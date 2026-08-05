@@ -1,0 +1,8 @@
+{
+  "event": "done",
+  "id": "Q-0031-8553",
+  "reason": "story review: empty-frontier copy misreads in-progress work as dependency-blocked",
+  "started_at": "2026-08-05T20:13:42+00:00",
+  "completed_at": "2026-08-05T20:14:38+00:00",
+  "files": []
+}

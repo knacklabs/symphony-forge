@@ -1202,14 +1202,7 @@ function renderOverview(state) {
       frontier.length === 1 ? "worktree" : "worktrees"} — one story per worktree.</p>
     ${frontierStories.length
       ? `<ul class="overview-list">${frontierStories.map(story => `<li>${overviewStoryButton(story, "", "frontier")}</li>`).join("")}</ul>`
-      : `<p class="overview-empty">${
-          !stories.length
-            ? `No stories yet. Confirm your specs, then ask for the roadmap —
-               stories are derived from them, never hand-written.`
-            : stories.every(story => story.status === "done")
-              ? `Every story is shipped. Ask for the next one when you are ready.`
-              : `Nothing can start yet — every unfinished story is waiting on another.
-                 Finish a story below to open its dependents.`}</p>`}`;
+      : `<p class="overview-empty">${emptyFrontierReason(stories)}</p>`}`;
 
   const epicAnswer = epics.length
     ? `<div class="epic-deliveries">${epics.map(epic => `<section class="epic-delivery">
@@ -1271,6 +1264,33 @@ function renderOverview(state) {
 // `slot` disambiguates the two places one story can appear: a frontier story
 // is rendered under both "What can start now?" and "Where does each story
 // sit?", so key alone cannot identify WHICH button had focus.
+// An empty frontier has four distinct causes and they are not interchangeable:
+// no stories at all, everything shipped, work already in progress, or genuine
+// dependency blocking. Saying "waiting on another" for a story that is ACTIVE
+// tells the reader to go finish a dependency that does not exist.
+function emptyFrontierReason(stories) {
+  if (!stories.length) {
+    return `No stories yet. Confirm your specs, then ask for the roadmap —
+            stories are derived from them, never hand-written.`;
+  }
+  const unfinished = stories.filter(story => story.state !== "shipped");
+  if (!unfinished.length) {
+    return `Every story is shipped. Ask for the next one when you are ready.`;
+  }
+  const building = unfinished.filter(story => story.state === "building").length;
+  const blocked = unfinished.filter(story => story.state === "blocked").length;
+  const parts = [];
+  if (building) {
+    parts.push(`${building} ${building === 1 ? "story is" : "stories are"} already building`);
+  }
+  if (blocked) {
+    parts.push(`${blocked} ${blocked === 1 ? "is" : "are"} blocked by a dependency`);
+  }
+  return parts.length
+    ? `Nothing new can start — ${parts.join(", and ")}.`
+    : `Nothing can start right now.`;
+}
+
 function overviewStoryButton(story, position, slot) {
   return `<button class="overview-story" type="button" data-story-key="${esc(story.key)}" data-overview-slot="${esc(slot)}">
     ${kindLabel("STORY")}<span class="key">${esc(story.key)}</span><span class="title">${esc(story.title || "Untitled story")}</span>
