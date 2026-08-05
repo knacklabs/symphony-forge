@@ -287,3 +287,7 @@
 {"event": "signal-resolved", "generated_by": "orchestrator", "at": "2026-08-05T16:43:58+00:00", "story": "PH-4", "detail": "S-0002-286b: Same question as S-0001, and the fault is the contract rather than your reading of it \u2014 two workers found it independently. PH-4.2's acceptance criterion is now AMENDED to say it explicitly: no dates "}
 {"event": "decomposed", "generated_by": "docs-decomposer", "at": "2026-08-05T16:43:58+00:00", "story": "PH-4", "detail": "4 task(s)"}
 {"event": "delegated", "generated_by": "orchestrator", "at": "2026-08-05T16:56:26+00:00", "story": "PH-4", "detail": "PH-4.2 (write)"}
+{"event": "stage-contract-changed", "generated_by": "implementer", "at": "2026-08-05T17:16:03+00:00", "story": "PH-4", "detail": "PH-4.2: task contract re-recorded mid-stage"}
+{"event": "stage-done", "generated_by": "implementer", "at": "2026-08-05T17:16:03+00:00", "story": "PH-4", "detail": "PH-4.2 The Overview becomes the default view"}
+{"event": "stage-start", "generated_by": "implementer", "at": "2026-08-05T17:16:12+00:00", "story": "PH-4", "detail": "PH-4.3 Labels, breadcrumb, and blocked named on every surface"}
+{"event": "delegated", "generated_by": "orchestrator", "at": "2026-08-05T17:22:06+00:00", "story": "PH-4", "detail": "PH-4.3 (write)"}

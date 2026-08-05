@@ -120,6 +120,7 @@
   .bar i.building { background: var(--build); }
   .bar i.ready    { background: var(--ready); }
   .bar i.blocked  { background: var(--stone); }
+  .bar i.waiting  { background: var(--muted); }
   .progress-line { margin-top: .38rem; font-size: .78rem; color: var(--muted); }
   .progress-line b { color: var(--ink); font-weight: 600; }
   .progress-line span { white-space: nowrap; }
@@ -129,6 +130,7 @@
   .k-building { color: var(--build); }
   .k-ready    { color: var(--ready); }
   .k-blocked  { color: var(--muted); }
+  .k-waiting  { color: var(--muted); }
 
   /* banner — urgent only, hidden when empty */
   #banner { margin-top: .55rem; display: grid; gap: .3rem; }
@@ -225,8 +227,14 @@
   .overview-story .key { font: 600 .7rem/1 var(--mono); color: var(--accent); margin-right: .45rem; }
   .overview-story .title { font-size: .8rem; }
   .overview-story .position { display: block; margin-top: .25rem; font-size: .72rem; color: var(--muted); }
+  .type-label {
+    display: inline-block; flex: none; font: 600 .55rem/1 var(--mono);
+    letter-spacing: .12em; color: var(--stone);
+  }
+  .overview-story .type-label { margin-right: .45rem; }
   .epic-deliveries { display: grid; gap: 1rem; }
   .epic-delivery { padding-left: .85rem; border-left: 2px solid var(--accent); }
+  .epic-delivery .type-label { margin-bottom: .3rem; }
   .epic-delivery h3 { font: 400 1.02rem/1.3 var(--serif); }
   .epic-delivery p { margin-top: .2rem; color: var(--muted); }
   .epic-stories { margin-top: .35rem; font: .68rem/1.5 var(--mono); color: var(--ink); }
@@ -346,6 +354,16 @@
     border-top: 1px solid var(--rule);
   }
   .panel h3:first-of-type { border-top: 0; padding-top: 0; }
+
+  .breadcrumb {
+    display: flex; flex-wrap: wrap; gap: .3rem; align-items: baseline;
+    margin-bottom: .85rem; color: var(--muted); font-size: .7rem;
+  }
+  .breadcrumb b {
+    display: block; font: 600 .52rem/1 var(--mono); letter-spacing: .1em;
+    text-transform: uppercase; color: var(--stone); margin-bottom: .15rem;
+  }
+  .breadcrumb .sep { color: var(--stone); }
 
   .statline { margin-top: .5rem; font-size: .8rem; color: var(--muted); }
   .statline b { font-weight: 600; }
@@ -699,6 +717,7 @@ function md(src) {
 }
 
 const rawBlock = (value) => `<pre class="raw">${esc(JSON.stringify(value, null, 2))}</pre>`;
+const kindLabel = (kind) => `<span class="type-label">${esc(kind)}</span>`;
 
 // Command-shaped fragments read as commands, so mark them up as such.
 // Escaped first; the replacements only wrap already-safe text.
@@ -799,7 +818,12 @@ function ageDays(iso) {
     then a stall old enough to be worth saying out loud. */
 function cardMark(story, leverage) {
   const waiting = story.blocked_by || [];
-  if (waiting.length) return `⊘ waits on ${waiting.slice(0, 2).join(", ")}${waiting.length > 2 ? "…" : ""}`;
+  if (story.state === "blocked") {
+    return waiting.length
+      ? `⊘ blocked by ${waiting.slice(0, 2).join(", ")}${waiting.length > 2 ? "…" : ""}`
+      : "⊘ blocked";
+  }
+  if (story.state === "waiting") return "· waiting";
   if (story.state === "ready") {
     const n = leverage.get(story.key) || 0;
     return n ? `★ unblocks ${n}` : "★ ready to plan";
@@ -856,7 +880,7 @@ function renderProgress(state) {
   const total = sum.total;
   const parts = [
     ["shipped", sum.shipped], ["building", sum.building],
-    ["ready", sum.ready], ["blocked", sum.blocked + sum.waiting],
+    ["ready", sum.ready], ["blocked", sum.blocked], ["waiting", sum.waiting],
   ];
   for (const [cls, n] of parts) {
     let seg = barSegments.get(cls);
@@ -870,14 +894,15 @@ function renderProgress(state) {
   }
   bar.setAttribute("aria-label",
     `${sum.shipped} of ${total} stories shipped, ${sum.building} building, ` +
-    `${sum.ready} ready to plan, ${sum.blocked + sum.waiting} blocked`);
+    `${sum.ready} ready to plan, ${sum.blocked} blocked, ${sum.waiting} waiting`);
   const cell = (cls, glyph, n, word) =>
     `<span class="k-${cls}"><em>${glyph}</em><b>${n}</b> ${word}</span>`;
   $("progress-line").innerHTML =
     `<span class="k-shipped"><em>✓</em><b>${sum.shipped}/${total}</b> shipped</span>` +
     (sum.building ? cell("building", "◐", sum.building, "building") : "") +
     (sum.ready ? cell("ready", "★", sum.ready, "ready to plan") : "") +
-    (sum.blocked + sum.waiting ? cell("blocked", "⊘", sum.blocked + sum.waiting, "waiting") : "");
+    (sum.blocked ? cell("blocked", "⊘", sum.blocked, "blocked") : "") +
+    (sum.waiting ? cell("waiting", "·", sum.waiting, "waiting") : "");
 }
 
 function renderBanner(state) {
@@ -955,6 +980,7 @@ function makeCard(key) {
   el.dataset.key = key;
   el.innerHTML = `<span class="card-top">
       <span class="card-glyph" aria-hidden="true"></span>
+      ${kindLabel("STORY")}
       <span class="card-key"></span>
       <span class="card-dot" hidden aria-hidden="true"></span>
     </span>
@@ -972,7 +998,7 @@ function makeLane(key, name) {
   el.className = "lane";
   el.dataset.epic = key;
   el.innerHTML = `<div class="lane-head">
-      <h2 class="lane-name"></h2><span class="lane-rule"></span>
+      ${kindLabel("EPIC")}<h2 class="lane-name"></h2><span class="lane-rule"></span>
       <span class="lane-count"></span>
     </div><div class="lane-grid"></div>`;
   el.querySelector(".lane-name").textContent = name;
@@ -1087,7 +1113,7 @@ function patchLanes(state) {
       if (card.mark !== mark) { el.querySelector(".card-mark").textContent = mark; card.mark = mark; }
       el.querySelector(".card-dot").hidden = !changed.has(key);
       el.setAttribute("aria-label",
-        `${key}${title ? " — " + title : ""}. ${STATE_WORD[story.state] || story.state}, at ${COLUMNS[col]}.` +
+        `Story ${key}${title ? " — " + title : ""}. ${STATE_WORD[story.state] || story.state}, at ${COLUMNS[col]}.` +
         `${mark ? " " + mark.replace(/^\S\s/, "") + "." : ""}${changed.has(key) ? " Changed." : ""}`);
 
       const cell = lane.cells[col];
@@ -1179,7 +1205,7 @@ function renderOverview(state) {
 
   const epicAnswer = epics.length
     ? `<div class="epic-deliveries">${epics.map(epic => `<section class="epic-delivery">
-        <h3>${esc(epic.title || epic.id)}</h3>
+        ${kindLabel("EPIC")}<h3>${esc(epic.title || epic.id)}</h3>
         <p>${esc(epic.objective || "No delivery objective recorded.")}</p>
         <div class="epic-stories">${(epic.stories || []).map(esc).join(" · ") || "No stories"}</div>
       </section>`).join("")}</div>`
@@ -1238,7 +1264,7 @@ function renderOverview(state) {
 // sit?", so key alone cannot identify WHICH button had focus.
 function overviewStoryButton(story, position, slot) {
   return `<button class="overview-story" type="button" data-story-key="${esc(story.key)}" data-overview-slot="${esc(slot)}">
-    <span class="key">${esc(story.key)}</span><span class="title">${esc(story.title || "Untitled story")}</span>
+    ${kindLabel("STORY")}<span class="key">${esc(story.key)}</span><span class="title">${esc(story.title || "Untitled story")}</span>
     ${position ? `<span class="position">${esc(position)}</span>` : ""}</button>`;
 }
 
@@ -1355,7 +1381,7 @@ function taskBlock(story) {
     const cls = t.status === "done" ? "done"
       : (t.status === "active" || t.status === "in-progress" ? "active" : "");
     const head = `<em aria-hidden="true">${mark[t.status] || "○"}</em>
-      <span class="id">${esc(t.id || "")}</span><span>${esc(t.title || "")}</span>`;
+      ${kindLabel("TASK")}<span class="id">${esc(t.id || "")}</span><span>${esc(t.title || "")}</span>`;
     // A task with no recorded detail stays a plain row: a disclosure that opens
     // onto nothing is worse than no disclosure.
     const detail = taskDossier(t);
@@ -1446,7 +1472,7 @@ function proofBlock(detail) {
          <dt>tasks</dt><dd>${(d.tasks || []).length}</dd>
        </dl>
        <ul class="tasks">${(d.tasks || []).map(t =>
-         `<li><em aria-hidden="true">·</em><span class="id">${esc(t.id || "")}</span>
+         `<li><em aria-hidden="true">·</em>${kindLabel("TASK")}<span class="id">${esc(t.id || "")}</span>
           <span>${esc(t.title || t.summary || "")}</span></li>`).join("")}</ul>`
     : `<h3>Decomposition</h3><p class="quiet">Not recorded yet — it is written when the approved
        plan is broken into bounded tasks.</p>`;
@@ -1461,6 +1487,21 @@ const RAW_SOURCE = {
                   reviews: (d.evidence || {}).reviews, grills: (d.evidence || {}).grills,
                   decomposition: (d.evidence || {}).decomposition}),
 };
+
+function drawerBreadcrumb(detail) {
+  const project = detail.project || {};
+  const epic = detail.epic || null;
+  const story = detail.story || {};
+  const epicName = epic && (epic.title || epic.id);
+  const segments = [
+    {label: "Project", value: project.name || "Unnamed project"},
+    ...(epicName ? [{label: "Epic", value: epicName}] : []),
+    {label: "Story", value: story.title || story.key || drawer.key},
+  ];
+  return `<nav class="breadcrumb" aria-label="Story hierarchy">${segments.map((segment, index) =>
+    `${index ? '<span class="sep" aria-hidden="true">›</span>' : ""}<span><b>${esc(segment.label)}</b>${esc(segment.value)}</span>`
+  ).join("")}</nav>`;
+}
 
 function drawerBody() {
   const detail = drawer.detail;
@@ -1487,9 +1528,10 @@ function drawerBody() {
   const days = ageDays(detail.plan && detail.plan.saved);
   const age = days !== null && s.state !== "shipped"
     ? ` · plan saved ${days === 0 ? "today" : plural(days, "day") + " ago"}` : "";
-  const blocked = (s.blocked_by || []).length
-    ? `<p class="statline">⊘ waiting on <b>${(s.blocked_by || []).map(esc).join(", ")}</b></p>` : "";
-  return `<h2 id="drawer-title"><span class="k">${esc(s.key || drawer.key)}</span>${esc(s.title || "")}</h2>
+  const blocked = s.state === "blocked" && (s.blocked_by || []).length
+    ? `<p class="statline">⊘ blocked by <b>${(s.blocked_by || []).map(esc).join(", ")}</b></p>` : "";
+  return `${drawerBreadcrumb(detail)}
+    <h2 id="drawer-title"><span class="k">${esc(s.key || drawer.key)}</span>${esc(s.title || "")}</h2>
     <p class="statline">${STATE_GLYPH[s.state] || "·"} <b>${esc(STATE_WORD[s.state] || s.state || "")}</b>${esc(age)}</p>
     ${blocked}
     <h3>Gate rail</h3>${railBlock(s)}

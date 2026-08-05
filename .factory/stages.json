@@ -14,7 +14,7 @@
     {
       "id": "PH-4.2",
       "title": "The Overview becomes the default view",
-      "status": "active",
+      "status": "done",
       "started_at": "2026-08-05T16:36:48+00:00",
       "base_sha": "b3a2bf1cbba17603613293a9fc3e5525b848427d",
       "dirty_at_start": {
@@ -35,12 +35,31 @@
           "git": "1 .M N... 100644 100644 100644 6c1cb4a33263bf3f3476f847e00892b9f7c559ee 6c1cb4a33263bf3f3476f847e00892b9f7c559ee .factory/stages.json\u0000\u0000100644 6c1cb4a33263bf3f3476f847e00892b9f7c559ee 0\t.factory/stages.json\u0000\u0000H .factory/stages.json\u0000"
         }
       },
-      "task_sha256": "fd59b46271f1fcd0a2e62e701014d3a8812e23aba84d28901f0f394e711a8801"
+      "task_sha256": "9792e0bd2f999dbac9944d768ec7932d2aaedb1c20db782c05465ed893dbe8ef",
+      "completed_at": "2026-08-05T17:16:03+00:00",
+      "contract_changed": {
+        "at": "2026-08-05T17:16:03+00:00",
+        "from": "fd59b46271f1fcd0a2e62e701014d3a8812e23aba84d28901f0f394e711a8801",
+        "to": "9792e0bd2f999dbac9944d768ec7932d2aaedb1c20db782c05465ed893dbe8ef"
+      }
     },
     {
       "id": "PH-4.3",
       "title": "Labels, breadcrumb, and blocked named on every surface",
-      "status": "pending"
+      "status": "active",
+      "started_at": "2026-08-05T17:16:12+00:00",
+      "base_sha": "6c40f63bd06aadaa28359223b729a03f26259044",
+      "dirty_at_start": {
+        ".factory/events.jsonl": {
+          "digest": "9e5aaa10cf8384eabdaf84349a331c28c1facf0cad65e0d05448676074c2e2b7",
+          "git": "1 .M N... 100644 100644 100644 01a4bf6c20b6391c713e48124c89e7f391aea231 01a4bf6c20b6391c713e48124c89e7f391aea231 .factory/events.jsonl\u0000\u0000100644 01a4bf6c20b6391c713e48124c89e7f391aea231 0\t.factory/events.jsonl\u0000\u0000H .factory/events.jsonl\u0000"
+        },
+        ".factory/stages.json": {
+          "digest": "14cd6d96552a04f6f7d690ae6d80276f536eeb1849bcfc755a7ab363a8891292",
+          "git": "1 .M N... 100644 100644 100644 85a55ca539f7cdf0fcb85400031023633a559d41 85a55ca539f7cdf0fcb85400031023633a559d41 .factory/stages.json\u0000\u0000100644 85a55ca539f7cdf0fcb85400031023633a559d41 0\t.factory/stages.json\u0000\u0000H .factory/stages.json\u0000"
+        }
+      },
+      "task_sha256": "07c82c8b57e1810998c9cecb240176c9e025b47f1585a46edce0313310879aa3"
     },
     {
       "id": "PH-4.4",

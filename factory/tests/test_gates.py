@@ -3995,6 +3995,82 @@ def test_overview_answers_the_four_questions():
     assert 'node.dataset.overviewSlot' in overview
 
 
+def test_epic_story_and_task_are_explicitly_labelled():
+    page = (HARNESS / "factory" / "board" / "index.html").read_text()
+
+    make_lane = page[page.index("function makeLane("):
+                     page.index("function rollCount(")]
+    overview = page[page.index("function renderOverview(state)"):
+                    page.index("function showBoardView(")]
+    make_card = page[page.index("function makeCard("):
+                     page.index("function makeLane(")]
+    task_block = page[page.index("function taskBlock("):
+                      page.index("function findingList(")]
+    proof_block = page[page.index("function proofBlock("):
+                       page.index("const RAW_SOURCE")]
+
+    assert 'kindLabel("EPIC")' in make_lane
+    assert 'kindLabel("EPIC")' in overview
+    assert 'kindLabel("STORY")' in make_card
+    assert 'kindLabel("STORY")' in overview
+    assert 'kindLabel("TASK")' in task_block
+    assert 'kindLabel("TASK")' in proof_block
+
+
+def test_drawer_opens_with_a_project_epic_story_breadcrumb():
+    page = (HARNESS / "factory" / "board" / "index.html").read_text()
+    breadcrumb = page[page.index("function drawerBreadcrumb("):
+                      page.index("function drawerBody(")]
+    drawer_body = page[page.index("function drawerBody("):
+                       page.index("function tabBar(")]
+    open_drawer = page[page.index("async function openDrawer("):
+                       page.index("/* ═══ library")]
+
+    assert "detail.project" in breadcrumb
+    assert "detail.epic" in breadcrumb
+    assert "detail.story" in breadcrumb
+    assert 'label: "Project"' in breadcrumb
+    assert 'label: "Epic"' in breadcrumb
+    assert 'label: "Story"' in breadcrumb
+    assert "epicName ?" in breadcrumb  # absent/unknown epic omits the segment
+    assert "drawerBreadcrumb(detail)" in drawer_body
+    assert "fetch(" not in breadcrumb
+    assert open_drawer.count("fetch(") == 1
+    assert "/api/story/" in open_drawer
+
+
+def test_blocked_reads_as_blocked_on_every_surface():
+    page = (HARNESS / "factory" / "board" / "index.html").read_text()
+    progress = page[page.index("function renderProgress(state)"):
+                    page.index("function renderBanner(state)")]
+    card_mark = page[page.index("function cardMark(story"):
+                     page.index("/* ═══ since you last looked")]
+    cards = page[page.index("function patchLanes(state)"):
+                 page.index("/* ═══ overview")]
+    drawer_body = page[page.index("function drawerBody("):
+                       page.index("function tabBar(")]
+
+    assert "sum.blocked + sum.waiting" not in progress
+    assert '["blocked", sum.blocked]' in progress
+    assert '["waiting", sum.waiting]' in progress
+    assert 'sum.blocked, "blocked"' in progress
+    assert 'sum.waiting, "waiting"' in progress
+
+    assert 'story.state === "blocked"' in card_mark
+    assert "blocked by" in card_mark
+    assert 'story.state === "waiting"' in card_mark
+    assert 'return "· waiting"' in card_mark
+    assert "STATE_WORD[story.state]" in cards  # card ARIA label
+    assert "STATE_WORD[s.state]" in drawer_body
+    assert "blocked by" in drawer_body
+    assert "waiting on" not in drawer_body
+
+    # The overview is a fifth state-reporting surface; keep it consistent too.
+    overview = page[page.index("function renderOverview(state)"):
+                    page.index("function showBoardView(")]
+    assert "STATE_WORD[story.state]" in overview
+
+
 def test_board_page_stays_self_contained():
     page = (HARNESS / "factory" / "board" / "index.html").read_text()
 
