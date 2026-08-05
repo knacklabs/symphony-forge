@@ -188,6 +188,6 @@
   "story": "PH-4",
   "epic": "symphony-forge",
   "plan_file": "plans/active/PH-4-present-the-hierarchy-to-engineers.md",
-  "plan_sha256": "fd744e3b6888704793f5811a5e887989baa5e92f005577da70bad3b8cf160bac",
-  "commit": "f4542889dca7616b653c31f29ccbbeb0fd3fca53"
+  "plan_sha256": "3ac84469fb7c472b3a215973fa6f9ebb9c83c96b5c92919e0b4b0425c52e06d4",
+  "commit": "b3a2bf1cbba17603613293a9fc3e5525b848427d"
 }

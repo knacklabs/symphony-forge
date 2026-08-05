@@ -4,16 +4,38 @@
     {
       "id": "PH-4.1",
       "title": "The API carries project identity and derived epic relationships",
-      "status": "active",
+      "status": "done",
       "started_at": "2026-08-05T15:37:35+00:00",
       "base_sha": "7e5d750023884df304bb445f002290a0eea3eafa",
       "dirty_at_start": {},
-      "task_sha256": "4e2bad218037ff9a6b831976b12ceff340309c81309c052d8b42d8f44810c628"
+      "task_sha256": "4e2bad218037ff9a6b831976b12ceff340309c81309c052d8b42d8f44810c628",
+      "completed_at": "2026-08-05T16:36:22+00:00"
     },
     {
       "id": "PH-4.2",
       "title": "The Overview becomes the default view",
-      "status": "pending"
+      "status": "active",
+      "started_at": "2026-08-05T16:36:48+00:00",
+      "base_sha": "b3a2bf1cbba17603613293a9fc3e5525b848427d",
+      "dirty_at_start": {
+        ".factory/decomposition.json": {
+          "digest": "3f995196ce7dd306bf648f0ba1131ddc1de9f009919bd1486522cb5ba1945661",
+          "git": "1 .M N... 100644 100644 100644 25f91a1fad6d713499ec371c7af957c35d93f057 25f91a1fad6d713499ec371c7af957c35d93f057 .factory/decomposition.json\u0000\u0000100644 25f91a1fad6d713499ec371c7af957c35d93f057 0\t.factory/decomposition.json\u0000\u0000H .factory/decomposition.json\u0000"
+        },
+        ".factory/events.jsonl": {
+          "digest": "adfe4bed6fabaf3e191bda44161be447d336c23c90bedb72c0cd2155a15e7bf2",
+          "git": "1 .M N... 100644 100644 100644 b7b2410647fa7b67fb8b6092b1b92d687f585738 b7b2410647fa7b67fb8b6092b1b92d687f585738 .factory/events.jsonl\u0000\u0000100644 b7b2410647fa7b67fb8b6092b1b92d687f585738 0\t.factory/events.jsonl\u0000\u0000H .factory/events.jsonl\u0000"
+        },
+        ".factory/run.json": {
+          "digest": "1fbfc1384474d918a4ee442d2258e674942d648a4488a67794a59c2d56ea4b8d",
+          "git": "1 .M N... 100644 100644 100644 4c74f0ed9e27427c88b6e5d4117ac3463a576063 4c74f0ed9e27427c88b6e5d4117ac3463a576063 .factory/run.json\u0000\u0000100644 4c74f0ed9e27427c88b6e5d4117ac3463a576063 0\t.factory/run.json\u0000\u0000H .factory/run.json\u0000"
+        },
+        ".factory/stages.json": {
+          "digest": "d7592b17a7d7ab23625b7b2493c05c63fb5233d67e6cb751b587fd42951384ad",
+          "git": "1 .M N... 100644 100644 100644 6c1cb4a33263bf3f3476f847e00892b9f7c559ee 6c1cb4a33263bf3f3476f847e00892b9f7c559ee .factory/stages.json\u0000\u0000100644 6c1cb4a33263bf3f3476f847e00892b9f7c559ee 0\t.factory/stages.json\u0000\u0000H .factory/stages.json\u0000"
+        }
+      },
+      "task_sha256": "fd59b46271f1fcd0a2e62e701014d3a8812e23aba84d28901f0f394e711a8801"
     },
     {
       "id": "PH-4.3",
