@@ -8186,3 +8186,31 @@ def test_doctor_merge_check_helpers(repo, monkeypatch):
     # No gh on PATH -> unanswerable -> None, never a red advisory row.
     monkeypatch.setattr(doctor.shutil, "which", lambda _: None)
     assert doctor._merge_check_status(fix=False) is None
+
+
+def test_project_name_survives_the_run_state_lifecycle(tmp_path):
+    """The Overview's project name comes from run.json, which intake and
+    pr_ready REWRITE. Injecting the field in a test proves nothing about
+    whether the lifecycle keeps it — a rewrite that dropped `project` would
+    silently regress every client board to its clone-directory slug."""
+    sys.path.insert(0, str(HARNESS / "factory" / "scripts"))
+    from forge_cli.board import project_identity
+
+    target = tmp_path / "acme-billing"
+    proc = subprocess.run(
+        [sys.executable, str(HARNESS / "factory" / "scripts" / "forge.py"),
+         "init", "--name", "Acme Billing", "--target", str(target)],
+        capture_output=True, text=True)
+    assert proc.returncode == 0, proc.stdout + proc.stderr
+    # The authored name, not the directory it was created in.
+    assert project_identity(target)["name"] == "Acme Billing"
+
+    git(target, "add", "-A")
+    git(target, "commit", "-q", "-m", "scaffold")
+    sign_off(target)
+    intake(target)
+    assert project_identity(target)["name"] == "Acme Billing", \
+        "intake rewrote run.json and dropped the authored project name"
+
+    run_state = json.loads((target / ".factory" / "run.json").read_text())
+    assert run_state.get("issue_key"), "intake did not actually write run state"

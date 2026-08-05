@@ -29,8 +29,18 @@ Three forms were available, and they fail differently:
 ## Decision
 
 The bundled example is **checked-in source, validated by the production
-validators**, and served by the flag that already exists:
-`./forge board --repo <example>`.
+validators**.
+
+> **Correction, 2026-08-06 (PH-4 implementation).** This decision originally
+> added "and served by the flag that already exists: `./forge board --repo
+> <example>`". That is wrong and was never implemented: `board.py` resolves
+> `index.html` from the `--repo` TARGET, so a data-only tree has no page to
+> serve. Making it work needs the page to resolve from the running code —
+> deferred as **D-0005**, because PH-4's approved plan scopes that task to
+> example/tests/docs and declares CLI/ops unchanged by design. The example is
+> validation-only until D-0005 is taken up. The confirmed substance of this
+> decision — checked-in source that the production validators must accept —
+> is unchanged.
 
 It is a minimal repo-shaped tree — `docs/product/BRIEF.md`, one confirmed
 capability spec, and a `plans/roadmap.json` carrying two epics, at least one
