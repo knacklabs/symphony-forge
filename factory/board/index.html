@@ -221,9 +221,10 @@
   .overview-story {
     width: 100%; cursor: pointer; text-align: left; padding: .55rem .65rem;
     border-left: 2px solid var(--stone); background: var(--wash); border-radius: 0 2px 2px 0;
+    transition: background-color 140ms ease-out, transform 110ms ease-out;
   }
   .overview-story:hover { background: var(--surface); }
-  .overview-story:active { transform: scale(.99); }
+  .overview-story:active { transform: scale(.98); }
   .overview-story .key { font: 600 .7rem/1 var(--mono); color: var(--accent); margin-right: .45rem; }
   .overview-story .title { font-size: .8rem; }
   .overview-story .position { display: block; margin-top: .25rem; font-size: .72rem; color: var(--muted); }
