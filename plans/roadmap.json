@@ -147,10 +147,30 @@
       "completed_at": "2026-08-05T21:11:46+00:00",
       "history": ".factory/history/PH-4/",
       "outcome": "Developers open the board and see the whole project: what it is, which stories can start right now and in how many worktrees, what each epic delivers, and why every blocked story is blocked \u2014 with epics, stories and tasks labelled as such and a Project > Epic > Story breadcrumb in the drawer. Blocked now reads as blocked on every surface instead of being folded into 'waiting', and a bundled example project ships that the production capture gates validate, so the board can be seen working before a repo has any work of its own."
+    },
+    {
+      "key": "PH-5",
+      "title": "The project knows what it built",
+      "story": "As a developer returning to a project months later, I want the repo itself to tell me everything it has built and where its record begins, so that I can trust what I read instead of reconstructing it from git archaeology.",
+      "acceptance_criteria": [
+        "forge history answers what happened for a story, event type or date range from the committed events, and names events with no story attribution rather than hiding them.",
+        "A quickfix window records every product file it touched, including inside an approved story, and the five-file budget still binds where the quickfix is the authorization.",
+        "A merged PR is linked to the work it shipped by an event in .factory/events.jsonl, so the link survives a clone with no GitHub remote.",
+        "forge init and forge adopt write a boundary marker naming the date, commit and count of preceding commits, and the board reports it instead of implying the record is complete.",
+        "Every shipped story has an outcome or an explicit marker that it predates the outcome contract; no outcome is written after the fact for work whose author did not state one."
+      ],
+      "order": 8,
+      "status": "pending",
+      "epic": "symphony-forge",
+      "skill": "backend",
+      "depends_on": [
+        "PH-4"
+      ],
+      "spec": "docs/specs/project-record.md"
     }
   ],
   "generated_by": "human",
-  "updated_at": "2026-08-05T21:11:46+00:00",
+  "updated_at": "2026-08-05T21:22:32+00:00",
   "epics": [
     {
       "id": "symphony-forge",
