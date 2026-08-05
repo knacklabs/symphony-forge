@@ -142,7 +142,7 @@
   .flag.urgent { border-left-color: var(--accent); background: var(--tint); }
   .flag em { font-style: normal; color: var(--accent); }
   .flag b { font-weight: 600; }
-  .flag code { font-size: .72rem; color: var(--muted); }
+  .flag code, .flag .do { font-size: .72rem; color: var(--muted); }
 
   /* next */
   .next { margin-top: .55rem; }
@@ -628,8 +628,8 @@
 </main>
 
 <footer class="wrap">
-  <p>Read-only. Every action lives in the CLI — <code>./forge next</code> prints the current move,
-     and plan approval happens in chat because the grill is bound by digest to the exact plan text.</p>
+  <p>Read-only — this board never writes. Work happens in your session: ask what is next, and
+     approve plans in chat, because the grill is bound by digest to the exact plan text.</p>
   <p id="lifecycle-footer" hidden>A card sits in the column it is waiting on. ★ marks one you can plan now.</p>
 </footer>
 
@@ -912,14 +912,14 @@ function renderBanner(state) {
     rows.push(`<div class="flag urgent"><em>⚠</em>
       <b>Worker paused — ${esc(sig.kind)}</b>
       <span>${esc(sig.id)}: ${esc(sig.message || "")}</span>
-      <code>./forge signal resolve ${esc(sig.id)} --notes "…"</code></div>`);
+      <span class="do">Answer it in your session — the worker stays paused until you do.</span></div>`);
   }
   if (state.quickfix) {
     const q = state.quickfix;
     rows.push(`<div class="flag urgent"><em>◆</em>
       <b>Quickfix window open</b>
       <span>${esc(q.id)} — ${esc(q.reason || "")} (${(q.files || []).length}/${esc(q.max_files)} files)</span>
-      <code>./forge quickfix done</code></div>`);
+      <span class="do">Close it in your session once the fix lands.</span></div>`);
   }
   const a = (state.summary || {}).attention || {};
   const quiet = [];
@@ -1029,9 +1029,8 @@ function patchLanes(state) {
   const host = $("lanes");
   $("empty").hidden = stories.length > 0;
   if (!stories.length) {
-    $("empty").innerHTML = `No stories yet. They are derived from confirmed specs — save specs while
-      prototyping (<code>./forge spec save &lt;slug&gt; --from &lt;draft.md&gt;</code>), confirm them,
-      then <code>./forge roadmap derive --input &lt;roadmap.json&gt;</code>.`;
+    $("empty").innerHTML = `No stories yet. They are derived from confirmed specs — save specs
+      while prototyping, confirm them, then ask for the roadmap.`;
   }
 
   // 1. measure, before anything moves
@@ -1193,8 +1192,8 @@ function renderOverview(state) {
       ? `<div class="project-sections">${projectSections.map(([heading, content]) =>
           `<section class="project-section"><h3>${esc(heading)}</h3><p>${esc(content)}</p></section>`
         ).join("")}</div>`
-      : `<p class="overview-empty">No project brief yet. Write <code>docs/product/BRIEF.md</code>
-          with its required headings — sign-off refuses without them.</p>`}`;
+      : `<p class="overview-empty">No project brief yet. Ask for one before sign-off —
+          it refuses until every required heading is captured.</p>`}`;
 
   const frontierStories = frontier.map(item =>
     typeof item === "string" ? (byKey.get(item) || {key: item}) : item);
@@ -1205,11 +1204,10 @@ function renderOverview(state) {
       ? `<ul class="overview-list">${frontierStories.map(story => `<li>${overviewStoryButton(story, "", "frontier")}</li>`).join("")}</ul>`
       : `<p class="overview-empty">${
           !stories.length
-            ? `No stories yet. They are derived from confirmed specs —
-               <code>./forge roadmap derive</code>.`
+            ? `No stories yet. Confirm your specs, then ask for the roadmap —
+               stories are derived from them, never hand-written.`
             : stories.every(story => story.status === "done")
-              ? `Every story is shipped. Add the next one with
-                 <code>./forge roadmap add</code>.`
+              ? `Every story is shipped. Ask for the next one when you are ready.`
               : `Nothing can start yet — every unfinished story is waiting on another.
                  Finish a story below to open its dependents.`}</p>`}`;
 
@@ -1219,9 +1217,8 @@ function renderOverview(state) {
         <p>${esc(epic.objective || "No delivery objective recorded.")}</p>
         <div class="epic-stories">${(epic.stories || []).map(esc).join(" · ") || "No stories"}</div>
       </section>`).join("")}</div>`
-    : `<p class="overview-empty">No epics yet. They arrive with the roadmap —
-        <code>./forge roadmap derive</code>, or <code>./forge roadmap epic add</code>
-        after sign-off.</p>`;
+    : `<p class="overview-empty">No epics yet. They arrive with the roadmap, and can be
+        added on their own after sign-off — ask for either.</p>`;
 
   const epicNames = new Map(epics.map(epic => [epic.id, epic.title || epic.id]));
   const storyAnswer = stories.length
@@ -1637,8 +1634,7 @@ function libraryBody(state) {
       </div>`).join("")}</div>
       ${(sp.unreferenced || []).length
         ? `<p class="quiet">Unreferenced by any story: ${sp.unreferenced.map(esc).join(", ")}</p>` : ""}`
-    : `<p class="quiet">No specs saved. First capability:
-        <code>./forge spec save &lt;slug&gt; --from &lt;draft.md&gt;</code></p>`;
+    : `<p class="quiet">No specs saved. Save the first capability while you prototype it.</p>`;
   const planRows = (loc) => (plans[loc] || []).map(p => `<div>
       <span class="id">${esc(p.story || p.issue || "")}</span>
       <span class="meta">saved ${esc((p.saved || "").slice(0, 10))}</span>
@@ -1651,7 +1647,7 @@ function libraryBody(state) {
       ? `<div class="ledger">${decisions.map(d => `<div>
           <span class="id">${esc(d.id)}</span><span>${esc(d.title)}</span>${openFile(d.path)}
         </div>`).join("")}</div>`
-      : `<p class="quiet">No accepted decisions yet — <code>./forge decision new &lt;slug&gt;</code>.</p>`}
+      : `<p class="quiet">No accepted decisions yet. They are recorded when you confirm one in chat.</p>`}
     <h3>Plans ledger</h3>
     ${active ? `<p class="quiet">Active</p><div class="ledger">${active}</div>` : ""}
     ${completed ? `<p class="quiet">Completed</p><div class="ledger">${completed}</div>` : ""}

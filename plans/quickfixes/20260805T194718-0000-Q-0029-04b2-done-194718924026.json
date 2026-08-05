@@ -1,0 +1,8 @@
+{
+  "event": "done",
+  "id": "Q-0029-04b2",
+  "reason": "board empty states: say the intent, not the CLI command \u2014 devs work through agents",
+  "started_at": "2026-08-05T19:45:23+00:00",
+  "completed_at": "2026-08-05T19:47:18+00:00",
+  "files": []
+}
