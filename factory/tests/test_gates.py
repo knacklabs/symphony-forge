@@ -3927,6 +3927,58 @@ def test_api_story_detail_carries_project_and_resolved_epic(repo):
     assert not isinstance(state["stories"][0]["epic"], dict)
 
 
+def test_board_default_view_is_the_overview():
+    page = (HARNESS / "factory" / "board" / "index.html").read_text()
+
+    assert '<body data-view="overview">' in page
+    assert 'data-board-view="overview" aria-selected="true"' in page
+    assert 'data-board-view="lifecycle" aria-selected="false"' in page
+    assert page.index('data-board-view="overview"') < page.index(
+        'data-board-view="lifecycle"')
+    assert 'id="overview-view"' in page
+    assert 'id="lifecycle-view" hidden' in page
+
+
+def test_overview_answers_the_four_questions():
+    page = (HARNESS / "factory" / "board" / "index.html").read_text()
+    overview = page[page.index("function renderOverview(state)"):
+                    page.index("/* ═══ overlays", page.index(
+                        "function renderOverview(state)"))]
+
+    questions = [
+        "What is this project?",
+        "What can start now?",
+        "What does each epic deliver?",
+        "Where does each story sit?",
+    ]
+    assert all(question in page for question in questions)
+    assert overview.index(questions[0]) < overview.index(questions[1])
+    assert overview.index(questions[1]) < overview.index(questions[2])
+    assert overview.index(questions[2]) < overview.index(questions[3])
+
+    assert "state.project" in overview and "state.root" not in overview
+    assert "state.frontier" in overview
+    assert "frontier.length" in overview
+    assert "state.epics" in overview and "epic.objective" in overview
+    assert "epic.stories" in overview
+    assert "story.blocked_by" in overview
+    assert "story.unblocks" in overview
+    assert "depends_on" not in overview
+    assert not re.search(r"\b(?:wave|layer)\s*\d", overview, re.IGNORECASE)
+
+
+def test_board_page_stays_self_contained():
+    page = (HARNESS / "factory" / "board" / "index.html").read_text()
+
+    assert len(re.findall(r"<style(?:\s|>)", page)) == 1
+    assert len(re.findall(r"<script(?:\s|>)", page)) == 1
+    assert not re.search(r"<(?:script|img|iframe)[^>]+\bsrc\s*=", page,
+                         re.IGNORECASE)
+    assert not re.search(r"<link[^>]+\bhref\s*=", page, re.IGNORECASE)
+    assert not re.search(r"@import\s+|url\(\s*['\"]?https?://", page,
+                         re.IGNORECASE)
+
+
 def test_recorder_holds_the_task_narrative_contract(repo, tmp_path):
     """objective and acceptance_criteria were prompt convention, so a task
     could reach the board as an id and a title."""

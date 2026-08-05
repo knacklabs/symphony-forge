@@ -72,7 +72,7 @@
         "Overview answers what each epic delivers, using the derived epic relationships from PH-4.1 rather than recomputing membership in the page.",
         "Overview answers why a story is blocked, naming the specific dependencies from blocked_by rather than saying only that it is blocked.",
         "No wave or layer numbering and no node-and-arrow dependency graph appears anywhere: the dependency presentation is the frontier plus per-story requires/unblocks (spec Boundaries, decision 0021).",
-        "No dates, estimates, burndown or velocity appear.",
+        "No dates, estimates, burndown or velocity appear IN THE OVERVIEW. This boundary constrains what the hierarchy presentation adds; it is NOT a mandate to strip timestamps the lifecycle board already shows. Its existing plan-age, verify/work, saved-plan and quickfix-closure dates stay exactly as they are \u2014 removing them would violate this task's own 'every current affordance intact' criterion and exceed the story's scope.",
         "The page remains one self-contained HTML file with inline CSS and JS: no new dependency, framework, build step or external asset request is introduced."
       ],
       "verify_commands": [
@@ -189,5 +189,5 @@
   "epic": "symphony-forge",
   "plan_file": "plans/active/PH-4-present-the-hierarchy-to-engineers.md",
   "plan_sha256": "3ac84469fb7c472b3a215973fa6f9ebb9c83c96b5c92919e0b4b0425c52e06d4",
-  "commit": "b3a2bf1cbba17603613293a9fc3e5525b848427d"
+  "commit": "7a19d631d14a7149ebca75dff728bd4d8ef1c08b"
 }
