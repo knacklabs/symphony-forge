@@ -301,3 +301,7 @@
 {"event": "delegated", "generated_by": "orchestrator", "at": "2026-08-05T17:55:50+00:00", "story": "PH-4", "detail": "PH-4.4 (write)"}
 {"event": "signal-resolved", "generated_by": "orchestrator", "at": "2026-08-05T17:56:17+00:00", "story": "PH-4", "detail": "S-0004-3043: Fair \u2014 the criterion named three widths without defining them. Rule: derive them from the board's OWN breakpoints rather than inventing numbers, because those bands are what the CSS actually distingui"}
 {"event": "decomposed", "generated_by": "docs-decomposer", "at": "2026-08-05T17:56:39+00:00", "story": "PH-4", "detail": "4 task(s)"}
+{"event": "signal-contradiction", "generated_by": "implementer", "at": "2026-08-05T18:01:28+00:00", "story": "PH-4", "detail": "PH-4.4 brief/decomposition require board.py page-source changes and forbid all AGENTS.md edits, but the approved plan scopes Task 4 to example/tests/docs only, declares CLI/ops unchanged, and root ins"}
+{"event": "delegated", "generated_by": "orchestrator", "at": "2026-08-05T18:01:36+00:00", "story": "PH-4", "detail": "PH-4.4 (write)"}
+{"event": "signal-resolved", "generated_by": "orchestrator", "at": "2026-08-05T18:03:03+00:00", "story": "PH-4", "detail": "S-0005-8c65: Right, and the contradiction was mine to remove \u2014 not yours to reconcile. The ROADMAP criterion is only 'the bundled example passes the production validators and reads correctly at desktop, tablet and"}
+{"event": "decomposed", "generated_by": "docs-decomposer", "at": "2026-08-05T18:03:04+00:00", "story": "PH-4", "detail": "4 task(s)"}

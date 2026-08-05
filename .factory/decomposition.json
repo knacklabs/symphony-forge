@@ -147,15 +147,13 @@
       ],
       "write_scope": [
         "factory/board/example",
-        "factory/scripts/forge_cli/board.py",
         "factory/tests/test_gates.py",
         "docs/getting-started.md",
         "factory/skills/forge.md"
       ],
       "acceptance_criteria": [
         "A checked-in example lives under factory/board/example as a minimal repo-shaped tree: docs/product/BRIEF.md, one confirmed capability spec, and plans/roadmap.json with two epics, at least one blocked story and at least two startable stories.",
-        "./forge board --repo factory/board/example serves the example, so it is a demonstrable artifact rather than test data (decision 0026).",
-        "The board PAGE resolves from the running code, not from the --repo target: index.html is machinery that ships beside board.py, so a data-only --repo directory must not need its own vendored copy. In an ordinary repo the running code IS the vendored copy, so this changes nothing there \u2014 prove that with a test that serves a repo whose factory/board/index.html differs from the harness's and asserts the running code's page is served.",
+        "The example is checked-in SOURCE a human can read and the validators can refuse (decision 0026) \u2014 not a test fixture. Serving it via ./forge board --repo is NOT in scope: board.py reads the page from the --repo target, so that would need a board.py change the approved plan excludes (its Task 4 scope is example/tests/docs, and Surface Impact declares CLI/ops unchanged by design). That improvement is deferred with a trigger, not smuggled in here.",
         "A test runs the PRODUCTION validators over the example \u2014 the same brief-heading, spec-section and roadmap story/epic contract functions the authoring routes and record_signoff.py call \u2014 not a parallel fixture-only check.",
         "The example exercises what the Overview must show: the frontier is non-empty, at least one story is blocked with a named dependency, and both epics have story membership.",
         "Deterministic width proof per decision 0027, with the three widths DERIVED from the board's own breakpoints rather than invented: index.html declares max-width:900px and max-width:620px, giving desktop (>900, test at 1280), tablet (621-900, test at 768) and mobile (<=620, test at 390). At each band the content that width must show is present and reachable \u2014 not removed, and not clipped by an overflow rule.",
@@ -192,5 +190,5 @@
   "epic": "symphony-forge",
   "plan_file": "plans/active/PH-4-present-the-hierarchy-to-engineers.md",
   "plan_sha256": "3ac84469fb7c472b3a215973fa6f9ebb9c83c96b5c92919e0b4b0425c52e06d4",
-  "commit": "2121a634c46af637b0a5c56d221c3b31d5b278d0"
+  "commit": "39b64264d337aaa1a1878b931fcdc14fc801793b"
 }
