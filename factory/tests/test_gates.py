@@ -26,6 +26,8 @@ from pathlib import Path
 import pytest
 
 HARNESS = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(HARNESS / "factory" / "scripts"))
+from record_signoff import REQUIRED_BRIEF_HEADINGS
 
 
 def run(repo: Path, script: str, *args: str, stdin: str | None = None,
@@ -83,17 +85,6 @@ PLAN_SECTIONS = (
 PLAN_BODY = "\n\n".join(
     f"## {section}\nTest content for {section}." for section in PLAN_SECTIONS
 ) + "\n"
-
-BRIEF_HEADINGS = (
-    "Summary",
-    "Users",
-    "Target Outcome",
-    "Key Flows",
-    "Domain Concepts",
-    "Constraints",
-    "Out of Scope",
-)
-
 
 def git(repo: Path, *args: str) -> str:
     proc = subprocess.run(["git", *GIT_ID, *args], cwd=repo,
@@ -914,9 +905,9 @@ def test_scaffolded_brief_carries_the_canonical_headings(repo):
         flags=re.MULTILINE,
     )
 
-    assert tuple(scaffolded) == BRIEF_HEADINGS
-    assert tuple(live) == BRIEF_HEADINGS
-    assert tuple(plan_headings) == BRIEF_HEADINGS
+    assert tuple(scaffolded) == REQUIRED_BRIEF_HEADINGS
+    assert tuple(live) == REQUIRED_BRIEF_HEADINGS
+    assert tuple(plan_headings) == REQUIRED_BRIEF_HEADINGS
     sign_off(repo)
     assert signed_off(repo)
 
@@ -930,14 +921,14 @@ def test_signoff_refuses_a_brief_missing_a_required_heading(repo):
     assert "at least one confirmed spec in docs/specs/" in out
     assert "plans/roadmap.json with at least one story" in out
     assert "docs/product/BRIEF.md is absent" in out
-    assert ", ".join(BRIEF_HEADINGS) in out
+    assert ", ".join(REQUIRED_BRIEF_HEADINGS) in out
 
     missing = {"Users", "Constraints"}
     brief.write_text(
         "# Product Brief\n\n"
         + "\n".join(
             f"## {heading}\n\nComplete.\n"
-            for heading in BRIEF_HEADINGS
+            for heading in REQUIRED_BRIEF_HEADINGS
             if heading not in missing
         )
     )
@@ -954,7 +945,7 @@ def test_signoff_refuses_a_heading_with_an_empty_body(repo):
         "# Product Brief\n\n"
         + "\n".join(
             f"## {heading}\n\n{empty_body if heading in empty else 'Complete.'}\n"
-            for heading in BRIEF_HEADINGS
+            for heading in REQUIRED_BRIEF_HEADINGS
         )
     )
 
@@ -3804,6 +3795,138 @@ def test_board_binds_evidence_to_the_story_that_owns_it(repo, tmp_path):
     assert "do_POST" not in board and "do_PUT" not in board and "do_DELETE" not in board
 
 
+def test_api_state_carries_project_identity_from_the_shared_parser(repo):
+    from forge_cli.board import aggregate_state
+
+    brief = repo / "docs" / "product" / "BRIEF.md"
+    brief.write_text(
+        "# Deliberately different document title\n\n"
+        + "\n".join(
+            f"## {heading}\n\nCaptured {heading}.\n"
+            for heading in REQUIRED_BRIEF_HEADINGS
+        )
+    )
+
+    # forge init --name AUTHORED this; the directory is "app". The authored
+    # name wins, or a project initialized as "Acme Billing" into ~/acme-billing
+    # reads as its slug on the board.
+    run_state = repo / ".factory" / "run.json"
+    run_state.write_text(json.dumps(
+        {**json.loads(run_state.read_text()), "project": "Acme Billing"}))
+    assert aggregate_state(repo)["project"]["name"] == "Acme Billing"
+    # Falls back to the directory only when nothing authored a name.
+    run_state.write_text(json.dumps(
+        {**json.loads(run_state.read_text()), "project": ""}))
+
+    project = aggregate_state(repo)["project"]
+    assert project == {
+        "name": "app",
+        "sections": {
+            heading: f"Captured {heading}."
+            for heading in REQUIRED_BRIEF_HEADINGS
+        },
+        "missing_sections": [],
+    }
+
+    brief.write_text("# Incomplete\n\n## Summary\n\nCaptured.\n")
+    incomplete = aggregate_state(repo)["project"]
+    assert incomplete["sections"] == {"Summary": "Captured."}
+    assert incomplete["missing_sections"] == list(REQUIRED_BRIEF_HEADINGS[1:])
+
+    brief.unlink()
+    missing = aggregate_state(repo)["project"]
+    assert missing["sections"] == {}
+    assert missing["missing_sections"] == list(REQUIRED_BRIEF_HEADINGS)
+
+
+def test_brief_required_headings_have_a_single_owner():
+    import record_signoff
+    from forge_cli import board, doctor
+
+    assert board.REQUIRED_BRIEF_HEADINGS is record_signoff.REQUIRED_BRIEF_HEADINGS
+    assert doctor.REQUIRED_BRIEF_HEADINGS is record_signoff.REQUIRED_BRIEF_HEADINGS
+    assert not hasattr(doctor, "BRIEF_REQUIRED_HEADINGS")
+
+    sources = [
+        (HARNESS / "factory" / "scripts" / "record_signoff.py").read_text(),
+        (HARNESS / "factory" / "scripts" / "forge_cli" / "doctor.py").read_text(),
+        (HARNESS / "factory" / "scripts" / "forge_cli" / "board.py").read_text(),
+    ]
+    assert sum(source.count("REQUIRED_BRIEF_HEADINGS = (") for source in sources) == 1
+    assert sum(source.count('"Summary"') for source in sources) == 1
+
+
+def test_api_state_derives_epic_relationships_and_reverse_unblocks(repo):
+    from forge_cli.board import aggregate_state
+
+    reporting = {
+        "id": "reporting", "title": "Reporting", "objective": "see trends",
+        "source_refs": ["docs/product/BRIEF.md"],
+    }
+    analytics = {
+        "id": "analytics", "title": "Analytics", "objective": "explain trends",
+        "source_refs": ["docs/product/BRIEF.md"],
+    }
+    roadmap = {
+        "generated_by": "human",
+        "epics": [ROADMAP_EPIC, reporting, analytics],
+        "items": [
+            authored_story("BILL-1", "Paid invoices", status="done"),
+            authored_story("BILL-2", "Open invoices", status="pending"),
+            authored_story("REP-1", "Aging report", epic="reporting",
+                           status="pending", depends_on=["BILL-2"]),
+            authored_story("REP-2", "Revenue report", epic="reporting",
+                           status="pending", depends_on=["BILL-1"]),
+            authored_story("ANA-1", "Trend analysis", epic="analytics",
+                           status="pending", depends_on=["BILL-1"]),
+        ],
+    }
+    (repo / "plans" / "roadmap.json").write_text(json.dumps(roadmap))
+
+    state = aggregate_state(repo)
+    stories = {story["key"]: story for story in state["stories"]}
+    assert stories["BILL-1"]["unblocks"] == ["REP-2", "ANA-1"]
+    assert stories["BILL-2"]["unblocks"] == ["REP-1"]
+    assert stories["REP-1"]["unblocks"] == []
+    assert stories["REP-2"]["unblocks"] == []
+    assert stories["ANA-1"]["unblocks"] == []
+    assert stories["REP-1"]["blocked_by"] == ["BILL-2"]
+    assert stories["REP-2"]["blocked_by"] == []
+
+    epics = {epic["id"]: epic for epic in state["epics"]}
+    assert epics["billing"]["stories"] == ["BILL-1", "BILL-2"]
+    assert epics["billing"]["progress"] == {"done": 1, "total": 2}
+    assert epics["reporting"]["stories"] == ["REP-1", "REP-2"]
+    assert epics["reporting"]["progress"] == {"done": 0, "total": 2}
+    assert epics["analytics"]["stories"] == ["ANA-1"]
+    assert epics["analytics"]["progress"] == {"done": 0, "total": 1}
+    assert epics["reporting"]["blocked_by"] == ["billing"]
+    assert epics["reporting"]["unblocks"] == []
+    assert epics["analytics"]["blocked_by"] == ["billing"]
+    assert epics["analytics"]["unblocks"] == []
+    assert epics["billing"]["blocked_by"] == []
+    assert epics["billing"]["unblocks"] == ["reporting", "analytics"]
+
+
+def test_api_story_detail_carries_project_and_resolved_epic(repo):
+    from forge_cli.board import aggregate_state, story_detail
+
+    (repo / "plans" / "roadmap.json").write_text(json.dumps({
+        "generated_by": "human",
+        "epics": [ROADMAP_EPIC],
+        "items": [authored_story("ENG-1", "Invoices", status="pending")],
+    }))
+
+    state = aggregate_state(repo)
+    detail = story_detail(repo, "ENG-1")
+    assert detail is not None
+    assert detail["project"] == state["project"]
+    assert detail["epic"] == state["epics"][0]
+    assert detail["epic"]["id"] == detail["story"]["epic"] == "billing"
+    assert state["stories"][0]["epic"] == "billing"
+    assert not isinstance(state["stories"][0]["epic"], dict)
+
+
 def test_recorder_holds_the_task_narrative_contract(repo, tmp_path):
     """objective and acceptance_criteria were prompt convention, so a task
     could reach the board as an id and a title."""
@@ -5673,7 +5796,7 @@ def test_doctor_reports_legacy_capture_without_blocking(repo, capsys):
     brief = repo / "docs" / "product" / "BRIEF.md"
     brief.write_text("\n".join(
         f"## {heading}\n\n{'' if heading in {'Users', 'Constraints'} else 'Captured.'}"
-        for heading in BRIEF_HEADINGS
+        for heading in REQUIRED_BRIEF_HEADINGS
     ))
     specs = repo / "docs" / "specs"
     specs.joinpath("base.md").write_text(
@@ -5702,11 +5825,11 @@ def test_doctor_reports_legacy_capture_without_blocking(repo, capsys):
     brief.unlink()
     report_legacy_capture_gaps(repo)
     out = capsys.readouterr().out
-    assert all(f"{heading}" in out for heading in BRIEF_HEADINGS)
+    assert all(f"{heading}" in out for heading in REQUIRED_BRIEF_HEADINGS)
     assert out.startswith("[opt ] capture/brief docs/product/BRIEF.md:")
 
     brief.write_text("\n".join(
-        f"## {heading}\n\nCaptured." for heading in BRIEF_HEADINGS
+        f"## {heading}\n\nCaptured." for heading in REQUIRED_BRIEF_HEADINGS
     ))
     complete_spec = (
         "---\nstatus: confirmed\n---\n\n# Complete\n\n"

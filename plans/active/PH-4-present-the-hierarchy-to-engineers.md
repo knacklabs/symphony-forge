@@ -294,3 +294,8 @@ missing `project` or `unblocks`; a blocked story reading `waiting` on any of the
 four named surfaces; a served page without the Overview as default; the bundled
 example failing a production validator. Each has a test. Review is one autoreview
 pass, three lenses (0011). The functional check runs because `user_facing: true`.
+
+## Implementation Assumptions
+
+<!-- Made during implementation, NOT part of the approved plan. Dev: review these before merge; promote any that matter to docs/decisions/. -->
+- 2026-08-05: Project name means the repository root directory name, matching the board's existing root identity because no separate authored project-name field is in scope.

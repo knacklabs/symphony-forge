@@ -14,6 +14,7 @@ import urllib.request
 from pathlib import Path
 
 from factory_lib import decomposition_state_path, load_json, parse_sections, repo_root
+from record_signoff import REQUIRED_BRIEF_HEADINGS
 
 from .common import run_quiet
 from .specs import missing_required_content, parse_frontmatter
@@ -27,17 +28,6 @@ SHELL_BUILTINS = {".", ":", "[", "cd", "echo", "eval", "exec", "exit", "export",
 # Openers of compound commands: the program is not token zero, and `bash -n`
 # has already proved the whole thing parses.
 SHELL_KEYWORDS = {"!", "(", "{", "case", "for", "if", "until", "while"}
-
-BRIEF_REQUIRED_HEADINGS = (
-    "Summary",
-    "Users",
-    "Target Outcome",
-    "Key Flows",
-    "Domain Concepts",
-    "Constraints",
-    "Out of Scope",
-)
-
 
 def unrunnable_reason(command: str) -> str | None:
     """Why this verify_commands entry cannot execute, or None if it can.
@@ -139,7 +129,7 @@ def legacy_capture_gaps(base: Path) -> list[tuple[str, str]]:
     # briefs that exist made the one project that needs this line the one
     # project that never sees it, while sign-off refuses it either way.
     sections = parse_sections(brief.read_text()) if brief.is_file() else {}
-    missing = [heading for heading in BRIEF_REQUIRED_HEADINGS
+    missing = [heading for heading in REQUIRED_BRIEF_HEADINGS
                if not sections.get(heading, "").strip()]
     if missing:
         found.append(("brief", f"docs/product/BRIEF.md: {', '.join(missing)}"))

@@ -9,7 +9,8 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import unquote, urlsplit
 
-from factory_lib import load_json, now_iso, repo_root, run_state_path
+from factory_lib import load_json, now_iso, parse_sections, repo_root, run_state_path
+from record_signoff import REQUIRED_BRIEF_HEADINGS
 
 from .assumptions import open_count as open_assumptions
 from .decisions import decision_records
@@ -163,6 +164,59 @@ def quickfix_ledger(base: Path) -> list[dict]:
     return [event for event in load_events(base) if event.get("event") == "done"]
 
 
+def project_identity(base: Path) -> dict:
+    """Project identity and capture status, derived from the committed brief.
+
+    The name is the one `forge init --name` AUTHORED into run.json, not the
+    directory it happens to sit in: `forge init --name "Acme Billing"` into
+    ~/work/acme-billing must read as Acme Billing. The directory name is the
+    fallback for a repo that predates the field or was never scaffolded — this
+    harness itself, whose run.json carries an empty project.
+    """
+    brief = base / "docs" / "product" / "BRIEF.md"
+    sections = parse_sections(brief.read_text()) if brief.is_file() else {}
+    authored = load_json(base / ".factory" / "run.json", default={})
+    name = authored.get("project") if isinstance(authored, dict) else ""
+    return {
+        "name": (name or "").strip() or base.name,
+        "sections": sections,
+        "missing_sections": [
+            heading for heading in REQUIRED_BRIEF_HEADINGS
+            if not sections.get(heading, "").strip()
+        ],
+    }
+
+
+def derived_epics(roadmap: dict, stories: list[dict]) -> list[dict]:
+    """Resolve epic membership, progress, and authored cross-epic gating."""
+    epics = [dict(epic) for epic in roadmap.get("epics", [])]
+    by_id = {epic.get("id"): epic for epic in epics}
+    story_epic = {story.get("key"): story.get("epic") for story in stories}
+    blocked_by = {epic_id: [] for epic_id in by_id}
+
+    for epic_id, epic in by_id.items():
+        members = [story for story in stories if story.get("epic") == epic_id]
+        epic["stories"] = [story.get("key") for story in members]
+        epic["progress"] = {
+            "done": sum(story.get("status") == "done" for story in members),
+            "total": len(members),
+        }
+        for story in members:
+            for dependency in story.get("depends_on", []):
+                dependency_epic = story_epic.get(dependency)
+                if (dependency_epic in by_id and dependency_epic != epic_id
+                        and dependency_epic not in blocked_by[epic_id]):
+                    blocked_by[epic_id].append(dependency_epic)
+
+    for epic_id, epic in by_id.items():
+        epic["blocked_by"] = blocked_by[epic_id]
+        epic["unblocks"] = [
+            other_id for other_id in by_id
+            if epic_id in blocked_by[other_id]
+        ]
+    return epics
+
+
 def aggregate_state(base: Path) -> dict:
     roadmap = load_roadmap(base)
     items = roadmap.get("items", [])
@@ -188,6 +242,11 @@ def aggregate_state(base: Path) -> dict:
     run = load_json(base / ".factory" / "run.json", default={})
     stages = _stage_summary(base)
     done_keys = {item.get("key") for item in items if item.get("status") == "done"}
+    unblocks = {item.get("key"): [] for item in items}
+    for item in items:
+        for dependency in item.get("depends_on", []):
+            if dependency in unblocks:
+                unblocks[dependency].append(item.get("key"))
     stories = []
     for item in items:
         story = dict(item)
@@ -198,6 +257,7 @@ def aggregate_state(base: Path) -> dict:
         story["tasks"] = tasks
         story["blocked_by"] = [dep for dep in item.get("depends_on", [])
                                if dep not in done_keys]
+        story["unblocks"] = unblocks.get(item.get("key"), [])
         story["lifecycle"] = {
             "spec": spec_status.get(item.get("spec"), "missing"),
             "roadmap": True,
@@ -210,12 +270,14 @@ def aggregate_state(base: Path) -> dict:
         }
         story["state"] = _story_state(story, bool(story["blocked_by"]))
         stories.append(story)
+    epics = derived_epics(roadmap, stories)
     signals = open_signals(base)
     return {
         "generated_at": now_iso(),
         "root": str(base.resolve()),
         "specs": specs,
-        "epics": roadmap.get("epics", []),
+        "project": project_identity(base),
+        "epics": epics,
         "stories": stories,
         "summary": _summary(stories, specs, signals, open_assumptions(base)),
         "frontier": frontier,
@@ -319,7 +381,8 @@ def story_detail(base: Path, key: str) -> dict | None:
     The key is matched against the roadmap rather than used as a path, so no
     request can address a file outside the artifacts this story owns.
     """
-    items = load_roadmap(base).get("items", [])
+    roadmap = load_roadmap(base)
+    items = roadmap.get("items", [])
     item = next((i for i in items if i.get("key") == key), None)
     if item is None:
         return None
@@ -357,7 +420,13 @@ def story_detail(base: Path, key: str) -> dict | None:
     spec = None
     if spec_path and (base / spec_path).is_file():
         spec = {"path": spec_path, "body": (base / spec_path).read_text()}
-    detail = {"key": key, "story": item, "plan": plan, "plan_body": plan_body,
+    epic = next(
+        (epic for epic in derived_epics(roadmap, items)
+         if epic.get("id") == item.get("epic")),
+        None,
+    )
+    detail = {"key": key, "project": project_identity(base), "epic": epic,
+              "story": item, "plan": plan, "plan_body": plan_body,
               "spec": spec, "evidence": evidence}
     detail["tasks"] = task_dossiers(detail)
     detail["readiness"] = approval_readiness(base, detail)

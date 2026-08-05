@@ -4,7 +4,11 @@
     {
       "id": "PH-4.1",
       "title": "The API carries project identity and derived epic relationships",
-      "status": "pending"
+      "status": "active",
+      "started_at": "2026-08-05T15:37:35+00:00",
+      "base_sha": "7e5d750023884df304bb445f002290a0eea3eafa",
+      "dirty_at_start": {},
+      "task_sha256": "4e2bad218037ff9a6b831976b12ceff340309c81309c052d8b42d8f44810c628"
     },
     {
       "id": "PH-4.2",
