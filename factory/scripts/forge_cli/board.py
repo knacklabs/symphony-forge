@@ -167,18 +167,30 @@ def quickfix_ledger(base: Path) -> list[dict]:
 def project_identity(base: Path) -> dict:
     """Project identity and capture status, derived from the committed brief.
 
-    The name is the one `forge init --name` AUTHORED into run.json, not the
-    directory it happens to sit in: `forge init --name "Acme Billing"` into
-    ~/work/acme-billing must read as Acme Billing. The directory name is the
-    fallback for a repo that predates the field or was never scaffolded — this
-    harness itself, whose run.json carries an empty project.
+    Three sources, most authoritative first, because no single one survives
+    every shape a repo takes:
+
+    1. `forge init --name`, authored into run.json — `--name "Acme Billing"`
+       into ~/work/acme-billing must read as Acme Billing, not its slug.
+    2. The BRIEF's H1 — DURABLE where run.json is not. run.json is lifecycle
+       state: a data-only tree (the bundled example) has none at all, and it
+       reduces to a phase-only object at ship. The brief is committed and
+       sign-off refuses without it.
+    3. The directory, for a repo that has neither.
     """
     brief = base / "docs" / "product" / "BRIEF.md"
-    sections = parse_sections(brief.read_text()) if brief.is_file() else {}
+    document = brief.read_text() if brief.is_file() else ""
+    sections = parse_sections(document) if document else {}
     authored = load_json(base / ".factory" / "run.json", default={})
     name = authored.get("project") if isinstance(authored, dict) else ""
+    if not (name or "").strip():
+        heading = re.search(r"^#\s+(.+?)\s*$", document, re.MULTILINE)
+        # "Product Brief" is the scaffold's placeholder title, not a project.
+        if heading and heading.group(1).strip().lower() != "product brief":
+            name = heading.group(1).strip()
     return {
-        "name": (name or "").strip() or base.name,
+        # resolve(): Path(".").name is "", which would render a nameless project.
+        "name": (name or "").strip() or base.resolve().name,
         "sections": sections,
         "missing_sections": [
             heading for heading in REQUIRED_BRIEF_HEADINGS
