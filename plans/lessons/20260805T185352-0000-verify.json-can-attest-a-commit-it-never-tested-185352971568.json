@@ -1,0 +1,11 @@
+{
+  "topic": "verify.json can attest a commit it never tested",
+  "lesson": "verify.py records head_sha(root) AFTER the phases finish, so any commit landing mid-run is stamped into verify.json as the tested commit. The evidence then attests code that was never executed. Freeze the tree for the whole run, or capture head_sha BEFORE the first phase and refuse if HEAD moved.",
+  "source": "PH-4 story gates: two verify runs stamped a HEAD created after the run started",
+  "applies_to": [
+    "factory/scripts/verify.py evidence recording"
+  ],
+  "severity": "medium",
+  "generated_by": "orchestrator",
+  "added_at": "2026-08-05T18:53:52+00:00"
+}
