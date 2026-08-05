@@ -36,17 +36,12 @@
         }
       },
       "task_sha256": "9792e0bd2f999dbac9944d768ec7932d2aaedb1c20db782c05465ed893dbe8ef",
-      "completed_at": "2026-08-05T17:16:03+00:00",
-      "contract_changed": {
-        "at": "2026-08-05T17:16:03+00:00",
-        "from": "fd59b46271f1fcd0a2e62e701014d3a8812e23aba84d28901f0f394e711a8801",
-        "to": "9792e0bd2f999dbac9944d768ec7932d2aaedb1c20db782c05465ed893dbe8ef"
-      }
+      "completed_at": "2026-08-05T17:16:03+00:00"
     },
     {
       "id": "PH-4.3",
       "title": "Labels, breadcrumb, and blocked named on every surface",
-      "status": "active",
+      "status": "done",
       "started_at": "2026-08-05T17:16:12+00:00",
       "base_sha": "6c40f63bd06aadaa28359223b729a03f26259044",
       "dirty_at_start": {
@@ -59,12 +54,26 @@
           "git": "1 .M N... 100644 100644 100644 85a55ca539f7cdf0fcb85400031023633a559d41 85a55ca539f7cdf0fcb85400031023633a559d41 .factory/stages.json\u0000\u0000100644 85a55ca539f7cdf0fcb85400031023633a559d41 0\t.factory/stages.json\u0000\u0000H .factory/stages.json\u0000"
         }
       },
-      "task_sha256": "07c82c8b57e1810998c9cecb240176c9e025b47f1585a46edce0313310879aa3"
+      "task_sha256": "07c82c8b57e1810998c9cecb240176c9e025b47f1585a46edce0313310879aa3",
+      "completed_at": "2026-08-05T17:47:03+00:00"
     },
     {
       "id": "PH-4.4",
       "title": "A bundled example, production-validated, at three widths",
-      "status": "pending"
+      "status": "active",
+      "started_at": "2026-08-05T17:47:13+00:00",
+      "base_sha": "66c1b59e7837721f58c89a27a621b929263722ba",
+      "dirty_at_start": {
+        ".factory/events.jsonl": {
+          "digest": "155da27c706fc523b772233d0cc8e4048724e22140171dbf2121d22ae3941925",
+          "git": "1 .M N... 100644 100644 100644 79a79a8e5be8f99d588f885bcb1a63c5e22fd2e6 79a79a8e5be8f99d588f885bcb1a63c5e22fd2e6 .factory/events.jsonl\u0000\u0000100644 79a79a8e5be8f99d588f885bcb1a63c5e22fd2e6 0\t.factory/events.jsonl\u0000\u0000H .factory/events.jsonl\u0000"
+        },
+        ".factory/stages.json": {
+          "digest": "e07f2deb890f1d40819c1910462b20de65b159d00e17aca7ce38c8a195e22202",
+          "git": "1 .M N... 100644 100644 100644 abedf90105533d71b1efe904eb8e415dbafac4bc abedf90105533d71b1efe904eb8e415dbafac4bc .factory/stages.json\u0000\u0000100644 abedf90105533d71b1efe904eb8e415dbafac4bc 0\t.factory/stages.json\u0000\u0000H .factory/stages.json\u0000"
+        }
+      },
+      "task_sha256": "8f4b53ad032711f57089f39f6d47384d38bc75623fe5d2579a8e4694738eef3e"
     }
   ]
 }

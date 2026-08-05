@@ -147,6 +147,7 @@
       ],
       "write_scope": [
         "factory/board/example",
+        "factory/scripts/forge_cli/board.py",
         "factory/tests/test_gates.py",
         "docs/getting-started.md",
         "factory/skills/forge.md"
@@ -154,6 +155,7 @@
       "acceptance_criteria": [
         "A checked-in example lives under factory/board/example as a minimal repo-shaped tree: docs/product/BRIEF.md, one confirmed capability spec, and plans/roadmap.json with two epics, at least one blocked story and at least two startable stories.",
         "./forge board --repo factory/board/example serves the example, so it is a demonstrable artifact rather than test data (decision 0026).",
+        "The board PAGE resolves from the running code, not from the --repo target: index.html is machinery that ships beside board.py, so a data-only --repo directory must not need its own vendored copy. In an ordinary repo the running code IS the vendored copy, so this changes nothing there \u2014 prove that with a test that serves a repo whose factory/board/index.html differs from the harness's and asserts the running code's page is served.",
         "A test runs the PRODUCTION validators over the example \u2014 the same brief-heading, spec-section and roadmap story/epic contract functions the authoring routes and record_signoff.py call \u2014 not a parallel fixture-only check.",
         "The example exercises what the Overview must show: the frontier is non-empty, at least one story is blocked with a named dependency, and both epics have story membership.",
         "Deterministic width proof per decision 0027: the breakpoints exist, and at each of desktop, tablet and mobile the content that width must show is present and reachable \u2014 not removed, and not clipped by an overflow rule.",
@@ -189,5 +191,5 @@
   "epic": "symphony-forge",
   "plan_file": "plans/active/PH-4-present-the-hierarchy-to-engineers.md",
   "plan_sha256": "3ac84469fb7c472b3a215973fa6f9ebb9c83c96b5c92919e0b4b0425c52e06d4",
-  "commit": "7a19d631d14a7149ebca75dff728bd4d8ef1c08b"
+  "commit": "66c1b59e7837721f58c89a27a621b929263722ba"
 }

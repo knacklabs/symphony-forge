@@ -291,3 +291,9 @@
 {"event": "stage-done", "generated_by": "implementer", "at": "2026-08-05T17:16:03+00:00", "story": "PH-4", "detail": "PH-4.2 The Overview becomes the default view"}
 {"event": "stage-start", "generated_by": "implementer", "at": "2026-08-05T17:16:12+00:00", "story": "PH-4", "detail": "PH-4.3 Labels, breadcrumb, and blocked named on every surface"}
 {"event": "delegated", "generated_by": "orchestrator", "at": "2026-08-05T17:22:06+00:00", "story": "PH-4", "detail": "PH-4.3 (write)"}
+{"event": "stage-done", "generated_by": "implementer", "at": "2026-08-05T17:47:03+00:00", "story": "PH-4", "detail": "PH-4.3 Labels, breadcrumb, and blocked named on every surface"}
+{"event": "stage-start", "generated_by": "implementer", "at": "2026-08-05T17:47:14+00:00", "story": "PH-4", "detail": "PH-4.4 A bundled example, production-validated, at three widths"}
+{"event": "signal-contradiction", "generated_by": "implementer", "at": "2026-08-05T17:48:56+00:00", "story": "PH-4", "detail": "PH-4.4 requires './forge board --repo factory/board/example' to serve a minimal example, but make_server currently reads HTML from <repo>/factory/board/index.html; fixing the server requires factory/s"}
+{"event": "delegated", "generated_by": "orchestrator", "at": "2026-08-05T17:50:47+00:00", "story": "PH-4", "detail": "PH-4.4 (write)"}
+{"event": "signal-resolved", "generated_by": "orchestrator", "at": "2026-08-05T17:51:48+00:00", "story": "PH-4", "detail": "S-0003-6ec8: Correct, and the flaw is mine \u2014 the criterion asserted --repo would serve a data-only tree without checking that board.py:535 reads the page from the --repo TARGET. Ruling: the board PAGE is machinery"}
+{"event": "decomposed", "generated_by": "docs-decomposer", "at": "2026-08-05T17:51:49+00:00", "story": "PH-4", "detail": "4 task(s)"}
