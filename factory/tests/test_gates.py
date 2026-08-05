@@ -3937,6 +3937,23 @@ def test_board_default_view_is_the_overview():
         'data-board-view="lifecycle"')
     assert 'id="overview-view"' in page
     assert 'id="lifecycle-view" hidden' in page
+    assert 'document.body.dataset.view = view' in page
+    assert '$("overview-view").hidden = view !== "overview"' in page
+    assert '$("lifecycle-view").hidden = view !== "lifecycle"' in page
+    # Both tabs stay in the tab order. A roving tabIndex without an
+    # ArrowLeft/ArrowRight handler stranded keyboard-only users in whichever
+    # view they picked first — with two tabs, keeping both focusable is the
+    # smaller fix than implementing the full tablist key protocol.
+    assert "tabIndex" not in page
+
+    # Adding a default view must not replace any part of the lifecycle render.
+    render = page[page.index("function render(state)"):
+                  page.index("async function poll()")]
+    for existing_affordance in (
+            "renderRunline(state)", "renderProgress(state)",
+            "renderBanner(state)", "renderNext(state)", "renderColhead()",
+            "patchLanes(state)"):
+        assert existing_affordance in render
 
 
 def test_overview_answers_the_four_questions():
@@ -3964,7 +3981,18 @@ def test_overview_answers_the_four_questions():
     assert "story.blocked_by" in overview
     assert "story.unblocks" in overview
     assert "depends_on" not in overview
+    assert "ageDays(" not in overview and "Date(" not in overview
     assert not re.search(r"\b(?:wave|layer)\s*\d", overview, re.IGNORECASE)
+    # The board polls, so a rebuild lands mid-interaction: it must restore both
+    # keyboard focus and the drawer's focus-return `opener`, or a live update
+    # silently steals a keyboard user's place.
+    assert "document.activeElement" in overview
+    assert "refocus.focus()" in overview
+    assert "opener = reopener" in overview
+    # A frontier story renders in BOTH sections, so identity is (slot, key):
+    # rebinding on key alone would jump focus to the other section.
+    assert "data-overview-slot" in page
+    assert 'node.dataset.overviewSlot' in overview
 
 
 def test_board_page_stays_self_contained():
