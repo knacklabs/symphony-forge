@@ -419,13 +419,11 @@ def story_detail(base: Path, key: str) -> dict | None:
     spec_path = item.get("spec")
     spec = None
     if spec_path and (base / spec_path).is_file():
-        # Frontmatter is metadata for the gates, not prose for the reader: the
-        # drawer was rendering `slug: …`, `status: confirmed` and a stray `---`
-        # above the spec's own title.
-        from .specs import FRONTMATTER
-        document = (base / spec_path).read_text()
-        spec = {"path": spec_path,
-                "body": FRONTMATTER.sub("", document, count=1).lstrip()}
+        # `body` stays the EXACT committed source: the raw-json view exists to
+        # show the artifact as it is, and stripping here would make the API
+        # lossy for every consumer to fix one renderer. The drawer strips
+        # frontmatter when it renders prose.
+        spec = {"path": spec_path, "body": (base / spec_path).read_text()}
     epic = next(
         (epic for epic in derived_epics(roadmap, items)
          if epic.get("id") == item.get("epic")),

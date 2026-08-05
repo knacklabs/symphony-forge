@@ -1,0 +1,8 @@
+{
+  "event": "done",
+  "id": "Q-0032-75ba",
+  "reason": "story review: keep spec.body raw in the API, strip frontmatter at render",
+  "started_at": "2026-08-05T20:26:29+00:00",
+  "completed_at": "2026-08-05T20:27:22+00:00",
+  "files": []
+}

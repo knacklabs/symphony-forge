@@ -651,6 +651,13 @@ const ENTER = "cubic-bezier(.32,.72,0,1)";
 
 /* Minimal markdown for what plans actually use. Input is escaped FIRST, so
    nothing here can inject — the patterns only add tags around safe text. */
+// Frontmatter is metadata for the gates, not prose: rendering it put
+// "slug: …", "status: confirmed" and a stray --- above a spec's own title.
+// Stripped HERE, at render, so the API keeps returning the exact source.
+function stripFrontmatter(src) {
+  return String(src || "").replace(/^---\r?\n[\s\S]*?\r?\n---\r?\n/, "");
+}
+
 function md(src) {
   // Comments are notes the author wrote to themselves — a template hint, a
   // "review before merge" reminder. Stripped BEFORE escaping, or they escape
@@ -1547,7 +1554,7 @@ function drawerBody() {
            <code>forge.py plan save --from &lt;plan-file&gt;</code>.</p>`;
     } else if (drawer.tab === "spec") {
       content = detail.spec
-        ? openFile(detail.spec.path) + md(detail.spec.body)
+        ? openFile(detail.spec.path) + md(stripFrontmatter(detail.spec.body))
         : `<p class="quiet">This story has no spec linked.</p>`;
     } else {
       content = proofBlock(detail);
