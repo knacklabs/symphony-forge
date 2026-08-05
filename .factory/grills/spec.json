@@ -2,27 +2,28 @@
   "generated_by": "griller",
   "gate": "spec",
   "verdict": "pass",
-  "questions_asked": 8,
-  "summary": "Interrogated the project-hierarchy spec against the code it claims to change. One claim was false and was corrected in the draft before this grill was recorded. Three gaps are real and are answered inside the spec's own boundaries; two are sequencing constraints that belong to the plans, not the spec, and are parked.",
+  "questions_asked": 5,
+  "summary": "Interrogated docs/specs/project-record.md against the Opus record audit that produced it, the active decision corpus, and the artifacts it claims to read. One claim was verified rather than trusted (that .factory/events.jsonl is cumulative) and held. Three findings were resolved into the spec: a PR link with three candidate homes and therefore no contract, an unresolved conflict between quickfix budgeting and task write scopes, and an acceptance criterion that invited the fabrication the spec elsewhere forbids.",
   "gaps": [
-    "The spec claimed the brief 'keeps every heading it already uses' and that the template therefore takes 'an insertion rather than a rewrite'. That is false: docs/product/BRIEF.md uses Summary/Users/Key Flows/Out of Scope while harness/nestjs-react/BRIEF_TEMPLATE.md scaffolds What/Who/Flows/Out of Scope (v1). The two already disagree, so something must be renamed.",
-    "The spec requires every story to name a known epic, but plans/roadmap.json on this line has no epics and there is no command that creates one outside the roadmap import ceremony, which needs an accepted epics-approved decision and a digest-bound grill. Enforcing the rule before the command exists would lock this repo out of its own roadmap.",
-    "The spec requires every story to reference a confirmed spec, which would delete the roadmap add --no-spec escape hatch that decision 0014 deliberately provides.",
-    "The spec says the board reads the hierarchy back, but the board renders no label for the epic or task level at all: EPIC appears zero times in factory/board/index.html and only the drawer says STORY. Projecting more data would not make the levels legible.",
-    "The spec's example expectations assume the Riverside example, which lives on feature/realistic-example-project and is not on this line."
+    "'The link is recorded where the work is recorded \u2014 an outcome, a quickfix record, or an event' named three homes, which is no contract at all: three writers, three readers, and no single place that answers 'which PR shipped this'.",
+    "The spec asserted that every authorizing path claims files against the quickfix budget, without resolving the conflict already flagged during PH-4: inside an approved story a task's write scope already bounds the work, so a second competing five-file budget would refuse honest edits.",
+    "'backfilled from evidence that exists (their plans, their archives, their PRs)' contradicted the spec's own boundary that history is never reconstructed. An outcome states what someone can now do; deriving one from a plan months later is reconstruction presented as record."
   ],
-  "contradictions": [],
+  "contradictions": [
+    "The Behaviour section said the two outcome-less stories may be 'backfilled ... or marked', while Boundaries said 'no synthesised outcomes for past work', and the acceptance criteria repeated the permissive form. A spec that permits and forbids the same act cannot gate anything."
+  ],
   "resolutions": [
-    "The brief paragraph was rewritten to state the divergence and name the live brief's set as canonical, with the template realigned onto it; nothing any project has already written is renamed.",
-    "The spec introduces forge roadmap epic add as the post-sign-off route that makes the epic requirement satisfiable, and scopes the at-least-one-epic requirement to derive and import.",
-    "The spec's Behaviour section states the carve-out explicitly: a story links a confirmed spec OR carries the ad-hoc debt marker, and plan save remains the gate where that debt comes due.",
-    "Explicit EPIC and STORY labels and a Project > Epic > Story breadcrumb are named in the Behaviour section, so the labelling is part of the capability rather than a rendering detail."
+    "PR linkage narrowed to ONE home: an event in .factory/events.jsonl. Verified cumulative rather than assumed \u2014 pr_ready.py:299 COPIES story events into the archive and explicitly does not prune ('a union-merged file cannot be pruned (decision 0017)'); the live ledger stands at 333 lines including PH-4's 64 archived ones. It already spans stories, so the link survives a clone with no remote and forge history surfaces it with no second reader.",
+    "Recording and bounding separated in the spec: an open window RECORDS every product file it touches on any authorizing path, while the five-file BUDGET binds only where the quickfix is itself the authorization. Resolves the conflict rather than deferring it, and matches why the budget exists.",
+    "Backfill removed. The two pre-contract stories are MARKED as predating the outcome gate; acceptance criteria rewritten to match and the permissive clause deleted, so the spec no longer both permits and forbids reconstruction.",
+    "The claim that forge history can read only .factory/events.jsonl was checked against pr_ready's archive path before being kept. Had it pruned, the command would have had to union the archives and the criterion would have been wrong."
   ],
   "open_items": [
-    "non-blocking: the presentation story depends on feature/realistic-example-project being merged first. That is a plan-level sequencing constraint, not a change to the capability.",
-    "non-blocking: client repos receive the stricter gates only at re-vendoring, so the rollout runs through forge upgrade rather than retroactively."
+    "Whether plans/roadmap.json should become a conflict-free directory like the 0022 ledgers is named in the spec's Boundaries as a separate decision, not resolved here. It has already lost items to merges twice, so it is real but distinct from record completeness.",
+    "The audit's finding that .factory/briefs/ is no longer durable after decision 0025 is not addressed by this spec. It is a capture question about what a worker was told; folding it in would widen the story past what its acceptance criteria can check."
   ],
-  "input_sha256": "45510fa0d3581bbd4f91bfdd7ded972752019482df625f9de70ed5fa778fd2b9",
-  "recorded_at": "2026-08-04T13:18:18+00:00",
-  "commit": "9716924654c255960d1c3d93e5ef9da8500e73c0"
+  "issue": "project-record",
+  "input_sha256": "c6964e5cae49f49b54e32fb7da8858f3750b649eb9f17c1cbd23b14285fb8448",
+  "recorded_at": "2026-08-05T21:22:19+00:00",
+  "commit": "552b9d21205757d7d5ff536806026dcaac14b7a2"
 }

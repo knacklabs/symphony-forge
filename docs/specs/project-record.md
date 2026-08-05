@@ -1,7 +1,7 @@
 ---
 slug: project-record
 title: The project knows what it built
-status: draft
+status: confirmed
 saved: 2026-08-05T21:20:10+00:00
 ---
 
