@@ -1,4 +1,9 @@
 ---
+issue: PH-4
+title: Present the hierarchy to engineers
+status: approved
+saved: 2026-08-05T15:26:27+00:00
+story: PH-4
 decisions_reviewed:
   - 0001-determinism-contract
   - 0002-concurrency-one-task-per-branch
@@ -22,6 +27,7 @@ decisions_reviewed:
   - 0023-stage-delta-by-ref
   - 0025-evidence-lifetime-contract
 ---
+
 
 # PH-4 — Present the hierarchy to engineers
 

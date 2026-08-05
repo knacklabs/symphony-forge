@@ -1,0 +1,34 @@
+{
+  "generated_by": "griller",
+  "gate": "plan",
+  "issue": "PH-4",
+  "verdict": "pass",
+  "questions_asked": 6,
+  "summary": "Interrogated the PH-4 draft against the roadmap story's five acceptance criteria, the confirmed project-hierarchy spec, and every ID from `forge decision list --active`. Six findings: four blocking (a third copy of the brief-heading constant the spec exists to prevent; an unfalsifiable AC4; a bundled example with no stated serving mechanism; a docs surface naming a file that does not exist) and two simplifications (redundant per-story epic objects; hand-waved worktree count). All six resolved in the plan; two genuine choices became decision records 0026 and 0027. Every task traces to at least one acceptance criterion.",
+  "gaps": [
+    "AC4 ('blocked described as blocked wherever the API reports blocked') was unfalsifiable as drafted: 'wherever' is unbounded, so no test could close it and review would have argued about coverage.",
+    "AC5's bundled example had no stated serving mechanism. An example nothing can display is test data by another name, which is the form decision 0026 rejects.",
+    "AC3's 'in how many worktrees' was asserted without saying where the number comes from.",
+    "The Surface Impact docs row named a board README. factory/board/ contains only index.html; the board is documented in docs/getting-started.md:189 and factory/skills/forge.md."
+  ],
+  "contradictions": [
+    "The plan said project identity would be parsed by 'the same parser record_signoff.py uses', but the required-heading LIST is duplicated verbatim as REQUIRED_BRIEF_HEADINGS (record_signoff.py:25) and BRIEF_REQUIRED_HEADINGS (doctor.py:31). Adding a third copy in board.py would produce exactly the gate/board disagreement the project-hierarchy spec's one-parser rule exists to prevent.",
+    "The plan added a resolved epic object to every story on /api/state while state already carries the epics array and each story already carries its epic id \u2014 a second representation of one fact, contradicting the plan's own stated rejection of second sources of truth (0017, 0021)."
+  ],
+  "resolutions": [
+    "AC4: 'wherever' replaced by a closed list of four surfaces \u2014 header progress totals, card mark, card ARIA label, drawer state \u2014 each asserted by test. Task 3 owns it.",
+    "AC5: the example is served by ./forge board --repo <example>, a flag that already exists; recorded in the plan's Technical Approach and in decision 0026.",
+    "AC3: stated as len(frontier) under decision 0002 (one story per worktree), not a separate computation.",
+    "Surface Impact docs row now names docs/getting-started.md and factory/skills/forge.md, and states there is no board README; task 4 owns both files.",
+    "Task 1 consolidates REQUIRED_BRIEF_HEADINGS and BRIEF_REQUIRED_HEADINGS into a single owner consumed by record_signoff.py, doctor.py and board.py, instead of adding a third copy. Recorded as a named risk in the plan.",
+    "Per-story resolved epic objects dropped from /api/state as an explicit non-goal; only /api/story/<key> gets the resolved object, because a story-detail response has no epics array to resolve against.",
+    "Two choices not derivable from BRIEF, architecture or existing records became decision records: docs/decisions/0026-bundled-example-validated-by-production-validators.md and docs/decisions/0027-responsive-proof-without-a-browser.md. Both are proposed and require human acceptance before the decomposition is recorded."
+  ],
+  "open_items": [
+    "Decisions 0026 and 0027 are status: proposed. The planner contract requires them accepted before record_decomposition_from_json.py runs; acceptance is human chat confirmation. Non-blocking for plan save, blocking for decomposition.",
+    "Decision 0009 (frozen gate integrity) is inert in the harness: check_vendor_integrity reports the manifest unarmed here and arms in client repos at upgrade. Verified, not assumed; no action for this story."
+  ],
+  "input_sha256": "f8d013c11155b1a3717ab90657d5cc865aa9041f50261a32facb104e06473c88",
+  "recorded_at": "2026-08-05T15:26:19+00:00",
+  "commit": "50dbc454ada25154d8681b7b0ec37f6a7bf835f5"
+}
