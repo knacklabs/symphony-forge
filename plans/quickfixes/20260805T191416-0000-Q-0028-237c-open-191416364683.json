@@ -1,0 +1,8 @@
+{
+  "event": "open",
+  "id": "Q-0028-237c",
+  "reason": "story review: TASK label breaks 3-col task grid; empty-frontier copy asserts blocked in all cases",
+  "started_at": "2026-08-05T19:14:16+00:00",
+  "max_files": 5,
+  "files": []
+}

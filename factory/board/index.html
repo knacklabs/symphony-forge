@@ -1203,8 +1203,15 @@ function renderOverview(state) {
       frontier.length === 1 ? "worktree" : "worktrees"} — one story per worktree.</p>
     ${frontierStories.length
       ? `<ul class="overview-list">${frontierStories.map(story => `<li>${overviewStoryButton(story, "", "frontier")}</li>`).join("")}</ul>`
-      : `<p class="overview-empty">Nothing can start yet — every pending story is waiting on
-          another. Finish a story below to open its dependents.</p>`}`;
+      : `<p class="overview-empty">${
+          !stories.length
+            ? `No stories yet. They are derived from confirmed specs —
+               <code>./forge roadmap derive</code>.`
+            : stories.every(story => story.status === "done")
+              ? `Every story is shipped. Add the next one with
+                 <code>./forge roadmap add</code>.`
+              : `Nothing can start yet — every unfinished story is waiting on another.
+                 Finish a story below to open its dependents.`}</p>`}`;
 
   const epicAnswer = epics.length
     ? `<div class="epic-deliveries">${epics.map(epic => `<section class="epic-delivery">
