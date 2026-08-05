@@ -1,0 +1,25 @@
+{
+  "issue": "PH-4",
+  "stages": [
+    {
+      "id": "PH-4.1",
+      "title": "The API carries project identity and derived epic relationships",
+      "status": "pending"
+    },
+    {
+      "id": "PH-4.2",
+      "title": "The Overview becomes the default view",
+      "status": "pending"
+    },
+    {
+      "id": "PH-4.3",
+      "title": "Labels, breadcrumb, and blocked named on every surface",
+      "status": "pending"
+    },
+    {
+      "id": "PH-4.4",
+      "title": "A bundled example, production-validated, at three widths",
+      "status": "pending"
+    }
+  ]
+}

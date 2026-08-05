@@ -1,0 +1,193 @@
+{
+  "generated_by": "docs-decomposer",
+  "user_facing": true,
+  "doc_roots": [
+    "docs/specs/project-hierarchy.md",
+    "plans/active/PH-4-present-the-hierarchy-to-engineers.md"
+  ],
+  "tasks": [
+    {
+      "id": "PH-4.1",
+      "title": "The API carries project identity and derived epic relationships",
+      "objective": "Add a derived project object and derived epic relationships to /api/state, per-story reverse unblocks alongside the existing blocked_by, and project plus a resolved epic to /api/story/<key> \u2014 consolidating the duplicated brief-heading constant instead of adding a third copy.",
+      "dependencies": [],
+      "write_scope": [
+        "factory/scripts/forge_cli/board.py",
+        "factory/scripts/record_signoff.py",
+        "factory/scripts/forge_cli/doctor.py",
+        "factory/tests/test_gates.py"
+      ],
+      "acceptance_criteria": [
+        "/api/state carries a project object with the project name and the BRIEF sections, parsed with factory_lib.parse_sections \u2014 the same parser record_signoff.py uses, so the gate and the board can never disagree.",
+        "REQUIRED_BRIEF_HEADINGS (record_signoff.py) and BRIEF_REQUIRED_HEADINGS (doctor.py) are consolidated into ONE owner consumed by record_signoff.py, doctor.py and board.py; no third copy is introduced and no call site keeps a private list.",
+        "/api/state carries derived epic relationships: per-epic story membership and progress, and epic-to-epic gating computed from the authored depends_on edges only \u2014 nothing is stored and no second graph is authored (decision 0021).",
+        "Every story in /api/state carries a derived reverse unblocks list alongside the existing blocked_by, and unblocks is exactly the inverse of the authored depends_on edges.",
+        "/api/story/<key> carries the same project object and a resolved epic object, so a drawer opened directly can render Project > Epic > Story from one response.",
+        "State stories do NOT gain a resolved epic object: they keep the epic id, and /api/state keeps its epics array, so the payload carries one representation of that fact rather than two.",
+        "The existing no-mutating-route assertion still passes and covers any route touched here: the board exposes GET only, and no POST/PUT/DELETE handler exists.",
+        "A repo whose BRIEF is missing or incomplete still serves /api/state without raising, reporting the missing sections rather than rendering a blank project as if it were complete."
+      ],
+      "verify_commands": [
+        "uv run --with pytest python -m pytest factory/tests/test_gates.py -q -k \"board or signoff or brief_heading\""
+      ],
+      "required_tests": [
+        {
+          "id": "test_api_state_carries_project_identity_from_the_shared_parser",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_brief_required_headings_have_a_single_owner",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_api_state_derives_epic_relationships_and_reverse_unblocks",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_api_story_detail_carries_project_and_resolved_epic",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        }
+      ],
+      "reviewer_focus": "That nothing is stored or authored: every added field must be derived per request from committed artifacts, or it contradicts decisions 0017 and 0021. Check the heading constant genuinely has one owner rather than one owner plus a convenience alias, and that the missing-BRIEF path reports rather than renders blanks."
+    },
+    {
+      "id": "PH-4.2",
+      "title": "The Overview becomes the default view",
+      "objective": "Make an Overview the board's default view, answering in the spec's order what this project is, what can start now and in how many worktrees, what each epic delivers, and where each story sits with what it requires and unblocks \u2014 with the existing lifecycle board kept as the second view.",
+      "dependencies": [
+        "PH-4.1"
+      ],
+      "write_scope": [
+        "factory/board/index.html",
+        "factory/tests/test_gates.py"
+      ],
+      "acceptance_criteria": [
+        "The Overview is what loads by default; the existing lifecycle board remains reachable as a second view with every current affordance intact.",
+        "Overview answers what the project is, rendered from the project object rather than from the filesystem root path.",
+        "Overview answers what can start now, listing the frontier stories and stating the worktree count as len(frontier) under decision 0002 \u2014 one story per worktree \u2014 with no separate computation.",
+        "Overview answers what each epic delivers, using the derived epic relationships from PH-4.1 rather than recomputing membership in the page.",
+        "Overview answers why a story is blocked, naming the specific dependencies from blocked_by rather than saying only that it is blocked.",
+        "No wave or layer numbering and no node-and-arrow dependency graph appears anywhere: the dependency presentation is the frontier plus per-story requires/unblocks (spec Boundaries, decision 0021).",
+        "No dates, estimates, burndown or velocity appear.",
+        "The page remains one self-contained HTML file with inline CSS and JS: no new dependency, framework, build step or external asset request is introduced."
+      ],
+      "verify_commands": [
+        "uv run --with pytest python -m pytest factory/tests/test_gates.py -q -k \"board or overview\""
+      ],
+      "required_tests": [
+        {
+          "id": "test_board_default_view_is_the_overview",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_overview_answers_the_four_questions",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_board_page_stays_self_contained",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        }
+      ],
+      "reviewer_focus": "That the Overview reads the derived fields rather than re-deriving them in JavaScript, which would put a second copy of the ordering logic in the page. Also that the lifecycle board lost nothing: this task adds a view, it does not replace one."
+    },
+    {
+      "id": "PH-4.3",
+      "title": "Labels, breadcrumb, and blocked named on every surface",
+      "objective": "Label every epic, story and task on screen as such, open the drawer with a Project > Epic > Story breadcrumb, and stop the header progress totals from folding blocked stories into a total labelled waiting.",
+      "dependencies": [
+        "PH-4.2"
+      ],
+      "write_scope": [
+        "factory/board/index.html",
+        "factory/tests/test_gates.py"
+      ],
+      "acceptance_criteria": [
+        "Every epic on screen carries an explicit EPIC label, every story card an explicit STORY label, and every task row an explicit TASK label \u2014 none of the three is inferable only from position or styling.",
+        "The drawer opens with a Project > Epic > Story breadcrumb rendered from the project and resolved epic that /api/story/<key> carries, without a second fetch.",
+        "A story the API reports as blocked reads as blocked on all four surfaces: the header progress totals, the card mark, the card ARIA label, and the drawer state.",
+        "The header progress totals no longer merge blocked into waiting: blocked is named as its own total, and a blocked story is never counted only as waiting.",
+        "A story that is genuinely waiting rather than blocked still reads as waiting, so the fix distinguishes the two states instead of renaming one into the other.",
+        "A story whose epic is unknown or absent still renders without a broken breadcrumb, degrading to Project > Story rather than showing an empty segment."
+      ],
+      "verify_commands": [
+        "uv run --with pytest python -m pytest factory/tests/test_gates.py -q -k \"board or label or breadcrumb or blocked\""
+      ],
+      "required_tests": [
+        {
+          "id": "test_epic_story_and_task_are_explicitly_labelled",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_drawer_opens_with_a_project_epic_story_breadcrumb",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_blocked_reads_as_blocked_on_every_surface",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        }
+      ],
+      "reviewer_focus": "That blocked and waiting stay distinct states rather than one being relabelled as the other, and that the four surfaces named in the acceptance criteria are genuinely all of them \u2014 if a fifth surface reports state, it needs the same treatment or the criterion is not met."
+    },
+    {
+      "id": "PH-4.4",
+      "title": "A bundled example, production-validated, at three widths",
+      "objective": "Add a checked-in minimal example project served by the existing forge board --repo flag, prove it passes the production brief, spec and roadmap validators rather than fixture-only checks, and assert the width rules decision 0027 defines as deterministic proof.",
+      "dependencies": [
+        "PH-4.3"
+      ],
+      "write_scope": [
+        "factory/board/example",
+        "factory/tests/test_gates.py",
+        "docs/getting-started.md",
+        "factory/skills/forge.md"
+      ],
+      "acceptance_criteria": [
+        "A checked-in example lives under factory/board/example as a minimal repo-shaped tree: docs/product/BRIEF.md, one confirmed capability spec, and plans/roadmap.json with two epics, at least one blocked story and at least two startable stories.",
+        "./forge board --repo factory/board/example serves the example, so it is a demonstrable artifact rather than test data (decision 0026).",
+        "A test runs the PRODUCTION validators over the example \u2014 the same brief-heading, spec-section and roadmap story/epic contract functions the authoring routes and record_signoff.py call \u2014 not a parallel fixture-only check.",
+        "The example exercises what the Overview must show: the frontier is non-empty, at least one story is blocked with a named dependency, and both epics have story membership.",
+        "Deterministic width proof per decision 0027: the breakpoints exist, and at each of desktop, tablet and mobile the content that width must show is present and reachable \u2014 not removed, and not clipped by an overflow rule.",
+        "docs/getting-started.md and factory/skills/forge.md describe the Overview default and the ./forge board --repo <example> invocation, so the example is discoverable rather than buried.",
+        "The example stays within the repo budget and adds no binary or generated asset."
+      ],
+      "verify_commands": [
+        "uv run --with pytest python -m pytest factory/tests/test_gates.py -q -k \"example or board or width\"",
+        "python3 factory/scripts/check_repo_budget.py"
+      ],
+      "required_tests": [
+        {
+          "id": "test_bundled_example_passes_the_production_validators",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_bundled_example_exercises_frontier_and_blocked",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_board_content_survives_all_three_widths",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        }
+      ],
+      "reviewer_focus": "That the validators called are genuinely the production ones and not reimplementations that happen to agree today \u2014 the whole value of decision 0026 is that a tightened capture contract breaks this test. Also that the width assertions could actually fail: an assertion that only checks a media query string exists proves nothing about content."
+    }
+  ],
+  "project": "",
+  "story": "PH-4",
+  "epic": "symphony-forge",
+  "plan_file": "plans/active/PH-4-present-the-hierarchy-to-engineers.md",
+  "plan_sha256": "fd744e3b6888704793f5811a5e887989baa5e92f005577da70bad3b8cf160bac",
+  "commit": "f4542889dca7616b653c31f29ccbbeb0fd3fca53"
+}
