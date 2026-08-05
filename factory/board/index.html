@@ -1192,7 +1192,8 @@ function renderOverview(state) {
       ? `<div class="project-sections">${projectSections.map(([heading, content]) =>
           `<section class="project-section"><h3>${esc(heading)}</h3><p>${esc(content)}</p></section>`
         ).join("")}</div>`
-      : `<p class="overview-empty">No project brief has been captured yet.</p>`}`;
+      : `<p class="overview-empty">No project brief yet. Write <code>docs/product/BRIEF.md</code>
+          with its required headings — sign-off refuses without them.</p>`}`;
 
   const frontierStories = frontier.map(item =>
     typeof item === "string" ? (byKey.get(item) || {key: item}) : item);
@@ -1201,7 +1202,8 @@ function renderOverview(state) {
       frontier.length === 1 ? "worktree" : "worktrees"} — one story per worktree.</p>
     ${frontierStories.length
       ? `<ul class="overview-list">${frontierStories.map(story => `<li>${overviewStoryButton(story, "", "frontier")}</li>`).join("")}</ul>`
-      : `<p class="overview-empty">No story is ready to start now.</p>`}`;
+      : `<p class="overview-empty">Nothing can start yet — every pending story is waiting on
+          another. Finish a story below to open its dependents.</p>`}`;
 
   const epicAnswer = epics.length
     ? `<div class="epic-deliveries">${epics.map(epic => `<section class="epic-delivery">
@@ -1209,7 +1211,9 @@ function renderOverview(state) {
         <p>${esc(epic.objective || "No delivery objective recorded.")}</p>
         <div class="epic-stories">${(epic.stories || []).map(esc).join(" · ") || "No stories"}</div>
       </section>`).join("")}</div>`
-    : `<p class="overview-empty">No epics have been derived yet.</p>`;
+    : `<p class="overview-empty">No epics yet. They arrive with the roadmap —
+        <code>./forge roadmap derive</code>, or <code>./forge roadmap epic add</code>
+        after sign-off.</p>`;
 
   const epicNames = new Map(epics.map(epic => [epic.id, epic.title || epic.id]));
   const storyAnswer = stories.length

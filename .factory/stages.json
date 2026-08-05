@@ -60,7 +60,7 @@
     {
       "id": "PH-4.4",
       "title": "A bundled example, production-validated, at three widths",
-      "status": "active",
+      "status": "done",
       "started_at": "2026-08-05T17:47:13+00:00",
       "base_sha": "66c1b59e7837721f58c89a27a621b929263722ba",
       "dirty_at_start": {
@@ -73,7 +73,13 @@
           "git": "1 .M N... 100644 100644 100644 abedf90105533d71b1efe904eb8e415dbafac4bc abedf90105533d71b1efe904eb8e415dbafac4bc .factory/stages.json\u0000\u0000100644 abedf90105533d71b1efe904eb8e415dbafac4bc 0\t.factory/stages.json\u0000\u0000H .factory/stages.json\u0000"
         }
       },
-      "task_sha256": "8f4b53ad032711f57089f39f6d47384d38bc75623fe5d2579a8e4694738eef3e"
+      "task_sha256": "3083e78d3acdf718907069c566b1c14685df3ce98e1cb8102b7080f758ca50c8",
+      "completed_at": "2026-08-05T18:24:13+00:00",
+      "contract_changed": {
+        "at": "2026-08-05T18:24:13+00:00",
+        "from": "8f4b53ad032711f57089f39f6d47384d38bc75623fe5d2579a8e4694738eef3e",
+        "to": "3083e78d3acdf718907069c566b1c14685df3ce98e1cb8102b7080f758ca50c8"
+      }
     }
   ]
 }
