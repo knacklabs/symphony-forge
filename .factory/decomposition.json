@@ -158,7 +158,8 @@
         "The board PAGE resolves from the running code, not from the --repo target: index.html is machinery that ships beside board.py, so a data-only --repo directory must not need its own vendored copy. In an ordinary repo the running code IS the vendored copy, so this changes nothing there \u2014 prove that with a test that serves a repo whose factory/board/index.html differs from the harness's and asserts the running code's page is served.",
         "A test runs the PRODUCTION validators over the example \u2014 the same brief-heading, spec-section and roadmap story/epic contract functions the authoring routes and record_signoff.py call \u2014 not a parallel fixture-only check.",
         "The example exercises what the Overview must show: the frontier is non-empty, at least one story is blocked with a named dependency, and both epics have story membership.",
-        "Deterministic width proof per decision 0027: the breakpoints exist, and at each of desktop, tablet and mobile the content that width must show is present and reachable \u2014 not removed, and not clipped by an overflow rule.",
+        "Deterministic width proof per decision 0027, with the three widths DERIVED from the board's own breakpoints rather than invented: index.html declares max-width:900px and max-width:620px, giving desktop (>900, test at 1280), tablet (621-900, test at 768) and mobile (<=620, test at 390). At each band the content that width must show is present and reachable \u2014 not removed, and not clipped by an overflow rule.",
+        "The test reads the breakpoint values FROM the stylesheet rather than hard-coding them a second time: if someone moves a breakpoint, the test must follow it or fail, never silently keep asserting the old bands.",
         "docs/getting-started.md and factory/skills/forge.md describe the Overview default and the ./forge board --repo <example> invocation, so the example is discoverable rather than buried.",
         "The example stays within the repo budget and adds no binary or generated asset."
       ],
@@ -191,5 +192,5 @@
   "epic": "symphony-forge",
   "plan_file": "plans/active/PH-4-present-the-hierarchy-to-engineers.md",
   "plan_sha256": "3ac84469fb7c472b3a215973fa6f9ebb9c83c96b5c92919e0b4b0425c52e06d4",
-  "commit": "66c1b59e7837721f58c89a27a621b929263722ba"
+  "commit": "2121a634c46af637b0a5c56d221c3b31d5b278d0"
 }
