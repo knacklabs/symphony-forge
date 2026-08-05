@@ -1,0 +1,93 @@
+{
+  "commit": "cba92b710059d2ca62d7c3a408761c80ac467109",
+  "automated": {
+    "generated_by": "implementer",
+    "status": "passed",
+    "summary": "PH-4 ships the reading layer over the hierarchy the capture stories already guaranteed: /api/state and /api/story/<key> carry derived project identity, epic membership, epic gating and per-story reverse unblocks; the Overview is the default view and answers what the project is, what can start now and in how many worktrees, what each epic delivers, and where each story sits; every epic, story and task is labelled and the drawer opens with a Project > Epic > Story breadcrumb; blocked reads as blocked on all five state-reporting surfaces instead of being folded into waiting; and a checked-in example is validated by the production capture gates at three widths derived from the stylesheet's own breakpoints. Verified against a seeded three-epic project served in a real browser.",
+    "pass_fail_summary": "357 passed, 0 failed (uv run --with pytest python -m pytest factory/tests -q). Deterministic verify green with head_before == head_after, so the recorded commit is provably the tested one.",
+    "commands_run": [
+      "python3 factory/scripts/verify.py",
+      "uv run --with pytest python -m pytest factory/tests -q",
+      "python3 factory/scripts/check_dual_runtime.py",
+      "python3 factory/scripts/check_factory_scaffold.py",
+      "python3 factory/scripts/check_repo_budget.py"
+    ],
+    "tests_added_or_updated": [
+      "test_api_state_carries_project_identity_from_the_shared_parser",
+      "test_brief_required_headings_have_a_single_owner",
+      "test_api_state_derives_epic_relationships_and_reverse_unblocks",
+      "test_api_story_detail_carries_project_and_resolved_epic",
+      "test_project_name_survives_the_run_state_lifecycle",
+      "test_board_default_view_is_the_overview",
+      "test_overview_answers_the_four_questions",
+      "test_board_page_stays_self_contained",
+      "test_epic_story_and_task_are_explicitly_labelled",
+      "test_drawer_opens_with_a_project_epic_story_breadcrumb",
+      "test_blocked_reads_as_blocked_on_every_surface",
+      "test_bundled_example_passes_the_production_validators",
+      "test_bundled_example_exercises_frontier_and_blocked",
+      "test_board_content_survives_all_three_widths"
+    ],
+    "reviewed_scope": [
+      "factory/scripts/forge_cli/board.py",
+      "factory/board/index.html",
+      "factory/board/example/",
+      "factory/scripts/forge_cli/phase.py",
+      "factory/scripts/record_signoff.py",
+      "factory/scripts/forge_cli/doctor.py",
+      "factory/tests/test_gates.py"
+    ],
+    "blocking_findings": [],
+    "remaining_gaps": [
+      "Task progress is visible only inside the story drawer; Overview and lifecycle cards stay story-level, so depth needs a click.",
+      "No cross-worktree view: the board reads one repo root, so parallel story worktrees are invisible to each other and 'N running in parallel' is not tracked. The Overview's worktree count is dependency CAPACITY, not live activity. Proposed as its own story rather than widened into this one.",
+      "Serving a data-only example via ./forge board --repo is deferred as D-0005: board.py resolves index.html from the --repo target."
+    ],
+    "skills_used": [
+      "frontend-design",
+      "emil-design-eng",
+      "improve-animations",
+      "review-animations"
+    ],
+    "residual_risks": [
+      "The width proof is structural (breakpoints parsed from the stylesheet, content asserted present and unclipped per band) rather than rendered, per decision 0027; visual quality at each width is the functional check's responsibility, not CI's."
+    ],
+    "non_blocking_findings": [],
+    "manual_validation_steps": [],
+    "recorded_at": "2026-08-05T20:40:33+00:00",
+    "commit": "cba92b710059d2ca62d7c3a408761c80ac467109"
+  },
+  "updated_at": "2026-08-05T20:41:11+00:00",
+  "functional": {
+    "generated_by": "functional-checker",
+    "status": "passed",
+    "score": 8,
+    "summary": "Driven as a user, not asserted from source: a seeded three-epic freight-brokerage project (Northwind Logistics, 7 stories spanning shipped/waiting/ready/blocked with a real cross-epic dependency chain) was served by the board and exercised in a real browser at 1440px. The Overview loaded as the default view and answered its four questions in order \u2014 project identity rendered from the brief's own sections, 'What can start now?' read '1 story can start now in 1 worktree \u2014 one story per worktree', each epic showed its objective and members, and every story listed Requires/Unblocks (QUOTE-1: 'Requires: nothing outstanding / Unblocks: QUOTE-2'; SETTLE-1 named both blockers). EPIC/STORY/TASK labels rendered throughout. Blocked read as blocked, not waiting: the header counted '2/7 shipped \u00b7 1 ready to plan \u00b7 3 blocked \u00b7 1 waiting' as separate totals, cards showed 'blocked by TRACK-1' and 'blocked by TRACK-2, QUOTE-3', while QUOTE-3 correctly read 'waiting'. Opening a story rendered the drawer with a full 'PROJECT Northwind Logistics > EPIC Quoting & Booking > STORY Book a carrier against a quote' breadcrumb from a single response, plus its gate rail and approval blockers. Two defects were found BY this check and fixed: the drawer rendered the spec's YAML frontmatter as body prose, and the next-step and approval-blocker guidance named CLI commands in a product whose devs speak intents to an agent.",
+    "manual_validation_steps": [
+      "Scaffolded a demo project with forge init --name 'Northwind Logistics' and seeded a brief, two confirmed specs, and a roadmap of 3 epics / 7 stories with a real dependency chain (SETTLE-1 requires both TRACK-2 and QUOTE-3).",
+      "Confirmed the derived state before rendering: frontier ['TRACK-1'], epic gating settlement blocked_by ['visibility','quoting'], per-story reverse unblocks correct.",
+      "Served the board and loaded it in Chrome at 1440x1000; confirmed Overview is the default view and the lifecycle board is reachable as the second view with its lanes, timestamps and gate rail intact.",
+      "Opened a story drawer and read the Project > Epic > Story breadcrumb, gate rail and approval blockers.",
+      "Re-served after fixes and re-checked the drawer and the NEXT line."
+    ],
+    "blocking_findings": [],
+    "non_blocking_findings": [
+      "Task-level progress is visible only after opening a story; cards and the Overview stay story-level.",
+      "The board shows one worktree. Parallel story worktrees are invisible to each other, and the Overview's worktree count is dependency capacity rather than live activity."
+    ],
+    "residual_risks": [
+      "Checked at desktop width in a real browser; tablet and mobile bands are covered structurally by test per decision 0027 (breakpoints parsed from the stylesheet, content asserted present and unclipped) rather than visually inspected."
+    ],
+    "reviewed_scope": [
+      "factory/board/index.html",
+      "factory/scripts/forge_cli/board.py",
+      "factory/board/example/"
+    ],
+    "recommendation": "land",
+    "remaining_gaps": [],
+    "commands_run": [],
+    "tests_added_or_updated": [],
+    "recorded_at": "2026-08-05T20:41:11+00:00",
+    "commit": "cba92b710059d2ca62d7c3a408761c80ac467109"
+  }
+}

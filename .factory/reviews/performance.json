@@ -1,0 +1,31 @@
+{
+  "score": 8,
+  "summary": "The board stays one self-contained HTML file with no new dependency, framework, build step or external asset \u2014 enforced structurally by a test asserting exactly one <style> and one <script> and no src/href/@import/remote url(). Overview rendering is guarded by a signature check so a poll that changes nothing does not rebuild the DOM. Derived epic relationships and reverse unblocks are O(stories x edges) over a roadmap measured in tens of items, computed per request rather than cached, which keeps decision 0017's single-source rule without a staleness surface.",
+  "blocking_findings": [],
+  "non_blocking_findings": [
+    "project_identity() re-reads BRIEF.md per call, including once per story_detail; negligible at roadmap scale and preferable to a cache that could disagree with the gate."
+  ],
+  "recommendation": "land",
+  "generated_by": "autoreview",
+  "reviewed_scope": [
+    "factory/scripts/forge_cli/board.py",
+    "factory/board/index.html",
+    "factory/board/example/",
+    "factory/scripts/forge_cli/phase.py",
+    "factory/scripts/record_signoff.py",
+    "factory/scripts/forge_cli/doctor.py",
+    "factory/tests/test_gates.py"
+  ],
+  "residual_risks": [
+    "The task-row layout finding was raised in five consecutive rounds and rejected each time on unchanged evidence: .tasks li (index.html:406) and .tasks li summary (417) are display:flex; the grid is the one-column list container, not the row. If a future change makes a task row a grid, that rejection stops being valid.",
+    "Width proof is structural, not rendered (decision 0027): visual quality at each breakpoint is the functional check's responsibility, not CI's."
+  ],
+  "skills_used": [
+    "review-animations",
+    "emil-design-eng",
+    "frontend-design"
+  ],
+  "aspect": "performance",
+  "recorded_at": "2026-08-05T20:40:33+00:00",
+  "commit": "cba92b710059d2ca62d7c3a408761c80ac467109"
+}

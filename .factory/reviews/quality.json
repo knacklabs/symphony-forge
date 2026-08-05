@@ -1,0 +1,32 @@
+{
+  "score": 8,
+  "summary": "Nine local passes plus five story-level passes. Real defects found and fixed: three accessibility regressions in the view switcher (a roving tabIndex with no arrow handler stranded keyboard users; the poll-driven rebuild detached both focus and the drawer's focus-return opener; rebinding by story key alone jumped focus between sections, since a frontier story renders twice); empty-frontier copy that asserted dependency-blocking for fresh, finished and in-progress repos in turn; a lossy API change that stripped frontmatter from spec.body for every consumer to fix one renderer; and a P1 where project identity read only lifecycle state, so the data-only bundled example reported its directory name instead of 'Workshop Dispatch'. Derivation discipline holds throughout: every added field is computed per request from committed artifacts, and the Overview consumes them rather than re-deriving the dependency graph in the page (asserted by test).",
+  "blocking_findings": [],
+  "non_blocking_findings": [
+    "forge next still embeds runnable commands for agent consumption; the board's own copy now names intents instead. The two audiences are served differently on purpose.",
+    "Task progress renders only in the story drawer; cards and Overview stay story-level. Recorded as a remaining gap, deferred to the board-truth story."
+  ],
+  "recommendation": "land",
+  "generated_by": "autoreview",
+  "reviewed_scope": [
+    "factory/scripts/forge_cli/board.py",
+    "factory/board/index.html",
+    "factory/board/example/",
+    "factory/scripts/forge_cli/phase.py",
+    "factory/scripts/record_signoff.py",
+    "factory/scripts/forge_cli/doctor.py",
+    "factory/tests/test_gates.py"
+  ],
+  "residual_risks": [
+    "The task-row layout finding was raised in five consecutive rounds and rejected each time on unchanged evidence: .tasks li (index.html:406) and .tasks li summary (417) are display:flex; the grid is the one-column list container, not the row. If a future change makes a task row a grid, that rejection stops being valid.",
+    "Width proof is structural, not rendered (decision 0027): visual quality at each breakpoint is the functional check's responsibility, not CI's."
+  ],
+  "skills_used": [
+    "review-animations",
+    "emil-design-eng",
+    "frontend-design"
+  ],
+  "aspect": "quality",
+  "recorded_at": "2026-08-05T20:40:33+00:00",
+  "commit": "cba92b710059d2ca62d7c3a408761c80ac467109"
+}

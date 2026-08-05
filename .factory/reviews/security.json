@@ -1,0 +1,31 @@
+{
+  "score": 9,
+  "summary": "The board remains strictly read-only: no POST/PUT/DELETE handler exists and a test asserts all three handler names are absent, extended across this story's additions. It binds 127.0.0.1 only. Every interpolation in the new Overview, breadcrumb, labels and epic sections goes through esc(), and the story key is matched against the roadmap rather than used as a path, so no request can address a file outside the artifacts a story owns. The bundled example is inert data \u2014 brief, spec and roadmap JSON \u2014 with no executable content.",
+  "blocking_findings": [],
+  "non_blocking_findings": [
+    "spec.body is returned as exact committed source and rendered through the page's existing markdown path; frontmatter is stripped at render, so no API consumer loses metadata."
+  ],
+  "recommendation": "land",
+  "generated_by": "autoreview",
+  "reviewed_scope": [
+    "factory/scripts/forge_cli/board.py",
+    "factory/board/index.html",
+    "factory/board/example/",
+    "factory/scripts/forge_cli/phase.py",
+    "factory/scripts/record_signoff.py",
+    "factory/scripts/forge_cli/doctor.py",
+    "factory/tests/test_gates.py"
+  ],
+  "residual_risks": [
+    "The task-row layout finding was raised in five consecutive rounds and rejected each time on unchanged evidence: .tasks li (index.html:406) and .tasks li summary (417) are display:flex; the grid is the one-column list container, not the row. If a future change makes a task row a grid, that rejection stops being valid.",
+    "Width proof is structural, not rendered (decision 0027): visual quality at each breakpoint is the functional check's responsibility, not CI's."
+  ],
+  "skills_used": [
+    "review-animations",
+    "emil-design-eng",
+    "frontend-design"
+  ],
+  "aspect": "security",
+  "recorded_at": "2026-08-05T20:40:33+00:00",
+  "commit": "cba92b710059d2ca62d7c3a408761c80ac467109"
+}
