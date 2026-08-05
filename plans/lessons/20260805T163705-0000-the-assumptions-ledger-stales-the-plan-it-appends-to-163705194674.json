@@ -1,0 +1,11 @@
+{
+  "topic": "the assumptions ledger stales the plan it appends to",
+  "lesson": "Logging an implementation assumption APPENDS an 'Implementation Assumptions' section to the approved plan file, which changes its sha256 and trips the plan-drift guard the decomposition binds \u2014 so the next stage refuses and the decomposition must be re-recorded. Self-inflicted drift: the harness stales its own plan. Either write assumptions outside the digest-bound plan, or exclude that section from the digest.",
+  "source": "PH-4: stage start PH-4.2 refused after PH-4.1's worker logged an assumption",
+  "applies_to": [
+    "forge assumptions / plan-drift check at stage start"
+  ],
+  "severity": "medium",
+  "generated_by": "orchestrator",
+  "added_at": "2026-08-05T16:37:05+00:00"
+}
