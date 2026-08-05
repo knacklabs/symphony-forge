@@ -3839,16 +3839,19 @@ def test_api_state_carries_project_identity_from_the_shared_parser(repo):
     assert missing["missing_sections"] == list(REQUIRED_BRIEF_HEADINGS)
 
 
-def test_project_name_falls_back_to_the_brief_when_run_state_is_absent():
-    """run.json is lifecycle state: a data-only tree has none, and it reduces
-    to a phase-only object at ship. The BRIEF is committed and sign-off
-    refuses without it, so its H1 is the durable name — the bundled example
-    read as 'example' (its directory) before this."""
+def test_bundled_example_authors_its_project_name():
+    """The example AUTHORS its name like any scaffolded repo, rather than the
+    board inferring one from the brief's H1 — a brief's H1 is a document
+    title (the scaffold ships '# Product Brief'), which is why
+    test_api_state_carries_project_identity_from_the_shared_parser
+    deliberately titles its brief differently from the project. Without an
+    authored name the example rendered as 'example', its directory."""
     sys.path.insert(0, str(HARNESS / "factory" / "scripts"))
     from forge_cli.board import project_identity
 
     example = HARNESS / "factory" / "board" / "example"
-    assert not (example / ".factory").exists()  # genuinely data-only
+    assert json.loads(
+        (example / ".factory" / "run.json").read_text())["project"] == "Workshop Dispatch"
     assert project_identity(example)["name"] == "Workshop Dispatch"
     # A relative path must still name the project, not render it blank.
     assert project_identity(Path(".")).get("name")

@@ -167,27 +167,21 @@ def quickfix_ledger(base: Path) -> list[dict]:
 def project_identity(base: Path) -> dict:
     """Project identity and capture status, derived from the committed brief.
 
-    Three sources, most authoritative first, because no single one survives
-    every shape a repo takes:
+    The name is the one `forge init --name` AUTHORED into run.json — `--name
+    "Acme Billing"` into ~/work/acme-billing must read as Acme Billing, not
+    its slug — falling back to the directory for a repo that never authored
+    one. `pr_ready` carries `project` into the shipped run state, so it
+    survives the whole lifecycle.
 
-    1. `forge init --name`, authored into run.json — `--name "Acme Billing"`
-       into ~/work/acme-billing must read as Acme Billing, not its slug.
-    2. The BRIEF's H1 — DURABLE where run.json is not. run.json is lifecycle
-       state: a data-only tree (the bundled example) has none at all, and it
-       reduces to a phase-only object at ship. The brief is committed and
-       sign-off refuses without it.
-    3. The directory, for a repo that has neither.
+    The BRIEF's H1 is deliberately NOT a source: it is a document title, which
+    is why the scaffold ships "# Product Brief". A repo that wants a name on
+    the board authors one; inferring it from a heading would put a document's
+    title where a project's name belongs.
     """
     brief = base / "docs" / "product" / "BRIEF.md"
-    document = brief.read_text() if brief.is_file() else ""
-    sections = parse_sections(document) if document else {}
+    sections = parse_sections(brief.read_text()) if brief.is_file() else {}
     authored = load_json(base / ".factory" / "run.json", default={})
     name = authored.get("project") if isinstance(authored, dict) else ""
-    if not (name or "").strip():
-        heading = re.search(r"^#\s+(.+?)\s*$", document, re.MULTILINE)
-        # "Product Brief" is the scaffold's placeholder title, not a project.
-        if heading and heading.group(1).strip().lower() != "product brief":
-            name = heading.group(1).strip()
     return {
         # resolve(): Path(".").name is "", which would render a nameless project.
         "name": (name or "").strip() or base.resolve().name,
