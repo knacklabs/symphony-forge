@@ -330,3 +330,4 @@
 {"event": "tests-automated", "generated_by": "implementer", "at": "2026-08-05T21:11:38+00:00", "story": "PH-4", "detail": "passed"}
 {"event": "tests-functional", "generated_by": "functional-checker", "at": "2026-08-05T21:11:38+00:00", "story": "PH-4", "detail": "passed"}
 {"event": "shipped", "generated_by": "orchestrator", "at": "2026-08-05T21:11:46+00:00", "story": "PH-4", "detail": "Developers open the board and see the whole project: what it is, which stories can start right now and in how many worktrees, what each epic delivers, and why every blocked story is blocked \u2014 with epi"}
+{"event": "spec-draft", "generated_by": "orchestrator", "at": "2026-08-05T21:20:10+00:00", "detail": "project-record: The project knows what it built"}
