@@ -135,7 +135,7 @@
         "The bundled example passes the production validators and reads correctly at desktop, tablet and mobile widths."
       ],
       "order": 7,
-      "status": "pending",
+      "status": "active",
       "skill": "fullstack",
       "depends_on": [
         "PH-1",
@@ -147,7 +147,7 @@
     }
   ],
   "generated_by": "human",
-  "updated_at": "2026-08-05T12:45:02+00:00",
+  "updated_at": "2026-08-05T15:10:18+00:00",
   "epics": [
     {
       "id": "symphony-forge",

@@ -270,3 +270,4 @@
 {"event": "review-performance", "generated_by": "autoreview", "at": "2026-08-05T12:44:41+00:00", "story": "PH-3"}
 {"event": "review-security", "generated_by": "autoreview", "at": "2026-08-05T12:44:41+00:00", "story": "PH-3"}
 {"event": "shipped", "generated_by": "orchestrator", "at": "2026-08-05T12:45:02+00:00", "story": "PH-3", "detail": "A plan is now refused unless it carries all nine sections the planner prompt mandates, checked with the shared parser instead of a substring that a fenced example could satisfy. A decomposition is bou"}
+{"event": "intake", "generated_by": "orchestrator", "at": "2026-08-05T15:10:18+00:00", "story": "PH-4", "detail": "Present the hierarchy to engineers"}
