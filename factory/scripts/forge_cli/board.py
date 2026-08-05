@@ -352,26 +352,26 @@ def approval_readiness(base: Path, detail: dict) -> list[dict]:
                       if s.get("kind") == "contradiction"]
     checks.append({
         "ok": bool(plan), "label": "plan saved",
-        "fix": "forge.py plan save --from <plan-file>"})
+        "fix": "write the plan, then ask to save it against this story"})
     checks.append({
         "ok": bool(grill) and grill.get("verdict") == "pass",
         "label": "plan grill passed",
-        "fix": "/grill-me, then record_grill_from_json.py --gate plan"})
+        "fix": "grill the plan and record the result — ask for it; save refuses without a passing grill"})
     checks.append({
         "ok": not missing,
         "label": "decisions reviewed" + (f" — {len(missing)} missing" if missing else ""),
         # The ids are the evidence, but sixteen of them inline is a wall of
         # text; the board discloses them behind the count.
         "detail": missing,
-        "fix": "list every active decision in the plan's decisions_reviewed"})
+        "fix": "the plan must attest every active decision — ask for the missing ones"})
     checks.append({
         "ok": "## Surface Impact" in body,
         "label": "Surface Impact section",
-        "fix": "classify every surface in the plan (factory/prompts/planner.md)"})
+        "fix": "the plan must classify every surface — runtime, API, data, CLI, UI, docs, tests"})
     checks.append({
         "ok": not contradictions,
         "label": "no open contradiction" + (f" — {', '.join(contradictions)}" if contradictions else ""),
-        "fix": "forge.py signal resolve <id> --notes \"...\""})
+        "fix": "answer the paused worker in your session"})
     return checks
 
 
@@ -419,7 +419,13 @@ def story_detail(base: Path, key: str) -> dict | None:
     spec_path = item.get("spec")
     spec = None
     if spec_path and (base / spec_path).is_file():
-        spec = {"path": spec_path, "body": (base / spec_path).read_text()}
+        # Frontmatter is metadata for the gates, not prose for the reader: the
+        # drawer was rendering `slug: …`, `status: confirmed` and a stray `---`
+        # above the spec's own title.
+        from .specs import FRONTMATTER
+        document = (base / spec_path).read_text()
+        spec = {"path": spec_path,
+                "body": FRONTMATTER.sub("", document, count=1).lstrip()}
     epic = next(
         (epic for epic in derived_epics(roadmap, items)
          if epic.get("id") == item.get("epic")),
