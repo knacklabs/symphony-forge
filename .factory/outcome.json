@@ -2,6 +2,6 @@
   "generated_by": "implementer",
   "outcome": "Developers open the board and see the whole project: what it is, which stories can start right now and in how many worktrees, what each epic delivers, and why every blocked story is blocked \u2014 with epics, stories and tasks labelled as such and a Project > Epic > Story breadcrumb in the drawer. Blocked now reads as blocked on every surface instead of being folded into 'waiting', and a bundled example project ships that the production capture gates validate, so the board can be seen working before a repo has any work of its own.",
   "issue": "PH-4",
-  "commit": "cba92b710059d2ca62d7c3a408761c80ac467109",
-  "recorded_at": "2026-08-05T20:41:11+00:00"
+  "commit": "ae00e5992c508460c6635590437cd85a8538f2fe",
+  "recorded_at": "2026-08-05T21:11:38+00:00"
 }
