@@ -1,0 +1,17 @@
+{
+  "issue_key": "PH-4",
+  "title": "Present the hierarchy to engineers",
+  "tracker": "linear",
+  "branch": "feat/PH-4-present-the-hierarchy-to-engineers",
+  "phase": "pr-ready",
+  "plan_status": "approved",
+  "decomposition_status": "recorded",
+  "implementation_status": "pending",
+  "tests_status": "passed",
+  "verify_status": "passed",
+  "review_status": "passed",
+  "created_at": "2026-08-05T15:10:18+00:00",
+  "updated_at": "2026-08-05T21:11:46+00:00",
+  "plan_file": "plans/completed/PH-4-present-the-hierarchy-to-engineers.md",
+  "story": "PH-4"
+}

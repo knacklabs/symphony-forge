@@ -1,0 +1,64 @@
+{"event": "roadmap-add", "generated_by": "orchestrator", "at": "2026-08-04T13:18:45+00:00", "story": "PH-4", "detail": "docs/specs/project-hierarchy.md"}
+{"event": "roadmap-add", "generated_by": "orchestrator", "at": "2026-08-04T13:18:45+00:00", "story": "PH-4", "detail": "docs/specs/project-hierarchy.md"}
+{"event": "roadmap-add", "generated_by": "orchestrator", "at": "2026-08-04T13:18:45+00:00", "story": "PH-4", "detail": "docs/specs/project-hierarchy.md"}
+{"event": "roadmap-set-epic", "generated_by": "orchestrator", "at": "2026-08-05T06:29:32+00:00", "story": "PH-4", "detail": "symphony-forge"}
+{"event": "intake", "generated_by": "orchestrator", "at": "2026-08-05T15:10:18+00:00", "story": "PH-4", "detail": "Present the hierarchy to engineers"}
+{"event": "plan-approved", "generated_by": "planner-high", "at": "2026-08-05T15:26:27+00:00", "story": "PH-4", "detail": "plans/active/PH-4-present-the-hierarchy-to-engineers.md"}
+{"event": "decomposed", "generated_by": "docs-decomposer", "at": "2026-08-05T15:37:23+00:00", "story": "PH-4", "detail": "4 task(s)"}
+{"event": "implementing", "generated_by": "orchestrator", "at": "2026-08-05T15:37:29+00:00", "story": "PH-4"}
+{"event": "stage-start", "generated_by": "implementer", "at": "2026-08-05T15:37:35+00:00", "story": "PH-4", "detail": "PH-4.1 The API carries project identity and derived epic relationships"}
+{"event": "delegated", "generated_by": "orchestrator", "at": "2026-08-05T15:55:12+00:00", "story": "PH-4", "detail": "PH-4.1 (write)"}
+{"event": "stage-done", "generated_by": "implementer", "at": "2026-08-05T16:36:22+00:00", "story": "PH-4", "detail": "PH-4.1 The API carries project identity and derived epic relationships"}
+{"event": "decomposed", "generated_by": "docs-decomposer", "at": "2026-08-05T16:36:42+00:00", "story": "PH-4", "detail": "4 task(s)"}
+{"event": "stage-start", "generated_by": "implementer", "at": "2026-08-05T16:36:48+00:00", "story": "PH-4", "detail": "PH-4.2 The Overview becomes the default view"}
+{"event": "signal-confusion", "generated_by": "implementer", "at": "2026-08-05T16:39:59+00:00", "story": "PH-4", "detail": "PH-4.2 says no dates appear, but preserving every lifecycle affordance retains existing plan-age, verify/work, saved-plan, and quickfix-closure dates; confirm that the no-dates boundary applies to the"}
+{"event": "delegated", "generated_by": "orchestrator", "at": "2026-08-05T16:40:14+00:00", "story": "PH-4", "detail": "PH-4.2 (write)"}
+{"event": "signal-resolved", "generated_by": "orchestrator", "at": "2026-08-05T16:40:54+00:00", "story": "PH-4", "detail": "S-0001-8123: Correct catch, and the answer is: the no-dates boundary applies to the NEW Overview only. The spec's Boundaries list ('No dates, estimates, burndown or velocity') constrains what the HIERARCHY present"}
+{"event": "signal-contradiction", "generated_by": "implementer", "at": "2026-08-05T16:43:09+00:00", "story": "PH-4", "detail": "PH-4.2 requires no dates anywhere, but preserving every lifecycle affordance conflicts with existing saved/worked/closed dates and building-age markers in factory/board/index.html; clarify whether the"}
+{"event": "delegated", "generated_by": "orchestrator", "at": "2026-08-05T16:43:17+00:00", "story": "PH-4", "detail": "PH-4.2 (write)"}
+{"event": "signal-resolved", "generated_by": "orchestrator", "at": "2026-08-05T16:43:58+00:00", "story": "PH-4", "detail": "S-0002-286b: Same question as S-0001, and the fault is the contract rather than your reading of it \u2014 two workers found it independently. PH-4.2's acceptance criterion is now AMENDED to say it explicitly: no dates "}
+{"event": "decomposed", "generated_by": "docs-decomposer", "at": "2026-08-05T16:43:58+00:00", "story": "PH-4", "detail": "4 task(s)"}
+{"event": "delegated", "generated_by": "orchestrator", "at": "2026-08-05T16:56:26+00:00", "story": "PH-4", "detail": "PH-4.2 (write)"}
+{"event": "stage-contract-changed", "generated_by": "implementer", "at": "2026-08-05T17:16:03+00:00", "story": "PH-4", "detail": "PH-4.2: task contract re-recorded mid-stage"}
+{"event": "stage-done", "generated_by": "implementer", "at": "2026-08-05T17:16:03+00:00", "story": "PH-4", "detail": "PH-4.2 The Overview becomes the default view"}
+{"event": "stage-start", "generated_by": "implementer", "at": "2026-08-05T17:16:12+00:00", "story": "PH-4", "detail": "PH-4.3 Labels, breadcrumb, and blocked named on every surface"}
+{"event": "delegated", "generated_by": "orchestrator", "at": "2026-08-05T17:22:06+00:00", "story": "PH-4", "detail": "PH-4.3 (write)"}
+{"event": "stage-done", "generated_by": "implementer", "at": "2026-08-05T17:47:03+00:00", "story": "PH-4", "detail": "PH-4.3 Labels, breadcrumb, and blocked named on every surface"}
+{"event": "stage-start", "generated_by": "implementer", "at": "2026-08-05T17:47:14+00:00", "story": "PH-4", "detail": "PH-4.4 A bundled example, production-validated, at three widths"}
+{"event": "signal-contradiction", "generated_by": "implementer", "at": "2026-08-05T17:48:56+00:00", "story": "PH-4", "detail": "PH-4.4 requires './forge board --repo factory/board/example' to serve a minimal example, but make_server currently reads HTML from <repo>/factory/board/index.html; fixing the server requires factory/s"}
+{"event": "delegated", "generated_by": "orchestrator", "at": "2026-08-05T17:50:47+00:00", "story": "PH-4", "detail": "PH-4.4 (write)"}
+{"event": "signal-resolved", "generated_by": "orchestrator", "at": "2026-08-05T17:51:48+00:00", "story": "PH-4", "detail": "S-0003-6ec8: Correct, and the flaw is mine \u2014 the criterion asserted --repo would serve a data-only tree without checking that board.py:535 reads the page from the --repo TARGET. Ruling: the board PAGE is machinery"}
+{"event": "decomposed", "generated_by": "docs-decomposer", "at": "2026-08-05T17:51:49+00:00", "story": "PH-4", "detail": "4 task(s)"}
+{"event": "signal-confusion", "generated_by": "implementer", "at": "2026-08-05T17:55:43+00:00", "story": "PH-4", "detail": "PH-4.4 requires deterministic desktop, tablet, and mobile proof, but the supplied brief names decision 0027 without providing the three viewport widths or a rule for selecting them."}
+{"event": "delegated", "generated_by": "orchestrator", "at": "2026-08-05T17:55:50+00:00", "story": "PH-4", "detail": "PH-4.4 (write)"}
+{"event": "signal-resolved", "generated_by": "orchestrator", "at": "2026-08-05T17:56:17+00:00", "story": "PH-4", "detail": "S-0004-3043: Fair \u2014 the criterion named three widths without defining them. Rule: derive them from the board's OWN breakpoints rather than inventing numbers, because those bands are what the CSS actually distingui"}
+{"event": "decomposed", "generated_by": "docs-decomposer", "at": "2026-08-05T17:56:39+00:00", "story": "PH-4", "detail": "4 task(s)"}
+{"event": "signal-contradiction", "generated_by": "implementer", "at": "2026-08-05T18:01:28+00:00", "story": "PH-4", "detail": "PH-4.4 brief/decomposition require board.py page-source changes and forbid all AGENTS.md edits, but the approved plan scopes Task 4 to example/tests/docs only, declares CLI/ops unchanged, and root ins"}
+{"event": "delegated", "generated_by": "orchestrator", "at": "2026-08-05T18:01:36+00:00", "story": "PH-4", "detail": "PH-4.4 (write)"}
+{"event": "signal-resolved", "generated_by": "orchestrator", "at": "2026-08-05T18:03:03+00:00", "story": "PH-4", "detail": "S-0005-8c65: Right, and the contradiction was mine to remove \u2014 not yours to reconcile. The ROADMAP criterion is only 'the bundled example passes the production validators and reads correctly at desktop, tablet and"}
+{"event": "decomposed", "generated_by": "docs-decomposer", "at": "2026-08-05T18:03:04+00:00", "story": "PH-4", "detail": "4 task(s)"}
+{"event": "delegated", "generated_by": "orchestrator", "at": "2026-08-05T18:09:45+00:00", "story": "PH-4", "detail": "PH-4.4 (write)"}
+{"event": "stage-contract-changed", "generated_by": "implementer", "at": "2026-08-05T18:24:13+00:00", "story": "PH-4", "detail": "PH-4.4: task contract re-recorded mid-stage"}
+{"event": "stage-done", "generated_by": "implementer", "at": "2026-08-05T18:24:13+00:00", "story": "PH-4", "detail": "PH-4.4 A bundled example, production-validated, at three widths"}
+{"event": "verify-passed", "generated_by": "orchestrator", "at": "2026-08-05T18:42:53+00:00", "story": "PH-4"}
+{"event": "verify-passed", "generated_by": "orchestrator", "at": "2026-08-05T18:53:27+00:00", "story": "PH-4"}
+{"event": "verify-passed", "generated_by": "orchestrator", "at": "2026-08-05T19:03:39+00:00", "story": "PH-4"}
+{"event": "verify-passed", "generated_by": "orchestrator", "at": "2026-08-05T20:07:58+00:00", "story": "PH-4"}
+{"event": "review-quality", "generated_by": "autoreview", "at": "2026-08-05T20:40:33+00:00", "story": "PH-4"}
+{"event": "review-performance", "generated_by": "autoreview", "at": "2026-08-05T20:40:33+00:00", "story": "PH-4"}
+{"event": "review-security", "generated_by": "autoreview", "at": "2026-08-05T20:40:33+00:00", "story": "PH-4"}
+{"event": "tests-automated", "generated_by": "implementer", "at": "2026-08-05T20:40:33+00:00", "story": "PH-4", "detail": "passed"}
+{"event": "tests-functional", "generated_by": "functional-checker", "at": "2026-08-05T20:41:11+00:00", "story": "PH-4", "detail": "passed"}
+{"event": "verify-failed", "generated_by": "orchestrator", "at": "2026-08-05T20:54:29+00:00", "story": "PH-4"}
+{"event": "review-quality", "generated_by": "autoreview", "at": "2026-08-05T20:54:40+00:00", "story": "PH-4"}
+{"event": "review-performance", "generated_by": "autoreview", "at": "2026-08-05T20:54:40+00:00", "story": "PH-4"}
+{"event": "review-security", "generated_by": "autoreview", "at": "2026-08-05T20:54:40+00:00", "story": "PH-4"}
+{"event": "tests-automated", "generated_by": "implementer", "at": "2026-08-05T20:54:40+00:00", "story": "PH-4", "detail": "passed"}
+{"event": "tests-functional", "generated_by": "functional-checker", "at": "2026-08-05T20:54:40+00:00", "story": "PH-4", "detail": "passed"}
+{"event": "verify-passed", "generated_by": "orchestrator", "at": "2026-08-05T21:11:24+00:00", "story": "PH-4"}
+{"event": "review-quality", "generated_by": "autoreview", "at": "2026-08-05T21:11:37+00:00", "story": "PH-4"}
+{"event": "review-performance", "generated_by": "autoreview", "at": "2026-08-05T21:11:37+00:00", "story": "PH-4"}
+{"event": "review-security", "generated_by": "autoreview", "at": "2026-08-05T21:11:37+00:00", "story": "PH-4"}
+{"event": "tests-automated", "generated_by": "implementer", "at": "2026-08-05T21:11:38+00:00", "story": "PH-4", "detail": "passed"}
+{"event": "tests-functional", "generated_by": "functional-checker", "at": "2026-08-05T21:11:38+00:00", "story": "PH-4", "detail": "passed"}
+{"event": "shipped", "generated_by": "orchestrator", "at": "2026-08-05T21:11:46+00:00", "story": "PH-4", "detail": "Developers open the board and see the whole project: what it is, which stories can start right now and in how many worktrees, what each epic delivers, and why every blocked story is blocked \u2014 with epi"}

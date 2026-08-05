@@ -135,7 +135,7 @@
         "The bundled example passes the production validators and reads correctly at desktop, tablet and mobile widths."
       ],
       "order": 7,
-      "status": "active",
+      "status": "done",
       "skill": "fullstack",
       "depends_on": [
         "PH-1",
@@ -143,11 +143,14 @@
         "PH-3"
       ],
       "spec": "docs/specs/project-hierarchy.md",
-      "epic": "symphony-forge"
+      "epic": "symphony-forge",
+      "completed_at": "2026-08-05T21:11:46+00:00",
+      "history": ".factory/history/PH-4/",
+      "outcome": "Developers open the board and see the whole project: what it is, which stories can start right now and in how many worktrees, what each epic delivers, and why every blocked story is blocked \u2014 with epics, stories and tasks labelled as such and a Project > Epic > Story breadcrumb in the drawer. Blocked now reads as blocked on every surface instead of being folded into 'waiting', and a bundled example project ships that the production capture gates validate, so the board can be seen working before a repo has any work of its own."
     }
   ],
   "generated_by": "human",
-  "updated_at": "2026-08-05T15:10:18+00:00",
+  "updated_at": "2026-08-05T21:11:46+00:00",
   "epics": [
     {
       "id": "symphony-forge",

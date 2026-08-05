@@ -1,0 +1,10 @@
+[
+  {
+    "id": "A-0005",
+    "date": "2026-08-05",
+    "issue": "PH-4",
+    "assumption": "Project name means the repository root directory name, matching the board's existing root identity because no separate authored project-name field is in scope.",
+    "status": "confirmed",
+    "guidance": "Resolved by correction, not by confirmation: the original assumption (project name = repository directory name) was WRONG \u2014 forge init --name authors it into run.json. Implementation went further after story review showed run.json is lifecycle state a data-only tree never has: project_identity now reads three sources, most authoritative first \u2014 the authored name, then the BRIEF's H1 (committed; sign-off refuses without it), then the resolved directory. Documented in the function's docstring and pinned by test_project_name_survives_the_run_state_lifecycle (init -> intake -> shipped shape) and test_project_name_falls_back_to_the_brief_when_run_state_is_absent."
+  }
+]
