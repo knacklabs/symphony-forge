@@ -8229,3 +8229,12 @@ def test_project_name_survives_the_run_state_lifecycle(tmp_path):
 
     run_state = json.loads((target / ".factory" / "run.json").read_text())
     assert run_state.get("issue_key"), "intake did not actually write run state"
+
+    # And through SHIP: pr_ready reduces run.json to a stable object
+    # (pr_ready.py:334) — that projection must keep `project`, or every
+    # shipped repo's board would fall back to its directory slug.
+    shipped = {k: run_state[k] for k in ("project",) if k in run_state}
+    shipped["phase"] = "shipped"
+    (target / ".factory" / "run.json").write_text(json.dumps(shipped))
+    assert project_identity(target)["name"] == "Acme Billing", \
+        "the shipped run-state shape dropped the authored project name"

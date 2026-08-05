@@ -1,0 +1,8 @@
+{
+  "event": "open",
+  "id": "Q-0034-b590",
+  "reason": "prove the shipped run-state shape keeps the authored project name",
+  "started_at": "2026-08-05T20:39:13+00:00",
+  "max_files": 5,
+  "files": []
+}
