@@ -4083,6 +4083,167 @@ def test_board_page_stays_self_contained():
                          re.IGNORECASE)
 
 
+def test_bundled_example_passes_the_production_validators():
+    from factory_lib import load_json
+    from forge_cli.roadmap import (
+        check_dag,
+        check_epic_contract,
+        check_epics,
+        check_item,
+        check_story_contract,
+    )
+    from forge_cli.specs import (
+        missing_required_content,
+        resolve_spec_reference,
+        spec_records,
+    )
+    from record_signoff import workflow_input_problems
+
+    example = HARNESS / "factory" / "board" / "example"
+    roadmap = load_json(example / "plans" / "roadmap.json", default={})
+
+    # These are the production gates used by record_signoff and roadmap
+    # authoring. Tightening any capture contract must refuse this source too.
+    assert workflow_input_problems(example) == []
+    records = spec_records(example)
+    assert len(records) == 1 and all(
+        record["status"] == "confirmed"
+        and missing_required_content(record["_path"].read_text()) == []
+        for record in records
+    )
+    check_epics(roadmap["epics"])
+    for epic in roadmap["epics"]:
+        check_epic_contract(epic, example)
+    known_epics = {epic["id"] for epic in roadmap["epics"]}
+    for position, story in enumerate(roadmap["items"], 1):
+        check_item(story, position)
+        check_story_contract(story, known_epics)
+        resolve_spec_reference(example, story["spec"], confirmed=True)
+    check_dag(roadmap["items"])
+
+
+def test_bundled_example_exercises_frontier_and_blocked():
+    from forge_cli.board import aggregate_state
+
+    example = HARNESS / "factory" / "board" / "example"
+    state = aggregate_state(example)
+    stories = {story["key"]: story for story in state["stories"]}
+
+    assert len(state["frontier"]) >= 2
+    assert all(stories[key]["ready_to_plan"] for key in state["frontier"])
+    blocked = [story for story in stories.values() if story["state"] == "blocked"]
+    assert blocked and all(story["blocked_by"] for story in blocked)
+    assert all(dependency in stories for story in blocked
+               for dependency in story["blocked_by"])
+    assert len(state["epics"]) == 2
+    assert all(epic["stories"] for epic in state["epics"])
+
+
+def test_board_content_survives_all_three_widths():
+    from forge_cli.board import aggregate_state
+
+    example = HARNESS / "factory" / "board" / "example"
+    page = (HARNESS / "factory" / "board" / "index.html").read_text()
+    stylesheet = re.search(r"<style>(.*?)</style>", page, re.DOTALL).group(1)
+    breakpoints = sorted(
+        {int(value) for value in re.findall(
+            r"@media\s*\(max-width:\s*(\d+)px\)", stylesheet)},
+        reverse=True,
+    )
+    assert len(breakpoints) == 2
+    tablet_max, mobile_max = breakpoints
+
+    widths = {"desktop": 1280, "tablet": 768, "mobile": 390}
+    assert widths["desktop"] > tablet_max
+    assert mobile_max < widths["tablet"] <= tablet_max
+    assert widths["mobile"] <= mobile_max
+
+    state = aggregate_state(example)
+    assert state["frontier"]
+    assert all(epic["stories"] for epic in state["epics"])
+    assert any(story["blocked_by"] for story in state["stories"])
+    for question in (
+        "What is this project?",
+        "What can start now?",
+        "What does each epic deliver?",
+        "Where does each story sit?",
+    ):
+        assert question in page
+    assert '<section id="overview-view" role="tabpanel"' in page
+
+    def matching_css(width: int) -> str:
+        """Base rules plus max-width media rules active at this width."""
+        chunks = []
+        cursor = 0
+        while True:
+            start = stylesheet.find("@media", cursor)
+            if start < 0:
+                chunks.append(stylesheet[cursor:])
+                return "".join(chunks)
+            chunks.append(stylesheet[cursor:start])
+            brace = stylesheet.find("{", start)
+            depth = 1
+            end = brace + 1
+            while depth:
+                depth += (stylesheet[end] == "{") - (stylesheet[end] == "}")
+                end += 1
+            condition = stylesheet[start:brace]
+            maximum = re.search(r"max-width:\s*(\d+)px", condition)
+            if maximum and width <= int(maximum.group(1)):
+                chunks.append(stylesheet[brace + 1:end - 1])
+            cursor = end
+
+    content_selectors = {
+        "main", ".wrap", "#overview-view", "#overview", ".overview",
+        ".overview-question", ".overview-answer", ".project-sections",
+        ".project-name", ".project-section", ".frontier-count",
+        ".overview-list", ".overview-list li", ".overview-story",
+        ".epic-deliveries", ".epic-delivery", ".epic-stories",
+        ".story-position", ".dependency-facts",
+    }
+    clipping_properties = {
+        "overflow", "overflow-x", "overflow-y", "clip", "clip-path",
+    }
+    zero_size_properties = {"height", "max-height", "block-size", "max-block-size"}
+
+    for width in widths.values():
+        declarations = []
+        for selectors, body in re.findall(r"([^{}]+)\{([^{}]*)\}", matching_css(width)):
+            if not content_selectors.intersection(
+                    selector.strip() for selector in selectors.split(",")):
+                continue
+            declarations.extend(
+                (name.strip(), value.strip().lower())
+                for name, _, value in (
+                    declaration.partition(":") for declaration in body.split(";"))
+                if name.strip() and value.strip()
+            )
+        assert not any(
+            (name == "display" and value == "none")
+            or (name == "visibility" and value in {"hidden", "collapse"})
+            or (name == "content-visibility" and value == "hidden")
+            or (name in clipping_properties and value in {"hidden", "clip"})
+            or (name in zero_size_properties and re.fullmatch(r"0(?:[a-z%]+)?", value))
+            for name, value in declarations
+        )
+
+    # The page deliberately clips horizontal body overflow. These shrink rules
+    # are what keep Overview content inside that boundary instead of merely
+    # hiding an accidental overflow at narrower bands.
+    compact = re.sub(r"\s+", " ", stylesheet)
+    assert re.search(r"\.overview-answer\s*\{[^}]*min-width:\s*0", compact)
+    assert re.search(
+        r"\.overview-question\s*\{[^}]*grid-template-columns:[^;}]*minmax\(0,",
+        compact,
+    )
+    mobile_css = matching_css(widths["mobile"])
+    for selector in (".overview-question", ".project-sections", ".story-position"):
+        assert re.search(
+            rf"{re.escape(selector)}\s*\{{[^}}]*grid-template-columns:\s*1fr",
+            mobile_css,
+        )
+
+
 def test_recorder_holds_the_task_narrative_contract(repo, tmp_path):
     """objective and acceptance_criteria were prompt convention, so a task
     could reach the board as an id and a title."""

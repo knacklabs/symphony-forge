@@ -120,6 +120,12 @@ instead of narrating it:
   the URL rather than starting a second one; a busy port means it is running.
 - Stories are cards on a swimlane board — epic lanes across the lifecycle
   columns — so progress is read from where a card sits, not from prose.
+- The board opens on **Overview**: what the project is, what can start now,
+  what each epic delivers, and where each story sits. Use
+  `./forge board --repo <example>` for a full initialized example repo. The
+  checked-in data-only contract sample is discoverable at
+  `factory/board/example/`; production validators exercise it, while direct
+  serving waits on the deferred board-page resolver change.
 - **Deep-link to the story you are talking about**: `…:8765/#RAIL-3` opens that
   story's drawer with its gate rail, what blocks the next gate, and its
   artifacts (plan, spec, decomposition, evidence).

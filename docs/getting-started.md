@@ -189,6 +189,21 @@ Optionally define the team first so assignment is checked and skill-matched:
 ./forge board                                      # read-only live lifecycle view
 ```
 
+The board opens on **Overview**, which answers what the project is, what can
+start now, what each epic delivers, and where each story sits. To inspect a
+different initialized example repo, point the same board command at it:
+
+```bash
+./forge board --repo <example>
+```
+
+The checked-in source at `factory/board/example/` is the smallest readable
+brief, confirmed spec, and roadmap that the production capture validators
+accept. It is intentionally a data-only validation example. The current board
+server reads its page from the `--repo` target, so pass a full initialized repo
+to the command above; direct serving of the data-only bundled tree is deferred
+until the page resolver changes.
+
 `plans/roadmap.json` is the durable backlog: intake marks items active,
 `pr_ready.py` marks them done with history links, assignments survive
 re-imports, and "what's next?" always knows the next story (and nags the EM

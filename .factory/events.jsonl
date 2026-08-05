@@ -305,3 +305,4 @@
 {"event": "delegated", "generated_by": "orchestrator", "at": "2026-08-05T18:01:36+00:00", "story": "PH-4", "detail": "PH-4.4 (write)"}
 {"event": "signal-resolved", "generated_by": "orchestrator", "at": "2026-08-05T18:03:03+00:00", "story": "PH-4", "detail": "S-0005-8c65: Right, and the contradiction was mine to remove \u2014 not yours to reconcile. The ROADMAP criterion is only 'the bundled example passes the production validators and reads correctly at desktop, tablet and"}
 {"event": "decomposed", "generated_by": "docs-decomposer", "at": "2026-08-05T18:03:04+00:00", "story": "PH-4", "detail": "4 task(s)"}
+{"event": "delegated", "generated_by": "orchestrator", "at": "2026-08-05T18:09:45+00:00", "story": "PH-4", "detail": "PH-4.4 (write)"}
