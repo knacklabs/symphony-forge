@@ -333,3 +333,4 @@
 {"event": "spec-draft", "generated_by": "orchestrator", "at": "2026-08-05T21:20:10+00:00", "detail": "project-record: The project knows what it built"}
 {"event": "spec-confirmed", "generated_by": "orchestrator", "at": "2026-08-05T21:22:19+00:00", "detail": "project-record"}
 {"event": "roadmap-add", "generated_by": "orchestrator", "at": "2026-08-05T21:22:32+00:00", "story": "PH-5", "detail": "docs/specs/project-record.md"}
+{"event": "intake", "generated_by": "orchestrator", "at": "2026-08-05T21:22:40+00:00", "story": "PH-5", "detail": "The project knows what it built"}

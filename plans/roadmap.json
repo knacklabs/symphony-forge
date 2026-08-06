@@ -160,7 +160,7 @@
         "Every shipped story has an outcome or an explicit marker that it predates the outcome contract; no outcome is written after the fact for work whose author did not state one."
       ],
       "order": 8,
-      "status": "pending",
+      "status": "active",
       "epic": "symphony-forge",
       "skill": "backend",
       "depends_on": [
@@ -170,7 +170,7 @@
     }
   ],
   "generated_by": "human",
-  "updated_at": "2026-08-05T21:22:32+00:00",
+  "updated_at": "2026-08-05T21:22:40+00:00",
   "epics": [
     {
       "id": "symphony-forge",
