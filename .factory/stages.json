@@ -14,7 +14,7 @@
     {
       "id": "PH-5.2",
       "title": "Quickfix windows record what they touched",
-      "status": "active",
+      "status": "done",
       "started_at": "2026-08-06T04:32:30+00:00",
       "base_sha": "5f8b960fed31050e8b47c38bace84a4e41893cb6",
       "dirty_at_start": {
@@ -27,12 +27,26 @@
           "git": "1 .M N... 100644 100644 100644 61fc92d8edf3a446c6b3cc1b1bc6e5d51a3cf6dd 61fc92d8edf3a446c6b3cc1b1bc6e5d51a3cf6dd .factory/stages.json\u0000\u0000100644 61fc92d8edf3a446c6b3cc1b1bc6e5d51a3cf6dd 0\t.factory/stages.json\u0000\u0000H .factory/stages.json\u0000"
         }
       },
-      "task_sha256": "fb2db21550360638713dc18dc85d84731c4e8e4d1ee9bb9841e08ec3641c0c74"
+      "task_sha256": "fb2db21550360638713dc18dc85d84731c4e8e4d1ee9bb9841e08ec3641c0c74",
+      "completed_at": "2026-08-06T05:07:12+00:00"
     },
     {
       "id": "PH-5.3",
       "title": "The PR link is an event",
-      "status": "pending"
+      "status": "active",
+      "started_at": "2026-08-06T05:07:32+00:00",
+      "base_sha": "c8509341d9cc6e530bbf19f52bebb5c002e78621",
+      "dirty_at_start": {
+        ".factory/events.jsonl": {
+          "digest": "accc8c019d770e61880cbe5f3f7e7f3bc322240c17d754a8e7c4021cc2a49106",
+          "git": "1 .M N... 100644 100644 100644 d6672618c0293547fdac414676b26e07b438a218 d6672618c0293547fdac414676b26e07b438a218 .factory/events.jsonl\u0000\u0000100644 d6672618c0293547fdac414676b26e07b438a218 0\t.factory/events.jsonl\u0000\u0000H .factory/events.jsonl\u0000"
+        },
+        ".factory/stages.json": {
+          "digest": "0e3449892c7b7475dc62b7c7f1f373ac8f2bed9f454046ed2e80373a6314d866",
+          "git": "1 .M N... 100644 100644 100644 995d848390c7ad7f384f39d6356c1113c9d0bc9a 995d848390c7ad7f384f39d6356c1113c9d0bc9a .factory/stages.json\u0000\u0000100644 995d848390c7ad7f384f39d6356c1113c9d0bc9a 0\t.factory/stages.json\u0000\u0000H .factory/stages.json\u0000"
+        }
+      },
+      "task_sha256": "216b37309e538ec6bc8ae7dd6486e5d4e316d0fdab435c52de14a5fce1bbdb31"
     },
     {
       "id": "PH-5.4",

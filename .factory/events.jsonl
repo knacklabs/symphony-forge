@@ -342,3 +342,7 @@
 {"event": "stage-done", "generated_by": "implementer", "at": "2026-08-06T04:32:20+00:00", "story": "PH-5", "detail": "PH-5.1 forge history reads the committed events"}
 {"event": "stage-start", "generated_by": "implementer", "at": "2026-08-06T04:32:30+00:00", "story": "PH-5", "detail": "PH-5.2 Quickfix windows record what they touched"}
 {"event": "delegated", "generated_by": "orchestrator", "at": "2026-08-06T04:40:13+00:00", "story": "PH-5", "detail": "PH-5.2 (write)"}
+{"event": "stage-done", "generated_by": "implementer", "at": "2026-08-06T05:07:12+00:00", "story": "PH-5", "detail": "PH-5.2 Quickfix windows record what they touched"}
+{"event": "stage-start", "generated_by": "implementer", "at": "2026-08-06T05:07:32+00:00", "story": "PH-5", "detail": "PH-5.3 The PR link is an event"}
+{"event": "delegated", "generated_by": "orchestrator", "at": "2026-08-06T05:11:48+00:00", "story": "PH-5", "detail": "PH-5.3 (write)"}
+{"event": "pr-linked", "generated_by": "orchestrator", "at": "2026-08-06T05:12:34+00:00", "story": "PH-4", "detail": "https://github.com/knacklabs/symphony-forge/pull/42"}

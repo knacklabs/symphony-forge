@@ -6,7 +6,7 @@ from pathlib import Path
 
 from factory_lib import repo_root
 
-from .events import load_events
+from .events import append_event, load_events
 
 
 def _event_line(event: dict) -> str:
@@ -16,6 +16,18 @@ def _event_line(event: dict) -> str:
     if event.get("detail"):
         line += f"  {event['detail']}"
     return line
+
+
+def cmd_pr_link(args: argparse.Namespace) -> None:
+    base = Path(args.repo).resolve() if args.repo else repo_root()
+    append_event(
+        base,
+        "pr-linked",
+        actor="orchestrator",
+        story=args.story,
+        detail=args.reference,
+    )
+    print(f"Linked {args.story} to {args.reference}")
 
 
 def cmd_history(args: argparse.Namespace) -> None:

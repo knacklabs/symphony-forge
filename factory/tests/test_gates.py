@@ -4574,6 +4574,41 @@ def test_forge_history_is_read_only(repo):
     assert factory_snapshot() == before
 
 
+def test_pr_link_event_survives_a_clone_with_no_remote(repo, tmp_path):
+    before = (repo / ".factory" / "run.json").read_bytes()
+    reference = "https://github.com/acme/widgets/pull/42"
+    code, out = run(repo, "forge.py", "pr-link", "ENG-1", reference)
+    assert code == 0, out
+    assert (repo / ".factory" / "run.json").read_bytes() == before
+    linked = json.loads(
+        (repo / ".factory" / "events.jsonl").read_text().splitlines()[-1])
+    assert linked["event"] == "pr-linked"
+    assert linked["story"] == "ENG-1"
+    assert linked["detail"] == reference
+
+    git(repo, "add", "-f", ".factory/events.jsonl")
+    git(repo, "commit", "-q", "-m", "link shipped PR")
+    clone = tmp_path / "clone"
+    git(repo.parent, "clone", "-q", str(repo), str(clone))
+    git(clone, "remote", "remove", "origin")
+    assert git(clone, "remote") == ""
+
+    code, out = run(clone, "forge.py", "history", "--story", "ENG-1")
+    assert code == 0, out
+    assert "pr-linked" in out and reference in out
+
+
+def test_forge_history_shows_the_pr_link(repo):
+    reference = "acme/widgets#42"
+    code, out = run(repo, "forge.py", "pr-link", "ENG-1", reference)
+    assert code == 0, out
+
+    code, out = run(repo, "forge.py", "history", "--story", "ENG-1")
+    assert code == 0, out
+    assert "Story: ENG-1" in out
+    assert "pr-linked" in out and reference in out
+
+
 def test_decisions_name_the_stories_they_govern(repo, tmp_path):
     sign_off(repo)
     intake(repo)
