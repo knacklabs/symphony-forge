@@ -8494,6 +8494,64 @@ def test_init_into_nonempty_noncolliding_target(tmp_path: Path):
     assert custom.read_text() == "local = true\n"
 
 
+def test_init_vendors_only_the_harness_owned_skill_not_a_source_decoy(
+    tmp_path: Path, monkeypatch,
+):
+    source = tmp_path / "source"
+    shutil.copytree(
+        HARNESS,
+        source,
+        ignore=shutil.ignore_patterns(".git", ".factory", "__pycache__", "*.pyc"),
+    )
+    (source / "DECOY.md").write_text("# Source-only canon\n")
+    for runtime in (".claude", ".codex"):
+        decoy = source / runtime / "skills" / "decoy" / "SKILL.md"
+        decoy.parent.mkdir(parents=True)
+        decoy.write_text("# Decoy\n\n<!-- canon: DECOY.md -->\n")
+
+    from forge_cli import scaffold
+    monkeypatch.setattr(scaffold, "repo_root", lambda: source)
+    target = tmp_path / "app"
+    scaffold.cmd_init(argparse.Namespace(
+        name="app", target=str(target), force=False, stack="nestjs-react",
+    ))
+
+    assert {
+        str(path.relative_to(target / ".claude"))
+        for path in (target / ".claude").rglob("*") if path.is_file()
+    } == {"CLAUDE.md", "settings.json", "skills/forge/SKILL.md"}
+    assert {
+        path.parent.name
+        for path in (target / ".codex" / "skills").glob("*/SKILL.md")
+    } == {"forge"}
+    code, out = run(target, "check_dual_runtime.py", str(target))
+    assert code == 0, out
+
+
+def test_init_and_upgrade_share_the_harness_owned_skill_set(repo):
+    from forge_cli.scaffold import HARNESS_OWNED_SKILLS
+    from forge_cli.upgrade import CLAUDE_HARNESS_OWNED
+
+    upgrade_skills = {
+        Path(path).name
+        for path in CLAUDE_HARNESS_OWNED
+        if path.startswith("skills/")
+    }
+    init_skills = {
+        runtime: {
+            child.name
+            for child in (repo / runtime / "skills").iterdir()
+            if child.is_dir()
+        }
+        for runtime in (".claude", ".codex")
+    }
+    assert upgrade_skills == set(HARNESS_OWNED_SKILLS)
+    assert init_skills == {
+        ".claude": set(HARNESS_OWNED_SKILLS),
+        ".codex": set(HARNESS_OWNED_SKILLS),
+    }
+
+
 def test_init_writes_a_record_origin_marker_with_preceding_count(tmp_path: Path):
     target = tmp_path / "app"
     note = target / "docs" / "notes" / "origin.md"

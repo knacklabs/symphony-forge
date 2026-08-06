@@ -19,7 +19,8 @@ from factory_lib import (
 
 from .common import fail
 from .scaffold import (
-    COPY_CODEX, COPY_WORKFLOWS, DOC_CONTRACTS, PROJECT_STARTERS,
+    COPY_CLAUDE, COPY_CODEX, COPY_WORKFLOWS, DOC_CONTRACTS,
+    HARNESS_OWNED_SKILLS, PROJECT_STARTERS,
     assert_target_destination,
     assert_target_file_destination,
     ensure_jsonl_attributes,
@@ -35,7 +36,10 @@ UPGRADE_FILES = ["forge", "CLAUDE.md", "WORKFLOW.md"]
 # the harness ships and never deletes client additions; retiring a
 # harness-shipped path is an explicit upgrade note, not an rmtree side
 # effect. Same rule for .codex/agents and .codex/skills below.
-CLAUDE_HARNESS_OWNED = ["CLAUDE.md", "settings.json", "skills/forge"]
+CLAUDE_HARNESS_OWNED = [
+    *COPY_CLAUDE,
+    *(f"skills/{skill}" for skill in HARNESS_OWNED_SKILLS),
+]
 # Project-owned: never touched — listed here as the explicit contract.
 # .github/workflows/ is project-owned EXCEPT the harness's own COPY_WORKFLOWS,
 # which are refreshed file-by-file below — the rest of the tree (deployment,
