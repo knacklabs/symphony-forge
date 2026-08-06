@@ -68,7 +68,8 @@ def _would_write(root: Path, target: Path) -> list[Path]:
             for f in src.rglob("*"):
                 if f.is_file() and "__pycache__" not in f.parts and f.suffix != ".pyc":
                     dests.append(target / f.relative_to(root))
-    for rel in [*(f".claude/{n}" for n in COPY_CLAUDE), *COPY_WORKFLOWS,
+    for rel in [*(f".claude/{n}" for n in COPY_CLAUDE
+                  if (root / ".claude" / n).exists()), *COPY_WORKFLOWS,
                 *(f".codex/{n}" for n in COPY_CODEX),
                 *COPY_FILES, *(dst for _, dst in DOC_CONTRACTS), *GENERATED_FILES,
                 *PROJECT_STARTERS]:
@@ -434,6 +435,10 @@ def _preflight_init(root: Path, target: Path) -> None:
             assert_target_destination(target, dst.parent)
             assert_target_file_destination(target, dst)
 
+    # cmd_init creates target/.claude unconditionally; validate that directory
+    # destination here, before the first mutation, even if no optional Claude
+    # file is present to validate it indirectly.
+    assert_target_destination(target, target / ".claude")
     for name in COPY_CLAUDE:
         if (root / ".claude" / name).exists():
             assert_target_file_destination(target, target / ".claude" / name)

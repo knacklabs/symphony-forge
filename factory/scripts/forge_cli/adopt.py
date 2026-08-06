@@ -81,7 +81,8 @@ def _preflight_adopt(harness: Path, target: Path, name: str) -> None:
     for tree in UPGRADE_TREES:
         vendor_tree(tree)
     for rel in COPY_CLAUDE:
-        file(target / ".claude" / rel)
+        if (harness / ".claude" / rel).exists():
+            file(target / ".claude" / rel)
     for rel in COPY_WORKFLOWS:
         file(target / rel)
     for rel in COPY_CODEX:
@@ -217,7 +218,9 @@ def cmd_adopt(args: argparse.Namespace) -> None:
     for tree in UPGRADE_TREES:
         vendor_tree(tree)
     for rel in COPY_CLAUDE:
-        vendor_file(harness / ".claude" / rel, target / ".claude" / rel)
+        src = harness / ".claude" / rel
+        if src.exists():
+            vendor_file(src, target / ".claude" / rel)
     # .github is not a machinery tree (mixed ownership): vendor only the harness
     # factory workflows, so the repo's own workflows (CI, deployment) survive.
     for rel in COPY_WORKFLOWS:
