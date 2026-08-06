@@ -8524,12 +8524,34 @@ def _init(target: Path, *extra: str):
 
 
 def _copy_harness_source(tmp_path: Path) -> Path:
-    source = tmp_path / "source"
-    shutil.copytree(
-        HARNESS,
-        source,
-        ignore=shutil.ignore_patterns(".git", ".factory", "__pycache__", "*.pyc"),
+    # Copy ONLY the harness-owned surface init/adopt read, never the whole repo:
+    # in a vendored client CI, HARNESS is the CLIENT root, so a wholesale copy
+    # would duplicate the client's deps/build trees and choke on client symlinks.
+    from forge_cli.scaffold import (
+        COPY_CLAUDE, COPY_CODEX, COPY_FILES, COPY_WORKFLOWS, DOC_CONTRACTS,
+        INIT_COPY_TREES, PROJECT_STARTERS,
     )
+    source = tmp_path / "source"
+    source.mkdir()
+    ignore = shutil.ignore_patterns(".git", ".factory", "__pycache__", "*.pyc")
+    rels = {
+        *INIT_COPY_TREES,
+        *(f".claude/{name}" for name in COPY_CLAUDE),
+        *(f".codex/{name}" for name in COPY_CODEX),
+        *COPY_WORKFLOWS, *COPY_FILES,
+        *(src for src, _ in DOC_CONTRACTS), *PROJECT_STARTERS,
+        "AGENTS.md",
+    }
+    for rel in sorted(rels):
+        src = HARNESS / rel
+        if not src.exists():
+            continue
+        dst = source / rel
+        dst.parent.mkdir(parents=True, exist_ok=True)
+        if src.is_dir():
+            shutil.copytree(src, dst, ignore=ignore, dirs_exist_ok=True)
+        else:
+            shutil.copy2(src, dst)
     return source
 
 
