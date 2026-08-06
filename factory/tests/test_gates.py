@@ -9185,3 +9185,99 @@ def test_assert_target_file_destination_refuses_a_directory_or_symlink(tmp_path:
     # a genuinely new file destination inside the target passes through.
     dest = target / "new.txt"
     assert assert_target_file_destination(target, dest) is dest
+
+
+# --- companion read-only lane hardening (ported from vendored gate fixes) ---
+def test_hook_denies_file_and_cwd_overrides_in_readonly_lane(repo):
+    """--prompt-file exfiltrates local files; options are default-deny."""
+    for cmd in (
+        "node /x/codex-companion.mjs task --prompt-file /etc/passwd go",
+        "node /x/codex-companion.mjs task --cwd /other/repo go",
+        "node /x/codex-companion.mjs task --unknown-flag go",
+    ):
+        code, out = hook(repo, {"tool_name": "Bash",
+                                "permission_mode": "default",
+                                "tool_input": {"command": cmd}})
+        assert "deny" in out, cmd
+
+
+def test_hook_denies_mutating_companion_subcommands(repo):
+    """Only allowlisted read-only verbs pass; setup/cancel/task-worker mutate."""
+    for verb in ("setup", "cancel", "task-worker", "unknown-verb"):
+        cmd = f"node /x/codex-companion.mjs {verb} go"
+        code, out = hook(repo, {"tool_name": "Bash",
+                                "permission_mode": "default",
+                                "tool_input": {"command": cmd}})
+        assert "deny" in out, cmd
+
+
+def test_hook_denies_exec_capable_display_commands(repo):
+    """Pagers and option-bearing display tools can execute; deny them."""
+    for cmd in (
+        "less '+!node /x/codex-companion.mjs task --write go' /dev/null",
+        "rg --pre=/x/codex-companion.mjs pattern file.txt",
+        "tail -f /tmp/codex-companion.mjs",
+    ):
+        code, out = hook(repo, {"tool_name": "Bash",
+                                "permission_mode": "default",
+                                "tool_input": {"command": cmd}})
+        assert "deny" in out, cmd
+
+
+def test_hook_denies_wrapped_or_computed_companion_launch(repo):
+    """Executors that could compute argv at runtime are unverifiable."""
+    for cmd in (
+        "xargs node /x/codex-companion.mjs task go",
+        "env FLAG=1 node /x/codex-companion.mjs task go",
+        "python3 -c 'import subprocess; subprocess.run([\"node\", "
+        "\"/x/codex-companion.mjs\", \"task\", \"--\" + \"write\"])'",
+    ):
+        code, out = hook(repo, {"tool_name": "Bash",
+                                "permission_mode": "default",
+                                "tool_input": {"command": cmd}})
+        assert "deny" in out, cmd
+
+
+def test_hook_denies_expansion_bearing_companion_launch(repo):
+    """Unexpanded variables can smuggle write flags; deny as unverifiable."""
+    for cmd in (
+        "flag=--write bash -c 'node /x/codex-companion.mjs task \"$flag\" go'",
+        "node /x/codex-companion.mjs task $(cat /tmp/mode) go",
+        "node /x/codex-companion.mjs task `cat /tmp/mode` go",
+        "node /x/codex-companion.mjs task $'--write' go",
+        "node /x/codex-companion.mjs task --writ[e] go",
+    ):
+        code, out = hook(repo, {"tool_name": "Bash",
+                                "permission_mode": "default",
+                                "tool_input": {"command": cmd}})
+        assert "deny" in out, cmd
+
+
+def test_hook_allows_readonly_companion_prompt_mentioning_write_flag(repo):
+    """A prompt that merely MENTIONS a write flag is not a write launch."""
+    cmd = "node /x/codex-companion.mjs task 'audit how --write is handled'"
+    code, out = hook(repo, {"tool_name": "Bash",
+                            "permission_mode": "default",
+                            "tool_input": {"command": cmd}})
+    assert code == 0 and "deny" not in out, cmd
+    # Even a read-only nested launch is unverifiable and therefore denied.
+    nested = "bash -c 'node /x/codex-companion.mjs task \"explore\"'"
+    code, out = hook(repo, {"tool_name": "Bash",
+                            "permission_mode": "default",
+                            "tool_input": {"command": nested}})
+    assert "deny" in out, nested
+
+
+def test_hook_denies_nested_quoted_companion_write_launch(repo):
+    """A write flag hidden inside a quoted nested shell must still deny."""
+    for cmd in (
+        "bash -c 'node /x/codex-companion.mjs task --full-auto go'",
+        'sh -c "node /x/codex-companion.mjs task '
+        '--dangerously-bypass-approvals-and-sandbox go"',
+        "bash -c 'node /x/codex-companion.mjs task --write go'",
+    ):
+        code, out = hook(repo, {"tool_name": "Bash",
+                                "permission_mode": "default",
+                                "tool_input": {"command": cmd}})
+        assert "deny" in out and "forge delegate" in out, cmd
+
