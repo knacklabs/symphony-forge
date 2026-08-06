@@ -45,12 +45,13 @@
     {
       "id": "FORGE-VENDOR-1.2",
       "title": "adopt vendors only the harness-owned skill",
-      "objective": "Replace adopt's wholesale .claude and .codex/skills vendoring (vendor_tree('.claude'), vendor_tree('.codex/skills')) with manifest-scoped copies: the .claude harness files plus only .claude/skills/forge and .codex/skills/forge, keeping adopt's per-file vendor_file boundary check. .codex/agents and config vendor as before. Add an adopt decoy-skill test.",
+      "objective": "Replace adopt's wholesale .claude and .codex/skills vendoring with manifest-scoped copies: the .claude harness files plus only .claude/skills/forge and .codex/skills/forge, keeping adopt's vendor_file boundary check; .codex/agents and config as before. Also route upgrade's .codex/skills through HARNESS_OWNED_SKILLS (it still iterated the source) so all three share one skill set. Add an adopt decoy-skill test and the three-way agreement test.",
       "dependencies": [
         "FORGE-VENDOR-1.1"
       ],
       "write_scope": [
         "factory/scripts/forge_cli/adopt.py",
+        "factory/scripts/forge_cli/upgrade.py",
         "factory/tests/test_gates.py"
       ],
       "acceptance_criteria": [
@@ -106,5 +107,5 @@
   ],
   "project": "",
   "plan_sha256": "724eb208e8d1aeb5ea3595fbeb18b181b74e4474eac00c62cc712ffe8bf887fd",
-  "commit": "e5e7ba0a4f8d6921cfdc0671cc24d017440e73d2"
+  "commit": "f016ec0c5c0ac9e08c9a2edad3aac1cf08de4a3d"
 }

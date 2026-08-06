@@ -2648,6 +2648,38 @@ def test_adopt_vendors_harness_and_preserves_project(tmp_path):
     assert code != 0 and "upgrade" in out
 
 
+def test_adopt_vendors_only_the_harness_owned_skill_not_a_source_decoy(
+    tmp_path: Path, monkeypatch,
+):
+    source = tmp_path / "source"
+    shutil.copytree(
+        HARNESS,
+        source,
+        ignore=shutil.ignore_patterns(".git", ".factory", "__pycache__", "*.pyc"),
+    )
+    (source / "DECOY.md").write_text("# Source-only canon\n")
+    for runtime in (".claude", ".codex"):
+        decoy = source / runtime / "skills" / "decoy" / "SKILL.md"
+        decoy.parent.mkdir(parents=True)
+        decoy.write_text("# Decoy\n\n<!-- canon: DECOY.md -->\n")
+
+    from forge_cli import adopt as adopt_cli
+    monkeypatch.setattr(adopt_cli, "repo_root", lambda: source)
+    target = existing_repo(tmp_path)
+    adopt_cli.cmd_adopt(argparse.Namespace(target=str(target), name="legacy"))
+
+    assert {
+        path.parent.name
+        for path in (target / ".claude" / "skills").glob("*/SKILL.md")
+    } == {"forge"}
+    assert {
+        path.parent.name
+        for path in (target / ".codex" / "skills").glob("*/SKILL.md")
+    } == {"forge"}
+    code, out = run(target, "check_dual_runtime.py", str(target))
+    assert code == 0, out
+
+
 def test_readopt_does_not_rewrite_the_record_origin(tmp_path):
     repo = existing_repo(tmp_path)
     marker = repo / ".factory" / "record-origin.json"
@@ -8528,10 +8560,15 @@ def test_init_vendors_only_the_harness_owned_skill_not_a_source_decoy(
     assert code == 0, out
 
 
-def test_init_and_upgrade_share_the_harness_owned_skill_set(repo):
+def test_init_adopt_upgrade_agree_on_the_harness_owned_skill_set(repo):
+    from forge_cli.adopt import ADOPT_SKILL_TREES
     from forge_cli.scaffold import HARNESS_OWNED_SKILLS
     from forge_cli.upgrade import CLAUDE_HARNESS_OWNED
 
+    adopt_skills = {
+        Path(path).name
+        for path in ADOPT_SKILL_TREES
+    }
     upgrade_skills = {
         Path(path).name
         for path in CLAUDE_HARNESS_OWNED
@@ -8545,7 +8582,7 @@ def test_init_and_upgrade_share_the_harness_owned_skill_set(repo):
         }
         for runtime in (".claude", ".codex")
     }
-    assert upgrade_skills == set(HARNESS_OWNED_SKILLS)
+    assert adopt_skills == upgrade_skills == set(HARNESS_OWNED_SKILLS)
     assert init_skills == {
         ".claude": set(HARNESS_OWNED_SKILLS),
         ".codex": set(HARNESS_OWNED_SKILLS),

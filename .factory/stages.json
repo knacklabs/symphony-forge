@@ -9,17 +9,16 @@
       "base_sha": "e5e7ba0a4f8d6921cfdc0671cc24d017440e73d2",
       "dirty_at_start": {},
       "task_sha256": "0e2b69f06f995cae63e1d9ac93c9dc8cfdb6301fe4a120b4ad331cf80b93b732",
-      "completed_at": "2026-08-06T18:16:44+00:00",
-      "contract_changed": {
-        "at": "2026-08-06T18:16:44+00:00",
-        "from": "1d824f15c6545cbb6703f3d8ec6ce792f274bddde1ecc9d9ce3fb53b0ae01384",
-        "to": "0e2b69f06f995cae63e1d9ac93c9dc8cfdb6301fe4a120b4ad331cf80b93b732"
-      }
+      "completed_at": "2026-08-06T18:16:44+00:00"
     },
     {
       "id": "FORGE-VENDOR-1.2",
       "title": "adopt vendors only the harness-owned skill",
-      "status": "pending"
+      "status": "active",
+      "started_at": "2026-08-06T18:16:57+00:00",
+      "base_sha": "f016ec0c5c0ac9e08c9a2edad3aac1cf08de4a3d",
+      "dirty_at_start": {},
+      "task_sha256": "a7172ef339516b835f8dbd3cbecf247b30a77bf27dfd2e0364fcb078cb2c8457"
     },
     {
       "id": "FORGE-VENDOR-1.3",
