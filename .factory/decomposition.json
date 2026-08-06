@@ -1,0 +1,185 @@
+{
+  "generated_by": "docs-decomposer",
+  "user_facing": true,
+  "doc_roots": [
+    "docs/specs/project-record.md",
+    "plans/active/PH-5-the-project-knows-what-it-built.md"
+  ],
+  "tasks": [
+    {
+      "id": "PH-5.1",
+      "title": "forge history reads the committed events",
+      "objective": "Add a forge history command that reads .factory/events.jsonl, filtered by story, event type, or date range, and shows events with no story attribution rather than hiding them \u2014 the reader the 314 committed events currently lack.",
+      "dependencies": [],
+      "write_scope": [
+        "factory/scripts/forge_cli/events.py",
+        "factory/scripts/forge_cli/history.py",
+        "factory/scripts/forge.py",
+        "factory/tests/test_gates.py"
+      ],
+      "acceptance_criteria": [
+        "load_events gains event= (type) and since=/until= (date, ISO prefix) filters alongside the existing story=, and each composes with the others.",
+        "forge history with no filter prints every event, grouping by story and printing an explicit section for events that carry no story, so a gap is shown rather than filtered away.",
+        "forge history --story <key>, --event <type>, --since <date> and --until <date> each narrow the output as named, and event types are discovered from the data rather than validated against a hardcoded set.",
+        "The command is read-only: it opens events.jsonl for reading only and writes nothing, proven by asserting no write occurs against a repo whose .factory is otherwise untouched.",
+        "forge history is registered in forge.py and runs stdlib-only."
+      ],
+      "verify_commands": [
+        "uv run --with pytest python -m pytest factory/tests/test_gates.py -q -k \"history or events\""
+      ],
+      "required_tests": [
+        {
+          "id": "test_forge_history_filters_by_story_type_and_date",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_forge_history_names_unattributed_events",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_forge_history_is_read_only",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        }
+      ],
+      "reviewer_focus": "That event types are discovered, not enumerated \u2014 a hardcoded set would silently drop any new type an emitter adds. And that the reader truly never writes: no lazy 'append missing field' or file rewrite hiding in the read path."
+    },
+    {
+      "id": "PH-5.2",
+      "title": "Quickfix windows record what they touched",
+      "objective": "Make an open quickfix window record every product file written through it, including inside an approved story where guard_product_writes returns early today, while keeping the five-file budget binding only where the quickfix is the sole authorization.",
+      "dependencies": [
+        "PH-5.1"
+      ],
+      "write_scope": [
+        "factory/scripts/pre_tool_use.py",
+        "factory/scripts/forge_cli/quickfix.py",
+        "factory/tests/test_gates.py"
+      ],
+      "acceptance_criteria": [
+        "When a quickfix window is open, every product path a write touches is recorded against the window BEFORE the approved-plan early return in guard_product_writes, so a window opened during an active story records its files instead of recording nothing.",
+        "Recording is passive: it appends to the window's file list, reaches no deny, and returns no authorization \u2014 the planning lock's deny paths and the approved-plan early return are otherwise unchanged.",
+        "The five-file budget (claim_files) still binds on the path where the quickfix is the sole authorization: an unplanned write of a sixth distinct file is still refused.",
+        "A quickfix opened inside an approved, decomposed story ends with a non-empty files list after a product write \u2014 the exact case that recorded nothing before.",
+        "The recording is idempotent: the same file touched twice appears once."
+      ],
+      "verify_commands": [
+        "uv run --with pytest python -m pytest factory/tests/test_gates.py -q -k \"quickfix or guard or claim\""
+      ],
+      "required_tests": [
+        {
+          "id": "test_quickfix_records_files_inside_an_active_story",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_quickfix_budget_still_refuses_over_limit_when_unplanned",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_quickfix_recording_authorizes_nothing",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        }
+      ],
+      "reviewer_focus": "This edits pre_tool_use.py, the always-armed planning lock (0013). The one thing that matters: recording must add a RECORD, never an authorization. Verify every deny path still fires and the recording branch cannot cause a write to be allowed that would otherwise be denied. If the recording path can skip a deny, that is a blocking finding."
+    },
+    {
+      "id": "PH-5.3",
+      "title": "The PR link is an event",
+      "objective": "Link a merged PR to the work it shipped by appending a pr-linked event to .factory/events.jsonl \u2014 the one durable home that survives a clone with no GitHub remote \u2014 surfaced by forge history.",
+      "dependencies": [
+        "PH-5.2"
+      ],
+      "write_scope": [
+        "factory/scripts/forge_cli/history.py",
+        "factory/scripts/forge.py",
+        "factory/tests/test_gates.py"
+      ],
+      "acceptance_criteria": [
+        "forge pr-link records a pr-linked event carrying the story/issue key and the PR reference, appended to .factory/events.jsonl through append_event.",
+        "forge history shows the pr-linked event for its story, so 'which PR shipped this' is answered from committed data with no GitHub call.",
+        "The link is readable after a clone with no remote configured: a test reads it back with no origin set.",
+        "The PR reference is not written to run.json, because pr_ready reduces run.json to {project, phase} and would erase it at ship."
+      ],
+      "verify_commands": [
+        "uv run --with pytest python -m pytest factory/tests/test_gates.py -q -k \"pr_link or history\""
+      ],
+      "required_tests": [
+        {
+          "id": "test_pr_link_event_survives_a_clone_with_no_remote",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_forge_history_shows_the_pr_link",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        }
+      ],
+      "reviewer_focus": "That the event is the ONLY home \u2014 no parallel write to run.json or a sidecar that a clone or a ship would drop. The whole point is one durable place, verified to survive with no remote."
+    },
+    {
+      "id": "PH-5.4",
+      "title": "The record states where it begins, and no shipped story is silently outcome-less",
+      "objective": "Write a record-origin boundary marker at init and adopt (date, commit, count of preceding commits), have the board report it instead of implying completeness, add the two pre-contract stories to the roadmap MARKED as predating the outcome contract, and have doctor report any done story that is both unmarked and outcome-less.",
+      "dependencies": [
+        "PH-5.3"
+      ],
+      "write_scope": [
+        "factory/scripts/forge_cli/scaffold.py",
+        "factory/scripts/forge_cli/adopt.py",
+        "factory/scripts/forge_cli/board.py",
+        "factory/scripts/forge_cli/doctor.py",
+        "plans/roadmap.json",
+        "docs/getting-started.md",
+        "factory/skills/forge.md",
+        "factory/tests/test_gates.py"
+      ],
+      "acceptance_criteria": [
+        "forge init and forge adopt write .factory/record-origin.json with date, commit, and preceding_commits (the count of commits already in the repo), create-if-absent so a re-adopt never rewrites the origin.",
+        "The boundary marker lives in its own committed file, NOT run.json, so pr_ready's {project, phase} projection cannot erase it at first ship.",
+        "The board reads record-origin.json and reports the boundary ('record begins here; N commits precede it') rather than implying the project began at adoption; when the marker is absent (a repo predating this) the board says nothing false.",
+        "FORGE-INIT-1 and harness-v2-wedge appear in plans/roadmap.json as done items carrying predates_outcome_contract: true and NO outcome field \u2014 key, title and status only, reconstructed from committed evidence, never a synthesised outcome.",
+        "forge doctor REPORTS any done roadmap item that is both outcome-less and unmarked; the check is a report, not a load-time gate, so a legacy roadmap still loads (the PH-2 authoring-not-loading rule).",
+        "docs/getting-started.md and factory/skills/forge.md describe forge history and the record boundary."
+      ],
+      "verify_commands": [
+        "uv run --with pytest python -m pytest factory/tests/test_gates.py -q -k \"origin or boundary or predates or doctor or board\"",
+        "python3 factory/scripts/check_repo_budget.py"
+      ],
+      "required_tests": [
+        {
+          "id": "test_init_writes_a_record_origin_marker_with_preceding_count",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_readopt_does_not_rewrite_the_record_origin",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_board_reports_the_record_boundary",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_doctor_reports_an_unmarked_outcomeless_done_item",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        }
+      ],
+      "reviewer_focus": "That no outcome is synthesised for the two pre-contract stories \u2014 they carry a marker and nothing else, which is the spec's honesty rule. And that the doctor check is a report, not a gate: adding it to load_roadmap or save_roadmap would refuse a legacy client roadmap, the exact PH-2 mistake."
+    }
+  ],
+  "project": "",
+  "story": "PH-5",
+  "epic": "symphony-forge",
+  "plan_file": "plans/active/PH-5-the-project-knows-what-it-built.md",
+  "plan_sha256": "7cfdef6f59f17aacb706d98d928973d126bf1f8a67a913b392279a146448d182",
+  "commit": "5431c41fbf392de7ad5fd4ec9ac49c69d80563c4"
+}

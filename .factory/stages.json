@@ -1,0 +1,25 @@
+{
+  "issue": "PH-5",
+  "stages": [
+    {
+      "id": "PH-5.1",
+      "title": "forge history reads the committed events",
+      "status": "pending"
+    },
+    {
+      "id": "PH-5.2",
+      "title": "Quickfix windows record what they touched",
+      "status": "pending"
+    },
+    {
+      "id": "PH-5.3",
+      "title": "The PR link is an event",
+      "status": "pending"
+    },
+    {
+      "id": "PH-5.4",
+      "title": "The record states where it begins, and no shipped story is silently outcome-less",
+      "status": "pending"
+    }
+  ]
+}

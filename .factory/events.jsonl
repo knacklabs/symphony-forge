@@ -335,3 +335,5 @@
 {"event": "roadmap-add", "generated_by": "orchestrator", "at": "2026-08-05T21:22:32+00:00", "story": "PH-5", "detail": "docs/specs/project-record.md"}
 {"event": "intake", "generated_by": "orchestrator", "at": "2026-08-05T21:22:40+00:00", "story": "PH-5", "detail": "The project knows what it built"}
 {"event": "plan-approved", "generated_by": "planner-high", "at": "2026-08-06T04:13:57+00:00", "story": "PH-5", "detail": "plans/active/PH-5-the-project-knows-what-it-built.md"}
+{"event": "decomposed", "generated_by": "docs-decomposer", "at": "2026-08-06T04:15:18+00:00", "story": "PH-5", "detail": "4 task(s)"}
+{"event": "implementing", "generated_by": "orchestrator", "at": "2026-08-06T04:15:18+00:00", "story": "PH-5"}
