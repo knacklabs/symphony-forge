@@ -451,3 +451,7 @@
 {"event": "signal-contradiction", "generated_by": "implementer", "at": "2026-08-06T17:55:14+00:00", "story": "FORGE-VENDOR-1", "detail": "FORGE-VENDOR-1.1 requires a passing init-adopt-upgrade agreement test, but adopt still wholesale-copies skills and adopt.py is outside this stage scope because routing adopt is assigned to FORGE-VENDO"}
 {"event": "decomposed", "generated_by": "docs-decomposer", "at": "2026-08-06T17:56:54+00:00", "story": "FORGE-VENDOR-1", "detail": "3 task(s)"}
 {"event": "signal-resolved", "generated_by": "orchestrator", "at": "2026-08-06T17:56:54+00:00", "story": "FORGE-VENDOR-1", "detail": "S-0001-41b8: Correct catch. The three-command agreement test is moved to FORGE-VENDOR-1.2 (after adopt is routed). In THIS stage (1.1): define the harness-owned skill set (forge) once, route init and re-express up"}
+{"event": "delegated", "generated_by": "orchestrator", "at": "2026-08-06T17:57:31+00:00", "story": "FORGE-VENDOR-1", "detail": "FORGE-VENDOR-1.1 (write)"}
+{"event": "delegated", "generated_by": "orchestrator", "at": "2026-08-06T18:12:32+00:00", "story": "FORGE-VENDOR-1", "detail": "FORGE-VENDOR-1.1 (write)"}
+{"event": "stage-contract-changed", "generated_by": "implementer", "at": "2026-08-06T18:16:44+00:00", "story": "FORGE-VENDOR-1", "detail": "FORGE-VENDOR-1.1: task contract re-recorded mid-stage"}
+{"event": "stage-done", "generated_by": "implementer", "at": "2026-08-06T18:16:44+00:00", "story": "FORGE-VENDOR-1", "detail": "FORGE-VENDOR-1.1 Shared harness-owned skill set; init vendors only it"}
