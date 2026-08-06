@@ -362,3 +362,4 @@
 {"event": "tests-automated", "generated_by": "implementer", "at": "2026-08-06T06:41:40+00:00", "story": "PH-5", "detail": "passed"}
 {"event": "tests-functional", "generated_by": "functional-checker", "at": "2026-08-06T06:41:41+00:00", "story": "PH-5", "detail": "passed"}
 {"event": "verify-passed", "generated_by": "orchestrator", "at": "2026-08-06T06:53:25+00:00", "story": "PH-5"}
+{"event": "shipped", "generated_by": "orchestrator", "at": "2026-08-06T06:53:58+00:00", "story": "PH-5", "detail": "The repo can now tell you what it built. forge history reads the committed event timeline filtered by story, type, or date and shows events no story owns instead of hiding them. Quickfix windows recor"}

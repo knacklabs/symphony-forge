@@ -1,0 +1,30 @@
+{"event": "roadmap-add", "generated_by": "orchestrator", "at": "2026-08-05T21:22:32+00:00", "story": "PH-5", "detail": "docs/specs/project-record.md"}
+{"event": "intake", "generated_by": "orchestrator", "at": "2026-08-05T21:22:40+00:00", "story": "PH-5", "detail": "The project knows what it built"}
+{"event": "plan-approved", "generated_by": "planner-high", "at": "2026-08-06T04:13:57+00:00", "story": "PH-5", "detail": "plans/active/PH-5-the-project-knows-what-it-built.md"}
+{"event": "decomposed", "generated_by": "docs-decomposer", "at": "2026-08-06T04:15:18+00:00", "story": "PH-5", "detail": "4 task(s)"}
+{"event": "implementing", "generated_by": "orchestrator", "at": "2026-08-06T04:15:18+00:00", "story": "PH-5"}
+{"event": "stage-start", "generated_by": "implementer", "at": "2026-08-06T04:15:26+00:00", "story": "PH-5", "detail": "PH-5.1 forge history reads the committed events"}
+{"event": "delegated", "generated_by": "orchestrator", "at": "2026-08-06T04:20:05+00:00", "story": "PH-5", "detail": "PH-5.1 (write)"}
+{"event": "stage-done", "generated_by": "implementer", "at": "2026-08-06T04:32:20+00:00", "story": "PH-5", "detail": "PH-5.1 forge history reads the committed events"}
+{"event": "stage-start", "generated_by": "implementer", "at": "2026-08-06T04:32:30+00:00", "story": "PH-5", "detail": "PH-5.2 Quickfix windows record what they touched"}
+{"event": "delegated", "generated_by": "orchestrator", "at": "2026-08-06T04:40:13+00:00", "story": "PH-5", "detail": "PH-5.2 (write)"}
+{"event": "stage-done", "generated_by": "implementer", "at": "2026-08-06T05:07:12+00:00", "story": "PH-5", "detail": "PH-5.2 Quickfix windows record what they touched"}
+{"event": "stage-start", "generated_by": "implementer", "at": "2026-08-06T05:07:32+00:00", "story": "PH-5", "detail": "PH-5.3 The PR link is an event"}
+{"event": "delegated", "generated_by": "orchestrator", "at": "2026-08-06T05:11:48+00:00", "story": "PH-5", "detail": "PH-5.3 (write)"}
+{"event": "stage-done", "generated_by": "implementer", "at": "2026-08-06T05:23:46+00:00", "story": "PH-5", "detail": "PH-5.3 The PR link is an event"}
+{"event": "stage-start", "generated_by": "implementer", "at": "2026-08-06T05:23:57+00:00", "story": "PH-5", "detail": "PH-5.4 The record states where it begins, and no shipped story is silently outcome-less"}
+{"event": "signal-contradiction", "generated_by": "implementer", "at": "2026-08-06T05:26:55+00:00", "story": "PH-5", "detail": "PH-5.4 cannot satisfy the brief literally within scope: visible board rendering requires factory/board/index.html (out of scope), while roadmap items limited to key/title/status plus predates_outcome_"}
+{"event": "delegated", "generated_by": "orchestrator", "at": "2026-08-06T05:28:00+00:00", "story": "PH-5", "detail": "PH-5.4 (write)"}
+{"event": "signal-resolved", "generated_by": "orchestrator", "at": "2026-08-06T05:29:10+00:00", "story": "PH-5", "detail": "S-0001-e151: Both real, both make the story more correct. (1) The board must RENDER the boundary, not just carry it in the API \u2014 AC4 is user_facing, so 'the board reports it' means visible. factory/board/index.htm"}
+{"event": "decomposed", "generated_by": "docs-decomposer", "at": "2026-08-06T05:29:10+00:00", "story": "PH-5", "detail": "4 task(s)"}
+{"event": "delegated", "generated_by": "orchestrator", "at": "2026-08-06T05:39:52+00:00", "story": "PH-5", "detail": "PH-5.4 (write)"}
+{"event": "stage-contract-changed", "generated_by": "implementer", "at": "2026-08-06T06:15:16+00:00", "story": "PH-5", "detail": "PH-5.4: task contract re-recorded mid-stage"}
+{"event": "stage-done", "generated_by": "implementer", "at": "2026-08-06T06:15:16+00:00", "story": "PH-5", "detail": "PH-5.4 The record states where it begins, and no shipped story is silently outcome-less"}
+{"event": "verify-passed", "generated_by": "orchestrator", "at": "2026-08-06T06:26:42+00:00", "story": "PH-5"}
+{"event": "review-quality", "generated_by": "autoreview", "at": "2026-08-06T06:41:40+00:00", "story": "PH-5"}
+{"event": "review-performance", "generated_by": "autoreview", "at": "2026-08-06T06:41:40+00:00", "story": "PH-5"}
+{"event": "review-security", "generated_by": "autoreview", "at": "2026-08-06T06:41:40+00:00", "story": "PH-5"}
+{"event": "tests-automated", "generated_by": "implementer", "at": "2026-08-06T06:41:40+00:00", "story": "PH-5", "detail": "passed"}
+{"event": "tests-functional", "generated_by": "functional-checker", "at": "2026-08-06T06:41:41+00:00", "story": "PH-5", "detail": "passed"}
+{"event": "verify-passed", "generated_by": "orchestrator", "at": "2026-08-06T06:53:25+00:00", "story": "PH-5"}
+{"event": "shipped", "generated_by": "orchestrator", "at": "2026-08-06T06:53:58+00:00", "story": "PH-5", "detail": "The repo can now tell you what it built. forge history reads the committed event timeline filtered by story, type, or date and shows events no story owns instead of hiding them. Quickfix windows recor"}

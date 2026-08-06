@@ -174,17 +174,20 @@
         "Every shipped story has an outcome or an explicit marker that it predates the outcome contract; no outcome is written after the fact for work whose author did not state one."
       ],
       "order": 8,
-      "status": "active",
+      "status": "done",
       "epic": "symphony-forge",
       "skill": "backend",
       "depends_on": [
         "PH-4"
       ],
-      "spec": "docs/specs/project-record.md"
+      "spec": "docs/specs/project-record.md",
+      "completed_at": "2026-08-06T06:53:58+00:00",
+      "history": ".factory/history/PH-5/",
+      "outcome": "The repo can now tell you what it built. forge history reads the committed event timeline filtered by story, type, or date and shows events no story owns instead of hiding them. Quickfix windows record every file they touch, so an ad-hoc change is no longer a why with no what. A merged PR is linked to its work by a durable event that survives a clone with no remote \u2014 forge pr-link. forge init and adopt stamp an honest 'record begins here' boundary (silent when it cannot be trusted), and forge doctor flags any shipped story with neither an outcome nor a predates-the-contract marker \u2014 the two that predate it now carry that marker rather than a fabricated outcome."
     }
   ],
   "generated_by": "human",
-  "updated_at": "2026-08-05T21:22:40+00:00",
+  "updated_at": "2026-08-06T06:53:58+00:00",
   "epics": [
     {
       "id": "symphony-forge",

@@ -1,0 +1,17 @@
+{
+  "issue_key": "PH-5",
+  "title": "The project knows what it built",
+  "tracker": "linear",
+  "branch": "feat/PH-5-the-project-knows-what-it-built",
+  "phase": "pr-ready",
+  "plan_status": "approved",
+  "decomposition_status": "recorded",
+  "implementation_status": "pending",
+  "tests_status": "passed",
+  "verify_status": "passed",
+  "review_status": "passed",
+  "created_at": "2026-08-05T21:22:40+00:00",
+  "updated_at": "2026-08-06T06:53:58+00:00",
+  "plan_file": "plans/completed/PH-5-the-project-knows-what-it-built.md",
+  "story": "PH-5"
+}
