@@ -346,3 +346,9 @@
 {"event": "stage-start", "generated_by": "implementer", "at": "2026-08-06T05:07:32+00:00", "story": "PH-5", "detail": "PH-5.3 The PR link is an event"}
 {"event": "delegated", "generated_by": "orchestrator", "at": "2026-08-06T05:11:48+00:00", "story": "PH-5", "detail": "PH-5.3 (write)"}
 {"event": "pr-linked", "generated_by": "orchestrator", "at": "2026-08-06T05:12:34+00:00", "story": "PH-4", "detail": "https://github.com/knacklabs/symphony-forge/pull/42"}
+{"event": "stage-done", "generated_by": "implementer", "at": "2026-08-06T05:23:46+00:00", "story": "PH-5", "detail": "PH-5.3 The PR link is an event"}
+{"event": "stage-start", "generated_by": "implementer", "at": "2026-08-06T05:23:57+00:00", "story": "PH-5", "detail": "PH-5.4 The record states where it begins, and no shipped story is silently outcome-less"}
+{"event": "signal-contradiction", "generated_by": "implementer", "at": "2026-08-06T05:26:55+00:00", "story": "PH-5", "detail": "PH-5.4 cannot satisfy the brief literally within scope: visible board rendering requires factory/board/index.html (out of scope), while roadmap items limited to key/title/status plus predates_outcome_"}
+{"event": "delegated", "generated_by": "orchestrator", "at": "2026-08-06T05:28:00+00:00", "story": "PH-5", "detail": "PH-5.4 (write)"}
+{"event": "signal-resolved", "generated_by": "orchestrator", "at": "2026-08-06T05:29:10+00:00", "story": "PH-5", "detail": "S-0001-e151: Both real, both make the story more correct. (1) The board must RENDER the boundary, not just carry it in the API \u2014 AC4 is user_facing, so 'the board reports it' means visible. factory/board/index.htm"}
+{"event": "decomposed", "generated_by": "docs-decomposer", "at": "2026-08-06T05:29:10+00:00", "story": "PH-5", "detail": "4 task(s)"}

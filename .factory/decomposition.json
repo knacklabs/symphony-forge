@@ -133,6 +133,7 @@
         "factory/scripts/forge_cli/scaffold.py",
         "factory/scripts/forge_cli/adopt.py",
         "factory/scripts/forge_cli/board.py",
+        "factory/board/index.html",
         "factory/scripts/forge_cli/doctor.py",
         "plans/roadmap.json",
         "docs/getting-started.md",
@@ -142,8 +143,8 @@
       "acceptance_criteria": [
         "forge init and forge adopt write .factory/record-origin.json with date, commit, and preceding_commits (the count of commits already in the repo), create-if-absent so a re-adopt never rewrites the origin.",
         "The boundary marker lives in its own committed file, NOT run.json, so pr_ready's {project, phase} projection cannot erase it at first ship.",
-        "The board reads record-origin.json and reports the boundary ('record begins here; N commits precede it') rather than implying the project began at adoption; when the marker is absent (a repo predating this) the board says nothing false.",
-        "FORGE-INIT-1 and harness-v2-wedge appear in plans/roadmap.json as done items carrying predates_outcome_contract: true and NO outcome field \u2014 key, title and status only, reconstructed from committed evidence, never a synthesised outcome.",
+        "The board API (aggregate_state) carries record-origin.json AND index.html renders the boundary ('record begins here; N commits precede it') rather than implying the project began at adoption; when the marker is absent (a repo predating this) the board says nothing false.",
+        "FORGE-INIT-1 and harness-v2-wedge appear in plans/roadmap.json as done items carrying predates_outcome_contract: true, their epic (symphony-forge \u2014 real structural membership, which the roadmap contract requires of every item), and NO outcome field. Key, title, status and epic are reconstructed from committed evidence; the OUTCOME is never synthesised \u2014 that is the honesty rule, and epic membership is a fact, not an outcome.",
         "forge doctor REPORTS any done roadmap item that is both outcome-less and unmarked; the check is a report, not a load-time gate, so a legacy roadmap still loads (the PH-2 authoring-not-loading rule).",
         "docs/getting-started.md and factory/skills/forge.md describe forge history and the record boundary."
       ],
@@ -181,5 +182,5 @@
   "epic": "symphony-forge",
   "plan_file": "plans/active/PH-5-the-project-knows-what-it-built.md",
   "plan_sha256": "7cfdef6f59f17aacb706d98d928973d126bf1f8a67a913b392279a146448d182",
-  "commit": "5431c41fbf392de7ad5fd4ec9ac49c69d80563c4"
+  "commit": "b175148428500a8c8da0277185a470bd181c3095"
 }

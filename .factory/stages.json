@@ -33,7 +33,7 @@
     {
       "id": "PH-5.3",
       "title": "The PR link is an event",
-      "status": "active",
+      "status": "done",
       "started_at": "2026-08-06T05:07:32+00:00",
       "base_sha": "c8509341d9cc6e530bbf19f52bebb5c002e78621",
       "dirty_at_start": {
@@ -46,12 +46,26 @@
           "git": "1 .M N... 100644 100644 100644 995d848390c7ad7f384f39d6356c1113c9d0bc9a 995d848390c7ad7f384f39d6356c1113c9d0bc9a .factory/stages.json\u0000\u0000100644 995d848390c7ad7f384f39d6356c1113c9d0bc9a 0\t.factory/stages.json\u0000\u0000H .factory/stages.json\u0000"
         }
       },
-      "task_sha256": "216b37309e538ec6bc8ae7dd6486e5d4e316d0fdab435c52de14a5fce1bbdb31"
+      "task_sha256": "216b37309e538ec6bc8ae7dd6486e5d4e316d0fdab435c52de14a5fce1bbdb31",
+      "completed_at": "2026-08-06T05:23:46+00:00"
     },
     {
       "id": "PH-5.4",
       "title": "The record states where it begins, and no shipped story is silently outcome-less",
-      "status": "pending"
+      "status": "active",
+      "started_at": "2026-08-06T05:23:56+00:00",
+      "base_sha": "b175148428500a8c8da0277185a470bd181c3095",
+      "dirty_at_start": {
+        ".factory/events.jsonl": {
+          "digest": "de2f840ac261a56989b82920c28d04d063380ec5dcefaf49dfb7175aeef11c79",
+          "git": "1 .M N... 100644 100644 100644 f32e5062938415968ca665bb23f99637a53e1285 f32e5062938415968ca665bb23f99637a53e1285 .factory/events.jsonl\u0000\u0000100644 f32e5062938415968ca665bb23f99637a53e1285 0\t.factory/events.jsonl\u0000\u0000H .factory/events.jsonl\u0000"
+        },
+        ".factory/stages.json": {
+          "digest": "e6d95494d55009b4b7e13a81b825f9cd191c142767a020e0831514fb31a04d29",
+          "git": "1 .M N... 100644 100644 100644 b684e334d249a757954570d2f2c88e698bd244f4 b684e334d249a757954570d2f2c88e698bd244f4 .factory/stages.json\u0000\u0000100644 b684e334d249a757954570d2f2c88e698bd244f4 0\t.factory/stages.json\u0000\u0000H .factory/stages.json\u0000"
+        }
+      },
+      "task_sha256": "aaec302f57ca39f27bf19ed7a4494520e8c53878ab76e4afc6f8677235f8a20a"
     }
   ]
 }
