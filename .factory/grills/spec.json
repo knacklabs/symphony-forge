@@ -2,22 +2,19 @@
   "generated_by": "griller",
   "gate": "spec",
   "verdict": "pass",
-  "questions_asked": 4,
-  "summary": "Interrogated docs/specs/path-boundary.md against decision 0005 (recurring-class escalation), decision 0028 (the invariant it states), and the actual copytree/symlink handling in the three commands. The one hard technical claim \u2014 that one shared check suffices despite copytree walks \u2014 was verified against the code rather than trusted.",
+  "questions_asked": 2,
   "gaps": [
-    "The spec says 'one shared check', but copytree cannot validate each internal file through a simple wrapper. Verified this is not a hole: the escape vector is the DESTINATION root (or a dest ancestor) being a symlink pointing outside the target, not the tree's internal files. upgrade's symlinks=True sites (upgrade.py:91,440) PRESERVE links rather than follow them; the symlinks=False sites (77,394; scaffold 324,334,336) follow SOURCE links, and the source is the trusted harness. So 'validate the root destination before the walk' is both sufficient and achievable, which is what the spec says.",
-    "The spec states the invariant but does not enumerate the write sites. That is correct scope: the enumeration is the plan/decomposition's job (a read-only site map is already running), and pinning it in the spec would stale the moment a site moves."
+    "How is 'harness-owned' determined, given init/adopt use repo_root() as their source \u2014 which the vendored gate tests set to the CLIENT repo, so there is no separate harness reference to iterate?",
+    "The vendored factory-scaffold workflow runs the harness's own regression suite in every client; some tests bind to symphony-forge's private FORGE-INIT-1 fixtures and can never pass elsewhere."
   ],
   "contradictions": [],
   "resolutions": [
-    "The copytree concern is resolved by the spec's own wording ('validates its root destination before the walk and does not follow symlinks into the tree') once checked against the code \u2014 no spec change needed, the claim holds.",
-    "Site enumeration stays out of the spec and belongs to the plan; the spec's acceptance criteria are about the invariant holding at every site and being regression-tested, which is checkable without naming each site."
+    "Resolved: a HARDCODED harness-owned manifest (whitelist), defined once and shared by init, adopt and upgrade. Because the source is repo_root() (the client under the vendored tests), the commands cannot distinguish harness-owned by iterating a separate tree \u2014 they must copy exactly the known harness paths (.claude/{CLAUDE.md, settings.json, skills/forge}, .codex config + harness agents + skills/forge) and nothing else from the source's .claude/.codex. This subsumes the reported skills-canon bug and also keeps a client's custom .codex content out of a scaffold. A test asserts init/adopt/upgrade agree on the set.",
+    "Resolved by human decision (this session): GATE the fixture-bound tests \u2014 they skip when their symphony-forge fixture (.factory/history/FORGE-INIT-1) is absent, so the vendored workflow passes in a client while still running every portable check and still running the fixture tests in symphony-forge's own CI. (The alternative, dropping pytest from the vendored workflow, was rejected: clients keep running the harness regression suite.)"
   ],
-  "open_items": [
-    "Whether the shared helper lives in scaffold.py (already imported by adopt) or a new small module is a plan-level choice, not a spec question."
-  ],
-  "issue": "path-boundary",
-  "input_sha256": "d9e07940822ccc9e559fa8157dc8ffa07de078e3c20b2cb6b0ccc458799249f1",
-  "recorded_at": "2026-08-06T07:34:36+00:00",
-  "commit": "2d8349f6077634c086ed76c7dafd8b94543f6679"
+  "open_items": [],
+  "summary": "The capability is well-scoped: init and adopt must vendor only harness-owned .claude/.codex machinery (a shared whitelist manifest), and the vendored regression suite must skip symphony-forge-only fixture tests in a client. Root cause confirmed against the code \u2014 all three commands source from repo_root(), so only a hardcoded manifest is safe. The two substantive choices (manifest whitelist; gate vs drop the harness tests) were put to the human and resolved. No contradiction with active decisions (0014 specs-before-build satisfied; 0016 machinery-dir ownership). Ready to confirm.",
+  "input_sha256": "f6a97a10c6d396e1e23f5fb36f354cfa80cde1e430dcb93c94992aa810b106ba",
+  "recorded_at": "2026-08-06T17:44:06+00:00",
+  "commit": "595cd0b85872913a2d004b5aa859fccc30f15a54"
 }

@@ -1,3 +1,17 @@
 {
-  "phase": "shipped"
+  "issue_key": "FORGE-VENDOR-1",
+  "title": "init and adopt vendor only harness-owned machinery",
+  "tracker": "linear",
+  "branch": "feat/FORGE-VENDOR-1-init-and-adopt-vendor-only-harness-owned-machinery",
+  "phase": "planning",
+  "plan_status": "approved",
+  "decomposition_status": "pending",
+  "implementation_status": "pending",
+  "tests_status": "pending",
+  "verify_status": "pending",
+  "review_status": "pending",
+  "created_at": "2026-08-06T17:44:39+00:00",
+  "updated_at": "2026-08-06T17:50:59+00:00",
+  "plan_file": "plans/active/FORGE-VENDOR-1-init-and-adopt-vendor-only-harness-owned-machinery.md",
+  "story": "FORGE-VENDOR-1"
 }
