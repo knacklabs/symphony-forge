@@ -355,3 +355,4 @@
 {"event": "delegated", "generated_by": "orchestrator", "at": "2026-08-06T05:39:52+00:00", "story": "PH-5", "detail": "PH-5.4 (write)"}
 {"event": "stage-contract-changed", "generated_by": "implementer", "at": "2026-08-06T06:15:16+00:00", "story": "PH-5", "detail": "PH-5.4: task contract re-recorded mid-stage"}
 {"event": "stage-done", "generated_by": "implementer", "at": "2026-08-06T06:15:16+00:00", "story": "PH-5", "detail": "PH-5.4 The record states where it begins, and no shipped story is silently outcome-less"}
+{"event": "verify-passed", "generated_by": "orchestrator", "at": "2026-08-06T06:26:42+00:00", "story": "PH-5"}
