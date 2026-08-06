@@ -28,6 +28,7 @@ from pathlib import Path
 import pytest
 
 HARNESS = Path(__file__).resolve().parents[2]
+FORGE_INIT_FIXTURE = HARNESS / ".factory" / "history" / "FORGE-INIT-1"
 sys.path.insert(0, str(HARNESS / "factory" / "scripts"))
 from record_signoff import REQUIRED_BRIEF_HEADINGS
 
@@ -2124,6 +2125,10 @@ def add_epic(repo: Path, epic=ROADMAP_EPIC) -> tuple[int, str]:
                *source_args)
 
 
+@pytest.mark.skipif(
+    not FORGE_INIT_FIXTURE.is_dir(),
+    reason="requires the FORGE-INIT-1 history fixture",
+)
 def test_shipped_roadmap_satisfies_the_story_contract():
     roadmap = json.loads((HARNESS / "plans" / "roadmap.json").read_text())
     epics = roadmap["epics"]
@@ -6529,6 +6534,10 @@ def test_decomposition_refuses_when_roadmap_story_is_missing(repo, tmp_path):
     assert "ENG-1" in out and "roadmap" in out
 
 
+@pytest.mark.skipif(
+    not FORGE_INIT_FIXTURE.is_dir(),
+    reason="requires the FORGE-INIT-1 history fixture",
+)
 def test_historical_decomposition_artifacts_still_parse():
     schema = json.loads((HARNESS / "factory" / "schemas" / "decomposition.json").read_text())
     assert "build_waves" in schema["optional"]
@@ -6761,6 +6770,10 @@ def test_doctor_reports_an_unmarked_outcomeless_done_item(repo, capsys):
     assert "DONE-1" not in out
 
 
+@pytest.mark.skipif(
+    not FORGE_INIT_FIXTURE.is_dir(),
+    reason="requires the FORGE-INIT-1 history fixture",
+)
 def test_precontract_stories_are_marked_without_synthesized_outcomes():
     roadmap = json.loads((HARNESS / "plans" / "roadmap.json").read_text())
     items = {item["key"]: item for item in roadmap["items"]}
@@ -8510,6 +8523,16 @@ def _init(target: Path, *extra: str):
     )
 
 
+def _copy_harness_source(tmp_path: Path) -> Path:
+    source = tmp_path / "source"
+    shutil.copytree(
+        HARNESS,
+        source,
+        ignore=shutil.ignore_patterns(".git", ".factory", "__pycache__", "*.pyc"),
+    )
+    return source
+
+
 def test_init_into_nonempty_noncolliding_target(tmp_path: Path):
     # A new repo with a commit of its own docs must not trip the guard
     target = tmp_path / "app"
@@ -8529,12 +8552,7 @@ def test_init_into_nonempty_noncolliding_target(tmp_path: Path):
 def test_init_vendors_only_the_harness_owned_skill_not_a_source_decoy(
     tmp_path: Path, monkeypatch,
 ):
-    source = tmp_path / "source"
-    shutil.copytree(
-        HARNESS,
-        source,
-        ignore=shutil.ignore_patterns(".git", ".factory", "__pycache__", "*.pyc"),
-    )
+    source = _copy_harness_source(tmp_path)
     (source / "DECOY.md").write_text("# Source-only canon\n")
     for runtime in (".claude", ".codex"):
         decoy = source / runtime / "skills" / "decoy" / "SKILL.md"
@@ -8558,6 +8576,50 @@ def test_init_vendors_only_the_harness_owned_skill_not_a_source_decoy(
     } == {"forge"}
     code, out = run(target, "check_dual_runtime.py", str(target))
     assert code == 0, out
+
+
+def test_vendored_scaffold_check_is_clean_in_a_client_repo_with_its_own_skill(
+    tmp_path: Path, monkeypatch,
+):
+    source = _copy_harness_source(tmp_path)
+    canon = source / "skills" / "client-skill" / "SKILL.md"
+    canon.parent.mkdir(parents=True)
+    canon.write_text("# Client skill canon\n")
+    client_skill = source / ".claude" / "skills" / "client-skill" / "SKILL.md"
+    client_skill.parent.mkdir(parents=True)
+    client_skill.write_text(
+        "# Client skill\n\n<!-- canon: skills/client-skill/SKILL.md -->\n"
+    )
+
+    from forge_cli import scaffold
+    monkeypatch.setattr(scaffold, "repo_root", lambda: source)
+    target = tmp_path / "app"
+    scaffold.cmd_init(argparse.Namespace(
+        name="app", target=str(target), force=False, stack="nestjs-react",
+    ))
+
+    assert not (target / ".claude" / "skills" / "client-skill").exists()
+    code, out = run(target, "check_dual_runtime.py", str(target))
+    assert code == 0, out
+
+    # The scaffold is clean because init EXCLUDED the client skill — not because
+    # the checker is toothless. A legitimate client skill (runtime + its canon
+    # target both present) is accepted...
+    owned = target / ".claude" / "skills" / "client-skill" / "SKILL.md"
+    owned.parent.mkdir(parents=True)
+    owned.write_text("# Client skill\n\n<!-- canon: skills/client-skill/SKILL.md -->\n")
+    owned_canon = target / "skills" / "client-skill" / "SKILL.md"
+    owned_canon.parent.mkdir(parents=True)
+    owned_canon.write_text("# Client skill canon\n")
+    code, out = run(target, "check_dual_runtime.py", str(target))
+    assert code == 0, out
+
+    # ...while the reported failure — the client skill dragged in WITHOUT its
+    # root canon target (init's old wholesale copy) — is caught. So the clean
+    # result above proves init's filtering, and the checker really gates it.
+    owned_canon.unlink()
+    code, out = run(target, "check_dual_runtime.py", str(target))
+    assert code != 0 and "client-skill" in out
 
 
 def test_init_adopt_upgrade_agree_on_the_harness_owned_skill_set(repo):
