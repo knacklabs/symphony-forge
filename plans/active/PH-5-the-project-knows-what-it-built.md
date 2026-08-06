@@ -1,4 +1,9 @@
 ---
+issue: PH-5
+title: The project knows what it built
+status: approved
+saved: 2026-08-06T04:13:57+00:00
+story: PH-5
 decisions_reviewed:
   - 0001-determinism-contract
   - 0002-concurrency-one-task-per-branch
@@ -24,6 +29,7 @@ decisions_reviewed:
   - 0026-bundled-example-validated-by-production-validators
   - 0027-responsive-proof-without-a-browser
 ---
+
 
 # PH-5 — The project knows what it built
 

@@ -1,0 +1,26 @@
+{
+  "generated_by": "griller",
+  "gate": "plan",
+  "issue": "PH-5",
+  "verdict": "pass",
+  "questions_asked": 6,
+  "summary": "Interrogated the PH-5 draft against the roadmap story's five acceptance criteria, the confirmed project-record spec, every active decision ID, and the read-only exploration of the seams. Every task traces to a criterion. Three findings resolved into the plan before saving; the plan makes no new decisions because every choice derives from the confirmed spec or an existing record, which was checked against each active ID.",
+  "gaps": [
+    "AC5's guard was drafted as a check in roadmap.py. That risked validating at load, which PH-2's lesson (and decision 0021's authoring-not-loading rule) says breaks legacy roadmaps \u2014 a client roadmap predating the marker would fail to load.",
+    "The plan asserted recording in the planning-lock hook 'authorizes nothing' without pinning why. The guard flow (pre_tool_use.py:221) was read: the early return at :231 fires before the quickfix check, so recording must be inserted before it; recording appends to the window's file list and reaches no deny and returns nothing, so no authorization path is added. Verified, not assumed.",
+    "The PR-link home could have been run.json's --pr-url, which already exists. Exploration proved pr_ready.py:332 reduces run.json to {project, phase} at ship, destroying it \u2014 so the event ledger is the only home that survives, which is what the spec already chose."
+  ],
+  "contradictions": [],
+  "resolutions": [
+    "AC5 guard moved from roadmap.py (load-time) to forge doctor (a report). pr_ready already requires an outcome to ship, so a new story cannot become outcome-less; doctor names the historical unmarked case without gating legacy loads. Task-4 scope and Surface Impact updated to doctor.py.",
+    "The recording seam is documented as append-only before the approved-plan early return, with claim_files (the budget) unchanged on the authorization path \u2014 the spec's separation of recording from bounding, verified against the actual guard flow. A test asserts the lock still refuses an unbudgeted write.",
+    "PR link stays an event (spec's one home), confirmed against pr_ready's run.json projection which would erase any run-state field."
+  ],
+  "open_items": [
+    "roadmap.json remains a single mutable file that has lost items to merges twice. Named in the plan's Non-goals as a separate decision (making it conflict-free like the 0022 ledgers), not resolved in this story \u2014 it is real but distinct from record completeness.",
+    "Decision 0025's brief-durability question (what a worker was told, no longer committed) is parked from the spec grill and stays out of scope here."
+  ],
+  "input_sha256": "e78eaf2727a21c6a1cc3c24d8f5180e29bf913e990437c2ccc5a9ccf92c68c86",
+  "recorded_at": "2026-08-06T04:13:57+00:00",
+  "commit": "30dd9516df320b2402143a96a9708d14fb6b2fc1"
+}

@@ -4,12 +4,14 @@
   "tracker": "linear",
   "branch": "feat/PH-5-the-project-knows-what-it-built",
   "phase": "planning",
-  "plan_status": "needs-plan",
+  "plan_status": "approved",
   "decomposition_status": "pending",
   "implementation_status": "pending",
   "tests_status": "pending",
   "verify_status": "pending",
   "review_status": "pending",
   "created_at": "2026-08-05T21:22:40+00:00",
-  "updated_at": "2026-08-05T21:22:40+00:00"
+  "updated_at": "2026-08-06T04:13:57+00:00",
+  "plan_file": "plans/active/PH-5-the-project-knows-what-it-built.md",
+  "story": "PH-5"
 }
