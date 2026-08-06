@@ -4,7 +4,11 @@
     {
       "id": "FORGE-VENDOR-1.1",
       "title": "Shared harness-owned skill set; init vendors only it",
-      "status": "pending"
+      "status": "active",
+      "started_at": "2026-08-06T17:53:05+00:00",
+      "base_sha": "e5e7ba0a4f8d6921cfdc0671cc24d017440e73d2",
+      "dirty_at_start": {},
+      "task_sha256": "1d824f15c6545cbb6703f3d8ec6ce792f274bddde1ecc9d9ce3fb53b0ae01384"
     },
     {
       "id": "FORGE-VENDOR-1.2",

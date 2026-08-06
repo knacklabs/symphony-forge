@@ -22,7 +22,7 @@
       "acceptance_criteria": [
         "forge init from a source repo carrying a decoy .claude/skills/decoy/SKILL.md (with a root-level canon target) produces a scaffold that does NOT contain decoy, and check_dual_runtime is clean on the scaffold.",
         "init copies the harness .claude files (CLAUDE.md, settings.json) and only the harness skill dirs .claude/skills/forge and .codex/skills/forge; .codex/agents and .codex config copy as before.",
-        "The harness-owned skill set is defined in ONE place; upgrade's CLAUDE_HARNESS_OWNED and init read the same definition, proven by a test that the commands agree.",
+        "The harness-owned skill set is defined in ONE place; upgrade's CLAUDE_HARNESS_OWNED and init read that same definition (no second hard-coded list), proven by a test. (adopt joins the agreement in FORGE-VENDOR-1.2.)",
         "forge init of symphony-forge produces the same scaffold as before (existing init scaffold tests stay green, unweakened)."
       ],
       "verify_commands": [
@@ -35,7 +35,7 @@
           "command": "uvx --with pytest python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
         },
         {
-          "id": "test_init_adopt_upgrade_agree_on_the_harness_owned_skill_set",
+          "id": "test_init_and_upgrade_share_the_harness_owned_skill_set",
           "path": "factory/tests/test_gates.py",
           "command": "uvx --with pytest python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
         }
@@ -56,6 +56,7 @@
       "acceptance_criteria": [
         "forge adopt from a source repo carrying a decoy .claude/skills/decoy/SKILL.md does NOT vendor decoy into the target, and check_dual_runtime is clean on the result.",
         "adopt vendors only the harness .claude files and the harness skill dirs (.claude/skills/forge, .codex/skills/forge), reading the same shared skill set as init and upgrade.",
+        "A test asserts init, adopt AND upgrade all read the one shared harness-owned skill set (now that adopt is routed) \u2014 no command carries a second hard-coded list.",
         "forge adopt of an existing project behaves as before (existing adopt tests stay green, unweakened)."
       ],
       "verify_commands": [
@@ -64,6 +65,11 @@
       "required_tests": [
         {
           "id": "test_adopt_vendors_only_the_harness_owned_skill_not_a_source_decoy",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_init_adopt_upgrade_agree_on_the_harness_owned_skill_set",
           "path": "factory/tests/test_gates.py",
           "command": "uvx --with pytest python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
         }
@@ -100,5 +106,5 @@
   ],
   "project": "",
   "plan_sha256": "724eb208e8d1aeb5ea3595fbeb18b181b74e4474eac00c62cc712ffe8bf887fd",
-  "commit": "99e4e6eadeed80010d56fcd10b40b53f7a09681a"
+  "commit": "e5e7ba0a4f8d6921cfdc0671cc24d017440e73d2"
 }
