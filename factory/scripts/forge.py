@@ -25,6 +25,7 @@ from forge_cli import quickfix as quickfix_mod
 from forge_cli import scratchpad as scratchpad_mod
 from forge_cli import stages as stages_mod
 from forge_cli import gstack as gstack_mod
+from forge_cli import history as history_mod
 from forge_cli import signal as signal_mod
 from forge_cli import decisions, doctor, phase, plans, roadmap, scaffold, specs, team, upgrade
 
@@ -43,6 +44,14 @@ def main() -> None:
     p_next = sub.add_parser("next", help="where am I and what do I do now (deterministic)")
     p_next.add_argument("--repo")
     p_next.set_defaults(func=phase.cmd_next)
+
+    p_history = sub.add_parser("history", help="read the committed project event timeline")
+    p_history.add_argument("--story", help="show only events attributed to this story")
+    p_history.add_argument("--event", help="show only this event type")
+    p_history.add_argument("--since", help="show events on or after this ISO date prefix")
+    p_history.add_argument("--until", help="show events on or before this ISO date prefix")
+    p_history.add_argument("--repo")
+    p_history.set_defaults(func=history_mod.cmd_history)
 
     p_board = sub.add_parser("board", help="open the read-only local lifecycle board")
     p_board.add_argument("--port", type=int, default=8765)

@@ -337,3 +337,5 @@
 {"event": "plan-approved", "generated_by": "planner-high", "at": "2026-08-06T04:13:57+00:00", "story": "PH-5", "detail": "plans/active/PH-5-the-project-knows-what-it-built.md"}
 {"event": "decomposed", "generated_by": "docs-decomposer", "at": "2026-08-06T04:15:18+00:00", "story": "PH-5", "detail": "4 task(s)"}
 {"event": "implementing", "generated_by": "orchestrator", "at": "2026-08-06T04:15:18+00:00", "story": "PH-5"}
+{"event": "stage-start", "generated_by": "implementer", "at": "2026-08-06T04:15:26+00:00", "story": "PH-5", "detail": "PH-5.1 forge history reads the committed events"}
+{"event": "delegated", "generated_by": "orchestrator", "at": "2026-08-06T04:20:05+00:00", "story": "PH-5", "detail": "PH-5.1 (write)"}

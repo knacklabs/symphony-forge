@@ -4424,6 +4424,89 @@ def test_event_ledger_merges_instead_of_conflicting(repo):
         "become safe and pr_ready could move rather than copy the timeline")
 
 
+def test_forge_history_filters_by_story_type_and_date(repo):
+    ledger = repo / ".factory" / "events.jsonl"
+    ledger.parent.mkdir(exist_ok=True)
+    events = [
+        {"event": "intake", "at": "2026-07-01T09:00:00+00:00",
+         "story": "ENG-1", "detail": "first"},
+        {"event": "future-emitter-event", "at": "2026-07-02T10:00:00+00:00",
+         "story": "ENG-1", "detail": "second"},
+        {"event": "future-emitter-event", "at": "2026-07-03T11:00:00+00:00",
+         "story": "ENG-2", "detail": "third"},
+        {"event": "stage-done", "at": "2026-07-04T12:00:00+00:00",
+         "detail": "unattributed"},
+        {"event": "legacy-event", "story": "ENG-1", "detail": "undated"},
+    ]
+    ledger.write_text("".join(json.dumps(event) + "\n" for event in events))
+
+    code, out = run(repo, "forge.py", "history", "--story", "ENG-1")
+    assert code == 0, out
+    assert "first" in out and "second" in out and "undated" in out
+    assert "third" not in out and "unattributed" not in out
+
+    code, out = run(repo, "forge.py", "history", "--event", "future-emitter-event")
+    assert code == 0, out
+    assert "second" in out and "third" in out
+    assert "first" not in out and "unattributed" not in out
+
+    code, out = run(repo, "forge.py", "history", "--since", "2026-07-03")
+    assert code == 0, out
+    assert "third" in out and "unattributed" in out
+    assert "first" not in out and "second" not in out
+
+    code, out = run(repo, "forge.py", "history", "--until", "2026-07-02")
+    assert code == 0, out
+    assert "first" in out and "second" in out
+    assert "third" not in out and "unattributed" not in out and "undated" not in out
+
+    code, out = run(
+        repo, "forge.py", "history", "--story", "ENG-1",
+        "--event", "future-emitter-event", "--since", "2026-07-02",
+        "--until", "2026-07-02",
+    )
+    assert code == 0, out
+    assert "second" in out
+    assert "first" not in out and "third" not in out
+
+
+def test_forge_history_names_unattributed_events(repo):
+    ledger = repo / ".factory" / "events.jsonl"
+    ledger.parent.mkdir(exist_ok=True)
+    events = [
+        {"event": "intake", "at": "2026-07-01T09:00:00+00:00",
+         "story": "ENG-1", "detail": "attributed"},
+        {"event": "spec-confirmed", "at": "2026-07-01T10:00:00+00:00",
+         "detail": "missing story"},
+    ]
+    ledger.write_text("".join(json.dumps(event) + "\n" for event in events))
+
+    code, out = run(repo, "forge.py", "history")
+    assert code == 0, out
+    assert "Story: ENG-1" in out and "attributed" in out
+    assert "Unattributed events (no story)" in out and "missing story" in out
+
+
+def test_forge_history_is_read_only(repo):
+    ledger = repo / ".factory" / "events.jsonl"
+    ledger.parent.mkdir(exist_ok=True)
+    ledger.write_text(
+        '{"event": "intake", "at": "2026-07-01T09:00:00+00:00", '
+        '"story": "ENG-1"}\n'
+    )
+
+    def factory_snapshot():
+        return {
+            path.relative_to(repo): (path.read_bytes(), path.stat().st_mtime_ns)
+            for path in (repo / ".factory").rglob("*") if path.is_file()
+        }
+
+    before = factory_snapshot()
+    code, out = run(repo, "forge.py", "history")
+    assert code == 0, out
+    assert factory_snapshot() == before
+
+
 def test_decisions_name_the_stories_they_govern(repo, tmp_path):
     sign_off(repo)
     intake(repo)

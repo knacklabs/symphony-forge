@@ -4,7 +4,11 @@
     {
       "id": "PH-5.1",
       "title": "forge history reads the committed events",
-      "status": "pending"
+      "status": "active",
+      "started_at": "2026-08-06T04:15:26+00:00",
+      "base_sha": "5c2e40a04934771cab6cf9c87796d2cb440d50de",
+      "dirty_at_start": {},
+      "task_sha256": "d56f04abbfb7269674df4cc9e7f03e70922130fb10466a79f4fbb3e51d570c72"
     },
     {
       "id": "PH-5.2",
