@@ -466,3 +466,4 @@
 {"event": "stage-start", "generated_by": "implementer", "at": "2026-08-06T18:30:07+00:00", "story": "FORGE-VENDOR-1", "detail": "FORGE-VENDOR-1.3 Gate the FORGE-INIT-1 fixture tests; client-CI simulation"}
 {"event": "delegated", "generated_by": "orchestrator", "at": "2026-08-06T18:42:20+00:00", "story": "FORGE-VENDOR-1", "detail": "FORGE-VENDOR-1.3 (write)"}
 {"event": "stage-done", "generated_by": "implementer", "at": "2026-08-06T18:49:12+00:00", "story": "FORGE-VENDOR-1", "detail": "FORGE-VENDOR-1.3 Gate the FORGE-INIT-1 fixture tests; client-CI simulation"}
+{"event": "verify-passed", "generated_by": "orchestrator", "at": "2026-08-06T18:59:20+00:00", "story": "FORGE-VENDOR-1"}
