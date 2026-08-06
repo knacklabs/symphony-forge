@@ -8622,6 +8622,35 @@ def test_vendored_scaffold_check_is_clean_in_a_client_repo_with_its_own_skill(
     assert code != 0 and "client-skill" in out
 
 
+def test_fixture_bound_tests_skip_in_a_fixture_free_client_scaffold(
+    tmp_path: Path, monkeypatch,
+):
+    # The client-CI guarantee is a PYTEST guarantee, not only a dual-runtime one:
+    # the FORGE-INIT-1-bound tests must SKIP (never fail) in a repo without that
+    # fixture. Scaffold a fixture-free target and run just those tests from its
+    # own vendored suite, proving the skip guards fire where the fixture is absent.
+    from forge_cli import scaffold
+    monkeypatch.setattr(scaffold, "repo_root", lambda: _copy_harness_source(tmp_path))
+    target = tmp_path / "app"
+    scaffold.cmd_init(argparse.Namespace(
+        name="app", target=str(target), force=False, stack="nestjs-react",
+    ))
+    assert not (target / ".factory" / "history" / "FORGE-INIT-1").exists()
+
+    result = subprocess.run(
+        [sys.executable, "-m", "pytest", "factory/tests/test_gates.py",
+         "-p", "no:cacheprovider", "-q", "-k",
+         "historical_decomposition_artifacts_still_parse or "
+         "precontract_stories_are_marked_without_synthesized_outcomes or "
+         "shipped_roadmap_satisfies_the_story_contract"],
+        cwd=target, capture_output=True, text=True,
+        env={**os.environ, "PYTEST_ADDOPTS": "-o tmp_path_retention_policy=none"},
+    )
+    out = result.stdout + result.stderr
+    assert result.returncode == 0, out       # no failures — a fail means the skip broke
+    assert "skipped" in out, out             # the fixture-bound tests actually skipped
+
+
 def test_init_adopt_upgrade_agree_on_the_harness_owned_skill_set():
     # Derive each command's skill set from its CONFIGURED paths, never from the
     # repo's actual skill directories — the whole point of this story is that a

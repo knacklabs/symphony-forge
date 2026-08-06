@@ -435,7 +435,8 @@ def _preflight_init(root: Path, target: Path) -> None:
             assert_target_file_destination(target, dst)
 
     for name in COPY_CLAUDE:
-        assert_target_file_destination(target, target / ".claude" / name)
+        if (root / ".claude" / name).exists():
+            assert_target_file_destination(target, target / ".claude" / name)
 
     codex = target / ".codex"
     assert_target_destination(target, codex)
@@ -521,9 +522,10 @@ def cmd_init(args: argparse.Namespace) -> None:
                              dirs_exist_ok=True, ignore=ignore)
     assert_target_destination(target, target / ".claude").mkdir(exist_ok=True)
     for name in COPY_CLAUDE:
-        dst = target / ".claude" / name
-        shutil.copy2(root / ".claude" / name,
-                     assert_target_file_destination(target, dst))
+        src = root / ".claude" / name
+        if src.exists():  # a source without an optional harness file is legal
+            dst = target / ".claude" / name
+            shutil.copy2(src, assert_target_file_destination(target, dst))
     for rel in COPY_WORKFLOWS:
         src = root / rel
         if src.exists():
