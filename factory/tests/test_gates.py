@@ -2602,6 +2602,24 @@ def test_adopt_vendors_harness_and_preserves_project(tmp_path):
     assert code != 0 and "upgrade" in out
 
 
+def test_readopt_does_not_rewrite_the_record_origin(tmp_path):
+    repo = existing_repo(tmp_path)
+    marker = repo / ".factory" / "record-origin.json"
+    marker.parent.mkdir(parents=True)
+    marker.write_text(json.dumps({
+        "date": "2025-01-02T03:04:05+00:00",
+        "commit": head(repo),
+        "preceding_commits": 7,
+    }, indent=2) + "\n")
+    original = marker.read_bytes()
+    git(repo, "add", ".factory/record-origin.json")
+    git(repo, "commit", "-q", "-m", "existing forge record boundary")
+
+    code, out = adopt(repo)
+    assert code == 0, out
+    assert marker.read_bytes() == original
+
+
 def test_adopt_refuses_dirty_tree(tmp_path):
     repo = existing_repo(tmp_path)
     (repo / "wip.txt").write_text("uncommitted\n")
@@ -3904,6 +3922,30 @@ def test_api_state_carries_project_identity_from_the_shared_parser(repo):
     missing = aggregate_state(repo)["project"]
     assert missing["sections"] == {}
     assert missing["missing_sections"] == list(REQUIRED_BRIEF_HEADINGS)
+
+
+def test_board_reports_the_record_boundary(repo):
+    from forge_cli.board import aggregate_state
+
+    state = aggregate_state(repo)
+    assert state["record_origin"] == json.loads(
+        (repo / ".factory" / "record-origin.json").read_text()
+    )
+    assert state["record_origin"]["preceding_commits"] == 0
+
+    page = (HARNESS / "factory" / "board" / "index.html").read_text()
+    boundary = (
+        "record begins here; ${esc(recordOrigin.preceding_commits)} "
+        "commits precede it"
+    )
+    assert boundary in page
+    # A real count renders the number; a null (shallow) count renders the
+    # boundary without one; no marker renders nothing.
+    assert "Number.isInteger(recordOrigin.preceding_commits)" in page
+    assert '`<p class="record-boundary">record begins here</p>`' in page
+
+    (repo / ".factory" / "record-origin.json").unlink()
+    assert aggregate_state(repo)["record_origin"] is None
 
 
 def test_bundled_example_authors_its_project_name():
@@ -6408,6 +6450,44 @@ def test_doctor_reports_an_epicless_roadmap_without_blocking(repo, capsys):
     assert "MOD-1" not in out
 
 
+def test_doctor_reports_an_unmarked_outcomeless_done_item(repo, capsys):
+    from forge_cli.doctor import report_legacy_roadmap_gaps
+    from forge_cli.roadmap import load_roadmap
+
+    roadmap = repo / "plans" / "roadmap.json"
+    roadmap.write_text(json.dumps({
+        "generated_by": "human",
+        "epics": [ROADMAP_EPIC],
+        "items": [
+            {"key": "GAP-1", "title": "Silent gap", "status": "done",
+             "epic": "billing"},
+            {"key": "OLD-1", "title": "Marked history", "status": "done",
+             "epic": "billing", "predates_outcome_contract": True},
+            {"key": "DONE-1", "title": "Recorded outcome", "status": "done",
+             "epic": "billing", "outcome": "Customers can pay invoices."},
+        ],
+    }))
+
+    assert len(load_roadmap(repo)["items"]) == 3
+    assert report_legacy_roadmap_gaps(repo) is None
+    out = capsys.readouterr().out
+    assert "[opt ] roadmap/outcome GAP-1: done without an outcome" in out
+    assert "OLD-1" not in out
+    assert "DONE-1" not in out
+
+
+def test_precontract_stories_are_marked_without_synthesized_outcomes():
+    roadmap = json.loads((HARNESS / "plans" / "roadmap.json").read_text())
+    items = {item["key"]: item for item in roadmap["items"]}
+
+    for key in ("FORGE-INIT-1", "harness-v2-wedge"):
+        item = items[key]
+        assert item["status"] == "done"
+        assert item["epic"] == "symphony-forge"
+        assert item["predates_outcome_contract"] is True
+        assert "outcome" not in item
+
+
 DELEGATE_TASK = {**STAGE_TASK, "required_tests": [{
                      "id": "test_slice",
                      "path": "factory/tests/test_gates.py",
@@ -8161,6 +8241,57 @@ def test_init_into_nonempty_noncolliding_target(tmp_path: Path):
     assert custom.read_text() == "local = true\n"
 
 
+def test_init_writes_a_record_origin_marker_with_preceding_count(tmp_path: Path):
+    target = tmp_path / "app"
+    note = target / "docs" / "notes" / "origin.md"
+    note.parent.mkdir(parents=True)
+    subprocess.run(["git", "init", "-q", str(target)], check=True)
+    note.write_text("first\n")
+    git(target, "add", "docs/notes/origin.md")
+    git(target, "commit", "-q", "-m", "first pre-forge commit")
+    note.write_text("second\n")
+    git(target, "add", "docs/notes/origin.md")
+    git(target, "commit", "-q", "-m", "second pre-forge commit")
+    before = head(target)
+
+    proc = _init(target)
+    assert proc.returncode == 0, proc.stdout + proc.stderr
+    marker = json.loads((target / ".factory" / "record-origin.json").read_text())
+    assert set(marker) == {"date", "commit", "preceding_commits"}
+    assert marker["date"]
+    assert marker["commit"] == before
+    assert marker["preceding_commits"] == 2
+
+
+def test_record_origin_records_unknown_count_for_a_shallow_clone(tmp_path: Path):
+    """A shallow clone counts only its local commits. An honest boundary must
+    not persist a truncated number it will claim forever — it records null, and
+    the board (which gates the count on Number.isInteger) omits it."""
+    sys.path.insert(0, str(HARNESS / "factory" / "scripts"))
+    from forge_cli.scaffold import ensure_record_origin
+
+    source = tmp_path / "source"
+    subprocess.run(["git", "init", "-q", str(source)], check=True)
+    for n in range(3):
+        (source / "f.txt").write_text(f"{n}\n")
+        git(source, "add", "f.txt")
+        git(source, "commit", "-q", "-m", f"commit {n}")
+
+    shallow = tmp_path / "shallow"
+    subprocess.run(["git", "clone", "-q", "--depth", "1",
+                    f"file://{source}", str(shallow)], check=True)
+    (shallow / ".factory").mkdir()
+
+    assert ensure_record_origin(shallow) is True
+    marker = json.loads((shallow / ".factory" / "record-origin.json").read_text())
+    assert marker["preceding_commits"] is None  # unknown, not the truncated 1
+    assert marker["commit"] and marker["date"]
+
+    # The board still shows the boundary for a null count — just no number.
+    page = (HARNESS / "factory" / "board" / "index.html").read_text()
+    assert '`<p class="record-boundary">record begins here</p>`' in page
+
+
 def test_init_refuses_colliding_target(tmp_path: Path):
     target = tmp_path / "app"
     target.mkdir()
@@ -8426,3 +8557,39 @@ def test_project_name_survives_the_run_state_lifecycle(tmp_path):
     (target / ".factory" / "run.json").write_text(json.dumps(shipped))
     assert project_identity(target)["name"] == "Acme Billing", \
         "the shipped run-state shape dropped the authored project name"
+
+
+def test_record_origin_skips_a_repo_with_an_existing_forge_record(tmp_path: Path):
+    """Re-adopting a pre-marker Forge repo must NOT stamp a boundary at HEAD:
+    the existing committed events ARE the record, so counting them as
+    'preceding' would falsely claim the record begins after work the board can
+    already show. The honest act is to leave the origin unclaimed."""
+    sys.path.insert(0, str(HARNESS / "factory" / "scripts"))
+    from forge_cli.scaffold import ensure_record_origin
+
+    target = tmp_path / "prior-forge"
+    subprocess.run(["git", "init", "-q", str(target)], check=True)
+    (target / "x.txt").write_text("work\n")
+    git(target, "add", "x.txt")
+    git(target, "commit", "-q", "-m", "pre-existing forge work")
+    (target / ".factory").mkdir()
+    (target / ".factory" / "events.jsonl").write_text(
+        '{"event": "shipped", "at": "2026-01-01T00:00:00+00:00", "story": "OLD-1"}\n')
+
+    assert ensure_record_origin(target) is False
+    assert not (target / ".factory" / "record-origin.json").exists()
+
+
+def test_record_origin_refuses_a_symlinked_factory_ancestor(tmp_path: Path):
+    """A symlinked .factory would land the marker outside the target — the
+    repository-escape class. Preflight must refuse before any write."""
+    sys.path.insert(0, str(HARNESS / "factory" / "scripts"))
+    from forge_cli.scaffold import check_record_origin_writable
+
+    target = tmp_path / "app"
+    target.mkdir()
+    outside = tmp_path / "elsewhere"
+    outside.mkdir()
+    (target / ".factory").symlink_to(outside)
+    with pytest.raises(SystemExit):
+        check_record_origin_writable(target)

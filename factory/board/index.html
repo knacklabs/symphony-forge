@@ -206,6 +206,9 @@
     font: 400 clamp(1.45rem, 3vw, 2.35rem)/1.08 var(--serif);
     color: var(--accent); margin-bottom: .8rem;
   }
+  .record-boundary {
+    margin: -.35rem 0 .8rem; color: var(--muted); font: .7rem/1.4 var(--mono);
+  }
   .project-sections { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .8rem 1.5rem; }
   .project-section h3 {
     font-size: .62rem; font-weight: 600; letter-spacing: .12em;
@@ -1176,12 +1179,14 @@ let overviewSignature = "";
 
 function renderOverview(state) {
   const project = state.project || {};
+  const recordOrigin = state.record_origin;
   const frontier = state.frontier || [];
   const epics = state.epics || [];
   const stories = state.stories || [];
   const byKey = new Map(stories.map(story => [story.key, story]));
   const relevant = {
     project: state.project,
+    record_origin: state.record_origin,
     frontier: state.frontier,
     epics: state.epics,
     stories: stories.map(story => ({
@@ -1194,7 +1199,14 @@ function renderOverview(state) {
   overviewSignature = nextSignature;
 
   const projectSections = Object.entries(project.sections || {});
+  // A shallow clone records a null count (it cannot be trusted). Still show
+  // the boundary — just without a number it would be lying about.
+  const recordBoundary = !recordOrigin ? ""
+    : Number.isInteger(recordOrigin.preceding_commits)
+      ? `<p class="record-boundary">record begins here; ${esc(recordOrigin.preceding_commits)} commits precede it</p>`
+      : `<p class="record-boundary">record begins here</p>`;
   const projectAnswer = `<h3 class="project-name">${esc(project.name || "Unnamed project")}</h3>
+    ${recordBoundary}
     ${projectSections.length
       ? `<div class="project-sections">${projectSections.map(([heading, content]) =>
           `<section class="project-section"><h3>${esc(heading)}</h3><p>${esc(content)}</p></section>`

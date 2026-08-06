@@ -173,8 +173,16 @@ def legacy_roadmap_gaps(base: Path) -> list[tuple[str, str]]:
     for position, item in enumerate(items or [], 1):
         if not isinstance(item, dict):
             found.append(("shape", f"item {position}: not an object"))
-        elif not item.get("epic"):
+            continue
+        if not item.get("epic"):
             found.append(("story", f"{item.get('key', '?')}: no epic declared"))
+        if (item.get("status") == "done" and not item.get("outcome")
+                and item.get("predates_outcome_contract") is not True):
+            found.append((
+                "outcome",
+                f"{item.get('key', '?')}: done without an outcome or "
+                "predates_outcome_contract marker",
+            ))
     return found
 
 

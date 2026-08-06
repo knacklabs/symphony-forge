@@ -352,3 +352,4 @@
 {"event": "delegated", "generated_by": "orchestrator", "at": "2026-08-06T05:28:00+00:00", "story": "PH-5", "detail": "PH-5.4 (write)"}
 {"event": "signal-resolved", "generated_by": "orchestrator", "at": "2026-08-06T05:29:10+00:00", "story": "PH-5", "detail": "S-0001-e151: Both real, both make the story more correct. (1) The board must RENDER the boundary, not just carry it in the API \u2014 AC4 is user_facing, so 'the board reports it' means visible. factory/board/index.htm"}
 {"event": "decomposed", "generated_by": "docs-decomposer", "at": "2026-08-06T05:29:10+00:00", "story": "PH-5", "detail": "4 task(s)"}
+{"event": "delegated", "generated_by": "orchestrator", "at": "2026-08-06T05:39:52+00:00", "story": "PH-5", "detail": "PH-5.4 (write)"}

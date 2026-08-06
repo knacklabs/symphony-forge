@@ -7,7 +7,7 @@ import shutil
 import subprocess
 from pathlib import Path
 
-from factory_lib import dump_json, now_iso, repo_root
+from factory_lib import dump_json, head_sha, now_iso, repo_root
 
 from .common import fail
 
@@ -66,10 +66,11 @@ def _would_write(root: Path, target: Path) -> list[Path]:
     return dests
 
 
-# init appends/touches these rather than overwriting: an existing regular file
-# is legal, but a symlink (or symlink/file ancestor) would write outside the
-# target or die midway, so they still join the preflight.
-APPEND_OR_TOUCH = ["README.md", "plans/active/.gitkeep",
+# Init appends, touches, or creates these only when absent: an existing regular
+# file is legal, but a symlink (or symlink/file ancestor) would write outside
+# the target or die midway, so they still join the preflight.
+APPEND_OR_TOUCH = ["README.md", ".factory/record-origin.json",
+                   "plans/active/.gitkeep",
                    "plans/completed/.gitkeep", "plans/debt/.gitkeep"]
 # mkdir-only destinations with no enumerated leaf file: an existing dir is
 # fine, but a file or symlink there would abort init midway.
@@ -234,6 +235,72 @@ def ensure_jsonl_attributes(target: Path, harness: Path) -> bool:
     return True
 
 
+def record_origin_path(target: Path) -> Path:
+    return target / ".factory" / "record-origin.json"
+
+
+def check_record_origin_writable(target: Path) -> None:
+    """Reject a marker path that would write outside the target or is not a
+    regular file. Called in a caller's preflight so an adopt/init never fails
+    HALFWAY on a bad path — and never lands another repo's history boundary
+    through a symlinked `.factory` (the repository-escape class, D-0003)."""
+    marker = record_origin_path(target)
+    if marker.is_symlink() or (marker.exists() and not marker.is_file()):
+        fail(f"refusing invalid record-origin path: {marker}")
+    # Every ancestor between target and the marker must resolve inside target,
+    # or a symlinked `.factory` would land the file outside it.
+    resolved_target = target.resolve()
+    if marker.parent.exists() and not (
+            marker.parent.resolve().is_relative_to(resolved_target)):
+        fail(f"refusing record-origin outside the target via a symlink: {marker}")
+
+
+def ensure_record_origin(target: Path) -> bool:
+    """Record where Forge's committed project history begins, once.
+
+    Only when there is no Forge record yet. A repo adopted by an earlier Forge
+    version already has committed events but no marker: stamping one now at HEAD
+    would count that Forge history as "preceding the record" — the board would
+    claim the record begins after work it can already display. The origin is
+    then unknowable, so the honest act is to leave it unclaimed, not to invent
+    a boundary that contradicts the timeline.
+    """
+    marker = record_origin_path(target)
+    check_record_origin_writable(target)
+    if marker.exists():
+        return False
+    events = target / ".factory" / "events.jsonl"
+    if events.is_file() and events.read_text().strip():
+        return False  # a Forge record already exists; its origin predates now
+    # A shallow clone counts only its local commits, so rev-list would report a
+    # truncated number the marker then claims forever. An honest boundary must
+    # not persist a count it cannot trust: record null (unknown) instead, and
+    # the board omits the count rather than stating a false one.
+    shallow = subprocess.run(
+        ["git", "rev-parse", "--is-shallow-repository"],
+        cwd=target, capture_output=True, text=True,
+    )
+    is_shallow = shallow.returncode == 0 and shallow.stdout.strip() == "true"
+    count = subprocess.run(
+        ["git", "rev-list", "--count", "HEAD"],
+        cwd=target, capture_output=True, text=True,
+    )
+    # Shallow: count is truncated and unknowable -> null. A repo with no commit
+    # yet (rev-list has no HEAD) genuinely has zero preceding -> 0, honest.
+    if is_shallow:
+        preceding = None
+    elif count.returncode == 0:
+        preceding = int(count.stdout.strip())
+    else:
+        preceding = 0
+    dump_json(marker, {
+        "date": now_iso(),
+        "commit": head_sha(target),
+        "preceding_commits": preceding,
+    })
+    return True
+
+
 def cmd_init(args: argparse.Namespace) -> None:
     root = repo_root()
     target = Path(args.target or args.name).resolve()
@@ -340,6 +407,7 @@ def cmd_init(args: argparse.Namespace) -> None:
 
     if not (target / ".git").exists():
         subprocess.run(["git", "init", "-q"], cwd=target, check=True)
+    ensure_record_origin(target)
 
     print(f"Scaffolded {args.name} at {target}")
     print("Next steps:")

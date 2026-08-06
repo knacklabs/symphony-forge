@@ -27,7 +27,9 @@ from .scaffold import (
     DOC_CONTRACTS,
     PROJECT_STARTERS,
     PROTOTYPE_README,
+    check_record_origin_writable,
     ensure_jsonl_attributes,
+    ensure_record_origin,
 )
 from .upgrade import UPGRADE_TREES
 
@@ -59,6 +61,9 @@ def cmd_adopt(args: argparse.Namespace) -> None:
             f"{target} has uncommitted changes. Commit everything first — adopt "
             "overwrites harness-owned paths and the diff must be reviewable."
         )
+    # Preflight the marker path with the other refusals, so an invalid one
+    # stops adoption before the first write rather than halfway through.
+    check_record_origin_writable(target)
     name = args.name or target.name
 
     overwritten: list[str] = []
@@ -220,6 +225,8 @@ def cmd_adopt(args: argparse.Namespace) -> None:
             {"project": name, "created_at": now_iso()},
         )
         created.append(".factory/run.json")
+    if ensure_record_origin(target):
+        created.append(".factory/record-origin.json")
 
     print(f"Adopted the harness into {target} (symphony-forge @ {commit[:8]})")
     if overwritten:

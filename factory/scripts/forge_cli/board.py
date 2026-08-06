@@ -246,6 +246,7 @@ def aggregate_state(base: Path) -> dict:
     ]
     spec_status = {record["path"]: record.get("status", "draft") for record in specs}
     run = load_json(base / ".factory" / "run.json", default={})
+    record_origin = load_json(base / ".factory" / "record-origin.json", default=None)
     stages = _stage_summary(base)
     done_keys = {item.get("key") for item in items if item.get("status") == "done"}
     unblocks = {item.get("key"): [] for item in items}
@@ -283,6 +284,7 @@ def aggregate_state(base: Path) -> dict:
         "root": str(base.resolve()),
         "specs": specs,
         "project": project_identity(base),
+        "record_origin": record_origin,
         "epics": epics,
         "stories": stories,
         "summary": _summary(stories, specs, signals, open_assumptions(base)),

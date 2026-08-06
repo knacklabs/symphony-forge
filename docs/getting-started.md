@@ -93,6 +93,9 @@ artifact schemas under `factory/schemas/`), the vendored engineering
 constitution, the phase manifest + skill allowlist (`harness.yaml`), doc
 contracts, and an armed sign-off gate. It refuses a target containing files
 it would overwrite (listing them); a non-empty target with no collisions is fine.
+It also creates `.factory/record-origin.json`, which records the date, current
+commit, and number of commits that existed before Forge began keeping the
+project record. The file is written once and is not moved forward later.
 
 The new repo has ZERO git relation to the harness (the machinery is a
 vendored copy — see "Template, Not Fork" in the README). Give it its own
@@ -190,8 +193,11 @@ Optionally define the team first so assignment is checked and skill-matched:
 ```
 
 The board opens on **Overview**, which answers what the project is, what can
-start now, what each epic delivers, and where each story sits. To inspect a
-different initialized example repo, point the same board command at it:
+start now, what each epic delivers, and where each story sits. When the repo
+has a record-origin marker, Overview also says where the Forge record begins
+and how many commits precede it; an older repo with no marker makes no claim.
+To inspect a different initialized example repo, point the same board command
+at it:
 
 ```bash
 ./forge board --repo <example>
@@ -208,6 +214,10 @@ until the page resolver changes.
 `pr_ready.py` marks them done with history links, assignments survive
 re-imports, and "what's next?" always knows the next story (and nags the EM
 about unassigned ones). Refine it by PR as planning teaches you more.
+
+To read the committed project record by story, event type, or date, say
+**"Show me the project history."** The agent runs `./forge history`; events
+without a story are shown as unattributed instead of being hidden.
 
 ## 8. The feature loop
 
@@ -343,6 +353,10 @@ CLEAN target tree:
 ```bash
 ./forge adopt --target ../legacy-repo --name my-app
 ```
+
+Adopt writes the same create-if-absent `.factory/record-origin.json` boundary
+before future work is recorded. Running adoption again can never rewrite that
+starting point or make the historical record look more complete than it is.
 
 It vendors the machinery, preserves any pre-existing `AGENTS.md`/`CLAUDE.md`
 into `docs/context/migrated-*` (the harvester picks them up), creates

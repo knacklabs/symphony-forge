@@ -1,6 +1,20 @@
 {
   "items": [
     {
+      "key": "harness-v2-wedge",
+      "title": "Harness v2 Week-One Wedge",
+      "status": "done",
+      "epic": "symphony-forge",
+      "predates_outcome_contract": true
+    },
+    {
+      "key": "FORGE-INIT-1",
+      "title": "forge init: per-file collision check for non-empty targets",
+      "status": "done",
+      "epic": "symphony-forge",
+      "predates_outcome_contract": true
+    },
+    {
       "key": "FORGE-DELEG-1",
       "title": "Briefed, bounded, measured delegation boundary",
       "story": "As a developer running Claude and Codex together, I want the handoff to be briefed, bounded and measured so that a run cannot stall silently, finish half the job, or ignore the rules I already wrote down.",
