@@ -8622,32 +8622,30 @@ def test_vendored_scaffold_check_is_clean_in_a_client_repo_with_its_own_skill(
     assert code != 0 and "client-skill" in out
 
 
-def test_init_adopt_upgrade_agree_on_the_harness_owned_skill_set(repo):
+def test_init_adopt_upgrade_agree_on_the_harness_owned_skill_set():
+    # Derive each command's skill set from its CONFIGURED paths, never from the
+    # repo's actual skill directories — the whole point of this story is that a
+    # client repo carries its own extra skills, so enumerating the tree here
+    # would make this very test fail in the client CI it is meant to protect.
     from forge_cli.adopt import ADOPT_SKILL_TREES
-    from forge_cli.scaffold import HARNESS_OWNED_SKILLS
+    from forge_cli.scaffold import HARNESS_OWNED_SKILLS, INIT_COPY_TREES
     from forge_cli.upgrade import (
         CLAUDE_HARNESS_OWNED,
         CODEX_HARNESS_OWNED_SKILLS,
     )
 
-    adopt_skills = {
-        Path(path).name
-        for path in ADOPT_SKILL_TREES
-    }
+    adopt_skills = {Path(path).name for path in ADOPT_SKILL_TREES}
     upgrade_claude_skills = {
         Path(path).name
         for path in CLAUDE_HARNESS_OWNED
         if path.startswith("skills/")
     }
-    upgrade_codex_skills = {
-        Path(path).name
-        for path in CODEX_HARNESS_OWNED_SKILLS
-    }
+    upgrade_codex_skills = {Path(path).name for path in CODEX_HARNESS_OWNED_SKILLS}
     init_skills = {
         runtime: {
-            child.name
-            for child in (repo / runtime / "skills").iterdir()
-            if child.is_dir()
+            Path(tree).name
+            for tree in INIT_COPY_TREES
+            if tree.startswith(f"{runtime}/skills/")
         }
         for runtime in (".claude", ".codex")
     }
