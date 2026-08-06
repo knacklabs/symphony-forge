@@ -356,3 +356,9 @@
 {"event": "stage-contract-changed", "generated_by": "implementer", "at": "2026-08-06T06:15:16+00:00", "story": "PH-5", "detail": "PH-5.4: task contract re-recorded mid-stage"}
 {"event": "stage-done", "generated_by": "implementer", "at": "2026-08-06T06:15:16+00:00", "story": "PH-5", "detail": "PH-5.4 The record states where it begins, and no shipped story is silently outcome-less"}
 {"event": "verify-passed", "generated_by": "orchestrator", "at": "2026-08-06T06:26:42+00:00", "story": "PH-5"}
+{"event": "review-quality", "generated_by": "autoreview", "at": "2026-08-06T06:41:40+00:00", "story": "PH-5"}
+{"event": "review-performance", "generated_by": "autoreview", "at": "2026-08-06T06:41:40+00:00", "story": "PH-5"}
+{"event": "review-security", "generated_by": "autoreview", "at": "2026-08-06T06:41:40+00:00", "story": "PH-5"}
+{"event": "tests-automated", "generated_by": "implementer", "at": "2026-08-06T06:41:40+00:00", "story": "PH-5", "detail": "passed"}
+{"event": "tests-functional", "generated_by": "functional-checker", "at": "2026-08-06T06:41:41+00:00", "story": "PH-5", "detail": "passed"}
+{"event": "verify-passed", "generated_by": "orchestrator", "at": "2026-08-06T06:53:25+00:00", "story": "PH-5"}

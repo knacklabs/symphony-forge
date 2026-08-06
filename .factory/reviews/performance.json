@@ -1,0 +1,32 @@
+{
+  "score": 8,
+  "recommendation": "land",
+  "summary": "forge history is O(events) over a committed JSONL read once; load_events gained filters without changing its single existing caller's behaviour. record_files appends distinct paths, no rewrite. The board reads one small marker file per request. No new dependency; forge_cli stays stdlib-only. Repo budget green.",
+  "generated_by": "autoreview",
+  "reviewed_scope": [
+    "factory/scripts/forge_cli/events.py",
+    "factory/scripts/forge_cli/history.py",
+    "factory/scripts/forge.py",
+    "factory/scripts/pre_tool_use.py",
+    "factory/scripts/forge_cli/quickfix.py",
+    "factory/scripts/forge_cli/scaffold.py",
+    "factory/scripts/forge_cli/adopt.py",
+    "factory/scripts/forge_cli/board.py",
+    "factory/scripts/forge_cli/doctor.py",
+    "factory/board/index.html",
+    "plans/roadmap.json",
+    "factory/tests/test_gates.py"
+  ],
+  "blocking_findings": [],
+  "residual_risks": [
+    "The symlinked-.factory guard is the 5th repository-escape finding across client-writing commands; fixed here, it also triggers deferral D-0003 (audit init/adopt/upgrade against the path-boundary invariant with a test per site) rather than being fully closed by this story.",
+    "roadmap.json remains a single mutable file that has lost items to merges twice; making it conflict-free like the 0022 ledgers is named as a separate decision, not done here."
+  ],
+  "skills_used": [
+    "review-animations"
+  ],
+  "aspect": "performance",
+  "non_blocking_findings": [],
+  "recorded_at": "2026-08-06T06:41:40+00:00",
+  "commit": "2ff6b60a5c234a828ff1575532bbdbe26aaa065f"
+}

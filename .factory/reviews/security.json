@@ -1,0 +1,32 @@
+{
+  "score": 9,
+  "recommendation": "land",
+  "summary": "The planning-lock change is the sensitive surface and it is additive: record_files reaches no deny and returns nothing, so no write that would be blocked can pass \u2014 the budget and every deny path are unchanged. The record-origin path is preflighted for symlink and out-of-target escape before any write (repository-escape class). forge history is a pure reader proven not to write. The pr-linked event and marker are inert committed data.",
+  "generated_by": "autoreview",
+  "reviewed_scope": [
+    "factory/scripts/forge_cli/events.py",
+    "factory/scripts/forge_cli/history.py",
+    "factory/scripts/forge.py",
+    "factory/scripts/pre_tool_use.py",
+    "factory/scripts/forge_cli/quickfix.py",
+    "factory/scripts/forge_cli/scaffold.py",
+    "factory/scripts/forge_cli/adopt.py",
+    "factory/scripts/forge_cli/board.py",
+    "factory/scripts/forge_cli/doctor.py",
+    "factory/board/index.html",
+    "plans/roadmap.json",
+    "factory/tests/test_gates.py"
+  ],
+  "blocking_findings": [],
+  "residual_risks": [
+    "The symlinked-.factory guard is the 5th repository-escape finding across client-writing commands; fixed here, it also triggers deferral D-0003 (audit init/adopt/upgrade against the path-boundary invariant with a test per site) rather than being fully closed by this story.",
+    "roadmap.json remains a single mutable file that has lost items to merges twice; making it conflict-free like the 0022 ledgers is named as a separate decision, not done here."
+  ],
+  "skills_used": [
+    "review-animations"
+  ],
+  "aspect": "security",
+  "non_blocking_findings": [],
+  "recorded_at": "2026-08-06T06:41:40+00:00",
+  "commit": "2ff6b60a5c234a828ff1575532bbdbe26aaa065f"
+}

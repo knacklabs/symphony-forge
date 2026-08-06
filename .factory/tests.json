@@ -1,0 +1,91 @@
+{
+  "commit": "2ff6b60a5c234a828ff1575532bbdbe26aaa065f",
+  "automated": {
+    "generated_by": "implementer",
+    "status": "passed",
+    "summary": "PH-5 makes the project's record readable and honest: forge history surfaces the 300+ committed events that had no reader; quickfix windows record every file they touch (closing the audit's 29/29-empty gap); a merged PR is linked by a durable event that survives a bare clone; forge init/adopt stamp an honest record-origin boundary; and the two pre-contract stories are marked, never given a fabricated outcome. Verified by dogfooding on this repo throughout.",
+    "pass_fail_summary": "374 passed, 0 failed (pytest factory/tests -q). Deterministic verify green with head_before == head_after == 10233160.",
+    "commands_run": [
+      "python3 factory/scripts/verify.py",
+      "uv run --with pytest python -m pytest factory/tests -q",
+      "python3 factory/scripts/check_repo_budget.py"
+    ],
+    "tests_added_or_updated": [
+      "test_forge_history_filters_by_story_type_and_date",
+      "test_forge_history_names_unattributed_events",
+      "test_forge_history_is_read_only",
+      "test_quickfix_records_files_inside_an_active_story",
+      "test_quickfix_budget_still_refuses_over_limit_when_unplanned",
+      "test_quickfix_recording_authorizes_nothing",
+      "test_pr_link_event_survives_a_clone_with_no_remote",
+      "test_forge_history_shows_the_pr_link",
+      "test_init_writes_a_record_origin_marker_with_preceding_count",
+      "test_record_origin_records_unknown_count_for_a_shallow_clone",
+      "test_record_origin_skips_a_repo_with_an_existing_forge_record",
+      "test_record_origin_refuses_a_symlinked_factory_ancestor",
+      "test_readopt_does_not_rewrite_the_record_origin",
+      "test_board_reports_the_record_boundary",
+      "test_doctor_reports_an_unmarked_outcomeless_done_item"
+    ],
+    "reviewed_scope": [
+      "factory/scripts/forge_cli/events.py",
+      "factory/scripts/forge_cli/history.py",
+      "factory/scripts/pre_tool_use.py",
+      "factory/scripts/forge_cli/quickfix.py",
+      "factory/scripts/forge_cli/scaffold.py",
+      "factory/scripts/forge_cli/adopt.py",
+      "factory/scripts/forge_cli/board.py",
+      "factory/scripts/forge_cli/doctor.py",
+      "factory/board/index.html",
+      "plans/roadmap.json"
+    ],
+    "blocking_findings": [],
+    "remaining_gaps": [
+      "The symlinked-.factory escape was the 5th repository-escape finding; fixed here, it triggers D-0003 to audit init/adopt/upgrade against the path-boundary invariant as its own story.",
+      "roadmap.json is still a single mutable file that has lost items to merges twice \u2014 conflict-free hardening is named as a separate decision.",
+      "Backfilling PR links for the other ~29 historical merged PRs is not done; forge pr-link makes it possible but each is a manual, evidence-based act, deliberately not fabricated in bulk."
+    ],
+    "skills_used": [
+      "review-animations",
+      "frontend-design",
+      "emil-design-eng"
+    ],
+    "non_blocking_findings": [],
+    "residual_risks": [],
+    "manual_validation_steps": [],
+    "recorded_at": "2026-08-06T06:41:40+00:00",
+    "commit": "2ff6b60a5c234a828ff1575532bbdbe26aaa065f"
+  },
+  "updated_at": "2026-08-06T06:41:41+00:00",
+  "functional": {
+    "generated_by": "functional-checker",
+    "status": "passed",
+    "score": 8,
+    "summary": "Driven as a user against this live repo, not asserted from source. forge history printed the six shipped stories with their outcomes and an explicit 'Unattributed events' section surfacing the spec/signoff/roadmap events that carry no story \u2014 the audit's gap made visible. forge pr-link PH-4 <url> linked PH-4 to its real PR #42, and forge history --story PH-4 showed the pr-linked event, so 'which PR shipped this' is answerable from committed data. forge doctor reported zero outcome gaps after the two pre-contract stories were marked. The board's record-boundary render was exercised: with an integer count it reads 'record begins here; N commits precede it', with a null (shallow) count it reads 'record begins here' without a number, and with no marker (this repo, which grew its own record) it correctly shows nothing rather than a false claim.",
+    "manual_validation_steps": [
+      "Ran forge history against this repo; confirmed shipped stories with outcomes and the unattributed section.",
+      "Ran forge pr-link PH-4 https://github.com/knacklabs/symphony-forge/pull/42; confirmed the pr-linked event via forge history --story PH-4.",
+      "Confirmed forge doctor reports no outcome gaps (both pre-contract stories marked).",
+      "Confirmed this repo has no record-origin.json \u2014 correct, as its record grew organically rather than from a mid-flight adoption \u2014 and the board shows no false boundary."
+    ],
+    "blocking_findings": [],
+    "non_blocking_findings": [
+      "The record boundary is data-verified and the render is asserted structurally; the three-width visual pass from PH-4 already covers the board's responsive rendering and is unchanged here."
+    ],
+    "residual_risks": [
+      "Board rendering was confirmed via the API state and the render template; a full browser pass of the new boundary line at three widths was not repeated, relying on PH-4's established responsive coverage (decision 0027)."
+    ],
+    "reviewed_scope": [
+      "factory/scripts/forge_cli/history.py",
+      "factory/scripts/forge_cli/board.py",
+      "factory/board/index.html",
+      "factory/scripts/forge_cli/doctor.py"
+    ],
+    "recommendation": "land",
+    "remaining_gaps": [],
+    "commands_run": [],
+    "tests_added_or_updated": [],
+    "recorded_at": "2026-08-06T06:41:41+00:00",
+    "commit": "2ff6b60a5c234a828ff1575532bbdbe26aaa065f"
+  }
+}

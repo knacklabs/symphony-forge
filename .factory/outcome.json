@@ -1,0 +1,7 @@
+{
+  "generated_by": "implementer",
+  "outcome": "The repo can now tell you what it built. forge history reads the committed event timeline filtered by story, type, or date and shows events no story owns instead of hiding them. Quickfix windows record every file they touch, so an ad-hoc change is no longer a why with no what. A merged PR is linked to its work by a durable event that survives a clone with no remote \u2014 forge pr-link. forge init and adopt stamp an honest 'record begins here' boundary (silent when it cannot be trusted), and forge doctor flags any shipped story with neither an outcome nor a predates-the-contract marker \u2014 the two that predate it now carry that marker rather than a fabricated outcome.",
+  "issue": "PH-5",
+  "commit": "2ff6b60a5c234a828ff1575532bbdbe26aaa065f",
+  "recorded_at": "2026-08-06T06:41:41+00:00"
+}

@@ -1,0 +1,32 @@
+{
+  "score": 8,
+  "recommendation": "land",
+  "summary": "Four tasks, each landing its criterion, verified by dogfooding on this repo as built. forge history reads 300+ committed events nobody could surface and gives unattributed events their own section. Quickfix recording closes the 29/29-empty-files gap at its root with a 13-line passive change to the planning lock that adds a record, never an authorization \u2014 confirmed by test and two independent reviews. PR links are durable events that survive a bare clone. The record-origin marker took four review rounds, each closing a distinct way it could state something false (shallow truncation, suppressed boundary, partial-write escape, re-adopt counting real history as preceding); all handled conservatively. The two pre-contract stories are marked, never given a synthesised outcome.",
+  "generated_by": "autoreview",
+  "reviewed_scope": [
+    "factory/scripts/forge_cli/events.py",
+    "factory/scripts/forge_cli/history.py",
+    "factory/scripts/forge.py",
+    "factory/scripts/pre_tool_use.py",
+    "factory/scripts/forge_cli/quickfix.py",
+    "factory/scripts/forge_cli/scaffold.py",
+    "factory/scripts/forge_cli/adopt.py",
+    "factory/scripts/forge_cli/board.py",
+    "factory/scripts/forge_cli/doctor.py",
+    "factory/board/index.html",
+    "plans/roadmap.json",
+    "factory/tests/test_gates.py"
+  ],
+  "blocking_findings": [],
+  "residual_risks": [
+    "The symlinked-.factory guard is the 5th repository-escape finding across client-writing commands; fixed here, it also triggers deferral D-0003 (audit init/adopt/upgrade against the path-boundary invariant with a test per site) rather than being fully closed by this story.",
+    "roadmap.json remains a single mutable file that has lost items to merges twice; making it conflict-free like the 0022 ledgers is named as a separate decision, not done here."
+  ],
+  "skills_used": [
+    "review-animations"
+  ],
+  "aspect": "quality",
+  "non_blocking_findings": [],
+  "recorded_at": "2026-08-06T06:41:40+00:00",
+  "commit": "2ff6b60a5c234a828ff1575532bbdbe26aaa065f"
+}
