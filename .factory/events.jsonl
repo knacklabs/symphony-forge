@@ -339,3 +339,6 @@
 {"event": "implementing", "generated_by": "orchestrator", "at": "2026-08-06T04:15:18+00:00", "story": "PH-5"}
 {"event": "stage-start", "generated_by": "implementer", "at": "2026-08-06T04:15:26+00:00", "story": "PH-5", "detail": "PH-5.1 forge history reads the committed events"}
 {"event": "delegated", "generated_by": "orchestrator", "at": "2026-08-06T04:20:05+00:00", "story": "PH-5", "detail": "PH-5.1 (write)"}
+{"event": "stage-done", "generated_by": "implementer", "at": "2026-08-06T04:32:20+00:00", "story": "PH-5", "detail": "PH-5.1 forge history reads the committed events"}
+{"event": "stage-start", "generated_by": "implementer", "at": "2026-08-06T04:32:30+00:00", "story": "PH-5", "detail": "PH-5.2 Quickfix windows record what they touched"}
+{"event": "delegated", "generated_by": "orchestrator", "at": "2026-08-06T04:40:13+00:00", "story": "PH-5", "detail": "PH-5.2 (write)"}

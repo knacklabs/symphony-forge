@@ -44,6 +44,20 @@ def _append(base: Path, event: dict) -> None:
     append_ledger_record(ledger_path(base), event, record_id)
 
 
+def _distinct_union(current: list[str], files: list[str]) -> list[str]:
+    return list(dict.fromkeys([*current, *files]))
+
+
+def record_files(base: Path, files: list[str]) -> None:
+    """Passively record distinct files touched by an already-authorized write."""
+    active = load_active(base)
+    if not active:
+        return
+    current = list(active.get("files", []))
+    active["files"] = _distinct_union(current, files)
+    dump_json(quickfix_path(base), active)
+
+
 def claim_files(base: Path, files: list[str]) -> tuple[bool, dict]:
     """Record distinct product files before a quickfix write.
 
@@ -54,7 +68,7 @@ def claim_files(base: Path, files: list[str]) -> tuple[bool, dict]:
     if not active:
         return False, {}
     current = list(active.get("files", []))
-    combined = current + [path for path in files if path not in current]
+    combined = _distinct_union(current, files)
     if len(combined) > int(active.get("max_files", MAX_FILES)):
         return False, active
     active["files"] = combined

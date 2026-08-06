@@ -3419,6 +3419,73 @@ def test_quickfix_lifecycle_tracks_files_and_enforces_budget(repo):
     assert code == 0 and "deny" in out
 
 
+def test_quickfix_records_files_inside_an_active_story(repo, tmp_path):
+    sign_off(repo)
+    intake(repo)
+    save_plan(repo, tmp_path)
+    code, out = run(repo, "record_decomposition_from_json.py", stdin=json.dumps(DECOMP))
+    assert code == 0, out
+    code, out = run(repo, "forge.py", "quickfix", "start", "repair active story")
+    assert code == 0, out
+
+    active_path = repo / ".factory" / "quickfix.json"
+    for number in range(1, 7):
+        code, out = hook(repo, {
+            "tool_name": "Edit", "permission_mode": "default",
+            "tool_input": {"file_path": str(repo / "src" / f"story-{number}.py")},
+        })
+        assert code == 0 and "deny" not in out, out
+    code, out = hook(repo, {
+        "tool_name": "Edit", "permission_mode": "default",
+        "tool_input": {"file_path": str(repo / "src" / "story-6.py")},
+    })
+    assert code == 0 and "deny" not in out, out
+    assert json.loads(active_path.read_text())["files"] == [
+        f"src/story-{number}.py" for number in range(1, 7)
+    ]
+
+
+def test_quickfix_budget_still_refuses_over_limit_when_unplanned(repo):
+    code, out = run(repo, "forge.py", "quickfix", "start", "bounded repair")
+    assert code == 0, out
+    active_path = repo / ".factory" / "quickfix.json"
+
+    for number in range(1, 6):
+        code, out = hook(repo, {
+            "tool_name": "Edit", "permission_mode": "default",
+            "tool_input": {"file_path": str(repo / "src" / f"bounded-{number}.py")},
+        })
+        assert code == 0 and "deny" not in out, out
+    code, out = hook(repo, {
+        "tool_name": "Edit", "permission_mode": "default",
+        "tool_input": {"file_path": str(repo / "src" / "bounded-6.py")},
+    })
+    assert code == 0 and "deny" in out and "scope exceeded" in out
+    assert json.loads(active_path.read_text())["files"] == [
+        f"src/bounded-{number}.py" for number in range(1, 6)
+    ]
+
+
+def test_quickfix_recording_authorizes_nothing(repo, tmp_path):
+    sign_off(repo)
+    intake(repo)
+    save_plan(repo, tmp_path)
+    code, out = run(repo, "forge.py", "quickfix", "start", "zero-budget probe")
+    assert code == 0, out
+
+    active_path = repo / ".factory" / "quickfix.json"
+    active = json.loads(active_path.read_text())
+    active["max_files"] = 0
+    active_path.write_text(json.dumps(active, indent=2) + "\n")
+
+    code, out = hook(repo, {
+        "tool_name": "Edit", "permission_mode": "default",
+        "tool_input": {"file_path": str(repo / "src" / "recorded.py")},
+    })
+    assert code == 0 and "deny" in out and "scope exceeded" in out
+    assert json.loads(active_path.read_text())["files"] == []
+
+
 # ---------------------------------------------------------------- plan grill
 
 def test_plan_save_requires_a_fresh_same_issue_grill(repo, tmp_path):

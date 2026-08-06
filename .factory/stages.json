@@ -4,16 +4,30 @@
     {
       "id": "PH-5.1",
       "title": "forge history reads the committed events",
-      "status": "active",
+      "status": "done",
       "started_at": "2026-08-06T04:15:26+00:00",
       "base_sha": "5c2e40a04934771cab6cf9c87796d2cb440d50de",
       "dirty_at_start": {},
-      "task_sha256": "d56f04abbfb7269674df4cc9e7f03e70922130fb10466a79f4fbb3e51d570c72"
+      "task_sha256": "d56f04abbfb7269674df4cc9e7f03e70922130fb10466a79f4fbb3e51d570c72",
+      "completed_at": "2026-08-06T04:32:20+00:00"
     },
     {
       "id": "PH-5.2",
       "title": "Quickfix windows record what they touched",
-      "status": "pending"
+      "status": "active",
+      "started_at": "2026-08-06T04:32:30+00:00",
+      "base_sha": "5f8b960fed31050e8b47c38bace84a4e41893cb6",
+      "dirty_at_start": {
+        ".factory/events.jsonl": {
+          "digest": "0fa0b3cc0981204e694619b782a424f34848aefa57048059e37c42bca5d75676",
+          "git": "1 .M N... 100644 100644 100644 8e12268c62268a9886feacd2b5327feaa729ed19 8e12268c62268a9886feacd2b5327feaa729ed19 .factory/events.jsonl\u0000\u0000100644 8e12268c62268a9886feacd2b5327feaa729ed19 0\t.factory/events.jsonl\u0000\u0000H .factory/events.jsonl\u0000"
+        },
+        ".factory/stages.json": {
+          "digest": "1b4ab963676f36dc05dd424f76c7e83e2dceba4da5e9a498b49dc37385668f1c",
+          "git": "1 .M N... 100644 100644 100644 61fc92d8edf3a446c6b3cc1b1bc6e5d51a3cf6dd 61fc92d8edf3a446c6b3cc1b1bc6e5d51a3cf6dd .factory/stages.json\u0000\u0000100644 61fc92d8edf3a446c6b3cc1b1bc6e5d51a3cf6dd 0\t.factory/stages.json\u0000\u0000H .factory/stages.json\u0000"
+        }
+      },
+      "task_sha256": "fb2db21550360638713dc18dc85d84731c4e8e4d1ee9bb9841e08ec3641c0c74"
     },
     {
       "id": "PH-5.3",
