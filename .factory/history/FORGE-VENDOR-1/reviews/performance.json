@@ -1,0 +1,16 @@
+{
+  "generated_by": "autoreview",
+  "score": 9,
+  "summary": "Branch autoreview (performance lens): copies are now bounded to a small fixed manifest rather than an unbounded source tree; the vendored regression tests' _copy_harness_source was narrowed from a whole-repo clone to the harness-owned surface, removing duplicated client dep/build trees from CI. No hot-path or complexity regressions.",
+  "blocking_findings": [],
+  "non_blocking_findings": [],
+  "recommendation": "approve",
+  "reviewed_scope": [
+    "factory/scripts/forge_cli/scaffold.py",
+    "factory/tests/test_gates.py"
+  ],
+  "aspect": "performance",
+  "residual_risks": [],
+  "recorded_at": "2026-08-06T19:44:12+00:00",
+  "commit": "a0b2ebc968e3c357b2199fb69c2267e346e2232e"
+}

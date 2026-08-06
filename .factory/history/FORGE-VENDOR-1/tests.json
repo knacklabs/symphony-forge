@@ -1,0 +1,32 @@
+{
+  "commit": "a0b2ebc968e3c357b2199fb69c2267e346e2232e",
+  "automated": {
+    "generated_by": "implementer",
+    "status": "pass",
+    "summary": "Full suite green (verify.py: check_dual_runtime, check_factory_scaffold, pytest factory/tests). New regression tests prove init/adopt/upgrade vendor only the harness-owned skill (forge), reject a source-repo decoy skill, and agree on one shared owned-set; a client-skill-sourced scaffold now passes check_dual_runtime; the three FORGE-INIT-1 fixture-bound tests skip in a fixture-free client scaffold and run here.",
+    "blocking_findings": [],
+    "commands_run": [
+      "python3 factory/scripts/verify.py",
+      "uv run python -m pytest factory/tests/test_gates.py -q -k 'init or adopt or scaffold or vendor or harness_owned or agree or client or fixture or dual_runtime'"
+    ],
+    "tests_added_or_updated": [
+      "test_init_vendors_only_the_harness_owned_skill_not_a_source_decoy",
+      "test_init_and_upgrade_share_the_harness_owned_skill_set",
+      "test_adopt_vendors_only_the_harness_owned_skill_not_a_source_decoy",
+      "test_init_adopt_upgrade_agree_on_the_harness_owned_skill_set",
+      "test_vendored_scaffold_check_is_clean_in_a_client_repo_with_its_own_skill",
+      "test_fixture_bound_tests_skip_in_a_fixture_free_client_scaffold",
+      "skipif guards on the three FORGE-INIT-1 fixture-bound tests",
+      "_copy_harness_source narrowed to the harness-owned surface"
+    ],
+    "pass_fail_summary": "verify.py passed; targeted init/adopt/scaffold sweep 9 passed.",
+    "non_blocking_findings": [],
+    "remaining_gaps": [],
+    "residual_risks": [],
+    "manual_validation_steps": [],
+    "reviewed_scope": [],
+    "recorded_at": "2026-08-06T19:44:12+00:00",
+    "commit": "a0b2ebc968e3c357b2199fb69c2267e346e2232e"
+  },
+  "updated_at": "2026-08-06T19:44:12+00:00"
+}

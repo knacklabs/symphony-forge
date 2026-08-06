@@ -1,0 +1,18 @@
+{
+  "generated_by": "autoreview",
+  "score": 9,
+  "summary": "Branch autoreview (quality lens): the harness-owned skill set is defined once in scaffold.py and reused by init, adopt, and upgrade; the wholesale .claude/.codex/skills copies are gone, replaced by manifest-scoped copies that still route through the FORGE-BOUNDARY-1 boundary helpers. Optional .claude files are guarded consistently across all three commands. Verdict: patch is correct.",
+  "blocking_findings": [],
+  "non_blocking_findings": [],
+  "recommendation": "approve",
+  "reviewed_scope": [
+    "factory/scripts/forge_cli/scaffold.py",
+    "factory/scripts/forge_cli/adopt.py",
+    "factory/scripts/forge_cli/upgrade.py",
+    "factory/tests/test_gates.py"
+  ],
+  "aspect": "quality",
+  "residual_risks": [],
+  "recorded_at": "2026-08-06T19:44:12+00:00",
+  "commit": "a0b2ebc968e3c357b2199fb69c2267e346e2232e"
+}

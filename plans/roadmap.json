@@ -246,16 +246,19 @@
         "init/adopt/upgrade of symphony-forge behave exactly as before (existing tests green)"
       ],
       "order": 11,
-      "status": "active",
+      "status": "done",
       "epic": "symphony-forge",
       "skill": "backend",
       "kind": "feature",
       "depends_on": [],
-      "spec": "docs/specs/harness-owned-vendoring.md"
+      "spec": "docs/specs/harness-owned-vendoring.md",
+      "completed_at": "2026-08-06T19:44:17+00:00",
+      "history": ".factory/history/FORGE-VENDOR-1/",
+      "outcome": "forge init and adopt now vendor only the harness-owned skill (forge), never a source repo's own skills, so a client repo whose CI runs the vendored factory tests no longer copies a client skill with a canon marker pointing outside the vendored tree into a scaffold \u2014 check_dual_runtime stays green in client CI. init/adopt/upgrade share one owned-skill manifest; the three symphony-forge-only fixture tests skip in a fixture-free client scaffold."
     }
   ],
   "generated_by": "human",
-  "updated_at": "2026-08-06T17:44:39+00:00",
+  "updated_at": "2026-08-06T19:44:17+00:00",
   "epics": [
     {
       "id": "symphony-forge",

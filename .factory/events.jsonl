@@ -467,3 +467,9 @@
 {"event": "delegated", "generated_by": "orchestrator", "at": "2026-08-06T18:42:20+00:00", "story": "FORGE-VENDOR-1", "detail": "FORGE-VENDOR-1.3 (write)"}
 {"event": "stage-done", "generated_by": "implementer", "at": "2026-08-06T18:49:12+00:00", "story": "FORGE-VENDOR-1", "detail": "FORGE-VENDOR-1.3 Gate the FORGE-INIT-1 fixture tests; client-CI simulation"}
 {"event": "verify-passed", "generated_by": "orchestrator", "at": "2026-08-06T18:59:20+00:00", "story": "FORGE-VENDOR-1"}
+{"event": "verify-passed", "generated_by": "orchestrator", "at": "2026-08-06T19:42:13+00:00", "story": "FORGE-VENDOR-1"}
+{"event": "tests-automated", "generated_by": "implementer", "at": "2026-08-06T19:44:12+00:00", "story": "FORGE-VENDOR-1", "detail": "pass"}
+{"event": "review-quality", "generated_by": "autoreview", "at": "2026-08-06T19:44:12+00:00", "story": "FORGE-VENDOR-1"}
+{"event": "review-performance", "generated_by": "autoreview", "at": "2026-08-06T19:44:12+00:00", "story": "FORGE-VENDOR-1"}
+{"event": "review-security", "generated_by": "autoreview", "at": "2026-08-06T19:44:12+00:00", "story": "FORGE-VENDOR-1"}
+{"event": "shipped", "generated_by": "orchestrator", "at": "2026-08-06T19:44:17+00:00", "story": "FORGE-VENDOR-1", "detail": "forge init and adopt now vendor only the harness-owned skill (forge), never a source repo's own skills, so a client repo whose CI runs the vendored factory tests no longer copies a client skill with a"}
