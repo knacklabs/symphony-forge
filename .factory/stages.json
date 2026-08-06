@@ -52,7 +52,7 @@
     {
       "id": "PH-5.4",
       "title": "The record states where it begins, and no shipped story is silently outcome-less",
-      "status": "active",
+      "status": "done",
       "started_at": "2026-08-06T05:23:56+00:00",
       "base_sha": "b175148428500a8c8da0277185a470bd181c3095",
       "dirty_at_start": {
@@ -65,7 +65,13 @@
           "git": "1 .M N... 100644 100644 100644 b684e334d249a757954570d2f2c88e698bd244f4 b684e334d249a757954570d2f2c88e698bd244f4 .factory/stages.json\u0000\u0000100644 b684e334d249a757954570d2f2c88e698bd244f4 0\t.factory/stages.json\u0000\u0000H .factory/stages.json\u0000"
         }
       },
-      "task_sha256": "aaec302f57ca39f27bf19ed7a4494520e8c53878ab76e4afc6f8677235f8a20a"
+      "task_sha256": "ef8c138baa3a255d78e9435be0b43d335785ed38d25db85c40219a4d2712a37f",
+      "completed_at": "2026-08-06T06:15:16+00:00",
+      "contract_changed": {
+        "at": "2026-08-06T06:15:16+00:00",
+        "from": "aaec302f57ca39f27bf19ed7a4494520e8c53878ab76e4afc6f8677235f8a20a",
+        "to": "ef8c138baa3a255d78e9435be0b43d335785ed38d25db85c40219a4d2712a37f"
+      }
     }
   ]
 }
