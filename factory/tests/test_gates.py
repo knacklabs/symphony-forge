@@ -8563,16 +8563,23 @@ def test_init_vendors_only_the_harness_owned_skill_not_a_source_decoy(
 def test_init_adopt_upgrade_agree_on_the_harness_owned_skill_set(repo):
     from forge_cli.adopt import ADOPT_SKILL_TREES
     from forge_cli.scaffold import HARNESS_OWNED_SKILLS
-    from forge_cli.upgrade import CLAUDE_HARNESS_OWNED
+    from forge_cli.upgrade import (
+        CLAUDE_HARNESS_OWNED,
+        CODEX_HARNESS_OWNED_SKILLS,
+    )
 
     adopt_skills = {
         Path(path).name
         for path in ADOPT_SKILL_TREES
     }
-    upgrade_skills = {
+    upgrade_claude_skills = {
         Path(path).name
         for path in CLAUDE_HARNESS_OWNED
         if path.startswith("skills/")
+    }
+    upgrade_codex_skills = {
+        Path(path).name
+        for path in CODEX_HARNESS_OWNED_SKILLS
     }
     init_skills = {
         runtime: {
@@ -8582,7 +8589,12 @@ def test_init_adopt_upgrade_agree_on_the_harness_owned_skill_set(repo):
         }
         for runtime in (".claude", ".codex")
     }
-    assert adopt_skills == upgrade_skills == set(HARNESS_OWNED_SKILLS)
+    assert (
+        adopt_skills
+        == upgrade_claude_skills
+        == upgrade_codex_skills
+        == set(HARNESS_OWNED_SKILLS)
+    )
     assert init_skills == {
         ".claude": set(HARNESS_OWNED_SKILLS),
         ".codex": set(HARNESS_OWNED_SKILLS),
