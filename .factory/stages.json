@@ -29,7 +29,12 @@
     {
       "id": "FORGE-VENDOR-1.3",
       "title": "Gate the FORGE-INIT-1 fixture tests; client-CI simulation",
-      "status": "pending"
+      "status": "done",
+      "started_at": "2026-08-06T18:30:07+00:00",
+      "base_sha": "529b2178b93c8b7965a6917b9ec67537cdf3c927",
+      "dirty_at_start": {},
+      "task_sha256": "5038d50a6d2c3b36834f19d174c1b4d7c34e5efa50e10cd5ba9fe83fee651cc0",
+      "completed_at": "2026-08-06T18:49:12+00:00"
     }
   ]
 }
