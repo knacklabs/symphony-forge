@@ -495,3 +495,5 @@
 {"event": "stage-done", "generated_by": "implementer", "at": "2026-08-07T06:04:48+00:00", "story": "FORGE-LOCK-1", "detail": "FORGE-LOCK-1.1 Repo-kind-aware planning lock + harness-source marker"}
 {"event": "verify-passed", "generated_by": "orchestrator", "at": "2026-08-07T06:16:28+00:00", "story": "FORGE-LOCK-1"}
 {"event": "verify-failed", "generated_by": "orchestrator", "at": "2026-08-07T08:06:14+00:00", "story": "FORGE-LOCK-1"}
+{"event": "verify-failed", "generated_by": "orchestrator", "at": "2026-08-07T08:29:06+00:00", "story": "FORGE-LOCK-1"}
+{"event": "verify-passed", "generated_by": "orchestrator", "at": "2026-08-07T08:54:15+00:00", "story": "FORGE-LOCK-1"}
