@@ -214,19 +214,30 @@ GIT_VALUE_OPTS = {
 }
 
 
-def git_subcommand(args: list[str]) -> tuple[str | None, list[str]]:
-    """The git subcommand and its args, skipping global options and their values."""
+def git_subcommand(args: list[str]) -> tuple[str | None, list[str], str]:
+    """(subcommand, subcommand args, `-C` cwd prefix), skipping global options.
+
+    `-C <dir>` changes the directory git resolves paths against (cumulative when
+    repeated), so its value is captured and later joined onto the operands —
+    otherwise `git -C .factory rm harness-source.json` would resolve against the
+    repo root and miss the marker. Other value-taking global options are skipped.
+    """
     index = 0
+    cwd_parts: list[str] = []
     while index < len(args):
         token = args[index]
+        if token == "-C" and index + 1 < len(args):
+            cwd_parts.append(args[index + 1])
+            index += 2
+            continue
         if token in GIT_VALUE_OPTS:
             index += 2  # option plus its separate value
             continue
         if token.startswith("-"):
             index += 1  # a flag, or --opt=value carrying its own value
             continue
-        return token, args[index + 1:]
-    return None, []
+        return token, args[index + 1:], "/".join(cwd_parts)
+    return None, [], "/".join(cwd_parts)
 
 
 def bash_write_paths(value: str) -> list[str]:
@@ -279,10 +290,15 @@ def bash_write_paths(value: str) -> list[str]:
             # `-C <dir>` that relocates path resolution, are arbitrary VCS ops
             # beyond this drift heuristic: git keeps them visible and the artifact
             # gates backstop (decision 0013 — this defends drift, not an adversary).
-            sub, sub_args = git_subcommand(args)
+            sub, sub_args, cwd = git_subcommand(args)
             if sub in {"rm", "mv"}:
-                found.extend(token for token in sub_args
-                             if not token.startswith("-") and token not in {">", ">>"})
+                for token in sub_args:
+                    if token.startswith("-") or token in {">", ">>"}:
+                        continue
+                    # Resolve the operand against git's -C directory so the true
+                    # target (not a root-relative mis-read) is classified.
+                    found.append(token if Path(token).is_absolute() or not cwd
+                                 else f"{cwd}/{token}")
         elif command_name == "cp" and operands:
             found.append(operands[-1])
         elif command_name == "mv":

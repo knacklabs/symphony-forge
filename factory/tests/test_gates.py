@@ -3629,6 +3629,7 @@ def test_harness_quickfix_cannot_delete_the_repo_kind_marker(repo):
     # even earlier by the blanket rm-rf policy; use `rm -r` to exercise this path.)
     for command in ("rm .factory/harness-source.json",
                     "git rm .factory/harness-source.json",
+                    "git -C .factory rm harness-source.json",  # -C must be honored
                     "rm -r .factory", "git rm .factory"):
         code, out = hook(repo, {
             "tool_name": "Bash", "permission_mode": "default",
