@@ -1,17 +1,15 @@
 {
-  "issue_key": "FORGE-LOCK-1",
-  "title": "The planning lock guards the harness's own source",
+  "issue_key": "FORGE-MODES-1",
+  "title": "Developer-selectable workflow modes (Lite mode)",
   "tracker": "linear",
-  "branch": "feat/FORGE-LOCK-1-the-planning-lock-guards-the-harness-s-own-source",
-  "phase": "implementing",
-  "plan_status": "approved",
-  "decomposition_status": "recorded",
+  "branch": "feat/FORGE-MODES-1-developer-selectable-workflow-modes",
+  "phase": "planning",
+  "plan_status": "needs-plan",
+  "decomposition_status": "pending",
   "implementation_status": "pending",
   "tests_status": "pending",
-  "verify_status": "passed",
+  "verify_status": "pending",
   "review_status": "pending",
-  "created_at": "2026-08-07T02:54:01+00:00",
-  "updated_at": "2026-08-07T06:16:28+00:00",
-  "plan_file": "plans/active/FORGE-LOCK-1-the-planning-lock-guards-the-harness-s-own-source.md",
-  "story": "FORGE-LOCK-1"
+  "created_at": "2026-08-07T06:47:41+00:00",
+  "updated_at": "2026-08-07T06:47:41+00:00"
 }
