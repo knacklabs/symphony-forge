@@ -3630,6 +3630,7 @@ def test_harness_quickfix_cannot_delete_the_repo_kind_marker(repo):
     for command in ("rm .factory/harness-source.json",
                     "git rm .factory/harness-source.json",
                     "git -C .factory rm harness-source.json",  # -C must be honored
+                    "mv .factory/harness-source.json plans/decoy.json",  # source too
                     "rm -r .factory", "git rm .factory"):
         code, out = hook(repo, {
             "tool_name": "Bash", "permission_mode": "default",

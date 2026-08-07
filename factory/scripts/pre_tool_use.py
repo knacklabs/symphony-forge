@@ -302,6 +302,9 @@ def bash_write_paths(value: str) -> list[str]:
         elif command_name == "cp" and operands:
             found.append(operands[-1])
         elif command_name == "mv":
+            # BOTH operands: the source is a deletion (moving the marker away
+            # removes it) and the destination is a write. Unlike `cp` above,
+            # which only creates its destination, `mv` must classify its source.
             found.extend(operands)
         elif command_name == "sed" and any(
             token == "-i" or token.startswith("-i") or token.startswith("--in-place")
