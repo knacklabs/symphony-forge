@@ -4591,6 +4591,125 @@ def test_trailer_check_targets_the_acceptance_commit(repo):
     assert code == 0 and "Confirmed-by" not in out
 
 
+# ---------------------------------------------------------- Gate A: PR ticket
+
+def pr_ticket_base(repo: Path, *keys: str) -> str:
+    for key in keys:
+        ensure_story(repo, key)
+    roadmap = repo / "plans" / "roadmap.json"
+    if not roadmap.exists():
+        roadmap.parent.mkdir(parents=True, exist_ok=True)
+        roadmap.write_text(json.dumps({
+            "generated_by": "docs-decomposer", "epics": [], "items": [],
+        }, indent=2) + "\n")
+    git(repo, "add", "plans/roadmap.json")
+    git(repo, "commit", "-q", "-m", "seed PR tickets")
+    return head(repo)
+
+
+def complete_story(repo: Path, key: str) -> None:
+    roadmap = repo / "plans" / "roadmap.json"
+    data = json.loads(roadmap.read_text())
+    next(item for item in data["items"] if item["key"] == key)["status"] = "done"
+    roadmap.write_text(json.dumps(data, indent=2) + "\n")
+    history = repo / ".factory" / "history" / key
+    history.mkdir(parents=True)
+    (history / "outcome.json").write_text('{"status": "recorded"}\n')
+
+
+def check_pr_ticket(repo: Path, base: str, branch: str, body: str = ""):
+    return run(
+        repo, "check_pr_ticket.py", "--base", base,
+        "--head-branch", branch, "--pr-body", body,
+    )
+
+
+def test_check_pr_ticket_passes_story(repo):
+    key = "BOARD-101"
+    base = pr_ticket_base(repo, key)
+    complete_story(repo, key)
+    git(repo, "add", "plans/roadmap.json", f".factory/history/{key}")
+    git(repo, "commit", "-q", "-m", "complete story")
+
+    code, out = check_pr_ticket(repo, base, f"feat/{key}-gate-a")
+
+    assert code == 0 and f"story {key}" in out, out
+
+
+def test_check_pr_ticket_fails_no_ticket(repo):
+    key = "BOARD-102"
+    base = pr_ticket_base(repo, key)
+    complete_story(repo, key)
+    git(repo, "add", "plans/roadmap.json", f".factory/history/{key}")
+    git(repo, "commit", "-q", "-m", "complete unlinked story")
+
+    code, out = check_pr_ticket(repo, base, "chore/unlinked")
+
+    assert code != 0 and "no ticket was found" in out, out
+
+
+def test_check_pr_ticket_fails_missing_done_flip(repo):
+    key = "BOARD-103"
+    base = pr_ticket_base(repo, key)
+    history = repo / ".factory" / "history" / key
+    history.mkdir(parents=True)
+    (history / "outcome.json").write_text('{"status": "recorded"}\n')
+    git(repo, "add", f".factory/history/{key}")
+    git(repo, "commit", "-q", "-m", "history without completion")
+
+    code, out = check_pr_ticket(repo, base, f"feat/{key}-gate-a")
+
+    assert code != 0 and "no ticket resolves" in out, out
+
+
+def test_check_pr_ticket_fails_missing_history(repo):
+    key = "BOARD-106"
+    base = pr_ticket_base(repo, key)
+    roadmap = repo / "plans" / "roadmap.json"
+    data = json.loads(roadmap.read_text())
+    next(item for item in data["items"] if item["key"] == key)["status"] = "done"
+    roadmap.write_text(json.dumps(data, indent=2) + "\n")
+    git(repo, "add", "plans/roadmap.json")
+    git(repo, "commit", "-q", "-m", "completion without history")
+
+    code, out = check_pr_ticket(repo, base, f"feat/{key}-gate-a")
+
+    assert code != 0 and "no ticket resolves" in out, out
+
+
+def test_check_pr_ticket_window_passes(repo):
+    window_id = "Q-0042-abcd"
+    base = pr_ticket_base(repo)
+    ledger = repo / "plans" / "quickfixes"
+    ledger.mkdir(exist_ok=True)
+    (ledger / "window-done.json").write_text(json.dumps({
+        "event": "done", "id": window_id, "files": ["src/fix.py"],
+    }) + "\n")
+    git(repo, "add", "plans/quickfixes/window-done.json")
+    git(repo, "commit", "-q", "-m", "complete work window")
+
+    code, out = check_pr_ticket(
+        repo, base, "fix/bounded-change", f"Summary\n\nTicket: {window_id}\n",
+    )
+
+    assert code == 0 and f"window {window_id}" in out, out
+
+
+def test_check_pr_ticket_fails_two_resolved_records(repo):
+    first, second = "BOARD-104", "BOARD-105"
+    base = pr_ticket_base(repo, first, second)
+    complete_story(repo, first)
+    complete_story(repo, second)
+    git(repo, "add", "plans/roadmap.json", ".factory/history")
+    git(repo, "commit", "-q", "-m", "complete two stories")
+
+    code, out = check_pr_ticket(
+        repo, base, f"feat/{first}-gate-a", f"Ticket: {second}\n",
+    )
+
+    assert code != 0 and "2 work records resolve" in out, out
+
+
 # ------------------------------------------------------------ parallelization
 
 def test_roadmap_parallel_frontier(repo, tmp_path):
@@ -10218,4 +10337,3 @@ def test_hook_denies_nested_quoted_companion_write_launch(repo):
                                 "permission_mode": "default",
                                 "tool_input": {"command": cmd}})
         assert "deny" in out and "forge delegate" in out, cmd
-

@@ -1,0 +1,32 @@
+name: pr-ticket-check
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  pr-ticket-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Self-test the PR-ticket gate
+        run: |
+          python3 -m pip install --quiet pytest
+          python3 -m pytest factory/tests/test_gates.py -q -k "pr_ticket or gate_a"
+      - name: Require exactly one completed work record
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_BRANCH: ${{ github.event.pull_request.head.ref }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: >-
+          python3 factory/scripts/check_pr_ticket.py
+          --base "$BASE_SHA"
+          --head-branch "$HEAD_BRANCH"
+          --pr-body "$PR_BODY"
