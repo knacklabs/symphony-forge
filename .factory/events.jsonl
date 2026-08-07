@@ -569,3 +569,6 @@
 {"event": "stage-start", "generated_by": "implementer", "at": "2026-08-07T17:23:46+00:00", "story": "FORGE-BOARD-1", "detail": "FORGE-BOARD-1.2 Gate A \u2014 PR-ticket required check"}
 {"event": "delegated", "generated_by": "orchestrator", "at": "2026-08-07T17:30:20+00:00", "story": "FORGE-BOARD-1", "detail": "FORGE-BOARD-1.2 (write)"}
 {"event": "stage-done", "generated_by": "implementer", "at": "2026-08-07T17:31:22+00:00", "story": "FORGE-BOARD-1", "detail": "FORGE-BOARD-1.2 Gate A \u2014 PR-ticket required check"}
+{"event": "stage-start", "generated_by": "implementer", "at": "2026-08-07T17:31:34+00:00", "story": "FORGE-BOARD-1", "detail": "FORGE-BOARD-1.3 Gate B \u2014 branch auto-link + red-main invariant"}
+{"event": "delegated", "generated_by": "orchestrator", "at": "2026-08-07T17:37:45+00:00", "story": "FORGE-BOARD-1", "detail": "FORGE-BOARD-1.3 (write)"}
+{"event": "stage-done", "generated_by": "implementer", "at": "2026-08-07T17:45:27+00:00", "story": "FORGE-BOARD-1", "detail": "FORGE-BOARD-1.3 Gate B \u2014 branch auto-link + red-main invariant"}

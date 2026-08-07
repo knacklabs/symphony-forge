@@ -24,7 +24,12 @@
     {
       "id": "FORGE-BOARD-1.3",
       "title": "Gate B \u2014 branch auto-link + red-main invariant",
-      "status": "pending"
+      "status": "done",
+      "started_at": "2026-08-07T17:31:34+00:00",
+      "base_sha": "f2b73cba4f96fe937a4462bdf5a25301f2310f8d",
+      "dirty_at_start": {},
+      "task_sha256": "6a27d2ae4b02ea0bc3c5f1e871e327c5552bc4881c4d4380f63cdcca540ec0ce",
+      "completed_at": "2026-08-07T17:45:27+00:00"
     }
   ]
 }
