@@ -219,6 +219,7 @@ def sign_off(repo: Path) -> None:
 
 
 def intake(repo: Path, key: str = "ENG-1", title: str = "Invoices", *extra: str) -> tuple[int, str]:
+    ensure_story(repo, key, title)
     return run(repo, "intake.py", "--issue", key, "--title", title, *extra)
 
 
@@ -1290,6 +1291,22 @@ def test_mark_harvested_requires_real_in_repo_outputs(repo):
 
 
 # ------------------------------------------------------------ intake safety
+
+def test_intake_refuses_off_board_key(repo):
+    code, out = run(repo, "intake.py", "--issue", "OFF-1", "--title", "Off board")
+
+    assert code != 0
+    assert "roadmap add --no-spec" in out
+
+
+def test_intake_allows_on_board_key(repo):
+    ensure_story(repo, "BOARD-1", "On board")
+
+    code, out = run(repo, "intake.py", "--issue", "BOARD-1", "--title", "On board")
+
+    assert code == 0, out
+    assert roadmap_items(repo)["BOARD-1"]["status"] == "active"
+
 
 def test_intake_preserves_signoff_and_refuses_to_clobber_evidence(repo, tmp_path):
     sign_off(repo)

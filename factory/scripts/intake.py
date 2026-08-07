@@ -22,6 +22,11 @@ root = repo_root()
 issue_key = ensure_issue_key(args.issue, root)
 # depends_on is enforced at activation, not just displayed in the frontier.
 outcome, waiting = activation_state(root, issue_key)
+if outcome == "absent":
+    raise SystemExit(
+        f"{issue_key} is not on plans/roadmap.json. "
+        "Add it first through the `roadmap add --no-spec` path."
+    )
 if outcome == "blocked":
     raise SystemExit(
         f"{issue_key} is BLOCKED on the roadmap — waiting on: {', '.join(waiting)}. "
