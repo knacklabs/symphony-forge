@@ -1,0 +1,32 @@
+{
+  "generated_by": "griller",
+  "gate": "plan",
+  "issue": "FORGE-MODES-1",
+  "verdict": "pass",
+  "questions_asked": 6,
+  "summary": "Grilled the FORGE-MODES-1 plan over two AskUserQuestion rounds (six forks) plus mechanical gaps, reconciled against every active decision. All resolved to the reuse-first/minimal options and folded into the plan; the biggest catch was that record_review refuses post-ship, which would have broken the very post-PR case the feature exists for. No blocking findings; frontier confirmed empty with the user.",
+  "gaps": [
+    "Budget cannot bind at write time: the planning-lock hook sees only Claude's Edit/Write/Bash tool calls, not the Codex companion's direct writes, so a file budget enforced via pre_tool_use.claim_files never binds on a `forge fix` run.",
+    "Review freshness and the 'window diff' have no committed anchor: 'stamped at HEAD' has nothing to check while a lite fix is an uncommitted working-tree change, and no base is defined to measure the diff against.",
+    "Post-ship recording is blocked: record_review_from_json.py:63 calls gate(signoff, approved_plan, decomposition), all absent post-ship, so lite's 'one review to close' cannot be recorded in the post-PR scenario that motivates the feature.",
+    "Redundant command surface: `mode full` is a no-op with nothing open, and `mode done` duplicated `quickfix done` over the same window record.",
+    "Lite-fix delegation rows have no decomposition task, but append_delegation validates against factory/schemas/delegation.json, which is task-shaped.",
+    "A dirty product working tree at `mode done` would make the budget count and the review measure something other than committed reality."
+  ],
+  "contradictions": [
+    "Decision 0003 (Terra explores, Sol implements) reads as absolute, but lite mode performs a terra@high WRITE \u2014 an extension recorded only in 0031, with no cross-reference from 0003."
+  ],
+  "resolutions": [
+    "Bound and review at completion, not write time (mirrors `stage done` measuring the diff): `forge fix` runs terra, the fix is committed, autoreview runs over base_sha->HEAD, and `forge mode done` measures that committed diff's distinct product files against the budget (refuse if over). claim_files still guards any direct Claude edits; record_files logs terra's touched files from the diff. (round-1 Q1)",
+    "Store base_sha on the lite window at open; the dev/Claude commits the fix (forge fix does NOT auto-commit, keeping human authorship); mode done measures and reviews base_sha->HEAD. (round-2 Q4)",
+    "Scope the relaxation to review recording only: add a lite_window_ok path passed exclusively by record_review_from_json.py, accepting an open lite window in place of approved-plan+decomposition; the shared gate() stays strict for verify/tests, with a gate test asserting a lite window does NOT unlock them. (round-2 Q8)",
+    "One opener + one closer: `forge mode lite` (open), `forge mode list`, and a single closer that dispatches the gate by profile (quickfix = close as today, lite = the one-review gate), exposed as `forge mode done`; `mode full` dropped. quickfix verbs unchanged. (round-1 Q3)",
+    "Lite-fix delegation rows reuse the lite window id as `task`; task 2 verifies/extends factory/schemas/delegation.json to accept that shape (schema is in its write_scope).",
+    "`forge mode done` refuses a dirty product working tree ('commit the fix first'), so the budget count and the review always measure committed reality. (round-2 Q5)",
+    "0031 records the terra@high-write extension of 0003 deliberately; task 4 adds a one-line 'see 0031 (lite mode)' cross-reference to 0003 so it no longer reads as absolute. Round-1 Q2 accepts that a supervised hand-edit under a lite window bypasses the model pin \u2014 the pin governs delegated fixes; this is an accepted, recorded consequence captured by the window manifest and the mandatory close review."
+  ],
+  "open_items": [],
+  "input_sha256": "82a27122621f3da123da9a3d905c0e400900cb318c6e07702eeb2519a737241b",
+  "recorded_at": "2026-08-07T07:13:03+00:00",
+  "commit": "e7ef2242716879d2f20136da8d1361f25c50e75f"
+}

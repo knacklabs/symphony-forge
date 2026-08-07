@@ -255,10 +255,29 @@
       "completed_at": "2026-08-06T19:44:17+00:00",
       "history": ".factory/history/FORGE-VENDOR-1/",
       "outcome": "forge init and adopt now vendor only the harness-owned skill (forge), never a source repo's own skills, so a client repo whose CI runs the vendored factory tests no longer copies a client skill with a canon marker pointing outside the vendored tree into a scaffold \u2014 check_dual_runtime stays green in client CI. init/adopt/upgrade share one owned-skill manifest; the three symphony-forge-only fixture tests skip in a fixture-free client scaffold."
+    },
+    {
+      "key": "FORGE-MODES-1",
+      "title": "Developer-selectable workflow modes (Lite mode)",
+      "story": "After a PR is raised, small human-supervised fixes shouldn't require the full factory loop. A developer-selectable lite mode gives a bounded, ledgered, one-review lane (terra@high for the delegated fix) that works even post-ship, without loosening the full loop or the trace-only quickfix hatch.",
+      "acceptance_criteria": [
+        "A developer can move a small change through a lighter path than the full loop, chosen deliberately, without hand-editing gate state.",
+        "Selecting the lighter path is an attributed, recorded act (who, why) that records which files the change touched.",
+        "A change in the lighter path does not ship until it has passed one review with no blocking findings.",
+        "A change that exceeds the lighter path's size bound is refused there and directed to the full loop.",
+        "The lighter path is available after a story has shipped, not only during it; the full loop and the trace-only hatch are unchanged."
+      ],
+      "order": 12,
+      "status": "pending",
+      "epic": "symphony-forge",
+      "skill": "backend",
+      "kind": "feature",
+      "depends_on": [],
+      "spec": "docs/specs/workflow-modes.md"
     }
   ],
   "generated_by": "human",
-  "updated_at": "2026-08-07T02:54:01+00:00",
+  "updated_at": "2026-08-07T07:28:02+00:00",
   "epics": [
     {
       "id": "symphony-forge",

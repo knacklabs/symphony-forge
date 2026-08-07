@@ -1,7 +1,7 @@
 ---
 slug: workflow-modes
 title: A small supervised fix doesn't need the full loop
-status: draft
+status: confirmed
 saved: 2026-08-07T07:16:50+00:00
 ---
 

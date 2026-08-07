@@ -496,3 +496,8 @@
 {"event": "verify-passed", "generated_by": "orchestrator", "at": "2026-08-07T06:16:28+00:00", "story": "FORGE-LOCK-1"}
 {"event": "intake", "generated_by": "orchestrator", "at": "2026-08-07T06:46:47+00:00", "story": "FORGE-MODES-1", "detail": "Developer-selectable workflow modes (Lite mode)"}
 {"event": "intake", "generated_by": "orchestrator", "at": "2026-08-07T06:47:41+00:00", "story": "FORGE-MODES-1", "detail": "Developer-selectable workflow modes (Lite mode)"}
+{"event": "spec-draft", "generated_by": "orchestrator", "at": "2026-08-07T07:16:50+00:00", "detail": "workflow-modes: A small supervised fix doesn't need the full loop"}
+{"event": "spec-confirmed", "generated_by": "orchestrator", "at": "2026-08-07T07:26:51+00:00", "detail": "workflow-modes"}
+{"event": "roadmap-add", "generated_by": "orchestrator", "at": "2026-08-07T07:28:02+00:00", "story": "FORGE-MODES-1", "detail": "docs/specs/workflow-modes.md"}
+{"event": "plan-human-approved", "generated_by": "human", "at": "2026-08-07T07:34:48+00:00", "story": "FORGE-MODES-1", "detail": "FORGE-MODES-1 approved by vrknetha"}
+{"event": "plan-approved", "generated_by": "planner-high", "at": "2026-08-07T07:34:48+00:00", "story": "FORGE-MODES-1", "detail": "plans/active/FORGE-MODES-1-developer-selectable-workflow-modes-lite-mode.md"}

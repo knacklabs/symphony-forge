@@ -1,4 +1,9 @@
 ---
+issue: FORGE-MODES-1
+title: Developer-selectable workflow modes (Lite mode)
+status: approved
+saved: 2026-08-07T07:34:48+00:00
+story: FORGE-MODES-1
 decisions_reviewed:
   - 0001-determinism-contract
   - 0002-concurrency-one-task-per-branch

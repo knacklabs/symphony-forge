@@ -2,19 +2,17 @@
   "generated_by": "griller",
   "gate": "spec",
   "verdict": "pass",
-  "questions_asked": 2,
+  "questions_asked": 1,
+  "summary": "Grilled the workflow-modes capability spec. It defers all implementation (model, commands, size bound) to the plan/decision explicitly, and its acceptance criteria are behavioral. The one genuine capability-boundary question \u2014 the default posture across vendored clients \u2014 was put to the user and resolved.",
   "gaps": [
-    "How is 'harness-owned' determined, given init/adopt use repo_root() as their source \u2014 which the vendored gate tests set to the CLIENT repo, so there is no separate harness reference to iterate?",
-    "The vendored factory-scaffold workflow runs the harness's own regression suite in every client; some tests bind to symphony-forge's private FORGE-INIT-1 fixtures and can never pass elsewhere."
+    "Default posture across clients was the key capability boundary and had to be explicit: whether lite mode ships on-by-default, opt-in, or mandatory changes what every vendored client inherits."
   ],
   "contradictions": [],
   "resolutions": [
-    "Resolved: a HARDCODED harness-owned manifest (whitelist), defined once and shared by init, adopt and upgrade. Because the source is repo_root() (the client under the vendored tests), the commands cannot distinguish harness-owned by iterating a separate tree \u2014 they must copy exactly the known harness paths (.claude/{CLAUDE.md, settings.json, skills/forge}, .codex config + harness agents + skills/forge) and nothing else from the source's .claude/.codex. This subsumes the reported skills-canon bug and also keeps a client's custom .codex content out of a scaffold. A test asserts init/adopt/upgrade agree on the set.",
-    "Resolved by human decision (this session): GATE the fixture-bound tests \u2014 they skip when their symphony-forge fixture (.factory/history/FORGE-INIT-1) is absent, so the vendored workflow passes in a client while still running every portable check and still running the fixture tests in symphony-forge's own CI. (The alternative, dropping pytest from the vendored workflow, was rejected: clients keep running the harness regression suite.)"
+    "Confirmed on-by-default and removable: every vendored client inherits lite mode; a stricter shop disables it by removing the modes.lite pin (like any harness pin). The spec's Boundaries already states this posture."
   ],
   "open_items": [],
-  "summary": "The capability is well-scoped: init and adopt must vendor only harness-owned .claude/.codex machinery (a shared whitelist manifest), and the vendored regression suite must skip symphony-forge-only fixture tests in a client. Root cause confirmed against the code \u2014 all three commands source from repo_root(), so only a hardcoded manifest is safe. The two substantive choices (manifest whitelist; gate vs drop the harness tests) were put to the human and resolved. No contradiction with active decisions (0014 specs-before-build satisfied; 0016 machinery-dir ownership). Ready to confirm.",
-  "input_sha256": "f6a97a10c6d396e1e23f5fb36f354cfa80cde1e430dcb93c94992aa810b106ba",
-  "recorded_at": "2026-08-06T17:44:06+00:00",
-  "commit": "595cd0b85872913a2d004b5aa859fccc30f15a54"
+  "input_sha256": "8db64d8b2103728d01927b41666fea4eb35f76add5c53acc8ecd65c5ae7d8b5d",
+  "recorded_at": "2026-08-07T07:26:50+00:00",
+  "commit": "ce14454e72cef889ed158c96d59645798954e9cf"
 }
