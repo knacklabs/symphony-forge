@@ -1,0 +1,11 @@
+{
+  "topic": "decomposition-shared-function-scope",
+  "lesson": "When a stage changes a shared helper, every consumer of that helper must be in the SAME stage's write_scope, or the stage silently regresses a sibling stage's file it cannot legally fix. FORGE-MODES-1.3 changed _lite_manifest to a committed diff; forge fix (fix.py, stage 2) depended on the old working-tree semantics and broke \u2014 fix.py had to be added to stage 3's scope.",
+  "source": "7c8543c",
+  "applies_to": [
+    "factory/scripts/forge_cli/**"
+  ],
+  "severity": "medium",
+  "generated_by": "orchestrator",
+  "added_at": "2026-08-07T10:01:46+00:00"
+}
