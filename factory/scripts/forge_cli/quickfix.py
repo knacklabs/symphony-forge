@@ -113,6 +113,16 @@ def cmd_done(args: argparse.Namespace) -> None:
     active = load_active(base)
     if not active:
         fail("no quickfix is open")
+    # The window pins the repo kind so marker deletion mid-window can't escape the
+    # budget — but that protection must be durable: if a harness-pinned window
+    # ends with the marker gone, closing it would flip the repo to client-mode
+    # permanently (every later factory/ write then bypasses the lock). Refuse to
+    # close until the marker is restored, so the pin cannot be laundered away.
+    if active.get("harness_source") and not is_harness_source_repo(base):
+        fail("this window was opened as the harness source repo, but "
+             ".factory/harness-source.json is now missing — restore it before "
+             "closing, or the repo would silently become a client and unlock all "
+             "machinery.")
     event = {
         "event": "done",
         "id": active["id"],

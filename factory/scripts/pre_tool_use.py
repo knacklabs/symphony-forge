@@ -304,11 +304,15 @@ def bash_write_paths(value: str) -> list[str]:
 def _contains_marker(rel: str) -> bool:
     """True when rel IS the repo-kind marker or a directory that contains it.
 
-    An ancestor delete (`rm -rf .factory`, or the repo root) removes the marker
-    just as surely as deleting it by name, so it must be gated the same way.
+    An ancestor delete (`rm -r .factory`) removes the marker just as surely as
+    deleting it by name. The repo ROOT (`.`/``) is deliberately excluded: it is
+    a benign create-destination for `cp/mv <src> .`, not a marker deletion, and
+    a genuine root wipe (`rm -rf .`) is caught by the rm-rf policy instead.
     """
-    if rel in ("", ".", HARNESS_SOURCE_MARKER):
+    if rel == HARNESS_SOURCE_MARKER:
         return True
+    if not rel or rel == ".":
+        return False
     return HARNESS_SOURCE_MARKER.startswith(rel.rstrip("/") + "/")
 
 

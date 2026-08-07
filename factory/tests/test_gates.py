@@ -3677,6 +3677,28 @@ def test_quickfix_pins_repo_kind_so_marker_deletion_cannot_escape_budget(repo):
         "tool_input": {"file_path": str(repo / "factory" / "scripts" / "m6.py")},
     })
     assert code == 0 and "deny" in out and "scope exceeded" in out
+    # And the pin cannot be laundered away by closing the window: a harness-pinned
+    # window whose marker went missing refuses to close until it is restored.
+    code, out = run(repo, "forge.py", "quickfix", "done")
+    assert code != 0 and "missing" in out, out
+    (repo / ".factory" / "harness-source.json").write_text('{"role": "harness-source"}\n')
+    code, out = run(repo, "forge.py", "quickfix", "done")
+    assert code == 0, out
+
+
+def test_harness_quickfix_allows_benign_root_destination(repo):
+    # The ancestor-marker guard must fire only on marker DELETION, not on a
+    # benign create-into-root destination like `cp/mv <src> .` (whose parsed
+    # target is the repo root). Those are ordinary product writes, budget-claimed.
+    mark_harness_source(repo)
+    code, out = run(repo, "forge.py", "quickfix", "start", "benign")
+    assert code == 0, out
+    for command in ("cp /tmp/tool .", "mv /tmp/tool ."):
+        code, out = hook(repo, {
+            "tool_name": "Bash", "permission_mode": "default",
+            "tool_input": {"command": command},
+        })
+        assert code == 0 and "repo-kind marker" not in out, command
 
 
 def test_scaffolded_client_has_no_harness_source_marker(tmp_path, monkeypatch):
