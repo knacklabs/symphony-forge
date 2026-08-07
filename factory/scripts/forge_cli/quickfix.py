@@ -109,6 +109,11 @@ def _open(base: Path, *, profile: str, reason: str, by: str | None = None) -> di
         "started_at": now_iso(),
         "max_files": MAX_FILES,
         "files": [],
+        # Pin the repo kind for the window's lifetime: the planning lock reads
+        # this instead of the live marker while a quickfix is open, so deleting
+        # the harness-source marker mid-window (by ANY means) cannot flip the
+        # repo to client-mode and let machinery writes escape the file budget.
+        "harness_source": is_harness_source_repo(base),
     }
     if by is not None:
         active["by"] = by
@@ -143,6 +148,16 @@ def cmd_done(args: argparse.Namespace) -> None:
         fail("no quickfix is open")
     if profile_of(active) != QUICKFIX:
         fail("a lite window is open — finish it with `./forge mode done`")
+    # The window pins the repo kind so marker deletion mid-window can't escape the
+    # budget — but that protection must be durable: if a harness-pinned window
+    # ends with the marker gone, closing it would flip the repo to client-mode
+    # permanently (every later factory/ write then bypasses the lock). Refuse to
+    # close until the marker is restored, so the pin cannot be laundered away.
+    if active.get("harness_source") and not is_harness_source_repo(base):
+        fail("this window was opened as the harness source repo, but "
+             ".factory/harness-source.json is now missing — restore it before "
+             "closing, or the repo would silently become a client and unlock all "
+             "machinery.")
     event = {
         "event": "done",
         "id": active["id"],

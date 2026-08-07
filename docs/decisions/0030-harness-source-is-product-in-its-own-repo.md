@@ -45,21 +45,46 @@ direct-delete commands (`rm`, `unlink`) and their git equivalents (`git rm`,
 hand-edit, `rm`, or `git rm`.
 
 Crucially, the marker may be changed **only under an approved plan with a
-recorded decomposition — never a quickfix.** The marker decides whether the
-machinery trees are product at all, so a quickfix that could `rm` it as its
-first claimed file would flip the repo to client-mode and let every later
-machinery write skip the five-file budget entirely, defeating the very bound the
-quickfix exists to enforce. Under an approved plan the machinery is already
-writable, so removing the marker grants nothing new; under a quickfix, a marker
-change is refused outright.
+recorded decomposition — never a quickfix.** Under an approved plan the machinery
+is already writable, so removing the marker grants nothing new; under a quickfix,
+a marker change is refused outright.
 
-The ceiling is 0013's, stated honestly: this is drift-defense, not an
-adversarial sandbox. The marker is protected exactly as strongly as any other
-machinery file — no more, no less. Arbitrary VCS or code that can also drop a
-file (`git checkout`/`reset`/`restore`/`clean`/`stash`, a `python -c os.remove`)
-is beyond the heuristic for the marker just as it is for `src/app.ts`; git
-history keeps such acts visible and the artifact gates (verify/review/pr_ready)
-remain the backstop. This **refines 0013** (it does not supersede it — 0013
+**The budget is protected structurally, not by exhaustive parsing.** A quickfix
+PINS the repo kind at its start (`harness_source` in the window state); while the
+window is open the planning lock reads that pin instead of the live marker. So
+even if the marker were removed mid-window by a vector the Bash guard does not
+catch, classification stays `harness`, machinery keeps being claimed, and the
+five-file budget cannot be escaped. This is the guarantee — the deletion guard is
+defence-in-depth, not the load-bearing wall.
+
+To keep the quickfix budget honest, it is counted per **created file**, not per
+literal operand: a copy/move into a machinery directory expands to
+`<dir>/<basename>` per source, so N copies spend N slots. A write whose file set
+cannot be bounded from the literal command — a recursive/globbed/brace `rm`/
+`git rm` of a product path, or a recursive or glob-sourced copy/move whose
+DESTINATION is a product path — is **refused**; the fix must enumerate the exact
+paths or be planned. Copy/move opacity is keyed on the destination, never the
+source, so a read-OUT backup (`cp -R factory/scripts /tmp/x`) is never blocked.
+The heuristic covers the common copy/move shapes. Exotic invocations — the
+attached `-tDIR` target form, a bare `mv <dir>` (recursive with no flag), a
+`git mv` into a directory, pure shell games (subshells, `xargs`, `\rm`), and
+arbitrary code (`python -c os.remove`, `find -delete`) — remain a documented
+residual, general to every repo. Per 0013 this Bash guard is drift-defense, not
+an adversarial sandbox: those forms are deliberate, not drift, the resulting
+machinery change is VISIBLE IN THE DIFF, and verify / branch autoreview /
+pr_ready are the backstop. It is at worst a budget mis-count, never a lock
+disarm — the pin keeps classification correct regardless.
+
+The Bash write guard catches the **common** deletion/relocation vectors that
+reach the marker: `rm`/`unlink`, `git rm`/`git mv`, `mv` of the source, and an
+ancestor delete (`rm -r .factory`). The ceiling is 0013's, stated honestly: this
+is drift-defense, not an adversarial sandbox. cwd games (`cd .factory && rm`),
+`git -C`, indirect pathspecs, globs, and arbitrary code (`python -c os.remove`,
+`find .factory -delete`) are beyond the heuristic for the marker just as they are
+for `src/app.ts`. For the LOCKED case (no quickfix, no plan) those remain the
+residual, backstopped by git history visibility and the artifact gates
+(verify/review/pr_ready); for the quickfix case the pin closes them entirely.
+This **refines 0013** (it does not supersede it — 0013
 stays authoritative for client repos; its "harness files stay freely writable"
 consequence now applies only to *client* repos) and complements 0009.
 

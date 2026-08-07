@@ -1,0 +1,16 @@
+{
+  "generated_by": "autoreview",
+  "score": 9,
+  "summary": "Branch autoreview (performance lens): the added work is per-tool-call string parsing over a shell command and a few product_path resolutions \u2014 negligible. is_harness_source_repo is a single stat; the quickfix pin avoids repeated marker reads during a window. No hot-path or complexity regression.",
+  "blocking_findings": [],
+  "non_blocking_findings": [],
+  "recommendation": "approve",
+  "reviewed_scope": [
+    "factory/scripts/pre_tool_use.py",
+    "factory/scripts/forge_cli/quickfix.py"
+  ],
+  "aspect": "performance",
+  "residual_risks": [],
+  "recorded_at": "2026-08-07T10:08:15+00:00",
+  "commit": "6a9e8de8aa0f3f9c7513b95d7c6715050b8050cf"
+}

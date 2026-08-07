@@ -1,0 +1,34 @@
+{
+  "commit": "6a9e8de8aa0f3f9c7513b95d7c6715050b8050cf",
+  "automated": {
+    "generated_by": "implementer",
+    "status": "pass",
+    "summary": "Full suite green (verify.py: check_dual_runtime, check_factory_scaffold, pytest factory/tests). New tests prove the planning lock is repo-kind-aware: in the harness source repo (marker present) machinery (factory/, constitution/, harness/, .claude/, .codex/) is denied without an approved plan and allowed after; in a client (no marker) it stays writable; a real forge-init from a marker-carrying source does NOT vendor the marker; a quickfix claims machinery files against the 5-file budget; the marker is plan-only and its deletion (rm/git rm/mv/rm -r .factory) refused; the quickfix repo-kind PIN keeps the budget un-escapable even if the marker is deleted mid-window, and a harness-pinned window refuses to close if the marker vanished; opaque machinery deletes and recursive/glob copies INTO machinery are refused while read-OUT copies are allowed; copies into a machinery dir are counted per created file.",
+    "blocking_findings": [],
+    "commands_run": [
+      "python3 factory/scripts/verify.py",
+      "uv run --with pytest python -m pytest factory/tests/test_gates.py -q -k 'marker or harness_repo or quickfix or planning_lock or opaque or pins'"
+    ],
+    "tests_added_or_updated": [
+      "test_harness_repo_locks_machinery_writes_without_a_plan",
+      "test_client_repo_leaves_vendored_machinery_writable",
+      "test_harness_quickfix_claims_machinery_files_against_budget",
+      "test_scaffolded_client_has_no_harness_source_marker (real forge init)",
+      "test_harness_repo_keeps_docs_and_planning_surfaces_writable",
+      "test_harness_quickfix_cannot_delete_the_repo_kind_marker",
+      "test_quickfix_pins_repo_kind_so_marker_deletion_cannot_escape_budget",
+      "test_harness_quickfix_allows_benign_root_destination",
+      "test_harness_quickfix_refuses_opaque_machinery_deletes",
+      "test_harness_quickfix_counts_each_file_copied_into_a_machinery_dir"
+    ],
+    "pass_fail_summary": "verify.py passed; targeted lock sweep 31 passed.",
+    "non_blocking_findings": [],
+    "remaining_gaps": [],
+    "residual_risks": [],
+    "manual_validation_steps": [],
+    "reviewed_scope": [],
+    "recorded_at": "2026-08-07T10:08:15+00:00",
+    "commit": "6a9e8de8aa0f3f9c7513b95d7c6715050b8050cf"
+  },
+  "updated_at": "2026-08-07T10:08:15+00:00"
+}
