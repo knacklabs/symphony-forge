@@ -316,7 +316,59 @@ def _contains_marker(rel: str) -> bool:
     return HARNESS_SOURCE_MARKER.startswith(rel.rstrip("/") + "/")
 
 
-def guard_product_writes(targets: list[str], state: dict, root: Path) -> None:
+GLOB_METACHARS = ("*", "?", "[")
+OPAQUE_QUICKFIX_MSG = (
+    "This write affects a product-path file set a quickfix cannot bound — a "
+    "recursive/globbed delete or a copy/move into a machinery directory claims "
+    "one budget slot but touches many files. Enumerate the exact paths, or plan "
+    "the change (plan mode / an approved plan) where the diff is measured whole."
+)
+
+
+def has_opaque_product_write(command: str, root: Path, is_harness: bool) -> bool:
+    """A product write/delete whose exact file set can't be read from the literal
+    command — a recursive `rm -r`, a glob operand, or a copy/move into an existing
+    product directory — so a quickfix cannot honestly claim it against its budget.
+    """
+    for segment in re.split(r"[;&|\n]+", strip_heredoc_bodies(command)):
+        tokens = tokenize(segment)
+        if tokens is None:
+            continue
+        index = next((i for i, token in enumerate(tokens)
+                      if not re.fullmatch(r"\w+=\S*", token)), None)
+        if index is None:
+            continue
+        name = tokens[index].rsplit("/", 1)[-1]
+        args = tokens[index + 1:]
+        if name == "git":
+            sub, args = git_subcommand(args)
+            if sub not in {"rm", "mv"}:
+                continue
+            name = sub
+        elif name not in {"rm", "unlink", "cp", "mv", "tee", "sed"}:
+            continue
+        flags = [token for token in args if token.startswith("-")]
+        operands = [token for token in args
+                    if not token.startswith("-") and token not in {">", ">>"}]
+        recursive = name == "rm" and any(
+            flag in ("-r", "-R", "--recursive")
+            or (len(flag) > 1 and not flag.startswith("--")
+                and ("r" in flag or "R" in flag))
+            for flag in flags)
+        for operand in operands:
+            globbed = any(char in operand for char in GLOB_METACHARS)
+            if (recursive or globbed) and product_path(operand, root, is_harness):
+                return True
+        if name in {"cp", "mv"} and len(operands) >= 2:
+            dest = operands[-1]
+            dest_path = Path(dest) if Path(dest).is_absolute() else root / dest
+            if dest_path.is_dir() and product_path(dest, root, is_harness):
+                return True
+    return False
+
+
+def guard_product_writes(targets: list[str], state: dict, root: Path,
+                         command: str = "") -> None:
     quickfix = load_active(root)
     # Effective repo kind: a live marker read, UNLESS a quickfix is open — then
     # the kind pinned at its start wins, so deleting the marker during the window
@@ -340,6 +392,12 @@ def guard_product_writes(targets: list[str], state: dict, root: Path) -> None:
         # `rm -rf .factory` — would disable classification and the budget with it.
         # Only an approved, decomposed plan authorizes a marker change.
         deny(MARKER_PLAN_ONLY_MSG)
+    if (command and not approved_and_decomposed
+            and has_opaque_product_write(command, root, is_harness)):
+        # A quickfix claims one slot per named path; a recursive/globbed op or a
+        # copy into a machinery dir would spend one slot on an unbounded file set,
+        # defeating the budget. Refuse it unless an approved plan measures the diff.
+        deny(OPAQUE_QUICKFIX_MSG)
     if (state.get("plan_status") == "approved"
             and state.get("decomposition_status") == "recorded"):
         # The plan already authorizes this write. Recording only observes it:
@@ -438,7 +496,8 @@ for candidate in write_targets:
 # The lock covers plan mode too: plan mode stops the Edit tools, not a Bash
 # redirect, and writing product code while planning is the thing being stopped.
 if permission_mode != "plan" or tool_name == "Bash":
-    guard_product_writes(write_targets, run_state, root)
+    guard_product_writes(write_targets, run_state, root,
+                         command=command if tool_name == "Bash" else "")
 literal_command = command.replace("''", "").replace('""', "")
 shell_shape = re.sub(
     r"\$\{[^}]*\}|\$[A-Za-z_][A-Za-z0-9_]*", "", literal_command)

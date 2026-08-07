@@ -3701,6 +3701,30 @@ def test_harness_quickfix_allows_benign_root_destination(repo):
         assert code == 0 and "repo-kind marker" not in out, command
 
 
+def test_harness_quickfix_refuses_opaque_product_writes(repo):
+    # The 5-file budget is only honest if each claimed slot is a bounded file.
+    # A recursive/globbed delete or a copy into a machinery directory would spend
+    # one slot on an unbounded set, so a quickfix refuses them; an explicit
+    # single-file path is bounded and allowed.
+    mark_harness_source(repo)
+    (repo / "factory" / "scripts").mkdir(parents=True, exist_ok=True)
+    code, out = run(repo, "forge.py", "quickfix", "start", "opaque")
+    assert code == 0, out
+    for command in ("rm -r factory/scripts",
+                    "rm factory/scripts/*.py",
+                    "cp /tmp/x factory/scripts/"):
+        code, out = hook(repo, {
+            "tool_name": "Bash", "permission_mode": "default",
+            "tool_input": {"command": command},
+        })
+        assert code == 0 and "deny" in out and "cannot bound" in out, command
+    code, out = hook(repo, {
+        "tool_name": "Bash", "permission_mode": "default",
+        "tool_input": {"command": "rm factory/scripts/one.py"},
+    })
+    assert code == 0 and "deny" not in out, out
+
+
 def test_scaffolded_client_has_no_harness_source_marker(tmp_path, monkeypatch):
     # Exercise a REAL vendoring path: a harness source that carries the marker
     # must not copy it into a client via `forge init`, or the client would

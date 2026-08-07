@@ -57,6 +57,12 @@ catch, classification stays `harness`, machinery keeps being claimed, and the
 five-file budget cannot be escaped. This is the guarantee — the deletion guard is
 defence-in-depth, not the load-bearing wall.
 
+To keep the quickfix budget honest, a quickfix also **refuses opaque product
+writes** — a recursive `rm -r`, a glob operand, or a copy/move into an existing
+machinery directory — since each would spend one budget slot on an unbounded set
+of files; the fix must enumerate the exact paths or be planned (where the whole
+diff is measured).
+
 The Bash write guard catches the **common** deletion/relocation vectors that
 reach the marker: `rm`/`unlink`, `git rm`/`git mv`, `mv` of the source, and an
 ancestor delete (`rm -r .factory`). The ceiling is 0013's, stated honestly: this
