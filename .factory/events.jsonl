@@ -499,3 +499,9 @@
 {"event": "verify-passed", "generated_by": "orchestrator", "at": "2026-08-07T08:54:15+00:00", "story": "FORGE-LOCK-1"}
 {"event": "verify-failed", "generated_by": "orchestrator", "at": "2026-08-07T09:15:42+00:00", "story": "FORGE-LOCK-1"}
 {"event": "verify-passed", "generated_by": "orchestrator", "at": "2026-08-07T09:38:56+00:00", "story": "FORGE-LOCK-1"}
+{"event": "verify-passed", "generated_by": "orchestrator", "at": "2026-08-07T10:07:38+00:00", "story": "FORGE-LOCK-1"}
+{"event": "tests-automated", "generated_by": "implementer", "at": "2026-08-07T10:08:15+00:00", "story": "FORGE-LOCK-1", "detail": "pass"}
+{"event": "review-quality", "generated_by": "autoreview", "at": "2026-08-07T10:08:15+00:00", "story": "FORGE-LOCK-1"}
+{"event": "review-performance", "generated_by": "autoreview", "at": "2026-08-07T10:08:15+00:00", "story": "FORGE-LOCK-1"}
+{"event": "review-security", "generated_by": "autoreview", "at": "2026-08-07T10:08:16+00:00", "story": "FORGE-LOCK-1"}
+{"event": "shipped", "generated_by": "orchestrator", "at": "2026-08-07T10:08:30+00:00", "story": "FORGE-LOCK-1", "detail": "The planning lock now guards the harness's own machinery in its own repo: a hand-edit to factory/, constitution/, harness/, .claude/ or .codex/ here needs an approved plan or a bounded quickfix, exact"}
