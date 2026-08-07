@@ -1,0 +1,17 @@
+{
+  "issue_key": "FORGE-MODES-1",
+  "title": "Developer-selectable workflow modes (Lite mode)",
+  "tracker": "linear",
+  "branch": "feat/FORGE-MODES-1-developer-selectable-workflow-modes",
+  "phase": "pr-ready",
+  "plan_status": "approved",
+  "decomposition_status": "recorded",
+  "implementation_status": "pending",
+  "tests_status": "passed",
+  "verify_status": "passed",
+  "review_status": "passed",
+  "created_at": "2026-08-07T06:47:41+00:00",
+  "updated_at": "2026-08-07T10:47:44+00:00",
+  "plan_file": "plans/completed/FORGE-MODES-1-developer-selectable-workflow-modes-lite-mode.md",
+  "story": "FORGE-MODES-1"
+}

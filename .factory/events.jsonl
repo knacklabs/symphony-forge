@@ -523,3 +523,4 @@
 {"event": "review-quality", "generated_by": "autoreview", "at": "2026-08-07T10:46:30+00:00", "story": "FORGE-MODES-1"}
 {"event": "review-performance", "generated_by": "autoreview", "at": "2026-08-07T10:46:30+00:00", "story": "FORGE-MODES-1"}
 {"event": "review-security", "generated_by": "autoreview", "at": "2026-08-07T10:46:30+00:00", "story": "FORGE-MODES-1"}
+{"event": "shipped", "generated_by": "orchestrator", "at": "2026-08-07T10:47:44+00:00", "story": "FORGE-MODES-1", "detail": "Developers can now make small, human-supervised fixes without the full factory loop. The always-armed planning lock has a third exit: ./forge mode lite --by <name> --reason <why> opens a bounded, ledg"}
