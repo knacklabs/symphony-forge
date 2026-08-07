@@ -4,7 +4,12 @@
     {
       "id": "FORGE-BOARD-1.1",
       "title": "Gate C \u2014 intake refuses off-board keys",
-      "status": "pending"
+      "status": "done",
+      "started_at": "2026-08-07T17:18:33+00:00",
+      "base_sha": "f9555876ffda9a849c99d51121c2aeca7473ac3c",
+      "dirty_at_start": {},
+      "task_sha256": "e45cfa1ddeee16172a6fef288cd9a32f02e0547762e1d20c1260d8ec80531a01",
+      "completed_at": "2026-08-07T17:23:34+00:00"
     },
     {
       "id": "FORGE-BOARD-1.2",

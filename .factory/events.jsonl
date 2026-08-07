@@ -563,3 +563,6 @@
 {"event": "plan-human-approved", "generated_by": "human", "at": "2026-08-07T17:15:00+00:00", "story": "FORGE-BOARD-1", "detail": "FORGE-BOARD-1 approved by vrknetha"}
 {"event": "plan-approved", "generated_by": "planner-high", "at": "2026-08-07T17:15:00+00:00", "story": "FORGE-BOARD-1", "detail": "plans/active/FORGE-BOARD-1-enforcement-gates-every-pr-ties-to-a-complete-on-board-ticket.md"}
 {"event": "decomposed", "generated_by": "docs-decomposer", "at": "2026-08-07T17:17:16+00:00", "story": "FORGE-BOARD-1", "detail": "3 task(s)"}
+{"event": "stage-start", "generated_by": "implementer", "at": "2026-08-07T17:18:33+00:00", "story": "FORGE-BOARD-1", "detail": "FORGE-BOARD-1.1 Gate C \u2014 intake refuses off-board keys"}
+{"event": "delegated", "generated_by": "orchestrator", "at": "2026-08-07T17:22:35+00:00", "story": "FORGE-BOARD-1", "detail": "FORGE-BOARD-1.1 (write)"}
+{"event": "stage-done", "generated_by": "implementer", "at": "2026-08-07T17:23:34+00:00", "story": "FORGE-BOARD-1", "detail": "FORGE-BOARD-1.1 Gate C \u2014 intake refuses off-board keys"}
