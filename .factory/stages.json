@@ -1,0 +1,25 @@
+{
+  "issue": "FORGE-MODES-1",
+  "stages": [
+    {
+      "id": "FORGE-MODES-1.1",
+      "title": "The lite window",
+      "status": "pending"
+    },
+    {
+      "id": "FORGE-MODES-1.2",
+      "title": "The lite fix path (terra@high)",
+      "status": "pending"
+    },
+    {
+      "id": "FORGE-MODES-1.3",
+      "title": "The lite close gate",
+      "status": "pending"
+    },
+    {
+      "id": "FORGE-MODES-1.4",
+      "title": "Contract + docs",
+      "status": "pending"
+    }
+  ]
+}

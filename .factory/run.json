@@ -5,13 +5,13 @@
   "branch": "feat/FORGE-MODES-1-developer-selectable-workflow-modes",
   "phase": "planning",
   "plan_status": "approved",
-  "decomposition_status": "pending",
+  "decomposition_status": "recorded",
   "implementation_status": "pending",
   "tests_status": "pending",
   "verify_status": "pending",
   "review_status": "pending",
   "created_at": "2026-08-07T06:47:41+00:00",
-  "updated_at": "2026-08-07T07:34:48+00:00",
+  "updated_at": "2026-08-07T07:39:30+00:00",
   "plan_file": "plans/active/FORGE-MODES-1-developer-selectable-workflow-modes-lite-mode.md",
   "story": "FORGE-MODES-1"
 }

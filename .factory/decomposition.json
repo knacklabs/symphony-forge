@@ -1,0 +1,195 @@
+{
+  "generated_by": "claude-code:plan-mode",
+  "user_facing": false,
+  "story": "FORGE-MODES-1",
+  "epic": "symphony-forge",
+  "tasks": [
+    {
+      "id": "FORGE-MODES-1.1",
+      "title": "The lite window",
+      "objective": "Generalize the quickfix window (forge_cli/quickfix.py) into a mode with a `profile` field (quickfix|lite) and, for lite, a `base_sha` at open. Add `forge mode lite|list|done` (mode lite needs --by/--reason); the closer dispatches by profile (quickfix unchanged; lite records the manifest, full gate added in .3). No `mode full`. Authorization is unchanged (an open window already authorizes); add session_start/phase banners naming an open lite window and its 'one review to close' state.",
+      "dependencies": [],
+      "write_scope": [
+        "factory/scripts/forge_cli/quickfix.py",
+        "factory/scripts/forge.py",
+        "factory/scripts/session_start.py",
+        "factory/scripts/forge_cli/phase.py",
+        "factory/tests/test_gates.py"
+      ],
+      "acceptance_criteria": [
+        "`forge mode lite --by X --reason Y` opens a window recorded with profile=lite and base_sha=HEAD; `forge mode list` shows it; `forge mode done` closes it (records the manifest); there is no `mode full` subcommand.",
+        "While a lite window is open, a product Edit/Write is authorized by pre_tool_use.py exactly as an open quickfix window authorizes it.",
+        "`quickfix start/done/list` behavior is unchanged (profile defaults to quickfix).",
+        "session_start.py and `forge next` name an open lite window and state that one review is required to close it."
+      ],
+      "verify_commands": [
+        "uv run --with pytest python -m pytest factory/tests/test_gates.py -q -k \"mode or lite_window or quickfix\""
+      ],
+      "required_tests": [
+        {
+          "id": "test_mode_lite_opens_window_with_profile_and_base_sha",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_lite_window_authorizes_product_write",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_mode_list_shows_open_lite_window",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_quickfix_profile_behavior_unchanged",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        }
+      ],
+      "reviewer_focus": "Reuse of the quickfix window/ledger/authorization rather than a parallel mechanism; quickfix profile fully unchanged; base_sha captured at open; no over-broad CLI (only lite|list|done)."
+    },
+    {
+      "id": "FORGE-MODES-1.2",
+      "title": "The lite fix path (terra@high)",
+      "objective": "Add `forge fix \"<desc>\"` (forge_cli/fix.py, wired in forge.py) requiring an open lite window; compose a minimal brief and launch the companion --write reusing delegate.py's launch/reap/ledger helpers. Model/effort come from a new mode_run_config over a `modes.lite` block in harness.yaml (gpt-5.6-terra/high/bound 5), not pinned_run_config. Lite-fix rows key `task` to the window id; extend delegation.json to accept it. No auto-commit; record touched files via record_files.",
+      "dependencies": [
+        "FORGE-MODES-1.1"
+      ],
+      "write_scope": [
+        "factory/scripts/forge_cli/fix.py",
+        "factory/scripts/forge_cli/delegate.py",
+        "factory/scripts/forge.py",
+        "harness.yaml",
+        "factory/schemas/delegation.json",
+        "factory/tests/test_gates.py"
+      ],
+      "acceptance_criteria": [
+        "`forge fix \"<desc>\"` refuses with no open lite window.",
+        "With an open lite window, the recorded delegation row shows model=gpt-5.6-terra, effort=high, write=true, and task=<lite window id>; the row validates against factory/schemas/delegation.json.",
+        "The model/effort are sourced from harness.yaml modes.lite, not the implementation pin; `python3 factory/scripts/check_dual_runtime.py` stays green.",
+        "`forge fix` does not create a git commit."
+      ],
+      "verify_commands": [
+        "uv run --with pytest python -m pytest factory/tests/test_gates.py -q -k \"fix or modes_lite or delegation\"",
+        "python3 factory/scripts/check_dual_runtime.py"
+      ],
+      "required_tests": [
+        {
+          "id": "test_forge_fix_refuses_without_lite_window",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_forge_fix_records_terra_high_write_delegation",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_modes_lite_pins_parse_and_dual_runtime_green",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        }
+      ],
+      "reviewer_focus": "forge fix reuses delegate's launch/reap/ledger verbatim (inherits normalize-ps-derived-identity and the launch- prefix); it carries none of the 0018 stage-done gates by design; model override reads modes.lite; no decomposition/stage coupling leaks in."
+    },
+    {
+      "id": "FORGE-MODES-1.3",
+      "title": "The lite close gate",
+      "objective": "Complete the lite `mode done` gate in quickfix.py: refuse a dirty product tree; measure the committed base_sha->HEAD diff and refuse over the bound; require the three review artifacts stamped at HEAD with no blockers (reuse a helper extracted from pr_ready into factory_lib). Add a `lite_window_ok` path passed ONLY by record_review so review recording accepts an open lite window; the shared gate() stays strict for verify/tests. On close, append the manifest and archive the reviews (0025).",
+      "dependencies": [
+        "FORGE-MODES-1.1",
+        "FORGE-MODES-1.2"
+      ],
+      "write_scope": [
+        "factory/scripts/forge_cli/quickfix.py",
+        "factory/scripts/pr_ready.py",
+        "factory/scripts/factory_lib.py",
+        "factory/scripts/record_review_from_json.py",
+        "factory/tests/test_gates.py"
+      ],
+      "acceptance_criteria": [
+        "`forge mode done` on a lite window refuses when the product working tree is dirty ('commit the fix first').",
+        "`forge mode done` refuses when the committed base_sha->HEAD diff touches more distinct product files than the bound, and passes at or under it.",
+        "`forge mode done` refuses without the three review artifacts stamped at HEAD with no blocking findings, and passes with them, recording a non-empty file manifest and archiving the reviews into the ledger record.",
+        "record_review_from_json.py records a review under an open lite window with no approved plan/decomposition; a lite window does NOT unlock verify.py or record_test recording (shared gate stays strict)."
+      ],
+      "verify_commands": [
+        "uv run --with pytest python -m pytest factory/tests/test_gates.py -q -k \"mode_done or lite_review or lite_window or gate\""
+      ],
+      "required_tests": [
+        {
+          "id": "test_mode_done_refuses_dirty_product_tree",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_mode_done_refuses_over_budget_committed_diff",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_mode_done_requires_clean_reviews_at_head",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_record_review_accepts_open_lite_window_post_ship",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_lite_window_does_not_unlock_verify_or_test_recording",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        }
+      ],
+      "reviewer_focus": "The lite_window_ok relaxation is scoped to review recording ONLY (verify/tests stay strict \u2014 assert it); budget measured on the committed diff not the working tree; dirty-tree refusal; evidence archived on close so .factory/reviews does not linger."
+    },
+    {
+      "id": "FORGE-MODES-1.4",
+      "title": "Contract + docs",
+      "objective": "Make the contract reflect the third exit: 0013 names lite as a third planning-lock exit; 0003 gains a one-line 'see 0031' cross-ref; WORKFLOW.md gets a Modes subsection; factory-entry-contract lists three exits; the /forge skill maps 'use lite mode' to `forge mode lite`. The skill edit gives the stage a product diff; no doc claims the code doesn't implement.",
+      "dependencies": [
+        "FORGE-MODES-1.1",
+        "FORGE-MODES-1.2",
+        "FORGE-MODES-1.3"
+      ],
+      "write_scope": [
+        "docs/decisions/0013-always-armed-planning-lock.md",
+        "docs/decisions/0003-model-tiers-terra-explore-sol-implement.md",
+        "WORKFLOW.md",
+        "docs/memory/factory-entry-contract.md",
+        ".claude/skills/forge/SKILL.md",
+        "factory/tests/test_gates.py"
+      ],
+      "acceptance_criteria": [
+        "docs/decisions/0013 and docs/memory/factory-entry-contract.md describe three planning-lock exits (approved plan, quickfix, lite window).",
+        "docs/decisions/0003 carries a one-line cross-reference to 0031's lite-mode terra-write extension.",
+        "WORKFLOW.md documents modes (full/lite) and the /forge skill maps 'use lite mode' to `forge mode lite`.",
+        "`python3 factory/scripts/check_dual_runtime.py` stays green after the doc/skill edits."
+      ],
+      "verify_commands": [
+        "python3 factory/scripts/check_dual_runtime.py",
+        "uv run --with pytest python -m pytest factory/tests/test_gates.py -q -k \"docs_third_exit or forge_skill_lite\""
+      ],
+      "required_tests": [
+        {
+          "id": "test_docs_describe_three_planning_lock_exits",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_forge_skill_maps_lite_mode_phrase",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        }
+      ],
+      "reviewer_focus": "The /forge skill provides a real product diff so the stage is not docs-only; 0003 gains a cross-ref (not a rewrite); no behavior claims in docs that the code does not implement; dual-runtime reference-not-duplicate stays intact."
+    }
+  ],
+  "project": "",
+  "plan_file": "plans/active/FORGE-MODES-1-developer-selectable-workflow-modes-lite-mode.md",
+  "plan_sha256": "ebbaa1c46fb4487e06abdae1f8aa29bd6fc97497610316c6ad3b05e8c24c73a7",
+  "commit": "d7ac19347660bc3afdb06c3bee88d85aa61384d7"
+}
