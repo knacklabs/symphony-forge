@@ -3859,6 +3859,67 @@ def test_mode_lite_opens_window_with_profile_and_base_sha(repo):
     assert code != 0 and "invalid choice" in out
 
 
+def test_forge_fix_refuses_without_lite_window(repo):
+    code, out = run(repo, "forge.py", "fix", "repair the parser")
+    assert code != 0 and "open lite window" in out.lower(), out
+
+
+def test_forge_fix_records_terra_high_write_delegation(repo, tmp_path):
+    code, out = run(repo, "forge.py", "mode", "lite",
+                    "--by", "Ada", "--reason", "bounded delivery")
+    assert code == 0, out
+    window = json.loads((repo / ".factory" / "quickfix.json").read_text())
+    before = head(repo)
+    companion_env = fake_companion_env(tmp_path)
+    companion_cache = (Path(companion_env["HOME"]) / ".claude" / "plugins" /
+                       "cache" / "openai-codex" / "codex")
+    companion = next(companion_cache.glob("*/scripts/codex-companion.mjs"))
+    companion.write_text(
+        "import fs from 'node:fs';\n"
+        "fs.mkdirSync('src', {recursive:true});\n"
+        "fs.writeFileSync('src/fixed.py', 'fixed = true\\n');\n"
+        "process.stdout.write(JSON.stringify({ok:true}));\n"
+    )
+
+    code, out = run(
+        repo, "forge.py", "fix", "repair the parser",
+        env=companion_env,
+    )
+    assert code == 0, out
+    assert head(repo) == before
+
+    rows = [json.loads(line) for line in
+            delegation_ledger(repo).read_text().splitlines() if line.strip()]
+    entry = rows[-1]
+    assert entry["launch_status"] == "succeeded"
+    assert entry["task"] == window["id"]
+    assert entry["model"] == "gpt-5.6-terra"
+    assert entry["effort"] == "high"
+    assert entry["write"] is True
+    assert entry["mode"] == "lite"
+    active = json.loads((repo / ".factory" / "quickfix.json").read_text())
+    assert active["files"] == ["src/fixed.py"]
+
+    sys.path.insert(0, str(repo / "factory" / "scripts"))
+    try:
+        from factory_lib import validate_payload
+        validate_payload(repo, "delegation", entry)
+    finally:
+        sys.path.pop(0)
+
+
+def test_modes_lite_pins_parse_and_dual_runtime_green(repo):
+    sys.path.insert(0, str(repo / "factory" / "scripts"))
+    try:
+        from forge_cli.delegate import mode_run_config
+        assert mode_run_config(repo, "lite") == ("gpt-5.6-terra", "high", 5)
+    finally:
+        sys.path.pop(0)
+
+    code, out = run(repo, "check_dual_runtime.py")
+    assert code == 0, out
+
+
 def test_lite_window_authorizes_product_write(repo):
     code, out = run(repo, "forge.py", "mode", "lite",
                     "--by", "Ada", "--reason", "bounded delivery")
@@ -5590,9 +5651,26 @@ def fake_companion_home(tmp_path: Path) -> Path:
     return home
 
 
+def fake_companion_env(tmp_path: Path) -> dict[str, str]:
+    fake_bin = tmp_path / "bin"
+    fake_bin.mkdir(exist_ok=True)
+    fake_ps = fake_bin / "ps"
+    fake_ps.write_text(
+        "#!/bin/sh\n"
+        "if [ \"$2\" = \"lstart=\" ]; then\n"
+        "  echo 'Thu Aug 7 00:00:00 2026'\n"
+        "fi\n"
+    )
+    fake_ps.chmod(0o755)
+    return {
+        "HOME": str(fake_companion_home(tmp_path)),
+        "PATH": f"{fake_bin}:{os.environ['PATH']}",
+    }
+
+
 def launch_fake(repo: Path, tmp_path: Path, stage_id: str) -> None:
     code, out = run(repo, "forge.py", "delegate", stage_id,
-                    env={"HOME": str(fake_companion_home(tmp_path))})
+                    env=fake_companion_env(tmp_path))
     assert code == 0, out
 
 
@@ -6040,7 +6118,8 @@ def test_stage_done_runs_environment_prefixed_required_test(repo, tmp_path):
     start_stage(repo, tmp_path, task)
     write_in_scope(repo, "src/core.py")
     write_in_scope(repo, path, "def test_slice():\n    pass\n")
-    code, out = run(repo, "forge.py", "stage", "done", "T1")
+    code, out = run(repo, "forge.py", "stage", "done", "T1",
+                    env=fake_companion_env(tmp_path))
     assert code == 0, out
 
 
@@ -7134,7 +7213,7 @@ def test_delegate_records_ledger_entry(repo, tmp_path):
     unlisted.parent.mkdir(parents=True)
     unlisted.write_text("process.exit(9);\n")
     code, out = run(repo, "forge.py", "delegate", "T1",
-                    env={"HOME": str(home_path)})
+                    env=fake_companion_env(tmp_path))
     assert code == 0, out
     lines = [json.loads(x) for x in
              delegation_ledger(repo).read_text().splitlines() if x.strip()]

@@ -21,6 +21,12 @@ precedence:
   - gstack
   - other-skills
 
+modes:
+  lite:
+    model: "gpt-5.6-terra"
+    reasoning: "high"
+    bound: 5
+
 phases:
   discovery: # 0a
     owner: "gstack:/office-hours"

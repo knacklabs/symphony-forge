@@ -18,6 +18,7 @@ from forge_cli import assumptions as assumptions_mod
 from forge_cli import context as ctx
 from forge_cli import deferrals as deferrals_mod
 from forge_cli import delegate as delegate_mod
+from forge_cli import fix as fix_mod
 from forge_cli import findings as findings_mod
 from forge_cli import lessons as lessons_mod
 from forge_cli import outcome as outcome_mod
@@ -139,6 +140,11 @@ def main() -> None:
     p_md = mode_sub.add_parser("done", help="close the active workflow mode window")
     p_md.add_argument("--repo")
     p_md.set_defaults(func=quickfix_mod.cmd_mode_done)
+
+    p_fix = sub.add_parser("fix", help="launch a bounded fix in an open lite window")
+    p_fix.add_argument("description")
+    p_fix.add_argument("--repo")
+    p_fix.set_defaults(func=fix_mod.cmd_fix)
 
     p_spec = sub.add_parser("spec", help="capture and confirm capability specs")
     spec_sub = p_spec.add_subparsers(dest="spec_command", required=True)
