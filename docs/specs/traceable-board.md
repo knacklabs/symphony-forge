@@ -38,6 +38,13 @@ Because the harness is vendored, every client inherits all four.
 
 ## Behaviour
 
+**Determinism is non-negotiable (decision 0001).** Every rule below is enforced
+by a deterministic gate — a script, a schema-validated recorder, or a CI check
+that REFUSES to proceed — never by agent discipline or memory. The agent authors
+content (plans, grills, task contracts); the gates guarantee the content exists,
+is fresh, and is digest-bound before the next step runs. A rule that cannot be
+made a deterministic gate is a warning, not a rule.
+
 ### One anchor: ticket = story = PR = plan (1:1)
 
 The roadmap item IS the ticket; its `key` is the ticket id. The **in-repo
@@ -64,6 +71,12 @@ parent), never PR-bearing.
   against the ACTUAL repo state after the prior tasks and grilled to catch
   assumptions, BEFORE implementing. The refinement is recorded as a stage
   contract change (decision 0023 already tracks this) and surfaced in the UI.
+- **The JIT grill is a deterministic gate, not a suggestion.** A stage's
+  implementation delegation is REFUSED without a fresh, digest-bound per-task
+  grill for that task — exactly as `plan save` refuses an ungrilled plan and
+  `stage done` refuses a missing write launch. No grilled task contract, no
+  implementation. This is what makes JIT planning enforced rather than
+  hoped-for.
 - **Two grill points catch different failures:** the story-level grill validates
   the breakdown (are these the right tasks? does the shape cover the story?);
   the per-task grill validates each task's details JIT (no speculative
@@ -151,6 +164,13 @@ gaps, and a done story always resolves to its PR.
   with no acceptance criteria demanded at capture.
 - The board renders a done story's PR link, and the link survives a clone with
   no remote.
+- Every rule in this capability is a deterministic gate (script / recorder / CI),
+  not agent discipline — an agent with no memory of the rules cannot weaken any
+  invariant.
+- A `sanitise` run leaves the repo canonical: no orphaned mode/quickfix windows
+  or stale task-scoped `.factory` state, roadmap healed, board completeness and
+  PR-links verified; it fixes what is mechanical and reports the rest,
+  fabricating nothing.
 
 ## Boundaries
 
@@ -176,3 +196,11 @@ gaps, and a done story always resolves to its PR.
    tracker mirroring; manual `pr-link` → fallback.
 5. **`knacklabs-upgrade-project` skill + runbook** — machinery upgrade + guided
    doctor-loop re-authoring that backfills legacy clients to the enforced bar.
+6. **`knacklabs-sanitise-project` skill (deterministic repo hygiene)** — a skill
+   wrapping deterministic `forge` commands to keep a client repo canonical:
+   `doctor` (health) + `roadmap heal` (drift) + close/clear orphaned mode/quickfix
+   windows and stale task-scoped `.factory` state + verify board completeness and
+   PR-linkage + flag secrets/cruft. It fixes what is mechanically fixable and
+   reports the rest (never fabricating records); runnable on demand and in CI. It
+   is itself deterministic — every action is an existing `forge` command, not a
+   judgement call.
