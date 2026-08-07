@@ -5,15 +5,17 @@ import argparse
 import hashlib
 import json
 import os
+import shutil
 import subprocess
 from pathlib import Path
 
 from factory_lib import (
     append_ledger_record, clean_git_env, dump_json, head_sha, load_json, now_iso,
-    read_ledger_records, repo_root,
+    load_review_artifacts, read_ledger_records, repo_root,
 )
 
 from .common import fail
+from .repo_kind import is_harness_source_repo
 
 MAX_FILES = 5
 QUICKFIX = "quickfix"
@@ -164,7 +166,26 @@ def cmd_mode_done(args: argparse.Namespace) -> None:
     if profile_of(active) == QUICKFIX:
         cmd_done(args)
         return
+    dirty = _lite_dirty_product_files(base)
+    if dirty:
+        fail(
+            "lite mode has uncommitted product changes — commit the fix first: "
+            + ", ".join(dirty[:5])
+        )
     files = _lite_manifest(base, active["base_sha"])
+    if not files:
+        fail("lite mode has no committed product files to close")
+    bound = int(active.get("max_files", MAX_FILES))
+    if len(files) > bound:
+        fail(
+            f"lite mode committed diff touches {len(files)} product files; "
+            f"the bound is {bound}"
+        )
+    reviews, review_problems = load_review_artifacts(
+        base, require_head=True, blockers_only=True,
+    )
+    if review_problems:
+        fail("lite mode needs clean reviews at HEAD:\n- " + "\n- ".join(review_problems))
     event = {
         "event": "done",
         "id": active["id"],
@@ -175,30 +196,53 @@ def cmd_mode_done(args: argparse.Namespace) -> None:
         "started_at": active["started_at"],
         "completed_at": now_iso(),
         "files": files,
+        "reviews": reviews,
     }
     _append(base, event)
+    shutil.rmtree(base / ".factory" / "reviews")
     quickfix_path(base).unlink()
     print(f"Lite mode {active['id']} done ({len(event['files'])} file(s)): "
           f"{active['reason']}")
 
 
 def _lite_manifest(base: Path, base_sha: str) -> list[str]:
-    """Return every tracked or untracked path changed since lite opened."""
-    commands = (
-        ["git", "diff", "--name-only", "-z", base_sha, "--"],
-        ["git", "ls-files", "--others", "--exclude-standard", "-z"],
+    """Return committed product paths changed since the lite window opened."""
+    return _lite_product_files(
+        base,
+        _git_paths(base, ["git", "diff", "--name-only", "-z", f"{base_sha}..HEAD", "--"]),
     )
-    files: set[str] = set()
-    for command in commands:
-        proc = subprocess.run(
-            command, cwd=base, capture_output=True, text=True, env=clean_git_env(),
-        )
-        if proc.returncode != 0:
-            fail(f"could not record the lite manifest: {proc.stderr.strip()}")
-        files.update(path for path in proc.stdout.split("\0") if path)
-    bookkeeping = {".factory/quickfix.json", "plans/quickfixes.jsonl"}
-    return sorted(path for path in files
-                  if path not in bookkeeping and not path.startswith("plans/quickfixes/"))
+
+
+def _lite_dirty_product_files(base: Path) -> list[str]:
+    tracked = _git_paths(base, ["git", "diff", "--name-only", "-z", "HEAD", "--"])
+    untracked = _git_paths(
+        base, ["git", "ls-files", "--others", "--exclude-standard", "-z"],
+    )
+    return _lite_product_files(base, [*tracked, *untracked])
+
+
+def _git_paths(base: Path, command: list[str]) -> list[str]:
+    proc = subprocess.run(
+        command, cwd=base, capture_output=True, text=True, env=clean_git_env(),
+    )
+    if proc.returncode != 0:
+        fail(f"could not inspect the lite diff: {proc.stderr.strip()}")
+    return [path for path in proc.stdout.split("\0") if path]
+
+
+def _lite_product_files(base: Path, paths: list[str]) -> list[str]:
+    """Apply the planning-lock product boundary to repo-relative Git paths."""
+    exempt_prefixes = ("plans/", "docs/", ".gstack/", ".github/", "prototype/", ".factory/")
+    if not is_harness_source_repo(base):
+        exempt_prefixes += ("factory/", "constitution/", "harness/", ".claude/", ".codex/")
+    exempt_files = {
+        "AGENTS.md", "CLAUDE.md", "WORKFLOW.md", "harness.yaml", "README.md",
+        ".gitignore", ".gitattributes", ".envrc",
+    }
+    return sorted({
+        path for path in paths
+        if path not in exempt_files and not path.startswith(exempt_prefixes)
+    })
 
 
 def cmd_list(args: argparse.Namespace) -> None:

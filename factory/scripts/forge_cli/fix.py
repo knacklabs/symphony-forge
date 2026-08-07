@@ -8,7 +8,9 @@ from factory_lib import repo_root
 
 from .common import fail
 from .delegate import brief_path, launch_companion, mode_run_config
-from .quickfix import LITE, _lite_manifest, load_active, profile_of, record_files
+from .quickfix import (
+    LITE, _lite_dirty_product_files, load_active, profile_of, record_files,
+)
 from .stages import task_digest
 
 
@@ -53,4 +55,7 @@ def cmd_fix(args: argparse.Namespace) -> None:
             mode=LITE,
         )
     finally:
-        record_files(base, _lite_manifest(base, window["base_sha"]))
+        # Record what terra just touched — its writes are uncommitted, so this
+        # is the working-tree manifest. `mode done` re-measures the committed
+        # base_sha..HEAD diff for the budget and the final ledger record.
+        record_files(base, _lite_dirty_product_files(base))

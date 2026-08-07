@@ -3830,13 +3830,31 @@ def test_quickfix_recording_authorizes_nothing(repo, tmp_path):
     assert json.loads(active_path.read_text())["files"] == []
 
 
-def test_mode_lite_opens_window_with_profile_and_base_sha(repo):
-    base_sha = head(repo)
+def open_lite(repo: Path) -> dict:
     code, out = run(repo, "forge.py", "mode", "lite",
                     "--by", "Ada", "--reason", "ship a bounded change")
-    assert code == 0 and "Lite mode" in out, out
+    assert code == 0, out
+    return json.loads((repo / ".factory" / "quickfix.json").read_text())
 
-    active = json.loads((repo / ".factory" / "quickfix.json").read_text())
+
+def write_lite_reviews(repo: Path, *, blocker: str | None = None,
+                       commit: str | None = None) -> None:
+    reviews = repo / ".factory" / "reviews"
+    reviews.mkdir(exist_ok=True)
+    for aspect in ("quality", "performance", "security"):
+        (reviews / f"{aspect}.json").write_text(json.dumps({
+            "generated_by": "autoreview",
+            "score": 9,
+            "summary": "clean",
+            "blocking_findings": [blocker] if blocker and aspect == "quality" else [],
+            "skills_used": ["review-animations"],
+            "commit": commit or head(repo),
+        }))
+
+
+def test_mode_lite_opens_window_with_profile_and_base_sha(repo):
+    base_sha = head(repo)
+    active = open_lite(repo)
     assert active["profile"] == "lite"
     assert active["base_sha"] == base_sha
     assert active["by"] == "Ada"
@@ -3844,6 +3862,9 @@ def test_mode_lite_opens_window_with_profile_and_base_sha(repo):
 
     (repo / "src").mkdir()
     (repo / "src" / "lite.py").write_text("enabled = True\n")
+    git(repo, "add", "src/lite.py")
+    git(repo, "commit", "-q", "-m", "bounded lite fix")
+    write_lite_reviews(repo)
     code, out = run(repo, "forge.py", "mode", "done")
     assert code == 0 and "1 file(s)" in out, out
     done = [json.loads(path.read_text())
@@ -3854,9 +3875,96 @@ def test_mode_lite_opens_window_with_profile_and_base_sha(repo):
     assert done[0]["base_sha"] == base_sha
     assert done[0]["by"] == "Ada"
     assert done[0]["files"] == ["src/lite.py"]
+    assert sorted(done[0]["reviews"]) == ["performance", "quality", "security"]
+    assert not (repo / ".factory" / "reviews").exists()
 
     code, out = run(repo, "forge.py", "mode", "full")
     assert code != 0 and "invalid choice" in out
+
+
+def test_mode_done_refuses_dirty_product_tree(repo):
+    open_lite(repo)
+    (repo / "src").mkdir()
+    (repo / "src" / "dirty.py").write_text("dirty = True\n")
+
+    code, out = run(repo, "forge.py", "mode", "done")
+
+    assert code != 0 and "commit the fix first" in out, out
+    assert (repo / ".factory" / "quickfix.json").exists()
+
+
+def test_mode_done_refuses_over_budget_committed_diff(repo):
+    open_lite(repo)
+    (repo / "src").mkdir()
+    for number in range(6):
+        (repo / "src" / f"fix_{number}.py").write_text(f"value = {number}\n")
+    git(repo, "add", "src")
+    git(repo, "commit", "-q", "-m", "oversized lite fix")
+
+    code, out = run(repo, "forge.py", "mode", "done")
+
+    assert code != 0 and "touches 6 product files" in out and "bound is 5" in out, out
+    assert (repo / ".factory" / "quickfix.json").exists()
+
+
+def test_mode_done_requires_clean_reviews_at_head(repo):
+    open_lite(repo)
+    (repo / "src").mkdir()
+    (repo / "src" / "reviewed.py").write_text("reviewed = True\n")
+    git(repo, "add", "src/reviewed.py")
+    git(repo, "commit", "-q", "-m", "reviewed lite fix")
+
+    code, out = run(repo, "forge.py", "mode", "done")
+    assert code != 0 and ".factory/reviews/quality.json" in out, out
+
+    write_lite_reviews(repo, blocker="fix this")
+    code, out = run(repo, "forge.py", "mode", "done")
+    assert code != 0 and "quality review must have no blockers" in out, out
+    assert (repo / ".factory" / "reviews").exists()
+
+    write_lite_reviews(repo)
+    code, out = run(repo, "forge.py", "mode", "done")
+    assert code == 0, out
+    done = [json.loads(path.read_text())
+            for path in (repo / "plans" / "quickfixes").glob("*.json")
+            if json.loads(path.read_text()).get("event") == "done"][-1]
+    assert done["files"] == ["src/reviewed.py"]
+    assert all(not review["blocking_findings"] for review in done["reviews"].values())
+    assert not (repo / ".factory" / "reviews").exists()
+
+
+def test_record_review_accepts_open_lite_window_post_ship(repo):
+    sign_off(repo)
+    shipped_state = run_state(repo)
+    shipped_state["phase"] = "shipped"
+    (repo / ".factory" / "run.json").write_text(json.dumps(shipped_state))
+    open_lite(repo)
+
+    code, out = run(
+        repo, "record_review_from_json.py", "--aspect", "quality",
+        stdin=json.dumps(review_payload()),
+    )
+
+    assert code == 0, out
+    recorded = json.loads((repo / ".factory" / "reviews" / "quality.json").read_text())
+    assert recorded["commit"] == head(repo)
+    assert run_state(repo) == shipped_state
+
+
+def test_lite_window_does_not_unlock_verify_or_test_recording(repo):
+    sign_off(repo)
+    open_lite(repo)
+
+    verify_code, verify_out = run(repo, "verify.py", "--print-only")
+    test_code, test_out = run(
+        repo, "record_test_from_json.py", "--kind", "automated",
+        stdin=json.dumps({"generated_by": "implementer", "status": "passed"}),
+    )
+
+    assert verify_code != 0 and "approved, saved plan" in verify_out, verify_out
+    assert test_code != 0 and "approved, saved plan" in test_out, test_out
+    assert not (repo / ".factory" / "verify.json").exists()
+    assert not (repo / ".factory" / "tests.json").exists()
 
 
 def test_forge_fix_refuses_without_lite_window(repo):
