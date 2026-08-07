@@ -68,6 +68,13 @@ FACTORY_STATE_WRITABLE = {
     ".factory/scratchpad.md",
     ".factory/harness-source.json",
 }
+# The repo-kind marker. It decides whether the machinery trees are product at
+# all, so it may be changed ONLY under an approved plan + decomposition, never a
+# quickfix: a quickfix that could `rm` it as its first claimed file would flip
+# the repo to client-mode and let every later machinery write skip the budget
+# entirely (defeating the very bound it exists to enforce). Under an approved
+# plan the machinery is already writable, so removing the marker grants nothing.
+HARNESS_SOURCE_MARKER = ".factory/harness-source.json"
 PLAN_MODE_MSG = (
     "Planning lock is armed — product writes require an approved plan. "
     "Either enter plan mode (shift+tab) [PLAN MODE] and save the approved plan per "
@@ -78,6 +85,12 @@ QUICKFIX_LIMIT_MSG = (
     "Quickfix scope exceeded — this is not a quickfix, enter plan mode (shift+tab). "
     "The other planning-lock exit is `./forge quickfix start \"<reason>\"`, but the "
     "current window must be closed first."
+)
+MARKER_PLAN_ONLY_MSG = (
+    f"{HARNESS_SOURCE_MARKER} is the repo-kind marker: it may be created, edited, "
+    "or deleted ONLY under an approved plan with a recorded decomposition, never a "
+    "quickfix. A quickfix that removed it could flip this repo to client-mode and "
+    "escape its own file budget. Plan the change, or leave the marker alone."
 )
 OPAQUE_WRITE_MSG = (
     "Opaque delegated writes cannot use a quickfix because its five-file budget "
@@ -284,6 +297,13 @@ def guard_product_writes(targets: list[str], state: dict, root: Path) -> None:
     ))
     if not product:
         return
+    approved_and_decomposed = (state.get("plan_status") == "approved"
+                               and state.get("decomposition_status") == "recorded")
+    if HARNESS_SOURCE_MARKER in product and not approved_and_decomposed:
+        # A quickfix must never be able to touch the marker (see its definition):
+        # deleting it mid-window would disable classification and the budget with
+        # it. Only an approved, decomposed plan authorizes a marker change.
+        deny(MARKER_PLAN_ONLY_MSG)
     if (state.get("plan_status") == "approved"
             and state.get("decomposition_status") == "recorded"):
         # The plan already authorizes this write. Recording only observes it:

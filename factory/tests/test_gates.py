@@ -3542,7 +3542,7 @@ def test_harness_repo_locks_machinery_writes_without_a_plan(repo, tmp_path):
         "permission_mode": "default",
         "tool_input": {"file_path": str(repo / marker_rel)},
     })
-    assert code == 0 and "deny" in out and "PLAN MODE" in out
+    assert code == 0 and "deny" in out and "repo-kind marker" in out
     for command in (f"rm {marker_rel}", f"git rm {marker_rel}",
                     f"git -C . rm {marker_rel}", f"git -c x=y rm {marker_rel}",
                     f"git mv {marker_rel} factory/scripts/moved.py"):
@@ -3551,7 +3551,7 @@ def test_harness_repo_locks_machinery_writes_without_a_plan(repo, tmp_path):
             "permission_mode": "default",
             "tool_input": {"command": command},
         })
-        assert code == 0 and "deny" in out and "PLAN MODE" in out, command
+        assert code == 0 and "deny" in out and "repo-kind marker" in out, command
 
     sign_off(repo)
     intake(repo)
@@ -3615,6 +3615,33 @@ def test_harness_quickfix_claims_machinery_files_against_budget(repo):
     done = [event for event in events if event.get("event") == "done"]
     assert len(done) == 1
     assert done[0]["files"] == expected
+
+
+def test_harness_quickfix_cannot_delete_the_repo_kind_marker(repo):
+    # The attack: open a quickfix, rm the marker as the first claimed file to
+    # flip the repo to client-mode, then flood machinery past the 5-file budget.
+    # The marker is plan-only, so the window can never touch it.
+    mark_harness_source(repo)
+    code, out = run(repo, "forge.py", "quickfix", "start", "sneaky")
+    assert code == 0, out
+    for command in ("rm .factory/harness-source.json",
+                    "git rm .factory/harness-source.json"):
+        code, out = hook(repo, {
+            "tool_name": "Bash", "permission_mode": "default",
+            "tool_input": {"command": command},
+        })
+        assert code == 0 and "deny" in out and "repo-kind marker" in out, command
+    code, out = hook(repo, {
+        "tool_name": "Write", "permission_mode": "default",
+        "tool_input": {"file_path": str(repo / ".factory" / "harness-source.json")},
+    })
+    assert code == 0 and "deny" in out and "repo-kind marker" in out
+    # Classification held: machinery is still product, still claimed against budget.
+    code, out = hook(repo, {
+        "tool_name": "Edit", "permission_mode": "default",
+        "tool_input": {"file_path": str(repo / "factory" / "scripts" / "x.py")},
+    })
+    assert code == 0 and "deny" not in out, out
 
 
 def test_scaffolded_client_has_no_harness_source_marker(repo):

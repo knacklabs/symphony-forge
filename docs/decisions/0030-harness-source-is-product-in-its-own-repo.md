@@ -41,9 +41,17 @@ The marker is itself a **product path**, not a freely-writable file: the
 planning lock governs creating, editing, or **deleting** it. The Bash write
 guard is extended to treat a deletion of a product path as a write, covering the
 direct-delete commands (`rm`, `unlink`) and their git equivalents (`git rm`,
-`git mv`). So flipping source→client to unlock machinery takes the same ceremony
-(an approved plan or a quickfix window) as any machinery change — it is not a
-silent hand-edit, `rm`, or `git rm`.
+`git mv`). So flipping source→client to unlock machinery is never a silent
+hand-edit, `rm`, or `git rm`.
+
+Crucially, the marker may be changed **only under an approved plan with a
+recorded decomposition — never a quickfix.** The marker decides whether the
+machinery trees are product at all, so a quickfix that could `rm` it as its
+first claimed file would flip the repo to client-mode and let every later
+machinery write skip the five-file budget entirely, defeating the very bound the
+quickfix exists to enforce. Under an approved plan the machinery is already
+writable, so removing the marker grants nothing new; under a quickfix, a marker
+change is refused outright.
 
 The ceiling is 0013's, stated honestly: this is drift-defense, not an
 adversarial sandbox. The marker is protected exactly as strongly as any other

@@ -493,3 +493,4 @@
 {"event": "delegated", "generated_by": "orchestrator", "at": "2026-08-07T06:03:43+00:00", "story": "FORGE-LOCK-1", "detail": "FORGE-LOCK-1.1 (write)"}
 {"event": "stage-contract-changed", "generated_by": "implementer", "at": "2026-08-07T06:04:48+00:00", "story": "FORGE-LOCK-1", "detail": "FORGE-LOCK-1.1: task contract re-recorded mid-stage"}
 {"event": "stage-done", "generated_by": "implementer", "at": "2026-08-07T06:04:48+00:00", "story": "FORGE-LOCK-1", "detail": "FORGE-LOCK-1.1 Repo-kind-aware planning lock + harness-source marker"}
+{"event": "verify-passed", "generated_by": "orchestrator", "at": "2026-08-07T06:16:28+00:00", "story": "FORGE-LOCK-1"}
