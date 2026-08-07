@@ -1,0 +1,7 @@
+{
+  "generated_by": "implementer",
+  "outcome": "Every PR now ties to a complete on-board ticket, enforced deterministically, so the board can no longer rot silently. Gate C: intake refuses a roadmap key that is not on the board (names the ad-hoc path). Gate A: a required CI check fails any PR that does not resolve to exactly one completed story (its done-flip + .factory/history/<key>/ in the same diff) or a ledgered window. Gate B: a pull_request workflow auto-commits the story-PR link to the branch (no CI writes to main), and check_board_complete verifies every done story has a pr-link + outcome + history. board-invariant ships workflow_dispatch-only; its live push:main enforcement is deferred to D-0011 pending the legacy backfill (the harness's pre-automation done stories).",
+  "issue": "FORGE-BOARD-1",
+  "commit": "ebf8bf8ca0e7fdf12a2463bb9b1af93e58868df1",
+  "recorded_at": "2026-08-07T17:53:31+00:00"
+}

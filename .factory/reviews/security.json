@@ -1,0 +1,26 @@
+{
+  "generated_by": "autoreview",
+  "score": 8,
+  "summary": "pr-link.yml holds contents:write, the only write surface. It is fork-guarded (if github.event.pull_request.head.repo.full_name == github.repository) so a fork PR cannot trigger the write, and it commits ONLY to the PR branch, never main. Ticket resolution intersects with real roadmap keys (candidates &= story_keys), so a crafted PR body cannot inject an arbitrary key. The Gate A / board checks are read-only and deterministic (contents:read).",
+  "blocking_findings": [],
+  "non_blocking_findings": [
+    {
+      "category": "trust-boundary",
+      "area": ".github/workflows/pr-link.yml",
+      "summary": "contents:write on a pull_request workflow is a trust surface; mitigated by the same-repo fork guard and by writing only to the PR branch. A maintainer should confirm branch protection permits the forge-pr-link[bot] branch push, and that the 'edited' trigger (loop-guarded) is acceptable."
+    }
+  ],
+  "residual_risks": [
+    "The write token is scoped to the workflow run; the loop guard prevents re-trigger storms on body edits."
+  ],
+  "recommendation": "approve-with-caveats",
+  "reviewed_scope": [
+    ".github/workflows/pr-link.yml",
+    ".github/workflows/pr-ticket-check.yml",
+    ".github/workflows/board-invariant.yml",
+    "factory/scripts/check_board_complete.py"
+  ],
+  "aspect": "security",
+  "recorded_at": "2026-08-07T17:53:14+00:00",
+  "commit": "ebf8bf8ca0e7fdf12a2463bb9b1af93e58868df1"
+}

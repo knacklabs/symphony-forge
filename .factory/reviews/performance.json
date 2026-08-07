@@ -1,0 +1,16 @@
+{
+  "generated_by": "autoreview",
+  "score": 9,
+  "summary": "No performance concerns. The three check scripts are cheap: a few git diff/show calls and JSON reads over the roadmap and events ledger, run once per PR / per push. No hot paths, loops over large sets, or query fanout. The CI workflows are standard checkout + python.",
+  "blocking_findings": [],
+  "non_blocking_findings": [],
+  "recommendation": "approve",
+  "reviewed_scope": [
+    "factory/scripts/check_pr_ticket.py",
+    "factory/scripts/check_board_complete.py"
+  ],
+  "aspect": "performance",
+  "residual_risks": [],
+  "recorded_at": "2026-08-07T17:53:14+00:00",
+  "commit": "ebf8bf8ca0e7fdf12a2463bb9b1af93e58868df1"
+}

@@ -1,0 +1,43 @@
+{
+  "commit": "ebf8bf8ca0e7fdf12a2463bb9b1af93e58868df1",
+  "automated": {
+    "generated_by": "implementer",
+    "status": "pass",
+    "summary": "Gate tests for FORGE-BOARD-1 across three stages: Gate C (intake refuses off-board keys), Gate A (check_pr_ticket resolves exactly one completed story/window per PR \u2014 story done-flip+history or window done record), Gate B (check_board_complete requires pr-linked+outcome+history for every done story, with predates_outcome_contract exemption). Full deterministic suite green via verify.py.",
+    "blocking_findings": [],
+    "commands_run": [
+      "python3 factory/scripts/verify.py (FACTORY_TEST_CMD = pytest factory/tests -n auto for the bulk, then stage_done tests serially)"
+    ],
+    "tests_added_or_updated": [
+      "test_intake_refuses_off_board_key",
+      "test_intake_allows_on_board_key",
+      "test_check_pr_ticket_passes_story",
+      "test_check_pr_ticket_fails_no_ticket",
+      "test_check_pr_ticket_fails_missing_done_flip",
+      "test_check_pr_ticket_fails_missing_history",
+      "test_check_pr_ticket_window_passes",
+      "test_check_pr_ticket_fails_two_resolved_records",
+      "test_check_board_complete_passes",
+      "test_check_board_complete_fails_missing_link",
+      "test_check_board_complete_fails_missing_outcome",
+      "test_check_board_complete_fails_missing_history",
+      "test_check_board_complete_predates_ok"
+    ],
+    "pass_fail_summary": "full factory/tests suite green (verify.py passed)",
+    "reviewed_scope": [
+      "factory/scripts/intake.py",
+      "factory/scripts/check_pr_ticket.py",
+      "factory/scripts/check_board_complete.py",
+      ".github/workflows/pr-ticket-check.yml",
+      ".github/workflows/pr-link.yml",
+      ".github/workflows/board-invariant.yml"
+    ],
+    "non_blocking_findings": [],
+    "remaining_gaps": [],
+    "residual_risks": [],
+    "manual_validation_steps": [],
+    "recorded_at": "2026-08-07T17:52:20+00:00",
+    "commit": "ebf8bf8ca0e7fdf12a2463bb9b1af93e58868df1"
+  },
+  "updated_at": "2026-08-07T17:52:20+00:00"
+}

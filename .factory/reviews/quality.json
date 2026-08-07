@@ -1,0 +1,29 @@
+{
+  "generated_by": "autoreview",
+  "score": 8,
+  "summary": "Faithful, well-tested enforcement gates. Gate C (intake refuses off-board, names the ad-hoc path) and Gate A (check_pr_ticket resolves exactly one completed story/window per PR, with a self-testing pull_request workflow) are complete and live. Gate B (check_board_complete + branch-commit pr-link.yml + board-invariant) is complete and tested. A required-test/parametrize mismatch was caught and fixed. Reuse-first (load_events/load_items/forge pr-link).",
+  "blocking_findings": [],
+  "non_blocking_findings": [
+    {
+      "category": "rollout-sequencing",
+      "area": ".github/workflows/board-invariant.yml",
+      "summary": "AC3's LIVE red-main enforcement is deferred: board-invariant ships dispatch-only (not push:main) because the harness's 10 legacy done stories predate the pr-link automation and would red main. The check + workflow are delivered and runnable; live push:main enablement is deferred to D-0011 (after the legacy backfill), which is the project-record/backfill story's job, not this one."
+    }
+  ],
+  "residual_risks": [
+    "AC3 is met in mechanism (check exists, tested, dispatch-runnable) but not in live push:main enforcement until D-0011.",
+    "pr-link.yml's branch push needs a GITHUB_TOKEN with contents:write configured on the repo."
+  ],
+  "recommendation": "approve-with-caveats",
+  "reviewed_scope": [
+    "factory/scripts/intake.py",
+    "factory/scripts/check_pr_ticket.py",
+    "factory/scripts/check_board_complete.py",
+    ".github/workflows/pr-ticket-check.yml",
+    ".github/workflows/pr-link.yml",
+    ".github/workflows/board-invariant.yml"
+  ],
+  "aspect": "quality",
+  "recorded_at": "2026-08-07T17:53:13+00:00",
+  "commit": "ebf8bf8ca0e7fdf12a2463bb9b1af93e58868df1"
+}
