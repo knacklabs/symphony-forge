@@ -1,0 +1,63 @@
+{
+  "event": "done",
+  "id": "Q-0038-25ca",
+  "profile": "lite",
+  "by": "vrknetha",
+  "reason": "0030 validation follow-up: add adopt+upgrade marker-not-vendored regression tests (C3 gap); test-only, supervised",
+  "base_sha": "a06a1b2e0a3c9a73c2eb4a2ce37c29ec5dbdd220",
+  "started_at": "2026-08-07T12:39:08+00:00",
+  "completed_at": "2026-08-07T12:43:24+00:00",
+  "files": [
+    "factory/tests/test_gates.py"
+  ],
+  "reviews": {
+    "quality": {
+      "generated_by": "autoreview",
+      "score": 9,
+      "summary": "Branch autoreview (quality lens): clean (patch is correct, 0.89). Doc-only corrections to decision 0030's overstated guarantees plus two focused regression tests confirming adopt and upgrade do not vendor the harness-source marker into a client. No actionable defect.",
+      "blocking_findings": [],
+      "non_blocking_findings": [],
+      "recommendation": "approve",
+      "reviewed_scope": [
+        "docs/decisions/0030-harness-source-is-product-in-its-own-repo.md",
+        "factory/tests/test_gates.py"
+      ],
+      "aspect": "quality",
+      "residual_risks": [],
+      "recorded_at": "2026-08-07T12:43:23+00:00",
+      "commit": "1bac47847d491013d95e34b00bab4a9f713619f2"
+    },
+    "performance": {
+      "generated_by": "autoreview",
+      "score": 9,
+      "summary": "Branch autoreview (performance lens): clean (patch is correct, 0.89). Doc-only corrections to decision 0030's overstated guarantees plus two focused regression tests confirming adopt and upgrade do not vendor the harness-source marker into a client. No actionable defect.",
+      "blocking_findings": [],
+      "non_blocking_findings": [],
+      "recommendation": "approve",
+      "reviewed_scope": [
+        "docs/decisions/0030-harness-source-is-product-in-its-own-repo.md",
+        "factory/tests/test_gates.py"
+      ],
+      "aspect": "performance",
+      "residual_risks": [],
+      "recorded_at": "2026-08-07T12:43:23+00:00",
+      "commit": "1bac47847d491013d95e34b00bab4a9f713619f2"
+    },
+    "security": {
+      "generated_by": "autoreview",
+      "score": 9,
+      "summary": "Branch autoreview (security lens): clean (patch is correct, 0.89). Doc-only corrections to decision 0030's overstated guarantees plus two focused regression tests confirming adopt and upgrade do not vendor the harness-source marker into a client. No actionable defect.",
+      "blocking_findings": [],
+      "non_blocking_findings": [],
+      "recommendation": "approve",
+      "reviewed_scope": [
+        "docs/decisions/0030-harness-source-is-product-in-its-own-repo.md",
+        "factory/tests/test_gates.py"
+      ],
+      "aspect": "security",
+      "residual_risks": [],
+      "recorded_at": "2026-08-07T12:43:24+00:00",
+      "commit": "1bac47847d491013d95e34b00bab4a9f713619f2"
+    }
+  }
+}
