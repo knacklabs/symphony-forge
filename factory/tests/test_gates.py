@@ -4710,6 +4710,92 @@ def test_check_pr_ticket_fails_two_resolved_records(repo):
     assert code != 0 and "2 work records resolve" in out, out
 
 
+# -------------------------------------------------- Gate B: board completeness
+
+def board_story(repo: Path, key: str, **over) -> None:
+    ensure_story(repo, key)
+    roadmap = repo / "plans" / "roadmap.json"
+    data = json.loads(roadmap.read_text())
+    item = next(item for item in data["items"] if item["key"] == key)
+    item.update({"status": "done", "outcome": "Shipped outcome."}, **over)
+    roadmap.write_text(json.dumps(data, indent=2) + "\n")
+
+
+def add_pr_link(repo: Path, key: str, reference: str = "acme/widgets#42") -> None:
+    events = repo / ".factory" / "events.jsonl"
+    events.parent.mkdir(exist_ok=True)
+    with events.open("a") as ledger:
+        ledger.write(json.dumps({
+            "event": "pr-linked",
+            "generated_by": "orchestrator",
+            "at": "2026-08-07T00:00:00+00:00",
+            "story": key,
+            "detail": reference,
+        }) + "\n")
+
+
+def add_story_history(repo: Path, key: str) -> None:
+    history = repo / ".factory" / "history" / key
+    history.mkdir(parents=True, exist_ok=True)
+
+
+def test_check_board_complete_passes(repo):
+    key = "BOARD-201"
+    board_story(repo, key)
+    add_pr_link(repo, key)
+    add_story_history(repo, key)
+
+    code, out = run(repo, "check_board_complete.py")
+
+    assert code == 0 and "Board completeness check OK" in out, out
+
+
+@pytest.mark.parametrize(
+    ("missing", "message"),
+    [
+        ("link", "missing pr-linked event"),
+        ("outcome", "missing outcome"),
+        ("history", "missing .factory/history/BOARD-202/ directory"),
+    ],
+)
+def test_check_board_complete_fails_missing_link(repo, missing, message):
+    key = "BOARD-202"
+    board_story(repo, key, **({"outcome": ""} if missing == "outcome" else {}))
+    if missing != "link":
+        add_pr_link(repo, key)
+    if missing != "history":
+        add_story_history(repo, key)
+
+    code, out = run(repo, "check_board_complete.py")
+
+    assert code != 0 and message in out, out
+
+
+def test_check_board_complete_predates_ok(repo):
+    key = "BOARD-203"
+    board_story(repo, key, outcome="", predates_outcome_contract=True)
+
+    code, out = run(repo, "check_board_complete.py")
+    assert code != 0 and f"missing .factory/history/{key}/ directory" in out, out
+
+    add_story_history(repo, key)
+
+    code, out = run(repo, "check_board_complete.py")
+
+    assert code == 0 and "Board completeness check OK" in out, out
+
+
+def test_gate_b_workflows_link_the_branch_and_check_main():
+    link = (HARNESS / ".github" / "workflows" / "pr-link.yml").read_text()
+    invariant = (HARNESS / ".github" / "workflows" / "board-invariant.yml").read_text()
+
+    assert "pull_request:" in link
+    assert "already_linked" in link
+    assert 'git push origin "HEAD:$HEAD_BRANCH"' in link
+    assert "branches: [main]" in invariant
+    assert "python3 factory/scripts/check_board_complete.py" in invariant
+
+
 # ------------------------------------------------------------ parallelization
 
 def test_roadmap_parallel_frontier(repo, tmp_path):

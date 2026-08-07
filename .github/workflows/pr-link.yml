@@ -1,0 +1,85 @@
+name: pr-link
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, edited]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: pr-link-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+
+jobs:
+  link-pr:
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Resolve the story and check the loop guard
+        id: link
+        env:
+          HEAD_BRANCH: ${{ github.event.pull_request.head.ref }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          python3 - <<'PY'
+          import os
+          import sys
+
+          sys.path.insert(0, "factory/scripts")
+          from check_pr_ticket import TICKET_LINE, branch_ticket
+          from factory_lib import repo_root
+          from forge_cli.events import load_events
+          from forge_cli.roadmap import load_items
+
+          root = repo_root()
+          story_keys = {
+              item["key"] for item in load_items(root)
+              if isinstance(item, dict) and isinstance(item.get("key"), str)
+          }
+          candidates = set(TICKET_LINE.findall(os.environ.get("PR_BODY", "")))
+          inferred = branch_ticket(os.environ["HEAD_BRANCH"], story_keys)
+          if inferred:
+              candidates.add(inferred)
+          candidates &= story_keys
+          if len(candidates) > 1:
+              raise SystemExit(
+                  "PR link FAILED: multiple roadmap stories resolve: "
+                  + ", ".join(sorted(candidates))
+              )
+
+          story = next(iter(candidates), "")
+          reference = f"{os.environ['GITHUB_REPOSITORY']}#{os.environ['PR_NUMBER']}"
+          already_linked = bool(story) and any(
+              event.get("story") == story and event.get("detail") == reference
+              for event in load_events(root, event="pr-linked")
+          )
+          with open(os.environ["GITHUB_OUTPUT"], "a") as output:
+              output.write(f"story={story}\n")
+              output.write(f"reference={reference}\n")
+              output.write(f"already_linked={str(already_linked).lower()}\n")
+          PY
+      - name: Record the PR link on the PR branch
+        if: steps.link.outputs.story != '' && steps.link.outputs.already_linked != 'true'
+        run: >-
+          python3 factory/scripts/forge.py pr-link
+          "${{ steps.link.outputs.story }}"
+          "${{ steps.link.outputs.reference }}"
+      - name: Commit the durable link to the PR branch
+        if: steps.link.outputs.story != '' && steps.link.outputs.already_linked != 'true'
+        env:
+          HEAD_BRANCH: ${{ github.event.pull_request.head.ref }}
+        run: |
+          git config user.name "forge-pr-link[bot]"
+          git config user.email "forge-pr-link[bot]@users.noreply.github.com"
+          git add -f .factory/events.jsonl
+          git commit -m "chore: link PR to ${{ steps.link.outputs.story }}"
+          git push origin "HEAD:$HEAD_BRANCH"

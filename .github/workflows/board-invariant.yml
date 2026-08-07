@@ -1,0 +1,24 @@
+name: board-invariant
+
+# push:main is intentionally DISABLED for now. The check fails on legacy `done`
+# stories that predate the pr-link automation (they carry no `pr-linked` event),
+# so enabling it on main before those stories are backfilled would red main.
+# Backfill (add pr-links or `predates_outcome_contract` markers) then re-enable
+# `push: branches: [main]` in the project-record/backfill story. Tracked as a
+# deferral. Runnable now via workflow_dispatch to see the outstanding gaps.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  board-invariant:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Require complete evidence for every done story
+        run: python3 factory/scripts/check_board_complete.py

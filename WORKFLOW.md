@@ -249,6 +249,18 @@ window (`./forge quickfix start "<reason>"`), or a bounded ledgered lite window
 `factory/`, and `prototype/`) and read-only exploration stay open. Everything
 downstream remains enforced at the artifact gates.
 
+The PR boundary adds two deterministic CI gates. Gate A runs
+`.github/workflows/pr-ticket-check.yml` on each pull request and requires
+exactly one resolved story or work window whose completion evidence travels in
+that PR. For a same-repository story PR, `.github/workflows/pr-link.yml` also
+records the story and PR as a `pr-linked` event, then commits that event to the
+PR branch; an exact-link guard makes subsequent runs a no-op, and CI never
+writes directly to `main`. Gate B runs `.github/workflows/board-invariant.yml`
+on `main` and keeps it red until every `done` roadmap story has a history
+directory plus a durable outcome and PR link. Stories explicitly marked
+`predates_outcome_contract` still need history, but are exempt from the newer
+outcome and link requirements.
+
 ## Task Graph Rules
 - The planner owns decomposition.
 - Decomposition is capability-driven; the recorded artifact is canonical
