@@ -14,7 +14,12 @@
     {
       "id": "FORGE-BOARD-1.2",
       "title": "Gate A \u2014 PR-ticket required check",
-      "status": "pending"
+      "status": "done",
+      "started_at": "2026-08-07T17:23:46+00:00",
+      "base_sha": "edf45f0124c29c32a3e4d397333d669bf5a4243c",
+      "dirty_at_start": {},
+      "task_sha256": "c01030d2e8a29e7fdde2f5c4087a73a0ec503869218cb057e9d3d06f59aa4f23",
+      "completed_at": "2026-08-07T17:31:22+00:00"
     },
     {
       "id": "FORGE-BOARD-1.3",

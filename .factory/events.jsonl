@@ -566,3 +566,6 @@
 {"event": "stage-start", "generated_by": "implementer", "at": "2026-08-07T17:18:33+00:00", "story": "FORGE-BOARD-1", "detail": "FORGE-BOARD-1.1 Gate C \u2014 intake refuses off-board keys"}
 {"event": "delegated", "generated_by": "orchestrator", "at": "2026-08-07T17:22:35+00:00", "story": "FORGE-BOARD-1", "detail": "FORGE-BOARD-1.1 (write)"}
 {"event": "stage-done", "generated_by": "implementer", "at": "2026-08-07T17:23:34+00:00", "story": "FORGE-BOARD-1", "detail": "FORGE-BOARD-1.1 Gate C \u2014 intake refuses off-board keys"}
+{"event": "stage-start", "generated_by": "implementer", "at": "2026-08-07T17:23:46+00:00", "story": "FORGE-BOARD-1", "detail": "FORGE-BOARD-1.2 Gate A \u2014 PR-ticket required check"}
+{"event": "delegated", "generated_by": "orchestrator", "at": "2026-08-07T17:30:20+00:00", "story": "FORGE-BOARD-1", "detail": "FORGE-BOARD-1.2 (write)"}
+{"event": "stage-done", "generated_by": "implementer", "at": "2026-08-07T17:31:22+00:00", "story": "FORGE-BOARD-1", "detail": "FORGE-BOARD-1.2 Gate A \u2014 PR-ticket required check"}
