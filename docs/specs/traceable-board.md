@@ -77,12 +77,14 @@ parent), never PR-bearing.
   `stage done` refuses a missing write launch. No grilled task contract, no
   implementation. This is what makes JIT planning enforced rather than
   hoped-for.
-- **Two grill points catch different failures:** the story-level grill validates
-  the breakdown (are these the right tasks? does the shape cover the story?);
-  the per-task grill validates each task's details JIT (no speculative
-  assumption). *(OPEN DETAIL to confirm: keep both grills — the working
-  assumption — or move grilling entirely to the task level with the story
-  holding only the list. Lean: keep both; they catch different failures.)*
+- **Two grill points, kept deliberately, because they catch different
+  failures:** the story-level plan-grill (which already grills the breakdown as
+  part of the plan) validates the decomposition — are these the right tasks?
+  does the shape cover the story? is it too big to split? — and the per-task
+  JIT grill validates each task's details against the real prior state (no
+  speculative assumption). Dropping the story-grill would leave the
+  decomposition itself unchecked; the per-task grill is the single new mechanism
+  added on top.
 - The split rule keeps this bounded (~5 tasks/story), so it is a handful of
   quick task-grills, not dozens.
 
