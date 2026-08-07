@@ -3712,17 +3712,24 @@ def test_harness_quickfix_refuses_opaque_product_writes(repo):
     assert code == 0, out
     for command in ("rm -r factory/scripts",
                     "rm factory/scripts/*.py",
+                    "rm factory/scripts/f{1..6}.py",  # brace expansion
+                    "cp -R /tmp/x factory/scripts/new",  # recursive copy
+                    "cp -t factory/scripts /tmp/a /tmp/b",  # GNU target-dir
                     "cp /tmp/x factory/scripts/"):
         code, out = hook(repo, {
             "tool_name": "Bash", "permission_mode": "default",
             "tool_input": {"command": command},
         })
         assert code == 0 and "deny" in out and "cannot bound" in out, command
-    code, out = hook(repo, {
-        "tool_name": "Bash", "permission_mode": "default",
-        "tool_input": {"command": "rm factory/scripts/one.py"},
-    })
-    assert code == 0 and "deny" not in out, out
+    # Bounded single-file ops stay allowed — including a sed program whose regex
+    # contains `*` (that is the program, not a globbed path).
+    for command in ("rm factory/scripts/one.py",
+                    "sed -i 's/foo.*/bar/' factory/scripts/x.py"):
+        code, out = hook(repo, {
+            "tool_name": "Bash", "permission_mode": "default",
+            "tool_input": {"command": command},
+        })
+        assert code == 0 and "deny" not in out, command
 
 
 def test_scaffolded_client_has_no_harness_source_marker(tmp_path, monkeypatch):

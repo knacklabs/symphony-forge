@@ -58,10 +58,14 @@ five-file budget cannot be escaped. This is the guarantee — the deletion guard
 defence-in-depth, not the load-bearing wall.
 
 To keep the quickfix budget honest, a quickfix also **refuses opaque product
-writes** — a recursive `rm -r`, a glob operand, or a copy/move into an existing
-machinery directory — since each would spend one budget slot on an unbounded set
-of files; the fix must enumerate the exact paths or be planned (where the whole
-diff is measured).
+writes** — a recursive `rm -r`/`cp -R`, a glob or brace operand, a directory
+source, `cp -t <dir>`, or a copy/move into an existing machinery directory —
+since each would spend one budget slot on an unbounded set of files; the fix must
+enumerate the exact paths or be planned (where the whole diff is measured). This
+covers the common shapes; truly exotic forms (nested subshells, `xargs`, `\rm`,
+arbitrary code) remain a budget-accuracy residual, general to every repo and
+backstopped by the artifact gates — not a lock disarm, since the pin keeps
+classification correct regardless.
 
 The Bash write guard catches the **common** deletion/relocation vectors that
 reach the marker: `rm`/`unlink`, `git rm`/`git mv`, `mv` of the source, and an

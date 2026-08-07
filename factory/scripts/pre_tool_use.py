@@ -316,7 +316,9 @@ def _contains_marker(rel: str) -> bool:
     return HARNESS_SOURCE_MARKER.startswith(rel.rstrip("/") + "/")
 
 
-GLOB_METACHARS = ("*", "?", "[")
+# Shell metacharacters that expand one literal into an unbounded set of paths:
+# globs (`*?[`) and brace expansion (`{1..6}`, `{a,b}`).
+GLOB_METACHARS = ("*", "?", "[", "{")
 OPAQUE_QUICKFIX_MSG = (
     "This write affects a product-path file set a quickfix cannot bound — a "
     "recursive/globbed delete or a copy/move into a machinery directory claims "
@@ -325,10 +327,20 @@ OPAQUE_QUICKFIX_MSG = (
 )
 
 
+def _is_dir(path: str, root: Path) -> bool:
+    candidate = Path(path) if Path(path).is_absolute() else root / path
+    return candidate.is_dir()
+
+
 def has_opaque_product_write(command: str, root: Path, is_harness: bool) -> bool:
     """A product write/delete whose exact file set can't be read from the literal
-    command — a recursive `rm -r`, a glob operand, or a copy/move into an existing
-    product directory — so a quickfix cannot honestly claim it against its budget.
+    command — a recursive `rm -r`/`cp -R`, a glob or brace operand, a directory
+    source, or a copy/move into a product directory — so a quickfix cannot
+    honestly claim it against its budget.
+
+    # ponytail: common shapes only (decision 0013). Target-directory tricks
+    # beyond `-t`, and pure shell games, stay a documented budget-accuracy
+    # residual — general to every repo, backstopped by the artifact gates.
     """
     for segment in re.split(r"[;&|\n]+", strip_heredoc_bodies(command)):
         tokens = tokenize(segment)
@@ -350,20 +362,34 @@ def has_opaque_product_write(command: str, root: Path, is_harness: bool) -> bool
         flags = [token for token in args if token.startswith("-")]
         operands = [token for token in args
                     if not token.startswith("-") and token not in {">", ">>"}]
-        recursive = name == "rm" and any(
-            flag in ("-r", "-R", "--recursive")
+        recursive = name in {"rm", "cp", "mv"} and any(
+            flag in ("-r", "-R", "-a", "--recursive", "--archive")
             or (len(flag) > 1 and not flag.startswith("--")
-                and ("r" in flag or "R" in flag))
+                and ("r" in flag or "R" in flag or "a" in flag))
             for flag in flags)
-        for operand in operands:
+        # sed's program (`s/foo.*/bar/`) is not a path — only its trailing file
+        # operand is; checking the program would flag its regex `*` as a glob.
+        path_operands = operands[-1:] if name == "sed" else operands
+        for operand in path_operands:
             globbed = any(char in operand for char in GLOB_METACHARS)
             if (recursive or globbed) and product_path(operand, root, is_harness):
                 return True
-        if name in {"cp", "mv"} and len(operands) >= 2:
-            dest = operands[-1]
-            dest_path = Path(dest) if Path(dest).is_absolute() else root / dest
-            if dest_path.is_dir() and product_path(dest, root, is_harness):
+        if name in {"cp", "mv"}:
+            # GNU `-t <dir>` / `--target-directory=<dir>`: many sources INTO a dir.
+            target = None
+            for position, arg in enumerate(args):
+                if arg in ("-t", "--target-directory") and position + 1 < len(args):
+                    target = args[position + 1]
+                elif arg.startswith("--target-directory="):
+                    target = arg.split("=", 1)[1]
+            if target is not None and product_path(target, root, is_harness):
                 return True
+            if len(operands) >= 2:
+                dest, sources = operands[-1], operands[:-1]
+                if product_path(dest, root, is_harness) and (
+                        recursive or _is_dir(dest, root)
+                        or any(_is_dir(src, root) for src in sources)):
+                    return True
     return False
 
 
@@ -378,13 +404,20 @@ def guard_product_writes(targets: list[str], state: dict, root: Path,
         is_harness = bool(quickfix["harness_source"])
     else:
         is_harness = is_harness_source_repo(root)
+    approved_and_decomposed = (state.get("plan_status") == "approved"
+                               and state.get("decomposition_status") == "recorded")
+    # Opaque check FIRST: a recursive/globbed op or a `cp -t`/dir copy can affect
+    # product files the literal-target extractor never classifies, so `product`
+    # may be empty even though the command hits machinery. Deny before any early
+    # return, whether the repo is fully locked or a quickfix is open.
+    if (command and not approved_and_decomposed
+            and has_opaque_product_write(command, root, is_harness)):
+        deny(OPAQUE_QUICKFIX_MSG)
     product = list(dict.fromkeys(
         rel for raw in targets if (rel := product_path(raw, root, is_harness)) is not None
     ))
     if not product:
         return
-    approved_and_decomposed = (state.get("plan_status") == "approved"
-                               and state.get("decomposition_status") == "recorded")
     if (any(_contains_marker(rel) for rel in product)
             and not approved_and_decomposed):
         # A quickfix must never be able to touch the marker (see its definition):
@@ -392,12 +425,6 @@ def guard_product_writes(targets: list[str], state: dict, root: Path,
         # `rm -rf .factory` — would disable classification and the budget with it.
         # Only an approved, decomposed plan authorizes a marker change.
         deny(MARKER_PLAN_ONLY_MSG)
-    if (command and not approved_and_decomposed
-            and has_opaque_product_write(command, root, is_harness)):
-        # A quickfix claims one slot per named path; a recursive/globbed op or a
-        # copy into a machinery dir would spend one slot on an unbounded file set,
-        # defeating the budget. Refuse it unless an approved plan measures the diff.
-        deny(OPAQUE_QUICKFIX_MSG)
     if (state.get("plan_status") == "approved"
             and state.get("decomposition_status") == "recorded"):
         # The plan already authorizes this write. Recording only observes it:
