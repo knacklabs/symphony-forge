@@ -1,0 +1,46 @@
+{
+  "commit": "05a5196063f122dadca172320127a9adc98a11b8",
+  "automated": {
+    "generated_by": "implementer",
+    "status": "pass",
+    "summary": "Gate tests for developer-selectable lite mode across all four stages: the lite window (profile + base_sha, mode CLI, banners), the terra@high fix path (forge fix + modes.lite pin + delegation schema), the close gate (dirty-tree/budget/at-HEAD-review refusals + scoped lite_window_ok relaxation), and the contract/docs. Full deterministic suite green (414 tests) via verify.py.",
+    "blocking_findings": [],
+    "commands_run": [
+      "python3 factory/scripts/verify.py (FACTORY_TEST_CMD = pytest factory/tests -n auto for the bulk, then the process-reaping stage_done tests serially)",
+      "uv run --with pytest python -m pytest factory/tests -q -k stage_done (serial \u2014 process-reaping tests race under xdist)"
+    ],
+    "tests_added_or_updated": [
+      "test_mode_lite_opens_window_with_profile_and_base_sha",
+      "test_lite_window_authorizes_product_write",
+      "test_mode_list_shows_open_lite_window",
+      "test_quickfix_profile_behavior_unchanged",
+      "test_forge_fix_refuses_without_lite_window",
+      "test_forge_fix_records_terra_high_write_delegation",
+      "test_modes_lite_pins_parse_and_dual_runtime_green",
+      "test_mode_done_refuses_dirty_product_tree",
+      "test_mode_done_refuses_over_budget_committed_diff",
+      "test_mode_done_requires_clean_reviews_at_head",
+      "test_record_review_accepts_open_lite_window_post_ship",
+      "test_lite_window_does_not_unlock_verify_or_test_recording",
+      "test_docs_describe_three_planning_lock_exits",
+      "test_forge_skill_maps_lite_mode_phrase"
+    ],
+    "pass_fail_summary": "414 passed, 0 failed (verify.py green; the reaping test passes serially \u2014 its xdist flake is environmental, not code)",
+    "reviewed_scope": [
+      "factory/scripts/forge_cli/quickfix.py",
+      "factory/scripts/forge_cli/fix.py",
+      "factory/scripts/forge_cli/delegate.py",
+      "factory/scripts/factory_lib.py",
+      "factory/scripts/record_review_from_json.py",
+      "factory/scripts/pr_ready.py",
+      "harness.yaml"
+    ],
+    "non_blocking_findings": [],
+    "remaining_gaps": [],
+    "residual_risks": [],
+    "manual_validation_steps": [],
+    "recorded_at": "2026-08-07T10:46:30+00:00",
+    "commit": "05a5196063f122dadca172320127a9adc98a11b8"
+  },
+  "updated_at": "2026-08-07T10:46:30+00:00"
+}

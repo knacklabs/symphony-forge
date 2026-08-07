@@ -1,0 +1,27 @@
+{
+  "generated_by": "autoreview",
+  "score": 8,
+  "summary": "The security-sensitive change is gate()'s lite_window_ok relaxation. It is correctly scoped: it skips ONLY the approved-plan and decomposition preconditions, ONLY when the caller passes lite_window_ok AND an open lite window exists; sign-off is never relaxed; only record_review passes the flag, so verify.py and record_test stay strict (asserted by test_lite_window_does_not_unlock_verify_or_test_recording). The lite window is a human-initiated, ledgered act (forge mode lite --by --reason), which is the trust anchor per 0031. The terra@high write path is sanctioned only inside an open lite window; raw codex exec stays hook-blocked; _lite_product_files applies the same product boundary as the planning lock (repo-kind aware).",
+  "blocking_findings": [],
+  "non_blocking_findings": [
+    {
+      "category": "trust-boundary",
+      "area": "factory/scripts/factory_lib.py",
+      "summary": "The lite relaxation reads .factory/quickfix.json directly for the profile; the .factory hand-write guard already protects that file, and pr_ready refuses to ship with an open window, so a stale/forged lite window cannot ride into a shipped story. No exposure found."
+    }
+  ],
+  "residual_risks": [
+    "A supervising human can hand-edit product code under a lite window, bypassing the terra@high model pin. This is an accepted 0031 consequence (the pin governs delegated fixes), captured by the file manifest + mandatory close review, and gated by human supervision \u2014 not an injection or privilege path."
+  ],
+  "recommendation": "approve-with-caveats",
+  "reviewed_scope": [
+    "factory/scripts/factory_lib.py",
+    "factory/scripts/record_review_from_json.py",
+    "factory/scripts/forge_cli/quickfix.py",
+    "factory/scripts/forge_cli/fix.py",
+    "harness.yaml"
+  ],
+  "aspect": "security",
+  "recorded_at": "2026-08-07T10:46:30+00:00",
+  "commit": "05a5196063f122dadca172320127a9adc98a11b8"
+}

@@ -1,0 +1,19 @@
+{
+  "generated_by": "autoreview",
+  "score": 9,
+  "summary": "No performance concerns. The lite path adds only a handful of bounded git subprocess calls (name-only diffs, ls-files) at open/fix/close \u2014 no hot paths, no loops over large sets, no query fanout. mode_run_config is a one-time regex read of harness.yaml. The terra@high fix is a single foreground delegation, reusing the existing launch/reap machinery unchanged.",
+  "blocking_findings": [],
+  "non_blocking_findings": [],
+  "residual_risks": [
+    "_lite_manifest / _lite_dirty_product_files each shell out to git 1-2 times; negligible at the human-supervised, small-fix scale this feature targets."
+  ],
+  "recommendation": "approve",
+  "reviewed_scope": [
+    "factory/scripts/forge_cli/quickfix.py",
+    "factory/scripts/forge_cli/fix.py",
+    "factory/scripts/forge_cli/delegate.py"
+  ],
+  "aspect": "performance",
+  "recorded_at": "2026-08-07T10:46:30+00:00",
+  "commit": "05a5196063f122dadca172320127a9adc98a11b8"
+}

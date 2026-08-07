@@ -1,0 +1,28 @@
+{
+  "ok": true,
+  "completed_at": "2026-08-07T10:40:59+00:00",
+  "commit": "05a5196063f122dadca172320127a9adc98a11b8",
+  "results": [
+    {
+      "command": "python3 factory/scripts/check_dual_runtime.py",
+      "exit_code": 0,
+      "stdout": "check_dual_runtime: clean.\n",
+      "stderr": "",
+      "phase": "structural"
+    },
+    {
+      "command": "python3 factory/scripts/check_factory_scaffold.py",
+      "exit_code": 0,
+      "stdout": "Factory scaffold OK\n",
+      "stderr": "",
+      "phase": "typecheck"
+    },
+    {
+      "command": "uv run --with pytest --with pytest-xdist python -m pytest factory/tests -q -n auto -k 'not stage_done' && uv run --with pytest python -m pytest factory/tests -q -k 'stage_done'",
+      "exit_code": 0,
+      "stdout": "bringing up nodes...\nbringing up nodes...\n\n........................................................................ [ 19%]\n........................................................................ [ 38%]\n........................................................................ [ 58%]\n........................................................................ [ 77%]\n........................................................................ [ 96%]\n............                                                             [100%]\n372 passed in 101.92s (0:01:41)\n..........................................                               [100%]\n42 passed, 372 deselected in 260.74s (0:04:20)\n",
+      "stderr": "",
+      "phase": "tests"
+    }
+  ]
+}

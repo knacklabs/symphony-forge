@@ -516,3 +516,10 @@
 {"event": "stage-start", "generated_by": "implementer", "at": "2026-08-07T10:00:25+00:00", "story": "FORGE-MODES-1", "detail": "FORGE-MODES-1.4 Contract + docs"}
 {"event": "delegated", "generated_by": "orchestrator", "at": "2026-08-07T10:11:34+00:00", "story": "FORGE-MODES-1", "detail": "FORGE-MODES-1.4 (write)"}
 {"event": "stage-done", "generated_by": "implementer", "at": "2026-08-07T10:13:34+00:00", "story": "FORGE-MODES-1", "detail": "FORGE-MODES-1.4 Contract + docs"}
+{"event": "verify-failed", "generated_by": "orchestrator", "at": "2026-08-07T10:32:19+00:00", "story": "FORGE-MODES-1"}
+{"event": "verify-passed", "generated_by": "orchestrator", "at": "2026-08-07T10:40:59+00:00", "story": "FORGE-MODES-1"}
+{"event": "tests-automated", "generated_by": "implementer", "at": "2026-08-07T10:41:48+00:00", "story": "FORGE-MODES-1", "detail": "pass"}
+{"event": "tests-automated", "generated_by": "implementer", "at": "2026-08-07T10:46:30+00:00", "story": "FORGE-MODES-1", "detail": "pass"}
+{"event": "review-quality", "generated_by": "autoreview", "at": "2026-08-07T10:46:30+00:00", "story": "FORGE-MODES-1"}
+{"event": "review-performance", "generated_by": "autoreview", "at": "2026-08-07T10:46:30+00:00", "story": "FORGE-MODES-1"}
+{"event": "review-security", "generated_by": "autoreview", "at": "2026-08-07T10:46:30+00:00", "story": "FORGE-MODES-1"}

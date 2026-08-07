@@ -1,0 +1,7 @@
+{
+  "generated_by": "implementer",
+  "outcome": "Developers can now make small, human-supervised fixes without the full factory loop. The always-armed planning lock has a third exit: ./forge mode lite --by <name> --reason <why> opens a bounded, ledgered lite window; ./forge fix \"<desc>\" runs the fix with terra@high (write-enabled); ./forge mode done closes it only after one autoreview pass with no blockers over the committed base_sha..HEAD diff, within the file budget \u2014 and this works even post-ship (record_review accepts an open lite window). The full loop and the trace-only quickfix hatch are unchanged.",
+  "issue": "FORGE-MODES-1",
+  "commit": "05a5196063f122dadca172320127a9adc98a11b8",
+  "recorded_at": "2026-08-07T10:46:52+00:00"
+}

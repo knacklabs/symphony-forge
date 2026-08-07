@@ -1,0 +1,37 @@
+{
+  "generated_by": "autoreview",
+  "score": 8,
+  "summary": "Reuse-first, faithful implementation of developer-selectable lite mode. The quickfix window is generalized (profile + base_sha) rather than duplicated; the close gate enforces dirty-tree refusal, a committed-diff budget, and three at-HEAD no-blocker reviews; gate() relaxation is correctly scoped; 414 tests green. One genuine edge-case defect found (non-blocking), and a cross-stage manifest regression was caught and fixed mid-build.",
+  "blocking_findings": [],
+  "non_blocking_findings": [
+    {
+      "category": "resource-cleanup",
+      "area": "factory/scripts/forge_cli/quickfix.py",
+      "summary": "cmd_mode_done unconditionally runs shutil.rmtree('.factory/reviews') after archiving a lite window's reviews. If a lite window is opened and closed during an active story's review phase, it would delete that story's review artifacts. Lite is post-ship-oriented so the window is unusual, but the rmtree should be guarded to remove only the artifacts it archived."
+    },
+    {
+      "category": "decomposition-hygiene",
+      "area": "factory/scripts/forge_cli/fix.py",
+      "summary": "Stage 3 changed the shared _lite_manifest to a committed diff, which broke forge fix's immediate working-tree recording (a stage-2 test). Reconciled by pointing forge fix at _lite_dirty_product_files and adding fix.py to stage 3's scope; lessoned for future decompositions."
+    }
+  ],
+  "residual_risks": [
+    "The rmtree edge above is deferred with a trigger rather than fixed in-story (lite is post-ship-oriented).",
+    "A supervised hand-edit under a lite window is not attributed to terra; captured by the manifest + close review, not the delegation ledger (accepted per 0031 grill Q2)."
+  ],
+  "recommendation": "approve-with-caveats",
+  "reviewed_scope": [
+    "factory/scripts/forge_cli/quickfix.py",
+    "factory/scripts/forge_cli/fix.py",
+    "factory/scripts/forge_cli/delegate.py",
+    "factory/scripts/factory_lib.py",
+    "factory/scripts/record_review_from_json.py",
+    "factory/scripts/pr_ready.py",
+    "factory/scripts/session_start.py",
+    "factory/scripts/forge_cli/phase.py",
+    "harness.yaml"
+  ],
+  "aspect": "quality",
+  "recorded_at": "2026-08-07T10:46:30+00:00",
+  "commit": "05a5196063f122dadca172320127a9adc98a11b8"
+}
