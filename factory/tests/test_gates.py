@@ -4750,25 +4750,29 @@ def test_check_board_complete_passes(repo):
     assert code == 0 and "Board completeness check OK" in out, out
 
 
-@pytest.mark.parametrize(
-    ("missing", "message"),
-    [
-        ("link", "missing pr-linked event"),
-        ("outcome", "missing outcome"),
-        ("history", "missing .factory/history/BOARD-202/ directory"),
-    ],
-)
-def test_check_board_complete_fails_missing_link(repo, missing, message):
+def test_check_board_complete_fails_missing_link(repo):
     key = "BOARD-202"
-    board_story(repo, key, **({"outcome": ""} if missing == "outcome" else {}))
-    if missing != "link":
-        add_pr_link(repo, key)
-    if missing != "history":
-        add_story_history(repo, key)
-
+    board_story(repo, key)
+    add_story_history(repo, key)
     code, out = run(repo, "check_board_complete.py")
+    assert code != 0 and "missing pr-linked event" in out, out
 
-    assert code != 0 and message in out, out
+
+def test_check_board_complete_fails_missing_outcome(repo):
+    key = "BOARD-202"
+    board_story(repo, key, outcome="")
+    add_pr_link(repo, key)
+    add_story_history(repo, key)
+    code, out = run(repo, "check_board_complete.py")
+    assert code != 0 and "missing outcome" in out, out
+
+
+def test_check_board_complete_fails_missing_history(repo):
+    key = "BOARD-202"
+    board_story(repo, key)
+    add_pr_link(repo, key)
+    code, out = run(repo, "check_board_complete.py")
+    assert code != 0 and "missing .factory/history/BOARD-202/ directory" in out, out
 
 
 def test_check_board_complete_predates_ok(repo):
