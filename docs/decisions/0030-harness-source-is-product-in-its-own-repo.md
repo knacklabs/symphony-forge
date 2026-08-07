@@ -65,10 +65,15 @@ cannot be bounded from the literal command — a recursive/globbed/brace `rm`/
 DESTINATION is a product path — is **refused**; the fix must enumerate the exact
 paths or be planned. Copy/move opacity is keyed on the destination, never the
 source, so a read-OUT backup (`cp -R factory/scripts /tmp/x`) is never blocked.
-Pure shell games (nested subshells, `xargs`, `\rm`) and arbitrary code
-(`python -c os.remove`, `find -delete`) remain a documented residual, general to
-every repo: a mis-count, never a lock disarm (the pin keeps classification
-correct regardless), backstopped by pr_ready and the artifact gates.
+The heuristic covers the common copy/move shapes. Exotic invocations — the
+attached `-tDIR` target form, a bare `mv <dir>` (recursive with no flag), a
+`git mv` into a directory, pure shell games (subshells, `xargs`, `\rm`), and
+arbitrary code (`python -c os.remove`, `find -delete`) — remain a documented
+residual, general to every repo. Per 0013 this Bash guard is drift-defense, not
+an adversarial sandbox: those forms are deliberate, not drift, the resulting
+machinery change is VISIBLE IN THE DIFF, and verify / branch autoreview /
+pr_ready are the backstop. It is at worst a budget mis-count, never a lock
+disarm — the pin keeps classification correct regardless.
 
 The Bash write guard catches the **common** deletion/relocation vectors that
 reach the marker: `rm`/`unlink`, `git rm`/`git mv`, `mv` of the source, and an

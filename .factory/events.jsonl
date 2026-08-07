@@ -497,3 +497,5 @@
 {"event": "verify-failed", "generated_by": "orchestrator", "at": "2026-08-07T08:06:14+00:00", "story": "FORGE-LOCK-1"}
 {"event": "verify-failed", "generated_by": "orchestrator", "at": "2026-08-07T08:29:06+00:00", "story": "FORGE-LOCK-1"}
 {"event": "verify-passed", "generated_by": "orchestrator", "at": "2026-08-07T08:54:15+00:00", "story": "FORGE-LOCK-1"}
+{"event": "verify-failed", "generated_by": "orchestrator", "at": "2026-08-07T09:15:42+00:00", "story": "FORGE-LOCK-1"}
+{"event": "verify-passed", "generated_by": "orchestrator", "at": "2026-08-07T09:38:56+00:00", "story": "FORGE-LOCK-1"}
