@@ -234,7 +234,35 @@ def git_subcommand(args: list[str]) -> tuple[str | None, list[str]]:
     return None, []
 
 
-def bash_write_paths(value: str) -> list[str]:
+def _copy_operands(operands: list[str], args: list[str],
+                   root: Path) -> tuple[list[str], list[str]]:
+    """(created destination files, source paths) for a cp/mv.
+
+    A directory (or repo-root) destination expands to `<dir>/<basename>` per
+    source, so each CREATED file is counted against the budget rather than the
+    container claiming one slot for many files. A file destination is itself.
+    GNU `-t <dir>` / `--target-directory=<dir>` puts the dir first, sources after.
+    """
+    target = None
+    for position, arg in enumerate(args):
+        if arg in ("-t", "--target-directory") and position + 1 < len(args):
+            target = args[position + 1]
+        elif arg.startswith("--target-directory="):
+            target = arg.split("=", 1)[1]
+    if target is not None:
+        dest, sources = target, operands
+    elif len(operands) >= 2:
+        dest, sources = operands[-1], operands[:-1]
+    else:
+        return operands, []  # single/zero operand — nothing to expand
+    dest_path = Path(dest) if Path(dest).is_absolute() else root / dest
+    if dest_path.is_dir() or dest in (".", ""):
+        base = dest.rstrip("/") or "."
+        return [f"{base}/{Path(src).name}" for src in sources], sources
+    return [dest], sources
+
+
+def bash_write_paths(value: str, root: Path) -> list[str]:
     """Extract likely write targets from a shell command.
 
     # ponytail: heuristic, defends drift not adversaries — tighten patterns
@@ -287,12 +315,16 @@ def bash_write_paths(value: str) -> list[str]:
                 found.extend(token for token in sub_args
                              if not token.startswith("-") and token not in {">", ">>"})
         elif command_name == "cp" and operands:
-            found.append(operands[-1])
+            # Count each CREATED file (dir destinations expand to dir/basename),
+            # so N copies into a machinery dir spend N budget slots, not one.
+            created, _ = _copy_operands(operands, args, root)
+            found.extend(created)
         elif command_name == "mv":
-            # BOTH operands: the source is a deletion (moving the marker away
-            # removes it) and the destination is a write. Unlike `cp` above,
-            # which only creates its destination, `mv` must classify its source.
-            found.extend(operands)
+            # The destination is a write (expanded like cp) AND every source is a
+            # deletion — moving the marker away removes it just like `rm`.
+            created, sources = _copy_operands(operands, args, root)
+            found.extend(created)
+            found.extend(sources)
         elif command_name == "sed" and any(
             token == "-i" or token.startswith("-i") or token.startswith("--in-place")
             for token in args
@@ -320,21 +352,21 @@ def _contains_marker(rel: str) -> bool:
 # globs (`*?[`) and brace expansion (`{1..6}`, `{a,b}`).
 GLOB_METACHARS = ("*", "?", "[", "{")
 OPAQUE_QUICKFIX_MSG = (
-    "A recursive or globbed delete of machinery claims one quickfix budget slot "
-    "but removes many files. Enumerate the exact paths, or plan the change (plan "
-    "mode / an approved plan) where the whole diff is measured."
+    "This op touches an unbounded set of machinery files — a recursive/globbed "
+    "delete, or a recursive/globbed copy or move INTO a machinery path — so a "
+    "quickfix cannot honestly claim it against its budget. Enumerate the exact "
+    "paths, or plan the change where the whole diff is measured."
 )
 
 
 def has_opaque_product_write(command: str, root: Path, is_harness: bool) -> bool:
-    """A recursive, globbed, or brace-expanded DELETION of a product path — its
-    exact file set can't be read from the literal command, so a quickfix cannot
-    honestly claim it. Deletion only (`rm`/`unlink`/`git rm`): its operands are
-    unambiguously writes. Copy/move (read-vs-write asymmetry, target-directory
-    forms) and multi-file `sed -i` are left to the pre-existing quickfix
-    budget-accuracy residual — general to every repo, backstopped by the artifact
-    gates (decision 0013). The repo-kind PIN, not this check, is what keeps the
-    lock un-escapable regardless of deletion vector.
+    """An op whose exact product-file set can't be read from the literal command,
+    so a quickfix cannot claim it: a recursive/globbed/brace DELETE of a product
+    path (`rm`/`unlink`/`git rm`), or a recursive/glob-sourced copy/move whose
+    DESTINATION is a product path. Copy/move opacity is keyed on the destination,
+    never the source, so a read-OUT backup (`cp -R factory/scripts /tmp/x`) is
+    never blocked. Pure shell games and arbitrary code stay a documented residual
+    (decision 0013); the repo-kind PIN, not this check, is the security guarantee.
     """
     for segment in re.split(r"[;&|\n]+", strip_heredoc_bodies(command)):
         tokens = tokenize(segment)
@@ -351,19 +383,26 @@ def has_opaque_product_write(command: str, root: Path, is_harness: bool) -> bool
             if sub != "rm":
                 continue
             name = "rm"
-        elif name not in {"rm", "unlink"}:
+        elif name not in {"rm", "unlink", "cp", "mv"}:
             continue
         flags = [token for token in args if token.startswith("-")]
         operands = [token for token in args
                     if not token.startswith("-") and token not in {">", ">>"}]
         recursive = any(
-            flag in ("-r", "-R", "--recursive")
+            flag in ("-r", "-R", "-a", "--recursive", "--archive")
             or (len(flag) > 1 and not flag.startswith("--")
-                and ("r" in flag or "R" in flag))
+                and any(char in flag for char in "rRa"))
             for flag in flags)
-        for operand in operands:
-            unbounded = recursive or any(char in operand for char in GLOB_METACHARS)
-            if unbounded and product_path(operand, root, is_harness):
+        if name in {"rm", "unlink"}:
+            for operand in operands:
+                if (recursive or any(c in operand for c in GLOB_METACHARS)) \
+                        and product_path(operand, root, is_harness):
+                    return True
+        else:  # cp / mv — opaque only when it WRITES into a product path
+            created, sources = _copy_operands(operands, args, root)
+            writes_product = any(product_path(c, root, is_harness) for c in created)
+            glob_source = any(any(g in src for g in GLOB_METACHARS) for src in sources)
+            if writes_product and (recursive or glob_source):
                 return True
     return False
 
@@ -488,7 +527,7 @@ run_state = load_json(run_state_path(root), default={})
 edit_target = (tool_input.get("file_path") or tool_input.get("notebook_path") or "")
 write_targets = [edit_target] if tool_name in EDIT_TOOLS and edit_target else []
 if tool_name == "Bash":
-    write_targets = bash_write_paths(command)
+    write_targets = bash_write_paths(command, root)
 
 # Recorded state is never hand-written, in any mode and at any plan status.
 for candidate in write_targets:

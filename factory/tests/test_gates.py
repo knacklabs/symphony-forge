@@ -3714,7 +3714,9 @@ def test_harness_quickfix_refuses_opaque_machinery_deletes(repo):
     for command in ("rm -r factory/scripts",
                     "rm factory/scripts/*.py",
                     "rm factory/scripts/f{1..6}.py",       # brace expansion
-                    "git rm -r factory/scripts"):
+                    "git rm -r factory/scripts",
+                    "cp -R /tmp/tree factory/scripts/new",  # recursive copy INTO machinery
+                    "cp /tmp/x/*.py factory/scripts/"):     # glob source INTO machinery
         code, out = hook(repo, {
             "tool_name": "Bash", "permission_mode": "default",
             "tool_input": {"command": command},
@@ -3729,6 +3731,27 @@ def test_harness_quickfix_refuses_opaque_machinery_deletes(repo):
             "tool_input": {"command": command},
         })
         assert code == 0 and "deny" not in out, command
+
+
+def test_harness_quickfix_counts_each_file_copied_into_a_machinery_dir(repo):
+    # `cp <src> factory/scripts/` creates factory/scripts/<basename>; six such
+    # copies must spend six budget slots (resolved per created file), not one for
+    # the shared directory — so the sixth is refused.
+    mark_harness_source(repo)
+    (repo / "factory" / "scripts").mkdir(parents=True, exist_ok=True)
+    code, out = run(repo, "forge.py", "quickfix", "start", "copies")
+    assert code == 0, out
+    for number in range(1, 6):
+        code, out = hook(repo, {
+            "tool_name": "Bash", "permission_mode": "default",
+            "tool_input": {"command": f"cp /tmp/a{number} factory/scripts/"},
+        })
+        assert code == 0 and "deny" not in out, out
+    code, out = hook(repo, {
+        "tool_name": "Bash", "permission_mode": "default",
+        "tool_input": {"command": "cp /tmp/a6 factory/scripts/"},
+    })
+    assert code == 0 and "deny" in out and "scope exceeded" in out
 
 
 def test_scaffolded_client_has_no_harness_source_marker(tmp_path, monkeypatch):

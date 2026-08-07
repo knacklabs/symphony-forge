@@ -57,16 +57,18 @@ catch, classification stays `harness`, machinery keeps being claimed, and the
 five-file budget cannot be escaped. This is the guarantee — the deletion guard is
 defence-in-depth, not the load-bearing wall.
 
-To keep the quickfix budget honest, a quickfix also **refuses an opaque machinery
-DELETE** — a recursive `rm -r`, a glob, or a brace-expanded `rm`/`git rm` of a
-product path — since it would spend one budget slot removing an unbounded set of
-files; the fix must enumerate the exact paths or be planned. Deletion is chosen
-because its operands are unambiguously writes. Copy/move (which read sources and
-write a destination — flagging sources would block harmless read-OUT backups) and
-multi-file `sed -i` are left to the pre-existing quickfix budget-accuracy
-residual: it is general to every repo (a client's `src/` under-counts the same
-way), it is a mis-count and not a lock disarm (the pin keeps classification
-correct regardless), and pr_ready plus the artifact gates are the backstop.
+To keep the quickfix budget honest, it is counted per **created file**, not per
+literal operand: a copy/move into a machinery directory expands to
+`<dir>/<basename>` per source, so N copies spend N slots. A write whose file set
+cannot be bounded from the literal command — a recursive/globbed/brace `rm`/
+`git rm` of a product path, or a recursive or glob-sourced copy/move whose
+DESTINATION is a product path — is **refused**; the fix must enumerate the exact
+paths or be planned. Copy/move opacity is keyed on the destination, never the
+source, so a read-OUT backup (`cp -R factory/scripts /tmp/x`) is never blocked.
+Pure shell games (nested subshells, `xargs`, `\rm`) and arbitrary code
+(`python -c os.remove`, `find -delete`) remain a documented residual, general to
+every repo: a mis-count, never a lock disarm (the pin keeps classification
+correct regardless), backstopped by pr_ready and the artifact gates.
 
 The Bash write guard catches the **common** deletion/relocation vectors that
 reach the marker: `rm`/`unlink`, `git rm`/`git mv`, `mv` of the source, and an
