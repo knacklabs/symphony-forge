@@ -103,6 +103,7 @@
       ],
       "write_scope": [
         "factory/scripts/forge_cli/quickfix.py",
+        "factory/scripts/forge_cli/fix.py",
         "factory/scripts/pr_ready.py",
         "factory/scripts/factory_lib.py",
         "factory/scripts/record_review_from_json.py",
@@ -191,5 +192,5 @@
   "project": "",
   "plan_file": "plans/active/FORGE-MODES-1-developer-selectable-workflow-modes-lite-mode.md",
   "plan_sha256": "ebbaa1c46fb4487e06abdae1f8aa29bd6fc97497610316c6ad3b05e8c24c73a7",
-  "commit": "d7ac19347660bc3afdb06c3bee88d85aa61384d7"
+  "commit": "07e144207515e6958d7caa95495d43c8a6bba94a"
 }

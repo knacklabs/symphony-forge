@@ -29,7 +29,22 @@
     {
       "id": "FORGE-MODES-1.3",
       "title": "The lite close gate",
-      "status": "pending"
+      "status": "done",
+      "started_at": "2026-08-07T08:28:58+00:00",
+      "base_sha": "07e144207515e6958d7caa95495d43c8a6bba94a",
+      "dirty_at_start": {
+        ".factory/signals.jsonl": {
+          "digest": "d92c71f093c5fb8432d4a624b772734587e8c68534d9d988f1eaa29f7f6754de",
+          "git": "? .factory/signals.jsonl\u0000\u0000\u0000"
+        }
+      },
+      "task_sha256": "2b7504977a668df2b7050eaf72574821eb315bab11449ae0b075d034870731de",
+      "completed_at": "2026-08-07T10:00:13+00:00",
+      "contract_changed": {
+        "at": "2026-08-07T10:00:13+00:00",
+        "from": "50c9522a10df4f9275fc388ea88bcae029cad2ff79bf062cc4584e5870fdb2cd",
+        "to": "2b7504977a668df2b7050eaf72574821eb315bab11449ae0b075d034870731de"
+      }
     },
     {
       "id": "FORGE-MODES-1.4",
