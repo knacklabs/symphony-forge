@@ -1,0 +1,62 @@
+{
+  "event": "done",
+  "id": "Q-0038-538d",
+  "profile": "lite",
+  "by": "vrknetha",
+  "reason": "vendor the grill-delivery contract into griller.md for all clients: AskUserQuestion delivery + rounds-until-frontier-empty",
+  "base_sha": "a06a1b2e0a3c9a73c2eb4a2ce37c29ec5dbdd220",
+  "started_at": "2026-08-07T12:15:24+00:00",
+  "completed_at": "2026-08-07T12:17:16+00:00",
+  "files": [
+    "factory/prompts/griller.md"
+  ],
+  "reviews": {
+    "quality": {
+      "generated_by": "autoreview",
+      "score": 9,
+      "summary": "Faithfully vendors the grill-delivery contract per the user directive: Method step 2 now interrogates in rounds until the frontier is empty and, in Claude Code, delivers each round via AskUserQuestion (recommended answer first); the intro is reconciled from 'one question at a time' to 'in rounds' so the file no longer contradicts itself. Single-file, contract-only change; keeps the recommended-answer and stop-when-confirming guidance.",
+      "blocking_findings": [],
+      "non_blocking_findings": [],
+      "residual_risks": [
+        "AskUserQuestion is a Claude Code affordance; the note is scoped to Claude Code, and Codex runs keep the round-based interrogation without it."
+      ],
+      "recommendation": "approve",
+      "reviewed_scope": [
+        "factory/prompts/griller.md"
+      ],
+      "aspect": "quality",
+      "recorded_at": "2026-08-07T12:17:03+00:00",
+      "commit": "9a92bf7ffbc2df091980ca36dd4d43f7166309f3"
+    },
+    "performance": {
+      "generated_by": "autoreview",
+      "score": 10,
+      "summary": "Documentation/contract change only \u2014 no code, no runtime path, no performance surface.",
+      "blocking_findings": [],
+      "non_blocking_findings": [],
+      "recommendation": "approve",
+      "reviewed_scope": [
+        "factory/prompts/griller.md"
+      ],
+      "aspect": "performance",
+      "residual_risks": [],
+      "recorded_at": "2026-08-07T12:17:03+00:00",
+      "commit": "9a92bf7ffbc2df091980ca36dd4d43f7166309f3"
+    },
+    "security": {
+      "generated_by": "autoreview",
+      "score": 10,
+      "summary": "Contract prose only \u2014 no executable code, no trust boundary, no data handling. No security surface.",
+      "blocking_findings": [],
+      "non_blocking_findings": [],
+      "recommendation": "approve",
+      "reviewed_scope": [
+        "factory/prompts/griller.md"
+      ],
+      "aspect": "security",
+      "residual_risks": [],
+      "recorded_at": "2026-08-07T12:17:03+00:00",
+      "commit": "9a92bf7ffbc2df091980ca36dd4d43f7166309f3"
+    }
+  }
+}

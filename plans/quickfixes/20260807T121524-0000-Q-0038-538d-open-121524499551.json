@@ -1,0 +1,12 @@
+{
+  "event": "open",
+  "id": "Q-0038-538d",
+  "profile": "lite",
+  "reason": "vendor the grill-delivery contract into griller.md for all clients: AskUserQuestion delivery + rounds-until-frontier-empty",
+  "started_at": "2026-08-07T12:15:24+00:00",
+  "max_files": 5,
+  "files": [],
+  "harness_source": true,
+  "by": "vrknetha",
+  "base_sha": "a06a1b2e0a3c9a73c2eb4a2ce37c29ec5dbdd220"
+}
