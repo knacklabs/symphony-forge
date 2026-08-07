@@ -13,8 +13,8 @@ they emerge. Confirm every spec, derive the roadmap from those specs, then
 record client sign-off. Existing sign-offs remain valid; this gate applies when
 sign-off is recorded or re-recorded.
 
-The product-write lock is always armed until the current plan is approved.
-There are two legitimate exits: enter plan mode, or open a bounded quickfix
-window with `./forge quickfix start "<reason>"`.
+The product-write lock is always armed. There are three legitimate exits: an
+approved plan, a bounded quickfix window opened with `./forge quickfix start
+"<reason>"`, or a bounded lite window opened with `./forge mode lite`.
 
-Sources: accepted decisions 0012, 0013, and 0014.
+Sources: accepted decisions 0012, 0013, 0014, and 0031.

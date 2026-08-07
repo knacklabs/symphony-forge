@@ -6,7 +6,7 @@ stories: []
 supersedes: 0004-mandatory-plan-mode
 ---
 
-# Always-armed planning lock with quickfix escape hatch
+# Always-armed planning lock with bounded escape hatches
 
 ## Context
 
@@ -21,12 +21,13 @@ judgment call.
 
 ## Decision
 
-The planning lock is ALWAYS armed: product-code writes are denied unless
-the active plan_status is approved OR an explicit quickfix window is open
-(`forge quickfix start "<reason>"` — bounded file budget, durably ledgered
-in plans/quickfixes.jsonl, closed with `forge quickfix done`). The
-PreToolUse hook also heuristically denies Bash write commands (redirects,
-tee, sed -i, cp, mv, touch) that target product paths while locked.
+The planning lock is ALWAYS armed: product-code writes are denied unless one
+of three exits is active — an approved plan, an explicit quickfix window
+(`forge quickfix start "<reason>"`), or an explicit lite window (`forge mode lite`).
+Quickfix and lite windows have bounded file budgets and are durably ledgered
+in plans/quickfixes.jsonl. The PreToolUse hook also heuristically denies Bash
+write commands (redirects, tee, sed -i, cp, mv, touch) that target product
+paths while locked.
 
 ## Consequences
 

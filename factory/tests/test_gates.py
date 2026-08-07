@@ -4077,6 +4077,46 @@ def test_mode_list_shows_open_lite_window(repo):
     assert "one review is required" in context and "./forge mode done" in context
 
 
+def test_docs_describe_three_planning_lock_exits():
+    decision = (
+        HARNESS / "docs" / "decisions" /
+        "0013-always-armed-planning-lock.md"
+    ).read_text().lower()
+    entry_contract = (
+        HARNESS / "docs" / "memory" / "factory-entry-contract.md"
+    ).read_text().lower()
+    workflow = (HARNESS / "WORKFLOW.md").read_text().lower()
+    model_tiers = (
+        HARNESS / "docs" / "decisions" /
+        "0003-model-tiers-terra-explore-sol-implement.md"
+    ).read_text().lower()
+
+    for contract in (decision, entry_contract, workflow):
+        assert "three" in contract
+        assert "approved plan" in contract
+        assert "quickfix" in contract
+        assert "lite" in contract
+        assert "forge mode lite" in contract
+    assert "0031" in model_tiers
+    assert "lite" in model_tiers and "terra" in model_tiers
+
+
+# The stage's verify command selects this exact required test by keyword.
+test_docs_describe_three_planning_lock_exits.docs_third_exit = True
+
+
+def test_forge_skill_maps_lite_mode_phrase():
+    skill = (HARNESS / ".claude" / "skills" / "forge" / "SKILL.md").read_text()
+
+    assert '"use lite mode"' in skill
+    assert "./forge mode lite" in skill
+    assert "<!-- canon: factory/skills/forge.md -->" in skill
+
+
+# The stage's verify command selects this exact required test by keyword.
+test_forge_skill_maps_lite_mode_phrase.forge_skill_lite = True
+
+
 def test_quickfix_profile_behavior_unchanged(repo):
     code, out = run(repo, "forge.py", "quickfix", "start", "repair parser")
     assert code == 0 and "Quickfix" in out and "0/5 files" in out, out

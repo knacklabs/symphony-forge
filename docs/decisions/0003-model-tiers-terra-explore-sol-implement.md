@@ -25,6 +25,8 @@ high effort, implementation the flagship at medium. Codex profiles
   (.codex/config.toml); effort escalates to high for migrations,
   cross-domain refactors, concurrency, and security-sensitive work.
 
+See decision 0031 for Lite mode's bounded Terra@high write extension.
+
 ## Consequences
 
 - Exploration is thorough without flagship cost; implementation gets the
