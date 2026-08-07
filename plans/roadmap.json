@@ -72,7 +72,7 @@
         "A test proves the two repo kinds are classified differently, so the distinction cannot silently regress."
       ],
       "order": 3,
-      "status": "pending",
+      "status": "active",
       "skill": "backend",
       "origin": "adhoc",
       "spec": "docs/specs/repo-system-of-record.md",
@@ -258,7 +258,7 @@
     }
   ],
   "generated_by": "human",
-  "updated_at": "2026-08-06T19:44:17+00:00",
+  "updated_at": "2026-08-07T02:54:01+00:00",
   "epics": [
     {
       "id": "symphony-forge",

@@ -473,3 +473,9 @@
 {"event": "review-performance", "generated_by": "autoreview", "at": "2026-08-06T19:44:12+00:00", "story": "FORGE-VENDOR-1"}
 {"event": "review-security", "generated_by": "autoreview", "at": "2026-08-06T19:44:12+00:00", "story": "FORGE-VENDOR-1"}
 {"event": "shipped", "generated_by": "orchestrator", "at": "2026-08-06T19:44:17+00:00", "story": "FORGE-VENDOR-1", "detail": "forge init and adopt now vendor only the harness-owned skill (forge), never a source repo's own skills, so a client repo whose CI runs the vendored factory tests no longer copies a client skill with a"}
+{"event": "intake", "generated_by": "orchestrator", "at": "2026-08-07T02:54:01+00:00", "story": "FORGE-LOCK-1", "detail": "The planning lock guards the harness's own source"}
+{"event": "plan-human-approved", "generated_by": "human", "at": "2026-08-07T03:31:32+00:00", "story": "FORGE-LOCK-1", "detail": "FORGE-LOCK-1 approved by vrknetha"}
+{"event": "plan-approved", "generated_by": "planner-high", "at": "2026-08-07T03:32:01+00:00", "story": "FORGE-LOCK-1", "detail": "plans/active/FORGE-LOCK-1-the-planning-lock-guards-the-harness-s-own-source.md"}
+{"event": "decomposed", "generated_by": "docs-decomposer", "at": "2026-08-07T03:34:10+00:00", "story": "FORGE-LOCK-1", "detail": "1 task(s)"}
+{"event": "implementing", "generated_by": "orchestrator", "at": "2026-08-07T03:35:03+00:00", "story": "FORGE-LOCK-1"}
+{"event": "stage-start", "generated_by": "implementer", "at": "2026-08-07T03:35:03+00:00", "story": "FORGE-LOCK-1", "detail": "FORGE-LOCK-1.1 Repo-kind-aware planning lock + harness-source marker"}

@@ -1,0 +1,27 @@
+{
+  "generated_by": "griller",
+  "gate": "plan",
+  "issue": "FORGE-LOCK-1",
+  "verdict": "pass",
+  "questions_asked": 3,
+  "input_sha256": "b56702091590f74176e193bff06aeb104ced643f494aaf48fa441396566ab10f",
+  "summary": "Grilled the plan on the three genuine design forks. All resolved to the fail-safe/minimal/scoped options; remaining choices are mechanical and folded into the plan.",
+  "gaps": [
+    "No existing repo-kind discriminator (Codex-confirmed): manifest/VENDORED_FROM absence is shared with pre-manifest clients, so an absence-based signal would freeze a real client's factory/ during planning (AC #2 regression).",
+    "Marker cannot be hand-written: the hook denies raw .factory/ writes (evidence-only), so committing the sentinel needs a path.",
+    "Product/machinery classification is duplicated across 4 gates (pre_tool_use, pr_ready, check_refactor_delta, stages); adding a 5th tuned copy would violate 0005's spirit.",
+    "Story text literally lists docs/ as product, but locking docs/ would block spec/architecture authoring during planning and adds little protection (decisions/memory are script-written)."
+  ],
+  "contradictions": [],
+  "resolutions": [
+    "Discriminator = positive .factory/harness-source.json sentinel; is_harness_source_repo = marker exists. Fail-safe: missing marker => today's exempt behavior, no client ever wrongly locked. Recorded as decision 0030's chosen mechanism with the absence-based alternative rejected.",
+    "Marker gets ONE entry in the hook's .factory/ write-allowlist (same exemption scratchpad.md has) since it is static config, not recorded evidence; created in the same task that edits the hook.",
+    "Scope this story to the lock only (pre_tool_use + a shared is_harness_source_repo seam); file a deferral with a trigger to later harmonize pr_ready/check_refactor_delta/stages onto the shared classifier, honoring 0005 without entrenching a 5th copy.",
+    "Lock machinery trees only (factory/, constitution/, harness/, .claude/, .codex/); keep docs/, plans/, .factory/, prototype/, .github/, and exempt root files writable in both repo kinds. Faithful to the intent (gate machinery needs a plan) without ceremony on discovery/planning content."
+  ],
+  "open_items": [
+    "Deferred (non-blocking, tracked): harmonize the 4 product/machinery classifiers onto one repo-kind-aware classifier; trigger = any of the 4 needs a path-set change again."
+  ],
+  "recorded_at": "2026-08-07T03:32:01+00:00",
+  "commit": "e4e5f973fe5f5e6fd8f811b72bc168ea40751d8b"
+}
