@@ -280,10 +280,29 @@
       "completed_at": "2026-08-07T10:47:44+00:00",
       "history": ".factory/history/FORGE-MODES-1/",
       "outcome": "Developers can now make small, human-supervised fixes without the full factory loop. The always-armed planning lock has a third exit: ./forge mode lite --by <name> --reason <why> opens a bounded, ledgered lite window; ./forge fix \"<desc>\" runs the fix with terra@high (write-enabled); ./forge mode done closes it only after one autoreview pass with no blockers over the committed base_sha..HEAD diff, within the file budget \u2014 and this works even post-ship (record_review accepts an open lite window). The full loop and the trace-only quickfix hatch are unchanged."
+    },
+    {
+      "key": "FORGE-BOARD-1",
+      "title": "Enforcement gates: every PR ties to a complete on-board ticket",
+      "story": "The provenance chain stops one step short of the PR, and board-completeness checks are only advisory, so PRs go untraceable and the board can rot. Add deterministic gates so every PR ties to exactly one complete on-board ticket, the story-PR link is captured automatically on merge, and main stays red until every done story is complete and linked.",
+      "acceptance_criteria": [
+        "A PR cannot merge unless it resolves to exactly one on-board story (or a ledgered mode/quickfix window) whose done-flip and .factory/history/<key>/ archive travel inside the PR's diff (Gate A, a CI required check).",
+        "On merge, the story-to-PR link is captured automatically (a merge workflow runs forge pr-link), and the link survives a clone with no remote.",
+        "main CI fails if any done story lacks a pr-linked event, an outcome (or predates_outcome_contract), or a .factory/history/<key>/ dir (Gate B, red-main completeness invariant).",
+        "Intake refuses a roadmap key that is not on the board, naming the ad-hoc capture path (Gate C).",
+        "Every gate is a deterministic script or CI check, not advisory; an agent with no memory of the rules cannot weaken any invariant."
+      ],
+      "order": 13,
+      "status": "pending",
+      "epic": "traceable-board",
+      "skill": "backend",
+      "kind": "feature",
+      "depends_on": [],
+      "spec": "docs/specs/traceable-board.md"
     }
   ],
   "generated_by": "human",
-  "updated_at": "2026-08-07T10:08:30+00:00",
+  "updated_at": "2026-08-07T17:05:45+00:00",
   "epics": [
     {
       "id": "symphony-forge",
@@ -291,6 +310,14 @@
       "objective": "Turn in-repo architecture and decisions into shipped applications through a deterministic software-factory workflow.",
       "source_refs": [
         "docs/product/BRIEF.md"
+      ]
+    },
+    {
+      "id": "traceable-board",
+      "title": "Traceable board: complete, JIT-planned, backtrackable",
+      "objective": "Make the epic/story/task/PR/ticket board complete and PR-linked, enforced deterministically so it cannot rot and agents can always backtrack; plan each task just-in-time against real prior state; and give clients skills to upgrade and sanitise into this bar.",
+      "source_refs": [
+        "docs/specs/traceable-board.md"
       ]
     }
   ]

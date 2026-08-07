@@ -556,3 +556,6 @@
 {"event": "review-performance", "generated_by": "autoreview", "at": "2026-08-07T10:08:15+00:00", "story": "FORGE-LOCK-1"}
 {"event": "review-security", "generated_by": "autoreview", "at": "2026-08-07T10:08:16+00:00", "story": "FORGE-LOCK-1"}
 {"event": "shipped", "generated_by": "orchestrator", "at": "2026-08-07T10:08:30+00:00", "story": "FORGE-LOCK-1", "detail": "The planning lock now guards the harness's own machinery in its own repo: a hand-edit to factory/, constitution/, harness/, .claude/ or .codex/ here needs an approved plan or a bounded quickfix, exact"}
+{"event": "spec-confirmed", "generated_by": "orchestrator", "at": "2026-08-07T17:04:53+00:00", "detail": "traceable-board"}
+{"event": "roadmap-epic-add", "generated_by": "orchestrator", "at": "2026-08-07T17:05:25+00:00", "detail": "traceable-board"}
+{"event": "roadmap-add", "generated_by": "orchestrator", "at": "2026-08-07T17:05:45+00:00", "story": "FORGE-BOARD-1", "detail": "docs/specs/traceable-board.md"}

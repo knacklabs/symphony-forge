@@ -1,7 +1,7 @@
 ---
 slug: traceable-board
 title: The board is complete, JIT-planned, and always backtrackable
-status: draft
+status: confirmed
 ---
 
 # The board is complete, JIT-planned, and always backtrackable

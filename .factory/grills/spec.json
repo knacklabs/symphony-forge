@@ -2,17 +2,24 @@
   "generated_by": "griller",
   "gate": "spec",
   "verdict": "pass",
-  "questions_asked": 1,
-  "summary": "Grilled the workflow-modes capability spec. It defers all implementation (model, commands, size bound) to the plan/decision explicitly, and its acceptance criteria are behavioral. The one genuine capability-boundary question \u2014 the default posture across vendored clients \u2014 was put to the user and resolved.",
+  "questions_asked": 0,
+  "summary": "traceable-board captures a model settled over an extended design session with vrknetha (ticket=story 1:1, JIT per-task planning+grilling, deterministic enforcement gates A/B/C, split rule, upgrade+sanitise skills). The genuine spec-level gaps are resolved by decisions already made in that session; recorded here rather than re-asked.",
   "gaps": [
-    "Default posture across clients was the key capability boundary and had to be explicit: whether lite mode ships on-by-default, opt-in, or mandatory changes what every vendored client inherits."
+    "The Behaviour section carries implementation detail (Gate A/B/C mechanics, specific forge commands, CI shape) where a spec should assert capability-level guarantees.",
+    "One spec backs six distinct stories (JIT planning, enforcement, board/UI, ad-hoc, upgrade skill, sanitise skill); the two skills are separable capabilities.",
+    "The spec asserts determinism as non-negotiable but does not itself prove each rule reduces to a deterministic gate \u2014 that proof is per-story."
   ],
-  "contradictions": [],
+  "contradictions": [
+    "The JIT per-task planning story directly conflicts with active decision 0007 (immutable-upfront-decomposition)."
+  ],
   "resolutions": [
-    "Confirmed on-by-default and removable: every vendored client inherits lite mode; a stricter shop disables it by removing the modes.lite pin (like any harness pin). The spec's Boundaries already states this posture."
+    "Kept as an epic DESIGN-spec by intent: it asserts the guarantees (a task is not implemented without a JIT grill; a PR cannot merge without a complete on-board ticket; a done story carries a durable PR link), and the mechanics illustrate \u2014 each story's PLAN owns the real implementation and its own plan-grill re-checks the how.",
+    "traceable-board is the EPIC; `roadmap derive` turns it into per-story items (the harness allows one spec to back many stories). The skills remain facets of the same 'complete, backtrackable, self-maintaining board' capability; splitting into sub-specs is a roadmap-structuring choice made at derive time, not a spec defect.",
+    "Each story's plan must show its rule as a concrete gate (script/recorder/CI) in its Verify Plan; the spec's determinism clause is the acceptance bar the per-story grills enforce.",
+    "The JIT-planning story (not built first) carries a decision record amending/superseding 0007 \u2014 deliberate, per vrknetha's correctness call. The enforcement-gates story built FIRST does not touch 0007, so the supersession is not a prerequisite for the first ship; the conflict is scheduled to its own story + decision, never a silent exception."
   ],
   "open_items": [],
-  "input_sha256": "8db64d8b2103728d01927b41666fea4eb35f76add5c53acc8ecd65c5ae7d8b5d",
-  "recorded_at": "2026-08-07T07:26:50+00:00",
-  "commit": "ce14454e72cef889ed158c96d59645798954e9cf"
+  "input_sha256": "c9ad92b573e37211b6884884b567e6a6a35d532ed52de6bd44198b4615315162",
+  "recorded_at": "2026-08-07T17:04:52+00:00",
+  "commit": "7befe35367d4260442455a24145cefbe70ff991c"
 }
