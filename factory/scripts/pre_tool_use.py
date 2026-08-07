@@ -10,6 +10,7 @@ from factory_lib import (
     client_signoff, load_json, read_hook_input, repo_root, run_state_path,
 )
 from forge_cli.quickfix import claim_files, load_active, record_files
+from forge_cli.repo_kind import is_harness_source_repo
 
 payload = read_hook_input()
 tool_name = payload.get("tool_name", "")
@@ -33,15 +34,18 @@ def deny(reason: str) -> None:
 # or a bounded quickfix is open. Planning surfaces stay available.
 EDIT_TOOLS = {"Edit", "Write", "MultiEdit", "NotebookEdit"}
 PLANNING_WRITE_OK = (
-    "plans/", "docs/", "factory/", ".claude/", ".codex/",
-    ".gstack/", ".github/", "constitution/", "harness/", "prototype/",
+    "plans/", "docs/", ".gstack/", ".github/", "prototype/",
+)
+CLIENT_MACHINERY_WRITE_OK = (
+    "factory/", "constitution/", "harness/", ".claude/", ".codex/",
 )
 # .factory/ is deliberately NOT writable by hand: run.json holds plan_status,
 # so a hand-edit disarms this very lock, and AGENTS.md already requires that
 # evidence enter .factory/ only through the record_* scripts. Those scripts
 # write it as themselves — this guard classifies tool-call targets, not what a
-# sanctioned script does internally. The scratchpad is the one hand-written
-# file there, and `forge note` writes it.
+# sanctioned script does internally. The scratchpad is the one freely
+# hand-written file there (`forge note`); the repo-kind marker also lives there
+# but is planning-locked, not free (see FACTORY_STATE_WRITABLE).
 FACTORY_STATE_MSG = (
     ".factory/ is recorded state, never hand-written (AGENTS.md): run.json "
     "carries plan_status, so editing it disarms the planning lock. Use the "
@@ -53,6 +57,16 @@ PLANNING_WRITE_OK_FILES = {
     ".gitignore", ".gitattributes", ".envrc",
     # session memory, not evidence — gitignored, and `forge note` appends to it
     ".factory/scratchpad.md",
+}
+# Files under .factory/ the evidence guard lets through — but that is the ONLY
+# guard they skip. The scratchpad is also freely writable (PLANNING_WRITE_OK_FILES
+# above). The repo-kind marker is deliberately NOT there: it is a product path,
+# so the planning lock governs it — creating, editing, or DELETING it needs an
+# approved plan or a quickfix. Disarming the source-repo lock therefore takes the
+# same ceremony as any machinery change, never a silent hand-edit or `rm`.
+FACTORY_STATE_WRITABLE = {
+    ".factory/scratchpad.md",
+    ".factory/harness-source.json",
 }
 PLAN_MODE_MSG = (
     "Planning lock is armed — product writes require an approved plan. "
@@ -94,8 +108,11 @@ def product_path(raw: str, root: Path) -> str | None:
         return None
     if not rel or rel in PLANNING_WRITE_OK_FILES:
         return None
+    exempt_prefixes = PLANNING_WRITE_OK
+    if not is_harness_source_repo(root):
+        exempt_prefixes += CLIENT_MACHINERY_WRITE_OK
     if any(rel == prefix.rstrip("/") or rel.startswith(prefix)
-           for prefix in PLANNING_WRITE_OK):
+           for prefix in exempt_prefixes):
         return None
     return rel
 
@@ -158,7 +175,7 @@ def redirect_targets(tokens: list[str]) -> list[str]:
 
 
 def in_factory_state(raw: str, root: Path) -> bool:
-    """True when a write target lands inside .factory/ (excluding the scratchpad)."""
+    """True when a write target lands in protected .factory/ state."""
     value = raw.strip().strip("\"'")
     if not value or "$" in value or "`" in value:
         return False
@@ -169,7 +186,30 @@ def in_factory_state(raw: str, root: Path) -> bool:
         rel = candidate.resolve().relative_to(root.resolve()).as_posix()
     except ValueError:
         return False
-    return rel.startswith(".factory/") and rel != ".factory/scratchpad.md"
+    return rel.startswith(".factory/") and rel not in FACTORY_STATE_WRITABLE
+
+
+# git global options that consume a following token as their value; the real
+# subcommand is the first bare token once these (and plain flags) are skipped.
+GIT_VALUE_OPTS = {
+    "-C", "-c", "--git-dir", "--work-tree", "--namespace",
+    "--super-prefix", "--config-env",
+}
+
+
+def git_subcommand(args: list[str]) -> tuple[str | None, list[str]]:
+    """The git subcommand and its args, skipping global options and their values."""
+    index = 0
+    while index < len(args):
+        token = args[index]
+        if token in GIT_VALUE_OPTS:
+            index += 2  # option plus its separate value
+            continue
+        if token.startswith("-"):
+            index += 1  # a flag, or --opt=value carrying its own value
+            continue
+        return token, args[index + 1:]
+    return None, []
 
 
 def bash_write_paths(value: str) -> list[str]:
@@ -197,7 +237,8 @@ def bash_write_paths(value: str) -> list[str]:
         if command_index is None:
             continue
         command_name = tokens[command_index].rsplit("/", 1)[-1]
-        if command_name not in {"tee", "sed", "cp", "mv", "touch"}:
+        if command_name not in {"tee", "sed", "cp", "mv", "touch", "rm",
+                                "unlink", "git"}:
             continue
         args = tokens[command_index + 1:]
         operands = [token for token in args
@@ -206,6 +247,25 @@ def bash_write_paths(value: str) -> list[str]:
             found.extend(operands)
         elif command_name == "touch":
             found.extend(operands)
+        elif command_name in {"rm", "unlink"}:
+            # Deleting a product path disarms as surely as writing one: removing
+            # the repo-kind marker would silently flip source->client and unlock
+            # all machinery. Every operand is a target.
+            found.extend(operands)
+        elif command_name == "git":
+            # `git rm` / `git mv` delete or relocate tracked files just like their
+            # shell namesakes — catch the marker (and any product path) going out
+            # the git side door too. Skip git's global options (and their values,
+            # e.g. `-C <dir>`, `-c <k=v>`) to find the real subcommand, so
+            # `git -C . rm <marker>` is not a bypass. Other subcommands that can
+            # also drop a file (checkout, reset, restore, clean, stash), and a
+            # `-C <dir>` that relocates path resolution, are arbitrary VCS ops
+            # beyond this drift heuristic: git keeps them visible and the artifact
+            # gates backstop (decision 0013 — this defends drift, not an adversary).
+            sub, sub_args = git_subcommand(args)
+            if sub in {"rm", "mv"}:
+                found.extend(token for token in sub_args
+                             if not token.startswith("-") and token not in {">", ">>"})
         elif command_name == "cp" and operands:
             found.append(operands[-1])
         elif command_name == "mv":

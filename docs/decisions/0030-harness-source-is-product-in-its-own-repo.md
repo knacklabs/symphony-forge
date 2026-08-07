@@ -30,14 +30,30 @@ would freeze a real client's `factory/` during planning.
 In the harness's own source repo, the machinery trees (`factory/`,
 `constitution/`, `harness/`, `.claude/`, `.codex/`) are **product** and obey the
 planning lock exactly as client product code does; `docs/`, `plans/`,
-`.factory/`, `prototype/`, `.github/`, and the exempt root files stay freely
-writable in both repo kinds. Repo kind is decided by a **positive** committed
-sentinel `.factory/harness-source.json` (never vendored — `.factory/` is
-excluded from all copying); `is_harness_source_repo(root)` is its presence. The
-signal is fail-safe: a missing marker degrades to today's exempt behavior, so no
-client is ever wrongly locked. This **refines 0013** (it does not supersede it —
-0013 stays authoritative for client repos; its "harness files stay freely
-writable" consequence now applies only to *client* repos) and complements 0009.
+`.factory/` state, `prototype/`, `.github/`, and the exempt root files stay
+freely writable in both repo kinds. Repo kind is decided by a **positive**
+committed sentinel `.factory/harness-source.json` (never vendored — `.factory/`
+is excluded from all copying); `is_harness_source_repo(root)` is its presence.
+The signal is fail-safe: a missing marker degrades to today's exempt behavior, so
+no client is ever wrongly locked.
+
+The marker is itself a **product path**, not a freely-writable file: the
+planning lock governs creating, editing, or **deleting** it. The Bash write
+guard is extended to treat a deletion of a product path as a write, covering the
+direct-delete commands (`rm`, `unlink`) and their git equivalents (`git rm`,
+`git mv`). So flipping source→client to unlock machinery takes the same ceremony
+(an approved plan or a quickfix window) as any machinery change — it is not a
+silent hand-edit, `rm`, or `git rm`.
+
+The ceiling is 0013's, stated honestly: this is drift-defense, not an
+adversarial sandbox. The marker is protected exactly as strongly as any other
+machinery file — no more, no less. Arbitrary VCS or code that can also drop a
+file (`git checkout`/`reset`/`restore`/`clean`/`stash`, a `python -c os.remove`)
+is beyond the heuristic for the marker just as it is for `src/app.ts`; git
+history keeps such acts visible and the artifact gates (verify/review/pr_ready)
+remain the backstop. This **refines 0013** (it does not supersede it — 0013
+stays authoritative for client repos; its "harness files stay freely writable"
+consequence now applies only to *client* repos) and complements 0009.
 
 ## Consequences
 
