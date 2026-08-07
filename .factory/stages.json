@@ -4,7 +4,7 @@
     {
       "id": "FORGE-LOCK-1.1",
       "title": "Repo-kind-aware planning lock + harness-source marker",
-      "status": "active",
+      "status": "done",
       "started_at": "2026-08-07T03:35:03+00:00",
       "base_sha": "e4e5f973fe5f5e6fd8f811b72bc168ea40751d8b",
       "dirty_at_start": {
@@ -45,7 +45,13 @@
           "git": "1 .M N... 100644 100644 100644 fad3107771d2ed921b4b3bd4c3022dcf03c78021 fad3107771d2ed921b4b3bd4c3022dcf03c78021 plans/roadmap.json\u0000\u0000100644 fad3107771d2ed921b4b3bd4c3022dcf03c78021 0\tplans/roadmap.json\u0000\u0000H plans/roadmap.json\u0000"
         }
       },
-      "task_sha256": "8e8657985abedc3367a6522102cfa642beb78d5e7682c1aa61e17d55e99052fa"
+      "task_sha256": "b8a5a6a25a5caaeacf15ffb0f3375bd670222f2ff7a02c29e08cb0e56876811c",
+      "completed_at": "2026-08-07T06:04:48+00:00",
+      "contract_changed": {
+        "at": "2026-08-07T06:04:48+00:00",
+        "from": "8e8657985abedc3367a6522102cfa642beb78d5e7682c1aa61e17d55e99052fa",
+        "to": "b8a5a6a25a5caaeacf15ffb0f3375bd670222f2ff7a02c29e08cb0e56876811c"
+      }
     }
   ]
 }
