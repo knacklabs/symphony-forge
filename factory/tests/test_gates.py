@@ -1532,6 +1532,20 @@ def upgrade_into(repo: Path):
     )
 
 
+def test_upgrade_does_not_vendor_the_harness_source_marker(repo):
+    # `forge upgrade` runs FROM the harness source, which carries the repo-kind
+    # marker. It must never copy that marker into the upgraded client, or the
+    # client would classify its vendored machinery as product and lock it.
+    sys.path.insert(0, str(HARNESS / "factory" / "scripts"))
+    from forge_cli.repo_kind import is_harness_source_repo
+    assert is_harness_source_repo(HARNESS), "harness source must carry the marker"
+    assert not (repo / ".factory" / "harness-source.json").exists()  # baseline: client
+    proc = upgrade_into(repo)
+    assert proc.returncode == 0, proc.stdout + proc.stderr
+    assert not (repo / ".factory" / "harness-source.json").exists()
+    assert not is_harness_source_repo(repo)
+
+
 def test_upgrade_refuses_a_symlinked_destination_before_writing(repo, tmp_path):
     outside = tmp_path / "outside-config.toml"
     outside.write_text("do not replace\n")
@@ -2651,6 +2665,28 @@ def test_adopt_vendors_harness_and_preserves_project(tmp_path):
     # adopting twice routes to upgrade instead
     code, out = adopt(repo)
     assert code != 0 and "upgrade" in out
+
+
+def test_adopt_does_not_vendor_the_harness_source_marker(tmp_path, monkeypatch):
+    # A harness source carrying the repo-kind marker must not copy it into an
+    # adopted client (the copytree ignores .factory, so add the marker back to
+    # prove adopt itself excludes it).
+    source = tmp_path / "source"
+    shutil.copytree(
+        HARNESS, source,
+        ignore=shutil.ignore_patterns(".git", ".factory", "__pycache__", "*.pyc"),
+    )
+    marker = source / ".factory" / "harness-source.json"
+    marker.parent.mkdir(parents=True, exist_ok=True)
+    marker.write_text('{"role": "harness-source", "repo": "symphony-forge"}\n')
+    from forge_cli import adopt as adopt_cli
+    from forge_cli.repo_kind import is_harness_source_repo
+    assert is_harness_source_repo(source)
+    monkeypatch.setattr(adopt_cli, "repo_root", lambda: source)
+    target = existing_repo(tmp_path)
+    adopt_cli.cmd_adopt(argparse.Namespace(target=str(target), name="legacy"))
+    assert not (target / ".factory" / "harness-source.json").exists()
+    assert not is_harness_source_repo(target)
 
 
 def test_adopt_vendors_only_the_harness_owned_skill_not_a_source_decoy(

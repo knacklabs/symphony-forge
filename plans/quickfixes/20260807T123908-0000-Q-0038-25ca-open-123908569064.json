@@ -1,0 +1,12 @@
+{
+  "event": "open",
+  "id": "Q-0038-25ca",
+  "profile": "lite",
+  "reason": "0030 validation follow-up: add adopt+upgrade marker-not-vendored regression tests (C3 gap); test-only, supervised",
+  "started_at": "2026-08-07T12:39:08+00:00",
+  "max_files": 5,
+  "files": [],
+  "harness_source": true,
+  "by": "vrknetha",
+  "base_sha": "a06a1b2e0a3c9a73c2eb4a2ce37c29ec5dbdd220"
+}
