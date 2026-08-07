@@ -2,7 +2,7 @@
 """forge — the harness CLI. `./forge <command>` from the repo root.
 
 Commands include doctor, init/adopt/upgrade, next, board, spec, plan,
-quickfix, roadmap, context, and decision management.
+quickfix, mode, roadmap, context, and decision management.
 Implementations live in forge_cli/ — one module per concern; this file is
 argument wiring only.
 """
@@ -125,6 +125,20 @@ def main() -> None:
     p_qfl = qf_sub.add_parser("list", help="show the active and completed quickfixes")
     p_qfl.add_argument("--repo")
     p_qfl.set_defaults(func=quickfix_mod.cmd_list)
+
+    p_mode = sub.add_parser("mode", help="manage developer-selected workflow modes")
+    mode_sub = p_mode.add_subparsers(dest="mode_command", required=True)
+    p_ml = mode_sub.add_parser("lite", help="open a lite workflow window")
+    p_ml.add_argument("--by", required=True, help="person opening the lite window")
+    p_ml.add_argument("--reason", required=True, help="why lite mode is appropriate")
+    p_ml.add_argument("--repo")
+    p_ml.set_defaults(func=quickfix_mod.cmd_lite)
+    p_mlist = mode_sub.add_parser("list", help="show workflow mode windows")
+    p_mlist.add_argument("--repo")
+    p_mlist.set_defaults(func=quickfix_mod.cmd_mode_list)
+    p_md = mode_sub.add_parser("done", help="close the active workflow mode window")
+    p_md.add_argument("--repo")
+    p_md.set_defaults(func=quickfix_mod.cmd_mode_done)
 
     p_spec = sub.add_parser("spec", help="capture and confirm capability specs")
     spec_sub = p_spec.add_subparsers(dest="spec_command", required=True)

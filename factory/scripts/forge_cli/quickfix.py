@@ -5,16 +5,19 @@ import argparse
 import hashlib
 import json
 import os
+import subprocess
 from pathlib import Path
 
 from factory_lib import (
-    append_ledger_record, dump_json, load_json, now_iso, read_ledger_records,
-    repo_root,
+    append_ledger_record, clean_git_env, dump_json, head_sha, load_json, now_iso,
+    read_ledger_records, repo_root,
 )
 
 from .common import fail
 
 MAX_FILES = 5
+QUICKFIX = "quickfix"
+LITE = "lite"
 
 
 def quickfix_path(base: Path) -> Path:
@@ -27,6 +30,11 @@ def ledger_path(base: Path) -> Path:
 
 def load_active(base: Path) -> dict:
     return load_json(quickfix_path(base), default={})
+
+
+def profile_of(window: dict) -> str:
+    """Return the window profile, including legacy quickfix records."""
+    return window.get("profile", QUICKFIX)
 
 
 def load_events(base: Path) -> list[dict]:
@@ -76,13 +84,15 @@ def claim_files(base: Path, files: list[str]) -> tuple[bool, dict]:
     return True, active
 
 
-def cmd_start(args: argparse.Namespace) -> None:
-    base = Path(args.repo).resolve() if args.repo else repo_root()
-    reason = args.reason.strip()
+def _open(base: Path, *, profile: str, reason: str, by: str | None = None) -> dict:
+    reason = reason.strip()
     if not reason:
-        fail("a quickfix needs a reason")
-    if load_active(base):
-        fail("a quickfix is already open — finish it with `./forge quickfix done`")
+        fail(f"a {profile} window needs a reason")
+    active_window = load_active(base)
+    if active_window:
+        active_profile = profile_of(active_window)
+        closer = "quickfix done" if active_profile == QUICKFIX else "mode done"
+        fail(f"a {active_profile} window is already open — finish it with `./forge {closer}`")
     sequence = sum(1 for event in load_events(base) if event.get("event") == "open") + 1
     # Collision-resistant like signal ids: `roadmap parallel` puts several
     # worktrees on the same ledger, and two opening at once would otherwise
@@ -92,14 +102,36 @@ def cmd_start(args: argparse.Namespace) -> None:
     ).hexdigest()[:4]
     active = {
         "id": f"Q-{sequence:04d}-{suffix}",
+        "profile": profile,
         "reason": reason,
         "started_at": now_iso(),
         "max_files": MAX_FILES,
         "files": [],
     }
+    if by is not None:
+        active["by"] = by
+    if profile == LITE:
+        active["base_sha"] = head_sha(base)
+        if not active["base_sha"]:
+            fail("lite mode needs a Git HEAD to record its opening boundary")
     dump_json(quickfix_path(base), active)
     _append(base, {"event": "open", **active})
-    print(f"Quickfix {active['id']} open (0/{MAX_FILES} files): {reason}")
+    return active
+
+
+def cmd_start(args: argparse.Namespace) -> None:
+    base = Path(args.repo).resolve() if args.repo else repo_root()
+    active = _open(base, profile=QUICKFIX, reason=args.reason)
+    print(f"Quickfix {active['id']} open (0/{MAX_FILES} files): {active['reason']}")
+
+
+def cmd_lite(args: argparse.Namespace) -> None:
+    base = Path(args.repo).resolve() if args.repo else repo_root()
+    by = args.by.strip()
+    if not by:
+        fail("lite mode needs --by")
+    active = _open(base, profile=LITE, reason=args.reason, by=by)
+    print(f"Lite mode {active['id']} open at {active['base_sha'][:8]}: {active['reason']}")
 
 
 def cmd_done(args: argparse.Namespace) -> None:
@@ -107,9 +139,12 @@ def cmd_done(args: argparse.Namespace) -> None:
     active = load_active(base)
     if not active:
         fail("no quickfix is open")
+    if profile_of(active) != QUICKFIX:
+        fail("a lite window is open — finish it with `./forge mode done`")
     event = {
         "event": "done",
         "id": active["id"],
+        "profile": QUICKFIX,
         "reason": active["reason"],
         "started_at": active["started_at"],
         "completed_at": now_iso(),
@@ -121,12 +156,78 @@ def cmd_done(args: argparse.Namespace) -> None:
           f"{active['reason']}")
 
 
+def cmd_mode_done(args: argparse.Namespace) -> None:
+    base = Path(args.repo).resolve() if args.repo else repo_root()
+    active = load_active(base)
+    if not active:
+        fail("no mode window is open")
+    if profile_of(active) == QUICKFIX:
+        cmd_done(args)
+        return
+    files = _lite_manifest(base, active["base_sha"])
+    event = {
+        "event": "done",
+        "id": active["id"],
+        "profile": LITE,
+        "by": active["by"],
+        "reason": active["reason"],
+        "base_sha": active["base_sha"],
+        "started_at": active["started_at"],
+        "completed_at": now_iso(),
+        "files": files,
+    }
+    _append(base, event)
+    quickfix_path(base).unlink()
+    print(f"Lite mode {active['id']} done ({len(event['files'])} file(s)): "
+          f"{active['reason']}")
+
+
+def _lite_manifest(base: Path, base_sha: str) -> list[str]:
+    """Return every tracked or untracked path changed since lite opened."""
+    commands = (
+        ["git", "diff", "--name-only", "-z", base_sha, "--"],
+        ["git", "ls-files", "--others", "--exclude-standard", "-z"],
+    )
+    files: set[str] = set()
+    for command in commands:
+        proc = subprocess.run(
+            command, cwd=base, capture_output=True, text=True, env=clean_git_env(),
+        )
+        if proc.returncode != 0:
+            fail(f"could not record the lite manifest: {proc.stderr.strip()}")
+        files.update(path for path in proc.stdout.split("\0") if path)
+    bookkeeping = {".factory/quickfix.json", "plans/quickfixes.jsonl"}
+    return sorted(path for path in files
+                  if path not in bookkeeping and not path.startswith("plans/quickfixes/"))
+
+
 def cmd_list(args: argparse.Namespace) -> None:
     base = Path(args.repo).resolve() if args.repo else repo_root()
     events = load_events(base)
     active = load_active(base)
-    if active:
+    if active and profile_of(active) == QUICKFIX:
         print(f"[OPEN] {active['id']} {len(active.get('files', []))}/"
+              f"{active.get('max_files', MAX_FILES)} — {active['reason']}")
+    closures = {event["id"] for event in events if event.get("event") == "done"}
+    for event in events:
+        if (event.get("event") != "open" or event["id"] not in closures
+                or profile_of(event) != QUICKFIX):
+            continue
+        done = next(item for item in events
+                    if item.get("event") == "done" and item["id"] == event["id"])
+        print(f"[done] {event['id']} {len(done.get('files', []))} file(s) — "
+              f"{event['reason']}")
+    if not any(profile_of(event) == QUICKFIX for event in events):
+        print("No quickfixes recorded.")
+
+
+def cmd_mode_list(args: argparse.Namespace) -> None:
+    base = Path(args.repo).resolve() if args.repo else repo_root()
+    events = load_events(base)
+    active = load_active(base)
+    if active:
+        profile = profile_of(active).upper()
+        print(f"[OPEN {profile}] {active['id']} {len(active.get('files', []))}/"
               f"{active.get('max_files', MAX_FILES)} — {active['reason']}")
     closures = {event["id"] for event in events if event.get("event") == "done"}
     for event in events:
@@ -134,7 +235,7 @@ def cmd_list(args: argparse.Namespace) -> None:
             continue
         done = next(item for item in events
                     if item.get("event") == "done" and item["id"] == event["id"])
-        print(f"[done] {event['id']} {len(done.get('files', []))} file(s) — "
-              f"{event['reason']}")
-    if not events:
-        print("No quickfixes recorded.")
+        print(f"[done {profile_of(event)}] {event['id']} "
+              f"{len(done.get('files', []))} file(s) — {event['reason']}")
+    if not active and not events:
+        print("No mode windows recorded.")

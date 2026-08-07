@@ -3830,6 +3830,85 @@ def test_quickfix_recording_authorizes_nothing(repo, tmp_path):
     assert json.loads(active_path.read_text())["files"] == []
 
 
+def test_mode_lite_opens_window_with_profile_and_base_sha(repo):
+    base_sha = head(repo)
+    code, out = run(repo, "forge.py", "mode", "lite",
+                    "--by", "Ada", "--reason", "ship a bounded change")
+    assert code == 0 and "Lite mode" in out, out
+
+    active = json.loads((repo / ".factory" / "quickfix.json").read_text())
+    assert active["profile"] == "lite"
+    assert active["base_sha"] == base_sha
+    assert active["by"] == "Ada"
+    assert active["reason"] == "ship a bounded change"
+
+    (repo / "src").mkdir()
+    (repo / "src" / "lite.py").write_text("enabled = True\n")
+    code, out = run(repo, "forge.py", "mode", "done")
+    assert code == 0 and "1 file(s)" in out, out
+    done = [json.loads(path.read_text())
+            for path in (repo / "plans" / "quickfixes").glob("*.json")
+            if json.loads(path.read_text()).get("event") == "done"]
+    assert len(done) == 1
+    assert done[0]["profile"] == "lite"
+    assert done[0]["base_sha"] == base_sha
+    assert done[0]["by"] == "Ada"
+    assert done[0]["files"] == ["src/lite.py"]
+
+    code, out = run(repo, "forge.py", "mode", "full")
+    assert code != 0 and "invalid choice" in out
+
+
+def test_lite_window_authorizes_product_write(repo):
+    code, out = run(repo, "forge.py", "mode", "lite",
+                    "--by", "Ada", "--reason", "bounded delivery")
+    assert code == 0, out
+
+    code, out = hook(repo, {
+        "tool_name": "Edit",
+        "permission_mode": "default",
+        "tool_input": {"file_path": str(repo / "src" / "lite.py")},
+    })
+    assert code == 0 and "deny" not in out, out
+
+
+def test_mode_list_shows_open_lite_window(repo):
+    code, out = run(repo, "forge.py", "mode", "lite",
+                    "--by", "Ada", "--reason", "finish the slice")
+    assert code == 0, out
+
+    code, out = run(repo, "forge.py", "mode", "list")
+    assert code == 0
+    assert "[OPEN LITE]" in out and "finish the slice" in out
+
+    code, out = run(repo, "forge.py", "next", "--repo", str(repo))
+    assert code == 0
+    assert "OPEN LITE WINDOW" in out
+    assert "one review is required" in out and "./forge mode done" in out
+
+    code, out = run(repo, "session_start.py", stdin="{}")
+    assert code == 0, out
+    context = json.loads(out)["hookSpecificOutput"]["additionalContext"]
+    assert "OPEN LITE WINDOW" in context
+    assert "one review is required" in context and "./forge mode done" in context
+
+
+def test_quickfix_profile_behavior_unchanged(repo):
+    code, out = run(repo, "forge.py", "quickfix", "start", "repair parser")
+    assert code == 0 and "Quickfix" in out and "0/5 files" in out, out
+    active_path = repo / ".factory" / "quickfix.json"
+    active = json.loads(active_path.read_text())
+    assert active["profile"] == "quickfix"
+
+    # Old active windows without a profile still behave as quickfixes.
+    active.pop("profile")
+    active_path.write_text(json.dumps(active, indent=2) + "\n")
+    code, out = run(repo, "forge.py", "quickfix", "list")
+    assert code == 0 and "[OPEN]" in out and "repair parser" in out
+    code, out = run(repo, "forge.py", "quickfix", "done")
+    assert code == 0 and "Quickfix" in out, out
+
+
 # ---------------------------------------------------------------- plan grill
 
 def test_plan_save_refuses_approved_without_a_matching_marker(repo, tmp_path):
