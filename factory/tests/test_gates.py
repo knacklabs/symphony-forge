@@ -3631,6 +3631,8 @@ def test_harness_quickfix_cannot_delete_the_repo_kind_marker(repo):
                     "git rm .factory/harness-source.json",
                     "git -C .factory rm harness-source.json",  # -C must be honored
                     "mv .factory/harness-source.json plans/decoy.json",  # source too
+                    "cd .factory && rm harness-source.json",  # shell cwd tracked
+                    "git rm --pathspec-from-file=plans/del.txt",  # un-enumerable
                     "rm -r .factory", "git rm .factory"):
         code, out = hook(repo, {
             "tool_name": "Bash", "permission_mode": "default",

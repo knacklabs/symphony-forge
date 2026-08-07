@@ -247,13 +247,18 @@ def bash_write_paths(value: str) -> list[str]:
     # if a real bypass shows up.
     """
     found: list[str] = []
-    # Newlines separate commands too: without them a multi-line script is one
-    # segment, and an earlier command's operand list swallows later lines.
+    # A `cd` reorients every later segment, so track the shell cwd across the
+    # `;`/`&&`/`|`/newline chain: `cd .factory && rm harness-source.json` deletes
+    # the marker, not a root-relative `harness-source.json`. Arbitrary code
+    # (python -c os.remove, find -delete, xargs) stays beyond this heuristic by
+    # design (decision 0013) — git keeps such acts visible, artifact gates backstop.
+    cwd = ""
     for segment in re.split(r"[;&|\n]+", strip_heredoc_bodies(value)):
         tokens = tokenize(segment)
         if tokens is None:
             continue
-        found.extend(redirect_targets(tokens))
+        seg: list[str] = list(redirect_targets(tokens))
+        cd_target: str | None = None
         # Command POSITION only (after env-var prefixes) — the same discipline
         # the codex-exec guard uses. Otherwise prose that merely mentions a
         # tool ("...sed -i, cp, mv...") is parsed as an invocation.
@@ -262,55 +267,61 @@ def bash_write_paths(value: str) -> list[str]:
              if not re.fullmatch(r"\w+=\S*", token)),
             None,
         )
-        if command_index is None:
-            continue
-        command_name = tokens[command_index].rsplit("/", 1)[-1]
-        if command_name not in {"tee", "sed", "cp", "mv", "touch", "rm",
-                                "unlink", "git"}:
-            continue
-        args = tokens[command_index + 1:]
-        operands = [token for token in args
-                    if not token.startswith("-") and token not in {">", ">>"}]
-        if command_name == "tee":
-            found.extend(operands)
-        elif command_name == "touch":
-            found.extend(operands)
-        elif command_name in {"rm", "unlink"}:
-            # Deleting a product path disarms as surely as writing one: removing
-            # the repo-kind marker would silently flip source->client and unlock
-            # all machinery. Every operand is a target.
-            found.extend(operands)
-        elif command_name == "git":
-            # `git rm` / `git mv` delete or relocate tracked files just like their
-            # shell namesakes — catch the marker (and any product path) going out
-            # the git side door too. Skip git's global options (and their values,
-            # e.g. `-C <dir>`, `-c <k=v>`) to find the real subcommand, so
-            # `git -C . rm <marker>` is not a bypass. Other subcommands that can
-            # also drop a file (checkout, reset, restore, clean, stash), and a
-            # `-C <dir>` that relocates path resolution, are arbitrary VCS ops
-            # beyond this drift heuristic: git keeps them visible and the artifact
-            # gates backstop (decision 0013 — this defends drift, not an adversary).
-            sub, sub_args, cwd = git_subcommand(args)
-            if sub in {"rm", "mv"}:
-                for token in sub_args:
-                    if token.startswith("-") or token in {">", ">>"}:
-                        continue
-                    # Resolve the operand against git's -C directory so the true
-                    # target (not a root-relative mis-read) is classified.
-                    found.append(token if Path(token).is_absolute() or not cwd
-                                 else f"{cwd}/{token}")
-        elif command_name == "cp" and operands:
-            found.append(operands[-1])
-        elif command_name == "mv":
-            # BOTH operands: the source is a deletion (moving the marker away
-            # removes it) and the destination is a write. Unlike `cp` above,
-            # which only creates its destination, `mv` must classify its source.
-            found.extend(operands)
-        elif command_name == "sed" and any(
-            token == "-i" or token.startswith("-i") or token.startswith("--in-place")
-            for token in args
-        ) and operands:
-            found.append(operands[-1])
+        if command_index is not None:
+            command_name = tokens[command_index].rsplit("/", 1)[-1]
+            args = tokens[command_index + 1:]
+            operands = [token for token in args
+                        if not token.startswith("-") and token not in {">", ">>"}]
+            if command_name == "cd":
+                cd_target = operands[0] if operands else None
+            elif command_name == "tee":
+                seg.extend(operands)
+            elif command_name == "touch":
+                seg.extend(operands)
+            elif command_name in {"rm", "unlink"}:
+                # Deleting a product path disarms as surely as writing one: removing
+                # the repo-kind marker would silently flip source->client and unlock
+                # all machinery. Every operand is a target.
+                seg.extend(operands)
+            elif command_name == "git":
+                # `git rm` / `git mv` delete or relocate tracked files like their
+                # shell namesakes. Skip git's global options to find the real
+                # subcommand and honor `-C <dir>`. An indirect pathspec
+                # (--pathspec-from-file) names paths we will not read, so assume
+                # conservatively it could hit the marker. Other subcommands that
+                # can drop a file (checkout/reset/restore/clean/stash) are
+                # arbitrary VCS ops beyond this drift heuristic (decision 0013).
+                sub, sub_args, gitc = git_subcommand(args)
+                if sub in {"rm", "mv"}:
+                    if any(a == "--pathspec-from-file"
+                           or a.startswith("--pathspec-from-file=")
+                           for a in sub_args):
+                        found.append(HARNESS_SOURCE_MARKER)
+                    for token in sub_args:
+                        if token.startswith("-") or token in {">", ">>"}:
+                            continue
+                        seg.append(token if Path(token).is_absolute() or not gitc
+                                   else f"{gitc}/{token}")
+            elif command_name == "cp" and operands:
+                seg.append(operands[-1])
+            elif command_name == "mv":
+                # BOTH operands: the source is a deletion (moving the marker away
+                # removes it) and the destination is a write. Unlike `cp` above,
+                # which only creates its destination, `mv` must classify its source.
+                seg.extend(operands)
+            elif command_name == "sed" and any(
+                token == "-i" or token.startswith("-i") or token.startswith("--in-place")
+                for token in args
+            ) and operands:
+                seg.append(operands[-1])
+        # Resolve this segment's targets against the cwd in effect for it.
+        for path in seg:
+            found.append(path if Path(path).is_absolute() or not cwd
+                         else f"{cwd}/{path}")
+        # A cd takes effect for SUBSEQUENT segments.
+        if cd_target is not None:
+            cwd = (cd_target if Path(cd_target).is_absolute()
+                   else f"{cwd}/{cd_target}" if cwd else cd_target)
     return found
 
 

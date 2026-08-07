@@ -53,13 +53,16 @@ quickfix exists to enforce. Under an approved plan the machinery is already
 writable, so removing the marker grants nothing new; under a quickfix, a marker
 change is refused outright.
 
-The ceiling is 0013's, stated honestly: this is drift-defense, not an
-adversarial sandbox. The marker is protected exactly as strongly as any other
-machinery file — no more, no less. Arbitrary VCS or code that can also drop a
-file (`git checkout`/`reset`/`restore`/`clean`/`stash`, a `python -c os.remove`)
-is beyond the heuristic for the marker just as it is for `src/app.ts`; git
-history keeps such acts visible and the artifact gates (verify/review/pr_ready)
-remain the backstop. This **refines 0013** (it does not supersede it — 0013
+The Bash write guard catches the common deletion/relocation vectors that reach
+the marker: `rm`/`unlink`, `git rm`/`git mv` (honoring `git -C` and treating an
+un-enumerable `--pathspec-from-file` conservatively), `mv` of the source, an
+ancestor delete (`rm -r .factory`), and a `cd` into `.factory` before the delete.
+The ceiling is 0013's, stated honestly: this is drift-defense, not an adversarial
+sandbox. Arbitrary code that can also drop a file — `python -c os.remove`,
+`find .factory -delete`, `xargs`, `git checkout`/`reset`/`restore`/`clean` — is
+beyond the heuristic for the marker just as it is for `src/app.ts`; git history
+keeps such acts visible and the artifact gates (verify/review/pr_ready) remain
+the backstop. This **refines 0013** (it does not supersede it — 0013
 stays authoritative for client repos; its "harness files stay freely writable"
 consequence now applies only to *client* repos) and complements 0009.
 
