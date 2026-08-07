@@ -1,0 +1,23 @@
+{
+  "generated_by": "griller",
+  "gate": "plan",
+  "issue": "FORGE-BOARD-1",
+  "verdict": "pass",
+  "questions_asked": 2,
+  "summary": "Grilled the enforcement-gates plan on its two genuine design forks (where the story-PR link is written; how Gate A treats window-PRs) plus the CI-testability limit. All resolved; no contradictions with the active decision corpus (adds CI + intake gates, does not touch pr_ready's frozen surface per 0009).",
+  "gaps": [
+    "Where the story-PR link is written was underspecified \u2014 a merge workflow implies CI writing to main (permissions, branch-protection friction, a bot commit per merge).",
+    "Gate A's treatment of PRs that ship from a lite/quickfix window rather than a story was not stated.",
+    "The Verify Plan cannot falsify the CI workflow YAML itself, only the check scripts."
+  ],
+  "contradictions": [],
+  "resolutions": [
+    "Auto-link on the PR BRANCH pre-merge: a pull_request workflow runs forge pr-link once the PR number exists and commits the pr-linked event to the branch (loop-guarded), so the link travels in the merge and no CI writes to main.",
+    "Window-PRs cite Ticket: <window-id> and prove themselves by their ledger done record in the diff; they are exempt from the story invariant. Keeps the lite/quickfix small-fix lanes viable.",
+    "The deterministic core is the two check scripts (unit-tested against fixture diffs/roadmaps/events); the workflow YAML is thin wiring and Gate A self-tests on this very PR (which resolves to FORGE-BOARD-1 with its done-flip + history in the diff)."
+  ],
+  "open_items": [],
+  "input_sha256": "a42105856340d8dff5756428cae018227b9c2c359d8a31e23ca936fae991a8ce",
+  "recorded_at": "2026-08-07T17:12:45+00:00",
+  "commit": "ba3ece0b85f78e270a8b4c570b5e940ba98e3edf"
+}

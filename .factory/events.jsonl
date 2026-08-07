@@ -559,3 +559,7 @@
 {"event": "spec-confirmed", "generated_by": "orchestrator", "at": "2026-08-07T17:04:53+00:00", "detail": "traceable-board"}
 {"event": "roadmap-epic-add", "generated_by": "orchestrator", "at": "2026-08-07T17:05:25+00:00", "detail": "traceable-board"}
 {"event": "roadmap-add", "generated_by": "orchestrator", "at": "2026-08-07T17:05:45+00:00", "story": "FORGE-BOARD-1", "detail": "docs/specs/traceable-board.md"}
+{"event": "intake", "generated_by": "orchestrator", "at": "2026-08-07T17:06:57+00:00", "story": "FORGE-BOARD-1", "detail": "Enforcement gates: every PR ties to a complete on-board ticket"}
+{"event": "plan-human-approved", "generated_by": "human", "at": "2026-08-07T17:15:00+00:00", "story": "FORGE-BOARD-1", "detail": "FORGE-BOARD-1 approved by vrknetha"}
+{"event": "plan-approved", "generated_by": "planner-high", "at": "2026-08-07T17:15:00+00:00", "story": "FORGE-BOARD-1", "detail": "plans/active/FORGE-BOARD-1-enforcement-gates-every-pr-ties-to-a-complete-on-board-ticket.md"}
+{"event": "decomposed", "generated_by": "docs-decomposer", "at": "2026-08-07T17:17:16+00:00", "story": "FORGE-BOARD-1", "detail": "3 task(s)"}

@@ -1,0 +1,130 @@
+{
+  "generated_by": "claude-code:plan-mode",
+  "user_facing": false,
+  "story": "FORGE-BOARD-1",
+  "epic": "traceable-board",
+  "tasks": [
+    {
+      "id": "FORGE-BOARD-1.1",
+      "title": "Gate C \u2014 intake refuses off-board keys",
+      "objective": "Make intake refuse a roadmap key that is not on the board. activation_state returns absent|blocked|activate|done; intake refuses only 'blocked' today. Add a refusal for 'absent' whose error names `roadmap add --no-spec`. The on-roadmap paths (activate/done) and the blocked path are unchanged.",
+      "dependencies": [],
+      "write_scope": [
+        "factory/scripts/intake.py",
+        "factory/tests/test_gates.py"
+      ],
+      "acceptance_criteria": [
+        "intake.py refuses a key that is not on plans/roadmap.json (activation_state 'absent'), and the error text names `roadmap add --no-spec`.",
+        "An on-board key (activate/done) and a blocked key behave exactly as before."
+      ],
+      "verify_commands": [
+        "uv run --with pytest python -m pytest factory/tests/test_gates.py -q -k \"intake or off_board or absent\""
+      ],
+      "required_tests": [
+        {
+          "id": "test_intake_refuses_off_board_key",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_intake_allows_on_board_key",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        }
+      ],
+      "reviewer_focus": "Only 'absent' newly refuses; blocked/activate/done paths untouched; error names the ad-hoc path; no regression to existing intake tests."
+    },
+    {
+      "id": "FORGE-BOARD-1.2",
+      "title": "Gate A \u2014 PR-ticket required check",
+      "objective": "Add factory/scripts/check_pr_ticket.py + .github/workflows/pr-ticket-check.yml. The script takes the base..HEAD diff, the head branch, and the PR body and asserts exactly ONE work record resolves: branch feat/<key>-* or a `Ticket: <key|window-id>` line; for a story the key is on roadmap.json and the diff flips it to done with .factory/history/<key>/ added; for a window its ledger done record is in the diff. Non-zero exit fails the required check.",
+      "dependencies": [
+        "FORGE-BOARD-1.1"
+      ],
+      "write_scope": [
+        "factory/scripts/check_pr_ticket.py",
+        ".github/workflows/pr-ticket-check.yml",
+        "factory/tests/test_gates.py"
+      ],
+      "acceptance_criteria": [
+        "check_pr_ticket.py exits 0 for a well-formed story PR fixture (branch feat/<key>-*, roadmap done-flip + .factory/history/<key>/ in the diff).",
+        "It exits non-zero when there is no resolvable ticket, when the done-flip or history is missing, or when two distinct work records resolve.",
+        "A window-PR (Ticket: <window-id> + its ledger done record in the diff) passes.",
+        "The check is deterministic \u2014 pure over its inputs, no network."
+      ],
+      "verify_commands": [
+        "uv run --with pytest python -m pytest factory/tests/test_gates.py -q -k \"pr_ticket or gate_a\""
+      ],
+      "required_tests": [
+        {
+          "id": "test_check_pr_ticket_passes_story",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_check_pr_ticket_fails_no_ticket",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_check_pr_ticket_fails_missing_done_flip",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_check_pr_ticket_window_passes",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        }
+      ],
+      "reviewer_focus": "Exactly-one-record; story requires done-flip + history in the SAME diff; window-id path viable; deterministic (fixtures, no network); the workflow self-tests on this PR."
+    },
+    {
+      "id": "FORGE-BOARD-1.3",
+      "title": "Gate B \u2014 branch auto-link + red-main invariant",
+      "objective": "Add factory/scripts/check_board_complete.py (main invariant: every 'done' story in roadmap.json has a pr-linked event in events.jsonl + an outcome or predates_outcome_contract + a .factory/history/<key>/ dir) + .github/workflows/pr-link.yml (pull_request: run `forge pr-link <key> <PR#>`, commit the pr-linked event to the branch, loop-guarded so it does not re-trigger) + board-invariant.yml (runs the check on main). Note both gates in WORKFLOW.md's gating model.",
+      "dependencies": [
+        "FORGE-BOARD-1.1",
+        "FORGE-BOARD-1.2"
+      ],
+      "write_scope": [
+        "factory/scripts/check_board_complete.py",
+        ".github/workflows/pr-link.yml",
+        ".github/workflows/board-invariant.yml",
+        "WORKFLOW.md",
+        "factory/tests/test_gates.py"
+      ],
+      "acceptance_criteria": [
+        "check_board_complete.py exits 0 for a complete board (every done story has a pr-linked event + outcome + history dir).",
+        "It exits non-zero when a done story lacks a pr-linked event, an outcome, or a history dir.",
+        "A done story carrying predates_outcome_contract passes without an outcome or link.",
+        "pr-link.yml commits the pr-linked event to the PR branch (not main) and is guarded to no-op when the link already exists."
+      ],
+      "verify_commands": [
+        "uv run --with pytest python -m pytest factory/tests/test_gates.py -q -k \"board_complete or gate_b\""
+      ],
+      "required_tests": [
+        {
+          "id": "test_check_board_complete_passes",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_check_board_complete_fails_missing_link",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_check_board_complete_predates_ok",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        }
+      ],
+      "reviewer_focus": "predates_outcome_contract exemption honored; check is deterministic; NO CI-to-main writes (link committed to the branch); loop guard present; WORKFLOW.md gating model updated."
+    }
+  ],
+  "project": "",
+  "plan_file": "plans/active/FORGE-BOARD-1-enforcement-gates-every-pr-ties-to-a-complete-on-board-ticket.md",
+  "plan_sha256": "f7faa32468caf5fe6476039c9f17136203f8fb5a98d6b03d1103fcf672aaf1bb",
+  "commit": "ba3ece0b85f78e270a8b4c570b5e940ba98e3edf"
+}

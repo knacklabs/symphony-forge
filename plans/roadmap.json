@@ -293,7 +293,7 @@
         "Every gate is a deterministic script or CI check, not advisory; an agent with no memory of the rules cannot weaken any invariant."
       ],
       "order": 13,
-      "status": "pending",
+      "status": "active",
       "epic": "traceable-board",
       "skill": "backend",
       "kind": "feature",
@@ -302,7 +302,7 @@
     }
   ],
   "generated_by": "human",
-  "updated_at": "2026-08-07T17:05:45+00:00",
+  "updated_at": "2026-08-07T17:06:57+00:00",
   "epics": [
     {
       "id": "symphony-forge",
