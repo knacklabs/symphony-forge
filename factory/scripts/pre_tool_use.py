@@ -100,8 +100,13 @@ OPAQUE_WRITE_MSG = (
 )
 
 
-def product_path(raw: str, root: Path) -> str | None:
-    """Return a canonical repo-relative product path, otherwise None."""
+def product_path(raw: str, root: Path, is_harness: bool) -> str | None:
+    """Return a canonical repo-relative product path, otherwise None.
+
+    is_harness is the EFFECTIVE repo kind: while a quickfix is open it is the
+    value pinned at the window's start (not the live marker), so deleting the
+    marker mid-window cannot change what counts as product.
+    """
     value = raw.strip().strip("\"'")
     if not value or value in {"-", "/dev/null"}:
         return None
@@ -122,7 +127,7 @@ def product_path(raw: str, root: Path) -> str | None:
     if not rel or rel in PLANNING_WRITE_OK_FILES:
         return None
     exempt_prefixes = PLANNING_WRITE_OK
-    if not is_harness_source_repo(root):
+    if not is_harness:
         exempt_prefixes += CLIENT_MACHINERY_WRITE_OK
     if any(rel == prefix.rstrip("/") or rel.startswith(prefix)
            for prefix in exempt_prefixes):
@@ -214,30 +219,19 @@ GIT_VALUE_OPTS = {
 }
 
 
-def git_subcommand(args: list[str]) -> tuple[str | None, list[str], str]:
-    """(subcommand, subcommand args, `-C` cwd prefix), skipping global options.
-
-    `-C <dir>` changes the directory git resolves paths against (cumulative when
-    repeated), so its value is captured and later joined onto the operands —
-    otherwise `git -C .factory rm harness-source.json` would resolve against the
-    repo root and miss the marker. Other value-taking global options are skipped.
-    """
+def git_subcommand(args: list[str]) -> tuple[str | None, list[str]]:
+    """The git subcommand and its args, skipping global options and their values."""
     index = 0
-    cwd_parts: list[str] = []
     while index < len(args):
         token = args[index]
-        if token == "-C" and index + 1 < len(args):
-            cwd_parts.append(args[index + 1])
-            index += 2
-            continue
         if token in GIT_VALUE_OPTS:
             index += 2  # option plus its separate value
             continue
         if token.startswith("-"):
             index += 1  # a flag, or --opt=value carrying its own value
             continue
-        return token, args[index + 1:], "/".join(cwd_parts)
-    return None, [], "/".join(cwd_parts)
+        return token, args[index + 1:]
+    return None, []
 
 
 def bash_write_paths(value: str) -> list[str]:
@@ -247,18 +241,13 @@ def bash_write_paths(value: str) -> list[str]:
     # if a real bypass shows up.
     """
     found: list[str] = []
-    # A `cd` reorients every later segment, so track the shell cwd across the
-    # `;`/`&&`/`|`/newline chain: `cd .factory && rm harness-source.json` deletes
-    # the marker, not a root-relative `harness-source.json`. Arbitrary code
-    # (python -c os.remove, find -delete, xargs) stays beyond this heuristic by
-    # design (decision 0013) — git keeps such acts visible, artifact gates backstop.
-    cwd = ""
+    # Newlines separate commands too: without them a multi-line script is one
+    # segment, and an earlier command's operand list swallows later lines.
     for segment in re.split(r"[;&|\n]+", strip_heredoc_bodies(value)):
         tokens = tokenize(segment)
         if tokens is None:
             continue
-        seg: list[str] = list(redirect_targets(tokens))
-        cd_target: str | None = None
+        found.extend(redirect_targets(tokens))
         # Command POSITION only (after env-var prefixes) — the same discipline
         # the codex-exec guard uses. Otherwise prose that merely mentions a
         # tool ("...sed -i, cp, mv...") is parsed as an invocation.
@@ -267,61 +256,48 @@ def bash_write_paths(value: str) -> list[str]:
              if not re.fullmatch(r"\w+=\S*", token)),
             None,
         )
-        if command_index is not None:
-            command_name = tokens[command_index].rsplit("/", 1)[-1]
-            args = tokens[command_index + 1:]
-            operands = [token for token in args
-                        if not token.startswith("-") and token not in {">", ">>"}]
-            if command_name == "cd":
-                cd_target = operands[0] if operands else None
-            elif command_name == "tee":
-                seg.extend(operands)
-            elif command_name == "touch":
-                seg.extend(operands)
-            elif command_name in {"rm", "unlink"}:
-                # Deleting a product path disarms as surely as writing one: removing
-                # the repo-kind marker would silently flip source->client and unlock
-                # all machinery. Every operand is a target.
-                seg.extend(operands)
-            elif command_name == "git":
-                # `git rm` / `git mv` delete or relocate tracked files like their
-                # shell namesakes. Skip git's global options to find the real
-                # subcommand and honor `-C <dir>`. An indirect pathspec
-                # (--pathspec-from-file) names paths we will not read, so assume
-                # conservatively it could hit the marker. Other subcommands that
-                # can drop a file (checkout/reset/restore/clean/stash) are
-                # arbitrary VCS ops beyond this drift heuristic (decision 0013).
-                sub, sub_args, gitc = git_subcommand(args)
-                if sub in {"rm", "mv"}:
-                    if any(a == "--pathspec-from-file"
-                           or a.startswith("--pathspec-from-file=")
-                           for a in sub_args):
-                        found.append(HARNESS_SOURCE_MARKER)
-                    for token in sub_args:
-                        if token.startswith("-") or token in {">", ">>"}:
-                            continue
-                        seg.append(token if Path(token).is_absolute() or not gitc
-                                   else f"{gitc}/{token}")
-            elif command_name == "cp" and operands:
-                seg.append(operands[-1])
-            elif command_name == "mv":
-                # BOTH operands: the source is a deletion (moving the marker away
-                # removes it) and the destination is a write. Unlike `cp` above,
-                # which only creates its destination, `mv` must classify its source.
-                seg.extend(operands)
-            elif command_name == "sed" and any(
-                token == "-i" or token.startswith("-i") or token.startswith("--in-place")
-                for token in args
-            ) and operands:
-                seg.append(operands[-1])
-        # Resolve this segment's targets against the cwd in effect for it.
-        for path in seg:
-            found.append(path if Path(path).is_absolute() or not cwd
-                         else f"{cwd}/{path}")
-        # A cd takes effect for SUBSEQUENT segments.
-        if cd_target is not None:
-            cwd = (cd_target if Path(cd_target).is_absolute()
-                   else f"{cwd}/{cd_target}" if cwd else cd_target)
+        if command_index is None:
+            continue
+        command_name = tokens[command_index].rsplit("/", 1)[-1]
+        if command_name not in {"tee", "sed", "cp", "mv", "touch", "rm",
+                                "unlink", "git"}:
+            continue
+        args = tokens[command_index + 1:]
+        operands = [token for token in args
+                    if not token.startswith("-") and token not in {">", ">>"}]
+        if command_name == "tee":
+            found.extend(operands)
+        elif command_name == "touch":
+            found.extend(operands)
+        elif command_name in {"rm", "unlink"}:
+            # Deleting a product path disarms as surely as writing one: removing
+            # the repo-kind marker would flip source->client. Every operand is a
+            # target. This heuristic covers the COMMON drift shapes; cwd games
+            # (`cd .factory && rm`), git -C, indirect pathspecs, globs, and
+            # arbitrary code (python -c, find -delete) are beyond it by design
+            # (decision 0013). The quickfix repo-kind PIN makes the file budget
+            # un-escapable regardless of how the marker is deleted; the locked
+            # case falls back to git visibility + artifact-gate backstop.
+            found.extend(operands)
+        elif command_name == "git":
+            # `git rm` / `git mv` delete or relocate tracked files like their
+            # shell namesakes — skip git's global options to reach the subcommand.
+            sub, sub_args = git_subcommand(args)
+            if sub in {"rm", "mv"}:
+                found.extend(token for token in sub_args
+                             if not token.startswith("-") and token not in {">", ">>"})
+        elif command_name == "cp" and operands:
+            found.append(operands[-1])
+        elif command_name == "mv":
+            # BOTH operands: the source is a deletion (moving the marker away
+            # removes it) and the destination is a write. Unlike `cp` above,
+            # which only creates its destination, `mv` must classify its source.
+            found.extend(operands)
+        elif command_name == "sed" and any(
+            token == "-i" or token.startswith("-i") or token.startswith("--in-place")
+            for token in args
+        ) and operands:
+            found.append(operands[-1])
     return found
 
 
@@ -337,8 +313,17 @@ def _contains_marker(rel: str) -> bool:
 
 
 def guard_product_writes(targets: list[str], state: dict, root: Path) -> None:
+    quickfix = load_active(root)
+    # Effective repo kind: a live marker read, UNLESS a quickfix is open — then
+    # the kind pinned at its start wins, so deleting the marker during the window
+    # (by any means) cannot flip classification and let machinery escape the
+    # budget. Fail-safe: an old window with no pin falls back to the live marker.
+    if quickfix is not None and "harness_source" in quickfix:
+        is_harness = bool(quickfix["harness_source"])
+    else:
+        is_harness = is_harness_source_repo(root)
     product = list(dict.fromkeys(
-        rel for raw in targets if (rel := product_path(raw, root)) is not None
+        rel for raw in targets if (rel := product_path(raw, root, is_harness)) is not None
     ))
     if not product:
         return
@@ -362,7 +347,7 @@ def guard_product_writes(targets: list[str], state: dict, root: Path) -> None:
         # the decomposition exists belongs to no task (AGENTS.md phase 4).
         if state.get("decomposition_status") == "recorded":
             return
-        if not load_active(root):
+        if not quickfix:
             deny(
                 "Plan approved, but no decomposition is recorded — implementation "
                 "is bounded by tasks, so a product write now belongs to no task. "
@@ -372,7 +357,6 @@ def guard_product_writes(targets: list[str], state: dict, root: Path) -> None:
             )
     # An open window does not skip this: each product file it touches must be
     # claimed against the budget, which is what bounds the escape hatch.
-    quickfix = load_active(root)
     if not quickfix:
         deny(PLAN_MODE_MSG)
     claimed, _ = claim_files(root, product)

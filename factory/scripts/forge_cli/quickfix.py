@@ -13,6 +13,7 @@ from factory_lib import (
 )
 
 from .common import fail
+from .repo_kind import is_harness_source_repo
 
 MAX_FILES = 5
 
@@ -96,6 +97,11 @@ def cmd_start(args: argparse.Namespace) -> None:
         "started_at": now_iso(),
         "max_files": MAX_FILES,
         "files": [],
+        # Pin the repo kind for the window's lifetime: the planning lock reads
+        # this instead of the live marker while a quickfix is open, so deleting
+        # the harness-source marker mid-window (by ANY means) cannot flip the
+        # repo to client-mode and let machinery writes escape the file budget.
+        "harness_source": is_harness_source_repo(base),
     }
     dump_json(quickfix_path(base), active)
     _append(base, {"event": "open", **active})

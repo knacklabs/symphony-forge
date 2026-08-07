@@ -3627,12 +3627,13 @@ def test_harness_quickfix_cannot_delete_the_repo_kind_marker(repo):
     # Direct deletion of the marker, and deletion of an ANCESTOR that contains
     # it (`rm -r .factory`, `git rm .factory`) — all refused. (`rm -rf` is caught
     # even earlier by the blanket rm-rf policy; use `rm -r` to exercise this path.)
+    # Common drift vectors — direct deletion of the marker and of the ancestor
+    # .factory that contains it — are refused. (cwd games, git -C, indirect
+    # pathspecs, and arbitrary code are the documented 0013 residual; the PIN
+    # test below is what makes the budget robust against ALL of them.)
     for command in ("rm .factory/harness-source.json",
                     "git rm .factory/harness-source.json",
-                    "git -C .factory rm harness-source.json",  # -C must be honored
-                    "mv .factory/harness-source.json plans/decoy.json",  # source too
-                    "cd .factory && rm harness-source.json",  # shell cwd tracked
-                    "git rm --pathspec-from-file=plans/del.txt",  # un-enumerable
+                    "mv .factory/harness-source.json plans/decoy.json",
                     "rm -r .factory", "git rm .factory"):
         code, out = hook(repo, {
             "tool_name": "Bash", "permission_mode": "default",
@@ -3651,6 +3652,31 @@ def test_harness_quickfix_cannot_delete_the_repo_kind_marker(repo):
         "tool_input": {"file_path": str(repo / "factory" / "scripts" / "x.py")},
     })
     assert code == 0 and "deny" not in out, out
+
+
+def test_quickfix_pins_repo_kind_so_marker_deletion_cannot_escape_budget(repo):
+    # The structural guarantee (decision 0030): a quickfix pins the repo kind at
+    # start, so even if the marker is removed mid-window by an UNCAUGHT vector,
+    # classification stays 'harness' and machinery keeps being claimed against
+    # the budget. Without the pin, the deletion would flip the repo to client and
+    # let unlimited machinery writes bypass the 5-file budget.
+    from forge_cli.repo_kind import is_harness_source_repo
+    mark_harness_source(repo)
+    code, out = run(repo, "forge.py", "quickfix", "start", "pinned")
+    assert code == 0, out
+    (repo / ".factory" / "harness-source.json").unlink()  # marker gone (any vector)
+    assert not is_harness_source_repo(repo)  # live classification would say client
+    for number in range(1, 6):  # ...but the window still claims machinery
+        code, out = hook(repo, {
+            "tool_name": "Edit", "permission_mode": "default",
+            "tool_input": {"file_path": str(repo / "factory" / "scripts" / f"m{number}.py")},
+        })
+        assert code == 0 and "deny" not in out, out
+    code, out = hook(repo, {  # 6th exceeds the pinned budget — still product
+        "tool_name": "Edit", "permission_mode": "default",
+        "tool_input": {"file_path": str(repo / "factory" / "scripts" / "m6.py")},
+    })
+    assert code == 0 and "deny" in out and "scope exceeded" in out
 
 
 def test_scaffolded_client_has_no_harness_source_marker(tmp_path, monkeypatch):

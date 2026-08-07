@@ -45,24 +45,28 @@ direct-delete commands (`rm`, `unlink`) and their git equivalents (`git rm`,
 hand-edit, `rm`, or `git rm`.
 
 Crucially, the marker may be changed **only under an approved plan with a
-recorded decomposition — never a quickfix.** The marker decides whether the
-machinery trees are product at all, so a quickfix that could `rm` it as its
-first claimed file would flip the repo to client-mode and let every later
-machinery write skip the five-file budget entirely, defeating the very bound the
-quickfix exists to enforce. Under an approved plan the machinery is already
-writable, so removing the marker grants nothing new; under a quickfix, a marker
-change is refused outright.
+recorded decomposition — never a quickfix.** Under an approved plan the machinery
+is already writable, so removing the marker grants nothing new; under a quickfix,
+a marker change is refused outright.
 
-The Bash write guard catches the common deletion/relocation vectors that reach
-the marker: `rm`/`unlink`, `git rm`/`git mv` (honoring `git -C` and treating an
-un-enumerable `--pathspec-from-file` conservatively), `mv` of the source, an
-ancestor delete (`rm -r .factory`), and a `cd` into `.factory` before the delete.
-The ceiling is 0013's, stated honestly: this is drift-defense, not an adversarial
-sandbox. Arbitrary code that can also drop a file — `python -c os.remove`,
-`find .factory -delete`, `xargs`, `git checkout`/`reset`/`restore`/`clean` — is
-beyond the heuristic for the marker just as it is for `src/app.ts`; git history
-keeps such acts visible and the artifact gates (verify/review/pr_ready) remain
-the backstop. This **refines 0013** (it does not supersede it — 0013
+**The budget is protected structurally, not by exhaustive parsing.** A quickfix
+PINS the repo kind at its start (`harness_source` in the window state); while the
+window is open the planning lock reads that pin instead of the live marker. So
+even if the marker were removed mid-window by a vector the Bash guard does not
+catch, classification stays `harness`, machinery keeps being claimed, and the
+five-file budget cannot be escaped. This is the guarantee — the deletion guard is
+defence-in-depth, not the load-bearing wall.
+
+The Bash write guard catches the **common** deletion/relocation vectors that
+reach the marker: `rm`/`unlink`, `git rm`/`git mv`, `mv` of the source, and an
+ancestor delete (`rm -r .factory`). The ceiling is 0013's, stated honestly: this
+is drift-defense, not an adversarial sandbox. cwd games (`cd .factory && rm`),
+`git -C`, indirect pathspecs, globs, and arbitrary code (`python -c os.remove`,
+`find .factory -delete`) are beyond the heuristic for the marker just as they are
+for `src/app.ts`. For the LOCKED case (no quickfix, no plan) those remain the
+residual, backstopped by git history visibility and the artifact gates
+(verify/review/pr_ready); for the quickfix case the pin closes them entirely.
+This **refines 0013** (it does not supersede it — 0013
 stays authoritative for client repos; its "harness files stay freely writable"
 consequence now applies only to *client* repos) and complements 0009.
 
