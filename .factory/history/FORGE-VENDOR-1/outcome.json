@@ -1,0 +1,7 @@
+{
+  "generated_by": "implementer",
+  "outcome": "forge init and adopt now vendor only the harness-owned skill (forge), never a source repo's own skills, so a client repo whose CI runs the vendored factory tests no longer copies a client skill with a canon marker pointing outside the vendored tree into a scaffold \u2014 check_dual_runtime stays green in client CI. init/adopt/upgrade share one owned-skill manifest; the three symphony-forge-only fixture tests skip in a fixture-free client scaffold.",
+  "issue": "FORGE-VENDOR-1",
+  "commit": "a0b2ebc968e3c357b2199fb69c2267e346e2232e",
+  "recorded_at": "2026-08-06T19:44:12+00:00"
+}

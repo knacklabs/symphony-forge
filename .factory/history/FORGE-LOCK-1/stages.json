@@ -1,0 +1,57 @@
+{
+  "issue": "FORGE-LOCK-1",
+  "stages": [
+    {
+      "id": "FORGE-LOCK-1.1",
+      "title": "Repo-kind-aware planning lock + harness-source marker",
+      "status": "done",
+      "started_at": "2026-08-07T03:35:03+00:00",
+      "base_sha": "e4e5f973fe5f5e6fd8f811b72bc168ea40751d8b",
+      "dirty_at_start": {
+        ".factory/decomposition.json": {
+          "digest": "38f9b29e539c081a1f5d7d3248cb6555d8fca40129886a9a8f018a2ccda9dbf7",
+          "git": "? .factory/decomposition.json\u0000\u0000\u0000"
+        },
+        ".factory/events.jsonl": {
+          "digest": "01adb36d910a08060dcc732ac0b02119acd8136dd6bfbd355989a6cb3b780834",
+          "git": "1 .M N... 100644 100644 100644 77bf8104b9da9bdda7c851b5abbbb56a97c00bf5 77bf8104b9da9bdda7c851b5abbbb56a97c00bf5 .factory/events.jsonl\u0000\u0000100644 77bf8104b9da9bdda7c851b5abbbb56a97c00bf5 0\t.factory/events.jsonl\u0000\u0000H .factory/events.jsonl\u0000"
+        },
+        ".factory/grills/plan.json": {
+          "digest": "185f8e5c8ac631f16c9a2a6c27e475ca2492be319dcde01ed9a2303ed2719a24",
+          "git": "? .factory/grills/plan.json\u0000\u0000\u0000"
+        },
+        ".factory/run.json": {
+          "digest": "53e564867960aefd5dec3c4cb6ce9f149bc82d60e3da2968d4ad49b9ed38622b",
+          "git": "1 .M N... 100644 100644 100644 99e2d3be945a093a25a512be5d0fd6ef828f64b1 99e2d3be945a093a25a512be5d0fd6ef828f64b1 .factory/run.json\u0000\u0000100644 99e2d3be945a093a25a512be5d0fd6ef828f64b1 0\t.factory/run.json\u0000\u0000H .factory/run.json\u0000"
+        },
+        ".factory/stages.json": {
+          "digest": "0dce7fddc9f38c74e75f84b990050eb3f18a3d7175c914eeeb4589499f7a0b09",
+          "git": "? .factory/stages.json\u0000\u0000\u0000"
+        },
+        "docs/decisions/0030-harness-source-is-product-in-its-own-repo.md": {
+          "digest": "8cb276c7d37c29cc8c489145878594852bbbeed7194c79580c40a7f8991cb5d4",
+          "git": "? docs/decisions/0030-harness-source-is-product-in-its-own-repo.md\u0000\u0000\u0000"
+        },
+        "plans/active/FORGE-LOCK-1-the-planning-lock-guards-the-harness-s-own-source.md": {
+          "digest": "74e1708c1d82d06b3357ba361662ae990cbf53389a790697b10c954de4485713",
+          "git": "? plans/active/FORGE-LOCK-1-the-planning-lock-guards-the-harness-s-own-source.md\u0000\u0000\u0000"
+        },
+        "plans/deferrals.md": {
+          "digest": "27edec2ee825c5536f946f32389771f6a887379afd8c170fb13c996f360a93e4",
+          "git": "1 .M N... 100644 100644 100644 657f3c47401c363973e456feee4021c89d0e78e8 657f3c47401c363973e456feee4021c89d0e78e8 plans/deferrals.md\u0000\u0000100644 657f3c47401c363973e456feee4021c89d0e78e8 0\tplans/deferrals.md\u0000\u0000H plans/deferrals.md\u0000"
+        },
+        "plans/roadmap.json": {
+          "digest": "277124ef8b410bdf88fc1431153e3bcd3f730cb95fab3cd140c12e75be4b1c67",
+          "git": "1 .M N... 100644 100644 100644 fad3107771d2ed921b4b3bd4c3022dcf03c78021 fad3107771d2ed921b4b3bd4c3022dcf03c78021 plans/roadmap.json\u0000\u0000100644 fad3107771d2ed921b4b3bd4c3022dcf03c78021 0\tplans/roadmap.json\u0000\u0000H plans/roadmap.json\u0000"
+        }
+      },
+      "task_sha256": "b8a5a6a25a5caaeacf15ffb0f3375bd670222f2ff7a02c29e08cb0e56876811c",
+      "completed_at": "2026-08-07T06:04:48+00:00",
+      "contract_changed": {
+        "at": "2026-08-07T06:04:48+00:00",
+        "from": "8e8657985abedc3367a6522102cfa642beb78d5e7682c1aa61e17d55e99052fa",
+        "to": "b8a5a6a25a5caaeacf15ffb0f3375bd670222f2ff7a02c29e08cb0e56876811c"
+      }
+    }
+  ]
+}

@@ -1,0 +1,111 @@
+{
+  "generated_by": "claude-code:plan-mode",
+  "user_facing": false,
+  "story": "FORGE-VENDOR-1",
+  "epic": "symphony-forge",
+  "plan_file": "plans/active/FORGE-VENDOR-1-init-and-adopt-vendor-only-harness-owned-machinery.md",
+  "doc_roots": [
+    "docs/specs/harness-owned-vendoring.md",
+    "plans/active/FORGE-VENDOR-1-init-and-adopt-vendor-only-harness-owned-machinery.md"
+  ],
+  "tasks": [
+    {
+      "id": "FORGE-VENDOR-1.1",
+      "title": "Shared harness-owned skill set; init vendors only it",
+      "objective": "Define the harness-owned skill set (forge) once in scaffold.py and re-express upgrade's CLAUDE_HARNESS_OWNED on it so the two cannot drift. Route init through it: drop .claude from the wholesale COPY_TREES and copy the .claude harness files plus only .claude/skills/forge; replace the wholesale .codex/skills copytree with only .codex/skills/forge; .codex/agents and config copy as-is, still through the existing boundary helpers. Add the agreement test and an init decoy-skill test.",
+      "dependencies": [],
+      "write_scope": [
+        "factory/scripts/forge_cli/scaffold.py",
+        "factory/scripts/forge_cli/upgrade.py",
+        "factory/tests/test_gates.py"
+      ],
+      "acceptance_criteria": [
+        "forge init from a source repo carrying a decoy .claude/skills/decoy/SKILL.md (with a root-level canon target) produces a scaffold that does NOT contain decoy, and check_dual_runtime is clean on the scaffold.",
+        "init copies the harness .claude files (CLAUDE.md, settings.json) and only the harness skill dirs .claude/skills/forge and .codex/skills/forge; .codex/agents and .codex config copy as before.",
+        "The harness-owned skill set is defined in ONE place; upgrade's CLAUDE_HARNESS_OWNED and init read that same definition (no second hard-coded list), proven by a test. (adopt joins the agreement in FORGE-VENDOR-1.2.)",
+        "forge init of symphony-forge produces the same scaffold as before (existing init scaffold tests stay green, unweakened)."
+      ],
+      "verify_commands": [
+        "uv run --with pytest python -m pytest factory/tests/test_gates.py -q -k \"init or scaffold or vendor or harness_owned or dual_runtime\""
+      ],
+      "required_tests": [
+        {
+          "id": "test_init_vendors_only_the_harness_owned_skill_not_a_source_decoy",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_init_and_upgrade_share_the_harness_owned_skill_set",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        }
+      ],
+      "reviewer_focus": "That init copies ONLY the harness skill (forge), not the source repo's other .claude/.codex skills \u2014 the decoy test must fail if the wholesale copy returns. That the harness-owned skill set is a single source of truth (no second hard-coded 'forge' list that can drift from upgrade). That a normal symphony-forge init is byte-for-byte unchanged (its .claude/.codex IS the manifest)."
+    },
+    {
+      "id": "FORGE-VENDOR-1.2",
+      "title": "adopt vendors only the harness-owned skill",
+      "objective": "Replace adopt's wholesale .claude and .codex/skills vendoring with manifest-scoped copies: the .claude harness files plus only .claude/skills/forge and .codex/skills/forge, keeping adopt's vendor_file boundary check; .codex/agents and config as before. Also route upgrade's .codex/skills through HARNESS_OWNED_SKILLS (it still iterated the source) so all three share one skill set. Add an adopt decoy-skill test and the three-way agreement test.",
+      "dependencies": [
+        "FORGE-VENDOR-1.1"
+      ],
+      "write_scope": [
+        "factory/scripts/forge_cli/adopt.py",
+        "factory/scripts/forge_cli/upgrade.py",
+        "factory/tests/test_gates.py"
+      ],
+      "acceptance_criteria": [
+        "forge adopt from a source repo carrying a decoy .claude/skills/decoy/SKILL.md does NOT vendor decoy into the target, and check_dual_runtime is clean on the result.",
+        "adopt vendors only the harness .claude files and the harness skill dirs (.claude/skills/forge, .codex/skills/forge), reading the same shared skill set as init and upgrade.",
+        "A test asserts init, adopt AND upgrade all read the one shared harness-owned skill set (now that adopt is routed) \u2014 no command carries a second hard-coded list.",
+        "forge adopt of an existing project behaves as before (existing adopt tests stay green, unweakened)."
+      ],
+      "verify_commands": [
+        "uv run --with pytest python -m pytest factory/tests/test_gates.py -q -k \"adopt or vendor or harness_owned\""
+      ],
+      "required_tests": [
+        {
+          "id": "test_adopt_vendors_only_the_harness_owned_skill_not_a_source_decoy",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_init_adopt_upgrade_agree_on_the_harness_owned_skill_set",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        }
+      ],
+      "reviewer_focus": "That adopt's wholesale .claude/.codex-skills vendoring is genuinely replaced (not left alongside), that it reads the SAME shared skill set as init (Task 1), and that adopt's per-file boundary check (vendor_file) is preserved. That no existing adopt test was weakened."
+    },
+    {
+      "id": "FORGE-VENDOR-1.3",
+      "title": "Gate the FORGE-INIT-1 fixture tests; client-CI simulation",
+      "objective": "Add a presence-keyed skip guard to the three FORGE-INIT-1-bound tests (historical_decomposition_artifacts, precontract_stories_are_marked, shipped_roadmap_satisfies_the_story_contract) so they skip when the fixture (.factory/history/FORGE-INIT-1/) is absent and still run in symphony-forge. Add a client-CI simulation test that scaffolds from a source carrying a client skill and asserts check_dual_runtime is clean.",
+      "dependencies": [
+        "FORGE-VENDOR-1.1"
+      ],
+      "write_scope": [
+        "factory/tests/test_gates.py"
+      ],
+      "acceptance_criteria": [
+        "The three FORGE-INIT-1 fixture-bound tests carry a skip guard keyed on the fixture's presence; they execute in symphony-forge (fixture present) and skip when it is absent.",
+        "A test simulates a client-repo run of the vendored checks: it scaffolds from a source carrying a client .claude/skills/<x>/SKILL.md, runs check_dual_runtime on the scaffold, and asserts it is clean (no dangling canon).",
+        "The full suite stays green in symphony-forge with no test weakened."
+      ],
+      "verify_commands": [
+        "uv run --with pytest python -m pytest factory/tests/test_gates.py -q -k \"historical_decomposition or precontract or shipped_roadmap or client_repo or vendored_scaffold or dual_runtime\""
+      ],
+      "required_tests": [
+        {
+          "id": "test_vendored_scaffold_check_is_clean_in_a_client_repo_with_its_own_skill",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        }
+      ],
+      "reviewer_focus": "That the skip guard keys on the FIXTURE's presence (so it is a no-op in symphony-forge and only skips where the fixture is genuinely absent), not on a coarse 'am I the harness' check that could hide a real failure. That the client-CI simulation actually reproduces the reported failure mode (a client skill with a root-level canon target) and would fail if init's filtering regressed."
+    }
+  ],
+  "project": "",
+  "plan_sha256": "724eb208e8d1aeb5ea3595fbeb18b181b74e4474eac00c62cc712ffe8bf887fd",
+  "commit": "f016ec0c5c0ac9e08c9a2edad3aac1cf08de4a3d"
+}

@@ -1,0 +1,25 @@
+{
+  "generated_by": "autoreview",
+  "score": 8,
+  "summary": "Branch autoreview (security lens): the security-critical invariant holds \u2014 the quickfix cannot be ESCAPED to unlock machinery, because the repo kind is PINNED at window start and read from the pin, so deleting the marker mid-window (by any vector) cannot flip the repo to client-mode; a harness-pinned window also refuses to close while the marker is missing. Common marker-deletion drift (rm/git rm/mv/rm -r .factory) and machinery machinery writes are caught; the marker is plan-only. Trust ceiling is 0013/0029 (drift-defense), stated honestly.",
+  "blocking_findings": [],
+  "non_blocking_findings": [
+    {
+      "category": "drift-ceiling",
+      "area": "pre_tool_use.py",
+      "summary": "Adversarial marker-deletion / machinery-write vectors beyond the Bash heuristic (cwd games, git -C, exotic cp/mv, python -c os.remove) are out of scope per 0013 \u2014 visible in git, backstopped by artifact gates, never a lock disarm given the pin."
+    }
+  ],
+  "residual_risks": [
+    "The lock is drift-defense, not an adversarial sandbox (0013, user-confirmed ceiling matching 0029): a determined session can still open its own quickfix or use an exotic shell form. All such acts are git-visible and artifact-gate-backstopped; none disarm the lock silently."
+  ],
+  "recommendation": "approve",
+  "reviewed_scope": [
+    "factory/scripts/pre_tool_use.py",
+    "factory/scripts/forge_cli/quickfix.py",
+    "factory/scripts/forge_cli/repo_kind.py"
+  ],
+  "aspect": "security",
+  "recorded_at": "2026-08-07T10:08:15+00:00",
+  "commit": "6a9e8de8aa0f3f9c7513b95d7c6715050b8050cf"
+}

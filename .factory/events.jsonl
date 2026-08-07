@@ -439,3 +439,69 @@
 {"event": "review-performance", "generated_by": "autoreview", "at": "2026-08-06T16:54:56+00:00", "story": "FORGE-BOUNDARY-1"}
 {"event": "review-security", "generated_by": "autoreview", "at": "2026-08-06T16:54:56+00:00", "story": "FORGE-BOUNDARY-1"}
 {"event": "shipped", "generated_by": "orchestrator", "at": "2026-08-06T16:55:07+00:00", "story": "FORGE-BOUNDARY-1", "detail": "forge init, adopt and upgrade now route every write into the target through one shared, resolved-path boundary check, closing the recurring repository-escape class (decision 0028): a destination or an"}
+{"event": "spec-draft", "generated_by": "orchestrator", "at": "2026-08-06T17:41:21+00:00", "detail": "harness-owned-vendoring: Harness-owned vendoring"}
+{"event": "spec-confirmed", "generated_by": "orchestrator", "at": "2026-08-06T17:44:06+00:00", "detail": "harness-owned-vendoring"}
+{"event": "roadmap-add", "generated_by": "orchestrator", "at": "2026-08-06T17:44:27+00:00", "story": "FORGE-VENDOR-1", "detail": "docs/specs/harness-owned-vendoring.md"}
+{"event": "intake", "generated_by": "orchestrator", "at": "2026-08-06T17:44:39+00:00", "story": "FORGE-VENDOR-1", "detail": "init and adopt vendor only harness-owned machinery"}
+{"event": "plan-human-approved", "generated_by": "human", "at": "2026-08-06T17:50:59+00:00", "story": "FORGE-VENDOR-1", "detail": "FORGE-VENDOR-1 approved by vrknetha"}
+{"event": "plan-approved", "generated_by": "planner-high", "at": "2026-08-06T17:50:59+00:00", "story": "FORGE-VENDOR-1", "detail": "plans/active/FORGE-VENDOR-1-init-and-adopt-vendor-only-harness-owned-machinery.md"}
+{"event": "decomposed", "generated_by": "docs-decomposer", "at": "2026-08-06T17:52:42+00:00", "story": "FORGE-VENDOR-1", "detail": "3 task(s)"}
+{"event": "implementing", "generated_by": "orchestrator", "at": "2026-08-06T17:52:42+00:00", "story": "FORGE-VENDOR-1"}
+{"event": "stage-start", "generated_by": "implementer", "at": "2026-08-06T17:53:05+00:00", "story": "FORGE-VENDOR-1", "detail": "FORGE-VENDOR-1.1 Shared harness-owned skill set; init vendors only it"}
+{"event": "signal-contradiction", "generated_by": "implementer", "at": "2026-08-06T17:55:14+00:00", "story": "FORGE-VENDOR-1", "detail": "FORGE-VENDOR-1.1 requires a passing init-adopt-upgrade agreement test, but adopt still wholesale-copies skills and adopt.py is outside this stage scope because routing adopt is assigned to FORGE-VENDO"}
+{"event": "decomposed", "generated_by": "docs-decomposer", "at": "2026-08-06T17:56:54+00:00", "story": "FORGE-VENDOR-1", "detail": "3 task(s)"}
+{"event": "signal-resolved", "generated_by": "orchestrator", "at": "2026-08-06T17:56:54+00:00", "story": "FORGE-VENDOR-1", "detail": "S-0001-41b8: Correct catch. The three-command agreement test is moved to FORGE-VENDOR-1.2 (after adopt is routed). In THIS stage (1.1): define the harness-owned skill set (forge) once, route init and re-express up"}
+{"event": "delegated", "generated_by": "orchestrator", "at": "2026-08-06T17:57:31+00:00", "story": "FORGE-VENDOR-1", "detail": "FORGE-VENDOR-1.1 (write)"}
+{"event": "delegated", "generated_by": "orchestrator", "at": "2026-08-06T18:12:32+00:00", "story": "FORGE-VENDOR-1", "detail": "FORGE-VENDOR-1.1 (write)"}
+{"event": "stage-contract-changed", "generated_by": "implementer", "at": "2026-08-06T18:16:44+00:00", "story": "FORGE-VENDOR-1", "detail": "FORGE-VENDOR-1.1: task contract re-recorded mid-stage"}
+{"event": "stage-done", "generated_by": "implementer", "at": "2026-08-06T18:16:44+00:00", "story": "FORGE-VENDOR-1", "detail": "FORGE-VENDOR-1.1 Shared harness-owned skill set; init vendors only it"}
+{"event": "stage-start", "generated_by": "implementer", "at": "2026-08-06T18:16:57+00:00", "story": "FORGE-VENDOR-1", "detail": "FORGE-VENDOR-1.2 adopt vendors only the harness-owned skill"}
+{"event": "signal-contradiction", "generated_by": "implementer", "at": "2026-08-06T18:19:38+00:00", "story": "FORGE-VENDOR-1", "detail": "FORGE-VENDOR-1.2 requires a test proving init, adopt, and upgrade all use the shared harness-owned skill set, but current upgrade.py still vendors every child under .codex/skills and is outside this s"}
+{"event": "delegated", "generated_by": "orchestrator", "at": "2026-08-06T18:19:47+00:00", "story": "FORGE-VENDOR-1", "detail": "FORGE-VENDOR-1.2 (write)"}
+{"event": "signal-resolved", "generated_by": "orchestrator", "at": "2026-08-06T18:21:02+00:00", "story": "FORGE-VENDOR-1", "detail": "S-0002-f785: Correct catch. upgrade.py is added to THIS stage's write scope (2). Fix: route upgrade's .codex/skills through HARNESS_OWNED_SKILLS instead of iterating the source's .codex/skills children \u2014 iterate H"}
+{"event": "decomposed", "generated_by": "docs-decomposer", "at": "2026-08-06T18:21:32+00:00", "story": "FORGE-VENDOR-1", "detail": "3 task(s)"}
+{"event": "delegated", "generated_by": "orchestrator", "at": "2026-08-06T18:24:44+00:00", "story": "FORGE-VENDOR-1", "detail": "FORGE-VENDOR-1.2 (write)"}
+{"event": "stage-contract-changed", "generated_by": "implementer", "at": "2026-08-06T18:29:54+00:00", "story": "FORGE-VENDOR-1", "detail": "FORGE-VENDOR-1.2: task contract re-recorded mid-stage"}
+{"event": "stage-done", "generated_by": "implementer", "at": "2026-08-06T18:29:54+00:00", "story": "FORGE-VENDOR-1", "detail": "FORGE-VENDOR-1.2 adopt vendors only the harness-owned skill"}
+{"event": "stage-start", "generated_by": "implementer", "at": "2026-08-06T18:30:07+00:00", "story": "FORGE-VENDOR-1", "detail": "FORGE-VENDOR-1.3 Gate the FORGE-INIT-1 fixture tests; client-CI simulation"}
+{"event": "delegated", "generated_by": "orchestrator", "at": "2026-08-06T18:42:20+00:00", "story": "FORGE-VENDOR-1", "detail": "FORGE-VENDOR-1.3 (write)"}
+{"event": "stage-done", "generated_by": "implementer", "at": "2026-08-06T18:49:12+00:00", "story": "FORGE-VENDOR-1", "detail": "FORGE-VENDOR-1.3 Gate the FORGE-INIT-1 fixture tests; client-CI simulation"}
+{"event": "verify-passed", "generated_by": "orchestrator", "at": "2026-08-06T18:59:20+00:00", "story": "FORGE-VENDOR-1"}
+{"event": "verify-passed", "generated_by": "orchestrator", "at": "2026-08-06T19:42:13+00:00", "story": "FORGE-VENDOR-1"}
+{"event": "tests-automated", "generated_by": "implementer", "at": "2026-08-06T19:44:12+00:00", "story": "FORGE-VENDOR-1", "detail": "pass"}
+{"event": "review-quality", "generated_by": "autoreview", "at": "2026-08-06T19:44:12+00:00", "story": "FORGE-VENDOR-1"}
+{"event": "review-performance", "generated_by": "autoreview", "at": "2026-08-06T19:44:12+00:00", "story": "FORGE-VENDOR-1"}
+{"event": "review-security", "generated_by": "autoreview", "at": "2026-08-06T19:44:12+00:00", "story": "FORGE-VENDOR-1"}
+{"event": "shipped", "generated_by": "orchestrator", "at": "2026-08-06T19:44:17+00:00", "story": "FORGE-VENDOR-1", "detail": "forge init and adopt now vendor only the harness-owned skill (forge), never a source repo's own skills, so a client repo whose CI runs the vendored factory tests no longer copies a client skill with a"}
+{"event": "intake", "generated_by": "orchestrator", "at": "2026-08-07T02:54:01+00:00", "story": "FORGE-LOCK-1", "detail": "The planning lock guards the harness's own source"}
+{"event": "plan-human-approved", "generated_by": "human", "at": "2026-08-07T03:31:32+00:00", "story": "FORGE-LOCK-1", "detail": "FORGE-LOCK-1 approved by vrknetha"}
+{"event": "plan-approved", "generated_by": "planner-high", "at": "2026-08-07T03:32:01+00:00", "story": "FORGE-LOCK-1", "detail": "plans/active/FORGE-LOCK-1-the-planning-lock-guards-the-harness-s-own-source.md"}
+{"event": "decomposed", "generated_by": "docs-decomposer", "at": "2026-08-07T03:34:10+00:00", "story": "FORGE-LOCK-1", "detail": "1 task(s)"}
+{"event": "implementing", "generated_by": "orchestrator", "at": "2026-08-07T03:35:03+00:00", "story": "FORGE-LOCK-1"}
+{"event": "stage-start", "generated_by": "implementer", "at": "2026-08-07T03:35:03+00:00", "story": "FORGE-LOCK-1", "detail": "FORGE-LOCK-1.1 Repo-kind-aware planning lock + harness-source marker"}
+{"event": "verify-passed", "generated_by": "orchestrator", "at": "2026-08-07T04:09:05+00:00", "story": "FORGE-LOCK-1"}
+{"event": "decomposed", "generated_by": "docs-decomposer", "at": "2026-08-07T04:33:18+00:00", "story": "FORGE-LOCK-1", "detail": "1 task(s)"}
+{"event": "signal-contradiction", "generated_by": "implementer", "at": "2026-08-07T04:38:32+00:00", "story": "FORGE-LOCK-1", "detail": "Current HEAD planning-locks marker deletion and adds rm/unlink/git deletion parsing, but FORGE-LOCK-1.1 says downstream logic is unchanged and .factory stays exempt with the marker allowlisted; confir"}
+{"event": "delegated", "generated_by": "orchestrator", "at": "2026-08-07T04:38:52+00:00", "story": "FORGE-LOCK-1", "detail": "FORGE-LOCK-1.1 (write)"}
+{"event": "signal-resolved", "generated_by": "orchestrator", "at": "2026-08-07T04:40:08+00:00", "story": "FORGE-LOCK-1", "detail": "S-0001-74f5: Authorized. The deletion protection (marker is a product path, planning-locked; Bash guard now catches rm/unlink and git rm/git mv) is the review-driven hardening recorded in decision 0030. Local auto"}
+{"event": "verify-failed", "generated_by": "orchestrator", "at": "2026-08-07T04:53:04+00:00", "story": "FORGE-LOCK-1"}
+{"event": "verify-failed", "generated_by": "orchestrator", "at": "2026-08-07T05:19:38+00:00", "story": "FORGE-LOCK-1"}
+{"event": "verify-passed", "generated_by": "orchestrator", "at": "2026-08-07T05:48:23+00:00", "story": "FORGE-LOCK-1"}
+{"event": "verify-passed", "generated_by": "orchestrator", "at": "2026-08-07T05:55:45+00:00", "story": "FORGE-LOCK-1"}
+{"event": "decomposed", "generated_by": "docs-decomposer", "at": "2026-08-07T05:58:42+00:00", "story": "FORGE-LOCK-1", "detail": "1 task(s)"}
+{"event": "decomposed", "generated_by": "docs-decomposer", "at": "2026-08-07T05:58:55+00:00", "story": "FORGE-LOCK-1", "detail": "1 task(s)"}
+{"event": "delegated", "generated_by": "orchestrator", "at": "2026-08-07T06:03:43+00:00", "story": "FORGE-LOCK-1", "detail": "FORGE-LOCK-1.1 (write)"}
+{"event": "stage-contract-changed", "generated_by": "implementer", "at": "2026-08-07T06:04:48+00:00", "story": "FORGE-LOCK-1", "detail": "FORGE-LOCK-1.1: task contract re-recorded mid-stage"}
+{"event": "stage-done", "generated_by": "implementer", "at": "2026-08-07T06:04:48+00:00", "story": "FORGE-LOCK-1", "detail": "FORGE-LOCK-1.1 Repo-kind-aware planning lock + harness-source marker"}
+{"event": "verify-passed", "generated_by": "orchestrator", "at": "2026-08-07T06:16:28+00:00", "story": "FORGE-LOCK-1"}
+{"event": "verify-failed", "generated_by": "orchestrator", "at": "2026-08-07T08:06:14+00:00", "story": "FORGE-LOCK-1"}
+{"event": "verify-failed", "generated_by": "orchestrator", "at": "2026-08-07T08:29:06+00:00", "story": "FORGE-LOCK-1"}
+{"event": "verify-passed", "generated_by": "orchestrator", "at": "2026-08-07T08:54:15+00:00", "story": "FORGE-LOCK-1"}
+{"event": "verify-failed", "generated_by": "orchestrator", "at": "2026-08-07T09:15:42+00:00", "story": "FORGE-LOCK-1"}
+{"event": "verify-passed", "generated_by": "orchestrator", "at": "2026-08-07T09:38:56+00:00", "story": "FORGE-LOCK-1"}
+{"event": "verify-passed", "generated_by": "orchestrator", "at": "2026-08-07T10:07:38+00:00", "story": "FORGE-LOCK-1"}
+{"event": "tests-automated", "generated_by": "implementer", "at": "2026-08-07T10:08:15+00:00", "story": "FORGE-LOCK-1", "detail": "pass"}
+{"event": "review-quality", "generated_by": "autoreview", "at": "2026-08-07T10:08:15+00:00", "story": "FORGE-LOCK-1"}
+{"event": "review-performance", "generated_by": "autoreview", "at": "2026-08-07T10:08:15+00:00", "story": "FORGE-LOCK-1"}
+{"event": "review-security", "generated_by": "autoreview", "at": "2026-08-07T10:08:16+00:00", "story": "FORGE-LOCK-1"}
+{"event": "shipped", "generated_by": "orchestrator", "at": "2026-08-07T10:08:30+00:00", "story": "FORGE-LOCK-1", "detail": "The planning lock now guards the harness's own machinery in its own repo: a hand-edit to factory/, constitution/, harness/, .claude/ or .codex/ here needs an approved plan or a bounded quickfix, exact"}

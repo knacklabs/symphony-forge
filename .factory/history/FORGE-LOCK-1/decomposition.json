@@ -1,0 +1,63 @@
+{
+  "generated_by": "claude-code:plan-mode",
+  "user_facing": false,
+  "story": "FORGE-LOCK-1",
+  "epic": "symphony-forge",
+  "plan_file": "plans/active/FORGE-LOCK-1-the-planning-lock-guards-the-harness-s-own-source.md",
+  "plan_sha256": "781424853e80f7bcff3f9ad5826cf2fade070881e24dfab162162b3fd060beb5",
+  "tasks": [
+    {
+      "id": "FORGE-LOCK-1.1",
+      "title": "Repo-kind-aware planning lock + harness-source marker",
+      "objective": "Make the planning lock repo-kind-aware in pre_tool_use.py. Add a shared is_harness_source_repo(root) (marker .factory/harness-source.json exists); when true, treat factory/, constitution/, harness/, .claude/, .codex/ as product while docs/, plans/, .factory/, prototype/, .github/ and root files stay exempt in both repo kinds. Allowlist the marker for .factory/ writes and commit it. Downstream gate + claim_files logic is unchanged (fixes the quickfix zero-scope report for free).",
+      "dependencies": [],
+      "write_scope": [
+        "factory/scripts/pre_tool_use.py",
+        "factory/scripts/forge_cli/repo_kind.py",
+        ".factory/harness-source.json",
+        "factory/tests/test_gates.py",
+        "docs/decisions/0030-harness-source-is-product-in-its-own-repo.md"
+      ],
+      "acceptance_criteria": [
+        "In the harness repo (marker present), a raw Edit/Write and a Bash redirect under factory/ are DENIED when plan_status is not approved and no quickfix is open; ALLOWED once plan_status=approved and decomposition recorded.",
+        "In a client repo (no marker), the same factory/ write is ALLOWED, exactly as today.",
+        "A harness-repo quickfix touching factory/ paths claims them against the 5-file budget; the closed ledger reports the real files (not []), and the 6th over-budget write is refused.",
+        "A freshly scaffolded/vendored client carries no .factory/harness-source.json, so it classifies as a client.",
+        "docs/, plans/, .factory/, prototype/, .github/ and exempt root files stay writable in the harness repo (no over-locking)."
+      ],
+      "verify_commands": [
+        "uv run --with pytest python -m pytest factory/tests/test_gates.py -q -k \"harness_repo or client_repo or quickfix or scaffolded_client or factory_state or planning_lock or bash_write_guard or bash_side_door\""
+      ],
+      "required_tests": [
+        {
+          "id": "test_harness_repo_locks_machinery_writes_without_a_plan",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_client_repo_leaves_vendored_machinery_writable",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_harness_quickfix_claims_machinery_files_against_budget",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_scaffolded_client_has_no_harness_source_marker",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_harness_repo_keeps_docs_and_planning_surfaces_writable",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        }
+      ],
+      "reviewer_focus": "Fail-safe direction (missing marker => client behavior, never lock a client); no over-locking of docs/plans/.github/root files; marker excluded from all vendoring; downstream claim_files path actually reached for machinery writes."
+    }
+  ],
+  "project": "",
+  "commit": "17de8ad97f467391b1f2b8ede40335c9fa80c417"
+}

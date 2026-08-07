@@ -1,0 +1,17 @@
+{
+  "generated_by": "autoreview",
+  "score": 9,
+  "summary": "Branch autoreview (security lens): init/adopt no longer drag a source repo's arbitrary skills (with canon markers pointing outside the vendored tree) into a scaffold, closing the dangling-pointer path that broke client check_dual_runtime. Every copy still passes through assert_target_destination / guarded_copytree, so the path-boundary guarantees are preserved. No new injection or escape surface.",
+  "blocking_findings": [],
+  "non_blocking_findings": [],
+  "recommendation": "approve",
+  "reviewed_scope": [
+    "factory/scripts/forge_cli/scaffold.py",
+    "factory/scripts/forge_cli/adopt.py",
+    "factory/scripts/forge_cli/upgrade.py"
+  ],
+  "aspect": "security",
+  "residual_risks": [],
+  "recorded_at": "2026-08-06T19:44:12+00:00",
+  "commit": "a0b2ebc968e3c357b2199fb69c2267e346e2232e"
+}

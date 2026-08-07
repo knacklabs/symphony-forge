@@ -72,11 +72,14 @@
         "A test proves the two repo kinds are classified differently, so the distinction cannot silently regress."
       ],
       "order": 3,
-      "status": "pending",
+      "status": "done",
       "skill": "backend",
       "origin": "adhoc",
       "spec": "docs/specs/repo-system-of-record.md",
-      "epic": "symphony-forge"
+      "epic": "symphony-forge",
+      "completed_at": "2026-08-07T10:08:30+00:00",
+      "history": ".factory/history/FORGE-LOCK-1/",
+      "outcome": "The planning lock now guards the harness's own machinery in its own repo: a hand-edit to factory/, constitution/, harness/, .claude/ or .codex/ here needs an approved plan or a bounded quickfix, exactly as a client's product code does \u2014 while a client repo's vendored copy of that machinery stays freely writable during planning. Repo kind is a positive .factory/harness-source.json sentinel (never vendored), and a quickfix pins it at start so deleting the marker mid-window can't unlock machinery. A harness-repo quickfix now claims the machinery files it touches against its five-file budget instead of reporting zero."
     },
     {
       "key": "PH-1",
@@ -233,10 +236,32 @@
       "completed_at": "2026-08-06T16:55:07+00:00",
       "history": ".factory/history/FORGE-BOUNDARY-1/",
       "outcome": "forge init, adopt and upgrade now route every write into the target through one shared, resolved-path boundary check, closing the recurring repository-escape class (decision 0028): a destination or ancestor symlink, a .. traversal, a symlink loop, or a crafted directory that resolves or writes outside the target is refused in a preflight before the first mutation, so an escape aborts clean instead of damaging a different repo. A cross-module structural anti-reopen scan fails the suite if any future raw filesystem write skips the shared helper. Hard-link inode-aliasing and TOCTOU races are documented as a deferred follow-up."
+    },
+    {
+      "key": "FORGE-VENDOR-1",
+      "title": "init and adopt vendor only harness-owned machinery; vendored scaffold-check passes in a client",
+      "story": "As a KnackLabs client running the vendored harness in my repo, I want forge init/adopt to vendor only the harness's own .claude/.codex machinery and the vendored factory-scaffold workflow to run only portable checks, so that my repo's own Claude/Codex skills and private fixtures never make the harness's CI fail.",
+      "acceptance_criteria": [
+        "init and adopt vendor only the harness-owned .claude/.codex manifest (CLAUDE.md, settings.json, skills/forge, codex config, harness agents, codex skills/forge) and never the source repo's other .claude/.codex-skills content",
+        "the harness-owned .claude/.codex set is defined once and shared by init, adopt and upgrade, proven by a test",
+        "forge init from a source carrying a client .claude/skills/<x>/SKILL.md yields a scaffold without it, and check_dual_runtime is clean",
+        "the FORGE-INIT-1 fixture-bound tests skip when their fixture is absent and still run in symphony-forge",
+        "init/adopt/upgrade of symphony-forge behave exactly as before (existing tests green)"
+      ],
+      "order": 11,
+      "status": "done",
+      "epic": "symphony-forge",
+      "skill": "backend",
+      "kind": "feature",
+      "depends_on": [],
+      "spec": "docs/specs/harness-owned-vendoring.md",
+      "completed_at": "2026-08-06T19:44:17+00:00",
+      "history": ".factory/history/FORGE-VENDOR-1/",
+      "outcome": "forge init and adopt now vendor only the harness-owned skill (forge), never a source repo's own skills, so a client repo whose CI runs the vendored factory tests no longer copies a client skill with a canon marker pointing outside the vendored tree into a scaffold \u2014 check_dual_runtime stays green in client CI. init/adopt/upgrade share one owned-skill manifest; the three symphony-forge-only fixture tests skip in a fixture-free client scaffold."
     }
   ],
   "generated_by": "human",
-  "updated_at": "2026-08-06T16:55:07+00:00",
+  "updated_at": "2026-08-07T10:08:30+00:00",
   "epics": [
     {
       "id": "symphony-forge",

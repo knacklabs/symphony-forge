@@ -1,0 +1,32 @@
+{"event": "roadmap-add", "generated_by": "orchestrator", "at": "2026-08-06T17:44:27+00:00", "story": "FORGE-VENDOR-1", "detail": "docs/specs/harness-owned-vendoring.md"}
+{"event": "intake", "generated_by": "orchestrator", "at": "2026-08-06T17:44:39+00:00", "story": "FORGE-VENDOR-1", "detail": "init and adopt vendor only harness-owned machinery"}
+{"event": "plan-human-approved", "generated_by": "human", "at": "2026-08-06T17:50:59+00:00", "story": "FORGE-VENDOR-1", "detail": "FORGE-VENDOR-1 approved by vrknetha"}
+{"event": "plan-approved", "generated_by": "planner-high", "at": "2026-08-06T17:50:59+00:00", "story": "FORGE-VENDOR-1", "detail": "plans/active/FORGE-VENDOR-1-init-and-adopt-vendor-only-harness-owned-machinery.md"}
+{"event": "decomposed", "generated_by": "docs-decomposer", "at": "2026-08-06T17:52:42+00:00", "story": "FORGE-VENDOR-1", "detail": "3 task(s)"}
+{"event": "implementing", "generated_by": "orchestrator", "at": "2026-08-06T17:52:42+00:00", "story": "FORGE-VENDOR-1"}
+{"event": "stage-start", "generated_by": "implementer", "at": "2026-08-06T17:53:05+00:00", "story": "FORGE-VENDOR-1", "detail": "FORGE-VENDOR-1.1 Shared harness-owned skill set; init vendors only it"}
+{"event": "signal-contradiction", "generated_by": "implementer", "at": "2026-08-06T17:55:14+00:00", "story": "FORGE-VENDOR-1", "detail": "FORGE-VENDOR-1.1 requires a passing init-adopt-upgrade agreement test, but adopt still wholesale-copies skills and adopt.py is outside this stage scope because routing adopt is assigned to FORGE-VENDO"}
+{"event": "decomposed", "generated_by": "docs-decomposer", "at": "2026-08-06T17:56:54+00:00", "story": "FORGE-VENDOR-1", "detail": "3 task(s)"}
+{"event": "signal-resolved", "generated_by": "orchestrator", "at": "2026-08-06T17:56:54+00:00", "story": "FORGE-VENDOR-1", "detail": "S-0001-41b8: Correct catch. The three-command agreement test is moved to FORGE-VENDOR-1.2 (after adopt is routed). In THIS stage (1.1): define the harness-owned skill set (forge) once, route init and re-express up"}
+{"event": "delegated", "generated_by": "orchestrator", "at": "2026-08-06T17:57:31+00:00", "story": "FORGE-VENDOR-1", "detail": "FORGE-VENDOR-1.1 (write)"}
+{"event": "delegated", "generated_by": "orchestrator", "at": "2026-08-06T18:12:32+00:00", "story": "FORGE-VENDOR-1", "detail": "FORGE-VENDOR-1.1 (write)"}
+{"event": "stage-contract-changed", "generated_by": "implementer", "at": "2026-08-06T18:16:44+00:00", "story": "FORGE-VENDOR-1", "detail": "FORGE-VENDOR-1.1: task contract re-recorded mid-stage"}
+{"event": "stage-done", "generated_by": "implementer", "at": "2026-08-06T18:16:44+00:00", "story": "FORGE-VENDOR-1", "detail": "FORGE-VENDOR-1.1 Shared harness-owned skill set; init vendors only it"}
+{"event": "stage-start", "generated_by": "implementer", "at": "2026-08-06T18:16:57+00:00", "story": "FORGE-VENDOR-1", "detail": "FORGE-VENDOR-1.2 adopt vendors only the harness-owned skill"}
+{"event": "signal-contradiction", "generated_by": "implementer", "at": "2026-08-06T18:19:38+00:00", "story": "FORGE-VENDOR-1", "detail": "FORGE-VENDOR-1.2 requires a test proving init, adopt, and upgrade all use the shared harness-owned skill set, but current upgrade.py still vendors every child under .codex/skills and is outside this s"}
+{"event": "delegated", "generated_by": "orchestrator", "at": "2026-08-06T18:19:47+00:00", "story": "FORGE-VENDOR-1", "detail": "FORGE-VENDOR-1.2 (write)"}
+{"event": "signal-resolved", "generated_by": "orchestrator", "at": "2026-08-06T18:21:02+00:00", "story": "FORGE-VENDOR-1", "detail": "S-0002-f785: Correct catch. upgrade.py is added to THIS stage's write scope (2). Fix: route upgrade's .codex/skills through HARNESS_OWNED_SKILLS instead of iterating the source's .codex/skills children \u2014 iterate H"}
+{"event": "decomposed", "generated_by": "docs-decomposer", "at": "2026-08-06T18:21:32+00:00", "story": "FORGE-VENDOR-1", "detail": "3 task(s)"}
+{"event": "delegated", "generated_by": "orchestrator", "at": "2026-08-06T18:24:44+00:00", "story": "FORGE-VENDOR-1", "detail": "FORGE-VENDOR-1.2 (write)"}
+{"event": "stage-contract-changed", "generated_by": "implementer", "at": "2026-08-06T18:29:54+00:00", "story": "FORGE-VENDOR-1", "detail": "FORGE-VENDOR-1.2: task contract re-recorded mid-stage"}
+{"event": "stage-done", "generated_by": "implementer", "at": "2026-08-06T18:29:54+00:00", "story": "FORGE-VENDOR-1", "detail": "FORGE-VENDOR-1.2 adopt vendors only the harness-owned skill"}
+{"event": "stage-start", "generated_by": "implementer", "at": "2026-08-06T18:30:07+00:00", "story": "FORGE-VENDOR-1", "detail": "FORGE-VENDOR-1.3 Gate the FORGE-INIT-1 fixture tests; client-CI simulation"}
+{"event": "delegated", "generated_by": "orchestrator", "at": "2026-08-06T18:42:20+00:00", "story": "FORGE-VENDOR-1", "detail": "FORGE-VENDOR-1.3 (write)"}
+{"event": "stage-done", "generated_by": "implementer", "at": "2026-08-06T18:49:12+00:00", "story": "FORGE-VENDOR-1", "detail": "FORGE-VENDOR-1.3 Gate the FORGE-INIT-1 fixture tests; client-CI simulation"}
+{"event": "verify-passed", "generated_by": "orchestrator", "at": "2026-08-06T18:59:20+00:00", "story": "FORGE-VENDOR-1"}
+{"event": "verify-passed", "generated_by": "orchestrator", "at": "2026-08-06T19:42:13+00:00", "story": "FORGE-VENDOR-1"}
+{"event": "tests-automated", "generated_by": "implementer", "at": "2026-08-06T19:44:12+00:00", "story": "FORGE-VENDOR-1", "detail": "pass"}
+{"event": "review-quality", "generated_by": "autoreview", "at": "2026-08-06T19:44:12+00:00", "story": "FORGE-VENDOR-1"}
+{"event": "review-performance", "generated_by": "autoreview", "at": "2026-08-06T19:44:12+00:00", "story": "FORGE-VENDOR-1"}
+{"event": "review-security", "generated_by": "autoreview", "at": "2026-08-06T19:44:12+00:00", "story": "FORGE-VENDOR-1"}
+{"event": "shipped", "generated_by": "orchestrator", "at": "2026-08-06T19:44:17+00:00", "story": "FORGE-VENDOR-1", "detail": "forge init and adopt now vendor only the harness-owned skill (forge), never a source repo's own skills, so a client repo whose CI runs the vendored factory tests no longer copies a client skill with a"}

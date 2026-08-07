@@ -1,0 +1,40 @@
+{
+  "issue": "FORGE-VENDOR-1",
+  "stages": [
+    {
+      "id": "FORGE-VENDOR-1.1",
+      "title": "Shared harness-owned skill set; init vendors only it",
+      "status": "done",
+      "started_at": "2026-08-06T17:53:05+00:00",
+      "base_sha": "e5e7ba0a4f8d6921cfdc0671cc24d017440e73d2",
+      "dirty_at_start": {},
+      "task_sha256": "0e2b69f06f995cae63e1d9ac93c9dc8cfdb6301fe4a120b4ad331cf80b93b732",
+      "completed_at": "2026-08-06T18:16:44+00:00"
+    },
+    {
+      "id": "FORGE-VENDOR-1.2",
+      "title": "adopt vendors only the harness-owned skill",
+      "status": "done",
+      "started_at": "2026-08-06T18:16:57+00:00",
+      "base_sha": "f016ec0c5c0ac9e08c9a2edad3aac1cf08de4a3d",
+      "dirty_at_start": {},
+      "task_sha256": "798773697356dbf0ad9503333a4859c2b95b6432127738e09e05747ecaece5ff",
+      "completed_at": "2026-08-06T18:29:54+00:00",
+      "contract_changed": {
+        "at": "2026-08-06T18:29:54+00:00",
+        "from": "a7172ef339516b835f8dbd3cbecf247b30a77bf27dfd2e0364fcb078cb2c8457",
+        "to": "798773697356dbf0ad9503333a4859c2b95b6432127738e09e05747ecaece5ff"
+      }
+    },
+    {
+      "id": "FORGE-VENDOR-1.3",
+      "title": "Gate the FORGE-INIT-1 fixture tests; client-CI simulation",
+      "status": "done",
+      "started_at": "2026-08-06T18:30:07+00:00",
+      "base_sha": "529b2178b93c8b7965a6917b9ec67537cdf3c927",
+      "dirty_at_start": {},
+      "task_sha256": "5038d50a6d2c3b36834f19d174c1b4d7c34e5efa50e10cd5ba9fe83fee651cc0",
+      "completed_at": "2026-08-06T18:49:12+00:00"
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "generated_by": "griller",
+  "gate": "plan",
+  "verdict": "pass",
+  "questions_asked": 1,
+  "gaps": [
+    "How the harness-owned manifest scopes .codex/agents: agents carry no canon markers (only skills do), so enumerating them in a strict whitelist adds drift for no bug-fixing benefit, while omitting them lets a client's custom agent be vendored into a scaffold."
+  ],
+  "contradictions": [],
+  "resolutions": [
+    "Human ruling: FILTER SKILLS ONLY. The manifest scopes the harness-owned skill (forge, under .claude/skills and .codex/skills); .codex/agents and .codex config copy as-is. This closes the actual dangling-canon bug (skills are the canon-marker carriers) without agent-list drift; a client's custom agent landing in a scaffold is cosmetic, not breaking, and is an accepted trade. Folded into Technical Approach and Risks; AC1 already scopes the filter to skills."
+  ],
+  "open_items": [],
+  "summary": "The plan applies the confirmed spec: init and adopt route their .claude/.codex skill vendoring through one shared harness-owned definition (upgrade's CLAUDE_HARNESS_OWNED, now shared), copying only skills/forge and never the source's other skills, while agents/config copy as-is; and the FORGE-INIT-1 fixture-bound tests gain a presence-keyed skip so the vendored suite passes in a client and still runs here. Root cause verified in code (all three commands source from repo_root()). The one open scope decision (agents) was put to the human and resolved. No contradiction with active decisions (0016 machinery ownership is the basis; 0028 boundary helpers are reused unchanged). Ready for plan-mode approval.",
+  "input_sha256": "ec3ed068a6792654ed2be71dc0fbadba582105c9c161d3ada5e7929b2f08e63d",
+  "issue": "FORGE-VENDOR-1",
+  "recorded_at": "2026-08-06T17:49:39+00:00",
+  "commit": "595cd0b85872913a2d004b5aa859fccc30f15a54"
+}

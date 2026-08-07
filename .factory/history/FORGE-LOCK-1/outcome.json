@@ -1,0 +1,7 @@
+{
+  "generated_by": "implementer",
+  "outcome": "The planning lock now guards the harness's own machinery in its own repo: a hand-edit to factory/, constitution/, harness/, .claude/ or .codex/ here needs an approved plan or a bounded quickfix, exactly as a client's product code does \u2014 while a client repo's vendored copy of that machinery stays freely writable during planning. Repo kind is a positive .factory/harness-source.json sentinel (never vendored), and a quickfix pins it at start so deleting the marker mid-window can't unlock machinery. A harness-repo quickfix now claims the machinery files it touches against its five-file budget instead of reporting zero.",
+  "issue": "FORGE-LOCK-1",
+  "commit": "6a9e8de8aa0f3f9c7513b95d7c6715050b8050cf",
+  "recorded_at": "2026-08-07T10:08:16+00:00"
+}

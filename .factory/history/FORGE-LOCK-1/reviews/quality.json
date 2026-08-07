@@ -1,0 +1,26 @@
+{
+  "generated_by": "autoreview",
+  "score": 8,
+  "summary": "Branch autoreview (quality lens): the repo-kind classification is coherent and well-factored \u2014 one shared is_harness_source_repo seam, product_path takes the effective kind, the quickfix pins it at start. The lock, marker plan-only rule, and opaque/copy accounting are clearly separated and commented. The change is bounded to pre_tool_use.py + quickfix.py + repo_kind.py + tests.",
+  "blocking_findings": [],
+  "non_blocking_findings": [
+    {
+      "category": "budget-accuracy",
+      "area": "pre_tool_use.py",
+      "summary": "Exotic cp/mv forms (attached -tDIR, bare mv of a dir, git mv into a dir) are not fully parsed by the write-target extractor \u2014 a budget mis-count / drift-ceiling residual, documented in decision 0030."
+    }
+  ],
+  "residual_risks": [
+    "Per decision 0013/0030, the Bash guard is drift-defense not an adversarial sandbox: exotic copy/move forms and arbitrary code (python -c, find -delete) can mis-count or evade the quickfix budget. This is never a lock disarm (the quickfix repo-kind PIN keeps classification correct regardless); the machinery change is visible in the diff and verify/autoreview/pr_ready are the backstop."
+  ],
+  "recommendation": "approve",
+  "reviewed_scope": [
+    "factory/scripts/pre_tool_use.py",
+    "factory/scripts/forge_cli/quickfix.py",
+    "factory/scripts/forge_cli/repo_kind.py",
+    "factory/tests/test_gates.py"
+  ],
+  "aspect": "quality",
+  "recorded_at": "2026-08-07T10:08:15+00:00",
+  "commit": "6a9e8de8aa0f3f9c7513b95d7c6715050b8050cf"
+}
