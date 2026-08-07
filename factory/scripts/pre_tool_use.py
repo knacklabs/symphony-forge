@@ -199,6 +199,10 @@ def in_factory_state(raw: str, root: Path) -> bool:
         rel = candidate.resolve().relative_to(root.resolve()).as_posix()
     except ValueError:
         return False
+    # `.factory` (the directory itself, e.g. `rm -rf .factory`) is protected too:
+    # deleting it wipes recorded state and the repo-kind marker in one stroke.
+    if rel == ".factory":
+        return True
     return rel.startswith(".factory/") and rel not in FACTORY_STATE_WRITABLE
 
 
@@ -291,6 +295,17 @@ def bash_write_paths(value: str) -> list[str]:
     return found
 
 
+def _contains_marker(rel: str) -> bool:
+    """True when rel IS the repo-kind marker or a directory that contains it.
+
+    An ancestor delete (`rm -rf .factory`, or the repo root) removes the marker
+    just as surely as deleting it by name, so it must be gated the same way.
+    """
+    if rel in ("", ".", HARNESS_SOURCE_MARKER):
+        return True
+    return HARNESS_SOURCE_MARKER.startswith(rel.rstrip("/") + "/")
+
+
 def guard_product_writes(targets: list[str], state: dict, root: Path) -> None:
     product = list(dict.fromkeys(
         rel for raw in targets if (rel := product_path(raw, root)) is not None
@@ -299,10 +314,12 @@ def guard_product_writes(targets: list[str], state: dict, root: Path) -> None:
         return
     approved_and_decomposed = (state.get("plan_status") == "approved"
                                and state.get("decomposition_status") == "recorded")
-    if HARNESS_SOURCE_MARKER in product and not approved_and_decomposed:
+    if (any(_contains_marker(rel) for rel in product)
+            and not approved_and_decomposed):
         # A quickfix must never be able to touch the marker (see its definition):
-        # deleting it mid-window would disable classification and the budget with
-        # it. Only an approved, decomposed plan authorizes a marker change.
+        # deleting it — directly, or by removing an ANCESTOR like `.factory` via
+        # `rm -rf .factory` — would disable classification and the budget with it.
+        # Only an approved, decomposed plan authorizes a marker change.
         deny(MARKER_PLAN_ONLY_MSG)
     if (state.get("plan_status") == "approved"
             and state.get("decomposition_status") == "recorded"):

@@ -3624,13 +3624,18 @@ def test_harness_quickfix_cannot_delete_the_repo_kind_marker(repo):
     mark_harness_source(repo)
     code, out = run(repo, "forge.py", "quickfix", "start", "sneaky")
     assert code == 0, out
+    # Direct deletion of the marker, and deletion of an ANCESTOR that contains
+    # it (`rm -r .factory`, `git rm .factory`) — all refused. (`rm -rf` is caught
+    # even earlier by the blanket rm-rf policy; use `rm -r` to exercise this path.)
     for command in ("rm .factory/harness-source.json",
-                    "git rm .factory/harness-source.json"):
+                    "git rm .factory/harness-source.json",
+                    "rm -r .factory", "git rm .factory"):
         code, out = hook(repo, {
             "tool_name": "Bash", "permission_mode": "default",
             "tool_input": {"command": command},
         })
-        assert code == 0 and "deny" in out and "repo-kind marker" in out, command
+        assert code == 0 and "deny" in out, command
+        assert "repo-kind marker" in out or "recorded state" in out, command
     code, out = hook(repo, {
         "tool_name": "Write", "permission_mode": "default",
         "tool_input": {"file_path": str(repo / ".factory" / "harness-source.json")},
@@ -3644,8 +3649,26 @@ def test_harness_quickfix_cannot_delete_the_repo_kind_marker(repo):
     assert code == 0 and "deny" not in out, out
 
 
-def test_scaffolded_client_has_no_harness_source_marker(repo):
-    assert not (repo / ".factory" / "harness-source.json").exists()
+def test_scaffolded_client_has_no_harness_source_marker(tmp_path, monkeypatch):
+    # Exercise a REAL vendoring path: a harness source that carries the marker
+    # must not copy it into a client via `forge init`, or the client would
+    # classify its vendored machinery as product and lock it during planning.
+    import argparse
+    from forge_cli import scaffold
+    from forge_cli.repo_kind import is_harness_source_repo
+    source = _copy_harness_source(tmp_path)
+    marker = source / ".factory" / "harness-source.json"
+    marker.parent.mkdir(parents=True, exist_ok=True)
+    marker.write_text('{"role": "harness-source", "repo": "symphony-forge"}\n')
+    assert is_harness_source_repo(source)
+
+    monkeypatch.setattr(scaffold, "repo_root", lambda: source)
+    target = tmp_path / "client-app"
+    scaffold.cmd_init(argparse.Namespace(
+        name="client-app", target=str(target), force=False, stack="nestjs-react",
+    ))
+    assert not (target / ".factory" / "harness-source.json").exists()
+    assert not is_harness_source_repo(target)
 
 
 def test_harness_repo_keeps_docs_and_planning_surfaces_writable(repo):
