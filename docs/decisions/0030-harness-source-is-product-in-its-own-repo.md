@@ -57,15 +57,16 @@ catch, classification stays `harness`, machinery keeps being claimed, and the
 five-file budget cannot be escaped. This is the guarantee — the deletion guard is
 defence-in-depth, not the load-bearing wall.
 
-To keep the quickfix budget honest, a quickfix also **refuses opaque product
-writes** — a recursive `rm -r`/`cp -R`, a glob or brace operand, a directory
-source, `cp -t <dir>`, or a copy/move into an existing machinery directory —
-since each would spend one budget slot on an unbounded set of files; the fix must
-enumerate the exact paths or be planned (where the whole diff is measured). This
-covers the common shapes; truly exotic forms (nested subshells, `xargs`, `\rm`,
-arbitrary code) remain a budget-accuracy residual, general to every repo and
-backstopped by the artifact gates — not a lock disarm, since the pin keeps
-classification correct regardless.
+To keep the quickfix budget honest, a quickfix also **refuses an opaque machinery
+DELETE** — a recursive `rm -r`, a glob, or a brace-expanded `rm`/`git rm` of a
+product path — since it would spend one budget slot removing an unbounded set of
+files; the fix must enumerate the exact paths or be planned. Deletion is chosen
+because its operands are unambiguously writes. Copy/move (which read sources and
+write a destination — flagging sources would block harmless read-OUT backups) and
+multi-file `sed -i` are left to the pre-existing quickfix budget-accuracy
+residual: it is general to every repo (a client's `src/` under-counts the same
+way), it is a mis-count and not a lock disarm (the pin keeps classification
+correct regardless), and pr_ready plus the artifact gates are the backstop.
 
 The Bash write guard catches the **common** deletion/relocation vectors that
 reach the marker: `rm`/`unlink`, `git rm`/`git mv`, `mv` of the source, and an

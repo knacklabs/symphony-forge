@@ -3701,30 +3701,29 @@ def test_harness_quickfix_allows_benign_root_destination(repo):
         assert code == 0 and "repo-kind marker" not in out, command
 
 
-def test_harness_quickfix_refuses_opaque_product_writes(repo):
-    # The 5-file budget is only honest if each claimed slot is a bounded file.
-    # A recursive/globbed delete or a copy into a machinery directory would spend
-    # one slot on an unbounded set, so a quickfix refuses them; an explicit
-    # single-file path is bounded and allowed.
+def test_harness_quickfix_refuses_opaque_machinery_deletes(repo):
+    # The 5-file budget is only honest if each claimed slot is a bounded file. A
+    # recursive/globbed/brace-expanded DELETE of machinery would spend one slot on
+    # an unbounded set, so a quickfix refuses it; explicit single-file ops stay
+    # allowed, and — critically — read-OUT copies (product source, external dest)
+    # are NOT blocked (they modify nothing in the repo).
     mark_harness_source(repo)
     (repo / "factory" / "scripts").mkdir(parents=True, exist_ok=True)
     code, out = run(repo, "forge.py", "quickfix", "start", "opaque")
     assert code == 0, out
     for command in ("rm -r factory/scripts",
                     "rm factory/scripts/*.py",
-                    "rm factory/scripts/f{1..6}.py",  # brace expansion
-                    "cp -R /tmp/x factory/scripts/new",  # recursive copy
-                    "cp -t factory/scripts /tmp/a /tmp/b",  # GNU target-dir
-                    "cp /tmp/x factory/scripts/"):
+                    "rm factory/scripts/f{1..6}.py",       # brace expansion
+                    "git rm -r factory/scripts"):
         code, out = hook(repo, {
             "tool_name": "Bash", "permission_mode": "default",
             "tool_input": {"command": command},
         })
-        assert code == 0 and "deny" in out and "cannot bound" in out, command
-    # Bounded single-file ops stay allowed — including a sed program whose regex
-    # contains `*` (that is the program, not a globbed path).
-    for command in ("rm factory/scripts/one.py",
-                    "sed -i 's/foo.*/bar/' factory/scripts/x.py"):
+        assert code == 0 and "deny" in out, command
+    for command in ("rm factory/scripts/one.py",              # explicit single file
+                    "sed -i 's/foo.*/bar/' factory/scripts/x.py",  # sed regex, not a glob
+                    "cp -R factory/scripts /tmp/backup",      # read-OUT: nothing written in-repo
+                    "cp factory/scripts/*.py /tmp/backup"):   # read-OUT glob source
         code, out = hook(repo, {
             "tool_name": "Bash", "permission_mode": "default",
             "tool_input": {"command": command},

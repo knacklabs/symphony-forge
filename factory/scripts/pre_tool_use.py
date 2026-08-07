@@ -320,27 +320,21 @@ def _contains_marker(rel: str) -> bool:
 # globs (`*?[`) and brace expansion (`{1..6}`, `{a,b}`).
 GLOB_METACHARS = ("*", "?", "[", "{")
 OPAQUE_QUICKFIX_MSG = (
-    "This write affects a product-path file set a quickfix cannot bound — a "
-    "recursive/globbed delete or a copy/move into a machinery directory claims "
-    "one budget slot but touches many files. Enumerate the exact paths, or plan "
-    "the change (plan mode / an approved plan) where the diff is measured whole."
+    "A recursive or globbed delete of machinery claims one quickfix budget slot "
+    "but removes many files. Enumerate the exact paths, or plan the change (plan "
+    "mode / an approved plan) where the whole diff is measured."
 )
 
 
-def _is_dir(path: str, root: Path) -> bool:
-    candidate = Path(path) if Path(path).is_absolute() else root / path
-    return candidate.is_dir()
-
-
 def has_opaque_product_write(command: str, root: Path, is_harness: bool) -> bool:
-    """A product write/delete whose exact file set can't be read from the literal
-    command — a recursive `rm -r`/`cp -R`, a glob or brace operand, a directory
-    source, or a copy/move into a product directory — so a quickfix cannot
-    honestly claim it against its budget.
-
-    # ponytail: common shapes only (decision 0013). Target-directory tricks
-    # beyond `-t`, and pure shell games, stay a documented budget-accuracy
-    # residual — general to every repo, backstopped by the artifact gates.
+    """A recursive, globbed, or brace-expanded DELETION of a product path — its
+    exact file set can't be read from the literal command, so a quickfix cannot
+    honestly claim it. Deletion only (`rm`/`unlink`/`git rm`): its operands are
+    unambiguously writes. Copy/move (read-vs-write asymmetry, target-directory
+    forms) and multi-file `sed -i` are left to the pre-existing quickfix
+    budget-accuracy residual — general to every repo, backstopped by the artifact
+    gates (decision 0013). The repo-kind PIN, not this check, is what keeps the
+    lock un-escapable regardless of deletion vector.
     """
     for segment in re.split(r"[;&|\n]+", strip_heredoc_bodies(command)):
         tokens = tokenize(segment)
@@ -354,42 +348,23 @@ def has_opaque_product_write(command: str, root: Path, is_harness: bool) -> bool
         args = tokens[index + 1:]
         if name == "git":
             sub, args = git_subcommand(args)
-            if sub not in {"rm", "mv"}:
+            if sub != "rm":
                 continue
-            name = sub
-        elif name not in {"rm", "unlink", "cp", "mv", "tee", "sed"}:
+            name = "rm"
+        elif name not in {"rm", "unlink"}:
             continue
         flags = [token for token in args if token.startswith("-")]
         operands = [token for token in args
                     if not token.startswith("-") and token not in {">", ">>"}]
-        recursive = name in {"rm", "cp", "mv"} and any(
-            flag in ("-r", "-R", "-a", "--recursive", "--archive")
+        recursive = any(
+            flag in ("-r", "-R", "--recursive")
             or (len(flag) > 1 and not flag.startswith("--")
-                and ("r" in flag or "R" in flag or "a" in flag))
+                and ("r" in flag or "R" in flag))
             for flag in flags)
-        # sed's program (`s/foo.*/bar/`) is not a path — only its trailing file
-        # operand is; checking the program would flag its regex `*` as a glob.
-        path_operands = operands[-1:] if name == "sed" else operands
-        for operand in path_operands:
-            globbed = any(char in operand for char in GLOB_METACHARS)
-            if (recursive or globbed) and product_path(operand, root, is_harness):
+        for operand in operands:
+            unbounded = recursive or any(char in operand for char in GLOB_METACHARS)
+            if unbounded and product_path(operand, root, is_harness):
                 return True
-        if name in {"cp", "mv"}:
-            # GNU `-t <dir>` / `--target-directory=<dir>`: many sources INTO a dir.
-            target = None
-            for position, arg in enumerate(args):
-                if arg in ("-t", "--target-directory") and position + 1 < len(args):
-                    target = args[position + 1]
-                elif arg.startswith("--target-directory="):
-                    target = arg.split("=", 1)[1]
-            if target is not None and product_path(target, root, is_harness):
-                return True
-            if len(operands) >= 2:
-                dest, sources = operands[-1], operands[:-1]
-                if product_path(dest, root, is_harness) and (
-                        recursive or _is_dir(dest, root)
-                        or any(_is_dir(src, root) for src in sources)):
-                    return True
     return False
 
 
