@@ -3896,8 +3896,19 @@ def test_mode_done_refuses_dirty_product_tree(repo):
 def test_mode_done_refuses_over_budget_committed_diff(repo):
     open_lite(repo)
     (repo / "src").mkdir()
-    for number in range(6):
+    for number in range(5):
         (repo / "src" / f"fix_{number}.py").write_text(f"value = {number}\n")
+    git(repo, "add", "src")
+    git(repo, "commit", "-q", "-m", "maximum-size lite fix")
+    write_lite_reviews(repo)
+
+    code, out = run(repo, "forge.py", "mode", "done")
+
+    assert code == 0 and "5 file(s)" in out, out
+
+    open_lite(repo)
+    for number in range(6):
+        (repo / "src" / f"extra_{number}.py").write_text(f"value = {number}\n")
     git(repo, "add", "src")
     git(repo, "commit", "-q", "-m", "oversized lite fix")
 
@@ -3908,7 +3919,7 @@ def test_mode_done_refuses_over_budget_committed_diff(repo):
 
 
 def test_mode_done_requires_clean_reviews_at_head(repo):
-    open_lite(repo)
+    active = open_lite(repo)
     (repo / "src").mkdir()
     (repo / "src" / "reviewed.py").write_text("reviewed = True\n")
     git(repo, "add", "src/reviewed.py")
@@ -3916,6 +3927,10 @@ def test_mode_done_requires_clean_reviews_at_head(repo):
 
     code, out = run(repo, "forge.py", "mode", "done")
     assert code != 0 and ".factory/reviews/quality.json" in out, out
+
+    write_lite_reviews(repo, commit=active["base_sha"])
+    code, out = run(repo, "forge.py", "mode", "done")
+    assert code != 0 and "must be stamped at HEAD" in out, out
 
     write_lite_reviews(repo, blocker="fix this")
     code, out = run(repo, "forge.py", "mode", "done")
