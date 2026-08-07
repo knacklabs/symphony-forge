@@ -1,0 +1,9 @@
+{
+  "event": "open",
+  "id": "Q-0037-8bab",
+  "reason": "board story_detail crashes (TypeError) on object-form required_tests, so done-story drawers show no content",
+  "started_at": "2026-08-07T11:55:09+00:00",
+  "max_files": 5,
+  "files": [],
+  "harness_source": true
+}

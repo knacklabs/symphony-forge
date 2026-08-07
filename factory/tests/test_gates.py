@@ -5043,6 +5043,42 @@ def test_board_task_rows_carry_their_own_plan_spec_and_proof(repo, tmp_path):
     assert plan_section(body, "T9") == ""
 
 
+def test_board_task_dossiers_survive_object_form_required_tests():
+    """required_tests entries are {id, path, command} OBJECTS (the recorded
+    decomposition schema), not bare strings. Coverage matched on the whole dict
+    (`t in str(recorded)`), which raised TypeError and crashed the story drawer
+    (HTTP 000) for EVERY done story, so their content never rendered. Coverage
+    must key on the test id; a legacy bare-string entry still works."""
+    sys.path.insert(0, str(HARNESS / "factory" / "scripts"))
+    from forge_cli.board import task_dossiers
+    detail = {
+        "plan_body": "",
+        "spec": {"path": "docs/specs/x.md"},
+        "evidence": {
+            "decomposition": {"tasks": [{
+                "id": "T1", "title": "slice", "objective": "build it",
+                "acceptance_criteria": ["works"],
+                "required_tests": [
+                    {"id": "test_alpha", "path": "t.py", "command": "pytest {path}::{id}"},
+                    {"id": "test_beta", "path": "t.py", "command": "pytest {path}::{id}"},
+                    "test_legacy_string",
+                ],
+            }]},
+            "stages": {"stages": [{"id": "T1", "status": "done"}]},
+            "tests": {"automated": {
+                "tests_added_or_updated": ["test_alpha runs green", "test_legacy_string"]}},
+            "verify": {"ok": True},
+            "reviews": {},
+        },
+    }
+    dossiers = task_dossiers(detail)  # must not raise
+    assert len(dossiers) == 1
+    covered = dossiers[0]["proof"]["covered_tests"]
+    covered_ids = {t["id"] if isinstance(t, dict) else t for t in covered}
+    # matched by id — alpha and the legacy string are recorded; beta is not
+    assert covered_ids == {"test_alpha", "test_legacy_string"}, covered_ids
+
+
 def test_adhoc_capture_is_visible_debt_not_a_build_bypass(repo, tmp_path):
     """The client emails a new ask mid-sprint. It must be capturable — an
     ask that cannot be recorded gets built off the books — without becoming a
