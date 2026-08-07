@@ -15,7 +15,8 @@
         "factory/scripts/pre_tool_use.py",
         "factory/scripts/forge_cli/repo_kind.py",
         ".factory/harness-source.json",
-        "factory/tests/test_gates.py"
+        "factory/tests/test_gates.py",
+        "docs/decisions/0030-harness-source-is-product-in-its-own-repo.md"
       ],
       "acceptance_criteria": [
         "In the harness repo (marker present), a raw Edit/Write and a Bash redirect under factory/ are DENIED when plan_status is not approved and no quickfix is open; ALLOWED once plan_status=approved and decomposition recorded.",
@@ -58,5 +59,5 @@
     }
   ],
   "project": "",
-  "commit": "e4e5f973fe5f5e6fd8f811b72bc168ea40751d8b"
+  "commit": "300eee91aa1df389dbdcdd842f4ffd454955a4be"
 }

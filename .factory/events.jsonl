@@ -480,3 +480,4 @@
 {"event": "implementing", "generated_by": "orchestrator", "at": "2026-08-07T03:35:03+00:00", "story": "FORGE-LOCK-1"}
 {"event": "stage-start", "generated_by": "implementer", "at": "2026-08-07T03:35:03+00:00", "story": "FORGE-LOCK-1", "detail": "FORGE-LOCK-1.1 Repo-kind-aware planning lock + harness-source marker"}
 {"event": "verify-passed", "generated_by": "orchestrator", "at": "2026-08-07T04:09:05+00:00", "story": "FORGE-LOCK-1"}
+{"event": "decomposed", "generated_by": "docs-decomposer", "at": "2026-08-07T04:33:18+00:00", "story": "FORGE-LOCK-1", "detail": "1 task(s)"}
