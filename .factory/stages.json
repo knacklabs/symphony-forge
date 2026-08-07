@@ -14,7 +14,17 @@
     {
       "id": "FORGE-MODES-1.2",
       "title": "The lite fix path (terra@high)",
-      "status": "pending"
+      "status": "done",
+      "started_at": "2026-08-07T08:06:35+00:00",
+      "base_sha": "0f3bff2dd6c691caaecd162c46e17fbb1f072221",
+      "dirty_at_start": {
+        ".factory/signals.jsonl": {
+          "digest": "d92c71f093c5fb8432d4a624b772734587e8c68534d9d988f1eaa29f7f6754de",
+          "git": "? .factory/signals.jsonl\u0000\u0000\u0000"
+        }
+      },
+      "task_sha256": "70706827015e5bf3a32583d03c8509f05908ec85af2517fad67d268faf6864bc",
+      "completed_at": "2026-08-07T08:28:46+00:00"
     },
     {
       "id": "FORGE-MODES-1.3",
