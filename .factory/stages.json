@@ -4,7 +4,12 @@
     {
       "id": "FORGE-MODES-1.1",
       "title": "The lite window",
-      "status": "pending"
+      "status": "done",
+      "started_at": "2026-08-07T07:52:52+00:00",
+      "base_sha": "fc0a998c2bc89fc2bc6422077dccf5f2cee76a32",
+      "dirty_at_start": {},
+      "task_sha256": "437fd79c3a6b8f9f9e158d37567170b148ba3fc5d24eb29a6cbab5e0cd06273e",
+      "completed_at": "2026-08-07T08:06:13+00:00"
     },
     {
       "id": "FORGE-MODES-1.2",
