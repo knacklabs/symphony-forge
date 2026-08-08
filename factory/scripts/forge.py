@@ -77,6 +77,13 @@ def main() -> None:
         "backfill", help="repair legacy done-story cards and PR links")
     p_project_backfill.add_argument("--repo")
     p_project_backfill.set_defaults(func=project_mod.cmd_backfill)
+    p_project_mark_predates = project_sub.add_parser(
+        "mark-predates", help="human-confirm that a story predates the outcome contract")
+    p_project_mark_predates.add_argument("key", help="story or issue key")
+    p_project_mark_predates.add_argument(
+        "--reason", required=True, help="why this story predates the outcome contract")
+    p_project_mark_predates.add_argument("--repo")
+    p_project_mark_predates.set_defaults(func=project_mod.cmd_mark_predates)
 
     p_init = sub.add_parser("init", help="scaffold a new client repo from this harness")
     p_init.add_argument("--name", required=True)

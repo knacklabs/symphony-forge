@@ -1,0 +1,15 @@
+{
+  "generated_by": "griller",
+  "gate": "task",
+  "task_id": "FORGE-BOARD-5.2",
+  "verdict": "pass",
+  "questions_asked": 0,
+  "summary": "Grilled FORGE-BOARD-5.2 (backfill provenance honesty) against real prior state: project.py backfill_project currently sets item['predates_outcome_contract']=True on the ZERO-match branch (the honesty hole). The fix removes that auto-set (report unresolved + skip; board_problems keeps the story red) and adds forge project mark-predates <key> --reason as the human-confirmed path (records reason + sets the marker). Unique-match link and 2+ ambiguous report+skip are untouched. write_scope covers project.py, forge.py (register mark-predates), test_gates.py. required_tests prove: zero-match no longer predates + stays red; mark-predates is the human path; unique still links. No regression to the FORGE-BOARD-4 dogfood (its 10 stories matched uniquely). No gaps.",
+  "gaps": [],
+  "contradictions": [],
+  "resolutions": [],
+  "open_items": [],
+  "input_sha256": "99cb70ffd7db6657dd3d58071f172c9ff9a7eadf34fe3aa16fea121aaf241c8b",
+  "recorded_at": "2026-08-08T18:43:09+00:00",
+  "commit": "377391dc6be1129966b28a43091d2968cdb42f73"
+}

@@ -4,16 +4,30 @@
     {
       "id": "FORGE-BOARD-5.1",
       "title": "forge roadmap fill (safe pending repair)",
-      "status": "active",
+      "status": "done",
       "started_at": "2026-08-08T18:34:28+00:00",
       "base_sha": "cf545849982898c7697a232cd11df2cc1624dc06",
       "dirty_at_start": {},
-      "task_sha256": "b0dc4e0ccf795bd57a01d1c2ea1fc3c3bfe14de0b49956bb55ded0f73b635dbe"
+      "task_sha256": "b0dc4e0ccf795bd57a01d1c2ea1fc3c3bfe14de0b49956bb55ded0f73b635dbe",
+      "completed_at": "2026-08-08T18:42:50+00:00"
     },
     {
       "id": "FORGE-BOARD-5.2",
       "title": "backfill provenance honesty (zero-match -> unresolved)",
-      "status": "pending"
+      "status": "active",
+      "started_at": "2026-08-08T18:43:08+00:00",
+      "base_sha": "377391dc6be1129966b28a43091d2968cdb42f73",
+      "dirty_at_start": {
+        ".factory/events.jsonl": {
+          "digest": "41c615469a791221b62e9cb3af0c0dd2f8bb12f4e7d210a95bd810e154b5be59",
+          "git": "1 .M N... 100644 100644 100644 35900a6bbe29c31d18cc36ea7d3cd4c0d72be0f5 35900a6bbe29c31d18cc36ea7d3cd4c0d72be0f5 .factory/events.jsonl\u0000\u0000100644 35900a6bbe29c31d18cc36ea7d3cd4c0d72be0f5 0\t.factory/events.jsonl\u0000\u0000H .factory/events.jsonl\u0000"
+        },
+        ".factory/stages.json": {
+          "digest": "f9a3841985e52bb21207cf2b93da6a65ad25e77b6a19f5f161d81ab993c084f4",
+          "git": "1 .M N... 100644 100644 100644 99df3606c0bbe3a0e7b1414bc6c8243d449c6052 99df3606c0bbe3a0e7b1414bc6c8243d449c6052 .factory/stages.json\u0000\u0000100644 99df3606c0bbe3a0e7b1414bc6c8243d449c6052 0\t.factory/stages.json\u0000\u0000H .factory/stages.json\u0000"
+        }
+      },
+      "task_sha256": "99cb70ffd7db6657dd3d58071f172c9ff9a7eadf34fe3aa16fea121aaf241c8b"
     }
   ]
 }

@@ -12,7 +12,8 @@ from check_board_complete import board_problems
 from check_vendor_integrity import integrity_problems
 from factory_lib import repo_root
 
-from .events import load_events
+from .common import fail
+from .events import append_event, load_events
 from .history import cmd_pr_link
 from .roadmap import load_items, pending_story_problems, save_roadmap
 
@@ -202,7 +203,7 @@ def backfill_project(base: Path, gh: GhSeam = _github_merge_records) -> dict[str
         and item.get("predates_outcome_contract") is not True
     ]
     records = gh(base) if candidates else []
-    counts = {"linked": 0, "predates": 0, "ambiguous": 0, "reconstructed": 0}
+    counts = {"linked": 0, "unresolved": 0, "ambiguous": 0, "reconstructed": 0}
     changed = False
 
     for item in candidates:
@@ -220,10 +221,8 @@ def backfill_project(base: Path, gh: GhSeam = _github_merge_records) -> dict[str
             cmd_pr_link(argparse.Namespace(repo=str(base), story=key, reference=reference))
             counts["linked"] += 1
         elif not matches:
-            item["predates_outcome_contract"] = True
-            changed = True
-            counts["predates"] += 1
-            print(f"Marked {key} predates_outcome_contract (no GitHub merge match)")
+            counts["unresolved"] += 1
+            print(f"SKIP {key}: unresolved provenance (no GitHub merge match)")
         else:
             references = [reference for match in matches
                           if (reference := _pr_reference(match))]
@@ -241,6 +240,29 @@ def cmd_backfill(args: argparse.Namespace) -> None:
     counts = backfill_project(base)
     print(
         "Project backfill complete: "
-        f"{counts['linked']} linked, {counts['predates']} predates, "
+        f"{counts['linked']} linked, {counts['unresolved']} unresolved, "
         f"{counts['ambiguous']} ambiguous, {counts['reconstructed']} card(s) reconstructed."
     )
+
+
+def cmd_mark_predates(args: argparse.Namespace) -> None:
+    base = Path(args.repo).resolve() if args.repo else repo_root()
+    reason = args.reason.strip()
+    if not reason:
+        fail("project mark-predates requires a non-blank --reason")
+
+    items = load_items(base)
+    item = next((entry for entry in items if entry.get("key") == args.key), None)
+    if item is None:
+        fail(f"{args.key} is not on the roadmap")
+
+    item["predates_outcome_contract"] = True
+    save_roadmap(base, items)
+    append_event(
+        base,
+        "project-mark-predates",
+        actor="human",
+        story=args.key,
+        detail=reason,
+    )
+    print(f"Marked {args.key} predates_outcome_contract: {reason}")

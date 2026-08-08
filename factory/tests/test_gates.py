@@ -5039,7 +5039,7 @@ def _backfill_events(repo: Path) -> list[dict]:
     return [json.loads(line) for line in path.read_text().splitlines()]
 
 
-def test_project_backfill_links_recoverable_story(repo):
+def test_project_backfill_unique_match_still_links(repo):
     key = "BOARD-210"
     pr = _merged_pr(42, f"{key} ship the board", f"feat/{key}-ship-board")
 
@@ -5052,18 +5052,53 @@ def test_project_backfill_links_recoverable_story(repo):
     assert [event["detail"] for event in links] == [pr["url"]]
 
 
-def test_project_backfill_marks_zero_match_predates(repo):
+def test_project_backfill_zero_match_does_not_predate(repo, capsys):
     key = "BOARD-211"
 
     counts = _backfill_done_story(repo, key, [])
 
+    out = capsys.readouterr().out
     item = roadmap_items(repo)[key]
-    assert counts["predates"] == 1
-    assert item["predates_outcome_contract"] is True
+    assert counts["unresolved"] == 1
+    assert f"SKIP {key}: unresolved provenance" in out
+    assert "predates_outcome_contract" not in item
     assert not any(
         event.get("event") == "pr-linked" and event.get("story") == key
         for event in _backfill_events(repo)
     )
+
+
+def test_project_backfill_zero_match_stays_red(repo):
+    key = "BOARD-216"
+    add_story_history(repo, key)
+
+    _backfill_done_story(repo, key, [])
+
+    code, out = run(repo, "check_board_complete.py")
+    assert code != 0, out
+    assert f"{key}: missing pr-linked event" in out
+
+
+def test_project_mark_predates_is_human_confirmed(repo):
+    key = "BOARD-217"
+    reason = "Shipped before durable outcome and PR-link records existed"
+    board_story(repo, key, outcome="")
+
+    code, out = run(
+        repo, "forge.py", "project", "mark-predates", key,
+        "--reason", reason, "--repo", str(repo),
+    )
+
+    assert code == 0, out
+    assert roadmap_items(repo)[key]["predates_outcome_contract"] is True
+    confirmations = [
+        event for event in _backfill_events(repo)
+        if event.get("event") == "project-mark-predates"
+        and event.get("story") == key
+    ]
+    assert len(confirmations) == 1
+    assert confirmations[0]["generated_by"] == "human"
+    assert confirmations[0]["detail"] == reason
 
 
 def test_project_backfill_reports_ambiguous_without_guessing(repo, capsys):
@@ -5163,7 +5198,8 @@ def test_project_backfill_is_idempotent(repo):
     second = backfill_project(repo, gh=gh_fixture)
 
     assert first["linked"] == 1
-    assert second == {"linked": 0, "predates": 0, "ambiguous": 0, "reconstructed": 0}
+    assert second == {"linked": 0, "unresolved": 0, "ambiguous": 0,
+                      "reconstructed": 0}
     assert calls == 1
     assert (repo / "plans" / "roadmap.json").read_bytes() == before["roadmap"]
     assert (repo / ".factory" / "events.jsonl").read_bytes() == before["events"]
