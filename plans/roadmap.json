@@ -315,16 +315,19 @@
         "Both grill points are kept: the story-level plan-grill validates the decomposition; the per-task JIT grill validates each task's details against real prior state."
       ],
       "order": 14,
-      "status": "active",
+      "status": "done",
       "epic": "traceable-board",
       "skill": "backend",
       "kind": "feature",
       "depends_on": [],
-      "spec": "docs/specs/traceable-board.md"
+      "spec": "docs/specs/traceable-board.md",
+      "completed_at": "2026-08-08T06:51:50+00:00",
+      "history": ".factory/history/FORGE-BOARD-2/",
+      "outcome": "The factory now records only a task LIST at decomposition and gates each task's detailed contract behind a just-in-time grill: forge delegate <task> refuses a write launch without a fresh, digest-bound passing per-task grill (decision 0032, amending 0007). A task's write_scope/tests/acceptance are authored against what earlier tasks actually built, then grilled, then delegated \u2014 so speculative upfront contracts that produce wrong code are gated out. The board renders each task's JIT grill status and a done story's PR link."
     }
   ],
   "generated_by": "human",
-  "updated_at": "2026-08-08T04:48:40+00:00",
+  "updated_at": "2026-08-08T06:51:50+00:00",
   "epics": [
     {
       "id": "symphony-forge",

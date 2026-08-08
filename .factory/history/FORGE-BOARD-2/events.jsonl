@@ -1,0 +1,30 @@
+{"event": "roadmap-add", "generated_by": "orchestrator", "at": "2026-08-08T04:48:06+00:00", "story": "FORGE-BOARD-2", "detail": "docs/specs/traceable-board.md"}
+{"event": "intake", "generated_by": "orchestrator", "at": "2026-08-08T04:48:40+00:00", "story": "FORGE-BOARD-2", "detail": "JIT task planning: per-task plan+grill against real prior state"}
+{"event": "plan-human-approved", "generated_by": "human", "at": "2026-08-08T05:24:17+00:00", "story": "FORGE-BOARD-2", "detail": "FORGE-BOARD-2 approved by vrknetha"}
+{"event": "plan-approved", "generated_by": "planner-high", "at": "2026-08-08T05:24:17+00:00", "story": "FORGE-BOARD-2", "detail": "plans/active/FORGE-BOARD-2-jit-task-planning-per-task-plan-grill-against-real-prior-state.md"}
+{"event": "decomposed", "generated_by": "docs-decomposer", "at": "2026-08-08T05:27:37+00:00", "story": "FORGE-BOARD-2", "detail": "4 task(s)"}
+{"event": "implementing", "generated_by": "orchestrator", "at": "2026-08-08T05:28:02+00:00", "story": "FORGE-BOARD-2"}
+{"event": "stage-start", "generated_by": "implementer", "at": "2026-08-08T05:30:12+00:00", "story": "FORGE-BOARD-2", "detail": "FORGE-BOARD-2.1 Per-task grill recorder + schema + storage"}
+{"event": "delegated", "generated_by": "orchestrator", "at": "2026-08-08T05:34:57+00:00", "story": "FORGE-BOARD-2", "detail": "FORGE-BOARD-2.1 (write)"}
+{"event": "stage-done", "generated_by": "implementer", "at": "2026-08-08T05:36:22+00:00", "story": "FORGE-BOARD-2", "detail": "FORGE-BOARD-2.1 Per-task grill recorder + schema + storage"}
+{"event": "stage-start", "generated_by": "implementer", "at": "2026-08-08T05:36:32+00:00", "story": "FORGE-BOARD-2", "detail": "FORGE-BOARD-2.2 require_task_grill + delegation gate"}
+{"event": "signal-contradiction", "generated_by": "implementer", "at": "2026-08-08T05:38:32+00:00", "story": "FORGE-BOARD-2", "detail": "FORGE-BOARD-2.2 requires pr_ready to archive .factory/grills/tasks/, but factory/scripts/pr_ready.py owns that archive and is outside the declared write scope; add it to scope or move the acceptance c"}
+{"event": "signal-resolved", "generated_by": "orchestrator", "at": "2026-08-08T05:41:16+00:00", "story": "FORGE-BOARD-2", "detail": "S-0001-9b77: Confirmed \u2014 pr_ready.py is correctly OUT of scope for 2.2. Implement only require_task_grill + the cmd_delegate gate + its tests within the declared write_scope (factory_lib.py, delegate.py, test_gate"}
+{"event": "delegated", "generated_by": "orchestrator", "at": "2026-08-08T05:41:37+00:00", "story": "FORGE-BOARD-2", "detail": "FORGE-BOARD-2.2 (write)"}
+{"event": "decomposed", "generated_by": "docs-decomposer", "at": "2026-08-08T05:43:24+00:00", "story": "FORGE-BOARD-2", "detail": "4 task(s)"}
+{"event": "delegated", "generated_by": "orchestrator", "at": "2026-08-08T06:05:03+00:00", "story": "FORGE-BOARD-2", "detail": "FORGE-BOARD-2.2 (write)"}
+{"event": "stage-contract-changed", "generated_by": "implementer", "at": "2026-08-08T06:05:40+00:00", "story": "FORGE-BOARD-2", "detail": "FORGE-BOARD-2.2: task contract re-recorded mid-stage"}
+{"event": "stage-done", "generated_by": "implementer", "at": "2026-08-08T06:05:40+00:00", "story": "FORGE-BOARD-2", "detail": "FORGE-BOARD-2.2 require_task_grill + delegation gate"}
+{"event": "stage-start", "generated_by": "implementer", "at": "2026-08-08T06:06:29+00:00", "story": "FORGE-BOARD-2", "detail": "FORGE-BOARD-2.3 Board/UI: per-task grill status + done-story PR link"}
+{"event": "delegated", "generated_by": "orchestrator", "at": "2026-08-08T06:14:06+00:00", "story": "FORGE-BOARD-2", "detail": "FORGE-BOARD-2.3 (write)"}
+{"event": "stage-done", "generated_by": "implementer", "at": "2026-08-08T06:16:46+00:00", "story": "FORGE-BOARD-2", "detail": "FORGE-BOARD-2.3 Board/UI: per-task grill status + done-story PR link"}
+{"event": "stage-start", "generated_by": "implementer", "at": "2026-08-08T06:17:07+00:00", "story": "FORGE-BOARD-2", "detail": "FORGE-BOARD-2.4 Decision + docs: the JIT loop as contract"}
+{"event": "delegated", "generated_by": "orchestrator", "at": "2026-08-08T06:25:54+00:00", "story": "FORGE-BOARD-2", "detail": "FORGE-BOARD-2.4 (write)"}
+{"event": "stage-done", "generated_by": "implementer", "at": "2026-08-08T06:26:42+00:00", "story": "FORGE-BOARD-2", "detail": "FORGE-BOARD-2.4 Decision + docs: the JIT loop as contract"}
+{"event": "verify-failed", "generated_by": "orchestrator", "at": "2026-08-08T06:31:19+00:00", "story": "FORGE-BOARD-2"}
+{"event": "verify-passed", "generated_by": "orchestrator", "at": "2026-08-08T06:49:16+00:00", "story": "FORGE-BOARD-2"}
+{"event": "review-quality", "generated_by": "autoreview", "at": "2026-08-08T06:50:40+00:00", "story": "FORGE-BOARD-2"}
+{"event": "review-performance", "generated_by": "autoreview", "at": "2026-08-08T06:50:40+00:00", "story": "FORGE-BOARD-2"}
+{"event": "review-security", "generated_by": "autoreview", "at": "2026-08-08T06:50:40+00:00", "story": "FORGE-BOARD-2"}
+{"event": "tests-automated", "generated_by": "implementer", "at": "2026-08-08T06:51:36+00:00", "story": "FORGE-BOARD-2", "detail": "pass"}
+{"event": "shipped", "generated_by": "orchestrator", "at": "2026-08-08T06:51:50+00:00", "story": "FORGE-BOARD-2", "detail": "The factory now records only a task LIST at decomposition and gates each task's detailed contract behind a just-in-time grill: forge delegate <task> refuses a write launch without a fresh, digest-boun"}

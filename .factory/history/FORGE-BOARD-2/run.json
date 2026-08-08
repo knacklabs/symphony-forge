@@ -1,0 +1,17 @@
+{
+  "issue_key": "FORGE-BOARD-2",
+  "title": "JIT task planning: per-task plan+grill against real prior state",
+  "tracker": "linear",
+  "branch": "feat/FORGE-BOARD-2-jit-task-planning-per-task-plan-grill-against-real-prior-state",
+  "phase": "pr-ready",
+  "plan_status": "approved",
+  "decomposition_status": "recorded",
+  "implementation_status": "pending",
+  "tests_status": "passed",
+  "verify_status": "passed",
+  "review_status": "passed",
+  "created_at": "2026-08-08T04:48:40+00:00",
+  "updated_at": "2026-08-08T06:51:50+00:00",
+  "plan_file": "plans/completed/FORGE-BOARD-2-jit-task-planning-per-task-plan-grill-against-real-prior-state.md",
+  "story": "FORGE-BOARD-2"
+}
