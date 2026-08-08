@@ -65,12 +65,19 @@ sign-off.
 Every handover gate is preceded by a recorded GRILL
 (`factory/prompts/griller.md`): an adversarial gaps-and-contradictions
 interrogation of what one role hands the next. Confirming each spec requires a
-fresh pass bound to that spec. The existing `signoff`, `epics`, and `plan`
-grills cover client→PM context, the derived backlog, and each task plan
-respectively. The verdict lands in `.factory/grills/<gate>.json` via
-`record_grill_from_json.py` (schema-validated, `generated_by: griller`);
-stale means the handover inputs changed after the grill. Findings must resolve
-into doc edits or decision records before a `pass` is recordable.
+fresh pass bound to that spec. Five scopes are enforced: `spec`, `signoff`,
+`epics`, `plan`, and `task`. The first four cover capability confirmation,
+client→PM context, the derived backlog, and the story plan. The per-leaf
+`task` grill introduced by decision 0032 (JIT task planning) interrogates the
+just-authored task contract against the real state left by completed stages.
+Its verdict lands in `.factory/grills/tasks/<id>.json` and is bound to the
+contract digest over `write_scope`, `required_tests`, `verify_commands`, and
+`acceptance_criteria`; a write `forge delegate <id>` refuses a missing,
+non-passing, or stale record. Other verdicts land in
+`.factory/grills/<gate>.json`. All records go through
+`record_grill_from_json.py` (schema-validated, `generated_by: griller`).
+Findings must resolve into contract/doc edits or decision records before a
+`pass` is recordable.
 
 ## Context Inbox & Doc Upkeep
 
@@ -249,6 +256,14 @@ window (`./forge quickfix start "<reason>"`), or a bounded ledgered lite window
 `factory/`, and `prototype/`) and read-only exploration stay open. Everything
 downstream remains enforced at the artifact gates.
 
+Decision 0032 adds a deterministic per-task grill to Full-mode execution. For
+each pending leaf the prescribed order is author the contract → re-record the
+decomposition → pass the digest-bound `task` grill → `forge stage start`
+→ `forge delegate`. `stage start` establishes the measured work boundary;
+the write-delegation path is the hard enforcement point and refuses a missing,
+non-passing, or stale `.factory/grills/tasks/<id>.json`. Read-only delegation
+does not cross that write gate.
+
 The PR boundary adds two deterministic CI gates. Gate A runs
 `.github/workflows/pr-ticket-check.yml` on each pull request and requires
 exactly one resolved story or work window whose completion evidence travels in
@@ -263,9 +278,14 @@ outcome and link requirements.
 
 ## Task Graph Rules
 - The planner owns decomposition.
-- Decomposition is capability-driven; the recorded artifact is canonical
+- Decomposition is capability-driven. Its first recording is the ordered task
+  LIST: stable ids, titles, objectives, acceptance intent, and dependencies
   (mirror to a tracker if the project uses one).
-- Each leaf task must have write scope, dependencies, acceptance criteria, verify commands, and reviewer focus.
+- Execution-contract detail is authored just in time for the next leaf task,
+  against the actual output of its completed dependencies: write scope, exact
+  acceptance criteria, verify commands, required tests, and reviewer focus.
+  Re-record the decomposition before grilling that contract. Do not guess
+  later-task detail during the initial decomposition (decision 0032).
 - One task should fit one implementation session and one review package.
 
 ## Project Roadmap
@@ -317,23 +337,30 @@ committed isn't merged.
 
 ## Stage Loop — defects never enter history
 
-Recording the decomposition also creates `.factory/stages.json` — the
-mutable execution twin of the immutable decomposition (decision 0007), one
-stage per leaf task in execution order. The dev works stages strictly
-through the loop:
+Recording the initial task list also creates `.factory/stages.json` — the
+mutable execution twin of the re-recordable decomposition (decision 0007),
+one stage per leaf task in execution order. Decision 0032 makes the pre-work
+sequence a JIT contract loop for every pending task:
 
-1. `forge stage start <id>` (strictly order-enforced; task-level `--parallel`
+1. author the next task's full contract against the approved plan and the real
+   repository state left by completed dependencies
+2. re-record the decomposition with that contract
+3. run `factory/prompts/griller.md` with `--gate task`, resolve its findings,
+   and record the pass for that id and current task-contract digest:
+   `record_grill_from_json.py --gate task --task <id> --task-digest <hash>`
+4. `forge stage start <id>` (strictly order-enforced; task-level `--parallel`
    is refused)
-2. `forge delegate <id>` composes the task brief and launches the installed
-   companion in the foreground with write access derived from stage state
-3. the orchestrator inspects the diff and rejects overbuilt code
-4. that stage's assumption rows are validated (`forge assumptions list --open`)
-5. smallest relevant checks run
-6. **local autoreview on the UNCOMMITTED diff until clean** (`autoreview
+5. `forge delegate <id>` composes the task brief and launches the installed
+   companion in the foreground with write access derived from stage state;
+   this is the hard gate that refuses a missing, failed, or stale task grill
+6. the orchestrator inspects the diff and rejects overbuilt code
+7. that stage's assumption rows are validated (`forge assumptions list --open`)
+8. smallest relevant checks run
+9. **local autoreview on the UNCOMMITTED diff until clean** (`autoreview
    --mode local`, run DIRECTLY by the orchestrator with the autoreview
    skill — never as a Codex handoff, which re-triggers the same skill one
    indirection deeper) — a stage commits only clean
-7. commit, then `forge stage done <id>`
+10. commit, then `forge stage done <id>`
 
 Per-stage local reviews are pre-commit hygiene and record nothing; the ONE
 branch-wide autoreview at the review phase remains the only review gate and
@@ -401,8 +428,10 @@ durable record of what was decided and what was built.
 2. complete discovery; prototype freely and save specs as capabilities emerge
 3. confirm every spec, then derive the roadmap from the specs
 4. record client sign-off
-5. plan one roadmap story and record its decomposition
-6. implement one leaf task — the implementer writes, runs, and records the automated tests
+5. plan one roadmap story and record its ordered task list
+6. for each leaf task: author its contract, re-record the decomposition, pass
+   the `task` grill, start the stage, then delegate it; the implementer writes,
+   runs, and records the automated tests
 7. run `python3 factory/scripts/verify.py`
 8. run ONE autoreview pass (three lenses) and record the three review artifacts
 9. run `functional-checker` when the decomposition has `user_facing: true`

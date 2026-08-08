@@ -38,7 +38,7 @@
     {
       "id": "FORGE-BOARD-2.3",
       "title": "Board/UI: per-task grill status + done-story PR link",
-      "status": "active",
+      "status": "done",
       "started_at": "2026-08-08T06:06:29+00:00",
       "base_sha": "6de81037c497e22d57aa09291673bd7ca2ccf3b9",
       "dirty_at_start": {
@@ -47,12 +47,30 @@
           "git": "? .factory/grills/tasks/FORGE-BOARD-2.3.json\u0000\u0000\u0000"
         }
       },
-      "task_sha256": "d969eb6e4cbe5c573509f495db3e340f95d2419572b1da9bac0011ba1c79e567"
+      "task_sha256": "d969eb6e4cbe5c573509f495db3e340f95d2419572b1da9bac0011ba1c79e567",
+      "completed_at": "2026-08-08T06:16:46+00:00"
     },
     {
       "id": "FORGE-BOARD-2.4",
       "title": "Decision + docs: the JIT loop as contract",
-      "status": "pending"
+      "status": "active",
+      "started_at": "2026-08-08T06:17:07+00:00",
+      "base_sha": "83e3e7ecf01d13f3b282f4c3bc7ac822e0b56dd0",
+      "dirty_at_start": {
+        ".factory/events.jsonl": {
+          "digest": "e5db5511314fbdb525ac00a17a564bc0218436acaf0b8e46f33d2d334125289b",
+          "git": "1 .M N... 100644 100644 100644 84f155794a98d2e7bd80ad9a012e125aa862a147 84f155794a98d2e7bd80ad9a012e125aa862a147 .factory/events.jsonl\u0000\u0000100644 84f155794a98d2e7bd80ad9a012e125aa862a147 0\t.factory/events.jsonl\u0000\u0000H .factory/events.jsonl\u0000"
+        },
+        ".factory/grills/tasks/FORGE-BOARD-2.4.json": {
+          "digest": "b9dacc1c85237e254256917788ab165b931bdeb889b418c4b12a8e56b3ca4e61",
+          "git": "? .factory/grills/tasks/FORGE-BOARD-2.4.json\u0000\u0000\u0000"
+        },
+        ".factory/stages.json": {
+          "digest": "395f6eccac820d7cccbe20d5da4c5c56d17f67fb71a386d8b6b92524cd2ae04c",
+          "git": "1 .M N... 100644 100644 100644 96399d837366308a036d1475154fc45e89f46997 96399d837366308a036d1475154fc45e89f46997 .factory/stages.json\u0000\u0000100644 96399d837366308a036d1475154fc45e89f46997 0\t.factory/stages.json\u0000\u0000H .factory/stages.json\u0000"
+        }
+      },
+      "task_sha256": "e2be8bc06ea9c51acfb69b71a70b5e83b3e1b45647e8b22b97ba1ab92086a3e1"
     }
   ]
 }

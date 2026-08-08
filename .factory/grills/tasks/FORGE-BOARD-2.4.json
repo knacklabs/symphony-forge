@@ -1,0 +1,15 @@
+{
+  "generated_by": "griller",
+  "gate": "task",
+  "task_id": "FORGE-BOARD-2.4",
+  "verdict": "pass",
+  "questions_asked": 0,
+  "summary": "Grilled FORGE-BOARD-2.4 (docs) against the SHIPPED behaviour of 2.1-2.3: the task grill recorder (--gate task), require_task_grill delegation gate, and board surfacing now exist. Docs must match them exactly with no aspirational drift: WORKFLOW.md gating model gains the per-task grill gate + the author->re-record->grill->stage start->delegate loop; griller.md documents a fifth 'task' gate/scope; the docs-decomposer prompt records the task LIST with contract detail deferred to JIT; degraded-mode covers the manual per-task grill path; decision 0032 (already accepted) is referenced. Docs-only, no code, no required_tests.",
+  "gaps": [],
+  "contradictions": [],
+  "resolutions": [],
+  "open_items": [],
+  "input_sha256": "e2be8bc06ea9c51acfb69b71a70b5e83b3e1b45647e8b22b97ba1ab92086a3e1",
+  "recorded_at": "2026-08-08T06:17:07+00:00",
+  "commit": "83e3e7ecf01d13f3b282f4c3bc7ac822e0b56dd0"
+}
