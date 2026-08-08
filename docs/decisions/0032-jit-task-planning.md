@@ -1,6 +1,6 @@
 ---
-status: proposed
-confirmed_by: ""
+status: accepted
+confirmed_by: "vrknetha"
 date: 2026-08-08
 stories: [FORGE-BOARD-2]
 ---
