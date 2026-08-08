@@ -324,10 +324,27 @@
       "completed_at": "2026-08-08T06:51:50+00:00",
       "history": ".factory/history/FORGE-BOARD-2/",
       "outcome": "The factory now records only a task LIST at decomposition and gates each task's detailed contract behind a just-in-time grill: forge delegate <task> refuses a write launch without a fresh, digest-bound passing per-task grill (decision 0032, amending 0007). A task's write_scope/tests/acceptance are authored against what earlier tasks actually built, then grilled, then delegated \u2014 so speculative upfront contracts that produce wrong code are gated out. The board renders each task's JIT grill status and a done story's PR link."
+    },
+    {
+      "key": "FORGE-BOARD-3",
+      "title": "Ad-hoc capture + simplification: one capture path, stories-only board mirror",
+      "story": "As a dev, I capture an ad-hoc 'what about X' with one command as visible spec-debt (no acceptance criteria demanded at capture), and the board mirrors STORIES only, so the epic/story/task/PR mapping is unambiguous and nothing evaporates into chat.",
+      "acceptance_criteria": [
+        "roadmap add --no-spec no longer requires or accepts --ac; the ad-hoc story lands as spec-debt in 'Needs spec', unplannable until spec confirm + link-spec.",
+        "WORKFLOW.md 'Source of Truth' mirrors stories only (task state is not mirrored into the tracker), removing the 'are tasks tickets?' ambiguity.",
+        "Manual forge pr-link is documented as a degraded-mode fallback only (Gate B's pr-link.yml automates it), not a routine step."
+      ],
+      "order": 15,
+      "status": "pending",
+      "epic": "traceable-board",
+      "skill": "backend",
+      "kind": "refactor",
+      "depends_on": [],
+      "spec": "docs/specs/traceable-board.md"
     }
   ],
   "generated_by": "human",
-  "updated_at": "2026-08-08T06:51:50+00:00",
+  "updated_at": "2026-08-08T12:18:20+00:00",
   "epics": [
     {
       "id": "symphony-forge",

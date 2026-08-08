@@ -610,3 +610,4 @@
 {"event": "tests-automated", "generated_by": "implementer", "at": "2026-08-08T06:51:36+00:00", "story": "FORGE-BOARD-2", "detail": "pass"}
 {"event": "shipped", "generated_by": "orchestrator", "at": "2026-08-08T06:51:50+00:00", "story": "FORGE-BOARD-2", "detail": "The factory now records only a task LIST at decomposition and gates each task's detailed contract behind a just-in-time grill: forge delegate <task> refuses a write launch without a fresh, digest-boun"}
 {"event": "pr-linked", "generated_by": "orchestrator", "at": "2026-08-08T06:53:08+00:00", "story": "FORGE-BOARD-2", "detail": "knacklabs/symphony-forge#57"}
+{"event": "roadmap-add", "generated_by": "orchestrator", "at": "2026-08-08T12:18:20+00:00", "story": "FORGE-BOARD-3", "detail": "docs/specs/traceable-board.md"}
