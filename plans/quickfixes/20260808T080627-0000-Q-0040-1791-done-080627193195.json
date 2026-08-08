@@ -1,0 +1,62 @@
+{
+  "event": "done",
+  "id": "Q-0040-1791",
+  "profile": "lite",
+  "by": "vrknetha",
+  "reason": "D-0012: Gate A (check_pr_ticket) accepts a story added-and-completed in one PR (base-absent -> head-done + history)",
+  "base_sha": "5a5e22b1f3e2dc363485527e87cee210cbc7e483",
+  "started_at": "2026-08-08T08:02:14+00:00",
+  "completed_at": "2026-08-08T08:06:27+00:00",
+  "files": [
+    "factory/scripts/check_pr_ticket.py",
+    "factory/tests/test_gates.py"
+  ],
+  "reviews": {
+    "quality": {
+      "generated_by": "autoreview",
+      "score": 9,
+      "summary": "Minimal, correct one-condition change: completed_stories now accepts base-absent OR not-done-at-base, keeping the done-at-head and history-added requirements. Failure message updated to name the addition case. A direct non-parametrized test (base-absent + done + history passes) plus the existing six check_pr_ticket tests green.",
+      "blocking_findings": [],
+      "non_blocking_findings": [],
+      "recommendation": "ship",
+      "reviewed_scope": [
+        "factory/scripts/check_pr_ticket.py",
+        "factory/tests/test_gates.py"
+      ],
+      "aspect": "quality",
+      "residual_risks": [],
+      "recorded_at": "2026-08-08T08:06:16+00:00",
+      "commit": "da83b9c1b3a4961183860a15d56bbc4025857822"
+    },
+    "performance": {
+      "generated_by": "autoreview",
+      "score": 10,
+      "summary": "No performance impact \u2014 the same single-pass set comprehension over head_items with an altered boolean condition. No new I/O, no new git calls.",
+      "blocking_findings": [],
+      "recommendation": "ship",
+      "reviewed_scope": [
+        "factory/scripts/check_pr_ticket.py"
+      ],
+      "aspect": "performance",
+      "non_blocking_findings": [],
+      "residual_risks": [],
+      "recorded_at": "2026-08-08T08:06:16+00:00",
+      "commit": "da83b9c1b3a4961183860a15d56bbc4025857822"
+    },
+    "security": {
+      "generated_by": "autoreview",
+      "score": 9,
+      "summary": "Does not weaken Gate A. Accepting base-absent still requires all the real evidence: the story is on the roadmap and done AT HEAD, its .factory/history/<key>/ archive is ADDED in this PR's diff, and a ticket candidate (branch feat/<key>- or a Ticket: line) resolves to it. A bundled add+complete PR is a legitimate completion; faking it would require fabricating the whole history archive, which is what the evidence recorders protect. Exactly-one-record resolution is unchanged.",
+      "blocking_findings": [],
+      "residual_risks": [],
+      "recommendation": "ship",
+      "reviewed_scope": [
+        "factory/scripts/check_pr_ticket.py"
+      ],
+      "aspect": "security",
+      "non_blocking_findings": [],
+      "recorded_at": "2026-08-08T08:06:16+00:00",
+      "commit": "da83b9c1b3a4961183860a15d56bbc4025857822"
+    }
+  }
+}

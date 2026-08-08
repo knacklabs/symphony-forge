@@ -1,0 +1,12 @@
+{
+  "event": "open",
+  "id": "Q-0040-1791",
+  "profile": "lite",
+  "reason": "D-0012: Gate A (check_pr_ticket) accepts a story added-and-completed in one PR (base-absent -> head-done + history)",
+  "started_at": "2026-08-08T08:02:14+00:00",
+  "max_files": 5,
+  "files": [],
+  "harness_source": true,
+  "by": "vrknetha",
+  "base_sha": "5a5e22b1f3e2dc363485527e87cee210cbc7e483"
+}
