@@ -315,7 +315,7 @@
         "Both grill points are kept: the story-level plan-grill validates the decomposition; the per-task JIT grill validates each task's details against real prior state."
       ],
       "order": 14,
-      "status": "pending",
+      "status": "active",
       "epic": "traceable-board",
       "skill": "backend",
       "kind": "feature",
@@ -324,7 +324,7 @@
     }
   ],
   "generated_by": "human",
-  "updated_at": "2026-08-08T04:48:06+00:00",
+  "updated_at": "2026-08-08T04:48:40+00:00",
   "epics": [
     {
       "id": "symphony-forge",

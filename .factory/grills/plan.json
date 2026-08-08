@@ -1,0 +1,25 @@
+{
+  "generated_by": "griller",
+  "gate": "plan",
+  "verdict": "pass",
+  "questions_asked": 4,
+  "summary": "Grilled the FORGE-BOARD-2 JIT-task-planning plan against the traceable-board spec, active decisions 0007/0023, and three mechanics maps (decomposition recorder, the plan-grill gate, the stage/delegation lifecycle) plus a board-renderer map. Frontier resolved in one round of four design questions plus the board fact-find; no open contradictions.",
+  "gaps": [
+    "Board/UI scope was open once the human chose to fold it into this story \u2014 resolved by mapping the renderer: board.py is a localhost HTTP server serving factory/board/index.html (SPA); the Epic->Story->Task hierarchy and task dossiers already exist, so the change is two localized insertions (a per-task grill line in the task dossier's proof block; a done-story PR link from pr-linked events).",
+    "Per-task grill storage shape (per-id vs single overwritten file) was unspecified \u2014 resolved to per-task .factory/grills/tasks/<id>.json for board visibility and per-story audit."
+  ],
+  "contradictions": [
+    "The spec says the JIT story 'supersedes decision 0007's immutable-upfront-decomposition stance', but the mechanics map shows 0007 actually owns the task LIST + execution order (which this design KEEPS), while contract immutability is enforced by decision 0023 + the recorder's done-stage guards."
+  ],
+  "resolutions": [
+    "Decision framing: AMEND 0007 (list + execution order stay fixed at decomposition; only the per-task contract DETAIL becomes JIT) and EXTEND 0023 (pre/mid-stage contract authoring is the normal path, gated by a fresh per-task grill; done-stage immutability preserved) \u2014 chosen over superseding 0007 outright.",
+    "Authoring point: author + re-record each task's contract BEFORE stage start, so task_digest stamped at start already matches the grilled contract \u2014 zero changes to the stage-start/done digest logic or the active-stage re-record path.",
+    "Grill storage: per-task .factory/grills/tasks/<id>.json, retained and archived per story; the delegation gate binds input_sha256 to the task_digest value (the contract hash), so any contract edit invalidates the grill.",
+    "Story scope: the full board/UI is folded into this story per the human's choice, raising it to ~4 tasks at the reviewability ceiling \u2014 deliberate, so the JIT data model and its visible surfacing ship together rather than as two stories."
+  ],
+  "open_items": [],
+  "input_sha256": "f27f315fc7e872c381958149a5fac7b66e2538209750bb90ff25dadef94f35c7",
+  "issue": "FORGE-BOARD-2",
+  "recorded_at": "2026-08-08T05:24:17+00:00",
+  "commit": "808780532c66d1abd18733f316c6f8824a1db6ee"
+}

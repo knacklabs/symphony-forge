@@ -1,0 +1,150 @@
+{
+  "generated_by": "claude-code:plan-mode",
+  "user_facing": false,
+  "story": "FORGE-BOARD-2",
+  "epic": "traceable-board",
+  "tasks": [
+    {
+      "id": "FORGE-BOARD-2.1",
+      "title": "Per-task grill recorder + schema + storage",
+      "objective": "Add a task-keyed grill gate primitive. Extend record_grill_from_json.py with a `task` gate that takes --task <id>, writes .factory/grills/tasks/<id>.json, and binds input_sha256 to a provided task-digest VALUE (the contract hash) rather than sha256 of a file. Extend factory/schemas/grill.json to accept gate=task plus a task_id field. The existing four gates (signoff/spec/epics/plan) are unchanged.",
+      "dependencies": [],
+      "write_scope": [
+        "factory/scripts/record_grill_from_json.py",
+        "factory/schemas/grill.json",
+        "factory/tests/test_gates.py"
+      ],
+      "acceptance_criteria": [
+        "record_grill_from_json.py accepts `--gate task --task <id>` and writes .factory/grills/tasks/<id>.json carrying verdict, gate=task, and task_id.",
+        "For the task gate, input_sha256 is bound to a supplied task-digest value (the contract hash), not sha256_of(a file).",
+        "factory/schemas/grill.json validates gate=task and a task_id field; the four existing gates behave exactly as before."
+      ],
+      "verify_commands": [
+        "uv run --with pytest python -m pytest factory/tests/test_gates.py -q -k \"task_grill or record_grill\""
+      ],
+      "required_tests": [
+        {
+          "id": "test_record_task_grill_writes_per_id_file",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_record_task_grill_binds_digest",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        }
+      ],
+      "reviewer_focus": "Per-id storage under grills/tasks/; digest bound to the task-digest value not a file; the four existing gates untouched; schema change is additive."
+    },
+    {
+      "id": "FORGE-BOARD-2.2",
+      "title": "require_task_grill + delegation gate",
+      "objective": "Add require_task_grill(root, task_id, expect_digest_value) in factory_lib.py as a task-keyed sibling of require_grill: resolve .factory/grills/tasks/<id>.json, require verdict==pass, a commit stamp, and input_sha256 == the task's task_digest. Insert it in cmd_delegate at the `if write:` point so a WRITE delegation is refused unless a fresh, digest-bound, passing per-task grill exists. Read-only lanes are unaffected.",
+      "dependencies": [
+        "FORGE-BOARD-2.1"
+      ],
+      "write_scope": [
+        "factory/scripts/factory_lib.py",
+        "factory/scripts/forge_cli/delegate.py",
+        "factory/tests/test_gates.py"
+      ],
+      "acceptance_criteria": [
+        "forge delegate <task> refuses a WRITE launch when no per-task grill exists, when its verdict is not pass, or when input_sha256 != task_digest(task) (stale); the refusal names the record command.",
+        "forge delegate <task> proceeds when a fresh, digest-bound, passing per-task grill exists.",
+        "A read-only delegation (write == False) is unaffected by the gate.",
+        "pr_ready archives .factory/grills/tasks/ into the story history."
+      ],
+      "verify_commands": [
+        "uv run --with pytest python -m pytest factory/tests/test_gates.py -q -k \"require_task_grill or delegate_task_grill\""
+      ],
+      "required_tests": [
+        {
+          "id": "test_delegate_refuses_without_task_grill",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_delegate_refuses_stale_task_grill",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_delegate_passes_with_fresh_task_grill",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_delegate_readonly_unaffected_by_task_grill",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        }
+      ],
+      "reviewer_focus": "Gate fires only on write launches; stale (digest mismatch) is refused; read-only unaffected; refusal names the exact next command; pr_ready archives task grills."
+    },
+    {
+      "id": "FORGE-BOARD-2.3",
+      "title": "Board/UI: per-task grill status + done-story PR link",
+      "objective": "Surface JIT provenance on the board. Extend board.py's grills read to also load .factory/grills/tasks/*.json, attach a grill field to each task's proof in task_dossiers, and render a grill line in taskDossier's proof block in index.html. Read pr-linked events (events.load_events(base, event='pr-linked')) and render the PR link on a done/shipped story. Extend factory/board/example/ so the render is demonstrable.",
+      "dependencies": [
+        "FORGE-BOARD-2.1"
+      ],
+      "write_scope": [
+        "factory/scripts/forge_cli/board.py",
+        "factory/board/index.html",
+        "factory/board/example/",
+        "factory/tests/test_gates.py"
+      ],
+      "acceptance_criteria": [
+        "story_detail/task_dossiers attach each task's per-task grill status from .factory/grills/tasks/<id>.json, and the task dossier renders a grill line beside Tests/Verify.",
+        "aggregate_state/story_detail resolve a done story's PR reference from pr-linked events, and a shipped story renders its PR link.",
+        "The board example fixture exercises both renders; existing board behaviour is otherwise unchanged."
+      ],
+      "verify_commands": [
+        "uv run --with pytest python -m pytest factory/tests/test_gates.py -q -k \"board\""
+      ],
+      "required_tests": [
+        {
+          "id": "test_board_shows_task_grill_status",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_board_shows_done_story_pr_link",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        }
+      ],
+      "reviewer_focus": "grills glob now recurses into tasks/; task-grill status attached per task id; PR link read from pr-linked events; no board regression; example fixture demonstrates both."
+    },
+    {
+      "id": "FORGE-BOARD-2.4",
+      "title": "Decision + docs: the JIT loop as contract",
+      "objective": "Make the JIT loop the documented contract. Update WORKFLOW.md's gating model with the per-task grill gate and the author->re-record->grill->stage start->delegate loop; the /forge skill; factory/prompts/griller.md with a fifth `task` gate/scope; the docs-decomposer prompt to record the task LIST with contract detail deferred to JIT; and docs/degraded-mode.md with the manual per-task grill path. Decision 0032 is referenced.",
+      "dependencies": [
+        "FORGE-BOARD-2.2",
+        "FORGE-BOARD-2.3"
+      ],
+      "write_scope": [
+        "WORKFLOW.md",
+        ".claude/skills/forge/SKILL.md",
+        "factory/prompts/griller.md",
+        "factory/prompts/decomposer.md",
+        "docs/degraded-mode.md"
+      ],
+      "acceptance_criteria": [
+        "WORKFLOW.md gating model documents the per-task grill gate and the JIT loop (author -> re-record -> grill -> stage start -> delegate).",
+        "griller.md documents a fifth `task` gate/scope; the docs-decomposer prompt instructs recording the task LIST with per-task contract detail deferred to JIT.",
+        "The /forge skill and docs/degraded-mode.md cover the per-task grill step; decision 0032 is referenced."
+      ],
+      "verify_commands": [
+        "python3 factory/scripts/check_dual_runtime.py"
+      ],
+      "required_tests": [],
+      "reviewer_focus": "Docs match the shipped gate exactly (no aspirational drift); griller/decomposer/skill/workflow/degraded-mode all name the task gate; 0032 referenced."
+    }
+  ],
+  "project": "",
+  "plan_file": "plans/active/FORGE-BOARD-2-jit-task-planning-per-task-plan-grill-against-real-prior-state.md",
+  "plan_sha256": "a2fa06b4564ae428193179f3c4bff35d0db82b310e36aaaf7f2b04aa01b4bb62",
+  "commit": "808780532c66d1abd18733f316c6f8824a1db6ee"
+}

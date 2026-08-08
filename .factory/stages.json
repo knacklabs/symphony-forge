@@ -1,0 +1,25 @@
+{
+  "issue": "FORGE-BOARD-2",
+  "stages": [
+    {
+      "id": "FORGE-BOARD-2.1",
+      "title": "Per-task grill recorder + schema + storage",
+      "status": "pending"
+    },
+    {
+      "id": "FORGE-BOARD-2.2",
+      "title": "require_task_grill + delegation gate",
+      "status": "pending"
+    },
+    {
+      "id": "FORGE-BOARD-2.3",
+      "title": "Board/UI: per-task grill status + done-story PR link",
+      "status": "pending"
+    },
+    {
+      "id": "FORGE-BOARD-2.4",
+      "title": "Decision + docs: the JIT loop as contract",
+      "status": "pending"
+    }
+  ]
+}

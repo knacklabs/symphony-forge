@@ -580,3 +580,8 @@
 {"event": "shipped", "generated_by": "orchestrator", "at": "2026-08-07T17:53:44+00:00", "story": "FORGE-BOARD-1", "detail": "Every PR now ties to a complete on-board ticket, enforced deterministically, so the board can no longer rot silently. Gate C: intake refuses a roadmap key that is not on the board (names the ad-hoc pa"}
 {"event": "pr-linked", "generated_by": "orchestrator", "at": "2026-08-07T17:56:27+00:00", "story": "FORGE-BOARD-1", "detail": "knacklabs/symphony-forge#56"}
 {"event": "roadmap-add", "generated_by": "orchestrator", "at": "2026-08-08T04:48:06+00:00", "story": "FORGE-BOARD-2", "detail": "docs/specs/traceable-board.md"}
+{"event": "intake", "generated_by": "orchestrator", "at": "2026-08-08T04:48:40+00:00", "story": "FORGE-BOARD-2", "detail": "JIT task planning: per-task plan+grill against real prior state"}
+{"event": "plan-human-approved", "generated_by": "human", "at": "2026-08-08T05:24:17+00:00", "story": "FORGE-BOARD-2", "detail": "FORGE-BOARD-2 approved by vrknetha"}
+{"event": "plan-approved", "generated_by": "planner-high", "at": "2026-08-08T05:24:17+00:00", "story": "FORGE-BOARD-2", "detail": "plans/active/FORGE-BOARD-2-jit-task-planning-per-task-plan-grill-against-real-prior-state.md"}
+{"event": "decomposed", "generated_by": "docs-decomposer", "at": "2026-08-08T05:27:37+00:00", "story": "FORGE-BOARD-2", "detail": "4 task(s)"}
+{"event": "implementing", "generated_by": "orchestrator", "at": "2026-08-08T05:28:02+00:00", "story": "FORGE-BOARD-2"}
