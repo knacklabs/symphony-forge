@@ -93,8 +93,7 @@ def main() -> int:
 
     completed_stories = {
         key for key, head_item in head_items.items()
-        if key in base_items
-        and base_items[key].get("status") != "done"
+        if (key not in base_items or base_items[key].get("status") != "done")
         and head_item.get("status") == "done"
         and any(path.startswith(f".factory/history/{key}/") for path in added)
     }
@@ -115,8 +114,9 @@ def main() -> int:
             print("PR ticket check FAILED: no ticket was found in the branch or PR body.")
         elif not resolved:
             print(
-                "PR ticket check FAILED: no ticket resolves to a story done-flip "
-                "with added history, or to an added window done record."
+                "PR ticket check FAILED: no ticket resolves; the ticket must "
+                "resolve to a story done-flip or addition, with added history, "
+                "or to an added window done record."
             )
         else:
             names = ", ".join(f"{kind}:{key}" for kind, key in sorted(resolved))

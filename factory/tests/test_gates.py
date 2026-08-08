@@ -4636,6 +4636,19 @@ def test_check_pr_ticket_passes_story(repo):
     assert code == 0 and f"story {key}" in out, out
 
 
+def test_check_pr_ticket_passes_base_absent_story(repo):
+    key = "BOARD-107"
+    base = pr_ticket_base(repo)
+    ensure_story(repo, key)
+    complete_story(repo, key)
+    git(repo, "add", "plans/roadmap.json", f".factory/history/{key}")
+    git(repo, "commit", "-q", "-m", "add and complete story")
+
+    code, out = check_pr_ticket(repo, base, f"feat/{key}-gate-a")
+
+    assert code == 0 and f"story {key}" in out, out
+
+
 def test_check_pr_ticket_fails_no_ticket(repo):
     key = "BOARD-102"
     base = pr_ticket_base(repo, key)
