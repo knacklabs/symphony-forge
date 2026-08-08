@@ -401,7 +401,7 @@
         "Guided re-authoring uses forge roadmap fill (pending-only, blank-only), never roadmap import on a done card; it never fabricates history."
       ],
       "order": 18,
-      "status": "pending",
+      "status": "active",
       "epic": "traceable-board",
       "skill": "fullstack",
       "kind": "feature",
@@ -412,7 +412,7 @@
     }
   ],
   "generated_by": "human",
-  "updated_at": "2026-08-08T18:52:13+00:00",
+  "updated_at": "2026-08-08T19:13:14+00:00",
   "epics": [
     {
       "id": "symphony-forge",

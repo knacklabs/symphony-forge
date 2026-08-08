@@ -1,0 +1,19 @@
+{
+  "generated_by": "griller",
+  "gate": "plan",
+  "verdict": "pass",
+  "questions_asked": 0,
+  "summary": "Grilled the FORGE-BOARD-6 plan (the knacklabs-upgrade-project skill). The upgrade-skill design was extensively grilled earlier and Codex-validated; this plan directly incorporates every Codex finding: the safe re-authoring primitive is forge roadmap fill (not import), all client commands route with --repo TARGET, the harness locate verifies origin/ref/clean and halts on pull failure, the runbook is framed periodic-convergent, and the existing getting-started upgrade section is updated (not duplicated). It composes the deterministic primitives (upgrade/doctor/project audit-backfill/roadmap fill) and adds one human-confirmed re-authoring step; determinism lives in the commands, enforced by the map's finding that operator skills touch no gated surface.",
+  "gaps": [],
+  "contradictions": [],
+  "resolutions": [
+    "Skill composes existing deterministic commands; no new forge command (all primitives shipped in FORGE-BOARD-4/5).",
+    "Codex majors baked in: robust harness locate (origin/ref/clean, halt on pull fail), --repo TARGET on every client command, periodic-convergent framing, roadmap fill (never import), never done stories.",
+    "One cohesive task (skill + setup registration + doc updates + a structure/safety-invariant test asserting --repo routing and fill-not-import)."
+  ],
+  "open_items": [],
+  "input_sha256": "996f84059d7cbf63d6a5597ce3267c805f56f72c524ca807b64775ff2d35b7da",
+  "issue": "FORGE-BOARD-6",
+  "recorded_at": "2026-08-08T19:15:54+00:00",
+  "commit": "7e2ec0c6a9ee7b5f50342b083b39ba63aa036582"
+}
