@@ -1,3 +1,17 @@
 {
-  "phase": "shipped"
+  "issue_key": "FORGE-BOARD-3",
+  "title": "Ad-hoc capture + simplification: one capture path, stories-only board mirror",
+  "tracker": "linear",
+  "branch": "feat/FORGE-BOARD-3-ad-hoc-capture-simplification-one-capture-path-stories-only-board-mirror",
+  "phase": "implementing",
+  "plan_status": "approved",
+  "decomposition_status": "recorded",
+  "implementation_status": "pending",
+  "tests_status": "pending",
+  "verify_status": "pending",
+  "review_status": "pending",
+  "created_at": "2026-08-08T12:18:44+00:00",
+  "updated_at": "2026-08-08T12:59:20+00:00",
+  "plan_file": "plans/active/FORGE-BOARD-3-ad-hoc-capture-simplification-one-capture-path-stories-only-board-mirror.md",
+  "story": "FORGE-BOARD-3"
 }

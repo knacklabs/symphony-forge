@@ -1,0 +1,47 @@
+{
+  "generated_by": "claude-code:plan-mode",
+  "user_facing": false,
+  "story": "FORGE-BOARD-3",
+  "epic": "traceable-board",
+  "tasks": [
+    {
+      "id": "FORGE-BOARD-3.1",
+      "title": "Ad-hoc capture + simplification",
+      "objective": "Make --ac optional on the --no-spec path (still required with --spec): flip forge.py's --ac to required=False and move the empty-criteria refusal into roadmap.py's --spec branch. Reword WORKFLOW.md's Source-of-Truth so an external tracker mirrors STORIES only (drop 'task state is mirrored'). Add a degraded-mode.md section demoting manual forge pr-link to a CI-unavailable fallback (Gate B's pr-link.yml automates it). Preserve the 0014 spec-debt planning gate.",
+      "dependencies": [],
+      "write_scope": [
+        "factory/scripts/forge.py",
+        "factory/scripts/forge_cli/roadmap.py",
+        "WORKFLOW.md",
+        "docs/degraded-mode.md",
+        "factory/tests/test_gates.py"
+      ],
+      "acceptance_criteria": [
+        "roadmap add --no-spec --reason '...' succeeds with NO --ac and lands as spec-debt (origin: adhoc, spec_debt_reason set, no spec); it stays unplannable until spec confirm + link-spec (plans.py gate unchanged).",
+        "roadmap add --spec ... still REFUSES an empty/absent --ac (a confirmed-spec story needs acceptance criteria).",
+        "WORKFLOW.md Source-of-Truth mirrors stories only; no 'task state is mirrored into the tracker' language remains.",
+        "docs/degraded-mode.md documents manual forge pr-link as a fallback for when pr-link.yml cannot run, noting Gate B automates it normally."
+      ],
+      "verify_commands": [
+        "uv run --with pytest python -m pytest factory/tests/test_gates.py -q -k \"no_spec or adhoc or roadmap_add\""
+      ],
+      "required_tests": [
+        {
+          "id": "test_roadmap_add_no_spec_without_ac_records_debt",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_roadmap_add_spec_without_ac_fails",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        }
+      ],
+      "reviewer_focus": "--ac required only with --spec, optional with --no-spec (accepted if given); the 0014 spec-debt gate untouched; WORKFLOW mirror is stories-only; pr-link command/automation/tests all preserved (docs-only demotion); refactor delta stays lean."
+    }
+  ],
+  "project": "",
+  "plan_file": "plans/active/FORGE-BOARD-3-ad-hoc-capture-simplification-one-capture-path-stories-only-board-mirror.md",
+  "plan_sha256": "95b7772642c841805b56465a46448f690c183b33ee7ac1bb8f2dc55645fd233b",
+  "commit": "e057da6e281938501e12efe9c8c50feed14c6120"
+}

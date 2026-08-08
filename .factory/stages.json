@@ -1,0 +1,10 @@
+{
+  "issue": "FORGE-BOARD-3",
+  "stages": [
+    {
+      "id": "FORGE-BOARD-3.1",
+      "title": "Ad-hoc capture + simplification",
+      "status": "pending"
+    }
+  ]
+}

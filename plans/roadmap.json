@@ -335,7 +335,7 @@
         "Manual forge pr-link is documented as a degraded-mode fallback only (Gate B's pr-link.yml automates it), not a routine step."
       ],
       "order": 15,
-      "status": "pending",
+      "status": "active",
       "epic": "traceable-board",
       "skill": "backend",
       "kind": "refactor",
@@ -344,7 +344,7 @@
     }
   ],
   "generated_by": "human",
-  "updated_at": "2026-08-08T12:18:20+00:00",
+  "updated_at": "2026-08-08T12:18:44+00:00",
   "epics": [
     {
       "id": "symphony-forge",
