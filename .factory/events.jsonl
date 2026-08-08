@@ -667,3 +667,8 @@
 {"event": "shipped", "generated_by": "orchestrator", "at": "2026-08-08T13:15:20+00:00", "story": "FORGE-BOARD-3", "detail": "Ad-hoc capture no longer demands acceptance criteria: roadmap add --no-spec --reason works with no --ac, landing the idea as spec-debt that is still unplannable until spec confirm + link-spec (decisio"}
 {"event": "pr-linked", "generated_by": "orchestrator", "at": "2026-08-08T13:16:18+00:00", "story": "FORGE-BOARD-3", "detail": "knacklabs/symphony-forge#59"}
 {"event": "pr-linked", "generated_by": "orchestrator", "at": "2026-08-08T17:13:24+00:00", "story": "FORGE-BOARD-4", "detail": "knacklabs/symphony-forge#60"}
+{"event": "intake", "generated_by": "orchestrator", "at": "2026-08-08T18:00:15+00:00", "story": "FORGE-BOARD-5", "detail": "knacklabs-upgrade-project skill (machinery upgrade + guided re-authoring)"}
+{"event": "plan-human-approved", "generated_by": "human", "at": "2026-08-08T18:33:13+00:00", "story": "FORGE-BOARD-5", "detail": "FORGE-BOARD-5 approved by vrknetha"}
+{"event": "plan-approved", "generated_by": "planner-high", "at": "2026-08-08T18:33:13+00:00", "story": "FORGE-BOARD-5", "detail": "plans/active/FORGE-BOARD-5-knacklabs-upgrade-project-skill-machinery-upgrade-guided-re-authoring.md"}
+{"event": "decomposed", "generated_by": "docs-decomposer", "at": "2026-08-08T18:34:00+00:00", "story": "FORGE-BOARD-5", "detail": "2 task(s)"}
+{"event": "implementing", "generated_by": "orchestrator", "at": "2026-08-08T18:34:13+00:00", "story": "FORGE-BOARD-5"}

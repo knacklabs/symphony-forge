@@ -1,0 +1,15 @@
+{
+  "issue": "FORGE-BOARD-5",
+  "stages": [
+    {
+      "id": "FORGE-BOARD-5.1",
+      "title": "forge roadmap fill (safe pending repair)",
+      "status": "pending"
+    },
+    {
+      "id": "FORGE-BOARD-5.2",
+      "title": "backfill provenance honesty (zero-match -> unresolved)",
+      "status": "pending"
+    }
+  ]
+}

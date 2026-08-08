@@ -1,0 +1,98 @@
+{
+  "generated_by": "claude-code:plan-mode",
+  "user_facing": false,
+  "story": "FORGE-BOARD-5",
+  "epic": "traceable-board",
+  "tasks": [
+    {
+      "id": "FORGE-BOARD-5.1",
+      "title": "forge roadmap fill (safe pending repair)",
+      "objective": "Add cmd_fill in roadmap.py (registered in forge.py): load the item by key; REFUSE if status != pending (never touch active/done); for each provided field (--story/--ac/--skill/--epic/--spec/--depends-on) set it ONLY if currently blank via _blank, and refuse to overwrite a non-blank field; record a roadmap-filled event. Reuse ITEM_SKILLS/check_item/resolve_spec_reference and missing_story_contract_fields to report what stays blank. A re-run is a safe no-op.",
+      "dependencies": [],
+      "write_scope": [
+        "factory/scripts/forge_cli/roadmap.py",
+        "factory/scripts/forge.py",
+        "factory/tests/test_gates.py"
+      ],
+      "acceptance_criteria": [
+        "forge roadmap fill sets ONLY currently-blank fields on a status==pending card and records the change (a roadmap-filled event).",
+        "It REFUSES an active card and a done card (never overwrites shipped history), naming why.",
+        "It refuses to overwrite a field that is already non-blank (blank-only); a re-run is a safe no-op."
+      ],
+      "verify_commands": [
+        "uv run --with pytest python -m pytest factory/tests/test_gates.py -q -k \"roadmap_fill\""
+      ],
+      "required_tests": [
+        {
+          "id": "test_roadmap_fill_sets_blank_field_on_pending",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_roadmap_fill_refuses_nonblank_field",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_roadmap_fill_refuses_active_card",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_roadmap_fill_refuses_done_card",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        }
+      ],
+      "reviewer_focus": "The pending-only guard is the safety property: active AND done cards are refused, so history is never overwritten; blank-only (no clobber); the event is recorded; re-run is idempotent."
+    },
+    {
+      "id": "FORGE-BOARD-5.2",
+      "title": "backfill provenance honesty (zero-match -> unresolved)",
+      "objective": "In project.py backfill_project, the ZERO GitHub match branch no longer sets predates_outcome_contract; it reports the story as unresolved provenance (report+skip; the audit's board_problems keeps it red). Add a human-confirmed predates path: forge project mark-predates <key> --reason (records who/why + sets predates_outcome_contract) in project.py, registered in forge.py. Unique-match linking and 2+ ambiguous report+skip are unchanged.",
+      "dependencies": [
+        "FORGE-BOARD-5.1"
+      ],
+      "write_scope": [
+        "factory/scripts/forge_cli/project.py",
+        "factory/scripts/forge.py",
+        "factory/tests/test_gates.py"
+      ],
+      "acceptance_criteria": [
+        "forge project backfill on a ZERO GitHub match no longer sets predates_outcome_contract; it reports unresolved provenance and check_board_complete stays failing for that story.",
+        "forge project mark-predates <key> --reason is the human-confirmed way to set predates_outcome_contract (records the reason); backfill never sets it automatically.",
+        "A uniquely-recoverable PR still links and 2+ ambiguous still report+skip (unchanged)."
+      ],
+      "verify_commands": [
+        "uv run --with pytest python -m pytest factory/tests/test_gates.py -q -k \"project_backfill or mark_predates\""
+      ],
+      "required_tests": [
+        {
+          "id": "test_project_backfill_zero_match_does_not_predate",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_project_backfill_zero_match_stays_red",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_project_mark_predates_is_human_confirmed",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_project_backfill_unique_match_still_links",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        }
+      ],
+      "reviewer_focus": "Honesty: backfill NEVER auto-sets predates on zero-match (stays red); predates is only human-confirmed via mark-predates; unique/ambiguous behaviour unchanged; no regression to the FORGE-BOARD-4 dogfood (all its stories matched uniquely)."
+    }
+  ],
+  "project": "",
+  "plan_file": "plans/active/FORGE-BOARD-5-knacklabs-upgrade-project-skill-machinery-upgrade-guided-re-authoring.md",
+  "plan_sha256": "eac02fe9c770a620ae4a6c06f24513d9716325afdf201d532dc967ff9b796dcb",
+  "commit": "103fac67b4ce8946832779dc94051581a08a6ce2"
+}

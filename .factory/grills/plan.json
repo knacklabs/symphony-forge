@@ -1,0 +1,21 @@
+{
+  "generated_by": "griller",
+  "gate": "plan",
+  "verdict": "pass",
+  "questions_asked": 3,
+  "summary": "Grilled the reworked FORGE-BOARD-5 plan (safe pending-story repair + backfill provenance honesty). A read-only Codex validation of the original skill-only plan returned NEEDS-REWORK with two blockers: (1) no deterministic primitive to re-author a legacy card safely (roadmap import overwrites even done cards -> falsifies history); (2) forge project backfill auto-marks predates on a zero GitHub match, falsely exempting a story whose PR the matcher missed. The plan was re-scoped to the deterministic fixes; the skill moved to FORGE-BOARD-6.",
+  "gaps": [],
+  "contradictions": [
+    "The original plan's 'no new command' non-goal conflicts with the determinism-is-non-negotiable clause (traceable-board): guided re-authoring cannot be enforced by agent discipline alone."
+  ],
+  "resolutions": [
+    "Add a deterministic forge roadmap fill: fills ONLY blank fields on a status==pending card, refuses active/done (never overwrites shipped history), records the change. Reverses the 'no new command' non-goal (the enforceable fix for Codex blocker 1).",
+    "Split: FORGE-BOARD-5 is the deterministic code (fill + backfill honesty); the knacklabs-upgrade-project skill becomes FORGE-BOARD-6, depends on it, and absorbs Codex majors 3/4 (harness-provenance verification + --repo TARGET routing + periodic-convergent framing).",
+    "Backfill honesty: zero GitHub match no longer sets predates_outcome_contract; it reports unresolved provenance and check_board_complete stays red until a human resolves it (Codex blocker 2). Unique-match linking unchanged; the FORGE-BOARD-4 dogfood stays valid."
+  ],
+  "open_items": [],
+  "input_sha256": "2770a4b53e94dbe8ecf764da440908dd19eb44e56a4544b16df48ca769592053",
+  "issue": "FORGE-BOARD-5",
+  "recorded_at": "2026-08-08T18:33:12+00:00",
+  "commit": "103fac67b4ce8946832779dc94051581a08a6ce2"
+}

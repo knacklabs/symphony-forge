@@ -327,6 +327,26 @@
       "outcome": "The factory now records only a task LIST at decomposition and gates each task's detailed contract behind a just-in-time grill: forge delegate <task> refuses a write launch without a fresh, digest-bound passing per-task grill (decision 0032, amending 0007). A task's write_scope/tests/acceptance are authored against what earlier tasks actually built, then grilled, then delegated \u2014 so speculative upfront contracts that produce wrong code are gated out. The board renders each task's JIT grill status and a done story's PR link."
     },
     {
+      "key": "FORGE-BOARD-3",
+      "title": "Ad-hoc capture + simplification: one capture path, stories-only board mirror",
+      "story": "As a dev, I capture an ad-hoc 'what about X' with one command as visible spec-debt (no acceptance criteria demanded at capture), and the board mirrors STORIES only, so the epic/story/task/PR mapping is unambiguous and nothing evaporates into chat.",
+      "acceptance_criteria": [
+        "roadmap add --no-spec no longer requires or accepts --ac; the ad-hoc story lands as spec-debt in 'Needs spec', unplannable until spec confirm + link-spec.",
+        "WORKFLOW.md 'Source of Truth' mirrors stories only (task state is not mirrored into the tracker), removing the 'are tasks tickets?' ambiguity.",
+        "Manual forge pr-link is documented as a degraded-mode fallback only (Gate B's pr-link.yml automates it), not a routine step."
+      ],
+      "order": 15,
+      "status": "done",
+      "epic": "traceable-board",
+      "skill": "backend",
+      "kind": "refactor",
+      "depends_on": [],
+      "spec": "docs/specs/traceable-board.md",
+      "completed_at": "2026-08-08T13:15:20+00:00",
+      "history": ".factory/history/FORGE-BOARD-3/",
+      "outcome": "Ad-hoc capture no longer demands acceptance criteria: roadmap add --no-spec --reason works with no --ac, landing the idea as spec-debt that is still unplannable until spec confirm + link-spec (decision 0014 preserved), while --spec stories still require --ac. WORKFLOW.md now mirrors STORIES only (decomposition and task state stay in the repo), removing the are-tasks-tickets ambiguity, and manual forge pr-link is documented as a CI-unavailable fallback since Gate B automates it."
+    },
+    {
       "key": "FORGE-BOARD-4",
       "title": "Project-state audit + legacy pr-link backfill (deterministic core)",
       "story": "As the harness, I provide a deterministic forge audit that reports every board-completeness and story-shape gap, and I backfill legacy done stories' pr-links from real GitHub merge records (marking genuine gaps, never fabricating), so an upgraded client's board converges to complete and D-0011's red-main invariant can be enabled.",
@@ -349,16 +369,18 @@
     },
     {
       "key": "FORGE-BOARD-5",
-      "title": "knacklabs-upgrade-project skill (machinery upgrade + guided re-authoring)",
-      "story": "As a dev upgrading an existing client, I run one skill that upgrades the vendored machinery (forge upgrade + doctor --fix), runs the FORGE-BOARD-4 audit, applies the deterministic backfills, and guides me through re-authoring pending stories that are missing details (propose + I confirm) \u2014 repeatably, so each run reconverges the board to the current enforced bar.",
+      "title": "Safe pending-story repair + backfill provenance honesty",
+      "story": "As the harness, I provide a deterministic forge roadmap fill that repairs an existing pending card by filling only blank fields (refusing active/done cards so shipped history is never overwritten), and I make forge project backfill honest (a zero GitHub match reports unresolved provenance instead of silently marking predates), so the upgrade skill can re-author legacy cards safely.",
       "acceptance_criteria": [
-        "A knacklabs-upgrade-project skill (the forge-upgrade sibling to knacklabs-migrate-project) orchestrates: machinery upgrade, the audit, deterministic backfills, then guided re-authoring of pending stories (agent proposes ACs/spec/epic, human confirms), and verifies check_vendor_integrity + check_board_complete.",
-        "Re-authoring only touches pending/active stories (forward intent), never synthesizes history for done stories; the skill is idempotent and re-runnable."
+        "forge roadmap fill sets ONLY currently-blank fields on a status==pending card and refuses active/done cards (never overwrites shipped history); it records the change.",
+        "fill refuses to overwrite a non-blank field (blank-only); a re-run is a safe no-op.",
+        "forge project backfill zero-match no longer sets predates_outcome_contract; it reports unresolved provenance and check_board_complete stays red until a human resolves it (pr-link or human-confirmed predates).",
+        "A uniquely-recoverable PR still links; the FORGE-BOARD-4 dogfood result stays valid."
       ],
       "order": 17,
-      "status": "pending",
+      "status": "active",
       "epic": "traceable-board",
-      "skill": "fullstack",
+      "skill": "backend",
       "kind": "feature",
       "depends_on": [
         "FORGE-BOARD-4"
@@ -366,28 +388,28 @@
       "spec": "docs/specs/traceable-board.md"
     },
     {
-      "key": "FORGE-BOARD-3",
-      "title": "Ad-hoc capture + simplification: one capture path, stories-only board mirror",
-      "story": "As a dev, I capture an ad-hoc 'what about X' with one command as visible spec-debt (no acceptance criteria demanded at capture), and the board mirrors STORIES only, so the epic/story/task/PR mapping is unambiguous and nothing evaporates into chat.",
+      "key": "FORGE-BOARD-6",
+      "title": "knacklabs-upgrade-project skill (machinery upgrade + guided re-authoring)",
+      "story": "As a dev upgrading an existing client, I run one skill that upgrades the vendored machinery (forge upgrade + doctor --fix), runs the FORGE-BOARD-4 audit, applies the deterministic backfills, and guides me through re-authoring pending stories that are missing details (propose + I confirm) \u2014 repeatably, so each run reconverges the board to the current enforced bar.",
       "acceptance_criteria": [
-        "roadmap add --no-spec no longer requires or accepts --ac; the ad-hoc story lands as spec-debt in 'Needs spec', unplannable until spec confirm + link-spec.",
-        "WORKFLOW.md 'Source of Truth' mirrors stories only (task state is not mirrored into the tracker), removing the 'are tasks tickets?' ambiguity.",
-        "Manual forge pr-link is documented as a degraded-mode fallback only (Gate B's pr-link.yml automates it), not a routine step."
+        "A knacklabs-upgrade-project skill (the forge-upgrade sibling to knacklabs-migrate-project) orchestrates: machinery upgrade, the audit, deterministic backfills, then guided re-authoring of pending stories (agent proposes ACs/spec/epic, human confirms), and verifies check_vendor_integrity + check_board_complete.",
+        "Re-authoring only touches pending/active stories (forward intent), never synthesizes history for done stories; the skill is idempotent and re-runnable.",
+        "The skill routes every client-targeting command with --repo TARGET (never the harness), verifies the harness clone's origin/ref/clean before forge upgrade, and frames itself as a periodic convergent runbook (Codex review majors 3/4).",
+        "Guided re-authoring uses forge roadmap fill (pending-only, blank-only), never roadmap import on a done card; it never fabricates history."
       ],
-      "order": 15,
-      "status": "done",
+      "order": 18,
+      "status": "pending",
       "epic": "traceable-board",
-      "skill": "backend",
-      "kind": "refactor",
-      "depends_on": [],
-      "spec": "docs/specs/traceable-board.md",
-      "completed_at": "2026-08-08T13:15:20+00:00",
-      "history": ".factory/history/FORGE-BOARD-3/",
-      "outcome": "Ad-hoc capture no longer demands acceptance criteria: roadmap add --no-spec --reason works with no --ac, landing the idea as spec-debt that is still unplannable until spec confirm + link-spec (decision 0014 preserved), while --spec stories still require --ac. WORKFLOW.md now mirrors STORIES only (decomposition and task state stay in the repo), removing the are-tasks-tickets ambiguity, and manual forge pr-link is documented as a CI-unavailable fallback since Gate B automates it."
+      "skill": "fullstack",
+      "kind": "feature",
+      "depends_on": [
+        "FORGE-BOARD-5"
+      ],
+      "spec": "docs/specs/traceable-board.md"
     }
   ],
   "generated_by": "human",
-  "updated_at": "2026-08-08T17:12:07+00:00",
+  "updated_at": "2026-08-08T18:00:15+00:00",
   "epics": [
     {
       "id": "symphony-forge",
