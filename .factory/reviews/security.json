@@ -1,0 +1,16 @@
+{
+  "generated_by": "autoreview",
+  "score": 9,
+  "summary": "Directly closes the two provenance/honesty holes Codex found. (1) forge roadmap fill can NEVER overwrite shipped history: it refuses any card whose status is not pending (active AND done refused) and only fills blank fields, so a card flipping to done mid-flight is refused on write. (2) forge project backfill NEVER auto-fabricates provenance: a zero GitHub match is reported unresolved and check_board_complete stays red for it; predates_outcome_contract is set ONLY via the human-confirmed mark-predates (with a recorded reason). No regression to the FORGE-BOARD-4 dogfood (its 10 stories matched uniquely, none used zero-match->predates).",
+  "blocking_findings": [],
+  "residual_risks": [],
+  "recommendation": "ship",
+  "reviewed_scope": [
+    "factory/scripts/forge_cli/roadmap.py",
+    "factory/scripts/forge_cli/project.py"
+  ],
+  "aspect": "security",
+  "non_blocking_findings": [],
+  "recorded_at": "2026-08-08T18:51:56+00:00",
+  "commit": "1313664bdb1cff1183af095d21de03dd2f249605"
+}

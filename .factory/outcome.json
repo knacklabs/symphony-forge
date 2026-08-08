@@ -1,0 +1,7 @@
+{
+  "generated_by": "implementer",
+  "outcome": "Two deterministic primitives close the honesty holes a Codex plan review found. forge roadmap fill safely repairs an existing PENDING card by filling only blank fields and refusing active/done cards, so legacy re-authoring can never overwrite shipped history. forge project backfill no longer auto-marks predates on a zero GitHub match (which could falsely exempt a story whose PR the matcher missed) \u2014 it reports unresolved provenance and the board stays red until a human resolves it, with forge project mark-predates the human-confirmed path. Together they make the upgrade skill (FORGE-BOARD-6) able to re-author legacy clients without fabricating history.",
+  "issue": "FORGE-BOARD-5",
+  "commit": "1313664bdb1cff1183af095d21de03dd2f249605",
+  "recorded_at": "2026-08-08T18:51:56+00:00"
+}

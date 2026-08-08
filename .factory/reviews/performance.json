@@ -1,0 +1,16 @@
+{
+  "generated_by": "autoreview",
+  "score": 10,
+  "summary": "Negligible. fill loads the roadmap, edits one item, saves. The backfill change is a branch swap (no auto-write on zero-match) and mark-predates edits one item. No new I/O on hot paths.",
+  "blocking_findings": [],
+  "recommendation": "ship",
+  "reviewed_scope": [
+    "factory/scripts/forge_cli/roadmap.py",
+    "factory/scripts/forge_cli/project.py"
+  ],
+  "aspect": "performance",
+  "non_blocking_findings": [],
+  "residual_risks": [],
+  "recorded_at": "2026-08-08T18:51:56+00:00",
+  "commit": "1313664bdb1cff1183af095d21de03dd2f249605"
+}

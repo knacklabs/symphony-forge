@@ -7,11 +7,11 @@
   "plan_status": "approved",
   "decomposition_status": "recorded",
   "implementation_status": "pending",
-  "tests_status": "pending",
-  "verify_status": "pending",
-  "review_status": "pending",
+  "tests_status": "recorded",
+  "verify_status": "passed",
+  "review_status": "in-progress",
   "created_at": "2026-08-08T18:00:15+00:00",
-  "updated_at": "2026-08-08T18:34:13+00:00",
+  "updated_at": "2026-08-08T18:52:13+00:00",
   "plan_file": "plans/active/FORGE-BOARD-5-knacklabs-upgrade-project-skill-machinery-upgrade-guided-re-authoring.md",
   "story": "FORGE-BOARD-5"
 }

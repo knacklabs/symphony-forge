@@ -1,0 +1,18 @@
+{
+  "generated_by": "autoreview",
+  "score": 9,
+  "summary": "Clean, targeted implementation of both Codex blockers. cmd_fill refuses any non-pending card and fills only blank fields, reusing the existing validators (ITEM_SKILLS/check_item/resolve_spec_reference/check_dag) and recording the change. The backfill zero-match branch drops the auto-predates and reports unresolved; cmd_mark_predates is the human-confirmed path (requires --reason, records an event). Symmetric, well-scoped, tested.",
+  "blocking_findings": [],
+  "non_blocking_findings": [],
+  "recommendation": "ship",
+  "reviewed_scope": [
+    "factory/scripts/forge_cli/roadmap.py",
+    "factory/scripts/forge_cli/project.py",
+    "factory/scripts/forge.py",
+    "factory/tests/test_gates.py"
+  ],
+  "aspect": "quality",
+  "residual_risks": [],
+  "recorded_at": "2026-08-08T18:51:56+00:00",
+  "commit": "1313664bdb1cff1183af095d21de03dd2f249605"
+}

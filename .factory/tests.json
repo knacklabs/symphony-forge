@@ -1,0 +1,36 @@
+{
+  "commit": "1313664bdb1cff1183af095d21de03dd2f249605",
+  "automated": {
+    "generated_by": "implementer",
+    "status": "pass",
+    "summary": "FORGE-BOARD-5 closes the two Codex-review blockers deterministically: forge roadmap fill (pending-only, blank-only, refuses active/done, records) and the backfill honesty fix (zero-match -> unresolved, not auto-predates; human-confirmed mark-predates). Full suite green via verify.py (xdist).",
+    "blocking_findings": [],
+    "commands_run": [
+      "python3 factory/scripts/verify.py (FACTORY_TEST_CMD = pytest factory/tests -n auto)"
+    ],
+    "tests_added_or_updated": [
+      "test_roadmap_fill_sets_blank_field_on_pending",
+      "test_roadmap_fill_refuses_nonblank_field",
+      "test_roadmap_fill_refuses_active_card",
+      "test_roadmap_fill_refuses_done_card",
+      "test_project_backfill_zero_match_does_not_predate",
+      "test_project_backfill_zero_match_stays_red",
+      "test_project_mark_predates_is_human_confirmed",
+      "test_project_backfill_unique_match_still_links"
+    ],
+    "pass_fail_summary": "full factory/tests suite green (verify.py passed)",
+    "reviewed_scope": [
+      "factory/scripts/forge_cli/roadmap.py",
+      "factory/scripts/forge_cli/project.py",
+      "factory/scripts/forge.py",
+      "factory/tests/test_gates.py"
+    ],
+    "non_blocking_findings": [],
+    "remaining_gaps": [],
+    "residual_risks": [],
+    "manual_validation_steps": [],
+    "recorded_at": "2026-08-08T18:52:13+00:00",
+    "commit": "1313664bdb1cff1183af095d21de03dd2f249605"
+  },
+  "updated_at": "2026-08-08T18:52:13+00:00"
+}
