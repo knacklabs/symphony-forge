@@ -54,7 +54,7 @@ prototype ▶ spec grills ▶ CONFIRMED SPECS ▶ derived roadmap ▶ sign-off g
 ## 1. Get the harness (once per machine)
 
 Clone it wherever you keep repos — `./setup` records the location for the
-bootstrap skill:
+bootstrap skills:
 
 ```bash
 git clone git@github.com:knacklabs/symphony-forge.git
@@ -369,15 +369,21 @@ harness are routed to `forge upgrade` instead.
 
 ## Upgrading a project to a newer harness
 
-Say: **"Upgrade this repo to the latest harness."** From the harness clone
-(clean target tree required):
+Say: **"Upgrade this repo to the latest harness."** (the
+`knacklabs-upgrade-project` skill installed by `./setup`)
 
-```bash
-./forge upgrade --target ../my-app
-```
+The skill locates the setup-pinned harness clone, verifies its origin, branch,
+and clean state, and stops if its fast-forward-only pull fails. Every periodic
+upgrade cycle also requires a clean, committed project baseline. It audits the
+project, refreshes machinery with `forge upgrade`, repairs tooling with
+`forge doctor --fix`, and pauses for review of the diff.
 
 Harness-owned machinery (`factory/` incl. schemas, adapters, `constitution/`,
 contracts) is replaced; project-owned content (`harness.yaml`, `AGENTS.md`,
 plans incl. the roadmap, decisions, context, prototype, `.factory/`) is never
-touched, and `factory/skills/proposed/` survives the swap. Review the diff,
-run the checks, commit.
+touched, and `factory/skills/proposed/` survives the swap. After the review,
+the skill backfills deterministic project-level gaps and guides you through
+re-authoring incomplete stories one at a time with `forge roadmap fill`.
+Completed stories are never rewritten and roadmap data is never bulk-loaded.
+It then re-runs verification and audit, reports `forge next`, and leaves the
+reviewed upgrade for you to commit as the next cycle's clean baseline.

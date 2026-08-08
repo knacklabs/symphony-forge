@@ -690,3 +690,5 @@
 {"event": "plan-approved", "generated_by": "planner-high", "at": "2026-08-08T19:15:56+00:00", "story": "FORGE-BOARD-6", "detail": "plans/active/FORGE-BOARD-6-knacklabs-upgrade-project-skill-machinery-upgrade-guided-re-authoring.md"}
 {"event": "decomposed", "generated_by": "docs-decomposer", "at": "2026-08-08T19:17:14+00:00", "story": "FORGE-BOARD-6", "detail": "1 task(s)"}
 {"event": "implementing", "generated_by": "orchestrator", "at": "2026-08-08T19:17:14+00:00", "story": "FORGE-BOARD-6"}
+{"event": "stage-start", "generated_by": "implementer", "at": "2026-08-08T19:17:31+00:00", "story": "FORGE-BOARD-6", "detail": "FORGE-BOARD-6.1 knacklabs-upgrade-project skill + registration + docs + test"}
+{"event": "delegated", "generated_by": "orchestrator", "at": "2026-08-08T19:22:39+00:00", "story": "FORGE-BOARD-6", "detail": "FORGE-BOARD-6.1 (write)"}
