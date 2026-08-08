@@ -1,0 +1,7 @@
+{
+  "generated_by": "implementer",
+  "outcome": "Symphony Forge now has a knacklabs-upgrade-project operator skill (the forge upgrade sibling to knacklabs-migrate-project) that turns the constant, change-driven upgrade into one runbook: locate the harness robustly, upgrade the machinery, run the project audit + honest backfill, and guide a human through re-authoring only pending stories via forge roadmap fill (never import, never done stories), then re-verify. Every client command routes --repo TARGET so it never touches the harness. It composes the deterministic primitives so the honesty and safety live in the commands, not the prose.",
+  "issue": "FORGE-BOARD-6",
+  "commit": "4562e12f62a1058ecb8fcbeca83b30091c80c278",
+  "recorded_at": "2026-08-08T19:26:54+00:00"
+}

@@ -1,0 +1,15 @@
+{
+  "generated_by": "autoreview",
+  "score": 10,
+  "summary": "A skill document + a static-string test + doc rows. No runtime code path, no performance surface.",
+  "blocking_findings": [],
+  "recommendation": "ship",
+  "reviewed_scope": [
+    "install/claude/knacklabs-upgrade-project/SKILL.md"
+  ],
+  "aspect": "performance",
+  "non_blocking_findings": [],
+  "residual_risks": [],
+  "recorded_at": "2026-08-08T19:26:53+00:00",
+  "commit": "4562e12f62a1058ecb8fcbeca83b30091c80c278"
+}

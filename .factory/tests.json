@@ -1,0 +1,30 @@
+{
+  "commit": "4562e12f62a1058ecb8fcbeca83b30091c80c278",
+  "automated": {
+    "generated_by": "implementer",
+    "status": "pass",
+    "summary": "FORGE-BOARD-6: the knacklabs-upgrade-project skill (runbook composing the deterministic primitives; Codex-review fixes baked in). Tests assert the two safety invariants (--repo TARGET routing; roadmap fill not import) plus structure and setup registration. Full suite green via verify.py (xdist).",
+    "blocking_findings": [],
+    "commands_run": [
+      "python3 factory/scripts/verify.py (FACTORY_TEST_CMD = pytest factory/tests -n auto)"
+    ],
+    "tests_added_or_updated": [
+      "test_upgrade_project_skill_structure_and_registration",
+      "test_upgrade_project_skill_uses_fill_not_import"
+    ],
+    "pass_fail_summary": "full factory/tests suite green (verify.py passed)",
+    "reviewed_scope": [
+      "install/claude/knacklabs-upgrade-project/SKILL.md",
+      "setup",
+      "docs/getting-started.md",
+      "factory/tests/test_gates.py"
+    ],
+    "non_blocking_findings": [],
+    "remaining_gaps": [],
+    "residual_risks": [],
+    "manual_validation_steps": [],
+    "recorded_at": "2026-08-08T19:27:08+00:00",
+    "commit": "4562e12f62a1058ecb8fcbeca83b30091c80c278"
+  },
+  "updated_at": "2026-08-08T19:27:08+00:00"
+}
