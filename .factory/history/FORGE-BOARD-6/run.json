@@ -1,0 +1,17 @@
+{
+  "issue_key": "FORGE-BOARD-6",
+  "title": "knacklabs-upgrade-project skill (machinery upgrade + guided re-authoring)",
+  "tracker": "linear",
+  "branch": "feat/FORGE-BOARD-6-knacklabs-upgrade-project-skill-machinery-upgrade-guided-re-authoring",
+  "phase": "pr-ready",
+  "plan_status": "approved",
+  "decomposition_status": "recorded",
+  "implementation_status": "pending",
+  "tests_status": "passed",
+  "verify_status": "passed",
+  "review_status": "passed",
+  "created_at": "2026-08-08T19:13:14+00:00",
+  "updated_at": "2026-08-08T19:27:08+00:00",
+  "plan_file": "plans/completed/FORGE-BOARD-6-knacklabs-upgrade-project-skill-machinery-upgrade-guided-re-authoring.md",
+  "story": "FORGE-BOARD-6"
+}

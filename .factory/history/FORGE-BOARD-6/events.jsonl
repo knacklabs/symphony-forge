@@ -1,0 +1,14 @@
+{"event": "intake", "generated_by": "orchestrator", "at": "2026-08-08T19:13:14+00:00", "story": "FORGE-BOARD-6", "detail": "knacklabs-upgrade-project skill (machinery upgrade + guided re-authoring)"}
+{"event": "plan-human-approved", "generated_by": "human", "at": "2026-08-08T19:15:55+00:00", "story": "FORGE-BOARD-6", "detail": "FORGE-BOARD-6 approved by vrknetha"}
+{"event": "plan-approved", "generated_by": "planner-high", "at": "2026-08-08T19:15:56+00:00", "story": "FORGE-BOARD-6", "detail": "plans/active/FORGE-BOARD-6-knacklabs-upgrade-project-skill-machinery-upgrade-guided-re-authoring.md"}
+{"event": "decomposed", "generated_by": "docs-decomposer", "at": "2026-08-08T19:17:14+00:00", "story": "FORGE-BOARD-6", "detail": "1 task(s)"}
+{"event": "implementing", "generated_by": "orchestrator", "at": "2026-08-08T19:17:14+00:00", "story": "FORGE-BOARD-6"}
+{"event": "stage-start", "generated_by": "implementer", "at": "2026-08-08T19:17:31+00:00", "story": "FORGE-BOARD-6", "detail": "FORGE-BOARD-6.1 knacklabs-upgrade-project skill + registration + docs + test"}
+{"event": "delegated", "generated_by": "orchestrator", "at": "2026-08-08T19:22:39+00:00", "story": "FORGE-BOARD-6", "detail": "FORGE-BOARD-6.1 (write)"}
+{"event": "stage-done", "generated_by": "implementer", "at": "2026-08-08T19:23:26+00:00", "story": "FORGE-BOARD-6", "detail": "FORGE-BOARD-6.1 knacklabs-upgrade-project skill + registration + docs + test"}
+{"event": "verify-passed", "generated_by": "orchestrator", "at": "2026-08-08T19:26:19+00:00", "story": "FORGE-BOARD-6"}
+{"event": "review-quality", "generated_by": "autoreview", "at": "2026-08-08T19:26:53+00:00", "story": "FORGE-BOARD-6"}
+{"event": "review-performance", "generated_by": "autoreview", "at": "2026-08-08T19:26:53+00:00", "story": "FORGE-BOARD-6"}
+{"event": "review-security", "generated_by": "autoreview", "at": "2026-08-08T19:26:54+00:00", "story": "FORGE-BOARD-6"}
+{"event": "tests-automated", "generated_by": "implementer", "at": "2026-08-08T19:27:08+00:00", "story": "FORGE-BOARD-6", "detail": "pass"}
+{"event": "shipped", "generated_by": "orchestrator", "at": "2026-08-08T19:27:08+00:00", "story": "FORGE-BOARD-6", "detail": "Symphony Forge now has a knacklabs-upgrade-project operator skill (the forge upgrade sibling to knacklabs-migrate-project) that turns the constant, change-driven upgrade into one runbook: locate the h"}
