@@ -1,0 +1,18 @@
+{"event": "roadmap-add", "generated_by": "orchestrator", "at": "2026-08-08T16:14:34+00:00", "story": "FORGE-BOARD-5", "detail": "docs/specs/traceable-board.md"}
+{"event": "intake", "generated_by": "orchestrator", "at": "2026-08-08T18:00:15+00:00", "story": "FORGE-BOARD-5", "detail": "knacklabs-upgrade-project skill (machinery upgrade + guided re-authoring)"}
+{"event": "plan-human-approved", "generated_by": "human", "at": "2026-08-08T18:33:13+00:00", "story": "FORGE-BOARD-5", "detail": "FORGE-BOARD-5 approved by vrknetha"}
+{"event": "plan-approved", "generated_by": "planner-high", "at": "2026-08-08T18:33:13+00:00", "story": "FORGE-BOARD-5", "detail": "plans/active/FORGE-BOARD-5-knacklabs-upgrade-project-skill-machinery-upgrade-guided-re-authoring.md"}
+{"event": "decomposed", "generated_by": "docs-decomposer", "at": "2026-08-08T18:34:00+00:00", "story": "FORGE-BOARD-5", "detail": "2 task(s)"}
+{"event": "implementing", "generated_by": "orchestrator", "at": "2026-08-08T18:34:13+00:00", "story": "FORGE-BOARD-5"}
+{"event": "stage-start", "generated_by": "implementer", "at": "2026-08-08T18:34:28+00:00", "story": "FORGE-BOARD-5", "detail": "FORGE-BOARD-5.1 forge roadmap fill (safe pending repair)"}
+{"event": "delegated", "generated_by": "orchestrator", "at": "2026-08-08T18:41:48+00:00", "story": "FORGE-BOARD-5", "detail": "FORGE-BOARD-5.1 (write)"}
+{"event": "stage-done", "generated_by": "implementer", "at": "2026-08-08T18:42:50+00:00", "story": "FORGE-BOARD-5", "detail": "FORGE-BOARD-5.1 forge roadmap fill (safe pending repair)"}
+{"event": "stage-start", "generated_by": "implementer", "at": "2026-08-08T18:43:09+00:00", "story": "FORGE-BOARD-5", "detail": "FORGE-BOARD-5.2 backfill provenance honesty (zero-match -> unresolved)"}
+{"event": "delegated", "generated_by": "orchestrator", "at": "2026-08-08T18:47:14+00:00", "story": "FORGE-BOARD-5", "detail": "FORGE-BOARD-5.2 (write)"}
+{"event": "stage-done", "generated_by": "implementer", "at": "2026-08-08T18:48:16+00:00", "story": "FORGE-BOARD-5", "detail": "FORGE-BOARD-5.2 backfill provenance honesty (zero-match -> unresolved)"}
+{"event": "verify-passed", "generated_by": "orchestrator", "at": "2026-08-08T18:51:21+00:00", "story": "FORGE-BOARD-5"}
+{"event": "review-quality", "generated_by": "autoreview", "at": "2026-08-08T18:51:56+00:00", "story": "FORGE-BOARD-5"}
+{"event": "review-performance", "generated_by": "autoreview", "at": "2026-08-08T18:51:56+00:00", "story": "FORGE-BOARD-5"}
+{"event": "review-security", "generated_by": "autoreview", "at": "2026-08-08T18:51:56+00:00", "story": "FORGE-BOARD-5"}
+{"event": "tests-automated", "generated_by": "implementer", "at": "2026-08-08T18:52:13+00:00", "story": "FORGE-BOARD-5", "detail": "pass"}
+{"event": "shipped", "generated_by": "orchestrator", "at": "2026-08-08T18:52:13+00:00", "story": "FORGE-BOARD-5", "detail": "Two deterministic primitives close the honesty holes a Codex plan review found. forge roadmap fill safely repairs an existing PENDING card by filling only blank fields and refusing active/done cards, "}
