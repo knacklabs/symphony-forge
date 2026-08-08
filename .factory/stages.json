@@ -1,0 +1,10 @@
+{
+  "issue": "FORGE-BOARD-6",
+  "stages": [
+    {
+      "id": "FORGE-BOARD-6.1",
+      "title": "knacklabs-upgrade-project skill + registration + docs + test",
+      "status": "pending"
+    }
+  ]
+}
