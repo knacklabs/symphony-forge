@@ -6322,6 +6322,12 @@ def fake_companion_env(tmp_path: Path) -> dict[str, str]:
 
 
 def launch_fake(repo: Path, tmp_path: Path, stage_id: str) -> None:
+    # The write delegation gate (decision 0032) refuses without a fresh per-task
+    # grill; record one bound to the recorded contract before launching.
+    from factory_lib import load_json, protected_decomposition_state_path
+    decomp = load_json(protected_decomposition_state_path(repo), default={})
+    task = next(t for t in decomp.get("tasks", []) if t.get("id") == stage_id)
+    record_task_grill(repo, task)
     code, out = run(repo, "forge.py", "delegate", stage_id,
                     env=fake_companion_env(tmp_path))
     assert code == 0, out
