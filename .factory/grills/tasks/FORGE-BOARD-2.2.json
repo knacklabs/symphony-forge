@@ -1,0 +1,15 @@
+{
+  "generated_by": "griller",
+  "gate": "task",
+  "task_id": "FORGE-BOARD-2.2",
+  "verdict": "pass",
+  "questions_asked": 0,
+  "summary": "Grilled FORGE-BOARD-2.2's contract against the real prior state left by 2.1 (the per-task grill recorder + .factory/grills/tasks/<id>.json storage now exist). The contract narrowed correctly after S-0001 (pr_ready archiving mis-scope) was deferred to D-0013. require_task_grill mirrors require_grill and binds to task_digest; the gate sits at the if-write choke point; read-only lanes are unaffected. No gaps or contradictions remain.",
+  "gaps": [],
+  "contradictions": [],
+  "resolutions": [],
+  "open_items": [],
+  "input_sha256": "f1c2a7ca3a4ed386fa2697e918f5b5fd90910adf7aa990d7a4bf92edc03d66b7",
+  "recorded_at": "2026-08-08T06:01:35+00:00",
+  "commit": "eac1183212fa9d8c7aa49334ff6cc03fdf6c115d"
+}

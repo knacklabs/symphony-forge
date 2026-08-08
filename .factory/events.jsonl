@@ -593,3 +593,6 @@
 {"event": "signal-resolved", "generated_by": "orchestrator", "at": "2026-08-08T05:41:16+00:00", "story": "FORGE-BOARD-2", "detail": "S-0001-9b77: Confirmed \u2014 pr_ready.py is correctly OUT of scope for 2.2. Implement only require_task_grill + the cmd_delegate gate + its tests within the declared write_scope (factory_lib.py, delegate.py, test_gate"}
 {"event": "delegated", "generated_by": "orchestrator", "at": "2026-08-08T05:41:37+00:00", "story": "FORGE-BOARD-2", "detail": "FORGE-BOARD-2.2 (write)"}
 {"event": "decomposed", "generated_by": "docs-decomposer", "at": "2026-08-08T05:43:24+00:00", "story": "FORGE-BOARD-2", "detail": "4 task(s)"}
+{"event": "delegated", "generated_by": "orchestrator", "at": "2026-08-08T06:05:03+00:00", "story": "FORGE-BOARD-2", "detail": "FORGE-BOARD-2.2 (write)"}
+{"event": "stage-contract-changed", "generated_by": "implementer", "at": "2026-08-08T06:05:40+00:00", "story": "FORGE-BOARD-2", "detail": "FORGE-BOARD-2.2: task contract re-recorded mid-stage"}
+{"event": "stage-done", "generated_by": "implementer", "at": "2026-08-08T06:05:40+00:00", "story": "FORGE-BOARD-2", "detail": "FORGE-BOARD-2.2 require_task_grill + delegation gate"}

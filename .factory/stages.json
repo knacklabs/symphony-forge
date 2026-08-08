@@ -14,7 +14,7 @@
     {
       "id": "FORGE-BOARD-2.2",
       "title": "require_task_grill + delegation gate",
-      "status": "active",
+      "status": "done",
       "started_at": "2026-08-08T05:36:32+00:00",
       "base_sha": "31749b5b75c69d4b23889bdf418a027e0d5fe04d",
       "dirty_at_start": {
@@ -27,7 +27,13 @@
           "git": "1 .M N... 100644 100644 100644 a95e18a4ca390120a374ed284afa7675b4f1805b a95e18a4ca390120a374ed284afa7675b4f1805b .factory/stages.json\u0000\u0000100644 a95e18a4ca390120a374ed284afa7675b4f1805b 0\t.factory/stages.json\u0000\u0000H .factory/stages.json\u0000"
         }
       },
-      "task_sha256": "5f6a5626d309cfe39bb72994220d67fdfeb824dbc9bb4add2f28ce3f82c63fb9"
+      "task_sha256": "f1c2a7ca3a4ed386fa2697e918f5b5fd90910adf7aa990d7a4bf92edc03d66b7",
+      "completed_at": "2026-08-08T06:05:40+00:00",
+      "contract_changed": {
+        "at": "2026-08-08T06:05:40+00:00",
+        "from": "5f6a5626d309cfe39bb72994220d67fdfeb824dbc9bb4add2f28ce3f82c63fb9",
+        "to": "f1c2a7ca3a4ed386fa2697e918f5b5fd90910adf7aa990d7a4bf92edc03d66b7"
+      }
     },
     {
       "id": "FORGE-BOARD-2.3",
