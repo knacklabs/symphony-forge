@@ -38,7 +38,16 @@
     {
       "id": "FORGE-BOARD-2.3",
       "title": "Board/UI: per-task grill status + done-story PR link",
-      "status": "pending"
+      "status": "active",
+      "started_at": "2026-08-08T06:06:29+00:00",
+      "base_sha": "6de81037c497e22d57aa09291673bd7ca2ccf3b9",
+      "dirty_at_start": {
+        ".factory/grills/tasks/FORGE-BOARD-2.3.json": {
+          "digest": "0cd7438c80e39f361b713db3a0ecde9c73180d50595302b14655357b30ebecbf",
+          "git": "? .factory/grills/tasks/FORGE-BOARD-2.3.json\u0000\u0000\u0000"
+        }
+      },
+      "task_sha256": "d969eb6e4cbe5c573509f495db3e340f95d2419572b1da9bac0011ba1c79e567"
     },
     {
       "id": "FORGE-BOARD-2.4",

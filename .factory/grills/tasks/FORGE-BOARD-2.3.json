@@ -1,0 +1,15 @@
+{
+  "generated_by": "griller",
+  "gate": "task",
+  "task_id": "FORGE-BOARD-2.3",
+  "verdict": "pass",
+  "questions_asked": 0,
+  "summary": "Grilled FORGE-BOARD-2.3 (board surfacing) against real prior state: 2.1's .factory/grills/tasks/<id>.json storage now exists (2.2's own grill is a live example). The board-renderer map confirmed the insertion points: board.py grills glob at :423-426 is non-recursive and must also load grills/tasks/*.json; task grill status attaches to each task's proof in task_dossiers (:517-524); rendered in taskDossier's proof block (index.html:1453-1474). PR link reads pr-linked events (events.load_events). write_scope includes factory/board/example/ so the render is demonstrable. No contradiction with prior tasks; board is read-only over the grill/event data.",
+  "gaps": [],
+  "contradictions": [],
+  "resolutions": [],
+  "open_items": [],
+  "input_sha256": "d969eb6e4cbe5c573509f495db3e340f95d2419572b1da9bac0011ba1c79e567",
+  "recorded_at": "2026-08-08T06:06:29+00:00",
+  "commit": "6de81037c497e22d57aa09291673bd7ca2ccf3b9"
+}

@@ -5487,6 +5487,38 @@ def test_bundled_example_exercises_frontier_and_blocked():
     assert all(epic["stories"] for epic in state["epics"])
 
 
+def test_board_shows_task_grill_status():
+    from forge_cli.board import story_detail
+
+    example = HARNESS / "factory" / "board" / "example"
+    detail = story_detail(example, "RETURN-1")
+    assert detail is not None
+    assert detail["tasks"][0]["proof"]["grill"]["verdict"] == "pass"
+
+    page = (HARNESS / "factory" / "board" / "index.html").read_text()
+    dossier = page[page.index("function taskDossier(t)"):
+                   page.index("function findingList(")]
+    assert "proof.grill" in dossier
+    assert "<b>Grill</b>" in dossier
+
+
+def test_board_shows_done_story_pr_link():
+    from forge_cli.board import aggregate_state, story_detail
+
+    example = HARNESS / "factory" / "board" / "example"
+    state = aggregate_state(example)
+    story = next(item for item in state["stories"] if item["key"] == "RETURN-1")
+    assert story["state"] == "shipped"
+    assert story["pr_link"] == "https://github.com/example/workshop-dispatch/pull/12"
+    assert story_detail(example, "RETURN-1")["story"]["pr_link"] == story["pr_link"]
+
+    page = (HARNESS / "factory" / "board" / "index.html").read_text()
+    drawer_body = page[page.index("function drawerBody()"):
+                       page.index("function tabBar()")]
+    assert 's.state === "shipped"' in drawer_body
+    assert "prReference(s)" in drawer_body
+
+
 def test_board_content_survives_all_three_widths():
     from forge_cli.board import aggregate_state
 
