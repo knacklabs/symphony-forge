@@ -335,16 +335,19 @@
         "Manual forge pr-link is documented as a degraded-mode fallback only (Gate B's pr-link.yml automates it), not a routine step."
       ],
       "order": 15,
-      "status": "active",
+      "status": "done",
       "epic": "traceable-board",
       "skill": "backend",
       "kind": "refactor",
       "depends_on": [],
-      "spec": "docs/specs/traceable-board.md"
+      "spec": "docs/specs/traceable-board.md",
+      "completed_at": "2026-08-08T13:15:20+00:00",
+      "history": ".factory/history/FORGE-BOARD-3/",
+      "outcome": "Ad-hoc capture no longer demands acceptance criteria: roadmap add --no-spec --reason works with no --ac, landing the idea as spec-debt that is still unplannable until spec confirm + link-spec (decision 0014 preserved), while --spec stories still require --ac. WORKFLOW.md now mirrors STORIES only (decomposition and task state stay in the repo), removing the are-tasks-tickets ambiguity, and manual forge pr-link is documented as a CI-unavailable fallback since Gate B automates it."
     }
   ],
   "generated_by": "human",
-  "updated_at": "2026-08-08T12:18:44+00:00",
+  "updated_at": "2026-08-08T13:15:20+00:00",
   "epics": [
     {
       "id": "symphony-forge",

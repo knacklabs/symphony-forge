@@ -1,0 +1,18 @@
+{"event": "roadmap-add", "generated_by": "orchestrator", "at": "2026-08-08T12:18:20+00:00", "story": "FORGE-BOARD-3", "detail": "docs/specs/traceable-board.md"}
+{"event": "intake", "generated_by": "orchestrator", "at": "2026-08-08T12:18:44+00:00", "story": "FORGE-BOARD-3", "detail": "Ad-hoc capture + simplification: one capture path, stories-only board mirror"}
+{"event": "plan-human-approved", "generated_by": "human", "at": "2026-08-08T12:58:42+00:00", "story": "FORGE-BOARD-3", "detail": "FORGE-BOARD-3 approved by vrknetha"}
+{"event": "plan-approved", "generated_by": "planner-high", "at": "2026-08-08T12:58:42+00:00", "story": "FORGE-BOARD-3", "detail": "plans/active/FORGE-BOARD-3-ad-hoc-capture-simplification-one-capture-path-stories-only-board-mirror.md"}
+{"event": "decomposed", "generated_by": "docs-decomposer", "at": "2026-08-08T12:59:20+00:00", "story": "FORGE-BOARD-3", "detail": "1 task(s)"}
+{"event": "implementing", "generated_by": "orchestrator", "at": "2026-08-08T12:59:20+00:00", "story": "FORGE-BOARD-3"}
+{"event": "stage-start", "generated_by": "implementer", "at": "2026-08-08T12:59:43+00:00", "story": "FORGE-BOARD-3", "detail": "FORGE-BOARD-3.1 Ad-hoc capture + simplification"}
+{"event": "signal-contradiction", "generated_by": "implementer", "at": "2026-08-08T13:01:58+00:00", "story": "FORGE-BOARD-3", "detail": "FORGE-BOARD-3.1 says moving cmd_add's explicit --ac guard into the --spec branch is sufficient, but check_story_contract runs before that branch and independently rejects empty acceptance_criteria; no"}
+{"event": "delegated", "generated_by": "orchestrator", "at": "2026-08-08T13:03:22+00:00", "story": "FORGE-BOARD-3", "detail": "FORGE-BOARD-3.1 (write)"}
+{"event": "signal-resolved", "generated_by": "orchestrator", "at": "2026-08-08T13:03:42+00:00", "story": "FORGE-BOARD-3", "detail": "S-0001-3187: Confirmed \u2014 check_story_contract (roadmap.py:149), called at cmd_add:498 BEFORE the spec/no-spec branch, independently requires acceptance_criteria. Full fix, all within roadmap.py (in scope): (1) in "}
+{"event": "delegated", "generated_by": "orchestrator", "at": "2026-08-08T13:08:45+00:00", "story": "FORGE-BOARD-3", "detail": "FORGE-BOARD-3.1 (write)"}
+{"event": "stage-done", "generated_by": "implementer", "at": "2026-08-08T13:11:14+00:00", "story": "FORGE-BOARD-3", "detail": "FORGE-BOARD-3.1 Ad-hoc capture + simplification"}
+{"event": "verify-passed", "generated_by": "orchestrator", "at": "2026-08-08T13:14:18+00:00", "story": "FORGE-BOARD-3"}
+{"event": "review-quality", "generated_by": "autoreview", "at": "2026-08-08T13:14:56+00:00", "story": "FORGE-BOARD-3"}
+{"event": "review-performance", "generated_by": "autoreview", "at": "2026-08-08T13:14:56+00:00", "story": "FORGE-BOARD-3"}
+{"event": "review-security", "generated_by": "autoreview", "at": "2026-08-08T13:14:56+00:00", "story": "FORGE-BOARD-3"}
+{"event": "tests-automated", "generated_by": "implementer", "at": "2026-08-08T13:15:19+00:00", "story": "FORGE-BOARD-3", "detail": "pass"}
+{"event": "shipped", "generated_by": "orchestrator", "at": "2026-08-08T13:15:20+00:00", "story": "FORGE-BOARD-3", "detail": "Ad-hoc capture no longer demands acceptance criteria: roadmap add --no-spec --reason works with no --ac, landing the idea as spec-debt that is still unplannable until spec confirm + link-spec (decisio"}

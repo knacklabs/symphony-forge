@@ -627,3 +627,4 @@
 {"event": "review-performance", "generated_by": "autoreview", "at": "2026-08-08T13:14:56+00:00", "story": "FORGE-BOARD-3"}
 {"event": "review-security", "generated_by": "autoreview", "at": "2026-08-08T13:14:56+00:00", "story": "FORGE-BOARD-3"}
 {"event": "tests-automated", "generated_by": "implementer", "at": "2026-08-08T13:15:19+00:00", "story": "FORGE-BOARD-3", "detail": "pass"}
+{"event": "shipped", "generated_by": "orchestrator", "at": "2026-08-08T13:15:20+00:00", "story": "FORGE-BOARD-3", "detail": "Ad-hoc capture no longer demands acceptance criteria: roadmap add --no-spec --reason works with no --ac, landing the idea as spec-debt that is still unplannable until spec confirm + link-spec (decisio"}
