@@ -579,3 +579,4 @@
 {"event": "review-security", "generated_by": "autoreview", "at": "2026-08-07T17:53:14+00:00", "story": "FORGE-BOARD-1"}
 {"event": "shipped", "generated_by": "orchestrator", "at": "2026-08-07T17:53:44+00:00", "story": "FORGE-BOARD-1", "detail": "Every PR now ties to a complete on-board ticket, enforced deterministically, so the board can no longer rot silently. Gate C: intake refuses a roadmap key that is not on the board (names the ad-hoc pa"}
 {"event": "pr-linked", "generated_by": "orchestrator", "at": "2026-08-07T17:56:27+00:00", "story": "FORGE-BOARD-1", "detail": "knacklabs/symphony-forge#56"}
+{"event": "roadmap-add", "generated_by": "orchestrator", "at": "2026-08-08T04:48:06+00:00", "story": "FORGE-BOARD-2", "detail": "docs/specs/traceable-board.md"}

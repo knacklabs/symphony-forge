@@ -302,10 +302,29 @@
       "completed_at": "2026-08-07T17:53:44+00:00",
       "history": ".factory/history/FORGE-BOARD-1/",
       "outcome": "Every PR now ties to a complete on-board ticket, enforced deterministically, so the board can no longer rot silently. Gate C: intake refuses a roadmap key that is not on the board (names the ad-hoc path). Gate A: a required CI check fails any PR that does not resolve to exactly one completed story (its done-flip + .factory/history/<key>/ in the same diff) or a ledgered window. Gate B: a pull_request workflow auto-commits the story-PR link to the branch (no CI writes to main), and check_board_complete verifies every done story has a pr-link + outcome + history. board-invariant ships workflow_dispatch-only; its live push:main enforcement is deferred to D-0011 pending the legacy backfill (the harness's pre-automation done stories)."
+    },
+    {
+      "key": "FORGE-BOARD-2",
+      "title": "JIT task planning: per-task plan+grill against real prior state",
+      "story": "As the harness, I record only the task LIST at decomposition and plan+grill each task's detailed contract just-in-time against the real repo state left by prior tasks, so later tasks stop shipping incorrect code built from speculative upfront contracts.",
+      "acceptance_criteria": [
+        "record_decomposition records the task LIST (id, order, dependencies, one-line objective) but not full per-task contracts; the list is shown under its story on the board from decomposition onward.",
+        "A stage's implementation delegation is REFUSED without a fresh, digest-bound per-task grill for that task \u2014 the JIT grill is a deterministic gate, exactly as plan save refuses an ungrilled plan.",
+        "Each task's detailed contract (write_scope, acceptance, tests, approach) is authored JIT against the actual repo state after prior tasks, and the refinement is recorded as a stage contract change (decision 0023).",
+        "A decision record supersedes decision 0007's immutable-upfront-decomposition stance; the shift is deliberate and recorded, not a silent exception.",
+        "Both grill points are kept: the story-level plan-grill validates the decomposition; the per-task JIT grill validates each task's details against real prior state."
+      ],
+      "order": 14,
+      "status": "pending",
+      "epic": "traceable-board",
+      "skill": "backend",
+      "kind": "feature",
+      "depends_on": [],
+      "spec": "docs/specs/traceable-board.md"
     }
   ],
   "generated_by": "human",
-  "updated_at": "2026-08-07T17:53:44+00:00",
+  "updated_at": "2026-08-08T04:48:06+00:00",
   "epics": [
     {
       "id": "symphony-forge",
