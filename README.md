@@ -42,11 +42,13 @@ this repo (cloned once, per machine)             your app repo (its own repo, it
   the new repo. The app is built *inside that repo* — the harness clone is
   never where app code lives.
 - **Upgrade**: when this template improves, nothing is merged or pulled into
-  the app. In the harness clone, say *"Update my-app to the latest harness."*
-  The agent rewrites ONLY the machinery (agent assets, adapters, the
-  constitution, the gates) — it refuses a dirty tree and never touches app
-  code, plans, docs, or evidence. You review the diff in the app repo like
-  any PR.
+  the app. Say *"Update my-app to the latest harness."* The installed
+  `knacklabs-upgrade-project` skill verifies and updates the harness clone,
+  audits the clean client, rewrites ONLY the machinery, repairs tooling, and
+  walks you through reviewing the diff. It then backfills project contracts,
+  guides pending-story re-authoring with `forge roadmap fill`, re-verifies,
+  and reports `forge next`; app code, completed stories, plans, docs, and
+  evidence remain yours.
 - **Never**: don't fork this repo (shared history means every upgrade becomes
   a merge into your app code, and the harness's own run state collides with
   yours) and don't use GitHub's template feature (clean copy once, but NO
@@ -135,6 +137,7 @@ your behalf, not for you to type.
 | machine setup | "Set up my machine" | `knacklabs-new-project` skill → `./forge doctor --fix` | doctor report |
 | new project | "Set up a new KnackLabs project called X" | `knacklabs-new-project` skill → `./forge init` | scaffolded repo |
 | existing repo | "Migrate this repo into the harness" | `knacklabs-migrate-project` skill → `./forge adopt` | vendored machinery; old context → `docs/context/` |
+| harness refresh | "Upgrade this repo to the latest harness" | `knacklabs-upgrade-project` skill → audit, upgrade, backfill, guided pending-story fill | reviewed and re-verified machinery upgrade |
 | any phase, lost | "What now?" | `/forge` skill → `./forge next` | — |
 | 0a discovery | "Let's run office hours" | gstack `/office-hours` | `docs/product/DISCOVERY.md`, `BRIEF.md`; design docs + decisions in `.gstack/projects/` (in-repo via `.envrc`) |
 | 0b prototype | build freely; save/confirm specs as capabilities emerge | ponytail (lite) allowed | `prototype/` + `docs/specs/` |

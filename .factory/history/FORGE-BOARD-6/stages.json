@@ -1,0 +1,15 @@
+{
+  "issue": "FORGE-BOARD-6",
+  "stages": [
+    {
+      "id": "FORGE-BOARD-6.1",
+      "title": "knacklabs-upgrade-project skill + registration + docs + test",
+      "status": "done",
+      "started_at": "2026-08-08T19:17:31+00:00",
+      "base_sha": "22de6ca78d8f1d0f94c6296332e5209b75ab055b",
+      "dirty_at_start": {},
+      "task_sha256": "fc93ec9c8690301ac99ea798832ed3406df0261645583e358e8235c0da7b832c",
+      "completed_at": "2026-08-08T19:23:26+00:00"
+    }
+  ]
+}

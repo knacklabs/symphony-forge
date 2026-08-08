@@ -1,0 +1,18 @@
+{
+  "generated_by": "autoreview",
+  "score": 9,
+  "summary": "The skill's exactness points are the safety story, and the test enforces them: it uses forge roadmap fill and NEVER roadmap import (so re-authoring cannot overwrite a shipped story's history) and routes every client-targeting command with --repo TARGET (so it never mutates or audits the HARNESS instead of the client). The harness locate block verifies canonical origin + refs/heads/main + a clean worktree and halts on pull failure, so dirty/wrong-branch machinery can't be vendored and misattributed (Codex major 3). It touches no gated surface (operator skills are outside dual-runtime/scaffold), so it can't weaken a gate.",
+  "blocking_findings": [],
+  "residual_risks": [
+    "{'category': 'guidance-not-gate', 'area': 'install/claude/knacklabs-upgrade-project/SKILL.md', 'summary': \"The runbook is agent guidance; the determinism/honesty is enforced by the commands it calls (roadmap fill's pending-only guard, backfill's no-auto-predates), not by the prose. The test pins the two invariants that matter most.\"}"
+  ],
+  "recommendation": "ship",
+  "reviewed_scope": [
+    "install/claude/knacklabs-upgrade-project/SKILL.md",
+    "setup"
+  ],
+  "aspect": "security",
+  "non_blocking_findings": [],
+  "recorded_at": "2026-08-08T19:26:54+00:00",
+  "commit": "4562e12f62a1058ecb8fcbeca83b30091c80c278"
+}

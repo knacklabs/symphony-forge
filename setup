@@ -63,7 +63,7 @@ run_python() {
 }
 
 install_bootstrap_skills() {
-  for SKILL in knacklabs-new-project knacklabs-migrate-project; do
+  for SKILL in knacklabs-new-project knacklabs-migrate-project knacklabs-upgrade-project; do
     SOURCE="$HERE/install/claude/$SKILL/SKILL.md"
 
     [ -f "$SOURCE" ] ||
@@ -113,6 +113,7 @@ MESSAGE
   echo
   echo 'Try it in Claude Code: "Set up a new KnackLabs project called my-app"'
   echo '               ...or: "Migrate this repo into the harness"'
+  echo '               ...or: "Upgrade this repo to the latest harness"'
 
   echo
   echo "Attempting to install or repair missing dependencies..."

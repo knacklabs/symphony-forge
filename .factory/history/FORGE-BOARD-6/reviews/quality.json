@@ -1,0 +1,20 @@
+{
+  "generated_by": "autoreview",
+  "score": 8,
+  "summary": "A clean runbook skill mirroring knacklabs-migrate-project, composing the deterministic primitives (upgrade/doctor/project audit-backfill/roadmap fill) into the constant convergent upgrade flow. All Codex-review fixes are present: robust harness locate (verify .git/toplevel/canonical-origin/main/clean, halt on pull fail), --repo TARGET on every client command, roadmap fill (never import), clean-baseline framing. Registered in setup; the existing getting-started upgrade section is updated (not duplicated).",
+  "blocking_findings": [],
+  "non_blocking_findings": [],
+  "recommendation": "ship",
+  "reviewed_scope": [
+    "install/claude/knacklabs-upgrade-project/SKILL.md",
+    "setup",
+    "docs/getting-started.md",
+    "README.md",
+    "factory/skills/forge.md",
+    "factory/tests/test_gates.py"
+  ],
+  "aspect": "quality",
+  "residual_risks": [],
+  "recorded_at": "2026-08-08T19:26:53+00:00",
+  "commit": "4562e12f62a1058ecb8fcbeca83b30091c80c278"
+}

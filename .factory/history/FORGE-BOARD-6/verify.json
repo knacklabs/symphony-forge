@@ -1,0 +1,28 @@
+{
+  "ok": true,
+  "completed_at": "2026-08-08T19:26:19+00:00",
+  "commit": "4562e12f62a1058ecb8fcbeca83b30091c80c278",
+  "results": [
+    {
+      "command": "python3 factory/scripts/check_dual_runtime.py",
+      "exit_code": 0,
+      "stdout": "WARNING: commit e900fcf5 accepting docs/decisions/0032-jit-task-planning.md lacks a `Confirmed-by:` trailer (convention-level check).\ncheck_dual_runtime: clean.\n",
+      "stderr": "",
+      "phase": "structural"
+    },
+    {
+      "command": "python3 factory/scripts/check_factory_scaffold.py",
+      "exit_code": 0,
+      "stdout": "Factory scaffold OK\n",
+      "stderr": "",
+      "phase": "typecheck"
+    },
+    {
+      "command": "uv run --with pytest --with pytest-xdist python -m pytest factory/tests -q -n auto -p no:cacheprovider",
+      "exit_code": 0,
+      "stdout": "bringing up nodes...\nbringing up nodes...\n\n........................................................................ [ 15%]\n........................................................................ [ 30%]\n........................................................................ [ 46%]\n........................................................................ [ 61%]\n........................................................................ [ 76%]\n........................................................................ [ 92%]\n.....................................                                    [100%]\n469 passed in 161.88s (0:02:41)\n",
+      "stderr": "",
+      "phase": "tests"
+    }
+  ]
+}

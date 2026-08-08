@@ -401,18 +401,21 @@
         "Guided re-authoring uses forge roadmap fill (pending-only, blank-only), never roadmap import on a done card; it never fabricates history."
       ],
       "order": 18,
-      "status": "pending",
+      "status": "done",
       "epic": "traceable-board",
       "skill": "fullstack",
       "kind": "feature",
       "depends_on": [
         "FORGE-BOARD-5"
       ],
-      "spec": "docs/specs/traceable-board.md"
+      "spec": "docs/specs/traceable-board.md",
+      "completed_at": "2026-08-08T19:27:08+00:00",
+      "history": ".factory/history/FORGE-BOARD-6/",
+      "outcome": "Symphony Forge now has a knacklabs-upgrade-project operator skill (the forge upgrade sibling to knacklabs-migrate-project) that turns the constant, change-driven upgrade into one runbook: locate the harness robustly, upgrade the machinery, run the project audit + honest backfill, and guide a human through re-authoring only pending stories via forge roadmap fill (never import, never done stories), then re-verify. Every client command routes --repo TARGET so it never touches the harness. It composes the deterministic primitives so the honesty and safety live in the commands, not the prose."
     }
   ],
   "generated_by": "human",
-  "updated_at": "2026-08-08T18:52:13+00:00",
+  "updated_at": "2026-08-08T19:27:08+00:00",
   "epics": [
     {
       "id": "symphony-forge",

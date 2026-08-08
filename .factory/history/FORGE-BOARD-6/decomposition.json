@@ -1,0 +1,48 @@
+{
+  "generated_by": "claude-code:plan-mode",
+  "user_facing": false,
+  "story": "FORGE-BOARD-6",
+  "epic": "traceable-board",
+  "tasks": [
+    {
+      "id": "FORGE-BOARD-6.1",
+      "title": "knacklabs-upgrade-project skill + registration + docs + test",
+      "objective": "Add install/claude/knacklabs-upgrade-project/SKILL.md: a runbook that locates the harness robustly (verify origin/ref/clean, halt on pull fail), then audit -> forge upgrade + doctor --fix -> backfill -> guided re-authoring of PENDING stories via forge roadmap fill (never import/done) -> re-verify -> forge next, with every client command using --repo \"$TARGET\". Register it in setup's loop; update the existing getting-started upgrade section + README/forge.md; add a structure/safety test.",
+      "dependencies": [],
+      "write_scope": [
+        "install/claude/knacklabs-upgrade-project/SKILL.md",
+        "setup",
+        "docs/getting-started.md",
+        "README.md",
+        "factory/skills/forge.md",
+        "factory/tests/test_gates.py"
+      ],
+      "acceptance_criteria": [
+        "SKILL.md runs the sequence locate(robust)->preflight audit->forge upgrade+doctor --fix->review->project backfill->guided roadmap fill re-authoring->re-verify->forge next; every client command carries --repo \"$TARGET\" and upgrade is the only step run from $HARNESS.",
+        "Re-authoring uses forge roadmap fill (pending-only) and NEVER roadmap import or a done story; the skill is framed periodic/convergent (clean committed baseline before each upgrade cycle).",
+        "The skill name is in setup's bootstrap-skill loop (installs to both runtime homes); the existing getting-started 'Upgrading an existing repo' section routes through it (updated, not duplicated).",
+        "A test asserts the skill exists, its name + trigger phrases, the {{HARNESS_PATH}} robust-locate strings, --repo \"$TARGET\" on client commands, forge roadmap fill present and roadmap import absent, and the skill in setup's loop."
+      ],
+      "verify_commands": [
+        "uv run --with pytest python -m pytest factory/tests/test_gates.py -q -k \"upgrade_project_skill\""
+      ],
+      "required_tests": [
+        {
+          "id": "test_upgrade_project_skill_structure_and_registration",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_upgrade_project_skill_uses_fill_not_import",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        }
+      ],
+      "reviewer_focus": "The two exactness points: every client command routes --repo \"$TARGET\" (never the harness), and re-authoring uses roadmap fill NOT import (asserted by the test); robust locate strings present; registered in setup; existing getting-started section updated not duplicated."
+    }
+  ],
+  "project": "",
+  "plan_file": "plans/active/FORGE-BOARD-6-knacklabs-upgrade-project-skill-machinery-upgrade-guided-re-authoring.md",
+  "plan_sha256": "92c74a6cc12c018f927a73e0929f5dfc413752bf306007ed07fcf07f28ecab9b",
+  "commit": "0d3be869dd5622ce3a2f9cf9e0d38926b358d6ae"
+}

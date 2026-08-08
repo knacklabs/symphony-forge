@@ -1,0 +1,15 @@
+{
+  "generated_by": "griller",
+  "gate": "task",
+  "task_id": "FORGE-BOARD-6.1",
+  "verdict": "pass",
+  "questions_asked": 0,
+  "summary": "Grilled FORGE-BOARD-6.1 (the upgrade skill) against real state: install/claude/knacklabs-migrate-project/SKILL.md and knacklabs-new-project/SKILL.md are the templates; setup's bootstrap loop registers skill names; docs/getting-started.md already has an 'Upgrading an existing repo' section to update; test_forge_skill_maps_lite_mode_phrase is the test model. The deterministic primitives the runbook composes all exist and are tested (forge upgrade, doctor, project audit/backfill/mark-predates, roadmap fill). The two exactness points are asserted by the required tests: every client command uses --repo \"$TARGET\", and re-authoring uses roadmap fill with roadmap import ABSENT. write_scope covers the skill, setup, the three docs, and test_gates.py. No new gated surface (operator skills are outside dual-runtime/scaffold). No gaps.",
+  "gaps": [],
+  "contradictions": [],
+  "resolutions": [],
+  "open_items": [],
+  "input_sha256": "fc93ec9c8690301ac99ea798832ed3406df0261645583e358e8235c0da7b832c",
+  "recorded_at": "2026-08-08T19:17:31+00:00",
+  "commit": "22de6ca78d8f1d0f94c6296332e5209b75ab055b"
+}

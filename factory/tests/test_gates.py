@@ -44,6 +44,68 @@ def run(repo: Path, script: str, *args: str, stdin: str | None = None,
     return proc.returncode, proc.stdout + proc.stderr
 
 
+def test_upgrade_project_skill_structure_and_registration():
+    skill_path = (
+        HARNESS / "install" / "claude" / "knacklabs-upgrade-project" / "SKILL.md"
+    )
+    skill = skill_path.read_text()
+    setup = (HARNESS / "setup").read_text()
+
+    assert skill_path.is_file()
+    assert "name: knacklabs-upgrade-project" in skill
+    for trigger in (
+        "Upgrade this repo to the latest harness",
+        "Update my-app to the latest harness",
+    ):
+        assert trigger in skill
+    for locate_contract in (
+        'HARNESS="{{HARNESS_PATH}}"',
+        'git -C "$HARNESS" remote get-url origin',
+        'git -C "$HARNESS" symbolic-ref --quiet HEAD',
+        'git -C "$HARNESS" status --porcelain',
+        'git -C "$HARNESS" pull --ff-only',
+        "Harness pull failed; the client was not upgraded.",
+    ):
+        assert locate_contract in skill
+    for client_command in (
+        '"$TARGET/forge" audit --repo "$TARGET"',
+        '"$TARGET/forge" project backfill --repo "$TARGET"',
+        '"$TARGET/forge" roadmap list --pending --repo "$TARGET"',
+        '"$TARGET/forge" roadmap fill "$KEY"',
+        '"$TARGET/forge" next --repo "$TARGET"',
+    ):
+        assert client_command in skill
+    client_forge_lines = [
+        line.strip() for line in skill.splitlines()
+        if line.strip().startswith('"$TARGET/forge"')
+    ]
+    assert client_forge_lines
+    assert client_forge_lines.count('"$TARGET/forge" doctor --fix') == 1
+    assert all(
+        '--repo "$TARGET"' in line
+        for line in client_forge_lines
+        if line != '"$TARGET/forge" doctor --fix'
+    )
+    assert '"$HOME/.claude/skills"' in setup
+    assert '"$HOME/.codex/skills"' in setup
+    assert '(cd "$HARNESS" && ./forge upgrade --target "$TARGET")' in skill
+    bootstrap_loop = re.search(r"for SKILL in ([^;]+); do", setup)
+    assert bootstrap_loop
+    assert "knacklabs-upgrade-project" in bootstrap_loop.group(1).split()
+
+
+def test_upgrade_project_skill_uses_fill_not_import():
+    skill = (
+        HARNESS / "install" / "claude" / "knacklabs-upgrade-project" / "SKILL.md"
+    ).read_text()
+
+    assert '"$TARGET/forge" roadmap fill "$KEY"' in skill
+    assert '--repo "$TARGET"' in skill
+    assert "roadmap import" not in skill.lower()
+    assert 'roadmap list --pending --repo "$TARGET"' in skill
+    assert "Never select or rewrite a completed" in skill
+
+
 
 def jsonl_append_rules(attributes: str) -> list[str]:
     """Rule lines still routing through the hanging per-clone driver.
