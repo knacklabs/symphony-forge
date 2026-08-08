@@ -34,8 +34,8 @@ from pathlib import Path
 
 from factory_lib import (
     git_control_dir, load_json, now_iso, protected_decomposition_state_path,
-    repo_root, run_state_path, safe_factory_append, safe_factory_write_bytes,
-    sha256_of, validate_payload,
+    repo_root, require_task_grill, run_state_path, safe_factory_append,
+    safe_factory_write_bytes, sha256_of, validate_payload,
 )
 
 from .common import fail
@@ -1125,6 +1125,9 @@ def cmd_delegate(args: argparse.Namespace) -> None:
     # Derived, not typed: an active stage with somewhere to write is a write
     # run. --read-only is the explicit exception, for exploration.
     write = bool(stage.get("status") == "active" and scope) and not args.read_only
+    task_sha256_value = task_digest(task)
+    if write:
+        require_task_grill(base, args.id, task_sha256_value)
     if write and args.background:
         fail("background write delegation cannot satisfy a measured stage: the "
              "worker could keep writing after stage close. Run it in the foreground, "
@@ -1143,7 +1146,7 @@ def cmd_delegate(args: argparse.Namespace) -> None:
         task_id=args.id,
         text=text,
         path=path,
-        task_sha256_value=task_digest(task),
+        task_sha256_value=task_sha256_value,
         model=model,
         effort=effort,
         write=write,

@@ -866,6 +866,41 @@ def require_grill(
         )
 
 
+def require_task_grill(
+    root: Path,
+    task_id: str,
+    expect_digest_value: str,
+) -> None:
+    """Require a passing grill bound to the current task contract digest."""
+    path = factory_dir(root) / "grills" / "tasks" / f"{task_id}.json"
+    data = load_json(path, default={})
+    record_command = (
+        "python3 factory/scripts/record_grill_from_json.py --gate task "
+        f"--task {task_id} --task-digest {expect_digest_value}"
+    )
+    if not data:
+        raise SystemExit(
+            f"Task grill required first: grill {task_id}, resolve findings, then record "
+            f"`{record_command}`."
+        )
+    if data.get("verdict") != "pass":
+        raise SystemExit(
+            f".factory/grills/tasks/{task_id}.json verdict is "
+            f"{data.get('verdict')!r} — resolve the recorded findings, re-grill, then "
+            f"record `{record_command}`; this gate needs a pass."
+        )
+    if not data.get("commit"):
+        raise SystemExit(
+            f".factory/grills/tasks/{task_id}.json has no commit stamp — re-record "
+            f"with current tooling using `{record_command}`."
+        )
+    if data.get("input_sha256") != expect_digest_value:
+        raise SystemExit(
+            f"the {task_id} task grill is STALE — it was not recorded against the "
+            f"current task contract. Re-grill and record `{record_command}`."
+        )
+
+
 def changed_since(root: Path, stamp: str, prefixes: tuple[str, ...]) -> list[str]:
     """Committed files under `prefixes` changed between `stamp` and HEAD.
 

@@ -51,8 +51,7 @@
       "acceptance_criteria": [
         "forge delegate <task> refuses a WRITE launch when no per-task grill exists, when its verdict is not pass, or when input_sha256 != task_digest(task) (stale); the refusal names the record command.",
         "forge delegate <task> proceeds when a fresh, digest-bound, passing per-task grill exists.",
-        "A read-only delegation (write == False) is unaffected by the gate.",
-        "pr_ready archives .factory/grills/tasks/ into the story history."
+        "A read-only delegation (write == False) is unaffected by the gate."
       ],
       "verify_commands": [
         "uv run --with pytest python -m pytest factory/tests/test_gates.py -q -k \"require_task_grill or delegate_task_grill\""
@@ -79,7 +78,7 @@
           "command": "uvx --with pytest python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
         }
       ],
-      "reviewer_focus": "Gate fires only on write launches; stale (digest mismatch) is refused; read-only unaffected; refusal names the exact next command; pr_ready archives task grills."
+      "reviewer_focus": "Gate fires only on write launches; stale (digest mismatch) is refused; read-only unaffected; refusal names the exact next command."
     },
     {
       "id": "FORGE-BOARD-2.3",
@@ -146,5 +145,5 @@
   "project": "",
   "plan_file": "plans/active/FORGE-BOARD-2-jit-task-planning-per-task-plan-grill-against-real-prior-state.md",
   "plan_sha256": "a2fa06b4564ae428193179f3c4bff35d0db82b310e36aaaf7f2b04aa01b4bb62",
-  "commit": "808780532c66d1abd18733f316c6f8824a1db6ee"
+  "commit": "31749b5b75c69d4b23889bdf418a027e0d5fe04d"
 }

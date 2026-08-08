@@ -4,16 +4,30 @@
     {
       "id": "FORGE-BOARD-2.1",
       "title": "Per-task grill recorder + schema + storage",
-      "status": "active",
+      "status": "done",
       "started_at": "2026-08-08T05:30:12+00:00",
       "base_sha": "b396e942a1d9f43d5dab67513d0d5fd2783ff244",
       "dirty_at_start": {},
-      "task_sha256": "dcedf817aff6864f4df257766599dbf14723f6d80a597eca5f7280fe1ffdb116"
+      "task_sha256": "dcedf817aff6864f4df257766599dbf14723f6d80a597eca5f7280fe1ffdb116",
+      "completed_at": "2026-08-08T05:36:22+00:00"
     },
     {
       "id": "FORGE-BOARD-2.2",
       "title": "require_task_grill + delegation gate",
-      "status": "pending"
+      "status": "active",
+      "started_at": "2026-08-08T05:36:32+00:00",
+      "base_sha": "31749b5b75c69d4b23889bdf418a027e0d5fe04d",
+      "dirty_at_start": {
+        ".factory/events.jsonl": {
+          "digest": "011210024cdc64f52b779f013bb8c18192360a6758f25ba0ce33c873399845c2",
+          "git": "1 .M N... 100644 100644 100644 ea7d7aa6f6bfea189dc51affd15a1d2df42f1cee ea7d7aa6f6bfea189dc51affd15a1d2df42f1cee .factory/events.jsonl\u0000\u0000100644 ea7d7aa6f6bfea189dc51affd15a1d2df42f1cee 0\t.factory/events.jsonl\u0000\u0000H .factory/events.jsonl\u0000"
+        },
+        ".factory/stages.json": {
+          "digest": "dcee06ed06c6c2a8edf021613ce1ec0b7cbcf3653ed445e846297b3f80cce8aa",
+          "git": "1 .M N... 100644 100644 100644 a95e18a4ca390120a374ed284afa7675b4f1805b a95e18a4ca390120a374ed284afa7675b4f1805b .factory/stages.json\u0000\u0000100644 a95e18a4ca390120a374ed284afa7675b4f1805b 0\t.factory/stages.json\u0000\u0000H .factory/stages.json\u0000"
+        }
+      },
+      "task_sha256": "5f6a5626d309cfe39bb72994220d67fdfeb824dbc9bb4add2f28ce3f82c63fb9"
     },
     {
       "id": "FORGE-BOARD-2.3",
