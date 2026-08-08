@@ -181,7 +181,7 @@ def main() -> None:
     p_ra.add_argument("title")
     p_ra.add_argument("--story", required=True,
                       help='the user-facing narrative: "As a <user>, I ... so that ..."')
-    p_ra.add_argument("--ac", action="append", required=True, metavar="CRITERION",
+    p_ra.add_argument("--ac", action="append", required=False, metavar="CRITERION",
                       help="acceptance criterion (repeat for each)")
     p_ra.add_argument("--epic", required=True)
     p_ra.add_argument("--skill", help="frontend | backend | fullstack")

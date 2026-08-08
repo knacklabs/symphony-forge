@@ -57,3 +57,15 @@ python3 factory/scripts/pr_ready.py
 The artifacts and gates never change — degraded mode swaps the coordinator,
 never the contract. Return to Claude + `/codex:rescue` the moment the plugin
 works again.
+
+## PR-link fallback when CI is unavailable
+
+Gate B normally links a completed story to its pull request automatically
+through `.github/workflows/pr-link.yml`. Use the manual command only when that
+workflow cannot run:
+
+```bash
+./forge pr-link <STORY> <PR-REFERENCE>
+```
+
+This is a CI-unavailable fallback, not the normal PR-linking path.

@@ -4,8 +4,8 @@
 - The repo owns workflow policy, prompts, run artifacts, plans, and decisions —
   it is the canonical state.
 - An external tracker (Linear, GitHub Issues, Jira) is OPTIONAL: when one is
-  used, decomposition and task state are mirrored into it; when none is used,
-  `.factory/decomposition.json` and `plans/` are the task graph.
+  used, roadmap stories are mirrored into it. Decomposition and task state
+  remain in the repo under `.factory/decomposition.json` and `plans/`.
 - GitHub mirrors branch, PR, checks, and review evidence.
 - gstack output is PROJECT-LOCAL: `.envrc` pins `GSTACK_HOME` to
   `<repo>/.gstack` (activate with `direnv allow`), so office-hours design
@@ -279,8 +279,8 @@ outcome and link requirements.
 ## Task Graph Rules
 - The planner owns decomposition.
 - Decomposition is capability-driven. Its first recording is the ordered task
-  LIST: stable ids, titles, objectives, acceptance intent, and dependencies
-  (mirror to a tracker if the project uses one).
+  LIST: stable ids, titles, objectives, acceptance intent, and dependencies.
+  The task list stays in the repo; only stories are mirrored to a tracker.
 - Execution-contract detail is authored just in time for the next leaf task,
   against the actual output of its completed dependencies: write scope, exact
   acceptance criteria, verify commands, required tests, and reviewer focus.

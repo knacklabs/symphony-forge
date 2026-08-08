@@ -2268,6 +2268,38 @@ def test_roadmap_add_no_spec_still_records_spec_debt(repo):
     assert item["spec_debt_reason"] == reason
 
 
+def test_roadmap_add_no_spec_without_ac_records_debt(repo):
+    sign_off(repo)
+    code, out = add_epic(repo)
+    assert code == 0, out
+    reason = "client asked mid-sprint"
+    code, out = run(
+        repo, "forge.py", "roadmap", "add", "ENG-9", "Reports",
+        "--story", "As a finance lead, I see monthly reports.",
+        "--skill", "backend", "--epic", "billing", "--no-spec",
+        "--reason", reason,
+    )
+    assert code == 0, out
+    item = roadmap_items(repo)["ENG-9"]
+    assert item["origin"] == "adhoc"
+    assert item["spec_debt_reason"] == reason
+    assert "spec" not in item
+    assert item["acceptance_criteria"] == []
+
+
+def test_roadmap_add_spec_without_ac_fails(repo):
+    sign_off(repo)
+    code, out = add_epic(repo)
+    assert code == 0, out
+    code, out = run(
+        repo, "forge.py", "roadmap", "add", "ENG-9", "Reports",
+        "--story", "As a finance lead, I see monthly reports.",
+        "--skill", "backend", "--epic", "billing",
+        "--spec", "docs/specs/base.md",
+    )
+    assert code != 0 and "--ac is required" in out, out
+
+
 def test_roadmap_authoring_refuses_an_incomplete_story(repo, tmp_path):
     code, out = import_roadmap(repo, tmp_path, {
         "generated_by": "human", "epics": [ROADMAP_EPIC],

@@ -1,0 +1,15 @@
+{
+  "generated_by": "griller",
+  "gate": "task",
+  "task_id": "FORGE-BOARD-3.1",
+  "verdict": "pass",
+  "questions_asked": 0,
+  "summary": "Grilled FORGE-BOARD-3.1's contract against current main state (post #57/#58). The mechanics maps confirmed: forge.py:184 --ac is required=True (flip to False); roadmap.py:475-477 guard moves into the --spec branch; task-state mirroring is docs-only (WORKFLOW.md:6-8,281-283, no code); pr-link automation is pr-link.yml (demotion is docs). write_scope covers exactly forge.py, roadmap.py, WORKFLOW.md, degraded-mode.md, test_gates.py. required_tests prove both the new --no-spec-without-ac path and the preserved --spec-requires-ac refusal. The 0014 spec-debt gate is preserved. No assumed files or APIs; no gaps.",
+  "gaps": [],
+  "contradictions": [],
+  "resolutions": [],
+  "open_items": [],
+  "input_sha256": "6532a3dfab20d0e95ddc33f0960e8cfc313eef1b1bf510e78cdda05ff6da80fc",
+  "recorded_at": "2026-08-08T12:59:43+00:00",
+  "commit": "57a25543c80e4b8edfa684c1c07f47b711d95b1a"
+}

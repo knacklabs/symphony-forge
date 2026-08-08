@@ -146,10 +146,14 @@ def _blank(value: object) -> bool:
     return value is None
 
 
-def check_story_contract(item: dict, known_epics: set[str]) -> None:
+def check_story_contract(item: dict, known_epics: set[str], *,
+                         require_acceptance_criteria: bool = True) -> None:
     """Require the narrative and hierarchy fields only at authoring routes."""
     missing = []
-    for field in ("epic", "story", "acceptance_criteria", "skill"):
+    required_fields = ["epic", "story", "skill"]
+    if require_acceptance_criteria:
+        required_fields.append("acceptance_criteria")
+    for field in required_fields:
         if field not in item or _blank(item[field]):
             missing.append(field)
     if "depends_on" not in item:
@@ -472,9 +476,6 @@ def cmd_add(args: argparse.Namespace) -> None:
     criteria = [c.strip() for c in (getattr(args, "ac", None) or []) if c.strip()]
     if not story:
         fail("--story is required: the narrative a reader needs six weeks later")
-    if not criteria:
-        fail("--ac is required (repeat it): a story with no acceptance criteria "
-             "cannot be verified or reviewed")
     item = {"key": args.key, "title": args.title, "story": story,
             "acceptance_criteria": criteria, "order": order, "status": "pending"}
     if args.epic:
@@ -495,7 +496,11 @@ def cmd_add(args: argparse.Namespace) -> None:
             fail(f"--depends-on references unknown stor{'ies' if len(missing) > 1 else 'y'}: "
                  f"{', '.join(missing)}")
     check_item(item, order)
-    check_story_contract(item, {epic["id"] for epic in epics})
+    check_story_contract(
+        item,
+        {epic["id"] for epic in epics},
+        require_acceptance_criteria=False,
+    )
     # Only the epic this story leans on, matching import: revalidating the
     # whole stored list would let one legacy epic elsewhere refuse an
     # unrelated, perfectly good story.
@@ -503,6 +508,9 @@ def cmd_add(args: argparse.Namespace) -> None:
         if epic.get("id") == item["epic"]:
             check_epic_contract(epic, base)
     if args.spec:
+        if not criteria:
+            fail("--ac is required (repeat it): a story with no acceptance criteria "
+                 "cannot be verified or reviewed")
         from .specs import resolve_spec_reference
         item["spec"] = resolve_spec_reference(
             base, args.spec, confirmed=True).relative_to(base).as_posix()
