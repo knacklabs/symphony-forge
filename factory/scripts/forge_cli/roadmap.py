@@ -564,6 +564,94 @@ def cmd_add(args: argparse.Namespace) -> None:
               "--spec docs/specs/<slug>.md")
 
 
+def cmd_fill(args: argparse.Namespace) -> None:
+    """Repair blank authoring fields on a pending roadmap item."""
+    base = Path(args.repo).resolve() if args.repo else repo_root()
+    data = load_roadmap(base)
+    items = data.get("items", [])
+    item = next((entry for entry in items if entry.get("key") == args.key), None)
+    if item is None:
+        fail(f"{args.key} is not on the roadmap")
+    status = item.get("status", "pending")
+    if status != "pending":
+        fail(f"{args.key} is {status}; roadmap fill only repairs pending cards "
+             "and never changes active or done history")
+
+    provided: list[tuple[str, object]] = []
+    if args.story is not None:
+        provided.append(("story", args.story.strip()))
+    if args.ac is not None:
+        provided.append(("acceptance_criteria",
+                         [criterion.strip() for criterion in args.ac
+                          if criterion.strip()]))
+    if args.skill is not None:
+        provided.append(("skill", args.skill))
+    if args.epic is not None:
+        provided.append(("epic", args.epic))
+    if args.spec is not None:
+        provided.append(("spec", args.spec.strip()))
+    if args.depends_on is not None:
+        dependencies = [dependency.strip() for dependency in args.depends_on
+                        if dependency.strip()]
+        provided.append(("depends_on", dependencies))
+
+    candidate = dict(item)
+    changed: list[str] = []
+    for field, value in provided:
+        current = candidate.get(field)
+        if not _blank(current):
+            if current != value:
+                fail(f"{args.key}: '{field}' is already non-blank; roadmap fill "
+                     "refuses to overwrite it")
+            continue
+        if field not in candidate or current != value:
+            candidate[field] = value
+            changed.append(field)
+
+    if "skill" in changed and candidate["skill"] not in ITEM_SKILLS:
+        fail(f"skill must be one of {', '.join(sorted(ITEM_SKILLS))}")
+    if ("epic" in changed
+            and candidate["epic"] not in {
+                epic.get("id") for epic in data.get("epics", [])
+            }):
+        fail(f"epic '{candidate['epic']}' is not a known epic")
+    if "spec" in changed:
+        from .specs import resolve_spec_reference
+        candidate["spec"] = resolve_spec_reference(
+            base, str(candidate["spec"]), confirmed=True,
+        ).relative_to(base).as_posix()
+    if "depends_on" in changed:
+        dependencies = candidate["depends_on"]
+        known = {entry.get("key") for entry in items}
+        missing = [dependency for dependency in dependencies
+                   if dependency not in known]
+        if missing:
+            fail(f"--depends-on references unknown stor"
+                 f"{'ies' if len(missing) > 1 else 'y'}: {', '.join(missing)}")
+        if args.key in dependencies:
+            fail(f"roadmap item {args.key} depends on itself")
+
+    check_item(candidate, items.index(item) + 1)
+    if "depends_on" in changed:
+        check_dag([candidate if entry is item else entry for entry in items])
+
+    missing_fields = missing_story_contract_fields(candidate)
+    if "spec" not in candidate or _blank(candidate["spec"]):
+        missing_fields.append("spec")
+    if changed:
+        items[items.index(item)] = candidate
+        save_roadmap(base, items)
+        append_event(base, "roadmap-filled", actor="orchestrator", story=args.key,
+                     detail=", ".join(changed))
+        print(f"Filled {args.key}: {', '.join(changed)}")
+    else:
+        print(f"{args.key} already has the requested values; no changes made")
+    if missing_fields:
+        print(f"Still blank: {', '.join(missing_fields)}")
+    else:
+        print("No story contract fields remain blank")
+
+
 def cmd_epic_add(args: argparse.Namespace) -> None:
     """Append one epic after sign-off without invoking the import handoff gate."""
     base = Path(args.repo).resolve() if args.repo else repo_root()

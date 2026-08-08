@@ -2233,6 +2233,90 @@ def test_set_epic_points_a_story_at_a_known_epic(repo):
     assert code != 0 and "not a known epic" in out, out
 
 
+def test_roadmap_fill_sets_blank_field_on_pending(repo):
+    seed_signoff_inputs(repo)
+    ensure_story(repo, "ENG-9", "Reports")
+    path = repo / "plans" / "roadmap.json"
+    data = json.loads(path.read_text())
+    item = next(item for item in data["items"] if item["key"] == "ENG-9")
+    item.pop("spec")
+    data["epics"].append({"id": "billing"})
+    path.write_text(json.dumps(data, indent=2) + "\n")
+    args = (
+        "roadmap", "fill", "ENG-9",
+        "--story", "As a finance lead, I see monthly reports.",
+        "--ac", "the report lists every invoice",
+        "--skill", "backend", "--epic", "billing",
+        "--spec", "docs/specs/base.md", "--depends-on", "SIGNOFF-0",
+    )
+
+    code, out = run(repo, "forge.py", *args)
+    assert code == 0, out
+    item = roadmap_items(repo)["ENG-9"]
+    assert item["story"] == "As a finance lead, I see monthly reports."
+    assert item["acceptance_criteria"] == ["the report lists every invoice"]
+    assert item["skill"] == "backend"
+    assert item["epic"] == "billing"
+    assert item["spec"] == "docs/specs/base.md"
+    assert item["depends_on"] == ["SIGNOFF-0"]
+    events = [json.loads(line) for line in
+              (repo / ".factory" / "events.jsonl").read_text().splitlines()]
+    filled = [event for event in events if event["event"] == "roadmap-filled"]
+    assert len(filled) == 1 and filled[0]["story"] == "ENG-9"
+
+    roadmap_before = path.read_bytes()
+    events_before = (repo / ".factory" / "events.jsonl").read_bytes()
+    code, out = run(repo, "forge.py", *args)
+    assert code == 0 and "already has the requested values" in out, out
+    assert path.read_bytes() == roadmap_before
+    assert (repo / ".factory" / "events.jsonl").read_bytes() == events_before
+
+
+def test_roadmap_fill_refuses_nonblank_field(repo):
+    ensure_story(repo, "ENG-9", "Reports")
+    path = repo / "plans" / "roadmap.json"
+    data = json.loads(path.read_text())
+    item = next(item for item in data["items"] if item["key"] == "ENG-9")
+    item["story"] = "Existing story"
+    path.write_text(json.dumps(data, indent=2) + "\n")
+    before = path.read_bytes()
+
+    code, out = run(repo, "forge.py", "roadmap", "fill", "ENG-9",
+                    "--story", "Replacement story")
+    assert code != 0 and "story" in out and "already non-blank" in out, out
+    assert path.read_bytes() == before
+
+
+def test_roadmap_fill_refuses_active_card(repo):
+    ensure_story(repo, "ENG-9", "Reports")
+    path = repo / "plans" / "roadmap.json"
+    data = json.loads(path.read_text())
+    item = next(item for item in data["items"] if item["key"] == "ENG-9")
+    item["status"] = "active"
+    path.write_text(json.dumps(data, indent=2) + "\n")
+    before = path.read_bytes()
+
+    code, out = run(repo, "forge.py", "roadmap", "fill", "ENG-9",
+                    "--story", "A story")
+    assert code != 0 and "active" in out and "pending" in out, out
+    assert path.read_bytes() == before
+
+
+def test_roadmap_fill_refuses_done_card(repo):
+    ensure_story(repo, "ENG-9", "Reports")
+    path = repo / "plans" / "roadmap.json"
+    data = json.loads(path.read_text())
+    item = next(item for item in data["items"] if item["key"] == "ENG-9")
+    item["status"] = "done"
+    path.write_text(json.dumps(data, indent=2) + "\n")
+    before = path.read_bytes()
+
+    code, out = run(repo, "forge.py", "roadmap", "fill", "ENG-9",
+                    "--story", "A story")
+    assert code != 0 and "done" in out and "pending" in out, out
+    assert path.read_bytes() == before
+
+
 def test_roadmap_add_requires_a_known_epic(repo):
     sign_off(repo)
     code, out = add_epic(repo)

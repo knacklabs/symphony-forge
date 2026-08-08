@@ -1,0 +1,15 @@
+{
+  "generated_by": "griller",
+  "gate": "task",
+  "task_id": "FORGE-BOARD-5.1",
+  "verdict": "pass",
+  "questions_asked": 0,
+  "summary": "Grilled FORGE-BOARD-5.1 (forge roadmap fill) against current main. The reuse surface exists: roadmap.py has load_items, _blank, ITEM_SKILLS, check_item, missing_story_contract_fields, and cmd_add/cmd_link_spec as patterns; resolve_spec_reference for --spec; events.append_event for the record. The safety property is the status==pending guard (refuse active/done) plus blank-only writes. write_scope covers roadmap.py (cmd_fill), forge.py (register), test_gates.py. required_tests prove: sets a blank field on pending; refuses a non-blank field; refuses active; refuses done. No assumed APIs; no gaps.",
+  "gaps": [],
+  "contradictions": [],
+  "resolutions": [],
+  "open_items": [],
+  "input_sha256": "b0dc4e0ccf795bd57a01d1c2ea1fc3c3bfe14de0b49956bb55ded0f73b635dbe",
+  "recorded_at": "2026-08-08T18:34:28+00:00",
+  "commit": "cf545849982898c7697a232cd11df2cc1624dc06"
+}

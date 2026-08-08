@@ -672,3 +672,5 @@
 {"event": "plan-approved", "generated_by": "planner-high", "at": "2026-08-08T18:33:13+00:00", "story": "FORGE-BOARD-5", "detail": "plans/active/FORGE-BOARD-5-knacklabs-upgrade-project-skill-machinery-upgrade-guided-re-authoring.md"}
 {"event": "decomposed", "generated_by": "docs-decomposer", "at": "2026-08-08T18:34:00+00:00", "story": "FORGE-BOARD-5", "detail": "2 task(s)"}
 {"event": "implementing", "generated_by": "orchestrator", "at": "2026-08-08T18:34:13+00:00", "story": "FORGE-BOARD-5"}
+{"event": "stage-start", "generated_by": "implementer", "at": "2026-08-08T18:34:28+00:00", "story": "FORGE-BOARD-5", "detail": "FORGE-BOARD-5.1 forge roadmap fill (safe pending repair)"}
+{"event": "delegated", "generated_by": "orchestrator", "at": "2026-08-08T18:41:48+00:00", "story": "FORGE-BOARD-5", "detail": "FORGE-BOARD-5.1 (write)"}

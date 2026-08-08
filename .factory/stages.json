@@ -4,7 +4,11 @@
     {
       "id": "FORGE-BOARD-5.1",
       "title": "forge roadmap fill (safe pending repair)",
-      "status": "pending"
+      "status": "active",
+      "started_at": "2026-08-08T18:34:28+00:00",
+      "base_sha": "cf545849982898c7697a232cd11df2cc1624dc06",
+      "dirty_at_start": {},
+      "task_sha256": "b0dc4e0ccf795bd57a01d1c2ea1fc3c3bfe14de0b49956bb55ded0f73b635dbe"
     },
     {
       "id": "FORGE-BOARD-5.2",

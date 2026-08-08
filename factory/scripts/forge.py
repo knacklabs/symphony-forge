@@ -207,6 +207,19 @@ def main() -> None:
     p_ra.add_argument("--reason", help="why this story is captured without a spec")
     p_ra.add_argument("--repo")
     p_ra.set_defaults(func=roadmap.cmd_add)
+    p_rf = rm_sub.add_parser(
+        "fill", help="repair blank authoring fields on a pending roadmap item")
+    p_rf.add_argument("key")
+    p_rf.add_argument("--story")
+    p_rf.add_argument("--ac", action="append", metavar="CRITERION",
+                      help="acceptance criterion (repeat for each)")
+    p_rf.add_argument("--skill", help="frontend | backend | fullstack")
+    p_rf.add_argument("--epic")
+    p_rf.add_argument("--spec", help="confirmed docs/specs/<slug>.md")
+    p_rf.add_argument("--depends-on", action="append", metavar="KEY",
+                      help="story key this one consumes (repeat)")
+    p_rf.add_argument("--repo")
+    p_rf.set_defaults(func=roadmap.cmd_fill)
     p_re = rm_sub.add_parser("epic", help="manage roadmap epics")
     re_sub = p_re.add_subparsers(dest="roadmap_epic_command", required=True)
     p_rea = re_sub.add_parser(
