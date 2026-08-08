@@ -1,0 +1,25 @@
+{
+  "generated_by": "autoreview",
+  "score": 9,
+  "summary": "Clean, minimal simplification. --ac becomes conditional via an explicit require_acceptance_criteria keyword on check_story_contract (cmd_add passes False; import/derive keep the True default) plus a --spec-branch guard \u2014 a clearer design than an origin-based exemption, surfaced by the implementer's contradiction signal. Docs mirror stories only (both the Source-of-Truth and Task Graph Rules references fixed), and degraded-mode documents manual pr-link as a fallback. Two non-parametrized tests cover both the new and preserved behaviours.",
+  "blocking_findings": [],
+  "non_blocking_findings": [
+    {
+      "category": "planning-scope",
+      "area": "planning",
+      "summary": "The plan under-specified the fix (missed check_story_contract, a shared validator run before the branch); the implementer's JIT contradiction signal caught it and the fix stayed in-scope (roadmap.py). A second small doc consistency edit (task-list mirror aside) was applied in review."
+    }
+  ],
+  "recommendation": "ship",
+  "reviewed_scope": [
+    "factory/scripts/forge.py",
+    "factory/scripts/forge_cli/roadmap.py",
+    "WORKFLOW.md",
+    "docs/degraded-mode.md",
+    "factory/tests/test_gates.py"
+  ],
+  "aspect": "quality",
+  "residual_risks": [],
+  "recorded_at": "2026-08-08T13:14:56+00:00",
+  "commit": "cb0cda747fe4915aa0d27f11d24c80e3b5ed5b21"
+}

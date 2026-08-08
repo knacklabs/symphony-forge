@@ -1,0 +1,31 @@
+{
+  "commit": "cb0cda747fe4915aa0d27f11d24c80e3b5ed5b21",
+  "automated": {
+    "generated_by": "implementer",
+    "status": "pass",
+    "summary": "FORGE-BOARD-3 simplification: --ac made optional on --no-spec (required with --spec) via a require_acceptance_criteria param on check_story_contract; WORKFLOW.md stories-only mirror; degraded-mode pr-link fallback. A JIT contradiction signal (S-0001) surfaced that check_story_contract also required ACs; the fix stayed in-scope. Full deterministic suite green via verify.py (xdist).",
+    "blocking_findings": [],
+    "commands_run": [
+      "python3 factory/scripts/verify.py (FACTORY_TEST_CMD = pytest factory/tests -n auto)"
+    ],
+    "tests_added_or_updated": [
+      "test_roadmap_add_no_spec_without_ac_records_debt",
+      "test_roadmap_add_spec_without_ac_fails"
+    ],
+    "pass_fail_summary": "full factory/tests suite green (verify.py passed)",
+    "reviewed_scope": [
+      "factory/scripts/forge.py",
+      "factory/scripts/forge_cli/roadmap.py",
+      "WORKFLOW.md",
+      "docs/degraded-mode.md",
+      "factory/tests/test_gates.py"
+    ],
+    "non_blocking_findings": [],
+    "remaining_gaps": [],
+    "residual_risks": [],
+    "manual_validation_steps": [],
+    "recorded_at": "2026-08-08T13:15:19+00:00",
+    "commit": "cb0cda747fe4915aa0d27f11d24c80e3b5ed5b21"
+  },
+  "updated_at": "2026-08-08T13:15:19+00:00"
+}

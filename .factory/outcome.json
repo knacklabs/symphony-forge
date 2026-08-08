@@ -1,0 +1,7 @@
+{
+  "generated_by": "implementer",
+  "outcome": "Ad-hoc capture no longer demands acceptance criteria: roadmap add --no-spec --reason works with no --ac, landing the idea as spec-debt that is still unplannable until spec confirm + link-spec (decision 0014 preserved), while --spec stories still require --ac. WORKFLOW.md now mirrors STORIES only (decomposition and task state stay in the repo), removing the are-tasks-tickets ambiguity, and manual forge pr-link is documented as a CI-unavailable fallback since Gate B automates it.",
+  "issue": "FORGE-BOARD-3",
+  "commit": "cb0cda747fe4915aa0d27f11d24c80e3b5ed5b21",
+  "recorded_at": "2026-08-08T13:15:19+00:00"
+}

@@ -621,3 +621,9 @@
 {"event": "delegated", "generated_by": "orchestrator", "at": "2026-08-08T13:03:22+00:00", "story": "FORGE-BOARD-3", "detail": "FORGE-BOARD-3.1 (write)"}
 {"event": "signal-resolved", "generated_by": "orchestrator", "at": "2026-08-08T13:03:42+00:00", "story": "FORGE-BOARD-3", "detail": "S-0001-3187: Confirmed \u2014 check_story_contract (roadmap.py:149), called at cmd_add:498 BEFORE the spec/no-spec branch, independently requires acceptance_criteria. Full fix, all within roadmap.py (in scope): (1) in "}
 {"event": "delegated", "generated_by": "orchestrator", "at": "2026-08-08T13:08:45+00:00", "story": "FORGE-BOARD-3", "detail": "FORGE-BOARD-3.1 (write)"}
+{"event": "stage-done", "generated_by": "implementer", "at": "2026-08-08T13:11:14+00:00", "story": "FORGE-BOARD-3", "detail": "FORGE-BOARD-3.1 Ad-hoc capture + simplification"}
+{"event": "verify-passed", "generated_by": "orchestrator", "at": "2026-08-08T13:14:18+00:00", "story": "FORGE-BOARD-3"}
+{"event": "review-quality", "generated_by": "autoreview", "at": "2026-08-08T13:14:56+00:00", "story": "FORGE-BOARD-3"}
+{"event": "review-performance", "generated_by": "autoreview", "at": "2026-08-08T13:14:56+00:00", "story": "FORGE-BOARD-3"}
+{"event": "review-security", "generated_by": "autoreview", "at": "2026-08-08T13:14:56+00:00", "story": "FORGE-BOARD-3"}
+{"event": "tests-automated", "generated_by": "implementer", "at": "2026-08-08T13:15:19+00:00", "story": "FORGE-BOARD-3", "detail": "pass"}

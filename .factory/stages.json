@@ -4,11 +4,12 @@
     {
       "id": "FORGE-BOARD-3.1",
       "title": "Ad-hoc capture + simplification",
-      "status": "active",
+      "status": "done",
       "started_at": "2026-08-08T12:59:43+00:00",
       "base_sha": "57a25543c80e4b8edfa684c1c07f47b711d95b1a",
       "dirty_at_start": {},
-      "task_sha256": "6532a3dfab20d0e95ddc33f0960e8cfc313eef1b1bf510e78cdda05ff6da80fc"
+      "task_sha256": "6532a3dfab20d0e95ddc33f0960e8cfc313eef1b1bf510e78cdda05ff6da80fc",
+      "completed_at": "2026-08-08T13:11:14+00:00"
     }
   ]
 }

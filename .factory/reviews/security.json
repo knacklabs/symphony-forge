@@ -1,0 +1,16 @@
+{
+  "generated_by": "autoreview",
+  "score": 9,
+  "summary": "Capture is still not authorization (decision 0014 preserved): a --no-spec story drops the --ac REQUIREMENT but keeps origin=adhoc + spec_debt_reason and no spec, so plans.py:117-125 still refuses to plan it until spec confirm + link-spec. The acceptance-criteria exemption is scoped to cmd_add's authoring route only (require_acceptance_criteria=False); import and derive routes keep the default True, so spec-backed stories still require ACs. No gate weakened.",
+  "blocking_findings": [],
+  "residual_risks": [],
+  "recommendation": "ship",
+  "reviewed_scope": [
+    "factory/scripts/forge_cli/roadmap.py",
+    "factory/scripts/forge_cli/plans.py"
+  ],
+  "aspect": "security",
+  "non_blocking_findings": [],
+  "recorded_at": "2026-08-08T13:14:56+00:00",
+  "commit": "cb0cda747fe4915aa0d27f11d24c80e3b5ed5b21"
+}

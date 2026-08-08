@@ -1,0 +1,15 @@
+{
+  "generated_by": "autoreview",
+  "score": 10,
+  "summary": "No performance impact \u2014 a required-fields list is built conditionally instead of a fixed tuple; one flag flips; the rest is docs. No new I/O or loops.",
+  "blocking_findings": [],
+  "recommendation": "ship",
+  "reviewed_scope": [
+    "factory/scripts/forge_cli/roadmap.py"
+  ],
+  "aspect": "performance",
+  "non_blocking_findings": [],
+  "residual_risks": [],
+  "recorded_at": "2026-08-08T13:14:56+00:00",
+  "commit": "cb0cda747fe4915aa0d27f11d24c80e3b5ed5b21"
+}
