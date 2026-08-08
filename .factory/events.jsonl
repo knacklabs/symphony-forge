@@ -684,3 +684,4 @@
 {"event": "review-security", "generated_by": "autoreview", "at": "2026-08-08T18:51:56+00:00", "story": "FORGE-BOARD-5"}
 {"event": "tests-automated", "generated_by": "implementer", "at": "2026-08-08T18:52:13+00:00", "story": "FORGE-BOARD-5", "detail": "pass"}
 {"event": "shipped", "generated_by": "orchestrator", "at": "2026-08-08T18:52:13+00:00", "story": "FORGE-BOARD-5", "detail": "Two deterministic primitives close the honesty holes a Codex plan review found. forge roadmap fill safely repairs an existing PENDING card by filling only blank fields and refusing active/done cards, "}
+{"event": "pr-linked", "generated_by": "orchestrator", "at": "2026-08-08T18:53:05+00:00", "story": "FORGE-BOARD-5", "detail": "knacklabs/symphony-forge#61"}
