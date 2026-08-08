@@ -2988,6 +2988,44 @@ def test_next_tags_steps_with_roles(repo):
 
 # ------------------------------------------------------------ handover grills
 
+def test_record_task_grill_writes_per_id_file(repo):
+    task_id = "FORGE-BOARD-2.1"
+    digest = "a" * 64
+    payload = {"generated_by": "griller", "gate": "task", "task_id": task_id,
+               "verdict": "pass",
+               "gaps": [], "contradictions": [], "resolutions": []}
+
+    code, out = run(repo, "record_grill_from_json.py", "--gate", "task",
+                    "--task", task_id, "--task-digest", digest,
+                    stdin=json.dumps(payload))
+
+    assert code == 0, out
+    recorded = json.loads(
+        (repo / ".factory" / "grills" / "tasks" / f"{task_id}.json").read_text()
+    )
+    assert recorded["verdict"] == "pass"
+    assert recorded["gate"] == "task"
+    assert recorded["task_id"] == task_id
+    assert not (repo / ".factory" / "grills" / "task.json").exists()
+
+
+def test_record_task_grill_binds_digest(repo):
+    task_id = "FORGE-BOARD-2.1"
+    task_digest = "0123456789abcdef" * 4
+    payload = {"generated_by": "griller", "gate": "task", "verdict": "pass",
+               "gaps": [], "contradictions": [], "resolutions": []}
+
+    code, out = run(repo, "record_grill_from_json.py", "--gate", "task",
+                    "--task", task_id, "--task-digest", task_digest,
+                    stdin=json.dumps(payload))
+
+    assert code == 0, out
+    recorded = json.loads(
+        (repo / ".factory" / "grills" / "tasks" / f"{task_id}.json").read_text()
+    )
+    assert recorded["input_sha256"] == task_digest
+
+
 def test_grill_recorder_refuses_pass_with_unresolved_findings(repo):
     seed_signoff_inputs(repo)
     code, out = record_grill(repo, "signoff",

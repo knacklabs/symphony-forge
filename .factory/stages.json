@@ -4,7 +4,11 @@
     {
       "id": "FORGE-BOARD-2.1",
       "title": "Per-task grill recorder + schema + storage",
-      "status": "pending"
+      "status": "active",
+      "started_at": "2026-08-08T05:30:12+00:00",
+      "base_sha": "b396e942a1d9f43d5dab67513d0d5fd2783ff244",
+      "dirty_at_start": {},
+      "task_sha256": "dcedf817aff6864f4df257766599dbf14723f6d80a597eca5f7280fe1ffdb116"
     },
     {
       "id": "FORGE-BOARD-2.2",

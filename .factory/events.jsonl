@@ -585,3 +585,5 @@
 {"event": "plan-approved", "generated_by": "planner-high", "at": "2026-08-08T05:24:17+00:00", "story": "FORGE-BOARD-2", "detail": "plans/active/FORGE-BOARD-2-jit-task-planning-per-task-plan-grill-against-real-prior-state.md"}
 {"event": "decomposed", "generated_by": "docs-decomposer", "at": "2026-08-08T05:27:37+00:00", "story": "FORGE-BOARD-2", "detail": "4 task(s)"}
 {"event": "implementing", "generated_by": "orchestrator", "at": "2026-08-08T05:28:02+00:00", "story": "FORGE-BOARD-2"}
+{"event": "stage-start", "generated_by": "implementer", "at": "2026-08-08T05:30:12+00:00", "story": "FORGE-BOARD-2", "detail": "FORGE-BOARD-2.1 Per-task grill recorder + schema + storage"}
+{"event": "delegated", "generated_by": "orchestrator", "at": "2026-08-08T05:34:57+00:00", "story": "FORGE-BOARD-2", "detail": "FORGE-BOARD-2.1 (write)"}
