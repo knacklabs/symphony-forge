@@ -1,0 +1,21 @@
+{
+  "generated_by": "autoreview",
+  "score": 8,
+  "summary": "The change strengthens the posture. A write delegation now requires a digest-bound passing per-task grill; input_sha256 binds to the exact task contract (task_digest), so an edited/stale contract invalidates the grill (fail-closed, like require_grill). record_grill's --task carries a path-traversal guard (Path(task).name != task rejects ../ and separators). The board PR-link render validates the http(s) scheme before emitting an anchor (non-http -> escaped span, blocking javascript:/data: URIs), escapes all interpolated content, and sets rel=noopener noreferrer on external links.",
+  "blocking_findings": [],
+  "non_blocking_findings": [],
+  "residual_risks": [
+    "{'category': 'by-design', 'area': 'factory_lib.require_task_grill', 'summary': 'The grill binds to the task CONTRACT digest, not the implementation; a code change under an unchanged contract keeps the grill valid. This is intentional \u2014 the per-task grill validates the plan/contract, mirroring how the plan grill validates the plan, not the code.'}"
+  ],
+  "recommendation": "ship",
+  "reviewed_scope": [
+    "factory/scripts/record_grill_from_json.py",
+    "factory/scripts/factory_lib.py",
+    "factory/scripts/forge_cli/delegate.py",
+    "factory/scripts/forge_cli/board.py",
+    "factory/board/index.html"
+  ],
+  "aspect": "security",
+  "recorded_at": "2026-08-08T06:50:40+00:00",
+  "commit": "509d4a1d87cc54f3db47911f3615fa9922a67e13"
+}

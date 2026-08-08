@@ -1,0 +1,34 @@
+{
+  "generated_by": "autoreview",
+  "score": 8,
+  "summary": "Clean, well-scoped implementation that reuses existing harness patterns: require_task_grill mirrors require_grill; the delegation gate sits at the single if-write choke point and DRYs the task_digest call; the board reuses task_dossiers/proof and the grills glob. Tests are non-parametrized (correct for JUnit id visibility). Docs accurately match shipped behaviour and even corrected a pre-existing inaccuracy (plan gate 'EVERY task' -> once per story).",
+  "blocking_findings": [],
+  "non_blocking_findings": [
+    {
+      "category": "decomposition-scope",
+      "area": "planning",
+      "summary": "Two upfront-decomposition mis-scopes surfaced mid-build: pr_ready task-grill archiving (deferred D-0013) and the launch_fake test helper (fixed) \u2014 each a file a task referenced but did not own. Ironically the exact failure this story's JIT gate prevents; expected for a bootstrapping story recorded the upfront way."
+    },
+    {
+      "category": "redundancy",
+      "area": "forge_cli/board.py",
+      "summary": "pr_links(base) is recomputed in both aggregate_state and story_detail; negligible, could be threaded through."
+    }
+  ],
+  "recommendation": "ship",
+  "reviewed_scope": [
+    "factory/scripts/record_grill_from_json.py",
+    "factory/scripts/factory_lib.py",
+    "factory/scripts/forge_cli/delegate.py",
+    "factory/scripts/forge_cli/board.py",
+    "factory/board/index.html",
+    "factory/schemas/grill.json",
+    "factory/prompts/griller.md",
+    "factory/prompts/decomposer.md",
+    "factory/tests/test_gates.py"
+  ],
+  "aspect": "quality",
+  "residual_risks": [],
+  "recorded_at": "2026-08-08T06:50:40+00:00",
+  "commit": "509d4a1d87cc54f3db47911f3615fa9922a67e13"
+}

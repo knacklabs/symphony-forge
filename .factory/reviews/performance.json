@@ -1,0 +1,23 @@
+{
+  "generated_by": "autoreview",
+  "score": 9,
+  "summary": "Negligible overhead. The gate adds one small JSON read (require_task_grill) per WRITE delegation only; read-only lanes are untouched. The board reads the pr-linked event stream once per aggregate/detail \u2014 small local files, no hot path, no loop over large data. task_digest is computed once and reused.",
+  "blocking_findings": [],
+  "non_blocking_findings": [
+    {
+      "category": "redundancy",
+      "area": "forge_cli/board.py",
+      "summary": "pr_links(base) parses events.jsonl in both aggregate_state and story_detail per render; trivial at board scale."
+    }
+  ],
+  "recommendation": "ship",
+  "reviewed_scope": [
+    "factory/scripts/factory_lib.py",
+    "factory/scripts/forge_cli/delegate.py",
+    "factory/scripts/forge_cli/board.py"
+  ],
+  "aspect": "performance",
+  "residual_risks": [],
+  "recorded_at": "2026-08-08T06:50:40+00:00",
+  "commit": "509d4a1d87cc54f3db47911f3615fa9922a67e13"
+}

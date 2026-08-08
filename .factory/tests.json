@@ -1,0 +1,40 @@
+{
+  "commit": "509d4a1d87cc54f3db47911f3615fa9922a67e13",
+  "automated": {
+    "generated_by": "implementer",
+    "status": "pass",
+    "summary": "Gate tests for FORGE-BOARD-2 (JIT task planning) across four stages: the per-task grill recorder (--gate task, per-id storage, digest binding), the require_task_grill delegation gate (refuses missing/not-pass/stale, passes fresh, read-only unaffected), and the board render of per-task grill status + done-story PR link. The launch_fake test helper was updated to record a contract-bound task grill so existing delegation tests satisfy the new gate. Full deterministic suite green via verify.py (xdist).",
+    "blocking_findings": [],
+    "commands_run": [
+      "python3 factory/scripts/verify.py (FACTORY_TEST_CMD = uv run --with pytest --with pytest-xdist python -m pytest factory/tests -q -n auto)"
+    ],
+    "tests_added_or_updated": [
+      "test_record_task_grill_writes_per_id_file",
+      "test_record_task_grill_binds_digest",
+      "test_delegate_refuses_without_task_grill",
+      "test_delegate_refuses_stale_task_grill",
+      "test_delegate_passes_with_fresh_task_grill",
+      "test_delegate_readonly_unaffected_by_task_grill",
+      "test_board_shows_task_grill_status",
+      "test_board_shows_done_story_pr_link",
+      "launch_fake helper: records a per-task grill before delegating (fixes test_stage_loop_orders_execution_and_gates_pr_ready, test_recorder_holds_the_task_narrative_contract)"
+    ],
+    "pass_fail_summary": "full factory/tests suite green (verify.py passed): 450 passed",
+    "reviewed_scope": [
+      "factory/scripts/record_grill_from_json.py",
+      "factory/scripts/factory_lib.py",
+      "factory/scripts/forge_cli/delegate.py",
+      "factory/scripts/forge_cli/board.py",
+      "factory/board/index.html",
+      "factory/schemas/grill.json",
+      "factory/tests/test_gates.py"
+    ],
+    "non_blocking_findings": [],
+    "remaining_gaps": [],
+    "residual_risks": [],
+    "manual_validation_steps": [],
+    "recorded_at": "2026-08-08T06:51:36+00:00",
+    "commit": "509d4a1d87cc54f3db47911f3615fa9922a67e13"
+  },
+  "updated_at": "2026-08-08T06:51:36+00:00"
+}

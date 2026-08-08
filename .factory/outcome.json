@@ -1,0 +1,7 @@
+{
+  "generated_by": "implementer",
+  "outcome": "The factory now records only a task LIST at decomposition and gates each task's detailed contract behind a just-in-time grill: forge delegate <task> refuses a write launch without a fresh, digest-bound passing per-task grill (decision 0032, amending 0007). A task's write_scope/tests/acceptance are authored against what earlier tasks actually built, then grilled, then delegated \u2014 so speculative upfront contracts that produce wrong code are gated out. The board renders each task's JIT grill status and a done story's PR link.",
+  "issue": "FORGE-BOARD-2",
+  "commit": "509d4a1d87cc54f3db47911f3615fa9922a67e13",
+  "recorded_at": "2026-08-08T06:50:58+00:00"
+}
