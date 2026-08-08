@@ -699,3 +699,4 @@
 {"event": "review-security", "generated_by": "autoreview", "at": "2026-08-08T19:26:54+00:00", "story": "FORGE-BOARD-6"}
 {"event": "tests-automated", "generated_by": "implementer", "at": "2026-08-08T19:27:08+00:00", "story": "FORGE-BOARD-6", "detail": "pass"}
 {"event": "shipped", "generated_by": "orchestrator", "at": "2026-08-08T19:27:08+00:00", "story": "FORGE-BOARD-6", "detail": "Symphony Forge now has a knacklabs-upgrade-project operator skill (the forge upgrade sibling to knacklabs-migrate-project) that turns the constant, change-driven upgrade into one runbook: locate the h"}
+{"event": "pr-linked", "generated_by": "orchestrator", "at": "2026-08-08T19:27:48+00:00", "story": "FORGE-BOARD-6", "detail": "knacklabs/symphony-forge#62"}
