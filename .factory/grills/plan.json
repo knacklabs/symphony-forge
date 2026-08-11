@@ -3,24 +3,24 @@
   "gate": "plan",
   "verdict": "pass",
   "gaps": [
-    "AC 3's real elevation path (winget/UAC) cannot fire on pre-provisioned headless CI runners \u2014 where does the one real remediation pass run?",
-    "Spec named only .claude/settings.json, but .codex/hooks.json carries the identical /usr/bin/python3 defect and check_dual_runtime demands event parity between the runtimes.",
-    "Delegate's argv targets the plugin companion, not codex; installed companion 1.0.6 exposes no config passthrough on task \u2014 AC 4's injection seam is unverified.",
-    "windows-latest CI placement: factory-scaffold.yml is vendored to every client; a job there ships client-side CI cost and touches the scaffold-check branch-protection context.",
-    "Recurring finding classes (repository-escape, reviewed-separately) anchor at upgrade.py, which the propagation criterion touches."
+    "Spec-vs-HEAD drift: several spec ACs describe future state as present - which are real breakages vs to-be prose?",
+    "Story size: four disjoint chunks in one story violates the split rule",
+    "Sandbox finding: danger-full-access ships to clients - fold in or separate?",
+    "Fail-closed limit: can the hook layer self-arm with no POSIX shell at all?",
+    "Editing live hook configs can brick this session mid-story"
   ],
   "contradictions": [],
   "resolutions": [
-    "Affected client's real Windows machine runs doctor --fix once post-upgrade; recorded as functional evidence \u2014 human choice (AskUserQuestion 2026-08-11).",
-    "Both hook files in scope for WIN-1.1; .codex/hooks.json stays out of GATE_FILES (client gate surface unchanged) \u2014 evidence-driven, noted in 0038 decision text.",
-    "WIN-1.3 leads with a bounded read-only seam verification and ranked zero-setup fallbacks: argv passthrough \u2192 companion config store via doctor --fix \u2192 deferral with trigger + documented gap; assumption recorded when the choice lands.",
-    "Separate harness-only windows-gates.yml, NOT in COPY_WORKFLOWS \u2014 no dead YAML to clients, scaffold-check context untouched; client machines covered by local doctor, not client CI.",
-    "Story adds no new cross-repo copy code (rides COPY_CLAUDE/COPY_CODEX/GATE trees); explicit tripwire \u2014 if repository-escape recurs in review, escalate to the queued hard-link/TOCTOU consolidation story, never patch here."
+    "Codex rescue enumerated the real breakages (8 pinned interpreters, sh-only entrypoint, doctor never executes hooks, POSIX-only delegate) and flagged the to-be prose; the plan builds on the verified set.",
+    "Human chose the narrow core: WIN-1 = resolution point + shim + doctor hook-health + windows CI; WIN-2/WIN-3/WIN-SBX added as siblings at approval.",
+    "Human chose a separate WIN-SBX story with its own end-to-end delegation verification; the .codex hashing gap rides it.",
+    "No - stated honestly in AC1: fail-closed holds within reach of a working shell; beyond that, doctor hook-health and CI are the detection net until WIN-2 installs the prerequisites.",
+    "The contract pins byte-identical POSIX behavior and the full suite green before the loop continues; the live self-test (lockout still denies) is in the verify plan."
   ],
   "open_items": [],
-  "notes": "Interrogated against the seven roadmap acceptance_criteria, the confirmed spec's grilled settlements, active decisions 0001-0037 (0009/0013/0018/0029/0030/0037 specifically; 0037 activated mid-planning when FORGE-ROLE-1 shipped and was folded in before save), and lessons (decomposition-shared-function-scope, evidence-vs-tooling). One human round via AskUserQuestion; remaining frontier resolved by read-only exploration evidence. Plan approved in plan mode per 0029.",
-  "input_sha256": "074d1a6b34eccbf15e0a0c6e27d5956207affecc5c91306486acea640cf8bfbb",
+  "notes": "Interrogated against the windows-zero-setup spec, Codex-rescue facts, and the 33 active decisions. Human approved in plan mode (0029); scope choices human-ruled via grill round.",
+  "input_sha256": "cf116cae6f53b6e56d143ea41658b4f4b8027eb4f72de0ac37eafbf099d62970",
   "issue": "FORGE-WIN-1",
-  "recorded_at": "2026-08-11T06:58:11+00:00",
-  "commit": "6491227dc4bd4ab7b2a3209565211155f578b310"
+  "recorded_at": "2026-08-11T07:12:11+00:00",
+  "commit": "ea109783647aa37650c1aca988190b409c713635"
 }

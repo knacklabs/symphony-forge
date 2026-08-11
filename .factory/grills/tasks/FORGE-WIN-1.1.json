@@ -3,22 +3,20 @@
   "gate": "task",
   "verdict": "pass",
   "gaps": [
-    "Verbatim execution of SessionStart/Stop hook commands may have side effects (context emission, ledger appends) \u2014 a health check must not mutate state.",
-    "The red-path test needs a broken interpreter without breaking the test run's own Python.",
-    "Does sh exist everywhere the doctor check runs, including windows-latest CI?",
-    "Does changing the command string break check_dual_runtime's parity or script-path extraction?"
+    "Editing live hook configs mid-session: what breaks the loop if the worker gets it wrong?",
+    "Does the windows-latest runner have what the job assumes?",
+    "Is the one-resolution-point contract falsifiable?"
   ],
   "contradictions": [],
   "resolutions": [
-    "Contract requires a read-only-shaped synthetic payload and demands hooks be exercised on a path that provably writes nothing; a hook that writes on any input must be checked via its harmless path explicitly, never skipped silently \u2014 reviewer_focus pins it.",
-    "Red test controls PATH only inside the checked environment passed to the hook-command execution (env dict), never the pytest process's own interpreter (tests already invoke machinery via sys.executable, test_gates.py:37).",
-    "Yes on every supported host: macOS/Linux natively; Windows hooks and doctor both run under Git Bash, and windows-latest runners ship Git Bash.",
-    "No: check_hook_registration extracts factory/scripts/<name>.py via regex and compares event sets only (check_dual_runtime.py:324-371); the contract explicitly preserves the literal token and event parity."
+    "The contract pins byte-identical POSIX behavior with the suite green before the loop continues, and the verify plan includes the live lockout-still-denies self-test immediately after the change lands.",
+    "windows-latest ships Git Bash and the py launcher; the job pins what it uses, and doctor red rows are the truth on real client machines either way.",
+    "Yes: test_hook_resolution_fails_closed_without_interpreter seeds a PATH without any python and asserts exit 2 from the resolution point; forge.cmd reusing the same point is reviewer_focus."
   ],
   "open_items": [],
-  "notes": "Task contract FORGE-WIN-1.1 interrogated against the approved plan, spec settlements, 0037/0038, and check_dual_runtime mechanics. Frontier empty; no human round needed (no new human-owned choices \u2014 all boundaries settled at spec/plan gates).",
+  "notes": "JIT grill; single task; narrowed core per the human-ruled split; refs re-verified by the worker against HEAD.",
   "task_id": "FORGE-WIN-1.1",
-  "input_sha256": ".factory/decomposition.json",
-  "recorded_at": "2026-08-11T07:01:35+00:00",
-  "commit": "784d9f6c55e9caae39895e5ad6d68c2e39071fa3"
+  "input_sha256": "e0393485c5ad685155a2b64954dc43d278580f41b29fbc86c0d04d7dc58d04b7",
+  "recorded_at": "2026-08-11T07:13:33+00:00",
+  "commit": "ea109783647aa37650c1aca988190b409c713635"
 }

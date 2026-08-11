@@ -108,11 +108,20 @@ All four boundaries below were grilled and human-settled 2026-08-11.
 - The harness never writes user-global files (`~/.codex/config.toml`
   included) — config rides the delegate argv.
 
-## Decomposition (epic → stories)
+## Decomposition (epic -> stories; split recorded 2026-08-11)
 
-1. **FORGE-WIN-1 — portable hooks + doctor hook-health/auto-fix +
-   propagation** — the settings.json interpreter fix, the doctor hook-health
-   check and Windows `--fix` path, delegate argv injection of the Codex
-   Windows flags, the `forge next` Windows preflight, init/adopt/upgrade
-   propagation, the `windows-latest` CI job, docs, gate tests. (Single
-   bounded story; implementation delegated.)
+Planning exploration (Codex rescue) widened the known breakage: delegate.py
+is POSIX-only (fcntl/ps/killpg), so the spec's single story split by the
+independence rule, human-ruled at the FORGE-WIN-1 plan gate:
+
+1. **FORGE-WIN-1 - the fail-open core**: one interpreter-resolution point
+   for all hooks (fail-closed within a working shell), forge.cmd shim,
+   doctor hook-health that EXECUTES hooks, windows-latest CI proof.
+2. **FORGE-WIN-2 - prerequisites**: doctor --fix auto-install (Git/Python,
+   at most one UAC); init/adopt/upgrade leave repos hook-healthy.
+3. **FORGE-WIN-3 - delegation on native Windows**: cross-platform process
+   machinery + injected sandbox flags.
+4. **FORGE-WIN-SBX - sandboxed workers by default**: workspace-write
+   default in vendored .codex/config.toml (found shipping
+   danger-full-access), verified against a real delegation; hooks.json
+   joins vendor-integrity hashing.

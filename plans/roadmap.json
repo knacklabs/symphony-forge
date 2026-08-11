@@ -565,16 +565,13 @@
     },
     {
       "key": "FORGE-WIN-1",
-      "title": "Zero-setup Windows support",
+      "title": "Zero-setup Windows support: the fail-open core",
       "story": "As a Windows dev on a new or existing client repo, I get a working harness (hooks, write lock, delegate) without performing any setup myself, so sessions never degrade to hand-typed commands",
       "acceptance_criteria": [
-        "On Windows with Git Bash every registered hook executes and pre_tool_use denies a product write exactly as on macOS/Linux",
-        "forge doctor executes every registered hook command verbatim on any platform and reports a named red check when one cannot run",
-        "On Windows missing Git or Python, forge doctor --fix converges to green with no user-typed setup and at most one consolidated elevation confirm",
-        "On Windows the recorded delegate invocation shows injected sandbox flags (unelevated, workspace-write); ~/.codex/config.toml untouched",
-        "forge next on a hook-broken Windows clone names doctor --fix as its first action",
-        "init/adopt/upgrade each leave a client repo hook-healthy on Windows; upgrade replaces the pinned-interpreter settings",
-        "windows-latest CI job runs the lockout gate tests and doctor hook-health green"
+        "Hook commands in both runtime configs resolve their interpreter through one shared point (py -3 -> python3 -> python) working on macOS/Linux/Windows Git Bash, failing CLOSED (exit 2) when unresolvable within a working shell",
+        "forge.cmd lets cmd/PowerShell users run forge with zero setup; the sh entrypoint is byte-identical for POSIX",
+        "forge doctor executes every registered hook command with a benign payload and reports a named RED check per hook that cannot run; forge next on a hook-broken clone names doctor as its first step",
+        "A windows-latest harness-internal CI job runs the lockout gate tests and doctor hook-health green; POSIX-only skips are enumerated, not silent"
       ],
       "order": 26,
       "status": "active",
@@ -598,10 +595,62 @@
       "depends_on": [],
       "origin": "adhoc",
       "spec_debt_reason": "guard allowlist gap found dogfooding WIN-1 exploration: heredoc-wrapped long prompts are correctly refused, but the clean file route is not admitted"
+    },
+    {
+      "key": "FORGE-WIN-2",
+      "title": "Doctor --fix installs prerequisites on Windows",
+      "story": "As a Windows dev with no Git or Python, forge doctor --fix converges the machine to green with no user-typed setup and at most one consolidated elevation confirm",
+      "acceptance_criteria": [
+        "On Windows missing Git or Python, doctor --fix converges to green with no user-typed setup and at most one UAC confirm",
+        "init/adopt/upgrade each leave a client repo hook-healthy on Windows; upgrade replaces pinned-interpreter settings"
+      ],
+      "order": 28,
+      "status": "pending",
+      "epic": "windows-zero-setup",
+      "skill": "backend",
+      "kind": "feature",
+      "depends_on": [
+        "FORGE-WIN-1"
+      ],
+      "spec": "docs/specs/windows-zero-setup.md"
+    },
+    {
+      "key": "FORGE-WIN-3",
+      "title": "Delegation runs on native Windows",
+      "story": "As a Windows dev, forge delegate launches and supervises Codex workers without POSIX-only process machinery, so implementation works end to end",
+      "acceptance_criteria": [
+        "delegate.py replaces fcntl/ps/killpg/preexec_fn with cross-platform equivalents; a delegation completes on windows-latest CI",
+        "The recorded delegate invocation shows injected sandbox flags (unelevated, workspace-write) on Windows"
+      ],
+      "order": 29,
+      "status": "pending",
+      "epic": "windows-zero-setup",
+      "skill": "backend",
+      "kind": "feature",
+      "depends_on": [
+        "FORGE-WIN-1"
+      ],
+      "spec": "docs/specs/windows-zero-setup.md"
+    },
+    {
+      "key": "FORGE-WIN-SBX",
+      "title": "Workers run sandboxed by default",
+      "story": "As an operator, delegated workers run workspace-write sandboxed in every client instead of danger-full-access, verified against a real delegation",
+      "acceptance_criteria": [
+        "Vendored .codex/config.toml defaults to workspace-write; a real delegation passes end to end under it; the escape hatch for genuinely-broader tasks is documented and ledgered",
+        "check_vendor_integrity hashes .codex/hooks.json; a decision record covers the default flip"
+      ],
+      "order": 30,
+      "status": "pending",
+      "epic": "windows-zero-setup",
+      "skill": "backend",
+      "kind": "feature",
+      "depends_on": [],
+      "spec": "docs/specs/windows-zero-setup.md"
     }
   ],
   "generated_by": "human",
-  "updated_at": "2026-08-11T06:57:04+00:00",
+  "updated_at": "2026-08-11T07:12:26+00:00",
   "epics": [
     {
       "id": "symphony-forge",
