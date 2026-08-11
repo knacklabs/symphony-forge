@@ -1,0 +1,22 @@
+{
+  "generated_by": "griller",
+  "gate": "task",
+  "verdict": "pass",
+  "gaps": [
+    "Editing live hook configs mid-session: what breaks the loop if the worker gets it wrong?",
+    "Does the windows-latest runner have what the job assumes?",
+    "Is the one-resolution-point contract falsifiable?"
+  ],
+  "contradictions": [],
+  "resolutions": [
+    "The contract pins byte-identical POSIX behavior with the suite green before the loop continues, and the verify plan includes the live lockout-still-denies self-test immediately after the change lands.",
+    "windows-latest ships Git Bash and the py launcher; the job pins what it uses, and doctor red rows are the truth on real client machines either way.",
+    "Yes: test_hook_resolution_fails_closed_without_interpreter seeds a PATH without any python and asserts exit 2 from the resolution point; forge.cmd reusing the same point is reviewer_focus."
+  ],
+  "open_items": [],
+  "notes": "JIT grill; single task; narrowed core per the human-ruled split; refs re-verified by the worker against HEAD.",
+  "task_id": "FORGE-WIN-1.2",
+  "input_sha256": "3603756d4c9eacc376906ac0debcfe2041de123176f2df29d48d2f3bcc39b4e5",
+  "recorded_at": "2026-08-11T17:36:11+00:00",
+  "commit": "104c59b5fef8a6f3a7c546d6ae1bacd263826585"
+}

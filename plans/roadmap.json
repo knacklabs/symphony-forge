@@ -574,14 +574,12 @@
         "A windows-latest harness-internal CI job runs the lockout gate tests and doctor hook-health green; POSIX-only skips are enumerated, not silent"
       ],
       "order": 26,
-      "status": "done",
+      "status": "active",
       "epic": "windows-zero-setup",
       "skill": "fullstack",
       "depends_on": [],
       "spec": "docs/specs/windows-zero-setup.md",
-      "completed_at": "2026-08-11T17:02:42+00:00",
-      "history": ".factory/history/FORGE-WIN-1/",
-      "outcome": "Windows can no longer silently disarm the harness: every hook resolves its interpreter through one fail-closed point (exit 2, never vanish), forge runs natively via forge.cmd, the launcher is CRLF-pinned, forge doctor executes all eight registered hooks and reds what cannot run, and a windows-latest CI job proves the armed lockout on the platform that exposed the hole. Joint work across two sessions under the human's pen ruling; the no-shell-at-all case stays detection-only until WIN-2 installs prerequisites."
+      "history": ".factory/history/FORGE-WIN-1/"
     },
     {
       "key": "FORGE-ROLE-2",
@@ -653,7 +651,7 @@
     }
   ],
   "generated_by": "human",
-  "updated_at": "2026-08-11T17:02:42+00:00",
+  "updated_at": "2026-08-11T17:33:49+00:00",
   "epics": [
     {
       "id": "symphony-forge",

@@ -1,0 +1,26 @@
+{
+  "generated_by": "griller",
+  "gate": "plan",
+  "verdict": "pass",
+  "gaps": [
+    "Spec-vs-HEAD drift: several spec ACs describe future state as present - which are real breakages vs to-be prose?",
+    "Story size: four disjoint chunks in one story violates the split rule",
+    "Sandbox finding: danger-full-access ships to clients - fold in or separate?",
+    "Fail-closed limit: can the hook layer self-arm with no POSIX shell at all?",
+    "Editing live hook configs can brick this session mid-story"
+  ],
+  "contradictions": [],
+  "resolutions": [
+    "Codex rescue enumerated the real breakages (8 pinned interpreters, sh-only entrypoint, doctor never executes hooks, POSIX-only delegate) and flagged the to-be prose; the plan builds on the verified set.",
+    "Human chose the narrow core: WIN-1 = resolution point + shim + doctor hook-health + windows CI; WIN-2/WIN-3/WIN-SBX added as siblings at approval.",
+    "Human chose a separate WIN-SBX story with its own end-to-end delegation verification; the .codex hashing gap rides it.",
+    "No - stated honestly in AC1: fail-closed holds within reach of a working shell; beyond that, doctor hook-health and CI are the detection net until WIN-2 installs the prerequisites.",
+    "The contract pins byte-identical POSIX behavior and the full suite green before the loop continues; the live self-test (lockout still denies) is in the verify plan."
+  ],
+  "open_items": [],
+  "notes": "Interrogated against the windows-zero-setup spec, Codex-rescue facts, and the 33 active decisions. Human approved in plan mode (0029); scope choices human-ruled via grill round.",
+  "input_sha256": "c7e0a5ac21387d6ff6abbb6d19ff6e2238754068a7f95a807bec6fe81894980b",
+  "issue": "FORGE-WIN-1",
+  "recorded_at": "2026-08-11T17:35:04+00:00",
+  "commit": "104c59b5fef8a6f3a7c546d6ae1bacd263826585"
+}

@@ -1,8 +1,8 @@
 ---
 issue: FORGE-WIN-1
-title: Zero-setup Windows support
+title: Zero-setup Windows support: the fail-open core
 status: approved
-saved: 2026-08-11T07:12:11+00:00
+saved: 2026-08-11T17:35:04+00:00
 story: FORGE-WIN-1
 decisions_reviewed:
   - 0001-determinism-contract
