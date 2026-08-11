@@ -1,0 +1,7 @@
+{
+  "generated_by": "implementer",
+  "outcome": "Windows can no longer silently disarm the harness: every hook resolves its interpreter through one fail-closed point (exit 2, never vanish), forge runs natively via forge.cmd, the launcher is CRLF-pinned, forge doctor executes all eight registered hooks and reds what cannot run, and a windows-latest CI job proves the armed lockout on the platform that exposed the hole. Joint work across two sessions under the human's pen ruling; the no-shell-at-all case stays detection-only until WIN-2 installs prerequisites.",
+  "issue": "FORGE-WIN-1",
+  "commit": "31b734b9bb4bdc9108dc10eef7989dfccb35a2ec",
+  "recorded_at": "2026-08-11T17:02:42+00:00"
+}

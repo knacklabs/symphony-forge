@@ -1,0 +1,18 @@
+{
+  "generated_by": "autoreview",
+  "score": 9,
+  "summary": "Each hook invocation gains one sh spawn and one git rev-parse over the old direct-python form - milliseconds per tool call, unchanged asymptotics. Doctor hook-health executes eight subprocesses only on the full run; --fast stays existence-only. The windows CI job adds runner minutes to harness PRs only (is_harness gated), not to clients.",
+  "blocking_findings": [],
+  "non_blocking_findings": [],
+  "residual_risks": [],
+  "recommendation": "ship",
+  "reviewed_scope": [
+    ".claude/settings.json",
+    ".codex/hooks.json",
+    "forge",
+    "factory/scripts/forge_cli/doctor.py"
+  ],
+  "aspect": "performance",
+  "recorded_at": "2026-08-11T17:02:42+00:00",
+  "commit": "31b734b9bb4bdc9108dc10eef7989dfccb35a2ec"
+}

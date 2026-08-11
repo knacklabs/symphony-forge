@@ -1,0 +1,36 @@
+{
+  "commit": "31b734b9bb4bdc9108dc10eef7989dfccb35a2ec",
+  "automated": {
+    "generated_by": "implementer",
+    "status": "pass",
+    "summary": "26 focused hook-health/forge-cmd/lockout/companion tests pass in the session environment (the worker's 28 full-file failures were the documented ps-sandbox class, rerun clean here); doctor's 8 hook-health rows green on a bare run; check_dual_runtime clean; live self-tests under the NEW hook commands: lockout denies a product write, recorder works. Full suite green via verify.py.",
+    "blocking_findings": [],
+    "commands_run": [
+      "uv run --with pytest python -m pytest factory/tests/test_gates.py -q -k \"hook_health or forge_cmd or lockout or companion\" (26 passed)",
+      "./forge doctor (8/8 hook-health green); python3 factory/scripts/check_dual_runtime.py . (clean)",
+      "FACTORY_*_CMD per .envrc; python3 factory/scripts/verify.py"
+    ],
+    "tests_added_or_updated": [
+      "factory/tests/test_gates.py::test_doctor_hook_health_reds_unresolvable_hook",
+      "factory/tests/test_gates.py::test_hook_resolution_fails_closed_without_interpreter"
+    ],
+    "pass_fail_summary": "focused 26/26; full suite pass",
+    "remaining_gaps": [
+      "Windows-latest proof lands with the PR's CI run - the first windows job in the repo"
+    ],
+    "reviewed_scope": [
+      "forge",
+      "forge.cmd",
+      ".claude/settings.json",
+      ".codex/hooks.json",
+      "factory/scripts/forge_cli/doctor.py",
+      "factory/tests/test_gates.py"
+    ],
+    "non_blocking_findings": [],
+    "residual_risks": [],
+    "manual_validation_steps": [],
+    "recorded_at": "2026-08-11T17:02:41+00:00",
+    "commit": "31b734b9bb4bdc9108dc10eef7989dfccb35a2ec"
+  },
+  "updated_at": "2026-08-11T17:02:41+00:00"
+}

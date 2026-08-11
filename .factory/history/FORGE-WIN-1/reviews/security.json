@@ -1,0 +1,23 @@
+{
+  "generated_by": "autoreview",
+  "score": 9,
+  "summary": "The fail-open hole closes where a shell exists: unresolvable interpreters now exit 2 (blocking) at the single resolution point, with the outer sh guard doubling the closure; the launcher itself is CRLF-pinned so a Windows checkout cannot corrupt the resolver; doctor turns silent breakage into named red rows and the windows CI job proves the armed lockout on the platform that exposed the hole. Verified live post-change: the session lockout denied a product write under the new hook path. Honest limit stands as specced: no shell at all still means no self-arming - detection is the net until WIN-2 installs prerequisites.",
+  "blocking_findings": [],
+  "non_blocking_findings": [],
+  "residual_risks": [
+    "Fail-open without any POSIX shell (AC-stated); WIN-2 owns remediation.",
+    "Workers still run danger-full-access until WIN-SBX flips the vendored default."
+  ],
+  "recommendation": "ship",
+  "reviewed_scope": [
+    "forge",
+    "forge.cmd",
+    ".gitattributes",
+    ".claude/settings.json",
+    ".codex/hooks.json",
+    "factory/scripts/forge_cli/doctor.py"
+  ],
+  "aspect": "security",
+  "recorded_at": "2026-08-11T17:02:42+00:00",
+  "commit": "31b734b9bb4bdc9108dc10eef7989dfccb35a2ec"
+}

@@ -1,0 +1,40 @@
+{
+  "generated_by": "autoreview",
+  "score": 9,
+  "summary": "One resolution point, two entrances, as contracted: hook commands route through `forge hook <name>` with the interpreter chain living only in the entrypoint, double exit-2 fail-closed (inner and outer) so a dead resolver blocks rather than vanishes; forge.cmd delegates to the same point; .gitattributes pins forge eol=lf (the worker's CRLF catch - the launcher itself was a fail-open vector); doctor executes all eight registered hooks with benign payloads and reds by name; the windows-latest job is harness-gated. Cross-session provenance recorded honestly: the diff is joint work under the human's pen ruling, decision 0038 (portable-fail-closed-hooks) was drafted in-flight by the other session and needs acceptance.",
+  "blocking_findings": [],
+  "non_blocking_findings": [
+    {
+      "category": "cross-session-provenance",
+      "area": "docs/decisions/0038-portable-fail-closed-hooks.md",
+      "summary": "A decision record entered via the parallel session rather than this plan's Decisions section (which said none needed); content is sound and rides for human acceptance - governance caught up at review rather than at authoring."
+    },
+    {
+      "category": "zombie-registry",
+      "area": "delegation",
+      "summary": "A second stale running entry (the other session's 4h verifying worker) persists in the registry; liveness detection remains follow-up material from FORGE-ROLE-1's review."
+    }
+  ],
+  "residual_risks": [
+    "Windows behavior is proven by the CI job from this PR onward; real client machines vary beyond the runner image - doctor's red rows are the client-side truth."
+  ],
+  "recommendation": "ship",
+  "reviewed_scope": [
+    "forge",
+    "forge.cmd",
+    ".gitattributes",
+    ".claude/settings.json",
+    ".codex/hooks.json",
+    "factory/scripts/forge.py",
+    "factory/scripts/forge_cli/doctor.py",
+    "factory/scripts/forge_cli/phase.py",
+    "factory/scripts/forge_cli/scaffold.py",
+    "factory/scripts/check_dual_runtime.py",
+    ".github/workflows/factory-scaffold.yml",
+    "docs/decisions/0038-portable-fail-closed-hooks.md",
+    "factory/tests/test_gates.py"
+  ],
+  "aspect": "quality",
+  "recorded_at": "2026-08-11T17:02:41+00:00",
+  "commit": "31b734b9bb4bdc9108dc10eef7989dfccb35a2ec"
+}
