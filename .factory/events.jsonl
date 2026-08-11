@@ -849,3 +849,8 @@
 {"event": "review-security", "generated_by": "autoreview", "at": "2026-08-11T03:38:38+00:00", "story": "FORGE-ROLE-1"}
 {"event": "shipped", "generated_by": "orchestrator", "at": "2026-08-11T03:38:39+00:00", "story": "FORGE-ROLE-1", "detail": "The role split is now a gate: the orchestrating session physically cannot write product or canon - even under an approved plan - with forge delegate as the sole write path, a ledgered five-file degrad"}
 {"event": "pr-linked", "generated_by": "orchestrator", "at": "2026-08-11T03:39:11+00:00", "story": "FORGE-ROLE-1", "detail": "knacklabs/symphony-forge#75"}
+{"event": "intake", "generated_by": "orchestrator", "at": "2026-08-11T06:53:17+00:00", "story": "FORGE-WIN-1", "detail": "Zero-setup Windows support"}
+{"event": "roadmap-add", "generated_by": "orchestrator", "at": "2026-08-11T06:54:46+00:00", "story": "FORGE-ROLE-2", "detail": "no spec (adhoc)"}
+{"event": "intake", "generated_by": "orchestrator", "at": "2026-08-11T06:57:04+00:00", "story": "FORGE-WIN-1", "detail": "Zero-setup Windows support"}
+{"event": "plan-human-approved", "generated_by": "human", "at": "2026-08-11T06:58:26+00:00", "story": "FORGE-WIN-1", "detail": "FORGE-WIN-1 approved by Ravi"}
+{"event": "plan-approved", "generated_by": "planner-high", "at": "2026-08-11T06:58:26+00:00", "story": "FORGE-WIN-1", "detail": "plans/active/FORGE-WIN-1-zero-setup-windows-support.md"}
