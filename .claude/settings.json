@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "/usr/bin/python3 \"$(git rev-parse --show-toplevel)/factory/scripts/session_start.py\""
+            "command": "\"$(command -v python3 || command -v python)\" \"$(git rev-parse --show-toplevel)/factory/scripts/session_start.py\""
           }
         ]
       }
@@ -16,7 +16,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "/usr/bin/python3 \"$(git rev-parse --show-toplevel)/factory/scripts/pre_compact.py\""
+            "command": "\"$(command -v python3 || command -v python)\" \"$(git rev-parse --show-toplevel)/factory/scripts/pre_compact.py\""
           }
         ]
       }
@@ -27,7 +27,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "/usr/bin/python3 \"$(git rev-parse --show-toplevel)/factory/scripts/pre_tool_use.py\""
+            "command": "\"$(command -v python3 || command -v python)\" \"$(git rev-parse --show-toplevel)/factory/scripts/pre_tool_use.py\""
           }
         ]
       },
@@ -36,7 +36,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "/usr/bin/python3 \"$(git rev-parse --show-toplevel)/factory/scripts/pre_tool_use.py\""
+            "command": "\"$(command -v python3 || command -v python)\" \"$(git rev-parse --show-toplevel)/factory/scripts/pre_tool_use.py\""
           }
         ]
       }
@@ -46,7 +46,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "/usr/bin/python3 \"$(git rev-parse --show-toplevel)/factory/scripts/stop_continue.py\"",
+            "command": "\"$(command -v python3 || command -v python)\" \"$(git rev-parse --show-toplevel)/factory/scripts/stop_continue.py\"",
             "timeout": 30
           }
         ]

@@ -856,3 +856,6 @@
 {"event": "plan-approved", "generated_by": "planner-high", "at": "2026-08-11T06:58:26+00:00", "story": "FORGE-WIN-1", "detail": "plans/active/FORGE-WIN-1-zero-setup-windows-support.md"}
 {"event": "decomposed", "generated_by": "docs-decomposer", "at": "2026-08-11T07:01:02+00:00", "story": "FORGE-WIN-1", "detail": "3 task(s)"}
 {"event": "implementing", "generated_by": "orchestrator", "at": "2026-08-11T07:01:02+00:00", "story": "FORGE-WIN-1"}
+{"event": "stage-start", "generated_by": "implementer", "at": "2026-08-11T07:01:47+00:00", "story": "FORGE-WIN-1", "detail": "FORGE-WIN-1.1 Portable fail-closed hooks + doctor hook-health"}
+{"event": "signal-blocked", "generated_by": "implementer", "at": "2026-08-11T07:07:34+00:00", "story": "FORGE-WIN-1", "detail": "FORGE-WIN-1.1 grants .claude/settings.json and .codex/hooks.json write scope, but this delegated sandbox mounts both directories read-only; apply_patch is refused, so the portable hook commands cannot"}
+{"event": "delegated", "generated_by": "orchestrator", "at": "2026-08-11T07:08:12+00:00", "story": "FORGE-WIN-1", "detail": "FORGE-WIN-1.1 (write)"}

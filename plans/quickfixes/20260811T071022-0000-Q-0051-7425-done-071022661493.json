@@ -1,0 +1,13 @@
+{
+  "event": "done",
+  "id": "Q-0051-7425",
+  "profile": "degraded",
+  "kind": "degraded",
+  "reason": "S-0001-84c4: delegated sandbox mounts .claude/ and .codex/ read-only \u2014 companion path structurally unavailable for the two hook files in FORGE-WIN-1.1 write scope",
+  "started_at": "2026-08-11T07:09:20+00:00",
+  "completed_at": "2026-08-11T07:10:22+00:00",
+  "files": [
+    ".claude/settings.json",
+    ".codex/hooks.json"
+  ]
+}
