@@ -4,11 +4,17 @@
     {
       "id": "FORGE-WIN-1.1",
       "title": "Interpreter resolution point + forge.cmd + doctor hook-health + windows CI",
-      "status": "active",
+      "status": "done",
       "started_at": "2026-08-11T07:01:47+00:00",
       "base_sha": "580f2ce548a45810a5fd6ca579dcee30bf19bfa5",
       "dirty_at_start": {},
-      "task_sha256": "90c107d6c1335ebc55fa827a503fe7072b056dcbcc9500bbe1c90bf31f0e23ae"
+      "task_sha256": "08c4eef177604ea5e73381fc0280650aa5ce569b8ac1008e901652cb3cdc7389",
+      "completed_at": "2026-08-11T16:42:16+00:00",
+      "contract_changed": {
+        "at": "2026-08-11T16:42:16+00:00",
+        "from": "90c107d6c1335ebc55fa827a503fe7072b056dcbcc9500bbe1c90bf31f0e23ae",
+        "to": "08c4eef177604ea5e73381fc0280650aa5ce569b8ac1008e901652cb3cdc7389"
+      }
     }
   ]
 }
