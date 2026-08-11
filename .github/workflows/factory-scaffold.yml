@@ -61,3 +61,36 @@ jobs:
           python3 factory/scripts/forge.py init --name smoke --target "$RUNNER_TEMP/forge-smoke"
           python3 factory/scripts/check_dual_runtime.py "$RUNNER_TEMP/forge-smoke"
           python3 factory/scripts/check_factory_scaffold.py "$RUNNER_TEMP/forge-smoke"
+
+  windows-hook-gates:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Identify harness vs vendored client
+        id: repo_kind
+        shell: pwsh
+        run: |
+          if (Test-Path constitution/VENDORED_FROM) {
+            "is_harness=false" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          } else {
+            "is_harness=true" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          }
+      - uses: actions/setup-python@v5
+        if: steps.repo_kind.outputs.is_harness == 'true'
+        with:
+          python-version: '3.11'
+      - name: Install harness test runner
+        if: steps.repo_kind.outputs.is_harness == 'true'
+        run: python -m pip install --quiet pytest
+      - name: Prove native launcher and armed hook gates
+        if: steps.repo_kind.outputs.is_harness == 'true'
+        run: >-
+          python -m pytest factory/tests/test_gates.py::test_doctor_hook_health_green_on_healthy_repo
+          factory/tests/test_gates.py::test_hook_resolution_fails_closed_without_interpreter
+          factory/tests/test_gates.py::test_registered_hook_command_fails_closed_when_cmd_cannot_spawn_sh
+          factory/tests/test_gates.py::test_registered_hook_path_keeps_recorder_and_lockout_armed
+          factory/tests/test_gates.py::test_forge_cmd_routes_git_bash_then_python_fallbacks
+          factory/tests/test_gates.py::test_windows_autocrlf_checkout_preserves_forge_launcher
+          factory/tests/test_gates.py::test_companion_guard_admits_read_only_and_refuses_write_shapes
+          factory/tests/test_gates.py::test_lockout_denies_product_write_under_approved_plan
+          factory/tests/test_gates.py::test_degraded_window_allows_and_ledgers_product_write -q

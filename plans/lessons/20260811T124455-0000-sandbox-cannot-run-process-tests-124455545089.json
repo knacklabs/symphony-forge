@@ -1,0 +1,11 @@
+{
+  "topic": "sandbox-cannot-run-process-tests",
+  "lesson": "The managed companion sandbox denies ps (Operation not permitted), so the ~28 process-cleanup/companion gate tests can never run there. Workers must run the focused non-process selectors, state which selector was skipped, and hand the canonical full suite to the orchestrator's permissive environment \u2014 never treat the ps denial as a test failure or retry it.",
+  "source": "S-0008-ac3a/S-0009-c6db",
+  "applies_to": [
+    "factory/tests/test_gates.py"
+  ],
+  "severity": "medium",
+  "generated_by": "orchestrator",
+  "added_at": "2026-08-11T12:44:55+00:00"
+}

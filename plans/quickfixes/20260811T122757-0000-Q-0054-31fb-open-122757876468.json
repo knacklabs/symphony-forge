@@ -1,0 +1,11 @@
+{
+  "event": "open",
+  "id": "Q-0054-31fb",
+  "profile": "degraded",
+  "reason": "Review round 5 P1: outer exit-2 guard on all 8 hook commands \u2014 inner guard is unreachable when sh itself cannot spawn (sandbox holds .claude/.codex read-only, lesson delegated-sandbox-adapter-readonly)",
+  "started_at": "2026-08-11T12:27:57+00:00",
+  "max_files": 5,
+  "files": [],
+  "harness_source": true,
+  "kind": "degraded"
+}

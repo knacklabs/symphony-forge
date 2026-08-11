@@ -34,7 +34,7 @@ COPY_WORKFLOWS = [
 ]
 COPY_CODEX = ["config.toml", "explore.config.toml", "hooks.json"]  # + agents/ and skills/ dirs
 COPY_FILES = ["harness.yaml", ".gitignore", ".gitattributes", ".envrc",
-              "WORKFLOW.md", "CLAUDE.md", "forge"]
+              "WORKFLOW.md", "CLAUDE.md", "forge", "forge.cmd"]
 DOC_CONTRACTS = [
     ("docs/product/README.md", "docs/product/README.md"),
     ("docs/architecture/README.md", "docs/architecture/README.md"),
@@ -222,13 +222,15 @@ def ensure_onboarding(target: Path, name: str) -> bool:
 
 
 def ensure_jsonl_attributes(target: Path, harness: Path) -> bool:
-    """Add missing harness JSONL merge rules without replacing project rules.
+    """Add missing harness attribute rules without replacing project rules.
 
     Only `merge=union` rules ship. These used to be `merge=jsonl-append`, a
     driver registered per clone by the SessionStart hook — so scaffolding wrote
     a rule into a client repo that depended on a hook having run on whatever
     machine merged it. When the driver was absent the rule was inert; when it
     was present it hung, and the merge blocked forever instead of failing.
+    The POSIX `forge` launcher is also pinned to LF so Git Bash can execute it
+    after a Windows checkout.
     """
     destination = assert_target_file_destination(target, target / ".gitattributes")
     if not destination.exists():
@@ -237,14 +239,14 @@ def ensure_jsonl_attributes(target: Path, harness: Path) -> bool:
     current = destination.read_text()
     required = [
         line for line in (harness / ".gitattributes").read_text().splitlines()
-        if "merge=union" in line
+        if "merge=union" in line or line == "forge text eol=lf"
     ]
     missing = [line for line in required if line not in current.splitlines()]
     if not missing:
         return False
     with destination.open("a") as handle:
         handle.write("\n" + "\n".join(missing) + "\n")
-    return True
+    return any("merge=union" in line for line in missing)
 
 
 def record_origin_path(target: Path) -> Path:

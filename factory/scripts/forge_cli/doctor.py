@@ -80,7 +80,12 @@ def skills_missing_per_runtime(base: Path, home: Path | None = None,
 
     Required groups back artifact attestations; advisory groups are reported
     without turning doctor into a gate."""
-    from .delegate import skill_groups
+    try:
+        from .delegate import skill_groups
+    except ModuleNotFoundError as exc:
+        if exc.name != "fcntl":
+            raise
+        return []
 
     home = home or Path.home()
     missing = []
@@ -203,19 +208,88 @@ def _check(name: str, ok: bool, detail: str, fix: str, required: bool = True) ->
     return {"name": name, "ok": ok, "detail": detail, "fix": fix, "required": required}
 
 
+def _display_mark(check: dict) -> str:
+    if check["ok"]:
+        return "OK "
+    if check["name"].startswith("hook-health "):
+        return "RED"
+    return "MISS" if check["required"] else "opt "
+
+
 HOOK_CONFIGS = (Path(".claude/settings.json"), Path(".codex/hooks.json"))
 HOOK_HEALTH_FIX = (
-    "run `./forge doctor --fix` or install python3 on PATH, then rerun doctor"
+    "restore missing `forge`/factory scripts, or run `./forge doctor --fix` "
+    "to install Python 3.10+, then rerun doctor"
 )
 HOOK_SHELL_FIX = (
     "install Git for Windows (Git Bash provides sh), then rerun doctor"
 )
 
 
-def fast_hook_status() -> tuple[bool, str]:
-    """Resolve the hook interpreter without spawning a subprocess."""
-    interpreter = shutil.which("python3") or shutil.which("python")
-    return interpreter is not None, interpreter or "python3/python not on PATH"
+def _hook_shell_candidates(env: dict[str, str]) -> list[str]:
+    """Git Bash launchers in the same order the hook runtimes can discover them."""
+    candidates = []
+    configured = env.get("CLAUDE_CODE_GIT_BASH_PATH")
+    if configured:
+        candidates.append(configured)
+    on_path = shutil.which("sh", path=env.get("PATH"))
+    if on_path:
+        candidates.append(on_path)
+    for variable in ("ProgramFiles", "ProgramFiles(x86)", "LOCALAPPDATA"):
+        root = env.get(variable)
+        if not root:
+            continue
+        git_root = Path(root) / ("Programs/Git" if variable == "LOCALAPPDATA" else "Git")
+        candidates.extend(str(git_root / relative) for relative in (
+            "bin/bash.exe", "usr/bin/bash.exe", "usr/bin/sh.exe",
+        ))
+    return list(dict.fromkeys(candidates))
+
+
+def _existing_hook_shell(env: dict[str, str]) -> str | None:
+    return next((candidate for candidate in _hook_shell_candidates(env)
+                 if Path(candidate).is_file()), None)
+
+
+def _runnable_hook_shell(env: dict[str, str], base: Path | None = None) -> str | None:
+    """Probe candidates before committing; WSL cannot read a Windows checkout path."""
+    for candidate in _hook_shell_candidates(env):
+        if not Path(candidate).is_file():
+            continue
+        # `-n` makes the candidate open and parse the actual launcher without
+        # needing Python. Git Bash accepts the Windows checkout path; WSL does
+        # not. The subsequent health rows execute every command for real.
+        command = ([candidate, "-n", str(base / "forge")]
+                   if base is not None else [candidate, "-c", "exit 0"])
+        try:
+            probe = subprocess.run(
+                command, cwd=base, capture_output=True, env=env, timeout=5,
+            )
+        except (OSError, subprocess.TimeoutExpired):
+            continue
+        if probe.returncode == 0:
+            return candidate
+    return None
+
+
+def fast_hook_status(base: Path | None = None) -> tuple[bool, str]:
+    """Check hook launcher prerequisites without spawning a subprocess."""
+    if base is not None:
+        required = (Path("forge"), Path("factory/scripts/forge.py"), *HOOK_CONFIGS)
+        for relative in required:
+            if not (base / relative).is_file():
+                return False, f"{relative} is missing"
+        if os.name != "nt" and not os.access(base / "forge", os.X_OK):
+            return False, "forge is not executable"
+    shell = _existing_hook_shell(dict(os.environ))
+    if not shell:
+        return False, "sh is not on PATH (install Git for Windows)"
+    interpreter = (
+        shutil.which("py") or shutil.which("python3") or shutil.which("python")
+    )
+    if not interpreter:
+        return False, "py/python3/python is not on PATH"
+    return True, f"{shell} + {interpreter}"
 
 
 def _hook_health_payload(event: str) -> str:
@@ -245,7 +319,11 @@ def hook_health_checks(base: Path, *, env: dict[str, str] | None = None) -> list
         "FACTORY_HOOK_HEALTH": "1",
         "PYTHONDONTWRITEBYTECODE": "1",
     }
-    shell = shutil.which("sh")
+    shell = _runnable_hook_shell(run_env, base)
+    shell_exists = _existing_hook_shell(run_env) is not None
+    if shell:
+        shell_dir = str(Path(shell).parent)
+        run_env["PATH"] = shell_dir + os.pathsep + run_env.get("PATH", "")
 
     for relative in HOOK_CONFIGS:
         path = base / relative
@@ -302,9 +380,13 @@ def hook_health_checks(base: Path, *, env: dict[str, str] | None = None) -> list
                         ))
                         continue
                     if not shell:
+                        detail = (
+                            f"{command} -> hook launcher probe failed"
+                            if shell_exists else f"{command} -> sh is not on PATH"
+                        )
                         checks.append(_check(
-                            name, False, f"{command} -> sh is not on PATH",
-                            HOOK_SHELL_FIX,
+                            name, False, detail,
+                            HOOK_HEALTH_FIX if shell_exists else HOOK_SHELL_FIX,
                         ))
                         continue
                     try:
@@ -321,7 +403,13 @@ def hook_health_checks(base: Path, *, env: dict[str, str] | None = None) -> list
                         detail = command
                         if result.returncode != 0:
                             suffix = f": {output[-240:]}" if output else ""
-                            detail = f"{command} -> exit {result.returncode}{suffix}"
+                            semantics = (
+                                " (blocking)" if result.returncode == 2
+                                else " (invalid hook exit; expected 0 or 2)"
+                            )
+                            detail = (
+                                f"{command} -> exit {result.returncode}{semantics}{suffix}"
+                            )
                         checks.append(_check(
                             name, result.returncode == 0, detail, HOOK_HEALTH_FIX,
                         ))
@@ -950,12 +1038,12 @@ def cmd_doctor(args: argparse.Namespace) -> None:
         ),
     ]
 
-    for name, repo, extra, sentinel in skill_packs:
+    for name, pack_repo, extra, sentinel in skill_packs:
         checks.append(_check(
             name,
             sentinel.is_dir(),
             "installed" if sentinel.is_dir() else "not installed",
-            f"`npx -y skills add {repo} -g --copy {' '.join(extra)}`",
+            f"`npx -y skills add {pack_repo} -g --copy {' '.join(extra)}`",
             required=False,
         ))
 
@@ -978,7 +1066,7 @@ def cmd_doctor(args: argparse.Namespace) -> None:
     failures = 0
 
     for check in checks:
-        mark = "OK " if check["ok"] else ("MISS" if check["required"] else "opt ")
+        mark = _display_mark(check)
         print(f"[{mark}] {check['name']:<{width}}  {check['detail']}")
 
         if not check["ok"]:

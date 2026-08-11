@@ -1,0 +1,11 @@
+{
+  "event": "open",
+  "id": "Q-0053-ebb5",
+  "profile": "degraded",
+  "reason": "Land the eight review-settled live hook commands with fail-closed exit-2 normalization",
+  "started_at": "2026-08-11T11:40:18+00:00",
+  "max_files": 5,
+  "files": [],
+  "harness_source": true,
+  "kind": "degraded"
+}

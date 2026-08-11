@@ -21,26 +21,47 @@ platform; Windows merely exposed it.
 
 ## Decision
 
-Registered hook commands must be host-portable — PATH-resolved interpreter
-(`"$(command -v python3 || command -v python)"`), sh-compatible, preserving
-the literal `factory/scripts/<name>.py` token — and their executability must
-be machine-proven: `forge doctor` executes every registered hook command
-verbatim on every platform with `FACTORY_HOOK_HEALTH=1`, bytecode writes
-disabled, and a read-only-shaped payload. Hooks that otherwise write for every
-payload must return successfully before that write while health mode is set.
-A hook that cannot run is a named red check, never silence. A fast,
-subprocess-free resolution check backs the `forge next` Windows preflight.
+Registered hooks route through one shared `forge hook <name>` entrypoint. The
+`forge` launcher owns interpreter resolution in the fixed `py -3` → `python3`
+→ `python` order and exits 2 when no supported interpreter resolves. That
+blocking exit is deliberate: resolution failure must never become an exit-127
+fail-open hole. Every registered command has the double guard
+`sh -c '"$(git rev-parse --show-toplevel)/forge" hook <name> || exit 2' || exit 2`.
+The inner guard preserves success and a genuine hook exit 2 while normalizing
+a missing launcher, missing entrypoint, or any other nonzero launch result.
+The outer guard closes the earlier spawn boundary when `sh` itself is missing
+or cannot run, so that failure also becomes blocking exit 2.
+
+The hook name maps deterministically to `factory/scripts/<name>.py` in the
+entrypoint. `check_dual_runtime.check_hook_registration` understands that
+mapping and still proves every registered script exists; the passthrough does
+not trade away token or extraction protection.
+
+Executability is machine-proven: `forge doctor` executes every registered hook
+command verbatim on every platform with `FACTORY_HOOK_HEALTH=1`, bytecode
+writes disabled, and a read-only-shaped payload. Hooks that otherwise write
+for every payload must return successfully before that write while health mode
+is set. A hook that cannot run is a named red check, never silence. A fast,
+subprocess-free prerequisite check makes `forge next` name doctor first when
+the hook launcher is broken.
 
 ## Consequences
 
-- Rejected: pinned absolute interpreter (today's defect); a committed shim
-  script or `forge hook` subcommand (both drop the literal script token that
-  `check_dual_runtime.check_hook_registration` now extracts with a plain
-  `factory/scripts/...` search);
-  `$CLAUDE_PROJECT_DIR` (ambiguous across worktrees vs `git rev-parse`).
-- Accepted residue: the one-substitution chain has no `py -3` leg and no
-  version gate; doctor's verbatim-execution check plus `doctor --fix`
-  (real Python on PATH) own that residue.
+- Rejected: pinned absolute interpreter (the original defect).
+- Rejected: inline `command -v python3 || command -v python`. When neither
+  command resolves, the shell attempts an empty command and returns 127;
+  Claude Code treats that non-2 exit as non-blocking, recreating the fail-open
+  defect. It also omits Windows' standard `py -3` launcher.
+- Rejected: `$CLAUDE_PROJECT_DIR` (ambiguous across worktrees vs
+  `git rev-parse`).
+- Accepted: `forge.cmd` is the native cmd/PowerShell entrance. It discovers
+  Git Bash through `CLAUDE_CODE_GIT_BASH_PATH`, `PATH`, and the standard
+  Git-for-Windows install locations, and only prefers a candidate after proving
+  it can execute the shared `forge` launcher. An incompatible shell such as WSL
+  falls through to the native chain. It then probes `py -3` and `python` for
+  Python 3.10+ before bootstrapping `forge.py`, falling through whenever a
+  candidate fails its probe. Hook interpreter policy remains owned by the
+  `forge` entrypoint.
 - `.codex/hooks.json` stays outside vendor-integrity `GATE_FILES` for now —
   adding it changes the client gate surface, a separate decision if wanted;
   its health is covered by the doctor check instead.

@@ -17,6 +17,28 @@ import sys
 sys.dont_write_bytecode = True
 
 import argparse
+import os
+from pathlib import Path
+
+HOOK_SCRIPTS = {
+    "pre_compact": "pre_compact.py",
+    "pre_tool_use": "pre_tool_use.py",
+    "session_start": "session_start.py",
+    "stop_continue": "stop_continue.py",
+}
+
+
+def _exec_hook(name: str) -> None:
+    script = HOOK_SCRIPTS.get(name)
+    if script is None:
+        print(f"unknown hook: {name}", file=sys.stderr)
+        raise SystemExit(2)
+    path = Path(__file__).resolve().parent / script
+    os.execv(sys.executable, [sys.executable, str(path)])
+
+
+if __name__ == "__main__" and len(sys.argv) == 3 and sys.argv[1] == "hook":
+    _exec_hook(sys.argv[2])
 
 from forge_cli import adopt as adopt_mod
 from forge_cli import audit as audit_mod
@@ -25,8 +47,6 @@ from forge_cli import codex_status
 from forge_cli import assumptions as assumptions_mod
 from forge_cli import context as ctx
 from forge_cli import deferrals as deferrals_mod
-from forge_cli import delegate as delegate_mod
-from forge_cli import fix as fix_mod
 from forge_cli import findings as findings_mod
 from forge_cli import lessons as lessons_mod
 from forge_cli import outcome as outcome_mod
@@ -40,10 +60,28 @@ from forge_cli import history as history_mod
 from forge_cli import signal as signal_mod
 from forge_cli import decisions, doctor, phase, plans, roadmap, scaffold, specs, team, upgrade
 
+if os.name == "nt":
+    delegate_mod = None
+    fix_mod = None
+else:
+    from forge_cli import delegate as delegate_mod
+    from forge_cli import fix as fix_mod
+
+
+def _posix_companion_only(_args: argparse.Namespace) -> None:
+    raise SystemExit(
+        "This companion command is not available natively on Windows yet; "
+        "run it under WSL2 or use the native non-delegating Forge commands."
+    )
+
 
 def main() -> None:
     parser = argparse.ArgumentParser(prog="forge", description=__doc__)
     sub = parser.add_subparsers(dest="command", required=True)
+
+    p_hook = sub.add_parser("hook", help="execute a registered factory hook")
+    p_hook.add_argument("name", choices=sorted(HOOK_SCRIPTS))
+    p_hook.set_defaults(func=lambda args: _exec_hook(args.name))
 
     p_doc = sub.add_parser("doctor", help="check machine prerequisites for the harness")
     p_doc.add_argument("--fix", action="store_true",
@@ -190,7 +228,7 @@ def main() -> None:
     p_fix = sub.add_parser("fix", help="launch a bounded fix in an open lite window")
     p_fix.add_argument("description")
     p_fix.add_argument("--repo")
-    p_fix.set_defaults(func=fix_mod.cmd_fix)
+    p_fix.set_defaults(func=fix_mod.cmd_fix if fix_mod else _posix_companion_only)
 
     p_spec = sub.add_parser("spec", help="capture and confirm capability specs")
     spec_sub = p_spec.add_subparsers(dest="spec_command", required=True)
@@ -410,7 +448,9 @@ def main() -> None:
     p_del.add_argument("--print-only", action="store_true",
                        help="print the argv without launching or recording evidence")
     p_del.add_argument("--repo")
-    p_del.set_defaults(func=delegate_mod.cmd_delegate)
+    p_del.set_defaults(
+        func=delegate_mod.cmd_delegate if delegate_mod else _posix_companion_only
+    )
 
     p_sls = st_sub.add_parser("list", help="show stage progress")
     p_sls.add_argument("--repo")

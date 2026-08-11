@@ -35,6 +35,13 @@ def cmd_next(args: argparse.Namespace) -> None:
         suffix = f" ({issue} — {state.get('title')})" if issue else ""
         print(f"PHASE: {label}{suffix}")
 
+    from .doctor import fast_hook_status
+    hooks_ok, hook_detail = fast_hook_status(base)
+    if not hooks_ok:
+        steps.append(
+            f"[dev] Hook launcher is broken ({hook_detail}) — run `./forge doctor` first"
+        )
+
     open_sigs = open_signals(base)
     if open_sigs:
         ids = ", ".join(s["id"] for s in open_sigs[:3])

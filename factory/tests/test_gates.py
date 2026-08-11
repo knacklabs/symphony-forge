@@ -2234,9 +2234,29 @@ def test_dual_runtime_linter_clean_on_scaffold_and_catches_phantom_ref(repo):
     assert code != 0 and "phantom" in out
 
 
+def _route_fixture_hooks_through_forge(repo: Path) -> None:
+    from check_dual_runtime import hook_script_paths
+
+    for relative in (".claude/settings.json", ".codex/hooks.json"):
+        path = repo / relative
+        document = json.loads(path.read_text())
+        for registrations in document["hooks"].values():
+            for registration in registrations:
+                for hook in registration["hooks"]:
+                    scripts = hook_script_paths(hook["command"])
+                    assert len(scripts) == 1
+                    name = Path(scripts[0]).stem
+                    hook["command"] = (
+                        "sh -c '\"$(git rev-parse --show-toplevel)/forge\" "
+                        f"hook {name} || exit 2' || exit 2"
+                    )
+        path.write_text(json.dumps(document, indent=2) + "\n")
+
+
 def test_doctor_hook_health_green_on_healthy_repo(repo):
     from forge_cli.doctor import hook_health_checks
 
+    _route_fixture_hooks_through_forge(repo)
     before = git(repo, "status", "--porcelain", "-uall")
     bytecode_before = set(repo.rglob("__pycache__"))
     checks = hook_health_checks(repo)
@@ -2247,28 +2267,187 @@ def test_doctor_hook_health_green_on_healthy_repo(repo):
     assert set(repo.rglob("__pycache__")) == bytecode_before
 
 
-def test_doctor_hook_health_red_names_unrunnable_command(repo, tmp_path):
-    from forge_cli.doctor import HOOK_HEALTH_FIX, hook_health_checks
+@pytest.mark.skipif(
+    os.name == "nt",
+    reason="POSIX only: constructs an interpreter-free PATH around a real sh binary",
+)
+def test_doctor_hook_health_reds_unresolvable_hook(repo, tmp_path):
+    from forge_cli.doctor import HOOK_HEALTH_FIX, _display_mark, hook_health_checks
 
+    _route_fixture_hooks_through_forge(repo)
     fake_bin = tmp_path / "hook-path"
     fake_bin.mkdir()
+    (fake_bin / "sh").symlink_to(shutil.which("sh"))
     fake_git = fake_bin / "git"
-    fake_git.write_text(f"#!/bin/sh\nprintf '%s\\n' '{repo}'\n")
+    fake_git.write_text(f"#!{shutil.which('sh')}\nprintf '%s\\n' '{repo}'\n")
     fake_git.chmod(0o755)
 
     checks = hook_health_checks(repo, env={"PATH": str(fake_bin)})
     failures = [check for check in checks if not check["ok"]]
 
     assert len(failures) == 8
+    assert len({check["name"] for check in failures}) == 8
     registered = json.loads((repo / ".claude" / "settings.json").read_text())
     command = registered["hooks"]["SessionStart"][0]["hooks"][0]["command"]
     assert any(command in check["detail"] for check in failures)
+    assert all("exit 2 (blocking)" in check["detail"] for check in failures)
+    assert all(_display_mark(check) == "RED" for check in failures)
     assert all(check["fix"] == HOOK_HEALTH_FIX for check in failures)
+
+
+def test_hook_resolution_fails_closed_without_interpreter(tmp_path):
+    from forge_cli.doctor import _runnable_hook_shell
+
+    shell = _runnable_hook_shell(dict(os.environ), HARNESS)
+    assert shell, "test requires a working POSIX shell"
+    empty_path = tmp_path / "empty-path"
+    empty_path.mkdir()
+
+    result = subprocess.run(
+        [shell, str(HARNESS / "forge"), "hook", "session_start"],
+        cwd=HARNESS,
+        input="{}",
+        capture_output=True,
+        text=True,
+        env={**os.environ, "PATH": str(empty_path)},
+    )
+
+    assert result.returncode == 2
+    assert "Python 3.10 or newer was not found" in result.stderr
+
+
+@pytest.mark.parametrize("broken_target", [
+    "forge", "factory/scripts/forge.py", "factory/scripts/session_start.py",
+])
+def test_registered_hook_command_normalizes_launch_failures(repo, broken_target):
+    from forge_cli.doctor import _runnable_hook_shell
+
+    _route_fixture_hooks_through_forge(repo)
+    shell = _runnable_hook_shell(dict(os.environ), repo)
+    assert shell, "test requires a shell that can launch this checkout"
+    (repo / broken_target).unlink()
+    document = json.loads((repo / ".claude" / "settings.json").read_text())
+    command = document["hooks"]["SessionStart"][0]["hooks"][0]["command"]
+
+    result = subprocess.run(
+        [shell, "-c", command],
+        cwd=repo,
+        input="{}",
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode == 2
+
+
+@pytest.mark.skipif(os.name == "nt", reason="POSIX executable mode has no cmd equivalent")
+def test_registered_hook_command_blocks_a_nonexecutable_launcher(repo):
+    _route_fixture_hooks_through_forge(repo)
+    (repo / "forge").chmod(0o644)
+    document = json.loads((repo / ".claude" / "settings.json").read_text())
+    command = document["hooks"]["SessionStart"][0]["hooks"][0]["command"]
+
+    result = subprocess.run(
+        [shutil.which("sh"), "-c", command], cwd=repo, input="{}",
+        capture_output=True, text=True,
+    )
+
+    assert result.returncode == 2
+
+
+@pytest.mark.skipif(os.name == "nt", reason="POSIX PATH fixture uses executable symlinks")
+def test_registered_hook_command_blocks_when_git_cannot_find_the_repo(repo, tmp_path):
+    _route_fixture_hooks_through_forge(repo)
+    fake_bin = tmp_path / "no-git"
+    fake_bin.mkdir()
+    (fake_bin / "sh").symlink_to(shutil.which("sh"))
+    (fake_bin / "python3").symlink_to(sys.executable)
+    document = json.loads((repo / ".claude" / "settings.json").read_text())
+    command = document["hooks"]["SessionStart"][0]["hooks"][0]["command"]
+
+    result = subprocess.run(
+        [shutil.which("sh"), "-c", command], cwd=repo, input="{}",
+        capture_output=True, text=True,
+        env={**os.environ, "PATH": str(fake_bin)},
+    )
+
+    assert result.returncode == 2
+
+
+def test_registered_hook_command_fails_closed_when_inner_sh_is_missing(repo, tmp_path):
+    from forge_cli.doctor import _runnable_hook_shell
+
+    _route_fixture_hooks_through_forge(repo)
+    shell = _runnable_hook_shell(dict(os.environ), repo)
+    assert shell, "test requires a shell that can launch this checkout"
+    document = json.loads((repo / ".claude" / "settings.json").read_text())
+    command = document["hooks"]["SessionStart"][0]["hooks"][0]["command"]
+    empty_path = tmp_path / "empty-path"
+    empty_path.mkdir()
+
+    result = subprocess.run(
+        [shell, "-c", command],
+        cwd=repo,
+        input="{}",
+        capture_output=True,
+        text=True,
+        env={**os.environ, "PATH": str(empty_path)},
+    )
+
+    assert result.returncode == 2
+
+
+@pytest.mark.skipif(
+    os.name != "nt",
+    reason="Windows only: proves cmd.exe evaluates the outer fail-closed guard",
+)
+def test_registered_hook_command_fails_closed_when_cmd_cannot_spawn_sh(repo, tmp_path):
+    _route_fixture_hooks_through_forge(repo)
+    document = json.loads((repo / ".claude" / "settings.json").read_text())
+    command = document["hooks"]["SessionStart"][0]["hooks"][0]["command"]
+    empty_path = tmp_path / "empty-path"
+    empty_path.mkdir()
+
+    result = subprocess.run(
+        [os.environ["COMSPEC"], "/d", "/c", command],
+        cwd=repo,
+        input="{}",
+        capture_output=True,
+        text=True,
+        env={**os.environ, "PATH": str(empty_path)},
+    )
+
+    assert result.returncode == 2
+
+
+@pytest.mark.parametrize(("hook_exit", "registered_exit"), [(0, 0), (2, 2), (7, 2)])
+def test_registered_hook_command_preserves_success_and_blocks_nonzero(
+        repo, hook_exit, registered_exit):
+    from forge_cli.doctor import _runnable_hook_shell
+
+    _route_fixture_hooks_through_forge(repo)
+    shell = _runnable_hook_shell(dict(os.environ), repo)
+    assert shell, "test requires a shell that can launch this checkout"
+    launcher = repo / "forge"
+    launcher.write_text(f"#!/bin/sh\nexit {hook_exit}\n")
+    document = json.loads((repo / ".claude" / "settings.json").read_text())
+    command = document["hooks"]["SessionStart"][0]["hooks"][0]["command"]
+
+    result = subprocess.run(
+        [shell, "-c", command],
+        cwd=repo,
+        input="{}",
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode == registered_exit
 
 
 def test_doctor_hook_health_catches_precompact_import_skew(repo):
     from forge_cli.doctor import hook_health_checks
 
+    _route_fixture_hooks_through_forge(repo)
     scratchpad = repo / "factory" / "scripts" / "forge_cli" / "scratchpad.py"
     scratchpad.write_text("raise ImportError('broken scratchpad package')\n")
 
@@ -2279,13 +2458,20 @@ def test_doctor_hook_health_catches_precompact_import_skew(repo):
     assert "broken scratchpad package" in failures[0]["detail"]
 
 
+@pytest.mark.skipif(
+    os.name == "nt",
+    reason="POSIX only: monkeypatches all shell discovery to emulate missing Git Bash",
+)
 def test_doctor_hook_health_missing_sh_names_git_bash_fix(repo, monkeypatch):
     from forge_cli import doctor
 
+    _route_fixture_hooks_through_forge(repo)
     real_which = doctor.shutil.which
     monkeypatch.setattr(
         doctor.shutil, "which",
-        lambda binary: None if binary == "sh" else real_which(binary),
+        lambda binary, path=None: (
+            None if binary == "sh" else real_which(binary, path=path)
+        ),
     )
 
     failures = [check for check in doctor.hook_health_checks(repo)
@@ -2296,8 +2482,22 @@ def test_doctor_hook_health_missing_sh_names_git_bash_fix(repo, monkeypatch):
     assert all("Git for Windows" in check["fix"] for check in failures)
 
 
+def test_doctor_hook_health_broken_launcher_does_not_blame_git_bash(repo):
+    from forge_cli import doctor
+
+    _route_fixture_hooks_through_forge(repo)
+    (repo / "forge").unlink()
+
+    failures = [check for check in doctor.hook_health_checks(repo)
+                if not check["ok"]]
+
+    assert len(failures) == 8
+    assert all("hook launcher probe failed" in check["detail"] for check in failures)
+    assert all(check["fix"] == doctor.HOOK_HEALTH_FIX for check in failures)
+
+
 def test_init_and_upgrade_ship_portable_hook_commands(tmp_path):
-    portable = '"$(command -v python3 || command -v python)"'
+    from check_dual_runtime import hook_script_paths
 
     def commands(root: Path, relative: str) -> list[str]:
         document = json.loads((root / relative).read_text())
@@ -2317,25 +2517,40 @@ def test_init_and_upgrade_ship_portable_hook_commands(tmp_path):
     assert initialized.returncode == 0, initialized.stdout + initialized.stderr
     assert len(commands(repo, ".claude/settings.json")) == 5
     assert len(commands(repo, ".codex/hooks.json")) == 3
+    assert (repo / "forge.cmd").is_file()
+    attributes = repo / ".gitattributes"
+    assert "forge text eol=lf" in attributes.read_text().splitlines()
     assert all(
-        command.startswith(portable) and "/factory/scripts/" in command
+        command.startswith("sh -c ")
+        and command.endswith(" || exit 2' || exit 2")
+        and hook_script_paths(command)
         for relative in (".claude/settings.json", ".codex/hooks.json")
         for command in commands(repo, relative)
     )
 
     git(repo, "add", "-A")
     git(repo, "commit", "-q", "-m", "scaffold")
+    (repo / "forge.cmd").unlink()
+    attributes.write_text("\n".join(
+        line for line in attributes.read_text().splitlines()
+        if line != "forge text eol=lf"
+    ) + "\n")
     for relative in (".claude/settings.json", ".codex/hooks.json"):
         (repo / relative).write_text(json.dumps({"hooks": {}}) + "\n")
-    git(repo, "add", ".claude/settings.json", ".codex/hooks.json")
+    git(repo, "add", ".claude/settings.json", ".codex/hooks.json",
+        ".gitattributes", "forge.cmd")
     git(repo, "commit", "-q", "-m", "degrade hook registrations")
 
     upgraded = upgrade_into(repo)
     assert upgraded.returncode == 0, upgraded.stdout + upgraded.stderr
     assert len(commands(repo, ".claude/settings.json")) == 5
     assert len(commands(repo, ".codex/hooks.json")) == 3
+    assert (repo / "forge.cmd").is_file()
+    assert "forge text eol=lf" in attributes.read_text().splitlines()
     assert all(
-        command.startswith(portable) and "/factory/scripts/" in command
+        command.startswith("sh -c ")
+        and command.endswith(" || exit 2' || exit 2")
+        and hook_script_paths(command)
         for relative in (".claude/settings.json", ".codex/hooks.json")
         for command in commands(repo, relative)
     )
@@ -2344,6 +2559,12 @@ def test_init_and_upgrade_ship_portable_hook_commands(tmp_path):
 def test_hook_registration_extracts_every_registered_script():
     from check_dual_runtime import hook_script_paths
 
+    synthetic = (
+        'sh -c \'"$(git rev-parse --show-toplevel)/forge" '
+        "hook session_start || exit 2'"
+    )
+    assert hook_script_paths(synthetic) == ["factory/scripts/session_start.py"]
+
     for relative in (".claude/settings.json", ".codex/hooks.json"):
         document = json.loads((HARNESS / relative).read_text())
         for event, registrations in document["hooks"].items():
@@ -2351,6 +2572,92 @@ def test_hook_registration_extracts_every_registered_script():
                 for hook in registration["hooks"]:
                     scripts = hook_script_paths(hook["command"])
                     assert scripts, f"{relative}:{event} did not expose a script path"
+                    assert all((HARNESS / script).is_file() for script in scripts)
+                    assert hook["command"].endswith(" || exit 2' || exit 2")
+
+
+def test_forge_cmd_routes_git_bash_then_python_fallbacks(tmp_path):
+    shim = (HARNESS / "forge.cmd").read_text()
+    assert shim.index("CLAUDE_CODE_GIT_BASH_PATH") < shim.index("where sh")
+    assert shim.index("where sh") < shim.index("where py") < shim.index("where python")
+    assert "%ProgramFiles%\\Git\\usr\\bin\\sh.exe" in shim
+    assert "%LOCALAPPDATA%\\Programs\\Git\\usr\\bin\\sh.exe" in shim
+    assert (
+        '"%~1" "%~dp0forge" --help >nul 2>nul\n'
+        'if not errorlevel 1 set "FORGE_SH=%~1"'
+    ) in shim
+    assert '"%FORGE_SH%" "%~dp0forge" %*' in shim
+    assert 'py -3 "%~dp0factory\\scripts\\forge.py" %*' in shim
+    assert 'python "%~dp0factory\\scripts\\forge.py" %*' in shim
+    assert shim.count("sys.version_info >= (3, 10)") == 2
+    assert (
+        'py -3 -c "import sys; raise SystemExit(0 if sys.version_info >= '
+        '(3, 10) else 1)" >nul 2>nul\n'
+        'if errorlevel 1 goto python_fallback\n'
+        'py -3 "%~dp0factory\\scripts\\forge.py" %*'
+    ) in shim
+    assert (
+        'python -c "import sys; raise SystemExit(0 if sys.version_info >= '
+        '(3, 10) else 1)" >nul 2>nul\n'
+        'if errorlevel 1 goto missing\n'
+        'python "%~dp0factory\\scripts\\forge.py" %*'
+    ) in shim
+    assert "exit /b 2" in shim
+
+    if os.name == "nt":
+        fake_shell = tmp_path / "git-bash.cmd"
+        shell_log = tmp_path / "git-bash.log"
+        fake_shell.write_text(f'@echo called>>"{shell_log}"\n@exit /b 0\n')
+        via_override = subprocess.run(
+            ["cmd", "/c", str(HARNESS / "forge.cmd"), "--help"],
+            cwd=HARNESS,
+            capture_output=True,
+            text=True,
+            env={**os.environ, "CLAUDE_CODE_GIT_BASH_PATH": str(fake_shell)},
+        )
+        assert via_override.returncode == 0, via_override.stdout + via_override.stderr
+        assert shell_log.read_text().splitlines() == ["called", "called"]
+
+        result = subprocess.run(
+            ["cmd", "/c", str(HARNESS / "forge.cmd"), "--help"],
+            cwd=HARNESS,
+            capture_output=True,
+            text=True,
+        )
+        assert result.returncode == 0, result.stdout + result.stderr
+
+        fake_bin = tmp_path / "incompatible-shell"
+        fake_bin.mkdir()
+        (fake_bin / "sh.cmd").write_text("@exit /b 9\n")
+        fallback = subprocess.run(
+            ["cmd", "/c", str(HARNESS / "forge.cmd"), "--help"],
+            cwd=HARNESS,
+            capture_output=True,
+            text=True,
+            env={**os.environ, "PATH": str(fake_bin) + os.pathsep + os.environ["PATH"]},
+        )
+        assert fallback.returncode == 0, fallback.stdout + fallback.stderr
+
+
+def test_windows_autocrlf_checkout_preserves_forge_launcher(tmp_path):
+    from forge_cli.doctor import _runnable_hook_shell
+
+    checkout = tmp_path / "autocrlf"
+    checkout.mkdir()
+    (checkout / ".gitattributes").write_bytes((HARNESS / ".gitattributes").read_bytes())
+    (checkout / "forge").write_bytes((HARNESS / "forge").read_bytes())
+    git(checkout, "init", "-q")
+    git(checkout, "config", "core.autocrlf", "true")
+    git(checkout, "add", ".gitattributes", "forge")
+    (checkout / "forge").unlink()
+    git(checkout, "checkout-index", "--force", "forge")
+
+    launcher = (checkout / "forge").read_bytes()
+    assert b"\r\n" not in launcher
+    shell = _runnable_hook_shell(dict(os.environ), HARNESS)
+    assert shell, "test requires Git Bash or another POSIX shell"
+    result = subprocess.run([shell, "-n", str(checkout / "forge")], capture_output=True)
+    assert result.returncode == 0, result.stderr.decode(errors="replace")
 
 
 def test_portable_fast_hook_status_is_subprocess_free(monkeypatch):
@@ -2363,7 +2670,131 @@ def test_portable_fast_hook_status_is_subprocess_free(monkeypatch):
     ok, detail = doctor.fast_hook_status()
 
     assert ok
-    assert detail == shutil.which("python3") or detail == shutil.which("python")
+    assert shutil.which("sh") in detail
+    assert any(
+        interpreter and interpreter in detail
+        for interpreter in (shutil.which("py"), shutil.which("python3"), shutil.which("python"))
+    )
+
+
+@pytest.mark.skipif(
+    os.name == "nt",
+    reason="POSIX fixture emulates Git Bash outside PATH with an executable wrapper",
+)
+def test_doctor_discovers_and_probes_git_bash_outside_path(tmp_path):
+    from forge_cli import doctor
+
+    program_files = tmp_path / "Program Files"
+    shell = program_files / "Git" / "usr" / "bin" / "sh.exe"
+    shell.parent.mkdir(parents=True)
+    shell.write_text(f"#!{shutil.which('sh')}\nexec {shutil.which('sh')} \"$@\"\n")
+    shell.chmod(0o755)
+    env = {
+        "PATH": str(tmp_path / "Git" / "cmd"),
+        "ProgramFiles": str(program_files),
+    }
+
+    assert shutil.which("sh", path=env["PATH"]) is None
+    assert doctor._runnable_hook_shell(env) == str(shell)
+
+
+@pytest.mark.skipif(
+    os.name == "nt",
+    reason="POSIX fixture emulates a healthy Git-for-Windows install outside PATH",
+)
+def test_doctor_hook_health_uses_git_bash_outside_path(repo, tmp_path):
+    from forge_cli.doctor import hook_health_checks
+
+    _route_fixture_hooks_through_forge(repo)
+    program_files = tmp_path / "Program Files"
+    git_root = program_files / "Git"
+    shell = git_root / "usr" / "bin" / "sh.exe"
+    shell.parent.mkdir(parents=True)
+    shell.write_text(f"#!{shutil.which('sh')}\nexec {shutil.which('sh')} \"$@\"\n")
+    shell.chmod(0o755)
+    (shell.parent / "sh").symlink_to(shell)
+    git_cmd = git_root / "cmd"
+    git_cmd.mkdir()
+    (git_cmd / "git").symlink_to(shutil.which("git"))
+    (git_cmd / "python3").symlink_to(sys.executable)
+
+    checks = hook_health_checks(repo, env={
+        "PATH": str(git_cmd),
+        "ProgramFiles": str(program_files),
+    })
+
+    assert len(checks) == 8
+    assert all(check["ok"] for check in checks), checks
+
+
+@pytest.mark.skipif(
+    os.name == "nt",
+    reason="POSIX fixture emulates the Claude Code Git Bash override",
+)
+def test_doctor_falls_through_an_unrunnable_configured_shell(tmp_path):
+    from forge_cli import doctor
+
+    broken = tmp_path / "broken-sh"
+    broken.write_text("#!/bin/sh\nexit 9\n")
+    broken.chmod(0o755)
+    healthy = tmp_path / "healthy-sh"
+    healthy.write_text(f"#!{shutil.which('sh')}\nexec {shutil.which('sh')} \"$@\"\n")
+    healthy.chmod(0o755)
+    env = {
+        "PATH": str(tmp_path),
+        "CLAUDE_CODE_GIT_BASH_PATH": str(broken),
+    }
+    path_sh = tmp_path / "sh"
+    path_sh.symlink_to(healthy)
+
+    assert doctor._runnable_hook_shell(env) == str(path_sh)
+
+
+def test_phase_names_doctor_first_when_hook_launcher_is_broken(repo, capsys):
+    from forge_cli import phase
+
+    (repo / "forge").unlink()
+    phase.cmd_next(argparse.Namespace(repo=str(repo)))
+    output = capsys.readouterr().out
+    first = output.split("NEXT:\n", 1)[1].splitlines()[0]
+
+    assert "forge doctor" in first
+
+    shutil.copy2(HARNESS / "forge", repo / "forge")
+    (repo / "forge").chmod(0o644)
+    phase.cmd_next(argparse.Namespace(repo=str(repo)))
+    output = capsys.readouterr().out
+    first = output.split("NEXT:\n", 1)[1].splitlines()[0]
+
+    assert "forge doctor" in first
+
+    (repo / "forge").chmod(0o755)
+    (repo / "factory" / "scripts" / "forge.py").unlink()
+    phase.cmd_next(argparse.Namespace(repo=str(repo)))
+    output = capsys.readouterr().out
+    first = output.split("NEXT:\n", 1)[1].splitlines()[0]
+
+    assert "forge doctor" in first
+
+
+def test_precompact_hook_health_resolves_context_before_returning():
+    source = (HARNESS / "factory" / "scripts" / "pre_compact.py").read_text()
+
+    read_input = source.index("payload = read_hook_input()")
+    resolve_repo = source.index("root = repo_root()", read_input)
+    import_scratchpad = source.index(
+        "from forge_cli.scratchpad import notes_section, scratchpad_path",
+        resolve_repo,
+    )
+    health_return = source.index(
+        'if os.environ.get("FACTORY_HOOK_HEALTH") == "1":', import_scratchpad,
+    )
+    first_write = min(
+        source.index("path.parent.mkdir", health_return),
+        source.index("path.write_text", health_return),
+    )
+
+    assert read_input < resolve_repo < import_scratchpad < health_return < first_write
 
 
 # ------------------------------------------------------------------- roadmap
@@ -4061,6 +4492,42 @@ def test_lockout_denies_product_write_under_approved_plan(repo, tmp_path):
         assert code == 0 and "deny" in out, payload
         assert "forge delegate <task-id>" in out
         assert "forge mode degraded start --reason" in out
+
+
+def test_registered_hook_path_keeps_recorder_and_lockout_armed(repo, tmp_path):
+    from forge_cli.doctor import _runnable_hook_shell
+
+    mark_harness_source(repo)
+    sign_off(repo)
+    intake(repo)
+    save_plan(repo, tmp_path)
+    code, out = run(
+        repo, "record_decomposition_from_json.py", stdin=json.dumps(DECOMP),
+    )
+    assert code == 0, out
+
+    _route_fixture_hooks_through_forge(repo)
+    shell = _runnable_hook_shell(dict(os.environ), repo)
+    assert shell, "test requires a shell that can launch this checkout"
+    document = json.loads((repo / ".claude" / "settings.json").read_text())
+    command = document["hooks"]["PreToolUse"][0]["hooks"][0]["command"]
+    payload = {
+        "tool_name": "Edit",
+        "permission_mode": "default",
+        "tool_input": {"file_path": str(repo / "src" / "app.ts")},
+    }
+
+    result = subprocess.run(
+        [shell, "-c", command],
+        cwd=repo,
+        input=json.dumps(payload),
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert "deny" in result.stdout
+    assert "forge delegate <task-id>" in result.stdout
 
 
 def test_degraded_window_allows_and_ledgers_product_write(repo):
@@ -10264,12 +10731,14 @@ def test_protected_lock_path_rejects_unsafe_task_id(repo):
         sys.path.pop(0)
 
 
-@pytest.mark.parametrize("wrapper_signal", [
-    signal.SIGINT,
-    signal.SIGTERM,
-    signal.SIGHUP,
-    signal.SIGQUIT,
-])
+@pytest.mark.skipif(
+    os.name == "nt",
+    reason="POSIX only: process-group termination uses HUP/QUIT and killpg",
+)
+@pytest.mark.parametrize("wrapper_signal", (
+    [signal.SIGINT, signal.SIGTERM, signal.SIGHUP, signal.SIGQUIT]
+    if os.name != "nt" else []
+))
 def test_termination_signals_reap_companion_before_lock_release(
         repo, tmp_path, wrapper_signal):
     start_stage(repo, tmp_path, STAGE_TASK, launch=False)

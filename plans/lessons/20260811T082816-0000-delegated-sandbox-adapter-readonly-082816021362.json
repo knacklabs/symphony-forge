@@ -1,0 +1,11 @@
+{
+  "topic": "delegated-sandbox-adapter-readonly",
+  "lesson": "The delegated companion sandbox mounts .claude/ and .codex/ READ-ONLY regardless of declared write scope. A worker whose scope includes .claude/settings.json or .codex/hooks.json must NOT edit or pause on those two files: implement everything else, assert their intended content via generated init/upgrade targets and fixtures, and report the exact final command strings \u2014 the orchestrator lands the two root files verbatim through a ledgered degraded window (precedent Q-0051-7425).",
+  "source": "S-0001-84c4/S-0003-32f9/S-0005-6e5d",
+  "applies_to": [
+    ".claude/settings.json,.codex/hooks.json"
+  ],
+  "severity": "high",
+  "generated_by": "orchestrator",
+  "added_at": "2026-08-11T08:28:16+00:00"
+}

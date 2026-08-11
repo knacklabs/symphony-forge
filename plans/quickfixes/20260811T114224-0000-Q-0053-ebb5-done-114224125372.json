@@ -1,0 +1,13 @@
+{
+  "event": "done",
+  "id": "Q-0053-ebb5",
+  "profile": "degraded",
+  "kind": "degraded",
+  "reason": "Land the eight review-settled live hook commands with fail-closed exit-2 normalization",
+  "started_at": "2026-08-11T11:40:18+00:00",
+  "completed_at": "2026-08-11T11:42:24+00:00",
+  "files": [
+    ".claude/settings.json",
+    ".codex/hooks.json"
+  ]
+}

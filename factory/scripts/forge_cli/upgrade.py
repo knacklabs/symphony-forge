@@ -29,7 +29,7 @@ from .scaffold import (
 
 # Harness-owned: replaced wholesale on upgrade.
 UPGRADE_TREES = ["factory", "constitution", "harness"]
-UPGRADE_FILES = ["forge", "CLAUDE.md", "WORKFLOW.md"]
+UPGRADE_FILES = ["forge", "forge.cmd", "CLAUDE.md", "WORKFLOW.md"]
 # .claude is MIXED ownership: client repos legitimately carry their own
 # skills, agents, launch.json, and settings.local.json (standard Claude Code
 # surfaces — see the thin-adapter linter). Upgrade replaces ONLY the paths

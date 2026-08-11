@@ -1,0 +1,11 @@
+{
+  "event": "open",
+  "id": "Q-0052-647e",
+  "profile": "degraded",
+  "reason": "S-0005-6e5d (recurring constraint, lesson recorded): sandbox mounts .claude/ and .codex/ read-only \u2014 landing the 8 forge-hook passthrough commands the worker specified verbatim",
+  "started_at": "2026-08-11T08:38:38+00:00",
+  "max_files": 5,
+  "files": [],
+  "harness_source": true,
+  "kind": "degraded"
+}
