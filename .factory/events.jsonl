@@ -917,3 +917,4 @@
 {"event": "stage-start", "generated_by": "implementer", "at": "2026-08-11T17:36:11+00:00", "story": "FORGE-WIN-1", "detail": "FORGE-WIN-1.2 Hook import chain must load on Windows (fcntl leak)"}
 {"event": "roadmap-add", "generated_by": "orchestrator", "at": "2026-08-11T17:49:28+00:00", "story": "FORGE-WIN-1B", "detail": "docs/specs/windows-zero-setup.md"}
 {"event": "delegated", "generated_by": "orchestrator", "at": "2026-08-11T17:50:38+00:00", "story": "FORGE-WIN-1", "detail": "FORGE-WIN-1.2 (write)"}
+{"event": "stage-done", "generated_by": "implementer", "at": "2026-08-11T17:59:22+00:00", "story": "FORGE-WIN-1", "detail": "FORGE-WIN-1.2 Hook import chain must load on Windows (fcntl leak)"}
