@@ -1,0 +1,24 @@
+{
+  "generated_by": "griller",
+  "gate": "task",
+  "verdict": "pass",
+  "gaps": [
+    "Verbatim execution of SessionStart/Stop hook commands may have side effects (context emission, ledger appends) \u2014 a health check must not mutate state.",
+    "The red-path test needs a broken interpreter without breaking the test run's own Python.",
+    "Does sh exist everywhere the doctor check runs, including windows-latest CI?",
+    "Does changing the command string break check_dual_runtime's parity or script-path extraction?"
+  ],
+  "contradictions": [],
+  "resolutions": [
+    "Contract requires a read-only-shaped synthetic payload and demands hooks be exercised on a path that provably writes nothing; a hook that writes on any input must be checked via its harmless path explicitly, never skipped silently \u2014 reviewer_focus pins it.",
+    "Red test controls PATH only inside the checked environment passed to the hook-command execution (env dict), never the pytest process's own interpreter (tests already invoke machinery via sys.executable, test_gates.py:37).",
+    "Yes on every supported host: macOS/Linux natively; Windows hooks and doctor both run under Git Bash, and windows-latest runners ship Git Bash.",
+    "No: check_hook_registration extracts factory/scripts/<name>.py via regex and compares event sets only (check_dual_runtime.py:324-371); the contract explicitly preserves the literal token and event parity."
+  ],
+  "open_items": [],
+  "notes": "Task contract FORGE-WIN-1.1 interrogated against the approved plan, spec settlements, 0037/0038, and check_dual_runtime mechanics. Frontier empty; no human round needed (no new human-owned choices \u2014 all boundaries settled at spec/plan gates).",
+  "task_id": "FORGE-WIN-1.1",
+  "input_sha256": ".factory/decomposition.json",
+  "recorded_at": "2026-08-11T07:01:35+00:00",
+  "commit": "784d9f6c55e9caae39895e5ad6d68c2e39071fa3"
+}

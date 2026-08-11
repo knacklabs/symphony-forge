@@ -1,0 +1,130 @@
+{
+  "generated_by": "claude-code:plan-mode",
+  "user_facing": false,
+  "story": "FORGE-WIN-1",
+  "epic": "windows-zero-setup",
+  "plan_file": "plans/active/FORGE-WIN-1-zero-setup-windows-support.md",
+  "doc_roots": [
+    "docs/specs/windows-zero-setup.md"
+  ],
+  "tasks": [
+    {
+      "id": "FORGE-WIN-1.1",
+      "title": "Portable fail-closed hooks + doctor hook-health",
+      "objective": "No hook command can silently fail to spawn again: both runtime hook files resolve their interpreter from PATH, forge doctor executes every registered hook command verbatim on every platform and goes red with a named fix when one cannot run, and scaffold/adopt/upgrade provably ship the portable form to clients.",
+      "dependencies": [],
+      "write_scope": [
+        ".claude/settings.json",
+        ".codex/hooks.json",
+        "factory/scripts/forge_cli/doctor.py",
+        "factory/scripts/check_dual_runtime.py",
+        "factory/tests/test_gates.py",
+        "docs/decisions/0038-portable-fail-closed-hooks.md"
+      ],
+      "acceptance_criteria": [
+        "All 5 commands in .claude/settings.json and all 3 in .codex/hooks.json replace /usr/bin/python3 with \"$(command -v python3 || command -v python)\", keeping the $(git rev-parse --show-toplevel)/factory/scripts/<script>.py form intact \u2014 the literal factory/scripts/<name>.py token must survive because check_dual_runtime.check_hook_registration regex-extracts it (check_dual_runtime.py:324); event parity between the two files unchanged.",
+        "forge doctor gains a hook-health check (existing _check pattern, doctor.py:202): parse both hook files, execute each registered command verbatim via sh -c from the repo root with a synthetic harmless hook payload on stdin (a read-only Bash tool_use JSON) and a benign expected outcome; any command that cannot spawn or errors is a required red check naming the exact command and the fix (doctor --fix / install python3). Healthy repo on macOS/Linux/Git-Bash: green.",
+        "A subprocess-free fast variant (sibling of fast_status, doctor.py:220) reports hook interpreter resolution via shutil.which for later consumption by forge next (wiring is WIN-1.2, not this task).",
+        "Gate tests: doctor hook-health green on the healthy repo; red with named command when the interpreter cannot resolve (PATH-controlled test env); scaffolded (forge init) and upgraded (forge upgrade) targets carry the portable command in both hook files (assert file content, reusing existing init/upgrade test fixtures); check_dual_runtime stays green. No new literal-interpreter string assertions introduced.",
+        "Decision 0038 text refined if implementation reveals corrections; status stays proposed (human accepts later)."
+      ],
+      "verify_commands": [
+        "uvx --with pytest python3 -m pytest factory/tests/test_gates.py -q -k \"hook_health or portable or dual_runtime\""
+      ],
+      "required_tests": [
+        {
+          "id": "test_doctor_hook_health_green_on_healthy_repo",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_doctor_hook_health_red_names_unrunnable_command",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_init_and_upgrade_ship_portable_hook_commands",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        }
+      ],
+      "reviewer_focus": "The verbatim-execution check must not mutate state (payload must be read-only-shaped and hooks must treat it as such \u2014 pre_tool_use on a read-only Bash payload allows and writes nothing; session_start/stop hooks invoked with harmless stdin must not append to ledgers or emit context side effects; if a hook DOES write on any input, the check must use its dry/harmless path explicitly, never skip it silently). The factory/scripts token must survive in the new command strings or check_dual_runtime's protection silently vanishes. Windows semantics reasoned, not assumed: hooks run under Git Bash."
+    },
+    {
+      "id": "FORGE-WIN-1.2",
+      "title": "Windows remediation (doctor --fix) + forge next preflight + docs",
+      "objective": "A Windows dev with a missing toolchain gets a green harness from the agent alone: doctor --fix installs Git-for-Windows/Python via winget with all elevation batched into one confirm, forge next surfaces doctor --fix as step 1 on a hook-broken Windows clone, and docs/windows.md records the supported path.",
+      "dependencies": [
+        "FORGE-WIN-1.1"
+      ],
+      "write_scope": [
+        "factory/scripts/forge_cli/doctor.py",
+        "factory/scripts/forge_cli/phase.py",
+        "docs/windows.md",
+        "docs/degraded-mode.md",
+        "factory/tests/test_gates.py"
+      ],
+      "acceptance_criteria": [
+        "doctor --fix on windows (_platform_name, doctor.py:334) detects missing Git-for-Windows / Python >=3.10 and installs via winget through run_quiet list-argv; elevation-requiring actions batched into ONE consolidated confirm; never touches ~/.codex/config.toml or any user-global file; non-Windows platforms unaffected.",
+        "phase.cmd_next: on Windows, the fast hook-health check (WIN-1.1) runs at the TOP of the preflight block (before open-signals, phase.py:38) and a broken clone prints doctor --fix as step 1; healthy clones and non-Windows output byte-identical to today.",
+        "docs/windows.md: supported path (Git for Windows + Git Bash), agent-handled remediation flow, WSL2 escape hatch, codex Windows sandbox rationale with upstream issue links; cross-referenced from docs/degraded-mode.md.",
+        "Gate tests: --fix planning/batching logic with installer calls faked (single-confirm invariant asserted); next-preflight ordering on a simulated broken state; real UAC path explicitly NOT CI-testable \u2014 verified once on the affected client's machine and recorded as functional evidence (plan Verify)."
+      ],
+      "verify_commands": [
+        "uvx --with pytest python3 -m pytest factory/tests/test_gates.py -q -k \"windows_fix or preflight or hook_health\""
+      ],
+      "required_tests": [
+        {
+          "id": "test_doctor_fix_windows_batches_elevation_into_single_confirm",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_forge_next_names_doctor_fix_first_on_broken_hooks",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        }
+      ],
+      "reviewer_focus": "forge next must stay fast (no subprocess in the preflight) and byte-identical off-Windows; winget argv assembled but faked in tests; single-confirm batching is the contract, not per-package prompts."
+    },
+    {
+      "id": "FORGE-WIN-1.3",
+      "title": "Codex sandbox seam via delegation + windows-latest CI",
+      "objective": "Codex Windows sandbox config rides the delegation with zero user setup \u2014 through whichever seam the installed companion actually exposes \u2014 and windows-latest CI proves the lockout and hook-health behavior on Windows forever after.",
+      "dependencies": [
+        "FORGE-WIN-1.1"
+      ],
+      "write_scope": [
+        "factory/scripts/forge_cli/delegate.py",
+        ".github/workflows/windows-gates.yml",
+        "factory/tests/test_gates.py",
+        "plans/deferrals.md"
+      ],
+      "acceptance_criteria": [
+        "Seam verification FIRST (read-only, against the installed companion): does task accept config passthrough, or does its config store cover sandbox mode? Implement the highest available fallback from the approved plan: (1) launch_companion (delegate.py:952) appends platform-conditional flags recorded via existing argv+argv_sha256 evidence; (2) doctor --fix invokes the companion's own config surface; (3) forge defer add with trigger 'companion exposes sandbox config' + documented gap in docs/windows.md. The chosen seam is recorded as an assumption (forge plan assume).",
+        "New harness-only .github/workflows/windows-gates.yml: windows-latest, setup-python 3.11, runs the lockout gate-test subset plus doctor hook-health against the checked-out repo; NOT added to COPY_WORKFLOWS (no client shipping); scaffold-check branch-protection context untouched.",
+        "Gate tests: whichever seam landed is asserted (argv flags in delegations.jsonl evidence for fallback 1; config invocation for fallback 2; deferral row for fallback 3); windows-gates.yml existence and harness-only placement asserted.",
+        "Windows-incompatible tests in the CI subset carry named skip reasons; the lockout deny/allow tests themselves run on windows-latest \u2014 skipping them does not satisfy this criterion."
+      ],
+      "verify_commands": [
+        "uvx --with pytest python3 -m pytest factory/tests/test_gates.py -q -k \"sandbox_seam or windows_gates or lockout\""
+      ],
+      "required_tests": [
+        {
+          "id": "test_windows_sandbox_config_rides_delegation_or_is_deferred_with_trigger",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_windows_gates_workflow_is_harness_only",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        }
+      ],
+      "reviewer_focus": "Companion is external \u2014 no forking, no version pinning games; the seam decision must be evidence-backed and recorded, not assumed. The CI job must not widen the client gate surface (COPY_WORKFLOWS untouched, scaffold-check context unchanged)."
+    }
+  ],
+  "project": "",
+  "plan_sha256": "58227c4ec665795536a296e859af661fa8306eac416d4951a388afab81470926",
+  "commit": "784d9f6c55e9caae39895e5ad6d68c2e39071fa3"
+}
