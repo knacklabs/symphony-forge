@@ -18,7 +18,7 @@ from __future__ import annotations
 
 import argparse
 import contextlib
-import fcntl
+import errno
 import hashlib
 import json
 import os
@@ -468,6 +468,41 @@ def _terminate_tagged_processes(
     )
 
 
+def _lock_file(handle) -> None:
+    if os.name == "nt":
+        import msvcrt
+
+        handle.seek(0, os.SEEK_END)
+        if handle.tell() == 0:
+            handle.write("\0")
+            handle.flush()
+        handle.seek(0)
+        try:
+            msvcrt.locking(handle.fileno(), msvcrt.LK_NBLCK, 1)
+        except OSError as exc:
+            if exc.errno in {errno.EACCES, errno.EAGAIN, errno.EDEADLK}:
+                raise BlockingIOError(exc.errno, exc.strerror) from exc
+            raise
+        return
+
+    import fcntl
+
+    fcntl.flock(handle.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+
+
+def _unlock_file(handle) -> None:
+    if os.name == "nt":
+        import msvcrt
+
+        handle.seek(0)
+        msvcrt.locking(handle.fileno(), msvcrt.LK_UNLCK, 1)
+        return
+
+    import fcntl
+
+    fcntl.flock(handle.fileno(), fcntl.LOCK_UN)
+
+
 def _acquire_delegation_lock(base: Path, lock_id: str, launch_id: str,
                              *, wait: bool = False,
                              namespace: str = "task"):
@@ -477,7 +512,7 @@ def _acquire_delegation_lock(base: Path, lock_id: str, launch_id: str,
     deadline = time.monotonic() + 30
     while True:
         try:
-            fcntl.flock(handle.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+            _lock_file(handle)
         except BlockingIOError:
             if wait and time.monotonic() < deadline:
                 time.sleep(0.05)
@@ -512,7 +547,7 @@ def _update_delegation_lock(handle, launch_id: str, owner_pid: int,
 
 def _release_delegation_lock(handle, _launch_id: str) -> None:
     with contextlib.suppress(OSError):
-        fcntl.flock(handle.fileno(), fcntl.LOCK_UN)
+        _unlock_file(handle)
     handle.close()
 
 
@@ -520,11 +555,11 @@ def _lock_is_held(path: Path) -> bool:
     path.parent.mkdir(parents=True, exist_ok=True)
     handle = path.open("a+")
     try:
-        fcntl.flock(handle.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+        _lock_file(handle)
     except BlockingIOError:
         return True
     else:
-        fcntl.flock(handle.fileno(), fcntl.LOCK_UN)
+        _unlock_file(handle)
         return False
     finally:
         handle.close()

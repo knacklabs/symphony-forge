@@ -2267,6 +2267,79 @@ def test_doctor_hook_health_green_on_healthy_repo(repo):
     assert set(repo.rglob("__pycache__")) == bytecode_before
 
 
+def test_hook_module_chain_has_no_posix_only_imports(repo, monkeypatch):
+    posix_only = {"fcntl", "grp", "pwd", "resource", "termios"}
+    module_paths = (
+        "factory/scripts/pre_tool_use.py",
+        "factory/scripts/forge_cli/quickfix.py",
+        "factory/scripts/forge_cli/stages.py",
+        "factory/scripts/forge_cli/delegate.py",
+    )
+    offenders = []
+    for relative in module_paths:
+        tree = ast.parse((repo / relative).read_text(), filename=relative)
+        for node in tree.body:
+            if isinstance(node, ast.Import):
+                names = {alias.name.partition(".")[0] for alias in node.names}
+            elif isinstance(node, ast.ImportFrom) and node.module:
+                names = {node.module.partition(".")[0]}
+            else:
+                continue
+            offenders.extend(
+                f"{relative}:{node.lineno}:{name}"
+                for name in sorted(names & posix_only)
+            )
+    assert offenders == []
+
+    program = "\n".join((
+        "import io, runpy, subprocess, sys",
+        "sys.path.insert(0, 'factory/scripts')",
+        "sys.modules.pop('fcntl', None)",
+        "sys.modules['fcntl'] = None",
+        "import forge_cli.quickfix",
+        "import forge_cli.stages",
+        "import forge_cli.delegate",
+        "sys.stdin = io.StringIO('{}')",
+        "runpy.run_path('factory/scripts/pre_tool_use.py', run_name='__main__')",
+    ))
+    result = subprocess.run(
+        [sys.executable, "-c", program], cwd=repo,
+        capture_output=True, text=True,
+    )
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert result.stdout == "{}\n"
+
+    import types
+    import forge_cli.delegate as delegate
+
+    native_os_name = delegate.os.name
+    calls = []
+    fake_msvcrt = types.SimpleNamespace(
+        LK_NBLCK=1,
+        LK_UNLCK=2,
+        locking=lambda fd, mode, length: calls.append((fd, mode, length)),
+    )
+    monkeypatch.setattr(delegate.os, "name", "nt")
+    monkeypatch.setitem(sys.modules, "msvcrt", fake_msvcrt)
+    lock_path = repo / ".factory" / "windows-import-proof.lock"
+    with lock_path.open("a+") as handle:
+        delegate._lock_file(handle)
+        delegate._unlock_file(handle)
+        assert calls == [
+            (handle.fileno(), fake_msvcrt.LK_NBLCK, 1),
+            (handle.fileno(), fake_msvcrt.LK_UNLCK, 1),
+        ]
+
+    monkeypatch.setattr(delegate.os, "name", native_os_name)
+    with lock_path.open("a+") as first, lock_path.open("a+") as second:
+        delegate._lock_file(first)
+        try:
+            with pytest.raises(BlockingIOError):
+                delegate._lock_file(second)
+        finally:
+            delegate._unlock_file(first)
+
+
 @pytest.mark.skipif(
     os.name == "nt",
     reason="POSIX only: constructs an interpreter-free PATH around a real sh binary",
