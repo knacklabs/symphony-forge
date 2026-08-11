@@ -3,20 +3,24 @@
   "gate": "task",
   "verdict": "pass",
   "gaps": [
-    "Editing live hook configs mid-session: what breaks the loop if the worker gets it wrong?",
-    "Does the windows-latest runner have what the job assumes?",
-    "Is the one-resolution-point contract falsifiable?"
+    "Verbatim execution of SessionStart/Stop hook commands may have side effects (context emission, ledger appends) \u2014 a health check must not mutate state.",
+    "Worker contradiction S-0002-0905: pre_compact.py overwrites .factory/scratchpad.md on EVERY payload \u2014 no harmless input exists, and the script was outside the stage write scope.",
+    "The red-path test needs a broken interpreter without breaking the test run's own Python.",
+    "Does sh exist everywhere the doctor check runs, including windows-latest CI?",
+    "Does changing the command string break check_dual_runtime's parity or script-path extraction?"
   ],
   "contradictions": [],
   "resolutions": [
-    "The contract pins byte-identical POSIX behavior with the suite green before the loop continues, and the verify plan includes the live lockout-still-denies self-test immediately after the change lands.",
-    "windows-latest ships Git Bash and the py launcher; the job pins what it uses, and doctor red rows are the truth on real client machines either way.",
-    "Yes: test_hook_resolution_fails_closed_without_interpreter seeds a PATH without any python and asserts exit 2 from the resolution point; forge.cmd reusing the same point is reviewer_focus."
+    "Contract requires a read-only-shaped synthetic payload and demands hooks be exercised on a path that provably writes nothing; a hook that writes on any input must be checked via its harmless path explicitly, never skipped silently \u2014 reviewer_focus pins it.",
+    "Scope amended (JIT re-record): pre_compact.py added to write_scope; doctor sets FACTORY_HOOK_HEALTH=1 for every hook execution and pre_compact.py exits 0 at entry under it, after imports/arg parsing, before any write \u2014 spawn still proven, normal operation byte-identical with env unset.",
+    "Red test controls PATH only inside the checked environment passed to the hook-command execution (env dict), never the pytest process's own interpreter (tests already invoke machinery via sys.executable, test_gates.py:37).",
+    "Yes on every supported host: macOS/Linux natively; Windows hooks and doctor both run under Git Bash, and windows-latest runners ship Git Bash.",
+    "No: check_hook_registration extracts factory/scripts/<name>.py via regex and compares event sets only (check_dual_runtime.py:324-371); the contract explicitly preserves the literal token and event parity."
   ],
   "open_items": [],
-  "notes": "JIT grill; single task; narrowed core per the human-ruled split; refs re-verified by the worker against HEAD.",
+  "notes": "Task contract FORGE-WIN-1.1 interrogated against the approved plan, spec settlements, 0037/0038, and check_dual_runtime mechanics. Amended twice: (a) S-0002-0905 scope amendment (pre_compact.py + FACTORY_HOOK_HEALTH design); (b) local autoreview round 1 findings folded in as criteria \u2014 P1 short-circuit-above-deferred-import false green, P2 init leg never exercised, plus orchestrator finding that check_dual_runtime extraction has been hollow for the $(git rev-parse) form (pre-existing; regex fix + pin test + 0038 text alignment now criterioned); (c) autoreview round 2 folded in \u2014 missing-sh branch needs shell-specific remediation, post-upgrade test must re-assert counts before all() content checks (vacuous-pass guard). Round 1 P1s fixed and not re-flagged: converging. Frontier empty; no human-owned choices.",
   "task_id": "FORGE-WIN-1.1",
-  "input_sha256": "e0393485c5ad685155a2b64954dc43d278580f41b29fbc86c0d04d7dc58d04b7",
-  "recorded_at": "2026-08-11T07:13:33+00:00",
-  "commit": "ea109783647aa37650c1aca988190b409c713635"
+  "input_sha256": "1836eac03ebdc570cf47eec3e8582d7892957ca0846c6708d283386dc6365b61",
+  "recorded_at": "2026-08-11T07:52:14+00:00",
+  "commit": "15282359e39364c4ad82751ee75a5d0d399861c1"
 }

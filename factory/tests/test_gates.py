@@ -2234,6 +2234,138 @@ def test_dual_runtime_linter_clean_on_scaffold_and_catches_phantom_ref(repo):
     assert code != 0 and "phantom" in out
 
 
+def test_doctor_hook_health_green_on_healthy_repo(repo):
+    from forge_cli.doctor import hook_health_checks
+
+    before = git(repo, "status", "--porcelain", "-uall")
+    bytecode_before = set(repo.rglob("__pycache__"))
+    checks = hook_health_checks(repo)
+
+    assert len(checks) == 8
+    assert all(check["ok"] for check in checks), checks
+    assert git(repo, "status", "--porcelain", "-uall") == before
+    assert set(repo.rglob("__pycache__")) == bytecode_before
+
+
+def test_doctor_hook_health_red_names_unrunnable_command(repo, tmp_path):
+    from forge_cli.doctor import HOOK_HEALTH_FIX, hook_health_checks
+
+    fake_bin = tmp_path / "hook-path"
+    fake_bin.mkdir()
+    fake_git = fake_bin / "git"
+    fake_git.write_text(f"#!/bin/sh\nprintf '%s\\n' '{repo}'\n")
+    fake_git.chmod(0o755)
+
+    checks = hook_health_checks(repo, env={"PATH": str(fake_bin)})
+    failures = [check for check in checks if not check["ok"]]
+
+    assert len(failures) == 8
+    registered = json.loads((repo / ".claude" / "settings.json").read_text())
+    command = registered["hooks"]["SessionStart"][0]["hooks"][0]["command"]
+    assert any(command in check["detail"] for check in failures)
+    assert all(check["fix"] == HOOK_HEALTH_FIX for check in failures)
+
+
+def test_doctor_hook_health_catches_precompact_import_skew(repo):
+    from forge_cli.doctor import hook_health_checks
+
+    scratchpad = repo / "factory" / "scripts" / "forge_cli" / "scratchpad.py"
+    scratchpad.write_text("raise ImportError('broken scratchpad package')\n")
+
+    failures = [check for check in hook_health_checks(repo) if not check["ok"]]
+
+    assert len(failures) == 1
+    assert ".claude/settings.json:PreCompact" in failures[0]["name"]
+    assert "broken scratchpad package" in failures[0]["detail"]
+
+
+def test_doctor_hook_health_missing_sh_names_git_bash_fix(repo, monkeypatch):
+    from forge_cli import doctor
+
+    real_which = doctor.shutil.which
+    monkeypatch.setattr(
+        doctor.shutil, "which",
+        lambda binary: None if binary == "sh" else real_which(binary),
+    )
+
+    failures = [check for check in doctor.hook_health_checks(repo)
+                if not check["ok"]]
+
+    assert len(failures) == 8
+    assert all(check["fix"] == doctor.HOOK_SHELL_FIX for check in failures)
+    assert all("Git for Windows" in check["fix"] for check in failures)
+
+
+def test_init_and_upgrade_ship_portable_hook_commands(tmp_path):
+    portable = '"$(command -v python3 || command -v python)"'
+
+    def commands(root: Path, relative: str) -> list[str]:
+        document = json.loads((root / relative).read_text())
+        return [
+            hook["command"]
+            for registrations in document["hooks"].values()
+            for registration in registrations
+            for hook in registration["hooks"]
+        ]
+
+    repo = tmp_path / "portable-hooks-client"
+    initialized = subprocess.run(
+        [sys.executable, str(HARNESS / "factory" / "scripts" / "forge.py"),
+         "init", "--name", "portable-hooks-client", "--target", str(repo)],
+        cwd=HARNESS, capture_output=True, text=True,
+    )
+    assert initialized.returncode == 0, initialized.stdout + initialized.stderr
+    assert len(commands(repo, ".claude/settings.json")) == 5
+    assert len(commands(repo, ".codex/hooks.json")) == 3
+    assert all(
+        command.startswith(portable) and "/factory/scripts/" in command
+        for relative in (".claude/settings.json", ".codex/hooks.json")
+        for command in commands(repo, relative)
+    )
+
+    git(repo, "add", "-A")
+    git(repo, "commit", "-q", "-m", "scaffold")
+    for relative in (".claude/settings.json", ".codex/hooks.json"):
+        (repo / relative).write_text(json.dumps({"hooks": {}}) + "\n")
+    git(repo, "add", ".claude/settings.json", ".codex/hooks.json")
+    git(repo, "commit", "-q", "-m", "degrade hook registrations")
+
+    upgraded = upgrade_into(repo)
+    assert upgraded.returncode == 0, upgraded.stdout + upgraded.stderr
+    assert len(commands(repo, ".claude/settings.json")) == 5
+    assert len(commands(repo, ".codex/hooks.json")) == 3
+    assert all(
+        command.startswith(portable) and "/factory/scripts/" in command
+        for relative in (".claude/settings.json", ".codex/hooks.json")
+        for command in commands(repo, relative)
+    )
+
+
+def test_hook_registration_extracts_every_registered_script():
+    from check_dual_runtime import hook_script_paths
+
+    for relative in (".claude/settings.json", ".codex/hooks.json"):
+        document = json.loads((HARNESS / relative).read_text())
+        for event, registrations in document["hooks"].items():
+            for registration in registrations:
+                for hook in registration["hooks"]:
+                    scripts = hook_script_paths(hook["command"])
+                    assert scripts, f"{relative}:{event} did not expose a script path"
+
+
+def test_portable_fast_hook_status_is_subprocess_free(monkeypatch):
+    from forge_cli import doctor
+
+    def subprocess_forbidden(*args, **kwargs):
+        raise AssertionError("fast hook status must not spawn a subprocess")
+
+    monkeypatch.setattr(doctor.subprocess, "run", subprocess_forbidden)
+    ok, detail = doctor.fast_hook_status()
+
+    assert ok
+    assert detail == shutil.which("python3") or detail == shutil.which("python")
+
+
 # ------------------------------------------------------------------- roadmap
 
 ROADMAP_EPIC = {"id": "billing", "title": "Billing", "objective": "money in",

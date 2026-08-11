@@ -28,6 +28,11 @@ def violation(msg: str) -> None:
     violations.append(f"VIOLATION: {msg}")
 
 
+def hook_script_paths(command: str) -> list[str]:
+    """Factory hook scripts exposed by a registered shell command."""
+    return re.findall(r"factory/scripts/[\w.]+\.py", command)
+
+
 def canon_files(root: Path) -> list[Path]:
     files: list[Path] = []
     for pattern in ("constitution/*.md", "docs/**/*.md", "harness/*/conventions/*.md"):
@@ -341,7 +346,7 @@ def check_path_parity(root: Path) -> None:
             for entry in entries:
                 for hook in entry.get("hooks", []):
                     command = hook.get("command", "")
-                    scripts = re.findall(r"\.[\w/]*scripts/[\w.]+\.py", command)
+                    scripts = hook_script_paths(command)
                     for script in scripts:
                         if not script.startswith("factory/scripts/"):
                             violation(

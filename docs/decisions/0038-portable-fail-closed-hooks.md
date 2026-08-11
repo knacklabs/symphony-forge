@@ -25,15 +25,18 @@ Registered hook commands must be host-portable — PATH-resolved interpreter
 (`"$(command -v python3 || command -v python)"`), sh-compatible, preserving
 the literal `factory/scripts/<name>.py` token — and their executability must
 be machine-proven: `forge doctor` executes every registered hook command
-verbatim on every platform, and a hook that cannot run is a named red check,
-never silence. A fast, subprocess-free resolution check backs the
-`forge next` Windows preflight.
+verbatim on every platform with `FACTORY_HOOK_HEALTH=1`, bytecode writes
+disabled, and a read-only-shaped payload. Hooks that otherwise write for every
+payload must return successfully before that write while health mode is set.
+A hook that cannot run is a named red check, never silence. A fast,
+subprocess-free resolution check backs the `forge next` Windows preflight.
 
 ## Consequences
 
 - Rejected: pinned absolute interpreter (today's defect); a committed shim
   script or `forge hook` subcommand (both drop the literal script token that
-  `check_dual_runtime.check_hook_registration` keys its protection on);
+  `check_dual_runtime.check_hook_registration` now extracts with a plain
+  `factory/scripts/...` search);
   `$CLAUDE_PROJECT_DIR` (ambiguous across worktrees vs `git rev-parse`).
 - Accepted residue: the one-substitution chain has no `py -3` leg and no
   version gate; doctor's verbatim-execution check plus `doctor --fix`

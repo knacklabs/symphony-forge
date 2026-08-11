@@ -12,6 +12,7 @@ noise: gitignored, overwritten per compaction, never evidence.
 """
 from __future__ import annotations
 
+import os
 import sys
 from pathlib import Path
 
@@ -104,6 +105,8 @@ def main() -> int:
     payload = read_hook_input()
     root = repo_root()
     from forge_cli.scratchpad import notes_section, scratchpad_path
+    if os.environ.get("FACTORY_HOOK_HEALTH") == "1":
+        return 0
     path = scratchpad_path(root)
     # The facts zone is hook-owned and rewritten; the agent's working notes
     # (`forge note`) are the whole point of surviving compaction — keep them.

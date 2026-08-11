@@ -867,3 +867,11 @@
 {"event": "roadmap-add", "generated_by": "orchestrator", "at": "2026-08-11T07:12:26+00:00", "story": "FORGE-WIN-SBX", "detail": "docs/specs/windows-zero-setup.md"}
 {"event": "signal-contradiction", "generated_by": "implementer", "at": "2026-08-11T07:13:04+00:00", "story": "FORGE-WIN-1", "detail": "FORGE-WIN-1.1 requires doctor to execute every registered hook without mutation, but PreCompact always overwrites .factory/scratchpad.md for every payload and factory/scripts/pre_compact.py is outside"}
 {"event": "decomposed", "generated_by": "docs-decomposer", "at": "2026-08-11T07:13:16+00:00", "story": "FORGE-WIN-1", "detail": "1 task(s)"}
+{"event": "decomposed", "generated_by": "docs-decomposer", "at": "2026-08-11T07:14:15+00:00", "story": "FORGE-WIN-1", "detail": "3 task(s)"}
+{"event": "signal-resolved", "generated_by": "orchestrator", "at": "2026-08-11T07:14:28+00:00", "story": "FORGE-WIN-1", "detail": "S-0002-0905: Contradiction confirmed and resolved by JIT scope amendment: factory/scripts/pre_compact.py is now IN your write scope. Sanctioned design: doctor's hook-health sets FACTORY_HOOK_HEALTH=1 for every hoo"}
+{"event": "delegated", "generated_by": "orchestrator", "at": "2026-08-11T07:15:22+00:00", "story": "FORGE-WIN-1", "detail": "FORGE-WIN-1.1 (write)"}
+{"event": "delegated", "generated_by": "orchestrator", "at": "2026-08-11T07:24:44+00:00", "story": "FORGE-WIN-1", "detail": "FORGE-WIN-1.1 (write)"}
+{"event": "decomposed", "generated_by": "docs-decomposer", "at": "2026-08-11T07:36:16+00:00", "story": "FORGE-WIN-1", "detail": "3 task(s)"}
+{"event": "delegated", "generated_by": "orchestrator", "at": "2026-08-11T07:41:23+00:00", "story": "FORGE-WIN-1", "detail": "FORGE-WIN-1.1 (write)"}
+{"event": "decomposed", "generated_by": "docs-decomposer", "at": "2026-08-11T07:51:53+00:00", "story": "FORGE-WIN-1", "detail": "3 task(s)"}
+{"event": "delegated", "generated_by": "orchestrator", "at": "2026-08-11T07:55:52+00:00", "story": "FORGE-WIN-1", "detail": "FORGE-WIN-1.1 (write)"}

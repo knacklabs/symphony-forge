@@ -203,6 +203,135 @@ def _check(name: str, ok: bool, detail: str, fix: str, required: bool = True) ->
     return {"name": name, "ok": ok, "detail": detail, "fix": fix, "required": required}
 
 
+HOOK_CONFIGS = (Path(".claude/settings.json"), Path(".codex/hooks.json"))
+HOOK_HEALTH_FIX = (
+    "run `./forge doctor --fix` or install python3 on PATH, then rerun doctor"
+)
+HOOK_SHELL_FIX = (
+    "install Git for Windows (Git Bash provides sh), then rerun doctor"
+)
+
+
+def fast_hook_status() -> tuple[bool, str]:
+    """Resolve the hook interpreter without spawning a subprocess."""
+    interpreter = shutil.which("python3") or shutil.which("python")
+    return interpreter is not None, interpreter or "python3/python not on PATH"
+
+
+def _hook_health_payload(event: str) -> str:
+    """Harmless synthetic stdin matching the registered hook event."""
+    payload: dict[str, object] = {"hook_event_name": event}
+    if event == "PreToolUse":
+        payload.update({
+            "tool_name": "Bash",
+            "tool_input": {"command": ":"},
+            "permission_mode": "default",
+        })
+    elif event == "SessionStart":
+        payload["source"] = "startup"
+    elif event == "PreCompact":
+        payload["trigger"] = "manual"
+    elif event == "Stop":
+        payload["stop_hook_active"] = True
+    return json.dumps(payload)
+
+
+def hook_health_checks(base: Path, *, env: dict[str, str] | None = None) -> list[dict]:
+    """Execute every registered hook exactly as its runtime will execute it."""
+    checks = []
+    run_env = {
+        **os.environ,
+        **(env or {}),
+        "FACTORY_HOOK_HEALTH": "1",
+        "PYTHONDONTWRITEBYTECODE": "1",
+    }
+    shell = shutil.which("sh")
+
+    for relative in HOOK_CONFIGS:
+        path = base / relative
+        try:
+            document = json.loads(path.read_text())
+            hooks = document.get("hooks") if isinstance(document, dict) else None
+            if not isinstance(hooks, dict):
+                raise ValueError("top-level 'hooks' must be an object")
+        except (OSError, UnicodeError, json.JSONDecodeError, ValueError) as exc:
+            checks.append(_check(
+                f"hook-health {relative}", False, str(exc), HOOK_HEALTH_FIX,
+            ))
+            continue
+
+        for event, registrations in hooks.items():
+            if not isinstance(registrations, list):
+                checks.append(_check(
+                    f"hook-health {relative}:{event}", False,
+                    "hook registrations must be a list", HOOK_HEALTH_FIX,
+                ))
+                continue
+            for registration_index, registration in enumerate(registrations, 1):
+                if not isinstance(registration, dict):
+                    checks.append(_check(
+                        f"hook-health {relative}:{event}[{registration_index}]",
+                        False, "hook registration must be an object", HOOK_HEALTH_FIX,
+                    ))
+                    continue
+                registered_hooks = registration.get("hooks")
+                if not isinstance(registered_hooks, list):
+                    checks.append(_check(
+                        f"hook-health {relative}:{event}[{registration_index}]",
+                        False, "registered hooks must be a list", HOOK_HEALTH_FIX,
+                    ))
+                    continue
+                for hook_index, hook in enumerate(registered_hooks, 1):
+                    if not isinstance(hook, dict):
+                        checks.append(_check(
+                            f"hook-health {relative}:{event}"
+                            f"[{registration_index}.{hook_index}]",
+                            False, "hook must be an object", HOOK_HEALTH_FIX,
+                        ))
+                        continue
+                    command = hook.get("command")
+                    if hook.get("type") != "command":
+                        continue
+                    name = (
+                        f"hook-health {relative}:{event}"
+                        f"[{registration_index}.{hook_index}]"
+                    )
+                    if not isinstance(command, str) or not command.strip():
+                        checks.append(_check(
+                            name, False, "command hook has no command", HOOK_HEALTH_FIX,
+                        ))
+                        continue
+                    if not shell:
+                        checks.append(_check(
+                            name, False, f"{command} -> sh is not on PATH",
+                            HOOK_SHELL_FIX,
+                        ))
+                        continue
+                    try:
+                        result = subprocess.run(
+                            [shell, "-c", command],
+                            cwd=base,
+                            input=_hook_health_payload(event),
+                            capture_output=True,
+                            text=True,
+                            env=run_env,
+                            timeout=30,
+                        )
+                        output = (result.stdout + result.stderr).strip()
+                        detail = command
+                        if result.returncode != 0:
+                            suffix = f": {output[-240:]}" if output else ""
+                            detail = f"{command} -> exit {result.returncode}{suffix}"
+                        checks.append(_check(
+                            name, result.returncode == 0, detail, HOOK_HEALTH_FIX,
+                        ))
+                    except (OSError, subprocess.TimeoutExpired) as exc:
+                        checks.append(_check(
+                            name, False, f"{command} -> {exc}", HOOK_HEALTH_FIX,
+                        ))
+    return checks
+
+
 # Shared install locations — fast_status() and cmd_doctor() must agree on
 # where things live, or the session banner and full doctor drift apart.
 def _codex_plugin_dir(home: Path) -> Path:
@@ -565,6 +694,10 @@ def cmd_doctor(args: argparse.Namespace) -> None:
               + (f" ({len(advisory_missing)} advisory missing)" if advisory_missing else ""))
         return
     checks: list[dict] = []
+    try:
+        repo = Path(getattr(args, "repo", None) or repo_root())
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        repo = None
 
     def which(binary: str) -> str | None:
         return shutil.which(binary)
@@ -573,6 +706,9 @@ def cmd_doctor(args: argparse.Namespace) -> None:
     checks.append(_check(
         "git", which("git") is not None, which("git") or "not on PATH",
         "https://git-scm.com — or `xcode-select --install` on macOS"))
+
+    if repo:
+        checks.extend(hook_health_checks(repo))
 
     node = which("node")
     node_ok, node_ver = (False, "not on PATH")
@@ -855,10 +991,6 @@ def cmd_doctor(args: argparse.Namespace) -> None:
     # would surface as a stage that cannot close. Report it before that happens.
     # doctor also runs outside a repo (fresh machine), where there is nothing
     # to migrate.
-    try:
-        repo = Path(getattr(args, "repo", None) or repo_root())
-    except (subprocess.CalledProcessError, FileNotFoundError):
-        repo = None
     # Required skills must be loadable by every runtime asked to attest them.
     # --fix mirrors an already-installed copy across, which is the whole gap:
     # `skills add` installs for Claude, and Codex reads a different directory.
