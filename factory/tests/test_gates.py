@@ -2651,6 +2651,11 @@ def test_hook_registration_extracts_every_registered_script():
 
 def test_forge_cmd_routes_git_bash_then_python_fallbacks(tmp_path):
     shim = (HARNESS / "forge.cmd").read_text()
+    launcher = (HARNESS / "forge").read_text()
+    assert 'setlocal\nset "PYTHONUTF8=1"' in shim
+    assert "set -eu\nexport PYTHONUTF8=1" in launcher
+    assert shim.index('set "PYTHONUTF8=1"') < shim.index("py -3")
+    assert launcher.index("export PYTHONUTF8=1") < launcher.index("py -3")
     assert shim.index("CLAUDE_CODE_GIT_BASH_PATH") < shim.index("where sh")
     assert shim.index("where sh") < shim.index("where py") < shim.index("where python")
     assert "%ProgramFiles%\\Git\\usr\\bin\\sh.exe" in shim

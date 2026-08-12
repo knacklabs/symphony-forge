@@ -1,5 +1,6 @@
 @echo off
 setlocal
+set "PYTHONUTF8=1"
 
 if defined CLAUDE_CODE_GIT_BASH_PATH for %%I in ("%CLAUDE_CODE_GIT_BASH_PATH%") do if /i "%%~xI"==".exe" (
   "%%~I" "%~dp0forge" --help >nul 2>nul

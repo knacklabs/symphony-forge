@@ -4,6 +4,7 @@
 # Supports Linux, macOS, and Windows Git Bash.
 
 set -eu
+export PYTHONUTF8=1
 
 case "$0" in
   */*) FORGE_DIR=${0%/*} ;;

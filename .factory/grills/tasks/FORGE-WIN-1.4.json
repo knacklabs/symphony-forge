@@ -1,0 +1,20 @@
+{
+  "generated_by": "griller",
+  "gate": "task",
+  "verdict": "pass",
+  "gaps": [
+    "Unconditional PYTHONUTF8=1 overrides a user 0?",
+    "Does setlocal scope contain it?"
+  ],
+  "contradictions": [],
+  "resolutions": [
+    "Acceptable and simpler: the harness owns its own process env; documented in reviewer_focus as the accepted tradeoff.",
+    "Yes: forge.cmd already runs under setlocal; the sh launcher exports only for its exec-ed child."
+  ],
+  "open_items": [],
+  "notes": "Micro-task from CI job 94039056540: UnicodeEncodeError charmap on U+2192 in forge.py --help via cmd. Class fix at the launcher (single resolution point).",
+  "task_id": "FORGE-WIN-1.4",
+  "input_sha256": "5646dcd0cd7918e23c343bf09604328b0d4d2081575764e4810069403437e6b9",
+  "recorded_at": "2026-08-12T07:16:13+00:00",
+  "commit": "9d49b3b1e760d15dbba61a6dd34350a8d8887109"
+}
