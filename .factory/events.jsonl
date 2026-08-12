@@ -984,3 +984,4 @@
 {"event": "review-performance", "generated_by": "autoreview", "at": "2026-08-12T18:43:45+00:00", "story": "FORGE-ROLE-2"}
 {"event": "review-security", "generated_by": "autoreview", "at": "2026-08-12T18:43:45+00:00", "story": "FORGE-ROLE-2"}
 {"event": "shipped", "generated_by": "orchestrator", "at": "2026-08-12T18:43:53+00:00", "story": "FORGE-ROLE-2", "detail": "Long read-only exploration briefs now reach Codex: the companion guard admits task --prompt-file with a repo-contained regular file (resolved-both-sides containment; absolute, traversal, escaping-syml"}
+{"event": "pr-linked", "generated_by": "orchestrator", "at": "2026-08-12T18:44:35+00:00", "story": "FORGE-ROLE-2", "detail": "knacklabs/symphony-forge#82"}
