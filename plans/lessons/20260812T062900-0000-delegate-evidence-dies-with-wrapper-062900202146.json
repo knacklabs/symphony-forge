@@ -1,0 +1,11 @@
+{
+  "topic": "delegate-evidence-dies-with-wrapper",
+  "lesson": "Delegation launch evidence binds to the CURRENT brief hash, and every relaunch rewrites the brief (scope-module lists shift with each commit), so killing or timing out a delegate wrapper and relaunching invalidates the prior worker's recorded success even when its diff was perfect. Run forge delegate FOREGROUND with a generous timeout for the final evidence-minting pass; never interleave commits between a worker's success and stage done.",
+  "source": "FORGE-WIN-1.3-ledger",
+  "applies_to": [
+    "factory/scripts/forge_cli/delegate.py,factory/scripts/forge_cli/stages.py"
+  ],
+  "severity": "high",
+  "generated_by": "orchestrator",
+  "added_at": "2026-08-12T06:29:00+00:00"
+}
