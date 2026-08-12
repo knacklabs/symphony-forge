@@ -967,3 +967,4 @@
 {"event": "review-performance", "generated_by": "autoreview", "at": "2026-08-12T13:45:16+00:00", "story": "FORGE-REV-2"}
 {"event": "review-security", "generated_by": "autoreview", "at": "2026-08-12T13:45:16+00:00", "story": "FORGE-REV-2"}
 {"event": "shipped", "generated_by": "orchestrator", "at": "2026-08-12T13:45:26+00:00", "story": "FORGE-REV-2", "detail": "Review is no longer plan-blind: decomposition tasks can declare plan_contracts (the plan invariants they must satisfy), ./forge review-brief composes the reviewer's contract prompt (per-task or --all "}
+{"event": "pr-linked", "generated_by": "orchestrator", "at": "2026-08-12T14:00:54+00:00", "story": "FORGE-REV-2", "detail": "knacklabs/symphony-forge#81"}
