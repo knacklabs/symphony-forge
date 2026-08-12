@@ -1,0 +1,24 @@
+{
+  "commit": "c876908993fa4f827e7534a1417bacb935d5ae31",
+  "automated": {
+    "generated_by": "implementer",
+    "status": "passed",
+    "summary": "Focused guard matrix 17 passed (admission incl. internal symlink; refusals: absolute, traversal, external symlink, dangling, directory, duplicate, missing value, wrong verbs, equals form, --cwd, unknown flag). Full gate suite 532 passed, 1 skipped. Live end-to-end (ROLE2-C4): multi-paragraph brief admitted via task --prompt-file (thread 019ff72c-f8a9-7d72-b449-2b7a1f7755fb, read-only, touchedFiles empty, correct answers); traversal-path invocation refused live by the armed hook.",
+    "blocking_findings": [],
+    "commands_run": [
+      "uv run --with pytest python -m pytest factory/tests/test_gates.py -q -k \"companion or readonly_lane\"",
+      "uv run --with pytest python -m pytest factory/tests/test_gates.py -q",
+      "node <plugin>/codex-companion.mjs task --prompt-file docs/context/rescue-brief-live-check.md --json",
+      "python3 factory/scripts/verify.py"
+    ],
+    "non_blocking_findings": [],
+    "remaining_gaps": [],
+    "residual_risks": [],
+    "tests_added_or_updated": [],
+    "manual_validation_steps": [],
+    "reviewed_scope": [],
+    "recorded_at": "2026-08-12T18:43:45+00:00",
+    "commit": "c876908993fa4f827e7534a1417bacb935d5ae31"
+  },
+  "updated_at": "2026-08-12T18:43:45+00:00"
+}

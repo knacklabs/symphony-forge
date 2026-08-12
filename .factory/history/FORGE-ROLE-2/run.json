@@ -1,0 +1,17 @@
+{
+  "issue_key": "FORGE-ROLE-2",
+  "title": "Read-only rescue accepts long prompts via prompt-file",
+  "tracker": "linear",
+  "branch": "feat/FORGE-ROLE-2-read-only-rescue-accepts-long-prompts-via-prompt-file",
+  "phase": "pr-ready",
+  "plan_status": "approved",
+  "decomposition_status": "recorded",
+  "implementation_status": "pending",
+  "tests_status": "passed",
+  "verify_status": "passed",
+  "review_status": "passed",
+  "created_at": "2026-08-12T15:21:01+00:00",
+  "updated_at": "2026-08-12T18:43:53+00:00",
+  "plan_file": "plans/completed/FORGE-ROLE-2-read-only-rescue-accepts-long-prompts-via-prompt-file.md",
+  "story": "FORGE-ROLE-2"
+}

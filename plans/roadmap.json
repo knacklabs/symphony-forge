@@ -592,12 +592,15 @@
         "The rescue route works with a multi-paragraph brief, live-verified"
       ],
       "order": 27,
-      "status": "active",
+      "status": "done",
       "epic": "strict-role-split",
       "skill": "backend",
       "depends_on": [],
       "origin": "adhoc",
-      "spec": "docs/specs/rescue-prompt-file.md"
+      "spec": "docs/specs/rescue-prompt-file.md",
+      "completed_at": "2026-08-12T18:43:53+00:00",
+      "history": ".factory/history/FORGE-ROLE-2/",
+      "outcome": "Long read-only exploration briefs now reach Codex: the companion guard admits task --prompt-file with a repo-contained regular file (resolved-both-sides containment; absolute, traversal, escaping-symlink, dangling, directory, duplicate, wrong-verb, and equals shapes all still refused), so the anytime rescue contract holds beyond short inline prompts \u2014 live-verified with a multi-paragraph brief in both directions. Write delegation and every other guard refusal are unchanged."
     },
     {
       "key": "FORGE-WIN-2",
@@ -675,7 +678,7 @@
     }
   ],
   "generated_by": "human",
-  "updated_at": "2026-08-12T15:21:01+00:00",
+  "updated_at": "2026-08-12T18:43:53+00:00",
   "epics": [
     {
       "id": "symphony-forge",

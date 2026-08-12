@@ -4,7 +4,7 @@
     {
       "id": "ROLE2-T1",
       "title": "Guard admits read-only task --prompt-file with resolved containment; guard test matrix",
-      "status": "active",
+      "status": "done",
       "started_at": "2026-08-12T18:03:37+00:00",
       "base_sha": "03a769b770866d56f78bba8dd0150ce77bf10c25",
       "dirty_at_start": {
@@ -29,7 +29,8 @@
           "git": "? .factory/stages.json\u0000\u0000\u0000"
         }
       },
-      "task_sha256": "5f4a566851a68c3ee09fcf2c2bc2771bd90e89b1c402f816e6a1867a827c4bf2"
+      "task_sha256": "5f4a566851a68c3ee09fcf2c2bc2771bd90e89b1c402f816e6a1867a827c4bf2",
+      "completed_at": "2026-08-12T18:31:29+00:00"
     }
   ]
 }

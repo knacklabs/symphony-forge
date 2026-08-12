@@ -1,0 +1,16 @@
+{
+  "generated_by": "autoreview",
+  "score": 9,
+  "summary": "Hook hot path gains one list comprehension over an already-parsed argv and, only when the flag is present, two path resolutions and one stat \u2014 bounded, per-invocation, no I/O amplification. The guard runs once per Bash tool call; the added work is microseconds against the existing shlex parse. No repeated reads, no subprocesses added.",
+  "blocking_findings": [],
+  "non_blocking_findings": [],
+  "residual_risks": [],
+  "recommendation": "approve",
+  "reviewed_scope": [
+    "factory/scripts/pre_tool_use.py"
+  ],
+  "skills_used": [],
+  "aspect": "performance",
+  "recorded_at": "2026-08-12T18:43:45+00:00",
+  "commit": "c876908993fa4f827e7534a1417bacb935d5ae31"
+}

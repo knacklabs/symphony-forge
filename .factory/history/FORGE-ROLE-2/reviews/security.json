@@ -1,0 +1,19 @@
+{
+  "generated_by": "autoreview",
+  "score": 9,
+  "summary": "This change deliberately loosens a security guard, so the lens applied is: what NEW capability does the allowlisted lane gain? Only this \u2014 a read-only companion task may read one repo-contained regular file as its prompt. Exfiltration via absolute/traversal/symlink-escape paths is refused with both sides resolved before comparison; dangling and directory targets are refused by is_file; duplicate flags and missing values cannot smuggle a second interpretation; the equals form cannot reach the admission because '=' is refused as shell syntax upstream (pinned by a test). Write-shaped invocations, wrappers, and shell metacharacters are refused exactly as before \u2014 the sandbox mode still derives from argv shape, never from prompt content.",
+  "blocking_findings": [],
+  "non_blocking_findings": [],
+  "residual_risks": [
+    "Prompt content can still instruct the model arbitrarily \u2014 unchanged trust shape: read-only sandboxing, not content vetting, is what bounds a rescue run, exactly as with delegate-composed briefs."
+  ],
+  "recommendation": "approve",
+  "reviewed_scope": [
+    "factory/scripts/pre_tool_use.py",
+    "factory/tests/test_gates.py"
+  ],
+  "skills_used": [],
+  "aspect": "security",
+  "recorded_at": "2026-08-12T18:43:45+00:00",
+  "commit": "c876908993fa4f827e7534a1417bacb935d5ae31"
+}

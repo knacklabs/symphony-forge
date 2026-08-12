@@ -1,0 +1,47 @@
+{
+  "generated_by": "autoreview",
+  "score": 9,
+  "summary": "A narrow, well-shaped loosening of a security guard: one validated admission (task-verb --prompt-file with resolved containment) inside the existing refuse-everything-else structure, nothing reordered and no refusal made quieter. The equals form is documented as refused upstream by the shell-syntax '=' check rather than re-validated, which is correct and now pinned by a test. The containment matrix exercises real filesystem cases (external symlink, dangling link, directory), not just lexical traversal. Live end-to-end verification done in both directions.",
+  "blocking_findings": [],
+  "non_blocking_findings": [
+    {
+      "category": "comment-drift-risk",
+      "area": "factory/scripts/pre_tool_use.py",
+      "summary": "The admission's reliance on the upstream '=' shell-syntax refusal for the equals form is documented in a comment; if that upstream check ever relaxes, the equals form silently bypasses value validation \u2014 the denial test pins it today, which is adequate."
+    }
+  ],
+  "residual_risks": [
+    "Guard-side containment resolves against the repo root while the companion resolves the same path against its cwd; identical in the admitted direct-invocation shape (cwd is the repo), and --cwd remains refused, so the two cannot diverge within the allowlisted lane."
+  ],
+  "recommendation": "approve",
+  "reviewed_scope": [
+    "factory/scripts/pre_tool_use.py",
+    "factory/tests/test_gates.py"
+  ],
+  "contract_verdicts": [
+    {
+      "contract_id": "ROLE2-C1",
+      "verdict": "implemented",
+      "evidence": "pre_tool_use.py:603-620 \u2014 flag admitted only when verb=='task' (:606), exactly one occurrence (:606), one non-flag value (:609), lexical refusal of absolute/'..' (:611-612), then resolved-both-sides containment with is_relative_to plus is_file (:615-618) under OSError/RuntimeError guard; admitted live in this repo (companion run answered from a multi-paragraph brief with touchedFiles empty)."
+    },
+    {
+      "contract_id": "ROLE2-C2",
+      "verdict": "implemented",
+      "evidence": "Refusal matrix at test_gates.py:12679-12700 \u2014 absolute, nested/../ traversal, external symlink, dangling symlink, directory, duplicate flag, missing value, status and task-resume-candidate verbs, equals form, --cwd, unknown flag; pre-existing refusal structure untouched (the admission block only splices its two tokens out of args before the unchanged READONLY_COMPANION_FLAGS sweep at :621-624). Traversal shape also refused live in this session."
+    },
+    {
+      "contract_id": "ROLE2-C3",
+      "verdict": "implemented",
+      "evidence": "test_gates.py:4820-4833 gains the valid brief and internal-symlink admission cases; :12679 carries the containment matrix; the laundering (:4760), wrapper (:12710 region), and shell-expansion regressions are diff-untouched (git diff shows no edits at those sites). Focused run: 17 passed; full suite 532 passed, 1 skipped."
+    },
+    {
+      "contract_id": "ROLE2-C4",
+      "verdict": "implemented",
+      "evidence": "Live end-to-end this session: a three-paragraph brief at docs/context/rescue-brief-live-check.md was admitted via 'task --prompt-file' (thread 019ff72c-f8a9-7d72-b449-2b7a1f7755fb, correct branch+deferral answers, touchedFiles []), and the same invocation shape with 'nested/../.factory/scratchpad.md' was refused by the guard; both recorded in the automated testing artifact."
+    }
+  ],
+  "skills_used": [],
+  "aspect": "quality",
+  "recorded_at": "2026-08-12T18:43:45+00:00",
+  "commit": "c876908993fa4f827e7534a1417bacb935d5ae31"
+}

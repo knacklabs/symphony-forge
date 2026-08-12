@@ -1,0 +1,15 @@
+{"event": "roadmap-add", "generated_by": "orchestrator", "at": "2026-08-11T06:54:46+00:00", "story": "FORGE-ROLE-2", "detail": "no spec (adhoc)"}
+{"event": "roadmap-link-spec", "generated_by": "orchestrator", "at": "2026-08-12T15:21:01+00:00", "story": "FORGE-ROLE-2", "detail": "docs/specs/rescue-prompt-file.md"}
+{"event": "intake", "generated_by": "orchestrator", "at": "2026-08-12T15:21:01+00:00", "story": "FORGE-ROLE-2", "detail": "Read-only rescue accepts long prompts via prompt-file"}
+{"event": "plan-human-approved", "generated_by": "human", "at": "2026-08-12T18:02:33+00:00", "story": "FORGE-ROLE-2", "detail": "FORGE-ROLE-2 approved by Ravi (vrknetha)"}
+{"event": "plan-approved", "generated_by": "planner-high", "at": "2026-08-12T18:02:33+00:00", "story": "FORGE-ROLE-2", "detail": "plans/active/FORGE-ROLE-2-read-only-rescue-accepts-long-prompts-via-prompt-file.md"}
+{"event": "decomposed", "generated_by": "docs-decomposer", "at": "2026-08-12T18:03:14+00:00", "story": "FORGE-ROLE-2", "detail": "1 task(s)"}
+{"event": "stage-start", "generated_by": "implementer", "at": "2026-08-12T18:03:37+00:00", "story": "FORGE-ROLE-2", "detail": "ROLE2-T1 Guard admits read-only task --prompt-file with resolved containment; guard test matrix"}
+{"event": "delegated", "generated_by": "orchestrator", "at": "2026-08-12T18:10:27+00:00", "story": "FORGE-ROLE-2", "detail": "ROLE2-T1 (write)"}
+{"event": "stage-done", "generated_by": "implementer", "at": "2026-08-12T18:31:29+00:00", "story": "FORGE-ROLE-2", "detail": "ROLE2-T1 Guard admits read-only task --prompt-file with resolved containment; guard test matrix"}
+{"event": "verify-passed", "generated_by": "orchestrator", "at": "2026-08-12T18:43:29+00:00", "story": "FORGE-ROLE-2"}
+{"event": "tests-automated", "generated_by": "implementer", "at": "2026-08-12T18:43:45+00:00", "story": "FORGE-ROLE-2", "detail": "passed"}
+{"event": "review-quality", "generated_by": "autoreview", "at": "2026-08-12T18:43:45+00:00", "story": "FORGE-ROLE-2"}
+{"event": "review-performance", "generated_by": "autoreview", "at": "2026-08-12T18:43:45+00:00", "story": "FORGE-ROLE-2"}
+{"event": "review-security", "generated_by": "autoreview", "at": "2026-08-12T18:43:45+00:00", "story": "FORGE-ROLE-2"}
+{"event": "shipped", "generated_by": "orchestrator", "at": "2026-08-12T18:43:53+00:00", "story": "FORGE-ROLE-2", "detail": "Long read-only exploration briefs now reach Codex: the companion guard admits task --prompt-file with a repo-contained regular file (resolved-both-sides containment; absolute, traversal, escaping-syml"}
