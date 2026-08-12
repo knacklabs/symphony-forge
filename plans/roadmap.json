@@ -650,10 +650,29 @@
       "kind": "feature",
       "depends_on": [],
       "spec": "docs/specs/windows-zero-setup.md"
+    },
+    {
+      "key": "FORGE-REV-2",
+      "title": "Review verifies plan contracts",
+      "story": "As an orchestrator, I want review to verdict every plan contract so that incomplete implementation blocks pr-ready instead of passing invisibly.",
+      "acceptance_criteria": [
+        "Decomposition tasks may declare validated plan_contracts",
+        "forge review-brief composes per-task and --all contract briefs",
+        "Quality review artifact must verdict every declared contract; partial/missing is a blocking finding",
+        "pr_ready refuses until all declared contracts are verified implemented",
+        "Tasks without plan_contracts behave exactly as today"
+      ],
+      "order": 31,
+      "status": "active",
+      "epic": "review-completeness",
+      "skill": "backend",
+      "kind": "feature",
+      "depends_on": [],
+      "spec": "docs/specs/plan-contract-review.md"
     }
   ],
   "generated_by": "human",
-  "updated_at": "2026-08-12T08:00:32+00:00",
+  "updated_at": "2026-08-12T12:16:05+00:00",
   "epics": [
     {
       "id": "symphony-forge",
@@ -701,6 +720,14 @@
       "objective": "Make the harness work on Windows for new and existing clients with zero user-performed setup: portable fail-closed hooks, doctor auto-remediation, delegate-time Codex config, forge-next self-heal trigger, and windows-latest CI.",
       "source_refs": [
         "docs/specs/windows-zero-setup.md"
+      ]
+    },
+    {
+      "id": "review-completeness",
+      "title": "Review is plan-aware: contracts get verdicts",
+      "objective": "Bind review to the plan: tasks declare plan contracts, review verdicts each one with evidence, and pr-ready refuses until every contract is verified implemented.",
+      "source_refs": [
+        "docs/specs/plan-contract-review.md"
       ]
     }
   ]

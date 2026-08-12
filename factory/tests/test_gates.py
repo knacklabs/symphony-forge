@@ -11556,6 +11556,181 @@ def test_pr_ready_refuses_drifted_gate_surface(repo, tmp_path):
     assert code == 0, out
 
 
+def test_decomposition_recorder_validates_plan_contracts(repo, tmp_path):
+    sign_off(repo)
+    intake(repo)
+    save_plan(repo, tmp_path)
+
+    task = {**DECOMP["tasks"][0], "id": "T1"}
+    for malformed in (None, False, 0, "", {}):
+        payload = {**DECOMP, "tasks": [{**task, "plan_contracts": malformed}]}
+        code, out = run(repo, "record_decomposition_from_json.py",
+                        stdin=json.dumps(payload))
+        assert code != 0 and "task T1" in out and "plan_contracts must be a list" in out
+
+    malformed_entries = [
+        "not-an-object",
+        {"id": "C1", "statement": "does the thing"},
+        {"id": "C1", "statement": "does the thing", "source": "plan#scope",
+         "extra": "no"},
+        {"id": "", "statement": "does the thing", "source": "plan#scope"},
+    ]
+    for entry in malformed_entries:
+        payload = {**DECOMP, "tasks": [{**task, "plan_contracts": [entry]}]}
+        code, out = run(repo, "record_decomposition_from_json.py",
+                        stdin=json.dumps(payload))
+        assert code != 0 and "task T1" in out and "entry 1" in out
+
+    contract = {"id": "C1", "statement": "does the thing",
+                "source": "plans/active/plan.md#scope"}
+    second = {**task, "id": "T2", "title": "second slice",
+              "dependencies": ["T1"], "plan_contracts": [contract]}
+    duplicate = {**DECOMP, "tasks": [
+        {**task, "plan_contracts": [contract]}, second,
+    ]}
+    code, out = run(repo, "record_decomposition_from_json.py",
+                    stdin=json.dumps(duplicate))
+    assert code != 0 and "task T2" in out and "entry 1" in out and "duplicate" in out
+
+    valid = {**DECOMP, "tasks": [
+        {**task, "plan_contracts": [contract]},
+        {**second, "plan_contracts": [{**contract, "id": "C2"}]},
+    ]}
+    code, out = run(repo, "record_decomposition_from_json.py", stdin=json.dumps(valid))
+    assert code == 0, out
+    recorded = json.loads((repo / ".factory" / "decomposition.json").read_text())
+    assert [item["id"] for item in recorded["tasks"][1]["plan_contracts"]] == ["C2"]
+
+
+def test_review_brief_composes_contract_brief(repo, tmp_path):
+    code, out = run(repo, "forge.py", "review-brief", "T1", "--repo", str(repo))
+    assert code != 0 and "No recorded decomposition" in out
+
+    sign_off(repo)
+    intake(repo)
+    save_plan(repo, tmp_path)
+    first = {**DECOMP["tasks"][0], "id": "T1", "reviewer_focus": "focus one",
+             "plan_contracts": [{"id": "C1", "statement": "first statement",
+                                  "source": "plan.md#first"}]}
+    second = {**DECOMP["tasks"][0], "id": "T2", "title": "second slice",
+              "dependencies": ["T1"], "reviewer_focus": "focus two",
+              "plan_contracts": [{"id": "C2", "statement": "second statement",
+                                   "source": "plan.md#second"}]}
+    code, out = run(repo, "record_decomposition_from_json.py", stdin=json.dumps(
+        {**DECOMP, "tasks": [first, second]}))
+    assert code == 0, out
+
+    code, out = run(repo, "forge.py", "review-brief", "T1", "--repo", str(repo))
+    assert code == 0 and out.strip() == ".factory/review-briefs/T1.md"
+    per_task = (repo / out.strip()).read_text()
+    assert all(value in per_task for value in (
+        "C1", "plan.md#first", "first statement", "focus one",
+        "implemented | partial | missing", "contract_verdicts", "file:line",
+    ))
+    assert "C2" not in per_task and "focus two" not in per_task
+
+    code, out = run(repo, "forge.py", "review-brief", "--all", "--repo", str(repo))
+    assert code == 0 and out.strip() == ".factory/review-briefs/all.md"
+    branch = (repo / out.strip()).read_text()
+    assert all(value in branch for value in ("C1", "C2", "focus one", "focus two"))
+
+    for args, expected in [
+        (("review-brief",), "exactly one"),
+        (("review-brief", "T1", "--all"), "exactly one"),
+        (("review-brief", "UNKNOWN"), "Unknown decomposition task id"),
+    ]:
+        code, out = run(repo, "forge.py", *args, "--repo", str(repo))
+        assert code != 0 and expected in out
+    module = (repo / "factory" / "scripts" / "forge_cli" / "review_brief.py").read_text()
+    assert "forge_cli.delegate" not in module and "import delegate" not in module
+
+
+def test_quality_review_requires_contract_verdicts(repo, tmp_path):
+    sign_off(repo)
+    intake(repo)
+    save_plan(repo, tmp_path)
+    contracts = [
+        {"id": "C1", "statement": "first statement", "source": "plan.md#first"},
+        {"id": "C2", "statement": "second statement", "source": "plan.md#second"},
+    ]
+    tasks = [
+        {**DECOMP["tasks"][0], "id": "T1", "plan_contracts": [contracts[0]]},
+        {**DECOMP["tasks"][0], "id": "T2", "title": "second slice",
+         "dependencies": ["T1"], "plan_contracts": [contracts[1]]},
+    ]
+    code, out = run(repo, "record_decomposition_from_json.py", stdin=json.dumps(
+        {**DECOMP, "tasks": tasks}))
+    assert code == 0, out
+
+    code, out = run(repo, "record_review_from_json.py", "--aspect", "quality",
+                    stdin=json.dumps(review_payload()))
+    assert code != 0 and "contract_verdicts" in out
+
+    def verdict(contract_id, value="implemented", evidence="src/app.py:12"):
+        return {"contract_id": contract_id, "verdict": value, "evidence": evidence}
+
+    refused = [
+        ([verdict("C1")], "C2"),
+        ([verdict("C1"), verdict("UNKNOWN")], "unknown contract id"),
+        ([verdict("C1"), verdict("C1")], "duplicate contract id"),
+        ([verdict("C1", "almost"), verdict("C2")], "implemented, partial, or missing"),
+        ([verdict("C1", evidence=""), verdict("C2")], "evidence"),
+    ]
+    for contract_verdicts, expected in refused:
+        code, out = run(repo, "record_review_from_json.py", "--aspect", "quality",
+                        stdin=json.dumps(review_payload(
+                            contract_verdicts=contract_verdicts)))
+        assert code != 0 and expected in out
+
+    partial = [verdict("C1", "partial"), verdict("C2")]
+    code, out = run(repo, "record_review_from_json.py", "--aspect", "quality",
+                    stdin=json.dumps(review_payload(contract_verdicts=partial)))
+    assert code == 0, out
+    quality = json.loads((repo / ".factory" / "reviews" / "quality.json").read_text())
+    assert quality["blocking_findings"] == [{
+        "category": "plan-contract-partial",
+        "area": "plan.md#first",
+        "summary": "C1: first statement",
+    }]
+
+    code, out = run(repo, "record_review_from_json.py", "--aspect", "performance",
+                    stdin=json.dumps(review_payload()))
+    assert code == 0, out
+
+
+def test_pr_ready_blocks_on_unverified_plan_contracts(repo, tmp_path):
+    sign_off(repo)
+    intake(repo)
+    save_plan(repo, tmp_path)
+    contracts = [
+        {"id": "C1", "statement": "first statement", "source": "plan.md#first"},
+        {"id": "C2", "statement": "second statement", "source": "plan.md#second"},
+    ]
+    task = {**DECOMP["tasks"][0], "plan_contracts": contracts}
+    code, out = run(repo, "record_decomposition_from_json.py", stdin=json.dumps(
+        {**DECOMP, "tasks": [task]}))
+    assert code == 0, out
+    write_passing_artifacts(repo)
+
+    code, out = run(repo, "pr_ready.py")
+    assert code != 0 and "C1, C2" in out and "./forge review-brief" in out
+
+    quality_path = repo / ".factory" / "reviews" / "quality.json"
+    quality = json.loads(quality_path.read_text())
+    quality["contract_verdicts"] = [
+        {"contract_id": "C1", "verdict": "implemented", "evidence": "src/a.py:1"},
+        {"contract_id": "C2", "verdict": "partial", "evidence": "src/b.py:2"},
+    ]
+    quality_path.write_text(json.dumps(quality))
+    code, out = run(repo, "pr_ready.py")
+    assert code != 0 and "C2" in out and "review-brief" in out
+
+    quality["contract_verdicts"][1]["verdict"] = "implemented"
+    quality_path.write_text(json.dumps(quality))
+    code, out = run(repo, "pr_ready.py")
+    assert code == 0, out
+
+
 def test_adopt_and_upgrade_refreeze_the_manifest(repo, tmp_path):
     # adopt arms a migrated repo
     legacy = existing_repo(tmp_path)

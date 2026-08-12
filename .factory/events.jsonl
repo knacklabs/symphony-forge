@@ -946,3 +946,14 @@
 {"event": "review-performance", "generated_by": "autoreview", "at": "2026-08-12T08:00:17+00:00", "story": "FORGE-WIN-1"}
 {"event": "review-security", "generated_by": "autoreview", "at": "2026-08-12T08:00:17+00:00", "story": "FORGE-WIN-1"}
 {"event": "shipped", "generated_by": "orchestrator", "at": "2026-08-12T08:00:32+00:00", "story": "FORGE-WIN-1", "detail": "Windows machines are first-class harness hosts with zero user setup: every registered hook resolves through the forge launcher and BLOCKS (exit 2) instead of silently disarming when anything in its ch"}
+{"event": "spec-draft", "generated_by": "orchestrator", "at": "2026-08-12T12:14:46+00:00", "detail": "plan-contract-review: Review verifies plan contracts, not just the diff"}
+{"event": "spec-draft", "generated_by": "orchestrator", "at": "2026-08-12T12:15:02+00:00", "detail": "plan-contract-review: Review verifies plan contracts, not just the diff"}
+{"event": "spec-confirmed", "generated_by": "orchestrator", "at": "2026-08-12T12:15:26+00:00", "detail": "plan-contract-review"}
+{"event": "roadmap-epic-add", "generated_by": "orchestrator", "at": "2026-08-12T12:15:59+00:00", "detail": "review-completeness"}
+{"event": "roadmap-add", "generated_by": "orchestrator", "at": "2026-08-12T12:15:59+00:00", "story": "FORGE-REV-2", "detail": "docs/specs/plan-contract-review.md"}
+{"event": "intake", "generated_by": "orchestrator", "at": "2026-08-12T12:16:05+00:00", "story": "FORGE-REV-2", "detail": "Review verifies plan contracts"}
+{"event": "plan-human-approved", "generated_by": "human", "at": "2026-08-12T12:17:24+00:00", "story": "FORGE-REV-2", "detail": "FORGE-REV-2 approved by Ravi (vrknetha)"}
+{"event": "plan-approved", "generated_by": "planner-high", "at": "2026-08-12T12:17:24+00:00", "story": "FORGE-REV-2", "detail": "plans/active/FORGE-REV-2-review-verifies-plan-contracts.md"}
+{"event": "decomposed", "generated_by": "docs-decomposer", "at": "2026-08-12T12:18:59+00:00", "story": "FORGE-REV-2", "detail": "1 task(s)"}
+{"event": "stage-start", "generated_by": "implementer", "at": "2026-08-12T12:19:21+00:00", "story": "FORGE-REV-2", "detail": "REV2-T1 Plan-contract-aware review: schema, brief composer, recorder enforcement, pr-ready gate, prompts"}
+{"event": "delegated", "generated_by": "orchestrator", "at": "2026-08-12T12:39:09+00:00", "story": "FORGE-REV-2", "detail": "REV2-T1 (write)"}

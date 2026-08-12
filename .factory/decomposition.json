@@ -1,0 +1,98 @@
+{
+  "generated_by": "claude-code:plan-mode",
+  "user_facing": false,
+  "status": "recorded",
+  "tasks": [
+    {
+      "id": "REV2-T1",
+      "title": "Plan-contract-aware review: schema, brief composer, recorder enforcement, pr-ready gate, prompts",
+      "objective": "Bind review to the plan: decomposition tasks may declare plan_contracts ({id, statement, source}); ./forge review-brief composes the reviewer's contract brief (per-task and --all); the quality review artifact must verdict every declared contract with evidence; partial/missing verdicts land as blocking findings; pr_ready refuses until every contract is verified implemented. Tasks without contracts behave exactly as today.",
+      "dependencies": [],
+      "write_scope": [
+        "factory/schemas/decomposition.json",
+        "factory/schemas/review.json",
+        "factory/scripts/record_decomposition_from_json.py",
+        "factory/scripts/record_review_from_json.py",
+        "factory/scripts/forge_cli/review_brief.py",
+        "factory/scripts/forge.py",
+        "factory/scripts/pr_ready.py",
+        "factory/prompts/reviewer.md",
+        "factory/prompts/pr-ready.md",
+        "factory/tests/test_gates.py"
+      ],
+      "acceptance_criteria": [
+        "factory/schemas/decomposition.json documents optional per-task plan_contracts (list of {id, statement, source}; source = plan file+section). record_decomposition_from_json.py validates them like required_tests: each entry exactly the three non-empty string keys, contract ids unique across the WHOLE decomposition (verdicts map by id); a malformed entry refuses with a message naming the task and entry position. Default only when absent \u2014 a non-list plan_contracts value refuses, never validates as empty (this file's dependencies/`or []` lesson).",
+        "New small module factory/scripts/forge_cli/review_brief.py \u2014 NOT in delegate.py, and importing NO delegate/companion machinery, so it works on Windows where forge.py sets delegate_mod = None. Registered unconditionally in forge.py as subcommand `review-brief` (positional optional task id, --all flag, --repo). It loads the recorded decomposition (protected_decomposition_state_path), refuses when none is recorded, refuses an unknown task id, refuses id together with --all and neither. It writes .factory/review-briefs/<task-id>.md (--all: all.md) via safe_factory_write_bytes and prints the repo-relative path (repo-relative on purpose \u2014 autoreview's --prompt-file requires it).",
+        "Brief content: the task's plan_contracts (id, source, statement), its reviewer_focus, and this instruction verbatim in substance: 'For each contract, emit a verdict \u2014 implemented | partial | missing \u2014 with file:line evidence, recorded as contract_verdicts in the quality artifact. Then review the diff normally; the contract check does not replace the quality/performance/security lenses.' --all composes the union of every task's contracts (with each task's reviewer_focus) for the closeout branch-wide review, which catches a later stage undoing an earlier stage's contract.",
+        "factory/schemas/review.json gains optional contract_verdicts: list, with a note documenting entries {contract_id, verdict: implemented|partial|missing, evidence}. record_review_from_json.py: for --aspect quality only, when the recorded decomposition declares any plan_contracts, refuse a payload whose contract_verdicts do not cover every declared contract id; refuse unknown contract ids, duplicate ids, verdict values outside the three, and missing/empty string evidence. Every partial/missing verdict is appended to blocking_findings as a structured finding {category: 'plan-contract-partial'|'plan-contract-missing', area: <contract source>, summary: '<contract id>: <statement>'} so the existing review_passed gate blocks. performance/security aspects and no-contract decompositions are untouched.",
+        "pr_ready.py: independent backstop after load_review_artifacts \u2014 when any recorded task declares plan_contracts, refuse pr-ready unless the recorded quality review carries verdict 'implemented' for every declared contract id; the refusal names the unverified contract ids and points at ./forge review-brief. This check must NOT trust the recorder (evidence can predate the schema change).",
+        "factory/prompts/reviewer.md step 1: when the task declares plan_contracts, run the autoreview skill with --prompt-file .factory/review-briefs/<task-id>.md (compose it with ./forge review-brief <task-id>), and the quality artifact must include contract_verdicts. factory/prompts/pr-ready.md: the branch-wide closeout autoreview takes ./forge review-brief --all output as its prompt file.",
+        "Backward compatible: a decomposition without plan_contracts records, reviews, and gates exactly as before; the full existing factory/tests/test_gates.py suite stays green. New pytest cases cover: recorder refusals and acceptance for plan_contracts; review-brief content and refusals (per-task and --all); quality recorder refusal without full verdict coverage and the blocking finding on partial; pr_ready refusal until all-implemented then pass. Match the existing test file's fixtures (repo fixture, sign_off/intake/save_plan helpers, DECOMP payload style)."
+      ],
+      "required_tests": [
+        {
+          "id": "test_decomposition_recorder_validates_plan_contracts",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_review_brief_composes_contract_brief",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_quality_review_requires_contract_verdicts",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_pr_ready_blocks_on_unverified_plan_contracts",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        }
+      ],
+      "verify_commands": [
+        "uv run --with pytest python -m pytest factory/tests/test_gates.py -q -k \"plan_contract or review_brief or contract_verdict\""
+      ],
+      "reviewer_focus": "Refusal messages must name the task/entry; the verdict union must cover EVERY task's contracts, not the last task's; review_brief.py must import no delegate machinery (Windows); pr_ready's backstop must not trust the recorder; no-contract decompositions must be behaviorally byte-identical.",
+      "plan_contracts": [
+        {
+          "id": "REV2-C1",
+          "statement": "A decomposition task may declare plan_contracts entries {id, statement, source}; the recorder validates shape and cross-decomposition id uniqueness like required_tests, refusing malformed entries with the task and position named.",
+          "source": "plans/active/FORGE-REV-2-review-verifies-plan-contracts.md#technical-approach"
+        },
+        {
+          "id": "REV2-C2",
+          "statement": "./forge review-brief <task-id> writes .factory/review-briefs/<task-id>.md with the task's contracts, reviewer_focus, and the implemented|partial|missing verdict instruction; --all writes the branch-wide union brief; the command works on Windows.",
+          "source": "plans/active/FORGE-REV-2-review-verifies-plan-contracts.md#technical-approach"
+        },
+        {
+          "id": "REV2-C3",
+          "statement": "record_review_from_json.py refuses a quality artifact that does not verdict every declared contract (unknown ids, bad verdicts, empty evidence also refuse); each partial/missing verdict is appended to blocking_findings as a structured finding.",
+          "source": "plans/active/FORGE-REV-2-review-verifies-plan-contracts.md#technical-approach"
+        },
+        {
+          "id": "REV2-C4",
+          "statement": "pr_ready.py refuses while any declared contract lacks an implemented verdict in the recorded quality review, independent of the recorder's own enforcement.",
+          "source": "plans/active/FORGE-REV-2-review-verifies-plan-contracts.md#technical-approach"
+        },
+        {
+          "id": "REV2-C5",
+          "statement": "reviewer.md instructs per-task --prompt-file usage and contract_verdicts in the quality artifact; pr-ready.md instructs the closeout branch-wide autoreview to use ./forge review-brief --all as its prompt file.",
+          "source": "plans/active/FORGE-REV-2-review-verifies-plan-contracts.md#technical-approach"
+        },
+        {
+          "id": "REV2-C6",
+          "statement": "A decomposition without plan_contracts records, reviews, and gates exactly as before; the pre-existing test suite passes unmodified.",
+          "source": "plans/active/FORGE-REV-2-review-verifies-plan-contracts.md#scope--non-goals"
+        }
+      ]
+    }
+  ],
+  "project": "",
+  "story": "FORGE-REV-2",
+  "epic": "review-completeness",
+  "plan_file": "plans/active/FORGE-REV-2-review-verifies-plan-contracts.md",
+  "plan_sha256": "9cf2f9ca6d93be58138697d474bb952c83090f7f1c3dbd2afe37d65a6f3b2919",
+  "commit": "e1901659626d226ca5a5bfa50cc3e35b14dedeab"
+}

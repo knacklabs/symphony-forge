@@ -121,6 +121,7 @@ if not tasks:
     )
 OBJECTIVE_MAX = 500
 seen_task_ids: set[str] = set()
+seen_contract_ids: set[str] = set()
 for pos, task in enumerate(tasks, 1):
     if not isinstance(task, dict) or not isinstance(task.get("id"), str) \
             or not isinstance(task.get("title"), str) or not task["id"].strip():
@@ -165,6 +166,30 @@ for pos, task in enumerate(tasks, 1):
             f"(max {OBJECTIVE_MAX}) — it is the summary a human reads, not the "
             "implementation transcript; put the detail in the plan."
         )
+    plan_contracts = task.get("plan_contracts", [])
+    if not isinstance(plan_contracts, list):
+        raise SystemExit(
+            f"decomposition task {task_id}: plan_contracts must be a list"
+        )
+    for contract_pos, contract in enumerate(plan_contracts, 1):
+        if not isinstance(contract, dict) or set(contract) != {
+                "id", "statement", "source"} or not all(
+                    isinstance(contract.get(key), str) and contract[key].strip()
+                    for key in ("id", "statement", "source")
+                ):
+            raise SystemExit(
+                f"decomposition task {task_id}: plan_contracts entry "
+                f"{contract_pos} needs exactly non-empty id, statement and "
+                "source strings."
+            )
+        contract_id = contract["id"]
+        if contract_id in seen_contract_ids:
+            raise SystemExit(
+                f"decomposition task {task_id}: plan_contracts entry "
+                f"{contract_pos} has duplicate contract id {contract_id!r} "
+                "across the decomposition"
+            )
+        seen_contract_ids.add(contract_id)
     for proof_pos, proof in enumerate(task.get("required_tests") or [], 1):
         if not isinstance(proof, dict):
             raise SystemExit(

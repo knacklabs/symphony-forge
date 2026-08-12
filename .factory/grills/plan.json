@@ -1,0 +1,22 @@
+{
+  "generated_by": "griller",
+  "gate": "plan",
+  "verdict": "pass",
+  "gaps": [
+    "The single story-level quality artifact vs per-task contracts: which verdicts are owed?",
+    "Does the recorder or the gate own the refusal when verdicts are absent?",
+    "Can the review-brief command exist on Windows where delegate_mod is None?",
+    "How does a later stage undoing an earlier stage's contract get caught when review is per-task?"
+  ],
+  "contradictions": [],
+  "resolutions": [
+    "The quality artifact verdicts the union of every task's contracts; the recorder refuses partial coverage, unknown ids, and bad verdict values.",
+    "Both: the recorder refuses at record time; pr_ready backstops independently because evidence can predate the schema change.",
+    "Yes \u2014 review_brief.py is a sibling module with no delegate/companion imports, registered unconditionally in forge.py.",
+    "The closeout branch-wide autoreview takes `./forge review-brief --all` (all tasks' contracts) as its prompt file."
+  ],
+  "input_sha256": "480ac67f221d31deaf9507f93f532b1a7ebc742fb84830d651ef8627c18a6a47",
+  "issue": "FORGE-REV-2",
+  "recorded_at": "2026-08-12T12:17:12+00:00",
+  "commit": "e1901659626d226ca5a5bfa50cc3e35b14dedeab"
+}

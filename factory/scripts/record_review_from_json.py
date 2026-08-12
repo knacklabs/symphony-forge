@@ -7,10 +7,12 @@ import sys
 from pathlib import Path
 
 from factory_lib import (
-    dump_json, gate, head_sha, now_iso, repo_root, require_skills, review_dir,
+    dump_json, gate, head_sha, load_json, now_iso,
+    protected_decomposition_state_path, repo_root, require_skills, review_dir,
     run_state_path, validate_payload,
 )
 from forge_cli.events import append_event
+from forge_cli.review_brief import declared_contracts
 
 
 def ensure_list(value):
@@ -74,6 +76,64 @@ review = dict(payload)
 review["aspect"] = args.aspect
 for key in ("blocking_findings", "non_blocking_findings"):
     review[key] = ensure_findings(key, payload.get(key))
+
+if args.aspect == "quality":
+    decomposition = load_json(protected_decomposition_state_path(root), default={})
+    contracts = declared_contracts(decomposition)
+    if contracts:
+        expected = {contract["id"]: contract for contract in contracts}
+        verdicts = payload.get("contract_verdicts")
+        if not isinstance(verdicts, list):
+            raise SystemExit(
+                "quality review contract_verdicts must be a list covering every "
+                "declared plan contract"
+            )
+        seen: set[str] = set()
+        for pos, verdict in enumerate(verdicts, 1):
+            if not isinstance(verdict, dict) or set(verdict) != {
+                    "contract_id", "verdict", "evidence"}:
+                raise SystemExit(
+                    f"contract_verdicts[{pos}] needs exactly contract_id, verdict "
+                    "and evidence"
+                )
+            contract_id = verdict.get("contract_id")
+            if not isinstance(contract_id, str) or contract_id not in expected:
+                raise SystemExit(
+                    f"contract_verdicts[{pos}]: unknown contract id "
+                    f"{contract_id!r}"
+                )
+            if contract_id in seen:
+                raise SystemExit(
+                    f"contract_verdicts[{pos}]: duplicate contract id "
+                    f"{contract_id!r}"
+                )
+            seen.add(contract_id)
+            value = verdict.get("verdict")
+            if value not in {"implemented", "partial", "missing"}:
+                raise SystemExit(
+                    f"contract_verdicts[{pos}] for {contract_id}: verdict must be "
+                    "implemented, partial, or missing"
+                )
+            evidence = verdict.get("evidence")
+            if not isinstance(evidence, str) or not evidence.strip():
+                raise SystemExit(
+                    f"contract_verdicts[{pos}] for {contract_id}: evidence must "
+                    "be a non-empty string"
+                )
+            if value in {"partial", "missing"}:
+                contract = expected[contract_id]
+                review["blocking_findings"].append({
+                    "category": f"plan-contract-{value}",
+                    "area": contract["source"],
+                    "summary": f"{contract_id}: {contract['statement']}",
+                })
+        missing_ids = [contract["id"] for contract in contracts
+                       if contract["id"] not in seen]
+        if missing_ids:
+            raise SystemExit(
+                "quality review contract_verdicts missing declared contract ids: "
+                + ", ".join(missing_ids)
+            )
 for key in ("residual_risks", "reviewed_scope"):
     review[key] = ensure_list(payload.get(key))
 review.setdefault("recommendation", "approve-with-caveats")

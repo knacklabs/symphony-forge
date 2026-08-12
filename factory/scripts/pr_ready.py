@@ -27,6 +27,7 @@ from forge_cli.outcome import load_outcome, outcome_path
 from forge_cli.roadmap import load_items, mark_status
 from forge_cli.quickfix import load_active
 from forge_cli.readiness import tests_passed
+from forge_cli.review_brief import declared_contracts
 from forge_cli.signal import open_signals, signals_path
 from forge_cli.stages import load_stages
 
@@ -112,8 +113,32 @@ for kind in ("automated", "functional"):
     elif not tests_passed(entry, functional=(kind == "functional")):
         missing.append(f"{kind} testing must have no blockers, no failed status"
                        + (" and score >= 8" if kind == "functional" else ""))
-_, review_problems = load_review_artifacts(root)
+reviews, review_problems = load_review_artifacts(root)
 missing.extend(review_problems)
+
+# Independent of the review recorder: existing artifacts may predate contract
+# enforcement, so readiness reads the quality evidence and checks every id.
+contracts = declared_contracts(decomposition)
+if contracts:
+    verdicts_by_id: dict[str, list[str]] = {}
+    recorded_verdicts = reviews.get("quality", {}).get("contract_verdicts")
+    if not isinstance(recorded_verdicts, list):
+        recorded_verdicts = []
+    for verdict in recorded_verdicts:
+        if not isinstance(verdict, dict):
+            continue
+        contract_id = verdict.get("contract_id")
+        value = verdict.get("verdict")
+        if isinstance(contract_id, str) and isinstance(value, str):
+            verdicts_by_id.setdefault(contract_id, []).append(value)
+    unverified = [contract["id"] for contract in contracts
+                  if verdicts_by_id.get(contract["id"]) != ["implemented"]]
+    if unverified:
+        missing.append(
+            "quality review must verify every plan contract as implemented; "
+            f"unverified: {', '.join(unverified)} — compose the reviewer prompt "
+            "with `./forge review-brief --all`"
+        )
 
 # The refactor ratchet: a refactor-tagged story that GREW product source is
 # not a refactor — it must shrink or hold the line (decision 0005 doctrine).

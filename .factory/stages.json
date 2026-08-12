@@ -1,0 +1,55 @@
+{
+  "issue": "FORGE-REV-2",
+  "stages": [
+    {
+      "id": "REV2-T1",
+      "title": "Plan-contract-aware review: schema, brief composer, recorder enforcement, pr-ready gate, prompts",
+      "status": "active",
+      "started_at": "2026-08-12T12:19:21+00:00",
+      "base_sha": "e1901659626d226ca5a5bfa50cc3e35b14dedeab",
+      "dirty_at_start": {
+        ".factory/decomposition.json": {
+          "digest": "5f6801134afd2ce1b283e6441daadd1c9396205af33898531569a3f44ac9101a",
+          "git": "? .factory/decomposition.json\u0000\u0000\u0000"
+        },
+        ".factory/events.jsonl": {
+          "digest": "50d8e03bd3daac8aafab62b81523eaa9c3e564756b21d1922606b90ce44930db",
+          "git": "1 .M N... 100644 100644 100644 4a75230acc205f0495526acae355268a509f090b 4a75230acc205f0495526acae355268a509f090b .factory/events.jsonl\u0000\u0000100644 4a75230acc205f0495526acae355268a509f090b 0\t.factory/events.jsonl\u0000\u0000H .factory/events.jsonl\u0000"
+        },
+        ".factory/grills/plan.json": {
+          "digest": "449da54728e7d14fd0c21a7b50a3c33533e296e91645a38ceba65f93ee3c4ff4",
+          "git": "? .factory/grills/plan.json\u0000\u0000\u0000"
+        },
+        ".factory/grills/spec.json": {
+          "digest": "699ff1e29534df8afc954030710d6084bafe5ed63dec848d2ef80153576482a0",
+          "git": "1 .M N... 100644 100644 100644 19165746988f13af341072d54ef30e302bd4106a 19165746988f13af341072d54ef30e302bd4106a .factory/grills/spec.json\u0000\u0000100644 19165746988f13af341072d54ef30e302bd4106a 0\t.factory/grills/spec.json\u0000\u0000H .factory/grills/spec.json\u0000"
+        },
+        ".factory/grills/tasks/REV2-T1.json": {
+          "digest": "748f8465fc8a44349dfd431b0e774ab8f87cee1a0488ce663e763891d001c9ee",
+          "git": "? .factory/grills/tasks/REV2-T1.json\u0000\u0000\u0000"
+        },
+        ".factory/run.json": {
+          "digest": "4b46a6b2bf74a5d714fa5be83bf99fec9ef8f560286f04ab7d66a4fbe2f249f4",
+          "git": "1 .M N... 100644 100644 100644 99e2d3be945a093a25a512be5d0fd6ef828f64b1 99e2d3be945a093a25a512be5d0fd6ef828f64b1 .factory/run.json\u0000\u0000100644 99e2d3be945a093a25a512be5d0fd6ef828f64b1 0\t.factory/run.json\u0000\u0000H .factory/run.json\u0000"
+        },
+        ".factory/stages.json": {
+          "digest": "1a9a389d2a57026823c37b007a8b954d39e0414affabfdc3ce1eef3643e28249",
+          "git": "? .factory/stages.json\u0000\u0000\u0000"
+        },
+        "docs/specs/plan-contract-review.md": {
+          "digest": "84a578ccedf916a9d0d2c1eb5f21b8565dd7447fc5860ddd923d6ecbae9910e3",
+          "git": "? docs/specs/plan-contract-review.md\u0000\u0000\u0000"
+        },
+        "plans/active/FORGE-REV-2-review-verifies-plan-contracts.md": {
+          "digest": "b6205176a5bc519803028250bafef7f164b1cfc524674e0badd8b667d4e04d0e",
+          "git": "? plans/active/FORGE-REV-2-review-verifies-plan-contracts.md\u0000\u0000\u0000"
+        },
+        "plans/roadmap.json": {
+          "digest": "c57c100101ca70d2dc256dc4b6976d3a90ec7c9c2c43b567d9d1c0ac1a6d397d",
+          "git": "1 .M N... 100644 100644 100644 7e12f24a3a7ec07d24d2a8c20745ed575cc09d91 7e12f24a3a7ec07d24d2a8c20745ed575cc09d91 plans/roadmap.json\u0000\u0000100644 7e12f24a3a7ec07d24d2a8c20745ed575cc09d91 0\tplans/roadmap.json\u0000\u0000H plans/roadmap.json\u0000"
+        }
+      },
+      "task_sha256": "656652a13021fa1a4502eb2a0c473ab768f82143a61898e212f125502923c1cf"
+    }
+  ]
+}

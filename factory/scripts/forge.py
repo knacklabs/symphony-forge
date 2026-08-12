@@ -52,6 +52,7 @@ from forge_cli import lessons as lessons_mod
 from forge_cli import outcome as outcome_mod
 from forge_cli import project as project_mod
 from forge_cli import quickfix as quickfix_mod
+from forge_cli import review_brief as review_brief_mod
 from forge_cli import scratchpad as scratchpad_mod
 from forge_cli import sanitise as sanitise_mod
 from forge_cli import stages as stages_mod
@@ -451,6 +452,14 @@ def main() -> None:
     p_del.set_defaults(
         func=delegate_mod.cmd_delegate if delegate_mod else _posix_companion_only
     )
+
+    p_review_brief = sub.add_parser(
+        "review-brief", help="compose the plan-contract prompt for autoreview")
+    p_review_brief.add_argument("id", nargs="?", help="task id from the decomposition")
+    p_review_brief.add_argument(
+        "--all", action="store_true", help="compose the branch-wide contract union")
+    p_review_brief.add_argument("--repo")
+    p_review_brief.set_defaults(func=review_brief_mod.cmd_review_brief)
 
     p_sls = st_sub.add_parser("list", help="show stage progress")
     p_sls.add_argument("--repo")

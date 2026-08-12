@@ -1,0 +1,20 @@
+{
+  "generated_by": "griller",
+  "gate": "task",
+  "verdict": "pass",
+  "gaps": [
+    "Does the quality recorder's verdict enforcement need the decomposition at record time, and is it guaranteed present?",
+    "What happens when review-brief is asked for a task with no plan_contracts and no reviewer_focus?",
+    "Does adding plan_contracts to THIS story's own decomposition break the old recorder that has never seen the field?"
+  ],
+  "contradictions": [],
+  "resolutions": [
+    "Yes and yes \u2014 record_review_from_json.py already gates on decomposition=True, so the recorded decomposition is guaranteed loadable at record time.",
+    "It still writes a valid brief (the diff-review instruction and any focus text); the contract section and verdict instruction appear only when contracts exist.",
+    "No \u2014 the recorder validates only known task fields and stores unknown keys opaquely; enforcement begins with the recorders this task itself lands."
+  ],
+  "task_id": "REV2-T1",
+  "input_sha256": "656652a13021fa1a4502eb2a0c473ab768f82143a61898e212f125502923c1cf",
+  "recorded_at": "2026-08-12T12:19:21+00:00",
+  "commit": "e1901659626d226ca5a5bfa50cc3e35b14dedeab"
+}

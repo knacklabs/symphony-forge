@@ -3,21 +3,17 @@
   "gate": "spec",
   "verdict": "pass",
   "gaps": [
-    "Elevation: 'zero setup' vs the UAC prompt winget forces for machine-wide Git \u2014 what does doctor --fix do?",
-    "Codex Windows config: where does the pinned sandbox config live \u2014 a user-global config.toml the harness has never touched, or elsewhere?",
-    "Verification: acceptance claims Windows gate-test behavior but CI has no Windows job.",
-    "Self-heal trigger: a broken client runs NO hooks, so skill instructions may never load \u2014 where does remediation trigger for un-upgraded clients?"
+    "Reviews are recorded once per story while plan_contracts are per-task \u2014 which contracts must the single quality artifact verdict?",
+    "Where does the review-brief composer live given delegate.py is gated off on Windows?",
+    "What stops contract ids colliding across tasks, making verdicts ambiguous?"
   ],
   "contradictions": [],
   "resolutions": [
-    "One consolidated UAC confirm: zero typed commands, one OS-forced click; batching, never a manual checklist \u2014 human choice.",
-    "Inject at delegate time: forge delegate appends the pinned flags (windows.sandbox=unelevated, workspace-write) to its fixed argv on Windows; harness never mutates ~/.codex/config.toml \u2014 human choice.",
-    "Add a windows-latest CI job running the lockout gate tests and doctor hook-health \u2014 human choice.",
-    "forge next surfaces it: the mandated first command runs the fast hook-health check on Windows and prints doctor --fix as step 1; agent continues automatically \u2014 human choice."
+    "The quality artifact must carry a verdict for EVERY contract declared by ANY task in the recorded decomposition; the recorder refuses partial coverage.",
+    "A small sibling forge_cli module with no delegate/companion imports, registered unconditionally in forge.py \u2014 brief composition is pure file writing and must work on Windows.",
+    "The decomposition recorder enforces contract-id uniqueness across the whole decomposition, like task ids."
   ],
-  "open_items": [],
-  "notes": "Round 1 via AskUserQuestion 2026-08-11; all four recommendations accepted; frontier empty. Root causes evidenced in-session: /usr/bin/python3 hook pin fails open on Windows; sh-only entrypoint; codex native sandbox instability (openai/codex #24098 #26158 #2549 #12496).",
-  "input_sha256": "7d7c6b1d342be5826192ecca9b4a0aa635c2cc322d961a293231b7d174cd929b",
-  "recorded_at": "2026-08-10T20:01:23+00:00",
-  "commit": "6591092ea3938dc66631b6a770952e1179223f38"
+  "input_sha256": "5af1aa36383ff01fe973ad1ad07f46e414f59c02eb6ac48859369c8ccd6b9efa",
+  "recorded_at": "2026-08-12T12:15:26+00:00",
+  "commit": "e1901659626d226ca5a5bfa50cc3e35b14dedeab"
 }
