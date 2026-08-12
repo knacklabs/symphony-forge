@@ -1,0 +1,22 @@
+{
+  "commit": "ffb46aaf3e537b53285ebc04453fabc3e0927688",
+  "automated": {
+    "generated_by": "implementer",
+    "status": "passed",
+    "summary": "Full gate suite green including 4 new plan-contract cases (recorder validation, review-brief composition, quality verdict enforcement, pr_ready backstop): 532 passed, 1 skipped. verify.py three-phase run green.",
+    "blocking_findings": [],
+    "commands_run": [
+      "uv run --with pytest python -m pytest factory/tests/test_gates.py -q",
+      "python3 factory/scripts/verify.py"
+    ],
+    "non_blocking_findings": [],
+    "remaining_gaps": [],
+    "residual_risks": [],
+    "tests_added_or_updated": [],
+    "manual_validation_steps": [],
+    "reviewed_scope": [],
+    "recorded_at": "2026-08-12T13:45:15+00:00",
+    "commit": "ffb46aaf3e537b53285ebc04453fabc3e0927688"
+  },
+  "updated_at": "2026-08-12T13:45:15+00:00"
+}

@@ -663,16 +663,19 @@
         "Tasks without plan_contracts behave exactly as today"
       ],
       "order": 31,
-      "status": "active",
+      "status": "done",
       "epic": "review-completeness",
       "skill": "backend",
       "kind": "feature",
       "depends_on": [],
-      "spec": "docs/specs/plan-contract-review.md"
+      "spec": "docs/specs/plan-contract-review.md",
+      "completed_at": "2026-08-12T13:45:26+00:00",
+      "history": ".factory/history/FORGE-REV-2/",
+      "outcome": "Review is no longer plan-blind: decomposition tasks can declare plan_contracts (the plan invariants they must satisfy), ./forge review-brief composes the reviewer's contract prompt (per-task or --all for the branch-wide closeout), the quality review artifact must verdict every declared contract with evidence \u2014 partial or missing verdicts become blocking findings \u2014 and pr-ready refuses until every contract is verified implemented. Incomplete implementation now blocks the gate instead of passing invisibly; tasks without contracts behave exactly as before."
     }
   ],
   "generated_by": "human",
-  "updated_at": "2026-08-12T12:16:05+00:00",
+  "updated_at": "2026-08-12T13:45:26+00:00",
   "epics": [
     {
       "id": "symphony-forge",

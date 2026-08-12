@@ -4,7 +4,7 @@
     {
       "id": "REV2-T1",
       "title": "Plan-contract-aware review: schema, brief composer, recorder enforcement, pr-ready gate, prompts",
-      "status": "active",
+      "status": "done",
       "started_at": "2026-08-12T12:19:21+00:00",
       "base_sha": "e1901659626d226ca5a5bfa50cc3e35b14dedeab",
       "dirty_at_start": {
@@ -49,7 +49,13 @@
           "git": "1 .M N... 100644 100644 100644 7e12f24a3a7ec07d24d2a8c20745ed575cc09d91 7e12f24a3a7ec07d24d2a8c20745ed575cc09d91 plans/roadmap.json\u0000\u0000100644 7e12f24a3a7ec07d24d2a8c20745ed575cc09d91 0\tplans/roadmap.json\u0000\u0000H plans/roadmap.json\u0000"
         }
       },
-      "task_sha256": "656652a13021fa1a4502eb2a0c473ab768f82143a61898e212f125502923c1cf"
+      "task_sha256": "98fc14d94dcf23ff8a910ea7fb9ee69724025328924e88aac0fc7166ecb4140a",
+      "completed_at": "2026-08-12T13:26:29+00:00",
+      "contract_changed": {
+        "at": "2026-08-12T13:26:29+00:00",
+        "from": "656652a13021fa1a4502eb2a0c473ab768f82143a61898e212f125502923c1cf",
+        "to": "98fc14d94dcf23ff8a910ea7fb9ee69724025328924e88aac0fc7166ecb4140a"
+      }
     }
   ]
 }

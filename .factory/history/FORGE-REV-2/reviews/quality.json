@@ -1,0 +1,65 @@
+{
+  "generated_by": "autoreview",
+  "score": 9,
+  "summary": "Faithful, minimal implementation of the plan-contract review chain: recorder validation mirrors the required_tests pattern, the brief composer is delegate-free and Windows-callable, the quality recorder converts partial/missing verdicts into structured blocking findings so the existing review_passed gate does the blocking, and pr_ready re-derives verdict coverage from evidence without trusting the recorder. Contract-free decompositions are behaviorally untouched (full pre-existing suite green unmodified).",
+  "blocking_findings": [],
+  "non_blocking_findings": [
+    {
+      "category": "lenient-backstop-parse",
+      "area": "factory/scripts/forge_cli/review_brief.py",
+      "summary": "declared_contracts silently skips malformed contract entries; intended for backstop reads of legacy evidence (the recorder enforces shape), but a comment noting that intent would stop a future tightening from breaking pr_ready on old artifacts."
+    }
+  ],
+  "residual_risks": [
+    "Evidence recorded by a pre-change recorder passes the recorder but is caught by the pr_ready backstop, which is the designed second net."
+  ],
+  "recommendation": "approve",
+  "reviewed_scope": [
+    "factory/schemas/decomposition.json",
+    "factory/schemas/review.json",
+    "factory/scripts/record_decomposition_from_json.py",
+    "factory/scripts/record_review_from_json.py",
+    "factory/scripts/forge_cli/review_brief.py",
+    "factory/scripts/forge.py",
+    "factory/scripts/pr_ready.py",
+    "factory/prompts/reviewer.md",
+    "factory/prompts/pr-ready.md",
+    "factory/tests/test_gates.py"
+  ],
+  "contract_verdicts": [
+    {
+      "contract_id": "REV2-C1",
+      "verdict": "implemented",
+      "evidence": "record_decomposition_from_json.py:169-192 validates each entry as exactly non-empty {id, statement, source} with decomposition-wide id uniqueness (seen_contract_ids at :124), refusing with task id and entry position; schema note in factory/schemas/decomposition.json (task_plan_contracts_note). Covered by test_decomposition_recorder_validates_plan_contracts."
+    },
+    {
+      "contract_id": "REV2-C2",
+      "verdict": "implemented",
+      "evidence": "forge_cli/review_brief.py:60-90 writes .factory/review-briefs/<task-id>.md (--all: all.md) via safe_factory_write_bytes and prints the repo-relative path; registered unconditionally in forge.py:55,456-462 (not gated behind the POSIX-only delegate_mod), imports only argparse/pathlib/factory_lib. Verified live: ./forge review-brief REV2-T1 and --all both compose; refusals for no id, id+--all, unknown id observed. Covered by test_review_brief_composes_contract_brief."
+    },
+    {
+      "contract_id": "REV2-C3",
+      "verdict": "implemented",
+      "evidence": "record_review_from_json.py:80-136 \u2014 quality aspect refuses non-list verdicts (:85-89), wrong keys (:96), unknown ids (:102), duplicates (:107), bad verdict values (:114), empty evidence (:120), and uncovered ids (:134); partial/missing appends {category: plan-contract-<verdict>, area: contract source, summary} to blocking_findings (:126). Covered by test_quality_review_requires_contract_verdicts."
+    },
+    {
+      "contract_id": "REV2-C4",
+      "verdict": "implemented",
+      "evidence": "pr_ready.py:121-141 re-reads quality evidence leniently and refuses unless every declared contract id maps to exactly [\"implemented\"], naming unverified ids and pointing at ./forge review-brief --all; independent of recorder enforcement by construction (reads the artifact, not the recorder's promise). Covered by test_pr_ready_blocks_on_unverified_plan_contracts."
+    },
+    {
+      "contract_id": "REV2-C5",
+      "verdict": "implemented",
+      "evidence": "reviewer.md:14-19 instructs composing the per-task brief and passing --prompt-file .factory/review-briefs/<task-id>.md plus contract_verdicts in the quality artifact; pr-ready.md:5-8 instructs ./forge review-brief --all as the closeout branch-wide prompt file."
+    },
+    {
+      "contract_id": "REV2-C6",
+      "verdict": "implemented",
+      "evidence": "All new recorder/gate branches are guarded by the presence of plan_contracts/contracts (record_decomposition_from_json.py:169 default [], record_review_from_json.py:82 'if contracts:', pr_ready.py:122 'if contracts:'); pre-existing suite passed unmodified \u2014 532 passed, 1 skipped."
+    }
+  ],
+  "skills_used": [],
+  "aspect": "quality",
+  "recorded_at": "2026-08-12T13:45:15+00:00",
+  "commit": "ffb46aaf3e537b53285ebc04453fabc3e0927688"
+}

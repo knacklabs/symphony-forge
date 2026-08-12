@@ -14,7 +14,7 @@
     "No \u2014 the recorder validates only known task fields and stores unknown keys opaquely; enforcement begins with the recorders this task itself lands."
   ],
   "task_id": "REV2-T1",
-  "input_sha256": "656652a13021fa1a4502eb2a0c473ab768f82143a61898e212f125502923c1cf",
-  "recorded_at": "2026-08-12T12:19:21+00:00",
-  "commit": "e1901659626d226ca5a5bfa50cc3e35b14dedeab"
+  "input_sha256": "98fc14d94dcf23ff8a910ea7fb9ee69724025328924e88aac0fc7166ecb4140a",
+  "recorded_at": "2026-08-12T12:55:42+00:00",
+  "commit": "ffb46aaf3e537b53285ebc04453fabc3e0927688"
 }

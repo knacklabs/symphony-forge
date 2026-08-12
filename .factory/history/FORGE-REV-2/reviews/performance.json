@@ -1,0 +1,19 @@
+{
+  "generated_by": "autoreview",
+  "score": 9,
+  "summary": "No hot paths touched. All additions are O(n) single passes over small in-memory lists (tasks, contracts, verdicts) inside CLI invocations that already read the same JSON files; review-brief adds one file write through the existing safe_factory_write_bytes path. pr_ready gains one dict build over the recorded verdicts \u2014 negligible against the subprocess and git calls already in that gate. No new I/O amplification, no added subprocesses, no repeated file reads (each artifact is loaded once per run).",
+  "blocking_findings": [],
+  "non_blocking_findings": [],
+  "residual_risks": [],
+  "recommendation": "approve",
+  "reviewed_scope": [
+    "factory/scripts/record_decomposition_from_json.py",
+    "factory/scripts/record_review_from_json.py",
+    "factory/scripts/forge_cli/review_brief.py",
+    "factory/scripts/pr_ready.py"
+  ],
+  "skills_used": [],
+  "aspect": "performance",
+  "recorded_at": "2026-08-12T13:45:16+00:00",
+  "commit": "ffb46aaf3e537b53285ebc04453fabc3e0927688"
+}

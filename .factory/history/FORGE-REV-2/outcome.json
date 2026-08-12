@@ -1,0 +1,7 @@
+{
+  "generated_by": "implementer",
+  "outcome": "Review is no longer plan-blind: decomposition tasks can declare plan_contracts (the plan invariants they must satisfy), ./forge review-brief composes the reviewer's contract prompt (per-task or --all for the branch-wide closeout), the quality review artifact must verdict every declared contract with evidence \u2014 partial or missing verdicts become blocking findings \u2014 and pr-ready refuses until every contract is verified implemented. Incomplete implementation now blocks the gate instead of passing invisibly; tasks without contracts behave exactly as before.",
+  "issue": "FORGE-REV-2",
+  "commit": "ffb46aaf3e537b53285ebc04453fabc3e0927688",
+  "recorded_at": "2026-08-12T13:45:26+00:00"
+}

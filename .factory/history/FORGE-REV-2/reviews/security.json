@@ -1,0 +1,21 @@
+{
+  "generated_by": "autoreview",
+  "score": 9,
+  "summary": "No new trust boundaries. The brief writer routes through safe_factory_write_bytes, which rejects absolute paths and '..' parts, so a hostile task id in a tampered decomposition fails closed instead of escaping .factory/ (verified: the write returns False and the command exits nonzero). Verdict input is schema- and recorder-validated with closed vocabularies (three verdict values, exact key sets), so no free-form data reaches evidence unchecked. pr_ready's backstop treats the quality artifact as untrusted input \u2014 non-dict entries and duplicate verdicts fail the implemented check rather than passing. Brief content derives only from the recorded, gate-protected decomposition; no secrets, no network, no shell.",
+  "blocking_findings": [],
+  "non_blocking_findings": [],
+  "residual_risks": [
+    "A tampered .factory/reviews/quality.json could claim implemented verdicts; unchanged trust model \u2014 evidence files are already integrity-covered by commit stamping and the frozen-gate audit, not by this change."
+  ],
+  "recommendation": "approve",
+  "reviewed_scope": [
+    "factory/scripts/forge_cli/review_brief.py",
+    "factory/scripts/record_review_from_json.py",
+    "factory/scripts/record_decomposition_from_json.py",
+    "factory/scripts/pr_ready.py"
+  ],
+  "skills_used": [],
+  "aspect": "security",
+  "recorded_at": "2026-08-12T13:45:16+00:00",
+  "commit": "ffb46aaf3e537b53285ebc04453fabc3e0927688"
+}
