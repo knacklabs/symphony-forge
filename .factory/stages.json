@@ -55,7 +55,7 @@
     {
       "id": "FORGE-WIN-1.4",
       "title": "Launchers force UTF-8 mode \u2014 no charmap crashes on Windows",
-      "status": "active",
+      "status": "done",
       "started_at": "2026-08-12T07:15:59+00:00",
       "base_sha": "9d49b3b1e760d15dbba61a6dd34350a8d8887109",
       "dirty_at_start": {
@@ -80,7 +80,8 @@
           "git": "1 .M N... 100644 100644 100644 6e3377b95dfbeced062c6afcdcd7dda9f4e08c16 6e3377b95dfbeced062c6afcdcd7dda9f4e08c16 .factory/stages.json\u0000\u0000100644 6e3377b95dfbeced062c6afcdcd7dda9f4e08c16 0\t.factory/stages.json\u0000\u0000H .factory/stages.json\u0000"
         }
       },
-      "task_sha256": "5646dcd0cd7918e23c343bf09604328b0d4d2081575764e4810069403437e6b9"
+      "task_sha256": "5646dcd0cd7918e23c343bf09604328b0d4d2081575764e4810069403437e6b9",
+      "completed_at": "2026-08-12T07:22:03+00:00"
     }
   ]
 }
