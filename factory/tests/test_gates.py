@@ -2704,6 +2704,13 @@ def test_forge_cmd_routes_git_bash_then_python_fallbacks(tmp_path):
             "ProgramFiles(x86)": str(tmp_path / "no-program-files-x86"),
             "LOCALAPPDATA": str(tmp_path / "no-local-app-data"),
         }
+        where_sh = subprocess.run(
+            ["where", "sh"],
+            capture_output=True,
+            text=True,
+            env=isolated_env,
+        )
+        assert where_sh.returncode != 0, where_sh.stdout + where_sh.stderr
         via_override = subprocess.run(
             ["cmd", "/c", str(override_case / "forge.cmd"), "--help"],
             cwd=override_case,
@@ -2716,6 +2723,19 @@ def test_forge_cmd_routes_git_bash_then_python_fallbacks(tmp_path):
         )
         assert via_override.returncode == 0, via_override.stdout + via_override.stderr
         assert via_override.stdout.splitlines() == ["OVERRIDE"]
+        override_exit = subprocess.run(
+            ["cmd", "/c", str(override_case / "forge.cmd"), "status"],
+            cwd=override_case,
+            capture_output=True,
+            text=True,
+            env={
+                **isolated_env,
+                "CLAUDE_CODE_GIT_BASH_PATH": executable_shell,
+            },
+        )
+        assert override_exit.returncode == 9, (
+            override_exit.stdout + override_exit.stderr
+        )
 
         fallback_case = tmp_path / "fallback"
         fallback_script = fallback_case / "factory" / "scripts" / "forge.py"
