@@ -593,14 +593,37 @@ def _companion_readonly_launch_ok():
         rest = shell_tokens[comp_idx + 1:]
         # Verb allowlist, not a flag denylist: other subcommands (setup,
         # cancel, task-worker) mutate state without any write flag. Options
-        # are default-deny too: --prompt-file and --cwd can exfiltrate
-        # arbitrary local files / retarget other repos, and future flags
-        # should not be trusted implicitly.
+        # are default-deny too: --cwd can retarget other repos, and future
+        # flags should not be trusted implicitly. The equals-sign form of
+        # --prompt-file stays explicitly unsupported because active shell
+        # syntax above refuses '='.
         if not rest or rest[0] not in READONLY_COMPANION_VERBS:
             return False
+        args = rest[1:]
+        prompt_flags = [idx for idx, token in enumerate(args)
+                        if token == "--prompt-file"]
+        if prompt_flags:
+            if rest[0] != "task" or len(prompt_flags) != 1:
+                return False
+            prompt_idx = prompt_flags[0]
+            if prompt_idx + 1 >= len(args) or args[prompt_idx + 1].startswith("-"):
+                return False
+            prompt_path = Path(args[prompt_idx + 1])
+            if prompt_path.is_absolute() or ".." in prompt_path.parts:
+                return False
+            try:
+                resolved_root = root.resolve()
+                resolved_prompt = (resolved_root / prompt_path).resolve()
+                valid_prompt = (resolved_prompt.is_relative_to(resolved_root)
+                                and resolved_prompt.is_file())
+            except (OSError, RuntimeError):
+                valid_prompt = False
+            if not valid_prompt:
+                return False
+            args = args[:prompt_idx] + args[prompt_idx + 2:]
         return all(
             not token.startswith("-") or token in READONLY_COMPANION_FLAGS
-            for token in rest[1:]
+            for token in args
         )
     # Companion path appears under another executor (xargs, env, sh -c,
     # an interpreter): the final argv cannot be established from text.

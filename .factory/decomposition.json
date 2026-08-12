@@ -1,0 +1,67 @@
+{
+  "generated_by": "claude-code:plan-mode",
+  "user_facing": false,
+  "status": "recorded",
+  "tasks": [
+    {
+      "id": "ROLE2-T1",
+      "title": "Guard admits read-only task --prompt-file with resolved containment; guard test matrix",
+      "objective": "Close the read-only rescue gap: _companion_readonly_launch_ok() in pre_tool_use.py admits --prompt-file on the task verb only \u2014 exactly one value, repo-relative existing regular file whose resolved path stays under the resolved repo root \u2014 replacing the explicit default-deny. Every containment failure and every currently-refused shape keeps refusing. Guard tests gain the admission case and the containment matrix; regressions stay untouched.",
+      "dependencies": [],
+      "write_scope": [
+        "factory/scripts/pre_tool_use.py",
+        "factory/tests/test_gates.py"
+      ],
+      "acceptance_criteria": [
+        "In factory/scripts/pre_tool_use.py, the explicit --prompt-file default-deny (currently ~lines 594-603) is replaced by admission logic inside _companion_readonly_launch_ok(): the flag is accepted ONLY when the verb is 'task', it appears exactly once with exactly one value (both '--prompt-file <path>' and '--prompt-file=<path>' forms handled or the unsupported form refused explicitly), and the value is a repo-relative path to an existing regular file whose fully resolved target (Path.resolve()) is contained under the resolved repo root (Path.is_relative_to). Internal symlinks that resolve inside the repo are admitted; symlinks resolving outside, absolute paths, '..' traversal, dangling paths, and directories are refused. Every refusal falls through to the existing refusal message path \u2014 no new silent failure mode, no quieter message.",
+        "The flag remains refused on 'status' and 'task-resume-candidate' verbs, and READONLY_COMPANION_FLAGS/write-shape/wrapper/shell-syntax vetting is otherwise byte-identical: the existing refusal structure is narrowed by exactly one validated admission, nothing else.",
+        "factory/tests/test_gates.py: test_hook_allows_readonly_companion_task_launch (~:4820) gains the valid prompt-file task shape (create a real brief file in the fixture repo); test_hook_denies_file_and_cwd_overrides_in_readonly_lane (~:12674) converts its prompt-file case into the containment matrix \u2014 absolute path, '..' traversal, symlink resolving outside the repo, dangling path, directory, duplicate flag/value, and the flag on a non-task verb \u2014 while retaining its --cwd and unknown-flag denials. test_companion_guard_admits_read_only_and_refuses_write_shapes (~:4593) and the quoted-write-laundering (~:4760), wrapped/computed-launch (~:12710), and shell-expansion (~:12726) regressions stay green UNMODIFIED.",
+        "Full gate suite green: uv run --with pytest python -m pytest factory/tests/test_gates.py -q."
+      ],
+      "required_tests": [
+        {
+          "id": "test_hook_allows_readonly_companion_task_launch",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_hook_denies_file_and_cwd_overrides_in_readonly_lane",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        }
+      ],
+      "verify_commands": [
+        "uv run --with pytest python -m pytest factory/tests/test_gates.py -q -k \"companion or readonly_lane\""
+      ],
+      "reviewer_focus": "This loosens a security guard: verify the admission is task-verb-scoped and value-validated with BOTH sides resolved before containment comparison; verify no other refusal got quieter or reordered; verify the containment matrix actually exercises an external symlink and a dangling path, not just lexical traversal; regressions must be diff-untouched.",
+      "plan_contracts": [
+        {
+          "id": "ROLE2-C1",
+          "statement": "The guard admits --prompt-file in the read-only lane only on the task verb, with exactly one value naming a repo-relative existing regular file whose resolved path is contained under the resolved repo root.",
+          "source": "plans/active/FORGE-ROLE-2-read-only-rescue-accepts-long-prompts-via-prompt-file.md#technical-approach"
+        },
+        {
+          "id": "ROLE2-C2",
+          "statement": "Absolute, traversal, dangling, directory, externally-resolving-symlink, duplicate-value, and wrong-verb prompt-file shapes are refused, and every pre-existing refusal (shell syntax, wrappers, write flags, --cwd, unknown flags) behaves exactly as before.",
+          "source": "plans/active/FORGE-ROLE-2-read-only-rescue-accepts-long-prompts-via-prompt-file.md#acceptance-criteria"
+        },
+        {
+          "id": "ROLE2-C3",
+          "statement": "The guard test matrix covers the admission and each containment refusal at the three named test sites, with the laundering/wrapper/expansion regression tests left unmodified.",
+          "source": "plans/active/FORGE-ROLE-2-read-only-rescue-accepts-long-prompts-via-prompt-file.md#technical-approach"
+        },
+        {
+          "id": "ROLE2-C4",
+          "statement": "A multi-paragraph brief reaches Codex through the read-only file route in a live end-to-end run, and the same invocation with a traversal path is refused live.",
+          "source": "plans/active/FORGE-ROLE-2-read-only-rescue-accepts-long-prompts-via-prompt-file.md#verify-plan"
+        }
+      ]
+    }
+  ],
+  "project": "",
+  "story": "FORGE-ROLE-2",
+  "epic": "strict-role-split",
+  "plan_file": "plans/active/FORGE-ROLE-2-read-only-rescue-accepts-long-prompts-via-prompt-file.md",
+  "plan_sha256": "606c67138045ae6f2e2f9296669e89cf570beb7ecb999b94c0e687a24dc61901",
+  "commit": "03a769b770866d56f78bba8dd0150ce77bf10c25"
+}

@@ -4818,8 +4818,13 @@ def test_hook_allows_readonly_companion_mentions(repo):
 
 
 def test_hook_allows_readonly_companion_task_launch(repo):
+    brief = repo / "brief.md"
+    brief.write_text("Inspect the sender chain.\nKeep this read-only.\n")
+    (repo / "brief-link.md").symlink_to(brief)
     for command in (
         COMPANION + " --effort xhigh 'explore the sender chain'",
+        COMPANION + " --prompt-file brief.md",
+        COMPANION + " --prompt-file brief-link.md",
         "node /x/codex-companion.mjs task-resume-candidate --json",
     ):
         code, out = hook(repo, {"tool_name": "Bash", "permission_mode": "default",
@@ -12672,9 +12677,26 @@ def test_assert_target_file_destination_refuses_a_directory_or_symlink(tmp_path:
 
 # --- companion read-only lane hardening (ported from vendored gate fixes) ---
 def test_hook_denies_file_and_cwd_overrides_in_readonly_lane(repo):
-    """--prompt-file exfiltrates local files; options are default-deny."""
+    """Prompt files stay repo-contained; other options remain default-deny."""
+    (repo / "brief.md").write_text("read only\n")
+    (repo / "brief-dir").mkdir()
+    outside = repo.parent / "outside.md"
+    outside.write_text("outside\n")
+    (repo / "outside-link.md").symlink_to(outside)
+    (repo / "dangling-link.md").symlink_to(repo.parent / "missing.md")
     for cmd in (
-        "node /x/codex-companion.mjs task --prompt-file /etc/passwd go",
+        f"node /x/codex-companion.mjs task --prompt-file {outside} go",
+        "node /x/codex-companion.mjs task --prompt-file nested/../brief.md go",
+        "node /x/codex-companion.mjs task --prompt-file outside-link.md go",
+        "node /x/codex-companion.mjs task --prompt-file dangling-link.md go",
+        "node /x/codex-companion.mjs task --prompt-file brief-dir go",
+        ("node /x/codex-companion.mjs task --prompt-file brief.md "
+         "--prompt-file brief.md go"),
+        "node /x/codex-companion.mjs task --prompt-file",
+        "node /x/codex-companion.mjs status --prompt-file brief.md",
+        ("node /x/codex-companion.mjs task-resume-candidate "
+         "--prompt-file brief.md"),
+        "node /x/codex-companion.mjs task --prompt-file=brief.md go",
         "node /x/codex-companion.mjs task --cwd /other/repo go",
         "node /x/codex-companion.mjs task --unknown-flag go",
     ):

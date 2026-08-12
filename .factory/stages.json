@@ -1,0 +1,35 @@
+{
+  "issue": "FORGE-ROLE-2",
+  "stages": [
+    {
+      "id": "ROLE2-T1",
+      "title": "Guard admits read-only task --prompt-file with resolved containment; guard test matrix",
+      "status": "active",
+      "started_at": "2026-08-12T18:03:37+00:00",
+      "base_sha": "03a769b770866d56f78bba8dd0150ce77bf10c25",
+      "dirty_at_start": {
+        ".factory/decomposition.json": {
+          "digest": "e90a9bcc5dce0718b8e9a194a7b4dde32967278507c3140589f43cf57791d1a8",
+          "git": "? .factory/decomposition.json\u0000\u0000\u0000"
+        },
+        ".factory/events.jsonl": {
+          "digest": "c1045f3a08489227891eda42be7881eb18646ff1ed929a63aa09c1a1cdea64de",
+          "git": "1 .M N... 100644 100644 100644 a867a24e2dc22a97997ae1856f5e50fc9fa93c8e a867a24e2dc22a97997ae1856f5e50fc9fa93c8e .factory/events.jsonl\u0000\u0000100644 a867a24e2dc22a97997ae1856f5e50fc9fa93c8e 0\t.factory/events.jsonl\u0000\u0000H .factory/events.jsonl\u0000"
+        },
+        ".factory/grills/tasks/ROLE2-T1.json": {
+          "digest": "b0952761cd55c77117246a0a6e25481633b7d251ce15ee849ef9c0d8f04fccfc",
+          "git": "? .factory/grills/tasks/ROLE2-T1.json\u0000\u0000\u0000"
+        },
+        ".factory/run.json": {
+          "digest": "9e80c59ccf6356517a0231cdcf9eb415dadf3b235945388dd8c7eed24929e3be",
+          "git": "1 .M N... 100644 100644 100644 16dddc8c1026f2ff5577cd2bfccb2b9eba0162bd 16dddc8c1026f2ff5577cd2bfccb2b9eba0162bd .factory/run.json\u0000\u0000100644 16dddc8c1026f2ff5577cd2bfccb2b9eba0162bd 0\t.factory/run.json\u0000\u0000H .factory/run.json\u0000"
+        },
+        ".factory/stages.json": {
+          "digest": "445e5deae734855e96ef300a520838b898e6cf93efd8af5c7acd46d4e8612ae4",
+          "git": "? .factory/stages.json\u0000\u0000\u0000"
+        }
+      },
+      "task_sha256": "5f4a566851a68c3ee09fcf2c2bc2771bd90e89b1c402f816e6a1867a827c4bf2"
+    }
+  ]
+}
