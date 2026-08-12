@@ -2655,11 +2655,14 @@ def test_forge_cmd_routes_git_bash_then_python_fallbacks(tmp_path):
     assert shim.index("where sh") < shim.index("where py") < shim.index("where python")
     assert "%ProgramFiles%\\Git\\usr\\bin\\sh.exe" in shim
     assert "%LOCALAPPDATA%\\Programs\\Git\\usr\\bin\\sh.exe" in shim
+    assert "call" not in shim.lower()
+    assert shim.count('if /i "%%~xI"==".exe"') == 2
+    assert shim.count('if /i "%%~xJ"==".exe"') == 1
     assert (
-        '"%~1" "%~dp0forge" --help >nul 2>nul\n'
-        'if not errorlevel 1 set "FORGE_SH=%~1"'
+        ':run_sh\n'
+        '"%FORGE_SH%" "%~dp0forge" %*\n'
+        'exit /b %errorlevel%'
     ) in shim
-    assert '"%FORGE_SH%" "%~dp0forge" %*' in shim
     assert 'py -3 "%~dp0factory\\scripts\\forge.py" %*' in shim
     assert 'python "%~dp0factory\\scripts\\forge.py" %*' in shim
     assert shim.count("sys.version_info >= (3, 10)") == 2
@@ -2678,18 +2681,102 @@ def test_forge_cmd_routes_git_bash_then_python_fallbacks(tmp_path):
     assert "exit /b 2" in shim
 
     if os.name == "nt":
-        fake_shell = tmp_path / "git-bash.cmd"
-        shell_log = tmp_path / "git-bash.log"
-        fake_shell.write_text(f'@echo called>>"{shell_log}"\n@exit /b 0\n')
+        executable_shell = shutil.which("sh")
+        assert executable_shell and Path(executable_shell).suffix.lower() == ".exe"
+        override_case = tmp_path / "override"
+        override_case.mkdir()
+        shutil.copy2(HARNESS / "forge.cmd", override_case / "forge.cmd")
+        (override_case / "forge").write_bytes(
+            b"#!/bin/sh\n"
+            b"if [ \"$1\" = \"--help\" ]; then printf 'OVERRIDE\\n'; exit 0; fi\n"
+            b"exit 9\n"
+        )
+        path_without_sh = os.pathsep.join(
+            entry
+            for entry in os.environ["PATH"].split(os.pathsep)
+            if shutil.which("sh", path=entry) is None
+        )
+        assert shutil.which("sh", path=path_without_sh) is None
+        isolated_env = {
+            **os.environ,
+            "PATH": path_without_sh,
+            "ProgramFiles": str(tmp_path / "no-program-files"),
+            "ProgramFiles(x86)": str(tmp_path / "no-program-files-x86"),
+            "LOCALAPPDATA": str(tmp_path / "no-local-app-data"),
+        }
         via_override = subprocess.run(
-            ["cmd", "/c", str(HARNESS / "forge.cmd"), "--help"],
-            cwd=HARNESS,
+            ["cmd", "/c", str(override_case / "forge.cmd"), "--help"],
+            cwd=override_case,
             capture_output=True,
             text=True,
-            env={**os.environ, "CLAUDE_CODE_GIT_BASH_PATH": str(fake_shell)},
+            env={
+                **isolated_env,
+                "CLAUDE_CODE_GIT_BASH_PATH": executable_shell,
+            },
         )
         assert via_override.returncode == 0, via_override.stdout + via_override.stderr
-        assert shell_log.read_text().splitlines() == ["called", "called"]
+        assert via_override.stdout.splitlines() == ["OVERRIDE"]
+
+        fallback_case = tmp_path / "fallback"
+        fallback_script = fallback_case / "factory" / "scripts" / "forge.py"
+        fallback_script.parent.mkdir(parents=True)
+        shutil.copy2(HARNESS / "forge.cmd", fallback_case / "forge.cmd")
+        fallback_script.write_text("print('PYTHON')\n")
+
+        shell_log = fallback_case / "git-bash.log"
+        cmd_override = fallback_case / "git-bash.cmd"
+        cmd_override.write_text(f'@echo called>>"{shell_log}"\n@exit /b 0\n')
+        extensionless_override = fallback_case / "extensionless-sh"
+        extensionless_batch = extensionless_override.with_suffix(".cmd")
+        extensionless_batch.write_text(
+            f'@echo called>>"{shell_log}"\n@exit /b 0\n'
+        )
+        for rejected_shell in (cmd_override, extensionless_override):
+            rejected_override = subprocess.run(
+                ["cmd", "/c", str(fallback_case / "forge.cmd"), "--help"],
+                cwd=fallback_case,
+                capture_output=True,
+                text=True,
+                env={
+                    **isolated_env,
+                    "CLAUDE_CODE_GIT_BASH_PATH": str(rejected_shell),
+                },
+            )
+            assert rejected_override.returncode == 0, (
+                rejected_override.stdout + rejected_override.stderr
+            )
+            assert rejected_override.stdout.splitlines() == ["PYTHON"]
+            assert not shell_log.exists()
+
+        literal_case = tmp_path / "literal-percent"
+        literal_case.mkdir()
+        shutil.copy2(HARNESS / "forge.cmd", literal_case / "forge.cmd")
+        (literal_case / "forge").write_bytes(
+            b'#!/bin/sh\n'
+            b'if [ "$1" = "--help" ]; then exit 0; fi\n'
+            b"printf 'ARG=%s\\n' \"$2\"\n"
+        )
+        runner = literal_case / "run-literal.cmd"
+        runner.write_text(
+            '@echo off\n'
+            f'set "CLAUDE_CODE_GIT_BASH_PATH={executable_shell}"\n'
+            f'"{literal_case / "forge.cmd"}" capture %FORGE_LITERAL%\n'
+        )
+        literal_percent = subprocess.run(
+            ["cmd", "/c", str(runner)],
+            cwd=literal_case,
+            capture_output=True,
+            text=True,
+            env={
+                **os.environ,
+                "FORGE_LITERAL": "%FORGE_LITERAL_PERCENT%",
+                "FORGE_LITERAL_PERCENT": "expanded",
+            },
+        )
+        assert literal_percent.returncode == 0, (
+            literal_percent.stdout + literal_percent.stderr
+        )
+        assert literal_percent.stdout.splitlines() == ["ARG=%FORGE_LITERAL_PERCENT%"]
 
         result = subprocess.run(
             ["cmd", "/c", str(HARNESS / "forge.cmd"), "--help"],
@@ -2698,18 +2785,6 @@ def test_forge_cmd_routes_git_bash_then_python_fallbacks(tmp_path):
             text=True,
         )
         assert result.returncode == 0, result.stdout + result.stderr
-
-        fake_bin = tmp_path / "incompatible-shell"
-        fake_bin.mkdir()
-        (fake_bin / "sh.cmd").write_text("@exit /b 9\n")
-        fallback = subprocess.run(
-            ["cmd", "/c", str(HARNESS / "forge.cmd"), "--help"],
-            cwd=HARNESS,
-            capture_output=True,
-            text=True,
-            env={**os.environ, "PATH": str(fake_bin) + os.pathsep + os.environ["PATH"]},
-        )
-        assert fallback.returncode == 0, fallback.stdout + fallback.stderr
 
 
 def test_windows_autocrlf_checkout_preserves_forge_launcher(tmp_path):

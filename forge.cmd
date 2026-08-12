@@ -1,10 +1,16 @@
 @echo off
 setlocal
 
-if defined CLAUDE_CODE_GIT_BASH_PATH call :probe_sh "%CLAUDE_CODE_GIT_BASH_PATH%"
+if defined CLAUDE_CODE_GIT_BASH_PATH for %%I in ("%CLAUDE_CODE_GIT_BASH_PATH%") do if /i "%%~xI"==".exe" (
+  "%%~I" "%~dp0forge" --help >nul 2>nul
+  if not errorlevel 1 set "FORGE_SH=%%~I"
+)
 if defined FORGE_SH goto run_sh
 
-for /f "delims=" %%I in ('where sh 2^>nul') do if not defined FORGE_SH call :probe_sh "%%I"
+for /f "delims=" %%I in ('where sh 2^>nul') do if not defined FORGE_SH for %%J in ("%%I") do if /i "%%~xJ"==".exe" (
+  "%%~J" "%~dp0forge" --help >nul 2>nul
+  if not errorlevel 1 set "FORGE_SH=%%~J"
+)
 if defined FORGE_SH goto run_sh
 
 for %%I in (
@@ -17,14 +23,12 @@ for %%I in (
   "%LOCALAPPDATA%\Programs\Git\bin\bash.exe"
   "%LOCALAPPDATA%\Programs\Git\usr\bin\bash.exe"
   "%LOCALAPPDATA%\Programs\Git\usr\bin\sh.exe"
-) do if not defined FORGE_SH if exist "%%~I" call :probe_sh "%%~I"
+) do if not defined FORGE_SH if exist "%%~I" if /i "%%~xI"==".exe" (
+  "%%~I" "%~dp0forge" --help >nul 2>nul
+  if not errorlevel 1 set "FORGE_SH=%%~I"
+)
 if defined FORGE_SH goto run_sh
 goto python
-
-:probe_sh
-"%~1" "%~dp0forge" --help >nul 2>nul
-if not errorlevel 1 set "FORGE_SH=%~1"
-exit /b 0
 
 :run_sh
 "%FORGE_SH%" "%~dp0forge" %*

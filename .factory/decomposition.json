@@ -93,9 +93,37 @@
         }
       ],
       "reviewer_focus": "The guard must sit at usage sites, not blanket try/except around real errors; delegate's POSIX process model is untouched beyond import hygiene (WIN-3 owns it); no behavior change on POSIX - the suite and the live self-test are the proof."
+    },
+    {
+      "id": "FORGE-WIN-1.3",
+      "title": "forge.cmd accepts only executable shells \u2014 no call, no reparse",
+      "objective": "The cmd shim has zero second-expansion surface: shell candidates are accepted only with an explicit .exe extension (batch and extensionless/PATHEXT-resolvable targets rejected as probe failures, falling through to the python chain), every invocation is direct \u2014 call appears nowhere \u2014 and exit codes propagate. Earlier call-based rounds were proven unsound (call always reparses); executables-only is the settled terminal design.",
+      "dependencies": [
+        "FORGE-WIN-1.2"
+      ],
+      "write_scope": [
+        "forge.cmd",
+        "factory/tests/test_gates.py"
+      ],
+      "acceptance_criteria": [
+        "ALLOWLIST, not denylist: a shell candidate is accepted ONLY with an explicit .exe extension (%~x1 compared case-insensitively); everything else \u2014 .cmd, .bat, extensionless paths that cmd would resolve via PATHEXT \u2014 is rejected as a probe failure and falls through. No call anywhere; executables invoked directly at both sites. This closes the PATHEXT-resolution leak (extensionless path passing a denylist, chaining to a batch file without returning).",
+        "Override test legs use the runner's REAL sh.exe path directly (never a copied exe \u2014 MSYS DLL deps make copies non-portable): override-honored is proven by stripping git paths from PATH so where-sh fails and success can only come via CLAUDE_CODE_GIT_BASH_PATH; a .cmd override and an extensionless override are each rejected and fall through to the python chain; the literal-percent leg stays; shim assertions pin the .exe allowlist and no-call.",
+        "POSIX suite untouched and green; PR 80 windows-hook-gates green."
+      ],
+      "verify_commands": [
+        "uvx --with pytest python3 -m pytest factory/tests/test_gates.py -q -k \"forge_cmd or hook_health\""
+      ],
+      "required_tests": [
+        {
+          "id": "test_forge_cmd_routes_git_bash_then_python_fallbacks",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        }
+      ],
+      "reviewer_focus": "The .exe allowlist and absence of call are the invariants \u2014 flag ANY reintroduction of call or non-.exe acceptance. Errorlevel must propagate through direct invocation. The override tests must not copy sh.exe (MSYS DLL deps); they use the real path with PATH stripped. Windows CI is the proof."
     }
   ],
   "project": "",
   "plan_sha256": "3822e5183db142bcb5560cda653d169c7e36d6ced21307807b7ed7857b6874c3",
-  "commit": "104c59b5fef8a6f3a7c546d6ae1bacd263826585"
+  "commit": "d489da3d193e64bc0bd4a5fdd83a59c5570a9949"
 }

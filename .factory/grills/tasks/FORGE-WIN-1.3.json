@@ -1,0 +1,20 @@
+{
+  "generated_by": "griller",
+  "gate": "task",
+  "verdict": "pass",
+  "gaps": [
+    "Does call change errorlevel semantics for the exe path?",
+    "Is the fake .cmd shell a legitimate simulation?"
+  ],
+  "contradictions": [],
+  "resolutions": [
+    "call sets errorlevel from the callee for both exe and batch; exit /b %errorlevel% after call propagates identically - the exe path is behavior-identical.",
+    "Yes: the shim must be robust to any target the env var can name; call handles both classes, so the test fake stays valid and pins the robustness."
+  ],
+  "open_items": [],
+  "notes": "Micro-task from windows CI failure on PR 80 (rc 1, swallowed output): batch chaining without call. Evidence: job 93875778405.",
+  "task_id": "FORGE-WIN-1.3",
+  "input_sha256": "5872f1346518bd57fdd8ea40e0709d9c3745d928daf2d125766797726e2702bf",
+  "recorded_at": "2026-08-12T03:58:12+00:00",
+  "commit": "d489da3d193e64bc0bd4a5fdd83a59c5570a9949"
+}
