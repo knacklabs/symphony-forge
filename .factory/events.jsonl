@@ -968,3 +968,9 @@
 {"event": "review-security", "generated_by": "autoreview", "at": "2026-08-12T13:45:16+00:00", "story": "FORGE-REV-2"}
 {"event": "shipped", "generated_by": "orchestrator", "at": "2026-08-12T13:45:26+00:00", "story": "FORGE-REV-2", "detail": "Review is no longer plan-blind: decomposition tasks can declare plan_contracts (the plan invariants they must satisfy), ./forge review-brief composes the reviewer's contract prompt (per-task or --all "}
 {"event": "pr-linked", "generated_by": "orchestrator", "at": "2026-08-12T14:00:54+00:00", "story": "FORGE-REV-2", "detail": "knacklabs/symphony-forge#81"}
+{"event": "spec-draft", "generated_by": "orchestrator", "at": "2026-08-12T15:20:42+00:00", "detail": "rescue-prompt-file: Read-only rescue accepts long prompts via prompt-file"}
+{"event": "spec-confirmed", "generated_by": "orchestrator", "at": "2026-08-12T15:21:01+00:00", "detail": "rescue-prompt-file"}
+{"event": "roadmap-link-spec", "generated_by": "orchestrator", "at": "2026-08-12T15:21:01+00:00", "story": "FORGE-ROLE-2", "detail": "docs/specs/rescue-prompt-file.md"}
+{"event": "intake", "generated_by": "orchestrator", "at": "2026-08-12T15:21:01+00:00", "story": "FORGE-ROLE-2", "detail": "Read-only rescue accepts long prompts via prompt-file"}
+{"event": "plan-human-approved", "generated_by": "human", "at": "2026-08-12T18:02:33+00:00", "story": "FORGE-ROLE-2", "detail": "FORGE-ROLE-2 approved by Ravi (vrknetha)"}
+{"event": "plan-approved", "generated_by": "planner-high", "at": "2026-08-12T18:02:33+00:00", "story": "FORGE-ROLE-2", "detail": "plans/active/FORGE-ROLE-2-read-only-rescue-accepts-long-prompts-via-prompt-file.md"}

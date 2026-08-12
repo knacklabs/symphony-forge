@@ -1,0 +1,22 @@
+{
+  "generated_by": "griller",
+  "gate": "plan",
+  "verdict": "pass",
+  "gaps": [
+    "Is admitting a file path a write side-channel \u2014 can a hostile brief file turn a read-only run into writes?",
+    "Does resolved-containment handle the macOS /tmp-symlink and worktree cases the suite runs under?",
+    "The plugin rescue agent is user-state \u2014 does the story fail if it never forwards --prompt-file?",
+    "Why leave the companion 'result' verb denial out of scope when it just forced log-tailing?"
+  ],
+  "contradictions": [],
+  "resolutions": [
+    "No: the sandbox mode is set by the invocation shape (no write flags), not by prompt content; the brief is data to the model exactly as delegate's composed briefs already are.",
+    "Both sides are resolved before comparison (Path.resolve() on file and root, is_relative_to), and the test matrix pins absolute/traversal/external-symlink/dangling cases so the suite proves it in its own environment.",
+    "No: the guard admission alone satisfies the roadmap AC via direct invocation, which is the documented fallback the harness adapter already teaches; plugin forwarding is an upstream nicety.",
+    "Scope discipline: it is a different verb with different output semantics; ledgered as a deferral with a revisit trigger instead of riding this bounded stage."
+  ],
+  "input_sha256": "9ef28938b7e3040037c72e058930e9cf1e2fb8369632b63ee1b6c610f430b43a",
+  "issue": "FORGE-ROLE-2",
+  "recorded_at": "2026-08-12T17:59:57+00:00",
+  "commit": "55016aaf5c1d56aec2101c69790c439bb5ecfc9f"
+}

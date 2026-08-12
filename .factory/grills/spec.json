@@ -3,17 +3,17 @@
   "gate": "spec",
   "verdict": "pass",
   "gaps": [
-    "Reviews are recorded once per story while plan_contracts are per-task \u2014 which contracts must the single quality artifact verdict?",
-    "Where does the review-brief composer live given delegate.py is gated off on Windows?",
-    "What stops contract ids colliding across tasks, making verdicts ambiguous?"
+    "Is a prompt FILE actually inert, or can its content reach a shell later in the companion?",
+    "Does admitting --prompt-file on read-only calls open a write side-channel (a hostile brief instructing Codex to write)?",
+    "Why not reuse forge delegate's brief file mechanism instead of a guard change?"
   ],
   "contradictions": [],
   "resolutions": [
-    "The quality artifact must carry a verdict for EVERY contract declared by ANY task in the recorded decomposition; the recorder refuses partial coverage.",
-    "A small sibling forge_cli module with no delegate/companion imports, registered unconditionally in forge.py \u2014 brief composition is pure file writing and must work on Windows.",
-    "The decomposition recorder enforces contract-id uniqueness across the whole decomposition, like task ids."
+    "The companion invokes Codex with a fixed shell-free argv and passes the file path through; content is read by the runtime as prompt data \u2014 the same trust shape delegate already relies on for its composed briefs.",
+    "No: read-only invocations run the companion sandboxed without write access; the guard change only affects how the prompt travels, not the sandbox mode \u2014 write-shaped invocations keep routing to delegate.",
+    "Delegate is stage-bound (task id, write derivation, evidence recording); rescue is the anytime read-only route with no stage \u2014 the file hand-off is the shared pattern, the lifecycles differ deliberately."
   ],
-  "input_sha256": "5af1aa36383ff01fe973ad1ad07f46e414f59c02eb6ac48859369c8ccd6b9efa",
-  "recorded_at": "2026-08-12T12:15:26+00:00",
-  "commit": "e1901659626d226ca5a5bfa50cc3e35b14dedeab"
+  "input_sha256": "a64d94e010fb76c8b0fd9b861b0986ee27ccb9ae105b10bee624ad55f4504f27",
+  "recorded_at": "2026-08-12T15:21:00+00:00",
+  "commit": "55016aaf5c1d56aec2101c69790c439bb5ecfc9f"
 }

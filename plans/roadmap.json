@@ -592,12 +592,12 @@
         "The rescue route works with a multi-paragraph brief, live-verified"
       ],
       "order": 27,
-      "status": "pending",
+      "status": "active",
       "epic": "strict-role-split",
       "skill": "backend",
       "depends_on": [],
       "origin": "adhoc",
-      "spec_debt_reason": "guard allowlist gap found dogfooding WIN-1 exploration: heredoc-wrapped long prompts are correctly refused, but the clean file route is not admitted"
+      "spec": "docs/specs/rescue-prompt-file.md"
     },
     {
       "key": "FORGE-WIN-2",
@@ -675,7 +675,7 @@
     }
   ],
   "generated_by": "human",
-  "updated_at": "2026-08-12T13:45:26+00:00",
+  "updated_at": "2026-08-12T15:21:01+00:00",
   "epics": [
     {
       "id": "symphony-forge",
