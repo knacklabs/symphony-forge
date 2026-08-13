@@ -1,0 +1,11 @@
+{
+  "event": "done",
+  "id": "Q-0058-197c",
+  "profile": "quickfix",
+  "reason": "Board follow-up to #86: half-width slide-in panels, reading-pane fill (#drawer .md max-width), and md() paragraph reflow of hard-wrapped prose",
+  "started_at": "2026-08-13T07:44:42+00:00",
+  "completed_at": "2026-08-13T07:44:57+00:00",
+  "files": [
+    "factory/board/index.html"
+  ]
+}
