@@ -1,13 +1,11 @@
 {
+  "event": "open",
   "id": "Q-0056-70d8",
   "profile": "lite",
   "reason": "record_review_from_json.py demands plan-contract verdicts from the protected decomposition twin even after the story shipped (pr_ready cleans only .factory/), taxing every post-ship quickfix quality review; one-line active-decomposition guard + regression test",
   "started_at": "2026-08-13T02:56:38+00:00",
   "max_files": 5,
-  "files": [
-    "factory/scripts/record_review_from_json.py",
-    "factory/tests/test_gates.py"
-  ],
+  "files": [],
   "harness_source": true,
   "by": "Ravi (vrknetha)",
   "base_sha": "245bdae17c2ebffa74f5fb6c26ebf4f76412a864"

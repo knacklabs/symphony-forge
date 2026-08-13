@@ -11714,6 +11714,30 @@ def test_quality_review_requires_contract_verdicts(repo, tmp_path):
     assert code == 0, out
 
 
+def test_lite_quality_review_ignores_shipped_plan_contracts(repo, tmp_path):
+    sign_off(repo)
+    intake(repo)
+    save_plan(repo, tmp_path)
+    task = {**DECOMP["tasks"][0], "plan_contracts": [{
+        "id": "C1", "statement": "first statement", "source": "plan.md#first",
+    }]}
+    code, out = run(repo, "record_decomposition_from_json.py", stdin=json.dumps(
+        {**DECOMP, "tasks": [task]}))
+    assert code == 0, out
+
+    state = run_state(repo)
+    (repo / ".factory" / "run.json").write_text(json.dumps({
+        "project": state["project"], "phase": "shipped",
+    }))
+    code, out = run(repo, "forge.py", "mode", "lite", "--by", "test",
+                    "--reason", "x")
+    assert code == 0, out
+
+    code, out = run(repo, "record_review_from_json.py", "--aspect", "quality",
+                    stdin=json.dumps(review_payload()))
+    assert code == 0, out
+
+
 def test_pr_ready_blocks_on_unverified_plan_contracts(repo, tmp_path):
     sign_off(repo)
     intake(repo)

@@ -1,0 +1,102 @@
+{
+  "event": "done",
+  "id": "Q-0055-8712",
+  "profile": "lite",
+  "by": "Ravi (vrknetha)",
+  "reason": "D-0017 recurring strand: pr-link's [skip ci] commit leaves required scaffold-check Expected forever on every PR; bounded 2-file workflow+test fix, proven by the next PR",
+  "base_sha": "b30be6e9faf44dbe5812062df871b3eef7a9ae9b",
+  "started_at": "2026-08-13T02:47:47+00:00",
+  "completed_at": "2026-08-13T02:56:29+00:00",
+  "files": [
+    "factory/tests/test_gates.py"
+  ],
+  "reviews": {
+    "quality": {
+      "generated_by": "autoreview",
+      "score": 9,
+      "summary": "Correct retrigger design: pr-link moves behind factory-scaffold completion (success + same-repo + PR-attached guards), preserves the story-resolution/already-linked logic and the skip-ci link commit verbatim, and carries scaffold-check to the new head as a status with provenance (source sha + run URL). The self-referential edge is handled by construction: on this change's own PR neither workflow version can fire, so the PR merges plainly. Content pins extended so a future edit that drops the guard pairing or the status context fails the suite.",
+      "blocking_findings": [],
+      "non_blocking_findings": [
+        {
+          "category": "output-delimiter-collision",
+          "area": ".github/workflows/pr-link.yml",
+          "summary": "The PR-body heredoc into GITHUB_OUTPUT uses a fixed EOF delimiter; a body line equal to EOF truncates parsing (degraded ticket detection, no privilege gain) \u2014 tolerable under the same-repo guard, random delimiter if it ever bites."
+        },
+        {
+          "category": "single-context-carry",
+          "area": ".github/workflows/pr-link.yml",
+          "summary": "Only scaffold-check is carried; if branch protection later adds required contexts the strand returns for those \u2014 revisit trigger noted in D-0017's ledger entry."
+        }
+      ],
+      "residual_risks": [
+        "workflow_run triggers execute the default-branch workflow file, so the new behavior arms only after merge; until then no pr-link fires on this PR by construction.",
+        "contract_verdicts below restate the SHIPPED FORGE-ROLE-2 story's contracts: the recorder demands them because pr_ready never clears the protected decomposition twin (bug found live in this window; fix ledgered as its own lite window). They are truthful but irrelevant to this diff."
+      ],
+      "contract_verdicts": [
+        {
+          "contract_id": "ROLE2-C1",
+          "verdict": "implemented",
+          "evidence": "Shipped in PR #82 (merged ef239a9): pre_tool_use.py task-verb --prompt-file admission with resolved containment; carried from .factory/history/FORGE-ROLE-2/reviews/quality.json."
+        },
+        {
+          "contract_id": "ROLE2-C2",
+          "verdict": "implemented",
+          "evidence": "Shipped in PR #82: containment/refusal matrix intact; carried from .factory/history/FORGE-ROLE-2/reviews/quality.json."
+        },
+        {
+          "contract_id": "ROLE2-C3",
+          "verdict": "implemented",
+          "evidence": "Shipped in PR #82: guard tests extended at the three sites, regressions untouched; carried from .factory/history/FORGE-ROLE-2/reviews/quality.json."
+        },
+        {
+          "contract_id": "ROLE2-C4",
+          "verdict": "implemented",
+          "evidence": "Shipped in PR #82: live end-to-end run both directions (thread 019ff72c-f8a9-7d72-b449-2b7a1f7755fb); carried from .factory/history/FORGE-ROLE-2/reviews/quality.json."
+        }
+      ],
+      "recommendation": "approve",
+      "reviewed_scope": [
+        ".github/workflows/pr-link.yml",
+        "factory/tests/test_gates.py"
+      ],
+      "skills_used": [],
+      "aspect": "quality",
+      "recorded_at": "2026-08-13T02:56:28+00:00",
+      "commit": "245bdae17c2ebffa74f5fb6c26ebf4f76412a864"
+    },
+    "performance": {
+      "generated_by": "autoreview",
+      "score": 9,
+      "summary": "One extra API GET (PR body) and one POST (status) per link event; the job now runs once per scaffold completion instead of once per PR event wave, which is strictly fewer runs. No hot path \u2014 CI-side only.",
+      "blocking_findings": [],
+      "non_blocking_findings": [],
+      "residual_risks": [],
+      "recommendation": "approve",
+      "reviewed_scope": [
+        ".github/workflows/pr-link.yml"
+      ],
+      "skills_used": [],
+      "aspect": "performance",
+      "recorded_at": "2026-08-13T02:52:36+00:00",
+      "commit": "245bdae17c2ebffa74f5fb6c26ebf4f76412a864"
+    },
+    "security": {
+      "generated_by": "autoreview",
+      "score": 8,
+      "summary": "The carried status is a vouching primitive, so the lens is: can it vouch falsely? It posts only when the triggering factory-scaffold run CONCLUDED success on the same PR head lineage, from a same-repo PR, and the only diff between vouched-for and vouched-on heads is the bot's own events.jsonl commit. statuses:write is the minimal added permission; the token is repo-scoped. PR body is fetched server-side and enters only a python env var and a GITHUB_OUTPUT heredoc (collision noted in quality; no shell interpolation of the body occurs). Fork PRs are excluded by the head_repository guard.",
+      "blocking_findings": [],
+      "non_blocking_findings": [],
+      "residual_risks": [
+        "A maintainer force-pushing between scaffold completion and the status POST could in principle receive the carried status on unrelated content; the window is seconds, the actor is a maintainer, and branch protection still requires the other checks \u2014 accepted."
+      ],
+      "recommendation": "approve",
+      "reviewed_scope": [
+        ".github/workflows/pr-link.yml"
+      ],
+      "skills_used": [],
+      "aspect": "security",
+      "recorded_at": "2026-08-13T02:52:36+00:00",
+      "commit": "245bdae17c2ebffa74f5fb6c26ebf4f76412a864"
+    }
+  }
+}

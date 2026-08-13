@@ -77,7 +77,9 @@ review["aspect"] = args.aspect
 for key in ("blocking_findings", "non_blocking_findings"):
     review[key] = ensure_findings(key, payload.get(key))
 
-if args.aspect == "quality":
+# The protected decomposition twin survives a ship (pr_ready cleans only .factory/),
+# so a shipped story's contracts must not demand later quickfix quality-review verdicts.
+if args.aspect == "quality" and state.get("decomposition_status") == "recorded":
     decomposition = load_json(protected_decomposition_state_path(root), default={})
     contracts = declared_contracts(decomposition)
     if contracts:
