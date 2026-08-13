@@ -1,34 +1,51 @@
 name: pr-link
 
 on:
-  pull_request:
-    types: [opened, reopened, synchronize, edited]
+  workflow_run:
+    workflows: [factory-scaffold]
+    types: [completed]
 
 permissions:
   contents: write
+  statuses: write
 
 concurrency:
-  group: pr-link-${{ github.event.pull_request.number }}
+  group: pr-link-${{ github.event.workflow_run.pull_requests[0].number }}
   cancel-in-progress: false
 
 jobs:
   link-pr:
-    if: github.event.pull_request.head.repo.full_name == github.repository
+    if: >-
+      github.event.workflow_run.event == 'pull_request' &&
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.head_repository.full_name == github.repository &&
+      github.event.workflow_run.pull_requests[0].number != ''
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.pull_request.head.ref }}
+          ref: ${{ github.event.workflow_run.head_branch }}
           fetch-depth: 0
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
+      - name: Fetch the PR body
+        id: pr
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.workflow_run.pull_requests[0].number }}
+        run: |
+          {
+            echo 'body<<EOF'
+            gh api "repos/$GITHUB_REPOSITORY/pulls/$PR_NUMBER" --jq .body
+            echo EOF
+          } >> "$GITHUB_OUTPUT"
       - name: Resolve the story and check the loop guard
         id: link
         env:
-          HEAD_BRANCH: ${{ github.event.pull_request.head.ref }}
-          PR_BODY: ${{ github.event.pull_request.body }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
+          HEAD_BRANCH: ${{ github.event.workflow_run.head_branch }}
+          PR_BODY: ${{ steps.pr.outputs.body }}
+          PR_NUMBER: ${{ github.event.workflow_run.pull_requests[0].number }}
         run: |
           python3 - <<'PY'
           import os
@@ -76,7 +93,7 @@ jobs:
       - name: Commit the durable link to the PR branch
         if: steps.link.outputs.story != '' && steps.link.outputs.already_linked != 'true'
         env:
-          HEAD_BRANCH: ${{ github.event.pull_request.head.ref }}
+          HEAD_BRANCH: ${{ github.event.workflow_run.head_branch }}
         run: |
           git config user.name "forge-pr-link[bot]"
           git config user.email "forge-pr-link[bot]@users.noreply.github.com"
@@ -86,3 +103,16 @@ jobs:
           # strands the PR's checks (D-0017, hit on PRs #72 and #73).
           git commit -m "chore: link PR to ${{ steps.link.outputs.story }} [skip ci]"
           git push origin "HEAD:$HEAD_BRANCH"
+      - name: Carry scaffold-check to the link commit
+        if: steps.link.outputs.story != '' && steps.link.outputs.already_linked != 'true'
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          SOURCE_SHA: ${{ github.event.workflow_run.head_sha }}
+          TARGET_URL: ${{ github.event.workflow_run.html_url }}
+        run: |
+          SHA="$(git rev-parse HEAD)"
+          gh api --method POST "repos/$GITHUB_REPOSITORY/statuses/$SHA" \
+            -f state=success \
+            -f context=scaffold-check \
+            -f "description=carried from $SOURCE_SHA - link commit touches only .factory/events.jsonl" \
+            -f target_url="$TARGET_URL"

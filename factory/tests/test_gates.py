@@ -3793,6 +3793,17 @@ def test_pr_link_commit_skips_ci():
     # D-0017: without [skip ci], the bot-attributed synchronize wave is held
     # action_required and strands the PR's checks behind a manual re-trigger.
     workflow = (HARNESS / ".github" / "workflows" / "pr-link.yml").read_text()
+    assert "workflow_run:\n    workflows: [factory-scaffold]\n    types: [completed]" in workflow
+    assert "github.event.workflow_run.conclusion == 'success'" in workflow
+    assert "statuses: write" in workflow
+    commit_guard = "steps.link.outputs.story != '' && steps.link.outputs.already_linked != 'true'"
+    commit_step, status_step = workflow.split("- name: Commit the durable link to the PR branch", 1)[1].split(
+        "- name: Carry scaffold-check to the link commit", 1
+    )
+    assert f"if: {commit_guard}" in commit_step
+    assert f"if: {commit_guard}" in status_step
+    assert "statuses/$SHA" in status_step
+    assert "context=scaffold-check" in status_step
     assert "[skip ci]" in workflow.split("git commit -m")[1].splitlines()[0]
 
 

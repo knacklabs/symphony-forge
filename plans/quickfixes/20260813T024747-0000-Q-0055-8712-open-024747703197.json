@@ -1,0 +1,12 @@
+{
+  "event": "open",
+  "id": "Q-0055-8712",
+  "profile": "lite",
+  "reason": "D-0017 recurring strand: pr-link's [skip ci] commit leaves required scaffold-check Expected forever on every PR; bounded 2-file workflow+test fix, proven by the next PR",
+  "started_at": "2026-08-13T02:47:47+00:00",
+  "max_files": 5,
+  "files": [],
+  "harness_source": true,
+  "by": "Ravi (vrknetha)",
+  "base_sha": "b30be6e9faf44dbe5812062df871b3eef7a9ae9b"
+}
