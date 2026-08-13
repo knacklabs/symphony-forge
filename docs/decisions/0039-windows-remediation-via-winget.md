@@ -1,8 +1,9 @@
 ---
-status: proposed
+status: superseded
 confirmed_by: ""
 date: 2026-08-12
 stories: [FORGE-WIN-2]
+superseded_by: 0040-windows-user-scope-first-elevation-deferred
 ---
 
 # Windows Remediation Via Winget
