@@ -1,0 +1,71 @@
+{
+  "event": "done",
+  "id": "Q-0056-70d8",
+  "profile": "lite",
+  "by": "Ravi (vrknetha)",
+  "reason": "record_review_from_json.py demands plan-contract verdicts from the protected decomposition twin even after the story shipped (pr_ready cleans only .factory/), taxing every post-ship quickfix quality review; one-line active-decomposition guard + regression test",
+  "base_sha": "245bdae17c2ebffa74f5fb6c26ebf4f76412a864",
+  "started_at": "2026-08-13T02:56:38+00:00",
+  "completed_at": "2026-08-13T03:00:17+00:00",
+  "files": [
+    "factory/scripts/record_review_from_json.py",
+    "factory/tests/test_gates.py"
+  ],
+  "reviews": {
+    "quality": {
+      "generated_by": "autoreview",
+      "score": 9,
+      "summary": "Minimal correct scoping: verdict enforcement now additionally requires run.json to carry decomposition_status == 'recorded', which the recorder sets at decomposition time and pr_ready strips at ship \u2014 so the enforcement window is exactly the active story, unchanged during stories, silent after them. The regression test reproduces the live failure shape (shipped contracts in the protected twin, post-ship run.json, open lite window) and pins acceptance of a verdict-free quality review.",
+      "blocking_findings": [],
+      "non_blocking_findings": [
+        {
+          "category": "stale-protected-state",
+          "area": "factory/scripts/pr_ready.py",
+          "summary": "Root cause remains that pr_ready never clears the protected decomposition twin at ship; this guard makes readers scope correctly, but clearing the twin in pr_ready's archive step would remove the stale state class entirely \u2014 candidate follow-up, not this window."
+        }
+      ],
+      "residual_risks": [],
+      "recommendation": "approve",
+      "reviewed_scope": [
+        "factory/scripts/record_review_from_json.py",
+        "factory/tests/test_gates.py"
+      ],
+      "skills_used": [],
+      "aspect": "quality",
+      "recorded_at": "2026-08-13T03:00:16+00:00",
+      "commit": "27bf6dc28d35adca26c7fcd3b6794cf3eeed0c2a"
+    },
+    "performance": {
+      "generated_by": "autoreview",
+      "score": 9,
+      "summary": "One dict lookup added on a CLI path; when the guard is false the recorder now skips a JSON load it previously performed. Net zero-to-negative cost.",
+      "blocking_findings": [],
+      "non_blocking_findings": [],
+      "residual_risks": [],
+      "recommendation": "approve",
+      "reviewed_scope": [
+        "factory/scripts/record_review_from_json.py"
+      ],
+      "skills_used": [],
+      "aspect": "performance",
+      "recorded_at": "2026-08-13T03:00:16+00:00",
+      "commit": "27bf6dc28d35adca26c7fcd3b6794cf3eeed0c2a"
+    },
+    "security": {
+      "generated_by": "autoreview",
+      "score": 9,
+      "summary": "The lens is whether the guard weakens contract enforcement: it cannot \u2014 decomposition_status is 'recorded' for the entire life of an active story (set by the schema-validated recorder, removed only by pr_ready after the contract gate itself has passed), so no review recorded during a story escapes verdict enforcement. Post-ship there is no story to under-review; pr_ready's independent backstop still reads the evidence for the next story.",
+      "blocking_findings": [],
+      "non_blocking_findings": [],
+      "residual_risks": [],
+      "recommendation": "approve",
+      "reviewed_scope": [
+        "factory/scripts/record_review_from_json.py"
+      ],
+      "skills_used": [],
+      "aspect": "security",
+      "recorded_at": "2026-08-13T03:00:16+00:00",
+      "commit": "27bf6dc28d35adca26c7fcd3b6794cf3eeed0c2a"
+    }
+  }
+}

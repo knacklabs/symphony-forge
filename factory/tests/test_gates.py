@@ -6460,7 +6460,8 @@ def test_gate_b_workflows_link_the_branch_and_check_main():
     link = (HARNESS / ".github" / "workflows" / "pr-link.yml").read_text()
     invariant = (HARNESS / ".github" / "workflows" / "board-invariant.yml").read_text()
 
-    assert "pull_request:" in link
+    assert "workflow_run:" in link
+    assert "workflows: [factory-scaffold]" in link
     assert "already_linked" in link
     assert 'git push origin "HEAD:$HEAD_BRANCH"' in link
     assert "branches: [main]" in invariant
