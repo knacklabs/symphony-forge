@@ -1,0 +1,69 @@
+{
+  "event": "done",
+  "id": "Q-0057-34e2",
+  "profile": "lite",
+  "by": "Ravi (vrknetha)",
+  "reason": "Gate B content pin still asserts pr-link.yml triggers on pull_request; stale after Q-0055 moved it to workflow_run \u2014 one-assert update, missed by Q-0055's -k pr_link filter",
+  "base_sha": "27bf6dc28d35adca26c7fcd3b6794cf3eeed0c2a",
+  "started_at": "2026-08-13T03:12:40+00:00",
+  "completed_at": "2026-08-13T03:30:37+00:00",
+  "files": [
+    "factory/tests/test_gates.py"
+  ],
+  "reviews": {
+    "quality": {
+      "generated_by": "autoreview",
+      "score": 9,
+      "summary": "One stale trigger pin replaced with two pins of the intended new trigger (workflow_run on factory-scaffold); the test's behavioral assertions (already_linked guard, branch push, board-invariant pins) are untouched. Full suite 533 passed, 1 skipped.",
+      "blocking_findings": [],
+      "non_blocking_findings": [
+        {
+          "category": "test-filter-blind-spot",
+          "area": "factory/tests/test_gates.py",
+          "summary": "Q-0055's proof command used -k pr_link, which missed this gate_b-named pin \u2014 workflow-content pins are spread across differently-named tests, so content changes should prove with the full suite, not a keyword slice; noted for future window briefs."
+        }
+      ],
+      "residual_risks": [],
+      "recommendation": "approve",
+      "reviewed_scope": [
+        "factory/tests/test_gates.py"
+      ],
+      "skills_used": [],
+      "aspect": "quality",
+      "recorded_at": "2026-08-13T03:30:37+00:00",
+      "commit": "49f49fed8f13df9109971402cfb607bddc8de4b0"
+    },
+    "performance": {
+      "generated_by": "autoreview",
+      "score": 9,
+      "summary": "Test-only, two string asserts; no runtime surface.",
+      "blocking_findings": [],
+      "non_blocking_findings": [],
+      "residual_risks": [],
+      "recommendation": "approve",
+      "reviewed_scope": [
+        "factory/tests/test_gates.py"
+      ],
+      "skills_used": [],
+      "aspect": "performance",
+      "recorded_at": "2026-08-13T03:30:37+00:00",
+      "commit": "49f49fed8f13df9109971402cfb607bddc8de4b0"
+    },
+    "security": {
+      "generated_by": "autoreview",
+      "score": 9,
+      "summary": "Test-only pin swap; the pins it keeps (already_linked guard, contained branch push) are the security-relevant ones and are unchanged.",
+      "blocking_findings": [],
+      "non_blocking_findings": [],
+      "residual_risks": [],
+      "recommendation": "approve",
+      "reviewed_scope": [
+        "factory/tests/test_gates.py"
+      ],
+      "skills_used": [],
+      "aspect": "security",
+      "recorded_at": "2026-08-13T03:30:37+00:00",
+      "commit": "49f49fed8f13df9109971402cfb607bddc8de4b0"
+    }
+  }
+}
