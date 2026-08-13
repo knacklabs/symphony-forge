@@ -330,7 +330,7 @@
 
   .panel {
     position: fixed; top: 0; right: 0; bottom: 0; z-index: 40;
-    width: var(--pw, min(420px, 100vw));
+    width: var(--pw, min(100vw, max(520px, 50vw)));
     background: var(--surface); border-left: 1px solid var(--rule);
     box-shadow: var(--shadow);
     display: flex; flex-direction: column;
@@ -338,11 +338,11 @@
     transition: transform 220ms var(--enter), width 260ms var(--enter);
   }
   .panel.open { transform: none; }
-  /* The reading state carries plan, spec and proof — text-heavy panes that
-     need a wide measure. Two-thirds of the viewport, with a floor so it stays
-     usable on smaller windows and a cap at the viewport on the narrowest. */
-  #drawer.wide { --pw: min(100vw, max(680px, 66vw)); }
-  #library { --pw: min(560px, 100vw); }
+  /* Every slide-in panel — the story drawer, its plan/spec/proof reading
+     state, and the Library — is half the viewport: wide enough for the
+     text-heavy reading panes, with a floor for small windows and a cap at the
+     viewport on the narrowest. The shared default on .panel is the single
+     source of that width, so no panel sets its own. */
   .panel-head {
     display: flex; align-items: center; gap: .6rem;
     padding: .8rem var(--gutter) .55rem; border-bottom: 1px solid var(--rule); flex: none;
@@ -500,6 +500,9 @@
 
   /* markdown, typeset at a comfortable measure */
   .md { max-width: 34em; }
+  /* In the drawer's reading panes the measure fills the (now half-width) panel
+     instead of stopping at 34em and leaving the right half blank. */
+  #drawer .md { max-width: none; }
   .md h1, .md h2, .md h3 { font-family: var(--serif); font-weight: 600; line-height: 1.25; margin: 1.3rem 0 .4rem; }
   .md h1 { font-size: 1.16rem; }
   .md h2 { font-size: 1.02rem; color: var(--accent); }
@@ -677,11 +680,19 @@ function md(src) {
     .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
   const cells = (row) => row.trim().replace(/^\||\|$/g, "").split("|").map(c => c.trim());
   const isDivider = (row) => /^\s*\|?[\s:|-]*-[\s:|-]*\|?\s*$/.test(row) && row.includes("-");
+  // A run of consecutive non-blank text lines is ONE paragraph. Hard-wrapped
+  // source (specs, briefs) must reflow to fill the measure, not stack as one
+  // <p> per source line with a gap between every wrapped fragment.
+  let para = [];
+  const flushPara = () => {
+    if (para.length) { out.push(`<p>${inline(para.join(" "))}</p>`); para = []; }
+  };
   for (let index = 0; index < lines.length; index++) {
     const line = lines[index];
     // A table is a header row followed by a divider — the shape every plan's
     // Surface Impact uses, and the one thing here that must not read as pipes.
     if (!fence && line.trim().startsWith("|") && isDivider(lines[index + 1] || "")) {
+      flushPara();
       closeList();
       const head = cells(line);
       const body = [];
@@ -699,6 +710,7 @@ function md(src) {
       continue;
     }
     if (/^```/.test(line)) {
+      flushPara();
       closeList();
       out.push(fence ? "</code></pre>" : "<pre><code>");
       fence = !fence;
@@ -709,22 +721,27 @@ function md(src) {
     const bullet = line.match(/^\s*[-*]\s+(.*)$/);
     const numbered = line.match(/^\s*\d+\.\s+(.*)$/);
     if (heading) {
+      flushPara();
       closeList();
       const level = heading[1].length;
       out.push(`<h${level}>${inline(heading[2])}</h${level}>`);
     } else if (bullet) {
+      flushPara();
       if (list !== "ul") { closeList(); out.push("<ul>"); list = "ul"; }
       out.push(`<li>${inline(bullet[1])}</li>`);
     } else if (numbered) {
+      flushPara();
       if (list !== "ol") { closeList(); out.push("<ol>"); list = "ol"; }
       out.push(`<li>${inline(numbered[1])}</li>`);
     } else if (!line.trim()) {
+      flushPara();
       closeList();
     } else {
       closeList();
-      out.push(`<p>${inline(line)}</p>`);
+      para.push(line);
     }
   }
+  flushPara();
   closeList();
   if (fence) out.push("</code></pre>");
   return `<div class="md">${out.join("\n")}</div>`;
