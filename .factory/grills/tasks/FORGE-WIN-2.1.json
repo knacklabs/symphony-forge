@@ -3,18 +3,20 @@
   "gate": "task",
   "verdict": "pass",
   "gaps": [
-    "Does removing orchestrated elevation still satisfy AC1 one-UAC-confirm?",
-    "Is the narrowed scope still CI-verifiable end to end?"
+    "Does consolidating three committed diffs into one stage window hide out-of-scope work?",
+    "Are the d0b0333 and efd7b88 diffs (parallel-session authored) reviewed?",
+    "Was the commit count verified rather than assumed?"
   ],
   "contradictions": [],
   "resolutions": [
-    "Yes honestly: user-scope installs need no harness elevation; a self-elevating package installer raises the OS single prompt, which IS the allowed one confirm; where machine-scope is truly required, honest red row + deferred D-0021.",
-    "Yes: no RunAs to fake unsafely \u2014 every path (user-scope argv, winget-absent, user-scope-failed, partial-install refresh) is testable with argv-recording fakes; the elevation batch that could not be validated blind is deferred to real-Windows."
+    "No: the window a604f12..efd7b88 is exactly the three implementation commits; write_scope derives from the actual diff and the stage close measures it.",
+    "Not yet - the 0011 orchestrator review of all three diffs is an explicit acceptance criterion gating the ship.",
+    "Yes: the prior agent's integrity check caught the undocumented third commit d0b0333 and refused to ledger a two-commit claim; this record accounts for it explicitly."
   ],
   "open_items": [],
-  "notes": "WIN-2.1 narrowed under decision 0040 (supersedes 0039) after the elevation-trust class recurred 4x (0005 escalation). Frontier empty.",
+  "notes": "JIT grill v3, operator-ruled fresh consolidation; virgin worktree sidesteps the poisoned per-worktree protected state.",
   "task_id": "FORGE-WIN-2.1",
-  "input_sha256": "d5437e8a2d7674b49e05d68a6be1528c356f1d715d0725eb2b58f2fd4318294f",
-  "recorded_at": "2026-08-12T12:06:58+00:00",
-  "commit": "a604f1256ade90d0c4b1a4f683624f43cd107133"
+  "input_sha256": "044367799be754afac874ea20da0d5abbefd81588d023cf020edf93a2e937aa5",
+  "recorded_at": "2026-08-13T06:00:09+00:00",
+  "commit": "efd7b883ad6d4014d56d8a1aca56a909ce2df714"
 }

@@ -3,58 +3,12 @@
   "stages": [
     {
       "id": "FORGE-WIN-2.1",
-      "title": "Doctor remediation core: python row, winget installs, one-confirm batching",
-      "status": "active",
-      "started_at": "2026-08-12T12:25:23+00:00",
+      "title": "Doctor remediation + convergence fixes + launcher probe + wiring + docs + CI (consolidated)",
+      "status": "done",
+      "started_at": "2026-08-12T13:00:00+00:00",
       "base_sha": "a604f1256ade90d0c4b1a4f683624f43cd107133",
-      "dirty_at_start": {
-        ".factory/decomposition.json": {
-          "digest": "abaaea1675ead17f61ea6b9d81226f6bd6a583a872fcaabbb751b33941800ab3",
-          "git": "1 .M N... 100644 100644 100644 bf0bc268ec5160d4a573a4f397d692256845a48c bf0bc268ec5160d4a573a4f397d692256845a48c .factory/decomposition.json\u0000\u0000100644 bf0bc268ec5160d4a573a4f397d692256845a48c 0\t.factory/decomposition.json\u0000\u0000H .factory/decomposition.json\u0000"
-        },
-        ".factory/events.jsonl": {
-          "digest": "b584529a16e599a018bd3a5e941633b95a6d7dc4697ad0c3fd881d6ab39909e5",
-          "git": "1 MM N... 100644 100644 100644 7849955b17a44a29f5d5abc99ba16e8f9c1ccd7b 00b75582309d6e424ea7167370f406e489c3b179 .factory/events.jsonl\u0000\u0000100644 00b75582309d6e424ea7167370f406e489c3b179 0\t.factory/events.jsonl\u0000\u0000H .factory/events.jsonl\u0000"
-        },
-        ".factory/grills/tasks/FORGE-WIN-2.1.json": {
-          "digest": "15db5248d4d00b9296624c2d07c2dbd1f7201a23254bd87777f18383dfd07a15",
-          "git": "1 M. N... 100644 100644 100644 2370b29d105a8b0332cd2685cb5c194da80debcd a0b06adcf3726acdee2d8be6758b04af3e52ba1b .factory/grills/tasks/FORGE-WIN-2.1.json\u0000\u0000100644 a0b06adcf3726acdee2d8be6758b04af3e52ba1b 0\t.factory/grills/tasks/FORGE-WIN-2.1.json\u0000\u0000H .factory/grills/tasks/FORGE-WIN-2.1.json\u0000"
-        },
-        ".factory/run.json": {
-          "digest": "a144308e9354a4aff235e71f5244f4651e062b951a73ad44578315b54fbd9b37",
-          "git": "1 MM N... 100644 100644 100644 a6c198ad57c0490ecdc2706d6c0d4e277d323a16 866bd013da2a20f9a3832d69a65d4f095f4a637f .factory/run.json\u0000\u0000100644 866bd013da2a20f9a3832d69a65d4f095f4a637f 0\t.factory/run.json\u0000\u0000H .factory/run.json\u0000"
-        },
-        ".factory/signals.jsonl": {
-          "digest": "5636cab7d0424f35398dc61fb4cb4f71ede53fd294be635b0978d29fc1885877",
-          "git": "1 A. N... 000000 100644 100644 0000000000000000000000000000000000000000 f16b092ee15d29a12f46a31f4a7dfc6583b13cf0 .factory/signals.jsonl\u0000\u0000100644 f16b092ee15d29a12f46a31f4a7dfc6583b13cf0 0\t.factory/signals.jsonl\u0000\u0000H .factory/signals.jsonl\u0000"
-        },
-        ".factory/stages.json": {
-          "digest": "6859752aa9c18b1cec62e871e118600a45cfd0bf26ca2625c4d6437817f2b1fd",
-          "git": "1 .M N... 100644 100644 100644 f06a2d87b6c95cd6a099f7542fe2b35548ce46a4 f06a2d87b6c95cd6a099f7542fe2b35548ce46a4 .factory/stages.json\u0000\u0000100644 f06a2d87b6c95cd6a099f7542fe2b35548ce46a4 0\t.factory/stages.json\u0000\u0000H .factory/stages.json\u0000"
-        },
-        "docs/decisions/0040-windows-user-scope-first-elevation-deferred.md": {
-          "digest": "56de18443412dcb7d3a4c976a47032c19e204d2dda20a4f999c6a6ef52a0cb94",
-          "git": "1 M. N... 100644 100644 100644 3b3a744464b680df0c5c8fc0c20ecb6488db18af f9ce8865eea738725e2feb2806a3b71e8e35ddd3 docs/decisions/0040-windows-user-scope-first-elevation-deferred.md\u0000\u0000100644 f9ce8865eea738725e2feb2806a3b71e8e35ddd3 0\tdocs/decisions/0040-windows-user-scope-first-elevation-deferred.md\u0000\u0000H docs/decisions/0040-windows-user-scope-first-elevation-deferred.md\u0000"
-        },
-        "factory/scripts/forge_cli/doctor.py": {
-          "digest": "937dcf48a147dff1c6bdb7dcecc8783a40d1b04c85ec087272ccb6d938f89d81",
-          "git": "1 M. N... 100644 100644 100644 a5dbdc4097311011b9cb626edd95d2bdc6999dad 8b15f3820a381853edaa8d5d7174fcde9fed63e4 factory/scripts/forge_cli/doctor.py\u0000\u0000100644 8b15f3820a381853edaa8d5d7174fcde9fed63e4 0\tfactory/scripts/forge_cli/doctor.py\u0000\u0000H factory/scripts/forge_cli/doctor.py\u0000"
-        },
-        "factory/scripts/forge_cli/phase.py": {
-          "digest": "cea52384cac9b23f377aa38864cbcf40e8bb0244dd1cf7c37b954de938d21d04",
-          "git": "1 M. N... 100644 100644 100644 55a6de3897efbdc843241e5665885051ec45b0b1 50320b193fd705df55aa85bd913d73379e0cc823 factory/scripts/forge_cli/phase.py\u0000\u0000100644 50320b193fd705df55aa85bd913d73379e0cc823 0\tfactory/scripts/forge_cli/phase.py\u0000\u0000H factory/scripts/forge_cli/phase.py\u0000"
-        },
-        "factory/tests/test_gates.py": {
-          "digest": "222c3ce9bcb68c31f3e81d60c88d2fa1bc92fbce668bc707d900eb7481457d2f",
-          "git": "1 M. N... 100644 100644 100644 10e53161c061605a22b90f592988060b0504e05f 270b74382ea65b6bb92799443f469594aa7a660a factory/tests/test_gates.py\u0000\u0000100644 270b74382ea65b6bb92799443f469594aa7a660a 0\tfactory/tests/test_gates.py\u0000\u0000H factory/tests/test_gates.py\u0000"
-        }
-      },
-      "task_sha256": "00810efaae2cfa7541ab5080ebf3fc748140963cef470d09f9d32cc1addc5482"
-    },
-    {
-      "id": "FORGE-WIN-2.2",
-      "title": "Launcher python3 probe + flow remediation wiring + docs + CI selector",
-      "status": "pending"
+      "task_sha256": "044367799be754afac874ea20da0d5abbefd81588d023cf020edf93a2e937aa5",
+      "completed_at": "2026-08-13T07:00:09+00:00"
     }
   ]
 }
