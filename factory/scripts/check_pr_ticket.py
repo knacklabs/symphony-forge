@@ -10,12 +10,38 @@ import sys
 from pathlib import Path
 
 from factory_lib import repo_root
+from forge_cli.scaffold import (
+    COPY_CLAUDE, COPY_TREES, COPY_WORKFLOWS, DOC_CONTRACTS,
+)
 
 ROADMAP = "plans/roadmap.json"
 TICKET_LINE = re.compile(
     r"^\s*Ticket:\s*([A-Za-z0-9][A-Za-z0-9._-]*)\s*$",
     re.MULTILINE,
 )
+
+# A harness re-vendor (`forge upgrade`) replaces only vendored, harness-owned
+# paths and ALWAYS rewrites the vendor manifest. It completes no roadmap story,
+# so the ticket requirement cannot apply to it. The ownership lists below are
+# the SAME ones the upgrader replaces (imported from forge_cli.scaffold, never
+# duplicated), so this exemption can never drift wider than what the harness
+# actually owns — and requiring a manifest marker in the diff keeps it to real
+# re-vendors, not hand-edits of gate machinery (which vendor-integrity refuses).
+HARNESS_TOP_FILES = frozenset({"forge", "forge.cmd", "CLAUDE.md", "WORKFLOW.md"})
+HARNESS_DOC_FILES = frozenset(dst for _, dst in DOC_CONTRACTS)
+HARNESS_CLAUDE_FILES = frozenset(f".claude/{name}" for name in COPY_CLAUDE)
+VENDOR_MARKERS = frozenset({
+    "constitution/VENDOR_MANIFEST.json",
+    "constitution/VENDORED_FROM",
+})
+
+
+def is_harness_owned(path: str) -> bool:
+    if path in HARNESS_TOP_FILES or path in HARNESS_DOC_FILES:
+        return True
+    if path in HARNESS_CLAUDE_FILES or path in COPY_WORKFLOWS:
+        return True
+    return any(path == tree or path.startswith(f"{tree}/") for tree in COPY_TREES)
 
 
 def git(root: Path, *args: str) -> str:
@@ -61,6 +87,24 @@ def added_paths(root: Path, base: str) -> set[str]:
         if status == "A":
             added.add(path)
     return added
+
+
+def changed_paths(root: Path, base: str) -> set[str]:
+    changed: set[str] = set()
+    for line in git(root, "diff", "--name-only", f"{base}..HEAD").splitlines():
+        path = line.strip()
+        if path:
+            changed.add(path)
+    return changed
+
+
+def is_harness_revendor(root: Path, base: str) -> bool:
+    """A PR that changes only harness-owned paths AND rewrites the vendor
+    manifest is a re-vendor: it completes no roadmap story and needs no ticket."""
+    changed = changed_paths(root, base)
+    return bool(changed) and bool(changed & VENDOR_MARKERS) and all(
+        is_harness_owned(path) for path in changed
+    )
 
 
 def branch_ticket(branch: str, story_keys: set[str]) -> str | None:
@@ -123,6 +167,14 @@ def main() -> int:
     undeclared = {(kind, key) for kind, key in completed if key not in candidates}
 
     if not completed:
+        if is_harness_revendor(root, args.base):
+            print(
+                "PR ticket check OK: harness re-vendor — only vendored "
+                "harness-owned paths changed and the vendor manifest was "
+                "rewritten, so this PR completes no roadmap story and needs "
+                "no ticket."
+            )
+            return 0
         print(
             "PR ticket check FAILED: no completed work record in "
             f"{args.base}..HEAD — a PR must complete a roadmap story (done-flip "

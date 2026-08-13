@@ -338,7 +338,10 @@
     transition: transform 220ms var(--enter), width 260ms var(--enter);
   }
   .panel.open { transform: none; }
-  #drawer.wide { --pw: min(760px, 100vw); }
+  /* The reading state carries plan, spec and proof — text-heavy panes that
+     need a wide measure. Two-thirds of the viewport, with a floor so it stays
+     usable on smaller windows and a cap at the viewport on the narrowest. */
+  #drawer.wide { --pw: min(100vw, max(680px, 66vw)); }
   #library { --pw: min(560px, 100vw); }
   .panel-head {
     display: flex; align-items: center; gap: .6rem;
@@ -1217,7 +1220,7 @@ function renderOverview(state) {
     ${recordBoundary}
     ${projectSections.length
       ? `<div class="project-sections">${projectSections.map(([heading, content]) =>
-          `<section class="project-section"><h3>${esc(heading)}</h3><p>${esc(content)}</p></section>`
+          `<section class="project-section"><h3>${esc(heading)}</h3>${md(content)}</section>`
         ).join("")}</div>`
       : `<p class="overview-empty">No project brief yet. Ask for one before sign-off —
           it refuses until every required heading is captured.</p>`}`;
@@ -1234,7 +1237,7 @@ function renderOverview(state) {
   const epicAnswer = epics.length
     ? `<div class="epic-deliveries">${epics.map(epic => `<section class="epic-delivery">
         ${kindLabel("EPIC")}<h3>${esc(epic.title || epic.id)}</h3>
-        <p>${esc(epic.objective || "No delivery objective recorded.")}</p>
+        ${md(epic.objective || "No delivery objective recorded.")}
         <div class="epic-stories">${(epic.stories || []).map(esc).join(" · ") || "No stories"}</div>
       </section>`).join("")}</div>`
     : `<p class="overview-empty">No epics yet. They arrive with the roadmap, and can be

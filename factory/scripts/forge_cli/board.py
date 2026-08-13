@@ -26,7 +26,7 @@ from .specs import spec_records
 def _plan_records(base: Path, location: str) -> list[dict]:
     records = []
     for path in sorted((base / "plans" / location).glob("*.md")):
-        fields, _ = parse_frontmatter(path.read_text())
+        fields, _ = parse_frontmatter(path.read_text(encoding="utf-8"))
         records.append({
             **fields,
             "path": path.relative_to(base).as_posix(),
@@ -189,7 +189,7 @@ def project_identity(base: Path) -> dict:
     title where a project's name belongs.
     """
     brief = base / "docs" / "product" / "BRIEF.md"
-    sections = parse_sections(brief.read_text()) if brief.is_file() else {}
+    sections = parse_sections(brief.read_text(encoding="utf-8")) if brief.is_file() else {}
     authored = load_json(base / ".factory" / "run.json", default={})
     name = authored.get("project") if isinstance(authored, dict) else ""
     return {
@@ -415,7 +415,7 @@ def story_detail(base: Path, key: str) -> dict | None:
     )
     plan_body = ""
     if plan:
-        _, plan_body = parse_frontmatter((base / plan["path"]).read_text())
+        _, plan_body = parse_frontmatter((base / plan["path"]).read_text(encoding="utf-8"))
     # Live .factory/ belongs to whatever story is ACTIVE. Handing it to any
     # other story shows one story's proof under another's name.
     active = load_json(run_state_path(base), default={}).get("issue_key")
@@ -448,7 +448,7 @@ def story_detail(base: Path, key: str) -> dict | None:
         # show the artifact as it is, and stripping here would make the API
         # lossy for every consumer to fix one renderer. The drawer strips
         # frontmatter when it renders prose.
-        spec = {"path": spec_path, "body": (base / spec_path).read_text()}
+        spec = {"path": spec_path, "body": (base / spec_path).read_text(encoding="utf-8")}
     epic = next(
         (epic for epic in derived_epics(roadmap, items)
          if epic.get("id") == item.get("epic")),

@@ -7142,6 +7142,52 @@ def test_check_pr_ticket_fails_missing_history(repo):
     assert code != 0 and "no completed work record" in out, out
 
 
+def test_check_pr_ticket_exempts_harness_revendor(repo):
+    # A harness re-vendor changes only harness-owned paths AND rewrites the
+    # vendor manifest — it completes no roadmap story and needs no ticket.
+    base = pr_ticket_base(repo)
+    (repo / "constitution" / "VENDOR_MANIFEST.json").write_text(
+        '{"harness_commit": "deadbeef", "files": {}}\n')
+    (repo / "factory" / "scripts" / "verify.py").write_text("# re-vendored\n")
+    git(repo, "add", "constitution/VENDOR_MANIFEST.json",
+        "factory/scripts/verify.py")
+    git(repo, "commit", "-q", "-m", "chore: re-vendor harness")
+
+    code, out = check_pr_ticket(repo, base, "chore/harness-upgrade-abc123")
+
+    assert code == 0 and "harness re-vendor" in out, out
+
+
+def test_check_pr_ticket_revendor_requires_manifest_marker(repo):
+    # Harness-owned edits WITHOUT the manifest marker are not a sanctioned
+    # re-vendor (vendor-integrity refuses hand-edits), so the ticket still holds.
+    base = pr_ticket_base(repo)
+    (repo / "factory" / "scripts" / "verify.py").write_text("# tweaked\n")
+    git(repo, "add", "factory/scripts/verify.py")
+    git(repo, "commit", "-q", "-m", "poke a harness file")
+
+    code, out = check_pr_ticket(repo, base, "chore/harness-poke")
+
+    assert code != 0 and "no completed work record" in out, out
+
+
+def test_check_pr_ticket_revendor_rejects_mixed_product_change(repo):
+    # A PR that also touches product paths is not a pure re-vendor: the ticket
+    # requirement still applies even with the manifest in the diff.
+    base = pr_ticket_base(repo)
+    (repo / "constitution" / "VENDOR_MANIFEST.json").write_text(
+        '{"harness_commit": "deadbeef", "files": {}}\n')
+    (repo / "plans").mkdir(exist_ok=True)
+    (repo / "plans" / "product-note.md").write_text("product change\n")
+    git(repo, "add", "constitution/VENDOR_MANIFEST.json",
+        "plans/product-note.md")
+    git(repo, "commit", "-q", "-m", "re-vendor plus product change")
+
+    code, out = check_pr_ticket(repo, base, "chore/mixed")
+
+    assert code != 0 and "no completed work record" in out, out
+
+
 def test_check_pr_ticket_window_passes(repo):
     window_id = "Q-0042-abcd"
     base = pr_ticket_base(repo)
