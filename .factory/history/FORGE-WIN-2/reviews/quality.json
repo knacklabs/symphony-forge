@@ -1,0 +1,36 @@
+{
+  "generated_by": "autoreview",
+  "score": 9,
+  "summary": "Orchestrator 0011 review of the full 1226-line consolidated diff: forge.cmd probe-then-commit flow with single-attempt bootstrap guard and errorlevel propagation; doctor remediation ordered before row recording so a fixing run reports truthfully; init/adopt/upgrade all invoke hook remediation with call sites and upgrade ordering source-pinned by test; winget trusted only via API-derived known-folder identity, APPEXECLINK accepted without resolution (test forbids following it), symlink hijack rejected; poisoned-environment and WOW64 cases pinned; authoritative post-refresh reprobes suppress false winget errors.",
+  "blocking_findings": [],
+  "non_blocking_findings": [
+    {
+      "category": "version-pin-aging",
+      "area": "factory/scripts/forge_cli/doctor.py",
+      "summary": "Python.Python.3.14 package pin will age; single constant, single site."
+    },
+    {
+      "category": "accepted-duplication",
+      "area": "forge.cmd",
+      "summary": "The cmd bootstrap duplicates winget location logic because no python exists yet at that point; necessarily divergent from doctor's python implementation."
+    }
+  ],
+  "residual_risks": [
+    "Real Windows machines vary beyond the runner; doctor red rows with manual URLs are the client-side truth."
+  ],
+  "recommendation": "ship",
+  "reviewed_scope": [
+    "forge.cmd",
+    "factory/scripts/forge_cli/doctor.py",
+    "factory/scripts/forge_cli/scaffold.py",
+    "factory/scripts/forge_cli/adopt.py",
+    "factory/scripts/forge_cli/upgrade.py",
+    "factory/scripts/forge_cli/phase.py",
+    "docs/windows.md",
+    "docs/decisions/0040-windows-user-scope-first-elevation-deferred.md",
+    "factory/tests/test_gates.py"
+  ],
+  "aspect": "quality",
+  "recorded_at": "2026-08-13T07:28:46+00:00",
+  "commit": "a2a551e94627297ad2e322f4829fe65f14d973db"
+}

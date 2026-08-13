@@ -1,0 +1,52 @@
+{"event": "roadmap-add", "generated_by": "orchestrator", "at": "2026-08-11T07:12:26+00:00", "story": "FORGE-WIN-2", "detail": "docs/specs/windows-zero-setup.md"}
+{"event": "intake", "generated_by": "orchestrator", "at": "2026-08-12T08:00:50+00:00", "story": "FORGE-WIN-2", "detail": "Doctor --fix installs prerequisites on Windows"}
+{"event": "plan-human-approved", "generated_by": "human", "at": "2026-08-12T09:20:01+00:00", "story": "FORGE-WIN-2", "detail": "FORGE-WIN-2 approved by Ravi"}
+{"event": "plan-approved", "generated_by": "planner-high", "at": "2026-08-12T09:20:01+00:00", "story": "FORGE-WIN-2", "detail": "plans/active/FORGE-WIN-2-doctor-fix-installs-prerequisites-on-windows.md"}
+{"event": "decomposed", "generated_by": "docs-decomposer", "at": "2026-08-12T09:21:13+00:00", "story": "FORGE-WIN-2", "detail": "2 task(s)"}
+{"event": "implementing", "generated_by": "orchestrator", "at": "2026-08-12T09:21:13+00:00", "story": "FORGE-WIN-2"}
+{"event": "stage-start", "generated_by": "implementer", "at": "2026-08-12T09:21:34+00:00", "story": "FORGE-WIN-2", "detail": "FORGE-WIN-2.1 Doctor remediation core: python row, winget installs, one-confirm batching"}
+{"event": "delegated", "generated_by": "orchestrator", "at": "2026-08-12T09:28:49+00:00", "story": "FORGE-WIN-2", "detail": "FORGE-WIN-2.1 (write)"}
+{"event": "decomposed", "generated_by": "docs-decomposer", "at": "2026-08-12T09:36:08+00:00", "story": "FORGE-WIN-2", "detail": "2 task(s)"}
+{"event": "signal-scope-change", "generated_by": "implementer", "at": "2026-08-12T09:37:35+00:00", "story": "FORGE-WIN-2", "detail": "FORGE-WIN-2.1 acceptance requires updating confirmed A-0009 because official Python 3.14 is the current Windows-installable maintenance line and 3.12 is security-only/source-only, but plans/assumption"}
+{"event": "delegated", "generated_by": "orchestrator", "at": "2026-08-12T09:39:55+00:00", "story": "FORGE-WIN-2", "detail": "FORGE-WIN-2.1 (write)"}
+{"event": "signal-resolved", "generated_by": "orchestrator", "at": "2026-08-12T09:45:52+00:00", "story": "FORGE-WIN-2", "detail": "S-0001-36a8: Pin corrected via A-0010 (confirmed): Python.Python.3.14. A-0009's 3.12 rationale is superseded \u2014 my earlier confirmation was stale, good catch. The plan prose's 3.12 mention is illustrative; the bind"}
+{"event": "delegated", "generated_by": "orchestrator", "at": "2026-08-12T09:54:49+00:00", "story": "FORGE-WIN-2", "detail": "FORGE-WIN-2.1 (write)"}
+{"event": "decomposed", "generated_by": "docs-decomposer", "at": "2026-08-12T10:07:32+00:00", "story": "FORGE-WIN-2", "detail": "2 task(s)"}
+{"event": "delegated", "generated_by": "orchestrator", "at": "2026-08-12T10:14:32+00:00", "story": "FORGE-WIN-2", "detail": "FORGE-WIN-2.1 (write)"}
+{"event": "decomposed", "generated_by": "docs-decomposer", "at": "2026-08-12T10:23:03+00:00", "story": "FORGE-WIN-2", "detail": "2 task(s)"}
+{"event": "delegated", "generated_by": "orchestrator", "at": "2026-08-12T10:32:50+00:00", "story": "FORGE-WIN-2", "detail": "FORGE-WIN-2.1 (write)"}
+{"event": "decomposed", "generated_by": "docs-decomposer", "at": "2026-08-12T10:42:55+00:00", "story": "FORGE-WIN-2", "detail": "2 task(s)"}
+{"event": "delegated", "generated_by": "orchestrator", "at": "2026-08-12T10:51:47+00:00", "story": "FORGE-WIN-2", "detail": "FORGE-WIN-2.1 (write)"}
+{"event": "decomposed", "generated_by": "docs-decomposer", "at": "2026-08-12T10:58:03+00:00", "story": "FORGE-WIN-2", "detail": "2 task(s)"}
+{"event": "delegated", "generated_by": "orchestrator", "at": "2026-08-12T11:03:49+00:00", "story": "FORGE-WIN-2", "detail": "FORGE-WIN-2.1 (write)"}
+{"event": "decomposed", "generated_by": "docs-decomposer", "at": "2026-08-12T11:10:36+00:00", "story": "FORGE-WIN-2", "detail": "2 task(s)"}
+{"event": "delegated", "generated_by": "orchestrator", "at": "2026-08-12T11:16:40+00:00", "story": "FORGE-WIN-2", "detail": "FORGE-WIN-2.1 (write)"}
+{"event": "decomposed", "generated_by": "docs-decomposer", "at": "2026-08-12T11:22:58+00:00", "story": "FORGE-WIN-2", "detail": "2 task(s)"}
+{"event": "signal-contradiction", "generated_by": "implementer", "at": "2026-08-12T11:25:41+00:00", "story": "FORGE-WIN-2", "detail": "FORGE-WIN-2.1 objective/reviewer require a single elevated PowerShell batch, but detailed acceptance forbids Start-Process/RunAs and all harness elevation; acceptance also names decision 0040 while wr"}
+{"event": "delegated", "generated_by": "orchestrator", "at": "2026-08-12T11:25:49+00:00", "story": "FORGE-WIN-2", "detail": "FORGE-WIN-2.1 (write)"}
+{"event": "signal-resolved", "generated_by": "orchestrator", "at": "2026-08-12T11:26:11+00:00", "story": "FORGE-WIN-2", "detail": "S-0002-756e: Right catch \u2014 my narrowing edit left stale elevation text in objective/reviewer and 0039 (not 0040) in scope. Fixed: objective/reviewer now describe user-scope-only (no RunAs), 0040 replaces 0039 in w"}
+{"event": "decomposed", "generated_by": "docs-decomposer", "at": "2026-08-12T11:26:24+00:00", "story": "FORGE-WIN-2", "detail": "2 task(s)"}
+{"event": "delegated", "generated_by": "orchestrator", "at": "2026-08-12T11:45:14+00:00", "story": "FORGE-WIN-2", "detail": "FORGE-WIN-2.1 (write)"}
+{"event": "decomposed", "generated_by": "docs-decomposer", "at": "2026-08-12T11:52:13+00:00", "story": "FORGE-WIN-2", "detail": "2 task(s)"}
+{"event": "delegated", "generated_by": "orchestrator", "at": "2026-08-12T11:57:51+00:00", "story": "FORGE-WIN-2", "detail": "FORGE-WIN-2.1 (write)"}
+{"event": "decomposed", "generated_by": "docs-decomposer", "at": "2026-08-12T12:06:58+00:00", "story": "FORGE-WIN-2", "detail": "2 task(s)"}
+{"event": "decomposed", "generated_by": "docs-decomposer", "at": "2026-08-12T12:10:04+00:00", "story": "FORGE-WIN-2", "detail": "2 task(s)"}
+{"event": "stage-start", "generated_by": "implementer", "at": "2026-08-12T12:11:35+00:00", "story": "FORGE-WIN-2", "detail": "FORGE-WIN-2.1 Doctor remediation core: python row, winget installs, one-confirm batching"}
+{"event": "delegated", "generated_by": "orchestrator", "at": "2026-08-12T12:15:14+00:00", "story": "FORGE-WIN-2", "detail": "FORGE-WIN-2.2 (read-only)"}
+{"event": "delegated", "generated_by": "orchestrator", "at": "2026-08-12T12:18:28+00:00", "story": "FORGE-WIN-2", "detail": "FORGE-WIN-2.2 (read-only)"}
+{"event": "stage-authority-migrated", "generated_by": "orchestrator", "at": "2026-08-12T12:22:40+00:00", "story": "FORGE-WIN-2", "detail": "2 task(s)"}
+{"event": "stage-incomplete", "generated_by": "implementer", "at": "2026-08-12T12:23:32+00:00", "story": "FORGE-WIN-2", "detail": "FORGE-WIN-2.1: measurement, not work: the remediation core is complete and committed at b8702c0; this stage row was rebuilt after relocation to the worktree, so its window post-dates its own work and can never measure it - consolidating into 2.2 which measures the remaining work forward"}
+{"event": "decomposed", "generated_by": "docs-decomposer", "at": "2026-08-12T12:25:23+00:00", "story": "FORGE-WIN-2", "detail": "2 task(s)"}
+{"event": "stage-start", "generated_by": "implementer", "at": "2026-08-12T12:25:24+00:00", "story": "FORGE-WIN-2", "detail": "FORGE-WIN-2.1 Doctor remediation core: python row, winget installs, one-confirm batching"}
+{"event": "decomposed", "generated_by": "docs-decomposer", "at": "2026-08-13T05:59:50+00:00", "story": "FORGE-WIN-2", "detail": "1 task(s)"}
+{"event": "stage-authority-migrated", "generated_by": "orchestrator", "at": "2026-08-13T06:54:34+00:00", "story": "FORGE-WIN-2", "detail": "1 task(s)"}
+{"event": "signal-contradiction", "generated_by": "implementer", "at": "2026-08-13T06:57:52+00:00", "story": "FORGE-WIN-2", "detail": "The required a604f12..efd7b88 consolidation range includes committed .factory files outside the brief's exclusive write scope; confirm stage-close exempts parent-owned evidence or revise the consolida"}
+{"event": "delegated", "generated_by": "orchestrator", "at": "2026-08-13T06:58:12+00:00", "story": "FORGE-WIN-2", "detail": "FORGE-WIN-2.1 (write)"}
+{"event": "signal-resolved", "generated_by": "orchestrator", "at": "2026-08-13T06:59:21+00:00", "story": "FORGE-WIN-2", "detail": "S-0003-6fb6: Exempt, by design: the six .factory files in the consolidation range are parent-owned evidence written by schema-validated recorders (decomposition, grills, run state, events) - never worker product. "}
+{"event": "stage-done", "generated_by": "implementer", "at": "2026-08-13T07:00:09+00:00", "story": "FORGE-WIN-2", "detail": "FORGE-WIN-2.1 Doctor remediation + convergence fixes + launcher probe + wiring + docs + CI (consolidated)"}
+{"event": "verify-passed", "generated_by": "orchestrator", "at": "2026-08-13T07:22:01+00:00", "story": "FORGE-WIN-2"}
+{"event": "tests-automated", "generated_by": "implementer", "at": "2026-08-13T07:28:29+00:00", "story": "FORGE-WIN-2", "detail": "pass"}
+{"event": "review-quality", "generated_by": "autoreview", "at": "2026-08-13T07:28:46+00:00", "story": "FORGE-WIN-2"}
+{"event": "review-performance", "generated_by": "autoreview", "at": "2026-08-13T07:28:56+00:00", "story": "FORGE-WIN-2"}
+{"event": "review-security", "generated_by": "autoreview", "at": "2026-08-13T07:29:09+00:00", "story": "FORGE-WIN-2"}
+{"event": "shipped", "generated_by": "orchestrator", "at": "2026-08-13T07:29:24+00:00", "story": "FORGE-WIN-2", "detail": "Windows machines converge without user-typed setup: forge doctor --fix installs Git and Python through winget in user scope with at most the installer's own OS prompt (never a harness-built elevation,"}

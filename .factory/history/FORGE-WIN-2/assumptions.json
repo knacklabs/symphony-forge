@@ -1,0 +1,18 @@
+[
+  {
+    "id": "A-0009",
+    "date": "2026-08-12",
+    "issue": "FORGE-WIN-2",
+    "assumption": "Windows remediation uses the winget package Python.Python.3.12 because it is a maintained release satisfying the required Python 3.10 minimum.",
+    "status": "confirmed",
+    "guidance": "Correct call: Python.Python.3.12 is maintained, satisfies the >=3.10 floor, and avoids bleeding-edge 3.13+ compatibility risk with the harness's stdlib usage. Revisit only when 3.12 leaves support."
+  },
+  {
+    "id": "A-0010",
+    "date": "2026-08-12",
+    "issue": "FORGE-WIN-2",
+    "assumption": "Windows python winget pin corrected to Python.Python.3.14: 3.12 is security-only per the Python lifecycle; 3.14 is the current bugfix line with winget manifests. Supersedes A-0009's 3.12 rationale (orchestrator's earlier confirmation was factually stale).",
+    "status": "confirmed",
+    "guidance": "Verified against the Python release lifecycle and winget-pkgs manifests by the worker (S-0001-36a8 evidence); 3.14 is the pin."
+  }
+]

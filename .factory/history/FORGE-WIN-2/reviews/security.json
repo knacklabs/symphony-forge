@@ -1,0 +1,18 @@
+{
+  "generated_by": "autoreview",
+  "score": 9,
+  "summary": "No elevation surface: no RunAs, Start-Process, or ShellExecute anywhere (source-asserted by tests); user-scope winget flags pinned; winget identity API-derived, never PATH-trusted (hijack test); APPEXECLINK accepted by lexists-without-resolve only, ordinary symlinks rejected; env vars used for PATH-candidate discovery only with the trust-boundary distinction documented in 0040; installer-owned UAC prompts are the OS's own, never harness-built (0040).",
+  "blocking_findings": [],
+  "non_blocking_findings": [],
+  "residual_risks": [
+    "A package installer may self-elevate with its own OS prompt; declining yields a named red row, per 0040."
+  ],
+  "recommendation": "ship",
+  "reviewed_scope": [
+    "factory/scripts/forge_cli/doctor.py",
+    "forge.cmd"
+  ],
+  "aspect": "security",
+  "recorded_at": "2026-08-13T07:29:09+00:00",
+  "commit": "a2a551e94627297ad2e322f4829fe65f14d973db"
+}

@@ -1,0 +1,28 @@
+{
+  "ok": true,
+  "completed_at": "2026-08-13T07:22:01+00:00",
+  "commit": "a2a551e94627297ad2e322f4829fe65f14d973db",
+  "results": [
+    {
+      "command": "python3 factory/scripts/check_dual_runtime.py",
+      "exit_code": 0,
+      "stdout": "WARNING: commit e900fcf5 accepting docs/decisions/0032-jit-task-planning.md lacks a `Confirmed-by:` trailer (convention-level check).\nWARNING: commit 785dba9c accepting docs/decisions/0033-gate-a-declares-all-work-records.md lacks a `Confirmed-by:` trailer (convention-level check).\nWARNING: commit 0f17e888 accepting docs/decisions/0034-vendored-docs-are-client-safe.md lacks a `Confirmed-by:` trailer (convention-level check).\ncheck_dual_runtime: clean.\n",
+      "stderr": "",
+      "phase": "structural"
+    },
+    {
+      "command": "python3 factory/scripts/check_factory_scaffold.py",
+      "exit_code": 0,
+      "stdout": "Factory scaffold OK\n",
+      "stderr": "",
+      "phase": "typecheck"
+    },
+    {
+      "command": "uv run --with pytest python -m pytest factory/tests -q",
+      "exit_code": 0,
+      "stdout": "........................................................................ [ 13%]\n.................................s...................................... [ 26%]\n........................................................................ [ 39%]\n........................................................................ [ 53%]\n........................................................................ [ 66%]\n........................................................................ [ 79%]\n........................................................................ [ 92%]\n......................................                                   [100%]\n541 passed, 1 skipped in 1169.26s (0:19:29)\n",
+      "stderr": "",
+      "phase": "tests"
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "event": "open",
+  "id": "Q-0056-dbdd",
+  "profile": "degraded",
+  "reason": "stage-record reconstruction after worktree relocation: 2.1's window post-dates its committed work and every sanctioned lever (migrate, consolidate, incomplete) refuses cyclically; resetting the unpushed branch tip to the true base a604f12 and rebuilding the tracker so the stage measures its own diff",
+  "started_at": "2026-08-12T12:24:28+00:00",
+  "max_files": 5,
+  "files": [],
+  "harness_source": true,
+  "kind": "degraded"
+}

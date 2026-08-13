@@ -1,0 +1,36 @@
+{
+  "commit": "a2a551e94627297ad2e322f4829fe65f14d973db",
+  "automated": {
+    "generated_by": "implementer",
+    "status": "pass",
+    "summary": "Consolidated three-commit window verified: close-time selector 21 passed; declared elevation-batching test passed; full suite green via verify.py in the session environment. Delegated verification run confirmed range integrity (exactly a505eb7, d0b0333, efd7b88) with no product edits.",
+    "blocking_findings": [],
+    "commands_run": [
+      "verify.py full (structural + scaffold + tests): Verification passed",
+      "close-time selector: 21 passed, 521 deselected",
+      "declared test test_doctor_fix_windows_batches_all_elevation_into_single_confirm: 1 passed"
+    ],
+    "tests_added_or_updated": [
+      "factory/tests/test_gates.py::test_doctor_fix_windows_batches_all_elevation_into_single_confirm",
+      "factory/tests/test_gates.py::test_forge_cmd_probes_python3_as_final_fallback",
+      "factory/tests/test_gates.py::test_doctor_fix_rejects_untrusted_winget_path",
+      "factory/tests/test_gates.py::test_doctor_fix_trusts_appexeclink_without_resolving"
+    ],
+    "pass_fail_summary": "selector 21/21; full suite pass",
+    "remaining_gaps": [
+      "Real-Windows validation of winget flows lands with the pilot; CI covers windows-latest shape"
+    ],
+    "reviewed_scope": [
+      "factory/scripts/forge_cli/doctor.py",
+      "forge.cmd",
+      "factory/scripts/forge_cli/scaffold.py",
+      "factory/tests/test_gates.py"
+    ],
+    "non_blocking_findings": [],
+    "residual_risks": [],
+    "manual_validation_steps": [],
+    "recorded_at": "2026-08-13T07:28:29+00:00",
+    "commit": "a2a551e94627297ad2e322f4829fe65f14d973db"
+  },
+  "updated_at": "2026-08-13T07:28:29+00:00"
+}

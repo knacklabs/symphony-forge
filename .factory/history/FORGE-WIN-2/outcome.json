@@ -1,0 +1,7 @@
+{
+  "generated_by": "implementer",
+  "outcome": "Windows machines converge without user-typed setup: forge doctor --fix installs Git and Python through winget in user scope with at most the installer's own OS prompt (never a harness-built elevation, 0040), forge.cmd probes py/python/python3 and can bootstrap Python once via trusted winget before failing closed, init/adopt/upgrade leave repos hook-healthy with named red rows and manual URLs when user-scope cannot converge, and PATH refresh uses API-derived known folders so poisoned environments cannot hijack the flow.",
+  "issue": "FORGE-WIN-2",
+  "commit": "a2a551e94627297ad2e322f4829fe65f14d973db",
+  "recorded_at": "2026-08-13T07:29:19+00:00"
+}

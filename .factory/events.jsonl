@@ -991,3 +991,9 @@
 {"event": "delegated", "generated_by": "orchestrator", "at": "2026-08-13T06:58:12+00:00", "story": "FORGE-WIN-2", "detail": "FORGE-WIN-2.1 (write)"}
 {"event": "signal-resolved", "generated_by": "orchestrator", "at": "2026-08-13T06:59:21+00:00", "story": "FORGE-WIN-2", "detail": "S-0003-6fb6: Exempt, by design: the six .factory files in the consolidation range are parent-owned evidence written by schema-validated recorders (decomposition, grills, run state, events) - never worker product. "}
 {"event": "stage-done", "generated_by": "implementer", "at": "2026-08-13T07:00:09+00:00", "story": "FORGE-WIN-2", "detail": "FORGE-WIN-2.1 Doctor remediation + convergence fixes + launcher probe + wiring + docs + CI (consolidated)"}
+{"event": "verify-passed", "generated_by": "orchestrator", "at": "2026-08-13T07:22:01+00:00", "story": "FORGE-WIN-2"}
+{"event": "tests-automated", "generated_by": "implementer", "at": "2026-08-13T07:28:29+00:00", "story": "FORGE-WIN-2", "detail": "pass"}
+{"event": "review-quality", "generated_by": "autoreview", "at": "2026-08-13T07:28:46+00:00", "story": "FORGE-WIN-2"}
+{"event": "review-performance", "generated_by": "autoreview", "at": "2026-08-13T07:28:56+00:00", "story": "FORGE-WIN-2"}
+{"event": "review-security", "generated_by": "autoreview", "at": "2026-08-13T07:29:09+00:00", "story": "FORGE-WIN-2"}
+{"event": "shipped", "generated_by": "orchestrator", "at": "2026-08-13T07:29:24+00:00", "story": "FORGE-WIN-2", "detail": "Windows machines converge without user-typed setup: forge doctor --fix installs Git and Python through winget in user scope with at most the installer's own OS prompt (never a harness-built elevation,"}

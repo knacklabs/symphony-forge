@@ -608,14 +608,17 @@
         "init/adopt/upgrade each leave a client repo hook-healthy on Windows; upgrade replaces pinned-interpreter settings"
       ],
       "order": 28,
-      "status": "active",
+      "status": "done",
       "epic": "windows-zero-setup",
       "skill": "backend",
       "kind": "feature",
       "depends_on": [
         "FORGE-WIN-1"
       ],
-      "spec": "docs/specs/windows-zero-setup.md"
+      "spec": "docs/specs/windows-zero-setup.md",
+      "completed_at": "2026-08-13T07:29:24+00:00",
+      "history": ".factory/history/FORGE-WIN-2/",
+      "outcome": "Windows machines converge without user-typed setup: forge doctor --fix installs Git and Python through winget in user scope with at most the installer's own OS prompt (never a harness-built elevation, 0040), forge.cmd probes py/python/python3 and can bootstrap Python once via trusted winget before failing closed, init/adopt/upgrade leave repos hook-healthy with named red rows and manual URLs when user-scope cannot converge, and PATH refresh uses API-derived known folders so poisoned environments cannot hijack the flow."
     },
     {
       "key": "FORGE-WIN-3",
@@ -653,7 +656,7 @@
     }
   ],
   "generated_by": "human",
-  "updated_at": "2026-08-12T08:00:50+00:00",
+  "updated_at": "2026-08-13T07:29:24+00:00",
   "epics": [
     {
       "id": "symphony-forge",

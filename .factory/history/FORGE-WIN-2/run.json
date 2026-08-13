@@ -1,0 +1,17 @@
+{
+  "issue_key": "FORGE-WIN-2",
+  "title": "Doctor --fix installs prerequisites on Windows",
+  "tracker": "linear",
+  "branch": "feat/FORGE-WIN-2-doctor-fix-installs-prerequisites-on-windows",
+  "phase": "pr-ready",
+  "plan_status": "approved",
+  "decomposition_status": "recorded",
+  "implementation_status": "pending",
+  "tests_status": "passed",
+  "verify_status": "passed",
+  "review_status": "passed",
+  "created_at": "2026-08-12T08:00:50+00:00",
+  "updated_at": "2026-08-13T07:29:24+00:00",
+  "plan_file": "plans/completed/FORGE-WIN-2-doctor-fix-installs-prerequisites-on-windows.md",
+  "story": "FORGE-WIN-2"
+}

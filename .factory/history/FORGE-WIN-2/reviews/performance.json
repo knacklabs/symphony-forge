@@ -1,0 +1,15 @@
+{
+  "generated_by": "autoreview",
+  "score": 9,
+  "summary": "Remediation work happens only on the --fix path with missing tools; fast_status stays subprocess-free (test-asserted); one PATH refresh and one reprobe per remediation run, pinned by test; 600s install timeout bounds winget.",
+  "blocking_findings": [],
+  "non_blocking_findings": [],
+  "residual_risks": [],
+  "recommendation": "ship",
+  "reviewed_scope": [
+    "factory/scripts/forge_cli/doctor.py"
+  ],
+  "aspect": "performance",
+  "recorded_at": "2026-08-13T07:28:56+00:00",
+  "commit": "a2a551e94627297ad2e322f4829fe65f14d973db"
+}
