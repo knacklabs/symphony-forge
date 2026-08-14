@@ -1,0 +1,10 @@
+{
+  "event": "open",
+  "id": "Q-0071-4180",
+  "profile": "quickfix",
+  "reason": "pyrightconfig.json: give Pyright/Pylance factory/scripts as an import root so forge_cli.*, factory_lib, and sibling scripts resolve (148 reportMissingImports -> 0); editor-only, no runtime or type-checking change",
+  "started_at": "2026-08-14T06:57:04+00:00",
+  "max_files": 5,
+  "files": [],
+  "harness_source": true
+}
