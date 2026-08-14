@@ -1,0 +1,10 @@
+// The forge scripts run with factory/scripts on sys.path: forge.py is invoked as
+// `python factory/scripts/forge.py`, factory/scripts/forge_cli/* import factory_lib
+// and each other, and factory/tests/test_gates.py does sys.path.insert(0, factory/scripts).
+// Tell the static analyzer (Pyright / Pylance) the same, so forge_cli.*, factory_lib,
+// and the sibling scripts (record_signoff, intake, check_*) resolve instead of reporting
+// "could not be resolved". Import resolution only — this does not opt the tree into
+// stricter type checking.
+{
+  "extraPaths": ["factory/scripts"]
+}
