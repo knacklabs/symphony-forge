@@ -26,7 +26,44 @@
         "new-story artifacts record under .factory/stories/<KEY>/ through one shared path helper",
         "legacy live and history layouts remain readable by every consumer"
       ],
-      "dependencies": []
+      "dependencies": [],
+      "write_scope": [
+        "factory/scripts/factory_lib.py",
+        "factory/scripts/record_decomposition_from_json.py",
+        "factory/scripts/record_grill_from_json.py",
+        "factory/scripts/record_test_from_json.py",
+        "factory/scripts/record_review_from_json.py",
+        "factory/scripts/verify.py",
+        "factory/tests/test_gates.py"
+      ],
+      "verify_commands": [
+        "python3 factory/scripts/check_dual_runtime.py"
+      ],
+      "required_tests": [
+        {
+          "id": "test_new_story_artifacts_record_under_story_dir",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest --with psutil python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_legacy_layout_stays_readable_by_every_consumer",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest --with psutil python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        }
+      ],
+      "reviewer_focus": "Single-source resolution is the whole game: story_dir(root, key) plus one evidence_path(root, key, name) accessor in factory_lib must be the ONLY place layout knowledge lives; a recorder or gate joining paths by hand forks the layout. Write-new/read-both: writers go story-scoped for stories intaken under the new layout, readers fall back legacy-first-miss. A budget overrun here is the split signal, not a reason-raise. Gate fields belong to the parallel approval-integrity branch - only path resolution changes here.",
+      "plan_contracts": [
+        {
+          "id": "CFS1-C1",
+          "statement": "new-story artifacts record under .factory/stories/<KEY>/ through one shared path helper",
+          "source": "plans/active/FORGE-CFS-1-story-state-stops-conflicting-across-prs.md#acceptance-criteria"
+        },
+        {
+          "id": "CFS1-C2",
+          "statement": "legacy live and history layouts remain readable by every consumer",
+          "source": "plans/active/FORGE-CFS-1-story-state-stops-conflicting-across-prs.md#acceptance-criteria"
+        }
+      ]
     },
     {
       "id": "run-pointer-untracked",
@@ -92,5 +129,5 @@
   "epic": "accountable-engineering",
   "plan_file": "plans/active/FORGE-CFS-1-story-state-stops-conflicting-across-prs.md",
   "plan_sha256": "ba7f3d643e7332cdeb8efe17a1e82d1fd32dbe9b7719190cafc81578c2fef03b",
-  "commit": "522285ce218b43a0848fae848ee67a5471f3b646"
+  "commit": "bc935ace2c6a2ca56936e218e13a7784928ee971"
 }

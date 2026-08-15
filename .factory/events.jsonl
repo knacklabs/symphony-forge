@@ -1351,3 +1351,4 @@
 {"event": "plan-approved", "generated_by": "planner-high", "at": "2026-08-15T14:17:54+00:00", "story": "FORGE-CFS-1", "detail": "plans/active/FORGE-CFS-1-story-state-stops-conflicting-across-prs.md"}
 {"event": "decomposed", "generated_by": "docs-decomposer", "at": "2026-08-15T14:18:30+00:00", "story": "FORGE-CFS-1", "detail": "6 task(s)"}
 {"event": "implementing", "generated_by": "orchestrator", "at": "2026-08-15T14:18:30+00:00", "story": "FORGE-CFS-1"}
+{"event": "decomposed", "generated_by": "docs-decomposer", "at": "2026-08-15T14:21:55+00:00", "story": "FORGE-CFS-1", "detail": "6 task(s)"}
