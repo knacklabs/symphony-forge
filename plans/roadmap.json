@@ -784,7 +784,7 @@
         "with unmerged index entries the hook permits git-native resolution of exactly those paths and refuses content hand-writes; an unparseable factory_lib or state file engages a static deny-list fallback instead of crashing"
       ],
       "order": 36,
-      "status": "pending",
+      "status": "active",
       "epic": "accountable-engineering",
       "skill": "backend",
       "depends_on": [],
@@ -792,7 +792,7 @@
     }
   ],
   "generated_by": "human",
-  "updated_at": "2026-08-14T13:44:37+00:00",
+  "updated_at": "2026-08-15T14:15:46+00:00",
   "epics": [
     {
       "id": "symphony-forge",

@@ -1,0 +1,96 @@
+{
+  "generated_by": "claude-code:plan-mode",
+  "project": "",
+  "story": "FORGE-CFS-1",
+  "user_facing": false,
+  "doc_roots": [
+    "docs/specs/conflict-free-story-state.md",
+    "plans/active/FORGE-CFS-1-story-state-stops-conflicting-across-prs.md"
+  ],
+  "epics": [
+    {
+      "id": "accountable-engineering",
+      "title": "Accountable engineering loop",
+      "objective": "Enforce decision 0032 end to end: JIT frontier contracts gated at stage start, evidence-backed grills, bounded reviewable diffs.",
+      "source_refs": [
+        "docs/specs/conflict-free-story-state.md"
+      ]
+    }
+  ],
+  "tasks": [
+    {
+      "id": "story-scoped-evidence",
+      "title": "Evidence records under the story directory",
+      "objective": "A single story_dir() path helper routes every recorder and gate to .factory/stories/<KEY>/ for new stories, with read fallback to the legacy live singletons and history/ so existing data stays readable.",
+      "acceptance_criteria": [
+        "new-story artifacts record under .factory/stories/<KEY>/ through one shared path helper",
+        "legacy live and history layouts remain readable by every consumer"
+      ],
+      "dependencies": []
+    },
+    {
+      "id": "run-pointer-untracked",
+      "title": "The active-story pointer leaves version control",
+      "objective": "Intake writes the pointer to .git/forge/run.json beside the protected authority; phase derives from story artifacts; tracked run.json is no longer written for new stories and stays readable for legacy ones.",
+      "acceptance_criteria": [
+        "two worktrees intake different stories with zero tracked run.json writes",
+        "phase derivation matches the old run.json semantics for legacy repos"
+      ],
+      "dependencies": [
+        "story-scoped-evidence"
+      ]
+    },
+    {
+      "id": "per-event-files",
+      "title": "Events are one file each",
+      "objective": "append_event writes per-event files under the story directory (0022 pattern); forge history and the board read per-event files and legacy events.jsonl together; the union-driver dependency is retired from docs.",
+      "acceptance_criteria": [
+        "recording an event creates a new file and appends to no shared ledger",
+        "forge history renders legacy and per-file events in one timeline"
+      ],
+      "dependencies": [
+        "run-pointer-untracked"
+      ]
+    },
+    {
+      "id": "ship-in-place",
+      "title": "pr_ready ships without moving files",
+      "objective": "pr_ready marks the story shipped inside its story directory - no archive move, no rename-detection strands; board and history read shipped story dirs; roadmap done-flip unchanged.",
+      "acceptance_criteria": [
+        "pr_ready completes with zero file moves and evidence stays at its recorded paths",
+        "board and forge history read shipped stories from the story directory"
+      ],
+      "dependencies": [
+        "per-event-files"
+      ]
+    },
+    {
+      "id": "merge-survivable-hooks",
+      "title": "Hooks survive merges and permit scoped resolution",
+      "objective": "With unmerged index entries, pre_tool_use permits git-native resolution (checkout --ours/--theirs, rm, add) for exactly those paths while refusing content hand-writes; unparseable factory_lib or state engages a static deny-list fallback instead of crashing; forge next auto-heals the roadmap after a merge commit.",
+      "acceptance_criteria": [
+        "the carve-out matrix passes: resolution allowed for exactly the unmerged set, refused outside it, deny-list fallback engages on broken imports",
+        "forge next heals the roadmap after a merge without being asked"
+      ],
+      "dependencies": [
+        "ship-in-place"
+      ]
+    },
+    {
+      "id": "migration-and-vendor",
+      "title": "Legacy repos cut over at intake; clients get it via upgrade",
+      "objective": "The next intake on a legacy repo starts the story-scoped layout without touching old artifacts; forge upgrade carries the change to client repos; docs sweep; the merge-simulation gate test proves two concurrent stories produce zero overlapping .factory paths.",
+      "acceptance_criteria": [
+        "intake on a legacy fixture starts the new layout with old artifacts untouched and readable",
+        "the merge-simulation test merges two concurrent story branches with zero .factory conflicts"
+      ],
+      "dependencies": [
+        "merge-survivable-hooks"
+      ]
+    }
+  ],
+  "epic": "accountable-engineering",
+  "plan_file": "plans/active/FORGE-CFS-1-story-state-stops-conflicting-across-prs.md",
+  "plan_sha256": "ba7f3d643e7332cdeb8efe17a1e82d1fd32dbe9b7719190cafc81578c2fef03b",
+  "commit": "522285ce218b43a0848fae848ee67a5471f3b646"
+}

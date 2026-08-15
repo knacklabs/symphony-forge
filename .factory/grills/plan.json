@@ -1,0 +1,24 @@
+{
+  "generated_by": "griller",
+  "gate": "plan",
+  "verdict": "pass",
+  "issue": "FORGE-CFS-1",
+  "questions_asked": 2,
+  "gaps": [
+    "What happens to existing .factory/history archives",
+    "Where the worktree-local run pointer lives",
+    "A hook carve-out that leaked beyond unmerged paths would reopen the write lock",
+    "Path resolution forked across recorders would create divergent layouts"
+  ],
+  "contradictions": [],
+  "resolutions": [
+    "Operator chose read-only legacy history via AskUserQuestion pre-draft round 2026-08-15 (plan Scope; spec non-goal)",
+    "Operator chose .git/forge/run.json beside the protected authority via AskUserQuestion pre-draft round 2026-08-15 (plan Technical Approach)",
+    "Carve-out is scoped to exactly the unmerged index paths and the test matrix must prove refusal outside that set (plan Risks and Verify Plan)",
+    "story_dir() is the single path-resolution point for every recorder and gate; reviewer focus pins it (plan Technical Approach and Risks)"
+  ],
+  "open_items": [],
+  "input_sha256": "ba75c9dc42cb90195f6588ad3586c1f1dc5c3dd0fe89dd63373ab3e14c70aada",
+  "recorded_at": "2026-08-15T14:17:43+00:00",
+  "commit": "522285ce218b43a0848fae848ee67a5471f3b646"
+}

@@ -1,0 +1,35 @@
+{
+  "issue": "FORGE-CFS-1",
+  "stages": [
+    {
+      "id": "story-scoped-evidence",
+      "title": "Evidence records under the story directory",
+      "status": "pending"
+    },
+    {
+      "id": "run-pointer-untracked",
+      "title": "The active-story pointer leaves version control",
+      "status": "pending"
+    },
+    {
+      "id": "per-event-files",
+      "title": "Events are one file each",
+      "status": "pending"
+    },
+    {
+      "id": "ship-in-place",
+      "title": "pr_ready ships without moving files",
+      "status": "pending"
+    },
+    {
+      "id": "merge-survivable-hooks",
+      "title": "Hooks survive merges and permit scoped resolution",
+      "status": "pending"
+    },
+    {
+      "id": "migration-and-vendor",
+      "title": "Legacy repos cut over at intake; clients get it via upgrade",
+      "status": "pending"
+    }
+  ]
+}
