@@ -1341,3 +1341,7 @@
 {"event": "review-security", "generated_by": "autoreview", "at": "2026-08-14T13:26:08+00:00", "story": "FORGE-ACC-2"}
 {"event": "verify-passed", "generated_by": "orchestrator", "at": "2026-08-14T13:44:18+00:00", "story": "FORGE-ACC-2"}
 {"event": "shipped", "generated_by": "orchestrator", "at": "2026-08-14T13:44:36+00:00", "story": "FORGE-ACC-2", "detail": "A task can no longer be implemented on an unproven plan: its grill must show what was inspected, how the system currently flows, how every acceptance criterion will be proven, what new abstractions ar"}
+{"event": "spec-draft", "generated_by": "orchestrator", "at": "2026-08-14T05:47:16+00:00", "detail": "conflict-free-story-state: Conflict-free story state: overlapping PRs stop colliding on recorded evidence"}
+{"event": "spec-confirmed", "generated_by": "orchestrator", "at": "2026-08-14T05:48:50+00:00", "detail": "conflict-free-story-state"}
+{"event": "roadmap-add", "generated_by": "orchestrator", "at": "2026-08-14T05:49:12+00:00", "story": "FORGE-CFS-1", "detail": "docs/specs/conflict-free-story-state.md"}
+{"event": "pr-linked", "generated_by": "orchestrator", "at": "2026-08-14T14:30:50+00:00", "story": "FORGE-ACC-1", "detail": "knacklabs/symphony-forge#104"}

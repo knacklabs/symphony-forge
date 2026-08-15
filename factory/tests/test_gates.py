@@ -9176,6 +9176,8 @@ def test_recorder_holds_the_task_narrative_contract(repo, tmp_path):
     record_skeleton_then_frontier(repo, [first, second])
     code, out = record_task_grill(repo, first)
     assert code == 0, out
+    code, out = record_task_grill(repo, DECOMP["tasks"][0])
+    assert code == 0, out
     run(repo, "forge.py", "stage", "start", "T1")
     launch_fake(repo, tmp_path, "T1")
     write_in_scope(repo, "src/core.py")  # stage done measures the diff
