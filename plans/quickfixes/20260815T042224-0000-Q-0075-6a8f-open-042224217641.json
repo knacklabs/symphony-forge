@@ -1,0 +1,10 @@
+{
+  "event": "open",
+  "id": "Q-0075-6a8f",
+  "profile": "quickfix",
+  "reason": "PR #107 CI: recorder stamps plan_sha256 from raw bytes while stage start compares plan_digest_without_assumptions (text-normalized) - CRLF divergence fails every stage start on Windows; align the recorder on the same digest, add a CRLF regression test, and set gc.auto=0 in the test fixture so repo copytree cannot race detached auto-gc",
+  "started_at": "2026-08-15T04:22:24+00:00",
+  "max_files": 5,
+  "files": [],
+  "harness_source": true
+}

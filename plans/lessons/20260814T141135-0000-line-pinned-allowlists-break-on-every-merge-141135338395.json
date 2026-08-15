@@ -1,0 +1,11 @@
+{
+  "topic": "line-pinned-allowlists-break-on-every-merge",
+  "lesson": "check_encoding_hygiene.py pins its errors-policy allowlist by exact file:line, so ANY insertion above a pinned site breaks scaffold-check on the next PR - it cost two quickfix windows and a bespoke re-pin script (scratchpad repin_hygiene.py: maps constructs by content against a reference revision) across PRs 104/107. Durable fix candidate for the approval-integrity story or a hygiene follow-up: pin by content fingerprint (path + normalized construct text) instead of line number, or ship the re-pin script as a forge command.",
+  "source": "PR-104/107 CI repair",
+  "applies_to": [
+    "factory/scripts/check_encoding_hygiene.py"
+  ],
+  "severity": "high",
+  "generated_by": "orchestrator",
+  "added_at": "2026-08-14T14:11:35+00:00"
+}

@@ -10,8 +10,9 @@ from pathlib import Path
 
 from factory_lib import (
     decomposition_state_path, dump_json, gate, head_sha, load_json, now_iso,
-    protected_decomposition_state_path, repo_root, run_state_path,
-    read_stdin_utf8, safe_factory_write_json, sha256_of, validate_payload,
+    plan_digest_without_assumptions, protected_decomposition_state_path,
+    repo_root, run_state_path, read_stdin_utf8, safe_factory_write_json,
+    validate_payload,
 )
 from forge_cli.doctor import unrunnable_reason
 from forge_cli.stages import review_budget
@@ -64,7 +65,7 @@ if not plan_path.is_file():
     raise SystemExit(
         f"decomposition provenance: active plan {plan_file!r} is not readable"
     )
-plan_sha256 = sha256_of(plan_path)
+plan_sha256 = plan_digest_without_assumptions(plan_path)
 # The digest the recorder can actually VOUCH for: it reads the active plan
 # itself, so the stamp is true at record time without asking the producer to
 # hash a file. A supplied digest is still compared — a producer that knows

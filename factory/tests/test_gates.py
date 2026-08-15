@@ -260,6 +260,7 @@ def repo(tmp_path: Path) -> Path:
         "Path(report).write_text(f'<testsuite><testcase name=\"{test_id}\" "
         "file=\"{path}\"/></testsuite>')\n"
     )
+    git(target, "config", "gc.auto", "0")
     git(target, "add", "-A")
     git(target, "commit", "-q", "-m", "scaffold")
     return target
@@ -9948,6 +9949,25 @@ def start_stage(repo: Path, tmp_path: Path, task: dict, stage_id: str = "T1",
     assert code == 0, out
     if launch:
         launch_fake(repo, tmp_path, stage_id)
+
+
+def test_plan_digest_is_newline_stable_across_record_and_stage_start(repo, tmp_path):
+    """Windows writes the saved plan with CRLF; the recorder and stage start
+    must agree on the plan digest regardless of newline shape (PR #107 CI)."""
+    sign_off(repo)
+    intake(repo)
+    save_plan(repo, tmp_path)
+    plan = next((repo / "plans" / "active").glob("*.md"))
+    plan.write_bytes(
+        plan.read_bytes().replace(b"\r\n", b"\n").replace(b"\n", b"\r\n")
+    )
+    before = plan.read_bytes()
+    record_skeleton_then_frontier(repo, [STAGE_TASK])
+    code, out = record_task_grill(repo, STAGE_TASK)
+    assert code == 0, out
+    assert plan.read_bytes() == before
+    code, out = run(repo, "forge.py", "stage", "start", "T1")
+    assert code == 0, out
 
 
 def write_in_scope(repo: Path, rel: str, text: str = "print('work')\n") -> None:
