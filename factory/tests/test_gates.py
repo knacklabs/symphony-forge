@@ -247,10 +247,16 @@ def dirty_digests(repo: Path) -> dict[str, str]:
 @pytest.fixture()
 def repo(tmp_path: Path) -> Path:
     target = tmp_path / "app"
+    # gc.auto=0 must reach forge init's OWN git commits: a detached auto-gc
+    # spawned during init can still be pruning objects when a test later
+    # copies .git (the review-budget copytree race). The config line below
+    # only governs git run after the repo exists.
     proc = subprocess.run(
         [sys.executable, str(HARNESS / "factory" / "scripts" / "forge.py"),
          "init", "--name", "app", "--target", str(target)],
         capture_output=True, text=True,
+        env={**os.environ, "GIT_CONFIG_COUNT": "1",
+             "GIT_CONFIG_KEY_0": "gc.auto", "GIT_CONFIG_VALUE_0": "0"},
     )
     assert proc.returncode == 0, proc.stdout + proc.stderr
     (target / "stage_contract_proof.py").write_text(

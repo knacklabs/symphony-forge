@@ -1,0 +1,9 @@
+{
+  "event": "done",
+  "id": "Q-0077-d0c0",
+  "profile": "quickfix",
+  "reason": "PR #107 scaffold-check: the gc race survives because forge init's own git commits run before the fixture's gc.auto=0 config line - inject gc.auto=0 via GIT_CONFIG_COUNT env into the init subprocess so no fixture git process can spawn detached gc",
+  "started_at": "2026-08-15T05:41:18+00:00",
+  "completed_at": "2026-08-15T06:21:03+00:00",
+  "files": []
+}
