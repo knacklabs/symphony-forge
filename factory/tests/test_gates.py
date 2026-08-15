@@ -504,6 +504,107 @@ def signed_off(repo: Path) -> bool:
     return bool(match and match.group(1))
 
 
+def test_new_story_artifacts_record_under_story_dir(repo, tmp_path):
+    sign_off(repo)
+    code, out = intake(repo)
+    assert code == 0, out
+    scoped = repo / ".factory" / "stories" / "ENG-1"
+    scoped.mkdir(parents=True)
+
+    code, out = save_plan(repo, tmp_path)
+    assert code == 0, out
+    record_skeleton_then_frontier(repo, DECOMP["tasks"])
+
+    testing = {
+        "generated_by": "implementer",
+        "status": "passed",
+        "summary": "focused evidence-path proof passed",
+        "blocking_findings": [],
+        "commands_run": ["pytest"],
+        "skills_used": ["emil-design-eng", "frontend-design"],
+    }
+    code, out = run(
+        repo, "record_test_from_json.py", "--kind", "automated",
+        stdin=json.dumps(testing),
+    )
+    assert code == 0, out
+
+    review = {
+        "generated_by": "autoreview",
+        "score": 9,
+        "summary": "story evidence paths are consistent",
+        "blocking_findings": [],
+        "skills_used": ["review-animations"],
+    }
+    for aspect in ("quality", "performance", "security"):
+        code, out = run(
+            repo, "record_review_from_json.py", "--aspect", aspect,
+            stdin=json.dumps(review),
+        )
+        assert code == 0, out
+
+    code, out = run(repo, "verify.py", env={
+        "FACTORY_STRUCTURAL_CMD": "true",
+        "FACTORY_TYPECHECK_CMD": "true",
+        "FACTORY_TEST_CMD": "true",
+    })
+    assert code == 0, out
+
+    expected = (
+        "decomposition.json",
+        "grills/plan.json",
+        "tests.json",
+        "reviews/quality.json",
+        "reviews/performance.json",
+        "reviews/security.json",
+        "verify.json",
+    )
+    for name in expected:
+        assert (scoped / name).is_file(), name
+        assert not (repo / ".factory" / name).exists(), name
+
+
+def test_legacy_layout_stays_readable_by_every_consumer(repo):
+    lib = load_factory_lib(repo)
+    factory = repo / ".factory"
+    factory.mkdir(exist_ok=True)
+    (factory / "run.json").write_text(json.dumps({"issue_key": "LEG-1"}))
+    legacy_names = (
+        "decomposition.json",
+        "grills/plan.json",
+        "grills/tasks/T1.json",
+        "tests.json",
+        "reviews/quality.json",
+        "verify.json",
+    )
+    for name in legacy_names:
+        path = factory / name
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text("{}\n")
+
+    assert lib.decomposition_state_path(repo) == factory / "decomposition.json"
+    assert lib.tests_state_path(repo) == factory / "tests.json"
+    assert lib.review_dir(repo) == factory / "reviews"
+    assert lib.verify_state_path(repo) == factory / "verify.json"
+    for name in legacy_names:
+        assert lib.evidence_path(repo, "LEG-1", name) == factory / name
+
+    history = factory / "history" / "LEG-1"
+    for name in legacy_names:
+        source = factory / name
+        target = history / name
+        target.parent.mkdir(parents=True, exist_ok=True)
+        source.replace(target)
+    (factory / "run.json").write_text(json.dumps({"issue_key": "OTHER-1"}))
+
+    assert lib.decomposition_state_path(repo, "LEG-1") == history / "decomposition.json"
+    assert lib.tests_state_path(repo, "LEG-1") == history / "tests.json"
+    assert lib.review_dir(repo, "LEG-1") == history / "reviews"
+    assert lib.verify_state_path(repo, "LEG-1") == history / "verify.json"
+    for name in legacy_names:
+        assert lib.evidence_path(repo, "LEG-1", name) == history / name
+
+
 def refresh_manifest(repo: Path) -> None:
     """What a real forge upgrade does after touching the gate surface."""
     proc = subprocess.run(

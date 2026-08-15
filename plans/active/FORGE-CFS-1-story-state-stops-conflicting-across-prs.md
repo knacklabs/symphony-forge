@@ -115,3 +115,8 @@ Skeletal, readable ids, contracts JIT:
 - Per-task selections; full `verify.py` at closeout; `check_dual_runtime.py` throughout.
 - The merge-simulation test: two fixture stories recorded concurrently in sibling worktrees merge into one base with zero `.factory` conflicts.
 - Carve-out matrix: with a synthetic unmerged index, git-native resolution passes for exactly those paths and refuses others; broken `factory_lib` engages the deny-list fallback instead of crashing.
+
+## Implementation Assumptions
+
+<!-- Made during implementation, NOT part of the approved plan. Dev: review these before merge; promote any that matter to docs/decisions/. -->
+- 2026-08-15: A story directory created by intake is the marker for story-scoped writes; without it, an active legacy story continues using live singletons.

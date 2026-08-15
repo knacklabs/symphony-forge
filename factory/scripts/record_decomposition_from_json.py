@@ -11,8 +11,7 @@ from pathlib import Path
 from factory_lib import (
     decomposition_state_path, dump_json, gate, head_sha, load_json, now_iso,
     plan_digest_without_assumptions, protected_decomposition_state_path,
-    repo_root, run_state_path, read_stdin_utf8, safe_factory_write_json,
-    validate_payload,
+    repo_root, run_state_path, read_stdin_utf8, validate_payload,
 )
 from forge_cli.doctor import unrunnable_reason
 from forge_cli.stages import review_budget
@@ -442,7 +441,7 @@ with delegation_exclusion(
         write_stages(root, stages_data)
     payload["commit"] = head_sha(root)
     dump_json(protected_decomposition_state_path(root), payload)
-    safe_factory_write_json(root, decomposition_state_path(root).name, payload)
+    dump_json(decomposition_state_path(root), payload)
     # The decomposition is immutable evidence; the stage tracker is its mutable
     # execution twin (decision 0007) — pr_ready refuses while stages are open.
     write_skeleton(root, state.get("issue_key", ""), tasks)

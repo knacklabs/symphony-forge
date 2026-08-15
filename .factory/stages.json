@@ -4,7 +4,11 @@
     {
       "id": "story-scoped-evidence",
       "title": "Evidence records under the story directory",
-      "status": "pending"
+      "status": "active",
+      "started_at": "2026-08-15T14:22:50+00:00",
+      "base_sha": "9d466cd7947ccbe8ce1db1a76c8f7ce5ece0fa58",
+      "dirty_at_start": {},
+      "task_sha256": "293be0b33b6b842d07eb08a19bd90cd42a9507969d92b93b72de7ca83b6e44b2"
     },
     {
       "id": "run-pointer-untracked",

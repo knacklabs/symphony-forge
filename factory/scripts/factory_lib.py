@@ -43,12 +43,56 @@ def factory_dir(root: Path | None = None) -> Path:
     return (root or repo_root()) / ".factory"
 
 
+def story_dir(root: Path, key: str) -> Path:
+    """Return the canonical evidence directory for one story."""
+    if not isinstance(key, str) or not key or Path(key).name != key \
+            or key in (".", ".."):
+        raise ValueError("story key must be one path component")
+    return factory_dir(root) / "stories" / key
+
+
+def evidence_path(root: Path, key: str, name: str) -> Path:
+    """Resolve story evidence, retaining legacy live and history reads.
+
+    Intake creates the story directory for the new layout. Its presence is
+    therefore also the write-layout marker; an active story without it is a
+    legacy story whose live singleton must remain writable.
+    """
+    relative = Path(name)
+    if relative.is_absolute() or not relative.parts or any(
+            part in ("", ".", "..") for part in relative.parts):
+        raise ValueError("evidence name must be a contained relative path")
+    scoped_dir = story_dir(root, key)
+    scoped = scoped_dir / relative
+    if scoped_dir.is_dir():
+        return scoped
+
+    live = factory_dir(root) / relative
+    state = load_json(run_state_path(root), default={})
+    if (state.get("issue_key") or state.get("story")) == key:
+        return live
+
+    archived = factory_dir(root) / "history" / key / relative
+    if archived.exists():
+        return archived
+    return scoped
+
+
+def _active_story_key(root: Path) -> str:
+    state = load_json(run_state_path(root), default={})
+    key = state.get("issue_key") or state.get("story")
+    return key if isinstance(key, str) else ""
+
+
 def run_state_path(root: Path | None = None) -> Path:
     return factory_dir(root) / "run.json"
 
 
-def decomposition_state_path(root: Path | None = None) -> Path:
-    return factory_dir(root) / "decomposition.json"
+def decomposition_state_path(root: Path | None = None, key: str | None = None) -> Path:
+    base = root or repo_root()
+    story = key or _active_story_key(base)
+    return evidence_path(base, story, "decomposition.json") if story \
+        else factory_dir(base) / "decomposition.json"
 
 
 def clean_git_env() -> dict[str, str]:
@@ -58,16 +102,25 @@ def clean_git_env() -> dict[str, str]:
     }
 
 
-def verify_state_path(root: Path | None = None) -> Path:
-    return factory_dir(root) / "verify.json"
+def verify_state_path(root: Path | None = None, key: str | None = None) -> Path:
+    base = root or repo_root()
+    story = key or _active_story_key(base)
+    return evidence_path(base, story, "verify.json") if story \
+        else factory_dir(base) / "verify.json"
 
 
-def tests_state_path(root: Path | None = None) -> Path:
-    return factory_dir(root) / "tests.json"
+def tests_state_path(root: Path | None = None, key: str | None = None) -> Path:
+    base = root or repo_root()
+    story = key or _active_story_key(base)
+    return evidence_path(base, story, "tests.json") if story \
+        else factory_dir(base) / "tests.json"
 
 
-def review_dir(root: Path | None = None) -> Path:
-    return factory_dir(root) / "reviews"
+def review_dir(root: Path | None = None, key: str | None = None) -> Path:
+    base = root or repo_root()
+    story = key or _active_story_key(base)
+    return evidence_path(base, story, "reviews") if story \
+        else factory_dir(base) / "reviews"
 
 
 FRONTMATTER = re.compile(r"\A---\r?\n(.*?)\r?\n---\r?\n", re.DOTALL)
@@ -894,7 +947,9 @@ def require_grill(
     the grill) from staleness. `expect_digest_of` binds the grill to the
     exact artifact being gated: the recorded input_sha256 must match that
     file, so grilling proposal A never approves proposal B."""
-    path = factory_dir(root) / "grills" / f"{gate}.json"
+    key = _active_story_key(root) if gate == "plan" else ""
+    path = evidence_path(root, key, f"grills/{gate}.json") if key \
+        else factory_dir(root) / "grills" / f"{gate}.json"
     data = load_json(path, default={})
     if not data:
         raise SystemExit(
@@ -946,7 +1001,9 @@ def require_task_grill(
     task: dict,
 ) -> None:
     """Require a passing grill bound to the current grounding inputs."""
-    path = factory_dir(root) / "grills" / "tasks" / f"{task_id}.json"
+    key = _active_story_key(root)
+    path = evidence_path(root, key, f"grills/tasks/{task_id}.json") if key \
+        else factory_dir(root) / "grills" / "tasks" / f"{task_id}.json"
     data = load_json(path, default={})
     record_command = (
         "python3 factory/scripts/record_grill_from_json.py --gate task "
@@ -1105,10 +1162,10 @@ def task_rows(root: Path) -> list[dict]:
     for task in tasks:
         task_id = task.get("id")
         stage = stage_by_id.get(task_id, {})
-        grill = load_json(
-            factory_dir(root) / "grills" / "tasks" / f"{task_id}.json",
-            default={},
-        )
+        key = _active_story_key(root)
+        grill_path = evidence_path(root, key, f"grills/tasks/{task_id}.json") \
+            if key else factory_dir(root) / "grills" / "tasks" / f"{task_id}.json"
+        grill = load_json(grill_path, default={})
         fresh = _task_grill_fresh(root, task, grill) if grill else False
         status = stage.get("status")
         if status == "done":
@@ -1180,10 +1237,10 @@ def task_frontier_state(root: Path) -> tuple[str, dict] | None:
     if not _task_contract_complete(frontier):
         return "author-contract", frontier
 
-    grill = load_json(
-        factory_dir(root) / "grills" / "tasks" / f"{task_id}.json",
-        default={},
-    )
+    key = _active_story_key(root)
+    grill_path = evidence_path(root, key, f"grills/tasks/{task_id}.json") \
+        if key else factory_dir(root) / "grills" / "tasks" / f"{task_id}.json"
+    grill = load_json(grill_path, default={})
     if _task_grill_fresh(root, frontier, grill):
         stage = stage_by_id.get(task_id, {})
         state = "delegate" if stage.get("status") == "active" else "stage-start"

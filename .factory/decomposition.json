@@ -23,8 +23,8 @@
       "title": "Evidence records under the story directory",
       "objective": "A single story_dir() path helper routes every recorder and gate to .factory/stories/<KEY>/ for new stories, with read fallback to the legacy live singletons and history/ so existing data stays readable.",
       "acceptance_criteria": [
-        "new-story artifacts record under .factory/stories/<KEY>/ through one shared path helper",
-        "legacy live and history layouts remain readable by every consumer"
+        "the in-scope recorders (decomposition, grill, test, review) and verify write and read new-story artifacts under .factory/stories/<KEY>/ through one shared path helper",
+        "legacy live and history layouts remain readable by those same consumers"
       ],
       "dependencies": [],
       "write_scope": [
@@ -51,16 +51,16 @@
           "command": "uvx --with pytest --with psutil python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
         }
       ],
-      "reviewer_focus": "Single-source resolution is the whole game: story_dir(root, key) plus one evidence_path(root, key, name) accessor in factory_lib must be the ONLY place layout knowledge lives; a recorder or gate joining paths by hand forks the layout. Write-new/read-both: writers go story-scoped for stories intaken under the new layout, readers fall back legacy-first-miss. A budget overrun here is the split signal, not a reason-raise. Gate fields belong to the parallel approval-integrity branch - only path resolution changes here.",
+      "reviewer_focus": "Single-source resolution is the whole game: story_dir(root, key) plus one evidence_path(root, key, name) accessor in factory_lib must be the ONLY place layout knowledge lives; a recorder or gate joining paths by hand forks the layout. Write-new/read-both: writers go story-scoped for stories intaken under the new layout, readers fall back legacy-first-miss. SCOPE BOUNDARY: this task covers the recorders in write_scope (decomposition, grill, test, review) and verify ONLY; plans.py and pr_ready.py read the plan grill / archive by hand but are the migration-and-vendor task's job - the required test must NOT exercise those paths (three prior signals hit exactly that). A budget overrun is the split signal, not a reason-raise.",
       "plan_contracts": [
         {
           "id": "CFS1-C1",
-          "statement": "new-story artifacts record under .factory/stories/<KEY>/ through one shared path helper",
+          "statement": "the in-scope recorders (decomposition, grill, test, review) and verify write and read new-story artifacts under .factory/stories/<KEY>/ through one shared path helper",
           "source": "plans/active/FORGE-CFS-1-story-state-stops-conflicting-across-prs.md#acceptance-criteria"
         },
         {
           "id": "CFS1-C2",
-          "statement": "legacy live and history layouts remain readable by every consumer",
+          "statement": "legacy live and history layouts remain readable by those same consumers",
           "source": "plans/active/FORGE-CFS-1-story-state-stops-conflicting-across-prs.md#acceptance-criteria"
         }
       ]
@@ -129,5 +129,5 @@
   "epic": "accountable-engineering",
   "plan_file": "plans/active/FORGE-CFS-1-story-state-stops-conflicting-across-prs.md",
   "plan_sha256": "ba7f3d643e7332cdeb8efe17a1e82d1fd32dbe9b7719190cafc81578c2fef03b",
-  "commit": "bc935ace2c6a2ca56936e218e13a7784928ee971"
+  "commit": "9d466cd7947ccbe8ce1db1a76c8f7ce5ece0fa58"
 }

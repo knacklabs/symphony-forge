@@ -17,8 +17,9 @@ import sys
 from pathlib import Path
 
 from factory_lib import (
-    dump_json, grounding_digest, head_sha, load_json, now_iso, read_stdin_utf8,
-    repo_root, run_state_path, sha256_of, task_frontier_state, validate_payload,
+    dump_json, evidence_path, grounding_digest, head_sha, load_json, now_iso,
+    read_stdin_utf8, repo_root, run_state_path, sha256_of, task_frontier_state,
+    validate_payload,
 )
 
 VERDICTS = {"pass", "blocked"}
@@ -245,10 +246,14 @@ if args.gate == "plan":
     payload["issue"] = issue
 payload["recorded_at"] = now_iso()
 payload["commit"] = head_sha(root)
+story = load_json(run_state_path(root), default={}).get("issue_key", "") \
+    if args.gate in ("plan", "task") else ""
 if args.gate == "task":
-    dest = root / ".factory" / "grills" / "tasks" / f"{args.task}.json"
+    name = f"grills/tasks/{args.task}.json"
 else:
-    dest = root / ".factory" / "grills" / f"{args.gate}.json"
+    name = f"grills/{args.gate}.json"
+dest = evidence_path(root, story, name) if story \
+    else root / ".factory" / name
 dump_json(dest, payload)
 print(f"Recorded {args.gate} grill: {payload['verdict']} "
       f"({len(payload['gaps'])} gap(s), {len(payload['contradictions'])} contradiction(s), "
