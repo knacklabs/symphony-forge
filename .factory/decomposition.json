@@ -319,162 +319,162 @@
           "command": "uvx --with pytest --with psutil python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
         },
         {
-          "id": "FAILED test_completed_contract_check_uses_protected_stage_digest",
+          "id": "test_completed_contract_check_uses_protected_stage_digest",
           "path": "factory/tests/test_gates.py",
           "command": "uvx --with pytest --with psutil python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
         },
         {
-          "id": "FAILED test_decomposition_accepts_empty_required_tests",
+          "id": "test_decomposition_accepts_empty_required_tests",
           "path": "factory/tests/test_gates.py",
           "command": "uvx --with pytest --with psutil python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
         },
         {
-          "id": "FAILED test_decomposition_accepts_frontier_detail_and_exempts_done_tasks",
+          "id": "test_decomposition_accepts_frontier_detail_and_exempts_done_tasks",
           "path": "factory/tests/test_gates.py",
           "command": "uvx --with pytest --with psutil python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
         },
         {
-          "id": "FAILED test_decomposition_provenance_overrides_agent_supplied_fields",
+          "id": "test_decomposition_provenance_overrides_agent_supplied_fields",
           "path": "factory/tests/test_gates.py",
           "command": "uvx --with pytest --with psutil python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
         },
         {
-          "id": "FAILED test_decomposition_recorder_validates_plan_contracts",
+          "id": "test_decomposition_recorder_validates_plan_contracts",
           "path": "factory/tests/test_gates.py",
           "command": "uvx --with pytest --with psutil python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
         },
         {
-          "id": "FAILED test_delegate_readonly_unaffected_by_task_grill",
+          "id": "test_delegate_readonly_unaffected_by_task_grill",
           "path": "factory/tests/test_gates.py",
           "command": "uvx --with pytest --with psutil python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
         },
         {
-          "id": "FAILED test_delegate_refuses_stale_task_grill",
+          "id": "test_delegate_refuses_stale_task_grill",
           "path": "factory/tests/test_gates.py",
           "command": "uvx --with pytest --with psutil python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
         },
         {
-          "id": "FAILED test_delegate_refuses_without_task_grill",
+          "id": "test_delegate_refuses_without_task_grill",
           "path": "factory/tests/test_gates.py",
           "command": "uvx --with pytest --with psutil python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
         },
         {
-          "id": "FAILED test_functional_check_conditional_on_user_facing",
+          "id": "test_functional_check_conditional_on_user_facing",
           "path": "factory/tests/test_gates.py",
           "command": "uvx --with pytest --with psutil python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
         },
         {
-          "id": "FAILED test_functional_check_required_when_user_facing",
+          "id": "test_functional_check_required_when_user_facing",
           "path": "factory/tests/test_gates.py",
           "command": "uvx --with pytest --with psutil python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
         },
         {
-          "id": "FAILED test_intake_after_ship_needs_no_discard",
+          "id": "test_intake_after_ship_needs_no_discard",
           "path": "factory/tests/test_gates.py",
           "command": "uvx --with pytest --with psutil python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
         },
         {
-          "id": "FAILED test_intake_preserves_signoff_and_refuses_to_clobber_evidence",
+          "id": "test_intake_preserves_signoff_and_refuses_to_clobber_evidence",
           "path": "factory/tests/test_gates.py",
           "command": "uvx --with pytest --with psutil python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
         },
         {
-          "id": "FAILED test_lite_quality_review_ignores_shipped_plan_contracts",
+          "id": "test_lite_quality_review_ignores_shipped_plan_contracts",
           "path": "factory/tests/test_gates.py",
           "command": "uvx --with pytest --with psutil python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
         },
         {
-          "id": "FAILED test_next_routes_design_skills_by_feature_type",
+          "id": "test_next_routes_design_skills_by_feature_type",
           "path": "factory/tests/test_gates.py",
           "command": "uvx --with pytest --with psutil python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
         },
         {
-          "id": "FAILED test_outcome_is_required_to_ship_and_survives_in_the_record",
+          "id": "test_outcome_is_required_to_ship_and_survives_in_the_record",
           "path": "factory/tests/test_gates.py",
           "command": "uvx --with pytest --with psutil python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
         },
         {
-          "id": "FAILED test_plan_grill_recorder_stamps_the_active_issue",
+          "id": "test_plan_grill_recorder_stamps_the_active_issue",
           "path": "factory/tests/test_gates.py",
           "command": "uvx --with pytest --with psutil python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
         },
         {
-          "id": "FAILED test_pr_ready_blocks_on_unverified_plan_contracts",
+          "id": "test_pr_ready_blocks_on_unverified_plan_contracts",
           "path": "factory/tests/test_gates.py",
           "command": "uvx --with pytest --with psutil python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
         },
         {
-          "id": "FAILED test_pr_ready_legacy_story_still_archives_to_history",
+          "id": "test_pr_ready_legacy_story_still_archives_to_history",
           "path": "factory/tests/test_gates.py",
           "command": "uvx --with pytest --with psutil python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
         },
         {
-          "id": "FAILED test_pr_ready_rejects_unstamped_evidence",
+          "id": "test_pr_ready_rejects_unstamped_evidence",
           "path": "factory/tests/test_gates.py",
           "command": "uvx --with pytest --with psutil python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
         },
         {
-          "id": "FAILED test_precompact_scratchpad_snapshots_facts_and_findings",
+          "id": "test_precompact_scratchpad_snapshots_facts_and_findings",
           "path": "factory/tests/test_gates.py",
           "command": "uvx --with pytest --with psutil python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
         },
         {
-          "id": "FAILED test_project_name_survives_the_run_state_lifecycle",
+          "id": "test_project_name_survives_the_run_state_lifecycle",
           "path": "factory/tests/test_gates.py",
           "command": "uvx --with pytest --with psutil python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
         },
         {
-          "id": "FAILED test_quality_review_requires_contract_verdicts",
+          "id": "test_quality_review_requires_contract_verdicts",
           "path": "factory/tests/test_gates.py",
           "command": "uvx --with pytest --with psutil python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
         },
         {
-          "id": "FAILED test_recorder_stdin_reads_non_ascii_utf8",
+          "id": "test_recorder_stdin_reads_non_ascii_utf8",
           "path": "factory/tests/test_gates.py",
           "command": "uvx --with pytest --with psutil python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
         },
         {
-          "id": "FAILED test_roadmap_lifecycle",
+          "id": "test_roadmap_lifecycle",
           "path": "factory/tests/test_gates.py",
           "command": "uvx --with pytest --with psutil python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
         },
         {
-          "id": "FAILED test_ship_archives_the_plan_grill_not_the_project_grills",
+          "id": "test_ship_archives_the_plan_grill_not_the_project_grills",
           "path": "factory/tests/test_gates.py",
           "command": "uvx --with pytest --with psutil python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
         },
         {
-          "id": "FAILED test_signal_events_block_ship_until_resolved",
+          "id": "test_signal_events_block_ship_until_resolved",
           "path": "factory/tests/test_gates.py",
           "command": "uvx --with pytest --with psutil python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
         },
         {
-          "id": "FAILED test_stage_loop_orders_execution_and_gates_pr_ready",
+          "id": "test_stage_loop_orders_execution_and_gates_pr_ready",
           "path": "factory/tests/test_gates.py",
           "command": "uvx --with pytest --with psutil python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
         },
         {
-          "id": "FAILED test_stage_migrate_records_the_base_on_adopted_stages",
+          "id": "test_stage_migrate_records_the_base_on_adopted_stages",
           "path": "factory/tests/test_gates.py",
           "command": "uvx --with pytest --with psutil python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
         },
         {
-          "id": "FAILED test_stage_migrate_refuses_partial_protected_authority[decomposition.json]",
+          "id": "test_stage_migrate_refuses_partial_protected_authority[decomposition.json]",
           "path": "factory/tests/test_gates.py",
           "command": "uvx --with pytest --with psutil python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
         },
         {
-          "id": "FAILED test_stage_migrate_requires_confirmation_and_adopts_legacy_state",
+          "id": "test_stage_migrate_requires_confirmation_and_adopts_legacy_state",
           "path": "factory/tests/test_gates.py",
           "command": "uvx --with pytest --with psutil python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
         },
         {
-          "id": "FAILED test_story_timeline_is_recorded_and_archived_with_its_story",
+          "id": "test_story_timeline_is_recorded_and_archived_with_its_story",
           "path": "factory/tests/test_gates.py",
           "command": "uvx --with pytest --with psutil python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
         },
         {
-          "id": "FAILED test_workspace_decomposition_mirror_cannot_forge_task_contract",
+          "id": "test_workspace_decomposition_mirror_cannot_forge_task_contract",
           "path": "factory/tests/test_gates.py",
           "command": "uvx --with pytest --with psutil python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
         },
@@ -512,5 +512,5 @@
   "epic": "accountable-engineering",
   "plan_file": "plans/active/FORGE-CFS-1-story-state-stops-conflicting-across-prs.md",
   "plan_sha256": "ba7f3d643e7332cdeb8efe17a1e82d1fd32dbe9b7719190cafc81578c2fef03b",
-  "commit": "f04e911ad676b34e7826332df7bbd402b6155fad"
+  "commit": "0c6679987724bcf31ad1886e0b68af47158805fd"
 }

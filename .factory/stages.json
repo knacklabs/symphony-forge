@@ -158,7 +158,7 @@
     {
       "id": "migration-and-vendor",
       "title": "Legacy repos cut over at intake; clients get it via upgrade",
-      "status": "active",
+      "status": "done",
       "started_at": "2026-08-18T13:24:21+00:00",
       "base_sha": "f04e911ad676b34e7826332df7bbd402b6155fad",
       "dirty_at_start": {
@@ -191,7 +191,13 @@
           "git": "1 .M N... 100644 100644 100644 bae24e4b876ca7499f1ac722552fd5a5e178d5f0 bae24e4b876ca7499f1ac722552fd5a5e178d5f0 .factory/stages.json\u0000\u0000100644 bae24e4b876ca7499f1ac722552fd5a5e178d5f0 0\t.factory/stages.json\u0000\u0000H .factory/stages.json\u0000"
         }
       },
-      "task_sha256": "7dedffd155decec69fd855f2e176a6b602408ea1bcc4b1d0784b747bcd97e899"
+      "task_sha256": "0b95d5f97043bdb3e870e3cb911a800b9aedc5cf689fb35c452e407116116080",
+      "completed_at": "2026-08-18T17:16:44+00:00",
+      "contract_changed": {
+        "at": "2026-08-18T17:16:44+00:00",
+        "from": "7dedffd155decec69fd855f2e176a6b602408ea1bcc4b1d0784b747bcd97e899",
+        "to": "0b95d5f97043bdb3e870e3cb911a800b9aedc5cf689fb35c452e407116116080"
+      }
     }
   ]
 }
