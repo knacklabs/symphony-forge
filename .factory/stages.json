@@ -45,7 +45,7 @@
     {
       "id": "per-event-files",
       "title": "Events are one file each",
-      "status": "active",
+      "status": "done",
       "started_at": "2026-08-18T11:23:14+00:00",
       "base_sha": "2101074551e5d9be865481d4fdbdf13a5d26795f",
       "dirty_at_start": {
@@ -78,12 +78,42 @@
           "git": "? plans/lessons/20260818T110932-0000-quickfix-records-touched-files--it-does-NOT-unlock-the-write-lock-110932869984.json\u0000\u0000\u0000"
         }
       },
-      "task_sha256": "3e6d2fa7856048b5eb7d4116c2eacaf4809703bd36806708ff2f732243f38c8b"
+      "task_sha256": "3e6d2fa7856048b5eb7d4116c2eacaf4809703bd36806708ff2f732243f38c8b",
+      "completed_at": "2026-08-18T11:35:24+00:00"
     },
     {
       "id": "ship-in-place",
       "title": "pr_ready ships without moving files",
-      "status": "pending"
+      "status": "active",
+      "started_at": "2026-08-18T11:38:31+00:00",
+      "base_sha": "3a36269cbd48c42f21bb20b35f70ee4737a7c5a4",
+      "dirty_at_start": {
+        ".factory/decomposition.json": {
+          "digest": "121e3df6ee8776cb6d9cb875c70425222659358549b5dd1c744f7fa68d24858e",
+          "git": "1 .M N... 100644 100644 100644 a08188b11d9b73c8981d418e24a47d507c72edf4 a08188b11d9b73c8981d418e24a47d507c72edf4 .factory/decomposition.json\u0000\u0000100644 a08188b11d9b73c8981d418e24a47d507c72edf4 0\t.factory/decomposition.json\u0000\u0000H .factory/decomposition.json\u0000"
+        },
+        ".factory/events/1240d8ec7ac145e7ba9dc21e3c8b0568.json": {
+          "digest": "bc482ba39577262ea25a0631a9be7dda8fdff1458b641f40c28ce59763860971",
+          "git": "? .factory/events/1240d8ec7ac145e7ba9dc21e3c8b0568.json\u0000\u0000\u0000"
+        },
+        ".factory/events/cf361897c65143ab92a6cb0f1b9abfae.json": {
+          "digest": "e33c8f0a4eb8f78069753e97d67b70618cf0caee05de1e08130dbbfe0bb8dfe5",
+          "git": "? .factory/events/cf361897c65143ab92a6cb0f1b9abfae.json\u0000\u0000\u0000"
+        },
+        ".factory/grills/tasks/ship-in-place.json": {
+          "digest": "1ec14a13dec4d567003a27f2f3728faaa7a9032975414426f068241a7ad2877d",
+          "git": "? .factory/grills/tasks/ship-in-place.json\u0000\u0000\u0000"
+        },
+        ".factory/run.json": {
+          "digest": "48e0d7dca9e5a3da1fb63c3db0d6885b64845d4f3b50cb38a3f96a2031d25d17",
+          "git": "1 .M N... 100644 100644 100644 6c16f27a115426adb767636380aa6b0d391656b2 6c16f27a115426adb767636380aa6b0d391656b2 .factory/run.json\u0000\u0000100644 6c16f27a115426adb767636380aa6b0d391656b2 0\t.factory/run.json\u0000\u0000H .factory/run.json\u0000"
+        },
+        ".factory/stages.json": {
+          "digest": "af756f564d4f8b1967c14e9ff7eb2d169da5a0ec27efc947b7fd06bc7d14be64",
+          "git": "1 .M N... 100644 100644 100644 4a312a01b7f6ee72379d8d414f590174b0092ffd 4a312a01b7f6ee72379d8d414f590174b0092ffd .factory/stages.json\u0000\u0000100644 4a312a01b7f6ee72379d8d414f590174b0092ffd 0\t.factory/stages.json\u0000\u0000H .factory/stages.json\u0000"
+        }
+      },
+      "task_sha256": "afb9bea193cab0e8ef077ecc098399f7ad74217640b59833c2c524de09ea9dae"
     },
     {
       "id": "merge-survivable-hooks",

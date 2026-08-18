@@ -1,0 +1,82 @@
+{
+  "generated_by": "griller",
+  "gate": "task",
+  "task_id": "ship-in-place",
+  "verdict": "pass",
+  "decision": "keep",
+  "questions_asked": 4,
+  "summary": "JIT grill of ship-in-place against spec, decisions 0045/0046, deferrals D-0028, and signal S-0002. Shipped-state recording, plan-file move scope, and legacy-path safety resolved; contract kept.",
+  "inspected_refs": [
+    "factory/scripts/pr_ready.py",
+    "factory/scripts/forge_cli/outcome.py",
+    "factory/scripts/factory_lib.py",
+    "factory/tests/test_gates.py",
+    "docs/specs/conflict-free-story-state.md",
+    "docs/decisions/0046-scoped-layout-activation-ordering.md"
+  ],
+  "current_flow": "pr_ready archives .factory/* to .factory/history/<issue>/ (shutil.move at line ~293), moves the plan to plans/completed/, requires outcome.json, and flips the roadmap item done. The archive move triggers cross-branch rename detection (0045). Task 4 makes new-layout stories ship in place (no .factory move); legacy stories keep the archive flow.",
+  "criteria_map": {
+    "pr_ready completes with zero file moves and evidence stays at its recorded paths": "test_pr_ready_ships_in_place_no_file_moves synthesizes a new-layout story and asserts pr_ready performs ZERO shutil.move of .factory evidence and every story-dir artifact stays at its recorded path (the plans/completed plan move is out of the .factory no-move scope and stays)",
+    "board and forge history read shipped stories from the story directory": "test_board_and_history_read_shipped_story_dir asserts board story_detail and forge history render a shipped new-layout story from .factory/stories/<KEY>/ with no history archive"
+  },
+  "new_abstractions": [
+    "pr_ready branches on the scoped-layout marker: new-layout ships in place (shipped derived from outcome.json presence), legacy keeps archive-to-history. Reversible: legacy path unchanged and guarded by a dedicated test."
+  ],
+  "rounds": [
+    {
+      "question": "How is 'shipped' state recorded for an in-place new-layout ship?",
+      "options": [
+        "Derive shipped from outcome.json presence",
+        "Write an explicit shipped marker file"
+      ],
+      "chosen": "Derive shipped from outcome.json presence"
+    },
+    {
+      "question": "Does ship-in-place also stop the plan-file move to plans/completed/?",
+      "options": [
+        "Keep the plan-file move; AC1 targets .factory only",
+        "Stop the plan-file move too for new-layout"
+      ],
+      "chosen": "Keep the plan-file move; AC1 targets .factory only"
+    },
+    {
+      "question": "Freeze the legacy ship path bit-for-bit, guarded by a test?",
+      "options": [
+        "Freeze legacy path, guard with the test",
+        "Change legacy ship now too"
+      ],
+      "chosen": "Freeze legacy path, guard with the test"
+    }
+  ],
+  "citations": [
+    {
+      "finding": "The pr_ready archive move triggers rename strands; ship in place removes it",
+      "source": "docs/specs/conflict-free-story-state.md#behaviour and docs/decisions/0045-conflict-free-story-state.md"
+    },
+    {
+      "finding": "No production story runs new-layout until migration-and-vendor, so legacy ship must stay unchanged",
+      "source": "docs/decisions/0046-scoped-layout-activation-ordering.md"
+    },
+    {
+      "finding": "board.py hard-codes story-evidence roots (.factory active / .factory/history/<key> shipped) and cannot render a shipped new-layout story from .factory/stories/<KEY>/ (S-0006); it was missing from write_scope.",
+      "source": "signal S-0006-ef90 (implementer scope contradiction)"
+    }
+  ],
+  "gaps": [
+    "How is 'shipped' state recorded for an in-place new-layout ship?",
+    "Does ship-in-place also stop the plan-file move to plans/completed/?",
+    "Freeze the legacy ship path bit-for-bit, guarded by a test?",
+    "board.py hard-codes story-evidence roots (.factory active / .factory/history/<key> shipped) and cannot render a shipped new-layout story from .factory/stories/<KEY>/ (S-0006); it was missing from write_scope."
+  ],
+  "contradictions": [],
+  "resolutions": [
+    "Derive shipped from outcome.json presence (operator 2026-08-18): no new marker; 'shipped' is implied when outcome.json exists in the story dir alongside the reviews, extending task 2's derive_phase artifact-implied approach. Idempotent rerun for new-layout keys on outcome.json in the story dir.",
+    "Keep the plan-file move (operator 2026-08-18): plans/*.md are uniquely named per story (no cross-worktree collision), so plans/completed/ stays for both layouts; AC1's 'zero file moves' refers to .factory story evidence, and the required test asserts zero .factory shutil.move.",
+    "Freeze the legacy path (operator 2026-08-18): marker off -> the exact archive-to-history + plans/completed flow today; test_pr_ready_legacy_story_still_archives_to_history guards bit-for-bit. outcome.json routes story-scoped (D-0028); pr_ready stops its own grill archival (S-0002) but does NOT touch plans.py (S-0001 defer).",
+    "board.py added to write_scope for the READ path only: resolve .factory/stories/<KEY>-first with .factory and .factory/history fallback (task 1's story-first/legacy-fallback). Read-only, never breaks on activation, reads legacy in production while the marker is off (0046) - NOT the plans.py deferral (S-0001). Contract re-recorded; re-delegated with board.py in scope."
+  ],
+  "open_items": [],
+  "input_sha256": "1f051f943a0e27cc8dfb200dff27dbe898747ecf6827d6129c89c5eb4d584cd4",
+  "recorded_at": "2026-08-18T11:43:33+00:00",
+  "commit": "3a36269cbd48c42f21bb20b35f70ee4737a7c5a4"
+}

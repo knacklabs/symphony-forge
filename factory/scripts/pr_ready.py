@@ -17,6 +17,8 @@ from factory_lib import (
     repo_root,
     review_dir,
     run_state_path,
+    story_dir,
+    story_uses_scoped_layout,
     tests_state_path,
     verify_state_path,
 )
@@ -42,8 +44,24 @@ EVIDENCE_PATHS = (
 EVIDENCE_FILES = {"forge", "CLAUDE.md", "AGENTS.md", "WORKFLOW.md", "harness.yaml",
                   ".gitignore", ".gitattributes", ".envrc"}
 
+
+def warn_unaccepted_decisions(root, issue_key: str) -> None:
+    unaccepted = [r["id"] for r in decision_records(root)
+                  if issue_key in r.get("stories", []) and r["status"] != "accepted"]
+    if unaccepted:
+        print(f"WARNING: {len(unaccepted)} decision(s) from this story are not accepted: "
+              f"{', '.join(unaccepted)} — confirm with the human who decided them "
+              "(./forge decision accept <slug> --by \"<name>\"), or they read as "
+              "unratified six weeks from now.")
+
+
 root = repo_root()
 run_state = load_json(run_state_path(root), default={})
+_active_key = run_state.get("issue_key", "")
+if _active_key and story_uses_scoped_layout(root, _active_key) \
+        and (story_dir(root, _active_key) / "shipped.json").is_file():
+    print(f"PR_READY (already shipped in place: {_active_key})")
+    raise SystemExit(0)
 # Idempotent rerun: after a ship, task-scoped state is archived AND removed
 # (parallel branches must converge without .factory conflicts), and run.json
 # is reduced to STABLE project fields — identical across branches, so merges
@@ -274,6 +292,36 @@ if missing:
         print(f"- {item}")
     raise SystemExit(1)
 
+# Scoped stories already own durable evidence paths. Shipping is a state
+# transition inside that directory: no plan/evidence move and no cleanup that
+# could strand a reader on the old location. Legacy stories continue through
+# the archive block below unchanged.
+if story_uses_scoped_layout(root, issue_key):
+    shipped_at = now_iso()
+    run_state["phase"] = "shipped"
+    run_state["review_status"] = "passed"
+    run_state["tests_status"] = "passed"
+    run_state["updated_at"] = shipped_at
+    dump_json(run_state_path(root), run_state)
+    dump_json(story_dir(root, issue_key) / "shipped.json", {
+        "generated_by": "orchestrator",
+        "story": issue_key,
+        "phase": "shipped",
+        "shipped_at": shipped_at,
+    })
+    append_event(root, "shipped", actor="orchestrator", story=issue_key,
+                 detail=(outcome_record or {}).get("outcome", "")[:200])
+    roadmap_done = mark_status(
+        root, issue_key, "done", completed_at=shipped_at,
+        history=f".factory/stories/{issue_key}/",
+        outcome=(outcome_record or {}).get("outcome", ""),
+    )
+    warn_unaccepted_decisions(root, issue_key)
+    roadmap_result = f"; Roadmap: {issue_key} marked done" if roadmap_done else ""
+    print(f"PR_READY (shipped in place at .factory/stories/{issue_key}/; "
+          f"evidence paths unchanged){roadmap_result}")
+    raise SystemExit(0)
+
 # Move the plan to plans/completed/ FIRST, so the run state we persist and
 # archive references the plan's final location, not a path about to vanish.
 completed = root / "plans" / "completed"
@@ -376,13 +424,7 @@ roadmap_done = mark_status(root, issue_key, "done", completed_at=now_iso(),
 # Advisory: a decision this story created that no human ever confirmed still
 # governs the code that shipped. Blocking would freeze legacy corpora, so this
 # names them instead — an unaccepted record is a question left open.
-unaccepted = [r["id"] for r in decision_records(root)
-              if issue_key in r.get("stories", []) and r["status"] != "accepted"]
-if unaccepted:
-    print(f"WARNING: {len(unaccepted)} decision(s) from this story are not accepted: "
-          f"{', '.join(unaccepted)} — confirm with the human who decided them "
-          "(./forge decision accept <slug> --by \"<name>\"), or they read as "
-          "unratified six weeks from now.")
+warn_unaccepted_decisions(root, issue_key)
 roadmap_result = f"; Roadmap: {issue_key} marked done" if roadmap_done else ""
 print(f"PR_READY (archived to .factory/history/{issue_key}/, plan moved to plans/completed/, "
       f"task-scoped .factory state cleaned){roadmap_result}")

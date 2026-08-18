@@ -169,13 +169,52 @@
     {
       "id": "ship-in-place",
       "title": "pr_ready ships without moving files",
-      "objective": "pr_ready marks the story shipped inside its story directory - no archive move, no rename-detection strands; board and history read shipped story dirs; roadmap done-flip unchanged.",
+      "objective": "For a new-layout story (marker present), pr_ready marks it shipped INSIDE its story directory - no archive move, no rename strands - and outcome.json routes story-scoped; a legacy story (marker off) keeps the existing archive-to-history flow unchanged. Board and forge history read shipped story dirs. Roadmap done-flip unchanged. Marker-neutral per decision 0046.",
       "acceptance_criteria": [
         "pr_ready completes with zero file moves and evidence stays at its recorded paths",
         "board and forge history read shipped stories from the story directory"
       ],
       "dependencies": [
         "per-event-files"
+      ],
+      "write_scope": [
+        "factory/scripts/pr_ready.py",
+        "factory/scripts/forge_cli/outcome.py",
+        "factory/scripts/forge_cli/board.py",
+        "factory/tests/test_gates.py"
+      ],
+      "verify_commands": [
+        "python3 factory/scripts/check_dual_runtime.py"
+      ],
+      "required_tests": [
+        {
+          "id": "test_pr_ready_ships_in_place_no_file_moves",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest --with psutil python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_board_and_history_read_shipped_story_dir",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest --with psutil python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_pr_ready_legacy_story_still_archives_to_history",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest --with psutil python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        }
+      ],
+      "reviewer_focus": "The ship path MUST branch on the scoped-layout marker: new-layout (marker present) ships IN PLACE - the story dir already holds all evidence (tasks 1-3), so pr_ready records shipped state in the story dir (a shipped marker or derive_phase's shipped rung) and performs ZERO shutil.move; a legacy story (marker off) keeps the exact archive-to-history + plans/completed move it does today (0046: no production story runs new-layout yet, so the legacy path must stay bit-for-bit unchanged - the third required test guards it). outcome.json routes through evidence_path (D-0028). pr_ready STOPS its own grill archival (S-0002) but does NOT touch plans.py (S-0001 defer to migration-and-vendor). Idempotent rerun for new-layout keys on the in-place shipped marker, not the history archive. board.py is IN scope for the READ path only: it hard-codes story-evidence roots as .factory (active) or .factory/history/<key> (shipped) and must resolve .factory/stories/<KEY>-first with .factory and .factory/history fallback (task 1's story-first/legacy-fallback discipline). This is read-only - board never breaks on activation and reads legacy in production while the marker is off (0046). forge history already reads via load_events/evidence_path. SCOPE: pr_ready + outcome recorder + tests only.",
+      "plan_contracts": [
+        {
+          "id": "CFS4-C1",
+          "statement": "pr_ready completes with zero file moves and evidence stays at its recorded paths",
+          "source": "plans/active/FORGE-CFS-1-story-state-stops-conflicting-across-prs.md#acceptance-criteria"
+        },
+        {
+          "id": "CFS4-C2",
+          "statement": "board and forge history read shipped stories from the story directory",
+          "source": "plans/active/FORGE-CFS-1-story-state-stops-conflicting-across-prs.md#acceptance-criteria"
+        }
       ]
     },
     {
@@ -206,5 +245,5 @@
   "epic": "accountable-engineering",
   "plan_file": "plans/active/FORGE-CFS-1-story-state-stops-conflicting-across-prs.md",
   "plan_sha256": "ba7f3d643e7332cdeb8efe17a1e82d1fd32dbe9b7719190cafc81578c2fef03b",
-  "commit": "2101074551e5d9be865481d4fdbdf13a5d26795f"
+  "commit": "3a36269cbd48c42f21bb20b35f70ee4737a7c5a4"
 }

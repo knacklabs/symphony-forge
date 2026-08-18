@@ -452,7 +452,11 @@ def save_plan_raw(repo: Path, tmp_path: Path) -> tuple[int, str]:
 
 def write_passing_artifacts(repo: Path, commit: str | None = None) -> None:
     sha = commit or head(repo)
-    f = repo / ".factory"
+    lib = load_factory_lib(repo)
+    key = run_state(repo).get("issue_key", "")
+    f = (lib.story_dir(repo, key)
+         if key and lib.story_uses_scoped_layout(repo, key)
+         else repo / ".factory")
     control = Path(git(repo, "rev-parse", "--absolute-git-dir")) / "forge"
     control.mkdir(parents=True, exist_ok=True)
     protected_decomposition = control / "decomposition.json"
@@ -717,7 +721,100 @@ def refresh_manifest(repo: Path) -> None:
 
 # ---------------------------------------------------------------- happy path
 
-def test_full_lifecycle_and_archive(repo, tmp_path):
+def prepare_pr_ready_story(
+    repo: Path, tmp_path: Path, *, scoped_layout: bool = False,
+) -> Path:
+    sign_off(repo)
+    if scoped_layout:
+        (repo / ".factory" / "stories" / "ENG-1").mkdir(parents=True)
+    code, out = intake(repo)
+    assert code == 0, out
+    if scoped_layout:
+        plan = repo / "plans" / "active" / "ENG-1-invoices.md"
+        plan.parent.mkdir(parents=True, exist_ok=True)
+        plan.write_text(
+            "---\nstatus: approved\nissue: ENG-1\nstory: ENG-1\n---\n\n" + PLAN_BODY
+        )
+        state = run_state(repo)
+        state.update({
+            "plan_file": plan.relative_to(repo).as_posix(),
+            "plan_status": "approved",
+            "story": "ENG-1",
+        })
+        lib = load_factory_lib(repo)
+        lib.dump_json(lib.run_state_path(repo), state)
+        code, out = record_grill(repo, "plan", digest_of=plan)
+        assert code == 0, out
+    else:
+        code, out = save_plan(repo, tmp_path)
+        assert code == 0, out
+    record_skeleton_then_frontier(repo, DECOMP["tasks"])
+    write_passing_artifacts(repo)
+    code, out = run(repo, "update_run.py", "--decomposition-status", "recorded")
+    assert code == 0, out
+    return repo / ".factory" / "stories" / "ENG-1"
+
+
+def test_pr_ready_ships_in_place_no_file_moves(repo, tmp_path):
+    scoped = prepare_pr_ready_story(repo, tmp_path, scoped_layout=True)
+    outcome = scoped / "outcome.json"
+    outcome.unlink()
+    code, out = run(
+        repo, "forge.py", "outcome", "set",
+        "The invoice list now loads for every account and supports date filters "
+        "without requiring a support request.",
+    )
+    assert code == 0, out
+    assert outcome.is_file() and not (repo / ".factory" / "outcome.json").exists()
+
+    plan = next((repo / "plans" / "active").glob("ENG-1-*.md"))
+    before = {
+        path.relative_to(repo): path.read_bytes()
+        for path in [plan, *scoped.rglob("*")]
+        if path.is_file()
+    }
+    code, out = run(repo, "pr_ready.py")
+    assert code == 0, out
+    assert "shipped in place" in out
+    assert not (repo / ".factory" / "history" / "ENG-1").exists()
+    assert not list((repo / "plans" / "completed").glob("ENG-1-*.md"))
+    for relative, body in before.items():
+        assert (repo / relative).read_bytes() == body, relative
+    shipped = json.loads((scoped / "shipped.json").read_text())
+    assert shipped["story"] == "ENG-1" and shipped["phase"] == "shipped"
+    assert run_state(repo)["phase"] == "shipped"
+    assert roadmap_items(repo)["ENG-1"]["status"] == "done"
+    assert roadmap_items(repo)["ENG-1"]["history"] == ".factory/stories/ENG-1/"
+
+    code, out = run(repo, "pr_ready.py")
+    assert code == 0 and "already shipped in place: ENG-1" in out
+
+
+def test_board_and_history_read_shipped_story_dir(repo, tmp_path):
+    scoped = prepare_pr_ready_story(repo, tmp_path, scoped_layout=True)
+    code, out = run(repo, "pr_ready.py")
+    assert code == 0, out
+
+    from forge_cli.board import aggregate_state, story_detail
+
+    detail = story_detail(repo, "ENG-1")
+    assert detail is not None
+    assert detail["evidence"]["outcome"]["outcome"].startswith("The invoice list")
+    assert detail["evidence"]["verify"]["ok"] is True
+    story = next(item for item in aggregate_state(repo)["stories"]
+                 if item["key"] == "ENG-1")
+    assert story["state"] == "shipped"
+    assert story["lifecycle"]["verify"] is True
+    assert story["lifecycle"]["tests"] is True
+    assert all(story["lifecycle"]["reviews"].values())
+    assert scoped.is_dir() and not (repo / ".factory" / "history" / "ENG-1").exists()
+
+    code, out = run(repo, "forge.py", "history", "--story", "ENG-1")
+    assert code == 0, out
+    assert "shipped" in out and "Story: ENG-1" in out
+
+
+def test_pr_ready_legacy_story_still_archives_to_history(repo, tmp_path):
     sign_off(repo)
     assert signed_off(repo)
     code, _ = intake(repo)
