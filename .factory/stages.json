@@ -14,7 +14,7 @@
     {
       "id": "run-pointer-untracked",
       "title": "The active-story pointer leaves version control",
-      "status": "active",
+      "status": "done",
       "started_at": "2026-08-18T09:41:16+00:00",
       "base_sha": "ee08f485d071442834d6794a2ffd9e082163ca3e",
       "dirty_at_start": {
@@ -39,7 +39,13 @@
           "git": "1 .M N... 100644 100644 100644 9446c11362dda5d8be1a487e470466de9fb9d623 9446c11362dda5d8be1a487e470466de9fb9d623 .factory/stages.json\u0000\u0000100644 9446c11362dda5d8be1a487e470466de9fb9d623 0\t.factory/stages.json\u0000\u0000H .factory/stages.json\u0000"
         }
       },
-      "task_sha256": "4e3d0305f081eb572af48ca98b7917e598c454506489095946fa344a4ffea9df"
+      "task_sha256": "9a6281dfb9fea139927daca92680af253f90bf02b6e40c2565d571e3408ba776",
+      "completed_at": "2026-08-18T11:09:03+00:00",
+      "contract_changed": {
+        "at": "2026-08-18T11:09:03+00:00",
+        "from": "4e3d0305f081eb572af48ca98b7917e598c454506489095946fa344a4ffea9df",
+        "to": "9a6281dfb9fea139927daca92680af253f90bf02b6e40c2565d571e3408ba776"
+      }
     },
     {
       "id": "per-event-files",
