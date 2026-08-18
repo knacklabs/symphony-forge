@@ -220,13 +220,62 @@
     {
       "id": "merge-survivable-hooks",
       "title": "Hooks survive merges and permit scoped resolution",
-      "objective": "With unmerged index entries, pre_tool_use permits git-native resolution (checkout --ours/--theirs, rm, add) for exactly those paths while refusing content hand-writes; unparseable factory_lib or state engages a static deny-list fallback instead of crashing; forge next auto-heals the roadmap after a merge commit.",
+      "objective": "pre_tool_use and stop_continue survive a merge: wrap the factory_lib/forge_cli imports and state loads so an unparseable factory_lib or run.json engages a SELF-CONTAINED static deny-list (fail-closed on product writes, permits git-native recovery + read-only) instead of crashing. With unmerged index entries, pre_tool_use permits git-native resolution for exactly those paths while refusing content hand-writes. forge next auto-heals the roadmap after a merge.",
       "acceptance_criteria": [
         "the carve-out matrix passes: resolution allowed for exactly the unmerged set, refused outside it, deny-list fallback engages on broken imports",
         "forge next heals the roadmap after a merge without being asked"
       ],
       "dependencies": [
         "ship-in-place"
+      ],
+      "write_scope": [
+        "factory/scripts/pre_tool_use.py",
+        "factory/scripts/stop_continue.py",
+        "factory/scripts/forge_cli/phase.py",
+        "factory/tests/test_gates.py"
+      ],
+      "verify_commands": [
+        "python3 factory/scripts/check_dual_runtime.py"
+      ],
+      "required_tests": [
+        {
+          "id": "test_hook_denylist_fallback_on_unparseable_state_or_import",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest --with psutil python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_hook_permits_git_native_resolution_on_unmerged_paths",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest --with psutil python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_hook_refuses_handwrite_and_merged_paths_during_merge",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest --with psutil python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_forge_next_auto_heals_roadmap_after_merge",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest --with psutil python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_jsonl_ledgers_merge_with_a_builtin_driver",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest --with psutil python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        }
+      ],
+      "reviewer_focus": "A CRASHING gate is an OPEN gate that ALSO traps the session - the exact incident this task fixes (lesson hooks-must-fail-closed-with-recovery). Two crash modes: unparseable run.json/state (JSONDecodeError at load) AND unparseable factory_lib.py (SyntaxError at IMPORT, before any code runs). The fallback MUST be SELF-CONTAINED - wrap the factory_lib/forge_cli imports in try/except and, on ImportError/SyntaxError OR a state parse error, run a minimal static deny-list that does NOT import factory_lib (inline the stdin parse + path checks). The deny-list FAILS CLOSED (denies product/canon writes by a hardcoded path-prefix list) but PERMITS git-native recovery (git checkout --ours/--theirs, git rm, git add, git merge/rebase/cherry-pick --abort, git reset) AND read-only tools, so the session self-heals in place. Mid-merge carve-out: when git ls-files -u shows unmerged entries, permit git-native resolution for EXACTLY those paths; Edit/Write content hand-writes to them stay refused; commands on merged paths refused. stop_continue MUST exit 0 (never exit-2) on unparseable state to avoid the re-invoke loop. forge next (phase.py) detects a fresh merge (MERGE_HEAD or a merge commit at HEAD) and runs roadmap heal (done-wins union) once, automatically. The NORMAL parseable-state hook path must not change behavior (existing hook tests stay green). SCOPE: the two hooks + forge next only. ALSO fix the stale existing test test_jsonl_ledgers_merge_with_a_builtin_driver (a task-3 followup, in scope via test_gates.py): task 3 narrowed .gitattributes from `.factory/*.jsonl merge=union` to `.factory/signals.jsonl merge=union` (events.jsonl is frozen/per-file), so the test's pattern tuple must change `.factory/*.jsonl` -> `.factory/signals.jsonl`. Do NOT re-add `.factory/*.jsonl` to .gitattributes (out of scope and wrong).",
+      "plan_contracts": [
+        {
+          "id": "CFS5-C1",
+          "statement": "the carve-out matrix passes: resolution allowed for exactly the unmerged set, refused outside it, deny-list fallback engages on broken imports",
+          "source": "plans/active/FORGE-CFS-1-story-state-stops-conflicting-across-prs.md#acceptance-criteria"
+        },
+        {
+          "id": "CFS5-C2",
+          "statement": "forge next heals the roadmap after a merge without being asked",
+          "source": "plans/active/FORGE-CFS-1-story-state-stops-conflicting-across-prs.md#acceptance-criteria"
+        }
       ]
     },
     {
@@ -245,5 +294,5 @@
   "epic": "accountable-engineering",
   "plan_file": "plans/active/FORGE-CFS-1-story-state-stops-conflicting-across-prs.md",
   "plan_sha256": "ba7f3d643e7332cdeb8efe17a1e82d1fd32dbe9b7719190cafc81578c2fef03b",
-  "commit": "3a36269cbd48c42f21bb20b35f70ee4737a7c5a4"
+  "commit": "8131682ca1c31d73e59d479ea9759bf9da39238c"
 }

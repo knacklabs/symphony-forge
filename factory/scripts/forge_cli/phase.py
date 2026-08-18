@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import subprocess
 from pathlib import Path
 
@@ -11,12 +12,70 @@ from factory_lib import (
 
 from .context import pending_context
 from .quickfix import load_active, profile_of
-from .roadmap import leverage, load_items, ready_pending
+from .roadmap import cmd_heal, leverage, load_items, ready_pending
 from .signal import open_signals
+
+
+def _auto_heal_roadmap_after_merge(base: Path) -> None:
+    if not (base / "plans" / "roadmap.json").exists():
+        return
+    head = subprocess.run(
+        ["git", "rev-list", "--parents", "-n", "1", "HEAD"], cwd=base,
+        capture_output=True, text=True, encoding="utf-8",
+    )
+    merge_head = subprocess.run(
+        ["git", "rev-parse", "--verify", "--quiet", "MERGE_HEAD"], cwd=base,
+        capture_output=True, text=True, encoding="utf-8",
+    )
+    parents = head.stdout.strip().split() if head.returncode == 0 else []
+    target = merge_head.stdout.strip() if merge_head.returncode == 0 else ""
+    token = f"merge:{parents[0]}:{target}" if target else (
+        f"head:{parents[0]}" if len(parents) > 2 else ""
+    )
+    if not token:
+        return
+    marker_result = subprocess.run(
+        ["git", "rev-parse", "--git-path", "forge-roadmap-healed"], cwd=base,
+        capture_output=True, text=True, encoding="utf-8",
+    )
+    if marker_result.returncode:
+        return
+    marker = Path(marker_result.stdout.strip())
+    if not marker.is_absolute():
+        marker = base / marker
+    previous = marker.read_text(encoding="utf-8").strip() if marker.exists() else ""
+    if previous == token:
+        return
+    if not target and previous.startswith("merge:") and previous.rsplit(":", 1)[-1] in parents[2:]:
+        marker.write_text(token + "\n", encoding="utf-8")
+        return
+    roadmap = base / "plans" / "roadmap.json"
+    try:
+        json.loads(roadmap.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        stages = []
+        for stage in ("2", "3"):
+            result = subprocess.run(
+                ["git", "show", f":{stage}:plans/roadmap.json"], cwd=base,
+                capture_output=True, text=True, encoding="utf-8",
+            )
+            if result.returncode == 0:
+                stages.append(json.loads(result.stdout))
+        if len(stages) == 2:
+            epics = {epic["id"]: epic for data in stages
+                     for epic in data.get("epics", [])}
+            roadmap.write_text(json.dumps({
+                "version": stages[0].get("version", 1),
+                "epics": list(epics.values()),
+                "items": stages[0].get("items", []) + stages[1].get("items", []),
+            }, indent=2) + "\n", encoding="utf-8")
+    cmd_heal(argparse.Namespace(repo=str(base)))
+    marker.write_text(token + "\n", encoding="utf-8")
 
 
 def cmd_next(args: argparse.Namespace) -> None:
     base = Path(args.repo).resolve() if args.repo else repo_root()
+    _auto_heal_roadmap_after_merge(base)
     state = load_json(run_state_path(base), default={})
     factory = base / ".factory"
     pending_ctx = len(pending_context(base))

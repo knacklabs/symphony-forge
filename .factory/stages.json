@@ -84,7 +84,7 @@
     {
       "id": "ship-in-place",
       "title": "pr_ready ships without moving files",
-      "status": "active",
+      "status": "done",
       "started_at": "2026-08-18T11:38:31+00:00",
       "base_sha": "3a36269cbd48c42f21bb20b35f70ee4737a7c5a4",
       "dirty_at_start": {
@@ -113,12 +113,46 @@
           "git": "1 .M N... 100644 100644 100644 4a312a01b7f6ee72379d8d414f590174b0092ffd 4a312a01b7f6ee72379d8d414f590174b0092ffd .factory/stages.json\u0000\u0000100644 4a312a01b7f6ee72379d8d414f590174b0092ffd 0\t.factory/stages.json\u0000\u0000H .factory/stages.json\u0000"
         }
       },
-      "task_sha256": "afb9bea193cab0e8ef077ecc098399f7ad74217640b59833c2c524de09ea9dae"
+      "task_sha256": "3c84d2141b0ccf77b939859944a13f2290be472f9352a16060fbda7982856d68",
+      "completed_at": "2026-08-18T11:58:07+00:00"
     },
     {
       "id": "merge-survivable-hooks",
       "title": "Hooks survive merges and permit scoped resolution",
-      "status": "pending"
+      "status": "active",
+      "started_at": "2026-08-18T12:01:13+00:00",
+      "base_sha": "8131682ca1c31d73e59d479ea9759bf9da39238c",
+      "dirty_at_start": {
+        ".factory/decomposition.json": {
+          "digest": "5db4de6272fd3b07ddbc5f6a09959039079cc8c650d3fd8cd58dc9f1ea713b28",
+          "git": "1 .M N... 100644 100644 100644 317e3fa63e90f849101fc984216d857490447702 317e3fa63e90f849101fc984216d857490447702 .factory/decomposition.json\u0000\u0000100644 317e3fa63e90f849101fc984216d857490447702 0\t.factory/decomposition.json\u0000\u0000H .factory/decomposition.json\u0000"
+        },
+        ".factory/events/54690214152f4cbb9ee527186063701d.json": {
+          "digest": "69bfbd5432a0bfbd36cb6e86ddefc9244acc55dc9e4ab0e190a61f5afc0a6c42",
+          "git": "? .factory/events/54690214152f4cbb9ee527186063701d.json\u0000\u0000\u0000"
+        },
+        ".factory/events/569ca4833d19408f84b6c7a586dec5c4.json": {
+          "digest": "9e0efa88b590a33d2494d80030954bae8e33c48d1a5aa3359c82a1ee2938f3fe",
+          "git": "? .factory/events/569ca4833d19408f84b6c7a586dec5c4.json\u0000\u0000\u0000"
+        },
+        ".factory/events/96f01552161d4ad9a39640a526a9ad84.json": {
+          "digest": "d2ab64839b1bcc1736be419f04548bdeffabf6653a05589ba82f58200f935e59",
+          "git": "? .factory/events/96f01552161d4ad9a39640a526a9ad84.json\u0000\u0000\u0000"
+        },
+        ".factory/grills/tasks/merge-survivable-hooks.json": {
+          "digest": "cc9542a9e2e7af447f4ee2553867d583006ec993fa4054975c53f238c831de59",
+          "git": "? .factory/grills/tasks/merge-survivable-hooks.json\u0000\u0000\u0000"
+        },
+        ".factory/run.json": {
+          "digest": "378ed8ef6fd3b72223436f0b91c97b5838ab4dc59dc7d928eb52988b4bbcdcda",
+          "git": "1 .M N... 100644 100644 100644 1628d52e5e1a19b197cb8f3a289e420434c5a1d4 1628d52e5e1a19b197cb8f3a289e420434c5a1d4 .factory/run.json\u0000\u0000100644 1628d52e5e1a19b197cb8f3a289e420434c5a1d4 0\t.factory/run.json\u0000\u0000H .factory/run.json\u0000"
+        },
+        ".factory/stages.json": {
+          "digest": "83a9a03b67b3b874a531231dfd5f5e2ee83097184e764b34a7f67f5687eb8050",
+          "git": "1 .M N... 100644 100644 100644 7946114c9738de121f14d78271d216aa1a2bb721 7946114c9738de121f14d78271d216aa1a2bb721 .factory/stages.json\u0000\u0000100644 7946114c9738de121f14d78271d216aa1a2bb721 0\t.factory/stages.json\u0000\u0000H .factory/stages.json\u0000"
+        }
+      },
+      "task_sha256": "092d762e6ad6ad9512bc495beab5f16b743151440a0c51c149c648fc0565838f"
     },
     {
       "id": "migration-and-vendor",

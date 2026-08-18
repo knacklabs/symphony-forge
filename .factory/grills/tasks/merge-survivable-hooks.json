@@ -1,0 +1,84 @@
+{
+  "generated_by": "griller",
+  "gate": "task",
+  "task_id": "merge-survivable-hooks",
+  "verdict": "pass",
+  "decision": "keep",
+  "questions_asked": 4,
+  "summary": "JIT grill of merge-survivable-hooks (the crash-loop fix) against spec, decision 0045/0046, and lesson hooks-must-fail-closed-with-recovery. Fallback allow-list, merge detection, and auto-heal trigger resolved; contract kept.",
+  "inspected_refs": [
+    "factory/scripts/pre_tool_use.py",
+    "factory/scripts/stop_continue.py",
+    "factory/scripts/forge_cli/phase.py",
+    "factory/scripts/forge_cli/roadmap.py",
+    "factory/tests/test_gates.py",
+    "docs/specs/conflict-free-story-state.md",
+    "docs/decisions/0045-conflict-free-story-state.md"
+  ],
+  "current_flow": "pre_tool_use and stop_continue import factory_lib/forge_cli at module top and load run.json at module level, so a conflict-markered factory_lib (SyntaxError at import) or run.json (JSONDecodeError at load) crashes EVERY hook; stop_continue's crash exits non-zero and re-invokes the model in an unrecoverable loop, and the crashed pre_tool_use denies the very git commands that would resolve the merge. Task 5 wraps imports/loads with a self-contained static deny-list fallback and adds a mid-merge git-resolution carve-out plus forge-next auto-heal.",
+  "criteria_map": {
+    "the carve-out matrix passes: resolution allowed for exactly the unmerged set, refused outside it, deny-list fallback engages on broken imports": "test_hook_permits_git_native_resolution_on_unmerged_paths + test_hook_refuses_handwrite_and_merged_paths_during_merge assert the per-path matrix (git ls-files -u set allowed, merged paths + content hand-writes refused); test_hook_denylist_fallback_on_unparseable_state_or_import asserts a broken factory_lib/run.json engages the self-contained deny-list (product write denied, git-recovery + read allowed) without crashing",
+    "forge next heals the roadmap after a merge without being asked": "test_forge_next_auto_heals_roadmap_after_merge seeds a roadmap.json with duplicate keys (a merge union) and asserts forge next runs heal (done-wins) once, idempotently"
+  },
+  "new_abstractions": [
+    "A self-contained static deny-list block in pre_tool_use/stop_continue that runs WITHOUT factory_lib (inline stdin parse + hardcoded product-prefix deny + git-recovery/read allow). Reversible: only engages when the normal import/load fails; the parseable path is unchanged."
+  ],
+  "rounds": [
+    {
+      "question": "What should the self-contained deny-list fallback ALLOW?",
+      "options": [
+        "Git-recovery verbs + all read-only",
+        "Also allow Edit/Write to .factory state",
+        "Deny everything (pure fail-closed)"
+      ],
+      "chosen": "Git-recovery verbs + all read-only"
+    },
+    {
+      "question": "How to determine the exact unmerged path set for the carve-out?",
+      "options": [
+        "git ls-files -u for paths; MERGE_HEAD/rebase dir as the gate",
+        "Allow git resolution anywhere while MERGE_HEAD exists"
+      ],
+      "chosen": "git ls-files -u for paths; MERGE_HEAD/rebase dir as the gate"
+    },
+    {
+      "question": "How should forge next decide to auto-run roadmap heal?",
+      "options": [
+        "Heal when roadmap.json has duplicate keys",
+        "Detect a merge commit at HEAD + a healed-marker"
+      ],
+      "chosen": "Heal when roadmap.json has duplicate keys"
+    }
+  ],
+  "citations": [
+    {
+      "finding": "A crashing gate is an open gate that also traps the session; hooks must fail closed with git-recovery permitted",
+      "source": "plans/lessons (hooks-must-fail-closed-with-recovery) and docs/decisions/0045-conflict-free-story-state.md"
+    },
+    {
+      "finding": "Mid-merge hook carve-out permits git-native resolution for exactly the unmerged paths; deny-list fallback on unparseable factory_lib/state",
+      "source": "docs/specs/conflict-free-story-state.md#behaviour"
+    },
+    {
+      "finding": "Stale existing test test_jsonl_ledgers_merge_with_a_builtin_driver fails: it asserts .gitattributes has `.factory/*.jsonl merge=union`, but task 3 narrowed that to `.factory/signals.jsonl` (events.jsonl frozen/per-file). Missed by task 3's targeted subset; surfaced by the full suite.",
+      "source": "full gate suite: test_jsonl_ledgers_merge_with_a_builtin_driver (1 failed, 597 passed)"
+    }
+  ],
+  "gaps": [
+    "What should the self-contained deny-list fallback ALLOW?",
+    "How to determine the exact unmerged path set for the carve-out?",
+    "How should forge next decide to auto-run roadmap heal?",
+    "Stale existing test test_jsonl_ledgers_merge_with_a_builtin_driver fails: it asserts .gitattributes has `.factory/*.jsonl merge=union`, but task 3 narrowed that to `.factory/signals.jsonl` (events.jsonl frozen/per-file). Missed by task 3's targeted subset; surfaced by the full suite."
+  ],
+  "contradictions": [],
+  "resolutions": [
+    "Git-recovery verbs + all read-only (operator 2026-08-18): the fallback ALLOWS git checkout --ours/--theirs, git rm/add/reset, git merge/rebase/cherry-pick --abort, and read-only tools; DENIES every Edit/Write and other Bash write. Hardcoded, no factory_lib dependency. Not 'deny everything' (that reproduces the trap) and not hand-writing .factory state (violates evidence-only-via-recorders).",
+    "git ls-files -u for the path set, MERGE_HEAD/rebase-apply|rebase-merge presence as the mid-merge gate (operator 2026-08-18): git-native resolution passes only for the exact unmerged paths; merged paths and content hand-writes refused - the full per-path matrix.",
+    "Heal when roadmap.json has duplicate keys (operator 2026-08-18): forge next runs heal only when duplicates exist (the exact merge-union condition); heal_items is a no-op otherwise, so it's self-limiting and idempotent - no merge-commit marker plumbing.",
+    "Fold the test fix into task 5 (test_gates.py in scope, promoted to required test): change the pattern tuple `.factory/*.jsonl` -> `.factory/signals.jsonl`. Do NOT re-add the wildcard to .gitattributes. Task-3 followup, not a hook change."
+  ],
+  "open_items": [],
+  "input_sha256": "b7246c320c2457eeacecb066aad27c3a6aadf65282d1489be0ab4c6420754c69",
+  "recorded_at": "2026-08-18T12:39:00+00:00",
+  "commit": "8131682ca1c31d73e59d479ea9759bf9da39238c"
+}

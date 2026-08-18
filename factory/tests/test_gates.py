@@ -6264,6 +6264,79 @@ def hook(repo: Path, payload: dict) -> tuple[int, str]:
     return run(repo, "pre_tool_use.py", stdin=json.dumps(payload))
 
 
+def make_unmerged(repo: Path, rel: str = "src/conflict.ts") -> None:
+    path = repo / rel
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text("base\n")
+    git(repo, "add", rel)
+    git(repo, "commit", "-m", "conflict base")
+    oid = git(repo, "rev-parse", f"HEAD:{rel}")
+    records = "".join(f"100644 {oid} {stage}\t{rel}\n" for stage in (1, 2, 3))
+    proc = subprocess.run(
+        ["git", "update-index", "--index-info"], cwd=repo, input=records,
+        capture_output=True, text=True,
+    )
+    assert proc.returncode == 0, proc.stdout + proc.stderr
+
+
+def test_hook_denylist_fallback_on_unparseable_state_or_import(repo):
+    state = repo / ".factory" / "run.json"
+    valid_state = state.read_text()
+    state.write_text("<<<<<<< ours\n{}\n=======\n{}\n>>>>>>> theirs\n")
+    payload = {"tool_name": "Edit", "tool_input": {
+        "file_path": str(repo / "src" / "app.ts")}}
+
+    code, out = hook(repo, payload)
+    assert code == 0 and "deny" in out and "emergency deny-list" in out
+    code, out = run(repo, "stop_continue.py", stdin="{}")
+    assert code == 0 and json.loads(out) == {"continue": True}
+
+    state.write_text(valid_state)
+    library = repo / "factory" / "scripts" / "factory_lib.py"
+    library.write_text("this is not valid Python !!!\n")
+    code, out = hook(repo, payload)
+    assert code == 0 and "deny" in out and "SyntaxError" in out
+    code, out = hook(repo, {"tool_name": "Bash", "tool_input": {"command": "sed -i x src/app.ts"}})
+    assert code == 0 and "deny" in out and "emergency deny-list" in out
+    code, out = hook(repo, {"tool_name": "Bash", "tool_input": {"command": "git status"}})
+    assert code == 0 and out == "{}\n"
+    code, out = run(repo, "stop_continue.py", stdin="{}")
+    assert code == 0 and json.loads(out) == {"continue": True}
+
+
+def test_hook_permits_git_native_resolution_on_unmerged_paths(repo):
+    make_unmerged(repo)
+    for command in (
+        "git checkout --ours -- src/conflict.ts",
+        "git checkout --theirs -- src/conflict.ts",
+        "git add -- src/conflict.ts",
+        "git rm -- src/conflict.ts",
+        "git reset -- src/conflict.ts",
+        "git merge --abort",
+        "git rebase --abort",
+        "git cherry-pick --abort",
+    ):
+        code, out = hook(repo, {"tool_name": "Bash", "tool_input": {"command": command}})
+        assert code == 0 and out == "{}\n", command
+
+
+def test_hook_refuses_handwrite_and_merged_paths_during_merge(repo):
+    make_unmerged(repo)
+    for payload in (
+        {"tool_name": "Edit", "tool_input": {
+            "file_path": str(repo / "src" / "conflict.ts")}},
+        {"tool_name": "Write", "tool_input": {
+            "file_path": str(repo / "src" / "conflict.ts")}},
+        {"tool_name": "Bash", "tool_input": {"command": "git add -- src/app.ts"}},
+        {"tool_name": "Bash", "tool_input": {
+            "command": "git checkout --ours -- src/app.ts"}},
+        {"tool_name": "Bash", "tool_input": {
+            "command": "git add -- src/conflict.ts src/app.ts"}},
+    ):
+        code, out = hook(repo, payload)
+        assert code == 0 and "deny" in out, payload
+
+
 def test_commit_belt_stages_refreshed_ledger(repo):
     context_file = repo / "docs" / "context" / "commit-note.md"
     context_file.write_text("new client context\n")
@@ -8690,6 +8763,48 @@ def test_roadmap_heal_unions_duplicates_done_wins(repo, tmp_path):
     p.write_text("{ <<<<<<< garbage")
     code, out = run(repo, "forge.py", "roadmap", "heal")
     assert code != 0 and "restore" in out
+
+
+def test_forge_next_auto_heals_roadmap_after_merge(repo, tmp_path):
+    import_roadmap(repo, tmp_path)
+    path = repo / "plans" / "roadmap.json"
+    git(repo, "add", "plans/roadmap.json")
+    git(repo, "commit", "-m", "roadmap base")
+    branch = git(repo, "branch", "--show-current")
+    git(repo, "checkout", "-b", "roadmap-side")
+    side = json.loads(path.read_text())
+    side["items"][0]["status"] = "active"
+    path.write_text(json.dumps(side, indent=2) + "\n")
+    git(repo, "add", "plans/roadmap.json")
+    git(repo, "commit", "-m", "roadmap active")
+    git(repo, "checkout", branch)
+    main = json.loads(path.read_text())
+    main["items"][0]["status"] = "done"
+    main["items"][0]["history"] = ".factory/history/ENG-1/"
+    path.write_text(json.dumps(main, indent=2) + "\n")
+    git(repo, "add", "plans/roadmap.json")
+    git(repo, "commit", "-m", "roadmap done")
+    merge = subprocess.run(
+        ["git", *GIT_ID, "merge", "roadmap-side"], cwd=repo,
+        capture_output=True, text=True,
+    )
+    assert merge.returncode != 0 and "CONFLICT" in merge.stdout + merge.stderr
+
+    code, first = run(repo, "forge.py", "next")
+    assert code == 0 and "Healed plans/roadmap.json" in first, first
+    assert roadmap_items(repo)["ENG-1"]["status"] == "done"
+    code, second = run(repo, "forge.py", "next")
+    assert code == 0 and "Healed plans/roadmap.json" not in second, second
+
+    git(repo, "add", "plans/roadmap.json")
+    git(repo, "commit", "-m", "resolve roadmap merge")
+    marker = Path(git(repo, "rev-parse", "--git-path", "forge-roadmap-healed"))
+    (marker if marker.is_absolute() else repo / marker).unlink()
+    merged = json.loads(path.read_text())
+    merged["items"].append({**merged["items"][0], "status": "active"})
+    path.write_text(json.dumps(merged, indent=2) + "\n")
+    code, after_commit = run(repo, "forge.py", "next")
+    assert code == 0 and "1 duplicate(s) unioned" in after_commit, after_commit
 
 
 # ------------------------------------------------- the record of what shipped
@@ -11551,7 +11666,7 @@ def test_jsonl_ledgers_merge_with_a_builtin_driver(repo):
     attributes = (HARNESS / ".gitattributes").read_text()
     assert not jsonl_append_rules(attributes)
     for pattern in ("plans/lessons.jsonl", "plans/quickfixes.jsonl",
-                    ".factory/*.jsonl"):
+                    ".factory/signals.jsonl"):
         line = next(l for l in attributes.splitlines() if l.startswith(pattern))
         assert line.endswith("merge=union"), line
 
