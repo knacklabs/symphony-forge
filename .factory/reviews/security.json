@@ -1,0 +1,18 @@
+{
+  "generated_by": "autoreview",
+  "score": 10,
+  "summary": "The new emergency deny-list fallback is soundly fail-closed: product/canon writes stay denied when factory_lib/state is unparseable, git-native recovery is whitelisted to exactly the git ls-files -u unmerged paths, and command chaining is neutralized because every non-flag arg must be a subset of the unmerged set. No trust-boundary or injection findings.",
+  "reviewed_scope": [
+    "factory/scripts/pre_tool_use.py",
+    "factory/scripts/stop_continue.py"
+  ],
+  "blocking_findings": [],
+  "non_blocking_findings": [],
+  "residual_risks": [
+    "_fallback_readonly and _git_recovery parse commands textually; if a future shell-feature (e.g. process substitution) is added to the allow path it must be re-audited, but current rejects on $ ` <> and non-unmerged path args hold."
+  ],
+  "aspect": "security",
+  "recommendation": "approve-with-caveats",
+  "recorded_at": "2026-08-18T17:48:42+00:00",
+  "commit": "332d24b24ec74400b0c04f3f3a3765b971d344fd"
+}

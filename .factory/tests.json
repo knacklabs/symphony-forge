@@ -1,0 +1,53 @@
+{
+  "commit": "332d24b24ec74400b0c04f3f3a3765b971d344fd",
+  "automated": {
+    "generated_by": "implementer",
+    "status": "pass",
+    "summary": "FORGE-CFS-1 conflict-free story state, 6 tasks. New tests cover each mechanism: story-scoped evidence (write-new/read-legacy across the in-scope recorders + verify), the worktree-local untracked run pointer + hybrid derive_phase, per-event files with legacy-union history, in-place ship with board/history story-dir reads, the merge-survivable hook carve-out matrix + deny-list fallback + forge-next auto-heal, and the atomic activation with a two-worktree merge simulation asserting zero .factory conflicts. Activating the intake marker migrated ~32 legacy-layout tests to new-layout expectations; two real consumer regressions (phase.py routing, pr_ready scratchpad) were caught by the full-suite gate and fixed. Full deterministic suite green via verify.py.",
+    "blocking_findings": [],
+    "commands_run": [
+      "python3 factory/scripts/verify.py (structural + typecheck + pytest factory/tests -q: 601 passed, 3 skipped)"
+    ],
+    "tests_added_or_updated": [
+      "test_new_story_artifacts_record_under_story_dir",
+      "test_legacy_layout_stays_readable_by_every_consumer",
+      "test_intake_writes_untracked_pointer_zero_tracked_run_json",
+      "test_phase_derivation_matches_legacy_run_json_semantics",
+      "test_append_event_writes_new_file_no_shared_ledger",
+      "test_history_merges_legacy_and_per_file_events",
+      "test_pr_ready_ships_in_place_no_file_moves",
+      "test_board_and_history_read_shipped_story_dir",
+      "test_pr_ready_legacy_story_still_archives_to_history",
+      "test_hook_denylist_fallback_on_unparseable_state_or_import",
+      "test_hook_permits_git_native_resolution_on_unmerged_paths",
+      "test_hook_refuses_handwrite_and_merged_paths_during_merge",
+      "test_forge_next_auto_heals_roadmap_after_merge",
+      "test_intake_on_legacy_fixture_starts_new_layout_old_artifacts_readable",
+      "test_merge_simulation_two_stories_zero_factory_conflicts",
+      "test_shipped_new_layout_story_visible_to_board_and_consumers",
+      "~32 existing gate tests migrated to new-layout expectations (activation)"
+    ],
+    "pass_fail_summary": "601 passed, 3 skipped, 0 failed (verify.py green)",
+    "reviewed_scope": [
+      "factory/scripts/factory_lib.py",
+      "factory/scripts/pre_tool_use.py",
+      "factory/scripts/stop_continue.py",
+      "factory/scripts/forge_cli/events.py",
+      "factory/scripts/forge_cli/phase.py",
+      "factory/scripts/pr_ready.py",
+      "factory/scripts/intake.py",
+      "factory/scripts/forge_cli/plans.py",
+      "factory/scripts/forge_cli/board.py",
+      "factory/scripts/forge_cli/findings.py",
+      "factory/scripts/forge_cli/audit.py",
+      "factory/tests/test_gates.py"
+    ],
+    "non_blocking_findings": [],
+    "remaining_gaps": [],
+    "residual_risks": [],
+    "manual_validation_steps": [],
+    "recorded_at": "2026-08-18T17:53:10+00:00",
+    "commit": "332d24b24ec74400b0c04f3f3a3765b971d344fd"
+  },
+  "updated_at": "2026-08-18T17:53:10+00:00"
+}

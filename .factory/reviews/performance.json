@@ -1,0 +1,28 @@
+{
+  "generated_by": "autoreview",
+  "score": 8,
+  "summary": "No hot-path regressions in correctness terms; two non-blocking overheads introduced by the single-source resolvers: git_control_dir subprocess cost on every run_state_path call, and load_events directory fan-out replacing a single JSONL read.",
+  "reviewed_scope": [
+    "factory/scripts/factory_lib.py",
+    "factory/scripts/forge_cli/events.py",
+    "factory/scripts/pre_tool_use.py"
+  ],
+  "blocking_findings": [],
+  "non_blocking_findings": [
+    {
+      "category": "subprocess-in-hot-path",
+      "area": "factory_lib.py",
+      "summary": "git_control_dir (factory_lib.py:647) forks git twice (rev-parse --absolute-git-dir + --show-toplevel) and is now called by run_state_path on every invocation, including pre_tool_use on every tool call; not memoized. Consider an lru_cache keyed on root."
+    },
+    {
+      "category": "io-amplification",
+      "area": "forge_cli/events.py",
+      "summary": "load_events (events.py:36) globs .factory/events/*.json and opens each file per call, versus one events.jsonl read before; O(events) file opens for history/board/doctor reads. Acceptable at current volumes; watch as event count grows."
+    }
+  ],
+  "residual_risks": [],
+  "aspect": "performance",
+  "recommendation": "approve-with-caveats",
+  "recorded_at": "2026-08-18T17:48:42+00:00",
+  "commit": "332d24b24ec74400b0c04f3f3a3765b971d344fd"
+}

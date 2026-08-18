@@ -1,0 +1,99 @@
+{
+  "generated_by": "autoreview",
+  "score": 9,
+  "summary": "FORGE-CFS-1 conflict-free story state: six single-source mechanisms (story_dir/evidence_path, untracked run pointer + hybrid derive_phase, per-event files, in-place ship, merge-survivable hooks, atomic activation) land cleanly. 601 tests pass incl. the two-worktree merge-simulation. Both task-6 contracts implemented; two minor non-blocking consistency/divergence notes.",
+  "reviewed_scope": [
+    "factory/scripts/factory_lib.py",
+    "factory/scripts/pre_tool_use.py",
+    "factory/scripts/stop_continue.py",
+    "factory/scripts/forge_cli/events.py",
+    "factory/scripts/forge_cli/phase.py",
+    "factory/scripts/pr_ready.py",
+    "factory/scripts/intake.py",
+    "factory/scripts/forge_cli/plans.py",
+    "factory/scripts/forge_cli/board.py",
+    "factory/scripts/forge_cli/findings.py",
+    "factory/scripts/forge_cli/audit.py",
+    "factory/scripts/forge_cli/outcome.py"
+  ],
+  "contract_verdicts": [
+    {
+      "contract_id": "CFS1-C1",
+      "verdict": "implemented",
+      "evidence": "factory_lib.py story_dir/evidence_path route decomposition/grill/test/review recorders + verify story-scoped; test_gates.py::test_new_story_artifacts_record_under_story_dir passes."
+    },
+    {
+      "contract_id": "CFS1-C2",
+      "verdict": "implemented",
+      "evidence": "factory_lib.py evidence_path legacy-fallback; test_gates.py::test_legacy_layout_stays_readable_by_every_consumer passes."
+    },
+    {
+      "contract_id": "CFS2-C1",
+      "verdict": "implemented",
+      "evidence": "factory_lib.py:run_state_path resolves the untracked git-control-dir pointer for new-layout; test_gates.py::test_intake_writes_untracked_pointer_zero_tracked_run_json passes (zero tracked run.json delta)."
+    },
+    {
+      "contract_id": "CFS2-C2",
+      "verdict": "implemented",
+      "evidence": "factory_lib.py:derive_phase hybrid; test_gates.py::test_phase_derivation_matches_legacy_run_json_semantics passes."
+    },
+    {
+      "contract_id": "CFS3-C1",
+      "verdict": "implemented",
+      "evidence": "forge_cli/events.py:append_event writes .factory/events/<uuid>.json, no shared-ledger append; test_gates.py::test_append_event_writes_new_file_no_shared_ledger passes."
+    },
+    {
+      "contract_id": "CFS3-C2",
+      "verdict": "implemented",
+      "evidence": "forge_cli/events.py:load_events unions per-event files + legacy events.jsonl; test_gates.py::test_history_merges_legacy_and_per_file_events passes."
+    },
+    {
+      "contract_id": "CFS4-C1",
+      "verdict": "implemented",
+      "evidence": "pr_ready.py new-layout ship performs zero .factory moves; test_gates.py::test_pr_ready_ships_in_place_no_file_moves passes."
+    },
+    {
+      "contract_id": "CFS4-C2",
+      "verdict": "implemented",
+      "evidence": "forge_cli/board.py story-dir-first read; test_gates.py::test_board_and_history_read_shipped_story_dir passes."
+    },
+    {
+      "contract_id": "CFS5-C1",
+      "verdict": "implemented",
+      "evidence": "pre_tool_use.py denylist_fallback + _git_recovery carve-out; test_gates.py::test_hook_permits_git_native_resolution_on_unmerged_paths, ::test_hook_refuses_handwrite_and_merged_paths_during_merge, ::test_hook_denylist_fallback_on_unparseable_state_or_import pass."
+    },
+    {
+      "contract_id": "CFS5-C2",
+      "verdict": "implemented",
+      "evidence": "forge_cli/phase.py _auto_heal_roadmap_after_merge; test_gates.py::test_forge_next_auto_heals_roadmap_after_merge passes."
+    },
+    {
+      "contract_id": "CFS6-C1",
+      "verdict": "implemented",
+      "evidence": "intake.py:118 story_dir(root, issue_key).mkdir() creates the marker; test_gates.py:636 test_intake_on_legacy_fixture_starts_new_layout_old_artifacts_readable passes."
+    },
+    {
+      "contract_id": "CFS6-C2",
+      "verdict": "implemented",
+      "evidence": "test_gates.py:664 test_merge_simulation_two_stories_zero_factory_conflicts passes (zero .factory conflicts merging two concurrent story branches)."
+    }
+  ],
+  "blocking_findings": [],
+  "non_blocking_findings": [
+    {
+      "category": "convention-drift",
+      "area": "forge_cli/events.py",
+      "summary": "Per-event filenames use uuid4().hex rather than the 0022 timestamp-prefixed scheme the grill chose; functionally fine since load_events sorts by the payload 'at' field, but inconsistent with the lessons/quickfix ledgers."
+    },
+    {
+      "category": "spec-divergence",
+      "area": "forge_cli/stages.py",
+      "summary": "stages.json is untracked-authoritative (git_control_dir) + a .factory mirror rather than story-scoped as the spec lists it; conflict-free and accepted this session, but deferral D-0027's story-scoped intent is not met."
+    }
+  ],
+  "residual_risks": [],
+  "aspect": "quality",
+  "recommendation": "approve-with-caveats",
+  "recorded_at": "2026-08-18T17:49:12+00:00",
+  "commit": "332d24b24ec74400b0c04f3f3a3765b971d344fd"
+}

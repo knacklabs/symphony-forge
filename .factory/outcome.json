@@ -1,0 +1,7 @@
+{
+  "generated_by": "implementer",
+  "outcome": "Overlapping story PRs no longer conflict on .factory state. Story evidence is story-scoped (.factory/stories/<KEY>/), the active-story run pointer is worktree-local and untracked with phase derived from artifacts, events are one conflict-free file each (union merge driver retired), pr_ready ships in place with no archive move, and the PreToolUse/Stop hooks survive a merge \u2014 engaging a self-contained deny-list that keeps writes locked but permits git-native recovery instead of crashing, so a conflict-markered run.json or factory_lib can never trap a session again. Intake activates the new layout; legacy repos stay readable and pick it up via forge upgrade. Proven by a two-worktree merge simulation with zero .factory conflicts.",
+  "issue": "FORGE-CFS-1",
+  "commit": "332d24b24ec74400b0c04f3f3a3765b971d344fd",
+  "recorded_at": "2026-08-18T17:49:24+00:00"
+}
