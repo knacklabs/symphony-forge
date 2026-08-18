@@ -11,7 +11,7 @@ from typing import Any
 import factory_lib
 from factory_lib import (
     client_signoff, dump_json, load_json, now_iso, repo_root, require_grill,
-    run_state_path, slugify,
+    evidence_path, run_state_path, slugify,
 )
 
 from .common import fail
@@ -72,11 +72,7 @@ def body_sha256(body: str) -> str:
 
 
 def _stages_progress(base: Path, issue: str, location: str) -> str:
-    path = (
-        base / ".factory" / "stages.json"
-        if location == "active"
-        else base / ".factory" / "history" / issue / "stages.json"
-    )
+    path = evidence_path(base, issue, "stages.json")
     stages = load_json(path, default={}).get("stages", [])
     if not stages:
         return "-"
@@ -132,7 +128,7 @@ def cmd_save(args: argparse.Namespace) -> None:
         ignore_names=("client-signoff", "epics-approved"),
         expect_digest_of=source,
     )
-    plan_grill = load_json(base / ".factory" / "grills" / "plan.json", default={})
+    plan_grill = load_json(evidence_path(base, issue, "grills/plan.json"), default={})
     if plan_grill.get("issue") != issue:
         fail(
             f"the recorded plan grill is for {plan_grill.get('issue')!r}, not {issue!r} — "

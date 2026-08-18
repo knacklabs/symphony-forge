@@ -1,0 +1,102 @@
+{
+  "generated_by": "griller",
+  "gate": "task",
+  "task_id": "migration-and-vendor",
+  "verdict": "pass",
+  "decision": "keep",
+  "questions_asked": 7,
+  "summary": "JIT grill of migration-and-vendor - the atomic activation (0046). Marker mechanism, audit completeness, and overrun handling resolved. Consumer audit (plans.py, check_board_complete, findings, audit) baked into write_scope.",
+  "inspected_refs": [
+    "factory/scripts/intake.py",
+    "factory/scripts/forge_cli/plans.py",
+    "factory/scripts/check_board_complete.py",
+    "factory/scripts/forge_cli/findings.py",
+    "factory/scripts/forge_cli/audit.py",
+    "factory/scripts/forge_cli/upgrade.py",
+    "factory/tests/test_gates.py",
+    "docs/decisions/0046-scoped-layout-activation-ordering.md"
+  ],
+  "current_flow": "Through tasks 1-5 the scoped-layout marker (.factory/stories/<KEY>/) is never created in production, so every mechanism runs legacy while proven via synthesized markers. plans.py:135/78, check_board_complete.py:31, findings.py:45, audit.py:37 hand-join .factory/history and grills/plan. Task 6 makes intake create the marker (activation) and migrates those consumers story-dir-first with legacy fallback, atomically per 0046.",
+  "criteria_map": {
+    "intake on a legacy fixture starts the new layout with old artifacts untouched and readable": "test_intake_on_legacy_fixture_starts_new_layout_old_artifacts_readable intakes a story in a repo carrying legacy singletons/history and asserts a .factory/stories/<KEY>/ marker appears, the new story records story-scoped, and the pre-existing legacy artifacts are neither moved nor rewritten and still read",
+    "the merge-simulation test merges two concurrent story branches with zero .factory conflicts": "test_merge_simulation_two_stories_zero_factory_conflicts intakes two stories in two worktrees, records evidence in each, merges one branch into the other's base, and asserts git reports zero conflicts under .factory"
+  },
+  "new_abstractions": [
+    "intake creates .factory/stories/<KEY>/ as the activation marker; the audited consumers gain story-dir-first + legacy fallback. Reversible: legacy repos untouched until their next intake; old artifacts stay readable."
+  ],
+  "rounds": [
+    {
+      "question": "How should intake SET the scoped-layout marker?",
+      "options": [
+        "Intake creates .factory/stories/<KEY>/",
+        "An explicit marker file / config flag"
+      ],
+      "chosen": "Intake creates .factory/stories/<KEY>/"
+    },
+    {
+      "question": "Is the 4-consumer audit complete, or hunt harder first?",
+      "options": [
+        "Trust audit + full-suite gate as the proof",
+        "Run a deeper read-only sweep first"
+      ],
+      "chosen": "Trust audit + full-suite gate as the proof"
+    },
+    {
+      "question": "If Codex signals a budget overrun, how to handle?",
+      "options": [
+        "Split into sequential stages, ship together",
+        "Force it into one delegation"
+      ],
+      "chosen": "Split into sequential stages, ship together"
+    }
+  ],
+  "citations": [
+    {
+      "finding": "Activation is deferred to migration-and-vendor and atomic; consumers migrate here",
+      "source": "docs/decisions/0046-scoped-layout-activation-ordering.md"
+    },
+    {
+      "finding": "Two concurrent stories must produce zero overlapping .factory paths; merge simulation proves it",
+      "source": "docs/specs/conflict-free-story-state.md#acceptance-criteria"
+    },
+    {
+      "finding": "Flipping the marker at intake makes every intake-based test run new-layout; 32 existing tests assert the OLD layout and fail (full suite: 32 failed, 569 passed). The activation itself is correct (merge-simulation + 3 required tests pass).",
+      "source": "full gate suite after activation: 32 failed, 569 passed, 3 skipped"
+    },
+    {
+      "finding": "S-0007: 2 of the 32 are real production regressions, not stale tests - phase.py hand-reads legacy decomposition/tests/verify/reviews (5th missed consumer), and pr_ready scoped ship leaves scratchpad.md.",
+      "source": "signal S-0007-519e"
+    },
+    {
+      "finding": "3 stragglers are TEST-MIGRATION ERRORS, not code regressions: stages.json is NOT story-scoped - it uses authoritative_stages_path = git_control_dir/stages.json (untracked worktree-local, already conflict-free like run.json). Codex over-migrated test_stage_loop and test_task_digest to expect .factory/stories/<KEY>/ paths that never exist; test_roadmap_dependency also fails from an over-eager assertion change.",
+      "source": "full suite round 2: 3 failed, 598 passed"
+    },
+    {
+      "finding": "LAST failing test test_stage_loop_orders_execution_and_gates_pr_ready: it reads/writes/asserts stages.json via story_state(repo) (lines ~10318/10335/10352) - FileNotFound, because stages.json is NOT story-scoped.",
+      "source": "full suite: 1 failed (test_stage_loop) after straggler pass"
+    }
+  ],
+  "gaps": [
+    "How should intake SET the scoped-layout marker?",
+    "Is the 4-consumer audit complete, or hunt harder first?",
+    "If Codex signals a budget overrun, how to handle?",
+    "Flipping the marker at intake makes every intake-based test run new-layout; 32 existing tests assert the OLD layout and fail (full suite: 32 failed, 569 passed). The activation itself is correct (merge-simulation + 3 required tests pass).",
+    "S-0007: 2 of the 32 are real production regressions, not stale tests - phase.py hand-reads legacy decomposition/tests/verify/reviews (5th missed consumer), and pr_ready scoped ship leaves scratchpad.md.",
+    "3 stragglers are TEST-MIGRATION ERRORS, not code regressions: stages.json is NOT story-scoped - it uses authoritative_stages_path = git_control_dir/stages.json (untracked worktree-local, already conflict-free like run.json). Codex over-migrated test_stage_loop and test_task_digest to expect .factory/stories/<KEY>/ paths that never exist; test_roadmap_dependency also fails from an over-eager assertion change.",
+    "LAST failing test test_stage_loop_orders_execution_and_gates_pr_ready: it reads/writes/asserts stages.json via story_state(repo) (lines ~10318/10335/10352) - FileNotFound, because stages.json is NOT story-scoped."
+  ],
+  "contradictions": [],
+  "resolutions": [
+    "Intake creates .factory/stories/<KEY>/ (operator 2026-08-18): story_uses_scoped_layout already keys on that directory, so intake mkdir-ing it IS the activation - new story goes story-scoped/untracked-pointer/ship-in-place, legacy (dir absent) stays legacy. No new marker format.",
+    "Trust audit + full-suite gate (operator 2026-08-18): the grep enumerated the hand-joined .factory/history and grills/plan reads (plans.py, check_board_complete, findings, audit); the merge-simulation + shipped-visible required tests and the full suite fail loudly on a missed consumer - a miss is a gate failure, not a silent break.",
+    "Split into sequential stages that ship together (operator 2026-08-18): on a budget-overrun signal, re-decompose into consumer-migration then intake-activation + merge-sim gate, both in this worktree landing in the same PR (0046 atomic ship). Otherwise one delegation.",
+    "Migrate the 32 stale tests (all now required tests; test_gates.py in scope) - the tests encode the old layout, production is correct, so FIX THE TESTS not the behavior. Pattern A (mechanical, ~25): a shipped story's evidence is at .factory/stories/<KEY>/ not .factory/history/<KEY>/ (ship-in-place); singleton evidence -> story-dir; run.json legacy assertions -> derived phase / untracked-pointer reality. Pattern B (~7, e.g. test_pr_ready_legacy_story_still_archives_to_history, test_stage_migrate_*, intake_after_ship, intake_preserves_signoff): these verify LEGACY behavior but intake now always creates the marker - construct a marker-ABSENT story (remove .factory/stories/<KEY> after intake, or place legacy artifacts manually) so the legacy path is still exercised; do NOT weaken the legacy code. Make each of the 35 required tests pass; the orchestrator runs the full suite to catch stragglers.",
+    "phase.py + pr_ready.py added to write_scope; fix behavior not tests: phase.py routes those reads via evidence_path; pr_ready scoped ship handles scratchpad.md. The other 30 remain stale-test migrations.",
+    "Correct the 3 test migrations (do NOT change stages.py or grill paths): test_stage_loop_orders_execution_and_gates_pr_ready and test_task_digest_arg_is_removed_and_gates_rederive must read stages/grills from their ACTUAL locations (stages via authoritative_stages_path/git_control_dir or the loader, task grills where record_grill writes them), not a synthesized story dir. test_roadmap_dependency_and_lifecycle_guards: re-check the expected exit code against the real command behavior (auto-heal from task 5 may change output) and fix the assertion, not the code. All three: fix the TEST to match correct behavior.",
+    "LITERAL fix for test_stage_loop_orders_execution_and_gates_pr_ready in test_gates.py: stages.json is written by write_stages to .git/forge/stages.json (authoritative, untracked) AND .factory/stages.json (tracked mirror) - NEVER story-scoped. The test's three story_state(repo) / 'stages.json' references (read ~10318, write ~10335, assert-exists ~10352) must ALL become `repo / '.factory' / 'stages.json'` - the SAME path the test already writes at line 10336 (delegation_ledger(repo).parent / 'stages.json'). Replace story_state(repo) with repo / '.factory' at exactly those three lines. Do NOT touch stages.py or any other file. This is the sole remaining failure (600/601)."
+  ],
+  "open_items": [],
+  "input_sha256": "3d98443b2785ea0ec602106c29cb3a58ab64503ac9dd9e5f5740804b5edc8843",
+  "recorded_at": "2026-08-18T15:19:05+00:00",
+  "commit": "f04e911ad676b34e7826332df7bbd402b6155fad"
+}

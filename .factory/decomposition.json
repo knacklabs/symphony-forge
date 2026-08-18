@@ -281,18 +281,236 @@
     {
       "id": "migration-and-vendor",
       "title": "Legacy repos cut over at intake; clients get it via upgrade",
-      "objective": "The next intake on a legacy repo starts the story-scoped layout without touching old artifacts; forge upgrade carries the change to client repos; docs sweep; the merge-simulation gate test proves two concurrent stories produce zero overlapping .factory paths.",
+      "objective": "Activate the story-scoped layout atomically (0046): intake creates .factory/stories/<KEY>/ (the marker) so new stories run new-layout; the audited legacy-path consumers (plans.py, check_board_complete, findings, audit) resolve story-dir-first with legacy fallback so shipped new-layout stories stay visible. Old artifacts untouched and readable; forge upgrade re-vendors to clients. A merge-simulation gate proves two concurrent stories produce zero overlapping .factory paths.",
       "acceptance_criteria": [
         "intake on a legacy fixture starts the new layout with old artifacts untouched and readable",
         "the merge-simulation test merges two concurrent story branches with zero .factory conflicts"
       ],
       "dependencies": [
         "merge-survivable-hooks"
+      ],
+      "write_scope": [
+        "factory/scripts/intake.py",
+        "factory/scripts/forge_cli/plans.py",
+        "factory/scripts/check_board_complete.py",
+        "factory/scripts/forge_cli/findings.py",
+        "factory/scripts/forge_cli/audit.py",
+        "factory/scripts/forge_cli/phase.py",
+        "factory/scripts/pr_ready.py",
+        "factory/tests/test_gates.py"
+      ],
+      "verify_commands": [
+        "python3 factory/scripts/check_dual_runtime.py"
+      ],
+      "required_tests": [
+        {
+          "id": "test_intake_on_legacy_fixture_starts_new_layout_old_artifacts_readable",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest --with psutil python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_merge_simulation_two_stories_zero_factory_conflicts",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest --with psutil python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_shipped_new_layout_story_visible_to_board_and_consumers",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest --with psutil python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "FAILED test_completed_contract_check_uses_protected_stage_digest",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest --with psutil python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "FAILED test_decomposition_accepts_empty_required_tests",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest --with psutil python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "FAILED test_decomposition_accepts_frontier_detail_and_exempts_done_tasks",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest --with psutil python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "FAILED test_decomposition_provenance_overrides_agent_supplied_fields",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest --with psutil python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "FAILED test_decomposition_recorder_validates_plan_contracts",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest --with psutil python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "FAILED test_delegate_readonly_unaffected_by_task_grill",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest --with psutil python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "FAILED test_delegate_refuses_stale_task_grill",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest --with psutil python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "FAILED test_delegate_refuses_without_task_grill",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest --with psutil python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "FAILED test_functional_check_conditional_on_user_facing",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest --with psutil python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "FAILED test_functional_check_required_when_user_facing",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest --with psutil python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "FAILED test_intake_after_ship_needs_no_discard",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest --with psutil python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "FAILED test_intake_preserves_signoff_and_refuses_to_clobber_evidence",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest --with psutil python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "FAILED test_lite_quality_review_ignores_shipped_plan_contracts",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest --with psutil python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "FAILED test_next_routes_design_skills_by_feature_type",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest --with psutil python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "FAILED test_outcome_is_required_to_ship_and_survives_in_the_record",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest --with psutil python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "FAILED test_plan_grill_recorder_stamps_the_active_issue",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest --with psutil python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "FAILED test_pr_ready_blocks_on_unverified_plan_contracts",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest --with psutil python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "FAILED test_pr_ready_legacy_story_still_archives_to_history",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest --with psutil python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "FAILED test_pr_ready_rejects_unstamped_evidence",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest --with psutil python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "FAILED test_precompact_scratchpad_snapshots_facts_and_findings",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest --with psutil python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "FAILED test_project_name_survives_the_run_state_lifecycle",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest --with psutil python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "FAILED test_quality_review_requires_contract_verdicts",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest --with psutil python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "FAILED test_recorder_stdin_reads_non_ascii_utf8",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest --with psutil python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "FAILED test_roadmap_lifecycle",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest --with psutil python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "FAILED test_ship_archives_the_plan_grill_not_the_project_grills",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest --with psutil python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "FAILED test_signal_events_block_ship_until_resolved",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest --with psutil python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "FAILED test_stage_loop_orders_execution_and_gates_pr_ready",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest --with psutil python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "FAILED test_stage_migrate_records_the_base_on_adopted_stages",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest --with psutil python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "FAILED test_stage_migrate_refuses_partial_protected_authority[decomposition.json]",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest --with psutil python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "FAILED test_stage_migrate_requires_confirmation_and_adopts_legacy_state",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest --with psutil python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "FAILED test_story_timeline_is_recorded_and_archived_with_its_story",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest --with psutil python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "FAILED test_workspace_decomposition_mirror_cannot_forge_task_contract",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest --with psutil python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_roadmap_dependency_and_lifecycle_guards",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest --with psutil python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_stage_loop_orders_execution_and_gates_pr_ready",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest --with psutil python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_task_digest_arg_is_removed_and_gates_rederive",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest --with psutil python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        }
+      ],
+      "reviewer_focus": "This is the ATOMIC activation (0046): intake sets the marker AND every audited legacy-path consumer migrates in the SAME task, gated by a green full suite - no half-migrated state ships. The marker is intake creating .factory/stories/<KEY>/ (story_uses_scoped_layout keys on its existence). Migrate the audited hand-joined reads to story-dir-first + legacy fallback (task 1's discipline): plans.py:135 plan grill + plans.py:78 history stages; check_board_complete.py:31 history dir; findings.py + audit.py history reads - so a shipped new-layout story (evidence in .factory/stories/<KEY>/, no history archive) is visible. AC1: intake on a LEGACY fixture leaves old singletons/history UNTOUCHED and readable (no data migration - legacy stays legacy, new stories go new-layout). AC2 headline: the merge-simulation test intakes two stories in two worktrees, records evidence in each, and merges one branch into the other's base asserting ZERO .factory conflicts. forge upgrade re-vendors scripts wholesale so clients get the change automatically at their next intake - verify the re-vendor includes the new files; no bespoke migration of client data. If the diff overruns the budget, the split is a SIGNAL (consumer-migration vs intake-activation), but they must land in the same story before ship. S-0007: TWO real production regressions the activation exposed (fix behavior, not tests): phase.py hand-reads legacy .factory/{decomposition,tests,verify,reviews} -> route through evidence_path (story-dir-first, legacy fallback) so scoped-story phase + design-skill routing work (test_next_routes_design_skills_by_feature_type); pr_ready's scoped new-layout ship path must handle .factory/scratchpad.md like the legacy path (test_precompact_scratchpad_snapshots_facts_and_findings). phase.py and pr_ready.py added to write_scope. The other 30 failing required tests are stale-test migrations (fix the tests per the two patterns).",
+      "plan_contracts": [
+        {
+          "id": "CFS6-C1",
+          "statement": "intake on a legacy fixture starts the new layout with old artifacts untouched and readable",
+          "source": "plans/active/FORGE-CFS-1-story-state-stops-conflicting-across-prs.md#acceptance-criteria"
+        },
+        {
+          "id": "CFS6-C2",
+          "statement": "the merge-simulation test merges two concurrent story branches with zero .factory conflicts",
+          "source": "plans/active/FORGE-CFS-1-story-state-stops-conflicting-across-prs.md#acceptance-criteria"
+        }
       ]
     }
   ],
   "epic": "accountable-engineering",
   "plan_file": "plans/active/FORGE-CFS-1-story-state-stops-conflicting-across-prs.md",
   "plan_sha256": "ba7f3d643e7332cdeb8efe17a1e82d1fd32dbe9b7719190cafc81578c2fef03b",
-  "commit": "8131682ca1c31d73e59d479ea9759bf9da39238c"
+  "commit": "f04e911ad676b34e7826332df7bbd402b6155fad"
 }

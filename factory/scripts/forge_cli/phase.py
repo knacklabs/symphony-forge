@@ -7,7 +7,8 @@ import subprocess
 from pathlib import Path
 
 from factory_lib import (
-    client_signoff, load_json, repo_root, run_state_path, task_frontier_state,
+    client_signoff, evidence_path, load_json, repo_root, run_state_path,
+    task_frontier_state,
 )
 
 from .context import pending_context
@@ -230,7 +231,10 @@ def cmd_next(args: argparse.Namespace) -> None:
                      "hook-blocked otherwise (Codex planning alternative: planner-high; "
                      "exploration via /codex:rescue read-only).")
         steps.append("[dev] Record new decisions as you go: forge.py decision new <slug>")
-        plan_grill = load_json(factory / "grills" / "plan.json", default={})
+        plan_grill = load_json(
+            evidence_path(base, state.get("issue_key"), "grills/plan.json"),
+            default={},
+        )
         if plan_grill.get("verdict") != "pass" or plan_grill.get("issue") != state.get("issue_key"):
             steps.append("[dev] MANDATORY before approval: grill the plan (/grill-me, or "
                          "factory/prompts/griller.md --gate plan) and record: "
@@ -243,13 +247,14 @@ def cmd_next(args: argparse.Namespace) -> None:
                      "record_decomposition_from_json.py and "
                      "update_run.py --phase implementing --decomposition-status recorded")
     else:
-        tests = load_json(factory / "tests.json", default={})
-        verify = load_json(factory / "verify.json", default={})
-        decomp = load_json(factory / "decomposition.json", default={})
+        issue = state.get("issue_key")
+        tests = load_json(evidence_path(base, issue, "tests.json"), default={})
+        verify = load_json(evidence_path(base, issue, "verify.json"), default={})
+        decomp = load_json(evidence_path(base, issue, "decomposition.json"), default={})
         user_facing = bool(decomp.get("user_facing", True))
         reviews_missing = [
             a for a in ("quality", "performance", "security")
-            if not load_json(factory / "reviews" / f"{a}.json", default={})
+            if not load_json(evidence_path(base, issue, f"reviews/{a}.json"), default={})
         ]
         if not tests.get("automated"):
             phase("implementing")

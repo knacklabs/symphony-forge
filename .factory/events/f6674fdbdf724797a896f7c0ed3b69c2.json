@@ -1,0 +1,1 @@
+{"event": "stage-done", "generated_by": "implementer", "at": "2026-08-18T13:12:53+00:00", "story": "FORGE-CFS-1", "detail": "merge-survivable-hooks Hooks survive merges and permit scoped resolution"}

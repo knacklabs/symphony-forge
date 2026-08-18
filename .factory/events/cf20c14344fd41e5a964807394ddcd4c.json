@@ -1,0 +1,1 @@
+{"event": "signal-resolved", "generated_by": "orchestrator", "at": "2026-08-18T14:15:10+00:00", "story": "FORGE-CFS-1", "detail": "S-0007-519e: Correct and well-caught - these two are REAL production regressions, not stale tests; do NOT weaken the tests to mask them. Adding factory/scripts/forge_cli/phase.py and factory/scripts/pr_ready.py to"}

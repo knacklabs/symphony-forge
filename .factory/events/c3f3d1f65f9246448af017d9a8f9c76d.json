@@ -1,0 +1,1 @@
+{"event": "signal-scope-change", "generated_by": "implementer", "at": "2026-08-18T14:14:27+00:00", "story": "FORGE-CFS-1", "detail": "Atomic scoped-layout activation cannot make declared required tests green within the six-file scope: factory/scripts/forge_cli/phase.py still reads legacy .factory/{decomposition,tests,verify,reviews}"}

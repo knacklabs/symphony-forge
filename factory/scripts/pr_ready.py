@@ -292,6 +292,12 @@ if missing:
         print(f"- {item}")
     raise SystemExit(1)
 
+# The compaction scratchpad is session noise, never evidence — a shipped
+# task starts the next one with a clean pad in either layout.
+scratchpad_file = root / ".factory" / "scratchpad.md"
+if scratchpad_file.exists():
+    scratchpad_file.unlink()
+
 # Scoped stories already own durable evidence paths. Shipping is a state
 # transition inside that directory: no plan/evidence move and no cleanup that
 # could strand a reader on the old location. Legacy stories continue through
@@ -385,11 +391,6 @@ if story_assumptions:
     dump_json(history / "assumptions.json", story_assumptions)
 if outcome_path(root).exists():
     shutil.copy2(outcome_path(root), history / "outcome.json")
-# The compaction scratchpad is session noise, never evidence — a shipped
-# task starts the next one with a clean pad.
-scratchpad_file = root / ".factory" / "scratchpad.md"
-if scratchpad_file.exists():
-    scratchpad_file.unlink()
 # The stage baselines go with the stage state they belong to (decision 0023).
 # They are refs, so nothing else prunes them, and a stale one would still
 # resolve for a task id the next story happens to reuse.

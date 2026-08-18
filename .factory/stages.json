@@ -119,7 +119,7 @@
     {
       "id": "merge-survivable-hooks",
       "title": "Hooks survive merges and permit scoped resolution",
-      "status": "active",
+      "status": "done",
       "started_at": "2026-08-18T12:01:13+00:00",
       "base_sha": "8131682ca1c31d73e59d479ea9759bf9da39238c",
       "dirty_at_start": {
@@ -152,12 +152,46 @@
           "git": "1 .M N... 100644 100644 100644 7946114c9738de121f14d78271d216aa1a2bb721 7946114c9738de121f14d78271d216aa1a2bb721 .factory/stages.json\u0000\u0000100644 7946114c9738de121f14d78271d216aa1a2bb721 0\t.factory/stages.json\u0000\u0000H .factory/stages.json\u0000"
         }
       },
-      "task_sha256": "092d762e6ad6ad9512bc495beab5f16b743151440a0c51c149c648fc0565838f"
+      "task_sha256": "5631674ac5b8c853ba80eba7d49d0af8e9a56cb6a9c3f1573695ef65ebfcf736",
+      "completed_at": "2026-08-18T13:12:53+00:00"
     },
     {
       "id": "migration-and-vendor",
       "title": "Legacy repos cut over at intake; clients get it via upgrade",
-      "status": "pending"
+      "status": "active",
+      "started_at": "2026-08-18T13:24:21+00:00",
+      "base_sha": "f04e911ad676b34e7826332df7bbd402b6155fad",
+      "dirty_at_start": {
+        ".factory/decomposition.json": {
+          "digest": "79a2b56209e0afedf85901e358d47092f6ca92e2cb3a37c3e94b2b027fe4448f",
+          "git": "1 .M N... 100644 100644 100644 192c237caf81fbb42d4ec591c0bec2bb05e494e2 192c237caf81fbb42d4ec591c0bec2bb05e494e2 .factory/decomposition.json\u0000\u0000100644 192c237caf81fbb42d4ec591c0bec2bb05e494e2 0\t.factory/decomposition.json\u0000\u0000H .factory/decomposition.json\u0000"
+        },
+        ".factory/events/6811113401764368a2be27cb50020b10.json": {
+          "digest": "5f1bea49232e1097c3d999b9c7708ded1c220e5b4aeae9b865db6a5a2e2cce72",
+          "git": "? .factory/events/6811113401764368a2be27cb50020b10.json\u0000\u0000\u0000"
+        },
+        ".factory/events/9b6f8e5b442241f8b0b55d813a12277b.json": {
+          "digest": "803de2c309cb294fe028040ea7cbcaf0995efa0c1189c0fe289888e9f6b1d2d3",
+          "git": "? .factory/events/9b6f8e5b442241f8b0b55d813a12277b.json\u0000\u0000\u0000"
+        },
+        ".factory/events/f6674fdbdf724797a896f7c0ed3b69c2.json": {
+          "digest": "51d75d448b8bafb03e51f2cfe249c32595e6eecb7a01adad3fd2a1963ba4da6d",
+          "git": "? .factory/events/f6674fdbdf724797a896f7c0ed3b69c2.json\u0000\u0000\u0000"
+        },
+        ".factory/grills/tasks/migration-and-vendor.json": {
+          "digest": "2e3951b0971ff6831f66c2149f19f6e5aa443ae67155a3d5ad0fe63dedfa4ec1",
+          "git": "? .factory/grills/tasks/migration-and-vendor.json\u0000\u0000\u0000"
+        },
+        ".factory/run.json": {
+          "digest": "805f5dbf85b3bbd11e3cc1c6bfedf7c9a8d019d369ecf2a45715dbb722b78c64",
+          "git": "1 .M N... 100644 100644 100644 e64cad403b70c4f5c1d1a8f45612476371eebc97 e64cad403b70c4f5c1d1a8f45612476371eebc97 .factory/run.json\u0000\u0000100644 e64cad403b70c4f5c1d1a8f45612476371eebc97 0\t.factory/run.json\u0000\u0000H .factory/run.json\u0000"
+        },
+        ".factory/stages.json": {
+          "digest": "c9ec10d3c83ec7f5fd7e58ac0fbfdc88bf5c23655a363cbc2fe47161a62738c1",
+          "git": "1 .M N... 100644 100644 100644 bae24e4b876ca7499f1ac722552fd5a5e178d5f0 bae24e4b876ca7499f1ac722552fd5a5e178d5f0 .factory/stages.json\u0000\u0000100644 bae24e4b876ca7499f1ac722552fd5a5e178d5f0 0\t.factory/stages.json\u0000\u0000H .factory/stages.json\u0000"
+        }
+      },
+      "task_sha256": "7dedffd155decec69fd855f2e176a6b602408ea1bcc4b1d0784b747bcd97e899"
     }
   ]
 }
