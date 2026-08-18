@@ -526,6 +526,9 @@ def test_new_story_artifacts_record_under_story_dir(repo, tmp_path):
     assert code == 0, out
     record_skeleton_then_frontier(repo, DECOMP["tasks"])
 
+    legacy_tests = repo / ".factory" / "tests.json"
+    legacy_tests.write_text(json.dumps({"functional": {"summary": "legacy proof"}}))
+
     testing = {
         "generated_by": "implementer",
         "status": "passed",
@@ -539,6 +542,11 @@ def test_new_story_artifacts_record_under_story_dir(repo, tmp_path):
         stdin=json.dumps(testing),
     )
     assert code == 0, out
+    recorded_tests = json.loads((scoped / "tests.json").read_text())
+    assert recorded_tests["functional"]["summary"] == "legacy proof"
+    assert json.loads(legacy_tests.read_text()) == {
+        "functional": {"summary": "legacy proof"},
+    }
 
     review = {
         "generated_by": "autoreview",
@@ -572,11 +580,14 @@ def test_new_story_artifacts_record_under_story_dir(repo, tmp_path):
     )
     for name in expected:
         assert (scoped / name).is_file(), name
-        assert not (repo / ".factory" / name).exists(), name
+        if name != "tests.json":
+            assert not (repo / ".factory" / name).exists(), name
 
 
 def test_legacy_layout_stays_readable_by_every_consumer(repo):
     lib = load_factory_lib(repo)
+    with pytest.raises(ValueError, match="one path component"):
+        lib.story_dir(repo, "LEG\\1")
     factory = repo / ".factory"
     factory.mkdir(exist_ok=True)
     (factory / "run.json").write_text(json.dumps({"issue_key": "LEG-1"}))

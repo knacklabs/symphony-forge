@@ -79,7 +79,7 @@
     "briefs story-scoping parked to D-0029 (non-blocking)"
   ],
   "decision": "keep",
-  "input_sha256": "a2ffa9e304ab76835140e414afa88b2f3d87f30c92ae93671f7908f7f6f02187",
-  "recorded_at": "2026-08-18T08:07:09+00:00",
-  "commit": "64a6187e0aaead594010ccd62fcf6911f67a3313"
+  "input_sha256": "91791d9ae31d1bcd6a71f52b0f99117ffcac24344ea4aa08f8624c38e7e71cc0",
+  "recorded_at": "2026-08-18T08:51:57+00:00",
+  "commit": "50d8324218be4075bd52dbe4309acf6b3fb137d8"
 }

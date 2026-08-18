@@ -45,8 +45,8 @@ def factory_dir(root: Path | None = None) -> Path:
 
 def story_dir(root: Path, key: str) -> Path:
     """Return the canonical evidence directory for one story."""
-    if not isinstance(key, str) or not key or Path(key).name != key \
-            or key in (".", ".."):
+    if not isinstance(key, str) or not key or key in (".", "..") \
+            or "/" in key or "\\" in key:
         raise ValueError("story key must be one path component")
     return factory_dir(root) / "stories" / key
 

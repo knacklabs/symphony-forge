@@ -1366,3 +1366,4 @@
 {"event": "delegated", "generated_by": "orchestrator", "at": "2026-08-15T14:41:05+00:00", "story": "FORGE-CFS-1", "detail": "story-scoped-evidence (write)"}
 {"event": "signal-resolved", "generated_by": "orchestrator", "at": "2026-08-15T14:42:22+00:00", "story": "FORGE-CFS-1", "detail": "S-0004-3b0a: Contract defect on my side, not a fourth deferral: the required test test_new_story_artifacts_record_under_story_dir was specified to exercise EVERY consumer, which pulls in plans.py's plan-grill rere"}
 {"event": "decomposed", "generated_by": "docs-decomposer", "at": "2026-08-15T14:43:03+00:00", "story": "FORGE-CFS-1", "detail": "6 task(s)"}
+{"event": "delegated", "generated_by": "orchestrator", "at": "2026-08-18T08:56:49+00:00", "story": "FORGE-CFS-1", "detail": "story-scoped-evidence (write)"}
