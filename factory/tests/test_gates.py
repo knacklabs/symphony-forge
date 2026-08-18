@@ -493,7 +493,8 @@ def write_passing_artifacts(repo: Path, commit: str | None = None) -> None:
 
 
 def run_state(repo: Path) -> dict:
-    return json.loads((repo / ".factory" / "run.json").read_text())
+    lib = load_factory_lib(repo)
+    return lib.load_json(lib.run_state_path(repo))
 
 
 def signed_off(repo: Path) -> bool:
@@ -520,7 +521,8 @@ def test_new_story_artifacts_record_under_story_dir(repo, tmp_path):
         "plan_status": "approved",
         "story": "ENG-1",
     })
-    (repo / ".factory" / "run.json").write_text(json.dumps(state))
+    lib = load_factory_lib(repo)
+    lib.dump_json(lib.run_state_path(repo), state)
 
     code, out = record_grill(repo, "plan", digest_of=plan)
     assert code == 0, out
@@ -582,6 +584,78 @@ def test_new_story_artifacts_record_under_story_dir(repo, tmp_path):
         assert (scoped / name).is_file(), name
         if name != "tests.json":
             assert not (repo / ".factory" / name).exists(), name
+
+
+def test_intake_writes_untracked_pointer_zero_tracked_run_json(repo, tmp_path):
+    sign_off(repo)
+    ensure_story(repo, "ENG-1", "Invoices")
+    ensure_story(repo, "ENG-2", "Payments")
+    git(repo, "add", "-A")
+    if git(repo, "diff", "--cached", "--name-only"):
+        git(repo, "commit", "-q", "-m", "prepare parallel stories")
+
+    worktrees = (
+        (tmp_path / "invoices", "story-invoices", "ENG-1", "Invoices"),
+        (tmp_path / "payments", "story-payments", "ENG-2", "Payments"),
+    )
+    tracked_before = (repo / ".factory" / "run.json").read_bytes()
+    pointers = []
+    for worktree, branch, key, title in worktrees:
+        git(repo, "worktree", "add", "-q", "-b", branch, str(worktree))
+        (worktree / ".factory" / "stories" / key).mkdir(parents=True)
+        code, out = intake(worktree, key, title)
+        assert code == 0, out
+
+        pointer = (
+            Path(git(worktree, "rev-parse", "--absolute-git-dir"))
+            / "forge" / "run.json"
+        )
+        pointers.append(pointer)
+        assert json.loads(pointer.read_text())["issue_key"] == key
+        assert (worktree / ".factory" / "run.json").read_bytes() == tracked_before
+        assert git(worktree, "diff", "--", ".factory/run.json") == ""
+
+    assert pointers[0] != pointers[1]
+
+
+def test_phase_derivation_matches_legacy_run_json_semantics(repo):
+    lib = load_factory_lib(repo)
+    legacy = repo / ".factory" / "run.json"
+    legacy_phases = (
+        "discovery", "planning", "decomposing", "awaiting-approval",
+        "implementing", "testing", "reviewing", "functional-check",
+        "pr-ready", "shipped", "done", "degraded",
+    )
+    for phase in legacy_phases:
+        legacy.write_text(json.dumps({"issue_key": "LEG-1", "phase": phase}))
+        assert lib.load_json(lib.run_state_path(repo))["phase"] == phase
+    assert lib.run_state_path(repo, "LEG-2", for_write=True) == legacy
+
+    key = "SCOPED-1"
+    scoped = lib.story_dir(repo, key)
+    scoped.mkdir(parents=True)
+    state = {"issue_key": key, "phase": "awaiting-approval"}
+    pointer = lib.run_state_path(repo, key, for_write=True)
+    lib.dump_json(pointer, state)
+    assert lib.load_json(lib.run_state_path(repo))["phase"] == "awaiting-approval"
+    assert lib.run_state_path(repo, "LEG-2", for_write=True) == legacy
+
+    (scoped / "decomposition.json").write_text("{}\n")
+    assert lib.load_json(lib.run_state_path(repo))["phase"] == "implementing"
+    (scoped / "tests.json").write_text("{}\n")
+    assert lib.load_json(lib.run_state_path(repo))["phase"] == "testing"
+    (scoped / "verify.json").write_text("{}\n")
+    assert lib.load_json(lib.run_state_path(repo))["phase"] == "reviewing"
+    reviews = scoped / "reviews"
+    reviews.mkdir()
+    for aspect in ("quality", "performance", "security"):
+        (reviews / f"{aspect}.json").write_text("{}\n")
+    assert lib.load_json(lib.run_state_path(repo))["phase"] == "functional-check"
+    (scoped / "outcome.json").write_text("{}\n")
+    assert lib.load_json(lib.run_state_path(repo))["phase"] == "functional-check"
+
+    lib.dump_json(pointer, {"phase": "shipped"})
+    assert lib.load_json(lib.run_state_path(repo))["phase"] == "shipped"
 
 
 def test_legacy_layout_stays_readable_by_every_consumer(repo):

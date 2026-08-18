@@ -1367,3 +1367,15 @@
 {"event": "signal-resolved", "generated_by": "orchestrator", "at": "2026-08-15T14:42:22+00:00", "story": "FORGE-CFS-1", "detail": "S-0004-3b0a: Contract defect on my side, not a fourth deferral: the required test test_new_story_artifacts_record_under_story_dir was specified to exercise EVERY consumer, which pulls in plans.py's plan-grill rere"}
 {"event": "decomposed", "generated_by": "docs-decomposer", "at": "2026-08-15T14:43:03+00:00", "story": "FORGE-CFS-1", "detail": "6 task(s)"}
 {"event": "delegated", "generated_by": "orchestrator", "at": "2026-08-18T08:56:49+00:00", "story": "FORGE-CFS-1", "detail": "story-scoped-evidence (write)"}
+{"event": "stage-contract-changed", "generated_by": "implementer", "at": "2026-08-18T08:57:59+00:00", "story": "FORGE-CFS-1", "detail": "story-scoped-evidence: task contract re-recorded mid-stage"}
+{"event": "stage-done", "generated_by": "implementer", "at": "2026-08-18T08:57:59+00:00", "story": "FORGE-CFS-1", "detail": "story-scoped-evidence Evidence records under the story directory"}
+{"event": "decomposed", "generated_by": "docs-decomposer", "at": "2026-08-18T09:37:31+00:00", "story": "FORGE-CFS-1", "detail": "6 task(s)"}
+{"event": "stage-start", "generated_by": "implementer", "at": "2026-08-18T09:41:16+00:00", "story": "FORGE-CFS-1", "detail": "run-pointer-untracked The active-story pointer leaves version control"}
+{"event": "delegated", "generated_by": "orchestrator", "at": "2026-08-18T09:49:39+00:00", "story": "FORGE-CFS-1", "detail": "run-pointer-untracked (write)"}
+{"event": "signal-scope-change", "generated_by": "implementer", "at": "2026-08-18T10:22:15+00:00", "story": "FORGE-CFS-1", "detail": "New-layout intake makes plan grills story-scoped, but factory/scripts/forge_cli/plans.py still directly reads .factory/grills/plan.json after require_grill; plan save fails and the required fix is out"}
+{"event": "delegated", "generated_by": "orchestrator", "at": "2026-08-18T10:22:38+00:00", "story": "FORGE-CFS-1", "detail": "run-pointer-untracked (write)"}
+{"event": "signal-resolved", "generated_by": "orchestrator", "at": "2026-08-18T10:23:16+00:00", "story": "FORGE-CFS-1", "detail": "S-0005-9b8e: Same deferral as S-0001/S-0003/S-0004 (operator rounds 2026-08-15/18): plans.py's manual reread of the plan grill (.factory/grills/plan.json after require_grill) is DEFERRED to migration-and-vendor, w"}
+{"event": "delegated", "generated_by": "orchestrator", "at": "2026-08-18T10:32:01+00:00", "story": "FORGE-CFS-1", "detail": "run-pointer-untracked (write)"}
+{"event": "delegated", "generated_by": "orchestrator", "at": "2026-08-18T10:36:58+00:00", "story": "FORGE-CFS-1", "detail": "run-pointer-untracked (write)"}
+{"event": "decomposed", "generated_by": "docs-decomposer", "at": "2026-08-18T10:39:58+00:00", "story": "FORGE-CFS-1", "detail": "6 task(s)"}
+{"event": "delegated", "generated_by": "orchestrator", "at": "2026-08-18T10:42:40+00:00", "story": "FORGE-CFS-1", "detail": "run-pointer-untracked (write)"}

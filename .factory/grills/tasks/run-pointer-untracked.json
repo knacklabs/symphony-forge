@@ -1,0 +1,86 @@
+{
+  "generated_by": "griller",
+  "gate": "task",
+  "task_id": "run-pointer-untracked",
+  "verdict": "pass",
+  "decision": "keep",
+  "questions_asked": 5,
+  "summary": "JIT grill of run-pointer-untracked against the spec, decision 0045, and the completed story-scoped-evidence work. Three seams (phase-derivation policy, AC1 test shape, write_scope breadth) interrogated and resolved; contract kept, resolutions are implementation guidance; a 4th finding (board-consumer regression from eager git_control_dir) added at measurement, fix re-delegated.",
+  "inspected_refs": [
+    "factory/scripts/factory_lib.py",
+    "factory/scripts/intake.py",
+    "factory/scripts/update_run.py",
+    "factory/scripts/forge_cli/phase.py",
+    "factory/tests/test_gates.py",
+    "docs/specs/conflict-free-story-state.md",
+    "docs/decisions/0045-conflict-free-story-state.md"
+  ],
+  "current_flow": "run_state_path() returns tracked .factory/run.json holding issue_key/story/phase; ~20 consumers read it and a few writers (intake, update_run, recorders) set fields. The tracked pointer is merge-contested - conflict markers in it crash the hooks. Task 2 redirects run_state_path to a worktree-local untracked pointer under the git control dir for new-layout stories, derives phase from story-dir artifacts, and keeps legacy .factory/run.json readable.",
+  "criteria_map": {
+    "two worktrees intake different stories with zero tracked run.json writes": "test_intake_writes_untracked_pointer_zero_tracked_run_json asserts intake writes the pointer under git-absolute-dir (worktree-local) and leaves .factory/run.json with zero tracked change - two concurrent worktrees never write the same tracked path",
+    "phase derivation matches the old run.json semantics for legacy repos": "test_phase_derivation_matches_legacy_run_json_semantics asserts derive_phase() reproduces the stored-phase value across the lifecycle for a legacy run.json fixture"
+  },
+  "new_abstractions": [
+    "run_state_path() gains an untracked worktree-local resolution (git rev-parse --absolute-git-dir / forge/run.json) plus a read-time derive_phase() over story-dir artifacts. Reversible: legacy tracked run.json stays readable; derivation prefers artifacts, falls back to the stored transient field."
+  ],
+  "rounds": [
+    {
+      "question": "The objective says phase derives from story-dir artifact presence rather than a stored field. But some lifecycle states no artifact implies - awaiting-approval, degraded-mode, shipped-before-archive. If phase is PURELY derived, those become unrepresentable. How should phase resolve?",
+      "options": [
+        "Hybrid: derive where artifacts imply, else stored",
+        "Pure-derive from artifacts only",
+        "Keep phase stored, just untrack the pointer"
+      ],
+      "chosen": "Hybrid: derive where artifacts imply, else stored"
+    },
+    {
+      "question": "AC1 is 'two worktrees intake different stories with zero tracked run.json writes.' Literally spinning two git worktrees in a unit test is brittle. How should the required test prove the no-conflict property?",
+      "options": [
+        "Assert intake writes git-control-dir path + zero tracked delta",
+        "Actually create two worktrees in the test"
+      ],
+      "chosen": "Assert intake writes git-control-dir path + zero tracked delta"
+    },
+    {
+      "question": "Task 2's write_scope is just factory_lib + intake + update_run + tests - relying on single-source run_state_path so the ~20 read consumers follow unchanged. Is that narrow scope right, or do recorders that write phase fields need explicit changes?",
+      "options": [
+        "Narrow scope is right - single-source suffices",
+        "Recorders need explicit phase-write changes too"
+      ],
+      "chosen": "Narrow scope is right - single-source suffices"
+    }
+  ],
+  "citations": [
+    {
+      "finding": "Worktree-local untracked pointer and phase-derives-from-artifacts are fixed by the confirmed spec and decision 0045",
+      "source": "docs/specs/conflict-free-story-state.md and docs/decisions/0045-conflict-free-story-state.md"
+    },
+    {
+      "finding": "run_state_path calls git_control_dir eagerly and SystemExits on non-toplevel/non-git fixtures (test_board_shows_task_grill_status and test_board_shows_done_story_pr_link regressed); a read must fall back to legacy .factory/run.json on git-resolution failure, never crash a consumer.",
+      "source": "full gate suite: test_board_shows_task_grill_status + test_board_shows_done_story_pr_link (2 failed, 589 passed)"
+    },
+    {
+      "finding": "Intake must not ACTIVATE the scoped-layout marker: setting it makes plan grills story-scoped and breaks 5 existing workflow tests via plans.py's legacy plan-grill read (S-0005). AC1 ('zero tracked run.json writes') can only be production-true once migration-and-vendor flips the marker AND fixes plans.py atomically.",
+      "source": "signal S-0005-9b8e + Codex incomplete return (5 adjacent workflow tests fail via plans.py)"
+    }
+  ],
+  "gaps": [
+    "The objective says phase derives from story-dir artifact presence rather than a stored field. But some lifecycle states no artifact implies - awaiting-approval, degraded-mode, shipped-before-archive. If phase is PURELY derived, those become unrepresentable. How should phase resolve?",
+    "AC1 is 'two worktrees intake different stories with zero tracked run.json writes.' Literally spinning two git worktrees in a unit test is brittle. How should the required test prove the no-conflict property?",
+    "Task 2's write_scope is just factory_lib + intake + update_run + tests - relying on single-source run_state_path so the ~20 read consumers follow unchanged. Is that narrow scope right, or do recorders that write phase fields need explicit changes?",
+    "run_state_path calls git_control_dir eagerly and SystemExits on non-toplevel/non-git fixtures (test_board_shows_task_grill_status and test_board_shows_done_story_pr_link regressed); a read must fall back to legacy .factory/run.json on git-resolution failure, never crash a consumer.",
+    "Intake must not ACTIVATE the scoped-layout marker: setting it makes plan grills story-scoped and breaks 5 existing workflow tests via plans.py's legacy plan-grill read (S-0005). AC1 ('zero tracked run.json writes') can only be production-true once migration-and-vendor flips the marker AND fixes plans.py atomically."
+  ],
+  "contradictions": [],
+  "resolutions": [
+    "Hybrid (operator via AskUserQuestion 2026-08-18): phase derives from artifact presence where an artifact unambiguously implies it (decomposition->implementing; verify+tests+reviews+outcome->shipped); transient states with no artifact (awaiting-approval, degraded) read from the untracked worktree-local pointer. Derivation is read-time and prefers artifacts so it self-corrects after a merge.",
+    "Required test asserts intake writes the pointer under git-absolute-dir (worktree-local) and leaves .factory/run.json with zero tracked delta (clean git status for that path) - proves the no-conflict property without brittle dual-worktree setup (operator 2026-08-18).",
+    "Narrow scope confirmed (operator 2026-08-18): single-source run_state_path routes every writer to the untracked pointer and derivation is read-time, so no recorder edits; write_scope stays factory_lib + intake + update_run + tests.",
+    "SOLE REMAINING BLOCKER (marker-neutrality and all other findings are DONE, plan/intake workflow tests green). run_state_path still calls `protected = git_control_dir(base) / 'run.json'` EAGERLY at the top, so test_board_shows_task_grill_status and test_board_shows_done_story_pr_link SystemExit in their non-git-toplevel fixtures. FIX: wrap that git_control_dir(base) call in try/except SystemExit and, on failure, return the legacy `factory_dir(base)/'run.json'` immediately (compute legacy first). New-layout writes always run in a real repo so they are unaffected. After the fix, run those two board tests and confirm green. This is the only change needed to complete the task.",
+    "Intake stays MARKER-NEUTRAL in run-pointer-untracked: it routes writes through run_state_path(for_write, key) so a story ALREADY marked new-layout writes the untracked pointer, but intake itself does NOT create the story dir / set story_uses_scoped_layout - that activation, with plans.py's catch-up, is migration-and-vendor's atomic job. Existing workflow tests MUST stay green (marker off in them, intake writes tracked run.json as today). Prove AC1 by SYNTHESIZING the marker in the required test (story dir present -> intake/run_state_path write untracked, zero tracked .factory/run.json delta), never by flipping intake's real marker. Deliver the mechanism (run_state_path untracked resolution + graceful git_control_dir->legacy fallback + hybrid derive_phase); defer activation."
+  ],
+  "open_items": [],
+  "input_sha256": "b3f7f8de6783355f7b63dd9607bf97cf2507388eeaa2da7fada25d9850fb9e0a",
+  "recorded_at": "2026-08-18T10:40:09+00:00",
+  "commit": "ee08f485d071442834d6794a2ffd9e082163ca3e"
+}

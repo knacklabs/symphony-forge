@@ -4,16 +4,42 @@
     {
       "id": "story-scoped-evidence",
       "title": "Evidence records under the story directory",
-      "status": "active",
+      "status": "done",
       "started_at": "2026-08-15T14:22:50+00:00",
       "base_sha": "9d466cd7947ccbe8ce1db1a76c8f7ce5ece0fa58",
       "dirty_at_start": {},
-      "task_sha256": "293be0b33b6b842d07eb08a19bd90cd42a9507969d92b93b72de7ca83b6e44b2"
+      "task_sha256": "ac0e16b9f054ed5ed44c378dd8753f2c5d702e8c8cebc6f476c81876ee440c78",
+      "completed_at": "2026-08-18T08:57:59+00:00"
     },
     {
       "id": "run-pointer-untracked",
       "title": "The active-story pointer leaves version control",
-      "status": "pending"
+      "status": "active",
+      "started_at": "2026-08-18T09:41:16+00:00",
+      "base_sha": "ee08f485d071442834d6794a2ffd9e082163ca3e",
+      "dirty_at_start": {
+        ".factory/decomposition.json": {
+          "digest": "46e67e8a74229581793412bb678cae247ff7478264775d6270ca3a92153b850f",
+          "git": "1 .M N... 100644 100644 100644 a6c58ee3b74aeeeab3ca94747d5959a39a0645ab a6c58ee3b74aeeeab3ca94747d5959a39a0645ab .factory/decomposition.json\u0000\u0000100644 a6c58ee3b74aeeeab3ca94747d5959a39a0645ab 0\t.factory/decomposition.json\u0000\u0000H .factory/decomposition.json\u0000"
+        },
+        ".factory/events.jsonl": {
+          "digest": "d682a642f6a45b3c1b404882e72998ec7eef9ebf3269c6a6793fae9458db2d42",
+          "git": "1 .M N... 100644 100644 100644 699972e4335e36dafd3f7d7e4fb6924f7c7a24ca 699972e4335e36dafd3f7d7e4fb6924f7c7a24ca .factory/events.jsonl\u0000\u0000100644 699972e4335e36dafd3f7d7e4fb6924f7c7a24ca 0\t.factory/events.jsonl\u0000\u0000H .factory/events.jsonl\u0000"
+        },
+        ".factory/grills/tasks/run-pointer-untracked.json": {
+          "digest": "c4177b3497eab0b0e4bcb011d5a29739752181b066f3ad4d731ed44095d187b9",
+          "git": "? .factory/grills/tasks/run-pointer-untracked.json\u0000\u0000\u0000"
+        },
+        ".factory/run.json": {
+          "digest": "ee083cc284e5cda73d53f10b68bc23f3d8914e5018040f8d8cf27f43775f860a",
+          "git": "1 .M N... 100644 100644 100644 d21412c6522af9459cb469589b79bbd77c89033c d21412c6522af9459cb469589b79bbd77c89033c .factory/run.json\u0000\u0000100644 d21412c6522af9459cb469589b79bbd77c89033c 0\t.factory/run.json\u0000\u0000H .factory/run.json\u0000"
+        },
+        ".factory/stages.json": {
+          "digest": "3d094b8bc2f19547991d4f83e517286eb77ba2aa5735c17fc0758259f90c1e8f",
+          "git": "1 .M N... 100644 100644 100644 9446c11362dda5d8be1a487e470466de9fb9d623 9446c11362dda5d8be1a487e470466de9fb9d623 .factory/stages.json\u0000\u0000100644 9446c11362dda5d8be1a487e470466de9fb9d623 0\t.factory/stages.json\u0000\u0000H .factory/stages.json\u0000"
+        }
+      },
+      "task_sha256": "4e3d0305f081eb572af48ca98b7917e598c454506489095946fa344a4ffea9df"
     },
     {
       "id": "per-event-files",

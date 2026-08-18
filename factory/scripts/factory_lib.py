@@ -51,6 +51,11 @@ def story_dir(root: Path, key: str) -> Path:
     return factory_dir(root) / "stories" / key
 
 
+def story_uses_scoped_layout(root: Path, key: str) -> bool:
+    """Return whether a story is marked for scoped state."""
+    return story_dir(root, key).is_dir()
+
+
 def evidence_path(
     root: Path,
     key: str | None,
@@ -77,7 +82,7 @@ def evidence_path(
     state = load_json(run_state_path(root), default={})
     active = (state.get("issue_key") or state.get("story")) == key
     if for_write:
-        return scoped if scoped_dir.is_dir() or not active else live
+        return scoped if story_uses_scoped_layout(root, key) or not active else live
     if scoped.exists():
         return scoped
     if active and live.exists():
@@ -95,8 +100,68 @@ def _active_story_key(root: Path) -> str:
     return key if isinstance(key, str) else ""
 
 
-def run_state_path(root: Path | None = None) -> Path:
-    return factory_dir(root) / "run.json"
+_RUN_STATE_ROOTS: dict[Path, Path] = {}
+
+
+def run_state_path(
+    root: Path | None = None,
+    key: str | None = None,
+    *,
+    for_write: bool = False,
+) -> Path:
+    """Resolve the worktree-local run pointer, with legacy fallback.
+
+    The protected pointer is authoritative for reads. Intake supplies the
+    story key for writes, so only a story with the scoped-layout marker writes
+    there; a legacy story continues using tracked run.json.
+    """
+    base = root or repo_root()
+    legacy = factory_dir(base) / "run.json"
+    try:
+        protected = git_control_dir(base) / "run.json"
+    except SystemExit:
+        if legacy.is_file() and not for_write:
+            return legacy
+        raise
+    if for_write and key:
+        path = protected if story_uses_scoped_layout(base, key) else legacy
+        if path == protected:
+            _RUN_STATE_ROOTS[protected] = base
+        return path
+    if protected.is_file():
+        _RUN_STATE_ROOTS[protected] = base
+        return protected
+    return legacy
+
+
+def derive_phase(root: Path, state: dict[str, Any]) -> str:
+    """Derive durable lifecycle progress while retaining transient phases."""
+    stored = state.get("phase", "")
+    key = state.get("issue_key") or state.get("story")
+    if not isinstance(key, str) or not key or not story_uses_scoped_layout(root, key):
+        return stored if isinstance(stored, str) else ""
+
+    scoped = story_dir(root, key)
+    implied = ""
+    if (scoped / "decomposition.json").is_file():
+        implied = "implementing"
+    if (scoped / "tests.json").is_file() or (scoped / "verify.json").is_file():
+        implied = "testing"
+    if (scoped / "tests.json").is_file() and (scoped / "verify.json").is_file():
+        implied = "reviewing"
+    reviews = scoped / "reviews"
+    if all((reviews / f"{aspect}.json").is_file()
+           for aspect in ("quality", "performance", "security")):
+        implied = "functional-check"
+
+    order = (
+        "discovery", "planning", "decomposing", "awaiting-approval",
+        "implementing", "testing", "reviewing", "functional-check",
+        "pr-ready", "shipped", "done",
+    )
+    if stored not in order or implied not in order:
+        return stored if isinstance(stored, str) else implied
+    return order[max(order.index(stored), order.index(implied))]
 
 
 def decomposition_state_path(
@@ -567,7 +632,11 @@ def now_iso() -> str:
 def load_json(path: Path, default: Any = None) -> Any:
     if not path.exists():
         return default
-    return json.loads(path.read_text(encoding="utf-8"))
+    data = json.loads(path.read_text(encoding="utf-8"))
+    run_root = _RUN_STATE_ROOTS.get(path)
+    if run_root is not None and isinstance(data, dict):
+        data = {**data, "phase": derive_phase(run_root, data)}
+    return data
 
 
 def dump_json(path: Path, data: Any) -> None:

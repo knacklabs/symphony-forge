@@ -68,13 +68,57 @@
     {
       "id": "run-pointer-untracked",
       "title": "The active-story pointer leaves version control",
-      "objective": "Intake writes the pointer to .git/forge/run.json beside the protected authority; phase derives from story artifacts; tracked run.json is no longer written for new stories and stays readable for legacy ones.",
+      "objective": "Move the active-story pointer out of version control: run_state_path() resolves to a worktree-local untracked pointer under the git control dir, with tracked .factory/run.json still readable for legacy repos. New-layout stories write only the untracked pointer; phase derives from story-dir artifact presence. Single-source in factory_lib so the ~20 read consumers follow unchanged.",
       "acceptance_criteria": [
         "two worktrees intake different stories with zero tracked run.json writes",
         "phase derivation matches the old run.json semantics for legacy repos"
       ],
       "dependencies": [
         "story-scoped-evidence"
+      ],
+      "write_scope": [
+        "factory/scripts/factory_lib.py",
+        "factory/scripts/intake.py",
+        "factory/scripts/update_run.py",
+        "factory/tests/test_gates.py"
+      ],
+      "verify_commands": [
+        "python3 factory/scripts/check_dual_runtime.py"
+      ],
+      "required_tests": [
+        {
+          "id": "test_intake_writes_untracked_pointer_zero_tracked_run_json",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest --with psutil python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_phase_derivation_matches_legacy_run_json_semantics",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest --with psutil python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_board_shows_task_grill_status",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest --with psutil python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_board_shows_done_story_pr_link",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest --with psutil python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        }
+      ],
+      "reviewer_focus": "Single-source run_state_path is the whole game (same discipline as story_dir in task 1): the ~20 read consumers follow the helper and must NOT be edited individually. The untracked pointer MUST resolve via the git control dir (git rev-parse --absolute-git-dir), never a literal root/.git join - in a linked worktree .git is a FILE, so a naive join writes the pointer to the wrong place and merges can still see it. Read resolves untracked-first then legacy .factory/run.json; write goes untracked only for new-layout (marker present), legacy stays tracked. Phase derives from story-dir artifact presence, matching the old stored-phase semantics for legacy. SCOPE BOUNDARY: does not touch read consumers, pr_ready archival (ship-in-place), event files (per-event-files), or intake-marker migration for existing repos (migration-and-vendor); required tests must not exercise those.",
+      "plan_contracts": [
+        {
+          "id": "CFS2-C1",
+          "statement": "two worktrees intake different stories with zero tracked run.json writes",
+          "source": "plans/active/FORGE-CFS-1-story-state-stops-conflicting-across-prs.md#acceptance-criteria"
+        },
+        {
+          "id": "CFS2-C2",
+          "statement": "phase derivation matches the old run.json semantics for legacy repos",
+          "source": "plans/active/FORGE-CFS-1-story-state-stops-conflicting-across-prs.md#acceptance-criteria"
+        }
       ]
     },
     {
@@ -129,5 +173,5 @@
   "epic": "accountable-engineering",
   "plan_file": "plans/active/FORGE-CFS-1-story-state-stops-conflicting-across-prs.md",
   "plan_sha256": "ba7f3d643e7332cdeb8efe17a1e82d1fd32dbe9b7719190cafc81578c2fef03b",
-  "commit": "9d466cd7947ccbe8ce1db1a76c8f7ce5ece0fa58"
+  "commit": "ee08f485d071442834d6794a2ffd9e082163ca3e"
 }

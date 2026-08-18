@@ -1,0 +1,9 @@
+{
+  "event": "done",
+  "id": "Q-0078-3eef",
+  "profile": "quickfix",
+  "reason": "run_state_path graceful fallback: guard git_control_dir so board/story_detail on non-git dirs falls back to legacy run.json instead of SystemExit; 4 delegations could not land it (worker never runs test_board_shows_task_grill_status). 3-line safety guard, session's crash-vs-degrade lesson.",
+  "started_at": "2026-08-18T10:39:11+00:00",
+  "completed_at": "2026-08-18T10:39:57+00:00",
+  "files": []
+}

@@ -105,7 +105,7 @@ def main(argv: list[str] | None = None) -> None:
             for plan in active_plans:
                 plan.rename(debt / plan.name)
                 print(f"Abandoned plan moved to plans/debt/{plan.name}")
-    dump_json(run_state_path(root), state)
+    dump_json(run_state_path(root, issue_key, for_write=True), state)
     append_event(root, "intake", actor="orchestrator", story=issue_key, detail=args.title)
     if outcome == "done":
         print(f"Initialized factory state for {issue_key} -> {branch}; "
