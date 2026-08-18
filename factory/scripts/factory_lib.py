@@ -51,7 +51,13 @@ def story_dir(root: Path, key: str) -> Path:
     return factory_dir(root) / "stories" / key
 
 
-def evidence_path(root: Path, key: str, name: str) -> Path:
+def evidence_path(
+    root: Path,
+    key: str | None,
+    name: str,
+    *,
+    for_write: bool = False,
+) -> Path:
     """Resolve story evidence, retaining legacy live and history reads.
 
     Intake creates the story directory for the new layout. Its presence is
@@ -62,14 +68,19 @@ def evidence_path(root: Path, key: str, name: str) -> Path:
     if relative.is_absolute() or not relative.parts or any(
             part in ("", ".", "..") for part in relative.parts):
         raise ValueError("evidence name must be a contained relative path")
+    live = factory_dir(root) / relative
+    if not key:
+        return live
+
     scoped_dir = story_dir(root, key)
     scoped = scoped_dir / relative
-    if scoped_dir.is_dir():
-        return scoped
-
-    live = factory_dir(root) / relative
     state = load_json(run_state_path(root), default={})
-    if (state.get("issue_key") or state.get("story")) == key:
+    active = (state.get("issue_key") or state.get("story")) == key
+    if for_write:
+        return scoped if scoped_dir.is_dir() or not active else live
+    if scoped.exists():
+        return scoped
+    if active and live.exists():
         return live
 
     archived = factory_dir(root) / "history" / key / relative
@@ -88,11 +99,15 @@ def run_state_path(root: Path | None = None) -> Path:
     return factory_dir(root) / "run.json"
 
 
-def decomposition_state_path(root: Path | None = None, key: str | None = None) -> Path:
+def decomposition_state_path(
+    root: Path | None = None,
+    key: str | None = None,
+    *,
+    for_write: bool = False,
+) -> Path:
     base = root or repo_root()
     story = key or _active_story_key(base)
-    return evidence_path(base, story, "decomposition.json") if story \
-        else factory_dir(base) / "decomposition.json"
+    return evidence_path(base, story, "decomposition.json", for_write=for_write)
 
 
 def clean_git_env() -> dict[str, str]:
@@ -102,25 +117,32 @@ def clean_git_env() -> dict[str, str]:
     }
 
 
-def verify_state_path(root: Path | None = None, key: str | None = None) -> Path:
+def verify_state_path(
+    root: Path | None = None,
+    key: str | None = None,
+    *,
+    for_write: bool = False,
+) -> Path:
     base = root or repo_root()
     story = key or _active_story_key(base)
-    return evidence_path(base, story, "verify.json") if story \
-        else factory_dir(base) / "verify.json"
+    return evidence_path(base, story, "verify.json", for_write=for_write)
 
 
-def tests_state_path(root: Path | None = None, key: str | None = None) -> Path:
+def tests_state_path(
+    root: Path | None = None,
+    key: str | None = None,
+    *,
+    for_write: bool = False,
+) -> Path:
     base = root or repo_root()
     story = key or _active_story_key(base)
-    return evidence_path(base, story, "tests.json") if story \
-        else factory_dir(base) / "tests.json"
+    return evidence_path(base, story, "tests.json", for_write=for_write)
 
 
 def review_dir(root: Path | None = None, key: str | None = None) -> Path:
     base = root or repo_root()
     story = key or _active_story_key(base)
-    return evidence_path(base, story, "reviews") if story \
-        else factory_dir(base) / "reviews"
+    return evidence_path(base, story, "reviews")
 
 
 FRONTMATTER = re.compile(r"\A---\r?\n(.*?)\r?\n---\r?\n", re.DOTALL)
@@ -814,7 +836,7 @@ def load_review_artifacts(
     problems: list[str] = []
     head = head_sha(root) if require_head else None
     for aspect in ("quality", "performance", "security"):
-        path = review_dir(root) / f"{aspect}.json"
+        path = evidence_path(root, _active_story_key(root), f"reviews/{aspect}.json")
         data = load_json(path, default={})
         if not data:
             problems.append(str(path.relative_to(root)))
@@ -948,8 +970,7 @@ def require_grill(
     exact artifact being gated: the recorded input_sha256 must match that
     file, so grilling proposal A never approves proposal B."""
     key = _active_story_key(root) if gate == "plan" else ""
-    path = evidence_path(root, key, f"grills/{gate}.json") if key \
-        else factory_dir(root) / "grills" / f"{gate}.json"
+    path = evidence_path(root, key, f"grills/{gate}.json")
     data = load_json(path, default={})
     if not data:
         raise SystemExit(
@@ -1002,8 +1023,7 @@ def require_task_grill(
 ) -> None:
     """Require a passing grill bound to the current grounding inputs."""
     key = _active_story_key(root)
-    path = evidence_path(root, key, f"grills/tasks/{task_id}.json") if key \
-        else factory_dir(root) / "grills" / "tasks" / f"{task_id}.json"
+    path = evidence_path(root, key, f"grills/tasks/{task_id}.json")
     data = load_json(path, default={})
     record_command = (
         "python3 factory/scripts/record_grill_from_json.py --gate task "
@@ -1163,8 +1183,7 @@ def task_rows(root: Path) -> list[dict]:
         task_id = task.get("id")
         stage = stage_by_id.get(task_id, {})
         key = _active_story_key(root)
-        grill_path = evidence_path(root, key, f"grills/tasks/{task_id}.json") \
-            if key else factory_dir(root) / "grills" / "tasks" / f"{task_id}.json"
+        grill_path = evidence_path(root, key, f"grills/tasks/{task_id}.json")
         grill = load_json(grill_path, default={})
         fresh = _task_grill_fresh(root, task, grill) if grill else False
         status = stage.get("status")
@@ -1238,8 +1257,7 @@ def task_frontier_state(root: Path) -> tuple[str, dict] | None:
         return "author-contract", frontier
 
     key = _active_story_key(root)
-    grill_path = evidence_path(root, key, f"grills/tasks/{task_id}.json") \
-        if key else factory_dir(root) / "grills" / "tasks" / f"{task_id}.json"
+    grill_path = evidence_path(root, key, f"grills/tasks/{task_id}.json")
     grill = load_json(grill_path, default={})
     if _task_grill_fresh(root, frontier, grill):
         stage = stage_by_id.get(task_id, {})

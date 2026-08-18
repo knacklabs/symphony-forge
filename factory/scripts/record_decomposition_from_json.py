@@ -441,7 +441,7 @@ with delegation_exclusion(
         write_stages(root, stages_data)
     payload["commit"] = head_sha(root)
     dump_json(protected_decomposition_state_path(root), payload)
-    dump_json(decomposition_state_path(root), payload)
+    dump_json(decomposition_state_path(root, for_write=True), payload)
     # The decomposition is immutable evidence; the stage tracker is its mutable
     # execution twin (decision 0007) — pr_ready refuses while stages are open.
     write_skeleton(root, state.get("issue_key", ""), tasks)

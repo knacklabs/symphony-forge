@@ -7,7 +7,7 @@ from pathlib import Path
 
 from factory_lib import (
     dump_json, gate, head_sha, load_json, now_iso,
-    protected_decomposition_state_path, repo_root, require_skills, review_dir,
+    evidence_path, protected_decomposition_state_path, repo_root, require_skills,
     read_stdin_utf8, run_state_path, validate_payload,
 )
 from forge_cli.events import append_event
@@ -70,7 +70,9 @@ state = gate(
 )
 validate_payload(root, "review", payload)
 require_skills(root, "review", payload)
-path = review_dir(root) / f"{args.aspect}.json"
+path = evidence_path(
+    root, state.get("issue_key"), f"reviews/{args.aspect}.json", for_write=True,
+)
 review = dict(payload)
 review["aspect"] = args.aspect
 for key in ("blocking_findings", "non_blocking_findings"):

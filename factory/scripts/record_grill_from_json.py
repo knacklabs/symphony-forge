@@ -252,8 +252,7 @@ if args.gate == "task":
     name = f"grills/tasks/{args.task}.json"
 else:
     name = f"grills/{args.gate}.json"
-dest = evidence_path(root, story, name) if story \
-    else root / ".factory" / name
+dest = evidence_path(root, story, name, for_write=True)
 dump_json(dest, payload)
 print(f"Recorded {args.gate} grill: {payload['verdict']} "
       f"({len(payload['gaps'])} gap(s), {len(payload['contradictions'])} contradiction(s), "

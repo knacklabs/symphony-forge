@@ -39,7 +39,7 @@ root = repo_root()
 gate(root, signoff=True, approved_plan=True, decomposition=True)
 validate_payload(root, f"test-{args.kind}", payload)
 require_skills(root, f"test-{args.kind}", payload)
-path = tests_state_path(root)
+path = tests_state_path(root, for_write=True)
 existing = load_json(path, default={}) or {}
 entry = dict(payload)
 for key in (

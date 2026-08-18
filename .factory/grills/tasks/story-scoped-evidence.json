@@ -1,61 +1,85 @@
 {
   "generated_by": "griller",
   "gate": "task",
+  "task_id": "story-scoped-evidence",
   "verdict": "pass",
-  "questions_asked": 1,
+  "questions_asked": 3,
+  "summary": "Re-grill of the revised story-scoped-evidence contract (prior grill staled when plan_contracts C1/C2 were reworded). Three seams interrogated against the task contract, spec behaviour, and decision 0045; all resolved. No prior stages to assume against (task 1 is first).",
   "inspected_refs": [
-    "factory/scripts/factory_lib.py:factory_dir",
-    "factory/scripts/factory_lib.py:task_frontier_state",
+    "factory/scripts/factory_lib.py",
     "factory/scripts/record_decomposition_from_json.py",
     "factory/scripts/record_grill_from_json.py",
     "factory/scripts/record_test_from_json.py",
     "factory/scripts/record_review_from_json.py",
     "factory/scripts/verify.py",
-    "docs/specs/conflict-free-story-state.md"
+    "factory/tests/test_gates.py",
+    "docs/specs/conflict-free-story-state.md",
+    "docs/decisions/0045-conflict-free-story-state.md"
   ],
-  "current_flow": "Every recorder and gate resolves task-scoped artifacts by joining factory_dir(root) with hard-coded names (decomposition.json, grills/tasks/<id>.json, tests.json, reviews/<aspect>.json, verify.json); pr_ready later MOVES the whole set into .factory/history/<story>/. Two concurrent stories therefore write identical paths and every overlapping PR conflicts; the move also triggers rename detection across branches. Nothing reads .factory/stories/ today.",
+  "current_flow": "Recorders and gates resolve task-scoped artifacts by joining factory_dir(root) with hard-coded names; pr_ready later MOVES the set to .factory/history/<story>/. Overlapping stories write identical paths, so every overlapping PR conflicts; the move triggers cross-branch rename detection. Task 1 introduces story_dir()/evidence_path() so new-layout stories write under .factory/stories/<KEY>/ with legacy read-fallback.",
   "criteria_map": {
-    "new-story artifacts record under .factory/stories/<KEY>/ through one shared path helper": "test_new_story_artifacts_record_under_story_dir intakes a story under the new layout marker and asserts every recorder lands its artifact in the story dir via the shared helper",
-    "legacy live and history layouts remain readable by every consumer": "test_legacy_layout_stays_readable_by_every_consumer replays a legacy fixture and asserts gates, board data, and history read the old paths unchanged"
+    "the in-scope recorders (decomposition, grill, test, review) and verify write and read new-story artifacts under .factory/stories/<KEY>/ through one shared path helper": "test_new_story_artifacts_record_under_story_dir synthesizes a story under the new-layout marker and asserts each of the four in-scope recorders + verify writes/reads its artifact under .factory/stories/<KEY>/ through the single story_dir()/evidence_path() helper; a hand-joined path fails the gate",
+    "legacy live and history layouts remain readable by those same consumers": "test_legacy_layout_stays_readable_by_every_consumer replays a legacy live+history fixture and asserts the same consumers read the old paths unchanged (story-scoped-first, legacy-fallback on miss)"
   },
-  "decision": "keep",
   "new_abstractions": [
-    "story_dir(root, key) and evidence_path(root, key, name) in factory_lib - no existing helper owns evidence layout; ad-hoc joins across seven consumers are exactly the fork risk. Reversible: pure path resolution, legacy fallback keeps every old artifact readable."
+    "story_dir(root, key) and evidence_path(root, key, name) in factory_lib - the single place layout knowledge lives; ad-hoc joins across the consumers are the fork risk. Reversible pure path resolution with legacy fallback."
   ],
   "rounds": [
     {
-      "question": "What keys a story into the NEW layout?",
+      "question": "Write predicate: how does a recorder decide story-scoped vs legacy, given CFS-1 itself was intaken under the old layout?",
       "options": [
-        "Intake-time marker in the story dir; stories intaken before the migration task stay legacy end-to-end",
-        "Code version decides; all writes flip story-scoped when the code lands"
+        "Per-story layout marker at intake",
+        "Always write story-scoped, read-both",
+        "Defer the predicate to migration task"
       ],
-      "chosen": "Intake-time marker in the story dir; stories intaken before the migration task stay legacy end-to-end"
+      "chosen": "Per-story layout marker at intake"
+    },
+    {
+      "question": "Spec lists 8 story-scoped artifact types; task 1 covers only decomposition/grill/test/review + verify. Who owns stages.json, outcome.json, briefs?",
+      "options": [
+        "Assign explicitly + deferral triggers",
+        "Fold into task 1",
+        "Already covered, no action"
+      ],
+      "chosen": "Assign explicitly + deferral triggers"
+    },
+    {
+      "question": "Should the required write-test prove ALL five in-scope consumers route through the helper, not just one?",
+      "options": [
+        "Parametrize across all 5 consumers",
+        "One representative consumer is enough"
+      ],
+      "chosen": "Parametrize across all 5 consumers"
     }
   ],
   "citations": [
     {
-      "finding": "Story-scoped evidence layout and read-only legacy history are fixed by the confirmed spec and the operator's pre-draft round",
-      "source": "docs/specs/conflict-free-story-state.md#behaviour and .factory/grills/plan.json (pre-draft rounds 2026-08-15)"
+      "finding": "Story-scoped layout, read-only legacy history, and intake-time marker are fixed by the confirmed spec and prior pre-draft round",
+      "source": "docs/specs/conflict-free-story-state.md#behaviour and .factory/grills/plan.json"
     },
     {
       "finding": "One record per file removes the conflict rather than resolving it",
-      "source": "docs/decisions/0022-conflict-free-ledgers.md and docs/decisions/0045-conflict-free-story-state.md"
+      "source": "docs/decisions/0022-conflict-free-ledgers.md and 0045-conflict-free-story-state.md"
     }
   ],
   "gaps": [
-    "What keys a story into the NEW layout?",
-    "Story-scoped evidence layout and read-only legacy history are fixed by the confirmed spec and the operator's pre-draft round",
-    "One record per file removes the conflict rather than resolving it"
+    "Write predicate: how does a recorder decide story-scoped vs legacy, given CFS-1 itself was intaken under the old layout?",
+    "Spec lists 8 story-scoped artifact types; task 1 covers only decomposition/grill/test/review + verify. Who owns stages.json, outcome.json, briefs?",
+    "Should the required write-test prove ALL five in-scope consumers route through the helper, not just one?"
   ],
   "contradictions": [],
   "resolutions": [
-    "Operator chose the intake-time marker via AskUserQuestion round 2026-08-15 - no mid-story layout flips",
-    "Cited to the confirmed spec and recorded pre-draft rounds",
-    "Cited to decisions 0022 and 0045"
+    "Per-story intake-time layout marker: writers go story-scoped only when the story dir/marker exists (created at intake, owned by migration-and-vendor); legacy stories incl. CFS-1 stay legacy end-to-end until re-intake, so no mid-story split. Task 1's required test synthesizes the marker to exercise story-scoped writes. Confirmed via AskUserQuestion 2026-08-18, consistent with the 2026-08-15 pre-draft decision.",
+    "Parked to owning tasks with revisit triggers (non-blocking for task 1): stages.json -> D-0027 (run-pointer/ship-in-place), outcome.json -> D-0028 (ship-in-place), briefs -> D-0029 (migration-and-vendor).",
+    "test_new_story_artifacts_record_under_story_dir parametrizes across all five consumers (decomposition/grill/test/review recorders + verify), asserting each routes through story_dir()/evidence_path(); a hand-joined path fails the gate."
   ],
-  "open_items": [],
-  "task_id": "story-scoped-evidence",
-  "input_sha256": "7e7c7aebbee0ca84f41328b22c04c6c0ceb9bd7dd60c42c6a7ee3c1ecc86aa22",
-  "recorded_at": "2026-08-15T14:22:49+00:00",
-  "commit": "bc935ace2c6a2ca56936e218e13a7784928ee971"
+  "open_items": [
+    "stages.json story-scoping parked to D-0027 (non-blocking)",
+    "outcome.json story-scoping parked to D-0028 (non-blocking)",
+    "briefs story-scoping parked to D-0029 (non-blocking)"
+  ],
+  "decision": "keep",
+  "input_sha256": "a2ffa9e304ab76835140e414afa88b2f3d87f30c92ae93671f7908f7f6f02187",
+  "recorded_at": "2026-08-18T08:07:09+00:00",
+  "commit": "64a6187e0aaead594010ccd62fcf6911f67a3313"
 }

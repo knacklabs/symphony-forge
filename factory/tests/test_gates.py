@@ -511,7 +511,18 @@ def test_new_story_artifacts_record_under_story_dir(repo, tmp_path):
     scoped = repo / ".factory" / "stories" / "ENG-1"
     scoped.mkdir(parents=True)
 
-    code, out = save_plan(repo, tmp_path)
+    plan = repo / "plans" / "active" / "ENG-1-evidence-paths.md"
+    plan.parent.mkdir(parents=True, exist_ok=True)
+    plan.write_text("---\nstatus: approved\n---\n\n" + PLAN_BODY)
+    state = run_state(repo)
+    state.update({
+        "plan_file": plan.relative_to(repo).as_posix(),
+        "plan_status": "approved",
+        "story": "ENG-1",
+    })
+    (repo / ".factory" / "run.json").write_text(json.dumps(state))
+
+    code, out = record_grill(repo, "plan", digest_of=plan)
     assert code == 0, out
     record_skeleton_then_frontier(repo, DECOMP["tasks"])
 
