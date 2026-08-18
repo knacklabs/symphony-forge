@@ -696,14 +696,16 @@
         "Vendored clients receive the hardening: the existing init/adopt/upgrade propagation tests cover the touched scripts."
       ],
       "order": 32,
-      "status": "active",
+      "status": "done",
       "epic": "windows-zero-setup",
       "skill": "backend",
       "kind": "feature",
       "depends_on": [
         "FORGE-WIN-3"
       ],
-      "spec": "docs/specs/windows-zero-setup.md"
+      "spec": "docs/specs/windows-zero-setup.md",
+      "completed_at": "2026-08-13T22:47:51+00:00",
+      "shipped_by": "PR #103 (04ce080)"
     },
     {
       "key": "FORGE-ACC-1",
@@ -792,7 +794,7 @@
     }
   ],
   "generated_by": "human",
-  "updated_at": "2026-08-14T13:44:37+00:00",
+  "updated_at": "2026-08-18T07:40:36+00:00",
   "epics": [
     {
       "id": "symphony-forge",
