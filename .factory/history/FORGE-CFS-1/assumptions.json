@@ -1,0 +1,10 @@
+[
+  {
+    "id": "A-0011",
+    "date": "2026-08-15",
+    "issue": "FORGE-CFS-1",
+    "assumption": "A story directory created by intake is the marker for story-scoped writes; without it, an active legacy story continues using live singletons.",
+    "status": "confirmed",
+    "guidance": "Confirmed: intake creates .factory/stories/<KEY>/ as the scoped-layout marker (intake.py:118); story_uses_scoped_layout keys on its existence; a legacy story without it keeps using live singletons. Operator-confirmed design (decision 0046, task-1 grill), proven by test_intake_on_legacy_fixture and the merge-simulation."
+  }
+]

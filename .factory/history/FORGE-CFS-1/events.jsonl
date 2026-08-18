@@ -1,0 +1,81 @@
+{"event": "roadmap-add", "generated_by": "orchestrator", "at": "2026-08-14T05:49:12+00:00", "story": "FORGE-CFS-1", "detail": "docs/specs/conflict-free-story-state.md"}
+{"event": "roadmap-add", "generated_by": "orchestrator", "at": "2026-08-14T05:49:12+00:00", "story": "FORGE-CFS-1", "detail": "docs/specs/conflict-free-story-state.md"}
+{"event": "intake", "generated_by": "orchestrator", "at": "2026-08-15T14:15:46+00:00", "story": "FORGE-CFS-1", "detail": "Story state stops conflicting across PRs"}
+{"event": "plan-human-approved", "generated_by": "human", "at": "2026-08-15T14:17:54+00:00", "story": "FORGE-CFS-1", "detail": "FORGE-CFS-1 approved by Ravi Kiran Vemula"}
+{"event": "plan-approved", "generated_by": "planner-high", "at": "2026-08-15T14:17:54+00:00", "story": "FORGE-CFS-1", "detail": "plans/active/FORGE-CFS-1-story-state-stops-conflicting-across-prs.md"}
+{"event": "decomposed", "generated_by": "docs-decomposer", "at": "2026-08-15T14:18:30+00:00", "story": "FORGE-CFS-1", "detail": "6 task(s)"}
+{"event": "implementing", "generated_by": "orchestrator", "at": "2026-08-15T14:18:30+00:00", "story": "FORGE-CFS-1"}
+{"event": "decomposed", "generated_by": "docs-decomposer", "at": "2026-08-15T14:21:55+00:00", "story": "FORGE-CFS-1", "detail": "6 task(s)"}
+{"event": "stage-start", "generated_by": "implementer", "at": "2026-08-15T14:22:50+00:00", "story": "FORGE-CFS-1", "detail": "story-scoped-evidence Evidence records under the story directory"}
+{"event": "signal-scope-change", "generated_by": "implementer", "at": "2026-08-15T14:28:24+00:00", "story": "FORGE-CFS-1", "detail": "New-layout plan save still reads .factory/grills/plan.json directly in factory/scripts/forge_cli/plans.py:135, but that required consumer is outside this task's write scope; acceptance cannot pass wit"}
+{"event": "delegated", "generated_by": "orchestrator", "at": "2026-08-15T14:28:36+00:00", "story": "FORGE-CFS-1", "detail": "story-scoped-evidence (write)"}
+{"event": "signal-resolved", "generated_by": "orchestrator", "at": "2026-08-15T14:29:15+00:00", "story": "FORGE-CFS-1", "detail": "S-0001-c24f: Operator chose (AskUserQuestion round 2026-08-15): DEFER the plans.py consumer. Revise your working criterion to: every consumer in this task's write scope reads both layouts; plans.py's new-layout re"}
+{"event": "signal-scope-change", "generated_by": "implementer", "at": "2026-08-15T14:30:31+00:00", "story": "FORGE-CFS-1", "detail": "Acceptance requires every gate/consumer to resolve story evidence only through evidence_path, but factory/scripts/pr_ready.py directly reads/archives/removes .factory/grills/plan.json and is outside t"}
+{"event": "delegated", "generated_by": "orchestrator", "at": "2026-08-15T14:31:58+00:00", "story": "FORGE-CFS-1", "detail": "story-scoped-evidence (write)"}
+{"event": "signal-resolved", "generated_by": "orchestrator", "at": "2026-08-15T14:35:03+00:00", "story": "FORGE-CFS-1", "detail": "S-0002-df80: Exclude lifecycle archival from this task - it is the ship-in-place task's job (decomposition dependency chain). This task (story-scoped-evidence) owns write/read resolution for the seven recorders+ve"}
+{"event": "signal-scope-change", "generated_by": "implementer", "at": "2026-08-15T14:37:38+00:00", "story": "FORGE-CFS-1", "detail": "New-story plan evidence is written to .factory/stories/<KEY>/grills/plan.json, but factory/scripts/forge_cli/plans.py rereads .factory/grills/plan.json by hand after require_grill; satisfying the decl"}
+{"event": "delegated", "generated_by": "orchestrator", "at": "2026-08-15T14:37:58+00:00", "story": "FORGE-CFS-1", "detail": "story-scoped-evidence (write)"}
+{"event": "signal-resolved", "generated_by": "orchestrator", "at": "2026-08-15T14:38:29+00:00", "story": "FORGE-CFS-1", "detail": "S-0003-6613: Same deferral as S-0001/S-0002 (operator rounds 2026-08-15): plans.py's manual reread of the plan grill is DEFERRED to the migration-and-vendor task, after the gates-first rebase over approval-integri"}
+{"event": "signal-scope-change", "generated_by": "implementer", "at": "2026-08-15T14:40:53+00:00", "story": "FORGE-CFS-1", "detail": "FORGE-CFS-1 story-scoped-evidence cannot satisfy every consumer within the declared write scope: factory/scripts/forge_cli/plans.py directly reads .factory/grills/plan.json, and the required new-story"}
+{"event": "delegated", "generated_by": "orchestrator", "at": "2026-08-15T14:41:05+00:00", "story": "FORGE-CFS-1", "detail": "story-scoped-evidence (write)"}
+{"event": "signal-resolved", "generated_by": "orchestrator", "at": "2026-08-15T14:42:22+00:00", "story": "FORGE-CFS-1", "detail": "S-0004-3b0a: Contract defect on my side, not a fourth deferral: the required test test_new_story_artifacts_record_under_story_dir was specified to exercise EVERY consumer, which pulls in plans.py's plan-grill rere"}
+{"event": "decomposed", "generated_by": "docs-decomposer", "at": "2026-08-15T14:43:03+00:00", "story": "FORGE-CFS-1", "detail": "6 task(s)"}
+{"event": "delegated", "generated_by": "orchestrator", "at": "2026-08-18T08:56:49+00:00", "story": "FORGE-CFS-1", "detail": "story-scoped-evidence (write)"}
+{"event": "stage-done", "generated_by": "implementer", "at": "2026-08-18T08:57:59+00:00", "story": "FORGE-CFS-1", "detail": "story-scoped-evidence Evidence records under the story directory"}
+{"event": "stage-contract-changed", "generated_by": "implementer", "at": "2026-08-18T08:57:59+00:00", "story": "FORGE-CFS-1", "detail": "story-scoped-evidence: task contract re-recorded mid-stage"}
+{"event": "decomposed", "generated_by": "docs-decomposer", "at": "2026-08-18T09:37:31+00:00", "story": "FORGE-CFS-1", "detail": "6 task(s)"}
+{"event": "stage-start", "generated_by": "implementer", "at": "2026-08-18T09:41:16+00:00", "story": "FORGE-CFS-1", "detail": "run-pointer-untracked The active-story pointer leaves version control"}
+{"event": "delegated", "generated_by": "orchestrator", "at": "2026-08-18T09:49:39+00:00", "story": "FORGE-CFS-1", "detail": "run-pointer-untracked (write)"}
+{"event": "signal-scope-change", "generated_by": "implementer", "at": "2026-08-18T10:22:15+00:00", "story": "FORGE-CFS-1", "detail": "New-layout intake makes plan grills story-scoped, but factory/scripts/forge_cli/plans.py still directly reads .factory/grills/plan.json after require_grill; plan save fails and the required fix is out"}
+{"event": "delegated", "generated_by": "orchestrator", "at": "2026-08-18T10:22:38+00:00", "story": "FORGE-CFS-1", "detail": "run-pointer-untracked (write)"}
+{"event": "signal-resolved", "generated_by": "orchestrator", "at": "2026-08-18T10:23:16+00:00", "story": "FORGE-CFS-1", "detail": "S-0005-9b8e: Same deferral as S-0001/S-0003/S-0004 (operator rounds 2026-08-15/18): plans.py's manual reread of the plan grill (.factory/grills/plan.json after require_grill) is DEFERRED to migration-and-vendor, w"}
+{"event": "delegated", "generated_by": "orchestrator", "at": "2026-08-18T10:32:01+00:00", "story": "FORGE-CFS-1", "detail": "run-pointer-untracked (write)"}
+{"event": "delegated", "generated_by": "orchestrator", "at": "2026-08-18T10:36:58+00:00", "story": "FORGE-CFS-1", "detail": "run-pointer-untracked (write)"}
+{"event": "decomposed", "generated_by": "docs-decomposer", "at": "2026-08-18T10:39:58+00:00", "story": "FORGE-CFS-1", "detail": "6 task(s)"}
+{"event": "delegated", "generated_by": "orchestrator", "at": "2026-08-18T10:42:40+00:00", "story": "FORGE-CFS-1", "detail": "run-pointer-untracked (write)"}
+{"event": "stage-done", "generated_by": "implementer", "at": "2026-08-18T11:09:03+00:00", "story": "FORGE-CFS-1", "detail": "run-pointer-untracked The active-story pointer leaves version control"}
+{"event": "stage-contract-changed", "generated_by": "implementer", "at": "2026-08-18T11:09:03+00:00", "story": "FORGE-CFS-1", "detail": "run-pointer-untracked: task contract re-recorded mid-stage"}
+{"event": "decomposed", "generated_by": "docs-decomposer", "at": "2026-08-18T11:21:23+00:00", "story": "FORGE-CFS-1", "detail": "6 task(s)"}
+{"event": "stage-start", "generated_by": "implementer", "at": "2026-08-18T11:23:14+00:00", "story": "FORGE-CFS-1", "detail": "per-event-files Events are one file each"}
+{"event": "delegated", "generated_by": "orchestrator", "at": "2026-08-18T11:29:17+00:00", "story": "FORGE-CFS-1", "detail": "per-event-files (write)"}
+{"event": "stage-done", "generated_by": "implementer", "at": "2026-08-18T11:35:24+00:00", "story": "FORGE-CFS-1", "detail": "per-event-files Events are one file each"}
+{"event": "decomposed", "generated_by": "docs-decomposer", "at": "2026-08-18T11:36:39+00:00", "story": "FORGE-CFS-1", "detail": "6 task(s)"}
+{"event": "stage-start", "generated_by": "implementer", "at": "2026-08-18T11:38:31+00:00", "story": "FORGE-CFS-1", "detail": "ship-in-place pr_ready ships without moving files"}
+{"event": "signal-scope-change", "generated_by": "implementer", "at": "2026-08-18T11:41:10+00:00", "story": "FORGE-CFS-1", "detail": "Acceptance requires board story evidence to read .factory/stories/<KEY>, but forge_cli/board.py hard-codes .factory and .factory/history roots and is outside this task's write scope; add board.py to s"}
+{"event": "signal-resolved", "generated_by": "orchestrator", "at": "2026-08-18T11:42:33+00:00", "story": "FORGE-CFS-1", "detail": "S-0006-ef90: Correct: board.py IS in ship-in-place's scope for the READ path - AC2 requires the board to render a shipped new-layout story from .factory/stories/<KEY>/. board.py hard-codes its story-evidence root "}
+{"event": "delegated", "generated_by": "orchestrator", "at": "2026-08-18T11:42:46+00:00", "story": "FORGE-CFS-1", "detail": "ship-in-place (write)"}
+{"event": "decomposed", "generated_by": "docs-decomposer", "at": "2026-08-18T11:43:18+00:00", "story": "FORGE-CFS-1", "detail": "6 task(s)"}
+{"event": "delegated", "generated_by": "orchestrator", "at": "2026-08-18T11:51:32+00:00", "story": "FORGE-CFS-1", "detail": "ship-in-place (write)"}
+{"event": "stage-done", "generated_by": "implementer", "at": "2026-08-18T11:58:07+00:00", "story": "FORGE-CFS-1", "detail": "ship-in-place pr_ready ships without moving files"}
+{"event": "stage-contract-changed", "generated_by": "implementer", "at": "2026-08-18T11:58:07+00:00", "story": "FORGE-CFS-1", "detail": "ship-in-place: task contract re-recorded mid-stage"}
+{"event": "decomposed", "generated_by": "docs-decomposer", "at": "2026-08-18T11:59:52+00:00", "story": "FORGE-CFS-1", "detail": "6 task(s)"}
+{"event": "stage-start", "generated_by": "implementer", "at": "2026-08-18T12:01:13+00:00", "story": "FORGE-CFS-1", "detail": "merge-survivable-hooks Hooks survive merges and permit scoped resolution"}
+{"event": "delegated", "generated_by": "orchestrator", "at": "2026-08-18T12:08:40+00:00", "story": "FORGE-CFS-1", "detail": "merge-survivable-hooks (write)"}
+{"event": "decomposed", "generated_by": "docs-decomposer", "at": "2026-08-18T12:38:47+00:00", "story": "FORGE-CFS-1", "detail": "6 task(s)"}
+{"event": "delegated", "generated_by": "orchestrator", "at": "2026-08-18T12:50:52+00:00", "story": "FORGE-CFS-1", "detail": "merge-survivable-hooks (write)"}
+{"event": "stage-done", "generated_by": "implementer", "at": "2026-08-18T13:12:53+00:00", "story": "FORGE-CFS-1", "detail": "merge-survivable-hooks Hooks survive merges and permit scoped resolution"}
+{"event": "stage-contract-changed", "generated_by": "implementer", "at": "2026-08-18T13:12:53+00:00", "story": "FORGE-CFS-1", "detail": "merge-survivable-hooks: task contract re-recorded mid-stage"}
+{"event": "decomposed", "generated_by": "docs-decomposer", "at": "2026-08-18T13:15:15+00:00", "story": "FORGE-CFS-1", "detail": "6 task(s)"}
+{"event": "stage-start", "generated_by": "implementer", "at": "2026-08-18T13:24:21+00:00", "story": "FORGE-CFS-1", "detail": "migration-and-vendor Legacy repos cut over at intake; clients get it via upgrade"}
+{"event": "delegated", "generated_by": "orchestrator", "at": "2026-08-18T13:32:07+00:00", "story": "FORGE-CFS-1", "detail": "migration-and-vendor (write)"}
+{"event": "decomposed", "generated_by": "docs-decomposer", "at": "2026-08-18T14:01:51+00:00", "story": "FORGE-CFS-1", "detail": "6 task(s)"}
+{"event": "signal-scope-change", "generated_by": "implementer", "at": "2026-08-18T14:14:27+00:00", "story": "FORGE-CFS-1", "detail": "Atomic scoped-layout activation cannot make declared required tests green within the six-file scope: factory/scripts/forge_cli/phase.py still reads legacy .factory/{decomposition,tests,verify,reviews}"}
+{"event": "delegated", "generated_by": "orchestrator", "at": "2026-08-18T14:14:48+00:00", "story": "FORGE-CFS-1", "detail": "migration-and-vendor (write)"}
+{"event": "signal-resolved", "generated_by": "orchestrator", "at": "2026-08-18T14:15:10+00:00", "story": "FORGE-CFS-1", "detail": "S-0007-519e: Correct and well-caught - these two are REAL production regressions, not stale tests; do NOT weaken the tests to mask them. Adding factory/scripts/forge_cli/phase.py and factory/scripts/pr_ready.py to"}
+{"event": "decomposed", "generated_by": "docs-decomposer", "at": "2026-08-18T14:15:58+00:00", "story": "FORGE-CFS-1", "detail": "6 task(s)"}
+{"event": "delegated", "generated_by": "orchestrator", "at": "2026-08-18T14:26:39+00:00", "story": "FORGE-CFS-1", "detail": "migration-and-vendor (write)"}
+{"event": "decomposed", "generated_by": "docs-decomposer", "at": "2026-08-18T14:58:31+00:00", "story": "FORGE-CFS-1", "detail": "6 task(s)"}
+{"event": "delegated", "generated_by": "orchestrator", "at": "2026-08-18T15:06:41+00:00", "story": "FORGE-CFS-1", "detail": "migration-and-vendor (write)"}
+{"event": "delegated", "generated_by": "orchestrator", "at": "2026-08-18T15:16:34+00:00", "story": "FORGE-CFS-1", "detail": "migration-and-vendor (write)"}
+{"event": "delegated", "generated_by": "orchestrator", "at": "2026-08-18T15:26:57+00:00", "story": "FORGE-CFS-1", "detail": "migration-and-vendor (write)"}
+{"event": "decomposed", "generated_by": "docs-decomposer", "at": "2026-08-18T17:05:50+00:00", "story": "FORGE-CFS-1", "detail": "6 task(s)"}
+{"event": "delegated", "generated_by": "orchestrator", "at": "2026-08-18T17:11:30+00:00", "story": "FORGE-CFS-1", "detail": "migration-and-vendor (write)"}
+{"event": "stage-done", "generated_by": "implementer", "at": "2026-08-18T17:16:44+00:00", "story": "FORGE-CFS-1", "detail": "migration-and-vendor Legacy repos cut over at intake; clients get it via upgrade"}
+{"event": "stage-contract-changed", "generated_by": "implementer", "at": "2026-08-18T17:16:44+00:00", "story": "FORGE-CFS-1", "detail": "migration-and-vendor: task contract re-recorded mid-stage"}
+{"event": "verify-passed", "generated_by": "orchestrator", "at": "2026-08-18T17:44:29+00:00", "story": "FORGE-CFS-1"}
+{"event": "review-performance", "generated_by": "autoreview", "at": "2026-08-18T17:48:42+00:00", "story": "FORGE-CFS-1"}
+{"event": "review-security", "generated_by": "autoreview", "at": "2026-08-18T17:48:42+00:00", "story": "FORGE-CFS-1"}
+{"event": "review-quality", "generated_by": "autoreview", "at": "2026-08-18T17:49:12+00:00", "story": "FORGE-CFS-1"}
+{"event": "tests-automated", "generated_by": "implementer", "at": "2026-08-18T17:51:02+00:00", "story": "FORGE-CFS-1", "detail": "pass"}
+{"event": "tests-automated", "generated_by": "implementer", "at": "2026-08-18T17:53:10+00:00", "story": "FORGE-CFS-1", "detail": "pass"}
+{"event": "shipped", "generated_by": "orchestrator", "at": "2026-08-18T17:53:22+00:00", "story": "FORGE-CFS-1", "detail": "Overlapping story PRs no longer conflict on .factory state. Story evidence is story-scoped (.factory/stories/<KEY>/), the active-story run pointer is worktree-local and untracked with phase derived fr"}

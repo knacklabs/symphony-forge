@@ -1,0 +1,1 @@
+{"event": "shipped", "generated_by": "orchestrator", "at": "2026-08-18T17:53:22+00:00", "story": "FORGE-CFS-1", "detail": "Overlapping story PRs no longer conflict on .factory state. Story evidence is story-scoped (.factory/stories/<KEY>/), the active-story run pointer is worktree-local and untracked with phase derived fr"}

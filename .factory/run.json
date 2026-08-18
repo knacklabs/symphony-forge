@@ -1,17 +1,3 @@
 {
-  "issue_key": "FORGE-CFS-1",
-  "title": "Story state stops conflicting across PRs",
-  "tracker": "linear",
-  "branch": "feat/FORGE-CFS-1-story-state-stops-conflicting-across-prs",
-  "phase": "implementing",
-  "plan_status": "approved",
-  "decomposition_status": "recorded",
-  "implementation_status": "pending",
-  "tests_status": "recorded",
-  "verify_status": "passed",
-  "review_status": "in-progress",
-  "created_at": "2026-08-15T14:15:46+00:00",
-  "updated_at": "2026-08-18T17:53:10+00:00",
-  "plan_file": "plans/active/FORGE-CFS-1-story-state-stops-conflicting-across-prs.md",
-  "story": "FORGE-CFS-1"
+  "phase": "shipped"
 }

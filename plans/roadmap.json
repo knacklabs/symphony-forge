@@ -784,15 +784,18 @@
         "with unmerged index entries the hook permits git-native resolution of exactly those paths and refuses content hand-writes; an unparseable factory_lib or state file engages a static deny-list fallback instead of crashing"
       ],
       "order": 36,
-      "status": "active",
+      "status": "done",
       "epic": "accountable-engineering",
       "skill": "backend",
       "depends_on": [],
-      "spec": "docs/specs/conflict-free-story-state.md"
+      "spec": "docs/specs/conflict-free-story-state.md",
+      "completed_at": "2026-08-18T17:53:22+00:00",
+      "history": ".factory/history/FORGE-CFS-1/",
+      "outcome": "Overlapping story PRs no longer conflict on .factory state. Story evidence is story-scoped (.factory/stories/<KEY>/), the active-story run pointer is worktree-local and untracked with phase derived from artifacts, events are one conflict-free file each (union merge driver retired), pr_ready ships in place with no archive move, and the PreToolUse/Stop hooks survive a merge \u2014 engaging a self-contained deny-list that keeps writes locked but permits git-native recovery instead of crashing, so a conflict-markered run.json or factory_lib can never trap a session again. Intake activates the new layout; legacy repos stay readable and pick it up via forge upgrade. Proven by a two-worktree merge simulation with zero .factory conflicts."
     }
   ],
   "generated_by": "human",
-  "updated_at": "2026-08-15T14:15:46+00:00",
+  "updated_at": "2026-08-18T17:53:22+00:00",
   "epics": [
     {
       "id": "symphony-forge",
