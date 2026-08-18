@@ -1,0 +1,12 @@
+{
+  "topic": "quickfix records touched files; it does NOT unlock the write lock",
+  "lesson": "forge quickfix start opens a ledger window that passively RECORDS product files touched by an already-authorized write; it does not authorize the write. With the session write lock armed and the companion available, direct Edit/Write of product code is still denied and must route through ./forge delegate. forge mode degraded is the only direct-write exception, and only during a companion outage. Do not reach for quickfix to hand-apply a fix the delegation keeps missing.",
+  "source": "FORGE-CFS-1 run-pointer-untracked, quickfix Q-0078 2026-08-18",
+  "applies_to": [
+    "factory/scripts/pre_tool_use.py",
+    "factory/scripts/forge_cli/quickfix.py"
+  ],
+  "severity": "medium",
+  "generated_by": "orchestrator",
+  "added_at": "2026-08-18T11:09:32+00:00"
+}

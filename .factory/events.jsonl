@@ -1381,3 +1381,6 @@
 {"event": "delegated", "generated_by": "orchestrator", "at": "2026-08-18T10:42:40+00:00", "story": "FORGE-CFS-1", "detail": "run-pointer-untracked (write)"}
 {"event": "stage-contract-changed", "generated_by": "implementer", "at": "2026-08-18T11:09:03+00:00", "story": "FORGE-CFS-1", "detail": "run-pointer-untracked: task contract re-recorded mid-stage"}
 {"event": "stage-done", "generated_by": "implementer", "at": "2026-08-18T11:09:03+00:00", "story": "FORGE-CFS-1", "detail": "run-pointer-untracked The active-story pointer leaves version control"}
+{"event": "decomposed", "generated_by": "docs-decomposer", "at": "2026-08-18T11:21:23+00:00", "story": "FORGE-CFS-1", "detail": "6 task(s)"}
+{"event": "stage-start", "generated_by": "implementer", "at": "2026-08-18T11:23:14+00:00", "story": "FORGE-CFS-1", "detail": "per-event-files Events are one file each"}
+{"event": "delegated", "generated_by": "orchestrator", "at": "2026-08-18T11:29:17+00:00", "story": "FORGE-CFS-1", "detail": "per-event-files (write)"}

@@ -1,0 +1,77 @@
+{
+  "generated_by": "griller",
+  "gate": "task",
+  "task_id": "per-event-files",
+  "verdict": "pass",
+  "decision": "keep",
+  "questions_asked": 3,
+  "summary": "JIT grill of per-event-files against spec, decisions 0022/0045/0046, and completed work. Three design points (placement, filename scheme, legacy fate) resolved; contract kept, resolutions are implementation guidance.",
+  "inspected_refs": [
+    "factory/scripts/forge_cli/events.py",
+    "factory/scripts/forge_cli/board.py",
+    ".gitattributes",
+    "factory/tests/test_gates.py",
+    "docs/specs/conflict-free-story-state.md",
+    "docs/decisions/0022-conflict-free-ledgers.md",
+    "docs/decisions/0046-scoped-layout-activation-ordering.md"
+  ],
+  "current_flow": "append_event appends one JSON line to the shared .factory/events.jsonl, which needs a per-clone merge=union driver (.gitattributes) that interleaves/tears lines across worktrees. load_events reads only events.jsonl (tolerating torn lines). board and forge history read via load_events. Task 3 makes append_event write per-event files and load_events read both, retiring the union driver.",
+  "criteria_map": {
+    "recording an event creates a new file and appends to no shared ledger": "test_append_event_writes_new_file_no_shared_ledger records an event and asserts a new .factory/events/<unique>.json exists and events.jsonl is unchanged (no append)",
+    "forge history renders legacy and per-file events in one timeline": "test_history_merges_legacy_and_per_file_events seeds a legacy events.jsonl plus per-event files and asserts load_events/forge history returns both, ordered, with story/event/since/until filters intact"
+  },
+  "new_abstractions": [
+    "append_event writes .factory/events/<iso>-<seq/id>.json (0022 pattern, collision-free across worktrees); load_events unions per-event files + legacy events.jsonl. Reversible: legacy events.jsonl stays readable; no caller or board change (single-source)."
+  ],
+  "rounds": [
+    {
+      "question": "Where should per-event files live?",
+      "options": [
+        "Flat .factory/events/ dir, unconditional",
+        "Marker-gated under the story dir"
+      ],
+      "chosen": "Flat .factory/events/ dir, unconditional"
+    },
+    {
+      "question": "Per-event filename scheme (collision-free across worktrees)?",
+      "options": [
+        "0022 pattern: timestamp + unique suffix",
+        "Timestamp + content hash"
+      ],
+      "chosen": "0022 pattern: timestamp + unique suffix"
+    },
+    {
+      "question": "Freeze legacy events.jsonl read-only after retiring the union driver?",
+      "options": [
+        "Yes - freeze events.jsonl, read-only",
+        "Migrate events.jsonl to per-event files"
+      ],
+      "chosen": "Yes - freeze events.jsonl, read-only"
+    }
+  ],
+  "citations": [
+    {
+      "finding": "One record per file removes the conflict; retire the union driver",
+      "source": "docs/decisions/0022-conflict-free-ledgers.md and docs/specs/conflict-free-story-state.md#behaviour"
+    },
+    {
+      "finding": "Events touch no deferred consumer, so retirement is unconditional and marker-neutral",
+      "source": "docs/decisions/0046-scoped-layout-activation-ordering.md"
+    }
+  ],
+  "gaps": [
+    "Where should per-event files live?",
+    "Per-event filename scheme (collision-free across worktrees)?",
+    "Freeze legacy events.jsonl read-only after retiring the union driver?"
+  ],
+  "contradictions": [],
+  "resolutions": [
+    "Flat .factory/events/ dir, UNCONDITIONAL (operator 2026-08-18): append_event always writes .factory/events/<unique>.json regardless of the scoped-layout marker. Events are conflict-free by unique name and no deferred consumer reads them, so this retires the union driver now and stays marker-neutral per 0046; events keep their 'story' field for load_events filtering. Overrides the objective's 'under the story directory' wording.",
+    "0022 pattern naming (operator 2026-08-18): reuse the lessons/quickfix ledger convention (<iso>-<seq>-<actor/id>.json) that already guarantees collision-free names across concurrent worktrees and that forge history already reads.",
+    "Freeze events.jsonl read-only (operator 2026-08-18): append_event never appends to it again, so it becomes static and conflict-free even after merge=union is removed from .gitattributes; load_events keeps reading it. No migration/deletion here (that, if ever, is migration-and-vendor)."
+  ],
+  "open_items": [],
+  "input_sha256": "b28277e856b0527e0e750563820448caa3e8cb909fe67626ae145dd3ada65f3a",
+  "recorded_at": "2026-08-18T11:22:54+00:00",
+  "commit": "2101074551e5d9be865481d4fdbdf13a5d26795f"
+}

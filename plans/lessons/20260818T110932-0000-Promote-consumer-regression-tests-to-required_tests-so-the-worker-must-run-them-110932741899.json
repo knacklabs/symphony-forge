@@ -1,0 +1,12 @@
+{
+  "topic": "Promote consumer-regression tests to required_tests so the worker must run them",
+  "lesson": "A delegated worker self-verifies only against the task's required_tests + verify_commands, not the full suite. A regression in an out-of-scope consumer (e.g. board/story_detail crashing on run_state_path) is invisible to it and survives repeated re-delegation. When measurement finds such a regression, add the exact failing test to the frontier task's required_tests and re-delegate: a failing required test is feedback the worker cannot skip. Four re-delegations failed to land a 3-line guard until the board test was promoted to required.",
+  "source": "FORGE-CFS-1 run-pointer-untracked, 5 delegations 2026-08-18",
+  "applies_to": [
+    "factory/scripts/record_decomposition_from_json.py",
+    "factory/tests/**"
+  ],
+  "severity": "high",
+  "generated_by": "orchestrator",
+  "added_at": "2026-08-18T11:09:32+00:00"
+}

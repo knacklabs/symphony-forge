@@ -124,13 +124,46 @@
     {
       "id": "per-event-files",
       "title": "Events are one file each",
-      "objective": "append_event writes per-event files under the story directory (0022 pattern); forge history and the board read per-event files and legacy events.jsonl together; the union-driver dependency is retired from docs.",
+      "objective": "append_event writes each event as its own conflict-free file (retiring the events.jsonl union-merge driver) instead of appending to the shared ledger; load_events / forge history / the board read per-event files and the legacy events.jsonl together. Single-source in events.py so the ~20 callers and the board follow unchanged. Marker-neutral per decision 0046.",
       "acceptance_criteria": [
         "recording an event creates a new file and appends to no shared ledger",
         "forge history renders legacy and per-file events in one timeline"
       ],
       "dependencies": [
         "run-pointer-untracked"
+      ],
+      "write_scope": [
+        "factory/scripts/forge_cli/events.py",
+        ".gitattributes",
+        "factory/tests/test_gates.py"
+      ],
+      "verify_commands": [
+        "python3 factory/scripts/check_dual_runtime.py"
+      ],
+      "required_tests": [
+        {
+          "id": "test_append_event_writes_new_file_no_shared_ledger",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest --with psutil python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_history_merges_legacy_and_per_file_events",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest --with psutil python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        }
+      ],
+      "reviewer_focus": "Single-source append_event/load_events is the whole game: the ~20 callers and board.py read through load_events and must NOT be edited individually. Per-event files are conflict-free by unique name; append_event must STOP appending to the shared events.jsonl (that retires the union driver) and the merge=union entry for events.jsonl must be removed from .gitattributes. load_events reads per-event files AND legacy events.jsonl, preserving the story/event/since/until filters and the per-line JSONDecodeError tolerance (a torn legacy line costs one event, never the timeline). append_event stays best-effort on write (OSError swallowed) but validate_payload is NOT swallowed. Marker-neutral per 0046: events touch no deferred consumer (plans.py/pr_ready), so retirement is unconditional and does not activate the story-scoped layout. SCOPE: does not touch the callers, board.py, plans.py, or pr_ready.",
+      "plan_contracts": [
+        {
+          "id": "CFS3-C1",
+          "statement": "recording an event creates a new file and appends to no shared ledger",
+          "source": "plans/active/FORGE-CFS-1-story-state-stops-conflicting-across-prs.md#acceptance-criteria"
+        },
+        {
+          "id": "CFS3-C2",
+          "statement": "forge history renders legacy and per-file events in one timeline",
+          "source": "plans/active/FORGE-CFS-1-story-state-stops-conflicting-across-prs.md#acceptance-criteria"
+        }
       ]
     },
     {
@@ -173,5 +206,5 @@
   "epic": "accountable-engineering",
   "plan_file": "plans/active/FORGE-CFS-1-story-state-stops-conflicting-across-prs.md",
   "plan_sha256": "ba7f3d643e7332cdeb8efe17a1e82d1fd32dbe9b7719190cafc81578c2fef03b",
-  "commit": "ee08f485d071442834d6794a2ffd9e082163ca3e"
+  "commit": "2101074551e5d9be865481d4fdbdf13a5d26795f"
 }

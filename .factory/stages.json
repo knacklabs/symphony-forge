@@ -40,17 +40,45 @@
         }
       },
       "task_sha256": "9a6281dfb9fea139927daca92680af253f90bf02b6e40c2565d571e3408ba776",
-      "completed_at": "2026-08-18T11:09:03+00:00",
-      "contract_changed": {
-        "at": "2026-08-18T11:09:03+00:00",
-        "from": "4e3d0305f081eb572af48ca98b7917e598c454506489095946fa344a4ffea9df",
-        "to": "9a6281dfb9fea139927daca92680af253f90bf02b6e40c2565d571e3408ba776"
-      }
+      "completed_at": "2026-08-18T11:09:03+00:00"
     },
     {
       "id": "per-event-files",
       "title": "Events are one file each",
-      "status": "pending"
+      "status": "active",
+      "started_at": "2026-08-18T11:23:14+00:00",
+      "base_sha": "2101074551e5d9be865481d4fdbdf13a5d26795f",
+      "dirty_at_start": {
+        ".factory/decomposition.json": {
+          "digest": "82efac395902efb60cc5430493f616798a85c1a141bfb1a7da81fb3b7e75c706",
+          "git": "1 .M N... 100644 100644 100644 a9e2a263c35365a95797a3d8c37f1ccc55105fe7 a9e2a263c35365a95797a3d8c37f1ccc55105fe7 .factory/decomposition.json\u0000\u0000100644 a9e2a263c35365a95797a3d8c37f1ccc55105fe7 0\t.factory/decomposition.json\u0000\u0000H .factory/decomposition.json\u0000"
+        },
+        ".factory/events.jsonl": {
+          "digest": "e7852346f2f4ea844e31fee75bb29069ff9e307e1b3305017e355a3e11b2a4c4",
+          "git": "1 .M N... 100644 100644 100644 b5ed4e423b68db0ee4ef4367d10f569ee2a4aeed b5ed4e423b68db0ee4ef4367d10f569ee2a4aeed .factory/events.jsonl\u0000\u0000100644 b5ed4e423b68db0ee4ef4367d10f569ee2a4aeed 0\t.factory/events.jsonl\u0000\u0000H .factory/events.jsonl\u0000"
+        },
+        ".factory/grills/tasks/per-event-files.json": {
+          "digest": "47472042c0d74b8629bd921dc434d25250beee24ac3bfed47c3bef3a48b51e79",
+          "git": "? .factory/grills/tasks/per-event-files.json\u0000\u0000\u0000"
+        },
+        ".factory/run.json": {
+          "digest": "b0b3b384a2310622d8194870f8391c2158b97324a964edd1b8301b42e4492fa8",
+          "git": "1 .M N... 100644 100644 100644 9c171b967be4a57340f3f7c540b8f3a34b463b8b 9c171b967be4a57340f3f7c540b8f3a34b463b8b .factory/run.json\u0000\u0000100644 9c171b967be4a57340f3f7c540b8f3a34b463b8b 0\t.factory/run.json\u0000\u0000H .factory/run.json\u0000"
+        },
+        ".factory/stages.json": {
+          "digest": "cbe7c79f8202ff9129838ce7f7ed3acc9ef1863a7769964e093e710933e8fee2",
+          "git": "1 .M N... 100644 100644 100644 a50f79934e217cadeabc735433d15a8473a492a2 a50f79934e217cadeabc735433d15a8473a492a2 .factory/stages.json\u0000\u0000100644 a50f79934e217cadeabc735433d15a8473a492a2 0\t.factory/stages.json\u0000\u0000H .factory/stages.json\u0000"
+        },
+        "plans/lessons/20260818T110932-0000-Promote-consumer-regression-tests-to-required_tests-so-the-worker-must-run-them-110932741899.json": {
+          "digest": "2d91cb0c89e8e7d1a3aea58235586bdd27fab98fff60149ac5ed9808361524d6",
+          "git": "? plans/lessons/20260818T110932-0000-Promote-consumer-regression-tests-to-required_tests-so-the-worker-must-run-them-110932741899.json\u0000\u0000\u0000"
+        },
+        "plans/lessons/20260818T110932-0000-quickfix-records-touched-files--it-does-NOT-unlock-the-write-lock-110932869984.json": {
+          "digest": "74a18a64ff1c9b7ca835de036661062e302b8392638ba8af648deb32c6f9df13",
+          "git": "? plans/lessons/20260818T110932-0000-quickfix-records-touched-files--it-does-NOT-unlock-the-write-lock-110932869984.json\u0000\u0000\u0000"
+        }
+      },
+      "task_sha256": "3e6d2fa7856048b5eb7d4116c2eacaf4809703bd36806708ff2f732243f38c8b"
     },
     {
       "id": "ship-in-place",

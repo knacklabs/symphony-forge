@@ -10,10 +10,8 @@
 .gstack/**/*.jsonl merge=union
 plans/lessons.jsonl merge=union
 plans/quickfixes.jsonl merge=union
-# Story timelines and worker signals: task-scoped, cleaned at every intake and
-# archived at ship, so they never accumulate across stories the way the durable
-# ledgers above did.
-.factory/*.jsonl merge=union
+# Worker signals remain one task-scoped legacy ledger.
+.factory/signals.jsonl merge=union
 .factory/history/**/*.jsonl merge=union
 
 # Git Bash executes this launcher on every platform; CRLF breaks POSIX parsing.

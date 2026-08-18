@@ -34,6 +34,7 @@ sys.path.insert(0, str(HARNESS / "factory" / "scripts"))
 from factory_lib import (
     grounding_digest, require_task_grill, task_frontier_state, task_rows,
 )
+from forge_cli.events import load_events
 from forge_cli.stages import task_digest, write_stages
 from record_signoff import REQUIRED_BRIEF_HEADINGS
 
@@ -4563,17 +4564,16 @@ def test_roadmap_fill_sets_blank_field_on_pending(repo):
     assert item["epic"] == "billing"
     assert item["spec"] == "docs/specs/base.md"
     assert item["depends_on"] == ["SIGNOFF-0"]
-    events = [json.loads(line) for line in
-              (repo / ".factory" / "events.jsonl").read_text().splitlines()]
+    events = load_events(repo)
     filled = [event for event in events if event["event"] == "roadmap-filled"]
     assert len(filled) == 1 and filled[0]["story"] == "ENG-9"
 
     roadmap_before = path.read_bytes()
-    events_before = (repo / ".factory" / "events.jsonl").read_bytes()
+    events_before = load_events(repo)
     code, out = run(repo, "forge.py", *args)
     assert code == 0 and "already has the requested values" in out, out
     assert path.read_bytes() == roadmap_before
-    assert (repo / ".factory" / "events.jsonl").read_bytes() == events_before
+    assert load_events(repo) == events_before
 
 
 def test_roadmap_fill_refuses_nonblank_field(repo):
@@ -8294,10 +8294,7 @@ def _merged_pr(number: int, title: str, branch: str) -> dict:
 
 
 def _backfill_events(repo: Path) -> list[dict]:
-    path = repo / ".factory" / "events.jsonl"
-    if not path.exists():
-        return []
-    return [json.loads(line) for line in path.read_text().splitlines()]
+    return load_events(repo)
 
 
 def test_project_backfill_unique_match_still_links(repo):
@@ -8504,7 +8501,7 @@ def test_project_backfill_is_idempotent(repo):
     first = backfill_project(repo, gh=gh_fixture)
     before = {
         "roadmap": (repo / "plans" / "roadmap.json").read_bytes(),
-        "events": (repo / ".factory" / "events.jsonl").read_bytes(),
+        "events": load_events(repo),
     }
     second = backfill_project(repo, gh=gh_fixture)
 
@@ -8513,7 +8510,7 @@ def test_project_backfill_is_idempotent(repo):
                       "reconstructed": 0}
     assert calls == 1
     assert (repo / "plans" / "roadmap.json").read_bytes() == before["roadmap"]
-    assert (repo / ".factory" / "events.jsonl").read_bytes() == before["events"]
+    assert load_events(repo) == before["events"]
 
 
 def test_harness_health_runs_project_audit_without_backfill():
@@ -8638,8 +8635,7 @@ def test_story_timeline_is_recorded_and_archived_with_its_story(repo, tmp_path):
     intake(repo)
     save_plan(repo, tmp_path)
     record_skeleton_then_frontier(repo, DECOMP["tasks"])
-    events = [json.loads(line) for line in
-              (repo / ".factory" / "events.jsonl").read_text().splitlines()]
+    events = load_events(repo)
     kinds = [e["event"] for e in events]
     assert "intake" in kinds and "plan-approved" in kinds and "decomposed" in kinds
     # every line says WHO: a timeline in an agent-built repo that cannot
@@ -8654,12 +8650,8 @@ def test_story_timeline_is_recorded_and_archived_with_its_story(repo, tmp_path):
                 (repo / ".factory" / "history" / "ENG-1" / "events.jsonl")
                 .read_text().splitlines()]
     assert "shipped" in [e["event"] for e in archived]
-    # The archive is a COPY: the live ledger is append-only and keeps every
-    # line. Removing lines from a union-merged file does not survive a parallel
-    # branch that still holds them — the removal grows back on merge, so it was
-    # never a removal at all.
-    live = [json.loads(line) for line in
-            (repo / ".factory" / "events.jsonl").read_text().splitlines()]
+    # The archive is a copy: the live per-event records remain available.
+    live = load_events(repo)
     assert [e for e in live if e.get("story") == "ENG-1"], live
     assert "client-signoff" in [e["event"] for e in live]
 
@@ -9512,54 +9504,46 @@ def test_adhoc_capture_is_visible_debt_not_a_build_bypass(repo, tmp_path):
     assert code == 0, out
 
 
-def test_event_ledger_merges_instead_of_conflicting(repo):
-    """Two stories shipping from parallel worktrees both append here. Without
-    the union driver the timeline is exactly the file that conflicts."""
+def test_append_event_writes_new_file_no_shared_ledger(repo):
     attrs = (repo / ".gitattributes").read_text()
-    # built-in union: a custom driver is registered per clone by a hook that
-    # may not have run, and this file must never conflict
-    assert ".factory/*.jsonl merge=union" in attrs
     ledger = repo / ".factory" / "events.jsonl"
     ledger.parent.mkdir(exist_ok=True)
-    ledger.write_text('{"event": "intake", "generated_by": "orchestrator"}\n')
-    git(repo, "add", "-f", ".factory/events.jsonl", ".gitattributes")
-    git(repo, "commit", "-q", "-m", "base ledger")
-    base = head(repo)
-    git(repo, "checkout", "-q", "-b", "story-a")
-    ledger.write_text(ledger.read_text() + '{"event": "stage-done", "story": "A"}\n')
-    git(repo, "add", "-f", ".factory/events.jsonl")
-    git(repo, "commit", "-q", "-m", "story A")
-    git(repo, "checkout", "-q", base)
-    git(repo, "checkout", "-q", "-b", "story-b")
-    ledger.write_text('{"event": "intake", "generated_by": "orchestrator"}\n'
-                      '{"event": "stage-done", "story": "B"}\n')
-    git(repo, "add", "-f", ".factory/events.jsonl")
-    git(repo, "commit", "-q", "-m", "story B")
-    git(repo, "merge", "--no-edit", "story-a")  # asserts a clean merge
-    merged = ledger.read_text()
-    assert '"story": "A"' in merged and '"story": "B"' in merged, merged
-    assert "<<<<<<<" not in merged
+    ledger.write_text('{"event": "legacy"}\n')
+    before = ledger.read_bytes()
 
-    # …and a union-merged file cannot also be PRUNED: whatever one branch
-    # removes, a parallel branch that still holds those lines restores on
-    # merge. That is why ship copies a story's timeline into its archive
-    # rather than moving it out of the live ledger.
-    shared = head(repo)                      # both branches below have A and B
-    git(repo, "checkout", "-q", "-b", "pruner")
-    ledger.write_text('{"event": "intake", "generated_by": "orchestrator"}\n')
-    git(repo, "add", "-f", ".factory/events.jsonl")
-    git(repo, "commit", "-q", "-m", "prune the shipped story's lines")
-    assert '"story": "A"' not in ledger.read_text()
-    git(repo, "checkout", "-q", shared)
-    git(repo, "checkout", "-q", "-b", "keeper")
-    ledger.write_text(ledger.read_text() + '{"event": "stage-done", "story": "C"}\n')
-    git(repo, "add", "-f", ".factory/events.jsonl")
-    git(repo, "commit", "-q", "-m", "story C appends")
-    git(repo, "checkout", "-q", "pruner")
-    git(repo, "merge", "--no-edit", "keeper")
-    assert '"story": "A"' in ledger.read_text(), (
-        "the pruned lines did NOT come back — if this ever fails, pruning has "
-        "become safe and pr_ready could move rather than copy the timeline")
+    code, out = run(repo, "forge.py", "pr-link", "ENG-1", "acme/widgets#42")
+    assert code == 0, out
+
+    event_files = list((repo / ".factory" / "events").glob("*.json"))
+    assert len(event_files) == 1
+    written = json.loads(event_files[0].read_text())
+    assert written["event"] == "pr-linked"
+    assert written["story"] == "ENG-1"
+    assert ledger.read_bytes() == before
+    assert ".factory/*.jsonl merge=union" not in attrs
+    assert ".factory/signals.jsonl merge=union" in attrs
+
+
+def test_history_merges_legacy_and_per_file_events(repo):
+    ledger = repo / ".factory" / "events.jsonl"
+    ledger.parent.mkdir(exist_ok=True)
+    ledger.write_text(
+        '{"event": "intake", "at": "2026-07-01T09:00:00+00:00", '
+        '"story": "ENG-1", "detail": "legacy event"}\n'
+        "torn legacy line\n"
+    )
+    event_dir = repo / ".factory" / "events"
+    event_dir.mkdir()
+    (event_dir / "one.json").write_text(json.dumps({
+        "event": "stage-done", "at": "2026-07-02T10:00:00+00:00",
+        "story": "ENG-1", "detail": "per-file event",
+    }))
+
+    code, out = run(repo, "forge.py", "history", "--story", "ENG-1")
+    assert code == 0, out
+    assert "legacy event" in out
+    assert "per-file event" in out
+    assert out.index("legacy event") < out.index("per-file event")
 
 
 def test_forge_history_filters_by_story_type_and_date(repo):
@@ -9651,13 +9635,12 @@ def test_pr_link_event_survives_a_clone_with_no_remote(repo, tmp_path):
     code, out = run(repo, "forge.py", "pr-link", "ENG-1", reference)
     assert code == 0, out
     assert (repo / ".factory" / "run.json").read_bytes() == before
-    linked = json.loads(
-        (repo / ".factory" / "events.jsonl").read_text().splitlines()[-1])
+    linked = load_events(repo)[-1]
     assert linked["event"] == "pr-linked"
     assert linked["story"] == "ENG-1"
     assert linked["detail"] == reference
 
-    git(repo, "add", "-f", ".factory/events.jsonl")
+    git(repo, "add", "-f", ".factory/events")
     git(repo, "commit", "-q", "-m", "link shipped PR")
     clone = tmp_path / "clone"
     git(repo.parent, "clone", "-q", str(repo), str(clone))
@@ -11292,8 +11275,7 @@ def test_stage_done_ledgers_a_contract_rewritten_mid_stage(repo, tmp_path):
         (repo / ".factory" / "stages.json").read_text())["stages"]
         if s["id"] == "T1")
     assert stage["contract_changed"]["from"] != stage["contract_changed"]["to"]
-    events = (repo / ".factory" / "events.jsonl").read_text()
-    assert "stage-contract-changed" in events
+    assert "stage-contract-changed" in [event["event"] for event in load_events(repo)]
 
 
 def test_decomposition_refuses_to_remove_an_active_task(repo, tmp_path):
@@ -11527,8 +11509,9 @@ def test_stage_done_incomplete_leaves_stage_open(repo, tmp_path):
     stages = json.loads((repo / ".factory" / "stages.json").read_text())["stages"]
     assert stages[0]["status"] == "active"
     assert stages[0]["incomplete"] == "the retry path is unwritten"
-    events = (repo / ".factory" / "events.jsonl").read_text()
-    assert "stage-incomplete" in events and "retry path" in events
+    events = load_events(repo)
+    assert any(event["event"] == "stage-incomplete"
+               and "retry path" in event.get("detail", "") for event in events)
     # and it clears once the stage really closes
     code, out = run(repo, "forge.py", "stage", "done", "T1")
     assert code == 0, out
