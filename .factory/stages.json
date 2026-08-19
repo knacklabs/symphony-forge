@@ -351,7 +351,7 @@
     {
       "id": "ordered-closeout",
       "title": "Closeout is ordered and pr_ready requires a clean tree",
-      "status": "active",
+      "status": "done",
       "started_at": "2026-08-19T10:03:27+00:00",
       "base_sha": "9a368ab99aebf5bc6e17d03d1a94a9cae35c9a49",
       "dirty_at_start": {
@@ -501,7 +501,8 @@
         "product_tree_digest": "0c26879ba6414774f292bcc90113d2e9ea810be247486699ae8ff18abd2ee250",
         "recorded_at": "2026-08-19T10:19:44+00:00",
         "generated_by": "autoreview"
-      }
+      },
+      "completed_at": "2026-08-19T10:20:32+00:00"
     },
     {
       "id": "hygiene-content-pins-and-doc-debts",
