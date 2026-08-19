@@ -344,7 +344,7 @@ def record_task_grill(repo: Path, task: dict, verdict: str = "pass",
         return code, out
     source = repo / ".factory" / "task-plan-drafts" / f"{task['id']}.md"
     source.parent.mkdir(parents=True, exist_ok=True)
-    source.write_text(f"# Task plan — {task['id']}\n\nImplement the recorded contract.\n")
+    source.write_text(f"# Task plan — {task['id']}\n\nImplement the recorded contract.\n", encoding="utf-8")
     code, plan_out = run(
         repo, "forge.py", "task", "plan", "save", task["id"],
         "--from", str(source),
@@ -10844,7 +10844,7 @@ def seed_task_start_inputs(
     grill.write_text(json.dumps({"verdict": "pass", "approved_by": "Test Human"}))
     task_plan = scoped / "task-plans" / f"{target_id}.md"
     task_plan.parent.mkdir(parents=True, exist_ok=True)
-    task_plan.write_text(f"# Task plan — {target_id}\n")
+    task_plan.write_text(f"# Task plan — {target_id}\n", encoding="utf-8")
     return {
         "plan": plan,
         "decomposition": scoped / "decomposition.json",
@@ -10901,7 +10901,8 @@ def prepare_task_pr_ready(repo: Path, tmp_path: Path) -> Path:
         main_sha = git(repo, "rev-parse", "origin/main")
         git(repo, "push", "-q", str(remote), f"{main_sha}:refs/heads/main")
     start_stage(repo, tmp_path, STAGE_TASK, launch=False)
-    code, out = run(repo, "forge.py", "delegate", "T1", "--print-only")
+    code, out = run(repo, "forge.py", "delegate", "T1", "--print-only",
+                    env=fake_companion_env(tmp_path))
     assert code == 0, out
     control = delegation_ledger(repo).parent
     stage = json.loads((control / "stages.json").read_text())["stages"][0]
@@ -11147,7 +11148,8 @@ def test_require_task_worktree_noops_for_story_level_run(repo, tmp_path):
     assert pointer.get("branch") and "task_id" not in pointer
     code, out = run(repo, "forge.py", "stage", "start", "T1")
     assert code == 0, out
-    code, out = run(repo, "forge.py", "delegate", "T1", "--print-only")
+    code, out = run(repo, "forge.py", "delegate", "T1", "--print-only",
+                    env=fake_companion_env(tmp_path))
     assert code == 0, out
 
 
@@ -11176,11 +11178,13 @@ def test_stage_start_and_delegate_refuse_from_wrong_task_worktree(repo, tmp_path
     assert code == 0, out
     pointer["branch"] = "feat/ENG-1-wrong"
     (control / "run.json").write_text(json.dumps(pointer))
-    code, out = run(repo, "forge.py", "delegate", "T1", "--print-only")
+    code, out = run(repo, "forge.py", "delegate", "T1", "--print-only",
+                    env=fake_companion_env(tmp_path))
     assert code != 0 and "task worktree required" in out, out
     pointer["branch"] = current_branch
     (control / "run.json").write_text(json.dumps(pointer))
-    code, out = run(repo, "forge.py", "delegate", "T1", "--print-only")
+    code, out = run(repo, "forge.py", "delegate", "T1", "--print-only",
+                    env=fake_companion_env(tmp_path))
     assert code == 0, out
 
 
