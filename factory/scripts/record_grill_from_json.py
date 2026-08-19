@@ -231,6 +231,8 @@ if args.gate == "task":
             f"payload task_id {payload['task_id']!r} does not match --task {args.task!r}"
         )
     task = _validate_task_grill(root, payload, args.task)
+    for field in ("approved_task_plan_sha256", "approved_by", "approved_at"):
+        payload.pop(field, None)
     payload["task_id"] = args.task
     payload["input_sha256"] = grounding_digest(root, task)
 if args.gate == "plan":

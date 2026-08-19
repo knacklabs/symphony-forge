@@ -324,14 +324,29 @@ def seed_task_grill_frontier(repo: Path, task: dict) -> None:
     }))
 
 
-def record_task_grill(repo: Path, task: dict,
-                      verdict: str = "pass") -> tuple[int, str]:
+def record_task_grill(repo: Path, task: dict, verdict: str = "pass",
+                      *, approve: bool = True) -> tuple[int, str]:
     payload = task_grill_payload(task, verdict)
-    return run(
+    code, out = run(
         repo, "record_grill_from_json.py", "--gate", "task",
         "--task", task["id"],
         stdin=json.dumps(payload),
     )
+    if code != 0 or verdict != "pass" or not approve:
+        return code, out
+    source = repo / ".factory" / "task-plan-drafts" / f"{task['id']}.md"
+    source.parent.mkdir(parents=True, exist_ok=True)
+    source.write_text(f"# Task plan — {task['id']}\n\nImplement the recorded contract.\n")
+    code, plan_out = run(
+        repo, "forge.py", "task", "plan", "save", task["id"],
+        "--from", str(source),
+    )
+    if code != 0:
+        return code, out + plan_out
+    code, approve_out = run(
+        repo, "forge.py", "task", "approve", task["id"], "--by", "Test Human",
+    )
+    return code, out + plan_out + approve_out
 
 
 def delegate_task_grill_test(test):
@@ -14204,6 +14219,81 @@ def test_board_task_rows_match_frontier_states(repo, tmp_path):
     write_stages(repo, stages)
     assert task_frontier_state(repo) is None
     assert task_rows(repo)[0]["state"] == "done"
+
+
+def test_stage_start_and_delegate_refuse_without_approved_task_plan(repo, tmp_path):
+    sign_off(repo)
+    intake(repo)
+    save_plan(repo, tmp_path)
+    record_skeleton_then_frontier(repo, [STAGE_TASK])
+    code, out = record_task_grill(repo, STAGE_TASK, approve=False)
+    assert code == 0, out
+
+    code, out = run(repo, "forge.py", "stage", "start", "T1")
+    assert code != 0 and "Task plan required first" in out
+
+    source = tmp_path / "T1.md"
+    source.write_text("# T1 plan\n\nImplement the bounded task.\n")
+    code, out = run(
+        repo, "forge.py", "task", "plan", "save", "T1", "--from", str(source),
+    )
+    assert code == 0, out
+    code, out = run(repo, "forge.py", "stage", "start", "T1")
+    assert code != 0 and "Task plan approval required" in out
+
+    code, out = run(
+        repo, "forge.py", "task", "approve", "T1", "--by", "Test Human",
+    )
+    assert code == 0, out
+    code, out = run(repo, "forge.py", "stage", "start", "T1")
+    assert code == 0, out
+    task_plan = story_state(repo) / "task-plans" / "T1.md"
+    task_plan.write_text(task_plan.read_text() + "\nChanged after approval.\n")
+    code, out = run(
+        repo, "forge.py", "delegate", "T1", env=fake_companion_env(tmp_path),
+    )
+    assert code != 0 and "Task plan approval required" in out
+    assert not delegation_ledger(repo).exists()
+
+
+def test_forge_next_and_board_route_author_task_plan_and_await_approval(
+        repo, tmp_path):
+    sign_off(repo)
+    intake(repo)
+    save_plan(repo, tmp_path)
+    record_skeleton_then_frontier(repo, [STAGE_TASK])
+    code, out = record_task_grill(repo, STAGE_TASK, approve=False)
+    assert code == 0, out
+
+    from forge_cli.board import next_actions
+
+    def assert_route(frontier: str, row_state: str, command: str) -> None:
+        assert task_frontier_state(repo)[0] == frontier
+        assert task_rows(repo)[0]["state"] == row_state
+        code, output = run(repo, "forge.py", "next")
+        assert code == 0, output
+        action = next(
+            line.split(". ", 1)[1]
+            for line in output.splitlines() if ". [dev]" in line
+        )
+        assert command in action
+        assert action in next_actions(repo)["steps"]
+
+    assert_route("author-task-plan", "author-task-plan", "task plan save T1")
+    source = tmp_path / "T1.md"
+    source.write_text("# T1 plan\n\nImplement the bounded task.\n")
+    code, out = run(
+        repo, "forge.py", "task", "plan", "save", "T1", "--from", str(source),
+    )
+    assert code == 0, out
+    assert_route("await-approval", "await-approval", "task approve T1")
+
+    code, out = run(
+        repo, "forge.py", "task", "approve", "T1", "--by", "Test Human",
+    )
+    assert code == 0, out
+    assert task_frontier_state(repo)[0] == "stage-start"
+    assert task_rows(repo)[0]["state"] == "grilled"
 
 
 def test_board_task_rows_show_grill_freshness_and_budget(

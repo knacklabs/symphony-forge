@@ -61,7 +61,10 @@ from forge_cli import stages as stages_mod
 from forge_cli import gstack as gstack_mod
 from forge_cli import history as history_mod
 from forge_cli import signal as signal_mod
-from forge_cli import decisions, doctor, phase, plans, roadmap, scaffold, specs, team, upgrade
+from forge_cli import (
+    decisions, doctor, phase, plans, roadmap, scaffold, specs, tasks as tasks_mod,
+    team, upgrade,
+)
 
 
 def main() -> None:
@@ -175,6 +178,27 @@ def main() -> None:
     p_assume.add_argument("--issue", help="issue key (defaults to .factory/run.json)")
     p_assume.add_argument("--repo")
     p_assume.set_defaults(func=plans.cmd_assume)
+
+    p_task = sub.add_parser("task", help="manage per-task plans and approval")
+    task_sub = p_task.add_subparsers(dest="task_command", required=True)
+    p_task_plan = task_sub.add_parser("plan", help="manage a task plan")
+    task_plan_sub = p_task_plan.add_subparsers(
+        dest="task_plan_command", required=True,
+    )
+    p_task_plan_save = task_plan_sub.add_parser(
+        "save", help="save a plan-mode plan for one task",
+    )
+    p_task_plan_save.add_argument("id", help="task id")
+    p_task_plan_save.add_argument("--from", dest="source", required=True)
+    p_task_plan_save.add_argument("--repo")
+    p_task_plan_save.set_defaults(func=tasks_mod.cmd_plan_save)
+    p_task_approve = task_sub.add_parser(
+        "approve", help="record human approval of a saved task plan",
+    )
+    p_task_approve.add_argument("id", help="task id")
+    p_task_approve.add_argument("--by", required=True, help="approving human")
+    p_task_approve.add_argument("--repo")
+    p_task_approve.set_defaults(func=tasks_mod.cmd_approve)
 
     p_qf = sub.add_parser("quickfix", help="bounded, ledgered planning-lock escape hatch")
     qf_sub = p_qf.add_subparsers(dest="quickfix_command", required=True)

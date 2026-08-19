@@ -25,7 +25,10 @@
     "new_abstractions": "list",
     "rounds": "list",
     "citations": "list",
-    "escalation_packet": "dict"
+    "escalation_packet": "dict",
+    "approved_task_plan_sha256": "str",
+    "approved_by": "str",
+    "approved_at": "str"
   },
   "verdict_note": "verdict: pass | blocked. pass requires zero unresolved blocking gaps/contradictions — every entry in gaps/contradictions must have a matching resolution (a doc edit or decision record) or be explicitly parked in open_items as non-blocking."
 }

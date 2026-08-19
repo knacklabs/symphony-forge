@@ -274,6 +274,16 @@ def cmd_next(args: argparse.Namespace) -> None:
                         f"[dev] Grill {task_id} with factory/prompts/griller.md --gate "
                         "task; resolve findings and record the digest-bound pass"
                     )
+                elif frontier == "author-task-plan":
+                    steps.append(
+                        f"[dev] Enter plan mode and author {task_id}, then save it: "
+                        f"./forge task plan save {task_id} --from <path>"
+                    )
+                elif frontier == "await-approval":
+                    steps.append(
+                        f"[dev] Await human approval, then record it: "
+                        f"./forge task approve {task_id} --by \"<name>\""
+                    )
                 elif frontier == "stage-start":
                     steps.append(f"[dev] Start {task_id}: ./forge stage start {task_id}")
                 elif frontier == "delegate":

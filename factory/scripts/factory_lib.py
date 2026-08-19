@@ -1255,6 +1255,24 @@ def _task_grill_fresh(root: Path, task: dict, grill: dict) -> bool:
     )
 
 
+def _task_plan_state(root: Path, task: dict, grill: dict) -> str:
+    """Derive the post-grill task-plan state without storing a status."""
+    task_id = task.get("id")
+    key = _active_story_key(root)
+    plan = evidence_path(root, key, f"task-plans/{task_id}.md")
+    if not plan.is_file():
+        return "author-task-plan"
+    approved = (
+        isinstance(grill.get("approved_by"), str)
+        and bool(grill["approved_by"].strip())
+        and isinstance(grill.get("approved_at"), str)
+        and bool(grill["approved_at"].strip())
+        and grill.get("approved_task_plan_sha256")
+        == plan_digest_without_assumptions(plan)
+    )
+    return "approved" if approved else "await-approval"
+
+
 def task_rows(root: Path) -> list[dict]:
     """Derive every live task row from the same inputs as frontier routing."""
     tasks = load_json(
@@ -1281,8 +1299,11 @@ def task_rows(root: Path) -> list[dict]:
             state = "active"
         elif not _task_contract_complete(task):
             state = "skeleton"
+        elif not fresh:
+            state = "ready"
         else:
-            state = "grilled" if fresh else "ready"
+            plan_state = _task_plan_state(root, task, grill)
+            state = "grilled" if plan_state == "approved" else plan_state
 
         budget = None
         if state == "active":
@@ -1347,14 +1368,19 @@ def task_frontier_state(root: Path) -> tuple[str, dict] | None:
     key = _active_story_key(root)
     grill_path = evidence_path(root, key, f"grills/tasks/{task_id}.json")
     grill = load_json(grill_path, default={})
-    if _task_grill_fresh(root, frontier, grill):
-        stage = stage_by_id.get(task_id, {})
-        state = "delegate" if stage.get("status") == "active" else "stage-start"
-        return state, frontier
-    return "grill", frontier
+    if not _task_grill_fresh(root, frontier, grill):
+        return "grill", frontier
+    plan_state = _task_plan_state(root, frontier, grill)
+    if plan_state != "approved":
+        return plan_state, frontier
+    stage = stage_by_id.get(task_id, {})
+    state = "delegate" if stage.get("status") == "active" else "stage-start"
+    return state, frontier
 
 
-def require_ready_task(root: Path, task_id: str) -> dict:
+def require_ready_task(
+    root: Path, task_id: str, *, require_approval: bool = True,
+) -> dict:
     """Require the JIT execution contract and its fresh, passing grill."""
     tasks = load_json(
         protected_decomposition_state_path(root), default={}
@@ -1388,6 +1414,22 @@ def require_ready_task(root: Path, task_id: str) -> dict:
             )
 
     require_task_grill(root, task_id, task)
+    if require_approval:
+        key = _active_story_key(root)
+        grill = load_json(
+            evidence_path(root, key, f"grills/tasks/{task_id}.json"), default={},
+        )
+        plan_state = _task_plan_state(root, task, grill)
+        if plan_state == "author-task-plan":
+            raise SystemExit(
+                f"Task plan required first: author {task_id} in plan mode, then run "
+                f"`./forge task plan save {task_id} --from <path>`."
+            )
+        if plan_state == "await-approval":
+            raise SystemExit(
+                f"Task plan approval required: a human must approve the current "
+                f"{task_id} plan with `./forge task approve {task_id} --by \"<name>\"`."
+            )
     return task
 
 
