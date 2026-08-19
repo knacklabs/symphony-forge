@@ -19,6 +19,8 @@ from factory_lib import (
     run_state_path,
     story_dir,
     story_uses_scoped_layout,
+    task_marker_on_main,
+    task_marker_path,
     task_seal_shared_problems,
     tests_state_path,
     verify_state_path,
@@ -101,6 +103,17 @@ if not plan_files and not (run_state.get("phase") == "pr-ready" and archived_pla
     )
 if not decomposition:
     missing.append(".factory/decomposition.json")
+if bool(run_state.get("base_main_sha")) and decomposition:
+    missing_markers = [
+        task_marker_path(issue_key, task["id"]).as_posix()
+        for task in decomposition.get("tasks", [])
+        if not task_marker_on_main(root, issue_key, task["id"])
+    ]
+    if missing_markers:
+        missing.append(
+            "all task markers on origin/main before story closeout: "
+            + ", ".join(missing_markers)
+        )
 missing.extend(require_closeout_order(root))
 
 # Automated proof remains a separate readiness requirement; functional proof

@@ -293,9 +293,9 @@ def cmd_next(args: argparse.Namespace) -> None:
             and tests.get("commit") == head
         )
         outcome = load_outcome(base) or {}
-        if open_stages:
+        frontier_state = task_frontier_state(base)
+        if open_stages or frontier_state:
             phase("implementing")
-            frontier_state = task_frontier_state(base)
             if frontier_state:
                 frontier, task = frontier_state
                 task_id = task["id"]
@@ -325,6 +325,11 @@ def cmd_next(args: argparse.Namespace) -> None:
                     steps.append(f"[dev] Start {task_id}: ./forge stage start {task_id}")
                 elif frontier == "delegate":
                     steps.append(f"[dev] Delegate {task_id}: ./forge delegate {task_id}")
+                elif frontier == "await-merge":
+                    steps.append(
+                        f"[dev] Await {task_id} merge into main; its task marker is "
+                        "not on origin/main yet, then rerun ./forge next"
+                    )
                 if user_facing:
                     steps[-1] += (
                         " — User-facing task: emil-design-eng + frontend-design are "

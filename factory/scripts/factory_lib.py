@@ -1492,6 +1492,8 @@ def _task_plan_state(root: Path, task: dict, grill: dict) -> str:
 
 def task_rows(root: Path) -> list[dict]:
     """Derive every live task row from the same inputs as frontier routing."""
+    run_state = load_json(run_state_path(root), default={})
+    is_task_level = bool(run_state.get("base_main_sha"))
     tasks = load_json(
         protected_decomposition_state_path(root), default={}
     ).get("tasks", [])
@@ -1502,16 +1504,21 @@ def task_rows(root: Path) -> list[dict]:
         if isinstance(stage, dict)
     }
     rows = []
+    key = _active_story_key(root)
     for task in tasks:
         task_id = task.get("id")
         stage = stage_by_id.get(task_id, {})
-        key = _active_story_key(root)
         grill_path = evidence_path(root, key, f"grills/tasks/{task_id}.json")
         grill = load_json(grill_path, default={})
         fresh = _task_grill_fresh(root, task, grill) if grill else False
         status = stage.get("status")
-        if status == "done":
+        marker_present = (
+            task_marker_on_main(root, key, task_id) if is_task_level else False
+        )
+        if marker_present or (not is_task_level and status == "done"):
             state = "done"
+        elif is_task_level and status == "done":
+            state = "await-merge"
         elif status == "active":
             state = "active"
         elif not _task_contract_complete(task):
@@ -1558,6 +1565,8 @@ def task_rows(root: Path) -> list[dict]:
 
 def task_frontier_state(root: Path) -> tuple[str, dict] | None:
     """Return the next JIT action and earliest unfinished task, without raising."""
+    run_state = load_json(run_state_path(root), default={})
+    is_task_level = bool(run_state.get("base_main_sha"))
     tasks = load_json(
         protected_decomposition_state_path(root), default={}
     ).get("tasks", [])
@@ -1567,22 +1576,30 @@ def task_frontier_state(root: Path) -> tuple[str, dict] | None:
         for stage in stages.get("stages", [])
         if isinstance(stage, dict)
     }
+    key = _active_story_key(root)
     frontier = next(
         (
             candidate
             for candidate in tasks
-            if stage_by_id.get(candidate.get("id"), {}).get("status") != "done"
+            if (
+                not task_marker_on_main(root, key, candidate.get("id"))
+                if is_task_level else
+                stage_by_id.get(candidate.get("id"), {}).get("status") != "done"
+            )
         ),
         None,
     )
     if frontier is None:
         return None
     task_id = frontier.get("id")
+    stage = stage_by_id.get(task_id, {})
+
+    if is_task_level and stage.get("status") == "done":
+        return "await-merge", frontier
 
     if not _task_contract_complete(frontier):
         return "author-contract", frontier
 
-    key = _active_story_key(root)
     grill_path = evidence_path(root, key, f"grills/tasks/{task_id}.json")
     grill = load_json(grill_path, default={})
     if not _task_grill_fresh(root, frontier, grill):
@@ -1590,7 +1607,6 @@ def task_frontier_state(root: Path) -> tuple[str, dict] | None:
     plan_state = _task_plan_state(root, frontier, grill)
     if plan_state != "approved":
         return plan_state, frontier
-    stage = stage_by_id.get(task_id, {})
     state = "delegate" if stage.get("status") == "active" else "stage-start"
     return state, frontier
 

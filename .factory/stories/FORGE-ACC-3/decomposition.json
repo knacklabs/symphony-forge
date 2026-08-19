@@ -433,6 +433,51 @@
       ],
       "dependencies": [
         "task-pr-gate"
+      ],
+      "write_scope": [
+        "factory/scripts/factory_lib.py",
+        "factory/scripts/forge_cli/phase.py",
+        "factory/scripts/pr_ready.py",
+        "factory/scripts/check_pr_ticket.py",
+        "factory/tests/test_gates.py"
+      ],
+      "verify_commands": [
+        "python3 factory/scripts/check_dual_runtime.py"
+      ],
+      "required_tests": [
+        {
+          "id": "test_task_frontier_awaits_marker_on_main_between_tasks",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest --with psutil python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_story_closeout_requires_all_task_markers_and_completed_stories_reads_shipped",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest --with psutil python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_story_level_frontier_unchanged_without_task_markers",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest --with psutil python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        }
+      ],
+      "review_budget": {
+        "max_changed_files": 8,
+        "max_changed_lines": 450,
+        "reason": "Marker-aware frontier + await-merge routing + story-closeout task-marker gate + completed_stories CFS-1 fix span four coupled seams; kept under one capability with a backward-compat story-level test."
+      },
+      "reviewer_focus": "CRITICAL backward-compat (task 8's lesson): the marker-aware behavior applies ONLY to task-level runs; a story-level run (like ACC-3 itself: run pointer has NO base_main_sha, no task_id) MUST keep the current stage-status-driven frontier and closeout unchanged. Gate every new behavior on `is_task_level = bool(run-pointer base_main_sha)`. (1) task_frontier_state: for task-level runs add an `await-merge` state after a task's stage is done until task_marker_on_main(root, key, id) is true (reuse task 9's helper), and select the earliest task whose marker is absent from main; for story-level runs, UNCHANGED (earliest stage!=done). (2) phase.py: route exactly one per-task frontier state incl. await-merge; task_rows uses the SAME predicates so the board cannot disagree; story-level routing unchanged. (3) pr_ready (story closeout): for task-level runs require EVERY decomposition task marker present on the closeout main base before verify+review+outcome+done-flip (an evidence-only story-closeout PR carries the flip); story-level closeout UNCHANGED (task 6 chain). (4) the CFS-1 completed-story recognition lives INLINE in factory/scripts/check_pr_ticket.py (a `.factory/history/<KEY>/` startswith check, ~line 171), NOT in factory_lib \u2014 make it ALSO recognize a `.factory/stories/<KEY>/shipped.json` added path (additive). Reuse task_marker_on_main, task_marker_path, git_control_dir. SCOPE: the 4 write_scope files only; a required test asserts the story-level frontier is unchanged when no task markers exist.",
+      "plan_contracts": [
+        {
+          "id": "ACC3T10-C1",
+          "statement": "forge next and the board surface exactly one next per-task frontier state from shared predicates, never offering task N+1 until N's marker is on main",
+          "source": "plans/active/FORGE-ACC-3-approval-and-closeout-integrity.md#task-decomposition"
+        },
+        {
+          "id": "ACC3T10-C2",
+          "statement": "story pr_ready refuses until every task marker is on main; completed_stories recognizes .factory/stories/<KEY>/shipped.json",
+          "source": "plans/active/FORGE-ACC-3-approval-and-closeout-integrity.md#task-decomposition"
+        }
       ]
     },
     {
@@ -453,5 +498,5 @@
   "epic": "accountable-engineering",
   "plan_file": "plans/active/FORGE-ACC-3-approval-and-closeout-integrity.md",
   "plan_sha256": "5d9d8ba4de41df6b9253dc04d5451145c7beef03ab9cad25af1aadc9e4982da2",
-  "commit": "e79b27309179e81cdb70f99539b8e49c75d22273"
+  "commit": "0648224a850005df418877f047018d9214c72d28"
 }

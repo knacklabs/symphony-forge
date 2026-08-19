@@ -1126,21 +1126,330 @@
         }
       },
       "task_sha256": "3e5b34f726c8f03a2e60afab4ef63201c1225e55323a8d2a1a6ef2ab6deceff2",
-      "local_review_stamp": {
-        "stage_id": "task-pr-gate",
-        "task_sha256": "3e5b34f726c8f03a2e60afab4ef63201c1225e55323a8d2a1a6ef2ab6deceff2",
-        "brief_sha256": "e29249ee890e814c42d8df710a0af341756274b191276af863abdd7eda62a726",
-        "base_sha": "4b343a74ba265617ecdeae828d4ad9bc683ce0b5",
-        "product_tree_digest": "5b71db42f8541fac89cd69bfc9eb88a50c0afef2b70d5bde1db08eefcf19f000",
-        "recorded_at": "2026-08-19T12:34:24+00:00",
-        "generated_by": "autoreview"
-      },
       "completed_at": "2026-08-19T12:35:00+00:00"
     },
     {
       "id": "task-frontier-and-closeout",
       "title": "forge next routes the full per-task frontier; story done-flip requires all task markers on main",
-      "status": "pending"
+      "status": "active",
+      "started_at": "2026-08-19T12:39:28+00:00",
+      "base_sha": "0648224a850005df418877f047018d9214c72d28",
+      "dirty_at_start": {
+        ".factory/events/03399a7401a3421e9df03afa8d829c18.json": {
+          "digest": "0e4207c184b4cce891e7fec99473940ee369e6a8c3f4f1227d398bae82fdbad3",
+          "git": "? .factory/events/03399a7401a3421e9df03afa8d829c18.json\u0000\u0000\u0000"
+        },
+        ".factory/events/07c6c48451ab4a30b473b5df9ac09046.json": {
+          "digest": "6b981917e97bbce69fc814105a7911888f9115963f7d0880bf540c55b78bb7b9",
+          "git": "? .factory/events/07c6c48451ab4a30b473b5df9ac09046.json\u0000\u0000\u0000"
+        },
+        ".factory/events/0b5b41b6dd38464588b7834cfb6478be.json": {
+          "digest": "3cbc1b18b4595f23765407cbac3c84e38a889cf9abe6746bfa2a78ab973c732d",
+          "git": "? .factory/events/0b5b41b6dd38464588b7834cfb6478be.json\u0000\u0000\u0000"
+        },
+        ".factory/events/0b5d08fda9224cd6833463c1d73cd173.json": {
+          "digest": "c5a04f9b3bef69de1fb5e9aa2363d7f9e5567fafdf7256385ee199d70ea6c772",
+          "git": "? .factory/events/0b5d08fda9224cd6833463c1d73cd173.json\u0000\u0000\u0000"
+        },
+        ".factory/events/12b98947eb39492c97c3c23714a9ccda.json": {
+          "digest": "5e2be9b8beb8e6f8227c93f90b63a343be95aaaa7e7ade26bc32d65039af7888",
+          "git": "? .factory/events/12b98947eb39492c97c3c23714a9ccda.json\u0000\u0000\u0000"
+        },
+        ".factory/events/1992cbcceaa9461a9500a83a91369d18.json": {
+          "digest": "b5c64b8d9bd3b3c9d8f3558146d9472eeba997f8e942e3f9c9cae804c9aacc82",
+          "git": "? .factory/events/1992cbcceaa9461a9500a83a91369d18.json\u0000\u0000\u0000"
+        },
+        ".factory/events/21e148478a1c460498aee391a2887fb4.json": {
+          "digest": "0d6f44ace55d0fdfeefb73276fea9aed152f91401c48ff45378e8c1b54b8ce33",
+          "git": "? .factory/events/21e148478a1c460498aee391a2887fb4.json\u0000\u0000\u0000"
+        },
+        ".factory/events/2c4a3b8c404f4396a80ed8da471e3551.json": {
+          "digest": "584d02ac42e810bc816d5b17b387dc13397dd08c3d679dcf3ab54c5dd9dfa9b0",
+          "git": "? .factory/events/2c4a3b8c404f4396a80ed8da471e3551.json\u0000\u0000\u0000"
+        },
+        ".factory/events/31270a0be57a48bcaafd0f67340b8735.json": {
+          "digest": "c2a58b7473a4903e2fc99d829194fcbb0ac09395acdd93c47500ac8fff849af0",
+          "git": "? .factory/events/31270a0be57a48bcaafd0f67340b8735.json\u0000\u0000\u0000"
+        },
+        ".factory/events/31429853f18c4b43a1463512e7634c18.json": {
+          "digest": "0993bb8e25f18456d8229311fac8505759bfc153d10c600ee59fa38af16954f3",
+          "git": "? .factory/events/31429853f18c4b43a1463512e7634c18.json\u0000\u0000\u0000"
+        },
+        ".factory/events/33a78e4d20d74b2087e27db2e3f58a44.json": {
+          "digest": "33c39190b15ba9e74d6a53d8603398d0f69f3e4c338bbbe29e20ab99b9923c0f",
+          "git": "? .factory/events/33a78e4d20d74b2087e27db2e3f58a44.json\u0000\u0000\u0000"
+        },
+        ".factory/events/35281caefb9543029b7ddfaade7dcc11.json": {
+          "digest": "7672112b120d46e3ee924d4f104af887605d2335f58586beb30eeb15393e91fd",
+          "git": "? .factory/events/35281caefb9543029b7ddfaade7dcc11.json\u0000\u0000\u0000"
+        },
+        ".factory/events/3820775318d04530923ecfd9ff126afd.json": {
+          "digest": "8cbec80e8af1ca5f5fc9c95e771d2ea6d334e703f35d9f84f26a699a071aba33",
+          "git": "? .factory/events/3820775318d04530923ecfd9ff126afd.json\u0000\u0000\u0000"
+        },
+        ".factory/events/3b3935b8a9f14ae0afecea0a81bdff21.json": {
+          "digest": "06f3b8646344d0b23ebe037e41161448ada732874ce5afbbb4f6a2e544778c8c",
+          "git": "? .factory/events/3b3935b8a9f14ae0afecea0a81bdff21.json\u0000\u0000\u0000"
+        },
+        ".factory/events/3c8fe702dd1b4b55aa7fa6cea1c7960e.json": {
+          "digest": "106a6f64cd19c24c505bb7fc7790e11e9b2c8e3b382b339e6aa0ff9a8361e11d",
+          "git": "? .factory/events/3c8fe702dd1b4b55aa7fa6cea1c7960e.json\u0000\u0000\u0000"
+        },
+        ".factory/events/45295a0854c24a4eba9bdf439395b9c7.json": {
+          "digest": "61c81d73cb6a9eff813dbc77a0ddb856785ba71397ea4d9743425ce48c157679",
+          "git": "? .factory/events/45295a0854c24a4eba9bdf439395b9c7.json\u0000\u0000\u0000"
+        },
+        ".factory/events/4ba12f48b1c64933b786306c47a55440.json": {
+          "digest": "9757b252a537349ed824f92af0f020cc99f025daba43575866dea17ca7543ded",
+          "git": "? .factory/events/4ba12f48b1c64933b786306c47a55440.json\u0000\u0000\u0000"
+        },
+        ".factory/events/501da9cf930243e2ab8a403a786da19d.json": {
+          "digest": "eb8e574a68ec7c9535e3448ef3d71435f165157bd95eff68b081d5114a38e7b2",
+          "git": "? .factory/events/501da9cf930243e2ab8a403a786da19d.json\u0000\u0000\u0000"
+        },
+        ".factory/events/518afd030e84447b933ec97ad58db41f.json": {
+          "digest": "d4d8f20cb6af89eb9f522a5b4ca81dea0f77f6655fc42ace6130c5286110a59b",
+          "git": "? .factory/events/518afd030e84447b933ec97ad58db41f.json\u0000\u0000\u0000"
+        },
+        ".factory/events/548fac496f8d4364be35aff06c6c4f0a.json": {
+          "digest": "da78d6bf1862f91dc4e1bc66611b26bb66d4ad2ab5bd0835ac509e36b522dc29",
+          "git": "? .factory/events/548fac496f8d4364be35aff06c6c4f0a.json\u0000\u0000\u0000"
+        },
+        ".factory/events/5553957ce7774e18b3d4df97f446e41d.json": {
+          "digest": "b0cd1838d35ef0ee14827f41a57568acd2921276dc1b37f29a20a06b3020d0fd",
+          "git": "? .factory/events/5553957ce7774e18b3d4df97f446e41d.json\u0000\u0000\u0000"
+        },
+        ".factory/events/57a8a0f5b1b54003b5f0a48601c98a5c.json": {
+          "digest": "e787b7dcde1f706120aa45bdca01f6fc697f9270a146a447edf382de7a3e20f5",
+          "git": "? .factory/events/57a8a0f5b1b54003b5f0a48601c98a5c.json\u0000\u0000\u0000"
+        },
+        ".factory/events/5b9f5c614a224279ac0d446e7fe90f56.json": {
+          "digest": "6ab92990babe48a112a6d0421bf5aea06007564b7d4d98decfd5ba147619beb6",
+          "git": "? .factory/events/5b9f5c614a224279ac0d446e7fe90f56.json\u0000\u0000\u0000"
+        },
+        ".factory/events/61903e3cfe5a4b69a82170482ea983b2.json": {
+          "digest": "6f22dc318c2d6308f3e6386f5498162059c3c5a598b3b0c3f01b7a56fac76cc3",
+          "git": "? .factory/events/61903e3cfe5a4b69a82170482ea983b2.json\u0000\u0000\u0000"
+        },
+        ".factory/events/68dba614235e415084760b741bd56d56.json": {
+          "digest": "b2f4b56e6e2682720630f6c8b9b27e98e4d7221f4ad2ba86c87d8cd0e0a582f6",
+          "git": "? .factory/events/68dba614235e415084760b741bd56d56.json\u0000\u0000\u0000"
+        },
+        ".factory/events/69000f5fe7334845a5fb63374f12f0cc.json": {
+          "digest": "f2f4382390eb0706a81068a55a21ac876eef11b917841fd7e68bc743e51f6061",
+          "git": "? .factory/events/69000f5fe7334845a5fb63374f12f0cc.json\u0000\u0000\u0000"
+        },
+        ".factory/events/6a6b9c3ff7814c709a819ca756c29582.json": {
+          "digest": "5e52ac837cbbd68029d756cfdd7d33fa1a59152b7faa83898ddc1e55286cd602",
+          "git": "? .factory/events/6a6b9c3ff7814c709a819ca756c29582.json\u0000\u0000\u0000"
+        },
+        ".factory/events/6d68ca1c57594023b26b1ebf4cf60416.json": {
+          "digest": "325495369b0ebd87fec38c6a0739b672f9f34c49cfc1853a513b84d823f3efff",
+          "git": "? .factory/events/6d68ca1c57594023b26b1ebf4cf60416.json\u0000\u0000\u0000"
+        },
+        ".factory/events/72fa776f08da482b9fed54106a9f42af.json": {
+          "digest": "1fe0d970e20d40324fdbb948583d314fa47d2d5ad0e332955a1ee43fc9fafa3f",
+          "git": "? .factory/events/72fa776f08da482b9fed54106a9f42af.json\u0000\u0000\u0000"
+        },
+        ".factory/events/7794344387c64e5bbf7dcd8a093bad5e.json": {
+          "digest": "7ba42f441323485a03680bbb63d24ad3a969b61d9a4f5db22ac9c33c8c94c576",
+          "git": "? .factory/events/7794344387c64e5bbf7dcd8a093bad5e.json\u0000\u0000\u0000"
+        },
+        ".factory/events/77e1d31a9a01487c97897bd742582843.json": {
+          "digest": "7a887f6b06dd23e5cee75c820f8d368518c445e8fc9a77edbb8cd5a181b7a07a",
+          "git": "? .factory/events/77e1d31a9a01487c97897bd742582843.json\u0000\u0000\u0000"
+        },
+        ".factory/events/815998a03f294fba9c937ff4f25a147d.json": {
+          "digest": "21c041b6d3a38c22406e4d1137c0b0f0d42ca3f7d4520001806f65893a6b790d",
+          "git": "? .factory/events/815998a03f294fba9c937ff4f25a147d.json\u0000\u0000\u0000"
+        },
+        ".factory/events/816c71a7d2954c6fb47ad487b1660145.json": {
+          "digest": "413c30eb44fd6869ca85c395d1ca96690fe5a5a5500b28b6865a0a22b3f54e6f",
+          "git": "? .factory/events/816c71a7d2954c6fb47ad487b1660145.json\u0000\u0000\u0000"
+        },
+        ".factory/events/899b1ef5a543482da176af95d35260f5.json": {
+          "digest": "b9888c6642fb94a21d26ed4d550b4050e19bca2fb4cb3504f19f89d5aaf8b036",
+          "git": "? .factory/events/899b1ef5a543482da176af95d35260f5.json\u0000\u0000\u0000"
+        },
+        ".factory/events/92e8dbc3103b4b43b97da53e57546a93.json": {
+          "digest": "d55e4fde5510134ac80c3d7cc83e89716b5e83726e20f792c100b71b76fcf581",
+          "git": "? .factory/events/92e8dbc3103b4b43b97da53e57546a93.json\u0000\u0000\u0000"
+        },
+        ".factory/events/934ecd97165c42ca91dd4b247ea0619d.json": {
+          "digest": "35fdf699cab925f46014f8918ec3fd281c2368e1a84ce2d51452abb3a83e0fac",
+          "git": "? .factory/events/934ecd97165c42ca91dd4b247ea0619d.json\u0000\u0000\u0000"
+        },
+        ".factory/events/9a69f164269e4b82aa2e677f0faf9730.json": {
+          "digest": "d9769a403c7eeea0e24cb33ffab21be937b300fbbdc32b4adf3d562a450b31c1",
+          "git": "? .factory/events/9a69f164269e4b82aa2e677f0faf9730.json\u0000\u0000\u0000"
+        },
+        ".factory/events/9b64f3fd660b4e96bf0a710a868211a2.json": {
+          "digest": "fa855ea2074bbded02f17e7c8ba1b376d6788a49eb8d078bdedab37f80392598",
+          "git": "? .factory/events/9b64f3fd660b4e96bf0a710a868211a2.json\u0000\u0000\u0000"
+        },
+        ".factory/events/9fe02088002547d19d9a263e56aa0d8a.json": {
+          "digest": "d66c5360f7e60bc8bc52af898ad5be1c184174ed6648e745f72a5b81073d48b8",
+          "git": "? .factory/events/9fe02088002547d19d9a263e56aa0d8a.json\u0000\u0000\u0000"
+        },
+        ".factory/events/a01bc7a456424940b69316bc11031868.json": {
+          "digest": "32cef9d0dd4ff85691d3352556f13a13ef75a0641e75ea28303f18596c76e62e",
+          "git": "? .factory/events/a01bc7a456424940b69316bc11031868.json\u0000\u0000\u0000"
+        },
+        ".factory/events/a3fc63e0b28743fb8840f90e91590aff.json": {
+          "digest": "7d8fbaf3c3dcedb5f0a4065dadbbeb088b6811c9612c86d474375145f745492e",
+          "git": "? .factory/events/a3fc63e0b28743fb8840f90e91590aff.json\u0000\u0000\u0000"
+        },
+        ".factory/events/aaf5230f7fb443a3aa7d27991fc5125b.json": {
+          "digest": "9083ef7a0929d016ef8594000c875ede142f9ddeb56c51bde23cded49cd43a7f",
+          "git": "? .factory/events/aaf5230f7fb443a3aa7d27991fc5125b.json\u0000\u0000\u0000"
+        },
+        ".factory/events/aead7fabd49b46c78ee4ad0ff2c42726.json": {
+          "digest": "858ed86a428b4c9377271edfde16ab4541767e4577c479a620be19958d5ffb06",
+          "git": "? .factory/events/aead7fabd49b46c78ee4ad0ff2c42726.json\u0000\u0000\u0000"
+        },
+        ".factory/events/b1ccfdeb4c1e424c858c2a59347afcf8.json": {
+          "digest": "04181b793811a7eb35e768eb954e70b2c0c7de1ad7f2e4564e1d0f711cf5095f",
+          "git": "? .factory/events/b1ccfdeb4c1e424c858c2a59347afcf8.json\u0000\u0000\u0000"
+        },
+        ".factory/events/b4ef09284e1d4368bb20dd8a58baedb1.json": {
+          "digest": "cf5eca20d20f65e39a240112ec524560b1869cebc872d560da7a4db7cb4a0251",
+          "git": "? .factory/events/b4ef09284e1d4368bb20dd8a58baedb1.json\u0000\u0000\u0000"
+        },
+        ".factory/events/b4fb12859a224485b807871e92af4647.json": {
+          "digest": "71ba90de7f318d2dfd2debccdcf320875db52c220f4ca829aa9e0b44d4a7272c",
+          "git": "? .factory/events/b4fb12859a224485b807871e92af4647.json\u0000\u0000\u0000"
+        },
+        ".factory/events/b7146bfb7ef24d309573f29f8f04e621.json": {
+          "digest": "d1df2db20ea1d9fc6c3d9dd34c70d93ada94f386b3d903c469426fdb425b7259",
+          "git": "? .factory/events/b7146bfb7ef24d309573f29f8f04e621.json\u0000\u0000\u0000"
+        },
+        ".factory/events/bd5c2e3f3d044c0d808a5a68f78d7e72.json": {
+          "digest": "73b490d572d166833cbb4e70d727b9efa256b324ccb6e5890f980ac1da9e0506",
+          "git": "? .factory/events/bd5c2e3f3d044c0d808a5a68f78d7e72.json\u0000\u0000\u0000"
+        },
+        ".factory/events/be09db7a4a9f471ca6c964b11764c855.json": {
+          "digest": "e5a86fe67635e2cf77ce285f44c90a01f363fe6f7a9540976c74728a8b18839e",
+          "git": "? .factory/events/be09db7a4a9f471ca6c964b11764c855.json\u0000\u0000\u0000"
+        },
+        ".factory/events/c814ef3b517b40f4828f7590beeeefa5.json": {
+          "digest": "807d949b7f3f49bedfe446302c4dc40b6e742831ba784db0c7aef97aec0e1457",
+          "git": "? .factory/events/c814ef3b517b40f4828f7590beeeefa5.json\u0000\u0000\u0000"
+        },
+        ".factory/events/cc2a15a8848b4421aaa0a3f51e0ba481.json": {
+          "digest": "6c8aa68438b2b642527dbbdbf57e8d030c046a4f84ff55e92ce26d7801a1a5ad",
+          "git": "? .factory/events/cc2a15a8848b4421aaa0a3f51e0ba481.json\u0000\u0000\u0000"
+        },
+        ".factory/events/cd731fbc3bdd487d904feb640139f01a.json": {
+          "digest": "22aec94ae7edb3b671093ec8b07a8571f69fe33b0e074abbc0d3dce7c7d7cd5a",
+          "git": "? .factory/events/cd731fbc3bdd487d904feb640139f01a.json\u0000\u0000\u0000"
+        },
+        ".factory/events/d29543b7852143428b2d5611e7f27b01.json": {
+          "digest": "35979b33925f445eb5ee9f9c0420116e38a7fd9026dc886fa1bf115ac2123238",
+          "git": "? .factory/events/d29543b7852143428b2d5611e7f27b01.json\u0000\u0000\u0000"
+        },
+        ".factory/events/d4955d1ed56c42099a7a21e7155c04b0.json": {
+          "digest": "349bffe40ac0771da2600ec4bac9552d1f19df8c8b4e81bdd68f3ac0c0fb02f2",
+          "git": "? .factory/events/d4955d1ed56c42099a7a21e7155c04b0.json\u0000\u0000\u0000"
+        },
+        ".factory/events/d7cd0788530b4db4a9d2ea68dbb68ab6.json": {
+          "digest": "7622736337e62ed91298e5cad44d0d0f397768be14e422f2e156d360b35b5e64",
+          "git": "? .factory/events/d7cd0788530b4db4a9d2ea68dbb68ab6.json\u0000\u0000\u0000"
+        },
+        ".factory/events/d9aeb0c61ab543d08b6fbe49cebd0fb6.json": {
+          "digest": "8e17cc875c3890e531af178d7728fb257f5432c403badff31098be52b9e9e93f",
+          "git": "? .factory/events/d9aeb0c61ab543d08b6fbe49cebd0fb6.json\u0000\u0000\u0000"
+        },
+        ".factory/events/db7da72d463446d9a995b3ab16a0bcf5.json": {
+          "digest": "734d1da5c577af3617da99f5e44169d81a39550996efd6d722e80064f994532c",
+          "git": "? .factory/events/db7da72d463446d9a995b3ab16a0bcf5.json\u0000\u0000\u0000"
+        },
+        ".factory/events/df6ad0fa132e4702ad518e86524a0825.json": {
+          "digest": "89782c8d1c3f4aec8260f1570ce65823b41c8ebc58140d3e8a5b42db6cd0ecc4",
+          "git": "? .factory/events/df6ad0fa132e4702ad518e86524a0825.json\u0000\u0000\u0000"
+        },
+        ".factory/events/e1e293a8128e4eabb41d72666155f196.json": {
+          "digest": "8071b0071cace9deca87b633a234fb3dd407763bcdcbd53c8ff08d9cc7614fb5",
+          "git": "? .factory/events/e1e293a8128e4eabb41d72666155f196.json\u0000\u0000\u0000"
+        },
+        ".factory/events/e27d217af9aa4becb738706661ef68da.json": {
+          "digest": "b5e2a6d838047694980240e11fc5d37e43af762f943cac424bc60438806aea82",
+          "git": "? .factory/events/e27d217af9aa4becb738706661ef68da.json\u0000\u0000\u0000"
+        },
+        ".factory/events/e91dc2c2af5448e39fa0910f7270636f.json": {
+          "digest": "b005a39d10dab7f6a2075e2fb713173580a82830d78ff5310a122e4dc6b33f1b",
+          "git": "? .factory/events/e91dc2c2af5448e39fa0910f7270636f.json\u0000\u0000\u0000"
+        },
+        ".factory/events/ea2151898246473fbd34ec7dbe93e06c.json": {
+          "digest": "6b07c2035a16a6d298c712adf129295e7e010972a3512497244c2c11b1eae749",
+          "git": "? .factory/events/ea2151898246473fbd34ec7dbe93e06c.json\u0000\u0000\u0000"
+        },
+        ".factory/events/ead2737dca45450db145bd397a932ae5.json": {
+          "digest": "300e0f86e913db5bcdea7c23d6b606865df61005d5ece0510c7f6493a82e89c7",
+          "git": "? .factory/events/ead2737dca45450db145bd397a932ae5.json\u0000\u0000\u0000"
+        },
+        ".factory/events/ec5a26da3c3f40b3af542a61a3e062fa.json": {
+          "digest": "019102c59c5ef42b025bbf7de2fbf11d479a61c1c0b4e1f31cacf17a1eb796ae",
+          "git": "? .factory/events/ec5a26da3c3f40b3af542a61a3e062fa.json\u0000\u0000\u0000"
+        },
+        ".factory/events/ef029e43d2aa404293ac6df0d2977449.json": {
+          "digest": "9446969c283a01cdd2cc4f442a6bcf2d34845393eb59163ed24ef961304bd458",
+          "git": "? .factory/events/ef029e43d2aa404293ac6df0d2977449.json\u0000\u0000\u0000"
+        },
+        ".factory/events/f457d910f4944520bb15e69dc05f6bd9.json": {
+          "digest": "10d3fe56984e136b24af139fe132ba3c1a58f261e6cfe717a84ffa42260005a6",
+          "git": "? .factory/events/f457d910f4944520bb15e69dc05f6bd9.json\u0000\u0000\u0000"
+        },
+        ".factory/events/feeae3d62e464dfb8f375690fba05c17.json": {
+          "digest": "9e33d9285000ca85c7cd1aa1dd1e8c19d5d374b5d7b6d7b8831887c89fbd0b52",
+          "git": "? .factory/events/feeae3d62e464dfb8f375690fba05c17.json\u0000\u0000\u0000"
+        },
+        ".factory/signals.jsonl": {
+          "digest": "e91f1097f48f1e0f8a7619aa3a32c894c3bfe47aa2dc0d84048ed126463dcc21",
+          "git": "? .factory/signals.jsonl\u0000\u0000\u0000"
+        },
+        ".factory/stages.json": {
+          "digest": "bac77606ec475aa71bef06cb79bf9c6b68087e858ac4ee521f5502eb26c2076d",
+          "git": "1 .M N... 100644 100644 100644 ff9de3c46c1bdb2a273b1098310474c744989f29 ff9de3c46c1bdb2a273b1098310474c744989f29 .factory/stages.json\u0000\u0000100644 ff9de3c46c1bdb2a273b1098310474c744989f29 0\t.factory/stages.json\u0000\u0000H .factory/stages.json\u0000"
+        },
+        ".factory/stories/FORGE-ACC-3/decomposition.json": {
+          "digest": "eb0a9d054096f294a9c45439fd11b7a97e0b0f86c5375e197cfc4fe1ed22e637",
+          "git": "1 .M N... 100644 100644 100644 e66b8d4ebc663c19ceae6a9084500b59466ac20b e66b8d4ebc663c19ceae6a9084500b59466ac20b .factory/stories/FORGE-ACC-3/decomposition.json\u0000\u0000100644 e66b8d4ebc663c19ceae6a9084500b59466ac20b 0\t.factory/stories/FORGE-ACC-3/decomposition.json\u0000\u0000H .factory/stories/FORGE-ACC-3/decomposition.json\u0000"
+        },
+        ".factory/stories/FORGE-ACC-3/grills/tasks/task-frontier-and-closeout.json": {
+          "digest": "8101923a9749f1f0f82bd3a231307eb97e6b5e2bf07cd1a9e8b392677e4aed11",
+          "git": "? .factory/stories/FORGE-ACC-3/grills/tasks/task-frontier-and-closeout.json\u0000\u0000\u0000"
+        },
+        ".factory/stories/FORGE-ACC-3/task-plans/task-frontier-and-closeout.md": {
+          "digest": "dd9c26658362e23d478953b4da54ae6d2ca4ec92673f4996652603d516a79792",
+          "git": "? .factory/stories/FORGE-ACC-3/task-plans/task-frontier-and-closeout.md\u0000\u0000\u0000"
+        },
+        "plans/deferrals.md": {
+          "digest": "6f990664f736166f471589e2b4039bce8ed86c2ca0202a8ae074fbaa8c62e597",
+          "git": "1 .M N... 100644 100644 100644 2a2625ba06c3153e358af11c12aafc7d68c768e9 2a2625ba06c3153e358af11c12aafc7d68c768e9 plans/deferrals.md\u0000\u0000100644 2a2625ba06c3153e358af11c12aafc7d68c768e9 0\tplans/deferrals.md\u0000\u0000H plans/deferrals.md\u0000"
+        },
+        "plans/lessons/20260819T113251-0000-New-workflow-gates-must-no-op---stay-scoped-to-their-trigger--or-they-deadlock-the-harness-113251198581.json": {
+          "digest": "43cd48ddf8e23115ab9e10b07c9eafc0a87137348410b8d336e527f97bdbb550",
+          "git": "? plans/lessons/20260819T113251-0000-New-workflow-gates-must-no-op---stay-scoped-to-their-trigger--or-they-deadlock-the-harness-113251198581.json\u0000\u0000\u0000"
+        },
+        "plans/quickfixes/20260819T062749-0000-Q-0081-629d-open-062749943700.json": {
+          "digest": "5c5163ee23d510c00834802ee81f103a947e42736fee5d9494b303b802a51b1a",
+          "git": "? plans/quickfixes/20260819T062749-0000-Q-0081-629d-open-062749943700.json\u0000\u0000\u0000"
+        },
+        "plans/quickfixes/20260819T064507-0000-Q-0081-629d-done-064507548479.json": {
+          "digest": "61fdb618a6a6ac90c6d9d20d3bd2d29e1f063d06e61662cc749417a822165673",
+          "git": "? plans/quickfixes/20260819T064507-0000-Q-0081-629d-done-064507548479.json\u0000\u0000\u0000"
+        }
+      },
+      "task_sha256": "baa8045813489c13b3ff10b91d41aca81bd8c13cb44ade55fef99a800339a1e0",
+      "local_review_stamp": {
+        "stage_id": "task-frontier-and-closeout",
+        "task_sha256": "3268ba2d22adbe43a917f1b3e40424b2108105ce8f45050c15b47e4eb2960873",
+        "brief_sha256": "41be2a5ec2829f8fe9972ac3001255007bb22c3af97a614012bd9a0244a96db0",
+        "base_sha": "0648224a850005df418877f047018d9214c72d28",
+        "product_tree_digest": "4d9c0485a664459f72ca9698f1183f9b0b1be8bcfe628ae24ea467f4cb7af6b8",
+        "recorded_at": "2026-08-19T12:51:17+00:00",
+        "generated_by": "autoreview"
+      }
     },
     {
       "id": "roadmap-gate-task-markers",

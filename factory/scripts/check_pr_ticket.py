@@ -168,7 +168,10 @@ def main() -> int:
         key for key, head_item in head_items.items()
         if (key not in base_items or base_items[key].get("status") != "done")
         and head_item.get("status") == "done"
-        and any(path.startswith(f".factory/history/{key}/") for path in added)
+        and (
+            any(path.startswith(f".factory/history/{key}/") for path in added)
+            or f".factory/stories/{key}/shipped.json" in added
+        )
     }
     completed_window_ids = completed_windows(root, added)
 

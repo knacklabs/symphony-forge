@@ -1,0 +1,71 @@
+{
+  "generated_by": "griller",
+  "gate": "task",
+  "verdict": "pass",
+  "gaps": [],
+  "contradictions": [],
+  "resolutions": [
+    "Gate all marker-aware behavior on is_task_level = bool(run-pointer base_main_sha); story-level runs (no base_main_sha, like ACC-3) keep the current stage-driven frontier + closeout UNCHANGED (task 8's lesson).",
+    "Run task_marker_on_main (git fetch + cat-file) LAZILY \u2014 only when evaluating a task-level task in await-merge; story-level forge next never fetches.",
+    "The CFS-1 completed-story recognition is INLINE in check_pr_ticket.py (a .factory/history/<KEY>/ startswith check), not a factory_lib function; make it ALSO recognize .factory/stories/<KEY>/shipped.json (additive). check_pr_ticket.py added to write_scope (resolved S-0007)."
+  ],
+  "inspected_refs": [
+    "factory/scripts/factory_lib.py",
+    "factory/scripts/forge_cli/phase.py",
+    "factory/scripts/pr_ready.py",
+    "factory/scripts/forge_cli/stages.py",
+    "factory/scripts/check_pr_ticket.py"
+  ],
+  "current_flow": "task_frontier_state selects the earliest task whose stage status != done (stage-driven, no marker/await-merge). pr_ready (task 6) enforces the ordered story closeout with no task-marker requirement. completed_stories recognizes only .factory/history/<KEY>/ (CFS-1 wrote shipped.json elsewhere). task_marker_on_main + task_marker_path exist from task 9.",
+  "criteria_map": {
+    "forge next and the board surface exactly one next per-task frontier state from shared predicates, never offering task N+1 until N's marker is on main": "Inspected task_frontier_state + phase.py + task_rows; for task-level runs an await-merge state (lazy task_marker_on_main) holds task N+1 until N's marker is on main; story-level unchanged; the board reuses the same predicates.",
+    "story pr_ready refuses until every task marker is on main; completed_stories recognizes .factory/stories/<KEY>/shipped.json": "Inspected pr_ready + completed_stories; for task-level runs pr_ready requires every decomposition task marker on the closeout main base; completed_stories additionally reads shipped.json."
+  },
+  "decision": "keep",
+  "new_abstractions": [
+    "An is_task_level(run) predicate + await-merge frontier state; justified as the single mode switch that keeps story-level behavior byte-identical while adding marker-awareness for task-level runs."
+  ],
+  "rounds": [
+    {
+      "question": "How is marker-aware behavior gated?",
+      "options": [
+        "Gate on run-pointer base_main_sha",
+        "Always marker-driven"
+      ],
+      "chosen": "Gate on run-pointer base_main_sha"
+    },
+    {
+      "question": "When does the await-merge fetch run?",
+      "options": [
+        "Only when evaluating a task in await-merge",
+        "On every forge next"
+      ],
+      "chosen": "Only when evaluating a task in await-merge"
+    },
+    {
+      "question": "completed_stories: replace or add the path?",
+      "options": [
+        "Read shipped.json AND legacy history",
+        "Replace with shipped.json only"
+      ],
+      "chosen": "Read shipped.json AND legacy history"
+    }
+  ],
+  "citations": [
+    {
+      "finding": "A new gate that ignores the story-level (no-marker) case deadlocks the frontier \u2014 the task-8 require_task_worktree regression lesson.",
+      "source": "plans/lessons/...deadlock (commit 4b343a7)"
+    },
+    {
+      "finding": "CFS-1 writes story completion to .factory/stories/<KEY>/shipped.json but completed_stories only reads .factory/history/<KEY>/.",
+      "source": "docs/decisions/0047-task-level-worktree-and-pr.md"
+    }
+  ],
+  "task_id": "task-frontier-and-closeout",
+  "input_sha256": "4a655991905b4c4687faa335e8609e60a01861d7342c41cd11a022dcd410face",
+  "recorded_at": "2026-08-19T12:43:43+00:00",
+  "commit": "0648224a850005df418877f047018d9214c72d28",
+  "approved_task_plan_sha256": "8e1fbaf9acf947214fc90da32311a50da180d8af6098284d1543599eb3ea1071",
+  "approved_by": "Ravi Kiran Vemula",
+  "approved_at": "2026-08-19T12:43:43+00:00"
+}

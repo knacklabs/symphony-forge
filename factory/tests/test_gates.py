@@ -8372,6 +8372,49 @@ def test_check_pr_ticket_passes_story(repo):
     assert code == 0 and f"story {key}" in out, out
 
 
+def test_story_closeout_requires_all_task_markers_and_completed_stories_reads_shipped(
+    repo, tmp_path,
+):
+    scoped = prepare_pr_ready_story(repo, tmp_path, scoped_layout=True)
+    control = delegation_ledger(repo).parent
+    decomposition_path = control / "decomposition.json"
+    decomposition = json.loads(decomposition_path.read_text())
+    decomposition["tasks"].append({
+        **decomposition["tasks"][0], "id": "T2", "title": "second slice",
+    })
+    decomposition_path.write_text(json.dumps(decomposition))
+    (scoped / "decomposition.json").write_text(json.dumps(decomposition))
+    write_passing_artifacts(repo)
+    configure_origin_main(repo, tmp_path / "closeout-origin.git")
+    pointer = json.loads((control / "run.json").read_text())
+    pointer["base_main_sha"] = git(repo, "rev-parse", "origin/main")
+    (control / "run.json").write_text(json.dumps(pointer))
+
+    code, out = run(repo, "pr_ready.py")
+    assert code != 0 and "T1" in out and "T2" in out, out
+    assert not (scoped / "shipped.json").exists()
+    assert roadmap_items(repo)["ENG-1"]["status"] == "active"
+
+    publish_task_marker(repo, "ENG-1", "T1")
+    write_passing_artifacts(repo)
+    code, out = run(repo, "pr_ready.py")
+    assert code != 0 and "T2" in out, out
+    assert not (scoped / "shipped.json").exists()
+
+    publish_task_marker(repo, "ENG-1", "T2")
+    write_passing_artifacts(repo)
+    closeout_base = head(repo)
+    code, out = run(repo, "pr_ready.py")
+    assert code == 0 and "shipped in place" in out, out
+    assert (scoped / "shipped.json").is_file()
+    assert roadmap_items(repo)["ENG-1"]["status"] == "done"
+
+    git(repo, "add", "plans/roadmap.json", ".factory/stories/ENG-1/shipped.json")
+    git(repo, "commit", "-q", "-m", "close out story")
+    code, out = check_pr_ticket(repo, closeout_base, "feat/ENG-1-closeout")
+    assert code == 0 and "story ENG-1" in out, out
+
+
 def test_check_pr_ticket_passes_base_absent_story(repo):
     key = "BOARD-107"
     base = pr_ticket_base(repo)
@@ -10737,6 +10780,25 @@ def fake_gh_env(tmp_path: Path) -> tuple[dict[str, str], Path]:
     }, argv_path
 
 
+def configure_origin_main(repo: Path, remote: Path) -> None:
+    proc = subprocess.run(["git", "init", "--bare", str(remote)],
+                          capture_output=True, text=True)
+    assert proc.returncode == 0, proc.stdout + proc.stderr
+    if "origin" not in git(repo, "remote").split():
+        git(repo, "remote", "add", "origin", str(remote))
+    git(repo, "push", "-q", "origin", f"{head(repo)}:refs/heads/main")
+
+
+def publish_task_marker(repo: Path, key: str, task_id: str) -> Path:
+    marker = story_state(repo, key) / "tasks" / task_id / "pr-ready.json"
+    marker.parent.mkdir(parents=True, exist_ok=True)
+    marker.write_text("{}\n")
+    git(repo, "add", marker.relative_to(repo).as_posix())
+    git(repo, "commit", "-q", "-m", f"mark {task_id} ready")
+    git(repo, "push", "-q", "origin", "HEAD:main")
+    return marker
+
+
 def prepare_task_pr_ready(repo: Path, tmp_path: Path) -> Path:
     remote = tmp_path / "pr-origin.git"
     if not remote.exists():
@@ -10857,6 +10919,68 @@ def test_task_start_creates_worktree_off_main_and_gates_on_predecessor_marker(
         (control / "stages.json").read_text())["stages"]] == ["done", "pending"]
     code, out = run(repo, "forge.py", "task", "start", "T2")
     assert code != 0 and "task branch already exists" in out, out
+
+
+def test_task_frontier_awaits_marker_on_main_between_tasks(repo, tmp_path):
+    sign_off(repo)
+    intake(repo)
+    save_plan(repo, tmp_path)
+    second = task_skeleton({**STAGE_TASK, "id": "T2", "title": "second slice"})
+    record_skeleton_then_frontier(repo, [STAGE_TASK, second])
+    code, out = record_task_grill(repo, STAGE_TASK)
+    assert code == 0, out
+    write_stages(repo, {
+        "issue": "ENG-1",
+        "stages": [
+            {"id": "T1", "title": "core slice", "status": "done"},
+            {"id": "T2", "title": "second slice", "status": "pending"},
+        ],
+    })
+    configure_origin_main(repo, tmp_path / "frontier-origin.git")
+    control = delegation_ledger(repo).parent
+    pointer = json.loads((control / "run.json").read_text())
+    pointer["base_main_sha"] = git(repo, "rev-parse", "origin/main")
+    (control / "run.json").write_text(json.dumps(pointer))
+
+    assert task_frontier_state(repo)[0:1] == ("await-merge",)
+    assert task_rows(repo)[0]["state"] == "await-merge"
+    code, out = run(repo, "forge.py", "next")
+    actions = [line for line in out.splitlines() if ". [dev]" in line]
+    assert code == 0 and len(actions) == 1, out
+    assert "T1" in actions[0] and "main" in actions[0]
+    assert "T2" not in actions[0]
+
+    publish_task_marker(repo, "ENG-1", "T1")
+    frontier = task_frontier_state(repo)
+    assert frontier and frontier[0] == "author-contract" and frontier[1]["id"] == "T2"
+    assert task_rows(repo)[0]["state"] == "done"
+    code, out = run(repo, "forge.py", "next")
+    actions = [line for line in out.splitlines() if ". [dev]" in line]
+    assert code == 0 and len(actions) == 1, out
+    assert "T2" in actions[0] and "T1" not in actions[0]
+
+
+def test_story_level_frontier_unchanged_without_task_markers(repo, tmp_path):
+    sign_off(repo)
+    intake(repo)
+    save_plan(repo, tmp_path)
+    second = task_skeleton({**STAGE_TASK, "id": "T2", "title": "second slice"})
+    record_skeleton_then_frontier(repo, [STAGE_TASK, second])
+    write_stages(repo, {
+        "issue": "ENG-1",
+        "stages": [
+            {"id": "T1", "title": "core slice", "status": "done"},
+            {"id": "T2", "title": "second slice", "status": "pending"},
+        ],
+    })
+
+    frontier = task_frontier_state(repo)
+    assert frontier and frontier[0] == "author-contract" and frontier[1]["id"] == "T2"
+    assert [row["state"] for row in task_rows(repo)] == ["done", "skeleton"]
+    code, out = run(repo, "forge.py", "next")
+    actions = [line for line in out.splitlines() if ". [dev]" in line]
+    assert code == 0 and len(actions) == 1, out
+    assert "T2" in actions[0] and "T1" not in actions[0]
 
 
 def test_task_pr_ready_refuses_unsealed_then_writes_marker_and_opens_pr(
