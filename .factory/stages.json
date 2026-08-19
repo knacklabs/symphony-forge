@@ -498,7 +498,7 @@
     {
       "id": "hygiene-content-pins-and-doc-debts",
       "title": "Hygiene pins survive insertions; grill docs match the recorder",
-      "status": "active",
+      "status": "done",
       "started_at": "2026-08-19T10:34:15+00:00",
       "base_sha": "0d9affc005cd6ca9c393d32a790c1734198de7d0",
       "dirty_at_start": {
@@ -688,7 +688,8 @@
         "product_tree_digest": "a835b0b8c6468c72a7ac9b0b0db1aed73cbedcdcf097625e89338fa4c4f0f03d",
         "recorded_at": "2026-08-19T10:51:49+00:00",
         "generated_by": "autoreview"
-      }
+      },
+      "completed_at": "2026-08-19T10:52:06+00:00"
     },
     {
       "id": "task-worktree-start",
