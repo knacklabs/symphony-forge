@@ -685,7 +685,7 @@
     {
       "id": "task-worktree-start",
       "title": "Each task runs in its own worktree off main",
-      "status": "active",
+      "status": "done",
       "started_at": "2026-08-19T11:03:16+00:00",
       "base_sha": "f8fa44b926cc66408f8096f5de7797b336774b4a",
       "dirty_at_start": {
@@ -895,7 +895,8 @@
         "product_tree_digest": "ec44fd539de3aa31d0f2910a3798571fdfe98903cb0f6c7d6f2ab8717769bff8",
         "recorded_at": "2026-08-19T11:11:18+00:00",
         "generated_by": "autoreview"
-      }
+      },
+      "completed_at": "2026-08-19T11:11:46+00:00"
     },
     {
       "id": "task-pr-gate",
