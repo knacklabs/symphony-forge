@@ -1446,7 +1446,7 @@
     {
       "id": "roadmap-gate-task-markers",
       "title": "CI treats a task marker as a completed work record",
-      "status": "active",
+      "status": "done",
       "started_at": "2026-08-19T12:57:25+00:00",
       "base_sha": "e87a6c1b3638183aa28d706eb2650c5792710bcc",
       "dirty_at_start": {
@@ -1804,7 +1804,8 @@
         "product_tree_digest": "3cd67bfa321d9822e3b6b540b0ea743508a57d06eae0cdda292dd61d0da258db",
         "recorded_at": "2026-08-19T13:03:33+00:00",
         "generated_by": "autoreview"
-      }
+      },
+      "completed_at": "2026-08-19T13:04:01+00:00"
     }
   ]
 }
