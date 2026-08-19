@@ -24,9 +24,9 @@ import xml.etree.ElementTree as ET
 from pathlib import Path
 
 from factory_lib import (
-    approved_plan_digest, clean_git_env, decomposition_state_path, dump_json,
+    clean_git_env, decomposition_state_path, dump_json,
     git_control_dir, head_sha, load_json, now_iso,
-    protected_decomposition_state_path, repo_root, plan_digest_without_assumptions,
+    protected_decomposition_state_path, repo_root, require_approved_plan_digest,
     require_ready_task, run_state_path,
     safe_factory_write_json, sha256_of, task_digest,
 )
@@ -705,23 +705,7 @@ def _cmd_start_locked(args: argparse.Namespace, base: Path) -> None:
     if not_done:
         fail(f"{args.id} follows unfinished task(s): {', '.join(not_done)} — "
              "finish them in decomposition order")
-    run_state = load_json(run_state_path(base), default={})
-    plan_file = run_state.get("plan_file")
-    plan_path = base / plan_file if isinstance(plan_file, str) else None
-    approved_sha256 = (
-        approved_plan_digest(base, run_state, plan_path)
-        if plan_path is not None and plan_path.is_file()
-        else run_state.get("approved_plan_sha256")
-    )
-    if not plan_file or not isinstance(approved_sha256, str) or not approved_sha256:
-        fail(f"{args.id} cannot start: the approved plan binding is missing. "
-             "Re-grill the current plan and re-approve it before starting the stage.")
-    if plan_path is None or not plan_path.is_file():
-        fail(f"{args.id} cannot start: approved plan {plan_file} is missing. Restore "
-             "it, or re-grill and re-approve the current plan.")
-    if plan_digest_without_assumptions(plan_path) != approved_sha256:
-        fail(f"{args.id} cannot start: {plan_file} differs from the approved plan. "
-             "Re-grill the edited plan and re-approve it before starting the stage.")
+    approved_sha256 = require_approved_plan_digest(base)
     decomposition = load_json(protected_decomposition_state_path(base), default={})
     if not decomposition:
         decomposition = load_json(decomposition_state_path(base), default={})

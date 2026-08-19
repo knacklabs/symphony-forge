@@ -11896,21 +11896,23 @@ def test_edited_approved_plan_refused_at_rerecord_and_stage_start(repo, tmp_path
         stdin=json.dumps({**DECOMP, "tasks": [STAGE_TASK]}),
     )
     assert code != 0, out
-    assert "differs from the approved plan" in out
-    assert "Re-grill" in out and "re-approve" in out
+    expected_refusal = (
+        "approved plan binding is missing or no longer matches the live plan. "
+        "Re-grill the current plan and re-approve it."
+    )
+    assert out.strip() == expected_refusal
+    shared_refusal = out
 
     code, out = run(repo, "forge.py", "stage", "start", "T1")
     assert code != 0, out
-    assert "differs from the approved plan" in out
-    assert "Re-grill" in out and "re-approve" in out
+    assert out == shared_refusal
 
     # Absence must refuse too: a stamped decomposition claims a binding, so
     # failing to VERIFY it is not permission to proceed.
     plan.unlink()
     code, out = run(repo, "forge.py", "stage", "start", "T1")
     assert code != 0, out
-    assert "approved plan" in out and "missing" in out
-    assert "re-grill" in out and "re-approve" in out
+    assert out == shared_refusal
 
 
 def test_no_prompt_authors_build_waves(repo):

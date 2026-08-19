@@ -9,9 +9,10 @@ import shlex
 from pathlib import Path
 
 from factory_lib import (
-    approved_plan_digest, decomposition_state_path, dump_json, gate, head_sha,
+    decomposition_state_path, dump_json, gate, head_sha,
     load_json, now_iso, plan_digest_without_assumptions,
-    protected_decomposition_state_path, repo_root, run_state_path,
+    protected_decomposition_state_path, repo_root, require_approved_plan_digest,
+    run_state_path,
     read_stdin_utf8, validate_payload,
 )
 from forge_cli.doctor import unrunnable_reason
@@ -66,18 +67,7 @@ if not plan_path.is_file():
         f"decomposition provenance: active plan {plan_file!r} is not readable"
     )
 plan_sha256 = plan_digest_without_assumptions(plan_path)
-approved_sha256 = approved_plan_digest(root, state, plan_path)
-if not isinstance(approved_sha256, str) or not approved_sha256:
-    raise SystemExit(
-        "decomposition refused: the approved plan digest is missing. Re-grill "
-        "the current plan and re-approve it before recording the decomposition."
-    )
-if plan_sha256 != approved_sha256:
-    raise SystemExit(
-        f"decomposition refused: active plan {plan_file!r} differs from the "
-        "approved plan. Re-grill the edited plan and re-approve it before "
-        "recording the decomposition."
-    )
+approved_sha256 = require_approved_plan_digest(root)
 # The digest the recorder can actually VOUCH for: it reads the active plan
 # itself, so the stamp is true at record time without asking the producer to
 # hash a file. A supplied digest is still compared — a producer that knows

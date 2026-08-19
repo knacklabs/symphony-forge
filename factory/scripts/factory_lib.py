@@ -1166,6 +1166,30 @@ def approved_plan_digest(
     return digest
 
 
+def require_approved_plan_digest(root: Path) -> str:
+    """Return the live approved-plan digest or require a fresh approval."""
+    state = load_json(run_state_path(root), default={})
+    plan_file = state.get("plan_file")
+    plan = root / plan_file if isinstance(plan_file, str) else None
+    approved = (
+        approved_plan_digest(root, state, plan)
+        if plan is not None and plan.is_file()
+        else None
+    )
+    if (
+        not isinstance(approved, str)
+        or not approved
+        or plan is None
+        or not plan.is_file()
+        or plan_digest_without_assumptions(plan) != approved
+    ):
+        raise SystemExit(
+            "approved plan binding is missing or no longer matches the live plan. "
+            "Re-grill the current plan and re-approve it."
+        )
+    return approved
+
+
 def product_tree_digest(root: Path) -> str:
     """Hash the deterministic index blob list, excluding workflow-only paths."""
     proc = subprocess.run(
