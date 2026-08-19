@@ -17,6 +17,7 @@ import sys
 from pathlib import Path
 
 from factory_lib import (
+    plan_digest_without_assumptions,
     dump_json, evidence_path, grounding_digest, head_sha, load_json, now_iso,
     read_stdin_utf8, repo_root, requirements_digest, run_state_path, sha256_of,
     task_frontier_state, validate_payload,
@@ -221,7 +222,10 @@ if args.gate in ("spec", "epics", "plan"):
     digest_target = Path(args.input_digest).expanduser()
     if not digest_target.is_file():
         raise SystemExit(f"--input-digest {digest_target} not found")
-    payload["input_sha256"] = sha256_of(digest_target)
+    payload["input_sha256"] = (
+        plan_digest_without_assumptions(digest_target)
+        if args.gate == "plan" else sha256_of(digest_target)
+    )
 if args.gate == "requirements":
     if args.input_digest:
         raise SystemExit(
