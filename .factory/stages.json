@@ -1131,7 +1131,7 @@
     {
       "id": "task-frontier-and-closeout",
       "title": "forge next routes the full per-task frontier; story done-flip requires all task markers on main",
-      "status": "active",
+      "status": "done",
       "started_at": "2026-08-19T12:39:28+00:00",
       "base_sha": "0648224a850005df418877f047018d9214c72d28",
       "dirty_at_start": {
@@ -1440,7 +1440,7 @@
           "git": "? plans/quickfixes/20260819T064507-0000-Q-0081-629d-done-064507548479.json\u0000\u0000\u0000"
         }
       },
-      "task_sha256": "baa8045813489c13b3ff10b91d41aca81bd8c13cb44ade55fef99a800339a1e0",
+      "task_sha256": "3268ba2d22adbe43a917f1b3e40424b2108105ce8f45050c15b47e4eb2960873",
       "local_review_stamp": {
         "stage_id": "task-frontier-and-closeout",
         "task_sha256": "3268ba2d22adbe43a917f1b3e40424b2108105ce8f45050c15b47e4eb2960873",
@@ -1449,6 +1449,12 @@
         "product_tree_digest": "4d9c0485a664459f72ca9698f1183f9b0b1be8bcfe628ae24ea467f4cb7af6b8",
         "recorded_at": "2026-08-19T12:51:17+00:00",
         "generated_by": "autoreview"
+      },
+      "completed_at": "2026-08-19T12:52:01+00:00",
+      "contract_changed": {
+        "at": "2026-08-19T12:52:01+00:00",
+        "from": "baa8045813489c13b3ff10b91d41aca81bd8c13cb44ade55fef99a800339a1e0",
+        "to": "3268ba2d22adbe43a917f1b3e40424b2108105ce8f45050c15b47e4eb2960873"
       }
     },
     {
