@@ -51,6 +51,12 @@ BYTE_PATH_ALLOWLIST: tuple[tuple[ContentPin, str], ...] = (
     (_pin("factory/scripts/forge_cli/upgrade.py", "df519031f73eaa05f29a2400e047d6df86e063ffc9d6da960673d1b58377bf7e"), "git path output"),
     (_pin("factory/scripts/pr_ready.py", "8a2e66903fca9ef3a2c5c2ad0bc8bda60d14cf90c9d6f3e664bf62e6c8dc746a"), "git freshness paths"), (_pin("factory/scripts/pr_ready.py", "8a2e66903fca9ef3a2c5c2ad0bc8bda60d14cf90c9d6f3e664bf62e6c8dc746a"), "git freshness paths"),
     (_pin("factory/scripts/pre_tool_use.py", "b8f1600045705ee2e7878b4a4335e7a58250f20286e39a8edc3bf2a01806f15b"), "git path output"), (_pin("factory/scripts/pre_tool_use.py", "0bb8fafe2022eacf21fe2b83887b18a12e0d176180642715b5a25d288ab39d1d"), "git unmerged paths"), (_pin("factory/scripts/pre_tool_use.py", "b8f1600045705ee2e7878b4a4335e7a58250f20286e39a8edc3bf2a01806f15b"), "git context-ledger staging paths"),
+    # Task-level shipping (0047): lossless git subprocess captures.
+    (_pin("factory/scripts/factory_lib.py", "70743b2c238d8a02f270f4bcdf7735b12f01ba8e074faefa8a4950542098b038"), "git fetch origin/main output"),
+    (_pin("factory/scripts/factory_lib.py", "8fbba4427985a266637ed43d2e2c07f15b87872aa7ed4a6a38706554ffe77fc7"), "git cat-file task marker check"),
+    (_pin("factory/scripts/factory_lib.py", "8a2e66903fca9ef3a2c5c2ad0bc8bda60d14cf90c9d6f3e664bf62e6c8dc746a", 4), "git symbolic-ref current branch"),
+    (_pin("factory/scripts/forge_cli/tasks.py", "13ca18bc3a83fc8ca32a3b0c9cfee255553c1003eefa3668574bdf8804e69ad9"), "git subprocess helper output"),
+    (_pin("factory/scripts/forge_cli/tasks.py", "8a2e66903fca9ef3a2c5c2ad0bc8bda60d14cf90c9d6f3e664bf62e6c8dc746a"), "gh pr create output"),
 )
 
 # These sites must remain byte-mode. check_file verifies that every entry still
