@@ -892,7 +892,7 @@
     {
       "id": "task-pr-gate",
       "title": "Each task ships as its own PR to main",
-      "status": "active",
+      "status": "done",
       "started_at": "2026-08-19T11:30:07+00:00",
       "base_sha": "4b343a74ba265617ecdeae828d4ad9bc683ce0b5",
       "dirty_at_start": {
@@ -1132,9 +1132,10 @@
         "brief_sha256": "e29249ee890e814c42d8df710a0af341756274b191276af863abdd7eda62a726",
         "base_sha": "4b343a74ba265617ecdeae828d4ad9bc683ce0b5",
         "product_tree_digest": "5b71db42f8541fac89cd69bfc9eb88a50c0afef2b70d5bde1db08eefcf19f000",
-        "recorded_at": "2026-08-19T12:28:44+00:00",
+        "recorded_at": "2026-08-19T12:34:24+00:00",
         "generated_by": "autoreview"
-      }
+      },
+      "completed_at": "2026-08-19T12:35:00+00:00"
     },
     {
       "id": "task-frontier-and-closeout",

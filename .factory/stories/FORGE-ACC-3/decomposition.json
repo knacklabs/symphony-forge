@@ -416,7 +416,12 @@
           "statement": "await-merge advances only when the task marker appears on refreshed origin/main, never on CI success alone",
           "source": "plans/active/FORGE-ACC-3-approval-and-closeout-integrity.md#task-decomposition"
         }
-      ]
+      ],
+      "review_budget": {
+        "max_changed_files": 8,
+        "max_changed_lines": 450,
+        "reason": "Coherent per-task shipping capability (forge task pr-ready + factored require_task_sealed/task_marker_on_main with completed-task grounding + pr_ready refactor + marker commit/push + tests); the ~414-line diff is inherent infra size and cannot be halved into independently shippable tasks (grilled S-0006)."
+      }
     },
     {
       "id": "task-frontier-and-closeout",
@@ -448,5 +453,5 @@
   "epic": "accountable-engineering",
   "plan_file": "plans/active/FORGE-ACC-3-approval-and-closeout-integrity.md",
   "plan_sha256": "5d9d8ba4de41df6b9253dc04d5451145c7beef03ab9cad25af1aadc9e4982da2",
-  "commit": "4b343a74ba265617ecdeae828d4ad9bc683ce0b5"
+  "commit": "e79b27309179e81cdb70f99539b8e49c75d22273"
 }
