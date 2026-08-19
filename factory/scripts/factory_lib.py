@@ -675,6 +675,18 @@ def protected_decomposition_state_path(root: Path) -> Path:
     return git_control_dir(root) / "decomposition.json"
 
 
+def task_marker_path(key: str, task_id: str) -> Path:
+    """Return the committed marker shared by task start and task closeout."""
+    for label, value in (("story key", key), ("task id", task_id)):
+        if (
+            not isinstance(value, str) or not value
+            or value in {".", ".."} or Path(value).name != value
+            or "\\" in value
+        ):
+            raise ValueError(f"{label} must be one path component")
+    return Path(".factory") / "stories" / key / "tasks" / task_id / "pr-ready.json"
+
+
 def _windows_reparse_point(path: Path) -> bool:
     info = os.lstat(path)
     return bool(
@@ -1561,6 +1573,37 @@ def task_frontier_state(root: Path) -> tuple[str, dict] | None:
     stage = stage_by_id.get(task_id, {})
     state = "delegate" if stage.get("status") == "active" else "stage-start"
     return state, frontier
+
+
+def require_task_worktree(root: Path) -> None:
+    """Bind task-level actions to the worktree recorded by `task start`."""
+    state = load_json(run_state_path(root), default={})
+    task_id = state.get("task_id")
+    branch = state.get("branch")
+    if task_id is None and branch is None:
+        return
+    if (
+        not isinstance(task_id, str) or not task_id
+        or not isinstance(branch, str) or not branch
+    ):
+        raise SystemExit(
+            "task worktree pointer is incomplete: task_id and branch must both be set"
+        )
+    proc = subprocess.run(
+        ["git", "symbolic-ref", "--quiet", "--short", "HEAD"],
+        cwd=root, capture_output=True, text=True, env=clean_git_env(),
+        encoding="utf-8", errors="surrogateescape",
+    )
+    current_branch = proc.stdout.strip() if proc.returncode == 0 else ""
+    frontier = task_frontier_state(root)
+    frontier_id = frontier[1].get("id") if frontier else None
+    if current_branch != branch or frontier_id != task_id:
+        raise SystemExit(
+            "task worktree required: expected "
+            f"branch {branch!r} at frontier {task_id!r}, found "
+            f"branch {current_branch or '<detached>'!r} at frontier "
+            f"{frontier_id or 'none'!r}"
+        )
 
 
 def require_ready_task(

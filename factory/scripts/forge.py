@@ -181,6 +181,12 @@ def main() -> None:
 
     p_task = sub.add_parser("task", help="manage per-task plans and approval")
     task_sub = p_task.add_subparsers(dest="task_command", required=True)
+    p_task_start = task_sub.add_parser(
+        "start", help="create a task branch and sibling worktree from origin/main",
+    )
+    p_task_start.add_argument("id", help="task id")
+    p_task_start.add_argument("--repo")
+    p_task_start.set_defaults(func=tasks_mod.cmd_task_start)
     p_task_plan = task_sub.add_parser("plan", help="manage a task plan")
     task_plan_sub = p_task_plan.add_subparsers(
         dest="task_plan_command", required=True,

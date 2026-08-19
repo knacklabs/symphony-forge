@@ -2,15 +2,33 @@
 from __future__ import annotations
 
 import argparse
+import json
+import subprocess
 from pathlib import Path
 
 from factory_lib import (
-    dump_json, evidence_path, load_json, now_iso,
+    clean_git_env, dump_json, evidence_path, git_control_dir, load_json, now_iso,
     plan_digest_without_assumptions, repo_root, require_ready_task,
-    run_state_path, validate_payload,
+    protected_decomposition_state_path, run_state_path,
+    task_marker_path, validate_payload,
 )
 
 from .common import fail
+
+
+def _git(base: Path, *args: str) -> subprocess.CompletedProcess[str]:
+    return subprocess.run(
+        ["git", *args], cwd=base, capture_output=True, text=True,
+        env=clean_git_env(), encoding="utf-8", errors="surrogateescape",
+    )
+
+
+def _require_git(base: Path, description: str, *args: str) -> str:
+    proc = _git(base, *args)
+    if proc.returncode != 0:
+        detail = proc.stderr.strip() or proc.stdout.strip()
+        fail(f"{description} failed" + (f": {detail}" if detail else ""))
+    return proc.stdout.strip()
 
 
 def _task_plan_path(base: Path, task_id: str, *, for_write: bool = False) -> Path:
@@ -65,3 +83,106 @@ def cmd_approve(args: argparse.Namespace) -> None:
     validate_payload(base, "grill", grill)
     dump_json(grill_path, grill)
     print(f"Approved task plan for {args.id} by {approved_by}")
+
+
+def cmd_task_start(args: argparse.Namespace) -> None:
+    base = Path(args.repo).resolve() if args.repo else repo_root()
+    state = load_json(run_state_path(base), default={})
+    key = state.get("issue_key") or state.get("story")
+    if not isinstance(key, str) or not key:
+        fail("task start requires an active story — run intake first")
+    decomposition_path = protected_decomposition_state_path(base)
+    decomposition = load_json(decomposition_path, default={})
+    tasks = decomposition.get("tasks") or []
+    index = next(
+        (position for position, task in enumerate(tasks)
+         if isinstance(task, dict) and task.get("id") == args.id),
+        None,
+    )
+    if index is None:
+        fail(f"{args.id!r} is not a task in the protected decomposition")
+    task_marker_path(key, args.id)  # validates both branch/path components
+
+    _require_git(base, "fetching origin/main", "fetch", "origin", "main")
+    base_main_sha = _require_git(
+        base, "resolving fetched origin/main", "rev-parse", "--verify",
+        "origin/main^{commit}",
+    )
+    if index:
+        predecessor = tasks[index - 1].get("id")
+        marker = task_marker_path(key, predecessor)
+        if _git(base, "cat-file", "-e", f"origin/main:{marker.as_posix()}").returncode:
+            fail(
+                f"task {args.id} cannot start: predecessor {predecessor} marker "
+                f"is absent from fetched origin/main ({marker.as_posix()})"
+            )
+
+    branch = f"feat/{key}-{args.id}"
+    worktree = base.parent / f"{base.name}-{key}-{args.id}"
+    if _git(base, "show-ref", "--verify", "--quiet", f"refs/heads/{branch}").returncode == 0:
+        fail(f"task branch already exists: {branch}")
+    if worktree.exists() or worktree.is_symlink():
+        fail(f"task worktree already exists: {worktree}")
+
+    plan_file = state.get("plan_file")
+    if not isinstance(plan_file, str) or not plan_file:
+        fail("task start requires the approved plan path in the run pointer")
+    plan_source = (base / plan_file).resolve()
+    try:
+        plan_relative = plan_source.relative_to(base)
+    except ValueError:
+        fail(f"approved plan path escapes the planning worktree: {plan_file!r}")
+    if (
+        plan_relative.parent.as_posix() != "plans/active"
+        or not plan_relative.name.startswith(f"{key}-")
+    ):
+        fail(f"approved plan must be plans/active/{key}-*.md")
+
+    sources = {
+        plan_relative: plan_source,
+        Path(".factory") / "stories" / key / "decomposition.json": decomposition_path,
+        Path(".factory") / "stories" / key / "grills" / "tasks" / f"{args.id}.json":
+            evidence_path(base, key, f"grills/tasks/{args.id}.json"),
+        Path(".factory") / "stories" / key / "task-plans" / f"{args.id}.md":
+            evidence_path(base, key, f"task-plans/{args.id}.md"),
+    }
+    missing = [path for path in sources.values() if not path.is_file()]
+    if missing:
+        fail("task start hydration inputs are missing: " + ", ".join(
+            path.relative_to(base).as_posix() if path.is_relative_to(base) else str(path)
+            for path in missing
+        ))
+    payloads = {relative: source.read_bytes() for relative, source in sources.items()}
+    decomposition_bytes = decomposition_path.read_bytes()
+    stages_bytes = (json.dumps({
+        "issue": key,
+        "stages": [
+            {
+                "id": task.get("id"),
+                "title": task.get("title"),
+                "status": "done" if position < index else "pending",
+            }
+            for position, task in enumerate(tasks)
+        ],
+    }, indent=2) + "\n").encode()
+
+    _require_git(
+        base, "creating task worktree", "worktree", "add", str(worktree),
+        "-b", branch, base_main_sha,
+    )
+    for relative, content in payloads.items():
+        destination = worktree / relative
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        destination.write_bytes(content)
+    control = git_control_dir(worktree)
+    control.mkdir(parents=True, exist_ok=True)
+    (control / "decomposition.json").write_bytes(decomposition_bytes)
+    (control / "stages.json").write_bytes(stages_bytes)
+    dump_json(control / "run.json", {
+        **state,
+        "issue_key": key,
+        "task_id": args.id,
+        "branch": branch,
+        "base_main_sha": base_main_sha,
+    })
+    print(f"Started task {args.id}: {branch} at {worktree} ({base_main_sha})")

@@ -28,7 +28,7 @@ from factory_lib import (
     git_control_dir, head_sha, load_json, now_iso,
     product_tree_digest,
     protected_decomposition_state_path, repo_root, require_approved_plan_digest,
-    require_ready_task, run_state_path,
+    require_ready_task, require_task_worktree, run_state_path,
     safe_factory_write_json, sha256_of, task_digest,
 )
 
@@ -723,6 +723,7 @@ def _find(data: dict, stage_id: str) -> dict:
 
 
 def _cmd_start_locked(args: argparse.Namespace, base: Path) -> None:
+    require_task_worktree(base)
     data = load_stages(base)
     if not data:
         fail("no .factory/stages.json — record the decomposition first "

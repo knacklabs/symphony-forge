@@ -10690,6 +10690,132 @@ def record_skeleton_then_frontier(repo: Path, tasks: list[dict]) -> None:
         assert code == 0, out
 
 
+def seed_task_start_inputs(
+    repo: Path, key: str, tasks: list[dict], target_id: str,
+) -> dict:
+    state = run_state(repo)
+    plan_file = state["plan_file"]
+    plan = repo / plan_file
+    decomposition = {
+        "plan_file": plan_file,
+        "plan_sha256": plan_digest_without_assumptions(plan),
+        "tasks": tasks,
+    }
+    control = delegation_ledger(repo).parent
+    control.mkdir(parents=True, exist_ok=True)
+    (control / "decomposition.json").write_text(json.dumps(decomposition))
+    scoped = story_state(repo, key)
+    scoped.mkdir(parents=True, exist_ok=True)
+    (scoped / "decomposition.json").write_text(json.dumps(decomposition))
+    grill = scoped / "grills" / "tasks" / f"{target_id}.json"
+    grill.parent.mkdir(parents=True, exist_ok=True)
+    grill.write_text(json.dumps({"verdict": "pass", "approved_by": "Test Human"}))
+    task_plan = scoped / "task-plans" / f"{target_id}.md"
+    task_plan.parent.mkdir(parents=True, exist_ok=True)
+    task_plan.write_text(f"# Task plan — {target_id}\n")
+    return {
+        "plan": plan,
+        "decomposition": scoped / "decomposition.json",
+        "grill": grill,
+        "task_plan": task_plan,
+    }
+
+
+def test_task_start_creates_worktree_off_main_and_gates_on_predecessor_marker(
+    repo, tmp_path,
+):
+    remote = tmp_path / "origin.git"
+    proc = subprocess.run(["git", "init", "--bare", str(remote)],
+                          capture_output=True, text=True)
+    assert proc.returncode == 0, proc.stdout + proc.stderr
+    git(repo, "remote", "add", "origin", str(remote))
+    git(repo, "push", "-q", "origin", f"{head(repo)}:refs/heads/main")
+
+    key = "ENG-1"
+    sign_off(repo)
+    code, out = intake(repo, key)
+    assert code == 0, out
+    code, out = save_plan(repo, tmp_path)
+    assert code == 0, out
+    first = {**DECOMP["tasks"][0], "id": "T1", "title": "first"}
+    second = {**DECOMP["tasks"][0], "id": "T2", "title": "second"}
+
+    seed_task_start_inputs(repo, key, [first], "T1")
+    code, out = run(repo, "forge.py", "task", "start", "T1")
+    assert code == 0, out
+    first_worktree = repo.parent / f"{repo.name}-{key}-T1"
+    assert git(first_worktree, "symbolic-ref", "--short", "HEAD") == "feat/ENG-1-T1"
+
+    sources = seed_task_start_inputs(repo, key, [first, second], "T2")
+    second_worktree = repo.parent / f"{repo.name}-{key}-T2"
+    code, out = run(repo, "forge.py", "task", "start", "T2")
+    assert code != 0 and "predecessor T1 marker is absent" in out, out
+    assert not second_worktree.exists()
+
+    marker = repo / ".factory" / "stories" / key / "tasks" / "T1" / "pr-ready.json"
+    marker.parent.mkdir(parents=True, exist_ok=True)
+    marker.write_text("{}\n")
+    git(repo, "add", str(marker.relative_to(repo)))
+    git(repo, "commit", "-q", "-m", "mark T1 ready")
+    git(repo, "push", "-q", "origin", "HEAD:main")
+    expected_base = git(repo, "rev-parse", "origin/main")
+
+    code, out = run(repo, "forge.py", "task", "start", "T2")
+    assert code == 0, out
+    assert head(second_worktree) == expected_base
+    assert git(second_worktree, "symbolic-ref", "--short", "HEAD") == "feat/ENG-1-T2"
+    destinations = {
+        "plan": second_worktree / sources["plan"].relative_to(repo),
+        "decomposition": story_state(second_worktree, key) / "decomposition.json",
+        "grill": story_state(second_worktree, key) / "grills/tasks/T2.json",
+        "task_plan": story_state(second_worktree, key) / "task-plans/T2.md",
+    }
+    assert all(destinations[name].read_bytes() == source.read_bytes()
+               for name, source in sources.items())
+    control = Path(git(second_worktree, "rev-parse", "--absolute-git-dir")) / "forge"
+    pointer = json.loads((control / "run.json").read_text())
+    assert pointer | {"issue_key": key, "task_id": "T2",
+                      "branch": "feat/ENG-1-T2", "base_main_sha": expected_base} == pointer
+    assert (control / "decomposition.json").read_bytes() == sources["decomposition"].read_bytes()
+    assert [stage["status"] for stage in json.loads(
+        (control / "stages.json").read_text())["stages"]] == ["done", "pending"]
+    code, out = run(repo, "forge.py", "task", "start", "T2")
+    assert code != 0 and "task branch already exists" in out, out
+
+
+def test_stage_start_and_delegate_refuse_from_wrong_task_worktree(repo, tmp_path):
+    task = task_with_plan_contracts({**DECOMP["tasks"][0], "user_facing": False})
+    sign_off(repo)
+    code, out = intake(repo)
+    assert code == 0, out
+    code, out = save_plan(repo, tmp_path)
+    assert code == 0, out
+    record_skeleton_then_frontier(repo, [task])
+    code, out = record_task_grill(repo, task)
+    assert code == 0, out
+
+    control = delegation_ledger(repo).parent
+    pointer = json.loads((control / "run.json").read_text())
+    current_branch = git(repo, "symbolic-ref", "--short", "HEAD")
+    pointer.update({"task_id": "T1", "branch": "feat/ENG-1-wrong"})
+    (control / "run.json").write_text(json.dumps(pointer))
+    code, out = run(repo, "forge.py", "stage", "start", "T1")
+    assert code != 0 and "task worktree required" in out, out
+
+    pointer["branch"] = current_branch
+    (control / "run.json").write_text(json.dumps(pointer))
+    code, out = run(repo, "forge.py", "stage", "start", "T1")
+    assert code == 0, out
+    pointer["branch"] = "feat/ENG-1-wrong"
+    (control / "run.json").write_text(json.dumps(pointer))
+    code, out = run(repo, "forge.py", "delegate", "T1", "--print-only")
+    assert code != 0 and "task worktree required" in out, out
+    pointer["branch"] = current_branch
+    (control / "run.json").write_text(json.dumps(pointer))
+    code, out = run(repo, "forge.py", "delegate", "T1", "--print-only")
+    assert code == 0, out
+
+
 def start_stage(repo: Path, tmp_path: Path, task: dict, stage_id: str = "T1",
                 *, launch: bool = True,
                 future_tasks: list[dict] | None = None) -> None:

@@ -1,0 +1,71 @@
+{
+  "generated_by": "griller",
+  "gate": "task",
+  "verdict": "pass",
+  "gaps": [],
+  "contradictions": [],
+  "resolutions": [
+    "Predecessor-marker gate via `git cat-file -e origin/main:<marker>` on the fetched main tree (no branch-name/merge inference, per 0047).",
+    "Hydrate the new task worktree by copying the approved plan, decomposition, task grill and task-plan FROM the current planning worktree (uniform for first and later tasks); init its protected run/decomposition/stages authority.",
+    "require_task_worktree refuses unless current branch == run-pointer branch AND task_id == the frontier task (two bindings)."
+  ],
+  "inspected_refs": [
+    "factory/scripts/forge_cli/tasks.py",
+    "factory/scripts/factory_lib.py",
+    "factory/scripts/forge_cli/roadmap.py",
+    "factory/scripts/forge_cli/stages.py",
+    "factory/scripts/forge_cli/delegate.py"
+  ],
+  "current_flow": "forge task has plan save/approve only; there is no task start. Worktrees are only PRINTED advisorily by roadmap cmd_parallel. The run pointer (git_control_dir/run.json) carries issue_key but no task_id/branch/base_main_sha, and nothing binds a downstream action to a specific task worktree.",
+  "criteria_map": {
+    "forge task start creates the task worktree/branch off fetched main and refuses if task N-1's marker is absent from main": "Inspected roadmap's worktree pattern + git_control_dir; cmd_task_start fetches origin/main, gates on `git cat-file -e origin/main:task_marker_path(pred)`, then `git worktree add -b feat/<KEY>-<TASKID> <fetched-sha>` and hydrates from the planning worktree.",
+    "stage start and delegate refuse from the wrong worktree/branch via require_task_worktree": "Inspected stages.py stage start and delegate.py launch; both call the shared require_task_worktree(root) which matches current branch AND run-pointer task_id."
+  },
+  "decision": "keep",
+  "new_abstractions": [
+    "factory_lib.task_marker_path(key, task_id) and require_task_worktree(root); justified as the shared marker-path (also written by task 9) and the single worktree-binding seam stage start + delegate reuse."
+  ],
+  "rounds": [
+    {
+      "question": "How is the predecessor marker checked?",
+      "options": [
+        "git cat-file -e origin/main:<marker>",
+        "Local branch/git-log inference"
+      ],
+      "chosen": "git cat-file -e origin/main:<marker>"
+    },
+    {
+      "question": "Where does the task worktree hydrate from?",
+      "options": [
+        "Copy from the current planning worktree",
+        "Read from merged main only"
+      ],
+      "chosen": "Copy from the current planning worktree"
+    },
+    {
+      "question": "What must require_task_worktree match?",
+      "options": [
+        "Branch AND run-pointer task_id",
+        "Branch name only"
+      ],
+      "chosen": "Branch AND run-pointer task_id"
+    }
+  ],
+  "citations": [
+    {
+      "finding": "0047 rejects merge inference from branch names; shipped truth is the marker on refreshed origin/main.",
+      "source": "docs/decisions/0047-task-level-worktree-and-pr.md"
+    },
+    {
+      "finding": "ACC-3 itself ships story-level; task start is built for the NEXT story (0047 bootstrap clause).",
+      "source": "docs/decisions/0047-task-level-worktree-and-pr.md"
+    }
+  ],
+  "task_id": "task-worktree-start",
+  "input_sha256": "7ebbe4ec05a30c5f0d788d69d477f168d27f14c3017bd744df2260fbae10d21f",
+  "recorded_at": "2026-08-19T10:59:38+00:00",
+  "commit": "f8fa44b926cc66408f8096f5de7797b336774b4a",
+  "approved_task_plan_sha256": "000be2b1cc774f4898e890fe964d452c3075687f60eb82a681ec66f7d4a59b45",
+  "approved_by": "Ravi Kiran Vemula",
+  "approved_at": "2026-08-19T11:03:16+00:00"
+}

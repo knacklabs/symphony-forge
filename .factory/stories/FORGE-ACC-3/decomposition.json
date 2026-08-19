@@ -333,6 +333,42 @@
       ],
       "dependencies": [
         "local-review-stamp"
+      ],
+      "write_scope": [
+        "factory/scripts/forge_cli/tasks.py",
+        "factory/scripts/forge.py",
+        "factory/scripts/factory_lib.py",
+        "factory/scripts/forge_cli/stages.py",
+        "factory/scripts/forge_cli/delegate.py",
+        "factory/tests/test_gates.py"
+      ],
+      "verify_commands": [
+        "python3 factory/scripts/check_dual_runtime.py"
+      ],
+      "required_tests": [
+        {
+          "id": "test_task_start_creates_worktree_off_main_and_gates_on_predecessor_marker",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest --with psutil python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_stage_start_and_delegate_refuse_from_wrong_task_worktree",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest --with psutil python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        }
+      ],
+      "reviewer_focus": "Implements decision 0047 forge task start. New forge_cli/tasks.py cmd_task_start(<id>) registered in forge.py as `forge task start <id>`: (1) git fetch origin main; resolve base_main_sha = the fetched origin/main SHA. (2) Predecessor-marker gate: the task's predecessor is the decomposition task immediately before <id> in recorded order; require its marker present in the fetched main tree via `git cat-file -e origin/main:<marker>` where marker = factory_lib.task_marker_path(key, pred_id) = .factory/stories/<KEY>/tasks/<PREDID>/pr-ready.json (NEW shared helper; task-pr-gate/task 9 WRITES this exact path). The FIRST task (no predecessor) skips the gate (bootstrap). (3) git worktree add <sibling ../<repo>-<KEY>-<TASKID>> -b feat/<KEY>-<TASKID> <base_main_sha>. (4) Hydrate the new worktree FROM THE CURRENT planning worktree (copy the approved story plan plans/active/<KEY>-*.md, the protected decomposition, this task's grill grills/tasks/<id>.json, and its task plan task-plans/<id>.md) and initialize that worktree's protected run/decomposition/stages authority (git_control_dir/run.json etc.). (5) Write the untracked run pointer (git_control_dir/run.json) with issue_key, task_id, branch, base_main_sha. Shared factory_lib.require_task_worktree(root): reads the run pointer and refuses unless the current branch == the pointer's branch AND task_id == the frontier task; stage start (stages.py) and write delegate (delegate.py) call it as a single seam. BOOTSTRAP: ACC-3 itself ships story-level and does NOT run forge task start; this builds it for the next story (0047). Idempotence/safety: refuse if the branch/worktree already exists; never touch origin. SCOPE: the 6 write_scope files only; keep the run-pointer additions backward-compatible (story-level runs omit task_id/branch).",
+      "plan_contracts": [
+        {
+          "id": "ACC3T8-C1",
+          "statement": "forge task start creates the task worktree/branch off fetched main and refuses if task N-1's marker is absent from main",
+          "source": "plans/active/FORGE-ACC-3-approval-and-closeout-integrity.md#task-decomposition"
+        },
+        {
+          "id": "ACC3T8-C2",
+          "statement": "stage start and delegate refuse from the wrong worktree/branch via require_task_worktree",
+          "source": "plans/active/FORGE-ACC-3-approval-and-closeout-integrity.md#task-decomposition"
+        }
       ]
     },
     {
@@ -377,5 +413,5 @@
   "epic": "accountable-engineering",
   "plan_file": "plans/active/FORGE-ACC-3-approval-and-closeout-integrity.md",
   "plan_sha256": "5d9d8ba4de41df6b9253dc04d5451145c7beef03ab9cad25af1aadc9e4982da2",
-  "commit": "0d9affc005cd6ca9c393d32a790c1734198de7d0"
+  "commit": "f8fa44b926cc66408f8096f5de7797b336774b4a"
 }
