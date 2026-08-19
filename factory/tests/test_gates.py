@@ -8463,6 +8463,64 @@ def test_check_pr_ticket_infers_ticket_from_feature_branch(repo):
     assert code == 0 and f"story {key}" in out, out
 
 
+def test_pr_ticket_accepts_a_validated_task_marker_as_work_record(repo):
+    key, task_id = "BOARD-112", "T1"
+    base = pr_ticket_base(repo, key)
+    marker = (
+        repo / ".factory" / "stories" / key / "tasks" / task_id
+        / "pr-ready.json"
+    )
+    marker.parent.mkdir(parents=True)
+    marker.write_text(json.dumps({
+        "task_id": task_id,
+        "branch": f"feat/{key}-{task_id}",
+        "base_main_sha": base,
+        "commit": head(repo),
+    }) + "\n")
+    git(repo, "add", marker.relative_to(repo).as_posix())
+    git(repo, "commit", "-q", "-m", "add incomplete task marker")
+
+    code, out = check_pr_ticket(
+        repo, base, "chore/task-marker", f"Ticket: {key}/{task_id}\n",
+    )
+    assert code != 0 and "no completed work record" in out, out
+
+    payload = json.loads(marker.read_text())
+    payload["sealed_at"] = "2026-08-19T00:00:00Z"
+    marker.write_text(json.dumps(payload) + "\n")
+    git(repo, "add", marker.relative_to(repo).as_posix())
+    git(repo, "commit", "-q", "-m", "seal task marker")
+
+    code, out = check_pr_ticket(
+        repo, base, "chore/task-marker", f"Ticket: {key}/{task_id}\n",
+    )
+    assert code == 0 and f"task {key}/{task_id}" in out, out
+
+    code, out = check_pr_ticket(repo, base, f"feat/{key}-{task_id}")
+    assert code == 0 and f"task {key}/{task_id}" in out, out
+
+
+def test_pr_ticket_story_and_quickfix_handling_unchanged(repo):
+    key, window_id = "BOARD-113", "Q-0042-bcde"
+    base = pr_ticket_base(repo, key)
+    complete_story(repo, key)
+    ledger = repo / "plans" / "quickfixes"
+    ledger.mkdir(exist_ok=True)
+    (ledger / "window-done.json").write_text(json.dumps({
+        "event": "done", "id": window_id, "files": ["src/fix.py"],
+    }) + "\n")
+    git(repo, "add", "plans/roadmap.json", f".factory/history/{key}",
+        "plans/quickfixes/window-done.json")
+    git(repo, "commit", "-q", "-m", "complete story and work window")
+
+    code, out = check_pr_ticket(
+        repo, base, f"feat/{key}-gate-a", f"Ticket: {window_id}\n",
+    )
+
+    assert code == 0, out
+    assert f"story {key}" in out and f"window {window_id}" in out, out
+
+
 def test_check_pr_ticket_fails_no_ticket(repo):
     key = "BOARD-102"
     base = pr_ticket_base(repo, key)

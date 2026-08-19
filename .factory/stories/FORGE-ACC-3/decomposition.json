@@ -490,6 +490,39 @@
       ],
       "dependencies": [
         "task-frontier-and-closeout"
+      ],
+      "write_scope": [
+        "factory/scripts/check_pr_ticket.py",
+        ".github/workflows/roadmap-gate.yml",
+        "factory/tests/test_gates.py"
+      ],
+      "verify_commands": [
+        "python3 factory/scripts/check_dual_runtime.py"
+      ],
+      "required_tests": [
+        {
+          "id": "test_pr_ticket_accepts_a_validated_task_marker_as_work_record",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest --with psutil python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_pr_ticket_story_and_quickfix_handling_unchanged",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest --with psutil python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        }
+      ],
+      "reviewer_focus": "Extends check_pr_ticket.py (the pr-ticket-check gate). Add completed_task_markers(root, added): an added path matching .factory/stories/<KEY>/tasks/<TASKID>/pr-ready.json whose JSON carries the required marker fields (task_id==<TASKID>, branch, base_main_sha, commit, sealed_at) yields the work record '<KEY>/<TASKID>'. Wire it into main() ADDITIVELY alongside completed_stories + completed_windows: a PR must declare EVERY completed record, and a task record is declared by a `Ticket: <KEY>/<TASKID>` body line OR inferred from a canonical task branch feat/<KEY>-<TASKID> (extend branch_ticket to yield <KEY>/<TASKID> when the branch names a decomposition task id and the diff adds that task's marker; the story-branch feat/<KEY>-<slug> inference stays). So a task PR whose only completed record is its validated marker passes. Story done-flip (history/shipped.json) and quickfix-window handling stay UNCHANGED (a required test asserts this). roadmap-gate.yml: change only if it must pass the head branch / not filter the marker path; otherwise leave it. Keep the CI-side check dependency-free (no schema import); validate marker fields by presence. SCOPE: the 3 write_scope files only.",
+      "plan_contracts": [
+        {
+          "id": "ACC3T11-C1",
+          "statement": "a task PR whose only completed work record is a validated task marker passes pr-ticket-check",
+          "source": "plans/active/FORGE-ACC-3-approval-and-closeout-integrity.md#task-decomposition"
+        },
+        {
+          "id": "ACC3T11-C2",
+          "statement": "story and quickfix declaration handling is unchanged",
+          "source": "plans/active/FORGE-ACC-3-approval-and-closeout-integrity.md#task-decomposition"
+        }
       ]
     }
   ],
@@ -498,5 +531,5 @@
   "epic": "accountable-engineering",
   "plan_file": "plans/active/FORGE-ACC-3-approval-and-closeout-integrity.md",
   "plan_sha256": "5d9d8ba4de41df6b9253dc04d5451145c7beef03ab9cad25af1aadc9e4982da2",
-  "commit": "0648224a850005df418877f047018d9214c72d28"
+  "commit": "e87a6c1b3638183aa28d706eb2650c5792710bcc"
 }

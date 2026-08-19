@@ -1,0 +1,69 @@
+{
+  "generated_by": "griller",
+  "gate": "task",
+  "verdict": "pass",
+  "gaps": [],
+  "contradictions": [],
+  "resolutions": [
+    "Validate a task marker by path (.factory/stories/<KEY>/tasks/<TASKID>/pr-ready.json) + required fields present (task_id==<TASKID>, branch, base_main_sha, commit, sealed_at); dependency-free, no schema import.",
+    "A task record <KEY>/<TASKID> is declared by a `Ticket: <KEY>/<TASKID>` body line OR inferred from a feat/<KEY>-<TASKID> branch that adds that marker (mirrors story ticket handling).",
+    "Additive: task markers join completed_stories + completed_windows; a PR must declare every completed record; story done-flip + quickfix-window handling stay unchanged (asserted by a required test)."
+  ],
+  "inspected_refs": [
+    "factory/scripts/check_pr_ticket.py",
+    ".github/workflows/roadmap-gate.yml",
+    "factory/scripts/forge_cli/tasks.py"
+  ],
+  "current_flow": "check_pr_ticket.py assembles completed work records from completed_stories (history/shipped.json) + completed_windows (quickfix) and requires every one declared via a Ticket: line or a feat/<KEY>- branch inference; it has NO notion of a per-task pr-ready.json marker. task_marker_path defines the marker (.factory/stories/<KEY>/tasks/<TASKID>/pr-ready.json) written by task 9.",
+  "criteria_map": {
+    "a task PR whose only completed work record is a validated task marker passes pr-ticket-check": "Inspected check_pr_ticket.main; completed_task_markers yields <KEY>/<TASKID> from an added valid marker, declared via Ticket: or the canonical task branch, so a task-only PR passes.",
+    "story and quickfix declaration handling is unchanged": "Inspected completed_stories/completed_windows; task markers are an additive third source; the existing paths are untouched (required test asserts it)."
+  },
+  "decision": "keep",
+  "new_abstractions": [
+    "completed_task_markers(root, added) + a task-branch case in branch_ticket; justified as the additive CI recognition of the task marker task 9 writes, with no schema coupling."
+  ],
+  "rounds": [
+    {
+      "question": "How is a task marker validated in CI?",
+      "options": [
+        "Path + required fields present",
+        "Full schema validation"
+      ],
+      "chosen": "Path + required fields present"
+    },
+    {
+      "question": "How is a task record declared?",
+      "options": [
+        "Ticket line OR canonical task branch",
+        "Ticket line only"
+      ],
+      "chosen": "Ticket line OR canonical task branch"
+    },
+    {
+      "question": "How do task markers interact with story/quickfix records?",
+      "options": [
+        "Additive \u2014 all three coexist",
+        "Task markers replace story records"
+      ],
+      "chosen": "Additive \u2014 all three coexist"
+    }
+  ],
+  "citations": [
+    {
+      "finding": "0047: check_pr_ticket + roadmap-gate.yml treat a validated task marker as a completed work record <KEY>/<TASKID>, preserving story/quickfix handling.",
+      "source": "docs/decisions/0047-task-level-worktree-and-pr.md"
+    },
+    {
+      "finding": "The task marker path .factory/stories/<KEY>/tasks/<TASKID>/pr-ready.json is written by forge task pr-ready (task 9).",
+      "source": "factory/scripts/forge_cli/tasks.py#cmd_task_pr_ready"
+    }
+  ],
+  "task_id": "roadmap-gate-task-markers",
+  "input_sha256": "03fe493c088d0bf4b43fef08e9bb90add0a2e4575ed4a273521edc6e5afc1a68",
+  "recorded_at": "2026-08-19T12:54:49+00:00",
+  "commit": "e87a6c1b3638183aa28d706eb2650c5792710bcc",
+  "approved_task_plan_sha256": "fc540a576e6d9d1ac4f6a71f5f30fcde32bc492142e6a261daaeb3c6e5ffe67b",
+  "approved_by": "Ravi Kiran Vemula",
+  "approved_at": "2026-08-19T12:57:25+00:00"
+}
