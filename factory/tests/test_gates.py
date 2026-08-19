@@ -10783,6 +10783,25 @@ def test_task_start_creates_worktree_off_main_and_gates_on_predecessor_marker(
     assert code != 0 and "task branch already exists" in out, out
 
 
+def test_require_task_worktree_noops_for_story_level_run(repo, tmp_path):
+    # A story-level run pointer carries `branch` (from intake) but no task_id;
+    # require_task_worktree must NOT gate it. Regression: it refused a
+    # branch-without-task_id pointer, deadlocking every story-level stage start.
+    task = task_with_plan_contracts({**DECOMP["tasks"][0], "user_facing": False})
+    sign_off(repo)
+    intake(repo)
+    save_plan(repo, tmp_path)
+    record_skeleton_then_frontier(repo, [task])
+    record_task_grill(repo, task)
+    control = delegation_ledger(repo).parent
+    pointer = json.loads((control / "run.json").read_text())
+    assert pointer.get("branch") and "task_id" not in pointer
+    code, out = run(repo, "forge.py", "stage", "start", "T1")
+    assert code == 0, out
+    code, out = run(repo, "forge.py", "delegate", "T1", "--print-only")
+    assert code == 0, out
+
+
 def test_stage_start_and_delegate_refuse_from_wrong_task_worktree(repo, tmp_path):
     task = task_with_plan_contracts({**DECOMP["tasks"][0], "user_facing": False})
     sign_off(repo)

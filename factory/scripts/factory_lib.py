@@ -1579,15 +1579,15 @@ def require_task_worktree(root: Path) -> None:
     """Bind task-level actions to the worktree recorded by `task start`."""
     state = load_json(run_state_path(root), default={})
     task_id = state.get("task_id")
-    branch = state.get("branch")
-    if task_id is None and branch is None:
+    # task_id is the task-level marker `forge task start` sets; a story-level run
+    # carries `branch` (from intake) but no task_id and must not be gated here.
+    if not (isinstance(task_id, str) and task_id):
         return
-    if (
-        not isinstance(task_id, str) or not task_id
-        or not isinstance(branch, str) or not branch
-    ):
+    branch = state.get("branch")
+    if not (isinstance(branch, str) and branch):
         raise SystemExit(
-            "task worktree pointer is incomplete: task_id and branch must both be set"
+            "task worktree pointer names a task_id without a branch — "
+            "re-run `./forge task start`"
         )
     proc = subprocess.run(
         ["git", "symbolic-ref", "--quiet", "--short", "HEAD"],

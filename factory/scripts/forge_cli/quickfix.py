@@ -12,7 +12,7 @@ from pathlib import Path
 from factory_lib import (
     _active_story_key, append_ledger_record, clean_git_env, dump_json,
     evidence_path, head_sha, load_json, load_review_artifacts, now_iso,
-    read_ledger_records, repo_root, require_all_stages_done,
+    read_ledger_records, repo_root,
 )
 
 from .common import fail
@@ -92,12 +92,16 @@ def _open(base: Path, *, profile: str, reason: str, by: str | None = None) -> di
     reason = reason.strip()
     if not reason:
         fail(f"a {profile} window needs a reason")
-    open_stages = require_all_stages_done(base)
-    if open_stages:
+    from forge_cli.stages import load_stages
+    active_stages = [
+        stage.get("id") for stage in load_stages(base).get("stages", [])
+        if isinstance(stage, dict) and stage.get("status") == "active"
+    ]
+    if active_stages:
         fail(
-            f"cannot open a {profile} window while stage(s) remain open: "
-            f"{', '.join(open_stages)} — pause the active stage with "
-            "`./forge stage done <id> --incomplete \"<what remains>\"` first"
+            f"cannot open a {profile} window while a stage is active: "
+            f"{', '.join(active_stages)} — finish it "
+            "(`./forge stage done <id>`) so no stage is active, then open the window"
         )
     active_window = load_active(base)
     if active_window:
