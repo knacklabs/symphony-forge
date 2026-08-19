@@ -10889,6 +10889,10 @@ def publish_task_marker(repo: Path, key: str, task_id: str) -> Path:
 
 
 def prepare_task_pr_ready(repo: Path, tmp_path: Path) -> Path:
+    # forge task pr-ready commits the marker with clean_git_env (no inline
+    # identity), so the repo needs a local git identity on identity-less runners.
+    git(repo, "config", "user.email", "test@knacklabs.dev")
+    git(repo, "config", "user.name", "Gate Tests")
     remote = tmp_path / "pr-origin.git"
     if not remote.exists():
         proc = subprocess.run(["git", "init", "--bare", str(remote)],
