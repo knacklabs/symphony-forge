@@ -236,7 +236,7 @@
     {
       "id": "coherent-branch-review",
       "title": "The three lenses are one run over one brief",
-      "status": "active",
+      "status": "done",
       "started_at": "2026-08-19T09:39:59+00:00",
       "base_sha": "5ee81b786676e4afd1aa09aca9aa3e5ba90ac301",
       "dirty_at_start": {
@@ -354,7 +354,8 @@
         "product_tree_digest": "c37adaac58ceb07e0108ced8847c02df64e39d75e88907ac7b4440d7af8496c9",
         "recorded_at": "2026-08-19T09:57:48+00:00",
         "generated_by": "autoreview"
-      }
+      },
+      "completed_at": "2026-08-19T09:58:26+00:00"
     },
     {
       "id": "ordered-closeout",
