@@ -1,0 +1,1 @@
+{"event": "signal-contradiction", "generated_by": "implementer", "at": "2026-08-19T10:16:41+00:00", "story": "FORGE-ACC-3", "detail": "ordered-closeout says window start must refuse every non-done stage but also says stage done --incomplete is the recovery; that command explicitly leaves the stage active, so the prescribed recovery c"}

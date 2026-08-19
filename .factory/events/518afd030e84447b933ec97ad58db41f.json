@@ -1,0 +1,1 @@
+{"event": "signal-contradiction", "generated_by": "implementer", "at": "2026-08-19T11:41:30+00:00", "story": "FORGE-ACC-3", "detail": "task pr-ready writes the marker after the sealed product commit and opens the PR, but the brief authorizes no marker commit/push; therefore the opened PR cannot contain the marker and its merge can ne"}

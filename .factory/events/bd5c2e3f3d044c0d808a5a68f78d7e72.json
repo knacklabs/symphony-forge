@@ -1,0 +1,1 @@
+{"event": "signal-resolved", "generated_by": "orchestrator", "at": "2026-08-19T11:35:42+00:00", "story": "FORGE-ACC-3", "detail": "S-0004-228f: Correct catch. Resolution: (1) the marker payload's commit field = the SEALED task commit C = HEAD captured BEFORE the marker is written (the reviewed product commit), NOT HEAD-after-the-marker-commit"}

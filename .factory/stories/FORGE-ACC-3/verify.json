@@ -1,0 +1,28 @@
+{
+  "ok": true,
+  "completed_at": "2026-08-19T15:46:49+00:00",
+  "commit": "89e88c8e0e658ad05fb87255c5fbb8a0feb314a3",
+  "results": [
+    {
+      "command": "python3 factory/scripts/check_dual_runtime.py",
+      "exit_code": 0,
+      "stdout": "WARNING: commit e900fcf5 accepting docs/decisions/0032-jit-task-planning.md lacks a `Confirmed-by:` trailer (convention-level check).\nWARNING: commit 785dba9c accepting docs/decisions/0033-gate-a-declares-all-work-records.md lacks a `Confirmed-by:` trailer (convention-level check).\nWARNING: commit 0f17e888 accepting docs/decisions/0034-vendored-docs-are-client-safe.md lacks a `Confirmed-by:` trailer (convention-level check).\nWARNING: commit fd798874 accepting docs/decisions/0040-windows-user-scope-first-elevation-deferred.md lacks a `Confirmed-by:` trailer (convention-level check).\nWARNING: commit 5195b56d accepting docs/decisions/0044-accountable-engineering-loop.md lacks a `Confirmed-by:` trailer (convention-level check).\nWARNING: commit 5195b56d accepting docs/decisions/0045-conflict-free-story-state.md lacks a `Confirmed-by:` trailer (convention-level check).\ncheck_dual_runtime: clean.\n",
+      "stderr": "",
+      "phase": "structural"
+    },
+    {
+      "command": "python3 factory/scripts/check_factory_scaffold.py",
+      "exit_code": 0,
+      "stdout": "Factory scaffold OK\n",
+      "stderr": "",
+      "phase": "typecheck"
+    },
+    {
+      "command": "uv run --with pytest --with psutil python -m pytest factory/tests -q",
+      "exit_code": 0,
+      "stdout": "........................................................................ [ 11%]\n................................................s....................... [ 23%]\n........................................................................ [ 34%]\n........................................................................ [ 46%]\n........................................................................ [ 57%]\n........................................................................ [ 69%]\n........................................................................ [ 80%]\n............................................ss.......................... [ 92%]\n..................................................                       [100%]\n623 passed, 3 skipped in 1486.78s (0:24:46)\n",
+      "stderr": "",
+      "phase": "tests"
+    }
+  ]
+}

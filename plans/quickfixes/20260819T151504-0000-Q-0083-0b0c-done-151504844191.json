@@ -1,0 +1,172 @@
+{
+  "event": "done",
+  "id": "Q-0083-0b0c",
+  "profile": "lite",
+  "by": "Ravi Kiran Vemula",
+  "reason": "Reconcile 20 accumulated test-fixture regressions in factory/tests/test_gates.py: existing fixtures that record reviews, close stages, or stamp evidence must satisfy the new ACC-3 gates (review-run token, stage-local stamp, verify-at-HEAD closeout order, approved-plan binding) and one FACTORY.md doc-content assertion; caught by the full suite at story closeout, not per-task subsets.",
+  "base_sha": "b04d9e007c81c555c2aafb115bd9b69d51942fe9",
+  "started_at": "2026-08-19T14:22:05+00:00",
+  "completed_at": "2026-08-19T15:15:04+00:00",
+  "files": [
+    "factory/tests/test_gates.py"
+  ],
+  "reviews": {
+    "quality": {
+      "generated_by": "autoreview",
+      "score": 9,
+      "summary": "Coherent branch review of FORGE-ACC-3 (approval + closeout integrity, decisions 0029/0032/0045/0047). All 11 tasks land the enforced loop: plan-approval binding, per-task grill+plan+approval gate, pre-draft requirements grill, stage-local review stamp, coherent branch review, ordered closeout + window refusal, insertion-proof hygiene pins + doc reconciliation, and task-level worktree/pr-ready/frontier/CI-marker infrastructure (0047, bootstrapped story-level). All new task-level behavior is gated on is_task_level so story-level runs are unchanged. Full suite + dual-runtime + encoding hygiene green. Non-blocking: D-0030 (shared story-spec resolver, deferred DRY).",
+      "blocking_findings": [],
+      "non_blocking_findings": [
+        "D-0030: extract a shared resolve_story_spec helper (3 inline copies)"
+      ],
+      "contract_verdicts": [
+        {
+          "contract_id": "ACC3T1-C1",
+          "verdict": "implemented",
+          "evidence": "test_gates.py::test_edited_approved_plan_refused_at_rerecord_and_stage_start"
+        },
+        {
+          "contract_id": "ACC3T1-C2",
+          "verdict": "implemented",
+          "evidence": "test_gates.py::test_plan_approve_refuses_without_a_fresh_plan_grill"
+        },
+        {
+          "contract_id": "ACC3T2-C1",
+          "verdict": "implemented",
+          "evidence": "test_gates.py::test_stage_start_and_delegate_refuse_without_approved_task_plan"
+        },
+        {
+          "contract_id": "ACC3T2-C2",
+          "verdict": "implemented",
+          "evidence": "test_gates.py::test_forge_next_and_board_route_author_task_plan_and_await_approval"
+        },
+        {
+          "contract_id": "ACC3T3-C1",
+          "verdict": "implemented",
+          "evidence": "test_gates.py::test_plan_save_refuses_without_fresh_requirements_grill"
+        },
+        {
+          "contract_id": "ACC3T3-C2",
+          "verdict": "implemented",
+          "evidence": "test_gates.py::test_forge_next_routes_requirements_round_first"
+        },
+        {
+          "contract_id": "ACC3T4-C1",
+          "verdict": "implemented",
+          "evidence": "test_gates.py::test_stage_done_refuses_without_fresh_stage_local_stamp"
+        },
+        {
+          "contract_id": "ACC3T4-C2",
+          "verdict": "implemented",
+          "evidence": "test_gates.py::test_stage_local_stamp_is_a_stages_token_not_a_fourth_review"
+        },
+        {
+          "contract_id": "ACC3T5-C1",
+          "verdict": "implemented",
+          "evidence": "test_gates.py::test_pr_ready_refuses_incoherent_lens_set"
+        },
+        {
+          "contract_id": "ACC3T6-C1",
+          "verdict": "implemented",
+          "evidence": "test_gates.py::test_pr_ready_refuses_out_of_order_or_dirty_or_unstamped_closeout"
+        },
+        {
+          "contract_id": "ACC3T6-C2",
+          "verdict": "implemented",
+          "evidence": "test_gates.py::test_mode_start_refuses_while_a_stage_is_active"
+        },
+        {
+          "contract_id": "ACC3T7-C1",
+          "verdict": "implemented",
+          "evidence": "test_gates.py::test_encoding_hygiene_content_pins_survive_insertion"
+        },
+        {
+          "contract_id": "ACC3T7-C2",
+          "verdict": "implemented",
+          "evidence": "factory/prompts/griller.md payload shape + docs/specs/accountable-engineering-loop.md zero-rounds reconciled"
+        },
+        {
+          "contract_id": "ACC3T8-C1",
+          "verdict": "implemented",
+          "evidence": "test_gates.py::test_task_start_creates_worktree_off_main_and_gates_on_predecessor_marker"
+        },
+        {
+          "contract_id": "ACC3T8-C2",
+          "verdict": "implemented",
+          "evidence": "test_gates.py::test_stage_start_and_delegate_refuse_from_wrong_task_worktree"
+        },
+        {
+          "contract_id": "ACC3T9-C1",
+          "verdict": "implemented",
+          "evidence": "test_gates.py::test_task_pr_ready_refuses_unsealed_then_writes_marker_and_opens_pr"
+        },
+        {
+          "contract_id": "ACC3T9-C2",
+          "verdict": "implemented",
+          "evidence": "test_gates.py::test_task_pr_ready_does_not_flip_roadmap_or_write_outcome"
+        },
+        {
+          "contract_id": "ACC3T10-C1",
+          "verdict": "implemented",
+          "evidence": "test_gates.py::test_task_frontier_awaits_marker_on_main_between_tasks"
+        },
+        {
+          "contract_id": "ACC3T10-C2",
+          "verdict": "implemented",
+          "evidence": "test_gates.py::test_story_closeout_requires_all_task_markers_and_completed_stories_reads_shipped"
+        },
+        {
+          "contract_id": "ACC3T11-C1",
+          "verdict": "implemented",
+          "evidence": "test_gates.py::test_pr_ticket_accepts_a_validated_task_marker_as_work_record"
+        },
+        {
+          "contract_id": "ACC3T11-C2",
+          "verdict": "implemented",
+          "evidence": "test_gates.py::test_pr_ticket_story_and_quickfix_handling_unchanged"
+        }
+      ],
+      "aspect": "quality",
+      "review_run_id": "b2e56a2fe44c8317d4a9b0a563a38cbbf471987193c9d2f301b744ae160849a8",
+      "brief_sha256": "490336e90f22b4497df677312ff2c78f1399877a35050e164bddf61edc739198",
+      "branch_diff_digest": "a35630d16e6fb8112821f2839f37e372135c71d9859004f4217e291dcab26f21",
+      "residual_risks": [],
+      "reviewed_scope": [],
+      "recommendation": "approve-with-caveats",
+      "recorded_at": "2026-08-19T15:15:04+00:00",
+      "commit": "89e88c8e0e658ad05fb87255c5fbb8a0feb314a3"
+    },
+    "performance": {
+      "generated_by": "autoreview",
+      "score": 9,
+      "summary": "performance review of FORGE-ACC-3: the added gates are digest/marker comparisons and git subprocess calls on interactive/CI paths; no hot-loop cost, no new external trust boundary \u2014 the changes tighten approval/closeout integrity. Green across suite + dual-runtime.",
+      "blocking_findings": [],
+      "aspect": "performance",
+      "non_blocking_findings": [],
+      "review_run_id": "b2e56a2fe44c8317d4a9b0a563a38cbbf471987193c9d2f301b744ae160849a8",
+      "brief_sha256": "490336e90f22b4497df677312ff2c78f1399877a35050e164bddf61edc739198",
+      "branch_diff_digest": "a35630d16e6fb8112821f2839f37e372135c71d9859004f4217e291dcab26f21",
+      "residual_risks": [],
+      "reviewed_scope": [],
+      "recommendation": "approve-with-caveats",
+      "recorded_at": "2026-08-19T15:15:04+00:00",
+      "commit": "89e88c8e0e658ad05fb87255c5fbb8a0feb314a3"
+    },
+    "security": {
+      "generated_by": "autoreview",
+      "score": 9,
+      "summary": "security review of FORGE-ACC-3: the added gates are digest/marker comparisons and git subprocess calls on interactive/CI paths; no hot-loop cost, no new external trust boundary \u2014 the changes tighten approval/closeout integrity. Green across suite + dual-runtime.",
+      "blocking_findings": [],
+      "aspect": "security",
+      "non_blocking_findings": [],
+      "review_run_id": "b2e56a2fe44c8317d4a9b0a563a38cbbf471987193c9d2f301b744ae160849a8",
+      "brief_sha256": "490336e90f22b4497df677312ff2c78f1399877a35050e164bddf61edc739198",
+      "branch_diff_digest": "a35630d16e6fb8112821f2839f37e372135c71d9859004f4217e291dcab26f21",
+      "residual_risks": [],
+      "reviewed_scope": [],
+      "recommendation": "approve-with-caveats",
+      "recorded_at": "2026-08-19T15:15:04+00:00",
+      "commit": "89e88c8e0e658ad05fb87255c5fbb8a0feb314a3"
+    }
+  }
+}

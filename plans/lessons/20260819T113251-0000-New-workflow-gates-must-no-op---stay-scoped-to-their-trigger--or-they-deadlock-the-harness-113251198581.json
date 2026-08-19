@@ -1,0 +1,13 @@
+{
+  "topic": "New workflow gates must no-op / stay scoped to their trigger, or they deadlock the harness",
+  "lesson": "A gate that keys off the wrong field or state deadlocks all write paths: require_task_worktree no-op'd only when task_id AND branch were both absent, but story-level pointers carry branch (from intake) with no task_id, so it refused every story-level stage start/delegate; and the mode-window guard refused while any stage was NOT DONE instead of ACTIVE, blocking between-task windows. When two gates each block the only write path to fix the other, you cannot self-recover \u2014 verify a new gate no-ops for the pre-existing (story-level / no-active-stage) case, and test that case explicitly.",
+  "source": "4b343a7",
+  "applies_to": [
+    "factory/scripts/factory_lib.py",
+    "factory/scripts/forge_cli/quickfix.py",
+    "factory/scripts/forge_cli/stages.py"
+  ],
+  "severity": "high",
+  "generated_by": "orchestrator",
+  "added_at": "2026-08-19T11:32:51+00:00"
+}

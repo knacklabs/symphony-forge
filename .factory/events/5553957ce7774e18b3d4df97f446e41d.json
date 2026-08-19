@@ -1,0 +1,1 @@
+{"event": "signal-resolved", "generated_by": "orchestrator", "at": "2026-08-19T11:42:06+00:00", "story": "FORGE-ACC-3", "detail": "S-0005-90df: forge task pr-ready is a FORGE COMMAND run by the orchestrator (like pr_ready.py and stage done, which already write+commit evidence) \u2014 it IS authorized to git-commit the marker and git-push the branc"}

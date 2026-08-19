@@ -1,0 +1,1 @@
+{"event": "signal-scope-change", "generated_by": "implementer", "at": "2026-08-19T12:27:06+00:00", "story": "FORGE-ACC-3", "detail": "task-pr-gate already has a 414-line scoped diff (budget 400) before further edits; split or reduce the task, including explicit task-level seal-refusal coverage and marker field contract alignment"}

@@ -1,0 +1,12 @@
+{
+  "event": "open",
+  "id": "Q-0083-0b0c",
+  "profile": "lite",
+  "reason": "Reconcile 20 accumulated test-fixture regressions in factory/tests/test_gates.py: existing fixtures that record reviews, close stages, or stamp evidence must satisfy the new ACC-3 gates (review-run token, stage-local stamp, verify-at-HEAD closeout order, approved-plan binding) and one FACTORY.md doc-content assertion; caught by the full suite at story closeout, not per-task subsets.",
+  "started_at": "2026-08-19T14:22:05+00:00",
+  "max_files": 5,
+  "files": [],
+  "harness_source": true,
+  "by": "Ravi Kiran Vemula",
+  "base_sha": "b04d9e007c81c555c2aafb115bd9b69d51942fe9"
+}

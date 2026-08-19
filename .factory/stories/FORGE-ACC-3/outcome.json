@@ -1,0 +1,7 @@
+{
+  "generated_by": "implementer",
+  "outcome": "Approval and closeout integrity is enforced end to end: an edited plan, an unreviewed commit, an out-of-order or unstamped artifact, or a mid-stage write window can no longer reach pr_ready. Plans bind by digest and need a fresh human-attributed grill+approval; every task is grilled, planned, and approved before implementation; the confirmed spec is re-grilled against repo reality before drafting; each stage closes only with a clean local-review stamp over its committed delta; the three lenses are one coherent run; closeout is ordered on a clean tree with the outcome on the evidence commit; no window opens mid-stage. Also builds decision 0047 task-level shipping (task start/pr-ready, marker-on-main, marker-aware frontier, CI task markers), bootstrapped story-level.",
+  "issue": "FORGE-ACC-3",
+  "commit": "89e88c8e0e658ad05fb87255c5fbb8a0feb314a3",
+  "recorded_at": "2026-08-19T15:16:35+00:00"
+}

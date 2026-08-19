@@ -1,0 +1,12 @@
+{
+  "event": "open",
+  "id": "Q-0082-edca",
+  "profile": "lite",
+  "reason": "Allowlist 5 accumulated encoding-hygiene errors-policy sites (errors=surrogateescape on git subprocess output) added by tasks 8-10 in factory_lib.py and forge_cli/tasks.py; content-fingerprint pins per task 7. Blocks story-PR scaffold-check otherwise.",
+  "started_at": "2026-08-19T13:04:49+00:00",
+  "max_files": 5,
+  "files": [],
+  "harness_source": true,
+  "by": "Ravi Kiran Vemula",
+  "base_sha": "9f47823f41b43cf6330fde8d011851d3fc06a03f"
+}

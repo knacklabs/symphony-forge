@@ -1,0 +1,12 @@
+{
+  "event": "open",
+  "id": "Q-0081-629d",
+  "profile": "lite",
+  "reason": "Task 1 autoreview finding: extract a single require_approved_plan_digest(root) helper in factory_lib and replace the duplicated compare-and-refuse logic in record_decomposition_from_json.py and stages.py, honoring the grilled single-shared-helper design.",
+  "started_at": "2026-08-19T06:27:49+00:00",
+  "max_files": 5,
+  "files": [],
+  "harness_source": true,
+  "by": "Ravi Kiran Vemula",
+  "base_sha": "6098014cb0f0abca575254778557b1fd13ed6497"
+}

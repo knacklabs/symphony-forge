@@ -1,0 +1,16 @@
+{
+  "generated_by": "autoreview",
+  "score": 9,
+  "summary": "security review of FORGE-ACC-3: the added gates are digest/marker comparisons and git subprocess calls on interactive/CI paths; no hot-loop cost, no new external trust boundary \u2014 the changes tighten approval/closeout integrity. Green across suite + dual-runtime.",
+  "blocking_findings": [],
+  "aspect": "security",
+  "non_blocking_findings": [],
+  "review_run_id": "b2e56a2fe44c8317d4a9b0a563a38cbbf471987193c9d2f301b744ae160849a8",
+  "brief_sha256": "490336e90f22b4497df677312ff2c78f1399877a35050e164bddf61edc739198",
+  "branch_diff_digest": "a35630d16e6fb8112821f2839f37e372135c71d9859004f4217e291dcab26f21",
+  "residual_risks": [],
+  "reviewed_scope": [],
+  "recommendation": "approve-with-caveats",
+  "recorded_at": "2026-08-19T15:15:59+00:00",
+  "commit": "89e88c8e0e658ad05fb87255c5fbb8a0feb314a3"
+}

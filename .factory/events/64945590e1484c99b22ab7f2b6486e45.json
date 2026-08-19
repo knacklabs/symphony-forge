@@ -1,0 +1,1 @@
+{"event": "signal-resolved", "generated_by": "orchestrator", "at": "2026-08-19T12:43:43+00:00", "story": "FORGE-ACC-3", "detail": "S-0007-7687: Correct \u2014 the CFS-1 completed-story recognition is inline in check_pr_ticket.py (a .factory/history/<KEY>/ startswith check near line 171), not a factory_lib function. check_pr_ticket.py is now in the"}

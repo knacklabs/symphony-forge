@@ -1,0 +1,1 @@
+{"event": "signal-contradiction", "generated_by": "implementer", "at": "2026-08-19T12:41:07+00:00", "story": "FORGE-ACC-3", "detail": "The required completed_stories CFS-1 fix lives only in factory/scripts/check_pr_ticket.py, but that file is outside this task's four-file write scope; factory_lib.py has no completed_stories consumer "}

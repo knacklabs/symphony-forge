@@ -1,0 +1,92 @@
+{
+  "event": "done",
+  "id": "Q-0081-629d",
+  "profile": "lite",
+  "by": "Ravi Kiran Vemula",
+  "reason": "Task 1 autoreview finding: extract a single require_approved_plan_digest(root) helper in factory_lib and replace the duplicated compare-and-refuse logic in record_decomposition_from_json.py and stages.py, honoring the grilled single-shared-helper design.",
+  "base_sha": "6098014cb0f0abca575254778557b1fd13ed6497",
+  "started_at": "2026-08-19T06:27:49+00:00",
+  "completed_at": "2026-08-19T06:45:07+00:00",
+  "files": [
+    "factory/scripts/factory_lib.py",
+    "factory/scripts/forge_cli/quickfix.py",
+    "factory/scripts/forge_cli/stages.py",
+    "factory/scripts/record_decomposition_from_json.py",
+    "factory/tests/test_gates.py"
+  ],
+  "reviews": {
+    "quality": {
+      "generated_by": "autoreview",
+      "score": 9,
+      "summary": "Two fixes under Q-0081. (1) The approved-plan divergence check is now a single require_approved_plan_digest(root) helper in factory_lib; record_decomposition_from_json.py and stages.py both call it (one compare, one re-approve message), removing the drifting duplicate the task-1 grill flagged. (2) Lite close (forge mode done) now cleans the story-scoped reviews the gate actually reads and tolerates the absent legacy .factory/reviews dir, fixing a CFS-1 crash; scoped-layout regression test added. Suites green.",
+      "blocking_findings": [],
+      "non_blocking_findings": [],
+      "reviewed_scope": [
+        "factory/scripts/factory_lib.py",
+        "factory/scripts/forge_cli/stages.py",
+        "factory/scripts/record_decomposition_from_json.py",
+        "factory/scripts/forge_cli/quickfix.py",
+        "factory/tests/test_gates.py"
+      ],
+      "contract_verdicts": [
+        {
+          "contract_id": "ACC3T1-C1",
+          "verdict": "implemented",
+          "evidence": "factory/scripts/factory_lib.py:1169 require_approved_plan_digest raises on missing binding or plan_digest_without_assumptions mismatch; record_decomposition_from_json.py:70 and forge_cli/stages.py:708 both call it; test_gates.py::test_edited_approved_plan_refused_at_rerecord_and_stage_start passes"
+        },
+        {
+          "contract_id": "ACC3T1-C2",
+          "verdict": "implemented",
+          "evidence": "forge_cli/plans.py cmd_approve calls require_grill(...); test_gates.py::test_plan_approve_refuses_without_a_fresh_plan_grill passes"
+        },
+        {
+          "contract_id": "ACC3T2-C1",
+          "verdict": "implemented",
+          "evidence": "factory_lib.require_ready_task(require_approval=True) gates stage start and write delegate on approved task-plan digest; unchanged by this fix"
+        },
+        {
+          "contract_id": "ACC3T2-C2",
+          "verdict": "implemented",
+          "evidence": "task_frontier_state and task_rows derive author-task-plan/await-approval from shared predicates; unchanged by this fix"
+        }
+      ],
+      "aspect": "quality",
+      "residual_risks": [],
+      "recommendation": "approve-with-caveats",
+      "recorded_at": "2026-08-19T06:44:56+00:00",
+      "commit": "55353f604cc36b8a196bbb3aa3e8f9b44d54f18b"
+    },
+    "performance": {
+      "generated_by": "autoreview",
+      "score": 9,
+      "summary": "Pure refactors: one shared digest helper (no new I/O) and a corrected rmtree target on the close path. No hot-path cost.",
+      "blocking_findings": [],
+      "reviewed_scope": [
+        "factory/scripts/factory_lib.py",
+        "factory/scripts/forge_cli/stages.py",
+        "factory/scripts/record_decomposition_from_json.py",
+        "factory/scripts/forge_cli/quickfix.py",
+        "factory/tests/test_gates.py"
+      ],
+      "aspect": "performance",
+      "non_blocking_findings": [],
+      "residual_risks": [],
+      "recommendation": "approve-with-caveats",
+      "recorded_at": "2026-08-19T06:44:56+00:00",
+      "commit": "55353f604cc36b8a196bbb3aa3e8f9b44d54f18b"
+    },
+    "security": {
+      "generated_by": "autoreview",
+      "score": 9,
+      "summary": "Both changes tighten, not weaken, trust gates: the edited-approved-plan refusal is consolidated to one seam, and lite close now reliably clears ephemeral gate reviews so they cannot pose as closeout proof. No new inputs or shell.",
+      "blocking_findings": [],
+      "aspect": "security",
+      "non_blocking_findings": [],
+      "residual_risks": [],
+      "reviewed_scope": [],
+      "recommendation": "approve-with-caveats",
+      "recorded_at": "2026-08-19T06:44:56+00:00",
+      "commit": "55353f604cc36b8a196bbb3aa3e8f9b44d54f18b"
+    }
+  }
+}

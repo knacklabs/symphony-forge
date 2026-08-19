@@ -1,0 +1,1 @@
+{"event": "signal-resolved", "generated_by": "orchestrator", "at": "2026-08-19T09:52:46+00:00", "story": "FORGE-ACC-3", "detail": "S-0001-8b7e: Keep the six-file write scope; do NOT modify factory/scripts/check_encoding_hygiene.py. The stale line-pin allowlist is a known, tracked fragility (line pins shift on any insertion). It is owned by ta"}

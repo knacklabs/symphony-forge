@@ -1,0 +1,1 @@
+{"event": "signal-contradiction", "generated_by": "implementer", "at": "2026-08-19T10:12:00+00:00", "story": "FORGE-ACC-3", "detail": "ordered-closeout says stage done --incomplete is the recovery before opening a window, but that command explicitly leaves the stage active; require_all_stages_done must therefore still refuse, and cha"}

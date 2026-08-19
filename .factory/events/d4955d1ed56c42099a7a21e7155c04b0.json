@@ -1,0 +1,1 @@
+{"event": "signal-contradiction", "generated_by": "implementer", "at": "2026-08-19T11:34:20+00:00", "story": "FORGE-ACC-3", "detail": "task pr-ready writes pr-ready.json after the task's final commit and immediately opens the PR, but no allowed commit/push step exists afterward; gh pr create does not include dirty files, so the marke"}

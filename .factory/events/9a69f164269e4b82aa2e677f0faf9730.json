@@ -1,0 +1,1 @@
+{"event": "stage-done", "generated_by": "implementer", "at": "2026-08-19T11:11:46+00:00", "story": "FORGE-ACC-3", "detail": "task-worktree-start Each task runs in its own worktree off main"}

@@ -763,13 +763,16 @@
         "opening a lite, quickfix, or degraded write window while a stage is active refuses"
       ],
       "order": 35,
-      "status": "active",
+      "status": "done",
       "epic": "accountable-engineering",
       "skill": "backend",
       "depends_on": [
         "FORGE-ACC-2"
       ],
-      "spec": "docs/specs/accountable-engineering-loop.md"
+      "spec": "docs/specs/accountable-engineering-loop.md",
+      "completed_at": "2026-08-19T15:47:58+00:00",
+      "history": ".factory/stories/FORGE-ACC-3/",
+      "outcome": "Approval and closeout integrity is enforced end to end: an edited plan, an unreviewed commit, an out-of-order or unstamped artifact, or a mid-stage write window can no longer reach pr_ready. Plans bind by digest and need a fresh human-attributed grill+approval; every task is grilled, planned, and approved before implementation; the confirmed spec is re-grilled against repo reality before drafting; each stage closes only with a clean local-review stamp over its committed delta; the three lenses are one coherent run; closeout is ordered on a clean tree with the outcome on the evidence commit; no window opens mid-stage. Also builds decision 0047 task-level shipping (task start/pr-ready, marker-on-main, marker-aware frontier, CI task markers), bootstrapped story-level."
     },
     {
       "key": "FORGE-CFS-1",
@@ -795,7 +798,7 @@
     }
   ],
   "generated_by": "human",
-  "updated_at": "2026-08-19T04:00:53+00:00",
+  "updated_at": "2026-08-19T15:47:58+00:00",
   "epics": [
     {
       "id": "symphony-forge",

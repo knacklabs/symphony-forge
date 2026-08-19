@@ -1,0 +1,1 @@
+{"event": "shipped", "generated_by": "orchestrator", "at": "2026-08-19T15:47:58+00:00", "story": "FORGE-ACC-3", "detail": "Approval and closeout integrity is enforced end to end: an edited plan, an unreviewed commit, an out-of-order or unstamped artifact, or a mid-stage write window can no longer reach pr_ready. Plans bin"}

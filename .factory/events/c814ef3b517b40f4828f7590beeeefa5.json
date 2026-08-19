@@ -1,0 +1,1 @@
+{"event": "signal-resolved", "generated_by": "orchestrator", "at": "2026-08-19T12:27:34+00:00", "story": "FORGE-ACC-3", "detail": "S-0006-9640: Do NOT split. task-pr-gate is one coherent capability \u2014 the forge task pr-ready command + the factored require_task_sealed/task_marker_on_main predicates + the pr_ready refactor + the marker commit/pu"}

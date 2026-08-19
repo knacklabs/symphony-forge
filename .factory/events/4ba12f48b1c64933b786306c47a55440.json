@@ -1,0 +1,1 @@
+{"event": "signal-resolved", "generated_by": "orchestrator", "at": "2026-08-19T10:12:33+00:00", "story": "FORGE-ACC-3", "detail": "S-0002-42c7: Correct catch \u2014 disregard the grill's 'stage done --incomplete then open a window' aside; it was wrong. --incomplete intentionally leaves the stage ACTIVE, so require_all_stages_done must still refuse"}
