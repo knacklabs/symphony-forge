@@ -7481,6 +7481,39 @@ def test_mode_lite_opens_window_with_profile_and_base_sha(repo):
     assert code != 0 and "invalid choice" in out
 
 
+def test_mode_done_clears_scoped_reviews_without_legacy_dir(repo):
+    # CFS-1 layout: reviews live under the story dir and .factory/reviews never
+    # exists. Lite close must clean the scoped gate reviews and not crash on the
+    # absent legacy directory (the pre-fix rmtree targeted .factory/reviews).
+    code, out = intake(repo)
+    assert code == 0, out
+    lib = load_factory_lib(repo)
+    key = run_state(repo)["issue_key"]
+    assert lib.story_uses_scoped_layout(repo, key)
+
+    open_lite(repo)
+    (repo / "src").mkdir(exist_ok=True)
+    (repo / "src" / "scoped_fix.py").write_text("ok = True\n")
+    git(repo, "add", "src/scoped_fix.py")
+    git(repo, "commit", "-q", "-m", "scoped lite fix")
+
+    scoped_reviews = lib.story_dir(repo, key) / "reviews"
+    scoped_reviews.mkdir(parents=True, exist_ok=True)
+    for aspect in ("quality", "performance", "security"):
+        (scoped_reviews / f"{aspect}.json").write_text(json.dumps({
+            "generated_by": "autoreview", "score": 9, "summary": "clean",
+            "blocking_findings": [], "commit": head(repo),
+        }))
+    # CFS-1 migrates the legacy reviews dir away; its absence used to crash the
+    # close (rmtree on a missing path).
+    shutil.rmtree(repo / ".factory" / "reviews", ignore_errors=True)
+
+    code, out = run(repo, "forge.py", "mode", "done")
+    assert code == 0 and "1 file(s)" in out, out
+    assert not scoped_reviews.exists()  # ephemeral gate reviews cleared
+    assert not (repo / ".factory" / "quickfix.json").exists()  # window closed
+
+
 def test_mode_abandon_closes_crashed_window(repo):
     active = open_lite(repo)
     (repo / "src").mkdir()
