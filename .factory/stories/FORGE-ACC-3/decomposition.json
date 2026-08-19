@@ -106,6 +106,42 @@
       ],
       "dependencies": [
         "task-plan-approval-gate"
+      ],
+      "write_scope": [
+        "factory/scripts/factory_lib.py",
+        "factory/scripts/forge_cli/plans.py",
+        "factory/scripts/record_grill_from_json.py",
+        "factory/scripts/forge_cli/phase.py",
+        "factory/schemas/grill.json",
+        "factory/tests/test_gates.py"
+      ],
+      "verify_commands": [
+        "python3 factory/scripts/check_dual_runtime.py"
+      ],
+      "required_tests": [
+        {
+          "id": "test_plan_save_refuses_without_fresh_requirements_grill",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest --with psutil python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_forge_next_routes_requirements_round_first",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest --with psutil python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        }
+      ],
+      "reviewer_focus": "Minimal design mirroring the existing plan/task grill gates - no new machinery. New 'requirements' grill gate: record_grill_from_json.py adds 'requirements' to --gate choices and SELF-DERIVES input_sha256 = requirements_digest(root, spec) exactly as --gate task self-derives grounding_digest (no --input-digest file). factory_lib.requirements_digest(root, spec_path) = sha256(spec_body_bytes + b'\\x00' + product_tree_digest(root)); REUSE product_tree_digest (it already excludes .factory/ and plans/, so plan/evidence churn does not stale the grill) - do NOT write a second tree-walker. spec is the active story's confirmed spec resolved from plans/roadmap.json item['spec']; refuse if the story has no confirmed spec. Grill recorded story-scoped at .factory/stories/<KEY>/grills/requirements.json via evidence_path. plans.py cmd_save gains _require_matching_requirements_grill(base, spec, issue) called alongside _require_matching_plan_grill: refuse unless a fresh passing requirements grill exists whose input_sha256 == requirements_digest (re-derived at gate time, mirroring the plan-grill digest re-derivation). phase.py routes the requirements round as the FIRST planning action (before plan grill/draft), one [dev] action, derived purely from grill presence+freshness - NO new stored status, NO new run-state field. griller.md/AskUserQuestion rounds are the delivery convention, not code. Gate at plan SAVE only (not a separate approve gate). SCOPE: the 6 write_scope files only; do not touch tasks.py or the task-level gate.",
+      "plan_contracts": [
+        {
+          "id": "ACC3T3-C1",
+          "statement": "plan save refuses without a fresh requirements-round grill matching the spec+tree digest",
+          "source": "plans/active/FORGE-ACC-3-approval-and-closeout-integrity.md#task-decomposition"
+        },
+        {
+          "id": "ACC3T3-C2",
+          "statement": "forge next routes the requirements round as the first planning action",
+          "source": "plans/active/FORGE-ACC-3-approval-and-closeout-integrity.md#task-decomposition"
+        }
       ]
     },
     {
@@ -209,5 +245,5 @@
   "epic": "accountable-engineering",
   "plan_file": "plans/active/FORGE-ACC-3-approval-and-closeout-integrity.md",
   "plan_sha256": "5d9d8ba4de41df6b9253dc04d5451145c7beef03ab9cad25af1aadc9e4982da2",
-  "commit": "17d7ec59804a07ea515cb7b67a679ff07bf4d883"
+  "commit": "55353f604cc36b8a196bbb3aa3e8f9b44d54f18b"
 }

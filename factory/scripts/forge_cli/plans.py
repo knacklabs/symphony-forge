@@ -10,8 +10,8 @@ from typing import Any
 import factory_lib
 from factory_lib import (
     client_signoff, dump_json, evidence_path, load_json, now_iso,
-    plan_digest_without_assumptions, repo_root, require_grill, run_state_path,
-    slugify,
+    plan_digest_without_assumptions, repo_root, require_grill,
+    requirements_digest, run_state_path, slugify,
 )
 
 from .common import fail
@@ -19,6 +19,7 @@ from .events import append_event
 from .context import pending_context
 from .decisions import active_decision_ids, decision_records
 from .signal import open_signals
+from .specs import resolve_spec_reference
 
 FRONTMATTER = re.compile(r"\A---\r?\n(.*?)\r?\n---\r?\n", re.DOTALL)
 
@@ -87,6 +88,29 @@ def _require_matching_plan_grill(
              "re-grill the current version, then approve it again")
 
 
+def _require_matching_requirements_grill(
+    base: Path, spec: Path, issue: str,
+) -> None:
+    grill = load_json(
+        evidence_path(base, issue, "grills/requirements.json"), default={},
+    )
+    command = "record_grill_from_json.py --gate requirements"
+    if not grill:
+        fail("requirements grill required before plan drafting: re-grill the "
+             f"confirmed spec against the current repository, then record `{command}`")
+    if grill.get("verdict") != "pass":
+        fail(f"the requirements grill verdict is {grill.get('verdict')!r} — resolve "
+             f"the findings and re-record `{command}`")
+    if not grill.get("commit"):
+        fail(f"the requirements grill has no commit stamp — re-record `{command}`")
+    if grill.get("issue") != issue:
+        fail(f"the requirements grill is for {grill.get('issue')!r}, not {issue!r} — "
+             f"re-grill this story and record `{command}`")
+    if grill.get("input_sha256") != requirements_digest(base, spec):
+        fail("the requirements grill is stale — the confirmed spec or product tree "
+             f"changed. Re-grill the current story and record `{command}`")
+
+
 def _stages_progress(base: Path, issue: str, location: str) -> str:
     path = evidence_path(base, issue, "stages.json")
     stages = load_json(path, default={}).get("stages", [])
@@ -135,6 +159,11 @@ def cmd_save(args: argparse.Namespace) -> None:
              "capture is not authorization (decision 0014). Draft and confirm the "
              f"capability spec, then: ./forge roadmap link-spec {story} "
              "--spec docs/specs/<slug>.md")
+    spec_ref = item.get("spec")
+    if not isinstance(spec_ref, str) or not spec_ref.strip():
+        fail(f"{story} has no confirmed spec — link a confirmed spec before planning")
+    spec = resolve_spec_reference(base, spec_ref, confirmed=True)
+    _require_matching_requirements_grill(base, spec, issue)
     # Approval requires the plan to have been GRILLED (grill-me / griller.md
     # --gate plan): fresh, passing, for THIS task, and bound by digest to
     # THIS draft — grilling one version never approves an edited one.

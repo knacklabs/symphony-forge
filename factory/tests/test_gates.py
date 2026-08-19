@@ -275,7 +275,12 @@ def repo(tmp_path: Path) -> Path:
 
 
 def record_grill(repo: Path, gate: str, verdict: str = "pass",
-                 digest_of: Path | None = None, **over) -> tuple[int, str]:
+                 digest_of: Path | None = None, *,
+                 seed_requirements: bool = True, **over) -> tuple[int, str]:
+    if gate == "plan" and seed_requirements:
+        code, out = record_grill(repo, "requirements")
+        if code != 0:
+            return code, out
     payload = {"generated_by": "griller", "gate": gate, "verdict": verdict,
                "gaps": [], "contradictions": [], "resolutions": [], **over}
     extra = ["--input-digest", str(digest_of)] if digest_of else []
@@ -7806,6 +7811,90 @@ def test_quickfix_profile_behavior_unchanged(repo):
 
 
 # ---------------------------------------------------------------- plan grill
+
+def test_plan_save_refuses_without_fresh_requirements_grill(repo, tmp_path):
+    sign_off(repo)
+    intake(repo)
+    plan = tmp_path / "requirements-plan.md"
+    plan.write_text(plan_draft(repo))
+    code, out = record_grill(
+        repo, "plan", digest_of=plan, seed_requirements=False,
+    )
+    assert code == 0, out
+
+    code, out = run(repo, "forge.py", "plan", "save", "--from", str(plan),
+                    "--story", "ENG-1")
+    assert code != 0 and "requirements grill required" in out.lower()
+
+    roadmap_path = repo / "plans" / "roadmap.json"
+    roadmap = json.loads(roadmap_path.read_text())
+    item = next(entry for entry in roadmap["items"] if entry["key"] == "ENG-1")
+    spec_ref = item.pop("spec")
+    roadmap_path.write_text(json.dumps(roadmap, indent=2) + "\n")
+    code, out = record_grill(repo, "requirements")
+    assert code != 0 and "no confirmed spec" in out
+    item["spec"] = spec_ref
+    roadmap_path.write_text(json.dumps(roadmap, indent=2) + "\n")
+
+    code, out = record_grill(repo, "requirements", verdict="blocked")
+    assert code == 0, out
+    code, out = run(repo, "forge.py", "plan", "save", "--from", str(plan),
+                    "--story", "ENG-1")
+    assert code != 0 and "blocked" in out
+
+    code, out = record_grill(repo, "requirements")
+    assert code == 0, out
+    requirements_path = story_state(repo) / "grills" / "requirements.json"
+    assert json.loads(requirements_path.read_text())["issue"] == "ENG-1"
+
+    spec = repo / "docs" / "specs" / "base.md"
+    spec.write_text(spec.read_text() + "\nRepository reality changed.\n")
+    code, out = run(repo, "forge.py", "plan", "save", "--from", str(plan),
+                    "--story", "ENG-1")
+    assert code != 0 and "requirements grill is stale" in out.lower()
+
+    code, out = record_grill(repo, "requirements")
+    assert code == 0, out
+    product = repo / "requirements-grounding.txt"
+    product.write_text("current repository\n")
+    git(repo, "add", product.name)
+    code, out = run(repo, "forge.py", "plan", "save", "--from", str(plan),
+                    "--story", "ENG-1")
+    assert code != 0 and "requirements grill is stale" in out.lower()
+
+    code, out = record_grill(repo, "requirements")
+    assert code == 0, out
+    code, out = run(repo, "forge.py", "plan", "save", "--from", str(plan),
+                    "--story", "ENG-1")
+    assert code != 0 and "awaiting-approval" in out
+
+
+def test_forge_next_routes_requirements_round_first(repo):
+    sign_off(repo)
+    intake(repo)
+
+    code, out = run(repo, "forge.py", "next", "--repo", str(repo))
+    assert code == 0, out
+    dev_actions = [line for line in out.splitlines() if "[dev]" in line]
+    assert len(dev_actions) == 1
+    assert "FIRST: re-grill" in dev_actions[0] and "--gate requirements" in out
+    assert "enter plan mode" not in out
+
+    code, out = record_grill(repo, "requirements")
+    assert code == 0, out
+    code, out = run(repo, "forge.py", "next", "--repo", str(repo))
+    assert code == 0, out
+    assert "enter plan mode" in out and "FIRST: re-grill" not in out
+
+    product = repo / "requirements-routing.txt"
+    product.write_text("changed\n")
+    git(repo, "add", product.name)
+    code, out = run(repo, "forge.py", "next", "--repo", str(repo))
+    assert code == 0, out
+    dev_actions = [line for line in out.splitlines() if "[dev]" in line]
+    assert len(dev_actions) == 1 and "FIRST: re-grill" in dev_actions[0]
+    assert "enter plan mode" not in out
+
 
 def test_plan_save_refuses_approved_without_a_matching_marker(repo, tmp_path):
     sign_off(repo)

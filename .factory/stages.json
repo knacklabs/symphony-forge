@@ -94,7 +94,60 @@
     {
       "id": "pre-draft-requirements-round",
       "title": "The spec is re-grilled against repo reality before plan drafting",
-      "status": "pending"
+      "status": "active",
+      "started_at": "2026-08-19T07:32:36+00:00",
+      "base_sha": "55353f604cc36b8a196bbb3aa3e8f9b44d54f18b",
+      "dirty_at_start": {
+        ".factory/events/1992cbcceaa9461a9500a83a91369d18.json": {
+          "digest": "b5c64b8d9bd3b3c9d8f3558146d9472eeba997f8e942e3f9c9cae804c9aacc82",
+          "git": "? .factory/events/1992cbcceaa9461a9500a83a91369d18.json\u0000\u0000\u0000"
+        },
+        ".factory/events/2c4a3b8c404f4396a80ed8da471e3551.json": {
+          "digest": "584d02ac42e810bc816d5b17b387dc13397dd08c3d679dcf3ab54c5dd9dfa9b0",
+          "git": "? .factory/events/2c4a3b8c404f4396a80ed8da471e3551.json\u0000\u0000\u0000"
+        },
+        ".factory/events/6d68ca1c57594023b26b1ebf4cf60416.json": {
+          "digest": "325495369b0ebd87fec38c6a0739b672f9f34c49cfc1853a513b84d823f3efff",
+          "git": "? .factory/events/6d68ca1c57594023b26b1ebf4cf60416.json\u0000\u0000\u0000"
+        },
+        ".factory/events/77e1d31a9a01487c97897bd742582843.json": {
+          "digest": "7a887f6b06dd23e5cee75c820f8d368518c445e8fc9a77edbb8cd5a181b7a07a",
+          "git": "? .factory/events/77e1d31a9a01487c97897bd742582843.json\u0000\u0000\u0000"
+        },
+        ".factory/events/a01bc7a456424940b69316bc11031868.json": {
+          "digest": "32cef9d0dd4ff85691d3352556f13a13ef75a0641e75ea28303f18596c76e62e",
+          "git": "? .factory/events/a01bc7a456424940b69316bc11031868.json\u0000\u0000\u0000"
+        },
+        ".factory/events/cc2a15a8848b4421aaa0a3f51e0ba481.json": {
+          "digest": "6c8aa68438b2b642527dbbdbf57e8d030c046a4f84ff55e92ce26d7801a1a5ad",
+          "git": "? .factory/events/cc2a15a8848b4421aaa0a3f51e0ba481.json\u0000\u0000\u0000"
+        },
+        ".factory/events/d29543b7852143428b2d5611e7f27b01.json": {
+          "digest": "35979b33925f445eb5ee9f9c0420116e38a7fd9026dc886fa1bf115ac2123238",
+          "git": "? .factory/events/d29543b7852143428b2d5611e7f27b01.json\u0000\u0000\u0000"
+        },
+        ".factory/stories/FORGE-ACC-3/decomposition.json": {
+          "digest": "b9b0e8919f62a9a9ef21881fed299c749c13fdfe2b07b7d762779eba0576eb35",
+          "git": "1 .M N... 100644 100644 100644 dfd540602c01eb5bfa9aed7e0fde9b866ce92191 dfd540602c01eb5bfa9aed7e0fde9b866ce92191 .factory/stories/FORGE-ACC-3/decomposition.json\u0000\u0000100644 dfd540602c01eb5bfa9aed7e0fde9b866ce92191 0\t.factory/stories/FORGE-ACC-3/decomposition.json\u0000\u0000H .factory/stories/FORGE-ACC-3/decomposition.json\u0000"
+        },
+        ".factory/stories/FORGE-ACC-3/grills/tasks/pre-draft-requirements-round.json": {
+          "digest": "d9792c4d99347d1a8aaeabec91ea93d2ec52151b2bfc4065455b39166d4d3569",
+          "git": "? .factory/stories/FORGE-ACC-3/grills/tasks/pre-draft-requirements-round.json\u0000\u0000\u0000"
+        },
+        ".factory/stories/FORGE-ACC-3/task-plans/pre-draft-requirements-round.md": {
+          "digest": "c5e138311da6dc77dc70b758a621c3b63ffa168678fef6f0e18338cc0bbc0ed6",
+          "git": "? .factory/stories/FORGE-ACC-3/task-plans/pre-draft-requirements-round.md\u0000\u0000\u0000"
+        },
+        "plans/quickfixes/20260819T062749-0000-Q-0081-629d-open-062749943700.json": {
+          "digest": "5c5163ee23d510c00834802ee81f103a947e42736fee5d9494b303b802a51b1a",
+          "git": "? plans/quickfixes/20260819T062749-0000-Q-0081-629d-open-062749943700.json\u0000\u0000\u0000"
+        },
+        "plans/quickfixes/20260819T064507-0000-Q-0081-629d-done-064507548479.json": {
+          "digest": "61fdb618a6a6ac90c6d9d20d3bd2d29e1f063d06e61662cc749417a822165673",
+          "git": "? plans/quickfixes/20260819T064507-0000-Q-0081-629d-done-064507548479.json\u0000\u0000\u0000"
+        }
+      },
+      "task_sha256": "aae3dbf885ae4e99fe1f5bd5848d6308f4aff8c9b6220ede0cabeab680bfcac1"
     },
     {
       "id": "local-review-stamp",

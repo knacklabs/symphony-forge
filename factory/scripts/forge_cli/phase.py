@@ -8,13 +8,14 @@ from pathlib import Path
 
 from factory_lib import (
     client_signoff, evidence_path, load_json, repo_root, run_state_path,
-    task_frontier_state,
+    requirements_digest, task_frontier_state,
 )
 
 from .context import pending_context
 from .quickfix import load_active, profile_of
 from .roadmap import cmd_heal, leverage, load_items, ready_pending
 from .signal import open_signals
+from .specs import resolve_spec_reference
 
 
 def _auto_heal_roadmap_after_merge(base: Path) -> None:
@@ -225,22 +226,44 @@ def cmd_next(args: argparse.Namespace) -> None:
                          "--issue <KEY> --title \"<title>\"")
     elif state.get("plan_status") != "approved":
         phase("planning")
-        steps.append("[dev] MANDATORY: enter plan mode (shift+tab) and plan per "
-                     "factory/prompts/planner.md, or deliberately open a bounded "
-                     "`./forge quickfix start \"<reason>\"` window. Product writes are "
-                     "hook-blocked otherwise (Codex planning alternative: planner-high; "
-                     "exploration via /codex:rescue read-only).")
-        steps.append("[dev] Record new decisions as you go: forge.py decision new <slug>")
-        plan_grill = load_json(
-            evidence_path(base, state.get("issue_key"), "grills/plan.json"),
-            default={},
+        issue = state.get("issue_key")
+        item = next((entry for entry in load_items(base) if entry.get("key") == issue), None)
+        spec_ref = item.get("spec") if isinstance(item, dict) else None
+        spec = resolve_spec_reference(base, spec_ref, confirmed=True) \
+            if isinstance(spec_ref, str) and spec_ref.strip() else None
+        requirements_grill = load_json(
+            evidence_path(base, issue, "grills/requirements.json"), default={},
         )
-        if plan_grill.get("verdict") != "pass" or plan_grill.get("issue") != state.get("issue_key"):
-            steps.append("[dev] MANDATORY before approval: grill the plan (/grill-me, or "
-                         "factory/prompts/griller.md --gate plan) and record: "
-                         "record_grill_from_json.py --gate plan — plan save refuses without it")
-        steps.append("[dev] On approval: forge.py plan save --from <plan-file> "
-                     f"--story {state.get('issue_key')}")
+        requirements_fresh = bool(
+            spec
+            and requirements_grill.get("verdict") == "pass"
+            and requirements_grill.get("commit")
+            and requirements_grill.get("issue") == issue
+            and requirements_grill.get("input_sha256") == requirements_digest(base, spec)
+        )
+        if not requirements_fresh:
+            steps.append(
+                "[dev] FIRST: re-grill the confirmed spec against current repo reality "
+                "with AskUserQuestion rounds (factory/prompts/griller.md --gate "
+                "requirements), resolve findings, then record: "
+                "record_grill_from_json.py --gate requirements"
+            )
+        else:
+            steps.append("[dev] MANDATORY: enter plan mode (shift+tab) and plan per "
+                         "factory/prompts/planner.md, or deliberately open a bounded "
+                         "`./forge quickfix start \"<reason>\"` window. Product writes are "
+                         "hook-blocked otherwise (Codex planning alternative: planner-high; "
+                         "exploration via /codex:rescue read-only).")
+            steps.append("[dev] Record new decisions as you go: forge.py decision new <slug>")
+            plan_grill = load_json(
+                evidence_path(base, issue, "grills/plan.json"), default={},
+            )
+            if plan_grill.get("verdict") != "pass" or plan_grill.get("issue") != issue:
+                steps.append("[dev] MANDATORY before approval: grill the plan (/grill-me, or "
+                             "factory/prompts/griller.md --gate plan) and record: "
+                             "record_grill_from_json.py --gate plan — plan save refuses without it")
+            steps.append("[dev] On approval: forge.py plan save --from <plan-file> "
+                         f"--story {issue}")
     elif state.get("decomposition_status") != "recorded":
         phase("decomposing")
         steps.append("[dev] Run docs-decomposer (factory/prompts/decomposer.md), then "

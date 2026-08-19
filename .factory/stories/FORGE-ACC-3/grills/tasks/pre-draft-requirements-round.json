@@ -1,0 +1,70 @@
+{
+  "generated_by": "griller",
+  "gate": "task",
+  "verdict": "pass",
+  "gaps": [],
+  "contradictions": [],
+  "resolutions": [
+    "Digest scope: reuse product_tree_digest as-is (excludes .factory/ + plans/, includes docs/); a docs/spec change since the grill correctly forces a re-grill before plan save. No second fingerprint.",
+    "Bootstrap: the requirements gate applies to ACC-3 itself; a real ACC-3 requirements grill runs before the task-7 plan re-save. No exemption code.",
+    "Spec coverage: bind the story's single confirmed spec (roadmap item['spec']); refuse if absent."
+  ],
+  "inspected_refs": [
+    "factory/scripts/factory_lib.py",
+    "factory/scripts/forge_cli/plans.py",
+    "factory/scripts/record_grill_from_json.py",
+    "factory/scripts/forge_cli/phase.py"
+  ],
+  "current_flow": "Planning routes plan-grill -> plan-draft -> plan save, which gates only on _require_matching_plan_grill. No requirements round exists: the confirmed spec is never re-grilled against current repo state before drafting. product_tree_digest and the self-deriving --gate task pattern already exist and are reused.",
+  "criteria_map": {
+    "plan save refuses without a fresh requirements-round grill matching the spec+tree digest": "Inspected plans.py cmd_save + _require_matching_plan_grill; the added _require_matching_requirements_grill re-derives requirements_digest(spec)=sha256(spec_body+product_tree_digest) at gate time and refuses a missing/stale/mismatched grill, exactly mirroring the plan-grill digest re-derivation.",
+    "forge next routes the requirements round as the first planning action": "Inspected phase.py planning routing; the requirements round is derived from grill presence+freshness (no new stored status) and emitted as the first [dev] planning action before plan grill/draft."
+  },
+  "decision": "keep",
+  "new_abstractions": [
+    "requirements_digest(root, spec_path) in factory_lib \u2014 a thin sha256(spec_body + product_tree_digest) mirror of grounding_digest; justified as the digest seam both the recorder and the save gate re-derive."
+  ],
+  "rounds": [
+    {
+      "question": "Digest scope: reuse product_tree_digest (includes docs/) or narrow it?",
+      "options": [
+        "Reuse product_tree_digest as-is",
+        "Exclude docs/decisions churn"
+      ],
+      "chosen": "Reuse product_tree_digest as-is"
+    },
+    {
+      "question": "Does the requirements gate apply to ACC-3's own task-7 plan re-save?",
+      "options": [
+        "Apply to ACC-3 too \u2014 dogfood",
+        "Exempt the current story"
+      ],
+      "chosen": "Apply to ACC-3 too \u2014 dogfood"
+    },
+    {
+      "question": "Which spec does the requirements round re-grill?",
+      "options": [
+        "The story's single confirmed spec",
+        "Every spec the plan cites"
+      ],
+      "chosen": "The story's single confirmed spec"
+    }
+  ],
+  "citations": [
+    {
+      "finding": "The roadmap AC mandates re-grilling 'the confirmed spec' (singular) against current repo state before drafting.",
+      "source": "plans/roadmap.json#FORGE-ACC-3 acceptance_criteria[2]"
+    },
+    {
+      "finding": "product_tree_digest already excludes .factory/ and plans/ and is the deterministic index fingerprint grounding_digest reuses.",
+      "source": "factory/scripts/factory_lib.py#product_tree_digest"
+    }
+  ],
+  "task_id": "pre-draft-requirements-round",
+  "input_sha256": "7017d5cf1853a06f76b63e725197c62e37e32c71277a42800e9c41e856a01811",
+  "recorded_at": "2026-08-19T07:30:39+00:00",
+  "commit": "55353f604cc36b8a196bbb3aa3e8f9b44d54f18b",
+  "approved_task_plan_sha256": "7b37a7a96494246e52fa9335468d3373749c9b205afadc5fc4612ae6d47f5b3b",
+  "approved_by": "Ravi Kiran Vemula",
+  "approved_at": "2026-08-19T07:32:28+00:00"
+}

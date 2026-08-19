@@ -1219,6 +1219,15 @@ def product_tree_digest(root: Path) -> str:
     return hashlib.sha256(payload.encode()).hexdigest()
 
 
+def requirements_digest(root: Path, spec_path: Path) -> str:
+    """Bind a confirmed spec body to the current product tree."""
+    raw = spec_path.read_bytes()
+    frontmatter = re.match(br"\A---\r?\n.*?\r?\n---\r?\n", raw, re.DOTALL)
+    body = raw[frontmatter.end():] if frontmatter else raw
+    payload = body + b"\x00" + product_tree_digest(root).encode("ascii")
+    return hashlib.sha256(payload).hexdigest()
+
+
 def grounding_digest(root: Path, task: dict) -> str:
     """Bind a task grill to its full contract, approved plan, and product tree."""
     decomposition = load_json(protected_decomposition_state_path(root), default={})
