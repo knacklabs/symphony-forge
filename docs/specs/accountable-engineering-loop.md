@@ -88,7 +88,9 @@ implementation does not enforce it end to end:
   citations and a recommended resolution, authority questions (product,
   scope, architecture, security/privacy, destructive migration, material
   cost, reliability) arrive as escalation packets. A grill records only
-  after its rounds are sanctioned; zero rounds is not a valid pass.
+  after its rounds are sanctioned. Each declared gap needs either a matching
+  rounds entry or a named-source citation; a zero-gap grill may validly have
+  zero rounds, including when it records sanctioned resolutions.
 - **Approval and closeout integrity (FORGE-ACC-3).** Approved `plan save`
   stores an `approved_plan_sha256` (excluding the sanctioned assumptions
   appendix) that every later gate rederives — an edited plan requires a
@@ -132,9 +134,9 @@ implementation does not enforce it end to end:
   touching only `.factory/` and `plans/` do not.
 - A grill missing any required proof, with an unmapped criterion, an absent
   `new_abstractions` field, or `pass`+split/block is refused; a `block`
-  without an escalation packet is refused; a grill records human rounds
-  (structured questions and sanctioned resolutions) — zero rounds is
-  refused.
+  without an escalation packet is refused; every declared gap needs either a
+  matching structured round or a named-source citation, while a zero-gap
+  grill may validly record zero rounds and sanctioned resolutions.
 - The frontier task's `criteria_map` lands as `plan_contracts`; quality
   review refuses without per-contract verdicts (existing FORGE-REV-2
   enforcement).

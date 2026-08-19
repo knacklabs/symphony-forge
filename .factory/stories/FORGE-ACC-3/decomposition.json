@@ -289,6 +289,38 @@
       ],
       "dependencies": [
         "ordered-closeout"
+      ],
+      "write_scope": [
+        "factory/scripts/check_encoding_hygiene.py",
+        "factory/prompts/griller.md",
+        "docs/specs/accountable-engineering-loop.md",
+        "WORKFLOW.md",
+        "docs/FACTORY.md",
+        "factory/tests/test_gates.py"
+      ],
+      "verify_commands": [
+        "python3 factory/scripts/check_dual_runtime.py",
+        "python3 factory/scripts/check_encoding_hygiene.py"
+      ],
+      "required_tests": [
+        {
+          "id": "test_encoding_hygiene_content_pins_survive_insertion",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest --with psutil python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        }
+      ],
+      "reviewer_focus": "Two parts: a mechanical hygiene-pin migration and doc-debt reconciliations. (1) check_encoding_hygiene.py allowlists (BYTE_PATH_ALLOWLIST, BYTE_MODE_ALLOWLIST, REPLACE_ALLOWLIST, STDIN_ALLOWLIST) stop pinning by 'path:line' and pin by {path, fingerprint, occurrence}: fingerprint = sha256 over the NORMALIZED construct line (strip leading/trailing whitespace; keep the code text so a changed construct correctly breaks its pin), occurrence = 0-based index among identical fingerprints in that file. At check time resolve each pin to its line(s) by scanning the file; an UNRESOLVABLE pin FAILS closed (the allowed construct moved or changed -> re-review), never silently drops. Do a ONE-TIME mechanical migration of ALL 73 existing pins (including the CFS-1 CI-fix line pins AND the accumulated tasks 3-6 shifts that made 16 stale) by reading each pinned line's current text and computing its fingerprint -> scaffold-check goes green and stays green under insertions. (2) Doc debts: griller.md gains the EXACT recorded task-grill payload shape (rounds entries {question, options (2-4 strings), chosen (one of options)}; citations {finding, source}; gaps need a rounds-entry-or-citation) so the doc matches record_grill_from_json.py; the accountable-engineering-loop spec's 'zero rounds is not a valid pass' wording is reconciled to the recorder's actual rounds-or-citation-per-gap rule (a 0-gap grill with resolutions is valid); WORKFLOW.md and docs/FACTORY.md declare the per-task plan artifact (.factory/stories/<KEY>/task-plans/<id>.md) and the ordered closeout chain. SCOPE: the 6 write_scope files only; do NOT touch specs.py/quickfix.py (D-0030/D-0031 are separate lite fixes).",
+      "plan_contracts": [
+        {
+          "id": "ACC3T7-C1",
+          "statement": "adding a line above a pinned site leaves scaffold-check green (fingerprint pins survive insertions); existing pins migrate mechanically",
+          "source": "plans/active/FORGE-ACC-3-approval-and-closeout-integrity.md#task-decomposition"
+        },
+        {
+          "id": "ACC3T7-C2",
+          "statement": "griller.md payload example matches the recorder and the spec zero-rounds wording is reconciled",
+          "source": "plans/active/FORGE-ACC-3-approval-and-closeout-integrity.md#task-decomposition"
+        }
       ]
     },
     {
@@ -345,5 +377,5 @@
   "epic": "accountable-engineering",
   "plan_file": "plans/active/FORGE-ACC-3-approval-and-closeout-integrity.md",
   "plan_sha256": "5d9d8ba4de41df6b9253dc04d5451145c7beef03ab9cad25af1aadc9e4982da2",
-  "commit": "9a368ab99aebf5bc6e17d03d1a94a9cae35c9a49"
+  "commit": "0d9affc005cd6ca9c393d32a790c1734198de7d0"
 }

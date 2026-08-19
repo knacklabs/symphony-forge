@@ -1,0 +1,71 @@
+{
+  "generated_by": "griller",
+  "gate": "task",
+  "verdict": "pass",
+  "gaps": [],
+  "contradictions": [],
+  "resolutions": [
+    "Fingerprint = sha256(normalized/stripped construct line) + 0-based occurrence index; survives insertions/reindentation above, breaks when the construct itself changes.",
+    "Unresolvable pin fails closed (construct moved/changed -> re-review); never silently drop an allowance.",
+    "Reconcile the spec to the recorder: each GAP needs a rounds-entry or citation; a 0-gap grill with sanctioned resolutions is a valid pass (do not invalidate tasks 3-6 grills)."
+  ],
+  "inspected_refs": [
+    "factory/scripts/check_encoding_hygiene.py",
+    "factory/prompts/griller.md",
+    "docs/specs/accountable-engineering-loop.md",
+    "WORKFLOW.md",
+    "factory/scripts/record_grill_from_json.py"
+  ],
+  "current_flow": "check_encoding_hygiene pins 73 allowlist sites by 'path:line', which shift on any insertion (16 already stale from tasks 3-6). griller.md documents rounds prose but not the recorded {question,options,chosen}/{finding,source} payload shape; the accountable-engineering-loop spec says 'zero rounds is not a valid pass', contradicting the recorder's per-gap rounds-or-citation rule; WORKFLOW.md/FACTORY.md never declare the task-plan artifact or the ordered closeout chain.",
+  "criteria_map": {
+    "adding a line above a pinned site leaves scaffold-check green (fingerprint pins survive insertions); existing pins migrate mechanically": "Inspected the four allowlists; migrating to {path, fingerprint, occurrence} resolved at run time makes pins insertion-proof, and a one-time mechanical migration regenerates all 73 from current line text (repairing the S-0001 breakage).",
+    "griller.md payload example matches the recorder and the spec zero-rounds wording is reconciled": "Inspected griller.md + record_grill_from_json.py + the spec; griller.md gains the exact recorded payload shape and the spec's zero-rounds line is softened to the per-gap rounds-or-citation rule."
+  },
+  "decision": "keep",
+  "new_abstractions": [
+    "A content-fingerprint pin format {path, fingerprint, occurrence} plus a run-time resolver in check_encoding_hygiene; justified as the insertion-proof replacement for the fragile path:line pins."
+  ],
+  "rounds": [
+    {
+      "question": "What does the fingerprint hash?",
+      "options": [
+        "Normalized line text + occurrence",
+        "Exact line bytes"
+      ],
+      "chosen": "Normalized line text + occurrence"
+    },
+    {
+      "question": "Unresolvable pin behavior?",
+      "options": [
+        "Fail closed",
+        "Warn and drop"
+      ],
+      "chosen": "Fail closed"
+    },
+    {
+      "question": "Reconcile zero-rounds which way?",
+      "options": [
+        "Reconcile spec -> recorder",
+        "Change recorder -> spec"
+      ],
+      "chosen": "Reconcile spec -> recorder"
+    }
+  ],
+  "citations": [
+    {
+      "finding": "73 path:line pins currently exist and 16 are already stale from tasks 3-6 insertions, per signal S-0001.",
+      "source": "factory/scripts/check_encoding_hygiene.py + signal S-0001-8b7e"
+    },
+    {
+      "finding": "The spec literally states 'zero rounds is not a valid pass', contradicting the recorder's per-gap rounds-or-citation rule.",
+      "source": "docs/specs/accountable-engineering-loop.md:91,136"
+    }
+  ],
+  "task_id": "hygiene-content-pins-and-doc-debts",
+  "input_sha256": "b1498f8507412d00753bf6add64e8b90ec935e6161bd51b52cbaaf8df641cb68",
+  "recorded_at": "2026-08-19T10:33:33+00:00",
+  "commit": "0d9affc005cd6ca9c393d32a790c1734198de7d0",
+  "approved_task_plan_sha256": "bc45e8b2ab53ee842da9820e0a06b689601638d17430ce3c8b1852186f0b3bc7",
+  "approved_by": "Ravi Kiran Vemula",
+  "approved_at": "2026-08-19T10:34:15+00:00"
+}

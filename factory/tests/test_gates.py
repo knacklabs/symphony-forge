@@ -1015,7 +1015,8 @@ def test_pr_ready_legacy_story_still_archives_to_history(repo, tmp_path):
 
 def test_encoding_hygiene_gate_catches_each_violation_class(tmp_path):
     from check_encoding_hygiene import (
-        BYTE_MODE_ALLOWLIST, BYTE_PATH_ALLOWLIST, check_file,
+        BYTE_MODE_ALLOWLIST, BYTE_PATH_ALLOWLIST, ContentPin, check_file,
+        construct_fingerprint,
     )
 
     violations = {
@@ -1123,16 +1124,28 @@ def test_encoding_hygiene_gate_catches_each_violation_class(tmp_path):
         "errors='strict').read()\n",
         encoding="utf-8",
     )
+    replace_pin = ContentPin(
+        "allowed.py", construct_fingerprint(
+            allowed.read_text(encoding="utf-8").splitlines()[1]),
+    )
+    byte_path_pin = ContentPin(
+        "allowed.py", construct_fingerprint(
+            allowed.read_text(encoding="utf-8").splitlines()[2]),
+    )
+    stdin_pin = ContentPin(
+        "allowed.py", construct_fingerprint(
+            allowed.read_text(encoding="utf-8").splitlines()[7]),
+    )
     assert check_file(
         allowed,
         root=tmp_path,
-        replace_allowlist=frozenset({"allowed.py:2"}),
-        byte_path_allowlist={"allowed.py:3": "lossless path"},
-        stdin_allowlist=frozenset({"allowed.py:8"}),
+        replace_allowlist=(replace_pin,),
+        byte_path_allowlist=((byte_path_pin, "lossless path"),),
+        stdin_allowlist=(stdin_pin,),
     ) == []
-    assert "factory/scripts/forge_cli/phase.py:25" in BYTE_PATH_ALLOWLIST
-    assert "factory/scripts/forge_cli/upgrade.py:314" in BYTE_MODE_ALLOWLIST
-    assert "factory/scripts/pr_ready.py:349" in BYTE_MODE_ALLOWLIST
+    assert any(pin.path.endswith("phase.py") for pin, _ in BYTE_PATH_ALLOWLIST)
+    assert any(pin.path.endswith("upgrade.py") for pin, _ in BYTE_MODE_ALLOWLIST)
+    assert any(pin.path.endswith("pr_ready.py") for pin, _ in BYTE_MODE_ALLOWLIST)
 
     byte_site = tmp_path / "byte_site.py"
     byte_site.write_text(
@@ -1143,8 +1156,35 @@ def test_encoding_hygiene_gate_catches_each_violation_class(tmp_path):
     assert {violation.rule for violation in check_file(
         byte_site,
         root=tmp_path,
-        byte_mode_allowlist={"byte_site.py:2": "must stay bytes"},
+        byte_mode_allowlist=((ContentPin(
+            "byte_site.py",
+            construct_fingerprint(
+                byte_site.read_text(encoding="utf-8").splitlines()[1]
+            ),
+        ), "must stay bytes"),),
     )} == {"byte-mode"}
+
+
+def test_encoding_hygiene_content_pins_survive_insertion(tmp_path):
+    from check_encoding_hygiene import (
+        ContentPin, check_file, construct_fingerprint,
+    )
+
+    path = tmp_path / "pinned.py"
+    construct = "Path('x').read_text(encoding='utf-8', errors='replace')"
+    pin = ContentPin("pinned.py", construct_fingerprint(construct), 0)
+    path.write_text(f"from pathlib import Path\n{construct}\n", encoding="utf-8")
+    assert check_file(path, root=tmp_path, replace_allowlist=(pin,)) == []
+
+    path.write_text(f"# insertion\nfrom pathlib import Path\n{construct}\n",
+                    encoding="utf-8")
+    assert check_file(path, root=tmp_path, replace_allowlist=(pin,)) == []
+
+    path.write_text("from pathlib import Path\nPath('changed').read_text("
+                    "encoding='utf-8', errors='replace')\n", encoding="utf-8")
+    violations = check_file(path, root=tmp_path, replace_allowlist=(pin,))
+    assert {violation.rule for violation in violations} == {"errors-policy"}
+    assert any("changed or was removed" in v.message for v in violations)
 
 
 def test_encoding_hygiene_gate_catches_wrapper_and_positional_tempfile(tmp_path):
