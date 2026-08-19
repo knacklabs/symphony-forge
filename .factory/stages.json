@@ -231,21 +231,130 @@
         }
       },
       "task_sha256": "0c10e39aa9228c12ebf47dbd4f740554d6eb4fb8b4c1d5016fc05afc47423970",
-      "local_review_stamp": {
-        "stage_id": "local-review-stamp",
-        "task_sha256": "0c10e39aa9228c12ebf47dbd4f740554d6eb4fb8b4c1d5016fc05afc47423970",
-        "brief_sha256": "6a9cc7bc27f0efb520bf1971aa57798f1e0421ddfe3a813c677285872372ea54",
-        "base_sha": "167cf41d636301f2fe0fb6a8334dc5a284001440",
-        "product_tree_digest": "197412027f3bae5207d54029b38aa929d1a8d4f8b7c30c237ebfe7537eec5603",
-        "recorded_at": "2026-08-19T09:21:11+00:00",
-        "generated_by": "autoreview"
-      },
       "completed_at": "2026-08-19T09:35:09+00:00"
     },
     {
       "id": "coherent-branch-review",
       "title": "The three lenses are one run over one brief",
-      "status": "pending"
+      "status": "active",
+      "started_at": "2026-08-19T09:39:59+00:00",
+      "base_sha": "5ee81b786676e4afd1aa09aca9aa3e5ba90ac301",
+      "dirty_at_start": {
+        ".factory/events/07c6c48451ab4a30b473b5df9ac09046.json": {
+          "digest": "6b981917e97bbce69fc814105a7911888f9115963f7d0880bf540c55b78bb7b9",
+          "git": "? .factory/events/07c6c48451ab4a30b473b5df9ac09046.json\u0000\u0000\u0000"
+        },
+        ".factory/events/1992cbcceaa9461a9500a83a91369d18.json": {
+          "digest": "b5c64b8d9bd3b3c9d8f3558146d9472eeba997f8e942e3f9c9cae804c9aacc82",
+          "git": "? .factory/events/1992cbcceaa9461a9500a83a91369d18.json\u0000\u0000\u0000"
+        },
+        ".factory/events/2c4a3b8c404f4396a80ed8da471e3551.json": {
+          "digest": "584d02ac42e810bc816d5b17b387dc13397dd08c3d679dcf3ab54c5dd9dfa9b0",
+          "git": "? .factory/events/2c4a3b8c404f4396a80ed8da471e3551.json\u0000\u0000\u0000"
+        },
+        ".factory/events/61903e3cfe5a4b69a82170482ea983b2.json": {
+          "digest": "6f22dc318c2d6308f3e6386f5498162059c3c5a598b3b0c3f01b7a56fac76cc3",
+          "git": "? .factory/events/61903e3cfe5a4b69a82170482ea983b2.json\u0000\u0000\u0000"
+        },
+        ".factory/events/69000f5fe7334845a5fb63374f12f0cc.json": {
+          "digest": "f2f4382390eb0706a81068a55a21ac876eef11b917841fd7e68bc743e51f6061",
+          "git": "? .factory/events/69000f5fe7334845a5fb63374f12f0cc.json\u0000\u0000\u0000"
+        },
+        ".factory/events/6d68ca1c57594023b26b1ebf4cf60416.json": {
+          "digest": "325495369b0ebd87fec38c6a0739b672f9f34c49cfc1853a513b84d823f3efff",
+          "git": "? .factory/events/6d68ca1c57594023b26b1ebf4cf60416.json\u0000\u0000\u0000"
+        },
+        ".factory/events/77e1d31a9a01487c97897bd742582843.json": {
+          "digest": "7a887f6b06dd23e5cee75c820f8d368518c445e8fc9a77edbb8cd5a181b7a07a",
+          "git": "? .factory/events/77e1d31a9a01487c97897bd742582843.json\u0000\u0000\u0000"
+        },
+        ".factory/events/899b1ef5a543482da176af95d35260f5.json": {
+          "digest": "b9888c6642fb94a21d26ed4d550b4050e19bca2fb4cb3504f19f89d5aaf8b036",
+          "git": "? .factory/events/899b1ef5a543482da176af95d35260f5.json\u0000\u0000\u0000"
+        },
+        ".factory/events/92e8dbc3103b4b43b97da53e57546a93.json": {
+          "digest": "d55e4fde5510134ac80c3d7cc83e89716b5e83726e20f792c100b71b76fcf581",
+          "git": "? .factory/events/92e8dbc3103b4b43b97da53e57546a93.json\u0000\u0000\u0000"
+        },
+        ".factory/events/a01bc7a456424940b69316bc11031868.json": {
+          "digest": "32cef9d0dd4ff85691d3352556f13a13ef75a0641e75ea28303f18596c76e62e",
+          "git": "? .factory/events/a01bc7a456424940b69316bc11031868.json\u0000\u0000\u0000"
+        },
+        ".factory/events/b1ccfdeb4c1e424c858c2a59347afcf8.json": {
+          "digest": "04181b793811a7eb35e768eb954e70b2c0c7de1ad7f2e4564e1d0f711cf5095f",
+          "git": "? .factory/events/b1ccfdeb4c1e424c858c2a59347afcf8.json\u0000\u0000\u0000"
+        },
+        ".factory/events/be09db7a4a9f471ca6c964b11764c855.json": {
+          "digest": "e5a86fe67635e2cf77ce285f44c90a01f363fe6f7a9540976c74728a8b18839e",
+          "git": "? .factory/events/be09db7a4a9f471ca6c964b11764c855.json\u0000\u0000\u0000"
+        },
+        ".factory/events/cc2a15a8848b4421aaa0a3f51e0ba481.json": {
+          "digest": "6c8aa68438b2b642527dbbdbf57e8d030c046a4f84ff55e92ce26d7801a1a5ad",
+          "git": "? .factory/events/cc2a15a8848b4421aaa0a3f51e0ba481.json\u0000\u0000\u0000"
+        },
+        ".factory/events/d29543b7852143428b2d5611e7f27b01.json": {
+          "digest": "35979b33925f445eb5ee9f9c0420116e38a7fd9026dc886fa1bf115ac2123238",
+          "git": "? .factory/events/d29543b7852143428b2d5611e7f27b01.json\u0000\u0000\u0000"
+        },
+        ".factory/events/d9aeb0c61ab543d08b6fbe49cebd0fb6.json": {
+          "digest": "8e17cc875c3890e531af178d7728fb257f5432c403badff31098be52b9e9e93f",
+          "git": "? .factory/events/d9aeb0c61ab543d08b6fbe49cebd0fb6.json\u0000\u0000\u0000"
+        },
+        ".factory/events/ea2151898246473fbd34ec7dbe93e06c.json": {
+          "digest": "6b07c2035a16a6d298c712adf129295e7e010972a3512497244c2c11b1eae749",
+          "git": "? .factory/events/ea2151898246473fbd34ec7dbe93e06c.json\u0000\u0000\u0000"
+        },
+        ".factory/events/ead2737dca45450db145bd397a932ae5.json": {
+          "digest": "300e0f86e913db5bcdea7c23d6b606865df61005d5ece0510c7f6493a82e89c7",
+          "git": "? .factory/events/ead2737dca45450db145bd397a932ae5.json\u0000\u0000\u0000"
+        },
+        ".factory/events/ec5a26da3c3f40b3af542a61a3e062fa.json": {
+          "digest": "019102c59c5ef42b025bbf7de2fbf11d479a61c1c0b4e1f31cacf17a1eb796ae",
+          "git": "? .factory/events/ec5a26da3c3f40b3af542a61a3e062fa.json\u0000\u0000\u0000"
+        },
+        ".factory/events/f457d910f4944520bb15e69dc05f6bd9.json": {
+          "digest": "10d3fe56984e136b24af139fe132ba3c1a58f261e6cfe717a84ffa42260005a6",
+          "git": "? .factory/events/f457d910f4944520bb15e69dc05f6bd9.json\u0000\u0000\u0000"
+        },
+        ".factory/signals.jsonl": {
+          "digest": "d92c71f093c5fb8432d4a624b772734587e8c68534d9d988f1eaa29f7f6754de",
+          "git": "? .factory/signals.jsonl\u0000\u0000\u0000"
+        },
+        ".factory/stages.json": {
+          "digest": "88acc2cb94ac6bc06068e59cc804a7669ecaed0bbc3ee0030de1266588f023b8",
+          "git": "1 .M N... 100644 100644 100644 7d1eef0620f436e4f1198df4d16b9bd8535058c2 7d1eef0620f436e4f1198df4d16b9bd8535058c2 .factory/stages.json\u0000\u0000100644 7d1eef0620f436e4f1198df4d16b9bd8535058c2 0\t.factory/stages.json\u0000\u0000H .factory/stages.json\u0000"
+        },
+        ".factory/stories/FORGE-ACC-3/decomposition.json": {
+          "digest": "b25c7c95729d525e3555a8780a6253211932c2513b0161a263fd666055c52123",
+          "git": "1 .M N... 100644 100644 100644 ff726b6aefe7337e9a422b250a5b651016859705 ff726b6aefe7337e9a422b250a5b651016859705 .factory/stories/FORGE-ACC-3/decomposition.json\u0000\u0000100644 ff726b6aefe7337e9a422b250a5b651016859705 0\t.factory/stories/FORGE-ACC-3/decomposition.json\u0000\u0000H .factory/stories/FORGE-ACC-3/decomposition.json\u0000"
+        },
+        ".factory/stories/FORGE-ACC-3/grills/tasks/coherent-branch-review.json": {
+          "digest": "0ef135a28960e388c1096891df1edc142ec7b6f045f65ea01c9d2fdb89f0a71f",
+          "git": "? .factory/stories/FORGE-ACC-3/grills/tasks/coherent-branch-review.json\u0000\u0000\u0000"
+        },
+        ".factory/stories/FORGE-ACC-3/task-plans/coherent-branch-review.md": {
+          "digest": "775ea9fa0aec24b54627382c95fa92212dbefc43c9ebf0a468faefee13ccbd9a",
+          "git": "? .factory/stories/FORGE-ACC-3/task-plans/coherent-branch-review.md\u0000\u0000\u0000"
+        },
+        "plans/quickfixes/20260819T062749-0000-Q-0081-629d-open-062749943700.json": {
+          "digest": "5c5163ee23d510c00834802ee81f103a947e42736fee5d9494b303b802a51b1a",
+          "git": "? plans/quickfixes/20260819T062749-0000-Q-0081-629d-open-062749943700.json\u0000\u0000\u0000"
+        },
+        "plans/quickfixes/20260819T064507-0000-Q-0081-629d-done-064507548479.json": {
+          "digest": "61fdb618a6a6ac90c6d9d20d3bd2d29e1f063d06e61662cc749417a822165673",
+          "git": "? plans/quickfixes/20260819T064507-0000-Q-0081-629d-done-064507548479.json\u0000\u0000\u0000"
+        }
+      },
+      "task_sha256": "b7d6ee0b95a073188a99e56cd942dc9dbff9d1af63b411ec507b377e1e702f62",
+      "local_review_stamp": {
+        "stage_id": "coherent-branch-review",
+        "task_sha256": "b7d6ee0b95a073188a99e56cd942dc9dbff9d1af63b411ec507b377e1e702f62",
+        "brief_sha256": "3c15cb202e56eb388d3e8a2e39f7477ae7a2730272c11a1489c0239ae1495e85",
+        "base_sha": "5ee81b786676e4afd1aa09aca9aa3e5ba90ac301",
+        "product_tree_digest": "c37adaac58ceb07e0108ced8847c02df64e39d75e88907ac7b4440d7af8496c9",
+        "recorded_at": "2026-08-19T09:57:48+00:00",
+        "generated_by": "autoreview"
+      }
     },
     {
       "id": "ordered-closeout",

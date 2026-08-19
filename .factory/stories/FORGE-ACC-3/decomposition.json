@@ -199,6 +199,37 @@
       ],
       "dependencies": [
         "local-review-stamp"
+      ],
+      "write_scope": [
+        "factory/scripts/forge_cli/review_brief.py",
+        "factory/scripts/record_review_from_json.py",
+        "factory/scripts/pr_ready.py",
+        "factory/scripts/factory_lib.py",
+        "factory/schemas/review.json",
+        "factory/tests/test_gates.py"
+      ],
+      "verify_commands": [
+        "python3 factory/scripts/check_dual_runtime.py"
+      ],
+      "required_tests": [
+        {
+          "id": "test_review_brief_mints_run_id_and_lenses_echo_it",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest --with psutil python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_pr_ready_refuses_incoherent_lens_set",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest --with psutil python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        }
+      ],
+      "reviewer_focus": "Minimal design; ONE shared coherence seam (no duplicated checks). review-brief --all (cmd_review_brief) additionally mints a review-run token at .factory/stories/<KEY>/review-run.json = {review_run_id, brief_sha256, branch_diff_digest, minted_at}. review_run_id is DETERMINISTIC = sha256(brief_sha256 + branch_diff_digest) (self-verifying; no opaque id store). factory_lib.branch_diff_digest(root) hashes the committed PRODUCT diff over merge-base(origin/main)..HEAD (reuse committed_paths + WORKFLOW_PATHS exclusion; excludes .factory/ and plans/), so a new branch commit re-grounds it. record_review (quality/performance/security) reads the current review-run token, refuses if its branch_diff_digest != current, and echoes {review_run_id, brief_sha256, branch_diff_digest} into each lens artifact (schema review.json allows the 3 fields). A shared factory_lib.require_coherent_review_run(root, reviews) checks all three lenses share one review_run_id + brief_sha256 + branch_diff_digest AND branch_diff_digest matches current state; pr_ready calls it (and load_review_artifacts may reuse it) - do NOT inline the check in pr_ready. Bootstrap: ACC-3's own story closeout mints the review-run and records the three lenses under it. SCOPE: the 6 write_scope files only; the stage-local stamp (task 4) is untouched.",
+      "plan_contracts": [
+        {
+          "id": "ACC3T5-C1",
+          "statement": "pr_ready refuses when the three lens artifacts do not share one review_run_id + brief sha + branch diff digest matching current state",
+          "source": "plans/active/FORGE-ACC-3-approval-and-closeout-integrity.md#task-decomposition"
+        }
       ]
     },
     {
@@ -279,5 +310,5 @@
   "epic": "accountable-engineering",
   "plan_file": "plans/active/FORGE-ACC-3-approval-and-closeout-integrity.md",
   "plan_sha256": "5d9d8ba4de41df6b9253dc04d5451145c7beef03ab9cad25af1aadc9e4982da2",
-  "commit": "167cf41d636301f2fe0fb6a8334dc5a284001440"
+  "commit": "5ee81b786676e4afd1aa09aca9aa3e5ba90ac301"
 }

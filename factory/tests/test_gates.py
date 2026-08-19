@@ -32,8 +32,8 @@ HARNESS = Path(__file__).resolve().parents[2]
 FORGE_INIT_FIXTURE = HARNESS / ".factory" / "history" / "FORGE-INIT-1"
 sys.path.insert(0, str(HARNESS / "factory" / "scripts"))
 from factory_lib import (
-    grounding_digest, plan_digest_without_assumptions, product_tree_digest,
-    require_task_grill,
+    branch_diff_digest, grounding_digest, plan_digest_without_assumptions,
+    product_tree_digest, require_task_grill,
     task_frontier_state, task_rows,
 )
 from forge_cli.events import load_events
@@ -272,6 +272,7 @@ def repo(tmp_path: Path) -> Path:
     git(target, "config", "gc.auto", "0")
     git(target, "add", "-A")
     git(target, "commit", "-q", "-m", "scaffold")
+    git(target, "update-ref", "refs/remotes/origin/main", head(target))
     return target
 
 
@@ -511,11 +512,19 @@ def write_passing_artifacts(repo: Path, commit: str | None = None) -> None:
     (f / "stages.json").write_text(json.dumps(stages))
     (control / "stages.json").write_text(json.dumps(stages))
     (f / "reviews").mkdir(exist_ok=True)
+    brief_sha256 = hashlib.sha256(b"fixture branch review brief").hexdigest()
+    branch_digest = lib.branch_diff_digest(repo)
+    review_run_id = hashlib.sha256(
+        (brief_sha256 + branch_digest).encode()
+    ).hexdigest()
     for aspect in ("quality", "performance", "security"):
         (f / "reviews" / f"{aspect}.json").write_text(
             json.dumps({"score": 9, "blocking_findings": [],
                         "generated_by": "autoreview",
-                        "skills_used": ["review-animations"], "commit": sha})
+                        "skills_used": ["review-animations"], "commit": sha,
+                        "review_run_id": review_run_id,
+                        "brief_sha256": brief_sha256,
+                        "branch_diff_digest": branch_digest})
         )
     (f / "outcome.json").write_text(json.dumps({
         "generated_by": "implementer", "commit": sha,
@@ -2332,7 +2341,7 @@ def test_pr_ready_accepts_decomposition_recorded_before_implementation(repo, tmp
 
 def test_pr_ready_tolerates_evidence_only_commits(repo, tmp_path):
     ready_task(repo, tmp_path)
-    git(repo, "add", "-A")
+    git(repo, "add", "-A", ".factory", "plans")
     git(repo, "commit", "-q", "-m", "record evidence")  # touches .factory/plans only
     code, out = run(repo, "pr_ready.py")
     assert code == 0, out
@@ -2340,13 +2349,14 @@ def test_pr_ready_tolerates_evidence_only_commits(repo, tmp_path):
 
 def test_pr_ready_tolerates_harness_upgrade_commits(repo, tmp_path):
     # Found by the pilot simulation: a forge upgrade mid-task touches factory/
-    # machinery — that is not product code and must not invalidate evidence.
-    # A real upgrade also re-freezes the vendor manifest; simulate both halves.
+    # machinery. In the harness repo that is product, so the branch review and
+    # evidence are re-grounded after the upgrade and manifest refresh.
     ready_task(repo, tmp_path)
     (repo / "factory" / "scripts" / "extra_helper.py").write_text("# upgraded\n")
     refresh_manifest(repo)
     git(repo, "add", "-A")
     git(repo, "commit", "-q", "-m", "chore: forge upgrade")
+    write_passing_artifacts(repo)
     code, out = run(repo, "pr_ready.py")
     assert code == 0, out
 
@@ -5248,6 +5258,7 @@ def test_recorders_refuse_nonconforming_payloads(repo, tmp_path):
                                       "summary": "ok", "blocking_findings": []}))
     assert code != 0 and "not pinned" in out
     # happy path: recorded, attested, no legacy keys written
+    mint_review_run(repo)
     code, out = run(repo, "record_review_from_json.py", "--aspect", "quality",
                     stdin=json.dumps({"generated_by": "autoreview", "score": 9,
                                       "summary": "ok", "blocking_findings": [],
@@ -5985,6 +5996,7 @@ def test_user_facing_artifacts_must_attest_design_skills(repo, tmp_path):
                                       ["emil-design-eng", "frontend-design"]}))
     assert code == 0, out
     # review artifact must attest review-animations on user-facing tasks
+    mint_review_run(repo)
     review = {"generated_by": "autoreview", "score": 9, "summary": "ok",
               "blocking_findings": []}
     code, out = run(repo, "record_review_from_json.py", "--aspect", "quality",
@@ -10360,6 +10372,13 @@ def review_payload(**over):
             "blocking_findings": [], "skills_used": ["review-animations"], **over}
 
 
+def mint_review_run(repo: Path) -> dict:
+    code, out = run(repo, "forge.py", "review-brief", "--all", "--repo", str(repo))
+    assert code == 0, out
+    key = run_state(repo)["issue_key"]
+    return json.loads((story_state(repo, key) / "review-run.json").read_text())
+
+
 def record_stage_local(repo: Path, **over) -> tuple[int, str]:
     return run(
         repo, "record_review_from_json.py", "--aspect", "stage-local",
@@ -10388,6 +10407,7 @@ def test_structured_findings_recorded_and_malformed_refused(repo, tmp_path):
     intake(repo)
     save_plan(repo, tmp_path)
     record_skeleton_then_frontier(repo, DECOMP["tasks"])
+    mint_review_run(repo)
     # a structured finding missing its category is refused, not stringified
     code, out = run(repo, "record_review_from_json.py", "--aspect", "quality",
                     stdin=json.dumps(review_payload(
@@ -15293,6 +15313,44 @@ def test_review_brief_composes_contract_brief(repo, tmp_path):
     assert "forge_cli.delegate" not in module and "import delegate" not in module
 
 
+def test_review_brief_mints_run_id_and_lenses_echo_it(repo, tmp_path):
+    sign_off(repo)
+    intake(repo)
+    save_plan(repo, tmp_path)
+    record_skeleton_then_frontier(repo, DECOMP["tasks"])
+    (repo / "app.py").write_text("print('reviewed branch')\n")
+    git(repo, "add", "app.py")
+    git(repo, "commit", "-q", "-m", "product change")
+
+    code, out = run(repo, "forge.py", "review-brief", "--all", "--repo", str(repo))
+    assert code == 0, out
+    brief = repo / ".factory" / "review-briefs" / "all.md"
+    token = json.loads((story_state(repo) / "review-run.json").read_text())
+    assert token["brief_sha256"] == hashlib.sha256(brief.read_bytes()).hexdigest()
+    assert token["branch_diff_digest"] == branch_diff_digest(repo)
+    assert token["review_run_id"] == hashlib.sha256(
+        (token["brief_sha256"] + token["branch_diff_digest"]).encode()
+    ).hexdigest()
+    assert token["minted_at"]
+
+    for aspect in ("quality", "performance", "security"):
+        code, out = run(repo, "record_review_from_json.py", "--aspect", aspect,
+                        stdin=json.dumps(review_payload()))
+        assert code == 0, out
+        review = json.loads(
+            (story_state(repo) / "reviews" / f"{aspect}.json").read_text()
+        )
+        for field in ("review_run_id", "brief_sha256", "branch_diff_digest"):
+            assert review[field] == token[field]
+
+    (repo / "app.py").write_text("print('changed after review run')\n")
+    git(repo, "add", "app.py")
+    git(repo, "commit", "-q", "-m", "change reviewed branch")
+    code, out = run(repo, "record_review_from_json.py", "--aspect", "quality",
+                    stdin=json.dumps(review_payload()))
+    assert code != 0 and "Branch changed after the review run" in out
+
+
 def test_quality_review_requires_contract_verdicts(repo, tmp_path):
     sign_off(repo)
     intake(repo)
@@ -15323,6 +15381,7 @@ def test_quality_review_requires_contract_verdicts(repo, tmp_path):
     code, out = run(repo, "record_decomposition_from_json.py", stdin=json.dumps(
         {**DECOMP, "tasks": tasks}))
     assert code == 0, out
+    mint_review_run(repo)
 
     code, out = run(repo, "record_review_from_json.py", "--aspect", "quality",
                     stdin=json.dumps(review_payload()))
@@ -15412,6 +15471,26 @@ def test_pr_ready_blocks_on_unverified_plan_contracts(repo, tmp_path):
     quality_path.write_text(json.dumps(quality))
     code, out = run(repo, "pr_ready.py")
     assert code == 0, out
+
+
+def test_pr_ready_refuses_incoherent_lens_set(repo, tmp_path):
+    scoped = prepare_pr_ready_story(repo, tmp_path, scoped_layout=True)
+    performance_path = scoped / "reviews" / "performance.json"
+    performance = json.loads(performance_path.read_text())
+    original_run_id = performance["review_run_id"]
+    performance["review_run_id"] = "different-run"
+    performance_path.write_text(json.dumps(performance))
+
+    code, out = run(repo, "pr_ready.py")
+    assert code != 0 and "must share one review_run_id" in out
+
+    performance["review_run_id"] = original_run_id
+    performance_path.write_text(json.dumps(performance))
+    (repo / "app.py").write_text("print('changed after branch review')\n")
+    git(repo, "add", "app.py")
+    git(repo, "commit", "-q", "-m", "change reviewed branch")
+    code, out = run(repo, "pr_ready.py")
+    assert code != 0 and "branch review is stale" in out
 
 
 def test_adopt_and_upgrade_refreeze_the_manifest(repo, tmp_path):

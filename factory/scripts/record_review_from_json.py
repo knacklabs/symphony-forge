@@ -2,13 +2,14 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 from pathlib import Path
 
 from factory_lib import (
-    dump_json, gate, head_sha, load_json, now_iso,
+    branch_diff_digest, dump_json, gate, head_sha, load_json, now_iso,
     evidence_path, protected_decomposition_state_path, repo_root, require_skills,
-    read_stdin_utf8, run_state_path, validate_payload,
+    read_stdin_utf8, run_state_path, story_dir, validate_payload,
 )
 from forge_cli.events import append_event
 from forge_cli.readiness import review_passed
@@ -144,6 +145,28 @@ if args.aspect == "quality" and state.get("decomposition_status") == "recorded":
                 "quality review contract_verdicts missing declared contract ids: "
                 + ", ".join(missing_ids)
             )
+if args.aspect != "stage-local" and state.get("issue_key"):
+    token_path = story_dir(root, state["issue_key"]) / "review-run.json"
+    token = load_json(token_path, default={})
+    fields = ("review_run_id", "brief_sha256", "branch_diff_digest")
+    if any(not isinstance(token.get(field), str) or not token[field]
+           for field in fields):
+        raise SystemExit(
+            "Missing current branch review run; run `./forge review-brief --all` first."
+        )
+    expected_run_id = hashlib.sha256(
+        (token["brief_sha256"] + token["branch_diff_digest"]).encode()
+    ).hexdigest()
+    if token["review_run_id"] != expected_run_id:
+        raise SystemExit(
+            "Invalid review-run token; rerun `./forge review-brief --all`."
+        )
+    if token["branch_diff_digest"] != branch_diff_digest(root):
+        raise SystemExit(
+            "Branch changed after the review run was minted; rerun "
+            "`./forge review-brief --all`."
+        )
+    review.update({field: token[field] for field in fields})
 for key in ("residual_risks", "reviewed_scope"):
     review[key] = ensure_list(payload.get(key))
 review.setdefault("recommendation", "approve-with-caveats")

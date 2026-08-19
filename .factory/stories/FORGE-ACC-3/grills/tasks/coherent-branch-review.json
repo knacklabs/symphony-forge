@@ -1,0 +1,70 @@
+{
+  "generated_by": "griller",
+  "gate": "task",
+  "verdict": "pass",
+  "gaps": [],
+  "contradictions": [],
+  "resolutions": [
+    "review_run_id = sha256(brief_sha256 + branch_diff_digest) \u2014 deterministic, self-verifying, no opaque id store.",
+    "branch_diff_digest = committed PRODUCT diff over merge-base(origin/main)..HEAD (excludes .factory/ + plans/); a new branch commit re-grounds it.",
+    "Coherence check lives in a shared factory_lib.require_coherent_review_run helper; pr_ready calls it (load_review_artifacts may reuse it) \u2014 no inline duplicate."
+  ],
+  "inspected_refs": [
+    "factory/scripts/forge_cli/review_brief.py",
+    "factory/scripts/record_review_from_json.py",
+    "factory/scripts/pr_ready.py",
+    "factory/scripts/factory_lib.py",
+    "factory/scripts/forge_cli/stages.py"
+  ],
+  "current_flow": "review-brief --all writes .factory/review-briefs/all.md but mints no run id; the three lens artifacts carry no shared run/brief/branch binding, so pr_ready cannot tell whether they are one coherent run over one branch state. committed_paths + WORKFLOW_PATHS exclusion and product_tree_digest already exist for the diff digest.",
+  "criteria_map": {
+    "pr_ready refuses when the three lens artifacts do not share one review_run_id + brief sha + branch diff digest matching current state": "Inspected pr_ready + load_review_artifacts; the shared require_coherent_review_run(root, reviews) refuses unless all three lenses echo one review_run_id/brief_sha256/branch_diff_digest and branch_diff_digest == current committed product diff."
+  },
+  "decision": "keep",
+  "new_abstractions": [
+    "factory_lib.branch_diff_digest(root) and require_coherent_review_run(root, reviews) plus a review-run token; justified as the single seam review-brief mints, record_review echoes, and pr_ready enforces."
+  ],
+  "rounds": [
+    {
+      "question": "How is review_run_id formed?",
+      "options": [
+        "Deterministic digest",
+        "Opaque minted id"
+      ],
+      "chosen": "Deterministic digest"
+    },
+    {
+      "question": "What does branch diff digest cover?",
+      "options": [
+        "Committed product diff vs main base",
+        "Full committed diff incl. docs/evidence"
+      ],
+      "chosen": "Committed product diff vs main base"
+    },
+    {
+      "question": "Where does the coherence check live?",
+      "options": [
+        "Shared factory_lib helper",
+        "Inline in pr_ready.py"
+      ],
+      "chosen": "Shared factory_lib helper"
+    }
+  ],
+  "citations": [
+    {
+      "finding": "Review must be ONE three-lens pass over one brief (decision 0011); coherence binding enforces exactly that.",
+      "source": "docs/decisions/0011"
+    },
+    {
+      "finding": "committed_paths over a base..HEAD range and the WORKFLOW_PATHS exclusion already exist to scope product changes.",
+      "source": "factory/scripts/forge_cli/stages.py#committed_paths"
+    }
+  ],
+  "task_id": "coherent-branch-review",
+  "input_sha256": "d4994519756a20435b0a022c4752b246547b7ecc24d95b534a0154fb3629e442",
+  "recorded_at": "2026-08-19T09:38:43+00:00",
+  "commit": "5ee81b786676e4afd1aa09aca9aa3e5ba90ac301",
+  "approved_task_plan_sha256": "28da3e2db006eb55c4b8d593a843ee8eb3851577bdacfb467e2240da3efa4f42",
+  "approved_by": "Ravi Kiran Vemula",
+  "approved_at": "2026-08-19T09:39:58+00:00"
+}

@@ -926,6 +926,75 @@ def load_review_artifacts(
     return reviews, problems
 
 
+def branch_diff_digest(root: Path) -> str:
+    """Hash the committed product diff from origin/main to the current HEAD."""
+    from forge_cli.stages import WORKFLOW_PATHS, committed_paths
+
+    merge_base = subprocess.run(
+        ["git", "merge-base", "origin/main", "HEAD"],
+        cwd=root, capture_output=True, text=True, env=clean_git_env(),
+        encoding="utf-8", errors="surrogateescape",
+    )
+    if merge_base.returncode != 0 or not merge_base.stdout.strip():
+        raise SystemExit(
+            "Cannot bind the branch review: origin/main has no merge base with HEAD."
+        )
+    base_sha = merge_base.stdout.strip()
+    current_head = head_sha(root)
+    paths = sorted(
+        path for path in committed_paths(root, base_sha, current_head)
+        if not path.startswith(WORKFLOW_PATHS)
+    )
+    if not paths:
+        return hashlib.sha256(b"").hexdigest()
+    diff = subprocess.run(
+        ["git", "diff", "--binary", "--no-ext-diff", base_sha, current_head,
+         "--", *paths],
+        cwd=root, capture_output=True, env=clean_git_env(),
+    )
+    if diff.returncode != 0:
+        raise SystemExit("Cannot bind the branch review: git diff failed.")
+    return hashlib.sha256(diff.stdout).hexdigest()
+
+
+def require_coherent_review_run(root: Path, reviews: dict[str, dict]) -> list[str]:
+    """Return close-gate problems for a split or stale three-lens review run."""
+    aspects = ("quality", "performance", "security")
+    if any(aspect not in reviews for aspect in aspects):
+        return []
+    fields = ("review_run_id", "brief_sha256", "branch_diff_digest")
+    bindings = [tuple(reviews[aspect].get(field) for field in fields)
+                for aspect in aspects]
+    if any(not isinstance(value, str) or not value for binding in bindings
+           for value in binding):
+        return [
+            "quality, performance, and security reviews must echo one "
+            "review_run_id, brief_sha256, and branch_diff_digest from "
+            "`./forge review-brief --all`"
+        ]
+    if len(set(bindings)) != 1:
+        return [
+            "quality, performance, and security reviews must share one "
+            "review_run_id, brief_sha256, and branch_diff_digest"
+        ]
+    review_run_id, brief_sha256, recorded_digest = bindings[0]
+    expected_run_id = hashlib.sha256(
+        (brief_sha256 + recorded_digest).encode()
+    ).hexdigest()
+    if review_run_id != expected_run_id:
+        return [
+            "review_run_id must equal sha256(brief_sha256 + branch_diff_digest)"
+        ]
+    current_digest = branch_diff_digest(root)
+    if recorded_digest != current_digest:
+        return [
+            "branch review is stale: branch_diff_digest does not match the "
+            "current committed product diff; rerun `./forge review-brief --all` "
+            "and all three lenses"
+        ]
+    return []
+
+
 SCHEMA_TYPES = {"str": str, "int": int, "bool": bool, "list": list, "dict": dict}
 
 

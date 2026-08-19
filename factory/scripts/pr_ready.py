@@ -21,6 +21,7 @@ from factory_lib import (
     story_uses_scoped_layout,
     tests_state_path,
     verify_state_path,
+    require_coherent_review_run,
 )
 from forge_cli.assumptions import blocking_for_issue, load_rows as load_assumptions
 from forge_cli.decisions import decision_records
@@ -133,6 +134,7 @@ for kind in ("automated", "functional"):
                        + (" and score >= 8" if kind == "functional" else ""))
 reviews, review_problems = load_review_artifacts(root)
 missing.extend(review_problems)
+missing.extend(require_coherent_review_run(root, reviews))
 
 # Independent of the review recorder: existing artifacts may predate contract
 # enforcement, so readiness reads the quality evidence and checks every id.
