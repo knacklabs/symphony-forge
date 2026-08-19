@@ -323,6 +323,7 @@ def seed_task_grill_frontier(repo: Path, task: dict) -> None:
     (repo / ".factory" / "run.json").write_text(json.dumps({
         "issue_key": "TEST-1",
         "plan_file": plan.relative_to(repo).as_posix(),
+        "plan_status": "approved",
     }))
     (control / "decomposition.json").write_text(json.dumps({
         "plan_file": plan.relative_to(repo).as_posix(),
@@ -600,6 +601,8 @@ def test_new_story_artifacts_record_under_story_dir(repo, tmp_path):
         "functional": {"summary": "legacy proof"},
     }
 
+    code, out = run(repo, "forge.py", "review-brief", "--all", "--repo", str(repo))
+    assert code == 0, out
     review = {
         "generated_by": "autoreview",
         "score": 9,
@@ -2346,7 +2349,7 @@ def test_pr_ready_rejects_unstamped_evidence(repo, tmp_path):
     verify = story_state(repo) / "verify.json"
     verify.write_text(json.dumps({"ok": True}))  # no commit stamp
     code, out = run(repo, "pr_ready.py")
-    assert code != 0 and "provenance" in out
+    assert code != 0 and "stamped at HEAD" in out
 
 
 def test_pr_ready_rejects_stale_evidence_after_code_change(repo, tmp_path):
@@ -2383,6 +2386,7 @@ def test_pr_ready_tolerates_evidence_only_commits(repo, tmp_path):
     ready_task(repo, tmp_path)
     git(repo, "add", "-A", ".factory", "plans")
     git(repo, "commit", "-q", "-m", "record evidence")  # touches .factory/plans only
+    write_passing_artifacts(repo)  # evidence-only commit moved HEAD; re-stamp there
     code, out = run(repo, "pr_ready.py")
     assert code == 0, out
 
@@ -5184,7 +5188,10 @@ def test_roadmap_lifecycle(repo, tmp_path):
     assert code == 0 and "marked active" in out
     assert roadmap_items(repo)["ENG-1"]["status"] == "active"
     # drive to pr-ready: item completed with a history link
-    save_plan(repo, tmp_path)
+    run(repo, "forge.py", "roadmap", "link-spec", "ENG-1",
+        "--spec", "docs/specs/base.md")  # task-3 requirements round needs a confirmed spec
+    code, out = save_plan(repo, tmp_path)
+    assert code == 0, out
     record_skeleton_then_frontier(repo, DECOMP["tasks"])
     write_passing_artifacts(repo)
     run(repo, "update_run.py", "--decomposition-status", "recorded")
@@ -10007,6 +10014,8 @@ def test_recorder_holds_the_task_narrative_contract(repo, tmp_path):
     second = {"id": "T2", "title": "second", "objective": "more",
               "acceptance_criteria": ["works"]}
     record_skeleton_then_frontier(repo, [first, second])
+    git(repo, "add", "-A")
+    git(repo, "commit", "-qm", "stage baseline")
     code, out = record_task_grill(repo, first)
     assert code == 0, out
     code, out = record_task_grill(repo, DECOMP["tasks"][0])
@@ -10014,6 +10023,7 @@ def test_recorder_holds_the_task_narrative_contract(repo, tmp_path):
     run(repo, "forge.py", "stage", "start", "T1")
     launch_fake(repo, tmp_path, "T1")
     write_in_scope(repo, "src/core.py")  # stage done measures the diff
+    stamp_and_commit(repo)
     code, out = run(repo, "forge.py", "stage", "done", "T1")
     assert code == 0, out
     rerecorded = {**DECOMP, "tasks": [first, second]}
@@ -10478,6 +10488,7 @@ def test_roadmap_dependency_and_lifecycle_guards(repo, tmp_path):
     # a done story is not silently reopened by re-intake
     code, out = intake(repo, "G-1", "API")
     assert code == 0
+    run(repo, "forge.py", "roadmap", "link-spec", "G-1", "--spec", "docs/specs/base.md")
     save_plan(repo, tmp_path)
     run(repo, "record_decomposition_from_json.py", stdin=json.dumps(DECOMP))
     write_passing_artifacts(repo)
@@ -10645,12 +10656,15 @@ def test_stage_loop_orders_execution_and_gates_pr_ready(repo, tmp_path):
     # done requires the stage to have actually started
     code, out = run(repo, "forge.py", "stage", "done", "T1")
     assert code != 0 and "not active" in out
+    git(repo, "add", "-A")
+    git(repo, "commit", "-qm", "stage baseline")
     code, out = record_task_grill(repo, t1)
     assert code == 0, out
     code, out = run(repo, "forge.py", "stage", "start", "T1")
     assert code == 0, out
     launch_fake(repo, tmp_path, "T1")
     write_in_scope(repo, "src/api/invoices.py")
+    stamp_and_commit(repo)
     code, out = run(repo, "forge.py", "stage", "done", "T1")
     assert code == 0, out
     decomp["tasks"][1] = task_with_plan_contracts({
@@ -10697,8 +10711,25 @@ def test_stage_loop_orders_execution_and_gates_pr_ready(repo, tmp_path):
     assert code == 0, out
     launch_fake(repo, tmp_path, "T2")
     write_in_scope(repo, "src/ui/list.py")
+    stamp_and_commit(repo, "src/ui/list.py")
     code, out = run(repo, "forge.py", "stage", "done", "T2")
     assert code == 0, out
+    # re-stamp the closeout evidence at the final HEAD (verify/reviews/outcome)
+    write_passing_artifacts(repo, commit=head(repo))
+    quality_path = story_state(repo) / "reviews" / "quality.json"
+    quality = json.loads(quality_path.read_text())
+    quality["contract_verdicts"] = [
+        {"contract_id": cid, "verdict": "implemented", "evidence": "focused stage proof"}
+        for cid in ("T1-C1", "T2-C1")
+    ]
+    quality_path.write_text(json.dumps(quality))
+    both_done = {"issue": run_state(repo).get("issue_key", ""),
+                 "stages": [{"id": "T1", "title": "api", "status": "done"},
+                            {"id": "T2", "title": "ui", "status": "done"}]}
+    (story_state(repo) / "stages.json").write_text(json.dumps(both_done))
+    (delegation_ledger(repo).parent / "stages.json").write_text(json.dumps(both_done))
+    (story_state(repo) / "decomposition.json").write_text(
+        json.dumps({**decomp, "commit": head(repo)}))
     code, out = run(repo, "pr_ready.py")
     assert code == 0, out
     assert (repo / ".factory" / "stages.json").exists()
@@ -12445,6 +12476,7 @@ def test_decomposition_refuses_to_remove_an_active_task(repo, tmp_path):
 def test_decomposition_refuses_to_rewrite_a_completed_task_contract(repo, tmp_path):
     start_stage(repo, tmp_path, STAGE_TASK)
     write_in_scope(repo, "src/core.py")
+    stamp_and_commit(repo)
     code, out = run(repo, "forge.py", "stage", "done", "T1")
     assert code == 0, out
     changed = {
@@ -12466,6 +12498,7 @@ def test_decomposition_backfills_unchanged_legacy_completed_contract(
     follow_up["acceptance_criteria"] = ["the follow-up is recorded"]
     start_stage(repo, tmp_path, STAGE_TASK, future_tasks=[follow_up])
     write_in_scope(repo, "src/core.py")
+    stamp_and_commit(repo)
     code, out = run(repo, "forge.py", "stage", "done", "T1")
     assert code == 0, out
     protected_stages = delegation_ledger(repo).parent / "stages.json"
@@ -12491,6 +12524,7 @@ def test_decomposition_backfills_unchanged_legacy_completed_contract(
 def test_completed_contract_check_uses_protected_stage_digest(repo, tmp_path):
     start_stage(repo, tmp_path, STAGE_TASK)
     write_in_scope(repo, "src/core.py")
+    stamp_and_commit(repo)
     code, out = run(repo, "forge.py", "stage", "done", "T1")
     assert code == 0, out
     changed_task = {
@@ -13283,6 +13317,7 @@ def test_delegate_refuses_active_empty_scope_and_read_only_passes(repo, tmp_path
     authority.write_text(json.dumps(decomposition))
     mirror.write_text(json.dumps(decomposition))
     write_in_scope(repo, "src/core.py")
+    stamp_and_commit(repo)
     code, out = run(repo, "forge.py", "stage", "done", "T1")
     assert code != 0 and "no successful write launch" in out
 
@@ -13471,6 +13506,7 @@ def test_delegate_print_only_records_no_successful_launch(repo, tmp_path):
     assert not (repo / ".factory" / "delegations.jsonl").exists()
     assert not delegation_ledger(repo).exists()
     write_in_scope(repo, "src/core.py")
+    stamp_and_commit(repo)
     code, out = run(repo, "forge.py", "stage", "done", "T1")
     assert code != 0 and "no successful write launch" in out
 
@@ -13528,6 +13564,7 @@ def test_running_write_launch_invalidates_older_success(repo, tmp_path):
     with ledger.open("a") as fh:
         fh.write(json.dumps(running) + "\n")
     write_in_scope(repo, "src/core.py")
+    stamp_and_commit(repo)
     code, out = run(repo, "forge.py", "stage", "done", "T1")
     assert code != 0 and "no successful write launch" in out
 
@@ -13555,6 +13592,7 @@ def test_workspace_mirror_cannot_forge_authoritative_launch(repo, tmp_path):
     with mirror.open("a") as fh:
         fh.write(json.dumps(forged) + "\n")
     write_in_scope(repo, "src/core.py")
+    stamp_and_commit(repo)
     code, out = run(repo, "forge.py", "stage", "done", "T1")
     assert code != 0 and "no successful write launch" in out
 
@@ -13825,11 +13863,14 @@ def test_overlapping_write_launch_stays_invalid_until_all_are_terminal(repo, tmp
         fh.write(json.dumps({**second, "launch_status": "succeeded",
                              "exit_code": 0}) + "\n")
     write_in_scope(repo, "src/core.py")
+    stamp_and_commit(repo)
     code, out = run(repo, "forge.py", "stage", "done", "T1")
     assert code != 0 and "no successful write launch" in out
     with ledger.open("a") as fh:
         fh.write(json.dumps({**first, "launch_status": "succeeded",
                              "exit_code": 0}) + "\n")
+    code, out = record_stage_local(repo)
+    assert code == 0, out
     code, out = run(repo, "forge.py", "stage", "done", "T1")
     assert code == 0, out
 
@@ -13862,6 +13903,7 @@ def test_running_launch_with_old_brief_still_blocks_stage_close(repo, tmp_path):
             **new_running, "launch_status": "succeeded", "exit_code": 0,
         }) + "\n")
     write_in_scope(repo, "src/core.py")
+    stamp_and_commit(repo)
     code, out = run(repo, "forge.py", "stage", "done", "T1")
     assert code != 0 and "no successful write launch" in out
 
@@ -14806,6 +14848,7 @@ def test_read_only_diagnostic_does_not_revoke_write_launch(repo, tmp_path):
                     env={"HOME": home})
     assert code == 0, out
     write_in_scope(repo, "src/core.py")
+    stamp_and_commit(repo)
     code, out = run(repo, "forge.py", "stage", "done", "T1")
     assert code == 0, out
 
@@ -15176,7 +15219,7 @@ def test_docs_state_the_enforced_jit_contract():
         assert "task grill" in lowered
         assert "stage start" in lowered
         assert "delegate" in lowered
-    assert "Do not guess later-task execution detail" in factory_doc
+    assert "Do not guess later-task" in factory_doc  # JIT rule (wraps in FACTORY.md)
     assert "later-task detail during the initial decomposition" in workflow
     assert "later tasks remains deferred" in decomposer
     for field in ("`write_scope`", "`required_tests`", "`verify_commands`",
@@ -15276,6 +15319,7 @@ def test_refactor_ratchet_blocks_growing_refactors(repo, tmp_path):
     assert code != 0 and "kind" in out
     git(repo, "checkout", "-q", "-b", "feat/REF-1-shrink")
     intake(repo, "REF-1", "Shrink the api layer")
+    run(repo, "forge.py", "roadmap", "link-spec", "REF-1", "--spec", "docs/specs/base.md")
     save_plan(repo, tmp_path)
     (repo / "src").mkdir(exist_ok=True)
     (repo / "src" / "grew.ts").write_text("line\n" * 40)
