@@ -24,9 +24,10 @@ import xml.etree.ElementTree as ET
 from pathlib import Path
 
 from factory_lib import (
-    clean_git_env, decomposition_state_path, dump_json, git_control_dir,
-    head_sha, load_json, now_iso, protected_decomposition_state_path, repo_root,
-    plan_digest_without_assumptions, require_ready_task, run_state_path,
+    approved_plan_digest, clean_git_env, decomposition_state_path, dump_json,
+    git_control_dir, head_sha, load_json, now_iso,
+    protected_decomposition_state_path, repo_root, plan_digest_without_assumptions,
+    require_ready_task, run_state_path,
     safe_factory_write_json, sha256_of, task_digest,
 )
 
@@ -704,38 +705,29 @@ def _cmd_start_locked(args: argparse.Namespace, base: Path) -> None:
     if not_done:
         fail(f"{args.id} follows unfinished task(s): {', '.join(not_done)} — "
              "finish them in decomposition order")
-    # The realistic staleness: the plan was edited AFTER this task graph was
-    # recorded, so the tasks describe a plan nobody approved. No record-time
-    # check can see that — the decomposition was current when it was written.
-    # This is where it becomes visible, at the last moment before work starts.
-    # The PROTECTED authority, not the workspace mirror. Reading the mutable
-    # .factory/decomposition.json meant that replacing it — which a merge does
-    # routinely, since tracked evidence travels with the branch — could drop
-    # the stamp and silently disable this check. A binding that disappears
-    # when a file is overwritten is not a binding.
+    run_state = load_json(run_state_path(base), default={})
+    plan_file = run_state.get("plan_file")
+    plan_path = base / plan_file if isinstance(plan_file, str) else None
+    approved_sha256 = (
+        approved_plan_digest(base, run_state, plan_path)
+        if plan_path is not None and plan_path.is_file()
+        else run_state.get("approved_plan_sha256")
+    )
+    if not plan_file or not isinstance(approved_sha256, str) or not approved_sha256:
+        fail(f"{args.id} cannot start: the approved plan binding is missing. "
+             "Re-grill the current plan and re-approve it before starting the stage.")
+    if plan_path is None or not plan_path.is_file():
+        fail(f"{args.id} cannot start: approved plan {plan_file} is missing. Restore "
+             "it, or re-grill and re-approve the current plan.")
+    if plan_digest_without_assumptions(plan_path) != approved_sha256:
+        fail(f"{args.id} cannot start: {plan_file} differs from the approved plan. "
+             "Re-grill the edited plan and re-approve it before starting the stage.")
     decomposition = load_json(protected_decomposition_state_path(base), default={})
     if not decomposition:
         decomposition = load_json(decomposition_state_path(base), default={})
-    stamped = decomposition.get("plan_sha256")
-    plan_file = load_json(run_state_path(base), default={}).get("plan_file")
-    if stamped:
-        # A stamped decomposition CLAIMS a plan binding, so failing to verify it
-        # is a refusal, never a pass. Skipping the check when the plan is gone
-        # would open the gate in exactly the case it exists for: the plan that
-        # was approved is no longer there to compare against.
-        if not plan_file:
-            fail(f"{args.id} cannot start: this decomposition is bound to a plan "
-                 "digest, but .factory/run.json no longer names a plan_file. "
-                 "Restore the run state or re-record the decomposition.")
-        if not (base / plan_file).is_file():
-            fail(f"{args.id} cannot start: the plan this decomposition was built "
-                 f"from ({plan_file}) is missing, so its binding cannot be "
-                 "verified. Restore it or re-record against the current plan.")
-        if plan_digest_without_assumptions(base / plan_file) != stamped:
-            fail(f"{args.id} cannot start: {plan_file} has changed since this "
-                 "decomposition was recorded, so the task list describes a plan "
-                 "that is no longer the approved one. Re-record the "
-                 "decomposition against the current plan, then start the stage.")
+    if decomposition.get("plan_sha256") != approved_sha256:
+        fail(f"{args.id} cannot start: the decomposition is not bound to the current "
+             "approved plan. Re-record the decomposition, then start the stage.")
     current_task = require_ready_task(base, args.id)
     stage["status"] = "active"
     stage["started_at"] = now_iso()

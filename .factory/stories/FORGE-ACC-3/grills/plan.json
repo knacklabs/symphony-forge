@@ -1,0 +1,96 @@
+{
+  "generated_by": "griller",
+  "gate": "plan",
+  "verdict": "pass",
+  "decision": "keep",
+  "questions_asked": 4,
+  "summary": "Plan grill of FORGE-ACC-3 (approval + closeout integrity), re-authored off main @8f1d053 after CFS-1 merged. Three findings resolved: closeout order kept verify->review (no flip), task 6 stays one task (split on budget signal), first-new-layout coupling is a dogfooding feature routed through evidence_path; task 2 expanded to a per-task plan-mode-approval gate (operator-required, Codex-designed).",
+  "inspected_refs": [
+    "docs/specs/accountable-engineering-loop.md",
+    "docs/specs/plan-approval.md",
+    "docs/decisions/0044-accountable-engineering-loop.md",
+    "docs/decisions/0045-conflict-free-story-state.md",
+    "docs/decisions/0046-scoped-layout-activation-ordering.md",
+    "factory/scripts/forge_cli/plans.py",
+    "factory/scripts/forge_cli/stages.py",
+    "factory/scripts/pr_ready.py",
+    "factory/scripts/check_encoding_hygiene.py"
+  ],
+  "current_flow": "ACC-1/ACC-2 shipped the loop's front half (skeletal frontier, proof-carrying grills, derived grounding, budgets). Approval and closeout remain convention: approved plans re-legitimize on re-record, task approval is implicit chat, no pre-draft requirements round, per-stage local review gates nothing, stage done accepts uncommitted work, review lenses need not be one run, closeout artifacts record in any order, windows can open mid-stage. check_encoding_hygiene still pins by file:line (fragile - CFS-1's CI fix added more line pins).",
+  "criteria_map": {
+    "approved plans bind by digest": "task plan-approval-binding stores approved_plan_sha256 and refuses re-record/stage-start on divergence",
+    "post-grill approved_by stamp": "task task-approval-stamp adds forge task approve + grill stamp + readiness refusal",
+    "pre-draft requirements round": "task pre-draft-requirements-round adds the requirements grill + plan-save gate",
+    "local-review stamp + commit-before-done": "task local-review-stamp adds the stage-local stamp + stage-done refusals",
+    "coherent one-run branch review": "task coherent-branch-review binds review_run_id across brief + lenses",
+    "ordered closeout + clean-tree pr_ready + no mid-stage windows": "task ordered-closeout adds require_all_stages_done, prerequisite chain, clean-tree pr_ready, window refusal",
+    "content-fingerprint hygiene pins + doc debts": "task hygiene-content-pins-and-doc-debts migrates pins + reconciles griller.md/spec"
+  },
+  "new_abstractions": [
+    "forge task approve (recorder-mediated approval stamp) - no existing mechanism records post-grill human task approval; refused-without gate. Reversible: stamp lives in the grill record.",
+    "content-fingerprint hygiene pins (sha over normalized construct text + occurrence index) - replaces fragile file:line pins; a one-time migration helper rewrites existing pins.",
+    "Per-task plan artifact (.factory/stories/<KEY>/task-plans/<id>.md) + forge task plan save/approve binding its digest into the grill record - the per-task analogue of story plan approval. Reversible: pure gate token in the grill record, no new status/DB."
+  ],
+  "rounds": [
+    {
+      "question": "Closeout order: review before verify (plan draft) vs verify then review (AGENTS.md + reviewer.md)?",
+      "options": [
+        "Keep verify -> review (align to docs)",
+        "Flip to review -> verify (as drafted)"
+      ],
+      "chosen": "Keep verify -> review (align to docs)"
+    },
+    {
+      "question": "Task 6 ordered-closeout bundles four changes - one task or too big?",
+      "options": [
+        "Keep as one task; split on a budget signal",
+        "Pre-split into two tasks now"
+      ],
+      "chosen": "Keep as one task; split on a budget signal"
+    },
+    {
+      "question": "ACC-3 is the first new-layout story and modifies CFS-1's recorders - risk or feature?",
+      "options": [
+        "Feature (dogfooding) + route through evidence_path",
+        "Add an explicit compatibility task"
+      ],
+      "chosen": "Feature (dogfooding) + route through evidence_path"
+    },
+    {
+      "question": "Operator requirement (non-negotiable): a deterministic per-task grill -> plan-in-plan-mode -> human approval gate, mirroring the story flow. The drafted task-approval-stamp (grill stamp only) does not provide the per-task plan + approval.",
+      "options": [
+        "Add the per-task plan-mode-approval gate (Codex design)",
+        "Story-level approval only"
+      ],
+      "chosen": "Add the per-task plan-mode-approval gate (Codex design)"
+    }
+  ],
+  "citations": [
+    {
+      "finding": "Approval must be a human-attributed marker the agent cannot mint; JIT contracts enforced end to end",
+      "source": "docs/specs/plan-approval.md and docs/specs/accountable-engineering-loop.md, decision 0044"
+    },
+    {
+      "finding": "Gates read the story-scoped .factory/stories/<KEY>/ shapes via evidence_path",
+      "source": "docs/decisions/0045-conflict-free-story-state.md and 0046"
+    }
+  ],
+  "gaps": [
+    "Closeout order: review before verify (plan draft) vs verify then review (AGENTS.md + reviewer.md)?",
+    "Task 6 ordered-closeout bundles four changes - one task or too big?",
+    "ACC-3 is the first new-layout story and modifies CFS-1's recorders - risk or feature?",
+    "Operator requirement (non-negotiable): a deterministic per-task grill -> plan-in-plan-mode -> human approval gate, mirroring the story flow. The drafted task-approval-stamp (grill stamp only) does not provide the per-task plan + approval."
+  ],
+  "contradictions": [],
+  "resolutions": [
+    "Keep verify -> review (operator 2026-08-19): plan updated to stages -> verify -> branch review -> outcome -> pr_ready, matching AGENTS.md + reviewer.md; the drafted order-flip and its doc-sweep are dropped.",
+    "Keep ordered-closeout as one cohesive task sharing require_all_stages_done (operator 2026-08-19); if the diff overruns budget the worker raises a split signal and it splits then.",
+    "Feature/dogfooding (operator 2026-08-19): ACC-3 is the first story under CFS-1's activated layout; every gate/recorder it touches reads via evidence_path/story_dir, enforced per-task in reviewer_focus - no separate compatibility task.",
+    "Expanded task 2 into a per-task-plan-approval gate per Codex's minimal design (2026-08-19): per-task plan at .factory/stories/<KEY>/task-plans/<id>.md (evidence_path); forge task plan save + forge task approve bind plan_digest_without_assumptions + stamp approved_by/at into the grill record; require_ready_task refuses at stage start AND delegate until BOTH the grill passed AND a matching approval exists; task_frontier_state routes author-contract -> grill -> author-task-plan -> await-approval -> stage-start -> delegate; NO grounding_digest change (grill precedes plan). Audited human attestation per 0029 - no false crypto claim, no signing/daemon (over-building). Operator-required + Codex-validated."
+  ],
+  "open_items": [],
+  "input_sha256": "6b7e4d2fef87343148203337f969559e4629794b65566b5baee1371bcf2db169",
+  "issue": "FORGE-ACC-3",
+  "recorded_at": "2026-08-19T04:53:45+00:00",
+  "commit": "8f1d0530b29083c4b7a0978bebb86fd9b0e1f23c"
+}

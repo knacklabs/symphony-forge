@@ -1,0 +1,128 @@
+{
+  "generated_by": "docs-decomposer",
+  "story": "FORGE-ACC-3",
+  "tasks": [
+    {
+      "id": "plan-approval-binding",
+      "title": "Approved plans bind by digest",
+      "objective": "The approval marker stores approved_plan_sha256 (assumptions-stripped, aligning the story marker off body_sha256); record_decomposition and stage start refuse when the live plan's digest differs from the APPROVED one; plan approve refuses without a fresh matching --gate plan grill.",
+      "acceptance_criteria": [
+        "an edited approved plan is refused at re-record and stage start until re-approved",
+        "plan approve refuses without a fresh passing --gate plan grill bound to the plan digest"
+      ],
+      "dependencies": [],
+      "write_scope": [
+        "factory/scripts/forge_cli/plans.py",
+        "factory/scripts/factory_lib.py",
+        "factory/scripts/record_decomposition_from_json.py",
+        "factory/scripts/forge_cli/stages.py",
+        "factory/tests/test_gates.py"
+      ],
+      "verify_commands": [
+        "python3 factory/scripts/check_dual_runtime.py"
+      ],
+      "required_tests": [
+        {
+          "id": "test_edited_approved_plan_refused_at_rerecord_and_stage_start",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest --with psutil python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_plan_approve_refuses_without_a_fresh_plan_grill",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest --with psutil python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        }
+      ],
+      "reviewer_focus": "The approval marker (plans.py cmd_approve) must bind approved_plan_sha256 = plan_digest_without_assumptions(body), NOT body_sha256 - appending an assumption keeps approval valid but editing the plan body invalidates it. record_decomposition_from_json.py AND stage start (stages.py) compare the LIVE plan's plan_digest_without_assumptions against the APPROVED marker's approved_plan_sha256 (not the record-time digest) and refuse on divergence with a re-approve message. cmd_approve requires a fresh passing --gate plan grill bound to the plan digest (mirror cmd_save require_grill). ALL plan/marker reads via evidence_path (ACC-3 is new-layout, story-scoped). Do NOT regress the story-plan save/approve flow (existing tests stay green). SCOPE: plans.py marker+approve grill, the shared approved-digest compare in factory_lib, the two refusal sites, tests only.",
+      "plan_contracts": [
+        {
+          "id": "ACC3T1-C1",
+          "statement": "an edited approved plan is refused at re-record and stage start until re-approved",
+          "source": "plans/active/FORGE-ACC-3-approval-and-closeout-integrity.md#task-decomposition"
+        },
+        {
+          "id": "ACC3T1-C2",
+          "statement": "plan approve refuses without a fresh passing --gate plan grill bound to the plan digest",
+          "source": "plans/active/FORGE-ACC-3-approval-and-closeout-integrity.md#task-decomposition"
+        }
+      ]
+    },
+    {
+      "id": "task-plan-approval-gate",
+      "title": "Each task is grilled, planned in plan mode, and human-approved before implementation",
+      "objective": "Deterministic per-task loop: a per-task plan at .factory/stories/<KEY>/task-plans/<id>.md (evidence_path) authored in plan mode; forge task plan save + forge task approve --by bind plan_digest_without_assumptions and stamp approved_by/at into the grill; require_ready_task refuses at stage start AND delegate until the grill passed AND a matching approval exists; task_frontier_state routes author-contract->grill->author-task-plan->await-approval->stage-start.",
+      "acceptance_criteria": [
+        "stage start and delegate refuse a task with no approved task plan whose digest matches, or a stale grill",
+        "forge next and the board route author-task-plan and await-approval identically from shared predicates"
+      ],
+      "dependencies": [
+        "plan-approval-binding"
+      ]
+    },
+    {
+      "id": "pre-draft-requirements-round",
+      "title": "The spec is re-grilled against repo reality before plan drafting",
+      "objective": "The planning branch's first action is a requirements re-grill of the confirmed spec against current repo state, recorded story-scoped (.factory/stories/<KEY>/grills/requirements.json, digest over spec body + product tree); plan save refuses without a fresh pass; rounds via AskUserQuestion.",
+      "acceptance_criteria": [
+        "plan save refuses without a fresh requirements-round grill matching the spec+tree digest",
+        "forge next routes the requirements round as the first planning action"
+      ],
+      "dependencies": [
+        "task-plan-approval-gate"
+      ]
+    },
+    {
+      "id": "local-review-stamp",
+      "title": "Stage close requires a recorded clean local review and committed work",
+      "objective": "record_review_from_json.py --aspect stage-local writes a clean-review stamp into stages.json bound to {stage id, task digest, composed-brief sha, baseline, pre-commit product diff digest}; stage done refuses a missing/stale stamp, any uncommitted/staged product change, or an empty committed delta. The stamp is a gate token, not a fourth review artifact (0011).",
+      "acceptance_criteria": [
+        "stage done refuses without a fresh stage-local stamp, or with uncommitted/staged product changes, or an empty committed delta",
+        "the stamp is a stages.json token and records no fourth review artifact"
+      ],
+      "dependencies": [
+        "pre-draft-requirements-round"
+      ]
+    },
+    {
+      "id": "coherent-branch-review",
+      "title": "The three lenses are one run over one brief",
+      "objective": "review-brief --all mints review_run_id embedding the brief sha + branch diff digest; each lens artifact echoes all three and matches current branch state; pr_ready refuses lens sets that disagree.",
+      "acceptance_criteria": [
+        "pr_ready refuses when the three lens artifacts do not share one review_run_id + brief sha + branch diff digest matching current state"
+      ],
+      "dependencies": [
+        "local-review-stamp"
+      ]
+    },
+    {
+      "id": "ordered-closeout",
+      "title": "Closeout is ordered and pr_ready requires a clean tree",
+      "objective": "Shared require_all_stages_done(); prerequisite chain stages -> verify -> branch review -> functional (when user_facing) -> outcome -> pr_ready (verify before review); pr_ready also requires a clean product worktree/index, repo-kind-aware evidence exclusions, and the outcome stamp on the evidence commit; quickfix/lite/degraded start refuses while any stage is active.",
+      "acceptance_criteria": [
+        "pr_ready refuses out-of-order closeout, a dirty product tree/index, or a missing outcome stamp on the evidence commit",
+        "quickfix/lite/degraded start refuse while any stage is active"
+      ],
+      "dependencies": [
+        "coherent-branch-review"
+      ]
+    },
+    {
+      "id": "hygiene-content-pins-and-doc-debts",
+      "title": "Hygiene pins survive insertions; grill docs match the recorder",
+      "objective": "check_encoding_hygiene allowlists become {path, construct-fingerprint} (sha over normalized line text + occurrence index), resolved to lines at run time, with a one-time migration of existing pins (incl. the CFS-1 CI-fix line pins); griller.md shows the recorded task-grill payload shape and the spec's zero-rounds wording is reconciled to the rounds-or-citation rule; WORKFLOW/FACTORY declare the task-plan artifact and closeout order.",
+      "acceptance_criteria": [
+        "adding a line above a pinned site leaves scaffold-check green (fingerprint pins survive insertions); existing pins migrate mechanically",
+        "griller.md payload example matches the recorder and the spec zero-rounds wording is reconciled"
+      ],
+      "dependencies": [
+        "ordered-closeout"
+      ]
+    }
+  ],
+  "user_facing": false,
+  "project": "",
+  "epic": "accountable-engineering",
+  "plan_file": "plans/active/FORGE-ACC-3-approval-and-closeout-integrity.md",
+  "plan_sha256": "5d9d8ba4de41df6b9253dc04d5451145c7beef03ab9cad25af1aadc9e4982da2",
+  "commit": "8f1d0530b29083c4b7a0978bebb86fd9b0e1f23c"
+}

@@ -3,15 +3,15 @@ from __future__ import annotations
 
 import argparse
 import datetime
-import hashlib
 import re
 from pathlib import Path
 from typing import Any
 
 import factory_lib
 from factory_lib import (
-    client_signoff, dump_json, load_json, now_iso, repo_root, require_grill,
-    evidence_path, run_state_path, slugify,
+    client_signoff, dump_json, evidence_path, load_json, now_iso,
+    plan_digest_without_assumptions, repo_root, require_grill, run_state_path,
+    slugify,
 )
 
 from .common import fail
@@ -67,8 +67,24 @@ def parse_frontmatter(text: str) -> tuple[dict[str, Any], str]:
     return fields, text[match.end():]
 
 
-def body_sha256(body: str) -> str:
-    return hashlib.sha256(body.encode()).hexdigest()
+def _require_matching_plan_grill(
+    base: Path, plan: Path, issue: str, *, awaiting: bool = False,
+) -> None:
+    require_grill(
+        base, "plan",
+        ("docs/product/", "docs/decisions/", "docs/architecture/"),
+        ignore_names=("client-signoff", "epics-approved"),
+    )
+    grill = load_json(evidence_path(base, issue, "grills/plan.json"), default={})
+    if grill.get("issue") != issue:
+        fail(f"the recorded plan grill is for {grill.get('issue')!r}, not "
+             f"{issue!r} — re-grill the current plan, then approve it")
+    if grill.get("input_sha256") != plan_digest_without_assumptions(plan):
+        if awaiting:
+            fail("plan approval refused: the plan grill does not match the awaiting "
+                 "plan. Re-grill the awaiting plan, then approve it again.")
+        fail(f"the plan grill was not recorded against THIS input ({plan.name}) — "
+             "re-grill the current version, then approve it again")
 
 
 def _stages_progress(base: Path, issue: str, location: str) -> str:
@@ -122,18 +138,7 @@ def cmd_save(args: argparse.Namespace) -> None:
     # Approval requires the plan to have been GRILLED (grill-me / griller.md
     # --gate plan): fresh, passing, for THIS task, and bound by digest to
     # THIS draft — grilling one version never approves an edited one.
-    require_grill(
-        base, "plan",
-        ("docs/product/", "docs/decisions/", "docs/architecture/"),
-        ignore_names=("client-signoff", "epics-approved"),
-        expect_digest_of=source,
-    )
-    plan_grill = load_json(evidence_path(base, issue, "grills/plan.json"), default={})
-    if plan_grill.get("issue") != issue:
-        fail(
-            f"the recorded plan grill is for {plan_grill.get('issue')!r}, not {issue!r} — "
-            "grill THIS task's plan (record_grill_from_json.py --gate plan)."
-        )
+    _require_matching_plan_grill(base, source, issue)
     contradictions = [
         signal for signal in open_signals(base) if signal.get("kind") == "contradiction"
     ]
@@ -171,12 +176,13 @@ def cmd_save(args: argparse.Namespace) -> None:
     ]
     if missing_sections:
         fail("the plan is missing required sections: " + ", ".join(missing_sections))
-    plan_digest = body_sha256(body)
-    marker = load_json(base / ".factory" / "plan-approval.json", default={})
+    plan_digest = plan_digest_without_assumptions(source)
+    marker_path = evidence_path(base, story, "plan-approval.json", for_write=True)
+    marker = load_json(marker_path, default={})
     # Bind to (issue, story) as well as the body: a body digest alone could be
     # replayed by saving the same text under a different --story/--issue, which
     # would approve a plan the human never reviewed in that context.
-    approved = (marker.get("plan_sha256") == plan_digest
+    approved = (marker.get("approved_plan_sha256") == plan_digest
                 and marker.get("issue") == issue
                 and marker.get("story") == story)
     status = "approved" if approved else "awaiting-approval"
@@ -196,6 +202,10 @@ def cmd_save(args: argparse.Namespace) -> None:
         state["plan_status"] = status
         state["plan_file"] = dest.relative_to(base).as_posix()
         state["story"] = story
+        if approved:
+            state["approved_plan_sha256"] = plan_digest_without_assumptions(dest)
+        else:
+            state.pop("approved_plan_sha256", None)
         state["updated_at"] = now_iso()
         dump_json(run_state_path(base), state)
     if not approved:
@@ -207,7 +217,7 @@ def cmd_save(args: argparse.Namespace) -> None:
     # Consume the marker: it authorizes exactly one save (0029). Leaving it
     # would let a later awaiting-approval reset re-approve the same body with no
     # fresh human action — the replay hole autoreview flagged.
-    (base / ".factory" / "plan-approval.json").unlink(missing_ok=True)
+    marker_path.unlink(missing_ok=True)
     append_event(base, "plan-approved", actor="planner-high", story=story,
                  detail=dest.relative_to(base).as_posix())
     print(f"Plan saved to {dest.relative_to(base)} (plan_status: approved)")
@@ -237,18 +247,25 @@ def cmd_approve(args: argparse.Namespace) -> None:
         fail("no current active plan to approve — pass --issue <key> to select "
              "one, or run `forge plan save` first")
         return  # unreachable (fail raises); narrows `plan` to a real path below
-    fields, body = parse_frontmatter(plan.read_text(encoding="utf-8"))
+    fields, _body = parse_frontmatter(plan.read_text(encoding="utf-8"))
+    if state.get("plan_status") != "awaiting-approval":
+        fail("plan approval requires an awaiting plan — save the current plan, "
+             "re-grill that awaiting version, then approve it")
+    issue = fields.get("issue") or state.get("issue_key")
+    _require_matching_plan_grill(base, plan, issue, awaiting=True)
     # The approval is for THIS plan in THIS context: bind issue and story so a
     # matching body cannot be replayed under a different story.
     marker = {
-        "plan_sha256": body_sha256(body),
-        "issue": fields.get("issue") or state.get("issue_key"),
-        "story": fields.get("story") or state.get("story")
-                 or fields.get("issue") or state.get("issue_key"),
+        "approved_plan_sha256": plan_digest_without_assumptions(plan),
+        "issue": issue,
+        "story": fields.get("story") or state.get("story") or issue,
         "approver": approver,
         "at": now_iso(),
     }
-    dump_json(base / ".factory" / "plan-approval.json", marker)
+    dump_json(
+        evidence_path(base, marker["story"], "plan-approval.json", for_write=True),
+        marker,
+    )
     # A committed audit trail of who approved and when — the marker itself is
     # ephemeral (0025), so the event is the durable record of the human gate.
     # actor is the allowlisted "human"; the approver's name is the detail.

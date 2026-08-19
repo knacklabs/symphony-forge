@@ -1,0 +1,93 @@
+{
+  "issue": "FORGE-ACC-3",
+  "stages": [
+    {
+      "id": "plan-approval-binding",
+      "title": "Approved plans bind by digest",
+      "status": "active",
+      "started_at": "2026-08-19T05:06:18+00:00",
+      "base_sha": "8f1d0530b29083c4b7a0978bebb86fd9b0e1f23c",
+      "dirty_at_start": {
+        ".factory/events/09fa35ccb7914931a041636311e662f0.json": {
+          "digest": "a98307c9561082aebb3eb4632c5c0b8831a1c769643f810798d6eaa1c74e39be",
+          "git": "? .factory/events/09fa35ccb7914931a041636311e662f0.json\u0000\u0000\u0000"
+        },
+        ".factory/events/367dd9ee205749779fcc10436b92b319.json": {
+          "digest": "2a06c053c5a5c816517446eebc5cc56e86331b9fbe27a613310dd80d7a2afd08",
+          "git": "? .factory/events/367dd9ee205749779fcc10436b92b319.json\u0000\u0000\u0000"
+        },
+        ".factory/events/82246ee89579408898f45922ef8b8198.json": {
+          "digest": "d9190fc5c534bbd96ce0f6c8dad770a4bc3ec61235990cd8886fc168560dfd3b",
+          "git": "? .factory/events/82246ee89579408898f45922ef8b8198.json\u0000\u0000\u0000"
+        },
+        ".factory/events/b1560a9568c6450ca6be23bc872d5e5d.json": {
+          "digest": "7cbe4712bfcf3821e7aa96ed96d20b012bc109931fe17f8ba057e6b9fad25465",
+          "git": "? .factory/events/b1560a9568c6450ca6be23bc872d5e5d.json\u0000\u0000\u0000"
+        },
+        ".factory/events/dff75118b32844e989111cb35bf5a9f1.json": {
+          "digest": "45d0f4128b6597186d16b5d900c887f4781c6079a85d7619dc5482f89fe1458f",
+          "git": "? .factory/events/dff75118b32844e989111cb35bf5a9f1.json\u0000\u0000\u0000"
+        },
+        ".factory/events/f28ca7adc64b4ed7bb451b3343f1b187.json": {
+          "digest": "5288a579681c19c54472b178e7469f0f1688e1741e467b804337766de9874a75",
+          "git": "? .factory/events/f28ca7adc64b4ed7bb451b3343f1b187.json\u0000\u0000\u0000"
+        },
+        ".factory/stages.json": {
+          "digest": "7cf35681d6b8890f1dd3fc349eb36b4848060d7983bd93f7aced8190c3d6dbba",
+          "git": "? .factory/stages.json\u0000\u0000\u0000"
+        },
+        ".factory/stories/FORGE-ACC-3/decomposition.json": {
+          "digest": "348229d0736ec58ac0a9701332bc919e30fcb8f653ec76dbc4252e5d43ff5451",
+          "git": "? .factory/stories/FORGE-ACC-3/decomposition.json\u0000\u0000\u0000"
+        },
+        ".factory/stories/FORGE-ACC-3/grills/plan.json": {
+          "digest": "93f416b1b5797362c28327aadd51ad7d596a6417a3d63940b822c15da71f58c0",
+          "git": "? .factory/stories/FORGE-ACC-3/grills/plan.json\u0000\u0000\u0000"
+        },
+        ".factory/stories/FORGE-ACC-3/grills/tasks/plan-approval-binding.json": {
+          "digest": "ca0fdfa3655ba428135f77148bb1c215fdb1ade689542e2b682e4f1ec9f6fed7",
+          "git": "? .factory/stories/FORGE-ACC-3/grills/tasks/plan-approval-binding.json\u0000\u0000\u0000"
+        },
+        "plans/active/FORGE-ACC-3-approval-and-closeout-integrity.md": {
+          "digest": "a8a6dbc6d2ba190ba945ade053fe49528021b51ca74cbeebd37fb013ce3627e5",
+          "git": "? plans/active/FORGE-ACC-3-approval-and-closeout-integrity.md\u0000\u0000\u0000"
+        },
+        "plans/roadmap.json": {
+          "digest": "23e759dcbc068de670bff882749b40de88b7f9f199389e0537251fa68a29653b",
+          "git": "1 .M N... 100644 100644 100644 1f22599a79fcf3ae9ec3adf6bd41658b008130af 1f22599a79fcf3ae9ec3adf6bd41658b008130af plans/roadmap.json\u0000\u0000100644 1f22599a79fcf3ae9ec3adf6bd41658b008130af 0\tplans/roadmap.json\u0000\u0000H plans/roadmap.json\u0000"
+        }
+      },
+      "task_sha256": "8975a36213c4e99934d36b3787d354505e6d7916095fedb7de7f14081a2c9b3c"
+    },
+    {
+      "id": "task-plan-approval-gate",
+      "title": "Each task is grilled, planned in plan mode, and human-approved before implementation",
+      "status": "pending"
+    },
+    {
+      "id": "pre-draft-requirements-round",
+      "title": "The spec is re-grilled against repo reality before plan drafting",
+      "status": "pending"
+    },
+    {
+      "id": "local-review-stamp",
+      "title": "Stage close requires a recorded clean local review and committed work",
+      "status": "pending"
+    },
+    {
+      "id": "coherent-branch-review",
+      "title": "The three lenses are one run over one brief",
+      "status": "pending"
+    },
+    {
+      "id": "ordered-closeout",
+      "title": "Closeout is ordered and pr_ready requires a clean tree",
+      "status": "pending"
+    },
+    {
+      "id": "hygiene-content-pins-and-doc-debts",
+      "title": "Hygiene pins survive insertions; grill docs match the recorder",
+      "status": "pending"
+    }
+  ]
+}

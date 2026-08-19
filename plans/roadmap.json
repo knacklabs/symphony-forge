@@ -763,7 +763,7 @@
         "opening a lite, quickfix, or degraded write window while a stage is active refuses"
       ],
       "order": 35,
-      "status": "pending",
+      "status": "active",
       "epic": "accountable-engineering",
       "skill": "backend",
       "depends_on": [
@@ -795,7 +795,7 @@
     }
   ],
   "generated_by": "human",
-  "updated_at": "2026-08-18T17:53:22+00:00",
+  "updated_at": "2026-08-19T04:00:53+00:00",
   "epics": [
     {
       "id": "symphony-forge",

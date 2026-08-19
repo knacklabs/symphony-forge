@@ -1057,7 +1057,11 @@ def require_grill(
             f".factory/grills/{gate}.json has no commit stamp — re-record with current tooling."
         )
     if expect_digest_of is not None:
-        actual = sha256_of(expect_digest_of)
+        actual = (
+            plan_digest_without_assumptions(expect_digest_of)
+            if gate == "plan"
+            else sha256_of(expect_digest_of)
+        )
         if data.get("input_sha256") != actual:
             raise SystemExit(
                 f"the {gate} grill was not recorded against THIS input "
@@ -1145,6 +1149,21 @@ def plan_digest_without_assumptions(path: Path) -> str:
     text = path.read_text(encoding="utf-8")
     approved_text = text.partition("\n## Implementation Assumptions")[0]
     return hashlib.sha256(approved_text.encode()).hexdigest()
+
+
+def approved_plan_digest(
+    root: Path, state: dict[str, Any], plan: Path,
+) -> str | None:
+    """Return the approval-time digest, backfilling legacy approved runs once."""
+    digest = state.get("approved_plan_sha256")
+    if isinstance(digest, str) and digest:
+        return digest
+    if "approved_plan_sha256" in state or state.get("plan_status") != "approved":
+        return None
+    digest = plan_digest_without_assumptions(plan)
+    state["approved_plan_sha256"] = digest
+    dump_json(run_state_path(root), state)
+    return digest
 
 
 def product_tree_digest(root: Path) -> str:

@@ -1,0 +1,77 @@
+{
+  "generated_by": "griller",
+  "gate": "task",
+  "task_id": "plan-approval-binding",
+  "verdict": "pass",
+  "decision": "keep",
+  "questions_asked": 3,
+  "summary": "JIT grill of plan-approval-binding against current plans.py/factory_lib and the approved plan. Digest consistency, a single compare seam, and the save->approve->re-save flow resolved; contract kept.",
+  "inspected_refs": [
+    "factory/scripts/forge_cli/plans.py",
+    "factory/scripts/factory_lib.py",
+    "factory/scripts/record_decomposition_from_json.py",
+    "factory/scripts/forge_cli/stages.py",
+    "factory/tests/test_gates.py",
+    "docs/specs/plan-approval.md",
+    "docs/decisions/0029-plan-approval-in-plan-mode.md"
+  ],
+  "current_flow": "plans.py cmd_approve stores an approval marker with plan_sha256 = body_sha256(body); cmd_save requires a fresh --gate plan grill bound to the plan digest but cmd_approve does not; record_decomposition and stage start do not compare the live plan against the APPROVED digest, so an approved plan can be edited and silently re-legitimized on re-record. plan_digest_without_assumptions already binds decomposition/task grounding downstream.",
+  "criteria_map": {
+    "an edited approved plan is refused at re-record and stage start until re-approved": "test_edited_approved_plan_refused_at_rerecord_and_stage_start edits an approved plan body and asserts both record_decomposition_from_json.py and stage start refuse until plan approve re-runs, via the shared require_approved_plan_digest helper comparing plan_digest_without_assumptions(live) vs the marker",
+    "plan approve refuses without a fresh passing --gate plan grill bound to the plan digest": "test_plan_approve_refuses_without_a_fresh_plan_grill asserts cmd_approve refuses when the plan grill is stale/absent/mismatched-digest, and the save(grill)->approve->re-save sequence still passes"
+  },
+  "new_abstractions": [
+    "require_approved_plan_digest(root) in factory_lib - single seam that reads the approval marker + live plan and refuses on divergence; called by record_decomposition and stage start. Reversible: pure read+compare, reuses plan_digest_without_assumptions."
+  ],
+  "rounds": [
+    {
+      "question": "Which digest do the marker and both refusal sites use?",
+      "options": [
+        "Reuse plan_digest_without_assumptions everywhere",
+        "Marker keeps body_sha256 + a separate approved-digest"
+      ],
+      "chosen": "Reuse plan_digest_without_assumptions everywhere"
+    },
+    {
+      "question": "One shared compare helper or inline at each site?",
+      "options": [
+        "One shared factory_lib helper both call",
+        "Inline the check at each site"
+      ],
+      "chosen": "One shared factory_lib helper both call"
+    },
+    {
+      "question": "Does plan approve's new fresh-grill requirement preserve save->approve->re-save?",
+      "options": [
+        "Yes - the save-time grill is still fresh at approve",
+        "Approve should re-require a brand-new grill each time"
+      ],
+      "chosen": "Yes - the save-time grill is still fresh at approve"
+    }
+  ],
+  "citations": [
+    {
+      "finding": "Approval is human-attested and digest-bound to THIS plan; grilling one version never approves an edited one",
+      "source": "docs/specs/plan-approval.md and plans.py cmd_save require_grill"
+    },
+    {
+      "finding": "plan_digest_without_assumptions is the assumptions-stripped digest already binding decomposition grounding",
+      "source": "factory/scripts/factory_lib.py (Codex rescue 2026-08-19)"
+    }
+  ],
+  "gaps": [
+    "Which digest do the marker and both refusal sites use?",
+    "One shared compare helper or inline at each site?",
+    "Does plan approve's new fresh-grill requirement preserve save->approve->re-save?"
+  ],
+  "contradictions": [],
+  "resolutions": [
+    "Reuse plan_digest_without_assumptions everywhere (operator 2026-08-19): marker stores it; both refusal sites recompute+compare; appending an assumption keeps approval valid, a body edit invalidates it; the three sites cannot disagree.",
+    "One shared factory_lib helper (operator 2026-08-19): require_approved_plan_digest(root) called by record_decomposition and stage start - no duplicated drifting checks.",
+    "Preserve save->approve->re-save (operator 2026-08-19): cmd_approve checks the same fresh digest-bound plan grill cmd_save required; only a stale/absent/mismatched grill or edited plan is refused; existing plan_save/approve tests stay green."
+  ],
+  "open_items": [],
+  "input_sha256": "814465c957a6ef8413112ae04c639e26dfdeed9ff68a2fdd1722c3a2fbcb1336",
+  "recorded_at": "2026-08-19T05:01:11+00:00",
+  "commit": "8f1d0530b29083c4b7a0978bebb86fd9b0e1f23c"
+}

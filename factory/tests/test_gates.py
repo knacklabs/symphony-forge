@@ -32,7 +32,8 @@ HARNESS = Path(__file__).resolve().parents[2]
 FORGE_INIT_FIXTURE = HARNESS / ".factory" / "history" / "FORGE-INIT-1"
 sys.path.insert(0, str(HARNESS / "factory" / "scripts"))
 from factory_lib import (
-    grounding_digest, require_task_grill, task_frontier_state, task_rows,
+    grounding_digest, plan_digest_without_assumptions, require_task_grill,
+    task_frontier_state, task_rows,
 )
 from forge_cli.events import load_events
 from forge_cli.stages import task_digest, write_stages
@@ -436,9 +437,13 @@ def save_plan(repo: Path, tmp_path: Path) -> tuple[int, str]:
                     "--story", story)
     if code == 0 or "awaiting-approval" not in out:
         return code, out
+    active = next((repo / "plans" / "active").glob(f"{story}-*.md"))
+    code, out = record_grill(repo, "plan", digest_of=active)
+    assert code == 0, out
     code, out = run(repo, "forge.py", "plan", "approve", "--by", "Gate Test Human")
     assert code == 0, out
-    return run(repo, "forge.py", "plan", "save", "--from", str(plan), "--story", story)
+    return run(repo, "forge.py", "plan", "save", "--from", str(active),
+               "--story", story)
 
 
 def save_plan_raw(repo: Path, tmp_path: Path) -> tuple[int, str]:
@@ -7776,7 +7781,7 @@ def test_plan_save_refuses_approved_without_a_matching_marker(repo, tmp_path):
     assert code != 0 and "requires an approved, saved plan" in out
 
 
-def test_plan_approve_requires_a_human_by_and_binds_the_body_digest(repo, tmp_path):
+def test_plan_approve_refuses_without_a_fresh_plan_grill(repo, tmp_path):
     sign_off(repo)
     intake(repo)
     ensure_story(repo, "ENG-1", "Invoices")
@@ -7792,30 +7797,36 @@ def test_plan_approve_requires_a_human_by_and_binds_the_body_digest(repo, tmp_pa
     code, out = run(repo, "forge.py", "plan", "approve", "--by", "  ")
     assert code != 0 and "human approver" in out
     code, out = run(repo, "forge.py", "plan", "approve", "--by", "Client PM")
-    assert code == 0, out
+    assert code != 0 and "awaiting plan" in out and "Re-grill" in out
 
     active = next((repo / "plans" / "active").glob("ENG-1-*.md"))
-    persisted_body = active.read_text().split("---\n", 2)[2]
-    marker = json.loads((repo / ".factory" / "plan-approval.json").read_text())
-    assert marker["plan_sha256"] == hashlib.sha256(persisted_body.encode()).hexdigest()
+    code, out = record_grill(repo, "plan", digest_of=active)
+    assert code == 0, out
+    code, out = run(repo, "forge.py", "plan", "approve", "--by", "Client PM")
+    assert code == 0, out
+
+    marker_path = story_state(repo) / "plan-approval.json"
+    marker = json.loads(marker_path.read_text())
+    assert marker["approved_plan_sha256"] == plan_digest_without_assumptions(active)
     assert marker["approver"] == "Client PM"
     assert marker["issue"] == "ENG-1" and marker["story"] == "ENG-1"
     assert marker["at"]
-    assert git(repo, "check-ignore", ".factory/plan-approval.json") == (
-        ".factory/plan-approval.json"
-    )
-    code, out = run(repo, "forge.py", "plan", "save", "--from", str(plan),
+    code, out = run(repo, "forge.py", "plan", "save", "--from", str(active),
                     "--story", "ENG-1")
     assert code == 0, out
     assert run_state(repo)["plan_status"] == "approved"
+    assert run_state(repo)["approved_plan_sha256"] == (
+        plan_digest_without_assumptions(active)
+    )
 
     # The marker cannot be replayed in a DIFFERENT context: a marker whose
     # body digest matches but whose story is another one does NOT approve —
     # the human reviewed this plan for THIS story, not that one.
-    marker_path = repo / ".factory" / "plan-approval.json"
+    code, out = record_grill(repo, "plan", digest_of=active)
+    assert code == 0, out
     tampered = {**marker, "story": "ENG-2"}
     marker_path.write_text(json.dumps(tampered))
-    code, out = run(repo, "forge.py", "plan", "save", "--from", str(plan),
+    code, out = run(repo, "forge.py", "plan", "save", "--from", str(active),
                     "--story", "ENG-1")
     assert code != 0 and "awaiting-approval" in out
     assert run_state(repo)["plan_status"] == "awaiting-approval"
@@ -7831,11 +7842,13 @@ def test_plan_save_refuses_an_edited_plan_riding_a_stale_marker(repo, tmp_path):
     code, out = run(repo, "forge.py", "plan", "save", "--from", str(plan),
                     "--story", "ENG-1")
     assert code != 0 and "awaiting-approval" in out
+    active = next((repo / "plans" / "active").glob("ENG-1-*.md"))
+    record_grill(repo, "plan", digest_of=active)
     code, out = run(repo, "forge.py", "plan", "approve", "--by", "Client PM")
     assert code == 0, out
     approved_digest = json.loads(
-        (repo / ".factory" / "plan-approval.json").read_text()
-    )["plan_sha256"]
+        (story_state(repo) / "plan-approval.json").read_text()
+    )["approved_plan_sha256"]
 
     plan.write_text(plan_draft(repo, body=PLAN_BODY + "\nEdited after approval.\n"))
     record_grill(repo, "plan", digest_of=plan)
@@ -7861,16 +7874,18 @@ def test_an_approval_marker_authorizes_only_one_save(repo, tmp_path):
     code, out = run(repo, "forge.py", "plan", "save", "--from", str(plan),
                     "--story", "ENG-1")
     assert code != 0 and "awaiting-approval" in out
+    active = next((repo / "plans" / "active").glob("ENG-1-*.md"))
+    record_grill(repo, "plan", digest_of=active)
     code, out = run(repo, "forge.py", "plan", "approve", "--by", "Client PM")
     assert code == 0, out
-    code, out = run(repo, "forge.py", "plan", "save", "--from", str(plan),
+    code, out = run(repo, "forge.py", "plan", "save", "--from", str(active),
                     "--story", "ENG-1")
     assert code == 0 and run_state(repo)["plan_status"] == "approved", out
-    assert not (repo / ".factory" / "plan-approval.json").exists()
+    assert not (story_state(repo) / "plan-approval.json").exists()
 
     # Same body, marker gone -> save refuses, no silent re-approval.
-    record_grill(repo, "plan", digest_of=plan)
-    code, out = run(repo, "forge.py", "plan", "save", "--from", str(plan),
+    record_grill(repo, "plan", digest_of=active)
+    code, out = run(repo, "forge.py", "plan", "save", "--from", str(active),
                     "--story", "ENG-1")
     assert code != 0 and "awaiting-approval" in out
     assert run_state(repo)["plan_status"] == "awaiting-approval"
@@ -7939,9 +7954,12 @@ def test_plan_save_requires_a_fresh_same_issue_grill(repo, tmp_path):
     assert code == 0, out
     code, out = save_plan_raw(repo, tmp_path)
     assert code != 0 and "awaiting-approval" in out, out
+    active = next((repo / "plans" / "active").glob("ENG-1-*.md"))
+    record_grill(repo, "plan", digest_of=active)
     code, out = run(repo, "forge.py", "plan", "approve", "--by", "Gate Test Human")
     assert code == 0, out
-    code, out = save_plan_raw(repo, tmp_path)
+    code, out = run(repo, "forge.py", "plan", "save", "--from", str(active),
+                    "--story", "ENG-1")
     assert code == 0, out
     # next task cannot ride the previous task's grill: intake clears it
     run(repo, "record_decomposition_from_json.py", stdin=json.dumps(DECOMP))
@@ -8011,9 +8029,11 @@ def test_plan_save_requires_decision_coverage_and_no_open_contradiction(repo, tm
     code, out = run(repo, "forge.py", "plan", "save", "--from", str(draft),
                     "--story", "ENG-1")
     assert code != 0 and "awaiting-approval" in out, out
+    active = next((repo / "plans" / "active").glob("ENG-1-*.md"))
+    record_grill(repo, "plan", digest_of=active)
     code, out = run(repo, "forge.py", "plan", "approve", "--by", "Gate Test Human")
     assert code == 0, out
-    code, out = run(repo, "forge.py", "plan", "save", "--from", str(draft),
+    code, out = run(repo, "forge.py", "plan", "save", "--from", str(active),
                     "--story", "ENG-1")
     assert code == 0, out
     saved = next((repo / "plans" / "active").glob("ENG-1-*.md")).read_text()
@@ -11846,7 +11866,7 @@ def test_stage_done_incomplete_leaves_stage_open(repo, tmp_path):
     assert stages[0]["status"] == "done" and "incomplete" not in stages[0]
 
 
-def test_stage_start_refuses_a_decomposition_whose_plan_moved(repo, tmp_path):
+def test_edited_approved_plan_refused_at_rerecord_and_stage_start(repo, tmp_path):
     """The realistic staleness is the plan being edited AFTER the task graph
     was recorded — the decomposition was current when written, so no
     record-time check can see it. Catch it before work starts."""
@@ -11856,16 +11876,26 @@ def test_stage_start_refuses_a_decomposition_whose_plan_moved(repo, tmp_path):
     record_skeleton_then_frontier(repo, [STAGE_TASK])
     plan = next((repo / "plans" / "active").glob("*.md"))
     plan.write_text(plan.read_text() + "\n<!-- edited after decomposition -->\n")
+    code, out = run(
+        repo, "record_decomposition_from_json.py",
+        stdin=json.dumps({**DECOMP, "tasks": [STAGE_TASK]}),
+    )
+    assert code != 0, out
+    assert "differs from the approved plan" in out
+    assert "Re-grill" in out and "re-approve" in out
+
     code, out = run(repo, "forge.py", "stage", "start", "T1")
     assert code != 0, out
-    assert "has changed since this decomposition was recorded" in out
+    assert "differs from the approved plan" in out
+    assert "Re-grill" in out and "re-approve" in out
 
     # Absence must refuse too: a stamped decomposition claims a binding, so
     # failing to VERIFY it is not permission to proceed.
     plan.unlink()
     code, out = run(repo, "forge.py", "stage", "start", "T1")
     assert code != 0, out
-    assert "missing" in out and "cannot be verified" in out
+    assert "approved plan" in out and "missing" in out
+    assert "re-grill" in out and "re-approve" in out
 
 
 def test_no_prompt_authors_build_waves(repo):
