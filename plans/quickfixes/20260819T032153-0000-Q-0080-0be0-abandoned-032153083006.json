@@ -1,0 +1,14 @@
+{
+  "event": "abandoned",
+  "id": "Q-0080-0be0",
+  "profile": "lite",
+  "reason": "Fix committed (f9e973d); mode done blocked only because pr_ready already archived the reviews (lite window opened post-ship). Closing without the completion claim.",
+  "opened_reason": "Post-ship CI remediation for PR #109: allowlist FORGE-CFS-1's intentional lossless git-path captures + self-contained hook stdin reads (encoding hygiene), declare the Q-0078 window (pr-ticket). Story shipped, no active stage for delegate.",
+  "started_at": "2026-08-19T03:15:53+00:00",
+  "completed_at": "2026-08-19T03:21:53+00:00",
+  "files": [
+    "factory/scripts/check_encoding_hygiene.py"
+  ],
+  "by": "Ravi Kiran Vemula",
+  "base_sha": "6ab5562234df9942f3041c28375623d92f1595c8"
+}
