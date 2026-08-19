@@ -32,7 +32,8 @@ HARNESS = Path(__file__).resolve().parents[2]
 FORGE_INIT_FIXTURE = HARNESS / ".factory" / "history" / "FORGE-INIT-1"
 sys.path.insert(0, str(HARNESS / "factory" / "scripts"))
 from factory_lib import (
-    grounding_digest, plan_digest_without_assumptions, require_task_grill,
+    grounding_digest, plan_digest_without_assumptions, product_tree_digest,
+    require_task_grill,
     task_frontier_state, task_rows,
 )
 from forge_cli.events import load_events
@@ -10359,6 +10360,29 @@ def review_payload(**over):
             "blocking_findings": [], "skills_used": ["review-animations"], **over}
 
 
+def record_stage_local(repo: Path, **over) -> tuple[int, str]:
+    return run(
+        repo, "record_review_from_json.py", "--aspect", "stage-local",
+        stdin=json.dumps(review_payload(**over)),
+    )
+
+
+def stamp_and_commit(repo: Path, *paths: str) -> None:
+    if not paths:
+        from forge_cli.stages import WORKFLOW_PATHS, dirty_paths
+        paths = tuple(
+            path for path in dirty_paths(repo)
+            if not path.startswith(WORKFLOW_PATHS)
+        )
+    if paths:
+        git(repo, "add", *paths)
+    code, out = record_stage_local(repo)
+    assert code == 0, out
+    if subprocess.run(
+            ["git", "diff", "--cached", "--quiet"], cwd=repo).returncode:
+        git(repo, "commit", "-qm", "reviewed stage work")
+
+
 def test_structured_findings_recorded_and_malformed_refused(repo, tmp_path):
     sign_off(repo)
     intake(repo)
@@ -10615,6 +10639,10 @@ def start_stage(repo: Path, tmp_path: Path, task: dict, stage_id: str = "T1",
     intake(repo)
     save_plan(repo, tmp_path)
     record_skeleton_then_frontier(repo, [task, *(future_tasks or [])])
+    git(repo, "add", "-A", "--", "harness.yaml", "docs/decisions")
+    if subprocess.run(
+            ["git", "diff", "--cached", "--quiet"], cwd=repo).returncode:
+        git(repo, "commit", "-qm", "settle stage fixture inputs")
     code, out = record_task_grill(repo, task)
     assert code == 0, out
     code, out = run(repo, "forge.py", "stage", "start", stage_id)
@@ -10929,8 +10957,105 @@ def test_stage_done_refuses_empty_diff(repo, tmp_path):
     code, out = run(repo, "forge.py", "stage", "done", "T1")
     assert code != 0 and "EMPTY diff" in out
     write_in_scope(repo, "src/core.py")
+    git(repo, "add", "src/core.py")
+    code, out = record_stage_local(repo)
+    assert code == 0, out
+    git(repo, "commit", "-qm", "reviewed stage work")
     code, out = run(repo, "forge.py", "stage", "done", "T1")
     assert code == 0, out
+
+
+def test_stage_done_refuses_without_fresh_stage_local_stamp(repo, tmp_path):
+    start_stage(
+        repo, tmp_path, STAGE_TASK, launch=False,
+    )
+
+    code, out = run(repo, "forge.py", "stage", "done", "T1")
+    assert code != 0 and "EMPTY diff" in out
+
+    write_in_scope(repo, "src/core.py", "version = 1\n")
+    code, out = run(repo, "forge.py", "stage", "done", "T1")
+    assert code != 0 and "no stage-local review stamp" in out
+
+    git(repo, "add", "src/core.py")
+    code, out = record_stage_local(repo)
+    assert code == 0, out
+    code, out = run(repo, "forge.py", "stage", "done", "T1")
+    assert code != 0 and "uncommitted or staged PRODUCT changes" in out
+
+    write_in_scope(repo, "src/core.py", "version = 2\n")
+    git(repo, "add", "src/core.py")
+    git(repo, "commit", "-qm", "different from reviewed tree")
+    code, out = run(repo, "forge.py", "stage", "done", "T1")
+    assert code != 0 and "STALE stage-local review stamp" in out
+
+    write_in_scope(repo, "src/core.py", "version = 3\n")
+    git(repo, "add", "src/core.py")
+    code, out = record_stage_local(repo)
+    assert code == 0, out
+    git(repo, "commit", "-qm", "exact reviewed tree")
+    code, out = run(repo, "forge.py", "stage", "done", "T1")
+    assert code != 0 and "no successful write launch" in out
+    assert "stage-local review stamp" not in out
+    assert "PRODUCT changes" not in out
+
+
+def test_stage_local_stamp_is_a_stages_token_not_a_fourth_review(repo, tmp_path):
+    start_stage(
+        repo, tmp_path, STAGE_TASK, launch=False,
+    )
+    write_in_scope(repo, "src/core.py")
+    git(repo, "add", "src/core.py")
+
+    brief = repo / ".factory" / "briefs" / "T1.md"
+    brief.parent.mkdir(parents=True, exist_ok=True)
+    brief.write_text("composed task brief\n")
+    brief_sha256 = hashlib.sha256(brief.read_bytes()).hexdigest()
+    stage = json.loads((repo / ".factory" / "stages.json").read_text())["stages"][0]
+    launch = {
+        "launch_id": "launch-stage-local-test",
+        "task": "T1",
+        "brief_sha256": brief_sha256,
+        "task_sha256": task_digest(STAGE_TASK),
+        "write": True,
+        "model": "gpt-test",
+        "effort": "medium",
+        "companion_path": "/tmp/companion.mjs",
+        "argv": ["node", "companion.mjs"],
+        "argv_sha256": "fixture",
+        "stage_started_at": stage["started_at"],
+        "process_token": "delegation-stage-local-test",
+    }
+    ledger = delegation_ledger(repo)
+    ledger.write_text("\n".join(json.dumps({
+        **launch,
+        "launch_status": status,
+        **({"exit_code": 0} if status == "succeeded" else {}),
+    }) for status in ("starting", "running", "succeeded")) + "\n")
+
+    code, out = record_stage_local(repo, score=7)
+    assert code != 0 and "must be clean" in out
+
+    code, out = record_stage_local(repo)
+    assert code == 0, out
+    mirror = json.loads((repo / ".factory" / "stages.json").read_text())
+    protected = json.loads(
+        (delegation_ledger(repo).parent / "stages.json").read_text()
+    )
+    stamp = mirror["stages"][0]["local_review_stamp"]
+    assert protected["stages"][0]["local_review_stamp"] == stamp
+    assert stamp == {
+        "stage_id": "T1",
+        "task_sha256": task_digest(STAGE_TASK),
+        "brief_sha256": brief_sha256,
+        "base_sha": mirror["stages"][0]["base_sha"],
+        "product_tree_digest": product_tree_digest(repo),
+        "recorded_at": stamp["recorded_at"],
+        "generated_by": "autoreview",
+    }
+    reviews = story_state(repo) / "reviews"
+    assert not (reviews / "stage-local.json").exists()
+    assert sorted(path.name for path in reviews.glob("*.json")) == []
 
 
 def test_review_budget_default_lowered_raised_and_exceeded(
@@ -11167,6 +11292,7 @@ def test_stage_done_allows_staged_file_to_directory_replacement(repo, tmp_path):
     git(repo, "rm", "src/pkg")
     write_in_scope(repo, "src/pkg/module.py", "replacement module\n")
     git(repo, "add", "src/pkg/module.py")
+    stamp_and_commit(repo)
     code, out = run(repo, "forge.py", "stage", "done", "T1")
     assert code == 0, out
 
@@ -11230,7 +11356,7 @@ def test_split_index_refuses_extra_empty_replacement_directory(repo):
     assert split == ["src/pkg"]
 
 
-def test_stage_done_rechecks_replacement_directory_after_proof(
+def test_stage_done_accepts_committed_directory_replacement_after_proof(
         repo, tmp_path):
     write_in_scope(repo, "src/pkg", "old file\n")
     git(repo, "add", "src/pkg")
@@ -11247,9 +11373,9 @@ def test_stage_done_rechecks_replacement_directory_after_proof(
     git(repo, "rm", "src/pkg")
     write_in_scope(repo, "src/pkg/module.py", "replacement module\n")
     git(repo, "add", "src/pkg/module.py")
+    stamp_and_commit(repo)
     code, out = run(repo, "forge.py", "stage", "done", "T1")
-    assert code != 0
-    assert "staged content that differs from the tested worktree" in out
+    assert code == 0, out
 
 
 def test_split_index_treats_checked_out_gitlink_as_directory_leaf(repo):
@@ -11308,6 +11434,7 @@ def test_stage_done_snapshots_checked_out_gitlinks(repo, tmp_path):
     git(repo, "commit", "-qam", "add dependency gitlink")
     start_stage(repo, tmp_path, STAGE_TASK)
     write_in_scope(repo, "src/core.py")
+    stamp_and_commit(repo)
     code, out = run(repo, "forge.py", "stage", "done", "T1")
     assert code == 0, out
 
@@ -11395,9 +11522,11 @@ def test_stage_done_refuses_missing_required_test(repo, tmp_path):
     }]}
     start_stage(repo, tmp_path, task)
     write_in_scope(repo, "src/core.py")
+    stamp_and_commit(repo)
     code, out = run(repo, "forge.py", "stage", "done", "T1")
     assert code != 0 and name in out
     write_in_scope(repo, "src/test_core.py", f"def {name}():\n    pass\n")
+    stamp_and_commit(repo)
     code, out = run(repo, "forge.py", "stage", "done", "T1")
     assert code == 0, out
 
@@ -11413,6 +11542,7 @@ def test_stage_done_requires_exact_junit_testcase_identity(repo, tmp_path):
     start_stage(repo, tmp_path, task)
     write_in_scope(repo, "src/core.py")
     write_in_scope(repo, path, "def test_slice_extra():\n    pass\n")
+    stamp_and_commit(repo)
     code, out = run(repo, "forge.py", "stage", "done", "T1")
     assert code != 0 and "not present in the fresh JUnit report" in out
 
@@ -11428,6 +11558,7 @@ def test_stage_done_runs_environment_prefixed_required_test(repo, tmp_path):
     start_stage(repo, tmp_path, task)
     write_in_scope(repo, "src/core.py")
     write_in_scope(repo, path, "def test_slice():\n    pass\n")
+    stamp_and_commit(repo)
     code, out = run(repo, "forge.py", "stage", "done", "T1",
                     env=fake_companion_env(tmp_path))
     assert code == 0, out
@@ -11445,6 +11576,7 @@ def test_stage_done_binds_required_test_to_declared_path(repo, tmp_path):
     write_in_scope(repo, "src/core.py")
     write_in_scope(repo, path, "def test_not_selected():\n    pass\n")
     write_in_scope(repo, "src/test_other.py", "def test_slice():\n    pass\n")
+    stamp_and_commit(repo)
     code, out = run(repo, "forge.py", "stage", "done", "T1")
     assert code != 0 and "not attributed" in out and path in out
 
@@ -11466,6 +11598,7 @@ def test_stage_done_refuses_required_test_product_mutation(repo, tmp_path):
         "def test_slice():\n"
         "    Path('src/generated.py').write_text('changed = True\\n')\n",
     )
+    stamp_and_commit(repo)
     code, out = run(repo, "forge.py", "stage", "done", "T1")
     assert code != 0 and "proof commands changed the product tree" in out
 
@@ -11479,6 +11612,7 @@ def test_stage_done_refuses_proof_mutation_of_protected_authority(
     task = {**STAGE_TASK, "verify_commands": [command]}
     start_stage(repo, tmp_path, task)
     write_in_scope(repo, "src/core.py")
+    stamp_and_commit(repo)
     code, out = run(repo, "forge.py", "stage", "done", "T1")
     assert code != 0 and "changed protected Forge authority" in out
 
@@ -11499,6 +11633,7 @@ def test_stage_done_detects_required_test_mode_mutation(repo, tmp_path):
         "def test_slice():\n"
         "    os.chmod('src/core.py', 0o755)\n",
     )
+    stamp_and_commit(repo)
     code, out = run(repo, "forge.py", "stage", "done", "T1")
     assert code != 0 and "proof commands changed the product tree" in out
 
@@ -11521,6 +11656,7 @@ def test_stage_done_detects_required_test_index_flag_mutation(repo, tmp_path):
         "    subprocess.run(['git', 'update-index', '--assume-unchanged', "
         "'src/core.py'], check=True)\n",
     )
+    stamp_and_commit(repo)
     code, out = run(repo, "forge.py", "stage", "done", "T1")
     assert code != 0 and "proof commands changed the product tree" in out
 
@@ -11551,6 +11687,7 @@ def test_stage_done_reaps_required_test_descendants(repo, tmp_path):
         "stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, "
         "start_new_session=True)\n",
     )
+    stamp_and_commit(repo)
     code, out = run(repo, "forge.py", "stage", "done", "T1")
     assert code == 0, out
     threading.Event().wait(6)
@@ -11561,6 +11698,7 @@ def test_stage_done_refuses_failing_verify_command(repo, tmp_path):
     task = {**STAGE_TASK, "verify_commands": ["exit 3"]}
     start_stage(repo, tmp_path, task)
     write_in_scope(repo, "src/core.py")
+    stamp_and_commit(repo)
     code, out = run(repo, "forge.py", "stage", "done", "T1")
     assert code != 0 and "exit 3" in out
 
@@ -11572,6 +11710,7 @@ def test_stage_done_remeasures_after_verify_command(repo, tmp_path):
     task = {**STAGE_TASK, "verify_commands": [command]}
     start_stage(repo, tmp_path, task)
     write_in_scope(repo, "src/core.py")
+    stamp_and_commit(repo)
     code, out = run(repo, "forge.py", "stage", "done", "T1")
     assert code != 0 and "proof commands changed the product tree" in out
 
@@ -11588,6 +11727,7 @@ def test_stage_done_reaps_verify_command_descendants(repo, tmp_path):
     task = {**STAGE_TASK, "verify_commands": [command]}
     start_stage(repo, tmp_path, task)
     write_in_scope(repo, "src/core.py")
+    stamp_and_commit(repo)
     code, out = run(repo, "forge.py", "stage", "done", "T1")
     assert code == 0, out
     threading.Event().wait(0.2)
@@ -11606,6 +11746,7 @@ def test_stage_done_termination_signal_reaps_active_proof(
     task = {**STAGE_TASK, "verify_commands": [command]}
     start_stage(repo, tmp_path, task)
     write_in_scope(repo, "src/core.py")
+    stamp_and_commit(repo, "src/core.py")
     proc = subprocess.Popen(
         [sys.executable, str(repo / "factory/scripts/forge.py"),
          "stage", "done", "T1"],
@@ -11709,6 +11850,7 @@ def test_stage_done_reloads_launch_after_proof_commands(repo, tmp_path):
     task = {**STAGE_TASK, "verify_commands": [command]}
     start_stage(repo, tmp_path, task)
     write_in_scope(repo, "src/core.py")
+    stamp_and_commit(repo, "src/core.py")
     code, out = run(repo, "forge.py", "stage", "done", "T1")
     assert code != 0 and "no successful write launch" in out
 
@@ -11751,6 +11893,7 @@ def test_stage_done_ledgers_a_contract_rewritten_mid_stage(repo, tmp_path):
                     env={"HOME": str(fake_companion_home(tmp_path))})
     assert code == 0, out
     write_in_scope(repo, "billing/ledger.py", "changed = True\n")
+    stamp_and_commit(repo, "billing/ledger.py")
     code, out = run(repo, "forge.py", "stage", "done", "T1")
     assert code == 0, out
     assert "contract changed" in out
@@ -11857,19 +12000,19 @@ def test_stage_done_ignores_paths_a_merge_brought_in(repo, tmp_path):
     window. That stranded PH-2.2 with its work complete and reviewed.
     """
     start_stage(repo, tmp_path, STAGE_TASK)
-    write_in_scope(repo, "src/core.py")
-    git(repo, "add", "src/core.py")
-    git(repo, "commit", "-qm", "the stage's own work")
 
     # An upstream branch that touches a path this task does not own.
-    git(repo, "checkout", "-q", "-b", "upstream", "HEAD~1")
+    git(repo, "checkout", "-q", "-b", "upstream")
     (repo / "unrelated.py").write_text("upstream = True\n")
     git(repo, "add", "unrelated.py")
     git(repo, "commit", "-qm", "upstream work outside this task")
     git(repo, "checkout", "-q", "-")
+    git(repo, "commit", "--allow-empty", "-qm", "keep stage branch divergent")
     git(repo, "merge", "--no-edit", "-q", "upstream")
 
     assert (repo / "unrelated.py").exists()
+    write_in_scope(repo, "src/core.py")
+    stamp_and_commit(repo, "src/core.py")
     code, out = run(repo, "forge.py", "stage", "done", "T1")
     assert code == 0, out
     assert "unrelated.py" not in out
@@ -11905,6 +12048,7 @@ def test_stage_start_never_moves_the_baseline(repo, tmp_path):
                     env={"HOME": str(fake_companion_home(tmp_path))})
     assert code == 0, out
     write_in_scope(repo, "src/core.py", "more = True\n")
+    stamp_and_commit(repo, "src/core.py")
     code, out = run(repo, "forge.py", "stage", "done", "T1")
     assert code == 0, out
 
@@ -11968,8 +12112,21 @@ def test_stage_done_sees_later_edits_to_an_initially_dirty_file(repo, tmp_path):
     write_in_scope(repo, "billing/ledger.py", "after = 2\n")
     code, out = run(repo, "forge.py", "stage", "done", "T1")
     assert code != 0 and "billing/ledger.py" in out
-    # left exactly as the stage found it, it is not this stage's work
+    widened = {**STAGE_TASK, "write_scope": ["src/", "billing/"]}
+    code, out = run(
+        repo, "record_decomposition_from_json.py",
+        stdin=json.dumps({**DECOMP, "tasks": [widened]}),
+    )
+    assert code == 0, out
+    code, out = record_task_grill(repo, widened)
+    assert code == 0, out
+    code, out = run(
+        repo, "forge.py", "delegate", "T1",
+        env={"HOME": str(fake_companion_home(tmp_path))},
+    )
+    assert code == 0, out
     write_in_scope(repo, "billing/ledger.py", "before = 1\n")
+    stamp_and_commit(repo, "src/core.py", "billing/ledger.py")
     code, out = run(repo, "forge.py", "stage", "done", "T1")
     assert code == 0, out
 
@@ -11997,6 +12154,7 @@ def test_stage_done_incomplete_leaves_stage_open(repo, tmp_path):
     assert any(event["event"] == "stage-incomplete"
                and "retry path" in event.get("detail", "") for event in events)
     # and it clears once the stage really closes
+    stamp_and_commit(repo, "src/core.py")
     code, out = run(repo, "forge.py", "stage", "done", "T1")
     assert code == 0, out
     stages = json.loads((repo / ".factory" / "stages.json").read_text())["stages"]
@@ -12810,6 +12968,7 @@ def test_stage_done_rejects_unbound_launch_argv(repo, tmp_path, tamper):
     with ledger.open("a") as fh:
         fh.write(json.dumps(entry) + "\n")
     write_in_scope(repo, "src/core.py")
+    stamp_and_commit(repo, "src/core.py")
     code, out = run(repo, "forge.py", "stage", "done", "T1")
     assert code != 0 and "no successful write launch" in out
 
@@ -12822,6 +12981,7 @@ def test_stage_done_rejects_incomplete_success_lifecycle(repo, tmp_path):
     with ledger.open("a") as fh:
         fh.write(json.dumps(entry) + "\n")
     write_in_scope(repo, "src/core.py")
+    stamp_and_commit(repo, "src/core.py")
     code, out = run(repo, "forge.py", "stage", "done", "T1")
     assert code != 0 and "no successful write launch" in out
 

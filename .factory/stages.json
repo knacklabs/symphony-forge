@@ -94,7 +94,7 @@
     {
       "id": "pre-draft-requirements-round",
       "title": "The spec is re-grilled against repo reality before plan drafting",
-      "status": "active",
+      "status": "done",
       "started_at": "2026-08-19T07:32:36+00:00",
       "base_sha": "55353f604cc36b8a196bbb3aa3e8f9b44d54f18b",
       "dirty_at_start": {
@@ -147,12 +147,99 @@
           "git": "? plans/quickfixes/20260819T064507-0000-Q-0081-629d-done-064507548479.json\u0000\u0000\u0000"
         }
       },
-      "task_sha256": "aae3dbf885ae4e99fe1f5bd5848d6308f4aff8c9b6220ede0cabeab680bfcac1"
+      "task_sha256": "aae3dbf885ae4e99fe1f5bd5848d6308f4aff8c9b6220ede0cabeab680bfcac1",
+      "completed_at": "2026-08-19T07:48:44+00:00"
     },
     {
       "id": "local-review-stamp",
       "title": "Stage close requires a recorded clean local review and committed work",
-      "status": "pending"
+      "status": "active",
+      "started_at": "2026-08-19T07:54:18+00:00",
+      "base_sha": "167cf41d636301f2fe0fb6a8334dc5a284001440",
+      "dirty_at_start": {
+        ".factory/events/07c6c48451ab4a30b473b5df9ac09046.json": {
+          "digest": "6b981917e97bbce69fc814105a7911888f9115963f7d0880bf540c55b78bb7b9",
+          "git": "? .factory/events/07c6c48451ab4a30b473b5df9ac09046.json\u0000\u0000\u0000"
+        },
+        ".factory/events/1992cbcceaa9461a9500a83a91369d18.json": {
+          "digest": "b5c64b8d9bd3b3c9d8f3558146d9472eeba997f8e942e3f9c9cae804c9aacc82",
+          "git": "? .factory/events/1992cbcceaa9461a9500a83a91369d18.json\u0000\u0000\u0000"
+        },
+        ".factory/events/2c4a3b8c404f4396a80ed8da471e3551.json": {
+          "digest": "584d02ac42e810bc816d5b17b387dc13397dd08c3d679dcf3ab54c5dd9dfa9b0",
+          "git": "? .factory/events/2c4a3b8c404f4396a80ed8da471e3551.json\u0000\u0000\u0000"
+        },
+        ".factory/events/6d68ca1c57594023b26b1ebf4cf60416.json": {
+          "digest": "325495369b0ebd87fec38c6a0739b672f9f34c49cfc1853a513b84d823f3efff",
+          "git": "? .factory/events/6d68ca1c57594023b26b1ebf4cf60416.json\u0000\u0000\u0000"
+        },
+        ".factory/events/77e1d31a9a01487c97897bd742582843.json": {
+          "digest": "7a887f6b06dd23e5cee75c820f8d368518c445e8fc9a77edbb8cd5a181b7a07a",
+          "git": "? .factory/events/77e1d31a9a01487c97897bd742582843.json\u0000\u0000\u0000"
+        },
+        ".factory/events/899b1ef5a543482da176af95d35260f5.json": {
+          "digest": "b9888c6642fb94a21d26ed4d550b4050e19bca2fb4cb3504f19f89d5aaf8b036",
+          "git": "? .factory/events/899b1ef5a543482da176af95d35260f5.json\u0000\u0000\u0000"
+        },
+        ".factory/events/a01bc7a456424940b69316bc11031868.json": {
+          "digest": "32cef9d0dd4ff85691d3352556f13a13ef75a0641e75ea28303f18596c76e62e",
+          "git": "? .factory/events/a01bc7a456424940b69316bc11031868.json\u0000\u0000\u0000"
+        },
+        ".factory/events/b1ccfdeb4c1e424c858c2a59347afcf8.json": {
+          "digest": "04181b793811a7eb35e768eb954e70b2c0c7de1ad7f2e4564e1d0f711cf5095f",
+          "git": "? .factory/events/b1ccfdeb4c1e424c858c2a59347afcf8.json\u0000\u0000\u0000"
+        },
+        ".factory/events/be09db7a4a9f471ca6c964b11764c855.json": {
+          "digest": "e5a86fe67635e2cf77ce285f44c90a01f363fe6f7a9540976c74728a8b18839e",
+          "git": "? .factory/events/be09db7a4a9f471ca6c964b11764c855.json\u0000\u0000\u0000"
+        },
+        ".factory/events/cc2a15a8848b4421aaa0a3f51e0ba481.json": {
+          "digest": "6c8aa68438b2b642527dbbdbf57e8d030c046a4f84ff55e92ce26d7801a1a5ad",
+          "git": "? .factory/events/cc2a15a8848b4421aaa0a3f51e0ba481.json\u0000\u0000\u0000"
+        },
+        ".factory/events/d29543b7852143428b2d5611e7f27b01.json": {
+          "digest": "35979b33925f445eb5ee9f9c0420116e38a7fd9026dc886fa1bf115ac2123238",
+          "git": "? .factory/events/d29543b7852143428b2d5611e7f27b01.json\u0000\u0000\u0000"
+        },
+        ".factory/signals.jsonl": {
+          "digest": "d92c71f093c5fb8432d4a624b772734587e8c68534d9d988f1eaa29f7f6754de",
+          "git": "? .factory/signals.jsonl\u0000\u0000\u0000"
+        },
+        ".factory/stages.json": {
+          "digest": "427b63c767745a4bfae87271c4a1bd063d52c6051a94a99ce6b00d1e2be1ac34",
+          "git": "1 .M N... 100644 100644 100644 7a75fa9ce6e070a71440606fa8f10935e8385faf 7a75fa9ce6e070a71440606fa8f10935e8385faf .factory/stages.json\u0000\u0000100644 7a75fa9ce6e070a71440606fa8f10935e8385faf 0\t.factory/stages.json\u0000\u0000H .factory/stages.json\u0000"
+        },
+        ".factory/stories/FORGE-ACC-3/decomposition.json": {
+          "digest": "87412c4a4515eb7681ce4d4d13ffe7cf864672303fafa67c26ac11dc7bd9f395",
+          "git": "1 .M N... 100644 100644 100644 35c64e0c52faaf58541664cec213cae3d8f1bdf4 35c64e0c52faaf58541664cec213cae3d8f1bdf4 .factory/stories/FORGE-ACC-3/decomposition.json\u0000\u0000100644 35c64e0c52faaf58541664cec213cae3d8f1bdf4 0\t.factory/stories/FORGE-ACC-3/decomposition.json\u0000\u0000H .factory/stories/FORGE-ACC-3/decomposition.json\u0000"
+        },
+        ".factory/stories/FORGE-ACC-3/grills/tasks/local-review-stamp.json": {
+          "digest": "bef5b3d22452134b324baa463dc1d3d881f7fb46104020ca3b25bd9d4318e7b1",
+          "git": "? .factory/stories/FORGE-ACC-3/grills/tasks/local-review-stamp.json\u0000\u0000\u0000"
+        },
+        ".factory/stories/FORGE-ACC-3/task-plans/local-review-stamp.md": {
+          "digest": "83ffddcba5a95ea1b6a8b12a1a4d66816822c59f0a188422a3ec200c831b7123",
+          "git": "? .factory/stories/FORGE-ACC-3/task-plans/local-review-stamp.md\u0000\u0000\u0000"
+        },
+        "plans/quickfixes/20260819T062749-0000-Q-0081-629d-open-062749943700.json": {
+          "digest": "5c5163ee23d510c00834802ee81f103a947e42736fee5d9494b303b802a51b1a",
+          "git": "? plans/quickfixes/20260819T062749-0000-Q-0081-629d-open-062749943700.json\u0000\u0000\u0000"
+        },
+        "plans/quickfixes/20260819T064507-0000-Q-0081-629d-done-064507548479.json": {
+          "digest": "61fdb618a6a6ac90c6d9d20d3bd2d29e1f063d06e61662cc749417a822165673",
+          "git": "? plans/quickfixes/20260819T064507-0000-Q-0081-629d-done-064507548479.json\u0000\u0000\u0000"
+        }
+      },
+      "task_sha256": "0c10e39aa9228c12ebf47dbd4f740554d6eb4fb8b4c1d5016fc05afc47423970",
+      "local_review_stamp": {
+        "stage_id": "local-review-stamp",
+        "task_sha256": "0c10e39aa9228c12ebf47dbd4f740554d6eb4fb8b4c1d5016fc05afc47423970",
+        "brief_sha256": "6a9cc7bc27f0efb520bf1971aa57798f1e0421ddfe3a813c677285872372ea54",
+        "base_sha": "167cf41d636301f2fe0fb6a8334dc5a284001440",
+        "product_tree_digest": "197412027f3bae5207d54029b38aa929d1a8d4f8b7c30c237ebfe7537eec5603",
+        "recorded_at": "2026-08-19T09:21:11+00:00",
+        "generated_by": "autoreview"
+      }
     },
     {
       "id": "coherent-branch-review",

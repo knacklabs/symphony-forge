@@ -11,7 +11,11 @@ from factory_lib import (
     read_stdin_utf8, run_state_path, validate_payload,
 )
 from forge_cli.events import append_event
+from forge_cli.readiness import review_passed
 from forge_cli.review_brief import declared_contracts
+from forge_cli.stages import (
+    load_stages, stage_review_binding, task_for, write_stages,
+)
 
 
 def ensure_list(value):
@@ -48,7 +52,10 @@ def ensure_findings(field: str, value):
 
 
 parser = argparse.ArgumentParser(description="Record a review artifact from structured JSON")
-parser.add_argument("--aspect", required=True, choices=["quality", "performance", "security"])
+parser.add_argument(
+    "--aspect", required=True,
+    choices=["quality", "performance", "security", "stage-local"],
+)
 parser.add_argument("--input", help="Path to a JSON file. If omitted, read JSON from stdin.")
 args = parser.parse_args()
 
@@ -142,6 +149,40 @@ for key in ("residual_risks", "reviewed_scope"):
 review.setdefault("recommendation", "approve-with-caveats")
 review["recorded_at"] = now_iso()
 review["commit"] = head_sha(root)
+if args.aspect == "stage-local":
+    if not review_passed(review):
+        raise SystemExit(
+            "stage-local review must be clean: score >= 8 and no blocking findings"
+        )
+    from forge_cli.delegate import delegation_exclusion
+    with delegation_exclusion(root, "stages", kind="stage-state", namespace="state"):
+        stages = load_stages(root)
+        active = [stage for stage in stages.get("stages", [])
+                  if stage.get("status") == "active"]
+        if len(active) != 1:
+            raise SystemExit(
+                "stage-local review requires exactly one active stage "
+                f"(found {len(active)})"
+            )
+        stage = active[0]
+        task = task_for(root, stage.get("id", ""))
+        if not task:
+            raise SystemExit(
+                f"active stage {stage.get('id')} has no recorded task contract"
+            )
+        stage["local_review_stamp"] = {
+            **stage_review_binding(root, stage, task),
+            "recorded_at": review["recorded_at"],
+            "generated_by": review.get("generated_by", "autoreview"),
+        }
+        write_stages(root, stages)
+    append_event(
+        root, "review-stage-local",
+        actor=review.get("generated_by", "autoreview"),
+        story=state.get("issue_key", ""), detail=stage.get("id", ""),
+    )
+    print(f"Recorded clean stage-local review stamp for {stage.get('id')}")
+    raise SystemExit(0)
 dump_json(path, review)
 if state.get("issue_key"):
     state["review_status"] = "in-progress"

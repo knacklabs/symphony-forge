@@ -26,6 +26,7 @@ from pathlib import Path
 from factory_lib import (
     clean_git_env, decomposition_state_path, dump_json,
     git_control_dir, head_sha, load_json, now_iso,
+    product_tree_digest,
     protected_decomposition_state_path, repo_root, require_approved_plan_digest,
     require_ready_task, run_state_path,
     safe_factory_write_json, sha256_of, task_digest,
@@ -161,6 +162,9 @@ def _git(base: Path, *args: str) -> str:
 
 def dirty_paths(base: Path) -> list[str]:
     """Every dirty path, including both sides of renames, without quote parsing."""
+    def product_path(rel: str) -> bool:
+        return not (rel.endswith(".pyc") or "__pycache__" in rel.split("/"))
+
     raw = _git(base, "status", "--porcelain=v1", "-z", "-uall")
     entries = raw.split("\0")
     paths: list[str] = []
@@ -171,12 +175,12 @@ def dirty_paths(base: Path) -> list[str]:
         if not entry:
             continue
         status, rel = entry[:2], entry[3:]
-        if rel:
+        if rel and product_path(rel):
             paths.append(rel)
         if any(flag in status for flag in "RC") and index < len(entries):
             source = entries[index]
             index += 1
-            if source:
+            if source and product_path(source):
                 paths.append(source)
     return sorted(set(paths))
 
@@ -661,6 +665,55 @@ def task_for(base: Path, stage_id: str) -> dict:
     return next((t for t in tasks if t.get("id") == stage_id), {})
 
 
+def stage_review_binding(base: Path, stage: dict, task: dict) -> dict[str, str]:
+    """The exact stage/product identity a local review authorizes."""
+    from .delegate import current_delegation
+
+    task_sha256 = task_digest(task)
+    launch = current_delegation(
+        base,
+        stage.get("id", ""),
+        stage_started_at=stage.get("started_at", ""),
+        task_sha256=task_sha256,
+        ignore_lock=True,
+    )
+    brief_sha256 = launch.get("brief_sha256", "") if launch else ""
+    return {
+        "stage_id": stage.get("id", ""),
+        "task_sha256": task_sha256,
+        "brief_sha256": brief_sha256 if isinstance(brief_sha256, str) else "",
+        "base_sha": stage_baseline(base, stage),
+        "product_tree_digest": product_tree_digest(base),
+    }
+
+
+def _require_reviewed_commit(base: Path, stage: dict, task: dict) -> None:
+    stamp = stage.get("local_review_stamp")
+    expected = stage_review_binding(base, stage, task)
+    if not isinstance(stamp, dict):
+        fail(f"{stage.get('id')} has no stage-local review stamp. Record a clean "
+             "local review before committing, then retry stage completion.")
+    stale = [key for key, value in expected.items() if stamp.get(key) != value]
+    if stale:
+        fail(f"{stage.get('id')} has a STALE stage-local review stamp "
+             f"({', '.join(stale)} changed). Re-run the local review against "
+             "the final staged product tree, commit exactly that tree, then retry.")
+    product_dirt = sorted(product_tree_snapshot(base)["dirty"])
+    if product_dirt:
+        fail(f"{stage.get('id')} has uncommitted or staged PRODUCT changes: "
+             f"{', '.join(product_dirt[:10])}. Commit exactly the reviewed tree "
+             "before closing the stage.")
+    base_sha = stage_baseline(base, stage)
+    head = head_sha(base) or ""
+    committed_product = [
+        path for path in committed_paths(base, base_sha, head)
+        if not path.startswith(WORKFLOW_PATHS)
+    ] if base_sha and head and base_sha != head else []
+    if not committed_product:
+        fail(f"{stage.get('id')} closes on an EMPTY committed delta — stage work "
+             "must be committed before completion.")
+
+
 def _find(data: dict, stage_id: str) -> dict:
     stage = next((s for s in data.get("stages", []) if s.get("id") == stage_id), None)
     if stage is None:
@@ -1056,6 +1109,7 @@ def _finish_stage(base: Path, args: argparse.Namespace, data: dict,
     # Verify commands are executable shell and may mutate files; only the
     # post-command measurement is allowed to authorize completion.
     _measure(base, args.id, stage, task)
+    _require_reviewed_commit(base, stage, task)
     _require_successful_launch(base, args.id, stage, task)
     proof_tree = product_tree_snapshot(base)
     authority_tree = protected_authority_snapshot(base)
@@ -1072,6 +1126,7 @@ def _finish_stage(base: Path, args: argparse.Namespace, data: dict,
     final_task = task_for(base, args.id)
     _measure(base, args.id, stage, final_task)
     _require_successful_launch(base, args.id, stage, final_task)
+    _require_reviewed_commit(base, stage, final_task)
     from .delegate import delegation_exclusion
 
     with delegation_exclusion(
@@ -1094,6 +1149,7 @@ def _finish_stage(base: Path, args: argparse.Namespace, data: dict,
                  "was being serialized; nothing was written — retry.")
         _measure(base, args.id, current, locked_task)
         _require_successful_launch(base, args.id, current, locked_task)
+        _require_reviewed_commit(base, current, locked_task)
         if product_tree_snapshot(base) != proof_tree:
             fail(f"{args.id}'s product tree changed after its required proof; "
                  "rerun stage completion against the final snapshot")

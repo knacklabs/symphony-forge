@@ -154,6 +154,40 @@
       ],
       "dependencies": [
         "pre-draft-requirements-round"
+      ],
+      "write_scope": [
+        "factory/scripts/record_review_from_json.py",
+        "factory/scripts/forge_cli/stages.py",
+        "factory/scripts/factory_lib.py",
+        "factory/tests/test_gates.py"
+      ],
+      "verify_commands": [
+        "python3 factory/scripts/check_dual_runtime.py"
+      ],
+      "required_tests": [
+        {
+          "id": "test_stage_done_refuses_without_fresh_stage_local_stamp",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest --with psutil python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_stage_local_stamp_is_a_stages_token_not_a_fourth_review",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest --with psutil python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        }
+      ],
+      "reviewer_focus": "Minimal design reusing existing stage machinery - no fourth review artifact (decision 0011). record_review_from_json.py gains --aspect stage-local: instead of writing reviews/<aspect>.json it writes a STAMP token into the ACTIVE stage's stages.json entry, requiring a clean review (reuse forge_cli.readiness.review_passed: no blocking_findings AND score>=MIN_SCORE) else refuse. The stamp binds {stage id, task_sha256 (task_digest of the frontier task), brief_sha256 (sha256_of the delegate brief at .factory/briefs/<id>.md via the latest launch record; bound-when-present so non-delegated work still stamps), base_sha baseline (stage_baseline), and the reviewed product-diff pin}. Realize the 'pre-commit product diff digest' by REUSING product_tree_digest (the deterministic index fingerprint excluding .factory/ and plans/) - reviewing then committing exactly that leaves it identical, so stamp==done proves you shipped what you reviewed; do NOT invent a bespoke diff-content digest. stage done (_finish_stage in stages.py) refuses unless: (a) a fresh stage-local stamp exists whose {stage id, task_sha256, base_sha, brief_sha256} match the stage and whose product_tree_digest == current, (b) no uncommitted/staged PRODUCT changes remain (reuse product_tree_snapshot/changed_paths), (c) the committed delta is non-empty (extend the existing empty-delta refusal). The stamp is a stages.json token ONLY: load_review_artifacts and closeout still read exactly the three lenses. Bootstrap: task 4 records its OWN stage-local stamp (dogfood) - no exemption. forge next routing for the local-review step is OUT of scope (task-frontier-and-closeout owns it). SCOPE: the 4 write_scope files only.",
+      "plan_contracts": [
+        {
+          "id": "ACC3T4-C1",
+          "statement": "stage done refuses without a fresh stage-local stamp, or with uncommitted/staged product changes, or an empty committed delta",
+          "source": "plans/active/FORGE-ACC-3-approval-and-closeout-integrity.md#task-decomposition"
+        },
+        {
+          "id": "ACC3T4-C2",
+          "statement": "the stamp is a stages.json token and records no fourth review artifact",
+          "source": "plans/active/FORGE-ACC-3-approval-and-closeout-integrity.md#task-decomposition"
+        }
       ]
     },
     {
@@ -245,5 +279,5 @@
   "epic": "accountable-engineering",
   "plan_file": "plans/active/FORGE-ACC-3-approval-and-closeout-integrity.md",
   "plan_sha256": "5d9d8ba4de41df6b9253dc04d5451145c7beef03ab9cad25af1aadc9e4982da2",
-  "commit": "55353f604cc36b8a196bbb3aa3e8f9b44d54f18b"
+  "commit": "167cf41d636301f2fe0fb6a8334dc5a284001440"
 }

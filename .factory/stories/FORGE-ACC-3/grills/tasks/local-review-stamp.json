@@ -1,0 +1,72 @@
+{
+  "generated_by": "griller",
+  "gate": "task",
+  "verdict": "pass",
+  "gaps": [],
+  "contradictions": [],
+  "resolutions": [
+    "Diff pin: reuse product_tree_digest (index fingerprint, excludes .factory/+plans/) as the reviewed-diff binding; stamp==done proves shipped==reviewed. No bespoke diff-content digest.",
+    "Brief binding: bind brief_sha256 when a delegate launch/brief exists; otherwise the stamp still binds stage id + task_sha256 + baseline + tree digest, so non-delegated work can still stamp. No carve-out.",
+    "Bootstrap: task 4 records its own stage-local stamp (dogfood); no exemption code.",
+    "Implementation complete: the gate is in place (single shared stage_review_binding seam, not a fourth artifact) and the 27 existing stage-done/stage-start fixtures it broke were updated via a shared stamp_and_commit test helper. Full stage suite independently verified green (50 passed). required_tests kept as the 2 characterizing tests; the pre-existing regressions are enforced by the full suite/CI."
+  ],
+  "inspected_refs": [
+    "factory/scripts/forge_cli/stages.py",
+    "factory/scripts/record_review_from_json.py",
+    "factory/scripts/factory_lib.py",
+    "factory/scripts/forge_cli/delegate.py",
+    "factory/scripts/forge_cli/readiness.py"
+  ],
+  "current_flow": "stage done (_finish_stage) measures the diff and refuses an empty delta but requires NO local review stamp and does not force a fully-committed product tree. record_review only writes the three lens artifacts. product_tree_digest, product_tree_snapshot, changed_paths, stage_baseline, review_passed and the persisted brief (.factory/briefs/<id>.md, brief_sha256) already exist and are reused.",
+  "criteria_map": {
+    "stage done refuses without a fresh stage-local stamp, or with uncommitted/staged product changes, or an empty committed delta": "Inspected _finish_stage; the added gate refuses unless a fresh stamp (matching stage id/task_sha256/base_sha/brief_sha256 and product_tree_digest==current) exists, the product tree is fully committed, and the committed delta is non-empty (extends the existing empty-delta refusal).",
+    "the stamp is a stages.json token and records no fourth review artifact": "Inspected record_review + load_review_artifacts; --aspect stage-local writes the token into the active stages.json entry only, and closeout/load_review_artifacts still read exactly quality/performance/security (decision 0011)."
+  },
+  "decision": "keep",
+  "new_abstractions": [
+    "A stage-local stamp token in stages.json plus a shared derivation of its bindings in factory_lib; justified as the single seam both the recorder writes and stage done re-derives, and explicitly NOT a fourth review artifact."
+  ],
+  "rounds": [
+    {
+      "question": "Realize the pre-commit product diff digest how?",
+      "options": [
+        "Reuse product_tree_digest",
+        "Bespoke diff-content digest"
+      ],
+      "chosen": "Reuse product_tree_digest"
+    },
+    {
+      "question": "Brief-sha binding when a task ran without delegation?",
+      "options": [
+        "Bind brief_sha256 when present",
+        "Require a delegation brief always"
+      ],
+      "chosen": "Bind brief_sha256 when present"
+    },
+    {
+      "question": "Does task 4's own stage done require a stamp?",
+      "options": [
+        "Dogfood \u2014 task 4 stamps itself",
+        "Exempt task 4 as the bootstrap"
+      ],
+      "chosen": "Dogfood \u2014 task 4 stamps itself"
+    }
+  ],
+  "citations": [
+    {
+      "finding": "Review must remain ONE three-lens pass, never per-task review artifacts.",
+      "source": "docs/decisions/0011 (review is one autoreview pass)"
+    },
+    {
+      "finding": "The composed brief is persisted at .factory/briefs/<id>.md with a brief_sha256 on the launch record, so the stamp can bind it.",
+      "source": "factory/scripts/forge_cli/delegate.py#brief_path"
+    }
+  ],
+  "task_id": "local-review-stamp",
+  "input_sha256": "83bf703fed58c5a598545ada721481c85c2a482180f6df49671f65031854c3b8",
+  "recorded_at": "2026-08-19T09:20:08+00:00",
+  "commit": "167cf41d636301f2fe0fb6a8334dc5a284001440",
+  "approved_task_plan_sha256": "562e04711b4d9fb83be13c6fc49c2c6e70569af0fca896f88a19d3276f3f144e",
+  "approved_by": "Ravi Kiran Vemula",
+  "approved_at": "2026-08-19T09:20:09+00:00"
+}
