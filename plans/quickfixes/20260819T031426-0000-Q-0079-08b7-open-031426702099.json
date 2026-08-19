@@ -1,0 +1,10 @@
+{
+  "event": "open",
+  "id": "Q-0079-08b7",
+  "profile": "quickfix",
+  "reason": "CI remediation for PR #109: allowlist FORGE-CFS-1's intentional lossless git-path captures and self-contained hook stdin reads in check_encoding_hygiene.py (14 encoding-hygiene sites), and declare the Q-0078 quickfix window for pr-ticket-check.",
+  "started_at": "2026-08-19T03:14:26+00:00",
+  "max_files": 5,
+  "files": [],
+  "harness_source": true
+}

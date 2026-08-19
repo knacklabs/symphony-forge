@@ -17,7 +17,12 @@ SCRIPTS = ROOT / "factory" / "scripts"
 # replacement-decoded text.  The scanner already ignores binary modes; this
 # inventory makes the review-sensitive exceptions explicit and auditable.
 BYTE_PATH_ALLOWLIST: dict[str, str] = {
+    "factory/scripts/factory_lib.py:648": "git control directory path",
+    "factory/scripts/factory_lib.py:655": "git worktree root path",
+    "factory/scripts/factory_lib.py:1073": "git status paths",
+    "factory/scripts/factory_lib.py:1152": "git index paths",
     "factory/scripts/factory_lib.py:1239": "git diff --name-only output (grounding staleness sweep)",
+    "factory/scripts/factory_lib.py:1383": "git diff paths",
     "factory/scripts/forge_cli/stages.py:644": "git diff --no-index numstat for untracked budget counting",
     # Lossless git path captures. These exact sites may use surrogateescape.
     "factory/scripts/check_dual_runtime.py:478": "git ls-files paths",
@@ -34,8 +39,10 @@ BYTE_PATH_ALLOWLIST: dict[str, str] = {
     "factory/scripts/factory_lib.py:1006": "git diff paths",
     "factory/scripts/forge_cli/adopt.py:185": "git status paths",
     "factory/scripts/forge_cli/audit.py:95": "git ls-files paths",
+    "factory/scripts/forge_cli/audit.py:101": "git ls-files paths",
     "factory/scripts/forge_cli/lessons.py:63": "git diff and ls-files paths",
     "factory/scripts/forge_cli/phase.py:25": "git status paths",
+    "factory/scripts/forge_cli/phase.py:85": "git status paths",
     "factory/scripts/forge_cli/project.py:138": "git ls-tree paths",
     "factory/scripts/forge_cli/quickfix.py:294": "decoded git path bytes",
     "factory/scripts/forge_cli/sanitise.py:20": "decoded git path bytes",
@@ -48,7 +55,10 @@ BYTE_PATH_ALLOWLIST: dict[str, str] = {
     "factory/scripts/forge_cli/upgrade.py:425": "git status paths",
     "factory/scripts/forge_cli/upgrade.py:663": "git path output",
     "factory/scripts/pr_ready.py:251": "git freshness paths",
+    "factory/scripts/pr_ready.py:269": "git freshness paths",
     "factory/scripts/pre_tool_use.py:481": "git path output",
+    "factory/scripts/pre_tool_use.py:42": "git unmerged paths",
+    "factory/scripts/pre_tool_use.py:658": "git context-ledger staging paths",
 }
 
 # These sites must remain byte-mode. check_file verifies that every entry still
@@ -74,6 +84,7 @@ REPLACE_ALLOWLIST: frozenset[str] = frozenset({
     "factory/scripts/check_repo_budget.py:19",
     "factory/scripts/factory_lib.py:26",
     "factory/scripts/factory_lib.py:1310",
+    "factory/scripts/factory_lib.py:1454",
     "factory/scripts/forge_cli/common.py:19",
     "factory/scripts/forge_cli/delegate.py:1067",
     "factory/scripts/forge_cli/delegate.py:1070",
@@ -92,6 +103,8 @@ REPLACE_ALLOWLIST: frozenset[str] = frozenset({
 
 STDIN_ALLOWLIST: frozenset[str] = frozenset({
     "factory/scripts/factory_lib.py:1258",
+    "factory/scripts/factory_lib.py:1402",
+    "factory/scripts/pre_tool_use.py:27",
 })
 
 

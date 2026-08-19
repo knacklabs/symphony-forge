@@ -1,0 +1,11 @@
+{
+  "topic": "A move-where-evidence-lives change needs an exhaustive hand-joined-read audit, and the full suite is the backstop",
+  "lesson": "When a change relocates where evidence is stored, every consumer that hand-joins the old path breaks. Grepping only the paths named in known signals (grills/plan, history) missed phase.py (reads decomposition/tests/verify/reviews) and a pr_ready scratchpad gap \u2014 both surfaced only by the full gate suite after activation (S-0007). Audit by grepping EVERY hand-joined .factory/<name> read across the tree, not just the signal-named ones; and always run the full suite before committing an activation, never a targeted subset (a targeted subset hid a .gitattributes test regression for two tasks).",
+  "source": "FORGE-CFS-1 migration-and-vendor, S-0007 + full-suite gate 2026-08-18",
+  "applies_to": [
+    "factory/scripts/**"
+  ],
+  "severity": "high",
+  "generated_by": "orchestrator",
+  "added_at": "2026-08-18T17:54:13+00:00"
+}
