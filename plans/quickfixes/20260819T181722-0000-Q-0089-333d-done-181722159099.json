@@ -1,0 +1,9 @@
+{
+  "event": "done",
+  "id": "Q-0089-333d",
+  "profile": "quickfix",
+  "reason": "rescue lane: read-only rescue exempt from mandatory read-order (Blocker 3) + xhigh validation lane docs",
+  "started_at": "2026-08-19T18:13:17+00:00",
+  "completed_at": "2026-08-19T18:17:22+00:00",
+  "files": []
+}

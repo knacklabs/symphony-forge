@@ -24,12 +24,6 @@ It provides:
 8. active decisions — `./forge decision list --active`, not raw `docs/decisions/`
 9. the derived roadmap, active plan, and decomposition artifacts
 
-This order is for a full planning or implementation session. A read-only rescue
-or exploration run (`/codex:rescue` without `--write` — code exploration, plan
-validation, debugging, root-cause) is exempt: read only the files its brief
-names. Walking the whole chain for a targeted question overruns the context
-budget and buys nothing.
-
 ## Runtime Modes
 
 Claude Code coordinates discovery, planning, decisions, and orchestration through `codex-plugin-cc`. Its hook always denies product and canon writes; planning exploration is delegated to Codex read-only runs.
@@ -68,8 +62,7 @@ Testing has no separate agent: the implementer writes and records the tests.
 ## Reasoning Defaults
 
 - planning / decomposition / architecture reconciliation: `high`
-- code exploration: `gpt-5.6-terra` @ `high` (`/codex:rescue`, read-only)
-- plan validation / debugging / root-cause: `gpt-5.6-sol` @ `xhigh` (`/codex:rescue`, read-only) — the hard-thinking lane, not the default
+- read-only rescue (`/codex:rescue`, no `--write`) — reads only what its brief names, never the whole read order: `gpt-5.6-terra` @ `high` for code exploration, `gpt-5.6-sol` @ `xhigh` for plan validation / debugging / root-cause (the hard-thinking lane, not the default)
 - implementation: `gpt-5.6-sol` @ `medium` (`high` for migrations/cross-domain/security)
 - review and testing agents: explicit per-agent overrides
 
