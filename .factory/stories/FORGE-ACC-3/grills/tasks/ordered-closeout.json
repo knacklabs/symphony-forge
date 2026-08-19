@@ -1,0 +1,71 @@
+{
+  "generated_by": "griller",
+  "gate": "task",
+  "verdict": "pass",
+  "gaps": [],
+  "contradictions": [],
+  "resolutions": [
+    "Order enforced at pr_ready via HEAD stamps + require_all_stages_done \u2014 NOT record-time recorder gates (which would break the lite-window review path).",
+    "quickfix/lite/degraded start all refuse uniformly while a stage is active; pause with stage done --incomplete if a window is truly needed.",
+    "pr_ready clean-tree check covers worktree AND index (no staged or unstaged product change)."
+  ],
+  "inspected_refs": [
+    "factory/scripts/pr_ready.py",
+    "factory/scripts/factory_lib.py",
+    "factory/scripts/forge_cli/quickfix.py",
+    "factory/scripts/forge_cli/phase.py",
+    "factory/scripts/forge_cli/outcome.py"
+  ],
+  "current_flow": "pr_ready collects a flat `missing` list with an inline open_stages check and no explicit ordered chain, no product-tree cleanliness gate, and no outcome-at-HEAD check; quickfix._open starts a window regardless of active stages. outcome already stamps commit=head_sha; product_tree_snapshot already reports staged+unstaged product dirt.",
+  "criteria_map": {
+    "pr_ready refuses out-of-order closeout, a dirty product tree/index, or a missing outcome stamp on the evidence commit": "Inspected pr_ready; a shared require_closeout_order(root) enforces stages-done -> verify@HEAD -> coherent lenses@HEAD -> functional@HEAD (user_facing) -> outcome with commit==HEAD, plus a clean product worktree AND index via product_tree_snapshot.",
+    "quickfix/lite/degraded start refuse while any stage is active": "Inspected quickfix._open (shared by cmd_start/cmd_lite/cmd_degraded_start); it refuses when require_all_stages_done reports an active stage."
+  },
+  "decision": "keep",
+  "new_abstractions": [
+    "factory_lib.require_all_stages_done(root) and require_closeout_order(root); justified as the single stages-done + closeout-order seam pr_ready and the window guard both reuse (no inline duplicates)."
+  ],
+  "rounds": [
+    {
+      "question": "How is closeout order enforced?",
+      "options": [
+        "At pr_ready via HEAD stamps",
+        "Record-time recorder prerequisites"
+      ],
+      "chosen": "At pr_ready via HEAD stamps"
+    },
+    {
+      "question": "Is degraded also refused mid-stage?",
+      "options": [
+        "Refuse all three uniformly",
+        "Exempt degraded"
+      ],
+      "chosen": "Refuse all three uniformly"
+    },
+    {
+      "question": "What does clean product tree require?",
+      "options": [
+        "Clean worktree AND index",
+        "Worktree only"
+      ],
+      "chosen": "Clean worktree AND index"
+    }
+  ],
+  "citations": [
+    {
+      "finding": "outcome already stamps commit = head_sha(base), so outcome-at-HEAD is a check, not new plumbing.",
+      "source": "factory/scripts/forge_cli/outcome.py"
+    },
+    {
+      "finding": "product_tree_snapshot already reports both staged and unstaged product dirt for the clean-tree gate.",
+      "source": "factory/scripts/forge_cli/stages.py#product_tree_snapshot"
+    }
+  ],
+  "task_id": "ordered-closeout",
+  "input_sha256": "d9b9d7bd7da082f78d7ed1c866919d57d1d2f81f5a8bcac8853ae2b8fd747780",
+  "recorded_at": "2026-08-19T10:02:38+00:00",
+  "commit": "9a368ab99aebf5bc6e17d03d1a94a9cae35c9a49",
+  "approved_task_plan_sha256": "ded0d775ba7a20ce0d0132d8d453d56f2d3d3c5ce12632d665fb3e6ab555884a",
+  "approved_by": "Ravi Kiran Vemula",
+  "approved_at": "2026-08-19T10:03:27+00:00"
+}

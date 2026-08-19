@@ -7,12 +7,15 @@ import subprocess
 from pathlib import Path
 
 from factory_lib import (
-    client_signoff, evidence_path, load_json, repo_root, run_state_path,
-    requirements_digest, task_frontier_state,
+    client_signoff, evidence_path, head_sha, load_json, load_review_artifacts,
+    repo_root, require_all_stages_done, require_coherent_review_run,
+    requirements_digest, run_state_path, task_frontier_state,
 )
 
 from .context import pending_context
 from .quickfix import load_active, profile_of
+from .outcome import load_outcome
+from .readiness import tests_passed
 from .roadmap import cmd_heal, leverage, load_items, ready_pending
 from .signal import open_signals
 from .specs import resolve_spec_reference
@@ -279,7 +282,18 @@ def cmd_next(args: argparse.Namespace) -> None:
             a for a in ("quality", "performance", "security")
             if not load_json(evidence_path(base, issue, f"reviews/{a}.json"), default={})
         ]
-        if not tests.get("automated"):
+        open_stages = require_all_stages_done(base)
+        head = head_sha(base)
+        reviews, review_problems = load_review_artifacts(base, require_head=True)
+        review_problems.extend(require_coherent_review_run(base, reviews))
+        functional = tests.get("functional", {})
+        functional_ready = bool(
+            functional
+            and tests_passed(functional, functional=True)
+            and tests.get("commit") == head
+        )
+        outcome = load_outcome(base) or {}
+        if open_stages:
             phase("implementing")
             frontier_state = task_frontier_state(base)
             if frontier_state:
@@ -318,18 +332,27 @@ def cmd_next(args: argparse.Namespace) -> None:
                         "skills_used); apple-design advisory for gesture/motion — "
                         "harness.yaml required_skills"
                     )
-        elif not verify.get("ok"):
+        elif not tests.get("automated"):
+            phase("testing")
+            steps.append("[dev] Record the completed stages' automated proof: "
+                         "record_test_from_json.py --kind automated --input <json>")
+        elif not verify.get("ok") or verify.get("commit") != head:
             phase("verifying")
             steps.append("[dev] Run: python3 factory/scripts/verify.py")
-        elif reviews_missing:
+        elif review_problems:
             phase("reviewing")
+            review_detail = ", ".join(reviews_missing) or "stale or incoherent lenses"
             steps.append("[dev] Run ONE autoreview pass in Codex, three lenses "
-                         f"(factory/prompts/reviewer.md); still to record: {', '.join(reviews_missing)} "
+                         f"(factory/prompts/reviewer.md); repair: {review_detail} "
                          "via record_review_from_json.py")
-        elif not tests.get("functional") and user_facing:
+        elif user_facing and not functional_ready:
             phase("functional-check")
             steps.append("[dev] Task is user-facing: run functional-checker and record: "
                          "record_test_from_json.py --kind functional --input <json>")
+        elif outcome.get("commit") != head or not outcome.get("outcome"):
+            phase("outcome")
+            steps.append("[dev] Record what shipped at the evidence commit: "
+                         "forge.py outcome set \"<what changed and what someone can now do>\"")
         else:
             phase("ready for PR gate")
             from .assumptions import blocking_for_issue

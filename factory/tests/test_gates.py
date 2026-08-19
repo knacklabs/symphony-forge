@@ -15493,6 +15493,76 @@ def test_pr_ready_refuses_incoherent_lens_set(repo, tmp_path):
     assert code != 0 and "branch review is stale" in out
 
 
+def test_pr_ready_refuses_out_of_order_or_dirty_or_unstamped_closeout(repo, tmp_path):
+    scoped = prepare_pr_ready_story(repo, tmp_path, scoped_layout=True)
+    verify_path = scoped / "verify.json"
+    verify = json.loads(verify_path.read_text())
+
+    # Later evidence cannot make up for a missing verify prerequisite.
+    verify_path.unlink()
+    code, out = run(repo, "pr_ready.py")
+    assert code != 0 and "successful .factory/verify.json" in out, out
+    verify_path.write_text(json.dumps(verify))
+
+    performance_path = scoped / "reviews" / "performance.json"
+    performance = json.loads(performance_path.read_text())
+    performance["commit"] = "deadbeef"
+    performance_path.write_text(json.dumps(performance))
+    code, out = run(repo, "pr_ready.py")
+    assert code != 0 and "performance review must be stamped at HEAD" in out, out
+    performance["commit"] = head(repo)
+    performance_path.write_text(json.dumps(performance))
+
+    outcome_path = scoped / "outcome.json"
+    outcome = json.loads(outcome_path.read_text())
+    outcome.pop("commit")
+    outcome_path.write_text(json.dumps(outcome))
+    code, out = run(repo, "pr_ready.py")
+    assert code != 0 and "outcome must be stamped at HEAD" in out, out
+    outcome["commit"] = head(repo)
+    outcome_path.write_text(json.dumps(outcome))
+
+    dirty = repo / "src" / "dirty.py"
+    dirty.parent.mkdir(exist_ok=True)
+    dirty.write_text("dirty = True\n")
+    code, out = run(repo, "pr_ready.py")
+    assert code != 0 and "clean product worktree and index" in out, out
+    git(repo, "add", "src/dirty.py")
+    code, out = run(repo, "pr_ready.py")
+    assert code != 0 and "clean product worktree and index" in out, out
+
+    git(repo, "reset", "-q", "HEAD", "--", "src/dirty.py")
+    dirty.unlink()
+    code, out = run(repo, "pr_ready.py")
+    assert code == 0, out
+
+
+def test_mode_start_refuses_while_a_stage_is_active(repo, tmp_path):
+    start_stage(repo, tmp_path, STAGE_TASK, launch=False)
+    attempts = (
+        ("forge.py", "quickfix", "start", "blocked repair"),
+        ("forge.py", "mode", "lite", "--by", "Ada", "--reason", "blocked repair"),
+        ("forge.py", "mode", "degraded", "start", "--reason", "blocked repair"),
+    )
+    for command in attempts:
+        code, out = run(repo, *command)
+        assert code != 0 and "T1" in out and "stage done" in out, out
+        assert not (repo / ".factory" / "quickfix.json").exists()
+
+    write_stages(repo, {
+        "issue": "ENG-1",
+        "stages": [{"id": "T1", "title": "core slice", "status": "done"}],
+    })
+    for index, command in enumerate(attempts):
+        code, out = run(repo, *command)
+        assert code == 0, out
+        if index == 0:
+            code, out = run(repo, "forge.py", "quickfix", "done")
+        else:
+            code, out = run(repo, "forge.py", "mode", "abandon", "--reason", "test cleanup")
+        assert code == 0, out
+
+
 def test_adopt_and_upgrade_refreeze_the_manifest(repo, tmp_path):
     # adopt repairs a client hook and arms the migrated repo
     legacy = existing_repo(tmp_path)

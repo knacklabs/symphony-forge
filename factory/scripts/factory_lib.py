@@ -995,6 +995,89 @@ def require_coherent_review_run(root: Path, reviews: dict[str, dict]) -> list[st
     return []
 
 
+def require_all_stages_done(root: Path) -> list[str]:
+    """Return decomposition task ids whose execution stage is not done."""
+    from forge_cli.stages import load_stages
+
+    decomposition = load_json(protected_decomposition_state_path(root), default={})
+    stages = {
+        stage.get("id"): stage
+        for stage in load_stages(root).get("stages", [])
+        if isinstance(stage, dict)
+    }
+    return [
+        task["id"]
+        for task in decomposition.get("tasks", [])
+        if isinstance(task, dict)
+        and isinstance(task.get("id"), str)
+        and stages.get(task["id"], {}).get("status") != "done"
+    ]
+
+
+def require_closeout_order(root: Path) -> list[str]:
+    """Return closeout problems in their required prerequisite order."""
+    from forge_cli.outcome import load_outcome
+    from forge_cli.readiness import tests_passed
+
+    problems: list[str] = []
+    head = head_sha(root)
+    expected = head[:8] if head else "missing"
+
+    open_stages = require_all_stages_done(root)
+    if open_stages:
+        problems.append(
+            f"stage completion: {', '.join(open_stages)} not done — work each "
+            "stage (forge stage start → local autoreview until clean → commit → "
+            "forge stage done; WORKFLOW.md Stage Loop)"
+        )
+
+    verify = load_json(verify_state_path(root), default={})
+    if not verify or not verify.get("ok"):
+        problems.append("successful .factory/verify.json")
+    elif verify.get("commit") != head:
+        stamp = verify.get("commit")
+        shown = stamp[:8] if isinstance(stamp, str) and stamp else "missing"
+        problems.append(
+            f"verify must be stamped at HEAD {expected} (got {shown})"
+        )
+
+    reviews, review_problems = load_review_artifacts(root, require_head=True)
+    problems.extend(review_problems)
+    problems.extend(require_coherent_review_run(root, reviews))
+
+    decomposition = load_json(protected_decomposition_state_path(root), default={})
+    if bool(decomposition.get("user_facing", True)):
+        tests = load_json(tests_state_path(root), default={})
+        functional = tests.get("functional", {}) if tests else {}
+        if not functional:
+            problems.append(".factory/tests.json:functional")
+        elif not tests_passed(functional, functional=True):
+            problems.append(
+                "functional testing must have no blockers, no failed status and score >= 8"
+            )
+        if functional and tests.get("commit") != head:
+            stamp = tests.get("commit")
+            shown = stamp[:8] if isinstance(stamp, str) and stamp else "missing"
+            problems.append(
+                f"functional testing must be stamped at HEAD {expected} (got {shown})"
+            )
+
+    outcome = load_outcome(root) or {}
+    if not outcome.get("outcome"):
+        problems.append(
+            "the shipped outcome — `forge.py outcome set \"<what changed and what "
+            "someone can now do>\"` (one paragraph, in a reader's language)"
+        )
+    elif outcome.get("commit") != head:
+        stamp = outcome.get("commit")
+        shown = stamp[:8] if isinstance(stamp, str) and stamp else "missing"
+        problems.append(
+            f"outcome must be stamped at HEAD {expected} (got {shown}) — rerun "
+            "`forge.py outcome set`"
+        )
+    return problems
+
+
 SCHEMA_TYPES = {"str": str, "int": int, "bool": bool, "list": list, "dict": dict}
 
 

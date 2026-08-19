@@ -21,18 +21,18 @@ from factory_lib import (
     story_uses_scoped_layout,
     tests_state_path,
     verify_state_path,
-    require_coherent_review_run,
+    require_closeout_order,
 )
 from forge_cli.assumptions import blocking_for_issue, load_rows as load_assumptions
 from forge_cli.decisions import decision_records
 from forge_cli.events import append_event, load_events
 from forge_cli.outcome import load_outcome, outcome_path
 from forge_cli.roadmap import load_items, mark_status
-from forge_cli.quickfix import load_active
+from forge_cli.quickfix import _lite_product_files, load_active
 from forge_cli.readiness import tests_passed
 from forge_cli.review_brief import declared_contracts
 from forge_cli.signal import open_signals, signals_path
-from forge_cli.stages import load_stages
+from forge_cli.stages import load_stages, product_tree_snapshot
 
 # Commits touching only these paths after evidence was recorded do not
 # invalidate it: evidence/plan/doc records, harness machinery and adapters
@@ -74,7 +74,6 @@ if run_state and not run_state.get("issue_key") and client_signoff(root)[0] \
     print(f"PR_READY (nothing active; shipped so far: {shipped})")
     raise SystemExit(0)
 decomposition = load_json(protected_decomposition_state_path(root), default={})
-verify = load_json(verify_state_path(root), default={})
 tests = load_json(tests_state_path(root), default={})
 missing: list[str] = []
 if not run_state:
@@ -102,39 +101,16 @@ if not plan_files and not (run_state.get("phase") == "pr-ready" and archived_pla
     )
 if not decomposition:
     missing.append(".factory/decomposition.json")
-else:
-    # The stage tracker is the decomposition's execution twin (decision 0007):
-    # every stage must have run its loop (local autoreview -> commit -> done).
-    stages_data = load_stages(root)
-    if not stages_data:
-        missing.append(".factory/stages.json (re-record the decomposition — "
-                       "the recorder creates the stage tracker)")
-    else:
-        open_stages = [s["id"] for s in stages_data.get("stages", [])
-                       if s.get("status") != "done"]
-        if open_stages:
-            missing.append(
-                f"stage completion: {', '.join(open_stages)} not done — work each "
-                "stage (forge stage start → local autoreview until clean → commit → "
-                "forge stage done; WORKFLOW.md Stage Loop)"
-            )
-if not verify or not verify.get("ok"):
-    missing.append("successful .factory/verify.json")
-# The functional check is owed only to user-facing work; the decomposition's
-# recorded flag decides — never the dev at gate time. Missing flag = required.
-user_facing = bool(decomposition.get("user_facing", True)) if decomposition else True
-for kind in ("automated", "functional"):
-    entry = tests.get(kind, {}) if tests else {}
-    if not entry:
-        if kind == "functional" and not user_facing:
-            continue
-        missing.append(f".factory/tests.json:{kind}")
-    elif not tests_passed(entry, functional=(kind == "functional")):
-        missing.append(f"{kind} testing must have no blockers, no failed status"
-                       + (" and score >= 8" if kind == "functional" else ""))
-reviews, review_problems = load_review_artifacts(root)
-missing.extend(review_problems)
-missing.extend(require_coherent_review_run(root, reviews))
+missing.extend(require_closeout_order(root))
+
+# Automated proof remains a separate readiness requirement; functional proof
+# belongs to the ordered closeout chain above.
+automated = tests.get("automated", {}) if tests else {}
+if not automated:
+    missing.append(".factory/tests.json:automated")
+elif not tests_passed(automated):
+    missing.append("automated testing must have no blockers, no failed status")
+reviews, _review_problems = load_review_artifacts(root)
 
 # Independent of the review recorder: existing artifacts may predate contract
 # enforcement, so readiness reads the quality evidence and checks every id.
@@ -218,11 +194,6 @@ if open_quickfix:
 # story shipped but never what it delivered, which is the question a reader
 # asks six weeks later. Recorded via `forge outcome set`, never hand-written.
 outcome_record = load_outcome(root)
-if not (outcome_record or {}).get("outcome"):
-    missing.append(
-        "the shipped outcome — `forge.py outcome set \"<what changed and what "
-        "someone can now do>\"` (one paragraph, in a reader's language)"
-    )
 
 unguided = blocking_for_issue(root, issue_key) if issue_key else []
 if unguided:
@@ -242,16 +213,8 @@ if decomposition and not decomposition.get("commit") and head:
         "commit provenance on: decomposition (re-record with current tooling)"
     )
 stamps: dict[str, str | None] = {}
-for label, data in (
-    ("verify", verify),
-    ("tests", tests),
-):
-    if data:
-        stamps[label] = data.get("commit")
-for aspect in ("quality", "performance", "security"):
-    data = load_json(review_dir(root) / f"{aspect}.json", default={})
-    if data:
-        stamps[f"review:{aspect}"] = data.get("commit")
+if tests:
+    stamps["tests"] = tests.get("commit")
 unstamped = [label for label, sha in stamps.items() if not sha]
 if unstamped and head:
     missing.append(
@@ -287,6 +250,15 @@ elif head and stamps:
                         f"fresh evidence: code changed since it was recorded at {stamp[:8]} "
                         f"({', '.join(code_changes[:5])}) — rerun verify/tests/reviews"
                     )
+
+dirty_product = _lite_product_files(
+    root, list(product_tree_snapshot(root).get("dirty", {})),
+)
+if dirty_product:
+    missing.append(
+        "clean product worktree and index: staged or unstaged product changes remain "
+        f"({', '.join(dirty_product[:5])})"
+    )
 
 if missing:
     print("PR not ready:")

@@ -346,21 +346,162 @@
         }
       },
       "task_sha256": "b7d6ee0b95a073188a99e56cd942dc9dbff9d1af63b411ec507b377e1e702f62",
-      "local_review_stamp": {
-        "stage_id": "coherent-branch-review",
-        "task_sha256": "b7d6ee0b95a073188a99e56cd942dc9dbff9d1af63b411ec507b377e1e702f62",
-        "brief_sha256": "3c15cb202e56eb388d3e8a2e39f7477ae7a2730272c11a1489c0239ae1495e85",
-        "base_sha": "5ee81b786676e4afd1aa09aca9aa3e5ba90ac301",
-        "product_tree_digest": "c37adaac58ceb07e0108ced8847c02df64e39d75e88907ac7b4440d7af8496c9",
-        "recorded_at": "2026-08-19T09:57:48+00:00",
-        "generated_by": "autoreview"
-      },
       "completed_at": "2026-08-19T09:58:26+00:00"
     },
     {
       "id": "ordered-closeout",
       "title": "Closeout is ordered and pr_ready requires a clean tree",
-      "status": "pending"
+      "status": "active",
+      "started_at": "2026-08-19T10:03:27+00:00",
+      "base_sha": "9a368ab99aebf5bc6e17d03d1a94a9cae35c9a49",
+      "dirty_at_start": {
+        ".factory/events/03399a7401a3421e9df03afa8d829c18.json": {
+          "digest": "0e4207c184b4cce891e7fec99473940ee369e6a8c3f4f1227d398bae82fdbad3",
+          "git": "? .factory/events/03399a7401a3421e9df03afa8d829c18.json\u0000\u0000\u0000"
+        },
+        ".factory/events/07c6c48451ab4a30b473b5df9ac09046.json": {
+          "digest": "6b981917e97bbce69fc814105a7911888f9115963f7d0880bf540c55b78bb7b9",
+          "git": "? .factory/events/07c6c48451ab4a30b473b5df9ac09046.json\u0000\u0000\u0000"
+        },
+        ".factory/events/0b5b41b6dd38464588b7834cfb6478be.json": {
+          "digest": "3cbc1b18b4595f23765407cbac3c84e38a889cf9abe6746bfa2a78ab973c732d",
+          "git": "? .factory/events/0b5b41b6dd38464588b7834cfb6478be.json\u0000\u0000\u0000"
+        },
+        ".factory/events/1992cbcceaa9461a9500a83a91369d18.json": {
+          "digest": "b5c64b8d9bd3b3c9d8f3558146d9472eeba997f8e942e3f9c9cae804c9aacc82",
+          "git": "? .factory/events/1992cbcceaa9461a9500a83a91369d18.json\u0000\u0000\u0000"
+        },
+        ".factory/events/2c4a3b8c404f4396a80ed8da471e3551.json": {
+          "digest": "584d02ac42e810bc816d5b17b387dc13397dd08c3d679dcf3ab54c5dd9dfa9b0",
+          "git": "? .factory/events/2c4a3b8c404f4396a80ed8da471e3551.json\u0000\u0000\u0000"
+        },
+        ".factory/events/31270a0be57a48bcaafd0f67340b8735.json": {
+          "digest": "c2a58b7473a4903e2fc99d829194fcbb0ac09395acdd93c47500ac8fff849af0",
+          "git": "? .factory/events/31270a0be57a48bcaafd0f67340b8735.json\u0000\u0000\u0000"
+        },
+        ".factory/events/33a78e4d20d74b2087e27db2e3f58a44.json": {
+          "digest": "33c39190b15ba9e74d6a53d8603398d0f69f3e4c338bbbe29e20ab99b9923c0f",
+          "git": "? .factory/events/33a78e4d20d74b2087e27db2e3f58a44.json\u0000\u0000\u0000"
+        },
+        ".factory/events/61903e3cfe5a4b69a82170482ea983b2.json": {
+          "digest": "6f22dc318c2d6308f3e6386f5498162059c3c5a598b3b0c3f01b7a56fac76cc3",
+          "git": "? .factory/events/61903e3cfe5a4b69a82170482ea983b2.json\u0000\u0000\u0000"
+        },
+        ".factory/events/69000f5fe7334845a5fb63374f12f0cc.json": {
+          "digest": "f2f4382390eb0706a81068a55a21ac876eef11b917841fd7e68bc743e51f6061",
+          "git": "? .factory/events/69000f5fe7334845a5fb63374f12f0cc.json\u0000\u0000\u0000"
+        },
+        ".factory/events/6d68ca1c57594023b26b1ebf4cf60416.json": {
+          "digest": "325495369b0ebd87fec38c6a0739b672f9f34c49cfc1853a513b84d823f3efff",
+          "git": "? .factory/events/6d68ca1c57594023b26b1ebf4cf60416.json\u0000\u0000\u0000"
+        },
+        ".factory/events/77e1d31a9a01487c97897bd742582843.json": {
+          "digest": "7a887f6b06dd23e5cee75c820f8d368518c445e8fc9a77edbb8cd5a181b7a07a",
+          "git": "? .factory/events/77e1d31a9a01487c97897bd742582843.json\u0000\u0000\u0000"
+        },
+        ".factory/events/899b1ef5a543482da176af95d35260f5.json": {
+          "digest": "b9888c6642fb94a21d26ed4d550b4050e19bca2fb4cb3504f19f89d5aaf8b036",
+          "git": "? .factory/events/899b1ef5a543482da176af95d35260f5.json\u0000\u0000\u0000"
+        },
+        ".factory/events/92e8dbc3103b4b43b97da53e57546a93.json": {
+          "digest": "d55e4fde5510134ac80c3d7cc83e89716b5e83726e20f792c100b71b76fcf581",
+          "git": "? .factory/events/92e8dbc3103b4b43b97da53e57546a93.json\u0000\u0000\u0000"
+        },
+        ".factory/events/a01bc7a456424940b69316bc11031868.json": {
+          "digest": "32cef9d0dd4ff85691d3352556f13a13ef75a0641e75ea28303f18596c76e62e",
+          "git": "? .factory/events/a01bc7a456424940b69316bc11031868.json\u0000\u0000\u0000"
+        },
+        ".factory/events/aead7fabd49b46c78ee4ad0ff2c42726.json": {
+          "digest": "858ed86a428b4c9377271edfde16ab4541767e4577c479a620be19958d5ffb06",
+          "git": "? .factory/events/aead7fabd49b46c78ee4ad0ff2c42726.json\u0000\u0000\u0000"
+        },
+        ".factory/events/b1ccfdeb4c1e424c858c2a59347afcf8.json": {
+          "digest": "04181b793811a7eb35e768eb954e70b2c0c7de1ad7f2e4564e1d0f711cf5095f",
+          "git": "? .factory/events/b1ccfdeb4c1e424c858c2a59347afcf8.json\u0000\u0000\u0000"
+        },
+        ".factory/events/b4ef09284e1d4368bb20dd8a58baedb1.json": {
+          "digest": "cf5eca20d20f65e39a240112ec524560b1869cebc872d560da7a4db7cb4a0251",
+          "git": "? .factory/events/b4ef09284e1d4368bb20dd8a58baedb1.json\u0000\u0000\u0000"
+        },
+        ".factory/events/b4fb12859a224485b807871e92af4647.json": {
+          "digest": "71ba90de7f318d2dfd2debccdcf320875db52c220f4ca829aa9e0b44d4a7272c",
+          "git": "? .factory/events/b4fb12859a224485b807871e92af4647.json\u0000\u0000\u0000"
+        },
+        ".factory/events/be09db7a4a9f471ca6c964b11764c855.json": {
+          "digest": "e5a86fe67635e2cf77ce285f44c90a01f363fe6f7a9540976c74728a8b18839e",
+          "git": "? .factory/events/be09db7a4a9f471ca6c964b11764c855.json\u0000\u0000\u0000"
+        },
+        ".factory/events/cc2a15a8848b4421aaa0a3f51e0ba481.json": {
+          "digest": "6c8aa68438b2b642527dbbdbf57e8d030c046a4f84ff55e92ce26d7801a1a5ad",
+          "git": "? .factory/events/cc2a15a8848b4421aaa0a3f51e0ba481.json\u0000\u0000\u0000"
+        },
+        ".factory/events/d29543b7852143428b2d5611e7f27b01.json": {
+          "digest": "35979b33925f445eb5ee9f9c0420116e38a7fd9026dc886fa1bf115ac2123238",
+          "git": "? .factory/events/d29543b7852143428b2d5611e7f27b01.json\u0000\u0000\u0000"
+        },
+        ".factory/events/d7cd0788530b4db4a9d2ea68dbb68ab6.json": {
+          "digest": "7622736337e62ed91298e5cad44d0d0f397768be14e422f2e156d360b35b5e64",
+          "git": "? .factory/events/d7cd0788530b4db4a9d2ea68dbb68ab6.json\u0000\u0000\u0000"
+        },
+        ".factory/events/d9aeb0c61ab543d08b6fbe49cebd0fb6.json": {
+          "digest": "8e17cc875c3890e531af178d7728fb257f5432c403badff31098be52b9e9e93f",
+          "git": "? .factory/events/d9aeb0c61ab543d08b6fbe49cebd0fb6.json\u0000\u0000\u0000"
+        },
+        ".factory/events/ea2151898246473fbd34ec7dbe93e06c.json": {
+          "digest": "6b07c2035a16a6d298c712adf129295e7e010972a3512497244c2c11b1eae749",
+          "git": "? .factory/events/ea2151898246473fbd34ec7dbe93e06c.json\u0000\u0000\u0000"
+        },
+        ".factory/events/ead2737dca45450db145bd397a932ae5.json": {
+          "digest": "300e0f86e913db5bcdea7c23d6b606865df61005d5ece0510c7f6493a82e89c7",
+          "git": "? .factory/events/ead2737dca45450db145bd397a932ae5.json\u0000\u0000\u0000"
+        },
+        ".factory/events/ec5a26da3c3f40b3af542a61a3e062fa.json": {
+          "digest": "019102c59c5ef42b025bbf7de2fbf11d479a61c1c0b4e1f31cacf17a1eb796ae",
+          "git": "? .factory/events/ec5a26da3c3f40b3af542a61a3e062fa.json\u0000\u0000\u0000"
+        },
+        ".factory/events/f457d910f4944520bb15e69dc05f6bd9.json": {
+          "digest": "10d3fe56984e136b24af139fe132ba3c1a58f261e6cfe717a84ffa42260005a6",
+          "git": "? .factory/events/f457d910f4944520bb15e69dc05f6bd9.json\u0000\u0000\u0000"
+        },
+        ".factory/signals.jsonl": {
+          "digest": "44822ce227f8de84cd2a64d3c316840139ff34e9a06e8374da1769ef19b7b5bf",
+          "git": "? .factory/signals.jsonl\u0000\u0000\u0000"
+        },
+        ".factory/stages.json": {
+          "digest": "1dd01d3e2dc1c6345d983881e939d90d8b77524988fc1b7d0f951f65a38f327f",
+          "git": "1 .M N... 100644 100644 100644 155d77e15784cbd85078cf749c2e8cd6a93fbc00 155d77e15784cbd85078cf749c2e8cd6a93fbc00 .factory/stages.json\u0000\u0000100644 155d77e15784cbd85078cf749c2e8cd6a93fbc00 0\t.factory/stages.json\u0000\u0000H .factory/stages.json\u0000"
+        },
+        ".factory/stories/FORGE-ACC-3/decomposition.json": {
+          "digest": "26721fd7ae41c1730da1e45355da4a8fa4869195fc56bc5b8fbca046c83fa7c7",
+          "git": "1 .M N... 100644 100644 100644 547cd75fb42973c45e70675ae126c9b0c253a220 547cd75fb42973c45e70675ae126c9b0c253a220 .factory/stories/FORGE-ACC-3/decomposition.json\u0000\u0000100644 547cd75fb42973c45e70675ae126c9b0c253a220 0\t.factory/stories/FORGE-ACC-3/decomposition.json\u0000\u0000H .factory/stories/FORGE-ACC-3/decomposition.json\u0000"
+        },
+        ".factory/stories/FORGE-ACC-3/grills/tasks/ordered-closeout.json": {
+          "digest": "480dc2a3ab1b8de9cf9102c1b0be2004d3a369f546aa472fdfbb065fc366cd7f",
+          "git": "? .factory/stories/FORGE-ACC-3/grills/tasks/ordered-closeout.json\u0000\u0000\u0000"
+        },
+        ".factory/stories/FORGE-ACC-3/task-plans/ordered-closeout.md": {
+          "digest": "c0f93af52a36fd23054292bba441c0cd23327698842642b26fc10542ed74a6f8",
+          "git": "? .factory/stories/FORGE-ACC-3/task-plans/ordered-closeout.md\u0000\u0000\u0000"
+        },
+        "plans/quickfixes/20260819T062749-0000-Q-0081-629d-open-062749943700.json": {
+          "digest": "5c5163ee23d510c00834802ee81f103a947e42736fee5d9494b303b802a51b1a",
+          "git": "? plans/quickfixes/20260819T062749-0000-Q-0081-629d-open-062749943700.json\u0000\u0000\u0000"
+        },
+        "plans/quickfixes/20260819T064507-0000-Q-0081-629d-done-064507548479.json": {
+          "digest": "61fdb618a6a6ac90c6d9d20d3bd2d29e1f063d06e61662cc749417a822165673",
+          "git": "? plans/quickfixes/20260819T064507-0000-Q-0081-629d-done-064507548479.json\u0000\u0000\u0000"
+        }
+      },
+      "task_sha256": "39d7b27b6450c95a342b16f5ce8337c71030a1b57cf250021b47a2e530cb04d1",
+      "local_review_stamp": {
+        "stage_id": "ordered-closeout",
+        "task_sha256": "39d7b27b6450c95a342b16f5ce8337c71030a1b57cf250021b47a2e530cb04d1",
+        "brief_sha256": "6425f14c0fa07c99780ca64d21e74f6b6b9b67bb613cb87526377960f25fca2f",
+        "base_sha": "9a368ab99aebf5bc6e17d03d1a94a9cae35c9a49",
+        "product_tree_digest": "0c26879ba6414774f292bcc90113d2e9ea810be247486699ae8ff18abd2ee250",
+        "recorded_at": "2026-08-19T10:19:44+00:00",
+        "generated_by": "autoreview"
+      }
     },
     {
       "id": "hygiene-content-pins-and-doc-debts",

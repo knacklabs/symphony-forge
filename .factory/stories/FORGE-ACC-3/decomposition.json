@@ -242,6 +242,41 @@
       ],
       "dependencies": [
         "coherent-branch-review"
+      ],
+      "write_scope": [
+        "factory/scripts/pr_ready.py",
+        "factory/scripts/factory_lib.py",
+        "factory/scripts/forge_cli/quickfix.py",
+        "factory/scripts/forge_cli/phase.py",
+        "factory/tests/test_gates.py"
+      ],
+      "verify_commands": [
+        "python3 factory/scripts/check_dual_runtime.py"
+      ],
+      "required_tests": [
+        {
+          "id": "test_pr_ready_refuses_out_of_order_or_dirty_or_unstamped_closeout",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest --with psutil python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_mode_start_refuses_while_a_stage_is_active",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest --with psutil python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        }
+      ],
+      "reviewer_focus": "Minimal, pr_ready-centred design; ONE shared stages-done seam. New factory_lib.require_all_stages_done(root) (all decomposition stages status=done; returns the open-stage list) replaces the inline open_stages check in pr_ready and is reused by the window-refusal guard. Enforce the closeout ORDER at pr_ready, NOT via record-time recorder gates (record-time gates on record_review/verify would break the lite-window review path). pr_ready requires, in order: require_all_stages_done -> verify present+ok stamped at HEAD -> the three coherent lenses (task 5) stamped at HEAD (this realises 'verify before review': verify must be present+current before pr_ready accepts the branch review) -> functional at HEAD when user_facing -> outcome present with outcome.commit == HEAD (the outcome stamp on the evidence commit) -> a clean product worktree AND index (reuse product_tree_snapshot: no staged or unstaged product change) with the existing repo-kind-aware evidence exclusions preserved. A shared factory_lib.require_closeout_order(root) returns the ordered problem list; pr_ready calls it (no inline duplicate). phase.py closeout routing lists the steps in that order. Window refusal: the shared quickfix._open refuses to start any profile (quickfix/lite/degraded) while require_all_stages_done reports an active/open stage \u2014 uniformly, per spec; pause a stage with `stage done --incomplete` first if a window is truly needed. SCOPE: the 5 write_scope files only.",
+      "plan_contracts": [
+        {
+          "id": "ACC3T6-C1",
+          "statement": "pr_ready refuses out-of-order closeout, a dirty product tree/index, or a missing outcome stamp on the evidence commit",
+          "source": "plans/active/FORGE-ACC-3-approval-and-closeout-integrity.md#task-decomposition"
+        },
+        {
+          "id": "ACC3T6-C2",
+          "statement": "quickfix/lite/degraded start refuse while any stage is active",
+          "source": "plans/active/FORGE-ACC-3-approval-and-closeout-integrity.md#task-decomposition"
+        }
       ]
     },
     {
@@ -310,5 +345,5 @@
   "epic": "accountable-engineering",
   "plan_file": "plans/active/FORGE-ACC-3-approval-and-closeout-integrity.md",
   "plan_sha256": "5d9d8ba4de41df6b9253dc04d5451145c7beef03ab9cad25af1aadc9e4982da2",
-  "commit": "5ee81b786676e4afd1aa09aca9aa3e5ba90ac301"
+  "commit": "9a368ab99aebf5bc6e17d03d1a94a9cae35c9a49"
 }
