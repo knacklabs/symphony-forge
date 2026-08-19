@@ -390,7 +390,9 @@ the approved plan, a human-only act, or scope the plan does not cover.
 ## Task Planning
 Per-task planning runs in Claude Code plan mode by default (exploration
 delegated to Codex: `/codex:rescue --model gpt-5.6-terra --effort high` —
-read-only by default, never Claude Code itself, never raw `codex exec`); devs may instead use the
+read-only by default, never Claude Code itself, never raw `codex exec`; plan
+validation, debugging and root-cause runs use `--model gpt-5.6-sol --effort xhigh`,
+still read-only); devs may instead use the
 `planner-high` Codex agent — the contract is identical either way. The plan follows
 `factory/prompts/planner.md`, including the mandatory **Decisions** section: every choice not derivable from BRIEF,
 architecture, or existing records becomes a `docs/decisions/` record

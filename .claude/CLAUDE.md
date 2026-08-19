@@ -10,7 +10,9 @@ Read `AGENTS.md` first; it is the contract. Standards live in `constitution/`
 - Codex executes: exploration, implementation, testing. Review is Claude's —
   run the autoreview skill DIRECTLY, loop until clean post-rescue (0011).
 - During planning, do NOT grep/read app code yourself — delegate `/codex:rescue
-  --model gpt-5.6-terra --effort high` (read-only). NEVER raw `codex exec`.
+  --model gpt-5.6-terra --effort high` (read-only). For plan validation,
+  debugging, or root-cause work use `/codex:rescue --model gpt-5.6-sol
+  --effort xhigh` (read-only). NEVER raw `codex exec`.
 
 ## codex-plugin-cc
 

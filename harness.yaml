@@ -66,6 +66,7 @@ phases:
     owner: "claude-code:plan-mode"
     alternate: "codex:planner-high"
     exploration: "/codex:rescue --model gpt-5.6-terra --effort high (read-only by default) — NEVER Claude Code itself, NEVER raw codex exec"
+    validation: "/codex:rescue --model gpt-5.6-sol --effort xhigh (read-only) — plan validation, debugging, root-cause; the hard-thinking lane, not the default"
     contract: "factory/prompts/planner.md"
     plan_artifact: "plans/active/<issue>-<slug>.md via forge.py plan save"
     decisions: "docs/decisions/ records BEFORE decomposition is recorded"
@@ -81,7 +82,8 @@ phases:
       forge.py plan save step, same gates. When planning in Claude, delegate
       ALL codebase exploration to Codex read-only runs
       (/codex:rescue --model gpt-5.6-terra --effort high — read-only by
-      default; raw codex exec is hook-blocked, no exceptions).
+      default; gpt-5.6-sol --effort xhigh for validation/debugging — read-only;
+      raw codex exec is hook-blocked, no exceptions).
       Approval is the saved plan file, not a flag.
   decomposition:
     owner: "codex:docs-decomposer"
