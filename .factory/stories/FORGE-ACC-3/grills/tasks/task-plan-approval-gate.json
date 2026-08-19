@@ -1,0 +1,77 @@
+{
+  "generated_by": "griller",
+  "gate": "task",
+  "task_id": "task-plan-approval-gate",
+  "verdict": "pass",
+  "decision": "keep",
+  "questions_asked": 3,
+  "summary": "JIT grill of the per-task plan-mode-approval gate (Codex-designed) against current factory_lib/phase.py/forge.py. CLI shape, grounding-digest exclusion, and bootstrapping resolved; contract kept.",
+  "inspected_refs": [
+    "factory/scripts/factory_lib.py",
+    "factory/scripts/forge_cli/phase.py",
+    "factory/scripts/forge.py",
+    "factory/scripts/record_grill_from_json.py",
+    "factory/schemas/grill.json",
+    "factory/scripts/forge_cli/stages.py",
+    "docs/decisions/0029-plan-approval-in-plan-mode.md"
+  ],
+  "current_flow": "After decomposition each task goes JIT contract -> task grill (--gate task, grounding_digest) -> stage start (require_ready_task: contract complete + fresh grill) -> delegate (same gate again). There is NO per-task plan artifact and NO per-task human approval; forge_cli/tasks.py does not exist; task_frontier_state routes author-contract->grill->stage-start->delegate.",
+  "criteria_map": {
+    "stage start and delegate refuse a task with no approved task plan whose digest matches, or a stale grill": "test_stage_start_and_delegate_refuse_without_approved_task_plan synthesizes a fresh-grilled task with no task-plan/approval and asserts both stage start and write delegate refuse via require_ready_task(require_approval=True), and pass once forge task plan save + forge task approve stamp a matching digest",
+    "forge next and the board route author-task-plan and await-approval identically from shared predicates": "test_forge_next_and_board_route_author_task_plan_and_await_approval asserts task_frontier_state/phase.py and task_rows both surface author-task-plan then await-approval from the same predicates"
+  },
+  "new_abstractions": [
+    "forge_cli/tasks.py (cmd_plan_save, cmd_approve) + per-task plan at .factory/stories/<KEY>/task-plans/<id>.md + approved_task_plan_sha256/approved_by/approved_at in the grill record - the per-task analogue of story plan approval. Reversible: pure gate token in the grill record, no new status/DB; reuses plan_digest_without_assumptions + require_task_grill + evidence_path."
+  ],
+  "rounds": [
+    {
+      "question": "Per-task command surface?",
+      "options": [
+        "forge task plan save + forge task approve",
+        "Overload forge plan with --task"
+      ],
+      "chosen": "forge task plan save + forge task approve"
+    },
+    {
+      "question": "Keep task-plan OUT of grounding_digest?",
+      "options": [
+        "Yes - keep task-plan OUT of grounding_digest",
+        "Fold the task-plan digest into grounding too"
+      ],
+      "chosen": "Yes - keep task-plan OUT of grounding_digest"
+    },
+    {
+      "question": "Avoid task 2 locking itself out?",
+      "options": [
+        "New default affects future stage starts only; test synthesizes",
+        "Gate task 2 under its own new rule immediately"
+      ],
+      "chosen": "New default affects future stage starts only; test synthesizes"
+    }
+  ],
+  "citations": [
+    {
+      "finding": "Approval is audited human attestation (--by), not cryptographic; grill precedes task-plan authoring so grounding must exclude it",
+      "source": "docs/decisions/0029-plan-approval-in-plan-mode.md and Codex rescue 2026-08-19"
+    },
+    {
+      "finding": "require_ready_task is the shared seam both stage start and write delegate already call",
+      "source": "factory/scripts/factory_lib.py:1357, forge_cli/stages.py, forge_cli/delegate.py"
+    }
+  ],
+  "gaps": [
+    "Per-task command surface?",
+    "Keep task-plan OUT of grounding_digest?",
+    "Avoid task 2 locking itself out?"
+  ],
+  "contradictions": [],
+  "resolutions": [
+    "forge task plan save + forge task approve (operator 2026-08-19): a new `task` subcommand group keeps story-plan (forge plan, plans/active/) and task-plan (forge task, story dir) namespaces distinct.",
+    "Keep task-plan OUT of grounding_digest (operator 2026-08-19): grounding stays over {contract, approved story plan, product tree}; approval is a separate stamp compared by require_ready_task - folding it in would stale the just-passed grill on save. reviewer_focus enforces.",
+    "New default gates future stage starts only (operator 2026-08-19): require_ready_task(require_approval=True) affects task 3+; task 2's delegate already passed the old launch check, stage done only measures; the required refusal test SYNTHESIZES an unapproved task, never task 2's own state - no self-lock."
+  ],
+  "open_items": [],
+  "input_sha256": "07c01e7d350d990947204117c0b9417374d8cd3b42ba124d4ce9410ebd64b445",
+  "recorded_at": "2026-08-19T05:31:38+00:00",
+  "commit": "17d7ec59804a07ea515cb7b67a679ff07bf4d883"
+}

@@ -1,8 +1,9 @@
 ---
-status: accepted
+status: superseded
 confirmed_by: "Ravi"
 date: 2026-07-14
 stories: []
+superseded_by: 0047-task-level-worktree-and-pr
 ---
 
 # Concurrency: one story per isolated worktree

@@ -4,7 +4,7 @@
     {
       "id": "plan-approval-binding",
       "title": "Approved plans bind by digest",
-      "status": "active",
+      "status": "done",
       "started_at": "2026-08-19T05:06:18+00:00",
       "base_sha": "8f1d0530b29083c4b7a0978bebb86fd9b0e1f23c",
       "dirty_at_start": {
@@ -57,12 +57,39 @@
           "git": "1 .M N... 100644 100644 100644 1f22599a79fcf3ae9ec3adf6bd41658b008130af 1f22599a79fcf3ae9ec3adf6bd41658b008130af plans/roadmap.json\u0000\u0000100644 1f22599a79fcf3ae9ec3adf6bd41658b008130af 0\tplans/roadmap.json\u0000\u0000H plans/roadmap.json\u0000"
         }
       },
-      "task_sha256": "8975a36213c4e99934d36b3787d354505e6d7916095fedb7de7f14081a2c9b3c"
+      "task_sha256": "8975a36213c4e99934d36b3787d354505e6d7916095fedb7de7f14081a2c9b3c",
+      "completed_at": "2026-08-19T05:28:42+00:00"
     },
     {
       "id": "task-plan-approval-gate",
       "title": "Each task is grilled, planned in plan mode, and human-approved before implementation",
-      "status": "pending"
+      "status": "done",
+      "started_at": "2026-08-19T05:33:03+00:00",
+      "base_sha": "17d7ec59804a07ea515cb7b67a679ff07bf4d883",
+      "dirty_at_start": {
+        ".factory/events/57d8227922744f49882c8e96706176c4.json": {
+          "digest": "8f351212f62b8d23c9952977b6a812912dd5be44f93f5c4be3a89e350fc071f0",
+          "git": "? .factory/events/57d8227922744f49882c8e96706176c4.json\u0000\u0000\u0000"
+        },
+        ".factory/events/d02d8255bec14749b1daa7d95d97f44c.json": {
+          "digest": "d6c2b32d1b57beee6b0930cf9212c160002fbce4bf61b5f1d7c0cfda2a4ca941",
+          "git": "? .factory/events/d02d8255bec14749b1daa7d95d97f44c.json\u0000\u0000\u0000"
+        },
+        ".factory/stages.json": {
+          "digest": "e3859190fc8d7d8db4cb5a8cce4c40e85d668332f228603c821a54eb1d046511",
+          "git": "1 .M N... 100644 100644 100644 72b9175d25d30e4387eb93dea5e4b51204e22641 72b9175d25d30e4387eb93dea5e4b51204e22641 .factory/stages.json\u0000\u0000100644 72b9175d25d30e4387eb93dea5e4b51204e22641 0\t.factory/stages.json\u0000\u0000H .factory/stages.json\u0000"
+        },
+        ".factory/stories/FORGE-ACC-3/decomposition.json": {
+          "digest": "831dc8da5555dd5e42d53a01d42be343ef70c977e5a2cbf23c94131ff93433f5",
+          "git": "1 .M N... 100644 100644 100644 78510618f058fc296bdda7591aea6d99f9750977 78510618f058fc296bdda7591aea6d99f9750977 .factory/stories/FORGE-ACC-3/decomposition.json\u0000\u0000100644 78510618f058fc296bdda7591aea6d99f9750977 0\t.factory/stories/FORGE-ACC-3/decomposition.json\u0000\u0000H .factory/stories/FORGE-ACC-3/decomposition.json\u0000"
+        },
+        ".factory/stories/FORGE-ACC-3/grills/tasks/task-plan-approval-gate.json": {
+          "digest": "31dfd30fdaf87083a9d7633ee0b8ca8acf36dc01cb99fdff4d3882143cf3000a",
+          "git": "? .factory/stories/FORGE-ACC-3/grills/tasks/task-plan-approval-gate.json\u0000\u0000\u0000"
+        }
+      },
+      "task_sha256": "05dc9d1258b59c0b23e11ed41c5947a3dd1d22faad698307ad828b626e8daa6f",
+      "completed_at": "2026-08-19T06:17:03+00:00"
     },
     {
       "id": "pre-draft-requirements-round",
@@ -87,6 +114,26 @@
     {
       "id": "hygiene-content-pins-and-doc-debts",
       "title": "Hygiene pins survive insertions; grill docs match the recorder",
+      "status": "pending"
+    },
+    {
+      "id": "task-worktree-start",
+      "title": "Each task runs in its own worktree off main",
+      "status": "pending"
+    },
+    {
+      "id": "task-pr-gate",
+      "title": "Each task ships as its own PR to main",
+      "status": "pending"
+    },
+    {
+      "id": "task-frontier-and-closeout",
+      "title": "forge next routes the full per-task frontier; story done-flip requires all task markers on main",
+      "status": "pending"
+    },
+    {
+      "id": "roadmap-gate-task-markers",
+      "title": "CI treats a task marker as a completed work record",
       "status": "pending"
     }
   ]

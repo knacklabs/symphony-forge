@@ -57,6 +57,43 @@
       ],
       "dependencies": [
         "plan-approval-binding"
+      ],
+      "write_scope": [
+        "factory/scripts/forge_cli/tasks.py",
+        "factory/scripts/forge.py",
+        "factory/scripts/factory_lib.py",
+        "factory/scripts/record_grill_from_json.py",
+        "factory/schemas/grill.json",
+        "factory/scripts/forge_cli/phase.py",
+        "factory/tests/test_gates.py"
+      ],
+      "verify_commands": [
+        "python3 factory/scripts/check_dual_runtime.py"
+      ],
+      "required_tests": [
+        {
+          "id": "test_stage_start_and_delegate_refuse_without_approved_task_plan",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest --with psutil python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_forge_next_and_board_route_author_task_plan_and_await_approval",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest --with psutil python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        }
+      ],
+      "reviewer_focus": "Codex-validated minimal design. New forge_cli/tasks.py (cmd_plan_save, cmd_approve) + forge.py registration of `forge task plan save <id> --from <path>` and `forge task approve <id> --by \"<name>\"`. The per-task plan lives at .factory/stories/<KEY>/task-plans/<id>.md via evidence_path - NOT plans/active/, NOT the decomposition. Approval metadata stays OUT of the Markdown so stamping does not change its digest. forge task approve refuses unless the task grill exists, passes, and is fresh, then stamps approved_task_plan_sha256 = plan_digest_without_assumptions(plan), approved_by, approved_at into the grill record (schema grill.json must allow these 3). Extend require_ready_task(root, id, *, require_approval=True) right after require_task_grill: task-plan exists, grill fresh, approval fields present, stored digest == current plan digest; stage start and write delegate already call this shared seam (no new local logic); forge task approve calls it with require_approval=False. Do NOT add the task-plan digest to grounding_digest (grill precedes plan authoring -> would stale the just-passed grill). task_frontier_state derives (no new stored status): author-contract -> grill -> author-task-plan -> await-approval -> stage-start -> delegate; phase.py maps each to one [dev] action and task_rows uses the SAME predicates so the board cannot disagree. A re-grill (record_grill) replaces the record and clears prior approval. Audited human attestation per 0029 - no signing/OAuth/nonce/plan-mode-hook/daemon (over-building). SCOPE: the 7 write_scope files only.",
+      "plan_contracts": [
+        {
+          "id": "ACC3T2-C1",
+          "statement": "stage start and delegate refuse a task with no approved task plan whose digest matches, or a stale grill",
+          "source": "plans/active/FORGE-ACC-3-approval-and-closeout-integrity.md#task-decomposition"
+        },
+        {
+          "id": "ACC3T2-C2",
+          "statement": "forge next and the board route author-task-plan and await-approval identically from shared predicates",
+          "source": "plans/active/FORGE-ACC-3-approval-and-closeout-integrity.md#task-decomposition"
+        }
       ]
     },
     {
@@ -117,6 +154,54 @@
       "dependencies": [
         "ordered-closeout"
       ]
+    },
+    {
+      "id": "task-worktree-start",
+      "title": "Each task runs in its own worktree off main",
+      "objective": "forge task start <id> creates feat/<KEY>-<TASKID> in a sibling worktree off the exact fetched origin/main SHA, requires task N-1's marker on main, hydrates the approved plan/decomposition/grill/task-plan and the worktree's protected run/decomposition/stages authority; the untracked run pointer gains issue_key/task_id/branch/base_main_sha; require_task_worktree binds downstream actions to the right worktree.",
+      "acceptance_criteria": [
+        "forge task start creates the task worktree/branch off fetched main and refuses if task N-1's marker is absent from main",
+        "stage start and delegate refuse from the wrong worktree/branch via require_task_worktree"
+      ],
+      "dependencies": [
+        "local-review-stamp"
+      ]
+    },
+    {
+      "id": "task-pr-gate",
+      "title": "Each task ships as its own PR to main",
+      "objective": "forge task pr-ready <id> seals a task (shared predicates factored from pr_ready.py): fresh grill + attributed task-plan approval, stage done with a clean certified local-review stamp + non-empty committed product delta, no open signal/window/blocking assumption, clean worktree; writes .factory/stories/<KEY>/tasks/<TASKID>/pr-ready.json and opens the PR; does NOT mark_status or write outcome/shipped.json. A task advances only when its marker is on refreshed origin/main.",
+      "acceptance_criteria": [
+        "forge task pr-ready refuses an unsealed task (missing approval/stamp/clean-tree/committed-delta) and otherwise writes the task marker + opens the PR without flipping the roadmap",
+        "await-merge advances only when the task marker appears on refreshed origin/main, never on CI success alone"
+      ],
+      "dependencies": [
+        "task-worktree-start"
+      ]
+    },
+    {
+      "id": "task-frontier-and-closeout",
+      "title": "forge next routes the full per-task frontier; story done-flip requires all task markers on main",
+      "objective": "task_frontier_state selects the earliest task whose marker is absent from main; phase.py routes exactly one per-task frontier state (author-contract...await-merge); pr_ready (story closeout) requires every task marker on the closeout main base before verify+review+outcome+done-flip, via an evidence-only story-closeout PR; fix completed_stories to read .factory/stories/<KEY>/shipped.json (CFS-1 mismatch).",
+      "acceptance_criteria": [
+        "forge next and the board surface exactly one next per-task frontier state from shared predicates, never offering task N+1 until N's marker is on main",
+        "story pr_ready refuses until every task marker is on main; completed_stories recognizes .factory/stories/<KEY>/shipped.json"
+      ],
+      "dependencies": [
+        "task-pr-gate"
+      ]
+    },
+    {
+      "id": "roadmap-gate-task-markers",
+      "title": "CI treats a task marker as a completed work record",
+      "objective": "check_pr_ticket.py and .github/workflows/roadmap-gate.yml treat an added, validated task marker (.factory/stories/<KEY>/tasks/<TASKID>/pr-ready.json) as a completed work record, declared as <KEY>/<TASKID> or inferred from the canonical branch, preserving existing story done-flip and quickfix-window handling.",
+      "acceptance_criteria": [
+        "a task PR whose only completed work record is a validated task marker passes pr-ticket-check",
+        "story and quickfix declaration handling is unchanged"
+      ],
+      "dependencies": [
+        "task-frontier-and-closeout"
+      ]
     }
   ],
   "user_facing": false,
@@ -124,5 +209,5 @@
   "epic": "accountable-engineering",
   "plan_file": "plans/active/FORGE-ACC-3-approval-and-closeout-integrity.md",
   "plan_sha256": "5d9d8ba4de41df6b9253dc04d5451145c7beef03ab9cad25af1aadc9e4982da2",
-  "commit": "8f1d0530b29083c4b7a0978bebb86fd9b0e1f23c"
+  "commit": "17d7ec59804a07ea515cb7b67a679ff07bf4d883"
 }
