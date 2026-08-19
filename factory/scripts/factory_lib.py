@@ -687,6 +687,26 @@ def task_marker_path(key: str, task_id: str) -> Path:
     return Path(".factory") / "stories" / key / "tasks" / task_id / "pr-ready.json"
 
 
+def task_marker_on_main(root: Path, key: str, task_id: str) -> bool:
+    """Refresh origin/main and report whether its tree contains the task marker."""
+    marker = task_marker_path(key, task_id)
+    fetch = subprocess.run(
+        ["git", "fetch", "origin", "main"], cwd=root, capture_output=True,
+        text=True, env=clean_git_env(), encoding="utf-8", errors="surrogateescape",
+    )
+    if fetch.returncode != 0:
+        detail = fetch.stderr.strip() or fetch.stdout.strip()
+        raise SystemExit(
+            "fetching origin/main failed" + (f": {detail}" if detail else "")
+        )
+    present = subprocess.run(
+        ["git", "cat-file", "-e", f"origin/main:{marker.as_posix()}"],
+        cwd=root, capture_output=True, text=True, env=clean_git_env(),
+        encoding="utf-8", errors="surrogateescape",
+    )
+    return present.returncode == 0
+
+
 def _windows_reparse_point(path: Path) -> bool:
     info = os.lstat(path)
     return bool(
@@ -1254,9 +1274,7 @@ def require_grill(
 
 
 def require_task_grill(
-    root: Path,
-    task_id: str,
-    task: dict,
+    root: Path, task_id: str, task: dict, *, treeish: str = "",
 ) -> None:
     """Require a passing grill bound to the current grounding inputs."""
     key = _active_story_key(root)
@@ -1282,7 +1300,7 @@ def require_task_grill(
             f".factory/grills/tasks/{task_id}.json has no commit stamp — re-record "
             f"with current tooling using `{record_command}`."
         )
-    if data.get("input_sha256") != grounding_digest(root, task):
+    if data.get("input_sha256") != grounding_digest(root, task, treeish=treeish):
         raise SystemExit(
             f"the {task_id} task grill is STALE — its grounding inputs changed. "
             f"Re-grill and record `{record_command}`; --task-digest was removed "
@@ -1354,10 +1372,12 @@ def require_approved_plan_digest(root: Path) -> str:
     return approved
 
 
-def product_tree_digest(root: Path) -> str:
-    """Hash the deterministic index blob list, excluding workflow-only paths."""
+def product_tree_digest(root: Path, treeish: str = "") -> str:
+    """Hash product blobs from the index, or from a named historical tree."""
+    git_args = (["ls-tree", "-r", "-z", treeish]
+                if treeish else ["ls-files", "--stage", "-z"])
     proc = subprocess.run(
-        ["git", "ls-files", "--stage", "-z"],
+        ["git", *git_args],
         cwd=root,
         capture_output=True,
         text=True,
@@ -1367,7 +1387,7 @@ def product_tree_digest(root: Path) -> str:
     )
     if proc.returncode != 0:
         raise SystemExit(
-            "cannot derive the task grounding digest from the Git index: "
+            "cannot derive the task grounding digest from Git: "
             + proc.stderr.strip()
         )
     blobs: list[tuple[str, str]] = []
@@ -1378,7 +1398,7 @@ def product_tree_digest(root: Path) -> str:
         if path.startswith((".factory/", "plans/")):
             continue
         fields = metadata.split()
-        blobs.append((path, fields[1]))
+        blobs.append((path, fields[2] if treeish else fields[1]))
     payload = json.dumps(sorted(blobs), separators=(",", ":"), ensure_ascii=True)
     return hashlib.sha256(payload.encode()).hexdigest()
 
@@ -1392,7 +1412,7 @@ def requirements_digest(root: Path, spec_path: Path) -> str:
     return hashlib.sha256(payload).hexdigest()
 
 
-def grounding_digest(root: Path, task: dict) -> str:
+def grounding_digest(root: Path, task: dict, *, treeish: str = "") -> str:
     """Bind a task grill to its full contract, approved plan, and product tree."""
     decomposition = load_json(protected_decomposition_state_path(root), default={})
     plan_file = decomposition.get("plan_file")
@@ -1420,7 +1440,7 @@ def grounding_digest(root: Path, task: dict) -> str:
         {
             "contract": task,
             "plan_sha256": plan_digest_without_assumptions(plan),
-            "product_tree_sha256": product_tree_digest(root),
+            "product_tree_sha256": product_tree_digest(root, treeish),
         },
         sort_keys=True,
         separators=(",", ":"),
@@ -1575,7 +1595,7 @@ def task_frontier_state(root: Path) -> tuple[str, dict] | None:
     return state, frontier
 
 
-def require_task_worktree(root: Path) -> None:
+def require_task_worktree(root: Path, *, allow_completed: bool = False) -> None:
     """Bind task-level actions to the worktree recorded by `task start`."""
     state = load_json(run_state_path(root), default={})
     task_id = state.get("task_id")
@@ -1597,7 +1617,12 @@ def require_task_worktree(root: Path) -> None:
     current_branch = proc.stdout.strip() if proc.returncode == 0 else ""
     frontier = task_frontier_state(root)
     frontier_id = frontier[1].get("id") if frontier else None
-    if current_branch != branch or frontier_id != task_id:
+    stage = next((stage for stage in load_json(
+        git_control_dir(root) / "stages.json", default={}
+    ).get("stages", []) if stage.get("id") == task_id), {})
+    completed = stage.get("status") == "done"
+    task_matches = frontier_id == task_id or (allow_completed and completed)
+    if current_branch != branch or not task_matches:
         raise SystemExit(
             "task worktree required: expected "
             f"branch {branch!r} at frontier {task_id!r}, found "
@@ -1608,6 +1633,7 @@ def require_task_worktree(root: Path) -> None:
 
 def require_ready_task(
     root: Path, task_id: str, *, require_approval: bool = True,
+    allow_completed: bool = False,
 ) -> dict:
     """Require the JIT execution contract and its fresh, passing grill."""
     tasks = load_json(
@@ -1623,7 +1649,13 @@ def require_ready_task(
         )
 
     frontier_state = task_frontier_state(root)
-    if frontier_state is None or frontier_state[1].get("id") != task_id:
+    stage = next((stage for stage in load_json(
+        git_control_dir(root) / "stages.json", default={}
+    ).get("stages", []) if stage.get("id") == task_id), {})
+    completed = stage.get("status") == "done"
+    if (
+        frontier_state is None or frontier_state[1].get("id") != task_id
+    ) and not (allow_completed and completed):
         frontier_id = frontier_state[1].get("id") if frontier_state else "none"
         raise SystemExit(
             f"{task_id} is not the earliest unfinished task ({frontier_id}); "
@@ -1641,7 +1673,11 @@ def require_ready_task(
                 "remains available for exploration only."
             )
 
-    require_task_grill(root, task_id, task)
+    treeish = ""
+    if allow_completed and completed:
+        from forge_cli.stages import stage_baseline
+        treeish = stage_baseline(root, stage)
+    require_task_grill(root, task_id, task, treeish=treeish)
     if require_approval:
         key = _active_story_key(root)
         grill = load_json(
@@ -1658,6 +1694,75 @@ def require_ready_task(
                 f"Task plan approval required: a human must approve the current "
                 f"{task_id} plan with `./forge task approve {task_id} --by \"<name>\"`."
             )
+    return task
+
+
+def task_seal_shared_problems(root: Path, issue_key: str) -> list[str]:
+    """Predicates shared by task sealing and story closeout readiness."""
+    from forge_cli.assumptions import blocking_for_issue
+    from forge_cli.quickfix import _lite_product_files, load_active, profile_of
+    from forge_cli.signal import open_signals
+    from forge_cli.stages import product_tree_snapshot
+
+    problems: list[str] = []
+    signals = open_signals(root)
+    if signals:
+        ids = ", ".join(f"{signal['id']} ({signal['kind']})" for signal in signals)
+        problems.append(
+            f"resolution of {len(signals)} open worker signal(s): {ids} — "
+            "`forge.py signal resolve <id> --notes ...`"
+        )
+    window = load_active(root)
+    if window:
+        profile = profile_of(window)
+        closer = "quickfix done" if profile == "quickfix" else "mode done"
+        problems.append(
+            f"closure of {profile} window {window['id']} ({window['reason']}) — "
+            f"`forge.py {closer}`"
+        )
+    assumptions = blocking_for_issue(root, issue_key) if issue_key else []
+    if assumptions:
+        ids = ", ".join(f"{row['id']} ({row['status']})" for row in assumptions)
+        problems.append(
+            f"orchestrator guidance on {len(assumptions)} assumption(s): {ids} — "
+            "resolve via `forge.py assumptions resolve <id> "
+            "--status confirmed|promoted --notes ...`"
+        )
+    dirty_product = _lite_product_files(
+        root, list(product_tree_snapshot(root).get("dirty", {})),
+    )
+    if dirty_product:
+        problems.append(
+            "clean product worktree and index: staged or unstaged product changes "
+            f"remain ({', '.join(dirty_product[:5])})"
+        )
+    return problems
+
+
+def require_task_sealed(root: Path, task_id: str) -> dict:
+    """Require the approved, reviewed, committed seal for one completed task."""
+    from forge_cli.stages import _require_reviewed_commit, load_stages
+
+    state = load_json(run_state_path(root), default={})
+    if state.get("task_id") != task_id:
+        raise SystemExit(
+            f"task worktree required: this worktree is bound to "
+            f"{state.get('task_id') or 'no task'!r}, not {task_id!r}"
+        )
+    require_task_worktree(root, allow_completed=True)
+    task = require_ready_task(root, task_id, allow_completed=True)
+    stage = next(
+        (candidate for candidate in load_stages(root).get("stages", [])
+         if candidate.get("id") == task_id),
+        None,
+    )
+    if not stage or stage.get("status") != "done":
+        raise SystemExit(f"task {task_id} is not sealed: stage status must be done")
+    _require_reviewed_commit(root, stage, task)
+    issue_key = state.get("issue_key") or state.get("story") or ""
+    problems = task_seal_shared_problems(root, issue_key)
+    if problems:
+        raise SystemExit("Task not PR ready:\n- " + "\n- ".join(problems))
     return task
 
 

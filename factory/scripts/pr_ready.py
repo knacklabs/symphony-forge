@@ -19,20 +19,20 @@ from factory_lib import (
     run_state_path,
     story_dir,
     story_uses_scoped_layout,
+    task_seal_shared_problems,
     tests_state_path,
     verify_state_path,
     require_closeout_order,
 )
-from forge_cli.assumptions import blocking_for_issue, load_rows as load_assumptions
+from forge_cli.assumptions import load_rows as load_assumptions
 from forge_cli.decisions import decision_records
 from forge_cli.events import append_event, load_events
 from forge_cli.outcome import load_outcome, outcome_path
 from forge_cli.roadmap import load_items, mark_status
-from forge_cli.quickfix import _lite_product_files, load_active
 from forge_cli.readiness import tests_passed
 from forge_cli.review_brief import declared_contracts
-from forge_cli.signal import open_signals, signals_path
-from forge_cli.stages import load_stages, product_tree_snapshot
+from forge_cli.signal import signals_path
+from forge_cli.stages import load_stages
 
 # Commits touching only these paths after evidence was recorded do not
 # invalidate it: evidence/plan/doc records, harness machinery and adapters
@@ -168,25 +168,9 @@ if gate_drift:
         "(python3 factory/scripts/check_vendor_integrity.py)"
     )
 
-# An unresolved worker signal is an unanswered contradiction — nothing ships
-# over one. The orchestrator resolves (forge signal resolve) and resumes.
-open_sigs = open_signals(root)
-if open_sigs:
-    ids = ", ".join(f"{s['id']} ({s['kind']})" for s in open_sigs)
-    missing.append(
-        f"resolution of {len(open_sigs)} open worker signal(s): {ids} — "
-        "`forge.py signal resolve <id> --notes ...`"
-    )
-
-# An open quickfix window is the planning lock still disarmed: it would carry
-# into the next task, and its ledger entry only records the files it touched
-# when it is closed. Ship with the hatch shut.
-open_quickfix = load_active(root)
-if open_quickfix:
-    missing.append(
-        f"closure of quickfix {open_quickfix['id']} ({open_quickfix['reason']}) — "
-        "`forge.py quickfix done`"
-    )
+# Task sealing and story closeout share the no-open-state and clean-tree
+# predicates. Story closeout adds its verify/review/outcome chain above.
+missing.extend(task_seal_shared_problems(root, issue_key))
 
 # Assumptions are guided before shipping: the orchestrator confirms, demands
 # a fix, or promotes each one — an unguided assumption is an unreviewed call.
@@ -194,14 +178,6 @@ if open_quickfix:
 # story shipped but never what it delivered, which is the question a reader
 # asks six weeks later. Recorded via `forge outcome set`, never hand-written.
 outcome_record = load_outcome(root)
-
-unguided = blocking_for_issue(root, issue_key) if issue_key else []
-if unguided:
-    ids = ", ".join(f"{r['id']} ({r['status']})" for r in unguided)
-    missing.append(
-        f"orchestrator guidance on {len(unguided)} assumption(s): {ids} — "
-        "resolve via `forge.py assumptions resolve <id> --status confirmed|promoted --notes ...`"
-    )
 
 # Provenance: every evidence artifact carries the commit it was recorded at;
 # all must agree, and no code may have changed since (evidence-only commits ok).
@@ -250,15 +226,6 @@ elif head and stamps:
                         f"fresh evidence: code changed since it was recorded at {stamp[:8]} "
                         f"({', '.join(code_changes[:5])}) — rerun verify/tests/reviews"
                     )
-
-dirty_product = _lite_product_files(
-    root, list(product_tree_snapshot(root).get("dirty", {})),
-)
-if dirty_product:
-    missing.append(
-        "clean product worktree and index: staged or unstaged product changes remain "
-        f"({', '.join(dirty_product[:5])})"
-    )
 
 if missing:
     print("PR not ready:")

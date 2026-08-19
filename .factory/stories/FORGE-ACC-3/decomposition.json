@@ -381,6 +381,41 @@
       ],
       "dependencies": [
         "task-worktree-start"
+      ],
+      "write_scope": [
+        "factory/scripts/forge_cli/tasks.py",
+        "factory/scripts/forge.py",
+        "factory/scripts/factory_lib.py",
+        "factory/scripts/pr_ready.py",
+        "factory/tests/test_gates.py"
+      ],
+      "verify_commands": [
+        "python3 factory/scripts/check_dual_runtime.py"
+      ],
+      "required_tests": [
+        {
+          "id": "test_task_pr_ready_refuses_unsealed_then_writes_marker_and_opens_pr",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest --with psutil python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_task_pr_ready_does_not_flip_roadmap_or_write_outcome",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest --with psutil python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        }
+      ],
+      "reviewer_focus": "Implements decision 0047 forge task pr-ready. FACTOR the reusable seal predicates OUT of pr_ready.py into a shared factory_lib.require_task_sealed(root, task_id) (do NOT clone pr_ready logic): fresh task grill + attributed task-plan approval (reuse require_ready_task), this task's stage status==done with a clean certified local-review stamp (reuse the task-4 stamp check) and a non-empty committed product delta, no open signal, no open window (quickfix/lite/degraded), no blocking assumption, and a clean product worktree/index (reuse product_tree_snapshot). Then refactor pr_ready.py to CALL the same factored predicates where they overlap (story closeout still adds its own verify/review/outcome chain). New forge_cli/tasks.py cmd_task_pr_ready(<id>) registered as `forge task pr-ready <id>`: run require_task_sealed; on pass write the marker task_marker_path(key, id) = .factory/stories/<KEY>/tasks/<TASKID>/pr-ready.json (validated recorder-style payload: task_id, branch, base_main_sha, commit==HEAD, sealed_at) then open the PR via `gh pr create` (gh is installed and authenticated in this environment). The marker is written FIRST (shipped truth) so it never depends on the PR call; if gh is unavailable/unauthenticated at run time, FAIL with a clear message directing `gh auth login` (never silently skip the PR). Tests stub a fake `gh` on PATH (recording its argv) to stay hermetic. It MUST NOT mark_status(), write outcome.json/shipped.json, or flip the roadmap. AC2 (await-merge advances only when the marker is on refreshed origin/main, never on CI success) is the marker-on-main truth task 8's start gate already reads; add a shared factory_lib.task_marker_on_main(root, key, id) helper (git fetch + cat-file) that task 8's gate and task 10's frontier reuse. BOOTSTRAP: ACC-3 ships story-level and does not run task pr-ready. SCOPE: the 5 write_scope files only.",
+      "plan_contracts": [
+        {
+          "id": "ACC3T9-C1",
+          "statement": "forge task pr-ready refuses an unsealed task (missing approval/stamp/clean-tree/committed-delta) and otherwise writes the task marker + opens the PR without flipping the roadmap",
+          "source": "plans/active/FORGE-ACC-3-approval-and-closeout-integrity.md#task-decomposition"
+        },
+        {
+          "id": "ACC3T9-C2",
+          "statement": "await-merge advances only when the task marker appears on refreshed origin/main, never on CI success alone",
+          "source": "plans/active/FORGE-ACC-3-approval-and-closeout-integrity.md#task-decomposition"
+        }
       ]
     },
     {
@@ -413,5 +448,5 @@
   "epic": "accountable-engineering",
   "plan_file": "plans/active/FORGE-ACC-3-approval-and-closeout-integrity.md",
   "plan_sha256": "5d9d8ba4de41df6b9253dc04d5451145c7beef03ab9cad25af1aadc9e4982da2",
-  "commit": "f8fa44b926cc66408f8096f5de7797b336774b4a"
+  "commit": "4b343a74ba265617ecdeae828d4ad9bc683ce0b5"
 }

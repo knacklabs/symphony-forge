@@ -3,14 +3,17 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
+import shutil
 import subprocess
 from pathlib import Path
 
 from factory_lib import (
     clean_git_env, dump_json, evidence_path, git_control_dir, load_json, now_iso,
     plan_digest_without_assumptions, repo_root, require_ready_task,
+    require_task_sealed,
     protected_decomposition_state_path, run_state_path,
-    task_marker_path, validate_payload,
+    task_marker_on_main, task_marker_path, validate_payload,
 )
 
 from .common import fail
@@ -103,19 +106,20 @@ def cmd_task_start(args: argparse.Namespace) -> None:
         fail(f"{args.id!r} is not a task in the protected decomposition")
     task_marker_path(key, args.id)  # validates both branch/path components
 
-    _require_git(base, "fetching origin/main", "fetch", "origin", "main")
-    base_main_sha = _require_git(
-        base, "resolving fetched origin/main", "rev-parse", "--verify",
-        "origin/main^{commit}",
-    )
     if index:
         predecessor = tasks[index - 1].get("id")
-        marker = task_marker_path(key, predecessor)
-        if _git(base, "cat-file", "-e", f"origin/main:{marker.as_posix()}").returncode:
+        if not task_marker_on_main(base, key, predecessor):
+            marker = task_marker_path(key, predecessor)
             fail(
                 f"task {args.id} cannot start: predecessor {predecessor} marker "
                 f"is absent from fetched origin/main ({marker.as_posix()})"
             )
+    else:
+        _require_git(base, "fetching origin/main", "fetch", "origin", "main")
+    base_main_sha = _require_git(
+        base, "resolving fetched origin/main", "rev-parse", "--verify",
+        "origin/main^{commit}",
+    )
 
     branch = f"feat/{key}-{args.id}"
     worktree = base.parent / f"{base.name}-{key}-{args.id}"
@@ -186,3 +190,73 @@ def cmd_task_start(args: argparse.Namespace) -> None:
         "base_main_sha": base_main_sha,
     })
     print(f"Started task {args.id}: {branch} at {worktree} ({base_main_sha})")
+
+
+def cmd_task_pr_ready(args: argparse.Namespace) -> None:
+    base = Path(args.repo).resolve() if args.repo else repo_root()
+    task = require_task_sealed(base, args.id)
+    state = load_json(run_state_path(base), default={})
+    key = state.get("issue_key") or state.get("story")
+    branch = state.get("branch")
+    base_main_sha = state.get("base_main_sha")
+    for field, value in (
+        ("story", key), ("branch", branch), ("base_main_sha", base_main_sha),
+    ):
+        if not isinstance(value, str) or not value.strip():
+            fail(f"task PR marker requires a non-empty {field} in the task run pointer")
+
+    commit = _require_git(
+        base, "resolving task HEAD", "rev-parse", "--verify", "HEAD^{commit}",
+    )
+    marker = task_marker_path(key, args.id)
+    payload = {
+        "task_id": args.id,
+        "branch": branch,
+        "base_main_sha": base_main_sha,
+        "commit": commit,
+        "sealed_at": now_iso(),
+    }
+    if any(not isinstance(value, str) or not value.strip() for value in payload.values()):
+        fail("task PR marker fields must all be non-empty strings")
+    dump_json(base / marker, payload)
+
+    # The marker is committed and pushed by this command (an evidence-only commit
+    # the command owns) so it rides the branch onto the PR; AC2's advance signal
+    # is that marker landing on origin/main at merge (task 8's cat-file gate).
+    _require_git(base, "staging the task PR marker", "add", "--", marker.as_posix())
+    _require_git(
+        base, "committing the task PR marker",
+        "commit", "-m", f"{key} {args.id}: task PR marker",
+    )
+    _require_git(base, "pushing the task branch", "push", "-u", "origin", branch)
+
+    if shutil.which("gh", path=os.environ.get("PATH")) is None:
+        fail(
+            f"task {args.id} is sealed at {marker.as_posix()}, but gh is unavailable. "
+            "Install GitHub CLI, run `gh auth login`, then retry to open the PR."
+        )
+    title = f"{key} {args.id}: {task.get('title', '').strip()}".rstrip(": ")
+    body = (
+        f"Task marker: {marker.as_posix()}\n\n"
+        f"Sealed commit: {commit}\n"
+    )
+    proc = subprocess.run(
+        [
+            "gh", "pr", "create", "--base", "main", "--title", title,
+            "--body", body,
+        ],
+        cwd=base,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        errors="surrogateescape",
+    )
+    if proc.returncode != 0:
+        detail = proc.stderr.strip() or proc.stdout.strip()
+        fail(
+            f"task {args.id} is sealed at {marker.as_posix()}, but opening the PR "
+            f"failed{f': {detail}' if detail else ''}. Run `gh auth login`, then retry."
+        )
+    print(f"Task {args.id} PR ready: {marker.as_posix()}")
+    if proc.stdout.strip():
+        print(proc.stdout.strip())

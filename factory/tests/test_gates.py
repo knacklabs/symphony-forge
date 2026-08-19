@@ -10721,6 +10721,82 @@ def seed_task_start_inputs(
     }
 
 
+def fake_gh_env(tmp_path: Path) -> tuple[dict[str, str], Path]:
+    bin_dir = tmp_path / "fake-gh-bin"
+    bin_dir.mkdir()
+    argv_path = tmp_path / "gh-argv.txt"
+    executable = bin_dir / "gh"
+    executable.write_text(
+        "#!/bin/sh\nprintf '%s\\n' \"$@\" > \"$GH_ARGV_FILE\"\n"
+        "printf '%s\\n' 'https://example.test/pr/1'\n"
+    )
+    executable.chmod(0o755)
+    return {
+        "PATH": f"{bin_dir}{os.pathsep}{os.environ.get('PATH', '')}",
+        "GH_ARGV_FILE": str(argv_path),
+    }, argv_path
+
+
+def prepare_task_pr_ready(repo: Path, tmp_path: Path) -> Path:
+    remote = tmp_path / "pr-origin.git"
+    if not remote.exists():
+        proc = subprocess.run(["git", "init", "--bare", str(remote)],
+                              capture_output=True, text=True)
+        assert proc.returncode == 0, proc.stdout + proc.stderr
+        if "origin" not in git(repo, "remote").split():
+            git(repo, "remote", "add", "origin", str(remote))
+        # publish the existing origin/main sha to the bare remote WITHOUT moving
+        # the local tracking ref, so base_main_sha stays stable while pushes work
+        main_sha = git(repo, "rev-parse", "origin/main")
+        git(repo, "push", "-q", str(remote), f"{main_sha}:refs/heads/main")
+    start_stage(repo, tmp_path, STAGE_TASK, launch=False)
+    code, out = run(repo, "forge.py", "delegate", "T1", "--print-only")
+    assert code == 0, out
+    control = delegation_ledger(repo).parent
+    stage = json.loads((control / "stages.json").read_text())["stages"][0]
+    brief = repo / ".factory" / "briefs" / "T1.md"
+    brief.parent.mkdir(parents=True, exist_ok=True)
+    brief.write_bytes((repo / ".factory" / "diagnostic-briefs" / "T1.md").read_bytes())
+    companion = "/tmp/test-companion.mjs"
+    argv = [
+        shutil.which("node") or "node", companion, "task", "--json", "--cwd",
+        str(repo), "--model", "gpt-test", "--effort", "medium",
+        "--prompt-file", ".factory/briefs/T1.md", "--write",
+    ]
+    launch = {
+        "launch_id": "task-pr-ready-test", "task": "T1", "write": True,
+        "brief_sha256": hashlib.sha256(brief.read_bytes()).hexdigest(),
+        "task_sha256": task_digest(STAGE_TASK), "model": "gpt-test",
+        "effort": "medium", "companion_path": companion, "argv": argv,
+        "argv_sha256": hashlib.sha256(json.dumps(
+            argv, separators=(",", ":")).encode()).hexdigest(),
+        "stage_started_at": stage["started_at"], "process_token": "test-process",
+    }
+    delegation_ledger(repo).write_text("\n".join(json.dumps({
+        **launch, "launch_status": status,
+        **({"exit_code": 0} if status == "succeeded" else {}),
+    }) for status in ("starting", "running", "succeeded")) + "\n")
+    pointer = json.loads((control / "run.json").read_text())
+    pointer.update({
+        "task_id": "T1",
+        "branch": git(repo, "symbolic-ref", "--short", "HEAD"),
+        "base_main_sha": git(repo, "rev-parse", "origin/main"),
+    })
+    (control / "run.json").write_text(json.dumps(pointer))
+    return story_state(repo) / "tasks" / "T1" / "pr-ready.json"
+
+
+def finish_task_for_pr_ready(repo: Path) -> None:
+    write_in_scope(repo, "src/core.py")
+    git(repo, "add", "src/core.py")
+    code, out = record_stage_local(repo)
+    assert code == 0, out
+    git(repo, "commit", "-qm", "seal task work")
+    data = json.loads((delegation_ledger(repo).parent / "stages.json").read_text())
+    data["stages"][0]["status"] = "done"
+    write_stages(repo, data)
+
+
 def test_task_start_creates_worktree_off_main_and_gates_on_predecessor_marker(
     repo, tmp_path,
 ):
@@ -10781,6 +10857,66 @@ def test_task_start_creates_worktree_off_main_and_gates_on_predecessor_marker(
         (control / "stages.json").read_text())["stages"]] == ["done", "pending"]
     code, out = run(repo, "forge.py", "task", "start", "T2")
     assert code != 0 and "task branch already exists" in out, out
+
+
+def test_task_pr_ready_refuses_unsealed_then_writes_marker_and_opens_pr(
+    repo, tmp_path,
+):
+    marker = prepare_task_pr_ready(repo, tmp_path)
+    gh_env, argv_path = fake_gh_env(tmp_path)
+
+    code, out = run(repo, "forge.py", "task", "pr-ready", "T1", env=gh_env)
+    assert code != 0 and "stage status must be done" in out, out
+    assert not marker.exists() and not argv_path.exists()
+
+    finish_task_for_pr_ready(repo)
+    expected_head = head(repo)
+    code, out = run(repo, "forge.py", "task", "pr-ready", "T1", env=gh_env)
+    assert code == 0, out
+    payload = json.loads(marker.read_text())
+    pointer = json.loads(
+        (delegation_ledger(repo).parent / "run.json").read_text()
+    )
+    assert payload == {
+        "task_id": "T1",
+        "branch": git(repo, "symbolic-ref", "--short", "HEAD"),
+        "base_main_sha": pointer["base_main_sha"],
+        "commit": expected_head,
+        "sealed_at": payload["sealed_at"],
+    }
+    # the marker rides an evidence commit that is pushed to origin (AC2)
+    assert head(repo) != expected_head  # a marker commit was made on top of the seal
+    assert marker.relative_to(repo).as_posix() in git(
+        repo, "show", "--name-only", "--format=", "HEAD"
+    )
+    assert git(repo, "cat-file", "-e", f"origin/{git(repo, 'symbolic-ref', '--short', 'HEAD')}:{marker.relative_to(repo).as_posix()}") == ""
+    argv = argv_path.read_text().splitlines()
+    assert argv[:4] == ["pr", "create", "--base", "main"]
+    assert "--head" not in argv
+    assert "--title" in argv and "ENG-1 T1: core slice" in argv
+    assert "--body" in argv
+    assert marker.relative_to(repo).as_posix() in argv_path.read_text()
+
+
+def test_task_pr_ready_does_not_flip_roadmap_or_write_outcome(repo, tmp_path):
+    marker = prepare_task_pr_ready(repo, tmp_path)
+    finish_task_for_pr_ready(repo)
+    gh_env, _ = fake_gh_env(tmp_path)
+    roadmap = repo / "plans" / "roadmap.json"
+    before = roadmap.read_bytes()
+
+    code, out = run(repo, "forge.py", "task", "pr-ready", "T1", env=gh_env)
+
+    assert code == 0, out
+    assert marker.is_file() and roadmap.read_bytes() == before
+    assert roadmap_items(repo)["ENG-1"]["status"] == "active"
+    for path in (
+        story_state(repo) / "outcome.json",
+        story_state(repo) / "shipped.json",
+        repo / ".factory" / "outcome.json",
+        repo / ".factory" / "shipped.json",
+    ):
+        assert not path.exists()
 
 
 def test_require_task_worktree_noops_for_story_level_run(repo, tmp_path):

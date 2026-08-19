@@ -1,0 +1,71 @@
+{
+  "generated_by": "griller",
+  "gate": "task",
+  "verdict": "pass",
+  "gaps": [],
+  "contradictions": [],
+  "resolutions": [
+    "PR flow: seal on C=HEAD; write marker with sealed_commit=C; then the command runs git add <marker>, git commit -m '<KEY> <id>: task PR marker' (evidence-only), git push -u origin <branch>, gh pr create. The commit+push are the command's own authorized git ops and are REQUIRED (without them AC2's marker-on-origin/main can never hold).",
+    "Factor the seal predicates into factory_lib.require_task_sealed(root, id); pr_ready.py refactors to call the same predicates where they overlap (factored, not cloned, per 0047).",
+    "Shipped truth = the exact pr-ready.json marker on refreshed origin/main (shared task_marker_on_main helper reused by task 8's start gate and task 10's frontier); never CI-green or branch/git-log inference."
+  ],
+  "inspected_refs": [
+    "factory/scripts/pr_ready.py",
+    "factory/scripts/forge_cli/tasks.py",
+    "factory/scripts/factory_lib.py",
+    "factory/scripts/forge_cli/stages.py",
+    "docs/decisions/0047-task-level-worktree-and-pr.md"
+  ],
+  "current_flow": "pr_ready.py is a story-level script with inline seal checks; there is no per-task seal or marker writer. task_marker_path (task 8) defines the marker path but nothing writes it. gh is available for PR creation.",
+  "criteria_map": {
+    "forge task pr-ready refuses an unsealed task (missing approval/stamp/clean-tree/committed-delta) and otherwise writes the task marker + opens the PR without flipping the roadmap": "Inspected pr_ready.py seal checks; factoring them into require_task_sealed and calling it from cmd_task_pr_ready refuses an unsealed task, else writes task_marker_path + gh pr create, with NO mark_status/outcome/shipped/roadmap write.",
+    "await-merge advances only when the task marker appears on refreshed origin/main, never on CI success alone": "Inspected task 8's cat-file start gate; the shared task_marker_on_main helper makes the marker-on-fetched-main the only advance signal."
+  },
+  "decision": "keep",
+  "new_abstractions": [
+    "factory_lib.require_task_sealed(root, id) and task_marker_on_main(root, key, id); justified as the factored seal predicates (shared with pr_ready) and the shared marker-on-main truth (shared with tasks 8/10)."
+  ],
+  "rounds": [
+    {
+      "question": "How does task pr-ready open the PR?",
+      "options": [
+        "Best-effort gh, always write marker",
+        "install gh cli, login and then continue"
+      ],
+      "chosen": "install gh cli, login and then continue"
+    },
+    {
+      "question": "How are seal predicates shared?",
+      "options": [
+        "Factor into factory_lib, both call it",
+        "Clone the checks into tasks.py"
+      ],
+      "chosen": "Factor into factory_lib, both call it"
+    },
+    {
+      "question": "What is the shipped-truth signal?",
+      "options": [
+        "Marker on refreshed origin/main",
+        "PR merged status via gh"
+      ],
+      "chosen": "Marker on refreshed origin/main"
+    }
+  ],
+  "citations": [
+    {
+      "finding": "0047 requires the seal predicates factored from pr_ready.py, not cloned, and makes the committed marker the shipped truth.",
+      "source": "docs/decisions/0047-task-level-worktree-and-pr.md"
+    },
+    {
+      "finding": "gh 2.95.0 is installed and authenticated (account vrknetha) in this environment, so gh pr create is the PR path.",
+      "source": "gh auth status"
+    }
+  ],
+  "task_id": "task-pr-gate",
+  "input_sha256": "d55c5873487fc50a06706dbe829ee1d1f827524346c609b845189cd02ccba69c",
+  "recorded_at": "2026-08-19T12:24:30+00:00",
+  "commit": "4b343a74ba265617ecdeae828d4ad9bc683ce0b5",
+  "approved_task_plan_sha256": "a05631cd777002440d1de12db672286501156b07bf2493a605db0a3ef422987e",
+  "approved_by": "Ravi Kiran Vemula",
+  "approved_at": "2026-08-19T12:24:30+00:00"
+}

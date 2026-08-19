@@ -187,6 +187,12 @@ def main() -> None:
     p_task_start.add_argument("id", help="task id")
     p_task_start.add_argument("--repo")
     p_task_start.set_defaults(func=tasks_mod.cmd_task_start)
+    p_task_pr_ready = task_sub.add_parser(
+        "pr-ready", help="seal one completed task and open its PR to main",
+    )
+    p_task_pr_ready.add_argument("id", help="task id")
+    p_task_pr_ready.add_argument("--repo")
+    p_task_pr_ready.set_defaults(func=tasks_mod.cmd_task_pr_ready)
     p_task_plan = task_sub.add_parser("plan", help="manage a task plan")
     task_plan_sub = p_task_plan.add_subparsers(
         dest="task_plan_command", required=True,
