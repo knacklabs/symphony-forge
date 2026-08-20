@@ -1,0 +1,11 @@
+{
+  "event": "done",
+  "id": "Q-0085-ac88",
+  "profile": "quickfix",
+  "reason": "Widen check_dual_runtime nonblank_lines/check_canon_markers to catch UnicodeDecodeError so a binary skill asset (shadcn logo PNG) under .claude/.codex no longer crashes the linter",
+  "started_at": "2026-08-20T11:08:05+00:00",
+  "completed_at": "2026-08-20T11:08:33+00:00",
+  "files": [
+    "factory/scripts/check_dual_runtime.py"
+  ]
+}
