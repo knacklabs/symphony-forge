@@ -2459,6 +2459,36 @@ def upgrade_into(repo: Path):
     )
 
 
+def test_upgrade_names_diverged_doc_contracts_and_writes_no_backup(repo):
+    edited = repo / "docs" / "product" / "README.md"
+    identical = repo / "docs" / "architecture" / "README.md"
+    edited.write_text("# Client-owned edit\n")
+    identical.write_bytes(
+        (HARNESS / "docs" / "architecture" / "README.md").read_bytes())
+    git(repo, "add", edited.relative_to(repo).as_posix())
+    git(repo, "commit", "-q", "-m", "edit a doc contract")
+
+    proc = upgrade_into(repo)
+
+    output = proc.stdout + proc.stderr
+    assert proc.returncode == 0, output
+    replaced = next(
+        line for line in output.splitlines()
+        if line.startswith("Replaced doc contracts:")
+    )
+    assert "docs/product/README.md" in replaced
+    assert "docs/architecture/README.md" in replaced
+    warning = next(
+        line for line in output.splitlines()
+        if line.startswith("WARNING: replaced doc contracts differed")
+    )
+    assert "docs/product/README.md" in warning
+    assert "docs/architecture/README.md" not in warning
+    assert "git diff -- docs/product/README.md" in warning
+    assert "docs/product/ (except its README.md doc contract)" in output
+    assert not list(repo.rglob("*.orig"))
+
+
 def test_upgrade_does_not_vendor_the_harness_source_marker(repo):
     # `forge upgrade` runs FROM the harness source, which carries the repo-kind
     # marker. It must never copy that marker into the upgraded client, or the
