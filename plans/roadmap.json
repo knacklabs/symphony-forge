@@ -797,6 +797,95 @@
       "outcome": "Overlapping story PRs no longer conflict on .factory state. Story evidence is story-scoped (.factory/stories/<KEY>/), the active-story run pointer is worktree-local and untracked with phase derived from artifacts, events are one conflict-free file each (union merge driver retired), pr_ready ships in place with no archive move, and the PreToolUse/Stop hooks survive a merge \u2014 engaging a self-contained deny-list that keeps writes locked but permits git-native recovery instead of crashing, so a conflict-markered run.json or factory_lib can never trap a session again. Intake activates the new layout; legacy repos stay readable and pick it up via forge upgrade. Proven by a two-worktree merge simulation with zero .factory conflicts."
     },
     {
+      "key": "FORGE-LED-1",
+      "title": "Privacy boundary decision and structured event schema",
+      "story": "As a harness maintainer, I want append_event to carry a task id and a typed data object validated per event, and the privacy/authority rule recorded as a decision, so that every later event carries facts and nothing else.",
+      "acceptance_criteria": [
+        "Decision export-privacy-boundary drafted, stating committed events are authoritative and the field-level may/may-not-leave rule",
+        "event schema declares data keys per event typed number|boolean|closed enum; append_event(task=, data=) validates; a free string in data fails a recorder test",
+        "existing call sites keep working unchanged (data optional)"
+      ],
+      "order": 37,
+      "status": "pending",
+      "epic": "measurable-ledger",
+      "skill": "backend",
+      "depends_on": [],
+      "spec": "docs/specs/factory-event-export.md"
+    },
+    {
+      "key": "FORGE-LED-2",
+      "title": "Every recorder carries its counts",
+      "story": "As a consumer of the ledger, I want stage-done, verify, tests, reviews, delegated and signals to carry their measured numbers, so that lead time, right-first-time, diff size and time-to-resolve are computable from events alone.",
+      "acceptance_criteria": [
+        "stage-done carries product-only and total (files,+,-) triples from the measured diff",
+        "verify-* carries check counts and duration; tests-* run/failed; review-* findings by severity; delegated model/effort/write; signal-* kind; signal-resolved elapsed seconds and resolver auto|human",
+        "gate-test story run shows each event with its declared data keys"
+      ],
+      "order": 38,
+      "status": "pending",
+      "epic": "measurable-ledger",
+      "skill": "backend",
+      "depends_on": [
+        "FORGE-LED-1"
+      ],
+      "spec": "docs/specs/factory-event-export.md"
+    },
+    {
+      "key": "FORGE-LED-3",
+      "title": "Missing transitions emit events",
+      "story": "As a consumer of the ledger, I want grills, plan saves, outcomes, quickfixes, degraded windows, lessons, assumptions, decisions and plan rejections to emit events, so that the story lifecycle is complete and 'grill changed the plan' is derivable.",
+      "acceptance_criteria": [
+        "grill-recorded (gate, rounds, questions, verdict, input digest) and plan-saved (digest) emitted; changed-by-grill derivable as digest mismatch",
+        "outcome-set, quickfix-start/done (file count, budget hit), degraded-start/end, lesson-added (severity), assumption-recorded, decision-accepted, plan-rejected emitted; events outside a story carry no story",
+        "forge history renders the new events"
+      ],
+      "order": 39,
+      "status": "pending",
+      "epic": "measurable-ledger",
+      "skill": "backend",
+      "depends_on": [
+        "FORGE-LED-1"
+      ],
+      "spec": "docs/specs/factory-event-export.md"
+    },
+    {
+      "key": "FORGE-LED-4",
+      "title": "Write-through export feed with backfill",
+      "story": "As cadence (or any local consumer), I want every event mirrored as a factory-export/v1 line in a per-machine, never-committed file with repo and actor hashes and no prose, so that I can measure without reading the repo.",
+      "acceptance_criteria": [
+        "append_event writes one export line to ~/.local/state/forge/export/<repo-hash>.jsonl (Windows equivalent); fields schema, repo, harness_sha, modified, story, task, event, at, generated_by, actor_hash, data; detail dropped; write failure never fails the recorder",
+        "factory/schemas/factory-export.json checked in; CI validates a fixture export; grep for repo name, path, branch, prose from the fixture finds nothing",
+        "forge events export backfills pre-existing events once, flagged backfilled:true, idempotent; rotate at 10 MB keep 3"
+      ],
+      "order": 40,
+      "status": "pending",
+      "epic": "measurable-ledger",
+      "skill": "backend",
+      "depends_on": [
+        "FORGE-LED-2",
+        "FORGE-LED-3"
+      ],
+      "spec": "docs/specs/factory-event-export.md"
+    },
+    {
+      "key": "FORGE-LED-5",
+      "title": "Vendored-harness manifest and upgrade carry",
+      "story": "As a harness maintainer, I want init/adopt/upgrade to write a harness-owned file manifest and doctor to report local modifications, so that a consumer can tell a trusted ledger from a patched one and client repos receive the export.",
+      "acceptance_criteria": [
+        ".factory/harness-manifest.json (path -> sha256) written by init, adopt, upgrade",
+        "forge doctor names locally modified harness files; export lines carry modified:true when any differ; upgrade restores both",
+        "forge upgrade carries schema, manifest and export to a client repo; check_dual_runtime.py green"
+      ],
+      "order": 41,
+      "status": "pending",
+      "epic": "measurable-ledger",
+      "skill": "backend",
+      "depends_on": [
+        "FORGE-LED-4"
+      ],
+      "spec": "docs/specs/factory-event-export.md"
+    },
+    {
       "key": "ship-clears-forge-authority",
       "title": "Ship-cleanup clears .git/forge authority",
       "story": "As a harness maintainer, I want story ship-cleanup to clear the git-local .git/forge stage authority \u2014 and load_stages to ignore it when no story is active \u2014 so that a shipped story's stale authority can never phantom-deadlock the next window.",
@@ -812,10 +901,26 @@
       "depends_on": [],
       "origin": "adhoc",
       "spec_debt_reason": "hardening follow-up from the 2026-08-19 WIN-2 stale-authority deadlock (see plans/lessons); no confirmed spec yet"
+    },
+    {
+      "key": "upgrade-preserves-doc-contracts",
+      "title": "Upgrade preserves and truthfully reports doc-contract overwrites",
+      "story": "As a client running forge upgrade, I want doc-contract files I appended to (e.g. docs/architecture/README.md) preserved to a .orig backup and named in the report \u2014 never silently overwritten while the summary calls the directory 'Untouched (project-owned)' \u2014 so I cannot lose project content invisibly.",
+      "acceptance_criteria": [
+        "The upgrade report names each replaced doc-contract destination path, and no longer implies a directory whose contract file was overwritten is fully untouched",
+        "When a client's doc-contract file differs from the new template, the upgrade names it and warns \u2014 pointing the operator at `git diff` (prior content is committed; upgrade requires a clean tree) \u2014 so divergence is never reported as 'untouched'; no backup files are created",
+        "Regression test: upgrading a client whose doc-contract README differs from the template names it replaced and emits the divergence warning, while an identical unedited file is not warned and no .orig files appear"
+      ],
+      "order": 43,
+      "status": "active",
+      "epic": "symphony-forge",
+      "skill": "backend",
+      "depends_on": [],
+      "spec": "docs/specs/legacy-upgrade.md"
     }
   ],
   "generated_by": "human",
-  "updated_at": "2026-08-20T06:53:36+00:00",
+  "updated_at": "2026-08-20T07:43:17+00:00",
   "epics": [
     {
       "id": "symphony-forge",
