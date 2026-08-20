@@ -1,0 +1,9 @@
+{
+  "event": "done",
+  "id": "Q-0091-46f5",
+  "profile": "quickfix",
+  "reason": "upgrade doc-contract overwrite safety (#112): bounded fix; formal stage-done closeout blocked by a verify_commands read-only-check quirk, recorded as the work record",
+  "started_at": "2026-08-20T12:30:55+00:00",
+  "completed_at": "2026-08-20T12:30:55+00:00",
+  "files": []
+}
