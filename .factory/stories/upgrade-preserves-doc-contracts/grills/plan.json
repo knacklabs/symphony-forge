@@ -1,0 +1,46 @@
+{
+  "generated_by": "griller",
+  "gate": "plan",
+  "issue": "upgrade-preserves-doc-contracts",
+  "verdict": "pass",
+  "summary": "Grilled the plan against the story ACs, the legacy-upgrade spec, decision 0028 (path boundary), decision 0005 (recurring findings), and the repository-escape recurring class on upgrade.py. Single bounded task, no over-build; every section traces to an AC.",
+  "questions_asked": 2,
+  "gaps": [
+    "Plan claimed 'No new decisions' while choosing the deterministic approach \u2014 a design stance that could warrant a decision record for traceability.",
+    "Original plan wrote <file>.orig for every diverged contract; operator flagged this bloats the client repo on every upgrade and is redundant, since upgrade requires a clean tree so the client's prior content is already committed and git-recoverable."
+  ],
+  "contradictions": [],
+  "resolutions": [
+    "Operator confirmed: rely on the recorded requirements grill + the confirmed legacy-upgrade spec; 'No new decisions' stands.",
+    "Dropped .orig entirely (operator-confirmed): truthful report + a divergence warning that names the overwritten-and-diverged contracts and points the operator at git diff before committing; git is the backup. No files written, no bloat. Roadmap AC2/AC3 and the plan reworded; the only remaining path-boundary surface is the read, guarded by is_file()/not is_symlink()."
+  ],
+  "open_items": [],
+  "criteria_map": {
+    "AC1-truthful-report": "Technical Approach truthful report + Surface Impact CLI Changed",
+    "AC2-warn-git-recoverable": "Technical Approach divergence detection + warning (no backup file)",
+    "AC3-regression-test": "Task Decomposition T1 test + Verify Plan (asserts no .orig)"
+  },
+  "inspected_refs": [
+    "factory/scripts/forge_cli/upgrade.py",
+    "factory/scripts/forge_cli/scaffold.py",
+    "docs/specs/legacy-upgrade.md",
+    "docs/decisions/0028-path-boundary-invariant.md",
+    "docs/decisions/0005-recurring-findings-escalation.md"
+  ],
+  "decision": "No new decisions (operator-confirmed).",
+  "rounds": [
+    {
+      "round": 1,
+      "focus": "decision-record traceability",
+      "outcome": "rely on requirements grill + spec"
+    },
+    {
+      "round": 2,
+      "focus": "does the .orig backup bloat the client repo on every upgrade",
+      "outcome": "drop .orig; warn + git-as-backup"
+    }
+  ],
+  "input_sha256": "71ee2d0eea30741bf9aab1dc8cadd49cca496fa01c39bf66fc0bf4c548fc815d",
+  "recorded_at": "2026-08-20T10:33:25+00:00",
+  "commit": "8ea57ad30daa33990f5fbde8c9b70ff48d5e0307"
+}

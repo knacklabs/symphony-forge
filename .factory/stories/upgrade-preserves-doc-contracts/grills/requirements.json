@@ -1,0 +1,48 @@
+{
+  "generated_by": "griller",
+  "gate": "requirements",
+  "issue": "upgrade-preserves-doc-contracts",
+  "verdict": "pass",
+  "summary": "Interrogated the doc-contract preservation requirement (issue #112) against forge upgrade's deterministic vendoring contract (spec legacy-upgrade.md).",
+  "questions_asked": 5,
+  "gaps": [
+    "On a diverged doc contract, undefined whether upgrade overwrites, preserves-in-place, or merges \u2014 governs whether the client keeps edits and still receives harness updates.",
+    "Divergence-detection baseline undefined: client file vs the new shipped template, or vs the client's old vendored template.",
+    "Whether to write a per-contract backup file at all, given the client repo is git and upgrade requires a clean tree."
+  ],
+  "contradictions": [
+    "Operator initially proposed an agent/LLM-driven merge inside forge upgrade, which contradicts the spec's deterministic, reproducible, git-diff-auditable vendoring contract (legacy-upgrade.md: one command, no residue) and would add a hard companion dependency."
+  ],
+  "resolutions": [
+    "Deterministic fix only (operator-confirmed): the report names the replaced doc contracts, stops reporting their dirs as 'Untouched (project-owned)', and warns on divergence \u2014 no merge, no agent.",
+    "Divergence baseline = the client's current doc-contract file vs the NEW shipped template (operator-confirmed); with no backup file an unedited client whose contract the harness updated sees only an informative warning line.",
+    "NO backup file is written: forge upgrade requires a clean tree, so the client's prior content is already committed and git-recoverable; the warning points the operator at git diff. A .orig per contract would bloat the client repo every upgrade to re-store what git already holds. Project-specific content belongs in a project-owned sibling file (issue #112 workaround).",
+    "Agent-assisted reconciliation is OUT of scope for the deterministic core; a separate opt-in follow-up if wanted."
+  ],
+  "open_items": [],
+  "inspected_refs": [
+    "factory/scripts/forge_cli/upgrade.py",
+    "factory/scripts/forge_cli/scaffold.py",
+    "docs/specs/legacy-upgrade.md"
+  ],
+  "rounds": [
+    {
+      "round": 1,
+      "focus": "divergence behavior + baseline",
+      "outcome": "operator questioned agent-merge; chose compare-vs-new-template"
+    },
+    {
+      "round": 2,
+      "focus": "scope given upgrade must stay deterministic",
+      "outcome": "deterministic fix; agent-reconcile deferred"
+    },
+    {
+      "round": 3,
+      "focus": "does per-upgrade backup bloat the client repo",
+      "outcome": "drop .orig; git is the backup (clean-tree required); warn + point at git diff"
+    }
+  ],
+  "input_sha256": "914a3435149e620f39fb87ff82d3d948e655209a6d20e88f2dd1f090340b9c7f",
+  "recorded_at": "2026-08-20T09:53:20+00:00",
+  "commit": "8ea57ad30daa33990f5fbde8c9b70ff48d5e0307"
+}

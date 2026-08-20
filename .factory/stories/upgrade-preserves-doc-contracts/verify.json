@@ -1,0 +1,28 @@
+{
+  "ok": true,
+  "completed_at": "2026-08-20T12:05:01+00:00",
+  "commit": "796d955bdf08cda5827006e7af1b459b9910be90",
+  "results": [
+    {
+      "command": "python3 factory/scripts/check_dual_runtime.py",
+      "exit_code": 0,
+      "stdout": "WARNING: commit e900fcf5 accepting docs/decisions/0032-jit-task-planning.md lacks a `Confirmed-by:` trailer (convention-level check).\nWARNING: commit 785dba9c accepting docs/decisions/0033-gate-a-declares-all-work-records.md lacks a `Confirmed-by:` trailer (convention-level check).\nWARNING: commit 0f17e888 accepting docs/decisions/0034-vendored-docs-are-client-safe.md lacks a `Confirmed-by:` trailer (convention-level check).\nWARNING: commit fd798874 accepting docs/decisions/0040-windows-user-scope-first-elevation-deferred.md lacks a `Confirmed-by:` trailer (convention-level check).\nWARNING: commit 5195b56d accepting docs/decisions/0044-accountable-engineering-loop.md lacks a `Confirmed-by:` trailer (convention-level check).\nWARNING: commit 5195b56d accepting docs/decisions/0045-conflict-free-story-state.md lacks a `Confirmed-by:` trailer (convention-level check).\ncheck_dual_runtime: clean.\n",
+      "stderr": "",
+      "phase": "structural"
+    },
+    {
+      "command": "python3 factory/scripts/check_factory_scaffold.py",
+      "exit_code": 0,
+      "stdout": "Factory scaffold OK\n",
+      "stderr": "",
+      "phase": "typecheck"
+    },
+    {
+      "command": "uv run --with pytest --with psutil python -m pytest factory/tests/test_gates.py::test_upgrade_names_diverged_doc_contracts_and_writes_no_backup -q",
+      "exit_code": 0,
+      "stdout": ".                                                                        [100%]\n1 passed in 0.63s\n",
+      "stderr": "",
+      "phase": "tests"
+    }
+  ]
+}

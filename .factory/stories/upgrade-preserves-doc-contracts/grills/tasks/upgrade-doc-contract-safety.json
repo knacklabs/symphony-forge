@@ -1,0 +1,64 @@
+{
+  "generated_by": "griller",
+  "gate": "task",
+  "issue": "upgrade-preserves-doc-contracts",
+  "task_id": "upgrade-doc-contract-safety",
+  "verdict": "pass",
+  "summary": "Grilled the frontier task contract against the approved plan, the story ACs, decision 0028 (path boundary), and the repository-escape recurring class on upgrade.py. Write scope is minimal (upgrade.py + test); the design was settled in the requirements and plan grills. Decision: keep \u2014 single bounded task, one write scope; no split/block warranted.",
+  "questions_asked": 2,
+  "gaps": [
+    "The single required test proves divergence-warning (AC2), no-backup (AC3), and that replaced contracts are named (AC1a), but must also prove AC1b: the completion report no longer presents a replaced contract's directory as unqualified 'Untouched (project-owned)'."
+  ],
+  "contradictions": [],
+  "resolutions": [
+    "Resolved into the task contract: the regression test additionally asserts the 'Untouched (project-owned)' line is qualified, so a replaced contract's directory is not presented as fully untouched (AC1b). reviewer_focus already flags this. No change to the required_tests id/path/command (assertion-level detail, task_digest unaffected)."
+  ],
+  "open_items": [],
+  "inspected_refs": [
+    "factory/scripts/forge_cli/upgrade.py",
+    "factory/scripts/forge_cli/scaffold.py",
+    "plans/active/upgrade-preserves-doc-contracts-upgrade-preserves-and-truthfully-reports-doc-contract-overwrites.md"
+  ],
+  "current_flow": "cmd_upgrade's DOC_CONTRACTS loop (upgrade.py:527-533) copies each (src,dst) via shutil.copy2 unconditionally \u2014 no read, no divergence check, no backup. The completion report (upgrade.py:712-717) prints '..., doc contracts' under 'Replaced (harness-owned)' and lists PROJECT_OWNED (incl. docs/architecture/, docs/product/, docs/decisions/, docs/context/, docs/specs/) under 'Untouched (project-owned)'. So a replaced contract file is never named and its parent dir is reported untouched even when the copy overwrote client-diverged content.",
+  "criteria_map": {
+    "The upgrade report names each replaced doc-contract destination path and no longer implies a directory whose contract file was overwritten is fully untouched": "truthful report: collect replaced_contracts, add a 'Replaced doc contracts:' line, and qualify the 'Untouched (project-owned)' line so a replaced contract's dir is not presented as untouched (upgrade.py:712-717)",
+    "When a client's doc-contract file differs from the new template, the upgrade names it and warns pointing at git diff; no backup files are created": "divergence detection in the DOC_CONTRACTS loop (upgrade.py:527-533): for a regular non-symlink dst whose bytes differ from src, collect as diverged; print a WARNING naming it and pointing at git diff; no backup/.orig written",
+    "Regression test: an edited doc-contract README is named replaced and warned, an identical one is not warned, and no .orig files appear": "test_upgrade_names_diverged_doc_contracts_and_writes_no_backup in factory/tests/test_gates.py: edited README -> named+warned; identical -> not warned; assert Untouched qualified and no .orig anywhere"
+  },
+  "new_abstractions": [],
+  "decision": "keep",
+  "citations": [
+    {
+      "finding": "The single required test proves divergence-warning (AC2), no-backup (AC3), and that replaced contracts are named (AC1a), but must also prove AC1b: the completion report no longer presents a replaced contract's directory as unqualified 'Untouched (project-owned)'.",
+      "source": "plans/active/upgrade-preserves-doc-contracts-upgrade-preserves-and-truthfully-reports-doc-contract-overwrites.md Verify Plan \u2014 the required test asserts the 'Untouched' qualifier (AC1b)"
+    },
+    {
+      "finding": "DOC_CONTRACTS entries are copied via shutil.copy2 with no divergence check or backup",
+      "source": "factory/scripts/forge_cli/upgrade.py:527-533"
+    },
+    {
+      "finding": "report prints ', doc contracts' under Replaced and PROJECT_OWNED dirs under 'Untouched (project-owned)'",
+      "source": "factory/scripts/forge_cli/upgrade.py:712-717"
+    },
+    {
+      "finding": "assert_target_file_destination path-boundary pattern for file writes (decision 0028)",
+      "source": "factory/scripts/forge_cli/upgrade.py:80-89"
+    }
+  ],
+  "rounds": [
+    {
+      "question": "For AC1, should the regression test also assert the report no longer presents a replaced contract's directory as unqualified 'Untouched (project-owned)', not just that the contract is named under 'Replaced'?",
+      "options": [
+        "Yes - assert the 'Untouched' qualifier too",
+        "Name-only is enough"
+      ],
+      "chosen": "Yes - assert the 'Untouched' qualifier too"
+    }
+  ],
+  "input_sha256": "6656ca6f54afd3c066d8025bc80782bc5ea8eaaa6b4b23086af6c8fbe86b5e09",
+  "recorded_at": "2026-08-20T11:17:25+00:00",
+  "commit": "759e71f6d2fdd6608fad681c22d8dd711dee55c4",
+  "approved_task_plan_sha256": "ea81e50788ded9054bad0c84a84d7f3ee435c5cd405355781c51676b14b72ad8",
+  "approved_by": "vrknetha",
+  "approved_at": "2026-08-20T11:17:25+00:00"
+}

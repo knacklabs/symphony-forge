@@ -1,0 +1,56 @@
+{
+  "generated_by": "claude-code:plan-mode",
+  "user_facing": false,
+  "story": "upgrade-preserves-doc-contracts",
+  "epic": "symphony-forge",
+  "plan_file": "plans/active/upgrade-preserves-doc-contracts-upgrade-preserves-and-truthfully-reports-doc-contract-overwrites.md",
+  "plan_sha256": "0c24e1797075d35bf2afd1228cb0c0e87c91ec0f181691ba9b862a73a99c37f3",
+  "tasks": [
+    {
+      "id": "upgrade-doc-contract-safety",
+      "title": "Upgrade detects diverged doc contracts and reports them truthfully",
+      "objective": "cmd_upgrade collects replaced + diverged doc contracts (a diverged contract is a regular non-symlink file whose bytes differ from the new template); the completion report names the replaced contracts, qualifies the 'Untouched (project-owned)' dirs, and warns on divergence pointing the operator at git diff. No backup file is written. A regression test covers edited-vs-identical contracts and asserts no .orig appears.",
+      "acceptance_criteria": [
+        "The upgrade report names each replaced doc-contract destination path and no longer implies a directory whose contract file was overwritten is fully untouched",
+        "When a client's doc-contract file differs from the new template, the upgrade names it and warns pointing at git diff; no backup files are created",
+        "Regression test: an edited doc-contract README is named replaced and warned, an identical one is not warned, and no .orig files appear"
+      ],
+      "dependencies": [],
+      "write_scope": [
+        "factory/scripts/forge_cli/upgrade.py",
+        "factory/tests/test_gates.py"
+      ],
+      "verify_commands": [
+        "python3 factory/scripts/verify.py",
+        "python3 factory/scripts/check_dual_runtime.py"
+      ],
+      "required_tests": [
+        {
+          "id": "test_upgrade_names_diverged_doc_contracts_and_writes_no_backup",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest --with psutil python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        }
+      ],
+      "reviewer_focus": "The new read follows symlinks: confirm the is_file() and not is_symlink() guard precedes read_bytes() (repository-escape recurring x3, decision 0028); confirm no write/backup/.orig path is added (copy path unchanged); confirm the report no longer lists a replaced contract's directory as unqualified 'Untouched (project-owned)'.",
+      "plan_contracts": [
+        {
+          "id": "UPGDOC-1",
+          "statement": "The upgrade report names each replaced doc-contract destination path and no longer implies a directory whose contract file was overwritten is fully untouched",
+          "source": "plans/active/upgrade-preserves-doc-contracts-upgrade-preserves-and-truthfully-reports-doc-contract-overwrites.md Technical Approach"
+        },
+        {
+          "id": "UPGDOC-2",
+          "statement": "When a client's doc-contract file differs from the new template, the upgrade names it and warns pointing at git diff; no backup files are created",
+          "source": "plans/active/upgrade-preserves-doc-contracts-upgrade-preserves-and-truthfully-reports-doc-contract-overwrites.md Technical Approach"
+        },
+        {
+          "id": "UPGDOC-3",
+          "statement": "Regression test: an edited doc-contract README is named replaced and warned, an identical one is not warned, and no .orig files appear",
+          "source": "plans/active/upgrade-preserves-doc-contracts-upgrade-preserves-and-truthfully-reports-doc-contract-overwrites.md Verify Plan"
+        }
+      ]
+    }
+  ],
+  "project": "",
+  "commit": "8ea57ad30daa33990f5fbde8c9b70ff48d5e0307"
+}
