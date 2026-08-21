@@ -59,7 +59,7 @@
       "spec": "docs/specs/legacy-upgrade.md",
       "completed_at": "2026-08-05T09:31:29+00:00",
       "history": ".factory/history/FORGE-UPG-1/",
-      "outcome": "A repo vendored before the factory/ rename can now be carried onto the current harness in one command. `forge upgrade` detects the legacy .agents/ layout, carries the project's skills across, deletes the old tree only once every file left in it is provably the machinery being replaced, and otherwise refuses before writing anything \u2014 so a refusal leaves a clean repo you can repair and re-run. It then names the project-owned files still mentioning the retired path instead of editing them. `forge stage migrate --base <sha>` gives a story that was open at upgrade time a measurement origin, so it can still be closed. Four client repos were stranded with no migration path; decision 0016 promised them one and this is it.",
+      "outcome": "A repo vendored before the factory/ rename can now be carried onto the current harness in one command. `forge upgrade` detects the legacy .agents/ layout, carries the project's skills across, deletes the old tree only once every file left in it is provably the machinery being replaced, and otherwise refuses before writing anything — so a refusal leaves a clean repo you can repair and re-run. It then names the project-owned files still mentioning the retired path instead of editing them. `forge stage migrate --base <sha>` gives a story that was open at upgrade time a measurement origin, so it can still be closed. Four client repos were stranded with no migration path; decision 0016 promised them one and this is it.",
       "epic": "symphony-forge"
     },
     {
@@ -80,7 +80,7 @@
       "epic": "symphony-forge",
       "completed_at": "2026-08-07T10:08:30+00:00",
       "history": ".factory/history/FORGE-LOCK-1/",
-      "outcome": "The planning lock now guards the harness's own machinery in its own repo: a hand-edit to factory/, constitution/, harness/, .claude/ or .codex/ here needs an approved plan or a bounded quickfix, exactly as a client's product code does \u2014 while a client repo's vendored copy of that machinery stays freely writable during planning. Repo kind is a positive .factory/harness-source.json sentinel (never vendored), and a quickfix pins it at start so deleting the marker mid-window can't unlock machinery. A harness-repo quickfix now claims the machinery files it touches against its five-file budget instead of reporting zero."
+      "outcome": "The planning lock now guards the harness's own machinery in its own repo: a hand-edit to factory/, constitution/, harness/, .claude/ or .codex/ here needs an approved plan or a bounded quickfix, exactly as a client's product code does — while a client repo's vendored copy of that machinery stays freely writable during planning. Repo kind is a positive .factory/harness-source.json sentinel (never vendored), and a quickfix pins it at start so deleting the marker mid-window can't unlock machinery. A harness-repo quickfix now claims the machinery files it touches against its five-file budget instead of reporting zero."
     },
     {
       "key": "PH-1",
@@ -120,7 +120,7 @@
       "epic": "symphony-forge",
       "completed_at": "2026-08-05T10:03:36+00:00",
       "history": ".factory/history/PH-2/",
-      "outcome": "A story on the roadmap now has to say what it is: the three routes that author stories refuse one that omits its epic, narrative, acceptance criteria, skill or an explicit depends_on. Two new commands make that requirement satisfiable after sign-off \u2014 roadmap epic add creates an epic, set-epic points an existing story at one \u2014 and this repo's own roadmap was backfilled through them, so forge roadmap list finally prints its epic above the stories. Legacy roadmaps still load, still flip status and still heal; doctor reports their gaps without blocking, and no longer crashes on the broken state it exists to diagnose."
+      "outcome": "A story on the roadmap now has to say what it is: the three routes that author stories refuse one that omits its epic, narrative, acceptance criteria, skill or an explicit depends_on. Two new commands make that requirement satisfiable after sign-off — roadmap epic add creates an epic, set-epic points an existing story at one — and this repo's own roadmap was backfilled through them, so forge roadmap list finally prints its epic above the stories. Legacy roadmaps still load, still flip status and still heal; doctor reports their gaps without blocking, and no longer crashes on the broken state it exists to diagnose."
     },
     {
       "key": "PH-3",
@@ -139,7 +139,7 @@
       "epic": "symphony-forge",
       "completed_at": "2026-08-05T12:45:02+00:00",
       "history": ".factory/history/PH-3/",
-      "outcome": "A plan is now refused unless it carries all nine sections the planner prompt mandates, checked with the shared parser instead of a substring that a fenced example could satisfy. A decomposition is bound to the plan it was built from: the recorder stamps project, story, epic, plan_file and the plan digest from trusted state and drops whatever an agent claimed, and stage start refuses when that plan has changed since \u2014 or when the binding cannot be verified at all. And build_waves stops being authored anywhere: prompts, the Codex agent contract, the doc and the scaffold check all let go of it together with its only reader, so ordering is derived from dependencies rather than written twice."
+      "outcome": "A plan is now refused unless it carries all nine sections the planner prompt mandates, checked with the shared parser instead of a substring that a fenced example could satisfy. A decomposition is bound to the plan it was built from: the recorder stamps project, story, epic, plan_file and the plan digest from trusted state and drops whatever an agent claimed, and stage start refuses when that plan has changed since — or when the binding cannot be verified at all. And build_waves stops being authored anywhere: prompts, the Codex agent contract, the doc and the scaffold check all let go of it together with its only reader, so ordering is derived from dependencies rather than written twice."
     },
     {
       "key": "PH-4",
@@ -164,7 +164,7 @@
       "epic": "symphony-forge",
       "completed_at": "2026-08-05T21:11:46+00:00",
       "history": ".factory/history/PH-4/",
-      "outcome": "Developers open the board and see the whole project: what it is, which stories can start right now and in how many worktrees, what each epic delivers, and why every blocked story is blocked \u2014 with epics, stories and tasks labelled as such and a Project > Epic > Story breadcrumb in the drawer. Blocked now reads as blocked on every surface instead of being folded into 'waiting', and a bundled example project ships that the production capture gates validate, so the board can be seen working before a repo has any work of its own."
+      "outcome": "Developers open the board and see the whole project: what it is, which stories can start right now and in how many worktrees, what each epic delivers, and why every blocked story is blocked — with epics, stories and tasks labelled as such and a Project > Epic > Story breadcrumb in the drawer. Blocked now reads as blocked on every surface instead of being folded into 'waiting', and a bundled example project ships that the production capture gates validate, so the board can be seen working before a repo has any work of its own."
     },
     {
       "key": "PH-5",
@@ -187,7 +187,7 @@
       "spec": "docs/specs/project-record.md",
       "completed_at": "2026-08-06T06:53:58+00:00",
       "history": ".factory/history/PH-5/",
-      "outcome": "The repo can now tell you what it built. forge history reads the committed event timeline filtered by story, type, or date and shows events no story owns instead of hiding them. Quickfix windows record every file they touch, so an ad-hoc change is no longer a why with no what. A merged PR is linked to its work by a durable event that survives a clone with no remote \u2014 forge pr-link. forge init and adopt stamp an honest 'record begins here' boundary (silent when it cannot be trusted), and forge doctor flags any shipped story with neither an outcome nor a predates-the-contract marker \u2014 the two that predate it now carry that marker rather than a fabricated outcome."
+      "outcome": "The repo can now tell you what it built. forge history reads the committed event timeline filtered by story, type, or date and shows events no story owns instead of hiding them. Quickfix windows record every file they touch, so an ad-hoc change is no longer a why with no what. A merged PR is linked to its work by a durable event that survives a clone with no remote — forge pr-link. forge init and adopt stamp an honest 'record begins here' boundary (silent when it cannot be trusted), and forge doctor flags any shipped story with neither an outcome nor a predates-the-contract marker — the two that predate it now carry that marker rather than a fabricated outcome."
     },
     {
       "key": "FORGE-APPROVE-1",
@@ -211,7 +211,7 @@
       "spec": "docs/specs/plan-approval.md",
       "completed_at": "2026-08-06T10:45:15+00:00",
       "history": ".factory/history/FORGE-APPROVE-1/",
-      "outcome": "Plan approval is now a human gate an agent cannot forge. forge plan save no longer records a plan as approved on its own \u2014 it saves the plan as awaiting-approval and approves only when a fresh approval marker matches that exact plan body under the same issue and story. A human creates that marker with forge plan approve --by \"<name>\" after reviewing the plan in plan mode, and the marker is consumed on the approved save so it authorizes exactly one save. The result: no product code can be written without a plan a human actually approved, closing the self-approval hole where an agent could plan, grill, and approve its own work. It carries the same trust model as decision accept and client sign-off, with a committed plan-human-approved audit event recording who approved and when."
+      "outcome": "Plan approval is now a human gate an agent cannot forge. forge plan save no longer records a plan as approved on its own — it saves the plan as awaiting-approval and approves only when a fresh approval marker matches that exact plan body under the same issue and story. A human creates that marker with forge plan approve --by \"<name>\" after reviewing the plan in plan mode, and the marker is consumed on the approved save so it authorizes exactly one save. The result: no product code can be written without a plan a human actually approved, closing the self-approval hole where an agent could plan, grill, and approve its own work. It carries the same trust model as decision accept and client sign-off, with a committed plan-human-approved audit event recording who approved and when."
     },
     {
       "key": "FORGE-BOUNDARY-1",
@@ -222,7 +222,7 @@
         "The check runs in preflight, before the first mutation, so an escape stops the command clean rather than mid-write.",
         "Every copytree validates its root destination before the walk and does not follow symlinks into the tree.",
         "Each of the three commands has a per-site test asserting an escape (symlinked destination and symlinked ancestor) is refused; the recurring repository-escape class has a regression test it cannot silently reopen.",
-        "A legal in-boundary write behaves exactly as before \u2014 the refactor changes safety, not outcomes."
+        "A legal in-boundary write behaves exactly as before — the refactor changes safety, not outcomes."
       ],
       "order": 10,
       "status": "done",
@@ -258,7 +258,7 @@
       "spec": "docs/specs/harness-owned-vendoring.md",
       "completed_at": "2026-08-06T19:44:17+00:00",
       "history": ".factory/history/FORGE-VENDOR-1/",
-      "outcome": "forge init and adopt now vendor only the harness-owned skill (forge), never a source repo's own skills, so a client repo whose CI runs the vendored factory tests no longer copies a client skill with a canon marker pointing outside the vendored tree into a scaffold \u2014 check_dual_runtime stays green in client CI. init/adopt/upgrade share one owned-skill manifest; the three symphony-forge-only fixture tests skip in a fixture-free client scaffold."
+      "outcome": "forge init and adopt now vendor only the harness-owned skill (forge), never a source repo's own skills, so a client repo whose CI runs the vendored factory tests no longer copies a client skill with a canon marker pointing outside the vendored tree into a scaffold — check_dual_runtime stays green in client CI. init/adopt/upgrade share one owned-skill manifest; the three symphony-forge-only fixture tests skip in a fixture-free client scaffold."
     },
     {
       "key": "FORGE-MODES-1",
@@ -280,7 +280,7 @@
       "spec": "docs/specs/workflow-modes.md",
       "completed_at": "2026-08-07T10:47:44+00:00",
       "history": ".factory/history/FORGE-MODES-1/",
-      "outcome": "Developers can now make small, human-supervised fixes without the full factory loop. The always-armed planning lock has a third exit: ./forge mode lite --by <name> --reason <why> opens a bounded, ledgered lite window; ./forge fix \"<desc>\" runs the fix with terra@high (write-enabled); ./forge mode done closes it only after one autoreview pass with no blockers over the committed base_sha..HEAD diff, within the file budget \u2014 and this works even post-ship (record_review accepts an open lite window). The full loop and the trace-only quickfix hatch are unchanged."
+      "outcome": "Developers can now make small, human-supervised fixes without the full factory loop. The always-armed planning lock has a third exit: ./forge mode lite --by <name> --reason <why> opens a bounded, ledgered lite window; ./forge fix \"<desc>\" runs the fix with terra@high (write-enabled); ./forge mode done closes it only after one autoreview pass with no blockers over the committed base_sha..HEAD diff, within the file budget — and this works even post-ship (record_review accepts an open lite window). The full loop and the trace-only quickfix hatch are unchanged."
     },
     {
       "key": "FORGE-BOARD-1",
@@ -310,7 +310,7 @@
       "story": "As the harness, I record only the task LIST at decomposition and plan+grill each task's detailed contract just-in-time against the real repo state left by prior tasks, so later tasks stop shipping incorrect code built from speculative upfront contracts.",
       "acceptance_criteria": [
         "record_decomposition records the task LIST (id, order, dependencies, one-line objective) but not full per-task contracts; the list is shown under its story on the board from decomposition onward.",
-        "A stage's implementation delegation is REFUSED without a fresh, digest-bound per-task grill for that task \u2014 the JIT grill is a deterministic gate, exactly as plan save refuses an ungrilled plan.",
+        "A stage's implementation delegation is REFUSED without a fresh, digest-bound per-task grill for that task — the JIT grill is a deterministic gate, exactly as plan save refuses an ungrilled plan.",
         "Each task's detailed contract (write_scope, acceptance, tests, approach) is authored JIT against the actual repo state after prior tasks, and the refinement is recorded as a stage contract change (decision 0023).",
         "A decision record supersedes decision 0007's immutable-upfront-decomposition stance; the shift is deliberate and recorded, not a silent exception.",
         "Both grill points are kept: the story-level plan-grill validates the decomposition; the per-task JIT grill validates each task's details against real prior state."
@@ -324,7 +324,7 @@
       "spec": "docs/specs/traceable-board.md",
       "completed_at": "2026-08-08T06:51:50+00:00",
       "history": ".factory/history/FORGE-BOARD-2/",
-      "outcome": "The factory now records only a task LIST at decomposition and gates each task's detailed contract behind a just-in-time grill: forge delegate <task> refuses a write launch without a fresh, digest-bound passing per-task grill (decision 0032, amending 0007). A task's write_scope/tests/acceptance are authored against what earlier tasks actually built, then grilled, then delegated \u2014 so speculative upfront contracts that produce wrong code are gated out. The board renders each task's JIT grill status and a done story's PR link."
+      "outcome": "The factory now records only a task LIST at decomposition and gates each task's detailed contract behind a just-in-time grill: forge delegate <task> refuses a write launch without a fresh, digest-bound passing per-task grill (decision 0032, amending 0007). A task's write_scope/tests/acceptance are authored against what earlier tasks actually built, then grilled, then delegated — so speculative upfront contracts that produce wrong code are gated out. The board renders each task's JIT grill status and a done story's PR link."
     },
     {
       "key": "FORGE-BOARD-3",
@@ -388,12 +388,12 @@
       "spec": "docs/specs/traceable-board.md",
       "completed_at": "2026-08-08T18:52:13+00:00",
       "history": ".factory/history/FORGE-BOARD-5/",
-      "outcome": "Two deterministic primitives close the honesty holes a Codex plan review found. forge roadmap fill safely repairs an existing PENDING card by filling only blank fields and refusing active/done cards, so legacy re-authoring can never overwrite shipped history. forge project backfill no longer auto-marks predates on a zero GitHub match (which could falsely exempt a story whose PR the matcher missed) \u2014 it reports unresolved provenance and the board stays red until a human resolves it, with forge project mark-predates the human-confirmed path. Together they make the upgrade skill (FORGE-BOARD-6) able to re-author legacy clients without fabricating history."
+      "outcome": "Two deterministic primitives close the honesty holes a Codex plan review found. forge roadmap fill safely repairs an existing PENDING card by filling only blank fields and refusing active/done cards, so legacy re-authoring can never overwrite shipped history. forge project backfill no longer auto-marks predates on a zero GitHub match (which could falsely exempt a story whose PR the matcher missed) — it reports unresolved provenance and the board stays red until a human resolves it, with forge project mark-predates the human-confirmed path. Together they make the upgrade skill (FORGE-BOARD-6) able to re-author legacy clients without fabricating history."
     },
     {
       "key": "FORGE-BOARD-6",
       "title": "knacklabs-upgrade-project skill (machinery upgrade + guided re-authoring)",
-      "story": "As a dev upgrading an existing client, I run one skill that upgrades the vendored machinery (forge upgrade + doctor --fix), runs the FORGE-BOARD-4 audit, applies the deterministic backfills, and guides me through re-authoring pending stories that are missing details (propose + I confirm) \u2014 repeatably, so each run reconverges the board to the current enforced bar.",
+      "story": "As a dev upgrading an existing client, I run one skill that upgrades the vendored machinery (forge upgrade + doctor --fix), runs the FORGE-BOARD-4 audit, applies the deterministic backfills, and guides me through re-authoring pending stories that are missing details (propose + I confirm) — repeatably, so each run reconverges the board to the current enforced bar.",
       "acceptance_criteria": [
         "A knacklabs-upgrade-project skill (the forge-upgrade sibling to knacklabs-migrate-project) orchestrates: machinery upgrade, the audit, deterministic backfills, then guided re-authoring of pending stories (agent proposes ACs/spec/epic, human confirms), and verifies check_vendor_integrity + check_board_complete.",
         "Re-authoring only touches pending/active stories (forward intent), never synthesizes history for done stories; the skill is idempotent and re-runnable.",
@@ -432,7 +432,7 @@
       "spec": "docs/specs/traceable-board.md",
       "completed_at": "2026-08-09T04:29:04+00:00",
       "history": ".factory/history/FORGE-BOARD-7/",
-      "outcome": "Symphony Forge gains a one-command repo-hygiene pass, `forge sanitise` (and `--check`): it heals only the safe (roadmap drift, committed cruft) and REPORTS what needs judgment (board gaps, missing PR links, secrets, stale task-state, open windows, advisories) without deleting evidence or fabricating; `--check` is read-only. Three primitives back it: `forge mode abandon` (ledgered close of a crashed window, keeping the harness-marker guard), a pure stale-task-state reporter, and a repo-wide secret/cruft scan. A `knacklabs-sanitise-project` skill wraps it on demand. The daily harness-health cron is gone \u2014 the client update check now runs only on `workflow_dispatch` and `push: main` with the cheap version short-circuit, so devs audit on demand and clients stop burning tokens daily."
+      "outcome": "Symphony Forge gains a one-command repo-hygiene pass, `forge sanitise` (and `--check`): it heals only the safe (roadmap drift, committed cruft) and REPORTS what needs judgment (board gaps, missing PR links, secrets, stale task-state, open windows, advisories) without deleting evidence or fabricating; `--check` is read-only. Three primitives back it: `forge mode abandon` (ledgered close of a crashed window, keeping the harness-marker guard), a pure stale-task-state reporter, and a repo-wide secret/cruft scan. A `knacklabs-sanitise-project` skill wraps it on demand. The daily harness-health cron is gone — the client update check now runs only on `workflow_dispatch` and `push: main` with the cheap version short-circuit, so devs audit on demand and clients stop burning tokens daily."
     },
     {
       "key": "FORGE-ALIGN-1",
@@ -539,7 +539,7 @@
       "spec": "docs/specs/terse-output.md",
       "completed_at": "2026-08-10T16:13:14+00:00",
       "history": ".factory/history/FORGE-TERSE-2/",
-      "outcome": "The narration budget is contract, not preference: conduct \u00a78 carries the full rule (one line per state change; findings, contradictions, refusals, and gate results never rationed; full prose only at gates and deliverables), AGENTS.md pins it as a strict non-negotiable at exactly the 110-line cap, and the implementer/planner/harvester prompts carry self-sufficient clauses so every delegated worker's brief includes it. Constitution and prompts reach all clients on forge upgrade; the AGENTS.md bullet reaches new clients at init, and existing pilots get it by hand. Enforcement is instruction+review like the rest of the conduct canon - the deterministic half of this epic is TERSE-1's budget test."
+      "outcome": "The narration budget is contract, not preference: conduct §8 carries the full rule (one line per state change; findings, contradictions, refusals, and gate results never rationed; full prose only at gates and deliverables), AGENTS.md pins it as a strict non-negotiable at exactly the 110-line cap, and the implementer/planner/harvester prompts carry self-sufficient clauses so every delegated worker's brief includes it. Constitution and prompts reach all clients on forge upgrade; the AGENTS.md bullet reaches new clients at init, and existing pilots get it by hand. Enforcement is instruction+review like the rest of the conduct canon - the deterministic half of this epic is TERSE-1's budget test."
     },
     {
       "key": "FORGE-ROLE-1",
@@ -600,7 +600,7 @@
       "spec": "docs/specs/rescue-prompt-file.md",
       "completed_at": "2026-08-12T18:43:53+00:00",
       "history": ".factory/history/FORGE-ROLE-2/",
-      "outcome": "Long read-only exploration briefs now reach Codex: the companion guard admits task --prompt-file with a repo-contained regular file (resolved-both-sides containment; absolute, traversal, escaping-symlink, dangling, directory, duplicate, wrong-verb, and equals shapes all still refused), so the anytime rescue contract holds beyond short inline prompts \u2014 live-verified with a multi-paragraph brief in both directions. Write delegation and every other guard refusal are unchanged."
+      "outcome": "Long read-only exploration briefs now reach Codex: the companion guard admits task --prompt-file with a repo-contained regular file (resolved-both-sides containment; absolute, traversal, escaping-symlink, dangling, directory, duplicate, wrong-verb, and equals shapes all still refused), so the anytime rescue contract holds beyond short inline prompts — live-verified with a multi-paragraph brief in both directions. Write delegation and every other guard refusal are unchanged."
     },
     {
       "key": "FORGE-WIN-2",
@@ -621,7 +621,7 @@
       "spec": "docs/specs/windows-zero-setup.md",
       "completed_at": "2026-08-13T04:04:50+00:00",
       "history": ".factory/history/FORGE-WIN-2/",
-      "outcome": "A Windows machine with no Git or Python converges to a working harness by running 'forge doctor --fix' with zero typed setup: it adds a real Python 3.10+ check, installs Git and Python in user scope via winget, finds them through canonical known folders plus ProgramW6432 (WOW64-safe), and refreshes PATH so the fixing run reports green \u2014 or prints honest guidance when it cannot. forge.cmd lets cmd/PowerShell users run the harness natively and bootstraps Python before the Git Bash handoff. Auto-remediation refuses to run under an elevated shell (fail-closed), never executing user-writable installers as admin. New clients get it at init, existing on forge upgrade, and windows-latest CI proves it. The single-UAC elevation batch is deferred to real-Windows validation (D-0021)."
+      "outcome": "A Windows machine with no Git or Python converges to a working harness by running 'forge doctor --fix' with zero typed setup: it adds a real Python 3.10+ check, installs Git and Python in user scope via winget, finds them through canonical known folders plus ProgramW6432 (WOW64-safe), and refreshes PATH so the fixing run reports green — or prints honest guidance when it cannot. forge.cmd lets cmd/PowerShell users run the harness natively and bootstraps Python before the Git Bash handoff. Auto-remediation refuses to run under an elevated shell (fail-closed), never executing user-writable installers as admin. New clients get it at init, existing on forge upgrade, and windows-latest CI proves it. The single-UAC elevation batch is deferred to real-Windows validation (D-0021)."
     },
     {
       "key": "FORGE-WIN-3",
@@ -642,7 +642,7 @@
       "spec": "docs/specs/windows-zero-setup.md",
       "completed_at": "2026-08-13T13:40:15+00:00",
       "history": ".factory/history/FORGE-WIN-3/",
-      "outcome": "Symphony Forge delegations now run end-to-end on native Windows: forge delegate launches, supervises, and reaps Codex workers through a single psutil-based process model (decision 0042) on both Windows and POSIX \u2014 retiring the ps/killpg machinery and its lstart fragility. psutil ships as the harness's first runtime Python dependency, gated by a required doctor row and installed by doctor --fix (venv-aware, PEP-668-honest, converges in one run). Windows workers record the workspace-write sandbox; the unelevated tightening stays deferred (D-0021). The windows-hook-gates CI selector gains a real Windows launch/reap E2E."
+      "outcome": "Symphony Forge delegations now run end-to-end on native Windows: forge delegate launches, supervises, and reaps Codex workers through a single psutil-based process model (decision 0042) on both Windows and POSIX — retiring the ps/killpg machinery and its lstart fragility. psutil ships as the harness's first runtime Python dependency, gated by a required doctor row and installed by doctor --fix (venv-aware, PEP-668-honest, converges in one run). Windows workers record the workspace-write sandbox; the unelevated tightening stays deferred (D-0021). The windows-hook-gates CI selector gains a real Windows launch/reap E2E."
     },
     {
       "key": "FORGE-WIN-SBX",
@@ -661,7 +661,7 @@
       "spec": "docs/specs/windows-zero-setup.md",
       "completed_at": "2026-08-13T07:32:49+00:00",
       "history": ".factory/history/FORGE-WIN-SBX/",
-      "outcome": "Every vendored Codex session in every client now defaults to workspace-write instead of full machine access, and the fail-closed hook wiring (.codex/hooks.json) is frozen vendor surface \u2014 a client edit that disarms a hook fails check_vendor_integrity by name at pr-ready. Broader access remains possible only as a deliberate, diff-visible config edit that forge upgrade reverts (decision 0041). Delegated workers were already workspace-write via the companion; the flip closes the dormant default, and the story's own delegation proved the boundary live when the sandbox refused the worker's .codex write."
+      "outcome": "Every vendored Codex session in every client now defaults to workspace-write instead of full machine access, and the fail-closed hook wiring (.codex/hooks.json) is frozen vendor surface — a client edit that disarms a hook fails check_vendor_integrity by name at pr-ready. Broader access remains possible only as a deliberate, diff-visible config edit that forge upgrade reverts (decision 0041). Delegated workers were already workspace-write via the companion; the flip closes the dormant default, and the story's own delegation proved the boundary live when the sandbox refused the worker's .codex write."
     },
     {
       "key": "FORGE-REV-2",
@@ -683,16 +683,16 @@
       "spec": "docs/specs/plan-contract-review.md",
       "completed_at": "2026-08-12T13:45:26+00:00",
       "history": ".factory/history/FORGE-REV-2/",
-      "outcome": "Review is no longer plan-blind: decomposition tasks can declare plan_contracts (the plan invariants they must satisfy), ./forge review-brief composes the reviewer's contract prompt (per-task or --all for the branch-wide closeout), the quality review artifact must verdict every declared contract with evidence \u2014 partial or missing verdicts become blocking findings \u2014 and pr-ready refuses until every contract is verified implemented. Incomplete implementation now blocks the gate instead of passing invisibly; tasks without contracts behave exactly as before."
+      "outcome": "Review is no longer plan-blind: decomposition tasks can declare plan_contracts (the plan invariants they must satisfy), ./forge review-brief composes the reviewer's contract prompt (per-task or --all for the branch-wide closeout), the quality review artifact must verdict every declared contract with evidence — partial or missing verdicts become blocking findings — and pr-ready refuses until every contract is verified implemented. Incomplete implementation now blocks the gate instead of passing invisibly; tasks without contracts behave exactly as before."
     },
     {
       "key": "FORGE-WIN-ENC",
       "title": "No code page can break the harness (encoding hardening)",
-      "story": "As a Windows developer on a default cp1252 console, I can run every forge flow \u2014 doctor, verify, delegation, evidence recording \u2014 without an encoding crash or mojibake, so that the zero-setup promise holds on machines we never configured.",
+      "story": "As a Windows developer on a default cp1252 console, I can run every forge flow — doctor, verify, delegation, evidence recording — without an encoding crash or mojibake, so that the zero-setup promise holds on machines we never configured.",
       "acceptance_criteria": [
         "One shared decode convention for captured child output: common.run_quiet, stages' required-test/verify runners, and delegate's capture points decode utf-8 with errors=replace via a single helper (run_cmd landed in PR #101); no call-site drift remains (audited).",
         "Text file I/O in factory/scripts is explicit: every read_text/write_text/open of a text file names encoding=utf-8 (plan/spec readers, delegate worker logs, evidence writers); a structural check or test refuses new locale-default text I/O.",
-        "windows-latest CI proves the flows under a FORCED cp1252 console (PYTHONIOENCODING=cp1252 or chcp 1252): forge next, doctor, a delegation launch, and verify all exit clean \u2014 the regression net GH's utf-8-friendly default never provides.",
+        "windows-latest CI proves the flows under a FORCED cp1252 console (PYTHONIOENCODING=cp1252 or chcp 1252): forge next, doctor, a delegation launch, and verify all exit clean — the regression net GH's utf-8-friendly default never provides.",
         "Vendored clients receive the hardening: the existing init/adopt/upgrade propagation tests cover the touched scripts."
       ],
       "order": 32,
@@ -794,16 +794,16 @@
       "spec": "docs/specs/conflict-free-story-state.md",
       "completed_at": "2026-08-18T17:53:22+00:00",
       "history": ".factory/history/FORGE-CFS-1/",
-      "outcome": "Overlapping story PRs no longer conflict on .factory state. Story evidence is story-scoped (.factory/stories/<KEY>/), the active-story run pointer is worktree-local and untracked with phase derived from artifacts, events are one conflict-free file each (union merge driver retired), pr_ready ships in place with no archive move, and the PreToolUse/Stop hooks survive a merge \u2014 engaging a self-contained deny-list that keeps writes locked but permits git-native recovery instead of crashing, so a conflict-markered run.json or factory_lib can never trap a session again. Intake activates the new layout; legacy repos stay readable and pick it up via forge upgrade. Proven by a two-worktree merge simulation with zero .factory conflicts."
+      "outcome": "Overlapping story PRs no longer conflict on .factory state. Story evidence is story-scoped (.factory/stories/<KEY>/), the active-story run pointer is worktree-local and untracked with phase derived from artifacts, events are one conflict-free file each (union merge driver retired), pr_ready ships in place with no archive move, and the PreToolUse/Stop hooks survive a merge — engaging a self-contained deny-list that keeps writes locked but permits git-native recovery instead of crashing, so a conflict-markered run.json or factory_lib can never trap a session again. Intake activates the new layout; legacy repos stay readable and pick it up via forge upgrade. Proven by a two-worktree merge simulation with zero .factory conflicts."
     },
     {
-      "key": "FORGE-LED-1",
-      "title": "Privacy boundary decision and structured event schema",
-      "story": "As a harness maintainer, I want append_event to carry a task id and a typed data object validated per event, and the privacy/authority rule recorded as a decision, so that every later event carries facts and nothing else.",
+      "key": "FORGE-LED-0",
+      "title": "Pilot: measure the last 20 shipped stories from committed records",
+      "story": "As the harness maintainer, I want a throwaway read-only script to project this repo's committed events, ledgers and PR links for the last ~20 shipped stories and report coverage, join rate and right-first-time agreement, so that we know whether broad instrumentation is worth owning before changing any recorder.",
       "acceptance_criteria": [
-        "Decision export-privacy-boundary drafted, stating committed events are authoritative and the field-level may/may-not-leave rule",
-        "event schema declares data keys per event typed number|boolean|closed enum; append_event(task=, data=) validates; a free string in data fails a recorder test",
-        "existing call sites keep working unchanged (data optional)"
+        "Report committed under docs/memory/ with: % stories with exactly one usable intake and shipped event; join rate to merged PRs; orphan/unmerged event count; duplicate/malformed/event-loss rate; agreement between event-derived and human-labelled right-first-time on 10 sampled stories",
+        "Decision export-privacy-boundary drafted with the boundary text from the spec (authority, field rule, titles, consumer-owned identity and collection policy) and presented for human acceptance",
+        "No recorder, schema or hook changes; script is not vendored"
       ],
       "order": 37,
       "status": "pending",
@@ -813,31 +813,32 @@
       "spec": "docs/specs/factory-event-export.md"
     },
     {
-      "key": "FORGE-LED-2",
-      "title": "Every recorder carries its counts",
-      "story": "As a consumer of the ledger, I want stage-done, verify, tests, reviews, delegated and signals to carry their measured numbers, so that lead time, right-first-time, diff size and time-to-resolve are computable from events alone.",
+      "key": "FORGE-LED-1",
+      "title": "Stable event id and strict discriminated event schema",
+      "story": "As a consumer of the ledger, I want every event to carry its id, optional task/signal_id/attempt and a per-kind typed data object that the validator enforces closed, so that records are joinable and can never carry prose.",
       "acceptance_criteria": [
-        "stage-done carries product-only and total (files,+,-) triples from the measured diff",
-        "verify-* carries check counts and duration; tests-* run/failed; review-* findings by severity; delegated model/effort/write; signal-* kind; signal-resolved elapsed seconds and resolver auto|human",
-        "gate-test story run shows each event with its declared data keys"
+        "Every event payload carries id equal to its file name; existing readers (forge history, pr_ready) accept both old and new payloads",
+        "Event schema is discriminated per kind with constrained scalar types (nonnegative_number, boolean, sha256, opaque_id, safe_token, closed enums); the validator enforces nested closed objects; a recorder test with an undeclared key or free string in data fails",
+        "export-privacy-boundary is accepted (human) before this story's plan is saved"
       ],
       "order": 38,
       "status": "pending",
       "epic": "measurable-ledger",
       "skill": "backend",
       "depends_on": [
-        "FORGE-LED-1"
+        "FORGE-LED-0"
       ],
       "spec": "docs/specs/factory-event-export.md"
     },
     {
-      "key": "FORGE-LED-3",
-      "title": "Missing transitions emit events",
-      "story": "As a consumer of the ledger, I want grills, plan saves, outcomes, quickfixes, degraded windows, lessons, assumptions, decisions and plan rejections to emit events, so that the story lifecycle is complete and 'grill changed the plan' is derivable.",
+      "key": "FORGE-LED-2",
+      "title": "Read-only exporter over a committed ref",
+      "story": "As cadence (or any local consumer), I want `forge events export --ref <ref>` to write factory-export/v1 NDJSON of event and roadmap records reachable at that ref with a header carrying schema, harness_commit, integrity_status and coverage, so that I can measure factory cycle time and roadmap progress without reading the repo.",
       "acceptance_criteria": [
-        "grill-recorded (gate, rounds, questions, verdict, input digest) and plan-saved (digest) emitted; changed-by-grill derivable as digest mismatch",
-        "outcome-set, quickfix-start/done (file count, budget hit), degraded-start/end, lesson-added (severity), assumption-recorded, decision-accepted, plan-rejected emitted; events outside a story carry no story",
-        "forge history renders the new events"
+        "factory/schemas/factory-export.json checked in; CI validates the export of this repo at HEAD; running twice yields identical output; --no-titles removes titles; grep for detail, paths, branch names or prose fixtures finds nothing",
+        "Header integrity_status comes from the existing vendor-integrity check (clean|drifted|unarmed) and flips to drifted when one vendored gate file is edited; no new manifest",
+        "Events are grouped into runs per intake; the run ending in shipped is primary, earlier runs carry run_status abandoned; roadmap records carry epic id, story key, status, dependencies, PR link, titles",
+        "Success prints one line; coverage and drift details are findings; forge upgrade carries schema and exporter to a client repo"
       ],
       "order": 39,
       "status": "pending",
@@ -849,46 +850,45 @@
       "spec": "docs/specs/factory-event-export.md"
     },
     {
-      "key": "FORGE-LED-4",
-      "title": "Write-through export feed with backfill",
-      "story": "As cadence (or any local consumer), I want every event mirrored as a factory-export/v1 line in a per-machine, never-committed file with repo and actor hashes and no prose, so that I can measure without reading the repo.",
+      "key": "FORGE-LED-3",
+      "title": "Source metrics the views consume",
+      "story": "As a consumer, I want verify duration and check counts, numeric tests run/failed, review blocking/non-blocking counts per lens, signal resolution elapsed seconds and resolver, stage-close measured diff and attempt, and plan-save attempt and result recorded at their sources and projected into event data, so that right-first-time and redo causes are computable.",
       "acceptance_criteria": [
-        "append_event writes one export line to ~/.local/state/forge/export/<repo-hash>.jsonl (Windows equivalent); fields schema, repo, harness_sha, modified, story, task, event, at, generated_by, actor_hash, data; detail dropped; write failure never fails the recorder",
-        "factory/schemas/factory-export.json checked in; CI validates a fixture export; grep for repo name, path, branch, prose from the fixture finds nothing",
-        "forge events export backfills pre-existing events once, flagged backfilled:true, idempotent; rotate at 10 MB keep 3"
+        "Artifact schemas (verify, test-automated, review, signal ledger, stages, plans) gain the numeric fields; recorders populate them; each field is consumed by a named metric in the spec",
+        "stage-done, verify-*, tests-*, review-*, signal-resolved, plan-saved events carry the declared data keys; gate-test happy path plus review-rework and plan-revision scenarios prove them",
+        "right-first-time (attempt == 1 across stage/verify/review/plan-save, no stage-incomplete) is computable from the export of the gate-test fixture"
       ],
       "order": 40,
       "status": "pending",
       "epic": "measurable-ledger",
       "skill": "backend",
       "depends_on": [
-        "FORGE-LED-2",
-        "FORGE-LED-3"
+        "FORGE-LED-2"
       ],
       "spec": "docs/specs/factory-event-export.md"
     },
     {
-      "key": "FORGE-LED-5",
-      "title": "Vendored-harness manifest and upgrade carry",
-      "story": "As a harness maintainer, I want init/adopt/upgrade to write a harness-owned file manifest and doctor to report local modifications, so that a consumer can tell a trusted ledger from a patched one and client repos receive the export.",
+      "key": "FORGE-LED-4",
+      "title": "Missing transitions consumed by named metrics",
+      "story": "As a consumer, I want grill-recorded, plan-saved, outcome-set and decision-accepted to emit events, and quickfix/degraded/lesson/signal ledgers projected by the exporter rather than duplicated, so that the story lifecycle in the export is complete for the metrics the views name.",
       "acceptance_criteria": [
-        ".factory/harness-manifest.json (path -> sha256) written by init, adopt, upgrade",
-        "forge doctor names locally modified harness files; export lines carry modified:true when any differ; upgrade restores both",
-        "forge upgrade carries schema, manifest and export to a client repo; check_dual_runtime.py green"
+        "grill-recorded (gate, rounds, questions_asked, verdict), plan-saved (attempt, result), outcome-set and decision-accepted emitted with declared data; grill records require rounds and questions_asked",
+        "Exporter projects quickfix, degraded, lesson and signal ledger records as event records with source ids; no duplicate global events are written",
+        "forge history renders the new events; export of the gate-test fixture contains every transition the spec lists"
       ],
       "order": 41,
       "status": "pending",
       "epic": "measurable-ledger",
       "skill": "backend",
       "depends_on": [
-        "FORGE-LED-4"
+        "FORGE-LED-3"
       ],
       "spec": "docs/specs/factory-event-export.md"
     },
     {
       "key": "ship-clears-forge-authority",
       "title": "Ship-cleanup clears .git/forge authority",
-      "story": "As a harness maintainer, I want story ship-cleanup to clear the git-local .git/forge stage authority \u2014 and load_stages to ignore it when no story is active \u2014 so that a shipped story's stale authority can never phantom-deadlock the next window.",
+      "story": "As a harness maintainer, I want story ship-cleanup to clear the git-local .git/forge stage authority — and load_stages to ignore it when no story is active — so that a shipped story's stale authority can never phantom-deadlock the next window.",
       "acceptance_criteria": [
         "On ship, pr_ready clears .git/forge/{stages,decomposition}.json (and delegations.jsonl, locks/), not only archiving to .factory/history/<KEY>/",
         "load_stages returns {} when the run has no issue_key (no active story), so leftover authority never reports a phantom active stage",
@@ -905,10 +905,10 @@
     {
       "key": "upgrade-preserves-doc-contracts",
       "title": "Upgrade preserves and truthfully reports doc-contract overwrites",
-      "story": "As a client running forge upgrade, I want doc-contract files I appended to (e.g. docs/architecture/README.md) preserved to a .orig backup and named in the report \u2014 never silently overwritten while the summary calls the directory 'Untouched (project-owned)' \u2014 so I cannot lose project content invisibly.",
+      "story": "As a client running forge upgrade, I want doc-contract files I appended to (e.g. docs/architecture/README.md) preserved to a .orig backup and named in the report — never silently overwritten while the summary calls the directory 'Untouched (project-owned)' — so I cannot lose project content invisibly.",
       "acceptance_criteria": [
         "The upgrade report names each replaced doc-contract destination path, and no longer implies a directory whose contract file was overwritten is fully untouched",
-        "When a client's doc-contract file differs from the new template, the upgrade names it and warns \u2014 pointing the operator at `git diff` (prior content is committed; upgrade requires a clean tree) \u2014 so divergence is never reported as 'untouched'; no backup files are created",
+        "When a client's doc-contract file differs from the new template, the upgrade names it and warns — pointing the operator at `git diff` (prior content is committed; upgrade requires a clean tree) — so divergence is never reported as 'untouched'; no backup files are created",
         "Regression test: upgrading a client whose doc-contract README differs from the template names it replaced and emits the divergence warning, while an identical unedited file is not warned and no .orig files appear"
       ],
       "order": 43,
@@ -998,7 +998,7 @@
     {
       "id": "accountable-engineering",
       "title": "Accountable engineering loop",
-      "objective": "Enforce decision 0032 end to end: JIT frontier contracts gated at stage start, evidence-backed independent task grills, internally derived grounding digests, bounded reviewable diffs, and task-level board visibility \u2014 agents do the heavy lifting, humans decide only authority questions.",
+      "objective": "Enforce decision 0032 end to end: JIT frontier contracts gated at stage start, evidence-backed independent task grills, internally derived grounding digests, bounded reviewable diffs, and task-level board visibility — agents do the heavy lifting, humans decide only authority questions.",
       "source_refs": [
         "docs/specs/accountable-engineering-loop.md"
       ]

@@ -1,0 +1,10 @@
+{
+  "event": "open",
+  "id": "Q-0085-7f97",
+  "profile": "quickfix",
+  "reason": "Add a sol@xhigh read-only lane for validation/debugging beside the terra@high exploration lane (doctrine only; hook already permits it)",
+  "started_at": "2026-08-19T11:11:40+00:00",
+  "max_files": 5,
+  "files": [],
+  "harness_source": true
+}
