@@ -243,9 +243,12 @@
   /* ── overview ─────────────────────────────────────────────────────── */
   main { padding-block: .4rem 4rem; }
   .overview { display: grid; gap: 0; }
-  /* Question stacks ABOVE its answer, so the answer uses the full width and
-     no empty side column is left over. */
-  .overview-question { display: block; padding: clamp(1.2rem, 2.6vw, 2rem) 0; }
+  /* Single-column grid: the question stacks ABOVE its answer (row 1 / row 2),
+     so the answer uses the full width with no empty side column. */
+  .overview-question {
+    display: grid; grid-template-columns: minmax(0, 1fr);
+    padding: clamp(1.2rem, 2.6vw, 2rem) 0;
+  }
   .overview-question > h2 {
     font: 400 clamp(1.15rem, 2vw, 1.5rem)/1.2 var(--serif);
     letter-spacing: .005em; color: var(--accent); margin-bottom: 1rem;
@@ -261,7 +264,7 @@
   /* Every section is one full-width solid card — consistent, no ragged
      side-by-side heights. Long prose flows into two columns so the width is
      used (34em cap lifted) and lines stay a comfortable length. */
-  .project-sections { display: grid; gap: .8rem; }
+  .project-sections { display: grid; grid-template-columns: 1fr; gap: .8rem; }
   .project-section {
     background: var(--surface); border: 1px solid var(--rule);
     border-radius: var(--radius-sm); box-shadow: var(--shadow-sm); padding: 1.05rem 1.2rem;
@@ -313,8 +316,9 @@
   /* Each story is ONE full-width card: the clickable story on top, its
      Requires/Unblocks beneath — no bare text floating in empty space. */
   .story-position {
-    display: block; background: var(--surface); border: 1px solid var(--rule);
-    border-radius: var(--radius-sm); box-shadow: var(--shadow-sm); overflow: hidden;
+    display: grid; grid-template-columns: 1fr;
+    background: var(--surface); border: 1px solid var(--rule);
+    border-radius: var(--radius-sm); box-shadow: var(--shadow-sm);
     transition: border-color 140ms ease-out, box-shadow 140ms ease-out;
   }
   .story-position:hover { border-color: var(--muted); box-shadow: var(--shadow); }
