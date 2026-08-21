@@ -1,0 +1,10 @@
+{
+  "event": "open",
+  "id": "Q-0089-474c",
+  "profile": "quickfix",
+  "reason": "ship-clears-forge-authority (#116): retire a shipped story's stale .git/forge stage authority; roadmap-story fix with a test, workflow evidence not recorded \u2014 quickfix work record for the PR gate",
+  "started_at": "2026-08-21T07:46:06+00:00",
+  "max_files": 5,
+  "files": [],
+  "harness_source": true
+}
