@@ -13668,6 +13668,59 @@ def test_missing_protected_stage_state_never_falls_back_to_workspace(
     assert code == 0 and "No stage tracker" in out
 
 
+def test_shipped_or_orphaned_authority_does_not_phantom_block(repo, tmp_path):
+    """A shipped story's leftover git-local stage authority must not report a
+    phantom active stage. With no active issue (or a mismatched one) load_stages
+    returns {}, so quickfix / mode / stage start all open freely; `stage clear`
+    retires the authority left behind by a story that shipped before it existed.
+    """
+    start_stage(repo, tmp_path, STAGE_TASK)
+    lib = load_factory_lib(repo)
+    sys.path.insert(0, str(repo / "factory" / "scripts"))
+    try:
+        from forge_cli.stages import authoritative_stages_path
+    finally:
+        sys.path.pop(0)
+
+    # While the story is active the stage IS reported and blocks a new window.
+    code, out = run(repo, "forge.py", "stage", "list")
+    assert code == 0 and "[>]" in out
+    code, out = run(repo, "forge.py", "quickfix", "start", "phantom check")
+    assert code != 0 and "stage is active" in out
+
+    # Post-ship run.json is project fields only, no issue_key. The authority
+    # file is still on disk — the bug is that its clear never ran.
+    lib.dump_json(lib.run_state_path(repo), {"project": "app", "phase": "shipped"})
+    assert authoritative_stages_path(repo).is_file()
+
+    # load_stages returns {} with no active issue: no phantom stage.
+    code, out = run(repo, "forge.py", "stage", "list")
+    assert code == 0 and "No stage tracker" in out
+    # quickfix start is no longer blocked.
+    code, out = run(repo, "forge.py", "quickfix", "start", "unblocked")
+    assert code == 0, out
+    run(repo, "forge.py", "quickfix", "done")
+
+    # Mismatch case: a DIFFERENT active story must not adopt the leftover T1.
+    lib.dump_json(lib.run_state_path(repo),
+                  {"project": "app", "issue_key": "OTHER-9"})
+    code, out = run(repo, "forge.py", "stage", "list")
+    assert code == 0 and "No stage tracker" in out
+    code, out = run(repo, "forge.py", "mode", "lite",
+                    "--reason", "no phantom", "--by", "Test Human")
+    assert code == 0, out
+    run(repo, "forge.py", "mode", "done")
+
+    # `stage clear` retires the orphaned authority, idempotently.
+    control = authoritative_stages_path(repo).parent
+    code, out = run(repo, "forge.py", "stage", "clear")
+    assert code == 0 and "stages.json" in out, out
+    assert not authoritative_stages_path(repo).is_file()
+    assert not (control / "decomposition.json").exists()
+    code, out = run(repo, "forge.py", "stage", "clear")
+    assert code == 0 and "No git-local story authority" in out
+
+
 def test_stage_migrate_requires_confirmation_and_adopts_legacy_state(
         repo, tmp_path):
     sign_off(repo)
