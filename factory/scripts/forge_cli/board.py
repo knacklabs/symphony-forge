@@ -340,16 +340,32 @@ def aggregate_state(base: Path) -> dict:
     }
 
 
+_NEXT_CACHE: dict[str, tuple[float, dict]] = {}
+_NEXT_TTL = 8.0
+
+
 def next_actions(base: Path) -> dict:
     """The deterministic 'where am I / what now', as the CLI computes it.
 
     # ponytail: captures cmd_next's own output rather than duplicating 100
     # lines of gate branching — one source of truth. If the shape ever needs
     # more than phase + steps, extract a builder from cmd_next instead.
+
+    Cached for a few seconds: cmd_next shells out to git ~5 times, and the
+    board polls every 4s, so an uncached call dominated /api/state latency.
+    The "what now" only changes on a phase transition, so brief staleness is
+    fine for a display.
     """
     import argparse
     import contextlib
     import io
+    import time
+
+    key = str(base.resolve())
+    hit = _NEXT_CACHE.get(key)
+    now = time.monotonic()
+    if hit and now - hit[0] < _NEXT_TTL:
+        return hit[1]
 
     from .phase import cmd_next
 
@@ -365,7 +381,9 @@ def next_actions(base: Path) -> dict:
             phase = line[len("PHASE:"):].strip()
         elif re.match(r"\s+\d+\.\s", line):
             steps.append(line.strip().split(". ", 1)[-1])
-    return {"phase": phase, "steps": steps}
+    result = {"phase": phase, "steps": steps}
+    _NEXT_CACHE[key] = (now, result)
+    return result
 
 
 def active_decisions(base: Path) -> list[dict]:
