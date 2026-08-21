@@ -3168,7 +3168,7 @@ def test_doctor_hook_health_green_on_healthy_repo(repo):
     bytecode_before = set(repo.rglob("__pycache__"))
     checks = hook_health_checks(repo)
 
-    assert len(checks) == 8
+    assert len(checks) == 9
     assert all(check["ok"] for check in checks), checks
     assert git(repo, "status", "--porcelain", "-uall") == before
     assert set(repo.rglob("__pycache__")) == bytecode_before
@@ -3265,8 +3265,8 @@ def test_doctor_hook_health_reds_unresolvable_hook(repo, tmp_path):
     checks = hook_health_checks(repo, env={"PATH": str(fake_bin)})
     failures = [check for check in checks if not check["ok"]]
 
-    assert len(failures) == 8
-    assert len({check["name"] for check in failures}) == 8
+    assert len(failures) == 9
+    assert len({check["name"] for check in failures}) == 9
     registered = json.loads((repo / ".claude" / "settings.json").read_text())
     command = registered["hooks"]["SessionStart"][0]["hooks"][0]["command"]
     assert any(command in check["detail"] for check in failures)
@@ -3457,7 +3457,7 @@ def test_doctor_hook_health_missing_sh_names_git_bash_fix(repo, monkeypatch):
     failures = [check for check in doctor.hook_health_checks(repo)
                 if not check["ok"]]
 
-    assert len(failures) == 8
+    assert len(failures) == 9
     assert all(check["fix"] == doctor.HOOK_SHELL_FIX for check in failures)
     assert all("Git for Windows" in check["fix"] for check in failures)
 
@@ -3471,7 +3471,7 @@ def test_doctor_hook_health_broken_launcher_does_not_blame_git_bash(repo):
     failures = [check for check in doctor.hook_health_checks(repo)
                 if not check["ok"]]
 
-    assert len(failures) == 8
+    assert len(failures) == 9
     assert all("hook launcher probe failed" in check["detail"] for check in failures)
     assert all(check["fix"] == doctor.HOOK_HEALTH_FIX for check in failures)
 
@@ -3488,6 +3488,12 @@ def test_init_and_upgrade_ship_portable_hook_commands(tmp_path):
             for hook in registration["hooks"]
         ]
 
+    def portable(command: str) -> bool:
+        expected_exit = " || exit 0' || exit 0" \
+            if "hook post_tool_use" in command else " || exit 2' || exit 2"
+        return (command.startswith("sh -c ") and command.endswith(expected_exit)
+                and bool(hook_script_paths(command)))
+
     repo = tmp_path / "portable-hooks-client"
     initialized = subprocess.run(
         [sys.executable, str(HARNESS / "factory" / "scripts" / "forge.py"),
@@ -3495,7 +3501,7 @@ def test_init_and_upgrade_ship_portable_hook_commands(tmp_path):
         cwd=HARNESS, capture_output=True, text=True,
     )
     assert initialized.returncode == 0, initialized.stdout + initialized.stderr
-    assert len(commands(repo, ".claude/settings.json")) == 5
+    assert len(commands(repo, ".claude/settings.json")) == 6
     assert len(commands(repo, ".codex/hooks.json")) == 3
     config = repo / ".codex" / "config.toml"
     assert 'sandbox_mode = "workspace-write"' in config.read_text().splitlines()
@@ -3503,9 +3509,7 @@ def test_init_and_upgrade_ship_portable_hook_commands(tmp_path):
     attributes = repo / ".gitattributes"
     assert "forge text eol=lf" in attributes.read_text().splitlines()
     assert all(
-        command.startswith("sh -c ")
-        and command.endswith(" || exit 2' || exit 2")
-        and hook_script_paths(command)
+        portable(command)
         for relative in (".claude/settings.json", ".codex/hooks.json")
         for command in commands(repo, relative)
     )
@@ -3529,15 +3533,13 @@ def test_init_and_upgrade_ship_portable_hook_commands(tmp_path):
 
     upgraded = upgrade_into(repo)
     assert upgraded.returncode == 0, upgraded.stdout + upgraded.stderr
-    assert len(commands(repo, ".claude/settings.json")) == 5
+    assert len(commands(repo, ".claude/settings.json")) == 6
     assert len(commands(repo, ".codex/hooks.json")) == 3
     assert 'sandbox_mode = "workspace-write"' in config.read_text().splitlines()
     assert (repo / "forge.cmd").is_file()
     assert "forge text eol=lf" in attributes.read_text().splitlines()
     assert all(
-        command.startswith("sh -c ")
-        and command.endswith(" || exit 2' || exit 2")
-        and hook_script_paths(command)
+        portable(command)
         for relative in (".claude/settings.json", ".codex/hooks.json")
         for command in commands(repo, relative)
     )
@@ -3560,7 +3562,9 @@ def test_hook_registration_extracts_every_registered_script():
                     scripts = hook_script_paths(hook["command"])
                     assert scripts, f"{relative}:{event} did not expose a script path"
                     assert all((HARNESS / script).is_file() for script in scripts)
-                    assert hook["command"].endswith(" || exit 2' || exit 2")
+                    expected_exit = " || exit 0' || exit 0" \
+                        if event == "PostToolUse" else " || exit 2' || exit 2"
+                    assert hook["command"].endswith(expected_exit)
 
 
 def test_forge_cmd_routes_git_bash_then_python_fallbacks(tmp_path):
@@ -4136,7 +4140,7 @@ def test_doctor_hook_health_uses_git_bash_outside_path(repo, tmp_path):
         "ProgramFiles": str(program_files),
     })
 
-    assert len(checks) == 8
+    assert len(checks) == 9
     assert all(check["ok"] for check in checks), checks
 
 
@@ -6588,6 +6592,181 @@ def test_assumptions_archive_compacts_resolved_rows(repo, tmp_path):
 
 def hook(repo: Path, payload: dict) -> tuple[int, str]:
     return run(repo, "pre_tool_use.py", stdin=json.dumps(payload))
+
+
+def post_hook(repo: Path, payload: dict) -> tuple[int, str]:
+    return run(repo, "forge.py", "hook", "post_tool_use", stdin=json.dumps(payload))
+
+
+def plan_hook_payload(path: Path, *, tool="Write", mode="plan", session_id=None):
+    payload = {
+        "tool_name": tool, "permission_mode": mode,
+        "tool_input": {"file_path": str(path)},
+    }
+    if session_id is not None:
+        payload["session_id"] = session_id
+    return payload
+
+
+def test_post_tool_use_records_plan_mode_marker(repo):
+    root_plan = repo / "plans" / "root-draft.md"
+    root_plan.write_text("# Root draft\n", encoding="utf-8")
+    code, out = post_hook(repo, plan_hook_payload(root_plan, session_id="session-root"))
+    assert code == 0, out
+    root_records = list((repo / ".factory" / "plan-mode").glob("*.json"))
+    assert len(root_records) == 1
+
+    code, out = intake(repo, "PLAN-1", "Plan provenance")
+    assert code == 0, out
+    plan = repo / "plans" / "draft.md"
+    plan.write_text("# Draft\n\nBody\n\n## Implementation Assumptions\n- ignored\n")
+    records_dir = story_state(repo, "PLAN-1") / "plan-mode"
+    for tool in ("Write", "Edit", "MultiEdit"):
+        payload = plan_hook_payload(plan, tool=tool, session_id=f"session-{tool}")
+        before = set(records_dir.glob("*.json"))
+        code, out = post_hook(repo, payload)
+        assert code == 0, out
+        records = set(records_dir.glob("*.json"))
+        assert len(records) == len(before) + 1
+        marker = json.loads((records - before).pop().read_text())
+        assert marker == {
+            "generated_by": "claude-code:plan-mode",
+            "path": str(plan),
+            "sha256": hashlib.sha256(plan.read_bytes()).hexdigest(),
+            "sha256_body": plan_digest_without_assumptions(plan),
+            "at": marker["at"],
+            "session_id": f"session-{tool}",
+        }
+
+    code, out = post_hook(repo, {**payload, "permission_mode": "default"})
+    assert code == 0, out
+    assert len(list(records_dir.glob("*.json"))) == 3
+
+
+def test_post_tool_use_records_ask_user_question_round(repo):
+    root_payload = {
+        "tool_name": "AskUserQuestion",
+        "session_id": "session-root",
+        "tool_input": {"questions": [{
+            "question": "Start the grill?",
+            "options": [{"label": "Start"}],
+        }]},
+        "tool_response": {"answers": {"Start the grill?": "Start"}},
+    }
+    code, out = post_hook(repo, root_payload)
+    assert code == 0, out
+    assert len(list((repo / ".factory" / "grill-rounds").glob("*.json"))) == 1
+
+    code, out = intake(repo, "GRILL-1", "Grill provenance")
+    assert code == 0, out
+    payload = {
+        "tool_name": "AskUserQuestion",
+        "permission_mode": "default",
+        "session_id": "session-2",
+        "tool_input": {"questions": [{
+            "question": "Keep this boundary?",
+            "options": [
+                {"label": "Keep", "description": "Keep the task bounded."},
+                {"label": "Split", "description": "Split the task."},
+            ],
+        }]},
+        "tool_response": {
+            "answers": {"Keep this boundary?": "Keep"},
+            "notes": "private free text must not be persisted",
+        },
+    }
+
+    code, out = post_hook(repo, payload)
+    assert code == 0, out
+    records = list((story_state(repo, "GRILL-1") / "grill-rounds").glob("*.json"))
+    assert len(records) == 1
+    assert json.loads(records[0].read_text()) == {
+        "generated_by": "claude-code:plan-mode",
+        "questions": [{
+            "question": "Keep this boundary?",
+            "options": ["Keep", "Split"],
+            "chosen": "Keep",
+        }],
+        "at": json.loads(records[0].read_text())["at"],
+        "session_id": "session-2",
+    }
+    assert "private free text" not in records[0].read_text()
+
+
+def test_post_tool_use_is_fail_open(repo):
+    code, out = run(repo, "post_tool_use.py", stdin="not json")
+    assert code == 0 and out == ""
+    code, out = post_hook(repo, {
+        "tool_name": "AskUserQuestion",
+        "tool_input": {"questions": "not a list"},
+        "tool_response": {"notes": "do not record me"},
+    })
+    assert code == 0 and out == ""
+    assert not (repo / ".factory" / "grill-rounds").exists()
+
+    schema = repo / "factory" / "schemas" / "plan-mode-marker.json"
+    schema.write_text(json.dumps({"required": {"missing": "str"}}))
+    plan = repo / "plans" / "draft.md"
+    plan.write_text("# Draft\n")
+    code, out = post_hook(repo, plan_hook_payload(plan, session_id="session-3"))
+    assert code == 0 and out == ""
+    assert not (repo / ".factory" / "plan-mode").exists()
+
+
+def test_vendor_integrity_covers_post_tool_use(repo):
+    files = json.loads(
+        (repo / "constitution" / "VENDOR_MANIFEST.json").read_text()
+    )["files"]
+    assert "factory/scripts/post_tool_use.py" in files
+    assert "factory/schemas/plan-mode-marker.json" in files
+    assert "factory/schemas/grill-round.json" in files
+    code, out = run(repo, "check_vendor_integrity.py")
+    assert code == 0 and "OK" in out, out
+
+
+def test_post_tool_use_marks_plan_outside_repo_with_raw_and_body_digests(
+        repo, tmp_path):
+    plan = tmp_path / "outside-plan.md"
+    plan.write_bytes(b"# Draft\n\nBody\n\n## Implementation Assumptions\n- ignored\n")
+    code, out = post_hook(repo, plan_hook_payload(plan))
+    assert code == 0, out
+    records = list((repo / ".factory" / "plan-mode").glob("*.json"))
+    assert len(records) == 1
+    marker = json.loads(records[0].read_text())
+    assert marker["path"] == str(plan.resolve())
+    assert marker["sha256"] == hashlib.sha256(plan.read_bytes()).hexdigest()
+    assert marker["sha256_body"] == plan_digest_without_assumptions(plan)
+    assert marker["session_id"] == ""
+
+
+def test_post_tool_use_round_without_response_records_chosen_null(repo):
+    payload = {
+        "tool_name": "AskUserQuestion",
+        "tool_input": {"questions": [{
+            "question": "Keep this boundary?",
+            "options": [{"label": "Keep"}, {"label": "Split"}],
+        }]},
+    }
+    records_dir = repo / ".factory" / "grill-rounds"
+    for response in (None, {"answers": {"Keep this boundary?": "free text"}}):
+        before = set(records_dir.glob("*.json"))
+        call = payload if response is None else {**payload, "tool_response": response}
+        code, out = post_hook(repo, call)
+        assert code == 0, out
+        added = set(records_dir.glob("*.json")) - before
+        assert len(added) == 1
+        record = json.loads(added.pop().read_text())
+        assert record["questions"][0]["chosen"] is None
+        assert record["session_id"] == ""
+
+
+def test_post_tool_use_records_without_session_id(repo):
+    plan = repo / "plans" / "draft.md"
+    plan.write_text("# Draft\n", encoding="utf-8")
+    code, out = post_hook(repo, plan_hook_payload(plan, tool="Edit"))
+    assert code == 0, out
+    marker = next((repo / ".factory" / "plan-mode").glob("*.json"))
+    assert json.loads(marker.read_text())["session_id"] == ""
 
 
 def make_unmerged(repo: Path, rel: str = "src/conflict.ts") -> None:

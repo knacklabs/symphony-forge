@@ -21,6 +21,7 @@ import os
 from pathlib import Path
 
 HOOK_SCRIPTS = {
+    "post_tool_use": "post_tool_use.py",
     "pre_compact": "pre_compact.py",
     "pre_tool_use": "pre_tool_use.py",
     "session_start": "session_start.py",
