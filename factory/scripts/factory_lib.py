@@ -1197,17 +1197,36 @@ def head_sha(root: Path | None = None) -> str | None:
     return proc.stdout.strip() if proc.returncode == 0 else None
 
 
+def active_task_user_facing(root: Path) -> bool:
+    """Design-skill enforcement is PER TASK, not per story. A user_facing story
+    (e.g. one whose web app is a later task) still contains backend tasks with
+    no UI; forcing those to attest UI design skills is the bug this resolves.
+    Resolve the active stage's task and read ITS OWN user_facing flag, defaulting
+    to False when the task does not declare one — the planner marks UI tasks
+    user_facing: true, and the task grill enforces that a user_facing story does
+    so for the task(s) that build UI."""
+    stages = load_json(git_control_dir(root) / "stages.json", default={})
+    active = next((s for s in stages.get("stages", [])
+                   if isinstance(s, dict) and s.get("status") == "active"), None)
+    if not active:
+        return False
+    decomposition = load_json(
+        protected_decomposition_state_path(root), default={})
+    task = next((t for t in decomposition.get("tasks", [])
+                 if isinstance(t, dict) and t.get("id") == active.get("id")), {})
+    return bool(task.get("user_facing"))
+
+
 def require_skills(root: Path, name: str, payload: dict) -> None:
     """Feature-type skill enforcement (same trust model as generated_by):
-    when the recorded decomposition says user_facing, the artifact must
-    ATTEST the phase's mandatory skills in skills_used. Advisory skills are
-    listed too when used, but only the required set gates."""
+    when the ACTIVE TASK is user_facing, the artifact must ATTEST the phase's
+    mandatory skills in skills_used. Advisory skills are listed too when used,
+    but only the required set gates."""
     schema = json.loads(schema_path(root, name).read_text(encoding="utf-8"))
     required = schema.get("required_skills", {})
     if not required:
         return
-    decomposition = load_json(decomposition_state_path(root), default={})
-    if not decomposition.get("user_facing"):
+    if not active_task_user_facing(root):
         return
     used = payload.get("skills_used") or []
     missing = [s for s in required.get("user_facing", []) if s not in used]

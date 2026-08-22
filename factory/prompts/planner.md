@@ -45,6 +45,17 @@ without it):
 - Deferred rows that survive the task land in the deferral ledger with a
   trigger (`./forge defer add`).
 
+Task Decomposition rules:
+- Each leaf task carries `user_facing: true|false`. Set it TRUE only for tasks
+  that build UI a person sees (screens, components, styling, motion); backend
+  tasks (APIs, schema, services, migrations, infra) are `false`. This per-TASK
+  flag — not the story-level one — is what gates that task's mandatory design
+  skills (emil-design-eng, frontend-design, review-animations) and design
+  review. So a user_facing STORY whose UI is one task marks THAT task `true` and
+  leaves its backend tasks `false`; backend stages then never carry UI-skill
+  requirements. A user_facing story with no user_facing task is a planning bug
+  the task grill rejects.
+
 Decisions section rules:
 - Every choice NOT derivable from BRIEF, architecture, or existing decision
   records is a decision (library pick, data-model shape, queue vs cron,

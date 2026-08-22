@@ -62,7 +62,10 @@ Five gates, five scopes:
   stages. Hunt: assumed files or APIs that prior work did not produce, stale
   or over-broad `write_scope`, acceptance criteria not served by the proposed
   work, required tests that do not prove those criteria, verify commands that
-  cannot falsify the change, and reviewer focus that misses the risky seam.
+  cannot falsify the change, reviewer focus that misses the risky seam, and a
+  `user_facing` flag that misclassifies the task — a UI task left `false` (its
+  mandatory design skills and design review would be skipped) or a backend task
+  marked `true` (forced to attest UI design skills it has no use for).
   This is the JIT task-planning gate from decision 0032, not a repeat of the
   story-level plan grill. Record it for the exact task id and contract digest;
   the digest covers `write_scope`, `required_tests`, `verify_commands`, and

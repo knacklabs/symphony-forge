@@ -1,0 +1,10 @@
+{
+  "event": "open",
+  "id": "Q-0094-3fc3",
+  "profile": "quickfix",
+  "reason": "Scope mandatory design skills to per-task user_facing, not the story flag, so backend tasks in a user-facing story don't require UI skills",
+  "started_at": "2026-08-22T19:23:58+00:00",
+  "max_files": 5,
+  "files": [],
+  "harness_source": true
+}
