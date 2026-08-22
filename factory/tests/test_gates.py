@@ -12143,6 +12143,34 @@ def test_stage_done_binds_required_test_to_declared_path(repo, tmp_path):
     assert code != 0 and "not attributed" in out and path in out
 
 
+def test_stage_done_accepts_absolute_junit_file_path(repo, tmp_path):
+    """node:test (via ``tsx --test``) writes the JUnit ``file`` as an ABSOLUTE
+    path. It is normalized back to the declared repo-relative path and accepted,
+    rather than being rejected as "not attributed"."""
+    test_id = "test_slice"
+    path = "src/abs_proof.py"
+    task = {**STAGE_TASK, "required_tests": [{
+        "id": test_id, "path": path,
+        "command": "python3 {path} {id} {report}",
+    }]}
+    start_stage(repo, tmp_path, task)
+    write_in_scope(repo, "src/core.py")
+    write_in_scope(
+        repo, path,
+        "import sys\n"
+        "from pathlib import Path\n"
+        "test_id, report = sys.argv[1], sys.argv[2]\n"
+        "abs_path = str(Path(sys.argv[0]).resolve())\n"
+        "Path(report).write_text(\n"
+        "    f'<testsuite><testcase name=\"{test_id}\" file=\"{abs_path}\"/>'\n"
+        "    '</testsuite>')\n",
+    )
+    stamp_and_commit(repo)
+    code, out = run(repo, "forge.py", "stage", "done", "T1",
+                    env=fake_companion_env(tmp_path))
+    assert code == 0, out
+
+
 def test_stage_done_refuses_required_test_product_mutation(repo, tmp_path):
     test_id = "test_slice"
     path = "src/test_core.py"

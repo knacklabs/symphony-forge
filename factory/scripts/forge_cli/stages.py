@@ -928,6 +928,29 @@ def _require_successful_launch(base: Path, stage_id: str, stage: dict,
              f"{stage_id}` successfully; `--print-only` is diagnostic only.")
 
 
+def _junit_case_path(raw: str, base: Path) -> str:
+    """Normalize a JUnit ``file`` attribute to a repo-relative POSIX path.
+
+    Runners disagree on what they write: ``node:test`` (via ``tsx --test``)
+    emits an ABSOLUTE path, while others emit a repo-relative one, optionally
+    ``./``-prefixed. Resolve an absolute path that lives under the repo back to
+    its repo-relative form so a genuinely-passing test is not rejected purely
+    for how its runner spells the path. A path outside the repo, or one that
+    cannot be resolved, is returned as given so the caller's equality check
+    still fails closed.
+    """
+    candidate = raw.strip().removeprefix("./")
+    if not candidate:
+        return ""
+    path = Path(candidate)
+    if path.is_absolute():
+        try:
+            return path.resolve().relative_to(base.resolve()).as_posix()
+        except ValueError:
+            return candidate
+    return path.as_posix()
+
+
 def _run_required_tests(base: Path, stage_id: str, task: dict) -> None:
     from .delegate import (
         blocked_termination_signals, _capture_spawn_identity, _process_table,
@@ -1027,7 +1050,7 @@ def _run_required_tests(base: Path, stage_id: str, task: dict) -> None:
                      "the fresh JUnit report")
             attributed = [
                 case for case in matches
-                if str(case.get("file", "")).removeprefix("./") == rel
+                if _junit_case_path(str(case.get("file", "")), base) == rel
             ]
             if not attributed:
                 fail(f"{stage_id} required test {test_id!r} was not attributed "
