@@ -1,0 +1,10 @@
+{
+  "event": "open",
+  "id": "Q-0094-f861",
+  "profile": "quickfix",
+  "reason": "Coordinator implementation-phase contract (who-authors-what + auto-commit + host-exception), Windows authority-snapshot lock-read fix, and robust required-test JUnit attribution",
+  "started_at": "2026-08-22T17:22:28+00:00",
+  "max_files": 5,
+  "files": [],
+  "harness_source": true
+}

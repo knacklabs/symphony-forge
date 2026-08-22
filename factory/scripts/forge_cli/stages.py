@@ -645,6 +645,15 @@ def protected_authority_snapshot(base: Path) -> dict[str, str]:
     result: dict[str, str] = {}
     for path in sorted(control.rglob("*")):
         rel = path.relative_to(control).as_posix()
+        # The locks/ subtree is transient coordination state, not attested
+        # authority. The delegation machinery holds these lock files open — with
+        # an EXCLUSIVE handle on Windows — for the duration of the very operation
+        # that snapshots the tree, so reading them here attests nothing durable
+        # and races that open handle (a hard OSError on Windows: a stage could
+        # never close). Proof commands never touch locks/, so excluding it keeps
+        # the tamper check honest while making stage close work cross-platform.
+        if rel == "locks" or rel.startswith("locks/"):
+            continue
         try:
             info = path.lstat()
             if path.is_symlink():
@@ -986,6 +995,38 @@ def _require_successful_launch(base: Path, stage_id: str, stage: dict,
              f"{stage_id}` successfully; `--print-only` is diagnostic only.")
 
 
+def _junit_case_matches_id(case, test_id: str) -> bool:
+    """A JUnit <testcase> identifies the required test when its name equals the
+    id, OR its leaf name does. Vitest/Jest prefix the testcase name with the
+    describe path (e.g. 'application backbone > t1-boot-migrate'), so matching
+    only the exact full name forces a describe-free test structure for no real
+    gain — the leaf is what the required-test id names."""
+    name = str(case.get("name", ""))
+    if name == test_id:
+        return True
+    for sep in (" > ", " › ", "::"):
+        if sep in name and name.rsplit(sep, 1)[-1].strip() == test_id:
+            return True
+    return False
+
+
+def _junit_case_attributed(case, rel: str) -> bool:
+    """Attribute a <testcase> to its declared source path. Runners record the
+    file in `file` (some) or `classname` (vitest/jest), often RELATIVE TO THE
+    RUNNER ROOT rather than the repo (vitest with a subdir `root:` emits
+    'test/x.spec.ts' for a repo path 'apps/api/test/x.spec.ts'). Match by exact
+    or path-suffix equality so a runner rooted in a subdirectory still attributes
+    correctly, without forcing every project to reconfigure its test runner."""
+    candidate = (str(case.get("file", "")) or str(case.get("classname", ""))
+                 ).removeprefix("./").replace("\\", "/")
+    if not candidate:
+        return False
+    declared = rel.replace("\\", "/")
+    return (candidate == declared
+            or declared.endswith("/" + candidate)
+            or candidate.endswith("/" + declared))
+
+
 def _run_required_tests(base: Path, stage_id: str, task: dict) -> None:
     from .delegate import (
         blocked_termination_signals, _capture_spawn_identity, _process_table,
@@ -1083,14 +1124,14 @@ def _run_required_tests(base: Path, stage_id: str, task: dict) -> None:
                      f"JUnit proof: {exc}")
             matches = [
                 case for case in root.iter("testcase")
-                if str(case.get("name", "")) == test_id
+                if _junit_case_matches_id(case, test_id)
             ]
             if not matches:
                 fail(f"{stage_id} required test {test_id!r} was not present in "
                      "the fresh JUnit report")
             attributed = [
                 case for case in matches
-                if str(case.get("file", "")).removeprefix("./") == rel
+                if _junit_case_attributed(case, rel)
             ]
             if not attributed:
                 fail(f"{stage_id} required test {test_id!r} was not attributed "
