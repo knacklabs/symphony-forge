@@ -39,6 +39,14 @@ def repo_root() -> Path:
     return Path(out.stdout.strip())
 
 
+def vendored_client(root: Path) -> bool:
+    """True when this repo VENDORED the harness — factory/ and the vendored
+    adapters/canon are infrastructure a `forge upgrade` may rewrite mid-task, not
+    the task's product. The source harness repo has no constitution/VENDORED_FROM
+    marker; every client that ran forge upgrade/adopt/scaffold gets one."""
+    return (root / "constitution" / "VENDORED_FROM").is_file()
+
+
 def factory_dir(root: Path | None = None) -> Path:
     return (root or repo_root()) / ".factory"
 

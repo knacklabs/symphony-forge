@@ -44,6 +44,25 @@ from .events import append_event
 # — exempting it here would make the scope check vacuous exactly where it is
 # being dogfooded.
 WORKFLOW_PATHS = (".factory/", "plans/")
+# In a repo that VENDORED the harness, factory/ and the vendored adapters/canon
+# are infrastructure a `forge upgrade` may rewrite mid-task — not the task's
+# product; pr_ready.EVIDENCE_PATHS already treats them so. The SOURCE harness
+# repo builds these AS product (no constitution/VENDORED_FROM marker), so it
+# keeps the strict set and the per-task scope check stays honest when dogfooding.
+HARNESS_MACHINERY_PATHS = (
+    "factory/", ".claude/", ".codex/", ".github/", "constitution/",
+    "harness/", ".gstack/",
+)
+
+
+def workflow_prefixes(base: Path) -> tuple[str, ...]:
+    """Path prefixes that never count as a task's product change. Extended with
+    the harness machinery only in a vendored client (see vendored_client)."""
+    from factory_lib import vendored_client
+    return (WORKFLOW_PATHS + HARNESS_MACHINERY_PATHS
+            if vendored_client(base) else WORKFLOW_PATHS)
+
+
 DEFAULT_REVIEW_BUDGET_FILES = 8
 DEFAULT_REVIEW_BUDGET_LINES = 400
 
@@ -375,7 +394,7 @@ def product_tree_snapshot(base: Path) -> dict:
     index_stage = _git(base, "ls-files", "--stage", "-z")
     dirty = [
         rel for rel in dirty_paths(base)
-        if not rel.startswith(WORKFLOW_PATHS)
+        if not rel.startswith(workflow_prefixes(base))
     ]
     digests: dict[str, str] = {}
     gitlinks = _gitlink_identities(
@@ -640,10 +659,10 @@ def _covered(path: str, scope: list[str]) -> bool:
     return False
 
 
-def out_of_scope(paths: list[str], scope: list[str]) -> list[str]:
+def out_of_scope(base: Path, paths: list[str], scope: list[str]) -> list[str]:
     """Product paths this sequential task touched but never declared."""
     return [p for p in paths
-            if not p.startswith(WORKFLOW_PATHS)
+            if not p.startswith(workflow_prefixes(base))
             and not _covered(p, scope)]
 
 
@@ -735,7 +754,7 @@ def _require_reviewed_commit(base: Path, stage: dict, task: dict) -> None:
     head = head_sha(base) or ""
     committed_product = [
         path for path in committed_paths(base, base_sha, head)
-        if not path.startswith(WORKFLOW_PATHS)
+        if not path.startswith(workflow_prefixes(base))
     ] if base_sha and head and base_sha != head else []
     if not committed_product:
         fail(f"{stage.get('id')} closes on an EMPTY committed delta — stage work "
@@ -856,7 +875,7 @@ def _measure(base: Path, stage_id: str, stage: dict, task: dict) -> None:
     baseline = stage.get("dirty_at_start", {})
     split = [
         path for path in split_index_paths(base)
-        if not path.startswith(WORKFLOW_PATHS)
+        if not path.startswith(workflow_prefixes(base))
     ]
     if split:
         fail(f"{stage_id} has staged content that differs from the tested "
@@ -864,7 +883,7 @@ def _measure(base: Path, stage_id: str, stage: dict, task: dict) -> None:
              "worktree agree before closing the stage.")
     product = [
         path for path in changed_paths(base, base_sha, baseline)
-        if not path.startswith(WORKFLOW_PATHS)
+        if not path.startswith(workflow_prefixes(base))
     ]
     contributions = contribution_paths(base, product, baseline, base_sha)
     if not contributions:
@@ -878,7 +897,7 @@ def _measure(base: Path, stage_id: str, stage: dict, task: dict) -> None:
         if not any(_covered(path, scope) for path in contributions):
             fail(f"{stage_id} closes without changing anything in its own "
                  "write_scope.")
-        strays = out_of_scope(product, scope)
+        strays = out_of_scope(base, product, scope)
         if strays:
             fail(f"{stage_id} changed {len(strays)} path(s) outside its declared "
                  f"write_scope: {', '.join(strays[:10])}"
@@ -923,7 +942,7 @@ def _require_successful_launch(base: Path, stage_id: str, stage: dict,
         isinstance(argv, list)
         and bool(argv)
         and all(isinstance(token, str) for token in argv)
-        and Path(argv[0]).name == "node"
+        and Path(argv[0]).stem.lower() == "node"
         and argv == [
             argv[0],
             entry.get("companion_path"),

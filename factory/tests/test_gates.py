@@ -17265,3 +17265,124 @@ def test_hook_denies_nested_quoted_companion_write_launch(repo):
                                 "permission_mode": "default",
                                 "tool_input": {"command": cmd}})
         assert "deny" in out and "forge delegate" in out, cmd
+
+
+# --- fix/windows-stage-close-and-plan-change-signoff ---------------------------
+# Three regression tests for: the Windows node.EXE launch-binding check, the
+# vendored-client factory/ scope exemption, and change-time re-validation when
+# an active task's execution contract is amended.
+
+
+def _seed_valid_launch(repo: Path, stage_id: str, task: dict,
+                       started_at: str, argv0: str) -> None:
+    """Write a fully valid succeeded write-launch ledger whose argv[0] is
+    `argv0`, so `_require_successful_launch` exercises the real predicate."""
+    from forge_cli.delegate import argv_digest
+    from factory_lib import sha256_of
+
+    brief = repo / ".factory" / "briefs" / f"{stage_id}.md"
+    brief.parent.mkdir(parents=True, exist_ok=True)
+    brief.write_text("composed task brief\n")
+    companion_path = "/opt/codex/codex-companion.mjs"
+    model, effort = "gpt-test", "medium"
+    argv = [
+        argv0, companion_path, "task", "--json", "--cwd", str(repo),
+        "--model", model, "--effort", effort,
+        "--prompt-file", brief.relative_to(repo).as_posix(), "--write",
+    ]
+    row = {
+        "launch_id": "launch-node-ext",
+        "task": stage_id,
+        "brief_sha256": sha256_of(brief),
+        "task_sha256": task_digest(task),
+        "write": True,
+        "model": model,
+        "effort": effort,
+        "companion_path": companion_path,
+        "argv": argv,
+        "argv_sha256": argv_digest(argv),
+        "stage_started_at": started_at,
+        "process_token": "tok-node-ext",
+    }
+    ledger = delegation_ledger(repo)
+    ledger.parent.mkdir(parents=True, exist_ok=True)
+    ledger.write_text("\n".join(json.dumps({
+        **row,
+        "launch_status": status,
+        **({"exit_code": 0} if status == "succeeded" else {}),
+    }) for status in ("starting", "running", "succeeded")) + "\n")
+
+
+def test_require_successful_launch_accepts_windows_node_exe(repo):
+    """On Windows the launcher is `node.EXE`; the argv[0] check must recognise
+    it (stem, case-insensitive) on every platform, while a non-node launcher
+    stays rejected."""
+    from forge_cli.stages import _require_successful_launch
+
+    started_at = "2026-01-01T00:00:00Z"
+    stage = {"id": "T1", "started_at": started_at}
+    for argv0 in (
+        "C:/Program Files/nodejs/node.EXE",
+        "node.exe",
+        "/usr/bin/node",
+    ):
+        _seed_valid_launch(repo, "T1", STAGE_TASK, started_at, argv0)
+        # No SystemExit: the launch is recognised as a valid bound write launch.
+        _require_successful_launch(repo, "T1", stage, STAGE_TASK)
+
+    _seed_valid_launch(repo, "T1", STAGE_TASK, started_at, "/usr/bin/python3")
+    with pytest.raises(SystemExit):
+        _require_successful_launch(repo, "T1", stage, STAGE_TASK)
+
+
+def test_vendored_client_extends_workflow_prefixes(repo, tmp_path):
+    """In a vendored client, factory/ (and the other harness machinery) is
+    infrastructure a `forge upgrade` may rewrite mid-task, so it never counts as
+    a task's product change. The source harness repo keeps the strict set."""
+    from factory_lib import vendored_client
+    from forge_cli.stages import out_of_scope, workflow_prefixes
+
+    # forge init writes constitution/VENDORED_FROM: this repo is a client.
+    assert (repo / "constitution" / "VENDORED_FROM").is_file()
+    assert vendored_client(repo) is True
+    assert "factory/" in workflow_prefixes(repo)
+    assert out_of_scope(repo, ["factory/scripts/x.py"], ["apps/api"]) == []
+
+    # A source-harness checkout has no marker: factory/ IS the product.
+    source = tmp_path / "source"
+    shutil.copytree(repo, source)
+    (source / "constitution" / "VENDORED_FROM").unlink()
+    assert vendored_client(source) is False
+    assert "factory/" not in workflow_prefixes(source)
+    assert out_of_scope(
+        source, ["factory/scripts/x.py"], ["apps/api"]
+    ) == ["factory/scripts/x.py"]
+
+
+def test_rerecord_active_task_contract_change_warns_and_clears_stamp(
+        repo, tmp_path):
+    """Amending an active task's execution contract is allowed, but its grill
+    and plan approval are now stale — surface that AT CHANGE TIME and drop the
+    now-stale local review stamp instead of silently deferring to close."""
+    start_stage(repo, tmp_path, STAGE_TASK)
+    write_in_scope(repo, "src/core.py")
+    git(repo, "add", "src/core.py")
+    code, out = record_stage_local(repo)
+    assert code == 0, out
+    before = json.loads((repo / ".factory" / "stages.json").read_text())
+    assert before["stages"][0].get("local_review_stamp")
+
+    amended = {**STAGE_TASK, "write_scope": ["src/", "lib/"]}
+    code, out = run(
+        repo, "record_decomposition_from_json.py",
+        stdin=json.dumps({**DECOMP, "tasks": [amended]}),
+    )
+    assert code == 0, out
+    assert "NOTE: T1 execution contract changed" in out
+    assert "STALE" in out
+    assert "record_grill_from_json.py --gate task --task T1" in out
+    assert "WARNING: T1 was already implemented/reviewed" in out
+
+    after = json.loads((repo / ".factory" / "stages.json").read_text())
+    assert after["stages"][0]["status"] == "active"
+    assert "local_review_stamp" not in after["stages"][0]

@@ -403,6 +403,8 @@ with delegation_exclusion(
                         "when the task reaches the frontier."
                     )
     backfilled_stage_digest = False
+    stages_dirty = False
+    changed_active: list[tuple[str, bool]] = []
     for stage in stages_data.get("stages") or []:
         if stage.get("status") not in {"active", "done"}:
             continue
@@ -414,6 +416,22 @@ with delegation_exclusion(
                 "cannot be removed or renamed; finish it or record it incomplete "
                 "before changing the task list."
             )
+        if stage.get("status") == "active":
+            # Amending an active (in-flight) task's execution contract is
+            # allowed, but its task grill and plan approval are now stale. Make
+            # that explicit AT CHANGE TIME and drop the stale review stamp so the
+            # requirement can't be silently deferred to delegate/close.
+            prior = prior_tasks.get(task_id)
+            changed = (
+                prior is not None
+                and _full_contract_digest(prior) != _full_contract_digest(new)
+            )
+            if changed:
+                was_reviewed = bool(stage.get("local_review_stamp"))
+                if stage.pop("local_review_stamp", None) is not None:
+                    stages_dirty = True
+                changed_active.append((task_id, was_reviewed))
+            continue
         if stage.get("status") == "done":
             prior = prior_tasks.get(task_id)
             if (
@@ -448,8 +466,23 @@ with delegation_exclusion(
                     f"decomposition task {task_id}: a completed stage's contract "
                     "cannot be changed or removed; add a new follow-up task instead."
                 )
-    if backfilled_stage_digest:
+    if backfilled_stage_digest or stages_dirty:
         write_stages(root, stages_data)
+    for task_id, was_reviewed in changed_active:
+        print(
+            f"\nNOTE: {task_id} execution contract changed. Its task grill and plan "
+            "approval are now STALE and do NOT carry to the amended plan.\n"
+            "Re-grill and re-approve BEFORE the next delegate or stage close:\n"
+            f"  python3 factory/scripts/record_grill_from_json.py --gate task --task {task_id}\n"
+            f"  ./forge task approve {task_id} --by \"<name>\"\n"
+        )
+        if was_reviewed:
+            print(
+                f"WARNING: {task_id} was already implemented/reviewed. Approving the amended "
+                "plan now post-dates the work — approval is meant to precede implementation. "
+                "For a substantive scope change prefer a follow-up task rather than re-approving "
+                "completed work.\n"
+            )
     payload["commit"] = head_sha(root)
     dump_json(protected_decomposition_state_path(root), payload)
     dump_json(decomposition_state_path(root, for_write=True), payload)
