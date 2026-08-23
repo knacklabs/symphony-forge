@@ -1803,12 +1803,20 @@ def require_task_sealed(root: Path, task_id: str) -> dict:
     from forge_cli.stages import _require_reviewed_commit, load_stages
 
     state = load_json(run_state_path(root), default={})
-    if state.get("task_id") != task_id:
-        raise SystemExit(
-            f"task worktree required: this worktree is bound to "
-            f"{state.get('task_id') or 'no task'!r}, not {task_id!r}"
-        )
-    require_task_worktree(root, allow_completed=True)
+    bound_task = state.get("task_id")
+    if bound_task:
+        # `forge task start` mode: the worktree is bound to a specific task_id;
+        # enforce that binding and the worktree pointer.
+        if bound_task != task_id:
+            raise SystemExit(
+                f"task worktree required: this worktree is bound to "
+                f"{bound_task!r}, not {task_id!r}"
+            )
+        require_task_worktree(root, allow_completed=True)
+    # Stage-based mode (no task_id in the run pointer, e.g. the task ran via
+    # `forge stage start` on the story branch): there is no task-bound worktree,
+    # so the seal is proven by the done stage + reviewed commit gate below
+    # rather than a worktree pointer.
     task = require_ready_task(root, task_id, allow_completed=True)
     stage = next(
         (candidate for candidate in load_stages(root).get("stages", [])

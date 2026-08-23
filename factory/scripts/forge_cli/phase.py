@@ -377,7 +377,11 @@ def cmd_next(args: argparse.Namespace) -> None:
                 steps.append(f"[EM] Guide {len(unguided)} open assumption(s) first "
                              "(pr_ready refuses them): forge.py assumptions list --open, "
                              "then assumptions resolve <id> --status ... --notes ...")
-            steps.append("[dev] Run: python3 factory/scripts/pr_ready.py (archives the task; merge stays manual)")
+            steps.append("[dev] Run: python3 factory/scripts/pr_ready.py (archives the story; merge stays manual)")
+            steps.append("[dev] Per-task PR instead: seal each completed task with "
+                         "`./forge task pr-ready <id>` — it writes the task marker, "
+                         "pushes the branch, and opens its PR to the repo default branch "
+                         "(works stage-based; no `forge task start` worktree required)")
             steps.append("[EM] Next task afterwards: pick from ./forge roadmap list --pending, "
                          "then intake.py --issue <KEY> --title \"<title>\"")
     from .decisions import decision_records

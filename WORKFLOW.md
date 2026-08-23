@@ -365,9 +365,19 @@ sequence a JIT contract loop for every pending task:
 8. that stage's assumption rows are validated (`forge assumptions list --open`)
 9. smallest relevant checks run
 10. **local autoreview on the UNCOMMITTED diff until clean** (`autoreview
-   --mode local`, run DIRECTLY by the orchestrator with the autoreview
-   skill — never as a Codex handoff, which re-triggers the same skill one
-   indirection deeper) — a stage commits only clean
+   --mode local --max-priority P2`, run DIRECTLY by the orchestrator with the
+   autoreview skill — never as a Codex handoff, which re-triggers the same skill
+   one indirection deeper). P2, not P0-only: the review enforces the structure
+   and validation the contract demanded. Keep the implementation UNCOMMITTED
+   through this fix/review loop and commit ONCE when it is clean — committing
+   product code mid-loop stales the task grill (its grounding is contract + plan
+   + product tree) and the write `forge delegate` refuses until you `git reset
+   --mixed HEAD~1`. When a review-driven fix genuinely cannot be verified inside
+   the companion sandbox (needs a database/network/Docker it lacks), the
+   orchestrator opens a bounded degraded window (`forge mode degraded start
+   --reason ...`, allowed mid-stage), makes the MINIMAL host fix, logs it with
+   `forge signal raise --kind host-exception`, verifies host-side, and resumes —
+   rather than re-delegating an unverifiable guess.
 11. commit, then `forge stage done <id>`
 
 `forge next` derives this frontier from the same readiness gate and reports

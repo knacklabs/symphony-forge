@@ -4,6 +4,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import shutil
 import subprocess
 from pathlib import Path
@@ -32,6 +33,23 @@ def _require_git(base: Path, description: str, *args: str) -> str:
         detail = proc.stderr.strip() or proc.stdout.strip()
         fail(f"{description} failed" + (f": {detail}" if detail else ""))
     return proc.stdout.strip()
+
+
+def _default_branch(base: Path) -> str:
+    """The integration branch a task PR targets: origin's default branch, not a
+    hardcoded 'main'. Repos ship on develop/trunk/etc.; a task PR must target
+    whatever origin/HEAD points at, falling back to main only if unresolved."""
+    proc = _git(base, "symbolic-ref", "--quiet", "refs/remotes/origin/HEAD")
+    if proc.returncode == 0 and proc.stdout.strip():
+        return proc.stdout.strip().rsplit("/", 1)[-1]
+    # origin/HEAD not set locally — ask the remote once, then fall back.
+    proc = _git(base, "remote", "show", "origin")
+    for line in proc.stdout.splitlines():
+        if "HEAD branch:" in line:
+            name = line.split("HEAD branch:", 1)[1].strip()
+            if name and name != "(unknown)":
+                return name
+    return "main"
 
 
 def _task_plan_path(base: Path, task_id: str, *, for_write: bool = False) -> Path:
@@ -197,13 +215,28 @@ def cmd_task_pr_ready(args: argparse.Namespace) -> None:
     task = require_task_sealed(base, args.id)
     state = load_json(run_state_path(base), default={})
     key = state.get("issue_key") or state.get("story")
+    if not isinstance(key, str) or not key.strip():
+        fail("task PR marker requires a non-empty story in the task run pointer")
+
+    # A task started via `forge stage start` (not `forge task start`) has no
+    # branch/base pointer in run.json. Derive both from git so the stage-based
+    # per-task PR flow seals cleanly instead of dead-ending — the branch is
+    # wherever the sealed work lives, the base is where it forked from the
+    # integration branch.
+    default_branch = _default_branch(base)
     branch = state.get("branch")
+    if not isinstance(branch, str) or not branch.strip():
+        branch = _require_git(
+            base, "resolving current branch", "rev-parse", "--abbrev-ref", "HEAD",
+        )
+        if branch == "HEAD":
+            fail("task PR ready: detached HEAD — check out the task branch first")
     base_main_sha = state.get("base_main_sha")
-    for field, value in (
-        ("story", key), ("branch", branch), ("base_main_sha", base_main_sha),
-    ):
-        if not isinstance(value, str) or not value.strip():
-            fail(f"task PR marker requires a non-empty {field} in the task run pointer")
+    if not isinstance(base_main_sha, str) or not base_main_sha.strip():
+        base_main_sha = _require_git(
+            base, "resolving integration base", "merge-base",
+            f"origin/{default_branch}", "HEAD",
+        )
 
     commit = _require_git(
         base, "resolving task HEAD", "rev-parse", "--verify", "HEAD^{commit}",
@@ -240,22 +273,25 @@ def cmd_task_pr_ready(args: argparse.Namespace) -> None:
         f"Task marker: {marker.as_posix()}\n\n"
         f"Sealed commit: {commit}\n"
     )
+    # Resolve owner/repo from origin so `gh` targets THIS repo — a bare
+    # `gh pr create` can resolve a PR number against the wrong repo when a
+    # local checkout tracks a differently-numbered upstream.
+    origin_url = _require_git(base, "resolving origin url", "remote", "get-url", "origin")
+    slug = re.sub(r"^.*github\.com[:/]", "", origin_url).removesuffix(".git")
+    cmd = ["gh", "pr", "create", "--base", default_branch, "--head", branch,
+           "--title", title, "--body", body]
+    if slug and "/" in slug:
+        cmd += ["--repo", slug]
     proc = subprocess.run(
-        [
-            "gh", "pr", "create", "--base", "main", "--title", title,
-            "--body", body,
-        ],
-        cwd=base,
-        capture_output=True,
-        text=True,
-        encoding="utf-8",
-        errors="surrogateescape",
+        cmd, cwd=base, capture_output=True, text=True,
+        encoding="utf-8", errors="surrogateescape",
     )
     if proc.returncode != 0:
         detail = proc.stderr.strip() or proc.stdout.strip()
         fail(
             f"task {args.id} is sealed at {marker.as_posix()}, but opening the PR "
-            f"failed{f': {detail}' if detail else ''}. Run `gh auth login`, then retry."
+            f"to {default_branch} failed{f': {detail}' if detail else ''}. "
+            "Run `gh auth login`, then retry."
         )
     print(f"Task {args.id} PR ready: {marker.as_posix()}")
     if proc.stdout.strip():
