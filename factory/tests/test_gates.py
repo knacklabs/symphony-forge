@@ -11231,8 +11231,12 @@ def test_task_pr_ready_refuses_unsealed_then_writes_marker_and_opens_pr(
     )
     assert git(repo, "cat-file", "-e", f"origin/{git(repo, 'symbolic-ref', '--short', 'HEAD')}:{marker.relative_to(repo).as_posix()}") == ""
     argv = argv_path.read_text().splitlines()
-    assert argv[:4] == ["pr", "create", "--base", "main"]
-    assert "--head" not in argv
+    # The task PR targets origin's DEFAULT branch (here main) and names an
+    # explicit --head so gh never guesses the source branch from local tracking.
+    assert argv[:6] == [
+        "pr", "create", "--base", "main",
+        "--head", git(repo, "symbolic-ref", "--short", "HEAD"),
+    ]
     assert "--title" in argv and "ENG-1 T1: core slice" in argv
     assert "--body" in argv
     assert marker.relative_to(repo).as_posix() in argv_path.read_text()
@@ -16272,24 +16276,36 @@ def test_pr_ready_refuses_out_of_order_or_dirty_or_unstamped_closeout(repo, tmp_
 
 def test_mode_start_refuses_while_a_stage_is_active(repo, tmp_path):
     start_stage(repo, tmp_path, STAGE_TASK, launch=False)
-    attempts = (
+    # quickfix and lite are out-of-band windows and must refuse mid-stage.
+    refused = (
         ("forge.py", "quickfix", "start", "blocked repair"),
         ("forge.py", "mode", "lite", "--by", "Ada", "--reason", "blocked repair"),
-        ("forge.py", "mode", "degraded", "start", "--reason", "blocked repair"),
     )
-    for command in attempts:
+    for command in refused:
         code, out = run(repo, *command)
         assert code != 0 and "T1" in out and "stage done" in out, out
         assert not (repo / ".factory" / "quickfix.json").exists()
+
+    # A DEGRADED window is the host-exception valve: it IS allowed mid-stage
+    # (bounded + ledgered) so a fix that provably cannot be verified in the
+    # companion sandbox can be made without tearing down the active stage.
+    code, out = run(repo, "forge.py", "mode", "degraded", "start", "--reason", "host exception")
+    assert code == 0, out
+    assert (repo / ".factory" / "quickfix.json").exists()
+    code, out = run(repo, "forge.py", "mode", "abandon", "--reason", "test cleanup")
+    assert code == 0, out
 
     write_stages(repo, {
         "issue": "ENG-1",
         "stages": [{"id": "T1", "title": "core slice", "status": "done"}],
     })
-    for index, command in enumerate(attempts):
+    all_windows = refused + (
+        ("forge.py", "mode", "degraded", "start", "--reason", "blocked repair"),
+    )
+    for command in all_windows:
         code, out = run(repo, *command)
         assert code == 0, out
-        if index == 0:
+        if command[1] == "quickfix":
             code, out = run(repo, "forge.py", "quickfix", "done")
         else:
             code, out = run(repo, "forge.py", "mode", "abandon", "--reason", "test cleanup")
