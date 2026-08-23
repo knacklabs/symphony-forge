@@ -2344,6 +2344,51 @@ def test_update_run_enforces_artifact_phase_order(repo, tmp_path):
     assert code != 0 and "pr_ready.py" in out
 
 
+def test_decomposition_not_frozen_by_previous_story_authority(repo, tmp_path):
+    # A shipped story whose ship-time clear never ran leaves .git/forge/
+    # decomposition.json + stages.json behind. The next story's FIRST
+    # recording must not be prefix-frozen to that stale task graph — the
+    # recorder story-scopes the protected authority the way load_stages does,
+    # clearing the shipped/orphaned story's leftovers idempotently.
+    sign_off(repo)
+    intake(repo)
+    code, out = save_plan(repo, tmp_path)
+    assert code == 0, out
+    record_skeleton_then_frontier(repo, DECOMP["tasks"])
+    lib = load_factory_lib(repo)
+    protected = lib.protected_decomposition_state_path(repo)
+    assert protected.exists()
+    assert json.loads(protected.read_text())["story"] == "ENG-1"
+
+    # Ship ENG-1 without clear_story_authority running (the documented
+    # "its clear never ran" case), then start ENG-2.
+    state = run_state(repo)
+    state["phase"] = "shipped"
+    lib.dump_json(lib.run_state_path(repo, state["issue_key"], for_write=True),
+                  state)
+    code, out = intake(repo, "ENG-2", "Receipts")
+    assert code == 0, out
+    code, out = save_plan(repo, tmp_path)
+    assert code == 0, out
+
+    # ENG-2's own task graph (different ids) records as a FIRST recording.
+    tasks2 = [{**DECOMP["tasks"][0], "id": "T2-1",
+               "title": "receipts slice"}]
+    skeletons = [task_skeleton(task) for task in tasks2]
+    code, out = run(repo, "record_decomposition_from_json.py",
+                    stdin=json.dumps({**DECOMP, "tasks": skeletons}))
+    assert code == 0, out
+    assert "Cleared stale protected authority" in out
+    assert json.loads(protected.read_text())["story"] == "ENG-2"
+
+    # Same-story re-record keeps the freeze: a NON-prefix rewrite still fails.
+    rogue = [{**DECOMP["tasks"][0], "id": "T2-ROGUE", "title": "rewrite"}]
+    code, out = run(repo, "record_decomposition_from_json.py",
+                    stdin=json.dumps({**DECOMP, "tasks": [
+                        task_skeleton(task) for task in rogue]}))
+    assert code != 0 and "frozen" in out
+
+
 def test_decomposition_refused_without_run_state(repo):
     (repo / ".factory" / "run.json").unlink()
     code, out = run(repo, "record_decomposition_from_json.py",

@@ -305,8 +305,8 @@ for pos, task in enumerate(tasks, 1):
         )
 from forge_cli.delegate import delegation_exclusion  # noqa: E402
 from forge_cli.stages import (  # noqa: E402
-    authoritative_stages_path, load_stages, task_digest, write_skeleton,
-    write_stages,
+    authoritative_stages_path, clear_story_authority, load_stages, task_digest,
+    write_skeleton, write_stages,
 )
 
 
@@ -333,6 +333,21 @@ with delegation_exclusion(
     }
     protected_decomposition = protected_decomposition_state_path(root)
     protected_stages = authoritative_stages_path(root)
+    # Story-scope the protected authority the way load_stages already does:
+    # leftover git-local state from a PREVIOUS story (its ship-time clear never
+    # ran) must not freeze the NEW story's task graph to the old prefix. Only
+    # same-story state participates in the freeze; anything else is the
+    # documented shipped/orphaned-story case and is cleared idempotently.
+    stale_story = load_json(protected_decomposition, default={}).get("story")
+    stale_stages_issue = load_json(protected_stages, default={}).get("issue")
+    if ((protected_decomposition.exists() and stale_story != story)
+            or (protected_stages.exists()
+                and stale_stages_issue not in (None, story))):
+        removed = clear_story_authority(root)
+        print(
+            "Cleared stale protected authority from previous story "
+            f"{stale_story or stale_stages_issue!r}: {', '.join(removed)}"
+        )
     first_recording = (
         not protected_decomposition.exists() and not protected_stages.exists()
     )
