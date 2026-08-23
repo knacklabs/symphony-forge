@@ -1,0 +1,9 @@
+{
+  "event": "done",
+  "id": "Q-0100-2ea3",
+  "profile": "quickfix",
+  "reason": "Harness: proactive code quality (P2 review + planner contract), per-task PR to default branch (stage-based), host-exception valve + mid-stage degraded window, Windows required-test runner, and forge-next per-task guidance.",
+  "started_at": "2026-08-23T14:52:14+00:00",
+  "completed_at": "2026-08-23T14:52:29+00:00",
+  "files": []
+}
