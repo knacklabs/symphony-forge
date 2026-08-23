@@ -1,0 +1,10 @@
+{
+  "event": "open",
+  "id": "Q-0100-f443",
+  "profile": "quickfix",
+  "reason": "delegate brief composer crashes on list-valued reviewer_focus (the stage-start gate itself requires the list); render it like the other list sections.",
+  "started_at": "2026-08-23T11:21:50+00:00",
+  "max_files": 5,
+  "files": [],
+  "harness_source": true
+}

@@ -966,7 +966,12 @@ def compose_brief(base: Path, task: dict, *, write: bool, user_facing: bool,
            if task.get("required_tests") else ""))
     body += _section("Verify commands (they will be run when the stage closes)",
                      "\n".join(f"- `{c}`" for c in task.get("verify_commands") or []))
-    body += _section("Reviewer focus", task.get("reviewer_focus", ""))
+    reviewer_focus = task.get("reviewer_focus", "")
+    if isinstance(reviewer_focus, list):
+        # The decomposition records reviewer_focus as a LIST (the stage-start
+        # gate requires it non-empty); render it like the other list sections.
+        reviewer_focus = "\n".join(f"- {item}" for item in reviewer_focus)
+    body += _section("Reviewer focus", reviewer_focus)
     decisions = [r for r in decision_records(base) if r["status"] == "accepted"]
     body += _section("Active decisions — binding", "\n".join(
         f"- {r['id']}: {r['title']}" for r in decisions))
