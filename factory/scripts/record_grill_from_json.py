@@ -19,6 +19,7 @@ from pathlib import Path
 from factory_lib import (
     plan_digest_without_assumptions,
     dump_json, evidence_path, grounding_digest, head_sha, load_json, now_iso,
+    protected_decomposition_state_path,
     read_stdin_utf8, repo_root, requirements_digest, run_state_path, sha256_of,
     task_frontier_state, validate_payload,
 )
@@ -79,11 +80,33 @@ def _validate_task_grill(root: Path, payload: dict, task_id: str) -> dict:
         raise SystemExit("task grill gaps entries must be non-empty strings")
 
     frontier = task_frontier_state(root)
-    if frontier is None or frontier[1].get("id") != task_id:
+    # The grill normally covers the frontier task. A task whose stage is already
+    # active or done may also be re-grilled — e.g. when a contract/budget change
+    # forces a re-grill AFTER implementation; the re-grill re-grounds to the same
+    # stage baseline the seal step checks (see the grounding block below), so this
+    # widens WHICH task may be grilled, not the gate itself.
+    from forge_cli.stages import load_stages
+    started_stage = next(
+        (s for s in load_stages(root).get("stages", [])
+         if s.get("id") == task_id and s.get("status") in {"active", "done"}),
+        None,
+    )
+    if started_stage is not None:
+        decomposition = load_json(
+            protected_decomposition_state_path(root), default={})
+        started_task = next(
+            (t for t in decomposition.get("tasks") or []
+             if t.get("id") == task_id), None)
+        if started_task is None:
+            raise SystemExit(
+                f"{task_id} has a stage but is not in the protected decomposition"
+            )
+        frontier = ((frontier[0] if frontier else None), started_task)
+    elif frontier is None or frontier[1].get("id") != task_id:
         frontier_id = frontier[1].get("id") if frontier else "none"
         raise SystemExit(
-            f"task grill must cover the protected frontier task ({frontier_id}), "
-            f"not {task_id}"
+            f"task grill must cover the protected frontier task ({frontier_id}) "
+            f"or a task whose stage is active/done, not {task_id}"
         )
     criteria = frontier[1].get("acceptance_criteria") or []
     if set(payload["criteria_map"]) != set(criteria):
@@ -256,10 +279,41 @@ if args.gate == "task":
             f"payload task_id {payload['task_id']!r} does not match --task {args.task!r}"
         )
     task = _validate_task_grill(root, payload, args.task)
-    for field in ("approved_task_plan_sha256", "approved_by", "approved_at"):
-        payload.pop(field, None)
+    from forge_cli.stages import load_stages, stage_baseline
+    grill_stage = next(
+        (s for s in load_stages(root).get("stages", [])
+         if s.get("id") == args.task), {})
+    started = grill_stage.get("status") in {"active", "done"}
+    # A fresh grill normally drops the approval stamp so a human re-approves. But a
+    # mechanical re-grill of a STARTED task whose task plan is UNCHANGED must not
+    # invalidate a standing human approval of that identical plan — re-approving an
+    # unchanged, already-approved plan is noise (and cannot be self-served). Carry
+    # the existing approval forward iff the stage has started and the recorded
+    # approval is for the CURRENT task plan (digest match); any real plan change
+    # breaks the digest and correctly forces fresh human approval.
+    story_state = load_json(run_state_path(root), default={})
+    story = story_state.get("issue_key") or story_state.get("story")
+    existing_grill = load_json(
+        evidence_path(root, story, f"grills/tasks/{args.task}.json"), default={})
+    approved_sha = existing_grill.get("approved_task_plan_sha256")
+    task_plan = evidence_path(root, story, f"task-plans/{args.task}.md")
+    if (
+        started and approved_sha and existing_grill.get("approved_by")
+        and task_plan.is_file()
+        and approved_sha == plan_digest_without_assumptions(task_plan)
+    ):
+        payload["approved_task_plan_sha256"] = approved_sha
+        payload["approved_by"] = existing_grill["approved_by"]
+        payload["approved_at"] = existing_grill.get("approved_at") or now_iso()
+    else:
+        for field in ("approved_task_plan_sha256", "approved_by", "approved_at"):
+            payload.pop(field, None)
     payload["task_id"] = args.task
-    payload["input_sha256"] = grounding_digest(root, task)
+    # Anchor the grill to the task's stage baseline once the stage has started, so
+    # a post-implementation re-grill stays bound to the same pre-implementation
+    # tree that pr-ready/stage-done check a completed task against.
+    grill_treeish = stage_baseline(root, grill_stage) if started else ""
+    payload["input_sha256"] = grounding_digest(root, task, treeish=grill_treeish)
 if args.gate == "plan":
     # Plan grills are per task: stamp the active issue so a stale grill from
     # a previous task can never satisfy this one's plan save.

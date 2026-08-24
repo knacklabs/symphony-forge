@@ -82,7 +82,11 @@ def cmd_plan_save(args: argparse.Namespace) -> None:
 
 def cmd_approve(args: argparse.Namespace) -> None:
     base = Path(args.repo).resolve() if args.repo else repo_root()
-    require_ready_task(base, args.id, require_approval=False)
+    # allow_completed: a completed task's plan may be (re-)approved — e.g. when a
+    # fix-driven re-grill clears the approval stamp after the stage has sealed.
+    # The human still signs off; this only permits re-approval after the fact,
+    # consistent with pr-ready's own allow_completed path.
+    require_ready_task(base, args.id, require_approval=False, allow_completed=True)
     approved_by = args.by.strip()
     if not approved_by:
         fail("task approval requires a non-empty human name via --by")
