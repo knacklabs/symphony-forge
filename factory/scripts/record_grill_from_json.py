@@ -17,7 +17,7 @@ import sys
 from pathlib import Path
 
 from factory_lib import (
-    plan_digest_without_assumptions,
+    plan_digest_without_assumptions, task_grounding_digest,
     dump_json, evidence_path, grounding_digest, head_sha, load_json, now_iso,
     protected_decomposition_state_path,
     read_stdin_utf8, repo_root, requirements_digest, run_state_path, sha256_of,
@@ -309,11 +309,7 @@ if args.gate == "task":
         for field in ("approved_task_plan_sha256", "approved_by", "approved_at"):
             payload.pop(field, None)
     payload["task_id"] = args.task
-    # Anchor the grill to the task's stage baseline once the stage has started, so
-    # a post-implementation re-grill stays bound to the same pre-implementation
-    # tree that pr-ready/stage-done check a completed task against.
-    grill_treeish = stage_baseline(root, grill_stage) if started else ""
-    payload["input_sha256"] = grounding_digest(root, task, treeish=grill_treeish)
+    payload["input_sha256"] = task_grounding_digest(root, task)
 if args.gate == "plan":
     # Plan grills are per task: stamp the active issue so a stale grill from
     # a previous task can never satisfy this one's plan save.

@@ -1343,7 +1343,7 @@ def require_task_grill(
             f".factory/grills/tasks/{task_id}.json has no commit stamp — re-record "
             f"with current tooling using `{record_command}`."
         )
-    if data.get("input_sha256") != grounding_digest(root, task, treeish=treeish):
+    if data.get("input_sha256") != task_grounding_digest(root, task):
         raise SystemExit(
             f"the {task_id} task grill is STALE — its grounding inputs changed. "
             f"Re-grill and record `{record_command}`; --task-digest was removed "
@@ -1507,11 +1507,30 @@ def _task_contract_complete(task: dict) -> bool:
     )
 
 
+def task_grounding_digest(root: Path, task: dict) -> str:
+    """A task grill's grounding, anchored to the task's stage baseline once the
+    stage has started, so record_grill and every freshness check agree on the
+    same pre-implementation tree. A re-grill forced after implementation (e.g. a
+    review-budget change discovered once the diff exists) then stays bound to the
+    tree the grill was recorded against instead of the moving working tree.
+    Before a stage exists the working tree IS that baseline, so "" is correct."""
+    from forge_cli.stages import load_stages, stage_baseline
+    task_id = task.get("id")
+    stage = next(
+        (s for s in load_stages(root).get("stages", [])
+         if isinstance(s, dict) and s.get("id") == task_id),
+        {},
+    )
+    treeish = (stage_baseline(root, stage)
+               if stage.get("status") in {"active", "done"} else "")
+    return grounding_digest(root, task, treeish=treeish)
+
+
 def _task_grill_fresh(root: Path, task: dict, grill: dict) -> bool:
     return bool(
         grill.get("verdict") == "pass"
         and grill.get("commit")
-        and grill.get("input_sha256") == grounding_digest(root, task)
+        and grill.get("input_sha256") == task_grounding_digest(root, task)
     )
 
 
