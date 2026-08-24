@@ -18,16 +18,20 @@ armed lock (0013) blocks product writes without an *approved* plan, but it
 trusts whatever set `approved`.
 
 The harness needs a human approval it cannot forge. Plan mode is where the human
-reviews the plan (`ExitPlanMode`), but Claude Code fires no hook on that
-transition (#21282), so plan mode cannot be the enforcement signal. The
-enforcement is an explicit human-attributed approval command — the same trust
+reviews the plan (`ExitPlanMode`); Claude Code fires no hook on that
+transition (#21282), but every `Write`/`Edit` made inside plan mode carries
+`permission_mode: "plan"`, and the PostToolUse hook records a plan-mode
+marker whose `plan_body_digest` the save/approve recorders require — so plan
+mode IS the authorship proof (decision 0048), while approval remains an
+explicit human-attributed command — the same trust
 model `decision accept` and client sign-off already use. Decision 0029 states
 the design and records this correction.
 
 ## Behaviour
 
-A plan reaches `approved` only through an explicit human approval, proven by a
-marker the agent cannot mint.
+A plan reaches `approved` only after its plan-mode authorship marker matches
+the current `plan_body_digest` and an explicit human-attributed approval is
+recorded.
 
 - `forge plan approve --by <name>` writes `.factory/plan-approval.json`: the
   approved plan's BODY digest, the approver, a timestamp. It is refused without a
@@ -37,10 +41,10 @@ marker the agent cannot mint.
   `plan-approval.json` marker matches the plan being saved (digest-bound over the
   BODY, the same freshness rule the grill uses). Absent, mismatched, or stale
   marker → refused.
-- The grill's genuine open questions are put to the human (`AskUserQuestion`)
-  before approval, so the human approves a plan whose questions they answered.
-  Presenting the plan in plan mode is the recommended review step; the attributed
-  `plan approve` is the recorded gate.
+- Every plan grill delivers ledger-matched `AskUserQuestion` rounds meeting
+  `GATE_ROUND_FLOORS` (plan 2), with `frontier_empty: true` on the final round,
+  before approval. Authoring in plan mode is required proof; the attributed
+  `plan approve` is the recorded human gate.
 - The marker is ephemeral working state (0025): gitignored, per-worktree, good
   for one save.
 
@@ -52,6 +56,8 @@ marker the agent cannot mint.
   the missing approval.
 - `forge plan approve --by <name>` writes the approval marker for the current
   plan's body digest and is refused without a human `--by`.
+- Plan save and approval refuse unless a plan-mode marker matches the current
+  `plan_body_digest`.
 - The marker binds the exact plan approved: saving a plan whose body digest
   differs from the marker (an edit after approval) is refused.
 - Implementation stays blocked (`update_run` refuses the implementing phase)

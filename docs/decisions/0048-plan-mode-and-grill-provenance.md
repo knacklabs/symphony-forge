@@ -1,6 +1,6 @@
 ---
-status: proposed
-confirmed_by: ""
+status: accepted
+confirmed_by: "Ravi Kiran Vemula"
 date: 2026-08-21
 stories: [plan-mode-and-grill-provenance]
 ---
@@ -23,14 +23,18 @@ tool event, and in plan mode the only writable file is the plan itself.
 
 A `Write`/`Edit` made with `permission_mode == "plan"` is the proof that a
 plan was authored in plan mode. A PostToolUse hook records, per active
-story, a marker with the sha256 of the written plan file; `plan save`,
-`plan approve`, `task plan save` and `task approve` refuse a file whose
-exact digest (excluding the `## Implementation Assumptions` block) has no
-marker. The same hook records every AskUserQuestion round (questions,
+story, a marker with the plan's `plan_body_digest` — the file excluding the
+harness-stamped YAML frontmatter block and the `## Implementation
+Assumptions` block (a `plan save` restamp must not invalidate authorship);
+`plan save`, `plan approve`, `task plan save` and `task approve` refuse a
+file whose body digest has no marker in the active story scope or the root
+scope. The same hook records every AskUserQuestion round (questions,
 options, chosen) one record per file under the story (root-level before
 sign-off); the grill recorder accepts only rounds that match a logged
 record, enforces floors spec 2 / requirements 1 / plan 2 / task 1, and
-requires `frontier_empty: true` on the final round. The task frontier is
+requires `frontier_empty: true` on the final round. AskUserQuestion answers (`tool_response`) are
+delivered to the hook — proven live on 2026-08-24 — so `chosen` equality is
+exact when the ledger entry has one. The task frontier is
 author-task-plan → grill → approve → stage start → delegate. The Codex
 planner hands its draft to Claude for the grill and plan mode; quickfix
 and degraded windows stay exempt; sessions without the hook (CI, terminal,
@@ -51,6 +55,6 @@ human approval marker and 0044's loop otherwise stand.
 - In-flight stories that grilled a task before saving its task plan keep
   that grill if the task plan is saved before `stage start` (one-time
   tolerance).
-- If Claude Code does not deliver AskUserQuestion answers to the hook, the
-  ledger stores questions and options only and the grill record carries
-  `chosen` (implementation assumption, verified live after the first task).
+- Verified live: the hook receives AskUserQuestion answers and plan-mode
+  Write/Edit events with `permission_mode: "plan"`; both record kinds were
+  proven on this story's own plan, task plans and grills before acceptance.

@@ -15916,6 +15916,50 @@ def test_docs_state_the_enforced_jit_contract():
     assert "findings and refusals always in full" in agents
 
 
+def test_docs_state_enforced_order():
+    decision = (
+        HARNESS / "docs" / "decisions" /
+        "0048-plan-mode-and-grill-provenance.md"
+    ).read_text()
+    loop_spec = (
+        HARNESS / "docs" / "specs" / "accountable-engineering-loop.md"
+    ).read_text()
+    approval_spec = (
+        HARNESS / "docs" / "specs" / "plan-approval.md"
+    ).read_text()
+    workflow = (HARNESS / "WORKFLOW.md").read_text()
+
+    assert "status: accepted" in decision
+    assert 'confirmed_by: "Ravi Kiran Vemula"' in decision
+    assert "status: confirmed" in loop_spec
+    assert "status: confirmed" in approval_spec
+
+    assert "zero-gap grill may validly have" not in loop_spec
+    assert "plan mode cannot be the enforcement signal" not in approval_spec
+    assert "recommended review step" not in approval_spec
+    assert "marker the agent cannot mint" not in approval_spec
+    for text in (decision, loop_spec, approval_spec):
+        unwrapped = " ".join(text.split())
+        assert "GATE_ROUND_FLOORS" in text or "floors spec 2" in unwrapped
+        assert "frontier_empty: true" in text
+        assert "ledger-matched" in text or "match a logged record" in unwrapped
+    for text in (decision, approval_spec):
+        assert "plan_body_digest" in text
+
+    task_loop = workflow.split("## Task Planning", 1)[1].split(
+        "During implementation", 1
+    )[0]
+    enforced_order = (
+        "task plan is authored in plan mode",
+        "task grill delivers its rounds",
+        "human approves",
+        "stage start",
+        "delegate",
+    )
+    positions = [task_loop.index(step) for step in enforced_order]
+    assert positions == sorted(positions)
+
+
 def test_plan_save_refuses_a_plan_missing_any_required_section(repo, tmp_path):
     sign_off(repo)
     intake(repo)

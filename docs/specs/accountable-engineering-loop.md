@@ -89,17 +89,19 @@ implementation does not enforce it end to end:
   scope, architecture, security/privacy, destructive migration, material
   cost, reliability) arrive as escalation packets. A grill records only
   after its rounds are sanctioned. Each declared gap needs either a matching
-  rounds entry or a named-source citation; a zero-gap grill may validly have
-  zero rounds, including when it records sanctioned resolutions.
+  rounds entry or a named-source citation. Every spec, requirements, plan
+  and task grill delivers ledger-matched AskUserQuestion rounds meeting
+  GATE_ROUND_FLOORS (spec 2, requirements 1, plan 2, task 1) with
+  `frontier_empty: true` attested on the final round; zero-round grills are
+  refused for these gates (decision 0048).
 - **Approval and closeout integrity (FORGE-ACC-3).** Approved `plan save`
   stores an `approved_plan_sha256` (excluding the sanctioned assumptions
   appendix) that every later gate rederives — an edited plan requires a
   fresh grill and human approval, and `plan approve` refuses without a
-  fresh matching plan grill on an awaiting plan. The task grill records
-  `approved_by`, stamped from the operator's sanctioned rounds AFTER the
-  grill passes; `require_ready_task` refuses a grill without the approval
-  stamp, bound to the same grounding digest — an approved-then-edited
-  contract needs re-grill and re-approval. `forge next`'s planning branch
+  fresh matching plan grill on an awaiting plan. After the task grill passes,
+  `forge task approve --by` stamps its human `approved_by`, bound to the same
+  grounding digest; `require_ready_task` refuses without that approval — an
+  approved-then-edited contract needs re-grill and re-approval. `forge next`'s planning branch
   routes a pre-draft requirements round: the confirmed spec is re-grilled
   against current repository state (rounds via AskUserQuestion) before
   story-plan drafting is instructed. The initial decomposition
@@ -135,8 +137,9 @@ implementation does not enforce it end to end:
 - A grill missing any required proof, with an unmapped criterion, an absent
   `new_abstractions` field, or `pass`+split/block is refused; a `block`
   without an escalation packet is refused; every declared gap needs either a
-  matching structured round or a named-source citation, while a zero-gap
-  grill may validly record zero rounds and sanctioned resolutions.
+  matching structured round or a named-source citation; all rounds are
+  ledger-matched and floored per decision 0048, including zero-gap grills;
+  resolutions are still recorded in the grill payload.
 - The frontier task's `criteria_map` lands as `plan_contracts`; quality
   review refuses without per-contract verdicts (existing FORGE-REV-2
   enforcement).
