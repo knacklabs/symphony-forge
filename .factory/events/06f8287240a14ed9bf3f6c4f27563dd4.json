@@ -1,0 +1,1 @@
+{"event": "signal-resolved", "generated_by": "orchestrator", "at": "2026-08-21T08:38:50+00:00", "story": "plan-mode-and-grill-provenance", "detail": "S-0009-dc54: Authorized: add factory/scripts/check_dual_runtime.py to the write scope and exempt the PostToolUse event from Claude/Codex hook parity with an inline reason: PostToolUse is Claude-only provenance (pl"}

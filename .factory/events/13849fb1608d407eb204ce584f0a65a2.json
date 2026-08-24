@@ -1,0 +1,1 @@
+{"event": "signal-resolved", "generated_by": "orchestrator", "at": "2026-08-21T09:03:29+00:00", "story": "plan-mode-and-grill-provenance", "detail": "S-0010-57ce: Authoritative record contract (supersedes any earlier wording): PLAN-MODE MARKER = {path: absolute path as written (may be outside the repo, e.g. ~/.claude/plans/x.md), sha256: hex of the raw file byt"}

@@ -1,0 +1,70 @@
+{
+  "generated_by": "griller",
+  "gate": "task",
+  "issue": "plan-mode-and-grill-provenance",
+  "task_id": "plan-mode-gate",
+  "verdict": "pass",
+  "decision": "keep",
+  "questions_asked": 3,
+  "summary": "Task grill for plan-mode-gate in plan mode, one AskUserQuestion round, frontier empty: contract checked against the shipped hook (task 1), plans.py/tasks.py slot-in points, plan_digest_without_assumptions, evidence_path, and the gate-test helpers.",
+  "inspected_refs": [
+    "factory/scripts/post_tool_use.py",
+    "factory/scripts/forge_cli/plans.py",
+    "factory/scripts/forge_cli/tasks.py",
+    "factory/scripts/factory_lib.py",
+    "factory/tests/test_gates.py"
+  ],
+  "current_flow": "plans.cmd_save resolves the source, requires a matching plan grill and writes the active plan; cmd_approve re-checks the grill and writes plan-approval.json; tasks.cmd_plan_save copies any UTF-8 markdown; tasks.cmd_approve stamps the task grill. None of them consults the plan-mode markers task 1 now records under <scope>/plan-mode/.",
+  "criteria_map": {
+    "require_plan_mode_marker refuses when no marker in the active story scope OR the root scope matches the file digest excluding the Implementation Assumptions block (story scope searched first, then root); plan save, plan approve, task plan save and task approve all call it": "require_plan_mode_marker (story then root) + four call sites; tests test_plan_save_refuses_plan_without_plan_mode_marker, test_plan_save_and_approve_accept_plan_with_plan_mode_marker, test_task_plan_save_and_approve_require_plan_mode_marker, test_plan_mode_marker_matches_body_not_assumptions, test_plan_mode_marker_in_root_scope_counts_for_active_story",
+    "gate tests prove refusal without a marker and success with one for both story and task plans": "the same five tests plus record_grill's plan_mode marking through the real hook in every fixture"
+  },
+  "new_abstractions": [],
+  "gaps": [
+    "T1 \u2014 marker lookup order: story then root, or story only",
+    "T2 \u2014 existing fixtures: update every fixture via the real hook, or temporary env bypass",
+    "plan-mode-gate review: lookup ignores the root scope when a story is active; add required test test_plan_mode_marker_in_root_scope_counts_for_active_story?"
+  ],
+  "contradictions": [],
+  "resolutions": [
+    "Story scope then root scope, digest-only",
+    "Every fixture marks via the real hook; no bypass",
+    "Criterion 1 restated with story-then-root lookup; fifth required test added"
+  ],
+  "rounds": [
+    {
+      "question": "T1 \u2014 marker lookup order: story then root, or story only",
+      "options": [
+        "Story then root",
+        "Story scope only"
+      ],
+      "chosen": "Story then root"
+    },
+    {
+      "question": "T2 \u2014 existing fixtures: update every fixture via the real hook, or temporary env bypass",
+      "options": [
+        "Update every fixture, no bypass",
+        "Temporary FORGE_SKIP_PLAN_MODE for tests only"
+      ],
+      "chosen": "Update every fixture, no bypass"
+    },
+    {
+      "question": "plan-mode-gate review: lookup ignores the root scope when a story is active; add required test test_plan_mode_marker_in_root_scope_counts_for_active_story?",
+      "options": [
+        "Approve",
+        "Drop the root fallback instead"
+      ],
+      "chosen": "Approve"
+    }
+  ],
+  "citations": [
+    {
+      "finding": "marker sha256_body uses plan_digest_without_assumptions",
+      "source": "factory/scripts/post_tool_use.py"
+    }
+  ],
+  "open_items": [],
+  "input_sha256": "096deeeec66e55f3987795cf85668c4d60d048d81f926e9567504869b4c8bfdc",
+  "recorded_at": "2026-08-21T12:07:08+00:00",
+  "commit": "befe217aa9e1a685b8033058a6edd42919bdf038"
+}
