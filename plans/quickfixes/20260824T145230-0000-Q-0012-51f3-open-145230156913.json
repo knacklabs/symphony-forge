@@ -1,0 +1,11 @@
+{
+  "event": "open",
+  "id": "Q-0012-51f3",
+  "profile": "degraded",
+  "reason": "Harness fix: record_grill grounds a task grill on the working tree (treeish=''), but pr-ready/stage-done ground a COMPLETED task's grill on its stage baseline. A re-grill forced AFTER implementation (e.g. a review-budget bump discovered once the diff exists) therefore anchors to the post-impl tree and reads STALE at seal, and the done task can no longer be re-grilled (frontier moved). Fix record_grill to (1) allow re-grilling a task whose stage is active/done and (2) anchor its grill to the stage baseline - making it consistent with the seal check. Consistency fix, not a loosening.",
+  "started_at": "2026-08-24T14:52:30+00:00",
+  "max_files": 5,
+  "files": [],
+  "harness_source": false,
+  "kind": "degraded"
+}
