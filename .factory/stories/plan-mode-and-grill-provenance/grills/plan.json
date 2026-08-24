@@ -105,7 +105,7 @@
   "open_items": [
     "Live verification of PostToolUse payloads after task 1 (orchestrator)"
   ],
-  "input_sha256": "e2f8de62c36be7d9aced449c394b60a49b88158719fdc1e82041bd9e35439a85",
-  "recorded_at": "2026-08-21T08:18:08+00:00",
-  "commit": "dda6ae83abeea44cc100f241ee89cb78fc3c0469"
+  "input_sha256": "21d218c50cfd9c22f3504d9a6d0b991e0b01a3fd9a8bce7a90a586285023386d",
+  "recorded_at": "2026-08-24T10:02:23+00:00",
+  "commit": "161b0fff807cfce4fa313db18e97ece9cfbe6f3e"
 }

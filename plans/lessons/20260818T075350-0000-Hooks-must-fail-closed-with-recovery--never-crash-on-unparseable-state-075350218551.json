@@ -1,0 +1,14 @@
+{
+  "topic": "Hooks must fail-closed with recovery, never crash on unparseable state",
+  "lesson": "load_json raises JSONDecodeError on a conflict-markered .factory/*.json, and pre_tool_use/stop_continue call it unguarded \u2014 so a mid-merge run.json crashes EVERY hook (Bash/Edit/Write/Stop) with no in-session escape, an unrecoverable loop. Hooks must catch the parse error, deny fail-closed with a clear message, and EXEMPT git-recovery commands (merge/rebase --abort, checkout of the state file) so the session can self-heal.",
+  "source": "session-2026-08-18-forge-win-enc-recovery",
+  "applies_to": [
+    "factory/scripts/factory_lib.py",
+    "factory/scripts/pre_tool_use.py",
+    "factory/scripts/stop_continue.py",
+    "factory/scripts/session_start.py"
+  ],
+  "severity": "high",
+  "generated_by": "orchestrator",
+  "added_at": "2026-08-18T07:53:50+00:00"
+}

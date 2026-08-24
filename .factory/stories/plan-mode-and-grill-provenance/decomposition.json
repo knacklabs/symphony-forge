@@ -4,7 +4,7 @@
   "epic": "accountable-engineering",
   "user_facing": false,
   "plan_file": "plans/active/plan-mode-and-grill-provenance-plan-mode-and-grill-provenance-are-enforced-not-advisory.md",
-  "plan_sha256": "e986b4b092680871ce35d9e57ed0115aca106cf5f75bb8c918576c10c824f937",
+  "plan_sha256": "864b1fcf1c1d5ce31e44cb9d813ccbd29461ff150f2acdfafaad298d80d7c6c4",
   "tasks": [
     {
       "id": "post-tool-use-ledgers",
@@ -89,7 +89,7 @@
       "title": "plan save, plan approve, task plan save and task approve require a plan-mode marker",
       "objective": "Make the story and task plan recorders refuse any plan file whose digest was not written in plan mode, so plans authored from normal mode cannot be saved or approved.",
       "acceptance_criteria": [
-        "require_plan_mode_marker refuses when no marker in the active story scope OR the root scope matches the file digest excluding the Implementation Assumptions block (story scope searched first, then root); plan save, plan approve, task plan save and task approve all call it",
+        "require_plan_mode_marker matches the digest of the plan BODY excluding both the harness-stamped frontmatter block and the Implementation Assumptions block (plan save re-stamps status/saved, which must not invalidate the marker), searching the active story scope then the root scope; plan save, plan approve, task plan save and task approve all call it",
         "gate tests prove refusal without a marker and success with one for both story and task plans"
       ],
       "dependencies": [
@@ -99,7 +99,8 @@
         "factory/scripts/factory_lib.py",
         "factory/scripts/forge_cli/plans.py",
         "factory/scripts/forge_cli/tasks.py",
-        "factory/tests/test_gates.py"
+        "factory/tests/test_gates.py",
+        "factory/scripts/post_tool_use.py"
       ],
       "required_tests": [
         {
@@ -126,16 +127,21 @@
           "id": "test_plan_mode_marker_in_root_scope_counts_for_active_story",
           "path": "factory/tests/test_gates.py",
           "command": "uvx --with pytest --with psutil python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_plan_save_restamp_does_not_invalidate_marker",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest --with psutil python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
         }
       ],
       "verify_commands": [
         "python3 factory/scripts/check_dual_runtime.py"
       ],
-      "reviewer_focus": "Digest-only check (no timestamps); markers read through evidence_path (story scope then root), never a hand-built path; refusal message tells the author exactly what to do; fixtures create markers only via the real post_tool_use hook (no env bypass, no hand-written marker files); quickfix/degraded untouched.",
+      "reviewer_focus": "One shared plan_body_digest helper used by both the hook and the gate (no second implementation); markers read through evidence_path story-then-root, never a hand-built path; fixtures create markers only via the real hook (no env bypass, no hand-written markers); the restamp test proves approve works after save without a fresh plan-mode round; quickfix/degraded untouched.",
       "plan_contracts": [
         {
           "id": "pmg-1",
-          "statement": "require_plan_mode_marker refuses when no marker in the active story scope OR the root scope matches the file digest excluding the Implementation Assumptions block (story scope searched first, then root); plan save, plan approve, task plan save and task approve all call it",
+          "statement": "require_plan_mode_marker matches the digest of the plan BODY excluding both the harness-stamped frontmatter block and the Implementation Assumptions block (plan save re-stamps status/saved, which must not invalidate the marker), searching the active story scope then the root scope; plan save, plan approve, task plan save and task approve all call it",
           "source": "plans/active/plan-mode-and-grill-provenance-plan-mode-and-grill-provenance-are-enforced-not-advisory.md#task-decomposition"
         },
         {
@@ -156,6 +162,67 @@
       ],
       "dependencies": [
         "plan-mode-gate"
+      ],
+      "write_scope": [
+        "factory/scripts/record_grill_from_json.py",
+        "factory/scripts/factory_lib.py",
+        "factory/scripts/forge_cli/tasks.py",
+        "factory/scripts/forge_cli/phase.py",
+        "factory/schemas/grill.json",
+        "factory/tests/test_gates.py"
+      ],
+      "required_tests": [
+        {
+          "id": "test_grill_refuses_round_not_in_ledger",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest --with psutil python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_grill_refuses_below_gate_floor",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest --with psutil python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_grill_refuses_missing_frontier_empty",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest --with psutil python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_grill_accepts_ledger_matched_rounds_happy_path",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest --with psutil python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_task_grill_requires_saved_task_plan_with_tolerance",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest --with psutil python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_frontier_orders_task_plan_before_grill",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest --with psutil python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        }
+      ],
+      "verify_commands": [
+        "python3 factory/scripts/check_dual_runtime.py"
+      ],
+      "reviewer_focus": "Rounds matched against ledger records read via evidence_path story-then-root, never hand-built paths; GATE_ROUND_FLOORS a named constant (spec 2, requirements 1, plan 2, task 1); frontier_empty required on the final round only; chosen equality exact when the ledger entry has non-null chosen; the task-plan tolerance keyed on timestamps and tested; every fixture logs rounds through the real hook; epics/signoff gates explicitly unchanged; no weakening of digest freshness.",
+      "plan_contracts": [
+        {
+          "id": "rpg-1",
+          "statement": "record_grill_from_json refuses, for spec/requirements/plan/task gates, rounds that do not match a logged record, counts below spec 2 / requirements 1 / plan 2 / task 1, and a final round without frontier_empty true; byte-identical re-records may reuse rounds",
+          "source": "plans/active/plan-mode-and-grill-provenance-plan-mode-and-grill-provenance-are-enforced-not-advisory.md#task-decomposition"
+        },
+        {
+          "id": "rpg-2",
+          "statement": "a task grill is refused when task-plans/<id>.md is absent, with a one-time tolerance for grills older than a later-saved task plan; task_frontier_state and tasks.cmd_plan_save implement author-task-plan before grill; forge next prints the enforced planning and implementing order",
+          "source": "plans/active/plan-mode-and-grill-provenance-plan-mode-and-grill-provenance-are-enforced-not-advisory.md#task-decomposition"
+        },
+        {
+          "id": "rpg-3",
+          "statement": "existing inverse-order gate tests are flipped, new refusal and happy-path tests pass",
+          "source": "plans/active/plan-mode-and-grill-provenance-plan-mode-and-grill-provenance-are-enforced-not-advisory.md#task-decomposition"
+        }
       ]
     },
     {
@@ -172,5 +239,5 @@
     }
   ],
   "project": "",
-  "commit": "befe217aa9e1a685b8033058a6edd42919bdf038"
+  "commit": "864b7628c294ba9de87f02e3f0ca95eb62283aed"
 }

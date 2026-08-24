@@ -1,0 +1,68 @@
+{
+  "generated_by": "griller",
+  "gate": "task",
+  "issue": "plan-mode-and-grill-provenance",
+  "task_id": "round-provenance-gate",
+  "verdict": "pass",
+  "decision": "keep",
+  "questions_asked": 2,
+  "summary": "Task grill for round-provenance-gate in plan mode, one AskUserQuestion round (recorded live in the grill-rounds ledger), frontier empty: contract checked against the shipped hook and marker gate, the grill recorder's current validation, require_grill/require_task_grill freshness, the frontier routing, and phase.py text.",
+  "inspected_refs": [
+    "factory/scripts/record_grill_from_json.py",
+    "factory/scripts/factory_lib.py",
+    "factory/scripts/forge_cli/tasks.py",
+    "factory/scripts/forge_cli/phase.py",
+    "factory/schemas/grill.json",
+    "factory/tests/test_gates.py",
+    ".factory/stories/plan-mode-and-grill-provenance/grill-rounds"
+  ],
+  "current_flow": "The grill recorder validates rounds structurally for the task gate only and accepts zero rounds; nothing checks rounds against the AskUserQuestion ledger task 1 now records (live-proven to include chosen answers); the frontier requires the task grill before the task plan; forge next prints the old order.",
+  "criteria_map": {
+    "record_grill_from_json refuses, for spec/requirements/plan/task gates, rounds that do not match a logged record, counts below spec 2 / requirements 1 / plan 2 / task 1, and a final round without frontier_empty true; byte-identical re-records may reuse rounds": "ledger match + GATE_ROUND_FLOORS + frontier_empty in record_grill_from_json; tests test_grill_refuses_round_not_in_ledger, test_grill_refuses_below_gate_floor, test_grill_refuses_missing_frontier_empty, test_grill_accepts_ledger_matched_rounds_happy_path",
+    "a task grill is refused when task-plans/<id>.md is absent, with a one-time tolerance for grills older than a later-saved task plan; task_frontier_state and tasks.cmd_plan_save implement author-task-plan before grill; forge next prints the enforced planning and implementing order": "task-plan-first refusal with timestamp tolerance + task_frontier_state/tasks.cmd_plan_save flip + phase.py text; tests test_task_grill_requires_saved_task_plan_with_tolerance, test_frontier_orders_task_plan_before_grill",
+    "existing inverse-order gate tests are flipped, new refusal and happy-path tests pass": "flipped inverse-order tests retained plus the six required tests green"
+  },
+  "new_abstractions": [
+    "GATE_ROUND_FLOORS constant"
+  ],
+  "gaps": [
+    "T3-1 \u2014 chosen equality in the ledger match, or question text only",
+    "T3-2 \u2014 floor epics/signoff gates now or leave unchanged this story"
+  ],
+  "contradictions": [],
+  "resolutions": [
+    "Exact chosen equality when the ledger entry has a non-null chosen; null matches on question text",
+    "Epics and signoff gates stay unchanged this story"
+  ],
+  "rounds": [
+    {
+      "question": "T3-1 \u2014 chosen equality in the ledger match, or question text only",
+      "options": [
+        "Exact chosen equality when the ledger has one",
+        "Question text only"
+      ],
+      "chosen": "Exact chosen equality when the ledger has one"
+    },
+    {
+      "question": "T3-2 \u2014 floor epics/signoff gates now or leave unchanged this story",
+      "options": [
+        "Leave epics/signoff unchanged",
+        "Floor all six gates now"
+      ],
+      "chosen": "Leave epics/signoff unchanged"
+    }
+  ],
+  "citations": [
+    {
+      "finding": "the hook's grill-round records include chosen answers",
+      "source": ".factory/stories/plan-mode-and-grill-provenance/grill-rounds (live record, 2026-08-24)"
+    }
+  ],
+  "open_items": [],
+  "input_sha256": "ea431d25fa6f4804423d57252dbf3832503daad1ba24c3b5bbc8785d8cb3f910",
+  "recorded_at": "2026-08-24T10:27:29+00:00",
+  "commit": "864b7628c294ba9de87f02e3f0ca95eb62283aed",
+  "approved_task_plan_sha256": "ee6aaf44a4709ffa30f91873c7bf255b4ac44a4705914840b62299876353fb95",
+  "approved_by": "Ravi Kiran Vemula",
+  "approved_at": "2026-08-24T10:41:08+00:00"
+}

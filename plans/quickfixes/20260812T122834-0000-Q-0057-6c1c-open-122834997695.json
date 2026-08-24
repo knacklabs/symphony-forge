@@ -1,0 +1,11 @@
+{
+  "event": "open",
+  "id": "Q-0057-6c1c",
+  "profile": "degraded",
+  "reason": "final stage-authority repair: 2.1 started on dirty tree so dirty_at_start masks its committed work; re-adopt via migrate against clean HEAD a505eb7 with true base a604f12",
+  "started_at": "2026-08-12T12:28:34+00:00",
+  "max_files": 5,
+  "files": [],
+  "harness_source": true,
+  "kind": "degraded"
+}

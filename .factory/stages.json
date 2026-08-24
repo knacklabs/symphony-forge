@@ -6,7 +6,7 @@
       "title": "PostToolUse hook: plan-mode markers and AskUserQuestion round ledger",
       "status": "done",
       "started_at": "2026-08-21T08:26:14+00:00",
-      "base_sha": "ee243c979fe0960f1fe3e3051131548fa78867d0",
+      "base_sha": "f24acab63ebddd9050375ee236c383d858347164",
       "dirty_at_start": {
         ".factory/events/263a6997bccd4d8bbc81ee3e6606c14a.json": {
           "digest": "efe4480b6a1c11b97482afae39917af000a60386587ba24a373471762aab6de1",
@@ -79,9 +79,9 @@
     {
       "id": "plan-mode-gate",
       "title": "plan save, plan approve, task plan save and task approve require a plan-mode marker",
-      "status": "active",
+      "status": "done",
       "started_at": "2026-08-21T11:32:09+00:00",
-      "base_sha": "befe217aa9e1a685b8033058a6edd42919bdf038",
+      "base_sha": "f24acab63ebddd9050375ee236c383d858347164",
       "dirty_at_start": {
         ".factory/events/01f24d3b017549b6be9fa062ed1fa05f.json": {
           "digest": "bb90bcdb90fa0c504e8a6e8b94f0e30cba3d4ae1ce49146398921cdc3b63ab9c",
@@ -264,12 +264,310 @@
           "git": "1 .M N... 100644 100644 100644 4676c930abcf29c78d51eeb8c826992b535bdf4e 4676c930abcf29c78d51eeb8c826992b535bdf4e plans/roadmap.json\u0000\u0000100644 4676c930abcf29c78d51eeb8c826992b535bdf4e 0\tplans/roadmap.json\u0000\u0000H plans/roadmap.json\u0000"
         }
       },
-      "task_sha256": "3bf78b793bb547dd84b741a1046d746e94f9a731b49720bdd0a6af91a8319e90"
+      "task_sha256": "7b26a2b7cea848009775dae61a3fbff6d898f7568d62be3755eb5ce94a674430",
+      "completed_at": "2026-08-24T10:17:21+00:00"
     },
     {
       "id": "round-provenance-gate",
       "title": "Grill recorder requires logged rounds, per-gate floors, frontier_empty, and a saved task plan; frontier order flipped",
-      "status": "pending"
+      "status": "active",
+      "started_at": "2026-08-24T10:29:31+00:00",
+      "base_sha": "864b7628c294ba9de87f02e3f0ca95eb62283aed",
+      "dirty_at_start": {
+        ".factory/events/05b06c5a66aa45a3acef1b1f995cba1a.json": {
+          "digest": "1b8077f34dae209c24c7abdc02538fd24f0fc864784c4064c7f82495c0cacdf3",
+          "git": "? .factory/events/05b06c5a66aa45a3acef1b1f995cba1a.json\u0000\u0000\u0000"
+        },
+        ".factory/events/11e839483acd4fbfb7a9c3783ab496fc.json": {
+          "digest": "21426ee7556c4f329700820df90bad6bb112a7a5797a1b9a319106a6719198a4",
+          "git": "? .factory/events/11e839483acd4fbfb7a9c3783ab496fc.json\u0000\u0000\u0000"
+        },
+        ".factory/events/16bd12ecaab44f0c8c15cbd254f45543.json": {
+          "digest": "4962872c4b9f65a52d247e49ce59ebb9fe76063005a0e90417660e27c864c527",
+          "git": "? .factory/events/16bd12ecaab44f0c8c15cbd254f45543.json\u0000\u0000\u0000"
+        },
+        ".factory/events/17c214f258be48d6907b450189aecf1a.json": {
+          "digest": "82aa13d3f28e480179239067ffbd6091bc5f5096a64c0a43de406e14f8c7c915",
+          "git": "? .factory/events/17c214f258be48d6907b450189aecf1a.json\u0000\u0000\u0000"
+        },
+        ".factory/events/1c723904d61545bfae7b8413c34d6584.json": {
+          "digest": "bf92c89441ccff680d75259740710fba57db5b52f2ec45ceaafd49cb3387b661",
+          "git": "? .factory/events/1c723904d61545bfae7b8413c34d6584.json\u0000\u0000\u0000"
+        },
+        ".factory/events/2d0309d250ed4c9c82bd2213093a5731.json": {
+          "digest": "d908666bdd274165c377aea59da4b16226df7e873f684fd92bc02892f6ec5594",
+          "git": "? .factory/events/2d0309d250ed4c9c82bd2213093a5731.json\u0000\u0000\u0000"
+        },
+        ".factory/events/433c0c329f304459944cef3e4775eb26.json": {
+          "digest": "2e6a13731406f3ad19253571ebbb22db0c48dc5bcf155233460195738b811409",
+          "git": "? .factory/events/433c0c329f304459944cef3e4775eb26.json\u0000\u0000\u0000"
+        },
+        ".factory/events/4d4a78ea293a4019b59bc7b8f78c6235.json": {
+          "digest": "2713c0f192c1bd923637ca01c55683504f5194ca219f5e5009782dbbd64f7636",
+          "git": "? .factory/events/4d4a78ea293a4019b59bc7b8f78c6235.json\u0000\u0000\u0000"
+        },
+        ".factory/events/519bd7e7a9b641ec9fdb1277a89d63a6.json": {
+          "digest": "228560693b784b601d7544aef13b33de0dbcb5fa5078d20334f899a155fbaae0",
+          "git": "? .factory/events/519bd7e7a9b641ec9fdb1277a89d63a6.json\u0000\u0000\u0000"
+        },
+        ".factory/events/526ad1390be74f998bb21b2e053561e8.json": {
+          "digest": "24ea8535fe3ef482a3b87b13e9e3af22fc893747e34943e901ce238c5e6e2bef",
+          "git": "? .factory/events/526ad1390be74f998bb21b2e053561e8.json\u0000\u0000\u0000"
+        },
+        ".factory/events/5656da29c7024ea99efb9c94d8b12be4.json": {
+          "digest": "5ecbc4716a09885c71f8405639f5f7c87498d029da295b68d3c5a6e7711655e6",
+          "git": "? .factory/events/5656da29c7024ea99efb9c94d8b12be4.json\u0000\u0000\u0000"
+        },
+        ".factory/events/621bcb7f51c948b59024a5f72dba153b.json": {
+          "digest": "d66935130b8684bc4abae7684f4aa130075a03d8de17784915858290e799915f",
+          "git": "? .factory/events/621bcb7f51c948b59024a5f72dba153b.json\u0000\u0000\u0000"
+        },
+        ".factory/events/6577403d08bb4ab1a836015844a25c3c.json": {
+          "digest": "d2003f032de45e845b82e230ac4f2e26f794fc374e15c7e14aedb67368078a85",
+          "git": "? .factory/events/6577403d08bb4ab1a836015844a25c3c.json\u0000\u0000\u0000"
+        },
+        ".factory/events/770acd09e5a44caba186264289f270d3.json": {
+          "digest": "9bd11f8f0764a95cc1ecd13b99b7ddb452dfe464e445cda1e2a8ea030b9797fa",
+          "git": "? .factory/events/770acd09e5a44caba186264289f270d3.json\u0000\u0000\u0000"
+        },
+        ".factory/events/787e630f843549789f9762653e7f0794.json": {
+          "digest": "3be749e249732f20e03ab2ff04ee06eb40e3697bea0e8af0f46ab566d3ad86e1",
+          "git": "? .factory/events/787e630f843549789f9762653e7f0794.json\u0000\u0000\u0000"
+        },
+        ".factory/events/7958a347c8ac446d8780ac067cd8588c.json": {
+          "digest": "ef0eff1e727046b3e9b7188e7f8975cce7a1c5a3d942f1a8fc1777c2a745371a",
+          "git": "? .factory/events/7958a347c8ac446d8780ac067cd8588c.json\u0000\u0000\u0000"
+        },
+        ".factory/events/79bad5c61b8c4a0a8119d53c61298daf.json": {
+          "digest": "2e142d1b7d6338ddc387419c8d08946de2ce318b298c40668409916290ca31b9",
+          "git": "? .factory/events/79bad5c61b8c4a0a8119d53c61298daf.json\u0000\u0000\u0000"
+        },
+        ".factory/events/81d78cbd7e33401d9a2f4dac06af2e59.json": {
+          "digest": "9373bdb9b8fe9746f91c96fad794f1933ff535b0ed06f852cbbb5182de337b79",
+          "git": "? .factory/events/81d78cbd7e33401d9a2f4dac06af2e59.json\u0000\u0000\u0000"
+        },
+        ".factory/events/85375e3600bf49e5a08ff472b17ddef7.json": {
+          "digest": "e6f119d1d267b0015c49e8e12951579ece28b3bf3cff0f7079446fdaebb41c9f",
+          "git": "? .factory/events/85375e3600bf49e5a08ff472b17ddef7.json\u0000\u0000\u0000"
+        },
+        ".factory/events/8c37f11f74394a998a07356b498e9567.json": {
+          "digest": "5c2128ceefddbed4024f1ab00d7089f0e1fa1eea250f7bb30cc941f6549c1889",
+          "git": "? .factory/events/8c37f11f74394a998a07356b498e9567.json\u0000\u0000\u0000"
+        },
+        ".factory/events/9614325f6ecc4d5e9dcace170c99fda4.json": {
+          "digest": "4962872c4b9f65a52d247e49ce59ebb9fe76063005a0e90417660e27c864c527",
+          "git": "? .factory/events/9614325f6ecc4d5e9dcace170c99fda4.json\u0000\u0000\u0000"
+        },
+        ".factory/events/9ce0916e9d974988998012ccf9d63854.json": {
+          "digest": "4962872c4b9f65a52d247e49ce59ebb9fe76063005a0e90417660e27c864c527",
+          "git": "? .factory/events/9ce0916e9d974988998012ccf9d63854.json\u0000\u0000\u0000"
+        },
+        ".factory/events/a2cb6456aade4bd896c264db1881008f.json": {
+          "digest": "d959d19867c56c87327f29e0f118e185833a9c3530d3260d4051fff2a1992911",
+          "git": "? .factory/events/a2cb6456aade4bd896c264db1881008f.json\u0000\u0000\u0000"
+        },
+        ".factory/events/a393729f283e427bbaa5ffbb6f9ae6b9.json": {
+          "digest": "5c566106badf81fecafffbbc6825fd1bbdb401b9a3e60a95c75d073a07c8250f",
+          "git": "? .factory/events/a393729f283e427bbaa5ffbb6f9ae6b9.json\u0000\u0000\u0000"
+        },
+        ".factory/events/ab6dae32e0cf4009996932de92b2f55c.json": {
+          "digest": "031d1496c4f7f430da534c5e209b8b39d9281e41077032a140e65442014d9075",
+          "git": "? .factory/events/ab6dae32e0cf4009996932de92b2f55c.json\u0000\u0000\u0000"
+        },
+        ".factory/events/ac8917ad379e4b338e7cb080fdf1fbf6.json": {
+          "digest": "4b99e51af7fca3f5cccd209187cf5c507389b2c1b4bab251e7f31f8e5fbe74c5",
+          "git": "? .factory/events/ac8917ad379e4b338e7cb080fdf1fbf6.json\u0000\u0000\u0000"
+        },
+        ".factory/events/ae4caaeb6961479383b13a0de3f4392d.json": {
+          "digest": "915deaa65032745217f93c5a460f46eeac853c7aa5b48611bb9afe875461f015",
+          "git": "? .factory/events/ae4caaeb6961479383b13a0de3f4392d.json\u0000\u0000\u0000"
+        },
+        ".factory/events/af92416658c6476591f83f55a9e81824.json": {
+          "digest": "4e21ed61b311ebeb9c4b9a20b92ebeb272e01f5b53fa661ce74e0ea6639c0494",
+          "git": "? .factory/events/af92416658c6476591f83f55a9e81824.json\u0000\u0000\u0000"
+        },
+        ".factory/events/b68dc7a986ec436fbea5cba1cb103565.json": {
+          "digest": "e50b9a3184d3cc5a48d3bb1861b8a6613ac5df75c14e84efc436235343a4993d",
+          "git": "? .factory/events/b68dc7a986ec436fbea5cba1cb103565.json\u0000\u0000\u0000"
+        },
+        ".factory/events/be343341b67f4610815682ffcc8ab6f0.json": {
+          "digest": "dfff8705eeef7b693432bca41580502b36badfe1726c54e0f70bfe8c3a903c26",
+          "git": "? .factory/events/be343341b67f4610815682ffcc8ab6f0.json\u0000\u0000\u0000"
+        },
+        ".factory/events/beb572dd3cd248f3a3a5f40a492868c4.json": {
+          "digest": "13ec040386988a3bef1f2c05de2ce139f2830ed8fb4f083588f7697474b0b41f",
+          "git": "? .factory/events/beb572dd3cd248f3a3a5f40a492868c4.json\u0000\u0000\u0000"
+        },
+        ".factory/events/c06e0fab63154e128e0ce353d71b00ff.json": {
+          "digest": "b657181bef713094ad93fee4e11fe99c96504222032341f694a68ef7903520e1",
+          "git": "? .factory/events/c06e0fab63154e128e0ce353d71b00ff.json\u0000\u0000\u0000"
+        },
+        ".factory/events/cc540ed61c1d4155a00c96ad039deda6.json": {
+          "digest": "b413d4f436b475d026f7b970a2ab9050ee8dfe755cec8a4f9aebd752d7e72cb6",
+          "git": "? .factory/events/cc540ed61c1d4155a00c96ad039deda6.json\u0000\u0000\u0000"
+        },
+        ".factory/events/cf6a8d95497b46b78ee87d4e9f6b0aed.json": {
+          "digest": "84c6692e840f6dfbbfc14cb8ea9863847c328623bbd9103b922ca8933cd73f19",
+          "git": "? .factory/events/cf6a8d95497b46b78ee87d4e9f6b0aed.json\u0000\u0000\u0000"
+        },
+        ".factory/events/e498673a2c6d4535ae7c7b5fd0f2b5c5.json": {
+          "digest": "f6ee493b68833ce109a6bf32f8b4849bff76cad05d0b49523845111de02cd459",
+          "git": "? .factory/events/e498673a2c6d4535ae7c7b5fd0f2b5c5.json\u0000\u0000\u0000"
+        },
+        ".factory/events/e6a459afb2a94ef791cc0db87826a14c.json": {
+          "digest": "2adf34962154d961f3fdc5e547f8c4a031fb557079aafb1f38ab4614cf37c269",
+          "git": "? .factory/events/e6a459afb2a94ef791cc0db87826a14c.json\u0000\u0000\u0000"
+        },
+        ".factory/events/e6fbad6903894628895b674ef7e3cc5c.json": {
+          "digest": "569b6a0dd577fe34e4354ca1cbf86174998752ac415edc7011f05195f74f57d9",
+          "git": "? .factory/events/e6fbad6903894628895b674ef7e3cc5c.json\u0000\u0000\u0000"
+        },
+        ".factory/events/eb0c40cc4dcd47ab8c1823d755be212e.json": {
+          "digest": "e88dd8bba2c62b28b40336c343c4351b39f0d0d1b75511c942e7ca7769fd0e36",
+          "git": "? .factory/events/eb0c40cc4dcd47ab8c1823d755be212e.json\u0000\u0000\u0000"
+        },
+        ".factory/events/f26a8720cee04fba9b02737fd582f351.json": {
+          "digest": "4962872c4b9f65a52d247e49ce59ebb9fe76063005a0e90417660e27c864c527",
+          "git": "? .factory/events/f26a8720cee04fba9b02737fd582f351.json\u0000\u0000\u0000"
+        },
+        ".factory/events/f40d705e98fb4ffb95e4c0610224e948.json": {
+          "digest": "4962872c4b9f65a52d247e49ce59ebb9fe76063005a0e90417660e27c864c527",
+          "git": "? .factory/events/f40d705e98fb4ffb95e4c0610224e948.json\u0000\u0000\u0000"
+        },
+        ".factory/events/fca1b336c05b42088834937a3e399135.json": {
+          "digest": "fddfe1dae9f43d46b214669dbe39f5812cba129e19774efc1d201798eceb85b3",
+          "git": "? .factory/events/fca1b336c05b42088834937a3e399135.json\u0000\u0000\u0000"
+        },
+        ".factory/stages.json": {
+          "digest": "bfd3516d45b1865566abb6c3a65b82f7647abb3940095a96d3c8f765a43a60c1",
+          "git": "1 .M N... 100644 100644 100644 b046933f41eb8f28c0276832b9ced67b4bb93a3b b046933f41eb8f28c0276832b9ced67b4bb93a3b .factory/stages.json\u0000\u0000100644 b046933f41eb8f28c0276832b9ced67b4bb93a3b 0\t.factory/stages.json\u0000\u0000H .factory/stages.json\u0000"
+        },
+        ".factory/stories/plan-mode-and-grill-provenance/decomposition.json": {
+          "digest": "e396d7a9301bca1a8222031877407a01dd40fc18e4544297a31421099884bd0d",
+          "git": "1 .M N... 100644 100644 100644 c675f5f802ed43563597d842e69ad59066075904 c675f5f802ed43563597d842e69ad59066075904 .factory/stories/plan-mode-and-grill-provenance/decomposition.json\u0000\u0000100644 c675f5f802ed43563597d842e69ad59066075904 0\t.factory/stories/plan-mode-and-grill-provenance/decomposition.json\u0000\u0000H .factory/stories/plan-mode-and-grill-provenance/decomposition.json\u0000"
+        },
+        ".factory/stories/plan-mode-and-grill-provenance/grill-rounds/0f860e9f-24c5-476e-8789-396d7df9d43c.json": {
+          "digest": "7f5afbfdf5bda8154dba6c8560eacc81ceb33680220ac704b556ffd1547fc43a",
+          "git": "? .factory/stories/plan-mode-and-grill-provenance/grill-rounds/0f860e9f-24c5-476e-8789-396d7df9d43c.json\u0000\u0000\u0000"
+        },
+        ".factory/stories/plan-mode-and-grill-provenance/grill-rounds/ca01786c-f86f-4062-a08b-5835d635e9ce.json": {
+          "digest": "36729f416aa8eaa596c6b950c2fc851334a32a8f37766513685f7a8f14a547ae",
+          "git": "? .factory/stories/plan-mode-and-grill-provenance/grill-rounds/ca01786c-f86f-4062-a08b-5835d635e9ce.json\u0000\u0000\u0000"
+        },
+        ".factory/stories/plan-mode-and-grill-provenance/grill-rounds/d0227438-fdda-4d46-b86f-23391e55939d.json": {
+          "digest": "a561397d1cc1ca0309d800092aacbce22f095b007007f1927db4bc4e74fce25a",
+          "git": "? .factory/stories/plan-mode-and-grill-provenance/grill-rounds/d0227438-fdda-4d46-b86f-23391e55939d.json\u0000\u0000\u0000"
+        },
+        ".factory/stories/plan-mode-and-grill-provenance/grills/plan.json": {
+          "digest": "71a9a1366ce3ccc80979972d0f959b021a8f75d4a8ba138ac433dfbbe5cae0bc",
+          "git": "1 .M N... 100644 100644 100644 8d3dad6c0bbbc00d3dbc31cc3b75ad444cf66988 8d3dad6c0bbbc00d3dbc31cc3b75ad444cf66988 .factory/stories/plan-mode-and-grill-provenance/grills/plan.json\u0000\u0000100644 8d3dad6c0bbbc00d3dbc31cc3b75ad444cf66988 0\t.factory/stories/plan-mode-and-grill-provenance/grills/plan.json\u0000\u0000H .factory/stories/plan-mode-and-grill-provenance/grills/plan.json\u0000"
+        },
+        ".factory/stories/plan-mode-and-grill-provenance/grills/requirements.json": {
+          "digest": "ad111129120b9d5e1a55b60051ba4f0686c849715825ff123c2c7a71368b34d7",
+          "git": "1 .M N... 100644 100644 100644 522000e4b13f7f9b29674a9b2352661414a91ae0 522000e4b13f7f9b29674a9b2352661414a91ae0 .factory/stories/plan-mode-and-grill-provenance/grills/requirements.json\u0000\u0000100644 522000e4b13f7f9b29674a9b2352661414a91ae0 0\t.factory/stories/plan-mode-and-grill-provenance/grills/requirements.json\u0000\u0000H .factory/stories/plan-mode-and-grill-provenance/grills/requirements.json\u0000"
+        },
+        ".factory/stories/plan-mode-and-grill-provenance/grills/tasks/plan-mode-gate.json": {
+          "digest": "e993d95fb6bfbdf72e5714ecb7290b17e2d826cff48d9645b7d65c56e901e4e7",
+          "git": "1 .M N... 100644 100644 100644 2ee467af41c82f1217991745035a3724903bd580 2ee467af41c82f1217991745035a3724903bd580 .factory/stories/plan-mode-and-grill-provenance/grills/tasks/plan-mode-gate.json\u0000\u0000100644 2ee467af41c82f1217991745035a3724903bd580 0\t.factory/stories/plan-mode-and-grill-provenance/grills/tasks/plan-mode-gate.json\u0000\u0000H .factory/stories/plan-mode-and-grill-provenance/grills/tasks/plan-mode-gate.json\u0000"
+        },
+        ".factory/stories/plan-mode-and-grill-provenance/grills/tasks/round-provenance-gate.json": {
+          "digest": "58f7ca86cde292bd679a10b4212956dcf961ab619429f376d07e6e8e7e8a9581",
+          "git": "? .factory/stories/plan-mode-and-grill-provenance/grills/tasks/round-provenance-gate.json\u0000\u0000\u0000"
+        },
+        ".factory/stories/plan-mode-and-grill-provenance/plan-mode/2e689003-c439-46ff-b4a0-906ba828ad6f.json": {
+          "digest": "25502be000ddc42a0228ebee109637d7a34f687ed13811b468faa3a1919f95e7",
+          "git": "? .factory/stories/plan-mode-and-grill-provenance/plan-mode/2e689003-c439-46ff-b4a0-906ba828ad6f.json\u0000\u0000\u0000"
+        },
+        ".factory/stories/plan-mode-and-grill-provenance/plan-mode/48ddc415-24d5-4cb5-973e-cb38dc18ad8b.json": {
+          "digest": "ce17623d48ab5ccf9c7e9c6769eee13ba6fd25bafd8e33037a5822c6691ed105",
+          "git": "? .factory/stories/plan-mode-and-grill-provenance/plan-mode/48ddc415-24d5-4cb5-973e-cb38dc18ad8b.json\u0000\u0000\u0000"
+        },
+        ".factory/stories/plan-mode-and-grill-provenance/plan-mode/54bcbf69-c601-484a-a587-e983554d5749.json": {
+          "digest": "b30813923cd07de5f734ebd535ed02e8a8583eeeb765f230dcf91f1583d4a834",
+          "git": "? .factory/stories/plan-mode-and-grill-provenance/plan-mode/54bcbf69-c601-484a-a587-e983554d5749.json\u0000\u0000\u0000"
+        },
+        ".factory/stories/plan-mode-and-grill-provenance/plan-mode/66226b8e-32a5-4fc0-8b12-e837c1e572de.json": {
+          "digest": "0f67a842579e4d6a93efa0e5cb84fc18f1396ff4f6204ad6443ef2f1c6dbce19",
+          "git": "? .factory/stories/plan-mode-and-grill-provenance/plan-mode/66226b8e-32a5-4fc0-8b12-e837c1e572de.json\u0000\u0000\u0000"
+        },
+        ".factory/stories/plan-mode-and-grill-provenance/plan-mode/830983b1-83ae-4d68-873b-a21c8171d733.json": {
+          "digest": "db1390435ee80456b35c14be07b9d9abf7ed84673266dadbe838bab53624fa29",
+          "git": "? .factory/stories/plan-mode-and-grill-provenance/plan-mode/830983b1-83ae-4d68-873b-a21c8171d733.json\u0000\u0000\u0000"
+        },
+        ".factory/stories/plan-mode-and-grill-provenance/task-plans/plan-mode-gate.md": {
+          "digest": "953f1456ba9eda081e30b6c9b86965c6782edcbfaa1e82bed54e80128d8b408b",
+          "git": "1 .M N... 100644 100644 100644 6049c291fae45c298c703a5fbce62b809426904c 6049c291fae45c298c703a5fbce62b809426904c .factory/stories/plan-mode-and-grill-provenance/task-plans/plan-mode-gate.md\u0000\u0000100644 6049c291fae45c298c703a5fbce62b809426904c 0\t.factory/stories/plan-mode-and-grill-provenance/task-plans/plan-mode-gate.md\u0000\u0000H .factory/stories/plan-mode-and-grill-provenance/task-plans/plan-mode-gate.md\u0000"
+        },
+        ".factory/stories/plan-mode-and-grill-provenance/task-plans/round-provenance-gate.md": {
+          "digest": "ff244648807f5f72483e6862f7dcd10cf897bba3ce0b45c8cd1753a2ef6af75f",
+          "git": "? .factory/stories/plan-mode-and-grill-provenance/task-plans/round-provenance-gate.md\u0000\u0000\u0000"
+        },
+        "plans/active/plan-mode-and-grill-provenance-plan-mode-and-grill-provenance-are-enforced-not-advisory.md": {
+          "digest": "a1af0a3885815e00dcec9502f64e406166b9668595769ef8af3bab882a4060ef",
+          "git": "1 .M N... 100644 100644 100644 7b40b29f92e71f4369aff2bb92589b7b306a7191 7b40b29f92e71f4369aff2bb92589b7b306a7191 plans/active/plan-mode-and-grill-provenance-plan-mode-and-grill-provenance-are-enforced-not-advisory.md\u0000\u0000100644 7b40b29f92e71f4369aff2bb92589b7b306a7191 0\tplans/active/plan-mode-and-grill-provenance-plan-mode-and-grill-provenance-are-enforced-not-advisory.md\u0000\u0000H plans/active/plan-mode-and-grill-provenance-plan-mode-and-grill-provenance-are-enforced-not-advisory.md\u0000"
+        },
+        "plans/debug/cadence-second-audit.md": {
+          "digest": "98afe6aa0f9df89d0a5d0958f9f31009a5035afee1d482de1296f5add6897e0e",
+          "git": "? plans/debug/cadence-second-audit.md\u0000\u0000\u0000"
+        },
+        "plans/debug/provenance-explore.md": {
+          "digest": "7ac245918b87ef5c948d4953229eee25f43d87b34bfd15fc1f54ce7710fb3ec7",
+          "git": "? plans/debug/provenance-explore.md\u0000\u0000\u0000"
+        },
+        "plans/lessons/20260818T075350-0000-Hooks-must-fail-closed-with-recovery--never-crash-on-unparseable-state-075350218551.json": {
+          "digest": "2260715955c8289add1f7b6da5820f7ea80726fbec9ba306f32ddb54d387da72",
+          "git": "? plans/lessons/20260818T075350-0000-Hooks-must-fail-closed-with-recovery--never-crash-on-unparseable-state-075350218551.json\u0000\u0000\u0000"
+        },
+        "plans/lessons/20260819T034012-0000-verify.py-does-not-run-check_encoding_hygiene.py---run-it-before-pr_ready-on-any-subprocess-stdin-I-034012746238.json": {
+          "digest": "d3ca83bc5fe46acad02bd3ecbcc5dcfa08fccbb8df0b7fa5d2bd560b8025a96b",
+          "git": "? plans/lessons/20260819T034012-0000-verify.py-does-not-run-check_encoding_hygiene.py---run-it-before-pr_ready-on-any-subprocess-stdin-I-034012746238.json\u0000\u0000\u0000"
+        },
+        "plans/lessons/20260821T074724-0000-plan-mode-not-enforced-074724574153.json": {
+          "digest": "9ac7c1db2e7f35ada7d69dd7d7a5b552569a682b20d9f898bd28d4577f517483",
+          "git": "? plans/lessons/20260821T074724-0000-plan-mode-not-enforced-074724574153.json\u0000\u0000\u0000"
+        },
+        "plans/lessons/20260824T101741-0000-rebase-orphans-stage-refs-101741963859.json": {
+          "digest": "5de49bc7e641b60a2827374854aa1fadcb1a00bf34eee80e2efcbae2414fa74c",
+          "git": "? plans/lessons/20260824T101741-0000-rebase-orphans-stage-refs-101741963859.json\u0000\u0000\u0000"
+        },
+        "plans/quickfixes/20260812T122216-0000-Q-0055-52ed-open-122216604906.json": {
+          "digest": "faafca8344233406175fe48f9e47249c4fa03870cf76052414650d5168554f6f",
+          "git": "? plans/quickfixes/20260812T122216-0000-Q-0055-52ed-open-122216604906.json\u0000\u0000\u0000"
+        },
+        "plans/quickfixes/20260812T122240-0000-Q-0055-52ed-done-122240118890.json": {
+          "digest": "ab5cec9dc7ffde9357707abc19ba1d481b2bb560a71849ebd16b5d811a7c75dc",
+          "git": "? plans/quickfixes/20260812T122240-0000-Q-0055-52ed-done-122240118890.json\u0000\u0000\u0000"
+        },
+        "plans/quickfixes/20260812T122428-0000-Q-0056-dbdd-open-122428946642.json": {
+          "digest": "179df10a76358fd3195e5bca3e50884e95b790bf95d15b23e98c3794afcee830",
+          "git": "? plans/quickfixes/20260812T122428-0000-Q-0056-dbdd-open-122428946642.json\u0000\u0000\u0000"
+        },
+        "plans/quickfixes/20260812T122523-0000-Q-0056-dbdd-done-122523337972.json": {
+          "digest": "4344da66659147bf686b04b3da0b9055c3830460a9cf78e7aafeebe01ff7c513",
+          "git": "? plans/quickfixes/20260812T122523-0000-Q-0056-dbdd-done-122523337972.json\u0000\u0000\u0000"
+        },
+        "plans/quickfixes/20260812T122834-0000-Q-0057-6c1c-open-122834997695.json": {
+          "digest": "814663d9c9d6c04595ff8238663f3b19022c120e493d8071ba06a6038b114654",
+          "git": "? plans/quickfixes/20260812T122834-0000-Q-0057-6c1c-open-122834997695.json\u0000\u0000\u0000"
+        },
+        "plans/quickfixes/20260812T122959-0000-Q-0057-6c1c-done-122959183438.json": {
+          "digest": "c3723c9edf72cbb5db8b0832ae14deee365b883f2bbabb86dc5337f97c40681f",
+          "git": "? plans/quickfixes/20260812T122959-0000-Q-0057-6c1c-done-122959183438.json\u0000\u0000\u0000"
+        },
+        "plans/quickfixes/20260812T123246-0000-Q-0058-22c6-open-123246537641.json": {
+          "digest": "2790ffae2879c79d4567a1cbce9834fe49b0e66db018fb7488c71628614a4778",
+          "git": "? plans/quickfixes/20260812T123246-0000-Q-0058-22c6-open-123246537641.json\u0000\u0000\u0000"
+        },
+        "plans/quickfixes/20260812T144007-0000-Q-0058-22c6-done-144007211251.json": {
+          "digest": "2aa84f0a4d2019655ebff0eb69aaf9646f9b34751719af1e7a9214430e901404",
+          "git": "? plans/quickfixes/20260812T144007-0000-Q-0058-22c6-done-144007211251.json\u0000\u0000\u0000"
+        },
+        "plans/roadmap.json": {
+          "digest": "5b48494df5b128eaaf5bcdfa51c809296d4a0a00724904e9624226bf5adaa3e0",
+          "git": "1 .M N... 100644 100644 100644 3e3f1330440f4d7066c2a0db7c9e86f2d15846af 3e3f1330440f4d7066c2a0db7c9e86f2d15846af plans/roadmap.json\u0000\u0000100644 3e3f1330440f4d7066c2a0db7c9e86f2d15846af 0\tplans/roadmap.json\u0000\u0000H plans/roadmap.json\u0000"
+        }
+      },
+      "task_sha256": "feae5e383f437620c4907242532ffe757d8fd1f47c12eada4f3a8ff4e59d91cf"
     },
     {
       "id": "docs-and-decision",

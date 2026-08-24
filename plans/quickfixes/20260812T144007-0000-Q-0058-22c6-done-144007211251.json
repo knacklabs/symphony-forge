@@ -1,0 +1,13 @@
+{
+  "event": "done",
+  "id": "Q-0058-22c6",
+  "profile": "degraded",
+  "kind": "degraded",
+  "reason": "user-approved stage-authority repair (chat 2026-08-12): remove wrong-base protected stage unit, re-adopt WIN-2.1/2.2 via migrate against clean HEAD a505eb7 with true base a604f12",
+  "started_at": "2026-08-12T12:32:46+00:00",
+  "completed_at": "2026-08-12T14:40:07+00:00",
+  "files": [
+    "stages.json",
+    "decomposition.json"
+  ]
+}

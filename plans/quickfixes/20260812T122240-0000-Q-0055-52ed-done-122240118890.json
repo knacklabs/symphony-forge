@@ -1,0 +1,13 @@
+{
+  "event": "done",
+  "id": "Q-0055-52ed",
+  "profile": "degraded",
+  "kind": "degraded",
+  "reason": "stage-authority repair unreachable by delegate: worktree protected stages unit has wrong base from tracker rebuild; migrate's error prescribes removal; files under .git control state",
+  "started_at": "2026-08-12T12:22:16+00:00",
+  "completed_at": "2026-08-12T12:22:40+00:00",
+  "files": [
+    ".git/worktrees/symphony-forge-FORGE-WIN-2/forge/stages.json",
+    ".git/worktrees/symphony-forge-FORGE-WIN-2/forge/decomposition.json"
+  ]
+}

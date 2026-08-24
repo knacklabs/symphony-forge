@@ -11,72 +11,84 @@ Task 1 shipped `factory/scripts/post_tool_use.py`: for `Write`/`Edit`/
 `<scope>/plan-mode/<uuid>.json` = `{generated_by, path (absolute), sha256
 (raw), sha256_body (plan_digest_without_assumptions), at, session_id}`,
 scope = `evidence_path(root, story, "plan-mode")` (root-level when no
-story). `plans.cmd_save()` (plans.py:123) resolves `source` at :145 and
-calls `_require_matching_plan_grill` at :170; `cmd_approve()` (:255)
-re-checks the grill at :284. `tasks.cmd_plan_save()` (tasks.py:47) reads
-`source` at :50–58 and copies it; `tasks.cmd_approve()` (:65) stamps the
-task grill. `plan_digest_without_assumptions` (factory_lib.py:1329) is the
-body digest both the grill and the marker use.
+story). An earlier delegation already landed `require_plan_mode_marker`
+(factory_lib.py:1336) and its four call sites in `plans.cmd_save/approve`
+and `tasks.cmd_plan_save/approve`, plus four tests — this round finishes
+the contract: the story-then-root scope fallback and the frontmatter
+exclusion found live on 2026-08-24.
+
+## Live findings this round must fix
+1. **Root-scope fallback missing:** the helper searches only
+   `evidence_path(root, _active_story_key(root), "plan-mode")`; when a
+   story is active the root scope is never consulted. Contract: story scope
+   first, then root scope.
+2. **Frontmatter restamp breaks the marker:** `plan save` rewrites
+   `status:`/`saved:` in the plan frontmatter, so the approve-time check
+   compares a digest the author could never have marked. The marker digest
+   (in BOTH the hook and the gate) must exclude the leading `---` YAML
+   frontmatter block as well as the `## Implementation Assumptions` block.
+   Add a shared helper (e.g. `plan_body_digest`) used by
+   `post_tool_use.py` (as `sha256_body`) and `require_plan_mode_marker`;
+   existing markers recorded with the old digest may be re-minted by the
+   author — no compatibility shim.
 
 ## Steps (Codex, via delegate)
-1. `factory_lib.py`: `require_plan_mode_marker(root, story, source: Path,
-   *, what: str) -> dict`: compute `plan_digest_without_assumptions(source)`;
-   scan `evidence_path(root, story, "plan-mode")` (and, when `story` is
-   None, the root scope) for a record whose `sha256_body` equals it; return
-   the record or `fail(f"{what} was not authored in plan mode: no plan-mode
-   marker matches {source} — enter plan mode, write the plan there, and
-   save that file verbatim")`. Malformed marker files are skipped (the hook
-   is fail-open; the gate is not).
-2. Call sites: `plans.cmd_save()` right after `source` is resolved and
-   before `_require_matching_plan_grill`; `plans.cmd_approve()` before the
-   grill check, against the awaiting active plan file; `tasks.cmd_plan_save()`
-   after reading `source`; `tasks.cmd_approve()` against the saved task plan.
-   Quickfix/degraded paths are untouched (they have no plans).
-3. Story-scope rule: markers are searched in the active story's scope first,
-   then the root scope (a plan written before `intake` — e.g. a storyless
-   spec session — still counts). No time window; digest only.
-4. Tests (`factory/tests/test_gates.py`, reuse `repo`, `intake`,
-   `save_plan`, `record_grill`, `post_hook`, `seed_task_grill_frontier`,
-   `record_task_grill`):
-   - `test_plan_save_refuses_plan_without_plan_mode_marker` — full happy
-     fixture minus marker → refused with the message above.
-   - `test_plan_save_and_approve_accept_plan_with_plan_mode_marker` — a
-     `post_hook` plan-mode Write for the same file, then save → awaiting,
-     approve → approved, save → approved.
-   - `test_task_plan_save_and_approve_require_plan_mode_marker` — refusal
-     without, success with.
-   - `test_plan_mode_marker_matches_body_not_assumptions` — append an
-     `## Implementation Assumptions` block after the marker; save still
-     passes (body digest unchanged).
-   Existing fixtures that call `save_plan` gain a helper `mark_plan(repo,
-   path)` that writes the marker through the real hook (no fixture writes a
-   marker file by hand).
+1. `factory_lib.py`: `plan_body_digest(path)` = sha256 of the text after
+   stripping one leading `---\n…\n---\n` frontmatter block (if present) and
+   truncating at `\n## Implementation Assumptions`;
+   `require_plan_mode_marker` compares `sha256_body` to it and scans the
+   active story scope then the root scope; malformed markers skipped;
+   refusal message unchanged.
+2. `post_tool_use.py`: `sha256_body` uses `plan_body_digest`; raw `sha256`
+   stays the raw bytes.
+3. Tests (six required):
+   - `test_plan_save_refuses_plan_without_plan_mode_marker`
+   - `test_plan_save_and_approve_accept_plan_with_plan_mode_marker` —
+     extended: after `plan save` restamps frontmatter, `plan approve` and a
+     second `plan save` still pass with the ORIGINAL marker.
+   - `test_task_plan_save_and_approve_require_plan_mode_marker`
+   - `test_plan_mode_marker_matches_body_not_assumptions`
+   - `test_plan_mode_marker_in_root_scope_counts_for_active_story` —
+     marker recorded with no active story (root scope), then intake; save
+     passes.
+   - `test_plan_save_restamp_does_not_invalidate_marker` — explicit
+     restamp regression test.
+   Fixtures keep marking plans through the real hook (`record_grill`'s
+   `plan_mode=True` path); no hand-written markers, no env bypass.
 
 ## Write scope
 `factory/scripts/factory_lib.py`, `factory/scripts/forge_cli/plans.py`,
-`factory/scripts/forge_cli/tasks.py`, `factory/tests/test_gates.py`.
+`factory/scripts/forge_cli/tasks.py`, `factory/scripts/post_tool_use.py`,
+`factory/tests/test_gates.py`.
 
 ## Proof (required_tests)
 `uvx --with pytest --with psutil python3 -m pytest {path}::{id} -q -o
 junit_family=legacy --junitxml={report}` on `factory/tests/test_gates.py`
-for the four ids above.
+for the six ids above.
 
 ## Verify commands
 `python3 factory/scripts/check_dual_runtime.py` (verify.py is the
 story-level phase; it writes an event and is not a task proof).
 
 ## Reviewer focus
-The check is digest-only (no timestamps); it reads markers through
-`evidence_path`, never a hand-built path; the refusal message tells the
-author exactly what to do; fixtures create markers only via the real hook;
-no gate weakens when the story scope is empty but the root scope matches.
+The digest exclusion is one shared helper used by both the hook and the
+gate (no second implementation); markers are read through `evidence_path`
+story-then-root, never a hand-built path; fixtures create markers only via
+the real hook; the restamp test proves approve works after save without a
+fresh plan-mode round.
 
-## Task grill (1 round, 2 questions; frontier empty)
+## Task grill (2 rounds, 4 questions; frontier empty)
 - Lookup order: active story scope, then root scope; digest-only.
 - Every existing fixture marks its plan through the real hook; no env
   bypass of any kind.
+- Root-scope fallback and its test added after review of the first
+  delegation.
+- Frontmatter exclusion and its test added after the live restamp failure
+  (2026-08-24); the shared `plan_body_digest` helper is the fix, not a
+  tolerance window.
 
 ## Risk
-Every existing gate test that saves a plan must now mark it first — the
-helper keeps that to one line per fixture; if the count is large the worker
-reports it as a finding rather than loosening the gate.
+Changing `sha256_body` semantics orphans the two markers minted today with
+the old digest — the orchestrator re-mints them in plan mode after this
+task lands (one Edit each); acceptable because the gate is not yet
+protecting any other story.

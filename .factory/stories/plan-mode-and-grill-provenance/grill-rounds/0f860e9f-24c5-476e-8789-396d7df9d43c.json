@@ -1,0 +1,23 @@
+{
+  "generated_by": "claude-code:plan-mode",
+  "questions": [
+    {
+      "question": "T3-1 \u2014 Should the ledger-match require `chosen` equality, or question-text match only? The hook stores chosen (proven live), but a grill payload may legitimately paraphrase nothing \u2014 exact equality is checkable.",
+      "options": [
+        "Exact chosen equality when the ledger has one (Recommended)",
+        "Question text only"
+      ],
+      "chosen": "Exact chosen equality when the ledger has one (Recommended)"
+    },
+    {
+      "question": "T3-2 \u2014 Floors apply to spec/requirements/plan/task. Leave the epics and signoff gates un-floored this story (they run rarely, pre-sign-off, and epics already requires an accepted decision)?",
+      "options": [
+        "Leave epics/signoff unchanged (Recommended)",
+        "Floor all six gates now"
+      ],
+      "chosen": "Leave epics/signoff unchanged (Recommended)"
+    }
+  ],
+  "at": "2026-08-24T10:26:48.030548+00:00",
+  "session_id": "9f647d39-defb-401c-b0b3-ad6ed23eabba"
+}

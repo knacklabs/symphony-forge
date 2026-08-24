@@ -1,0 +1,1 @@
+{"event": "stage-start", "generated_by": "implementer", "at": "2026-08-20T11:17:27+00:00", "story": "upgrade-preserves-doc-contracts", "detail": "upgrade-doc-contract-safety Upgrade detects diverged doc contracts and reports them truthfully"}

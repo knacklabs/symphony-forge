@@ -2,7 +2,7 @@
 issue: plan-mode-and-grill-provenance
 title: Plan mode and grill provenance are enforced, not advisory
 status: approved
-saved: 2026-08-21T08:18:10+00:00
+saved: 2026-08-24T10:04:04+00:00
 story: plan-mode-and-grill-provenance
 decisions_reviewed:
   - 0001-determinism-contract
@@ -273,3 +273,4 @@ Sequential (2 and 3 both touch `factory_lib.py` and the gate suite).
 - `check_dual_runtime.py`, `check_vendor_integrity.py` green; `forge
   upgrade --target <example>` carries `post_tool_use.py` and the settings
   entry.
+

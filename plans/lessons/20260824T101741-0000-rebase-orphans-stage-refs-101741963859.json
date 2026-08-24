@@ -1,0 +1,11 @@
+{
+  "topic": "rebase-orphans-stage-refs",
+  "lesson": "A rebase leaves refs/forge/stage/<id> baselines (decision 0023) pointing at pre-rebase commits, so stage done measures the whole upstream delta as the stage's diff ('changed N paths outside write_scope' listing upstream files). Fix: git update-ref each stage ref to the rebased equivalent commit, re-record the stage-local review (its base_sha binding goes stale), then stage done. Worktree-local .git/forge state and stage refs never rebase with the branch.",
+  "source": "plan-mode-and-grill-provenance task 2, 2026-08-24",
+  "applies_to": [
+    ".git/forge/*"
+  ],
+  "severity": "medium",
+  "generated_by": "orchestrator",
+  "added_at": "2026-08-24T10:17:41+00:00"
+}
