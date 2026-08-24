@@ -12,7 +12,7 @@ from pathlib import Path
 from factory_lib import (
     clean_git_env, dump_json, evidence_path, git_control_dir, load_json, now_iso,
     plan_digest_without_assumptions, repo_root, require_ready_task,
-    require_task_sealed,
+    require_plan_mode_marker, require_task_sealed,
     protected_decomposition_state_path, run_state_path,
     task_marker_on_main, task_marker_path, validate_payload,
 )
@@ -74,6 +74,7 @@ def cmd_plan_save(args: argparse.Namespace) -> None:
         fail("task plan source must be UTF-8 Markdown")
     if not content.strip():
         fail("task plan source must not be empty")
+    require_plan_mode_marker(base, source)
     dest = _task_plan_path(base, args.id, for_write=True)
     dest.parent.mkdir(parents=True, exist_ok=True)
     dest.write_text(content, encoding="utf-8")
@@ -92,6 +93,7 @@ def cmd_approve(args: argparse.Namespace) -> None:
             f"task approval refused: no saved task plan for {args.id}. "
             f"Run `./forge task plan save {args.id} --from <path>` first."
         )
+    require_plan_mode_marker(base, plan)
     state = load_json(run_state_path(base), default={})
     story = state.get("issue_key") or state.get("story")
     grill_path = evidence_path(

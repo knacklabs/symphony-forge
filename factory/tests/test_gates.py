@@ -278,7 +278,8 @@ def repo(tmp_path: Path) -> Path:
 
 def record_grill(repo: Path, gate: str, verdict: str = "pass",
                  digest_of: Path | None = None, *,
-                 seed_requirements: bool = True, **over) -> tuple[int, str]:
+                 seed_requirements: bool = True,
+                 plan_mode: bool = True, **over) -> tuple[int, str]:
     if gate == "plan" and seed_requirements:
         code, out = record_grill(repo, "requirements")
         if code != 0:
@@ -286,8 +287,13 @@ def record_grill(repo: Path, gate: str, verdict: str = "pass",
     payload = {"generated_by": "griller", "gate": gate, "verdict": verdict,
                "gaps": [], "contradictions": [], "resolutions": [], **over}
     extra = ["--input-digest", str(digest_of)] if digest_of else []
-    return run(repo, "record_grill_from_json.py", "--gate", gate, *extra,
-               stdin=json.dumps(payload))
+    result = run(repo, "record_grill_from_json.py", "--gate", gate, *extra,
+                 stdin=json.dumps(payload))
+    if result[0] == 0 and gate == "plan" and digest_of and plan_mode:
+        marker = post_hook(repo, plan_hook_payload(digest_of))
+        if marker[0] != 0:
+            return marker
+    return result
 
 
 def task_grill_payload(task: dict, verdict: str = "pass", **over) -> dict:
@@ -345,6 +351,9 @@ def record_task_grill(repo: Path, task: dict, verdict: str = "pass",
     source = repo / ".factory" / "task-plan-drafts" / f"{task['id']}.md"
     source.parent.mkdir(parents=True, exist_ok=True)
     source.write_text(f"# Task plan — {task['id']}\n\nImplement the recorded contract.\n", encoding="utf-8")
+    code, marker_out = post_hook(repo, plan_hook_payload(source))
+    if code != 0:
+        return code, out + marker_out
     code, plan_out = run(
         repo, "forge.py", "task", "plan", "save", task["id"],
         "--from", str(source),
@@ -8275,6 +8284,98 @@ def test_plan_save_refuses_approved_without_a_matching_marker(repo, tmp_path):
     assert code != 0 and "requires an approved, saved plan" in out
 
 
+def test_plan_save_refuses_plan_without_plan_mode_marker(repo, tmp_path):
+    sign_off(repo)
+    intake(repo)
+    plan = tmp_path / "normal-mode-plan.md"
+    plan.write_text(plan_draft(repo))
+    code, out = record_grill(repo, "plan", digest_of=plan, plan_mode=False)
+    assert code == 0, out
+
+    code, out = run(repo, "forge.py", "plan", "save", "--from", str(plan),
+                    "--story", "ENG-1")
+
+    assert code != 0 and "plan-mode marker required" in out
+    assert "enter plan mode" in out and "this exact plan file" in out
+    assert not list((repo / "plans" / "active").glob("ENG-1-*.md"))
+
+
+def test_plan_save_and_approve_accept_plan_with_plan_mode_marker(repo, tmp_path):
+    sign_off(repo)
+    intake(repo)
+    plan = tmp_path / "plan-mode-plan.md"
+    plan.write_text(plan_draft(repo))
+    code, out = record_grill(repo, "plan", digest_of=plan, plan_mode=False)
+    assert code == 0, out
+    code, out = post_hook(repo, plan_hook_payload(plan))
+    assert code == 0, out
+
+    code, out = run(repo, "forge.py", "plan", "save", "--from", str(plan),
+                    "--story", "ENG-1")
+    assert code != 0 and "awaiting-approval" in out, out
+    active = next((repo / "plans" / "active").glob("ENG-1-*.md"))
+    code, out = record_grill(repo, "plan", digest_of=active, plan_mode=False)
+    assert code == 0, out
+    code, out = post_hook(repo, plan_hook_payload(active))
+    assert code == 0, out
+    code, out = run(repo, "forge.py", "plan", "approve", "--by", "Client PM")
+    assert code == 0, out
+    code, out = run(repo, "forge.py", "plan", "save", "--from", str(active),
+                    "--story", "ENG-1")
+    assert code == 0 and run_state(repo)["plan_status"] == "approved", out
+
+
+def test_task_plan_save_and_approve_require_plan_mode_marker(repo, tmp_path):
+    sign_off(repo)
+    intake(repo)
+    save_plan(repo, tmp_path)
+    record_skeleton_then_frontier(repo, [STAGE_TASK])
+    code, out = record_task_grill(repo, STAGE_TASK, approve=False)
+    assert code == 0, out
+    source = tmp_path / "T1.md"
+    source.write_text("# T1 plan\n\nImplement the bounded task.\n")
+
+    code, out = run(repo, "forge.py", "task", "plan", "save", "T1",
+                    "--from", str(source))
+    assert code != 0 and "plan-mode marker required" in out
+    code, out = post_hook(repo, plan_hook_payload(source))
+    assert code == 0, out
+    code, out = run(repo, "forge.py", "task", "plan", "save", "T1",
+                    "--from", str(source))
+    assert code == 0, out
+
+    records = story_state(repo) / "plan-mode"
+    for marker in records.glob("*.json"):
+        marker.unlink()
+    code, out = run(repo, "forge.py", "task", "approve", "T1",
+                    "--by", "Test Human")
+    assert code != 0 and "plan-mode marker required" in out
+    saved = story_state(repo) / "task-plans" / "T1.md"
+    code, out = post_hook(repo, plan_hook_payload(saved))
+    assert code == 0, out
+    code, out = run(repo, "forge.py", "task", "approve", "T1",
+                    "--by", "Test Human")
+    assert code == 0 and "Approved task plan" in out, out
+
+
+def test_plan_mode_marker_matches_body_not_assumptions(repo, tmp_path):
+    sign_off(repo)
+    intake(repo)
+    plan = tmp_path / "assumptions-plan.md"
+    plan.write_text(plan_draft(repo))
+    code, out = post_hook(repo, plan_hook_payload(plan))
+    assert code == 0, out
+    plan.write_text(plan.read_text() + "\n## Implementation Assumptions\n- Later detail.\n")
+    code, out = record_grill(repo, "plan", digest_of=plan, plan_mode=False)
+    assert code == 0, out
+
+    code, out = run(repo, "forge.py", "plan", "save", "--from", str(plan),
+                    "--story", "ENG-1")
+
+    assert code != 0 and "awaiting-approval" in out, out
+    assert "plan-mode marker required" not in out
+
+
 def test_plan_approve_refuses_without_a_fresh_plan_grill(repo, tmp_path):
     sign_off(repo)
     intake(repo)
@@ -15453,6 +15554,8 @@ def test_stage_start_and_delegate_refuse_without_approved_task_plan(repo, tmp_pa
 
     source = tmp_path / "T1.md"
     source.write_text("# T1 plan\n\nImplement the bounded task.\n")
+    code, out = post_hook(repo, plan_hook_payload(source))
+    assert code == 0, out
     code, out = run(
         repo, "forge.py", "task", "plan", "save", "T1", "--from", str(source),
     )
@@ -15501,6 +15604,8 @@ def test_forge_next_and_board_route_author_task_plan_and_await_approval(
     assert_route("author-task-plan", "author-task-plan", "task plan save T1")
     source = tmp_path / "T1.md"
     source.write_text("# T1 plan\n\nImplement the bounded task.\n")
+    code, out = post_hook(repo, plan_hook_payload(source))
+    assert code == 0, out
     code, out = run(
         repo, "forge.py", "task", "plan", "save", "T1", "--from", str(source),
     )
