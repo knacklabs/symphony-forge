@@ -284,6 +284,15 @@ def record_grill(repo: Path, gate: str, verdict: str = "pass",
         code, out = record_grill(repo, "requirements")
         if code != 0:
             return code, out
+    floors = {"spec": 2, "requirements": 1, "plan": 2, "task": 1}
+    rounds = over.get("rounds")
+    if gate in floors and rounds is None:
+        rounds = grill_rounds(gate, floors[gate])
+        over["rounds"] = rounds
+    if rounds is not None:
+        code, out = log_grill_rounds(repo, rounds)
+        if code != 0:
+            return code, out
     payload = {"generated_by": "griller", "gate": gate, "verdict": verdict,
                "gaps": [], "contradictions": [], "resolutions": [], **over}
     extra = ["--input-digest", str(digest_of)] if digest_of else []
@@ -306,7 +315,8 @@ def task_grill_payload(task: dict, verdict: str = "pass", **over) -> dict:
                    for criterion in task["acceptance_criteria"]
                },
                "decision": "keep" if verdict == "pass" else "block",
-               "new_abstractions": [], "rounds": [], "citations": []}
+               "new_abstractions": [], "rounds": grill_rounds("task", 1),
+               "citations": []}
     if verdict == "blocked":
         payload["escalation_packet"] = {
             "issue": "The task cannot proceed as written.",
@@ -336,34 +346,69 @@ def seed_task_grill_frontier(repo: Path, task: dict) -> None:
         "plan_sha256": hashlib.sha256(plan.read_bytes()).hexdigest(),
         "tasks": [task],
     }))
+    task_plan = repo / ".factory" / "task-plans" / f"{task['id']}.md"
+    task_plan.parent.mkdir(parents=True, exist_ok=True)
+    task_plan.write_text(f"# Task plan — {task['id']}\n")
+    code, out = log_grill_rounds(repo, grill_rounds("task", 1))
+    assert code == 0, out
 
 
 def record_task_grill(repo: Path, task: dict, verdict: str = "pass",
                       *, approve: bool = True) -> tuple[int, str]:
-    payload = task_grill_payload(task, verdict)
-    code, out = run(
-        repo, "record_grill_from_json.py", "--gate", "task",
-        "--task", task["id"],
-        stdin=json.dumps(payload),
-    )
-    if code != 0 or verdict != "pass" or not approve:
-        return code, out
     source = repo / ".factory" / "task-plan-drafts" / f"{task['id']}.md"
     source.parent.mkdir(parents=True, exist_ok=True)
     source.write_text(f"# Task plan — {task['id']}\n\nImplement the recorded contract.\n", encoding="utf-8")
     code, marker_out = post_hook(repo, plan_hook_payload(source))
     if code != 0:
-        return code, out + marker_out
+        return code, marker_out
     code, plan_out = run(
         repo, "forge.py", "task", "plan", "save", task["id"],
         "--from", str(source),
     )
     if code != 0:
-        return code, out + plan_out
+        return code, plan_out
+    payload = task_grill_payload(task, verdict)
+    code, round_out = log_grill_rounds(repo, payload["rounds"])
+    if code != 0:
+        return code, plan_out + round_out
+    code, out = run(
+        repo, "record_grill_from_json.py", "--gate", "task",
+        "--task", task["id"], stdin=json.dumps(payload),
+    )
+    if code != 0 or verdict != "pass" or not approve:
+        return code, plan_out + out
     code, approve_out = run(
         repo, "forge.py", "task", "approve", task["id"], "--by", "Test Human",
     )
     return code, out + plan_out + approve_out
+
+
+def grill_rounds(gate: str, count: int) -> list[dict]:
+    rounds = [{
+        "question": f"{gate} provenance round {index + 1}?",
+        "options": ["Keep", "Revise"],
+        "chosen": "Keep",
+    } for index in range(count)]
+    rounds[-1]["frontier_empty"] = True
+    return rounds
+
+
+def log_grill_rounds(repo: Path, rounds: list[dict]) -> tuple[int, str]:
+    output = ""
+    for entry in rounds:
+        question = entry["question"]
+        code, out = post_hook(repo, {
+            "tool_name": "AskUserQuestion",
+            "tool_input": {"questions": [{
+                "question": question,
+                "options": [{"label": option} for option in entry["options"]],
+            }]},
+            "tool_response": {"answers": {question: entry["chosen"]}},
+        })
+        output += out
+        if code != 0:
+            return code, output
+    return 0, output
 
 
 def delegate_task_grill_test(test):
@@ -5880,6 +5925,123 @@ def test_next_tags_steps_with_roles(repo):
 
 # ------------------------------------------------------------ handover grills
 
+def _record_spec_rounds(repo: Path, rounds: list[dict]) -> tuple[int, str]:
+    spec = repo / "docs" / "specs" / "base.md"
+    spec.parent.mkdir(parents=True, exist_ok=True)
+    spec.write_text("# Base spec\n")
+    return run(
+        repo, "record_grill_from_json.py", "--gate", "spec",
+        "--input-digest", str(spec),
+        stdin=json.dumps({
+            "generated_by": "griller", "gate": "spec", "verdict": "pass",
+            "gaps": [], "contradictions": [], "resolutions": [],
+            "rounds": rounds,
+        }),
+    )
+
+
+def test_grill_refuses_round_not_in_ledger(repo):
+    rounds = grill_rounds("spec", 2)
+    code, out = log_grill_rounds(repo, rounds)
+    assert code == 0, out
+    rounds[0]["chosen"] = "Revise"
+    code, out = _record_spec_rounds(repo, rounds)
+    assert code != 0 and "does not match an AskUserQuestion ledger record" in out
+
+
+def test_grill_refuses_below_gate_floor(repo):
+    rounds = grill_rounds("spec", 1)
+    code, out = log_grill_rounds(repo, rounds)
+    assert code == 0, out
+    code, out = _record_spec_rounds(repo, rounds)
+    assert code != 0 and "requires at least 2 logged round(s)" in out
+
+
+def test_grill_refuses_missing_frontier_empty(repo):
+    rounds = grill_rounds("spec", 2)
+    rounds[-1].pop("frontier_empty")
+    code, out = log_grill_rounds(repo, rounds)
+    assert code == 0, out
+    code, out = _record_spec_rounds(repo, rounds)
+    assert code != 0 and "final round requires frontier_empty true" in out
+
+
+def test_grill_accepts_ledger_matched_rounds_happy_path(repo):
+    rounds = grill_rounds("spec", 2)
+    code, out = log_grill_rounds(repo, rounds)
+    assert code == 0, out
+    code, out = _record_spec_rounds(repo, rounds)
+    assert code == 0, out
+    code, out = _record_spec_rounds(repo, rounds)
+    assert code == 0, out  # byte-identical re-record may reuse its own rounds
+
+
+def test_task_grill_requires_saved_task_plan_with_tolerance(repo):
+    task = STAGE_TASK
+    seed_task_grill_frontier(repo, task)
+    plan = repo / ".factory" / "task-plans" / "T1.md"
+    plan.unlink()
+    payload = task_grill_payload(task)
+    command = ("record_grill_from_json.py", "--gate", "task", "--task", "T1")
+    code, out = run(repo, *command, stdin=json.dumps(payload))
+    assert code != 0 and "requires a saved task plan first" in out
+
+    source = repo / "plans" / "T1-draft.md"
+    source.write_text("# T1 plan\n")
+    code, out = post_hook(repo, plan_hook_payload(source))
+    assert code == 0, out
+    code, out = run(
+        repo, "forge.py", "task", "plan", "save", "T1", "--from", str(source),
+    )
+    assert code == 0, out
+    code, out = run(repo, *command, stdin=json.dumps(payload))
+    assert code == 0, out
+
+    grill_path = repo / ".factory" / "grills" / "tasks" / "T1.json"
+    legacy = json.loads(grill_path.read_text())
+    legacy.pop("task_plan_sha256")
+    legacy["recorded_at"] = "2000-01-01T00:00:00+00:00"
+    grill_path.write_text(json.dumps(legacy))
+    plan.unlink()
+    code, out = run(
+        repo, "forge.py", "task", "plan", "save", "T1", "--from", str(source),
+    )
+    assert code == 0, out
+    migrated = json.loads(grill_path.read_text())
+    assert migrated["task_plan_sha256"] == plan_digest_without_assumptions(plan)
+
+
+def test_frontier_orders_task_plan_before_grill(repo, tmp_path):
+    sign_off(repo)
+    intake(repo)
+    save_plan(repo, tmp_path)
+    record_skeleton_then_frontier(repo, [STAGE_TASK])
+    assert task_frontier_state(repo)[0] == "author-task-plan"
+    code, out = run(repo, "forge.py", "next")
+    assert code == 0 and "Before grilling" in out
+
+    source = tmp_path / "T1.md"
+    source.write_text("# T1 plan\n")
+    code, out = post_hook(repo, plan_hook_payload(source))
+    assert code == 0, out
+    code, out = run(
+        repo, "forge.py", "task", "plan", "save", "T1", "--from", str(source),
+    )
+    assert code == 0, out
+    assert task_frontier_state(repo)[0] == "grill"
+    code, out = run(repo, "forge.py", "next")
+    assert code == 0 and "With the saved T1 task plan in place" in out
+
+    payload = task_grill_payload(STAGE_TASK)
+    code, out = log_grill_rounds(repo, payload["rounds"])
+    assert code == 0, out
+    code, out = run(
+        repo, "record_grill_from_json.py", "--gate", "task", "--task", "T1",
+        stdin=json.dumps(payload),
+    )
+    assert code == 0, out
+    assert task_frontier_state(repo)[0] == "await-approval"
+
 def test_record_task_grill_writes_per_id_file(repo):
     task_id = "FORGE-BOARD-2.1"
     task = {**STAGE_TASK, "id": task_id}
@@ -6044,8 +6206,11 @@ def test_task_grill_requires_proofs_and_rounds(repo):
             "question": gap,
             "options": ["Keep", "Split", "Block", "Revise"],
             "chosen": "Revise",
+            "frontier_empty": True,
         }],
     }
+    code, out = log_grill_rounds(repo, four_option_round["rounds"])
+    assert code == 0, out
     code, out = record(four_option_round)
     assert code == 0, out
     code, out = record({**uncovered, "citations": [{"finding": gap, "source": ""}]})
@@ -6058,9 +6223,11 @@ def test_task_grill_requires_proofs_and_rounds(repo):
         "resolutions": ["The operator chose to keep the bounded task.",
                         "The declared test command remains binding."],
         "rounds": [{"question": gap, "options": ["Keep", "Split"],
-                    "chosen": "Keep"}],
+                    "chosen": "Keep", "frontier_empty": True}],
         "citations": [{"finding": cited_gap, "source": "docs/QUALITY.md"}],
     }
+    code, out = log_grill_rounds(repo, proved["rounds"])
+    assert code == 0, out
     code, out = record(proved)
     assert code == 0, out
 
@@ -13720,8 +13887,8 @@ def test_stage_start_refuses_unready_or_ungrilled_contract(repo, tmp_path):
     assert code == 0, out
     before = (authority.read_bytes(), mirror.read_bytes())
     code, out = run(repo, "forge.py", "stage", "start", "T1")
-    assert code != 0 and "Task grill required" in out
-    assert "record_grill_from_json.py --gate task --task T1" in out
+    assert code != 0 and "Task plan required first" in out
+    assert "./forge task plan save T1 --from <path>" in out
     assert (authority.read_bytes(), mirror.read_bytes()) == before
 
     code, out = record_task_grill(repo, STAGE_TASK)
@@ -15561,7 +15728,7 @@ def test_board_task_rows_match_frontier_states(repo, tmp_path):
         stdin=json.dumps({**DECOMP, "tasks": [STAGE_TASK]}),
     )
     assert code == 0, out
-    assert_state("grill", "ready")
+    assert_state("author-task-plan", "author-task-plan")
 
     code, out = record_task_grill(repo, STAGE_TASK)
     assert code == 0, out
@@ -15588,19 +15755,9 @@ def test_stage_start_and_delegate_refuse_without_approved_task_plan(repo, tmp_pa
     intake(repo)
     save_plan(repo, tmp_path)
     record_skeleton_then_frontier(repo, [STAGE_TASK])
-    code, out = record_task_grill(repo, STAGE_TASK, approve=False)
-    assert code == 0, out
-
     code, out = run(repo, "forge.py", "stage", "start", "T1")
     assert code != 0 and "Task plan required first" in out
-
-    source = tmp_path / "T1.md"
-    source.write_text("# T1 plan\n\nImplement the bounded task.\n")
-    code, out = post_hook(repo, plan_hook_payload(source))
-    assert code == 0, out
-    code, out = run(
-        repo, "forge.py", "task", "plan", "save", "T1", "--from", str(source),
-    )
+    code, out = record_task_grill(repo, STAGE_TASK, approve=False)
     assert code == 0, out
     code, out = run(repo, "forge.py", "stage", "start", "T1")
     assert code != 0 and "Task plan approval required" in out
@@ -15626,9 +15783,6 @@ def test_forge_next_and_board_route_author_task_plan_and_await_approval(
     intake(repo)
     save_plan(repo, tmp_path)
     record_skeleton_then_frontier(repo, [STAGE_TASK])
-    code, out = record_task_grill(repo, STAGE_TASK, approve=False)
-    assert code == 0, out
-
     from forge_cli.board import next_actions
 
     def assert_route(frontier: str, row_state: str, command: str) -> None:
@@ -15650,6 +15804,15 @@ def test_forge_next_and_board_route_author_task_plan_and_await_approval(
     assert code == 0, out
     code, out = run(
         repo, "forge.py", "task", "plan", "save", "T1", "--from", str(source),
+    )
+    assert code == 0, out
+    assert_route("grill", "ready", "saved T1 task plan")
+    payload = task_grill_payload(STAGE_TASK)
+    code, out = log_grill_rounds(repo, payload["rounds"])
+    assert code == 0, out
+    code, out = run(
+        repo, "record_grill_from_json.py", "--gate", "task", "--task", "T1",
+        stdin=json.dumps(payload),
     )
     assert code == 0, out
     assert_route("await-approval", "await-approval", "task approve T1")

@@ -1534,10 +1534,20 @@ def _task_contract_complete(task: dict) -> bool:
 
 
 def _task_grill_fresh(root: Path, task: dict, grill: dict) -> bool:
+    task_id = task.get("id")
+    plan = evidence_path(
+        root, _active_story_key(root), f"task-plans/{task_id}.md",
+    )
+    if not plan.is_file():
+        return False
+    plan_provenance_ok = (
+        grill.get("task_plan_sha256") == plan_digest_without_assumptions(plan)
+    )
     return bool(
         grill.get("verdict") == "pass"
         and grill.get("commit")
         and grill.get("input_sha256") == grounding_digest(root, task)
+        and plan_provenance_ok
     )
 
 
@@ -1592,11 +1602,14 @@ def task_rows(root: Path) -> list[dict]:
             state = "active"
         elif not _task_contract_complete(task):
             state = "skeleton"
-        elif not fresh:
-            state = "ready"
         else:
             plan_state = _task_plan_state(root, task, grill)
-            state = "grilled" if plan_state == "approved" else plan_state
+            if plan_state == "author-task-plan":
+                state = plan_state
+            elif not fresh:
+                state = "ready"
+            else:
+                state = "grilled" if plan_state == "approved" else plan_state
 
         budget = None
         if state == "active":
@@ -1671,9 +1684,11 @@ def task_frontier_state(root: Path) -> tuple[str, dict] | None:
 
     grill_path = evidence_path(root, key, f"grills/tasks/{task_id}.json")
     grill = load_json(grill_path, default={})
+    plan_state = _task_plan_state(root, frontier, grill)
+    if plan_state == "author-task-plan":
+        return plan_state, frontier
     if not _task_grill_fresh(root, frontier, grill):
         return "grill", frontier
-    plan_state = _task_plan_state(root, frontier, grill)
     if plan_state != "approved":
         return plan_state, frontier
     state = "delegate" if stage.get("status") == "active" else "stage-start"
@@ -1718,7 +1733,7 @@ def require_task_worktree(root: Path, *, allow_completed: bool = False) -> None:
 
 def require_ready_task(
     root: Path, task_id: str, *, require_approval: bool = True,
-    allow_completed: bool = False,
+    allow_completed: bool = False, require_grill: bool = True,
 ) -> dict:
     """Require the JIT execution contract and its fresh, passing grill."""
     tasks = load_json(
@@ -1762,18 +1777,19 @@ def require_ready_task(
     if allow_completed and completed:
         from forge_cli.stages import stage_baseline
         treeish = stage_baseline(root, stage)
-    require_task_grill(root, task_id, task, treeish=treeish)
-    if require_approval:
-        key = _active_story_key(root)
-        grill = load_json(
-            evidence_path(root, key, f"grills/tasks/{task_id}.json"), default={},
+    key = _active_story_key(root)
+    grill = load_json(
+        evidence_path(root, key, f"grills/tasks/{task_id}.json"), default={},
+    )
+    if require_approval and _task_plan_state(root, task, grill) == "author-task-plan":
+        raise SystemExit(
+            f"Task plan required first: author {task_id} in plan mode, then run "
+            f"`./forge task plan save {task_id} --from <path>`."
         )
+    if require_grill:
+        require_task_grill(root, task_id, task, treeish=treeish)
+    if require_approval:
         plan_state = _task_plan_state(root, task, grill)
-        if plan_state == "author-task-plan":
-            raise SystemExit(
-                f"Task plan required first: author {task_id} in plan mode, then run "
-                f"`./forge task plan save {task_id} --from <path>`."
-            )
         if plan_state == "await-approval":
             raise SystemExit(
                 f"Task plan approval required: a human must approve the current "
