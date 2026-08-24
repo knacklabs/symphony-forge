@@ -15671,6 +15671,22 @@ def test_forge_next_routes_the_jit_frontier_states(repo, tmp_path):
     )
     assert code == 0, out
     action = next_action()
+    assert "enter plan mode" in action
+    assert "task plan save" in action
+    assert "stage start" not in action and "forge delegate" not in action
+
+    source = tmp_path / "T1.md"
+    source.write_text(
+        "# Task plan — T1\n\nImplement the recorded contract.\n",
+        encoding="utf-8",
+    )
+    code, out = post_hook(repo, plan_hook_payload(source))
+    assert code == 0, out
+    code, out = run(
+        repo, "forge.py", "task", "plan", "save", "T1", "--from", str(source),
+    )
+    assert code == 0, out
+    action = next_action()
     assert "factory/prompts/griller.md --gate task" in action
     assert "stage start" not in action and "forge delegate" not in action
 
