@@ -235,9 +235,77 @@
       ],
       "dependencies": [
         "round-provenance-gate"
+      ],
+      "write_scope": [
+        "docs/decisions/0048-plan-mode-and-grill-provenance.md",
+        "docs/specs/accountable-engineering-loop.md",
+        "docs/specs/plan-approval.md",
+        "WORKFLOW.md",
+        "factory/tests/test_gates.py"
+      ],
+      "required_tests": [
+        {
+          "id": "test_docs_state_enforced_order",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest --with psutil python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        }
+      ],
+      "verify_commands": [
+        "python3 factory/scripts/check_dual_runtime.py"
+      ],
+      "reviewer_focus": "Spec clauses match the shipped enforcement exactly (floors, frontier_empty, ledger match, plan_body_digest); 0048 supersedes clause-level only; both spec re-confirm grills recorded under the new enforcement; the doc test is string-level like existing doc gates.",
+      "plan_contracts": [
+        {
+          "id": "dad-1",
+          "statement": "decision 0048 accepted by a human; accountable-engineering-loop.md zero-rounds sentence and plan-approval.md not-the-signal sentence replaced; both specs re-confirmed with recorded grills",
+          "source": "plans/active/plan-mode-and-grill-provenance-plan-mode-and-grill-provenance-are-enforced-not-advisory.md#task-decomposition"
+        },
+        {
+          "id": "dad-2",
+          "statement": "WORKFLOW.md task-loop paragraph states the new order; check_dual_runtime and check_vendor_integrity green",
+          "source": "plans/active/plan-mode-and-grill-provenance-plan-mode-and-grill-provenance-are-enforced-not-advisory.md#task-decomposition"
+        }
+      ]
+    },
+    {
+      "id": "flip-frontier-routing-test",
+      "title": "Follow-up: frontier-routing test asserts the enforced order",
+      "objective": "Fix the one full-suite failure: the frontier-routing test still expects the pre-0048 grill-first order after decomposition recording.",
+      "acceptance_criteria": [
+        "test_forge_next_routes_the_jit_frontier_states asserts the enforced order (author-task-plan first, then task plan save + approve in the fixture, then the grill action); no assertion deleted; no production code changed",
+        "full gate suite green: the one failing test passes and no other test regresses"
+      ],
+      "write_scope": [
+        "factory/tests/test_gates.py"
+      ],
+      "required_tests": [
+        {
+          "id": "test_forge_next_routes_the_jit_frontier_states",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest --with psutil python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        }
+      ],
+      "verify_commands": [
+        "python3 factory/scripts/check_dual_runtime.py"
+      ],
+      "reviewer_focus": "The test asserts the new order end to end rather than deleting assertions; the fixture uses the real task plan save / task approve commands and the real hook for the marker.",
+      "plan_contracts": [
+        {
+          "id": "fft-1",
+          "statement": "test_forge_next_routes_the_jit_frontier_states asserts the enforced order (author-task-plan first, then task plan save + approve in the fixture, then the grill action); no assertion deleted; no production code changed",
+          "source": "plans/active/plan-mode-and-grill-provenance-plan-mode-and-grill-provenance-are-enforced-not-advisory.md#task-decomposition"
+        },
+        {
+          "id": "fft-2",
+          "statement": "full gate suite green: the one failing test passes and no other test regresses",
+          "source": "plans/active/plan-mode-and-grill-provenance-plan-mode-and-grill-provenance-are-enforced-not-advisory.md#task-decomposition"
+        }
+      ],
+      "dependencies": [
+        "docs-and-decision"
       ]
     }
   ],
   "project": "",
-  "commit": "864b7628c294ba9de87f02e3f0ca95eb62283aed"
+  "commit": "68fe33b81fee7f70fd9393a3a42ba7192a6b4709"
 }

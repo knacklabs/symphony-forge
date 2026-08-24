@@ -946,15 +946,18 @@
         "Gate tests cover: plan authored outside plan mode is refused; grill with unlogged rounds is refused; the happy path passes; vendored to clients by forge upgrade"
       ],
       "order": 45,
-      "status": "active",
+      "status": "done",
       "epic": "accountable-engineering",
       "skill": "backend",
       "depends_on": [],
-      "spec": "docs/specs/accountable-engineering-loop.md"
+      "spec": "docs/specs/accountable-engineering-loop.md",
+      "completed_at": "2026-08-24T14:00:51+00:00",
+      "history": ".factory/stories/plan-mode-and-grill-provenance/",
+      "outcome": "Plan-mode and grill discipline are now gates the recorders enforce, not reminders. A PostToolUse hook records who authored every plan (plan-mode markers) and every question actually put to a human (AskUserQuestion rounds with chosen answers); plan and task-plan save/approve refuse a plan without a matching marker, and spec, requirements, plan and task grills refuse rounds not in the ledger, below the per-gate floor, or missing the frontier-empty attestation. The task loop runs plan, then grill, then human approval, then stage start \u2014 printed by forge next and pinned by tests. A session can no longer save a plan authored outside plan mode or record a grill that never asked a human anything; the story proved it on itself, its own gates refusing its own plan and grill until done right."
     }
   ],
   "generated_by": "human",
-  "updated_at": "2026-08-24T10:00:03+00:00",
+  "updated_at": "2026-08-24T14:00:51+00:00",
   "epics": [
     {
       "id": "symphony-forge",

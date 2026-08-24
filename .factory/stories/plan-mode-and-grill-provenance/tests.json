@@ -1,0 +1,47 @@
+{
+  "commit": "6df3ef73e5740e105af7cbc9725e7ec10b6cdab7",
+  "automated": {
+    "generated_by": "implementer",
+    "status": "passed",
+    "summary": "Full gate suite green after the follow-up fix (657 tests; the frontier-routing test now asserts the enforced 0048 order). Per-task required tests ran at each stage close: 7 (post-tool-use-ledgers), 6 (plan-mode-gate), 6 (round-provenance-gate), 1 (docs-and-decision), 1 (flip-frontier-routing-test). Live verification in this session: a plan-mode Edit minted a marker; plan save/approve and task plan save/approve passed only via markers and refused a restamped body until the shared digest fix; an AskUserQuestion round was recorded with the chosen answer and the recorder refused a paraphrased round until it matched the ledger exactly.",
+    "blocking_findings": [],
+    "commands_run": [
+      "python3 factory/scripts/verify.py",
+      "uv run --with pytest --with psutil python -m pytest factory/tests -q",
+      "python3 factory/scripts/check_dual_runtime.py"
+    ],
+    "tests_added_or_updated": [
+      "test_post_tool_use_records_plan_mode_marker",
+      "test_post_tool_use_records_ask_user_question_round",
+      "test_post_tool_use_is_fail_open",
+      "test_vendor_integrity_covers_post_tool_use",
+      "test_post_tool_use_marks_plan_outside_repo_with_raw_and_body_digests",
+      "test_post_tool_use_round_without_response_records_chosen_null",
+      "test_post_tool_use_records_without_session_id",
+      "test_plan_save_refuses_plan_without_plan_mode_marker",
+      "test_plan_save_and_approve_accept_plan_with_plan_mode_marker",
+      "test_task_plan_save_and_approve_require_plan_mode_marker",
+      "test_plan_mode_marker_matches_body_not_assumptions",
+      "test_plan_mode_marker_in_root_scope_counts_for_active_story",
+      "test_plan_save_restamp_does_not_invalidate_marker",
+      "test_grill_refuses_round_not_in_ledger",
+      "test_grill_refuses_below_gate_floor",
+      "test_grill_refuses_missing_frontier_empty",
+      "test_grill_accepts_ledger_matched_rounds_happy_path",
+      "test_task_grill_requires_saved_task_plan_with_tolerance",
+      "test_frontier_orders_task_plan_before_grill",
+      "test_docs_state_enforced_order",
+      "test_forge_next_routes_the_jit_frontier_states"
+    ],
+    "pass_fail_summary": "verify.py: Verification passed; focused required tests all green at stage close",
+    "skills_used": [],
+    "non_blocking_findings": [],
+    "remaining_gaps": [],
+    "residual_risks": [],
+    "manual_validation_steps": [],
+    "reviewed_scope": [],
+    "recorded_at": "2026-08-24T13:59:34+00:00",
+    "commit": "6df3ef73e5740e105af7cbc9725e7ec10b6cdab7"
+  },
+  "updated_at": "2026-08-24T13:59:34+00:00"
+}

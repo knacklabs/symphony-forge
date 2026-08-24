@@ -1,0 +1,48 @@
+{
+  "generated_by": "griller",
+  "gate": "task",
+  "issue": "plan-mode-and-grill-provenance",
+  "task_id": "flip-frontier-routing-test",
+  "verdict": "pass",
+  "decision": "keep",
+  "questions_asked": 1,
+  "summary": "Task grill for the follow-up flip-frontier-routing-test: one full-suite failure, one-file test fix delegated to Codex; frozen graph forbids reopening task 3.",
+  "inspected_refs": [
+    "factory/tests/test_gates.py",
+    "factory/scripts/forge_cli/phase.py",
+    ".factory/stories/plan-mode-and-grill-provenance/grill-rounds"
+  ],
+  "current_flow": "test_forge_next_routes_the_jit_frontier_states asserts factory/prompts/griller.md --gate task as the first frontier action after decomposition; under 0048 forge next prints the author-task-plan action first, so the assertion fails; 656 other tests pass.",
+  "criteria_map": {
+    "test_forge_next_routes_the_jit_frontier_states asserts the enforced order (author-task-plan first, then task plan save + approve in the fixture, then the grill action); no assertion deleted; no production code changed": "single test rewrite advancing the fixture through task plan save and approve before the grill assertion; required test id test_forge_next_routes_the_jit_frontier_states",
+    "full gate suite green: the one failing test passes and no other test regresses": "full suite re-run at story verify after the fix"
+  },
+  "new_abstractions": [],
+  "gaps": [
+    "T5-1 \u2014 The frontier-routing test still asserts the old order (task 3 missed one assertion; the other 656 tests pass). Fix it as follow-up task flip-frontier-routing-test (frozen graph forbids reopening task 3), one file, Codex-delegated?"
+  ],
+  "contradictions": [],
+  "resolutions": [
+    "Follow-up task confirmed by the human in the recorded round"
+  ],
+  "rounds": [
+    {
+      "question": "T5-1 \u2014 The frontier-routing test still asserts the old order (task 3 missed one assertion; the other 656 tests pass). Fix it as follow-up task flip-frontier-routing-test (frozen graph forbids reopening task 3), one file, Codex-delegated?",
+      "options": [
+        "Yes \u2014 follow-up task, proceed; frontier empty (Recommended)",
+        "Different approach"
+      ],
+      "chosen": "Yes \u2014 follow-up task, proceed; frontier empty (Recommended)",
+      "frontier_empty": true
+    }
+  ],
+  "citations": [],
+  "open_items": [],
+  "input_sha256": "4f040a9e3591f9b6dd2820887ca5e1383ee75974259f8aa9290f5dee0eec630b",
+  "task_plan_sha256": "dc2c87b45d8ff3c7c702b52bdba3866b4dd58f1f1eba593bc4c1769fde8c0f1a",
+  "recorded_at": "2026-08-24T13:29:22+00:00",
+  "commit": "68fe33b81fee7f70fd9393a3a42ba7192a6b4709",
+  "approved_task_plan_sha256": "dc2c87b45d8ff3c7c702b52bdba3866b4dd58f1f1eba593bc4c1769fde8c0f1a",
+  "approved_by": "Ravi Kiran Vemula",
+  "approved_at": "2026-08-24T13:29:44+00:00"
+}

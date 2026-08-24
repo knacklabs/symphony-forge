@@ -1,0 +1,15 @@
+{
+  "generated_by": "claude-code:plan-mode",
+  "questions": [
+    {
+      "question": "Approve the flip-frontier-routing-test task plan (one test file, asserts the enforced order end to end)?",
+      "options": [
+        "Approve (Recommended)",
+        "Hold"
+      ],
+      "chosen": "Approve (Recommended)"
+    }
+  ],
+  "at": "2026-08-24T13:29:35.540808+00:00",
+  "session_id": "9f647d39-defb-401c-b0b3-ad6ed23eabba"
+}

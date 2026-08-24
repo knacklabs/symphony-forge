@@ -1,0 +1,50 @@
+{
+  "generated_by": "griller",
+  "gate": "task",
+  "issue": "plan-mode-and-grill-provenance",
+  "task_id": "docs-and-decision",
+  "verdict": "pass",
+  "decision": "keep",
+  "questions_asked": 1,
+  "summary": "Task grill for docs-and-decision in plan mode, one AskUserQuestion round recorded by the live hook, frontier empty: docs-only task; the two spec re-confirms are deliberately the first grills under the new enforcement.",
+  "inspected_refs": [
+    "docs/decisions/0048-plan-mode-and-grill-provenance.md",
+    "docs/specs/accountable-engineering-loop.md",
+    "docs/specs/plan-approval.md",
+    "WORKFLOW.md",
+    ".factory/stories/plan-mode-and-grill-provenance/grill-rounds"
+  ],
+  "current_flow": "Tasks 1-3 shipped the ledgers and both gates; the accountable-engineering-loop spec still grants zero-round grills at lines 93 and 139, plan-approval still calls plan mode not-the-enforcement-signal, WORKFLOW.md Task Planning still describes grill-before-task-plan, and 0048 is proposed.",
+  "criteria_map": {
+    "decision 0048 accepted by a human; accountable-engineering-loop.md zero-rounds sentence and plan-approval.md not-the-signal sentence replaced; both specs re-confirmed with recorded grills": "0048 updated with as-built facts and human-accepted; both spec clauses replaced and the specs re-confirmed with grills recorded under the new enforcement",
+    "WORKFLOW.md task-loop paragraph states the new order; check_dual_runtime and check_vendor_integrity green": "WORKFLOW.md Task Planning paragraph states the enforced order; test_docs_state_enforced_order pins all four docs; check_dual_runtime green"
+  },
+  "new_abstractions": [],
+  "gaps": [
+    "T4-1 \u2014 Task 4 contract: docs + decision 0048 acceptance + one doc-consistency test (Codex writes only the test; I write the docs). The two spec re-confirms will be the first grills recorded under the new enforcement \u2014 if the recorder refuses them, that's a task-3 finding to fix, never to bypass. Record this contract and proceed?"
+  ],
+  "contradictions": [],
+  "resolutions": [
+    "Contract recorded as planned: orchestrator writes docs, Codex writes only the test; refusals of the new enforcement are task-3 findings, never bypassed"
+  ],
+  "rounds": [
+    {
+      "question": "T4-1 \u2014 Task 4 contract: docs + decision 0048 acceptance + one doc-consistency test (Codex writes only the test; I write the docs). The two spec re-confirms will be the first grills recorded under the new enforcement \u2014 if the recorder refuses them, that's a task-3 finding to fix, never to bypass. Record this contract and proceed?",
+      "options": [
+        "Record and proceed; frontier empty (Recommended)",
+        "Adjust first"
+      ],
+      "chosen": "Record and proceed; frontier empty (Recommended)",
+      "frontier_empty": true
+    }
+  ],
+  "citations": [],
+  "open_items": [],
+  "input_sha256": "91922286c6aeb9cc7d0d4d2742f83738bc3f26593e63b205031bc83c0e6e3a97",
+  "task_plan_sha256": "97fcc1e3fc93cee0a4eb71666003f5145f0c6acf75069765e99d2dd0ed92d37a",
+  "recorded_at": "2026-08-24T10:54:18+00:00",
+  "commit": "ef8e1c5dba9bf83475527bfdf4a31d5a8b3b260d",
+  "approved_task_plan_sha256": "97fcc1e3fc93cee0a4eb71666003f5145f0c6acf75069765e99d2dd0ed92d37a",
+  "approved_by": "Ravi Kiran Vemula",
+  "approved_at": "2026-08-24T10:55:01+00:00"
+}

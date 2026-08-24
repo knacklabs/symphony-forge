@@ -1,0 +1,39 @@
+{
+  "generated_by": "claude-code:plan-mode",
+  "questions": [
+    {
+      "question": "AEL-1: accountable-engineering-loop \u00a7Division-of-labor now requires ledger-matched, floored, frontier_empty-attested rounds for spec/requirements/plan/task grills (0048). Does the amended clause match the shipped code exactly?",
+      "options": [
+        "Yes, clause matches GATE_ROUND_FLOORS as shipped",
+        "No, re-word"
+      ],
+      "chosen": "Yes, clause matches GATE_ROUND_FLOORS as shipped"
+    },
+    {
+      "question": "AEL-2: the second zero-rounds restatement (line ~139) is replaced by a pointer to 0048 rather than repeating the floors. Acceptable, frontier empty on this spec?",
+      "options": [
+        "Yes \u2014 pointer, no duplication; frontier empty",
+        "Repeat the floors in both places"
+      ],
+      "chosen": "Yes \u2014 pointer, no duplication; frontier empty"
+    },
+    {
+      "question": "PA-1: plan-approval now says plan mode IS the authorship proof via permission_mode markers, while human approval stays the separate unforgeable act (0029 intact). Correct split?",
+      "options": [
+        "Yes \u2014 authorship proof vs approval act, both required",
+        "No, re-word"
+      ],
+      "chosen": "Yes \u2014 authorship proof vs approval act, both required"
+    },
+    {
+      "question": "PA-2: no other clause of plan-approval changes (self-authored-grill criticism, digest freshness, awaiting\u2192approved flow all stand). Frontier empty on this spec?",
+      "options": [
+        "Yes \u2014 rest of the spec stands; frontier empty",
+        "Something else needs amending"
+      ],
+      "chosen": "Yes \u2014 rest of the spec stands; frontier empty"
+    }
+  ],
+  "at": "2026-08-24T10:58:19.331359+00:00",
+  "session_id": "9f647d39-defb-401c-b0b3-ad6ed23eabba"
+}

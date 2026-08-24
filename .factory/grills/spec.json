@@ -2,41 +2,43 @@
   "generated_by": "griller",
   "gate": "spec",
   "verdict": "pass",
-  "questions_asked": 8,
+  "questions_asked": 2,
+  "summary": "Re-confirmation grill for plan-approval after rewriting the not-the-enforcement-signal clause: plan mode is the authorship proof via permission_mode markers (0048) while the human-attributed approval command remains the separate unforgeable act (0029 intact); every other clause stands. Recorded under the new enforcement.",
+  "inspected_refs": [
+    "docs/specs/plan-approval.md",
+    "docs/decisions/0048-plan-mode-and-grill-provenance.md",
+    "docs/decisions/0029-plan-approval-in-plan-mode.md"
+  ],
   "gaps": [
-    "A HEAD-bound grounding digest would stale every task grill on any commit, including the harness's own evidence commits and a resumed task's own work",
-    "Binding the digest to the raw plan file lets 'forge plan assume' stale every task grill in the story (recorded lesson: the assumptions ledger stales the plan it appends to)",
-    "Board had no task-level visibility although every new gate lives at task level",
-    "The 8-file/400-line default was presented as a derived p90 but matches no measurement (actual p90: 20/672 all-paths, 5/256 product-only)",
-    "The slim grill dropped the article's abstraction-justification and irreversibility/rollback proofs",
-    "Degraded-mode window behavior was unstated",
-    "Spec permitted zero-human-question grill passes, contradicting the operator mandate that every grill delivers AskUserQuestion rounds (both rescue models, top priority)",
-    "Approved plans were silently re-legitimizable after edit; task graph not frozen; completed contracts only four-fifths immutable; local review unrecorded; stage done accepted uncommitted work; branch review unbound to review-brief --all; closeout ordering unenforced (Sol xhigh audit)",
-    "Initial decomposition could carry execution detail on the first task; future reviewer_focus/plan_contracts unrestricted (both models)",
-    "Task-level approval lived implicitly in plan-mode exit BEFORE the grill and left no durable artifact; and no interrogation preceded story-plan drafting"
+    "PA-1: plan-approval now says plan mode IS the authorship proof via permission_mode markers, while human approval stays the separate unforgeable act (0029 intact). Correct split?",
+    "PA-2: no other clause of plan-approval changes (self-authored-grill criticism, digest freshness, awaiting\u2192approved flow all stand). Frontier empty on this spec?"
   ],
-  "contradictions": [
-    "docs/FACTORY.md:129-138 requires full upfront task contracts, contradicting accepted decision 0032's JIT contract",
-    "Per-commit review suggestion contradicts decision 0011's single autoreview pass",
-    "griller.md requires AskUserQuestion rounds while the confirmed spec accepted zero-question passes"
-  ],
+  "contradictions": [],
   "resolutions": [
-    "Grounding digest uses a product-tree hash excluding .factory/ and plans/ \u2014 evidence and in-progress commits never stale a grill (spec Behaviour)",
-    "Plan digest computed excluding the appended Implementation Assumptions section (spec Behaviour)",
-    "Board renders in-flight story task rows (state, grill freshness, budget usage) from the same derivation forge next uses (spec Behaviour)",
-    "8/400 declared as a policy target with the measured p90s recorded alongside; lower free, higher requires written reason (spec Behaviour)",
-    "new_abstractions declare-or-empty proof with insufficiency evidence and irreversible-effects rollback notes; block decisions emit an escalation packet, never a transcript link (spec Behaviour)",
-    "Lite, quickfix, and degraded windows explicitly unchanged (spec Non-goals)",
-    "Story scope corrects docs/FACTORY.md to the 0032 skeletal-list + JIT contract (spec Behaviour and Acceptance)",
-    "Review cadence stays decision 0011; the grilled criteria_map lands as FORGE-REV-2 plan_contracts so completeness is verdicted by the existing quality review (spec Behaviour)",
-    "Spec amended: every grill delivers rounds via AskUserQuestion, zero rounds refused; JIT re-records pin claude-code:plan-mode (operator-sanctioned round 2026-08-13)",
-    "FORGE-ACC-3 behaviour block added: approved-plan digest binding, recorded local-review stamp, commit-before-done, coherent one-run branch review bound to review-brief --all, closeout ordering (stages\u2192review\u2192verify\u2192functional\u2192outcome\u2192pr_ready), clean-tree pr_ready, write-window refusal during active stages",
-    "Initial recording refuses execution detail on every task incl. reviewer_focus/plan_contracts; skeleton frozen after first recording; completed contracts immutable under full-contract digest",
-    "Contradiction resolved in the spec's favor of the mandate; griller.md and spec now agree",
-    "Operator directed (chat 2026-08-14): the task grill records approved_by stamped after the pass and require_ready_task refuses without it; forge next routes a pre-draft requirements round re-grilling the confirmed spec against repo state - both added to the spec ACC-3 block and FORGE-ACC-3 acceptance criteria"
+    "Confirmed by the human in the recorded round: Yes \u2014 authorship proof vs approval act, both required",
+    "Confirmed by the human in the recorded round: Yes \u2014 rest of the spec stands; frontier empty"
+  ],
+  "rounds": [
+    {
+      "question": "PA-1: plan-approval now says plan mode IS the authorship proof via permission_mode markers, while human approval stays the separate unforgeable act (0029 intact). Correct split?",
+      "options": [
+        "Yes \u2014 authorship proof vs approval act, both required",
+        "No, re-word"
+      ],
+      "chosen": "Yes \u2014 authorship proof vs approval act, both required"
+    },
+    {
+      "question": "PA-2: no other clause of plan-approval changes (self-authored-grill criticism, digest freshness, awaiting\u2192approved flow all stand). Frontier empty on this spec?",
+      "options": [
+        "Yes \u2014 rest of the spec stands; frontier empty",
+        "Something else needs amending"
+      ],
+      "chosen": "Yes \u2014 rest of the spec stands; frontier empty",
+      "frontier_empty": true
+    }
   ],
   "open_items": [],
-  "input_sha256": "6185369a9586d1fcc22f209a23129e56f71cc5f83168b1d8ce245c7a43ba8d4b",
-  "recorded_at": "2026-08-14T12:23:59+00:00",
-  "commit": "0d453cd98f4c950d165add248127b19dadf50676"
+  "input_sha256": "4b60063080c79ac88fa26cf7e930e6a06b8232e8edefc0101c360f53de07e878",
+  "recorded_at": "2026-08-24T10:58:38+00:00",
+  "commit": "ef8e1c5dba9bf83475527bfdf4a31d5a8b3b260d"
 }

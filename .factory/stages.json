@@ -270,7 +270,7 @@
     {
       "id": "round-provenance-gate",
       "title": "Grill recorder requires logged rounds, per-gate floors, frontier_empty, and a saved task plan; frontier order flipped",
-      "status": "active",
+      "status": "done",
       "started_at": "2026-08-24T10:29:31+00:00",
       "base_sha": "864b7628c294ba9de87f02e3f0ca95eb62283aed",
       "dirty_at_start": {
@@ -567,12 +567,187 @@
           "git": "1 .M N... 100644 100644 100644 3e3f1330440f4d7066c2a0db7c9e86f2d15846af 3e3f1330440f4d7066c2a0db7c9e86f2d15846af plans/roadmap.json\u0000\u0000100644 3e3f1330440f4d7066c2a0db7c9e86f2d15846af 0\tplans/roadmap.json\u0000\u0000H plans/roadmap.json\u0000"
         }
       },
-      "task_sha256": "feae5e383f437620c4907242532ffe757d8fd1f47c12eada4f3a8ff4e59d91cf"
+      "task_sha256": "feae5e383f437620c4907242532ffe757d8fd1f47c12eada4f3a8ff4e59d91cf",
+      "completed_at": "2026-08-24T10:48:25+00:00"
     },
     {
       "id": "docs-and-decision",
       "title": "Decision 0048 accepted; accountable-engineering-loop and plan-approval specs amended and re-confirmed",
-      "status": "pending"
+      "status": "done",
+      "started_at": "2026-08-24T10:55:01+00:00",
+      "base_sha": "ef8e1c5dba9bf83475527bfdf4a31d5a8b3b260d",
+      "dirty_at_start": {
+        ".factory/events/6ba6c56c3e914e5abe33835c404309d8.json": {
+          "digest": "ab51b23a8b46b15918fcf8ff75b9c92b2e479b97ffbc580b26d3cb1e476f08cd",
+          "git": "? .factory/events/6ba6c56c3e914e5abe33835c404309d8.json\u0000\u0000\u0000"
+        },
+        ".factory/events/db58edb50ee546ddb25e0cece2909683.json": {
+          "digest": "f77a774167ba11ddd1d8c386bd26aaacad2e97ca7dfa32ffbff2bb5d4314ddf0",
+          "git": "? .factory/events/db58edb50ee546ddb25e0cece2909683.json\u0000\u0000\u0000"
+        },
+        ".factory/events/e923c40e20f6417a8b3a756d487876ee.json": {
+          "digest": "03b5f801b6cd06ae3d7193a8de4d78be6d5b9ea97ffb77bbde9f459396af1f0f",
+          "git": "? .factory/events/e923c40e20f6417a8b3a756d487876ee.json\u0000\u0000\u0000"
+        },
+        ".factory/stages.json": {
+          "digest": "f1afc203375a17d7265e1d41f19f7e75b9e23dac8f6474777b428dd05daa8765",
+          "git": "1 .M N... 100644 100644 100644 f86f612646d3278a56fd41e986ed35b676da8ffb f86f612646d3278a56fd41e986ed35b676da8ffb .factory/stages.json\u0000\u0000100644 f86f612646d3278a56fd41e986ed35b676da8ffb 0\t.factory/stages.json\u0000\u0000H .factory/stages.json\u0000"
+        },
+        ".factory/stories/plan-mode-and-grill-provenance/decomposition.json": {
+          "digest": "f668cb8bd5cc6dd65a2ff3256c295ae30ec2dcda086aa2fe0808411dca3ca85c",
+          "git": "1 .M N... 100644 100644 100644 553042c94e3fb067a4c077bcae330febdad0903b 553042c94e3fb067a4c077bcae330febdad0903b .factory/stories/plan-mode-and-grill-provenance/decomposition.json\u0000\u0000100644 553042c94e3fb067a4c077bcae330febdad0903b 0\t.factory/stories/plan-mode-and-grill-provenance/decomposition.json\u0000\u0000H .factory/stories/plan-mode-and-grill-provenance/decomposition.json\u0000"
+        },
+        ".factory/stories/plan-mode-and-grill-provenance/grill-rounds/509cb381-9d80-4b99-b4d7-fa9df0f1ab73.json": {
+          "digest": "789e546f189279658020f5fb24e0ec502f335fc57d6cb6184daf01e8308d84ec",
+          "git": "? .factory/stories/plan-mode-and-grill-provenance/grill-rounds/509cb381-9d80-4b99-b4d7-fa9df0f1ab73.json\u0000\u0000\u0000"
+        },
+        ".factory/stories/plan-mode-and-grill-provenance/grill-rounds/701a37d3-4378-43f1-9bfe-efd2ecae184d.json": {
+          "digest": "1327e92e78830a2aa6eb66cfef61ad3d27d38a3554a370a949b4f2812451f909",
+          "git": "? .factory/stories/plan-mode-and-grill-provenance/grill-rounds/701a37d3-4378-43f1-9bfe-efd2ecae184d.json\u0000\u0000\u0000"
+        },
+        ".factory/stories/plan-mode-and-grill-provenance/grills/tasks/docs-and-decision.json": {
+          "digest": "e027e859a910ca079a081aa599b2caf4ffab624ecee56dc324df749585329240",
+          "git": "? .factory/stories/plan-mode-and-grill-provenance/grills/tasks/docs-and-decision.json\u0000\u0000\u0000"
+        },
+        ".factory/stories/plan-mode-and-grill-provenance/plan-mode/85d119cd-ab93-470a-a004-80081feb5059.json": {
+          "digest": "60354d8cecf4cc22b5054423bc144ff48951c429913914fa8febcbab6b528597",
+          "git": "? .factory/stories/plan-mode-and-grill-provenance/plan-mode/85d119cd-ab93-470a-a004-80081feb5059.json\u0000\u0000\u0000"
+        },
+        ".factory/stories/plan-mode-and-grill-provenance/task-plans/docs-and-decision.md": {
+          "digest": "414ea5a92d92a4ab514204c574bca2056673440970ac3f4cd686742e15f390b6",
+          "git": "? .factory/stories/plan-mode-and-grill-provenance/task-plans/docs-and-decision.md\u0000\u0000\u0000"
+        }
+      },
+      "task_sha256": "e87d4f2f4ba20361d4358d93566b54c9343814d4b47349dce27511dd4978d7b2",
+      "completed_at": "2026-08-24T11:03:34+00:00"
+    },
+    {
+      "id": "flip-frontier-routing-test",
+      "title": "Follow-up: frontier-routing test asserts the enforced order",
+      "status": "done",
+      "started_at": "2026-08-24T13:29:44+00:00",
+      "base_sha": "68fe33b81fee7f70fd9393a3a42ba7192a6b4709",
+      "dirty_at_start": {
+        ".factory/events/03f7d4f8e16a402fbc30e766cfaea3de.json": {
+          "digest": "426653736e1075d1c4fa06d4597a97f6d7a484d6ff807d64564ac4129794ac6e",
+          "git": "? .factory/events/03f7d4f8e16a402fbc30e766cfaea3de.json\u0000\u0000\u0000"
+        },
+        ".factory/events/2a6912583bc2454e816a6d7751178c1a.json": {
+          "digest": "c5bed162ad701f6bdfa5e930b1e0e8b05754dee3e477adfc71e4d7505ea20f96",
+          "git": "? .factory/events/2a6912583bc2454e816a6d7751178c1a.json\u0000\u0000\u0000"
+        },
+        ".factory/events/2c950a66ba884de1bcd6c391c0694bbc.json": {
+          "digest": "5dbb090d076c3f1dffaa4dd5c6ba8ed98693d3aedf03f167207f839acaa9a752",
+          "git": "? .factory/events/2c950a66ba884de1bcd6c391c0694bbc.json\u0000\u0000\u0000"
+        },
+        ".factory/events/6ba6c56c3e914e5abe33835c404309d8.json": {
+          "digest": "ab51b23a8b46b15918fcf8ff75b9c92b2e479b97ffbc580b26d3cb1e476f08cd",
+          "git": "? .factory/events/6ba6c56c3e914e5abe33835c404309d8.json\u0000\u0000\u0000"
+        },
+        ".factory/events/b3436893e41d4e32ae58c560aea4f8ae.json": {
+          "digest": "78499e58f28ecbfbf4b3e1227c947b072b15da8f94e87d91b72156560aabe1f3",
+          "git": "? .factory/events/b3436893e41d4e32ae58c560aea4f8ae.json\u0000\u0000\u0000"
+        },
+        ".factory/events/b35f1182352c4c46aa4d50a23e830916.json": {
+          "digest": "3429e97be913e0d0c6286c3b876c658d5b175dbbff5457f6f4f08a3008b2cccb",
+          "git": "? .factory/events/b35f1182352c4c46aa4d50a23e830916.json\u0000\u0000\u0000"
+        },
+        ".factory/events/b9ae3a26f02a4b7da73c7b48a3a11c28.json": {
+          "digest": "4d57017ff301a2db65d07bbcad764bc564df39151d1389bd743d1abf12efe854",
+          "git": "? .factory/events/b9ae3a26f02a4b7da73c7b48a3a11c28.json\u0000\u0000\u0000"
+        },
+        ".factory/events/d0573a1a75ac44eba11cf046eb2422c6.json": {
+          "digest": "c5bed162ad701f6bdfa5e930b1e0e8b05754dee3e477adfc71e4d7505ea20f96",
+          "git": "? .factory/events/d0573a1a75ac44eba11cf046eb2422c6.json\u0000\u0000\u0000"
+        },
+        ".factory/events/db58edb50ee546ddb25e0cece2909683.json": {
+          "digest": "f77a774167ba11ddd1d8c386bd26aaacad2e97ca7dfa32ffbff2bb5d4314ddf0",
+          "git": "? .factory/events/db58edb50ee546ddb25e0cece2909683.json\u0000\u0000\u0000"
+        },
+        ".factory/events/e923c40e20f6417a8b3a756d487876ee.json": {
+          "digest": "03b5f801b6cd06ae3d7193a8de4d78be6d5b9ea97ffb77bbde9f459396af1f0f",
+          "git": "? .factory/events/e923c40e20f6417a8b3a756d487876ee.json\u0000\u0000\u0000"
+        },
+        ".factory/events/f72774efa5654d0d952c06a379e71b9d.json": {
+          "digest": "80bac769b2fe1fcfcc534beb19a6c32d803e60a5bd10f6a4ac8e9b020af0663b",
+          "git": "? .factory/events/f72774efa5654d0d952c06a379e71b9d.json\u0000\u0000\u0000"
+        },
+        ".factory/grills/spec.json": {
+          "digest": "eeb32235dd1c22ffd253f51d0919645c1d79ad7413037e64dd586f95e70a62fb",
+          "git": "1 .M N... 100644 100644 100644 ccb1918eb9ff8691ea63e75e3c3ec014cb0e205b ccb1918eb9ff8691ea63e75e3c3ec014cb0e205b .factory/grills/spec.json\u0000\u0000100644 ccb1918eb9ff8691ea63e75e3c3ec014cb0e205b 0\t.factory/grills/spec.json\u0000\u0000H .factory/grills/spec.json\u0000"
+        },
+        ".factory/stages.json": {
+          "digest": "ccd8de08e74e1ff6218d620780f1b249fc459147c6c7d0398aa5dff77b25a486",
+          "git": "1 .M N... 100644 100644 100644 f86f612646d3278a56fd41e986ed35b676da8ffb f86f612646d3278a56fd41e986ed35b676da8ffb .factory/stages.json\u0000\u0000100644 f86f612646d3278a56fd41e986ed35b676da8ffb 0\t.factory/stages.json\u0000\u0000H .factory/stages.json\u0000"
+        },
+        ".factory/stories/plan-mode-and-grill-provenance/decomposition.json": {
+          "digest": "233d3c07d579a7bd53704fc548533f939094edb6684b9784c40e8a98846ef3d1",
+          "git": "1 .M N... 100644 100644 100644 553042c94e3fb067a4c077bcae330febdad0903b 553042c94e3fb067a4c077bcae330febdad0903b .factory/stories/plan-mode-and-grill-provenance/decomposition.json\u0000\u0000100644 553042c94e3fb067a4c077bcae330febdad0903b 0\t.factory/stories/plan-mode-and-grill-provenance/decomposition.json\u0000\u0000H .factory/stories/plan-mode-and-grill-provenance/decomposition.json\u0000"
+        },
+        ".factory/stories/plan-mode-and-grill-provenance/grill-rounds/0a095084-b7bd-48a2-b6e6-72dd023d6baf.json": {
+          "digest": "87ab6069ead5ef75c3ef624869ef5873fc55ca9add99a596f98a3655d99aa9be",
+          "git": "? .factory/stories/plan-mode-and-grill-provenance/grill-rounds/0a095084-b7bd-48a2-b6e6-72dd023d6baf.json\u0000\u0000\u0000"
+        },
+        ".factory/stories/plan-mode-and-grill-provenance/grill-rounds/509cb381-9d80-4b99-b4d7-fa9df0f1ab73.json": {
+          "digest": "789e546f189279658020f5fb24e0ec502f335fc57d6cb6184daf01e8308d84ec",
+          "git": "? .factory/stories/plan-mode-and-grill-provenance/grill-rounds/509cb381-9d80-4b99-b4d7-fa9df0f1ab73.json\u0000\u0000\u0000"
+        },
+        ".factory/stories/plan-mode-and-grill-provenance/grill-rounds/701a37d3-4378-43f1-9bfe-efd2ecae184d.json": {
+          "digest": "1327e92e78830a2aa6eb66cfef61ad3d27d38a3554a370a949b4f2812451f909",
+          "git": "? .factory/stories/plan-mode-and-grill-provenance/grill-rounds/701a37d3-4378-43f1-9bfe-efd2ecae184d.json\u0000\u0000\u0000"
+        },
+        ".factory/stories/plan-mode-and-grill-provenance/grill-rounds/dedd84ae-ea37-47a8-8199-b5f81453f875.json": {
+          "digest": "c9f116a1993f14e0e928383eafc91a731a45db4b0ad209b95f2dfd4772b4f3df",
+          "git": "? .factory/stories/plan-mode-and-grill-provenance/grill-rounds/dedd84ae-ea37-47a8-8199-b5f81453f875.json\u0000\u0000\u0000"
+        },
+        ".factory/stories/plan-mode-and-grill-provenance/grill-rounds/e2545838-21da-494b-b807-36ba6ebaa09e.json": {
+          "digest": "46eacd1425b4765922178b4526f637d8bb12cec13a386e0779e36a13ad00a534",
+          "git": "? .factory/stories/plan-mode-and-grill-provenance/grill-rounds/e2545838-21da-494b-b807-36ba6ebaa09e.json\u0000\u0000\u0000"
+        },
+        ".factory/stories/plan-mode-and-grill-provenance/grill-rounds/eb81072d-a8e7-4d66-be91-b8138314bf18.json": {
+          "digest": "e422c6272c6a542045650902ea32ffdf40289aa8f749a2183a63344afecd2237",
+          "git": "? .factory/stories/plan-mode-and-grill-provenance/grill-rounds/eb81072d-a8e7-4d66-be91-b8138314bf18.json\u0000\u0000\u0000"
+        },
+        ".factory/stories/plan-mode-and-grill-provenance/grills/tasks/docs-and-decision.json": {
+          "digest": "e027e859a910ca079a081aa599b2caf4ffab624ecee56dc324df749585329240",
+          "git": "? .factory/stories/plan-mode-and-grill-provenance/grills/tasks/docs-and-decision.json\u0000\u0000\u0000"
+        },
+        ".factory/stories/plan-mode-and-grill-provenance/grills/tasks/flip-frontier-routing-test.json": {
+          "digest": "87e8269b129957fd7cce7d3d47af00fe144edd3e9da5dbf1c117f00dc26d5e04",
+          "git": "? .factory/stories/plan-mode-and-grill-provenance/grills/tasks/flip-frontier-routing-test.json\u0000\u0000\u0000"
+        },
+        ".factory/stories/plan-mode-and-grill-provenance/plan-mode/85d119cd-ab93-470a-a004-80081feb5059.json": {
+          "digest": "60354d8cecf4cc22b5054423bc144ff48951c429913914fa8febcbab6b528597",
+          "git": "? .factory/stories/plan-mode-and-grill-provenance/plan-mode/85d119cd-ab93-470a-a004-80081feb5059.json\u0000\u0000\u0000"
+        },
+        ".factory/stories/plan-mode-and-grill-provenance/plan-mode/9e6f66c2-a406-4465-be47-1bf06b3642aa.json": {
+          "digest": "5ad30c2e9985207117d5b22a8541f58d5af071449d425e3fd2a954b4dde27b12",
+          "git": "? .factory/stories/plan-mode-and-grill-provenance/plan-mode/9e6f66c2-a406-4465-be47-1bf06b3642aa.json\u0000\u0000\u0000"
+        },
+        ".factory/stories/plan-mode-and-grill-provenance/task-plans/docs-and-decision.md": {
+          "digest": "414ea5a92d92a4ab514204c574bca2056673440970ac3f4cd686742e15f390b6",
+          "git": "? .factory/stories/plan-mode-and-grill-provenance/task-plans/docs-and-decision.md\u0000\u0000\u0000"
+        },
+        ".factory/stories/plan-mode-and-grill-provenance/task-plans/flip-frontier-routing-test.md": {
+          "digest": "476a86e7eaa5d2383b119ffccf64d45936b5447c450e5c61110a65c5d5e9ac10",
+          "git": "? .factory/stories/plan-mode-and-grill-provenance/task-plans/flip-frontier-routing-test.md\u0000\u0000\u0000"
+        },
+        ".factory/stories/plan-mode-and-grill-provenance/verify.json": {
+          "digest": "3e176656a02dd9319f9921742f38fefc7e13789d551a707dd16f93818a472a12",
+          "git": "1 .M N... 100644 100644 100644 897cc6f81f84ab3b9efe720d31738693e474387d 897cc6f81f84ab3b9efe720d31738693e474387d .factory/stories/plan-mode-and-grill-provenance/verify.json\u0000\u0000100644 897cc6f81f84ab3b9efe720d31738693e474387d 0\t.factory/stories/plan-mode-and-grill-provenance/verify.json\u0000\u0000H .factory/stories/plan-mode-and-grill-provenance/verify.json\u0000"
+        }
+      },
+      "task_sha256": "989bab13775a98ff081f9adb881a50fdf1d786a0721ca9e7563fb3f93c818f41",
+      "local_review_stamp": {
+        "stage_id": "flip-frontier-routing-test",
+        "task_sha256": "989bab13775a98ff081f9adb881a50fdf1d786a0721ca9e7563fb3f93c818f41",
+        "brief_sha256": "aeec4117cc6c84991e0e282f2bbf44fc3a8e7b8443c787015c62c6241c78f197",
+        "base_sha": "68fe33b81fee7f70fd9393a3a42ba7192a6b4709",
+        "product_tree_digest": "11f437700585d7d65fbd02398f7ada480e50a7e5ed78792f37bb382cdecc8a0e",
+        "recorded_at": "2026-08-24T13:33:38+00:00",
+        "generated_by": "autoreview"
+      },
+      "completed_at": "2026-08-24T13:33:56+00:00"
     }
   ]
 }

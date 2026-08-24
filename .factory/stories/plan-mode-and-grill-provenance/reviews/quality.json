@@ -1,0 +1,104 @@
+{
+  "generated_by": "autoreview",
+  "score": 9,
+  "summary": "Quality lens over the full branch. The mechanism is one coherent chain: the fail-open PostToolUse hook records plan-mode markers (plan_body_digest, raw sha kept for forensics) and AskUserQuestion rounds; require_plan_mode_marker and the grill recorder consume exactly those records through evidence_path story-then-root; GATE_ROUND_FLOORS is a single named constant; the frontier and forge next state the enforced order; docs and decision 0048 say what the code does, pinned by a doc-consistency test. Fixtures mint provenance only through the real hook \u2014 no bypass path exists in tests or code. Live-proven on the story itself: the gates refused the story's own plan (restamp), grill (paraphrased chosen) and task order until corrected.",
+  "blocking_findings": [],
+  "non_blocking_findings": [
+    {
+      "category": "naming",
+      "area": "factory/scripts/post_tool_use.py",
+      "summary": "_written_path retains an unused root parameter after the outside-repo change"
+    }
+  ],
+  "residual_risks": [
+    "Markers/rounds ledgers grow per story; evidence lifetime follows the existing story-scope archive contract (0025)"
+  ],
+  "reviewed_scope": [
+    "factory/scripts/post_tool_use.py",
+    "factory/scripts/factory_lib.py",
+    "factory/scripts/record_grill_from_json.py",
+    "factory/scripts/forge_cli/plans.py",
+    "factory/scripts/forge_cli/tasks.py",
+    "factory/scripts/forge_cli/phase.py",
+    "factory/scripts/forge.py",
+    "factory/scripts/check_dual_runtime.py",
+    "factory/schemas/plan-mode-marker.json",
+    "factory/schemas/grill-round.json",
+    "factory/schemas/grill.json",
+    ".claude/settings.json",
+    "WORKFLOW.md",
+    "docs/specs/accountable-engineering-loop.md",
+    "docs/specs/plan-approval.md",
+    "docs/decisions/0048-plan-mode-and-grill-provenance.md",
+    "factory/tests/test_gates.py"
+  ],
+  "recommendation": "approve",
+  "contract_verdicts": [
+    {
+      "contract_id": "ptl-1",
+      "verdict": "implemented",
+      "evidence": "factory/scripts/post_tool_use.py:47-70 marker branch with plan_body_digest and root/story scope; test_gates.py test_post_tool_use_records_plan_mode_marker, test_post_tool_use_marks_plan_outside_repo_with_raw_and_body_digests, test_post_tool_use_records_without_session_id"
+    },
+    {
+      "contract_id": "ptl-2",
+      "verdict": "implemented",
+      "evidence": "factory/scripts/post_tool_use.py:73-118 grill-round branch with chosen-null fallback; test_post_tool_use_records_ask_user_question_round, test_post_tool_use_round_without_response_records_chosen_null, test_post_tool_use_is_fail_open"
+    },
+    {
+      "contract_id": "ptl-3",
+      "verdict": "implemented",
+      "evidence": "factory/scripts/forge.py HOOK_SCRIPTS entry; .claude/settings.json PostToolUse matcher; factory/scripts/check_dual_runtime.py claude_only exemption; test_vendor_integrity_covers_post_tool_use"
+    },
+    {
+      "contract_id": "pmg-1",
+      "verdict": "implemented",
+      "evidence": "factory/scripts/factory_lib.py:1379-1401 plan_body_digest + require_plan_mode_marker (story then root); call sites plans.py cmd_save/cmd_approve, tasks.py cmd_plan_save/cmd_approve; six pmg tests incl. restamp and root-scope"
+    },
+    {
+      "contract_id": "pmg-2",
+      "verdict": "implemented",
+      "evidence": "factory/tests/test_gates.py record_grill plan_mode=True path marks every fixture plan through the real hook; test_plan_save_and_approve_accept_plan_with_plan_mode_marker"
+    },
+    {
+      "contract_id": "rpg-1",
+      "verdict": "implemented",
+      "evidence": "factory/scripts/record_grill_from_json.py GATE_ROUND_FLOORS:29, ledger match and frontier_empty:116; tests test_grill_refuses_round_not_in_ledger, test_grill_refuses_below_gate_floor, test_grill_refuses_missing_frontier_empty, test_grill_accepts_ledger_matched_rounds_happy_path"
+    },
+    {
+      "contract_id": "rpg-2",
+      "verdict": "implemented",
+      "evidence": "factory/scripts/factory_lib.py task_frontier_state author-task-plan first (:1560,:1607); tasks.py:69 require_grill=False at plan save; phase.py enforced-order text; test_task_grill_requires_saved_task_plan_with_tolerance"
+    },
+    {
+      "contract_id": "rpg-3",
+      "verdict": "implemented",
+      "evidence": "factory/tests/test_gates.py flipped inverse-order assertions and test_frontier_orders_task_plan_before_grill; full suite green at verify"
+    },
+    {
+      "contract_id": "dad-1",
+      "verdict": "implemented",
+      "evidence": "docs/decisions/0048 accepted by Ravi Kiran Vemula; docs/specs/accountable-engineering-loop.md and plan-approval.md amended and re-confirmed with enforcement-recorded grills"
+    },
+    {
+      "contract_id": "dad-2",
+      "verdict": "implemented",
+      "evidence": "WORKFLOW.md Task Planning enforced-order paragraph; test_docs_state_enforced_order at test_gates.py:15919; check_dual_runtime clean"
+    },
+    {
+      "contract_id": "fft-1",
+      "verdict": "implemented",
+      "evidence": "factory/tests/test_gates.py:15673 asserts author-task-plan routed first then real task plan save/approve then the grill route; no assertion deleted"
+    },
+    {
+      "contract_id": "fft-2",
+      "verdict": "implemented",
+      "evidence": "verify.py Verification passed on the full suite after the fix"
+    }
+  ],
+  "aspect": "quality",
+  "review_run_id": "2040786ac6ed92748945e2b07879ecbd1dd826d94afba8bf1a4fb232dcabb5b8",
+  "brief_sha256": "bc6ecb614fb9f924dd87f78430d38cef257d915d21be9b4b7d0116139a54a8c5",
+  "branch_diff_digest": "2aac55cf67c338402c04dd9a0b05a727b5bcb44613848f00ed869ba0d9a8cbe0",
+  "recorded_at": "2026-08-24T14:00:30+00:00",
+  "commit": "6df3ef73e5740e105af7cbc9725e7ec10b6cdab7"
+}
