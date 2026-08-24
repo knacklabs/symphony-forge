@@ -8376,6 +8376,48 @@ def test_plan_mode_marker_matches_body_not_assumptions(repo, tmp_path):
     assert "plan-mode marker required" not in out
 
 
+def test_plan_mode_marker_in_root_scope_counts_for_active_story(repo, tmp_path):
+    sign_off(repo)
+    plan = tmp_path / "root-scope-plan.md"
+    plan.write_text(plan_draft(repo))
+    code, out = post_hook(repo, plan_hook_payload(plan))
+    assert code == 0, out
+    assert list((repo / ".factory" / "plan-mode").glob("*.json"))
+
+    intake(repo)
+    code, out = record_grill(repo, "plan", digest_of=plan, plan_mode=False)
+    assert code == 0, out
+    code, out = run(repo, "forge.py", "plan", "save", "--from", str(plan),
+                    "--story", "ENG-1")
+
+    assert code != 0 and "awaiting-approval" in out, out
+    assert "plan-mode marker required" not in out
+
+
+def test_plan_save_restamp_does_not_invalidate_marker(repo, tmp_path):
+    sign_off(repo)
+    intake(repo)
+    plan = tmp_path / "restamped-plan.md"
+    plan.write_text(plan_draft(repo))
+    code, out = record_grill(repo, "plan", digest_of=plan, plan_mode=False)
+    assert code == 0, out
+    code, out = post_hook(repo, plan_hook_payload(plan))
+    assert code == 0, out
+
+    code, out = run(repo, "forge.py", "plan", "save", "--from", str(plan),
+                    "--story", "ENG-1")
+    assert code != 0 and "awaiting-approval" in out, out
+    active = next((repo / "plans" / "active").glob("ENG-1-*.md"))
+    code, out = record_grill(repo, "plan", digest_of=active, plan_mode=False)
+    assert code == 0, out
+    code, out = run(repo, "forge.py", "plan", "approve", "--by", "Client PM")
+    assert code == 0, out
+    code, out = run(repo, "forge.py", "plan", "save", "--from", str(active),
+                    "--story", "ENG-1")
+
+    assert code == 0 and run_state(repo)["plan_status"] == "approved", out
+
+
 def test_plan_approve_refuses_without_a_fresh_plan_grill(repo, tmp_path):
     sign_off(repo)
     intake(repo)

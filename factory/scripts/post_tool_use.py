@@ -13,7 +13,7 @@ from factory_lib import (
     _active_story_key,
     dump_json,
     evidence_path,
-    plan_digest_without_assumptions,
+    plan_body_digest,
     repo_root,
     validate_payload,
 )
@@ -58,7 +58,7 @@ def _plan_marker(root: Path, payload: dict) -> dict | None:
         "generated_by": "claude-code:plan-mode",
         "path": str(path),
         "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
-        "sha256_body": plan_digest_without_assumptions(path),
+        "sha256_body": plan_body_digest(path),
         "at": datetime.now(timezone.utc).isoformat(),
         "session_id": session_id or "",
     }
