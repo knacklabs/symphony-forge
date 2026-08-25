@@ -1,0 +1,10 @@
+{
+  "event": "open",
+  "id": "Q-0102-1d4b",
+  "profile": "quickfix",
+  "reason": "reviewer.md + decomposer.md: enforce coherent file/folder organisation (technology-agnostic); delegate.py: surface open worker signals during supervision",
+  "started_at": "2026-08-25T03:43:51+00:00",
+  "max_files": 5,
+  "files": [],
+  "harness_source": true
+}
