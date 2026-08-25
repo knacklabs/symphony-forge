@@ -97,6 +97,14 @@ A task is not PR-ready until all of these exist:
 
 ## Non-Negotiables
 
+- The constitution binds HOW code is written, not just conduct. Every agent that
+  touches code — Claude, Codex, or any subagent or Codex agent either of them
+  releases, in ANY environment including a sandbox/worktree with no network
+  (`constitution/` is vendored on disk, always readable) — reads
+  `constitution/README.md` and follows the matching coding standards, at
+  implement, grill/re-grill, review, autoreview, and lens time. Whoever spawns an
+  agent passes it this instruction; tasks CITE the constitution, never re-derive or
+  contradict it.
 - Keep tasks bounded and capability-driven; plans bind one roadmap story and attest all active decisions.
 - The session write lock is always armed: delegate locked writes; use `forge mode degraded` only during a companion outage.
 - Do not decompose by document file or arbitrary file count.

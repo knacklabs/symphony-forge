@@ -67,6 +67,20 @@ Five gates, five scopes:
   one ecosystem's tool. Fail the plan when code ships with no configured lint/
   format/static-analysis gate that an automated check enforces on every push; an
   absent linter is a silent quality default exactly like an unjustified tool pick.
+  Also hold the plan against the CONSTITUTION's coding standards
+  (`constitution/README.md` index — read the references it maps to the plan's
+  surfaces). The constitution is law, so a plan whose SHAPE omits or contradicts a
+  mandated standard is a GAP, not a style preference: HTTP surfaces with no typed
+  request AND response DTOs (`pnp-api-standards`, `pnp-swagger-api-documentation-
+  standards`), a module ignoring the modular-monolith layout or file-suffix
+  standards (`pnp-coding-standards-modular-monolith`, `03`), missing structured
+  logging (`05`/`06`) or domain exception handling (`07`), an external integration
+  that skips the provider/port pattern (`08`, `pnp-provider-pattern-for-
+  integration`), or database work ignoring `pnp-database-standards`. Flag each and
+  require the plan to conform or record a deliberate, written deviation — never
+  wave it through as "the implementer will follow standards later"; a plan must not
+  design AGAINST the law. (Do this whether you grill as a Claude subagent or a
+  read-only Codex pass; `constitution/` is on disk in every environment.)
   Reconcile the plan explicitly against
   EVERY ID from `forge decision list --active`; a conflict becomes a
   contradiction signal or a superseding decision, never a silent exception.
@@ -96,7 +110,10 @@ Five gates, five scopes:
   builds only domain services with no HTTP controllers/DTOs/routes; owns the UI
   row but ships no components) — reachability is part of "done", not a later
   task's problem, required tests that do not prove those criteria, verify commands that
-  cannot falsify the change, reviewer focus that misses the risky seam, and a
+  cannot falsify the change, reviewer focus that misses the risky seam OR that
+  re-states shape rules the constitution already sets instead of CITING the
+  load-bearing `constitution/` references for the task (the contract points at the
+  law, never re-derives or contradicts it), and a
   `user_facing` flag that misclassifies the task — a UI task left `false` (its
   mandatory design skills and design review would be skipped) or a backend task
   marked `true` (forced to attest UI design skills it has no use for).

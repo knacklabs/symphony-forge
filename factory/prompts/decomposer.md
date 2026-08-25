@@ -106,16 +106,21 @@ on the selected task:
   Never use a shell or `env` wrapper and never emit opaque strings. `stage done`
   checks the path, runs the argv, and requires the fresh report to name the id
   exactly with `file` equal to that path.
-- `reviewer_focus` — state the expected code SHAPE and ORGANISATION, not just the
-  behaviour, so the implementer builds it navigable the first time. Name how files
-  and folders group by responsibility AND concern (e.g. types, constants, enums,
-  domain errors, data access, mapping, validation, and a thin coordinator each in
-  their own file; a large module split into coherent directories, not a flat
-  dump), and call out concerns that must NOT share a file (e.g. typed enums mixed
-  with primitive constants and DI tokens). This is technology-AGNOSTIC: require a
-  coherent, maintainable organisation appropriate to the stack — matched to the
-  module's real responsibilities and known growth, NOT one mandated layout and NOT
-  speculative structure. The reviewer's quality lens enforces this focus.
+- `reviewer_focus` — point the implementer at the CONSTITUTION for code shape and
+  organisation, then add only what is task-SPECIFIC. The constitution's coding
+  standards (`constitution/README.md` → `pnp-coding-standards-modular-monolith.md`,
+  `03-modular-monolith-structure.md`, plus the API/Swagger/logging/exception/
+  notification references it indexes) ALREADY mandate file suffixes, DTOs (request
+  AND response), mappers, interfaces, providers, module layout, structured logging,
+  and domain error handling — so DO NOT re-derive or re-state those rules per task.
+  Restating standards the constitution already sets is the anti-pattern that lets
+  bespoke, drifting shape rules quietly REPLACE the law; cite the law instead.
+  Write `reviewer_focus` as: (1) which constitution references are load-bearing for
+  THIS task, and (2) the task-specific risky seam and the concerns that must not
+  share a file — framed as CONFORMANCE to the constitution, never as a new invented
+  layout. This stays technology-AGNOSTIC because the constitution is: it mandates
+  coherent standards, not one speculative layout. The reviewer's quality lens
+  enforces conformance to the constitution PLUS this task-specific focus.
 
 Re-record the complete decomposition with
 `record_decomposition_from_json.py`, preserving task ids, order, and completed

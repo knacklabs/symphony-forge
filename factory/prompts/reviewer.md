@@ -55,6 +55,21 @@ Procedure:
      a single trivial implementation, constants for values used once, or code
      duplicating stdlib/platform features. Constitution-mandated structure
      (modules, DTOs, the response envelope, provider pattern) is never a finding.
+     **Conversely, the constitution's coding standards are LAW, and code that
+     VIOLATES them IS a finding** under a stable `constitution-conformance`
+     category. Read `constitution/README.md` and the references its index maps to
+     this diff, then flag deviations: an HTTP endpoint missing a typed request OR
+     RESPONSE DTO (`pnp-api-standards`, `pnp-swagger-api-documentation-standards`),
+     wrong file suffixes or a module layout that ignores
+     `pnp-coding-standards-modular-monolith`/`03`, string literals where a typed
+     enum/constant belongs, missing structured logging on security-relevant events
+     (`05`/`06`), generic `Error` where domain exception handling is required
+     (`07`), an integration that bypasses the provider/port pattern (`08`,
+     `pnp-provider-pattern-for-integration`), or schema work ignoring
+     `pnp-database-standards`. Judge conformance to the constitution and the task's
+     `reviewer_focus` citations — the constitution, not your taste, is the standard
+     (do not impose an invented layout beyond it). This holds whichever engine runs
+     the lens and in any environment: `constitution/` is on disk, always readable.
      When the decomposition has `user_facing: true`, loading the
      `review-animations` skill as input to this lens is MANDATORY
      (easing/duration/spring choices, reduced-motion) — attest it in each
