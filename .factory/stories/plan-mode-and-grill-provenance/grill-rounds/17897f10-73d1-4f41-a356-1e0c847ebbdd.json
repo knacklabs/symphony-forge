@@ -1,0 +1,34 @@
+{
+  "generated_by": "claude-code:plan-mode",
+  "questions": [
+    {
+      "question": "Story 1 \u2014 'the check that checked nothing'. Which incident anchors it?",
+      "options": [
+        "Green suite that was red (Recommended)",
+        "49 green tests, real launch crashed",
+        "verify.json attests a commit it never tested"
+      ],
+      "chosen": "Green suite that was red (Recommended)"
+    },
+    {
+      "question": "Story 4 \u2014 'reaches for the off switch'. Lead incident?",
+      "options": [
+        "0048 plan-mode provenance, 2026-08-21 (Recommended)",
+        "0009 frozen gate surface",
+        "0030 marker deletion"
+      ],
+      "chosen": "0048 plan-mode provenance, 2026-08-21 (Recommended)"
+    },
+    {
+      "question": "What should the ~60s pre-recorded clip show?",
+      "options": [
+        "Hook denies a product edit, then delegate (Recommended)",
+        "pr_ready refusing with missing[] list",
+        "forge doctor executing hooks verbatim"
+      ],
+      "chosen": "Hook denies a product edit, then delegate (Recommended)"
+    }
+  ],
+  "at": "2026-08-25T12:22:31.416957+00:00",
+  "session_id": "5ca7889f-b2c5-4169-9f29-5cb1f6fc3956"
+}

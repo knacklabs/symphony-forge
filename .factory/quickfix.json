@@ -5,7 +5,8 @@
   "started_at": "2026-08-25T10:01:27+00:00",
   "max_files": 5,
   "files": [
-    "factory/scripts/post_tool_use.py"
+    "factory/scripts/post_tool_use.py",
+    "factory/tests/test_gates.py"
   ],
   "harness_source": true,
   "by": "Ravi Kiran Vemula",

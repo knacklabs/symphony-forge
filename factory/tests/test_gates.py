@@ -30,6 +30,24 @@ import pytest
 
 HARNESS = Path(__file__).resolve().parents[2]
 FORGE_INIT_FIXTURE = HARNESS / ".factory" / "history" / "FORGE-INIT-1"
+UPGRADE_PROJECT_SKILL_FIXTURE = (
+    HARNESS / "install" / "claude" / "knacklabs-upgrade-project" / "SKILL.md"
+)
+SANITISE_PROJECT_SKILL_FIXTURE = (
+    HARNESS / "install" / "claude" / "knacklabs-sanitise-project" / "SKILL.md"
+)
+SETUP_FIXTURE = HARNESS / "setup"
+HARNESS_SOURCE_MARKER_FIXTURE = HARNESS / ".factory" / "harness-source.json"
+PR_LINK_WORKFLOW_FIXTURE = HARNESS / ".github" / "workflows" / "pr-link.yml"
+BOARD_INVARIANT_WORKFLOW_FIXTURE = (
+    HARNESS / ".github" / "workflows" / "board-invariant.yml"
+)
+PLANNING_LOCK_DECISION_FIXTURE = (
+    HARNESS / "docs" / "decisions" / "0013-always-armed-planning-lock.md"
+)
+PLAN_MODE_DECISION_FIXTURE = (
+    HARNESS / "docs" / "decisions" / "0048-plan-mode-and-grill-provenance.md"
+)
 sys.path.insert(0, str(HARNESS / "factory" / "scripts"))
 from factory_lib import (
     branch_diff_digest, grounding_digest, plan_digest_without_assumptions,
@@ -74,12 +92,14 @@ def fake_psutil(processes, *, current_user="owner"):
     )
 
 
+@pytest.mark.skipif(
+    not (UPGRADE_PROJECT_SKILL_FIXTURE.is_file() and SETUP_FIXTURE.is_file()),
+    reason="requires the upgrade-project harness-source fixtures",
+)
 def test_upgrade_project_skill_structure_and_registration():
-    skill_path = (
-        HARNESS / "install" / "claude" / "knacklabs-upgrade-project" / "SKILL.md"
-    )
+    skill_path = UPGRADE_PROJECT_SKILL_FIXTURE
     skill = skill_path.read_text()
-    setup = (HARNESS / "setup").read_text()
+    setup = SETUP_FIXTURE.read_text()
 
     assert skill_path.is_file()
     assert "name: knacklabs-upgrade-project" in skill
@@ -124,10 +144,12 @@ def test_upgrade_project_skill_structure_and_registration():
     assert "knacklabs-upgrade-project" in bootstrap_loop.group(1).split()
 
 
+@pytest.mark.skipif(
+    not UPGRADE_PROJECT_SKILL_FIXTURE.is_file(),
+    reason="requires the upgrade-project harness-source fixture",
+)
 def test_upgrade_project_skill_uses_fill_not_import():
-    skill = (
-        HARNESS / "install" / "claude" / "knacklabs-upgrade-project" / "SKILL.md"
-    ).read_text()
+    skill = UPGRADE_PROJECT_SKILL_FIXTURE.read_text()
 
     assert '"$TARGET/forge" roadmap fill "$KEY"' in skill
     assert '--repo "$TARGET"' in skill
@@ -136,12 +158,14 @@ def test_upgrade_project_skill_uses_fill_not_import():
     assert "Never select or rewrite a completed" in skill
 
 
+@pytest.mark.skipif(
+    not (SANITISE_PROJECT_SKILL_FIXTURE.is_file() and SETUP_FIXTURE.is_file()),
+    reason="requires the sanitise-project harness-source fixtures",
+)
 def test_sanitise_skill_structure_and_registration():
-    skill_path = (
-        HARNESS / "install" / "claude" / "knacklabs-sanitise-project" / "SKILL.md"
-    )
+    skill_path = SANITISE_PROJECT_SKILL_FIXTURE
     skill = skill_path.read_text()
-    setup = (HARNESS / "setup").read_text()
+    setup = SETUP_FIXTURE.read_text()
 
     assert skill_path.is_file()
     assert "name: knacklabs-sanitise-project" in skill
@@ -2621,6 +2645,10 @@ def test_upgrade_names_diverged_doc_contracts_and_writes_no_backup(repo):
     assert not list(repo.rglob("*.orig"))
 
 
+@pytest.mark.skipif(
+    not HARNESS_SOURCE_MARKER_FIXTURE.is_file(),
+    reason="requires the harness-source marker fixture",
+)
 def test_upgrade_does_not_vendor_the_harness_source_marker(repo):
     # `forge upgrade` runs FROM the harness source, which carries the repo-kind
     # marker. It must never copy that marker into the upgraded client, or the
@@ -5713,10 +5741,14 @@ def test_adopt_refuses_a_symlinked_ancestor_and_leaves_the_target_clean(
 
 # ------------------------------------------------------- project-local gstack
 
+@pytest.mark.skipif(
+    not PR_LINK_WORKFLOW_FIXTURE.is_file(),
+    reason="requires the pr-link workflow harness-source fixture",
+)
 def test_pr_link_commit_skips_ci():
     # D-0017: without [skip ci], the bot-attributed synchronize wave is held
     # action_required and strands the PR's checks behind a manual re-trigger.
-    workflow = (HARNESS / ".github" / "workflows" / "pr-link.yml").read_text()
+    workflow = PR_LINK_WORKFLOW_FIXTURE.read_text()
     assert "workflow_run:\n    workflows: [factory-scaffold]\n    types: [completed]" in workflow
     assert "github.event.workflow_run.conclusion == 'success'" in workflow
     assert "statuses: write" in workflow
@@ -8203,7 +8235,10 @@ def test_forge_fix_records_terra_high_write_delegation(repo, tmp_path):
     assert code == 0, out
     window = json.loads((repo / ".factory" / "quickfix.json").read_text())
     before = head(repo)
-    companion_env = fake_companion_env(tmp_path)
+    companion_env = {
+        **fake_companion_env(tmp_path),
+        "PYTHONPATH": str(_fake_psutil_module(tmp_path)),
+    }
     companion_cache = (Path(companion_env["HOME"]) / ".claude" / "plugins" /
                        "cache" / "openai-codex" / "codex")
     companion = next(companion_cache.glob("*/scripts/codex-companion.mjs"))
@@ -8287,11 +8322,12 @@ def test_mode_list_shows_open_lite_window(repo):
     assert "one review is required" in context and "./forge mode done" in context
 
 
+@pytest.mark.skipif(
+    not PLANNING_LOCK_DECISION_FIXTURE.is_file(),
+    reason="requires the planning-lock decision harness-source fixture",
+)
 def test_docs_describe_three_planning_lock_exits():
-    decision = (
-        HARNESS / "docs" / "decisions" /
-        "0013-always-armed-planning-lock.md"
-    ).read_text().lower()
+    decision = PLANNING_LOCK_DECISION_FIXTURE.read_text().lower()
     entry_contract = (
         HARNESS / "docs" / "memory" / "factory-entry-contract.md"
     ).read_text().lower()
@@ -9380,9 +9416,14 @@ def test_check_board_complete_predates_ok(repo):
     assert code == 0 and "Board completeness check OK" in out, out
 
 
+@pytest.mark.skipif(
+    not (PR_LINK_WORKFLOW_FIXTURE.is_file() and
+         BOARD_INVARIANT_WORKFLOW_FIXTURE.is_file()),
+    reason="requires the Gate B workflow harness-source fixtures",
+)
 def test_gate_b_workflows_link_the_branch_and_check_main():
-    link = (HARNESS / ".github" / "workflows" / "pr-link.yml").read_text()
-    invariant = (HARNESS / ".github" / "workflows" / "board-invariant.yml").read_text()
+    link = PR_LINK_WORKFLOW_FIXTURE.read_text()
+    invariant = BOARD_INVARIANT_WORKFLOW_FIXTURE.read_text()
 
     assert "workflow_run:" in link
     assert "workflows: [factory-scaffold]" in link
@@ -10766,6 +10807,8 @@ def test_adhoc_capture_is_visible_debt_not_a_build_bypass(repo, tmp_path):
 def test_append_event_writes_new_file_no_shared_ledger(repo):
     attrs = (repo / ".gitattributes").read_text()
     ledger = repo / ".factory" / "events.jsonl"
+    event_dir = repo / ".factory" / "events"
+    before_event_files = set(event_dir.glob("*.json"))
     ledger.parent.mkdir(exist_ok=True)
     ledger.write_text('{"event": "legacy"}\n')
     before = ledger.read_bytes()
@@ -10773,7 +10816,9 @@ def test_append_event_writes_new_file_no_shared_ledger(repo):
     code, out = run(repo, "forge.py", "pr-link", "ENG-1", "acme/widgets#42")
     assert code == 0, out
 
-    event_files = list((repo / ".factory" / "events").glob("*.json"))
+    event_files = [
+        path for path in event_dir.glob("*.json") if path not in before_event_files
+    ]
     assert len(event_files) == 1
     written = json.loads(event_files[0].read_text())
     assert written["event"] == "pr-linked"
@@ -11370,6 +11415,26 @@ def fake_companion_home(tmp_path: Path) -> Path:
 
 def fake_companion_env(tmp_path: Path) -> dict[str, str]:
     return {"HOME": str(fake_companion_home(tmp_path))}
+
+
+def _fake_psutil_module(tmp_path: Path) -> Path:
+    """Provide the minimal process-discovery contract for CLI fixture runs."""
+    module = tmp_path / "psutil.py"
+    module.write_text(
+        "class Error(Exception): pass\n"
+        "class AccessDenied(Exception): pass\n"
+        "class NoSuchProcess(Exception): pass\n"
+        "STATUS_ZOMBIE = 'zombie'\n"
+        "class Process:\n"
+        "    def __init__(self, _pid=None): pass\n"
+        "    def create_time(self): return 1.0\n"
+        "    def children(self, recursive=False): return []\n"
+        "    def username(self): return 'fixture-user'\n"
+        "    def is_running(self): return False\n"
+        "    def status(self): return STATUS_ZOMBIE\n"
+        "def process_iter(_attrs=None): return iter(())\n"
+    )
+    return tmp_path
 
 
 def launch_fake(repo: Path, tmp_path: Path, stage_id: str) -> None:
@@ -15932,11 +15997,12 @@ def test_docs_state_the_enforced_jit_contract():
     assert "findings and refusals always in full" in agents
 
 
+@pytest.mark.skipif(
+    not PLAN_MODE_DECISION_FIXTURE.is_file(),
+    reason="requires the plan-mode decision harness-source fixture",
+)
 def test_docs_state_enforced_order():
-    decision = (
-        HARNESS / "docs" / "decisions" /
-        "0048-plan-mode-and-grill-provenance.md"
-    ).read_text()
+    decision = PLAN_MODE_DECISION_FIXTURE.read_text()
     loop_spec = (
         HARNESS / "docs" / "specs" / "accountable-engineering-loop.md"
     ).read_text()
@@ -17070,7 +17136,15 @@ def test_fixture_bound_tests_skip_in_a_fixture_free_client_scaffold(
          "-p", "no:cacheprovider", "-q", "-k",
          "historical_decomposition_artifacts_still_parse or "
          "precontract_stories_are_marked_without_synthesized_outcomes or "
-         "shipped_roadmap_satisfies_the_story_contract"],
+         "shipped_roadmap_satisfies_the_story_contract or "
+         "upgrade_project_skill_structure_and_registration or "
+         "upgrade_project_skill_uses_fill_not_import or "
+         "sanitise_skill_structure_and_registration or "
+         "upgrade_does_not_vendor_the_harness_source_marker or "
+         "pr_link_commit_skips_ci or "
+         "docs_describe_three_planning_lock_exits or "
+         "gate_b_workflows_link_the_branch_and_check_main or "
+         "docs_state_enforced_order"],
         cwd=target, capture_output=True, text=True,
         env={**os.environ, "PYTEST_ADDOPTS": "-o tmp_path_retention_policy=none"},
     )

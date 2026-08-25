@@ -1,0 +1,25 @@
+{
+  "generated_by": "claude-code:plan-mode",
+  "questions": [
+    {
+      "question": "What should the slide deliverable be? (this decides what the plan produces)",
+      "options": [
+        "Markdown outline + speaker notes (Recommended)",
+        ".pptx via the pptx skill",
+        "Marp / reveal.js markdown"
+      ],
+      "chosen": "Markdown outline + speaker notes (Recommended)"
+    },
+    {
+      "question": "Do you want a live demo or terminal recording of Symphony Forge in the 22 minutes?",
+      "options": [
+        "No demo \u2014 screenshots/snippets only (Recommended)",
+        "One short pre-recorded clip",
+        "Live demo"
+      ],
+      "chosen": "One short pre-recorded clip"
+    }
+  ],
+  "at": "2026-08-25T12:19:05.187211+00:00",
+  "session_id": "5ca7889f-b2c5-4169-9f29-5cb1f6fc3956"
+}
