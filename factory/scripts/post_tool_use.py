@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import hashlib
 import json
-import sys
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
@@ -14,6 +13,7 @@ from factory_lib import (
     dump_json,
     evidence_path,
     plan_body_digest,
+    read_stdin_utf8,
     repo_root,
     validate_payload,
 )
@@ -119,7 +119,7 @@ def _grill_round(root: Path, payload: dict) -> dict | None:
 
 def main() -> None:
     try:
-        payload = json.load(sys.stdin)
+        payload = json.loads(read_stdin_utf8())
         if not isinstance(payload, dict):
             return
         root = repo_root()

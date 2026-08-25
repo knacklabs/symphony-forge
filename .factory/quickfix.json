@@ -1,0 +1,13 @@
+{
+  "id": "Q-0107-8f79",
+  "profile": "lite",
+  "reason": "CI encoding-hygiene red on PR 136: one-line stdin reader fix in post_tool_use.py",
+  "started_at": "2026-08-25T10:01:27+00:00",
+  "max_files": 5,
+  "files": [
+    "factory/scripts/post_tool_use.py"
+  ],
+  "harness_source": true,
+  "by": "Ravi Kiran Vemula",
+  "base_sha": "625e00962b7237b761c81ce6135fc11fa90fa0b8"
+}
