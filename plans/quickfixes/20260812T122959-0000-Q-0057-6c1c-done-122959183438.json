@@ -1,0 +1,13 @@
+{
+  "event": "done",
+  "id": "Q-0057-6c1c",
+  "profile": "degraded",
+  "kind": "degraded",
+  "reason": "final stage-authority repair: 2.1 started on dirty tree so dirty_at_start masks its committed work; re-adopt via migrate against clean HEAD a505eb7 with true base a604f12",
+  "started_at": "2026-08-12T12:28:34+00:00",
+  "completed_at": "2026-08-12T12:29:59+00:00",
+  "files": [
+    ".git/worktrees/symphony-forge-FORGE-WIN-2/forge/stages.json",
+    ".git/worktrees/symphony-forge-FORGE-WIN-2/forge/decomposition.json"
+  ]
+}

@@ -365,9 +365,19 @@ sequence a JIT contract loop for every pending task:
 8. that stage's assumption rows are validated (`forge assumptions list --open`)
 9. smallest relevant checks run
 10. **local autoreview on the UNCOMMITTED diff until clean** (`autoreview
-   --mode local`, run DIRECTLY by the orchestrator with the autoreview
-   skill — never as a Codex handoff, which re-triggers the same skill one
-   indirection deeper) — a stage commits only clean
+   --mode local --max-priority P2`, run DIRECTLY by the orchestrator with the
+   autoreview skill — never as a Codex handoff, which re-triggers the same skill
+   one indirection deeper). P2, not P0-only: the review enforces the structure
+   and validation the contract demanded. Keep the implementation UNCOMMITTED
+   through this fix/review loop and commit ONCE when it is clean — committing
+   product code mid-loop stales the task grill (its grounding is contract + plan
+   + product tree) and the write `forge delegate` refuses until you `git reset
+   --mixed HEAD~1`. When a review-driven fix genuinely cannot be verified inside
+   the companion sandbox (needs a database/network/Docker it lacks), the
+   orchestrator opens a bounded degraded window (`forge mode degraded start
+   --reason ...`, allowed mid-stage), makes the MINIMAL host fix, logs it with
+   `forge signal raise --kind host-exception`, verifies host-side, and resumes —
+   rather than re-delegating an unverifiable guess.
 11. commit, then `forge stage done <id>`
 
 `forge next` derives this frontier from the same readiness gate and reports
@@ -387,8 +397,45 @@ holds across phase transitions (verify → review → functional → pr_ready).
 It stops only for an open signal, a gate refusal it cannot resolve within
 the approved plan, a human-only act, or scope the plan does not cover.
 
+### Who authors what — no ambiguity once implementation starts
+
+After task-plan sign-off, the division of labour is FIXED, so a task never
+stalls on "should I do this or hand it to Codex?":
+
+- **Every product change is Codex's, via `forge delegate`.** Not only the
+  initial implementation — EVERY fix that diff inspection, the checks, verify,
+  or autoreview demand. A one-line config tweak, a dependency bump, a test
+  rename, a "trivial" correction: each is a fresh `forge delegate` against the
+  same contract, then re-inspect / re-review. The coordinator NEVER edits a
+  product file (app code, config, tests, schema, fixtures — anything that lands
+  in the committed diff) with its own hands.
+- **The coordinator's hands do only orchestration:** author task contracts,
+  compose briefs, delegate, run the checks / `verify.py` / required tests, run
+  the branch autoreview, record evidence via the `record_*` scripts, commit,
+  and — when the story reaches a PR — review that PR.
+- **Commit is not a human gate.** A clean local autoreview plus green checks IS
+  the permission to commit (conduct §7 autonomy above); the coordinator commits
+  and moves to the next stage without pausing for a human "ok to commit?". This
+  is what lets an unattended overnight run finish instead of stalling.
+- **The one exception — a logged host-exception.** When a required product
+  change is PROVABLY impossible in the companion's environment (a sandbox with
+  no network, database, or Docker that the change or its verification needs),
+  the coordinator may make the MINIMAL change on the host and MUST record why
+  with `forge signal raise ... --kind host-exception` (resolve it once done).
+  This is bounded and always ledgered — never the default, never silent.
+
+The point: from sign-off to green tests the coordinator has full, deterministic
+visibility of what it does versus what it delegates, and only genuine
+human-only acts (decisions, sign-off) or unresolvable gate refusals pause it.
+
 ## Task Planning
-Per-task planning runs in Claude Code plan mode by default (exploration
+Per-task planning runs in Claude Code plan mode — enforced, not advisory
+(decision 0048): the task plan is authored in plan mode (the PostToolUse
+hook records its plan-mode marker), then the task grill delivers its rounds
+through AskUserQuestion until `frontier_empty`, then a human approves
+(`forge task approve --by`), then `stage start`, then `delegate`. A task
+plan without a marker, or a grill whose rounds are not in the ledger, is
+refused by the recorders. (Exploration
 delegated to Codex: `/codex:rescue --model gpt-5.6-terra --effort high` —
 read-only by default, never Claude Code itself, never raw `codex exec`; plan
 validation, debugging and root-cause runs use `--model gpt-5.6-sol --effort xhigh`,

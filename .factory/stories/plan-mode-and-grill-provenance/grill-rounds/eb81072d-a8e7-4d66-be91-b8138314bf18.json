@@ -1,0 +1,15 @@
+{
+  "generated_by": "claude-code:plan-mode",
+  "questions": [
+    {
+      "question": "T5-1 \u2014 The frontier-routing test still asserts the old order (task 3 missed one assertion; the other 656 tests pass). Fix it as follow-up task flip-frontier-routing-test (frozen graph forbids reopening task 3), one file, Codex-delegated?",
+      "options": [
+        "Yes \u2014 follow-up task, proceed; frontier empty (Recommended)",
+        "Different approach"
+      ],
+      "chosen": "Yes \u2014 follow-up task, proceed; frontier empty (Recommended)"
+    }
+  ],
+  "at": "2026-08-24T13:28:26.733317+00:00",
+  "session_id": "9f647d39-defb-401c-b0b3-ad6ed23eabba"
+}

@@ -106,7 +106,16 @@ on the selected task:
   Never use a shell or `env` wrapper and never emit opaque strings. `stage done`
   checks the path, runs the argv, and requires the fresh report to name the id
   exactly with `file` equal to that path.
-- `reviewer_focus`
+- `reviewer_focus` — state the expected code SHAPE and ORGANISATION, not just the
+  behaviour, so the implementer builds it navigable the first time. Name how files
+  and folders group by responsibility AND concern (e.g. types, constants, enums,
+  domain errors, data access, mapping, validation, and a thin coordinator each in
+  their own file; a large module split into coherent directories, not a flat
+  dump), and call out concerns that must NOT share a file (e.g. typed enums mixed
+  with primitive constants and DI tokens). This is technology-AGNOSTIC: require a
+  coherent, maintainable organisation appropriate to the stack — matched to the
+  module's real responsibilities and known growth, NOT one mandated layout and NOT
+  speculative structure. The reviewer's quality lens enforces this focus.
 
 Re-record the complete decomposition with
 `record_decomposition_from_json.py`, preserving task ids, order, and completed

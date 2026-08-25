@@ -1,0 +1,15 @@
+{
+  "generated_by": "claude-code:plan-mode",
+  "questions": [
+    {
+      "question": "Accept decision 0048 (plan-mode-and-grill-provenance)? As-built: permission_mode-plan writes are the authorship proof via plan_body_digest markers (story-then-root); AskUserQuestion is the only sanctioned round source with exact chosen equality (tool_response live-proven); floors spec 2 / req 1 / plan 2 / task 1 + frontier_empty; task plan before task grill; Codex planner hands back to Claude; quickfix/degraded exempt; non-Claude sessions refused. Supersedes only 0044's zero-rounds sentence and 0029's not-the-signal sentence.",
+      "options": [
+        "Accept (Recommended)",
+        "Hold"
+      ],
+      "chosen": "Accept (Recommended)"
+    }
+  ],
+  "at": "2026-08-24T10:58:58.178439+00:00",
+  "session_id": "9f647d39-defb-401c-b0b3-ad6ed23eabba"
+}

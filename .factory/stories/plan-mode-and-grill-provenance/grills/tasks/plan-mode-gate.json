@@ -1,0 +1,79 @@
+{
+  "generated_by": "griller",
+  "gate": "task",
+  "issue": "plan-mode-and-grill-provenance",
+  "task_id": "plan-mode-gate",
+  "verdict": "pass",
+  "decision": "keep",
+  "questions_asked": 4,
+  "summary": "Task grill for plan-mode-gate in plan mode, one AskUserQuestion round, frontier empty: contract checked against the shipped hook (task 1), plans.py/tasks.py slot-in points, plan_digest_without_assumptions, evidence_path, and the gate-test helpers. Amended 2026-08-24 after the live restamp failure.",
+  "inspected_refs": [
+    "factory/scripts/post_tool_use.py",
+    "factory/scripts/forge_cli/plans.py",
+    "factory/scripts/forge_cli/tasks.py",
+    "factory/scripts/factory_lib.py",
+    "factory/tests/test_gates.py"
+  ],
+  "current_flow": "plans.cmd_save resolves the source, requires a matching plan grill and writes the active plan; cmd_approve re-checks the grill and writes plan-approval.json; tasks.cmd_plan_save copies any UTF-8 markdown; tasks.cmd_approve stamps the task grill. None of them consults the plan-mode markers task 1 now records under <scope>/plan-mode/.",
+  "criteria_map": {
+    "require_plan_mode_marker matches the digest of the plan BODY excluding both the harness-stamped frontmatter block and the Implementation Assumptions block (plan save re-stamps status/saved, which must not invalidate the marker), searching the active story scope then the root scope; plan save, plan approve, task plan save and task approve all call it": "require_plan_mode_marker (frontmatter+assumptions-excluded digest, story then root scope) + four call sites; six required tests incl. restamp and root-scope",
+    "gate tests prove refusal without a marker and success with one for both story and task plans": "the same tests plus record_grill's plan_mode marking through the real hook in every fixture"
+  },
+  "new_abstractions": [],
+  "gaps": [
+    "T1 \u2014 marker lookup order: story then root, or story only",
+    "T2 \u2014 existing fixtures: update every fixture via the real hook, or temporary env bypass",
+    "plan-mode-gate review: lookup ignores the root scope when a story is active; add required test test_plan_mode_marker_in_root_scope_counts_for_active_story?",
+    "Live failure 2026-08-24: plan save re-stamps status/saved frontmatter, so the approve-time marker check can never match without a fresh plan-mode round"
+  ],
+  "contradictions": [],
+  "resolutions": [
+    "Story scope then root scope, digest-only",
+    "Every fixture marks via the real hook; no bypass",
+    "Criterion 1 restated with story-then-root lookup; fifth required test added",
+    "Criterion 1 restated: the marker digest excludes the harness-stamped frontmatter block as well as the assumptions block; required test test_plan_save_restamp_does_not_invalidate_marker added"
+  ],
+  "rounds": [
+    {
+      "question": "T1 \u2014 marker lookup order: story then root, or story only",
+      "options": [
+        "Story then root",
+        "Story scope only"
+      ],
+      "chosen": "Story then root"
+    },
+    {
+      "question": "T2 \u2014 existing fixtures: update every fixture via the real hook, or temporary env bypass",
+      "options": [
+        "Update every fixture, no bypass",
+        "Temporary FORGE_SKIP_PLAN_MODE for tests only"
+      ],
+      "chosen": "Update every fixture, no bypass"
+    },
+    {
+      "question": "plan-mode-gate review: lookup ignores the root scope when a story is active; add required test test_plan_mode_marker_in_root_scope_counts_for_active_story?",
+      "options": [
+        "Approve",
+        "Drop the root fallback instead"
+      ],
+      "chosen": "Approve"
+    }
+  ],
+  "citations": [
+    {
+      "finding": "marker sha256_body uses plan_digest_without_assumptions",
+      "source": "factory/scripts/post_tool_use.py"
+    },
+    {
+      "finding": "Live failure 2026-08-24: plan save re-stamps status/saved frontmatter, so the approve-time marker check can never match without a fresh plan-mode round",
+      "source": "factory/scripts/forge_cli/plans.py cmd_save (frontmatter restamp) observed live against the story's own plan"
+    }
+  ],
+  "open_items": [],
+  "input_sha256": "fc92a254f6cb684e76c27eddeb26977c4a6c5c3f818545be8a08aa669d87c9db",
+  "recorded_at": "2026-08-24T10:06:05+00:00",
+  "commit": "161b0fff807cfce4fa313db18e97ece9cfbe6f3e",
+  "approved_task_plan_sha256": "8c9f7c7e6e609ffe76fe273bf85bd14a8bc76f09e0094b3ecf4f74e1ba281089",
+  "approved_by": "Ravi Kiran Vemula",
+  "approved_at": "2026-08-24T10:07:16+00:00"
+}

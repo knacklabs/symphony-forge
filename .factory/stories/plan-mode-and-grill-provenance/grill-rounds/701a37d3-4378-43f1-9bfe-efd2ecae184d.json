@@ -1,0 +1,15 @@
+{
+  "generated_by": "claude-code:plan-mode",
+  "questions": [
+    {
+      "question": "Approve the docs-and-decision task plan? (I write decision 0048 update + two spec amendments + WORKFLOW.md; Codex writes only the doc-consistency test; both spec re-confirms grilled under the new enforcement.)",
+      "options": [
+        "Approve (Recommended)",
+        "Hold"
+      ],
+      "chosen": "Approve (Recommended)"
+    }
+  ],
+  "at": "2026-08-24T10:54:38.805968+00:00",
+  "session_id": "9f647d39-defb-401c-b0b3-ad6ed23eabba"
+}

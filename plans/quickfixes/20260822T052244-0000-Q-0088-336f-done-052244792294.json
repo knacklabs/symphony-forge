@@ -1,0 +1,9 @@
+{
+  "event": "done",
+  "id": "Q-0088-336f",
+  "profile": "quickfix",
+  "reason": "stage-done read-only proof guard fixes (issue #112): verify.py proof-mode + product_tree_snapshot workflow-path exclusion",
+  "started_at": "2026-08-22T05:22:44+00:00",
+  "completed_at": "2026-08-22T05:22:44+00:00",
+  "files": []
+}

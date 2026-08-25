@@ -39,6 +39,14 @@ def repo_root() -> Path:
     return Path(out.stdout.strip())
 
 
+def vendored_client(root: Path) -> bool:
+    """True when this repo VENDORED the harness — factory/ and the vendored
+    adapters/canon are infrastructure a `forge upgrade` may rewrite mid-task, not
+    the task's product. The source harness repo has no constitution/VENDORED_FROM
+    marker; every client that ran forge upgrade/adopt/scaffold gets one."""
+    return (root / "constitution" / "VENDORED_FROM").is_file()
+
+
 def factory_dir(root: Path | None = None) -> Path:
     return (root or repo_root()) / ".factory"
 
@@ -644,7 +652,21 @@ def dump_json(path: Path, data: Any) -> None:
     path.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
 
 
+# Git's control dir is constant for a worktree over a process's lifetime, but
+# resolving it shells out to git twice. The board resolves it ~100× per poll
+# (once per run_state_path / evidence_path call), which turned a single request
+# into ~16s of subprocess churn on Windows. Memoise per resolved root so a
+# request costs two git calls, not two hundred. Only successful results are
+# cached; a failure re-runs so a transient git error is not pinned for the
+# process's life.
+_GIT_CONTROL_DIR_CACHE: dict[Path, Path] = {}
+
+
 def git_control_dir(root: Path) -> Path:
+    resolved = root.resolve()
+    cached = _GIT_CONTROL_DIR_CACHE.get(resolved)
+    if cached is not None:
+        return cached
     proc = subprocess.run(
         ["git", "rev-parse", "--absolute-git-dir"],
         cwd=root,
@@ -663,12 +685,14 @@ def git_control_dir(root: Path) -> Path:
         proc.returncode != 0
         or top.returncode != 0
         or not proc.stdout.strip()
-        or Path(top.stdout.strip()).resolve() != root.resolve()
+        or Path(top.stdout.strip()).resolve() != resolved
     ):
         raise SystemExit(
             "Cannot resolve Git's protected control directory for factory state."
         )
-    return Path(proc.stdout.strip()) / "forge"
+    result = Path(proc.stdout.strip()) / "forge"
+    _GIT_CONTROL_DIR_CACHE[resolved] = result
+    return result
 
 
 def protected_decomposition_state_path(root: Path) -> Path:
@@ -1173,17 +1197,36 @@ def head_sha(root: Path | None = None) -> str | None:
     return proc.stdout.strip() if proc.returncode == 0 else None
 
 
+def active_task_user_facing(root: Path) -> bool:
+    """Design-skill enforcement is PER TASK, not per story. A user_facing story
+    (e.g. one whose web app is a later task) still contains backend tasks with
+    no UI; forcing those to attest UI design skills is the bug this resolves.
+    Resolve the active stage's task and read ITS OWN user_facing flag, defaulting
+    to False when the task does not declare one — the planner marks UI tasks
+    user_facing: true, and the task grill enforces that a user_facing story does
+    so for the task(s) that build UI."""
+    stages = load_json(git_control_dir(root) / "stages.json", default={})
+    active = next((s for s in stages.get("stages", [])
+                   if isinstance(s, dict) and s.get("status") == "active"), None)
+    if not active:
+        return False
+    decomposition = load_json(
+        protected_decomposition_state_path(root), default={})
+    task = next((t for t in decomposition.get("tasks", [])
+                 if isinstance(t, dict) and t.get("id") == active.get("id")), {})
+    return bool(task.get("user_facing"))
+
+
 def require_skills(root: Path, name: str, payload: dict) -> None:
     """Feature-type skill enforcement (same trust model as generated_by):
-    when the recorded decomposition says user_facing, the artifact must
-    ATTEST the phase's mandatory skills in skills_used. Advisory skills are
-    listed too when used, but only the required set gates."""
+    when the ACTIVE TASK is user_facing, the artifact must ATTEST the phase's
+    mandatory skills in skills_used. Advisory skills are listed too when used,
+    but only the required set gates."""
     schema = json.loads(schema_path(root, name).read_text(encoding="utf-8"))
     required = schema.get("required_skills", {})
     if not required:
         return
-    decomposition = load_json(decomposition_state_path(root), default={})
-    if not decomposition.get("user_facing"):
+    if not active_task_user_facing(root):
         return
     used = payload.get("skills_used") or []
     missing = [s for s in required.get("user_facing", []) if s not in used]
@@ -1333,6 +1376,32 @@ def plan_digest_without_assumptions(path: Path) -> str:
     return hashlib.sha256(approved_text.encode()).hexdigest()
 
 
+def plan_body_digest(path: Path) -> str:
+    """Hash the authored plan body, excluding harness-managed content."""
+    raw = path.read_bytes()
+    frontmatter = re.match(br"\A---\r?\n.*?\r?\n---\r?\n", raw, re.DOTALL)
+    body = raw[frontmatter.end():] if frontmatter else raw
+    approved_body = body.partition(b"\n## Implementation Assumptions")[0]
+    return hashlib.sha256(approved_body).hexdigest()
+
+
+def require_plan_mode_marker(root: Path, plan: Path) -> None:
+    """Require plan-mode provenance for the current plan body."""
+    story_directory = evidence_path(root, _active_story_key(root), "plan-mode")
+    root_directory = evidence_path(root, None, "plan-mode")
+    digest = plan_body_digest(plan)
+    for directory in dict.fromkeys((story_directory, root_directory)):
+        markers = sorted(directory.glob("*.json")) if directory.is_dir() else ()
+        for marker_path in markers:
+            marker = load_json(marker_path, default={})
+            if marker.get("sha256_body") == digest:
+                return
+    raise SystemExit(
+        f"plan-mode marker required for {plan.name}: enter plan mode, edit or save "
+        "this exact plan file there, then retry without changing its body."
+    )
+
+
 def approved_plan_digest(
     root: Path, state: dict[str, Any], plan: Path,
 ) -> str | None:
@@ -1465,10 +1534,20 @@ def _task_contract_complete(task: dict) -> bool:
 
 
 def _task_grill_fresh(root: Path, task: dict, grill: dict) -> bool:
+    task_id = task.get("id")
+    plan = evidence_path(
+        root, _active_story_key(root), f"task-plans/{task_id}.md",
+    )
+    if not plan.is_file():
+        return False
+    plan_provenance_ok = (
+        grill.get("task_plan_sha256") == plan_digest_without_assumptions(plan)
+    )
     return bool(
         grill.get("verdict") == "pass"
         and grill.get("commit")
         and grill.get("input_sha256") == grounding_digest(root, task)
+        and plan_provenance_ok
     )
 
 
@@ -1523,11 +1602,14 @@ def task_rows(root: Path) -> list[dict]:
             state = "active"
         elif not _task_contract_complete(task):
             state = "skeleton"
-        elif not fresh:
-            state = "ready"
         else:
             plan_state = _task_plan_state(root, task, grill)
-            state = "grilled" if plan_state == "approved" else plan_state
+            if plan_state == "author-task-plan":
+                state = plan_state
+            elif not fresh:
+                state = "ready"
+            else:
+                state = "grilled" if plan_state == "approved" else plan_state
 
         budget = None
         if state == "active":
@@ -1602,9 +1684,11 @@ def task_frontier_state(root: Path) -> tuple[str, dict] | None:
 
     grill_path = evidence_path(root, key, f"grills/tasks/{task_id}.json")
     grill = load_json(grill_path, default={})
+    plan_state = _task_plan_state(root, frontier, grill)
+    if plan_state == "author-task-plan":
+        return plan_state, frontier
     if not _task_grill_fresh(root, frontier, grill):
         return "grill", frontier
-    plan_state = _task_plan_state(root, frontier, grill)
     if plan_state != "approved":
         return plan_state, frontier
     state = "delegate" if stage.get("status") == "active" else "stage-start"
@@ -1649,7 +1733,7 @@ def require_task_worktree(root: Path, *, allow_completed: bool = False) -> None:
 
 def require_ready_task(
     root: Path, task_id: str, *, require_approval: bool = True,
-    allow_completed: bool = False,
+    allow_completed: bool = False, require_grill: bool = True,
 ) -> dict:
     """Require the JIT execution contract and its fresh, passing grill."""
     tasks = load_json(
@@ -1693,18 +1777,19 @@ def require_ready_task(
     if allow_completed and completed:
         from forge_cli.stages import stage_baseline
         treeish = stage_baseline(root, stage)
-    require_task_grill(root, task_id, task, treeish=treeish)
-    if require_approval:
-        key = _active_story_key(root)
-        grill = load_json(
-            evidence_path(root, key, f"grills/tasks/{task_id}.json"), default={},
+    key = _active_story_key(root)
+    grill = load_json(
+        evidence_path(root, key, f"grills/tasks/{task_id}.json"), default={},
+    )
+    if require_approval and _task_plan_state(root, task, grill) == "author-task-plan":
+        raise SystemExit(
+            f"Task plan required first: author {task_id} in plan mode, then run "
+            f"`./forge task plan save {task_id} --from <path>`."
         )
+    if require_grill:
+        require_task_grill(root, task_id, task, treeish=treeish)
+    if require_approval:
         plan_state = _task_plan_state(root, task, grill)
-        if plan_state == "author-task-plan":
-            raise SystemExit(
-                f"Task plan required first: author {task_id} in plan mode, then run "
-                f"`./forge task plan save {task_id} --from <path>`."
-            )
         if plan_state == "await-approval":
             raise SystemExit(
                 f"Task plan approval required: a human must approve the current "
@@ -1760,12 +1845,20 @@ def require_task_sealed(root: Path, task_id: str) -> dict:
     from forge_cli.stages import _require_reviewed_commit, load_stages
 
     state = load_json(run_state_path(root), default={})
-    if state.get("task_id") != task_id:
-        raise SystemExit(
-            f"task worktree required: this worktree is bound to "
-            f"{state.get('task_id') or 'no task'!r}, not {task_id!r}"
-        )
-    require_task_worktree(root, allow_completed=True)
+    bound_task = state.get("task_id")
+    if bound_task:
+        # `forge task start` mode: the worktree is bound to a specific task_id;
+        # enforce that binding and the worktree pointer.
+        if bound_task != task_id:
+            raise SystemExit(
+                f"task worktree required: this worktree is bound to "
+                f"{bound_task!r}, not {task_id!r}"
+            )
+        require_task_worktree(root, allow_completed=True)
+    # Stage-based mode (no task_id in the run pointer, e.g. the task ran via
+    # `forge stage start` on the story branch): there is no task-bound worktree,
+    # so the seal is proven by the done stage + reviewed commit gate below
+    # rather than a worktree pointer.
     task = require_ready_task(root, task_id, allow_completed=True)
     stage = next(
         (candidate for candidate in load_stages(root).get("stages", [])

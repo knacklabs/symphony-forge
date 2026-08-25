@@ -1,0 +1,10 @@
+{
+  "event": "open",
+  "id": "Q-0106-044e",
+  "profile": "quickfix",
+  "reason": "CI encoding hygiene: post_tool_use.py must use the allowlisted strict UTF-8 stdin reader",
+  "started_at": "2026-08-25T10:00:26+00:00",
+  "max_files": 5,
+  "files": [],
+  "harness_source": true
+}

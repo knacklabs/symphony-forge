@@ -308,12 +308,14 @@ def cmd_next(args: argparse.Namespace) -> None:
                     )
                 elif frontier == "grill":
                     steps.append(
-                        f"[dev] Grill {task_id} with factory/prompts/griller.md --gate "
-                        "task; resolve findings and record the digest-bound pass"
+                        f"[dev] With the saved {task_id} task plan in place, grill it "
+                        "with factory/prompts/griller.md --gate task; resolve findings "
+                        "and record the digest-bound pass"
                     )
                 elif frontier == "author-task-plan":
                     steps.append(
-                        f"[dev] Enter plan mode and author {task_id}, then save it: "
+                        f"[dev] Before grilling, enter plan mode and author {task_id}, "
+                        "then save it: "
                         f"./forge task plan save {task_id} --from <path>"
                     )
                 elif frontier == "await-approval":
@@ -330,7 +332,18 @@ def cmd_next(args: argparse.Namespace) -> None:
                         f"[dev] Await {task_id} merge into main; its task marker is "
                         "not on origin/main yet, then rerun ./forge next"
                     )
-                if user_facing:
+                # Design-skill guidance is PER TASK, not per story. Before the
+                # contract is authored the task flag is not set, so prompt
+                # conditionally at author-contract; afterwards gate on the task's
+                # OWN user_facing, so a backend task in a user_facing story is not
+                # told its (nonexistent) UI skills are mandatory.
+                if frontier == "author-contract":
+                    steps[-1] += (
+                        " — if this task builds UI a person sees, set "
+                        "user_facing: true (emil-design-eng + frontend-design then "
+                        "MANDATORY); a backend task sets user_facing: false"
+                    )
+                elif task.get("user_facing"):
                     steps[-1] += (
                         " — User-facing task: emil-design-eng + frontend-design are "
                         "MANDATORY (recorder refuses the artifact without them in "
@@ -366,7 +379,11 @@ def cmd_next(args: argparse.Namespace) -> None:
                 steps.append(f"[EM] Guide {len(unguided)} open assumption(s) first "
                              "(pr_ready refuses them): forge.py assumptions list --open, "
                              "then assumptions resolve <id> --status ... --notes ...")
-            steps.append("[dev] Run: python3 factory/scripts/pr_ready.py (archives the task; merge stays manual)")
+            steps.append("[dev] Run: python3 factory/scripts/pr_ready.py (archives the story; merge stays manual)")
+            steps.append("[dev] Per-task PR instead: seal each completed task with "
+                         "`./forge task pr-ready <id>` — it writes the task marker, "
+                         "pushes the branch, and opens its PR to the repo default branch "
+                         "(works stage-based; no `forge task start` worktree required)")
             steps.append("[EM] Next task afterwards: pick from ./forge roadmap list --pending, "
                          "then intake.py --issue <KEY> --title \"<title>\"")
     from .decisions import decision_records

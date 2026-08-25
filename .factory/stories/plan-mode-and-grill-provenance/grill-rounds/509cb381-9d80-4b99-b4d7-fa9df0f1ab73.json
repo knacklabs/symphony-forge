@@ -1,0 +1,15 @@
+{
+  "generated_by": "claude-code:plan-mode",
+  "questions": [
+    {
+      "question": "T4-1 \u2014 Task 4 contract: docs + decision 0048 acceptance + one doc-consistency test (Codex writes only the test; I write the docs). The two spec re-confirms will be the first grills recorded under the new enforcement \u2014 if the recorder refuses them, that's a task-3 finding to fix, never to bypass. Record this contract and proceed?",
+      "options": [
+        "Record and proceed; frontier empty (Recommended)",
+        "Adjust first"
+      ],
+      "chosen": "Record and proceed; frontier empty (Recommended)"
+    }
+  ],
+  "at": "2026-08-24T10:50:53.481052+00:00",
+  "session_id": "9f647d39-defb-401c-b0b3-ad6ed23eabba"
+}

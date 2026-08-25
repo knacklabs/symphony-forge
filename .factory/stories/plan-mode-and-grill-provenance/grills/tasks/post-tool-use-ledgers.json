@@ -1,0 +1,104 @@
+{
+  "generated_by": "griller",
+  "gate": "task",
+  "issue": "plan-mode-and-grill-provenance",
+  "task_id": "post-tool-use-ledgers",
+  "verdict": "pass",
+  "decision": "keep",
+  "questions_asked": 5,
+  "summary": "Task grill for post-tool-use-ledgers in plan mode, one AskUserQuestion round, frontier empty: contract checked against the approved story plan, decisions 0022/0038/0029, the hook dispatcher, settings.json, evidence_path/validate_payload, and the gate-test helpers. Re-grilled after signal S-0009: write scope gains factory/scripts/check_dual_runtime.py for a reasoned PostToolUse parity exemption.",
+  "inspected_refs": [
+    "factory/scripts/forge.py",
+    ".claude/settings.json",
+    "factory/scripts/pre_tool_use.py",
+    "factory/scripts/factory_lib.py",
+    "factory/scripts/forge_cli/events.py",
+    "factory/tests/test_gates.py",
+    "plans/active/plan-mode-and-grill-provenance-plan-mode-and-grill-provenance-are-enforced-not-advisory.md"
+  ],
+  "current_flow": "Four hook scripts are dispatched by forge.py HOOK_SCRIPTS; settings.json has no PostToolUse; pre_tool_use.py parses tool_name, tool_input and permission_mode; per-story evidence is written under .factory/stories/<key>/ through evidence_path and validated by validate_payload; one record per file per 0022. Nothing records plan-mode writes or AskUserQuestion rounds today.",
+  "criteria_map": {
+    "forge hook post_tool_use records <scope>/plan-mode/<uuid>.json with path (absolute, may be outside the repo such as ~/.claude/plans/x.md), sha256 (raw bytes), sha256_body (plan_digest_without_assumptions), at, session_id ('' when absent), generated_by 'claude-code:plan-mode' for Write/Edit/MultiEdit made with permission_mode plan, and nothing for other modes; root-level dirs are used when no story is active": "post_tool_use.py branch A + plan-mode-marker schema + test_post_tool_use_records_plan_mode_marker + test_post_tool_use_marks_plan_outside_repo_with_raw_and_body_digests + test_post_tool_use_records_without_session_id",
+    "the same hook records <scope>/grill-rounds/<uuid>.json with questions (question, options, chosen \u2014 chosen null when tool_response is absent or not among the options), at, session_id ('' when absent), generated_by 'claude-code:plan-mode' for every AskUserQuestion whose tool_input.questions is usable; unparseable input exits 0 without writing": "post_tool_use.py branch B + grill-round schema + test_post_tool_use_records_ask_user_question_round + test_post_tool_use_round_without_response_records_chosen_null + test_post_tool_use_is_fail_open",
+    "both record kinds validate against new schemas; .claude/settings.json wires PostToolUse for Write|Edit|MultiEdit|AskUserQuestion; gate tests cover both record kinds and the fail-open path": "forge.py dispatcher entry + settings.json PostToolUse + check_dual_runtime exemption + test_vendor_integrity_covers_post_tool_use"
+  },
+  "new_abstractions": [],
+  "gaps": [
+    "T1 \u2014 PostToolUse exits 0 on failure vs PreToolUse exit 2",
+    "T2 \u2014 marker records sha256 and sha256_body, or body only",
+    "T3 \u2014 root-scope records committed like events?",
+    "S-0009 \u2014 how should PostToolUse satisfy the dual-runtime parity check?",
+    "Amend post-tool-use-ledgers: add three required tests (marker for a plan outside the repo with raw+body digests; round without tool_response records chosen null; missing session_id still records)?",
+    "verify.py listed as a task verify command although it appends a verify-passed event and stage done requires read-only proof"
+  ],
+  "contradictions": [],
+  "resolutions": [
+    "Explicit exit 0 for the PostToolUse command",
+    "Both digests recorded; gate compares body",
+    "Root-scope records committed like events",
+    "check_dual_runtime.py added to the write scope; PostToolUse exempted from Claude/Codex hook parity with a reason naming decision 0048 (Codex has no plan mode or AskUserQuestion)",
+    "Three required tests added; criteria 1 and 2 restated with the authoritative record contract (S-0010); findings are now failing tests the worker cannot skip",
+    "verify_commands reduced to check_dual_runtime.py; verify.py stays the story-level verify phase (precedent: FORGE-ACC-3 tasks)"
+  ],
+  "rounds": [
+    {
+      "question": "T1 \u2014 PostToolUse exits 0 on failure vs PreToolUse exit 2",
+      "options": [
+        "Exit 0 for PostToolUse, explicit",
+        "Fail closed like PreToolUse"
+      ],
+      "chosen": "Exit 0 for PostToolUse, explicit"
+    },
+    {
+      "question": "T2 \u2014 marker records sha256 and sha256_body, or body only",
+      "options": [
+        "Both",
+        "Body only"
+      ],
+      "chosen": "Both"
+    },
+    {
+      "question": "T3 \u2014 root-scope records committed like events?",
+      "options": [
+        "Yes, committed like events",
+        "Keep root-scope records untracked"
+      ],
+      "chosen": "Yes, committed like events"
+    },
+    {
+      "question": "S-0009 \u2014 how should PostToolUse satisfy the dual-runtime parity check?",
+      "options": [
+        "Exempt PostToolUse in check_dual_runtime.py with a stated reason",
+        "Mirror a PostToolUse entry into .codex/hooks.json"
+      ],
+      "chosen": "Exempt PostToolUse in check_dual_runtime.py with a stated reason"
+    },
+    {
+      "question": "Amend post-tool-use-ledgers: add three required tests (marker for a plan outside the repo with raw+body digests; round without tool_response records chosen null; missing session_id still records)?",
+      "options": [
+        "Approve amendment",
+        "Hold"
+      ],
+      "chosen": "Approve amendment"
+    }
+  ],
+  "citations": [
+    {
+      "finding": "hooks do not fire on ExitPlanMode; permission_mode is delivered per tool event",
+      "source": "docs/decisions/0029-plan-approval-in-plan-mode.md"
+    },
+    {
+      "finding": "verify.py listed as a task verify command although it appends a verify-passed event and stage done requires read-only proof",
+      "source": "factory/scripts/verify.py (append_event verify-passed) and factory/scripts/forge_cli/stages.py product_tree_snapshot"
+    }
+  ],
+  "open_items": [
+    "Live check of PostToolUse payloads after stage done"
+  ],
+  "input_sha256": "4ea25eb6029bf60a439dbb60481bf4b3e300c15bd1d8940e3efedd64b0de6ba8",
+  "recorded_at": "2026-08-21T11:04:37+00:00",
+  "commit": "befe217aa9e1a685b8033058a6edd42919bdf038",
+  "approved_task_plan_sha256": "66f746f5ee27b76df0fdbd122a83a9779080a94589d5aa029304fa42c93aacc3",
+  "approved_by": "Ravi Kiran Vemula",
+  "approved_at": "2026-08-21T11:17:40+00:00"
+}

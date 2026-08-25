@@ -1,0 +1,311 @@
+{
+  "generated_by": "claude-code:plan-mode",
+  "story": "plan-mode-and-grill-provenance",
+  "epic": "accountable-engineering",
+  "user_facing": false,
+  "plan_file": "plans/active/plan-mode-and-grill-provenance-plan-mode-and-grill-provenance-are-enforced-not-advisory.md",
+  "plan_sha256": "864b1fcf1c1d5ce31e44cb9d813ccbd29461ff150f2acdfafaad298d80d7c6c4",
+  "tasks": [
+    {
+      "id": "post-tool-use-ledgers",
+      "title": "PostToolUse hook: plan-mode markers and AskUserQuestion round ledger",
+      "objective": "Add the hook script, its dispatcher entry, two schemas and the settings wiring so that plan-mode writes and AskUserQuestion rounds are recorded per story; no recorder behaviour changes yet.",
+      "acceptance_criteria": [
+        "forge hook post_tool_use records <scope>/plan-mode/<uuid>.json with path (absolute, may be outside the repo such as ~/.claude/plans/x.md), sha256 (raw bytes), sha256_body (plan_digest_without_assumptions), at, session_id ('' when absent), generated_by 'claude-code:plan-mode' for Write/Edit/MultiEdit made with permission_mode plan, and nothing for other modes; root-level dirs are used when no story is active",
+        "the same hook records <scope>/grill-rounds/<uuid>.json with questions (question, options, chosen \u2014 chosen null when tool_response is absent or not among the options), at, session_id ('' when absent), generated_by 'claude-code:plan-mode' for every AskUserQuestion whose tool_input.questions is usable; unparseable input exits 0 without writing",
+        "both record kinds validate against new schemas; .claude/settings.json wires PostToolUse for Write|Edit|MultiEdit|AskUserQuestion; gate tests cover both record kinds and the fail-open path"
+      ],
+      "dependencies": [],
+      "write_scope": [
+        "factory/scripts/post_tool_use.py",
+        "factory/scripts/forge.py",
+        "factory/schemas/plan-mode-marker.json",
+        "factory/schemas/grill-round.json",
+        ".claude/settings.json",
+        "factory/tests/test_gates.py",
+        "factory/scripts/check_dual_runtime.py"
+      ],
+      "required_tests": [
+        {
+          "id": "test_post_tool_use_records_plan_mode_marker",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest --with psutil python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_post_tool_use_records_ask_user_question_round",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest --with psutil python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_post_tool_use_is_fail_open",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest --with psutil python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_vendor_integrity_covers_post_tool_use",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest --with psutil python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_post_tool_use_marks_plan_outside_repo_with_raw_and_body_digests",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest --with psutil python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_post_tool_use_round_without_response_records_chosen_null",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest --with psutil python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_post_tool_use_records_without_session_id",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest --with psutil python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        }
+      ],
+      "verify_commands": [
+        "python3 factory/scripts/check_dual_runtime.py"
+      ],
+      "reviewer_focus": "Fail-open is real (every error path exits 0 and writes nothing); no AskUserQuestion free text (notes) is persisted; marker digests use the same body exclusion as plan_digest_without_assumptions; records land under the story scope via evidence_path, never a hand-built path; settings.json PostToolUse command exits 0, PreToolUse entries untouched.",
+      "plan_contracts": [
+        {
+          "id": "ptl-1",
+          "statement": "forge hook post_tool_use records <scope>/plan-mode/<uuid>.json with path (absolute, may be outside the repo such as ~/.claude/plans/x.md), sha256 (raw bytes), sha256_body (plan_digest_without_assumptions), at, session_id ('' when absent), generated_by 'claude-code:plan-mode' for Write/Edit/MultiEdit made with permission_mode plan, and nothing for other modes; root-level dirs are used when no story is active",
+          "source": "plans/active/plan-mode-and-grill-provenance-plan-mode-and-grill-provenance-are-enforced-not-advisory.md#task-decomposition"
+        },
+        {
+          "id": "ptl-2",
+          "statement": "the same hook records <scope>/grill-rounds/<uuid>.json with questions (question, options, chosen \u2014 chosen null when tool_response is absent or not among the options), at, session_id ('' when absent), generated_by 'claude-code:plan-mode' for every AskUserQuestion whose tool_input.questions is usable; unparseable input exits 0 without writing",
+          "source": "plans/active/plan-mode-and-grill-provenance-plan-mode-and-grill-provenance-are-enforced-not-advisory.md#task-decomposition"
+        },
+        {
+          "id": "ptl-3",
+          "statement": "both record kinds validate against new schemas; .claude/settings.json wires PostToolUse for Write|Edit|MultiEdit|AskUserQuestion; gate tests cover both record kinds and the fail-open path",
+          "source": "plans/active/plan-mode-and-grill-provenance-plan-mode-and-grill-provenance-are-enforced-not-advisory.md#task-decomposition"
+        }
+      ]
+    },
+    {
+      "id": "plan-mode-gate",
+      "title": "plan save, plan approve, task plan save and task approve require a plan-mode marker",
+      "objective": "Make the story and task plan recorders refuse any plan file whose digest was not written in plan mode, so plans authored from normal mode cannot be saved or approved.",
+      "acceptance_criteria": [
+        "require_plan_mode_marker matches the digest of the plan BODY excluding both the harness-stamped frontmatter block and the Implementation Assumptions block (plan save re-stamps status/saved, which must not invalidate the marker), searching the active story scope then the root scope; plan save, plan approve, task plan save and task approve all call it",
+        "gate tests prove refusal without a marker and success with one for both story and task plans"
+      ],
+      "dependencies": [
+        "post-tool-use-ledgers"
+      ],
+      "write_scope": [
+        "factory/scripts/factory_lib.py",
+        "factory/scripts/forge_cli/plans.py",
+        "factory/scripts/forge_cli/tasks.py",
+        "factory/tests/test_gates.py",
+        "factory/scripts/post_tool_use.py"
+      ],
+      "required_tests": [
+        {
+          "id": "test_plan_save_refuses_plan_without_plan_mode_marker",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest --with psutil python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_plan_save_and_approve_accept_plan_with_plan_mode_marker",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest --with psutil python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_task_plan_save_and_approve_require_plan_mode_marker",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest --with psutil python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_plan_mode_marker_matches_body_not_assumptions",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest --with psutil python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_plan_mode_marker_in_root_scope_counts_for_active_story",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest --with psutil python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_plan_save_restamp_does_not_invalidate_marker",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest --with psutil python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        }
+      ],
+      "verify_commands": [
+        "python3 factory/scripts/check_dual_runtime.py"
+      ],
+      "reviewer_focus": "One shared plan_body_digest helper used by both the hook and the gate (no second implementation); markers read through evidence_path story-then-root, never a hand-built path; fixtures create markers only via the real hook (no env bypass, no hand-written markers); the restamp test proves approve works after save without a fresh plan-mode round; quickfix/degraded untouched.",
+      "plan_contracts": [
+        {
+          "id": "pmg-1",
+          "statement": "require_plan_mode_marker matches the digest of the plan BODY excluding both the harness-stamped frontmatter block and the Implementation Assumptions block (plan save re-stamps status/saved, which must not invalidate the marker), searching the active story scope then the root scope; plan save, plan approve, task plan save and task approve all call it",
+          "source": "plans/active/plan-mode-and-grill-provenance-plan-mode-and-grill-provenance-are-enforced-not-advisory.md#task-decomposition"
+        },
+        {
+          "id": "pmg-2",
+          "statement": "gate tests prove refusal without a marker and success with one for both story and task plans",
+          "source": "plans/active/plan-mode-and-grill-provenance-plan-mode-and-grill-provenance-are-enforced-not-advisory.md#task-decomposition"
+        }
+      ]
+    },
+    {
+      "id": "round-provenance-gate",
+      "title": "Grill recorder requires logged rounds, per-gate floors, frontier_empty, and a saved task plan; frontier order flipped",
+      "objective": "Make grills provable: rounds must match the AskUserQuestion ledger, meet the per-gate floor, end with a frontier_empty attestation, and a task grill needs its task plan first; forge next prints the enforced order.",
+      "acceptance_criteria": [
+        "record_grill_from_json refuses, for spec/requirements/plan/task gates, rounds that do not match a logged record, counts below spec 2 / requirements 1 / plan 2 / task 1, and a final round without frontier_empty true; byte-identical re-records may reuse rounds",
+        "a task grill is refused when task-plans/<id>.md is absent, with a one-time tolerance for grills older than a later-saved task plan; task_frontier_state and tasks.cmd_plan_save implement author-task-plan before grill; forge next prints the enforced planning and implementing order",
+        "existing inverse-order gate tests are flipped, new refusal and happy-path tests pass"
+      ],
+      "dependencies": [
+        "plan-mode-gate"
+      ],
+      "write_scope": [
+        "factory/scripts/record_grill_from_json.py",
+        "factory/scripts/factory_lib.py",
+        "factory/scripts/forge_cli/tasks.py",
+        "factory/scripts/forge_cli/phase.py",
+        "factory/schemas/grill.json",
+        "factory/tests/test_gates.py"
+      ],
+      "required_tests": [
+        {
+          "id": "test_grill_refuses_round_not_in_ledger",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest --with psutil python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_grill_refuses_below_gate_floor",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest --with psutil python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_grill_refuses_missing_frontier_empty",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest --with psutil python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_grill_accepts_ledger_matched_rounds_happy_path",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest --with psutil python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_task_grill_requires_saved_task_plan_with_tolerance",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest --with psutil python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_frontier_orders_task_plan_before_grill",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest --with psutil python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        }
+      ],
+      "verify_commands": [
+        "python3 factory/scripts/check_dual_runtime.py"
+      ],
+      "reviewer_focus": "Rounds matched against ledger records read via evidence_path story-then-root, never hand-built paths; GATE_ROUND_FLOORS a named constant (spec 2, requirements 1, plan 2, task 1); frontier_empty required on the final round only; chosen equality exact when the ledger entry has non-null chosen; the task-plan tolerance keyed on timestamps and tested; every fixture logs rounds through the real hook; epics/signoff gates explicitly unchanged; no weakening of digest freshness.",
+      "plan_contracts": [
+        {
+          "id": "rpg-1",
+          "statement": "record_grill_from_json refuses, for spec/requirements/plan/task gates, rounds that do not match a logged record, counts below spec 2 / requirements 1 / plan 2 / task 1, and a final round without frontier_empty true; byte-identical re-records may reuse rounds",
+          "source": "plans/active/plan-mode-and-grill-provenance-plan-mode-and-grill-provenance-are-enforced-not-advisory.md#task-decomposition"
+        },
+        {
+          "id": "rpg-2",
+          "statement": "a task grill is refused when task-plans/<id>.md is absent, with a one-time tolerance for grills older than a later-saved task plan; task_frontier_state and tasks.cmd_plan_save implement author-task-plan before grill; forge next prints the enforced planning and implementing order",
+          "source": "plans/active/plan-mode-and-grill-provenance-plan-mode-and-grill-provenance-are-enforced-not-advisory.md#task-decomposition"
+        },
+        {
+          "id": "rpg-3",
+          "statement": "existing inverse-order gate tests are flipped, new refusal and happy-path tests pass",
+          "source": "plans/active/plan-mode-and-grill-provenance-plan-mode-and-grill-provenance-are-enforced-not-advisory.md#task-decomposition"
+        }
+      ]
+    },
+    {
+      "id": "docs-and-decision",
+      "title": "Decision 0048 accepted; accountable-engineering-loop and plan-approval specs amended and re-confirmed",
+      "objective": "Close the record contradictions the exploration found so the corpus states the enforced rule once.",
+      "acceptance_criteria": [
+        "decision 0048 accepted by a human; accountable-engineering-loop.md zero-rounds sentence and plan-approval.md not-the-signal sentence replaced; both specs re-confirmed with recorded grills",
+        "WORKFLOW.md task-loop paragraph states the new order; check_dual_runtime and check_vendor_integrity green"
+      ],
+      "dependencies": [
+        "round-provenance-gate"
+      ],
+      "write_scope": [
+        "docs/decisions/0048-plan-mode-and-grill-provenance.md",
+        "docs/specs/accountable-engineering-loop.md",
+        "docs/specs/plan-approval.md",
+        "WORKFLOW.md",
+        "factory/tests/test_gates.py"
+      ],
+      "required_tests": [
+        {
+          "id": "test_docs_state_enforced_order",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest --with psutil python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        }
+      ],
+      "verify_commands": [
+        "python3 factory/scripts/check_dual_runtime.py"
+      ],
+      "reviewer_focus": "Spec clauses match the shipped enforcement exactly (floors, frontier_empty, ledger match, plan_body_digest); 0048 supersedes clause-level only; both spec re-confirm grills recorded under the new enforcement; the doc test is string-level like existing doc gates.",
+      "plan_contracts": [
+        {
+          "id": "dad-1",
+          "statement": "decision 0048 accepted by a human; accountable-engineering-loop.md zero-rounds sentence and plan-approval.md not-the-signal sentence replaced; both specs re-confirmed with recorded grills",
+          "source": "plans/active/plan-mode-and-grill-provenance-plan-mode-and-grill-provenance-are-enforced-not-advisory.md#task-decomposition"
+        },
+        {
+          "id": "dad-2",
+          "statement": "WORKFLOW.md task-loop paragraph states the new order; check_dual_runtime and check_vendor_integrity green",
+          "source": "plans/active/plan-mode-and-grill-provenance-plan-mode-and-grill-provenance-are-enforced-not-advisory.md#task-decomposition"
+        }
+      ]
+    },
+    {
+      "id": "flip-frontier-routing-test",
+      "title": "Follow-up: frontier-routing test asserts the enforced order",
+      "objective": "Fix the one full-suite failure: the frontier-routing test still expects the pre-0048 grill-first order after decomposition recording.",
+      "acceptance_criteria": [
+        "test_forge_next_routes_the_jit_frontier_states asserts the enforced order (author-task-plan first, then task plan save + approve in the fixture, then the grill action); no assertion deleted; no production code changed",
+        "full gate suite green: the one failing test passes and no other test regresses"
+      ],
+      "write_scope": [
+        "factory/tests/test_gates.py"
+      ],
+      "required_tests": [
+        {
+          "id": "test_forge_next_routes_the_jit_frontier_states",
+          "path": "factory/tests/test_gates.py",
+          "command": "uvx --with pytest --with psutil python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        }
+      ],
+      "verify_commands": [
+        "python3 factory/scripts/check_dual_runtime.py"
+      ],
+      "reviewer_focus": "The test asserts the new order end to end rather than deleting assertions; the fixture uses the real task plan save / task approve commands and the real hook for the marker.",
+      "plan_contracts": [
+        {
+          "id": "fft-1",
+          "statement": "test_forge_next_routes_the_jit_frontier_states asserts the enforced order (author-task-plan first, then task plan save + approve in the fixture, then the grill action); no assertion deleted; no production code changed",
+          "source": "plans/active/plan-mode-and-grill-provenance-plan-mode-and-grill-provenance-are-enforced-not-advisory.md#task-decomposition"
+        },
+        {
+          "id": "fft-2",
+          "statement": "full gate suite green: the one failing test passes and no other test regresses",
+          "source": "plans/active/plan-mode-and-grill-provenance-plan-mode-and-grill-provenance-are-enforced-not-advisory.md#task-decomposition"
+        }
+      ],
+      "dependencies": [
+        "docs-and-decision"
+      ]
+    }
+  ],
+  "project": "",
+  "commit": "68fe33b81fee7f70fd9393a3a42ba7192a6b4709"
+}

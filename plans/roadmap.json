@@ -934,10 +934,30 @@
       "depends_on": [],
       "origin": "adhoc",
       "spec_debt_reason": "hardening follow-up from the 2026-08-20 issue-#112 story where stage done could not close (verify.py in verify_commands tripped the read-only check; reap scan spun on a bloated process table); no confirmed spec yet"
+    },
+    {
+      "key": "plan-mode-and-grill-provenance",
+      "title": "Plan mode and grill provenance are enforced, not advisory",
+      "story": "As the harness owner, I want story plans and task plans to be refused unless they were authored in plan mode and grilled through recorded AskUserQuestion rounds until the frontier was empty, so that the planning discipline is a gate the recorder checks rather than a reminder the session can skip.",
+      "acceptance_criteria": [
+        "A PostToolUse hook on ExitPlanMode records a story-scoped marker (timestamp, sha256 of the plan text); plan save and task plan save refuse a --from file whose digest has no marker in the active story window",
+        "A PostToolUse hook logs every AskUserQuestion (question texts) into a story-scoped ledger; the grill recorder for spec, requirements, plan and task gates requires each rounds[].question to match a logged question and enforces a per-gate minimum of rounds or an explicit frontier-empty attestation on the final round",
+        "Recorders refuse a task grill recorded before the task plan is saved; forge next prints the enforced order: plan mode -> grill rounds -> save -> human approval",
+        "Gate tests cover: plan authored outside plan mode is refused; grill with unlogged rounds is refused; the happy path passes; vendored to clients by forge upgrade"
+      ],
+      "order": 45,
+      "status": "done",
+      "epic": "accountable-engineering",
+      "skill": "backend",
+      "depends_on": [],
+      "spec": "docs/specs/accountable-engineering-loop.md",
+      "completed_at": "2026-08-24T14:00:51+00:00",
+      "history": ".factory/stories/plan-mode-and-grill-provenance/",
+      "outcome": "Plan-mode and grill discipline are now gates the recorders enforce, not reminders. A PostToolUse hook records who authored every plan (plan-mode markers) and every question actually put to a human (AskUserQuestion rounds with chosen answers); plan and task-plan save/approve refuse a plan without a matching marker, and spec, requirements, plan and task grills refuse rounds not in the ledger, below the per-gate floor, or missing the frontier-empty attestation. The task loop runs plan, then grill, then human approval, then stage start \u2014 printed by forge next and pinned by tests. A session can no longer save a plan authored outside plan mode or record a grill that never asked a human anything; the story proved it on itself, its own gates refusing its own plan and grill until done right."
     }
   ],
   "generated_by": "human",
-  "updated_at": "2026-08-20T13:25:43+00:00",
+  "updated_at": "2026-08-24T14:00:51+00:00",
   "epics": [
     {
       "id": "symphony-forge",

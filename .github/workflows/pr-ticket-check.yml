@@ -22,11 +22,19 @@ jobs:
           python3 -m pytest factory/tests/test_gates.py -q -k "pr_ticket or gate_a"
       - name: Require exactly one completed work record
         env:
-          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
           HEAD_BRANCH: ${{ github.event.pull_request.head.ref }}
           PR_BODY: ${{ github.event.pull_request.body }}
-        run: >-
-          python3 factory/scripts/check_pr_ticket.py
-          --base "$BASE_SHA"
-          --head-branch "$HEAD_BRANCH"
-          --pr-body "$PR_BODY"
+        # Diff against the MERGE-BASE, not pull_request.base.sha: base.sha is the
+        # base branch tip when the event fired and goes stale as main advances,
+        # so base.sha..HEAD sweeps in main's OWN commits (and other PRs' work
+        # records), making the gate demand declarations for work this PR never
+        # did. merge-base(current base, head) is the true fork point.
+        run: |
+          git fetch --no-tags origin "$BASE_REF"
+          BASE_SHA="$(git merge-base FETCH_HEAD "$HEAD_SHA")"
+          python3 factory/scripts/check_pr_ticket.py \
+            --base "$BASE_SHA" \
+            --head-branch "$HEAD_BRANCH" \
+            --pr-body "$PR_BODY"

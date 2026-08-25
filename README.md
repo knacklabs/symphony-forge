@@ -95,6 +95,12 @@ something you type.
              (Claude)                     (+ surfaces)  (stages)          (Codex, attested)   (until clean)                  (ONE autoreview)     (ship gate)
 ```
 
+The read-only board (`./forge board`) renders that lifecycle live — committed
+artifacts become stories flowing across the stages, grouped by epic, with the
+gate rail and evidence a click away. Below, a real client project mid-delivery:
+
+![Symphony Forge lifecycle board](docs/assets/board.png)
+
 - **Before sign-off**: discovery and prototyping are lightweight; capability
   specs are saved and grilled as they emerge, then the roadmap is derived from
   the confirmed set. The prototype remains the permanent UX reference.

@@ -1,0 +1,42 @@
+{
+  "generated_by": "griller",
+  "gate": "requirements",
+  "issue": "plan-mode-and-grill-provenance",
+  "verdict": "pass",
+  "questions_asked": 7,
+  "summary": "Re-recorded 2026-08-24 after rebase onto origin/main (39 commits incl. product-tree exclusion fix and story-scope authority fix) and worktree swap; the seven decisions stand unchanged and the exploration findings were re-checked against the rebased tree. Requirements grill for plan-mode-and-grill-provenance against accountable-engineering-loop, plan-approval and the live recorders. Seven decisions: exact digest match between the ExitPlanMode marker and the saved plan; the plan-mode file is the plan and is saved verbatim (frontmatter authored inside plan mode); AskUserQuestion rounds logged one-record-per-file under .factory/stories/<key>/grill-rounds/ with question, options, chosen and no free text; per-gate floors spec 2, requirements 1, plan 2, task 1 plus a frontier_empty attestation on the last round; the Codex planner hands its draft back to Claude for the grill and ExitPlanMode; quickfix and degraded windows stay exempt; non-Claude sessions are refused (plans and grills are authored in Claude Code only).",
+  "inspected_refs": [
+    "docs/specs/accountable-engineering-loop.md",
+    "docs/specs/plan-approval.md",
+    "factory/scripts/record_grill_from_json.py",
+    "factory/scripts/forge_cli/plans.py",
+    "factory/scripts/forge_cli/tasks.py",
+    "factory/scripts/pre_tool_use.py",
+    ".claude/settings.json"
+  ],
+  "gaps": [
+    "Digest rule when the plan is edited after ExitPlanMode",
+    "Which text is canonical: plan-mode file vs repo plan with frontmatter",
+    "Per-gate minimum rounds",
+    "How the Codex planner satisfies Claude-only provenance",
+    "Whether quickfix/degraded need provenance",
+    "Where the AskUserQuestion ledger lives",
+    "Non-Claude sessions (CI, terminal)"
+  ],
+  "contradictions": [],
+  "resolutions": [
+    "Exact digest match; any post-exit edit requires re-entering plan mode",
+    "The plan-mode file is the plan; saved verbatim; frontmatter authored in plan mode",
+    "spec 2 / requirements 1 / plan 2 / task 1 with frontier_empty on the last round",
+    "Codex drafts; Claude enters plan mode with the draft, grills, exits",
+    "Exempt as today; they are bounded and ledgered",
+    "One record per file under .factory/stories/<key>/grill-rounds/, schema-validated, question+options+chosen only",
+    "Refused; plans and grills are Claude Code acts"
+  ],
+  "open_items": [
+    "Claude Code hook-input facts (ExitPlanMode/AskUserQuestion payloads, permission_mode) to be verified by the Codex exploration before the plan is written"
+  ],
+  "input_sha256": "9f628235777bc5ab70da9af97a4feb60fd8379fefaf72acb128dd3892090cee1",
+  "recorded_at": "2026-08-24T10:00:53+00:00",
+  "commit": "161b0fff807cfce4fa313db18e97ece9cfbe6f3e"
+}

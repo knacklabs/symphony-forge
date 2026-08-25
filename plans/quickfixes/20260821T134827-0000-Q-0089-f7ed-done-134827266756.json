@@ -1,0 +1,9 @@
+{
+  "event": "done",
+  "id": "Q-0089-f7ed",
+  "profile": "quickfix",
+  "reason": "make the task-execution path (unrunnable_reason bash probe + stages spawn options) cross-platform on Windows",
+  "started_at": "2026-08-21T13:48:26+00:00",
+  "completed_at": "2026-08-21T13:48:27+00:00",
+  "files": []
+}

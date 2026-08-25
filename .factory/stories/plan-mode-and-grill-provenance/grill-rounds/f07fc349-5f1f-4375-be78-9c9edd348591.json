@@ -1,0 +1,15 @@
+{
+  "generated_by": "claude-code:plan-mode",
+  "questions": [
+    {
+      "question": "Raise round-provenance-gate's review budget to 6 files / 500 lines so the worker can finish? (Alternative: split the frontier flip + phase text into a separate task \u2014 one more full gate cycle.)",
+      "options": [
+        "Raise to 500 lines, re-approve (Recommended)",
+        "Split the task"
+      ],
+      "chosen": "Raise to 500 lines, re-approve (Recommended)"
+    }
+  ],
+  "at": "2026-08-24T10:40:56.136205+00:00",
+  "session_id": "9f647d39-defb-401c-b0b3-ad6ed23eabba"
+}

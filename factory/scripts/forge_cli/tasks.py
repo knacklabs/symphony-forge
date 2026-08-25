@@ -4,14 +4,16 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import shutil
 import subprocess
+from datetime import datetime, timezone
 from pathlib import Path
 
 from factory_lib import (
     clean_git_env, dump_json, evidence_path, git_control_dir, load_json, now_iso,
     plan_digest_without_assumptions, repo_root, require_ready_task,
-    require_task_sealed,
+    require_plan_mode_marker, require_task_sealed,
     protected_decomposition_state_path, run_state_path,
     task_marker_on_main, task_marker_path, validate_payload,
 )
@@ -34,6 +36,23 @@ def _require_git(base: Path, description: str, *args: str) -> str:
     return proc.stdout.strip()
 
 
+def _default_branch(base: Path) -> str:
+    """The integration branch a task PR targets: origin's default branch, not a
+    hardcoded 'main'. Repos ship on develop/trunk/etc.; a task PR must target
+    whatever origin/HEAD points at, falling back to main only if unresolved."""
+    proc = _git(base, "symbolic-ref", "--quiet", "refs/remotes/origin/HEAD")
+    if proc.returncode == 0 and proc.stdout.strip():
+        return proc.stdout.strip().rsplit("/", 1)[-1]
+    # origin/HEAD not set locally — ask the remote once, then fall back.
+    proc = _git(base, "remote", "show", "origin")
+    for line in proc.stdout.splitlines():
+        if "HEAD branch:" in line:
+            name = line.split("HEAD branch:", 1)[1].strip()
+            if name and name != "(unknown)":
+                return name
+    return "main"
+
+
 def _task_plan_path(base: Path, task_id: str, *, for_write: bool = False) -> Path:
     state = load_json(run_state_path(base), default={})
     story = state.get("issue_key") or state.get("story")
@@ -46,7 +65,9 @@ def _task_plan_path(base: Path, task_id: str, *, for_write: bool = False) -> Pat
 
 def cmd_plan_save(args: argparse.Namespace) -> None:
     base = Path(args.repo).resolve() if args.repo else repo_root()
-    require_ready_task(base, args.id, require_approval=False)
+    require_ready_task(
+        base, args.id, require_approval=False, require_grill=False,
+    )
     source = Path(args.source).expanduser()
     if not source.is_file():
         fail(f"task plan source {source} not found — pass the plan-mode file via --from")
@@ -56,9 +77,29 @@ def cmd_plan_save(args: argparse.Namespace) -> None:
         fail("task plan source must be UTF-8 Markdown")
     if not content.strip():
         fail("task plan source must not be empty")
+    require_plan_mode_marker(base, source)
     dest = _task_plan_path(base, args.id, for_write=True)
     dest.parent.mkdir(parents=True, exist_ok=True)
     dest.write_text(content, encoding="utf-8")
+    state = load_json(run_state_path(base), default={})
+    story = state.get("issue_key") or state.get("story")
+    grill_path = evidence_path(
+        base, story, f"grills/tasks/{args.id}.json", for_write=True,
+    )
+    grill = load_json(grill_path, default={})
+    if grill and "task_plan_sha256" not in grill:
+        try:
+            grilled_at = datetime.fromisoformat(grill["recorded_at"])
+            if grilled_at.tzinfo is None:
+                grilled_at = grilled_at.replace(tzinfo=timezone.utc)
+            saved_at = datetime.fromtimestamp(dest.stat().st_mtime, timezone.utc)
+        except (KeyError, TypeError, ValueError, OSError):
+            pass
+        else:
+            if grilled_at <= saved_at:
+                grill["task_plan_sha256"] = plan_digest_without_assumptions(dest)
+                validate_payload(base, "grill", grill)
+                dump_json(grill_path, grill)
     print(f"Saved task plan: {dest.relative_to(base)}")
 
 
@@ -74,6 +115,7 @@ def cmd_approve(args: argparse.Namespace) -> None:
             f"task approval refused: no saved task plan for {args.id}. "
             f"Run `./forge task plan save {args.id} --from <path>` first."
         )
+    require_plan_mode_marker(base, plan)
     state = load_json(run_state_path(base), default={})
     story = state.get("issue_key") or state.get("story")
     grill_path = evidence_path(
@@ -197,13 +239,28 @@ def cmd_task_pr_ready(args: argparse.Namespace) -> None:
     task = require_task_sealed(base, args.id)
     state = load_json(run_state_path(base), default={})
     key = state.get("issue_key") or state.get("story")
+    if not isinstance(key, str) or not key.strip():
+        fail("task PR marker requires a non-empty story in the task run pointer")
+
+    # A task started via `forge stage start` (not `forge task start`) has no
+    # branch/base pointer in run.json. Derive both from git so the stage-based
+    # per-task PR flow seals cleanly instead of dead-ending — the branch is
+    # wherever the sealed work lives, the base is where it forked from the
+    # integration branch.
+    default_branch = _default_branch(base)
     branch = state.get("branch")
+    if not isinstance(branch, str) or not branch.strip():
+        branch = _require_git(
+            base, "resolving current branch", "rev-parse", "--abbrev-ref", "HEAD",
+        )
+        if branch == "HEAD":
+            fail("task PR ready: detached HEAD — check out the task branch first")
     base_main_sha = state.get("base_main_sha")
-    for field, value in (
-        ("story", key), ("branch", branch), ("base_main_sha", base_main_sha),
-    ):
-        if not isinstance(value, str) or not value.strip():
-            fail(f"task PR marker requires a non-empty {field} in the task run pointer")
+    if not isinstance(base_main_sha, str) or not base_main_sha.strip():
+        base_main_sha = _require_git(
+            base, "resolving integration base", "merge-base",
+            f"origin/{default_branch}", "HEAD",
+        )
 
     commit = _require_git(
         base, "resolving task HEAD", "rev-parse", "--verify", "HEAD^{commit}",
@@ -240,22 +297,25 @@ def cmd_task_pr_ready(args: argparse.Namespace) -> None:
         f"Task marker: {marker.as_posix()}\n\n"
         f"Sealed commit: {commit}\n"
     )
+    # Resolve owner/repo from origin so `gh` targets THIS repo — a bare
+    # `gh pr create` can resolve a PR number against the wrong repo when a
+    # local checkout tracks a differently-numbered upstream.
+    origin_url = _require_git(base, "resolving origin url", "remote", "get-url", "origin")
+    slug = re.sub(r"^.*github\.com[:/]", "", origin_url).removesuffix(".git")
+    cmd = ["gh", "pr", "create", "--base", default_branch, "--head", branch,
+           "--title", title, "--body", body]
+    if slug and "/" in slug:
+        cmd += ["--repo", slug]
     proc = subprocess.run(
-        [
-            "gh", "pr", "create", "--base", "main", "--title", title,
-            "--body", body,
-        ],
-        cwd=base,
-        capture_output=True,
-        text=True,
-        encoding="utf-8",
-        errors="surrogateescape",
+        cmd, cwd=base, capture_output=True, text=True,
+        encoding="utf-8", errors="surrogateescape",
     )
     if proc.returncode != 0:
         detail = proc.stderr.strip() or proc.stdout.strip()
         fail(
             f"task {args.id} is sealed at {marker.as_posix()}, but opening the PR "
-            f"failed{f': {detail}' if detail else ''}. Run `gh auth login`, then retry."
+            f"to {default_branch} failed{f': {detail}' if detail else ''}. "
+            "Run `gh auth login`, then retry."
         )
     print(f"Task {args.id} PR ready: {marker.as_posix()}")
     if proc.stdout.strip():

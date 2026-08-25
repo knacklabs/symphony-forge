@@ -2,55 +2,43 @@
   "generated_by": "griller",
   "gate": "spec",
   "verdict": "pass",
-  "questions_asked": 6,
-  "summary": "Revised factory-event-export spec grilled after a read-only gpt-5.6-sol@xhigh validation run (12m52s; verdict: stop write-through design, keep direction). Ten validation findings folded in as spec edits; six human decisions recorded (titles, identity, pilot-first, right-first-time definition, collection policy, restart runs).",
+  "questions_asked": 2,
+  "summary": "Re-confirmation grill for plan-approval after rewriting the not-the-enforcement-signal clause: plan mode is the authorship proof via permission_mode markers (0048) while the human-attributed approval command remains the separate unforgeable act (0029 intact); every other clause stands. Recorded under the new enforcement.",
   "inspected_refs": [
-    "docs/specs/factory-event-export.md",
-    "factory/scripts/forge_cli/events.py",
-    "factory/scripts/forge_cli/stages.py",
-    "factory/scripts/forge_cli/plans.py",
-    "factory/scripts/check_vendor_integrity.py",
-    "factory/schemas/event.json",
-    "docs/decisions/0009-frozen-gate-integrity.md",
-    "docs/decisions/0017-repo-as-system-of-record.md",
-    "docs/decisions/0022-conflict-free-ledgers.md",
-    "docs/specs/conflict-free-story-state.md",
-    "docs/specs/harness-owned-vendoring.md"
+    "docs/specs/plan-approval.md",
+    "docs/decisions/0048-plan-mode-and-grill-provenance.md",
+    "docs/decisions/0029-plan-approval-in-plan-mode.md"
   ],
   "gaps": [
-    "Write-through per-machine file recreated the many-writers problem 0022 removed and captured unmerged-branch events",
-    "Proposed harness manifest duplicated VENDOR_MANIFEST.json / check_vendor_integrity (decision 0009); harness-source.json carries no sha",
-    "'Grill changed the plan = digest mismatch' impossible: plan save requires digest equality",
-    "Privacy contradiction: spec forbade prose while views need story/epic titles; story keys and task ids are not opaque",
-    "Spec claimed a complete authoritative ledger while events are best-effort (0017)",
-    "Counts promised by LED-2 did not exist in source artifacts (verify timing, tests numbers, review severity, signal elapsed/resolver)",
-    "sha256(origin URL) and sha256(email) are unstable / re-identifying identities",
-    "Backfill idempotency impossible without a payload-level event id",
-    "Lead time misnamed (shipped = PR-ready); right-first-time undefined without attempts/results",
-    "Repeated intake (restart) semantics undefined",
-    "Collection policy for non-forge and third-party-client repos unstated"
+    "PA-1: plan-approval now says plan mode IS the authorship proof via permission_mode markers, while human approval stays the separate unforgeable act (0029 intact). Correct split?",
+    "PA-2: no other clause of plan-approval changes (self-authored-grill criticism, digest freshness, awaiting\u2192approved flow all stand). Frontier empty on this spec?"
   ],
   "contradictions": [],
   "resolutions": [
-    "Replaced with a read-only exporter over a committed ref; consumer owns collection, identity and upsert; no per-machine file, rotation or backfill marker",
-    "Reuse VENDOR_MANIFEST.json; export header carries harness_commit and integrity_status clean|drifted|unarmed; manifest story deleted",
-    "Replaced with plan-saved attempt + result; a second save after a grill is a revision",
-    "Titles exported as a separate roadmap record kind (on by default, --no-titles); keys/ids typed opaque_id/safe_token in the discriminated schema; decision names the risk",
-    "Spec states events are best-effort; export header carries coverage; every metric reported with coverage",
-    "Artifact schemas gain the numeric fields first (LED-3); only metrics consumed by a named view are added",
-    "No hashes in forge; consumer attaches project and authenticated subject identity",
-    "Every event payload carries id equal to its file name; consumer upserts by (project, source_event_id)",
-    "Defined factory cycle time (intake -> shipped) and right-first-time (attempt == 1 across stage/verify/review/plan-save, no stage-incomplete)",
-    "Exporter groups events into runs per intake; latest run ending in shipped wins; earlier runs flagged abandoned",
-    "Collection policy recorded as the consumer's: default-on on company devices per tier, client-restricted class for NDA repos, other-work bucket, never compare across tiers"
+    "Confirmed by the human in the recorded round: Yes \u2014 authorship proof vs approval act, both required",
+    "Confirmed by the human in the recorded round: Yes \u2014 rest of the spec stands; frontier empty"
   ],
-  "open_items": [
-    "Local judge spec (verdict events at pr_ready) \u2014 separate capability after export ships",
-    "Cadence-side: repo classification/tiers story before the forge collector; BRIEF line allowing admins every per-dev page must be reconciled with self-view-only",
-    "WORKFLOW.md still describes archive/delete lifecycle wording superseded by conflict-free-story-state (doc debt, not this spec)",
-    "export-privacy-boundary decision must be human-accepted before LED-1 planning (enforced by LED-0/LED-1 acceptance criteria)"
+  "rounds": [
+    {
+      "question": "PA-1: plan-approval now says plan mode IS the authorship proof via permission_mode markers, while human approval stays the separate unforgeable act (0029 intact). Correct split?",
+      "options": [
+        "Yes \u2014 authorship proof vs approval act, both required",
+        "No, re-word"
+      ],
+      "chosen": "Yes \u2014 authorship proof vs approval act, both required"
+    },
+    {
+      "question": "PA-2: no other clause of plan-approval changes (self-authored-grill criticism, digest freshness, awaiting\u2192approved flow all stand). Frontier empty on this spec?",
+      "options": [
+        "Yes \u2014 rest of the spec stands; frontier empty",
+        "Something else needs amending"
+      ],
+      "chosen": "Yes \u2014 rest of the spec stands; frontier empty",
+      "frontier_empty": true
+    }
   ],
-  "input_sha256": "2e0840e83c101e873b89017bbd2aa81fbcbced962b37d883125fcd17a851ad0f",
-  "recorded_at": "2026-08-21T05:55:05+00:00",
-  "commit": "dda6ae83abeea44cc100f241ee89cb78fc3c0469"
+  "open_items": [],
+  "input_sha256": "4b60063080c79ac88fa26cf7e930e6a06b8232e8edefc0101c360f53de07e878",
+  "recorded_at": "2026-08-24T10:58:38+00:00",
+  "commit": "ef8e1c5dba9bf83475527bfdf4a31d5a8b3b260d"
 }

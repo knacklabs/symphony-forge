@@ -63,7 +63,12 @@ jobs:
               if isinstance(item, dict) and isinstance(item.get("key"), str)
           }
           candidates = set(TICKET_LINE.findall(os.environ.get("PR_BODY", "")))
-          inferred = branch_ticket(os.environ["HEAD_BRANCH"], story_keys)
+          # branch_ticket() gained a required task_records arg (per-task branch
+          # matching). pr-link resolves STORIES only — any task record would be
+          # dropped by the `candidates &= story_keys` intersection below — so
+          # pass an empty set. (The signature change updated the check_pr_ticket
+          # caller but missed this one.)
+          inferred = branch_ticket(os.environ["HEAD_BRANCH"], story_keys, set())
           if inferred:
               candidates.add(inferred)
           candidates &= story_keys

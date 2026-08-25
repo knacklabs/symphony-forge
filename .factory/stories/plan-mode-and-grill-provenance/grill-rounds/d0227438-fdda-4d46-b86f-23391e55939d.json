@@ -1,0 +1,15 @@
+{
+  "generated_by": "claude-code:plan-mode",
+  "questions": [
+    {
+      "question": "Approve the amended plan-mode-gate task plan? Changes since your last approval: story-then-root marker lookup, and the frontmatter-restamp fix (shared plan_body_digest helper in both hook and gate) with two new required tests \u2014 six total.",
+      "options": [
+        "Approve (Recommended)",
+        "Hold"
+      ],
+      "chosen": "Approve (Recommended)"
+    }
+  ],
+  "at": "2026-08-24T10:07:08.595528+00:00",
+  "session_id": "9f647d39-defb-401c-b0b3-ad6ed23eabba"
+}

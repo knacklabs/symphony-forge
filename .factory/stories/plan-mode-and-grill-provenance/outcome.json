@@ -1,0 +1,7 @@
+{
+  "generated_by": "implementer",
+  "outcome": "Plan-mode and grill discipline are now gates the recorders enforce, not reminders. A PostToolUse hook records who authored every plan (plan-mode markers) and every question actually put to a human (AskUserQuestion rounds with chosen answers); plan and task-plan save/approve refuse a plan without a matching marker, and spec, requirements, plan and task grills refuse rounds not in the ledger, below the per-gate floor, or missing the frontier-empty attestation. The task loop runs plan, then grill, then human approval, then stage start \u2014 printed by forge next and pinned by tests. A session can no longer save a plan authored outside plan mode or record a grill that never asked a human anything; the story proved it on itself, its own gates refusing its own plan and grill until done right.",
+  "issue": "plan-mode-and-grill-provenance",
+  "commit": "6df3ef73e5740e105af7cbc9725e7ec10b6cdab7",
+  "recorded_at": "2026-08-24T14:00:51+00:00"
+}

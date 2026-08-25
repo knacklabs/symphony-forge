@@ -1,0 +1,11 @@
+{
+  "topic": "plan-mode-not-enforced",
+  "lesson": "The phase engine says 'MANDATORY: enter plan mode' but no hook checks it, and grill depth is self-reported: a session can author plans as files and record one-question grills. Until plan-mode-and-grill-provenance ships, the orchestrator must enter plan mode for every story and task plan and grill in AskUserQuestion rounds until the frontier is empty.",
+  "source": "cadence decisions-reconciled session 2026-08-21",
+  "applies_to": [
+    "factory/scripts/forge_cli/plans.py"
+  ],
+  "severity": "high",
+  "generated_by": "orchestrator",
+  "added_at": "2026-08-21T07:59:34+00:00"
+}

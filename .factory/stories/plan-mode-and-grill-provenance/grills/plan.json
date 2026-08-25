@@ -1,0 +1,111 @@
+{
+  "generated_by": "griller",
+  "gate": "plan",
+  "issue": "plan-mode-and-grill-provenance",
+  "verdict": "pass",
+  "questions_asked": 7,
+  "summary": "Plan grill for plan-mode-and-grill-provenance in plan mode, two AskUserQuestion rounds (7 questions), frontier empty. Interrogated against the roadmap criteria, decisions 0029/0044/0022/0038/0047, the accountable-engineering-loop and plan-approval specs, and the Codex read-only exploration (slot-in points, #21282 finding). Simpler shapes rejected in the plan: ExitPlanMode marker (not hookable), time-window match, extending pre_tool_use (wrong digest for Edit), task-only rounds.",
+  "inspected_refs": [
+    "docs/specs/accountable-engineering-loop.md",
+    "docs/specs/plan-approval.md",
+    "docs/decisions/0029-plan-approval-in-plan-mode.md",
+    "docs/decisions/0044-accountable-engineering-loop.md",
+    "factory/scripts/pre_tool_use.py",
+    "factory/scripts/record_grill_from_json.py",
+    "factory/scripts/forge_cli/plans.py",
+    "factory/scripts/forge_cli/tasks.py",
+    "factory/scripts/forge_cli/phase.py",
+    "factory/scripts/factory_lib.py",
+    "factory/tests/test_gates.py",
+    ".claude/settings.json"
+  ],
+  "gaps": [
+    "P1 \u2014 marker keys on permission_mode==plan writes; assumptions appended only via forge plan assume?",
+    "P2 \u2014 storyless spec/epics grills: root-level grill-rounds dir?",
+    "P3 \u2014 migration for in-flight stories that grilled before a task plan",
+    "P4 \u2014 four sequential tasks or merge 2 and 3",
+    "P5 \u2014 fallback if AskUserQuestion answers are not delivered to PostToolUse",
+    "P6 \u2014 supersession scope of 0048 over 0044 and 0029",
+    "P7 \u2014 re-recording a grill after tree drift: same rounds if text unchanged?"
+  ],
+  "contradictions": [],
+  "resolutions": [
+    "Marker excludes the Implementation Assumptions block; plan assume is the only post-approval edit path",
+    "Root-level .factory/grill-rounds/ for storyless gates, same schema and hook",
+    "One-time tolerance keyed on grill timestamp < task-plan timestamp, tested",
+    "Four sequential tasks",
+    "Fallback: ledger stores questions+options; chosen stays in the grill record; recorded as an assumption",
+    "0048 supersedes 0044's zero-rounds sentence and 0029's not-the-signal sentence only",
+    "Same rounds reusable when the interrogated text is byte-identical"
+  ],
+  "rounds": [
+    {
+      "question": "P1 \u2014 marker keys on permission_mode==plan writes; assumptions appended only via forge plan assume?",
+      "options": [
+        "Yes \u2014 plan assume is the only post-approval edit path",
+        "Marker on body only from day one"
+      ],
+      "chosen": "Yes \u2014 plan assume is the only post-approval edit path"
+    },
+    {
+      "question": "P2 \u2014 storyless spec/epics grills: root-level grill-rounds dir?",
+      "options": [
+        "Root-level grill-rounds dir",
+        "Skip provenance for spec/epics gates"
+      ],
+      "chosen": "Root-level grill-rounds dir"
+    },
+    {
+      "question": "P3 \u2014 migration for in-flight stories that grilled before a task plan",
+      "options": [
+        "One-time tolerance, tested",
+        "Force re-grill everywhere"
+      ],
+      "chosen": "One-time tolerance, tested"
+    },
+    {
+      "question": "P4 \u2014 four sequential tasks or merge 2 and 3",
+      "options": [
+        "Keep four",
+        "Merge into three"
+      ],
+      "chosen": "Keep four"
+    },
+    {
+      "question": "P5 \u2014 fallback if AskUserQuestion answers are not delivered to PostToolUse",
+      "options": [
+        "Accept the fallback; record it as an assumption",
+        "Block until verified"
+      ],
+      "chosen": "Accept the fallback; record it as an assumption"
+    },
+    {
+      "question": "P6 \u2014 supersession scope of 0048 over 0044 and 0029",
+      "options": [
+        "Clause-level for both",
+        "Fully supersede 0044"
+      ],
+      "chosen": "Clause-level for both"
+    },
+    {
+      "question": "P7 \u2014 re-recording a grill after tree drift: same rounds if text unchanged?",
+      "options": [
+        "Same rounds allowed when the interrogated text is unchanged",
+        "Always new rounds"
+      ],
+      "chosen": "Same rounds allowed when the interrogated text is unchanged"
+    }
+  ],
+  "criteria_map": {
+    "1": "tasks post-tool-use-ledgers + plan-mode-gate",
+    "2": "tasks post-tool-use-ledgers + round-provenance-gate",
+    "3": "task round-provenance-gate",
+    "4": "all four tasks; docs-and-decision closes the spec contradiction"
+  },
+  "open_items": [
+    "Live verification of PostToolUse payloads after task 1 (orchestrator)"
+  ],
+  "input_sha256": "21d218c50cfd9c22f3504d9a6d0b991e0b01a3fd9a8bce7a90a586285023386d",
+  "recorded_at": "2026-08-24T10:02:23+00:00",
+  "commit": "161b0fff807cfce4fa313db18e97ece9cfbe6f3e"
+}

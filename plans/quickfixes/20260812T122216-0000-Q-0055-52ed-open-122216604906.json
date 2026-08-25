@@ -1,0 +1,11 @@
+{
+  "event": "open",
+  "id": "Q-0055-52ed",
+  "profile": "degraded",
+  "reason": "stage-authority repair unreachable by delegate: worktree protected stages unit has wrong base from tracker rebuild; migrate's error prescribes removal; files under .git control state",
+  "started_at": "2026-08-12T12:22:16+00:00",
+  "max_files": 5,
+  "files": [],
+  "harness_source": true,
+  "kind": "degraded"
+}

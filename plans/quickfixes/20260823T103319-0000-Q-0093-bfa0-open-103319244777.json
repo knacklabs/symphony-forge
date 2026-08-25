@@ -1,0 +1,10 @@
+{
+  "event": "open",
+  "id": "Q-0093-bfa0",
+  "profile": "quickfix",
+  "reason": "Recorder freeze: stale protected authority from a shipped story (its clear never ran) prefix-freezes the NEXT story's first decomposition recording; story-scope it like load_stages and clear idempotently.",
+  "started_at": "2026-08-23T10:33:19+00:00",
+  "max_files": 5,
+  "files": [],
+  "harness_source": true
+}

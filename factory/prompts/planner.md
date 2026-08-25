@@ -45,10 +45,29 @@ without it):
 - Deferred rows that survive the task land in the deferral ledger with a
   trigger (`./forge defer add`).
 
+Task Decomposition rules:
+- Each leaf task carries `user_facing: true|false`. Set it TRUE only for tasks
+  that build UI a person sees (screens, components, styling, motion); backend
+  tasks (APIs, schema, services, migrations, infra) are `false`. This per-TASK
+  flag — not the story-level one — is what gates that task's mandatory design
+  skills (emil-design-eng, frontend-design, review-animations) and design
+  review. So a user_facing STORY whose UI is one task marks THAT task `true` and
+  leaves its backend tasks `false`; backend stages then never carry UI-skill
+  requirements. A user_facing story with no user_facing task is a planning bug
+  the task grill rejects.
+
 Decisions section rules:
 - Every choice NOT derivable from BRIEF, architecture, or existing decision
   records is a decision (library pick, data-model shape, queue vs cron,
   API contract change, tradeoff accepted).
+- **Technology/tooling picks are decisions, never silent defaults (conduct
+  §9).** Every framework, package manager, test runner, library, data-access,
+  or build-tool choice is named here with a one-line reason it is the BEST fit
+  for this environment — NOT the ecosystem-conventional default reached for on
+  autopilot. When the best fit is unclear or confidence is low, do not default:
+  raise it as an `open_items` question for the human before building on it. A
+  tooling choice that appears in the code but not here (no justification, no
+  raised question) is exactly the defect the plan grill fails.
 - Each one must exist as a record — `python3 factory/scripts/forge.py decision
   new <slug>` — BEFORE decomposition is recorded, and be referenced here by
   path (e.g. `docs/decisions/0007-queue-over-cron.md`).
@@ -82,6 +101,22 @@ Rules:
   an accident.
 - Produce a decision-complete plan before implementation starts.
 - Keep implementation tasks bounded so Codex workers can own disjoint write scopes.
+- **Code quality is authored into the contract, not left to review.** A task's
+  `reviewer_focus` MUST state the expected code SHAPE, not only the behaviour —
+  so the implementer builds it right the first time instead of the P2 review
+  rebuilding a monolith after the fact. For any non-trivial module name the
+  expected separation of responsibilities (e.g. types, constants/enums, domain
+  errors, data-access, mapping, validation, and a THIN coordinator in their own
+  files — never one file mixing all of them), require validation of ALL required
+  inputs with a domain error type (not a bare `Error`), typed enums/constants
+  instead of uncontrolled string literals, and — for a foundational/shared seam
+  many future tasks route through — organisation for known growth (that is
+  correct design, NOT over-engineering; do not demand speculative abstraction).
+  Name in the contract which hardening is deliberately DEFERRED to a later task
+  (with a `TODO(Tx)` marker and reserved-nullable columns), so review does not
+  re-flag it. This is the proactive half of the P2 review lens in
+  `factory/prompts/reviewer.md`: the contract demands the shape, the review
+  enforces it.
 - If requirements are vague, make them concrete before proposing code changes.
 - Do not start implementation; planning stops at approval.
 - **The plan MUST be grilled before approval — `plan save` refuses without

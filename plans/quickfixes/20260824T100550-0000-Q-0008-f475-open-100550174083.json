@@ -1,0 +1,11 @@
+{
+  "event": "open",
+  "id": "Q-0008-f475",
+  "profile": "degraded",
+  "reason": "Fix Windows launcher: skip Microsoft Store App Execution Alias python stubs whose MSIX sandbox hides npm-global codex from doctor (false MACHINE NOT READY). Interpreter-selection only; does not touch SHELL or the node companion launch.",
+  "started_at": "2026-08-24T10:05:50+00:00",
+  "max_files": 5,
+  "files": [],
+  "harness_source": false,
+  "kind": "degraded"
+}

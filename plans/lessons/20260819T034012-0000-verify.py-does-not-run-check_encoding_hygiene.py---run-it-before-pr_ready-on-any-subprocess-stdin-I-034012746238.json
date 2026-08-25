@@ -1,0 +1,12 @@
+{
+  "topic": "verify.py does not run check_encoding_hygiene.py \u2014 run it before pr_ready on any subprocess/stdin I/O change",
+  "lesson": "verify.py runs structural + typecheck + pytest, but NOT check_encoding_hygiene.py, which CI's scaffold-check runs. New git-subprocess captures (surrogateescape) and raw stdin reads pass verify.py locally then fail scaffold-check in CI (14 violations on FORGE-CFS-1). Before pr_ready on any change adding subprocess captures or stdin reads, run python3 factory/scripts/check_encoding_hygiene.py and allowlist intentional lossless-git/self-contained-stdin sites (byte-path/replace/stdin lists), or use forge fix under a lite window post-ship.",
+  "source": "PR #109 scaffold-check failure 2026-08-19",
+  "applies_to": [
+    "factory/scripts/check_encoding_hygiene.py",
+    "factory/scripts/verify.py"
+  ],
+  "severity": "medium",
+  "generated_by": "orchestrator",
+  "added_at": "2026-08-19T03:40:12+00:00"
+}

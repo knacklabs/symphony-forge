@@ -1,1811 +1,753 @@
 {
-  "issue": "FORGE-ACC-3",
+  "issue": "plan-mode-and-grill-provenance",
   "stages": [
     {
-      "id": "plan-approval-binding",
-      "title": "Approved plans bind by digest",
+      "id": "post-tool-use-ledgers",
+      "title": "PostToolUse hook: plan-mode markers and AskUserQuestion round ledger",
       "status": "done",
-      "started_at": "2026-08-19T05:06:18+00:00",
-      "base_sha": "8f1d0530b29083c4b7a0978bebb86fd9b0e1f23c",
+      "started_at": "2026-08-21T08:26:14+00:00",
+      "base_sha": "f24acab63ebddd9050375ee236c383d858347164",
       "dirty_at_start": {
-        ".factory/events/09fa35ccb7914931a041636311e662f0.json": {
-          "digest": "a98307c9561082aebb3eb4632c5c0b8831a1c769643f810798d6eaa1c74e39be",
-          "git": "? .factory/events/09fa35ccb7914931a041636311e662f0.json\u0000\u0000\u0000"
+        ".factory/events/263a6997bccd4d8bbc81ee3e6606c14a.json": {
+          "digest": "efe4480b6a1c11b97482afae39917af000a60386587ba24a373471762aab6de1",
+          "git": "? .factory/events/263a6997bccd4d8bbc81ee3e6606c14a.json\u0000\u0000\u0000"
         },
-        ".factory/events/367dd9ee205749779fcc10436b92b319.json": {
-          "digest": "2a06c053c5a5c816517446eebc5cc56e86331b9fbe27a613310dd80d7a2afd08",
-          "git": "? .factory/events/367dd9ee205749779fcc10436b92b319.json\u0000\u0000\u0000"
+        ".factory/events/5848072bfac34f3c81621fcd481cfa2c.json": {
+          "digest": "84e4d82b4ae8574653ccecf1b6ea682d290da3fc58ca0768a75a01437f7f4456",
+          "git": "? .factory/events/5848072bfac34f3c81621fcd481cfa2c.json\u0000\u0000\u0000"
         },
-        ".factory/events/82246ee89579408898f45922ef8b8198.json": {
-          "digest": "d9190fc5c534bbd96ce0f6c8dad770a4bc3ec61235990cd8886fc168560dfd3b",
-          "git": "? .factory/events/82246ee89579408898f45922ef8b8198.json\u0000\u0000\u0000"
+        ".factory/events/7261a0e65970455c83d1bd3a1575608f.json": {
+          "digest": "89302003d62269df463be7155afc1e5fa2c3acf8358f842c975843735d6afe89",
+          "git": "? .factory/events/7261a0e65970455c83d1bd3a1575608f.json\u0000\u0000\u0000"
         },
-        ".factory/events/b1560a9568c6450ca6be23bc872d5e5d.json": {
-          "digest": "7cbe4712bfcf3821e7aa96ed96d20b012bc109931fe17f8ba057e6b9fad25465",
-          "git": "? .factory/events/b1560a9568c6450ca6be23bc872d5e5d.json\u0000\u0000\u0000"
+        ".factory/events/c5f6c47354934fa78966ba9c5fcb6cc8.json": {
+          "digest": "0ee28223948356b79765d0da674a58183d8479515ee97a924d500273a00d59f4",
+          "git": "? .factory/events/c5f6c47354934fa78966ba9c5fcb6cc8.json\u0000\u0000\u0000"
         },
-        ".factory/events/dff75118b32844e989111cb35bf5a9f1.json": {
-          "digest": "45d0f4128b6597186d16b5d900c887f4781c6079a85d7619dc5482f89fe1458f",
-          "git": "? .factory/events/dff75118b32844e989111cb35bf5a9f1.json\u0000\u0000\u0000"
+        ".factory/events/c8458449131b44a4811a66bc43c8a3c2.json": {
+          "digest": "1b2935578d8a1eadcc08d9a99495b6eda1a4c4f1fb33467ecac856f3645db80f",
+          "git": "? .factory/events/c8458449131b44a4811a66bc43c8a3c2.json\u0000\u0000\u0000"
         },
-        ".factory/events/f28ca7adc64b4ed7bb451b3343f1b187.json": {
-          "digest": "5288a579681c19c54472b178e7469f0f1688e1741e467b804337766de9874a75",
-          "git": "? .factory/events/f28ca7adc64b4ed7bb451b3343f1b187.json\u0000\u0000\u0000"
+        ".factory/events/e48d96ca342d4737a19f91d4aa583c1e.json": {
+          "digest": "c3d1f45c028d920c4b535677d92178af930bd627a56b2cc0573443dae5abc3a5",
+          "git": "? .factory/events/e48d96ca342d4737a19f91d4aa583c1e.json\u0000\u0000\u0000"
+        },
+        ".factory/events/ed6faa0a75ff49febdd54f1f88cdb18c.json": {
+          "digest": "7ec2ea8f2f21149da84b6df6c925d1ab197450443c791d38bc926e41d7b94cd0",
+          "git": "? .factory/events/ed6faa0a75ff49febdd54f1f88cdb18c.json\u0000\u0000\u0000"
         },
         ".factory/stages.json": {
-          "digest": "7cf35681d6b8890f1dd3fc349eb36b4848060d7983bd93f7aced8190c3d6dbba",
-          "git": "? .factory/stages.json\u0000\u0000\u0000"
+          "digest": "35563ffcf09eac5f6dd9fbfa6079c534956e7fbafcefb66e013403941acec046",
+          "git": "1 .M N... 100644 100644 100644 18847253627c55f6b77d999a689f1fb717d937c4 18847253627c55f6b77d999a689f1fb717d937c4 .factory/stages.json\u0000\u0000100644 18847253627c55f6b77d999a689f1fb717d937c4 0\t.factory/stages.json\u0000\u0000H .factory/stages.json\u0000"
         },
-        ".factory/stories/FORGE-ACC-3/decomposition.json": {
-          "digest": "348229d0736ec58ac0a9701332bc919e30fcb8f653ec76dbc4252e5d43ff5451",
-          "git": "? .factory/stories/FORGE-ACC-3/decomposition.json\u0000\u0000\u0000"
+        ".factory/stories/plan-mode-and-grill-provenance/decomposition.json": {
+          "digest": "92a83043585de9901332759b187b9284a31858953504f8585cf8948ab223b14e",
+          "git": "? .factory/stories/plan-mode-and-grill-provenance/decomposition.json\u0000\u0000\u0000"
         },
-        ".factory/stories/FORGE-ACC-3/grills/plan.json": {
-          "digest": "93f416b1b5797362c28327aadd51ad7d596a6417a3d63940b822c15da71f58c0",
-          "git": "? .factory/stories/FORGE-ACC-3/grills/plan.json\u0000\u0000\u0000"
+        ".factory/stories/plan-mode-and-grill-provenance/grills/plan.json": {
+          "digest": "fa0261c1600bd4c8d64118352854355872903507bb6c341b403831856296ce58",
+          "git": "? .factory/stories/plan-mode-and-grill-provenance/grills/plan.json\u0000\u0000\u0000"
         },
-        ".factory/stories/FORGE-ACC-3/grills/tasks/plan-approval-binding.json": {
-          "digest": "ca0fdfa3655ba428135f77148bb1c215fdb1ade689542e2b682e4f1ec9f6fed7",
-          "git": "? .factory/stories/FORGE-ACC-3/grills/tasks/plan-approval-binding.json\u0000\u0000\u0000"
+        ".factory/stories/plan-mode-and-grill-provenance/grills/requirements.json": {
+          "digest": "10adb8965f05cdf4f5870dca100395a00961aef8843f2dfe72339b66e6a419d2",
+          "git": "? .factory/stories/plan-mode-and-grill-provenance/grills/requirements.json\u0000\u0000\u0000"
         },
-        "plans/active/FORGE-ACC-3-approval-and-closeout-integrity.md": {
-          "digest": "a8a6dbc6d2ba190ba945ade053fe49528021b51ca74cbeebd37fb013ce3627e5",
-          "git": "? plans/active/FORGE-ACC-3-approval-and-closeout-integrity.md\u0000\u0000\u0000"
+        ".factory/stories/plan-mode-and-grill-provenance/grills/tasks/post-tool-use-ledgers.json": {
+          "digest": "637b777c5a0667007912939ed402dfc3d9b69d1cc58d77556615049008602c0e",
+          "git": "? .factory/stories/plan-mode-and-grill-provenance/grills/tasks/post-tool-use-ledgers.json\u0000\u0000\u0000"
+        },
+        ".factory/stories/plan-mode-and-grill-provenance/task-plans/post-tool-use-ledgers.md": {
+          "digest": "b83f5a9f57827373d6b17b744dd8891b9931a89b0df20508ba03cdaac8aff6ad",
+          "git": "? .factory/stories/plan-mode-and-grill-provenance/task-plans/post-tool-use-ledgers.md\u0000\u0000\u0000"
+        },
+        "plans/active/plan-mode-and-grill-provenance-plan-mode-and-grill-provenance-are-enforced-not-advisory.md": {
+          "digest": "07fdc9f99fac88cabdf6ee164f8ea1cf227c3fc388d6ec4c844f7bea5115691c",
+          "git": "? plans/active/plan-mode-and-grill-provenance-plan-mode-and-grill-provenance-are-enforced-not-advisory.md\u0000\u0000\u0000"
+        },
+        "plans/lessons/20260821T075934-0000-plan-mode-not-enforced-075934794024.json": {
+          "digest": "335d220da7babcef82d7bd4a32134280ead414be3efbed90108fda165bd29f3d",
+          "git": "? plans/lessons/20260821T075934-0000-plan-mode-not-enforced-075934794024.json\u0000\u0000\u0000"
         },
         "plans/roadmap.json": {
-          "digest": "23e759dcbc068de670bff882749b40de88b7f9f199389e0537251fa68a29653b",
-          "git": "1 .M N... 100644 100644 100644 1f22599a79fcf3ae9ec3adf6bd41658b008130af 1f22599a79fcf3ae9ec3adf6bd41658b008130af plans/roadmap.json\u0000\u0000100644 1f22599a79fcf3ae9ec3adf6bd41658b008130af 0\tplans/roadmap.json\u0000\u0000H plans/roadmap.json\u0000"
+          "digest": "976bc10d4912639858a833f2243df9b9de01f2dcf37831c2eafdd46ad3f89466",
+          "git": "1 .M N... 100644 100644 100644 4676c930abcf29c78d51eeb8c826992b535bdf4e 4676c930abcf29c78d51eeb8c826992b535bdf4e plans/roadmap.json\u0000\u0000100644 4676c930abcf29c78d51eeb8c826992b535bdf4e 0\tplans/roadmap.json\u0000\u0000H plans/roadmap.json\u0000"
         }
       },
-      "task_sha256": "8975a36213c4e99934d36b3787d354505e6d7916095fedb7de7f14081a2c9b3c",
-      "completed_at": "2026-08-19T05:28:42+00:00"
+      "task_sha256": "a82f107f0dd5506426850c5ec56b05955c404e8ad53731bb27b3daca1e7a656e",
+      "completed_at": "2026-08-21T11:20:48+00:00"
     },
     {
-      "id": "task-plan-approval-gate",
-      "title": "Each task is grilled, planned in plan mode, and human-approved before implementation",
+      "id": "plan-mode-gate",
+      "title": "plan save, plan approve, task plan save and task approve require a plan-mode marker",
       "status": "done",
-      "started_at": "2026-08-19T05:33:03+00:00",
-      "base_sha": "17d7ec59804a07ea515cb7b67a679ff07bf4d883",
+      "started_at": "2026-08-21T11:32:09+00:00",
+      "base_sha": "f24acab63ebddd9050375ee236c383d858347164",
       "dirty_at_start": {
-        ".factory/events/57d8227922744f49882c8e96706176c4.json": {
-          "digest": "8f351212f62b8d23c9952977b6a812912dd5be44f93f5c4be3a89e350fc071f0",
-          "git": "? .factory/events/57d8227922744f49882c8e96706176c4.json\u0000\u0000\u0000"
+        ".factory/events/01f24d3b017549b6be9fa062ed1fa05f.json": {
+          "digest": "bb90bcdb90fa0c504e8a6e8b94f0e30cba3d4ae1ce49146398921cdc3b63ab9c",
+          "git": "? .factory/events/01f24d3b017549b6be9fa062ed1fa05f.json\u0000\u0000\u0000"
         },
-        ".factory/events/d02d8255bec14749b1daa7d95d97f44c.json": {
-          "digest": "d6c2b32d1b57beee6b0930cf9212c160002fbce4bf61b5f1d7c0cfda2a4ca941",
-          "git": "? .factory/events/d02d8255bec14749b1daa7d95d97f44c.json\u0000\u0000\u0000"
+        ".factory/events/050b4ce1203e4efb91113f9c6d7c4c92.json": {
+          "digest": "40a1425be5a8d2fd27daffe29f81bed25d2f2e0dc5cdd6b658650e20439cf479",
+          "git": "? .factory/events/050b4ce1203e4efb91113f9c6d7c4c92.json\u0000\u0000\u0000"
         },
-        ".factory/stages.json": {
-          "digest": "e3859190fc8d7d8db4cb5a8cce4c40e85d668332f228603c821a54eb1d046511",
-          "git": "1 .M N... 100644 100644 100644 72b9175d25d30e4387eb93dea5e4b51204e22641 72b9175d25d30e4387eb93dea5e4b51204e22641 .factory/stages.json\u0000\u0000100644 72b9175d25d30e4387eb93dea5e4b51204e22641 0\t.factory/stages.json\u0000\u0000H .factory/stages.json\u0000"
+        ".factory/events/06f8287240a14ed9bf3f6c4f27563dd4.json": {
+          "digest": "78bfa8c74692a8190c4ca9c777d1b0e064f0215d1388cf0917d44e92619200d9",
+          "git": "? .factory/events/06f8287240a14ed9bf3f6c4f27563dd4.json\u0000\u0000\u0000"
         },
-        ".factory/stories/FORGE-ACC-3/decomposition.json": {
-          "digest": "831dc8da5555dd5e42d53a01d42be343ef70c977e5a2cbf23c94131ff93433f5",
-          "git": "1 .M N... 100644 100644 100644 78510618f058fc296bdda7591aea6d99f9750977 78510618f058fc296bdda7591aea6d99f9750977 .factory/stories/FORGE-ACC-3/decomposition.json\u0000\u0000100644 78510618f058fc296bdda7591aea6d99f9750977 0\t.factory/stories/FORGE-ACC-3/decomposition.json\u0000\u0000H .factory/stories/FORGE-ACC-3/decomposition.json\u0000"
+        ".factory/events/0931e5a8ab3643e186a86997ab13411c.json": {
+          "digest": "7468d8f343817c6a2c3a9058595d186841a27d7dd370badf3983713f000094cb",
+          "git": "? .factory/events/0931e5a8ab3643e186a86997ab13411c.json\u0000\u0000\u0000"
         },
-        ".factory/stories/FORGE-ACC-3/grills/tasks/task-plan-approval-gate.json": {
-          "digest": "31dfd30fdaf87083a9d7633ee0b8ca8acf36dc01cb99fdff4d3882143cf3000a",
-          "git": "? .factory/stories/FORGE-ACC-3/grills/tasks/task-plan-approval-gate.json\u0000\u0000\u0000"
-        }
-      },
-      "task_sha256": "05dc9d1258b59c0b23e11ed41c5947a3dd1d22faad698307ad828b626e8daa6f",
-      "completed_at": "2026-08-19T06:17:03+00:00"
-    },
-    {
-      "id": "pre-draft-requirements-round",
-      "title": "The spec is re-grilled against repo reality before plan drafting",
-      "status": "done",
-      "started_at": "2026-08-19T07:32:36+00:00",
-      "base_sha": "55353f604cc36b8a196bbb3aa3e8f9b44d54f18b",
-      "dirty_at_start": {
-        ".factory/events/1992cbcceaa9461a9500a83a91369d18.json": {
-          "digest": "b5c64b8d9bd3b3c9d8f3558146d9472eeba997f8e942e3f9c9cae804c9aacc82",
-          "git": "? .factory/events/1992cbcceaa9461a9500a83a91369d18.json\u0000\u0000\u0000"
+        ".factory/events/13849fb1608d407eb204ce584f0a65a2.json": {
+          "digest": "b4daceb01bd0978e06cec8d31ab1b3209b611141de14478375d5916ec69259e2",
+          "git": "? .factory/events/13849fb1608d407eb204ce584f0a65a2.json\u0000\u0000\u0000"
         },
-        ".factory/events/2c4a3b8c404f4396a80ed8da471e3551.json": {
-          "digest": "584d02ac42e810bc816d5b17b387dc13397dd08c3d679dcf3ab54c5dd9dfa9b0",
-          "git": "? .factory/events/2c4a3b8c404f4396a80ed8da471e3551.json\u0000\u0000\u0000"
+        ".factory/events/263a6997bccd4d8bbc81ee3e6606c14a.json": {
+          "digest": "efe4480b6a1c11b97482afae39917af000a60386587ba24a373471762aab6de1",
+          "git": "? .factory/events/263a6997bccd4d8bbc81ee3e6606c14a.json\u0000\u0000\u0000"
         },
-        ".factory/events/6d68ca1c57594023b26b1ebf4cf60416.json": {
-          "digest": "325495369b0ebd87fec38c6a0739b672f9f34c49cfc1853a513b84d823f3efff",
-          "git": "? .factory/events/6d68ca1c57594023b26b1ebf4cf60416.json\u0000\u0000\u0000"
+        ".factory/events/47c2fdd4434a40fa95d01d4b7d369e0c.json": {
+          "digest": "a35cb77f159f33fe5bdd6325ad7109fcf7391c5bca128ac89080fa27de149033",
+          "git": "? .factory/events/47c2fdd4434a40fa95d01d4b7d369e0c.json\u0000\u0000\u0000"
         },
-        ".factory/events/77e1d31a9a01487c97897bd742582843.json": {
-          "digest": "7a887f6b06dd23e5cee75c820f8d368518c445e8fc9a77edbb8cd5a181b7a07a",
-          "git": "? .factory/events/77e1d31a9a01487c97897bd742582843.json\u0000\u0000\u0000"
+        ".factory/events/4d243069ea2448ea8c61caee2646c5b1.json": {
+          "digest": "4f4c0c4d5bb857a3d85bb0e303ee2e3db707fd16758f09dd4592d218b723b18a",
+          "git": "? .factory/events/4d243069ea2448ea8c61caee2646c5b1.json\u0000\u0000\u0000"
         },
-        ".factory/events/a01bc7a456424940b69316bc11031868.json": {
-          "digest": "32cef9d0dd4ff85691d3352556f13a13ef75a0641e75ea28303f18596c76e62e",
-          "git": "? .factory/events/a01bc7a456424940b69316bc11031868.json\u0000\u0000\u0000"
+        ".factory/events/53738fdbe2a44ddd9601352751e4dc67.json": {
+          "digest": "a2a0bf89d5efa08a69a6329164913a7d6040dacac964a4e154614974e08a7998",
+          "git": "? .factory/events/53738fdbe2a44ddd9601352751e4dc67.json\u0000\u0000\u0000"
         },
-        ".factory/events/cc2a15a8848b4421aaa0a3f51e0ba481.json": {
-          "digest": "6c8aa68438b2b642527dbbdbf57e8d030c046a4f84ff55e92ce26d7801a1a5ad",
-          "git": "? .factory/events/cc2a15a8848b4421aaa0a3f51e0ba481.json\u0000\u0000\u0000"
+        ".factory/events/5848072bfac34f3c81621fcd481cfa2c.json": {
+          "digest": "84e4d82b4ae8574653ccecf1b6ea682d290da3fc58ca0768a75a01437f7f4456",
+          "git": "? .factory/events/5848072bfac34f3c81621fcd481cfa2c.json\u0000\u0000\u0000"
         },
-        ".factory/events/d29543b7852143428b2d5611e7f27b01.json": {
-          "digest": "35979b33925f445eb5ee9f9c0420116e38a7fd9026dc886fa1bf115ac2123238",
-          "git": "? .factory/events/d29543b7852143428b2d5611e7f27b01.json\u0000\u0000\u0000"
+        ".factory/events/605e3b89ff4d400a889c13770ea23a74.json": {
+          "digest": "8140f1d2f8de40399a1e90b8d778e2e29d01a15720a484e9ae84a172a72b3604",
+          "git": "? .factory/events/605e3b89ff4d400a889c13770ea23a74.json\u0000\u0000\u0000"
         },
-        ".factory/stories/FORGE-ACC-3/decomposition.json": {
-          "digest": "b9b0e8919f62a9a9ef21881fed299c749c13fdfe2b07b7d762779eba0576eb35",
-          "git": "1 .M N... 100644 100644 100644 dfd540602c01eb5bfa9aed7e0fde9b866ce92191 dfd540602c01eb5bfa9aed7e0fde9b866ce92191 .factory/stories/FORGE-ACC-3/decomposition.json\u0000\u0000100644 dfd540602c01eb5bfa9aed7e0fde9b866ce92191 0\t.factory/stories/FORGE-ACC-3/decomposition.json\u0000\u0000H .factory/stories/FORGE-ACC-3/decomposition.json\u0000"
+        ".factory/events/7261a0e65970455c83d1bd3a1575608f.json": {
+          "digest": "89302003d62269df463be7155afc1e5fa2c3acf8358f842c975843735d6afe89",
+          "git": "? .factory/events/7261a0e65970455c83d1bd3a1575608f.json\u0000\u0000\u0000"
         },
-        ".factory/stories/FORGE-ACC-3/grills/tasks/pre-draft-requirements-round.json": {
-          "digest": "d9792c4d99347d1a8aaeabec91ea93d2ec52151b2bfc4065455b39166d4d3569",
-          "git": "? .factory/stories/FORGE-ACC-3/grills/tasks/pre-draft-requirements-round.json\u0000\u0000\u0000"
+        ".factory/events/84fc8d4cc8e143959153f65f89474bfb.json": {
+          "digest": "329c67af15da7ba4fe2dbfb8730c898b5cc0c93080ded4a28b40069366f59a8b",
+          "git": "? .factory/events/84fc8d4cc8e143959153f65f89474bfb.json\u0000\u0000\u0000"
         },
-        ".factory/stories/FORGE-ACC-3/task-plans/pre-draft-requirements-round.md": {
-          "digest": "c5e138311da6dc77dc70b758a621c3b63ffa168678fef6f0e18338cc0bbc0ed6",
-          "git": "? .factory/stories/FORGE-ACC-3/task-plans/pre-draft-requirements-round.md\u0000\u0000\u0000"
+        ".factory/events/85a9686ac0e840e1a67920c99f023209.json": {
+          "digest": "61915bf6af8b761a7bab1235fba970bfcf5702226faecac0183fc1ad31d46331",
+          "git": "? .factory/events/85a9686ac0e840e1a67920c99f023209.json\u0000\u0000\u0000"
         },
-        "plans/quickfixes/20260819T062749-0000-Q-0081-629d-open-062749943700.json": {
-          "digest": "5c5163ee23d510c00834802ee81f103a947e42736fee5d9494b303b802a51b1a",
-          "git": "? plans/quickfixes/20260819T062749-0000-Q-0081-629d-open-062749943700.json\u0000\u0000\u0000"
+        ".factory/events/87d72dd093314806afa13170ac39440c.json": {
+          "digest": "f2c5973139aeb9c0df8ba1760895e0206ef482715348f21e60e21bd109e84f80",
+          "git": "? .factory/events/87d72dd093314806afa13170ac39440c.json\u0000\u0000\u0000"
         },
-        "plans/quickfixes/20260819T064507-0000-Q-0081-629d-done-064507548479.json": {
-          "digest": "61fdb618a6a6ac90c6d9d20d3bd2d29e1f063d06e61662cc749417a822165673",
-          "git": "? plans/quickfixes/20260819T064507-0000-Q-0081-629d-done-064507548479.json\u0000\u0000\u0000"
-        }
-      },
-      "task_sha256": "aae3dbf885ae4e99fe1f5bd5848d6308f4aff8c9b6220ede0cabeab680bfcac1",
-      "completed_at": "2026-08-19T07:48:44+00:00"
-    },
-    {
-      "id": "local-review-stamp",
-      "title": "Stage close requires a recorded clean local review and committed work",
-      "status": "done",
-      "started_at": "2026-08-19T07:54:18+00:00",
-      "base_sha": "167cf41d636301f2fe0fb6a8334dc5a284001440",
-      "dirty_at_start": {
-        ".factory/events/07c6c48451ab4a30b473b5df9ac09046.json": {
-          "digest": "6b981917e97bbce69fc814105a7911888f9115963f7d0880bf540c55b78bb7b9",
-          "git": "? .factory/events/07c6c48451ab4a30b473b5df9ac09046.json\u0000\u0000\u0000"
+        ".factory/events/94639f9766d8496ab68032886082abed.json": {
+          "digest": "f564aebae05d241a0caeb0e753984cf5f46de37bfe019bda05a2d1dd166fd0a9",
+          "git": "? .factory/events/94639f9766d8496ab68032886082abed.json\u0000\u0000\u0000"
         },
-        ".factory/events/1992cbcceaa9461a9500a83a91369d18.json": {
-          "digest": "b5c64b8d9bd3b3c9d8f3558146d9472eeba997f8e942e3f9c9cae804c9aacc82",
-          "git": "? .factory/events/1992cbcceaa9461a9500a83a91369d18.json\u0000\u0000\u0000"
+        ".factory/events/9d6a3bd3245b466bbf7c9ae763e2be48.json": {
+          "digest": "10284f5512f11a46060411f341f0b63c609fac20c5ad31932b65dba71992c31f",
+          "git": "? .factory/events/9d6a3bd3245b466bbf7c9ae763e2be48.json\u0000\u0000\u0000"
         },
-        ".factory/events/2c4a3b8c404f4396a80ed8da471e3551.json": {
-          "digest": "584d02ac42e810bc816d5b17b387dc13397dd08c3d679dcf3ab54c5dd9dfa9b0",
-          "git": "? .factory/events/2c4a3b8c404f4396a80ed8da471e3551.json\u0000\u0000\u0000"
+        ".factory/events/a0d721f3d4f44a578142a629f8e33fcf.json": {
+          "digest": "39a8f236b96c0c2e898b1806fc8ab0fdf4d722cbfddc0775e31e20b879218284",
+          "git": "? .factory/events/a0d721f3d4f44a578142a629f8e33fcf.json\u0000\u0000\u0000"
         },
-        ".factory/events/6d68ca1c57594023b26b1ebf4cf60416.json": {
-          "digest": "325495369b0ebd87fec38c6a0739b672f9f34c49cfc1853a513b84d823f3efff",
-          "git": "? .factory/events/6d68ca1c57594023b26b1ebf4cf60416.json\u0000\u0000\u0000"
+        ".factory/events/b3fe41ef40f14f1a808701c033b1e36c.json": {
+          "digest": "28da6e50eb6a426b95ea2a5d46f245e28b7ab2cf0863169f2ea6fe134c54ad0b",
+          "git": "? .factory/events/b3fe41ef40f14f1a808701c033b1e36c.json\u0000\u0000\u0000"
         },
-        ".factory/events/77e1d31a9a01487c97897bd742582843.json": {
-          "digest": "7a887f6b06dd23e5cee75c820f8d368518c445e8fc9a77edbb8cd5a181b7a07a",
-          "git": "? .factory/events/77e1d31a9a01487c97897bd742582843.json\u0000\u0000\u0000"
+        ".factory/events/b6c816e17f494fe4b472693d406f5d90.json": {
+          "digest": "4178eef098221d17ebddd3976d13ddf62674b9988d7a6d0afb55a5db8472e050",
+          "git": "? .factory/events/b6c816e17f494fe4b472693d406f5d90.json\u0000\u0000\u0000"
         },
-        ".factory/events/899b1ef5a543482da176af95d35260f5.json": {
-          "digest": "b9888c6642fb94a21d26ed4d550b4050e19bca2fb4cb3504f19f89d5aaf8b036",
-          "git": "? .factory/events/899b1ef5a543482da176af95d35260f5.json\u0000\u0000\u0000"
+        ".factory/events/b6da5aca6aa44973be2f6bbeda353329.json": {
+          "digest": "4ebed5bb0c9d68503002aa743b8d02484726efe6fa6408aeec12827b4ad8bd33",
+          "git": "? .factory/events/b6da5aca6aa44973be2f6bbeda353329.json\u0000\u0000\u0000"
         },
-        ".factory/events/a01bc7a456424940b69316bc11031868.json": {
-          "digest": "32cef9d0dd4ff85691d3352556f13a13ef75a0641e75ea28303f18596c76e62e",
-          "git": "? .factory/events/a01bc7a456424940b69316bc11031868.json\u0000\u0000\u0000"
+        ".factory/events/c08c425ed4cc4603a4b765928e462d59.json": {
+          "digest": "ceb643f23385a0a7476ba61cc0240bab32186598be7e95ff499448efc044fa93",
+          "git": "? .factory/events/c08c425ed4cc4603a4b765928e462d59.json\u0000\u0000\u0000"
         },
-        ".factory/events/b1ccfdeb4c1e424c858c2a59347afcf8.json": {
-          "digest": "04181b793811a7eb35e768eb954e70b2c0c7de1ad7f2e4564e1d0f711cf5095f",
-          "git": "? .factory/events/b1ccfdeb4c1e424c858c2a59347afcf8.json\u0000\u0000\u0000"
+        ".factory/events/c5f6c47354934fa78966ba9c5fcb6cc8.json": {
+          "digest": "0ee28223948356b79765d0da674a58183d8479515ee97a924d500273a00d59f4",
+          "git": "? .factory/events/c5f6c47354934fa78966ba9c5fcb6cc8.json\u0000\u0000\u0000"
         },
-        ".factory/events/be09db7a4a9f471ca6c964b11764c855.json": {
-          "digest": "e5a86fe67635e2cf77ce285f44c90a01f363fe6f7a9540976c74728a8b18839e",
-          "git": "? .factory/events/be09db7a4a9f471ca6c964b11764c855.json\u0000\u0000\u0000"
+        ".factory/events/c8458449131b44a4811a66bc43c8a3c2.json": {
+          "digest": "1b2935578d8a1eadcc08d9a99495b6eda1a4c4f1fb33467ecac856f3645db80f",
+          "git": "? .factory/events/c8458449131b44a4811a66bc43c8a3c2.json\u0000\u0000\u0000"
         },
-        ".factory/events/cc2a15a8848b4421aaa0a3f51e0ba481.json": {
-          "digest": "6c8aa68438b2b642527dbbdbf57e8d030c046a4f84ff55e92ce26d7801a1a5ad",
-          "git": "? .factory/events/cc2a15a8848b4421aaa0a3f51e0ba481.json\u0000\u0000\u0000"
+        ".factory/events/c9d038d4f06f4aff955e86fa8a17b4cd.json": {
+          "digest": "6fe807bb39ab47f6731e03a142cde7f3b50601c166604caf610660b386712e60",
+          "git": "? .factory/events/c9d038d4f06f4aff955e86fa8a17b4cd.json\u0000\u0000\u0000"
         },
-        ".factory/events/d29543b7852143428b2d5611e7f27b01.json": {
-          "digest": "35979b33925f445eb5ee9f9c0420116e38a7fd9026dc886fa1bf115ac2123238",
-          "git": "? .factory/events/d29543b7852143428b2d5611e7f27b01.json\u0000\u0000\u0000"
+        ".factory/events/d1f5bfddda634f5cbf9c16d94e261feb.json": {
+          "digest": "76770b906d86daaca5484b05e18716e6b9a0be97d71b24091eaffd46c0adffb3",
+          "git": "? .factory/events/d1f5bfddda634f5cbf9c16d94e261feb.json\u0000\u0000\u0000"
+        },
+        ".factory/events/db7ba670f62145bd9a706adefd0f49e7.json": {
+          "digest": "b3ca32c5c70edf8a8ef6b96ff217962d8cf9548ddf190d05e55eb662d78514d5",
+          "git": "? .factory/events/db7ba670f62145bd9a706adefd0f49e7.json\u0000\u0000\u0000"
+        },
+        ".factory/events/ddac9a3808ac465aa5ef78854eb66b1b.json": {
+          "digest": "fee40adde2ad434fc10651449fb72fd23a56ddffd946296183bb36cf8a6128d5",
+          "git": "? .factory/events/ddac9a3808ac465aa5ef78854eb66b1b.json\u0000\u0000\u0000"
+        },
+        ".factory/events/e48d96ca342d4737a19f91d4aa583c1e.json": {
+          "digest": "c3d1f45c028d920c4b535677d92178af930bd627a56b2cc0573443dae5abc3a5",
+          "git": "? .factory/events/e48d96ca342d4737a19f91d4aa583c1e.json\u0000\u0000\u0000"
+        },
+        ".factory/events/ed6faa0a75ff49febdd54f1f88cdb18c.json": {
+          "digest": "7ec2ea8f2f21149da84b6df6c925d1ab197450443c791d38bc926e41d7b94cd0",
+          "git": "? .factory/events/ed6faa0a75ff49febdd54f1f88cdb18c.json\u0000\u0000\u0000"
+        },
+        ".factory/events/f5aeb5179d1a486d92f73443c765a1f8.json": {
+          "digest": "71bf27f383c62e2dc92907551f5da0cd249054ba41793742c5c45a72cd2c6c53",
+          "git": "? .factory/events/f5aeb5179d1a486d92f73443c765a1f8.json\u0000\u0000\u0000"
+        },
+        ".factory/events/f5b95be9893644e593debee04af0adc3.json": {
+          "digest": "e60a948556b84427de4d95bb487b61435e895b38c379d4594bbcb30e0a152aad",
+          "git": "? .factory/events/f5b95be9893644e593debee04af0adc3.json\u0000\u0000\u0000"
         },
         ".factory/signals.jsonl": {
-          "digest": "d92c71f093c5fb8432d4a624b772734587e8c68534d9d988f1eaa29f7f6754de",
-          "git": "? .factory/signals.jsonl\u0000\u0000\u0000"
+          "digest": "a4ce030abbca08dcf7b4709e8e61d8372e96f61070e277ed665f32394825db8f",
+          "git": "1 .M N... 100644 100644 100644 671d418263e9293cfbe20dbacc95cd94c54d8b67 671d418263e9293cfbe20dbacc95cd94c54d8b67 .factory/signals.jsonl\u0000\u0000100644 671d418263e9293cfbe20dbacc95cd94c54d8b67 0\t.factory/signals.jsonl\u0000\u0000H .factory/signals.jsonl\u0000"
         },
         ".factory/stages.json": {
-          "digest": "427b63c767745a4bfae87271c4a1bd063d52c6051a94a99ce6b00d1e2be1ac34",
-          "git": "1 .M N... 100644 100644 100644 7a75fa9ce6e070a71440606fa8f10935e8385faf 7a75fa9ce6e070a71440606fa8f10935e8385faf .factory/stages.json\u0000\u0000100644 7a75fa9ce6e070a71440606fa8f10935e8385faf 0\t.factory/stages.json\u0000\u0000H .factory/stages.json\u0000"
+          "digest": "31a626c6dffcd479efa3295c80bcca82f2119e94e542319fe80d1b42a4fa0277",
+          "git": "1 .M N... 100644 100644 100644 18847253627c55f6b77d999a689f1fb717d937c4 18847253627c55f6b77d999a689f1fb717d937c4 .factory/stages.json\u0000\u0000100644 18847253627c55f6b77d999a689f1fb717d937c4 0\t.factory/stages.json\u0000\u0000H .factory/stages.json\u0000"
         },
-        ".factory/stories/FORGE-ACC-3/decomposition.json": {
-          "digest": "87412c4a4515eb7681ce4d4d13ffe7cf864672303fafa67c26ac11dc7bd9f395",
-          "git": "1 .M N... 100644 100644 100644 35c64e0c52faaf58541664cec213cae3d8f1bdf4 35c64e0c52faaf58541664cec213cae3d8f1bdf4 .factory/stories/FORGE-ACC-3/decomposition.json\u0000\u0000100644 35c64e0c52faaf58541664cec213cae3d8f1bdf4 0\t.factory/stories/FORGE-ACC-3/decomposition.json\u0000\u0000H .factory/stories/FORGE-ACC-3/decomposition.json\u0000"
+        ".factory/stories/plan-mode-and-grill-provenance/decomposition.json": {
+          "digest": "c0f12d59d7af5d30caa2c09458d18df40b53aa3b089cc4eba5a9cfd59fdd6bf6",
+          "git": "? .factory/stories/plan-mode-and-grill-provenance/decomposition.json\u0000\u0000\u0000"
         },
-        ".factory/stories/FORGE-ACC-3/grills/tasks/local-review-stamp.json": {
-          "digest": "bef5b3d22452134b324baa463dc1d3d881f7fb46104020ca3b25bd9d4318e7b1",
-          "git": "? .factory/stories/FORGE-ACC-3/grills/tasks/local-review-stamp.json\u0000\u0000\u0000"
+        ".factory/stories/plan-mode-and-grill-provenance/grills/plan.json": {
+          "digest": "fa0261c1600bd4c8d64118352854355872903507bb6c341b403831856296ce58",
+          "git": "? .factory/stories/plan-mode-and-grill-provenance/grills/plan.json\u0000\u0000\u0000"
         },
-        ".factory/stories/FORGE-ACC-3/task-plans/local-review-stamp.md": {
-          "digest": "83ffddcba5a95ea1b6a8b12a1a4d66816822c59f0a188422a3ec200c831b7123",
-          "git": "? .factory/stories/FORGE-ACC-3/task-plans/local-review-stamp.md\u0000\u0000\u0000"
+        ".factory/stories/plan-mode-and-grill-provenance/grills/requirements.json": {
+          "digest": "10adb8965f05cdf4f5870dca100395a00961aef8843f2dfe72339b66e6a419d2",
+          "git": "? .factory/stories/plan-mode-and-grill-provenance/grills/requirements.json\u0000\u0000\u0000"
         },
-        "plans/quickfixes/20260819T062749-0000-Q-0081-629d-open-062749943700.json": {
-          "digest": "5c5163ee23d510c00834802ee81f103a947e42736fee5d9494b303b802a51b1a",
-          "git": "? plans/quickfixes/20260819T062749-0000-Q-0081-629d-open-062749943700.json\u0000\u0000\u0000"
+        ".factory/stories/plan-mode-and-grill-provenance/grills/tasks/plan-mode-gate.json": {
+          "digest": "1939e61f1f21e736e3a89cb3941dbcaec3b6129bd6928ac848b9855d6fd35bc6",
+          "git": "? .factory/stories/plan-mode-and-grill-provenance/grills/tasks/plan-mode-gate.json\u0000\u0000\u0000"
         },
-        "plans/quickfixes/20260819T064507-0000-Q-0081-629d-done-064507548479.json": {
-          "digest": "61fdb618a6a6ac90c6d9d20d3bd2d29e1f063d06e61662cc749417a822165673",
-          "git": "? plans/quickfixes/20260819T064507-0000-Q-0081-629d-done-064507548479.json\u0000\u0000\u0000"
+        ".factory/stories/plan-mode-and-grill-provenance/grills/tasks/post-tool-use-ledgers.json": {
+          "digest": "5a7a70147aff0b52d6661e3456bc6fecb079ecf0838827f05b4df1635828214f",
+          "git": "? .factory/stories/plan-mode-and-grill-provenance/grills/tasks/post-tool-use-ledgers.json\u0000\u0000\u0000"
+        },
+        ".factory/stories/plan-mode-and-grill-provenance/task-plans/plan-mode-gate.md": {
+          "digest": "861bc3fcb6ac7a47810d6611e684e61e4104a0fcfda2ee2cc86248748373611d",
+          "git": "? .factory/stories/plan-mode-and-grill-provenance/task-plans/plan-mode-gate.md\u0000\u0000\u0000"
+        },
+        ".factory/stories/plan-mode-and-grill-provenance/task-plans/post-tool-use-ledgers.md": {
+          "digest": "b83f5a9f57827373d6b17b744dd8891b9931a89b0df20508ba03cdaac8aff6ad",
+          "git": "? .factory/stories/plan-mode-and-grill-provenance/task-plans/post-tool-use-ledgers.md\u0000\u0000\u0000"
+        },
+        ".factory/stories/plan-mode-and-grill-provenance/verify.json": {
+          "digest": "37287b8c01b7eda5f5671104282773c77325528ff1f0bb69ff9afb377b04ac8f",
+          "git": "? .factory/stories/plan-mode-and-grill-provenance/verify.json\u0000\u0000\u0000"
+        },
+        "plans/active/plan-mode-and-grill-provenance-plan-mode-and-grill-provenance-are-enforced-not-advisory.md": {
+          "digest": "07fdc9f99fac88cabdf6ee164f8ea1cf227c3fc388d6ec4c844f7bea5115691c",
+          "git": "? plans/active/plan-mode-and-grill-provenance-plan-mode-and-grill-provenance-are-enforced-not-advisory.md\u0000\u0000\u0000"
+        },
+        "plans/lessons/20260821T075934-0000-plan-mode-not-enforced-075934794024.json": {
+          "digest": "335d220da7babcef82d7bd4a32134280ead414be3efbed90108fda165bd29f3d",
+          "git": "? plans/lessons/20260821T075934-0000-plan-mode-not-enforced-075934794024.json\u0000\u0000\u0000"
+        },
+        "plans/roadmap.json": {
+          "digest": "976bc10d4912639858a833f2243df9b9de01f2dcf37831c2eafdd46ad3f89466",
+          "git": "1 .M N... 100644 100644 100644 4676c930abcf29c78d51eeb8c826992b535bdf4e 4676c930abcf29c78d51eeb8c826992b535bdf4e plans/roadmap.json\u0000\u0000100644 4676c930abcf29c78d51eeb8c826992b535bdf4e 0\tplans/roadmap.json\u0000\u0000H plans/roadmap.json\u0000"
         }
       },
-      "task_sha256": "0c10e39aa9228c12ebf47dbd4f740554d6eb4fb8b4c1d5016fc05afc47423970",
-      "completed_at": "2026-08-19T09:35:09+00:00"
+      "task_sha256": "7b26a2b7cea848009775dae61a3fbff6d898f7568d62be3755eb5ce94a674430",
+      "completed_at": "2026-08-24T10:17:21+00:00"
     },
     {
-      "id": "coherent-branch-review",
-      "title": "The three lenses are one run over one brief",
+      "id": "round-provenance-gate",
+      "title": "Grill recorder requires logged rounds, per-gate floors, frontier_empty, and a saved task plan; frontier order flipped",
       "status": "done",
-      "started_at": "2026-08-19T09:39:59+00:00",
-      "base_sha": "5ee81b786676e4afd1aa09aca9aa3e5ba90ac301",
+      "started_at": "2026-08-24T10:29:31+00:00",
+      "base_sha": "864b7628c294ba9de87f02e3f0ca95eb62283aed",
       "dirty_at_start": {
-        ".factory/events/07c6c48451ab4a30b473b5df9ac09046.json": {
-          "digest": "6b981917e97bbce69fc814105a7911888f9115963f7d0880bf540c55b78bb7b9",
-          "git": "? .factory/events/07c6c48451ab4a30b473b5df9ac09046.json\u0000\u0000\u0000"
+        ".factory/events/05b06c5a66aa45a3acef1b1f995cba1a.json": {
+          "digest": "1b8077f34dae209c24c7abdc02538fd24f0fc864784c4064c7f82495c0cacdf3",
+          "git": "? .factory/events/05b06c5a66aa45a3acef1b1f995cba1a.json\u0000\u0000\u0000"
         },
-        ".factory/events/1992cbcceaa9461a9500a83a91369d18.json": {
-          "digest": "b5c64b8d9bd3b3c9d8f3558146d9472eeba997f8e942e3f9c9cae804c9aacc82",
-          "git": "? .factory/events/1992cbcceaa9461a9500a83a91369d18.json\u0000\u0000\u0000"
+        ".factory/events/11e839483acd4fbfb7a9c3783ab496fc.json": {
+          "digest": "21426ee7556c4f329700820df90bad6bb112a7a5797a1b9a319106a6719198a4",
+          "git": "? .factory/events/11e839483acd4fbfb7a9c3783ab496fc.json\u0000\u0000\u0000"
         },
-        ".factory/events/2c4a3b8c404f4396a80ed8da471e3551.json": {
-          "digest": "584d02ac42e810bc816d5b17b387dc13397dd08c3d679dcf3ab54c5dd9dfa9b0",
-          "git": "? .factory/events/2c4a3b8c404f4396a80ed8da471e3551.json\u0000\u0000\u0000"
+        ".factory/events/16bd12ecaab44f0c8c15cbd254f45543.json": {
+          "digest": "4962872c4b9f65a52d247e49ce59ebb9fe76063005a0e90417660e27c864c527",
+          "git": "? .factory/events/16bd12ecaab44f0c8c15cbd254f45543.json\u0000\u0000\u0000"
         },
-        ".factory/events/61903e3cfe5a4b69a82170482ea983b2.json": {
-          "digest": "6f22dc318c2d6308f3e6386f5498162059c3c5a598b3b0c3f01b7a56fac76cc3",
-          "git": "? .factory/events/61903e3cfe5a4b69a82170482ea983b2.json\u0000\u0000\u0000"
+        ".factory/events/17c214f258be48d6907b450189aecf1a.json": {
+          "digest": "82aa13d3f28e480179239067ffbd6091bc5f5096a64c0a43de406e14f8c7c915",
+          "git": "? .factory/events/17c214f258be48d6907b450189aecf1a.json\u0000\u0000\u0000"
         },
-        ".factory/events/69000f5fe7334845a5fb63374f12f0cc.json": {
-          "digest": "f2f4382390eb0706a81068a55a21ac876eef11b917841fd7e68bc743e51f6061",
-          "git": "? .factory/events/69000f5fe7334845a5fb63374f12f0cc.json\u0000\u0000\u0000"
+        ".factory/events/1c723904d61545bfae7b8413c34d6584.json": {
+          "digest": "bf92c89441ccff680d75259740710fba57db5b52f2ec45ceaafd49cb3387b661",
+          "git": "? .factory/events/1c723904d61545bfae7b8413c34d6584.json\u0000\u0000\u0000"
         },
-        ".factory/events/6d68ca1c57594023b26b1ebf4cf60416.json": {
-          "digest": "325495369b0ebd87fec38c6a0739b672f9f34c49cfc1853a513b84d823f3efff",
-          "git": "? .factory/events/6d68ca1c57594023b26b1ebf4cf60416.json\u0000\u0000\u0000"
+        ".factory/events/2d0309d250ed4c9c82bd2213093a5731.json": {
+          "digest": "d908666bdd274165c377aea59da4b16226df7e873f684fd92bc02892f6ec5594",
+          "git": "? .factory/events/2d0309d250ed4c9c82bd2213093a5731.json\u0000\u0000\u0000"
         },
-        ".factory/events/77e1d31a9a01487c97897bd742582843.json": {
-          "digest": "7a887f6b06dd23e5cee75c820f8d368518c445e8fc9a77edbb8cd5a181b7a07a",
-          "git": "? .factory/events/77e1d31a9a01487c97897bd742582843.json\u0000\u0000\u0000"
+        ".factory/events/433c0c329f304459944cef3e4775eb26.json": {
+          "digest": "2e6a13731406f3ad19253571ebbb22db0c48dc5bcf155233460195738b811409",
+          "git": "? .factory/events/433c0c329f304459944cef3e4775eb26.json\u0000\u0000\u0000"
         },
-        ".factory/events/899b1ef5a543482da176af95d35260f5.json": {
-          "digest": "b9888c6642fb94a21d26ed4d550b4050e19bca2fb4cb3504f19f89d5aaf8b036",
-          "git": "? .factory/events/899b1ef5a543482da176af95d35260f5.json\u0000\u0000\u0000"
+        ".factory/events/4d4a78ea293a4019b59bc7b8f78c6235.json": {
+          "digest": "2713c0f192c1bd923637ca01c55683504f5194ca219f5e5009782dbbd64f7636",
+          "git": "? .factory/events/4d4a78ea293a4019b59bc7b8f78c6235.json\u0000\u0000\u0000"
         },
-        ".factory/events/92e8dbc3103b4b43b97da53e57546a93.json": {
-          "digest": "d55e4fde5510134ac80c3d7cc83e89716b5e83726e20f792c100b71b76fcf581",
-          "git": "? .factory/events/92e8dbc3103b4b43b97da53e57546a93.json\u0000\u0000\u0000"
+        ".factory/events/519bd7e7a9b641ec9fdb1277a89d63a6.json": {
+          "digest": "228560693b784b601d7544aef13b33de0dbcb5fa5078d20334f899a155fbaae0",
+          "git": "? .factory/events/519bd7e7a9b641ec9fdb1277a89d63a6.json\u0000\u0000\u0000"
         },
-        ".factory/events/a01bc7a456424940b69316bc11031868.json": {
-          "digest": "32cef9d0dd4ff85691d3352556f13a13ef75a0641e75ea28303f18596c76e62e",
-          "git": "? .factory/events/a01bc7a456424940b69316bc11031868.json\u0000\u0000\u0000"
+        ".factory/events/526ad1390be74f998bb21b2e053561e8.json": {
+          "digest": "24ea8535fe3ef482a3b87b13e9e3af22fc893747e34943e901ce238c5e6e2bef",
+          "git": "? .factory/events/526ad1390be74f998bb21b2e053561e8.json\u0000\u0000\u0000"
         },
-        ".factory/events/b1ccfdeb4c1e424c858c2a59347afcf8.json": {
-          "digest": "04181b793811a7eb35e768eb954e70b2c0c7de1ad7f2e4564e1d0f711cf5095f",
-          "git": "? .factory/events/b1ccfdeb4c1e424c858c2a59347afcf8.json\u0000\u0000\u0000"
+        ".factory/events/5656da29c7024ea99efb9c94d8b12be4.json": {
+          "digest": "5ecbc4716a09885c71f8405639f5f7c87498d029da295b68d3c5a6e7711655e6",
+          "git": "? .factory/events/5656da29c7024ea99efb9c94d8b12be4.json\u0000\u0000\u0000"
         },
-        ".factory/events/be09db7a4a9f471ca6c964b11764c855.json": {
-          "digest": "e5a86fe67635e2cf77ce285f44c90a01f363fe6f7a9540976c74728a8b18839e",
-          "git": "? .factory/events/be09db7a4a9f471ca6c964b11764c855.json\u0000\u0000\u0000"
+        ".factory/events/621bcb7f51c948b59024a5f72dba153b.json": {
+          "digest": "d66935130b8684bc4abae7684f4aa130075a03d8de17784915858290e799915f",
+          "git": "? .factory/events/621bcb7f51c948b59024a5f72dba153b.json\u0000\u0000\u0000"
         },
-        ".factory/events/cc2a15a8848b4421aaa0a3f51e0ba481.json": {
-          "digest": "6c8aa68438b2b642527dbbdbf57e8d030c046a4f84ff55e92ce26d7801a1a5ad",
-          "git": "? .factory/events/cc2a15a8848b4421aaa0a3f51e0ba481.json\u0000\u0000\u0000"
+        ".factory/events/6577403d08bb4ab1a836015844a25c3c.json": {
+          "digest": "d2003f032de45e845b82e230ac4f2e26f794fc374e15c7e14aedb67368078a85",
+          "git": "? .factory/events/6577403d08bb4ab1a836015844a25c3c.json\u0000\u0000\u0000"
         },
-        ".factory/events/d29543b7852143428b2d5611e7f27b01.json": {
-          "digest": "35979b33925f445eb5ee9f9c0420116e38a7fd9026dc886fa1bf115ac2123238",
-          "git": "? .factory/events/d29543b7852143428b2d5611e7f27b01.json\u0000\u0000\u0000"
+        ".factory/events/770acd09e5a44caba186264289f270d3.json": {
+          "digest": "9bd11f8f0764a95cc1ecd13b99b7ddb452dfe464e445cda1e2a8ea030b9797fa",
+          "git": "? .factory/events/770acd09e5a44caba186264289f270d3.json\u0000\u0000\u0000"
         },
-        ".factory/events/d9aeb0c61ab543d08b6fbe49cebd0fb6.json": {
-          "digest": "8e17cc875c3890e531af178d7728fb257f5432c403badff31098be52b9e9e93f",
-          "git": "? .factory/events/d9aeb0c61ab543d08b6fbe49cebd0fb6.json\u0000\u0000\u0000"
+        ".factory/events/787e630f843549789f9762653e7f0794.json": {
+          "digest": "3be749e249732f20e03ab2ff04ee06eb40e3697bea0e8af0f46ab566d3ad86e1",
+          "git": "? .factory/events/787e630f843549789f9762653e7f0794.json\u0000\u0000\u0000"
         },
-        ".factory/events/ea2151898246473fbd34ec7dbe93e06c.json": {
-          "digest": "6b07c2035a16a6d298c712adf129295e7e010972a3512497244c2c11b1eae749",
-          "git": "? .factory/events/ea2151898246473fbd34ec7dbe93e06c.json\u0000\u0000\u0000"
+        ".factory/events/7958a347c8ac446d8780ac067cd8588c.json": {
+          "digest": "ef0eff1e727046b3e9b7188e7f8975cce7a1c5a3d942f1a8fc1777c2a745371a",
+          "git": "? .factory/events/7958a347c8ac446d8780ac067cd8588c.json\u0000\u0000\u0000"
         },
-        ".factory/events/ead2737dca45450db145bd397a932ae5.json": {
-          "digest": "300e0f86e913db5bcdea7c23d6b606865df61005d5ece0510c7f6493a82e89c7",
-          "git": "? .factory/events/ead2737dca45450db145bd397a932ae5.json\u0000\u0000\u0000"
+        ".factory/events/79bad5c61b8c4a0a8119d53c61298daf.json": {
+          "digest": "2e142d1b7d6338ddc387419c8d08946de2ce318b298c40668409916290ca31b9",
+          "git": "? .factory/events/79bad5c61b8c4a0a8119d53c61298daf.json\u0000\u0000\u0000"
         },
-        ".factory/events/ec5a26da3c3f40b3af542a61a3e062fa.json": {
-          "digest": "019102c59c5ef42b025bbf7de2fbf11d479a61c1c0b4e1f31cacf17a1eb796ae",
-          "git": "? .factory/events/ec5a26da3c3f40b3af542a61a3e062fa.json\u0000\u0000\u0000"
+        ".factory/events/81d78cbd7e33401d9a2f4dac06af2e59.json": {
+          "digest": "9373bdb9b8fe9746f91c96fad794f1933ff535b0ed06f852cbbb5182de337b79",
+          "git": "? .factory/events/81d78cbd7e33401d9a2f4dac06af2e59.json\u0000\u0000\u0000"
         },
-        ".factory/events/f457d910f4944520bb15e69dc05f6bd9.json": {
-          "digest": "10d3fe56984e136b24af139fe132ba3c1a58f261e6cfe717a84ffa42260005a6",
-          "git": "? .factory/events/f457d910f4944520bb15e69dc05f6bd9.json\u0000\u0000\u0000"
+        ".factory/events/85375e3600bf49e5a08ff472b17ddef7.json": {
+          "digest": "e6f119d1d267b0015c49e8e12951579ece28b3bf3cff0f7079446fdaebb41c9f",
+          "git": "? .factory/events/85375e3600bf49e5a08ff472b17ddef7.json\u0000\u0000\u0000"
         },
-        ".factory/signals.jsonl": {
-          "digest": "d92c71f093c5fb8432d4a624b772734587e8c68534d9d988f1eaa29f7f6754de",
-          "git": "? .factory/signals.jsonl\u0000\u0000\u0000"
+        ".factory/events/8c37f11f74394a998a07356b498e9567.json": {
+          "digest": "5c2128ceefddbed4024f1ab00d7089f0e1fa1eea250f7bb30cc941f6549c1889",
+          "git": "? .factory/events/8c37f11f74394a998a07356b498e9567.json\u0000\u0000\u0000"
+        },
+        ".factory/events/9614325f6ecc4d5e9dcace170c99fda4.json": {
+          "digest": "4962872c4b9f65a52d247e49ce59ebb9fe76063005a0e90417660e27c864c527",
+          "git": "? .factory/events/9614325f6ecc4d5e9dcace170c99fda4.json\u0000\u0000\u0000"
+        },
+        ".factory/events/9ce0916e9d974988998012ccf9d63854.json": {
+          "digest": "4962872c4b9f65a52d247e49ce59ebb9fe76063005a0e90417660e27c864c527",
+          "git": "? .factory/events/9ce0916e9d974988998012ccf9d63854.json\u0000\u0000\u0000"
+        },
+        ".factory/events/a2cb6456aade4bd896c264db1881008f.json": {
+          "digest": "d959d19867c56c87327f29e0f118e185833a9c3530d3260d4051fff2a1992911",
+          "git": "? .factory/events/a2cb6456aade4bd896c264db1881008f.json\u0000\u0000\u0000"
+        },
+        ".factory/events/a393729f283e427bbaa5ffbb6f9ae6b9.json": {
+          "digest": "5c566106badf81fecafffbbc6825fd1bbdb401b9a3e60a95c75d073a07c8250f",
+          "git": "? .factory/events/a393729f283e427bbaa5ffbb6f9ae6b9.json\u0000\u0000\u0000"
+        },
+        ".factory/events/ab6dae32e0cf4009996932de92b2f55c.json": {
+          "digest": "031d1496c4f7f430da534c5e209b8b39d9281e41077032a140e65442014d9075",
+          "git": "? .factory/events/ab6dae32e0cf4009996932de92b2f55c.json\u0000\u0000\u0000"
+        },
+        ".factory/events/ac8917ad379e4b338e7cb080fdf1fbf6.json": {
+          "digest": "4b99e51af7fca3f5cccd209187cf5c507389b2c1b4bab251e7f31f8e5fbe74c5",
+          "git": "? .factory/events/ac8917ad379e4b338e7cb080fdf1fbf6.json\u0000\u0000\u0000"
+        },
+        ".factory/events/ae4caaeb6961479383b13a0de3f4392d.json": {
+          "digest": "915deaa65032745217f93c5a460f46eeac853c7aa5b48611bb9afe875461f015",
+          "git": "? .factory/events/ae4caaeb6961479383b13a0de3f4392d.json\u0000\u0000\u0000"
+        },
+        ".factory/events/af92416658c6476591f83f55a9e81824.json": {
+          "digest": "4e21ed61b311ebeb9c4b9a20b92ebeb272e01f5b53fa661ce74e0ea6639c0494",
+          "git": "? .factory/events/af92416658c6476591f83f55a9e81824.json\u0000\u0000\u0000"
+        },
+        ".factory/events/b68dc7a986ec436fbea5cba1cb103565.json": {
+          "digest": "e50b9a3184d3cc5a48d3bb1861b8a6613ac5df75c14e84efc436235343a4993d",
+          "git": "? .factory/events/b68dc7a986ec436fbea5cba1cb103565.json\u0000\u0000\u0000"
+        },
+        ".factory/events/be343341b67f4610815682ffcc8ab6f0.json": {
+          "digest": "dfff8705eeef7b693432bca41580502b36badfe1726c54e0f70bfe8c3a903c26",
+          "git": "? .factory/events/be343341b67f4610815682ffcc8ab6f0.json\u0000\u0000\u0000"
+        },
+        ".factory/events/beb572dd3cd248f3a3a5f40a492868c4.json": {
+          "digest": "13ec040386988a3bef1f2c05de2ce139f2830ed8fb4f083588f7697474b0b41f",
+          "git": "? .factory/events/beb572dd3cd248f3a3a5f40a492868c4.json\u0000\u0000\u0000"
+        },
+        ".factory/events/c06e0fab63154e128e0ce353d71b00ff.json": {
+          "digest": "b657181bef713094ad93fee4e11fe99c96504222032341f694a68ef7903520e1",
+          "git": "? .factory/events/c06e0fab63154e128e0ce353d71b00ff.json\u0000\u0000\u0000"
+        },
+        ".factory/events/cc540ed61c1d4155a00c96ad039deda6.json": {
+          "digest": "b413d4f436b475d026f7b970a2ab9050ee8dfe755cec8a4f9aebd752d7e72cb6",
+          "git": "? .factory/events/cc540ed61c1d4155a00c96ad039deda6.json\u0000\u0000\u0000"
+        },
+        ".factory/events/cf6a8d95497b46b78ee87d4e9f6b0aed.json": {
+          "digest": "84c6692e840f6dfbbfc14cb8ea9863847c328623bbd9103b922ca8933cd73f19",
+          "git": "? .factory/events/cf6a8d95497b46b78ee87d4e9f6b0aed.json\u0000\u0000\u0000"
+        },
+        ".factory/events/e498673a2c6d4535ae7c7b5fd0f2b5c5.json": {
+          "digest": "f6ee493b68833ce109a6bf32f8b4849bff76cad05d0b49523845111de02cd459",
+          "git": "? .factory/events/e498673a2c6d4535ae7c7b5fd0f2b5c5.json\u0000\u0000\u0000"
+        },
+        ".factory/events/e6a459afb2a94ef791cc0db87826a14c.json": {
+          "digest": "2adf34962154d961f3fdc5e547f8c4a031fb557079aafb1f38ab4614cf37c269",
+          "git": "? .factory/events/e6a459afb2a94ef791cc0db87826a14c.json\u0000\u0000\u0000"
+        },
+        ".factory/events/e6fbad6903894628895b674ef7e3cc5c.json": {
+          "digest": "569b6a0dd577fe34e4354ca1cbf86174998752ac415edc7011f05195f74f57d9",
+          "git": "? .factory/events/e6fbad6903894628895b674ef7e3cc5c.json\u0000\u0000\u0000"
+        },
+        ".factory/events/eb0c40cc4dcd47ab8c1823d755be212e.json": {
+          "digest": "e88dd8bba2c62b28b40336c343c4351b39f0d0d1b75511c942e7ca7769fd0e36",
+          "git": "? .factory/events/eb0c40cc4dcd47ab8c1823d755be212e.json\u0000\u0000\u0000"
+        },
+        ".factory/events/f26a8720cee04fba9b02737fd582f351.json": {
+          "digest": "4962872c4b9f65a52d247e49ce59ebb9fe76063005a0e90417660e27c864c527",
+          "git": "? .factory/events/f26a8720cee04fba9b02737fd582f351.json\u0000\u0000\u0000"
+        },
+        ".factory/events/f40d705e98fb4ffb95e4c0610224e948.json": {
+          "digest": "4962872c4b9f65a52d247e49ce59ebb9fe76063005a0e90417660e27c864c527",
+          "git": "? .factory/events/f40d705e98fb4ffb95e4c0610224e948.json\u0000\u0000\u0000"
+        },
+        ".factory/events/fca1b336c05b42088834937a3e399135.json": {
+          "digest": "fddfe1dae9f43d46b214669dbe39f5812cba129e19774efc1d201798eceb85b3",
+          "git": "? .factory/events/fca1b336c05b42088834937a3e399135.json\u0000\u0000\u0000"
         },
         ".factory/stages.json": {
-          "digest": "88acc2cb94ac6bc06068e59cc804a7669ecaed0bbc3ee0030de1266588f023b8",
-          "git": "1 .M N... 100644 100644 100644 7d1eef0620f436e4f1198df4d16b9bd8535058c2 7d1eef0620f436e4f1198df4d16b9bd8535058c2 .factory/stages.json\u0000\u0000100644 7d1eef0620f436e4f1198df4d16b9bd8535058c2 0\t.factory/stages.json\u0000\u0000H .factory/stages.json\u0000"
+          "digest": "bfd3516d45b1865566abb6c3a65b82f7647abb3940095a96d3c8f765a43a60c1",
+          "git": "1 .M N... 100644 100644 100644 b046933f41eb8f28c0276832b9ced67b4bb93a3b b046933f41eb8f28c0276832b9ced67b4bb93a3b .factory/stages.json\u0000\u0000100644 b046933f41eb8f28c0276832b9ced67b4bb93a3b 0\t.factory/stages.json\u0000\u0000H .factory/stages.json\u0000"
         },
-        ".factory/stories/FORGE-ACC-3/decomposition.json": {
-          "digest": "b25c7c95729d525e3555a8780a6253211932c2513b0161a263fd666055c52123",
-          "git": "1 .M N... 100644 100644 100644 ff726b6aefe7337e9a422b250a5b651016859705 ff726b6aefe7337e9a422b250a5b651016859705 .factory/stories/FORGE-ACC-3/decomposition.json\u0000\u0000100644 ff726b6aefe7337e9a422b250a5b651016859705 0\t.factory/stories/FORGE-ACC-3/decomposition.json\u0000\u0000H .factory/stories/FORGE-ACC-3/decomposition.json\u0000"
+        ".factory/stories/plan-mode-and-grill-provenance/decomposition.json": {
+          "digest": "e396d7a9301bca1a8222031877407a01dd40fc18e4544297a31421099884bd0d",
+          "git": "1 .M N... 100644 100644 100644 c675f5f802ed43563597d842e69ad59066075904 c675f5f802ed43563597d842e69ad59066075904 .factory/stories/plan-mode-and-grill-provenance/decomposition.json\u0000\u0000100644 c675f5f802ed43563597d842e69ad59066075904 0\t.factory/stories/plan-mode-and-grill-provenance/decomposition.json\u0000\u0000H .factory/stories/plan-mode-and-grill-provenance/decomposition.json\u0000"
         },
-        ".factory/stories/FORGE-ACC-3/grills/tasks/coherent-branch-review.json": {
-          "digest": "0ef135a28960e388c1096891df1edc142ec7b6f045f65ea01c9d2fdb89f0a71f",
-          "git": "? .factory/stories/FORGE-ACC-3/grills/tasks/coherent-branch-review.json\u0000\u0000\u0000"
+        ".factory/stories/plan-mode-and-grill-provenance/grill-rounds/0f860e9f-24c5-476e-8789-396d7df9d43c.json": {
+          "digest": "7f5afbfdf5bda8154dba6c8560eacc81ceb33680220ac704b556ffd1547fc43a",
+          "git": "? .factory/stories/plan-mode-and-grill-provenance/grill-rounds/0f860e9f-24c5-476e-8789-396d7df9d43c.json\u0000\u0000\u0000"
         },
-        ".factory/stories/FORGE-ACC-3/task-plans/coherent-branch-review.md": {
-          "digest": "775ea9fa0aec24b54627382c95fa92212dbefc43c9ebf0a468faefee13ccbd9a",
-          "git": "? .factory/stories/FORGE-ACC-3/task-plans/coherent-branch-review.md\u0000\u0000\u0000"
+        ".factory/stories/plan-mode-and-grill-provenance/grill-rounds/ca01786c-f86f-4062-a08b-5835d635e9ce.json": {
+          "digest": "36729f416aa8eaa596c6b950c2fc851334a32a8f37766513685f7a8f14a547ae",
+          "git": "? .factory/stories/plan-mode-and-grill-provenance/grill-rounds/ca01786c-f86f-4062-a08b-5835d635e9ce.json\u0000\u0000\u0000"
         },
-        "plans/quickfixes/20260819T062749-0000-Q-0081-629d-open-062749943700.json": {
-          "digest": "5c5163ee23d510c00834802ee81f103a947e42736fee5d9494b303b802a51b1a",
-          "git": "? plans/quickfixes/20260819T062749-0000-Q-0081-629d-open-062749943700.json\u0000\u0000\u0000"
+        ".factory/stories/plan-mode-and-grill-provenance/grill-rounds/d0227438-fdda-4d46-b86f-23391e55939d.json": {
+          "digest": "a561397d1cc1ca0309d800092aacbce22f095b007007f1927db4bc4e74fce25a",
+          "git": "? .factory/stories/plan-mode-and-grill-provenance/grill-rounds/d0227438-fdda-4d46-b86f-23391e55939d.json\u0000\u0000\u0000"
         },
-        "plans/quickfixes/20260819T064507-0000-Q-0081-629d-done-064507548479.json": {
-          "digest": "61fdb618a6a6ac90c6d9d20d3bd2d29e1f063d06e61662cc749417a822165673",
-          "git": "? plans/quickfixes/20260819T064507-0000-Q-0081-629d-done-064507548479.json\u0000\u0000\u0000"
+        ".factory/stories/plan-mode-and-grill-provenance/grills/plan.json": {
+          "digest": "71a9a1366ce3ccc80979972d0f959b021a8f75d4a8ba138ac433dfbbe5cae0bc",
+          "git": "1 .M N... 100644 100644 100644 8d3dad6c0bbbc00d3dbc31cc3b75ad444cf66988 8d3dad6c0bbbc00d3dbc31cc3b75ad444cf66988 .factory/stories/plan-mode-and-grill-provenance/grills/plan.json\u0000\u0000100644 8d3dad6c0bbbc00d3dbc31cc3b75ad444cf66988 0\t.factory/stories/plan-mode-and-grill-provenance/grills/plan.json\u0000\u0000H .factory/stories/plan-mode-and-grill-provenance/grills/plan.json\u0000"
+        },
+        ".factory/stories/plan-mode-and-grill-provenance/grills/requirements.json": {
+          "digest": "ad111129120b9d5e1a55b60051ba4f0686c849715825ff123c2c7a71368b34d7",
+          "git": "1 .M N... 100644 100644 100644 522000e4b13f7f9b29674a9b2352661414a91ae0 522000e4b13f7f9b29674a9b2352661414a91ae0 .factory/stories/plan-mode-and-grill-provenance/grills/requirements.json\u0000\u0000100644 522000e4b13f7f9b29674a9b2352661414a91ae0 0\t.factory/stories/plan-mode-and-grill-provenance/grills/requirements.json\u0000\u0000H .factory/stories/plan-mode-and-grill-provenance/grills/requirements.json\u0000"
+        },
+        ".factory/stories/plan-mode-and-grill-provenance/grills/tasks/plan-mode-gate.json": {
+          "digest": "e993d95fb6bfbdf72e5714ecb7290b17e2d826cff48d9645b7d65c56e901e4e7",
+          "git": "1 .M N... 100644 100644 100644 2ee467af41c82f1217991745035a3724903bd580 2ee467af41c82f1217991745035a3724903bd580 .factory/stories/plan-mode-and-grill-provenance/grills/tasks/plan-mode-gate.json\u0000\u0000100644 2ee467af41c82f1217991745035a3724903bd580 0\t.factory/stories/plan-mode-and-grill-provenance/grills/tasks/plan-mode-gate.json\u0000\u0000H .factory/stories/plan-mode-and-grill-provenance/grills/tasks/plan-mode-gate.json\u0000"
+        },
+        ".factory/stories/plan-mode-and-grill-provenance/grills/tasks/round-provenance-gate.json": {
+          "digest": "58f7ca86cde292bd679a10b4212956dcf961ab619429f376d07e6e8e7e8a9581",
+          "git": "? .factory/stories/plan-mode-and-grill-provenance/grills/tasks/round-provenance-gate.json\u0000\u0000\u0000"
+        },
+        ".factory/stories/plan-mode-and-grill-provenance/plan-mode/2e689003-c439-46ff-b4a0-906ba828ad6f.json": {
+          "digest": "25502be000ddc42a0228ebee109637d7a34f687ed13811b468faa3a1919f95e7",
+          "git": "? .factory/stories/plan-mode-and-grill-provenance/plan-mode/2e689003-c439-46ff-b4a0-906ba828ad6f.json\u0000\u0000\u0000"
+        },
+        ".factory/stories/plan-mode-and-grill-provenance/plan-mode/48ddc415-24d5-4cb5-973e-cb38dc18ad8b.json": {
+          "digest": "ce17623d48ab5ccf9c7e9c6769eee13ba6fd25bafd8e33037a5822c6691ed105",
+          "git": "? .factory/stories/plan-mode-and-grill-provenance/plan-mode/48ddc415-24d5-4cb5-973e-cb38dc18ad8b.json\u0000\u0000\u0000"
+        },
+        ".factory/stories/plan-mode-and-grill-provenance/plan-mode/54bcbf69-c601-484a-a587-e983554d5749.json": {
+          "digest": "b30813923cd07de5f734ebd535ed02e8a8583eeeb765f230dcf91f1583d4a834",
+          "git": "? .factory/stories/plan-mode-and-grill-provenance/plan-mode/54bcbf69-c601-484a-a587-e983554d5749.json\u0000\u0000\u0000"
+        },
+        ".factory/stories/plan-mode-and-grill-provenance/plan-mode/66226b8e-32a5-4fc0-8b12-e837c1e572de.json": {
+          "digest": "0f67a842579e4d6a93efa0e5cb84fc18f1396ff4f6204ad6443ef2f1c6dbce19",
+          "git": "? .factory/stories/plan-mode-and-grill-provenance/plan-mode/66226b8e-32a5-4fc0-8b12-e837c1e572de.json\u0000\u0000\u0000"
+        },
+        ".factory/stories/plan-mode-and-grill-provenance/plan-mode/830983b1-83ae-4d68-873b-a21c8171d733.json": {
+          "digest": "db1390435ee80456b35c14be07b9d9abf7ed84673266dadbe838bab53624fa29",
+          "git": "? .factory/stories/plan-mode-and-grill-provenance/plan-mode/830983b1-83ae-4d68-873b-a21c8171d733.json\u0000\u0000\u0000"
+        },
+        ".factory/stories/plan-mode-and-grill-provenance/task-plans/plan-mode-gate.md": {
+          "digest": "953f1456ba9eda081e30b6c9b86965c6782edcbfaa1e82bed54e80128d8b408b",
+          "git": "1 .M N... 100644 100644 100644 6049c291fae45c298c703a5fbce62b809426904c 6049c291fae45c298c703a5fbce62b809426904c .factory/stories/plan-mode-and-grill-provenance/task-plans/plan-mode-gate.md\u0000\u0000100644 6049c291fae45c298c703a5fbce62b809426904c 0\t.factory/stories/plan-mode-and-grill-provenance/task-plans/plan-mode-gate.md\u0000\u0000H .factory/stories/plan-mode-and-grill-provenance/task-plans/plan-mode-gate.md\u0000"
+        },
+        ".factory/stories/plan-mode-and-grill-provenance/task-plans/round-provenance-gate.md": {
+          "digest": "ff244648807f5f72483e6862f7dcd10cf897bba3ce0b45c8cd1753a2ef6af75f",
+          "git": "? .factory/stories/plan-mode-and-grill-provenance/task-plans/round-provenance-gate.md\u0000\u0000\u0000"
+        },
+        "plans/active/plan-mode-and-grill-provenance-plan-mode-and-grill-provenance-are-enforced-not-advisory.md": {
+          "digest": "a1af0a3885815e00dcec9502f64e406166b9668595769ef8af3bab882a4060ef",
+          "git": "1 .M N... 100644 100644 100644 7b40b29f92e71f4369aff2bb92589b7b306a7191 7b40b29f92e71f4369aff2bb92589b7b306a7191 plans/active/plan-mode-and-grill-provenance-plan-mode-and-grill-provenance-are-enforced-not-advisory.md\u0000\u0000100644 7b40b29f92e71f4369aff2bb92589b7b306a7191 0\tplans/active/plan-mode-and-grill-provenance-plan-mode-and-grill-provenance-are-enforced-not-advisory.md\u0000\u0000H plans/active/plan-mode-and-grill-provenance-plan-mode-and-grill-provenance-are-enforced-not-advisory.md\u0000"
+        },
+        "plans/debug/cadence-second-audit.md": {
+          "digest": "98afe6aa0f9df89d0a5d0958f9f31009a5035afee1d482de1296f5add6897e0e",
+          "git": "? plans/debug/cadence-second-audit.md\u0000\u0000\u0000"
+        },
+        "plans/debug/provenance-explore.md": {
+          "digest": "7ac245918b87ef5c948d4953229eee25f43d87b34bfd15fc1f54ce7710fb3ec7",
+          "git": "? plans/debug/provenance-explore.md\u0000\u0000\u0000"
+        },
+        "plans/lessons/20260818T075350-0000-Hooks-must-fail-closed-with-recovery--never-crash-on-unparseable-state-075350218551.json": {
+          "digest": "2260715955c8289add1f7b6da5820f7ea80726fbec9ba306f32ddb54d387da72",
+          "git": "? plans/lessons/20260818T075350-0000-Hooks-must-fail-closed-with-recovery--never-crash-on-unparseable-state-075350218551.json\u0000\u0000\u0000"
+        },
+        "plans/lessons/20260819T034012-0000-verify.py-does-not-run-check_encoding_hygiene.py---run-it-before-pr_ready-on-any-subprocess-stdin-I-034012746238.json": {
+          "digest": "d3ca83bc5fe46acad02bd3ecbcc5dcfa08fccbb8df0b7fa5d2bd560b8025a96b",
+          "git": "? plans/lessons/20260819T034012-0000-verify.py-does-not-run-check_encoding_hygiene.py---run-it-before-pr_ready-on-any-subprocess-stdin-I-034012746238.json\u0000\u0000\u0000"
+        },
+        "plans/lessons/20260821T074724-0000-plan-mode-not-enforced-074724574153.json": {
+          "digest": "9ac7c1db2e7f35ada7d69dd7d7a5b552569a682b20d9f898bd28d4577f517483",
+          "git": "? plans/lessons/20260821T074724-0000-plan-mode-not-enforced-074724574153.json\u0000\u0000\u0000"
+        },
+        "plans/lessons/20260824T101741-0000-rebase-orphans-stage-refs-101741963859.json": {
+          "digest": "5de49bc7e641b60a2827374854aa1fadcb1a00bf34eee80e2efcbae2414fa74c",
+          "git": "? plans/lessons/20260824T101741-0000-rebase-orphans-stage-refs-101741963859.json\u0000\u0000\u0000"
+        },
+        "plans/quickfixes/20260812T122216-0000-Q-0055-52ed-open-122216604906.json": {
+          "digest": "faafca8344233406175fe48f9e47249c4fa03870cf76052414650d5168554f6f",
+          "git": "? plans/quickfixes/20260812T122216-0000-Q-0055-52ed-open-122216604906.json\u0000\u0000\u0000"
+        },
+        "plans/quickfixes/20260812T122240-0000-Q-0055-52ed-done-122240118890.json": {
+          "digest": "ab5cec9dc7ffde9357707abc19ba1d481b2bb560a71849ebd16b5d811a7c75dc",
+          "git": "? plans/quickfixes/20260812T122240-0000-Q-0055-52ed-done-122240118890.json\u0000\u0000\u0000"
+        },
+        "plans/quickfixes/20260812T122428-0000-Q-0056-dbdd-open-122428946642.json": {
+          "digest": "179df10a76358fd3195e5bca3e50884e95b790bf95d15b23e98c3794afcee830",
+          "git": "? plans/quickfixes/20260812T122428-0000-Q-0056-dbdd-open-122428946642.json\u0000\u0000\u0000"
+        },
+        "plans/quickfixes/20260812T122523-0000-Q-0056-dbdd-done-122523337972.json": {
+          "digest": "4344da66659147bf686b04b3da0b9055c3830460a9cf78e7aafeebe01ff7c513",
+          "git": "? plans/quickfixes/20260812T122523-0000-Q-0056-dbdd-done-122523337972.json\u0000\u0000\u0000"
+        },
+        "plans/quickfixes/20260812T122834-0000-Q-0057-6c1c-open-122834997695.json": {
+          "digest": "814663d9c9d6c04595ff8238663f3b19022c120e493d8071ba06a6038b114654",
+          "git": "? plans/quickfixes/20260812T122834-0000-Q-0057-6c1c-open-122834997695.json\u0000\u0000\u0000"
+        },
+        "plans/quickfixes/20260812T122959-0000-Q-0057-6c1c-done-122959183438.json": {
+          "digest": "c3723c9edf72cbb5db8b0832ae14deee365b883f2bbabb86dc5337f97c40681f",
+          "git": "? plans/quickfixes/20260812T122959-0000-Q-0057-6c1c-done-122959183438.json\u0000\u0000\u0000"
+        },
+        "plans/quickfixes/20260812T123246-0000-Q-0058-22c6-open-123246537641.json": {
+          "digest": "2790ffae2879c79d4567a1cbce9834fe49b0e66db018fb7488c71628614a4778",
+          "git": "? plans/quickfixes/20260812T123246-0000-Q-0058-22c6-open-123246537641.json\u0000\u0000\u0000"
+        },
+        "plans/quickfixes/20260812T144007-0000-Q-0058-22c6-done-144007211251.json": {
+          "digest": "2aa84f0a4d2019655ebff0eb69aaf9646f9b34751719af1e7a9214430e901404",
+          "git": "? plans/quickfixes/20260812T144007-0000-Q-0058-22c6-done-144007211251.json\u0000\u0000\u0000"
+        },
+        "plans/roadmap.json": {
+          "digest": "5b48494df5b128eaaf5bcdfa51c809296d4a0a00724904e9624226bf5adaa3e0",
+          "git": "1 .M N... 100644 100644 100644 3e3f1330440f4d7066c2a0db7c9e86f2d15846af 3e3f1330440f4d7066c2a0db7c9e86f2d15846af plans/roadmap.json\u0000\u0000100644 3e3f1330440f4d7066c2a0db7c9e86f2d15846af 0\tplans/roadmap.json\u0000\u0000H plans/roadmap.json\u0000"
         }
       },
-      "task_sha256": "b7d6ee0b95a073188a99e56cd942dc9dbff9d1af63b411ec507b377e1e702f62",
-      "completed_at": "2026-08-19T09:58:26+00:00"
+      "task_sha256": "feae5e383f437620c4907242532ffe757d8fd1f47c12eada4f3a8ff4e59d91cf",
+      "completed_at": "2026-08-24T10:48:25+00:00"
     },
     {
-      "id": "ordered-closeout",
-      "title": "Closeout is ordered and pr_ready requires a clean tree",
+      "id": "docs-and-decision",
+      "title": "Decision 0048 accepted; accountable-engineering-loop and plan-approval specs amended and re-confirmed",
       "status": "done",
-      "started_at": "2026-08-19T10:03:27+00:00",
-      "base_sha": "9a368ab99aebf5bc6e17d03d1a94a9cae35c9a49",
+      "started_at": "2026-08-24T10:55:01+00:00",
+      "base_sha": "ef8e1c5dba9bf83475527bfdf4a31d5a8b3b260d",
       "dirty_at_start": {
-        ".factory/events/03399a7401a3421e9df03afa8d829c18.json": {
-          "digest": "0e4207c184b4cce891e7fec99473940ee369e6a8c3f4f1227d398bae82fdbad3",
-          "git": "? .factory/events/03399a7401a3421e9df03afa8d829c18.json\u0000\u0000\u0000"
+        ".factory/events/6ba6c56c3e914e5abe33835c404309d8.json": {
+          "digest": "ab51b23a8b46b15918fcf8ff75b9c92b2e479b97ffbc580b26d3cb1e476f08cd",
+          "git": "? .factory/events/6ba6c56c3e914e5abe33835c404309d8.json\u0000\u0000\u0000"
         },
-        ".factory/events/07c6c48451ab4a30b473b5df9ac09046.json": {
-          "digest": "6b981917e97bbce69fc814105a7911888f9115963f7d0880bf540c55b78bb7b9",
-          "git": "? .factory/events/07c6c48451ab4a30b473b5df9ac09046.json\u0000\u0000\u0000"
+        ".factory/events/db58edb50ee546ddb25e0cece2909683.json": {
+          "digest": "f77a774167ba11ddd1d8c386bd26aaacad2e97ca7dfa32ffbff2bb5d4314ddf0",
+          "git": "? .factory/events/db58edb50ee546ddb25e0cece2909683.json\u0000\u0000\u0000"
         },
-        ".factory/events/0b5b41b6dd38464588b7834cfb6478be.json": {
-          "digest": "3cbc1b18b4595f23765407cbac3c84e38a889cf9abe6746bfa2a78ab973c732d",
-          "git": "? .factory/events/0b5b41b6dd38464588b7834cfb6478be.json\u0000\u0000\u0000"
-        },
-        ".factory/events/1992cbcceaa9461a9500a83a91369d18.json": {
-          "digest": "b5c64b8d9bd3b3c9d8f3558146d9472eeba997f8e942e3f9c9cae804c9aacc82",
-          "git": "? .factory/events/1992cbcceaa9461a9500a83a91369d18.json\u0000\u0000\u0000"
-        },
-        ".factory/events/2c4a3b8c404f4396a80ed8da471e3551.json": {
-          "digest": "584d02ac42e810bc816d5b17b387dc13397dd08c3d679dcf3ab54c5dd9dfa9b0",
-          "git": "? .factory/events/2c4a3b8c404f4396a80ed8da471e3551.json\u0000\u0000\u0000"
-        },
-        ".factory/events/31270a0be57a48bcaafd0f67340b8735.json": {
-          "digest": "c2a58b7473a4903e2fc99d829194fcbb0ac09395acdd93c47500ac8fff849af0",
-          "git": "? .factory/events/31270a0be57a48bcaafd0f67340b8735.json\u0000\u0000\u0000"
-        },
-        ".factory/events/33a78e4d20d74b2087e27db2e3f58a44.json": {
-          "digest": "33c39190b15ba9e74d6a53d8603398d0f69f3e4c338bbbe29e20ab99b9923c0f",
-          "git": "? .factory/events/33a78e4d20d74b2087e27db2e3f58a44.json\u0000\u0000\u0000"
-        },
-        ".factory/events/61903e3cfe5a4b69a82170482ea983b2.json": {
-          "digest": "6f22dc318c2d6308f3e6386f5498162059c3c5a598b3b0c3f01b7a56fac76cc3",
-          "git": "? .factory/events/61903e3cfe5a4b69a82170482ea983b2.json\u0000\u0000\u0000"
-        },
-        ".factory/events/69000f5fe7334845a5fb63374f12f0cc.json": {
-          "digest": "f2f4382390eb0706a81068a55a21ac876eef11b917841fd7e68bc743e51f6061",
-          "git": "? .factory/events/69000f5fe7334845a5fb63374f12f0cc.json\u0000\u0000\u0000"
-        },
-        ".factory/events/6d68ca1c57594023b26b1ebf4cf60416.json": {
-          "digest": "325495369b0ebd87fec38c6a0739b672f9f34c49cfc1853a513b84d823f3efff",
-          "git": "? .factory/events/6d68ca1c57594023b26b1ebf4cf60416.json\u0000\u0000\u0000"
-        },
-        ".factory/events/77e1d31a9a01487c97897bd742582843.json": {
-          "digest": "7a887f6b06dd23e5cee75c820f8d368518c445e8fc9a77edbb8cd5a181b7a07a",
-          "git": "? .factory/events/77e1d31a9a01487c97897bd742582843.json\u0000\u0000\u0000"
-        },
-        ".factory/events/899b1ef5a543482da176af95d35260f5.json": {
-          "digest": "b9888c6642fb94a21d26ed4d550b4050e19bca2fb4cb3504f19f89d5aaf8b036",
-          "git": "? .factory/events/899b1ef5a543482da176af95d35260f5.json\u0000\u0000\u0000"
-        },
-        ".factory/events/92e8dbc3103b4b43b97da53e57546a93.json": {
-          "digest": "d55e4fde5510134ac80c3d7cc83e89716b5e83726e20f792c100b71b76fcf581",
-          "git": "? .factory/events/92e8dbc3103b4b43b97da53e57546a93.json\u0000\u0000\u0000"
-        },
-        ".factory/events/a01bc7a456424940b69316bc11031868.json": {
-          "digest": "32cef9d0dd4ff85691d3352556f13a13ef75a0641e75ea28303f18596c76e62e",
-          "git": "? .factory/events/a01bc7a456424940b69316bc11031868.json\u0000\u0000\u0000"
-        },
-        ".factory/events/aead7fabd49b46c78ee4ad0ff2c42726.json": {
-          "digest": "858ed86a428b4c9377271edfde16ab4541767e4577c479a620be19958d5ffb06",
-          "git": "? .factory/events/aead7fabd49b46c78ee4ad0ff2c42726.json\u0000\u0000\u0000"
-        },
-        ".factory/events/b1ccfdeb4c1e424c858c2a59347afcf8.json": {
-          "digest": "04181b793811a7eb35e768eb954e70b2c0c7de1ad7f2e4564e1d0f711cf5095f",
-          "git": "? .factory/events/b1ccfdeb4c1e424c858c2a59347afcf8.json\u0000\u0000\u0000"
-        },
-        ".factory/events/b4ef09284e1d4368bb20dd8a58baedb1.json": {
-          "digest": "cf5eca20d20f65e39a240112ec524560b1869cebc872d560da7a4db7cb4a0251",
-          "git": "? .factory/events/b4ef09284e1d4368bb20dd8a58baedb1.json\u0000\u0000\u0000"
-        },
-        ".factory/events/b4fb12859a224485b807871e92af4647.json": {
-          "digest": "71ba90de7f318d2dfd2debccdcf320875db52c220f4ca829aa9e0b44d4a7272c",
-          "git": "? .factory/events/b4fb12859a224485b807871e92af4647.json\u0000\u0000\u0000"
-        },
-        ".factory/events/be09db7a4a9f471ca6c964b11764c855.json": {
-          "digest": "e5a86fe67635e2cf77ce285f44c90a01f363fe6f7a9540976c74728a8b18839e",
-          "git": "? .factory/events/be09db7a4a9f471ca6c964b11764c855.json\u0000\u0000\u0000"
-        },
-        ".factory/events/cc2a15a8848b4421aaa0a3f51e0ba481.json": {
-          "digest": "6c8aa68438b2b642527dbbdbf57e8d030c046a4f84ff55e92ce26d7801a1a5ad",
-          "git": "? .factory/events/cc2a15a8848b4421aaa0a3f51e0ba481.json\u0000\u0000\u0000"
-        },
-        ".factory/events/d29543b7852143428b2d5611e7f27b01.json": {
-          "digest": "35979b33925f445eb5ee9f9c0420116e38a7fd9026dc886fa1bf115ac2123238",
-          "git": "? .factory/events/d29543b7852143428b2d5611e7f27b01.json\u0000\u0000\u0000"
-        },
-        ".factory/events/d7cd0788530b4db4a9d2ea68dbb68ab6.json": {
-          "digest": "7622736337e62ed91298e5cad44d0d0f397768be14e422f2e156d360b35b5e64",
-          "git": "? .factory/events/d7cd0788530b4db4a9d2ea68dbb68ab6.json\u0000\u0000\u0000"
-        },
-        ".factory/events/d9aeb0c61ab543d08b6fbe49cebd0fb6.json": {
-          "digest": "8e17cc875c3890e531af178d7728fb257f5432c403badff31098be52b9e9e93f",
-          "git": "? .factory/events/d9aeb0c61ab543d08b6fbe49cebd0fb6.json\u0000\u0000\u0000"
-        },
-        ".factory/events/ea2151898246473fbd34ec7dbe93e06c.json": {
-          "digest": "6b07c2035a16a6d298c712adf129295e7e010972a3512497244c2c11b1eae749",
-          "git": "? .factory/events/ea2151898246473fbd34ec7dbe93e06c.json\u0000\u0000\u0000"
-        },
-        ".factory/events/ead2737dca45450db145bd397a932ae5.json": {
-          "digest": "300e0f86e913db5bcdea7c23d6b606865df61005d5ece0510c7f6493a82e89c7",
-          "git": "? .factory/events/ead2737dca45450db145bd397a932ae5.json\u0000\u0000\u0000"
-        },
-        ".factory/events/ec5a26da3c3f40b3af542a61a3e062fa.json": {
-          "digest": "019102c59c5ef42b025bbf7de2fbf11d479a61c1c0b4e1f31cacf17a1eb796ae",
-          "git": "? .factory/events/ec5a26da3c3f40b3af542a61a3e062fa.json\u0000\u0000\u0000"
-        },
-        ".factory/events/f457d910f4944520bb15e69dc05f6bd9.json": {
-          "digest": "10d3fe56984e136b24af139fe132ba3c1a58f261e6cfe717a84ffa42260005a6",
-          "git": "? .factory/events/f457d910f4944520bb15e69dc05f6bd9.json\u0000\u0000\u0000"
-        },
-        ".factory/signals.jsonl": {
-          "digest": "44822ce227f8de84cd2a64d3c316840139ff34e9a06e8374da1769ef19b7b5bf",
-          "git": "? .factory/signals.jsonl\u0000\u0000\u0000"
+        ".factory/events/e923c40e20f6417a8b3a756d487876ee.json": {
+          "digest": "03b5f801b6cd06ae3d7193a8de4d78be6d5b9ea97ffb77bbde9f459396af1f0f",
+          "git": "? .factory/events/e923c40e20f6417a8b3a756d487876ee.json\u0000\u0000\u0000"
         },
         ".factory/stages.json": {
-          "digest": "1dd01d3e2dc1c6345d983881e939d90d8b77524988fc1b7d0f951f65a38f327f",
-          "git": "1 .M N... 100644 100644 100644 155d77e15784cbd85078cf749c2e8cd6a93fbc00 155d77e15784cbd85078cf749c2e8cd6a93fbc00 .factory/stages.json\u0000\u0000100644 155d77e15784cbd85078cf749c2e8cd6a93fbc00 0\t.factory/stages.json\u0000\u0000H .factory/stages.json\u0000"
+          "digest": "f1afc203375a17d7265e1d41f19f7e75b9e23dac8f6474777b428dd05daa8765",
+          "git": "1 .M N... 100644 100644 100644 f86f612646d3278a56fd41e986ed35b676da8ffb f86f612646d3278a56fd41e986ed35b676da8ffb .factory/stages.json\u0000\u0000100644 f86f612646d3278a56fd41e986ed35b676da8ffb 0\t.factory/stages.json\u0000\u0000H .factory/stages.json\u0000"
         },
-        ".factory/stories/FORGE-ACC-3/decomposition.json": {
-          "digest": "26721fd7ae41c1730da1e45355da4a8fa4869195fc56bc5b8fbca046c83fa7c7",
-          "git": "1 .M N... 100644 100644 100644 547cd75fb42973c45e70675ae126c9b0c253a220 547cd75fb42973c45e70675ae126c9b0c253a220 .factory/stories/FORGE-ACC-3/decomposition.json\u0000\u0000100644 547cd75fb42973c45e70675ae126c9b0c253a220 0\t.factory/stories/FORGE-ACC-3/decomposition.json\u0000\u0000H .factory/stories/FORGE-ACC-3/decomposition.json\u0000"
+        ".factory/stories/plan-mode-and-grill-provenance/decomposition.json": {
+          "digest": "f668cb8bd5cc6dd65a2ff3256c295ae30ec2dcda086aa2fe0808411dca3ca85c",
+          "git": "1 .M N... 100644 100644 100644 553042c94e3fb067a4c077bcae330febdad0903b 553042c94e3fb067a4c077bcae330febdad0903b .factory/stories/plan-mode-and-grill-provenance/decomposition.json\u0000\u0000100644 553042c94e3fb067a4c077bcae330febdad0903b 0\t.factory/stories/plan-mode-and-grill-provenance/decomposition.json\u0000\u0000H .factory/stories/plan-mode-and-grill-provenance/decomposition.json\u0000"
         },
-        ".factory/stories/FORGE-ACC-3/grills/tasks/ordered-closeout.json": {
-          "digest": "480dc2a3ab1b8de9cf9102c1b0be2004d3a369f546aa472fdfbb065fc366cd7f",
-          "git": "? .factory/stories/FORGE-ACC-3/grills/tasks/ordered-closeout.json\u0000\u0000\u0000"
+        ".factory/stories/plan-mode-and-grill-provenance/grill-rounds/509cb381-9d80-4b99-b4d7-fa9df0f1ab73.json": {
+          "digest": "789e546f189279658020f5fb24e0ec502f335fc57d6cb6184daf01e8308d84ec",
+          "git": "? .factory/stories/plan-mode-and-grill-provenance/grill-rounds/509cb381-9d80-4b99-b4d7-fa9df0f1ab73.json\u0000\u0000\u0000"
         },
-        ".factory/stories/FORGE-ACC-3/task-plans/ordered-closeout.md": {
-          "digest": "c0f93af52a36fd23054292bba441c0cd23327698842642b26fc10542ed74a6f8",
-          "git": "? .factory/stories/FORGE-ACC-3/task-plans/ordered-closeout.md\u0000\u0000\u0000"
+        ".factory/stories/plan-mode-and-grill-provenance/grill-rounds/701a37d3-4378-43f1-9bfe-efd2ecae184d.json": {
+          "digest": "1327e92e78830a2aa6eb66cfef61ad3d27d38a3554a370a949b4f2812451f909",
+          "git": "? .factory/stories/plan-mode-and-grill-provenance/grill-rounds/701a37d3-4378-43f1-9bfe-efd2ecae184d.json\u0000\u0000\u0000"
         },
-        "plans/quickfixes/20260819T062749-0000-Q-0081-629d-open-062749943700.json": {
-          "digest": "5c5163ee23d510c00834802ee81f103a947e42736fee5d9494b303b802a51b1a",
-          "git": "? plans/quickfixes/20260819T062749-0000-Q-0081-629d-open-062749943700.json\u0000\u0000\u0000"
+        ".factory/stories/plan-mode-and-grill-provenance/grills/tasks/docs-and-decision.json": {
+          "digest": "e027e859a910ca079a081aa599b2caf4ffab624ecee56dc324df749585329240",
+          "git": "? .factory/stories/plan-mode-and-grill-provenance/grills/tasks/docs-and-decision.json\u0000\u0000\u0000"
         },
-        "plans/quickfixes/20260819T064507-0000-Q-0081-629d-done-064507548479.json": {
-          "digest": "61fdb618a6a6ac90c6d9d20d3bd2d29e1f063d06e61662cc749417a822165673",
-          "git": "? plans/quickfixes/20260819T064507-0000-Q-0081-629d-done-064507548479.json\u0000\u0000\u0000"
+        ".factory/stories/plan-mode-and-grill-provenance/plan-mode/85d119cd-ab93-470a-a004-80081feb5059.json": {
+          "digest": "60354d8cecf4cc22b5054423bc144ff48951c429913914fa8febcbab6b528597",
+          "git": "? .factory/stories/plan-mode-and-grill-provenance/plan-mode/85d119cd-ab93-470a-a004-80081feb5059.json\u0000\u0000\u0000"
+        },
+        ".factory/stories/plan-mode-and-grill-provenance/task-plans/docs-and-decision.md": {
+          "digest": "414ea5a92d92a4ab514204c574bca2056673440970ac3f4cd686742e15f390b6",
+          "git": "? .factory/stories/plan-mode-and-grill-provenance/task-plans/docs-and-decision.md\u0000\u0000\u0000"
         }
       },
-      "task_sha256": "39d7b27b6450c95a342b16f5ce8337c71030a1b57cf250021b47a2e530cb04d1",
-      "completed_at": "2026-08-19T10:20:32+00:00"
+      "task_sha256": "e87d4f2f4ba20361d4358d93566b54c9343814d4b47349dce27511dd4978d7b2",
+      "completed_at": "2026-08-24T11:03:34+00:00"
     },
     {
-      "id": "hygiene-content-pins-and-doc-debts",
-      "title": "Hygiene pins survive insertions; grill docs match the recorder",
+      "id": "flip-frontier-routing-test",
+      "title": "Follow-up: frontier-routing test asserts the enforced order",
       "status": "done",
-      "started_at": "2026-08-19T10:34:15+00:00",
-      "base_sha": "0d9affc005cd6ca9c393d32a790c1734198de7d0",
+      "started_at": "2026-08-24T13:29:44+00:00",
+      "base_sha": "68fe33b81fee7f70fd9393a3a42ba7192a6b4709",
       "dirty_at_start": {
-        ".factory/events/03399a7401a3421e9df03afa8d829c18.json": {
-          "digest": "0e4207c184b4cce891e7fec99473940ee369e6a8c3f4f1227d398bae82fdbad3",
-          "git": "? .factory/events/03399a7401a3421e9df03afa8d829c18.json\u0000\u0000\u0000"
+        ".factory/events/03f7d4f8e16a402fbc30e766cfaea3de.json": {
+          "digest": "426653736e1075d1c4fa06d4597a97f6d7a484d6ff807d64564ac4129794ac6e",
+          "git": "? .factory/events/03f7d4f8e16a402fbc30e766cfaea3de.json\u0000\u0000\u0000"
         },
-        ".factory/events/07c6c48451ab4a30b473b5df9ac09046.json": {
-          "digest": "6b981917e97bbce69fc814105a7911888f9115963f7d0880bf540c55b78bb7b9",
-          "git": "? .factory/events/07c6c48451ab4a30b473b5df9ac09046.json\u0000\u0000\u0000"
+        ".factory/events/2a6912583bc2454e816a6d7751178c1a.json": {
+          "digest": "c5bed162ad701f6bdfa5e930b1e0e8b05754dee3e477adfc71e4d7505ea20f96",
+          "git": "? .factory/events/2a6912583bc2454e816a6d7751178c1a.json\u0000\u0000\u0000"
         },
-        ".factory/events/0b5b41b6dd38464588b7834cfb6478be.json": {
-          "digest": "3cbc1b18b4595f23765407cbac3c84e38a889cf9abe6746bfa2a78ab973c732d",
-          "git": "? .factory/events/0b5b41b6dd38464588b7834cfb6478be.json\u0000\u0000\u0000"
+        ".factory/events/2c950a66ba884de1bcd6c391c0694bbc.json": {
+          "digest": "5dbb090d076c3f1dffaa4dd5c6ba8ed98693d3aedf03f167207f839acaa9a752",
+          "git": "? .factory/events/2c950a66ba884de1bcd6c391c0694bbc.json\u0000\u0000\u0000"
         },
-        ".factory/events/1992cbcceaa9461a9500a83a91369d18.json": {
-          "digest": "b5c64b8d9bd3b3c9d8f3558146d9472eeba997f8e942e3f9c9cae804c9aacc82",
-          "git": "? .factory/events/1992cbcceaa9461a9500a83a91369d18.json\u0000\u0000\u0000"
+        ".factory/events/6ba6c56c3e914e5abe33835c404309d8.json": {
+          "digest": "ab51b23a8b46b15918fcf8ff75b9c92b2e479b97ffbc580b26d3cb1e476f08cd",
+          "git": "? .factory/events/6ba6c56c3e914e5abe33835c404309d8.json\u0000\u0000\u0000"
         },
-        ".factory/events/2c4a3b8c404f4396a80ed8da471e3551.json": {
-          "digest": "584d02ac42e810bc816d5b17b387dc13397dd08c3d679dcf3ab54c5dd9dfa9b0",
-          "git": "? .factory/events/2c4a3b8c404f4396a80ed8da471e3551.json\u0000\u0000\u0000"
+        ".factory/events/b3436893e41d4e32ae58c560aea4f8ae.json": {
+          "digest": "78499e58f28ecbfbf4b3e1227c947b072b15da8f94e87d91b72156560aabe1f3",
+          "git": "? .factory/events/b3436893e41d4e32ae58c560aea4f8ae.json\u0000\u0000\u0000"
         },
-        ".factory/events/31270a0be57a48bcaafd0f67340b8735.json": {
-          "digest": "c2a58b7473a4903e2fc99d829194fcbb0ac09395acdd93c47500ac8fff849af0",
-          "git": "? .factory/events/31270a0be57a48bcaafd0f67340b8735.json\u0000\u0000\u0000"
+        ".factory/events/b35f1182352c4c46aa4d50a23e830916.json": {
+          "digest": "3429e97be913e0d0c6286c3b876c658d5b175dbbff5457f6f4f08a3008b2cccb",
+          "git": "? .factory/events/b35f1182352c4c46aa4d50a23e830916.json\u0000\u0000\u0000"
         },
-        ".factory/events/33a78e4d20d74b2087e27db2e3f58a44.json": {
-          "digest": "33c39190b15ba9e74d6a53d8603398d0f69f3e4c338bbbe29e20ab99b9923c0f",
-          "git": "? .factory/events/33a78e4d20d74b2087e27db2e3f58a44.json\u0000\u0000\u0000"
+        ".factory/events/b9ae3a26f02a4b7da73c7b48a3a11c28.json": {
+          "digest": "4d57017ff301a2db65d07bbcad764bc564df39151d1389bd743d1abf12efe854",
+          "git": "? .factory/events/b9ae3a26f02a4b7da73c7b48a3a11c28.json\u0000\u0000\u0000"
         },
-        ".factory/events/3b3935b8a9f14ae0afecea0a81bdff21.json": {
-          "digest": "06f3b8646344d0b23ebe037e41161448ada732874ce5afbbb4f6a2e544778c8c",
-          "git": "? .factory/events/3b3935b8a9f14ae0afecea0a81bdff21.json\u0000\u0000\u0000"
+        ".factory/events/d0573a1a75ac44eba11cf046eb2422c6.json": {
+          "digest": "c5bed162ad701f6bdfa5e930b1e0e8b05754dee3e477adfc71e4d7505ea20f96",
+          "git": "? .factory/events/d0573a1a75ac44eba11cf046eb2422c6.json\u0000\u0000\u0000"
         },
-        ".factory/events/45295a0854c24a4eba9bdf439395b9c7.json": {
-          "digest": "61c81d73cb6a9eff813dbc77a0ddb856785ba71397ea4d9743425ce48c157679",
-          "git": "? .factory/events/45295a0854c24a4eba9bdf439395b9c7.json\u0000\u0000\u0000"
+        ".factory/events/db58edb50ee546ddb25e0cece2909683.json": {
+          "digest": "f77a774167ba11ddd1d8c386bd26aaacad2e97ca7dfa32ffbff2bb5d4314ddf0",
+          "git": "? .factory/events/db58edb50ee546ddb25e0cece2909683.json\u0000\u0000\u0000"
         },
-        ".factory/events/4ba12f48b1c64933b786306c47a55440.json": {
-          "digest": "9757b252a537349ed824f92af0f020cc99f025daba43575866dea17ca7543ded",
-          "git": "? .factory/events/4ba12f48b1c64933b786306c47a55440.json\u0000\u0000\u0000"
+        ".factory/events/e923c40e20f6417a8b3a756d487876ee.json": {
+          "digest": "03b5f801b6cd06ae3d7193a8de4d78be6d5b9ea97ffb77bbde9f459396af1f0f",
+          "git": "? .factory/events/e923c40e20f6417a8b3a756d487876ee.json\u0000\u0000\u0000"
         },
-        ".factory/events/57a8a0f5b1b54003b5f0a48601c98a5c.json": {
-          "digest": "e787b7dcde1f706120aa45bdca01f6fc697f9270a146a447edf382de7a3e20f5",
-          "git": "? .factory/events/57a8a0f5b1b54003b5f0a48601c98a5c.json\u0000\u0000\u0000"
+        ".factory/events/f72774efa5654d0d952c06a379e71b9d.json": {
+          "digest": "80bac769b2fe1fcfcc534beb19a6c32d803e60a5bd10f6a4ac8e9b020af0663b",
+          "git": "? .factory/events/f72774efa5654d0d952c06a379e71b9d.json\u0000\u0000\u0000"
         },
-        ".factory/events/61903e3cfe5a4b69a82170482ea983b2.json": {
-          "digest": "6f22dc318c2d6308f3e6386f5498162059c3c5a598b3b0c3f01b7a56fac76cc3",
-          "git": "? .factory/events/61903e3cfe5a4b69a82170482ea983b2.json\u0000\u0000\u0000"
-        },
-        ".factory/events/68dba614235e415084760b741bd56d56.json": {
-          "digest": "b2f4b56e6e2682720630f6c8b9b27e98e4d7221f4ad2ba86c87d8cd0e0a582f6",
-          "git": "? .factory/events/68dba614235e415084760b741bd56d56.json\u0000\u0000\u0000"
-        },
-        ".factory/events/69000f5fe7334845a5fb63374f12f0cc.json": {
-          "digest": "f2f4382390eb0706a81068a55a21ac876eef11b917841fd7e68bc743e51f6061",
-          "git": "? .factory/events/69000f5fe7334845a5fb63374f12f0cc.json\u0000\u0000\u0000"
-        },
-        ".factory/events/6d68ca1c57594023b26b1ebf4cf60416.json": {
-          "digest": "325495369b0ebd87fec38c6a0739b672f9f34c49cfc1853a513b84d823f3efff",
-          "git": "? .factory/events/6d68ca1c57594023b26b1ebf4cf60416.json\u0000\u0000\u0000"
-        },
-        ".factory/events/77e1d31a9a01487c97897bd742582843.json": {
-          "digest": "7a887f6b06dd23e5cee75c820f8d368518c445e8fc9a77edbb8cd5a181b7a07a",
-          "git": "? .factory/events/77e1d31a9a01487c97897bd742582843.json\u0000\u0000\u0000"
-        },
-        ".factory/events/816c71a7d2954c6fb47ad487b1660145.json": {
-          "digest": "413c30eb44fd6869ca85c395d1ca96690fe5a5a5500b28b6865a0a22b3f54e6f",
-          "git": "? .factory/events/816c71a7d2954c6fb47ad487b1660145.json\u0000\u0000\u0000"
-        },
-        ".factory/events/899b1ef5a543482da176af95d35260f5.json": {
-          "digest": "b9888c6642fb94a21d26ed4d550b4050e19bca2fb4cb3504f19f89d5aaf8b036",
-          "git": "? .factory/events/899b1ef5a543482da176af95d35260f5.json\u0000\u0000\u0000"
-        },
-        ".factory/events/92e8dbc3103b4b43b97da53e57546a93.json": {
-          "digest": "d55e4fde5510134ac80c3d7cc83e89716b5e83726e20f792c100b71b76fcf581",
-          "git": "? .factory/events/92e8dbc3103b4b43b97da53e57546a93.json\u0000\u0000\u0000"
-        },
-        ".factory/events/934ecd97165c42ca91dd4b247ea0619d.json": {
-          "digest": "35fdf699cab925f46014f8918ec3fd281c2368e1a84ce2d51452abb3a83e0fac",
-          "git": "? .factory/events/934ecd97165c42ca91dd4b247ea0619d.json\u0000\u0000\u0000"
-        },
-        ".factory/events/a01bc7a456424940b69316bc11031868.json": {
-          "digest": "32cef9d0dd4ff85691d3352556f13a13ef75a0641e75ea28303f18596c76e62e",
-          "git": "? .factory/events/a01bc7a456424940b69316bc11031868.json\u0000\u0000\u0000"
-        },
-        ".factory/events/aaf5230f7fb443a3aa7d27991fc5125b.json": {
-          "digest": "9083ef7a0929d016ef8594000c875ede142f9ddeb56c51bde23cded49cd43a7f",
-          "git": "? .factory/events/aaf5230f7fb443a3aa7d27991fc5125b.json\u0000\u0000\u0000"
-        },
-        ".factory/events/aead7fabd49b46c78ee4ad0ff2c42726.json": {
-          "digest": "858ed86a428b4c9377271edfde16ab4541767e4577c479a620be19958d5ffb06",
-          "git": "? .factory/events/aead7fabd49b46c78ee4ad0ff2c42726.json\u0000\u0000\u0000"
-        },
-        ".factory/events/b1ccfdeb4c1e424c858c2a59347afcf8.json": {
-          "digest": "04181b793811a7eb35e768eb954e70b2c0c7de1ad7f2e4564e1d0f711cf5095f",
-          "git": "? .factory/events/b1ccfdeb4c1e424c858c2a59347afcf8.json\u0000\u0000\u0000"
-        },
-        ".factory/events/b4ef09284e1d4368bb20dd8a58baedb1.json": {
-          "digest": "cf5eca20d20f65e39a240112ec524560b1869cebc872d560da7a4db7cb4a0251",
-          "git": "? .factory/events/b4ef09284e1d4368bb20dd8a58baedb1.json\u0000\u0000\u0000"
-        },
-        ".factory/events/b4fb12859a224485b807871e92af4647.json": {
-          "digest": "71ba90de7f318d2dfd2debccdcf320875db52c220f4ca829aa9e0b44d4a7272c",
-          "git": "? .factory/events/b4fb12859a224485b807871e92af4647.json\u0000\u0000\u0000"
-        },
-        ".factory/events/be09db7a4a9f471ca6c964b11764c855.json": {
-          "digest": "e5a86fe67635e2cf77ce285f44c90a01f363fe6f7a9540976c74728a8b18839e",
-          "git": "? .factory/events/be09db7a4a9f471ca6c964b11764c855.json\u0000\u0000\u0000"
-        },
-        ".factory/events/cc2a15a8848b4421aaa0a3f51e0ba481.json": {
-          "digest": "6c8aa68438b2b642527dbbdbf57e8d030c046a4f84ff55e92ce26d7801a1a5ad",
-          "git": "? .factory/events/cc2a15a8848b4421aaa0a3f51e0ba481.json\u0000\u0000\u0000"
-        },
-        ".factory/events/d29543b7852143428b2d5611e7f27b01.json": {
-          "digest": "35979b33925f445eb5ee9f9c0420116e38a7fd9026dc886fa1bf115ac2123238",
-          "git": "? .factory/events/d29543b7852143428b2d5611e7f27b01.json\u0000\u0000\u0000"
-        },
-        ".factory/events/d7cd0788530b4db4a9d2ea68dbb68ab6.json": {
-          "digest": "7622736337e62ed91298e5cad44d0d0f397768be14e422f2e156d360b35b5e64",
-          "git": "? .factory/events/d7cd0788530b4db4a9d2ea68dbb68ab6.json\u0000\u0000\u0000"
-        },
-        ".factory/events/d9aeb0c61ab543d08b6fbe49cebd0fb6.json": {
-          "digest": "8e17cc875c3890e531af178d7728fb257f5432c403badff31098be52b9e9e93f",
-          "git": "? .factory/events/d9aeb0c61ab543d08b6fbe49cebd0fb6.json\u0000\u0000\u0000"
-        },
-        ".factory/events/df6ad0fa132e4702ad518e86524a0825.json": {
-          "digest": "89782c8d1c3f4aec8260f1570ce65823b41c8ebc58140d3e8a5b42db6cd0ecc4",
-          "git": "? .factory/events/df6ad0fa132e4702ad518e86524a0825.json\u0000\u0000\u0000"
-        },
-        ".factory/events/e1e293a8128e4eabb41d72666155f196.json": {
-          "digest": "8071b0071cace9deca87b633a234fb3dd407763bcdcbd53c8ff08d9cc7614fb5",
-          "git": "? .factory/events/e1e293a8128e4eabb41d72666155f196.json\u0000\u0000\u0000"
-        },
-        ".factory/events/ea2151898246473fbd34ec7dbe93e06c.json": {
-          "digest": "6b07c2035a16a6d298c712adf129295e7e010972a3512497244c2c11b1eae749",
-          "git": "? .factory/events/ea2151898246473fbd34ec7dbe93e06c.json\u0000\u0000\u0000"
-        },
-        ".factory/events/ead2737dca45450db145bd397a932ae5.json": {
-          "digest": "300e0f86e913db5bcdea7c23d6b606865df61005d5ece0510c7f6493a82e89c7",
-          "git": "? .factory/events/ead2737dca45450db145bd397a932ae5.json\u0000\u0000\u0000"
-        },
-        ".factory/events/ec5a26da3c3f40b3af542a61a3e062fa.json": {
-          "digest": "019102c59c5ef42b025bbf7de2fbf11d479a61c1c0b4e1f31cacf17a1eb796ae",
-          "git": "? .factory/events/ec5a26da3c3f40b3af542a61a3e062fa.json\u0000\u0000\u0000"
-        },
-        ".factory/events/f457d910f4944520bb15e69dc05f6bd9.json": {
-          "digest": "10d3fe56984e136b24af139fe132ba3c1a58f261e6cfe717a84ffa42260005a6",
-          "git": "? .factory/events/f457d910f4944520bb15e69dc05f6bd9.json\u0000\u0000\u0000"
-        },
-        ".factory/signals.jsonl": {
-          "digest": "b8c7e6daf808ddc5c1663b718957e4be7ef7803a5e9b5989c243cfa9a97fb202",
-          "git": "? .factory/signals.jsonl\u0000\u0000\u0000"
+        ".factory/grills/spec.json": {
+          "digest": "eeb32235dd1c22ffd253f51d0919645c1d79ad7413037e64dd586f95e70a62fb",
+          "git": "1 .M N... 100644 100644 100644 ccb1918eb9ff8691ea63e75e3c3ec014cb0e205b ccb1918eb9ff8691ea63e75e3c3ec014cb0e205b .factory/grills/spec.json\u0000\u0000100644 ccb1918eb9ff8691ea63e75e3c3ec014cb0e205b 0\t.factory/grills/spec.json\u0000\u0000H .factory/grills/spec.json\u0000"
         },
         ".factory/stages.json": {
-          "digest": "1c6312b58144c98ed89bdf28a83481f110704e2817c9b36e84cd4baa603b9e09",
-          "git": "1 .M N... 100644 100644 100644 b095fcc6cb21b0971476840c364abf73575a0966 b095fcc6cb21b0971476840c364abf73575a0966 .factory/stages.json\u0000\u0000100644 b095fcc6cb21b0971476840c364abf73575a0966 0\t.factory/stages.json\u0000\u0000H .factory/stages.json\u0000"
+          "digest": "ccd8de08e74e1ff6218d620780f1b249fc459147c6c7d0398aa5dff77b25a486",
+          "git": "1 .M N... 100644 100644 100644 f86f612646d3278a56fd41e986ed35b676da8ffb f86f612646d3278a56fd41e986ed35b676da8ffb .factory/stages.json\u0000\u0000100644 f86f612646d3278a56fd41e986ed35b676da8ffb 0\t.factory/stages.json\u0000\u0000H .factory/stages.json\u0000"
         },
-        ".factory/stories/FORGE-ACC-3/decomposition.json": {
-          "digest": "029140f4379c2b35b77238e1cf15e5f811c4fad1682ca163fa31a6ab375d6d8e",
-          "git": "1 .M N... 100644 100644 100644 130ed116680f6c767cadeb6ad6015f2e519de9b2 130ed116680f6c767cadeb6ad6015f2e519de9b2 .factory/stories/FORGE-ACC-3/decomposition.json\u0000\u0000100644 130ed116680f6c767cadeb6ad6015f2e519de9b2 0\t.factory/stories/FORGE-ACC-3/decomposition.json\u0000\u0000H .factory/stories/FORGE-ACC-3/decomposition.json\u0000"
+        ".factory/stories/plan-mode-and-grill-provenance/decomposition.json": {
+          "digest": "233d3c07d579a7bd53704fc548533f939094edb6684b9784c40e8a98846ef3d1",
+          "git": "1 .M N... 100644 100644 100644 553042c94e3fb067a4c077bcae330febdad0903b 553042c94e3fb067a4c077bcae330febdad0903b .factory/stories/plan-mode-and-grill-provenance/decomposition.json\u0000\u0000100644 553042c94e3fb067a4c077bcae330febdad0903b 0\t.factory/stories/plan-mode-and-grill-provenance/decomposition.json\u0000\u0000H .factory/stories/plan-mode-and-grill-provenance/decomposition.json\u0000"
         },
-        ".factory/stories/FORGE-ACC-3/grills/tasks/hygiene-content-pins-and-doc-debts.json": {
-          "digest": "092d15346d7385b570fc373338314b8900b642a73a05ee2fa7db0cfacac7a51b",
-          "git": "? .factory/stories/FORGE-ACC-3/grills/tasks/hygiene-content-pins-and-doc-debts.json\u0000\u0000\u0000"
+        ".factory/stories/plan-mode-and-grill-provenance/grill-rounds/0a095084-b7bd-48a2-b6e6-72dd023d6baf.json": {
+          "digest": "87ab6069ead5ef75c3ef624869ef5873fc55ca9add99a596f98a3655d99aa9be",
+          "git": "? .factory/stories/plan-mode-and-grill-provenance/grill-rounds/0a095084-b7bd-48a2-b6e6-72dd023d6baf.json\u0000\u0000\u0000"
         },
-        ".factory/stories/FORGE-ACC-3/task-plans/hygiene-content-pins-and-doc-debts.md": {
-          "digest": "c32cf622277121fd4dd97213b7d9480f6e0dfcec0a509d21aad1bb781c16270b",
-          "git": "? .factory/stories/FORGE-ACC-3/task-plans/hygiene-content-pins-and-doc-debts.md\u0000\u0000\u0000"
+        ".factory/stories/plan-mode-and-grill-provenance/grill-rounds/509cb381-9d80-4b99-b4d7-fa9df0f1ab73.json": {
+          "digest": "789e546f189279658020f5fb24e0ec502f335fc57d6cb6184daf01e8308d84ec",
+          "git": "? .factory/stories/plan-mode-and-grill-provenance/grill-rounds/509cb381-9d80-4b99-b4d7-fa9df0f1ab73.json\u0000\u0000\u0000"
         },
-        "plans/quickfixes/20260819T062749-0000-Q-0081-629d-open-062749943700.json": {
-          "digest": "5c5163ee23d510c00834802ee81f103a947e42736fee5d9494b303b802a51b1a",
-          "git": "? plans/quickfixes/20260819T062749-0000-Q-0081-629d-open-062749943700.json\u0000\u0000\u0000"
+        ".factory/stories/plan-mode-and-grill-provenance/grill-rounds/701a37d3-4378-43f1-9bfe-efd2ecae184d.json": {
+          "digest": "1327e92e78830a2aa6eb66cfef61ad3d27d38a3554a370a949b4f2812451f909",
+          "git": "? .factory/stories/plan-mode-and-grill-provenance/grill-rounds/701a37d3-4378-43f1-9bfe-efd2ecae184d.json\u0000\u0000\u0000"
         },
-        "plans/quickfixes/20260819T064507-0000-Q-0081-629d-done-064507548479.json": {
-          "digest": "61fdb618a6a6ac90c6d9d20d3bd2d29e1f063d06e61662cc749417a822165673",
-          "git": "? plans/quickfixes/20260819T064507-0000-Q-0081-629d-done-064507548479.json\u0000\u0000\u0000"
+        ".factory/stories/plan-mode-and-grill-provenance/grill-rounds/dedd84ae-ea37-47a8-8199-b5f81453f875.json": {
+          "digest": "c9f116a1993f14e0e928383eafc91a731a45db4b0ad209b95f2dfd4772b4f3df",
+          "git": "? .factory/stories/plan-mode-and-grill-provenance/grill-rounds/dedd84ae-ea37-47a8-8199-b5f81453f875.json\u0000\u0000\u0000"
+        },
+        ".factory/stories/plan-mode-and-grill-provenance/grill-rounds/e2545838-21da-494b-b807-36ba6ebaa09e.json": {
+          "digest": "46eacd1425b4765922178b4526f637d8bb12cec13a386e0779e36a13ad00a534",
+          "git": "? .factory/stories/plan-mode-and-grill-provenance/grill-rounds/e2545838-21da-494b-b807-36ba6ebaa09e.json\u0000\u0000\u0000"
+        },
+        ".factory/stories/plan-mode-and-grill-provenance/grill-rounds/eb81072d-a8e7-4d66-be91-b8138314bf18.json": {
+          "digest": "e422c6272c6a542045650902ea32ffdf40289aa8f749a2183a63344afecd2237",
+          "git": "? .factory/stories/plan-mode-and-grill-provenance/grill-rounds/eb81072d-a8e7-4d66-be91-b8138314bf18.json\u0000\u0000\u0000"
+        },
+        ".factory/stories/plan-mode-and-grill-provenance/grills/tasks/docs-and-decision.json": {
+          "digest": "e027e859a910ca079a081aa599b2caf4ffab624ecee56dc324df749585329240",
+          "git": "? .factory/stories/plan-mode-and-grill-provenance/grills/tasks/docs-and-decision.json\u0000\u0000\u0000"
+        },
+        ".factory/stories/plan-mode-and-grill-provenance/grills/tasks/flip-frontier-routing-test.json": {
+          "digest": "87e8269b129957fd7cce7d3d47af00fe144edd3e9da5dbf1c117f00dc26d5e04",
+          "git": "? .factory/stories/plan-mode-and-grill-provenance/grills/tasks/flip-frontier-routing-test.json\u0000\u0000\u0000"
+        },
+        ".factory/stories/plan-mode-and-grill-provenance/plan-mode/85d119cd-ab93-470a-a004-80081feb5059.json": {
+          "digest": "60354d8cecf4cc22b5054423bc144ff48951c429913914fa8febcbab6b528597",
+          "git": "? .factory/stories/plan-mode-and-grill-provenance/plan-mode/85d119cd-ab93-470a-a004-80081feb5059.json\u0000\u0000\u0000"
+        },
+        ".factory/stories/plan-mode-and-grill-provenance/plan-mode/9e6f66c2-a406-4465-be47-1bf06b3642aa.json": {
+          "digest": "5ad30c2e9985207117d5b22a8541f58d5af071449d425e3fd2a954b4dde27b12",
+          "git": "? .factory/stories/plan-mode-and-grill-provenance/plan-mode/9e6f66c2-a406-4465-be47-1bf06b3642aa.json\u0000\u0000\u0000"
+        },
+        ".factory/stories/plan-mode-and-grill-provenance/task-plans/docs-and-decision.md": {
+          "digest": "414ea5a92d92a4ab514204c574bca2056673440970ac3f4cd686742e15f390b6",
+          "git": "? .factory/stories/plan-mode-and-grill-provenance/task-plans/docs-and-decision.md\u0000\u0000\u0000"
+        },
+        ".factory/stories/plan-mode-and-grill-provenance/task-plans/flip-frontier-routing-test.md": {
+          "digest": "476a86e7eaa5d2383b119ffccf64d45936b5447c450e5c61110a65c5d5e9ac10",
+          "git": "? .factory/stories/plan-mode-and-grill-provenance/task-plans/flip-frontier-routing-test.md\u0000\u0000\u0000"
+        },
+        ".factory/stories/plan-mode-and-grill-provenance/verify.json": {
+          "digest": "3e176656a02dd9319f9921742f38fefc7e13789d551a707dd16f93818a472a12",
+          "git": "1 .M N... 100644 100644 100644 897cc6f81f84ab3b9efe720d31738693e474387d 897cc6f81f84ab3b9efe720d31738693e474387d .factory/stories/plan-mode-and-grill-provenance/verify.json\u0000\u0000100644 897cc6f81f84ab3b9efe720d31738693e474387d 0\t.factory/stories/plan-mode-and-grill-provenance/verify.json\u0000\u0000H .factory/stories/plan-mode-and-grill-provenance/verify.json\u0000"
         }
       },
-      "task_sha256": "6730df2f3b9b2633abb1540fa0a2486f4d40409f78e0999c3e2a9324d6c070c2",
-      "completed_at": "2026-08-19T10:52:06+00:00"
-    },
-    {
-      "id": "task-worktree-start",
-      "title": "Each task runs in its own worktree off main",
-      "status": "done",
-      "started_at": "2026-08-19T11:03:16+00:00",
-      "base_sha": "f8fa44b926cc66408f8096f5de7797b336774b4a",
-      "dirty_at_start": {
-        ".factory/events/03399a7401a3421e9df03afa8d829c18.json": {
-          "digest": "0e4207c184b4cce891e7fec99473940ee369e6a8c3f4f1227d398bae82fdbad3",
-          "git": "? .factory/events/03399a7401a3421e9df03afa8d829c18.json\u0000\u0000\u0000"
-        },
-        ".factory/events/07c6c48451ab4a30b473b5df9ac09046.json": {
-          "digest": "6b981917e97bbce69fc814105a7911888f9115963f7d0880bf540c55b78bb7b9",
-          "git": "? .factory/events/07c6c48451ab4a30b473b5df9ac09046.json\u0000\u0000\u0000"
-        },
-        ".factory/events/0b5b41b6dd38464588b7834cfb6478be.json": {
-          "digest": "3cbc1b18b4595f23765407cbac3c84e38a889cf9abe6746bfa2a78ab973c732d",
-          "git": "? .factory/events/0b5b41b6dd38464588b7834cfb6478be.json\u0000\u0000\u0000"
-        },
-        ".factory/events/1992cbcceaa9461a9500a83a91369d18.json": {
-          "digest": "b5c64b8d9bd3b3c9d8f3558146d9472eeba997f8e942e3f9c9cae804c9aacc82",
-          "git": "? .factory/events/1992cbcceaa9461a9500a83a91369d18.json\u0000\u0000\u0000"
-        },
-        ".factory/events/2c4a3b8c404f4396a80ed8da471e3551.json": {
-          "digest": "584d02ac42e810bc816d5b17b387dc13397dd08c3d679dcf3ab54c5dd9dfa9b0",
-          "git": "? .factory/events/2c4a3b8c404f4396a80ed8da471e3551.json\u0000\u0000\u0000"
-        },
-        ".factory/events/31270a0be57a48bcaafd0f67340b8735.json": {
-          "digest": "c2a58b7473a4903e2fc99d829194fcbb0ac09395acdd93c47500ac8fff849af0",
-          "git": "? .factory/events/31270a0be57a48bcaafd0f67340b8735.json\u0000\u0000\u0000"
-        },
-        ".factory/events/33a78e4d20d74b2087e27db2e3f58a44.json": {
-          "digest": "33c39190b15ba9e74d6a53d8603398d0f69f3e4c338bbbe29e20ab99b9923c0f",
-          "git": "? .factory/events/33a78e4d20d74b2087e27db2e3f58a44.json\u0000\u0000\u0000"
-        },
-        ".factory/events/3820775318d04530923ecfd9ff126afd.json": {
-          "digest": "8cbec80e8af1ca5f5fc9c95e771d2ea6d334e703f35d9f84f26a699a071aba33",
-          "git": "? .factory/events/3820775318d04530923ecfd9ff126afd.json\u0000\u0000\u0000"
-        },
-        ".factory/events/3b3935b8a9f14ae0afecea0a81bdff21.json": {
-          "digest": "06f3b8646344d0b23ebe037e41161448ada732874ce5afbbb4f6a2e544778c8c",
-          "git": "? .factory/events/3b3935b8a9f14ae0afecea0a81bdff21.json\u0000\u0000\u0000"
-        },
-        ".factory/events/45295a0854c24a4eba9bdf439395b9c7.json": {
-          "digest": "61c81d73cb6a9eff813dbc77a0ddb856785ba71397ea4d9743425ce48c157679",
-          "git": "? .factory/events/45295a0854c24a4eba9bdf439395b9c7.json\u0000\u0000\u0000"
-        },
-        ".factory/events/4ba12f48b1c64933b786306c47a55440.json": {
-          "digest": "9757b252a537349ed824f92af0f020cc99f025daba43575866dea17ca7543ded",
-          "git": "? .factory/events/4ba12f48b1c64933b786306c47a55440.json\u0000\u0000\u0000"
-        },
-        ".factory/events/501da9cf930243e2ab8a403a786da19d.json": {
-          "digest": "eb8e574a68ec7c9535e3448ef3d71435f165157bd95eff68b081d5114a38e7b2",
-          "git": "? .factory/events/501da9cf930243e2ab8a403a786da19d.json\u0000\u0000\u0000"
-        },
-        ".factory/events/57a8a0f5b1b54003b5f0a48601c98a5c.json": {
-          "digest": "e787b7dcde1f706120aa45bdca01f6fc697f9270a146a447edf382de7a3e20f5",
-          "git": "? .factory/events/57a8a0f5b1b54003b5f0a48601c98a5c.json\u0000\u0000\u0000"
-        },
-        ".factory/events/61903e3cfe5a4b69a82170482ea983b2.json": {
-          "digest": "6f22dc318c2d6308f3e6386f5498162059c3c5a598b3b0c3f01b7a56fac76cc3",
-          "git": "? .factory/events/61903e3cfe5a4b69a82170482ea983b2.json\u0000\u0000\u0000"
-        },
-        ".factory/events/68dba614235e415084760b741bd56d56.json": {
-          "digest": "b2f4b56e6e2682720630f6c8b9b27e98e4d7221f4ad2ba86c87d8cd0e0a582f6",
-          "git": "? .factory/events/68dba614235e415084760b741bd56d56.json\u0000\u0000\u0000"
-        },
-        ".factory/events/69000f5fe7334845a5fb63374f12f0cc.json": {
-          "digest": "f2f4382390eb0706a81068a55a21ac876eef11b917841fd7e68bc743e51f6061",
-          "git": "? .factory/events/69000f5fe7334845a5fb63374f12f0cc.json\u0000\u0000\u0000"
-        },
-        ".factory/events/6d68ca1c57594023b26b1ebf4cf60416.json": {
-          "digest": "325495369b0ebd87fec38c6a0739b672f9f34c49cfc1853a513b84d823f3efff",
-          "git": "? .factory/events/6d68ca1c57594023b26b1ebf4cf60416.json\u0000\u0000\u0000"
-        },
-        ".factory/events/77e1d31a9a01487c97897bd742582843.json": {
-          "digest": "7a887f6b06dd23e5cee75c820f8d368518c445e8fc9a77edbb8cd5a181b7a07a",
-          "git": "? .factory/events/77e1d31a9a01487c97897bd742582843.json\u0000\u0000\u0000"
-        },
-        ".factory/events/816c71a7d2954c6fb47ad487b1660145.json": {
-          "digest": "413c30eb44fd6869ca85c395d1ca96690fe5a5a5500b28b6865a0a22b3f54e6f",
-          "git": "? .factory/events/816c71a7d2954c6fb47ad487b1660145.json\u0000\u0000\u0000"
-        },
-        ".factory/events/899b1ef5a543482da176af95d35260f5.json": {
-          "digest": "b9888c6642fb94a21d26ed4d550b4050e19bca2fb4cb3504f19f89d5aaf8b036",
-          "git": "? .factory/events/899b1ef5a543482da176af95d35260f5.json\u0000\u0000\u0000"
-        },
-        ".factory/events/92e8dbc3103b4b43b97da53e57546a93.json": {
-          "digest": "d55e4fde5510134ac80c3d7cc83e89716b5e83726e20f792c100b71b76fcf581",
-          "git": "? .factory/events/92e8dbc3103b4b43b97da53e57546a93.json\u0000\u0000\u0000"
-        },
-        ".factory/events/934ecd97165c42ca91dd4b247ea0619d.json": {
-          "digest": "35fdf699cab925f46014f8918ec3fd281c2368e1a84ce2d51452abb3a83e0fac",
-          "git": "? .factory/events/934ecd97165c42ca91dd4b247ea0619d.json\u0000\u0000\u0000"
-        },
-        ".factory/events/9b64f3fd660b4e96bf0a710a868211a2.json": {
-          "digest": "fa855ea2074bbded02f17e7c8ba1b376d6788a49eb8d078bdedab37f80392598",
-          "git": "? .factory/events/9b64f3fd660b4e96bf0a710a868211a2.json\u0000\u0000\u0000"
-        },
-        ".factory/events/a01bc7a456424940b69316bc11031868.json": {
-          "digest": "32cef9d0dd4ff85691d3352556f13a13ef75a0641e75ea28303f18596c76e62e",
-          "git": "? .factory/events/a01bc7a456424940b69316bc11031868.json\u0000\u0000\u0000"
-        },
-        ".factory/events/aaf5230f7fb443a3aa7d27991fc5125b.json": {
-          "digest": "9083ef7a0929d016ef8594000c875ede142f9ddeb56c51bde23cded49cd43a7f",
-          "git": "? .factory/events/aaf5230f7fb443a3aa7d27991fc5125b.json\u0000\u0000\u0000"
-        },
-        ".factory/events/aead7fabd49b46c78ee4ad0ff2c42726.json": {
-          "digest": "858ed86a428b4c9377271edfde16ab4541767e4577c479a620be19958d5ffb06",
-          "git": "? .factory/events/aead7fabd49b46c78ee4ad0ff2c42726.json\u0000\u0000\u0000"
-        },
-        ".factory/events/b1ccfdeb4c1e424c858c2a59347afcf8.json": {
-          "digest": "04181b793811a7eb35e768eb954e70b2c0c7de1ad7f2e4564e1d0f711cf5095f",
-          "git": "? .factory/events/b1ccfdeb4c1e424c858c2a59347afcf8.json\u0000\u0000\u0000"
-        },
-        ".factory/events/b4ef09284e1d4368bb20dd8a58baedb1.json": {
-          "digest": "cf5eca20d20f65e39a240112ec524560b1869cebc872d560da7a4db7cb4a0251",
-          "git": "? .factory/events/b4ef09284e1d4368bb20dd8a58baedb1.json\u0000\u0000\u0000"
-        },
-        ".factory/events/b4fb12859a224485b807871e92af4647.json": {
-          "digest": "71ba90de7f318d2dfd2debccdcf320875db52c220f4ca829aa9e0b44d4a7272c",
-          "git": "? .factory/events/b4fb12859a224485b807871e92af4647.json\u0000\u0000\u0000"
-        },
-        ".factory/events/b7146bfb7ef24d309573f29f8f04e621.json": {
-          "digest": "d1df2db20ea1d9fc6c3d9dd34c70d93ada94f386b3d903c469426fdb425b7259",
-          "git": "? .factory/events/b7146bfb7ef24d309573f29f8f04e621.json\u0000\u0000\u0000"
-        },
-        ".factory/events/be09db7a4a9f471ca6c964b11764c855.json": {
-          "digest": "e5a86fe67635e2cf77ce285f44c90a01f363fe6f7a9540976c74728a8b18839e",
-          "git": "? .factory/events/be09db7a4a9f471ca6c964b11764c855.json\u0000\u0000\u0000"
-        },
-        ".factory/events/cc2a15a8848b4421aaa0a3f51e0ba481.json": {
-          "digest": "6c8aa68438b2b642527dbbdbf57e8d030c046a4f84ff55e92ce26d7801a1a5ad",
-          "git": "? .factory/events/cc2a15a8848b4421aaa0a3f51e0ba481.json\u0000\u0000\u0000"
-        },
-        ".factory/events/d29543b7852143428b2d5611e7f27b01.json": {
-          "digest": "35979b33925f445eb5ee9f9c0420116e38a7fd9026dc886fa1bf115ac2123238",
-          "git": "? .factory/events/d29543b7852143428b2d5611e7f27b01.json\u0000\u0000\u0000"
-        },
-        ".factory/events/d7cd0788530b4db4a9d2ea68dbb68ab6.json": {
-          "digest": "7622736337e62ed91298e5cad44d0d0f397768be14e422f2e156d360b35b5e64",
-          "git": "? .factory/events/d7cd0788530b4db4a9d2ea68dbb68ab6.json\u0000\u0000\u0000"
-        },
-        ".factory/events/d9aeb0c61ab543d08b6fbe49cebd0fb6.json": {
-          "digest": "8e17cc875c3890e531af178d7728fb257f5432c403badff31098be52b9e9e93f",
-          "git": "? .factory/events/d9aeb0c61ab543d08b6fbe49cebd0fb6.json\u0000\u0000\u0000"
-        },
-        ".factory/events/db7da72d463446d9a995b3ab16a0bcf5.json": {
-          "digest": "734d1da5c577af3617da99f5e44169d81a39550996efd6d722e80064f994532c",
-          "git": "? .factory/events/db7da72d463446d9a995b3ab16a0bcf5.json\u0000\u0000\u0000"
-        },
-        ".factory/events/df6ad0fa132e4702ad518e86524a0825.json": {
-          "digest": "89782c8d1c3f4aec8260f1570ce65823b41c8ebc58140d3e8a5b42db6cd0ecc4",
-          "git": "? .factory/events/df6ad0fa132e4702ad518e86524a0825.json\u0000\u0000\u0000"
-        },
-        ".factory/events/e1e293a8128e4eabb41d72666155f196.json": {
-          "digest": "8071b0071cace9deca87b633a234fb3dd407763bcdcbd53c8ff08d9cc7614fb5",
-          "git": "? .factory/events/e1e293a8128e4eabb41d72666155f196.json\u0000\u0000\u0000"
-        },
-        ".factory/events/ea2151898246473fbd34ec7dbe93e06c.json": {
-          "digest": "6b07c2035a16a6d298c712adf129295e7e010972a3512497244c2c11b1eae749",
-          "git": "? .factory/events/ea2151898246473fbd34ec7dbe93e06c.json\u0000\u0000\u0000"
-        },
-        ".factory/events/ead2737dca45450db145bd397a932ae5.json": {
-          "digest": "300e0f86e913db5bcdea7c23d6b606865df61005d5ece0510c7f6493a82e89c7",
-          "git": "? .factory/events/ead2737dca45450db145bd397a932ae5.json\u0000\u0000\u0000"
-        },
-        ".factory/events/ec5a26da3c3f40b3af542a61a3e062fa.json": {
-          "digest": "019102c59c5ef42b025bbf7de2fbf11d479a61c1c0b4e1f31cacf17a1eb796ae",
-          "git": "? .factory/events/ec5a26da3c3f40b3af542a61a3e062fa.json\u0000\u0000\u0000"
-        },
-        ".factory/events/f457d910f4944520bb15e69dc05f6bd9.json": {
-          "digest": "10d3fe56984e136b24af139fe132ba3c1a58f261e6cfe717a84ffa42260005a6",
-          "git": "? .factory/events/f457d910f4944520bb15e69dc05f6bd9.json\u0000\u0000\u0000"
-        },
-        ".factory/signals.jsonl": {
-          "digest": "b8c7e6daf808ddc5c1663b718957e4be7ef7803a5e9b5989c243cfa9a97fb202",
-          "git": "? .factory/signals.jsonl\u0000\u0000\u0000"
-        },
-        ".factory/stages.json": {
-          "digest": "74ada90a8c3c033911652a0c0e3480b640533ad60e66e624cbe8c1667a137e30",
-          "git": "1 .M N... 100644 100644 100644 fb537cb411887363ccce779781fb397d0ca50b63 fb537cb411887363ccce779781fb397d0ca50b63 .factory/stages.json\u0000\u0000100644 fb537cb411887363ccce779781fb397d0ca50b63 0\t.factory/stages.json\u0000\u0000H .factory/stages.json\u0000"
-        },
-        ".factory/stories/FORGE-ACC-3/decomposition.json": {
-          "digest": "1478db8506178e8205af3e87100074669e214d5e728ebfd6577e30cb8b68e181",
-          "git": "1 .M N... 100644 100644 100644 c51a27c6e4c0a4b44768ff13cf1477075f5b25c3 c51a27c6e4c0a4b44768ff13cf1477075f5b25c3 .factory/stories/FORGE-ACC-3/decomposition.json\u0000\u0000100644 c51a27c6e4c0a4b44768ff13cf1477075f5b25c3 0\t.factory/stories/FORGE-ACC-3/decomposition.json\u0000\u0000H .factory/stories/FORGE-ACC-3/decomposition.json\u0000"
-        },
-        ".factory/stories/FORGE-ACC-3/grills/tasks/task-worktree-start.json": {
-          "digest": "73bac11170d473646dc40f72a5785b5fe134d890a6b9a6c32e025503ab76f5c3",
-          "git": "? .factory/stories/FORGE-ACC-3/grills/tasks/task-worktree-start.json\u0000\u0000\u0000"
-        },
-        ".factory/stories/FORGE-ACC-3/task-plans/task-worktree-start.md": {
-          "digest": "6b41a3475ac59547d6db0ec00be4c527e7c16ece395822991f698784e6a6b511",
-          "git": "? .factory/stories/FORGE-ACC-3/task-plans/task-worktree-start.md\u0000\u0000\u0000"
-        },
-        "plans/quickfixes/20260819T062749-0000-Q-0081-629d-open-062749943700.json": {
-          "digest": "5c5163ee23d510c00834802ee81f103a947e42736fee5d9494b303b802a51b1a",
-          "git": "? plans/quickfixes/20260819T062749-0000-Q-0081-629d-open-062749943700.json\u0000\u0000\u0000"
-        },
-        "plans/quickfixes/20260819T064507-0000-Q-0081-629d-done-064507548479.json": {
-          "digest": "61fdb618a6a6ac90c6d9d20d3bd2d29e1f063d06e61662cc749417a822165673",
-          "git": "? plans/quickfixes/20260819T064507-0000-Q-0081-629d-done-064507548479.json\u0000\u0000\u0000"
-        }
-      },
-      "task_sha256": "d36bf2fb41c9c73fb0d7b93c60403b462e4609604f6192db72a684218f833c0c",
-      "completed_at": "2026-08-19T11:11:46+00:00"
-    },
-    {
-      "id": "task-pr-gate",
-      "title": "Each task ships as its own PR to main",
-      "status": "done",
-      "started_at": "2026-08-19T11:30:07+00:00",
-      "base_sha": "4b343a74ba265617ecdeae828d4ad9bc683ce0b5",
-      "dirty_at_start": {
-        ".factory/events/03399a7401a3421e9df03afa8d829c18.json": {
-          "digest": "0e4207c184b4cce891e7fec99473940ee369e6a8c3f4f1227d398bae82fdbad3",
-          "git": "? .factory/events/03399a7401a3421e9df03afa8d829c18.json\u0000\u0000\u0000"
-        },
-        ".factory/events/07c6c48451ab4a30b473b5df9ac09046.json": {
-          "digest": "6b981917e97bbce69fc814105a7911888f9115963f7d0880bf540c55b78bb7b9",
-          "git": "? .factory/events/07c6c48451ab4a30b473b5df9ac09046.json\u0000\u0000\u0000"
-        },
-        ".factory/events/0b5b41b6dd38464588b7834cfb6478be.json": {
-          "digest": "3cbc1b18b4595f23765407cbac3c84e38a889cf9abe6746bfa2a78ab973c732d",
-          "git": "? .factory/events/0b5b41b6dd38464588b7834cfb6478be.json\u0000\u0000\u0000"
-        },
-        ".factory/events/12b98947eb39492c97c3c23714a9ccda.json": {
-          "digest": "5e2be9b8beb8e6f8227c93f90b63a343be95aaaa7e7ade26bc32d65039af7888",
-          "git": "? .factory/events/12b98947eb39492c97c3c23714a9ccda.json\u0000\u0000\u0000"
-        },
-        ".factory/events/1992cbcceaa9461a9500a83a91369d18.json": {
-          "digest": "b5c64b8d9bd3b3c9d8f3558146d9472eeba997f8e942e3f9c9cae804c9aacc82",
-          "git": "? .factory/events/1992cbcceaa9461a9500a83a91369d18.json\u0000\u0000\u0000"
-        },
-        ".factory/events/2c4a3b8c404f4396a80ed8da471e3551.json": {
-          "digest": "584d02ac42e810bc816d5b17b387dc13397dd08c3d679dcf3ab54c5dd9dfa9b0",
-          "git": "? .factory/events/2c4a3b8c404f4396a80ed8da471e3551.json\u0000\u0000\u0000"
-        },
-        ".factory/events/31270a0be57a48bcaafd0f67340b8735.json": {
-          "digest": "c2a58b7473a4903e2fc99d829194fcbb0ac09395acdd93c47500ac8fff849af0",
-          "git": "? .factory/events/31270a0be57a48bcaafd0f67340b8735.json\u0000\u0000\u0000"
-        },
-        ".factory/events/33a78e4d20d74b2087e27db2e3f58a44.json": {
-          "digest": "33c39190b15ba9e74d6a53d8603398d0f69f3e4c338bbbe29e20ab99b9923c0f",
-          "git": "? .factory/events/33a78e4d20d74b2087e27db2e3f58a44.json\u0000\u0000\u0000"
-        },
-        ".factory/events/35281caefb9543029b7ddfaade7dcc11.json": {
-          "digest": "7672112b120d46e3ee924d4f104af887605d2335f58586beb30eeb15393e91fd",
-          "git": "? .factory/events/35281caefb9543029b7ddfaade7dcc11.json\u0000\u0000\u0000"
-        },
-        ".factory/events/3820775318d04530923ecfd9ff126afd.json": {
-          "digest": "8cbec80e8af1ca5f5fc9c95e771d2ea6d334e703f35d9f84f26a699a071aba33",
-          "git": "? .factory/events/3820775318d04530923ecfd9ff126afd.json\u0000\u0000\u0000"
-        },
-        ".factory/events/3b3935b8a9f14ae0afecea0a81bdff21.json": {
-          "digest": "06f3b8646344d0b23ebe037e41161448ada732874ce5afbbb4f6a2e544778c8c",
-          "git": "? .factory/events/3b3935b8a9f14ae0afecea0a81bdff21.json\u0000\u0000\u0000"
-        },
-        ".factory/events/45295a0854c24a4eba9bdf439395b9c7.json": {
-          "digest": "61c81d73cb6a9eff813dbc77a0ddb856785ba71397ea4d9743425ce48c157679",
-          "git": "? .factory/events/45295a0854c24a4eba9bdf439395b9c7.json\u0000\u0000\u0000"
-        },
-        ".factory/events/4ba12f48b1c64933b786306c47a55440.json": {
-          "digest": "9757b252a537349ed824f92af0f020cc99f025daba43575866dea17ca7543ded",
-          "git": "? .factory/events/4ba12f48b1c64933b786306c47a55440.json\u0000\u0000\u0000"
-        },
-        ".factory/events/501da9cf930243e2ab8a403a786da19d.json": {
-          "digest": "eb8e574a68ec7c9535e3448ef3d71435f165157bd95eff68b081d5114a38e7b2",
-          "git": "? .factory/events/501da9cf930243e2ab8a403a786da19d.json\u0000\u0000\u0000"
-        },
-        ".factory/events/57a8a0f5b1b54003b5f0a48601c98a5c.json": {
-          "digest": "e787b7dcde1f706120aa45bdca01f6fc697f9270a146a447edf382de7a3e20f5",
-          "git": "? .factory/events/57a8a0f5b1b54003b5f0a48601c98a5c.json\u0000\u0000\u0000"
-        },
-        ".factory/events/61903e3cfe5a4b69a82170482ea983b2.json": {
-          "digest": "6f22dc318c2d6308f3e6386f5498162059c3c5a598b3b0c3f01b7a56fac76cc3",
-          "git": "? .factory/events/61903e3cfe5a4b69a82170482ea983b2.json\u0000\u0000\u0000"
-        },
-        ".factory/events/68dba614235e415084760b741bd56d56.json": {
-          "digest": "b2f4b56e6e2682720630f6c8b9b27e98e4d7221f4ad2ba86c87d8cd0e0a582f6",
-          "git": "? .factory/events/68dba614235e415084760b741bd56d56.json\u0000\u0000\u0000"
-        },
-        ".factory/events/69000f5fe7334845a5fb63374f12f0cc.json": {
-          "digest": "f2f4382390eb0706a81068a55a21ac876eef11b917841fd7e68bc743e51f6061",
-          "git": "? .factory/events/69000f5fe7334845a5fb63374f12f0cc.json\u0000\u0000\u0000"
-        },
-        ".factory/events/6a6b9c3ff7814c709a819ca756c29582.json": {
-          "digest": "5e52ac837cbbd68029d756cfdd7d33fa1a59152b7faa83898ddc1e55286cd602",
-          "git": "? .factory/events/6a6b9c3ff7814c709a819ca756c29582.json\u0000\u0000\u0000"
-        },
-        ".factory/events/6d68ca1c57594023b26b1ebf4cf60416.json": {
-          "digest": "325495369b0ebd87fec38c6a0739b672f9f34c49cfc1853a513b84d823f3efff",
-          "git": "? .factory/events/6d68ca1c57594023b26b1ebf4cf60416.json\u0000\u0000\u0000"
-        },
-        ".factory/events/77e1d31a9a01487c97897bd742582843.json": {
-          "digest": "7a887f6b06dd23e5cee75c820f8d368518c445e8fc9a77edbb8cd5a181b7a07a",
-          "git": "? .factory/events/77e1d31a9a01487c97897bd742582843.json\u0000\u0000\u0000"
-        },
-        ".factory/events/816c71a7d2954c6fb47ad487b1660145.json": {
-          "digest": "413c30eb44fd6869ca85c395d1ca96690fe5a5a5500b28b6865a0a22b3f54e6f",
-          "git": "? .factory/events/816c71a7d2954c6fb47ad487b1660145.json\u0000\u0000\u0000"
-        },
-        ".factory/events/899b1ef5a543482da176af95d35260f5.json": {
-          "digest": "b9888c6642fb94a21d26ed4d550b4050e19bca2fb4cb3504f19f89d5aaf8b036",
-          "git": "? .factory/events/899b1ef5a543482da176af95d35260f5.json\u0000\u0000\u0000"
-        },
-        ".factory/events/92e8dbc3103b4b43b97da53e57546a93.json": {
-          "digest": "d55e4fde5510134ac80c3d7cc83e89716b5e83726e20f792c100b71b76fcf581",
-          "git": "? .factory/events/92e8dbc3103b4b43b97da53e57546a93.json\u0000\u0000\u0000"
-        },
-        ".factory/events/934ecd97165c42ca91dd4b247ea0619d.json": {
-          "digest": "35fdf699cab925f46014f8918ec3fd281c2368e1a84ce2d51452abb3a83e0fac",
-          "git": "? .factory/events/934ecd97165c42ca91dd4b247ea0619d.json\u0000\u0000\u0000"
-        },
-        ".factory/events/9a69f164269e4b82aa2e677f0faf9730.json": {
-          "digest": "d9769a403c7eeea0e24cb33ffab21be937b300fbbdc32b4adf3d562a450b31c1",
-          "git": "? .factory/events/9a69f164269e4b82aa2e677f0faf9730.json\u0000\u0000\u0000"
-        },
-        ".factory/events/9b64f3fd660b4e96bf0a710a868211a2.json": {
-          "digest": "fa855ea2074bbded02f17e7c8ba1b376d6788a49eb8d078bdedab37f80392598",
-          "git": "? .factory/events/9b64f3fd660b4e96bf0a710a868211a2.json\u0000\u0000\u0000"
-        },
-        ".factory/events/9fe02088002547d19d9a263e56aa0d8a.json": {
-          "digest": "d66c5360f7e60bc8bc52af898ad5be1c184174ed6648e745f72a5b81073d48b8",
-          "git": "? .factory/events/9fe02088002547d19d9a263e56aa0d8a.json\u0000\u0000\u0000"
-        },
-        ".factory/events/a01bc7a456424940b69316bc11031868.json": {
-          "digest": "32cef9d0dd4ff85691d3352556f13a13ef75a0641e75ea28303f18596c76e62e",
-          "git": "? .factory/events/a01bc7a456424940b69316bc11031868.json\u0000\u0000\u0000"
-        },
-        ".factory/events/a3fc63e0b28743fb8840f90e91590aff.json": {
-          "digest": "7d8fbaf3c3dcedb5f0a4065dadbbeb088b6811c9612c86d474375145f745492e",
-          "git": "? .factory/events/a3fc63e0b28743fb8840f90e91590aff.json\u0000\u0000\u0000"
-        },
-        ".factory/events/aaf5230f7fb443a3aa7d27991fc5125b.json": {
-          "digest": "9083ef7a0929d016ef8594000c875ede142f9ddeb56c51bde23cded49cd43a7f",
-          "git": "? .factory/events/aaf5230f7fb443a3aa7d27991fc5125b.json\u0000\u0000\u0000"
-        },
-        ".factory/events/aead7fabd49b46c78ee4ad0ff2c42726.json": {
-          "digest": "858ed86a428b4c9377271edfde16ab4541767e4577c479a620be19958d5ffb06",
-          "git": "? .factory/events/aead7fabd49b46c78ee4ad0ff2c42726.json\u0000\u0000\u0000"
-        },
-        ".factory/events/b1ccfdeb4c1e424c858c2a59347afcf8.json": {
-          "digest": "04181b793811a7eb35e768eb954e70b2c0c7de1ad7f2e4564e1d0f711cf5095f",
-          "git": "? .factory/events/b1ccfdeb4c1e424c858c2a59347afcf8.json\u0000\u0000\u0000"
-        },
-        ".factory/events/b4ef09284e1d4368bb20dd8a58baedb1.json": {
-          "digest": "cf5eca20d20f65e39a240112ec524560b1869cebc872d560da7a4db7cb4a0251",
-          "git": "? .factory/events/b4ef09284e1d4368bb20dd8a58baedb1.json\u0000\u0000\u0000"
-        },
-        ".factory/events/b4fb12859a224485b807871e92af4647.json": {
-          "digest": "71ba90de7f318d2dfd2debccdcf320875db52c220f4ca829aa9e0b44d4a7272c",
-          "git": "? .factory/events/b4fb12859a224485b807871e92af4647.json\u0000\u0000\u0000"
-        },
-        ".factory/events/b7146bfb7ef24d309573f29f8f04e621.json": {
-          "digest": "d1df2db20ea1d9fc6c3d9dd34c70d93ada94f386b3d903c469426fdb425b7259",
-          "git": "? .factory/events/b7146bfb7ef24d309573f29f8f04e621.json\u0000\u0000\u0000"
-        },
-        ".factory/events/be09db7a4a9f471ca6c964b11764c855.json": {
-          "digest": "e5a86fe67635e2cf77ce285f44c90a01f363fe6f7a9540976c74728a8b18839e",
-          "git": "? .factory/events/be09db7a4a9f471ca6c964b11764c855.json\u0000\u0000\u0000"
-        },
-        ".factory/events/cc2a15a8848b4421aaa0a3f51e0ba481.json": {
-          "digest": "6c8aa68438b2b642527dbbdbf57e8d030c046a4f84ff55e92ce26d7801a1a5ad",
-          "git": "? .factory/events/cc2a15a8848b4421aaa0a3f51e0ba481.json\u0000\u0000\u0000"
-        },
-        ".factory/events/d29543b7852143428b2d5611e7f27b01.json": {
-          "digest": "35979b33925f445eb5ee9f9c0420116e38a7fd9026dc886fa1bf115ac2123238",
-          "git": "? .factory/events/d29543b7852143428b2d5611e7f27b01.json\u0000\u0000\u0000"
-        },
-        ".factory/events/d7cd0788530b4db4a9d2ea68dbb68ab6.json": {
-          "digest": "7622736337e62ed91298e5cad44d0d0f397768be14e422f2e156d360b35b5e64",
-          "git": "? .factory/events/d7cd0788530b4db4a9d2ea68dbb68ab6.json\u0000\u0000\u0000"
-        },
-        ".factory/events/d9aeb0c61ab543d08b6fbe49cebd0fb6.json": {
-          "digest": "8e17cc875c3890e531af178d7728fb257f5432c403badff31098be52b9e9e93f",
-          "git": "? .factory/events/d9aeb0c61ab543d08b6fbe49cebd0fb6.json\u0000\u0000\u0000"
-        },
-        ".factory/events/db7da72d463446d9a995b3ab16a0bcf5.json": {
-          "digest": "734d1da5c577af3617da99f5e44169d81a39550996efd6d722e80064f994532c",
-          "git": "? .factory/events/db7da72d463446d9a995b3ab16a0bcf5.json\u0000\u0000\u0000"
-        },
-        ".factory/events/df6ad0fa132e4702ad518e86524a0825.json": {
-          "digest": "89782c8d1c3f4aec8260f1570ce65823b41c8ebc58140d3e8a5b42db6cd0ecc4",
-          "git": "? .factory/events/df6ad0fa132e4702ad518e86524a0825.json\u0000\u0000\u0000"
-        },
-        ".factory/events/e1e293a8128e4eabb41d72666155f196.json": {
-          "digest": "8071b0071cace9deca87b633a234fb3dd407763bcdcbd53c8ff08d9cc7614fb5",
-          "git": "? .factory/events/e1e293a8128e4eabb41d72666155f196.json\u0000\u0000\u0000"
-        },
-        ".factory/events/ea2151898246473fbd34ec7dbe93e06c.json": {
-          "digest": "6b07c2035a16a6d298c712adf129295e7e010972a3512497244c2c11b1eae749",
-          "git": "? .factory/events/ea2151898246473fbd34ec7dbe93e06c.json\u0000\u0000\u0000"
-        },
-        ".factory/events/ead2737dca45450db145bd397a932ae5.json": {
-          "digest": "300e0f86e913db5bcdea7c23d6b606865df61005d5ece0510c7f6493a82e89c7",
-          "git": "? .factory/events/ead2737dca45450db145bd397a932ae5.json\u0000\u0000\u0000"
-        },
-        ".factory/events/ec5a26da3c3f40b3af542a61a3e062fa.json": {
-          "digest": "019102c59c5ef42b025bbf7de2fbf11d479a61c1c0b4e1f31cacf17a1eb796ae",
-          "git": "? .factory/events/ec5a26da3c3f40b3af542a61a3e062fa.json\u0000\u0000\u0000"
-        },
-        ".factory/events/ef029e43d2aa404293ac6df0d2977449.json": {
-          "digest": "9446969c283a01cdd2cc4f442a6bcf2d34845393eb59163ed24ef961304bd458",
-          "git": "? .factory/events/ef029e43d2aa404293ac6df0d2977449.json\u0000\u0000\u0000"
-        },
-        ".factory/events/f457d910f4944520bb15e69dc05f6bd9.json": {
-          "digest": "10d3fe56984e136b24af139fe132ba3c1a58f261e6cfe717a84ffa42260005a6",
-          "git": "? .factory/events/f457d910f4944520bb15e69dc05f6bd9.json\u0000\u0000\u0000"
-        },
-        ".factory/signals.jsonl": {
-          "digest": "b8c7e6daf808ddc5c1663b718957e4be7ef7803a5e9b5989c243cfa9a97fb202",
-          "git": "? .factory/signals.jsonl\u0000\u0000\u0000"
-        },
-        ".factory/stages.json": {
-          "digest": "770ce6e200158214b2ec79f4f55513370bf7c7a2a4b896434c75b6bf4bd05451",
-          "git": "1 .M N... 100644 100644 100644 b7d9e63525450b8e903664f5c6bcaab545c38b8a b7d9e63525450b8e903664f5c6bcaab545c38b8a .factory/stages.json\u0000\u0000100644 b7d9e63525450b8e903664f5c6bcaab545c38b8a 0\t.factory/stages.json\u0000\u0000H .factory/stages.json\u0000"
-        },
-        ".factory/stories/FORGE-ACC-3/decomposition.json": {
-          "digest": "4bc4a70e7f8102b4a389ec202709af9607743fe4a0e436533fc2fe16885a4919",
-          "git": "1 .M N... 100644 100644 100644 bd26c39fb61b98dab62cf92be0ee7c73ababc152 bd26c39fb61b98dab62cf92be0ee7c73ababc152 .factory/stories/FORGE-ACC-3/decomposition.json\u0000\u0000100644 bd26c39fb61b98dab62cf92be0ee7c73ababc152 0\t.factory/stories/FORGE-ACC-3/decomposition.json\u0000\u0000H .factory/stories/FORGE-ACC-3/decomposition.json\u0000"
-        },
-        ".factory/stories/FORGE-ACC-3/grills/tasks/task-pr-gate.json": {
-          "digest": "8a92de4f4b8300bbf5ae6968107254dbd08dc843ed95aacc1dbd5fd07d844a61",
-          "git": "? .factory/stories/FORGE-ACC-3/grills/tasks/task-pr-gate.json\u0000\u0000\u0000"
-        },
-        ".factory/stories/FORGE-ACC-3/task-plans/task-pr-gate.md": {
-          "digest": "9836bcd35e20512feaac12af1b034852c8c08eb8dd6783e29c149d43c7b28c9b",
-          "git": "? .factory/stories/FORGE-ACC-3/task-plans/task-pr-gate.md\u0000\u0000\u0000"
-        },
-        "plans/deferrals.md": {
-          "digest": "6f990664f736166f471589e2b4039bce8ed86c2ca0202a8ae074fbaa8c62e597",
-          "git": "1 .M N... 100644 100644 100644 2a2625ba06c3153e358af11c12aafc7d68c768e9 2a2625ba06c3153e358af11c12aafc7d68c768e9 plans/deferrals.md\u0000\u0000100644 2a2625ba06c3153e358af11c12aafc7d68c768e9 0\tplans/deferrals.md\u0000\u0000H plans/deferrals.md\u0000"
-        },
-        "plans/quickfixes/20260819T062749-0000-Q-0081-629d-open-062749943700.json": {
-          "digest": "5c5163ee23d510c00834802ee81f103a947e42736fee5d9494b303b802a51b1a",
-          "git": "? plans/quickfixes/20260819T062749-0000-Q-0081-629d-open-062749943700.json\u0000\u0000\u0000"
-        },
-        "plans/quickfixes/20260819T064507-0000-Q-0081-629d-done-064507548479.json": {
-          "digest": "61fdb618a6a6ac90c6d9d20d3bd2d29e1f063d06e61662cc749417a822165673",
-          "git": "? plans/quickfixes/20260819T064507-0000-Q-0081-629d-done-064507548479.json\u0000\u0000\u0000"
-        }
-      },
-      "task_sha256": "3e5b34f726c8f03a2e60afab4ef63201c1225e55323a8d2a1a6ef2ab6deceff2",
-      "completed_at": "2026-08-19T12:35:00+00:00"
-    },
-    {
-      "id": "task-frontier-and-closeout",
-      "title": "forge next routes the full per-task frontier; story done-flip requires all task markers on main",
-      "status": "done",
-      "started_at": "2026-08-19T12:39:28+00:00",
-      "base_sha": "0648224a850005df418877f047018d9214c72d28",
-      "dirty_at_start": {
-        ".factory/events/03399a7401a3421e9df03afa8d829c18.json": {
-          "digest": "0e4207c184b4cce891e7fec99473940ee369e6a8c3f4f1227d398bae82fdbad3",
-          "git": "? .factory/events/03399a7401a3421e9df03afa8d829c18.json\u0000\u0000\u0000"
-        },
-        ".factory/events/07c6c48451ab4a30b473b5df9ac09046.json": {
-          "digest": "6b981917e97bbce69fc814105a7911888f9115963f7d0880bf540c55b78bb7b9",
-          "git": "? .factory/events/07c6c48451ab4a30b473b5df9ac09046.json\u0000\u0000\u0000"
-        },
-        ".factory/events/0b5b41b6dd38464588b7834cfb6478be.json": {
-          "digest": "3cbc1b18b4595f23765407cbac3c84e38a889cf9abe6746bfa2a78ab973c732d",
-          "git": "? .factory/events/0b5b41b6dd38464588b7834cfb6478be.json\u0000\u0000\u0000"
-        },
-        ".factory/events/0b5d08fda9224cd6833463c1d73cd173.json": {
-          "digest": "c5a04f9b3bef69de1fb5e9aa2363d7f9e5567fafdf7256385ee199d70ea6c772",
-          "git": "? .factory/events/0b5d08fda9224cd6833463c1d73cd173.json\u0000\u0000\u0000"
-        },
-        ".factory/events/12b98947eb39492c97c3c23714a9ccda.json": {
-          "digest": "5e2be9b8beb8e6f8227c93f90b63a343be95aaaa7e7ade26bc32d65039af7888",
-          "git": "? .factory/events/12b98947eb39492c97c3c23714a9ccda.json\u0000\u0000\u0000"
-        },
-        ".factory/events/1992cbcceaa9461a9500a83a91369d18.json": {
-          "digest": "b5c64b8d9bd3b3c9d8f3558146d9472eeba997f8e942e3f9c9cae804c9aacc82",
-          "git": "? .factory/events/1992cbcceaa9461a9500a83a91369d18.json\u0000\u0000\u0000"
-        },
-        ".factory/events/21e148478a1c460498aee391a2887fb4.json": {
-          "digest": "0d6f44ace55d0fdfeefb73276fea9aed152f91401c48ff45378e8c1b54b8ce33",
-          "git": "? .factory/events/21e148478a1c460498aee391a2887fb4.json\u0000\u0000\u0000"
-        },
-        ".factory/events/2c4a3b8c404f4396a80ed8da471e3551.json": {
-          "digest": "584d02ac42e810bc816d5b17b387dc13397dd08c3d679dcf3ab54c5dd9dfa9b0",
-          "git": "? .factory/events/2c4a3b8c404f4396a80ed8da471e3551.json\u0000\u0000\u0000"
-        },
-        ".factory/events/31270a0be57a48bcaafd0f67340b8735.json": {
-          "digest": "c2a58b7473a4903e2fc99d829194fcbb0ac09395acdd93c47500ac8fff849af0",
-          "git": "? .factory/events/31270a0be57a48bcaafd0f67340b8735.json\u0000\u0000\u0000"
-        },
-        ".factory/events/31429853f18c4b43a1463512e7634c18.json": {
-          "digest": "0993bb8e25f18456d8229311fac8505759bfc153d10c600ee59fa38af16954f3",
-          "git": "? .factory/events/31429853f18c4b43a1463512e7634c18.json\u0000\u0000\u0000"
-        },
-        ".factory/events/33a78e4d20d74b2087e27db2e3f58a44.json": {
-          "digest": "33c39190b15ba9e74d6a53d8603398d0f69f3e4c338bbbe29e20ab99b9923c0f",
-          "git": "? .factory/events/33a78e4d20d74b2087e27db2e3f58a44.json\u0000\u0000\u0000"
-        },
-        ".factory/events/35281caefb9543029b7ddfaade7dcc11.json": {
-          "digest": "7672112b120d46e3ee924d4f104af887605d2335f58586beb30eeb15393e91fd",
-          "git": "? .factory/events/35281caefb9543029b7ddfaade7dcc11.json\u0000\u0000\u0000"
-        },
-        ".factory/events/3820775318d04530923ecfd9ff126afd.json": {
-          "digest": "8cbec80e8af1ca5f5fc9c95e771d2ea6d334e703f35d9f84f26a699a071aba33",
-          "git": "? .factory/events/3820775318d04530923ecfd9ff126afd.json\u0000\u0000\u0000"
-        },
-        ".factory/events/3b3935b8a9f14ae0afecea0a81bdff21.json": {
-          "digest": "06f3b8646344d0b23ebe037e41161448ada732874ce5afbbb4f6a2e544778c8c",
-          "git": "? .factory/events/3b3935b8a9f14ae0afecea0a81bdff21.json\u0000\u0000\u0000"
-        },
-        ".factory/events/3c8fe702dd1b4b55aa7fa6cea1c7960e.json": {
-          "digest": "106a6f64cd19c24c505bb7fc7790e11e9b2c8e3b382b339e6aa0ff9a8361e11d",
-          "git": "? .factory/events/3c8fe702dd1b4b55aa7fa6cea1c7960e.json\u0000\u0000\u0000"
-        },
-        ".factory/events/45295a0854c24a4eba9bdf439395b9c7.json": {
-          "digest": "61c81d73cb6a9eff813dbc77a0ddb856785ba71397ea4d9743425ce48c157679",
-          "git": "? .factory/events/45295a0854c24a4eba9bdf439395b9c7.json\u0000\u0000\u0000"
-        },
-        ".factory/events/4ba12f48b1c64933b786306c47a55440.json": {
-          "digest": "9757b252a537349ed824f92af0f020cc99f025daba43575866dea17ca7543ded",
-          "git": "? .factory/events/4ba12f48b1c64933b786306c47a55440.json\u0000\u0000\u0000"
-        },
-        ".factory/events/501da9cf930243e2ab8a403a786da19d.json": {
-          "digest": "eb8e574a68ec7c9535e3448ef3d71435f165157bd95eff68b081d5114a38e7b2",
-          "git": "? .factory/events/501da9cf930243e2ab8a403a786da19d.json\u0000\u0000\u0000"
-        },
-        ".factory/events/518afd030e84447b933ec97ad58db41f.json": {
-          "digest": "d4d8f20cb6af89eb9f522a5b4ca81dea0f77f6655fc42ace6130c5286110a59b",
-          "git": "? .factory/events/518afd030e84447b933ec97ad58db41f.json\u0000\u0000\u0000"
-        },
-        ".factory/events/548fac496f8d4364be35aff06c6c4f0a.json": {
-          "digest": "da78d6bf1862f91dc4e1bc66611b26bb66d4ad2ab5bd0835ac509e36b522dc29",
-          "git": "? .factory/events/548fac496f8d4364be35aff06c6c4f0a.json\u0000\u0000\u0000"
-        },
-        ".factory/events/5553957ce7774e18b3d4df97f446e41d.json": {
-          "digest": "b0cd1838d35ef0ee14827f41a57568acd2921276dc1b37f29a20a06b3020d0fd",
-          "git": "? .factory/events/5553957ce7774e18b3d4df97f446e41d.json\u0000\u0000\u0000"
-        },
-        ".factory/events/57a8a0f5b1b54003b5f0a48601c98a5c.json": {
-          "digest": "e787b7dcde1f706120aa45bdca01f6fc697f9270a146a447edf382de7a3e20f5",
-          "git": "? .factory/events/57a8a0f5b1b54003b5f0a48601c98a5c.json\u0000\u0000\u0000"
-        },
-        ".factory/events/5b9f5c614a224279ac0d446e7fe90f56.json": {
-          "digest": "6ab92990babe48a112a6d0421bf5aea06007564b7d4d98decfd5ba147619beb6",
-          "git": "? .factory/events/5b9f5c614a224279ac0d446e7fe90f56.json\u0000\u0000\u0000"
-        },
-        ".factory/events/61903e3cfe5a4b69a82170482ea983b2.json": {
-          "digest": "6f22dc318c2d6308f3e6386f5498162059c3c5a598b3b0c3f01b7a56fac76cc3",
-          "git": "? .factory/events/61903e3cfe5a4b69a82170482ea983b2.json\u0000\u0000\u0000"
-        },
-        ".factory/events/68dba614235e415084760b741bd56d56.json": {
-          "digest": "b2f4b56e6e2682720630f6c8b9b27e98e4d7221f4ad2ba86c87d8cd0e0a582f6",
-          "git": "? .factory/events/68dba614235e415084760b741bd56d56.json\u0000\u0000\u0000"
-        },
-        ".factory/events/69000f5fe7334845a5fb63374f12f0cc.json": {
-          "digest": "f2f4382390eb0706a81068a55a21ac876eef11b917841fd7e68bc743e51f6061",
-          "git": "? .factory/events/69000f5fe7334845a5fb63374f12f0cc.json\u0000\u0000\u0000"
-        },
-        ".factory/events/6a6b9c3ff7814c709a819ca756c29582.json": {
-          "digest": "5e52ac837cbbd68029d756cfdd7d33fa1a59152b7faa83898ddc1e55286cd602",
-          "git": "? .factory/events/6a6b9c3ff7814c709a819ca756c29582.json\u0000\u0000\u0000"
-        },
-        ".factory/events/6d68ca1c57594023b26b1ebf4cf60416.json": {
-          "digest": "325495369b0ebd87fec38c6a0739b672f9f34c49cfc1853a513b84d823f3efff",
-          "git": "? .factory/events/6d68ca1c57594023b26b1ebf4cf60416.json\u0000\u0000\u0000"
-        },
-        ".factory/events/72fa776f08da482b9fed54106a9f42af.json": {
-          "digest": "1fe0d970e20d40324fdbb948583d314fa47d2d5ad0e332955a1ee43fc9fafa3f",
-          "git": "? .factory/events/72fa776f08da482b9fed54106a9f42af.json\u0000\u0000\u0000"
-        },
-        ".factory/events/7794344387c64e5bbf7dcd8a093bad5e.json": {
-          "digest": "7ba42f441323485a03680bbb63d24ad3a969b61d9a4f5db22ac9c33c8c94c576",
-          "git": "? .factory/events/7794344387c64e5bbf7dcd8a093bad5e.json\u0000\u0000\u0000"
-        },
-        ".factory/events/77e1d31a9a01487c97897bd742582843.json": {
-          "digest": "7a887f6b06dd23e5cee75c820f8d368518c445e8fc9a77edbb8cd5a181b7a07a",
-          "git": "? .factory/events/77e1d31a9a01487c97897bd742582843.json\u0000\u0000\u0000"
-        },
-        ".factory/events/815998a03f294fba9c937ff4f25a147d.json": {
-          "digest": "21c041b6d3a38c22406e4d1137c0b0f0d42ca3f7d4520001806f65893a6b790d",
-          "git": "? .factory/events/815998a03f294fba9c937ff4f25a147d.json\u0000\u0000\u0000"
-        },
-        ".factory/events/816c71a7d2954c6fb47ad487b1660145.json": {
-          "digest": "413c30eb44fd6869ca85c395d1ca96690fe5a5a5500b28b6865a0a22b3f54e6f",
-          "git": "? .factory/events/816c71a7d2954c6fb47ad487b1660145.json\u0000\u0000\u0000"
-        },
-        ".factory/events/899b1ef5a543482da176af95d35260f5.json": {
-          "digest": "b9888c6642fb94a21d26ed4d550b4050e19bca2fb4cb3504f19f89d5aaf8b036",
-          "git": "? .factory/events/899b1ef5a543482da176af95d35260f5.json\u0000\u0000\u0000"
-        },
-        ".factory/events/92e8dbc3103b4b43b97da53e57546a93.json": {
-          "digest": "d55e4fde5510134ac80c3d7cc83e89716b5e83726e20f792c100b71b76fcf581",
-          "git": "? .factory/events/92e8dbc3103b4b43b97da53e57546a93.json\u0000\u0000\u0000"
-        },
-        ".factory/events/934ecd97165c42ca91dd4b247ea0619d.json": {
-          "digest": "35fdf699cab925f46014f8918ec3fd281c2368e1a84ce2d51452abb3a83e0fac",
-          "git": "? .factory/events/934ecd97165c42ca91dd4b247ea0619d.json\u0000\u0000\u0000"
-        },
-        ".factory/events/9a69f164269e4b82aa2e677f0faf9730.json": {
-          "digest": "d9769a403c7eeea0e24cb33ffab21be937b300fbbdc32b4adf3d562a450b31c1",
-          "git": "? .factory/events/9a69f164269e4b82aa2e677f0faf9730.json\u0000\u0000\u0000"
-        },
-        ".factory/events/9b64f3fd660b4e96bf0a710a868211a2.json": {
-          "digest": "fa855ea2074bbded02f17e7c8ba1b376d6788a49eb8d078bdedab37f80392598",
-          "git": "? .factory/events/9b64f3fd660b4e96bf0a710a868211a2.json\u0000\u0000\u0000"
-        },
-        ".factory/events/9fe02088002547d19d9a263e56aa0d8a.json": {
-          "digest": "d66c5360f7e60bc8bc52af898ad5be1c184174ed6648e745f72a5b81073d48b8",
-          "git": "? .factory/events/9fe02088002547d19d9a263e56aa0d8a.json\u0000\u0000\u0000"
-        },
-        ".factory/events/a01bc7a456424940b69316bc11031868.json": {
-          "digest": "32cef9d0dd4ff85691d3352556f13a13ef75a0641e75ea28303f18596c76e62e",
-          "git": "? .factory/events/a01bc7a456424940b69316bc11031868.json\u0000\u0000\u0000"
-        },
-        ".factory/events/a3fc63e0b28743fb8840f90e91590aff.json": {
-          "digest": "7d8fbaf3c3dcedb5f0a4065dadbbeb088b6811c9612c86d474375145f745492e",
-          "git": "? .factory/events/a3fc63e0b28743fb8840f90e91590aff.json\u0000\u0000\u0000"
-        },
-        ".factory/events/aaf5230f7fb443a3aa7d27991fc5125b.json": {
-          "digest": "9083ef7a0929d016ef8594000c875ede142f9ddeb56c51bde23cded49cd43a7f",
-          "git": "? .factory/events/aaf5230f7fb443a3aa7d27991fc5125b.json\u0000\u0000\u0000"
-        },
-        ".factory/events/aead7fabd49b46c78ee4ad0ff2c42726.json": {
-          "digest": "858ed86a428b4c9377271edfde16ab4541767e4577c479a620be19958d5ffb06",
-          "git": "? .factory/events/aead7fabd49b46c78ee4ad0ff2c42726.json\u0000\u0000\u0000"
-        },
-        ".factory/events/b1ccfdeb4c1e424c858c2a59347afcf8.json": {
-          "digest": "04181b793811a7eb35e768eb954e70b2c0c7de1ad7f2e4564e1d0f711cf5095f",
-          "git": "? .factory/events/b1ccfdeb4c1e424c858c2a59347afcf8.json\u0000\u0000\u0000"
-        },
-        ".factory/events/b4ef09284e1d4368bb20dd8a58baedb1.json": {
-          "digest": "cf5eca20d20f65e39a240112ec524560b1869cebc872d560da7a4db7cb4a0251",
-          "git": "? .factory/events/b4ef09284e1d4368bb20dd8a58baedb1.json\u0000\u0000\u0000"
-        },
-        ".factory/events/b4fb12859a224485b807871e92af4647.json": {
-          "digest": "71ba90de7f318d2dfd2debccdcf320875db52c220f4ca829aa9e0b44d4a7272c",
-          "git": "? .factory/events/b4fb12859a224485b807871e92af4647.json\u0000\u0000\u0000"
-        },
-        ".factory/events/b7146bfb7ef24d309573f29f8f04e621.json": {
-          "digest": "d1df2db20ea1d9fc6c3d9dd34c70d93ada94f386b3d903c469426fdb425b7259",
-          "git": "? .factory/events/b7146bfb7ef24d309573f29f8f04e621.json\u0000\u0000\u0000"
-        },
-        ".factory/events/bd5c2e3f3d044c0d808a5a68f78d7e72.json": {
-          "digest": "73b490d572d166833cbb4e70d727b9efa256b324ccb6e5890f980ac1da9e0506",
-          "git": "? .factory/events/bd5c2e3f3d044c0d808a5a68f78d7e72.json\u0000\u0000\u0000"
-        },
-        ".factory/events/be09db7a4a9f471ca6c964b11764c855.json": {
-          "digest": "e5a86fe67635e2cf77ce285f44c90a01f363fe6f7a9540976c74728a8b18839e",
-          "git": "? .factory/events/be09db7a4a9f471ca6c964b11764c855.json\u0000\u0000\u0000"
-        },
-        ".factory/events/c814ef3b517b40f4828f7590beeeefa5.json": {
-          "digest": "807d949b7f3f49bedfe446302c4dc40b6e742831ba784db0c7aef97aec0e1457",
-          "git": "? .factory/events/c814ef3b517b40f4828f7590beeeefa5.json\u0000\u0000\u0000"
-        },
-        ".factory/events/cc2a15a8848b4421aaa0a3f51e0ba481.json": {
-          "digest": "6c8aa68438b2b642527dbbdbf57e8d030c046a4f84ff55e92ce26d7801a1a5ad",
-          "git": "? .factory/events/cc2a15a8848b4421aaa0a3f51e0ba481.json\u0000\u0000\u0000"
-        },
-        ".factory/events/cd731fbc3bdd487d904feb640139f01a.json": {
-          "digest": "22aec94ae7edb3b671093ec8b07a8571f69fe33b0e074abbc0d3dce7c7d7cd5a",
-          "git": "? .factory/events/cd731fbc3bdd487d904feb640139f01a.json\u0000\u0000\u0000"
-        },
-        ".factory/events/d29543b7852143428b2d5611e7f27b01.json": {
-          "digest": "35979b33925f445eb5ee9f9c0420116e38a7fd9026dc886fa1bf115ac2123238",
-          "git": "? .factory/events/d29543b7852143428b2d5611e7f27b01.json\u0000\u0000\u0000"
-        },
-        ".factory/events/d4955d1ed56c42099a7a21e7155c04b0.json": {
-          "digest": "349bffe40ac0771da2600ec4bac9552d1f19df8c8b4e81bdd68f3ac0c0fb02f2",
-          "git": "? .factory/events/d4955d1ed56c42099a7a21e7155c04b0.json\u0000\u0000\u0000"
-        },
-        ".factory/events/d7cd0788530b4db4a9d2ea68dbb68ab6.json": {
-          "digest": "7622736337e62ed91298e5cad44d0d0f397768be14e422f2e156d360b35b5e64",
-          "git": "? .factory/events/d7cd0788530b4db4a9d2ea68dbb68ab6.json\u0000\u0000\u0000"
-        },
-        ".factory/events/d9aeb0c61ab543d08b6fbe49cebd0fb6.json": {
-          "digest": "8e17cc875c3890e531af178d7728fb257f5432c403badff31098be52b9e9e93f",
-          "git": "? .factory/events/d9aeb0c61ab543d08b6fbe49cebd0fb6.json\u0000\u0000\u0000"
-        },
-        ".factory/events/db7da72d463446d9a995b3ab16a0bcf5.json": {
-          "digest": "734d1da5c577af3617da99f5e44169d81a39550996efd6d722e80064f994532c",
-          "git": "? .factory/events/db7da72d463446d9a995b3ab16a0bcf5.json\u0000\u0000\u0000"
-        },
-        ".factory/events/df6ad0fa132e4702ad518e86524a0825.json": {
-          "digest": "89782c8d1c3f4aec8260f1570ce65823b41c8ebc58140d3e8a5b42db6cd0ecc4",
-          "git": "? .factory/events/df6ad0fa132e4702ad518e86524a0825.json\u0000\u0000\u0000"
-        },
-        ".factory/events/e1e293a8128e4eabb41d72666155f196.json": {
-          "digest": "8071b0071cace9deca87b633a234fb3dd407763bcdcbd53c8ff08d9cc7614fb5",
-          "git": "? .factory/events/e1e293a8128e4eabb41d72666155f196.json\u0000\u0000\u0000"
-        },
-        ".factory/events/e27d217af9aa4becb738706661ef68da.json": {
-          "digest": "b5e2a6d838047694980240e11fc5d37e43af762f943cac424bc60438806aea82",
-          "git": "? .factory/events/e27d217af9aa4becb738706661ef68da.json\u0000\u0000\u0000"
-        },
-        ".factory/events/e91dc2c2af5448e39fa0910f7270636f.json": {
-          "digest": "b005a39d10dab7f6a2075e2fb713173580a82830d78ff5310a122e4dc6b33f1b",
-          "git": "? .factory/events/e91dc2c2af5448e39fa0910f7270636f.json\u0000\u0000\u0000"
-        },
-        ".factory/events/ea2151898246473fbd34ec7dbe93e06c.json": {
-          "digest": "6b07c2035a16a6d298c712adf129295e7e010972a3512497244c2c11b1eae749",
-          "git": "? .factory/events/ea2151898246473fbd34ec7dbe93e06c.json\u0000\u0000\u0000"
-        },
-        ".factory/events/ead2737dca45450db145bd397a932ae5.json": {
-          "digest": "300e0f86e913db5bcdea7c23d6b606865df61005d5ece0510c7f6493a82e89c7",
-          "git": "? .factory/events/ead2737dca45450db145bd397a932ae5.json\u0000\u0000\u0000"
-        },
-        ".factory/events/ec5a26da3c3f40b3af542a61a3e062fa.json": {
-          "digest": "019102c59c5ef42b025bbf7de2fbf11d479a61c1c0b4e1f31cacf17a1eb796ae",
-          "git": "? .factory/events/ec5a26da3c3f40b3af542a61a3e062fa.json\u0000\u0000\u0000"
-        },
-        ".factory/events/ef029e43d2aa404293ac6df0d2977449.json": {
-          "digest": "9446969c283a01cdd2cc4f442a6bcf2d34845393eb59163ed24ef961304bd458",
-          "git": "? .factory/events/ef029e43d2aa404293ac6df0d2977449.json\u0000\u0000\u0000"
-        },
-        ".factory/events/f457d910f4944520bb15e69dc05f6bd9.json": {
-          "digest": "10d3fe56984e136b24af139fe132ba3c1a58f261e6cfe717a84ffa42260005a6",
-          "git": "? .factory/events/f457d910f4944520bb15e69dc05f6bd9.json\u0000\u0000\u0000"
-        },
-        ".factory/events/feeae3d62e464dfb8f375690fba05c17.json": {
-          "digest": "9e33d9285000ca85c7cd1aa1dd1e8c19d5d374b5d7b6d7b8831887c89fbd0b52",
-          "git": "? .factory/events/feeae3d62e464dfb8f375690fba05c17.json\u0000\u0000\u0000"
-        },
-        ".factory/signals.jsonl": {
-          "digest": "e91f1097f48f1e0f8a7619aa3a32c894c3bfe47aa2dc0d84048ed126463dcc21",
-          "git": "? .factory/signals.jsonl\u0000\u0000\u0000"
-        },
-        ".factory/stages.json": {
-          "digest": "bac77606ec475aa71bef06cb79bf9c6b68087e858ac4ee521f5502eb26c2076d",
-          "git": "1 .M N... 100644 100644 100644 ff9de3c46c1bdb2a273b1098310474c744989f29 ff9de3c46c1bdb2a273b1098310474c744989f29 .factory/stages.json\u0000\u0000100644 ff9de3c46c1bdb2a273b1098310474c744989f29 0\t.factory/stages.json\u0000\u0000H .factory/stages.json\u0000"
-        },
-        ".factory/stories/FORGE-ACC-3/decomposition.json": {
-          "digest": "eb0a9d054096f294a9c45439fd11b7a97e0b0f86c5375e197cfc4fe1ed22e637",
-          "git": "1 .M N... 100644 100644 100644 e66b8d4ebc663c19ceae6a9084500b59466ac20b e66b8d4ebc663c19ceae6a9084500b59466ac20b .factory/stories/FORGE-ACC-3/decomposition.json\u0000\u0000100644 e66b8d4ebc663c19ceae6a9084500b59466ac20b 0\t.factory/stories/FORGE-ACC-3/decomposition.json\u0000\u0000H .factory/stories/FORGE-ACC-3/decomposition.json\u0000"
-        },
-        ".factory/stories/FORGE-ACC-3/grills/tasks/task-frontier-and-closeout.json": {
-          "digest": "8101923a9749f1f0f82bd3a231307eb97e6b5e2bf07cd1a9e8b392677e4aed11",
-          "git": "? .factory/stories/FORGE-ACC-3/grills/tasks/task-frontier-and-closeout.json\u0000\u0000\u0000"
-        },
-        ".factory/stories/FORGE-ACC-3/task-plans/task-frontier-and-closeout.md": {
-          "digest": "dd9c26658362e23d478953b4da54ae6d2ca4ec92673f4996652603d516a79792",
-          "git": "? .factory/stories/FORGE-ACC-3/task-plans/task-frontier-and-closeout.md\u0000\u0000\u0000"
-        },
-        "plans/deferrals.md": {
-          "digest": "6f990664f736166f471589e2b4039bce8ed86c2ca0202a8ae074fbaa8c62e597",
-          "git": "1 .M N... 100644 100644 100644 2a2625ba06c3153e358af11c12aafc7d68c768e9 2a2625ba06c3153e358af11c12aafc7d68c768e9 plans/deferrals.md\u0000\u0000100644 2a2625ba06c3153e358af11c12aafc7d68c768e9 0\tplans/deferrals.md\u0000\u0000H plans/deferrals.md\u0000"
-        },
-        "plans/lessons/20260819T113251-0000-New-workflow-gates-must-no-op---stay-scoped-to-their-trigger--or-they-deadlock-the-harness-113251198581.json": {
-          "digest": "43cd48ddf8e23115ab9e10b07c9eafc0a87137348410b8d336e527f97bdbb550",
-          "git": "? plans/lessons/20260819T113251-0000-New-workflow-gates-must-no-op---stay-scoped-to-their-trigger--or-they-deadlock-the-harness-113251198581.json\u0000\u0000\u0000"
-        },
-        "plans/quickfixes/20260819T062749-0000-Q-0081-629d-open-062749943700.json": {
-          "digest": "5c5163ee23d510c00834802ee81f103a947e42736fee5d9494b303b802a51b1a",
-          "git": "? plans/quickfixes/20260819T062749-0000-Q-0081-629d-open-062749943700.json\u0000\u0000\u0000"
-        },
-        "plans/quickfixes/20260819T064507-0000-Q-0081-629d-done-064507548479.json": {
-          "digest": "61fdb618a6a6ac90c6d9d20d3bd2d29e1f063d06e61662cc749417a822165673",
-          "git": "? plans/quickfixes/20260819T064507-0000-Q-0081-629d-done-064507548479.json\u0000\u0000\u0000"
-        }
-      },
-      "task_sha256": "3268ba2d22adbe43a917f1b3e40424b2108105ce8f45050c15b47e4eb2960873",
-      "completed_at": "2026-08-19T12:52:01+00:00"
-    },
-    {
-      "id": "roadmap-gate-task-markers",
-      "title": "CI treats a task marker as a completed work record",
-      "status": "done",
-      "started_at": "2026-08-19T12:57:25+00:00",
-      "base_sha": "e87a6c1b3638183aa28d706eb2650c5792710bcc",
-      "dirty_at_start": {
-        ".factory/events/03399a7401a3421e9df03afa8d829c18.json": {
-          "digest": "0e4207c184b4cce891e7fec99473940ee369e6a8c3f4f1227d398bae82fdbad3",
-          "git": "? .factory/events/03399a7401a3421e9df03afa8d829c18.json\u0000\u0000\u0000"
-        },
-        ".factory/events/07c6c48451ab4a30b473b5df9ac09046.json": {
-          "digest": "6b981917e97bbce69fc814105a7911888f9115963f7d0880bf540c55b78bb7b9",
-          "git": "? .factory/events/07c6c48451ab4a30b473b5df9ac09046.json\u0000\u0000\u0000"
-        },
-        ".factory/events/0b5b41b6dd38464588b7834cfb6478be.json": {
-          "digest": "3cbc1b18b4595f23765407cbac3c84e38a889cf9abe6746bfa2a78ab973c732d",
-          "git": "? .factory/events/0b5b41b6dd38464588b7834cfb6478be.json\u0000\u0000\u0000"
-        },
-        ".factory/events/0b5d08fda9224cd6833463c1d73cd173.json": {
-          "digest": "c5a04f9b3bef69de1fb5e9aa2363d7f9e5567fafdf7256385ee199d70ea6c772",
-          "git": "? .factory/events/0b5d08fda9224cd6833463c1d73cd173.json\u0000\u0000\u0000"
-        },
-        ".factory/events/12b98947eb39492c97c3c23714a9ccda.json": {
-          "digest": "5e2be9b8beb8e6f8227c93f90b63a343be95aaaa7e7ade26bc32d65039af7888",
-          "git": "? .factory/events/12b98947eb39492c97c3c23714a9ccda.json\u0000\u0000\u0000"
-        },
-        ".factory/events/1992cbcceaa9461a9500a83a91369d18.json": {
-          "digest": "b5c64b8d9bd3b3c9d8f3558146d9472eeba997f8e942e3f9c9cae804c9aacc82",
-          "git": "? .factory/events/1992cbcceaa9461a9500a83a91369d18.json\u0000\u0000\u0000"
-        },
-        ".factory/events/1be9a170b5834722aa5212561fce00c9.json": {
-          "digest": "838cfde3965bbc74cba4681f7014372306511e8aaddcff8a992ed411285ae0af",
-          "git": "? .factory/events/1be9a170b5834722aa5212561fce00c9.json\u0000\u0000\u0000"
-        },
-        ".factory/events/1fdc6a4cf9d64349b9407b301483652e.json": {
-          "digest": "288cacc15ee04c334ae961fc355c08c45adecfe2e97c63206d3741659193fe72",
-          "git": "? .factory/events/1fdc6a4cf9d64349b9407b301483652e.json\u0000\u0000\u0000"
-        },
-        ".factory/events/21e148478a1c460498aee391a2887fb4.json": {
-          "digest": "0d6f44ace55d0fdfeefb73276fea9aed152f91401c48ff45378e8c1b54b8ce33",
-          "git": "? .factory/events/21e148478a1c460498aee391a2887fb4.json\u0000\u0000\u0000"
-        },
-        ".factory/events/2c4a3b8c404f4396a80ed8da471e3551.json": {
-          "digest": "584d02ac42e810bc816d5b17b387dc13397dd08c3d679dcf3ab54c5dd9dfa9b0",
-          "git": "? .factory/events/2c4a3b8c404f4396a80ed8da471e3551.json\u0000\u0000\u0000"
-        },
-        ".factory/events/31270a0be57a48bcaafd0f67340b8735.json": {
-          "digest": "c2a58b7473a4903e2fc99d829194fcbb0ac09395acdd93c47500ac8fff849af0",
-          "git": "? .factory/events/31270a0be57a48bcaafd0f67340b8735.json\u0000\u0000\u0000"
-        },
-        ".factory/events/31429853f18c4b43a1463512e7634c18.json": {
-          "digest": "0993bb8e25f18456d8229311fac8505759bfc153d10c600ee59fa38af16954f3",
-          "git": "? .factory/events/31429853f18c4b43a1463512e7634c18.json\u0000\u0000\u0000"
-        },
-        ".factory/events/33a78e4d20d74b2087e27db2e3f58a44.json": {
-          "digest": "33c39190b15ba9e74d6a53d8603398d0f69f3e4c338bbbe29e20ab99b9923c0f",
-          "git": "? .factory/events/33a78e4d20d74b2087e27db2e3f58a44.json\u0000\u0000\u0000"
-        },
-        ".factory/events/35281caefb9543029b7ddfaade7dcc11.json": {
-          "digest": "7672112b120d46e3ee924d4f104af887605d2335f58586beb30eeb15393e91fd",
-          "git": "? .factory/events/35281caefb9543029b7ddfaade7dcc11.json\u0000\u0000\u0000"
-        },
-        ".factory/events/3820775318d04530923ecfd9ff126afd.json": {
-          "digest": "8cbec80e8af1ca5f5fc9c95e771d2ea6d334e703f35d9f84f26a699a071aba33",
-          "git": "? .factory/events/3820775318d04530923ecfd9ff126afd.json\u0000\u0000\u0000"
-        },
-        ".factory/events/3b3935b8a9f14ae0afecea0a81bdff21.json": {
-          "digest": "06f3b8646344d0b23ebe037e41161448ada732874ce5afbbb4f6a2e544778c8c",
-          "git": "? .factory/events/3b3935b8a9f14ae0afecea0a81bdff21.json\u0000\u0000\u0000"
-        },
-        ".factory/events/3c8fe702dd1b4b55aa7fa6cea1c7960e.json": {
-          "digest": "106a6f64cd19c24c505bb7fc7790e11e9b2c8e3b382b339e6aa0ff9a8361e11d",
-          "git": "? .factory/events/3c8fe702dd1b4b55aa7fa6cea1c7960e.json\u0000\u0000\u0000"
-        },
-        ".factory/events/3cc1de8cdc764415b7006001ec003dcd.json": {
-          "digest": "05c61c4e6688e64bf6594e1171a1f043c40b972055a2e3a4c72153ff196a2623",
-          "git": "? .factory/events/3cc1de8cdc764415b7006001ec003dcd.json\u0000\u0000\u0000"
-        },
-        ".factory/events/45295a0854c24a4eba9bdf439395b9c7.json": {
-          "digest": "61c81d73cb6a9eff813dbc77a0ddb856785ba71397ea4d9743425ce48c157679",
-          "git": "? .factory/events/45295a0854c24a4eba9bdf439395b9c7.json\u0000\u0000\u0000"
-        },
-        ".factory/events/4ba12f48b1c64933b786306c47a55440.json": {
-          "digest": "9757b252a537349ed824f92af0f020cc99f025daba43575866dea17ca7543ded",
-          "git": "? .factory/events/4ba12f48b1c64933b786306c47a55440.json\u0000\u0000\u0000"
-        },
-        ".factory/events/501da9cf930243e2ab8a403a786da19d.json": {
-          "digest": "eb8e574a68ec7c9535e3448ef3d71435f165157bd95eff68b081d5114a38e7b2",
-          "git": "? .factory/events/501da9cf930243e2ab8a403a786da19d.json\u0000\u0000\u0000"
-        },
-        ".factory/events/518afd030e84447b933ec97ad58db41f.json": {
-          "digest": "d4d8f20cb6af89eb9f522a5b4ca81dea0f77f6655fc42ace6130c5286110a59b",
-          "git": "? .factory/events/518afd030e84447b933ec97ad58db41f.json\u0000\u0000\u0000"
-        },
-        ".factory/events/548fac496f8d4364be35aff06c6c4f0a.json": {
-          "digest": "da78d6bf1862f91dc4e1bc66611b26bb66d4ad2ab5bd0835ac509e36b522dc29",
-          "git": "? .factory/events/548fac496f8d4364be35aff06c6c4f0a.json\u0000\u0000\u0000"
-        },
-        ".factory/events/5553957ce7774e18b3d4df97f446e41d.json": {
-          "digest": "b0cd1838d35ef0ee14827f41a57568acd2921276dc1b37f29a20a06b3020d0fd",
-          "git": "? .factory/events/5553957ce7774e18b3d4df97f446e41d.json\u0000\u0000\u0000"
-        },
-        ".factory/events/57a8a0f5b1b54003b5f0a48601c98a5c.json": {
-          "digest": "e787b7dcde1f706120aa45bdca01f6fc697f9270a146a447edf382de7a3e20f5",
-          "git": "? .factory/events/57a8a0f5b1b54003b5f0a48601c98a5c.json\u0000\u0000\u0000"
-        },
-        ".factory/events/5b9f5c614a224279ac0d446e7fe90f56.json": {
-          "digest": "6ab92990babe48a112a6d0421bf5aea06007564b7d4d98decfd5ba147619beb6",
-          "git": "? .factory/events/5b9f5c614a224279ac0d446e7fe90f56.json\u0000\u0000\u0000"
-        },
-        ".factory/events/61903e3cfe5a4b69a82170482ea983b2.json": {
-          "digest": "6f22dc318c2d6308f3e6386f5498162059c3c5a598b3b0c3f01b7a56fac76cc3",
-          "git": "? .factory/events/61903e3cfe5a4b69a82170482ea983b2.json\u0000\u0000\u0000"
-        },
-        ".factory/events/64945590e1484c99b22ab7f2b6486e45.json": {
-          "digest": "432b9e8616e2c5235cb6a18cf6c302486faee19b39336acd57746f4011fd4320",
-          "git": "? .factory/events/64945590e1484c99b22ab7f2b6486e45.json\u0000\u0000\u0000"
-        },
-        ".factory/events/68dba614235e415084760b741bd56d56.json": {
-          "digest": "b2f4b56e6e2682720630f6c8b9b27e98e4d7221f4ad2ba86c87d8cd0e0a582f6",
-          "git": "? .factory/events/68dba614235e415084760b741bd56d56.json\u0000\u0000\u0000"
-        },
-        ".factory/events/69000f5fe7334845a5fb63374f12f0cc.json": {
-          "digest": "f2f4382390eb0706a81068a55a21ac876eef11b917841fd7e68bc743e51f6061",
-          "git": "? .factory/events/69000f5fe7334845a5fb63374f12f0cc.json\u0000\u0000\u0000"
-        },
-        ".factory/events/6a6b9c3ff7814c709a819ca756c29582.json": {
-          "digest": "5e52ac837cbbd68029d756cfdd7d33fa1a59152b7faa83898ddc1e55286cd602",
-          "git": "? .factory/events/6a6b9c3ff7814c709a819ca756c29582.json\u0000\u0000\u0000"
-        },
-        ".factory/events/6d68ca1c57594023b26b1ebf4cf60416.json": {
-          "digest": "325495369b0ebd87fec38c6a0739b672f9f34c49cfc1853a513b84d823f3efff",
-          "git": "? .factory/events/6d68ca1c57594023b26b1ebf4cf60416.json\u0000\u0000\u0000"
-        },
-        ".factory/events/72fa776f08da482b9fed54106a9f42af.json": {
-          "digest": "1fe0d970e20d40324fdbb948583d314fa47d2d5ad0e332955a1ee43fc9fafa3f",
-          "git": "? .factory/events/72fa776f08da482b9fed54106a9f42af.json\u0000\u0000\u0000"
-        },
-        ".factory/events/75912cd942f545b3b2fb85f3353284e2.json": {
-          "digest": "fba26ea4f36711ba2cb9b1e9f00627c134e371b767f74a5ecbdd97a991e7229f",
-          "git": "? .factory/events/75912cd942f545b3b2fb85f3353284e2.json\u0000\u0000\u0000"
-        },
-        ".factory/events/7794344387c64e5bbf7dcd8a093bad5e.json": {
-          "digest": "7ba42f441323485a03680bbb63d24ad3a969b61d9a4f5db22ac9c33c8c94c576",
-          "git": "? .factory/events/7794344387c64e5bbf7dcd8a093bad5e.json\u0000\u0000\u0000"
-        },
-        ".factory/events/77e1d31a9a01487c97897bd742582843.json": {
-          "digest": "7a887f6b06dd23e5cee75c820f8d368518c445e8fc9a77edbb8cd5a181b7a07a",
-          "git": "? .factory/events/77e1d31a9a01487c97897bd742582843.json\u0000\u0000\u0000"
-        },
-        ".factory/events/7e3f1ffda32045ccb846e147595ceb03.json": {
-          "digest": "1b52a5247e68a6217f372436a26fa1d0fffea31ccc860fbd3ccf8a4b96909c52",
-          "git": "? .factory/events/7e3f1ffda32045ccb846e147595ceb03.json\u0000\u0000\u0000"
-        },
-        ".factory/events/815998a03f294fba9c937ff4f25a147d.json": {
-          "digest": "21c041b6d3a38c22406e4d1137c0b0f0d42ca3f7d4520001806f65893a6b790d",
-          "git": "? .factory/events/815998a03f294fba9c937ff4f25a147d.json\u0000\u0000\u0000"
-        },
-        ".factory/events/816c71a7d2954c6fb47ad487b1660145.json": {
-          "digest": "413c30eb44fd6869ca85c395d1ca96690fe5a5a5500b28b6865a0a22b3f54e6f",
-          "git": "? .factory/events/816c71a7d2954c6fb47ad487b1660145.json\u0000\u0000\u0000"
-        },
-        ".factory/events/883bf869a1d845c1a69a56f796545aea.json": {
-          "digest": "c9c3f0806ae3475a6b63240c5b1d7083c888afa16f6b0a57ca34db2894995f43",
-          "git": "? .factory/events/883bf869a1d845c1a69a56f796545aea.json\u0000\u0000\u0000"
-        },
-        ".factory/events/899b1ef5a543482da176af95d35260f5.json": {
-          "digest": "b9888c6642fb94a21d26ed4d550b4050e19bca2fb4cb3504f19f89d5aaf8b036",
-          "git": "? .factory/events/899b1ef5a543482da176af95d35260f5.json\u0000\u0000\u0000"
-        },
-        ".factory/events/92e8dbc3103b4b43b97da53e57546a93.json": {
-          "digest": "d55e4fde5510134ac80c3d7cc83e89716b5e83726e20f792c100b71b76fcf581",
-          "git": "? .factory/events/92e8dbc3103b4b43b97da53e57546a93.json\u0000\u0000\u0000"
-        },
-        ".factory/events/934163d0bdb84a0c9f996b3c8c457e14.json": {
-          "digest": "427275c4c513d33d53c39259f04b4363af4d6dee48d4a5be895e39bf89ecef08",
-          "git": "? .factory/events/934163d0bdb84a0c9f996b3c8c457e14.json\u0000\u0000\u0000"
-        },
-        ".factory/events/934ecd97165c42ca91dd4b247ea0619d.json": {
-          "digest": "35fdf699cab925f46014f8918ec3fd281c2368e1a84ce2d51452abb3a83e0fac",
-          "git": "? .factory/events/934ecd97165c42ca91dd4b247ea0619d.json\u0000\u0000\u0000"
-        },
-        ".factory/events/9a69f164269e4b82aa2e677f0faf9730.json": {
-          "digest": "d9769a403c7eeea0e24cb33ffab21be937b300fbbdc32b4adf3d562a450b31c1",
-          "git": "? .factory/events/9a69f164269e4b82aa2e677f0faf9730.json\u0000\u0000\u0000"
-        },
-        ".factory/events/9b64f3fd660b4e96bf0a710a868211a2.json": {
-          "digest": "fa855ea2074bbded02f17e7c8ba1b376d6788a49eb8d078bdedab37f80392598",
-          "git": "? .factory/events/9b64f3fd660b4e96bf0a710a868211a2.json\u0000\u0000\u0000"
-        },
-        ".factory/events/9fe02088002547d19d9a263e56aa0d8a.json": {
-          "digest": "d66c5360f7e60bc8bc52af898ad5be1c184174ed6648e745f72a5b81073d48b8",
-          "git": "? .factory/events/9fe02088002547d19d9a263e56aa0d8a.json\u0000\u0000\u0000"
-        },
-        ".factory/events/a01bc7a456424940b69316bc11031868.json": {
-          "digest": "32cef9d0dd4ff85691d3352556f13a13ef75a0641e75ea28303f18596c76e62e",
-          "git": "? .factory/events/a01bc7a456424940b69316bc11031868.json\u0000\u0000\u0000"
-        },
-        ".factory/events/a3fc63e0b28743fb8840f90e91590aff.json": {
-          "digest": "7d8fbaf3c3dcedb5f0a4065dadbbeb088b6811c9612c86d474375145f745492e",
-          "git": "? .factory/events/a3fc63e0b28743fb8840f90e91590aff.json\u0000\u0000\u0000"
-        },
-        ".factory/events/aaf5230f7fb443a3aa7d27991fc5125b.json": {
-          "digest": "9083ef7a0929d016ef8594000c875ede142f9ddeb56c51bde23cded49cd43a7f",
-          "git": "? .factory/events/aaf5230f7fb443a3aa7d27991fc5125b.json\u0000\u0000\u0000"
-        },
-        ".factory/events/aead7fabd49b46c78ee4ad0ff2c42726.json": {
-          "digest": "858ed86a428b4c9377271edfde16ab4541767e4577c479a620be19958d5ffb06",
-          "git": "? .factory/events/aead7fabd49b46c78ee4ad0ff2c42726.json\u0000\u0000\u0000"
-        },
-        ".factory/events/b1ccfdeb4c1e424c858c2a59347afcf8.json": {
-          "digest": "04181b793811a7eb35e768eb954e70b2c0c7de1ad7f2e4564e1d0f711cf5095f",
-          "git": "? .factory/events/b1ccfdeb4c1e424c858c2a59347afcf8.json\u0000\u0000\u0000"
-        },
-        ".factory/events/b4bcc45da2cd48edb612c43bd7ce62c0.json": {
-          "digest": "6c27db8337dd45b81a19af365440c54fa4e8b41096edd6889fa438eee81385f6",
-          "git": "? .factory/events/b4bcc45da2cd48edb612c43bd7ce62c0.json\u0000\u0000\u0000"
-        },
-        ".factory/events/b4ef09284e1d4368bb20dd8a58baedb1.json": {
-          "digest": "cf5eca20d20f65e39a240112ec524560b1869cebc872d560da7a4db7cb4a0251",
-          "git": "? .factory/events/b4ef09284e1d4368bb20dd8a58baedb1.json\u0000\u0000\u0000"
-        },
-        ".factory/events/b4fb12859a224485b807871e92af4647.json": {
-          "digest": "71ba90de7f318d2dfd2debccdcf320875db52c220f4ca829aa9e0b44d4a7272c",
-          "git": "? .factory/events/b4fb12859a224485b807871e92af4647.json\u0000\u0000\u0000"
-        },
-        ".factory/events/b7146bfb7ef24d309573f29f8f04e621.json": {
-          "digest": "d1df2db20ea1d9fc6c3d9dd34c70d93ada94f386b3d903c469426fdb425b7259",
-          "git": "? .factory/events/b7146bfb7ef24d309573f29f8f04e621.json\u0000\u0000\u0000"
-        },
-        ".factory/events/bd5c2e3f3d044c0d808a5a68f78d7e72.json": {
-          "digest": "73b490d572d166833cbb4e70d727b9efa256b324ccb6e5890f980ac1da9e0506",
-          "git": "? .factory/events/bd5c2e3f3d044c0d808a5a68f78d7e72.json\u0000\u0000\u0000"
-        },
-        ".factory/events/be09db7a4a9f471ca6c964b11764c855.json": {
-          "digest": "e5a86fe67635e2cf77ce285f44c90a01f363fe6f7a9540976c74728a8b18839e",
-          "git": "? .factory/events/be09db7a4a9f471ca6c964b11764c855.json\u0000\u0000\u0000"
-        },
-        ".factory/events/c814ef3b517b40f4828f7590beeeefa5.json": {
-          "digest": "807d949b7f3f49bedfe446302c4dc40b6e742831ba784db0c7aef97aec0e1457",
-          "git": "? .factory/events/c814ef3b517b40f4828f7590beeeefa5.json\u0000\u0000\u0000"
-        },
-        ".factory/events/cc2a15a8848b4421aaa0a3f51e0ba481.json": {
-          "digest": "6c8aa68438b2b642527dbbdbf57e8d030c046a4f84ff55e92ce26d7801a1a5ad",
-          "git": "? .factory/events/cc2a15a8848b4421aaa0a3f51e0ba481.json\u0000\u0000\u0000"
-        },
-        ".factory/events/cd731fbc3bdd487d904feb640139f01a.json": {
-          "digest": "22aec94ae7edb3b671093ec8b07a8571f69fe33b0e074abbc0d3dce7c7d7cd5a",
-          "git": "? .factory/events/cd731fbc3bdd487d904feb640139f01a.json\u0000\u0000\u0000"
-        },
-        ".factory/events/d29543b7852143428b2d5611e7f27b01.json": {
-          "digest": "35979b33925f445eb5ee9f9c0420116e38a7fd9026dc886fa1bf115ac2123238",
-          "git": "? .factory/events/d29543b7852143428b2d5611e7f27b01.json\u0000\u0000\u0000"
-        },
-        ".factory/events/d4955d1ed56c42099a7a21e7155c04b0.json": {
-          "digest": "349bffe40ac0771da2600ec4bac9552d1f19df8c8b4e81bdd68f3ac0c0fb02f2",
-          "git": "? .factory/events/d4955d1ed56c42099a7a21e7155c04b0.json\u0000\u0000\u0000"
-        },
-        ".factory/events/d7cd0788530b4db4a9d2ea68dbb68ab6.json": {
-          "digest": "7622736337e62ed91298e5cad44d0d0f397768be14e422f2e156d360b35b5e64",
-          "git": "? .factory/events/d7cd0788530b4db4a9d2ea68dbb68ab6.json\u0000\u0000\u0000"
-        },
-        ".factory/events/d9aeb0c61ab543d08b6fbe49cebd0fb6.json": {
-          "digest": "8e17cc875c3890e531af178d7728fb257f5432c403badff31098be52b9e9e93f",
-          "git": "? .factory/events/d9aeb0c61ab543d08b6fbe49cebd0fb6.json\u0000\u0000\u0000"
-        },
-        ".factory/events/db7da72d463446d9a995b3ab16a0bcf5.json": {
-          "digest": "734d1da5c577af3617da99f5e44169d81a39550996efd6d722e80064f994532c",
-          "git": "? .factory/events/db7da72d463446d9a995b3ab16a0bcf5.json\u0000\u0000\u0000"
-        },
-        ".factory/events/df6ad0fa132e4702ad518e86524a0825.json": {
-          "digest": "89782c8d1c3f4aec8260f1570ce65823b41c8ebc58140d3e8a5b42db6cd0ecc4",
-          "git": "? .factory/events/df6ad0fa132e4702ad518e86524a0825.json\u0000\u0000\u0000"
-        },
-        ".factory/events/e1e293a8128e4eabb41d72666155f196.json": {
-          "digest": "8071b0071cace9deca87b633a234fb3dd407763bcdcbd53c8ff08d9cc7614fb5",
-          "git": "? .factory/events/e1e293a8128e4eabb41d72666155f196.json\u0000\u0000\u0000"
-        },
-        ".factory/events/e27d217af9aa4becb738706661ef68da.json": {
-          "digest": "b5e2a6d838047694980240e11fc5d37e43af762f943cac424bc60438806aea82",
-          "git": "? .factory/events/e27d217af9aa4becb738706661ef68da.json\u0000\u0000\u0000"
-        },
-        ".factory/events/e865248de1d94d378f089cef5afdc6a2.json": {
-          "digest": "3ca7361d83df3c7f13dc667c3f35b8f1987b1a7c87aecd42988d70e67242698e",
-          "git": "? .factory/events/e865248de1d94d378f089cef5afdc6a2.json\u0000\u0000\u0000"
-        },
-        ".factory/events/e91dc2c2af5448e39fa0910f7270636f.json": {
-          "digest": "b005a39d10dab7f6a2075e2fb713173580a82830d78ff5310a122e4dc6b33f1b",
-          "git": "? .factory/events/e91dc2c2af5448e39fa0910f7270636f.json\u0000\u0000\u0000"
-        },
-        ".factory/events/ea2151898246473fbd34ec7dbe93e06c.json": {
-          "digest": "6b07c2035a16a6d298c712adf129295e7e010972a3512497244c2c11b1eae749",
-          "git": "? .factory/events/ea2151898246473fbd34ec7dbe93e06c.json\u0000\u0000\u0000"
-        },
-        ".factory/events/ead2737dca45450db145bd397a932ae5.json": {
-          "digest": "300e0f86e913db5bcdea7c23d6b606865df61005d5ece0510c7f6493a82e89c7",
-          "git": "? .factory/events/ead2737dca45450db145bd397a932ae5.json\u0000\u0000\u0000"
-        },
-        ".factory/events/ec5a26da3c3f40b3af542a61a3e062fa.json": {
-          "digest": "019102c59c5ef42b025bbf7de2fbf11d479a61c1c0b4e1f31cacf17a1eb796ae",
-          "git": "? .factory/events/ec5a26da3c3f40b3af542a61a3e062fa.json\u0000\u0000\u0000"
-        },
-        ".factory/events/ef029e43d2aa404293ac6df0d2977449.json": {
-          "digest": "9446969c283a01cdd2cc4f442a6bcf2d34845393eb59163ed24ef961304bd458",
-          "git": "? .factory/events/ef029e43d2aa404293ac6df0d2977449.json\u0000\u0000\u0000"
-        },
-        ".factory/events/f457d910f4944520bb15e69dc05f6bd9.json": {
-          "digest": "10d3fe56984e136b24af139fe132ba3c1a58f261e6cfe717a84ffa42260005a6",
-          "git": "? .factory/events/f457d910f4944520bb15e69dc05f6bd9.json\u0000\u0000\u0000"
-        },
-        ".factory/events/feeae3d62e464dfb8f375690fba05c17.json": {
-          "digest": "9e33d9285000ca85c7cd1aa1dd1e8c19d5d374b5d7b6d7b8831887c89fbd0b52",
-          "git": "? .factory/events/feeae3d62e464dfb8f375690fba05c17.json\u0000\u0000\u0000"
-        },
-        ".factory/signals.jsonl": {
-          "digest": "0829079ce2a805a2dc984bb60f679ffbf989ce12ba5f9738db6aac660852f4ae",
-          "git": "? .factory/signals.jsonl\u0000\u0000\u0000"
-        },
-        ".factory/stages.json": {
-          "digest": "63e9ab2c7dd8665eebf969680451713c357828c44998843e92bd354a68553201",
-          "git": "1 .M N... 100644 100644 100644 79faa0cc1b2167399ad5e0fbd3a301677f8fce02 79faa0cc1b2167399ad5e0fbd3a301677f8fce02 .factory/stages.json\u0000\u0000100644 79faa0cc1b2167399ad5e0fbd3a301677f8fce02 0\t.factory/stages.json\u0000\u0000H .factory/stages.json\u0000"
-        },
-        ".factory/stories/FORGE-ACC-3/decomposition.json": {
-          "digest": "1a3622c9482191b84290ab3d7909d938ee9e3d93690b17d81c4fec6c8535e4dd",
-          "git": "1 .M N... 100644 100644 100644 fd6d9ff3060a890816cab71595d41668a17e0b67 fd6d9ff3060a890816cab71595d41668a17e0b67 .factory/stories/FORGE-ACC-3/decomposition.json\u0000\u0000100644 fd6d9ff3060a890816cab71595d41668a17e0b67 0\t.factory/stories/FORGE-ACC-3/decomposition.json\u0000\u0000H .factory/stories/FORGE-ACC-3/decomposition.json\u0000"
-        },
-        ".factory/stories/FORGE-ACC-3/grills/tasks/roadmap-gate-task-markers.json": {
-          "digest": "bf65f45b0914a14632691ada97e3f9e4faa01b97358c3595775733c3f49d3bc0",
-          "git": "? .factory/stories/FORGE-ACC-3/grills/tasks/roadmap-gate-task-markers.json\u0000\u0000\u0000"
-        },
-        ".factory/stories/FORGE-ACC-3/task-plans/roadmap-gate-task-markers.md": {
-          "digest": "73aca76a9cb93f302db2e548a26123a3f935a2402f9745bb0a890314298f8883",
-          "git": "? .factory/stories/FORGE-ACC-3/task-plans/roadmap-gate-task-markers.md\u0000\u0000\u0000"
-        },
-        "plans/deferrals.md": {
-          "digest": "6f990664f736166f471589e2b4039bce8ed86c2ca0202a8ae074fbaa8c62e597",
-          "git": "1 .M N... 100644 100644 100644 2a2625ba06c3153e358af11c12aafc7d68c768e9 2a2625ba06c3153e358af11c12aafc7d68c768e9 plans/deferrals.md\u0000\u0000100644 2a2625ba06c3153e358af11c12aafc7d68c768e9 0\tplans/deferrals.md\u0000\u0000H plans/deferrals.md\u0000"
-        },
-        "plans/lessons/20260819T113251-0000-New-workflow-gates-must-no-op---stay-scoped-to-their-trigger--or-they-deadlock-the-harness-113251198581.json": {
-          "digest": "43cd48ddf8e23115ab9e10b07c9eafc0a87137348410b8d336e527f97bdbb550",
-          "git": "? plans/lessons/20260819T113251-0000-New-workflow-gates-must-no-op---stay-scoped-to-their-trigger--or-they-deadlock-the-harness-113251198581.json\u0000\u0000\u0000"
-        },
-        "plans/quickfixes/20260819T062749-0000-Q-0081-629d-open-062749943700.json": {
-          "digest": "5c5163ee23d510c00834802ee81f103a947e42736fee5d9494b303b802a51b1a",
-          "git": "? plans/quickfixes/20260819T062749-0000-Q-0081-629d-open-062749943700.json\u0000\u0000\u0000"
-        },
-        "plans/quickfixes/20260819T064507-0000-Q-0081-629d-done-064507548479.json": {
-          "digest": "61fdb618a6a6ac90c6d9d20d3bd2d29e1f063d06e61662cc749417a822165673",
-          "git": "? plans/quickfixes/20260819T064507-0000-Q-0081-629d-done-064507548479.json\u0000\u0000\u0000"
-        }
-      },
-      "task_sha256": "5324c1ba0a431ab2d10a290e283ca995716f69ed1406f12459e32bb68f2e0132",
+      "task_sha256": "989bab13775a98ff081f9adb881a50fdf1d786a0721ca9e7563fb3f93c818f41",
       "local_review_stamp": {
-        "stage_id": "roadmap-gate-task-markers",
-        "task_sha256": "5324c1ba0a431ab2d10a290e283ca995716f69ed1406f12459e32bb68f2e0132",
-        "brief_sha256": "aca642fcbbc522cf2cf4cae229c3e123a6f5e1a18134decb40d907c88926049b",
-        "base_sha": "e87a6c1b3638183aa28d706eb2650c5792710bcc",
-        "product_tree_digest": "3cd67bfa321d9822e3b6b540b0ea743508a57d06eae0cdda292dd61d0da258db",
-        "recorded_at": "2026-08-19T13:03:33+00:00",
+        "stage_id": "flip-frontier-routing-test",
+        "task_sha256": "989bab13775a98ff081f9adb881a50fdf1d786a0721ca9e7563fb3f93c818f41",
+        "brief_sha256": "aeec4117cc6c84991e0e282f2bbf44fc3a8e7b8443c787015c62c6241c78f197",
+        "base_sha": "68fe33b81fee7f70fd9393a3a42ba7192a6b4709",
+        "product_tree_digest": "11f437700585d7d65fbd02398f7ada480e50a7e5ed78792f37bb382cdecc8a0e",
+        "recorded_at": "2026-08-24T13:33:38+00:00",
         "generated_by": "autoreview"
       },
-      "completed_at": "2026-08-19T13:04:01+00:00"
+      "completed_at": "2026-08-24T13:33:56+00:00"
     }
   ]
 }

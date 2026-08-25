@@ -278,16 +278,31 @@ def repo(tmp_path: Path) -> Path:
 
 def record_grill(repo: Path, gate: str, verdict: str = "pass",
                  digest_of: Path | None = None, *,
-                 seed_requirements: bool = True, **over) -> tuple[int, str]:
+                 seed_requirements: bool = True,
+                 plan_mode: bool = True, **over) -> tuple[int, str]:
     if gate == "plan" and seed_requirements:
         code, out = record_grill(repo, "requirements")
+        if code != 0:
+            return code, out
+    floors = {"spec": 2, "requirements": 1, "plan": 2, "task": 1}
+    rounds = over.get("rounds")
+    if gate in floors and rounds is None:
+        rounds = grill_rounds(gate, floors[gate])
+        over["rounds"] = rounds
+    if rounds is not None:
+        code, out = log_grill_rounds(repo, rounds)
         if code != 0:
             return code, out
     payload = {"generated_by": "griller", "gate": gate, "verdict": verdict,
                "gaps": [], "contradictions": [], "resolutions": [], **over}
     extra = ["--input-digest", str(digest_of)] if digest_of else []
-    return run(repo, "record_grill_from_json.py", "--gate", gate, *extra,
-               stdin=json.dumps(payload))
+    result = run(repo, "record_grill_from_json.py", "--gate", gate, *extra,
+                 stdin=json.dumps(payload))
+    if result[0] == 0 and gate == "plan" and digest_of and plan_mode:
+        marker = post_hook(repo, plan_hook_payload(digest_of))
+        if marker[0] != 0:
+            return marker
+    return result
 
 
 def task_grill_payload(task: dict, verdict: str = "pass", **over) -> dict:
@@ -300,7 +315,8 @@ def task_grill_payload(task: dict, verdict: str = "pass", **over) -> dict:
                    for criterion in task["acceptance_criteria"]
                },
                "decision": "keep" if verdict == "pass" else "block",
-               "new_abstractions": [], "rounds": [], "citations": []}
+               "new_abstractions": [], "rounds": grill_rounds("task", 1),
+               "citations": []}
     if verdict == "blocked":
         payload["escalation_packet"] = {
             "issue": "The task cannot proceed as written.",
@@ -330,31 +346,69 @@ def seed_task_grill_frontier(repo: Path, task: dict) -> None:
         "plan_sha256": hashlib.sha256(plan.read_bytes()).hexdigest(),
         "tasks": [task],
     }))
+    task_plan = repo / ".factory" / "task-plans" / f"{task['id']}.md"
+    task_plan.parent.mkdir(parents=True, exist_ok=True)
+    task_plan.write_text(f"# Task plan — {task['id']}\n")
+    code, out = log_grill_rounds(repo, grill_rounds("task", 1))
+    assert code == 0, out
 
 
 def record_task_grill(repo: Path, task: dict, verdict: str = "pass",
                       *, approve: bool = True) -> tuple[int, str]:
-    payload = task_grill_payload(task, verdict)
-    code, out = run(
-        repo, "record_grill_from_json.py", "--gate", "task",
-        "--task", task["id"],
-        stdin=json.dumps(payload),
-    )
-    if code != 0 or verdict != "pass" or not approve:
-        return code, out
     source = repo / ".factory" / "task-plan-drafts" / f"{task['id']}.md"
     source.parent.mkdir(parents=True, exist_ok=True)
     source.write_text(f"# Task plan — {task['id']}\n\nImplement the recorded contract.\n", encoding="utf-8")
+    code, marker_out = post_hook(repo, plan_hook_payload(source))
+    if code != 0:
+        return code, marker_out
     code, plan_out = run(
         repo, "forge.py", "task", "plan", "save", task["id"],
         "--from", str(source),
     )
     if code != 0:
-        return code, out + plan_out
+        return code, plan_out
+    payload = task_grill_payload(task, verdict)
+    code, round_out = log_grill_rounds(repo, payload["rounds"])
+    if code != 0:
+        return code, plan_out + round_out
+    code, out = run(
+        repo, "record_grill_from_json.py", "--gate", "task",
+        "--task", task["id"], stdin=json.dumps(payload),
+    )
+    if code != 0 or verdict != "pass" or not approve:
+        return code, plan_out + out
     code, approve_out = run(
         repo, "forge.py", "task", "approve", task["id"], "--by", "Test Human",
     )
     return code, out + plan_out + approve_out
+
+
+def grill_rounds(gate: str, count: int) -> list[dict]:
+    rounds = [{
+        "question": f"{gate} provenance round {index + 1}?",
+        "options": ["Keep", "Revise"],
+        "chosen": "Keep",
+    } for index in range(count)]
+    rounds[-1]["frontier_empty"] = True
+    return rounds
+
+
+def log_grill_rounds(repo: Path, rounds: list[dict]) -> tuple[int, str]:
+    output = ""
+    for entry in rounds:
+        question = entry["question"]
+        code, out = post_hook(repo, {
+            "tool_name": "AskUserQuestion",
+            "tool_input": {"questions": [{
+                "question": question,
+                "options": [{"label": option} for option in entry["options"]],
+            }]},
+            "tool_response": {"answers": {question: entry["chosen"]}},
+        })
+        output += out
+        if code != 0:
+            return code, output
+    return 0, output
 
 
 def delegate_task_grill_test(test):
@@ -1427,6 +1481,39 @@ def test_symlinked_manifest_is_refused(repo, tmp_path):
     assert 'signoff_record: ""' in real.read_text(), "wrote through the symlink"
 
 
+def test_vendor_manifest_is_line_ending_independent(repo):
+    """A manifest generated on a Windows working tree (CRLF) must still verify
+    on a Linux CI checkout (LF). Hashing raw bytes made the whole gate surface
+    read as vendor-drift right after a Windows re-vendor (project audit /
+    roadmap-gate); compute_hashes now normalises CRLF->LF."""
+    from importlib import import_module
+    import sys
+    sys.path.insert(0, str(repo / "factory" / "scripts"))
+    sys.modules.pop("check_vendor_integrity", None)
+    cvi = import_module("check_vendor_integrity")
+
+    target = next(p for p in (repo / cvi.GATE_TREES[0]).rglob("*.py")
+                  if p.is_file())
+    lf = target.read_bytes().replace(b"\r\n", b"\n")
+    crlf = lf.replace(b"\n", b"\r\n")
+
+    # Manifest generated from LF content (a Linux re-vendor); a CRLF working
+    # tree (Windows checkout) of the same file must NOT read as drift.
+    target.write_bytes(lf)
+    cvi.write_manifest(repo, "test-commit")
+    assert cvi.integrity_problems(repo) == []
+    target.write_bytes(crlf)
+    assert cvi.integrity_problems(repo) == [], \
+        "CRLF working tree must verify against an LF manifest"
+
+    # And the reverse: manifest from CRLF (a Windows re-vendor), verified on a
+    # LF checkout (Linux CI) — the exact roadmap-gate failure this fixes.
+    cvi.write_manifest(repo, "test-commit")
+    target.write_bytes(lf)
+    assert cvi.integrity_problems(repo) == [], \
+        "LF checkout must verify against a CRLF manifest"
+
+
 def test_migration_ignores_a_mentioned_but_unset_key(repo):
     """The key must be detected as a real top-level assignment: a project-owned
     harness.yaml may mention it in a comment, and a substring test would then
@@ -2311,6 +2398,51 @@ def test_update_run_enforces_artifact_phase_order(repo, tmp_path):
     assert code != 0 and "pr_ready.py" in out
 
 
+def test_decomposition_not_frozen_by_previous_story_authority(repo, tmp_path):
+    # A shipped story whose ship-time clear never ran leaves .git/forge/
+    # decomposition.json + stages.json behind. The next story's FIRST
+    # recording must not be prefix-frozen to that stale task graph — the
+    # recorder story-scopes the protected authority the way load_stages does,
+    # clearing the shipped/orphaned story's leftovers idempotently.
+    sign_off(repo)
+    intake(repo)
+    code, out = save_plan(repo, tmp_path)
+    assert code == 0, out
+    record_skeleton_then_frontier(repo, DECOMP["tasks"])
+    lib = load_factory_lib(repo)
+    protected = lib.protected_decomposition_state_path(repo)
+    assert protected.exists()
+    assert json.loads(protected.read_text())["story"] == "ENG-1"
+
+    # Ship ENG-1 without clear_story_authority running (the documented
+    # "its clear never ran" case), then start ENG-2.
+    state = run_state(repo)
+    state["phase"] = "shipped"
+    lib.dump_json(lib.run_state_path(repo, state["issue_key"], for_write=True),
+                  state)
+    code, out = intake(repo, "ENG-2", "Receipts")
+    assert code == 0, out
+    code, out = save_plan(repo, tmp_path)
+    assert code == 0, out
+
+    # ENG-2's own task graph (different ids) records as a FIRST recording.
+    tasks2 = [{**DECOMP["tasks"][0], "id": "T2-1",
+               "title": "receipts slice"}]
+    skeletons = [task_skeleton(task) for task in tasks2]
+    code, out = run(repo, "record_decomposition_from_json.py",
+                    stdin=json.dumps({**DECOMP, "tasks": skeletons}))
+    assert code == 0, out
+    assert "Cleared stale protected authority" in out
+    assert json.loads(protected.read_text())["story"] == "ENG-2"
+
+    # Same-story re-record keeps the freeze: a NON-prefix rewrite still fails.
+    rogue = [{**DECOMP["tasks"][0], "id": "T2-ROGUE", "title": "rewrite"}]
+    code, out = run(repo, "record_decomposition_from_json.py",
+                    stdin=json.dumps({**DECOMP, "tasks": [
+                        task_skeleton(task) for task in rogue]}))
+    assert code != 0 and "frozen" in out
+
+
 def test_decomposition_refused_without_run_state(repo):
     (repo / ".factory" / "run.json").unlink()
     code, out = run(repo, "record_decomposition_from_json.py",
@@ -3090,7 +3222,7 @@ def test_doctor_hook_health_green_on_healthy_repo(repo):
     bytecode_before = set(repo.rglob("__pycache__"))
     checks = hook_health_checks(repo)
 
-    assert len(checks) == 8
+    assert len(checks) == 9
     assert all(check["ok"] for check in checks), checks
     assert git(repo, "status", "--porcelain", "-uall") == before
     assert set(repo.rglob("__pycache__")) == bytecode_before
@@ -3187,8 +3319,8 @@ def test_doctor_hook_health_reds_unresolvable_hook(repo, tmp_path):
     checks = hook_health_checks(repo, env={"PATH": str(fake_bin)})
     failures = [check for check in checks if not check["ok"]]
 
-    assert len(failures) == 8
-    assert len({check["name"] for check in failures}) == 8
+    assert len(failures) == 9
+    assert len({check["name"] for check in failures}) == 9
     registered = json.loads((repo / ".claude" / "settings.json").read_text())
     command = registered["hooks"]["SessionStart"][0]["hooks"][0]["command"]
     assert any(command in check["detail"] for check in failures)
@@ -3379,7 +3511,7 @@ def test_doctor_hook_health_missing_sh_names_git_bash_fix(repo, monkeypatch):
     failures = [check for check in doctor.hook_health_checks(repo)
                 if not check["ok"]]
 
-    assert len(failures) == 8
+    assert len(failures) == 9
     assert all(check["fix"] == doctor.HOOK_SHELL_FIX for check in failures)
     assert all("Git for Windows" in check["fix"] for check in failures)
 
@@ -3393,7 +3525,7 @@ def test_doctor_hook_health_broken_launcher_does_not_blame_git_bash(repo):
     failures = [check for check in doctor.hook_health_checks(repo)
                 if not check["ok"]]
 
-    assert len(failures) == 8
+    assert len(failures) == 9
     assert all("hook launcher probe failed" in check["detail"] for check in failures)
     assert all(check["fix"] == doctor.HOOK_HEALTH_FIX for check in failures)
 
@@ -3410,6 +3542,12 @@ def test_init_and_upgrade_ship_portable_hook_commands(tmp_path):
             for hook in registration["hooks"]
         ]
 
+    def portable(command: str) -> bool:
+        expected_exit = " || exit 0' || exit 0" \
+            if "hook post_tool_use" in command else " || exit 2' || exit 2"
+        return (command.startswith("sh -c ") and command.endswith(expected_exit)
+                and bool(hook_script_paths(command)))
+
     repo = tmp_path / "portable-hooks-client"
     initialized = subprocess.run(
         [sys.executable, str(HARNESS / "factory" / "scripts" / "forge.py"),
@@ -3417,7 +3555,7 @@ def test_init_and_upgrade_ship_portable_hook_commands(tmp_path):
         cwd=HARNESS, capture_output=True, text=True,
     )
     assert initialized.returncode == 0, initialized.stdout + initialized.stderr
-    assert len(commands(repo, ".claude/settings.json")) == 5
+    assert len(commands(repo, ".claude/settings.json")) == 6
     assert len(commands(repo, ".codex/hooks.json")) == 3
     config = repo / ".codex" / "config.toml"
     assert 'sandbox_mode = "workspace-write"' in config.read_text().splitlines()
@@ -3425,9 +3563,7 @@ def test_init_and_upgrade_ship_portable_hook_commands(tmp_path):
     attributes = repo / ".gitattributes"
     assert "forge text eol=lf" in attributes.read_text().splitlines()
     assert all(
-        command.startswith("sh -c ")
-        and command.endswith(" || exit 2' || exit 2")
-        and hook_script_paths(command)
+        portable(command)
         for relative in (".claude/settings.json", ".codex/hooks.json")
         for command in commands(repo, relative)
     )
@@ -3451,15 +3587,13 @@ def test_init_and_upgrade_ship_portable_hook_commands(tmp_path):
 
     upgraded = upgrade_into(repo)
     assert upgraded.returncode == 0, upgraded.stdout + upgraded.stderr
-    assert len(commands(repo, ".claude/settings.json")) == 5
+    assert len(commands(repo, ".claude/settings.json")) == 6
     assert len(commands(repo, ".codex/hooks.json")) == 3
     assert 'sandbox_mode = "workspace-write"' in config.read_text().splitlines()
     assert (repo / "forge.cmd").is_file()
     assert "forge text eol=lf" in attributes.read_text().splitlines()
     assert all(
-        command.startswith("sh -c ")
-        and command.endswith(" || exit 2' || exit 2")
-        and hook_script_paths(command)
+        portable(command)
         for relative in (".claude/settings.json", ".codex/hooks.json")
         for command in commands(repo, relative)
     )
@@ -3482,7 +3616,9 @@ def test_hook_registration_extracts_every_registered_script():
                     scripts = hook_script_paths(hook["command"])
                     assert scripts, f"{relative}:{event} did not expose a script path"
                     assert all((HARNESS / script).is_file() for script in scripts)
-                    assert hook["command"].endswith(" || exit 2' || exit 2")
+                    expected_exit = " || exit 0' || exit 0" \
+                        if event == "PostToolUse" else " || exit 2' || exit 2"
+                    assert hook["command"].endswith(expected_exit)
 
 
 def test_forge_cmd_routes_git_bash_then_python_fallbacks(tmp_path):
@@ -4058,7 +4194,7 @@ def test_doctor_hook_health_uses_git_bash_outside_path(repo, tmp_path):
         "ProgramFiles": str(program_files),
     })
 
-    assert len(checks) == 8
+    assert len(checks) == 9
     assert all(check["ok"] for check in checks), checks
 
 
@@ -5687,17 +5823,20 @@ def test_upgrade_delivers_gstack_setup_to_older_scaffolds(repo):
 
 
 def test_next_routes_design_skills_by_feature_type(repo, tmp_path):
+    # Design-skill routing is PER TASK: the active/frontier task's OWN
+    # user_facing flag decides, not the story's.
     sign_off(repo)
     intake(repo)
     save_plan(repo, tmp_path)
-    record_skeleton_then_frontier(repo, DECOMP["tasks"])  # user_facing: true
+    ui_task = {**DECOMP["tasks"][0], "user_facing": True}
+    record_skeleton_then_frontier(repo, [ui_task])
     run(repo, "update_run.py", "--decomposition-status", "recorded")
     code, out = run(repo, "forge.py", "next")
     assert code == 0 and "emil-design-eng" in out
-    # backend task: no design skills suggested
+    # a backend task in the same story: no design skills suggested
     decomp_path = story_state(repo) / "decomposition.json"
     data = json.loads(decomp_path.read_text())
-    data["user_facing"] = False
+    data["tasks"][0]["user_facing"] = False
     decomp_path.write_text(json.dumps(data))
     (delegation_ledger(repo).parent / "decomposition.json").write_text(json.dumps(data))
     code, out = run(repo, "forge.py", "next")
@@ -5785,6 +5924,123 @@ def test_next_tags_steps_with_roles(repo):
 
 
 # ------------------------------------------------------------ handover grills
+
+def _record_spec_rounds(repo: Path, rounds: list[dict]) -> tuple[int, str]:
+    spec = repo / "docs" / "specs" / "base.md"
+    spec.parent.mkdir(parents=True, exist_ok=True)
+    spec.write_text("# Base spec\n")
+    return run(
+        repo, "record_grill_from_json.py", "--gate", "spec",
+        "--input-digest", str(spec),
+        stdin=json.dumps({
+            "generated_by": "griller", "gate": "spec", "verdict": "pass",
+            "gaps": [], "contradictions": [], "resolutions": [],
+            "rounds": rounds,
+        }),
+    )
+
+
+def test_grill_refuses_round_not_in_ledger(repo):
+    rounds = grill_rounds("spec", 2)
+    code, out = log_grill_rounds(repo, rounds)
+    assert code == 0, out
+    rounds[0]["chosen"] = "Revise"
+    code, out = _record_spec_rounds(repo, rounds)
+    assert code != 0 and "does not match an AskUserQuestion ledger record" in out
+
+
+def test_grill_refuses_below_gate_floor(repo):
+    rounds = grill_rounds("spec", 1)
+    code, out = log_grill_rounds(repo, rounds)
+    assert code == 0, out
+    code, out = _record_spec_rounds(repo, rounds)
+    assert code != 0 and "requires at least 2 logged round(s)" in out
+
+
+def test_grill_refuses_missing_frontier_empty(repo):
+    rounds = grill_rounds("spec", 2)
+    rounds[-1].pop("frontier_empty")
+    code, out = log_grill_rounds(repo, rounds)
+    assert code == 0, out
+    code, out = _record_spec_rounds(repo, rounds)
+    assert code != 0 and "final round requires frontier_empty true" in out
+
+
+def test_grill_accepts_ledger_matched_rounds_happy_path(repo):
+    rounds = grill_rounds("spec", 2)
+    code, out = log_grill_rounds(repo, rounds)
+    assert code == 0, out
+    code, out = _record_spec_rounds(repo, rounds)
+    assert code == 0, out
+    code, out = _record_spec_rounds(repo, rounds)
+    assert code == 0, out  # byte-identical re-record may reuse its own rounds
+
+
+def test_task_grill_requires_saved_task_plan_with_tolerance(repo):
+    task = STAGE_TASK
+    seed_task_grill_frontier(repo, task)
+    plan = repo / ".factory" / "task-plans" / "T1.md"
+    plan.unlink()
+    payload = task_grill_payload(task)
+    command = ("record_grill_from_json.py", "--gate", "task", "--task", "T1")
+    code, out = run(repo, *command, stdin=json.dumps(payload))
+    assert code != 0 and "requires a saved task plan first" in out
+
+    source = repo / "plans" / "T1-draft.md"
+    source.write_text("# T1 plan\n")
+    code, out = post_hook(repo, plan_hook_payload(source))
+    assert code == 0, out
+    code, out = run(
+        repo, "forge.py", "task", "plan", "save", "T1", "--from", str(source),
+    )
+    assert code == 0, out
+    code, out = run(repo, *command, stdin=json.dumps(payload))
+    assert code == 0, out
+
+    grill_path = repo / ".factory" / "grills" / "tasks" / "T1.json"
+    legacy = json.loads(grill_path.read_text())
+    legacy.pop("task_plan_sha256")
+    legacy["recorded_at"] = "2000-01-01T00:00:00+00:00"
+    grill_path.write_text(json.dumps(legacy))
+    plan.unlink()
+    code, out = run(
+        repo, "forge.py", "task", "plan", "save", "T1", "--from", str(source),
+    )
+    assert code == 0, out
+    migrated = json.loads(grill_path.read_text())
+    assert migrated["task_plan_sha256"] == plan_digest_without_assumptions(plan)
+
+
+def test_frontier_orders_task_plan_before_grill(repo, tmp_path):
+    sign_off(repo)
+    intake(repo)
+    save_plan(repo, tmp_path)
+    record_skeleton_then_frontier(repo, [STAGE_TASK])
+    assert task_frontier_state(repo)[0] == "author-task-plan"
+    code, out = run(repo, "forge.py", "next")
+    assert code == 0 and "Before grilling" in out
+
+    source = tmp_path / "T1.md"
+    source.write_text("# T1 plan\n")
+    code, out = post_hook(repo, plan_hook_payload(source))
+    assert code == 0, out
+    code, out = run(
+        repo, "forge.py", "task", "plan", "save", "T1", "--from", str(source),
+    )
+    assert code == 0, out
+    assert task_frontier_state(repo)[0] == "grill"
+    code, out = run(repo, "forge.py", "next")
+    assert code == 0 and "With the saved T1 task plan in place" in out
+
+    payload = task_grill_payload(STAGE_TASK)
+    code, out = log_grill_rounds(repo, payload["rounds"])
+    assert code == 0, out
+    code, out = run(
+        repo, "record_grill_from_json.py", "--gate", "task", "--task", "T1",
+        stdin=json.dumps(payload),
+    )
+    assert code == 0, out
+    assert task_frontier_state(repo)[0] == "await-approval"
 
 def test_record_task_grill_writes_per_id_file(repo):
     task_id = "FORGE-BOARD-2.1"
@@ -5950,8 +6206,11 @@ def test_task_grill_requires_proofs_and_rounds(repo):
             "question": gap,
             "options": ["Keep", "Split", "Block", "Revise"],
             "chosen": "Revise",
+            "frontier_empty": True,
         }],
     }
+    code, out = log_grill_rounds(repo, four_option_round["rounds"])
+    assert code == 0, out
     code, out = record(four_option_round)
     assert code == 0, out
     code, out = record({**uncovered, "citations": [{"finding": gap, "source": ""}]})
@@ -5964,9 +6223,11 @@ def test_task_grill_requires_proofs_and_rounds(repo):
         "resolutions": ["The operator chose to keep the bounded task.",
                         "The declared test command remains binding."],
         "rounds": [{"question": gap, "options": ["Keep", "Split"],
-                    "chosen": "Keep"}],
+                    "chosen": "Keep", "frontier_empty": True}],
         "citations": [{"finding": cited_gap, "source": "docs/QUALITY.md"}],
     }
+    code, out = log_grill_rounds(repo, proved["rounds"])
+    assert code == 0, out
     code, out = record(proved)
     assert code == 0, out
 
@@ -6053,10 +6314,16 @@ def test_stale_grill_refused_after_handover_docs_change(repo):
 # ------------------------------------------------ mandatory skill attestation
 
 def test_user_facing_artifacts_must_attest_design_skills(repo, tmp_path):
+    # Enforcement keys off the ACTIVE TASK's user_facing flag, so the story
+    # needs an active, user_facing task before the recorders gate on skills.
     sign_off(repo)
     intake(repo)
     save_plan(repo, tmp_path)
-    record_skeleton_then_frontier(repo, DECOMP["tasks"])  # user_facing
+    ui_task = {**DECOMP["tasks"][0], "user_facing": True}
+    record_skeleton_then_frontier(repo, [ui_task])
+    control = delegation_ledger(repo).parent
+    (control / "stages.json").write_text(json.dumps(
+        {"issue": "ENG-1", "stages": [{"id": "T1", "status": "active"}]}))
     # testing artifact without the mandatory design skills -> refused
     base = {"generated_by": "implementer", "status": "passed", "summary": "ok",
             "blocking_findings": [], "commands_run": ["pytest"]}
@@ -6082,10 +6349,11 @@ def test_user_facing_artifacts_must_attest_design_skills(repo, tmp_path):
     code, out = run(repo, "record_review_from_json.py", "--aspect", "quality",
                     stdin=json.dumps({**review, "skills_used": ["review-animations"]}))
     assert code == 0, out
-    # backend task: no design-skill requirement
-    code, out = run(repo, "record_decomposition_from_json.py",
-                    stdin=json.dumps({**DECOMP, "user_facing": False}))
-    assert code == 0, out
+    # a backend active task in the same story: no design-skill requirement —
+    # the active task's OWN flag governs, so flip it and re-check.
+    data = json.loads((control / "decomposition.json").read_text())
+    data["tasks"][0]["user_facing"] = False
+    (control / "decomposition.json").write_text(json.dumps(data))
     code, out = run(repo, "record_test_from_json.py", "--kind", "automated",
                     stdin=json.dumps(base))
     assert code == 0, out
@@ -6500,6 +6768,181 @@ def test_assumptions_archive_compacts_resolved_rows(repo, tmp_path):
 
 def hook(repo: Path, payload: dict) -> tuple[int, str]:
     return run(repo, "pre_tool_use.py", stdin=json.dumps(payload))
+
+
+def post_hook(repo: Path, payload: dict) -> tuple[int, str]:
+    return run(repo, "forge.py", "hook", "post_tool_use", stdin=json.dumps(payload))
+
+
+def plan_hook_payload(path: Path, *, tool="Write", mode="plan", session_id=None):
+    payload = {
+        "tool_name": tool, "permission_mode": mode,
+        "tool_input": {"file_path": str(path)},
+    }
+    if session_id is not None:
+        payload["session_id"] = session_id
+    return payload
+
+
+def test_post_tool_use_records_plan_mode_marker(repo):
+    root_plan = repo / "plans" / "root-draft.md"
+    root_plan.write_text("# Root draft\n", encoding="utf-8")
+    code, out = post_hook(repo, plan_hook_payload(root_plan, session_id="session-root"))
+    assert code == 0, out
+    root_records = list((repo / ".factory" / "plan-mode").glob("*.json"))
+    assert len(root_records) == 1
+
+    code, out = intake(repo, "PLAN-1", "Plan provenance")
+    assert code == 0, out
+    plan = repo / "plans" / "draft.md"
+    plan.write_text("# Draft\n\nBody\n\n## Implementation Assumptions\n- ignored\n")
+    records_dir = story_state(repo, "PLAN-1") / "plan-mode"
+    for tool in ("Write", "Edit", "MultiEdit"):
+        payload = plan_hook_payload(plan, tool=tool, session_id=f"session-{tool}")
+        before = set(records_dir.glob("*.json"))
+        code, out = post_hook(repo, payload)
+        assert code == 0, out
+        records = set(records_dir.glob("*.json"))
+        assert len(records) == len(before) + 1
+        marker = json.loads((records - before).pop().read_text())
+        assert marker == {
+            "generated_by": "claude-code:plan-mode",
+            "path": str(plan),
+            "sha256": hashlib.sha256(plan.read_bytes()).hexdigest(),
+            "sha256_body": plan_digest_without_assumptions(plan),
+            "at": marker["at"],
+            "session_id": f"session-{tool}",
+        }
+
+    code, out = post_hook(repo, {**payload, "permission_mode": "default"})
+    assert code == 0, out
+    assert len(list(records_dir.glob("*.json"))) == 3
+
+
+def test_post_tool_use_records_ask_user_question_round(repo):
+    root_payload = {
+        "tool_name": "AskUserQuestion",
+        "session_id": "session-root",
+        "tool_input": {"questions": [{
+            "question": "Start the grill?",
+            "options": [{"label": "Start"}],
+        }]},
+        "tool_response": {"answers": {"Start the grill?": "Start"}},
+    }
+    code, out = post_hook(repo, root_payload)
+    assert code == 0, out
+    assert len(list((repo / ".factory" / "grill-rounds").glob("*.json"))) == 1
+
+    code, out = intake(repo, "GRILL-1", "Grill provenance")
+    assert code == 0, out
+    payload = {
+        "tool_name": "AskUserQuestion",
+        "permission_mode": "default",
+        "session_id": "session-2",
+        "tool_input": {"questions": [{
+            "question": "Keep this boundary?",
+            "options": [
+                {"label": "Keep", "description": "Keep the task bounded."},
+                {"label": "Split", "description": "Split the task."},
+            ],
+        }]},
+        "tool_response": {
+            "answers": {"Keep this boundary?": "Keep"},
+            "notes": "private free text must not be persisted",
+        },
+    }
+
+    code, out = post_hook(repo, payload)
+    assert code == 0, out
+    records = list((story_state(repo, "GRILL-1") / "grill-rounds").glob("*.json"))
+    assert len(records) == 1
+    assert json.loads(records[0].read_text()) == {
+        "generated_by": "claude-code:plan-mode",
+        "questions": [{
+            "question": "Keep this boundary?",
+            "options": ["Keep", "Split"],
+            "chosen": "Keep",
+        }],
+        "at": json.loads(records[0].read_text())["at"],
+        "session_id": "session-2",
+    }
+    assert "private free text" not in records[0].read_text()
+
+
+def test_post_tool_use_is_fail_open(repo):
+    code, out = run(repo, "post_tool_use.py", stdin="not json")
+    assert code == 0 and out == ""
+    code, out = post_hook(repo, {
+        "tool_name": "AskUserQuestion",
+        "tool_input": {"questions": "not a list"},
+        "tool_response": {"notes": "do not record me"},
+    })
+    assert code == 0 and out == ""
+    assert not (repo / ".factory" / "grill-rounds").exists()
+
+    schema = repo / "factory" / "schemas" / "plan-mode-marker.json"
+    schema.write_text(json.dumps({"required": {"missing": "str"}}))
+    plan = repo / "plans" / "draft.md"
+    plan.write_text("# Draft\n")
+    code, out = post_hook(repo, plan_hook_payload(plan, session_id="session-3"))
+    assert code == 0 and out == ""
+    assert not (repo / ".factory" / "plan-mode").exists()
+
+
+def test_vendor_integrity_covers_post_tool_use(repo):
+    files = json.loads(
+        (repo / "constitution" / "VENDOR_MANIFEST.json").read_text()
+    )["files"]
+    assert "factory/scripts/post_tool_use.py" in files
+    assert "factory/schemas/plan-mode-marker.json" in files
+    assert "factory/schemas/grill-round.json" in files
+    code, out = run(repo, "check_vendor_integrity.py")
+    assert code == 0 and "OK" in out, out
+
+
+def test_post_tool_use_marks_plan_outside_repo_with_raw_and_body_digests(
+        repo, tmp_path):
+    plan = tmp_path / "outside-plan.md"
+    plan.write_bytes(b"# Draft\n\nBody\n\n## Implementation Assumptions\n- ignored\n")
+    code, out = post_hook(repo, plan_hook_payload(plan))
+    assert code == 0, out
+    records = list((repo / ".factory" / "plan-mode").glob("*.json"))
+    assert len(records) == 1
+    marker = json.loads(records[0].read_text())
+    assert marker["path"] == str(plan.resolve())
+    assert marker["sha256"] == hashlib.sha256(plan.read_bytes()).hexdigest()
+    assert marker["sha256_body"] == plan_digest_without_assumptions(plan)
+    assert marker["session_id"] == ""
+
+
+def test_post_tool_use_round_without_response_records_chosen_null(repo):
+    payload = {
+        "tool_name": "AskUserQuestion",
+        "tool_input": {"questions": [{
+            "question": "Keep this boundary?",
+            "options": [{"label": "Keep"}, {"label": "Split"}],
+        }]},
+    }
+    records_dir = repo / ".factory" / "grill-rounds"
+    for response in (None, {"answers": {"Keep this boundary?": "free text"}}):
+        before = set(records_dir.glob("*.json"))
+        call = payload if response is None else {**payload, "tool_response": response}
+        code, out = post_hook(repo, call)
+        assert code == 0, out
+        added = set(records_dir.glob("*.json")) - before
+        assert len(added) == 1
+        record = json.loads(added.pop().read_text())
+        assert record["questions"][0]["chosen"] is None
+        assert record["session_id"] == ""
+
+
+def test_post_tool_use_records_without_session_id(repo):
+    plan = repo / "plans" / "draft.md"
+    plan.write_text("# Draft\n", encoding="utf-8")
+    code, out = post_hook(repo, plan_hook_payload(plan, tool="Edit"))
+    assert code == 0, out
+    marker = next((repo / ".factory" / "plan-mode").glob("*.json"))
+    assert json.loads(marker.read_text())["session_id"] == ""
 
 
 def make_unmerged(repo: Path, rel: str = "src/conflict.ts") -> None:
@@ -8008,6 +8451,140 @@ def test_plan_save_refuses_approved_without_a_matching_marker(repo, tmp_path):
     assert code != 0 and "requires an approved, saved plan" in out
 
 
+def test_plan_save_refuses_plan_without_plan_mode_marker(repo, tmp_path):
+    sign_off(repo)
+    intake(repo)
+    plan = tmp_path / "normal-mode-plan.md"
+    plan.write_text(plan_draft(repo))
+    code, out = record_grill(repo, "plan", digest_of=plan, plan_mode=False)
+    assert code == 0, out
+
+    code, out = run(repo, "forge.py", "plan", "save", "--from", str(plan),
+                    "--story", "ENG-1")
+
+    assert code != 0 and "plan-mode marker required" in out
+    assert "enter plan mode" in out and "this exact plan file" in out
+    assert not list((repo / "plans" / "active").glob("ENG-1-*.md"))
+
+
+def test_plan_save_and_approve_accept_plan_with_plan_mode_marker(repo, tmp_path):
+    sign_off(repo)
+    intake(repo)
+    plan = tmp_path / "plan-mode-plan.md"
+    plan.write_text(plan_draft(repo))
+    code, out = record_grill(repo, "plan", digest_of=plan, plan_mode=False)
+    assert code == 0, out
+    code, out = post_hook(repo, plan_hook_payload(plan))
+    assert code == 0, out
+
+    code, out = run(repo, "forge.py", "plan", "save", "--from", str(plan),
+                    "--story", "ENG-1")
+    assert code != 0 and "awaiting-approval" in out, out
+    active = next((repo / "plans" / "active").glob("ENG-1-*.md"))
+    code, out = record_grill(repo, "plan", digest_of=active, plan_mode=False)
+    assert code == 0, out
+    code, out = post_hook(repo, plan_hook_payload(active))
+    assert code == 0, out
+    code, out = run(repo, "forge.py", "plan", "approve", "--by", "Client PM")
+    assert code == 0, out
+    code, out = run(repo, "forge.py", "plan", "save", "--from", str(active),
+                    "--story", "ENG-1")
+    assert code == 0 and run_state(repo)["plan_status"] == "approved", out
+
+
+def test_task_plan_save_and_approve_require_plan_mode_marker(repo, tmp_path):
+    sign_off(repo)
+    intake(repo)
+    save_plan(repo, tmp_path)
+    record_skeleton_then_frontier(repo, [STAGE_TASK])
+    code, out = record_task_grill(repo, STAGE_TASK, approve=False)
+    assert code == 0, out
+    source = tmp_path / "T1.md"
+    source.write_text("# T1 plan\n\nImplement the bounded task.\n")
+
+    code, out = run(repo, "forge.py", "task", "plan", "save", "T1",
+                    "--from", str(source))
+    assert code != 0 and "plan-mode marker required" in out
+    code, out = post_hook(repo, plan_hook_payload(source))
+    assert code == 0, out
+    code, out = run(repo, "forge.py", "task", "plan", "save", "T1",
+                    "--from", str(source))
+    assert code == 0, out
+
+    records = story_state(repo) / "plan-mode"
+    for marker in records.glob("*.json"):
+        marker.unlink()
+    code, out = run(repo, "forge.py", "task", "approve", "T1",
+                    "--by", "Test Human")
+    assert code != 0 and "plan-mode marker required" in out
+    saved = story_state(repo) / "task-plans" / "T1.md"
+    code, out = post_hook(repo, plan_hook_payload(saved))
+    assert code == 0, out
+    code, out = run(repo, "forge.py", "task", "approve", "T1",
+                    "--by", "Test Human")
+    assert code == 0 and "Approved task plan" in out, out
+
+
+def test_plan_mode_marker_matches_body_not_assumptions(repo, tmp_path):
+    sign_off(repo)
+    intake(repo)
+    plan = tmp_path / "assumptions-plan.md"
+    plan.write_text(plan_draft(repo))
+    code, out = post_hook(repo, plan_hook_payload(plan))
+    assert code == 0, out
+    plan.write_text(plan.read_text() + "\n## Implementation Assumptions\n- Later detail.\n")
+    code, out = record_grill(repo, "plan", digest_of=plan, plan_mode=False)
+    assert code == 0, out
+
+    code, out = run(repo, "forge.py", "plan", "save", "--from", str(plan),
+                    "--story", "ENG-1")
+
+    assert code != 0 and "awaiting-approval" in out, out
+    assert "plan-mode marker required" not in out
+
+
+def test_plan_mode_marker_in_root_scope_counts_for_active_story(repo, tmp_path):
+    sign_off(repo)
+    plan = tmp_path / "root-scope-plan.md"
+    plan.write_text(plan_draft(repo))
+    code, out = post_hook(repo, plan_hook_payload(plan))
+    assert code == 0, out
+    assert list((repo / ".factory" / "plan-mode").glob("*.json"))
+
+    intake(repo)
+    code, out = record_grill(repo, "plan", digest_of=plan, plan_mode=False)
+    assert code == 0, out
+    code, out = run(repo, "forge.py", "plan", "save", "--from", str(plan),
+                    "--story", "ENG-1")
+
+    assert code != 0 and "awaiting-approval" in out, out
+    assert "plan-mode marker required" not in out
+
+
+def test_plan_save_restamp_does_not_invalidate_marker(repo, tmp_path):
+    sign_off(repo)
+    intake(repo)
+    plan = tmp_path / "restamped-plan.md"
+    plan.write_text(plan_draft(repo))
+    code, out = record_grill(repo, "plan", digest_of=plan, plan_mode=False)
+    assert code == 0, out
+    code, out = post_hook(repo, plan_hook_payload(plan))
+    assert code == 0, out
+
+    code, out = run(repo, "forge.py", "plan", "save", "--from", str(plan),
+                    "--story", "ENG-1")
+    assert code != 0 and "awaiting-approval" in out, out
+    active = next((repo / "plans" / "active").glob("ENG-1-*.md"))
+    code, out = record_grill(repo, "plan", digest_of=active, plan_mode=False)
+    assert code == 0, out
+    code, out = run(repo, "forge.py", "plan", "approve", "--by", "Client PM")
+    assert code == 0, out
+    code, out = run(repo, "forge.py", "plan", "save", "--from", str(active),
+                    "--story", "ENG-1")
+
+    assert code == 0 and run_state(repo)["plan_status"] == "approved", out
+
+
 def test_plan_approve_refuses_without_a_fresh_plan_grill(repo, tmp_path):
     sign_off(repo)
     intake(repo)
@@ -8350,8 +8927,12 @@ def test_roadmap_gate_workflow_shape():
     assert "fetch-depth: 0" in pr_job and "fetch-depth: 0" not in coverage_job
     assert "github.event_name == 'push'" in coverage_job
     assert "github.ref_name == github.event.repository.default_branch" in coverage_job
-    for name in ("BASE_SHA", "HEAD_BRANCH", "PR_BODY"):
+    for name in ("HEAD_SHA", "HEAD_BRANCH", "PR_BODY"):
         assert f"{name}:" in pr_job and f"{name}:" not in coverage_job
+    # BASE_SHA is derived from the merge-base of the PR head and its target, not
+    # declared as an env var (fix/pr-ticket-check-merge-base).
+    assert 'BASE_SHA="$(git merge-base' in pr_job
+    assert "BASE_SHA:" not in pr_job
     for job in (pr_job, coverage_job):
         assert job.count("id: arm") == 1
         assert job.count("constitution/VENDORED_FROM") == 1
@@ -11139,8 +11720,12 @@ def test_task_pr_ready_refuses_unsealed_then_writes_marker_and_opens_pr(
     )
     assert git(repo, "cat-file", "-e", f"origin/{git(repo, 'symbolic-ref', '--short', 'HEAD')}:{marker.relative_to(repo).as_posix()}") == ""
     argv = argv_path.read_text().splitlines()
-    assert argv[:4] == ["pr", "create", "--base", "main"]
-    assert "--head" not in argv
+    # The task PR targets origin's DEFAULT branch (here main) and names an
+    # explicit --head so gh never guesses the source branch from local tracking.
+    assert argv[:6] == [
+        "pr", "create", "--base", "main",
+        "--head", git(repo, "symbolic-ref", "--short", "HEAD"),
+    ]
     assert "--title" in argv and "ENG-1 T1: core slice" in argv
     assert "--body" in argv
     assert marker.relative_to(repo).as_posix() in argv_path.read_text()
@@ -13302,8 +13887,8 @@ def test_stage_start_refuses_unready_or_ungrilled_contract(repo, tmp_path):
     assert code == 0, out
     before = (authority.read_bytes(), mirror.read_bytes())
     code, out = run(repo, "forge.py", "stage", "start", "T1")
-    assert code != 0 and "Task grill required" in out
-    assert "record_grill_from_json.py --gate task --task T1" in out
+    assert code != 0 and "Task plan required first" in out
+    assert "./forge task plan save T1 --from <path>" in out
     assert (authority.read_bytes(), mirror.read_bytes()) == before
 
     code, out = record_task_grill(repo, STAGE_TASK)
@@ -13696,6 +14281,59 @@ def test_missing_protected_stage_state_never_falls_back_to_workspace(
     mirror.write_text(json.dumps(forged))
     code, out = run(repo, "forge.py", "stage", "list")
     assert code == 0 and "No stage tracker" in out
+
+
+def test_shipped_or_orphaned_authority_does_not_phantom_block(repo, tmp_path):
+    """A shipped story's leftover git-local stage authority must not report a
+    phantom active stage. With no active issue (or a mismatched one) load_stages
+    returns {}, so quickfix / mode / stage start all open freely; `stage clear`
+    retires the authority left behind by a story that shipped before it existed.
+    """
+    start_stage(repo, tmp_path, STAGE_TASK)
+    lib = load_factory_lib(repo)
+    sys.path.insert(0, str(repo / "factory" / "scripts"))
+    try:
+        from forge_cli.stages import authoritative_stages_path
+    finally:
+        sys.path.pop(0)
+
+    # While the story is active the stage IS reported and blocks a new window.
+    code, out = run(repo, "forge.py", "stage", "list")
+    assert code == 0 and "[>]" in out
+    code, out = run(repo, "forge.py", "quickfix", "start", "phantom check")
+    assert code != 0 and "stage is active" in out
+
+    # Post-ship run.json is project fields only, no issue_key. The authority
+    # file is still on disk — the bug is that its clear never ran.
+    lib.dump_json(lib.run_state_path(repo), {"project": "app", "phase": "shipped"})
+    assert authoritative_stages_path(repo).is_file()
+
+    # load_stages returns {} with no active issue: no phantom stage.
+    code, out = run(repo, "forge.py", "stage", "list")
+    assert code == 0 and "No stage tracker" in out
+    # quickfix start is no longer blocked.
+    code, out = run(repo, "forge.py", "quickfix", "start", "unblocked")
+    assert code == 0, out
+    run(repo, "forge.py", "quickfix", "done")
+
+    # Mismatch case: a DIFFERENT active story must not adopt the leftover T1.
+    lib.dump_json(lib.run_state_path(repo),
+                  {"project": "app", "issue_key": "OTHER-9"})
+    code, out = run(repo, "forge.py", "stage", "list")
+    assert code == 0 and "No stage tracker" in out
+    code, out = run(repo, "forge.py", "mode", "lite",
+                    "--reason", "no phantom", "--by", "Test Human")
+    assert code == 0, out
+    run(repo, "forge.py", "mode", "done")
+
+    # `stage clear` retires the orphaned authority, idempotently.
+    control = authoritative_stages_path(repo).parent
+    code, out = run(repo, "forge.py", "stage", "clear")
+    assert code == 0 and "stages.json" in out, out
+    assert not authoritative_stages_path(repo).is_file()
+    assert not (control / "decomposition.json").exists()
+    code, out = run(repo, "forge.py", "stage", "clear")
+    assert code == 0 and "No git-local story authority" in out
 
 
 def test_stage_migrate_requires_confirmation_and_adopts_legacy_state(
@@ -15001,6 +15639,9 @@ def test_forge_next_routes_the_jit_frontier_states(repo, tmp_path):
     sign_off(repo)
     intake(repo)
     save_plan(repo, tmp_path)
+    # A user_facing task, so the per-task design-skill guidance surfaces at
+    # every frontier state as the task walks toward delegation.
+    ui_task = {**STAGE_TASK, "user_facing": True}
 
     def next_action() -> str:
         code, out = run(repo, "forge.py", "next")
@@ -15026,16 +15667,32 @@ def test_forge_next_routes_the_jit_frontier_states(repo, tmp_path):
     code, out = run(
         repo,
         "record_decomposition_from_json.py",
-        stdin=json.dumps({**DECOMP, "tasks": [STAGE_TASK]}),
+        stdin=json.dumps({**DECOMP, "tasks": [ui_task]}),
+    )
+    assert code == 0, out
+    action = next_action()
+    assert "enter plan mode" in action
+    assert "task plan save" in action
+    assert "stage start" not in action and "forge delegate" not in action
+
+    source = tmp_path / "T1.md"
+    source.write_text(
+        "# Task plan — T1\n\nImplement the recorded contract.\n",
+        encoding="utf-8",
+    )
+    code, out = post_hook(repo, plan_hook_payload(source))
+    assert code == 0, out
+    code, out = run(
+        repo, "forge.py", "task", "plan", "save", "T1", "--from", str(source),
     )
     assert code == 0, out
     action = next_action()
     assert "factory/prompts/griller.md --gate task" in action
     assert "stage start" not in action and "forge delegate" not in action
 
-    code, out = record_task_grill(repo, STAGE_TASK)
+    code, out = record_task_grill(repo, ui_task)
     assert code == 0, out
-    stale = {**STAGE_TASK, "reviewer_focus": "the changed bounded contract",
+    stale = {**ui_task, "reviewer_focus": "the changed bounded contract",
              "write_scope": ["src/changed/"]}
     code, out = run(
         repo,
@@ -15087,7 +15744,7 @@ def test_board_task_rows_match_frontier_states(repo, tmp_path):
         stdin=json.dumps({**DECOMP, "tasks": [STAGE_TASK]}),
     )
     assert code == 0, out
-    assert_state("grill", "ready")
+    assert_state("author-task-plan", "author-task-plan")
 
     code, out = record_task_grill(repo, STAGE_TASK)
     assert code == 0, out
@@ -15114,17 +15771,9 @@ def test_stage_start_and_delegate_refuse_without_approved_task_plan(repo, tmp_pa
     intake(repo)
     save_plan(repo, tmp_path)
     record_skeleton_then_frontier(repo, [STAGE_TASK])
-    code, out = record_task_grill(repo, STAGE_TASK, approve=False)
-    assert code == 0, out
-
     code, out = run(repo, "forge.py", "stage", "start", "T1")
     assert code != 0 and "Task plan required first" in out
-
-    source = tmp_path / "T1.md"
-    source.write_text("# T1 plan\n\nImplement the bounded task.\n")
-    code, out = run(
-        repo, "forge.py", "task", "plan", "save", "T1", "--from", str(source),
-    )
+    code, out = record_task_grill(repo, STAGE_TASK, approve=False)
     assert code == 0, out
     code, out = run(repo, "forge.py", "stage", "start", "T1")
     assert code != 0 and "Task plan approval required" in out
@@ -15150,9 +15799,6 @@ def test_forge_next_and_board_route_author_task_plan_and_await_approval(
     intake(repo)
     save_plan(repo, tmp_path)
     record_skeleton_then_frontier(repo, [STAGE_TASK])
-    code, out = record_task_grill(repo, STAGE_TASK, approve=False)
-    assert code == 0, out
-
     from forge_cli.board import next_actions
 
     def assert_route(frontier: str, row_state: str, command: str) -> None:
@@ -15170,8 +15816,19 @@ def test_forge_next_and_board_route_author_task_plan_and_await_approval(
     assert_route("author-task-plan", "author-task-plan", "task plan save T1")
     source = tmp_path / "T1.md"
     source.write_text("# T1 plan\n\nImplement the bounded task.\n")
+    code, out = post_hook(repo, plan_hook_payload(source))
+    assert code == 0, out
     code, out = run(
         repo, "forge.py", "task", "plan", "save", "T1", "--from", str(source),
+    )
+    assert code == 0, out
+    assert_route("grill", "ready", "saved T1 task plan")
+    payload = task_grill_payload(STAGE_TASK)
+    code, out = log_grill_rounds(repo, payload["rounds"])
+    assert code == 0, out
+    code, out = run(
+        repo, "record_grill_from_json.py", "--gate", "task", "--task", "T1",
+        stdin=json.dumps(payload),
     )
     assert code == 0, out
     assert_route("await-approval", "await-approval", "task approve T1")
@@ -15273,6 +15930,50 @@ def test_docs_state_the_enforced_jit_contract():
     assert "task griller" in implementing_route
     assert "stage start" in implementing_route and "delegate" in implementing_route
     assert "findings and refusals always in full" in agents
+
+
+def test_docs_state_enforced_order():
+    decision = (
+        HARNESS / "docs" / "decisions" /
+        "0048-plan-mode-and-grill-provenance.md"
+    ).read_text()
+    loop_spec = (
+        HARNESS / "docs" / "specs" / "accountable-engineering-loop.md"
+    ).read_text()
+    approval_spec = (
+        HARNESS / "docs" / "specs" / "plan-approval.md"
+    ).read_text()
+    workflow = (HARNESS / "WORKFLOW.md").read_text()
+
+    assert "status: accepted" in decision
+    assert 'confirmed_by: "Ravi Kiran Vemula"' in decision
+    assert "status: confirmed" in loop_spec
+    assert "status: confirmed" in approval_spec
+
+    assert "zero-gap grill may validly have" not in loop_spec
+    assert "plan mode cannot be the enforcement signal" not in approval_spec
+    assert "recommended review step" not in approval_spec
+    assert "marker the agent cannot mint" not in approval_spec
+    for text in (decision, loop_spec, approval_spec):
+        unwrapped = " ".join(text.split())
+        assert "GATE_ROUND_FLOORS" in text or "floors spec 2" in unwrapped
+        assert "frontier_empty: true" in text
+        assert "ledger-matched" in text or "match a logged record" in unwrapped
+    for text in (decision, approval_spec):
+        assert "plan_body_digest" in text
+
+    task_loop = workflow.split("## Task Planning", 1)[1].split(
+        "During implementation", 1
+    )[0]
+    enforced_order = (
+        "task plan is authored in plan mode",
+        "task grill delivers its rounds",
+        "human approves",
+        "stage start",
+        "delegate",
+    )
+    positions = [task_loop.index(step) for step in enforced_order]
+    assert positions == sorted(positions)
 
 
 def test_plan_save_refuses_a_plan_missing_any_required_section(repo, tmp_path):
@@ -16124,24 +16825,36 @@ def test_pr_ready_refuses_out_of_order_or_dirty_or_unstamped_closeout(repo, tmp_
 
 def test_mode_start_refuses_while_a_stage_is_active(repo, tmp_path):
     start_stage(repo, tmp_path, STAGE_TASK, launch=False)
-    attempts = (
+    # quickfix and lite are out-of-band windows and must refuse mid-stage.
+    refused = (
         ("forge.py", "quickfix", "start", "blocked repair"),
         ("forge.py", "mode", "lite", "--by", "Ada", "--reason", "blocked repair"),
-        ("forge.py", "mode", "degraded", "start", "--reason", "blocked repair"),
     )
-    for command in attempts:
+    for command in refused:
         code, out = run(repo, *command)
         assert code != 0 and "T1" in out and "stage done" in out, out
         assert not (repo / ".factory" / "quickfix.json").exists()
+
+    # A DEGRADED window is the host-exception valve: it IS allowed mid-stage
+    # (bounded + ledgered) so a fix that provably cannot be verified in the
+    # companion sandbox can be made without tearing down the active stage.
+    code, out = run(repo, "forge.py", "mode", "degraded", "start", "--reason", "host exception")
+    assert code == 0, out
+    assert (repo / ".factory" / "quickfix.json").exists()
+    code, out = run(repo, "forge.py", "mode", "abandon", "--reason", "test cleanup")
+    assert code == 0, out
 
     write_stages(repo, {
         "issue": "ENG-1",
         "stages": [{"id": "T1", "title": "core slice", "status": "done"}],
     })
-    for index, command in enumerate(attempts):
+    all_windows = refused + (
+        ("forge.py", "mode", "degraded", "start", "--reason", "blocked repair"),
+    )
+    for command in all_windows:
         code, out = run(repo, *command)
         assert code == 0, out
-        if index == 0:
+        if command[1] == "quickfix":
             code, out = run(repo, "forge.py", "quickfix", "done")
         else:
             code, out = run(repo, "forge.py", "mode", "abandon", "--reason", "test cleanup")
@@ -17212,3 +17925,220 @@ def test_hook_denies_nested_quoted_companion_write_launch(repo):
                                 "permission_mode": "default",
                                 "tool_input": {"command": cmd}})
         assert "deny" in out and "forge delegate" in out, cmd
+
+
+# --- fix/windows-stage-close-and-plan-change-signoff ---------------------------
+# Three regression tests for: the Windows node.EXE launch-binding check, the
+# vendored-client factory/ scope exemption, and change-time re-validation when
+# an active task's execution contract is amended.
+
+
+def _seed_valid_launch(repo: Path, stage_id: str, task: dict,
+                       started_at: str, argv0: str) -> None:
+    """Write a fully valid succeeded write-launch ledger whose argv[0] is
+    `argv0`, so `_require_successful_launch` exercises the real predicate."""
+    from forge_cli.delegate import argv_digest
+    from factory_lib import sha256_of
+
+    brief = repo / ".factory" / "briefs" / f"{stage_id}.md"
+    brief.parent.mkdir(parents=True, exist_ok=True)
+    brief.write_text("composed task brief\n")
+    companion_path = "/opt/codex/codex-companion.mjs"
+    model, effort = "gpt-test", "medium"
+    argv = [
+        argv0, companion_path, "task", "--json", "--cwd", str(repo),
+        "--model", model, "--effort", effort,
+        "--prompt-file", brief.relative_to(repo).as_posix(), "--write",
+    ]
+    row = {
+        "launch_id": "launch-node-ext",
+        "task": stage_id,
+        "brief_sha256": sha256_of(brief),
+        "task_sha256": task_digest(task),
+        "write": True,
+        "model": model,
+        "effort": effort,
+        "companion_path": companion_path,
+        "argv": argv,
+        "argv_sha256": argv_digest(argv),
+        "stage_started_at": started_at,
+        "process_token": "tok-node-ext",
+    }
+    ledger = delegation_ledger(repo)
+    ledger.parent.mkdir(parents=True, exist_ok=True)
+    ledger.write_text("\n".join(json.dumps({
+        **row,
+        "launch_status": status,
+        **({"exit_code": 0} if status == "succeeded" else {}),
+    }) for status in ("starting", "running", "succeeded")) + "\n")
+
+
+def test_require_successful_launch_accepts_windows_node_exe(repo):
+    """On Windows the launcher is `node.EXE`; the argv[0] check must recognise
+    it (stem, case-insensitive) on every platform, while a non-node launcher
+    stays rejected."""
+    from forge_cli.stages import _require_successful_launch
+
+    started_at = "2026-01-01T00:00:00Z"
+    stage = {"id": "T1", "started_at": started_at}
+    for argv0 in (
+        "C:/Program Files/nodejs/node.EXE",
+        "node.exe",
+        "/usr/bin/node",
+    ):
+        _seed_valid_launch(repo, "T1", STAGE_TASK, started_at, argv0)
+        # No SystemExit: the launch is recognised as a valid bound write launch.
+        _require_successful_launch(repo, "T1", stage, STAGE_TASK)
+
+    _seed_valid_launch(repo, "T1", STAGE_TASK, started_at, "/usr/bin/python3")
+    with pytest.raises(SystemExit):
+        _require_successful_launch(repo, "T1", stage, STAGE_TASK)
+
+
+def test_vendored_client_extends_workflow_prefixes(repo, tmp_path):
+    """In a vendored client, factory/ (and the other harness machinery) is
+    infrastructure a `forge upgrade` may rewrite mid-task, so it never counts as
+    a task's product change. The source harness repo keeps the strict set."""
+    from factory_lib import vendored_client
+    from forge_cli.stages import out_of_scope, workflow_prefixes
+
+    # forge init writes constitution/VENDORED_FROM: this repo is a client.
+    assert (repo / "constitution" / "VENDORED_FROM").is_file()
+    assert vendored_client(repo) is True
+    assert "factory/" in workflow_prefixes(repo)
+    assert out_of_scope(repo, ["factory/scripts/x.py"], ["apps/api"]) == []
+
+    # Top-level vendored harness FILES are excluded too (not only directories):
+    # a coordinator's own harness patch can leave WORKFLOW.md dirty at stage
+    # start, and reverting it mid-stage must not read as an out-of-scope change.
+    assert "WORKFLOW.md" in workflow_prefixes(repo)
+    assert out_of_scope(repo, ["WORKFLOW.md"], ["apps/api"]) == []
+
+    # A source-harness checkout has no marker: factory/ IS the product.
+    source = tmp_path / "source"
+    shutil.copytree(repo, source)
+    (source / "constitution" / "VENDORED_FROM").unlink()
+    assert vendored_client(source) is False
+    assert "factory/" not in workflow_prefixes(source)
+    assert out_of_scope(
+        source, ["factory/scripts/x.py"], ["apps/api"]
+    ) == ["factory/scripts/x.py"]
+    assert "WORKFLOW.md" not in workflow_prefixes(source)
+    assert out_of_scope(source, ["WORKFLOW.md"], ["apps/api"]) == ["WORKFLOW.md"]
+
+
+def test_rerecord_active_task_contract_change_warns_and_clears_stamp(
+        repo, tmp_path):
+    """Amending an active task's execution contract is allowed, but its grill
+    and plan approval are now stale — surface that AT CHANGE TIME and drop the
+    now-stale local review stamp instead of silently deferring to close."""
+    start_stage(repo, tmp_path, STAGE_TASK)
+    write_in_scope(repo, "src/core.py")
+    git(repo, "add", "src/core.py")
+    code, out = record_stage_local(repo)
+    assert code == 0, out
+    before = json.loads((repo / ".factory" / "stages.json").read_text())
+    assert before["stages"][0].get("local_review_stamp")
+
+    amended = {**STAGE_TASK, "write_scope": ["src/", "lib/"]}
+    code, out = run(
+        repo, "record_decomposition_from_json.py",
+        stdin=json.dumps({**DECOMP, "tasks": [amended]}),
+    )
+    assert code == 0, out
+    assert "NOTE: T1 execution contract changed" in out
+    assert "STALE" in out
+    assert "record_grill_from_json.py --gate task --task T1" in out
+    assert "WARNING: T1 was already implemented/reviewed" in out
+
+    after = json.loads((repo / ".factory" / "stages.json").read_text())
+    assert after["stages"][0]["status"] == "active"
+    assert "local_review_stamp" not in after["stages"][0]
+
+
+# --- fix/per-task-user-facing-skills ------------------------------------------
+# Design-skill enforcement keys off the ACTIVE TASK's user_facing flag, not the
+# story's — a backend task in a user_facing story is not forced to attest UI
+# design skills.
+
+
+def test_active_task_user_facing_is_per_task(repo):
+    from factory_lib import (active_task_user_facing, git_control_dir,
+                             protected_decomposition_state_path)
+
+    control = git_control_dir(repo)
+    control.mkdir(parents=True, exist_ok=True)
+    (control / "stages.json").write_text(
+        json.dumps({"issue": "S", "stages": [{"id": "T1", "status": "active"}]}))
+    decomp = protected_decomposition_state_path(repo)
+    decomp.parent.mkdir(parents=True, exist_ok=True)
+
+    # user_facing STORY, but the active BACKEND task is not user_facing
+    decomp.write_text(json.dumps(
+        {"user_facing": True, "tasks": [{"id": "T1", "user_facing": False}]}))
+    assert active_task_user_facing(repo) is False
+
+    # a UI task explicitly marked user_facing
+    decomp.write_text(json.dumps(
+        {"user_facing": True, "tasks": [{"id": "T1", "user_facing": True}]}))
+    assert active_task_user_facing(repo) is True
+
+    # no active stage -> not user_facing (nothing to gate)
+    (control / "stages.json").write_text(
+        json.dumps({"issue": "S", "stages": [{"id": "T1", "status": "done"}]}))
+    assert active_task_user_facing(repo) is False
+
+
+# --- fix/coordinator-contract-and-windows-lock-read ---------------------------
+# The Windows lock-read race in the authority snapshot, and robust required-test
+# attribution (vitest/jest leaf names + classname / root-relative file paths).
+
+
+def test_protected_authority_snapshot_excludes_locks(repo):
+    """The transient locks/ subtree is not attested authority: the delegation
+    machinery holds those files open (exclusively on Windows) while the snapshot
+    runs, so including them attests nothing durable and hard-fails the read on
+    Windows. Non-lock authority is still captured."""
+    from factory_lib import git_control_dir
+    from forge_cli.stages import protected_authority_snapshot
+
+    control = git_control_dir(repo)
+    control.mkdir(parents=True, exist_ok=True)
+    (control / "run.json").write_text('{"issue_key":"X"}')
+    (control / "locks" / "task").mkdir(parents=True, exist_ok=True)
+    (control / "locks" / "task" / "T1.lock").write_text('{"kind":"stage-close"}')
+    snap = protected_authority_snapshot(repo)
+    assert "run.json" in snap, "snapshot must still capture non-lock authority"
+    assert not any(rel == "locks" or rel.startswith("locks/") for rel in snap)
+
+
+def test_junit_case_matches_id_exact_and_leaf():
+    import xml.etree.ElementTree as ET
+
+    from forge_cli.stages import _junit_case_matches_id
+
+    exact = ET.fromstring('<testcase name="t1-boot-migrate"/>')
+    leaf = ET.fromstring(
+        '<testcase name="application backbone &gt; t1-boot-migrate"/>')
+    other = ET.fromstring('<testcase name="unrelated case"/>')
+    assert _junit_case_matches_id(exact, "t1-boot-migrate")
+    assert _junit_case_matches_id(leaf, "t1-boot-migrate")
+    assert not _junit_case_matches_id(other, "t1-boot-migrate")
+
+
+def test_junit_case_attributed_file_or_classname_suffix():
+    import xml.etree.ElementTree as ET
+
+    from forge_cli.stages import _junit_case_attributed
+
+    rel = "apps/api/test/backbone.e2e-spec.ts"
+    # vitest/jest: the source path is in `classname`, relative to the runner root
+    vitest = ET.fromstring(
+        '<testcase classname="test/backbone.e2e-spec.ts" name="t1-boot-migrate"/>')
+    # some runners emit an explicit `file`, repo-relative with a ./ prefix
+    withfile = ET.fromstring(f'<testcase file="./{rel}" name="t1-boot-migrate"/>')
+    wrong = ET.fromstring(
+        '<testcase classname="test/other.spec.ts" name="t1-boot-migrate"/>')
+    assert _junit_case_attributed(vitest, rel)
+    assert _junit_case_attributed(withfile, rel)
+    assert not _junit_case_attributed(wrong, rel)

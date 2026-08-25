@@ -1,0 +1,15 @@
+{
+  "generated_by": "claude-code:plan-mode",
+  "questions": [
+    {
+      "question": "Approve the round-provenance-gate task plan? Ledger-matched rounds (exact chosen equality) + floors (spec 2 / req 1 / plan 2 / task 1) + frontier_empty on the final round; task plan before task grill with a timestamped tolerance; frontier and forge-next order flipped; six required tests; epics/signoff gates untouched.",
+      "options": [
+        "Approve (Recommended)",
+        "Hold"
+      ],
+      "chosen": "Approve (Recommended)"
+    }
+  ],
+  "at": "2026-08-24T10:29:22.296972+00:00",
+  "session_id": "9f647d39-defb-401c-b0b3-ad6ed23eabba"
+}

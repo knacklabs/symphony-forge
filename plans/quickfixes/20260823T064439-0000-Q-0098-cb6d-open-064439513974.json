@@ -1,0 +1,10 @@
+{
+  "event": "open",
+  "id": "Q-0098-cb6d",
+  "profile": "quickfix",
+  "reason": "Fix line-ending-dependent vendor manifest: forge upgrade on Windows (CRLF) produces a manifest that fails project audit / roadmap-gate on a Linux CI checkout (LF). Normalise CRLF->LF in compute_hashes + force LF on the gate surface in .gitattributes.",
+  "started_at": "2026-08-23T06:44:39+00:00",
+  "max_files": 5,
+  "files": [],
+  "harness_source": true
+}

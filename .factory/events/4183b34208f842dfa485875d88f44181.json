@@ -1,0 +1,1 @@
+{"event": "shipped", "generated_by": "orchestrator", "at": "2026-08-24T14:00:51+00:00", "story": "plan-mode-and-grill-provenance", "detail": "Plan-mode and grill discipline are now gates the recorders enforce, not reminders. A PostToolUse hook records who authored every plan (plan-mode markers) and every question actually put to a human (As"}

@@ -1,0 +1,10 @@
+{
+  "event": "open",
+  "id": "Q-0093-43f3",
+  "profile": "quickfix",
+  "reason": "Windows stage-close: node.EXE launch check, vendored-client factory/ scope exemption, and change-time plan-change re-validation",
+  "started_at": "2026-08-22T10:19:39+00:00",
+  "max_files": 5,
+  "files": [],
+  "harness_source": true
+}

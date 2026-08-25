@@ -1,0 +1,9 @@
+{
+  "event": "done",
+  "id": "Q-0094-cf09",
+  "profile": "quickfix",
+  "reason": "Exclude top-level vendored harness file WORKFLOW.md from per-task product scope measurement (completes the harness-machinery exclusion for FILES, not just directories)",
+  "started_at": "2026-08-23T02:28:15+00:00",
+  "completed_at": "2026-08-23T02:28:41+00:00",
+  "files": []
+}

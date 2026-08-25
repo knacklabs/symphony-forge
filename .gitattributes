@@ -16,3 +16,14 @@ plans/quickfixes.jsonl merge=union
 
 # Git Bash executes this launcher on every platform; CRLF breaks POSIX parsing.
 forge text eol=lf
+
+# The vendored gate surface is hashed into constitution/VENDOR_MANIFEST.json.
+# CRLF on a Windows checkout would make every gate file read as vendor-drift
+# against a LF Linux CI checkout (project audit / roadmap-gate). Force LF so the
+# surface is byte-identical across platforms; compute_hashes also normalises
+# CRLF->LF as a backstop. This file ships to clients via scaffold/upgrade.
+factory/scripts/** text eol=lf
+factory/schemas/** text eol=lf
+factory/prompts/** text eol=lf
+.claude/settings.json text eol=lf
+.codex/hooks.json text eol=lf

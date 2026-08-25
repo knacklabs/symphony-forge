@@ -1,0 +1,9 @@
+{
+  "event": "done",
+  "id": "Q-0090-a20d",
+  "profile": "quickfix",
+  "reason": "modernize the lifecycle board UI (card-driven redesign, ruled evidence/decomposition/library tables, gate-rail stepper, markdown bullet-wrap fix, visible scrollbars) and fix ~16s /api/state latency by memoising git_control_dir and next_actions",
+  "started_at": "2026-08-21T18:00:04+00:00",
+  "completed_at": "2026-08-21T18:00:05+00:00",
+  "files": []
+}

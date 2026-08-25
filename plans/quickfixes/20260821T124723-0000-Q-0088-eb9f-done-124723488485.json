@@ -1,0 +1,9 @@
+{
+  "event": "done",
+  "id": "Q-0088-eb9f",
+  "profile": "quickfix",
+  "reason": "fix #117: validate required_tests paths with posix semantics so the recorder works on Windows",
+  "started_at": "2026-08-21T12:47:22+00:00",
+  "completed_at": "2026-08-21T12:47:23+00:00",
+  "files": []
+}

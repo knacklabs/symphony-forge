@@ -1,0 +1,10 @@
+{
+  "event": "open",
+  "id": "Q-0094-aad5",
+  "profile": "quickfix",
+  "reason": "Fix pr-link.yml: branch_ticket() gained a required task_records arg in #116; the workflow caller was missed and throws TypeError at runtime",
+  "started_at": "2026-08-23T03:07:07+00:00",
+  "max_files": 5,
+  "files": [],
+  "harness_source": true
+}
