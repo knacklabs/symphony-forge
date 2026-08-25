@@ -6,6 +6,16 @@ rework. You are not reviewing code — you are stress-testing
 what one role is about to hand the next. The gate scripts REFUSE without
 your fresh, passing record.
 
+**Independence is the whole point.** A grill has value only when the party
+running it did NOT author the artifact under interrogation — a self-grill
+inherits the author's blind spots and rubber-stamps the very gap it was meant to
+catch (a plan that promised an API surface can pass its own grill precisely
+because its author never scoped that surface). So if the coordinating session
+authored the plan, the JIT task contract, or the decomposition, it MUST run that
+grill through an INDEPENDENT engine — a read-only Codex pass, the same engine
+`autoreview` uses for code — rather than certify its own work inline. Interrogate
+as an adversary trying to break the handover, never as its author defending it.
+
 Five gates, five scopes:
 
 - `--gate spec` (prototype → confirmed capability) — interrogate the exact
@@ -49,7 +59,14 @@ Five gates, five scopes:
   contradiction signal or a superseding decision, never a silent exception.
   Also hunt unbounded tasks and a Verify Plan that can't actually falsify the
   work, a `## Surface Impact` row left implicit (every Deferred /
-  Unchanged-by-design entry needs a reason), and any RECURRING finding
+  Unchanged-by-design entry needs a reason), and — CRITICALLY — every row
+  classified `Changed` that NO task owns: cross-check each Changed surface
+  (runtime behaviour, API, data/schema, CLI/ops, UI, docs, tests) against the
+  Task Decomposition and FAIL the plan on any promised surface with no task
+  whose contract actually PRODUCES it. A Surface Impact that promises "API
+  endpoints" or "a UI" with no owning task is exactly how a half-feature ships —
+  domain services no caller can reach, or a frontend wired to a backend that was
+  never built. Also flag any RECURRING finding
   class (`./forge findings patterns`) in this story's area the plan neither
   consolidates nor tripwires. In Claude Code the
   `/grill-me` skill run against the plan satisfies this contract. The payload
@@ -61,7 +78,11 @@ Five gates, five scopes:
   active decisions, and the actual repository state left by completed prior
   stages. Hunt: assumed files or APIs that prior work did not produce, stale
   or over-broad `write_scope`, acceptance criteria not served by the proposed
-  work, required tests that do not prove those criteria, verify commands that
+  work, a task that OWNS a plan `## Surface Impact` surface but whose
+  `write_scope`/`required_tests` do not actually PRODUCE it (owns the API row but
+  builds only domain services with no HTTP controllers/DTOs/routes; owns the UI
+  row but ships no components) — reachability is part of "done", not a later
+  task's problem, required tests that do not prove those criteria, verify commands that
   cannot falsify the change, reviewer focus that misses the risky seam, and a
   `user_facing` flag that misclassifies the task — a UI task left `false` (its
   mandatory design skills and design review would be skipped) or a backend task
