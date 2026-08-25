@@ -34,7 +34,22 @@ Procedure:
    `factory/schemas/review.json`, each with `"generated_by": "autoreview"`:
    - **quality** — correctness, regressions, gaps in the implementer's tests,
      API/contract drift, and **maintainability** — not only where it affects
-     defect risk. Flag single-responsibility violations and poor file/folder
+     defect risk. **Approved-deliverable presence and reachability — check this
+     FIRST, before judging the code that IS present.** Cross-check the task's
+     `acceptance_criteria` AND the approved task-plan's concrete deliverables
+     against the ACTUAL diff. Every deliverable a criterion or the plan names — a
+     guard/middleware, an endpoint or route, a migration, a config wiring, a CI
+     job, a decorator, a port/adapter — must be genuinely IMPLEMENTED and
+     REACHABLE (registered in the module/app, actually invoked — not merely
+     defined in a file nothing imports). A promised deliverable that is ABSENT, or
+     present but unreachable, is a BLOCKING finding under a stable
+     `missing-deliverable` category — even when everything that IS present is
+     clean and the build passes. This is the check that catches an implementation
+     silently dropping an approved requirement that lived in plan prose or an
+     acceptance criterion rather than a formal `plan_contract`/`contract_verdict`:
+     a tidy PARTIAL implementation must never pass as complete. When the task
+     declares `plan_contracts`, this presence audit is in addition to (not a
+     substitute for) the per-contract `contract_verdicts`. Flag single-responsibility violations and poor file/folder
      organisation: a service that mixes types + validation + data access +
      mapping + orchestration in one file, thin/partial validation of required
      inputs, uncontrolled string literals where an enum/constant belongs,
