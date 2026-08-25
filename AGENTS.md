@@ -97,29 +97,14 @@ A task is not PR-ready until all of these exist:
 
 ## Non-Negotiables
 
-- The constitution binds HOW code is written, not just conduct. Every agent that
-  touches code — Claude, Codex, or any subagent or Codex agent either of them
-  releases, in ANY environment including a sandbox/worktree with no network
-  (`constitution/` is vendored on disk, always readable) — reads
-  `constitution/README.md` and follows the matching coding standards, at
-  implement, grill/re-grill, review, autoreview, and lens time. Whoever spawns an
-  agent passes it this instruction; tasks CITE the constitution, never re-derive or
-  contradict it.
-- Approval locks the contract until the PR opens: from sign-off to PR, any
-  deviation from an approved contract (amending criteria, changing scope,
-  inserting/reordering/removing a task) stops for the human — never a silent
-  edit. Done+shipped work is immutable (add a follow-up task); a done-but-unshipped
-  task is changed by `forge task reopen <id>` → re-grill → re-implement; an active
-  task is amended → re-grill → re-approve. The coordinator recognises the
-  deviation and asks the human; it never reshuffles the graph on its own authority.
+- The constitution binds HOW code is written (not just conduct) for EVERY executor — Claude, Codex, or any subagent, any environment: follow the `constitution/README.md` coding standards at implement/grill/review, cite them, never re-derive. Approval then LOCKS the contract until the PR opens — any post-approval change stops for the human (done+shipped is immutable → new task; done-but-unshipped → `forge task reopen`; active → amend + re-grill); never reshuffle the graph on your own authority.
 - Keep tasks bounded and capability-driven; plans bind one roadmap story and attest all active decisions.
 - The session write lock is always armed: delegate locked writes; use `forge mode degraded` only during a companion outage.
 - Do not decompose by document file or arbitrary file count.
 - Do not bypass `verify.py` with ad hoc validation commands.
 - Evidence enters `.factory/` only via schema-validated recorders (pinned `generated_by`), never by hand.
 - Narration budget (conduct §8): one line per state change; findings and refusals always in full; process chatter never.
-- Review = ONE autoreview pass run by the orchestrating session directly —
-  never a Codex review job (decision 0011), never nested reviewers.
+- Review = ONE autoreview pass by the orchestrating session (0011); never a Codex review job, never nested reviewers.
 - One worktree/story; sequential tasks; dependency-ready stories may parallelize (0002). Delegation/proof commands are trusted inputs; observed descendant cleanup is not hostile-code containment.
 - Keep the template repo independent of any client-specific source repo.
 - Do not keep long policy blocks in `AGENTS.md`; move them into docs.
