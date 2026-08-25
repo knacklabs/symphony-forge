@@ -58,6 +58,15 @@ Five gates, five scopes:
   justification and no raised open question (conduct §9: silent tooling defaults
   are prohibited — a pick whose fit is unclear must be asked of the human, not
   defaulted; fail the plan on any tooling choice reached for on autopilot).
+  Also flag a MISSING quality-gate baseline: any codebase the plan touches must
+  wire a stack-APPROPRIATE static-analysis gate — a linter AND formatter, plus a
+  type-checker where the language has one — into CI/verify, not merely a test
+  runner. Name the CAPABILITY, never a fixed tool: ESLint/Biome for JS-TS,
+  Ruff/flake8 for Python, golangci-lint for Go, Clippy for Rust, Checkstyle/
+  Spotbugs for Java, and so on — the requirement is generic to every backend, not
+  one ecosystem's tool. Fail the plan when code ships with no configured lint/
+  format/static-analysis gate that an automated check enforces on every push; an
+  absent linter is a silent quality default exactly like an unjustified tool pick.
   Reconcile the plan explicitly against
   EVERY ID from `forge decision list --active`; a conflict becomes a
   contradiction signal or a superseding decision, never a silent exception.
