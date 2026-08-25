@@ -11422,6 +11422,9 @@ def test_initial_recording_is_fully_skeletal_and_graph_freezes(repo, tmp_path):
     )
     assert code == 0, out
 
+    # Nothing has STARTED yet: the pending graph may be reshaped, but every such
+    # change is an APPROVED-PLAN AMENDMENT (it prints the amendment NOTE and marks
+    # the approval/grills stale), never a silent reshuffle.
     graph_edits = [
         [{**first, "id": "RENAMED"},
          {**second, "dependencies": ["RENAMED"]}],
@@ -11434,7 +11437,38 @@ def test_initial_recording_is_fully_skeletal_and_graph_freezes(repo, tmp_path):
             repo, "record_decomposition_from_json.py",
             stdin=json.dumps({**DECOMP, "tasks": tasks}),
         )
-        assert code != 0 and "task graph is frozen" in out
+        assert code == 0 and "AMENDED" in out, out
+    # Restore the original skeleton for the checks that follow.
+    run(repo, "record_decomposition_from_json.py",
+        stdin=json.dumps({**DECOMP, "tasks": [first, second]}))
+
+    # Once T1 has STARTED (here: done) its graph position — id, order,
+    # dependencies — is HARD frozen; only `forge task reopen` can move started
+    # work, a plain re-record cannot.
+    write_stages(repo, {
+        "issue": "ENG-1",
+        "stages": [
+            {"id": "T1", "title": first["title"], "status": "done"},
+            {"id": "T2", "title": second["title"], "status": "pending"},
+        ],
+    })
+    for tasks in (
+        [{**first, "id": "RENAMED"}, {**second, "dependencies": ["RENAMED"]}],
+        [{**second, "dependencies": []}, {**first, "dependencies": ["T2"]}],
+    ):
+        code, out = run(
+            repo, "record_decomposition_from_json.py",
+            stdin=json.dumps({**DECOMP, "tasks": tasks}),
+        )
+        assert code != 0 and "frozen for work that has started" in out, out
+    # Back to pending so the append + frontier-detail checks below are unaffected.
+    write_stages(repo, {
+        "issue": "ENG-1",
+        "stages": [
+            {"id": "T1", "title": first["title"], "status": "pending"},
+            {"id": "T2", "title": second["title"], "status": "pending"},
+        ],
+    })
 
     appended = {**skeletal_stage_task("T3", "split-out slice"),
                 "dependencies": ["T2"]}
@@ -11443,13 +11477,13 @@ def test_initial_recording_is_fully_skeletal_and_graph_freezes(repo, tmp_path):
         repo, "record_decomposition_from_json.py",
         stdin=json.dumps({**DECOMP, "tasks": [first, second, detailed_append]}),
     )
-    assert code != 0 and "appended task must be skeletal" in out
+    assert code != 0 and "pending non-frontier task must not declare" in out, out
     empty_detail_append = {**appended, "write_scope": []}
     code, out = run(
         repo, "record_decomposition_from_json.py",
         stdin=json.dumps({**DECOMP, "tasks": [first, second, empty_detail_append]}),
     )
-    assert code != 0 and "appended task must be skeletal" in out
+    assert code != 0 and "pending non-frontier task must not declare" in out, out
     code, out = run(
         repo, "record_decomposition_from_json.py",
         stdin=json.dumps({**DECOMP, "tasks": [first, second, appended]}),
