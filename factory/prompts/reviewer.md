@@ -34,11 +34,18 @@ Procedure:
    `factory/schemas/review.json`, each with `"generated_by": "autoreview"`:
    - **quality** — correctness, regressions, gaps in the implementer's tests,
      API/contract drift, and **maintainability** — not only where it affects
-     defect risk. Flag single-responsibility violations and poor file
+     defect risk. Flag single-responsibility violations and poor file/folder
      organisation: a service that mixes types + validation + data access +
      mapping + orchestration in one file, thin/partial validation of required
-     inputs, uncontrolled string literals where an enum/constant belongs, and
-     generic `Error` where a domain error type belongs. **Structure-for-growth
+     inputs, uncontrolled string literals where an enum/constant belongs,
+     generic `Error` where a domain error type belongs, support/declaration
+     files that cram unrelated concerns together (e.g. typed enums + primitive
+     constants + DI tokens in one file), and a large module dumped flat with no
+     coherent directory grouping by responsibility and concern. This
+     organisation check is technology-AGNOSTIC — flag INCOHERENCE against the
+     organisation the task's `reviewer_focus` calls for, never a specific
+     mandated layout; cluster it under a stable `code-organization` category so
+     `forge findings patterns` sees it recur. **Structure-for-growth
      is NOT over-engineering:** organising distinct, concrete responsibilities
      in foundational/shared infrastructure that is known to grow (a seam many
      future tasks route through) is correct design — do not wave it through as

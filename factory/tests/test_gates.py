@@ -10502,6 +10502,48 @@ def test_signal_events_block_ship_until_resolved(repo, tmp_path):
     assert (repo / ".factory" / "signals.jsonl").exists()
 
 
+def test_delegate_surfaces_open_worker_signals(repo, capsys):
+    """`forge delegate` surfaces newly-raised worker signals to stdout during
+    supervision, so a paused worker is not missed; it dedupes, throttles, and
+    ignores resolved signals."""
+    from forge_cli.delegate import _surface_open_signals
+
+    signals = repo / ".factory" / "signals.jsonl"
+    signals.parent.mkdir(parents=True, exist_ok=True)
+
+    def raised(sid, kind, message):
+        return json.dumps({
+            "event": "raised", "id": sid, "task": "ENG-1",
+            "at": "2026-01-01T00:00:00+00:00", "generated_by": "implementer",
+            "kind": kind, "message": message,
+        })
+
+    # An open (raised, unresolved) signal and a raised-then-resolved one.
+    signals.write_text(
+        raised("S-0001-abcd", "blocked", "needs a decision") + "\n"
+        + raised("S-0002-ef01", "confusion", "already answered") + "\n"
+        + json.dumps({"event": "resolved", "id": "S-0002-ef01",
+                      "at": "2026-01-01T00:00:02+00:00", "notes": "done"}) + "\n",
+        encoding="utf-8",
+    )
+
+    seen: set[str] = set()
+    # First pass surfaces the open signal (past the throttle deadline of 0.0).
+    next_at = _surface_open_signals(repo, seen, 0.0)
+    out = capsys.readouterr().out
+    assert "S-0001-abcd" in out and "blocked" in out and "PAUSED" in out
+    assert "S-0002-ef01" not in out  # resolved signals are never surfaced
+    assert "S-0001-abcd" in seen and next_at > 0.0
+
+    # Throttled: before the returned deadline nothing is re-read/printed.
+    _surface_open_signals(repo, seen, next_at)
+    assert capsys.readouterr().out == ""
+
+    # Even past the throttle, an already-surfaced signal is not reprinted.
+    _surface_open_signals(repo, seen, 0.0)
+    assert capsys.readouterr().out == ""
+
+
 def test_open_quickfix_blocks_ship_until_closed(repo, tmp_path):
     """An open window is the lock still disarmed — and an unwritten ledger row."""
     sign_off(repo)

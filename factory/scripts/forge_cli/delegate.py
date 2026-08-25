@@ -43,6 +43,7 @@ from .common import fail
 from .decisions import decision_records
 from .events import append_event
 from .lessons import relevant_lessons
+from .signal import open_signals
 from .stages import load_stages, review_budget
 
 SAFE_TASK_ID = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]*\Z")
@@ -53,6 +54,9 @@ DEFAULT_MODEL = "gpt-5.6-sol"
 DEFAULT_EFFORT = "medium"
 PROCESS_QUIET_SECONDS = 0.75
 PROCESS_POLL_SECONDS = 0.02
+# How often, during worker supervision, to re-read the signal channel and
+# surface any newly-raised (still-open) worker signal to the orchestrator.
+SIGNAL_SURFACE_INTERVAL_SECONDS = 2.0
 SIGKILL = getattr(signal, "SIGKILL", None)
 TERMINATION_SIGNALS = tuple(
     candidate for candidate in (
@@ -698,10 +702,45 @@ def _terminate_observed_process_tree(
         foreground_identity=foreground_identity)
 
 
+def _surface_open_signals(
+        base: Path, seen: set[str], next_check_at: float) -> float:
+    """Print newly-raised worker signals to stdout during supervision.
+
+    A worker raises a signal (contradiction / confusion / blocked / scope-change)
+    and PAUSES; it cannot proceed until the orchestrator answers with `forge
+    signal resolve`. The channel is `.factory/signals.jsonl`, but nothing else
+    alerts the coordinator, so a paused worker is invisible unless someone tails
+    that file by hand. Surface each newly-open signal here, throttled to
+    SIGNAL_SURFACE_INTERVAL_SECONDS and fully best-effort — this is diagnostics
+    and must never disturb the wait/reap path.
+    """
+    now = time.monotonic()
+    if now < next_check_at:
+        return next_check_at
+    try:
+        for entry in open_signals(base):
+            signal_id = entry.get("id")
+            if not signal_id or signal_id in seen:
+                continue
+            seen.add(signal_id)
+            print(
+                f"\n[worker signal] {entry.get('kind', '?')} {signal_id}: "
+                f"{str(entry.get('message', '')).strip()}\n"
+                f"  the worker is PAUSED — answer with: forge signal resolve "
+                f"{signal_id} --notes \"<answer>\", then resume the delegation.",
+                flush=True,
+            )
+    except Exception:
+        # Never let signal surfacing interfere with process supervision/reaping.
+        pass
+    return now + SIGNAL_SURFACE_INTERVAL_SECONDS
+
+
 def _wait_and_reap(
         proc: subprocess.Popen[str], token: str = "",
         baseline: dict[int, tuple[int, float]] | None = None,
-        foreground_identity: float | str = "") -> bool:
+        foreground_identity: float | str = "",
+        base: Path | None = None) -> bool:
     """Wait for trusted work and reap its observed process tree.
 
     A child can create a new session and leave the leader's process group. PID
@@ -711,8 +750,13 @@ def _wait_and_reap(
     deterministic cleanup for trusted repository commands, not hostile-code
     containment; a process that deliberately clears its environment needs the
     separately deferred container boundary.
+
+    When `base` is given, newly-raised worker signals are surfaced to stdout as
+    they appear so a paused worker is never missed.
     """
     descendants: dict[int, float] = {}
+    surfaced_signal_ids: set[str] = set()
+    next_signal_check_at = 0.0
     try:
         while proc.poll() is None:
             current = _process_table()
@@ -720,6 +764,9 @@ def _wait_and_reap(
             if token:
                 descendants.update(
                     _tagged_processes(token, baseline, current))
+            if base is not None:
+                next_signal_check_at = _surface_open_signals(
+                    base, surfaced_signal_ids, next_signal_check_at)
             time.sleep(PROCESS_POLL_SECONDS)
         current = _process_table()
         descendants.update(_descendants(proc.pid))
@@ -1126,7 +1173,8 @@ def launch_companion(
             fail(f"Codex companion launch could not be registered: {exc}")
         try:
             if not _wait_and_reap(
-                    proc, process_token, process_baseline, process_identity):
+                    proc, process_token, process_baseline, process_identity,
+                    base=base):
                 raise RuntimeError("companion process tree survived termination")
         except BaseException:
             # The outer handler retries cleanup and records a terminal failure
