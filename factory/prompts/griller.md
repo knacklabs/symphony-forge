@@ -12,9 +12,13 @@ inherits the author's blind spots and rubber-stamps the very gap it was meant to
 catch (a plan that promised an API surface can pass its own grill precisely
 because its author never scoped that surface). So if the coordinating session
 authored the plan, the JIT task contract, or the decomposition, it MUST run that
-grill through an INDEPENDENT engine — a read-only Codex pass, the same engine
-`autoreview` uses for code — rather than certify its own work inline. Interrogate
-as an adversary trying to break the handover, never as its author defending it.
+grill in a SEPARATE agent that did not author the artifact — a fresh subagent
+(a Claude subagent via the Agent tool, or a read-only Codex pass) reading the
+plan/contract cold — rather than certify its own work inline. A Claude subagent
+is usually the better fit for planning grills: it reasons over the docs, is fully
+independent of the authoring context, and sidesteps the write-lock that gates the
+Codex companion. Interrogate as an adversary trying to break the handover, never
+as its author defending it.
 
 Five gates, five scopes:
 
