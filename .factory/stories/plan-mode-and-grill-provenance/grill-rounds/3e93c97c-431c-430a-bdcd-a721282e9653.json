@@ -1,0 +1,25 @@
+{
+  "generated_by": "claude-code:plan-mode",
+  "questions": [
+    {
+      "question": "Does this narrative hold, or does the spine need to shift?",
+      "options": [
+        "Yes \u2014 write the slides on this",
+        "Lead harder with 'devs = decision makers'",
+        "Lead harder with the Claude/Codex mantra"
+      ],
+      "chosen": "Yes \u2014 write the slides on this"
+    },
+    {
+      "question": "How much of the 22 min goes to the four stories vs the thesis/setup?",
+      "options": [
+        "Setup 6 / stories 12 / close 4 (Recommended)",
+        "Setup 9 / stories 10 / close 3",
+        "Setup 4 / stories 15 / close 3"
+      ],
+      "chosen": "Setup 6 / stories 12 / close 4 (Recommended)"
+    }
+  ],
+  "at": "2026-08-25T12:29:18.892284+00:00",
+  "session_id": "5ca7889f-b2c5-4169-9f29-5cb1f6fc3956"
+}
