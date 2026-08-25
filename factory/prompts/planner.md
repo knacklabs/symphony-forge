@@ -133,3 +133,20 @@ Rules:
   approval in chat, run `./forge plan approve --by "<their name>"`, then rerun
   `plan save` with the unchanged plan. `update_run.py` refuses implementation
   until this digest-bound approval makes `plan_status` approved.
+- **Approval LOCKS the contract until the PR opens.** At the moment of approval,
+  hold this rule for the whole story: from sign-off until the PR is opened, any
+  deviation from the approved contract — amending acceptance criteria, changing
+  write_scope, inserting/reordering/removing a task, re-scoping — is NEVER a
+  silent edit. The flow STOPS and goes back to the human:
+  - **Task not started / active (in-flight), not yet shipped:** amend its
+    contract, then re-present to the human, `plan approve --by`, and re-grill
+    before the next delegate/stage close (the recorder marks the grill +
+    approval stale to force this).
+  - **Task done but NOT shipped:** `./forge task reopen <id>` moves it back to
+    active — then re-grill and re-implement.
+  - **Task done AND shipped (merged):** it is immutable; add a NEW follow-up
+    task, never rewrite it.
+  - **Adding a task to the story:** a graph amendment — human approval is
+    mandatory before it runs.
+  You (the coordinator) own this clarity: recognise the deviation, stop, and ask
+  the human. Never reshuffle the graph or re-scope a task on your own authority.

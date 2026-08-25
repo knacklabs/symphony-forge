@@ -105,6 +105,13 @@ A task is not PR-ready until all of these exist:
   implement, grill/re-grill, review, autoreview, and lens time. Whoever spawns an
   agent passes it this instruction; tasks CITE the constitution, never re-derive or
   contradict it.
+- Approval locks the contract until the PR opens: from sign-off to PR, any
+  deviation from an approved contract (amending criteria, changing scope,
+  inserting/reordering/removing a task) stops for the human — never a silent
+  edit. Done+shipped work is immutable (add a follow-up task); a done-but-unshipped
+  task is changed by `forge task reopen <id>` → re-grill → re-implement; an active
+  task is amended → re-grill → re-approve. The coordinator recognises the
+  deviation and asks the human; it never reshuffles the graph on its own authority.
 - Keep tasks bounded and capability-driven; plans bind one roadmap story and attest all active decisions.
 - The session write lock is always armed: delegate locked writes; use `forge mode degraded` only during a companion outage.
 - Do not decompose by document file or arbitrary file count.
