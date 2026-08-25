@@ -193,6 +193,13 @@ def main() -> None:
     p_task_pr_ready.add_argument("id", help="task id")
     p_task_pr_ready.add_argument("--repo")
     p_task_pr_ready.set_defaults(func=tasks_mod.cmd_task_pr_ready)
+    p_task_reopen = task_sub.add_parser(
+        "reopen",
+        help="reopen a done-but-unshipped task (move the frontier back to it)",
+    )
+    p_task_reopen.add_argument("id", help="task id")
+    p_task_reopen.add_argument("--repo")
+    p_task_reopen.set_defaults(func=tasks_mod.cmd_task_reopen)
     p_task_plan = task_sub.add_parser("plan", help="manage a task plan")
     task_plan_sub = p_task_plan.add_subparsers(
         dest="task_plan_command", required=True,

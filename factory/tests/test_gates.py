@@ -11512,6 +11512,37 @@ def test_initial_recording_is_fully_skeletal_and_graph_freezes(repo, tmp_path):
     assert code == 0, out
 
 
+def test_task_reopen_moves_frontier_back_and_ripples_the_done_tail(repo, tmp_path):
+    sign_off(repo)
+    intake(repo)
+    save_plan(repo, tmp_path)
+    record_skeleton_then_frontier(
+        repo, [skeletal_stage_task("T1"), skeletal_stage_task("T2")])
+    # T1 and the tail built on it (T2) are both done but unshipped.
+    write_stages(repo, {
+        "issue": "ENG-1",
+        "stages": [
+            {"id": "T1", "title": "first", "status": "done", "task_sha256": "abc",
+             "local_review_stamp": {"score": 9}},
+            {"id": "T2", "title": "second", "status": "done", "task_sha256": "def"},
+        ],
+    })
+    code, out = run(repo, "forge.py", "task", "reopen", "T1")
+    assert code == 0 and "Reopened" in out and "T1" in out and "T2" in out, out
+    # T1 is now the pending frontier again; reopening a pending task refuses.
+    code, out = run(repo, "forge.py", "task", "reopen", "T1")
+    assert code != 0 and "not done" in out, out
+
+
+def test_task_reopen_refuses_a_task_not_in_the_decomposition(repo, tmp_path):
+    sign_off(repo)
+    intake(repo)
+    save_plan(repo, tmp_path)
+    record_skeleton_then_frontier(repo, [skeletal_stage_task("T1")])
+    code, out = run(repo, "forge.py", "task", "reopen", "NOPE")
+    assert code != 0 and "not in the current decomposition" in out, out
+
+
 def test_done_contracts_immutable_and_criteria_map_binds_plan_contracts(
         repo, tmp_path):
     sign_off(repo)
