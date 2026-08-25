@@ -2381,7 +2381,11 @@ def test_decomposition_not_frozen_by_previous_story_authority(repo, tmp_path):
     assert "Cleared stale protected authority" in out
     assert json.loads(protected.read_text())["story"] == "ENG-2"
 
-    # Same-story re-record keeps the freeze: a NON-prefix rewrite still fails.
+    # Same-story freeze still applies to STARTED work: once T2-1 is done, a
+    # non-prefix rewrite is frozen. (An unstarted rewrite would instead be an
+    # amendment — allowed but human-gated — which is covered elsewhere.)
+    write_stages(repo, {"issue": "ENG-2", "stages": [
+        {"id": "T2-1", "title": "receipts slice", "status": "done"}]})
     rogue = [{**DECOMP["tasks"][0], "id": "T2-ROGUE", "title": "rewrite"}]
     code, out = run(repo, "record_decomposition_from_json.py",
                     stdin=json.dumps({**DECOMP, "tasks": [
