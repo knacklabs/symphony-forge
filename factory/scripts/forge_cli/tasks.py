@@ -57,7 +57,12 @@ def _task_plan_path(base: Path, task_id: str, *, for_write: bool = False) -> Pat
     state = load_json(run_state_path(base), default={})
     story = state.get("issue_key") or state.get("story")
     if not isinstance(story, str) or not story:
-        fail("task plan requires an active story — run intake first")
+        from .story import ensure_active_pointer
+        story = ensure_active_pointer(base)
+    if not isinstance(story, str) or not story:
+        fail("task plan requires an active story. Start a new one with intake, or "
+             "if a decomposed story lost its git-local pointer on this checkout, "
+             "rebuild it with `forge story resume <key>`.")
     return evidence_path(
         base, story, f"task-plans/{task_id}.md", for_write=for_write,
     )
@@ -135,7 +140,13 @@ def cmd_task_start(args: argparse.Namespace) -> None:
     state = load_json(run_state_path(base), default={})
     key = state.get("issue_key") or state.get("story")
     if not isinstance(key, str) or not key:
-        fail("task start requires an active story — run intake first")
+        from .story import ensure_active_pointer
+        key = ensure_active_pointer(base)
+    if not isinstance(key, str) or not key:
+        fail("task start requires an active story. Start a new one with intake, or "
+             "if a decomposed story lost its git-local pointer on this checkout "
+             "(e.g. a fresh trunk clone between tasks), rebuild it with "
+             "`forge story resume <key>`.")
     decomposition_path = protected_decomposition_state_path(base)
     decomposition = load_json(decomposition_path, default={})
     tasks = decomposition.get("tasks") or []
@@ -244,7 +255,12 @@ def cmd_task_reopen(args: argparse.Namespace) -> None:
     state = load_json(run_state_path(base), default={})
     key = state.get("issue_key") or state.get("story")
     if not isinstance(key, str) or not key.strip():
-        fail("reopen requires an active story — run intake first")
+        from .story import ensure_active_pointer
+        key = ensure_active_pointer(base)
+    if not isinstance(key, str) or not key.strip():
+        fail("reopen requires an active story. Start a new one with intake, or "
+             "if a decomposed story lost its git-local pointer on this checkout, "
+             "rebuild it with `forge story resume <key>`.")
     data = load_stages(base)
     stages = data.get("stages") or []
     idx = next((i for i, s in enumerate(stages) if s.get("id") == args.id), None)

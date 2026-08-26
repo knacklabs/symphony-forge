@@ -81,10 +81,21 @@ def _auto_heal_roadmap_after_merge(base: Path) -> None:
 def cmd_next(args: argparse.Namespace) -> None:
     base = Path(args.repo).resolve() if args.repo else repo_root()
     _auto_heal_roadmap_after_merge(base)
+    # run.json is a derived pointer (0045); re-derive it when a fresh checkout or
+    # a shipped-task cleanup left it absent but the committed record still names
+    # exactly one in-flight story. Silent no-op when the pointer already stands.
+    from .story import ensure_active_pointer
+    rederived = not load_json(run_state_path(base), default={}).get("issue_key")
+    active_key = ensure_active_pointer(base)
     state = load_json(run_state_path(base), default={})
     factory = base / ".factory"
     pending_ctx = len(pending_context(base))
     steps: list[str] = []
+    if rederived and active_key:
+        steps.append(
+            f"(re-derived the worktree-local run pointer for {active_key} from "
+            "committed state — it was absent on this checkout; nothing was lost)"
+        )
     signed_off = client_signoff(base)[0]
     status = subprocess.run(
         ["git", "status", "--porcelain", "--untracked-files=all"],

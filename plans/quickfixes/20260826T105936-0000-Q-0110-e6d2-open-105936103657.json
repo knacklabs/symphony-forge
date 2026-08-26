@@ -1,0 +1,10 @@
+{
+  "event": "open",
+  "id": "Q-0110-e6d2",
+  "profile": "quickfix",
+  "reason": "Self-healing derived run pointer: forge next / task start / task plan / reopen re-derive the worktree-local run.json (0045) from committed roadmap+decomposition+plan when absent, plus explicit 'forge story resume'; fixes stories showing 'no active task' on a clean trunk checkout between tasks",
+  "started_at": "2026-08-26T10:59:36+00:00",
+  "max_files": 5,
+  "files": [],
+  "harness_source": true
+}
