@@ -1,0 +1,9 @@
+{
+  "event": "done",
+  "id": "Q-0111-af19",
+  "profile": "quickfix",
+  "reason": "forge doctor: advise when Python is user-scoped and thus unreachable by the Codex worker sandbox (separate sandbox user, profile hidden) - so a green host doctor no longer masks a broken worker where ./forge and the .codex pre_tool_use hook fail on Python 3.10+ being absent",
+  "started_at": "2026-08-26T14:16:31+00:00",
+  "completed_at": "2026-08-26T14:16:45+00:00",
+  "files": []
+}
