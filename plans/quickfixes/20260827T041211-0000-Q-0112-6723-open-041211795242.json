@@ -1,0 +1,10 @@
+{
+  "event": "open",
+  "id": "Q-0112-6723",
+  "profile": "quickfix",
+  "reason": "smooth coordinator task->PR flow: normalise plan-mode marker digest line-endings (cross-platform); reconcile griller.md with the recorder (document frontier_empty + criteria_map three-way equality, drop the rejected --task-digest, and the ledgered-rounds vs subagent-independence contradiction); add a task-grill staleness ordering tip",
+  "started_at": "2026-08-27T04:12:11+00:00",
+  "max_files": 5,
+  "files": [],
+  "harness_source": true
+}

@@ -1348,7 +1348,10 @@ def require_task_grill(
             f"the {task_id} task grill is STALE — its grounding inputs changed. "
             f"Re-grill and record `{record_command}`; --task-digest was removed "
             "because the digest is derived from the protected contract, approved "
-            "plan, and product tree."
+            "plan, and product tree. Tip: record the task grill LAST, immediately "
+            "before `task approve`/`stage start` — committing any tracked file "
+            "outside .factory/ and plans/ (docs/, factory/scripts/, source) between "
+            "grilling and approving changes the product tree and re-stales it."
         )
 
 
@@ -1377,10 +1380,21 @@ def plan_digest_without_assumptions(path: Path) -> str:
 
 
 def plan_body_digest(path: Path) -> str:
-    """Hash the authored plan body, excluding harness-managed content."""
+    """Hash the authored plan body, excluding harness-managed content.
+
+    Line endings are normalised to LF before hashing so the digest is stable
+    across platforms and Git's autocrlf. The plan-mode marker's ``sha256_body``
+    is computed here from the plan-mode source, while ``require_plan_mode_marker``
+    recomputes it from the saved/committed task plan. Without normalisation a plan
+    saved by ``write_text()`` on Windows (LF -> CRLF), or checked out on another
+    machine under ``core.autocrlf``, would hash differently from its marker and
+    ``task approve`` would demand a spurious re-grill. Both callers run through
+    this function, so normalising here keeps create and check symmetric on every OS.
+    """
     raw = path.read_bytes()
-    frontmatter = re.match(br"\A---\r?\n.*?\r?\n---\r?\n", raw, re.DOTALL)
-    body = raw[frontmatter.end():] if frontmatter else raw
+    normalised = raw.replace(b"\r\n", b"\n").replace(b"\r", b"\n")
+    frontmatter = re.match(br"\A---\n.*?\n---\n", normalised, re.DOTALL)
+    body = normalised[frontmatter.end():] if frontmatter else normalised
     approved_body = body.partition(b"\n## Implementation Assumptions")[0]
     return hashlib.sha256(approved_body).hexdigest()
 

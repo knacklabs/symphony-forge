@@ -50,7 +50,8 @@ PLAN_MODE_DECISION_FIXTURE = (
 )
 sys.path.insert(0, str(HARNESS / "factory" / "scripts"))
 from factory_lib import (
-    branch_diff_digest, grounding_digest, plan_digest_without_assumptions,
+    branch_diff_digest, grounding_digest, plan_body_digest,
+    plan_digest_without_assumptions,
     product_tree_digest, require_task_grill,
     task_frontier_state, task_rows,
 )
@@ -18285,3 +18286,28 @@ def test_junit_case_attributed_file_or_classname_suffix():
     assert _junit_case_attributed(vitest, rel)
     assert _junit_case_attributed(withfile, rel)
     assert not _junit_case_attributed(wrong, rel)
+
+
+def test_plan_body_digest_is_line_ending_agnostic(tmp_path):
+    """The plan-mode marker digest must be stable across platforms and Git
+    autocrlf. plan_body_digest is computed once from the plan-mode source (marker
+    create) and again from the saved/committed task plan (marker check); if a
+    write_text() on Windows or a core.autocrlf checkout turned LF into CRLF, an
+    unnormalised digest would never match and `task approve` would demand a
+    spurious re-grill. So LF, CRLF, and CR renderings of the same body must hash
+    identically."""
+    body = "---\ntitle: T\nkey: value\n---\n\n# Plan\n\nline one\nline two\n"
+    lf = tmp_path / "lf.md"
+    lf.write_bytes(body.encode("utf-8"))
+    crlf = tmp_path / "crlf.md"
+    crlf.write_bytes(body.replace("\n", "\r\n").encode("utf-8"))
+    cr = tmp_path / "cr.md"
+    cr.write_bytes(body.replace("\n", "\r").encode("utf-8"))
+    assert plan_body_digest(lf) == plan_body_digest(crlf) == plan_body_digest(cr)
+
+    # The Implementation Assumptions appendix is excluded regardless of newline
+    # style, so appending it (in any rendering) does not change the digest.
+    with_appendix = body + "\n## Implementation Assumptions\n\n- later\n"
+    appended = tmp_path / "appended.md"
+    appended.write_bytes(with_appendix.replace("\n", "\r\n").encode("utf-8"))
+    assert plan_body_digest(appended) == plan_body_digest(lf)
