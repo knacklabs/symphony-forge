@@ -1,0 +1,9 @@
+{
+  "event": "done",
+  "id": "Q-0114-06b5",
+  "profile": "quickfix",
+  "reason": "generic trunk de-hardcoding (derive origin/HEAD, fall back to main) so task start/markers/review work on develop-trunk repos; new bounded 'forge deps lock' (lockfile-only, package-manager-inferred) for dependency updates the sandbox and write-lock cannot do",
+  "started_at": "2026-08-27T05:02:55+00:00",
+  "completed_at": "2026-08-27T05:02:55+00:00",
+  "files": []
+}

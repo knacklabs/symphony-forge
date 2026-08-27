@@ -711,20 +711,55 @@ def task_marker_path(key: str, task_id: str) -> Path:
     return Path(".factory") / "stories" / key / "tasks" / task_id / "pr-ready.json"
 
 
+def default_trunk_branch(root: Path) -> str:
+    """The repo's integration trunk — origin's default branch, not a hardcoded
+    'main'. Task markers, the task-start base, and the branch-review diff all
+    live on whatever ``origin/HEAD`` points at (main / develop / trunk / …), so
+    deriving it keeps the harness correct on every repo instead of only on
+    main-trunk ones. Falls back to 'main' when the default cannot be resolved,
+    which preserves prior behaviour for main-trunk repos (zero regression)."""
+    # Branch/ref names are UTF-8 (unlike arbitrary file paths), so strict UTF-8
+    # decoding is correct here and needs no lossless surrogateescape.
+    ref = subprocess.run(
+        ["git", "symbolic-ref", "--quiet", "refs/remotes/origin/HEAD"],
+        cwd=root, capture_output=True, text=True, env=clean_git_env(),
+        encoding="utf-8",
+    )
+    if ref.returncode == 0 and ref.stdout.strip():
+        return ref.stdout.strip().rsplit("/", 1)[-1]
+    # origin/HEAD not set locally — ask the remote once, then fall back to main.
+    show = subprocess.run(
+        ["git", "remote", "show", "origin"],
+        cwd=root, capture_output=True, text=True, env=clean_git_env(),
+        encoding="utf-8",
+    )
+    for line in show.stdout.splitlines():
+        if "HEAD branch:" in line:
+            name = line.split("HEAD branch:", 1)[1].strip()
+            if name and name != "(unknown)":
+                return name
+    return "main"
+
+
 def task_marker_on_main(root: Path, key: str, task_id: str) -> bool:
-    """Refresh origin/main and report whether its tree contains the task marker."""
+    """Refresh the trunk and report whether its tree contains the task marker.
+
+    'main' in the name is historical: the branch queried is the resolved trunk
+    (``default_trunk_branch``), so a develop/trunk repo finds its markers too.
+    """
     marker = task_marker_path(key, task_id)
+    trunk = default_trunk_branch(root)
     fetch = subprocess.run(
-        ["git", "fetch", "origin", "main"], cwd=root, capture_output=True,
+        ["git", "fetch", "origin", trunk], cwd=root, capture_output=True,
         text=True, env=clean_git_env(), encoding="utf-8", errors="surrogateescape",
     )
     if fetch.returncode != 0:
         detail = fetch.stderr.strip() or fetch.stdout.strip()
         raise SystemExit(
-            "fetching origin/main failed" + (f": {detail}" if detail else "")
+            f"fetching origin/{trunk} failed" + (f": {detail}" if detail else "")
         )
     present = subprocess.run(
-        ["git", "cat-file", "-e", f"origin/main:{marker.as_posix()}"],
+        ["git", "cat-file", "-e", f"origin/{trunk}:{marker.as_posix()}"],
         cwd=root, capture_output=True, text=True, env=clean_git_env(),
         encoding="utf-8", errors="surrogateescape",
     )
@@ -983,17 +1018,18 @@ def load_review_artifacts(
 
 
 def branch_diff_digest(root: Path) -> str:
-    """Hash the committed product diff from origin/main to the current HEAD."""
+    """Hash the committed product diff from the trunk to the current HEAD."""
     from forge_cli.stages import WORKFLOW_PATHS, committed_paths
 
+    trunk = default_trunk_branch(root)
     merge_base = subprocess.run(
-        ["git", "merge-base", "origin/main", "HEAD"],
+        ["git", "merge-base", f"origin/{trunk}", "HEAD"],
         cwd=root, capture_output=True, text=True, env=clean_git_env(),
         encoding="utf-8", errors="surrogateescape",
     )
     if merge_base.returncode != 0 or not merge_base.stdout.strip():
         raise SystemExit(
-            "Cannot bind the branch review: origin/main has no merge base with HEAD."
+            f"Cannot bind the branch review: origin/{trunk} has no merge base with HEAD."
         )
     base_sha = merge_base.stdout.strip()
     current_head = head_sha(root)

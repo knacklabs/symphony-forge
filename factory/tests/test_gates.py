@@ -18311,3 +18311,54 @@ def test_plan_body_digest_is_line_ending_agnostic(tmp_path):
     appended = tmp_path / "appended.md"
     appended.write_bytes(with_appendix.replace("\n", "\r\n").encode("utf-8"))
     assert plan_body_digest(appended) == plan_body_digest(lf)
+
+
+def test_default_trunk_branch_derives_from_origin_head(tmp_path):
+    """The trunk (task markers, task-start base, review diff) is whatever
+    origin/HEAD points at — main, develop, trunk — not a hardcoded 'main', so the
+    harness works on any repo. Falls back to 'main' when unresolved, preserving
+    main-trunk behaviour."""
+    from factory_lib import default_trunk_branch
+    repo = tmp_path / "r"
+    repo.mkdir()
+    def git(*a):
+        subprocess.run(["git", *GIT_ID, *a], cwd=repo, check=True,
+                       capture_output=True, text=True)
+    subprocess.run(["git", "init", "-q"], cwd=repo, check=True,
+                   capture_output=True, text=True)
+    (repo / "f").write_text("x", encoding="utf-8")
+    git("add", "."); git("commit", "-qm", "c")
+    # No origin/HEAD and no 'origin' remote -> fall back to 'main'.
+    assert default_trunk_branch(repo) == "main"
+    # A develop-trunk remote: origin/HEAD -> origin/develop resolves to 'develop'.
+    sha = subprocess.run(["git", "rev-parse", "HEAD"], cwd=repo,
+                         capture_output=True, text=True).stdout.strip()
+    git("update-ref", "refs/remotes/origin/develop", sha)
+    git("symbolic-ref", "refs/remotes/origin/HEAD",
+        "refs/remotes/origin/develop")
+    assert default_trunk_branch(repo) == "develop"
+
+
+def test_forge_deps_lock_detects_manager_and_guards(tmp_path):
+    """`forge deps lock` infers the package manager from the lockfile present
+    (generic across pnpm/npm/yarn) and fails clearly with no package.json or no
+    lockfile, so it never silently no-ops."""
+    from forge_cli.deps import detect_locker, cmd_lock
+    root = tmp_path / "app"
+    root.mkdir()
+    assert detect_locker(root) is None
+    (root / "package-lock.json").write_text("{}", encoding="utf-8")
+    assert detect_locker(root)[1] == "npm"
+    (root / "pnpm-lock.yaml").write_text("", encoding="utf-8")
+    assert detect_locker(root)[1] == "pnpm"  # first-match precedence
+    # Guard: no package.json -> refuse.
+    bare = tmp_path / "bare"
+    bare.mkdir()
+    with pytest.raises(SystemExit):
+        cmd_lock(argparse.Namespace(repo=str(bare)))
+    # Guard: package.json but no lockfile -> refuse.
+    only_pkg = tmp_path / "pkg"
+    only_pkg.mkdir()
+    (only_pkg / "package.json").write_text("{}", encoding="utf-8")
+    with pytest.raises(SystemExit):
+        cmd_lock(argparse.Namespace(repo=str(only_pkg)))
