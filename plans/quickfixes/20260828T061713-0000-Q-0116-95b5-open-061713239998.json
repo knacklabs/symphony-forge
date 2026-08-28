@@ -1,0 +1,10 @@
+{
+  "event": "open",
+  "id": "Q-0116-95b5",
+  "profile": "quickfix",
+  "reason": "#145 stage A: DAG-aware task frontier \u2014 a deps-met task may start ahead of an unrelated earlier task (one active stage at a time; no-deps tasks default to their predecessor, preserving list order)",
+  "started_at": "2026-08-28T06:17:13+00:00",
+  "max_files": 5,
+  "files": [],
+  "harness_source": true
+}

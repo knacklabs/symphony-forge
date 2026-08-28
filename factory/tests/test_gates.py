@@ -15901,6 +15901,74 @@ def test_board_task_rows_match_frontier_states(repo, tmp_path):
     assert task_rows(repo)[0]["state"] == "done"
 
 
+def test_task_frontier_honours_dependency_dag(repo, tmp_path):
+    """#145 stage A: a deps-met task may start ahead of an unrelated earlier task."""
+    sign_off(repo)
+    intake(repo)
+    save_plan(repo, tmp_path)
+    from factory_lib import require_ready_task, task_ready_ids
+    def task(task_id: str, **extra) -> dict:
+        contracts = [
+            {**contract, "id": f"{contract['id']}-{task_id}"}
+            for contract in STAGE_TASK["plan_contracts"]
+        ]
+        return {**STAGE_TASK, "id": task_id, "plan_contracts": contracts,
+                "acceptance_criteria": [c["statement"] for c in contracts],
+                **extra}
+
+    tasks = [
+        task("T1"),
+        task("T2"),
+        task("T3", dependencies=["T1"]),
+        task("T4", dependencies=["T2"]),
+    ]
+    skeletons = [
+        {**skeletal_stage_task(t["id"]), **({"dependencies": t["dependencies"]}
+                                            if "dependencies" in t else {})}
+        for t in tasks
+    ]
+    code, out = run(
+        repo, "record_decomposition_from_json.py",
+        stdin=json.dumps({**DECOMP, "tasks": skeletons}),
+    )
+    assert code == 0, out
+    code, out = run(
+        repo, "record_decomposition_from_json.py",
+        stdin=json.dumps({**DECOMP, "tasks": [tasks[0], *skeletons[1:]]}),
+    )
+    assert code == 0, out
+    # Nothing done yet: only T1 is ready (T2 follows its predecessor T1).
+    assert task_ready_ids(repo) == ["T1"]
+    stages = json.loads((repo / ".factory" / "stages.json").read_text())
+    stages["stages"][0]["status"] = "done"
+    write_stages(repo, stages)
+    # T1 done: T2 (predecessor default) and T3 (explicit dep) are ready; T4 waits on T2.
+    assert task_ready_ids(repo) == ["T2", "T3"]
+    frontier = task_frontier_state(repo)
+    assert frontier and frontier[1]["id"] == "T2"
+    # Execution detail may be authored on the ready T3 ahead of T2, never on T4.
+    code, out = run(
+        repo, "record_decomposition_from_json.py",
+        stdin=json.dumps({**DECOMP, "tasks": [tasks[0], skeletons[1], tasks[2], skeletons[3]]}),
+    )
+    assert code == 0, out
+    code, out = run(
+        repo, "record_decomposition_from_json.py",
+        stdin=json.dumps({**DECOMP, "tasks": [tasks[0], skeletons[1], tasks[2], tasks[3]]}),
+    )
+    assert code != 0 and "T4: pending non-frontier task" in out
+    require_ready_task(repo, "T3", require_approval=False, require_grill=False)
+    with pytest.raises(SystemExit, match="T4 is not ready: waiting on T2"):
+        require_ready_task(repo, "T4", require_approval=False, require_grill=False)
+    # One active stage at a time: with T2 active, T3 must wait for it.
+    stages["stages"][1]["status"] = "active"
+    write_stages(repo, stages)
+    frontier = task_frontier_state(repo)
+    assert frontier and frontier[1]["id"] == "T2"
+    with pytest.raises(SystemExit, match="T3 cannot start while T2 is active"):
+        require_ready_task(repo, "T3", require_approval=False, require_grill=False)
+
+
 def test_stage_start_and_delegate_refuse_without_approved_task_plan(repo, tmp_path):
     sign_off(repo)
     intake(repo)
