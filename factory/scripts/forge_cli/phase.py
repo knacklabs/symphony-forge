@@ -371,9 +371,13 @@ def cmd_next(args: argparse.Namespace) -> None:
         elif review_problems:
             phase("reviewing")
             review_detail = ", ".join(reviews_missing) or "stale or incoherent lenses"
-            steps.append("[dev] Run ONE autoreview pass in Codex, three lenses "
-                         f"(factory/prompts/reviewer.md); repair: {review_detail} "
-                         "via record_review_from_json.py")
+            steps.append("[dev] Run the autoreview DIRECTLY (the orchestrating "
+                         "session — 0011, never a Codex review job), three lenses "
+                         f"(factory/prompts/reviewer.md); repair: {review_detail}. On "
+                         "ANY finding, delegate the fix to Codex (`./forge delegate "
+                         "<id>`), then re-run the autoreview — loop until every lens is "
+                         "clean; record each pass via record_review_from_json.py. Do "
+                         "NOT stop for a human between rounds.")
         elif user_facing and not functional_ready:
             phase("functional-check")
             steps.append("[dev] Task is user-facing: run functional-checker and record: "
@@ -394,7 +398,9 @@ def cmd_next(args: argparse.Namespace) -> None:
             steps.append("[dev] Per-task PR instead: seal each completed task with "
                          "`./forge task pr-ready <id>` — it writes the task marker, "
                          "pushes the branch, and opens its PR to the repo default branch "
-                         "(works stage-based; no `forge task start` worktree required)")
+                         "(works stage-based; no `forge task start` worktree required), "
+                         "then poll the PR's CI to green and fix any CI failure — no "
+                         "human touch is needed after the plan approval")
             steps.append("[EM] Next task afterwards: pick from ./forge roadmap list --pending, "
                          "then intake.py --issue <KEY> --title \"<title>\"")
     from .decisions import decision_records

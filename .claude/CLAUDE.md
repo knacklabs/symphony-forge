@@ -8,7 +8,7 @@ Read `AGENTS.md` first; it is the contract. Standards live in `constitution/`
 
 - Claude Code coordinates: discovery, planning, decisions, orchestration.
 - Codex executes: exploration, implementation, testing. Review is Claude's —
-  run the autoreview skill DIRECTLY, loop until clean post-rescue (0011).
+  run autoreview DIRECTLY; on findings delegate fixes to Codex and re-review, loop until clean (0011); then pr-ready → PR to default branch → poll CI green (fix failures). Never stop at review.
 - During planning, do NOT grep/read app code yourself — delegate `/codex:rescue`
   read-only: `gpt-5.6-terra` @ high to explore, `gpt-5.6-sol` @ xhigh to validate/debug. NEVER raw `codex exec`.
 
