@@ -1,0 +1,10 @@
+{
+  "event": "open",
+  "id": "Q-0118-2a83",
+  "profile": "quickfix",
+  "reason": "grill flow: sub-agent cold-read every round + converge before a single approval",
+  "started_at": "2026-08-28T15:46:05+00:00",
+  "max_files": 5,
+  "files": [],
+  "harness_source": true
+}
