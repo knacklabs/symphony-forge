@@ -26,11 +26,15 @@ not necessarily a separate process. The recorder accepts ONLY rounds that match 
 logged AskUserQuestion record (`record_grill_from_json.py`), and only the
 top-level Claude session in plan mode produces those log entries — a subagent or
 read-only Codex pass cannot. So for plan/task grills the top-level session drives
-the rounds through AskUserQuestion itself; a fresh subagent or Codex pass is still
-a legitimate way to gather independent findings first, but you must carry those
-findings back into your own AskUserQuestion rounds rather than hand the recorder a
-subagent's findings JSON (it will reject rounds that are not in the ledger). Read
-the artifact cold, as an adversary who did not write it. (The spec, signoff, and
+the rounds through AskUserQuestion itself — but because the coordinating session
+authored the plan, the independent cold-read pass is MANDATORY, not optional: on
+EVERY round spawn a fresh subagent (Agent tool) that reads the plan/contract cold
+and returns findings — never grill your own work inline — then carry ONLY those
+findings into your own AskUserQuestion rounds (the recorder rejects rounds not in
+the ledger, so the top-level session must still ask). Loop subagent → your
+AskUserQuestion rounds → answers → subagent again, until a round is clean AND the
+plan is stable; only then, approve exactly once. Read cold, as an adversary who
+did not write it. (The spec, signoff, and
 epics gates do not ledger-match, so a subagent grill records directly there.)
 
 Five gates, five scopes:
