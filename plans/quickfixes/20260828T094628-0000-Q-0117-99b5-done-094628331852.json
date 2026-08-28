@@ -1,0 +1,9 @@
+{
+  "event": "done",
+  "id": "Q-0117-99b5",
+  "profile": "quickfix",
+  "reason": "harness fixes from running the harness on a real project: board task-plan tabs, autoreview loop, grill sequencing, /grill-me install",
+  "started_at": "2026-08-28T09:46:27+00:00",
+  "completed_at": "2026-08-28T09:46:28+00:00",
+  "files": []
+}
