@@ -1,0 +1,9 @@
+{
+  "event": "done",
+  "id": "Q-0115-a655",
+  "profile": "quickfix",
+  "reason": "review-brief --all crashes on list-valued reviewer_focus (TypeError joining a list); render bullets like the delegate brief (#133); found closing a vendored client story right after re-vendoring to #143",
+  "started_at": "2026-08-28T04:44:02+00:00",
+  "completed_at": "2026-08-28T04:44:02+00:00",
+  "files": []
+}
