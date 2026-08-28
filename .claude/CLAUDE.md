@@ -29,9 +29,9 @@ Read `AGENTS.md` first; it is the contract. Standards live in `constitution/`
 
 ## Ground rules
 - Session write lock always armed: PLAN MODE never unlocks product/canon; delegate
-  writes, or during a companion outage use `forge mode degraded start --reason`, grill
-  (`/grill-me`), present to the HUMAN; on approval `./forge plan approve --by
-  "<name>"` and re-save — only its marker approves.
+  writes, or during a companion outage `forge mode degraded start --reason`. Grill
+  (`/grill-me`) BEFORE approval, loop rounds until clean; the human reviews the plan
+  on the BOARD (not chat), then `./forge plan approve --by "<name>"` + re-save — only its marker approves.
 - Decisions: `./forge decision new <slug>`; acceptance is HUMAN chat
   confirmation — then run accept/sign-off yourself, `--by "<name>"` + trailer.
 - Recording sign-off requires confirmed specs and their derived roadmap.
