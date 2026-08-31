@@ -2385,7 +2385,7 @@ function renderDag(state) {
       ? story.taskState || story.state : STATE_WORD[story.state] || story.state;
     const action = DAG.mode === "tasks"
       ? "Select to trace its dependency path."
-      : "Select to trace its dependency path. Double-click to open its task dependency graph.";
+      : "Select to trace its dependency path. Double-click or press Enter to open its task dependency graph.";
     node.setAttribute("aria-label", `${kind} ${story.key}${story.title ? " — " + story.title : ""}. ${stateWord}. ${parents.length} prerequisites and ${unlocks.length} direct downstream ${unlocks.length === 1 ? kind.toLowerCase() : `${kind.toLowerCase()}s`}. ${action}`);
     node.setAttribute("aria-pressed", "false");
     node.addEventListener("pointerenter", event => {
@@ -2397,6 +2397,9 @@ function renderDag(state) {
     });
     node.addEventListener("focus", () => {
       setDagHovered(story.key);
+      if (node.matches(":focus-visible")) {
+        focusDagStory(story.key, !REDUCE.matches, 220);
+      }
     });
     node.addEventListener("blur", () => {
       if (DAG.hovered === story.key) setDagHovered(null);
@@ -2409,6 +2412,11 @@ function renderDag(state) {
       event.preventDefault();
       openDagTaskView(story.key, event.detail !== 0, node);
     });
+    node.addEventListener("keydown", event => {
+      if (DAG.mode !== "stories" || event.key !== "Enter") return;
+      event.preventDefault();
+      openDagTaskView(story.key, false, node);
+    });
     nodes.appendChild(node);
     DAG.nodes.set(story.key, node);
   }
@@ -2416,10 +2424,14 @@ function renderDag(state) {
   if (DAG.selected && !layout.byKey.has(DAG.selected)) DAG.selected = null;
   if (DAG.hovered && !layout.byKey.has(DAG.hovered)) DAG.hovered = null;
   DAG.needsReset = DAG.needsReset || previousWidth !== layout.width || previousHeight !== layout.height;
-  if (DAG.mode === "stories") DAG.entryPending = DAG.entryPending || !previousWidth;
+  const returningToStories = DAG.mode === "stories" && Boolean(DAG.returnView);
+  if (DAG.mode === "stories" && !returningToStories) {
+    DAG.entryPending = DAG.entryPending || !previousWidth;
+  }
   applyDagSelection();
   if (DAG.mode === "tasks" && !previousWidth) resetDagView(false);
-  if (DAG.mode === "stories" && document.body.dataset.view === "dependencies"
+  if (DAG.mode === "stories" && !returningToStories
+      && document.body.dataset.view === "dependencies"
       && DAG.entryPending) scheduleDagEntrance();
 }
 
@@ -2894,6 +2906,10 @@ function zoomDag(factor, animate = true, point = null) {
 
 function retargetDagZoom(delta, point) {
   if (!DAG.layout) return;
+  if (REDUCE.matches) {
+    zoomDag(Math.exp(-delta * .00135), false, point);
+    return;
+  }
   if (!DAG.wheel) {
     stopDagMotion();
     DAG.wheel = {

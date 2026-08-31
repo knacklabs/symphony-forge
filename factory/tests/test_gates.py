@@ -10417,6 +10417,13 @@ def test_dependency_view_is_an_authored_read_only_dag():
     assert 'node.addEventListener("dblclick"' in dag
     assert 'if (DAG.mode !== "stories") return' in dag
     assert 'openDagTaskView(story.key' in dag
+    assert 'node.addEventListener("keydown"' in dag
+    assert 'event.key !== "Enter"' in dag
+    assert 'openDagTaskView(story.key, false, node)' in dag
+    assert 'node.matches(":focus-visible")' in dag
+    assert 'focusDagStory(story.key, !REDUCE.matches, 220)' in dag
+    assert "if (REDUCE.matches)" in dag[dag.index("function retargetDagZoom("):
+                                              dag.index("function stepDagZoom(")]
     assert "fetch(" not in dag
     assert all(method not in page for method in (
         "do_POST", "do_PUT", "do_PATCH", "do_DELETE"))
@@ -10578,10 +10585,15 @@ def test_story_double_click_opens_a_task_graph_inside_the_same_read_only_shell()
     assert 'node.addEventListener("dblclick"' in node_click
     assert 'if (DAG.mode !== "stories") return' in node_click
     assert 'openDagTaskView(story.key' in node_click
+    assert 'node.addEventListener("keydown"' in node_click
+    assert 'event.key !== "Enter"' in node_click
+    assert 'openDagTaskView(story.key, false, node)' in node_click
     assert node_click.index('selectDagNode(story.key') < node_click.index(
         'node.addEventListener("dblclick"')
     assert 'swapDagLevel("tasks", key, animate, originNode)' in open_tasks
     assert 'swapDagLevel("stories", null, animate)' in open_tasks
+    assert 'const returningToStories = DAG.mode === "stories" && Boolean(DAG.returnView)' in dag
+    assert 'DAG.mode === "stories" && !returningToStories' in dag
     assert 'document.querySelector("[data-dag-back]").hidden = !isTasks' in chrome
     assert 'DAG.mode === "tasks"' in chrome
 
