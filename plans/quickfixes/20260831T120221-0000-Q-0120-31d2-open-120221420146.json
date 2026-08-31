@@ -1,0 +1,12 @@
+{
+  "event": "open",
+  "id": "Q-0120-31d2",
+  "profile": "lite",
+  "reason": "Bounded two-file canon edit: legacy anomaly lens in griller.md + legacy intake/inventory steps in migrate-project\n  skill",
+  "started_at": "2026-08-31T12:02:21+00:00",
+  "max_files": 5,
+  "files": [],
+  "harness_source": true,
+  "by": "Ravi",
+  "base_sha": "44664efaa53f32b67d3f010f90f8f913baa5c879"
+}
