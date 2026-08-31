@@ -1,0 +1,12 @@
+{
+  "event": "open",
+  "id": "Q-0119-fc90",
+  "profile": "lite",
+  "reason": "Add the approved read-only dependency DAG board visualization and task graph navigation",
+  "started_at": "2026-08-31T10:48:02+00:00",
+  "max_files": 5,
+  "files": [],
+  "harness_source": true,
+  "by": "Nandeeshwar",
+  "base_sha": "44664efaa53f32b67d3f010f90f8f913baa5c879"
+}
