@@ -143,6 +143,19 @@ Five gates, five scopes:
   `acceptance_criteria`. A changed field makes the old task grill stale, and a
   write delegation refuses it; read-only delegation is unaffected.
 
+Legacy lens (adopted repos): when the plan or task touches code that predates
+the harness (a `forge adopt` migration), every cold-read ALSO hunts what code
+plus available evidence cannot explain — magic values, dead-looking flags,
+timing hacks, behavior no doc, commit, or decision justifies. Each anomaly
+enters the rounds recognition-style: show the snippet, ask the pointed
+question, recommended answer first. An answer that settles authority becomes a
+`./forge decision new` record confirmed by the named human; an anomaly nobody
+can explain gets its behavior pinned by a characterization test in the task's
+`required_tests` plus an `open_items` entry ("behavior pinned, reason
+unknown") — never silently resolved. Documents are testimony, code is the
+witness: cross-check every historical claim against the code and raise
+mismatches as contradictions, keeping the citation either way.
+
 Method:
 
 1. Read the artifacts in scope FIRST; derive your question list from actual
