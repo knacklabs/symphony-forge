@@ -66,11 +66,18 @@ def merge_task_detail(
     stage_by_id = {stage.get("id"): stage for stage in stages}
     derived = {row.get("id"): row for row in (derived_rows or [])}
     tasks = []
+    # The decomposition is the source of WHICH tasks exist; the stage tracker
+    # only supplies live status. Enumerate the planned tasks when derived rows
+    # are supplied (the active story) OR when the stage tracker is empty — a
+    # shipped, non-active story keeps its stages in a singleton that is no
+    # longer reachable by key, so falling through to `stages` there would drop
+    # the whole task graph to zero rows. Only when stages are present and no
+    # derived rows are given (a live story mid-flight) do stages drive the list.
     sources = (
         [stage_by_id.get(task.get("id"), {
             "id": task.get("id"), "title": task.get("title"),
         }) for task in planned_tasks]
-        if derived_rows is not None else stages
+        if derived_rows is not None or not stages else stages
     )
     for stage in sources:
         task = {"id": stage.get("id"), "title": stage.get("title"),

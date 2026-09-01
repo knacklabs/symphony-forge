@@ -1078,6 +1078,47 @@ def test_board_shows_shipped_story_tasks_when_plan_left_active_and_completed(
     assert story["lifecycle"]["planned"] is True
 
 
+def test_board_renders_shipped_story_from_decomposition_when_no_stages(
+    repo, tmp_path,
+):
+    # The harder shape the plan-moved test does not cover: a shipped, non-active
+    # story whose stage tracker is unreachable by key. Its stages lived in the
+    # global singleton while it was active; once another story became active and
+    # no scoped stages.json was left behind, evidence lookup returns nothing. The
+    # board must still render the task graph from the archived decomposition,
+    # never collapse it to "No task graph yet" (the completed-story board bug on
+    # a real shipped Foundation story that carried no scoped stages.json).
+    from forge_cli.board import aggregate_state
+
+    prepare_pr_ready_story(repo, tmp_path, scoped_layout=True)
+    code, out = run(repo, "pr_ready.py")
+    assert code == 0, out
+
+    def eng1():
+        return next(s for s in aggregate_state(repo)["stories"] if s["key"] == "ENG-1")
+
+    assert eng1()["tasks"], "tasks present at ship"
+
+    # Strip the scoped stage tracker AND clear the active pointer, so ENG-1's
+    # per-stage status is no longer reachable by key — exactly a shipped story
+    # whose stages only ever lived in the global singleton.
+    (repo / ".factory" / "stories" / "ENG-1" / "stages.json").unlink(missing_ok=True)
+    lib = load_factory_lib(repo)
+    state = run_state(repo)
+    state["issue_key"] = None
+    state["story"] = None
+    lib.dump_json(lib.run_state_path(repo), state)
+
+    story = eng1()
+    assert story["state"] == "shipped"
+    assert story["tasks"], (
+        "shipped story's task graph must render from the decomposition when the "
+        "stage tracker is unreachable"
+    )
+    assert len(story["tasks"]) == len(DECOMP["tasks"])
+    assert story["lifecycle"]["planned"] is True
+
+
 def test_pr_ready_legacy_story_still_archives_to_history(repo, tmp_path):
     sign_off(repo)
     assert signed_off(repo)
