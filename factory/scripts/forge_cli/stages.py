@@ -858,6 +858,8 @@ def _find(data: dict, stage_id: str) -> dict:
 
 
 def _cmd_start_locked(args: argparse.Namespace, base: Path) -> None:
+    from factory_lib import require_task_start_recorded
+    require_task_start_recorded(base, args.id)
     require_task_worktree(base)
     data = load_stages(base)
     if not data:

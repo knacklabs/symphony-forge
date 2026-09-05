@@ -154,13 +154,37 @@ def require_fresh_task_grill(
              f"{str(verdict)!r}, not 'pass'. Fix what it found, re-grill until a "
              "round is clean, then approve.")
     digest = plan_digest_without_assumptions(plan)
-    if digest not in (grill.get("task_plan_sha256"),
-                      grill.get("approved_task_plan_sha256")):
-        fail(f"task approval refused: the grill for {task_id} was recorded "
-             "against different plan text — the plan was edited after it passed, "
-             "so the grill no longer covers what you are approving (this is why "
-             "the board is not showing it). Re-grill the current plan, then "
-             "approve.")
+    if digest in (grill.get("task_plan_sha256"),
+                  grill.get("approved_task_plan_sha256")):
+        return
+    # The plan changed since the grill. WHO has to act depends on whether it
+    # had already been approved.
+    #
+    # Never approved: the grill has not read this text, so it is a re-grill.
+    #
+    # Already approved: the grill DID converge on this design and a human
+    # signed it off; the words then changed. Another adversarial cold read is
+    # not what is missing — the human is, because they approved specific text
+    # and it is no longer that text. Sending this back through the grill cost
+    # a full round for a one-sentence rewording, and worse, let a real design
+    # change be cleared by an agent re-grilling instead of by the person who
+    # approved the original.
+    if grill.get("approved_at") and grill.get("approved_by"):
+        fail(
+            f"task approval refused: the {task_id} plan CHANGED after "
+            f"{grill.get('approved_by')} approved it on "
+            f"{grill.get('approved_at')}.\n"
+            "  This does not need another grill — the grill already converged "
+            "on this design. It needs the human to read what changed and "
+            "approve the new text.\n"
+            f"  Show them the diff, then re-run this command once they have "
+            f"re-read the plan on the board."
+        )
+    fail(f"task approval refused: the grill for {task_id} was recorded "
+         "against different plan text — the plan was edited after it passed, "
+         "so the grill no longer covers what you are approving (this is why "
+         "the board is not showing it). Re-grill the current plan, then "
+         "approve.")
 
 
 def cmd_approve(args: argparse.Namespace) -> None:

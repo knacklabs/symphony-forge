@@ -207,6 +207,30 @@ genuine `confusion`, a hard `blocked`, or a `scope-change` — via
 that thread instead of guessing. The orchestrator resolves the event
 (`forge.py signal resolve <id> --notes "<answer>"` — an answer, a decision
 record, or a plan revision) and resumes the worker with the resolution.
+
+The orchestrator ANSWERS IT ITSELF, records the reasoning in `--notes`, and
+resumes — it does not relay the signal to the human — whenever the answer
+follows from what is already decided:
+
+- a `review_budget` ceiling reached: raise it with headroom and say why. The
+  ceiling stops runaway scope; it is not a statement about what the task must
+  do, and it is not a number worth a human's attention.
+- `write_scope` one or two files short of what the work mechanically implies —
+  a lockfile, a barrel/index file, a generated type, a doc reference to a
+  renamed script: extend the scope, name each file and why the work implies it.
+- a sandbox or environment block with a documented path (`docs/degraded-mode.md`,
+  a binding lesson, a pinned mirror): take that path.
+- anything answerable from the contract, the approved plan, the constitution or
+  an accepted decision record. Quote the source in the notes.
+
+It ESCALATES to the human only for a decision nobody has made yet: two accepted
+decisions that genuinely conflict, a requirement that cannot be met without
+changing what the feature DOES, or a scope extension that changes the task
+rather than completing it. When escalating, state the options and the
+recommendation — never relay the raw signal.
+
+A stop costs the human a context switch and costs the run its momentum, so the
+burden is on ESCALATING, never on deciding.
 Signals are schema-validated (`factory/schemas/signal.json`, attested
 `generated_by`), surfaced by `forge next` and the session-start hook, and
 OPEN SIGNALS BLOCK `pr_ready` — an unanswered contradiction cannot ship.

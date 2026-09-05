@@ -1,0 +1,182 @@
+"""What actually forces a re-grill, and what must never.
+
+Its own module — test_gates.py is one 690-test file where every added branch
+collides with every other.
+
+Measured cost of the old rule on one story: eighteen grill rounds. The grill
+bound the WHOLE task contract plus the whole product tree, so resolving a grill
+finding — which is done by editing the contract — invalidated the grill that
+found it, and committing the implementation invalidated it again. Neither loop
+can converge. Raising a review-budget ceiling from 38 files to 58, pure
+bookkeeping, cost a full adversarial round.
+"""
+from __future__ import annotations
+
+import json
+import sys
+from pathlib import Path
+
+import pytest
+
+from test_gates import HARNESS, git, load_factory_lib, repo, run  # noqa: F401
+
+sys.path.insert(0, str(HARNESS / "factory" / "scripts"))
+from factory_lib import GROUNDING_CONTRACT_FIELDS  # noqa: E402
+
+
+TASK = {
+    "id": "T1",
+    "title": "core slice",
+    "epic_id": "E1",
+    "objective": "Build the slice.",
+    "acceptance_criteria": ["the slice runs green"],
+    "plan_contracts": [{"id": "C1", "statement": "the slice runs green",
+                        "source": "plans/active/TEST-1-test-plan.md#ac"}],
+    "write_scope": ["src/"],
+    "required_tests": [{"id": "t1", "path": "a.spec.ts", "command": "run"}],
+    "verify_commands": ["npm test"],
+    "user_facing": False,
+    "review_budget": {"max_changed_files": 38, "max_changed_lines": 2000,
+                      "reason": "foundation"},
+    "reviewer_focus": "watch the boundaries",
+}
+
+
+def _seed(repo: Path):
+    """A minimal repo where grounding_digest can be derived."""
+    lib = load_factory_lib(repo)
+    control = Path(git(repo, "rev-parse", "--absolute-git-dir")) / "forge"
+    control.mkdir(parents=True, exist_ok=True)
+    plan = repo / "plans" / "active" / "TEST-1-test-plan.md"
+    plan.parent.mkdir(parents=True, exist_ok=True)
+    plan.write_text("# Plan\n\nThe approved story plan.\n", encoding="utf-8")
+    lib.dump_json(control / "run.json",
+                  {"issue_key": "TEST-1", "plan_file": "plans/active/TEST-1-test-plan.md"})
+    lib.dump_json(control / "decomposition.json",
+                  {"plan_file": "plans/active/TEST-1-test-plan.md", "tasks": [TASK]})
+    return lib
+
+
+# --------------------------------------------------------------- bookkeeping
+@pytest.mark.parametrize("field,value", [
+    ("review_budget", {"max_changed_files": 999, "max_changed_lines": 9,
+                       "reason": "raised after measuring"}),
+    ("reviewer_focus", "a completely rewritten focus"),
+    ("title", "renamed"),
+    ("epic_id", "E9"),
+])
+def test_bookkeeping_never_forces_a_regrill(repo: Path, field, value):
+    """The signal that interrupted the human to raise a file count.
+
+    A review budget is a stop on runaway scope, not a statement about what the
+    task must do. Binding the grill to it meant the human's own instruction —
+    "raise it and do not stop again" — was itself a stop.
+    """
+    lib = _seed(repo)
+    before = lib.grounding_digest(repo, TASK, in_stage=True)
+    after = lib.grounding_digest(repo, {**TASK, field: value}, in_stage=True)
+    assert before == after, f"changing {field} forced a re-grill"
+
+
+# --------------------------------------------------------------- substantive
+@pytest.mark.parametrize("field,value", [
+    ("objective", "Build something else entirely."),
+    ("acceptance_criteria", ["a different bar for done"]),
+    ("plan_contracts", [{"id": "C9", "statement": "different", "source": "x"}]),
+    ("write_scope", ["src/", "apps/api/src/NEW.ts"]),
+    ("required_tests", [{"id": "t2", "path": "b.spec.ts", "command": "run"}]),
+    ("verify_commands", ["npm run other"]),
+    ("user_facing", True),
+])
+def test_changing_what_the_work_is_forces_a_regrill(repo: Path, field, value):
+    # The gate has to keep working. Narrowing write_scope or adding a required
+    # test changes what was authorised, and the grill that read the old version
+    # does not speak to the new one.
+    lib = _seed(repo)
+    before = lib.grounding_digest(repo, TASK, in_stage=True)
+    after = lib.grounding_digest(repo, {**TASK, field: value}, in_stage=True)
+    assert before != after, f"changing {field} did NOT force a re-grill"
+
+
+def test_every_substantive_field_is_actually_bound(repo: Path):
+    # A field named in the tuple but absent from the payload would be silently
+    # unbound — the shape of the original defect.
+    lib = _seed(repo)
+    base = lib.grounding_digest(repo, TASK, in_stage=True)
+    for field in GROUNDING_CONTRACT_FIELDS:
+        mutated = {**TASK, field: ["mutated-sentinel"]}
+        assert lib.grounding_digest(repo, mutated, in_stage=True) != base, field
+
+
+# -------------------------------------------------------------- product tree
+def test_the_work_does_not_invalidate_its_own_authorisation(repo: Path):
+    """The circularity, stated as a test.
+
+    delegate refuses without a fresh grill; committing the implementation moved
+    the tree; the tree was part of the grill's binding. So the only way to fix
+    delivered code was blocked by having delivered it.
+    """
+    lib = _seed(repo)
+    before = lib.grounding_digest(repo, TASK, in_stage=True)
+    (repo / "src").mkdir(exist_ok=True)
+    (repo / "src" / "implementation.ts").write_text(
+        "export const built = true;\n", encoding="utf-8")
+    git(repo, "add", "-A")
+    git(repo, "-c", "user.email=t@t", "-c", "user.name=t", "commit",
+        "-m", "the implementation lands")
+    assert lib.grounding_digest(repo, TASK, in_stage=True) == before, (
+        "committing the implementation still stales the grill")
+
+
+def test_before_the_stage_opens_the_tree_still_counts(repo: Path):
+    # The other half. A plan is grilled against a codebase; if that codebase
+    # moves BEFORE the work is authorised, the grill read something else.
+    lib = _seed(repo)
+    before = lib.grounding_digest(repo, TASK, in_stage=False)
+    (repo / "src").mkdir(exist_ok=True)
+    (repo / "src" / "elsewhere.ts").write_text("export const x = 1;\n",
+                                               encoding="utf-8")
+    git(repo, "add", "-A")
+    git(repo, "-c", "user.email=t@t", "-c", "user.name=t", "commit",
+        "-m", "unrelated work lands first")
+    assert lib.grounding_digest(repo, TASK, in_stage=False) != before
+
+
+def test_in_stage_is_decided_by_the_stage_not_the_caller(repo: Path):
+    # Four call sites asked this question three different ways; the read-only
+    # one never asked it at all, so the board and `forge next` reported STALE
+    # for delivered work and kept routing it back to the grill.
+    lib = _seed(repo)
+    control = Path(git(repo, "rev-parse", "--absolute-git-dir")) / "forge"
+    lib.dump_json(control / "stages.json", {"stages": [
+        {"id": "T1", "status": "pending"}]})
+    assert lib.task_in_stage(repo, "T1") is False
+    for status in ("active", "done"):
+        lib.dump_json(control / "stages.json", {"stages": [
+            {"id": "T1", "status": status}]})
+        assert lib.task_in_stage(repo, "T1") is True, status
+
+
+# ------------------------------------------------------------- compatibility
+def test_a_grill_recorded_by_older_tooling_still_verifies(repo: Path):
+    """Upgrading must not demand a re-grill of every in-flight task.
+
+    The legacy digest covers a SUPERSET of what the current rule covers, so
+    accepting it as an alternative cannot let through anything the current rule
+    would refuse.
+    """
+    lib = _seed(repo)
+    legacy = lib.legacy_grounding_digest(repo, TASK)
+    assert lib.grounding_matches(repo, TASK, legacy, in_stage=True)
+    assert not lib.grounding_matches(repo, TASK, "not-a-digest", in_stage=True)
+
+    # And it is not a bypass: a legacy record whose contract changed is still
+    # refused, because the legacy digest covered that field too.
+    moved = {**TASK, "write_scope": ["src/", "src/extra.ts"]}
+    assert not lib.grounding_matches(repo, moved, legacy, in_stage=True)
+
+
+def test_a_missing_digest_is_never_treated_as_a_match(repo: Path):
+    lib = _seed(repo)
+    for empty in ("", None):
+        assert not lib.grounding_matches(repo, TASK, empty, in_stage=True)

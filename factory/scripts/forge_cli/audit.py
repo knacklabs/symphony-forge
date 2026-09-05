@@ -202,11 +202,15 @@ def grills_still_ground(base: Path) -> list[str]:
             from factory_lib import task_state_root
             treeish = stage_baseline(task_state_root(base, task_id), stage)
         try:
-            expected = grounding_digest(base, task, treeish=treeish)
+            from factory_lib import grounding_matches, task_in_stage
+            grounded = grounding_matches(
+                base, task, record.get("input_sha256"), treeish=treeish,
+                in_stage=task_in_stage(base, task_id),
+            )
         except SystemExit as exc:
             problems.append(f"{task_id} grill cannot be re-derived: {exc}")
             continue
-        if record.get("input_sha256") != expected:
+        if not grounded:
             basis = record.get("grounding_basis") or "unrecorded"
             problems.append(
                 f"{task_id} grill no longer grounds: it claims "

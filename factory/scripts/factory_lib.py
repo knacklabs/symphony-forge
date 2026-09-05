@@ -1771,7 +1771,10 @@ def require_task_grill(
             f".factory/grills/tasks/{task_id}.json has no commit stamp — re-record "
             f"with current tooling using `{record_command}`."
         )
-    if data.get("input_sha256") != grounding_digest(root, task, treeish=treeish):
+    if not grounding_matches(
+        root, task, data.get("input_sha256"), treeish=treeish,
+        in_stage=task_in_stage(root, task_id),
+    ):
         # A digest mismatch has two very different causes, and reporting both as
         # "STALE" sent a reader hunting for a content change that never
         # happened. When the grill was ground on a DIFFERENT BASIS than the one
@@ -1928,8 +1931,37 @@ def requirements_digest(root: Path, spec_path: Path) -> str:
     return hashlib.sha256(payload).hexdigest()
 
 
-def grounding_digest(root: Path, task: dict, *, treeish: str = "") -> str:
-    """Bind a task grill to its full contract, approved plan, and product tree."""
+GROUNDING_CONTRACT_FIELDS = (
+    # What the task IS. A change here changes the work, so the grill that
+    # examined the old version no longer speaks to the new one.
+    "objective",
+    "acceptance_criteria",
+    "plan_contracts",
+    "write_scope",
+    "required_tests",
+    "verify_commands",
+    "user_facing",
+)
+# Deliberately NOT grounded: `review_budget` and `reviewer_focus` are
+# bookkeeping for the reviewer, and `title`/`id`/`epic_id` are labels. Raising
+# a file-count ceiling used to invalidate the grill and force a full re-grill
+# round — the ceiling is a stop on runaway scope, never a statement about what
+# the task must do.
+
+
+def task_in_stage(root: Path, task_id: str) -> bool:
+    """True once `stage start` has opened this task's stage.
+
+    From this moment the product tree moves because of the work the grill
+    authorised, so it stops being part of the grounding.
+    """
+    return task_stage_record(root, task_id).get("status") in ("active", "done")
+
+
+def grounding_digest(root: Path, task: dict, *, treeish: str = "",
+                     in_stage: bool = False) -> str:
+    """Bind a task grill to what the work IS: the substantive contract, the
+    approved plan, and — only before the stage opens — the product tree."""
     decomposition = load_json(protected_decomposition_state_path(root), default={})
     plan_file = decomposition.get("plan_file")
     if not isinstance(plan_file, str) or not plan_file.strip():
@@ -1952,6 +1984,45 @@ def grounding_digest(root: Path, task: dict, *, treeish: str = "") -> str:
             f"cannot derive the task grounding digest: approved plan {plan_file!r} "
             "does not exist"
         )
+    body = {
+        "contract": {field: task.get(field) for field in GROUNDING_CONTRACT_FIELDS},
+        "plan_sha256": plan_digest_without_assumptions(plan),
+    }
+    # The product tree is part of the grounding only until the stage opens.
+    # Before work starts, the plan was grilled against a codebase and a change
+    # there means the grill read something else. After work starts, the tree
+    # moves BECAUSE OF the work the grill authorised, so binding to it makes
+    # the gate self-defeating: committing the implementation stales the grill,
+    # and the grill is what `forge delegate` needs to fix the implementation.
+    if not in_stage:
+        body["product_tree_sha256"] = product_tree_digest(root, treeish)
+    payload = json.dumps(body, sort_keys=True, separators=(",", ":"),
+                         ensure_ascii=True)
+    return hashlib.sha256(payload.encode()).hexdigest()
+
+
+def legacy_grounding_digest(root: Path, task: dict, *, treeish: str = "") -> str:
+    """The pre-split digest: the WHOLE task dict plus the tree, unconditionally.
+
+    Kept so a grill recorded by older tooling still verifies. It is strictly
+    STRICTER than the current rule — it covers every field the current one
+    covers and more — so accepting it as an alternative can never let through
+    something the current rule would refuse.
+    """
+    decomposition = load_json(protected_decomposition_state_path(root), default={})
+    plan_file = decomposition.get("plan_file") or load_json(
+        run_state_path(root), default={}).get("plan_file")
+    if not isinstance(plan_file, str) or not plan_file.strip():
+        raise SystemExit(
+            "cannot derive the task grounding digest: the protected decomposition "
+            "does not name its approved plan"
+        )
+    plan = (root / plan_file).resolve()
+    if not plan.is_file():
+        raise SystemExit(
+            f"cannot derive the task grounding digest: approved plan {plan_file!r} "
+            "does not exist"
+        )
     payload = json.dumps(
         {
             "contract": task,
@@ -1963,6 +2034,25 @@ def grounding_digest(root: Path, task: dict, *, treeish: str = "") -> str:
         ensure_ascii=True,
     )
     return hashlib.sha256(payload.encode()).hexdigest()
+
+
+def grounding_matches(root: Path, task: dict, recorded: str, *,
+                      treeish: str = "", in_stage: bool = False) -> bool:
+    """Does a recorded grill still bind its inputs?
+
+    Accepts the legacy digest too. That is a compatibility path, not a hole:
+    the legacy digest covers a superset of the inputs, so anything it accepts
+    the current rule would also accept.
+    """
+    if not recorded:
+        return False
+    if recorded == grounding_digest(root, task, treeish=treeish,
+                                    in_stage=in_stage):
+        return True
+    try:
+        return recorded == legacy_grounding_digest(root, task, treeish=treeish)
+    except SystemExit:
+        return False
 
 
 _TASK_CONTRACT_FIELDS = (
@@ -1991,7 +2081,10 @@ def _task_grill_fresh(root: Path, task: dict, grill: dict) -> bool:
         grill.get("task_plan_sha256") == plan_digest_without_assumptions(plan)
     )
     try:
-        grounding = grounding_digest(root, task)
+        grounded = grounding_matches(
+            root, task, grill.get("input_sha256"),
+            in_stage=task_in_stage(root, str(task_id or "")),
+        )
     except SystemExit:
         # The approved story plan is gone — e.g. a shipped or archived story
         # whose plan moved out of plans/active/. A grill cannot be "fresh"
@@ -2003,7 +2096,7 @@ def _task_grill_fresh(root: Path, task: dict, grill: dict) -> bool:
     return bool(
         grill.get("verdict") == "pass"
         and grill.get("commit")
-        and grill.get("input_sha256") == grounding
+        and grounded
         and plan_provenance_ok
     )
 
@@ -2316,6 +2409,30 @@ def task_frontier_state(root: Path) -> tuple[str, dict] | None:
         return plan_state, frontier
     state = "delegate" if stage.get("status") == "active" else "stage-start"
     return state, frontier
+
+
+def require_task_start_recorded(root: Path, task_id: str) -> None:
+    """`stage start` is the wrong place to discover `task start` was skipped.
+
+    require_task_worktree returns early when the run pointer has no task_id --
+    the very state a skipped `task start` leaves -- so every task-level guard
+    silently stopped checking. This asks the question those guards assume has
+    already been answered, at the one moment it can still be answered cheaply:
+    before the stage opens and pins a baseline.
+    """
+    state = load_json(run_state_path(root), default={})
+    recorded = state.get("task_id")
+    if isinstance(recorded, str) and recorded:
+        return
+    raise SystemExit(
+        f"stage start refused: `./forge task start {task_id}` has not been run "
+        f"on this checkout.\n"
+        f"  It creates the task branch and its SIBLING WORKTREE and pins "
+        f"base_main_sha; without it the work lands on the trunk's own tree and "
+        f"the seal cannot measure the diff later.\n"
+        f"  Run `./forge task start {task_id}`, then run this from INSIDE the "
+        f"worktree it prints."
+    )
 
 
 def require_task_worktree(root: Path, *, allow_completed: bool = False) -> None:

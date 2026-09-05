@@ -211,9 +211,17 @@ def cmd_next(args: argparse.Namespace) -> None:
     open_sigs = open_signals(base)
     if open_sigs:
         ids = ", ".join(s["id"] for s in open_sigs[:3])
-        steps.append(f"[orchestrator] {len(open_sigs)} OPEN worker signal(s) ({ids}) — a "
-                     "paused worker is waiting: forge.py signal list --open, then "
-                     "signal resolve <id> --notes \"...\" and resume the rescue")
+        steps.append(
+            f"[orchestrator] {len(open_sigs)} OPEN worker signal(s) ({ids}) — a "
+            "paused worker is waiting: forge.py signal list --open, then "
+            "signal resolve <id> --notes \"...\" and resume the rescue. ANSWER "
+            "IT YOURSELF and record why (WORKFLOW.md) when it is a review "
+            "budget ceiling, a write_scope short by files the work mechanically "
+            "implies, a sandbox block with a documented path, or anything the "
+            "contract, plan, constitution or an accepted decision already "
+            "settles. Escalate ONLY a decision nobody has made yet, with "
+            "options and a recommendation — the burden is on escalating, not "
+            "on deciding.")
     active_window = load_active(base)
     if active_window and profile_of(active_window) == "lite":
         steps.append(
