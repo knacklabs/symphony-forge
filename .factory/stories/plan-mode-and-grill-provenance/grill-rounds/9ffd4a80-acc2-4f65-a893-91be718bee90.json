@@ -1,0 +1,44 @@
+{
+  "generated_by": "claude-code:plan-mode",
+  "questions": [
+    {
+      "question": "Who is this migration capability for, primarily?",
+      "options": [
+        "KnackLabs client work",
+        "Product for other teams",
+        "Both, KnackLabs first"
+      ],
+      "chosen": "Both, KnackLabs first"
+    },
+    {
+      "question": "What does success look like for a migrated legacy project?",
+      "options": [
+        "First safe shipped change",
+        "Reconstructed canon",
+        "Architect confidence"
+      ],
+      "chosen": "Reconstructed canon"
+    },
+    {
+      "question": "What sources can you realistically count on having access to?",
+      "options": [
+        "Repo + git history only",
+        "GitHub PRs + reviews",
+        "Jira/Confluence",
+        "Slack/people"
+      ],
+      "chosen": null
+    },
+    {
+      "question": "Challenge: do you actually need the WHOLE history reconstructed upfront, or just enough context per change? Upfront archaeology on a 15-year codebase may be mostly waste \u2014 most reconstructed docs will never be read.",
+      "options": [
+        "JIT per-change archaeology",
+        "Upfront full sweep",
+        "Thin map + JIT depth"
+      ],
+      "chosen": "Upfront full sweep"
+    }
+  ],
+  "at": "2026-08-31T10:57:42.498762+00:00",
+  "session_id": "23d83fed-46b1-450d-9f2a-883644b3877f"
+}

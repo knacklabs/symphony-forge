@@ -1,0 +1,9 @@
+{
+  "event": "done",
+  "id": "Q-0119-f0df",
+  "profile": "quickfix",
+  "reason": "Add legacy anomaly lens to griller rubric and legacy intake/inventory steps to migrate-project skill (validated plan we-made-a-good-humble-acorn)",
+  "started_at": "2026-08-31T11:57:48+00:00",
+  "completed_at": "2026-08-31T12:02:10+00:00",
+  "files": []
+}
