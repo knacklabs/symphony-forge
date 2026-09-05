@@ -524,6 +524,11 @@ def main() -> None:
     p_ss.add_argument("id", help="stage id from the recorded decomposition")
     p_ss.add_argument("--parallel", action="store_true",
                       help="unsupported: tasks are sequential inside one story worktree")
+    p_ss.add_argument(
+        "--trunk", action="store_true",
+        help="run this stage on the trunk's tree instead of a task worktree; "
+             "recorded on the stage, so a trunk-based run is a choice someone "
+             "made rather than a step someone forgot")
     p_ss.add_argument("--repo")
     p_ss.set_defaults(func=stages_mod.cmd_start)
     p_sd = st_sub.add_parser("done", help="finish a stage AFTER local autoreview + commit")

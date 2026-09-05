@@ -2411,7 +2411,8 @@ def task_frontier_state(root: Path) -> tuple[str, dict] | None:
     return state, frontier
 
 
-def require_task_start_recorded(root: Path, task_id: str) -> None:
+def require_task_start_recorded(root: Path, task_id: str, *,
+                                trunk: bool = False) -> None:
     """`stage start` is the wrong place to discover `task start` was skipped.
 
     require_task_worktree returns early when the run pointer has no task_id --
@@ -2424,6 +2425,8 @@ def require_task_start_recorded(root: Path, task_id: str) -> None:
     recorded = state.get("task_id")
     if isinstance(recorded, str) and recorded:
         return
+    if trunk:
+        return
     raise SystemExit(
         f"stage start refused: `./forge task start {task_id}` has not been run "
         f"on this checkout.\n"
@@ -2431,7 +2434,11 @@ def require_task_start_recorded(root: Path, task_id: str) -> None:
         f"base_main_sha; without it the work lands on the trunk's own tree and "
         f"the seal cannot measure the diff later.\n"
         f"  Run `./forge task start {task_id}`, then run this from INSIDE the "
-        f"worktree it prints."
+        f"worktree it prints.\n"
+        f"  Deliberately working on the trunk instead? Say so: "
+        f"`./forge stage start {task_id} --trunk`. It is recorded on the "
+        f"stage, so a trunk-based run is a choice someone made rather than "
+        f"a step someone forgot."
     )
 
 

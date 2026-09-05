@@ -6303,7 +6303,7 @@ def test_grounding_digest_staleness_matrix(repo):
         "issue": "TEST-1",
         "stages": [{"id": "T1", "title": "grounding", "status": "pending"}],
     })
-    code, out = run(repo, "forge.py", "stage", "start", "T1")
+    code, out = run(repo, "forge.py", "stage", "start", "T1", "--trunk")
     assert code == 0, out
 
 
@@ -7696,7 +7696,7 @@ def test_planning_lock_forces_plan_mode(repo, tmp_path):
     assert "deny" in out and "forge delegate" in out
     code, out = record_task_grill(repo, task)
     assert code == 0, out
-    run(repo, "forge.py", "stage", "start", "T1")
+    run(repo, "forge.py", "stage", "start", "T1", "--trunk")
     code, out = hook(repo, {"tool_name": "Bash", "permission_mode": "default",
                             "tool_input": {"command": companion + " --write "
                                            "--prompt-file .factory/briefs/T1.md"}})
@@ -11236,7 +11236,7 @@ def test_recorder_holds_the_task_narrative_contract(repo, tmp_path):
     assert code == 0, out
     code, out = record_task_grill(repo, DECOMP["tasks"][0])
     assert code == 0, out
-    run(repo, "forge.py", "stage", "start", "T1")
+    run(repo, "forge.py", "stage", "start", "T1", "--trunk")
     launch_fake(repo, tmp_path, "T1")
     write_in_scope(repo, "src/core.py")  # stage done measures the diff
     stamp_and_commit(repo)
@@ -11874,7 +11874,7 @@ def test_stage_loop_orders_execution_and_gates_pr_ready(repo, tmp_path):
     ]}
     record_skeleton_then_frontier(repo, decomp["tasks"])
     # Order is strict inside one story worktree.
-    code, out = run(repo, "forge.py", "stage", "start", "T2")
+    code, out = run(repo, "forge.py", "stage", "start", "T2", "--trunk")
     assert code != 0 and "T1" in out
     code, out = run(repo, "forge.py", "stage", "start", "T2", "--parallel")
     assert code != 0 and "task stages are sequential" in out
@@ -11885,7 +11885,7 @@ def test_stage_loop_orders_execution_and_gates_pr_ready(repo, tmp_path):
     git(repo, "commit", "-qm", "stage baseline")
     code, out = record_task_grill(repo, t1)
     assert code == 0, out
-    code, out = run(repo, "forge.py", "stage", "start", "T1")
+    code, out = run(repo, "forge.py", "stage", "start", "T1", "--trunk")
     assert code == 0, out
     launch_fake(repo, tmp_path, "T1")
     write_in_scope(repo, "src/api/invoices.py")
@@ -11932,7 +11932,7 @@ def test_stage_loop_orders_execution_and_gates_pr_ready(repo, tmp_path):
     # The next task starts only after its predecessor is done.
     code, out = record_task_grill(repo, decomp["tasks"][1])
     assert code == 0, out
-    code, out = run(repo, "forge.py", "stage", "start", "T2")
+    code, out = run(repo, "forge.py", "stage", "start", "T2", "--trunk")
     assert code == 0, out
     launch_fake(repo, tmp_path, "T2")
     write_in_scope(repo, "src/ui/list.py")
@@ -12723,7 +12723,7 @@ def test_incomplete_is_refused_when_the_proof_says_the_work_is_done(
     save_plan(repo, tmp_path)
     record_skeleton_then_frontier(repo, [task])
     record_task_grill(repo, task)
-    code, out = run(repo, "forge.py", "stage", "start", "T1")
+    code, out = run(repo, "forge.py", "stage", "start", "T1", "--trunk")
     assert code == 0, out
 
     lib = load_factory_lib(repo)
@@ -12908,7 +12908,7 @@ def test_require_task_worktree_noops_for_story_level_run(repo, tmp_path):
     control = delegation_ledger(repo).parent
     pointer = json.loads((control / "run.json").read_text())
     assert pointer.get("branch") and "task_id" not in pointer
-    code, out = run(repo, "forge.py", "stage", "start", "T1")
+    code, out = run(repo, "forge.py", "stage", "start", "T1", "--trunk")
     assert code == 0, out
     code, out = run(repo, "forge.py", "delegate", "T1", "--print-only",
                     env=fake_companion_env(tmp_path))
@@ -12931,12 +12931,12 @@ def test_stage_start_and_delegate_refuse_from_wrong_task_worktree(repo, tmp_path
     current_branch = git(repo, "symbolic-ref", "--short", "HEAD")
     pointer.update({"task_id": "T1", "branch": "feat/ENG-1-wrong"})
     (control / "run.json").write_text(json.dumps(pointer))
-    code, out = run(repo, "forge.py", "stage", "start", "T1")
+    code, out = run(repo, "forge.py", "stage", "start", "T1", "--trunk")
     assert code != 0 and "task worktree required" in out, out
 
     pointer["branch"] = current_branch
     (control / "run.json").write_text(json.dumps(pointer))
-    code, out = run(repo, "forge.py", "stage", "start", "T1")
+    code, out = run(repo, "forge.py", "stage", "start", "T1", "--trunk")
     assert code == 0, out
     pointer["branch"] = "feat/ENG-1-wrong"
     (control / "run.json").write_text(json.dumps(pointer))
@@ -12965,7 +12965,7 @@ def start_stage(repo: Path, tmp_path: Path, task: dict, stage_id: str = "T1",
         git(repo, "commit", "-qm", "settle stage fixture inputs")
     code, out = record_task_grill(repo, task)
     assert code == 0, out
-    code, out = run(repo, "forge.py", "stage", "start", stage_id)
+    code, out = run(repo, "forge.py", "stage", "start", stage_id, "--trunk")
     assert code == 0, out
     if launch:
         launch_fake(repo, tmp_path, stage_id)
@@ -12986,7 +12986,7 @@ def test_plan_digest_is_newline_stable_across_record_and_stage_start(repo, tmp_p
     code, out = record_task_grill(repo, STAGE_TASK)
     assert code == 0, out
     assert plan.read_bytes() == before
-    code, out = run(repo, "forge.py", "stage", "start", "T1")
+    code, out = run(repo, "forge.py", "stage", "start", "T1", "--trunk")
     assert code == 0, out
 
 
@@ -14375,7 +14375,7 @@ def test_completed_contract_check_uses_protected_stage_digest(repo, tmp_path):
 def test_stage_start_refuses_to_rebaseline_an_unchanged_active_contract(repo, tmp_path):
     start_stage(repo, tmp_path, STAGE_TASK)
     write_in_scope(repo, "billing/ledger.py")
-    code, out = run(repo, "forge.py", "stage", "start", "T1")
+    code, out = run(repo, "forge.py", "stage", "start", "T1", "--trunk")
     assert code != 0 and "already active" in out and "erase" in out
 
 
@@ -14425,7 +14425,7 @@ def test_stage_start_never_moves_the_baseline(repo, tmp_path):
     code, out = run(repo, "record_decomposition_from_json.py",
                     stdin=json.dumps({**DECOMP, "tasks": [widened]}))
     assert code == 0, out
-    code, out = run(repo, "forge.py", "stage", "start", "T1")
+    code, out = run(repo, "forge.py", "stage", "start", "T1", "--trunk")
     assert code != 0 and "not something to move" in out
 
     # ...and the ref still points where it did, so the work stays measurable.
@@ -14571,14 +14571,14 @@ def test_edited_approved_plan_refused_at_rerecord_and_stage_start(repo, tmp_path
     assert out.strip() == expected_refusal
     shared_refusal = out
 
-    code, out = run(repo, "forge.py", "stage", "start", "T1")
+    code, out = run(repo, "forge.py", "stage", "start", "T1", "--trunk")
     assert code != 0, out
     assert out == shared_refusal
 
     # Absence must refuse too: a stamped decomposition claims a binding, so
     # failing to VERIFY it is not permission to proceed.
     plan.unlink()
-    code, out = run(repo, "forge.py", "stage", "start", "T1")
+    code, out = run(repo, "forge.py", "stage", "start", "T1", "--trunk")
     assert code != 0, out
     assert out == shared_refusal
 
@@ -15082,7 +15082,7 @@ def test_stage_start_refuses_unready_or_ungrilled_contract(repo, tmp_path):
         )
         assert code == 0, out
         before = (authority.read_bytes(), mirror.read_bytes())
-        code, out = run(repo, "forge.py", "stage", "start", "T1")
+        code, out = run(repo, "forge.py", "stage", "start", "T1", "--trunk")
         assert code != 0 and field in out
         assert "record_decomposition_from_json.py --input <json>" in out
         assert (authority.read_bytes(), mirror.read_bytes()) == before
@@ -15094,7 +15094,7 @@ def test_stage_start_refuses_unready_or_ungrilled_contract(repo, tmp_path):
     )
     assert code == 0, out
     before = (authority.read_bytes(), mirror.read_bytes())
-    code, out = run(repo, "forge.py", "stage", "start", "T1")
+    code, out = run(repo, "forge.py", "stage", "start", "T1", "--trunk")
     assert code != 0 and "Task plan required first" in out
     assert "./forge task plan save T1 --from <path>" in out
     assert (authority.read_bytes(), mirror.read_bytes()) == before
@@ -15109,7 +15109,7 @@ def test_stage_start_refuses_unready_or_ungrilled_contract(repo, tmp_path):
     )
     assert code == 0, out
     before = (authority.read_bytes(), mirror.read_bytes())
-    code, out = run(repo, "forge.py", "stage", "start", "T1")
+    code, out = run(repo, "forge.py", "stage", "start", "T1", "--trunk")
     assert code != 0 and "STALE" in out and "grounding inputs changed" in out
     assert (authority.read_bytes(), mirror.read_bytes()) == before
 
@@ -15211,7 +15211,7 @@ def test_delegate_derives_write_from_stage_state(repo, tmp_path):
             and "Write access: NO" in out and "not launched" in out)
     code, out = record_task_grill(repo, DELEGATE_TASK)
     assert code == 0, out
-    run(repo, "forge.py", "stage", "start", "T1")
+    run(repo, "forge.py", "stage", "start", "T1", "--trunk")
     code, out = run(repo, "forge.py", "delegate", "T1", "--print-only",
                     env={"HOME": home})
     assert code == 0 and "--write" in out
@@ -15450,7 +15450,7 @@ def test_workspace_decomposition_mirror_cannot_forge_task_contract(
     mirror.write_text(json.dumps(forged))
     code, out = record_task_grill(repo, STAGE_TASK)
     assert code == 0, out
-    code, out = run(repo, "forge.py", "stage", "start", "T1")
+    code, out = run(repo, "forge.py", "stage", "start", "T1", "--trunk")
     assert code == 0, out
     code, out = run(repo, "forge.py", "delegate", "T1", "--print-only",
                     env={"HOME": str(fake_companion_home(tmp_path))})
@@ -15564,7 +15564,7 @@ def test_stage_migrate_requires_confirmation_and_adopts_legacy_state(
     assert (protected / "stages.json").is_file()
     code, out = record_task_grill(repo, STAGE_TASK)
     assert code == 0, out
-    code, out = run(repo, "forge.py", "stage", "start", "T1")
+    code, out = run(repo, "forge.py", "stage", "start", "T1", "--trunk")
     assert code == 0, out
 
 
@@ -16538,7 +16538,7 @@ def test_stage_close_exclusion_blocks_a_new_delegate(repo, tmp_path):
         with delegation_exclusion(repo, "T1", kind="stage-close"):
             code, out = run(repo, "forge.py", "delegate", "T1",
                             env={"HOME": str(fake_companion_home(tmp_path))})
-            start_code, start_out = run(repo, "forge.py", "stage", "start", "T1")
+            start_code, start_out = run(repo, "forge.py", "stage", "start", "T1", "--trunk")
     finally:
         sys.path.pop(0)
     assert code != 0 and "active protected lock" in out
@@ -16963,7 +16963,7 @@ def test_board_task_rows_match_frontier_states(repo, tmp_path):
     assert task_rows(repo)[0]["state"] == "grilled"
     assert task_rows(repo)[0]["grill_freshness"] == "fresh"
 
-    code, out = run(repo, "forge.py", "stage", "start", "T1")
+    code, out = run(repo, "forge.py", "stage", "start", "T1", "--trunk")
     assert code == 0, out
     frontier = task_frontier_state(repo)
     assert frontier and frontier[0] == "delegate"
@@ -17062,11 +17062,11 @@ def test_stage_start_and_delegate_refuse_without_approved_task_plan(repo, tmp_pa
     intake(repo)
     save_plan(repo, tmp_path)
     record_skeleton_then_frontier(repo, [STAGE_TASK])
-    code, out = run(repo, "forge.py", "stage", "start", "T1")
+    code, out = run(repo, "forge.py", "stage", "start", "T1", "--trunk")
     assert code != 0 and "Task plan required first" in out
     code, out = record_task_grill(repo, STAGE_TASK, approve=False)
     assert code == 0, out
-    code, out = run(repo, "forge.py", "stage", "start", "T1")
+    code, out = run(repo, "forge.py", "stage", "start", "T1", "--trunk")
     assert code != 0 and "Task plan approval required" in out
 
     view_plan_on_board(repo, "T1")  # the human opens it on the board
@@ -17074,7 +17074,7 @@ def test_stage_start_and_delegate_refuse_without_approved_task_plan(repo, tmp_pa
         repo, "forge.py", "task", "approve", "T1", "--by", "Test Human",
     )
     assert code == 0, out
-    code, out = run(repo, "forge.py", "stage", "start", "T1")
+    code, out = run(repo, "forge.py", "stage", "start", "T1", "--trunk")
     assert code == 0, out
     task_plan = story_state(repo) / "task-plans" / "T1.md"
     task_plan.write_text(task_plan.read_text() + "\nChanged after approval.\n")
@@ -17147,7 +17147,7 @@ def test_board_task_rows_show_grill_freshness_and_budget(
     assert code == 0, out
     assert task_rows(repo)[0]["grill_freshness"] == "fresh"
 
-    code, out = run(repo, "forge.py", "stage", "start", "T1")
+    code, out = run(repo, "forge.py", "stage", "start", "T1", "--trunk")
     assert code == 0, out
     write_in_scope(repo, "src/core.py", "first\nsecond\n")
     git(repo, "add", "src/core.py")
@@ -17412,7 +17412,7 @@ def test_precompact_scratchpad_snapshots_facts_and_findings(repo, tmp_path):
     record_skeleton_then_frontier(repo, [task])
     code, out = record_task_grill(repo, task)
     assert code == 0, out
-    run(repo, "forge.py", "stage", "start", "T1")
+    run(repo, "forge.py", "stage", "start", "T1", "--trunk")
     run(repo, "forge.py", "plan", "assume", "cache TTL is 60s")
     run(repo, "forge.py", "signal", "raise", "--kind", "blocked",
         "--by", "implementer", "-m", "migrations dir is missing")
