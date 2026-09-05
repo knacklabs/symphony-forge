@@ -406,10 +406,27 @@ def record_task_grill(repo: Path, task: dict, verdict: str = "pass",
     )
     if code != 0 or verdict != "pass" or not approve:
         return code, plan_out + out
+    # The human opens the plan on the board before approving it. That step was
+    # guidance only and is now a gate, so the helper that models the normal
+    # flow has to include it — every caller of this helper is a test whose
+    # subject is something else, and none of them should have to know about
+    # the board to get a task approved.
+    view_plan_on_board(repo, task["id"])
     code, approve_out = run(
         repo, "forge.py", "task", "approve", task["id"], "--by", "Test Human",
     )
     return code, out + plan_out + approve_out
+
+
+def view_plan_on_board(repo: Path, task_id: str, story: str = "") -> None:
+    """Record what the board records when a human opens the story drawer."""
+    lib = load_factory_lib(repo)
+    key = story or lib.load_json(
+        lib.run_state_path(repo), default={}).get("issue_key", "")
+    plan = lib.evidence_path(repo, key, f"task-plans/{task_id}.md")
+    if plan.is_file():
+        lib.record_plan_view(
+            repo, key, task_id, lib.plan_digest_without_assumptions(plan))
 
 
 def grill_rounds(gate: str, count: int) -> list[dict]:
@@ -8745,6 +8762,7 @@ def test_task_plan_save_and_approve_are_mode_agnostic(repo, tmp_path):
     for marker in (story_state(repo) / "plan-mode").glob("*.json"):
         marker.unlink()
 
+    view_plan_on_board(repo, "T1")  # the human opens it on the board
     code, out = run(repo, "forge.py", "task", "approve", "T1",
                     "--by", "Test Human")
 
@@ -17051,6 +17069,7 @@ def test_stage_start_and_delegate_refuse_without_approved_task_plan(repo, tmp_pa
     code, out = run(repo, "forge.py", "stage", "start", "T1")
     assert code != 0 and "Task plan approval required" in out
 
+    view_plan_on_board(repo, "T1")  # the human opens it on the board
     code, out = run(
         repo, "forge.py", "task", "approve", "T1", "--by", "Test Human",
     )
@@ -17106,6 +17125,7 @@ def test_forge_next_and_board_route_author_task_plan_and_await_approval(
     assert code == 0, out
     assert_route("await-approval", "await-approval", "task approve T1")
 
+    view_plan_on_board(repo, "T1")  # the human opens it on the board
     code, out = run(
         repo, "forge.py", "task", "approve", "T1", "--by", "Test Human",
     )

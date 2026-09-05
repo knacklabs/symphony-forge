@@ -11,6 +11,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from factory_lib import (
+    plan_was_viewed,
     clean_git_env, default_trunk_branch, dump_json, evidence_path,
     git_control_dir, load_json, now_iso,
     plan_digest_without_assumptions, repo_root, require_ready_task,
@@ -186,7 +187,25 @@ def cmd_approve(args: argparse.Namespace) -> None:
     )
     grill = load_json(grill_path, default={})
     require_fresh_task_grill(base, args.id, plan, grill)
-    grill["approved_task_plan_sha256"] = plan_digest_without_assumptions(plan)
+    digest = plan_digest_without_assumptions(plan)
+    # The plan is reviewed on the BOARD, not in chat. That was guidance only,
+    # and guidance is what failed: `forge next` announced the plan "is now
+    # visible on the board" without checking a board was running, gave no URL,
+    # and this command accepted the approval with no evidence anyone had seen
+    # it. A plan can now only be approved after the board actually sent THIS
+    # text to a reader.
+    if not plan_was_viewed(base, story or "", args.id, digest):
+        fail(
+            f"task approval refused: this {args.id} plan has not been opened on "
+            f"the board.\n"
+            f"  The human reviews the plan THERE, not in chat — approving text "
+            f"nobody opened is the gap this closes.\n"
+            f"  Run `./forge board`, open {story or 'the story'}, read the "
+            f"{args.id} plan, then approve.\n"
+            f"  (If it was edited after they read it, the digest changed and "
+            f"they need to look again.)"
+        )
+    grill["approved_task_plan_sha256"] = digest
     grill["approved_by"] = approved_by
     grill["approved_at"] = now_iso()
     validate_payload(base, "grill", grill)

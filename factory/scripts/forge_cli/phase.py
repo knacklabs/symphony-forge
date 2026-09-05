@@ -134,6 +134,24 @@ def _task_count_hint(base: Path, state: dict) -> str:
             "holds either way.")
 
 
+def _board_handoff(base: Path) -> str:
+    """The board URL, and whether it is already up.
+
+    `forge next` used to state that the plan "is now visible on the board"
+    without checking one was running or naming where it is. The human then had
+    nothing to open, so the review happened in chat — the exact thing the rule
+    forbids. Say the address, and say plainly when nothing is serving it.
+    """
+    from .board import DEFAULT_PORT, already_serving
+    url = f"http://127.0.0.1:{DEFAULT_PORT}/"
+    try:
+        live = already_serving(DEFAULT_PORT)
+    except Exception:
+        live = False
+    return (f"The board is running at {url}." if live
+            else f"NO BOARD IS RUNNING — start one: `./forge board` ({url}).")
+
+
 def cmd_next(args: argparse.Namespace) -> None:
     base = Path(args.repo).resolve() if args.repo else repo_root()
     _auto_heal_roadmap_after_merge(base)
@@ -461,13 +479,19 @@ def cmd_next(args: argparse.Namespace) -> None:
                     )
                 elif frontier == "await-approval":
                     steps.append(
-                        f"[dev] The grilled {task_id} plan is now visible on the board. "
-                        "Ask for approval EXACTLY ONCE, and only after the grill has "
-                        "converged (a clean round AND the plan is final — no pending "
-                        "edits): the human reviews it THERE (not in chat) and approves; "
+                        f"[dev] The grilled {task_id} plan is ready for review. "
+                        f"{_board_handoff(base)} GIVE THE HUMAN THAT LINK and ask "
+                        "them to open the story and read the plan there — saying "
+                        "\"it is on the board\" without a link is what left the "
+                        "last approval happening blind in chat. Ask for approval "
+                        "EXACTLY ONCE, and only after the grill has converged (a "
+                        "clean round AND the plan is final — no pending edits): "
+                        "the human reviews it THERE (not in chat) and approves; "
                         f"then record it: `./forge task approve {task_id} --by \"<name>\"`. "
-                        "Do NOT approve after an intermediate grill — a later edit "
-                        "re-stales the approval and forces another round."
+                        "The approval is REFUSED until the board has actually sent "
+                        "them this plan text, so the link is the step, not a "
+                        "courtesy. Do NOT approve after an intermediate grill — a "
+                        "later edit re-stales the approval and forces another round."
                     )
                 elif frontier == "stage-start":
                     # Naming only `stage start` sent the work to the trunk's own

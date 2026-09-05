@@ -123,7 +123,8 @@ def main() -> None:
     p_pr_link.set_defaults(func=history_mod.cmd_pr_link)
 
     p_board = sub.add_parser("board", help="open the read-only local lifecycle board")
-    p_board.add_argument("--port", type=int, default=8765)
+    p_board.add_argument("--port", type=int,
+                         default=board_mod.DEFAULT_PORT)
     p_board.add_argument("--repo")
     p_board.set_defaults(func=board_mod.cmd_board)
 

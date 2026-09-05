@@ -1645,6 +1645,41 @@ def _grill_exempt(rel: str, ignore_names: tuple[str, ...]) -> bool:
     )
 
 
+def board_views_path(root: Path) -> Path:
+    """Per-worktree and uncommitted, beside the delegation ledger.
+
+    "This human saw this plan" is a fact about one machine at one moment, not
+    about the repository, so it never travels in a commit.
+    """
+    return git_control_dir(root) / "board-views.json"
+
+
+def record_plan_view(root: Path, story: str, task_id: str, digest: str) -> None:
+    """The board released this EXACT plan text to a browser.
+
+    One entry per task holding the newest digest seen, not an append-only
+    ledger: the drawer re-polls every few seconds and an ever-growing log of
+    the same fact is noise. A later edit produces a new digest, which lands
+    here only when the board sends the new text — so re-approval after an edit
+    needs the human to look again, exactly as first approval did.
+    """
+    if not (story and task_id and digest):
+        return
+    path = board_views_path(root)
+    views = load_json(path, default={}) or {}
+    key = f"{story}/{task_id}"
+    if views.get(key, {}).get("digest") == digest:
+        return
+    views[key] = {"digest": digest, "at": now_iso()}
+    dump_json(path, views)
+
+
+def plan_was_viewed(root: Path, story: str, task_id: str, digest: str) -> bool:
+    """Whether THIS plan text was put in front of a human on the board."""
+    views = load_json(board_views_path(root), default={}) or {}
+    return views.get(f"{story}/{task_id}", {}).get("digest") == digest
+
+
 def require_grill(
     root: Path,
     gate: str,
