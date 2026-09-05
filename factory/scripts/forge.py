@@ -694,6 +694,19 @@ def main() -> None:
     p_sl.add_argument("--open", action="store_true")
     p_sl.add_argument("--repo")
     p_sl.set_defaults(func=signal_mod.cmd_list)
+    p_sig_esc = sig_sub.add_parser(
+        "escalate",
+        help="record the decision that does not exist, so the human may be asked")
+    p_sig_esc.add_argument(
+        "--missing-decision", dest="missing_decision", required=True,
+        help="the decision nobody has made, in a sentence")
+    p_sig_esc.add_argument(
+        "--checked", default="",
+        help="where you already looked: contract,plan,constitution,decisions,lessons")
+    p_sig_esc.add_argument("--task", default="", help="task id, when known")
+    p_sig_esc.add_argument("--repo")
+    p_sig_esc.set_defaults(func=signal_mod.cmd_escalate)
+
     p_sv = sig_sub.add_parser("resolve", help="orchestrator: answer an open signal")
     p_sv.add_argument("id", help="e.g. S-0001")
     p_sv.add_argument("--notes", required=True, help="the resolution the worker resumes with")

@@ -216,6 +216,77 @@ command = (tool_input.get("command") or "").strip()
 permission_mode = payload.get("permission_mode", "")
 
 
+# ---------------------------------------------------------------- ask gate --
+# Questions to the human belong in PLANNING. Once a stage is open the plan is
+# approved, and an interruption is either something already decided (the
+# contract, the plan, the constitution, an accepted decision, a lesson) or a
+# decision nobody has made. Only the second earns a stop.
+#
+# Measured before this existed: 26 interruptions on one story, 19 of them
+# mechanical — a budget ceiling, a scope short by files the work implied, a
+# sandbox block with a documented path. The rule for those was written down and
+# ignored, because prose does not bind.
+ASK_TOOLS = {"AskUserQuestion"}
+
+
+def _stage_is_open(root: Path) -> bool:
+    try:
+        import json as _json
+        control = subprocess.run(
+            ["git", "rev-parse", "--absolute-git-dir"], cwd=root,
+            capture_output=True, text=True, encoding="utf-8")
+        if control.returncode != 0:
+            return False
+        stages = Path(control.stdout.strip()) / "forge" / "stages.json"
+        if not stages.is_file():
+            return False
+        data = _json.loads(stages.read_text(encoding="utf-8"))
+        return any(stage.get("status") == "active"
+                   for stage in data.get("stages", []))
+    except Exception:
+        # A gate that cannot read state must not block the session.
+        return False
+
+
+ASK_DENIED = (
+    "DENIED — you are inside an open implementation stage. Questions to the "
+    "human belong in PLANNING; the plan is already approved.\n\n"
+    "Before asking, check whether this is already settled by: the task "
+    "contract - the approved plan - the constitution - an accepted decision "
+    "record - a lesson in force for these paths.\n"
+    "If it is, act on it and CONTINUE. Do not ask.\n\n"
+    "Specifically, these are never questions for the human:\n"
+    "  - a review budget ceiling: raise it with a recorded reason and continue "
+    "(it no longer re-grills, and splitting can only be judged on a finished "
+    "diff)\n"
+    "  - a file the work mechanically implies but write_scope omits: extend "
+    "the scope, name each file and why, continue\n"
+    "  - a sandbox or environment block: take the documented path "
+    "(docs/degraded-mode.md, a binding lesson, a pinned mirror)\n\n"
+    "If a decision GENUINELY does not exist yet, name it and it will pass:\n"
+    "  ./forge signal escalate --missing-decision \"<what nobody has decided>\" "
+    "--checked \"contract,plan,constitution,decisions,lessons\"\n\n"
+    "A re-grill mid-stage is allowed the same way: escalate naming the "
+    "substantive contract field that changed."
+)
+
+if tool_name in ASK_TOOLS:
+    try:
+        _root = Path.cwd()
+        if _stage_is_open(_root):
+            sys.path.insert(0, str(Path(__file__).resolve().parent))
+            from forge_cli.signal import open_escalation, spend_escalation
+            _record = open_escalation(_root)
+            if not _record:
+                deny(ASK_DENIED)
+            spend_escalation(_root, _record)
+    except SystemExit:
+        raise
+    except Exception:
+        # Never let the gate itself break the session.
+        pass
+
+
 # Session lock: product and canon writes are always refused unless a bounded
 # degraded window is open. Orchestration surfaces stay available.
 # .factory/ is deliberately NOT writable by hand: run.json holds plan_status,
