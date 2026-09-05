@@ -15183,13 +15183,19 @@ def test_brief_states_budget_and_narration_line(repo, tmp_path):
     code, out = run(repo, "forge.py", "delegate", "T1", "--print-only",
                     env={"HOME": str(fake_companion_home(tmp_path))})
     assert code == 0, out
-    brief = (repo / ".factory" / "diagnostic-briefs" / "T1.md").read_text()
+    # Explicit encoding: the brief is UTF-8, and reading it in the host locale
+    # turns the conduct section sign into mojibake on Windows.
+    brief = (repo / ".factory" / "diagnostic-briefs" / "T1.md").read_text(
+        encoding="utf-8")
     assert (
         "Review budget: 3 files / 120 changed lines (additions + deletions), "
-        "excluding `.factory/` and `plans/`. If the work will exceed it, stop "
-        "and return incomplete so the orchestrator can split the task before "
-        "more work."
+        "excluding `.factory/` and `plans/`."
     ) in brief
+    # The ceiling is measured by `stage done` on a FINISHED diff. Ordering a
+    # mid-flight stop turned it into a question, and splitting cannot be judged
+    # against work that is not done.
+    assert "stop and return incomplete" not in brief
+    assert "NOT a mid-flight stop and NOT a question" in brief
     assert (
         "Narration budget: one line per state change, findings and refusals "
         "always in full, process chatter never (conduct §8)."
