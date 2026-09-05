@@ -2439,6 +2439,89 @@ def task_frontier_state(root: Path) -> tuple[str, dict] | None:
     return state, frontier
 
 
+INTERRUPT_REFUSAL = (
+    "You are inside an OPEN implementation stage. Questions to the human "
+    "belong in PLANNING — the plan is already approved, and from here to the "
+    "PR the run is yours.\n\n"
+    "Check first whether this is already settled by: the task contract - the "
+    "approved plan - the constitution - an accepted decision record - a lesson "
+    "in force for these paths. If it is, act on it and CONTINUE.\n\n"
+    "Never a question for the human:\n"
+    "  - a review budget ceiling: raise it with a recorded reason and continue. "
+    "It is measured by `stage done` on a FINISHED diff, which is the only "
+    "point splitting can be judged, and changing it no longer re-grills.\n"
+    "  - a file the work mechanically implies but write_scope omits (a "
+    "lockfile, a module registration, a barrel, a doc reference): extend the "
+    "scope, name each file and why the work implies it, continue.\n"
+    "  - an environment or sandbox block: take the documented path "
+    "(docs/degraded-mode.md, a binding lesson, a pinned mirror).\n\n"
+    "If a decision GENUINELY does not exist yet, name it and this stands "
+    "down:\n"
+    "  ./forge signal escalate --missing-decision \"<what nobody has decided>\" "
+    "--checked \"contract,plan,constitution,decisions,lessons\"\n\n"
+    "A mid-stage re-grill is allowed the same way: escalate naming the "
+    "substantive contract field that changed."
+)
+
+
+def task_work_is_finished(root: Path) -> bool:
+    """Has the task reached the point where stopping is the right thing?
+
+    The gate must let go when the work is genuinely done, or it traps the
+    session at the end of a good task — a far worse failure than the
+    interruptions it prevents. Recorded review proof is the signal: it is the
+    last thing produced before the PR, and it cannot be faked into place
+    because the recorder validates it.
+    """
+    state = load_json(run_state_path(root), default={})
+    key = state.get("issue_key") or ""
+    # The ACTIVE STAGE names the task, not the run pointer: a story whose
+    # `task start` was skipped has no task_id at all, and that is the very
+    # state this gate exists for.
+    stages = load_json(git_control_dir(root) / "stages.json", default={})
+    task_id = next((stage.get("id") for stage in stages.get("stages", [])
+                    if stage.get("status") == "active"), "")
+    if not task_id:
+        task_id = active_task_id(root)
+    if not task_id:
+        # Cannot tell. An interruption too few strands the human; an
+        # interruption too many costs one question.
+        return False
+    for name in ("reviews/quality.json", "reviews/performance.json",
+                 "reviews/security.json"):
+        record = load_json(
+            evidence_path(root, key, f"tasks/{task_id}/{name}"), default={})
+        if not record:
+            record = load_json(evidence_path(root, key, name), default={})
+        if not record:
+            return False
+    return True
+
+
+def may_interrupt(root: Path) -> tuple[bool, str]:
+    """Whether the agent may stop to involve the human right now.
+
+    Asked by BOTH hooks so they cannot disagree. Fails OPEN on unreadable
+    state: a missed interruption costs one question, a broken hook costs the
+    session.
+    """
+    try:
+        from forge_cli.signal import open_escalation
+        stages = load_json(
+            git_control_dir(root) / "stages.json", default={})
+        active = any(stage.get("status") == "active"
+                     for stage in stages.get("stages", []))
+        if not active:
+            return True, ""                      # planning: ask freely
+        if open_escalation(root):
+            return True, ""                      # a decision really is missing
+        if task_work_is_finished(root):
+            return True, ""                      # the work is done; let go
+        return False, INTERRUPT_REFUSAL
+    except Exception:
+        return True, ""
+
+
 def require_task_start_recorded(root: Path, task_id: str, *,
                                 trunk: bool = False) -> None:
     """`stage start` is the wrong place to discover `task start` was skipped.

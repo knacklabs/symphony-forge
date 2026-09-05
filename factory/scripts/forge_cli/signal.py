@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import uuid
 from pathlib import Path
 
 from factory_lib import load_json, now_iso, repo_root, run_state_path, validate_payload
@@ -101,7 +102,7 @@ def open_escalation(base: Path) -> dict:
         return {}
     records = [json.loads(line) for line in
                path.read_text(encoding="utf-8").splitlines() if line.strip()]
-    for record in reversed(records):
+    for record in records:
         if not record.get("spent"):
             return record
     return {}
@@ -115,8 +116,9 @@ def spend_escalation(base: Path, record: dict) -> None:
     lines = [json.loads(line) for line in
              path.read_text(encoding="utf-8").splitlines() if line.strip()]
     for entry in lines:
-        if entry.get("at") == record.get("at"):
+        if entry.get("id") and entry.get("id") == record.get("id"):
             entry["spent"] = True
+            break
     path.write_text("".join(json.dumps(e) + "\n" for e in lines),
                     encoding="utf-8")
 
@@ -145,6 +147,7 @@ def cmd_escalate(args: argparse.Namespace) -> None:
              "  A decision that exists in any of these is not missing.")
 
     record = {
+        "id": uuid.uuid4().hex,
         "at": now_iso(),
         "missing_decision": missing,
         "checked": sorted(checked),

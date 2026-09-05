@@ -53,7 +53,7 @@ def _pre_hook(repo: Path, payload: dict):
 def test_asking_is_free_while_the_plan_is_still_being_made(repo: Path):
     # No stage open: this is planning, which is exactly where questions belong.
     code, out = _pre_hook(repo, _ask_payload())
-    assert "DENIED" not in out, out
+    assert '"permissionDecision": "deny"' not in out, out
 
 
 def test_asking_is_denied_once_a_stage_is_open(repo: Path):
@@ -65,7 +65,7 @@ def test_asking_is_denied_once_a_stage_is_open(repo: Path):
     """
     _open_a_stage(repo)
     code, out = _pre_hook(repo, _ask_payload())
-    assert "DENIED" in out, out
+    assert '"permissionDecision": "deny"' in out, out
     # The refusal must carry the answer, not just the refusal.
     assert "review budget ceiling" in out or "review budget" in out
     assert "CONTINUE" in out
@@ -85,7 +85,7 @@ def test_a_recorded_escalation_lets_the_question_through(repo: Path):
     assert code == 0, out
 
     code, out = _pre_hook(repo, _ask_payload())
-    assert "DENIED" not in out, out
+    assert '"permissionDecision": "deny"' not in out, out
 
 
 def test_one_escalation_authorises_one_question(repo: Path):
@@ -99,9 +99,9 @@ def test_one_escalation_authorises_one_question(repo: Path):
     assert code == 0, out
 
     code, out = _pre_hook(repo, _ask_payload())
-    assert "DENIED" not in out, out
+    assert '"permissionDecision": "deny"' not in out, out
     code, out = _pre_hook(repo, _ask_payload())
-    assert "DENIED" in out, "the escalation was not spent"
+    assert '"permissionDecision": "deny"' in out, "the escalation was not spent"
 
 
 def test_a_self_answerable_reason_is_refused_with_the_answer(repo: Path):
@@ -175,4 +175,169 @@ def test_the_gate_never_breaks_the_session(repo: Path):
     control.mkdir(parents=True, exist_ok=True)
     (control / "stages.json").write_text("{not json", encoding="utf-8")
     code, out = _pre_hook(repo, _ask_payload())
-    assert "DENIED" not in out, out
+    assert '"permissionDecision": "deny"' not in out, out
+
+
+# --------------------------------------------------------------- stop gate --
+def _stop_hook(repo: Path, payload: dict | None = None):
+    import subprocess
+    proc = subprocess.run(
+        [sys.executable, str(repo / "factory" / "scripts" / "stop_continue.py")],
+        cwd=repo, input=json.dumps(payload or {}), capture_output=True,
+        text=True)
+    try:
+        return json.loads(proc.stdout.strip().splitlines()[-1])
+    except Exception:
+        return {"continue": True}
+
+
+def test_ending_the_turn_is_refused_mid_task(repo: Path):
+    """The exit a pre-tool gate cannot close.
+
+    Nothing stops an agent ending its turn and asking in prose instead of
+    through the question tool. Until this hook blocked, that was the whole
+    gate's back door.
+    """
+    _open_a_stage(repo)
+    result = _stop_hook(repo)
+    assert result.get("decision") == "block", result
+    assert "Do not stop here" in result.get("reason", "")
+    assert "signal escalate" in result["reason"]
+    # It must say what to do next, or it is a wall.
+    assert "forge next" in result["reason"]
+
+
+def test_ending_the_turn_is_free_during_planning(repo: Path):
+    # No stage open means the plan is still being made, which is exactly where
+    # the human belongs.
+    assert _stop_hook(repo).get("continue") is True
+
+
+def test_an_escalation_lets_the_turn_end(repo: Path):
+    _open_a_stage(repo)
+    code, out = run(
+        repo, "forge.py", "signal", "escalate",
+        "--missing-decision", "nobody has decided whether a transferred worker "
+                              "keeps their employee code",
+        "--checked", "contract,plan,constitution,decisions,lessons")
+    assert code == 0, out
+    assert _stop_hook(repo).get("continue") is True
+
+
+def test_the_hook_never_loops_the_session(repo: Path):
+    # Claude Code sets stop_hook_active after it has blocked once. Ignoring it
+    # would trap an agent that cannot satisfy the gate.
+    _open_a_stage(repo)
+    assert _stop_hook(repo).get("decision") == "block"
+    assert _stop_hook(repo, {"stop_hook_active": True}).get("continue") is True
+
+
+def test_the_gate_lets_go_when_the_work_is_finished(repo: Path):
+    """It must release at the end of a good task.
+
+    Trapping a session that has actually finished is a worse failure than the
+    interruptions this prevents, so recorded three-lens review proof stands the
+    gate down.
+    """
+    _open_a_stage(repo)
+    lib = load_factory_lib(repo)
+    control = Path(git(repo, "rev-parse", "--absolute-git-dir")) / "forge"
+    lib.dump_json(control / "run.json", {"issue_key": "ENG-1", "task_id": "T1"})
+    assert _stop_hook(repo).get("decision") == "block"
+
+    for lens in ("quality", "performance", "security"):
+        path = lib.evidence_path(
+            repo, "ENG-1", f"tasks/T1/reviews/{lens}.json", for_write=True)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        lib.dump_json(path, {"aspect": lens, "blocking": []})
+    assert _stop_hook(repo).get("continue") is True
+
+
+def test_both_hooks_ask_the_same_rule(repo: Path):
+    # The defect this whole PR exists to fix was one question answered three
+    # ways in four places. Two hooks deciding "may I interrupt?" separately
+    # would be the same mistake again.
+    for name in ("pre_tool_use.py", "stop_continue.py"):
+        source = (HARNESS / "factory" / "scripts" / name).read_text(
+            encoding="utf-8")
+        assert "may_interrupt" in source, name
+
+
+# ------------------------------------------------------------ stress cases --
+def test_the_gate_cannot_be_walked_past_by_a_reworded_budget_question(repo: Path):
+    """The obvious evasion: say the same thing in other words.
+
+    Matching is on the substance an escalation NAMES, so paraphrase does not
+    help — and it must not, or the gate is theatre.
+    """
+    for wording in (
+        "the review_budget of 38 files is too small for this work",
+        "we have hit the file ceiling and need a bigger budget",
+        "max_changed_files needs to go up",
+    ):
+        code, out = run(
+            repo, "forge.py", "signal", "escalate",
+            "--missing-decision", wording,
+            "--checked", "contract,plan,constitution,decisions,lessons")
+        assert code != 0, f"walked past the gate with: {wording}"
+
+
+def test_a_partial_checked_list_is_refused(repo: Path):
+    # Claiming three of the five sources is how "I looked" becomes a formality.
+    code, out = run(
+        repo, "forge.py", "signal", "escalate",
+        "--missing-decision", "nobody has decided the document retention window",
+        "--checked", "contract,plan")
+    assert code != 0
+    assert "constitution" in out and "decisions" in out and "lessons" in out
+
+
+def test_an_escalation_survives_only_until_it_is_used(repo: Path):
+    # Recording several up front must not buy a session's worth of stops...
+    _open_a_stage(repo)
+    for n in range(3):
+        code, out = run(
+            repo, "forge.py", "signal", "escalate",
+            "--missing-decision", f"nobody has decided policy question {n} "
+                                  f"about cross-organisation transfers",
+            "--checked", "contract,plan,constitution,decisions,lessons")
+        assert code == 0, out
+    # ...but three genuine questions may genuinely be asked three times.
+    for _ in range(3):
+        code, out = _pre_hook(repo, _ask_payload())
+        assert '"permissionDecision": "deny"' not in out, out
+    code, out = _pre_hook(repo, _ask_payload())
+    assert '"permissionDecision": "deny"' in out, "the fourth was not refused"
+
+
+def test_a_closed_stage_releases_the_gate(repo: Path):
+    # Between tasks the human is back in the loop; the gate must not persist.
+    lib = load_factory_lib(repo)
+    control = Path(git(repo, "rev-parse", "--absolute-git-dir")) / "forge"
+    control.mkdir(parents=True, exist_ok=True)
+    lib.dump_json(control / "stages.json",
+                  {"stages": [{"id": "T1", "status": "done"}]})
+    code, out = _pre_hook(repo, _ask_payload())
+    assert '"permissionDecision": "deny"' not in out, out
+    assert _stop_hook(repo).get("continue") is True
+
+
+def test_the_gate_ignores_every_other_tool(repo: Path):
+    # It must gate interrupting the human, not working. A gate that slowed the
+    # ordinary path would be removed within a day.
+    _open_a_stage(repo)
+    for tool in ("Bash", "Read", "Edit", "Write", "Grep"):
+        code, out = _pre_hook(repo, {"tool_name": tool, "tool_input": {}})
+        assert '"permissionDecision": "deny"' not in out, f"{tool}: {out}"
+
+
+def test_a_missing_control_directory_fails_open(repo: Path):
+    # A fresh clone, a worktree mid-prune: the gate must not be the reason a
+    # session cannot speak.
+    import shutil
+    control = Path(git(repo, "rev-parse", "--absolute-git-dir")) / "forge"
+    if control.exists():
+        shutil.rmtree(control)
+    code, out = _pre_hook(repo, _ask_payload())
+    assert '"permissionDecision": "deny"' not in out, out
+    assert _stop_hook(repo).get("continue") is True
