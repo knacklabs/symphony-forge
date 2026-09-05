@@ -826,6 +826,9 @@ def companion_script(home: Path | None = None) -> Path:
     return candidates[0]
 
 
+ALLOWED_EFFORTS = ("low", "medium", "high", "xhigh")
+
+
 def pinned_run_config(base: Path) -> tuple[str, str]:
     """The model and effort harness.yaml pins for implementation.
 
@@ -1284,6 +1287,16 @@ def cmd_delegate(args: argparse.Namespace) -> None:
     path = (diagnostic_briefs_dir(base) / f"{args.id}.md"
             if args.print_only or not write else canonical_path)
     model, effort = pinned_run_config(base)
+    # harness.yaml pins the floor and names when to escalate; this is the
+    # mechanism that makes the escalation reachable. Recorded in the ledger
+    # with the rest of the argv, so a run at a raised effort is evidence
+    # rather than a claim.
+    override = (getattr(args, "effort", "") or "").strip()
+    if override:
+        if override not in ALLOWED_EFFORTS:
+            fail(f"--effort must be one of {', '.join(ALLOWED_EFFORTS)}, "
+                 f"got {override!r}")
+        effort = override
     launch_companion(
         base,
         task_id=args.id,

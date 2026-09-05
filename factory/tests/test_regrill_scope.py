@@ -212,3 +212,60 @@ def test_opening_the_stage_does_not_stale_the_grill_that_authorised_it(repo: Pat
     # And the gate still bites on a real contract change afterwards.
     moved = {**TASK, "write_scope": ["src/", "src/unplanned.ts"]}
     assert not lib.grounding_matches(repo, moved, recorded, in_stage=True)
+
+
+def test_a_second_delegate_after_committing_needs_no_new_grill(repo: Path, tmp_path):
+    """The loop, replayed end to end with the real commands.
+
+    From the story's own handover: "committing the code stales the gate that
+    authorises fixing the code. Every fix cycle therefore costs a grill round."
+    Twenty rounds. This is that cycle: grill, approve, open the stage, deliver
+    the implementation, then go back for the fix round — which is where the
+    harness used to demand a fresh grill before it would let anyone write.
+    """
+    from test_gates import (  # noqa: E402
+        STAGE_TASK, fake_companion_env, start_stage,
+    )
+
+    start_stage(repo, tmp_path, STAGE_TASK, launch=False)
+
+    # Codex delivers, and the delivery is committed — the step that used to
+    # stale the gate.
+    (repo / "src").mkdir(exist_ok=True)
+    (repo / "src" / "delivered.ts").write_text(
+        "export const implementation = true;\n", encoding="utf-8")
+    git(repo, "add", "-A")
+    git(repo, "-c", "user.email=t@t", "-c", "user.name=t", "commit",
+        "-m", "WF-1 T1: the implementation lands")
+
+    # The fix round. No re-grill, no re-approval, no contract edit.
+    code, out = run(repo, "forge.py", "delegate", "T1",
+                    env=fake_companion_env(tmp_path))
+    assert code == 0, (
+        "delegate still demands a fresh grill after the implementation was "
+        f"committed — the loop is intact:\n{out}")
+
+
+def test_a_contract_change_still_stops_the_next_delegate(repo: Path, tmp_path):
+    # The other half: the gate must still refuse when what was authorised
+    # actually changed, or the fix has simply removed the gate.
+    from test_gates import (  # noqa: E402
+        STAGE_TASK, fake_companion_env, start_stage,
+    )
+    from factory_lib import (  # noqa: E402
+        dump_json, load_json, protected_decomposition_state_path,
+    )
+
+    start_stage(repo, tmp_path, STAGE_TASK, launch=False)
+
+    path = protected_decomposition_state_path(repo)
+    decomposition = load_json(path, default={})
+    for task in decomposition.get("tasks", []):
+        if task.get("id") == "T1":
+            task["write_scope"] = list(task.get("write_scope") or []) + ["apps/"]
+    dump_json(path, decomposition)
+
+    code, out = run(repo, "forge.py", "delegate", "T1",
+                    env=fake_companion_env(tmp_path))
+    assert code != 0, f"a widened write scope no longer stops delegate:\n{out}"
+    assert "STALE" in out or "grill" in out.lower()

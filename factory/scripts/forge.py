@@ -577,6 +577,12 @@ def main() -> None:
                        help="background exploration only; active write stages refuse it")
     p_del.add_argument("--print-only", action="store_true",
                        help="print the argv without launching or recording evidence")
+    p_del.add_argument(
+        "--effort", default="",
+        choices=["", "low", "medium", "high", "xhigh"],
+        help="raise the reasoning effort above the harness.yaml floor for this "
+             "run — harness.yaml names migrations, cross-domain work and "
+             "security-sensitive changes as the cases that warrant it")
     p_del.add_argument("--repo")
     p_del.set_defaults(func=delegate_mod.cmd_delegate)
 
