@@ -47,7 +47,7 @@ except (ImportError, SyntaxError):
 
 try:
     root = repo_root()
-    allowed, reason = may_interrupt(root)
+    allowed, reason = may_interrupt(root, spend=True)
 except Exception:
     emit(CONTINUE)
 

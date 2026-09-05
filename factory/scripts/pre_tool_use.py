@@ -222,18 +222,9 @@ permission_mode = payload.get("permission_mode", "")
 if tool_name == "AskUserQuestion":
     try:
         from factory_lib import may_interrupt
-        allowed, reason = may_interrupt(Path.cwd())
+        allowed, reason = may_interrupt(Path.cwd(), spend=True)
         if not allowed:
-            from forge_cli.signal import open_escalation, spend_escalation
             deny(reason)
-        record = None
-        try:
-            from forge_cli.signal import open_escalation, spend_escalation
-            record = open_escalation(Path.cwd())
-        except Exception:
-            record = None
-        if record:
-            spend_escalation(Path.cwd(), record)
     except SystemExit:
         raise
     except Exception:

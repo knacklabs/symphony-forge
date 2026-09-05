@@ -232,24 +232,34 @@ def test_the_hook_never_loops_the_session(repo: Path):
     assert _stop_hook(repo, {"stop_hook_active": True}).get("continue") is True
 
 
-def test_the_gate_lets_go_when_the_work_is_finished(repo: Path):
-    """It must release at the end of a good task.
+def test_the_gate_lets_go_when_the_stage_closes(repo: Path):
+    """The window is the open stage — approval to PR — and nothing narrower.
 
-    Trapping a session that has actually finished is a worse failure than the
-    interruptions this prevents, so recorded three-lens review proof stands the
-    gate down.
+    An earlier version released once the three-lens review proof existed. That
+    is a PROXY for "nearly done" and wrong in both directions: `stage done`,
+    `outcome set`, `pr_ready`, the push and CI all follow it, so an agent could
+    stop with no PR raised. The way out is to FINISH the task.
     """
-    _open_a_stage(repo)
     lib = load_factory_lib(repo)
     control = Path(git(repo, "rev-parse", "--absolute-git-dir")) / "forge"
+    control.mkdir(parents=True, exist_ok=True)
     lib.dump_json(control / "run.json", {"issue_key": "ENG-1", "task_id": "T1"})
+
+    _open_a_stage(repo)
     assert _stop_hook(repo).get("decision") == "block"
 
+    # Recorded reviews are NOT a way out while the stage is still open.
     for lens in ("quality", "performance", "security"):
         path = lib.evidence_path(
             repo, "ENG-1", f"tasks/T1/reviews/{lens}.json", for_write=True)
         path.parent.mkdir(parents=True, exist_ok=True)
         lib.dump_json(path, {"aspect": lens, "blocking": []})
+    assert _stop_hook(repo).get("decision") == "block", (
+        "review proof released the gate before the PR")
+
+    # Closing the stage is.
+    lib.dump_json(control / "stages.json",
+                  {"stages": [{"id": "T1", "status": "done"}]})
     assert _stop_hook(repo).get("continue") is True
 
 

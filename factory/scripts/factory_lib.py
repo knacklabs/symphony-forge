@@ -2464,59 +2464,35 @@ INTERRUPT_REFUSAL = (
 )
 
 
-def task_work_is_finished(root: Path) -> bool:
-    """Has the task reached the point where stopping is the right thing?
-
-    The gate must let go when the work is genuinely done, or it traps the
-    session at the end of a good task — a far worse failure than the
-    interruptions it prevents. Recorded review proof is the signal: it is the
-    last thing produced before the PR, and it cannot be faked into place
-    because the recorder validates it.
-    """
-    state = load_json(run_state_path(root), default={})
-    key = state.get("issue_key") or ""
-    # The ACTIVE STAGE names the task, not the run pointer: a story whose
-    # `task start` was skipped has no task_id at all, and that is the very
-    # state this gate exists for.
-    stages = load_json(git_control_dir(root) / "stages.json", default={})
-    task_id = next((stage.get("id") for stage in stages.get("stages", [])
-                    if stage.get("status") == "active"), "")
-    if not task_id:
-        task_id = active_task_id(root)
-    if not task_id:
-        # Cannot tell. An interruption too few strands the human; an
-        # interruption too many costs one question.
-        return False
-    for name in ("reviews/quality.json", "reviews/performance.json",
-                 "reviews/security.json"):
-        record = load_json(
-            evidence_path(root, key, f"tasks/{task_id}/{name}"), default={})
-        if not record:
-            record = load_json(evidence_path(root, key, name), default={})
-        if not record:
-            return False
-    return True
-
-
-def may_interrupt(root: Path) -> tuple[bool, str]:
+def may_interrupt(root: Path, *, spend: bool = False) -> tuple[bool, str]:
     """Whether the agent may stop to involve the human right now.
+
+    The window is the OPEN STAGE — `stage start` follows the human approving
+    the task plan, `stage done` follows the review — so from approval to PR the
+    run belongs to the agent. The way out is to finish the task; there is no
+    proxy for having finished it.
 
     Asked by BOTH hooks so they cannot disagree. Fails OPEN on unreadable
     state: a missed interruption costs one question, a broken hook costs the
     session.
     """
     try:
-        from forge_cli.signal import open_escalation
+        from forge_cli.signal import open_escalation, spend_escalation
         stages = load_json(
             git_control_dir(root) / "stages.json", default={})
         active = any(stage.get("status") == "active"
                      for stage in stages.get("stages", []))
         if not active:
             return True, ""                      # planning: ask freely
-        if open_escalation(root):
-            return True, ""                      # a decision really is missing
-        if task_work_is_finished(root):
-            return True, ""                      # the work is done; let go
+        record = open_escalation(root)
+        if record:
+            # Spent HERE, not by the caller: one escalation authorises one
+            # interruption through either door. The Stop hook used to let a
+            # turn end without consuming it, so a single genuine question left
+            # the gate open for the rest of the stage.
+            if spend:
+                spend_escalation(root, record)
+            return True, ""
         return False, INTERRUPT_REFUSAL
     except Exception:
         return True, ""
