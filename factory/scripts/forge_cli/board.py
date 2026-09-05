@@ -10,6 +10,7 @@ from pathlib import Path
 from urllib.parse import unquote, urlsplit
 
 from factory_lib import (
+    record_plan_view,
     task_evidence_path,
     evidence_path, load_json, now_iso, parse_sections,
     plan_digest_without_assumptions, repo_root, run_state_path, story_dir, task_rows,
@@ -1080,6 +1081,26 @@ def task_dossiers(base: Path, key: str, detail: dict) -> list[dict]:
     return dossiers
 
 
+def _record_plan_views(root: Path, key: str, detail: dict | None) -> None:
+    """Note every clean task plan this response carries.
+
+    Failure here must never break the board: the gate refusing to approve is
+    recoverable, a board that 500s while the human is trying to read the plan
+    is not.
+    """
+    if not detail:
+        return
+    try:
+        for task in detail.get("tasks", []):
+            if task.get("plan_state") != "clean" or not task.get("plan"):
+                continue
+            plan_path = root / task["plan_path"]
+            record_plan_view(root, key, task.get("id", ""),
+                             plan_digest_without_assumptions(plan_path))
+    except Exception:
+        pass
+
+
 def make_server(base: Path, port: int) -> ThreadingHTTPServer:
     root = base.resolve()
     # This process is the read-only board: it re-renders every few seconds, and
@@ -1098,7 +1119,16 @@ def make_server(base: Path, port: int) -> ThreadingHTTPServer:
                 content_type = "application/json; charset=utf-8"
                 status = 200
             elif route.startswith("/api/story/"):
-                detail = story_detail(root, unquote(route[len("/api/story/"):]))
+                key = unquote(route[len("/api/story/"):])
+                detail = story_detail(root, key)
+                # The drawer is fetched only when a human OPENS that story, and
+                # a task plan reaches it only once its grill is clean. So this
+                # is the moment the plan text actually left the server for a
+                # person to read — the fact `task approve` needs and could
+                # never previously check. `/api/state` is deliberately not
+                # recorded: `already_serving` probes it, and a probe is not a
+                # reader.
+                _record_plan_views(root, key, detail)
                 body = json.dumps(detail or {"error": "unknown story"}).encode()
                 content_type = "application/json; charset=utf-8"
                 status = 200 if detail else 404
@@ -1123,6 +1153,12 @@ def make_server(base: Path, port: int) -> ThreadingHTTPServer:
     # ponytail: stdlib server + polling, no websockets/framework — upgrade
     # only if multiple simultaneous viewers ever matter.
     return ThreadingHTTPServer(("127.0.0.1", port), BoardHandler)
+
+
+# The board address, named once. `forge next` now has to tell the human
+# where to look, and a second copy of the number is how the two drift
+# apart — the same way the six grill gates drifted across eight files.
+DEFAULT_PORT = 8765
 
 
 def already_serving(port: int) -> bool:

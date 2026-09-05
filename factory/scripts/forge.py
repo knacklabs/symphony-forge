@@ -123,7 +123,8 @@ def main() -> None:
     p_pr_link.set_defaults(func=history_mod.cmd_pr_link)
 
     p_board = sub.add_parser("board", help="open the read-only local lifecycle board")
-    p_board.add_argument("--port", type=int, default=8765)
+    p_board.add_argument("--port", type=int,
+                         default=board_mod.DEFAULT_PORT)
     p_board.add_argument("--repo")
     p_board.set_defaults(func=board_mod.cmd_board)
 
@@ -523,6 +524,11 @@ def main() -> None:
     p_ss.add_argument("id", help="stage id from the recorded decomposition")
     p_ss.add_argument("--parallel", action="store_true",
                       help="unsupported: tasks are sequential inside one story worktree")
+    p_ss.add_argument(
+        "--trunk", action="store_true",
+        help="run this stage on the trunk's tree instead of a task worktree; "
+             "recorded on the stage, so a trunk-based run is a choice someone "
+             "made rather than a step someone forgot")
     p_ss.add_argument("--repo")
     p_ss.set_defaults(func=stages_mod.cmd_start)
     p_sd = st_sub.add_parser("done", help="finish a stage AFTER local autoreview + commit")
@@ -571,6 +577,12 @@ def main() -> None:
                        help="background exploration only; active write stages refuse it")
     p_del.add_argument("--print-only", action="store_true",
                        help="print the argv without launching or recording evidence")
+    p_del.add_argument(
+        "--effort", default="",
+        choices=["", "low", "medium", "high", "xhigh"],
+        help="raise the reasoning effort above the harness.yaml floor for this "
+             "run — harness.yaml names migrations, cross-domain work and "
+             "security-sensitive changes as the cases that warrant it")
     p_del.add_argument("--repo")
     p_del.set_defaults(func=delegate_mod.cmd_delegate)
 
@@ -682,6 +694,19 @@ def main() -> None:
     p_sl.add_argument("--open", action="store_true")
     p_sl.add_argument("--repo")
     p_sl.set_defaults(func=signal_mod.cmd_list)
+    p_sig_esc = sig_sub.add_parser(
+        "escalate",
+        help="record the decision that does not exist, so the human may be asked")
+    p_sig_esc.add_argument(
+        "--missing-decision", dest="missing_decision", required=True,
+        help="the decision nobody has made, in a sentence")
+    p_sig_esc.add_argument(
+        "--checked", default="",
+        help="where you already looked: contract,plan,constitution,decisions,lessons")
+    p_sig_esc.add_argument("--task", default="", help="task id, when known")
+    p_sig_esc.add_argument("--repo")
+    p_sig_esc.set_defaults(func=signal_mod.cmd_escalate)
+
     p_sv = sig_sub.add_parser("resolve", help="orchestrator: answer an open signal")
     p_sv.add_argument("id", help="e.g. S-0001")
     p_sv.add_argument("--notes", required=True, help="the resolution the worker resumes with")

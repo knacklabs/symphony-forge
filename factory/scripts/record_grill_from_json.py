@@ -403,7 +403,9 @@ if args.gate == "task":
     else:
         _treeish = ""
         _basis = "working-tree"
-    payload["input_sha256"] = grounding_digest(root, task, treeish=_treeish)
+    _in_stage = _stage.get("status") in ("active", "done")
+    payload["input_sha256"] = grounding_digest(
+        root, task, treeish=_treeish, in_stage=_in_stage)
     # Say what this attestation was grounded on. A digest alone can only ever
     # report "stale"; naming the basis lets the seal say WHY it disagrees and
     # which command fixes it.

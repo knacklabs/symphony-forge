@@ -69,7 +69,39 @@ def _grill_skill_section() -> str:
             "and surface every place the artifact leaves the reader to guess.")
 
 
-def _compose_brief(base: Path, gate: str, label: str, artifact: str) -> str:
+def _lessons_section(base: Path, gate: str, task_id: str) -> str:
+    """Lessons in force for the paths this task may touch.
+
+    Task-gate only: it is the one gate whose artifact names a write scope, and
+    a lesson list unrelated to the work would be noise the reader learns to
+    skip.
+    """
+    if gate != "task" or not task_id:
+        return ""
+    try:
+        from factory_lib import (
+            load_json, protected_decomposition_state_path,
+        )
+        from .lessons import relevant_lessons
+        tasks = load_json(protected_decomposition_state_path(base),
+                          default={}).get("tasks", [])
+        task = next((t for t in tasks if t.get("id") == task_id), None)
+        scope = [str(entry) for entry in (task or {}).get("write_scope") or []]
+        lessons = relevant_lessons(base, scope) if scope else []
+    except Exception:
+        return ""
+    if not lessons:
+        return ""
+    lines = ["## Lessons already in force for these paths", "",
+             "The plan must design AROUND these. A plan that ignores one is "
+             "not merely unlucky later — it is wrong now, and saying so is "
+             "part of this read.", ""]
+    lines += [f"- {entry.get('lesson', '')}" for entry in lessons]
+    return "\n".join(lines) + "\n"
+
+
+def _compose_brief(base: Path, gate: str, label: str, artifact: str,
+                   task_id: str = "") -> str:
     contract = base / "factory" / "prompts" / "griller.md"
     contract_text = (contract.read_text(encoding="utf-8")
                      if contract.is_file() else "")
@@ -87,6 +119,7 @@ def _compose_brief(base: Path, gate: str, label: str, artifact: str) -> str:
         "",
         contract_text,
         "",
+        _lessons_section(base, gate, task_id),
         f"## The artifact under interrogation ({label})",
         "",
         artifact,
@@ -110,7 +143,7 @@ def cmd_grill_run(args: argparse.Namespace) -> None:
     task_id = (args.task or "").strip()
     label, artifact = _artifact_text(
         base, gate, task_id, (getattr(args, "file", "") or "").strip())
-    text = _compose_brief(base, gate, label, artifact)
+    text = _compose_brief(base, gate, label, artifact, task_id)
 
     # Keyed apart from real task ids so a grill row can never be mistaken for
     # a task's delegation, and so concurrent grills of different gates do not
