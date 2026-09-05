@@ -29,8 +29,15 @@ def emit(payload: dict) -> None:
     raise SystemExit(0)
 
 
+# factory_lib first: its strict UTF-8 reader is the only sanctioned way to take
+# stdin, so the hook cannot inherit a host locale and mis-decode the payload.
 try:
-    raw = sys.stdin.read()
+    from factory_lib import may_interrupt, read_stdin_utf8, repo_root
+except (ImportError, SyntaxError):
+    emit(CONTINUE)
+
+try:
+    raw = read_stdin_utf8()
     event = json.loads(raw) if raw.strip() else {}
 except Exception:
     emit(CONTINUE)
@@ -38,11 +45,6 @@ except Exception:
 # Claude Code sets this when the hook already blocked once this turn. Honour it
 # or the session loops forever on an agent that cannot satisfy the gate.
 if event.get("stop_hook_active"):
-    emit(CONTINUE)
-
-try:
-    from factory_lib import may_interrupt, repo_root
-except (ImportError, SyntaxError):
     emit(CONTINUE)
 
 try:
