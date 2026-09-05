@@ -180,3 +180,35 @@ def test_a_missing_digest_is_never_treated_as_a_match(repo: Path):
     lib = _seed(repo)
     for empty in ("", None):
         assert not lib.grounding_matches(repo, TASK, empty, in_stage=True)
+
+
+def test_opening_the_stage_does_not_stale_the_grill_that_authorised_it(repo: Path):
+    """The transition, which is the normal order of events.
+
+    grill -> approve -> stage start. The grill is stamped while the stage is
+    still pending, so the product tree IS part of its binding. If the checker
+    simply stopped counting the tree once the stage opened, the act of opening
+    the stage would stale every grill — the opposite of the bug being fixed,
+    at the worst possible moment. The stage pins that same tree as its
+    baseline, so measuring against the baseline reproduces what was recorded.
+    """
+    lib = _seed(repo)
+    git(repo, "add", "-A")
+    git(repo, "-c", "user.email=t@t", "-c", "user.name=t", "commit",
+        "-m", "the tree the grill was recorded against")
+    head = git(repo, "rev-parse", "HEAD")
+
+    # Recorded BEFORE the stage opened: tree included.
+    recorded = lib.grounding_digest(repo, TASK, in_stage=False)
+
+    control = Path(git(repo, "rev-parse", "--absolute-git-dir")) / "forge"
+    control.mkdir(parents=True, exist_ok=True)
+    lib.dump_json(control / "stages.json", {"stages": [
+        {"id": "T1", "status": "active", "base_sha": head}]})
+
+    assert lib.grounding_matches(repo, TASK, recorded, in_stage=True), (
+        "opening the stage staled the grill that authorised it")
+
+    # And the gate still bites on a real contract change afterwards.
+    moved = {**TASK, "write_scope": ["src/", "src/unplanned.ts"]}
+    assert not lib.grounding_matches(repo, moved, recorded, in_stage=True)

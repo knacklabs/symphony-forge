@@ -2049,10 +2049,38 @@ def grounding_matches(root: Path, task: dict, recorded: str, *,
     if recorded == grounding_digest(root, task, treeish=treeish,
                                     in_stage=in_stage):
         return True
+    if in_stage:
+        # Stamped BEFORE the stage opened, so the tree was part of it. The
+        # stage pinned that same tree as its baseline, so measuring against
+        # the baseline reproduces exactly what was recorded. Without this the
+        # act of opening the stage staled every grill.
+        baseline = _stage_baseline_for(root, str(task.get("id") or ""))
+        if baseline:
+            try:
+                if recorded == grounding_digest(root, task, treeish=baseline,
+                                                in_stage=False):
+                    return True
+            except SystemExit:
+                pass
     try:
         return recorded == legacy_grounding_digest(root, task, treeish=treeish)
     except SystemExit:
         return False
+
+
+def _stage_baseline_for(root: Path, task_id: str) -> str:
+    """The tree this task's stage pinned when it opened, or "" if unknowable."""
+    if not task_id:
+        return ""
+    try:
+        from forge_cli.stages import stage_baseline
+        stage = task_stage_record(root, task_id)
+        if not stage:
+            return ""
+        return stage_baseline(task_state_root(root, task_id), stage) or ""
+    except Exception:
+        # Never let a baseline lookup decide a gate by crashing it.
+        return ""
 
 
 _TASK_CONTRACT_FIELDS = (
