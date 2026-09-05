@@ -16918,7 +16918,7 @@ def test_forge_next_routes_the_jit_frontier_states(repo, tmp_path):
     assert f"./forge stage start {stale['id']}" in action
     assert "forge delegate" not in action
 
-    code, out = run(repo, "forge.py", "stage", "start", stale["id"])
+    code, out = run(repo, "forge.py", "stage", "start", stale["id"], "--trunk")
     assert code == 0, out
     action = next_action()
     assert f"./forge delegate {stale['id']}" in action
@@ -17153,11 +17153,27 @@ def test_board_task_rows_show_grill_freshness_and_budget(
     git(repo, "add", "src/core.py")
     row = task_rows(repo)[0]
     assert row["state"] == "active"
-    assert row["grill_freshness"] == "stale"
+    # The task's OWN in-scope work must not read as stale. The board used
+    # to say stale here, and `forge next` acted on it by routing delivered
+    # work back to the grill that had authorised it.
+    assert row["grill_freshness"] == "fresh"
     assert row["budget"] == {
         "used": {"files": 1, "lines": 2},
         "limit": {"files": 2, "lines": 5},
     }
+
+    # Changing what the task IS still reads stale, on the board exactly as
+    # at the gate — the two used to disagree.
+    from factory_lib import (
+        dump_json, load_json, protected_decomposition_state_path,
+    )
+    path = protected_decomposition_state_path(repo)
+    decomposition = load_json(path, default={})
+    for entry in decomposition.get("tasks", []):
+        if entry.get("id") == "T1":
+            entry["write_scope"] = list(entry.get("write_scope") or []) + ["apps/"]
+    dump_json(path, decomposition)
+    assert task_rows(repo)[0]["grill_freshness"] == "stale"
 
     from forge_cli import board
     real_task_rows = board.task_rows
