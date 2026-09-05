@@ -2565,6 +2565,36 @@ def require_task_worktree(root: Path, *, allow_completed: bool = False) -> None:
         )
 
 
+def required_tests_outside_scope(task: dict, root: Path | None = None) -> list[str]:
+    """Required-test paths the task is not allowed to write.
+
+    Prefix matching on write_scope entries, which name directories or files:
+    "src/" covers "src/a/b.spec.ts", and an entry naming the file covers
+    exactly it. An empty scope is not judged here — the contract completeness
+    check already refuses that.
+    """
+    scope = [str(entry).replace("\\", "/").rstrip("/")
+             for entry in (task.get("write_scope") or []) if entry]
+    if not scope:
+        return []
+    outside: list[str] = []
+    for test in task.get("required_tests") or []:
+        path = str((test or {}).get("path") or "").replace("\\", "/").strip()
+        if not path:
+            continue
+        if any(path == entry or path.startswith(entry + "/")
+               for entry in scope):
+            continue
+        # Outside the scope is only a CONTRADICTION when the task has to
+        # create the file. A required test that already exists is a proof the
+        # task must not break — it needs no write access to it, and refusing
+        # that would forbid a perfectly good contract.
+        if root is not None and (root / path).exists():
+            continue
+        outside.append(path)
+    return outside
+
+
 def require_ready_task(
     root: Path, task_id: str, *, require_approval: bool = True,
     allow_completed: bool = False, require_grill: bool = True,
@@ -2609,6 +2639,19 @@ def require_ready_task(
                 "dependencies are done (a task without explicit dependencies "
                 "follows its predecessor)."
             )
+
+    unreachable = required_tests_outside_scope(task, root)
+    if unreachable:
+        raise SystemExit(
+            f"{task_id} cannot produce its own required tests: "
+            f"{', '.join(unreachable)} "
+            f"{'is' if len(unreachable) == 1 else 'are'} outside write_scope "
+            f"({', '.join(task.get('write_scope') or []) or 'empty'}).\n"
+            "  The contract asks the task to CREATE a proof it is not allowed "
+            "to write (the file does not exist yet). "
+            "Fix it in the decomposition NOW — discovering this mid-"
+            "implementation costs a paused worker and an interrupted human."
+        )
 
     for field in _TASK_CONTRACT_FIELDS:
         value = task.get(field)

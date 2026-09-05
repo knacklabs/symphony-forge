@@ -182,3 +182,77 @@ def test_an_unknown_effort_is_refused(repo: Path, tmp_path):
     code, out = run(repo, "forge.py", "delegate", "T1", "--effort", "maximum")
     assert code != 0
     assert "invalid choice" in out or "must be one of" in out
+
+
+# ------------------------------------------- caught in planning, not later --
+def test_a_required_test_outside_the_write_scope_is_refused(repo: Path, tmp_path):
+    """Five of one story's interruptions were a scope discovered too late.
+
+    The derivable part is checkable before approval: a required test names a
+    path, and a task that may not write that path cannot produce that proof.
+    """
+    sys.path.insert(0, str(repo / "factory" / "scripts"))
+    from factory_lib import required_tests_outside_scope  # noqa: E402
+
+    inside = {"write_scope": ["src/"],
+              "required_tests": [{"path": "src/core.spec.ts"}]}
+    assert required_tests_outside_scope(inside) == []
+
+    outside = {"write_scope": ["src/"],
+               "required_tests": [{"path": "apps/api/test/e2e.spec.ts"}]}
+    assert required_tests_outside_scope(outside) == ["apps/api/test/e2e.spec.ts"]
+
+    # A scope entry naming the file exactly covers it.
+    exact = {"write_scope": ["src/core.spec.ts"],
+             "required_tests": [{"path": "src/core.spec.ts"}]}
+    assert required_tests_outside_scope(exact) == []
+
+    # A prefix must not match a sibling directory: "src" does not cover
+    # "srcfoo/".
+    sibling = {"write_scope": ["src"],
+               "required_tests": [{"path": "srcfoo/a.spec.ts"}]}
+    assert required_tests_outside_scope(sibling) == ["srcfoo/a.spec.ts"]
+
+
+def test_the_task_grill_sees_the_lessons_in_force(repo: Path):
+    """A cold reader that cannot see the constraints cannot fault a plan for
+    ignoring them.
+
+    Eight of one story's interruptions were an environment block that was
+    already recorded as a lesson. The delegate brief carried them; the grill
+    brief, which reads the plan BEFORE the work, did not.
+    """
+    sys.path.insert(0, str(repo / "factory" / "scripts"))
+    from forge_cli.grill import _lessons_section  # noqa: E402
+
+    # No task, no scope: silence rather than a list the reader learns to skip.
+    assert _lessons_section(repo, "spec", "") == ""
+    assert _lessons_section(repo, "task", "") == ""
+
+    source = (HARNESS / "factory" / "scripts" / "forge_cli" / "grill.py"
+              ).read_text(encoding="utf-8")
+    assert "_lessons_section(base, gate, task_id)" in source, (
+        "the brief must actually carry the section")
+    assert "design AROUND these" in source
+
+
+def test_the_audit_counts_interruptions_after_approval(repo: Path):
+    # No gate catches everything, so a bad stop still reaches the human once.
+    # What must not happen is it reaching them eighteen times unmeasured.
+    sys.path.insert(0, str(repo / "factory" / "scripts"))
+    from forge_cli.audit import interruptions_after_approval  # noqa: E402
+    from forge_cli.signal import escalations_path  # noqa: E402
+    import json as _json
+
+    assert interruptions_after_approval(repo) == []
+
+    path = escalations_path(repo)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text("".join(
+        _json.dumps({"id": str(n), "story": "WF-1", "spent": True,
+                     "missing_decision": f"decision {n} nobody has made"}) + "\n"
+        for n in range(4)), encoding="utf-8")
+
+    problems = interruptions_after_approval(repo)
+    assert problems and "WF-1 stopped for the human 4 time(s)" in problems[0]
+    assert "approval to" in problems[0]
