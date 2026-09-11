@@ -970,9 +970,63 @@ PONYTAIL_BRIEF = (
 )
 
 
+def _review_findings_section(base: Path, task: dict, story: str) -> str:
+    """The task's recorded review findings, handed to the implementer.
+
+    There was no channel: after `forge review` blocked, the coordinator
+    hand-copied findings into notes, and one fix launch made zero edits
+    because its brief said nothing about them (WF-1 T2, gap G4). The recorded
+    artifacts are the findings; the brief now carries them verbatim.
+    """
+    from factory_lib import load_json, proof_path
+    task_id = str(task.get("id") or "")
+    if not story or not task_id:
+        return ""
+    blocking: list[tuple[str, dict]] = []
+    caveats: list[tuple[str, dict]] = []
+    for lens in ("quality", "performance", "security"):
+        artifact = load_json(
+            proof_path(base, story, f"reviews/{lens}.json", task_id=task_id),
+            default={})
+        if not isinstance(artifact, dict):
+            continue
+        if artifact.get("task_id") not in (None, task_id):
+            continue
+        blocking += [(lens, f) for f in artifact.get("blocking_findings") or []
+                     if isinstance(f, dict)]
+        caveats += [(lens, f) for f in artifact.get("non_blocking_findings") or []
+                    if isinstance(f, dict)]
+    if not blocking and not caveats:
+        return ""
+
+    def line(lens: str, finding: dict) -> str:
+        where = finding.get("area")
+        return (f"- [{lens}] {finding.get('category', '')}: {finding.get('summary', '')}"
+                + (f" ({where})" if where else ""))
+
+    parts = []
+    if blocking:
+        parts.append(
+            "These are the review's BLOCKING findings on this task's current "
+            "diff. This launch exists to close them; the seal refuses until a "
+            "review records none. Fix each, or say in a signal why it is not a "
+            "defect.\n\n" + "\n".join(line(*item) for item in blocking))
+    if caveats:
+        parts.append(
+            "Non-blocking follow-ups (fix only when cheap and in scope; "
+            "otherwise they stay recorded for `forge defer`):\n\n"
+            + "\n".join(line(*item) for item in caveats))
+    return _section("Review findings to fix (recorded by `forge review`)",
+                    "\n\n".join(parts))
+
+
 def compose_brief(base: Path, task: dict, *, write: bool, user_facing: bool,
                   story: str) -> str:
-    scope = task.get("write_scope") or []
+    # Contract scope plus every measured amendment: what `stage done` will
+    # actually accept. The grill and the review brief read the same union.
+    from .stages import effective_scope
+    scope = effective_scope(base, str(task.get("id") or ""),
+                            task.get("write_scope") or [])
     try:
         max_files, max_lines, _reason = review_budget(task)
     except ValueError as exc:
@@ -1032,6 +1086,7 @@ def compose_brief(base: Path, task: dict, *, write: bool, user_facing: bool,
         # gate requires it non-empty); render it like the other list sections.
         reviewer_focus = "\n".join(f"- {item}" for item in reviewer_focus)
     body += _section("Reviewer focus", reviewer_focus)
+    body += _review_findings_section(base, task, story)
     decisions = [r for r in decision_records(base) if r["status"] == "accepted"]
     body += _section("Active decisions — binding", "\n".join(
         f"- {r['id']}: {r['title']}" for r in decisions))

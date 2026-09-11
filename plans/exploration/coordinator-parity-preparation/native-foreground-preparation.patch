@@ -1,0 +1,2620 @@
+diff --git a/.claude/settings.json b/.claude/settings.json
+index 2cb1385..ae7ad17 100644
+--- a/.claude/settings.json
++++ b/.claude/settings.json
+@@ -23,7 +23,7 @@
+     ],
+     "PreToolUse": [
+       {
+-        "matcher": "Bash",
++        "matcher": "Bash|AskUserQuestion",
+         "hooks": [
+           {
+             "type": "command",
+diff --git a/.codex/hooks.json b/.codex/hooks.json
+index ab30327..0679557 100644
+--- a/.codex/hooks.json
++++ b/.codex/hooks.json
+@@ -2,7 +2,7 @@
+   "hooks": {
+     "SessionStart": [
+       {
+-        "matcher": "startup|resume",
++        "matcher": "startup|resume|clear|compact",
+         "hooks": [
+           {
+             "type": "command",
+@@ -12,9 +12,19 @@
+         ]
+       }
+     ],
++    "PreCompact": [
++      {
++        "hooks": [
++          {
++            "type": "command",
++            "command": "sh -c '\"$(git rev-parse --show-toplevel)/forge\" hook pre_compact || exit 2' || exit 2"
++          }
++        ]
++      }
++    ],
+     "PreToolUse": [
+       {
+-        "matcher": "Bash",
++        "matcher": "Bash|Edit|Write|apply_patch|request_user_input|request_user_input_async",
+         "hooks": [
+           {
+             "type": "command",
+@@ -24,6 +34,17 @@
+         ]
+       }
+     ],
++    "PostToolUse": [
++      {
++        "matcher": "^request_user_input$",
++        "hooks": [
++          {
++            "type": "command",
++            "command": "sh -c '\"$(git rev-parse --show-toplevel)/forge\" hook post_tool_use || exit 0' || exit 0"
++          }
++        ]
++      }
++    ],
+     "Stop": [
+       {
+         "hooks": [
+diff --git a/factory/schemas/delegation.json b/factory/schemas/delegation.json
+index c463d3e..f8ffda7 100644
+--- a/factory/schemas/delegation.json
++++ b/factory/schemas/delegation.json
+@@ -13,7 +13,6 @@
+     "write": "bool",
+     "model": "str",
+     "effort": "str",
+-    "companion_path": "str",
+     "argv": "list",
+     "argv_sha256": "str",
+     "launch_status": "str"
+@@ -21,6 +20,14 @@
+   "optional": {
+     "story": "str",
+     "mode": "str",
++    "transport": "str",
++    "companion_path": "str",
++    "executable_path": "str",
++    "brief_path": "str",
++    "output_path": "str",
++    "stderr_path": "str",
++    "session_id": "str",
++    "resume_session": "str",
+     "background": "bool",
+     "stage_started_at": "str",
+     "pid": "int",
+@@ -29,5 +36,5 @@
+     "process_token": "str",
+     "exit_code": "int"
+   },
+-  "kind_note": "Append-only starting, running, and terminal lines share a launch_id. The starting row is protected before spawn; the running row adds PID identity. Brief, task, stage and argv digests bind a stage delegation to its active contract; lite-fix rows set mode=lite and key task to the open window id. Authoritative rows and locks live in Git's protected control directory; .factory/delegations.jsonl is a diagnostic mirror. Per-task and shared-state locks serialize writers; PID start identity prevents reuse mistakes, unverified reused groups are never signalled, and trusted-command cleanup reaps the process group plus descendants observed through a post-exit quiet window. Print-only diagnostics never create a record."
++  "kind_note": "Append-only starting, running, and terminal lines share a launch_id. The starting row is protected before spawn; the running row adds PID identity. Brief, task, stage and argv digests bind a stage delegation to its active contract; lite-fix rows set mode=lite and key task to the open window id. Legacy rows omit transport and use companion_path; native rows set transport=native and bind the executable, brief, protected logs and terminal session identity. Authoritative rows and locks live in Git's protected control directory; .factory/delegations.jsonl is a diagnostic mirror. Per-task and shared-state locks serialize writers; PID start identity prevents reuse mistakes, unverified reused groups are never signalled, and trusted-command cleanup reaps the process group plus descendants observed through a post-exit quiet window. Print-only diagnostics never create a record."
+ }
+diff --git a/factory/scripts/check_dual_runtime.py b/factory/scripts/check_dual_runtime.py
+index 9be8d46..8694f83 100644
+--- a/factory/scripts/check_dual_runtime.py
++++ b/factory/scripts/check_dual_runtime.py
+@@ -28,6 +28,7 @@ from pathlib import Path
+ 
+ DUP_WINDOW = 10  # consecutive identical non-blank lines that count as duplication
+ CLAUDE_MD_MAX_LINES = 40
++CODEX_SESSION_START_SOURCES = ("startup", "resume", "clear", "compact")
+ 
+ violations: list[str] = []
+ warnings: list[str] = []
+@@ -387,18 +388,70 @@ def check_path_parity(root: Path) -> None:
+ 
+     codex_events = check_hook_registration(".codex/hooks.json")
+     claude_events = check_hook_registration(".claude/settings.json")
+-    # PreCompact and PostToolUse exist only in Claude Code — Codex sessions
+-    # expose neither event. Their snapshot/provenance records are therefore
+-    # Claude-only session machinery, not gates.
+-    claude_only = {"PostToolUse", "PreCompact"}
+-    if codex_events and claude_events and codex_events != claude_events - claude_only:
++    if codex_events and claude_events and codex_events != claude_events:
+         violation(
+             f"Hook parity broken: .codex/hooks.json registers {sorted(codex_events)} but "
+             f".claude/settings.json registers {sorted(claude_events)}. Both runtimes must "
+-            f"enforce the same GATES (Claude-only session/provenance events exempt: "
+-            f"{sorted(claude_only)})."
++            "register equivalent gate and provenance events."
+         )
+ 
++    # An event with the wrong matcher silently skips its gate. Check the
++    # runtime-specific question names against the shared handlers too.
++    for relative, question_tools in (
++        (".claude/settings.json", ("AskUserQuestion",)),
++        (".codex/hooks.json", ("request_user_input", "request_user_input_async", "apply_patch")),
++    ):
++        try:
++            hooks = json.loads((root / relative).read_text(encoding="utf-8"))["hooks"]
++        except (OSError, ValueError, KeyError):
++            continue  # Missing/invalid registrations are reported above.
++        for tool in question_tools:
++            events = (("PreToolUse",) if tool.endswith("_async") or tool == "apply_patch"
++                      else ("PreToolUse", "PostToolUse"))
++            for event in events:
++                script = "pre_tool_use" if event == "PreToolUse" else "post_tool_use"
++                covered = False
++                for entry in hooks.get(event, []):
++                    matcher = entry.get("matcher") or ".*"
++                    try:
++                        aliases = (tool, "Edit", "Write") if tool == "apply_patch" else (tool,)
++                        matches = matcher == "*" or any(re.search(matcher, alias) for alias in aliases)
++                    except re.error:
++                        matches = None
++                    if matches and any(
++                        f"factory/scripts/{script}.py" in hook_script_paths(hook.get("command", ""))
++                        for hook in entry.get("hooks", [])
++                    ):
++                        covered = True
++                if not covered:
++                    violation(f"{relative} ({event}) must route {tool} to forge hook {script}.")
++        if relative == ".codex/hooks.json":
++            covered_sources = set()
++            for entry in hooks.get("SessionStart", []):
++                matcher = entry.get("matcher")
++                if not any(
++                    "factory/scripts/session_start.py" in hook_script_paths(
++                        hook.get("command", ""))
++                    for hook in entry.get("hooks", [])
++                ):
++                    continue
++                for source in CODEX_SESSION_START_SOURCES:
++                    try:
++                        matches = (matcher in {None, "", "*"}
++                                   or bool(re.search(str(matcher), source)))
++                    except re.error:
++                        matches = False
++                    if matches:
++                        covered_sources.add(source)
++            missing_sources = [source for source in CODEX_SESSION_START_SOURCES
++                               if source not in covered_sources]
++            if missing_sources:
++                violation(
++                    ".codex/hooks.json (SessionStart) must independently match "
++                    f"startup, resume, clear, and compact and route them to forge hook "
++                    f"session_start (missing: {', '.join(missing_sources)})."
++                )
++
+ 
+ ALLOWED_CLAUDE = {"CLAUDE.md", "settings.json", "settings.local.json", "launch.json"}
+ # The adapter rule guards against CANON living in the adapter. An OS artifact
+diff --git a/factory/scripts/forge_cli/delegate.py b/factory/scripts/forge_cli/delegate.py
+index 74c9b83..1a12951 100644
+--- a/factory/scripts/forge_cli/delegate.py
++++ b/factory/scripts/forge_cli/delegate.py
+@@ -148,8 +148,31 @@ def load_delegations(base: Path) -> list[dict]:
+     return entries
+ 
+ 
+-def append_delegation(base: Path, record: dict) -> None:
++def append_delegation(base: Path, record: dict) -> bool:
+     validate_payload(base, "delegation", record)
++    terminal = record.get("launch_status") in {"succeeded", "failed"}
++    if record.get("transport") == "native" and terminal:
++        launch_id = record["launch_id"]
++        lock = _acquire_delegation_lock(
++            base, f"terminal-{launch_id}", launch_id,
++            wait=True, namespace="state",
++        )
++        try:
++            if any(
++                row.get("launch_id") == launch_id
++                and row.get("launch_status") in {"succeeded", "failed"}
++                for row in load_delegations(base)
++            ):
++                return False
++            _append_delegation_line(base, record)
++        finally:
++            _release_delegation_lock(lock, launch_id)
++        return True
++    _append_delegation_line(base, record)
++    return True
++
++
++def _append_delegation_line(base: Path, record: dict) -> None:
+     line = (json.dumps(record) + "\n").encode()
+     # The worker can write the workspace mirror, so it is diagnostic only.
+     # Stage close reads the Git-control copy, which workspace-write sandboxes
+@@ -676,16 +699,19 @@ def _terminate_observed_process_tree(
+         baseline: dict[int, tuple[int, float]] | None = None,
+         foreground_identity: float | str = "") -> bool:
+     """Cancel a spawned command immediately, then reap every observed child."""
+-    # The foreground process group is the one resource we already own and can
+-    # identify without walking the process table. Signal it before fallible
+-    # descendant discovery so an unavailable `ps` cannot leave the command
+-    # running after Forge exits.
+-    if foreground_identity and proc.poll() is None:
+-        _signal_verified_process_group(proc.pid, foreground_identity)
++    # Preserve child identities before signalling the leader. A detached child
++    # can ignore SIGTERM while the leader exits immediately; after reparenting,
++    # walking from the dead leader can no longer rediscover it for escalation.
+     try:
+         descendants = _descendants(proc.pid)
+     except ProcessDiscoveryError:
+         descendants = {}
++    if foreground_identity and proc.poll() is None:
++        _signal_verified_process_group(proc.pid, foreground_identity)
++    try:
++        descendants.update(_descendants(proc.pid))
++    except ProcessDiscoveryError:
++        pass
+     try:
+         if token:
+             descendants.update(_tagged_processes(token, baseline))
+@@ -770,7 +796,8 @@ def current_delegation(base: Path, task_id: str, *,
+     bindings = (
+         "task", "brief_sha256", "task_sha256", "write", "model", "effort",
+         "companion_path", "argv", "argv_sha256", "stage_started_at",
+-        "process_token",
++        "process_token", "transport", "executable_path", "brief_path",
++        "output_path", "stderr_path", "resume_session", "background",
+     )
+     completed: list[tuple[int, dict]] = []
+     for started, rows in launches.values():
+@@ -1069,11 +1096,14 @@ def launch_companion(
+         base: Path, *, task_id: str, text: str, path: Path,
+         task_sha256_value: str, model: str, effort: str, write: bool,
+         story: str = "", background: bool = False, print_only: bool = False,
+-        stage_started_at: str = "", mode: str = "") -> dict | None:
+-    """Write a brief and run the protected companion launch lifecycle."""
++        stage_started_at: str = "", mode: str = "", resume_session: str = "") -> dict | None:
++    """Write a brief and run the selected protected launch lifecycle."""
++    from .codex_runtime import coordinator_runtime
++
+     # Prefixed, not bare hex: a bare 32-character hex string reads as a
+     # credential to secret scanners.
+     launch_id = f"launch-{uuid.uuid4().hex}"
++    runtime = coordinator_runtime()
+     lock = (_acquire_delegation_lock(base, task_id, launch_id)
+             if write and not print_only else None)
+     if write and not print_only:
+@@ -1083,19 +1113,39 @@ def launch_companion(
+         fail(f"cannot safely write .factory/{rel}; remove any symlinked brief "
+              "path and retry")
+     brief_digest = sha256_of(path)
+-    node = shutil.which("node")
+-    if not node:
+-        fail("node is required to launch the Codex companion — run `./forge doctor --fix`")
+-    companion = companion_script()
+     rel = path.relative_to(base).as_posix()
+-    argv = [
+-        node, str(companion), "task", "--json", "--cwd", str(base),
+-        "--model", model, "--effort", effort, "--prompt-file", rel,
+-    ]
+-    if write:
+-        argv.append("--write")
+-    if background:
+-        argv.append("--background")
++    companion: Path | None = None
++    executable = ""
++    output_path: Path | None = None
++    stderr_path: Path | None = None
++    if runtime == "codex":
++        from .codex_runtime import native_argv
++
++        executable = shutil.which("codex") or ""
++        if not executable:
++            fail("codex is required for native delegation — run `./forge doctor --fix`")
++        executable = str(Path(executable).resolve())
++        argv = native_argv(
++            executable, base, model, effort, write,
++            resume_session=resume_session,
++        )
++        logs = delegations_path(base).parent / "native-runs"
++        logs.mkdir(parents=True, exist_ok=True)
++        output_path = logs / f"{launch_id}.jsonl"
++        stderr_path = logs / f"{launch_id}.stderr.log"
++    else:
++        node = shutil.which("node")
++        if not node:
++            fail("node is required to launch the Codex companion — run `./forge doctor --fix`")
++        companion = companion_script()
++        argv = [
++            node, str(companion), "task", "--json", "--cwd", str(base),
++            "--model", model, "--effort", effort, "--prompt-file", rel,
++        ]
++        if write:
++            argv.append("--write")
++        if background:
++            argv.append("--background")
+     write_detail = ("YES (lite window is open)" if mode else
+                     "YES (stage is active with a write scope)")
+     launch_detail = " | not launched" if print_only else ""
+@@ -1104,6 +1154,12 @@ def launch_companion(
+           f"{shlex.join(argv)}{launch_detail}")
+     if print_only:
+         return None
++    if runtime == "codex" and write:
++        from .doctor import codex_hook_readiness
++
++        ready, detail = codex_hook_readiness(base)
++        if not ready:
++            fail(f"native Codex write launch refused: {detail}")
+ 
+     process_token = f"delegation-{launch_id}"
+     record = {
+@@ -1116,12 +1172,23 @@ def launch_companion(
+         "write": write,
+         "model": model,
+         "effort": effort,
+-        "companion_path": str(companion),
+         "argv": argv,
+         "argv_sha256": argv_digest(argv),
+         "launch_status": "starting",
+         "process_token": process_token,
+     }
++    if runtime == "codex":
++        record.update({
++            "transport": "native",
++            "executable_path": executable,
++            "brief_path": rel,
++            "output_path": str(output_path),
++            "stderr_path": str(stderr_path),
++        })
++        if resume_session:
++            record["resume_session"] = resume_session
++    else:
++        record["companion_path"] = str(companion)
+     if story:
+         record["story"] = story
+     if background:
+@@ -1136,12 +1203,20 @@ def launch_companion(
+     process_identity: float | str = ""
+     stdout = ""
+     stderr = ""
+-    stdout_log = tempfile.TemporaryFile(
+-        mode="w+t", encoding="utf-8", errors="replace"
+-    )
+-    stderr_log = tempfile.TemporaryFile(
+-        mode="w+t", encoding="utf-8", errors="replace"
+-    )
++    if output_path:
++        # Native stdout is a JSONL protocol: invalid UTF-8 must fail the run,
++        # not be rewritten into evidence that the runtime did not emit.
++        stdout_log = open(output_path, "w+t", encoding="utf-8")
++        stderr_log = open(stderr_path, "w+t", encoding="utf-8")
++    else:
++        # Companion output is display-only and has historically been tolerant
++        # of malformed worker bytes; preserve that audited behavior unchanged.
++        stdout_log = tempfile.TemporaryFile(
++            mode="w+t", encoding="utf-8", errors="replace"
++        )
++        stderr_log = tempfile.TemporaryFile(
++            mode="w+t", encoding="utf-8", errors="replace"
++        )
+     handled_signals = list(TERMINATION_SIGNALS)
+     previous_handlers = {
+         candidate: signal.getsignal(candidate) for candidate in handled_signals
+@@ -1157,6 +1232,8 @@ def launch_companion(
+         try:
+             process_env = os.environ.copy()
+             process_env["FORGE_PROCESS_TOKEN"] = process_token
++            if runtime == "codex":
++                process_env["FORGE_LAUNCH_ID"] = launch_id
+             process_env["PYTHONUTF8"] = "1"
+             with blocked_termination_signals():
+                 process_baseline = _process_table()
+@@ -1168,6 +1245,7 @@ def launch_companion(
+                 )
+                 proc = subprocess.Popen(
+                     argv, cwd=base, stdout=stdout_log, stderr=stderr_log,
++                    stdin=subprocess.PIPE if runtime == "codex" else None,
+                     text=True, env=process_env, **spawn_options,
+                 )
+                 process_identity = _capture_spawn_identity(proc)
+@@ -1185,16 +1263,22 @@ def launch_companion(
+                         lock, record["launch_id"], proc.pid,
+                         owner_pgid=proc.pid)
+                 append_delegation(base, record)
++                if runtime == "codex":
++                    assert proc.stdin is not None
++                    proc.stdin.write(text)
++                    proc.stdin.close()
+         except OSError as exc:
+             if proc is None:
+                 append_delegation(base, {
+                     **record, "at": now_iso(), "launch_status": "failed",
+                 })
+                 terminal_recorded = True
+-                fail(f"Codex companion could not start: {exc}")
++                label = "worker" if runtime == "codex" else "companion"
++                fail(f"Codex {label} could not start: {exc}")
+             # Popen succeeded; the outer handler must reap that process tree
+             # before any terminal launch row is recorded.
+-            fail(f"Codex companion launch could not be registered: {exc}")
++            label = "worker" if runtime == "codex" else "companion"
++            fail(f"Codex {label} launch could not be registered: {exc}")
+         try:
+             if not _wait_and_reap(
+                     proc, process_token, process_baseline, process_identity):
+@@ -1207,14 +1291,26 @@ def launch_companion(
+         stderr_log.seek(0)
+         stdout = stdout_log.read()
+         stderr = stderr_log.read()
+-        if stdout:
++        if stdout and runtime != "codex":
+             print(stdout.rstrip())
+         if proc.returncode != 0:
+-            append_delegation(base, {
++            failed = {
+                 **record, "at": now_iso(), "launch_status": "failed",
+                 "exit_code": proc.returncode,
+-            })
++            }
++            if runtime == "codex":
++                from .codex_runtime import native_session_identity
++
++                session_id = native_session_identity(output_path)
++                if session_id:
++                    failed["session_id"] = session_id
++            append_delegation(base, failed)
+             terminal_recorded = True
++            if runtime == "codex":
++                detail = stderr.strip()
++                fail(f"Codex worker launch failed (exit {proc.returncode})"
++                     + (f": {detail}" if detail
++                        else f"; see {output_path}"))
+             fail("Codex companion launch failed "
+                  f"(exit {proc.returncode}): {(stderr or stdout).strip()}")
+         if sha256_of(path) != brief_digest:
+@@ -1230,8 +1326,38 @@ def launch_companion(
+             **record, "at": now_iso(), "launch_status": "succeeded",
+             "exit_code": proc.returncode,
+         }
+-        append_delegation(base, terminal)
++        if runtime == "codex":
++            from .codex_runtime import native_completed_message, parse_native_result
++
++            try:
++                terminal["session_id"] = parse_native_result(output_path)
++            except ValueError as exc:
++                failed = {
++                    **record, "at": now_iso(), "launch_status": "failed",
++                    "exit_code": proc.returncode,
++                }
++                from .codex_runtime import native_session_identity
++                session_id = native_session_identity(output_path)
++                if session_id:
++                    failed["session_id"] = session_id
++                append_delegation(base, failed)
++                terminal_recorded = True
++                fail(str(exc))
++        published = append_delegation(base, terminal)
+         terminal_recorded = True
++        if runtime == "codex" and not published:
++            existing = next(
++                row for row in reversed(load_delegations(base))
++                if row.get("launch_id") == launch_id
++                and row.get("launch_status") in {"succeeded", "failed"}
++            )
++            if existing.get("launch_status") != "succeeded":
++                fail(f"native Codex {launch_id} was already recorded failed")
++        if runtime == "codex":
++            message = native_completed_message(output_path)
++            if message:
++                print(message)
++            print(f"Native Codex {terminal['session_id']}: succeeded")
+         return terminal
+     except BaseException:
+         if proc is not None and not terminal_recorded:
+@@ -1239,10 +1365,19 @@ def launch_companion(
+                 terminated = _terminate_observed_process_tree(
+                     proc, process_token, process_baseline, process_identity)
+             if terminated:
+-                append_delegation(base, {
++                failed = {
+                     **record, "at": now_iso(), "launch_status": "failed",
+                     "exit_code": proc.returncode if proc.returncode is not None else 130,
+-                })
++                }
++                if runtime == "codex" and output_path:
++                    from .codex_runtime import native_session_identity
++                    try:
++                        session_id = native_session_identity(output_path)
++                    except ValueError:
++                        session_id = ""
++                    if session_id:
++                        failed["session_id"] = session_id
++                append_delegation(base, failed)
+         raise
+     finally:
+         stdout_log.close()
+diff --git a/factory/scripts/forge_cli/doctor.py b/factory/scripts/forge_cli/doctor.py
+index da43d0c..5a1f3f6 100644
+--- a/factory/scripts/forge_cli/doctor.py
++++ b/factory/scripts/forge_cli/doctor.py
+@@ -8,6 +8,7 @@ import importlib.util
+ import json
+ import os
+ import platform
++import queue
+ import re
+ import shlex
+ import shutil
+@@ -16,6 +17,8 @@ import stat
+ import subprocess
+ import sys
+ import tempfile
++import threading
++import time
+ import urllib.request
+ import uuid
+ from datetime import datetime, timezone
+@@ -253,6 +256,15 @@ def _display_mark(check: dict) -> str:
+ 
+ 
+ HOOK_CONFIGS = (Path(".claude/settings.json"), Path(".codex/hooks.json"))
++CODEX_HOOK_CONTRACT = {
++    "sessionStart": " hook session_start ",
++    "preToolUse": " hook pre_tool_use ",
++    "postToolUse": " hook post_tool_use ",
++    "preCompact": " hook pre_compact ",
++    "stop": " hook stop_continue ",
++}
++CODEX_HOOK_EVENTS = set(CODEX_HOOK_CONTRACT)
++CODEX_SESSION_START_SOURCES = ("startup", "resume", "clear", "compact")
+ HOOK_HEALTH_FIX = (
+     "restore missing `forge`/factory scripts, or run `./forge doctor --fix` "
+     "to install Python 3.10+, then rerun doctor"
+@@ -771,6 +783,213 @@ def _install_psutil() -> tuple[bool, str]:
+     return True, detail
+ 
+ 
++def _codex_hooks_inventory(binary: str, base: Path) -> tuple[list[dict] | None, str]:
++    """Ask the PATH-selected Codex CLI which hooks it actually loaded."""
++    try:
++        run_env = dict(os.environ)
++        run_env.pop("CODEX_THREAD_ID", None)
++        run_env.pop("CODEX_SHELL", None)
++        process = subprocess.Popen(
++            [binary, "app-server", "--listen", "stdio://"], cwd=base,
++            stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
++            text=True, encoding="utf-8", env=run_env,
++        )
++    except OSError as exc:
++        return None, f"Codex hook inspection failed: {exc}"
++    messages: queue.Queue[dict] = queue.Queue()
++
++    def read_messages() -> None:
++        assert process.stdout is not None
++        for line in process.stdout:
++            try:
++                message = json.loads(line)
++            except json.JSONDecodeError:
++                continue
++            if isinstance(message, dict):
++                messages.put(message)
++
++    threading.Thread(target=read_messages, daemon=True).start()
++
++    def send(message: dict) -> None:
++        assert process.stdin is not None
++        process.stdin.write(json.dumps(message) + "\n")
++        process.stdin.flush()
++
++    deadline = time.monotonic() + 10
++    try:
++        send({
++            "jsonrpc": "2.0", "id": 1, "method": "initialize",
++            "params": {
++                "clientInfo": {"name": "forge-doctor", "version": "1"},
++                "capabilities": {"experimentalApi": True},
++            },
++        })
++        while True:
++            message = messages.get(timeout=max(0.01, deadline - time.monotonic()))
++            if message.get("id") == 1:
++                if "error" in message:
++                    return None, f"Codex app-server initialize failed: {message['error']}"
++                break
++        send({"jsonrpc": "2.0", "method": "initialized", "params": {}})
++        send({
++            "jsonrpc": "2.0", "id": 2, "method": "hooks/list",
++            "params": {"cwds": [str(base.resolve())]},
++        })
++        while True:
++            message = messages.get(timeout=max(0.01, deadline - time.monotonic()))
++            if message.get("id") != 2:
++                continue
++            if "error" in message:
++                return None, f"Codex hooks/list failed: {message['error']}"
++            result = message.get("result")
++            entries = result.get("data") if isinstance(result, dict) else None
++            if not isinstance(entries, list) or len(entries) != 1:
++                return None, "Codex hooks/list returned no unique checkout result"
++            entry = entries[0]
++            if not isinstance(entry, dict) or not isinstance(entry.get("hooks"), list):
++                return None, "Codex hooks/list returned an invalid checkout result"
++            errors = entry.get("errors") or []
++            if errors:
++                return None, f"Codex could not load hooks: {errors}"
++            return entry["hooks"], ""
++    except (OSError, BrokenPipeError, queue.Empty) as exc:
++        return None, f"Codex hook inspection failed: {exc}"
++    finally:
++        try:
++            process.terminate()
++        except OSError:
++            pass
++        try:
++            process.wait(timeout=2)
++        except subprocess.TimeoutExpired:
++            process.kill()
++            process.wait()
++
++
++def _git_worktree_roots(base: Path) -> tuple[set[Path] | None, str]:
++    try:
++        result = subprocess.run(
++            ["git", "worktree", "list", "--porcelain", "-z"], cwd=base,
++            capture_output=True, timeout=5,
++        )
++    except (OSError, subprocess.TimeoutExpired) as exc:
++        return None, f"cannot resolve Git worktree family: {exc}"
++    if result.returncode != 0:
++        try:
++            detail = result.stderr.decode("utf-8").strip()
++        except UnicodeDecodeError:
++            return None, "cannot resolve Git worktree family: git returned non-UTF-8 stderr"
++        return None, f"cannot resolve Git worktree family: {detail or 'git failed'}"
++    try:
++        roots = {
++            Path(field.removeprefix(b"worktree ").decode("utf-8")).resolve()
++            for field in result.stdout.split(b"\0")
++            if field.startswith(b"worktree ")
++        }
++    except UnicodeDecodeError:
++        return None, "cannot resolve Git worktree family: git returned a non-UTF-8 path"
++    return (roots, "") if roots else (None, "git returned no worktree roots")
++
++
++def codex_hook_readiness(base: Path) -> tuple[bool, str]:
++    """Verify the Codex CLI loads enabled, trusted hooks from this checkout.
++
++    This PATH-based probe does not inspect Codex Desktop. Live CLI event emission
++    and Desktop readiness require their own runtime evidence.
++    """
++    binary = shutil.which("codex")
++    if not binary:
++        return False, "codex CLI is not on PATH"
++    expected = (base / ".codex" / "hooks.json").resolve()
++    if not expected.is_file():
++        return False, f"{expected} is missing"
++    hooks, error = _codex_hooks_inventory(binary, base)
++    if hooks is None:
++        return False, error
++    roots, error = _git_worktree_roots(base)
++    if roots is None:
++        return False, error
++    family_sources = {root / ".codex" / "hooks.json" for root in roots}
++    loaded_family = [hook for hook in hooks
++                     if Path(str(hook.get("sourcePath", ""))).resolve()
++                     in family_sources]
++    if not loaded_family:
++        return False, f"Codex did not load hooks from {expected} or its Git worktree family"
++    try:
++        expected_bytes = expected.read_bytes()
++        divergent = {
++            Path(str(hook.get("sourcePath", ""))).resolve()
++            for hook in loaded_family
++            if Path(str(hook.get("sourcePath", ""))).resolve().read_bytes()
++            != expected_bytes
++        }
++    except OSError as exc:
++        return False, f"cannot compare inherited Codex hook source: {exc}"
++    if divergent:
++        return False, (
++            "Codex inherited divergent hooks from its Git worktree family: "
++            + ", ".join(str(path) for path in sorted(divergent))
++        )
++    exact = loaded_family
++    disabled = [str(hook.get("eventName")) for hook in exact
++                if hook.get("enabled") is not True]
++    if disabled:
++        return False, "Codex hooks are disabled: " + ", ".join(sorted(disabled))
++    untrusted = [str(hook.get("eventName")) for hook in exact
++                 if hook.get("trustStatus") not in {"trusted", "managed"}]
++    if untrusted:
++        return False, "Codex hooks are not trusted: " + ", ".join(sorted(untrusted))
++    events = {str(hook.get("eventName")) for hook in exact}
++    missing = CODEX_HOOK_EVENTS - events
++    if missing:
++        return False, "Codex did not load required hooks: " + ", ".join(sorted(missing))
++    wrong = [str(hook.get("eventName")) for hook in exact
++             if hook.get("eventName") in CODEX_HOOK_CONTRACT
++             and (CODEX_HOOK_CONTRACT[str(hook["eventName"])]
++                  not in str(hook.get("command", ""))
++                  or not str(hook.get("currentHash", "")).startswith("sha256:"))]
++    if wrong:
++        return False, "Codex loaded the wrong hook command: " + ", ".join(sorted(wrong))
++
++    for hook in exact:
++        matcher = hook.get("matcher") or ".*"
++        if matcher == "*":
++            continue
++        try:
++            re.compile(str(matcher))
++        except re.error:
++            return False, f"Codex hook matcher is invalid: {hook.get('eventName')}"
++
++    def matcher_covers(event: str, aliases: tuple[str, ...]) -> bool:
++        matchers = [hook.get("matcher") for hook in exact
++                    if hook.get("eventName") == event]
++        return any(
++            matcher in {None, "", "*"}
++            or (isinstance(matcher, str)
++                and any(re.search(matcher, alias) for alias in aliases))
++            for matcher in matchers
++        )
++
++    pre_tools = (("Bash",), ("apply_patch", "Edit", "Write"),
++                 ("request_user_input",), ("request_user_input_async",))
++    missing_matchers = [aliases[0] for aliases in pre_tools
++                        if not matcher_covers("preToolUse", aliases)]
++    if missing_matchers:
++        return False, "Codex PreToolUse matcher does not cover: " + ", ".join(missing_matchers)
++    if not matcher_covers("postToolUse", ("request_user_input",)):
++        return False, "Codex PostToolUse matcher does not cover request_user_input"
++    missing_starts = [source for source in CODEX_SESSION_START_SOURCES
++                      if not matcher_covers("sessionStart", (source,))]
++    if missing_starts:
++        return False, "Codex SessionStart matcher does not cover: " + ", ".join(missing_starts)
++    return True, (
++        f"{len(exact)} enabled and trusted hook(s) loaded from {expected}; "
++        "CLI live event emission is verified separately; this PATH-based CLI "
++        "probe does not certify Codex Desktop"
++    )
++
++
++
+ def _psutil_check(*, fix: bool = False) -> dict:
+     ok, detail = _psutil_import_status()
+     if not ok and fix:
+diff --git a/factory/scripts/forge_cli/stages.py b/factory/scripts/forge_cli/stages.py
+index 4cf56b9..06b1b98 100644
+--- a/factory/scripts/forge_cli/stages.py
++++ b/factory/scripts/forge_cli/stages.py
+@@ -1365,7 +1365,10 @@ def _require_successful_launch(base: Path, stage_id: str, stage: dict,
+                                task: dict) -> str:
+     """Refuse without a successful Codex write launch or a covering host-fix
+     window. Returns the window id when a window satisfied it, else ""."""
+-    from .delegate import argv_digest, brief_path, current_delegation
++    from .codex_runtime import native_argv_valid, parse_native_result
++    from .delegate import (
++        argv_digest, brief_path, current_delegation, delegations_path,
++    )
+ 
+     digest = task_digest(task)
+     brief = brief_path(base, stage_id)
+@@ -1377,28 +1380,51 @@ def _require_successful_launch(base: Path, stage_id: str, stage: dict,
+         ignore_lock=True,
+     )
+     argv = entry.get("argv") if entry else None
+-    argv_valid = (
+-        isinstance(argv, list)
+-        and bool(argv)
+-        and all(isinstance(token, str) for token in argv)
+-        and Path(argv[0]).stem.lower() == "node"
+-        and argv == [
+-            argv[0],
+-            entry.get("companion_path"),
+-            "task",
+-            "--json",
+-            "--cwd",
+-            str(base),
+-            "--model",
+-            entry.get("model"),
+-            "--effort",
+-            entry.get("effort"),
+-            "--prompt-file",
+-            brief.relative_to(base).as_posix(),
+-            "--write",
+-        ]
+-        and entry.get("argv_sha256") == argv_digest(argv)
+-    )
++    transport = entry.get("transport") if entry else None
++    if transport == "native":
++        expected_output = (delegations_path(base).parent / "native-runs" /
++                           f"{entry.get('launch_id')}.jsonl")
++        expected_stderr = (delegations_path(base).parent / "native-runs" /
++                           f"{entry.get('launch_id')}.stderr.log")
++        try:
++            session_id = parse_native_result(expected_output)
++        except ValueError:
++            session_id = ""
++        argv_valid = (
++            native_argv_valid(entry, base)
++            and entry.get("write") is True
++            and not entry.get("resume_session")
++            and entry.get("brief_path") == brief.relative_to(base).as_posix()
++            and entry.get("output_path") == str(expected_output)
++            and entry.get("stderr_path") == str(expected_stderr)
++            and entry.get("session_id") == session_id
++            and entry.get("argv_sha256") == argv_digest(argv)
++        )
++    elif transport is None:
++        argv_valid = (
++            isinstance(argv, list)
++            and bool(argv)
++            and all(isinstance(token, str) for token in argv)
++            and Path(argv[0]).stem.lower() == "node"
++            and argv == [
++                argv[0],
++                entry.get("companion_path"),
++                "task",
++                "--json",
++                "--cwd",
++                str(base),
++                "--model",
++                entry.get("model"),
++                "--effort",
++                entry.get("effort"),
++                "--prompt-file",
++                brief.relative_to(base).as_posix(),
++                "--write",
++            ]
++            and entry.get("argv_sha256") == argv_digest(argv)
++        )
++    else:
++        argv_valid = False
+     valid = (
+         entry
+         and entry.get("launch_status") == "succeeded"
+diff --git a/factory/scripts/pre_tool_use.py b/factory/scripts/pre_tool_use.py
+index b587099..f5ec6dd 100755
+--- a/factory/scripts/pre_tool_use.py
++++ b/factory/scripts/pre_tool_use.py
+@@ -20,6 +20,7 @@ def deny(reason: str) -> None:
+ 
+ 
+ EDIT_TOOLS = {"Edit", "Write", "MultiEdit", "NotebookEdit"}
++PATCH_TOOL = "apply_patch"
+ 
+ 
+ def _raw_payload() -> dict:
+@@ -191,6 +192,9 @@ def denylist_fallback(payload: dict, reason: str) -> None:
+     tool = payload.get("tool_name", "")
+     target = ((payload.get("tool_input") or {}).get("file_path") or
+               (payload.get("tool_input") or {}).get("notebook_path") or "")
++    if tool == PATCH_TOOL:
++        deny("Forge emergency deny-list engaged; apply_patch writes cannot be "
++             "classified while the full policy is unavailable.")
+     if (tool in EDIT_TOOLS and _static_locked(target, root)) or (
+         tool == "Bash" and not _fallback_readonly(command)
+     ):
+@@ -207,6 +211,7 @@ try:
+     from forge_cli.context import context_files, context_paths, scan_inbox
+     from forge_cli.quickfix import DEGRADED, claim_files, load_active, profile_of
+     from forge_cli.repo_kind import is_harness_source_repo, locked_repo_path
++    from forge_cli.worker_admission import live_worker_admission, path_in_scope
+ except (ImportError, SyntaxError) as exc:
+     denylist_fallback(payload, type(exc).__name__)
+ 
+@@ -219,7 +224,7 @@ permission_mode = payload.get("permission_mode", "")
+ # ---------------------------------------------------------------- ask gate --
+ # One of the two ways to interrupt the human. The rule itself lives in
+ # factory_lib.may_interrupt so this and the Stop hook cannot drift apart.
+-if tool_name == "AskUserQuestion":
++if tool_name in {"AskUserQuestion", "request_user_input", "request_user_input_async"}:
+     try:
+         from factory_lib import may_interrupt
+         allowed, reason = may_interrupt(Path.cwd(), spend=True)
+@@ -249,8 +254,8 @@ FACTORY_STATE_MSG = (
+ # Files under .factory/ the evidence guard lets through — but that is the ONLY
+ # guard they skip. The scratchpad is also exempt in the shared locked-path
+ # classifier. The repo-kind marker is deliberately NOT there: it is a product path,
+-# so the session lock governs it. Disarming the source-repo lock therefore runs
+-# through a delegated worker, never a silent session edit or `rm`.
++# so the session lock governs it. Changing source-repo classification therefore
++# requires a protected delegated worker whose scope names the marker.
+ FACTORY_STATE_WRITABLE = {
+     ".factory/scratchpad.md",
+     ".factory/harness-source.json",
+@@ -499,6 +504,65 @@ def bash_write_paths(value: str, root: Path) -> list[str]:
+     return found
+ 
+ 
++PATCH_HEADER = re.compile(r"^\*\*\* (Add|Update|Delete) File: (.+)$")
++
++
++def apply_patch_paths(value: str) -> list[str] | None:
++    """Extract every write path from one native apply_patch payload.
++
++    None is a malformed patch. The parser understands only the native patch
++    envelope and its Add/Update/Delete/Move controls, so an unknown control
++    fails closed instead of silently dropping a write target.
++    """
++    lines = value.splitlines()
++    if len(lines) < 3 or lines[0] != "*** Begin Patch" or lines[-1] != "*** End Patch":
++        return None
++    paths: list[str] = []
++    operation = ""
++    moved = False
++    for line in lines[1:-1]:
++        match = PATCH_HEADER.fullmatch(line)
++        if match:
++            operation = match.group(1)
++            moved = False
++            path = match.group(2).strip()
++            if not path:
++                return None
++            paths.append(path)
++            continue
++        if line.startswith("*** Move to: "):
++            path = line.removeprefix("*** Move to: ").strip()
++            if operation != "Update" or moved or not path:
++                return None
++            paths.append(path)
++            moved = True
++            continue
++        if line == "*** End of File":
++            if operation != "Update":
++                return None
++            continue
++        if line.startswith("*** "):
++            return None
++    return paths if paths else None
++
++
++def normalized_patch_paths(paths: list[str], root: Path) -> list[str] | None:
++    normalized: list[str] = []
++    for raw in paths:
++        if "$" in raw or "`" in raw:
++            return None
++        candidate = Path(raw).expanduser()
++        try:
++            rel = (candidate if candidate.is_absolute() else root / candidate) \
++                .resolve().relative_to(root.resolve()).as_posix()
++        except (OSError, RuntimeError, ValueError):
++            return None
++        if not rel or rel == ".":
++            return None
++        normalized.append(rel)
++    return normalized
++
++
+ def _contains_marker(rel: str) -> bool:
+     """True when rel IS the repo-kind marker or a directory that contains it.
+ 
+@@ -599,7 +663,7 @@ def guard_product_writes(targets: list[str], root: Path, command: str = "") -> N
+         # A session window must never be able to touch the marker:
+         # deleting it — directly, or by removing an ANCESTOR like `.factory` via
+         # `rm -rf .factory` — would disable classification and the budget with it.
+-        # Only the hook-bypassing delegated worker may change it.
++        # Only a protected delegated worker whose scope names it may change it.
+         deny(MARKER_PLAN_ONLY_MSG)
+     if not degraded:
+         deny(PLAN_MODE_MSG)
+@@ -619,26 +683,14 @@ for pattern in blocked:
+     if re.search(pattern, command):
+         deny(f"Blocked by factory policy: {command}")
+ 
+-# Raw `codex exec` bypasses the sanctioned runtime (/codex:rescue -> the
+-# plugin companion): no session threading, no background management, no
+-# repo-pinned invocation shape. There is NO escape hatch — doctor installs
+-# codex-plugin-cc as a required tool; if it breaks, repair it or work in a
+-# Codex session directly (docs/degraded-mode.md).
+-# Match INVOCATIONS (command position, env prefixes, pipeline segments,
+-# command substitution) — not prose in heredocs/echo that mentions the phrase.
+-# `codex [global flags] exec` counts too — flags between must not bypass.
++# Raw `codex exec` bypasses Forge's protected runtime launch: no bound brief,
++# live worker registration, or lifecycle proof. Keep the existing invocation
++# matcher, including substitutions and global flags; exempt only exact help argv
++# and safe display commands whose quoted text happens to contain the phrase.
+ CODEX_EXEC_INVOCATION = re.compile(
+-    r"(?:^|[;&|]\s*|\$\(\s*)(?:\w+=\S+\s+)*codex(?:\s+-{1,2}[\w-]+(?:[= ]\S+)?)*\s+exec\b",
++    r"(?:^|[;&|]\s*|\$\(\s*|`\s*)(?:\w+=\S+\s+)*codex(?:\s+-{1,2}[\w-]+(?:[= ]\S+)?)*\s+exec\b",
+     re.MULTILINE,
+ )
+-if CODEX_EXEC_INVOCATION.search(command):
+-    deny(
+-        "Direct `codex exec` is off-contract — invoke Codex through the plugin: "
+-        "/codex:rescue [--background] [--write] [--model <m>] [--effort <e>] \"<task>\" "
+-        "(read-only unless --write). Plugin missing or broken? `./forge doctor --fix` "
+-        "reinstalls it; meanwhile work in a Codex session directly "
+-        "(docs/degraded-mode.md) — same prompts, same artifacts, same gates."
+-    )
+ 
+ check_bypass = ["pnpm test", "pnpm lint", "pnpm typecheck", "pnpm check:all"]
+ if any(token in command for token in check_bypass) and "factory/scripts/verify.py" not in command:
+@@ -712,6 +764,15 @@ edit_target = (tool_input.get("file_path") or tool_input.get("notebook_path") or
+ write_targets = [edit_target] if tool_name in EDIT_TOOLS and edit_target else []
+ if tool_name == "Bash":
+     write_targets = bash_write_paths(command, root)
++elif tool_name == PATCH_TOOL:
++    parsed_patch_paths = apply_patch_paths(command)
++    normalized_paths = (
++        normalized_patch_paths(parsed_patch_paths, root)
++        if parsed_patch_paths is not None else None
++    )
++    if normalized_paths is None:
++        deny("apply_patch payload is malformed; Forge cannot prove its write paths.")
++    write_targets = normalized_paths
+ 
+ # Recorded state is never hand-written, in any mode and at any plan status.
+ for candidate in write_targets:
+@@ -720,8 +781,38 @@ for candidate in write_targets:
+ 
+ # The session lock covers every permission mode. Planning changes authorization
+ # for the plan UI, never for product or canon writes.
+-guard_product_writes(write_targets, root,
+-                     command=command if tool_name == "Bash" else "")
++window = load_active(root)
++is_harness = (
++    bool(window["harness_source"])
++    if window is not None and "harness_source" in window
++    else is_harness_source_repo(root)
++)
++locked_targets = list(dict.fromkeys(
++    rel for raw in write_targets
++    if (rel := product_path(raw, root, is_harness)) is not None
++))
++worker, worker_error = live_worker_admission(root)
++if locked_targets and worker_error:
++    deny(worker_error)
++if locked_targets and worker:
++    marker_targeted = any(_contains_marker(rel) for rel in locked_targets)
++    if marker_targeted and worker["kind"] != "stage":
++        deny(MARKER_PLAN_ONLY_MSG)
++    if worker["kind"] == "stage":
++        outside = [rel for rel in locked_targets
++                   if not path_in_scope(rel, worker["scope"])]
++        if outside:
++            deny("Registered worker write is outside the protected task scope: "
++                 + ", ".join(outside))
++    elif worker["kind"] == "lite":
++        claimed, _ = claim_files(root, locked_targets)
++        if not claimed:
++            deny(QUICKFIX_LIMIT_MSG)
++    else:
++        deny("Forge worker write admission returned an unknown grant kind.")
++else:
++    guard_product_writes(write_targets, root,
++                         command=command if tool_name == "Bash" else "")
+ # A heredoc whose ONLY consumer is a data sink (cat/tee/printf/echo writing
+ # to a file) is data, never argv: its body is dropped before the companion
+ # classification so a note that mentions the companion, or holds a quote or
+@@ -835,11 +926,29 @@ def _has_active_shell_syntax(value: str) -> bool:
+                 return True
+         elif char in "'\"":
+             quote = char
+-        elif char in ";&|<>$`(){}\n*?~=[]":
++        elif char in ";&|<>$`(){}\n*?~[]":
+             return True
+     return False
+ 
+ 
++codex_match = CODEX_EXEC_INVOCATION.search(command)
++codex_help = (
++    shell_tokens in (["codex", "exec", "--help"], ["codex", "exec", "-h"])
++    and not _has_active_shell_syntax(command)
++)
++quoted_display = (
++    bool(shell_tokens) and Path(shell_tokens[0]).name in DISPLAY_SAFE_ARGV0
++    and _display_safe(shell_tokens) and not _has_active_shell_syntax(command)
++)
++if codex_match and not codex_help and not quoted_display:
++    deny(
++        "Direct `codex exec` is off-contract. Use `./forge delegate <task-id>` "
++        "for protected implementation or `./forge explore --prompt-file <brief> "
++        "[--purpose validate]` for read-only exploration; Forge selects and "
++        "records the configured runtime."
++    )
++
++
+ def _companion_readonly_launch_ok():
+     """True iff the command is a provably read-only companion launch."""
+     if _has_active_shell_syntax(command):
+@@ -862,8 +971,8 @@ def _companion_readonly_launch_ok():
+         # cancel, task-worker) mutate state without any write flag. Options
+         # are default-deny too: --cwd can retarget other repos, and future
+         # flags should not be trusted implicitly. The equals-sign form of
+-        # --prompt-file stays explicitly unsupported because active shell
+-        # syntax above refuses '='.
++        # --prompt-file stays explicitly unsupported because it is not the
++        # exact allowlisted flag and therefore fails the argv check below.
+         if not rest or rest[0] not in READONLY_COMPANION_VERBS:
+             return False
+         args = rest[1:]
+diff --git a/factory/scripts/session_start.py b/factory/scripts/session_start.py
+index 6ce7914..99fbb9a 100755
+--- a/factory/scripts/session_start.py
++++ b/factory/scripts/session_start.py
+@@ -62,17 +62,18 @@ if run_state.get("issue_key"):
+             f"Story: {run_state.get('story', run_state.get('issue_key', '?'))}"
+         )
+ quickfix = load_active(root)
+-# The lock is armed by the ABSENCE of an approved plan, so it is armed hardest
+-# when there is no task at all (decision 0013) — announce it outside the
+-# active-issue block, or a fresh session meets the wall with no warning.
++# Coordinator writes remain locked even after plan approval.
++context.append(
++    "SESSION WRITE LOCK ARMED: product and canon writes use `./forge delegate`. "
++    "Plan approval authorizes the task, not direct coordinator edits. "
++    "The ledgered outage exception is `./forge mode degraded`."
++)
+ if run_state.get("plan_status") != "approved" and not quickfix:
+     context.append(
+-        "PLANNING LOCK ARMED: product writes are blocked until a plan is saved "
+-        "and approved, or a bounded window is open. Enter plan mode (shift+tab) "
+-        "and plan per factory/prompts/planner.md, or run "
+-        "`./forge quickfix start \"<reason>\"`. The plan must be GRILLED before "
+-        "approval (/grill-me; record via record_grill_from_json.py --gate plan) "
+-        "— plan save refuses without it. Codex alternative: the planner-high agent."
++        "Plan per factory/prompts/planner.md; authoring is mode-agnostic. "
++        "Use `./forge next` for the current contract and grill prerequisites. "
++        "Human rounds use Claude AskUserQuestion or Codex request_user_input; "
++        "see docs/native-coordinator.md for runtime readiness."
+     )
+ if quickfix:
+     if quickfix.get("profile", "quickfix") == "lite":
+@@ -97,7 +98,7 @@ signals = open_signals(root)
+ if signals:
+     context.append(
+         f"OPEN WORKER SIGNALS: {len(signals)} — paused worker(s) awaiting resolution "
+-        "(forge.py signal list --open; resolve, then resume the rescue)."
++        "(forge.py signal list --open; resolve, then resume the worker)."
+     )
+ from forge_cli.assumptions import open_count  # noqa: E402
+ assumptions_open = open_count(root)
+diff --git a/factory/tests/test_gates.py b/factory/tests/test_gates.py
+index 095c89b..2d434f0 100644
+--- a/factory/tests/test_gates.py
++++ b/factory/tests/test_gates.py
+@@ -16219,7 +16219,7 @@ def test_process_cleanup_reaps_known_process_when_discovery_fails(
+     assert signals == [(101, signal.SIGTERM), (101, signal.SIGKILL)]
+ 
+ 
+-def test_immediate_cleanup_signals_owned_group_before_discovery(
++def test_immediate_cleanup_snapshots_children_then_signals_and_rediscovers(
+         repo, monkeypatch):
+     sys.path.insert(0, str(repo / "factory" / "scripts"))
+     try:
+@@ -16248,7 +16248,7 @@ def test_immediate_cleanup_signals_owned_group_before_discovery(
+     finally:
+         sys.path.pop(0)
+     assert stopped is False
+-    assert events == ["signal", "discover", "reap"]
++    assert events == ["discover", "signal", "discover", "reap"]
+ 
+ 
+ def test_process_cleanup_discovers_children_spawned_during_termination(
+@@ -16598,7 +16598,7 @@ def test_termination_signals_reap_companion_before_lock_release(
+         stdout=subprocess.PIPE,
+         stderr=subprocess.PIPE,
+         text=True,
+-        env={**os.environ, "HOME": str(home)},
++        env={**os.environ, "HOME": str(home), "FORGE_COORDINATOR": "claude"},
+     )
+     lock = delegation_lock(repo, "T1")
+     latest = {}
+@@ -16646,7 +16646,8 @@ def test_windows_delegation_launches_and_reaps(repo, tmp_path):
+         stdout=subprocess.PIPE,
+         stderr=subprocess.PIPE,
+         text=True,
+-        env={**os.environ, "HOME": str(home), "USERPROFILE": str(home)},
++        env={**os.environ, "HOME": str(home), "USERPROFILE": str(home),
++             "FORGE_COORDINATOR": "claude"},
+         creationflags=subprocess.CREATE_NEW_PROCESS_GROUP,
+     )
+     child_pid = 0
+@@ -16731,7 +16732,8 @@ def test_windows_delegation_success_round_trips_unicode_handoff(repo, tmp_path):
+         capture_output=True,
+         text=True,
+         encoding="utf-8",
+-        env={**os.environ, "HOME": str(home), "USERPROFILE": str(home)},
++        env={**os.environ, "HOME": str(home), "USERPROFILE": str(home),
++             "FORGE_COORDINATOR": "claude"},
+     )
+ 
+     assert proc.returncode == 0, proc.stdout + proc.stderr
+diff --git a/harness.yaml b/harness.yaml
+index da7b0ec..412ea0b 100644
+--- a/harness.yaml
++++ b/harness.yaml
+@@ -103,10 +103,8 @@ phases:
+     notes: "Per-task task graph; records the user_facing flag the ship gate reads."
+   implementation:
+     owner: "codex:/codex:rescue"
+-    model: "gpt-5.6-sol"
+-    # Floor, not a ceiling. Escalate with `./forge delegate <id> --effort high`
+-    # for migrations, cross-domain work, or security-sensitive changes.
+-    reasoning: "medium"
++    model: "gpt-5.6-luna"
++    reasoning: "max"
+     prompts: "factory/prompts/implementer.md"
+     required_skills: # ENFORCED by feature type — the decomposition's user_facing flag:
+       # the recorder refuses a user-facing testing artifact unless skills_used
+diff --git a/factory/scripts/forge_cli/codex_runtime.py b/factory/scripts/forge_cli/codex_runtime.py
+new file mode 100644
+index 0000000..17b5f46
+--- /dev/null
++++ b/factory/scripts/forge_cli/codex_runtime.py
+@@ -0,0 +1,143 @@
++"""Native Codex coordinator selection and exact exec contracts."""
++from __future__ import annotations
++
++import json
++import os
++from pathlib import Path
++
++
++RUNTIMES = ("claude", "codex")
++
++
++def selected_coordinator(requested: str | None = None) -> str:
++    """Select the coordinator without changing the legacy outside-runtime default."""
++    explicit = requested if requested is not None else os.environ.get("FORGE_COORDINATOR")
++    if explicit is not None:
++        value = explicit.strip().lower()
++        if value not in RUNTIMES:
++            raise SystemExit(
++                "FORGE_COORDINATOR must be 'claude' or 'codex', "
++                f"got {explicit!r}"
++            )
++        return value
++    if os.environ.get("CODEX_THREAD_ID") or os.environ.get("CODEX_SHELL"):
++        return "codex"
++    if os.environ.get("CLAUDECODE"):
++        return "claude"
++    return "claude"
++
++
++def coordinator_runtime() -> str:
++    return selected_coordinator()
++
++
++def native_argv(
++        executable: str, base: Path, model: str, effort: str, write: bool,
++        *, resume_session: str = "") -> list[str]:
++    """Build the complete shell-free native invocation used as launch evidence."""
++    argv = [
++        executable,
++        "exec",
++        "--json",
++        "--enable",
++        "hooks",
++        "-C",
++        str(base),
++        "--model",
++        model,
++        "--config",
++        f'model_reasoning_effort="{effort}"',
++        "--config",
++        'approval_policy="never"',
++        "--sandbox",
++        "workspace-write" if write else "read-only",
++    ]
++    if resume_session:
++        argv.extend(("resume", resume_session))
++    argv.append("-")
++    return argv
++
++
++def native_argv_valid(entry: dict, base: Path) -> bool:
++    executable = entry.get("executable_path")
++    argv = entry.get("argv")
++    if not isinstance(executable, str) or not executable:
++        return False
++    if not isinstance(argv, list) or not all(isinstance(v, str) for v in argv):
++        return False
++    return argv == native_argv(
++        executable,
++        base,
++        str(entry.get("model") or ""),
++        str(entry.get("effort") or ""),
++        entry.get("write") is True,
++        resume_session=str(entry.get("resume_session") or ""),
++    )
++
++
++def _native_events(path: Path, *, allow_truncated_tail: bool = False) -> list[dict]:
++    try:
++        raw = path.read_bytes()
++    except OSError as exc:
++        raise ValueError(f"native Codex output is unavailable: {exc}") from exc
++    try:
++        text = raw.decode("utf-8")
++    except UnicodeDecodeError as exc:
++        boundary = max(raw.rfind(b"\n"), raw.rfind(b"\r"))
++        if (not allow_truncated_tail or raw.endswith((b"\n", b"\r"))
++                or exc.start <= boundary):
++            raise ValueError("native Codex output is not UTF-8") from exc
++        text = raw[:boundary + 1].decode("utf-8")
++    lines = text.splitlines()
++    events = []
++    for number, line in enumerate(lines, start=1):
++        if not line.strip():
++            continue
++        try:
++            event = json.loads(line)
++        except json.JSONDecodeError as exc:
++            if (allow_truncated_tail and number == len(lines)
++                    and not text.endswith(("\n", "\r"))):
++                break
++            raise ValueError(f"native Codex output line {number} is not JSON") from exc
++        if not isinstance(event, dict) or not isinstance(event.get("type"), str):
++            raise ValueError(f"native Codex output line {number} is not an event")
++        events.append(event)
++    return events
++
++
++def parse_native_result(path: Path) -> str:
++    """Return the persisted Codex session id only for a terminal success stream."""
++    events = _native_events(path)
++    session_id = native_session_identity(path)
++    if not session_id:
++        raise ValueError("native Codex output has no unique thread.started identity")
++    if any(event.get("type") in {"error", "turn.failed"} for event in events):
++        raise ValueError("native Codex output reports a failed run")
++    if not events or events[-1].get("type") != "turn.completed":
++        raise ValueError("native Codex output has no terminal turn.completed event")
++    return session_id
++
++
++def native_session_identity(path: Path) -> str:
++    """Return only an unambiguous runtime identity, regardless of outcome."""
++    try:
++        starts = [event for event in _native_events(path, allow_truncated_tail=True)
++                  if event.get("type") == "thread.started"]
++    except ValueError:
++        return ""
++    if len(starts) != 1 or not isinstance(starts[0].get("thread_id"), str):
++        return ""
++    return starts[0]["thread_id"].strip()
++
++
++def native_completed_message(path: Path) -> str:
++    messages = [
++        event.get("item", {}).get("text")
++        for event in _native_events(path)
++        if event.get("type") == "item.completed"
++        and isinstance(event.get("item"), dict)
++        and event["item"].get("type") == "agent_message"
++        and isinstance(event["item"].get("text"), str)
++    ]
++    return messages[-1].strip() if messages else ""
+diff --git a/factory/scripts/forge_cli/worker_admission.py b/factory/scripts/forge_cli/worker_admission.py
+new file mode 100644
+index 0000000..deb42ed
+--- /dev/null
++++ b/factory/scripts/forge_cli/worker_admission.py
+@@ -0,0 +1,264 @@
++"""Validate a hook caller against a live protected Forge write launch."""
++from __future__ import annotations
++
++import json
++import os
++from pathlib import Path
++
++from factory_lib import (
++    git_control_dir, load_json, now_iso, run_state_path, sha256_of, task_digest,
++)
++
++from .delegate import (
++    SAFE_TASK_ID,
++    _lock_is_held,
++    _process_start_identity,
++    argv_digest,
++    brief_path,
++    delegation_lock_path,
++    load_delegations,
++)
++from .quickfix import LITE, load_active, profile_of
++from .stages import load_stages
++
++
++def _deny(reason: str) -> tuple[None, str]:
++    return None, f"Forge worker write admission refused: {reason}"
++
++
++def _revocation_path(base: Path, launch_id: str) -> Path:
++    if not SAFE_TASK_ID.fullmatch(launch_id):
++        raise ValueError("launch id is not a plain identifier")
++    return git_control_dir(base) / "revoked-launches" / f"{launch_id}.json"
++
++
++def revoke_worker_admission(base: Path, record: dict) -> None:
++    """Permanently revoke one launch before cancellation signals its process."""
++    launch_id = str(record.get("launch_id") or "")
++    path = _revocation_path(base, launch_id)
++    path.parent.mkdir(parents=True, exist_ok=True)
++    flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL
++    if hasattr(os, "O_NOFOLLOW"):
++        flags |= os.O_NOFOLLOW
++    try:
++        descriptor = os.open(path, flags, 0o600)
++    except FileExistsError:
++        return
++    try:
++        payload = json.dumps({
++            "launch_id": launch_id,
++            "process_token": record.get("process_token"),
++            "revoked_at": now_iso(),
++        }).encode("utf-8")
++        os.write(descriptor, payload)
++        os.fsync(descriptor)
++    finally:
++        os.close(descriptor)
++
++
++def worker_admission_revoked(base: Path, launch_id: str) -> bool:
++    try:
++        path = _revocation_path(base, launch_id)
++        path.lstat()
++        return True
++    except FileNotFoundError:
++        return False
++    except (OSError, ValueError):
++        return True
++
++
++def _current_process_descends_from(pid: int, identity: str) -> bool:
++    try:
++        import psutil
++    except ImportError:
++        return False
++    try:
++        process = psutil.Process(os.getpid())
++        lineage = [process, *process.parents()]
++        return any(
++            item.pid == pid and str(item.create_time()) == identity
++            for item in lineage
++        )
++    except (OSError, psutil.Error):
++        return False
++
++
++def _bound_rows(base: Path, launch_id: str) -> tuple[list[dict], str]:
++    try:
++        rows = [row for row in load_delegations(base)
++                if row.get("launch_id") == launch_id]
++    except (OSError, SystemExit, ValueError) as exc:
++        return [], str(exc)
++    if not rows:
++        return [], "the launch id has no protected authority record"
++    bindings = (
++        "task", "brief_sha256", "task_sha256", "write", "model", "effort",
++        "argv", "argv_sha256", "stage_started_at", "process_token", "mode",
++        "transport", "brief_path", "executable_path", "resume_session",
++        "output_path", "stderr_path",
++    )
++    if any(row.get(field) != rows[0].get(field)
++           for row in rows[1:] for field in bindings):
++        return [], "the launch binding changed between lifecycle rows"
++    if [row.get("launch_status") for row in rows] != ["starting", "running"]:
++        return [], "the latest protected launch is not exclusively running"
++    return rows, ""
++
++
++def _lite_contract(base: Path, record: dict) -> tuple[dict | None, str]:
++    window = load_active(base)
++    if not window or profile_of(window) != LITE:
++        return _deny("the bound lite window is no longer open")
++    if record.get("mode") != LITE or record.get("task") != window.get("id"):
++        return _deny("the running launch does not match the current lite window")
++    canonical = brief_path(base, str(window["id"]))
++    try:
++        lines = canonical.read_text(encoding="utf-8").splitlines()
++    except OSError:
++        return _deny("the bound lite brief is missing")
++    description = next(
++        (line.removeprefix("Fix: ") for line in lines if line.startswith("Fix: ")),
++        "",
++    )
++    contract = {
++        "acceptance_criteria": [description],
++        "required_tests": [],
++        "verify_commands": [],
++        "write_scope": [],
++    }
++    if not description or record.get("task_sha256") != task_digest(contract):
++        return _deny("the lite fix contract changed after launch")
++    return {"kind": LITE, "window": window}, ""
++
++
++def _stage_contract(base: Path, record: dict) -> tuple[dict | None, str]:
++    task_id = record.get("task")
++    from factory_lib import protected_decomposition_state_path
++
++    decomposition = load_json(protected_decomposition_state_path(base), default={})
++    task = next((item for item in decomposition.get("tasks", [])
++                 if isinstance(item, dict) and item.get("id") == task_id), None)
++    if task is None or record.get("task_sha256") != task_digest(task):
++        return _deny("the protected task contract changed after launch")
++    stages = load_stages(base)
++    stage = next((item for item in stages.get("stages", [])
++                  if isinstance(item, dict) and item.get("id") == task_id), None)
++    if (
++        stage is None
++        or stage.get("status") != "active"
++        or stage.get("started_at") != record.get("stage_started_at")
++        or stage.get("task_sha256") != record.get("task_sha256")
++    ):
++        return _deny("the bound task stage is no longer the active stage")
++    run = load_json(run_state_path(base), default={})
++    story = run.get("story") or run.get("issue_key")
++    if record.get("story") and record.get("story") != story:
++        return _deny("the active story changed after launch")
++    scope = task.get("write_scope") or []
++    if not scope or any(not isinstance(item, str) or not item.strip()
++                        for item in scope):
++        return _deny("the protected task has no valid write scope")
++    return {"kind": "stage", "scope": scope}, ""
++
++
++def live_worker_admission(base: Path) -> tuple[dict | None, str]:
++    """Return the live launch grant, or a reason for a claimed-but-invalid grant.
++
++    An empty reason means this is an ordinary coordinator process with no worker
++    credentials. Environment markers select a protected record; they never grant
++    authority by themselves.
++    """
++    token = os.environ.get("FORGE_PROCESS_TOKEN", "")
++    launch_id = os.environ.get("FORGE_LAUNCH_ID", "")
++    if not token and not launch_id:
++        return None, ""
++    if not token:
++        return _deny("FORGE_PROCESS_TOKEN is missing")
++    try:
++        all_rows = load_delegations(base)
++    except (OSError, SystemExit, ValueError) as exc:
++        return _deny(str(exc))
++    if not launch_id:
++        # Older companion launches predate FORGE_LAUNCH_ID. Their protected
++        # process token still resolves one exact launch; native launches require
++        # both markers.
++        candidates = {
++            row.get("launch_id") for row in all_rows
++            if row.get("process_token") == token and not row.get("transport")
++        }
++        if len(candidates) != 1 or not all(isinstance(item, str) for item in candidates):
++            return _deny("the legacy process token does not resolve one companion launch")
++        launch_id = candidates.pop()
++    if worker_admission_revoked(base, launch_id):
++        return _deny("the protected launch authority was revoked")
++    rows, error = _bound_rows(base, launch_id)
++    if error:
++        return _deny(error)
++    record = rows[-1]
++    if record.get("argv_sha256") != argv_digest(record.get("argv") or []):
++        return _deny("the protected launch argv digest is invalid")
++    if record.get("transport") == "native" and not os.environ.get("FORGE_LAUNCH_ID"):
++        return _deny("native workers require FORGE_LAUNCH_ID")
++    if record.get("transport") == "native":
++        try:
++            from .codex_runtime import native_argv_valid
++            native_shape_valid = native_argv_valid(record, base)
++        except (ImportError, OSError, TypeError, ValueError):
++            native_shape_valid = False
++        if not native_shape_valid:
++            return _deny("the protected native argv is invalid")
++    if record.get("process_token") != token or record.get("write") is not True:
++        return _deny("the environment does not match a protected write launch")
++    pid, identity = record.get("pid"), record.get("pid_started")
++    if not isinstance(pid, int) or not isinstance(identity, str):
++        return _deny("the running row has no process identity")
++    try:
++        current_identity = _process_start_identity(pid)
++    except (OSError, RuntimeError):
++        current_identity = None
++    if current_identity is None or str(current_identity) != identity:
++        return _deny("the registered worker process is no longer live")
++    if not _current_process_descends_from(pid, identity):
++        return _deny("the hook caller is outside the registered worker process tree")
++    task_id = record.get("task")
++    if not isinstance(task_id, str):
++        return _deny("the protected launch has no task id")
++    lock_path = delegation_lock_path(base, task_id)
++    if not _lock_is_held(lock_path):
++        return _deny("the protected write lock is no longer held")
++    try:
++        lock = json.loads(lock_path.read_text(encoding="utf-8"))
++    except (OSError, json.JSONDecodeError):
++        return _deny("the protected write lock is malformed")
++    if (
++        lock.get("kind") != "delegation"
++        or lock.get("launch_id") != launch_id
++        or lock.get("owner_pid") != pid
++    ):
++        return _deny("the protected write lock does not match the running worker")
++    canonical = brief_path(base, task_id)
++    if (
++        canonical.is_symlink()
++        or not canonical.is_file()
++        or record.get("brief_sha256") != sha256_of(canonical)
++    ):
++        return _deny("the delegation brief changed after launch")
++    if record.get("brief_path"):
++        try:
++            if (base / str(record["brief_path"])).resolve() != canonical.resolve():
++                return _deny("the native brief path is not canonical")
++        except OSError:
++            return _deny("the native brief path cannot be resolved")
++    contract, reason = (_lite_contract(base, record) if record.get("mode") == LITE
++                        else _stage_contract(base, record))
++    if worker_admission_revoked(base, launch_id):
++        return _deny("the protected launch authority was revoked")
++    return contract, reason
++
++
++def path_in_scope(path: str, scope: list[str]) -> bool:
++    return any(
++        bool(prefix := entry.strip().rstrip("/"))
++        and (path == prefix or path.startswith(prefix + "/"))
++        for entry in scope
++    )
+diff --git a/factory/tests/test_native_launch.py b/factory/tests/test_native_launch.py
+new file mode 100644
+index 0000000..4691e6c
+--- /dev/null
++++ b/factory/tests/test_native_launch.py
+@@ -0,0 +1,365 @@
++"""Native Codex uses the protected delegation lifecycle without the plugin."""
++from __future__ import annotations
++
++import json
++import os
++import shutil
++import subprocess
++import sys
++import threading
++import time
++from pathlib import Path
++
++import pytest
++
++
++HARNESS = Path(__file__).resolve().parents[2]
++sys.path.insert(0, str(HARNESS / "factory" / "scripts"))
++
++from forge_cli.codex_runtime import (  # noqa: E402
++    native_argv, native_argv_valid, native_session_identity,
++    parse_native_result, selected_coordinator,
++)
++from forge_cli.delegate import (  # noqa: E402
++    append_delegation, argv_digest, launch_companion, load_delegations,
++)
++from forge_cli.stages import _require_successful_launch, task_digest  # noqa: E402
++from factory_lib import sha256_of  # noqa: E402
++
++
++@pytest.fixture()
++def native_repo(tmp_path: Path) -> Path:
++    base = tmp_path / "repo"
++    base.mkdir()
++    subprocess.run(["git", "init", "-q", str(base)], check=True)
++    schemas = base / "factory" / "schemas"
++    schemas.mkdir(parents=True)
++    shutil.copy(HARNESS / "factory/schemas/delegation.json", schemas)
++    (base / ".factory").mkdir()
++    return base
++
++
++def fake_codex(tmp_path: Path, *, terminal: str = "turn.completed",
++               delay: float = 0, exit_code: int = 0,
++               session_id: str = "thread-fixture",
++               wait_on_new: float = 0,
++               completed_message: str = "") -> Path:
++    script = tmp_path / ("fake_codex.py" if os.name == "nt" else "codex")
++    script.write_text(
++        ("" if os.name == "nt" else f"#!{sys.executable}\n") +
++        "import json, os, sys, time\n"
++        "prompt = sys.stdin.read()\n"
++        "resumed = 'resume' in sys.argv\n"
++        f"if {wait_on_new!r} and not resumed:\n"
++        f"    print(json.dumps({{'type':'thread.started','thread_id':{session_id!r}}}),"
++        " flush=True)\n"
++        f"    time.sleep({wait_on_new!r})\n"
++        "    raise SystemExit(0)\n"
++        f"time.sleep({delay!r})\n"
++        f"print(json.dumps({{'type':'thread.started','thread_id':{session_id!r}}}))\n"
++        "print(json.dumps({'type':'item.completed','item':{'type':'agent_message',"
++        f"'text':{completed_message!r} or prompt}}}}))\n"
++        f"print(json.dumps({{'type':{terminal!r}}}))\n"
++        "with open(os.environ['FAKE_CODEX_CAPTURE'], 'w') as stream:\n"
++        "    json.dump({'argv':sys.argv[1:], 'prompt':prompt, "
++        "'token':os.environ.get('FORGE_PROCESS_TOKEN'), "
++        "'launch_id':os.environ.get('FORGE_LAUNCH_ID')}, stream)\n"
++        f"sys.exit({exit_code})\n",
++    )
++    if os.name != "nt":
++        script.chmod(0o755)
++        return script
++    launcher = tmp_path / "codex.cmd"
++    launcher.write_text(
++        f'@echo off\r\n"{sys.executable}" "{script}" %*\r\n'
++    )
++    return launcher
++
++
++def native_env(monkeypatch, tmp_path: Path, executable: Path) -> Path:
++    capture = tmp_path / "capture.json"
++    monkeypatch.setenv("FORGE_COORDINATOR", "codex")
++    monkeypatch.setenv("FAKE_CODEX_CAPTURE", str(capture))
++    monkeypatch.setenv("PATH", f"{executable.parent}{os.pathsep}{os.environ['PATH']}")
++    return capture
++
++
++def test_runtime_selection_is_explicit_then_native_then_legacy(monkeypatch):
++    monkeypatch.delenv("FORGE_COORDINATOR", raising=False)
++    monkeypatch.delenv("CODEX_THREAD_ID", raising=False)
++    monkeypatch.delenv("CODEX_SHELL", raising=False)
++    monkeypatch.delenv("CLAUDECODE", raising=False)
++    assert selected_coordinator() == "claude"
++    monkeypatch.setenv("CLAUDECODE", "1")
++    assert selected_coordinator() == "claude"
++    monkeypatch.setenv("CODEX_THREAD_ID", "thread")
++    assert selected_coordinator() == "codex"
++    assert selected_coordinator("claude") == "claude"
++    with pytest.raises(SystemExit, match="claude.*codex"):
++        selected_coordinator("other")
++
++
++def test_native_argv_binds_policy_and_resume(tmp_path):
++    argv = native_argv("/bin/codex", tmp_path, "model", "high", False)
++    entry = {
++        "executable_path": "/bin/codex", "argv": argv,
++        "model": "model", "effort": "high", "write": False,
++    }
++    assert native_argv_valid(entry, tmp_path)
++    assert argv[-1] == "-"
++    assert argv[argv.index("--enable") + 1] == "hooks"
++    assert argv[argv.index("--sandbox") + 1] == "read-only"
++    assert 'approval_policy="never"' in argv
++    resumed = native_argv(
++        "/bin/codex", tmp_path, "model", "high", False,
++        resume_session="thread-1",
++    )
++    assert resumed[-3:] == ["resume", "thread-1", "-"]
++
++
++def test_native_launch_registers_before_stdin_and_records_terminal_identity(
++        native_repo, tmp_path, monkeypatch):
++    executable = fake_codex(tmp_path)
++    capture_path = native_env(monkeypatch, tmp_path, executable)
++    brief = native_repo / ".factory" / "briefs" / "T1.md"
++    terminal = launch_companion(
++        native_repo,
++        task_id="T1",
++        text="fixture prompt",
++        path=brief,
++        task_sha256_value="task-digest",
++        model="model-pin",
++        effort="medium",
++        write=False,
++    )
++    capture = json.loads(capture_path.read_text())
++    rows = load_delegations(native_repo)
++    assert [row["launch_status"] for row in rows] == [
++        "starting", "running", "succeeded",
++    ]
++    assert terminal["transport"] == "native"
++    assert terminal["session_id"] == "thread-fixture"
++    assert terminal["brief_path"] == ".factory/briefs/T1.md"
++    assert Path(terminal["output_path"]).is_file()
++    assert Path(terminal["stderr_path"]).is_file()
++    assert capture["prompt"] == "fixture prompt"
++    assert capture["token"] == terminal["process_token"]
++    assert capture["launch_id"] == terminal["launch_id"]
++    assert capture["argv"][-1] == "-"
++
++
++def test_native_zero_exit_without_completed_turn_is_failed(
++        native_repo, tmp_path, monkeypatch, capsys):
++    executable = fake_codex(tmp_path, terminal="item.completed")
++    native_env(monkeypatch, tmp_path, executable)
++    with pytest.raises(SystemExit):
++        launch_companion(
++            native_repo,
++            task_id="T1",
++            text="fixture prompt",
++            path=native_repo / ".factory" / "briefs" / "T1.md",
++            task_sha256_value="task-digest",
++            model="model-pin",
++            effort="medium",
++            write=False,
++        )
++    assert "turn.completed" in capsys.readouterr().out
++    failed = load_delegations(native_repo)[-1]
++    assert failed["launch_status"] == "failed"
++    assert failed["session_id"] == "thread-fixture"
++
++
++def test_native_write_fails_closed_when_hooks_are_not_ready(
++        native_repo, tmp_path, monkeypatch, capsys):
++    executable = fake_codex(tmp_path)
++    native_env(monkeypatch, tmp_path, executable)
++    import forge_cli.doctor as doctor
++
++    monkeypatch.setattr(
++        doctor, "codex_hook_readiness",
++        lambda _base: (False, "exact repo hook source is not trusted"),
++    )
++    with pytest.raises(SystemExit):
++        launch_companion(
++            native_repo,
++            task_id="T1",
++            text="fixture prompt",
++            path=native_repo / ".factory" / "briefs" / "T1.md",
++            task_sha256_value="task-digest",
++            model="model-pin",
++            effort="medium",
++            write=True,
++        )
++    assert "exact repo hook source is not trusted" in capsys.readouterr().out
++    assert load_delegations(native_repo) == []
++
++
++def test_native_nonzero_failure_retains_real_session_identity(
++        native_repo, tmp_path, monkeypatch):
++    executable = fake_codex(tmp_path, terminal="turn.failed", exit_code=3)
++    native_env(monkeypatch, tmp_path, executable)
++    with pytest.raises(SystemExit):
++        launch_companion(
++            native_repo,
++            task_id="explore",
++            text="fixture prompt",
++            path=native_repo / ".factory" / "briefs" / "explore.md",
++            task_sha256_value="",
++            model="model-pin",
++            effort="high",
++            write=False,
++        )
++    failed = load_delegations(native_repo)[-1]
++    assert failed["launch_status"] == "failed"
++    assert failed["exit_code"] == 3
++    assert failed["session_id"] == "thread-fixture"
++
++
++def test_native_identity_survives_only_a_truncated_jsonl_tail(tmp_path):
++    output = tmp_path / "native.jsonl"
++    output.write_text(
++        '{"type":"thread.started","thread_id":"thread-prefix"}\n'
++        '{"type":"item.completed"'
++    )
++    assert native_session_identity(output) == "thread-prefix"
++    with pytest.raises(ValueError):
++        parse_native_result(output)
++    output.write_text(
++        '{"type":"thread.started","thread_id":"thread-prefix"}\n'
++        'malformed complete line\n'
++    )
++    assert native_session_identity(output) == ""
++    output.write_bytes(
++        b'{"type":"thread.started","thread_id":"thread-prefix"}\n'
++        + "snowman: \u2603".encode("utf-8")[:-1]
++    )
++    assert native_session_identity(output) == "thread-prefix"
++    with pytest.raises(ValueError):
++        parse_native_result(output)
++    output.write_bytes(
++        b'{"type":"thread.started","thread_id":"thread-prefix"}\n'
++        b'broken: \xe2\n'
++    )
++    assert native_session_identity(output) == ""
++
++
++def test_stage_launch_gate_requires_exact_native_terminal_stream(
++        native_repo, tmp_path):
++    task = {"id": "T1", "write_scope": ["src/"]}
++    stage = {"started_at": "2026-01-01T00:00:00Z"}
++    launch_id = "launch-stage-fixture"
++    brief = native_repo / ".factory" / "briefs" / "T1.md"
++    brief.parent.mkdir(parents=True)
++    brief.write_text("brief")
++    logs = Path(subprocess.run(
++        ["git", "rev-parse", "--absolute-git-dir"], cwd=native_repo,
++        check=True, capture_output=True, text=True,
++    ).stdout.strip()) / "forge" / "native-runs"
++    logs.mkdir(parents=True)
++    output = logs / f"{launch_id}.jsonl"
++    stderr = logs / f"{launch_id}.stderr.log"
++    output.write_text(
++        '{"type":"thread.started","thread_id":"thread-fixture"}\n'
++        '{"type":"turn.completed"}\n'
++    )
++    stderr.write_text("")
++    argv = native_argv("/bin/codex", native_repo, "model", "medium", True)
++    record = {
++        "generated_by": "orchestrator", "at": stage["started_at"],
++        "launch_id": launch_id, "task": "T1",
++        "brief_sha256": sha256_of(brief), "task_sha256": task_digest(task),
++        "write": True, "model": "model", "effort": "medium",
++        "argv": argv, "argv_sha256": argv_digest(argv),
++        "process_token": f"delegation-{launch_id}",
++        "stage_started_at": stage["started_at"], "transport": "native",
++        "executable_path": "/bin/codex",
++        "brief_path": ".factory/briefs/T1.md",
++        "output_path": str(output), "stderr_path": str(stderr),
++    }
++    for status in ("starting", "running"):
++        append_delegation(native_repo, {**record, "launch_status": status})
++    append_delegation(native_repo, {
++        **record, "launch_status": "succeeded", "exit_code": 0,
++        "session_id": "thread-fixture",
++    })
++    _require_successful_launch(native_repo, "T1", stage, task)
++    output.write_text('{"type":"thread.started","thread_id":"thread-fixture"}\n')
++    with pytest.raises(SystemExit):
++        _require_successful_launch(native_repo, "T1", stage, task)
++
++
++def test_concurrent_native_terminal_is_idempotent_and_retry_can_close_stage(
++        native_repo):
++    task = {"id": "T1", "write_scope": ["src/"]}
++    stage = {"started_at": "2026-01-01T00:00:00Z"}
++    brief = native_repo / ".factory" / "briefs" / "T1.md"
++    brief.parent.mkdir(parents=True)
++    brief.write_text("brief")
++    git_dir = Path(subprocess.run(
++        ["git", "rev-parse", "--absolute-git-dir"], cwd=native_repo,
++        check=True, capture_output=True, text=True,
++    ).stdout.strip())
++    logs = git_dir / "forge" / "native-runs"
++    logs.mkdir(parents=True)
++
++    def record(launch_id: str) -> dict:
++        output = logs / f"{launch_id}.jsonl"
++        stderr = logs / f"{launch_id}.stderr.log"
++        argv = native_argv("/bin/codex", native_repo, "model", "medium", True)
++        return {
++            "generated_by": "orchestrator", "at": stage["started_at"],
++            "launch_id": launch_id, "task": "T1",
++            "brief_sha256": sha256_of(brief),
++            "task_sha256": task_digest(task), "write": True,
++            "model": "model", "effort": "medium", "argv": argv,
++            "argv_sha256": argv_digest(argv),
++            "process_token": f"delegation-{launch_id}",
++            "stage_started_at": stage["started_at"], "transport": "native",
++            "executable_path": "/bin/codex",
++            "brief_path": ".factory/briefs/T1.md",
++            "output_path": str(output), "stderr_path": str(stderr),
++        }
++
++    first = record("launch-first")
++    append_delegation(native_repo, {**first, "launch_status": "starting"})
++    append_delegation(native_repo, {**first, "launch_status": "running"})
++    barrier = threading.Barrier(2)
++    errors = []
++
++    def finish(status: str) -> None:
++        try:
++            barrier.wait()
++            append_delegation(native_repo, {
++                **first, "launch_status": status,
++                "exit_code": 0 if status == "succeeded" else 1,
++                "session_id": "thread-first",
++            })
++        except BaseException as exc:  # surfaced below instead of lost in thread
++            errors.append(exc)
++
++    workers = [threading.Thread(target=finish, args=(status,))
++               for status in ("failed", "succeeded")]
++    for worker in workers:
++        worker.start()
++    for worker in workers:
++        worker.join()
++    assert errors == []
++    first_rows = [row for row in load_delegations(native_repo)
++                  if row["launch_id"] == "launch-first"]
++    assert len([row for row in first_rows
++                if row["launch_status"] in {"failed", "succeeded"}]) == 1
++
++    retry = record("launch-retry")
++    output = Path(retry["output_path"])
++    output.write_text(
++        '{"type":"thread.started","thread_id":"thread-retry"}\n'
++        '{"type":"turn.completed"}\n'
++    )
++    Path(retry["stderr_path"]).write_text("")
++    append_delegation(native_repo, {**retry, "launch_status": "starting"})
++    append_delegation(native_repo, {**retry, "launch_status": "running"})
++    append_delegation(native_repo, {
++        **retry, "launch_status": "succeeded", "exit_code": 0,
++        "session_id": "thread-retry",
++    })
++    _require_successful_launch(native_repo, "T1", stage, task)
+diff --git a/factory/tests/test_native_setup.py b/factory/tests/test_native_setup.py
+new file mode 100644
+index 0000000..e91961b
+--- /dev/null
++++ b/factory/tests/test_native_setup.py
+@@ -0,0 +1,166 @@
++"""Codex-only readiness and dual-adapter scaffold regression coverage."""
++from __future__ import annotations
++
++import argparse
++import json
++import subprocess
++import sys
++
++import pytest
++
++from test_gates import HARNESS, adopt, existing_repo, git, repo, run  # noqa: F401
++
++
++def _hook(event: str, source, *, enabled=True, trust="trusted") -> dict:
++    from forge_cli.doctor import CODEX_HOOK_CONTRACT
++
++    hook = {
++        "eventName": event,
++        "sourcePath": str(source),
++        "enabled": enabled,
++        "trustStatus": trust,
++        "command": f"sh -c 'forge{CODEX_HOOK_CONTRACT[event]}'",
++        "currentHash": "sha256:trusted-by-codex",
++    }
++    if event == "preToolUse":
++        hook["matcher"] = (
++            "Bash|apply_patch|Edit|Write|request_user_input|request_user_input_async"
++        )
++    elif event == "postToolUse":
++        hook["matcher"] = "^request_user_input$"
++    elif event == "sessionStart":
++        hook["matcher"] = "startup|resume|clear|compact"
++    return hook
++
++
++def test_codex_hook_readiness_requires_exact_enabled_trusted_source(
++        tmp_path, monkeypatch):
++    from forge_cli import doctor
++
++    config = tmp_path / ".codex" / "hooks.json"
++    config.parent.mkdir()
++    config.write_text('{"hooks": {}}\n')
++    valid = [_hook(event, config) for event in doctor.CODEX_HOOK_EVENTS]
++    monkeypatch.setattr(doctor.shutil, "which", lambda name: f"/tools/{name}")
++    monkeypatch.setattr(doctor, "_git_worktree_roots", lambda _base: ({tmp_path}, ""))
++    monkeypatch.setattr(
++        doctor, "_codex_hooks_inventory", lambda _binary, _base: (valid, ""))
++
++    ok, detail = doctor.codex_hook_readiness(tmp_path)
++    assert ok and "PATH-based CLI probe does not certify Codex Desktop" in detail
++
++    for matcher in ("*", "", None):
++        match_all = [dict(hook) for hook in valid]
++        for hook in match_all:
++            if hook["eventName"] not in {"preToolUse", "postToolUse", "sessionStart"}:
++                continue
++            if matcher is None:
++                hook.pop("matcher", None)
++            else:
++                hook["matcher"] = matcher
++        monkeypatch.setattr(
++            doctor, "_codex_hooks_inventory",
++            lambda _binary, _base, hooks=match_all: (hooks, ""),
++        )
++        assert doctor.codex_hook_readiness(tmp_path)[0]
++
++    for hooks, expected in (
++        ([], "did not load hooks from"),
++        ([*valid[:-1], _hook("stop", config, trust="untrusted")], "not trusted"),
++        ([*valid[:-1], _hook("stop", config, enabled=False)], "disabled"),
++        (valid[:-1], "required hooks"),
++        ([_hook(event, tmp_path / "other.json") for event in doctor.CODEX_HOOK_EVENTS],
++         "did not load hooks from"),
++    ):
++        monkeypatch.setattr(
++            doctor, "_codex_hooks_inventory",
++            lambda _binary, _base, hooks=hooks: (hooks, ""),
++        )
++        assert expected in doctor.codex_hook_readiness(tmp_path)[1]
++
++    wrong = [dict(hook) for hook in valid]
++    wrong[0]["command"] = "sh -c 'forge hook unrelated'"
++    monkeypatch.setattr(
++        doctor, "_codex_hooks_inventory", lambda _binary, _base: (wrong, ""))
++    assert "wrong hook command" in doctor.codex_hook_readiness(tmp_path)[1]
++
++    wrong = [dict(hook) for hook in valid]
++    next(hook for hook in wrong if hook["eventName"] == "preToolUse")["matcher"] = "Bash"
++    monkeypatch.setattr(
++        doctor, "_codex_hooks_inventory", lambda _binary, _base: (wrong, ""))
++    assert "PreToolUse matcher" in doctor.codex_hook_readiness(tmp_path)[1]
++
++    malformed = [dict(hook) for hook in valid]
++    next(hook for hook in malformed if hook["eventName"] == "preToolUse")["matcher"] = "["
++    monkeypatch.setattr(
++        doctor, "_codex_hooks_inventory", lambda _binary, _base: (malformed, ""))
++    assert "matcher is invalid" in doctor.codex_hook_readiness(tmp_path)[1]
++
++    sources = doctor.CODEX_SESSION_START_SOURCES
++    for missing in sources:
++        incomplete = [dict(hook) for hook in valid]
++        next(hook for hook in incomplete
++             if hook["eventName"] == "sessionStart")["matcher"] = "|".join(
++                 source for source in sources if source != missing)
++        monkeypatch.setattr(
++            doctor, "_codex_hooks_inventory",
++            lambda _binary, _base, hooks=incomplete: (hooks, ""),
++        )
++        detail = doctor.codex_hook_readiness(tmp_path)[1]
++        assert "SessionStart matcher" in detail and missing in detail
++
++
++def test_codex_hook_readiness_accepts_only_identical_inherited_worktree_hooks(
++        tmp_path, monkeypatch):
++    from forge_cli import doctor
++
++    main = tmp_path / "main"
++    linked = tmp_path / "linked"
++    subprocess.run(["git", "init", "-q", str(main)], check=True)
++    subprocess.run(["git", "config", "user.email", "forge@example.invalid"], cwd=main, check=True)
++    subprocess.run(["git", "config", "user.name", "Forge Tests"], cwd=main, check=True)
++    config = main / ".codex" / "hooks.json"
++    config.parent.mkdir()
++    config.write_text('{"hooks": {"fixture": true}}\n')
++    subprocess.run(["git", "add", "."], cwd=main, check=True)
++    subprocess.run(["git", "commit", "-q", "-m", "hooks"], cwd=main, check=True)
++    subprocess.run(["git", "worktree", "add", "-q", "-b", "linked", str(linked)],
++                   cwd=main, check=True)
++    inherited = [_hook(event, config) for event in doctor.CODEX_HOOK_EVENTS]
++    monkeypatch.setattr(doctor.shutil, "which", lambda name: f"/tools/{name}")
++    monkeypatch.setattr(
++        doctor, "_codex_hooks_inventory", lambda _binary, _base: (inherited, ""))
++
++    assert doctor.codex_hook_readiness(linked)[0]
++
++    config.write_text('{"hooks": {"fixture": "diverged"}}\n')
++    ok, detail = doctor.codex_hook_readiness(linked)
++    assert not ok and "inherited divergent hooks" in detail
++
++
++def test_dual_runtime_checker_accepts_session_start_match_all(repo):
++    config = repo / ".codex/hooks.json"
++    document = json.loads(config.read_text(encoding="utf-8"))
++    document["hooks"]["SessionStart"][0]["matcher"] = "*"
++    config.write_text(json.dumps(document), encoding="utf-8")
++
++    code, out = run(repo, "check_dual_runtime.py", str(repo))
++
++    assert code == 0, out
++
++
++@pytest.mark.parametrize("missing", ["startup", "resume", "clear", "compact"])
++def test_dual_runtime_checker_requires_each_session_start_source(
++        repo, missing):
++    config = repo / ".codex/hooks.json"
++    document = json.loads(config.read_text(encoding="utf-8"))
++    document["hooks"]["SessionStart"][0]["matcher"] = "|".join(
++        source for source in ("startup", "resume", "clear", "compact")
++        if source != missing)
++    config.write_text(json.dumps(document), encoding="utf-8")
++
++    code, out = run(repo, "check_dual_runtime.py", str(repo))
++
++    assert code != 0 and f"missing: {missing}" in out
++
++
+diff --git a/factory/tests/test_worker_admission.py b/factory/tests/test_worker_admission.py
+new file mode 100644
+index 0000000..d6de994
+--- /dev/null
++++ b/factory/tests/test_worker_admission.py
+@@ -0,0 +1,416 @@
++"""Native edit-hook coverage and protected worker admission."""
++from __future__ import annotations
++
++import hashlib
++import json
++import os
++import subprocess
++import sys
++from pathlib import Path
++
++import psutil
++import pytest
++
++from test_gates import HARNESS, git, repo  # noqa: F401
++
++sys.path.insert(0, str(HARNESS / "factory" / "scripts"))
++from factory_lib import task_digest  # noqa: E402
++from forge_cli.codex_runtime import native_argv  # noqa: E402
++
++
++TASK = {
++    "id": "T1",
++    "title": "hook admission",
++    "write_scope": ["src/"],
++    "required_tests": [],
++    "verify_commands": [],
++    "acceptance_criteria": ["A registered native worker can edit its scope."],
++}
++
++
++def _control(repo: Path) -> Path:
++    path = Path(git(repo, "rev-parse", "--absolute-git-dir")) / "forge"
++    path.mkdir(parents=True, exist_ok=True)
++    return path
++
++
++def _hook(repo: Path, payload: dict, env: dict[str, str] | None = None) -> str:
++    proc = subprocess.run(
++        [sys.executable, str(repo / "factory/scripts/pre_tool_use.py")],
++        cwd=repo,
++        input=json.dumps(payload),
++        capture_output=True,
++        text=True,
++        env={**os.environ, **(env or {})},
++    )
++    assert proc.returncode == 0, proc.stdout + proc.stderr
++    return proc.stdout
++
++
++def _patch(*controls: str) -> dict:
++    return {
++        "tool_name": "apply_patch",
++        "permission_mode": "default",
++        "tool_input": {
++            "command": "\n".join(("*** Begin Patch", *controls, "*** End Patch")),
++        },
++    }
++
++
++def _seed_contract(repo: Path) -> tuple[Path, str]:
++    (repo / ".factory/harness-source.json").write_text("{}\n", encoding="utf-8")
++    brief = repo / ".factory/briefs/T1.md"
++    brief.parent.mkdir(parents=True, exist_ok=True)
++    brief.write_text("# T1 protected brief\n", encoding="utf-8")
++    control = _control(repo)
++    digest = task_digest(TASK)
++    (control / "run.json").write_text(
++        json.dumps({"issue_key": "STORY-1", "story": "STORY-1"}),
++        encoding="utf-8",
++    )
++    (control / "decomposition.json").write_text(
++        json.dumps({"tasks": [TASK]}), encoding="utf-8",
++    )
++    (control / "stages.json").write_text(json.dumps({
++        "issue": "STORY-1",
++        "stages": [{
++            "id": "T1", "status": "active", "started_at": "stage-1",
++            "task_sha256": digest,
++        }],
++    }), encoding="utf-8")
++    return brief, digest
++
++
++def _worker_script(tmp_path: Path) -> Path:
++    script = tmp_path / "hook_worker.py"
++    script.write_text(
++        "import json, os, subprocess, sys\n"
++        "lock, hook, repo = sys.argv[1:4]\n"
++        "sys.path.insert(0, os.path.join(repo, 'factory', 'scripts'))\n"
++        "from forge_cli.delegate import _lock_file\n"
++        "with open(lock, 'a+', encoding='utf-8') as handle:\n"
++        " handle.seek(0); handle.truncate()\n"
++        " json.dump({'kind':'delegation','launch_id':os.environ['FORGE_LAUNCH_ID'],"
++        "'owner_pid':os.getpid()}, handle); handle.flush()\n"
++        " _lock_file(handle)\n"
++        " print('READY', flush=True)\n"
++        " payload = sys.stdin.readline()\n"
++        " env = dict(os.environ)\n"
++        " if len(sys.argv) > 4: env.pop('FORGE_LAUNCH_ID', None)\n"
++        " result = subprocess.run([sys.executable, hook], cwd=repo, input=payload,"
++        " capture_output=True, text=True, env=env)\n"
++        " print(result.stdout, end='', flush=True)\n",
++        encoding="utf-8",
++    )
++    return script
++
++
++def _start_worker(repo: Path, tmp_path: Path, *, launch_id: str = "launch-test",
++                  task_id: str = "T1", legacy_env: bool = False):
++    control = _control(repo)
++    lock = control / f"locks/task/{task_id}.lock"
++    lock.parent.mkdir(parents=True, exist_ok=True)
++    token = f"delegation-{launch_id}"
++    env = {
++        **os.environ,
++        "FORGE_PROCESS_TOKEN": token,
++        "FORGE_LAUNCH_ID": launch_id,
++    }
++    argv = [sys.executable, str(_worker_script(tmp_path)), str(lock),
++            str(repo / "factory/scripts/pre_tool_use.py"), str(repo)]
++    if legacy_env:
++        argv.append("legacy")
++    proc = subprocess.Popen(
++        argv,
++        stdin=subprocess.PIPE,
++        stdout=subprocess.PIPE,
++        stderr=subprocess.PIPE,
++        text=True,
++        env=env,
++    )
++    assert proc.stdout is not None and proc.stdout.readline().strip() == "READY"
++    return proc, token, launch_id
++
++
++def _record_launch(repo: Path, proc: subprocess.Popen[str], token: str,
++                   launch_id: str, brief: Path, digest: str, *, running=True,
++                   task_id: str = "T1", mode: str = "",
++                   transport: str = "native") -> None:
++    executable = str(Path(sys.executable).resolve())
++    argv = (native_argv(executable, repo, "gpt-test", "medium", True)
++            if transport == "native"
++            else ["node", "/x/codex-companion.mjs", "task", "--write"])
++    base = {
++        "generated_by": "orchestrator",
++        "at": "2026-09-07T00:00:00Z",
++        "launch_id": launch_id,
++        "task": task_id,
++        "brief_sha256": hashlib.sha256(brief.read_bytes()).hexdigest(),
++        "task_sha256": digest,
++        "write": True,
++        "model": "gpt-test",
++        "effort": "medium",
++        "companion_path": executable,
++        "argv": argv,
++        "argv_sha256": hashlib.sha256(
++            json.dumps(argv, separators=(",", ":")).encode()
++        ).hexdigest(),
++        "launch_status": "starting",
++        "process_token": token,
++    }
++    if transport == "native":
++        base.update({
++            "transport": "native",
++            "executable_path": executable,
++            "brief_path": brief.relative_to(repo).as_posix(),
++        })
++    if mode:
++        base["mode"] = mode
++    else:
++        base.update({"story": "STORY-1", "stage_started_at": "stage-1"})
++    rows = [base]
++    if running:
++        rows.append({
++            **base,
++            "launch_status": "running",
++            "pid": proc.pid,
++            "pgid": proc.pid,
++            "pid_started": str(psutil.Process(proc.pid).create_time()),
++        })
++    (_control(repo) / "delegations.jsonl").write_text(
++        "".join(json.dumps(row) + "\n" for row in rows), encoding="utf-8",
++    )
++
++
++def _invoke_worker(proc: subprocess.Popen[str], payload: dict) -> str:
++    assert proc.stdin is not None and proc.stdout is not None
++    proc.stdin.write(json.dumps(payload) + "\n")
++    proc.stdin.flush()
++    proc.stdin.close()
++    output = proc.stdout.read()
++    proc.wait(timeout=10)
++    assert proc.returncode == 0, (proc.stderr.read() if proc.stderr else "")
++    return output
++
++
++def test_native_worker_patch_add_update_delete_and_move_is_admitted(repo, tmp_path):
++    brief, digest = _seed_contract(repo)
++    proc, token, launch_id = _start_worker(repo, tmp_path)
++    _record_launch(repo, proc, token, launch_id, brief, digest)
++    output = _invoke_worker(proc, _patch(
++        "*** Add File: src/new.py", "+new",
++        "*** Update File: src/old.py", "*** Move to: src/moved.py", "@@", "-old", "+new",
++        "*** End of File",
++        "*** Delete File: src/gone.py",
++    ))
++    assert "deny" not in output, output
++
++
++def test_stage_worker_may_change_repo_marker_only_when_scope_names_it(repo, tmp_path):
++    brief, _ = _seed_contract(repo)
++    marker_task = {**TASK, "write_scope": [".factory/harness-source.json"]}
++    digest = task_digest(marker_task)
++    control = _control(repo)
++    (control / "decomposition.json").write_text(
++        json.dumps({"tasks": [marker_task]}), encoding="utf-8",
++    )
++    (control / "stages.json").write_text(json.dumps({
++        "issue": "STORY-1",
++        "stages": [{
++            "id": "T1", "status": "active", "started_at": "stage-1",
++            "task_sha256": digest,
++        }],
++    }), encoding="utf-8")
++    proc, token, launch_id = _start_worker(repo, tmp_path)
++    _record_launch(repo, proc, token, launch_id, brief, digest)
++    output = _invoke_worker(
++        proc, _patch("*** Delete File: .factory/harness-source.json"),
++    )
++    assert "deny" not in output, output
++
++
++def test_legacy_companion_token_still_resolves_protected_worker(repo, tmp_path):
++    brief, digest = _seed_contract(repo)
++    proc, token, launch_id = _start_worker(repo, tmp_path, legacy_env=True)
++    _record_launch(
++        repo, proc, token, launch_id, brief, digest, transport="companion",
++    )
++    output = _invoke_worker(proc, _patch("*** Add File: src/new.py", "+new"))
++    assert "deny" not in output, output
++
++
++def test_client_coordinator_apply_patch_still_locks_product(repo):
++    output = _hook(repo, _patch(
++        "*** Update File: src/old.py", "@@", "-old", "+new", "*** End of File",
++    ))
++    assert "deny" in output and "forge delegate" in output
++
++
++@pytest.mark.parametrize("status", ["coordinator", "starting", "forged"])
++def test_unregistered_callers_cannot_write_product(repo, tmp_path, status):
++    brief, digest = _seed_contract(repo)
++    if status == "coordinator":
++        output = _hook(repo, _patch("*** Add File: src/new.py", "+new"))
++    elif status == "forged":
++        output = _hook(
++            repo, _patch("*** Add File: src/new.py", "+new"),
++            {"FORGE_PROCESS_TOKEN": "forged", "FORGE_LAUNCH_ID": "launch-forged"},
++        )
++    else:
++        proc, token, launch_id = _start_worker(repo, tmp_path)
++        _record_launch(repo, proc, token, launch_id, brief, digest, running=False)
++        output = _invoke_worker(proc, _patch("*** Add File: src/new.py", "+new"))
++    assert "deny" in output
++
++
++def test_terminated_worker_and_reused_environment_are_denied(repo, tmp_path):
++    brief, digest = _seed_contract(repo)
++    proc, token, launch_id = _start_worker(repo, tmp_path)
++    _record_launch(repo, proc, token, launch_id, brief, digest)
++    proc.terminate()
++    proc.wait(timeout=10)
++    output = _hook(
++        repo, _patch("*** Add File: src/new.py", "+new"),
++        {"FORGE_PROCESS_TOKEN": token, "FORGE_LAUNCH_ID": launch_id},
++    )
++    assert "deny" in output and "no longer live" in output
++
++
++@pytest.mark.parametrize("marker_kind", ["malformed", "directory"])
++def test_any_protected_revocation_marker_denies_admission(
++        repo, tmp_path, monkeypatch, marker_kind):
++    import forge_cli.worker_admission as admission
++
++    brief, digest = _seed_contract(repo)
++    proc, token, launch_id = _start_worker(repo, tmp_path)
++    _record_launch(repo, proc, token, launch_id, brief, digest)
++    monkeypatch.setenv("FORGE_PROCESS_TOKEN", token)
++    monkeypatch.setenv("FORGE_LAUNCH_ID", launch_id)
++    monkeypatch.setattr(admission, "_current_process_descends_from", lambda *_a: True)
++    marker = admission._revocation_path(repo, launch_id)
++    marker.parent.mkdir(parents=True, exist_ok=True)
++    if marker_kind == "directory":
++        marker.mkdir()
++    else:
++        marker.write_text("not JSON", encoding="utf-8")
++    try:
++        grant, reason = admission.live_worker_admission(repo)
++        assert grant is None and "revoked" in reason
++    finally:
++        proc.terminate()
++        proc.wait(timeout=10)
++
++
++def test_contract_mutation_and_out_of_scope_move_are_denied(repo, tmp_path):
++    brief, digest = _seed_contract(repo)
++    proc, token, launch_id = _start_worker(repo, tmp_path)
++    _record_launch(repo, proc, token, launch_id, brief, digest)
++    changed = {**TASK, "write_scope": ["other/"]}
++    (_control(repo) / "decomposition.json").write_text(
++        json.dumps({"tasks": [changed]}), encoding="utf-8",
++    )
++    output = _invoke_worker(proc, _patch(
++        "*** Update File: src/old.py", "*** Move to: outside.py", "@@", "-old", "+new",
++    ))
++    assert "deny" in output and "contract changed" in output
++
++
++def test_stage_restart_invalidates_running_worker(repo, tmp_path):
++    brief, digest = _seed_contract(repo)
++    proc, token, launch_id = _start_worker(repo, tmp_path)
++    _record_launch(repo, proc, token, launch_id, brief, digest)
++    (_control(repo) / "stages.json").write_text(json.dumps({
++        "issue": "STORY-1",
++        "stages": [{
++            "id": "T1", "status": "active", "started_at": "stage-2",
++            "task_sha256": digest,
++        }],
++    }), encoding="utf-8")
++    output = _invoke_worker(proc, _patch("*** Add File: src/new.py", "+new"))
++    assert "deny" in output and "no longer the active stage" in output
++
++
++def test_worker_move_target_must_remain_in_scope(repo, tmp_path):
++    brief, digest = _seed_contract(repo)
++    proc, token, launch_id = _start_worker(repo, tmp_path)
++    _record_launch(repo, proc, token, launch_id, brief, digest)
++    output = _invoke_worker(proc, _patch(
++        "*** Update File: src/old.py", "*** Move to: outside.py", "@@", "-old", "+new",
++    ))
++    assert "deny" in output and "outside the protected task scope" in output
++
++
++@pytest.mark.parametrize("terminal", ["failed", "succeeded"])
++def test_terminal_launch_never_retains_write_admission(repo, tmp_path, terminal):
++    brief, digest = _seed_contract(repo)
++    proc, token, launch_id = _start_worker(repo, tmp_path)
++    _record_launch(repo, proc, token, launch_id, brief, digest)
++    ledger = _control(repo) / "delegations.jsonl"
++    running = json.loads(ledger.read_text(encoding="utf-8").splitlines()[-1])
++    with ledger.open("a", encoding="utf-8") as handle:
++        handle.write(json.dumps({
++            **running, "launch_status": terminal,
++            "exit_code": 0 if terminal == "succeeded" else 1,
++        }) + "\n")
++    output = _invoke_worker(proc, _patch("*** Add File: src/new.py", "+new"))
++    assert "deny" in output and "not exclusively running" in output
++
++
++def test_live_lite_worker_uses_current_window_and_file_budget(repo, tmp_path):
++    (repo / ".factory/harness-source.json").write_text("{}\n", encoding="utf-8")
++    window_id = "Q-0001-test"
++    (repo / ".factory/quickfix.json").write_text(json.dumps({
++        "id": window_id,
++        "profile": "lite",
++        "reason": "bounded native fix",
++        "started_at": "2026-09-07T00:00:00Z",
++        "max_files": 5,
++        "files": [],
++        "harness_source": True,
++        "base_sha": git(repo, "rev-parse", "HEAD"),
++    }), encoding="utf-8")
++    description = "repair one bounded file"
++    brief = repo / f".factory/briefs/{window_id}.md"
++    brief.parent.mkdir(parents=True, exist_ok=True)
++    brief.write_text(
++        f"# Lite fix — {window_id}\n\nFix: {description}\n\nWork only here.\n",
++        encoding="utf-8",
++    )
++    digest = task_digest({
++        "acceptance_criteria": [description],
++        "required_tests": [],
++        "verify_commands": [],
++        "write_scope": [],
++    })
++    proc, token, launch_id = _start_worker(repo, tmp_path, task_id=window_id)
++    _record_launch(
++        repo, proc, token, launch_id, brief, digest,
++        task_id=window_id, mode="lite",
++    )
++    output = _invoke_worker(proc, _patch("*** Add File: src/lite.py", "+new"))
++    assert "deny" not in output, output
++    claimed = json.loads((repo / ".factory/quickfix.json").read_text())["files"]
++    assert claimed == ["src/lite.py"]
++
++
++def test_worker_cannot_patch_recorded_factory_state(repo, tmp_path):
++    brief, digest = _seed_contract(repo)
++    proc, token, launch_id = _start_worker(repo, tmp_path)
++    _record_launch(repo, proc, token, launch_id, brief, digest)
++    output = _invoke_worker(proc, _patch(
++        "*** Update File: .factory/run.json", "@@", "-{}", "+{}",
++    ))
++    assert "deny" in output and "never hand-written" in output
++
++
++@pytest.mark.parametrize("header", [
++    "*** Mystery File: src/x.py",
++    "*** Add File: ../outside.py",
++])
++def test_malformed_or_outside_apply_patch_fails_closed(repo, header):
++    _seed_contract(repo)
++    output = _hook(repo, {
++        "tool_name": "apply_patch",
++        "tool_input": {"command": f"*** Begin Patch\n{header}\n*** End Patch"},
++    })
++    assert "deny" in output and "malformed" in output

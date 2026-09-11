@@ -1,0 +1,2801 @@
+{
+  "status": "Approval-input ownership graph; effective only after this exact digest is versioned and bound by the approved story plan. Not a Forge recorder payload.",
+  "story": "FORGE-COORD-1",
+  "plan": "/Users/dev/.codex/plans/symphony-forge+lean-delivery-workflow+20260910.md",
+  "canon_owner": "Main; accepted0064 and confirmed specification, actual artifact publication and recorder gates",
+  "transition": {
+    "source": "/Users/dev/Workdir/symphony-forge-native-dogfood",
+    "current_trunk": "824baed4a657a83a6a7583e85ee67d2907e7c172",
+    "fresh_main_reproduction": "/Users/dev/Workdir/symphony-forge-lean",
+    "route": "Existing0063 source ceremony, existing task start from fetched trunk, exact allocated preparation, fresh real-target binding, registered admission",
+    "first_original_patch_bytes": 109953,
+    "first_original_patch_sha256": "bee122bb370177ededefb5fe81a82f8c600f69af8502e151956ec7b8afed29e2",
+    "first_scope_status": "Confirmed24: baseline23 plus review.py. Client protected reads succeeded; LEAN owns false phase.py wording. First provides actual native read/denied-unauthorized-write proof, not a snapshot or recorder ban.",
+    "scope_path_count": 24,
+    "old_caps": "Accepted0064 and confirmed spec replace obsolete120000/180000 clauses, including0058 wording, with actual installed helper safeguards; no implicit patch cap or helper-limit edit.",
+    "current_helper": "Main resolved current helper and verified large-input and lossless-chunk tests PASS;512000 per-prompt bound",
+    "first_review": "Current three-lens execution; later LEAN-WORKFLOW single combined reviewer run with genuine three assessments",
+    "source_inventory": "plans/exploration/coordinator-parity-preparation/native-foreground-preparation-inventory.json; SHA2563874bb1a3e698c340c19b419d22cad897d12c80d2314bd4b5142d5c3656fa48f"
+  },
+  "tasks": [
+    {
+      "id": "NATIVE-FOREGROUND-ACTIVATE",
+      "title": "Native foreground and complete first-task proof",
+      "depends_on": [],
+      "user_facing": false,
+      "acceptance_criteria": [
+        "AC1",
+        "AC2",
+        "AC3",
+        "AC4",
+        "AC5",
+        "AC7",
+        "AC10",
+        "AC11"
+      ],
+      "replaces_old_rows": [
+        "NATIVE-FOREGROUND-ACTIVATE"
+      ],
+      "owned_behavior": [
+        "Existing complete foreground hooks/checker/readiness and process-bound admission",
+        "C9 full approved plan and automated report in review inputs",
+        "C10 shared complete local/committed/board proof and seal before mutation",
+        "Minimal task workspace creation before successor JIT",
+        "Foreground interruption/failure revocation before cleanup and failed cleanup refusal",
+        "Claude clear registration and independent/both-adapter hook omission tests",
+        "Explicit reviewed task proof_path preflight, never another task/story proof",
+        "Actual native protected-state read and denied unauthorized mutation proof; current client reads already work, false phase wording belongs to LEAN"
+      ],
+      "planning_surfaces": [
+        ".claude/settings.json",
+        ".codex/hooks.json",
+        "factory/schemas/delegation.json",
+        "factory/scripts/check_dual_runtime.py",
+        "factory/scripts/forge_cli/delegate.py",
+        "factory/scripts/forge_cli/doctor.py",
+        "factory/scripts/forge_cli/stages.py",
+        "factory/scripts/pre_tool_use.py",
+        "factory/scripts/session_start.py",
+        "factory/tests/test_gates.py",
+        "harness.yaml",
+        "factory/scripts/forge_cli/codex_runtime.py",
+        "factory/scripts/forge_cli/worker_admission.py",
+        "factory/tests/test_native_launch.py",
+        "factory/tests/test_native_setup.py",
+        "factory/tests/test_worker_admission.py",
+        "factory/scripts/forge.py",
+        "factory/scripts/factory_lib.py",
+        "factory/scripts/forge_cli/readiness.py",
+        "factory/scripts/forge_cli/review_brief.py",
+        "factory/scripts/check_task_proof.py",
+        "factory/scripts/forge_cli/tasks.py",
+        "AGENTS.md",
+        "factory/scripts/forge_cli/review.py"
+      ],
+      "verification": [
+        "Genuine0063 source and target bindings; wrong owner/placeholder/copied proof refuse",
+        "Admitted new contribution, targeted tests, declared verify, current three-lens review, PR and green CI",
+        "Background/jobs/status/cancel/resume/explore/optional questions refuse until later owner",
+        "cmd_review accepts own task-only proof and refuses other task/story proof; Git-local refusal regression follows actual diagnosed access boundary"
+      ]
+    },
+    {
+      "id": "LEAN-WORKFLOW",
+      "title": "One brief and one complete independent review",
+      "depends_on": [
+        "NATIVE-FOREGROUND-ACTIVATE"
+      ],
+      "user_facing": false,
+      "acceptance_criteria": [
+        "AC4",
+        "AC9",
+        "AC11"
+      ],
+      "replaces_old_rows": [
+        "POLICY"
+      ],
+      "owned_behavior": [
+        "Authoritative task brief with derived metadata; actual standing authorization reused for in-scope work",
+        "Remove compulsory requirements/story/task certification and repeated human approval rituals in every producer and consumer",
+        "One combined independent review result with actual three assessments and existing same-run proof projections",
+        "Complete review packaging including CI files, generated artifacts and supported lossless chunks",
+        "Fresh worker context carries settled rulings; one decision card only for real unknowns",
+        "Shared exact-file workflow ownership predicate: only four scaffold-owned workflows excluded; arbitrary client .github paths included in measurement/review/staleness",
+        "Rulings propagate through existing task brief/contract and recorders to fresh delegate/review briefs; no new ruling ledger or workspace-minted authority",
+        "Generated migration/snapshot output remains reviewed and counted; choose coherent explicit file/line bounds from actual complete scope, no blanket exclusion"
+      ],
+      "planning_surfaces": [
+        "factory/scripts/forge_cli/tasks.py",
+        "factory/scripts/forge_cli/plans.py",
+        "factory/scripts/forge_cli/grill.py",
+        "factory/scripts/grill_gates.py",
+        "factory/scripts/record_grill_from_json.py",
+        "factory/scripts/record_decomposition_from_json.py",
+        "factory/scripts/factory_lib.py",
+        "factory/scripts/forge_cli/delegate.py",
+        "factory/scripts/forge_cli/review.py",
+        "factory/scripts/forge_cli/review_brief.py",
+        "factory/scripts/record_review_from_json.py",
+        "factory/scripts/check_task_proof.py",
+        "factory/scripts/forge_cli/readiness.py",
+        "factory/scripts/forge_cli/stages.py",
+        "factory/skills/forge.md",
+        "WORKFLOW.md",
+        "docs/FACTORY.md",
+        "docs/QUALITY.md",
+        "docs/ROLES.md",
+        "factory/prompts",
+        "factory/schemas",
+        "harness.yaml",
+        "AGENTS.md",
+        "factory/scripts/forge_cli/signal.py",
+        "factory/scripts/pr_ready.py",
+        "factory/scripts/forge_cli/scaffold.py",
+        "factory/scripts/forge_cli/upgrade.py",
+        "factory/scripts/check_vendor_integrity.py",
+        "factory/scripts/forge_cli/phase.py"
+      ],
+      "verification": [
+        "Old legitimate proof remains readable, no synthetic approval or review conversion",
+        "Local/CI/board reject identical missing/stale/blocked proof; complete reviewed scope",
+        "Gate/proof/continuation regressions; no UI components, daemon or registry"
+      ]
+    },
+    {
+      "id": "NATIVE-LIFECYCLE",
+      "title": "Native background lifecycle and read-only helpers",
+      "depends_on": [
+        "LEAN-WORKFLOW"
+      ],
+      "user_facing": false,
+      "acceptance_criteria": [
+        "AC2",
+        "AC3",
+        "AC4",
+        "AC10"
+      ],
+      "replaces_old_rows": [
+        "NATIVE-BACKGROUND-LIFECYCLE"
+      ],
+      "owned_behavior": [
+        "Detached native supervisor/request/launch, jobs/status/cancel/resume/explore",
+        "Process identity, recovery, locking and truthful cleanup",
+        "Preserve native_jobs/cmd_cancel and both original cancellation tests"
+      ],
+      "planning_surfaces": [
+        "factory/scripts/forge_cli/codex_runtime.py",
+        "factory/scripts/forge_cli/delegate.py",
+        "factory/scripts/forge_cli/stages.py",
+        "factory/scripts/forge_cli/worker_admission.py",
+        "factory/scripts/forge.py",
+        "factory/schemas/delegation.json",
+        "factory/tests/test_native_launch.py",
+        "factory/tests/test_worker_admission.py",
+        "AGENTS.md"
+      ],
+      "verification": [
+        "Live terminal/process-tree proof and cancellation races",
+        "test_cancel_revokes_admission_before_slow_cleanup",
+        "test_failed_cancel_cleanup_leaves_live_worker_revoked",
+        "No Claude fallback or helper write authority"
+      ]
+    },
+    {
+      "id": "SHARED-COORDINATOR-JOURNEY",
+      "title": "Coordinator questions, task ownership and reliable continuation",
+      "depends_on": [
+        "NATIVE-LIFECYCLE"
+      ],
+      "user_facing": true,
+      "acceptance_criteria": [
+        "AC1",
+        "AC4",
+        "AC5",
+        "AC9",
+        "AC10",
+        "AC11"
+      ],
+      "replaces_old_rows": [
+        "QUESTION-IDENTITY",
+        "POLICY",
+        "TASKS"
+      ],
+      "owned_behavior": [
+        "Complete optional native question identity/normalization/schema/recorder/eligibility/single use",
+        "Main-only host-permitted decisions and exact current artifact display",
+        "Remaining0062 max/model/fallback/settings and shared adapter policy",
+        "Registered same-common-directory worktree attachment, owner reads, board/queue and task-only reconciliation",
+        "Safe story resume, question ledger hydration, sealed-record immutability and sibling/trunk integration",
+        "Same PR identity/retries, no duplicate dispatch, completed-boundary handoff and quiet continuation",
+        "Hydrate actual consumed grill-rounds records only; plan-mode marker gate remains withdrawn",
+        "Preserve/reconstruct task_id/branch/base_main_sha and verified owner on resume; never downgrade task-proof mode",
+        "Preserve complete stage seal fields; read-only next must not destructively rebuild state",
+        "Resolve exact approved plan/story before auto-selection and reload state after valid pointer recovery"
+      ],
+      "planning_surfaces": [
+        "factory/scripts/post_tool_use.py",
+        "factory/tests/test_native_questions.py",
+        "factory/scripts/forge_cli/tasks.py",
+        "factory/scripts/forge_cli/stages.py",
+        "factory/scripts/forge_cli/phase.py",
+        "factory/scripts/forge_cli/grill.py",
+        "factory/scripts/grill_gates.py",
+        "factory/scripts/factory_lib.py",
+        "factory/scripts/intake.py",
+        "factory/scripts/record_decomposition_from_json.py",
+        "factory/scripts/forge_cli/delegate.py",
+        "factory/scripts/forge.py",
+        "factory/schemas",
+        "factory/board",
+        "factory/skills/forge.md",
+        "docs/product/BRIEF.md",
+        "docs/native-coordinator.md",
+        "AGENTS.md",
+        "factory/scripts/forge_cli/story.py"
+      ],
+      "verification": [
+        "Exact optional question/session/tool/turn/story/free-text/replay/cancel cases; no fabricated approvals",
+        "Wrong story/owner, dirty/unregistered/independent-clone target and unproven sealed state refuse without destructive repair",
+        "Actual board functional proof, fresh-context/PR/handoff recovery and platform evidence inputs"
+      ]
+    },
+    {
+      "id": "PORTABLE-DELIVERY-MIGRATION",
+      "title": "Portable setup, durable history and existing-client migration",
+      "depends_on": [
+        "SHARED-COORDINATOR-JOURNEY"
+      ],
+      "user_facing": false,
+      "acceptance_criteria": [
+        "AC3",
+        "AC5",
+        "AC8",
+        "AC12"
+      ],
+      "replaces_old_rows": [
+        "DELIVERY"
+      ],
+      "owned_behavior": [
+        "Native selection/refusal/repair propagation and init/adopt/upgrade ownership",
+        "Retired original agents removed only if unchanged; modified/custom/unknown files preserved",
+        "Decision JSON generated from existing parser, no new authority",
+        "Actual payload/filename event identity; one immutable events.bundle.json; idempotent preview/apply; legacy idless JSONL and historical copies unchanged without heuristic deduplication",
+        "Four distinct client common directories upgraded through existing forge upgrade; dirty MyClaw checkouts preserved",
+        "Use exact three-file byte-identity retirement and inherited Decision0028 consolidation/tripwire; do not delete client-owned agent trees"
+      ],
+      "planning_surfaces": [
+        "factory/scripts/forge_cli/doctor.py",
+        "factory/scripts/forge_cli/upgrade.py",
+        "factory/scripts/forge_cli/decisions.py",
+        "factory/scripts/forge_cli/events.py",
+        "factory/scripts/forge_cli/history.py",
+        "factory/scripts/forge.py",
+        "factory/scripts/pr_ready.py",
+        "factory/scripts/check_dual_runtime.py",
+        "factory/schemas/event.json",
+        "factory/skills/forge.md",
+        "factory/scripts/forge_cli/scaffold.py",
+        "factory/tests/test_native_setup.py",
+        "AGENTS.md",
+        "README.md",
+        "docs/getting-started.md",
+        "factory/scripts/check_factory_scaffold.py",
+        ".codex/agents/planner-high.toml",
+        ".codex/agents/docs-decomposer.toml",
+        ".codex/agents/functional-checker.toml"
+      ],
+      "verification": [
+        "Init/adopt/upgrade native ownership and coordinator repair/verify parity",
+        "Decision0028 destination/symlink/raw-write sentinel refusals",
+        "Accepted0064 fixtures: stable-ID collisions, distinct IDs with equal text, legacy JSONL/history bytes unchanged, open/unattributed events refused, atomic bundle/no sidecar and second apply no diff",
+        "Vendor manifests/integrity, meaningful client checks, isolated clean or dirty-client PRs"
+      ]
+    },
+    {
+      "id": "FORMAT-SOURCES",
+      "title": "Complete pure mechanical Python formatting",
+      "depends_on": [
+        "PORTABLE-DELIVERY-MIGRATION"
+      ],
+      "user_facing": false,
+      "acceptance_criteria": [
+        "AC12"
+      ],
+      "replaces_old_rows": [
+        "QF-01",
+        "QF-02",
+        "QF-03",
+        "QF-04",
+        "QF-05",
+        "QF-06",
+        "QF-07",
+        "QF-08",
+        "QF-09",
+        "QF-10",
+        "QF-11",
+        "QF-12",
+        "QF-13",
+        "QF-14",
+        "QF-15",
+        "QF-16",
+        "QF-17",
+        "QF-18",
+        "QF-19"
+      ],
+      "owned_behavior": [
+        "Full pinned formatter output over all authored Python",
+        "No semantic fixes or scope omissions; preserve tests and comments/directives",
+        "One coherent reviewable formatting task using complete lossless review inputs"
+      ],
+      "planning_surfaces": [
+        "All authored Python source and tests covered by the actual pinned baseline",
+        "AGENTS.md concise local practice pointer only if needed"
+      ],
+      "verification": [
+        "Exact formatter reproduction",
+        "AST equivalence and explicit comment/directive preservation and exception review",
+        "Full meaningful tests and independent review; no broad suppression"
+      ]
+    },
+    {
+      "id": "QUALITY-BASELINE",
+      "title": "Semantic fixes and mandatory full quality baseline",
+      "depends_on": [
+        "FORMAT-SOURCES"
+      ],
+      "user_facing": false,
+      "acceptance_criteria": [
+        "AC12"
+      ],
+      "replaces_old_rows": [
+        "QS-01",
+        "QS-02",
+        "QS-03",
+        "QS-04",
+        "QS-05",
+        "QS-06",
+        "QS-07",
+        "QS-08",
+        "QS-09",
+        "QS-10",
+        "QS-11",
+        "QS-12",
+        "QA-01"
+      ],
+      "owned_behavior": [
+        "Fix every remaining Ruff/Pyright diagnostic against actual post-format tree",
+        "Pin exact tools/config and Python3.11; same full authored source/test scope locally and CI",
+        "Enforce missing configuration/tool and deliberate violations; meaningful client-language validation",
+        "In the already owned factory-scaffold workflow, require actual Ubuntu24.04 x64 and native Windows native-regression coverage and explicitly pinned real Codex CLI package/version/help smoke under0065; preserve current full-suite and Windows gates."
+      ],
+      "planning_surfaces": [
+        "All authored Python source/test semantic diagnostic owners",
+        "requirements-quality.txt",
+        "ruff.toml",
+        "pyrightconfig.json",
+        "factory/scripts/check_python_quality.py",
+        "factory/scripts/verify.py",
+        ".envrc",
+        ".github/workflows/factory-scaffold.yml",
+        "factory/tests",
+        "AGENTS.md concise practice pointer"
+      ],
+      "verification": [
+        "Full pinned formatter/lint/types pass",
+        "Meaningful behavior regressions for semantic changes",
+        "Missing tools/config and planted violations fail; local/CI agreement; client discriminator does not bypass client product checks",
+        "Exact pinned shared command and each negative activation case in quality_contract",
+        "Remeasure after FORMAT predecessor; refuse any budget/semantic/complete-lossless-review failure before seal",
+        "Capture actual CI head/run/job/image/OS/CPU/build/command/log evidence; meaningful required native tests pass, no empty/wholly skipped selection or CLI-to-Desktop claim."
+      ]
+    },
+    {
+      "id": "FORGE-COORD-1.1",
+      "title": "Complete native parity and installed-client dogfood",
+      "depends_on": [
+        "QUALITY-BASELINE"
+      ],
+      "user_facing": false,
+      "acceptance_criteria": [
+        "AC1",
+        "AC2",
+        "AC3",
+        "AC4",
+        "AC5",
+        "AC6",
+        "AC7",
+        "AC8",
+        "AC9",
+        "AC10",
+        "AC11",
+        "AC12"
+      ],
+      "replaces_old_rows": [
+        "FORGE-COORD-1.1"
+      ],
+      "owned_behavior": [
+        "Full integrated AC1-12 and roadmap acceptance",
+        "Required local Mac and Linux/Windows CI proof, complete logs and explicit unavailable live-platform limitations",
+        "Separate /tmp Task tracker installed client, own private origin/CI and complete native task lifecycle",
+        "Existing story outcome only after every real predecessor marker is on trunk"
+      ],
+      "planning_surfaces": [
+        "Task-owned existing report/recorder inputs and any approved integration repair scope",
+        "Separate client worktree/origin: its own authorized product and proof"
+      ],
+      "verification": [
+        "Required local Mac and Linux/Windows CI results pass; unavailable live observations remain explicit; no CLI/CI-to-Desktop or WSL-to-native-Windows claim",
+        "Client admitted contribution plus tests/verify/review/functional proof/PR/green CI",
+        "Integration report references exact client origin/commit/PR/artifact/log paths; no copied harness proof"
+      ]
+    }
+  ],
+  "native_cells": [
+    "native-cli-macos",
+    "native-desktop-macos",
+    "native-cli-linux-ubuntu-24.04-x64",
+    "native-desktop-linux-ubuntu-24.04-x64",
+    "native-cli-windows",
+    "native-desktop-windows"
+  ],
+  "client_failures": [
+    {
+      "id": "review-wrong-task-proof",
+      "symptom": "Review preflight reads another task/story proof",
+      "owner": "NATIVE-FOREGROUND-ACTIVATE",
+      "source_seams": [
+        "factory/scripts/forge_cli/review.py"
+      ],
+      "acceptance": "Path24 confirmed: cmd_review uses proof_path(..., task_id=args.id); own task proof only",
+      "audit_status": "Confirmed by worker-and-review-bugs.md source audit; no product test performed",
+      "audit_report": "/Users/dev/.codex/reviews/forge-lean-20260910/worker-and-review-bugs.md",
+      "report_number": 1
+    },
+    {
+      "id": "review-ci-files",
+      "symptom": "Review silently omits .github product changes",
+      "owner": "LEAN-WORKFLOW",
+      "source_seams": [
+        "factory/scripts/forge_cli/review.py",
+        "factory/scripts/forge_cli/review_brief.py"
+      ],
+      "acceptance": "All changed product CI paths must reach actual review",
+      "audit_status": "Confirmed by worker-and-review-bugs.md source audit; no product test performed",
+      "audit_report": "/Users/dev/.codex/reviews/forge-lean-20260910/worker-and-review-bugs.md",
+      "report_number": 5
+    },
+    {
+      "id": "review-generated-size",
+      "symptom": "Generated snapshot/review input handling blocks complete review",
+      "owner": "LEAN-WORKFLOW",
+      "source_seams": [
+        "factory/scripts/forge_cli/review.py",
+        "factory/scripts/forge_cli/review_brief.py",
+        "factory/scripts/forge_cli/stages.py"
+      ],
+      "acceptance": "All generated output remains counted and reviewed; budget explicitly fits actual scope. No blanket exclusion or unrequested new manifest.",
+      "audit_status": "Confirmed generated output counts toward budgets; explicit scope/risk policy needed, no blanket exclusion",
+      "report_number": 3,
+      "audit_report": "/Users/dev/.codex/reviews/forge-lean-20260910/lifecycle-proof-bugs.md"
+    },
+    {
+      "id": "git-local-worker-context",
+      "symptom": "Reported Git-local invisibility; audit showed protected reads succeeded and phase.py printed a false pending-stage message",
+      "owner": "LEAN-WORKFLOW",
+      "source_seams": [
+        "factory/scripts/forge_cli/phase.py",
+        "factory/tests/test_worker_admission.py"
+      ],
+      "acceptance": "LEAN repairs false phase wording; first records actual native read/denied-unauthorized-write observation plus regression. No unproven read-root repair or recorder ban.",
+      "audit_status": "Final audit: protected reads succeed; phase.py hardcoded pending message is wrong",
+      "audit_report": "/Users/dev/.codex/reviews/forge-lean-20260910/worker-and-review-bugs.md",
+      "report_number": 4,
+      "first_task_observation_owner": "NATIVE-FOREGROUND-ACTIVATE"
+    },
+    {
+      "id": "question-ledger-hydration",
+      "symptom": "Fresh task/resume loses actual question ledger context",
+      "owner": "SHARED-COORDINATOR-JOURNEY",
+      "source_seams": [
+        "factory/scripts/forge_cli/tasks.py",
+        "factory/scripts/forge_cli/grill.py"
+      ],
+      "acceptance": "Hydrate exact consumed grill-round records preserving story identity; do not reintroduce obsolete plan-mode markers",
+      "audit_status": "Confirmed omission of consumed grill-round hydration; plan-mode-marker portion is withdrawn under0050",
+      "report_number": 2,
+      "audit_report": "/Users/dev/.codex/reviews/forge-lean-20260910/lifecycle-proof-bugs.md"
+    },
+    {
+      "id": "worker-ruling-context",
+      "symptom": "Fresh worker forgets settled lint/engineering rulings",
+      "owner": "LEAN-WORKFLOW",
+      "source_seams": [
+        "factory/scripts/forge_cli/signal.py",
+        "factory/scripts/forge_cli/delegate.py",
+        "factory/scripts/forge_cli/review_brief.py",
+        "Existing task brief and contract recorders"
+      ],
+      "acceptance": "Reuse existing task brief/contract/ruling recorders; propagate real decision once without a new ledger",
+      "audit_status": "Confirmed by worker-and-review-bugs.md source audit; no product test performed",
+      "audit_report": "/Users/dev/.codex/reviews/forge-lean-20260910/worker-and-review-bugs.md",
+      "report_number": 6
+    },
+    {
+      "id": "resume-proof-base",
+      "symptom": "Story resume selects wrong proof chain when base_main_sha is absent",
+      "owner": "SHARED-COORDINATOR-JOURNEY",
+      "source_seams": [
+        "factory/scripts/forge_cli/tasks.py",
+        "factory/scripts/forge_cli/stages.py",
+        "factory/scripts/factory_lib.py",
+        "factory/scripts/forge_cli/story.py"
+      ],
+      "acceptance": "Recover only genuine matching story/base provenance; no borrowed proof",
+      "audit_status": "Confirmed resume drops task/base/owner identity and can switch task closeout to story singleton proof",
+      "report_number": 7,
+      "audit_report": "/Users/dev/.codex/reviews/forge-lean-20260910/lifecycle-proof-bugs.md"
+    },
+    {
+      "id": "resume-sealed-rewrite",
+      "symptom": "Resume or migration destructively rewrites sealed records",
+      "owner": "SHARED-COORDINATOR-JOURNEY",
+      "source_seams": [
+        "factory/scripts/forge_cli/stages.py",
+        "factory/scripts/factory_lib.py",
+        "factory/scripts/forge_cli/story.py"
+      ],
+      "acceptance": "Preserve committed sealed artifacts and avoid mutation on read",
+      "audit_status": "Confirmed destructive resume rebuild drops sealed stage fields and rewrites stored records",
+      "report_number": 9,
+      "audit_report": "/Users/dev/.codex/reviews/forge-lean-20260910/lifecycle-proof-bugs.md"
+    },
+    {
+      "id": "cross-task-legacy-fallback",
+      "symptom": "Old tasks borrow a new story/task review through fallback",
+      "owner": "NATIVE-FOREGROUND-ACTIVATE",
+      "source_seams": [
+        "factory/scripts/factory_lib.py",
+        "factory/scripts/check_task_proof.py"
+      ],
+      "acceptance": "Repair in first C10 owner; fallback only for genuine recorded legacy ownership",
+      "audit_status": "Confirmed and reproduced cross-task singleton fallback; first C10 must reject unqualified legacy proof",
+      "report_number": 8,
+      "audit_report": "/Users/dev/.codex/reviews/forge-lean-20260910/lifecycle-proof-bugs.md"
+    },
+    {
+      "id": "sealed-trunk-conflict",
+      "symptom": "Sibling/trunk integration collides or replaces sealed records",
+      "owner": "SHARED-COORDINATOR-JOURNEY",
+      "source_seams": [
+        "factory/scripts/forge_cli/tasks.py",
+        "factory/scripts/forge_cli/stages.py",
+        "factory/scripts/forge_cli/story.py"
+      ],
+      "acceptance": "Task-owned immutable merge/reconciliation; preserve original dirty state",
+      "audit_status": "Confirmed owner/trunk split: reconcile may select or overwrite stale main state instead of preserving the verified task owner",
+      "report_number": 10,
+      "audit_report": "/Users/dev/.codex/reviews/forge-lean-20260910/lifecycle-proof-bugs.md"
+    }
+  ],
+  "out_of_scope_for_this_planning_write": [
+    "Repo/source code",
+    "Git mutations",
+    "Forge or .factory recorders",
+    "Changes to any existing client",
+    "Old39 graph approval or regeneration"
+  ],
+  "scope_note": "planning_surfaces are code-owner responsibilities, not automatically approved write_scope glob grants; every actual task brief must resolve exact paths and tests against its predecessor",
+  "retention_container": {
+    "scoped_path": ".factory/stories/<KEY>/events.bundle.json",
+    "legacy_path": ".factory/history/<KEY>/events.bundle.json",
+    "format": "forge-event-bundle/v1",
+    "reader": "Validate format, exact story and explicit stable IDs; merge only active per-file/new-bundle inputs by ID. Root/history idless JSONL and existing legacy reading stay untouched. Unsupported/mismatched/malformed bundles refuse, never reinterpret legacy history.",
+    "sidecars": false
+  },
+  "roadmap_acceptance_crosswalk": [
+    {
+      "criterion": 1,
+      "statement": "Both coordinators preserve existing worker policy and every Forge gate.",
+      "owners": [
+        "NATIVE-FOREGROUND-ACTIVATE",
+        "LEAN-WORKFLOW",
+        "NATIVE-LIFECYCLE",
+        "SHARED-COORDINATOR-JOURNEY",
+        "FORGE-COORD-1.1"
+      ],
+      "proof": "Shared worker policy, exact approved brief and real authority, complete task proof and actual integrated lifecycle"
+    },
+    {
+      "criterion": 2,
+      "statement": "Codex records real human grill provenance and runs without Claude or plugin state.",
+      "owners": [
+        "NATIVE-FOREGROUND-ACTIVATE",
+        "NATIVE-LIFECYCLE",
+        "SHARED-COORDINATOR-JOURNEY",
+        "PORTABLE-DELIVERY-MIGRATION",
+        "FORGE-COORD-1.1"
+      ],
+      "proof": "Host-permitted actual answers/approvals, exact optional question events, native-only launch/setup and required local Mac and Linux/Windows CI results with live-platform limitations"
+    },
+    {
+      "criterion": 3,
+      "statement": "After the existing approvals, explicitly scoped native bootstrap support tasks may use the existing isolated candidate under Decision0058 and deliver prepared changes through complete, independently reviewed support PRs. Validate exact scopes, target preparation, baselines and complete review boundaries before execution. Preserve genuine approvals, registered delegated writes, existing review limits, normal task PR gates, actual predecessor markers on main and sequential merge ordering for this overlapping bootstrap and quality delivery; native write-hook activation and legitimate worker admission land together. General dependency-ready scheduling under Decision0059 remains available where dependencies and disjoint scopes permit. Separately approved staged quality-cleanup predecessor tasks activate mandatory full-repository quality checks before full parity ships. FORGE-COORD-1.1 completes the remaining bounded parity integration and its approval-to-PR chain, including required local macOS native proof and passing Ubuntu 24.04 x64/native Windows CI before parity shipping, with unavailable Linux/Windows live CLI/Desktop observations recorded as accepted limitations under Decision0065. Original prepared bootstrap bytes retain their provenance and are reviewed completely, but are not credited as delegated contribution.",
+      "owners": [
+        "NATIVE-FOREGROUND-ACTIVATE",
+        "LEAN-WORKFLOW",
+        "NATIVE-LIFECYCLE",
+        "SHARED-COORDINATOR-JOURNEY",
+        "PORTABLE-DELIVERY-MIGRATION",
+        "FORMAT-SOURCES",
+        "QUALITY-BASELINE",
+        "FORGE-COORD-1.1"
+      ],
+      "proof": "Original inventory and exact owner contributions, complete reviewed inputs, task markers, full quality, separate installed client and required local Mac and Linux/Windows CI proof with live-platform limitations"
+    }
+  ],
+  "versioned_target": "plans/exploration/coordinator-parity-preparation/lean-delivery-graph.json; main must copy before approval",
+  "plan_reference": "FORGE-COORD-1 story plan digest binds this graph; omit reverse plan hash to avoid a circular digest.",
+  "prepared_hunk_owners": {
+    "artifact": "Immutable preparation review allocation; no approval, runtime registry or task proof",
+    "original_patch": {
+      "path": "plans/exploration/coordinator-parity-preparation/native-original-40-path.patch",
+      "bytes": 342596,
+      "sha256": "09cd2ec4826e407541cc4fe75d6d604f9ce6b8bb9f1c8b734aef23e2e42ad54f",
+      "parse_validation": "git apply --numstat native-original-40-path.patch exited0 and parsed all40 paths on2026-09-10. The final @@ -82,9 +91,14 @@ hunk has9 old and14 new lines; bytes are identical to git diff --cached --binary. Review-pass claim of13 new lines was disproved; no patch repair or truncation was applied."
+    },
+    "foreground_patch": {
+      "path": "plans/exploration/coordinator-parity-preparation/native-foreground-preparation.patch",
+      "base": "824baed4a657a83a6a7583e85ee67d2907e7c172",
+      "bytes": 109953,
+      "sha256": "bee122bb370177ededefb5fe81a82f8c600f69af8502e151956ec7b8afed29e2",
+      "owner": "NATIVE-FOREGROUND-ACTIVATE"
+    },
+    "allocation_rule": "Each hunk inherits remainder_review_owner from its path unless that hunk explicitly overrides it. For a path with first_selection, only the exact file/hunks selected by native-foreground-preparation.patch belong to NATIVE-FOREGROUND-ACTIVATE; the remainder owner covers all residual behavior in its own task delta. The foreground patch and its committed per-path inventory are the sole import selection. The original40 patch is preserved donor history, not an alternate import. Already shipped first-task bytes are not re-reviewed. Superseded historical bytes remain archived and receive an explicit equivalent/corrected/retired disposition in the remainder owners complete review. No hunk may disappear or move owners without recorded contract amendment.",
+    "new_foreground_material": "Any selected bytes that postdate the original40 patch are still preparation, bound by the foreground patch/inventory; admitted C9/C10/workspace/guards/clear/probe contributions remain separate.",
+    "paths": [
+      {
+        "path": ".claude/settings.json",
+        "diff_sha256": "9f2e754fbc7718cd42e6ffca9b87e075d5c02ec1ae08f1a534b910a18f258afa",
+        "hunks": [
+          {
+            "id": ".claude/settings.json#hunk-1",
+            "header": "@@ -23,7 +23,7 @@",
+            "patch_line": 5,
+            "sha256": "fca4d970a94e3f25b3b5410fffe101022b842d8ac77b48da570de17efc922475"
+          }
+        ],
+        "remainder_review_owner": "NATIVE-FOREGROUND-ACTIVATE",
+        "first_selection": {
+          "owner": "NATIVE-FOREGROUND-ACTIVATE",
+          "file_diff_sha256": "9f2e754fbc7718cd42e6ffca9b87e075d5c02ec1ae08f1a534b910a18f258afa",
+          "hunks": [
+            {
+              "id": ".claude/settings.json#hunk-1",
+              "header": "@@ -23,7 +23,7 @@",
+              "patch_line": 5,
+              "sha256": "fca4d970a94e3f25b3b5410fffe101022b842d8ac77b48da570de17efc922475"
+            }
+          ]
+        }
+      },
+      {
+        "path": ".codex/config.toml",
+        "diff_sha256": "3c280ee87635105bd97ce5e7f14f53bf8ffb6ae1c463af9c86292357cb71426b",
+        "hunks": [
+          {
+            "id": ".codex/config.toml#hunk-1",
+            "header": "@@ -1,9 +1,9 @@",
+            "patch_line": 18,
+            "sha256": "4dd54979fccec1557d07da432f5a4b87ea7eb7721605d5d51a2cfd3a04d37673"
+          },
+          {
+            "id": ".codex/config.toml#hunk-2",
+            "header": "@@ -19,7 +19,7 @@ sandbox_mode = \"workspace-write\"",
+            "patch_line": 32,
+            "sha256": "f43ac169bcd4dc35571000d4298fa9149a3b44de47258e039081abd8aa1ad77c"
+          }
+        ],
+        "remainder_review_owner": "SHARED-COORDINATOR-JOURNEY"
+      },
+      {
+        "path": ".codex/hooks.json",
+        "diff_sha256": "32ca0a324ac617bf0a79be4769f9acba6fdf19670ce34f418ee0abfe6cd3b6c5",
+        "hunks": [
+          {
+            "id": ".codex/hooks.json#hunk-1",
+            "header": "@@ -2,7 +2,7 @@",
+            "patch_line": 45,
+            "sha256": "1d108869c8c169dd37992cce7a1229e4a8a0ffc3fea660599ca537a1c041fddc"
+          },
+          {
+            "id": ".codex/hooks.json#hunk-2",
+            "header": "@@ -12,9 +12,19 @@",
+            "patch_line": 54,
+            "sha256": "9b433c3d57bf7672d3d65e7d850527c2be9c4d556a79a9b00e22d4704c87fbc3"
+          },
+          {
+            "id": ".codex/hooks.json#hunk-3",
+            "header": "@@ -24,6 +34,17 @@",
+            "patch_line": 75,
+            "sha256": "a48c1a557395556b45871afc9c736c13e66fedb41fb950b3d60d016f6bdc9f6c"
+          }
+        ],
+        "remainder_review_owner": "NATIVE-FOREGROUND-ACTIVATE",
+        "first_selection": {
+          "owner": "NATIVE-FOREGROUND-ACTIVATE",
+          "file_diff_sha256": "d01d00ae5d2e5972dd49306a44b0a1a45743443ab662188e638033c31453dcb1",
+          "hunks": [
+            {
+              "id": ".codex/hooks.json#hunk-1",
+              "header": "@@ -2,7 +2,7 @@",
+              "patch_line": 18,
+              "sha256": "38418c7af3c1ab897aea25a87979707bc480da6dc8522d597eff4b064ab6a0f6"
+            },
+            {
+              "id": ".codex/hooks.json#hunk-2",
+              "header": "@@ -12,9 +12,19 @@",
+              "patch_line": 27,
+              "sha256": "9b433c3d57bf7672d3d65e7d850527c2be9c4d556a79a9b00e22d4704c87fbc3"
+            },
+            {
+              "id": ".codex/hooks.json#hunk-3",
+              "header": "@@ -24,6 +34,17 @@",
+              "patch_line": 48,
+              "sha256": "a48c1a557395556b45871afc9c736c13e66fedb41fb950b3d60d016f6bdc9f6c"
+            }
+          ]
+        }
+      },
+      {
+        "path": "AGENTS.md",
+        "diff_sha256": "a8bf915729506e0a5d471d7e50591887b8728dfc97d420ea06e6a40c19922793",
+        "hunks": [
+          {
+            "id": "AGENTS.md#hunk-1",
+            "header": "@@ -26,7 +26,7 @@ It provides:",
+            "patch_line": 97,
+            "sha256": "5ac5c7a28f03482d7644542f8d2a4494ffb9ab83fb2936e009c270e7d332f22c"
+          },
+          {
+            "id": "AGENTS.md#hunk-2",
+            "header": "@@ -38,7 +38,7 @@ Codex executes exploration, implementation, testing, and the review: the orchest",
+            "patch_line": 106,
+            "sha256": "50a2030fa500247a2293d021bb2069e112bae17b053d6b44bffe9744c560f8a8"
+          }
+        ],
+        "remainder_review_owner": "LEAN-WORKFLOW"
+      },
+      {
+        "path": "README.md",
+        "diff_sha256": "1b56dfe9ebc1746284805704dfcd2d513896cf97e8574156856b22fef001c1f6",
+        "hunks": [
+          {
+            "id": "README.md#hunk-1",
+            "header": "@@ -1,12 +1,12 @@",
+            "patch_line": 119,
+            "sha256": "7080bb5805db9121e4ab0c19cc830f5495419536114eb757bd32695223c059ac"
+          },
+          {
+            "id": "README.md#hunk-2",
+            "header": "@@ -20,7 +20,7 @@ Its thesis: the bottleneck in agentic development was never agent speed, it was",
+            "patch_line": 134,
+            "sha256": "57c67824760e3ac7db435bd3d8426f958823147213bf49d00bf58b85e199fd4f"
+          },
+          {
+            "id": "README.md#hunk-3",
+            "header": "@@ -41,9 +41,9 @@ The full contract is in [`AGENTS.md`](AGENTS.md), which both runtimes read. A Co",
+            "patch_line": 143,
+            "sha256": "4cca0da74c49b1af3a10ee3e8b3ca35049c07b07238ade2e074aac5073f943ca"
+          },
+          {
+            "id": "README.md#hunk-4",
+            "header": "@@ -74,7 +74,7 @@ this repo (cloned once, per machine)             your app repo (its own repo, it",
+            "patch_line": 155,
+            "sha256": "eb7b50a0ec72101683dd69aee214151c7576f68338d7b5f00ab0d26accd481fa"
+          },
+          {
+            "id": "README.md#hunk-5",
+            "header": "@@ -112,8 +112,8 @@ something you type.",
+            "patch_line": 164,
+            "sha256": "a14306d2204038374d595370dfbbbf40327fa2bc426d62a21ac30983501ff7d6"
+          },
+          {
+            "id": "README.md#hunk-6",
+            "header": "@@ -144,13 +144,13 @@ column describes that machinery. In lifecycle order:",
+            "patch_line": 175,
+            "sha256": "52236e71f7ae73c65e01e72d2e345e8a02f7e048791dd85e666f7eebd22840e6"
+          },
+          {
+            "id": "README.md#hunk-7",
+            "header": "@@ -185,7 +185,7 @@ your behalf, not for you to type.",
+            "patch_line": 194,
+            "sha256": "900d54b776e592596136e8f726a0c8f157f21ca0e3c278c644a8a4feaaa3ec7b"
+          },
+          {
+            "id": "README.md#hunk-8",
+            "header": "@@ -195,16 +195,16 @@ your behalf, not for you to type.",
+            "patch_line": 203,
+            "sha256": "fa9b8ab721955c05fb1fedf60e864cf44c75244bc8dbc1a929c81cada572b738"
+          },
+          {
+            "id": "README.md#hunk-9",
+            "header": "@@ -235,8 +235,8 @@ symphony-forge/",
+            "patch_line": 227,
+            "sha256": "8ece3abb929566991a3699b4a69651bc89bb2c6f1d99a425b95ed7cbd245bb4a"
+          },
+          {
+            "id": "README.md#hunk-10",
+            "header": "@@ -246,6 +246,7 @@ symphony-forge/",
+            "patch_line": 238,
+            "sha256": "f916d49d5742a66db77e93dd448e089919dd482e094d7600d6fab0b723e8fa7c"
+          },
+          {
+            "id": "README.md#hunk-11",
+            "header": "@@ -253,7 +254,7 @@ symphony-forge/",
+            "patch_line": 246,
+            "sha256": "0750af79caac808ff920f079b075b90702831b225292df98fa32c4d7ea3a0641"
+          }
+        ],
+        "remainder_review_owner": "PORTABLE-DELIVERY-MIGRATION"
+      },
+      {
+        "path": "WORKFLOW.md",
+        "diff_sha256": "e3bb528086ed7d9562334736735475aefadb969f7d8bac29c7d676accdc0d62c",
+        "hunks": [
+          {
+            "id": "WORKFLOW.md#hunk-1",
+            "header": "@@ -22,9 +22,10 @@",
+            "patch_line": 259,
+            "sha256": "5cb344e74f509d7ce8b2c446a226f2dc925bb60c29d5545e790b7a480472669b"
+          },
+          {
+            "id": "WORKFLOW.md#hunk-2",
+            "header": "@@ -65,9 +66,9 @@ sign-off.",
+            "patch_line": 273,
+            "sha256": "ec397bd02d5e48b735f72128e405e9ee86c378fd35dfaea9450c831a8d49dd8d"
+          },
+          {
+            "id": "WORKFLOW.md#hunk-3",
+            "header": "@@ -137,7 +138,7 @@ lines, or constitution changes, each with cited evidence. Humans promote or",
+            "patch_line": 286,
+            "sha256": "817c491f56ed2ecefd63b4800f3a52a4d62b99231ce0c5c31bf624078502fc4a"
+          },
+          {
+            "id": "WORKFLOW.md#hunk-4",
+            "header": "@@ -189,7 +190,7 @@ Two rules keep it grounded:",
+            "patch_line": 295,
+            "sha256": "eeac51ef2159d616c0f245907d088e9121cfd254b61a24c12f7a14bfd4d1a6eb"
+          },
+          {
+            "id": "WORKFLOW.md#hunk-5",
+            "header": "@@ -197,9 +198,10 @@ Two rules keep it grounded:",
+            "patch_line": 304,
+            "sha256": "4dcee35436afd21d2f98cff6d801c6d16c5f7d6e6ef7eec0422028634ab426c0"
+          },
+          {
+            "id": "WORKFLOW.md#hunk-6",
+            "header": "@@ -403,30 +405,36 @@ sibling settled.",
+            "patch_line": 318,
+            "sha256": "41dafee480395929460292b5cb9d23359805f9e3ead3b34a9c2ff51ee8433479"
+          },
+          {
+            "id": "WORKFLOW.md#hunk-7",
+            "header": "@@ -454,11 +462,12 @@ sequence a JIT contract loop for every pending task:",
+            "patch_line": 374,
+            "sha256": "9ca1633aa7a0946da22b18ddc1c6467f0026274836dc6d31feef32e50a2e51a3"
+          },
+          {
+            "id": "WORKFLOW.md#hunk-8",
+            "header": "@@ -483,7 +492,6 @@ loop exists, and `record_review_from_json.py --aspect stage-local` remains",
+            "patch_line": 390,
+            "sha256": "fe83c9bd4e7de9f55b947ecb4f4f05eb9bc858c99786e1639890e04cf777714b"
+          },
+          {
+            "id": "WORKFLOW.md#hunk-9",
+            "header": "@@ -504,18 +512,18 @@ stalls on \"should I do this or hand it to Codex?\":",
+            "patch_line": 398,
+            "sha256": "3d0875f0adf924da095ca616799f51cc5fb4e4b2878a1d74648d86b33c82448b"
+          },
+          {
+            "id": "WORKFLOW.md#hunk-10",
+            "header": "@@ -523,18 +531,16 @@ visibility of what it does versus what it delegates, and only genuine",
+            "patch_line": 427,
+            "sha256": "5f3775c6adc8d793b1ff6c03e5ea9100e8a06ce35bbcbf60d6faec112d81d7f6"
+          },
+          {
+            "id": "WORKFLOW.md#hunk-11",
+            "header": "@@ -558,20 +564,20 @@ assumption that would change scope or acceptance criteria is a report back",
+            "patch_line": 456,
+            "sha256": "d80bd1323cc7d2de060f319315ed692d46d53cfd9ea1cc5f7bee2c411c80739b"
+          },
+          {
+            "id": "WORKFLOW.md#hunk-12",
+            "header": "@@ -584,20 +590,25 @@ durable record of what was decided and what was built.",
+            "patch_line": 490,
+            "sha256": "656a47fde3a352c7d67fdb1610ccbcd381cc094ed5d579ab777c92eefbcdf502"
+          }
+        ],
+        "remainder_review_owner": "LEAN-WORKFLOW"
+      },
+      {
+        "path": "docs/FACTORY.md",
+        "diff_sha256": "554be3547a1996dce50b06aa0959a89a7c3463237f1b694014ac835db45a712b",
+        "hunks": [
+          {
+            "id": "docs/FACTORY.md#hunk-1",
+            "header": "@@ -6,12 +6,11 @@ This document is the operating contract for the factory beyond the short root `A",
+            "patch_line": 530,
+            "sha256": "e239c2a1853ea292a12a8ca9a134e322fe30417827a5d0754e7b451b55a9b051"
+          },
+          {
+            "id": "docs/FACTORY.md#hunk-2",
+            "header": "@@ -72,7 +71,7 @@ Use strong reasoning selectively.",
+            "patch_line": 548,
+            "sha256": "ed294510ae6d98246598a30a8c28f0e2c769bd59ad1d7e363b66926c57c00d38"
+          }
+        ],
+        "remainder_review_owner": "LEAN-WORKFLOW"
+      },
+      {
+        "path": "docs/getting-started.md",
+        "diff_sha256": "67bf26f9740e075a2cd1e1da981c3eec9d85aca012d50042101c391f394838fb",
+        "hunks": [
+          {
+            "id": "docs/getting-started.md#hunk-1",
+            "header": "@@ -1,11 +1,12 @@",
+            "patch_line": 561,
+            "sha256": "edf4100b6094e350fdb8bcc8f2815bc34a811e156b1f5c21ff13d8410f35183c"
+          },
+          {
+            "id": "docs/getting-started.md#hunk-2",
+            "header": "@@ -22,21 +23,21 @@ you what's missing. But this is the shape of the whole system:",
+            "patch_line": 577,
+            "sha256": "2c657f2698074ed04f2a44086097f9427d02c2589b927ca1c9e25fb5928df24a"
+          },
+          {
+            "id": "docs/getting-started.md#hunk-3",
+            "header": "@@ -66,16 +67,19 @@ cd symphony-forge",
+            "patch_line": 607,
+            "sha256": "174db4f91172a9bc408992bad2be568c6bbace4c481deff265bc86841bf7ed90"
+          },
+          {
+            "id": "docs/getting-started.md#hunk-4",
+            "header": "@@ -239,14 +243,14 @@ Each story lives in its own isolated worktree and branch with its own committed",
+            "patch_line": 634,
+            "sha256": "59d1b5937dc40763826b30e1a603bab2bb34c77591241f36ac95e3a12964f664"
+          },
+          {
+            "id": "docs/getting-started.md#hunk-5",
+            "header": "@@ -281,15 +285,17 @@ python3 factory/scripts/record_test_from_json.py --kind automated --input /tmp/a",
+            "patch_line": 657,
+            "sha256": "511bef5e8808cb169206465a4a489feb57daa69a9c103cc5d848d77cdf3bd766"
+          },
+          {
+            "id": "docs/getting-started.md#hunk-6",
+            "header": "@@ -343,8 +349,10 @@ python3 factory/scripts/check_agents_hygiene.py # AGENTS.md size + links",
+            "patch_line": 680,
+            "sha256": "11ed064896ff8ccffb3740beefdc928982030b161f348c618f3464c561f3d0fb"
+          },
+          {
+            "id": "docs/getting-started.md#hunk-7",
+            "header": "@@ -380,8 +388,10 @@ Say: **\"Upgrade this repo to the latest harness.\"** (the",
+            "patch_line": 693,
+            "sha256": "3738db9321453be08e34d57b6880486a3bcf8132d5914ba34b593e44d7702934"
+          }
+        ],
+        "remainder_review_owner": "PORTABLE-DELIVERY-MIGRATION"
+      },
+      {
+        "path": "docs/memory/MEMORY.md",
+        "diff_sha256": "c7e87289f7a88d0add70ea01cf2309f5935b2917bebb5ac16864140f80cf52bc",
+        "hunks": [
+          {
+            "id": "docs/memory/MEMORY.md#hunk-1",
+            "header": "@@ -8,7 +8,7 @@ note drifts.",
+            "patch_line": 710,
+            "sha256": "08335df1197e74dbe153dcc77b31286a5c3d80193359808fdbe83ccca00b1b07"
+          }
+        ],
+        "remainder_review_owner": "LEAN-WORKFLOW"
+      },
+      {
+        "path": "docs/memory/factory-entry-contract.md",
+        "diff_sha256": "5b79a85e0989fcf527b4cb280009665eefc8aafd8736d473502316261b561fd0",
+        "hunks": [
+          {
+            "id": "docs/memory/factory-entry-contract.md#hunk-1",
+            "header": "@@ -1,6 +1,6 @@",
+            "patch_line": 723,
+            "sha256": "03deebff499a660b2c39a04959da61d14f2f5b740fd254a1e2ec3e22248202ec"
+          },
+          {
+            "id": "docs/memory/factory-entry-contract.md#hunk-2",
+            "header": "@@ -16,5 +16,7 @@ sign-off is recorded or re-recorded.",
+            "patch_line": 731,
+            "sha256": "84cc2291448169cec097a5fea7b819d2921215ac9551c9b801c85be5547eeb68"
+          }
+        ],
+        "remainder_review_owner": "LEAN-WORKFLOW"
+      },
+      {
+        "path": "docs/native-coordinator.md",
+        "diff_sha256": "252583d6c0aff5722a59bb4c831b2e440c2259ea5fadea03d05e0531dd256ed1",
+        "hunks": [
+          {
+            "id": "docs/native-coordinator.md#hunk-1",
+            "header": "@@ -0,0 +1,112 @@",
+            "patch_line": 745,
+            "sha256": "a65a11502ab84e0767e4f622a74d4fe2e3093917255929a5e0109323e0b1bd8d"
+          }
+        ],
+        "remainder_review_owner": "SHARED-COORDINATOR-JOURNEY"
+      },
+      {
+        "path": "factory/prompts/griller.md",
+        "diff_sha256": "27499b8c0aa31c058fec1169c8a13a69e841eaca2b2f2faad8b6842ce405a70f",
+        "hunks": [
+          {
+            "id": "factory/prompts/griller.md#hunk-1",
+            "header": "@@ -28,45 +28,39 @@ RELEASE IT THROUGH THE HARNESS. `./forge grill run --gate <gate>` composes the c",
+            "patch_line": 862,
+            "sha256": "59b6d1d5392ceff891cceef6873f81130d9624818fe44f9d6d7f1ca15652eece"
+          },
+          {
+            "id": "factory/prompts/griller.md#hunk-2",
+            "header": "@@ -84,8 +78,9 @@ So the WHOLE grill is:",
+            "patch_line": 935,
+            "sha256": "3617e9c3e4fbac2701814441bb3926290edb77d483d5a6ea6ed4452a69c321d1"
+          },
+          {
+            "id": "factory/prompts/griller.md#hunk-3",
+            "header": "@@ -103,7 +98,7 @@ way around the rule, and the five-read cap still backstops it. (EVERY gate is le",
+            "patch_line": 947,
+            "sha256": "e2cc9dfb7e78cc3f5a39b3b9ff3d240049722f6a1cd7de1544b72b8de7feb1fd"
+          },
+          {
+            "id": "factory/prompts/griller.md#hunk-4",
+            "header": "@@ -131,7 +126,7 @@ approve. `NOT CONVERGED` does NOT mean read again \u2014 it means resolve what the",
+            "patch_line": 956,
+            "sha256": "4fbee0121d0219615c5de54a065b8cb72b19ed47bba232500fc71e170d419bf8"
+          },
+          {
+            "id": "factory/prompts/griller.md#hunk-5",
+            "header": "@@ -249,8 +244,7 @@ Method:",
+            "patch_line": 965,
+            "sha256": "d509a3bd6bcdf5565d85539ab9b702537cae0e8f7f4a49f9d61f63efaad8fb15"
+          },
+          {
+            "id": "factory/prompts/griller.md#hunk-6",
+            "header": "@@ -282,7 +276,7 @@ Method:",
+            "patch_line": 975,
+            "sha256": "27d348d9ad0982b09808ec8e1d6768c3d9e7504b00d8b43e18b06a54fe763303"
+          },
+          {
+            "id": "factory/prompts/griller.md#hunk-7",
+            "header": "@@ -293,6 +287,12 @@ Method:",
+            "patch_line": 984,
+            "sha256": "9e03bcb927085cdbe2bb440bc6ece256c1dbc4146771fe30992629095f5952f4"
+          }
+        ],
+        "remainder_review_owner": "LEAN-WORKFLOW"
+      },
+      {
+        "path": "factory/prompts/planner.md",
+        "diff_sha256": "1a48dbb2570b76c7b660033ecaceef1600dffe57dde289b46f5b2712295b3d04",
+        "hunks": [
+          {
+            "id": "factory/prompts/planner.md#hunk-1",
+            "header": "@@ -1,8 +1,13 @@",
+            "patch_line": 1001,
+            "sha256": "3d4628e5d1754e174fd37985d8c5198f56b1084c6c8d97cf1190a46fc1802ea1"
+          }
+        ],
+        "remainder_review_owner": "LEAN-WORKFLOW"
+      },
+      {
+        "path": "factory/schemas/delegation.json",
+        "diff_sha256": "287b35708cd421c87379fa6396302236a4b7d6c467ab0a437a8b25b8028a33c0",
+        "hunks": [
+          {
+            "id": "factory/schemas/delegation.json#hunk-1",
+            "header": "@@ -13,7 +13,6 @@",
+            "patch_line": 1022,
+            "sha256": "e5f8e4c2123c2ab8d1a882496470342128201aba1c86cc4902b11a8bf6358dec"
+          },
+          {
+            "id": "factory/schemas/delegation.json#hunk-2",
+            "header": "@@ -21,6 +20,14 @@",
+            "patch_line": 1030,
+            "sha256": "e50cd70f052392276d090c6b37ed474ff3244d6022454a725b94ed04e0ba18e1"
+          },
+          {
+            "id": "factory/schemas/delegation.json#hunk-3",
+            "header": "@@ -29,5 +36,5 @@",
+            "patch_line": 1045,
+            "sha256": "3bbdd1d1493aac6eb104bfad13f2528b59d4af13e5dc4e01f6e22e6868f3c662"
+          }
+        ],
+        "remainder_review_owner": "NATIVE-FOREGROUND-ACTIVATE",
+        "first_selection": {
+          "owner": "NATIVE-FOREGROUND-ACTIVATE",
+          "file_diff_sha256": "287b35708cd421c87379fa6396302236a4b7d6c467ab0a437a8b25b8028a33c0",
+          "hunks": [
+            {
+              "id": "factory/schemas/delegation.json#hunk-1",
+              "header": "@@ -13,7 +13,6 @@",
+              "patch_line": 70,
+              "sha256": "e5f8e4c2123c2ab8d1a882496470342128201aba1c86cc4902b11a8bf6358dec"
+            },
+            {
+              "id": "factory/schemas/delegation.json#hunk-2",
+              "header": "@@ -21,6 +20,14 @@",
+              "patch_line": 78,
+              "sha256": "e50cd70f052392276d090c6b37ed474ff3244d6022454a725b94ed04e0ba18e1"
+            },
+            {
+              "id": "factory/schemas/delegation.json#hunk-3",
+              "header": "@@ -29,5 +36,5 @@",
+              "patch_line": 93,
+              "sha256": "3bbdd1d1493aac6eb104bfad13f2528b59d4af13e5dc4e01f6e22e6868f3c662"
+            }
+          ]
+        }
+      },
+      {
+        "path": "factory/schemas/grill-round.json",
+        "diff_sha256": "11965a4261d851b2ae76842d0a79f3169a516ea20a82f9d07099873dc0dffba0",
+        "hunks": [
+          {
+            "id": "factory/schemas/grill-round.json#hunk-1",
+            "header": "@@ -1,12 +1,22 @@",
+            "patch_line": 1056,
+            "sha256": "3c7512db03bd68399c57fc045af6e1d1687f1e115f8b2f8d29cb3c130b085aac"
+          }
+        ],
+        "remainder_review_owner": "SHARED-COORDINATOR-JOURNEY"
+      },
+      {
+        "path": "factory/scripts/check_dual_runtime.py",
+        "diff_sha256": "afa99ed7d14292ebf29353d41808b4708a1df2cb9e3cbc74ca0005fb4a3f3976",
+        "hunks": [
+          {
+            "id": "factory/scripts/check_dual_runtime.py#hunk-1",
+            "header": "@@ -387,18 +387,70 @@ def check_path_parity(root: Path) -> None:",
+            "patch_line": 1086,
+            "sha256": "457c4534e0d0d3e2d5350664acee6f213d50e0f924ed6375b2b1229801daf056"
+          }
+        ],
+        "remainder_review_owner": "NATIVE-FOREGROUND-ACTIVATE",
+        "first_selection": {
+          "owner": "NATIVE-FOREGROUND-ACTIVATE",
+          "file_diff_sha256": "3c0e097b6bec19a758e4e62ec1e5662b59bf070fe2e6d718e4cd5cecc19ad8dd",
+          "hunks": [
+            {
+              "id": "factory/scripts/check_dual_runtime.py#hunk-1",
+              "header": "@@ -28,6 +28,7 @@ from pathlib import Path",
+              "patch_line": 104,
+              "sha256": "e9f005cabf9adb0206f45d4ed5926a07c26d58899230af2c19595615104caf2c"
+            },
+            {
+              "id": "factory/scripts/check_dual_runtime.py#hunk-2",
+              "header": "@@ -387,18 +388,70 @@ def check_path_parity(root: Path) -> None:",
+              "patch_line": 112,
+              "sha256": "e8f7ea86c37b214d16f12a69b88785ff43ec89a5009d32c4e4e5333a834b2a39"
+            }
+          ]
+        }
+      },
+      {
+        "path": "factory/scripts/forge.py",
+        "diff_sha256": "13ae88c0f779ce79f8561c842565cdaf13ac1155237e7b12bcc3f435aa72e5cb",
+        "hunks": [
+          {
+            "id": "factory/scripts/forge.py#hunk-1",
+            "header": "@@ -62,6 +62,7 @@ from forge_cli import deferrals as deferrals_mod",
+            "patch_line": 1168,
+            "sha256": "e0b91e86772f9dc61b1c8a99cc081846d4a2ebcfa666ce825ad86a99e3603807"
+          },
+          {
+            "id": "factory/scripts/forge.py#hunk-2",
+            "header": "@@ -94,6 +95,8 @@ def main() -> None:",
+            "patch_line": 1176,
+            "sha256": "ea0c79e98daf6e95629266eddc022d9456482153285de868d7826d15aad86aaa"
+          },
+          {
+            "id": "factory/scripts/forge.py#hunk-3",
+            "header": "@@ -575,6 +578,24 @@ def main() -> None:",
+            "patch_line": 1185,
+            "sha256": "949fcf3cca5ddba41a0f4cabe5f36a03318d01ba133ce70c9a8c652abbe06e14"
+          }
+        ],
+        "remainder_review_owner": "NATIVE-LIFECYCLE"
+      },
+      {
+        "path": "factory/scripts/forge_cli/codex_runtime.py",
+        "diff_sha256": "47e19d8af352b54b578f1770e1a03ba358baa9da04090881f9e971bff0c10d0f",
+        "hunks": [
+          {
+            "id": "factory/scripts/forge_cli/codex_runtime.py#hunk-1",
+            "header": "@@ -0,0 +1,156 @@",
+            "patch_line": 1215,
+            "sha256": "3fd0fb970455b4289b9e2b3b7a614d63c5f4d58c426e17e6375d078572737fb7"
+          }
+        ],
+        "remainder_review_owner": "NATIVE-LIFECYCLE",
+        "first_selection": {
+          "owner": "NATIVE-FOREGROUND-ACTIVATE",
+          "file_diff_sha256": "b5981d37df0569cc50025d653280de3dd092d75b4b125004280af93e387781c0",
+          "hunks": [
+            {
+              "id": "factory/scripts/forge_cli/codex_runtime.py#hunk-1",
+              "header": "@@ -0,0 +1,143 @@",
+              "patch_line": 1242,
+              "sha256": "5dff3b6b885a2b112fb888921220c7c7f53b7da420ae535b5d5fb780ed3bc5d6"
+            }
+          ]
+        }
+      },
+      {
+        "path": "factory/scripts/forge_cli/codex_status.py",
+        "diff_sha256": "3f90e170c79eb3810f83c1b7baa8606d65424a8e8c51b60b364a478cc38b088e",
+        "hunks": [
+          {
+            "id": "factory/scripts/forge_cli/codex_status.py#hunk-1",
+            "header": "@@ -14,10 +14,13 @@ from __future__ import annotations",
+            "patch_line": 1376,
+            "sha256": "8d3e57d0cf468dce59f0859ba822dc2be432d748a96d6659f6a3084ab5a69b9d"
+          },
+          {
+            "id": "factory/scripts/forge_cli/codex_status.py#hunk-2",
+            "header": "@@ -54,12 +57,11 @@ def load_jobs(base: Path, state_root: Path | None = None) -> list[dict]:",
+            "patch_line": 1391,
+            "sha256": "ceafe38dd1fdbf73660c874472451f7b06fd0e1b7955f31536f88f52e0096aa6"
+          },
+          {
+            "id": "factory/scripts/forge_cli/codex_status.py#hunk-3",
+            "header": "@@ -83,6 +85,128 @@ def load_jobs(base: Path, state_root: Path | None = None) -> list[dict]:",
+            "patch_line": 1407,
+            "sha256": "8dd6034c94085687d5885aceb09b9a385254c91e3bfa1a0aa98b8f489213b8a7"
+          },
+          {
+            "id": "factory/scripts/forge_cli/codex_status.py#hunk-4",
+            "header": "@@ -252,7 +376,7 @@ def dead_launches(base: Path) -> list[dict]:",
+            "patch_line": 1536,
+            "sha256": "5f6d2393a41725924422c283f1a94204558514fd132a17d72a5964cd3c6100da"
+          },
+          {
+            "id": "factory/scripts/forge_cli/codex_status.py#hunk-5",
+            "header": "@@ -267,19 +391,17 @@ def cmd_status(args: argparse.Namespace) -> None:",
+            "patch_line": 1545,
+            "sha256": "44e0bac30b28608b9f7d4e6ce95ec3f02889d25fc82c9331319069b299aa4fe8"
+          },
+          {
+            "id": "factory/scripts/forge_cli/codex_status.py#hunk-6",
+            "header": "@@ -300,5 +422,4 @@ def cmd_status(args: argparse.Namespace) -> None:",
+            "patch_line": 1571,
+            "sha256": "71b42ffabe293225afcca05358b280356dac61eef363e8e6981923f30c38988d"
+          }
+        ],
+        "remainder_review_owner": "NATIVE-LIFECYCLE"
+      },
+      {
+        "path": "factory/scripts/forge_cli/delegate.py",
+        "diff_sha256": "74f48aa298bd73f8bf9a64e8edcf77917a9d43a502847febf0fe86e6c27f2430",
+        "hunks": [
+          {
+            "id": "factory/scripts/forge_cli/delegate.py#hunk-1",
+            "header": "@@ -27,6 +27,7 @@ import shlex",
+            "patch_line": 1582,
+            "sha256": "a9ce42f905a76a682e4573026db117a109cf2890e10b6b2beb35857a9fb620f7"
+          },
+          {
+            "id": "factory/scripts/forge_cli/delegate.py#hunk-2",
+            "header": "@@ -53,6 +54,7 @@ DEFAULT_MODEL = \"gpt-5.6-sol\"",
+            "patch_line": 1590,
+            "sha256": "2067c1eae920865d15f5b477a4cb00b5fbd89f8b5d9cb9fed3a477a0a731cafe"
+          },
+          {
+            "id": "factory/scripts/forge_cli/delegate.py#hunk-3",
+            "header": "@@ -148,8 +150,31 @@ def load_delegations(base: Path) -> list[dict]:",
+            "patch_line": 1598,
+            "sha256": "497e7cfec5235f8bc516d3a5f2b025578cd98cd0dfe3dae824600cba5ef13a86"
+          },
+          {
+            "id": "factory/scripts/forge_cli/delegate.py#hunk-4",
+            "header": "@@ -676,16 +701,19 @@ def _terminate_observed_process_tree(",
+            "patch_line": 1631,
+            "sha256": "c849a37bb6b0f164cd9f5da9a92389779bd91c03101332e95a9fe78257806014"
+          },
+          {
+            "id": "factory/scripts/forge_cli/delegate.py#hunk-5",
+            "header": "@@ -770,7 +798,8 @@ def current_delegation(base: Path, task_id: str, *,",
+            "patch_line": 1657,
+            "sha256": "6da755db1a69f70e42f48ec3197776f0c799b09da029f3a499e6645d892b7a79"
+          },
+          {
+            "id": "factory/scripts/forge_cli/delegate.py#hunk-6",
+            "header": "@@ -1065,15 +1094,154 @@ def argv_digest(argv: list[str]) -> str:",
+            "patch_line": 1667,
+            "sha256": "626396267472ba5df12dbcc37250d662e4f5f00f19738114899ae39b5d627380"
+          },
+          {
+            "id": "factory/scripts/forge_cli/delegate.py#hunk-7",
+            "header": "@@ -1083,19 +1251,39 @@ def launch_companion(",
+            "patch_line": 1825,
+            "sha256": "d61ab3e2a1630a5b8b66ac25298fcd624e74e520e53eb7bbf9c772feb216cc78"
+          },
+          {
+            "id": "factory/scripts/forge_cli/delegate.py#hunk-8",
+            "header": "@@ -1104,6 +1292,12 @@ def launch_companion(",
+            "patch_line": 1877,
+            "sha256": "d795c6b7d425f5e546491595d285f137fbbd59212874ddd16cc441db4db3dd0a"
+          },
+          {
+            "id": "factory/scripts/forge_cli/delegate.py#hunk-9",
+            "header": "@@ -1116,15 +1310,26 @@ def launch_companion(",
+            "patch_line": 1890,
+            "sha256": "f1c2dd0e655308f49247a7828d2ee399a38a783dde070d1b85be7b57b83935f2"
+          },
+          {
+            "id": "factory/scripts/forge_cli/delegate.py#hunk-10",
+            "header": "@@ -1136,12 +1341,20 @@ def launch_companion(",
+            "patch_line": 1919,
+            "sha256": "f29865e334620645fa8d88409356effc7fbecb5b06017012cc470ff4ae518049"
+          },
+          {
+            "id": "factory/scripts/forge_cli/delegate.py#hunk-11",
+            "header": "@@ -1157,6 +1370,8 @@ def launch_companion(",
+            "patch_line": 1946,
+            "sha256": "65cfe12066782a32d8b508cfd6a3f4baf649dece59e5630d16b3fd0ec612eeed"
+          },
+          {
+            "id": "factory/scripts/forge_cli/delegate.py#hunk-12",
+            "header": "@@ -1168,6 +1383,7 @@ def launch_companion(",
+            "patch_line": 1955,
+            "sha256": "c7a6bb7fa9c2100772e33ebc79a1c1c42e2a6b35192740a679a9d8e8769a3f31"
+          },
+          {
+            "id": "factory/scripts/forge_cli/delegate.py#hunk-13",
+            "header": "@@ -1185,16 +1401,22 @@ def launch_companion(",
+            "patch_line": 1963,
+            "sha256": "170d4488de7d290b25a553d1b31ccaaababbda1dab1462aa71ccb0c178812fb7"
+          },
+          {
+            "id": "factory/scripts/forge_cli/delegate.py#hunk-14",
+            "header": "@@ -1207,14 +1429,26 @@ def launch_companion(",
+            "patch_line": 1988,
+            "sha256": "bb95edd87a8b5466f131dd9f033b15d948f55d3161d13d92995e28fa186191dd"
+          },
+          {
+            "id": "factory/scripts/forge_cli/delegate.py#hunk-15",
+            "header": "@@ -1230,8 +1464,38 @@ def launch_companion(",
+            "patch_line": 2018,
+            "sha256": "ad21ce34ffb12e0461a7dc788175fe9ed93993585c67ebe42ed18bfb63f414d4"
+          },
+          {
+            "id": "factory/scripts/forge_cli/delegate.py#hunk-16",
+            "header": "@@ -1239,10 +1503,19 @@ def launch_companion(",
+            "patch_line": 2058,
+            "sha256": "96dd43222d0e97094e9d6c5b761964a98941fcf51726f3800e006214fadb5ac3"
+          }
+        ],
+        "remainder_review_owner": "NATIVE-LIFECYCLE",
+        "first_selection": {
+          "owner": "NATIVE-FOREGROUND-ACTIVATE",
+          "file_diff_sha256": "04f71472bae96f573702fdac00eb2b918efa3894a398a8b150f0a80c9465b050",
+          "hunks": [
+            {
+              "id": "factory/scripts/forge_cli/delegate.py#hunk-1",
+              "header": "@@ -148,8 +148,31 @@ def load_delegations(base: Path) -> list[dict]:",
+              "patch_line": 194,
+              "sha256": "bd5147604e3d8886fd13119ed4b637e9792787e7abf125d85494027e389d7654"
+            },
+            {
+              "id": "factory/scripts/forge_cli/delegate.py#hunk-2",
+              "header": "@@ -676,16 +699,19 @@ def _terminate_observed_process_tree(",
+              "patch_line": 227,
+              "sha256": "bef7ac95dd929f213666a0f9689391cdceba8cc53b4edaf7628ceb05546f9076"
+            },
+            {
+              "id": "factory/scripts/forge_cli/delegate.py#hunk-3",
+              "header": "@@ -770,7 +796,8 @@ def current_delegation(base: Path, task_id: str, *,",
+              "patch_line": 253,
+              "sha256": "ab02073d3132601c06aec2a88f888cb7dd2f2ca628f86258079dce64881671d8"
+            },
+            {
+              "id": "factory/scripts/forge_cli/delegate.py#hunk-4",
+              "header": "@@ -1069,11 +1096,14 @@ def launch_companion(",
+              "patch_line": 263,
+              "sha256": "671983d4f77726178cf66ecee3bac38c2bbd455a2bab2c57bbcb13fc5c3037ea"
+            },
+            {
+              "id": "factory/scripts/forge_cli/delegate.py#hunk-5",
+              "header": "@@ -1083,19 +1113,39 @@ def launch_companion(",
+              "patch_line": 280,
+              "sha256": "43a7e46ba4cec891506dc06b1819a38d267be84e831f1ed95574c0f41dee17dd"
+            },
+            {
+              "id": "factory/scripts/forge_cli/delegate.py#hunk-6",
+              "header": "@@ -1104,6 +1154,12 @@ def launch_companion(",
+              "patch_line": 332,
+              "sha256": "97160dde5793fcbb7aba3d8466e91d181ab05e44cbe997dfdf98501c1d9f7977"
+            },
+            {
+              "id": "factory/scripts/forge_cli/delegate.py#hunk-7",
+              "header": "@@ -1116,12 +1172,23 @@ def launch_companion(",
+              "patch_line": 345,
+              "sha256": "ec7538967c341c629044a40dafe2226624a220bb15f6664b0c503cd734f9e02b"
+            },
+            {
+              "id": "factory/scripts/forge_cli/delegate.py#hunk-8",
+              "header": "@@ -1136,12 +1203,20 @@ def launch_companion(",
+              "patch_line": 370,
+              "sha256": "a5569d5066e95f2f74650da11206fa9484aab7950d646fef6bae8cca77d9f266"
+            },
+            {
+              "id": "factory/scripts/forge_cli/delegate.py#hunk-9",
+              "header": "@@ -1157,6 +1232,8 @@ def launch_companion(",
+              "patch_line": 397,
+              "sha256": "96b128b45c76123dec7e6f9f781adfded73557025100add903b6d9e293a07794"
+            },
+            {
+              "id": "factory/scripts/forge_cli/delegate.py#hunk-10",
+              "header": "@@ -1168,6 +1245,7 @@ def launch_companion(",
+              "patch_line": 406,
+              "sha256": "4e465ee4aaed4a13fa5ed04be5f7de18ff54ef06f4aed5882f7271ca5ac2c0da"
+            },
+            {
+              "id": "factory/scripts/forge_cli/delegate.py#hunk-11",
+              "header": "@@ -1185,16 +1263,22 @@ def launch_companion(",
+              "patch_line": 414,
+              "sha256": "82611108dabf5f54840067ed9ae594d0672f517c8e66918ff9b889fec13bc00f"
+            },
+            {
+              "id": "factory/scripts/forge_cli/delegate.py#hunk-12",
+              "header": "@@ -1207,14 +1291,26 @@ def launch_companion(",
+              "patch_line": 439,
+              "sha256": "57966bdb2e047d847fba78b60b633d6aaca3fbb3f51188a1a5400a56bc883b2c"
+            },
+            {
+              "id": "factory/scripts/forge_cli/delegate.py#hunk-13",
+              "header": "@@ -1230,8 +1326,38 @@ def launch_companion(",
+              "patch_line": 469,
+              "sha256": "f5fa17a81a901f2ad31ac0f3221dfd14882d9f7b7ce7c88e30789efb6497f63e"
+            },
+            {
+              "id": "factory/scripts/forge_cli/delegate.py#hunk-14",
+              "header": "@@ -1239,10 +1365,19 @@ def launch_companion(",
+              "patch_line": 509,
+              "sha256": "b350f8e753518d1246028fa436964b536f95c7984c299ad6967508b39e40c164"
+            }
+          ]
+        }
+      },
+      {
+        "path": "factory/scripts/forge_cli/doctor.py",
+        "diff_sha256": "3a2c857bd63ef222fa789d8d57de6587a2b5e934e3286946fde103d6c4bab7fd",
+        "hunks": [
+          {
+            "id": "factory/scripts/forge_cli/doctor.py#hunk-1",
+            "header": "@@ -8,6 +8,7 @@ import importlib.util",
+            "patch_line": 2084,
+            "sha256": "b12b8800341f112c661804a056f1a2d737220d671aaae7e66ea042a43d60176a"
+          },
+          {
+            "id": "factory/scripts/forge_cli/doctor.py#hunk-2",
+            "header": "@@ -16,6 +17,8 @@ import stat",
+            "patch_line": 2092,
+            "sha256": "a103a3748b3b97c2beed4eafed57d2214ba272c162f473bde40dfab4249f461a"
+          },
+          {
+            "id": "factory/scripts/forge_cli/doctor.py#hunk-3",
+            "header": "@@ -25,6 +28,7 @@ from factory_lib import decomposition_state_path, load_json, parse_sections, rep",
+            "patch_line": 2101,
+            "sha256": "43d2693c78b9819b20d9c6a9e8cfaa91ad207986a90b6edbb1320f68b81b93af"
+          },
+          {
+            "id": "factory/scripts/forge_cli/doctor.py#hunk-4",
+            "header": "@@ -110,8 +114,17 @@ SKILL_GROUP_RUNTIMES = {",
+            "patch_line": 2109,
+            "sha256": "d2c381fa2325f784833e0da83efd1e3d4bec982a574dd40e2e95bc639e55e659"
+          },
+          {
+            "id": "factory/scripts/forge_cli/doctor.py#hunk-5",
+            "header": "@@ -129,10 +142,11 @@ def skills_missing_per_runtime(base: Path, home: Path | None = None,",
+            "patch_line": 2128,
+            "sha256": "5f36935ff7136b0381426983d78b75b714b4370c29d0890eeadcbe3ae5a897ad"
+          },
+          {
+            "id": "factory/scripts/forge_cli/doctor.py#hunk-6",
+            "header": "@@ -253,6 +267,14 @@ def _display_mark(check: dict) -> str:",
+            "patch_line": 2142,
+            "sha256": "0739ec8ba06e04e4895da06ebb2d1c45440a080da0e04b5453ab7b3037c656d4"
+          },
+          {
+            "id": "factory/scripts/forge_cli/doctor.py#hunk-7",
+            "header": "@@ -346,7 +368,8 @@ def _hook_health_payload(event: str) -> str:",
+            "patch_line": 2157,
+            "sha256": "3def0f40b38c526c2edc049f205b76eeb558c088a0c49db09d3ebc20c21b41c0"
+          },
+          {
+            "id": "factory/scripts/forge_cli/doctor.py#hunk-8",
+            "header": "@@ -361,7 +384,8 @@ def hook_health_checks(base: Path, *, env: dict[str, str] | None = None) -> list",
+            "patch_line": 2167,
+            "sha256": "4a57064188b16578e3aa39efc3ef0b8a38ddbd0d3616a3757d1d32fe2b8a7c6d"
+          },
+          {
+            "id": "factory/scripts/forge_cli/doctor.py#hunk-9",
+            "header": "@@ -456,6 +480,211 @@ def hook_health_checks(base: Path, *, env: dict[str, str] | None = None) -> list",
+            "patch_line": 2177,
+            "sha256": "e5bd4201d00047a07b9057a5bc07a471f7eb2eb832202c6e5cc30bd9d4025d31"
+          },
+          {
+            "id": "factory/scripts/forge_cli/doctor.py#hunk-10",
+            "header": "@@ -778,12 +1007,13 @@ def _psutil_check(*, fix: bool = False) -> dict:",
+            "patch_line": 2389,
+            "sha256": "c7dd4f74d530bf3068f37269f62ec630af6cc72d276728484754f6fc4e7a26cb"
+          },
+          {
+            "id": "factory/scripts/forge_cli/doctor.py#hunk-11",
+            "header": "@@ -792,18 +1022,27 @@ def fast_status(home: Path | None = None) -> tuple[list[str], list[str]]:",
+            "patch_line": 2404,
+            "sha256": "94d37064d7e39d5820e7955036132692c8d81f16ff83cd3cb1a9130ff0eb9f78"
+          },
+          {
+            "id": "factory/scripts/forge_cli/doctor.py#hunk-12",
+            "header": "@@ -1036,9 +1275,9 @@ def _winget_user_install(",
+            "patch_line": 2439,
+            "sha256": "5c51d9fa72b82166867ffeecf6ae04863b3ece412fc5ffc8d252caed661385a5"
+          },
+          {
+            "id": "factory/scripts/forge_cli/doctor.py#hunk-13",
+            "header": "@@ -1339,8 +1578,9 @@ def _git_fix_message() -> str:",
+            "patch_line": 2451,
+            "sha256": "211caee9ba9c2104173b315c5fc90e4926fc3604ff6415e6dbbb069d5426a55c"
+          },
+          {
+            "id": "factory/scripts/forge_cli/doctor.py#hunk-14",
+            "header": "@@ -1349,7 +1589,7 @@ def cmd_doctor(args: argparse.Namespace) -> None:",
+            "patch_line": 2462,
+            "sha256": "7de482e65bacd92cc6ad3ac13123b0563b5043f2dd4c4b3949e3bda17f0bdc71"
+          },
+          {
+            "id": "factory/scripts/forge_cli/doctor.py#hunk-15",
+            "header": "@@ -1390,25 +1630,26 @@ def cmd_doctor(args: argparse.Namespace) -> None:",
+            "patch_line": 2471,
+            "sha256": "f9190e6654992e117fea473b77492b4eca215d8bfb4edf23a8dfe7755c8be072"
+          },
+          {
+            "id": "factory/scripts/forge_cli/doctor.py#hunk-16",
+            "header": "@@ -1462,7 +1703,7 @@ def cmd_doctor(args: argparse.Namespace) -> None:",
+            "patch_line": 2516,
+            "sha256": "63e216e05ecbbb74e2f9fd4d2e949d4c89704bc0985e5568e09c927878f0ab1b"
+          },
+          {
+            "id": "factory/scripts/forge_cli/doctor.py#hunk-17",
+            "header": "@@ -1510,14 +1751,23 @@ def cmd_doctor(args: argparse.Namespace) -> None:",
+            "patch_line": 2525,
+            "sha256": "579289f05d88bb8b0f6619160110458c8d3108c51d52545edd7559f0eaad127e"
+          },
+          {
+            "id": "factory/scripts/forge_cli/doctor.py#hunk-18",
+            "header": "@@ -1525,26 +1775,28 @@ def cmd_doctor(args: argparse.Namespace) -> None:",
+            "patch_line": 2556,
+            "sha256": "74301fafac1d44f6f42b063c404736d1926f8e19265227d90e00e6f0dbff33e5"
+          },
+          {
+            "id": "factory/scripts/forge_cli/doctor.py#hunk-19",
+            "header": "@@ -1556,13 +1808,14 @@ def cmd_doctor(args: argparse.Namespace) -> None:",
+            "patch_line": 2602,
+            "sha256": "c06b65caf0d1f895f5183a6bd5945e400db6cd42c55c54a3c623676ab1b59a02"
+          },
+          {
+            "id": "factory/scripts/forge_cli/doctor.py#hunk-20",
+            "header": "@@ -1594,13 +1847,17 @@ def cmd_doctor(args: argparse.Namespace) -> None:",
+            "patch_line": 2620,
+            "sha256": "b17f05688e585a3449539e8b7f8f9ffb2239e6c006fc58b82a3322072d322c8a"
+          },
+          {
+            "id": "factory/scripts/forge_cli/doctor.py#hunk-21",
+            "header": "@@ -1612,26 +1869,33 @@ def cmd_doctor(args: argparse.Namespace) -> None:",
+            "patch_line": 2642,
+            "sha256": "6a9d497407a35b3426c06a586ff42ae8f9852c687aaf5226fe6ab7e85a266369"
+          },
+          {
+            "id": "factory/scripts/forge_cli/doctor.py#hunk-22",
+            "header": "@@ -1663,21 +1927,22 @@ def cmd_doctor(args: argparse.Namespace) -> None:",
+            "patch_line": 2690,
+            "sha256": "d545705f2ea9a6bfc864c6ab673f0900ffa4136667a4c6b307f313c8eec4458f"
+          },
+          {
+            "id": "factory/scripts/forge_cli/doctor.py#hunk-23",
+            "header": "@@ -1691,14 +1956,15 @@ def cmd_doctor(args: argparse.Namespace) -> None:",
+            "patch_line": 2716,
+            "sha256": "13141fd08cf5eb0020670835e1899556a30c84330f06c3118c8976e49c1821a6"
+          },
+          {
+            "id": "factory/scripts/forge_cli/doctor.py#hunk-24",
+            "header": "@@ -1718,7 +1984,7 @@ def cmd_doctor(args: argparse.Namespace) -> None:",
+            "patch_line": 2735,
+            "sha256": "e5147c4af2d2084f808c5622f30fe6cfa9e8cff0039db4d88c9404260235ef9e"
+          },
+          {
+            "id": "factory/scripts/forge_cli/doctor.py#hunk-25",
+            "header": "@@ -1747,7 +2013,9 @@ def cmd_doctor(args: argparse.Namespace) -> None:",
+            "patch_line": 2744,
+            "sha256": "b9389d1e41ff89894882f9c48064a0755937db4867e11cc740f4ff43f442f24b"
+          },
+          {
+            "id": "factory/scripts/forge_cli/doctor.py#hunk-26",
+            "header": "@@ -1764,7 +2032,8 @@ def cmd_doctor(args: argparse.Namespace) -> None:",
+            "patch_line": 2755,
+            "sha256": "e05046705d979cb3827945911e206582f4774552556b593b21d200cba6c03403"
+          }
+        ],
+        "remainder_review_owner": "PORTABLE-DELIVERY-MIGRATION",
+        "first_selection": {
+          "owner": "NATIVE-FOREGROUND-ACTIVATE",
+          "file_diff_sha256": "75e9131b394a04a3963a145d73ebb160b214e89e35a6fc8e181fc3ba6e53e028",
+          "hunks": [
+            {
+              "id": "factory/scripts/forge_cli/doctor.py#hunk-1",
+              "header": "@@ -8,6 +8,7 @@ import importlib.util",
+              "patch_line": 535,
+              "sha256": "b12b8800341f112c661804a056f1a2d737220d671aaae7e66ea042a43d60176a"
+            },
+            {
+              "id": "factory/scripts/forge_cli/doctor.py#hunk-2",
+              "header": "@@ -16,6 +17,8 @@ import stat",
+              "patch_line": 543,
+              "sha256": "a103a3748b3b97c2beed4eafed57d2214ba272c162f473bde40dfab4249f461a"
+            },
+            {
+              "id": "factory/scripts/forge_cli/doctor.py#hunk-3",
+              "header": "@@ -253,6 +256,15 @@ def _display_mark(check: dict) -> str:",
+              "patch_line": 552,
+              "sha256": "dce24e7f0d660dcb4a8b82a2e6bcfcb5cee63152afb21b3f510ae2d4f2e6b56c"
+            },
+            {
+              "id": "factory/scripts/forge_cli/doctor.py#hunk-4",
+              "header": "@@ -771,6 +783,213 @@ def _install_psutil() -> tuple[bool, str]:",
+              "patch_line": 568,
+              "sha256": "4f760ec4247c9ecf629a7ea632888cd55bf01ccdf1bd7da063218b55e25a5447"
+            }
+          ]
+        }
+      },
+      {
+        "path": "factory/scripts/forge_cli/explore.py",
+        "diff_sha256": "3993a14d64b30d25be779a31805fd03616c8ba5f243e44862d50e279769236d2",
+        "hunks": [
+          {
+            "id": "factory/scripts/forge_cli/explore.py#hunk-1",
+            "header": "@@ -0,0 +1,41 @@",
+            "patch_line": 2770,
+            "sha256": "3104a0fc505c35903735524e06884b2b235e811c2a5f5ad20f61adea1cbec9f2"
+          }
+        ],
+        "remainder_review_owner": "NATIVE-LIFECYCLE"
+      },
+      {
+        "path": "factory/scripts/forge_cli/phase.py",
+        "diff_sha256": "609e961f14016c382d6712fbbb80eeb512b6b6f72c05fa63c22a12d38d194ef1",
+        "hunks": [
+          {
+            "id": "factory/scripts/forge_cli/phase.py#hunk-1",
+            "header": "@@ -312,9 +312,10 @@ def cmd_next(args: argparse.Namespace) -> None:",
+            "patch_line": 2816,
+            "sha256": "85af3107bded942f60b348efa1730cd5d80932ed1dd91d8c3ec14150d2da8530"
+          },
+          {
+            "id": "factory/scripts/forge_cli/phase.py#hunk-2",
+            "header": "@@ -418,7 +419,7 @@ def cmd_next(args: argparse.Namespace) -> None:",
+            "patch_line": 2830,
+            "sha256": "ba10154726e1a7f45442d31da573d673d991f27ae7fc4b549639caaeb0fc3cac"
+          },
+          {
+            "id": "factory/scripts/forge_cli/phase.py#hunk-3",
+            "header": "@@ -516,7 +517,8 @@ def cmd_next(args: argparse.Namespace) -> None:",
+            "patch_line": 2839,
+            "sha256": "aa51047d75d0bf12921bda2b81faa66d70193b9275c064baebe710c5cd4d634b"
+          }
+        ],
+        "remainder_review_owner": "LEAN-WORKFLOW"
+      },
+      {
+        "path": "factory/scripts/forge_cli/scaffold.py",
+        "diff_sha256": "cd608a27e374d26d9c6ab6797fe333084ec5e04439626731dfbc765d5bd59f47",
+        "hunks": [
+          {
+            "id": "factory/scripts/forge_cli/scaffold.py#hunk-1",
+            "header": "@@ -44,6 +44,7 @@ DOC_CONTRACTS = [",
+            "patch_line": 2853,
+            "sha256": "65d2c40db3a897a4ef69364cfc37f49f6be87abf9ce2b732e89dc588758d1adc"
+          }
+        ],
+        "remainder_review_owner": "PORTABLE-DELIVERY-MIGRATION"
+      },
+      {
+        "path": "factory/scripts/forge_cli/stages.py",
+        "diff_sha256": "04093e3fc28bf41d7a4a822261d5e772580919fe44e34eea9a3d697b21147fca",
+        "hunks": [
+          {
+            "id": "factory/scripts/forge_cli/stages.py#hunk-1",
+            "header": "@@ -1365,7 +1365,10 @@ def _require_successful_launch(base: Path, stage_id: str, stage: dict,",
+            "patch_line": 2865,
+            "sha256": "f3caeef1642b7967cb33e5bfbf5d0cfaa50eaaafeca774ca6f325d3fa300fd02"
+          },
+          {
+            "id": "factory/scripts/forge_cli/stages.py#hunk-2",
+            "header": "@@ -1377,28 +1380,51 @@ def _require_successful_launch(base: Path, stage_id: str, stage: dict,",
+            "patch_line": 2877,
+            "sha256": "e6dccf173e4aa72099180776a717567349891a31b2e4094a43196352735044e9"
+          }
+        ],
+        "remainder_review_owner": "NATIVE-FOREGROUND-ACTIVATE",
+        "first_selection": {
+          "owner": "NATIVE-FOREGROUND-ACTIVATE",
+          "file_diff_sha256": "04093e3fc28bf41d7a4a822261d5e772580919fe44e34eea9a3d697b21147fca",
+          "hunks": [
+            {
+              "id": "factory/scripts/forge_cli/stages.py#hunk-1",
+              "header": "@@ -1365,7 +1365,10 @@ def _require_successful_launch(base: Path, stage_id: str, stage: dict,",
+              "patch_line": 786,
+              "sha256": "f3caeef1642b7967cb33e5bfbf5d0cfaa50eaaafeca774ca6f325d3fa300fd02"
+            },
+            {
+              "id": "factory/scripts/forge_cli/stages.py#hunk-2",
+              "header": "@@ -1377,28 +1380,51 @@ def _require_successful_launch(base: Path, stage_id: str, stage: dict,",
+              "patch_line": 798,
+              "sha256": "e6dccf173e4aa72099180776a717567349891a31b2e4094a43196352735044e9"
+            }
+          ]
+        }
+      },
+      {
+        "path": "factory/scripts/forge_cli/worker_admission.py",
+        "diff_sha256": "da04cea6bfd3c35d28bde67c646add718f150f363543e73c177de1149c5dd2d2",
+        "hunks": [
+          {
+            "id": "factory/scripts/forge_cli/worker_admission.py#hunk-1",
+            "header": "@@ -0,0 +1,264 @@",
+            "patch_line": 2956,
+            "sha256": "7aa17ffd86e43f10d845425cfb698251c1cac9f00a26e3ebb8b70711654249fa"
+          }
+        ],
+        "remainder_review_owner": "NATIVE-FOREGROUND-ACTIVATE",
+        "first_selection": {
+          "owner": "NATIVE-FOREGROUND-ACTIVATE",
+          "file_diff_sha256": "da04cea6bfd3c35d28bde67c646add718f150f363543e73c177de1149c5dd2d2",
+          "hunks": [
+            {
+              "id": "factory/scripts/forge_cli/worker_admission.py#hunk-1",
+              "header": "@@ -0,0 +1,264 @@",
+              "patch_line": 1391,
+              "sha256": "7aa17ffd86e43f10d845425cfb698251c1cac9f00a26e3ebb8b70711654249fa"
+            }
+          ]
+        }
+      },
+      {
+        "path": "factory/scripts/post_tool_use.py",
+        "diff_sha256": "14db4329f7d2745e4093195e1e5bb13f6d5f54409ffb6c8d3bb69ac63c805967",
+        "hunks": [
+          {
+            "id": "factory/scripts/post_tool_use.py#hunk-1",
+            "header": "@@ -1,5 +1,5 @@",
+            "patch_line": 3225,
+            "sha256": "b844a8d7d17c3420fa528b81a42d5d611a4270f2bffdcd2e493c07062ca43e0c"
+          },
+          {
+            "id": "factory/scripts/post_tool_use.py#hunk-2",
+            "header": "@@ -12,27 +12,56 @@ from factory_lib import (",
+            "patch_line": 3232,
+            "sha256": "afb65ce73406644e2d93e45c4b34d241206c1a0c925133d139c1e53078904cf4"
+          },
+          {
+            "id": "factory/scripts/post_tool_use.py#hunk-3",
+            "header": "@@ -79,43 +108,118 @@ def _option_labels(raw: object) -> list[str] | None:",
+            "patch_line": 3296,
+            "sha256": "b7b63d7411d5bfac8e7f62760c4c37f881ed958de99ea6869c978acf6b47870f"
+          },
+          {
+            "id": "factory/scripts/post_tool_use.py#hunk-4",
+            "header": "@@ -137,7 +241,11 @@ def main() -> None:",
+            "patch_line": 3436,
+            "sha256": "81b2b54136dea56decedfeb601fc46f76b65b2e176f57ef95461c5f95ee5d1b3"
+          }
+        ],
+        "remainder_review_owner": "SHARED-COORDINATOR-JOURNEY"
+      },
+      {
+        "path": "factory/scripts/pre_tool_use.py",
+        "diff_sha256": "fd368e8b413c04fd019952a3b54efce60d49863ec02dbb694a4b9af4cd5bec92",
+        "hunks": [
+          {
+            "id": "factory/scripts/pre_tool_use.py#hunk-1",
+            "header": "@@ -20,6 +20,7 @@ def deny(reason: str) -> None:",
+            "patch_line": 3453,
+            "sha256": "50e8f6792acc506a62b4d45fc83843ca9cc359a5edfabb44415d34dd2d59b1c5"
+          },
+          {
+            "id": "factory/scripts/pre_tool_use.py#hunk-2",
+            "header": "@@ -191,6 +192,9 @@ def denylist_fallback(payload: dict, reason: str) -> None:",
+            "patch_line": 3461,
+            "sha256": "1059e24b21de105810ae21b42717a101a4fc30236823c5c5572fe6cf3ade1654"
+          },
+          {
+            "id": "factory/scripts/pre_tool_use.py#hunk-3",
+            "header": "@@ -207,6 +211,7 @@ try:",
+            "patch_line": 3471,
+            "sha256": "59154021c1ebbe5f477b3d1e6673a2912fc310f0abb62bcc79485ae30276e17f"
+          },
+          {
+            "id": "factory/scripts/pre_tool_use.py#hunk-4",
+            "header": "@@ -219,7 +224,7 @@ permission_mode = payload.get(\"permission_mode\", \"\")",
+            "patch_line": 3479,
+            "sha256": "4219cf179f3fe0239bae222db10ea3b6aeed7db9ddd78de73930426cd8989314"
+          },
+          {
+            "id": "factory/scripts/pre_tool_use.py#hunk-5",
+            "header": "@@ -249,8 +254,8 @@ FACTORY_STATE_MSG = (",
+            "patch_line": 3488,
+            "sha256": "3e268e426a5c151106943bdf711b0dc73292cb32f4433e0f421ef4fe6afd9ea7"
+          },
+          {
+            "id": "factory/scripts/pre_tool_use.py#hunk-6",
+            "header": "@@ -499,6 +504,65 @@ def bash_write_paths(value: str, root: Path) -> list[str]:",
+            "patch_line": 3499,
+            "sha256": "0d5a8deb053934653670a8eb33322fc5d528215021de5816b2bead3306f880fc"
+          },
+          {
+            "id": "factory/scripts/pre_tool_use.py#hunk-7",
+            "header": "@@ -599,7 +663,7 @@ def guard_product_writes(targets: list[str], root: Path, command: str = \"\") -> N",
+            "patch_line": 3565,
+            "sha256": "be1e3cffb275f85307c7465ca99547adc49806d29dfec7574faef822bcd2866a"
+          },
+          {
+            "id": "factory/scripts/pre_tool_use.py#hunk-8",
+            "header": "@@ -619,11 +683,8 @@ for pattern in blocked:",
+            "patch_line": 3574,
+            "sha256": "c262c52bd6d64a344d04bb9ade873f514407d9dbe258ffa305f4cd637f17e508"
+          },
+          {
+            "id": "factory/scripts/pre_tool_use.py#hunk-9",
+            "header": "@@ -633,11 +694,10 @@ CODEX_EXEC_INVOCATION = re.compile(",
+            "patch_line": 3588,
+            "sha256": "bd5579520c78f52851ae391056aeea8240806408d98f142578eee4fe57c04786"
+          },
+          {
+            "id": "factory/scripts/pre_tool_use.py#hunk-10",
+            "header": "@@ -712,6 +772,15 @@ edit_target = (tool_input.get(\"file_path\") or tool_input.get(\"notebook_path\") or",
+            "patch_line": 3604,
+            "sha256": "b8b32bea9923f493280055d1242183241de1eac847aa8f26426a19e0f6be5520"
+          },
+          {
+            "id": "factory/scripts/pre_tool_use.py#hunk-11",
+            "header": "@@ -720,8 +789,38 @@ for candidate in write_targets:",
+            "patch_line": 3620,
+            "sha256": "ec9c3d2a600f21025d5332b3ad364922036e253db709a91ef479388399635c51"
+          }
+        ],
+        "remainder_review_owner": "NATIVE-FOREGROUND-ACTIVATE",
+        "first_selection": {
+          "owner": "NATIVE-FOREGROUND-ACTIVATE",
+          "file_diff_sha256": "e7046601b90099b69057176ef7b68a05e4635c51fce582591392342acd274660",
+          "hunks": [
+            {
+              "id": "factory/scripts/pre_tool_use.py#hunk-1",
+              "header": "@@ -20,6 +20,7 @@ def deny(reason: str) -> None:",
+              "patch_line": 876,
+              "sha256": "50e8f6792acc506a62b4d45fc83843ca9cc359a5edfabb44415d34dd2d59b1c5"
+            },
+            {
+              "id": "factory/scripts/pre_tool_use.py#hunk-2",
+              "header": "@@ -191,6 +192,9 @@ def denylist_fallback(payload: dict, reason: str) -> None:",
+              "patch_line": 884,
+              "sha256": "1059e24b21de105810ae21b42717a101a4fc30236823c5c5572fe6cf3ade1654"
+            },
+            {
+              "id": "factory/scripts/pre_tool_use.py#hunk-3",
+              "header": "@@ -207,6 +211,7 @@ try:",
+              "patch_line": 894,
+              "sha256": "59154021c1ebbe5f477b3d1e6673a2912fc310f0abb62bcc79485ae30276e17f"
+            },
+            {
+              "id": "factory/scripts/pre_tool_use.py#hunk-4",
+              "header": "@@ -219,7 +224,7 @@ permission_mode = payload.get(\"permission_mode\", \"\")",
+              "patch_line": 902,
+              "sha256": "4219cf179f3fe0239bae222db10ea3b6aeed7db9ddd78de73930426cd8989314"
+            },
+            {
+              "id": "factory/scripts/pre_tool_use.py#hunk-5",
+              "header": "@@ -249,8 +254,8 @@ FACTORY_STATE_MSG = (",
+              "patch_line": 911,
+              "sha256": "3e268e426a5c151106943bdf711b0dc73292cb32f4433e0f421ef4fe6afd9ea7"
+            },
+            {
+              "id": "factory/scripts/pre_tool_use.py#hunk-6",
+              "header": "@@ -499,6 +504,65 @@ def bash_write_paths(value: str, root: Path) -> list[str]:",
+              "patch_line": 922,
+              "sha256": "0d5a8deb053934653670a8eb33322fc5d528215021de5816b2bead3306f880fc"
+            },
+            {
+              "id": "factory/scripts/pre_tool_use.py#hunk-7",
+              "header": "@@ -599,7 +663,7 @@ def guard_product_writes(targets: list[str], root: Path, command: str = \"\") -> N",
+              "patch_line": 988,
+              "sha256": "be1e3cffb275f85307c7465ca99547adc49806d29dfec7574faef822bcd2866a"
+            },
+            {
+              "id": "factory/scripts/pre_tool_use.py#hunk-8",
+              "header": "@@ -619,26 +683,14 @@ for pattern in blocked:",
+              "patch_line": 997,
+              "sha256": "51105de9d6871b706e2554ee7caeaf28e91fc5e724e5d80508dcc2ece1001c86"
+            },
+            {
+              "id": "factory/scripts/pre_tool_use.py#hunk-9",
+              "header": "@@ -712,6 +764,15 @@ edit_target = (tool_input.get(\"file_path\") or tool_input.get(\"notebook_path\") or",
+              "patch_line": 1029,
+              "sha256": "917e8eec8514c5407f5b28ae047e09a44169d4c52f51d0a9048bfc3fa086dcc8"
+            },
+            {
+              "id": "factory/scripts/pre_tool_use.py#hunk-10",
+              "header": "@@ -720,8 +781,38 @@ for candidate in write_targets:",
+              "patch_line": 1045,
+              "sha256": "a3f5ae704690a13f7a237f380d82dc7ab1f1d198d3802cada030e6655d2bd0bc"
+            },
+            {
+              "id": "factory/scripts/pre_tool_use.py#hunk-11",
+              "header": "@@ -835,11 +926,29 @@ def _has_active_shell_syntax(value: str) -> bool:",
+              "patch_line": 1086,
+              "sha256": "200ef5edd0f4728a9ffefc23425f344f4e3c897de8e90e4feb93cb97a8364398"
+            },
+            {
+              "id": "factory/scripts/pre_tool_use.py#hunk-12",
+              "header": "@@ -862,8 +971,8 @@ def _companion_readonly_launch_ok():",
+              "patch_line": 1117,
+              "sha256": "083ca34a1d09913f54c7db9ba96510686ca7cea5bda40f86b23193937667327e"
+            }
+          ]
+        }
+      },
+      {
+        "path": "factory/scripts/record_grill_from_json.py",
+        "diff_sha256": "014d0fcf9f52f88a3bed8c7c0f4fca850400d677120db1666180a4fdd4188ee2",
+        "hunks": [
+          {
+            "id": "factory/scripts/record_grill_from_json.py#hunk-1",
+            "header": "@@ -12,6 +12,7 @@ of what blocked) but never satisfies a gate.",
+            "patch_line": 3665,
+            "sha256": "a3701697d2b9f9fddf68f20c3d9f1b1da2571c9cd45e46ed509655fff6ec5a4e"
+          },
+          {
+            "id": "factory/scripts/record_grill_from_json.py#hunk-2",
+            "header": "@@ -24,6 +25,7 @@ from factory_lib import (",
+            "patch_line": 3673,
+            "sha256": "49395f998029b9c8284b037b42447043f7e48ff715d001578081aa15027e5554"
+          },
+          {
+            "id": "factory/scripts/record_grill_from_json.py#hunk-3",
+            "header": "@@ -37,6 +39,26 @@ def _non_empty_string(value: object) -> bool:",
+            "patch_line": 3681,
+            "sha256": "dc093a9292330df55691c553653d351198be6551d6714e8a18c843046fda08f7"
+          },
+          {
+            "id": "factory/scripts/record_grill_from_json.py#hunk-4",
+            "header": "@@ -48,77 +70,151 @@ def _validate_round_provenance(",
+            "patch_line": 3708,
+            "sha256": "bf637d25631792e087a050cb07b96ca280138e097d8307dd21f605f505abe952"
+          },
+          {
+            "id": "factory/scripts/record_grill_from_json.py#hunk-5",
+            "header": "@@ -133,6 +229,24 @@ def _validate_round_provenance(",
+            "patch_line": 3887,
+            "sha256": "b9b22c77e93ed20756764b36d2cd1ca9ceccf33bb8a9a3236ff37a9a49ee212a"
+          },
+          {
+            "id": "factory/scripts/record_grill_from_json.py#hunk-6",
+            "header": "@@ -254,11 +368,10 @@ def _validate_task_grill(root: Path, payload: dict, task_id: str) -> dict:",
+            "patch_line": 3912,
+            "sha256": "706a13998da9d4e19b39a331bc4f7550791e72b7c9588ac998bdb671504864b1"
+          },
+          {
+            "id": "factory/scripts/record_grill_from_json.py#hunk-7",
+            "header": "@@ -440,15 +553,30 @@ active_story = load_json(run_state_path(root), default={}).get(\"issue_key\", \"\")",
+            "patch_line": 3925,
+            "sha256": "71e8aae51aa5525422e00bc54a529ee25809aae3cba80e25d2f9759ae869c1d5"
+          }
+        ],
+        "remainder_review_owner": "SHARED-COORDINATOR-JOURNEY"
+      },
+      {
+        "path": "factory/scripts/session_start.py",
+        "diff_sha256": "cbe59bf7af47706166d576dc9b6da040d8424897e340e2815997b8865673d9c9",
+        "hunks": [
+          {
+            "id": "factory/scripts/session_start.py#hunk-1",
+            "header": "@@ -62,17 +62,18 @@ if run_state.get(\"issue_key\"):",
+            "patch_line": 3966,
+            "sha256": "25a6a91cb4fc52412f092dfefd4bee80c9d9d0f87d4d900fdd0a0ffa8e101fdc"
+          },
+          {
+            "id": "factory/scripts/session_start.py#hunk-2",
+            "header": "@@ -97,7 +98,7 @@ signals = open_signals(root)",
+            "patch_line": 3994,
+            "sha256": "d0467a90127123a643cddd75b03bfdad61814867ad8d82340e0d144e33199e42"
+          }
+        ],
+        "remainder_review_owner": "NATIVE-FOREGROUND-ACTIVATE",
+        "first_selection": {
+          "owner": "NATIVE-FOREGROUND-ACTIVATE",
+          "file_diff_sha256": "cbe59bf7af47706166d576dc9b6da040d8424897e340e2815997b8865673d9c9",
+          "hunks": [
+            {
+              "id": "factory/scripts/session_start.py#hunk-1",
+              "header": "@@ -62,17 +62,18 @@ if run_state.get(\"issue_key\"):",
+              "patch_line": 1132,
+              "sha256": "25a6a91cb4fc52412f092dfefd4bee80c9d9d0f87d4d900fdd0a0ffa8e101fdc"
+            },
+            {
+              "id": "factory/scripts/session_start.py#hunk-2",
+              "header": "@@ -97,7 +98,7 @@ signals = open_signals(root)",
+              "patch_line": 1160,
+              "sha256": "d0467a90127123a643cddd75b03bfdad61814867ad8d82340e0d144e33199e42"
+            }
+          ]
+        }
+      },
+      {
+        "path": "factory/skills/forge.md",
+        "diff_sha256": "90a09f449dd0e5b0f653d5ac8c150b529b3cff472115a87c86ba6bf7d306d871",
+        "hunks": [
+          {
+            "id": "factory/skills/forge.md#hunk-1",
+            "header": "@@ -36,11 +36,11 @@ or route:",
+            "patch_line": 4007,
+            "sha256": "9da2c39f2a9b4919d9fcdc7fce8c328664d7f5eb2365d554122a84d78e7b49ad"
+          },
+          {
+            "id": "factory/skills/forge.md#hunk-2",
+            "header": "@@ -58,7 +58,7 @@ or route:",
+            "patch_line": 4022,
+            "sha256": "3936bd4843d442486cef48fd6d09d371abd8c967854b89149be82a38ae7c5bc5"
+          },
+          {
+            "id": "factory/skills/forge.md#hunk-3",
+            "header": "@@ -71,8 +71,8 @@ or route:",
+            "patch_line": 4031,
+            "sha256": "100b73f8c4630ffb81b030f1234a1af616fc417e2c82e8dca2216d55d9712537"
+          },
+          {
+            "id": "factory/skills/forge.md#hunk-4",
+            "header": "@@ -86,7 +86,9 @@ or route:",
+            "patch_line": 4042,
+            "sha256": "9102dd7e315d81abf1cb1d4c3f24b31be56c3389f4412f2cebbc75f0cc794995"
+          },
+          {
+            "id": "factory/skills/forge.md#hunk-5",
+            "header": "@@ -141,6 +143,15 @@ instead of narrating it:",
+            "patch_line": 4053,
+            "sha256": "70703160b549f94e569771414c0c5ea9b6c5d65676eee57558820cae2a59c90e"
+          }
+        ],
+        "remainder_review_owner": "LEAN-WORKFLOW"
+      },
+      {
+        "path": "factory/tests/test_ask_gate.py",
+        "diff_sha256": "71ca5f096b7e167fa0e8c5d110e5245a6db1b475badc4dfd488936dcf1234756",
+        "hunks": [
+          {
+            "id": "factory/tests/test_ask_gate.py#hunk-1",
+            "header": "@@ -19,14 +19,16 @@ import json",
+            "patch_line": 4073,
+            "sha256": "bf74caee9be67a457b39c2147727a0a00bc7c0da00f8561553007729e7f2c6c8"
+          },
+          {
+            "id": "factory/tests/test_ask_gate.py#hunk-2",
+            "header": "@@ -50,13 +52,15 @@ def _pre_hook(repo: Path, payload: dict):",
+            "patch_line": 4092,
+            "sha256": "58e11f7f5e3f1d8c89633044bd6def03f1f108e17d294d5cded9786574f4062f"
+          },
+          {
+            "id": "factory/tests/test_ask_gate.py#hunk-3",
+            "header": "@@ -64,7 +68,7 @@ def test_asking_is_denied_once_a_stage_is_open(repo: Path):",
+            "patch_line": 4111,
+            "sha256": "949fa0cd2719269cdb9353222441446e584af83c6155d6b4ca27da52ceb1e6d4"
+          },
+          {
+            "id": "factory/tests/test_ask_gate.py#hunk-4",
+            "header": "@@ -88,7 +92,8 @@ def test_a_recorded_escalation_lets_the_question_through(repo: Path):",
+            "patch_line": 4120,
+            "sha256": "03d0629557dc2b8e65dd09ea05aa56f22930702e2b9e5f7fd6065b069a55e0d5"
+          },
+          {
+            "id": "factory/tests/test_ask_gate.py#hunk-5",
+            "header": "@@ -98,9 +103,9 @@ def test_one_escalation_authorises_one_question(repo: Path):",
+            "patch_line": 4130,
+            "sha256": "4a5b242544fd86d2bcdaa35619f75d85ea36df444d2c961334dcb535b4125824"
+          },
+          {
+            "id": "factory/tests/test_ask_gate.py#hunk-6",
+            "header": "@@ -351,3 +356,51 @@ def test_a_missing_control_directory_fails_open(repo: Path):",
+            "patch_line": 4142,
+            "sha256": "f32d94725e72acec95fb40df7a3f53e1f3a2341354ae7294db6bece8276da267"
+          }
+        ],
+        "remainder_review_owner": "SHARED-COORDINATOR-JOURNEY"
+      },
+      {
+        "path": "factory/tests/test_gates.py",
+        "diff_sha256": "f739a207dcdd23628b03d108242f1955d3489292b038bc8eff5a07fdfb862e21",
+        "hunks": [
+          {
+            "id": "factory/tests/test_gates.py#hunk-1",
+            "header": "@@ -63,11 +63,15 @@ from record_signoff import REQUIRED_BRIEF_HEADINGS",
+            "patch_line": 4198,
+            "sha256": "22e8a956e3bbb8d48eb5aa2c73337392430cdc4ac515fff3c842f1c2ed587a2c"
+          },
+          {
+            "id": "factory/tests/test_gates.py#hunk-2",
+            "header": "@@ -303,6 +307,12 @@ def repo(tmp_path: Path) -> Path:",
+            "patch_line": 4215,
+            "sha256": "34e2ee8fd60236a8c94e0afdaee971d11e5961f28491d38d3807c85e8ad28c20"
+          },
+          {
+            "id": "factory/tests/test_gates.py#hunk-3",
+            "header": "@@ -359,7 +369,7 @@ def task_grill_payload(task: dict, verdict: str = \"pass\", **over) -> dict:",
+            "patch_line": 4228,
+            "sha256": "a0abe7a93a81041f4e1e82d7e9c3a9e6a05c4b32114edf530202812a117e6675"
+          },
+          {
+            "id": "factory/tests/test_gates.py#hunk-4",
+            "header": "@@ -379,8 +389,10 @@ def seed_task_grill_frontier(repo: Path, task: dict) -> None:",
+            "patch_line": 4237,
+            "sha256": "d45d77cbdb36701edd4fe81ad2889a868621040c7f7bd34d279c38cc96966fce"
+          },
+          {
+            "id": "factory/tests/test_gates.py#hunk-5",
+            "header": "@@ -442,10 +454,15 @@ def grill_rounds(gate: str, count: int) -> list[dict]:",
+            "patch_line": 4249,
+            "sha256": "47ebf1b102c2895377fcaf272068934dccaf7a3f241af5d99b3454f4d61560b2"
+          },
+          {
+            "id": "factory/tests/test_gates.py#hunk-6",
+            "header": "@@ -455,6 +472,12 @@ def log_grill_rounds(repo: Path, rounds: list[dict]) -> tuple[int, str]:",
+            "patch_line": 4266,
+            "sha256": "bafd7268afa8071b1c614189d30d3c0c44fd425c0a8511ea47aa37cf3e280630"
+          },
+          {
+            "id": "factory/tests/test_gates.py#hunk-7",
+            "header": "@@ -2706,6 +2729,8 @@ def test_upgrade_replaces_machinery_preserves_project(repo, tmp_path):",
+            "patch_line": 4279,
+            "sha256": "eccd5fa371d44f303cab7934acfab364363e7b26ae4189ccbaa0d7d1658757be",
+            "remainder_review_owner": "PORTABLE-DELIVERY-MIGRATION"
+          },
+          {
+            "id": "factory/tests/test_gates.py#hunk-8",
+            "header": "@@ -3329,6 +3354,16 @@ def test_dual_runtime_replace_decodes_tracked_source_suffix(repo):",
+            "patch_line": 4288,
+            "sha256": "53189fc5812779bdc7421c424d4de289fa985dd83a977ff51f96ae29f77adf5b"
+          },
+          {
+            "id": "factory/tests/test_gates.py#hunk-9",
+            "header": "@@ -3356,7 +3391,7 @@ def test_doctor_hook_health_green_on_healthy_repo(repo):",
+            "patch_line": 4305,
+            "sha256": "6298c92c77cbe10cf156a97dd4cacb754f4d0aaa92f42006e08fb10179478d19",
+            "remainder_review_owner": "PORTABLE-DELIVERY-MIGRATION"
+          },
+          {
+            "id": "factory/tests/test_gates.py#hunk-10",
+            "header": "@@ -3453,8 +3488,8 @@ def test_doctor_hook_health_reds_unresolvable_hook(repo, tmp_path):",
+            "patch_line": 4314,
+            "sha256": "3169b7e47878079cdbde28167bed49a7f286ee42ef8fa751e46bab11c4200787",
+            "remainder_review_owner": "PORTABLE-DELIVERY-MIGRATION"
+          },
+          {
+            "id": "factory/tests/test_gates.py#hunk-11",
+            "header": "@@ -3621,9 +3656,11 @@ def test_doctor_hook_health_catches_precompact_import_skew(repo):",
+            "patch_line": 4325,
+            "sha256": "af4dd69f847b7d1f734c77bf71209d33de4ea3ee9214b685ebf339b693d3d02f",
+            "remainder_review_owner": "PORTABLE-DELIVERY-MIGRATION"
+          },
+          {
+            "id": "factory/tests/test_gates.py#hunk-12",
+            "header": "@@ -3645,7 +3682,7 @@ def test_doctor_hook_health_missing_sh_names_git_bash_fix(repo, monkeypatch):",
+            "patch_line": 4340,
+            "sha256": "1bee795d7d9b9adea2127c8b30bfa4b3557ad424c578a62b24afca905763ceee",
+            "remainder_review_owner": "PORTABLE-DELIVERY-MIGRATION"
+          },
+          {
+            "id": "factory/tests/test_gates.py#hunk-13",
+            "header": "@@ -3659,7 +3696,7 @@ def test_doctor_hook_health_broken_launcher_does_not_blame_git_bash(repo):",
+            "patch_line": 4349,
+            "sha256": "2277aedb81e0411234ae551c67d7838ac0c85dade524c371654b0a06f455939a",
+            "remainder_review_owner": "PORTABLE-DELIVERY-MIGRATION"
+          },
+          {
+            "id": "factory/tests/test_gates.py#hunk-14",
+            "header": "@@ -3689,8 +3726,8 @@ def test_init_and_upgrade_ship_portable_hook_commands(tmp_path):",
+            "patch_line": 4358,
+            "sha256": "4aeb3c9a8a70c0048f92f238d0abfb1469ec509362ec1fc7c49aec7e7b47b6ec",
+            "remainder_review_owner": "PORTABLE-DELIVERY-MIGRATION"
+          },
+          {
+            "id": "factory/tests/test_gates.py#hunk-15",
+            "header": "@@ -3721,8 +3758,8 @@ def test_init_and_upgrade_ship_portable_hook_commands(tmp_path):",
+            "patch_line": 4369,
+            "sha256": "a833e39722feec2019392686bcc05058ab3b30fa77bb75adb3fc72bda3f0e0c5",
+            "remainder_review_owner": "PORTABLE-DELIVERY-MIGRATION"
+          },
+          {
+            "id": "factory/tests/test_gates.py#hunk-16",
+            "header": "@@ -4328,7 +4365,7 @@ def test_doctor_hook_health_uses_git_bash_outside_path(repo, tmp_path):",
+            "patch_line": 4380,
+            "sha256": "ecee332370bda2f081ed511fee4ae706c7a817c31e631fa41c9ad450df334fed",
+            "remainder_review_owner": "PORTABLE-DELIVERY-MIGRATION"
+          },
+          {
+            "id": "factory/tests/test_gates.py#hunk-17",
+            "header": "@@ -6123,10 +6160,10 @@ def test_grill_accepts_ledger_matched_rounds_happy_path(repo):",
+            "patch_line": 4389,
+            "sha256": "8991e410cded4fd4f31d3ee9e02bf5ba0048bdc6b611073905e0ad01d908c6f6"
+          },
+          {
+            "id": "factory/tests/test_gates.py#hunk-18",
+            "header": "@@ -6191,8 +6228,8 @@ def test_frontier_orders_task_plan_before_grill(repo, tmp_path):",
+            "patch_line": 4402,
+            "sha256": "07d7c6635b5361a4e09f85fc63edc7f45a434c9ae1a3689541eaa04d0a28e5cf"
+          },
+          {
+            "id": "factory/tests/test_gates.py#hunk-19",
+            "header": "@@ -6211,8 +6248,8 @@ def test_record_task_grill_writes_per_id_file(repo):",
+            "patch_line": 4413,
+            "sha256": "e8cf7b94c43c232ccfddbfe80f5c47a3d941b6c3f73500756e81ab14c0614419"
+          },
+          {
+            "id": "factory/tests/test_gates.py#hunk-20",
+            "header": "@@ -6366,9 +6403,9 @@ def test_task_grill_requires_proofs_and_rounds(repo):",
+            "patch_line": 4424,
+            "sha256": "7936ce2f807d4c704f4bba8b7796d7f4928fa8f08131ef210d7390205c359256"
+          },
+          {
+            "id": "factory/tests/test_gates.py#hunk-21",
+            "header": "@@ -6403,8 +6440,10 @@ def test_task_grill_requires_proofs_and_rounds(repo):",
+            "patch_line": 4436,
+            "sha256": "ee374d5bca29047fe546617db3405bf67dad70eb829cf8933d69d75ba7c4c637"
+          },
+          {
+            "id": "factory/tests/test_gates.py#hunk-22",
+            "header": "@@ -6957,6 +6996,7 @@ def test_post_tool_use_records_ask_user_question_round(repo):",
+            "patch_line": 4449,
+            "sha256": "7e28b89fb0af9290cf4ddf85600f0216193aaeb4ab6d3091b33189efbd96bf18"
+          },
+          {
+            "id": "factory/tests/test_gates.py#hunk-23",
+            "header": "@@ -6973,6 +7013,7 @@ def test_post_tool_use_records_ask_user_question_round(repo):",
+            "patch_line": 4457,
+            "sha256": "04a0d62c4e3d1ea78a62c16cf204ac9666fef19f9b8cd6fc829edb664d2d4b0e"
+          },
+          {
+            "id": "factory/tests/test_gates.py#hunk-24",
+            "header": "@@ -6991,14 +7032,23 @@ def test_post_tool_use_records_ask_user_question_round(repo):",
+            "patch_line": 4465,
+            "sha256": "29bdf998f8644e16bc0ac0c039184aeab03623c00771569b988fdf6f11daecde"
+          },
+          {
+            "id": "factory/tests/test_gates.py#hunk-25",
+            "header": "@@ -7034,27 +7084,6 @@ def test_vendor_integrity_covers_post_tool_use(repo):",
+            "patch_line": 4490,
+            "sha256": "ae3b30e1adaa0a23ae296457b212a874caa4e98357bdb3bbd9b3a9e25590ce4c"
+          },
+          {
+            "id": "factory/tests/test_gates.py#hunk-26",
+            "header": "@@ -7599,16 +7628,16 @@ def test_planning_lock_forces_plan_mode(repo, tmp_path):",
+            "patch_line": 4518,
+            "sha256": "602ae292ad30398af1ac91e97f70b25a4763cf1b683e26c8e60650a406c26731"
+          },
+          {
+            "id": "factory/tests/test_gates.py#hunk-27",
+            "header": "@@ -7623,7 +7652,7 @@ def test_planning_lock_forces_plan_mode(repo, tmp_path):",
+            "patch_line": 4539,
+            "sha256": "bff9075b4ba390d349b24a1a05589454bcc6bf7fdf8bd5390b5e8e2d9a65663b"
+          },
+          {
+            "id": "factory/tests/test_gates.py#hunk-28",
+            "header": "@@ -7649,7 +7678,7 @@ def test_planning_lock_forces_plan_mode(repo, tmp_path):",
+            "patch_line": 4548,
+            "sha256": "01d575713fd80c6e25fc344b9ea8c82ab92e5419bec9695cabe563bc74980687"
+          },
+          {
+            "id": "factory/tests/test_gates.py#hunk-29",
+            "header": "@@ -11620,7 +11649,7 @@ def test_review_hardening_guards(repo, tmp_path):",
+            "patch_line": 4557,
+            "sha256": "df0235f79f5c9aa66f4332dffcb273e4c2f967dad17d90ed9325b9ccd5fddd13"
+          },
+          {
+            "id": "factory/tests/test_gates.py#hunk-30",
+            "header": "@@ -11909,7 +11938,10 @@ def fake_companion_home(tmp_path: Path) -> Path:",
+            "patch_line": 4566,
+            "sha256": "36a8ed1886395ddb840ed2e4e7076b01ba76f57e9c9f59fea24f2a4168e2dd6c"
+          },
+          {
+            "id": "factory/tests/test_gates.py#hunk-31",
+            "header": "@@ -13156,7 +13188,8 @@ def test_done_contracts_immutable_and_criteria_map_binds_plan_contracts(",
+            "patch_line": 4578,
+            "sha256": "a42d016cf41c69aa2fff5a4e9cb26c6a83279cc40328e6d5a04375db165cc1f2"
+          },
+          {
+            "id": "factory/tests/test_gates.py#hunk-32",
+            "header": "@@ -16219,7 +16252,7 @@ def test_process_cleanup_reaps_known_process_when_discovery_fails(",
+            "patch_line": 4588,
+            "sha256": "497665ce936d5db1094229db6fa8fa5bb00bd0bcada326d236083a66a0ae7636"
+          },
+          {
+            "id": "factory/tests/test_gates.py#hunk-33",
+            "header": "@@ -16248,7 +16281,7 @@ def test_immediate_cleanup_signals_owned_group_before_discovery(",
+            "patch_line": 4597,
+            "sha256": "cd6e6610e265ce122d2f70b0dae617c4ba2a5f28bd57d8c6aa8b70eeca23215a"
+          },
+          {
+            "id": "factory/tests/test_gates.py#hunk-34",
+            "header": "@@ -16598,7 +16631,7 @@ def test_termination_signals_reap_companion_before_lock_release(",
+            "patch_line": 4606,
+            "sha256": "47d373269eba8a439825aa55642935582377ff114bd5b132f9a57e08913b666d"
+          },
+          {
+            "id": "factory/tests/test_gates.py#hunk-35",
+            "header": "@@ -16646,7 +16679,8 @@ def test_windows_delegation_launches_and_reaps(repo, tmp_path):",
+            "patch_line": 4615,
+            "sha256": "d946fc5d7a7b9cb4d87d74a97e25f28c608cd9155e0ffb2199a4f9953ed5a7c7"
+          },
+          {
+            "id": "factory/tests/test_gates.py#hunk-36",
+            "header": "@@ -16731,7 +16765,8 @@ def test_windows_delegation_success_round_trips_unicode_handoff(repo, tmp_path):",
+            "patch_line": 4625,
+            "sha256": "a3c6c6b322516fceb1157fe6d1054da590db6ef60f3914ffe6cc589719508297"
+          },
+          {
+            "id": "factory/tests/test_gates.py#hunk-37",
+            "header": "@@ -17110,6 +17145,15 @@ def test_forge_next_and_board_route_author_task_plan_and_await_approval(",
+            "patch_line": 4635,
+            "sha256": "2643847de5fb4098f34eaa3f9bf0ef99f2f4433ab9e52aa8d02abedc8e5671d6"
+          },
+          {
+            "id": "factory/tests/test_gates.py#hunk-38",
+            "header": "@@ -17119,7 +17163,8 @@ def test_forge_next_and_board_route_author_task_plan_and_await_approval(",
+            "patch_line": 4651,
+            "sha256": "24f011b24f0eac36a9d1afb5062d0a09eb740f1846e280d40ebcea722bc48af4"
+          },
+          {
+            "id": "factory/tests/test_gates.py#hunk-39",
+            "header": "@@ -17295,15 +17340,18 @@ def test_docs_state_enforced_order():",
+            "patch_line": 4661,
+            "sha256": "19791d5126b80087fa3a822fdda5042a98528a6a18d933837d16b8660dfba2aa"
+          },
+          {
+            "id": "factory/tests/test_gates.py#hunk-40",
+            "header": "@@ -17580,6 +17628,8 @@ def test_session_start_injects_project_memory_plan_and_quickfix(repo, tmp_path):",
+            "patch_line": 4682,
+            "sha256": "523dc3c96536b5a2c45398abd85d62a51e6a71e9787014023c2c0c3d2e436bfb"
+          }
+        ],
+        "remainder_review_owner": "SHARED-COORDINATOR-JOURNEY",
+        "first_selection": {
+          "owner": "NATIVE-FOREGROUND-ACTIVATE",
+          "file_diff_sha256": "25e8204fb5ba1620d45e4c6678ab41dfe41accc143c5f5f77506520719d9b66a",
+          "hunks": [
+            {
+              "id": "factory/tests/test_gates.py#hunk-1",
+              "header": "@@ -16219,7 +16219,7 @@ def test_process_cleanup_reaps_known_process_when_discovery_fails(",
+              "patch_line": 1173,
+              "sha256": "d369dd6aa4747e607bf92d9e19708ca164b79b8b6246d788f2a3dfaf5a0255f6"
+            },
+            {
+              "id": "factory/tests/test_gates.py#hunk-2",
+              "header": "@@ -16248,7 +16248,7 @@ def test_immediate_cleanup_signals_owned_group_before_discovery(",
+              "patch_line": 1182,
+              "sha256": "1bf28d3566eaeded05fcff241ba1bac1f68f936b2a235bee03cab557e3511611"
+            },
+            {
+              "id": "factory/tests/test_gates.py#hunk-3",
+              "header": "@@ -16598,7 +16598,7 @@ def test_termination_signals_reap_companion_before_lock_release(",
+              "patch_line": 1191,
+              "sha256": "ac1fefacd21e3d2b97364cd1653d764f0a9401b86505141ebb0fdf161c69ff53"
+            },
+            {
+              "id": "factory/tests/test_gates.py#hunk-4",
+              "header": "@@ -16646,7 +16646,8 @@ def test_windows_delegation_launches_and_reaps(repo, tmp_path):",
+              "patch_line": 1200,
+              "sha256": "21cb8bdc2820815b0b6f4bcbab9a4100c78710cab69e2e94e632a2e42f63e953"
+            },
+            {
+              "id": "factory/tests/test_gates.py#hunk-5",
+              "header": "@@ -16731,7 +16732,8 @@ def test_windows_delegation_success_round_trips_unicode_handoff(repo, tmp_path):",
+              "patch_line": 1210,
+              "sha256": "db715a51fc77118b0dc60d287b7cb332de9e73be3a9dd0742694c71623ce3cf2"
+            }
+          ]
+        }
+      },
+      {
+        "path": "factory/tests/test_native_launch.py",
+        "diff_sha256": "339f530747bb31b3f8807e2c50476f6e612c5cd157c0013c74175d61b9040e50",
+        "hunks": [
+          {
+            "id": "factory/tests/test_native_launch.py#hunk-1",
+            "header": "@@ -0,0 +1,516 @@",
+            "patch_line": 4696,
+            "sha256": "b1ae977cf3f4e56a0d99a72bd13bbec00f82f4119549dfec905da21be5c66c1c"
+          }
+        ],
+        "remainder_review_owner": "NATIVE-LIFECYCLE",
+        "first_selection": {
+          "owner": "NATIVE-FOREGROUND-ACTIVATE",
+          "file_diff_sha256": "e9ef9dcd7fd701b5c0115768f3ad483c4687e653ba43f26f550a7f8e1f1e01d9",
+          "hunks": [
+            {
+              "id": "factory/tests/test_native_launch.py#hunk-1",
+              "header": "@@ -0,0 +1,365 @@",
+              "patch_line": 1661,
+              "sha256": "483fa31e663e2ae9676d01941ad6f2cf6537c1aa1fc6a01c5237aab0e2c8ec7a"
+            }
+          ]
+        }
+      },
+      {
+        "path": "factory/tests/test_native_questions.py",
+        "diff_sha256": "014398358e41d02a916a4fb27f27d0756b2b3434cce77e788d18dfc962ef3df9",
+        "hunks": [
+          {
+            "id": "factory/tests/test_native_questions.py#hunk-1",
+            "header": "@@ -0,0 +1,812 @@",
+            "patch_line": 5218,
+            "sha256": "8b9de72bc6fb7148864de90ba5b43244732bfdbd9174316b3c1906c7b0017630"
+          }
+        ],
+        "remainder_review_owner": "SHARED-COORDINATOR-JOURNEY"
+      },
+      {
+        "path": "factory/tests/test_native_setup.py",
+        "diff_sha256": "cdc4d9cb71bf558a3e375741302fecee922b4a209040c845d78f3b1e0d9b7673",
+        "hunks": [
+          {
+            "id": "factory/tests/test_native_setup.py#hunk-1",
+            "header": "@@ -0,0 +1,301 @@",
+            "patch_line": 6036,
+            "sha256": "9b18963e774cb1e2826587c3f8020cb289a3062202f12f27e5bac4f3cfd542c7"
+          }
+        ],
+        "remainder_review_owner": "PORTABLE-DELIVERY-MIGRATION",
+        "first_selection": {
+          "owner": "NATIVE-FOREGROUND-ACTIVATE",
+          "file_diff_sha256": "263ff7d25116aa91585a25486d312c76aea5b7d0daf13763b407f0b1e770f443",
+          "hunks": [
+            {
+              "id": "factory/tests/test_native_setup.py#hunk-1",
+              "header": "@@ -0,0 +1,166 @@",
+              "patch_line": 2032,
+              "sha256": "e4d96e33e4bb65d7d6b3fe1a2d744953557666abfe1256e1c18c1cf5511ef5b8"
+            }
+          ]
+        }
+      },
+      {
+        "path": "factory/tests/test_native_status.py",
+        "diff_sha256": "403486bba137766f44f2e19a1fc7d47381eeba19639c7b7a2087287c9126248c",
+        "hunks": [
+          {
+            "id": "factory/tests/test_native_status.py#hunk-1",
+            "header": "@@ -0,0 +1,173 @@",
+            "patch_line": 6343,
+            "sha256": "d197b5917228cd596dcc344d7f88c5cd595717274b86636a238da2bc77607ed3"
+          }
+        ],
+        "remainder_review_owner": "NATIVE-LIFECYCLE"
+      },
+      {
+        "path": "factory/tests/test_plan_against_reality.py",
+        "diff_sha256": "6dd4339ff614decf328f38f7ba77d7a184372963e7bc11ef30b798b614a6a61b",
+        "hunks": [
+          {
+            "id": "factory/tests/test_plan_against_reality.py#hunk-1",
+            "header": "@@ -171,6 +171,8 @@ def test_grill_rounds_are_still_recorded_after_the_removal(repo: Path):",
+            "patch_line": 6521,
+            "sha256": "3a67d1ba1fc9fd98e286664a79da427efd75bbde54dfb82d22c07737c3eebbf9"
+          }
+        ],
+        "remainder_review_owner": "SHARED-COORDINATOR-JOURNEY"
+      },
+      {
+        "path": "factory/tests/test_worker_admission.py",
+        "diff_sha256": "c79706aa4a43f698ceb97ceb1f3a80e5d02cd701ed13253e02b83eeb4dc99ee4",
+        "hunks": [
+          {
+            "id": "factory/tests/test_worker_admission.py#hunk-1",
+            "header": "@@ -0,0 +1,484 @@",
+            "patch_line": 6535,
+            "sha256": "c5b8a26243f3ebcd3816930d83a969af54837d4956420316002625bb4fcbee79"
+          }
+        ],
+        "remainder_review_owner": "NATIVE-LIFECYCLE",
+        "first_selection": {
+          "owner": "NATIVE-FOREGROUND-ACTIVATE",
+          "file_diff_sha256": "53081de371f8a69795ba4aacac0f5e0901e79d3d4d687b5691e677a08924c97f",
+          "hunks": [
+            {
+              "id": "factory/tests/test_worker_admission.py#hunk-1",
+              "header": "@@ -0,0 +1,416 @@",
+              "patch_line": 2204,
+              "sha256": "f1e12925db0cd122407c11e1c8565c0e865a1d8c9d8ae846b259d505868acf00"
+            }
+          ]
+        }
+      },
+      {
+        "path": "harness.yaml",
+        "diff_sha256": "d624039017773f1de7bf7ca8523ff5415645c07ffb20123564063af3b4496020",
+        "hunks": [
+          {
+            "id": "harness.yaml#hunk-1",
+            "header": "@@ -22,6 +22,15 @@ precedence:",
+            "patch_line": 7024,
+            "sha256": "7aa2f6ab40ca6e845751810dbb7431430ccf06a93cf5f330502672b2aa15ac64"
+          },
+          {
+            "id": "harness.yaml#hunk-2",
+            "header": "@@ -70,10 +79,10 @@ phases:",
+            "patch_line": 7040,
+            "sha256": "b8f0b8c592e730bbd6a6e6106213e818b1518caa82d377683ad4d2b33c97f34d"
+          },
+          {
+            "id": "harness.yaml#hunk-3",
+            "header": "@@ -82,9 +91,14 @@ phases:",
+            "patch_line": 7055,
+            "sha256": "ce1c11028aea8c579666681e48dbababfc5ddc9924f63e7b835dadcb93326c2f"
+          }
+        ],
+        "remainder_review_owner": "SHARED-COORDINATOR-JOURNEY",
+        "first_selection": {
+          "owner": "NATIVE-FOREGROUND-ACTIVATE",
+          "file_diff_sha256": "52636e75f0c20cb34fab9f897d242c0a103cfe10d3e87effe190e5a56a806191",
+          "hunks": [
+            {
+              "id": "harness.yaml#hunk-1",
+              "header": "@@ -103,10 +103,8 @@ phases:",
+              "patch_line": 1224,
+              "sha256": "2cc5a2c3c0e41816121768262613a4049b2d60594bbdfd253939ad55b12255f8"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "versioned_artifacts": [
+    {
+      "path": "plans/exploration/coordinator-parity-preparation/native-original-40-path.patch",
+      "sha256": "09cd2ec4826e407541cc4fe75d6d604f9ce6b8bb9f1c8b734aef23e2e42ad54f",
+      "bytes": 342596,
+      "source": "/Users/dev/.codex/reviews/forge-host-interaction-20260909/native-original-staged-3e7b9b4-20260910.patch"
+    },
+    {
+      "path": "plans/exploration/coordinator-parity-preparation/native-foreground-preparation.patch",
+      "sha256": "bee122bb370177ededefb5fe81a82f8c600f69af8502e151956ec7b8afed29e2",
+      "bytes": 109953,
+      "source": "/Users/dev/.codex/reviews/forge-host-interaction-20260909/native-foreground-original-closure-20260910.patch"
+    },
+    {
+      "path": "plans/exploration/coordinator-parity-preparation/client-ledger-migration-inventory.json",
+      "sha256": "58ceca629e89aa1a213451f1c9fbe6e6ce27d91492a658c538dc4190ce4c8e05",
+      "bytes": 1738,
+      "source": "/Users/dev/.codex/reviews/forge-host-interaction-20260909/client-ledger-migration-inventory-20260910.json"
+    }
+  ],
+  "quality_contract": {
+    "pins": {
+      "python": "3.11",
+      "ruff": "0.16.6",
+      "pyright": "1.1.411"
+    },
+    "requirements_path": "requirements-quality.txt",
+    "config_paths": [
+      "ruff.toml",
+      "pyrightconfig.json"
+    ],
+    "runner": "factory/scripts/check_python_quality.py",
+    "command": "uv run --python 3.11 --with pytest --with psutil --with-requirements requirements-quality.txt python factory/scripts/check_python_quality.py",
+    "runner_steps": [
+      "ruff check .",
+      "ruff format --check .",
+      "pyright --project pyrightconfig.json"
+    ],
+    "scope": "All authored Python source and tests; retain existing factory/scripts import path; no blanket diagnostic suppression or test exclusion",
+    "activation_surfaces": [
+      "factory/scripts/verify.py",
+      ".envrc",
+      ".github/workflows/factory-scaffold.yml",
+      "factory/tests"
+    ],
+    "negative_proof": [
+      "missing FACTORY_QUALITY_CMD from environment and .envrc fails",
+      "missing or malformed pinned requirements/configuration fails",
+      "missing Ruff/Pyright command fails",
+      "deliberate lint, formatting and type defects each fail",
+      "empty or no-op quality command cannot pass activation",
+      "local and CI execute exactly the same pinned command",
+      "vendored clients select meaningful product-stack checks rather than the harness Python runner"
+    ],
+    "measurement": "FORMAT measures actual pinned output on shipped PORTABLE predecessor; QUALITY measures actual residual diagnostics/diff on shipped FORMAT predecessor. Both bind exact file/line budgets, full byte inventory and complete helper-rendered prompt partitions before execution/review.",
+    "refusal_threshold": "Actual file/line scope exceeds approved positive budget, full instructions/evidence cannot be losslessly partitioned under the installed helper limit, any chunk is missing/failed, or format output changes semantics. Stop before review/seal and use existing amendment route. No implicit product-patch byte cap or chunk-count cap. Split only independently meaningful acceptance/proof boundaries after an actual scope contradiction; no automatic byte-sized tasks."
+  },
+  "review_contract": {
+    "authority": [
+      "0064-lean-delivery-and-durable-history",
+      "0011-orchestrator-runs-autoreview"
+    ],
+    "non_authority": "0049 is proposed and supplies no authority",
+    "operation": "One ./forge review <task-id> operation per task; fixes may repeat the operation on the updated task diff until clean",
+    "first": "Existing three-lens runner inside that operation until LEAN-WORKFLOW ships",
+    "after_lean": "One combined assessment across installed helper lossless chunks; explicit quality/performance/security results",
+    "binding": [
+      "review_run_id",
+      "brief_sha256",
+      "branch_diff_digest"
+    ],
+    "artifacts": [
+      "reviews/quality.json",
+      "reviews/performance.json",
+      "reviews/security.json"
+    ],
+    "success": "All chunks and genuine assessments complete/clean; same task/diff/input binding; no unassessed lens copied from another result; no nested or story-wide duplicate review"
+  },
+  "retirement_contract": {
+    "owner": "PORTABLE-DELIVERY-MIGRATION",
+    "paths": [
+      ".codex/agents/planner-high.toml",
+      ".codex/agents/docs-decomposer.toml",
+      ".codex/agents/functional-checker.toml"
+    ],
+    "deletion_rule": "Delete only regular non-symlink files byte-identical to known harness-owned content at the clients recorded vendoring revision; identity must be independently resolvable. Path alone or latest template similarity is insufficient. Preserve modified/unverifiable/client copies and additions, reporting the exact reason.",
+    "delivery": "Omit these three definitions from new init/adopt/upgrade copies and obsolete checks; preserve logical role/prompts/producer identities and custom agents. Never delete .codex/agents recursively.",
+    "tests": [
+      "unchanged known-owned three removed",
+      "modified and unverifiable copies preserved",
+      "arbitrary custom files preserved",
+      "symlink leaf/ancestor refused before mutation with unchanged external sentinels",
+      "new destinations omit only retired definitions",
+      "second upgrade is idempotent"
+    ],
+    "boundary": "Reuse Decision0028 preflight and checked file-destination helpers; legacy .agents migration is a distinct existing path and grants no permission to delete .codex/agents."
+  },
+  "client_rollout": {
+    "inventory_path": "plans/exploration/coordinator-parity-preparation/client-ledger-migration-inventory.json",
+    "inventory_sha256": "58ceca629e89aa1a213451f1c9fbe6e6ce27d91492a658c538dc4190ce4c8e05",
+    "snapshot_note": "Five checkout observations, four Git common directories; refresh actual state at execution without replacing this historical inventory.",
+    "deduplicate_by": "Resolved absolute git rev-parse --git-common-dir, not checkout pathname",
+    "clients": [
+      {
+        "name": "cadence",
+        "common_directory": "/Users/dev/Workdir/cadence/.git",
+        "snapshot_dirty": false,
+        "outcome": "Isolated upgrade PR; migration applied or explicit legacy-only no-op; vendor/client checks and CI recorded"
+      },
+      {
+        "name": "toolshed",
+        "common_directory": "/Users/dev/Workdir/toolshed/.git",
+        "snapshot_dirty": false,
+        "outcome": "Isolated upgrade PR; migration applied or explicit legacy-only no-op; vendor/client checks and CI recorded"
+      },
+      {
+        "name": "myclaw",
+        "common_directory": "/Users/dev/Workdir/myclaw/.git",
+        "snapshot_dirty": true,
+        "also_observed": "/Users/dev/Workdir/myclaw-cache-bug-cache-bug-T1",
+        "outcome": "One isolated upgrade worktree/PR for the shared common directory, preserving both dirty checkouts, divergent hotfix commits and files; never upgrade both copies independently"
+      },
+      {
+        "name": "knacklabs-ats",
+        "common_directory": "/Users/dev/Workdir/knacklabs-ats/.git",
+        "snapshot_dirty": false,
+        "outcome": "Isolated upgrade PR; migration applied or explicit legacy-only no-op; vendor/client checks and CI recorded"
+      }
+    ],
+    "procedure": [
+      "Refresh branch/HEAD/common-dir/status and identify a safe story boundary; preserve every observed checkout and hotfix",
+      "Create a new feature/forge-lean-upgrade-<client> branch and sibling worktree from verified current committed head; do not stash, reset or use --force",
+      "From shipped harness run ./forge upgrade --target <upgrade-worktree>; review owned machinery/doc contracts and VENDORED_FROM/VENDOR_MANIFEST",
+      "In upgraded worktree run proposed ./forge history --compact --preview then --apply for attributable shipped per-file events; leave legacy-only streams unchanged",
+      "Run python factory/scripts/check_vendor_integrity.py --repo <upgrade-worktree>, then client declared verify/quality/type/tests and CI; record applied/no-op/conflict outcome",
+      "Unsafe/ambiguous client gets a concrete blocker/deferral with path and next action; continue other clients, never claim all migrated while a row remains unresolved"
+    ],
+    "smallest_checks": [
+      "uv run --python 3.11 python factory/scripts/check_vendor_integrity.py --repo <upgrade-worktree>",
+      "From upgraded client: uv run --python 3.11 --with pytest --with psutil python factory/scripts/verify.py, consuming that clients own .envrc structural/type/test/quality commands",
+      "Focused shipped harness tests: uv run --python 3.11 --with pytest --with psutil python -m pytest factory/tests/test_gates.py -k \"upgrade or no_raw_write_primitive_outside_the_boundary_helper\" -q"
+    ]
+  },
+  "client_dogfood": {
+    "owner": "Separate installed-client task TASKTRACKER-1/TASKTRACKER-1.1 (planned identity, main records it in that client)",
+    "user_facing": true,
+    "proof": "Client implementer automated tests and functional-checker functional proof, own tests.json/verify.json/reviews/task PR/CI; preserve required UI skill attestations",
+    "integration_task": "FORGE-COORD-1.1",
+    "integration_user_facing": false,
+    "integration_consumes": "Exact client origin/commit/PR/log and client-owned artifact paths, not copied authority or credited harness code"
+  },
+  "native_report_contract": {
+    "task": "FORGE-COORD-1.1",
+    "generated_by": "implementer",
+    "fields": [
+      "status",
+      "summary",
+      "commands_run",
+      "pass_fail_summary",
+      "remaining_gaps",
+      "blocking_findings"
+    ],
+    "labels": [
+      "native-cli-macos",
+      "native-desktop-macos",
+      "native-cli-linux-ubuntu-24.04-x64",
+      "native-desktop-linux-ubuntu-24.04-x64",
+      "native-cli-windows",
+      "native-desktop-windows"
+    ],
+    "rules": "Each of the six fixed labels occurs once in pass_fail_summary with passed/failed/unobserved, explicit evidence kind, tested revision, OS/CPU/runtime build and exact command/log references. Native-cli-macos and native-desktop-macos require actual local observations. Native-cli-linux-ubuntu-24.04-x64 and native-cli-windows require meaningful actual OS CI regressions and pinned real CLI package/version/help smoke; state unavailable authenticated runtime behavior. The two Linux/Windows Desktop rows remain explicitly unobserved where no host exists. Accepted0065 limitations stay in remaining_gaps without becoming blockers solely from absence. Actual failures and missing required evidence appear in both remaining_gaps and blocking_findings. Aggregate passes only with all four required rows, required client evidence and other task checks passing and no blocker. CI/CLI never certifies unobserved Desktop. Existing schema fields/recorder only; no new matrix artifact."
+  },
+  "recurring_finding_disposition": {
+    "owner": "PORTABLE-DELIVERY-MIGRATION",
+    "known_baseline": {
+      "area": "FORGE-UPG-1 upgrade.py",
+      "reviewed-separately": 3,
+      "repository-escape": 3
+    },
+    "classification": "Historical recurring classes already structurally consolidated under accepted0005/0028; no resolved-status field, so zero historical rows is not a completion requirement",
+    "invariant": "Every changed read/copy/delete site is audited against existing preflight and destination helpers before any mutation; byte-owned retirement preserves unknown files",
+    "existing_seams": [
+      "_preflight_upgrade",
+      "_replace_path",
+      "_keep_path",
+      "assert_target_destination",
+      "assert_target_file_destination"
+    ],
+    "required_tests": [
+      "test_no_raw_write_primitive_outside_the_boundary_helper",
+      "test_upgrade_refuses_a_symlinked_destination_before_writing",
+      "test_upgrade_refuses_a_symlinked_ancestor_and_leaves_the_target_clean",
+      "malformed-state and retired-copy preservation refusals with unchanged target/external sentinels"
+    ],
+    "tripwire": "Capture forge findings patterns before/after. Any new/changed recurring class, unresolved current review finding, raw-write violation or escape regression stops affected client mutation; use existing scope-change/deferral route, retain hard-link/TOCTOU deferral. Historical counts alone do not trigger another refactor."
+  },
+  "prepared_hunk_owner_binding": {
+    "path": "plans/exploration/coordinator-parity-preparation/lean-delivery-graph.json",
+    "json_pointer": "/prepared_hunk_owners",
+    "member_sha256": "1f91b525fd605a01eb15ef39c5a8fc18e277b2d205b76661a117b529314b6122",
+    "canonical_member_encoding": "json.dumps(member, indent=2) followed by one LF; graph digest is bound in the story plan",
+    "note": "The mapping is already in this versioned graph; do not create a duplicate standalone owner registry."
+  },
+  "design_review_applicability": {
+    "owner": "LEAN-WORKFLOW",
+    "field": "Existing approval-bound brief/frontmatter design_review: required|routine",
+    "missing_unknown": "required",
+    "required_when": [
+      "permissions",
+      "security boundaries",
+      "destructive operations",
+      "data migration",
+      "substantial architecture changes",
+      "material changes to one of those"
+    ],
+    "routine_when": "Explicit no-trigger rationale is bound by the existing approval; worker cannot downgrade it",
+    "assessment_reuse": "One genuine design assessment may cover multiple applicable existing gates only if it explicitly reviewed every complete input and each existing record is independently bound to its own artifact; no copied pass or skipped input",
+    "transition": "First and LEAN implementation retain incumbent prerequisites until LEAN ships; authorization/admission/tests/review/CI remain required.",
+    "binding_contract": "Use the confirmed specifications explicit six-gate input/record/digest table and existing Gate.locate/evidence_path/recorder functions. Classification/rationale are authored digest-bound content; epics derives classification from referenced capabilities. Shared reads require complete named inputs and independently assessed per-gate frontiers and bindings; current one-gate launch never certifies another gate."
+  },
+  "roadmap_limit_interpretation": "The existing review limits phrase means the actual installed helper safeguards under accepted0064, which expressly amends obsolete0058/spec caps; no helper limit edit or implicit patch cap.",
+  "confirmed_spec": {
+    "path": "docs/specs/dual-coordinator-parity.md",
+    "sha256": "bb3c94c137c7f1ec56d4e5f5814ee634a1683997a906b66600d476063929b557",
+    "status": "confirmed through actual main-owned save/grill/confirm route"
+  },
+  "retention_contract_source": "Confirmed docs/specs/dual-coordinator-parity.md and accepted0064; all necessary scope and proof is included here and in the bound story plan.",
+  "draft_checkpoint_contract": "SHARED-COORDINATOR-JOURNEY owns verified origin/head repository/branch/base/reviewed-commit matching, refusal on uncertain lookup and requery after uncertain creation. FORGE-COORD-1.1 uses Git/gh draft operations without forge task pr-ready while required platform results are missing. Reuse one PR and preserve eventual marker identity/timestamp; no new registry."
+}

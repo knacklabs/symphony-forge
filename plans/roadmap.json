@@ -954,10 +954,27 @@
       "completed_at": "2026-08-24T14:00:51+00:00",
       "history": ".factory/stories/plan-mode-and-grill-provenance/",
       "outcome": "Plan-mode and grill discipline are now gates the recorders enforce, not reminders. A PostToolUse hook records who authored every plan (plan-mode markers) and every question actually put to a human (AskUserQuestion rounds with chosen answers); plan and task-plan save/approve refuse a plan without a matching marker, and spec, requirements, plan and task grills refuse rounds not in the ledger, below the per-gate floor, or missing the frontier-empty attestation. The task loop runs plan, then grill, then human approval, then stage start \u2014 printed by forge next and pinned by tests. A session can no longer save a plan authored outside plan mode or record a grill that never asked a human anything; the story proved it on itself, its own gates refusing its own plan and grill until done right."
+    },
+    {
+      "key": "FORGE-COORD-1",
+      "title": "Either Claude or Codex coordinates the same Forge workflow",
+      "story": "As a developer, I can use Claude with Codex rescue or Codex alone as coordinator so that I keep the same worker roles and gates in either interface.",
+      "acceptance_criteria": [
+        "Both coordinators preserve existing worker policy and every Forge gate.",
+        "Codex records real human grill provenance and runs without Claude or plugin state.",
+        "After the existing approvals, explicitly scoped native bootstrap support tasks may use the existing isolated candidate under Decision0058 and deliver prepared changes through complete, independently reviewed support PRs. Validate exact scopes, target preparation, baselines and complete review boundaries before execution. Preserve genuine approvals, registered delegated writes, existing review limits, normal task PR gates, actual predecessor markers on main and sequential merge ordering for this overlapping bootstrap and quality delivery; native write-hook activation and legitimate worker admission land together. General dependency-ready scheduling under Decision0059 remains available where dependencies and disjoint scopes permit. Separately approved staged quality-cleanup predecessor tasks activate mandatory full-repository quality checks before full parity ships. FORGE-COORD-1.1 completes the remaining bounded parity integration and its approval-to-PR chain, including required local macOS native proof and passing Ubuntu 24.04 x64/native Windows CI before parity shipping, with unavailable Linux/Windows live CLI/Desktop observations recorded as accepted limitations under Decision0065. Original prepared bootstrap bytes retain their provenance and are reviewed completely, but are not credited as delegated contribution."
+      ],
+      "order": 46,
+      "status": "active",
+      "epic": "symphony-forge",
+      "skill": "backend",
+      "depends_on": [],
+      "origin": "adhoc",
+      "spec": "docs/specs/dual-coordinator-parity.md"
     }
   ],
   "generated_by": "human",
-  "updated_at": "2026-09-03T15:04:31+00:00",
+  "updated_at": "2026-09-08T06:25:50+00:00",
   "epics": [
     {
       "id": "symphony-forge",

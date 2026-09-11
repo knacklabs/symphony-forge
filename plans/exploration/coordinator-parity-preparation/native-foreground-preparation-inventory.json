@@ -1,0 +1,195 @@
+{
+  "status": "unapproved preparation inventory; no task contribution or proof",
+  "story": "FORGE-COORD-1",
+  "task": "NATIVE-FOREGROUND-ACTIVATE",
+  "trunk_commit": "824baed4a657a83a6a7583e85ee67d2907e7c172",
+  "source_checkout": "/Users/dev/Workdir/symphony-forge-native-dogfood",
+  "source_head": "24bdd7050cb4800819d3bc86142ef4d708f98922",
+  "source_state": "preserved current staged and unstaged preparation; not a clean source commit",
+  "original_staged_patch_sha256": "09cd2ec4826e407541cc4fe75d6d604f9ce6b8bb9f1c8b734aef23e2e42ad54f",
+  "patch_bytes": 109953,
+  "patch_sha256": "bee122bb370177ededefb5fe81a82f8c600f69af8502e151956ec7b8afed29e2",
+  "paths": [
+    {
+      "path": ".claude/settings.json",
+      "added_lines": 1,
+      "deleted_lines": 1,
+      "prepared_bytes": 1669,
+      "prepared_sha256": "a521a44797facae43aaaa7fd9c5003f70f02cc97257ae757124f3c1d4482a1d8",
+      "trunk_sha256": "9012729a5bac6312fc30ca96bafe3ab04e12ce08fd00848f03486764d5502241",
+      "preserved_source_sha256": "a521a44797facae43aaaa7fd9c5003f70f02cc97257ae757124f3c1d4482a1d8",
+      "source_exact": true
+    },
+    {
+      "path": ".codex/hooks.json",
+      "added_lines": 23,
+      "deleted_lines": 2,
+      "prepared_bytes": 1619,
+      "prepared_sha256": "50cfd56baa3b5d1031c356c527016873f9e1b822d309df245b2ed2895f0cf6af",
+      "trunk_sha256": "718f12acd05a85c2fa6495aa658c627dbb2a7078c748d592bf559fee17c6bce2",
+      "preserved_source_sha256": "50cfd56baa3b5d1031c356c527016873f9e1b822d309df245b2ed2895f0cf6af",
+      "source_exact": true
+    },
+    {
+      "path": "factory/schemas/delegation.json",
+      "added_lines": 9,
+      "deleted_lines": 2,
+      "prepared_bytes": 1787,
+      "prepared_sha256": "612761b8cf6ae87c26d4618905aa41c6b403eb2a795c18bc1356f747b2d744cd",
+      "trunk_sha256": "ad198d9e926a4a6893d0f783061986dab734f7e8b7128409fe7e752c29119621",
+      "preserved_source_sha256": "612761b8cf6ae87c26d4618905aa41c6b403eb2a795c18bc1356f747b2d744cd",
+      "source_exact": true
+    },
+    {
+      "path": "factory/scripts/check_dual_runtime.py",
+      "added_lines": 60,
+      "deleted_lines": 7,
+      "prepared_bytes": 27956,
+      "prepared_sha256": "6f311999c27c87451e19934e495e89849d05e4bebefa692c3a5d884f0141c2a4",
+      "trunk_sha256": "25c31cf27bcc8a05ffe4e5cf8bc88961d0295f259a6ff34d48096255f71e46f5",
+      "preserved_source_sha256": "6f311999c27c87451e19934e495e89849d05e4bebefa692c3a5d884f0141c2a4",
+      "source_exact": true
+    },
+    {
+      "path": "factory/scripts/forge_cli/delegate.py",
+      "added_lines": 172,
+      "deleted_lines": 37,
+      "prepared_bytes": 61038,
+      "prepared_sha256": "650711537dcfd7c1f974b2a8c091d280828bf157925e050bd037615b76483c40",
+      "trunk_sha256": "46fab34a6517ea80c325911386dcc5a52a6e664573df51b4c031c3d5ad0cd6d2",
+      "preserved_source_sha256": "a6072d972e5f00c0eb1d7d9101003731d6e630ed42a9467445de7e75460a1981",
+      "source_exact": false
+    },
+    {
+      "path": "factory/scripts/forge_cli/doctor.py",
+      "added_lines": 219,
+      "deleted_lines": 0,
+      "prepared_bytes": 83729,
+      "prepared_sha256": "7a9e19d3e624c37a357915b5350f7fc1b8d7637fb030695624b2a1629e3ee9fa",
+      "trunk_sha256": "a5a2de0d192356ea174afd16c6134b4df14c6fcb4bb397bdf3ca063bf8d407d0",
+      "preserved_source_sha256": "9ae9f24ba5cc987ab51902c948ab093b3501e3021b67b3b4d4f25ad6d873cce8",
+      "source_exact": false
+    },
+    {
+      "path": "factory/scripts/forge_cli/stages.py",
+      "added_lines": 49,
+      "deleted_lines": 23,
+      "prepared_bytes": 96973,
+      "prepared_sha256": "bc9a1d8be676958bed0dcaadc68fff01ebf5757b6a63def7d6bd26bd7141b253",
+      "trunk_sha256": "2d1848704c313a5459ea2905d5b833d77ed738d62bf725c4615fb13dab2a7914",
+      "preserved_source_sha256": "bc9a1d8be676958bed0dcaadc68fff01ebf5757b6a63def7d6bd26bd7141b253",
+      "source_exact": true
+    },
+    {
+      "path": "factory/scripts/pre_tool_use.py",
+      "added_lines": 135,
+      "deleted_lines": 26,
+      "prepared_bytes": 42911,
+      "prepared_sha256": "faca43039989072f3041a09eadfebced076792ae266ddd5ae8d556b510edcd48",
+      "trunk_sha256": "384d6f584eb1eff3709147b4745e19de67a2db85566e260dd7e840dcfce81749",
+      "preserved_source_sha256": "faca43039989072f3041a09eadfebced076792ae266ddd5ae8d556b510edcd48",
+      "source_exact": true
+    },
+    {
+      "path": "factory/scripts/session_start.py",
+      "added_lines": 11,
+      "deleted_lines": 10,
+      "prepared_bytes": 6355,
+      "prepared_sha256": "f606e40b770e2064090cc7ae40811733ea7b2f7b873c7ae56e9ef57491a4f847",
+      "trunk_sha256": "57f8fe0ea7f1fb08f5b5aae51098437208a50572d6ffde622350513987c62b64",
+      "preserved_source_sha256": "f606e40b770e2064090cc7ae40811733ea7b2f7b873c7ae56e9ef57491a4f847",
+      "source_exact": true
+    },
+    {
+      "path": "factory/tests/test_gates.py",
+      "added_lines": 7,
+      "deleted_lines": 5,
+      "prepared_bytes": 845773,
+      "prepared_sha256": "e788e975d13eae4c7ecfad77937c633e0108e29f3d6699c048a884e9c3721d34",
+      "trunk_sha256": "173fb8d2d1f027056fd21fd055bf967f57e7f799d47b4124b66a8c5ea4d9bb9c",
+      "preserved_source_sha256": "da15a5ccac61cfb1481e20c9bd1392e3fc000f712ddc16b919b9755f54e20a7e",
+      "source_exact": false
+    },
+    {
+      "path": "harness.yaml",
+      "added_lines": 2,
+      "deleted_lines": 4,
+      "prepared_bytes": 8876,
+      "prepared_sha256": "5d2fef30883103f203b3a3af36cff882f2802b12a364bc1a2d1d592bbab7c097",
+      "trunk_sha256": "e2fa68793cfbc7f3fd97713c82acfb1407cc973abaa573149924924f6e9e2f9b",
+      "preserved_source_sha256": "c51cb1ba946aaa62005cd185a8e6d52bba7cb2914c4749c5e40da7ef0fed106f",
+      "source_exact": false
+    },
+    {
+      "path": "factory/scripts/forge_cli/codex_runtime.py",
+      "added_lines": 143,
+      "deleted_lines": 0,
+      "prepared_bytes": 5029,
+      "prepared_sha256": "ae3ea3419aa47f5b611e07489d6f5fc454ddef4ee120afe453552528205a8ad0",
+      "trunk_sha256": null,
+      "preserved_source_sha256": "545cb614ca529a3bc261f456b26bfb8021fe6edf60c7c753645f20b81fc134dc",
+      "source_exact": false
+    },
+    {
+      "path": "factory/scripts/forge_cli/worker_admission.py",
+      "added_lines": 264,
+      "deleted_lines": 0,
+      "prepared_bytes": 10698,
+      "prepared_sha256": "feaca9c727e56667689061c22b857f921b2c15ca064797becd7ef1fb1c8dc456",
+      "trunk_sha256": null,
+      "preserved_source_sha256": "feaca9c727e56667689061c22b857f921b2c15ca064797becd7ef1fb1c8dc456",
+      "source_exact": true
+    },
+    {
+      "path": "factory/tests/test_native_launch.py",
+      "added_lines": 365,
+      "deleted_lines": 0,
+      "prepared_bytes": 14296,
+      "prepared_sha256": "c0f51eb2d8b9199041240da2b08fef0eb08850730254d0c82d3787b70efcb46a",
+      "trunk_sha256": null,
+      "preserved_source_sha256": "1f2a498c7f13d439e8e12d7cd28f13d2638707c1405a70f5b9c3fc30494cd971",
+      "source_exact": false
+    },
+    {
+      "path": "factory/tests/test_native_setup.py",
+      "added_lines": 166,
+      "deleted_lines": 0,
+      "prepared_bytes": 6765,
+      "prepared_sha256": "374003215ee29ee14f0f44738883bc1a8e1ba78ed4a7f73f8cd754bfcb4cae22",
+      "trunk_sha256": null,
+      "preserved_source_sha256": "cc59078cde671beef4d9a59338444ed42f96611f599b8dda038ea46a0b8682af",
+      "source_exact": false
+    },
+    {
+      "path": "factory/tests/test_worker_admission.py",
+      "added_lines": 416,
+      "deleted_lines": 0,
+      "prepared_bytes": 15681,
+      "prepared_sha256": "ef6062159d6c020c7ef72e604b133bfb05fcc637422310e72c195c6a6445a86d",
+      "trunk_sha256": null,
+      "preserved_source_sha256": "401aab0994ddaf298c0ce71ce57c1bf7f42013acd1550882cad7c1f8493eb787",
+      "source_exact": false
+    }
+  ],
+  "extraction_notes": {
+    "factory/scripts/forge_cli/delegate.py": "Original foreground subset; original background supervisor entrypoints and branches belong to NATIVE-BACKGROUND-LIFECYCLE.",
+    "factory/scripts/forge_cli/doctor.py": "Trunk file plus original current source _codex_hooks_inventory, _git_worktree_roots, codex_hook_readiness and their constants/imports; runtime setup/repair changes retain DELIVERY owner.",
+    "factory/scripts/forge_cli/codex_runtime.py": "Original first143 lines; detached supervisor entrypoint belongs to NATIVE-BACKGROUND-LIFECYCLE.",
+    "factory/tests/test_native_launch.py": "Original foreground cases and shared fixture, excluding original background cases assigned to successor.",
+    "factory/tests/test_native_setup.py": "Original prefix through all SessionStart source cases; later doctor/init/adopt/upgrade cases retain DELIVERY owner.",
+    "factory/tests/test_worker_admission.py": "Original source minus two direct cmd_cancel tests and their argparse import; those exact tests belong to NATIVE-BACKGROUND-LIFECYCLE.",
+    "factory/tests/test_gates.py": "Original prepared native cleanup-order and coordinator-environment fixture hunks only.",
+    "harness.yaml": "Exact reviewed phases.implementation block from /Users/dev/Workdir/symphony-forge-claude-coordinator-ux/harness.yaml; SHA256 6bcdae4285b954fd6f3cf701bc4e88547ae4648cca0951018068fda43c5d4804."
+  },
+  "preparation_checks": {
+    "clean_base_apply_check": "passed on the publication clone whose tree equals merged824baed",
+    "focused_command": "uv run --with pytest --with psutil python -m pytest -q factory/tests/test_native_launch.py factory/tests/test_native_setup.py factory/tests/test_worker_admission.py",
+    "focused_result": "35 passed in18.31 seconds; source preparation only",
+    "hook_registration_checker": "clean; eight pre-existing trailer warnings",
+    "configured_first_worker": [
+      "gpt-5.6-luna",
+      "max"
+    ]
+  },
+  "pending": "Genuine story/source-task/target-task approvals, owner creation, first registered worker contribution, final complete diff/review measurement, verify, task review, marker, PR and CI remain required."
+}

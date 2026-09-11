@@ -52,7 +52,7 @@ sys.path.insert(0, str(HARNESS / "factory" / "scripts"))
 from factory_lib import (
     branch_diff_digest, grounding_digest, plan_body_digest,
     plan_digest_without_assumptions,
-    product_tree_digest, require_task_grill,
+    product_delta_digest, product_tree_digest, require_task_grill,
     task_frontier_state, task_rows,
 )
 from grill_gates import GATES
@@ -13355,12 +13355,13 @@ def test_stage_local_stamp_is_a_stages_token_not_a_fourth_review(repo, tmp_path)
     )
     stamp = mirror["stages"][0]["local_review_stamp"]
     assert protected["stages"][0]["local_review_stamp"] == stamp
+    # The stamp is about the DIFF the review read: base and delta, nothing
+    # else. Contract text, brief text and the tree are not in it, so none of
+    # them can stale a review of unchanged code.
     assert stamp == {
         "stage_id": "T1",
-        "task_sha256": task_digest(STAGE_TASK),
-        "brief_sha256": brief_sha256,
         "base_sha": mirror["stages"][0]["base_sha"],
-        "product_tree_digest": product_tree_digest(repo),
+        "delta_id": product_delta_digest(repo, mirror["stages"][0]["base_sha"]),
         "recorded_at": stamp["recorded_at"],
         "generated_by": "autoreview",
     }
@@ -14223,7 +14224,14 @@ def test_proof_reaps_spawn_when_process_identity_probe_fails(
     assert spawned["stderr"].errors == "replace"
 
 
-def test_stage_done_reloads_launch_after_proof_commands(repo, tmp_path):
+def test_stage_done_ignores_a_brief_rewritten_by_proof_commands(repo, tmp_path):
+    """The launch attests that Codex wrote inside THIS stage; the brief's
+    bytes are not part of that. Binding the launch to the brief digest meant a
+    re-composed brief (any contract re-record) orphaned every launch and the
+    only way back was a Codex run that changed nothing. A proof command that
+    rewrites the brief therefore changes nothing the seal depends on -- and
+    every input the launch binding still has lives in protected authority,
+    which a proof command may not touch (that refusal is tested separately)."""
     command = ("python3 -c \"from pathlib import Path; "
                "p=Path('.factory/briefs/T1.md'); "
                "p.write_text(p.read_text() + 'changed')\"")
@@ -14232,7 +14240,8 @@ def test_stage_done_reloads_launch_after_proof_commands(repo, tmp_path):
     write_in_scope(repo, "src/core.py")
     stamp_and_commit(repo, "src/core.py")
     code, out = run(repo, "forge.py", "stage", "done", "T1")
-    assert code != 0 and "no successful write launch" in out
+    assert code == 0, out
+    assert measured_stage(repo)["status"] == "done"
 
 
 def test_stage_start_gates_on_dependencies_not_list_order(repo, tmp_path):
@@ -19449,18 +19458,20 @@ def test_vendored_client_extends_workflow_prefixes(repo, tmp_path):
     assert out_of_scope(source, ["WORKFLOW.md"], ["apps/api"]) == ["WORKFLOW.md"]
 
 
-def test_rerecord_active_task_contract_change_warns_and_clears_stamp(
+def test_rerecord_active_task_measurement_change_keeps_stamp_and_says_so(
         repo, tmp_path):
-    """Amending an active task's execution contract is allowed, but its grill
-    and plan approval are now stale — surface that AT CHANGE TIME and drop the
-    now-stale local review stamp instead of silently deferring to close."""
+    """Widening write_scope changes how the work is MEASURED, not what it is.
+    The review stamp binds to the diff, which did not move, so it stands; the
+    recorder says nothing needs re-grilling. Before: the stamp was dropped and
+    a full re-grill + re-approval demanded for zero code change."""
     start_stage(repo, tmp_path, STAGE_TASK)
     write_in_scope(repo, "src/core.py")
     git(repo, "add", "src/core.py")
     code, out = record_stage_local(repo)
     assert code == 0, out
     before = json.loads((repo / ".factory" / "stages.json").read_text())
-    assert before["stages"][0].get("local_review_stamp")
+    stamp = before["stages"][0].get("local_review_stamp")
+    assert stamp
 
     amended = {**STAGE_TASK, "write_scope": ["src/", "lib/"]}
     code, out = run(
@@ -19468,14 +19479,45 @@ def test_rerecord_active_task_contract_change_warns_and_clears_stamp(
         stdin=json.dumps({**DECOMP, "tasks": [amended]}),
     )
     assert code == 0, out
-    assert "NOTE: T1 execution contract changed" in out
-    assert "STALE" in out
-    assert "record_grill_from_json.py --gate task --task T1" in out
-    assert "WARNING: T1 was already implemented/reviewed" in out
+    assert "changed only in how the work is MEASURED" in out
+    assert "nothing to re-grill or re-approve" in out
+    assert "STALE" not in out
 
     after = json.loads((repo / ".factory" / "stages.json").read_text())
     assert after["stages"][0]["status"] == "active"
-    assert "local_review_stamp" not in after["stages"][0]
+    assert after["stages"][0]["local_review_stamp"] == stamp
+
+
+def test_rerecord_active_task_grounding_change_warns_but_keeps_stamp(
+        repo, tmp_path):
+    """Changing an acceptance criterion changes what the work IS: the grill
+    and the approval are stale and the recorder says so at change time. The
+    review stamp still stands -- the diff did not move -- so the re-review is
+    owed only when the code changes to meet the new criterion."""
+    start_stage(repo, tmp_path, STAGE_TASK)
+    write_in_scope(repo, "src/core.py")
+    git(repo, "add", "src/core.py")
+    code, out = record_stage_local(repo)
+    assert code == 0, out
+
+    amended = {**STAGE_TASK,
+               "acceptance_criteria": ["the slice runs green", "and audits"],
+               "plan_contracts": STAGE_TASK["plan_contracts"] + [{
+                   "id": "C2", "statement": "and audits",
+                   "source": "plans/active/TEST-1-test-plan.md#acceptance-criteria"}]}
+    code, out = run(
+        repo, "record_decomposition_from_json.py",
+        stdin=json.dumps({**DECOMP, "tasks": [amended]}),
+    )
+    assert code == 0, out
+    assert "NOTE: T1 execution contract changed in what the work IS" in out
+    assert "STALE" in out
+    assert "record_grill_from_json.py --gate task --task T1" in out
+    assert "WARNING: T1 was already implemented/reviewed" in out
+    assert "The review stamp, if any, stands" in out
+
+    after = json.loads((repo / ".factory" / "stages.json").read_text())
+    assert after["stages"][0].get("local_review_stamp")
 
 
 # --- fix/per-task-user-facing-skills ------------------------------------------

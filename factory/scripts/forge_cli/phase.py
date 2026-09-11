@@ -153,7 +153,7 @@ def _board_handoff(base: Path) -> str:
 
 
 _PARALLEL_COMMANDS = {
-    "await-merge": "./forge task pr-ready {id} (its own PR; merge in dependency order)",
+    "await-merge": "./forge task close {id} (seals it and opens its own PR; merge in dependency order)",
     "delegate": "./forge delegate {id} from inside its worktree",
     "stage-start": "./forge task start {id}, then `./forge stage start {id}` from "
                    "inside the worktree it prints",
@@ -598,9 +598,10 @@ def cmd_next(args: argparse.Namespace) -> None:
                     )
                 elif frontier == "await-merge":
                     steps.append(
-                        f"[dev] Ship {task_id} as its own PR: ./forge task pr-ready "
-                        f"{task_id} (writes the task marker, pushes the branch, opens "
-                        "the PR to the trunk, then poll its CI to green and fix any "
+                        f"[dev] Ship {task_id} as its own PR: ./forge task close "
+                        f"{task_id} (re-reviews only if the diff moved, closes the "
+                        "stage, writes the task marker, pushes the branch, opens "
+                        "the PR to the trunk; then poll its CI to green and fix any "
                         "failure). Its marker is not on the trunk yet; after it "
                         "merges, rerun ./forge next. BUT if this task's work is "
                         "ALREADY merged — it shipped through a story-level or direct "
@@ -646,10 +647,10 @@ def cmd_next(args: argparse.Namespace) -> None:
             phase("reviewing")
             review_detail = ", ".join(reviews_missing) or "stale or incoherent lenses"
             steps.append("[dev] Review is ONE three-lens pass PER TASK, run by "
-                         "Codex: `./forge review <task-id>` records all three "
-                         f"lenses as that task's proof; repair: {review_detail}. "
+                         "Codex: `./forge task close <task-id>` runs it (only when "
+                         f"the diff moved) and records all three lenses; repair: {review_detail}. "
                          "On ANY finding, delegate the fix (`./forge delegate "
-                         "<task-id>`), commit, then rerun `./forge review "
+                         "<task-id>`), commit, then rerun `./forge task close "
                          "<task-id>` — loop until every lens is clean. Findings "
                          "are work, not a question for the human; do NOT stop "
                          "between rounds.")
@@ -670,9 +671,9 @@ def cmd_next(args: argparse.Namespace) -> None:
                              "(pr_ready refuses them): forge.py assumptions list --open, "
                              "then assumptions resolve <id> --status ... --notes ...")
             steps.append("[dev] Run: python3 factory/scripts/pr_ready.py (archives the story; merge stays manual)")
-            steps.append("[dev] Per-task PR instead: seal each completed task with "
-                         "`./forge task pr-ready <id>` — it writes the task marker, "
-                         "pushes the branch, and opens its PR to the repo default branch "
+            steps.append("[dev] Per-task PR instead: close each completed task with "
+                         "`./forge task close <id>` — proof, review only if the diff "
+                         "moved, stage done, task marker, push, PR to the repo default branch "
                          "(works stage-based; no `forge task start` worktree required), "
                          "then poll the PR's CI to green and fix any CI failure — no "
                          "human touch is needed after the plan approval")

@@ -143,23 +143,42 @@ def review_excluded_prefixes(base: Path) -> tuple[str, ...]:
     (`workflow_prefixes`). A re-vendor commit on a task branch once put 36
     harness files into a client's review bundle and the quality lens raised
     P1s against harness code the task never touched."""
-    from .stages import HARNESS_MACHINERY_PATHS, WORKFLOW_PATHS
-    from factory_lib import vendored_client
-    prefixes = set(HARNESS_PREFIXES) | set(WORKFLOW_PATHS)
-    if vendored_client(base):
-        prefixes |= set(HARNESS_MACHINERY_PATHS)
-    return tuple(sorted(prefixes))
+    # The same set the stage measures and the stamp binds to; one function,
+    # so a path is product for every closeout check or for none.
+    from factory_lib import product_excluded_prefixes
+    return product_excluded_prefixes(base)
 
 
 def _product_dirty(base: Path) -> list[str]:
+    """Dirty product paths, from NUL-separated porcelain with no stripping.
+
+    Stripping the status text ate the leading space of a first ` M path`
+    entry, and `line[3:]` then cut the first character of the path itself --
+    `plans/roadmap.json` became `lans/roadmap.json`, outside every excluded
+    prefix, and a review refused on harness bookkeeping. Both sides of a
+    rename count: either path being dirty is a dirty tree.
+    """
     excluded = review_excluded_prefixes(base)
-    status = _require_git(base, "reading working tree status", "status",
-                          "--porcelain", "--untracked-files=all")
-    dirty = []
-    for line in status.splitlines():
-        path = line[3:].strip()
-        if path and not path.startswith(excluded):
-            dirty.append(path)
+    proc = _git(base, "status", "--porcelain", "-z", "--untracked-files=all")
+    if proc.returncode != 0:
+        fail("reading working tree status failed"
+             + (f": {proc.stderr.strip()}" if proc.stderr.strip() else ""))
+    entries = proc.stdout.split("\0")
+    dirty: list[str] = []
+    index = 0
+    while index < len(entries):
+        entry = entries[index]
+        index += 1
+        if len(entry) < 4:
+            continue
+        code, path = entry[:2], entry[3:]
+        paths = [path]
+        if code[:1] in ("R", "C") and index < len(entries) and entries[index]:
+            paths.append(entries[index])  # the rename/copy source follows
+            index += 1
+        for rel in paths:
+            if rel and not rel.startswith(excluded):
+                dirty.append(rel)
     return dirty
 
 
@@ -246,32 +265,55 @@ def _score(blocking: int, non_blocking: int) -> int:
     return max(0, int(10 - 3 * blocking - min(2.0, 0.5 * non_blocking)))
 
 
+def recorded_review_totals(base: Path, story: str, task_id: str,
+                           lenses: list[str] | tuple[str, ...]) -> tuple[int, int, dict]:
+    """Blocking and non-blocking counts from the recorded lens artifacts.
+
+    The one source every gate agrees on: `stage done`, `task pr-ready` and CI
+    all read these files. A verdict computed anywhere else can disagree with
+    them, and did.
+    """
+    recorded: dict[str, dict] = {}
+    for lens in lenses:
+        artifact = load_json(
+            proof_path(base, story, f"reviews/{lens}.json", task_id=task_id),
+            default={})
+        recorded[lens] = artifact if isinstance(artifact, dict) else {}
+    blocking = sum(len(a.get("blocking_findings") or []) for a in recorded.values())
+    caveats = sum(len(a.get("non_blocking_findings") or []) for a in recorded.values())
+    return blocking, caveats, recorded
+
+
 def _next_hint(task_id: str, stage_status: str, blocking: int, caveats: int) -> str:
     """The one instruction after a review. Blocking findings go back to Codex;
-    a done stage reopens for the fix first (delegate writes only inside an
-    active stage); a clean run has already stamped the stage."""
+    a clean run has already stamped the stage, and `task close` takes it from
+    there -- re-reviewing only if the diff moves again, reopening a done stage
+    itself, then measuring, closing and sealing."""
+    # These are instructions, not options. A coordinator that turns a review
+    # finding into a menu for the human ("fix now / ship and defer / fix it
+    # myself") is asking them to arbitrate something the harness has already
+    # decided: fixing a finding the review just raised is the work, and it goes
+    # to Codex like every other write.
     if blocking:
-        reopen = (f"`./forge task reopen {task_id} --review-fix`, then "
-                  if stage_status == "done" else "")
-        return (f"NEXT: {blocking} blocking finding(s) — {reopen}delegate the fixes "
-                f"to Codex (`./forge delegate {task_id}`), commit, rerun "
-                f"`./forge review {task_id}`. Loop until no lens blocks. Do this "
-                "WITHOUT asking the human to choose: a blocking finding cannot be "
-                "deferred or shipped past (pr-ready refuses it). A finding that "
-                "contradicts an accepted contract is not a defect: record the "
-                "contract as a lesson (`./forge lesson add`) so the next round "
-                "carries it. Host-side fixing is the single exception, and only "
-                "when the defect cannot be reproduced or fixed inside the Codex "
-                "sandbox — then open a ledgered degraded window and say why.")
-    seal = (f"`./forge stage done {task_id}` then `./forge task pr-ready {task_id}`"
-            if stage_status == "active" else f"`./forge task pr-ready {task_id}`")
+        return (f"NEXT: {blocking} blocking finding(s) -- delegate the fixes "
+                f"to Codex (`./forge delegate {task_id}`), commit, then "
+                f"`./forge task close {task_id}`: it re-reviews the new diff, "
+                "and a done stage reopens itself for the fix. Loop until no "
+                "lens blocks. Do this WITHOUT asking the human to choose: a "
+                "blocking finding cannot be deferred or shipped past (the seal "
+                "refuses it). A finding that contradicts an accepted contract "
+                "is not a defect: record the contract as a lesson "
+                "(`./forge lesson add`) so the next round carries it. Host-side "
+                "fixing is the single exception, and only when the defect cannot "
+                "be reproduced or fixed inside the Codex sandbox -- then open a "
+                "ledgered degraded window and say why.")
+    seal = f"`./forge task close {task_id}` measures, closes and seals it"
     if caveats:
         return (f"NEXT: no blocking finding; {caveats} non-blocking finding(s) "
-                "recorded as follow-ups. The stage is stamped — " + seal + ". Fix a "
+                "recorded as follow-ups. The stage is stamped -- " + seal + ". Fix a "
                 "follow-up in this task only when it is cheap and in scope; "
                 "otherwise `./forge defer` it with a revisit trigger.")
-    return "NEXT: all lenses clean; the stage is stamped — " + seal + "."
-
+    return "NEXT: all lenses clean; the stage is stamped -- " + seal + "."
 
 def _recommendation(blocking: int, non_blocking: int) -> str:
     if blocking:
@@ -803,8 +845,6 @@ def _shared_terms(finding: dict | str, source: str) -> list[str]:
 
 
 def cmd_review(args: argparse.Namespace) -> None:
-    from .stages import load_stages, task_for
-
     base = Path(args.repo).resolve() if args.repo else repo_root()
     if getattr(args, "reject", None):
         reject_finding(base, args.id, getattr(args, "lens", None) or "",
@@ -812,6 +852,35 @@ def cmd_review(args: argparse.Namespace) -> None:
                        cite=getattr(args, "cite", "") or "",
                        by=getattr(args, "by", "") or "")
         return
+    outcome = review_task(
+        base, args.id, lens=getattr(args, "lens", None),
+        engine=getattr(args, "engine", "codex"),
+        max_priority=getattr(args, "max_priority", "P2"),
+        skill=getattr(args, "skill", None),
+    )
+    print(_next_hint(args.id, outcome["stage_status"], outcome["blocking"],
+                     outcome["caveats"]))
+
+
+def review_task(base: Path, task_id: str, *, lens: str | None = None,
+                engine: str = "codex", max_priority: str = "P2",
+                skill: str | None = None) -> dict:
+    """Release the three-lens review for one task and record its proof.
+
+    Returns {"blocking", "caveats", "stamped", "stage_status"}. `cmd_review`
+    prints the next-step hint; `task close` reads the numbers and decides.
+    """
+    from .stages import load_stages, task_for
+
+    class _Args:  # the body below reads these as it always did
+        pass
+    args = _Args()
+    args.id = task_id
+    args.lens = lens
+    args.engine = engine
+    args.max_priority = max_priority
+    args.skill = skill
+
     task = task_for(base, args.id)
     if not task:
         fail(f"task {args.id} is not in the recorded decomposition")
@@ -926,12 +995,17 @@ def cmd_review(args: argparse.Namespace) -> None:
         outcome[lens] = artifact
     shutil.rmtree(tmp, ignore_errors=True)
 
-    blocking_total = sum(len(a["blocking_findings"]) for a in outcome.values())
-    caveats_total = sum(len(a["non_blocking_findings"]) for a in outcome.values())
-    for lens, artifact in outcome.items():
-        print(f"{lens:<12} score {artifact['score']:>2}  {artifact['recommendation']:<21}"
-              f" blocking={len(artifact['blocking_findings'])} "
-              f"non-blocking={len(artifact['non_blocking_findings'])}")
+    # Count what was RECORDED, not what was composed. The recorder turns a
+    # partial or missing contract verdict into a blocking finding, and CI
+    # reads the recorded file; counting the pre-record artifact printed
+    # "blocking=0", stamped the stage, and let CI refuse it (WF-1 T2).
+    blocking_total, caveats_total, recorded = recorded_review_totals(
+        base, story, args.id, lenses)
+    for lens, artifact in recorded.items():
+        print(f"{lens:<12} score {str(artifact.get('score', '?')):>2}  "
+              f"{str(artifact.get('recommendation', '')):<21}"
+              f" blocking={len(artifact.get('blocking_findings') or [])} "
+              f"non-blocking={len(artifact.get('non_blocking_findings') or [])}")
     print(f"Recorded {len(outcome)} review artifact(s) for {args.id} under "
           f".factory/stories/{story}/reviews/.")
     # ONE review per task: a run with no blocking finding is the stage's review
@@ -951,9 +1025,9 @@ def cmd_review(args: argparse.Namespace) -> None:
         from .stages import revoke_stage_review_stamp
         if revoke_stage_review_stamp(base, args.id):
             print(f"Stage {args.id}'s earlier review stamp revoked: this run blocks.")
-    # These are instructions, not options. A coordinator that turns a review
-    # finding into a menu for the human ("fix now / ship and defer / fix it
-    # myself") is asking them to arbitrate something the harness has already
-    # decided: fixing a finding the review just raised is the work, and it goes
-    # to Codex like every other write.
-    print(_next_hint(args.id, str(started.get(args.id)), blocking_total, caveats_total))
+    return {
+        "blocking": blocking_total,
+        "caveats": caveats_total,
+        "stamped": bool(not blocking_total and len(lenses) == len(LENSES)),
+        "stage_status": str(started.get(args.id)),
+    }

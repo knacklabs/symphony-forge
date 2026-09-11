@@ -2,43 +2,34 @@
   "generated_by": "griller",
   "gate": "spec",
   "verdict": "pass",
-  "questions_asked": 2,
-  "summary": "Re-confirmation grill for plan-approval after rewriting the not-the-enforcement-signal clause: plan mode is the authorship proof via permission_mode markers (0048) while the human-attributed approval command remains the separate unforgeable act (0029 intact); every other clause stands. Recorded under the new enforcement.",
-  "inspected_refs": [
-    "docs/specs/plan-approval.md",
-    "docs/decisions/0048-plan-mode-and-grill-provenance.md",
-    "docs/decisions/0029-plan-approval-in-plan-mode.md"
-  ],
   "gaps": [
-    "PA-1: plan-approval now says plan mode IS the authorship proof via permission_mode markers, while human approval stays the separate unforgeable act (0029 intact). Correct split?",
-    "PA-2: no other clause of plan-approval changes (self-authored-grill criticism, digest freshness, awaiting\u2192approved flow all stand). Frontier empty on this spec?"
+    "Grill applicability was not deterministic across the two coordinators.",
+    "Review capacity was ambiguous against the roadmap and Decision 0058.",
+    "The workspace contract omitted explicit approved-story, decomposition, identity and trunk-dependency bindings.",
+    "Coordinator review ownership and the delegated fix/re-review loop were not explicit.",
+    "The six-cell report did not name its existing artifact, producer or aggregate predicate.",
+    "Event compaction lacked exact storage, format, reader compatibility and atomicity boundaries.",
+    "Prepared-byte provenance did not name its durable inventory, baseline and versioned ownership graph.",
+    "Follow-up requirements read needed exact per-gate classification inputs and independent digest bindings for shared design reads.",
+    "The review-only draft PR checkpoint needed its explicit safe-reuse and uncertain-lookup contract restored."
   ],
   "contradictions": [],
   "resolutions": [
-    "Confirmed by the human in the recorded round: Yes \u2014 authorship proof vs approval act, both required",
-    "Confirmed by the human in the recorded round: Yes \u2014 rest of the spec stands; frontier empty"
+    "After LEAN-WORKFLOW ships, the approval-bound artifact records design_review required/routine in existing frontmatter. Missing/unknown means required; the named sensitive-change triggers require design scrutiny and routine classification needs a no-trigger rationale. Workers cannot downgrade it. Both adapters use the same predicate. One actual assessment may cover several applicable gates only with complete reviewed inputs and independent existing digest bindings. The first task retains all current gates until changed enforcement ships; no current pass is fabricated from this future rule.",
+    "Accepted 0064 explicitly amends the obsolete fixed-cap interpretation of 0058. The specification defines existing review limits as the installed helpers actual safeguards and complete lossless coverage, not a pinned 512000-byte Forge limit. Measure complete final inputs, use supported chunks and split if intact input cannot fit; no helper cap is edited or overridden. This implements the users already approved simplification while preserving the roadmap criterion.",
+    "The specification restores approved story, matching decomposition, exact story/task identity, fetched trunk commit and all effective dependency markers; open PR, green CI and messages are explicitly insufficient. It preserves fixed IDs/order/dependencies and the existing clean, unowned, same-common-directory attachment and publish-owner-last requirements under 0059.",
+    "The specification names main-launched forge review under accepted 0011/0064, prohibits self-certification and nested reviewers, and requires delegated fixes followed by review until every assessment is clean. Proposed 0049 is explicitly not authority. First uses current three-lens execution; LEAN later implements one combined operation with genuine linked lens artifacts.",
+    "The specification retains factory/schemas/test-automated.json, implementer production, the existing recorder/task path and six fixed labels. Accepted0065 applies the users explicit CI-only Linux/Windows ruling: actual local Mac CLI/Desktop and meaningful Ubuntu24.04 x64/nativeWindows CI are required. CI rows explicitly state regression/package-smoke evidence and unavailable authenticated behavior; Desktop observations stay unobserved limitations. Required evidence or any actual failure blocks aggregate readiness; accepted unavailable-platform limitations remain in remaining_gaps without fabricated passes. Existing fields and C10 propagate the honest aggregate; no new schema/matrix.",
+    "The specification names scoped and legacy events.bundle.json paths, format forge-event-bundle/v1, matching story/explicit IDs, validated reader union and identical-ID deduplication during interrupted cleanup. Conflicts refuse; legacy idless history stays unchanged and unread as new live events. After shipped proof is durable, sibling temporary write plus atomic replacement precedes read-back exact comparison and source removal. Failure preserves loose sources and hard proof.",
+    "The specification names the existing committed native-foreground-preparation-inventory.json, exact824baed4 baseline, 109953-byte bee122 patch and16 prepared-file hashes. It requires the complete versioned lean-delivery graph and reproducible artifacts to allocate all original paths/hunks and be SHA-bound by the approved story plan before any support-task contract. Main is publishing that graph and exact patches before plan approval; the spec does not treat temporary paths or source approvals as target authority.",
+    "The saved specification now maps all six gates to their exact existing classification input, record and digest. Epics derives classification from linked capability specs rather than adding JSON authority; signoff includes its complete located handover. Classification/rationale stay authored and digest-bound. A shared read explicitly names every gate, includes complete located/grounding inputs, returns independently assessed frontiers and binds each existing record; current one-gate launches cannot claim this future capability. LEAN owns implementation and refusal regressions before the feature is usable.",
+    "The checkpoint now names normal Git/gh draft operations instead of forge task pr-ready, matches origin/head repository/head branch/base/reviewed commit, refuses creation after uncertain or ambiguous lookup, and re-queries after uncertain creation. It preserves one PR identity and eventual marker identity/timestamp. Shared owns the retry mechanism and Integration its live checkpoint; no new registry or authority is introduced."
   ],
-  "rounds": [
-    {
-      "question": "PA-1: plan-approval now says plan mode IS the authorship proof via permission_mode markers, while human approval stays the separate unforgeable act (0029 intact). Correct split?",
-      "options": [
-        "Yes \u2014 authorship proof vs approval act, both required",
-        "No, re-word"
-      ],
-      "chosen": "Yes \u2014 authorship proof vs approval act, both required"
-    },
-    {
-      "question": "PA-2: no other clause of plan-approval changes (self-authored-grill criticism, digest freshness, awaiting\u2192approved flow all stand). Frontier empty on this spec?",
-      "options": [
-        "Yes \u2014 rest of the spec stands; frontier empty",
-        "Something else needs amending"
-      ],
-      "chosen": "Yes \u2014 rest of the spec stands; frontier empty",
-      "frontier_empty": true
-    }
-  ],
+  "rounds": [],
   "open_items": [],
-  "input_sha256": "4b60063080c79ac88fa26cf7e930e6a06b8232e8edefc0101c360f53de07e878",
-  "recorded_at": "2026-08-24T10:58:38+00:00",
-  "commit": "ef8e1c5dba9bf83475527bfdf4a31d5a8b3b260d"
+  "frontier_empty": true,
+  "summary": "Actual independent native Forge spec read launch-4b859e18db2b416a9ca56133b022b179, session01a08a2e-3a40-7651-b52b-719ebf1f6013 completed with these seven findings. Main adjudicated and resolved them in the saved current specification and accepted0064, with the existing one-read resolution procedure. This technical record claims no new implementation, worker contribution or platform proof; confirmation uses the users standing authorization for the accepted lean workflow and client migration. Actual subsequent requirements read launch-8eab636cdde543289b4958af475583d7, session01a08a40-f15e-74e3-bc7d-d3de778fb3c0 supplied these two additional clarifications. They are technical corrections within accepted0064 and the existing checkpoint scope, resolved without another cold read. Its third suggestion to mandate Native receipt A is rejected in the requirements disposition because that answer was explicitly limited to one2026-09-08 hook-delivery probe, not a product naming requirement. The users subsequent explicit CI-only Linux/Windows ruling is recorded in accepted0065; main amended only platform acceptance and its exact report interpretation while preserving all other resolved findings. No additional cold read or actual CI/runtime pass is claimed.",
+  "input_sha256": "9b94b886b837e5547f754031097fa85852a83be6d4f33c61fcfe3bbf2e080265",
+  "recorded_at": "2026-09-10T08:26:21+00:00",
+  "commit": "120c6b607afc4cb5f58f35e579bd4f04c3009436"
 }

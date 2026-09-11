@@ -1,0 +1,37 @@
+[
+  {
+    "path": "/Users/dev/Workdir/cadence",
+    "common_directory": "/Users/dev/Workdir/cadence/.git",
+    "head": "075a2c1c2d5355a96279c8d8be912dc3ab5f5ffd",
+    "dirty_entries": 0,
+    "vendored_from": "symphony-forge @ 34499411785ba7b535b23743f19428c2140acd11\nUpdate by re-vendoring from the harness repo; do not edit in place."
+  },
+  {
+    "path": "/Users/dev/Workdir/toolshed",
+    "common_directory": "/Users/dev/Workdir/toolshed/.git",
+    "head": "91c61387a1771dc52f574b6e11a47fcd2059e1b4",
+    "dirty_entries": 0,
+    "vendored_from": "symphony-forge @ 1b61d05453bc8083b3fb69895e4e68e8a029382d\nUpdate by re-vendoring from the harness repo; do not edit in place."
+  },
+  {
+    "path": "/Users/dev/Workdir/myclaw",
+    "common_directory": "/Users/dev/Workdir/myclaw/.git",
+    "head": "9fc11b6e8657dd95c59af012e1386db83ae05b99",
+    "dirty_entries": 40,
+    "vendored_from": "symphony-forge @ 6babcda24292f1702ec53f63d53e94f2aa1897e3\nUpdate by re-vendoring from the harness repo; do not edit in place."
+  },
+  {
+    "path": "/Users/dev/Workdir/knacklabs-ats",
+    "common_directory": "/Users/dev/Workdir/knacklabs-ats/.git",
+    "head": "86e74a5feb4ed107dbda0e8dcf0e24481b3d162a",
+    "dirty_entries": 0,
+    "vendored_from": "symphony-forge @ 6d2cf98749e730015f69896fd67919a101424ccb\nUpdate by re-vendoring from the harness repo; do not edit in place."
+  },
+  {
+    "path": "/Users/dev/Workdir/myclaw-cache-bug-cache-bug-T1",
+    "common_directory": "/Users/dev/Workdir/myclaw/.git",
+    "head": "a0ee8a4bd9ee2ffc73c3d904112879b3dd82a41d",
+    "dirty_entries": 15,
+    "vendored_from": "symphony-forge @ 221ab027368f6c130e84fe373304ac09f1bee58f\nUpdate by re-vendoring from the harness repo; do not edit in place."
+  }
+]

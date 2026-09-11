@@ -1,8 +1,9 @@
 ---
-status: accepted
+status: superseded
 confirmed_by: "Ravi"
 date: 2026-07-14
 stories: []
+superseded_by: 0062-luna-max-exploration-and-implementation
 ---
 
 # Model tiers: Terra@high explores, Sol@medium implements
