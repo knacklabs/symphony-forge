@@ -29,6 +29,11 @@ jobs:
       - uses: actions/setup-python@v7
         with:
           python-version: '3.11'
+      # The companion launch (and every test that exercises it) needs node on
+      # PATH. A hosted image ships one; a self-hosted runner promises nothing.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
       - name: Check scaffold files
         run: python3 factory/scripts/check_factory_scaffold.py
       - name: Check AGENTS hygiene
