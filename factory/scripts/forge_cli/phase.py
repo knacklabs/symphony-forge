@@ -11,6 +11,7 @@ from factory_lib import (
     client_signoff, evidence_path, head_sha, load_json, load_review_artifacts,
     repo_root, require_all_stages_done, require_coherent_review_run,
     requirements_digest, run_state_path, task_frontier_state,
+    proof_read_path,
 )
 
 from .context import pending_context
@@ -461,13 +462,13 @@ def cmd_next(args: argparse.Namespace) -> None:
             "implementing --decomposition-status recorded")
     else:
         issue = state.get("issue_key")
-        tests = load_json(evidence_path(base, issue, "tests.json"), default={})
-        verify = load_json(evidence_path(base, issue, "verify.json"), default={})
+        tests = load_json(proof_read_path(base, issue, "tests.json"), default={})
+        verify = load_json(proof_read_path(base, issue, "verify.json"), default={})
         decomp = load_json(evidence_path(base, issue, "decomposition.json"), default={})
         user_facing = bool(decomp.get("user_facing", True))
         reviews_missing = [
             a for a in ("quality", "performance", "security")
-            if not load_json(evidence_path(base, issue, f"reviews/{a}.json"), default={})
+            if not load_json(proof_read_path(base, issue, f"reviews/{a}.json"), default={})
         ]
         open_stages = require_all_stages_done(base)
         head = head_sha(base)

@@ -9139,8 +9139,8 @@ def test_roadmap_gate_workflow_shape():
     assert re.search(r"^  push:\s*$", workflow, re.MULTILINE)
     assert "  pr-contract:" in workflow
     assert "  coverage:" in workflow
-    assert workflow.count("- uses: actions/checkout@v4") == 2
-    assert workflow.count("- uses: actions/setup-python@v5") == 2
+    assert workflow.count("- uses: actions/checkout@v7") == 2
+    assert workflow.count("- uses: actions/setup-python@v7") == 2
     assert workflow.count("python-version: '3.11'") == 2
     assert workflow.count("id: arm") == 2
     assert workflow.count("constitution/VENDORED_FROM") == 2
@@ -17591,7 +17591,7 @@ def test_session_start_injects_project_memory_plan_and_quickfix(repo, tmp_path):
     assert "OPEN QUICKFIX" in context and "adjust cutoff" in context
 
 
-def test_board_serves_live_lifecycle_state(repo, tmp_path):
+def test_board_serves_live_lifecycle_state(repo, tmp_path, monkeypatch):
     sign_off(repo)
     ensure_story(repo, "ENG-1", "Invoices")
     intake(repo)
@@ -17606,7 +17606,12 @@ def test_board_serves_live_lifecycle_state(repo, tmp_path):
     run(repo, "forge.py", "quickfix", "start", "board fixture")
 
     sys.path.insert(0, str(HARNESS / "factory" / "scripts"))
+    import factory_lib
     from forge_cli.board import make_server
+    # make_server puts this process in board mode (fetch window, git memos);
+    # restore CLI mode for every test that runs after this one.
+    monkeypatch.setattr(factory_lib, "MARKER_FETCH_TTL", factory_lib.MARKER_FETCH_TTL)
+    monkeypatch.setattr(factory_lib, "BOARD_MEMO", factory_lib.BOARD_MEMO)
     server = make_server(repo, 0)
     thread = threading.Thread(target=server.serve_forever, daemon=True)
     thread.start()

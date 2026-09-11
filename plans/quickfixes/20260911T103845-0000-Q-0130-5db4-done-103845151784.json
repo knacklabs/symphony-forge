@@ -1,0 +1,9 @@
+{
+  "event": "done",
+  "id": "Q-0130-5db4",
+  "profile": "quickfix",
+  "reason": "Per-task proof is written to the task directory but five readers still look only at the story level, so forge review, the board, the phase display, the stage records and the review brief all miss proof the writers just recorded. forge task start stamps task_id into the worktree pointer and the recorders resolve through proof_path, which is the intended design; check_task_proof and the ship gate already read task-first with a story fallback, but review.py, board.py, phase.py, stages.py and review_brief.py were left on the story-only path. Move them to the same task-first resolution.",
+  "started_at": "2026-09-11T08:55:23+00:00",
+  "completed_at": "2026-09-11T10:38:45+00:00",
+  "files": []
+}

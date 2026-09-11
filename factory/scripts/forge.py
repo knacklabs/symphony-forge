@@ -225,6 +225,9 @@ def main() -> None:
     p_task_close.add_argument(
         "--skill", help="path to the autoreview helper (default: $AUTOREVIEW "
                         "or ~/.codex/skills/autoreview/scripts/autoreview)")
+    p_task_close.add_argument(
+        "--sequential", action="store_true",
+        help="run the three review lenses one at a time instead of together")
     p_task_close.add_argument("--repo")
     p_task_close.set_defaults(func=close_mod.cmd_task_close)
     p_task_reopen = task_sub.add_parser(
@@ -628,6 +631,10 @@ def main() -> None:
     p_review.add_argument(
         "--skill", help="path to the autoreview helper (default: $AUTOREVIEW "
                         "or ~/.codex/skills/autoreview/scripts/autoreview)")
+    p_review.add_argument(
+        "--sequential", action="store_true",
+        help="run the three lenses one at a time instead of together (the "
+             "default runs them concurrently; FORGE_REVIEW_SEQUENTIAL=1 too)")
     p_review.add_argument(
         "--reject", metavar="MATCH",
         help="do not run: move the one recorded blocking finding of --lens whose "

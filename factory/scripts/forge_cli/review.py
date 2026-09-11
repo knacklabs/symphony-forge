@@ -21,11 +21,14 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import threading
+import time
 import uuid
 from pathlib import Path
 
 from factory_lib import (
     branch_diff_digest, clean_git_env, evidence_path, load_json,
+    proof_read_path,
     proof_path, protected_decomposition_state_path, repo_root, run_state_path,
     safe_factory_write_bytes, schema_path,
 )
@@ -533,11 +536,17 @@ def codex_runs_path(root: Path) -> Path:
     return git_control_dir(root) / "codex_runs.jsonl"
 
 
+# One file, appended by every lens launch. The launches happen in this
+# process, so a lock here is what keeps three concurrent lenses from
+# interleaving half-lines into it.
+_CODEX_RUN_LOCK = threading.Lock()
+
+
 def _append_codex_run(root: Path, record: dict) -> None:
     try:
         path = codex_runs_path(root)
         path.parent.mkdir(parents=True, exist_ok=True)
-        with path.open("a", encoding="utf-8") as handle:
+        with _CODEX_RUN_LOCK, path.open("a", encoding="utf-8") as handle:
             handle.write(json.dumps(record, sort_keys=True) + "\n")
     except (OSError, SystemExit):
         return  # advisory: never fail a review because bookkeeping failed
@@ -576,13 +585,23 @@ def _close_codex_run(root: Path, run_id: str, returncode) -> None:
     })
 
 
-def _run_skill(skill: Path, worktree: Path, base_sha: str, prompt_rel: str,
-               json_out: Path, engine: str, max_priority: str) -> dict:
-    argv = [
+def _skill_argv(skill: Path, base_sha: str, prompt_rel: str, json_out: Path,
+                engine: str, max_priority: str) -> list[str]:
+    return [
         sys.executable, str(skill), "--mode", "branch", "--base", base_sha,
         "--engine", engine, "--max-priority", max_priority,
         "--prompt-file", prompt_rel, "--json-output", str(json_out),
     ]
+
+
+def _run_skill(skill: Path, worktree: Path, base_sha: str, prompt_rel: str,
+               json_out: Path, engine: str, max_priority: str,
+               ledger_root: Path | None = None) -> dict:
+    argv = _skill_argv(skill, base_sha, prompt_rel, json_out, engine, max_priority)
+    # The ledger goes to the REPO's control dir: the review worktree is removed
+    # when the review ends and its control dir pruned with it, so rows written
+    # there never reach `forge codex status`.
+    ledger = ledger_root or worktree
     # Inherit stdio: the skill's heartbeat ("review still running ...") and any
     # streamed engine output are how the coordinator WATCHES this Codex release.
     #
@@ -593,19 +612,128 @@ def _run_skill(skill: Path, worktree: Path, base_sha: str, prompt_rel: str,
     # review was ever in flight. A delegation is covered by its own ledger; a
     # review was the blind spot, and it is the release the coordinator is told
     # to watch every time.
-    started = _record_codex_run(worktree, prompt_rel, argv)
+    started = _record_codex_run(ledger, prompt_rel, argv)
     process = subprocess.Popen(argv, cwd=worktree,
                                env={**os.environ, "PYTHONUTF8": "1"})
-    _stamp_codex_run(worktree, started, pid=process.pid)
+    _stamp_codex_run(ledger, started, pid=process.pid)
     try:
         returncode = process.wait()
     finally:
-        _close_codex_run(worktree, started, getattr(process, "returncode", None))
+        _close_codex_run(ledger, started, getattr(process, "returncode", None))
     if returncode not in (0, 1):  # 1 == findings present, not an error
         fail(f"autoreview exited {returncode} for {prompt_rel}; see its output above")
     if not json_out.is_file():
         fail(f"autoreview produced no JSON for {prompt_rel} (the run aborted?)")
     return json.loads(json_out.read_text(encoding="utf-8"))
+
+
+def review_log_dir(base: Path, task_id: str) -> Path:
+    """Where each lens's streamed output lands when lenses run together.
+
+    Beside the run ledger in git's control directory, not under .factory/:
+    nothing in the product tree changes, so a review never dirties the
+    working copy or needs an ignore rule.
+    """
+    return codex_runs_path(base).parent / "review-logs" / task_id
+
+
+def review_log_path(base: Path, task_id: str, lens: str) -> Path:
+    return review_log_dir(base, task_id) / f"{lens}.log"
+
+
+def run_lenses(skill: Path, worktree: Path, base_sha: str, lenses: list[str],
+               prompts: dict[str, tuple[str, bytes]], tmp: Path, engine: str,
+               max_priority: str, *, parallel: bool, log_dir: Path,
+               ledger_root: Path | None = None,
+               heartbeat_every: float = 60.0) -> dict[str, dict]:
+    """Release every lens and return its report, keyed by lens.
+
+    Sequential keeps the old shape: one lens at a time, stdio inherited so the
+    skill's heartbeat is the watch. Parallel launches all of them at once --
+    each with its own ledger row, pid, prompt, output file and log -- and
+    prints one combined heartbeat. Nothing downstream needs one lens before
+    another; the artifacts are recorded only after all have returned. If one
+    lens crashes the others are still waited for and reaped, then the failure
+    names the lens and its log, so a crash never orphans a running review.
+    """
+    if not parallel or len(lenses) == 1:
+        reports: dict[str, dict] = {}
+        for lens in lenses:
+            reports[lens] = _run_skill(
+                skill, worktree, base_sha, prompts[lens][0], tmp / f"{lens}.json",
+                engine, max_priority, ledger_root=ledger_root)
+        return reports
+
+    ledger = ledger_root or worktree  # same rule as _run_skill
+    log_dir.mkdir(parents=True, exist_ok=True)
+    launched: dict[str, dict] = {}
+    try:
+        for lens in lenses:
+            json_out = tmp / f"{lens}.json"
+            argv = _skill_argv(skill, base_sha, prompts[lens][0], json_out,
+                               engine, max_priority)
+            log = (log_dir / f"{lens}.log").open("wb")
+            run_id = _record_codex_run(ledger, prompts[lens][0], argv)
+            process = subprocess.Popen(
+                argv, cwd=worktree, stdout=log, stderr=subprocess.STDOUT,
+                env={**os.environ, "PYTHONUTF8": "1"})
+            _stamp_codex_run(ledger, run_id, pid=process.pid)
+            launched[lens] = {"process": process, "run_id": run_id, "log": log,
+                              "json": json_out, "started": time.monotonic(),
+                              "returncode": None}
+        print(f"lenses running together: {', '.join(lenses)} -- one heartbeat "
+              f"line per {int(heartbeat_every)}s; each lens's own output is in "
+              f"{log_dir.as_posix()}/<lens>.log", flush=True)
+
+        last_beat = time.monotonic()
+        while any(item["returncode"] is None for item in launched.values()):
+            for lens, item in launched.items():
+                if item["returncode"] is not None:
+                    continue
+                code = item["process"].poll()
+                if code is None:
+                    continue
+                item["returncode"] = code
+                _close_codex_run(ledger, item["run_id"], code)
+                item["log"].close()
+                took = int(time.monotonic() - item["started"])
+                print(f"== {lens} lens finished (exit {code}, {took}s) ==", flush=True)
+            now = time.monotonic()
+            if now - last_beat >= heartbeat_every:
+                last_beat = now
+                status = " · ".join(
+                    f"{lens} {int(now - item['started'])}s"
+                    for lens, item in launched.items() if item["returncode"] is None)
+                print(f"review still running: {status}", flush=True)
+            time.sleep(1.0)
+    finally:
+        # A KeyboardInterrupt or a fail() above must not leave lenses running.
+        for lens, item in launched.items():
+            if item["returncode"] is None:
+                try:
+                    item["process"].terminate()
+                except OSError:
+                    pass
+                _close_codex_run(ledger, item["run_id"], None)
+            try:
+                item["log"].close()
+            except OSError:
+                pass
+
+    crashed = [lens for lens, item in launched.items()
+               if item["returncode"] not in (0, 1)]  # 1 == findings, not an error
+    if crashed:
+        where = ", ".join(f"{lens} (exit {launched[lens]['returncode']}, "
+                          f"{(log_dir / f'{lens}.log').as_posix()})" for lens in crashed)
+        fail(f"autoreview crashed on {where}; the other lens(es) finished and "
+             "were reaped. Read the log, fix the cause, rerun the review.")
+    reports = {}
+    for lens, item in launched.items():
+        if not item["json"].is_file():
+            fail(f"autoreview produced no JSON for the {lens} lens (the run "
+                 f"aborted?); see {(log_dir / f'{lens}.log').as_posix()}")
+        reports[lens] = json.loads(item["json"].read_text(encoding="utf-8"))
+    return reports
 
 
 def reject_finding(base: Path, task_id: str, lens: str, match: str, *,
@@ -857,6 +985,7 @@ def cmd_review(args: argparse.Namespace) -> None:
         engine=getattr(args, "engine", "codex"),
         max_priority=getattr(args, "max_priority", "P2"),
         skill=getattr(args, "skill", None),
+        parallel=not getattr(args, "sequential", False),
     )
     print(_next_hint(args.id, outcome["stage_status"], outcome["blocking"],
                      outcome["caveats"]))
@@ -864,7 +993,7 @@ def cmd_review(args: argparse.Namespace) -> None:
 
 def review_task(base: Path, task_id: str, *, lens: str | None = None,
                 engine: str = "codex", max_priority: str = "P2",
-                skill: str | None = None) -> dict:
+                skill: str | None = None, parallel: bool | None = None) -> dict:
     """Release the three-lens review for one task and record its proof.
 
     Returns {"blocking", "caveats", "stamped", "stage_status"}. `cmd_review`
@@ -900,10 +1029,8 @@ def review_task(base: Path, task_id: str, *, lens: str | None = None,
     if not isinstance(story, str) or not story:
         fail("review requires an active story")
     for artifact in ("verify.json", "tests.json"):
-        # Hotfix (vendored): verify.py and record_test write task-scoped proof
-        # (proof_path -> tasks/<id>/) once `task start` stamps task_id into the
-        # worktree pointer; read the same path here. Upstream: symphony-forge.
-        if not proof_path(base, story, artifact, task_id=args.id).is_file():
+        # Proof follows the writer: a per-task run records under the task.
+        if not proof_read_path(base, story, artifact).is_file():
             fail(f"{artifact} is not recorded for {story}; review runs after "
                  "`python3 factory/scripts/verify.py` and "
                  "`record_test_from_json.py --kind automated`")
@@ -955,14 +1082,20 @@ def review_task(base: Path, task_id: str, *, lens: str | None = None,
             target = worktree / rel
             target.parent.mkdir(parents=True, exist_ok=True)
             target.write_bytes(body)
+        # Together by default: the lenses share nothing but the diff they
+        # read. FORGE_REVIEW_SEQUENTIAL=1 or --sequential restores one at a
+        # time (an account that rate-limits three sessions, or a debug run).
+        together = (parallel if parallel is not None
+                    else not os.environ.get("FORGE_REVIEW_SEQUENTIAL"))
         for lens in lenses:
             print(f"== {lens} lens: releasing Codex over {len(scope)} path(s) "
-                  f"({base_sha[:7]}..{review_tip[:7]}, task tip {tip_sha[:7]}) — "
-                  "watch the heartbeat below ==", flush=True)
-            reports[lens] = _run_skill(
-                skill, worktree, base_sha, prompts[lens][0], tmp / f"{lens}.json",
-                args.engine, args.max_priority,
-            )
+                  f"({base_sha[:7]}..{review_tip[:7]}, task tip {tip_sha[:7]})"
+                  f"{' ==' if together and len(lenses) > 1 else ' — watch the heartbeat below =='}",
+                  flush=True)
+        reports = run_lenses(
+            skill, worktree, base_sha, lenses, prompts, tmp, args.engine,
+            args.max_priority, parallel=together,
+            log_dir=review_log_dir(base, args.id), ledger_root=base)
     finally:
         _git(base, "worktree", "remove", "--force", str(worktree))
         _git(base, "worktree", "prune")

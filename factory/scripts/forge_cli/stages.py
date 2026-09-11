@@ -32,6 +32,7 @@ from factory_lib import (
     protected_decomposition_state_path, repo_root, require_approved_plan_digest,
     require_ready_task, require_task_worktree, run_state_path,
     safe_factory_write_json, sha256_of, story_dir, task_digest,
+    proof_read_path,
 )
 
 from .common import fail
@@ -1886,8 +1887,8 @@ def _refuse_incomplete_against_complete_proof(base: Path, task_id: str) -> None:
     if not key:
         return
     verify_ok = verify_passed(load_json(
-        evidence_path(base, key, "verify.json"), default={}))
-    tests = load_json(evidence_path(base, key, "tests.json"), default={})
+        proof_read_path(base, key, "verify.json"), default={}))
+    tests = load_json(proof_read_path(base, key, "tests.json"), default={})
     aspects = ("quality", "performance", "security")
     lenses = {
         aspect: review_passed(load_json(

@@ -9,6 +9,7 @@ from pathlib import Path
 from factory_lib import (
     branch_diff_digest, load_json, now_iso, protected_decomposition_state_path,
     repo_root, run_state_path, safe_factory_write_bytes,
+    proof_read_path,
 )
 
 
@@ -91,7 +92,7 @@ def _evidence_section(base: Path) -> list[str]:
     if not isinstance(story, str) or not story:
         return []
     lines: list[str] = []
-    verify = load_json(evidence_path(base, story, "verify.json"), default={})
+    verify = load_json(proof_read_path(base, story, "verify.json"), default={})
     if verify:
         ok = "ok" if verify.get("ok") is True else "FAILED"
         commit = str(verify.get("commit", ""))[:12]
@@ -100,7 +101,7 @@ def _evidence_section(base: Path) -> list[str]:
             if isinstance(result, dict) and result.get("command"):
                 code = result.get("exit_code")
                 lines.append(f"  - `{result['command']}` -> exit {code}")
-    tests = load_json(evidence_path(base, story, "tests.json"), default={})
+    tests = load_json(proof_read_path(base, story, "tests.json"), default={})
     automated = (tests or {}).get("automated")
     if isinstance(automated, dict):
         lines.append(f"- automated tests: {automated.get('status', 'unknown')}")

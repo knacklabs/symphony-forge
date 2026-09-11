@@ -426,7 +426,7 @@ sequence a JIT contract loop for every pending task:
 7. the orchestrator inspects the diff and rejects overbuilt code
 8. that stage's assumption rows are validated (`forge assumptions list --open`)
 9. smallest relevant checks run
-10. commit, then **`forge review <id>`** — ONE three-lens autoreview of the
+10. commit, then **`forge review <id>`** — ONE three-lens autoreview (the three lenses run together, one Codex process each, joined at the end; `--sequential` runs them one at a time) of the
    task's own delta, run by Codex with the settled contracts in the brief. A
    run with no blocking (P0/P1) finding STAMPS the stage, bound to that tree;
    non-blocking findings are recorded follow-ups. A blocking finding is ALWAYS
