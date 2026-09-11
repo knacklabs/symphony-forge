@@ -9139,8 +9139,8 @@ def test_roadmap_gate_workflow_shape():
     assert re.search(r"^  push:\s*$", workflow, re.MULTILINE)
     assert "  pr-contract:" in workflow
     assert "  coverage:" in workflow
-    assert workflow.count("- uses: actions/checkout@v4") == 2
-    assert workflow.count("- uses: actions/setup-python@v5") == 2
+    assert workflow.count("- uses: actions/checkout@v7") == 2
+    assert workflow.count("- uses: actions/setup-python@v7") == 2
     assert workflow.count("python-version: '3.11'") == 2
     assert workflow.count("id: arm") == 2
     assert workflow.count("constitution/VENDORED_FROM") == 2
