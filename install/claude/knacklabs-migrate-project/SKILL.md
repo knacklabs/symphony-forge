@@ -87,10 +87,30 @@ confirm it in one breath with the prototype-or-production question below.
    - **Production-intent repo**: leave the code in place; move only prototype
      artifacts (mockups, spikes, demo assets) into `prototype/`.
    - Everything unstructured — notes, transcripts, chat exports, old README
-     lore, the `migrated-*` files — belongs in `docs/context/`. Then:
+     lore, the `migrated-*` files — belongs in `docs/context/`. So do
+     tracker/doc exports (Jira, Confluence, wikis — whatever exists) the
+     client produces as agent-readable TEXT: no integrations, no parsers;
+     redact or split secret-shaped or oversized files first (the scanner
+     refuses them; small binaries get ledgered — manually ignore those).
+     No exports at all? Skip nothing else — the workflow is code-first:
+     specs are reverse-drafted from observed behavior (7c), git history
+     feeds the snapshot (6b), and the grill's legacy lens
+     (factory/prompts/griller.md) elicits the rest from whoever remains;
+     zero docs shifts canon toward pinned behavior and open items, not a
+     different workflow. Then:
    ```bash
    ./forge context scan
    ```
+
+6b. **Legacy inventory snapshot (one-time, time-boxed).** For a repo whose
+   authors are gone, write ONE shallow markdown snapshot into
+   `docs/context/inventory-<date>.md`: modules, dependency edges, churn,
+   author recency (recency is fact — "departed" only if a human says so).
+   Scan, harvest, and mark it like any inbox item; never edit it afterwards
+   (editing re-pends it and blocks planning). It exists only to pick the
+   first story well. There is no separate excavation tracker — progress
+   lives in grill open items and story/task state; modules no task touches
+   stay unexcavated at zero cost.
 
 7. **Harvest** (`factory/prompts/harvester.md`): distill
    `docs/product/DISCOVERY.md` and `BRIEF.md` from the context; propose a

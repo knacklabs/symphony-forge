@@ -1,0 +1,16 @@
+{
+  "generated_by": "claude-code:plan-mode",
+  "questions": [
+    {
+      "question": "The write lock blocks canon edits (factory/prompts/griller.md, install/.../SKILL.md) from this session. How should the two drafted edits land?",
+      "options": [
+        "You open lite, I forge fix (Recommended)",
+        "Full task ceremony + delegate",
+        "You edit directly"
+      ],
+      "chosen": "You open lite, I forge fix (Recommended)"
+    }
+  ],
+  "at": "2026-08-31T12:01:05.859875+00:00",
+  "session_id": "23d83fed-46b1-450d-9f2a-883644b3877f"
+}
