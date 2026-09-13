@@ -427,7 +427,12 @@ sequence a JIT contract loop for every pending task:
 8. that stage's assumption rows are validated (`forge assumptions list --open`)
 9. smallest relevant checks run
 10. commit, then **`forge review <id>`** — ONE three-lens autoreview (the three lenses run together, one Codex process each, joined at the end; `--sequential` runs them one at a time, and so does `forge review` itself while the installed review skill still lets TruffleHog self-update -- `forge doctor` shows which, `forge doctor --fix` refreshes it) of the
-   task's own delta, run by Codex with the settled contracts in the brief. A
+   task's own delta, run by Codex with the settled contracts in the brief. Each
+   lens runs INSIDE the reviewed worktree, read-only (0070): the diff is the
+   subject, and a verdict or finding about code the diff does not show -- a
+   callee, a file a contract names, the other places a contract covers -- is
+   read there and cited by line, never guessed; "cannot verify from the diff"
+   is not a verdict. A
    run with no blocking (P0/P1) finding STAMPS the stage, bound to that tree;
    non-blocking findings are recorded follow-ups. A blocking finding is ALWAYS
    fixed by re-delegating to Codex (`forge delegate <id>` — the stage is still

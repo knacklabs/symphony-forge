@@ -52,13 +52,38 @@ VERDICT_LINE = re.compile(
 )
 DEFAULT_SKILL = Path.home() / ".codex" / "skills" / "autoreview" / "scripts" / "autoreview"
 
+# The reviewer's working folder IS the reviewed worktree, read-only (decision
+# 0070): a verdict about code the diff does not show is read, not guessed.
 COMMON_PREAMBLE = """\
-You are one lens of a three-lens code review. You see ONLY the diff bundle for
-this task (no repository access), so judge what the diff shows and say so when
-something cannot be verified from it. Report every finding with its
+You are one lens of a three-lens code review. The diff bundle is the subject.
+Your working folder is the reviewed repository at the task tip, READ-ONLY; the
+skill's note that the sandbox is empty does not apply to this run. Judge the
+diff first. When a verdict or a finding depends on code the diff does not show
+-- the callee of a changed line, a file a contract names, the other places a
+contract covers -- open it (cat, sed -n, rg) and cite the line you read.
+"Cannot verify from the diff" is not a verdict and not a finding: a partial or
+missing verdict names the line that fails, and a finding about unchanged code
+names the line that shows the defect. Read to resolve, not to roam: no finding
+on code the diff neither touches nor calls. Report every finding with its
 file_path and line. Use ONLY these categories: bug, security, regression,
 test_gap, maintainability. Priorities: P0/P1 block the task; P2/P3 must be
 resolved or explicitly deferred with a reason before it ships.
+"""
+
+# The fallback when the tree cannot be offered (another engine, codex not on
+# PATH, or FORGE_REVIEW_EMPTY_WORKSPACE set): the reviewer is told so, and told
+# that what it cannot see is not thereby partial.
+DIFF_ONLY_PREAMBLE = """\
+You are one lens of a three-lens code review. You see ONLY the diff bundle for
+this task (no repository access). Judge what the diff shows. What the diff does
+not show is not thereby partial or missing: a contract whose evidence lies in
+unchanged code, or a call whose callee you cannot open, is verdicted
+implemented with the evidence "not in the bundle: <the file you would need>"
+so the host checks that line; reserve partial and missing for a line in the
+bundle that fails the contract. Report every
+finding with its file_path and line. Use ONLY these categories: bug, security,
+regression, test_gap, maintainability. Priorities: P0/P1 block the task; P2/P3
+must be resolved or explicitly deferred with a reason before it ships.
 """
 
 LENS_FOCUS = {
@@ -173,9 +198,11 @@ def _product_dirty(base: Path) -> list[str]:
     return dirty
 
 
-def _lens_prompt(task: dict, lens: str, base: Path | None = None) -> bytes:
+def _lens_prompt(task: dict, lens: str, base: Path | None = None, *,
+                 repo_readable: bool = True) -> bytes:
+    preamble = COMMON_PREAMBLE if repo_readable else DIFF_ONLY_PREAMBLE
     lines = [f"# Review brief — {task.get('id', '')} — {lens} lens", "",
-             COMMON_PREAMBLE, LENS_FOCUS[lens], LEFTOVER_INSTRUCTION]
+             preamble, LENS_FOCUS[lens], LEFTOVER_INSTRUCTION]
     if lens == "quality":
         lines += [QUALITY_VERDICT_FORMAT, VERDICT_INSTRUCTION, ""]
     lines += _task_section(task, base)
@@ -530,18 +557,26 @@ def _close_codex_run(root: Path, run_id: str, returncode) -> None:
 
 
 def _skill_argv(skill: Path, base_sha: str, prompt_rel: str, json_out: Path,
-                engine: str, max_priority: str) -> list[str]:
-    return [
+                engine: str, max_priority: str,
+                codex_bin: str | None = None) -> list[str]:
+    argv = [
         sys.executable, str(skill), "--mode", "branch", "--base", base_sha,
         "--engine", engine, "--max-priority", max_priority,
         "--prompt-file", prompt_rel, "--json-output", str(json_out),
     ]
+    if codex_bin:
+        # The launcher that starts Codex inside the reviewed worktree instead
+        # of the skill's empty folder (review_launcher, decision 0070).
+        argv += ["--codex-bin", codex_bin]
+    return argv
 
 
 def _run_skill(skill: Path, worktree: Path, base_sha: str, prompt_rel: str,
                json_out: Path, engine: str, max_priority: str,
-               ledger_root: Path | None = None) -> dict:
-    argv = _skill_argv(skill, base_sha, prompt_rel, json_out, engine, max_priority)
+               ledger_root: Path | None = None,
+               codex_bin: str | None = None) -> dict:
+    argv = _skill_argv(skill, base_sha, prompt_rel, json_out, engine, max_priority,
+                       codex_bin)
     # The ledger goes to the REPO's control dir: the review worktree is removed
     # when the review ends and its control dir pruned with it, so rows written
     # there never reach `forge codex status`.
@@ -627,7 +662,8 @@ def run_lenses(skill: Path, worktree: Path, base_sha: str, lenses: list[str],
                prompts: dict[str, tuple[str, bytes]], tmp: Path, engine: str,
                max_priority: str, *, parallel: bool, log_dir: Path,
                ledger_root: Path | None = None,
-               heartbeat_every: float = 60.0) -> dict[str, dict]:
+               heartbeat_every: float = 60.0,
+               codex_bin: str | None = None) -> dict[str, dict]:
     """Release every lens and return its report, keyed by lens.
 
     Sequential keeps the old shape: one lens at a time, stdio inherited so the
@@ -643,7 +679,7 @@ def run_lenses(skill: Path, worktree: Path, base_sha: str, lenses: list[str],
         for lens in lenses:
             reports[lens] = _run_skill(
                 skill, worktree, base_sha, prompts[lens][0], tmp / f"{lens}.json",
-                engine, max_priority, ledger_root=ledger_root)
+                engine, max_priority, ledger_root=ledger_root, codex_bin=codex_bin)
         return reports
 
     ledger = ledger_root or worktree  # same rule as _run_skill
@@ -653,7 +689,7 @@ def run_lenses(skill: Path, worktree: Path, base_sha: str, lenses: list[str],
         for lens in lenses:
             json_out = tmp / f"{lens}.json"
             argv = _skill_argv(skill, base_sha, prompts[lens][0], json_out,
-                               engine, max_priority)
+                               engine, max_priority, codex_bin)
             log = (log_dir / f"{lens}.log").open("wb")
             run_id = _record_codex_run(ledger, prompts[lens][0], argv)
             process = subprocess.Popen(
@@ -1238,10 +1274,12 @@ def review_task(base: Path, task_id: str, *, lens: str | None = None,
 
     skill = resolve_skill(getattr(args, "skill", None))
     lenses = [args.lens] if getattr(args, "lens", None) else list(LENSES)
+    from .review_launcher import repo_readable, write_launcher
+    readable, why_not = repo_readable(args.engine)
     prompts: dict[str, tuple[str, bytes]] = {}
     for lens in lenses:
         rel = f"review-briefs/{args.id}.{lens}.md"
-        body = _lens_prompt(task, lens, base)
+        body = _lens_prompt(task, lens, base, repo_readable=readable)
         if not safe_factory_write_bytes(base, rel, body):
             fail(f"could not write .factory/{rel}")
         prompts[lens] = (f".factory/{rel}", body)
@@ -1262,6 +1300,14 @@ def review_task(base: Path, task_id: str, *, lens: str | None = None,
             target = worktree / rel
             target.parent.mkdir(parents=True, exist_ok=True)
             target.write_bytes(body)
+        codex_bin = None
+        if readable:
+            codex_bin = str(write_launcher(tmp, worktree))
+            print("review lenses run inside the reviewed worktree, read-only: a "
+                  "verdict on unchanged code is read, not guessed (0070)", flush=True)
+        else:
+            print(f"review lenses see only the diff bundle ({why_not}); the brief "
+                  "tells them not to mark unseen code partial", flush=True)
         # Together by default: the lenses share nothing but the diff they
         # read. FORGE_REVIEW_SEQUENTIAL=1 or --sequential restores one at a
         # time (an account that rate-limits three sessions, or a debug run).
@@ -1279,7 +1325,8 @@ def review_task(base: Path, task_id: str, *, lens: str | None = None,
         reports = run_lenses(
             skill, worktree, base_sha, lenses, prompts, tmp, args.engine,
             args.max_priority, parallel=together,
-            log_dir=review_log_dir(base, args.id), ledger_root=base)
+            log_dir=review_log_dir(base, args.id), ledger_root=base,
+            codex_bin=codex_bin)
     finally:
         _git(base, "worktree", "remove", "--force", str(worktree))
         _git(base, "worktree", "prune")
