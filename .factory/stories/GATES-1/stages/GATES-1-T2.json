@@ -1,5 +1,14 @@
 {
   "id": "GATES-1-T2",
   "title": "Both grill guards read the ledger the same way",
-  "status": "pending"
+  "status": "active",
+  "started_at": "2026-09-13T06:47:15+00:00",
+  "base_sha": "f52c4c20c6da712b8dc250fb1b2a1903cf29db0e",
+  "dirty_at_start": {
+    ".factory/stories/GATES-1/grills/tasks/GATES-1-T2.json": {
+      "digest": "13548fde85f38b91a5e8960379ade5fa74334e8cbe4fffdcb91ae2cace6eb1e9",
+      "git": "1 .M N... 100644 100644 100644 af0f2b87d384be055c5a06f8783400922695c19f af0f2b87d384be055c5a06f8783400922695c19f .factory/stories/GATES-1/grills/tasks/GATES-1-T2.json\u0000\u0000100644 af0f2b87d384be055c5a06f8783400922695c19f 0\t.factory/stories/GATES-1/grills/tasks/GATES-1-T2.json\u0000\u0000H .factory/stories/GATES-1/grills/tasks/GATES-1-T2.json\u0000"
+    }
+  },
+  "task_sha256": "d1f7831fa00339af6830472898f9197c411ec58237da4ffa5c03c8107e76f2df"
 }
