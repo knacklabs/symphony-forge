@@ -93,12 +93,17 @@ across grills", whose intent — that every gate is genuinely ledger-matched —
 survives intact, because the only case relaxed is re-recording a gate whose
 question was already asked and answered.
 
-**The grill budget counts reads, not failures.** The launch ledger gains a
-terminal state per row. A read consumes an allowance only when it terminates as
-`answered`, meaning the launcher exited zero AND a verdict was captured. Rows
-terminating as `failed` or `interrupted` — a non-zero launcher exit, or an exit
-without a captured verdict, which is what the upstream compaction fault produces
-— consume nothing and are ignored by the repeat-read guard. Recording an escalation grants exactly one further read
+**The grill budget counts reads, not failures.** A read that failed consumes no
+allowance. The ledger already records this: the repeat-read guard ignores a
+launch whose terminal row is `failed`, while the cap counts every launch
+regardless. Two guards reading the same ledger disagree about what a read is, and
+the cap's answer is the wrong one — a crashed launcher spends an allowance that
+exists to stop a reader circling, when nothing circled.
+
+A third state for a read that exits zero having produced nothing was specified
+here and is deferred, not dropped: the upstream compaction fault that produced it
+is fixed in codex 0.154.0, and detecting it means decoding the companion's JSON
+payload, so it will be built when a run is actually observed doing it. Recording an escalation grants exactly one further read
 for that gate and task, and that grant is spent when the next read completes,
 clearing both the cap and the repeat-read guard, so the printed promise matches
 the behaviour.
@@ -133,10 +138,9 @@ the behaviour.
    rounds and needs no new question; a round is refused when reused across a
    different gate, story or task; and the floor of one real round per gate still
    holds. All four asserted.
-6. The launch ledger records a terminal state per row, and only an `answered`
-   row spends an allowance. A row that exits non-zero, and a row that exits zero
-   without a captured verdict, each leave the budget unchanged and are ignored by
-   the repeat-read guard. Asserted for all three states.
+6. A launch whose terminal row is `failed` spends no allowance, and the cap and
+   the repeat-read guard agree on that. Asserted both ways: a failed launch
+   leaves the budget unchanged, and a successful one still spends it.
 7. Recording an escalation permits exactly one further read for that gate and
    task, clearing both the cap and the repeat-read guard, and that grant is spent
    once the read completes. Asserted from an exhausted budget.
