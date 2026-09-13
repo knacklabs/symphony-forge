@@ -1,0 +1,70 @@
+{
+  "generated_by": "griller",
+  "gate": "task",
+  "verdict": "pass",
+  "issue": "GATES-1",
+  "decision": "keep",
+  "new_abstractions": [
+    "One collapsed terminal-launch view in grill.py \u2014 justified because two guards independently mis-read the same ledger, and a shared view is what stops them diverging again"
+  ],
+  "current_flow": "Every launch appends three rows to the delegation ledger: starting, then running, then a terminal row \u2014 confirmed against the live ledger, where all twelve grill launches are ('starting','running','succeeded'). _rounds_since_last_pass (grill.py:293) builds a SET of launch_ids from raw rows with no status filter at all, so any launch counts. _refuse_a_second_cold_read (grill.py:386) drops rows whose launch_status is 'failed', which looks like it excludes a failed launch but does not: that launch's starting and running rows are not failed, still carry its id, and the guard still refuses. Neither guard collapses rows per launch, so neither can act on how a launch actually ended.",
+  "criteria_map": {
+    "Rows are collapsed by launch_id to the latest row, and both guards consume that same view": "factory/scripts/forge_cli/grill.py:293 and factory/scripts/forge_cli/grill.py:386 \u2014 one helper reduces rows per launch_id to its latest, and both call it",
+    "A launch whose lifecycle ends starting, running, failed does not count toward the cap": "factory/scripts/forge_cli/grill.py:293 \u2014 the cap counts collapsed launches whose latest row is not failed",
+    "That same failed launch does not make the repeat-read guard refuse, which it does today": "factory/scripts/forge_cli/grill.py:386 \u2014 the guard's row-level filter is replaced by the collapsed view; its starting/running rows no longer survive the filter",
+    "A launch whose lifecycle ends starting, running, succeeded still counts, so the budget is not disabled": "factory/scripts/forge_cli/grill.py:293 \u2014 succeeded is not failed, so it counts exactly as today",
+    "A launch whose latest row is starting or running counts as a read in flight": "factory/scripts/forge_cli/grill.py:293 \u2014 only a latest row of failed is excluded",
+    "No new field is written to the delegation ledger, and launch_status keeps its existing values": "factory/scripts/forge_cli/delegate.py is outside the write scope; the fix reads existing rows"
+  },
+  "summary": "Three cold reads, and each cut the task rather than growing it. Read one found the escalation grant unbuildable here \u2014 open_escalation returns the first unspent record globally, the record carries no gate, the CLI has only --task \u2014 so it split to T5. Read two found the outcome field unbuildable as designed: the launcher runs the companion with --json, so stdout is a serialized object and the griller's CONVERGED marker never ends it; that deferred as D-0032 with a revisit trigger, and the confirmed spec was amended to stop promising it. Read three found the remaining premise wrong: the repeat-read guard does NOT already ignore failed launches, because row-level filtering cannot, so copying its filter to the cap would have fixed nothing. T2 is now one collapsed view consumed by both guards. The owner ruled both get fixed.",
+  "gaps": [
+    "The plan still described the answered/interrupted design in its Technical Approach, its acceptance summary and T5's dependency line, after only the T2 bullet had been narrowed."
+  ],
+  "contradictions": [
+    "The contract claimed the repeat-read guard already ignored failed launches and proposed copying that filter to the cap; the filter is row-level and a failed launch's starting and running rows defeat it, so both guards were broken and the proposed fix was a no-op."
+  ],
+  "resolutions": [
+    "Both guards move to one view that collapses rows by launch_id to the latest, and a launch is failed only when THAT row is failed.",
+    "Required tests seed real lifecycles \u2014 starting/running/failed and starting/running/succeeded, plus standalone starting and running \u2014 rather than synthetic single rows.",
+    "The plan's Technical Approach, acceptance summary and T5 dependency were rewritten to match; T5 now depends on the collapsed view rather than on an outcome field that will not exist.",
+    "The owner ruled that T2 fixes BOTH guards, accepting that a failed launch will no longer block a retry without --reread."
+  ],
+  "open_items": [],
+  "questions_asked": 1,
+  "rounds": [
+    {
+      "question": "The third read found the repeat-read guard is broken the same way as the cap. Fix both in T2, or only the cap?",
+      "options": [
+        "Fix both guards (Recommended)",
+        "Fix only the cap"
+      ],
+      "chosen": "Fix both guards (Recommended)",
+      "frontier_empty": true
+    }
+  ],
+  "inspected_refs": [
+    ".factory/stories/GATES-1/task-plans/GATES-1-T2.md",
+    "plans/active/GATES-1-gates-stale-only-on-what-they-read.md",
+    "docs/specs/gates-stale-only-on-what-they-read.md",
+    "factory/scripts/forge_cli/grill.py",
+    "factory/scripts/forge_cli/delegate.py",
+    "factory/scripts/forge_cli/signal.py",
+    "plans/deferrals.md"
+  ],
+  "citations": [
+    {
+      "finding": "The plan still described the answered/interrupted design in its Technical Approach, its acceptance summary and T5's dependency line, after only the T2 bullet had been narrowed.",
+      "source": "plans/active/GATES-1-gates-stale-only-on-what-they-read.md:189 \u2014 the Technical Approach paragraph still mandated a terminal state the task defers"
+    }
+  ],
+  "task_id": "GATES-1-T2",
+  "input_sha256": "8fbe785600e240030dfc45a4ccf8cb14c4cb158e577eb49b3266a5843b5fb919",
+  "grounding_basis": "working-tree",
+  "grounding_treeish": "",
+  "task_plan_sha256": "fc17b94dc6ba326de5eeddbf5a3bf8bbd4ec32bcf8a1fd585bab9d8fc7d56535",
+  "recorded_at": "2026-09-13T06:29:27+00:00",
+  "commit": "7bf3951cf5bc96378dc278fc075e239db85f20f3",
+  "approved_task_plan_sha256": "fc17b94dc6ba326de5eeddbf5a3bf8bbd4ec32bcf8a1fd585bab9d8fc7d56535",
+  "approved_by": "Ravi",
+  "approved_at": "2026-09-13T06:29:33+00:00"
+}

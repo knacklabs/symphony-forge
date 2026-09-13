@@ -5,12 +5,11 @@
       "id": "GATES-1-T1",
       "title": "A question round belongs to its gate and story",
       "status": "done",
-      "completed_at": "2026-09-13T05:34:04+00:00",
-      "task_sha256": "a65a1b9ab6f8921d7229371ec487e97f5c1ba1ba1d6795257fc4d03ccab8b849"
+      "task_sha256": "9b16215dc5a5621a18ee9a46e05704d8125144efb717c50dbe051f6f36efb371"
     },
     {
       "id": "GATES-1-T2",
-      "title": "The grill budget counts answered reads, not failures",
+      "title": "Both grill guards read the ledger the same way",
       "status": "pending"
     },
     {
@@ -21,6 +20,11 @@
     {
       "id": "GATES-1-T4",
       "title": "Post-stage task freshness keeps its selective binding",
+      "status": "pending"
+    },
+    {
+      "id": "GATES-1-T5",
+      "title": "An escalation grants exactly one further read, for that gate and task",
       "status": "pending"
     }
   ]

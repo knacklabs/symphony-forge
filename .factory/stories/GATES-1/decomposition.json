@@ -4,7 +4,7 @@
   "story": "GATES-1",
   "epic": "accountable-engineering",
   "plan_file": "plans/active/GATES-1-gates-stale-only-on-what-they-read.md",
-  "plan_sha256": "54710b56cc6467518f3ff39739edb4d761217b2a3a0997e2f4ae52af18e55c31",
+  "plan_sha256": "1a1dc27e1a6ec81951972052c3cdc5a84733226a3b1c2214b2c2943b1faec639",
   "tasks": [
     {
       "id": "GATES-1-T1",
@@ -124,17 +124,102 @@
     },
     {
       "id": "GATES-1-T2",
-      "title": "The grill budget counts answered reads, not failures",
-      "objective": "Launch rows gain a terminal state: answered (exit zero with a captured verdict), interrupted (exit zero, no verdict, which the upstream compaction fault produces) and failed. The launcher captures the verdict it does not capture today. The cap counts only answered rows, the repeat-read guard ignores the rest, and an escalation grants one further read for that gate and task, spent when it terminates answered.",
+      "title": "Both grill guards read the ledger the same way",
+      "objective": "Every launch appends starting, running, then a terminal row, and neither grill guard collapses them \u2014 so filtering rows by status cannot exclude a failed launch, whose starting and running rows still carry its id. The cap counts every launch regardless, and the repeat-read guard's existing failed-filter does not work. Both adopt one view that collapses rows by launch_id to the latest, so a launch whose latest row is failed spends no allowance and blocks no further read. No new ledger field.",
       "acceptance_criteria": [
-        "A launch row records a terminal state of answered, interrupted or failed, with the verdict captured for answered",
-        "Only an answered row decrements the grill allowance, asserted for all three states",
-        "The repeat-read guard ignores interrupted and failed rows",
-        "Recording an escalation grants exactly one further read scoped to that gate and task",
-        "That grant is spent when the granted read terminates answered, and not before"
+        "Rows are collapsed by launch_id to the latest row, and both guards consume that same view",
+        "A launch whose lifecycle ends starting, running, failed does not count toward the cap",
+        "That same failed launch does not make the repeat-read guard refuse, which it does today",
+        "A launch whose lifecycle ends starting, running, succeeded still counts, so the budget is not disabled",
+        "A launch whose latest row is starting or running counts as a read in flight",
+        "No new field is written to the delegation ledger, and launch_status keeps its existing values"
       ],
       "depends_on": [],
-      "user_facing": false
+      "user_facing": false,
+      "plan_contracts": [
+        {
+          "id": "GATES-1-T2-C1",
+          "statement": "Rows are collapsed by launch_id to the latest row, and both guards consume that same view",
+          "source": "plans/active/GATES-1-gates-stale-only-on-what-they-read.md \u00a7 Acceptance Criteria"
+        },
+        {
+          "id": "GATES-1-T2-C2",
+          "statement": "A launch whose lifecycle ends starting, running, failed does not count toward the cap",
+          "source": "plans/active/GATES-1-gates-stale-only-on-what-they-read.md \u00a7 Acceptance Criteria"
+        },
+        {
+          "id": "GATES-1-T2-C3",
+          "statement": "That same failed launch does not make the repeat-read guard refuse, which it does today",
+          "source": "plans/active/GATES-1-gates-stale-only-on-what-they-read.md \u00a7 Acceptance Criteria"
+        },
+        {
+          "id": "GATES-1-T2-C4",
+          "statement": "A launch whose lifecycle ends starting, running, succeeded still counts, so the budget is not disabled",
+          "source": "plans/active/GATES-1-gates-stale-only-on-what-they-read.md \u00a7 Acceptance Criteria"
+        },
+        {
+          "id": "GATES-1-T2-C5",
+          "statement": "A launch whose latest row is starting or running counts as a read in flight",
+          "source": "plans/active/GATES-1-gates-stale-only-on-what-they-read.md \u00a7 Acceptance Criteria"
+        },
+        {
+          "id": "GATES-1-T2-C6",
+          "statement": "No new field is written to the delegation ledger, and launch_status keeps its existing values",
+          "source": "plans/active/GATES-1-gates-stale-only-on-what-they-read.md \u00a7 Acceptance Criteria"
+        }
+      ],
+      "write_scope": [
+        "factory/scripts/forge_cli/grill.py",
+        "factory/tests/test_grill_budget.py"
+      ],
+      "required_tests": [
+        {
+          "id": "test_a_failed_lifecycle_does_not_count_toward_the_cap",
+          "path": "factory/tests/test_grill_budget.py",
+          "command": "uv run --with pytest --with psutil python -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_a_failed_lifecycle_does_not_block_the_repeat_read_guard",
+          "path": "factory/tests/test_grill_budget.py",
+          "command": "uv run --with pytest --with psutil python -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_a_succeeded_lifecycle_still_counts",
+          "path": "factory/tests/test_grill_budget.py",
+          "command": "uv run --with pytest --with psutil python -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_a_launch_still_in_flight_counts",
+          "path": "factory/tests/test_grill_budget.py",
+          "command": "uv run --with pytest --with psutil python -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_both_guards_agree_on_the_same_collapsed_view",
+          "path": "factory/tests/test_grill_budget.py",
+          "command": "uv run --with pytest --with psutil python -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_no_new_ledger_field_is_written",
+          "path": "factory/tests/test_grill_budget.py",
+          "command": "uv run --with pytest --with psutil python -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        }
+      ],
+      "verify_commands": [
+        "uv run --with pytest --with psutil python -m pytest factory/tests -q"
+      ],
+      "review_budget": {
+        "max_changed_files": 2,
+        "max_changed_lines": 200,
+        "reason": "One collapsed terminal-launch view in grill.py consumed by both guards, and one new suite seeding real row lifecycles. Two earlier drafts were cut by their own cold reads: the outcome field (the companion emits JSON, D-0032) and the escalation grant (scoping does not exist, split to T5)."
+      },
+      "reviewer_focus": [
+        "That rows are collapsed by launch_id to the LATEST row, since a failed launch's starting and running rows are not failed and defeated the previous row-level filter",
+        "That the repeat-read guard's existing filter is actually fixed, not merely copied: it looks correct today and is not",
+        "That tests seed real lifecycles \u2014 starting, running, failed and starting, running, succeeded, plus standalone starting and running \u2014 rather than synthetic single rows",
+        "That a successful launch still spends an allowance, or the budget is disabled rather than corrected",
+        "That nothing new is written to the ledger, since the fix is to READ what was always there",
+        "That no answered/interrupted outcome sneaks in: deferred as D-0032 because the companion is invoked with --json"
+      ]
     },
     {
       "id": "GATES-1-T3",
@@ -166,8 +251,25 @@
         "GATES-1-T3"
       ],
       "user_facing": false
+    },
+    {
+      "id": "GATES-1-T5",
+      "title": "An escalation grants exactly one further read, for that gate and task",
+      "objective": "Recording an escalation grants exactly one further cold read scoped to the gate and task it was raised for, and that grant passes BOTH the cap and the repeat-read guard. Today an open escalation clears the cap alone, so the human is told grilling continues and is then refused by a second guard. The grant is claimed atomically and spent when the granted read completes, per the confirmed spec.",
+      "acceptance_criteria": [
+        "An escalation record carries the gate and task it was raised for",
+        "An open escalation grants one further read for that gate and task, and not for any other",
+        "The granted read passes both the cap and the repeat-read guard",
+        "The grant is claimed atomically, so two concurrent launches cannot both spend it",
+        "The grant is spent when the granted read completes, per the confirmed spec",
+        "A second read without a new escalation is refused"
+      ],
+      "depends_on": [
+        "GATES-1-T2"
+      ],
+      "user_facing": false
     }
   ],
   "project": "",
-  "commit": "1e8779d579799f8a81b92fed5ca0bbd1acc80cba"
+  "commit": "7bf3951cf5bc96378dc278fc075e239db85f20f3"
 }

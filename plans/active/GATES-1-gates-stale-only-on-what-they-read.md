@@ -2,7 +2,7 @@
 issue: GATES-1
 title: Gates stale only on what they read
 status: approved
-saved: 2026-09-13T05:22:52+00:00
+saved: 2026-09-13T06:23:47+00:00
 story: GATES-1
 decisions_reviewed:
   - 0001-determinism-contract
@@ -117,8 +117,8 @@ leave a pass valid and edits inside it stale the pass, including a newly accepte
 decision; one predicate used by all six gates, the board and the next-step text;
 review stamps surviving contract re-records that leave the delta unchanged;
 same-gate round reuse with the per-gate floor intact; ledger terminal states
-where only an answered read spends an allowance; and a bounded command-grammar
-check.
+where a launch whose latest row is failed spends no allowance and blocks no
+further read; and a bounded command-grammar check.
 
 ## Technical Approach
 
@@ -186,12 +186,18 @@ earlier draft of this plan required, breaks the ordinary flow instead — spec,
 signoff and epics are recorded while a story IS active, so their rounds live in
 that story's directory. The gate tests caught it. Those gates are unchanged.
 
-**The ledger learns what happened.** Launch rows gain a terminal state:
-`answered` for exit zero with a captured verdict, `failed` for a non-zero exit,
-`interrupted` for exit zero without a verdict, which is what the upstream
-compaction fault produces. The cap counts only `answered`, and the repeat-read
-guard ignores the other two. Escalation grants exactly one further read scoped to
-the gate and task, spent when that read terminates as `answered`.
+**Both grill guards read the ledger the same way.** Every launch appends
+`starting`, then `running`, then a terminal row. Neither guard collapses them, so
+filtering rows by status cannot exclude a failed launch: its `starting` and
+`running` rows are not failed and still carry its id. The cap counts every launch
+regardless, and the repeat-read guard's existing failed-filter does not actually
+work. Both move to one view that collapses rows by `launch_id` to the latest, and
+a launch whose latest row is `failed` spends nothing and blocks nothing.
+
+A third state for a read that exits zero having produced nothing is deferred as
+D-0032. The launcher runs the companion with `--json`, so the griller's verdict
+marker never ends raw stdout, and detecting a silent read needs payload decoding
+the fix above does not.
 
 **The manifest is derived, never declared.** The recorder builds it from the
 FINAL pass payload rather than trusting an author to list inputs: it resolves
@@ -233,7 +239,7 @@ decision.
 
 ## Task Decomposition
 
-FOUR tasks. The plan gate read this twice and each round asked the plan to
+FIVE tasks. The plan gate read this twice and each round asked the plan to
 specify a mechanism at code level; four distinct mechanisms are involved, and
 that depth belongs in a task contract rather than here. Splitting also lets the
 two small mechanisms land while the manifest work is still being designed.
@@ -244,13 +250,28 @@ two small mechanisms land while the manifest work is still being designed.
   where evidence already lives, so no hook, round or schema changes. Carries the
   test-baseline comparator the stage cannot close without, which is why it ships
   first: the other three cannot close a stage without it.
-- **T2 Ledger terminal states.** Launch rows move from `succeeded`/`failed` to a
-  terminal state that distinguishes `answered` (exit zero WITH a captured
-  verdict) from `interrupted` (exit zero, no verdict — what the upstream
-  compaction fault produces) and `failed`. The cap counts only `answered`; the
-  repeat-read guard ignores the rest; escalation grants one further read for that
-  gate and task, spent when it terminates `answered`. Needs the verdict capture
-  the launcher does not do today. Depends on T1 only for the comparator.
+- **T2 The cap and the repeat-read guard agree.** A failed launch spends no
+  allowance. The repeat-read guard already ignores a launch whose terminal row is
+  `failed`; `_rounds_since_last_pass` counts every launch regardless, so a
+  crashed launcher burns an allowance that exists to stop a reader circling. The
+  cap adopts the filter the other guard already uses — existing data, no new
+  field. Independent of the other tasks.
+
+  A third state for a read that exits zero having produced nothing is deferred as
+  D-0032, not dropped. The launcher runs the companion with `--json`, so stdout
+  is a serialized object whose verdict text is in `rawOutput`, not raw text
+  ending in the griller's marker; detecting it needs payload decoding, an
+  end-anchored grammar, failure precedence for the host-side branches that write
+  `failed` after a zero exit, and an outcome config on the starting row for
+  read-launch recovery. The fault that motivated it is fixed in codex 0.154.0.
+- **T5 The escalation grant.** An escalation grants exactly one further read for
+  THAT gate and task. This is separate from T2 because the scoping does not
+  exist: `open_escalation` returns the first unspent record globally, the record
+  carries no gate, and the CLI exposes only `--task`, so one escalation silently
+  unlocks a different gate. It needs `signal.py`, `forge.py`, the schema and the
+  existing cap test — and an atomic claim, since two launches can both observe an
+  unspent grant. The spend rule follows the confirmed spec: the grant is spent
+  when the granted read COMPLETES, not only when it answers. Depends on T2.
 - **T3 The manifest producer and freshness predicate.** ONE authoritative
   per-gate producer of manifest inputs, returning normalised repo-relative paths
   rather than the display text gate locators return today, and handling the
@@ -268,9 +289,16 @@ two small mechanisms land while the manifest work is still being designed.
   objective or criteria. Preserves 0066's post-stage binding rather than
   replacing it, and restores the stamp path to `delta_id` only. Depends on T3.
 
-Order: T1, then T2, then T3, then T4. The order is by dependency: T4 needs T3's
-manifest, and T1 and T2 are independent of both. Nothing is sequenced by a shared
-verification helper, because none is needed — see the note on the suite below.
+Order: T1, then T2, then T3, then T4, with T5 after T2. The order is by
+dependency: T4 needs T3's manifest, T5 needs T2's collapsed terminal-launch view
+to decide when a granted read has been spent, and T1 and T2 are independent of
+both. Nothing is sequenced by a shared verification helper, because
+none is needed — see the note on the suite below.
+
+T5 was split out of T2 when T2's contract was read cold. T2 was carrying two
+mechanisms that share a sentence in the spec but no code: counting what a read
+produced, and granting a further read. Only the first fits three files, and the
+second turned out to rest on scoping the repo does not have.
 
 ## Risks
 

@@ -1,0 +1,15 @@
+{
+  "generated_by": "claude-code:plan-mode",
+  "questions": [
+    {
+      "question": "The third read found the repeat-read guard is broken the same way as the cap. Fix both in T2, or only the cap?",
+      "options": [
+        "Fix both guards (Recommended)",
+        "Fix only the cap"
+      ],
+      "chosen": "Fix both guards (Recommended)"
+    }
+  ],
+  "at": "2026-09-13T06:28:46.523948+00:00",
+  "session_id": "b4051e43-dbea-4d62-ba73-ae6210455474"
+}
