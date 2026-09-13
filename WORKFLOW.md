@@ -427,13 +427,27 @@ sequence a JIT contract loop for every pending task:
 8. that stage's assumption rows are validated (`forge assumptions list --open`)
 9. smallest relevant checks run
 10. commit, then **`forge review <id>`** — ONE three-lens autoreview (the three lenses run together, one Codex process each, joined at the end; `--sequential` runs them one at a time, and so does `forge review` itself while the installed review skill still lets TruffleHog self-update -- `forge doctor` shows which, `forge doctor --fix` refreshes it) of the
-   task's own delta, run by Codex with the settled contracts in the brief. A
+   task's own delta, run by Codex with the settled contracts in the brief. Each
+   lens runs INSIDE the reviewed worktree, read-only (0070): the diff is the
+   subject, and a verdict or finding about code the diff does not show -- a
+   callee, a file a contract names, the other places a contract covers -- is
+   read there and cited by line, never guessed; "cannot verify from the diff"
+   is not a verdict. A
    run with no blocking (P0/P1) finding STAMPS the stage, bound to that tree;
    non-blocking findings are recorded follow-ups. A blocking finding is ALWAYS
    fixed by re-delegating to Codex (`forge delegate <id>` — the stage is still
    active), committed, and reviewed again; the orchestrator never stops to ask
-   who fixes. A finding that contradicts an accepted decision, a plan section or
-   a sealed contract is not a defect: `forge review <id> --reject "<text>"
+   who fixes. It is never relayed unread: the orchestrator TRIAGES each finding
+   first — opens the cited line and the code it calls, decides real or not with
+   a file:line it read, and for a real one searches the repo for every other
+   place the same contract applies — and records it (`forge review <id> --triage
+   "<text>" --lens <l> --real --evidence <file:line> --instance <file:line> ...
+   [--keep "<what must not change>"] --by <agent>`, or `--not-a-defect --evidence
+   <file:line> --reason ...`). The fix brief carries the triage beside each
+   finding, and `forge delegate` warns on any left without one. A finding relayed
+   unread is how one class of defect costs one round per file (WF-1 T5: six
+   reviews, eight fix rounds; decision 0069). A finding that contradicts an
+   accepted decision, a plan section or a sealed contract is not a defect: `forge review <id> --reject "<text>"
    --lens <l> --reason ... --cite <decision|contract|section> --by <agent>`
    records the rejection, ledgers the contract as a lesson and stamps when no
    lens blocks. The ONE exception to re-delegating: a fix that genuinely

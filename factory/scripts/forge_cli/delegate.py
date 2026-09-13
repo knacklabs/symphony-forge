@@ -991,10 +991,11 @@ def _review_findings_section(base: Path, task: dict, story: str) -> str:
     artifacts are the findings; the brief now carries them verbatim.
     """
     from factory_lib import load_json, proof_path
+    from .review import blocking_with_triage
     task_id = str(task.get("id") or "")
     if not story or not task_id:
         return ""
-    blocking: list[tuple[str, dict]] = []
+    blocking = blocking_with_triage(base, story, task_id)
     caveats: list[tuple[str, dict]] = []
     for lens in ("quality", "performance", "security"):
         artifact = load_json(
@@ -1004,8 +1005,6 @@ def _review_findings_section(base: Path, task: dict, story: str) -> str:
             continue
         if artifact.get("task_id") not in (None, task_id):
             continue
-        blocking += [(lens, f) for f in artifact.get("blocking_findings") or []
-                     if isinstance(f, dict)]
         caveats += [(lens, f) for f in artifact.get("non_blocking_findings") or []
                     if isinstance(f, dict)]
     if not blocking and not caveats:
@@ -1016,13 +1015,39 @@ def _review_findings_section(base: Path, task: dict, story: str) -> str:
         return (f"- [{lens}] {finding.get('category', '')}: {finding.get('summary', '')}"
                 + (f" ({where})" if where else ""))
 
+    def triaged(lens: str, finding: dict, triage: dict | None) -> str:
+        # The host read the code before this launch, or did not. Either way
+        # the worker is told which, so a raw claim is never mistaken for a
+        # verified one (WF-1 T5: eleven of twenty-five were claims).
+        if triage is None:
+            return line(lens, finding) + (
+                "\n  - HOST TRIAGE: none recorded. This is the reviewer's claim, "
+                "unverified: open the cited line and the code it calls before you "
+                "change anything, and fix the whole class the contract names, "
+                "not only the file the review cited.")
+        out = [line(lens, finding),
+               f"  - HOST TRIAGE (real, {triage.get('triaged_by', '')}): proof "
+               f"{triage.get('evidence', '')}.",
+               "  - Fix at EVERY one of: "
+               + ", ".join(str(i) for i in triage.get("instances") or []) + "."]
+        if triage.get("keep"):
+            out.append(f"  - Keep unchanged: {triage['keep']}")
+        if triage.get("reason"):
+            out.append(f"  - Why: {triage['reason']}")
+        return "\n".join(out)
+
     parts = []
     if blocking:
+        done = sum(1 for _, _, triage in blocking if triage is not None)
         parts.append(
             "These are the review's BLOCKING findings on this task's current "
             "diff. This launch exists to close them; the seal refuses until a "
-            "review records none. Fix each, or say in a signal why it is not a "
-            "defect.\n\n" + "\n".join(line(*item) for item in blocking))
+            "review records none. The host's triage under a finding is binding: "
+            "fix it at every instance listed and leave what it says to keep. A "
+            "finding without one is unverified: read the code first, then fix "
+            "the class. Say in a signal why something is not a defect.\n\n"
+            f"{done} of {len(blocking)} triaged by the host.\n\n"
+            + "\n".join(triaged(*item) for item in blocking))
     if caveats:
         parts.append(
             "Non-blocking follow-ups (fix only when cheap and in scope; "
@@ -1357,6 +1382,17 @@ def cmd_delegate(args: argparse.Namespace) -> None:
              "or use --read-only for background exploration.")
     state = load_json(run_state_path(base), default={})
     story = str(state.get("story") or state.get("issue_key") or "")
+    if story:
+        # Not a refusal: the launch goes ahead, and the gap is said out loud
+        # where the coordinator is looking (decision 0069).
+        from .review import untriaged_blocking
+        left, total = untriaged_blocking(base, story, args.id)
+        if left:
+            print(f"WARNING: {left} of {total} blocking finding(s) on {args.id} "
+                  "are untriaged -- the worker gets the raw claim. Open the cited "
+                  "line and the code it calls, then `./forge review "
+                  f"{args.id} --triage ...` before launching (WORKFLOW.md Stage Loop).",
+                  flush=True)
     text = compose_brief(base, task, write=write,
                          user_facing=bool(task.get("user_facing")),
                          story=story)

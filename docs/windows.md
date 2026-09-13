@@ -64,3 +64,15 @@ surface enforced by the current checker.
 WSL2 is optional, not a prerequisite. Use it as an escape hatch when policy or
 machine configuration prevents the supported native Windows path from
 converging; inside WSL2, follow the normal Linux setup.
+
+## Review lenses read the worktree
+
+`forge review` starts each lens inside the review worktree, read-only, through
+a launcher that also carries `[windows] sandbox = "elevated"` and the real
+`CODEX_HOME` past the skill's isolation (decision 0070). It needs the elevated
+sandbox set up once on the machine (the `.sandbox` folders under
+`~/.codex`); until then the lens's shell commands fail with "blocked by
+policy" or error 1223, and the fix is to run one interactive Codex session
+with the sandbox enabled so it completes set-up. Each run leaves
+`bin/launch.log` beside the review worktree with the exact Codex command it
+started.
