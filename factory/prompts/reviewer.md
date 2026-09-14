@@ -2,7 +2,7 @@
 
 Review runs ONCE per task, after `verify.py` passes and the automated testing
 artifact is recorded, and before `task pr-ready`. The orchestrator releases it
-with **`./forge review <task-id>`** (decisions 0011, 0049): that command runs
+with **`./forge review <task-id>`** (accepted decisions 0011, 0054 and 0069): that command runs
 the autoreview skill with Codex as its engine — one helper call covering all
 three lenses, in a clean worktree pinned at the task tip, over the whole task
 diff from its recorded base — watches it, and records one immutable selected
@@ -52,7 +52,8 @@ Procedure:
    contract the reviewer did not verdict is recorded as `partial` (fail-closed)
    so it surfaces as a blocking finding rather than passing silently. Verdicts
    are required for the reviewed task's contracts and those of tasks already
-   done; tasks that have not started are not verdicted (0049).
+   done; tasks that have not started are not verdicted under the accepted
+   per-task proof model in 0054, as preserved by 0069.
 2. Review through THREE lenses and emit one JSON per lens matching
    `factory/schemas/review.json`, each with `"generated_by": "autoreview"`:
    - **quality** — correctness, regressions, gaps in the implementer's tests,

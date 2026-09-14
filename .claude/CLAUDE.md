@@ -9,7 +9,7 @@ The user and host select the main coordinator model and reasoning; Forge-managed
 
 - Claude Code coordinates: discovery, planning, decisions, orchestration.
 - Codex executes: exploration, implementation, testing, AND the review — ONE
-  three-lens pass PER TASK, run by `./forge task close <id>` (Codex engine, never nested; records the task's proof — 0011/0049), WATCHED; loop fixes→close until clean → PR → poll CI green. Never stop at review, and never turn a finding into a menu for the human (AGENTS.md "Review findings are not a menu").
+  three-lens pass PER TASK, run by `./forge task close <id>` (Codex engine, never nested; records the task's proof under accepted 0011/0054/0069), WATCHED; loop fixes→close until clean → PR → poll CI green. Never stop at review, and never turn a finding into a menu for the human (AGENTS.md "Review findings are not a menu").
 - READ BEFORE YOU ASSERT (planner.md): open the type/enum/route/decision you write a rule about — docs record the design, the grill checks what was built. Delegate BREADTH only: `/codex:rescue` read-only, NEVER raw `codex exec`.
 
 ## codex-plugin-cc

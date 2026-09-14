@@ -1,5 +1,6 @@
 """forge review <task-id> — release Codex for a task's three-lens review and
-record the three artifacts as that task's proof (decisions 0011, 0049).
+record the three artifacts as that task's proof (accepted decisions 0011,
+0054 and 0069).
 
 One command replaces the hand-assembled skill invocation the coordinator used
 to get wrong: it pins the task tip in a clean detached worktree (so harness
@@ -854,7 +855,8 @@ def _contract_verdicts(
 ) -> list[dict]:
     """Verdicts for the reviewed task come from the reviewer; contracts of other
     tasks already done are attested as shipped at their own seal; contracts of
-    tasks that have not started are not required (recorder, decision 0049)."""
+    tasks that have not started are not required under the accepted per-task
+    proof model (recorder, decisions 0054 and 0069)."""
     out: list[dict] = []
     parsed = _parse_verdicts(
         verdict_texts if verdict_texts is not None else _verdict_texts(reviewed)

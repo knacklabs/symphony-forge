@@ -28,7 +28,7 @@ It provides:
 
 Claude Code coordinates discovery, planning, decisions, and orchestration through `codex-plugin-cc`. Its hook always denies product and canon writes; planning exploration is delegated to Codex read-only runs.
 
-Codex executes exploration, implementation, testing, and the review: the orchestrating session releases ONE three-lens pass per task with `./forge review <task-id>` (Codex-run, never a nested companion job; recorded as that task's proof — 0011, 0049), watches it, and loops it until clean, delegating fixes back to Codex. `./forge delegate` is the sole normal write path; a five-file `forge mode degraded` window is the ledgered outage exception. The `.factory` artifacts are required in either route.
+Codex executes exploration, implementation, testing, and the review: the orchestrating session releases ONE three-lens pass per task with `./forge review <task-id>` (Codex-run, never a nested companion job; recorded as that task's proof under accepted 0011, 0054 and 0069), watches it, and loops it until clean, delegating fixes back to Codex. `./forge delegate` is the sole normal write path; a five-file `forge mode degraded` window is the ledgered outage exception. The `.factory` artifacts are required in either route.
 
 ## Phase Contract
 
@@ -40,7 +40,7 @@ Codex executes exploration, implementation, testing, and the review: the orchest
 3. wait for approval
 4. per task: plan-mode JIT contract → re-record → grill → stage start → `./forge delegate`; measure under 0018
 5. run deterministic verify
-6. review, once per task after implementation and verify: `./forge review <task-id>` releases Codex for the three lenses and records them as the task's proof (0049), then LOOP — delegate fixes to Codex, re-review — until every lens is clean (never a menu for the human — `docs/QUALITY.md`)
+6. review, once per task after implementation and verify: `./forge review <task-id>` releases Codex for the three lenses and records them as the task's proof under accepted 0054 and 0069, then LOOP — delegate fixes to Codex, re-review — until every lens is clean (never a menu for the human — `docs/QUALITY.md`)
 7. run the functional check when the decomposition says `user_facing: true`
 8. record the shipped outcome, mark PR ready, open the PR to the default branch, and poll CI green (fixing CI failures)
 
@@ -104,7 +104,7 @@ Closeout never re-verifies. Story proof is only `outcome.json`
 - Evidence enters `.factory/` only via schema-validated recorders (pinned `generated_by`), never by hand.
 - Narration budget (conduct §8): one line per state change; findings and refusals always in full; process chatter never.
 - Follow [bounded recovery](docs/QUALITY.md#bounded-recovery) in every phase; repeated unchanged failures need a diagnosed, tested fix before another model run.
-- Review = ONE three-lens pass PER TASK via `./forge review <id>`, run by Codex, looped until clean (review → delegate fixes → re-review) and recorded before `pr-ready` (0011, 0049); never nested reviewers.
+- Review = ONE three-lens pass PER TASK via `./forge review <id>`, run by Codex, looped until clean (review → delegate fixes → re-review) and recorded before `pr-ready` under accepted 0011, 0054 and 0069; never nested reviewers.
 - One worktree/story; sequential tasks; dependency-ready stories may parallelize (0002). Delegation/proof commands are trusted inputs; observed descendant cleanup is not hostile-code containment.
 - Keep the template repo independent of any client-specific source repo.
 - Do not keep long policy blocks in `AGENTS.md`; move them into docs.
