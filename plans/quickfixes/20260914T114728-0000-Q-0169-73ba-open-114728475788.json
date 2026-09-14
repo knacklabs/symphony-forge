@@ -1,0 +1,13 @@
+{
+  "event": "open",
+  "id": "Q-0169-73ba",
+  "profile": "degraded",
+  "reason": "normal delegation is unavailable because this branch's hook runtime differs from the parent; restore governed native reapproval after approved plan edits",
+  "started_at": "2026-09-14T11:47:28+00:00",
+  "max_files": 5,
+  "files": [],
+  "harness_source": true,
+  "kind": "degraded",
+  "task_id": "LEAN-WORKFLOW",
+  "story": "FORGE-COORD-1"
+}

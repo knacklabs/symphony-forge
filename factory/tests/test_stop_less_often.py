@@ -26,6 +26,31 @@ sys.path.insert(0, str(HARNESS / "factory" / "scripts"))
 
 
 # ------------------------------------------------- a plan edited after approval
+def test_an_edited_story_plan_routes_to_native_reapproval_without_a_cold_read(
+        repo: Path, tmp_path):
+    sign_off(repo)
+    intake(repo)
+    code, out = save_plan(repo, tmp_path)
+    assert code == 0, out
+    lib = load_factory_lib(repo)
+    state = json.loads(lib.run_state_path(repo).read_text())
+    plan = repo / state["plan_file"]
+    grill = story_state(repo) / "grills" / "plan.json"
+    original_grill = grill.read_bytes()
+    plan.write_text(
+        plan.read_text(encoding="utf-8") + "\nApproved amendment.\n",
+        encoding="utf-8",
+    )
+
+    code, out = run(repo, "forge.py", "next")
+
+    assert code == 0, out
+    assert "PHASE: awaiting amended-plan approval" in out
+    assert "Display its exact current bytes in native Plan Mode" in out
+    assert "do not launch another plan cold read" in out
+    assert grill.read_bytes() == original_grill
+
+
 def test_a_plan_edited_after_approval_goes_to_the_human_not_the_grill(
         repo: Path, tmp_path):
     """The rule the human asked for: strict, but not another cold read.

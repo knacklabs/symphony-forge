@@ -734,6 +734,7 @@ with delegation_exclusion(
                 row["measurement_continuity"] = receipts_by_task[row.get("id")]
         write_stages(root, refreshed_stages)
     state["decomposition_status"] = "recorded"
+    state["decomposition_plan_sha256"] = approved_sha256
     state["updated_at"] = now_iso()
     dump_json(run_state_path(root), state)
     from forge_cli.events import append_event  # noqa: E402

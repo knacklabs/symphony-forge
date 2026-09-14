@@ -14762,8 +14762,9 @@ def test_edited_approved_plan_refused_at_rerecord_and_stage_start(repo, tmp_path
     )
     assert code != 0, out
     expected_refusal = (
-        "approved plan binding is missing or no longer matches the live plan. "
-        "Re-grill the current plan and re-approve it."
+        "approved plan binding no longer matches the live plan. Display the "
+        "exact current plan in native Plan Mode and consume a fresh approval; "
+        "a post-approval edit returns to its approver, not another cold read."
     )
     assert out.strip() == expected_refusal
     shared_refusal = out
@@ -14777,7 +14778,10 @@ def test_edited_approved_plan_refused_at_rerecord_and_stage_start(repo, tmp_path
     plan.unlink()
     code, out = run(repo, "forge.py", "stage", "start", "T1", "--trunk")
     assert code != 0, out
-    assert out == shared_refusal
+    assert out.strip() == (
+        "approved plan binding is missing or no longer matches the live plan. "
+        "Complete the current plan grill and native approval."
+    )
 
 
 def test_no_prompt_authors_build_waves(repo):

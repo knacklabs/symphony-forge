@@ -3683,16 +3683,29 @@ def require_approved_plan_digest(root: Path) -> str:
         if plan is not None and plan.is_file()
         else None
     )
+    live = (
+        plan_digest_without_assumptions(plan)
+        if plan is not None and plan.is_file()
+        else None
+    )
+    if (state.get("plan_status") == "approved"
+            and isinstance(approved, str) and approved
+            and live is not None and live != approved):
+        raise SystemExit(
+            "approved plan binding no longer matches the live plan. Display the "
+            "exact current plan in native Plan Mode and consume a fresh approval; "
+            "a post-approval edit returns to its approver, not another cold read."
+        )
     if (
         not isinstance(approved, str)
         or not approved
         or plan is None
         or not plan.is_file()
-        or plan_digest_without_assumptions(plan) != approved
+        or live != approved
     ):
         raise SystemExit(
             "approved plan binding is missing or no longer matches the live plan. "
-            "Re-grill the current plan and re-approve it."
+            "Complete the current plan grill and native approval."
         )
     return approved
 

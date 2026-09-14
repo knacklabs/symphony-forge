@@ -9,13 +9,28 @@ from pathlib import Path
 
 from factory_lib import (
     client_signoff, evidence_path, load_json, repo_root,
-    require_all_stages_done, run_state_path, task_frontier_state,
+    plan_digest_without_assumptions, require_all_stages_done, run_state_path,
+    task_frontier_state,
 )
 
 from .context import pending_context
 from .quickfix import load_active, profile_of
 from .roadmap import cmd_heal, leverage, load_items, ready_pending
 from .signal import open_signals
+
+
+def _approved_plan_changed(base: Path, state: dict) -> bool:
+    """Whether an approved story plan now has different semantic bytes."""
+    if state.get("plan_status") != "approved":
+        return False
+    approved = state.get("approved_plan_sha256")
+    relative = state.get("plan_file")
+    if (not isinstance(approved, str)
+            or re.fullmatch(r"[0-9a-f]{64}", approved) is None
+            or not isinstance(relative, str)):
+        return False
+    plan = base / relative
+    return plan.is_file() and plan_digest_without_assumptions(plan) != approved
 
 
 def _auto_heal_roadmap_after_merge(base: Path) -> None:
@@ -392,6 +407,16 @@ def cmd_next(args: argparse.Namespace) -> None:
                          "./forge roadmap derive --input <json>")
             steps.append("[dev] Or start a task directly: python3 factory/scripts/intake.py "
                          "--issue <KEY> --title \"<title>\"")
+    elif _approved_plan_changed(base, state):
+        phase("awaiting amended-plan approval")
+        steps.append(
+            f"[dev] The approved story plan changed at {state.get('plan_file')}. "
+            "Display its exact current bytes in native Plan Mode and consume one "
+            "fresh human approval event. This post-approval edit returns directly "
+            "to its approver; do not launch another plan cold read. After approval, "
+            "freshly grill the active task, re-record the same decomposition to bind "
+            "the new story digest, then approve that task plan again."
+        )
     elif state.get("plan_status") != "approved":
         phase("planning")
         issue = state.get("issue_key")

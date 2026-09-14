@@ -47,9 +47,109 @@ def _story_candidate(repo: Path) -> approval.ApprovalCandidate:
         "plan_status": "awaiting-approval",
         "plan_file": plan.relative_to(repo).as_posix(),
     })
+    digest = lib.plan_digest_without_assumptions(plan)
+    lib.dump_json(
+        lib.evidence_path(
+            repo, "APPROVE-1", "grills/plan.json", for_write=True,
+        ),
+        {
+            "verdict": "pass", "commit": lib.head_sha(repo),
+            "issue": "APPROVE-1", "input_sha256": digest,
+        },
+    )
     candidate = approval._story_candidate(repo)
     assert candidate is not None
     return candidate
+
+
+def test_awaiting_story_edit_is_ineligible_until_its_plan_grill_matches(
+        repo: Path):
+    candidate = _story_candidate(repo)
+    grill = candidate.evidence.parent / "grills" / "plan.json"
+    original_grill = grill.read_bytes()
+    candidate.path.write_text(
+        candidate.path.read_text(encoding="utf-8") + "\nEdited before approval.\n",
+        encoding="utf-8",
+    )
+
+    assert approval._story_candidate(repo) is None
+    assert grill.read_bytes() == original_grill
+
+
+def test_approved_story_edit_is_the_only_candidate_and_rebinds_atomically(
+        repo: Path):
+    candidate = _story_candidate(repo)
+    original = approval.record_native_approval(
+        repo, _event(), runtime="claude",
+    )
+    candidate.path.write_text(
+        candidate.path.read_text(encoding="utf-8") + "\nApproved amendment.\n",
+        encoding="utf-8",
+    )
+    lib = load_factory_lib(repo)
+    amended_digest = lib.plan_digest_without_assumptions(candidate.path)
+    candidates = approval.eligible_candidates(repo)
+    assert [(row.kind, row.digest) for row in candidates] == [
+        ("story", amended_digest),
+    ]
+
+    stale = {**_event(), "digest": original["approved_plan_sha256"]}
+    with pytest.raises(approval.ApprovalRefused, match="digest is stale"):
+        approval.record_native_approval(repo, stale, runtime="claude")
+    cancelled = {**_event(), "cancelled": True}
+    with pytest.raises(approval.ApprovalRefused, match="unsuccessful"):
+        approval.record_native_approval(repo, cancelled, runtime="claude")
+    state = json.loads(lib.run_state_path(repo).read_text())
+    assert state["approved_plan_sha256"] == original["approved_plan_sha256"]
+
+    amended = approval.record_native_approval(
+        repo, _event(), runtime="claude",
+    )
+    state = json.loads(lib.run_state_path(repo).read_text())
+    assert amended["approved_plan_sha256"] == amended_digest
+    assert state["approved_plan_sha256"] == amended_digest
+    assert "status: approved" in candidate.path.read_text(encoding="utf-8")
+    assert json.loads(candidate.evidence.read_text())["approved_plan_sha256"] \
+        == amended_digest
+
+
+def test_task_approval_waits_for_story_approval_and_decomposition_rebinding(
+        repo: Path, monkeypatch: pytest.MonkeyPatch):
+    story = _story_candidate(repo)
+    approval.record_native_approval(repo, _event(), runtime="claude")
+    lib = load_factory_lib(repo)
+    task = {"id": "T1"}
+    monkeypatch.setattr(
+        approval, "task_frontier_state", lambda _base: ("await-approval", task),
+    )
+    task_plan = lib.evidence_path(
+        repo, "APPROVE-1", "task-plans/T1.md", for_write=True,
+    )
+    task_plan.parent.mkdir(parents=True, exist_ok=True)
+    task_plan.write_text("# Task plan\n", encoding="utf-8")
+    task_digest = lib.plan_digest_without_assumptions(task_plan)
+    task_grill = lib.evidence_path(
+        repo, "APPROVE-1", "grills/tasks/T1.json", for_write=True,
+    )
+    lib.dump_json(task_grill, {
+        "verdict": "pass", "task_plan_sha256": task_digest,
+    })
+    decomposition = lib.protected_decomposition_state_path(repo)
+    decomposition.unlink(missing_ok=True)
+
+    assert approval._task_candidate(repo) is None
+    story_digest = lib.plan_digest_without_assumptions(story.path)
+    lib.dump_json(decomposition, {
+        "plan_sha256": story_digest, "tasks": [task],
+    })
+    assert approval._task_candidate(repo) is not None
+
+    story.path.write_text(
+        story.path.read_text(encoding="utf-8") + "\nAnother amendment.\n",
+        encoding="utf-8",
+    )
+    assert approval._task_candidate(repo) is None
+    assert [row.kind for row in approval.eligible_candidates(repo)] == ["story"]
 
 
 def test_native_approval_refuses_zero_multiple_candidates_replay_and_missing_identity(

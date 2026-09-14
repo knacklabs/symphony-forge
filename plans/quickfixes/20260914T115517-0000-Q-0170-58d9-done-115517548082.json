@@ -1,0 +1,17 @@
+{
+  "event": "done",
+  "id": "Q-0170-58d9",
+  "profile": "degraded",
+  "kind": "degraded",
+  "reason": "normal delegation is unavailable because this branch's hook runtime differs from the parent; prove approved story reapproval and active-stage rebinding",
+  "started_at": "2026-09-14T11:51:09+00:00",
+  "completed_at": "2026-09-14T11:55:17+00:00",
+  "files": [
+    "factory/tests/test_approval_hooks.py",
+    "factory/tests/test_stop_less_often.py",
+    "factory/tests/test_regrill_scope.py",
+    "factory/tests/test_gates.py"
+  ],
+  "task_id": "LEAN-WORKFLOW",
+  "story": "FORGE-COORD-1"
+}

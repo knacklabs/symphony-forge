@@ -296,7 +296,10 @@ if args.gate == "task":
             f"save {args.task} --from <path>`"
         )
     task = _validate_task_grill(root, payload, args.task)
-    for field in ("approved_task_plan_sha256", "approved_by", "approved_at"):
+    for field in (
+        "approved_task_plan_sha256", "approved_by", "approved_at",
+        "approval_runtime", "approval_session_id", "approval_event_id",
+    ):
         payload.pop(field, None)
     payload["task_id"] = args.task
     # Ground on the SAME treeish the seal (require_ready_task) uses: a DONE

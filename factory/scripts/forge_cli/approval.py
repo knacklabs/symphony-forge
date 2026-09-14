@@ -15,7 +15,7 @@ from typing import Any
 from factory_lib import (
     _task_plan_state, dump_json, evidence_path, load_json, now_iso,
     plan_digest_without_assumptions, protected_decomposition_state_path,
-    run_state_path, task_frontier_state,
+    require_grill, run_state_path, task_frontier_state,
 )
 
 
@@ -39,7 +39,8 @@ def _text(value: object) -> str:
 
 def _story_candidate(base: Path) -> ApprovalCandidate | None:
     state = load_json(run_state_path(base), default={})
-    if state.get("plan_status") != "awaiting-approval":
+    status = state.get("plan_status")
+    if status not in {"awaiting-approval", "approved"}:
         return None
     relative = state.get("plan_file")
     if not isinstance(relative, str) or not relative:
@@ -50,8 +51,31 @@ def _story_candidate(base: Path) -> ApprovalCandidate | None:
     story = _text(state.get("story")) or _text(state.get("issue_key"))
     if not story:
         return None
+    digest = plan_digest_without_assumptions(path)
+    if status == "awaiting-approval":
+        grill = load_json(
+            evidence_path(base, story, "grills/plan.json"), default={},
+        )
+        if (grill.get("issue") != story
+                or grill.get("input_sha256") != digest):
+            return None
+        try:
+            require_grill(
+                base, "plan",
+                ("docs/product/", "docs/decisions/", "docs/architecture/"),
+                ignore_names=("client-signoff", "epics-approved"),
+                expect_digest_of=path,
+            )
+        except SystemExit:
+            return None
+    else:
+        approved = state.get("approved_plan_sha256")
+        if (not isinstance(approved, str)
+                or re.fullmatch(r"[0-9a-f]{64}", approved) is None
+                or approved == digest):
+            return None
     return ApprovalCandidate(
-        "story", story, "", path, plan_digest_without_assumptions(path),
+        "story", story, "", path, digest,
         evidence_path(base, story, "plan-approval.json", for_write=True),
     )
 
@@ -64,6 +88,18 @@ def _task_candidate(base: Path) -> ApprovalCandidate | None:
     state = load_json(run_state_path(base), default={})
     story = _text(state.get("story")) or _text(state.get("issue_key"))
     if not story:
+        return None
+    relative = state.get("plan_file")
+    story_plan = base / relative if isinstance(relative, str) else None
+    if (state.get("plan_status") != "approved"
+            or story_plan is None or not story_plan.is_file()):
+        return None
+    story_digest = plan_digest_without_assumptions(story_plan)
+    decomposition = load_json(
+        protected_decomposition_state_path(base), default={},
+    )
+    if (state.get("approved_plan_sha256") != story_digest
+            or decomposition.get("plan_sha256") != story_digest):
         return None
     task_id = _text(task.get("id"))
     if not task_id:
@@ -154,7 +190,11 @@ def _approve_story(base: Path, candidate: ApprovalCandidate, record: dict[str, A
         r"(?m)^(status:\s*)awaiting-approval\s*$", r"\1approved", text, count=1,
     )
     if count != 1:
-        raise ApprovalRefused("awaiting story plan has no awaiting-approval status")
+        if re.search(r"(?m)^status:\s*approved\s*$", text) is None:
+            raise ApprovalRefused(
+                "story plan has neither awaiting-approval nor approved status"
+            )
+        updated = text
     # The status line is frontmatter and excluded by the shared semantic digest.
     candidate.path.write_text(updated, encoding="utf-8")
     if plan_digest_without_assumptions(candidate.path) != candidate.digest:

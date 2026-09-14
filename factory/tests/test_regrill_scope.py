@@ -12,6 +12,8 @@ bookkeeping, cost a full adversarial round.
 """
 from __future__ import annotations
 
+import copy
+import hashlib
 import json
 import sys
 from pathlib import Path
@@ -508,6 +510,97 @@ def test_measurement_amendment_without_a_bound_launch_writes_nothing(
 
     assert code != 0 and "exact successful write launch" in out, out
     assert (protected.read_bytes(), tracked.read_bytes()) == before
+
+
+def test_story_plan_reapproval_rebinds_an_active_task_without_restarting_it(
+        repo: Path, tmp_path):
+    from test_gates import (  # noqa: E402
+        DECOMP, STAGE_TASK, _seed_cold_launch, fake_companion_env,
+        native_claude_approval, post_hook, run_state, start_stage,
+        story_state, task_grill_payload,
+    )
+
+    start_stage(repo, tmp_path, STAGE_TASK)
+    _seed_pre_stage_grill(repo, STAGE_TASK)
+    widened = {**STAGE_TASK, "write_scope": ["src/", "billing/"]}
+    code, out = run(
+        repo, "record_decomposition_from_json.py",
+        stdin=json.dumps({**DECOMP, "tasks": [widened]}),
+    )
+    assert code == 0, out
+    lib = load_factory_lib(repo)
+    stage_before = lib.task_stage_record(repo, "T1")
+    receipts_before = copy.deepcopy(stage_before["measurement_continuity"])
+    stable_before = {
+        field: copy.deepcopy(stage_before.get(field))
+        for field in ("started_at", "base_sha", "dirty_at_start", "task_sha256")
+    }
+
+    state = run_state(repo)
+    plan = repo / state["plan_file"]
+    plan.write_text(
+        plan.read_text(encoding="utf-8") + "\nApproved story amendment.\n",
+        encoding="utf-8",
+    )
+    amended_story_digest = lib.plan_digest_without_assumptions(plan)
+    code, out = run(repo, "forge.py", "next")
+    assert code == 0 and "awaiting amended-plan approval" in out, out
+    code, out = post_hook(repo, native_claude_approval())
+    assert code == 0, out
+    assert run_state(repo)["approved_plan_sha256"] == amended_story_digest
+
+    task_plan = story_state(repo) / "task-plans" / "T1.md"
+    _seed_cold_launch(
+        repo, "task", hashlib.sha256(task_plan.read_bytes()).hexdigest(),
+        "T1",
+    )
+    code, out = run(
+        repo, "record_grill_from_json.py", "--gate", "task", "--task", "T1",
+        stdin=json.dumps(task_grill_payload(widened)),
+    )
+    assert code == 0, out
+    grill_path = story_state(repo) / "grills" / "tasks" / "T1.json"
+    grill = json.loads(grill_path.read_text())
+    for field in (
+        "approved_task_plan_sha256", "approved_by", "approved_at",
+        "approval_runtime", "approval_session_id", "approval_event_id",
+    ):
+        assert field not in grill
+    assert grill["input_sha256"] == lib.grounding_digest(
+        repo, widened, in_stage=True,
+    )
+
+    # The task remains ineligible until the protected decomposition binds the
+    # newly approved story digest.
+    code, out = post_hook(repo, native_claude_approval())
+    assert code == 0, out
+    assert "approved_task_plan_sha256" not in json.loads(grill_path.read_text())
+    code, out = run(
+        repo, "record_decomposition_from_json.py",
+        stdin=json.dumps({**DECOMP, "tasks": [widened]}),
+    )
+    assert code == 0, out
+    state = run_state(repo)
+    assert state["decomposition_plan_sha256"] == amended_story_digest
+    code, out = post_hook(repo, native_claude_approval())
+    assert code == 0, out
+    assert json.loads(grill_path.read_text())["approved_task_plan_sha256"] \
+        == lib.plan_digest_without_assumptions(task_plan)
+
+    stage_after = lib.task_stage_record(repo, "T1")
+    assert stage_after["measurement_continuity"] == receipts_before
+    assert {
+        field: stage_after.get(field) for field in stable_before
+    } == stable_before
+    assert lib.task_grill_grounding_matches(repo, widened, json.loads(
+        grill_path.read_text()
+    ))
+
+    code, out = run(
+        repo, "forge.py", "delegate", "T1", "--scope", "src/",
+        env=fake_companion_env(tmp_path),
+    )
+    assert code == 0, out
 
 
 def test_a_contract_change_still_stops_the_next_delegate(repo: Path, tmp_path):
