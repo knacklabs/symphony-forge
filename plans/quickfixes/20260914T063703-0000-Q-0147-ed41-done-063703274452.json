@@ -1,0 +1,16 @@
+{
+  "event": "done",
+  "id": "Q-0147-ed41",
+  "profile": "degraded",
+  "kind": "degraded",
+  "reason": "Ordinary delegation is blocked after a recorder-authorized active-stage measurement-only scope amendment; add a protected continuity receipt and its focused regression without changing the original grill or approval.",
+  "started_at": "2026-09-14T06:20:41+00:00",
+  "completed_at": "2026-09-14T06:37:03+00:00",
+  "files": [
+    "factory/scripts/factory_lib.py",
+    "factory/scripts/record_decomposition_from_json.py",
+    "factory/tests/test_regrill_scope.py"
+  ],
+  "task_id": "LEAN-WORKFLOW",
+  "story": "FORGE-COORD-1"
+}

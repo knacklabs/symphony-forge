@@ -3320,10 +3320,7 @@ def require_task_grill(
             f".factory/grills/tasks/{task_id}.json has no commit stamp — re-record "
             f"with current tooling using `{record_command}`."
         )
-    if not grounding_matches(
-        root, task, data.get("input_sha256"), treeish=treeish,
-        in_stage=task_in_stage(root, task_id),
-    ):
+    if not task_grill_grounding_matches(root, task, data, treeish=treeish):
         # A digest mismatch has two very different causes, and reporting both as
         # "STALE" sent a reader hunting for a content change that never
         # happened. When the grill was ground on a DIFFERENT BASIS than the one
@@ -3372,6 +3369,194 @@ def task_digest(task: dict) -> str:
         sort_keys=True,
     )
     return hashlib.sha256(payload.encode()).hexdigest()
+
+
+def measurement_contract(task: dict) -> dict:
+    """Return the fields an active stage measures mechanically."""
+    return {field: task.get(field) for field in MEASUREMENT_CONTRACT_FIELDS}
+
+
+def task_plan_binding_digest(root: Path, task_id: str, grill: dict) -> str:
+    """Return the live approved task-plan digest, or ``""`` on any mismatch."""
+    plan = evidence_path(
+        root, _active_story_key(root), f"task-plans/{task_id}.md",
+    )
+    if not plan.is_file():
+        return ""
+    digest = plan_digest_without_assumptions(plan)
+    if (
+        grill.get("task_plan_sha256") != digest
+        or grill.get("approved_task_plan_sha256") != digest
+    ):
+        return ""
+    return digest
+
+
+def story_plan_digest(root: Path) -> str:
+    """Return the live approved story-plan body digest, or ``""``."""
+    decomposition = load_json(protected_decomposition_state_path(root), default={})
+    plan_file = decomposition.get("plan_file")
+    if not isinstance(plan_file, str) or not plan_file.strip():
+        return ""
+    plan = root / plan_file
+    return plan_digest_without_assumptions(plan) if plan.is_file() else ""
+
+
+def validated_measurement_launch(
+    root: Path,
+    task: dict,
+    stage: dict,
+    origin_task_sha256: str,
+    origin_measurement: dict,
+    launch_id: str = "",
+) -> dict | None:
+    """Return the real write launch that anchors a measurement receipt."""
+    from forge_cli.delegate import argv_digest, brief_path, current_delegation
+    from forge_cli.stages import _require_successful_launch
+
+    task_id = str(task.get("id") or "")
+    entry = current_delegation(
+        root,
+        task_id,
+        stage_started_at=str(stage.get("started_at") or ""),
+        task_sha256=origin_task_sha256,
+        ignore_lock=True,
+    )
+    if not entry:
+        return None
+    if (
+        entry.get("launch_status") != "succeeded"
+        or entry.get("write") is not True
+        or entry.get("story") != _active_story_key(root)
+        or entry.get("stage_started_at") != stage.get("started_at")
+        or entry.get("task_sha256") != origin_task_sha256
+        or entry.get("write_scope") != origin_measurement.get("write_scope")
+        or (launch_id and entry.get("launch_id") != launch_id)
+    ):
+        return None
+    if entry.get("transport") is None:
+        argv = entry.get("argv")
+        brief = brief_path(root, task_id)
+        prompts = (str(brief), brief.relative_to(root).as_posix())
+        expected = [
+            [
+                argv[0], entry.get("companion_path"), "task", "--json",
+                "--cwd", str(root), "--model", entry.get("model"),
+                "--effort", entry.get("effort"), "--prompt-file", prompt,
+                "--write",
+            ]
+            for prompt in prompts
+        ] if isinstance(argv, list) and argv else []
+        if (
+            not isinstance(argv, list)
+            or not argv
+            or not all(isinstance(token, str) for token in argv)
+            or Path(argv[0]).stem.lower() != "node"
+            or entry.get("argv_sha256") != argv_digest(argv)
+            or entry.get("exit_code") != 0
+            or argv not in expected
+        ):
+            return None
+        return entry
+    try:
+        host_window = _require_successful_launch(root, task_id, stage, task)
+    except SystemExit:
+        return None
+    return entry if host_window == "" else None
+
+
+def _measurement_continuity_matches(root: Path, task: dict, grill: dict) -> bool:
+    """Validate the complete recorder-owned active-stage receipt chain."""
+    task_id = str(task.get("id") or "")
+    stage = task_stage_record(root, task_id)
+    receipts = stage.get("measurement_continuity")
+    if stage.get("status") != "active" or not isinstance(receipts, list) or not receipts:
+        return False
+    semantic = grounding_digest(root, task, in_stage=True)
+    story_digest = story_plan_digest(root)
+    task_plan_digest = task_plan_binding_digest(root, task_id, grill)
+    if not story_digest or not task_plan_digest:
+        return False
+    expected = stage.get("task_sha256")
+    previous_measurement = None
+    origin_task = None
+    origin_measurement = None
+    launch_id = ""
+    required = {
+        "generated_by", "recorded_at", "story", "task_id", "stage_started_at",
+        "stage_base_sha", "source_grill_input_sha256", "story_plan_sha256",
+        "task_plan_sha256", "semantic_grounding_sha256", "from_task_sha256",
+        "to_task_sha256", "from_measurement", "to_measurement", "launch_id",
+    }
+    for index, receipt in enumerate(receipts):
+        if not isinstance(receipt, dict) or set(receipt) != required:
+            return False
+        before = receipt.get("from_measurement")
+        after = receipt.get("to_measurement")
+        if not isinstance(before, dict) or not isinstance(after, dict):
+            return False
+        if set(before) != set(MEASUREMENT_CONTRACT_FIELDS) \
+                or set(after) != set(MEASUREMENT_CONTRACT_FIELDS):
+            return False
+        if (
+            receipt.get("generated_by") != "record_decomposition_from_json"
+            or receipt.get("story") != _active_story_key(root)
+            or receipt.get("task_id") != task_id
+            or receipt.get("stage_started_at") != stage.get("started_at")
+            or receipt.get("stage_base_sha") != stage.get("base_sha")
+            or receipt.get("source_grill_input_sha256") != grill.get("input_sha256")
+            or receipt.get("story_plan_sha256") != story_digest
+            or receipt.get("task_plan_sha256") != task_plan_digest
+            or receipt.get("semantic_grounding_sha256") != semantic
+            or receipt.get("from_task_sha256") != expected
+            or (previous_measurement is not None and before != previous_measurement)
+        ):
+            return False
+        before_task = {**task, **before}
+        after_task = {**task, **after}
+        if (
+            task_digest(before_task) != receipt.get("from_task_sha256")
+            or task_digest(after_task) != receipt.get("to_task_sha256")
+        ):
+            return False
+        if index == 0:
+            if not grounding_matches(
+                root, before_task, grill.get("input_sha256"), in_stage=True,
+            ):
+                return False
+            origin_task = before_task
+            origin_measurement = before
+            launch_id = str(receipt.get("launch_id") or "")
+        elif receipt.get("launch_id") != launch_id:
+            return False
+        expected = receipt.get("to_task_sha256")
+        previous_measurement = after
+    if expected != task_digest(task) or previous_measurement != measurement_contract(task):
+        return False
+    assert origin_task is not None and origin_measurement is not None
+    return validated_measurement_launch(
+        root,
+        origin_task,
+        stage,
+        str(stage.get("task_sha256") or ""),
+        origin_measurement,
+        launch_id,
+    ) is not None
+
+
+def task_grill_grounding_matches(
+    root: Path, task: dict, grill: dict, *, treeish: str = "",
+) -> bool:
+    """Accept current grounding or an exact recorder-owned continuity chain."""
+    if grounding_matches(
+        root,
+        task,
+        grill.get("input_sha256"),
+        treeish=treeish,
+        in_stage=task_in_stage(root, str(task.get("id") or "")),
+    ):
+        return True
+    return _measurement_continuity_matches(root, task, grill)
 
 
 CONTRACT_BLOCK_START = "<!-- forge:contract -->"
@@ -3911,10 +4096,7 @@ def _task_grill_fresh(root: Path, task: dict, grill: dict) -> bool:
         grill.get("task_plan_sha256") == plan_digest_without_assumptions(plan)
     )
     try:
-        grounded = grounding_matches(
-            root, task, grill.get("input_sha256"),
-            in_stage=task_in_stage(root, str(task_id or "")),
-        )
+        grounded = task_grill_grounding_matches(root, task, grill)
     except SystemExit:
         # The approved story plan is gone — e.g. a shipped or archived story
         # whose plan moved out of plans/active/. A grill cannot be "fresh"

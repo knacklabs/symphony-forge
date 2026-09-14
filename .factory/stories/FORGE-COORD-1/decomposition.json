@@ -1101,6 +1101,6 @@
   "story": "FORGE-COORD-1",
   "epic": "symphony-forge",
   "plan_file": "plans/active/FORGE-COORD-1-either-claude-or-codex-coordinates-the-same-forge-workflow.md",
-  "commit": "6ae2dea1b7417fff4c9c3fc3552488a8378aacd4",
+  "commit": "32b3ee692e361b831b31075758c2c374fa2f613e",
   "plan_sha256": "a9a320376907ebb81835bc3a6b722adda63c4f2e5756822b6f3b93d9ed5395de"
 }

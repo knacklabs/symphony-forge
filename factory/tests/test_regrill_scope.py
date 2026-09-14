@@ -60,6 +60,21 @@ def _seed(repo: Path):
     return lib
 
 
+def _seed_pre_stage_grill(repo: Path, task: dict) -> str:
+    """Reproduce the opaque pre-Lean grill carried by the dogfood stage."""
+    lib = load_factory_lib(repo)
+    stage = lib.task_stage_record(repo, task["id"])
+    path = lib.evidence_path(
+        repo, "ENG-1", f"grills/tasks/{task['id']}.json", for_write=True,
+    )
+    grill = lib.load_json(path, default={})
+    grill["input_sha256"] = lib.grounding_digest(
+        repo, task, treeish=stage["base_sha"], in_stage=False,
+    )
+    lib.dump_json(path, grill)
+    return grill["input_sha256"]
+
+
 # --------------------------------------------------------------- bookkeeping
 @pytest.mark.parametrize("field,value", [
     ("review_budget", {"max_changed_files": 999, "max_changed_lines": 9,
@@ -254,10 +269,36 @@ def test_a_second_delegate_after_committing_needs_no_new_grill(repo: Path, tmp_p
     harness used to demand a fresh grill before it would let anyone write.
     """
     from test_gates import (  # noqa: E402
-        STAGE_TASK, fake_companion_env, start_stage,
+        DECOMP, STAGE_TASK, fake_companion_env, start_stage,
     )
 
-    start_stage(repo, tmp_path, STAGE_TASK, launch=False)
+    start_stage(repo, tmp_path, STAGE_TASK)
+    original_grill = _seed_pre_stage_grill(repo, STAGE_TASK)
+
+    # A worker signal reveals one more mechanically measured path. The
+    # recorder proves the original grill + launch before carrying the unchanged
+    # semantic authorization across the wider measurement contract.
+    widened = {**STAGE_TASK, "write_scope": ["src/", "billing/"]}
+    code, out = run(
+        repo,
+        "record_decomposition_from_json.py",
+        stdin=json.dumps({**DECOMP, "tasks": [widened]}),
+    )
+    assert code == 0, out
+    lib = load_factory_lib(repo)
+    grill = lib.load_json(
+        lib.evidence_path(repo, "ENG-1", "grills/tasks/T1.json"), default={},
+    )
+    assert grill["input_sha256"] == original_grill
+    # An identical re-record rebuilds the stage skeleton but must not drop the
+    # receipt that carries authorization across the measurement amendment.
+    code, out = run(
+        repo,
+        "record_decomposition_from_json.py",
+        stdin=json.dumps({**DECOMP, "tasks": [widened]}),
+    )
+    assert code == 0, out
+    assert len(lib.task_stage_record(repo, "T1")["measurement_continuity"]) == 1
 
     # Codex delivers, and the delivery is committed — the step that used to
     # stale the gate.
@@ -268,12 +309,52 @@ def test_a_second_delegate_after_committing_needs_no_new_grill(repo: Path, tmp_p
     git(repo, "-c", "user.email=t@t", "-c", "user.name=t", "commit",
         "-m", "WF-1 T1: the implementation lands")
 
-    # The fix round. No re-grill, no re-approval, no contract edit.
-    code, out = run(repo, "forge.py", "delegate", "T1", "--print-only",
+    # The fix round. No re-grill or re-approval; a real narrowed launch proves
+    # the retry receives only its proper subset of the now-approved scope.
+    code, out = run(repo, "forge.py", "delegate", "T1", "--scope", "src/",
                     env=fake_companion_env(tmp_path))
     assert code == 0, (
         "delegate still demands a fresh grill after the implementation was "
         f"committed — the loop is intact:\n{out}")
+    from forge_cli.delegate import load_delegations  # noqa: E402
+    succeeded = [
+        row for row in load_delegations(repo)
+        if row.get("task") == "T1" and row.get("launch_status") == "succeeded"
+    ]
+    assert len({row["launch_id"] for row in succeeded}) == 2
+    assert succeeded[-1]["write_scope"] == ["src/"]
+
+    # The receipt is authority, so a forged field must close the gate again.
+    from forge_cli.stages import load_stages, write_stages  # noqa: E402
+    stages = load_stages(repo)
+    stages["stages"][0]["measurement_continuity"][0][
+        "semantic_grounding_sha256"
+    ] = "0" * 64
+    write_stages(repo, stages)
+    with pytest.raises(SystemExit, match="STALE"):
+        lib.require_task_grill(repo, "T1", widened)
+
+
+def test_measurement_amendment_without_a_bound_launch_writes_nothing(
+        repo: Path, tmp_path):
+    from test_gates import DECOMP, STAGE_TASK, start_stage  # noqa: E402
+
+    start_stage(repo, tmp_path, STAGE_TASK, launch=False)
+    _seed_pre_stage_grill(repo, STAGE_TASK)
+    lib = load_factory_lib(repo)
+    protected = lib.protected_decomposition_state_path(repo)
+    tracked = lib.decomposition_state_path(repo)
+    before = (protected.read_bytes(), tracked.read_bytes())
+    widened = {**STAGE_TASK, "write_scope": ["src/", "billing/"]}
+
+    code, out = run(
+        repo,
+        "record_decomposition_from_json.py",
+        stdin=json.dumps({**DECOMP, "tasks": [widened]}),
+    )
+
+    assert code != 0 and "exact successful write launch" in out, out
+    assert (protected.read_bytes(), tracked.read_bytes()) == before
 
 
 def test_a_contract_change_still_stops_the_next_delegate(repo: Path, tmp_path):

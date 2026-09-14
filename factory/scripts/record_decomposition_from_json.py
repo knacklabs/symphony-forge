@@ -9,14 +9,16 @@ import shlex
 from pathlib import Path, PurePosixPath
 
 from factory_lib import (
-    decomposition_state_path, dump_json, gate, head_sha,
+    decomposition_state_path, dump_json, evidence_path, gate, grounding_digest,
+    grounding_matches, head_sha,
     load_json, now_iso, plan_digest_without_assumptions,
     protected_decomposition_state_path, repo_root, require_approved_plan_digest,
     run_state_path,
     read_stdin_utf8, validate_payload,
     ready_task_ids,
-    IN_STAGE_GROUNDING_FIELDS, MEASUREMENT_CONTRACT_FIELDS,
-    refresh_task_plan_contract,
+    IN_STAGE_GROUNDING_FIELDS, MEASUREMENT_CONTRACT_FIELDS, measurement_contract,
+    refresh_task_plan_contract, story_plan_digest, task_grill_grounding_matches,
+    task_plan_binding_digest, validated_measurement_launch,
 )
 from forge_cli.doctor import unrunnable_reason
 from forge_cli.stages import review_budget
@@ -325,6 +327,104 @@ def _task_graph(tasks: list[dict]) -> list[tuple[str, tuple[str, ...]]]:
         for task in tasks
     ]
 
+
+def _measurement_receipt(
+    root: Path,
+    story: str,
+    stage: dict,
+    source: dict,
+    target: dict,
+    grill: dict,
+) -> dict:
+    """Build a continuity receipt after every original binding re-validates."""
+    task_id = str(target.get("id") or "")
+    task_plan_sha256 = task_plan_binding_digest(root, task_id, grill)
+    story_plan_sha256 = story_plan_digest(root)
+    semantic = grounding_digest(root, target, in_stage=True)
+    if (
+        not task_plan_sha256
+        or not story_plan_sha256
+        or semantic != grounding_digest(root, source, in_stage=True)
+    ):
+        raise SystemExit(
+            f"decomposition task {task_id}: cannot preserve the task grill across "
+            "this measurement amendment because its approved story or task plan "
+            "binding changed; no decomposition state was written"
+        )
+    receipts = stage.get("measurement_continuity")
+    if isinstance(receipts, list) and receipts:
+        launch_id = receipts[0].get("launch_id")
+        origin_measurement = receipts[0].get("from_measurement")
+        origin_sha256 = stage.get("task_sha256")
+        launch_task = {**target, **origin_measurement} \
+            if isinstance(origin_measurement, dict) else source
+    else:
+        launch_id = ""
+        origin_measurement = measurement_contract(source)
+        origin_sha256 = task_digest(source)
+        launch_task = source
+    launch = validated_measurement_launch(
+        root,
+        launch_task,
+        stage,
+        str(origin_sha256 or ""),
+        origin_measurement,
+        str(launch_id or ""),
+    )
+    if launch is None:
+        raise SystemExit(
+            f"decomposition task {task_id}: an active-stage measurement amendment "
+            "needs the exact successful write launch that the original task grill "
+            "authorized; the launch is missing, failed, ambiguous, or no longer "
+            "bound to this stage. No decomposition state was written"
+        )
+    return {
+        "generated_by": "record_decomposition_from_json",
+        "recorded_at": now_iso(),
+        "story": story,
+        "task_id": task_id,
+        "stage_started_at": stage.get("started_at"),
+        "stage_base_sha": stage.get("base_sha"),
+        "source_grill_input_sha256": grill.get("input_sha256"),
+        "story_plan_sha256": story_plan_sha256,
+        "task_plan_sha256": task_plan_sha256,
+        "semantic_grounding_sha256": semantic,
+        "from_task_sha256": task_digest(source),
+        "to_task_sha256": task_digest(target),
+        "from_measurement": measurement_contract(source),
+        "to_measurement": measurement_contract(target),
+        "launch_id": launch.get("launch_id"),
+    }
+
+
+def _bootstrap_measurement_source(
+    root: Path, stage: dict, target: dict, grill: dict,
+) -> dict | None:
+    """Recover a missed receipt from the exact stage-bound launch scope."""
+    from forge_cli.delegate import current_delegation
+
+    task_id = str(target.get("id") or "")
+    original_sha256 = str(stage.get("task_sha256") or "")
+    launch = current_delegation(
+        root,
+        task_id,
+        stage_started_at=str(stage.get("started_at") or ""),
+        task_sha256=original_sha256,
+        ignore_lock=True,
+    )
+    scope = launch.get("write_scope") if launch else None
+    if not isinstance(scope, list) or not all(isinstance(path, str) for path in scope):
+        return None
+    source = {**target, "write_scope": scope}
+    if (
+        task_digest(source) != original_sha256
+        or not grounding_matches(
+            root, source, grill.get("input_sha256"), in_stage=True,
+        )
+    ):
+        return None
+    return source
+
 # Stage transitions and decomposition publication share one protected state
 # lock. A re-record may amend an active task, but never rewrite the contract a
 # completed stage already attested or race that stage's done transition.
@@ -512,7 +612,50 @@ with delegation_exclusion(
                     f"decomposition task {task_id}: a completed stage's contract "
                     "cannot be changed or removed; add a new follow-up task instead."
                 )
-    if backfilled_stage_digest or stages_dirty:
+    # A pre-stage grill includes measurement fields so it can authorize stage
+    # start. Once the stage is active those fields are enforced mechanically.
+    # Preserve that transition as a protected receipt before publishing an
+    # amended measurement contract; never rewrite the original grill evidence.
+    for stage in stages_data.get("stages") or []:
+        if stage.get("status") != "active":
+            continue
+        task_id = stage.get("id")
+        target = current_tasks.get(task_id)
+        prior = prior_tasks.get(task_id)
+        if target is None or prior is None:
+            continue
+        grounding_moved = any(
+            prior.get(field) != target.get(field)
+            for field in IN_STAGE_GROUNDING_FIELDS
+        )
+        if grounding_moved:
+            continue
+        grill = load_json(
+            evidence_path(root, story, f"grills/tasks/{task_id}.json"),
+            default={},
+        )
+        if not grill or task_grill_grounding_matches(root, target, grill):
+            continue
+        source = (
+            prior if task_grill_grounding_matches(root, prior, grill)
+            else _bootstrap_measurement_source(root, stage, target, grill)
+        )
+        if source is None:
+            raise SystemExit(
+                f"decomposition task {task_id}: cannot prove continuity from the "
+                "original task grill to this active-stage measurement contract; "
+                "no decomposition state was written"
+            )
+        receipt = _measurement_receipt(root, story, stage, source, target, grill)
+        receipts = stage.setdefault("measurement_continuity", [])
+        if not isinstance(receipts, list):
+            raise SystemExit(
+                f"decomposition task {task_id}: protected measurement continuity "
+                "state is malformed; no decomposition state was written"
+            )
+        receipts.append(receipt)
+        stages_dirty = True
+    if backfilled_stage_digest:
         write_stages(root, stages_data)
     # The saved task plans carry a rendered copy of their contract. Re-render
     # so the copy can never lag the record it is rendered from.
@@ -576,6 +719,20 @@ with delegation_exclusion(
     # The decomposition is immutable evidence; the stage tracker is its mutable
     # execution twin (decision 0007) — pr_ready refuses while stages are open.
     write_skeleton(root, state.get("issue_key", ""), tasks)
+    receipts_by_task = {
+        row.get("id"): row.get("measurement_continuity")
+        for row in stages_data.get("stages") or []
+        if row.get("measurement_continuity")
+    }
+    if receipts_by_task:
+        # write_skeleton preserves seal fields but deliberately rebuilds each
+        # row. Restore existing and newly validated receipts after that rebuild,
+        # while retaining any pending-tail graph changes it created.
+        refreshed_stages = load_stages(root)
+        for row in refreshed_stages.get("stages") or []:
+            if row.get("id") in receipts_by_task:
+                row["measurement_continuity"] = receipts_by_task[row.get("id")]
+        write_stages(root, refreshed_stages)
     state["decomposition_status"] = "recorded"
     state["updated_at"] = now_iso()
     dump_json(run_state_path(root), state)
