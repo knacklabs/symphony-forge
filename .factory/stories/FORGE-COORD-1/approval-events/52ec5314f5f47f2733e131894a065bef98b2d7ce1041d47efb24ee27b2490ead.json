@@ -1,0 +1,12 @@
+{
+  "approved_plan_sha256": "704e22e69b3722fc885bd09231691a18c2afc01b0982a112bb7b5118744f1723",
+  "approved_by": "human-via-Codex",
+  "approved_at": "2026-09-14T16:53:54+00:00",
+  "runtime": "codex",
+  "session_id": "01a07a12-c372-79b2-b066-50fd86caeae0",
+  "event_id": "user-message-160291616",
+  "plan_kind": "story",
+  "story": "FORGE-COORD-1",
+  "task": "",
+  "previous_approved_plan_sha256": "a9a320376907ebb81835bc3a6b722adda63c4f2e5756822b6f3b93d9ed5395de"
+}

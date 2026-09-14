@@ -136,7 +136,7 @@ def test_codex_hook_readiness_requires_exact_enabled_trusted_source(
         assert "SessionStart matcher" in detail and missing in detail
 
 
-def test_codex_hook_readiness_accepts_only_identical_inherited_worktree_hooks(
+def test_codex_hook_readiness_accepts_safe_inherited_worktree_hook_supersets(
         tmp_path, monkeypatch):
     from forge_cli import doctor
 
@@ -162,6 +162,121 @@ def test_codex_hook_readiness_accepts_only_identical_inherited_worktree_hooks(
     config.write_text('{"hooks": {"fixture": "diverged"}}\n')
     ok, detail = doctor.codex_hook_readiness(linked)
     assert not ok and "inherited divergent hooks" in detail
+
+    expected = json.loads((HARNESS / ".codex" / "hooks.json").read_text())
+    actual = copy.deepcopy(expected)
+    expected["hooks"]["PreToolUse"][0]["matcher"] = (
+        "Bash|apply_patch|request_user_input"
+    )
+    actual["hooks"]["PreToolUse"][0]["matcher"] = (
+        "Bash|Edit|Write|apply_patch|request_user_input|request_user_input_async"
+    )
+    (linked / ".codex" / "hooks.json").write_text(json.dumps(expected))
+    config.write_text(json.dumps(actual))
+    inherited = [_hook(event, config) for event in doctor.CODEX_HOOK_EVENTS]
+    next(hook for hook in inherited if hook["eventName"] == "preToolUse")[
+        "matcher"
+    ] = actual["hooks"]["PreToolUse"][0]["matcher"]
+    monkeypatch.setattr(
+        doctor, "_codex_hooks_inventory", lambda _binary, _base: (inherited, ""))
+    assert doctor.codex_hook_readiness(linked)[0]
+
+    divergent_root = tmp_path / "divergent"
+    divergent_config = divergent_root / ".codex" / "hooks.json"
+    divergent_config.parent.mkdir(parents=True)
+    divergent_source = copy.deepcopy(actual)
+    divergent_source["hooks"]["Stop"][0]["hooks"][0]["command"] = "exit 0"
+    divergent_config.write_text(json.dumps(divergent_source))
+    mixed = inherited + [
+        _hook(event, divergent_config) for event in doctor.CODEX_HOOK_EVENTS
+    ]
+    monkeypatch.setattr(
+        doctor, "_git_worktree_roots",
+        lambda _base: ({main.resolve(), linked.resolve(), divergent_root.resolve()}, ""),
+    )
+    monkeypatch.setattr(
+        doctor, "_codex_hooks_inventory", lambda _binary, _base: (mixed, ""))
+    ok, detail = doctor.codex_hook_readiness(linked)
+    assert not ok and str(divergent_config) in detail
+
+    monkeypatch.setattr(
+        doctor, "_git_worktree_roots",
+        lambda _base: ({main.resolve(), linked.resolve()}, ""),
+    )
+    monkeypatch.setattr(
+        doctor, "_codex_hooks_inventory", lambda _binary, _base: (inherited, ""))
+    actual["hooks"]["PreToolUse"][0]["hooks"][0]["command"] = "run something else"
+    config.write_text(json.dumps(actual))
+    ok, detail = doctor.codex_hook_readiness(linked)
+    assert not ok and "inherited divergent hooks" in detail
+
+
+def test_inherited_hook_compatibility_is_fail_closed():
+    from forge_cli import doctor
+
+    expected = json.loads((HARNESS / ".codex" / "hooks.json").read_text())
+
+    def encoded(document, *, pretty=False):
+        return json.dumps(
+            document, indent=2 if pretty else None, sort_keys=pretty,
+        ).encode()
+
+    # Formatting and key order are not semantic differences.
+    assert doctor._compatible_hook_source(
+        encoded(expected, pretty=True), encoded(expected),
+    )
+
+    inherited = copy.deepcopy(expected)
+    inherited["hooks"]["PreToolUse"][0]["matcher"] = (
+        "Bash|Edit|Write|apply_patch|request_user_input|request_user_input_async"
+    )
+    expected["hooks"]["PreToolUse"][0]["matcher"] = (
+        "Bash|apply_patch|request_user_input"
+    )
+    assert doctor._compatible_hook_source(encoded(expected), encoded(inherited))
+
+    divergent = []
+
+    missing_alias = copy.deepcopy(inherited)
+    missing_alias["hooks"]["PreToolUse"][0]["matcher"] = "Bash|apply_patch"
+    divergent.append(missing_alias)
+
+    for matcher in ("Bash|.*|apply_patch|request_user_input", "(?:Bash|Edit)"):
+        regex_matcher = copy.deepcopy(inherited)
+        regex_matcher["hooks"]["PreToolUse"][0]["matcher"] = matcher
+        divergent.append(regex_matcher)
+
+    extra_registration = copy.deepcopy(inherited)
+    extra_registration["hooks"]["PreToolUse"].append(
+        copy.deepcopy(extra_registration["hooks"]["PreToolUse"][0])
+    )
+    divergent.append(extra_registration)
+
+    changed_post_matcher = copy.deepcopy(inherited)
+    changed_post_matcher["hooks"]["PostToolUse"][0]["matcher"] = ".*"
+    divergent.append(changed_post_matcher)
+
+    changed_command = copy.deepcopy(inherited)
+    changed_command["hooks"]["Stop"][0]["hooks"][0]["command"] = "exit 0"
+    divergent.append(changed_command)
+
+    changed_metadata = copy.deepcopy(inherited)
+    changed_metadata["hooks"]["Stop"][0]["hooks"][0]["timeout"] = 31
+    divergent.append(changed_metadata)
+
+    extra_event = copy.deepcopy(inherited)
+    extra_event["hooks"]["Unexpected"] = []
+    divergent.append(extra_event)
+
+    extra_top_level = copy.deepcopy(inherited)
+    extra_top_level["unexpected"] = True
+    divergent.append(extra_top_level)
+
+    for document in divergent:
+        assert not doctor._compatible_hook_source(encoded(expected), encoded(document))
+
+    for malformed in (b"{", b"[]", b'{"hooks": []}'):
+        assert not doctor._compatible_hook_source(malformed, malformed)
 
 
 def test_doctor_repairs_only_exact_plugin_max_source(tmp_path, monkeypatch):

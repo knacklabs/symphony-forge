@@ -1,0 +1,15 @@
+{
+  "event": "done",
+  "id": "Q-0171-7d6c",
+  "profile": "degraded",
+  "kind": "degraded",
+  "reason": "native delegate cannot start because Codex loads a semantically compatible but byte-divergent parent worktree hook config",
+  "started_at": "2026-09-14T17:00:50+00:00",
+  "completed_at": "2026-09-14T17:11:05+00:00",
+  "files": [
+    "factory/scripts/forge_cli/doctor.py",
+    "factory/tests/test_native_setup.py"
+  ],
+  "task_id": "LEAN-WORKFLOW",
+  "story": "FORGE-COORD-1"
+}
