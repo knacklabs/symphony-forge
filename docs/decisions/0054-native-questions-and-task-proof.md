@@ -42,7 +42,8 @@ This amends only the older once-per-story proof timing in Decisions0001/0007
 and Decision0047's closeout consequence. Stage-local certification remains,
 each task carries its own proof, and story closeout consumes shipped task proof
 without replacing the task reviews. The task-worktree, marker-on-main and human
-merge rules remain. Proposed Decision0049 is not accepted by this amendment.
+merge rules remain. The earlier proposed per-task-review record is not accepted
+by this amendment.
 
 Decision0053's prohibition on relaxed round matching continues to prohibit
 relaxing exact event/question/submitted-text matching, story eligibility and
