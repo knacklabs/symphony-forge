@@ -15,7 +15,6 @@ from factory_lib import (
 )
 
 from .common import fail
-from .events import append_event
 from .context import pending_context
 from .decisions import active_decision_ids, decision_records
 from .signal import open_signals
@@ -123,6 +122,11 @@ def cmd_save(args: argparse.Namespace) -> None:
     if not source.is_file():
         fail(f"plan source {source} not found — pass the approved plan file via --from")
     story = args.story or issue
+    current_story = state.get("story") or state.get("issue_key")
+    if state.get("plan_status") == "approved" and current_story == story:
+        fail(f"plan save refused: {story} already has an approved current plan. "
+             "Keep the approved contract stable; use the governed amendment "
+             "path when its meaning must change.")
     roadmap_items = load_json(base / "plans" / "roadmap.json", default={}).get("items", [])
     item = next((i for i in roadmap_items if i.get("key") == story), None)
     if item is None:
@@ -181,16 +185,7 @@ def cmd_save(args: argparse.Namespace) -> None:
     ]
     if missing_sections:
         fail("the plan is missing required sections: " + ", ".join(missing_sections))
-    plan_digest = plan_digest_without_assumptions(source)
-    marker_path = evidence_path(base, story, "plan-approval.json", for_write=True)
-    marker = load_json(marker_path, default={})
-    # Bind to (issue, story) as well as the body: a body digest alone could be
-    # replayed by saving the same text under a different --story/--issue, which
-    # would approve a plan the human never reviewed in that context.
-    approved = (marker.get("approved_plan_sha256") == plan_digest
-                and marker.get("issue") == issue
-                and marker.get("story") == story)
-    status = "approved" if approved else "awaiting-approval"
+    status = "awaiting-approval"
     title = args.title or state.get("title") or issue
     dest_dir = base / "plans" / "active"
     dest_dir.mkdir(parents=True, exist_ok=True)
@@ -207,26 +202,14 @@ def cmd_save(args: argparse.Namespace) -> None:
         state["plan_status"] = status
         state["plan_file"] = dest.relative_to(base).as_posix()
         state["story"] = story
-        if approved:
-            state["approved_plan_sha256"] = plan_digest_without_assumptions(dest)
-        else:
-            state.pop("approved_plan_sha256", None)
+        state.pop("approved_plan_sha256", None)
         state["updated_at"] = now_iso()
         dump_json(run_state_path(base), state)
-    if not approved:
-        print(
-            f"Plan saved to {dest.relative_to(base)} (plan_status: awaiting-approval). "
-            "Display these exact bytes in native Plan Mode; successful native "
-            "approval records and advances this plan automatically."
-        )
-        return
-    # Consume the marker: it authorizes exactly one save (0029). Leaving it
-    # would let a later awaiting-approval reset re-approve the same body with no
-    # fresh human action — the replay hole autoreview flagged.
-    marker_path.unlink(missing_ok=True)
-    append_event(base, "plan-approved", actor="planner-high", story=story,
-                 detail=dest.relative_to(base).as_posix())
-    print(f"Plan saved to {dest.relative_to(base)} (plan_status: approved)")
+    print(
+        f"Plan saved to {dest.relative_to(base)} (plan_status: awaiting-approval). "
+        "Display these exact bytes in native Plan Mode; successful native "
+        "approval records and advances this plan automatically."
+    )
 
 
 def cmd_list(args: argparse.Namespace) -> None:

@@ -8,18 +8,17 @@ import os
 import re
 import shutil
 import subprocess
-from datetime import datetime, timezone
 from pathlib import Path
 
 from factory_lib import (
     _committed_task_marker,
     clean_git_env, default_trunk_branch, dump_json, evidence_path,
     git_control_dir, load_json, now_iso,
-    plan_digest_without_assumptions, repo_root, require_approved_plan_digest,
+    repo_root, require_approved_plan_digest,
     require_ready_task, task_digest,
     require_task_sealed,
     protected_decomposition_state_path, run_state_path,
-    task_marker_on_main, task_marker_path, validate_payload,
+    task_marker_on_main, task_marker_path,
 )
 
 from .common import fail
@@ -111,6 +110,15 @@ def cmd_plan_save(args: argparse.Namespace) -> None:
         fail("task plan source must not be empty")
     require_task_plan_sections(content, args.id)
     dest = _task_plan_path(base, args.id, for_write=True)
+    state = load_json(run_state_path(base), default={})
+    story = state.get("issue_key") or state.get("story")
+    grill_path = evidence_path(
+        base, story, f"grills/tasks/{args.id}.json", for_write=True,
+    )
+    grill = load_json(grill_path, default={})
+    if grill and "task_plan_sha256" not in grill:
+        fail(f"task plan save refused: {args.id} has a legacy task grill. Run "
+             "`forge upgrade` to retire the old format before saving.")
     dest.parent.mkdir(parents=True, exist_ok=True)
     dest.write_text(content, encoding="utf-8")
     # The plan carries a RENDERED copy of its contract, never a hand-written
@@ -123,25 +131,6 @@ def cmd_plan_save(args: argparse.Namespace) -> None:
         if isinstance(t, dict) and t.get("id") == args.id), None)
     if contract:
         refresh_task_plan_contract(base, args.id, contract)
-    state = load_json(run_state_path(base), default={})
-    story = state.get("issue_key") or state.get("story")
-    grill_path = evidence_path(
-        base, story, f"grills/tasks/{args.id}.json", for_write=True,
-    )
-    grill = load_json(grill_path, default={})
-    if grill and "task_plan_sha256" not in grill:
-        try:
-            grilled_at = datetime.fromisoformat(grill["recorded_at"])
-            if grilled_at.tzinfo is None:
-                grilled_at = grilled_at.replace(tzinfo=timezone.utc)
-            saved_at = datetime.fromtimestamp(dest.stat().st_mtime, timezone.utc)
-        except (KeyError, TypeError, ValueError, OSError):
-            pass
-        else:
-            if grilled_at <= saved_at:
-                grill["task_plan_sha256"] = plan_digest_without_assumptions(dest)
-                validate_payload(base, "grill", grill)
-                dump_json(grill_path, grill)
     print(f"Saved task plan: {dest.relative_to(base)}")
 
 

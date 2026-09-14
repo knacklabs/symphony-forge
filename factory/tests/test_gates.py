@@ -8689,6 +8689,18 @@ def test_codex_sync_question_passes_pre_hook_then_records_approval(repo, tmp_pat
     code, out = post_hook(repo, event)
     assert code == 0, out
     assert run_state(repo)["plan_status"] == "approved"
+    approved_events = [entry for entry in load_events(repo)
+                       if entry.get("event") == "plan-approved"]
+    assert len(approved_events) == 1
+
+    code, out = post_hook(repo, event)
+    assert code == 0, out
+    assert len([entry for entry in load_events(repo)
+                if entry.get("event") == "plan-approved"]) == 1
+    code, out = run(repo, "forge.py", "plan", "save", "--from", str(plan),
+                    "--story", "ENG-1")
+    assert code != 0 and "already has an approved current plan" in out
+    assert run_state(repo)["plan_status"] == "approved"
 
 
 def test_plan_save_accepts_a_plan_authored_in_any_mode(repo, tmp_path):
@@ -8737,6 +8749,33 @@ def test_task_plan_save_requires_workflow_and_manual_verification(repo, tmp_path
                     "--from", str(source))
     # Heading LEVEL is not the point: a deeper structure still wrote them.
     assert code == 0, out
+
+
+def test_task_plan_save_refuses_legacy_grill_without_mutating_plan(repo, tmp_path):
+    sign_off(repo)
+    intake(repo)
+    save_plan(repo, tmp_path)
+    record_skeleton_then_frontier(repo, [STAGE_TASK])
+    destination = story_state(repo) / "task-plans" / "T1.md"
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    destination.write_text("existing plan\n")
+    grill = story_state(repo) / "grills" / "tasks" / "T1.json"
+    grill.parent.mkdir(parents=True, exist_ok=True)
+    grill.write_text(json.dumps({
+        "generated_by": "griller", "gate": "task",
+        "recorded_at": "2026-01-01T00:00:00+00:00",
+    }) + "\n")
+    source = tmp_path / "T1-modern.md"
+    source.write_text(
+        "# T1 plan\n\n## Workflow\n\nA to B.\n\n"
+        "## Manual Verification\n\nRun it.\n"
+    )
+
+    code, out = run(repo, "forge.py", "task", "plan", "save", "T1",
+                    "--from", str(source))
+
+    assert code != 0 and "legacy task grill" in out and "forge upgrade" in out
+    assert destination.read_text() == "existing plan\n"
 
 
 def test_existing_plan_save_gates_still_run_unchanged(repo, tmp_path):
@@ -13956,6 +13995,29 @@ def test_product_snapshot_reads_gitlink_index_once(repo, monkeypatch):
         args[:2] == ("ls-files", "--stage") and "-z" not in args
         for args in calls
     )
+
+
+def test_stage_proof_reuses_one_input_snapshot_for_both_identities(repo, monkeypatch):
+    import forge_cli.stages as stages
+
+    original = stages.product_tree_snapshot
+    calls = []
+
+    def counted(base):
+        calls.append(base)
+        return original(base)
+
+    monkeypatch.setattr(stages, "product_tree_snapshot", counted)
+    monkeypatch.setattr(stages, "protected_authority_snapshot",
+                        lambda *_args: {"authority": "unchanged"})
+    monkeypatch.setattr(stages, "_proof_receipt", lambda *_args: {})
+    monkeypatch.setattr(stages, "_store_proof_receipt", lambda *_args: None)
+
+    stages.run_stage_proof(
+        repo, "T1", {"verify_commands": [], "required_tests": []},
+    )
+
+    assert calls == [repo, repo]
 
 
 def test_stage_done_checks_both_sides_of_a_committed_rename(repo, tmp_path):

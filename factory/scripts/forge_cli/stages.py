@@ -1851,11 +1851,15 @@ def _proof_tool_identity(command: str) -> dict[str, object]:
     }
 
 
-def proof_identity(base: Path, task: dict, kind: str) -> dict[str, object]:
+def proof_identity(
+        base: Path, task: dict, kind: str, *, product_tree: dict | None = None,
+) -> dict[str, object]:
     """Content identity for one independently reusable proof type."""
     if kind not in {"tests", "verify"}:
         raise ValueError("proof kind must be tests or verify")
-    snapshot = product_tree_snapshot(base)
+    snapshot = (
+        product_tree if product_tree is not None else product_tree_snapshot(base)
+    )
     if kind == "tests":
         declarations = task.get("required_tests") or []
         commands = [entry.get("command", "") for entry in declarations
@@ -1909,8 +1913,12 @@ def run_stage_proof(base: Path, stage_id: str, task: dict) -> tuple[dict, dict, 
     """
     proof_tree = product_tree_snapshot(base)
     authority_tree = protected_authority_snapshot(base)
-    verify_identity = proof_identity(base, task, "verify")
-    test_identity = proof_identity(base, task, "tests")
+    verify_identity = proof_identity(
+        base, task, "verify", product_tree=proof_tree,
+    )
+    test_identity = proof_identity(
+        base, task, "tests", product_tree=proof_tree,
+    )
     verify_receipt = _proof_receipt(base, stage_id, "verify")
     test_receipt = _proof_receipt(base, stage_id, "tests")
     reuse_verify = (verify_receipt.get("status") == "passed"
