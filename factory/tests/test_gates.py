@@ -563,6 +563,25 @@ def native_claude_approval() -> dict:
     }
 
 
+def native_codex_approval() -> dict:
+    question = "Approve this exact plan?"
+    return {
+        "tool_name": "request_user_input",
+        "session_id": f"session-{uuid.uuid4().hex}",
+        "tool_use_id": f"event-{uuid.uuid4().hex}",
+        "tool_input": {"questions": [{
+            "header": "Approve plan",
+            "question": question,
+            "options": [
+                {"label": "Approve plan"},
+                {"label": "Request changes"},
+                {"label": "Stop"},
+            ],
+        }]},
+        "tool_response": {"answers": {question: "Approve plan"}},
+    }
+
+
 def save_plan_raw(repo: Path, tmp_path: Path) -> tuple[int, str]:
     state = run_state(repo)
     story = state.get("issue_key", "ENG-1")
@@ -8650,6 +8669,26 @@ def test_plan_save_stops_once_at_awaiting_native_approval(repo, tmp_path):
     assert run_state(repo)["plan_status"] == "awaiting-approval"
     code, out = run(repo, "update_run.py", "--phase", "implementing")
     assert code != 0 and "requires an approved, saved plan" in out
+
+
+def test_codex_sync_question_passes_pre_hook_then_records_approval(repo, tmp_path):
+    sign_off(repo)
+    intake(repo)
+    ensure_story(repo, "ENG-1", "Invoices")
+    plan = tmp_path / "codex-approval-plan.md"
+    plan.write_text(plan_draft(repo))
+    code, out = record_grill(repo, "plan", digest_of=plan)
+    assert code == 0, out
+    code, out = run(repo, "forge.py", "plan", "save", "--from", str(plan),
+                    "--story", "ENG-1")
+    assert code == 0 and "awaiting-approval" in out, out
+
+    event = native_codex_approval()
+    code, out = hook(repo, event)
+    assert code == 0 and '"permissionDecision": "deny"' not in out, out
+    code, out = post_hook(repo, event)
+    assert code == 0, out
+    assert run_state(repo)["plan_status"] == "approved"
 
 
 def test_plan_save_accepts_a_plan_authored_in_any_mode(repo, tmp_path):
@@ -17668,23 +17707,20 @@ def test_machine_readiness_checked_every_session(repo, tmp_path):
     assert proc.returncode == 0 and "MACHINE NOT READY" in proc.stdout
 
 
-def test_session_start_routes_native_questions_to_main_chat(repo):
-    code, out = run(
-        repo, "session_start.py", stdin="{}",
-        env={"FORGE_COORDINATOR": "codex"},
-    )
-    assert code == 0, out
-    native = json.loads(out)["hookSpecificOutput"]["additionalContext"]
-    assert "main-chat approval path" in native
-    assert "request_user_input" not in native and "AskUserQuestion" not in native
-
-    code, out = run(
-        repo, "session_start.py", stdin="{}",
-        env={"FORGE_COORDINATOR": "claude"},
-    )
-    assert code == 0, out
-    claude = json.loads(out)["hookSpecificOutput"]["additionalContext"]
-    assert "Claude AskUserQuestion or Codex request_user_input" in claude
+def test_session_start_gives_runtime_neutral_native_approval_guidance(repo):
+    contexts = []
+    for runtime in ("codex", "claude"):
+        code, out = run(
+            repo, "session_start.py", stdin="{}",
+            env={"FORGE_COORDINATOR": runtime},
+        )
+        assert code == 0, out
+        contexts.append(json.loads(out)["hookSpecificOutput"]["additionalContext"])
+    assert contexts[0] == contexts[1]
+    assert "./forge next" in contexts[0]
+    assert "native synchronous question tool" in contexts[0]
+    assert "successful native approval is recorded" in contexts[0]
+    assert "main-chat approval path" not in contexts[0]
 
 
 def test_session_start_injects_project_memory_plan_and_quickfix(repo, tmp_path):
@@ -18672,11 +18708,14 @@ def test_native_unshipped_operations_refuse_before_dispatch(
         assert "[DEAD GRILL] grill-plan" in output
         assert "native.jsonl" in output and "native.stderr" in output
         assert "[DEAD GRILL] T1" not in output
-    for tool_name in ("request_user_input", "request_user_input_async"):
-        code, output = run(repo, "pre_tool_use.py", stdin=json.dumps({
-            "tool_name": tool_name, "tool_input": {"questions": []},
-        }), env={"FORGE_COORDINATOR": "codex"})
-        assert code == 0 and "deny" in output and "question delivery" in output
+    code, output = run(repo, "pre_tool_use.py", stdin=json.dumps({
+        "tool_name": "request_user_input", "tool_input": {"questions": []},
+    }), env={"FORGE_COORDINATOR": "codex"})
+    assert code == 0 and "deny" in output and "signal escalate" in output
+    code, output = run(repo, "pre_tool_use.py", stdin=json.dumps({
+        "tool_name": "request_user_input_async", "tool_input": {"questions": []},
+    }), env={"FORGE_COORDINATOR": "codex"})
+    assert code == 0 and "deny" in output and "optional clarification" in output
     code, output = run(repo, "pre_tool_use.py", stdin=json.dumps({
         "tool_name": "Bash", "tool_input": {"command": "codex exec 'inspect'"},
     }), env={"FORGE_COORDINATOR": "codex"})

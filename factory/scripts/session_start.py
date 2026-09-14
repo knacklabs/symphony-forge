@@ -69,21 +69,13 @@ context.append(
     "The ledgered outage exception is `./forge mode degraded`."
 )
 if run_state.get("plan_status") != "approved" and not quickfix:
-    from forge_cli.codex_runtime import coordinator_runtime  # noqa: E402
-    if coordinator_runtime() == "codex":
-        context.append(
-            "Plan per factory/prompts/planner.md; authoring is mode-agnostic. "
-            "Use `./forge next` for the current contract and grill prerequisites. "
-            "Human questions and approvals use the main-chat approval path; "
-            "native question adapters are unavailable in this release."
-        )
-    else:
-        context.append(
-            "Plan per factory/prompts/planner.md; authoring is mode-agnostic. "
-            "Use `./forge next` for the current contract and grill prerequisites. "
-            "Human rounds use Claude AskUserQuestion or Codex request_user_input; "
-            "see docs/native-coordinator.md for runtime readiness."
-        )
+    context.append(
+        "Plan per factory/prompts/planner.md; authoring is mode-agnostic. "
+        "Use `./forge next` for the current contract and grill prerequisites. "
+        "Required human rounds and approval use the coordinator's native "
+        "synchronous question tool; successful native approval is recorded "
+        "from that completed tool event."
+    )
 if quickfix:
     if quickfix.get("profile", "quickfix") == "lite":
         context.append(
