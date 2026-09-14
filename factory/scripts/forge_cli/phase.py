@@ -414,8 +414,8 @@ def cmd_next(args: argparse.Namespace) -> None:
             "Display its exact current bytes in native Plan Mode and consume one "
             "fresh human approval event. This post-approval edit returns directly "
             "to its approver; do not launch another plan cold read. After approval, "
-            "freshly grill the active task, re-record the same decomposition to bind "
-            "the new story digest, then approve that task plan again."
+            "re-record the same decomposition to bind the new story digest. An "
+            "unchanged task keeps its existing cold proof and task approval."
         )
     elif state.get("plan_status") != "approved":
         phase("planning")

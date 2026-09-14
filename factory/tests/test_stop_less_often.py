@@ -48,6 +48,8 @@ def test_an_edited_story_plan_routes_to_native_reapproval_without_a_cold_read(
     assert "PHASE: awaiting amended-plan approval" in out
     assert "Display its exact current bytes in native Plan Mode" in out
     assert "do not launch another plan cold read" in out
+    assert "re-record the same decomposition" in out
+    assert "keeps its existing cold proof and task approval" in out
     assert grill.read_bytes() == original_grill
 
 

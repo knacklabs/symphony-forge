@@ -31,6 +31,7 @@ class ApprovalCandidate:
     path: Path
     digest: str
     evidence: Path
+    previous_digest: str = ""
 
 
 def _text(value: object) -> str:
@@ -52,6 +53,7 @@ def _story_candidate(base: Path) -> ApprovalCandidate | None:
     if not story:
         return None
     digest = plan_digest_without_assumptions(path)
+    previous_digest = ""
     if status == "awaiting-approval":
         grill = load_json(
             evidence_path(base, story, "grills/plan.json"), default={},
@@ -74,9 +76,11 @@ def _story_candidate(base: Path) -> ApprovalCandidate | None:
                 or re.fullmatch(r"[0-9a-f]{64}", approved) is None
                 or approved == digest):
             return None
+        previous_digest = approved
     return ApprovalCandidate(
         "story", story, "", path, digest,
         evidence_path(base, story, "plan-approval.json", for_write=True),
+        previous_digest,
     )
 
 
@@ -279,6 +283,8 @@ def record_native_approval(
             "story": candidate.story,
             "task": candidate.task,
         }
+        if candidate.kind == "story" and candidate.previous_digest:
+            record["previous_approved_plan_sha256"] = candidate.previous_digest
         authority_paths = {candidate.evidence}
         if candidate.kind == "story":
             authority_paths.update({candidate.path, run_state_path(base)})

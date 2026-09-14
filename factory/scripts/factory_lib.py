@@ -3347,6 +3347,104 @@ def story_plan_digest(root: Path) -> str:
     return plan_digest_without_assumptions(plan) if plan.is_file() else ""
 
 
+def _native_story_approval_recorded(
+    root: Path, story: str, record: dict, *, path: Path | None = None,
+) -> bool:
+    """Whether one story-approval record is its real native-event tombstone."""
+    runtime = record.get("runtime")
+    session = record.get("session_id")
+    event = record.get("event_id")
+    expected_actor = {
+        "claude": "human-via-Claude",
+        "codex": "human-via-Codex",
+    }.get(runtime)
+    if (
+        record.get("approved_by") != expected_actor
+        or record.get("plan_kind") != "story"
+        or record.get("story") != story
+        or record.get("task") != ""
+        or re.fullmatch(
+            r"[0-9a-f]{64}", record.get("approved_plan_sha256") or "",
+        ) is None
+        or not all(
+            isinstance(value, str) and value.strip()
+            for value in (record.get("approved_at"), session, event)
+        )
+    ):
+        return False
+    replay_key = hashlib.sha256(
+        f"{runtime}\0{session}\0{event}".encode("utf-8")
+    ).hexdigest()
+    replay = evidence_path(
+        root, story, f"approval-events/{replay_key}.json",
+    )
+    if path is not None and path != replay:
+        return False
+    return load_json(replay, default={}) == record
+
+
+def approved_story_plan_predecessors(
+    root: Path, current_digest: str,
+) -> tuple[str, ...]:
+    """Return authenticated predecessor digests for the current approval.
+
+    The transition is authority only when the live run, selected approval
+    record, and consumed native-event tombstone all name the same story and
+    old-to-new digest pair.  Callers use it narrowly to preserve an unchanged
+    task's cold proof across a human-approved story-plan edit.
+    """
+    if re.fullmatch(r"[0-9a-f]{64}", current_digest or "") is None:
+        return ()
+    state = load_json(run_state_path(root), default={})
+    story = str(state.get("story") or state.get("issue_key") or "").strip()
+    relative = state.get("plan_file")
+    if (
+        not story
+        or state.get("plan_status") != "approved"
+        or state.get("approved_plan_sha256") != current_digest
+        or not isinstance(relative, str)
+    ):
+        return ()
+    plan = root / relative
+    if not plan.is_file() or plan_digest_without_assumptions(plan) != current_digest:
+        return ()
+    record = load_json(
+        evidence_path(root, story, "plan-approval.json"), default={},
+    )
+    if (
+        record.get("approved_plan_sha256") != current_digest
+        or not _native_story_approval_recorded(root, story, record)
+    ):
+        return ()
+
+    predecessors: list[str] = []
+    seen = {current_digest}
+    event_dir = evidence_path(root, story, "approval-events")
+    while True:
+        previous = record.get("previous_approved_plan_sha256")
+        if (
+            re.fullmatch(r"[0-9a-f]{64}", previous or "") is None
+            or previous in seen
+        ):
+            break
+        predecessors.append(previous)
+        seen.add(previous)
+        matches = []
+        for path in event_dir.glob("*.json"):
+            candidate = load_json(path, default={})
+            if (
+                candidate.get("approved_plan_sha256") == previous
+                and _native_story_approval_recorded(
+                    root, story, candidate, path=path,
+                )
+            ):
+                matches.append(candidate)
+        if len(matches) != 1:
+            break
+        record = matches[0]
+    return tuple(predecessors)
+
+
 def validated_measurement_launch(
     root: Path,
     task: dict,
@@ -3408,7 +3506,13 @@ def validated_measurement_launch(
     ) else None
 
 
-def _measurement_continuity_matches(root: Path, task: dict, grill: dict) -> bool:
+def _measurement_continuity_matches(
+    root: Path,
+    task: dict,
+    grill: dict,
+    *,
+    allow_unbound_story_reapproval: bool = False,
+) -> bool:
     """Validate the complete recorder-owned active-stage receipt chain."""
     task_id = str(task.get("id") or "")
     stage = task_stage_record(root, task_id)
@@ -3416,8 +3520,18 @@ def _measurement_continuity_matches(root: Path, task: dict, grill: dict) -> bool
     if stage.get("status") not in ("active", "done") \
             or not isinstance(receipts, list) or not receipts:
         return False
-    semantic = grounding_digest(root, task, in_stage=True)
     story_digest = story_plan_digest(root)
+    decomposition = load_json(
+        protected_decomposition_state_path(root), default={},
+    )
+    transition_is_bound = decomposition.get("plan_sha256") == story_digest
+    previous_story_digests = (
+        approved_story_plan_predecessors(root, story_digest)
+        if transition_is_bound or allow_unbound_story_reapproval
+        else ()
+    )
+    permitted_story_digests = {story_digest}
+    permitted_story_digests.update(previous_story_digests)
     task_plan_digest = task_plan_binding_digest(root, task_id, grill)
     if not story_digest or not task_plan_digest:
         return False
@@ -3444,6 +3558,7 @@ def _measurement_continuity_matches(root: Path, task: dict, grill: dict) -> bool
             return False
         before = receipt.get("from_measurement")
         after = receipt.get("to_measurement")
+        receipt_story_digest = receipt.get("story_plan_sha256")
         if not isinstance(before, dict) or not isinstance(after, dict):
             return False
         if set(before) != set(MEASUREMENT_CONTRACT_FIELDS) \
@@ -3456,9 +3571,15 @@ def _measurement_continuity_matches(root: Path, task: dict, grill: dict) -> bool
             or receipt.get("stage_started_at") != stage.get("started_at")
             or receipt.get("stage_base_sha") != stage.get("base_sha")
             or receipt.get("source_grill_input_sha256") != grill.get("input_sha256")
-            or receipt.get("story_plan_sha256") != story_digest
+            or receipt_story_digest not in permitted_story_digests
             or receipt.get("task_plan_sha256") != task_plan_digest
-            or receipt.get("semantic_grounding_sha256") != semantic
+            or receipt.get("semantic_grounding_sha256")
+            != grounding_digest(
+                root,
+                task,
+                in_stage=True,
+                _plan_sha256=receipt_story_digest,
+            )
             or receipt.get("from_task_sha256") != expected
             or (previous_measurement is not None and before != previous_measurement)
         ):
@@ -3472,7 +3593,11 @@ def _measurement_continuity_matches(root: Path, task: dict, grill: dict) -> bool
             return False
         if index == 0:
             if not grounding_matches(
-                root, before_task, grill.get("input_sha256"), in_stage=True,
+                root,
+                before_task,
+                grill.get("input_sha256"),
+                in_stage=True,
+                _plan_sha256=receipt_story_digest,
             ):
                 return False
             origin_task = before_task
@@ -3497,7 +3622,12 @@ def _measurement_continuity_matches(root: Path, task: dict, grill: dict) -> bool
 
 
 def task_grill_grounding_matches(
-    root: Path, task: dict, grill: dict, *, treeish: str = "",
+    root: Path,
+    task: dict,
+    grill: dict,
+    *,
+    treeish: str = "",
+    allow_unbound_story_reapproval: bool = False,
 ) -> bool:
     """Accept current grounding or an exact recorder-owned continuity chain."""
     if grounding_matches(
@@ -3508,7 +3638,32 @@ def task_grill_grounding_matches(
         in_stage=task_in_stage(root, str(task.get("id") or "")),
     ):
         return True
-    return _measurement_continuity_matches(root, task, grill)
+    current_story_digest = story_plan_digest(root)
+    decomposition = load_json(
+        protected_decomposition_state_path(root), default={},
+    )
+    transition_is_bound = decomposition.get("plan_sha256") == current_story_digest
+    previous_story_digests = (
+        approved_story_plan_predecessors(root, current_story_digest)
+        if transition_is_bound or allow_unbound_story_reapproval
+        else ()
+    )
+    for previous_story_digest in previous_story_digests:
+        if grounding_matches(
+            root,
+            task,
+            grill.get("input_sha256"),
+            treeish=treeish,
+            in_stage=task_in_stage(root, str(task.get("id") or "")),
+            _plan_sha256=previous_story_digest,
+        ):
+            return True
+    return _measurement_continuity_matches(
+        root,
+        task,
+        grill,
+        allow_unbound_story_reapproval=allow_unbound_story_reapproval,
+    )
 
 
 CONTRACT_BLOCK_START = "<!-- forge:contract -->"
@@ -3877,36 +4032,41 @@ def task_in_stage(root: Path, task_id: str) -> bool:
 
 def grounding_digest(root: Path, task: dict, *, treeish: str = "",
                      in_stage: bool = False,
-                     fields: tuple[str, ...] | None = None) -> str:
+                     fields: tuple[str, ...] | None = None,
+                     _plan_sha256: str | None = None) -> str:
     """Bind a task grill to what the work IS: the substantive contract, the
     approved plan, and — only before the stage opens — the product tree."""
-    decomposition = load_json(protected_decomposition_state_path(root), default={})
-    plan_file = decomposition.get("plan_file")
-    if not isinstance(plan_file, str) or not plan_file.strip():
-        plan_file = load_json(run_state_path(root), default={}).get("plan_file")
-    if not isinstance(plan_file, str) or not plan_file.strip():
-        raise SystemExit(
-            "cannot derive the task grounding digest: the protected decomposition "
-            "does not name its approved plan"
+    if _plan_sha256 is None:
+        decomposition = load_json(
+            protected_decomposition_state_path(root), default={},
         )
-    plan = (root / plan_file).resolve()
-    try:
-        plan.relative_to(root.resolve())
-    except ValueError:
-        raise SystemExit(
-            f"cannot derive the task grounding digest: plan path escapes the repo: "
-            f"{plan_file!r}"
-        )
-    if not plan.is_file():
-        raise SystemExit(
-            f"cannot derive the task grounding digest: approved plan {plan_file!r} "
-            "does not exist"
-        )
+        plan_file = decomposition.get("plan_file")
+        if not isinstance(plan_file, str) or not plan_file.strip():
+            plan_file = load_json(run_state_path(root), default={}).get("plan_file")
+        if not isinstance(plan_file, str) or not plan_file.strip():
+            raise SystemExit(
+                "cannot derive the task grounding digest: the protected decomposition "
+                "does not name its approved plan"
+            )
+        plan = (root / plan_file).resolve()
+        try:
+            plan.relative_to(root.resolve())
+        except ValueError:
+            raise SystemExit(
+                "cannot derive the task grounding digest: plan path escapes the repo: "
+                f"{plan_file!r}"
+            )
+        if not plan.is_file():
+            raise SystemExit(
+                f"cannot derive the task grounding digest: approved plan {plan_file!r} "
+                "does not exist"
+            )
+        _plan_sha256 = plan_digest_without_assumptions(plan)
     if fields is None:
         fields = IN_STAGE_GROUNDING_FIELDS if in_stage else GROUNDING_CONTRACT_FIELDS
     body = {
         "contract": {field: task.get(field) for field in fields},
-        "plan_sha256": plan_digest_without_assumptions(plan),
+        "plan_sha256": _plan_sha256,
     }
     # The product tree is part of the grounding only until the stage opens.
     # Before work starts, the plan was grilled against a codebase and a change
@@ -3925,7 +4085,13 @@ def grounding_digest(root: Path, task: dict, *, treeish: str = "",
     return hashlib.sha256(payload.encode()).hexdigest()
 
 
-def legacy_grounding_digest(root: Path, task: dict, *, treeish: str = "") -> str:
+def legacy_grounding_digest(
+    root: Path,
+    task: dict,
+    *,
+    treeish: str = "",
+    _plan_sha256: str | None = None,
+) -> str:
     """The pre-split digest: the WHOLE task dict plus the tree, unconditionally.
 
     Kept so a grill recorded by older tooling still verifies. It is strictly
@@ -3933,24 +4099,28 @@ def legacy_grounding_digest(root: Path, task: dict, *, treeish: str = "") -> str
     covers and more — so accepting it as an alternative can never let through
     something the current rule would refuse.
     """
-    decomposition = load_json(protected_decomposition_state_path(root), default={})
-    plan_file = decomposition.get("plan_file") or load_json(
-        run_state_path(root), default={}).get("plan_file")
-    if not isinstance(plan_file, str) or not plan_file.strip():
-        raise SystemExit(
-            "cannot derive the task grounding digest: the protected decomposition "
-            "does not name its approved plan"
+    if _plan_sha256 is None:
+        decomposition = load_json(
+            protected_decomposition_state_path(root), default={},
         )
-    plan = (root / plan_file).resolve()
-    if not plan.is_file():
-        raise SystemExit(
-            f"cannot derive the task grounding digest: approved plan {plan_file!r} "
-            "does not exist"
-        )
+        plan_file = decomposition.get("plan_file") or load_json(
+            run_state_path(root), default={}).get("plan_file")
+        if not isinstance(plan_file, str) or not plan_file.strip():
+            raise SystemExit(
+                "cannot derive the task grounding digest: the protected decomposition "
+                "does not name its approved plan"
+            )
+        plan = (root / plan_file).resolve()
+        if not plan.is_file():
+            raise SystemExit(
+                f"cannot derive the task grounding digest: approved plan {plan_file!r} "
+                "does not exist"
+            )
+        _plan_sha256 = plan_digest_without_assumptions(plan)
     payload = json.dumps(
         {
             "contract": task,
-            "plan_sha256": plan_digest_without_assumptions(plan),
+            "plan_sha256": _plan_sha256,
             "product_tree_sha256": product_tree_digest(root, treeish),
         },
         sort_keys=True,
@@ -3961,7 +4131,8 @@ def legacy_grounding_digest(root: Path, task: dict, *, treeish: str = "") -> str
 
 
 def grounding_matches(root: Path, task: dict, recorded: str, *,
-                      treeish: str = "", in_stage: bool = False) -> bool:
+                      treeish: str = "", in_stage: bool = False,
+                      _plan_sha256: str | None = None) -> bool:
     """Does a recorded grill still bind its inputs?
 
     Accepts the legacy digest too. That is a compatibility path, not a hole:
@@ -3970,16 +4141,23 @@ def grounding_matches(root: Path, task: dict, recorded: str, *,
     """
     if not recorded:
         return False
-    if recorded == grounding_digest(root, task, treeish=treeish,
-                                    in_stage=in_stage):
+    if recorded == grounding_digest(
+        root, task, treeish=treeish, in_stage=in_stage,
+        _plan_sha256=_plan_sha256,
+    ):
         return True
     if in_stage:
         # Recorded in-stage under the previous rule, which still grounded the
         # three measurement fields. Those fields have not moved if this
         # matches, so the record is as good as one made today.
-        if recorded == grounding_digest(root, task, treeish=treeish,
-                                        in_stage=True,
-                                        fields=GROUNDING_CONTRACT_FIELDS):
+        if recorded == grounding_digest(
+            root,
+            task,
+            treeish=treeish,
+            in_stage=True,
+            fields=GROUNDING_CONTRACT_FIELDS,
+            _plan_sha256=_plan_sha256,
+        ):
             return True
         # Stamped BEFORE the stage opened, so the tree was part of it. The
         # stage pinned that same tree as its baseline, so measuring against
@@ -3988,13 +4166,20 @@ def grounding_matches(root: Path, task: dict, recorded: str, *,
         baseline = _stage_baseline_for(root, str(task.get("id") or ""))
         if baseline:
             try:
-                if recorded == grounding_digest(root, task, treeish=baseline,
-                                                in_stage=False):
+                if recorded == grounding_digest(
+                    root,
+                    task,
+                    treeish=baseline,
+                    in_stage=False,
+                    _plan_sha256=_plan_sha256,
+                ):
                     return True
             except SystemExit:
                 pass
     try:
-        return recorded == legacy_grounding_digest(root, task, treeish=treeish)
+        return recorded == legacy_grounding_digest(
+            root, task, treeish=treeish, _plan_sha256=_plan_sha256,
+        )
     except SystemExit:
         return False
 

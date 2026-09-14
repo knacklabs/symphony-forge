@@ -92,6 +92,17 @@ def test_approved_story_edit_is_the_only_candidate_and_rebinds_atomically(
     assert [(row.kind, row.digest) for row in candidates] == [
         ("story", amended_digest),
     ]
+    protected = lib.protected_decomposition_state_path(repo)
+    authority_before = (
+        candidate.path.read_bytes(),
+        candidate.evidence.read_bytes(),
+        lib.run_state_path(repo).read_bytes(),
+        protected.read_bytes() if protected.is_file() else None,
+        sorted(
+            path.read_bytes()
+            for path in (candidate.evidence.parent / "approval-events").glob("*.json")
+        ),
+    )
 
     stale = {**_event(), "digest": original["approved_plan_sha256"]}
     with pytest.raises(approval.ApprovalRefused, match="digest is stale"):
@@ -99,6 +110,16 @@ def test_approved_story_edit_is_the_only_candidate_and_rebinds_atomically(
     cancelled = {**_event(), "cancelled": True}
     with pytest.raises(approval.ApprovalRefused, match="unsuccessful"):
         approval.record_native_approval(repo, cancelled, runtime="claude")
+    assert (
+        candidate.path.read_bytes(),
+        candidate.evidence.read_bytes(),
+        lib.run_state_path(repo).read_bytes(),
+        protected.read_bytes() if protected.is_file() else None,
+        sorted(
+            path.read_bytes()
+            for path in (candidate.evidence.parent / "approval-events").glob("*.json")
+        ),
+    ) == authority_before
     state = json.loads(lib.run_state_path(repo).read_text())
     assert state["approved_plan_sha256"] == original["approved_plan_sha256"]
 
@@ -107,10 +128,24 @@ def test_approved_story_edit_is_the_only_candidate_and_rebinds_atomically(
     )
     state = json.loads(lib.run_state_path(repo).read_text())
     assert amended["approved_plan_sha256"] == amended_digest
+    assert amended["previous_approved_plan_sha256"] \
+        == original["approved_plan_sha256"]
     assert state["approved_plan_sha256"] == amended_digest
     assert "status: approved" in candidate.path.read_text(encoding="utf-8")
     assert json.loads(candidate.evidence.read_text())["approved_plan_sha256"] \
         == amended_digest
+    assert lib.approved_story_plan_predecessors(repo, amended_digest) == (
+        original["approved_plan_sha256"],
+    )
+
+    replay = next(
+        path for path in (candidate.evidence.parent / "approval-events").glob("*.json")
+        if json.loads(path.read_text()) == amended
+    )
+    replay_bytes = replay.read_bytes()
+    replay.write_text(json.dumps({**amended, "story": "OTHER"}))
+    assert lib.approved_story_plan_predecessors(repo, amended_digest) == ()
+    replay.write_bytes(replay_bytes)
 
 
 def test_task_approval_waits_for_story_approval_and_decomposition_rebinding(

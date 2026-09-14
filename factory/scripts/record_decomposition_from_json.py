@@ -17,8 +17,9 @@ from factory_lib import (
     read_stdin_utf8, validate_payload,
     ready_task_ids,
     IN_STAGE_GROUNDING_FIELDS, MEASUREMENT_CONTRACT_FIELDS, measurement_contract,
-    refresh_task_plan_contract, story_plan_digest, task_grill_grounding_matches,
-    task_plan_binding_digest, validated_measurement_launch,
+    approved_story_plan_predecessors, refresh_task_plan_contract,
+    story_plan_digest, task_grill_grounding_matches, task_plan_binding_digest,
+    validated_measurement_launch,
 )
 from forge_cli.doctor import unrunnable_reason
 from forge_cli.stages import review_budget
@@ -456,6 +457,12 @@ with delegation_exclusion(
     )
     prior_decomposition = load_json(
         protected_decomposition, default={})
+    reapproval_predecessors = approved_story_plan_predecessors(
+        root, approved_sha256,
+    )
+    reapproval_rebind = bool(
+        prior_decomposition.get("plan_sha256") in reapproval_predecessors
+    )
     prior_tasks = {
         task.get("id"): task
         for task in prior_decomposition.get("tasks") or []
@@ -634,10 +641,20 @@ with delegation_exclusion(
             evidence_path(root, story, f"grills/tasks/{task_id}.json"),
             default={},
         )
-        if not grill or task_grill_grounding_matches(root, target, grill):
+        if not grill or task_grill_grounding_matches(
+            root,
+            target,
+            grill,
+            allow_unbound_story_reapproval=reapproval_rebind,
+        ):
             continue
         source = (
-            prior if task_grill_grounding_matches(root, prior, grill)
+            prior if task_grill_grounding_matches(
+                root,
+                prior,
+                grill,
+                allow_unbound_story_reapproval=reapproval_rebind,
+            )
             else _bootstrap_measurement_source(root, stage, target, grill)
         )
         if source is None:
