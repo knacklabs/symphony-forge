@@ -1,5 +1,38 @@
 {
   "id": "LEAN-WORKFLOW",
   "title": "One brief and one complete independent review",
-  "status": "pending"
+  "status": "active",
+  "started_at": "2026-09-14T03:54:21+00:00",
+  "base_sha": "6ae2dea1b7417fff4c9c3fc3552488a8378aacd4",
+  "dirty_at_start": {
+    ".factory/stories/FORGE-COORD-1/decomposition.json": {
+      "digest": "a1863d21ac4b853f3153286cb38c40d52c09ff5d4d33a60e484ff0e773d53bbe",
+      "git": "1 .M N... 100644 100644 100644 cd54ebbf862967c6a4e29d51028afea4b1f0b66c cd54ebbf862967c6a4e29d51028afea4b1f0b66c .factory/stories/FORGE-COORD-1/decomposition.json\u0000\u0000100644 cd54ebbf862967c6a4e29d51028afea4b1f0b66c 0\t.factory/stories/FORGE-COORD-1/decomposition.json\u0000\u0000H .factory/stories/FORGE-COORD-1/decomposition.json\u0000"
+    },
+    ".factory/stories/FORGE-COORD-1/grills/plan.json": {
+      "digest": "c91d4d6140edb4a0eb05c0feb73f984b6c1580970e5d044405cd15a6ce3277c1",
+      "git": "1 .M N... 100644 100644 100644 cf52ebe07559da10345fd1124c80ff198b265c3e cf52ebe07559da10345fd1124c80ff198b265c3e .factory/stories/FORGE-COORD-1/grills/plan.json\u0000\u0000100644 cf52ebe07559da10345fd1124c80ff198b265c3e 0\t.factory/stories/FORGE-COORD-1/grills/plan.json\u0000\u0000H .factory/stories/FORGE-COORD-1/grills/plan.json\u0000"
+    },
+    ".factory/stories/FORGE-COORD-1/grills/requirements.json": {
+      "digest": "b4579959c08cd1fa1d4fa1d888b477397828c7ed5c88f6e70305f7e1a3b20fe8",
+      "git": "1 .M N... 100644 100644 100644 5e31561439b5d86618fa8457aa1eed228c6758fd 5e31561439b5d86618fa8457aa1eed228c6758fd .factory/stories/FORGE-COORD-1/grills/requirements.json\u0000\u0000100644 5e31561439b5d86618fa8457aa1eed228c6758fd 0\t.factory/stories/FORGE-COORD-1/grills/requirements.json\u0000\u0000H .factory/stories/FORGE-COORD-1/grills/requirements.json\u0000"
+    },
+    ".factory/stories/FORGE-COORD-1/grills/tasks/LEAN-WORKFLOW.json": {
+      "digest": "006770673eff895a033ec3ad06c827537535fd8640067b345bf31bd0f1dc1495",
+      "git": "? .factory/stories/FORGE-COORD-1/grills/tasks/LEAN-WORKFLOW.json\u0000\u0000\u0000"
+    },
+    ".factory/stories/FORGE-COORD-1/task-plans/LEAN-WORKFLOW.md": {
+      "digest": "63a23a2a2c0937eec7b3fdf69a5c252811f744289ae50beba564baea824049f7",
+      "git": "? .factory/stories/FORGE-COORD-1/task-plans/LEAN-WORKFLOW.md\u0000\u0000\u0000"
+    },
+    "plans/active/FORGE-COORD-1-either-claude-or-codex-coordinates-the-same-forge-workflow.md": {
+      "digest": "f5ac56ac16a300edc1f645cd49856d465c6cb4c13fad523c5c143c30e61259ba",
+      "git": "1 .M N... 100644 100644 100644 ffda306b202e99273fc24bf91d37d062db9013f9 ffda306b202e99273fc24bf91d37d062db9013f9 plans/active/FORGE-COORD-1-either-claude-or-codex-coordinates-the-same-forge-workflow.md\u0000\u0000100644 ffda306b202e99273fc24bf91d37d062db9013f9 0\tplans/active/FORGE-COORD-1-either-claude-or-codex-coordinates-the-same-forge-workflow.md\u0000\u0000H plans/active/FORGE-COORD-1-either-claude-or-codex-coordinates-the-same-forge-workflow.md\u0000"
+    },
+    "plans/roadmap.json": {
+      "digest": "155b9fcd91d2f8d478b6194ec93c0dc7d27349061a4a085f33675dc9409beb09",
+      "git": "1 .M N... 100644 100644 100644 7acb5fbd48661238e81356c09315ebf7ef393842 7acb5fbd48661238e81356c09315ebf7ef393842 plans/roadmap.json\u0000\u0000100644 7acb5fbd48661238e81356c09315ebf7ef393842 0\tplans/roadmap.json\u0000\u0000H plans/roadmap.json\u0000"
+    }
+  },
+  "task_sha256": "c3da88c8625f353d5768032c8f06e3bc491ca181be28512c4b018483971d79c1"
 }

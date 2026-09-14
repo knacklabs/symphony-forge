@@ -32,7 +32,7 @@ from factory_lib import (  # noqa: E402
     protected_decomposition_state_path,
 )
 from forge_cli.stages import (  # noqa: E402
-    _legacy_stamp_binding, load_stages, stamp_is_fresh, task_digest, task_for,
+    load_stages, stamp_is_fresh, task_digest, task_for,
 )
 
 
@@ -56,9 +56,8 @@ def _commit_decision(repo: Path, name: str = "0099-mid-stage-call") -> None:
 # ------------------------------------------------- the stamp is about the diff
 
 
-def test_the_stamp_survives_everything_that_is_not_the_diff(repo, tmp_path):
-    """A decision record, a contract re-record, a scope widening: none of
-    them change a product byte, so none of them stale the review."""
+def test_the_stamp_survives_bookkeeping_but_not_reviewed_meaning(repo, tmp_path):
+    """Bookkeeping can reuse; a semantic contract change cannot."""
     start_stage(repo, tmp_path, STAGE_TASK)
     write_in_scope(repo, "src/core.py")
     stamp_and_commit(repo)
@@ -73,8 +72,8 @@ def test_the_stamp_survives_everything_that_is_not_the_diff(repo, tmp_path):
 
     code, out = _rerecord(repo, {**STAGE_TASK, "write_scope": ["src/", "lib/"]})
     assert code == 0, out
-    assert stamp_is_fresh(repo, _stage(repo), task_for(repo, "T1")), \
-        "a contract re-record staled the review"
+    assert not stamp_is_fresh(repo, _stage(repo), task_for(repo, "T1")), \
+        "a reviewed-meaning change reused the old review"
 
 
 def test_the_stamp_goes_stale_on_exactly_a_product_change(repo, tmp_path):
@@ -94,10 +93,8 @@ def test_the_stamp_goes_stale_on_exactly_a_product_change(repo, tmp_path):
 # --------------------------------------- the T2 cascade, replayed and ended
 
 
-def test_stage_done_survives_a_contract_rerecord(repo, tmp_path):
-    """The cascade that cost T2 its morning: widen scope -> re-record ->
-    launch orphaned + stamp stale + grill stale -> re-grill, re-approve,
-    no-op delegate, re-review. Now: widen scope -> re-record -> stage done."""
+def test_stage_done_requires_review_after_semantic_contract_rerecord(repo, tmp_path):
+    """A launch remains attributable, but changed reviewed meaning reruns review."""
     start_stage(repo, tmp_path, STAGE_TASK)
     write_in_scope(repo, "src/core.py")
     stamp_and_commit(repo)
@@ -113,15 +110,13 @@ def test_stage_done_survives_a_contract_rerecord(repo, tmp_path):
     assert task_digest(task_for(repo, "T1")) != launched_under
 
     code, out = run(repo, "forge.py", "stage", "done", "T1")
-    assert code == 0, out
-    stage = measured_stage(repo)
-    assert stage["status"] == "done"
-    assert stage["contract_changed"]["from"] == launched_under
+    assert code != 0, out
+    assert "STALE stage-local review stamp" in out
 
 
-def test_native_stage_done_uses_the_scope_recorded_at_launch(repo, tmp_path):
-    """A native launch keeps the exact write grant it ran under when a later
-    contract re-record changes that grant."""
+def test_native_stage_done_keeps_launch_scope_but_rereviews_changed_meaning(
+        repo, tmp_path):
+    """Launch attribution survives, but changed review semantics do not reuse."""
     from forge_cli.codex_runtime import native_argv
     from forge_cli.delegate import argv_digest, brief_path
 
@@ -146,6 +141,9 @@ def test_native_stage_done_uses_the_scope_recorded_at_launch(repo, tmp_path):
     executable = "/usr/bin/codex"
     native_rows = []
     for row in rows:
+        if row.get("task") != "T1":
+            native_rows.append(row)
+            continue
         argv = native_argv(
             executable, repo, row["model"], row["effort"], True,
             launched_task["write_scope"],
@@ -179,41 +177,31 @@ def test_native_stage_done_uses_the_scope_recorded_at_launch(repo, tmp_path):
     code, out = _rerecord(repo, changed_task)
     assert code == 0, out
     code, out = run(repo, "forge.py", "stage", "done", "T1")
-    assert code == 0, out
+    assert code != 0 and "STALE stage-local review stamp" in out, out
 
 
-def test_legacy_stamp_converts_in_place_when_still_fresh(repo, tmp_path):
-    """Migration without a launch. A stamp recorded under the old rule and
-    still fresh by that rule is accepted and given a delta_id on first check;
-    one stale under the old rule stays stale."""
+def test_legacy_stamp_never_converts_in_normal_runtime(repo, tmp_path):
+    """Lean migration owns old stamp conversion; runtime requires current proof."""
     start_stage(repo, tmp_path, STAGE_TASK)
     write_in_scope(repo, "src/core.py")
     git(repo, "add", "src/core.py")
     git(repo, "commit", "-qm", "work")
     data = load_stages(repo)
     stage = next(s for s in data["stages"] if s["id"] == "T1")
-    legacy = {**_legacy_stamp_binding(repo, stage, task_for(repo, "T1")),
-              "recorded_at": "2026-09-09T00:00:00+00:00",
-              "generated_by": "autoreview"}
+    legacy = {
+        "stage_id": "T1",
+        "task_sha256": task_digest(task_for(repo, "T1")),
+        "brief_sha256": "legacy",
+        "base_sha": stage["base_sha"],
+        "product_tree_digest": product_delta_digest(repo, stage["base_sha"]),
+        "recorded_at": "2026-09-09T00:00:00+00:00",
+        "generated_by": "autoreview",
+    }
     stage["local_review_stamp"] = legacy
     from forge_cli.stages import write_stages
     write_stages(repo, data)
     write_task_proof(repo, "T1", publish_review=True)
 
-    assert stamp_is_fresh(repo, _stage(repo), task_for(repo, "T1"))
-    converted = _stage(repo)["local_review_stamp"]
-    assert converted["delta_id"] == product_delta_digest(repo, stage["base_sha"])
-    code, out = run(repo, "forge.py", "stage", "done", "T1")
-    assert code == 0, out
-
-    # Stale under the old rule: the tree moved after it was recorded.
-    start = None
-    data = load_stages(repo)
-    stage = next(s for s in data["stages"] if s["id"] == "T1")
-    stage["status"] = "active"
-    stage.pop("completed_at", None)
-    stage["local_review_stamp"] = {**legacy, "product_tree_digest": "0" * 64}
-    write_stages(repo, data)
     assert not stamp_is_fresh(repo, _stage(repo), task_for(repo, "T1"))
 
 

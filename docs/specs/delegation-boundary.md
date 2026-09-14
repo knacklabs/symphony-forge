@@ -56,6 +56,14 @@ as a launch.
 **Write permission is derived, not typed.** An active stage with a non-empty
 `write_scope` is a write run. `--read-only` is the explicit exception.
 
+`forge delegate <task-id> --scope <repo-path> [--scope ...]` may narrow a
+write launch to a proper subset of the effective approved scope. One exact
+approved file is a valid member. The normalized subset is stored in the
+existing delegation `write_scope`, included in the brief and launch identity,
+and enforced by admission hooks; it creates no second scope ledger. Omitting
+the flag uses the complete effective scope. Equal, empty, escaping, duplicate,
+or out-of-scope selections refuse before launch.
+
 **A brief is not skippable.** `forge delegate` is the canonical execution
 boundary; direct companion Bash calls are off-contract and routed back to it.
 `stage done` refuses without a successful write launch bound to the active
@@ -120,6 +128,9 @@ expected to attest them, and `--fix` installs what is missing.
   the declared path.
 - The generated brief carries the acceptance criteria, the write scope with
   its existing modules, and — for user-facing work — the design rules inline.
+- A narrowed delegation records and enforces only its proper approved subset;
+  omission retains the full effective scope and no parallel scope authority is
+  created.
 - `forge codex status` reports the write flag per job and flags a stalled one.
 - `forge doctor` reports a required skill that a runtime cannot load.
 - `forge next` names the delegation step.

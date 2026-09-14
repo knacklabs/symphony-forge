@@ -402,12 +402,11 @@ def check_path_parity(root: Path) -> None:
             "PreToolUse": (
                 "Bash", "AskUserQuestion", "Edit", "Write", "MultiEdit", "NotebookEdit",
             ),
-            "PostToolUse": ("Write", "Edit", "MultiEdit", "AskUserQuestion"),
+            "PostToolUse": ("AskUserQuestion", "ExitPlanMode"),
         }),
         (".codex/hooks.json", {
             "PreToolUse": (
-                "Bash", "Edit", "Write", "apply_patch", "request_user_input",
-                "request_user_input_async",
+                "Bash", "apply_patch", "request_user_input",
             ),
             "PostToolUse": ("request_user_input",),
         }),

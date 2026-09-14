@@ -10,7 +10,7 @@ from pathlib import Path
 from factory_lib import (
     client_signoff, evidence_path, head_sha, load_json, load_review_artifacts,
     repo_root, require_all_stages_done, require_coherent_review_run,
-    requirements_digest, run_state_path, task_frontier_state,
+    run_state_path, task_frontier_state,
     proof_read_path,
 )
 
@@ -158,8 +158,7 @@ _PARALLEL_COMMANDS = {
     "delegate": "./forge delegate {id} from inside its worktree",
     "stage-start": "./forge task start {id}, then `./forge stage start {id}` from "
                    "inside the worktree it prints",
-    "await-approval": "./forge task approve {id} --by \"<name>\" once the human "
-                      "has read it on the board",
+    "await-approval": "show the exact plan in native Plan Mode and consume its approval",
     "grill": "./forge grill run --gate task --task {id}",
     "author-task-plan": "author its plan, then ./forge task plan save {id} --from <path>",
     "author-contract": "author its contract and re-record the decomposition",
@@ -314,28 +313,11 @@ def cmd_next(args: argparse.Namespace) -> None:
                          "from its draft, then confirm it")
         drafts = [spec["slug"] for spec in specs if spec.get("status") != "confirmed"]
         if drafts:
-            if native_coordinator:
-                steps.append(
-                    "[PM] Native spec grill question delivery is unavailable in "
-                    "this release. STOP here; LEAN-WORKFLOW owns closing this "
-                    "gap. Do not repeat an unsupported question action."
-                )
-            else:
-                from grill_gates import get_gate
-                floor = get_gate("spec").min_rounds
-                steps.append(
-                    "[PM] Grill and confirm every draft spec: "
-                    f"{', '.join(drafts)} — the spec gate is LEDGER-MATCHED, so "
-                    "its rounds must come from AskUserQuestion in THIS top-level "
-                    f"Claude session. Complete at least {floor} ledger-matched "
-                    f"human round{'s' if floor != 1 else ''}, mark the last "
-                    "`\"frontier_empty\": true`, then: "
-                    "`python3 factory/scripts/record_grill_from_json.py --gate "
-                    "spec --input-digest docs/specs/<slug>.md --input "
-                    "<grill.json>` and `forge spec confirm <slug>`. That payload "
-                    "needs generated_by/gate/verdict/gaps/contradictions/"
-                    "resolutions plus rounds[] of {question, options, chosen} "
-                    "(factory/schemas/grill.json)")
+            steps.append(
+                "[PM] Cold-read and confirm every draft spec once: "
+                f"{', '.join(drafts)}. Record an ordered finding_dispositions "
+                "map and explain every amendment from the cold input to final "
+                "bytes, then `forge spec confirm <slug>`.")
         if specs and not drafts and not load_items(base):
             steps.append("[PM/EM] Derive the spec-linked roadmap before sign-off: "
                          "./forge roadmap derive --input <json> "
@@ -343,17 +325,10 @@ def cmd_next(args: argparse.Namespace) -> None:
         signoff_grill = load_json(factory / "grills" / "signoff.json", default={})
         if (not workflow_input_problems(base)
                 and signoff_grill.get("verdict") != "pass"):
-            if native_coordinator:
-                steps.append(
-                    "[PM] Native sign-off grill question delivery is unavailable "
-                    "in this release. STOP here; LEAN-WORKFLOW owns closing this "
-                    "gap. Do not repeat an unsupported question action."
-                )
-            else:
-                steps.append(
-                    "[PM] Before sign-off: grill the handover for "
-                    "gaps/contradictions (factory/prompts/griller.md), resolve "
-                    "findings, record: record_grill_from_json.py --gate signoff")
+            steps.append(
+                "[PM] Before sign-off: cold-read the handover once, resolve and "
+                "source every finding, explain amendments, then record: "
+                "record_grill_from_json.py --gate signoff")
         steps.append(
             "[PM] When the client confirms: forge.py decision new client-signoff, "
             "then forge.py decision accept client-signoff --by <name> (human), "
@@ -425,37 +400,7 @@ def cmd_next(args: argparse.Namespace) -> None:
     elif state.get("plan_status") != "approved":
         phase("planning")
         issue = state.get("issue_key")
-        item = next((entry for entry in load_items(base) if entry.get("key") == issue), None)
-        spec_ref = item.get("spec") if isinstance(item, dict) else None
-        spec = resolve_spec_reference(base, spec_ref, confirmed=True) \
-            if isinstance(spec_ref, str) and spec_ref.strip() else None
-        requirements_grill = load_json(
-            evidence_path(base, issue, "grills/requirements.json"), default={},
-        )
-        requirements_fresh = bool(
-            spec
-            and requirements_grill.get("verdict") == "pass"
-            and requirements_grill.get("commit")
-            and requirements_grill.get("issue") == issue
-            and requirements_grill.get("input_sha256") == requirements_digest(base, spec)
-        )
-        if not requirements_fresh:
-            if native_coordinator:
-                steps.append(
-                    "[dev] Native requirements grill question delivery is "
-                    "unavailable in this release. STOP here; LEAN-WORKFLOW owns "
-                    "closing this gap. Do not repeat an unsupported question action."
-                )
-            else:
-                steps.append(
-                    "[dev] FIRST: re-grill the confirmed spec against current repo "
-                    "reality with AskUserQuestion rounds "
-                    "(factory/prompts/griller.md --gate requirements), resolve "
-                    "findings, then record: record_grill_from_json.py --gate "
-                    "requirements"
-                )
-        else:
-            steps.append(
+        steps.append(
                 "[dev] FIRST read the system this plan will assert about — open "
                 "the types, enums, routes, permission codes and decision "
                 "records it will name. Not the architecture note describing "
@@ -464,23 +409,24 @@ def cmd_next(args: argparse.Namespace) -> None:
                 "built. Delegate BREADTH to a read-only Codex run "
                 "(/codex:rescue) when the question is how a whole flow hangs "
                 "together; look up specific facts yourself.")
-            steps.append("[dev] THEN plan per factory/prompts/planner.md, or "
+        steps.append("[dev] THEN plan per factory/prompts/planner.md, or "
                          "deliberately open a bounded "
                          "`./forge quickfix start \"<reason>\"` window. Product writes are "
                          "hook-blocked otherwise (Codex planning alternative: "
                          "planner-high). Authoring is "
                          "mode-agnostic (0050) — do not switch the session's mode "
                          "to write a plan.")
-            steps.append("[dev] Record new decisions as you go: forge.py decision new <slug>")
-            plan_grill = load_json(
+        steps.append("[dev] Record new decisions as you go: forge.py decision new <slug>")
+        plan_grill = load_json(
                 evidence_path(base, issue, "grills/plan.json"), default={},
             )
-            if plan_grill.get("verdict") != "pass" or plan_grill.get("issue") != issue:
-                steps.append("[dev] MANDATORY before approval: grill the plan (/grill-me, or "
+        if plan_grill.get("verdict") != "pass" or plan_grill.get("issue") != issue:
+            steps.append("[dev] MANDATORY before approval: grill the plan (/grill-me, or "
                              "factory/prompts/griller.md --gate plan) and record: "
                              "record_grill_from_json.py --gate plan — plan save refuses without it")
-            steps.append("[dev] On approval: forge.py plan save --from <plan-file> "
-                         f"--story {issue}")
+        steps.append("[dev] Save once: forge.py plan save --from <plan-file> "
+                     f"--story {issue}; then display those exact bytes in native "
+                     "Plan Mode. The successful native approval event advances it.")
     elif state.get("decomposition_status") != "recorded":
         phase("decomposing")
         steps.append(
@@ -539,7 +485,7 @@ def cmd_next(args: argparse.Namespace) -> None:
                     steps.append(
                         f"[dev] Grill the saved {task_id} plan with `/grill-me` "
                         "(factory/prompts/griller.md --gate task). Because YOU authored "
-                        "the plan, EVERY round starts with a fresh read-only Codex "
+                        "the plan, release one fresh read-only Codex "
                         f"cold-read: `./forge grill run --gate task --task {task_id}` "
                         "(ledgered, so a killed launcher still shows in `forge codex "
                         "status`; it pins the cold reader from harness.yaml) — not "
@@ -547,14 +493,13 @@ def cmd_next(args: argparse.Namespace) -> None:
                         "that Codex run (it can pause on a signal awaiting you). ONE "
                         "cold read is the WHOLE grill. Clean? Record and move on. "
                         "Otherwise resolve every finding the REPO answers yourself, and "
-                        "put only what it cannot answer to the human in THIS grill via "
-                        "AskUserQuestion (recommended answer first) — there is no later "
-                        "round to save the hard ones for. Amend the contract once, then "
-                        "record the digest-bound pass against the AMENDED version. Do "
+                        "put only what it cannot answer to the human through the host's "
+                        "permitted channel. Record an ordered one-to-one disposition "
+                        "and source for every finding, plus an explained amendment bridge "
+                        "to the final digest. Do "
                         "NOT cold-read again: a second unconstrained read returns a "
                         "DIFFERENT frontier, not a shorter one, and that is how grills "
-                        "reached forty rounds. Only a clean grill makes the plan appear "
-                        "on the board. Do NOT ask for approval before it is recorded."
+                        "reached forty rounds. Do NOT ask for approval before it is recorded."
                     )
                 elif frontier == "author-task-plan":
                     steps.append(
@@ -583,19 +528,11 @@ def cmd_next(args: argparse.Namespace) -> None:
                     )
                 elif frontier == "await-approval":
                     steps.append(
-                        f"[dev] The grilled {task_id} plan is ready for review. "
-                        f"{_board_handoff(base)} GIVE THE HUMAN THAT LINK and ask "
-                        "them to open the story and read the plan there — saying "
-                        "\"it is on the board\" without a link is what left the "
-                        "last approval happening blind in chat. Ask for approval "
-                        "EXACTLY ONCE, and only after the grill has converged (a "
-                        "clean round AND the plan is final — no pending edits): "
-                        "the human reviews it THERE (not in chat) and approves; "
-                        f"then record it: `./forge task approve {task_id} --by \"<name>\"`. "
-                        "`task approve` prints the board link again as a courtesy; "
-                        "it does not check that the plan was opened — you do. "
-                        "Do NOT approve after an intermediate grill — a "
-                        "later edit re-stales the approval and forces another round."
+                        f"[dev] The cold-grilled {task_id} plan is ready. Display "
+                        "its exact final bytes in native Plan Mode and ask once. "
+                        "A successful Claude ExitPlanMode or the exact synchronous "
+                        "Codex Approve plan / Request changes / Stop response is "
+                        "recorded automatically; there is no board or manual-approve step."
                     )
                 elif frontier == "stage-start":
                     # Naming only `stage start` sent the work to the trunk's own

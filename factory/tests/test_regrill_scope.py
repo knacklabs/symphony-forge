@@ -269,7 +269,7 @@ def test_a_second_delegate_after_committing_needs_no_new_grill(repo: Path, tmp_p
         "-m", "WF-1 T1: the implementation lands")
 
     # The fix round. No re-grill, no re-approval, no contract edit.
-    code, out = run(repo, "forge.py", "delegate", "T1",
+    code, out = run(repo, "forge.py", "delegate", "T1", "--print-only",
                     env=fake_companion_env(tmp_path))
     assert code == 0, (
         "delegate still demands a fresh grill after the implementation was "

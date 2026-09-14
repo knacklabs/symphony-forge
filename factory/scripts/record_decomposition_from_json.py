@@ -530,7 +530,7 @@ with delegation_exclusion(
                 "to the amended plan.\n"
                 "Re-grill and re-approve BEFORE the next delegate or stage close:\n"
                 f"  python3 factory/scripts/record_grill_from_json.py --gate task --task {task_id}\n"
-                f"  ./forge task approve {task_id} --by \"<name>\"\n"
+                "  display the exact amended plan in native Plan Mode and consume its approval\n"
                 "The review stamp, if any, stands: it binds to the product diff, "
                 "which this did not change.\n"
             )
@@ -566,7 +566,7 @@ with delegation_exclusion(
             "and do NOT carry to the amended graph.\n"
             "Re-present the amended plan to the HUMAN, then before any stage start / "
             "delegate:\n"
-            "  ./forge plan approve --by \"<name>\"   # only after the human confirms\n"
+            "  consume the successful native Plan Mode approval event\n"
             "  python3 factory/scripts/record_grill_from_json.py --gate task "
             "--task <frontier-id>\n"
         )

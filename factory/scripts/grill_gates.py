@@ -7,19 +7,16 @@ that same text so "this grill was of THIS version" stays checkable rather than
 assumed. Locating the artifact is therefore part of what a gate IS, not
 plumbing bolted on beside it.
 
-Before this table the six gates were spelled out in eight places — the runner's
-label map and its two hand-written lookups, the recorder's round floors, its
-`--gate` choices, its story-scoping tuple and its evidence filename branch,
-`forge.py`'s own choices list, and the schema's prose. They drifted, silently,
-in the direction you would expect: the runner could locate two of six gates, so
-four gates could not be released through the ledgered launcher at all, and the
-round floor covered four of six, so `signoff` and `epics` accepted a grill with
-ZERO rounds behind them and passed.
+Before this table the gates were spelled out in multiple consumers: the
+runner's label map and locators, the recorder's choices and story scoping,
+`forge.py`, and the schema prose. They drifted until some recordable gates were
+not runnable. Lean keeps one row per supported cold-read gate and removes the
+separate requirements gate and round-floor model.
 
 A `Gate` therefore has no optional fields. A row cannot be declared without
-saying where its artifact lives and how many rounds it needs, so "recordable
-but not runnable" and "gated but unfloored" stop being states this harness can
-represent. Adding a gate is adding a row; every consumer picks it up.
+saying where its artifact lives, so "recordable but not runnable" stops being
+a state this harness can represent. Adding a gate is adding a row; every
+consumer picks it up.
 """
 from __future__ import annotations
 
@@ -30,18 +27,6 @@ from typing import Callable
 from factory_lib import (
     evidence_path, load_json, run_state_path,
 )
-
-# Said once, carried into every brief and every recorder message. The floor is
-# the point below which a grill is not evidence at all — it was never the bar.
-# A grill is done when a round comes back clean AND the round before it came
-# back clean; a single clean round after a noisy one is a coincidence, not
-# convergence.
-FLOOR_IS_NOT_A_TARGET = (
-    "The round count below is a FLOOR, not a target. Keep grilling until a "
-    "round comes back clean AND stays clean on the next one — hitting the "
-    "floor is not the same as passing."
-)
-
 
 def _fail(message: str) -> None:
     raise SystemExit(message)
@@ -111,24 +96,6 @@ def _locate_epics(base: Path, task_id: str, file_arg: str) -> tuple[str, str]:
     return f"the derived epics in {path.name}", path.read_text(encoding="utf-8")
 
 
-def _locate_requirements(base: Path, task_id: str, file_arg: str) -> tuple[str, str]:
-    """The requirements round interrogates the confirmed spec BEHIND the active
-    story — the same spec the recorder digests, so the grill and its record
-    cannot describe different documents."""
-    story = _active_story(base)
-    if not story:
-        _fail("no active story — run intake before the requirements grill")
-    items = load_json(base / "plans" / "roadmap.json", default={}).get("items", [])
-    item = next((entry for entry in items if entry.get("key") == story), None)
-    reference = item.get("spec") if isinstance(item, dict) else None
-    if not isinstance(reference, str) or not reference.strip():
-        _fail(f"active story {story!r} has no confirmed spec to grill — link "
-              f"one first: ./forge roadmap link-spec {story} --spec <path>")
-    spec = base / reference
-    text = _read_text(spec, f"the linked spec {reference!r} does not exist")
-    return f"requirements for {story} ({reference})", text
-
-
 def _locate_plan(base: Path, task_id: str, file_arg: str) -> tuple[str, str]:
     """A plan is grilled BEFORE it is saved — plan save refuses without a
     passing grill — so the draft in hand is the normal case and the recorded
@@ -160,11 +127,10 @@ def _locate_task(base: Path, task_id: str, file_arg: str) -> tuple[str, str]:
 @dataclass(frozen=True)
 class Gate:
     """One gate. Every field is required: a row that cannot say where its
-    artifact lives, or how many rounds it needs, is not a gate."""
+    artifact lives is not a gate."""
 
     name: str
     describes: str
-    min_rounds: int
     story_scoped: bool
     locate: Callable[[Path, str, str], tuple[str, str]]
 
@@ -175,23 +141,20 @@ class Gate:
 
 GATES: dict[str, Gate] = {gate.name: gate for gate in (
     Gate("spec", "the capability spec under interrogation",
-         1, False, _locate_spec),
+         False, _locate_spec),
     Gate("signoff", "the client sign-off handover under interrogation",
-         1, False, _locate_signoff),
+         False, _locate_signoff),
     Gate("epics", "the derived epics under interrogation",
-         1, False, _locate_epics),
-    Gate("requirements", "the requirements round under interrogation",
-         1, True, _locate_requirements),
+         False, _locate_epics),
     Gate("plan", "the plan under interrogation",
-         1, True, _locate_plan),
+         True, _locate_plan),
     Gate("task", "the per-task implementation plan under interrogation",
-         1, True, _locate_task),
+         True, _locate_task),
 )}
 
 # A blank column is a bug that ships quietly, so it is caught at import rather
 # than by whoever first runs the gate months later.
 for _gate in GATES.values():
-    assert _gate.min_rounds >= 1, f"{_gate.name}: a gate with no floor is ungated"
     assert callable(_gate.locate), f"{_gate.name}: no way to locate its artifact"
     assert _gate.describes.strip(), f"{_gate.name}: no description for the brief"
 

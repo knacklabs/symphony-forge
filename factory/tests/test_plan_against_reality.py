@@ -123,24 +123,16 @@ def test_doctor_requires_the_skill_that_is_used(repo: Path):
 
 
 # ------------------------------------------------- the unrecordable grill --
-def test_the_frontier_refusal_names_the_remedy(repo: Path):
-    """Twenty-two rounds recorded nothing because of this message.
-
-    The ledger records {question, options, chosen} and never `frontier_empty`,
-    while the provenance check requires the submitted rounds to MATCH the
-    ledger. So building the payload from the ledger — the obvious thing —
-    can never satisfy the gate, and the refusal named the requirement without
-    saying the flag is added by hand.
-    """
+def test_lean_docs_match_single_cold_grill_runtime(repo: Path):
     recorder = (HARNESS / "factory" / "scripts" / "record_grill_from_json.py"
                 ).read_text(encoding="utf-8")
-    start = recorder.index("requires frontier_empty true")
-    message = recorder[start:start + 900]
-    assert "BY HAND" in message
-    assert "ledger never carries this flag" in message
-    # And it must say what to do when the frontier is genuinely NOT closed,
-    # or the flag becomes something to set to get past the gate.
-    assert "has not converged" in message
+    workflow = _flat((HARNESS / "WORKFLOW.md").read_text(encoding="utf-8"))
+    quality = _flat((HARNESS / "docs/QUALITY.md").read_text(encoding="utf-8"))
+    assert "finding_dispositions" in recorder
+    assert "cold_input_sha256" in recorder and "final_artifact_sha256" in recorder
+    assert "one independent cold" in workflow.lower()
+    assert "one independent cold" in quality.lower()
+    assert "frontier_empty" not in recorder and "grill-rounds" not in recorder
 
 
 # ------------------------------------------------------------- dead code ---
@@ -156,14 +148,12 @@ def test_the_plan_mode_marker_recording_is_gone(repo: Path):
     assert 'permission_mode") == "plan"' not in hook
     assert '"plan-mode"' not in hook
 
-    # The grill round recording must be untouched — it is what every gate
-    # validates against.
-    assert 'tool == "AskUserQuestion"' in hook
-    assert '"grill-rounds"' in hook
+    assert 'tool == "AskUserQuestion"' not in hook
+    assert '"grill-rounds"' not in hook
+    assert 'tool == "ExitPlanMode"' in hook
 
 
-def test_grill_rounds_are_still_recorded_after_the_removal(repo: Path):
-    # The only branch that matters must still fire end to end.
+def test_optional_questions_do_not_create_grill_authority(repo: Path):
     lib = load_factory_lib(repo)
     control = Path(git(repo, "rev-parse", "--absolute-git-dir")) / "forge"
     control.mkdir(parents=True, exist_ok=True)
@@ -178,10 +168,7 @@ def test_grill_rounds_are_still_recorded_after_the_removal(repo: Path):
         "tool_response": {"answers": {"Does GRN come from SAP?": "SAP"}},
     })
     assert code == 0, out
-    rounds = list(lib.evidence_path(repo, "ENG-1", "grill-rounds").glob("*.json"))
-    assert rounds, "the grill round was not recorded"
-    record = json.loads(rounds[0].read_text(encoding="utf-8"))
-    assert record["questions"][0]["chosen"] == "SAP"
+    assert not lib.evidence_path(repo, "ENG-1", "grill-rounds").exists()
 
 
 # ------------------------------------------------- the TASK plan, equally --

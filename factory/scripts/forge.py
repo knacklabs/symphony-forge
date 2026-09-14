@@ -106,7 +106,6 @@ from forge_cli import sanitise as sanitise_mod
 from forge_cli import stages as stages_mod
 from forge_cli import gstack as gstack_mod
 from forge_cli import history as history_mod
-from forge_cli import ceremony as ceremony_mod
 from forge_cli import signal as signal_mod
 from forge_cli import (
     decisions, doctor, phase, plans, roadmap, scaffold, specs,
@@ -196,7 +195,7 @@ def main() -> None:
                           help="re-vendor harness machinery into a client repo (run from the harness)")
     p_up.add_argument("--target", required=True, help="the client repo to upgrade")
     p_up.add_argument("--force", action="store_true",
-                      help="proceed even if the target has uncommitted changes")
+                      help="legacy option; never bypasses the clean-target requirement")
     p_up.set_defaults(func=upgrade.cmd_upgrade)
 
     p_plan = sub.add_parser("plan", help="manage task plans")
@@ -211,12 +210,6 @@ def main() -> None:
                         help="roadmap story key (defaults to the active issue key)")
     p_save.add_argument("--repo", help="target repo (defaults to this repo)")
     p_save.set_defaults(func=plans.cmd_save)
-    p_approve = plan_sub.add_parser(
-        "approve", help="record a human's approval of the current plan body")
-    p_approve.add_argument("--by", required=True, help="the human confirming (not an agent)")
-    p_approve.add_argument("--issue", help="select the plan by issue key (no run state / several active)")
-    p_approve.add_argument("--repo", help="target repo (defaults to this repo)")
-    p_approve.set_defaults(func=plans.cmd_approve)
     p_pl = plan_sub.add_parser("list", help="show plans, roadmap status, and stage progress")
     p_pl.add_argument("--repo")
     p_pl.set_defaults(func=plans.cmd_list)
@@ -309,13 +302,6 @@ def main() -> None:
     p_task_plan_save.add_argument("--from", dest="source", required=True)
     p_task_plan_save.add_argument("--repo")
     p_task_plan_save.set_defaults(func=tasks_mod.cmd_plan_save)
-    p_task_approve = task_sub.add_parser(
-        "approve", help="record human approval of a saved task plan",
-    )
-    p_task_approve.add_argument("id", help="task id")
-    p_task_approve.add_argument("--by", required=True, help="approving human")
-    p_task_approve.add_argument("--repo")
-    p_task_approve.set_defaults(func=tasks_mod.cmd_approve)
 
     p_story = sub.add_parser(
         "story", help="story-level run state (resume an in-flight story pointer)",
@@ -636,6 +622,13 @@ def main() -> None:
                        help="background exploration only; active write stages refuse it")
     p_del.add_argument("--print-only", action="store_true",
                        help="print the argv without launching or recording evidence")
+    p_del.add_argument(
+        "--scope", action="append", default=[], metavar="PATH",
+        help="narrow a write launch to this approved file/directory (repeatable; "
+             "the selected set must be a proper subset)")
+    p_del.add_argument(
+        "--context-file", metavar="PATH",
+        help="secure same-user UTF-8 context snapshot supplied only to this launch")
     p_del.add_argument("--repo")
     p_del.set_defaults(func=delegate_mod.cmd_delegate)
 
@@ -738,18 +731,6 @@ def main() -> None:
                                help="cluster recorded findings by class; recurring = refactor signal")
     p_fp.add_argument("--repo")
     p_fp.set_defaults(func=findings_mod.cmd_patterns)
-
-    p_cer = sub.add_parser("ceremony", help="point this session's grill rounds / plan markers at a sibling worktree")
-    cer_sub = p_cer.add_subparsers(dest="ceremony_command", required=True)
-    p_ct = cer_sub.add_parser("target", help="set/show/clear the ceremony target checkout")
-    ct_sub = p_ct.add_subparsers(dest="target_command", required=True)
-    p_cts = ct_sub.add_parser("set", help="ledger rounds/markers into this sibling factory checkout")
-    p_cts.add_argument("path", help="absolute (or cwd-relative) path to the target worktree")
-    p_cts.set_defaults(func=ceremony_mod.cmd_target)
-    p_ctw = ct_sub.add_parser("show", help="print the current ceremony target")
-    p_ctw.set_defaults(func=ceremony_mod.cmd_target)
-    p_ctc = ct_sub.add_parser("clear", help="revert to ledgering in this checkout")
-    p_ctc.set_defaults(func=ceremony_mod.cmd_target)
 
     p_sig = sub.add_parser("signal", help="worker→orchestrator event channel (.factory/signals.jsonl)")
     sig_sub = p_sig.add_subparsers(dest="signal_command", required=True)

@@ -122,6 +122,7 @@ def _bound_rows(base: Path, launch_id: str,
         "argv", "argv_sha256", "write_scope", "stage_started_at", "process_token", "mode",
         "transport", "brief_path", "executable_path", "resume_session",
         "output_path", "stderr_path",
+        "context",
     )
     if any(row.get(field) != rows[0].get(field)
            for row in rows[1:] for field in bindings):
@@ -182,16 +183,17 @@ def _stage_contract(base: Path, record: dict) -> tuple[dict | None, str]:
     story = run.get("story") or run.get("issue_key")
     if record.get("story") and record.get("story") != story:
         return _deny("the active story changed after launch")
-    task_scope = task.get("write_scope") or []
+    from .stages import effective_scope
+    task_scope = effective_scope(base, str(task_id), task.get("write_scope") or [])
     if not task_scope or any(not isinstance(item, str) or not item.strip()
                              for item in task_scope):
         return _deny("the protected task has no valid write scope")
-    scope = record.get("write_scope") if record.get("transport") == "native" else task_scope
+    scope = record.get("write_scope")
     if (not isinstance(scope, list) or not scope
             or any(not isinstance(item, str) or not item.strip() for item in scope)):
         return _deny("the protected native launch has no valid recorded write scope")
-    if scope != task_scope:
-        return _deny("the protected native launch write scope does not match its task")
+    if any(not path_in_scope(item.rstrip("/"), task_scope) for item in scope):
+        return _deny("the protected launch write scope is not a subset of its task")
     from .stages import stage_baseline
     return {
         "kind": "stage",

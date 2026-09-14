@@ -22,7 +22,8 @@ you what's missing. But this is the shape of the whole system:
 ```text
 prototype ▶ spec grills ▶ CONFIRMED SPECS ▶ derived roadmap ▶ sign-off grill
   ▶ SIGN-OFF ▶ roadmap+team ▶ per task:
-  PLAN MODE (hook-forced) ▶ grill ▶ plan saved (incl. Surface Impact) ▶
+  NATIVE PLAN MODE ▶ one cold grill + dispositions ▶ save awaiting plan ▶
+  native approval of exact final digest ▶
   decompose (creates the stage tracker) ▶ per stage: implement (`forge delegate`)
   ▶ LOCAL autoreview until clean ▶ commit ▶ stage done ▶ … ▶ verify ▶
   ONE branch autoreview ▶ functional (if user-facing) ▶ assumptions guided ▶
@@ -247,10 +248,13 @@ archives evidence before merge.
    `/codex:rescue --model gpt-5.6-sol --effort low` (read-only by default;
    raw `codex exec` is hook-blocked, no exceptions).
    `planner-high` in Codex is the sanctioned alternate. New decisions get
-   records. **Before approval, grilling the plan is mandatory** — say:
+   records. **Before approval, one independent cold grill is mandatory** — say:
    **"Grill me on this plan"** (`/grill-me`); the verdict is recorded
-   (`record_grill_from_json.py --gate plan`) and `plan save` refuses
-   without it. Then say: **"Save the plan."**
+   (`record_grill_from_json.py --gate plan`) with every finding disposed and
+   every amendment explained. Then say: **"Save the plan."** The save records
+   `awaiting-approval`; approve the exact displayed final plan through native
+   Plan Mode. There is no board approval, manual approve command, or second
+   unchanged save.
 
 ```bash
 ./forge plan save --from <approved-plan-file>

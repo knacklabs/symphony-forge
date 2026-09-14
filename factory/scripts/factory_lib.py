@@ -43,48 +43,6 @@ def repo_root() -> Path:
     return Path(out.stdout.strip())
 
 
-CEREMONY_POINTER_NAME = "ceremony-target"
-
-
-def ceremony_pointer_path(root: Path) -> Path:
-    return root / ".factory" / CEREMONY_POINTER_NAME
-
-
-def read_ceremony_target(root: Path) -> Path | None:
-    """The validated ceremony-target checkout for ``root``, or None.
-
-    `forge ceremony target set` points one session's interactive ceremony
-    (AskUserQuestion grill rounds, plan-mode markers) at a sibling worktree so
-    a single session can orchestrate a second story there. Fail-open to the
-    session checkout: a missing, unreadable, relative, self-pointing or
-    non-factory target yields None so evidence is never dropped.
-    """
-    try:
-        raw = ceremony_pointer_path(root).read_text(encoding="utf-8").strip()
-    except OSError:
-        return None
-    if not raw:
-        return None
-    target = Path(raw)
-    if not target.is_absolute():
-        return None
-    try:
-        resolved = target.resolve()
-        session = root.resolve()
-    except OSError:
-        return None
-    if resolved == session:
-        return None
-    if not (resolved / ".factory").is_dir():
-        return None
-    if not (resolved / "factory" / "schemas").is_dir():
-        # A bare .factory without the harness schemas would make hook-side
-        # validation fail and silently DROP evidence — only a full factory
-        # checkout qualifies as a ceremony target.
-        return None
-    return resolved
-
-
 def vendored_client(root: Path) -> bool:
     """True when this repo VENDORED the harness — factory/ and the vendored
     adapters/canon are infrastructure a `forge upgrade` may rewrite mid-task, not
@@ -1382,11 +1340,19 @@ def load_review_artifacts(
     reviews: dict[str, dict] = {}
     problems: list[str] = []
     head = head_sha(root) if require_head else None
+    key = _active_story_key(root)
+    task_id = active_task_id(root)
+    if not key or not task_id:
+        return {}, ["selected task review generation is missing"]
+    generation, _selection, lineage_problems = read_selected_review_generation(
+        root, key, task_id,
+    )
+    if lineage_problems or not isinstance(generation, dict):
+        return {}, lineage_problems or ["selected task review generation is missing"]
     for aspect in ("quality", "performance", "security"):
-        path = evidence_path(root, _active_story_key(root), f"reviews/{aspect}.json")
-        data = load_json(path, default={})
-        if not data:
-            problems.append(str(path.relative_to(root)))
+        data = generation.get("lenses", {}).get(aspect)
+        if not isinstance(data, dict):
+            problems.append(f"selected review has no {aspect} lens")
             continue
         reviews[aspect] = data
         if data.get("blocking_findings") or (
@@ -1394,8 +1360,8 @@ def load_review_artifacts(
         ):
             requirement = "have no blockers" if blockers_only else "be >= 8 with no blockers"
             problems.append(f"{aspect} review must {requirement}")
-        if require_head and data.get("commit") != head:
-            stamp = data.get("commit")
+        if require_head and generation.get("inspected_commit") != head:
+            stamp = generation.get("inspected_commit")
             shown = stamp[:8] if isinstance(stamp, str) and stamp else "missing"
             expected = head[:8] if head else "missing"
             problems.append(
@@ -2320,21 +2286,16 @@ def require_closeout_order(root: Path) -> list[str]:
     from forge_cli.review_brief import declared_contracts
     declared = [c["id"] for c in declared_contracts(decomposition)]
     if declared:
-        # A contract is verified wherever the proof for it actually lives: in a
-        # task-level run that is the owning task's quality review, in a
-        # story-level run the story's. The GUARANTEE is the same either way —
-        # every declared contract is verified implemented — and it must not
-        # depend on which flow shipped the story, or a contract could be
-        # dropped merely by choosing a flow.
-        sources = ([task_evidence_path(root, key, str(t.get("id") or ""),
-                                       "reviews/quality.json")
-                    for t in tasks] if task_level and tasks else [])
-        sources.append(evidence_path(root, key, "reviews/quality.json"))
         verified: set[str] = set()
-        for source in sources:
-            if not source.is_file():
+        for task in tasks:
+            task_id = str(task.get("id") or "")
+            generation, _selection, selected_problems = (
+                read_selected_review_generation(root, key, task_id)
+            )
+            if selected_problems or not isinstance(generation, dict):
                 continue
-            for verdict in load_json(source, default={}).get("contract_verdicts") or []:
+            quality = generation.get("lenses", {}).get("quality", {})
+            for verdict in quality.get("contract_verdicts") or []:
                 if (isinstance(verdict, dict)
                         and verdict.get("verdict") == "implemented"
                         and isinstance(verdict.get("contract_id"), str)):
@@ -3390,7 +3351,7 @@ def require_task_grill(
             f"Re-grill and record `{record_command}`; --task-digest was removed "
             "because the digest is derived from the protected contract, approved "
             "plan, and product tree. Tip: record the task grill LAST, immediately "
-            "before `task approve`/`stage start` — committing any tracked file "
+            "before native approval / `stage start` — committing any tracked file "
             "outside .factory/ and plans/ (docs/, factory/scripts/, source) between "
             "grilling and approving changes the product tree and re-stales it."
         )
@@ -3446,13 +3407,9 @@ def plan_body_digest(path: Path) -> str:
     """Hash the authored plan body, excluding harness-managed content.
 
     Line endings are normalised to LF before hashing so the digest is stable
-    across platforms and Git's autocrlf. The plan-mode marker's ``sha256_body``
-    is computed here from the plan-mode source, while ``require_plan_mode_marker``
-    recomputes it from the saved/committed task plan. Without normalisation a plan
-    saved by ``write_text()`` on Windows (LF -> CRLF), or checked out on another
-    machine under ``core.autocrlf``, would hash differently from its marker and
-    ``task approve`` would demand a spurious re-grill. Both callers run through
-    this function, so normalising here keeps create and check symmetric on every OS.
+    across platforms and Git's autocrlf. Both the cold-grill bridge and shared
+    native approval recorder use this function; saving on Windows therefore
+    cannot create a spurious approval mismatch.
     """
     return _plan_body_digest_bytes(path.read_bytes())
 
@@ -3475,7 +3432,7 @@ def _plan_body_digest_bytes(raw: bytes) -> str:
     # substitutes a newline for the contract block, and the block is appended
     # after one. Removing it therefore leaves one MORE trailing newline than
     # the file carried before the block existed, so the first render of the
-    # block changed this digest and `task approve` refused with "the plan
+    # block changed this digest and native approval refused with "the plan
     # CHANGED" against byte-identical authored text.
     approved_body = approved_body.rstrip(b"\n") + b"\n"
     return hashlib.sha256(authored + b"\n---\n" + approved_body).hexdigest()
@@ -4722,8 +4679,8 @@ def require_ready_task(
         plan_state = _task_plan_state(root, task, grill)
         if plan_state == "await-approval":
             raise SystemExit(
-                f"Task plan approval required: a human must approve the current "
-                f"{task_id} plan with `./forge task approve {task_id} --by \"<name>\"`."
+                f"Task plan approval required: display the exact current {task_id} "
+                "plan in native Plan Mode and consume its approval event."
             )
     return task
 

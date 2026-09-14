@@ -530,14 +530,504 @@
     {
       "id": "LEAN-WORKFLOW",
       "title": "One brief and one complete independent review",
-      "objective": "One brief and standing authorization under Decision0074 model policy and Decision0068 worker networking: Authoritative task brief with derived metadata; actual standing authorization reused for in-scope work; remove compulsory requirements/story/task certification and repeated human approval rituals in every producer and consumer. The complete combined-review protocol is First-owned. Add --context-file only to forge grill run with one no-follow immutable UTF-8 snapshot, exact identity/capacity/refusal proof, mode-0600 storage below a per-user mode-0700 transient directory, terminal deletion, verified stale cleanup, metadata-only durable evidence, and an 8,388,608-byte local allocation ceiling. Update workflow, quality, roles and architecture docs in the same task before the new approval boundary ships.",
+      "objective": "install recovery PR2 by replacing repeated approval/round ceremony with native approval, one cold grill with complete finding disposition, narrowed delegation, mandatory context-file security, content-bound close reuse in existing stage state, Lean-owned migration/deletion for removed formats including sealed fixed-proof migration, three-profile Forge registry reduction, PR-link workflow repair/backfill, docs/spec/architecture/runtime alignment, and the amended Portable PR3 handoff.",
       "dependencies": [
         "NATIVE-FOREGROUND-ACTIVATE"
       ],
       "user_facing": false,
       "acceptance_criteria": [
-        "LEAN-WORKFLOW consumes First's Decision0074 model policy, Decision0068 worker-network rule, and complete gates, carries continuation/context rulings into fresh workers, preserves developer journey proof inputs, and replaces repeated certification with one authoritative brief while retaining existing proof/refusal authority. Only `forge grill run --context-file` accepts supplemental context. It rejects symlink/reparse ancestors and leaves, opens one regular-file handle without following links, requires stable pre-open/handle/post-read identity, and launches one immutable UTF-8 snapshot bound in memory by hash/count. The snapshot is a randomized regular single-link mode-0600 file under a per-user mode-0700 transient directory, is deleted after terminal publication, and stale cleanup requires exact owner/type/link/mode/directory/launch identity. Durable logs/evidence retain only supplied state, byte count, and opaque context ID, never source path, content digest, or bytes. Its fixed local limit is 8,388,608 bytes; an unknown installed-component byte limit refuses. Capacity includes exact primary brief/framing/context bytes. A grill always sends the one complete framed input unchanged, never partitions it, and refuses an oversized input with required bytes and both limits. Any future partitioned consumer needs a separately approved capability and cannot satisfy a grill gate. It owns its AC6 evidence boundary: diagnostics and preparation stay labelled, and only recorder-produced exact-task proof may satisfy a task gate. Its owning docs ship with the behavior.",
-        "LEAN-WORKFLOW owns the roadmap acceptance that both coordinators preserve existing worker policy and every Forge gate while consuming First's complete combined-review proof without reimplementing it."
+        "Native approval path: story/task plans approve through the supported Claude and Codex native approval events, not the old manual/board route.",
+        "Shared recorder identity: the shared approval recorder binds exactly one current-frontier candidate, current digest, runtime, stable session/event identity, plan kind/story/task, replay refusal, and `human-via-Claude` / `human-via-Codex` attribution.",
+        "Ceremony removal: requirements grill, round floors, old round ledgers as authority, fake frontier questions, second unchanged save, and manual plan/task approval leave normal runtime; Lean preserves one independent cold grill plus complete finding disposition, including the three requirements cold-read gap dispositions for context snapshot security, independent migration coverage, and clean-target preservation, explained amendment bridge to the final artifact digest, final human approval on that digest, and refusal for unexplained out-of-disposition changes.",
+        "Narrowed delegation: `forge delegate --scope` is a proper-subset narrowing feature, exact approved files are valid subset members, no flag keeps full effective scope, and hook admission enforces the narrowed launch identity.",
+        "Content-bound close reuse: test/verify receipts and selected-review reviewed-meaning identity reuse only when their proof-type inputs match; substantive acceptance/security/migration/evidence/review-instruction/product-delta changes force review, while canonicalized bookkeeping/timestamp changes preserve immutable original provenance.",
+        "Lean migration: `forge upgrade` performs clean-checkout preflight with no `--force` bypass, full inventory/hash/classification, independent raw no-follow coverage over fixed legacy roots/exact parents, temp build, validation, publish/readback, idempotent retry, unequal partial refusal, generated `.factory/migrations/lean-workflow-v2.json`, profile/settings preservation, and deletion only after durable current outputs exist.",
+        "Fixed-proof migration: Lean migrates sealed fixed-lens proof once into canonical `origin=upgrade` selected generations with the full sealed-proof safety contract, while active old proof requires a fresh review and normal runtime never uses direct fixed-file fallback authority.",
+        "Hook/config/profile target: committed Claude/Codex hook matrices, `.codex/config.toml`, `.claude/CLAUDE.md`, and profile installation match the recovery target; only three Forge-owned profiles remain while client-modified/client-added profiles are preserved.",
+        "PR-link workflow staging: `.github/workflows/pr-link.yml` stages per-event `.factory/events/` files and updates its status/comment wording without returning to `.factory/events.jsonl` writes.",
+        "Verified PR-link backfill: only verified PR #109 and #110 links are backfilled through `forge pr-link`, producing recorder-generated event files and clearing those board-completeness failures without touching unrelated spec gaps.",
+        "Normal-runtime refusal: Lean-removed old formats outside upgrade produce `run forge upgrade` guidance; PR3-owned legacy families stay compatible until Portable handles them.",
+        "Docs/runtime agreement: workflow, docs, specs, prompts, skills, architecture text, reviewer focus, required tests, and design-review status agree with the implemented runtime without duplicating long canon in `AGENTS.md`."
+      ],
+      "write_scope": [
+        "AGENTS.md",
+        "WORKFLOW.md",
+        "docs/FACTORY.md",
+        "docs/QUALITY.md",
+        "docs/ROLES.md",
+        "docs/getting-started.md",
+        "docs/architecture/dual-coordinator-parity.md",
+        "docs/specs/dual-coordinator-parity.md",
+        "docs/specs/plan-approval.md",
+        "docs/specs/delegation-boundary.md",
+        "docs/specs/conflict-free-story-state.md",
+        "factory/skills/forge.md",
+        "factory/prompts/planner.md",
+        "factory/prompts/griller.md",
+        "factory/prompts/decomposer.md",
+        "factory/prompts/reviewer.md",
+        "harness.yaml",
+        ".codex/config.toml",
+        ".codex/hooks.json",
+        ".claude/settings.json",
+        ".claude/CLAUDE.md",
+        ".github/workflows/pr-link.yml",
+        ".codex/agents/architect.toml",
+        ".codex/agents/backend.toml",
+        ".codex/agents/debugger.toml",
+        ".codex/agents/explorer.toml",
+        ".codex/agents/frontend.toml",
+        ".codex/agents/griller.toml",
+        ".codex/agents/lite.toml",
+        ".codex/agents/performance.toml",
+        ".codex/agents/planner.toml",
+        ".codex/agents/refactorer.toml",
+        ".codex/agents/security.toml",
+        ".codex/agents/tester.toml",
+        "factory/scripts/forge.py",
+        "factory/scripts/factory_lib.py",
+        "factory/scripts/pre_tool_use.py",
+        "factory/scripts/post_tool_use.py",
+        "factory/scripts/check_dual_runtime.py",
+        "factory/scripts/session_start.py",
+        "factory/scripts/record_grill_from_json.py",
+        "factory/scripts/grill_gates.py",
+        "factory/scripts/record_decomposition_from_json.py",
+        "factory/scripts/record_test_from_json.py",
+        "factory/scripts/verify.py",
+        "factory/scripts/check_task_proof.py",
+        "factory/scripts/forge_cli/plans.py",
+        "factory/scripts/forge_cli/tasks.py",
+        "factory/scripts/forge_cli/phase.py",
+        "factory/scripts/forge_cli/approval.py",
+        "factory/scripts/forge_cli/ceremony.py",
+        "factory/scripts/forge_cli/delegate.py",
+        "factory/scripts/forge_cli/stages.py",
+        "factory/scripts/forge_cli/grill.py",
+        "factory/scripts/forge_cli/readiness.py",
+        "factory/scripts/forge_cli/upgrade.py",
+        "factory/scripts/forge_cli/audit.py",
+        "factory/scripts/forge_cli/close.py",
+        "factory/scripts/forge_cli/review.py",
+        "factory/scripts/forge_cli/review_brief.py",
+        "factory/scripts/forge_cli/signal.py",
+        "factory/scripts/forge_cli/scaffold.py",
+        "factory/scripts/forge_cli/doctor.py",
+        "factory/scripts/forge_cli/board.py",
+        "factory/scripts/forge_cli/codex_runtime.py",
+        "factory/scripts/forge_cli/worker_admission.py",
+        "factory/schemas/lean-workflow-migration.json",
+        "factory/schemas/grill.json",
+        "factory/schemas/grill-round.json",
+        "factory/schemas/plan-mode-marker.json",
+        "factory/tests/test_gates.py",
+        "factory/tests/test_native_setup.py",
+        "factory/tests/test_one_grill.py",
+        "factory/tests/test_round_provenance.py",
+        "factory/tests/test_grill_carries_answers.py",
+        "factory/tests/test_board_approval_gate.py",
+        "factory/tests/test_plan_against_reality.py",
+        "factory/tests/test_gate_table_e2e.py",
+        "factory/tests/test_grill_release.py",
+        "factory/tests/test_ask_gate.py",
+        "factory/tests/test_proof_read_path.py",
+        "factory/tests/test_review_settled_contracts.py",
+        "factory/tests/test_review_task_delta.py",
+        "factory/tests/test_gate_table.py",
+        "factory/tests/test_close_binds_to_the_diff.py",
+        "factory/tests/test_worker_admission.py",
+        "factory/tests/test_lean_workflow.py",
+        "factory/tests/test_approval_hooks.py",
+        "factory/tests/test_upgrade_lean_workflow.py",
+        "factory/tests/test_delegate_scope.py",
+        "factory/tests/test_proof_reuse.py",
+        "factory/tests/test_pr_link_workflow.py",
+        "factory/tests/test_regrill_scope.py",
+        ".factory/migrations/lean-workflow-v2.json",
+        ".factory/events/"
+      ],
+      "plan_contracts": [
+        {
+          "id": "LEAN-AC-1",
+          "statement": "Native approval path: story/task plans approve through the supported Claude and Codex native approval events, not the old manual/board route.",
+          "source": "/Users/dev/.codex/plans/symphony-forge+lean-workflow+jit+20260914T071000IST.md#Acceptance Criteria 1"
+        },
+        {
+          "id": "LEAN-AC-2",
+          "statement": "Shared recorder identity: the shared approval recorder binds exactly one current-frontier candidate, current digest, runtime, stable session/event identity, plan kind/story/task, replay refusal, and `human-via-Claude` / `human-via-Codex` attribution.",
+          "source": "/Users/dev/.codex/plans/symphony-forge+lean-workflow+jit+20260914T071000IST.md#Acceptance Criteria 2"
+        },
+        {
+          "id": "LEAN-AC-3",
+          "statement": "Ceremony removal: requirements grill, round floors, old round ledgers as authority, fake frontier questions, second unchanged save, and manual plan/task approval leave normal runtime; Lean preserves one independent cold grill plus complete finding disposition, including the three requirements cold-read gap dispositions for context snapshot security, independent migration coverage, and clean-target preservation, explained amendment bridge to the final artifact digest, final human approval on that digest, and refusal for unexplained out-of-disposition changes.",
+          "source": "/Users/dev/.codex/plans/symphony-forge+lean-workflow+jit+20260914T071000IST.md#Acceptance Criteria 3"
+        },
+        {
+          "id": "LEAN-AC-4",
+          "statement": "Narrowed delegation: `forge delegate --scope` is a proper-subset narrowing feature, exact approved files are valid subset members, no flag keeps full effective scope, and hook admission enforces the narrowed launch identity.",
+          "source": "/Users/dev/.codex/plans/symphony-forge+lean-workflow+jit+20260914T071000IST.md#Acceptance Criteria 4"
+        },
+        {
+          "id": "LEAN-AC-5",
+          "statement": "Content-bound close reuse: test/verify receipts and selected-review reviewed-meaning identity reuse only when their proof-type inputs match; substantive acceptance/security/migration/evidence/review-instruction/product-delta changes force review, while canonicalized bookkeeping/timestamp changes preserve immutable original provenance.",
+          "source": "/Users/dev/.codex/plans/symphony-forge+lean-workflow+jit+20260914T071000IST.md#Acceptance Criteria 5"
+        },
+        {
+          "id": "LEAN-AC-6",
+          "statement": "Lean migration: `forge upgrade` performs clean-checkout preflight with no `--force` bypass, full inventory/hash/classification, independent raw no-follow coverage over fixed legacy roots/exact parents, temp build, validation, publish/readback, idempotent retry, unequal partial refusal, generated `.factory/migrations/lean-workflow-v2.json`, profile/settings preservation, and deletion only after durable current outputs exist.",
+          "source": "/Users/dev/.codex/plans/symphony-forge+lean-workflow+jit+20260914T071000IST.md#Acceptance Criteria 6"
+        },
+        {
+          "id": "LEAN-AC-7",
+          "statement": "Fixed-proof migration: Lean migrates sealed fixed-lens proof once into canonical `origin=upgrade` selected generations with the full sealed-proof safety contract, while active old proof requires a fresh review and normal runtime never uses direct fixed-file fallback authority.",
+          "source": "/Users/dev/.codex/plans/symphony-forge+lean-workflow+jit+20260914T071000IST.md#Acceptance Criteria 7"
+        },
+        {
+          "id": "LEAN-AC-8",
+          "statement": "Hook/config/profile target: committed Claude/Codex hook matrices, `.codex/config.toml`, `.claude/CLAUDE.md`, and profile installation match the recovery target; only three Forge-owned profiles remain while client-modified/client-added profiles are preserved.",
+          "source": "/Users/dev/.codex/plans/symphony-forge+lean-workflow+jit+20260914T071000IST.md#Acceptance Criteria 8"
+        },
+        {
+          "id": "LEAN-AC-9",
+          "statement": "PR-link workflow staging: `.github/workflows/pr-link.yml` stages per-event `.factory/events/` files and updates its status/comment wording without returning to `.factory/events.jsonl` writes.",
+          "source": "/Users/dev/.codex/plans/symphony-forge+lean-workflow+jit+20260914T071000IST.md#Acceptance Criteria 9"
+        },
+        {
+          "id": "LEAN-AC-10",
+          "statement": "Verified PR-link backfill: only verified PR #109 and #110 links are backfilled through `forge pr-link`, producing recorder-generated event files and clearing those board-completeness failures without touching unrelated spec gaps.",
+          "source": "/Users/dev/.codex/plans/symphony-forge+lean-workflow+jit+20260914T071000IST.md#Acceptance Criteria 10"
+        },
+        {
+          "id": "LEAN-AC-11",
+          "statement": "Normal-runtime refusal: Lean-removed old formats outside upgrade produce `run forge upgrade` guidance; PR3-owned legacy families stay compatible until Portable handles them.",
+          "source": "/Users/dev/.codex/plans/symphony-forge+lean-workflow+jit+20260914T071000IST.md#Acceptance Criteria 11"
+        },
+        {
+          "id": "LEAN-AC-12",
+          "statement": "Docs/runtime agreement: workflow, docs, specs, prompts, skills, architecture text, reviewer focus, required tests, and design-review status agree with the implemented runtime without duplicating long canon in `AGENTS.md`.",
+          "source": "/Users/dev/.codex/plans/symphony-forge+lean-workflow+jit+20260914T071000IST.md#Acceptance Criteria 12"
+        }
+      ],
+      "required_tests": [
+        {
+          "id": "factory/tests/test_approval_hooks.py",
+          "path": "factory/tests/test_approval_hooks.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools FORGE_REQUIRED_SELECTOR={id} uv run --python 3.11 --with pytest --with psutil python -m pytest {path} -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_native_approval_refuses_zero_multiple_candidates_replay_and_missing_identity",
+          "path": "factory/tests/test_approval_hooks.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_native_approval_records_human_via_runtime_identity_without_display_name",
+          "path": "factory/tests/test_approval_hooks.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_native_approval_reuses_existing_story_and_task_approval_storage",
+          "path": "factory/tests/test_approval_hooks.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_native_plan_mode_approval_records_exact_digest_for_claude_exit_plan_mode",
+          "path": "factory/tests/test_lean_workflow.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_native_plan_mode_approval_records_exact_digest_for_codex_sync_approval",
+          "path": "factory/tests/test_lean_workflow.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_native_approval_refuses_stale_wrong_runtime_canceled_async_and_unsupported_payloads",
+          "path": "factory/tests/test_lean_workflow.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_normal_flow_no_longer_requires_requirements_grill_manual_approval_or_second_save",
+          "path": "factory/tests/test_lean_workflow.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_delegate_scope_must_be_strict_subset_of_approved_write_scope",
+          "path": "factory/tests/test_delegate_scope.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_delegate_scope_is_bound_to_brief_launch_identity_and_existing_write_scope",
+          "path": "factory/tests/test_delegate_scope.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_hook_refuses_write_outside_narrowed_delegate_scope",
+          "path": "factory/tests/test_delegate_scope.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_delegate_brief_carries_criteria_and_scope",
+          "path": "factory/tests/test_gates.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_native_worker_patch_add_update_delete_and_move_is_admitted",
+          "path": "factory/tests/test_worker_admission.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_context_file_security_no_follow_modes_identity_capacity_and_cleanup",
+          "path": "factory/tests/test_delegate_scope.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_context_file_native_windows_protected_dacl_owner_reopen_and_stale_cleanup",
+          "path": "factory/tests/test_delegate_scope.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_context_file_launch_uses_one_handle_snapshot_and_metadata_only_evidence",
+          "path": "factory/tests/test_worker_admission.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_unchanged_test_verify_and_selected_review_inputs_reuse_success_without_rerun",
+          "path": "factory/tests/test_proof_reuse.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_changed_unknown_partial_or_generated_output_identity_forces_fresh_run",
+          "path": "factory/tests/test_proof_reuse.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_reuse_identity_is_proof_type_specific_and_reviewed_meaning_bound",
+          "path": "factory/tests/test_proof_reuse.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_selected_review_reuses_for_bookkeeping_only_changes_and_preserves_original_provenance",
+          "path": "factory/tests/test_proof_reuse.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_selected_review_reruns_for_changed_acceptance_security_migration_or_evidence",
+          "path": "factory/tests/test_proof_reuse.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_selected_upgrade_generation_requires_exact_sealed_binding",
+          "path": "factory/tests/test_review_settled_contracts.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_selected_review_reviewed_meaning_includes_ci_generated_outputs_and_review_instructions",
+          "path": "factory/tests/test_review_task_delta.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_selected_review_reruns_for_substantive_automated_evidence_change",
+          "path": "factory/tests/test_review_task_delta.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_lean_migration_refuses_dirty_checkout_before_writing",
+          "path": "factory/tests/test_upgrade_lean_workflow.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_lean_migration_force_cannot_bypass_dirty_tree_refusal",
+          "path": "factory/tests/test_upgrade_lean_workflow.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_lean_migration_independent_raw_walk_covers_each_candidate_exactly_once",
+          "path": "factory/tests/test_upgrade_lean_workflow.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_lean_migration_inventories_hashes_temp_validates_publishes_and_reads_back",
+          "path": "factory/tests/test_upgrade_lean_workflow.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_lean_migration_refuses_malformed_mixed_partial_conflicting_or_linked_inputs",
+          "path": "factory/tests/test_upgrade_lean_workflow.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_lean_migration_is_idempotent_for_byte_identical_retry_and_refuses_unequal_partial_retry",
+          "path": "factory/tests/test_upgrade_lean_workflow.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_lean_migration_forces_fresh_review_for_active_old_proof_and_migrates_only_exact_sealed_proof",
+          "path": "factory/tests/test_upgrade_lean_workflow.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_normal_runtime_refuses_lean_removed_formats_with_upgrade_guidance",
+          "path": "factory/tests/test_upgrade_lean_workflow.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_codex_hook_readiness_requires_exact_enabled_trusted_source",
+          "path": "factory/tests/test_native_setup.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_codex_hook_readiness_accepts_only_identical_inherited_worktree_hooks",
+          "path": "factory/tests/test_native_setup.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_model_policy_selects_sol_work_and_luna_lite",
+          "path": "factory/tests/test_native_setup.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_active_model_policy_has_no_forbidden_execution_surface",
+          "path": "factory/tests/test_gate_table.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_project_agents_init_upgrade_and_preserve_client_additions",
+          "path": "factory/tests/test_gates.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_recovery_profile_override_keeps_only_three_forge_profiles",
+          "path": "factory/tests/test_native_setup.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_upgrade_preserves_client_profiles_while_removing_retired_forge_profiles",
+          "path": "factory/tests/test_gates.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_upgrade_preserves_project_settings_and_refuses_unknown_same_name_profile_rows",
+          "path": "factory/tests/test_gates.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_pr_link_workflow_stages_per_event_files_not_legacy_jsonl",
+          "path": "factory/tests/test_pr_link_workflow.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_pr_link_workflow_status_description_names_per_event_link_commit",
+          "path": "factory/tests/test_pr_link_workflow.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_verified_forge_acc3_and_cfs1_pr_links_make_board_complete",
+          "path": "factory/tests/test_pr_link_workflow.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_history_merges_legacy_and_per_file_events",
+          "path": "factory/tests/test_gates.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_pr_link_event_survives_a_clone_with_no_remote",
+          "path": "factory/tests/test_gates.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_forge_history_shows_the_pr_link",
+          "path": "factory/tests/test_gates.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_signal_ruling_hydration_survives_lean_lifecycle_state_changes",
+          "path": "factory/tests/test_gates.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_generated_review_inputs_are_included_in_reviewed_meaning",
+          "path": "factory/tests/test_review_task_delta.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "factory/tests/test_regrill_scope.py",
+          "path": "factory/tests/test_regrill_scope.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools FORGE_REQUIRED_SELECTOR={id} uv run --python 3.11 --with pytest --with psutil python -m pytest {path} -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_one_cold_grill_full_disposition_replaces_round_floors_and_frontier_fake",
+          "path": "factory/tests/test_lean_workflow.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_recovery_override_removes_round_ledgers_without_losing_cold_read_proof",
+          "path": "factory/tests/test_lean_workflow.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_lean_docs_match_single_cold_grill_runtime",
+          "path": "factory/tests/test_plan_against_reality.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_native_approval_no_longer_routes_through_board_or_manual_approve",
+          "path": "factory/tests/test_board_approval_gate.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+        }
+      ],
+      "verify_commands": [
+        "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python factory/scripts/verify.py",
+        "python3 factory/scripts/check_dual_runtime.py",
+        "python3 factory/scripts/check_encoding_hygiene.py",
+        "python3 factory/scripts/check_board_complete.py",
+        "git diff --check"
+      ],
+      "reviewer_focus": [
+        "Prove the new flow removes ceremony only where native approval/proof identity replaces it. No real gate may disappear without an equivalent current authority check.",
+        "Confirm native approval derives exactly one eligible awaiting story/task artifact from the current frontier and refuses zero candidates, multiple candidates, replay, missing stable session/event identity, stale digests, cancellation, wrong runtime, async acknowledgement, unsupported payloads, and optional clarification events.",
+        "Confirm approval records bind runtime, stable session/event identity, plan kind/story/task, current digest, and attribution as `human-via-Claude` or `human-via-Codex` without inventing a display name.",
+        "Confirm one independent cold grill plus ordered one-to-one finding/resolution/source dispositions bridges the exact original cold-read input to the final artifact digest, with final human approval on that digest and refusal for unexplained out-of-disposition changes.",
+        "Confirm `delegate --scope` is a proper-subset narrowing feature, not a bypass; exact approved files are valid subset members and no flag keeps full effective scope.",
+        "Confirm mandatory context-file security for `--context-file`: same-user read/write/delete access only, no-follow, stable identity, one handle/snapshot, UTF-8/capacity, POSIX `0700`/`0600`, native Windows protected DACL with only the current user SID, reopen owner/DACL verification before launch and stale cleanup, refusal for extra allow ACEs/unverifiable ACL/reparse/link/identity drift, and metadata-only evidence.",
+        "Confirm proof reuse is content-bound and fail-closed for tests, verify, and selected review proof.",
+        "Confirm selected-review reuse remains Decision 0066 stamp-token delta-bound and also matches current reviewed-meaning identity: approved semantic task-brief digest, effective acceptance/security/migration semantics, substantive automated evidence, review instructions/helper/config, and product delta.",
+        "Confirm canonicalized recorder bookkeeping and timestamps are the only selected-review changes that may reuse, and that reuse preserves immutable original input/raw provenance.",
+        "Confirm migration has clean-target refusal with no `--force` dirty bypass, full preflight, independent raw no-follow coverage over fixed legacy roots/exact parents with exact once classification comparison, temp validation, readback, idempotent retry, unequal-partial refusal, and a generated `.factory/migrations/lean-workflow-v2.json` manifest.",
+        "Confirm migration preserves project-owned settings plus client-added/client-modified profiles, deletes or replaces only byte/hash-matching Forge-owned installed files, and refuses unknown same-name profile rows.",
+        "Confirm Lean owns sealed fixed-proof migration and three-profile Forge-owned pruning once; Portable must consume those outputs rather than duplicate fixed-review or 15-profile obligations.",
+        "Confirm PR3-owned broad legacy compatibility remains in the amended `PORTABLE-DELIVERY-MIGRATION` row immediately after Lean and does not pull Native or Shared work into PR3.",
+        "Confirm `pr-link.yml` stages per-event records and the two existing missing links are recorder-generated from verified PR evidence.",
+        "Confirm docs/prompts match runtime and do not duplicate long canon in `AGENTS.md`.",
+        "Confirm the task decomposition objective and `acceptance_criteria` are amended now and match the twelve plan contracts one-to-one.",
+        "Run or explicitly account for real Claude and Codex native Plan Mode approval smoke tests and live `gh pr view 109` / `gh pr view 110` evidence before backfill."
+      ],
+      "review_budget": {
+        "max_changed_files": 96,
+        "max_changed_lines": 14500,
+        "reason": "Lean recovery PR2 spans native approval eligibility, context-file security including native Windows protected DACL proof, narrowed delegation, reviewed-meaning close reuse, clean-target and independently covered Lean migration/deletion including sealed fixed-proof migration, three-profile pruning with settings/profile preservation, PR-link repair, docs/runtime alignment, and the amended Portable PR3 handoff; stop for amendment if measured diff exceeds this budget."
+      }
+    },
+    {
+      "id": "PORTABLE-DELIVERY-MIGRATION",
+      "title": "Portable setup, durable history and existing-client migration",
+      "objective": "Portable PR3 migrates the whole event family from current per-event files, older root JSONL, and historical bundles into one append-only event log per story plus a canonical unattributed sink for idless or unattributable legacy rows, then routes future producers, readers, history, board, and audit consumers through that canonical store and removes normal-runtime legacy event readers with `forge upgrade` guidance. It also completes the remaining non-review legacy-family migration already assigned to `PORTABLE-DELIVERY-MIGRATION`, preserving client changes, dirty-state refusal, task proof, seals, selected review proof, audit and Git history, setup/doctor behavior, Linux and native Windows behavior, the three-profile Forge registry, and client-modified/client-added profiles without duplicating Lean fixed-proof/profile work or reinstalling retired Forge-owned profiles. The current bounded story ceiling is 46 changed files and 8,200 added-plus-deleted lines; the exact post-Lean JIT must add write_scope, required_tests, verify_commands, reviewer_focus, plan_contracts, and review_budget from the actual Lean trunk before delegation.",
+      "dependencies": [
+        "LEAN-WORKFLOW"
+      ],
+      "user_facing": false,
+      "acceptance_criteria": [
+        "Canonical event storage is one append-only event log per story for attributable story events, plus a canonical unattributed sink for idless/unattributable legacy rows. Future event producers write only the story-scoped log, and readers/history/board consume story logs without a second normal-runtime legacy event reader or treating the unattributed sink as story authority.",
+        "Appends are safe under concurrent writers: each event has one unique ID, append order is deterministic and durable, complete rows are read back after write, partial rows refuse, and retries cannot duplicate or reorder an already committed event.",
+        "`forge upgrade` migrates every existing event-family source: current `.factory/events/<id>.json` per-event files, older `.factory/events.jsonl`, and any historical event bundles.",
+        "Migration preserves exact ID, payload bytes/fields, source identity, source ordering, append ordering, and reference semantics. Per-file UUID filenames keep exact IDs. Legacy/historical idless rows stay idless and unattributed as applicable; they receive only deterministic migration record key/provenance for retry/readback, never a fabricated original event ID, story, or attribution.",
+        "Migration inventory is mechanically complete before mutation. Conflicting duplicate IDs, unequal duplicate payloads, malformed records, ambiguous story references, linked/replaced paths, coverage drift, or partial target state refuse before target mutation.",
+        "Migration publishes through crash-safe temp/readback/atomic target steps. Source removal happens only after target readback proves exact ID/payload/order/reference preservation; byte-identical retry completes missing safe steps and refuses unequal partial state.",
+        "After Portable, unmigrated event-family data in normal runtime refuses with `forge upgrade` guidance. There is no second normal-runtime legacy event reader.",
+        "The migration preserves client changes, dirty-state refusal, task proof, seals, selected review proof, audit/history records, profile preservation, setup/doctor behavior, and Git history. It rewrites no commits and hand-edits no generated evidence.",
+        "Event-log compaction/rewrite is not introduced. Reduced PR/file churn is proven by future producers appending to one story log rather than creating one new file per event.",
+        "Linux and native Windows proof cover event-log append, unattributed sink append, upgrade migration, stale/partial cleanup, path-boundary refusal, and old-data upgrade guidance.",
+        "Portable also completes the remaining non-review legacy-family migration already assigned to `PORTABLE-DELIVERY-MIGRATION`, without reinstalling retired Forge-owned profiles or duplicating Lean fixed-proof/profile work.",
+        "Documentation, prompts, and verification text name Portable as the event-family owner, keep Lean limited to current PR-link staging/backfill honesty, remove any duplicate Integration event-bundle obligation, and preserve the current bounded story ceiling of 46 changed files and 8,200 added-plus-deleted lines until the post-Lean JIT regenerates the executable fields from actual Lean trunk."
       ]
     },
     {
@@ -545,7 +1035,7 @@
       "title": "Native detached read-only lifecycle and helpers",
       "objective": "Native detached read-only lifecycle and helpers: detached supervisor/request/launch for read-only helpers plus jobs/status/cancel/resume/explore; process identity, recovery, locking and truthful cleanup; preserve native_jobs/cmd_cancel and both original cancellation tests. Implementation writers remain foreground and stage-bound; background write admission stays refused and has no owner in this story. It owns constitution-compliant structured lifecycle logging, bounded existing retries, redaction, cancel ordering and truthful surfaced terminal errors. A top-level native launcher/supervisor Exception boundary produces one sanitized terminal failure with a stable errorId linked to the launch's distinct correlationId and nonzero result and increments durable structured forge_native_unexpected_errors_total exactly once with bounded labels and matching correlation. Emit constitution-exact structured JSON only through the Local console logger; treat human stderr as operator UI and task JSONL as durable evidence, include a sanitized stack trace at the top-level exception boundary, and update factory and architecture docs in the same task.",
       "dependencies": [
-        "LEAN-WORKFLOW"
+        "PORTABLE-DELIVERY-MIGRATION"
       ],
       "user_facing": false,
       "acceptance_criteria": [
@@ -567,24 +1057,11 @@
       ]
     },
     {
-      "id": "PORTABLE-DELIVERY-MIGRATION",
-      "title": "Portable setup, durable history and existing-client migration",
-      "objective": "Portable setup, durable history and existing-client migration: ./setup and forge doctor choose claude or codex per invocation from explicit argument, environment, one detected host, then TTY and refuse ambiguity before repair without persisting the choice; init/adopt/upgrade preserve both adapters. Client rollout exercises the First-owned Decision0074 team registry through existing init full-tree copy and upgrade same-name refresh while preserving distinct client-added agents. Under one cross-platform exclusion lock, upgrade builds a complete fixed-review candidate-universe manifest classifying every discovered path as eligible, excluded, or invalid and independently rewalks its count/classifications/digest before writes, excludes every active or unmarked well-formed fixed set for fresh ordinary combined review and migrates only exactly marker-bound sealed state into origin=upgrade generations and selected pointers, and supports failure-atomic per-task commits plus byte-identical whole-inventory resume without runtime fallback. The task ships verified client-safe upgrade and compaction before Main performs the three configured-client rollout; Toolshed remains a zero-mutation D-0033 deferral until its identity and authority are supplied. The upgrade representation uses honest origin-specific fields and never fabricates missing provider provenance; update factory, README, getting-started and architecture docs in the same task.",
-      "dependencies": [
-        "SHARED-COORDINATOR-JOURNEY"
-      ],
-      "user_facing": false,
-      "acceptance_criteria": [
-        "PORTABLE-DELIVERY-MIGRATION preserves native independence, lifecycle hook delivery, per-invocation setup/doctor selection, dual-adapter client preservation, Decision0074 registry refresh, derived active decisions and safe retention. Selection uses the first applicable tier: one valid explicit argument, else one valid FORGE_COORDINATOR, else exactly one detected host, else TTY. A higher tier suppresses lower-tier disagreement; multiple explicit values, invalid selected value, cancellation, EOF or missing TTY answer refuse before repair. Detecting both or neither host reaches TTY. Selection is not persisted. One cross-platform exclusion lock covers the whole review migration. Before the first target write, one fresh walk represents every discovered candidate path exactly once as eligible, excluded, or invalid; an independent second walk must match the universe count, classifications, and digest. Invalid malformed/linked/colliding/replaced/ambiguous rows block. Zero eligible passes only for an empty universe or explicit exclusions. Eligible marker-bound sealed rows form the sorted migration inventory, which is revalidated with complete coverage under the same lock before every pointer commit. Every active or unmarked well-formed fixed set is excluded and must receive a fresh ordinary combined review against current task state. Sealed proof binds the immutable marker commit and exact fixed bytes. It creates and reads back immutable origin=upgrade generations and pointer-last per-task commits. A sealed reader accepts that later pointer only for an exact marker-commit binding. If a later task fails, matching committed tasks remain valid, untouched tasks retain inert fixed files, and a byte-identical retry with the same inventory digest completes only missing tasks; any drift refuses before another pointer. Replacement, mismatch, mixed, malformed, colliding, linked or ambiguous input refuses without another target mutation. Unbound archives stay display-only and fixed files are never runtime fallback. Its owning docs and migration schema contract must ship with the behavior. Portable proves and ships this capability before any external client mutation; the later client PRs are story-level evidence and never Portable task proof.",
-        "PORTABLE-DELIVERY-MIGRATION preserves legacy JSONL/history bytes and compacts only validated live attributed per-file sources into the first immutable events.bundle.json. The lowercase 32-hex source filename stem is the authoritative ID; each member is {id: stem, payload: validated original event object}. Preview digest binds apply and deletion requires content-identical durable readback. First publication is atomic no-overwrite. Retry deletes only identical loose members already represented. A later eligible event makes preview and apply refuse, remains loose and unchanged, and reports its ID. V1 creates no successor shard or bundle rewrite."
-      ]
-    },
-    {
       "id": "FORMAT-SOURCES",
       "title": "Complete pure mechanical Python formatting",
       "objective": "Complete pure mechanical Python formatting: first create and commit requirements-quality.txt with ruff==0.16.6, pyright==1.1.411, pytest==9.1.1, pytest-xdist==3.8.0 and psutil==7.2.2 plus the final ruff.toml; then run Ruff 0.16.6 formatting over exactly every tracked *.py below factory/scripts/ and factory/tests/; no semantic fixes or scope omissions; preserve tests and comments/directives; one coherent reviewable formatting task using complete lossless review inputs. Update quality docs for the pinned formatter contract in the same task.",
       "dependencies": [
-        "PORTABLE-DELIVERY-MIGRATION"
+        "SHARED-COORDINATOR-JOURNEY"
       ],
       "user_facing": false,
       "acceptance_criteria": [
@@ -608,13 +1085,13 @@
     {
       "id": "FORGE-COORD-1.1",
       "title": "Complete native parity and installed-client dogfood",
-      "objective": "Complete native parity and installed-client dogfood: Full integrated AC1-12 and roadmap acceptance; mandatory local Mac CLI/Desktop and Linux/Windows CI proof, complete logs and explicit Linux/Windows live-runtime limitations; the one authorized `/tmp` Task tracker client at private `vrknetha/symphony-forge-tasktracker-dogfood`, collision-safe origin creation/reuse, clean install, declared lint/type/build/test checks, and recorded create/list/complete persistence. The separate client starts only after QUALITY-BASELINE reaches trunk and remains on its own lifecycle; Integration requires its exact task marker, reviewed PR, functional proof and green CI. Before closing, require human-merged and verified cadence, myclaw and knacklabs-ats rollout PR/CI outcomes plus a Toolshed row that stays paused with zero mutation until its exact remote/default-branch identity is supplied and approved from the merged Portable trunk revision. Run the one formal combined review only after required platform evidence is complete, then use ordinary task pr-ready/PR/CI.",
+      "objective": "Complete native parity and installed-client dogfood: Full integrated AC1-12 and roadmap acceptance; consume Portable canonical event history only as final proof of the shipped platform outcome; mandatory local Mac CLI/Desktop and Linux/Windows CI proof, complete logs and explicit Linux/Windows live-runtime limitations; the one authorized `/tmp` Task tracker client at private `vrknetha/symphony-forge-tasktracker-dogfood`, collision-safe origin creation/reuse, clean install, declared lint/type/build/test checks, and recorded create/list/complete persistence. The separate client starts only after QUALITY-BASELINE reaches trunk and remains on its own lifecycle; Integration requires its exact task marker, reviewed PR, functional proof and green CI. Before closing, require human-merged and verified cadence, myclaw and knacklabs-ats rollout PR/CI outcomes plus a Toolshed row that stays paused with zero mutation until its exact remote/default-branch identity is supplied and approved from the merged Portable trunk revision. Run the one formal combined review only after required platform evidence is complete, then use ordinary task pr-ready/PR/CI.",
       "dependencies": [
         "QUALITY-BASELINE"
       ],
       "user_facing": false,
       "acceptance_criteria": [
-        "FORGE-COORD-1.1 closes AC1 through AC12 and the current roadmap acceptance for both coordinators, including Decision 0074 main-selection/managed-lane policy, preservation of Forge gates, cooperative-transfer observable gates without a fencing claim, real native Codex without Claude/plugin state, complete approved native support, quality predecessors and final parity integration, including one exact digest-matched protected story/task snapshot and exact owner/worktree/base/stage tuple with byte-identical or freshly validated unchanged-head retry. The three configured client rows bind exact canonical repository/default-branch identities, fetched bases, final Quality-or-later source revision, PRs, checks, CI, human merge, and verified resulting default-branch tip. Cadence is knacklabs/cadence@main, MyClaw resolves its configured alias to knacklabs/gantry@main, and KnackLabs ATS is knacklabs/knacklabs-ats@develop. Toolshed has no configured remote and remains paused with zero mutation under D-0033 until the user supplies and approves its exact owner/repository, default branch, and mutation authority; that explicit limitation does not block the three configured client proofs or Integration.",
+        "FORGE-COORD-1.1 closes AC1 through AC12 and the current roadmap acceptance for both coordinators, including Decision 0074 main-selection/managed-lane policy, preservation of Forge gates, consumption of Portable canonical event history only as final proof,  cooperative-transfer observable gates without a fencing claim, real native Codex without Claude/plugin state, complete approved native support, quality predecessors and final parity integration, including one exact digest-matched protected story/task snapshot and exact owner/worktree/base/stage tuple with byte-identical or freshly validated unchanged-head retry. The three configured client rows bind exact canonical repository/default-branch identities, fetched bases, final Quality-or-later source revision, PRs, checks, CI, human merge, and verified resulting default-branch tip. Cadence is knacklabs/cadence@main, MyClaw resolves its configured alias to knacklabs/gantry@main, and KnackLabs ATS is knacklabs/knacklabs-ats@develop. Toolshed has no configured remote and remains paused with zero mutation under D-0033 until the user supplies and approves its exact owner/repository, default branch, and mutation authority; that explicit limitation does not block the three configured client proofs or Integration.",
         "FORGE-COORD-1.1 proves required local Mac CLI and Desktop observations and meaningful Ubuntu24.04 x64/native Windows CI; only unavailable Linux/Windows authenticated live CLI/Desktop observations may be accepted0065 limitations, while Mac evidence cannot be waived, plus, after the Quality marker reaches trunk, the one user-authorized installed-client Task tracker exception: private origin/CI, clean harness install, declared lint/type/build/test checks, recorded create/list/complete persistence, admitted contribution, client-owned proof, review, functional proof, PR and green CI. Integration refuses until the client task marker, reviewed PR, functional proof and green CI match its cited repository/commit; there is no ninth harness task or surrogate cross-repo ID.",
         "FORGE-COORD-1.1 encodes pass_fail_summary as one JSON array string with exactly these labels in order: native-cli-macos, native-desktop-macos, native-cli-linux-ubuntu-24.04-x64, native-desktop-linux-ubuntu-24.04-x64, native-cli-windows, and native-desktop-windows. Every row has exactly label/status/evidence_kind/os/cpu/revision/runtime/commands/logs. Its own json.loads validator resolves logs and client proof, derives aggregate status and rejects malformed/duplicate/missing/contradictory/unresolved evidence; C10 consumes the review-bound aggregate. One review lifecycle whose selected clean immutable generation binds the complete updated platform report before ordinary readiness and PR/CI. Integration cites separate durable native lifecycle, Mac CLI/Desktop and Task tracker interaction logs with exact correlations; one producer cannot certify another surface."
       ]
@@ -624,6 +1101,6 @@
   "story": "FORGE-COORD-1",
   "epic": "symphony-forge",
   "plan_file": "plans/active/FORGE-COORD-1-either-claude-or-codex-coordinates-the-same-forge-workflow.md",
-  "commit": "44a7a3bdc42fa228f891a609a3510abd15d0cbf0",
-  "plan_sha256": "c605101d86582523c618eb7fbe236ccc103b96743d039926f418dc6540a3fd7c"
+  "commit": "6ae2dea1b7417fff4c9c3fc3552488a8378aacd4",
+  "plan_sha256": "a9a320376907ebb81835bc3a6b722adda63c4f2e5756822b6f3b93d9ed5395de"
 }

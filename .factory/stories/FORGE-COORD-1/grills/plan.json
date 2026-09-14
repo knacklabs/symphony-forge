@@ -3,17 +3,30 @@
   "gate": "plan",
   "verdict": "pass",
   "issue": "FORGE-COORD-1",
-  "summary": "Resolved the cold reader's stale approval and budget-authority finding in the already-approved story plan without changing production behavior or the eight-task graph.",
+  "summary": "One successful plan cold read inspected original body digest e01729d81944fc5ed80c2b4ce7b9a8253187758b8b67f5fddc7d0f0b3a6d2409 and produced eight findings. The amended draft resolves each finding one-to-one, with no unexplained amendment, and has final body digest a9a320376907ebb81835bc3a6b722adda63c4f2e5756822b6f3b93d9ed5395de. The cold reader did not inspect the amended bytes; this disposition bridge plus the subsequent human approval binds the final revision without a second cold call. The only post-disposition normalization changed noncanonical frontmatter key source_saved to Forge-owned saved so plan save preserves the same digest; no authored contract body or decision list changed. After that approved revision, the user explicitly selected one append-only event log per story with one-time upgrade migration and clarified that the existing next Portable task owns it; this explained pending-task ownership amendment keeps Lean's product scope and the eight-task/three-PR sequence unchanged, removes Integration's duplicate bundle duty, and is bound by final approval. The earlier cold reader did not inspect this later user-selected event wording.",
   "gaps": [
-    "The approved story plan body still said the Decision 0074 amendment remained awaiting recorder-bound approval even though its frontmatter and recorded plan state were approved, and it omitted the diagnosed post-c9a85e9 fixture continuation plus the original-versus-measured budget account."
+    "The cold-read draft resurrected NATIVE-FOREGROUND-ACTIVATE even though PR #221, its sealed task commit, and its reconciled done stage were already on trunk.",
+    "The cold-read draft's three-profile pruning contradicted active Decision 0074 and the 15-profile repository state.",
+    "The cold-read draft reassigned fixed-review migration from the earlier settled Portable-only answer and confirmed-spec ownership into Lean.",
+    "The cold-read draft changed the pending dependency chain while describing the eight-task decomposition as unchanged.",
+    "The cold-read draft assigned mandatory-round-floor removal to Lean although Decision 0073 and the confirmed spec deferred zero-round behavior until Shared.",
+    "The unsaved cold-read draft claimed approved authority although its body digest differed from the currently approved plan digest.",
+    "The cold-read draft bound docs/specs/dual-coordinator-parity.md to stale SHA256 2a19f2d5e4b15f85f22e2e4642e13911db7774512a1c9d745abb65be1f79e3c8.",
+    "The cold-read draft required /Users/dev/Workdir/knacklabs-ats/.git for final Integration although that checkout is absent and the draft named no authorized preparation path."
   ],
   "contradictions": [],
   "resolutions": [
-    "The candidate now states that the 2026-09-12 chain and Decision 0074 amendment were recorder-bound approved on 2026-09-13, separates the current task-plan approval, and appends the exact three-path fixture continuation with original 24-file/4,000-line estimate, measured 122-path/15,061-line integrated delta, 14-path/95-line correction, and current 180-file/18,000-line ceiling."
+    "The final draft records First only as historical completed evidence: PR #221 merged at 6ae2dea, seal 8a92cbe, stage done, and all remaining execution begins with Lean from that trunk.",
+    "The final draft cites the user's later direct recovery instruction and approved three-PR plan as the narrow controlling authority that overrides the older 15-profile target for this recovery; Lean now owns tested migration to the three retained Forge-owned profiles while preserving client-added and client-modified profiles.",
+    "The final draft makes the same later recovery authority explicit, assigns the complete fixed-review candidate-universe, safety, migration, publication, and normal-runtime fallback retirement to Lean, and narrows Portable to the remaining non-review legacy families in PR3.",
+    "The final draft calls the dependency order an amendment under the later recovery authority and requires deliberate re-recording: First(done) -> Lean -> Portable -> Native lifecycle -> Shared -> Format -> Quality -> Integration.",
+    "The final draft explicitly identifies the later recovery instruction as overriding Decision 0073/spec42 timing for Lean, binds Lean to one real cold read with complete disposition and no synthetic closing question, and leaves broader structured-question and journey behavior to Shared.",
+    "The final draft frontmatter is status draft and states that it has no authority until a fresh grill and recorded human approval bind the final body digest.",
+    "The final draft binds the current committed spec SHA256 d7c7a52e43bee5e0df6ef4a932626071ac9bc52d873f9b67a1e66d2d06e10e2e and labels the prior hash as historical pre-Lean wording.",
+    "The final draft records the ATS checkout as absent, performs no current mutation, and uses the already-approved exact knacklabs/knacklabs-ats@develop rollout as future authority for collision-safe isolated checkout preparation and identity verification; ATS blocks Integration and story close, not the three-PR recovery."
   ],
   "open_items": [],
-  "questions_asked": 2,
-  "frontier_empty": true,
+  "questions_asked": 1,
   "rounds": [
     {
       "question": "When CI requires a PR, which delivery rule should Forge use?",
@@ -21,32 +34,46 @@
         "CI transport only (Recommended)",
         "Full checkpoint"
       ],
-      "chosen": "CI transport only (Recommended)"
-    },
-    {
-      "question": "What should happen when any required question exchange for the story is still open?",
-      "options": [
-        "Wait for all (Recommended)",
-        "Allow handoff"
-      ],
-      "chosen": "Wait for all (Recommended)",
+      "chosen": "CI transport only (Recommended)",
       "frontier_empty": true
     }
   ],
-  "inspected_refs": [
-    "plans/active/FORGE-COORD-1-either-claude-or-codex-coordinates-the-same-forge-workflow.md",
-    ".factory/stories/FORGE-COORD-1/task-plans/NATIVE-FOREGROUND-ACTIVATE.md",
-    ".factory/stories/FORGE-COORD-1/decomposition.json",
-    "plans/lessons/20260910T170240-0000-first-native-scope-correction-authorization-170240173755.json"
-  ],
-  "current_flow": "Save this exact corrected story-plan digest awaiting approval, bind the standing user authorization, save it unchanged as approved, re-record the unchanged eight-task decomposition against the new digest, then record the resolved current task grill and launch only the three-path fixture repair.",
+  "current_flow": "Cold proof: session 01a09dcf-45d6-7262-bfad-5f57b3baaa28 on original digest e01729d81944fc5ed80c2b4ce7b9a8253187758b8b67f5fddc7d0f0b3a6d2409. Disposition bridge: the eight ordered gap/resolution/citation entries explain every amendment. Final artifact: digest a9a320376907ebb81835bc3a6b722adda63c4f2e5756822b6f3b93d9ed5395de. Record this pass against the final file, save it awaiting approval, bind the user's standing approved recovery amendment to that exact digest, save unchanged as approved, and re-record the amended eight-task decomposition. The later user-selected event amendment is source authority for Portable's canonical per-story log and migration contract; no new cold read or synthetic question was run.",
   "citations": [
     {
-      "finding": "The approved story plan body still said the Decision 0074 amendment remained awaiting recorder-bound approval even though its frontmatter and recorded plan state were approved, and it omitted the diagnosed post-c9a85e9 fixture continuation plus the original-versus-measured budget account.",
-      "source": "current cold-read task grill finding 4 and 5; active story plan approval paragraph and transition; scope-correction lesson; measured e17f44f..c9a85e9 product delta"
+      "finding": "The cold-read draft resurrected NATIVE-FOREGROUND-ACTIVATE even though PR #221, its sealed task commit, and its reconciled done stage were already on trunk.",
+      "source": "plan cold read session 01a09dcf-45d6-7262-bfad-5f57b3baaa28 finding 1; original cold input lines 81,174,220; final amended plan lines 81-89"
+    },
+    {
+      "finding": "The cold-read draft's three-profile pruning contradicted active Decision 0074 and the 15-profile repository state.",
+      "source": "plan cold read session 01a09dcf-45d6-7262-bfad-5f57b3baaa28 finding 2; Decision 0074 lines 36 and 46; final amended plan lines 73,218-226"
+    },
+    {
+      "finding": "The cold-read draft reassigned fixed-review migration from the earlier settled Portable-only answer and confirmed-spec ownership into Lean.",
+      "source": "plan cold read session 01a09dcf-45d6-7262-bfad-5f57b3baaa28 finding 3; original cold input lines 112,135,180; final amended plan lines 155,212,272-273"
+    },
+    {
+      "finding": "The cold-read draft changed the pending dependency chain while describing the eight-task decomposition as unchanged.",
+      "source": "plan cold read session 01a09dcf-45d6-7262-bfad-5f57b3baaa28 finding 4; protected decomposition prior chain; final amended plan lines 73,267-278"
+    },
+    {
+      "finding": "The cold-read draft assigned mandatory-round-floor removal to Lean although Decision 0073 and the confirmed spec deferred zero-round behavior until Shared.",
+      "source": "plan cold read session 01a09dcf-45d6-7262-bfad-5f57b3baaa28 finding 5; Decision 0073 lines 20-31; confirmed spec line 42; final amended plan lines 166,249,272"
+    },
+    {
+      "finding": "The unsaved cold-read draft claimed approved authority although its body digest differed from the currently approved plan digest.",
+      "source": "plan cold read session 01a09dcf-45d6-7262-bfad-5f57b3baaa28 finding 6; original body digest e01729d81944fc5ed80c2b4ce7b9a8253187758b8b67f5fddc7d0f0b3a6d2409; final amended plan lines 1-5,73"
+    },
+    {
+      "finding": "The cold-read draft bound docs/specs/dual-coordinator-parity.md to stale SHA256 2a19f2d5e4b15f85f22e2e4642e13911db7774512a1c9d745abb65be1f79e3c8.",
+      "source": "plan cold read session 01a09dcf-45d6-7262-bfad-5f57b3baaa28 finding 7; sha256sum docs/specs/dual-coordinator-parity.md; final amended plan line 192"
+    },
+    {
+      "finding": "The cold-read draft required /Users/dev/Workdir/knacklabs-ats/.git for final Integration although that checkout is absent and the draft named no authorized preparation path.",
+      "source": "plan cold read session 01a09dcf-45d6-7262-bfad-5f57b3baaa28 finding 8; filesystem absence observed during the cold read; final amended plan lines 230-239,314"
     }
   ],
-  "input_sha256": "c605101d86582523c618eb7fbe236ccc103b96743d039926f418dc6540a3fd7c",
-  "recorded_at": "2026-09-13T17:35:37+00:00",
-  "commit": "c9a85e9722983787797edd82556e713986948c20"
+  "input_sha256": "a9a320376907ebb81835bc3a6b722adda63c4f2e5756822b6f3b93d9ed5395de",
+  "recorded_at": "2026-09-14T03:50:55+00:00",
+  "commit": "6ae2dea1b7417fff4c9c3fc3552488a8378aacd4"
 }

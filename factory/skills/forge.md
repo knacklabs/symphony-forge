@@ -71,9 +71,9 @@ or route:
 | assign a story / distribute work (EM) | `./forge roadmap assign <KEY> --to <dev>` — checked against the roster; match story skill to dev skills |
 | who does what / role handoffs | `docs/ROLES.md` — forge next tags every step [PM]/[EM]/[dev] |
 | start a task / new feature | `python3 factory/scripts/intake.py --issue <KEY> --title "<title>"` — then check `forge.py context list --pending` BEFORE planning |
-| plan is approved | `python3 factory/scripts/forge.py plan save --from <plan-file> --story <key>` (frontmatter attests every active decision) |
+| save and approve a plan | `python3 factory/scripts/forge.py plan save --from <plan-file> --story <key>` records `awaiting-approval`; after one independent cold grill and complete disposition/amendment bridge, show the exact final plan in native Plan Mode. Successful Claude `ExitPlanMode` or the exact synchronous Codex approval question records approval automatically |
 | show implementation progress / how far along are we / show the board | `./forge board` — see "Show, don't recite" below. `./forge plan list` is the text fallback |
-| review the plan / let me read the plan | open the board at that story: `./forge board` then share `http://127.0.0.1:8765/#<STORY-KEY>`. Its drawer renders the plan with an approval-readiness checklist; approval still happens in chat (the grill is an interrogation, not a button) |
+| review the plan / let me read the plan | present the exact final plan through native Plan Mode; `./forge board` is a read-only status view and never an approval transport |
 | I need a small fix without a plan | `./forge quickfix start "<reason>"` — a bounded, ledgered window (5 product files) that the hook tracks; close it with `./forge quickfix done`. Exceeding the budget forces plan mode, and pr_ready refuses to ship with a window open |
 | why is my edit blocked | the planning lock is ALWAYS armed (decision 0013): product writes need an approved plan or an open quickfix. `.factory/` is never hand-written; recorded state comes from the record_* scripts |
 | record the decomposition | `python3 factory/scripts/record_decomposition_from_json.py --input <json>`, then `update_run.py --phase implementing --decomposition-status recorded` |
@@ -89,7 +89,7 @@ or route:
 | a worker signal is open (orchestrator) | `./forge signal list --open` → inspect the signal and its worker state → resolve the cause with `./forge signal resolve <id> --notes "<answer>"`. Resume only a live paused worker; otherwise reconcile its result before deciding whether new delegation is needed. Open signals block pr_ready |
 | review / guide the assumptions (orchestrator) | `./forge assumptions list --open`, then `./forge assumptions resolve <id> --status confirmed\|fix-needed\|promoted --notes "..."` — pr_ready refuses unguided rows |
 | work the next stage / where am I in the task | Run `./forge next` and follow the current frontier. After implementation and focused tests: commit product changes → deterministic verify and task test recording → `./forge review <id>` → functional check if required → `./forge stage done <id>` → `./forge task pr-ready <id>` → CI and merge (WORKFLOW.md Stage Loop; `docs/QUALITY.md` bounded recovery) |
-| delegate this task / hand it to Codex | `./forge delegate <task-id>` — builds `.factory/briefs/<id>.md`, derives the write flag from stage state, launches the companion without a shell, and records evidence used by `stage done`; `--print-only` is diagnostic and cannot satisfy the gate |
+| delegate this task / hand it to Codex | `./forge delegate <task-id>` — builds the current story brief, derives the write flag from stage state, launches the companion without a shell, and records evidence used by `stage done`; repeat `--scope <repo-path>` to choose a proper subset of the approved effective scope, or omit it for the full scope; `--print-only` is diagnostic and cannot satisfy the gate |
 | is Codex stuck? / did it actually do anything | `./forge codex status` — status, phase, write flag and age per job; flags a run that has not moved and a read-only run launched while a stage is active. Advisory, never a gate |
 | it only did part of the job | `./forge stage done <id> --incomplete "<what is missing>"` — the stage stays active and the gap enters the timeline |
 | are we fixing the same thing again | `./forge findings patterns` — a class at 3+ hits gets a refactor story + decision, never a fourth patch |
@@ -137,10 +137,10 @@ instead of narrating it:
   artifacts (plan, spec, decomposition, evidence).
 - Specs, decisions, the plans ledger and quickfix history sit behind the
   **Library** panel in the header — reference material, off the main surface.
-- **After saving a plan**, hand over the link so the dev reads the rendered
-  plan and its approval-readiness checklist instead of the markdown file.
-- The board is READ-ONLY on purpose. It shows what blocks approval; it never
-  approves. Recording still goes through the gated commands above.
+- **After saving a plan**, the board may show its readiness, but native Plan
+  Mode must display the exact final plan for approval.
+- The board is READ-ONLY on purpose. It shows status; it never approves.
+  Approval recording comes from the native host completion event.
 - Still report the outcome in chat — the board supplements your answer, it
   does not replace it.
 

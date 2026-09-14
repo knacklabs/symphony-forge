@@ -148,31 +148,14 @@ def test_the_board_port_is_named_once(repo: Path):
     assert isinstance(DEFAULT_PORT, int)
 
 
-def test_approve_prints_the_board_link_and_does_not_gate_on_it(repo: Path, tmp_path):
-    """The board-view marker is a courtesy, not a gate.
-
-    Gating approval on "the board sent this text" refused the human who had
-    just read the plan in another worktree (the marker is per git control
-    dir) and turned every approval into a marker hunt. The approval prints
-    the board address; whether the plan was read there is the human's call.
-    """
-    from test_gates import (  # noqa: E402
-        STAGE_TASK, intake, record_skeleton_then_frontier, record_task_grill,
-        save_plan, sign_off,
-    )
-
-    sign_off(repo)
-    intake(repo)
-    save_plan(repo, tmp_path)
-    record_skeleton_then_frontier(repo, [STAGE_TASK])
-    code, out = record_task_grill(repo, STAGE_TASK, approve=False)
-    assert code == 0, out
-
-    code, out = run(
-        repo, "forge.py", "task", "approve", "T1", "--by", "Test Human")
-    assert code == 0, out
-    assert "Approved task plan" in out
-    assert "http://127.0.0.1:" in out, "the board address is the courtesy"
+def test_native_approval_no_longer_routes_through_board_or_manual_approve(repo: Path):
+    code, out = run(repo, "forge.py", "task", "approve", "T1", "--by", "Nobody")
+    assert code != 0 and "invalid choice" in out
+    code, out = run(repo, "forge.py", "plan", "approve", "--by", "Nobody")
+    assert code != 0 and "invalid choice" in out
+    phase = (HARNESS / "factory/scripts/forge_cli/phase.py").read_text(encoding="utf-8")
+    assert "consume its approval" in phase
+    assert "task approve {id}" not in phase
 
 
 def test_an_edit_after_the_human_looked_needs_a_second_look(repo: Path, tmp_path):

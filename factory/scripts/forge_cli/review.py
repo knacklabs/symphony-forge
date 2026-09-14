@@ -1520,6 +1520,10 @@ def review_task(base: Path, task_id: str, *, lens: str | None = None,
                 "commit": tip_sha,
             })
         prompt_body = prompts["combined"][1]
+        from .stages import reviewed_meaning_identity
+        reviewed_meaning = reviewed_meaning_identity(
+            base, stage, task, helper_before,
+        )
         candidate = {
             "format": "forge-review-generation/v1", "origin": "combined",
             "generated_by": "autoreview", "story": story, "task_id": args.id,
@@ -1528,8 +1532,8 @@ def review_task(base: Path, task_id: str, *, lens: str | None = None,
             "inspected_commit": tip_sha,
             "delta_id": token.get("branch_diff_digest"),
             "helper": helper_before,
-            "input": {"sha256": hashlib.sha256(prompt_body).hexdigest(),
-                      "bytes": len(prompt_body)},
+            "input": {"sha256": reviewed_meaning["identity"],
+                      "bytes": reviewed_meaning["bytes"]},
             "raw_result": {"encoding": "base64",
                            "sha256": hashlib.sha256(raw_result).hexdigest(),
                            "bytes": len(raw_result),

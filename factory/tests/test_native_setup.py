@@ -28,9 +28,7 @@ def _hook(event: str, source, *, enabled=True, trust="trusted") -> dict:
         "currentHash": "sha256:trusted-by-codex",
     }
     if event == "preToolUse":
-        hook["matcher"] = (
-            "Bash|apply_patch|Edit|Write|request_user_input|request_user_input_async"
-        )
+        hook["matcher"] = "Bash|apply_patch|request_user_input"
     elif event == "postToolUse":
         hook["matcher"] = "^request_user_input$"
     elif event == "sessionStart":
@@ -95,11 +93,10 @@ def test_codex_hook_readiness_requires_exact_enabled_trusted_source(
         doctor, "_codex_hooks_inventory", lambda _binary, _base: (wrong, ""))
     assert "PreToolUse matcher" in doctor.codex_hook_readiness(tmp_path)[1]
 
-    tools = ("Bash", "apply_patch", "Edit", "Write",
-             "request_user_input", "request_user_input_async")
+    tools = ("Bash", "apply_patch", "request_user_input")
     config_path = repo / ".codex" / "hooks.json"
     original_config = config_path.read_bytes()
-    for missing in ("apply_patch", "Edit", "Write"):
+    for missing in tools:
         incomplete = [dict(hook) for hook in valid]
         next(hook for hook in incomplete
              if hook["eventName"] == "preToolUse")["matcher"] = "|".join(
@@ -306,17 +303,9 @@ def test_model_policy_selects_sol_work_and_luna_lite():
     }
 
     assert {"model", "model_reasoning_effort", "plan_mode_reasoning_effort"}.isdisjoint(config)
-    assert lanes == {
-        ("gpt-5.6-sol", "low"): {"explorer"},
-        ("gpt-5.6-sol", "medium"): {
-            "backend", "debugger", "frontend", "refactorer", "tester",
-        },
-        ("gpt-5.6-sol", "high"): {
-            "architect", "docs-decomposer", "functional-checker", "griller",
-            "performance", "planner", "planner-high", "security",
-        },
-        ("gpt-5.6-luna", "max"): {"lite"},
-    }
+    assert lanes == {("gpt-5.6-sol", "high"): {
+        "docs-decomposer", "functional-checker", "planner-high",
+    }}
     assert pinned_run_config(HARNESS) == ("gpt-5.6-sol", "medium")
     assert (explore["model"], explore["model_reasoning_effort"]) == (
         "gpt-5.6-sol", "low")
@@ -331,14 +320,27 @@ SESSION_START_SOURCES = ("startup", "resume", "clear", "compact")
 HOOK_TOOL_MATRIX = {
     ".claude/settings.json": {
         "PreToolUse": ("Bash", "AskUserQuestion", "Edit", "Write", "MultiEdit", "NotebookEdit"),
-        "PostToolUse": ("Write", "Edit", "MultiEdit", "AskUserQuestion"),
+        "PostToolUse": ("AskUserQuestion", "ExitPlanMode"),
     },
     ".codex/hooks.json": {
-        "PreToolUse": ("Bash", "Edit", "Write", "apply_patch", "request_user_input",
-                       "request_user_input_async"),
+        "PreToolUse": ("Bash", "apply_patch", "request_user_input"),
         "PostToolUse": ("request_user_input",),
     },
 }
+
+
+def test_recovery_profile_override_keeps_only_three_forge_profiles():
+    config = tomllib.loads(
+        (HARNESS / ".codex/config.toml").read_text(encoding="utf-8"))
+    expected = {"planner-high", "docs-decomposer", "functional-checker"}
+    configured = {
+        name for name, row in config["agents"].items()
+        if isinstance(row, dict) and row.get("config_file")
+    }
+    installed = {
+        path.stem for path in (HARNESS / ".codex/agents").glob("*.toml")
+    }
+    assert configured == expected == installed
 
 
 def _remove_session_start_source(config, missing):

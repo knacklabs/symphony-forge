@@ -6,10 +6,13 @@ Replaces machinery the harness owns; never touches project-owned content.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import shutil
 import subprocess
 import tempfile
+import os
+import re
 from pathlib import Path
 
 from factory_lib import (
@@ -43,6 +46,392 @@ CLAUDE_HARNESS_OWNED = [
 CODEX_HARNESS_OWNED_SKILLS = tuple(
     f".codex/skills/{skill}" for skill in HARNESS_OWNED_SKILLS
 )
+RETIRED_FORGE_PROFILE_HASHES = {
+    "architect.toml": "35faa44d7f1b022944b891c94b8694733278708c4ec1c68228838fff13e44b28",
+    "backend.toml": "f6e60262307d3314819cb74a37d19c09ec8f6b75e6db86c9ce486b1924a01fcb",
+    "debugger.toml": "49a401de95061a44523a96443c0250f0635613d3383dd03bd134bb3813ca4f10",
+    "explorer.toml": "005a60fc53d4b444c89c0277264899922c58a14e62d6a4a56d3c83589efac14e",
+    "frontend.toml": "973987f868ab4c6106b4f641cb00f1d1341ccdf7085bc9a17df926845c56679a",
+    "griller.toml": "a48745f1fceb3544d539bcef3b8ac07bedbd19dfdf1296523b5873fbf20d2d65",
+    "lite.toml": "89eb2fdde5648c31e0b073eccd918179f885e3dedfb4c906ea7d545cb98d7e8f",
+    "performance.toml": "158305a29dd70b7a1dbbae18d5f8e765b44d224fd21571bf8ad95e65716c8ae5",
+    "planner.toml": "c5ac3eb9a7fef55d06c1b11d35be3e213acc862060fb6626cdf322e1bf3e147a",
+    "refactorer.toml": "384138f285f4178762f3f2c9c3abf230db09963213cc282efbb6ab2f722b6db5",
+    "security.toml": "124e70c1bfc81459b842196be977b2304e85dbbd834166d1c9e60c7909707bbd",
+    "tester.toml": "a6770f50e9b9bc772c883e9edd6aa112b30260a78aa9915cb94f1c98b48ed7f6",
+}
+LEAN_MIGRATION_VERSION = "lean-workflow-v2"
+LEAN_LENSES = ("performance", "quality", "security")
+
+
+def _lean_family(relative: str, data: bytes | None = None) -> str:
+    """Primary classifier for formats removed by Lean."""
+    if relative == ".codex/config.toml" and data and b"codex_hooks = true" in data:
+        return "old-hook-flag"
+    if relative.startswith(".codex/agents/"):
+        name = relative.rsplit("/", 1)[-1]
+        expected = RETIRED_FORGE_PROFILE_HASHES.get(name)
+        if expected and data is not None and hashlib.sha256(data).hexdigest() == expected:
+            return "retired-forge-profile"
+    if re.fullmatch(r"\.factory/(?:stories/[^/]+/)?grill-rounds/[^/]+\.json", relative):
+        return "grill-round"
+    if re.fullmatch(r"\.factory/(?:stories/[^/]+/)?grills/requirements\.json", relative):
+        return "requirements-grill"
+    if re.fullmatch(r"\.factory/(?:stories/[^/]+/)?grills/plan\.json", relative):
+        if data and b'"cold_input_sha256"' not in data:
+            return "old-plan-grill"
+    if re.fullmatch(r"\.factory/(?:stories/[^/]+/)?grills/tasks/[^/]+\.json", relative):
+        if data and (b'"rounds"' in data or b'"cold_input_sha256"' not in data):
+            return "old-task-grill"
+    if re.fullmatch(r"\.factory/(?:stories/[^/]+/)?plan-approval\.json", relative):
+        if data and b'"runtime"' not in data:
+            return "manual-plan-approval"
+    if re.fullmatch(r"\.factory/(?:stories/[^/]+/)?plan-mode/[^/]+\.json", relative):
+        return "plan-mode-marker"
+    if re.fullmatch(
+            r"\.factory/stories/[^/]+/tasks/[^/]+/reviews/(?:quality|performance|security)\.json",
+            relative):
+        return "fixed-review-lens"
+    if (relative == ".factory/stages.json"
+            or re.fullmatch(r"\.factory/stories/[^/]+/stages/[^/]+\.json", relative)):
+        if data and b'"local_review_stamp"' in data and b'"reviewed_meaning"' not in data:
+            return "legacy-stage-stamp"
+    return ""
+
+
+def lean_primary_inventory(target: Path) -> list[dict]:
+    candidates: list[Path] = []
+    roots = [target / ".factory", target / ".codex" / "agents"]
+    config = target / ".codex" / "config.toml"
+    if config.exists() or config.is_symlink():
+        candidates.append(config)
+    for root in roots:
+        if not root.exists() and not root.is_symlink():
+            continue
+        if root.is_symlink():
+            fail(f"Lean migration refuses linked inventory root {root}")
+        for directory, names, files in os.walk(root, followlinks=False):
+            current = Path(directory)
+            linked = [name for name in names if (current / name).is_symlink()]
+            if linked:
+                fail(f"Lean migration refuses linked directory {current / linked[0]}")
+            for name in files:
+                candidates.append(current / name)
+    entries = []
+    for path in sorted(set(candidates)):
+        relative = path.relative_to(target).as_posix()
+        try:
+            info = path.lstat()
+        except OSError as exc:
+            fail(f"Lean migration cannot inventory {relative}: {exc}")
+        if path.is_symlink() or not path.is_file() or info.st_nlink != 1:
+            if _lean_family(relative):
+                fail(f"Lean migration refuses linked or non-regular candidate {relative}")
+            continue
+        data = path.read_bytes()
+        family = _lean_family(relative, data)
+        if family:
+            entries.append({
+                "path": relative, "family": family, "type": "file",
+                "sha256": hashlib.sha256(data).hexdigest(), "bytes": len(data),
+            })
+    return entries
+
+
+def lean_raw_inventory(target: Path) -> list[dict]:
+    """Independent no-follow walk; does not call the primary classifier."""
+    rows: list[dict] = []
+    starts = [target / ".factory", target / ".codex" / "agents"]
+    config = target / ".codex" / "config.toml"
+    stack = [path for path in starts if path.exists() or path.is_symlink()]
+    files = [config] if config.exists() or config.is_symlink() else []
+    while stack:
+        directory = stack.pop()
+        if directory.is_symlink():
+            fail(f"Lean raw inventory refuses linked root {directory}")
+        try:
+            children = list(os.scandir(directory))
+        except OSError as exc:
+            fail(f"Lean raw inventory cannot read {directory}: {exc}")
+        for child in children:
+            path = Path(child.path)
+            if child.is_symlink():
+                rel = path.relative_to(target).as_posix()
+                # Any link in a fixed legacy root makes coverage unverifiable.
+                fail(f"Lean raw inventory refuses linked entry {rel}")
+            if child.is_dir(follow_symlinks=False):
+                stack.append(path)
+            elif child.is_file(follow_symlinks=False):
+                files.append(path)
+    for path in sorted(set(files)):
+        relative = path.relative_to(target).as_posix()
+        data = path.read_bytes()
+        family = ""
+        # Deliberately independent spelling of the candidate universe.
+        if relative == ".codex/config.toml" and b"codex_hooks = true" in data:
+            family = "old-hook-flag"
+        elif relative.startswith(".codex/agents/"):
+            name = relative.rsplit("/", 1)[-1]
+            if (name in RETIRED_FORGE_PROFILE_HASHES
+                    and hashlib.sha256(data).hexdigest() == RETIRED_FORGE_PROFILE_HASHES[name]):
+                family = "retired-forge-profile"
+        elif "/grill-rounds/" in relative and relative.endswith(".json"):
+            family = "grill-round"
+        elif relative.endswith("/grills/requirements.json") \
+                or relative == ".factory/grills/requirements.json":
+            family = "requirements-grill"
+        elif (relative.endswith("/grills/plan.json")
+              or relative == ".factory/grills/plan.json") \
+                and b'"cold_input_sha256"' not in data:
+            family = "old-plan-grill"
+        elif "/grills/tasks/" in relative and relative.endswith(".json") \
+                and (b'"rounds"' in data or b'"cold_input_sha256"' not in data):
+            family = "old-task-grill"
+        elif relative.endswith("/plan-approval.json") \
+                and b'"runtime"' not in data:
+            family = "manual-plan-approval"
+        elif "/plan-mode/" in relative and relative.endswith(".json"):
+            family = "plan-mode-marker"
+        elif "/tasks/" in relative and "/reviews/" in relative \
+                and relative.rsplit("/", 1)[-1] in {f"{lens}.json" for lens in LEAN_LENSES}:
+            family = "fixed-review-lens"
+        elif (relative == ".factory/stages.json" or "/stages/" in relative) \
+                and b'"local_review_stamp"' in data and b'"reviewed_meaning"' not in data:
+            family = "legacy-stage-stamp"
+        if family:
+            rows.append({
+                "path": relative, "family": family, "type": "file",
+                "sha256": hashlib.sha256(data).hexdigest(), "bytes": len(data),
+            })
+    return rows
+
+
+def _inventory_digest(entries: list[dict]) -> str:
+    return hashlib.sha256(json.dumps(
+        entries, sort_keys=True, separators=(",", ":"), ensure_ascii=False,
+    ).encode("utf-8")).hexdigest()
+
+
+def preflight_lean_migration(target: Path) -> dict | None:
+    manifest = target / ".factory" / "migrations" / f"{LEAN_MIGRATION_VERSION}.json"
+    primary = lean_primary_inventory(target)
+    raw = lean_raw_inventory(target)
+    if primary != raw:
+        fail("Lean migration independent raw inventory does not exactly match primary classification")
+    for entry in primary:
+        if entry["family"] in {"old-hook-flag", "retired-forge-profile"}:
+            continue
+        try:
+            value = json.loads((target / entry["path"]).read_text(encoding="utf-8"))
+        except (UnicodeDecodeError, json.JSONDecodeError, OSError) as exc:
+            fail(f"Lean migration found malformed {entry['family']} input "
+                 f"{entry['path']}: {exc}")
+        if not isinstance(value, dict):
+            fail(f"Lean migration found malformed {entry['family']} input "
+                 f"{entry['path']}: expected a JSON object")
+    if manifest.exists() or manifest.is_symlink():
+        if manifest.is_symlink() or not manifest.is_file():
+            fail("Lean migration manifest is linked or not a regular file")
+        saved = load_json(manifest, default={})
+        if saved.get("version") != LEAN_MIGRATION_VERSION:
+            fail("Lean migration found an unequal partial retry; restore or complete the original checkout")
+        if not primary:
+            return None
+        if saved.get("completed_at"):
+            fail("Lean migration found an unequal partial retry; restore or complete the original checkout")
+        if saved.get("entries") != primary:
+            fail("Lean migration found an unequal partial retry; restore or complete the original checkout")
+        migration = {"entries": primary,
+                     "input_inventory_digest": saved.get("input_inventory_digest"),
+                     "resume": True}
+        migration["review_candidates"] = _fixed_review_candidates(target, migration)
+        return migration
+    migration = {"entries": primary,
+                 "input_inventory_digest": _inventory_digest(primary)}
+    migration["review_candidates"] = _fixed_review_candidates(target, migration)
+    return migration
+
+
+def _fixed_review_candidates(target: Path, migration: dict) -> list[tuple[dict, list[Path]]]:
+    from factory_lib import validate_review_document
+    grouped: dict[tuple[str, str], list[dict]] = {}
+    for entry in migration["entries"]:
+        if entry["family"] != "fixed-review-lens":
+            continue
+        parts = Path(entry["path"]).parts
+        story, task = parts[2], parts[4]
+        grouped.setdefault((story, task), []).append(entry)
+    candidates = []
+    for (story, task), entries in sorted(grouped.items()):
+        marker = target / ".factory" / "stories" / story / "tasks" / task / "pr-ready.json"
+        if not marker.is_file() or marker.is_symlink():
+            continue  # active old proof is intentionally retired and reviewed fresh
+        marker_data = load_json(marker, default={})
+        sealed = marker_data.get("commit")
+        if not isinstance(sealed, str) or not sealed:
+            fail(f"sealed fixed review {story}/{task} has no exact marker commit")
+        by_lens = {Path(entry["path"]).stem: entry for entry in entries}
+        if set(by_lens) != set(LEAN_LENSES):
+            fail(f"sealed fixed review {story}/{task} is partial")
+        lenses = {
+            lens: load_json(target / by_lens[lens]["path"], default={})
+            for lens in LEAN_LENSES
+        }
+        deltas = {value.get("branch_diff_digest") for value in lenses.values()
+                  if isinstance(value, dict)}
+        if len(deltas) != 1 or not next(iter(deltas), ""):
+            fail(f"sealed fixed review {story}/{task} has conflicting delta identity")
+        candidate = {
+            "format": "forge-review-generation/v1", "origin": "upgrade",
+            "generated_by": "upgrade", "story": story, "task_id": task,
+            "inspected_commit": sealed, "delta_id": next(iter(deltas)),
+            "lenses": lenses, "recorded_at": __import__("datetime").datetime.now(
+                __import__("datetime").timezone.utc).isoformat(),
+            "upgrade": {
+                "inventory_digest": migration["input_inventory_digest"],
+                "source_kind": "sealed", "sealed_commit": sealed,
+                "legacy_artifacts": [
+                    {"aspect": lens, "path": by_lens[lens]["path"],
+                     "sha256": by_lens[lens]["sha256"]}
+                    for lens in LEAN_LENSES
+                ],
+            },
+        }
+        validate_review_document(target, candidate, allow_missing_generation_id=True)
+        candidates.append((candidate, [target / entry["path"] for entry in entries]))
+    return candidates
+
+
+def apply_lean_migration(target: Path, migration: dict | None) -> None:
+    if migration is None:
+        return
+    from factory_lib import (
+        dump_json, now_iso, publish_review_generation, review_generation_bytes,
+        review_generation_id, validate_payload, validate_review_document,
+    )
+    review_candidates = migration.get("review_candidates") or []
+    runtime_paths = [
+        target / "factory" / "scripts" / "forge_cli" / "approval.py",
+        target / "factory" / "scripts" / "post_tool_use.py",
+        target / ".codex" / "config.toml",
+        target / ".codex" / "hooks.json",
+        target / ".claude" / "settings.json",
+    ]
+    runtime = [{"path": path.relative_to(target).as_posix(),
+                "sha256": hashlib.sha256(path.read_bytes()).hexdigest()}
+               for path in runtime_paths if path.is_file() and not path.is_symlink()]
+    # Build every durable output away from the target first. Publication starts
+    # only after schema validation and byte readback of the whole build.
+    with tempfile.TemporaryDirectory(prefix="forge-lean-build-") as temporary:
+        build = Path(temporary)
+        built_generations: list[tuple[dict, str, str]] = []
+        outputs: list[dict[str, str]] = []
+        for index, (candidate, _paths) in enumerate(review_candidates):
+            validate_review_document(target, candidate, allow_missing_generation_id=True)
+            generation = dict(candidate)
+            generation["generation_id"] = review_generation_id(generation)
+            validate_review_document(target, generation)
+            body = review_generation_bytes(generation)
+            path = build / "reviews" / f"{index}-{generation['generation_id']}.json"
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_bytes(body)
+            if path.read_bytes() != body:
+                fail("Lean migration temporary review readback differs")
+            validate_review_document(target, json.loads(path.read_text(encoding="utf-8")))
+            digest = hashlib.sha256(body).hexdigest()
+            built_generations.append((candidate, generation["generation_id"], digest))
+            outputs.append({
+                "generation_id": generation["generation_id"],
+                "generation_sha256": digest,
+            })
+
+        manifest = {
+            "generated_by": "upgrade", "version": LEAN_MIGRATION_VERSION,
+            "input_inventory_digest": migration["input_inventory_digest"],
+            "output_digest": hashlib.sha256(json.dumps(
+                outputs, sort_keys=True, separators=(",", ":")).encode()).hexdigest(),
+            "installed_runtime_digest": _inventory_digest(runtime),
+            "entries": migration["entries"], "recorded_at": now_iso(),
+        }
+        validate_payload(target, "lean-workflow-migration", manifest)
+        built_manifest = build / f"{LEAN_MIGRATION_VERSION}.json"
+        dump_json(built_manifest, manifest)
+        if load_json(built_manifest, default={}) != manifest:
+            fail("Lean migration temporary manifest readback differs")
+
+        for candidate, expected_id, expected_sha in built_generations:
+            generation, selection = publish_review_generation(
+                target, candidate["story"], candidate["task_id"], candidate,
+            )
+            if (generation["generation_id"] != expected_id
+                    or selection["generation_sha256"] != expected_sha):
+                fail("Lean migration published review differs from temporary build")
+
+    destination = target / ".factory" / "migrations" / f"{LEAN_MIGRATION_VERSION}.json"
+    if destination.exists():
+        existing = load_json(destination, default={})
+        comparable = {key: value for key, value in existing.items()
+                      if key not in {"recorded_at", "completed_at"}}
+        expected = {key: value for key, value in manifest.items() if key != "recorded_at"}
+        if comparable != expected:
+            fail("Lean migration manifest retry differs from the durable original")
+    else:
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        dump_json(destination, manifest)
+        if load_json(destination, default={}) != manifest:
+            fail("Lean migration manifest readback differs")
+
+    # Durable selected outputs and manifest now exist. Retire exactly the
+    # inventoried bytes, refusing identity drift instead of deleting by name.
+    for entry in migration["entries"]:
+        path = target / entry["path"]
+        if not path.exists():
+            continue
+        if entry["family"] == "old-hook-flag":
+            if path.is_symlink() or not path.is_file() \
+                    or "hooks = true" not in path.read_text(encoding="utf-8") \
+                    or "codex_hooks = true" in path.read_text(encoding="utf-8"):
+                fail("Lean migration did not install the current Codex hook flag")
+            continue
+        if path.is_symlink() or not path.is_file() \
+                or hashlib.sha256(path.read_bytes()).hexdigest() != entry["sha256"]:
+            fail(f"Lean migration input changed before deletion: {entry['path']}")
+        if entry["family"] == "legacy-stage-stamp":
+            data = load_json(path, default={})
+            records = data.get("stages") if isinstance(data.get("stages"), list) else [data]
+            for record in records:
+                if isinstance(record, dict):
+                    stamp = record.get("local_review_stamp")
+                    if isinstance(stamp, dict) and "reviewed_meaning" not in stamp:
+                        record.pop("local_review_stamp", None)
+            dump_json(path, data)
+        else:
+            path.unlink()
+
+    completed = load_json(destination, default={})
+    if not completed.get("completed_at"):
+        completed["completed_at"] = now_iso()
+        validate_payload(target, "lean-workflow-migration", completed)
+        dump_json(destination, completed)
+        if load_json(destination, default={}) != completed:
+            fail("Lean migration completion readback differs")
+
+
+def _retired_forge_profiles(target: Path) -> tuple[list[Path], list[Path]]:
+    """Classify old same-name rows without treating a client edit as ours."""
+    removable: list[Path] = []
+    preserved: list[Path] = []
+    root = target / ".codex" / "agents"
+    for name, expected in RETIRED_FORGE_PROFILE_HASHES.items():
+        path = root / name
+        if not path.exists() and not path.is_symlink():
+            continue
+        if path.is_symlink() or not path.is_file():
+            preserved.append(path)
+            continue
+        actual = hashlib.sha256(path.read_bytes()).hexdigest()
+        (removable if actual == expected else preserved).append(path)
+    return removable, preserved
 # Project-owned: never touched — listed here as the explicit contract.
 # .github/workflows/ is project-owned EXCEPT the harness's own COPY_WORKFLOWS,
 # which are refreshed file-by-file below — the rest of the tree (deployment,
@@ -429,11 +818,13 @@ def cmd_upgrade(args: argparse.Namespace) -> None:
         ["git", "status", "--porcelain"], cwd=target, capture_output=True,
         text=True, encoding="utf-8", errors="surrogateescape",
     ).stdout.strip()
-    if dirty and not args.force:
+    if dirty:
         fail(
             f"{target} has uncommitted changes. Commit or stash first so the upgrade "
-            "is a reviewable diff (--force to override)."
+            "is a reviewable diff. Lean migration has no --force bypass."
         )
+    _retired_profiles, preserved_profiles = _retired_forge_profiles(target)
+    lean_migration = preflight_lean_migration(target)
     _check_legacy_retirable(target, harness)
 
     # factory/skills is mixed ownership too: the `skills` CLI installs
@@ -560,6 +951,8 @@ def cmd_upgrade(args: argparse.Namespace) -> None:
             )
     shutil.rmtree(
         assert_target_destination(keep_root, keep_root), ignore_errors=True)
+
+    apply_lean_migration(target, lean_migration)
 
     retired_legacy = _retire_legacy_agents(target)
 
@@ -738,14 +1131,16 @@ def cmd_upgrade(args: argparse.Namespace) -> None:
     # dirty-target gate held. --force bypasses that gate, so uncommitted edits
     # and untracked files are outside what was searched — say so rather than
     # printing a definitive answer the scan cannot support.
-    caveat = " (index only — --force skipped the clean-tree check, so uncommitted " \
-             "and untracked files were not searched)" if args.force else ""
+    caveat = ""
     if stale_references:
         print(f"Project-owned files still referencing .agents/{caveat}:")
         for rel in stale_references:
             print(f"  {rel}")
     else:
         print(f"Project-owned files still referencing .agents/: none{caveat}")
+    if preserved_profiles:
+        print("Preserved client-modified retired profile names: "
+              + ", ".join(path.name for path in preserved_profiles))
     print("Next: review with `git diff`, run `python3 factory/scripts/check_dual_runtime.py` "
           "and the gate tests, then commit.")
     from .scaffold import remediate_windows_hook_entry

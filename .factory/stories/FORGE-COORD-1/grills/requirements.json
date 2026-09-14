@@ -2,14 +2,20 @@
   "generated_by": "griller",
   "gate": "requirements",
   "verdict": "pass",
-  "issue": "FORGE-COORD-1",
-  "summary": "The current cold reader rechecked the confirmed requirements while diagnosing the closeout continuation. The product tree moved only through the approved integrated implementation and its focused corrections; the confirmed capability boundary is unchanged and the fixture repair adds no behavior.",
-  "gaps": [],
+  "gaps": [
+    "The confirmed context snapshot requirement names POSIX 0700/0600 modes but does not define the equivalent native Windows confidentiality mechanism.",
+    "The confirmed migration requirement calls for an independent second walk without defining a structurally independent enumerator that can detect classifier omissions.",
+    "The confirmed preservation wording does not distinguish project-owned settings and modified profiles from hash-matching Forge-owned inputs, and does not say whether --force can bypass the clean-target migration boundary."
+  ],
   "contradictions": [],
-  "resolutions": [],
+  "resolutions": [
+    "The amended recovery plan defines one portable current-user-only access invariant, POSIX owner/mode/link checks, and an inheritance-disabled native Windows DACL limited to the current user SID with owner/DACL readback before launch and stale cleanup; every unverifiable or broader ACL refuses unchanged.",
+    "The amended recovery plan separates per-family discovery/classification from a no-follow raw directory-entry walk over fixed legacy roots and exact parents; the raw walker cannot call the classifiers and complete one-to-one count/classification/digest coverage is rechecked under the same exclusion before any write or pointer commit.",
+    "The amended recovery plan makes clean target state mandatory even with --force, preserves dirt through zero-write refusal, preserves project-owned settings plus client-added and client-modified profiles, and permits replacement/deletion only for byte/hash-matching known Forge-owned installed files; unknown or mixed same-name rows are explicitly preserved or invalid."
+  ],
   "open_items": [],
-  "questions_asked": 1,
-  "frontier_empty": true,
+  "summary": "One fresh requirements cold read ran because the confirmed-spec grounding digest changed after First merged. Its three implementation gaps are resolved in the amended story and Lean task plans without changing the frozen confirmed spec during bootstrap; admitted Lean implementation will update the spec and architecture before shipping.",
+  "questions_asked": 0,
   "rounds": [
     {
       "question": "Dual-coordinator review migration: should Forge remove ongoing fixed-path review compatibility and use one Portable-owned upgrade migration into canonical task-scoped selected review sets?",
@@ -21,19 +27,22 @@
       "frontier_empty": true
     }
   ],
-  "inspected_refs": [
-    "docs/specs/dual-coordinator-parity.md",
-    "docs/architecture/dual-coordinator-parity.md",
-    "docs/product/BRIEF.md",
-    "plans/active/FORGE-COORD-1-either-claude-or-codex-coordinates-the-same-forge-workflow.md",
-    ".factory/stories/FORGE-COORD-1/decomposition.json",
-    ".factory/stories/FORGE-COORD-1/task-plans/NATIVE-FOREGROUND-ACTIVATE.md",
-    "factory/tests/test_board_load_time.py",
-    "factory/tests/test_gates.py"
+  "citations": [
+    {
+      "finding": "The confirmed context snapshot requirement names POSIX 0700/0600 modes but does not define the equivalent native Windows confidentiality mechanism.",
+      "source": "requirements cold read session 01a09dde-30ac-7470-9e9f-98522917517f; docs/specs/dual-coordinator-parity.md:76,106; amended story plan context security contract; amended Lean JIT plan Windows DACL proof"
+    },
+    {
+      "finding": "The confirmed migration requirement calls for an independent second walk without defining a structurally independent enumerator that can detect classifier omissions.",
+      "source": "requirements cold read session 01a09dde-30ac-7470-9e9f-98522917517f; docs/specs/dual-coordinator-parity.md:88; amended story and Lean migration coverage contracts"
+    },
+    {
+      "finding": "The confirmed preservation wording does not distinguish project-owned settings and modified profiles from hash-matching Forge-owned inputs, and does not say whether --force can bypass the clean-target migration boundary.",
+      "source": "requirements cold read session 01a09dde-30ac-7470-9e9f-98522917517f; docs/specs/dual-coordinator-parity.md:119; factory/scripts/forge_cli/upgrade.py:428,509; amended recovery preservation contract"
+    }
   ],
-  "current_flow": "Keep the confirmed capability unchanged, correct only story-plan approval and measured-history wording, rebind the unchanged eight-task graph, and repair the two stale fixtures plus AGENTS.md line hygiene before resuming close.",
-  "citations": [],
-  "input_sha256": "2731481c616ce7c5c5a416c50dc56b0c4f9d71af4edd0208509c4ec38b736435",
-  "recorded_at": "2026-09-13T17:36:06+00:00",
-  "commit": "c9a85e9722983787797edd82556e713986948c20"
+  "issue": "FORGE-COORD-1",
+  "input_sha256": "73b80b980bf1d8654af7b1fef4f31b6ead86f29eae38ac5dfdc3cda14d187def",
+  "recorded_at": "2026-09-14T03:50:54+00:00",
+  "commit": "6ae2dea1b7417fff4c9c3fc3552488a8378aacd4"
 }

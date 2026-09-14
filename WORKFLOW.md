@@ -550,13 +550,16 @@ visibility of what it does versus what it delegates, and only genuine
 human-only acts (decisions, sign-off) or unresolvable gate refusals pause it.
 
 ## Task Planning
-Per-task planning runs in Claude Code plan mode — enforced, not advisory
-(decision 0048): the task plan is authored in plan mode (the PostToolUse
-hook records its plan-mode marker), then the task grill delivers its rounds
-through AskUserQuestion until `frontier_empty`, then a human approves
-(`forge task approve --by`), then `stage start`, then `delegate`. A task
-plan without a marker, or a grill whose rounds are not in the ledger, is
-refused by the recorders. (Exploration
+Story and task plans use the coordinator's native Plan Mode. Each plan gets
+one independent cold read at Sol/high. The cold proof binds the exact input it
+read; `finding_dispositions` maps every finding, and `amendments` explains every
+change between that input and the final artifact. The exact final plan is then
+shown in Plan Mode. A successful Claude `ExitPlanMode`, or Codex's exact
+synchronous `Approve plan / Request changes / Stop` question, records the human
+approval against the final digest through the shared recorder. There is no
+requirements grill, compulsory human round, `frontier_empty` question, manual
+`plan approve` / `task approve` command, board approval, or second unchanged
+save in the normal flow. (Exploration
 delegated to Codex: `/codex:rescue --model gpt-5.6-sol --effort low` —
 read-only by default, never Claude Code itself, never raw `codex exec`; plan
 validation and architecture work use `--model gpt-5.6-sol --effort high`,
@@ -565,8 +568,8 @@ devs may instead use the
 `planner-high` Codex agent — the contract is identical either way. The plan follows
 `factory/prompts/planner.md`, including the mandatory **Decisions** section: every choice not derivable from BRIEF,
 architecture, or existing records becomes a `docs/decisions/` record
-(`forge.py decision new`) before decomposition is recorded. Approval means the
-plan is in-repo — `forge.py plan save --from <plan-file>` writes
+(`forge.py decision new`) before decomposition is recorded. `forge.py plan
+save --from <plan-file>` writes the exact awaiting-approval plan to
 `plans/active/<issue>-<slug>.md`. The draft frontmatter lists every ID from
 `forge decision list --active`, and `--story <key>` binds it to the roadmap;
 open contradiction signals or incomplete decision coverage refuse the save.
@@ -587,14 +590,13 @@ to the dev, not an assumption.
 
 ## Artifacts
 Required run artifacts:
-- `.factory/run.json`
+- `.factory/stories/<key>/run.json`
 - `plans/active/<issue>-<slug>.md` (the approved plan)
-- `.factory/decomposition.json`
-- `.factory/verify.json`
-- `.factory/tests.json`
-- `.factory/reviews/quality.json`
-- `.factory/reviews/performance.json`
-- `.factory/reviews/security.json`
+- `.factory/stories/<key>/decomposition.json`
+- `.factory/stories/<key>/tasks/<id>/verify.json`
+- `.factory/stories/<key>/tasks/<id>/tests.json`
+- `.factory/stories/<key>/tasks/<id>/reviews/selected.json`
+- `.factory/stories/<key>/tasks/<id>/reviews/generations/<sha256>.json`
 
 Every evidence artifact is stamped with the commit it was recorded at.
 `pr_ready.py` refuses unstamped artifacts, artifacts spanning different
@@ -611,13 +613,18 @@ durable record of what was decided and what was built.
 3. confirm every spec, then derive the roadmap from the specs
 4. record client sign-off
 5. plan one roadmap story and record its ordered task list
-6. for each leaf task: author its contract, re-record the decomposition, pass
-   the `task` grill, save and approve its per-task plan artifact, start the
-   stage, then delegate it; the implementer writes, runs, and records the tests
-7. after all stages are done, run ONE branch autoreview pass (three lenses)
-   and record the three review artifacts
-8. run `python3 factory/scripts/verify.py`
-9. run `functional-checker` when the decomposition has `user_facing: true`
+6. for each leaf task: author its complete contract, re-record the
+   decomposition, run one independent cold task grill, record every finding's
+   disposition and amendment, obtain native approval of the final task-plan
+   digest, start the stage, then delegate it; `delegate --scope` may repeat to
+   select a proper subset of the approved effective scope, while omission uses
+   the full scope
+7. after implementation, run the task's tests and deterministic verify; reuse
+   a successful receipt only when that proof type's content-bound identity is
+   unchanged
+8. run ONE three-lens review for the task; reuse selected proof only while its
+   stamp-token delta and complete reviewed-meaning identity are unchanged
+9. run `functional-checker` when the task has `user_facing: true`
 10. record the shipped outcome with `./forge outcome set "<what changed>"`
 11. run `python3 factory/scripts/pr_ready.py`
 

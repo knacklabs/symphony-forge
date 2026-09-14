@@ -24,7 +24,7 @@
     ],
     "PreToolUse": [
       {
-        "matcher": "Bash|Edit|Write|apply_patch|request_user_input|request_user_input_async",
+        "matcher": "Bash|apply_patch|request_user_input",
         "hooks": [
           {
             "type": "command",

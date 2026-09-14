@@ -20,12 +20,12 @@ The committed configurations are the normative current tool inventory:
 |---|---|---|
 | Claude | `SessionStart` | `startup|resume|clear|compact` |
 | Claude | `PreCompact` | the host pre-compact event |
-| Claude | `PreToolUse` | `Bash|AskUserQuestion` and `Edit|Write|MultiEdit|NotebookEdit` |
-| Claude | `PostToolUse` | completed `AskUserQuestion` plus diagnostic write capture |
+| Claude | `PreToolUse` | `Bash|Edit|Write|MultiEdit|NotebookEdit|AskUserQuestion` |
+| Claude | `PostToolUse` | completed `AskUserQuestion|ExitPlanMode` |
 | Claude | `Stop` | the host stop event |
 | Codex | `SessionStart` | `startup|resume|clear|compact` |
 | Codex | `PreCompact` | the host pre-compact event |
-| Codex | `PreToolUse` | `Bash|Edit|Write|apply_patch|request_user_input|request_user_input_async` |
+| Codex | `PreToolUse` | `Bash|apply_patch|request_user_input` |
 | Codex | `PostToolUse` | completed synchronous `request_user_input` |
 | Codex | `Stop` | the host stop event |
 
@@ -33,15 +33,17 @@ An asynchronous question call is guarded at issuance but is not completion evide
 
 Unexpected lifecycle exceptions reach one top-level boundary, return nonzero with a stable sanitized `errorId`, write one structured error containing that ID and the launch's distinct `correlationId`, and increment `forge_native_unexpected_errors_total` once with bounded labels. `correlationId` is the workflow trace key; `errorId` joins the terminal failure to its one structured error. Decision 0060's narrow POSIX signal-mask restoration stays in the existing launch path.
 
-## Human-question identity
+## Native approval and human-question identity
 
-A successful structured-question hook writes one immutable event. The filename's fresh lowercase 32-hex stem is its event ID; a zero-based index identifies each question in the call. Eligibility binds runtime, session, event ID, question index, exact story/gate/task scope, current input digest, requiredness, question, ordered options, and nonblank answer. The call is atomic for authority: every question returns one nonblank answer or no answer from that call is eligible. Labels and nonblank free-form answers are preserved exactly. One pass claims a question once; Decision 0073 permits reuse only when re-recording the same gate, story, and task. Historical rounds keep their old contract.
+Story and task plans receive one independent cold read. The launch binds the exact cold input; an ordered one-to-one disposition maps every finding to its resolution and source, and explained amendments bridge that input to the final artifact. Native human approval then binds the final semantic digest. The cold reader is never described as having reviewed amended bytes. Requirements-only grills, human-round floors, synthetic `frontier_empty` questions, manual approval commands, board approval, and the second unchanged save are retired from normal runtime.
 
-Question reuse requires the same gate, story, task, and input digest. If an answer changes an approval-bound artifact, the earlier round remains audit context but cannot authorize the changed bytes. The owning decision or approval independently binds the final revision, and the final grill uses a fresh eligible round or Shared's independently ledgered empty-frontier route. No revision-mapping protocol or chat collector is added.
+Both approval adapters call one recorder. It derives exactly one eligible current-frontier story or task candidate. Claude accepts only a successful `ExitPlanMode`; Codex accepts only the exact completed synchronous `Approve plan / Request changes / Stop` question with `Approve plan` selected. Runtime, stable session and event identity, plan kind, story, task, and current digest are required and replay-protected. Zero or multiple candidates, replay, missing identity, stale digest, cancellation, wrong runtime, asynchronous acknowledgement, optional clarification, or any unsupported payload refuses. Attribution is only `human-via-Claude` or `human-via-Codex` plus the bound identities.
+
+Broader structured questions remain a successor concern. A successful structured-question hook may still write an immutable diagnostic event, but those old round records no longer authorize plan or task approval and normal runtime never consumes them as a compulsory grill floor.
 
 Shared extends the existing signal family with an orchestrator-produced `required-question` blocked signal bound to the story and sorted affected tasks/artifacts. Closing it requires a validated owning decision or approval record path and SHA256. Existing worker signals keep their present producer contract. Before Shared ships, ordinary required questions remain in the current host conversation and no cross-session recovery is claimed.
 
-An optional grill context file is captured into a randomized regular single-link `0600` snapshot beneath a dedicated per-user `0700` transient directory. The griller launches only that immutable snapshot and deletes it after terminal publication. Durable lifecycle rows and evidence record only whether context was supplied, its byte count, and a random opaque context ID; they never record source path, content digest, or supplemental bytes. Recovery deletes a stale snapshot only when ownership, type, link count, mode, directory boundary, and launch/context filename identity all match; an unknown or mismatched transient refuses unchanged.
+An optional grill context file is captured through one open handle into a randomized regular single-link `0600` snapshot beneath a dedicated same-user `0700` transient directory. Native Windows applies and verifies an owner-only protected DACL, rejects extra access entries, and reopens the exact file identity before launch. The griller launches only that immutable snapshot and deletes it after terminal publication. Durable lifecycle rows and evidence record only whether context was supplied, its byte count, and a random opaque context ID; they never record source path, content digest, or supplemental bytes. Recovery deletes a stale snapshot only when ownership, type, link count, mode or DACL, directory boundary, and launch/context filename identity all match; an unknown or mismatched transient refuses unchanged.
 
 ## Review publication
 
@@ -65,9 +67,13 @@ One classifier in `factory_lib.py` supplies review scope plus current and histor
 
 Pre-seal readers resolve the current pointer. Normal sealed readers resolve the pointer at the task marker commit. A citation-based rejection reads a selected combined or rejection generation and writes an immutable `origin=rejection` successor bound to its immediate source and combined root; it preserves exact raw output, prior history, and unaffected lenses, then appends the exact finding, reason, citation, actor, and durable lesson identity. Upgrade, fixed-only, unselected, copied, stale, incomplete-source, unrelated, no-match, ambiguous, and already-rejected sources refuse without changing selection.
 
-## One-time upgrade migration
+## One-time Lean upgrade migration
 
-Upgrade performs one fresh walk of both fixed-review roots before any target write and represents every discovered candidate path exactly once in a sorted coverage manifest as eligible, excluded, or invalid. Eligible rows are marker-bound sealed three-lens sets and become the migration inventory. Active or otherwise unshipped, incomplete-but-well-formed, multiply-bound, and unidentified rows are excluded with reasons; active work receives a fresh ordinary combined review. Malformed, linked, colliding, replaced, or ambiguous rows are invalid and block the whole migration. A second independent walk must reproduce the full candidate count, classifications, and digest, so a classifier omission cannot disappear from both sides. Zero eligible rows pass when the universe is empty or every row is explicitly excluded. Sealed proof binds the original marker commit and exact fixed-artifact bytes. Only after complete coverage and the eligible inventory pass may upgrade write and read back `origin=upgrade` generations and their pointers.
+Lean upgrade requires a clean target before any write, and `--force` cannot bypass that refusal. Its primary per-family classifier inventories requirements and plan grills, grill-round ledgers, embedded task approvals, story approval and plan-mode markers, fixed review lenses, legacy stage stamps, the old hook flag, and the known fifteen-profile installation state. A separate raw no-follow directory-entry walk over fixed legacy roots and exact parents emits normalized path/type/identity without calling those discoverers. Every raw candidate must classify exactly once, and both universes must match count, classification, and digest before publication.
+
+Current outputs are built and validated in a temporary area, published, read back, and recorded in `.factory/migrations/lean-workflow-v2.json` before exact old bytes are removed. Project-owned settings, client-added profiles, and client-modified same-name profiles are preserved; only byte/hash-matching Forge-owned retired files are removed or replaced. Unknown, mixed, linked, malformed, partial, conflicting, or hash-mismatched state refuses. Byte-identical retry succeeds; unequal partial retry refuses.
+
+For fixed review proof, eligible rows are marker-bound sealed three-lens sets. Active or otherwise unshipped, incomplete-but-well-formed, multiply-bound, and unidentified rows are excluded with reasons and active work receives a fresh ordinary combined review. Malformed, linked, colliding, replaced, or ambiguous rows block migration. Sealed proof binds the original marker commit and exact fixed-artifact bytes. Only after complete coverage may upgrade write and read back `origin=upgrade` generations and their pointers.
 
 For already sealed legacy tasks, the current migration pointer is valid only when its generation's sealed-commit binding exactly equals the immutable marker. A replacement, mismatch, malformed set, mixed state, collision, linked path, or ambiguous owner refuses. Byte-identical retry is idempotent. Runtime readers never fall back to fixed paths.
 
@@ -75,4 +81,4 @@ The first event bundle for a shipped story is immutable. A later eligible event 
 
 ## Successor ownership
 
-`NATIVE-LIFECYCLE` owns detached read-only helpers, lifecycle recovery, cancellation, correlated errors, metrics, and signal behavior. `SHARED-COORDINATOR-JOURNEY` owns question identity, workspace-first task ownership, board state, and between-task coordinator changes. `PORTABLE-DELIVERY-MIGRATION` owns setup delivery, review migration, event retention, and client rollout support. Each successor updates this architecture before changing an enduring boundary.
+`NATIVE-LIFECYCLE` owns detached read-only helpers, lifecycle recovery, cancellation, correlated errors, metrics, and signal behavior. `SHARED-COORDINATOR-JOURNEY` owns broader question identity, workspace-first task ownership, board state, and between-task coordinator changes. `PORTABLE-DELIVERY-MIGRATION` owns the remaining legacy layout families, setup delivery, event retention, and client rollout support; it preserves Lean's three-profile registry and does not reintroduce retired profiles or fixed-review fallback. Each successor updates this architecture before changing an enduring boundary.

@@ -26,6 +26,7 @@ import time
 import types
 import urllib.error
 import urllib.request
+import uuid
 from datetime import datetime
 from pathlib import Path
 
@@ -310,31 +311,29 @@ def record_grill(repo: Path, gate: str, verdict: str = "pass",
                  digest_of: Path | None = None, *,
                  seed_requirements: bool = True,
                  plan_mode: bool = True, **over) -> tuple[int, str]:
-    if gate == "plan" and seed_requirements:
-        code, out = record_grill(repo, "requirements")
-        if code != 0:
-            return code, out
-    # A ninth copy of the floors lived here and drifted with the rest. The
-    # suite now reads the same table the harness does, so a floor change is
-    # exercised rather than silently bypassed.
-    floor = GATES[gate].min_rounds if gate in GATES else 0
-    rounds = over.get("rounds")
-    if floor and rounds is None:
-        rounds = grill_rounds(gate, floor)
-        over["rounds"] = rounds
-    if rounds is not None:
-        code, out = log_grill_rounds(repo, rounds)
-        if code != 0:
-            return code, out
     payload = {"generated_by": "griller", "gate": gate, "verdict": verdict,
-               "gaps": [], "contradictions": [], "resolutions": [], **over}
+               "gaps": [], "contradictions": [], "resolutions": [],
+               "finding_dispositions": [], **over}
+    if verdict == "blocked":
+        payload["escalation_packet"] = {
+            "issue": "The artifact cannot proceed as written.",
+            "evidence": "The cold read found a blocking gap.",
+            "recommendation": "Revise the artifact before approval.",
+            "alternatives": "Narrow the scope or resolve the gap.",
+            "rollback": "Keep the workflow at the current gate.",
+        }
+        findings = [*payload["gaps"], *payload["contradictions"]]
+        payload["finding_dispositions"] = [{
+            "finding": finding,
+            "resolution": f"Resolve before leaving the {gate} gate.",
+            "source": "factory/prompts/griller.md",
+        } for finding in findings]
+    label, artifact = GATES[gate].locate(
+        repo, "", str(digest_of) if digest_of else "")
+    _seed_cold_launch(repo, gate, hashlib.sha256(artifact.encode()).hexdigest())
     extra = ["--input-digest", str(digest_of)] if digest_of else []
     result = run(repo, "record_grill_from_json.py", "--gate", gate, *extra,
                  stdin=json.dumps(payload))
-    if result[0] == 0 and gate == "plan" and digest_of and plan_mode:
-        marker = post_hook(repo, plan_hook_payload(digest_of))
-        if marker[0] != 0:
-            return marker
     return result
 
 
@@ -348,8 +347,7 @@ def task_grill_payload(task: dict, verdict: str = "pass", **over) -> dict:
                    for criterion in task["acceptance_criteria"]
                },
                "decision": "keep" if verdict == "pass" else "block",
-               "new_abstractions": [], "rounds": grill_rounds("task", 1),
-               "citations": []}
+               "new_abstractions": [], "finding_dispositions": []}
     if verdict == "blocked":
         payload["escalation_packet"] = {
             "issue": "The task cannot proceed as written.",
@@ -382,8 +380,6 @@ def seed_task_grill_frontier(repo: Path, task: dict) -> None:
     task_plan = repo / ".factory" / "task-plans" / f"{task['id']}.md"
     task_plan.parent.mkdir(parents=True, exist_ok=True)
     task_plan.write_text(f"# Task plan — {task['id']}\n")
-    code, out = log_grill_rounds(repo, grill_rounds("task", 1))
-    assert code == 0, out
 
 
 def record_task_grill(repo: Path, task: dict, verdict: str = "pass",
@@ -401,25 +397,39 @@ def record_task_grill(repo: Path, task: dict, verdict: str = "pass",
     if code != 0:
         return code, plan_out
     payload = task_grill_payload(task, verdict)
-    code, round_out = log_grill_rounds(repo, payload["rounds"])
-    if code != 0:
-        return code, plan_out + round_out
+    saved_plan = story_state(repo) / "task-plans" / f"{task['id']}.md"
+    _seed_cold_launch(
+        repo, "task", hashlib.sha256(saved_plan.read_bytes()).hexdigest(), task["id"])
     code, out = run(
         repo, "record_grill_from_json.py", "--gate", "task",
         "--task", task["id"], stdin=json.dumps(payload),
     )
     if code != 0 or verdict != "pass" or not approve:
         return code, plan_out + out
-    # The human opens the plan on the board before approving it. That step was
-    # guidance only and is now a gate, so the helper that models the normal
-    # flow has to include it — every caller of this helper is a test whose
-    # subject is something else, and none of them should have to know about
-    # the board to get a task approved.
-    view_plan_on_board(repo, task["id"])
-    code, approve_out = run(
-        repo, "forge.py", "task", "approve", task["id"], "--by", "Test Human",
-    )
+    code, approve_out = post_hook(repo, native_claude_approval())
     return code, out + plan_out + approve_out
+
+
+def _seed_cold_launch(repo: Path, gate: str, digest: str, task_id: str = "") -> None:
+    from forge_cli.delegate import delegations_path
+    label = f"grill-{gate}" + (f"-{task_id}" if task_id else "")
+    path = delegations_path(repo)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    rows = []
+    if path.is_file():
+        rows = [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines()
+                if line.strip()]
+    rows = [row for row in rows if row.get("task") != label]
+    rows.append({
+            "launch_id": f"launch-test-{uuid.uuid4().hex}",
+            "task": label,
+            "story": run_state(repo).get("issue_key", ""),
+            "at": datetime.now().astimezone().isoformat(),
+            "launch_status": "succeeded",
+            "task_sha256": digest,
+        })
+    path.write_text("".join(json.dumps(row) + "\n" for row in rows),
+                    encoding="utf-8")
 
 
 def view_plan_on_board(repo: Path, task_id: str, story: str = "") -> None:
@@ -431,34 +441,6 @@ def view_plan_on_board(repo: Path, task_id: str, story: str = "") -> None:
     if plan.is_file():
         lib.record_plan_view(
             repo, key, task_id, lib.plan_digest_without_assumptions(plan))
-
-
-def grill_rounds(gate: str, count: int) -> list[dict]:
-    rounds = [{
-        "question": f"{gate} provenance round {index + 1}?",
-        "options": ["Keep", "Revise"],
-        "chosen": "Keep",
-    } for index in range(count)]
-    rounds[-1]["frontier_empty"] = True
-    return rounds
-
-
-def log_grill_rounds(repo: Path, rounds: list[dict]) -> tuple[int, str]:
-    output = ""
-    for entry in rounds:
-        question = entry["question"]
-        code, out = post_hook(repo, {
-            "tool_name": "AskUserQuestion",
-            "tool_input": {"questions": [{
-                "question": question,
-                "options": [{"label": option} for option in entry["options"]],
-            }]},
-            "tool_response": {"answers": {question: entry["chosen"]}},
-        })
-        output += out
-        if code != 0:
-            return code, output
-    return 0, output
 
 
 def delegate_task_grill_test(test):
@@ -562,16 +544,18 @@ def save_plan(repo: Path, tmp_path: Path) -> tuple[int, str]:
     record_grill(repo, "plan", digest_of=plan)  # grill bound to THIS draft
     code, out = run(repo, "forge.py", "plan", "save", "--from", str(plan),
                     "--story", story)
-    if code == 0 or "awaiting-approval" not in out:
+    if code != 0 or "awaiting-approval" not in out:
         return code, out
-    active = next((repo / "plans" / "active").glob(f"{story}-*.md"))
-    # ONE grill record, made against the draft, still matches the saved copy:
-    # the digest is the plan BODY, so `saved:` in the frontmatter cannot
-    # invalidate it (the second record-after-save round is gone).
-    code, out = run(repo, "forge.py", "plan", "approve", "--by", "Gate Test Human")
-    assert code == 0, out
-    return run(repo, "forge.py", "plan", "save", "--from", str(active),
-               "--story", story)
+    return post_hook(repo, native_claude_approval())
+
+
+def native_claude_approval() -> dict:
+    return {
+        "tool_name": "ExitPlanMode",
+        "session_id": f"session-{uuid.uuid4().hex}",
+        "tool_use_id": f"event-{uuid.uuid4().hex}",
+        "tool_response": {"status": "success"},
+    }
 
 
 def save_plan_raw(repo: Path, tmp_path: Path) -> tuple[int, str]:
@@ -733,14 +717,17 @@ def write_task_proof(repo: Path, task_id: str = "T1", *,
             "END FORGE ASSESSMENT security", "overall_confidence": 0.9}
         raw = json.dumps({**provider, "provider_report": provider,
                           "review_status": "scoped-clean"}, sort_keys=True).encode()
+        helper = {"path": "/fixture/autoreview", "version": "fixture",
+                  "sha256": "a" * 64}
+        from forge_cli.stages import reviewed_meaning_identity, task_for
+        meaning = reviewed_meaning_identity(repo, stage, task_for(repo, task_id), helper)
         lib.publish_review_generation(repo, key, task_id, {
             "format": "forge-review-generation/v1", "origin": "combined",
             "generated_by": "autoreview", "story": key, "task_id": task_id,
             "review_run_id": review_run_id, "brief_sha256": brief_sha256,
             "inspected_commit": sha, "delta_id": delta_id,
-            "helper": {"path": "/fixture/autoreview", "version": "fixture",
-                       "sha256": "a" * 64},
-            "input": {"sha256": "c" * 64, "bytes": 1},
+            "helper": helper,
+            "input": {"sha256": meaning["identity"], "bytes": meaning["bytes"]},
             "raw_result": {"encoding": "base64", "sha256": hashlib.sha256(raw).hexdigest(),
                            "bytes": len(raw), "data": base64.b64encode(raw).decode("ascii")},
             "lenses": {
@@ -6195,64 +6182,6 @@ def test_next_tags_steps_with_roles(repo):
 
 # ------------------------------------------------------------ handover grills
 
-def _record_spec_rounds(repo: Path, rounds: list[dict]) -> tuple[int, str]:
-    spec = repo / "docs" / "specs" / "base.md"
-    spec.parent.mkdir(parents=True, exist_ok=True)
-    spec.write_text("# Base spec\n")
-    return run(
-        repo, "record_grill_from_json.py", "--gate", "spec",
-        "--input-digest", str(spec),
-        stdin=json.dumps({
-            "generated_by": "griller", "gate": "spec", "verdict": "pass",
-            "gaps": [], "contradictions": [], "resolutions": [],
-            "rounds": rounds,
-        }),
-    )
-
-
-def test_grill_refuses_round_not_in_ledger(repo):
-    rounds = grill_rounds("spec", 2)
-    code, out = log_grill_rounds(repo, rounds)
-    assert code == 0, out
-    rounds[0]["chosen"] = "Revise"
-    code, out = _record_spec_rounds(repo, rounds)
-    assert code != 0 and "does not match an AskUserQuestion ledger record" in out
-
-
-def test_grill_refuses_below_gate_floor(repo):
-    # The floor is read from the gate table rather than restated here, so a
-    # future floor change is EXERCISED by this test instead of silently
-    # bypassing it — restating it is how the suite's own copy drifted.
-    floor = GATES["spec"].min_rounds
-    rounds = grill_rounds("spec", floor)[:floor - 1]
-    if rounds:
-        code, out = log_grill_rounds(repo, rounds)
-        assert code == 0, out
-    code, out = _record_spec_rounds(repo, rounds)
-    assert code != 0 and f"at least {floor} logged round(s)" in out
-    # And the refusal must not read as "reach this number and you are done".
-    assert "not a target" in out
-
-
-def test_grill_refuses_missing_frontier_empty(repo):
-    rounds = grill_rounds("spec", 2)
-    rounds[-1].pop("frontier_empty")
-    code, out = log_grill_rounds(repo, rounds)
-    assert code == 0, out
-    code, out = _record_spec_rounds(repo, rounds)
-    assert code != 0 and "final round requires frontier_empty true" in out
-
-
-def test_grill_accepts_ledger_matched_rounds_happy_path(repo):
-    rounds = grill_rounds("spec", 2)
-    code, out = log_grill_rounds(repo, rounds)
-    assert code == 0, out
-    code, out = _record_spec_rounds(repo, rounds)
-    assert code == 0, out
-    code, out = _record_spec_rounds(repo, rounds)
-    assert code == 0, out  # byte-identical re-record may reuse its own rounds
-
-
 def test_task_grill_requires_saved_task_plan_with_tolerance(repo):
     task = STAGE_TASK
     seed_task_grill_frontier(repo, task)
@@ -6311,8 +6240,8 @@ def test_frontier_orders_task_plan_before_grill(repo, tmp_path):
     assert code == 0 and "Grill the saved T1 plan" in out
 
     payload = task_grill_payload(STAGE_TASK)
-    code, out = log_grill_rounds(repo, payload["rounds"])
-    assert code == 0, out
+    saved = story_state(repo) / "task-plans" / "T1.md"
+    _seed_cold_launch(repo, "task", hashlib.sha256(saved.read_bytes()).hexdigest(), "T1")
     code, out = run(
         repo, "record_grill_from_json.py", "--gate", "task", "--task", "T1",
         stdin=json.dumps(payload),
@@ -6470,7 +6399,7 @@ def test_task_digest_arg_is_removed_and_gates_rederive(repo):
     assert "--task-digest was removed" in out
 
 
-def test_task_grill_requires_proofs_and_rounds(repo):
+def test_task_grill_requires_proofs_and_complete_dispositions(repo):
     task = STAGE_TASK
     seed_task_grill_frontier(repo, task)
     command = ("record_grill_from_json.py", "--gate", "task", "--task", "T1")
@@ -6479,56 +6408,45 @@ def test_task_grill_requires_proofs_and_rounds(repo):
         return run(repo, *command, stdin=json.dumps(payload))
 
     complete = task_grill_payload(task)
+    plan = repo / ".factory/task-plans/T1.md"
+
+    def seed():
+        _seed_cold_launch(repo, "task", hashlib.sha256(plan.read_bytes()).hexdigest(), "T1")
+
     for field in ("inspected_refs", "current_flow", "criteria_map", "decision",
-                  "new_abstractions", "rounds", "citations"):
+                  "new_abstractions", "finding_dispositions"):
+        seed()
         code, out = record({key: value for key, value in complete.items() if key != field})
         assert code != 0 and field in out
 
+    seed()
     code, out = record({**complete, "inspected_refs": ["missing.py:symbol"]})
     assert code != 0 and "does not exist" in out
+    seed()
     code, out = record({**complete, "criteria_map": {}})
     assert code != 0 and "acceptance criterion" in out
+    seed()
     code, out = record({**complete, "decision": "split"})
     assert code != 0 and "requires decision 'keep'" in out
 
-    gap = "Should this task keep its current boundary?"
-    cited_gap = "Does the contract already dictate the test command?"
-    uncovered = {**complete, "verdict": "blocked", "decision": "split",
-                 "gaps": [gap], "resolutions": ["Operator decision recorded."]}
+    gap = "The task boundary lacks an explicit source."
+    uncovered = {**complete, "verdict": "blocked", "decision": "block",
+                 "gaps": [gap], "resolutions": ["The source was recorded."],
+                 "finding_dispositions": []}
+    seed()
     code, out = record(uncovered)
-    assert code != 0 and "lack a rounds entry or citation" in out
-    code, out = record({**uncovered, "rounds": [{
-        "question": gap, "options": ["Keep", "Split"], "chosen": "Elsewhere",
-    }]})
-    assert code != 0 and "chosen must be one of" in out
-    four_option_round = {
-        **uncovered,
-        "rounds": [{
-            "question": gap,
-            "options": ["Keep", "Split", "Block", "Revise"],
-            "chosen": "Revise",
-            "frontier_empty": True,
-        }],
-    }
-    code, out = log_grill_rounds(repo, four_option_round["rounds"])
-    assert code == 0, out
-    code, out = record(four_option_round)
-    assert code == 0, out
-    code, out = record({**uncovered, "citations": [{"finding": gap, "source": ""}]})
-    assert code != 0 and "named source document" in out
+    assert code != 0 and "map every cold-read finding exactly once" in out
 
     proved = {
-        **complete,
+        **uncovered,
         "inspected_refs": ["factory/scripts/record_grill_from_json.py:_validate_task_grill"],
-        "gaps": [gap, cited_gap],
-        "resolutions": ["The operator chose to keep the bounded task.",
-                        "The declared test command remains binding."],
-        "rounds": [{"question": gap, "options": ["Keep", "Split"],
-                    "chosen": "Keep", "frontier_empty": True}],
-        "citations": [{"finding": cited_gap, "source": "docs/QUALITY.md"}],
+        "finding_dispositions": [{
+            "finding": gap,
+            "resolution": "The source was recorded.",
+            "source": "docs/QUALITY.md",
+        }],
     }
-    code, out = log_grill_rounds(repo, proved["rounds"])
-    assert code == 0, out
+    seed()
     code, out = record(proved)
     assert code == 0, out
 
@@ -7096,56 +7014,6 @@ def plan_hook_payload(path: Path, *, tool="Write", mode="plan", session_id=None)
     return payload
 
 
-def test_post_tool_use_records_ask_user_question_round(repo):
-    root_payload = {
-        "tool_name": "AskUserQuestion",
-        "session_id": "session-root",
-        "tool_input": {"questions": [{
-            "question": "Start the grill?",
-            "options": [{"label": "Start"}],
-        }]},
-        "tool_response": {"answers": {"Start the grill?": "Start"}},
-    }
-    code, out = post_hook(repo, root_payload)
-    assert code == 0, out
-    assert len(list((repo / ".factory" / "grill-rounds").glob("*.json"))) == 1
-
-    code, out = intake(repo, "GRILL-1", "Grill provenance")
-    assert code == 0, out
-    payload = {
-        "tool_name": "AskUserQuestion",
-        "permission_mode": "default",
-        "session_id": "session-2",
-        "tool_input": {"questions": [{
-            "question": "Keep this boundary?",
-            "options": [
-                {"label": "Keep", "description": "Keep the task bounded."},
-                {"label": "Split", "description": "Split the task."},
-            ],
-        }]},
-        "tool_response": {
-            "answers": {"Keep this boundary?": "Keep"},
-            "notes": "private free text must not be persisted",
-        },
-    }
-
-    code, out = post_hook(repo, payload)
-    assert code == 0, out
-    records = list((story_state(repo, "GRILL-1") / "grill-rounds").glob("*.json"))
-    assert len(records) == 1
-    assert json.loads(records[0].read_text()) == {
-        "generated_by": "claude-code:plan-mode",
-        "questions": [{
-            "question": "Keep this boundary?",
-            "options": ["Keep", "Split"],
-            "chosen": "Keep",
-        }],
-        "at": json.loads(records[0].read_text())["at"],
-        "session_id": "session-2",
-    }
-    assert "private free text" not in records[0].read_text()
-
-
 def test_post_tool_use_is_fail_open(repo):
     code, out = run(repo, "post_tool_use.py", stdin="not json")
     assert code == 0 and out == ""
@@ -7156,13 +7024,6 @@ def test_post_tool_use_is_fail_open(repo):
     })
     assert code == 0 and out == ""
     assert not (repo / ".factory" / "grill-rounds").exists()
-
-    schema = repo / "factory" / "schemas" / "plan-mode-marker.json"
-    schema.write_text(json.dumps({"required": {"missing": "str"}}))
-    plan = repo / "plans" / "draft.md"
-    plan.write_text("# Draft\n")
-    code, out = post_hook(repo, plan_hook_payload(plan, session_id="session-3"))
-    assert code == 0 and out == ""
     assert not (repo / ".factory" / "plan-mode").exists()
 
 
@@ -7171,31 +7032,10 @@ def test_vendor_integrity_covers_post_tool_use(repo):
         (repo / "constitution" / "VENDOR_MANIFEST.json").read_text()
     )["files"]
     assert "factory/scripts/post_tool_use.py" in files
-    assert "factory/schemas/plan-mode-marker.json" in files
-    assert "factory/schemas/grill-round.json" in files
+    assert "factory/schemas/plan-mode-marker.json" not in files
+    assert "factory/schemas/grill-round.json" not in files
     code, out = run(repo, "check_vendor_integrity.py")
     assert code == 0 and "OK" in out, out
-
-
-def test_post_tool_use_round_without_response_records_chosen_null(repo):
-    payload = {
-        "tool_name": "AskUserQuestion",
-        "tool_input": {"questions": [{
-            "question": "Keep this boundary?",
-            "options": [{"label": "Keep"}, {"label": "Split"}],
-        }]},
-    }
-    records_dir = repo / ".factory" / "grill-rounds"
-    for response in (None, {"answers": {"Keep this boundary?": "free text"}}):
-        before = set(records_dir.glob("*.json"))
-        call = payload if response is None else {**payload, "tool_response": response}
-        code, out = post_hook(repo, call)
-        assert code == 0, out
-        added = set(records_dir.glob("*.json")) - before
-        assert len(added) == 1
-        record = json.loads(added.pop().read_text())
-        assert record["questions"][0]["chosen"] is None
-        assert record["session_id"] == ""
 
 
 def make_unmerged(repo: Path, rel: str = "src/conflict.ts") -> None:
@@ -8684,99 +8524,7 @@ def test_quickfix_profile_behavior_unchanged(repo):
 
 # ---------------------------------------------------------------- plan grill
 
-def test_plan_save_refuses_without_fresh_requirements_grill(repo, tmp_path):
-    sign_off(repo)
-    intake(repo)
-    plan = tmp_path / "requirements-plan.md"
-    plan.write_text(plan_draft(repo))
-    code, out = record_grill(
-        repo, "plan", digest_of=plan, seed_requirements=False,
-    )
-    assert code == 0, out
-
-    code, out = run(repo, "forge.py", "plan", "save", "--from", str(plan),
-                    "--story", "ENG-1")
-    assert code != 0 and "requirements grill required" in out.lower()
-
-    roadmap_path = repo / "plans" / "roadmap.json"
-    roadmap = json.loads(roadmap_path.read_text())
-    item = next(entry for entry in roadmap["items"] if entry["key"] == "ENG-1")
-    spec_ref = item.pop("spec")
-    roadmap_path.write_text(json.dumps(roadmap, indent=2) + "\n")
-    code, out = record_grill(repo, "requirements")
-    assert code != 0 and "no confirmed spec" in out
-    item["spec"] = spec_ref
-    roadmap_path.write_text(json.dumps(roadmap, indent=2) + "\n")
-
-    code, out = record_grill(repo, "requirements", verdict="blocked")
-    assert code == 0, out
-    code, out = run(repo, "forge.py", "plan", "save", "--from", str(plan),
-                    "--story", "ENG-1")
-    assert code != 0 and "blocked" in out
-
-    code, out = record_grill(repo, "requirements")
-    assert code == 0, out
-    requirements_path = story_state(repo) / "grills" / "requirements.json"
-    assert json.loads(requirements_path.read_text())["issue"] == "ENG-1"
-
-    spec = repo / "docs" / "specs" / "base.md"
-    spec.write_text(spec.read_text() + "\nRepository reality changed.\n")
-    code, out = run(repo, "forge.py", "plan", "save", "--from", str(plan),
-                    "--story", "ENG-1")
-    assert code != 0 and "requirements grill is stale" in out.lower()
-
-    code, out = record_grill(repo, "requirements")
-    assert code == 0, out
-    product = repo / "requirements-grounding.txt"
-    product.write_text("current repository\n")
-    git(repo, "add", product.name)
-    code, out = run(repo, "forge.py", "plan", "save", "--from", str(plan),
-                    "--story", "ENG-1")
-    assert code != 0 and "requirements grill is stale" in out.lower()
-
-    code, out = record_grill(repo, "requirements")
-    assert code == 0, out
-    code, out = run(repo, "forge.py", "plan", "save", "--from", str(plan),
-                    "--story", "ENG-1")
-    assert code != 0 and "awaiting-approval" in out
-
-
-def test_forge_next_routes_requirements_round_first(repo, monkeypatch):
-    monkeypatch.setenv("FORGE_COORDINATOR", "claude")
-    sign_off(repo)
-    intake(repo)
-
-    code, out = run(repo, "forge.py", "next", "--repo", str(repo))
-    assert code == 0, out
-    dev_actions = [line for line in out.splitlines() if "[dev]" in line]
-    assert len(dev_actions) == 1
-    assert "FIRST: re-grill" in dev_actions[0] and "--gate requirements" in out
-    assert "enter plan mode" not in out
-
-    code, out = record_grill(repo, "requirements")
-    assert code == 0, out
-    code, out = run(repo, "forge.py", "next", "--repo", str(repo))
-    assert code == 0, out
-    # 0050 removed the "enter plan mode" instruction; the planning step is
-    # still what appears once the requirements round is recorded.
-    # Reading comes first and authoring second — assert the ORDER, since
-    # that is the whole point of splitting the step.
-    assert "FIRST read the system this plan will assert about" in out
-    assert "THEN plan per factory/prompts/planner.md" in out
-    assert out.index("FIRST read the system") < out.index("THEN plan per")
-    assert "FIRST: re-grill" not in out
-
-    product = repo / "requirements-routing.txt"
-    product.write_text("changed\n")
-    git(repo, "add", product.name)
-    code, out = run(repo, "forge.py", "next", "--repo", str(repo))
-    assert code == 0, out
-    dev_actions = [line for line in out.splitlines() if "[dev]" in line]
-    assert len(dev_actions) == 1 and "FIRST: re-grill" in dev_actions[0]
-    assert "enter plan mode" not in out
-
-
-def test_plan_save_refuses_approved_without_a_matching_marker(repo, tmp_path):
+def test_plan_save_stops_once_at_awaiting_native_approval(repo, tmp_path):
     sign_off(repo)
     intake(repo)
     ensure_story(repo, "ENG-1", "Invoices")
@@ -8787,10 +8535,10 @@ def test_plan_save_refuses_approved_without_a_matching_marker(repo, tmp_path):
     code, out = run(repo, "forge.py", "plan", "save", "--from", str(plan),
                     "--story", "ENG-1")
 
-    assert code != 0
+    assert code == 0, out
     assert "awaiting-approval" in out
-    assert "review it in plan mode" in out
-    assert "forge plan approve" in out
+    assert "native Plan Mode" in out
+    assert "forge plan approve" not in out
     active = next((repo / "plans" / "active").glob("ENG-1-*.md"))
     assert "status: awaiting-approval" in active.read_text()
     assert run_state(repo)["plan_status"] == "awaiting-approval"
@@ -8801,10 +8549,8 @@ def test_plan_save_refuses_approved_without_a_matching_marker(repo, tmp_path):
 def test_plan_save_accepts_a_plan_authored_in_any_mode(repo, tmp_path):
     """Plan authoring is mode-agnostic (0050).
 
-    The plan-mode marker used to be required, which forced an operator running
-    in auto mode into plan mode purely to get a file written. It proved only
-    that a mode was entered; the grill — digest-bound, with a floor of recorded
-    human rounds — is the provenance that means something.
+    Saving validates the authored artifact and cold proof. Native Plan Mode is
+    the later approval transport, not an authorship marker.
     """
     sign_off(repo)
     intake(repo)
@@ -8817,52 +8563,8 @@ def test_plan_save_accepts_a_plan_authored_in_any_mode(repo, tmp_path):
                     "--story", "ENG-1")
 
     assert "plan-mode marker" not in out
-    assert code != 0 and "awaiting-approval" in out, out
+    assert code == 0 and "awaiting-approval" in out, out
     assert list((repo / "plans" / "active").glob("ENG-1-*.md"))
-
-
-def test_plan_save_and_approve_accept_plan_with_plan_mode_marker(repo, tmp_path):
-    sign_off(repo)
-    intake(repo)
-    plan = tmp_path / "plan-mode-plan.md"
-    plan.write_text(plan_draft(repo))
-    code, out = record_grill(repo, "plan", digest_of=plan, plan_mode=False)
-    assert code == 0, out
-    code, out = post_hook(repo, plan_hook_payload(plan))
-    assert code == 0, out
-
-    code, out = run(repo, "forge.py", "plan", "save", "--from", str(plan),
-                    "--story", "ENG-1")
-    assert code != 0 and "awaiting-approval" in out, out
-    active = next((repo / "plans" / "active").glob("ENG-1-*.md"))
-    code, out = record_grill(repo, "plan", digest_of=active, plan_mode=False)
-    assert code == 0, out
-    code, out = post_hook(repo, plan_hook_payload(active))
-    assert code == 0, out
-    code, out = run(repo, "forge.py", "plan", "approve", "--by", "Client PM")
-    assert code == 0, out
-    code, out = run(repo, "forge.py", "plan", "save", "--from", str(active),
-                    "--story", "ENG-1")
-    assert code == 0 and run_state(repo)["plan_status"] == "approved", out
-
-
-def test_task_plan_save_and_approve_are_mode_agnostic(repo, tmp_path):
-    """No plan-mode marker anywhere: save and approve both succeed (0050)."""
-    sign_off(repo)
-    intake(repo)
-    save_plan(repo, tmp_path)
-    record_skeleton_then_frontier(repo, [STAGE_TASK])
-    code, out = record_task_grill(repo, STAGE_TASK, approve=False)
-    assert code == 0, out
-    for marker in (story_state(repo) / "plan-mode").glob("*.json"):
-        marker.unlink()
-
-    view_plan_on_board(repo, "T1")  # the human opens it on the board
-    code, out = run(repo, "forge.py", "task", "approve", "T1",
-                    "--by", "Test Human")
-
-    assert "plan-mode marker" not in out
-    assert code == 0 and "Approved task plan" in out, out
 
 
 def test_task_plan_save_requires_workflow_and_manual_verification(repo, tmp_path):
@@ -8890,185 +8592,6 @@ def test_task_plan_save_requires_workflow_and_manual_verification(repo, tmp_path
                     "--from", str(source))
     # Heading LEVEL is not the point: a deeper structure still wrote them.
     assert code == 0, out
-
-
-def test_task_approve_refuses_a_stale_or_failing_grill(repo, tmp_path):
-    """The board withholds a task plan until its grill passed against the
-    current text. Approval used to only CLAIM to check that, so a plan the
-    board refused to show could still be approved."""
-    sign_off(repo)
-    intake(repo)
-    save_plan(repo, tmp_path)
-    record_skeleton_then_frontier(repo, [STAGE_TASK])
-
-    # require_ready_task's grill gate runs first, so this is the refusal an
-    # unprepared task actually gets -- asserted here so the ordering is pinned
-    # rather than assumed.
-    code, out = run(repo, "forge.py", "task", "approve", "T1",
-                    "--by", "Test Human")
-    assert code != 0 and "Task grill required first" in out, out
-
-    code, out = record_task_grill(repo, STAGE_TASK, approve=False)
-    assert code == 0, out
-    saved = story_state(repo) / "task-plans" / "T1.md"
-    saved.write_text(saved.read_text(encoding="utf-8") + "\nEdited after the grill.\n",
-                     encoding="utf-8")
-
-    code, out = run(repo, "forge.py", "task", "approve", "T1",
-                    "--by", "Test Human")
-
-    assert code != 0, out
-    assert "recorded against different plan text" in out
-    assert "why the board is not showing it" in out
-
-
-def test_plan_mode_marker_matches_body_not_assumptions(repo, tmp_path):
-    sign_off(repo)
-    intake(repo)
-    plan = tmp_path / "assumptions-plan.md"
-    plan.write_text(plan_draft(repo))
-    code, out = post_hook(repo, plan_hook_payload(plan))
-    assert code == 0, out
-    plan.write_text(plan.read_text() + "\n## Implementation Assumptions\n- Later detail.\n")
-    code, out = record_grill(repo, "plan", digest_of=plan, plan_mode=False)
-    assert code == 0, out
-
-    code, out = run(repo, "forge.py", "plan", "save", "--from", str(plan),
-                    "--story", "ENG-1")
-
-    assert code != 0 and "awaiting-approval" in out, out
-    assert "plan-mode marker required" not in out
-
-
-def test_plan_save_restamp_does_not_invalidate_marker(repo, tmp_path):
-    sign_off(repo)
-    intake(repo)
-    plan = tmp_path / "restamped-plan.md"
-    plan.write_text(plan_draft(repo))
-    code, out = record_grill(repo, "plan", digest_of=plan, plan_mode=False)
-    assert code == 0, out
-    code, out = post_hook(repo, plan_hook_payload(plan))
-    assert code == 0, out
-
-    code, out = run(repo, "forge.py", "plan", "save", "--from", str(plan),
-                    "--story", "ENG-1")
-    assert code != 0 and "awaiting-approval" in out, out
-    active = next((repo / "plans" / "active").glob("ENG-1-*.md"))
-    code, out = record_grill(repo, "plan", digest_of=active, plan_mode=False)
-    assert code == 0, out
-    code, out = run(repo, "forge.py", "plan", "approve", "--by", "Client PM")
-    assert code == 0, out
-    code, out = run(repo, "forge.py", "plan", "save", "--from", str(active),
-                    "--story", "ENG-1")
-
-    assert code == 0 and run_state(repo)["plan_status"] == "approved", out
-
-
-def test_plan_approve_refuses_without_a_fresh_plan_grill(repo, tmp_path):
-    sign_off(repo)
-    intake(repo)
-    ensure_story(repo, "ENG-1", "Invoices")
-    plan = tmp_path / "approval-plan.md"
-    plan.write_text(plan_draft(repo))
-    record_grill(repo, "plan", digest_of=plan)
-    code, out = run(repo, "forge.py", "plan", "save", "--from", str(plan),
-                    "--story", "ENG-1")
-    assert code != 0 and "awaiting-approval" in out
-
-    code, out = run(repo, "forge.py", "plan", "approve")
-    assert code != 0 and "--by" in out
-    code, out = run(repo, "forge.py", "plan", "approve", "--by", "  ")
-    assert code != 0 and "human approver" in out
-    # The ONE grill recorded against the draft still matches the saved copy
-    # (body digest): no second record before approval.
-    code, out = run(repo, "forge.py", "plan", "approve", "--by", "Client PM")
-    assert code == 0, out
-    active = next((repo / "plans" / "active").glob("ENG-1-*.md"))
-
-    marker_path = story_state(repo) / "plan-approval.json"
-    marker = json.loads(marker_path.read_text())
-    assert marker["approved_plan_sha256"] == plan_digest_without_assumptions(active)
-    assert marker["approver"] == "Client PM"
-    assert marker["issue"] == "ENG-1" and marker["story"] == "ENG-1"
-    assert marker["at"]
-    code, out = run(repo, "forge.py", "plan", "save", "--from", str(active),
-                    "--story", "ENG-1")
-    assert code == 0, out
-    assert run_state(repo)["plan_status"] == "approved"
-    assert run_state(repo)["approved_plan_sha256"] == (
-        plan_digest_without_assumptions(active)
-    )
-
-    # The marker cannot be replayed in a DIFFERENT context: a marker whose
-    # body digest matches but whose story is another one does NOT approve —
-    # the human reviewed this plan for THIS story, not that one.
-    code, out = record_grill(repo, "plan", digest_of=active)
-    assert code == 0, out
-    tampered = {**marker, "story": "ENG-2"}
-    marker_path.write_text(json.dumps(tampered))
-    code, out = run(repo, "forge.py", "plan", "save", "--from", str(active),
-                    "--story", "ENG-1")
-    assert code != 0 and "awaiting-approval" in out
-    assert run_state(repo)["plan_status"] == "awaiting-approval"
-
-
-def test_plan_save_refuses_an_edited_plan_riding_a_stale_marker(repo, tmp_path):
-    sign_off(repo)
-    intake(repo)
-    ensure_story(repo, "ENG-1", "Invoices")
-    plan = tmp_path / "approval-plan.md"
-    plan.write_text(plan_draft(repo))
-    record_grill(repo, "plan", digest_of=plan)
-    code, out = run(repo, "forge.py", "plan", "save", "--from", str(plan),
-                    "--story", "ENG-1")
-    assert code != 0 and "awaiting-approval" in out
-    active = next((repo / "plans" / "active").glob("ENG-1-*.md"))
-    record_grill(repo, "plan", digest_of=active)
-    code, out = run(repo, "forge.py", "plan", "approve", "--by", "Client PM")
-    assert code == 0, out
-    approved_digest = json.loads(
-        (story_state(repo) / "plan-approval.json").read_text()
-    )["approved_plan_sha256"]
-
-    plan.write_text(plan_draft(repo, body=PLAN_BODY + "\nEdited after approval.\n"))
-    record_grill(repo, "plan", digest_of=plan)
-    code, out = run(repo, "forge.py", "plan", "save", "--from", str(plan),
-                    "--story", "ENG-1")
-
-    assert code != 0 and "awaiting-approval" in out
-    assert run_state(repo)["plan_status"] == "awaiting-approval"
-    active = next((repo / "plans" / "active").glob("ENG-1-*.md"))
-    edited_body = active.read_text().split("---\n", 2)[2]
-    assert hashlib.sha256(edited_body.encode()).hexdigest() != approved_digest
-
-
-def test_an_approval_marker_authorizes_only_one_save(repo, tmp_path):
-    # The marker is consumed on the approved save; replaying it (e.g. after a
-    # later awaiting-approval reset of the same body) must require a fresh approve.
-    sign_off(repo)
-    intake(repo)
-    ensure_story(repo, "ENG-1", "Invoices")
-    plan = tmp_path / "once-plan.md"
-    plan.write_text(plan_draft(repo))
-    record_grill(repo, "plan", digest_of=plan)
-    code, out = run(repo, "forge.py", "plan", "save", "--from", str(plan),
-                    "--story", "ENG-1")
-    assert code != 0 and "awaiting-approval" in out
-    active = next((repo / "plans" / "active").glob("ENG-1-*.md"))
-    record_grill(repo, "plan", digest_of=active)
-    code, out = run(repo, "forge.py", "plan", "approve", "--by", "Client PM")
-    assert code == 0, out
-    code, out = run(repo, "forge.py", "plan", "save", "--from", str(active),
-                    "--story", "ENG-1")
-    assert code == 0 and run_state(repo)["plan_status"] == "approved", out
-    assert not (story_state(repo) / "plan-approval.json").exists()
-
-    # Same body, marker gone -> save refuses, no silent re-approval.
-    record_grill(repo, "plan", digest_of=active)
-    code, out = run(repo, "forge.py", "plan", "save", "--from", str(active),
-                    "--story", "ENG-1")
-    assert code != 0 and "awaiting-approval" in out
-    assert run_state(repo)["plan_status"] == "awaiting-approval"
 
 
 def test_existing_plan_save_gates_still_run_unchanged(repo, tmp_path):
@@ -9133,25 +8656,10 @@ def test_plan_save_requires_a_fresh_same_issue_grill(repo, tmp_path):
     code, out = record_grill(repo, "plan", digest_of=plan_file)
     assert code == 0, out
     code, out = save_plan_raw(repo, tmp_path)
-    assert code != 0 and "awaiting-approval" in out, out
-    active = next((repo / "plans" / "active").glob("ENG-1-*.md"))
-    record_grill(repo, "plan", digest_of=active)
-    code, out = run(repo, "forge.py", "plan", "approve", "--by", "Gate Test Human")
+    assert code == 0 and "awaiting-approval" in out, out
+    code, out = post_hook(repo, native_claude_approval())
     assert code == 0, out
-    code, out = run(repo, "forge.py", "plan", "save", "--from", str(active),
-                    "--story", "ENG-1")
-    assert code == 0, out
-    # next task cannot ride the previous task's grill: intake clears it
-    run(repo, "record_decomposition_from_json.py", stdin=json.dumps(DECOMP))
-    write_passing_artifacts(repo)
-    run(repo, "update_run.py", "--decomposition-status", "recorded")
-    run(repo, "pr_ready.py")
-    intake(repo, "ENG-2", "Payments")
-    assert not (repo / ".factory" / "grills" / "plan.json").exists()
-    code, out = save_plan_raw(repo, tmp_path)
-    assert code != 0 and "grill" in out.lower()
-
-
+    assert run_state(repo)["plan_status"] == "approved"
 def test_plan_grill_recorder_stamps_the_active_issue(repo, tmp_path):
     sign_off(repo)
     intake(repo)
@@ -9208,13 +8716,8 @@ def test_plan_save_requires_decision_coverage_and_no_open_contradiction(repo, tm
         "--notes", "plan updated to follow the decision")
     code, out = run(repo, "forge.py", "plan", "save", "--from", str(draft),
                     "--story", "ENG-1")
-    assert code != 0 and "awaiting-approval" in out, out
-    active = next((repo / "plans" / "active").glob("ENG-1-*.md"))
-    record_grill(repo, "plan", digest_of=active)
-    code, out = run(repo, "forge.py", "plan", "approve", "--by", "Gate Test Human")
-    assert code == 0, out
-    code, out = run(repo, "forge.py", "plan", "save", "--from", str(active),
-                    "--story", "ENG-1")
+    assert code == 0 and "awaiting-approval" in out, out
+    code, out = post_hook(repo, native_claude_approval())
     assert code == 0, out
     saved = next((repo / "plans" / "active").glob("ENG-1-*.md")).read_text()
     assert "story: ENG-1" in saved
@@ -11699,6 +11202,26 @@ def test_decisions_name_the_stories_they_govern(repo, tmp_path):
 
 # ------------------------------------------------------- signal event channel
 
+def test_signal_ruling_hydration_survives_lean_lifecycle_state_changes(
+        repo, tmp_path):
+    sign_off(repo)
+    intake(repo)
+    code, out = run(
+        repo, "forge.py", "signal", "raise", "--kind", "confusion",
+        "--by", "implementer", "-m", "Which recorded retention rule controls?",
+    )
+    assert code == 0, out
+    signal_id = re.search(r"S-\d{4}-[0-9a-f]{4}", out).group(0)
+    ruling = "Decision 0001 controls; retain the durable record."
+    code, out = run(repo, "forge.py", "signal", "resolve", signal_id,
+                    "--notes", ruling)
+    assert code == 0, out
+    code, out = save_plan(repo, tmp_path)
+    assert code == 0, out
+    code, out = run(repo, "forge.py", "signal", "list")
+    assert code == 0 and signal_id in out and ruling in out
+    assert run_state(repo)["plan_status"] == "approved"
+
 def test_signal_events_block_ship_until_resolved(repo, tmp_path):
     sign_off(repo)
     intake(repo)
@@ -12103,15 +11626,18 @@ def stamp_and_commit(repo: Path, *paths: str) -> None:
         )
     if paths:
         git(repo, "add", *paths)
-    code, out = record_stage_local(repo)
-    assert code == 0, out
-    if subprocess.run(
-            ["git", "diff", "--cached", "--quiet"], cwd=repo).returncode:
-        git(repo, "commit", "-qm", "reviewed stage work")
     active = [stage["id"] for stage in load_stages(repo).get("stages", [])
               if stage.get("status") == "active"]
     if len(active) == 1:
         write_task_proof(repo, active[0], publish_review=True)
+    code, out = record_stage_local(repo)
+    assert code == 0, out
+    if len(active) == 1:
+        from forge_cli.stages import stamp_stage_review
+        stamp_stage_review(repo, active[0])
+    if subprocess.run(
+            ["git", "diff", "--cached", "--quiet"], cwd=repo).returncode:
+        git(repo, "commit", "-qm", "reviewed stage work")
 
 
 def test_structured_findings_recorded_and_malformed_refused(repo, tmp_path):
@@ -15575,7 +15101,8 @@ def test_delegate_refuses_active_empty_scope_and_read_only_passes(repo, tmp_path
     assert code != 0 and "write_scope" in out
     assert "record_decomposition_from_json.py --input <json>" in out
     assert "forge delegate T1 --read-only" in out
-    assert not delegation_ledger(repo).exists()
+    rows = [json.loads(line) for line in delegation_ledger(repo).read_text().splitlines()]
+    assert not any(row.get("task") == "T1" for row in rows)
 
     code, out = run(
         repo,
@@ -15588,7 +15115,8 @@ def test_delegate_refuses_active_empty_scope_and_read_only_passes(repo, tmp_path
     )
     assert code == 0, out
     assert "Write access: NO" in out and "--write" not in out
-    assert not delegation_ledger(repo).exists()
+    rows = [json.loads(line) for line in delegation_ledger(repo).read_text().splitlines()]
+    assert not any(row.get("task") == "T1" for row in rows)
 
     decomposition["tasks"] = [STAGE_TASK]
     authority.write_text(json.dumps(decomposition))
@@ -15619,7 +15147,7 @@ def test_delegate_brief_carries_criteria_and_scope(repo, tmp_path):
     assert "Then return." in brief
     assert "orchestrator owns local autoreview" in brief
     assert "Do not run" in brief and "forge stage done" in brief
-    assert "--prompt-file .factory/diagnostic-briefs/T1.md" in out
+    assert "--prompt-file" in out and ".factory/diagnostic-briefs/T1.md" in out
 
 
 def test_brief_states_budget_and_narration_line(repo, tmp_path):
@@ -17566,10 +17094,7 @@ def test_stage_start_and_delegate_refuse_without_approved_task_plan(repo, tmp_pa
     code, out = run(repo, "forge.py", "stage", "start", "T1", "--trunk")
     assert code != 0 and "Task plan approval required" in out
 
-    view_plan_on_board(repo, "T1")  # the human opens it on the board
-    code, out = run(
-        repo, "forge.py", "task", "approve", "T1", "--by", "Test Human",
-    )
+    code, out = post_hook(repo, native_claude_approval())
     assert code == 0, out
     code, out = run(repo, "forge.py", "stage", "start", "T1", "--trunk")
     assert code == 0, out
@@ -17579,7 +17104,8 @@ def test_stage_start_and_delegate_refuse_without_approved_task_plan(repo, tmp_pa
         repo, "forge.py", "delegate", "T1", env=fake_companion_env(tmp_path),
     )
     assert code != 0 and "Task plan approval required" in out
-    assert not delegation_ledger(repo).exists()
+    rows = [json.loads(line) for line in delegation_ledger(repo).read_text().splitlines()]
+    assert not any(row.get("task") == "T1" for row in rows)
 
 
 def test_forge_next_and_board_route_author_task_plan_and_await_approval(
@@ -17604,27 +17130,22 @@ def test_forge_next_and_board_route_author_task_plan_and_await_approval(
     assert_route("author-task-plan", "author-task-plan", "task plan save T1")
     source = tmp_path / "T1.md"
     source.write_text("# T1 plan\n\nImplement the bounded task.\n\n## Workflow\n\nRequest -> handler -> store.\n\n## Manual Verification\n\n1. Run it. 2. See the row.\n")
-    code, out = post_hook(repo, plan_hook_payload(source))
-    assert code == 0, out
     code, out = run(
         repo, "forge.py", "task", "plan", "save", "T1", "--from", str(source),
     )
     assert code == 0, out
     assert_route("grill", "ready", "Grill the saved T1 plan")
     payload = task_grill_payload(STAGE_TASK)
-    code, out = log_grill_rounds(repo, payload["rounds"])
-    assert code == 0, out
+    saved = story_state(repo) / "task-plans" / "T1.md"
+    _seed_cold_launch(repo, "task", hashlib.sha256(saved.read_bytes()).hexdigest(), "T1")
     code, out = run(
         repo, "record_grill_from_json.py", "--gate", "task", "--task", "T1",
         stdin=json.dumps(payload),
     )
     assert code == 0, out
-    assert_route("await-approval", "await-approval", "task approve T1")
+    assert_route("await-approval", "await-approval", "native Plan Mode")
 
-    view_plan_on_board(repo, "T1")  # the human opens it on the board
-    code, out = run(
-        repo, "forge.py", "task", "approve", "T1", "--by", "Test Human",
-    )
+    code, out = post_hook(repo, native_claude_approval())
     assert code == 0, out
     assert task_frontier_state(repo)[0] == "stage-start"
     assert task_rows(repo)[0]["state"] == "grilled"
@@ -17737,50 +17258,31 @@ def test_docs_state_the_enforced_jit_contract():
     assert "findings and refusals always in full" in agents
 
 
-@pytest.mark.skipif(
-    not PLAN_MODE_DECISION_FIXTURE.is_file(),
-    reason="requires the plan-mode decision harness-source fixture",
-)
 def test_docs_state_enforced_order():
-    decision = PLAN_MODE_DECISION_FIXTURE.read_text()
-    loop_spec = (
-        HARNESS / "docs" / "specs" / "accountable-engineering-loop.md"
-    ).read_text()
     approval_spec = (
         HARNESS / "docs" / "specs" / "plan-approval.md"
     ).read_text()
+    parity_spec = (
+        HARNESS / "docs" / "specs" / "dual-coordinator-parity.md"
+    ).read_text()
     workflow = (HARNESS / "WORKFLOW.md").read_text()
 
-    assert "status: accepted" in decision
-    assert 'confirmed_by: "Ravi Kiran Vemula"' in decision
-    assert "status: confirmed" in loop_spec
     assert "status: confirmed" in approval_spec
+    for text in (approval_spec, parity_spec, workflow):
+        assert "one independent cold" in text.lower()
+        assert "finding_dispositions" in text
+        assert "amendments" in text
+        assert "native" in text.lower() and "approval" in text.lower()
+    assert "There are no normal-flow `plan approve` or `task approve` commands" \
+        in approval_spec
 
-    assert "zero-gap grill may validly have" not in loop_spec
-    assert "plan mode cannot be the enforcement signal" not in approval_spec
-    assert "recommended review step" not in approval_spec
-    assert "marker the agent cannot mint" not in approval_spec
-    for text in (decision, loop_spec, approval_spec):
-        unwrapped = " ".join(text.split())
-        # The docs must NAME whatever enforces the floors. That used to be
-        # the recorder's own map; it is now the gate table the recorder
-        # derives that map from.
-        assert ("grill_gates.GATES" in text or "GATE_ROUND_FLOORS" in text
-                or "floors spec 2" in unwrapped)
-        assert "frontier_empty: true" in text
-        assert "ledger-matched" in text or "match a logged record" in unwrapped
-    for text in (decision, approval_spec):
-        assert "plan_body_digest" in text
-
-    task_loop = workflow.split("## Task Planning", 1)[1].split(
-        "During implementation", 1
-    )[0]
+    task_loop = workflow.split("## Execution Order", 1)[1]
     enforced_order = (
-        "task plan is authored in plan mode",
-        "task grill delivers its rounds",
-        "human approves",
-        "stage start",
-        "delegate",
+        "author its complete contract",
+        "one independent cold task grill",
+        "native approval",
+        "start the stage",
+        "delegate it",
     )
     positions = [task_loop.index(step) for step in enforced_order]
     assert positions == sorted(positions)
@@ -19212,8 +18714,8 @@ def test_review_generation_retry_and_collision_are_safe(repo, tmp_path):
 def test_close_and_frontier_use_selected_current_delta(repo, tmp_path):
     task, proof, lib, selected, _path, _generation = _selected_review_case(repo, tmp_path)
     from forge_cli.stages import (
-        _legacy_stamp_binding, authoritative_stages_path, load_stages,
-        stamp_is_fresh, stamp_stage_review, stages_path,
+        authoritative_stages_path, load_stages, stamp_is_fresh,
+        stamp_stage_review, stages_path,
     )
     pointer_path = proof / "reviews/selected.json"
     pointer_bytes = pointer_path.read_bytes()
@@ -19225,9 +18727,11 @@ def test_close_and_frontier_use_selected_current_delta(repo, tmp_path):
     selected["delta_id"] = "f" * 64
     pointer_path.write_bytes(lib.review_generation_bytes(selected))
     stages = load_stages(repo)
-    stages["stages"][0]["local_review_stamp"] = _legacy_stamp_binding(
-        repo, stages["stages"][0], task,
-    )
+    stages["stages"][0]["local_review_stamp"] = {
+        "stage_id": "T1", "task_sha256": task_digest(task),
+        "brief_sha256": "legacy", "base_sha": stages["stages"][0]["base_sha"],
+        "product_tree_digest": "legacy",
+    }
     write_stages(repo, stages)
     caller = copy.deepcopy(stages["stages"][0])
     stage_paths = (authoritative_stages_path(repo), stages_path(repo))
@@ -19262,6 +18766,7 @@ def test_close_and_frontier_use_selected_current_delta(repo, tmp_path):
     restored_stages = load_stages(repo)
     restored_stages["stages"][0]["status"] = "active"
     write_stages(repo, restored_stages)
+    stamp_stage_review(repo, "T1", lenses=("quality", "performance", "security"))
     caller = load_stages(repo)["stages"][0]
     assert stamp_is_fresh(repo, caller, task)
     assert "delta_id" in caller["local_review_stamp"]
@@ -20441,7 +19946,7 @@ def test_project_agents_init_upgrade_and_preserve_client_additions(
         for path in (source / ".codex" / "agents").glob("*.toml")
     }
     source_config = (source / ".codex" / "config.toml").read_bytes()
-    assert len(source_agents) == 15
+    assert len(source_agents) == 3
 
     target = tmp_path / "app"
     initialized = _init(target)
@@ -20468,6 +19973,60 @@ def test_project_agents_init_upgrade_and_preserve_client_additions(
     } == source_agents
     assert (target / ".codex" / "config.toml").read_bytes() == source_config
     assert custom.read_text(encoding="utf-8") == 'name = "client-custom"\n'
+
+
+def _retired_profile_bytes(name: str) -> bytes:
+    result = subprocess.run(
+        ["git", "show", f"HEAD:.codex/agents/{name}"], cwd=HARNESS,
+        capture_output=True,
+    )
+    assert result.returncode == 0, result.stderr.decode(errors="replace")
+    return result.stdout
+
+
+def test_upgrade_preserves_client_profiles_while_removing_retired_forge_profiles(
+        repo: Path):
+    agents = repo / ".codex/agents"
+    retired = agents / "architect.toml"
+    retired.write_bytes(_retired_profile_bytes("architect.toml"))
+    modified_same_name = agents / "backend.toml"
+    modified_same_name.write_text('model = "client-owned"\n', encoding="utf-8")
+    custom = agents / "client-custom.toml"
+    custom.write_text('model = "client-owned"\n', encoding="utf-8")
+    git(repo, "add", "-A")
+    git(repo, "commit", "-q", "-m", "seed old and client profiles")
+
+    result = subprocess.run(
+        [sys.executable, str(HARNESS / "factory/scripts/forge.py"),
+         "upgrade", "--target", str(repo)],
+        cwd=HARNESS, capture_output=True, text=True,
+    )
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert not retired.exists()
+    assert modified_same_name.read_text() == 'model = "client-owned"\n'
+    assert custom.read_text() == 'model = "client-owned"\n'
+
+
+def test_upgrade_preserves_project_settings_and_refuses_unknown_same_name_profile_rows(
+        repo: Path, tmp_path: Path):
+    local = repo / ".claude/settings.local.json"
+    local.write_text('{"client": true}\n', encoding="utf-8")
+    outside = tmp_path / "outside.toml"
+    outside.write_text('model = "outside"\n', encoding="utf-8")
+    linked = repo / ".codex/agents/security.toml"
+    linked.symlink_to(outside)
+    git(repo, "add", "-A")
+    git(repo, "commit", "-q", "-m", "project settings and invalid profile row")
+
+    result = subprocess.run(
+        [sys.executable, str(HARNESS / "factory/scripts/forge.py"),
+         "upgrade", "--target", str(repo)],
+        cwd=HARNESS, capture_output=True, text=True,
+    )
+    assert result.returncode != 0
+    assert "linked" in (result.stdout + result.stderr).lower()
+    assert local.read_text() == '{"client": true}\n'
+    assert linked.is_symlink()
 
 
 def test_init_into_nonempty_noncolliding_target(tmp_path: Path):
@@ -21712,13 +21271,7 @@ def test_junit_case_attributed_file_or_classname_suffix():
 
 
 def test_plan_body_digest_is_line_ending_agnostic(tmp_path):
-    """The plan-mode marker digest must be stable across platforms and Git
-    autocrlf. plan_body_digest is computed once from the plan-mode source (marker
-    create) and again from the saved/committed task plan (marker check); if a
-    write_text() on Windows or a core.autocrlf checkout turned LF into CRLF, an
-    unnormalised digest would never match and `task approve` would demand a
-    spurious re-grill. So LF, CRLF, and CR renderings of the same body must hash
-    identically."""
+    """Approval digests are stable across line endings and Git autocrlf."""
     body = "---\ntitle: T\nkey: value\n---\n\n# Plan\n\nline one\nline two\n"
     lf = tmp_path / "lf.md"
     lf.write_bytes(body.encode("utf-8"))
@@ -21785,50 +21338,6 @@ def test_forge_deps_lock_detects_manager_and_guards(tmp_path):
     (only_pkg / "package.json").write_text("{}", encoding="utf-8")
     with pytest.raises(SystemExit):
         cmd_lock(argparse.Namespace(repo=str(only_pkg)))
-
-
-def test_ceremony_target_redirects_rounds_and_markers(repo, tmp_path):
-    # A second full factory checkout is the ceremony target.
-    target = tmp_path / "sibling"
-    proc = subprocess.run(
-        [sys.executable, str(HARNESS / "factory" / "scripts" / "forge.py"),
-         "init", "--name", "sibling", "--target", str(target)],
-        capture_output=True, text=True,
-        env={**os.environ, "GIT_CONFIG_COUNT": "1",
-             "GIT_CONFIG_KEY_0": "gc.auto", "GIT_CONFIG_VALUE_0": "0"},
-    )
-    assert proc.returncode == 0, proc.stdout + proc.stderr
-
-    code, out = run(repo, "forge.py", "ceremony", "target", "set", str(target))
-    assert code == 0, out
-    code, out = log_grill_rounds(repo, grill_rounds("spec", 1))
-    assert code == 0, out
-    session_rounds = list((repo / ".factory").rglob("grill-rounds/*.json"))
-    target_rounds = list((target / ".factory").rglob("grill-rounds/*.json"))
-    assert not session_rounds, "round leaked into the session checkout"
-    assert len(target_rounds) == 1, "round did not reach the ceremony target"
-
-    # Clearing the pointer restores self-ledgering.
-    code, out = run(repo, "forge.py", "ceremony", "target", "clear")
-    assert code == 0, out
-    code, out = log_grill_rounds(repo, grill_rounds("spec", 1))
-    assert code == 0, out
-    assert len(list((repo / ".factory").rglob("grill-rounds/*.json"))) == 1
-    assert len(list((target / ".factory").rglob("grill-rounds/*.json"))) == 1
-
-    # A stale pointer fails OPEN to the session checkout (evidence never drops).
-    (repo / ".factory" / "ceremony-target").write_text(str(tmp_path / "gone"), encoding="utf-8")
-    code, out = log_grill_rounds(repo, grill_rounds("spec", 1))
-    assert code == 0, out
-    assert len(list((repo / ".factory").rglob("grill-rounds/*.json"))) == 2
-
-    # The CLI refuses self-pointing and non-factory targets.
-    code, out = run(repo, "forge.py", "ceremony", "target", "set", str(repo))
-    assert code != 0 and "DIFFERENT checkout" in out
-    bare = tmp_path / "bare"
-    bare.mkdir()
-    code, out = run(repo, "forge.py", "ceremony", "target", "set", str(bare))
-    assert code != 0 and "not an adopted factory repo" in out
 
 
 def test_write_lock_exempts_ignored_local_config_but_not_tracked_product(repo):
@@ -22099,18 +21608,6 @@ def test_next_only_offers_signoff_grill_for_complete_inputs(repo):
         repo, "forge.py", "next", env={"FORGE_COORDINATOR": "claude"})
     assert code == 0, ready
     assert "Before sign-off: grill the handover" in ready
-
-
-def test_next_native_requirements_question_stops_at_unsupported_delivery(
-        repo, tmp_path):
-    sign_off(repo)
-    intake(repo)
-    code, output = run(
-        repo, "forge.py", "next", env={"FORGE_COORDINATOR": "codex"})
-    assert code == 0, output
-    assert "requirements grill question delivery is unavailable" in output
-    assert "STOP" in output and "LEAN-WORKFLOW" in output
-    assert "AskUserQuestion" not in output and "request_user_input" not in output
 
 
 def task_pr_retry_env(tmp_path: Path) -> tuple[dict[str, str], Path, Path]:

@@ -146,20 +146,21 @@ Rules:
 - Save the grilled plan into the repo, bound to its roadmap story:
   `python3 factory/scripts/forge.py plan save --from <plan-file> --story
   <story-key>`. This records it as `awaiting-approval`.
-- The grilled plan is now on the board (`awaiting-approval`) — the human reviews
-  it THERE, not as a plan-mode dump in chat. After the human confirms approval
-  in chat, run `./forge plan approve --by "<their name>"`, then rerun
-  `plan save` with the unchanged plan. `update_run.py` refuses implementation
-  until this digest-bound approval makes `plan_status` approved.
+- Saving leaves the grilled plan at `awaiting-approval`. Present the exact final
+  artifact in native Plan Mode. A successful Claude `ExitPlanMode`, or the exact
+  synchronous Codex `Approve plan / Request changes / Stop` question, records
+  approval through the shared recorder. Never use the board, a manual approve
+  command, or a second unchanged save as approval evidence. `update_run.py`
+  refuses implementation until native approval binds the final digest.
 - **Approval LOCKS the contract until the PR opens.** At the moment of approval,
   hold this rule for the whole story: from sign-off until the PR is opened, any
   deviation from the approved contract — amending acceptance criteria, changing
   write_scope, inserting/reordering/removing a task, re-scoping — is NEVER a
   silent edit. The flow STOPS and goes back to the human:
   - **Task not started / active (in-flight), not yet shipped:** amend its
-    contract, then re-present to the human, `plan approve --by`, and re-grill
-    before the next delegate/stage close (the recorder marks the grill +
-    approval stale to force this).
+    contract, re-grill it, then re-present the exact final artifact through
+    native Plan Mode before the next delegate/stage close (the recorder marks
+    the prior grill and approval stale to force this).
   - **Task done but NOT shipped:** `./forge task reopen <id>` moves it back to
     active — then re-grill and re-implement.
   - **Task done AND shipped (merged):** it is immutable; add a NEW follow-up

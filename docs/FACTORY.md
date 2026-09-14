@@ -6,12 +6,10 @@ This document is the operating contract for the factory beyond the short root `A
 
 ## Runtime
 
-Claude Code coordinates (planning, decisions, orchestration via
-codex-plugin-cc); Codex executes (exploration, implementation, testing, review
-subagents, PR packaging). That two-runtime stack is deliberate and complete —
-anything that ever drives sessions differently must still produce the
-identical repo contract and `.factory` artifacts, which is the only rule that
-matters here.
+Either Claude Code or native Codex may coordinate the same phase engine. Codex
+workers execute exploration, implementation, testing, and review; the active
+coordinator owns the human conversation and orchestration. Both adapters must
+produce the identical repo contract and `.factory` artifacts.
 
 ## Prompt Usage Model
 
@@ -136,12 +134,13 @@ includes:
 - non-empty acceptance criteria
 - dependencies when needed; every dependency names an earlier task
 
-Immediately before the next pending leaf, enter plan mode per
+Immediately before the next pending leaf, enter native Plan Mode per
 `factory/prompts/planner.md` and author its execution contract against the
 state left by completed tasks: write scope, exact acceptance criteria, verify
 commands, required tests, and reviewer focus. Re-record the decomposition,
 save the plan-mode result at `.factory/stories/<KEY>/task-plans/<id>.md`,
-then pass the digest-bound task grill and record its human approval. Run
+run one independent cold grill, record its complete finding dispositions and
+amendment bridge, then record native human approval of the final digest. Run
 `forge stage start <id>`, then `forge delegate <id>`. Do not guess later-task
 execution detail. `forge next` routes this loop one action at a time.
 

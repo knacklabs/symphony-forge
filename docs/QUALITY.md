@@ -44,6 +44,14 @@ three `factory/schemas/review.json` lens records, then replaces the task's
 
 Never review inline in the coordinating session; never nest reviewers.
 
+Before approval, one independent cold grill reads the exact original plan.
+Every reported gap or contradiction has one ordered `finding_dispositions`
+entry, and every change to the final artifact has an explained `amendments`
+entry. Native human approval binds the resulting final digest. This is
+adversarial contract review, not one of the three implementation-review lenses;
+it has no requirements-only pass, human-round floor, or synthetic
+`frontier_empty` question.
+
 The run is the task's ONLY review: with no blocking (P0/P1) finding it
 stamps the stage — bound to the reviewed tree — and `stage done` and
 `task pr-ready` seal on that stamp; non-blocking findings are recorded
@@ -130,6 +138,18 @@ Proof is stored under the task that produced it:
 Complete review recording requires `--set --task <id>` and never falls back to
 story-level or fixed lens files. Fixed `{quality,performance,security}.json`
 files are diagnostic or one-time migration inputs only.
+
+Successful tests, verify, and selected review may be reused only through their
+existing stage receipts. Test identity includes product bytes, exact command,
+selectors, test configuration, and tool versions. Verify identity includes
+product bytes, argv, configuration, tool versions, and generated semantic
+inputs. Review additionally requires the existing stamp-token delta binding and
+the current reviewed-meaning identity: approved semantic task brief, effective
+acceptance/security/migration semantics, substantive automated evidence,
+review instructions/helper/configuration, generated semantic inputs, and the
+product delta. Recorder timestamps and explicitly canonicalized bookkeeping may
+reuse; unknown, partial, or changed substantive input forces a fresh run while
+the original raw provenance stays immutable.
 
 This used to be one set of artifacts per STORY, rewritten by each task in
 turn: a story's review described whichever task ran last, and a task PR could

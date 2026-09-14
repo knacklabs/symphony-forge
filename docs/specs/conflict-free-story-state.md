@@ -35,7 +35,9 @@ saved: 2026-08-14T05:47:16+00:00
 
 - **Story-scoped evidence.** From intake, recorders and gates read/write
   `.factory/stories/<KEY>/…` for all task-scoped artifacts (decomposition,
-  stages, verify, tests, reviews, outcome, grills, briefs). `pr_ready` marks
+  stages, verify, tests, reviews, outcome, grills, approval events, briefs).
+  Native story approval remains the story's `plan-approval.json`; native task
+  approval remains on its task-grill record. `pr_ready` marks
   the story shipped in place — no archive move, no rename strands. Existing
   `.factory/history/` archives stay readable.
 - **Derived active-story pointer.** `run.json`'s merge-contested authority

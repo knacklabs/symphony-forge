@@ -3,15 +3,25 @@
 Review runs ONCE per task, after `verify.py` passes and the automated testing
 artifact is recorded, and before `task pr-ready`. The orchestrator releases it
 with **`./forge review <task-id>`** (decisions 0011, 0049): that command runs
-the autoreview skill with Codex as its engine — once per lens, in a clean
-worktree pinned at the task tip, over the whole task diff from its recorded
-base — watches it, and records the three artifacts as the task's proof. NEVER
+the autoreview skill with Codex as its engine — one helper call covering all
+three lenses, in a clean worktree pinned at the task tip, over the whole task
+diff from its recorded base — watches it, and records one immutable selected
+generation as the task's proof. NEVER
 hand the review to a nested Codex companion job (that re-triggers the same
 skill one indirection deeper and the companion write-guard refuses it), and
 never hand-write findings inline.
 
 Formal review uses `gpt-5.6-sol` at `high` reasoning. Route fixes back to the
 active `gpt-5.6-sol`/medium implementer and reuse that agent across review loops.
+
+A previously selected clean generation may be reused only when the stage's
+stamp-token delta and current reviewed-meaning identity both match. Reviewed
+meaning includes the approved semantic task brief, effective acceptance,
+security and migration semantics, substantive automated evidence, review
+instructions/helper/configuration, generated semantic inputs, and product
+delta. Only explicitly canonicalized recorder bookkeeping and timestamps are
+ignored; unknown, partial, or substantive change forces a fresh helper call and
+preserves the original raw provenance.
 
 Loop discipline (carried over from the retired subagent panel): scope-freeze —
 review the diff that exists, do not expand scope; verify findings against the

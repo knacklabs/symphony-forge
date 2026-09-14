@@ -21,13 +21,83 @@ import pytest
 
 from test_gates import (  # noqa: I001 — test_gates puts factory/scripts on sys.path
     DECOMP, _write_complete_automated, git, head, intake, record_task_grill, repo,
-    run, save_plan, sign_off, skeletal_stage_task, task_skeleton,
+    run, save_plan, sign_off, skeletal_stage_task, task_skeleton, load_factory_lib,
 )
+from forge_cli import stages as stage_helpers  # noqa: E402
 from forge_cli.review import (  # noqa: E402
     _actual_passes, _project_combined_report, _tagged_finding, resolve_review_base,
 )
 
 __all__ = ["repo"]
+
+
+def _meaning_fixture(repo, monkeypatch):
+    lib = load_factory_lib(repo)
+    lib.dump_json(lib.run_state_path(repo), {"issue_key": "S1", "story": "S1"})
+    plan = lib.evidence_path(repo, "S1", "task-plans/T1.md", for_write=True)
+    plan.parent.mkdir(parents=True, exist_ok=True)
+    plan.write_text("# reviewed task plan\n", encoding="utf-8")
+    proof = lib.proof_path(repo, "S1", "tests.json", task_id="T1", for_write=True)
+    proof.parent.mkdir(parents=True, exist_ok=True)
+    proof.write_text(json.dumps({
+        "automated": {"status": "passed", "cases": ["baseline"]},
+        "recorded_at": "bookkeeping", "generated_by": "implementer",
+    }), encoding="utf-8")
+    generated = repo / "ci/generated.json"
+    generated.parent.mkdir(parents=True, exist_ok=True)
+    generated.write_text('{"contract": "v1"}\n', encoding="utf-8")
+    task = {
+        "id": "T1", "objective": "review the semantic change",
+        "acceptance_criteria": ["works"],
+        "plan_contracts": [{"id": "C1", "statement": "works", "source": "plan"}],
+        "reviewer_focus": ["security"], "write_scope": ["src/"],
+        "required_tests": [], "verify_commands": [],
+        "generated_semantic_inputs": ["ci/generated.json"],
+    }
+    monkeypatch.setattr(
+        stage_helpers, "stage_review_binding",
+        lambda *_args: {"stage_id": "T1", "base_sha": "b", "delta_id": "d" * 64},
+    )
+    return lib, task, {"id": "T1"}, {
+        "path": "factory/prompts/reviewer.md", "version": "v1",
+        "sha256": "a" * 64,
+    }
+
+
+def test_selected_review_reviewed_meaning_includes_ci_generated_outputs_and_review_instructions(
+        repo, monkeypatch):
+    _lib, task, stage, helper = _meaning_fixture(repo, monkeypatch)
+    meaning = stage_helpers.reviewed_meaning_identity(repo, stage, task, helper)
+    assert meaning["inputs"]["generated_semantic_inputs"] == {
+        "ci/generated.json": hashlib.sha256(
+            (repo / "ci/generated.json").read_bytes()).hexdigest(),
+    }
+    assert set(meaning["inputs"]["review_instructions"]) == {
+        "factory/prompts/reviewer.md", "factory/scripts/forge_cli/review.py",
+        "factory/scripts/forge_cli/review_brief.py", "factory/schemas/review.json",
+    }
+    assert meaning["inputs"]["helper"]["current_sha256"] == hashlib.sha256(
+        (repo / "factory/prompts/reviewer.md").read_bytes()).hexdigest()
+
+
+def test_selected_review_reruns_for_substantive_automated_evidence_change(
+        repo, monkeypatch):
+    lib, task, stage, helper = _meaning_fixture(repo, monkeypatch)
+    before = stage_helpers.reviewed_meaning_identity(repo, stage, task, helper)["identity"]
+    proof = lib.proof_path(repo, "S1", "tests.json", task_id="T1")
+    evidence = json.loads(proof.read_text())
+    evidence["automated"]["cases"].append("new semantic case")
+    proof.write_text(json.dumps(evidence), encoding="utf-8")
+    assert stage_helpers.reviewed_meaning_identity(
+        repo, stage, task, helper)["identity"] != before
+
+
+def test_generated_review_inputs_are_included_in_reviewed_meaning(repo, monkeypatch):
+    _lib, task, stage, helper = _meaning_fixture(repo, monkeypatch)
+    before = stage_helpers.reviewed_meaning_identity(repo, stage, task, helper)["identity"]
+    (repo / "ci/generated.json").write_text('{"contract": "v2"}\n', encoding="utf-8")
+    assert stage_helpers.reviewed_meaning_identity(
+        repo, stage, task, helper)["identity"] != before
 
 
 def _combined_explanation(quality: str, performance: str, security: str) -> str:

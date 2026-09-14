@@ -20,130 +20,82 @@ from factory_lib import (
     plan_digest_without_assumptions,
     dump_json, evidence_path, git_control_dir, grounding_digest, head_sha,
     load_json, now_iso, protected_decomposition_state_path, read_stdin_utf8,
-    repo_root, requirements_digest, run_state_path, sha256_of,
+    repo_root, run_state_path, sha256_of,
     task_frontier_state, task_stage_record, validate_payload,
 )
-from forge_cli.specs import resolve_spec_reference
-from grill_gates import FLOOR_IS_NOT_A_TARGET, GATES, gate_names, get_gate
+from grill_gates import gate_names, get_gate
 
 VERDICTS = {"pass", "blocked"}
 TASK_DECISIONS = {"keep", "split", "block"}
-# Floors live in the gate table: every gate has one, so no gate can be
-# gated-but-unfloored the way signoff and epics silently were.
-GATE_ROUND_FLOORS = {name: gate.min_rounds for name, gate in GATES.items()}
 
 
 def _non_empty_string(value: object) -> bool:
     return isinstance(value, str) and bool(value.strip())
 
 
-def _validate_round_provenance(
-    root: Path, payload: dict, gate: str, story: str, task_id: str = "",
-) -> None:
-    floor = GATE_ROUND_FLOORS[gate]
-    rounds = payload.get("rounds")
-    if not isinstance(rounds, list) or len(rounds) < floor:
+def _cold_launch_digest(root: Path, gate: str, task_id: str) -> str:
+    from forge_cli.delegate import load_delegations
+    label = f"grill-{gate}" + (f"-{task_id}" if task_id else "")
+    story = load_json(run_state_path(root), default={}).get("issue_key", "")
+    spec = get_gate(gate)
+    previous = load_json(
+        evidence_path(root, story if spec.story_scoped else "",
+                      spec.evidence_name(task_id)), default={},
+    )
+    since = str(previous.get("recorded_at") or "")
+    latest: dict[str, dict] = {}
+    for row in load_delegations(root):
+        if (row.get("task") == label
+                and (not spec.story_scoped or row.get("story") == story)
+                and str(row.get("at") or "") > since
+                and isinstance(row.get("launch_id"), str)):
+            latest[row["launch_id"]] = row
+    completed = [row for row in latest.values()
+                 if row.get("launch_status") == "succeeded"]
+    if len(completed) != 1:
         raise SystemExit(
-            f"{gate} grill requires at least {floor} logged round(s). "
-            + FLOOR_IS_NOT_A_TARGET
+            f"{gate} grill requires exactly one successful independent cold-read "
+            f"launch since its last pass; found {len(completed)}"
         )
+    digest = completed[0].get("task_sha256")
+    if not isinstance(digest, str) or len(digest) != 64:
+        raise SystemExit(f"{gate} cold-read launch has no exact input digest")
+    return digest
 
-    # Only the ACTIVE story's rounds are ever read, plus the global ones, so a
-    # round asked during a DIFFERENT story is already unreachable here. An
-    # earlier draft narrowed this further for non-story-scoped gates and broke
-    # the ordinary flow: spec, signoff and epics are recorded while a story IS
-    # active, so their rounds live in that story's directory.
-    ledger_rounds: list[dict] = []
-    directories = (
-        evidence_path(root, story, "grill-rounds"),
-        evidence_path(root, None, "grill-rounds"),
-    )
-    for directory in dict.fromkeys(directories):
-        if not directory.is_dir():
-            continue
-        for record_path in sorted(directory.glob("*.json")):
-            record = load_json(record_path, default={})
-            ledger_rounds.extend(
-                entry for entry in record.get("questions", [])
-                if isinstance(entry, dict)
-            )
 
-    current_name = get_gate(gate).evidence_name(task_id)
-    current_story = story if get_gate(gate).story_scoped else ""
-    current_path = evidence_path(root, current_story, current_name)
-    grill_directories = (
-        evidence_path(root, story, "grills"),
-        evidence_path(root, None, "grills"),
-    )
-    used_rounds: list[dict] = []
-    for directory in dict.fromkeys(grill_directories):
-        if not directory.is_dir():
-            continue
-        paths = [*directory.glob("*.json"), *directory.glob("tasks/*.json")]
-        for grill_path in paths:
-            saved = load_json(grill_path, default={})
-            saved_rounds = saved.get("rounds")
-            # A pass never spends the rounds recorded at its OWN evidence path,
-            # whatever they now contain. That path is unique per gate, story and
-            # task, so this is exactly "reusable at THAT gate for THAT story"
-            # (decision 0067) and nothing wider: every OTHER pass still spends
-            # them. The old condition also required the stored rounds to be
-            # byte-identical to the ones being submitted, so editing a round made
-            # a pass start consuming its own history and demand a new question.
-            if grill_path == current_path:
-                continue
-            if isinstance(saved_rounds, list):
-                used_rounds.extend(
-                    entry for entry in saved_rounds if isinstance(entry, dict)
-                )
-
-    available = list(ledger_rounds)
-    for used in used_rounds:
-        claimed = next((
-            logged for logged in available
-            if logged.get("question") == used.get("question")
-            and logged.get("options") == used.get("options")
-            and (
-                logged.get("chosen") is None
-                or logged.get("chosen") == used.get("chosen")
-            )
-        ), None)
-        if claimed is not None:
-            available.remove(claimed)
-    for round_entry in rounds:
-        if not isinstance(round_entry, dict):
-            raise SystemExit(f"{gate} grill rounds entries must be objects")
-        question = round_entry.get("question")
-        options = round_entry.get("options")
-        chosen = round_entry.get("chosen")
-        match = next((
-            logged for logged in available
-            if logged.get("question") == question
-            and logged.get("options") == options
-            and (
-                logged.get("chosen") is None
-                or logged.get("chosen") == chosen
-            )
-        ), None)
-        if match is None:
+def _validate_dispositions(payload: dict, cold: str, final: str) -> None:
+    findings = [*payload.get("gaps", []), *payload.get("contradictions", [])]
+    dispositions = payload.get("finding_dispositions")
+    if not isinstance(dispositions, list) or len(dispositions) != len(findings):
+        raise SystemExit(
+            "grill finding_dispositions must map every cold-read finding exactly once"
+        )
+    for finding, disposition in zip(findings, dispositions):
+        if (not isinstance(disposition, dict)
+                or disposition.get("finding") != finding
+                or any(not _non_empty_string(disposition.get(field))
+                       for field in ("resolution", "source"))):
             raise SystemExit(
-                f"{gate} grill round does not match an AskUserQuestion ledger record: "
-                f"{question!r}"
+                "grill finding_dispositions must be ordered one-to-one objects "
+                "with exact finding, resolution, and source"
             )
-        available.remove(match)
-    if rounds[-1].get("frontier_empty") is not True:
+    amendments = payload.get("amendments", [])
+    if not isinstance(amendments, list):
+        raise SystemExit("grill amendments must be a list")
+    for entry in amendments:
+        if (not isinstance(entry, dict)
+                or any(not _non_empty_string(entry.get(field))
+                       for field in ("change", "reason", "source"))):
+            raise SystemExit(
+                "grill amendments require non-empty change, reason, and source"
+            )
+    if cold != final and not amendments:
         raise SystemExit(
-            f"{gate} grill final round requires frontier_empty true.\n"
-            "  The ledger never carries this flag — post_tool_use records the "
-            "question and the answer, nothing more — so you set it BY HAND on "
-            "the last entry of the `rounds` you submit. Copying the ledger "
-            "verbatim can therefore never satisfy this gate.\n"
-            "  If the frontier really is closed, ask one genuine closing "
-            "question (\"any remaining gap before we hand off?\"), answer it, "
-            "and mark that entry \"frontier_empty\": true. If it is not "
-            "closed, the grill has not converged and another round is the "
-            "honest answer (factory/prompts/griller.md)."
+            "the final artifact differs from the cold-read input; every change "
+            "requires an explained amendment bridge"
         )
+    payload["cold_input_sha256"] = cold
+    payload["final_artifact_sha256"] = final
 
 
 def _validate_task_grill(root: Path, payload: dict, task_id: str) -> dict:
@@ -153,8 +105,7 @@ def _validate_task_grill(root: Path, payload: dict, task_id: str) -> dict:
         "criteria_map": dict,
         "decision": str,
         "new_abstractions": list,
-        "rounds": list,
-        "citations": list,
+        "finding_dispositions": list,
     }
     for field, expected in required.items():
         if field not in payload:
@@ -253,42 +204,6 @@ def _validate_task_grill(root: Path, payload: dict, task_id: str) -> dict:
             f"statements (missing={missing}, extra={extra})"
         )
 
-    covered: set[str] = set()
-    for entry in payload["rounds"]:
-        if not isinstance(entry, dict):
-            raise SystemExit("task grill rounds entries must be objects")
-        question = entry.get("question")
-        options = entry.get("options")
-        chosen = entry.get("chosen")
-        if (
-            not _non_empty_string(question)
-            or not isinstance(options, list)
-            or not 2 <= len(options) <= 4
-            or any(not _non_empty_string(option) for option in options)
-            or not _non_empty_string(chosen)
-            or chosen not in options
-        ):
-            raise SystemExit(
-                "task grill rounds entries require {question, options, chosen}; "
-                "options must contain two to four strings and chosen must be one of them"
-            )
-        covered.add(question)
-    for entry in payload["citations"]:
-        if not isinstance(entry, dict):
-            raise SystemExit("task grill citations entries must be objects")
-        finding = entry.get("finding")
-        source = entry.get("source")
-        if not _non_empty_string(finding) or not _non_empty_string(source):
-            raise SystemExit(
-                "task grill citations entries require a finding and named source document"
-            )
-        covered.add(finding)
-    uncovered = [gap for gap in payload["gaps"] if gap not in covered]
-    if uncovered:
-        raise SystemExit(
-            f"task grill gap(s) lack a rounds entry or citation: {uncovered}"
-        )
-
     if payload["decision"] == "block":
         packet = payload.get("escalation_packet")
         packet_fields = {
@@ -364,26 +279,6 @@ if args.gate in ("spec", "epics", "plan"):
         plan_digest_without_assumptions(digest_target)
         if args.gate == "plan" else sha256_of(digest_target)
     )
-if args.gate == "requirements":
-    if args.input_digest:
-        raise SystemExit(
-            "--gate requirements self-derives its digest; do not pass --input-digest"
-        )
-    issue = load_json(run_state_path(root), default={}).get("issue_key", "")
-    if not issue:
-        raise SystemExit("no active story — run intake before the requirements grill")
-    items = load_json(root / "plans" / "roadmap.json", default={}).get("items", [])
-    item = next((entry for entry in items if entry.get("key") == issue), None)
-    spec_ref = item.get("spec") if isinstance(item, dict) else None
-    if not isinstance(spec_ref, str) or not spec_ref.strip():
-        raise SystemExit(f"active story {issue!r} has no confirmed spec")
-    spec = resolve_spec_reference(root, spec_ref, confirmed=True)
-    if payload.get("issue") and payload["issue"] != issue:
-        raise SystemExit(
-            f"payload issue {payload['issue']!r} does not match the active story {issue!r}"
-        )
-    payload["issue"] = issue
-    payload["input_sha256"] = requirements_digest(root, spec)
 if args.gate == "task":
     if not args.task:
         raise SystemExit("--gate task requires --task <id>")
@@ -450,10 +345,16 @@ payload["recorded_at"] = now_iso()
 payload["commit"] = head_sha(root)
 active_story = load_json(run_state_path(root), default={}).get("issue_key", "")
 _gate = get_gate(args.gate)
-# Unconditional: every row in the table carries a floor, so there is no longer
-# a gate this check can skip.
-_validate_round_provenance(
-    root, payload, args.gate, active_story, args.task or "",
+if args.gate == "task":
+    final_digest = sha256_of(task_plan)
+else:
+    _label, artifact = _gate.locate(root, args.task or "", args.input_digest or "")
+    from forge_cli.grill import _artifact_digest
+    final_digest = _artifact_digest(artifact)
+_validate_dispositions(
+    payload,
+    _cold_launch_digest(root, args.gate, args.task or ""),
+    final_digest,
 )
 
 

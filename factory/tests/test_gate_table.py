@@ -163,21 +163,9 @@ def test_active_model_policy_has_no_forbidden_execution_surface():
         if isinstance(row, dict) and "config_file" in row
     }
     expected_roles = {
-        "architect": ("gpt-5.6-sol", "high"),
-        "backend": ("gpt-5.6-sol", "medium"),
-        "debugger": ("gpt-5.6-sol", "medium"),
         "docs-decomposer": ("gpt-5.6-sol", "high"),
-        "explorer": ("gpt-5.6-sol", "low"),
-        "frontend": ("gpt-5.6-sol", "medium"),
         "functional-checker": ("gpt-5.6-sol", "high"),
-        "griller": ("gpt-5.6-sol", "high"),
-        "lite": ("gpt-5.6-luna", "max"),
-        "performance": ("gpt-5.6-sol", "high"),
-        "planner": ("gpt-5.6-sol", "high"),
         "planner-high": ("gpt-5.6-sol", "high"),
-        "refactorer": ("gpt-5.6-sol", "medium"),
-        "security": ("gpt-5.6-sol", "high"),
-        "tester": ("gpt-5.6-sol", "medium"),
     }
     actual_roles = {
         name: (row["model"], row["model_reasoning_effort"])
