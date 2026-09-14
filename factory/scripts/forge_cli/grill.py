@@ -236,8 +236,9 @@ def _refuse_past_the_cap(base: Path, ledger_id: str, gate: str,
         "something nobody has decided, and another round cannot settle that — "
         "stories that kept going reached eleven, twenty-six and forty rounds, "
         "the last costing six hours.\n\n"
-        "  Take the open findings to the human, say what you recommend, and "
-        "record what they decide:\n"
+        "  Resolve repository-answerable findings from repository facts. If "
+        "an unresolved material choice remains, take only that choice to the "
+        "human, say what you recommend, and record what they decide:\n"
         "    ./forge signal escalate --missing-decision \"<what nobody has "
         "decided>\" --checked \"contract,plan,constitution,decisions,lessons\"\n"
         "  Grilling continues after that. Recording a pass resets the count."
@@ -301,9 +302,10 @@ def _refuse_a_second_cold_read(base: Path, ledger_id: str, gate: str,
     exactly when it is wrong: the amendment answers the findings, so a reader
     that never saw them will not check it, it will look for new ones.
 
-    This is not a wall. The findings go to the human, the artifact is amended
-    once, and the pass is recorded against the AMENDED version -- one read,
-    then save. A reread stays available as a CHOICE with a reason, for when
+    This is not a wall. The coordinator resolves repository-answerable
+    findings, escalates only an unresolved material choice, amends the artifact
+    once, and records the pass against the AMENDED version -- one read, then
+    save. A reread stays available as a CHOICE with a reason, for when
     the answers changed the artifact's SHAPE rather than its details; the
     reason is ledgered, and the five-read cap still backstops it.
     """
@@ -330,9 +332,10 @@ def _refuse_a_second_cold_read(base: Path, ledger_id: str, gate: str,
         "frontier, and the artifact you amended to close round one becomes "
         "round two's input. Stories that kept re-reading reached eleven, "
         "twenty-six and forty rounds.\n\n"
-        "  One read is the whole grill. Put its findings to the human NOW, "
-        "amend the artifact to what they decided, and record the pass against "
-        "the amended version:\n"
+        "  One read is the whole grill. Resolve repository-answerable findings "
+        "from repository facts. Escalate only an unresolved material choice, "
+        "then amend the artifact once and record the pass against the amended "
+        "version:\n"
         "    python3 factory/scripts/record_grill_from_json.py "
         f"--gate {gate}"
         f"{' --task ' + task_id if task_id else ''} --input <json>\n\n"
@@ -384,9 +387,9 @@ def cmd_grill_run(args: argparse.Namespace) -> None:
     if args.print_only:
         return
     print(
-        "NEXT: put EVERY finding to the human in THIS grill "
-        "(AskUserQuestion -- the ledger the recorder reads), amend the "
-        "artifact to what they decided, then record the pass:\n"
+        "NEXT: resolve repository-answerable findings from repository facts. "
+        "Escalate only an unresolved material choice through the host's "
+        "synchronous question tool, amend the artifact once, then record the pass:\n"
         "  python3 factory/scripts/record_grill_from_json.py "
         f"--gate {gate}"
         f"{' --task ' + task_id if task_id else ''} --input <json>\n"

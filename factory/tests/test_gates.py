@@ -15341,6 +15341,31 @@ def test_brief_states_budget_and_narration_line(repo, tmp_path):
     ) in brief
 
 
+def test_grill_run_routes_only_unresolved_material_choices_to_human(
+        repo, monkeypatch, capsys):
+    from forge_cli import delegate, grill
+
+    monkeypatch.setattr(grill, "_refuse_past_the_cap", lambda *_args: None)
+    monkeypatch.setattr(grill, "_refuse_a_second_cold_read", lambda *_args: None)
+    monkeypatch.setattr(grill, "_artifact_text", lambda *_args: ("plan", "body"))
+    monkeypatch.setattr(grill, "_compose_brief", lambda *_args: "brief")
+    monkeypatch.setattr(delegate, "mode_run_config",
+                        lambda *_args: ("gpt-test", "high", 0))
+    monkeypatch.setattr(delegate, "launch_companion", lambda *_args, **_kwargs: None)
+    args = argparse.Namespace(
+        repo=str(repo), gate="plan", task="", file="", reread="",
+        print_only=False,
+    )
+
+    grill.cmd_grill_run(args)
+
+    output = capsys.readouterr().out
+    assert "resolve repository-answerable findings from repository facts" in output
+    assert "only an unresolved material choice" in output
+    assert "synchronous question tool" in output
+    assert "EVERY finding" not in output
+
+
 def test_delegate_derives_write_from_stage_state(repo, tmp_path):
     """Write permission stopped being a per-request opinion: three layers
     disagreed on the default and a read-only sandbox can neither write nor ask."""
