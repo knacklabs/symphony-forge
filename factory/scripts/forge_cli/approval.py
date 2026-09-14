@@ -13,7 +13,7 @@ from pathlib import Path
 from typing import Any
 
 from factory_lib import (
-    dump_json, evidence_path, load_json, now_iso,
+    _task_plan_state, dump_json, evidence_path, load_json, now_iso,
     plan_digest_without_assumptions, protected_decomposition_state_path,
     run_state_path, task_frontier_state,
 )
@@ -74,11 +74,7 @@ def _task_candidate(base: Path) -> ApprovalCandidate | None:
     if not plan.is_file() or grill.get("verdict") != "pass":
         return None
     digest = plan_digest_without_assumptions(plan)
-    # The cold proof may bind either the original input plus an explicit
-    # amendment bridge, or the final bytes in old pre-Lean records.
-    if grill.get("task_plan_sha256") != digest:
-        return None
-    if grill.get("approved_task_plan_sha256") == digest:
+    if _task_plan_state(base, task, grill) != "await-approval":
         return None
     return ApprovalCandidate("task", story, task_id, plan, digest, grill_path)
 

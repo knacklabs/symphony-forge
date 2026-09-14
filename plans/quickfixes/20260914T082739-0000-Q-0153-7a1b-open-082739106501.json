@@ -1,0 +1,13 @@
+{
+  "event": "open",
+  "id": "Q-0153-7a1b",
+  "profile": "degraded",
+  "reason": "The Q-0152 compatibility run proved stage start reports task-plan approval before checking whether the current plan bytes still match the cold grill. Native approval rejects that same mismatch, leaving no actionable path. Repair the shared task grill gate and its two regression tests; ordinary delegation remains unavailable because this Lean branch's committed hooks diverge from the parent worktree.",
+  "started_at": "2026-09-14T08:27:39+00:00",
+  "max_files": 5,
+  "files": [],
+  "harness_source": true,
+  "kind": "degraded",
+  "task_id": "LEAN-WORKFLOW",
+  "story": "FORGE-COORD-1"
+}

@@ -3462,10 +3462,7 @@ def task_plan_binding_digest(root: Path, task_id: str, grill: dict) -> str:
     if not plan.is_file():
         return ""
     digest = plan_digest_without_assumptions(plan)
-    if (
-        grill.get("task_plan_sha256") != digest
-        or grill.get("approved_task_plan_sha256") != digest
-    ):
+    if not _task_plan_approval_matches_digest(grill, digest):
         return ""
     return digest
 
@@ -4170,6 +4167,43 @@ def _task_contract_complete(task: dict) -> bool:
     )
 
 
+def _native_task_approval_recorded(grill: dict) -> bool:
+    """Whether the current task approval came from the shared native recorder."""
+    runtime = grill.get("approval_runtime")
+    expected_actor = {
+        "claude": "human-via-Claude",
+        "codex": "human-via-Codex",
+    }.get(runtime)
+    digest = grill.get("approved_task_plan_sha256")
+    return bool(
+        expected_actor
+        and grill.get("approved_by") == expected_actor
+        and isinstance(digest, str)
+        and re.fullmatch(r"[0-9a-f]{64}", digest)
+        and all(
+            isinstance(grill.get(field), str) and grill[field].strip()
+            for field in (
+                "approved_at", "approval_session_id", "approval_event_id",
+            )
+        )
+    )
+
+
+def _task_plan_approval_matches_digest(grill: dict, digest: str) -> bool:
+    """Whether current approval authority binds this task-plan digest."""
+    return bool(
+        isinstance(grill.get("approved_by"), str)
+        and grill["approved_by"].strip()
+        and isinstance(grill.get("approved_at"), str)
+        and grill["approved_at"].strip()
+        and grill.get("approved_task_plan_sha256") == digest
+        and (
+            grill.get("task_plan_sha256") == digest
+            or _native_task_approval_recorded(grill)
+        )
+    )
+
+
 def _task_grill_fresh(root: Path, task: dict, grill: dict) -> bool:
     task_id = task.get("id")
     plan = evidence_path(
@@ -4179,6 +4213,7 @@ def _task_grill_fresh(root: Path, task: dict, grill: dict) -> bool:
         return False
     plan_provenance_ok = (
         grill.get("task_plan_sha256") == plan_digest_without_assumptions(plan)
+        or _native_task_approval_recorded(grill)
     )
     try:
         grounded = task_grill_grounding_matches(root, task, grill)
@@ -4205,15 +4240,15 @@ def _task_plan_state(root: Path, task: dict, grill: dict) -> str:
     plan = evidence_path(root, key, f"task-plans/{task_id}.md")
     if not plan.is_file():
         return "author-task-plan"
-    approved = (
-        isinstance(grill.get("approved_by"), str)
-        and bool(grill["approved_by"].strip())
-        and isinstance(grill.get("approved_at"), str)
-        and bool(grill["approved_at"].strip())
-        and grill.get("approved_task_plan_sha256")
-        == plan_digest_without_assumptions(plan)
-    )
-    return "approved" if approved else "await-approval"
+    digest = plan_digest_without_assumptions(plan)
+    cold_read_matches = grill.get("task_plan_sha256") == digest
+    native_approval = _native_task_approval_recorded(grill)
+    approved = _task_plan_approval_matches_digest(grill, digest)
+    if approved:
+        return "approved"
+    if cold_read_matches or native_approval:
+        return "await-approval"
+    return "grill"
 
 
 def task_rows(root: Path) -> list[dict]:
@@ -4944,6 +4979,13 @@ def require_ready_task(
         require_task_grill(root, task_id, task, treeish=treeish)
     if require_approval:
         plan_state = _task_plan_state(root, task, grill)
+        if plan_state == "grill":
+            raise SystemExit(
+                f"the {task_id} task grill is STALE — the task plan changed "
+                "before any native approval bound it. Re-grill and record "
+                "`python3 factory/scripts/record_grill_from_json.py --gate task "
+                f"--task {task_id}` against the current plan."
+            )
         if plan_state == "await-approval":
             raise SystemExit(
                 f"Task plan approval required: display the exact current {task_id} "
