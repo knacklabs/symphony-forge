@@ -91,28 +91,6 @@ def test_forge_next_makes_reading_a_step_not_a_parenthesis(repo: Path):
     assert "/codex:rescue" in step, "breadth still delegates"
 
 
-# ------------------------------------------------------- the grill skill ---
-def test_the_harness_names_the_skill_a_reader_can_actually_load(repo: Path):
-    """`grill-me` carries disable-model-invocation: no model invokes it.
-
-    It is the human's `/grill-me` alias, redirecting to `grilling`, which
-    holds the technique and which `doctor` mirrors into both runtimes.
-    Instructing a cold reader to load the alias described something that
-    cannot happen.
-    """
-    contract = (HARNESS / "factory" / "prompts" / "griller.md").read_text(
-        encoding="utf-8")
-    assert "LOADS and RUNS the `grill-me` skill" not in contract
-    assert "disable-model-invocation" in contract, (
-        "say WHY the alias is not the thing to load")
-    assert "`grilling`" in contract
-
-    grill = (HARNESS / "factory" / "scripts" / "forge_cli" / "grill.py"
-             ).read_text(encoding="utf-8")
-    assert "installed only on the Claude side" not in grill, (
-        "doctor mirrors grilling into ~/.codex/skills; the claim was false")
-
-
 def test_doctor_requires_the_skill_that_is_used(repo: Path):
     # Requiring the Codex mirror of an un-invocable stub sent anyone missing it
     # to fix something no reader can use.

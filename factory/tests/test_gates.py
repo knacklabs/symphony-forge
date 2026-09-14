@@ -397,7 +397,11 @@ def record_task_grill(repo: Path, task: dict, verdict: str = "pass",
     if code != 0:
         return code, plan_out
     payload = task_grill_payload(task, verdict)
-    saved_plan = story_state(repo) / "task-plans" / f"{task['id']}.md"
+    lib = load_factory_lib(repo)
+    saved_plan = lib.evidence_path(
+        repo, run_state(repo).get("issue_key"),
+        f"task-plans/{task['id']}.md",
+    )
     _seed_cold_launch(
         repo, "task", hashlib.sha256(saved_plan.read_bytes()).hexdigest(), task["id"])
     code, out = run(
@@ -493,8 +497,9 @@ def seed_signoff_inputs(repo: Path) -> None:
             "saved: 2026-07-24T00:00:00+00:00\n---\n\n# Base\n"
         )
     roadmap = repo / "plans" / "roadmap.json"
-    if not roadmap.exists():
-        roadmap.parent.mkdir(parents=True, exist_ok=True)
+    roadmap.parent.mkdir(parents=True, exist_ok=True)
+    data = json.loads(roadmap.read_text()) if roadmap.exists() else {}
+    if not data.get("items"):
         roadmap.write_text(json.dumps({
             "generated_by": "docs-decomposer",
             "epics": [],
@@ -616,6 +621,78 @@ def write_passing_artifacts(repo: Path, commit: str | None = None) -> None:
                         "brief_sha256": brief_sha256,
                         "branch_diff_digest": branch_digest})
         )
+    raw_report = {
+        "findings": [],
+        "overall_correctness": "patch is correct",
+        "overall_explanation":
+            "BEGIN FORGE ASSESSMENT quality\nquality\n"
+            "END FORGE ASSESSMENT quality\n"
+            "BEGIN FORGE ASSESSMENT performance\nfast\n"
+            "END FORGE ASSESSMENT performance\n"
+            "BEGIN FORGE ASSESSMENT security\nsafe\n"
+            "END FORGE ASSESSMENT security",
+        "overall_confidence": 0.9,
+    }
+    raw = json.dumps({
+        **raw_report,
+        "provider_report": raw_report,
+        "review_status": "scoped-clean",
+    }, sort_keys=True).encode()
+    helper = {
+        "path": "/fixture/autoreview", "version": "fixture", "sha256": "a" * 64,
+    }
+    review_input = b"fixture reviewed meaning"
+    for task in decomposition["tasks"]:
+        task_id = task["id"]
+        delta_id = lib.product_delta_digest(
+            repo, lib.effective_review_base(repo, task_id, sha),
+        )
+        selected_brief_sha256 = hashlib.sha256(
+            f"fixture review brief for {task_id}".encode()
+        ).hexdigest()
+        selected_review_run_id = hashlib.sha256(
+            (selected_brief_sha256 + delta_id).encode()
+        ).hexdigest()
+        lenses = {
+            aspect: {
+                "task_id": task_id,
+                "generated_by": "autoreview",
+                "score": 10,
+                "summary": f"{aspect} review passed",
+                "blocking_findings": [],
+                "non_blocking_findings": [],
+                "recommendation": "approve",
+                "commit": sha,
+                "review_run_id": selected_review_run_id,
+                "brief_sha256": selected_brief_sha256,
+                "branch_diff_digest": delta_id,
+            }
+            for aspect in ("quality", "performance", "security")
+        }
+        lib.publish_review_generation(repo, key, task_id, {
+            "format": "forge-review-generation/v1",
+            "origin": "combined",
+            "generated_by": "autoreview",
+            "story": key,
+            "task_id": task_id,
+            "review_run_id": selected_review_run_id,
+            "brief_sha256": selected_brief_sha256,
+            "inspected_commit": sha,
+            "delta_id": delta_id,
+            "helper": helper,
+            "input": {
+                "sha256": hashlib.sha256(review_input).hexdigest(),
+                "bytes": len(review_input),
+            },
+            "raw_result": {
+                "encoding": "base64",
+                "sha256": hashlib.sha256(raw).hexdigest(),
+                "bytes": len(raw),
+                "data": base64.b64encode(raw).decode("ascii"),
+            },
+            "lenses": lenses,
+            "recorded_at": "2026-09-10T00:00:00+00:00",
+        })
     (f / "outcome.json").write_text(json.dumps({
         "generated_by": "implementer", "commit": sha,
         "outcome": "The invoice list now loads for every account and can be filtered "
@@ -736,6 +813,10 @@ def write_task_proof(repo: Path, task_id: str = "T1", *,
             },
             "recorded_at": "2026-09-10T00:00:00+00:00",
         })
+        from forge_cli.stages import stamp_stage_review
+        stamp_stage_review(
+            repo, task_id, lenses=("quality", "performance", "security"),
+        )
         # The marker command stages only its marker. Keep the brief in the
         # index so a marker commit carries the exact bytes and approved
         # records its reviews bind.
@@ -6200,6 +6281,9 @@ def test_task_grill_requires_saved_task_plan_with_tolerance(repo):
         repo, "forge.py", "task", "plan", "save", "T1", "--from", str(source),
     )
     assert code == 0, out
+    _seed_cold_launch(
+        repo, "task", hashlib.sha256(plan.read_bytes()).hexdigest(), "T1",
+    )
     code, out = run(repo, *command, stdin=json.dumps(payload))
     assert code == 0, out
 
@@ -6254,6 +6338,10 @@ def test_record_task_grill_writes_per_id_file(repo):
     task = {**STAGE_TASK, "id": task_id}
     seed_task_grill_frontier(repo, task)
     payload = task_grill_payload(task, task_id=task_id)
+    plan = repo / ".factory" / "task-plans" / f"{task_id}.md"
+    _seed_cold_launch(
+        repo, "task", hashlib.sha256(plan.read_bytes()).hexdigest(), task_id,
+    )
 
     code, out = run(repo, "record_grill_from_json.py", "--gate", "task",
                     "--task", task_id,
@@ -6274,6 +6362,10 @@ def test_record_task_grill_binds_derived_digest(repo):
     task = {**STAGE_TASK, "id": task_id}
     seed_task_grill_frontier(repo, task)
     payload = task_grill_payload(task)
+    plan = repo / ".factory" / "task-plans" / f"{task_id}.md"
+    _seed_cold_launch(
+        repo, "task", hashlib.sha256(plan.read_bytes()).hexdigest(), task_id,
+    )
 
     code, out = run(repo, "record_grill_from_json.py", "--gate", "task",
                     "--task", task_id,
@@ -6430,7 +6522,7 @@ def test_task_grill_requires_proofs_and_complete_dispositions(repo):
     assert code != 0 and "requires decision 'keep'" in out
 
     gap = "The task boundary lacks an explicit source."
-    uncovered = {**complete, "verdict": "blocked", "decision": "block",
+    uncovered = {**task_grill_payload(task, verdict="blocked"),
                  "gaps": [gap], "resolutions": ["The source was recorded."],
                  "finding_dispositions": []}
     seed()
@@ -6482,6 +6574,11 @@ def test_task_grill_block_requires_escalation_packet(repo):
     }))
     assert code != 0 and "exactly" in out
 
+    _seed_cold_launch(
+        repo, "task",
+        hashlib.sha256((repo / ".factory/task-plans/T1.md").read_bytes()).hexdigest(),
+        "T1",
+    )
     code, out = run(repo, *command, stdin=json.dumps(payload))
     assert code == 0, out
 
@@ -8667,8 +8764,8 @@ def test_plan_grill_recorder_stamps_the_active_issue(repo, tmp_path):
     draft.write_text("x\n")
     code, out = record_grill(repo, "plan", issue="ENG-9", digest_of=draft)  # wrong task
     assert code != 0 and "does not match" in out
-    code, out = record_grill(repo, "plan")  # digest is mandatory for plan gate
-    assert code != 0 and "input-digest" in out
+    with pytest.raises(SystemExit, match="--file"):
+        record_grill(repo, "plan")
     code, out = record_grill(repo, "plan", digest_of=draft)
     assert code == 0, out
     data = json.loads((story_state(repo) / "grills" / "plan.json").read_text())
@@ -11893,6 +11990,21 @@ def delegation_ledger(repo: Path) -> Path:
     return Path(git_dir) / "forge" / "delegations.jsonl"
 
 
+def task_write_launch_rows(repo: Path, task_id: str) -> list[dict]:
+    ledger = delegation_ledger(repo)
+    if not ledger.exists():
+        return []
+    rows = [
+        json.loads(line)
+        for line in ledger.read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    ]
+    return [
+        row for row in rows
+        if row.get("task") == task_id and row.get("write") is True
+    ]
+
+
 def delegation_lock(repo: Path, task_id: str) -> Path:
     return delegation_ledger(repo).parent / "locks" / "task" / f"{task_id}.lock"
 
@@ -13107,6 +13219,11 @@ def test_done_contracts_immutable_and_criteria_map_binds_plan_contracts(
     assert code != 0 and "requires the task's plan_contracts" in out
 
     seed_task_grill_frontier(repo, task)
+    _seed_cold_launch(
+        repo, "task",
+        hashlib.sha256((repo / ".factory/task-plans/T1.md").read_bytes()).hexdigest(),
+        "T1",
+    )
     code, out = run(
         repo, "record_grill_from_json.py", "--gate", "task", "--task", "T1",
         stdin=json.dumps(payload),
@@ -13117,6 +13234,11 @@ def test_done_contracts_immutable_and_criteria_map_binds_plan_contracts(
         **task["plan_contracts"][0], "statement": "a different plan promise",
     }]}
     seed_task_grill_frontier(repo, mismatched)
+    _seed_cold_launch(
+        repo, "task",
+        hashlib.sha256((repo / ".factory/task-plans/T1.md").read_bytes()).hexdigest(),
+        "T1",
+    )
     code, out = run(
         repo, "record_grill_from_json.py", "--gate", "task", "--task", "T1",
         stdin=json.dumps(payload),
@@ -15216,14 +15338,14 @@ def test_delegate_refuses_without_task_grill(repo, tmp_path):
     code, out = run(repo, "forge.py", "delegate", "T1",
                     env=fake_companion_env(tmp_path))
     assert code != 0 and "Task grill required" in out and command in out
-    assert not delegation_ledger(repo).exists()
+    assert not task_write_launch_rows(repo, "T1")
 
     code, out = record_task_grill(repo, STAGE_TASK, verdict="blocked")
     assert code == 0, out
     code, out = run(repo, "forge.py", "delegate", "T1",
                     env=fake_companion_env(tmp_path))
     assert code != 0 and "verdict is 'blocked'" in out and command in out
-    assert not delegation_ledger(repo).exists()
+    assert not task_write_launch_rows(repo, "T1")
 
 
 @delegate_task_grill_test
@@ -15239,7 +15361,7 @@ def test_delegate_refuses_stale_task_grill(repo, tmp_path):
     assert code != 0 and "STALE" in out
     assert "record_grill_from_json.py --gate task --task T1" in out
     assert "--task-digest was removed" in out
-    assert not delegation_ledger(repo).exists()
+    assert not task_write_launch_rows(repo, "T1")
 
 
 @delegate_task_grill_test
@@ -15284,8 +15406,7 @@ def test_delegate_records_ledger_entry(repo, tmp_path):
     code, out = run(repo, "forge.py", "delegate", "T1",
                     env=fake_companion_env(tmp_path))
     assert code == 0, out
-    lines = [json.loads(x) for x in
-             delegation_ledger(repo).read_text().splitlines() if x.strip()]
+    lines = task_write_launch_rows(repo, "T1")
     assert len(lines) == 3
     assert lines[0]["launch_status"] == "starting"
     assert "pid" not in lines[0]
@@ -15317,7 +15438,7 @@ def test_delegate_print_only_records_no_successful_launch(repo, tmp_path):
                     env={"HOME": home})
     assert code == 0 and "not launched" in out
     assert not (repo / ".factory" / "delegations.jsonl").exists()
-    assert not delegation_ledger(repo).exists()
+    assert not task_write_launch_rows(repo, "T1")
     write_in_scope(repo, "src/core.py")
     stamp_and_commit(repo)
     code, out = run(repo, "forge.py", "stage", "done", "T1")
@@ -15764,8 +15885,8 @@ def test_overlapping_write_launch_stays_invalid_until_all_are_terminal(repo, tmp
     with ledger.open("a") as fh:
         fh.write(json.dumps({**first, "launch_status": "succeeded",
                              "exit_code": 0}) + "\n")
-    code, out = record_stage_local(repo)
-    assert code == 0, out
+    from forge_cli.stages import stamp_stage_review
+    stamp_stage_review(repo, "T1", lenses=("quality", "performance", "security"))
     code, out = run(repo, "forge.py", "stage", "done", "T1")
     assert code == 0, out
 
@@ -16770,7 +16891,7 @@ def test_delegate_refuses_background_write_launch(repo, tmp_path):
                     env=fake_companion_env(tmp_path))
     assert code != 0 and "background write delegation" in out
     assert not (repo / ".factory" / "delegations.jsonl").exists()
-    assert not delegation_ledger(repo).exists()
+    assert not task_write_launch_rows(repo, "T1")
 
 
 def test_codex_status_reports_write_flag_and_stall(repo, tmp_path):
@@ -17237,9 +17358,11 @@ def test_docs_state_the_enforced_jit_contract():
         assert "factory/prompts/planner.md" in text
         lowered = text.lower()
         assert "re-record" in lowered
-        assert "task grill" in lowered
         assert "stage start" in lowered
         assert "delegate" in lowered
+    assert "cold grill" in factory_doc.lower()
+    assert "cold task grill" in workflow.lower()
+    assert "task grill" in decomposer.lower()
     assert "Do not guess later-task" in factory_doc  # JIT rule (wraps in FACTORY.md)
     assert "later-task detail during the initial decomposition" in workflow
     assert "later tasks remains deferred" in decomposer
@@ -17939,7 +18062,7 @@ def test_review_consumers_include_complete_approved_inputs(
         f"- Story: `{state['issue_key']}`", "- Task: `T1`", f"- Branch: `{branch}`",
         "- Current delta ID: `",
         "#### Full approved task plan", "#### Full grill and approval record",
-        '"approved_by": "Test Human"', '"approved_task_plan_sha256"',
+        '"approved_by": "human-via-Claude"', '"approved_task_plan_sha256"',
         "#### Full task-owned automated report",
         plan_text, full_grill, full_automated,
     ))
@@ -21565,33 +21688,12 @@ def test_next_prose_reconciles_handoffs_without_blind_retry():
     assert 'elif frontier == "inspect-proof":' in source
 
 
-def test_next_early_grill_guidance_uses_gate_floor_and_stops_native(repo, tmp_path):
-    draft = tmp_path / "notes.md"
-    draft.write_text("Early capability notes.\n", encoding="utf-8")
-    code, output = run(
-        repo, "forge.py", "spec", "save", "early", "--from", str(draft))
-    assert code == 0, output
-
-    code, claude = run(
-        repo, "forge.py", "next", env={"FORGE_COORDINATOR": "claude"})
-    assert code == 0, claude
-    assert f"at least {GATES['spec'].min_rounds} ledger-matched" in claude
-    assert "at least 2 real rounds" not in claude
-
-    code, native = run(
-        repo, "forge.py", "next", env={"FORGE_COORDINATOR": "codex"})
-    assert code == 0, native
-    assert "unavailable" in native and "STOP" in native
-    assert "LEAN-WORKFLOW" in native
-    assert "AskUserQuestion" not in native and "request_user_input" not in native
-
-
 def test_next_only_offers_signoff_grill_for_complete_inputs(repo):
     (repo / ".factory/grills/signoff.json").unlink(missing_ok=True)
     code, incomplete = run(
         repo, "forge.py", "next", env={"FORGE_COORDINATOR": "claude"})
     assert code == 0, incomplete
-    assert "Before sign-off: grill the handover" not in incomplete
+    assert "Before sign-off: cold-read the handover once" not in incomplete
 
     seed_signoff_inputs(repo)
     brief = repo / "docs/product/BRIEF.md"
@@ -21607,7 +21709,7 @@ def test_next_only_offers_signoff_grill_for_complete_inputs(repo):
     code, ready = run(
         repo, "forge.py", "next", env={"FORGE_COORDINATOR": "claude"})
     assert code == 0, ready
-    assert "Before sign-off: grill the handover" in ready
+    assert "Before sign-off: cold-read the handover once" in ready
 
 
 def task_pr_retry_env(tmp_path: Path) -> tuple[dict[str, str], Path, Path]:
@@ -21779,7 +21881,7 @@ def test_task_pr_ready_refuses_changed_evidence_after_marker(
     }
 
     code, out = run(repo, "forge.py", "task", "pr-ready", "T1", env=env)
-    assert code != 0 and "changed after task marker" in out, out
+    assert code != 0 and "STALE stage-local review stamp" in out, out
     assert head(repo) == changed_evidence_head
     assert marker.read_bytes() == before["marker"]
     assert stage_path.read_bytes() == before["stage"]

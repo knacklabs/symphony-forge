@@ -1515,26 +1515,18 @@ def _successful_launch_entry_valid(
             and entry.get("argv_sha256") == argv_digest(argv)
         )
     elif transport is None:
+        prompts = (str(brief), brief.relative_to(base).as_posix())
         argv_valid = (
             isinstance(argv, list)
             and bool(argv)
             and all(isinstance(token, str) for token in argv)
             and Path(argv[0]).stem.lower() == "node"
-            and argv == [
-                argv[0],
-                entry.get("companion_path"),
-                "task",
-                "--json",
-                "--cwd",
-                str(base),
-                "--model",
-                entry.get("model"),
-                "--effort",
-                entry.get("effort"),
-                "--prompt-file",
-                brief.relative_to(base).as_posix(),
+            and argv in [[
+                argv[0], entry.get("companion_path"), "task", "--json",
+                "--cwd", str(base), "--model", entry.get("model"),
+                "--effort", entry.get("effort"), "--prompt-file", prompt,
                 "--write",
-            ]
+            ] for prompt in prompts]
             and entry.get("argv_sha256") == argv_digest(argv)
         )
     else:

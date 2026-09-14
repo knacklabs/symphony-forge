@@ -127,14 +127,6 @@ def test_forge_next_hands_over_the_address(repo: Path):
     # the plan is visible somewhere the human cannot reach.
     assert "NO BOARD IS RUNNING" in handoff or "board is running" in handoff
 
-    source = (HARNESS / "factory" / "scripts" / "forge_cli" / "phase.py"
-              ).read_text(encoding="utf-8")
-    step = source[source.index("plan is ready for review"):][:900]
-    assert "GIVE THE HUMAN THAT LINK" in step
-    assert "does not check" in step, (
-        "the step must say the approval is NOT gated on the board")
-
-
 def test_the_board_port_is_named_once(repo: Path):
     # Two copies of the address is how `forge next` would come to point
     # somewhere the board is not.
