@@ -15,7 +15,9 @@ from test_gates import (  # noqa: F401
 
 sys.path.insert(0, str(HARNESS / "factory" / "scripts"))
 from forge_cli.review import _helper_identity, codex_runs_path, review_task  # noqa: E402
-from forge_cli.stages import load_stages  # noqa: E402
+from forge_cli.stages import (  # noqa: E402
+    load_stages, reviewed_meaning_identity, task_for,
+)
 
 
 FAKE_REVIEW = r'''
@@ -126,6 +128,12 @@ def test_default_review_uses_one_helper_and_publishes_one_generation(repo, tmp_p
         "starting") == 1
     stage = next(item for item in load_stages(repo)["stages"] if item["id"] == "T1")
     assert stage["local_review_stamp"]["delta_id"] == pointer["delta_id"]
+    meaning = reviewed_meaning_identity(
+        repo, stage, task_for(repo, "T1"), generation["helper"],
+    )
+    assert generation["input"] == {
+        "sha256": meaning["identity"], "bytes": meaning["bytes"],
+    }
 
 
 def test_review_helper_identity_mismatch_refuses_publication(repo, tmp_path, monkeypatch):

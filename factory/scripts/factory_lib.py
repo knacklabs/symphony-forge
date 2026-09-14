@@ -1341,13 +1341,69 @@ def load_review_artifacts(
     problems: list[str] = []
     head = head_sha(root) if require_head else None
     key = _active_story_key(root)
+    active_window = load_json(factory_dir(root) / "quickfix.json", default={})
+    if active_window.get("profile") == "lite":
+        for aspect in ("quality", "performance", "security"):
+            path = evidence_path(root, key or None, f"reviews/{aspect}.json")
+            data = load_json(path, default={})
+            if not data:
+                problems.append(str(path.relative_to(root)))
+                continue
+            reviews[aspect] = data
+            if data.get("blocking_findings") or (
+                not blockers_only and not review_passed(data)
+            ):
+                requirement = (
+                    "have no blockers" if blockers_only else "be >= 8 with no blockers"
+                )
+                problems.append(f"{aspect} review must {requirement}")
+            if require_head and data.get("commit") != head:
+                stamp = data.get("commit")
+                shown = stamp[:8] if isinstance(stamp, str) and stamp else "missing"
+                expected = head[:8] if head else "missing"
+                problems.append(
+                    f"{aspect} review must be stamped at HEAD {expected} (got {shown})"
+                )
+        return reviews, problems
+
     task_id = active_task_id(root)
+    if key and not task_id:
+        decomposition = load_json(
+            protected_decomposition_state_path(root), default={},
+        )
+        tasks = [
+            task for task in (
+                decomposition.get("tasks", [])
+                if isinstance(decomposition, dict) else []
+            )
+            if isinstance(task, dict) and isinstance(task.get("id"), str)
+        ]
+        if len(tasks) == 1:
+            task_id = tasks[0]["id"]
     if not key or not task_id:
         return {}, ["selected task review generation is missing"]
-    generation, _selection, lineage_problems = read_selected_review_generation(
-        root, key, task_id,
+    _generation_rel, selection_rel = _review_relpaths(key, task_id)
+    selection_present = (root / selection_rel).exists() or (root / selection_rel).is_symlink()
+    expected_delta = ""
+    review_head = head or head_sha(root) or ""
+    review_base = effective_review_base(root, task_id, review_head)
+    if review_base and review_head:
+        expected_delta = product_delta_digest(
+            root, review_base, review_head,
+        )
+    generation, selection, lineage_problems = read_selected_review_generation(
+        root, key, task_id, expected_delta_id=expected_delta,
     )
     if lineage_problems or not isinstance(generation, dict):
+        fixed = [
+            evidence_path(root, key, f"reviews/{aspect}.json")
+            for aspect in ("quality", "performance", "security")
+        ]
+        if not selection_present and any(path.is_file() for path in fixed):
+            return {}, [
+                "legacy fixed review proof is no longer runtime authority; "
+                "run `forge upgrade`"
+            ]
         return {}, lineage_problems or ["selected task review generation is missing"]
     for aspect in ("quality", "performance", "security"):
         data = generation.get("lenses", {}).get(aspect)
@@ -2237,14 +2293,28 @@ def require_closeout_order(root: Path) -> list[str]:
     # Selecting on the run mode is what keeps both flows working. Requiring
     # per-task proof everywhere would strand every story-level run — a
     # deadlock, since a story-level run cannot produce task markers at all.
-    task_level = bool(load_json(run_state_path(root), default={}).get("base_main_sha"))
     key = _active_story_key(root)
     decomposition = load_json(protected_decomposition_state_path(root), default={})
     tasks = [t for t in decomposition.get("tasks", []) if isinstance(t, dict)]
+    marker_backed = any(
+        task_evidence_path(
+            root, key, str(task.get("id") or ""), "pr-ready.json",
+        ).is_file()
+        for task in tasks
+    )
+    task_level = (
+        bool(load_json(run_state_path(root), default={}).get("base_main_sha"))
+        or marker_backed
+    )
 
     if task_level and tasks:
         for task in tasks:
             problems.extend(task_proof_problems(root, key, task))
+    elif len(tasks) > 1:
+        problems.append(
+            "multi-task story close requires each task's committed pr-ready marker "
+            "and selected review proof"
+        )
     else:
         verify = load_json(verify_state_path(root), default={})
         if not verify or not verify.get("ok"):
@@ -2258,7 +2328,15 @@ def require_closeout_order(root: Path) -> list[str]:
 
         reviews, review_problems = load_review_artifacts(root, require_head=True)
         problems.extend(review_problems)
-        problems.extend(require_coherent_review_run(root, reviews))
+        review_delta = None
+        if len(tasks) == 1:
+            task_id = str(tasks[0].get("id") or "")
+            review_base = effective_review_base(root, task_id, head or "")
+            if review_base:
+                review_delta = product_delta_digest(root, review_base, head or "")
+        problems.extend(require_coherent_review_run(
+            root, reviews, expected_branch_diff_digest=review_delta,
+        ))
 
         decomposition = load_json(protected_decomposition_state_path(root), default={})
         if bool(decomposition.get("user_facing", True)):

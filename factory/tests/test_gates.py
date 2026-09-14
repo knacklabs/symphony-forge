@@ -572,7 +572,10 @@ def save_plan_raw(repo: Path, tmp_path: Path) -> tuple[int, str]:
     return run(repo, "forge.py", "plan", "save", "--from", str(plan), "--story", story)
 
 
-def write_passing_artifacts(repo: Path, commit: str | None = None) -> None:
+def write_passing_artifacts(
+    repo: Path, commit: str | None = None, *, verify_contracts: bool = False,
+    contract_verdicts: list[dict] | None = None, publish_selected: bool = True,
+) -> None:
     sha = commit or head(repo)
     lib = load_factory_lib(repo)
     key = run_state(repo).get("issue_key", "")
@@ -597,10 +600,14 @@ def write_passing_artifacts(repo: Path, commit: str | None = None) -> None:
                        "generated_by": "functional-checker"},
         "commit": sha,
     }))
+    review_base = git(repo, "merge-base", "origin/main", sha)
     stages = {
         "issue": run_state(repo).get("issue_key", ""),
         "stages": [
-            {"id": task["id"], "title": task["title"], "status": "done"}
+            {
+                "id": task["id"], "title": task["title"], "status": "done",
+                "base_sha": review_base,
+            }
             for task in decomposition["tasks"]
         ],
     }
@@ -644,6 +651,10 @@ def write_passing_artifacts(repo: Path, commit: str | None = None) -> None:
     review_input = b"fixture reviewed meaning"
     for task in decomposition["tasks"]:
         task_id = task["id"]
+        if not publish_selected or lib.task_evidence_path(
+            repo, key, task_id, "pr-ready.json",
+        ).is_file():
+            continue
         delta_id = lib.product_delta_digest(
             repo, lib.effective_review_base(repo, task_id, sha),
         )
@@ -669,6 +680,18 @@ def write_passing_artifacts(repo: Path, commit: str | None = None) -> None:
             }
             for aspect in ("quality", "performance", "security")
         }
+        if verify_contracts and contract_verdicts is None:
+            contract_verdicts = [
+                {
+                    "contract_id": contract["id"],
+                    "verdict": "implemented",
+                    "evidence": "focused stage proof",
+                }
+                for owner in decomposition["tasks"]
+                for contract in owner.get("plan_contracts", [])
+            ]
+        if contract_verdicts is not None:
+            lenses["quality"]["contract_verdicts"] = contract_verdicts
         lib.publish_review_generation(repo, key, task_id, {
             "format": "forge-review-generation/v1",
             "origin": "combined",
@@ -704,7 +727,8 @@ def write_task_proof(repo: Path, task_id: str = "T1", *,
                      blocked: bool = False,
                      publish_review: bool = False,
                      review_blocked: bool = False,
-                     preserve_existing_proof: bool = False) -> Path:
+                     preserve_existing_proof: bool = False,
+                     contract_verdicts: list[dict] | None = None) -> Path:
     """Write one complete task-owned proof bundle for gate fixtures."""
     lib = load_factory_lib(repo)
     key = run_state(repo).get("issue_key", "ENG-1")
@@ -794,6 +818,11 @@ def write_task_proof(repo: Path, task_id: str = "T1", *,
             "END FORGE ASSESSMENT security", "overall_confidence": 0.9}
         raw = json.dumps({**provider, "provider_report": provider,
                           "review_status": "scoped-clean"}, sort_keys=True).encode()
+        if contract_verdicts is not None:
+            quality_path = task_root / "reviews" / "quality.json"
+            quality = json.loads(quality_path.read_text())
+            quality["contract_verdicts"] = contract_verdicts
+            quality_path.write_text(json.dumps(quality))
         helper = {"path": "/fixture/autoreview", "version": "fixture",
                   "sha256": "a" * 64}
         from forge_cli.stages import reviewed_meaning_identity, task_for
@@ -813,10 +842,11 @@ def write_task_proof(repo: Path, task_id: str = "T1", *,
             },
             "recorded_at": "2026-09-10T00:00:00+00:00",
         })
-        from forge_cli.stages import stamp_stage_review
-        stamp_stage_review(
-            repo, task_id, lenses=("quality", "performance", "security"),
-        )
+        if stage.get("status") in {"active", "done"} and not review_blocked:
+            from forge_cli.stages import stamp_stage_review
+            stamp_stage_review(
+                repo, task_id, lenses=("quality", "performance", "security"),
+            )
         # The marker command stages only its marker. Keep the brief in the
         # index so a marker commit carries the exact bytes and approved
         # records its reviews bind.
@@ -1332,7 +1362,7 @@ def test_board_stages_are_attributed_per_story(repo):
     assert _stages_for(repo, "") == {}, "no active story: empty key must not crash"
 
 
-def test_pr_ready_legacy_story_still_archives_to_history(repo, tmp_path):
+def test_pr_ready_legacy_fixed_review_requires_upgrade(repo, tmp_path):
     sign_off(repo)
     assert signed_off(repo)
     code, _ = intake(repo)
@@ -1341,43 +1371,14 @@ def test_pr_ready_legacy_story_still_archives_to_history(repo, tmp_path):
     code, out = save_plan(repo, tmp_path)
     assert code == 0, out
     record_skeleton_then_frontier(repo, DECOMP["tasks"])
-    write_passing_artifacts(repo)
-    # D-0013: a per-task grill must be archived into history like plan.json.
-    task_grills = repo / ".factory" / "grills" / "tasks"
-    task_grills.mkdir(parents=True, exist_ok=True)
-    (task_grills / "ENG-1.1.json").write_text('{"gate": "task", "verdict": "pass"}\n')
+    write_passing_artifacts(repo, publish_selected=False)
     code, out = run(repo, "update_run.py", "--decomposition-status", "recorded")
     assert code == 0, out
     code, out = run(repo, "pr_ready.py")
-    assert code == 0, out
-    # Archive: history bundle + plan moved + plan_file consistent (autoreview r8)
-    history = repo / ".factory" / "history" / "ENG-1"
-    for name in ("run.json", "decomposition.json", "verify.json", "tests.json"):
-        assert (history / name).exists()
-    assert (history / "reviews" / "quality.json").exists()
-    completed = repo / "plans" / "completed" / "ENG-1-invoices.md"
-    assert completed.exists()
-    assert not list((repo / "plans" / "active").glob("ENG-1-*.md"))
-    # the archived run.json carries the full task state...
-    archived_state = json.loads((history / "run.json").read_text())
-    assert archived_state["plan_file"] == "plans/completed/ENG-1-invoices.md"
-    # ...while the working tree is CLEANED for conflict-free branch merges:
-    # task-scoped artifacts removed, run.json reduced to project + last_shipped
-    for name in ("decomposition.json", "verify.json", "tests.json"):
-        assert not (repo / ".factory" / name).exists()
-    assert not (repo / ".factory" / "reviews").exists()
-    assert not (repo / ".factory" / "grills" / "plan.json").exists()
-    # D-0013: task grills archived into history, then removed from the live tree.
-    assert (history / "grills" / "tasks" / "ENG-1.1.json").exists()
-    assert not (repo / ".factory" / "grills" / "tasks").exists()
-    live = run_state(repo)
-    assert live["phase"] == "shipped" and signed_off(repo)
-    assert "client_signoff" not in live  # derived from harness.yaml, never stored
-    assert "issue_key" not in live and "last_shipped" not in live
-    assert "updated_at" not in live  # byte-stable across parallel branches
-    # Idempotent rerun (autoreview r2)
-    code, out = run(repo, "pr_ready.py")
-    assert code == 0 and "shipped so far: ENG-1" in out
+    assert code != 0 and "run `forge upgrade`" in out, out
+    assert (repo / ".factory/reviews/quality.json").is_file()
+    assert list((repo / "plans/active").glob("ENG-1-*.md"))
+    assert not (repo / ".factory/history/ENG-1").exists()
 
 
 def test_encoding_hygiene_gate_catches_each_violation_class(tmp_path):
@@ -9018,15 +9019,12 @@ def test_story_closeout_requires_all_task_markers_and_completed_stories_reads_sh
             repo, task_id, user_facing=task.get(
                 "user_facing", decomposition.get("user_facing", False)),
             publish_review=True,
+            contract_verdicts=[
+                {"contract_id": contract["id"], "verdict": "implemented",
+                 "evidence": "src/app.py:1"}
+                for contract in task["plan_contracts"]
+            ],
         )
-        quality_path = proof / "reviews" / "quality.json"
-        quality = json.loads(quality_path.read_text())
-        quality["contract_verdicts"] = [
-            {"contract_id": contract["id"], "verdict": "implemented",
-             "evidence": "src/app.py:1"}
-            for contract in task["plan_contracts"]
-        ]
-        quality_path.write_text(json.dumps(quality))
         proof_files = proof.relative_to(repo).as_posix()
         git(repo, "add", proof_files, ".factory/review-briefs/all.md", (scoped / "decomposition.json").relative_to(repo).as_posix())
         git(repo, "commit", "-q", "-m", f"record {task_id} proof")
@@ -11896,7 +11894,7 @@ def test_stage_loop_orders_execution_and_gates_pr_ready(repo, tmp_path):
     code, out = run(repo, "forge.py", "stage", "done", "T2")
     assert code == 0, out
     # re-stamp the closeout evidence at the final HEAD (verify/reviews/outcome)
-    write_passing_artifacts(repo, commit=head(repo))
+    write_passing_artifacts(repo, commit=head(repo), verify_contracts=True)
     quality_path = story_state(repo) / "reviews" / "quality.json"
     quality = json.loads(quality_path.read_text())
     quality["contract_verdicts"] = [
@@ -11912,7 +11910,7 @@ def test_stage_loop_orders_execution_and_gates_pr_ready(repo, tmp_path):
     (story_state(repo) / "decomposition.json").write_text(
         json.dumps({**decomp, "commit": head(repo)}))
     code, out = run(repo, "pr_ready.py")
-    assert code == 0, out
+    assert code != 0 and "committed pr-ready marker" in out, out
     assert (repo / ".factory" / "stages.json").exists()
 
 
@@ -17381,6 +17379,13 @@ def test_docs_state_the_enforced_jit_contract():
     assert "findings and refusals always in full" in agents
 
 
+@pytest.mark.skipif(
+    not (
+        (HARNESS / "docs/specs/plan-approval.md").is_file()
+        and (HARNESS / "docs/specs/dual-coordinator-parity.md").is_file()
+    ),
+    reason="requires the harness-source approval and parity specs",
+)
 def test_docs_state_enforced_order():
     approval_spec = (
         HARNESS / "docs" / "specs" / "plan-approval.md"
@@ -17585,15 +17590,7 @@ def test_precompact_scratchpad_snapshots_facts_and_findings(repo, tmp_path):
     assert "migrations dir is missing" not in text        # resolved fact refreshed away
     # a shipped task wipes the pad — session noise never crosses tasks
     run(repo, "forge.py", "stage", "done", "T1")
-    write_passing_artifacts(repo)
-    quality_path = story_state(repo) / "reviews" / "quality.json"
-    quality = json.loads(quality_path.read_text())
-    quality["contract_verdicts"] = [{
-        "contract_id": "C1",
-        "verdict": "implemented",
-        "evidence": "src/core.py:1",
-    }]
-    quality_path.write_text(json.dumps(quality))
+    write_passing_artifacts(repo, verify_contracts=True)
     run(repo, "update_run.py", "--decomposition-status", "recorded")
     run(repo, "forge.py", "assumptions", "resolve", "A-0001",
         "--status", "confirmed", "--notes", "60s confirmed with EM")
@@ -19105,8 +19102,8 @@ def test_task_proof_allows_mixed_product_and_metadata_commits(
 
     # Complete the ordinary stage/seal path. The stage stamp is bound to N's
     # product tree, while the proof records intentionally retain E and M.
-    code, out = record_stage_local(repo)
-    assert code == 0, out
+    from forge_cli.stages import stamp_stage_review
+    stamp_stage_review(repo, "T1", lenses=("quality", "performance", "security"))
     stages_path = delegation_ledger(repo).parent / "stages.json"
     stages = json.loads(stages_path.read_text())
     stages["stages"][0]["status"] = "done"
@@ -19838,40 +19835,43 @@ def test_pr_ready_blocks_on_unverified_plan_contracts(repo, tmp_path):
     code, out = run(repo, "pr_ready.py")
     assert code != 0 and "C1, C2" in out and "./forge review-brief" in out
 
-    quality_path = story_state(repo) / "reviews" / "quality.json"
-    quality = json.loads(quality_path.read_text())
-    quality["contract_verdicts"] = [
+    verdicts = [
         {"contract_id": "C1", "verdict": "implemented", "evidence": "src/a.py:1"},
         {"contract_id": "C2", "verdict": "partial", "evidence": "src/b.py:2"},
     ]
-    quality_path.write_text(json.dumps(quality))
+    write_passing_artifacts(repo, contract_verdicts=verdicts)
     code, out = run(repo, "pr_ready.py")
     assert code != 0 and "C2" in out and "review-brief" in out
 
-    quality["contract_verdicts"][1]["verdict"] = "implemented"
-    quality_path.write_text(json.dumps(quality))
+    verdicts[1]["verdict"] = "implemented"
+    write_passing_artifacts(repo, contract_verdicts=verdicts)
     code, out = run(repo, "pr_ready.py")
     assert code == 0, out
 
 
 def test_pr_ready_refuses_incoherent_lens_set(repo, tmp_path):
     scoped = prepare_pr_ready_story(repo, tmp_path, scoped_layout=True)
-    performance_path = scoped / "reviews" / "performance.json"
-    performance = json.loads(performance_path.read_text())
-    original_run_id = performance["review_run_id"]
-    performance["review_run_id"] = "different-run"
-    performance_path.write_text(json.dumps(performance))
+    selection = json.loads(
+        (scoped / "tasks/T1/reviews/selected.json").read_text()
+    )
+    generation_path = (
+        scoped / "tasks/T1/reviews/generations"
+        / f"{selection['generation_id']}.json"
+    )
+    original_generation = generation_path.read_bytes()
+    generation = json.loads(original_generation)
+    generation["lenses"]["performance"]["review_run_id"] = "different-run"
+    generation_path.write_text(json.dumps(generation))
 
     code, out = run(repo, "pr_ready.py")
-    assert code != 0 and "must share one review_run_id" in out
+    assert code != 0 and "selected review proof is invalid" in out
 
-    performance["review_run_id"] = original_run_id
-    performance_path.write_text(json.dumps(performance))
+    generation_path.write_bytes(original_generation)
     (repo / "app.py").write_text("print('changed after branch review')\n")
     git(repo, "add", "app.py")
     git(repo, "commit", "-q", "-m", "change reviewed branch")
     code, out = run(repo, "pr_ready.py")
-    assert code != 0 and "branch review is stale" in out
+    assert code != 0 and "selected review generation is stale" in out
 
 
 def test_pr_ready_refuses_out_of_order_or_dirty_or_unstamped_closeout(repo, tmp_path):
@@ -19885,14 +19885,20 @@ def test_pr_ready_refuses_out_of_order_or_dirty_or_unstamped_closeout(repo, tmp_
     assert code != 0 and "successful .factory/verify.json" in out, out
     verify_path.write_text(json.dumps(verify))
 
-    performance_path = scoped / "reviews" / "performance.json"
-    performance = json.loads(performance_path.read_text())
-    performance["commit"] = "deadbeef"
-    performance_path.write_text(json.dumps(performance))
+    selection = json.loads(
+        (scoped / "tasks/T1/reviews/selected.json").read_text()
+    )
+    generation_path = (
+        scoped / "tasks/T1/reviews/generations"
+        / f"{selection['generation_id']}.json"
+    )
+    original_generation = generation_path.read_bytes()
+    generation = json.loads(original_generation)
+    generation["lenses"]["performance"]["commit"] = "deadbeef"
+    generation_path.write_text(json.dumps(generation))
     code, out = run(repo, "pr_ready.py")
-    assert code != 0 and "performance review must be stamped at HEAD" in out, out
-    performance["commit"] = head(repo)
-    performance_path.write_text(json.dumps(performance))
+    assert code != 0 and "selected review proof is invalid" in out, out
+    generation_path.write_bytes(original_generation)
 
     outcome_path = scoped / "outcome.json"
     outcome = json.loads(outcome_path.read_text())
@@ -20099,8 +20105,14 @@ def test_project_agents_init_upgrade_and_preserve_client_additions(
 
 
 def _retired_profile_bytes(name: str) -> bytes:
+    relative = f".codex/agents/{name}"
+    deleted = subprocess.run(
+        ["git", "log", "-1", "--diff-filter=D", "--format=%H", "--", relative],
+        cwd=HARNESS, capture_output=True, text=True, encoding="utf-8",
+    )
+    assert deleted.returncode == 0 and deleted.stdout.strip(), deleted.stderr
     result = subprocess.run(
-        ["git", "show", f"HEAD:.codex/agents/{name}"], cwd=HARNESS,
+        ["git", "show", f"{deleted.stdout.strip()}^:{relative}"], cwd=HARNESS,
         capture_output=True,
     )
     assert result.returncode == 0, result.stderr.decode(errors="replace")

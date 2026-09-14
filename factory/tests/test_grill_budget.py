@@ -26,6 +26,7 @@ def _lifecycle(repo: Path, launch_id: str, statuses: tuple[str, ...]) -> Path:
             fh.write(json.dumps({
                 "launch_id": launch_id,
                 "task": "grill-plan",
+                "story": "ENG-1",
                 "at": f"2026-09-07T10:00:0{index}+00:00",
                 "launch_status": status,
                 "write": False,
@@ -88,16 +89,21 @@ def test_both_guards_agree_on_the_same_collapsed_view(repo: Path, monkeypatch):
     from forge_cli import grill  # noqa: E402
 
     original = grill._latest_launch_rows
-    calls: list[tuple[Path, str, str]] = []
+    calls: list[tuple[Path, str, str, str]] = []
 
-    def tracked(base: Path, ledger_id: str, since: str) -> list[dict]:
-        calls.append((base, ledger_id, since))
-        return original(base, ledger_id, since)
+    def tracked(
+        base: Path, ledger_id: str, since: str, *, story: str = "",
+    ) -> list[dict]:
+        calls.append((base, ledger_id, since, story))
+        return original(base, ledger_id, since, story=story)
 
     monkeypatch.setattr(grill, "_latest_launch_rows", tracked)
     assert _rounds(repo) == 3
     assert _repeat_read_is_refused(repo)
-    assert calls == [(repo, "grill-plan", ""), (repo, "grill-plan", "")]
+    assert calls == [
+        (repo, "grill-plan", "", ""),
+        (repo, "grill-plan", "", "ENG-1"),
+    ]
 
 
 def test_no_new_ledger_field_is_written(repo: Path):
@@ -109,5 +115,5 @@ def test_no_new_ledger_field_is_written(repo: Path):
     assert not _repeat_read_is_refused(repo)
     assert path.read_text(encoding="utf-8") == before
     assert all(set(json.loads(line)) == {
-        "launch_id", "task", "at", "launch_status", "write",
+        "launch_id", "task", "story", "at", "launch_status", "write",
     } for line in before.splitlines())

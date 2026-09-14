@@ -1,0 +1,18 @@
+{
+  "event": "done",
+  "id": "Q-0151-34b3",
+  "profile": "degraded",
+  "kind": "degraded",
+  "reason": "The second post-Lean full-suite pass exposed two bounded compatibility seams: the combined-review recorder still hashes the raw prompt instead of the reviewed-meaning identity, and story-level/Lite close helpers need explicit selected-generation versus ephemeral-review routing after fixed proof fallback retirement. Ordinary delegation remains unavailable because the Lean branch's committed hooks diverge from the parent worktree. Repair only factory_lib.py, record_review_from_json.py, test_review_lenses_in_parallel.py, test_gates.py, and test_grill_budget.py in this batch.",
+  "started_at": "2026-09-14T07:49:28+00:00",
+  "completed_at": "2026-09-14T08:16:27+00:00",
+  "files": [
+    "factory/scripts/factory_lib.py",
+    "factory/scripts/record_review_from_json.py",
+    "factory/tests/test_review_lenses_in_parallel.py",
+    "factory/tests/test_gates.py",
+    "factory/tests/test_grill_budget.py"
+  ],
+  "task_id": "LEAN-WORKFLOW",
+  "story": "FORGE-COORD-1"
+}
