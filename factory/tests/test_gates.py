@@ -8908,9 +8908,9 @@ def test_roadmap_gate_workflow_shape():
     assert "except" not in workflow
     assert workflow.count("GITHUB_OUTPUT") == 2
     # Three guarded steps across two jobs: pr-contract runs BOTH the ticket
-    # gate and the task-proof gate (0049). Every gated step must carry the
-    # guard -- a new gate that forgot it would fire in the harness itself and
-    # in clients that have not signed off.
+    # gate and the task-proof gate (accepted 0054/0069). Every gated step must
+    # carry the guard. A new gate that forgot it would fire in the harness
+    # itself and in clients that have not signed off.
     assert workflow.count("steps.arm.outputs.armed == 'true'") == 3
     assert workflow.count("fetch-depth: 0") == 1
     assert "fetch-depth: 0" in pr_job and "fetch-depth: 0" not in coverage_job
@@ -19667,7 +19667,8 @@ def test_quality_review_requires_contract_verdicts(repo, tmp_path):
     })
     seed_review_inputs(repo, [tasks[0]])
     # BOTH tasks are in scope here: a review only verdicts the contracts of
-    # tasks that have started or shipped (0049), so leaving T2 pending would
+    # tasks that have started or shipped (accepted 0054/0069), so leaving T2
+    # pending would
     # take C2 out of scope and make the refusal matrix below meaningless. The
     # scoping rule itself is pinned by
     # test_quality_review_ignores_contracts_of_tasks_that_have_not_started.
@@ -19730,7 +19731,7 @@ def test_quality_review_requires_contract_verdicts(repo, tmp_path):
 def test_quality_review_ignores_contracts_of_tasks_that_have_not_started(
         repo, tmp_path):
     """A per-task review verdicts the contracts of tasks that have STARTED or
-    shipped -- never those of a task nobody has begun (0049).
+    shipped -- never those of a task nobody has begun (accepted 0054/0069).
 
     Under the old story-level shape, reviewing the first task demanded verdicts
     for every later task's contracts, which a reviewer cannot honestly give.

@@ -170,7 +170,8 @@ for key in ("blocking_findings", "non_blocking_findings"):
 if args.aspect == "quality" and state.get("decomposition_status") == "recorded":
     decomposition = load_json(protected_decomposition_state_path(root), default={})
     contracts = declared_contracts(decomposition)
-    # Per-task proof (0049): a task's review verdicts the contracts of tasks
+    # Per-task proof (accepted 0054/0069): a task's review verdicts the
+    # contracts of tasks
     # that have started or shipped — its own and the done ones — never those
     # of tasks that have not begun. When every stage is done (story closeout)
     # this is still the full union.

@@ -73,10 +73,11 @@ clients and preserving client changes and existing hotfixes.
   Attributed authorization, concrete revision binding and locked worker scope
   remain required. Preserve 0018's actual admission, measurement and test gates.
 - Under this accepted decision and 0011, amend the separate lens-launch
-  procedure while retaining genuine three-lens proof. Proposed 0049 is not
-  authority for this change. Amend 0055/0056 rollout ordering to native
-  foundation, lean enforcement, then coherent quality capabilities; full static
-  quality and all six native runtime cells still precede full parity shipping.
+  procedure while retaining genuine three-lens proof. The earlier proposed
+  per-task-review record is not authority for this change. Amend 0055/0056
+  rollout ordering to native foundation, lean enforcement, then coherent
+  quality capabilities; full static quality and all six native runtime cells
+  still precede full parity shipping.
   Amend 0058's obsolete fixed-cap interpretation: existing review limits mean
   the installed helper's actual enforced safeguards, never a tool-cap override.
   Replace the spec's agreed 120000/180000-byte bounds with complete review under
