@@ -818,6 +818,16 @@ def write_task_proof(repo: Path, task_id: str = "T1", *,
             "END FORGE ASSESSMENT security", "overall_confidence": 0.9}
         raw = json.dumps({**provider, "provider_report": provider,
                           "review_status": "scoped-clean"}, sort_keys=True).encode()
+        from forge_cli.stages import reviewed_meaning_identity, task_for
+        if contract_verdicts is None:
+            contract_verdicts = [
+                {
+                    "contract_id": contract["id"],
+                    "verdict": "implemented",
+                    "evidence": "src/core.py:1",
+                }
+                for contract in task_for(repo, task_id).get("plan_contracts") or []
+            ]
         if contract_verdicts is not None:
             quality_path = task_root / "reviews" / "quality.json"
             quality = json.loads(quality_path.read_text())
@@ -825,7 +835,6 @@ def write_task_proof(repo: Path, task_id: str = "T1", *,
             quality_path.write_text(json.dumps(quality))
         helper = {"path": "/fixture/autoreview", "version": "fixture",
                   "sha256": "a" * 64}
-        from forge_cli.stages import reviewed_meaning_identity, task_for
         meaning = reviewed_meaning_identity(repo, stage, task_for(repo, task_id), helper)
         lib.publish_review_generation(repo, key, task_id, {
             "format": "forge-review-generation/v1", "origin": "combined",
@@ -1203,35 +1212,34 @@ def refresh_manifest(repo: Path) -> None:
 def prepare_pr_ready_story(
     repo: Path, tmp_path: Path, *, scoped_layout: bool = False,
 ) -> Path:
-    sign_off(repo)
-    if scoped_layout:
-        (repo / ".factory" / "stories" / "ENG-1").mkdir(parents=True)
-    code, out = intake(repo)
+    assert scoped_layout, "story closeout fixtures use canonical scoped task proof"
+    marker = prepare_task_pr_ready(repo, tmp_path)
+    finish_task_for_pr_ready(repo)
+    proof = write_task_proof(
+        repo,
+        "T1",
+        publish_review=True,
+        contract_verdicts=[{
+            "contract_id": "C1",
+            "verdict": "implemented",
+            "evidence": "src/core.py:1",
+        }],
+    )
+    git(repo, "add", proof.relative_to(repo).as_posix(), ".factory/review-briefs/all.md")
+    git(repo, "commit", "-qm", "record canonical task proof")
+    gh_env, _ = fake_gh_env(tmp_path)
+    code, out = run(repo, "forge.py", "task", "pr-ready", "T1", env=gh_env)
+    assert code == 0 and marker.is_file(), out
+    code, out = run(
+        repo,
+        "forge.py",
+        "outcome",
+        "set",
+        "The invoice list now loads for every account and can be filtered by date, "
+        "which previously required a support request.",
+    )
     assert code == 0, out
-    if scoped_layout:
-        plan = repo / "plans" / "active" / "ENG-1-invoices.md"
-        plan.parent.mkdir(parents=True, exist_ok=True)
-        plan.write_text(
-            "---\nstatus: approved\nissue: ENG-1\nstory: ENG-1\n---\n\n" + PLAN_BODY
-        )
-        state = run_state(repo)
-        state.update({
-            "plan_file": plan.relative_to(repo).as_posix(),
-            "plan_status": "approved",
-            "story": "ENG-1",
-        })
-        lib = load_factory_lib(repo)
-        lib.dump_json(lib.run_state_path(repo), state)
-        code, out = record_grill(repo, "plan", digest_of=plan)
-        assert code == 0, out
-    else:
-        code, out = save_plan(repo, tmp_path)
-        assert code == 0, out
-    record_skeleton_then_frontier(repo, DECOMP["tasks"])
-    write_passing_artifacts(repo)
-    code, out = run(repo, "update_run.py", "--decomposition-status", "recorded")
-    assert code == 0, out
-    return repo / ".factory" / "stories" / "ENG-1"
+    return story_state(repo, "ENG-1")
 
 
 def test_pr_ready_ships_in_place_no_file_moves(repo, tmp_path):
@@ -1279,7 +1287,7 @@ def test_board_and_history_read_shipped_story_dir(repo, tmp_path):
     detail = story_detail(repo, "ENG-1")
     assert detail is not None
     assert detail["evidence"]["outcome"]["outcome"].startswith("The invoice list")
-    assert detail["evidence"]["verify"]["ok"] is True
+    assert detail["tasks"][0]["proof"]["verify_ok"] is True
     story = next(item for item in aggregate_state(repo)["stories"]
                  if item["key"] == "ENG-1")
     assert story["state"] == "shipped"
@@ -8983,23 +8991,24 @@ def test_story_closeout_requires_all_task_markers_and_completed_stories_reads_sh
     control = delegation_ledger(repo).parent
     decomposition_path = control / "decomposition.json"
     decomposition = json.loads(decomposition_path.read_text())
-    decomposition["tasks"].append({
+    decomposition["tasks"].append(task_with_plan_contracts({
         **decomposition["tasks"][0], "id": "T2", "title": "second slice",
-    })
-    decomposition["tasks"] = [
-        task_with_plan_contracts(task, prefix=f"{task['id']}-C")
-        for task in decomposition["tasks"]
-    ]
+    }, prefix="T2-C"))
     decomposition_path.write_text(json.dumps(decomposition))
     (scoped / "decomposition.json").write_text(json.dumps(decomposition))
-    write_passing_artifacts(repo)
-    configure_origin_main(repo, tmp_path / "closeout-origin.git")
+    git(repo, "add", (scoped / "decomposition.json").relative_to(repo).as_posix())
+    git(repo, "commit", "-qm", "add second task contract")
+    git(repo, "push", "-q", "origin", "HEAD:main")
     pointer = json.loads((control / "run.json").read_text())
     pointer["base_main_sha"] = git(repo, "rev-parse", "origin/main")
     (control / "run.json").write_text(json.dumps(pointer))
+    write_stages(repo, {"issue": "ENG-1", "stages": [
+        {"id": "T1", "title": decomposition["tasks"][0]["title"], "status": "done"},
+        {"id": "T2", "title": "second slice", "status": "pending"},
+    ]})
 
     code, out = run(repo, "pr_ready.py")
-    assert code != 0 and "T1" in out and "T2" in out, out
+    assert code != 0 and "T2" in out, out
     assert not (scoped / "shipped.json").exists()
     assert roadmap_items(repo)["ENG-1"]["status"] == "active"
 
@@ -9045,25 +9054,20 @@ def test_story_closeout_requires_all_task_markers_and_completed_stories_reads_sh
         git(repo, "commit", "-q", "-m", f"mark {task_id} ready")
         git(repo, "push", "-q", "origin", "HEAD:main")
 
-    _, t1_seal = seal_task_proof("T1")
-    publish_sealed_marker("T1", t1_seal)
-    assert load_factory_lib(repo).task_marker_on_main(repo, "ENG-1", "T1")
-    write_passing_artifacts(repo)
-    code, out = run(repo, "pr_ready.py")
-    assert code != 0 and "T2" in out, out
-    assert not (scoped / "shipped.json").exists()
-
     _, t2_seal = seal_task_proof("T2")
     publish_sealed_marker("T2", t2_seal)
-    write_passing_artifacts(repo)
-    quality_path = scoped / "reviews" / "quality.json"
-    quality = json.loads(quality_path.read_text())
-    quality["contract_verdicts"] = [
-        verdict for task in decomposition["tasks"]
-        for verdict in json.loads((scoped / "tasks" / task["id"] / "reviews"
-                                   / "quality.json").read_text())["contract_verdicts"]
-    ]
-    quality_path.write_text(json.dumps(quality))
+    write_stages(repo, {"issue": "ENG-1", "stages": [
+        {"id": task["id"], "title": task["title"], "status": "done"}
+        for task in decomposition["tasks"]
+    ]})
+    code, out = run(
+        repo,
+        "forge.py",
+        "outcome",
+        "set",
+        "Both task slices shipped, so readers can use the complete workflow now.",
+    )
+    assert code == 0, out
     closeout_base = head(repo)
     code, out = run(repo, "pr_ready.py")
     assert code == 0 and "shipped in place" in out, out
@@ -19828,25 +19832,33 @@ def test_pr_ready_blocks_on_unverified_plan_contracts(repo, tmp_path):
         {"id": "C1", "statement": "first statement", "source": "plan.md#first"},
         {"id": "C2", "statement": "second statement", "source": "plan.md#second"},
     ]
-    task = {**DECOMP["tasks"][0], "plan_contracts": contracts}
+    task = {
+        **DECOMP["tasks"][0],
+        "acceptance_criteria": ["first statement", "second statement"],
+        "plan_contracts": contracts,
+    }
     record_skeleton_then_frontier(repo, [task])
-    write_passing_artifacts(repo)
+    code, out = record_task_grill(repo, task)
+    assert code == 0, out
+    lib = load_factory_lib(repo)
 
-    code, out = run(repo, "pr_ready.py")
-    assert code != 0 and "C1, C2" in out and "./forge review-brief" in out
+    write_task_proof(repo, "T1", publish_review=True, contract_verdicts=[])
+    problems = lib.task_proof_problems(repo, "ENG-1", task, preseal=True)
+    assert any("C1, C2" in problem and "./forge review-brief" in problem
+               for problem in problems)
 
     verdicts = [
         {"contract_id": "C1", "verdict": "implemented", "evidence": "src/a.py:1"},
         {"contract_id": "C2", "verdict": "partial", "evidence": "src/b.py:2"},
     ]
-    write_passing_artifacts(repo, contract_verdicts=verdicts)
-    code, out = run(repo, "pr_ready.py")
-    assert code != 0 and "C2" in out and "review-brief" in out
+    write_task_proof(repo, "T1", publish_review=True, contract_verdicts=verdicts)
+    problems = lib.task_proof_problems(repo, "ENG-1", task, preseal=True)
+    assert any("C2" in problem and "review-brief" in problem for problem in problems)
 
     verdicts[1]["verdict"] = "implemented"
-    write_passing_artifacts(repo, contract_verdicts=verdicts)
-    code, out = run(repo, "pr_ready.py")
-    assert code == 0, out
+    write_task_proof(repo, "T1", publish_review=True, contract_verdicts=verdicts)
+    problems = lib.task_proof_problems(repo, "ENG-1", task, preseal=True)
+    assert not any("unverified" in problem for problem in problems), problems
 
 
 def test_pr_ready_refuses_incoherent_lens_set(repo, tmp_path):
@@ -19858,47 +19870,26 @@ def test_pr_ready_refuses_incoherent_lens_set(repo, tmp_path):
         scoped / "tasks/T1/reviews/generations"
         / f"{selection['generation_id']}.json"
     )
-    original_generation = generation_path.read_bytes()
-    generation = json.loads(original_generation)
+    generation = json.loads(generation_path.read_bytes())
     generation["lenses"]["performance"]["review_run_id"] = "different-run"
     generation_path.write_text(json.dumps(generation))
+    git(repo, "add", generation_path.relative_to(repo).as_posix())
+    git(repo, "commit", "-qm", "tamper with sealed review proof")
 
     code, out = run(repo, "pr_ready.py")
-    assert code != 0 and "selected review proof is invalid" in out
-
-    generation_path.write_bytes(original_generation)
-    (repo / "app.py").write_text("print('changed after branch review')\n")
-    git(repo, "add", "app.py")
-    git(repo, "commit", "-q", "-m", "change reviewed branch")
-    code, out = run(repo, "pr_ready.py")
-    assert code != 0 and "selected review generation is stale" in out
+    assert code != 0 and "proof changed after task marker" in out
 
 
 def test_pr_ready_refuses_out_of_order_or_dirty_or_unstamped_closeout(repo, tmp_path):
     scoped = prepare_pr_ready_story(repo, tmp_path, scoped_layout=True)
-    verify_path = scoped / "verify.json"
+    verify_path = scoped / "tasks/T1/verify.json"
     verify = json.loads(verify_path.read_text())
 
     # Later evidence cannot make up for a missing verify prerequisite.
     verify_path.unlink()
     code, out = run(repo, "pr_ready.py")
-    assert code != 0 and "successful .factory/verify.json" in out, out
+    assert code != 0 and "T1: no passing verify" in out, out
     verify_path.write_text(json.dumps(verify))
-
-    selection = json.loads(
-        (scoped / "tasks/T1/reviews/selected.json").read_text()
-    )
-    generation_path = (
-        scoped / "tasks/T1/reviews/generations"
-        / f"{selection['generation_id']}.json"
-    )
-    original_generation = generation_path.read_bytes()
-    generation = json.loads(original_generation)
-    generation["lenses"]["performance"]["commit"] = "deadbeef"
-    generation_path.write_text(json.dumps(generation))
-    code, out = run(repo, "pr_ready.py")
-    assert code != 0 and "selected review proof is invalid" in out, out
-    generation_path.write_bytes(original_generation)
 
     outcome_path = scoped / "outcome.json"
     outcome = json.loads(outcome_path.read_text())

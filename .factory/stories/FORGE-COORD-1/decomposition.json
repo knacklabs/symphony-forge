@@ -649,7 +649,13 @@
         "factory/tests/test_lifecycle_end_to_end.py",
         "factory/tests/test_review_lenses_in_parallel.py",
         "factory/tests/test_seal_measures.py",
-        "factory/tests/test_stop_less_often.py"
+        "factory/tests/test_stop_less_often.py",
+        ".github/workflows/roadmap-gate.yml",
+        "docs/decisions/0049-per-task-review-proof.md",
+        "docs/decisions/0064-lean-delivery-and-durable-history.md",
+        "plans/active/FORGE-WIN-3-delegation-runs-on-native-windows.md",
+        "plans/active/upgrade-doc-contract-safety-task-plan.md",
+        "factory/scripts/pr_ready.py"
       ],
       "plan_contracts": [
         {
@@ -714,11 +720,6 @@
         }
       ],
       "required_tests": [
-        {
-          "id": "factory/tests/test_approval_hooks.py",
-          "path": "factory/tests/test_approval_hooks.py",
-          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools FORGE_REQUIRED_SELECTOR={id} uv run --python 3.11 --with pytest --with psutil python -m pytest {path} -o junit_family=legacy --junitxml={report}"
-        },
         {
           "id": "test_native_approval_refuses_zero_multiple_candidates_replay_and_missing_identity",
           "path": "factory/tests/test_approval_hooks.py",
@@ -1106,6 +1107,6 @@
   "story": "FORGE-COORD-1",
   "epic": "symphony-forge",
   "plan_file": "plans/active/FORGE-COORD-1-either-claude-or-codex-coordinates-the-same-forge-workflow.md",
-  "commit": "91ae8580375d6a00b043541f70a885557a1d8ca7",
+  "commit": "c50c3411322f005f9bbaf33a59be751409d83894",
   "plan_sha256": "a9a320376907ebb81835bc3a6b722adda63c4f2e5756822b6f3b93d9ed5395de"
 }

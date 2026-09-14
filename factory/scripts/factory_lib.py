@@ -1334,7 +1334,7 @@ def load_review_artifacts(
     require_head: bool = False,
     blockers_only: bool = False,
 ) -> tuple[dict[str, dict], list[str]]:
-    """Load the three review artifacts and return any close-gate problems."""
+    """Load the active Lite window's three ephemeral review artifacts."""
     from forge_cli.readiness import review_passed
 
     reviews: dict[str, dict] = {}
@@ -1342,73 +1342,13 @@ def load_review_artifacts(
     head = head_sha(root) if require_head else None
     key = _active_story_key(root)
     active_window = load_json(factory_dir(root) / "quickfix.json", default={})
-    if active_window.get("profile") == "lite":
-        for aspect in ("quality", "performance", "security"):
-            path = evidence_path(root, key or None, f"reviews/{aspect}.json")
-            data = load_json(path, default={})
-            if not data:
-                problems.append(str(path.relative_to(root)))
-                continue
-            reviews[aspect] = data
-            if data.get("blocking_findings") or (
-                not blockers_only and not review_passed(data)
-            ):
-                requirement = (
-                    "have no blockers" if blockers_only else "be >= 8 with no blockers"
-                )
-                problems.append(f"{aspect} review must {requirement}")
-            if require_head and data.get("commit") != head:
-                stamp = data.get("commit")
-                shown = stamp[:8] if isinstance(stamp, str) and stamp else "missing"
-                expected = head[:8] if head else "missing"
-                problems.append(
-                    f"{aspect} review must be stamped at HEAD {expected} (got {shown})"
-                )
-        return reviews, problems
-
-    task_id = active_task_id(root)
-    if key and not task_id:
-        decomposition = load_json(
-            protected_decomposition_state_path(root), default={},
-        )
-        tasks = [
-            task for task in (
-                decomposition.get("tasks", [])
-                if isinstance(decomposition, dict) else []
-            )
-            if isinstance(task, dict) and isinstance(task.get("id"), str)
-        ]
-        if len(tasks) == 1:
-            task_id = tasks[0]["id"]
-    if not key or not task_id:
-        return {}, ["selected task review generation is missing"]
-    _generation_rel, selection_rel = _review_relpaths(key, task_id)
-    selection_present = (root / selection_rel).exists() or (root / selection_rel).is_symlink()
-    expected_delta = ""
-    review_head = head or head_sha(root) or ""
-    review_base = effective_review_base(root, task_id, review_head)
-    if review_base and review_head:
-        expected_delta = product_delta_digest(
-            root, review_base, review_head,
-        )
-    generation, selection, lineage_problems = read_selected_review_generation(
-        root, key, task_id, expected_delta_id=expected_delta,
-    )
-    if lineage_problems or not isinstance(generation, dict):
-        fixed = [
-            evidence_path(root, key, f"reviews/{aspect}.json")
-            for aspect in ("quality", "performance", "security")
-        ]
-        if not selection_present and any(path.is_file() for path in fixed):
-            return {}, [
-                "legacy fixed review proof is no longer runtime authority; "
-                "run `forge upgrade`"
-            ]
-        return {}, lineage_problems or ["selected task review generation is missing"]
+    if active_window.get("profile") != "lite":
+        return {}, ["lite review window is not active"]
     for aspect in ("quality", "performance", "security"):
-        data = generation.get("lenses", {}).get(aspect)
-        if not isinstance(data, dict):
-            problems.append(f"selected review has no {aspect} lens")
+        path = evidence_path(root, key or None, f"reviews/{aspect}.json")
+        data = load_json(path, default={})
+        if not data:
+            problems.append(str(path.relative_to(root)))
             continue
         reviews[aspect] = data
         if data.get("blocking_findings") or (
@@ -1416,8 +1356,8 @@ def load_review_artifacts(
         ):
             requirement = "have no blockers" if blockers_only else "be >= 8 with no blockers"
             problems.append(f"{aspect} review must {requirement}")
-        if require_head and generation.get("inspected_commit") != head:
-            stamp = generation.get("inspected_commit")
+        if require_head and data.get("commit") != head:
+            stamp = data.get("commit")
             shown = stamp[:8] if isinstance(stamp, str) and stamp else "missing"
             expected = head[:8] if head else "missing"
             problems.append(
@@ -2026,6 +1966,23 @@ def _modern_task_proof_problems(
         generation.get("lenses", {})
         if isinstance(generation, dict) else {lens: {} for lens in _PROOF_LENSES}
     )
+    declared = [
+        str(contract.get("id") or "")
+        for contract in task.get("plan_contracts") or []
+        if isinstance(contract, dict) and contract.get("id")
+    ]
+    implemented = {
+        verdict.get("contract_id")
+        for verdict in reviews.get("quality", {}).get("contract_verdicts") or []
+        if isinstance(verdict, dict) and verdict.get("verdict") == "implemented"
+    }
+    unverified = [contract_id for contract_id in declared if contract_id not in implemented]
+    if unverified:
+        problems.append(
+            f"{task_id}: quality review must verify every plan contract as "
+            f"implemented; unverified: {', '.join(unverified)} — compose the "
+            "reviewer prompt with `./forge review-brief --all`"
+        )
     if marker_publication_commit:
         proof_root = f".factory/stories/{key}/tasks/{task_id}"
         history_review_paths = set(authoritative_review_paths)
@@ -2267,8 +2224,6 @@ def require_closeout_order(root: Path) -> list[str]:
     can answer.
     """
     from forge_cli.outcome import load_outcome
-    from forge_cli.readiness import tests_passed
-
     problems: list[str] = []
     head = head_sha(root)
     expected = head[:8] if head else "missing"
@@ -2282,108 +2237,23 @@ def require_closeout_order(root: Path) -> list[str]:
             "Stage Loop)"
         )
 
-    # WHICH proof closes a story depends on how its work reached the trunk.
-    #
-    # A task-level run ships each task as its own PR, and each of those PRs is
-    # gated on that task's proof — so the story is the sum of its tasks and a
-    # second story-wide pass re-reviews reviewed code. A story-level run has no
-    # per-task PRs and no per-task markers; its work reached the trunk as one
-    # story, so the story-level chain is the only proof there is.
-    #
-    # Selecting on the run mode is what keeps both flows working. Requiring
-    # per-task proof everywhere would strand every story-level run — a
-    # deadlock, since a story-level run cannot produce task markers at all.
     key = _active_story_key(root)
     decomposition = load_json(protected_decomposition_state_path(root), default={})
     tasks = [t for t in decomposition.get("tasks", []) if isinstance(t, dict)]
-    marker_backed = any(
-        task_evidence_path(
-            root, key, str(task.get("id") or ""), "pr-ready.json",
-        ).is_file()
-        for task in tasks
-    )
-    task_level = (
-        bool(load_json(run_state_path(root), default={}).get("base_main_sha"))
-        or marker_backed
-    )
-
-    if task_level and tasks:
+    fixed_reviews = [
+        evidence_path(root, key, f"reviews/{aspect}.json")
+        for aspect in ("quality", "performance", "security")
+    ]
+    if any(path.is_file() for path in fixed_reviews):
+        problems.append(
+            "legacy fixed review proof is no longer runtime authority; "
+            "run `forge upgrade`"
+        )
+    if tasks:
         for task in tasks:
             problems.extend(task_proof_problems(root, key, task))
-    elif len(tasks) > 1:
-        problems.append(
-            "multi-task story close requires each task's committed pr-ready marker "
-            "and selected review proof"
-        )
     else:
-        verify = load_json(verify_state_path(root), default={})
-        if not verify or not verify.get("ok"):
-            problems.append("successful .factory/verify.json")
-        elif verify.get("commit") != head:
-            stamp = verify.get("commit")
-            shown = stamp[:8] if isinstance(stamp, str) and stamp else "missing"
-            problems.append(
-                f"verify must be stamped at HEAD {expected} (got {shown})"
-            )
-
-        reviews, review_problems = load_review_artifacts(root, require_head=True)
-        problems.extend(review_problems)
-        review_delta = None
-        if len(tasks) == 1:
-            task_id = str(tasks[0].get("id") or "")
-            review_base = effective_review_base(root, task_id, head or "")
-            if review_base:
-                review_delta = product_delta_digest(root, review_base, head or "")
-        problems.extend(require_coherent_review_run(
-            root, reviews, expected_branch_diff_digest=review_delta,
-        ))
-
-        decomposition = load_json(protected_decomposition_state_path(root), default={})
-        if bool(decomposition.get("user_facing", True)):
-            tests = load_json(tests_state_path(root), default={})
-            functional = tests.get("functional", {}) if tests else {}
-            if not functional:
-                problems.append(".factory/tests.json:functional")
-            elif not tests_passed(functional, functional=True):
-                problems.append(
-                    "functional testing must have no blockers, no failed status and score >= 8"
-                )
-            if functional and tests.get("commit") != head:
-                stamp = tests.get("commit")
-                shown = stamp[:8] if isinstance(stamp, str) and stamp else "missing"
-                problems.append(
-                    f"functional testing must be stamped at HEAD {expected} (got {shown})"
-                )
-
-    # Plan contracts are verified by the task that owns them; the union across
-    # tasks must still account for every declared contract, so a contract
-    # cannot be dropped by being in nobody's task.
-    # Contracts are declared PER TASK (task["plan_contracts"]); there is no
-    # decomposition-level key, so reading one silently found nothing and the
-    # gate passed everything.
-    from forge_cli.review_brief import declared_contracts
-    declared = [c["id"] for c in declared_contracts(decomposition)]
-    if declared:
-        verified: set[str] = set()
-        for task in tasks:
-            task_id = str(task.get("id") or "")
-            generation, _selection, selected_problems = (
-                read_selected_review_generation(root, key, task_id)
-            )
-            if selected_problems or not isinstance(generation, dict):
-                continue
-            quality = generation.get("lenses", {}).get("quality", {})
-            for verdict in quality.get("contract_verdicts") or []:
-                if (isinstance(verdict, dict)
-                        and verdict.get("verdict") == "implemented"
-                        and isinstance(verdict.get("contract_id"), str)):
-                    verified.add(verdict["contract_id"])
-        unverified = [c for c in declared if c not in verified]
-        if unverified:
-            problems.append(
-                "quality review must verify every plan contract as implemented; "
-                f"unverified: {', '.join(unverified)} — compose the reviewer "
-                "prompt with `./forge review-brief --all`")
+        problems.append("recorded decomposition must contain at least one task")
 
     outcome = load_outcome(root) or {}
     if not outcome.get("outcome"):

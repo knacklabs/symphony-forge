@@ -693,10 +693,15 @@ Rendered by the harness from the recorded decomposition; edit the decomposition,
 - factory/tests/test_review_lenses_in_parallel.py
 - factory/tests/test_seal_measures.py
 - factory/tests/test_stop_less_often.py
+- .github/workflows/roadmap-gate.yml
+- docs/decisions/0049-per-task-review-proof.md
+- docs/decisions/0064-lean-delivery-and-durable-history.md
+- plans/active/FORGE-WIN-3-delegation-runs-on-native-windows.md
+- plans/active/upgrade-doc-contract-safety-task-plan.md
+- factory/scripts/pr_ready.py
 
 **Required tests** (run by `stage done`)
 
-- `factory/tests/test_approval_hooks.py` -- `UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools FORGE_REQUIRED_SELECTOR={id} uv run --python 3.11 --with pytest --with psutil python -m pytest {path} -o junit_family=legacy --junitxml={report}` (factory/tests/test_approval_hooks.py)
 - `test_native_approval_refuses_zero_multiple_candidates_replay_and_missing_identity` -- `UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}` (factory/tests/test_approval_hooks.py)
 - `test_native_approval_records_human_via_runtime_identity_without_display_name` -- `UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}` (factory/tests/test_approval_hooks.py)
 - `test_native_approval_reuses_existing_story_and_task_approval_storage` -- `UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}` (factory/tests/test_approval_hooks.py)

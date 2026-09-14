@@ -11,7 +11,6 @@ from factory_lib import (
     dump_json,
     head_sha,
     load_json,
-    load_review_artifacts,
     now_iso,
     protected_decomposition_state_path,
     repo_root,
@@ -19,8 +18,6 @@ from factory_lib import (
     run_state_path,
     story_dir,
     story_uses_scoped_layout,
-    task_marker_on_main,
-    task_marker_path,
     task_seal_shared_problems,
     tests_state_path,
     verify_state_path,
@@ -31,7 +28,6 @@ from forge_cli.decisions import decision_records
 from forge_cli.events import append_event, load_events
 from forge_cli.outcome import load_outcome, outcome_path
 from forge_cli.roadmap import load_items, mark_status
-from forge_cli.readiness import tests_passed
 from forge_cli.review_brief import declared_contracts
 from forge_cli.signal import signals_path
 from forge_cli.stages import clear_story_authority, load_stages
@@ -40,14 +36,6 @@ from forge_cli.stages import clear_story_authority, load_stages
 # invalidate it: evidence/plan/doc records, harness machinery and adapters
 # (e.g. a forge upgrade mid-task), canon docs, and the preserved prototype.
 # Evidence attests to PRODUCT code; everything listed here is not that.
-EVIDENCE_PATHS = (
-    ".factory/", "plans/", "docs/", "factory/", ".claude/", ".codex/",
-    ".github/", "constitution/", "harness/", "prototype/", ".gstack/",
-)
-EVIDENCE_FILES = {"forge", "CLAUDE.md", "AGENTS.md", "WORKFLOW.md", "harness.yaml",
-                  ".gitignore", ".gitattributes", ".envrc"}
-
-
 def warn_unaccepted_decisions(root, issue_key: str) -> None:
     unaccepted = [r["id"] for r in decision_records(root)
                   if issue_key in r.get("stories", []) and r["status"] != "accepted"]
@@ -76,7 +64,6 @@ if run_state and not run_state.get("issue_key") and client_signoff(root)[0] \
     print(f"PR_READY (nothing active; shipped so far: {shipped})")
     raise SystemExit(0)
 decomposition = load_json(protected_decomposition_state_path(root), default={})
-tests = load_json(tests_state_path(root), default={})
 missing: list[str] = []
 if not run_state:
     missing.append(".factory/run.json")
@@ -103,19 +90,6 @@ if not plan_files and not (run_state.get("phase") == "pr-ready" and archived_pla
     )
 if not decomposition:
     missing.append(".factory/decomposition.json")
-# Markers exist only in a task-level run; a story-level run reached the
-# trunk as one story and has none to require.
-if bool(run_state.get("base_main_sha")) and decomposition:
-    missing_markers = [
-        task_marker_path(issue_key, task["id"]).as_posix()
-        for task in decomposition.get("tasks", [])
-        if not task_marker_on_main(root, issue_key, task["id"])
-    ]
-    if missing_markers:
-        missing.append(
-            "all task markers on origin/main before story closeout: "
-            + ", ".join(missing_markers)
-        )
 missing.extend(require_closeout_order(root))
 
 # Automated tests, the three lenses and the plan-contract verdicts are all
@@ -166,53 +140,11 @@ missing.extend(task_seal_shared_problems(root, issue_key))
 # asks six weeks later. Recorded via `forge outcome set`, never hand-written.
 outcome_record = load_outcome(root)
 
-# Provenance: every evidence artifact carries the commit it was recorded at;
-# all must agree, and no code may have changed since (evidence-only commits ok).
-# Decomposition is a plan-side artifact — recorded BEFORE implementation by
-# design — so it must be stamped but is exempt from same-commit/freshness.
 head = head_sha(root)
 if decomposition and not decomposition.get("commit") and head:
     missing.append(
         "commit provenance on: decomposition (re-record with current tooling)"
     )
-stamps: dict[str, str | None] = {}
-if tests:
-    stamps["tests"] = tests.get("commit")
-unstamped = [label for label, sha in stamps.items() if not sha]
-if unstamped and head:
-    missing.append(
-        f"commit provenance on: {', '.join(unstamped)} (re-record with current tooling — "
-        "artifacts without a commit stamp are unverifiable evidence)"
-    )
-elif head and stamps:
-    distinct = {sha for sha in stamps.values()}
-    if len(distinct) > 1:
-        missing.append(
-            f"consistent evidence: artifacts span commits {sorted(s[:8] for s in distinct)} — "
-            "re-record so all evidence reflects one code state"
-        )
-    else:
-        stamp = distinct.pop()
-        if stamp != head:
-            proc = subprocess.run(
-                ["git", "diff", "--name-only", f"{stamp}..{head}"],
-                cwd=root, capture_output=True, text=True,
-                encoding="utf-8", errors="surrogateescape",
-            )
-            if proc.returncode != 0:
-                missing.append(
-                    f"evidence commit {stamp[:8]} is unknown to this repo — re-record"
-                )
-            else:
-                code_changes = [
-                    f for f in proc.stdout.splitlines()
-                    if f and not f.startswith(EVIDENCE_PATHS) and f not in EVIDENCE_FILES
-                ]
-                if code_changes:
-                    missing.append(
-                        f"fresh evidence: code changed since it was recorded at {stamp[:8]} "
-                        f"({', '.join(code_changes[:5])}) — rerun verify/tests/reviews"
-                    )
 
 if missing:
     print("PR not ready:")

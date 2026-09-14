@@ -12,11 +12,9 @@ from pathlib import Path
 from urllib.parse import unquote, urlsplit
 
 from factory_lib import (
-    record_plan_view,
-    task_evidence_path,
+    read_selected_review_generation, record_plan_view, task_evidence_path,
     evidence_path, load_json, now_iso, parse_sections,
     plan_digest_without_assumptions, repo_root, run_state_path, story_dir, task_rows,
-    proof_read_path,
 )
 
 # Shipped/archived plans move out of active|completed; scan debt too or a
@@ -179,18 +177,34 @@ def _plan_evidence(
             "total": len(stages),
         }
     tasks = merge_task_detail(decomposition, stages, derived_rows)
-    # The same predicates pr_ready gates on: a tick here must mean the gate
-    # would open, not merely that a file is on disk.
-    recorded = load_json(proof_read_path(base, story, "tests.json"), default={})
+    bundles = []
+    for task in tasks:
+        task_id = str(task.get("id") or "")
+        recorded = load_json(
+            task_evidence_path(base, story, task_id, "tests.json"), default={})
+        generation, _selection, review_problems = read_selected_review_generation(
+            base, story, task_id,
+        )
+        bundles.append({
+            "task": task,
+            "verify": load_json(
+                task_evidence_path(base, story, task_id, "verify.json"), default={}),
+            "tests": recorded,
+            "reviews": generation.get("lenses", {})
+            if isinstance(generation, dict) and not review_problems else {},
+        })
     evidence = {
-        "verify": verify_passed(load_json(
-            proof_read_path(base, story, "verify.json"), default={})),
-        "tests": tests_passed(recorded.get("automated")) and (
-            tests_passed(recorded.get("functional"), functional=True)
-            if recorded.get("functional") else True),
+        "verify": bool(bundles) and all(
+            verify_passed(bundle["verify"]) for bundle in bundles),
+        "tests": bool(bundles) and all(
+            tests_passed(bundle["tests"].get("automated")) and (
+                tests_passed(bundle["tests"].get("functional"), functional=True)
+                if bundle["task"].get("user_facing") else True
+            ) for bundle in bundles
+        ),
         "reviews": {
-            aspect: review_passed(load_json(
-                proof_read_path(base, story, f"reviews/{aspect}.json"), default={}))
+            aspect: bool(bundles) and all(
+                review_passed(bundle["reviews"].get(aspect)) for bundle in bundles)
             for aspect in ("quality", "performance", "security")
         },
     }
@@ -1021,20 +1035,28 @@ def task_dossiers(base: Path, key: str, detail: dict) -> list[dict]:
     evidence = detail.get("evidence") or {}
     decomposition = evidence.get("decomposition") or {}
     stages = (evidence.get("stages") or {}).get("stages", [])
-    tests = evidence.get("tests") or {}
-    verify = evidence.get("verify") or {}
-    reviews = evidence.get("reviews") or {}
     task_grills = evidence.get("task_grills") or {}
     spec_path = (detail.get("spec") or {}).get("path", "")
     launches = task_launches(base)
 
-    recorded_tests = []
-    for entry in tests.values():
-        if isinstance(entry, dict):
-            recorded_tests.extend(entry.get("tests_added_or_updated") or [])
-
     dossiers = []
     for task in merge_task_detail(decomposition, stages, detail.get("task_rows")):
+        task_id = str(task.get("id") or "")
+        tests = load_json(
+            task_evidence_path(base, key, task_id, "tests.json"), default={})
+        verify = load_json(
+            task_evidence_path(base, key, task_id, "verify.json"), default={})
+        generation, _selection, review_problems = read_selected_review_generation(
+            base, key, task_id,
+        )
+        own_reviews = (
+            generation.get("lenses", {})
+            if isinstance(generation, dict) and not review_problems else {}
+        )
+        recorded_tests = []
+        for entry in tests.values():
+            if isinstance(entry, dict):
+                recorded_tests.extend(entry.get("tests_added_or_updated") or [])
         required = task.get("required_tests") or []
         # A required test counts as proven only if a recorded artifact names it;
         # "tests.json exists" is not evidence that THIS task was covered. Entries
@@ -1043,38 +1065,18 @@ def task_dossiers(base: Path, key: str, detail: dict) -> list[dict]:
         covered = [t for t in required
                    if isinstance((tid := t.get("id") if isinstance(t, dict) else t), str)
                    and any(tid in str(recorded) for recorded in recorded_tests)]
-        # A task's OWN review is all of that task's findings — no attribution
-        # needed, because the review covered that task's diff and nothing else.
-        # The story-scoped fallback still has to guess by matching the task id
-        # in the finding text, which is why per-task storage removes a whole
-        # class of misattribution rather than only a class of overwriting.
-        own_reviews = {}
-        for aspect in ("quality", "performance", "security"):
-            scoped = task_evidence_path(base, key, str(task.get("id") or ""),
-                                        f"reviews/{aspect}.json")
-            if scoped.is_file():
-                own_reviews[aspect] = load_json(scoped, default={})
-
         findings = []
-        for aspect, review in (own_reviews or reviews).items():
+        for aspect, review in own_reviews.items():
             if not isinstance(review, dict):
                 continue
             for finding in (review.get("blocking_findings") or []) + \
                            (review.get("non_blocking_findings") or []):
                 text = finding if isinstance(finding, str) else finding.get("summary", "")
-                area = "" if isinstance(finding, str) else finding.get("area", "")
-                if own_reviews:
-                    findings.append({"aspect": aspect, "summary": text})
-                    continue
-                # Bounded match: a substring test hands TS-3.10's findings to
-                # TS-3.1, which is silent misattribution of review evidence.
-                if re.search(rf"(?<![\w.]){re.escape(task['id'])}(?![\w]|\.\d)",
-                             f"{text} {area}"):
-                    findings.append({"aspect": aspect, "summary": text})
+                findings.append({"aspect": aspect, "summary": text})
         task["proof"] = {
             "required_tests": required,
             "covered_tests": covered,
-            "verify_ok": verify.get("ok") is True,
+            "verify_ok": verify_passed(verify),
             "verify_at": verify.get("completed_at"),
             "grill": task_grills.get(task["id"]),
             "findings": findings,
@@ -1087,7 +1089,7 @@ def task_dossiers(base: Path, key: str, detail: dict) -> list[dict]:
         task["plan_excerpt"] = "" if excerpt.strip() == objective else excerpt
         task.update(task_plan_view(base, key, task, task_grills.get(task["id"])))
         task["progress"] = task_progress(
-            task, launches.get(task["id"]), reviews)
+            task, launches.get(task["id"]), own_reviews)
         dossiers.append(task)
     return dossiers
 

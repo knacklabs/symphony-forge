@@ -8,16 +8,12 @@ import subprocess
 from pathlib import Path
 
 from factory_lib import (
-    client_signoff, evidence_path, head_sha, load_json, load_review_artifacts,
-    repo_root, require_all_stages_done, require_coherent_review_run,
-    run_state_path, task_frontier_state,
-    proof_read_path,
+    client_signoff, evidence_path, load_json, repo_root,
+    require_all_stages_done, run_state_path, task_frontier_state,
 )
 
 from .context import pending_context
 from .quickfix import load_active, profile_of
-from .outcome import load_outcome
-from .readiness import tests_passed
 from .roadmap import cmd_heal, leverage, load_items, ready_pending
 from .signal import open_signals
 from .specs import resolve_spec_reference
@@ -438,36 +434,12 @@ def cmd_next(args: argparse.Namespace) -> None:
             "record_decomposition_from_json.py and update_run.py --phase "
             "implementing --decomposition-status recorded")
     else:
-        issue = state.get("issue_key")
-        tests = load_json(proof_read_path(base, issue, "tests.json"), default={})
-        verify = load_json(proof_read_path(base, issue, "verify.json"), default={})
-        decomp = load_json(evidence_path(base, issue, "decomposition.json"), default={})
-        user_facing = bool(decomp.get("user_facing", True))
-        reviews_missing = [
-            a for a in ("quality", "performance", "security")
-            if not load_json(proof_read_path(base, issue, f"reviews/{a}.json"), default={})
-        ]
         open_stages = require_all_stages_done(base)
-        head = head_sha(base)
-        reviews, review_problems = load_review_artifacts(base, require_head=True)
-        review_problems.extend(require_coherent_review_run(base, reviews))
-        functional = tests.get("functional", {})
-        functional_ready = bool(
-            functional
-            and tests_passed(functional, functional=True)
-            and tests.get("commit") == head
-        )
-        outcome = load_outcome(base) or {}
-        # A task-level run proves itself per task; the story-scoped reads above
-        # describe a story-level run and say nothing about it.
-        task_level = bool(state.get("base_main_sha")) and bool(decomp.get("tasks"))
-        task_closeout = []
-        if task_level:
-            from factory_lib import require_closeout_order
-            task_closeout = [
-                problem for problem in require_closeout_order(base)
-                if "stage completion" not in problem
-            ]
+        from factory_lib import require_closeout_order
+        task_closeout = [
+            problem for problem in require_closeout_order(base)
+            if "stage completion" not in problem
+        ]
         frontier_state = task_frontier_state(base)
         if open_stages or frontier_state:
             phase("implementing")
@@ -682,32 +654,6 @@ def cmd_next(args: argparse.Namespace) -> None:
             # a prompt starts asking for work the gate already accepted.
             phase("closeout")
             steps.append(f"[dev] {task_closeout[0]}")
-        elif not tests.get("automated"):
-            phase("testing")
-            steps.append("[dev] Record the completed stages' automated proof: "
-                         "record_test_from_json.py --kind automated --input <json>")
-        elif not verify.get("ok") or verify.get("commit") != head:
-            phase("verifying")
-            steps.append("[dev] Run: python3 factory/scripts/verify.py")
-        elif review_problems:
-            phase("reviewing")
-            review_detail = ", ".join(reviews_missing) or "stale or incoherent lenses"
-            steps.append("[dev] Review is ONE three-lens pass PER TASK, run by "
-                         "Codex: `./forge task close <task-id>` runs it (only when "
-                         f"the diff moved) and records all three lenses; repair: {review_detail}. "
-                         "On ANY finding, delegate the fix (`./forge delegate "
-                         "<task-id>`), commit, then rerun `./forge task close "
-                         "<task-id>` — loop until every lens is clean. Findings "
-                         "are work, not a question for the human; do NOT stop "
-                         "between rounds.")
-        elif user_facing and not functional_ready:
-            phase("functional-check")
-            steps.append("[dev] Task is user-facing: run functional-checker and record: "
-                         "record_test_from_json.py --kind functional --input <json>")
-        elif outcome.get("commit") != head or not outcome.get("outcome"):
-            phase("outcome")
-            steps.append("[dev] Record what shipped at the evidence commit: "
-                         "forge.py outcome set \"<what changed and what someone can now do>\"")
         else:
             phase("ready for PR gate")
             from .assumptions import blocking_for_issue
