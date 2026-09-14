@@ -688,6 +688,11 @@ Rendered by the harness from the recorded decomposition; edit the decomposition,
 - factory/tests/test_regrill_scope.py
 - .factory/migrations/lean-workflow-v2.json
 - .factory/events/
+- factory/tests/test_grill_budget.py
+- factory/tests/test_lifecycle_end_to_end.py
+- factory/tests/test_review_lenses_in_parallel.py
+- factory/tests/test_seal_measures.py
+- factory/tests/test_stop_less_often.py
 
 **Required tests** (run by `stage done`)
 

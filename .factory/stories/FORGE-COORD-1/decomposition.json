@@ -644,7 +644,12 @@
         "factory/tests/test_pr_link_workflow.py",
         "factory/tests/test_regrill_scope.py",
         ".factory/migrations/lean-workflow-v2.json",
-        ".factory/events/"
+        ".factory/events/",
+        "factory/tests/test_grill_budget.py",
+        "factory/tests/test_lifecycle_end_to_end.py",
+        "factory/tests/test_review_lenses_in_parallel.py",
+        "factory/tests/test_seal_measures.py",
+        "factory/tests/test_stop_less_often.py"
       ],
       "plan_contracts": [
         {
@@ -1101,6 +1106,6 @@
   "story": "FORGE-COORD-1",
   "epic": "symphony-forge",
   "plan_file": "plans/active/FORGE-COORD-1-either-claude-or-codex-coordinates-the-same-forge-workflow.md",
-  "commit": "32b3ee692e361b831b31075758c2c374fa2f613e",
+  "commit": "91ae8580375d6a00b043541f70a885557a1d8ca7",
   "plan_sha256": "a9a320376907ebb81835bc3a6b722adda63c4f2e5756822b6f3b93d9ed5395de"
 }
