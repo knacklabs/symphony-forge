@@ -75,6 +75,111 @@ def _seed_pre_stage_grill(repo: Path, task: dict) -> str:
     return grill["input_sha256"]
 
 
+def _rewrite_launch_as_native(repo: Path, task: dict) -> tuple[str, Path]:
+    """Replace the fixture's one companion lifecycle with valid native proof."""
+    from test_gates import delegation_ledger  # noqa: E402
+    from forge_cli.codex_runtime import native_argv  # noqa: E402
+    from forge_cli.delegate import argv_digest, brief_path  # noqa: E402
+
+    ledger = delegation_ledger(repo)
+    rows = [json.loads(line) for line in ledger.read_text().splitlines()]
+    launch_id = rows[-1]["launch_id"]
+    logs = ledger.parent / "native-runs"
+    logs.mkdir(parents=True, exist_ok=True)
+    output = logs / f"{launch_id}.jsonl"
+    stderr = logs / f"{launch_id}.stderr.log"
+    output.write_text(
+        '{"type":"thread.started","thread_id":"receipt-origin"}\n'
+        '{"type":"turn.completed"}\n',
+        encoding="utf-8",
+    )
+    stderr.write_text("", encoding="utf-8")
+    executable = "/bin/codex"
+    rewritten = []
+    for row in rows:
+        if row.get("launch_id") != launch_id:
+            rewritten.append(row)
+            continue
+        argv = native_argv(
+            executable, repo, row["model"], row["effort"], True,
+            task["write_scope"],
+        )
+        native = {
+            **row,
+            "transport": "native",
+            "executable_path": executable,
+            "brief_path": brief_path(repo, "T1").relative_to(repo).as_posix(),
+            "output_path": str(output),
+            "stderr_path": str(stderr),
+            "write_scope": task["write_scope"],
+            "argv": argv,
+            "argv_sha256": argv_digest(argv),
+        }
+        native.pop("companion_path", None)
+        if native["launch_status"] == "succeeded":
+            native["session_id"] = "receipt-origin"
+        rewritten.append(native)
+    ledger.write_text(
+        "".join(json.dumps(row) + "\n" for row in rewritten),
+        encoding="utf-8",
+    )
+    return launch_id, output
+
+
+def _append_native_launch(repo: Path, task: dict, launch_id: str) -> None:
+    from forge_cli.codex_runtime import native_argv  # noqa: E402
+    from forge_cli.delegate import (  # noqa: E402
+        append_delegation, argv_digest, brief_path, delegations_path,
+    )
+
+    lib = load_factory_lib(repo)
+    stage = lib.task_stage_record(repo, "T1")
+    logs = delegations_path(repo).parent / "native-runs"
+    output = logs / f"{launch_id}.jsonl"
+    stderr = logs / f"{launch_id}.stderr.log"
+    output.write_text(
+        '{"type":"thread.started","thread_id":"receipt-later"}\n'
+        '{"type":"turn.completed"}\n',
+        encoding="utf-8",
+    )
+    stderr.write_text("", encoding="utf-8")
+    executable = "/bin/codex"
+    argv = native_argv(
+        executable, repo, "gpt-5.6-sol", "medium", True,
+        task["write_scope"],
+    )
+    record = {
+        "generated_by": "orchestrator",
+        "at": stage["started_at"],
+        "launch_id": launch_id,
+        "task": "T1",
+        "story": "ENG-1",
+        "brief_sha256": lib.sha256_of(brief_path(repo, "T1")),
+        "task_sha256": lib.task_digest(task),
+        "write": True,
+        "model": "gpt-5.6-sol",
+        "effort": "medium",
+        "write_scope": task["write_scope"],
+        "argv": argv,
+        "argv_sha256": argv_digest(argv),
+        "process_token": f"delegation-{launch_id}",
+        "stage_started_at": stage["started_at"],
+        "transport": "native",
+        "executable_path": executable,
+        "brief_path": brief_path(repo, "T1").relative_to(repo).as_posix(),
+        "output_path": str(output),
+        "stderr_path": str(stderr),
+    }
+    for status in ("starting", "running"):
+        assert append_delegation(repo, {**record, "launch_status": status})
+    assert append_delegation(repo, {
+        **record,
+        "launch_status": "succeeded",
+        "exit_code": 0,
+        "session_id": "receipt-later",
+    })
+
+
 # --------------------------------------------------------------- bookkeeping
 @pytest.mark.parametrize("field,value", [
     ("review_budget", {"max_changed_files": 999, "max_changed_lines": 9,
@@ -324,15 +429,63 @@ def test_a_second_delegate_after_committing_needs_no_new_grill(repo: Path, tmp_p
     assert len({row["launch_id"] for row in succeeded}) == 2
     assert succeeded[-1]["write_scope"] == ["src/"]
 
-    # The receipt is authority, so a forged field must close the gate again.
+    # Stage close rewrites task_sha256 to the final measured contract. The same
+    # immutable receipt must keep completed-task readiness grounded.
     from forge_cli.stages import load_stages, write_stages  # noqa: E402
+    stages = load_stages(repo)
+    stages["stages"][0]["status"] = "done"
+    stages["stages"][0]["task_sha256"] = lib.task_digest(widened)
+    write_stages(repo, stages)
+    assert lib.require_ready_task(
+        repo, "T1", allow_completed=True, require_approval=False,
+    )["id"] == "T1"
+
+    # The receipt is authority, so a forged field must close the gate again.
     stages = load_stages(repo)
     stages["stages"][0]["measurement_continuity"][0][
         "semantic_grounding_sha256"
     ] = "0" * 64
     write_stages(repo, stages)
+    with pytest.raises(SystemExit, match="stage-baseline"):
+        lib.require_ready_task(
+            repo, "T1", allow_completed=True, require_approval=False,
+        )
+
+
+def test_measurement_receipt_authenticates_its_native_launch_not_a_later_one(
+        repo: Path, tmp_path):
+    from test_gates import DECOMP, STAGE_TASK, start_stage  # noqa: E402
+    from forge_cli.stages import _require_successful_launch  # noqa: E402
+
+    start_stage(repo, tmp_path, STAGE_TASK)
+    _seed_pre_stage_grill(repo, STAGE_TASK)
+    _launch_id, original_output = _rewrite_launch_as_native(repo, STAGE_TASK)
+    widened = {**STAGE_TASK, "write_scope": ["src/", "billing/"]}
+    code, out = run(
+        repo,
+        "record_decomposition_from_json.py",
+        stdin=json.dumps({**DECOMP, "tasks": [widened]}),
+    )
+    assert code == 0, out
+
+    _append_native_launch(repo, widened, "launch-later-valid")
+    lib = load_factory_lib(repo)
+    stage = lib.task_stage_record(repo, "T1")
+    assert _require_successful_launch(repo, "T1", stage, widened) == ""
+
+    original_output.write_text(
+        '{"type":"thread.started","thread_id":"receipt-origin"}\n',
+        encoding="utf-8",
+    )
     with pytest.raises(SystemExit, match="STALE"):
         lib.require_task_grill(repo, "T1", widened)
+
+    original_output.write_text(
+        '{"type":"thread.started","thread_id":"receipt-origin"}\n'
+        '{"type":"turn.completed"}\n',
+        encoding="utf-8",
+    )
+    lib.require_task_grill(repo, "T1", widened)
 
 
 def test_measurement_amendment_without_a_bound_launch_writes_nothing(

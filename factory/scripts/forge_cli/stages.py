@@ -1476,29 +1476,17 @@ def _host_window_covering(base: Path, stage: dict, task: dict) -> dict | None:
     return None
 
 
-def _require_successful_launch(base: Path, stage_id: str, stage: dict,
-                               task: dict) -> str:
-    """Refuse without a successful Codex write launch or a covering host-fix
-    window. Returns the window id when a window satisfied it, else ""."""
+def _successful_launch_entry_valid(
+        base: Path, stage_id: str, stage: dict, entry: dict | None) -> bool:
+    """Return whether this exact terminal row proves a stage-bound write."""
     from .codex_runtime import native_argv_valid, parse_native_result
-    from .delegate import (
-        argv_digest, brief_path, current_delegation, delegations_path,
-    )
+    from .delegate import argv_digest, brief_path, delegations_path
 
     brief = brief_path(base, stage_id)
-    # Any contract version: the launch proves Codex wrote inside THIS stage.
-    # Binding it to the contract digest orphaned every launch the moment the
-    # contract was re-recorded, and the only way back was a Codex launch that
-    # did nothing but produce a row with the new digest. The contract at
-    # launch time stays on the row as evidence; `stage done` records a
-    # contract that moved (decision 0023).
-    entry = current_delegation(
-        base,
-        stage_id,
-        stage_started_at=stage.get("started_at", ""),
-        ignore_lock=True,
-    )
-    argv = entry.get("argv") if entry else None
+    launch_id = entry.get("launch_id") if entry else None
+    if not isinstance(launch_id, str) or not re.fullmatch(r"[A-Za-z0-9._-]+", launch_id):
+        return False
+    argv = entry.get("argv")
     transport = entry.get("transport") if entry else None
     if transport == "native":
         launch_scope = entry.get("write_scope")
@@ -1508,9 +1496,9 @@ def _require_successful_launch(base: Path, stage_id: str, stage: dict,
             and all(isinstance(path, str) and path.strip() for path in launch_scope)
         )
         expected_output = (delegations_path(base).parent / "native-runs" /
-                           f"{entry.get('launch_id')}.jsonl")
+                           f"{launch_id}.jsonl")
         expected_stderr = (delegations_path(base).parent / "native-runs" /
-                           f"{entry.get('launch_id')}.stderr.log")
+                           f"{launch_id}.stderr.log")
         try:
             session_id = parse_native_result(expected_output)
         except ValueError:
@@ -1554,11 +1542,33 @@ def _require_successful_launch(base: Path, stage_id: str, stage: dict,
     valid = (
         entry
         and entry.get("launch_status") == "succeeded"
+        and entry.get("exit_code") == 0
         and entry.get("write") is True
         and entry.get("stage_started_at") == stage.get("started_at")
         and argv_valid
     )
-    if valid:
+    return bool(valid)
+
+
+def _require_successful_launch(base: Path, stage_id: str, stage: dict,
+                               task: dict) -> str:
+    """Refuse without a successful Codex write launch or a covering host-fix
+    window. Returns the window id when a window satisfied it, else ""."""
+    from .delegate import current_delegation
+
+    # Any contract version: the launch proves Codex wrote inside THIS stage.
+    # Binding it to the contract digest orphaned every launch the moment the
+    # contract was re-recorded, and the only way back was a Codex launch that
+    # did nothing but produce a row with the new digest. The contract at
+    # launch time stays on the row as evidence; `stage done` records a
+    # contract that moved (decision 0023).
+    entry = current_delegation(
+        base,
+        stage_id,
+        stage_started_at=stage.get("started_at", ""),
+        ignore_lock=True,
+    )
+    if _successful_launch_entry_valid(base, stage_id, stage, entry):
         return ""
     window = _host_window_covering(base, stage, task)
     if window:

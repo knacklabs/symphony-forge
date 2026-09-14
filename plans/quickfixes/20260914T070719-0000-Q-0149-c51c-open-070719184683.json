@@ -1,0 +1,13 @@
+{
+  "event": "open",
+  "id": "Q-0149-c51c",
+  "profile": "degraded",
+  "reason": "The committed measurement-continuity repair passes active-stage delegation, but bounded audit found that sealing loses the same valid receipt after stage status becomes done and that native validation can borrow a later launch instead of proving the receipt's exact original launch; ordinary delegation remains unavailable because this Lean task's committed hooks diverge from the parent worktree. Repair only the receipt validator and focused regression.",
+  "started_at": "2026-09-14T07:07:19+00:00",
+  "max_files": 5,
+  "files": [],
+  "harness_source": true,
+  "kind": "degraded",
+  "task_id": "LEAN-WORKFLOW",
+  "story": "FORGE-COORD-1"
+}

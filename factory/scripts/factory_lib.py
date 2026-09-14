@@ -3412,7 +3412,7 @@ def validated_measurement_launch(
 ) -> dict | None:
     """Return the real write launch that anchors a measurement receipt."""
     from forge_cli.delegate import argv_digest, brief_path, current_delegation
-    from forge_cli.stages import _require_successful_launch
+    from forge_cli.stages import _successful_launch_entry_valid
 
     task_id = str(task.get("id") or "")
     entry = current_delegation(
@@ -3458,11 +3458,9 @@ def validated_measurement_launch(
         ):
             return None
         return entry
-    try:
-        host_window = _require_successful_launch(root, task_id, stage, task)
-    except SystemExit:
-        return None
-    return entry if host_window == "" else None
+    return entry if _successful_launch_entry_valid(
+        root, task_id, stage, entry,
+    ) else None
 
 
 def _measurement_continuity_matches(root: Path, task: dict, grill: dict) -> bool:
@@ -3470,14 +3468,22 @@ def _measurement_continuity_matches(root: Path, task: dict, grill: dict) -> bool
     task_id = str(task.get("id") or "")
     stage = task_stage_record(root, task_id)
     receipts = stage.get("measurement_continuity")
-    if stage.get("status") != "active" or not isinstance(receipts, list) or not receipts:
+    if stage.get("status") not in ("active", "done") \
+            or not isinstance(receipts, list) or not receipts:
         return False
     semantic = grounding_digest(root, task, in_stage=True)
     story_digest = story_plan_digest(root)
     task_plan_digest = task_plan_binding_digest(root, task_id, grill)
     if not story_digest or not task_plan_digest:
         return False
-    expected = stage.get("task_sha256")
+    current_task_sha256 = task_digest(task)
+    if stage.get("status") == "done":
+        if stage.get("task_sha256") != current_task_sha256:
+            return False
+        first = receipts[0]
+        expected = first.get("from_task_sha256") if isinstance(first, dict) else None
+    else:
+        expected = stage.get("task_sha256")
     previous_measurement = None
     origin_task = None
     origin_measurement = None
@@ -3531,14 +3537,15 @@ def _measurement_continuity_matches(root: Path, task: dict, grill: dict) -> bool
             return False
         expected = receipt.get("to_task_sha256")
         previous_measurement = after
-    if expected != task_digest(task) or previous_measurement != measurement_contract(task):
+    if expected != current_task_sha256 \
+            or previous_measurement != measurement_contract(task):
         return False
     assert origin_task is not None and origin_measurement is not None
     return validated_measurement_launch(
         root,
         origin_task,
         stage,
-        str(stage.get("task_sha256") or ""),
+        str(receipts[0].get("from_task_sha256") or ""),
         origin_measurement,
         launch_id,
     ) is not None
