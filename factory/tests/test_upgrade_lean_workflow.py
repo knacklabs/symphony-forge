@@ -59,6 +59,27 @@ def test_lean_migration_independent_raw_walk_covers_each_candidate_exactly_once(
         upgrade.preflight_lean_migration(repo)
 
 
+def test_lean_migration_inventories_ignore_history_but_preserve_live_mismatch(
+        repo: Path):
+    history = repo / ".factory/history/S1/grill-rounds/old.json"
+    history.parent.mkdir(parents=True)
+    history.write_text('{"questions":[]}\n', encoding="utf-8")
+    live = repo / ".factory/unexpected/grill-rounds/old.json"
+    live.parent.mkdir(parents=True)
+    live.write_text('{"questions":[]}\n', encoding="utf-8")
+
+    primary = upgrade.lean_primary_inventory(repo)
+    raw = upgrade.lean_raw_inventory(repo)
+    history_rel = history.relative_to(repo).as_posix()
+    live_rel = live.relative_to(repo).as_posix()
+    assert history_rel not in {entry["path"] for entry in primary}
+    assert history_rel not in {entry["path"] for entry in raw}
+    assert live_rel not in {entry["path"] for entry in primary}
+    assert [entry["path"] for entry in raw].count(live_rel) == 1
+    with pytest.raises(SystemExit):
+        upgrade.preflight_lean_migration(repo)
+
+
 def test_lean_migration_inventories_hashes_temp_validates_publishes_and_reads_back(
         repo: Path):
     legacy = _legacy_round(repo)

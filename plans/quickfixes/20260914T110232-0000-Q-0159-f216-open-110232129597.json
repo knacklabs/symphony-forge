@@ -1,0 +1,13 @@
+{
+  "event": "open",
+  "id": "Q-0159-f216",
+  "profile": "degraded",
+  "reason": "normal delegation is unavailable because this branch's hook runtime differs from the parent; prune archived Lean inventory only",
+  "started_at": "2026-09-14T11:02:32+00:00",
+  "max_files": 5,
+  "files": [],
+  "harness_source": true,
+  "kind": "degraded",
+  "task_id": "LEAN-WORKFLOW",
+  "story": "FORGE-COORD-1"
+}

@@ -1,0 +1,15 @@
+{
+  "event": "done",
+  "id": "Q-0159-f216",
+  "profile": "degraded",
+  "kind": "degraded",
+  "reason": "normal delegation is unavailable because this branch's hook runtime differs from the parent; prune archived Lean inventory only",
+  "started_at": "2026-09-14T11:02:32+00:00",
+  "completed_at": "2026-09-14T11:04:25+00:00",
+  "files": [
+    "factory/scripts/forge_cli/upgrade.py",
+    "factory/tests/test_upgrade_lean_workflow.py"
+  ],
+  "task_id": "LEAN-WORKFLOW",
+  "story": "FORGE-COORD-1"
+}

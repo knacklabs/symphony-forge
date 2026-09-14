@@ -112,6 +112,8 @@ def lean_primary_inventory(target: Path) -> list[dict]:
             fail(f"Lean migration refuses linked inventory root {root}")
         for directory, names, files in os.walk(root, followlinks=False):
             current = Path(directory)
+            if current == target / ".factory":
+                names[:] = [name for name in names if name != "history"]
             linked = [name for name in names if (current / name).is_symlink()]
             if linked:
                 fail(f"Lean migration refuses linked directory {current / linked[0]}")
@@ -155,6 +157,8 @@ def lean_raw_inventory(target: Path) -> list[dict]:
             fail(f"Lean raw inventory cannot read {directory}: {exc}")
         for child in children:
             path = Path(child.path)
+            if path == target / ".factory" / "history":
+                continue
             if child.is_symlink():
                 rel = path.relative_to(target).as_posix()
                 # Any link in a fixed legacy root makes coverage unverifiable.
