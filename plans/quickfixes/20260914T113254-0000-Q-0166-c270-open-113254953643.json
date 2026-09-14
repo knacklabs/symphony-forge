@@ -1,0 +1,13 @@
+{
+  "event": "open",
+  "id": "Q-0166-c270",
+  "profile": "degraded",
+  "reason": "normal delegation is unavailable because this branch's hook runtime differs from the parent; remove advisor-confirmed unreachable helpers and orphan imports",
+  "started_at": "2026-09-14T11:32:54+00:00",
+  "max_files": 5,
+  "files": [],
+  "harness_source": true,
+  "kind": "degraded",
+  "task_id": "LEAN-WORKFLOW",
+  "story": "FORGE-COORD-1"
+}

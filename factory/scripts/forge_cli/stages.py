@@ -306,11 +306,6 @@ def clear_story_authority(base: Path) -> list[str]:
     return removed
 
 
-def pending_stages(base: Path) -> list[dict]:
-    return [s for s in load_stages(base).get("stages", [])
-            if s.get("status") != "done"]
-
-
 def _git(base: Path, *args: str) -> str:
     proc = subprocess.run(
         ["git", *args], cwd=base, capture_output=True, text=True,

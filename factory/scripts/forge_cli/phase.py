@@ -16,7 +16,6 @@ from .context import pending_context
 from .quickfix import load_active, profile_of
 from .roadmap import cmd_heal, leverage, load_items, ready_pending
 from .signal import open_signals
-from .specs import resolve_spec_reference
 
 
 def _auto_heal_roadmap_after_merge(base: Path) -> None:

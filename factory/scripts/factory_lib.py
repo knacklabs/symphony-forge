@@ -3820,15 +3820,6 @@ def _product_tree_digest_now(root: Path, treeish: str,
     return hashlib.sha256(payload.encode()).hexdigest()
 
 
-def requirements_digest(root: Path, spec_path: Path) -> str:
-    """Bind a confirmed spec body to the current product tree."""
-    raw = spec_path.read_bytes()
-    frontmatter = re.match(br"\A---\r?\n.*?\r?\n---\r?\n", raw, re.DOTALL)
-    body = raw[frontmatter.end():] if frontmatter else raw
-    payload = body + b"\x00" + product_tree_digest(root).encode("ascii")
-    return hashlib.sha256(payload).hexdigest()
-
-
 GROUNDING_CONTRACT_FIELDS = (
     # What the task IS. A change here changes the work, so the grill that
     # examined the old version no longer speaks to the new one.

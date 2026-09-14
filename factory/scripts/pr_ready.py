@@ -28,7 +28,6 @@ from forge_cli.decisions import decision_records
 from forge_cli.events import append_event, load_events
 from forge_cli.outcome import load_outcome, outcome_path
 from forge_cli.roadmap import load_items, mark_status
-from forge_cli.review_brief import declared_contracts
 from forge_cli.signal import signals_path
 from forge_cli.stages import clear_story_authority, load_stages
 

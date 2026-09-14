@@ -14,7 +14,7 @@ from urllib.parse import unquote, urlsplit
 from factory_lib import (
     read_selected_review_generation, record_plan_view, task_evidence_path,
     evidence_path, load_json, now_iso, parse_sections,
-    plan_digest_without_assumptions, repo_root, run_state_path, story_dir, task_rows,
+    plan_digest_without_assumptions, repo_root, run_state_path, task_rows,
 )
 
 # Shipped/archived plans move out of active|completed; scan debt too or a
@@ -27,7 +27,7 @@ from . import fscache
 from .assumptions import open_count as open_assumptions
 from .decisions import decision_records
 from .plans import parse_frontmatter
-from .quickfix import ledger_path, load_active
+from .quickfix import load_active
 from .readiness import review_passed, tests_passed, verify_passed
 from .roadmap import load_roadmap, ready_pending
 from .signal import open_signals
