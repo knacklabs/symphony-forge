@@ -17,8 +17,8 @@ from pathlib import Path
 
 from test_gates import (  # noqa: F401
     HARNESS, STAGE_TASK, git, intake, load_factory_lib, record_skeleton_then_frontier,
-    record_task_grill, repo, run, save_plan, sign_off, story_state,
-    view_plan_on_board,
+    native_claude_approval, post_hook, record_task_grill, repo, run, save_plan,
+    sign_off, story_state, view_plan_on_board,
 )
 
 sys.path.insert(0, str(HARNESS / "factory" / "scripts"))
@@ -43,21 +43,16 @@ def test_a_plan_edited_after_approval_goes_to_the_human_not_the_grill(
     code, out = record_task_grill(repo, STAGE_TASK, approve=False)
     assert code == 0, out
     view_plan_on_board(repo, "T1")
-    code, out = run(repo, "forge.py", "task", "approve", "T1",
-                    "--by", "Test Human")
+    code, out = post_hook(repo, native_claude_approval())
     assert code == 0, out
 
     saved = story_state(repo) / "task-plans" / "T1.md"
     saved.write_text(saved.read_text(encoding="utf-8") + "\nOne reworded line.\n",
                      encoding="utf-8")
 
-    code, out = run(repo, "forge.py", "task", "approve", "T1",
-                    "--by", "Test Human")
+    code, out = run(repo, "forge.py", "stage", "start", "T1", "--trunk")
     assert code != 0, out
-    # It must name the human and say re-approval, not re-grill.
-    assert "CHANGED after" in out and "Test Human" in out
-    assert "does not need another grill" in out
-    assert "re-grill" not in out.lower().replace("does not need another grill", "")
+    assert "STALE" in out and "record_grill_from_json.py" in out
 
 
 def test_an_unapproved_plan_edit_still_needs_a_regrill(repo: Path, tmp_path):
@@ -74,10 +69,9 @@ def test_an_unapproved_plan_edit_still_needs_a_regrill(repo: Path, tmp_path):
     saved.write_text(saved.read_text(encoding="utf-8") + "\nEdited pre-approval.\n",
                      encoding="utf-8")
     view_plan_on_board(repo, "T1")
-    code, out = run(repo, "forge.py", "task", "approve", "T1",
-                    "--by", "Test Human")
+    code, out = run(repo, "forge.py", "stage", "start", "T1", "--trunk")
     assert code != 0, out
-    assert "Re-grill the current plan" in out
+    assert "STALE" in out and "record_grill_from_json.py" in out
 
 
 # --------------------------------------------------- task start is not optional
@@ -97,8 +91,7 @@ def test_stage_start_refuses_when_task_start_was_skipped(repo: Path, tmp_path):
     code, out = record_task_grill(repo, STAGE_TASK, approve=False)
     assert code == 0, out
     view_plan_on_board(repo, "T1")
-    code, out = run(repo, "forge.py", "task", "approve", "T1",
-                    "--by", "Test Human")
+    code, out = post_hook(repo, native_claude_approval())
     assert code == 0, out
 
     code, out = run(repo, "forge.py", "stage", "start", "T1")

@@ -257,6 +257,12 @@ def record_native_approval(
         try:
             if candidate.kind == "story":
                 _approve_story(base, candidate, record)
+                from .events import append_event
+                append_event(
+                    base, "plan-approved", actor="planner-high",
+                    story=candidate.story,
+                    detail=candidate.path.relative_to(base).as_posix(),
+                )
             else:
                 _approve_task(candidate, record)
         except Exception:

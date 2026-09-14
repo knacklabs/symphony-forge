@@ -333,7 +333,9 @@ def apply_lean_migration(target: Path, migration: dict | None) -> None:
             validate_review_document(target, generation)
             body = review_generation_bytes(generation)
             path = build / "reviews" / f"{index}-{generation['generation_id']}.json"
-            path.parent.mkdir(parents=True, exist_ok=True)
+            assert_target_destination(build, path.parent).mkdir(
+                parents=True, exist_ok=True,
+            )
             path.write_bytes(body)
             if path.read_bytes() != body:
                 fail("Lean migration temporary review readback differs")
@@ -376,7 +378,9 @@ def apply_lean_migration(target: Path, migration: dict | None) -> None:
         if comparable != expected:
             fail("Lean migration manifest retry differs from the durable original")
     else:
-        destination.parent.mkdir(parents=True, exist_ok=True)
+        assert_target_destination(target, destination.parent).mkdir(
+            parents=True, exist_ok=True,
+        )
         dump_json(destination, manifest)
         if load_json(destination, default={}) != manifest:
             fail("Lean migration manifest readback differs")
