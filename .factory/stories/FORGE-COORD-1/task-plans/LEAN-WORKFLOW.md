@@ -699,6 +699,7 @@ Rendered by the harness from the recorded decomposition; edit the decomposition,
 - plans/active/FORGE-WIN-3-delegation-runs-on-native-windows.md
 - plans/active/upgrade-doc-contract-safety-task-plan.md
 - factory/scripts/pr_ready.py
+- factory/scripts/check_encoding_hygiene.py
 
 **Required tests** (run by `stage done`)
 
