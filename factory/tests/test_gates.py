@@ -367,14 +367,17 @@ def seed_task_grill_frontier(repo: Path, task: dict) -> None:
     plan.parent.mkdir(parents=True, exist_ok=True)
     if not plan.exists():
         plan.write_text("---\nstatus: approved\n---\n" + PLAN_BODY)
+    approved_plan_sha256 = plan_digest_without_assumptions(plan)
     (repo / ".factory" / "run.json").write_text(json.dumps({
         "issue_key": "TEST-1",
+        "story": "TEST-1",
         "plan_file": plan.relative_to(repo).as_posix(),
         "plan_status": "approved",
+        "approved_plan_sha256": approved_plan_sha256,
     }))
     (control / "decomposition.json").write_text(json.dumps({
         "plan_file": plan.relative_to(repo).as_posix(),
-        "plan_sha256": plan_digest_without_assumptions(plan),
+        "plan_sha256": approved_plan_sha256,
         "tasks": [task],
     }))
     task_plan = repo / ".factory" / "task-plans" / f"{task['id']}.md"
@@ -594,6 +597,7 @@ def save_plan_raw(repo: Path, tmp_path: Path) -> tuple[int, str]:
 def write_passing_artifacts(
     repo: Path, commit: str | None = None, *, verify_contracts: bool = False,
     contract_verdicts: list[dict] | None = None, publish_selected: bool = True,
+    legacy_fixed: bool = False, functional_tasks: set[str] | None = None,
 ) -> None:
     sha = commit or head(repo)
     lib = load_factory_lib(repo)
@@ -611,14 +615,6 @@ def write_passing_artifacts(
     decomposition = {**decomposition, "commit": sha}
     (f / "decomposition.json").write_text(json.dumps(decomposition))
     protected_decomposition.write_text(json.dumps(decomposition))
-    (f / "verify.json").write_text(json.dumps({"ok": True, "commit": sha}))
-    (f / "tests.json").write_text(json.dumps({
-        "automated": {"status": "passed", "generated_by": "implementer",
-                      "skills_used": ["emil-design-eng", "frontend-design"]},
-        "functional": {"status": "passed", "score": 9,
-                       "generated_by": "functional-checker"},
-        "commit": sha,
-    }))
     review_base = git(repo, "merge-base", "origin/main", sha)
     stages = {
         "issue": run_state(repo).get("issue_key", ""),
@@ -632,21 +628,114 @@ def write_passing_artifacts(
     }
     (f / "stages.json").write_text(json.dumps(stages))
     (control / "stages.json").write_text(json.dumps(stages))
-    (f / "reviews").mkdir(exist_ok=True)
-    brief_sha256 = hashlib.sha256(b"fixture branch review brief").hexdigest()
-    branch_digest = lib.branch_diff_digest(repo)
-    review_run_id = hashlib.sha256(
-        (brief_sha256 + branch_digest).encode()
-    ).hexdigest()
-    for aspect in ("quality", "performance", "security"):
-        (f / "reviews" / f"{aspect}.json").write_text(
-            json.dumps({"score": 9, "blocking_findings": [],
-                        "generated_by": "autoreview",
-                        "skills_used": ["review-animations"], "commit": sha,
-                        "review_run_id": review_run_id,
-                        "brief_sha256": brief_sha256,
-                        "branch_diff_digest": branch_digest})
+    if legacy_fixed:
+        (f / "verify.json").write_text(json.dumps({"ok": True, "commit": sha}))
+        (f / "tests.json").write_text(json.dumps({
+            "automated": {"status": "passed", "generated_by": "implementer",
+                          "skills_used": ["emil-design-eng", "frontend-design"]},
+            "functional": {"status": "passed", "score": 9,
+                           "generated_by": "functional-checker"},
+            "commit": sha,
+        }))
+        (f / "reviews").mkdir(exist_ok=True)
+        brief_sha256 = hashlib.sha256(b"fixture branch review brief").hexdigest()
+        branch_digest = lib.branch_diff_digest(repo)
+        review_run_id = hashlib.sha256(
+            (brief_sha256 + branch_digest).encode()
+        ).hexdigest()
+        for aspect in ("quality", "performance", "security"):
+            (f / "reviews" / f"{aspect}.json").write_text(
+                json.dumps({"score": 9, "blocking_findings": [],
+                            "generated_by": "autoreview",
+                            "skills_used": ["review-animations"], "commit": sha,
+                            "review_run_id": review_run_id,
+                            "brief_sha256": brief_sha256,
+                            "branch_diff_digest": branch_digest})
+            )
+        (f / "outcome.json").write_text(json.dumps({
+            "generated_by": "implementer", "commit": sha,
+            "outcome": "The invoice list now loads for every account and can be "
+                       "filtered by date, which previously required a support request.",
+        }))
+        return
+
+    for task in decomposition["tasks"]:
+        task_id = task["id"]
+        task_plan = lib.evidence_path(
+            repo, key, f"task-plans/{task_id}.md", for_write=True,
         )
+        task_plan.parent.mkdir(parents=True, exist_ok=True)
+        if not task_plan.is_file():
+            task_plan.write_text(
+                f"# Task plan — {task_id}\n\nImplement the recorded contract.\n",
+                encoding="utf-8",
+            )
+        task_plan_sha256 = lib.plan_digest_without_assumptions(task_plan)
+        grill_path = lib.evidence_path(
+            repo, key, f"grills/tasks/{task_id}.json", for_write=True,
+        )
+        lib.dump_json(grill_path, {
+            "generated_by": "griller",
+            "gate": "task",
+            "issue": key,
+            "task_id": task_id,
+            "verdict": "pass",
+            "gaps": [],
+            "contradictions": [],
+            "resolutions": [],
+            "inspected_refs": ["factory/tests/test_gates.py"],
+            "commit": sha,
+            "input_sha256": lib.grounding_digest(repo, task, in_stage=True),
+            "grounding_basis": "working-tree",
+            "grounding_treeish": "",
+            "task_plan_sha256": task_plan_sha256,
+            "approved_task_plan_sha256": task_plan_sha256,
+            "approved_by": "human-via-Claude",
+            "approved_at": "2026-09-10T00:00:00+00:00",
+            "approval_runtime": "claude",
+            "approval_session_id": f"fixture-session-{task_id}",
+            "approval_event_id": f"fixture-event-{task_id}",
+        })
+        task_root = lib.task_evidence_path(
+            repo, key, task_id, "verify.json", for_write=True,
+        ).parent
+        task_root.mkdir(parents=True, exist_ok=True)
+        lib.dump_json(task_root / "verify.json", {"ok": True, "commit": sha})
+        tests = {
+            "automated": {
+                "generated_by": "implementer",
+                "status": "passed",
+                "summary": "focused task proof passed",
+                "blocking_findings": [],
+                "commands_run": ["pytest task proof"],
+                "reviewed_scope": ["factory/tests/test_gates.py"],
+                "remaining_gaps": ["REPORT_TAIL_SENTINEL"],
+                "recorded_at": "2026-09-10T00:00:00+00:00",
+                "commit": sha,
+            },
+            "commit": sha,
+        }
+        if functional_tasks is None or task_id in functional_tasks:
+            tests["functional"] = {
+                "generated_by": "functional-checker",
+                "status": "passed",
+                "score": 9,
+                "blocking_findings": [],
+            }
+        lib.dump_json(task_root / "tests.json", tests)
+
+    from forge_cli.review_brief import (  # noqa: E402
+        VERDICT_INSTRUCTION, _task_section,
+    )
+    brief_lines = [
+        "# Branch-wide plan-contract review brief", "", VERDICT_INSTRUCTION, "",
+    ]
+    for task in decomposition["tasks"]:
+        brief_lines.extend(_task_section(task, repo, full_inputs=True))
+    brief = repo / ".factory" / "review-briefs" / "all.md"
+    brief.parent.mkdir(parents=True, exist_ok=True)
+    brief.write_text("\n".join(brief_lines).rstrip() + "\n", encoding="utf-8")
+    brief_sha256 = hashlib.sha256(brief.read_bytes()).hexdigest()
     raw_report = {
         "findings": [],
         "overall_correctness": "patch is correct",
@@ -667,7 +756,6 @@ def write_passing_artifacts(
     helper = {
         "path": "/fixture/autoreview", "version": "fixture", "sha256": "a" * 64,
     }
-    review_input = b"fixture reviewed meaning"
     for task in decomposition["tasks"]:
         task_id = task["id"]
         if not publish_selected or lib.task_evidence_path(
@@ -677,11 +765,8 @@ def write_passing_artifacts(
         delta_id = lib.product_delta_digest(
             repo, lib.effective_review_base(repo, task_id, sha),
         )
-        selected_brief_sha256 = hashlib.sha256(
-            f"fixture review brief for {task_id}".encode()
-        ).hexdigest()
         selected_review_run_id = hashlib.sha256(
-            (selected_brief_sha256 + delta_id).encode()
+            (brief_sha256 + delta_id).encode()
         ).hexdigest()
         lenses = {
             aspect: {
@@ -694,23 +779,26 @@ def write_passing_artifacts(
                 "recommendation": "approve",
                 "commit": sha,
                 "review_run_id": selected_review_run_id,
-                "brief_sha256": selected_brief_sha256,
+                "brief_sha256": brief_sha256,
                 "branch_diff_digest": delta_id,
             }
             for aspect in ("quality", "performance", "security")
         }
-        if verify_contracts and contract_verdicts is None:
-            contract_verdicts = [
+        task_contract_verdicts = contract_verdicts
+        if verify_contracts and task_contract_verdicts is None:
+            task_contract_verdicts = [
                 {
                     "contract_id": contract["id"],
                     "verdict": "implemented",
                     "evidence": "focused stage proof",
                 }
-                for owner in decomposition["tasks"]
-                for contract in owner.get("plan_contracts", [])
+                for contract in task.get("plan_contracts", [])
             ]
-        if contract_verdicts is not None:
-            lenses["quality"]["contract_verdicts"] = contract_verdicts
+        if task_contract_verdicts is not None:
+            lenses["quality"]["contract_verdicts"] = task_contract_verdicts
+        from forge_cli.stages import reviewed_meaning_identity  # noqa: E402
+        stage = next(row for row in stages["stages"] if row["id"] == task_id)
+        meaning = reviewed_meaning_identity(repo, stage, task, helper)
         lib.publish_review_generation(repo, key, task_id, {
             "format": "forge-review-generation/v1",
             "origin": "combined",
@@ -718,13 +806,13 @@ def write_passing_artifacts(
             "story": key,
             "task_id": task_id,
             "review_run_id": selected_review_run_id,
-            "brief_sha256": selected_brief_sha256,
+            "brief_sha256": brief_sha256,
             "inspected_commit": sha,
             "delta_id": delta_id,
             "helper": helper,
             "input": {
-                "sha256": hashlib.sha256(review_input).hexdigest(),
-                "bytes": len(review_input),
+                "sha256": meaning["identity"],
+                "bytes": meaning["bytes"],
             },
             "raw_result": {
                 "encoding": "base64",
@@ -735,10 +823,69 @@ def write_passing_artifacts(
             "lenses": lenses,
             "recorded_at": "2026-09-10T00:00:00+00:00",
         })
+        from forge_cli.stages import stamp_stage_review  # noqa: E402
+        stamp_stage_review(
+            repo, task_id, lenses=("quality", "performance", "security"),
+        )
     (f / "outcome.json").write_text(json.dumps({
         "generated_by": "implementer", "commit": sha,
         "outcome": "The invoice list now loads for every account and can be filtered "
                    "by date, which previously required a support request."}))
+
+
+def seal_fixture_tasks(repo: Path, tmp_path: Path, *task_ids: str) -> None:
+    """Publish real task markers and advance the fixture trunk to contain them."""
+    decomposition = json.loads(
+        (delegation_ledger(repo).parent / "decomposition.json").read_text()
+    )
+    ids = task_ids or tuple(
+        task["id"] for task in decomposition["tasks"]
+    )
+    state = run_state(repo)
+    branch = str(state.get("branch") or "")
+    scoped = story_state(repo, str(state.get("issue_key") or ""))
+    git(repo, "config", "user.email", "test@knacklabs.dev")
+    git(repo, "config", "user.name", "Gate Tests")
+    remote = tmp_path / "closeout-origin.git"
+    proc = subprocess.run(
+        ["git", "init", "--bare", str(remote)], capture_output=True, text=True,
+    )
+    assert proc.returncode == 0, proc.stdout + proc.stderr
+    main_sha = git(repo, "rev-parse", "origin/main")
+    git(repo, "remote", "add", "origin", str(remote))
+    git(repo, "push", "-q", str(remote), f"{main_sha}:refs/heads/main")
+    if branch and git(repo, "branch", "--show-current") != branch:
+        git(repo, "checkout", "-qb", branch)
+    outcome_path = scoped / "outcome.json"
+    outcome = json.loads(outcome_path.read_text()) if outcome_path.is_file() else None
+    functional_tasks = {
+        task_id for task_id in ids if "functional" in json.loads(
+            (scoped / "tasks" / task_id / "tests.json").read_text()
+        )
+    }
+    git(repo, "add", "-A")
+    if git(repo, "diff", "--cached", "--name-only"):
+        git(repo, "commit", "-qm", "record fixture state")
+    write_passing_artifacts(
+        repo, commit=head(repo), functional_tasks=functional_tasks,
+        verify_contracts=any(
+            task.get("plan_contracts") for task in decomposition["tasks"]
+        ),
+    )
+    git(repo, "add", "-A")
+    git(repo, "commit", "-qm", "record canonical fixture task proof")
+    gh_env, _ = fake_gh_env(tmp_path)
+    for task_id in ids:
+        code, out = run(
+            repo, "forge.py", "task", "pr-ready", task_id, env=gh_env,
+        )
+        assert code == 0, out
+        git(repo, "push", "-q", "origin", "HEAD:main")
+    if outcome is not None:
+        code, out = run(
+            repo, "forge.py", "outcome", "set", outcome["outcome"],
+        )
+        assert code == 0, out
 
 
 def write_task_proof(repo: Path, task_id: str = "T1", *,
@@ -1244,11 +1391,12 @@ def prepare_pr_ready_story(
             "evidence": "src/core.py:1",
         }],
     )
-    git(repo, "add", proof.relative_to(repo).as_posix(), ".factory/review-briefs/all.md")
+    git(repo, "add", "-A")
     git(repo, "commit", "-qm", "record canonical task proof")
     gh_env, _ = fake_gh_env(tmp_path)
     code, out = run(repo, "forge.py", "task", "pr-ready", "T1", env=gh_env)
     assert code == 0 and marker.is_file(), out
+    git(repo, "push", "-q", "origin", "HEAD:main")
     code, out = run(
         repo,
         "forge.py",
@@ -1398,7 +1546,7 @@ def test_pr_ready_legacy_fixed_review_requires_upgrade(repo, tmp_path):
     code, out = save_plan(repo, tmp_path)
     assert code == 0, out
     record_skeleton_then_frontier(repo, DECOMP["tasks"])
-    write_passing_artifacts(repo, publish_selected=False)
+    write_passing_artifacts(repo, publish_selected=False, legacy_fixed=True)
     code, out = run(repo, "update_run.py", "--decomposition-status", "recorded")
     assert code == 0, out
     code, out = run(repo, "pr_ready.py")
@@ -2514,7 +2662,6 @@ def test_pr_ready_requires_saved_plan(repo, tmp_path):
     (repo / ".factory" / "run.json").write_text(
         json.dumps({**run_state(repo), "plan_status": "approved"})
     )
-    write_passing_artifacts(repo)
     code, out = run(repo, "pr_ready.py")
     assert code != 0 and "plans/active" in out
 
@@ -2823,16 +2970,17 @@ def ready_task(repo: Path, tmp_path: Path) -> None:
     sign_off(repo)
     intake(repo)
     save_plan(repo, tmp_path)
+    record_skeleton_then_frontier(repo, DECOMP["tasks"])
     write_passing_artifacts(repo)
     run(repo, "update_run.py", "--decomposition-status", "recorded")
 
 
 def test_pr_ready_rejects_unstamped_evidence(repo, tmp_path):
     ready_task(repo, tmp_path)
-    verify = story_state(repo) / "verify.json"
+    verify = story_state(repo) / "tasks" / "T1" / "verify.json"
     verify.write_text(json.dumps({"ok": True}))  # no commit stamp
     code, out = run(repo, "pr_ready.py")
-    assert code != 0 and "stamped at HEAD" in out
+    assert code != 0 and "verify proof has no valid commit stamp" in out
 
 
 def test_pr_ready_rejects_stale_evidence_after_code_change(repo, tmp_path):
@@ -2841,9 +2989,10 @@ def test_pr_ready_rejects_stale_evidence_after_code_change(repo, tmp_path):
     git(repo, "add", "app.py")
     git(repo, "commit", "-q", "-m", "code change after evidence")
     code, out = run(repo, "pr_ready.py")
-    assert code != 0 and "fresh evidence" in out
+    assert code != 0 and "product content changed after verify proof" in out
     # Re-recording at the new commit clears it
     write_passing_artifacts(repo)
+    seal_fixture_tasks(repo, tmp_path)
     code, out = run(repo, "pr_ready.py")
     assert code == 0, out
 
@@ -2861,6 +3010,7 @@ def test_pr_ready_accepts_decomposition_recorded_before_implementation(repo, tmp
     git(repo, "add", "src.py")
     git(repo, "commit", "-q", "-m", "implementation")
     write_passing_artifacts(repo)  # evidence stamped at the new HEAD
+    seal_fixture_tasks(repo, tmp_path)
     code, out = run(repo, "pr_ready.py")
     assert code == 0, out
 
@@ -2870,6 +3020,7 @@ def test_pr_ready_tolerates_evidence_only_commits(repo, tmp_path):
     git(repo, "add", "-A", ".factory", "plans")
     git(repo, "commit", "-q", "-m", "record evidence")  # touches .factory/plans only
     write_passing_artifacts(repo)  # evidence-only commit moved HEAD; re-stamp there
+    seal_fixture_tasks(repo, tmp_path)
     code, out = run(repo, "pr_ready.py")
     assert code == 0, out
 
@@ -2884,6 +3035,7 @@ def test_pr_ready_tolerates_harness_upgrade_commits(repo, tmp_path):
     git(repo, "add", "-A")
     git(repo, "commit", "-q", "-m", "chore: forge upgrade")
     write_passing_artifacts(repo)
+    seal_fixture_tasks(repo, tmp_path)
     code, out = run(repo, "pr_ready.py")
     assert code == 0, out
 
@@ -5723,6 +5875,7 @@ def test_roadmap_lifecycle(repo, tmp_path):
     record_skeleton_then_frontier(repo, DECOMP["tasks"])
     write_passing_artifacts(repo)
     run(repo, "update_run.py", "--decomposition-status", "recorded")
+    seal_fixture_tasks(repo, tmp_path)
     code, out = run(repo, "pr_ready.py")
     assert code == 0, out
     items = roadmap_items(repo)
@@ -5874,9 +6027,11 @@ def test_functional_check_conditional_on_user_facing(repo, tmp_path):
     (f / "decomposition.json").write_text(json.dumps(decomp))
     (delegation_ledger(repo).parent / "decomposition.json").write_text(
         json.dumps(decomp))
-    tests = json.loads((f / "tests.json").read_text())
+    tests_path = f / "tasks" / "T1" / "tests.json"
+    tests = json.loads(tests_path.read_text())
     del tests["functional"]
-    (f / "tests.json").write_text(json.dumps(tests))
+    tests_path.write_text(json.dumps(tests))
+    seal_fixture_tasks(repo, tmp_path)
     code, out = run(repo, "pr_ready.py")
     assert code == 0, out
 
@@ -5885,12 +6040,15 @@ def test_functional_check_required_when_user_facing(repo, tmp_path):
     sign_off(repo)
     intake(repo)
     save_plan(repo, tmp_path)
+    task = {**DECOMP["tasks"][0], "user_facing": True}
+    record_skeleton_then_frontier(repo, [task])
     run(repo, "update_run.py", "--decomposition-status", "recorded")
-    write_passing_artifacts(repo)  # user_facing: true via DECOMP
+    write_passing_artifacts(repo)
     f = story_state(repo)
-    tests = json.loads((f / "tests.json").read_text())
+    tests_path = f / "tasks" / "T1" / "tests.json"
+    tests = json.loads(tests_path.read_text())
     del tests["functional"]
-    (f / "tests.json").write_text(json.dumps(tests))
+    tests_path.write_text(json.dumps(tests))
     code, out = run(repo, "pr_ready.py")
     assert code != 0 and "functional" in out
 
@@ -6291,7 +6449,7 @@ def test_next_tags_steps_with_roles(repo):
 
 # ------------------------------------------------------------ handover grills
 
-def test_task_grill_requires_saved_task_plan_with_tolerance(repo):
+def test_task_grill_requires_a_saved_plan_and_refuses_a_legacy_retry(repo):
     task = STAGE_TASK
     seed_task_grill_frontier(repo, task)
     plan = repo / ".factory" / "task-plans" / "T1.md"
@@ -6324,9 +6482,7 @@ def test_task_grill_requires_saved_task_plan_with_tolerance(repo):
     code, out = run(
         repo, "forge.py", "task", "plan", "save", "T1", "--from", str(source),
     )
-    assert code == 0, out
-    migrated = json.loads(grill_path.read_text())
-    assert migrated["task_plan_sha256"] == plan_digest_without_assumptions(plan)
+    assert code != 0 and "legacy task grill" in out and "forge upgrade" in out
 
 
 def test_frontier_orders_task_plan_before_grill(repo, tmp_path):
@@ -6754,6 +6910,7 @@ def test_assumptions_ledger_gates_pr_ready(repo, tmp_path):
     code, out = run(repo, "forge.py", "assumptions", "resolve", "A-0001",
                     "--status", "confirmed", "--notes", "switched to UUIDv4; verified")
     assert code == 0, out
+    seal_fixture_tasks(repo, tmp_path)
     code, out = run(repo, "pr_ready.py")
     assert code == 0, out
     # list --open is the orchestrator's console
@@ -10044,6 +10201,7 @@ def test_outcome_is_required_to_ship_and_survives_in_the_record(repo, tmp_path):
             "so support no longer has to run the export by hand.")
     code, out = run(repo, "forge.py", "outcome", "set", text)
     assert code == 0, out
+    seal_fixture_tasks(repo, tmp_path)
     code, out = run(repo, "pr_ready.py")
     assert code == 0 and "PR_READY" in out, out
     # what shipped is answerable from the durable record, not from a session
@@ -10066,6 +10224,7 @@ def test_story_timeline_is_recorded_and_archived_with_its_story(repo, tmp_path):
     assert all(e["story"] == "ENG-1" for e in events if "story" in e)
     write_passing_artifacts(repo)
     run(repo, "update_run.py", "--decomposition-status", "recorded")
+    seal_fixture_tasks(repo, tmp_path)
     code, out = run(repo, "pr_ready.py")
     assert code == 0, out
     live = load_events(repo)
@@ -10082,6 +10241,7 @@ def test_ship_archives_the_plan_grill_not_the_project_grills(repo, tmp_path):
     write_passing_artifacts(repo)
     run(repo, "update_run.py", "--decomposition-status", "recorded")
     assert (story_state(repo) / "grills" / "plan.json").exists()
+    seal_fixture_tasks(repo, tmp_path)
     code, out = run(repo, "pr_ready.py")
     assert code == 0, out
     history = story_state(repo)
@@ -11107,7 +11267,7 @@ def test_board_task_rows_carry_their_own_plan_spec_and_proof(repo, tmp_path):
     assert plan_section(body, "T9") == ""
 
 
-def test_board_task_dossiers_survive_object_form_required_tests():
+def test_board_task_dossiers_survive_object_form_required_tests(repo):
     """required_tests entries are {id, path, command} OBJECTS (the recorded
     decomposition schema), not bare strings. Coverage matched on the whole dict
     (`t in str(recorded)`), which raised TypeError and crashed the story drawer
@@ -11135,9 +11295,12 @@ def test_board_task_dossiers_survive_object_form_required_tests():
             "reviews": {},
         },
     }
-    # base/key only steer the per-task plan lookup; with no saved plan on disk
-    # the dossier still assembles (plan_state "none"), so coverage matching runs.
-    dossiers = task_dossiers(HARNESS, "RETURN-1", detail)  # must not raise
+    tests = story_state(repo, "RETURN-1") / "tasks" / "T1" / "tests.json"
+    tests.parent.mkdir(parents=True, exist_ok=True)
+    tests.write_text(json.dumps(detail["evidence"]["tests"]))
+    # base/key steer both the per-task plan lookup and the canonical task-owned
+    # proof read; with no saved plan the dossier still assembles.
+    dossiers = task_dossiers(repo, "RETURN-1", detail)  # must not raise
     assert len(dossiers) == 1
     covered = dossiers[0]["proof"]["covered_tests"]
     covered_ids = {t["id"] if isinstance(t, dict) else t for t in covered}
@@ -11431,6 +11594,7 @@ def test_signal_events_block_ship_until_resolved(repo, tmp_path):
     code, out = run(repo, "forge.py", "signal", "resolve", sig_id,
                     "--notes", "decision 0001 wins: hard-delete; plan revised")
     assert code == 0 and out.splitlines() == [f"Signal {sig_id} resolved"]
+    seal_fixture_tasks(repo, tmp_path)
     code, out = run(repo, "pr_ready.py")
     assert code == 0, out
     # channel archived with the task, working copy cleaned
@@ -11445,6 +11609,7 @@ def test_open_quickfix_blocks_ship_until_closed(repo, tmp_path):
     run(repo, "record_decomposition_from_json.py", stdin=json.dumps(DECOMP))
     write_passing_artifacts(repo)
     run(repo, "update_run.py", "--decomposition-status", "recorded")
+    seal_fixture_tasks(repo, tmp_path)
 
     code, out = run(repo, "forge.py", "quickfix", "start", "tweak the copy")
     assert code == 0
@@ -11741,6 +11906,7 @@ def test_roadmap_dependency_and_lifecycle_guards(repo, tmp_path):
     run(repo, "record_decomposition_from_json.py", stdin=json.dumps(DECOMP))
     write_passing_artifacts(repo)
     run(repo, "update_run.py", "--decomposition-status", "recorded")
+    seal_fixture_tasks(repo, tmp_path)
     run(repo, "pr_ready.py")
     code, out = intake(repo, "G-1", "API")
     assert code == 0 and "already done" in out
@@ -11943,10 +12109,7 @@ def test_stage_loop_orders_execution_and_gates_pr_ready(repo, tmp_path):
     # pr_ready refuses while a stage is open
     stages_before_artifacts = json.loads(
         (repo / ".factory" / "stages.json").read_text())
-    write_passing_artifacts(repo)
-    quality_path = story_state(repo) / "reviews" / "quality.json"
-    quality = json.loads(quality_path.read_text())
-    quality["contract_verdicts"] = [
+    contract_verdicts = [
         {
             "contract_id": contract_id,
             "verdict": "implemented",
@@ -11954,7 +12117,7 @@ def test_stage_loop_orders_execution_and_gates_pr_ready(repo, tmp_path):
         }
         for contract_id in ("T1-C1", "T2-C1")
     ]
-    quality_path.write_text(json.dumps(quality))
+    write_passing_artifacts(repo, contract_verdicts=contract_verdicts)
     # write_passing_artifacts stamps the single-task DECOMP; T2's contract has
     # to survive, or stage done has nothing to measure it against
     (story_state(repo) / "decomposition.json").write_text(
@@ -11976,21 +12139,9 @@ def test_stage_loop_orders_execution_and_gates_pr_ready(repo, tmp_path):
     code, out = run(repo, "forge.py", "stage", "done", "T2")
     assert code == 0, out
     # re-stamp the closeout evidence at the final HEAD (verify/reviews/outcome)
-    write_passing_artifacts(repo, commit=head(repo), verify_contracts=True)
-    quality_path = story_state(repo) / "reviews" / "quality.json"
-    quality = json.loads(quality_path.read_text())
-    quality["contract_verdicts"] = [
-        {"contract_id": cid, "verdict": "implemented", "evidence": "focused stage proof"}
-        for cid in ("T1-C1", "T2-C1")
-    ]
-    quality_path.write_text(json.dumps(quality))
-    both_done = {"issue": run_state(repo).get("issue_key", ""),
-                 "stages": [{"id": "T1", "title": "api", "status": "done"},
-                            {"id": "T2", "title": "ui", "status": "done"}]}
-    (story_state(repo) / "stages.json").write_text(json.dumps(both_done))
-    (delegation_ledger(repo).parent / "stages.json").write_text(json.dumps(both_done))
-    (story_state(repo) / "decomposition.json").write_text(
-        json.dumps({**decomp, "commit": head(repo)}))
+    write_passing_artifacts(
+        repo, commit=head(repo), contract_verdicts=contract_verdicts,
+    )
     code, out = run(repo, "pr_ready.py")
     assert code != 0 and "committed pr-ready marker" in out, out
     assert (repo / ".factory" / "stages.json").exists()
@@ -17648,6 +17799,7 @@ def test_refactor_ratchet_blocks_growing_refactors(repo, tmp_path):
     git(repo, "add", "-A")
     git(repo, "commit", "-q", "-m", "refactor(REF-1): actually shrink")
     write_passing_artifacts(repo)
+    seal_fixture_tasks(repo, tmp_path)
     code, out = run(repo, "pr_ready.py")
     assert code == 0, out
 
@@ -17728,6 +17880,7 @@ def test_precompact_scratchpad_snapshots_facts_and_findings(repo, tmp_path):
     run(repo, "update_run.py", "--decomposition-status", "recorded")
     run(repo, "forge.py", "assumptions", "resolve", "A-0001",
         "--status", "confirmed", "--notes", "60s confirmed with EM")
+    seal_fixture_tasks(repo, tmp_path)
     code, out = run(repo, "pr_ready.py")
     assert code == 0, out
     assert not pad.exists()
@@ -18060,6 +18213,7 @@ def test_pr_ready_refuses_drifted_gate_surface(repo, tmp_path):
     code, out = run(repo, "session_start.py", stdin="{}")
     assert code == 0 and "GATE SURFACE DRIFTED" in out, out
     git(repo, "checkout", "--", "factory/prompts/reviewer.md")
+    seal_fixture_tasks(repo, tmp_path)
     code, out = run(repo, "pr_ready.py")
     assert code == 0, out
 
@@ -18854,15 +19008,21 @@ def test_task_proof_consumers_share_complete_predicate(repo, tmp_path):
         return next(s for s in aggregate_state(repo)["stories"]
                     if s["key"] == "ENG-1")
 
+    assert not lib.task_proof_problems(repo, "ENG-1", task, preseal=True)
+    assert lib.task_proof_problems(repo, "ENG-1", task) == [
+        "T1: committed pr-ready marker is missing",
+    ]
+    assert story()["lifecycle"]["proven"] == {"done": 0, "total": 1}
+    seal_fixture_tasks(repo, tmp_path)
     assert not lib.task_proof_problems(repo, "ENG-1", task)
     assert story()["lifecycle"]["proven"] == {"done": 1, "total": 1}
     selected = json.loads((proof / "reviews/selected.json").read_text())
     generation = proof / "reviews/generations" / f"{selected['generation_id']}.json"
     generation.write_bytes(generation.read_bytes() + b" ")
+    git(repo, "add", generation.relative_to(repo).as_posix())
+    git(repo, "commit", "-qm", "tamper selected generation")
     assert lib.task_proof_problems(repo, "ENG-1", task)
     assert story()["lifecycle"]["proven"] == {"done": 0, "total": 1}
-    git(repo, "add", "-A")
-    git(repo, "commit", "-qm", "tamper selected generation")
     import check_task_proof
     assert check_task_proof.proof_problems(repo, "ENG-1", "T1")
 
@@ -19052,7 +19212,7 @@ def test_task_proof_ci_uses_sealed_selected_t1_not_later_t2_singleton(
     git(repo, "add", "-A")
     git(repo, "commit", "-qm", "prepare historical T1")
     proof_base = head(repo)
-    write_passing_artifacts(repo, commit=proof_base)
+    write_passing_artifacts(repo, commit=proof_base, legacy_fixed=True)
     bundle = repo / ".factory"
     for lens in ("quality", "performance", "security"):
         path = bundle / "reviews" / f"{lens}.json"

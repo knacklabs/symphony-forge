@@ -2101,12 +2101,14 @@ def task_proof_problems(
             return [f"{task_id}: task PR marker is invalid"]
 
     marker_context = None
+    missing_marker = False
     if not preseal:
         marker_context, marker_problem = _committed_task_marker(
             root, key, task_id, marker, reader, inspected_head=inspected_head,
         )
         if marker_problem:
             return [marker_problem]
+        missing_marker = marker_context is None
 
     expected_head = inspected_head or head_sha(root) or ""
     proof_base = ""
@@ -2188,7 +2190,7 @@ def task_proof_problems(
         review_base = effective_review_base(root, task_id) or proof_base
         expected_review_delta = product_delta_digest(root, review_base)
 
-    return _modern_task_proof_problems(
+    problems = _modern_task_proof_problems(
         root, key, task, read_task,
         expected_head=expected_head,
         marker_publication_commit=marker_publication_commit,
@@ -2207,6 +2209,9 @@ def task_proof_problems(
         selected_upgrade_after_marker=selected_upgrade_after_marker,
         history_head=inspected_head or "HEAD",
     )
+    if missing_marker:
+        problems.insert(0, f"{task_id}: committed pr-ready marker is missing")
+    return problems
 
 
 def require_closeout_order(root: Path) -> list[str]:
@@ -2248,6 +2253,20 @@ def require_closeout_order(root: Path) -> list[str]:
         problems.append(
             "legacy fixed review proof is no longer runtime authority; "
             "run `forge upgrade`"
+        )
+    trunk = default_trunk_branch(root)
+    trunk_available = bool(tasks) and fetch_trunk(root, trunk)
+    missing_trunk_markers = [
+        str(task.get("id") or "")
+        for task in tasks
+        if not trunk_available or not task_marker_on_main(
+            root, key, str(task.get("id") or ""), refresh=False,
+        )
+    ]
+    if missing_trunk_markers:
+        problems.append(
+            "every task must have its committed pr-ready marker on the trunk; "
+            f"missing: {', '.join(missing_trunk_markers)}"
         )
     if tasks:
         for task in tasks:
