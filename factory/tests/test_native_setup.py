@@ -136,7 +136,7 @@ def test_codex_hook_readiness_requires_exact_enabled_trusted_source(
         assert "SessionStart matcher" in detail and missing in detail
 
 
-def test_codex_hook_readiness_accepts_safe_inherited_worktree_hook_supersets(
+def test_codex_hook_readiness_accepts_only_identical_inherited_worktree_hooks(
         tmp_path, monkeypatch):
     from forge_cli import doctor
 
