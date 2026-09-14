@@ -8,7 +8,7 @@ from pathlib import Path
 
 from factory_lib import (
     active_task_id, branch_diff_digest, dump_json, gate, head_sha, load_json, now_iso,
-    effective_review_base, evidence_path, proof_path,
+    effective_review_base, proof_path,
     protected_decomposition_state_path, repo_root,
     product_delta_digest, publish_review_generation, require_skills,
     read_stdin_utf8, run_state_path, story_dir, validate_payload,

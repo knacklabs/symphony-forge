@@ -2,8 +2,6 @@
 from __future__ import annotations
 
 import json
-import subprocess
-from pathlib import Path
 
 from factory_lib import (
     client_signoff, load_json, read_hook_input, repo_root, run_state_path,
@@ -72,9 +70,9 @@ if run_state.get("plan_status") != "approved" and not quickfix:
     context.append(
         "Plan per factory/prompts/planner.md; authoring is mode-agnostic. "
         "Use `./forge next` for the current contract and grill prerequisites. "
-        "Required human rounds and approval use the coordinator's native "
-        "synchronous question tool; successful native approval is recorded "
-        "from that completed tool event."
+        "Unresolved material choices use the coordinator's supported human "
+        "channel. Plan approval uses the runtime's native Plan Mode approval "
+        "event, and the completed event is recorded against the exact plan."
     )
 if quickfix:
     if quickfix.get("profile", "quickfix") == "lite":

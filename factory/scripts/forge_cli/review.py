@@ -32,7 +32,7 @@ import unicodedata
 from pathlib import Path, PurePosixPath
 
 from factory_lib import (
-    branch_diff_digest, clean_git_env, head_sha, load_json, product_delta_digest,
+    head_sha, load_json, product_delta_digest,
     proof_path, protected_decomposition_state_path, repo_root, run_state_path,
     safe_factory_write_bytes, schema_path,
 )
@@ -637,7 +637,7 @@ def _project_combined_report(
 
 def rederive_combined_lenses(base: Path, candidate: dict) -> dict[str, dict]:
     """Project a combined candidate again from current authoritative task state."""
-    from .stages import load_stages, stage_baseline, task_for
+    from .stages import load_stages, task_for
 
     task_id = str(candidate.get("task_id") or "")
     task = task_for(base, task_id)
@@ -1509,7 +1509,6 @@ def review_task(base: Path, task_id: str, *, lens: str | None = None,
         recorded = {args.lens: artifact}
     else:
         from factory_lib import now_iso
-        from .stages import stage_baseline
         artifacts = _project_combined_report(
             task, reviewed, scope, base_sha, tip_sha, skills_used, all_tasks,
             started, excluded,

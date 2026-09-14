@@ -1,0 +1,17 @@
+{
+  "event": "done",
+  "id": "Q-0167-601f",
+  "profile": "degraded",
+  "kind": "degraded",
+  "reason": "normal delegation is unavailable because this branch's hook runtime differs from the parent; align native guidance and remove orphan review imports",
+  "started_at": "2026-09-14T11:34:43+00:00",
+  "completed_at": "2026-09-14T11:35:12+00:00",
+  "files": [
+    "factory/scripts/session_start.py",
+    "factory/tests/test_gates.py",
+    "factory/scripts/forge_cli/review.py",
+    "factory/scripts/record_review_from_json.py"
+  ],
+  "task_id": "LEAN-WORKFLOW",
+  "story": "FORGE-COORD-1"
+}

@@ -17805,8 +17805,9 @@ def test_session_start_gives_runtime_neutral_native_approval_guidance(repo):
         contexts.append(json.loads(out)["hookSpecificOutput"]["additionalContext"])
     assert contexts[0] == contexts[1]
     assert "./forge next" in contexts[0]
-    assert "native synchronous question tool" in contexts[0]
-    assert "successful native approval is recorded" in contexts[0]
+    assert "Unresolved material choices" in contexts[0]
+    assert "native Plan Mode approval event" in contexts[0]
+    assert "completed event is recorded against the exact plan" in contexts[0]
     assert "main-chat approval path" not in contexts[0]
 
 
