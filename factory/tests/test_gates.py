@@ -6419,7 +6419,7 @@ def test_grounding_digest_staleness_matrix(repo):
     record_current()
     assert state() == "stage-start"
 
-    changed_contract = {**task, "reviewer_focus": "changed full-contract field"}
+    changed_contract = {**task, "objective": "changed grounded contract field"}
     seed_task_grill_frontier(repo, changed_contract)
     assert state() == "grill"
     seed_task_grill_frontier(repo, task)

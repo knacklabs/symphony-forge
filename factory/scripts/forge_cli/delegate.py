@@ -1704,6 +1704,10 @@ def cmd_delegate(args: argparse.Namespace) -> None:
     stage = next((s for s in load_stages(base).get("stages", [])
                   if s.get("id") == args.id), {})
     scope = task.get("write_scope") or []
+    from .codex_runtime import coordinator_runtime
+    if coordinator_runtime() == "codex" and args.background:
+        fail("native Codex delegation is foreground-only in this release; "
+             "background/read-only background is owned by NATIVE-LIFECYCLE")
     # Derived, not typed: an active stage is a write run. --read-only is the
     # explicit exception for exploration; an empty scope is an incomplete
     # contract, not an implicit read-only downgrade.
@@ -1716,10 +1720,6 @@ def cmd_delegate(args: argparse.Namespace) -> None:
     scope = narrowed_scope(scope, list(getattr(args, "scope", []) or []))
     write = bool(active and scope) and not args.read_only
     task_sha256_value = task_digest(task)
-    from .codex_runtime import coordinator_runtime
-    if coordinator_runtime() == "codex" and args.background:
-        fail("native Codex delegation is foreground-only in this release; "
-             "background/read-only background is owned by NATIVE-LIFECYCLE")
     if write and args.background:
         fail("background write delegation cannot satisfy a measured stage: the "
              "worker could keep writing after stage close. Run it in the foreground, "

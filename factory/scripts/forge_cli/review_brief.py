@@ -156,17 +156,17 @@ def _approved_task_inputs(base: Path, task: dict) -> dict:
         raise SystemExit(
             f"Review brief refused: grill for {task_id} is not a passing grill for this task."
         )
-    if not _task_plan_approval_matches_digest(grill, digest):
-        raise SystemExit(
-            f"Review brief refused: grill/approval for {task_id} is stale or does not "
-            "match the approved task plan."
-        )
     if (not isinstance(grill.get("approved_by"), str)
             or not grill["approved_by"].strip()
             or not isinstance(grill.get("approved_at"), str)
             or not grill["approved_at"].strip()):
         raise SystemExit(
             f"Review brief refused: approved_by and approved_at are required for {task_id}."
+        )
+    if not _task_plan_approval_matches_digest(grill, digest):
+        raise SystemExit(
+            f"Review brief refused: grill/approval for {task_id} is stale or does not "
+            "match the approved task plan."
         )
     if treeish:
         grill_commit_problems = _proof_commit_problems(
