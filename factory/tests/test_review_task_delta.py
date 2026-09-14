@@ -403,20 +403,24 @@ def test_review_set_recorder_validates_origin_specific_shape_and_raw_bytes(
         repo, tmp_path, monkeypatch):
     from test_review_settled_contracts import _publish, _story
     from factory_lib import protected_decomposition_state_path, validate_review_document
-    from forge_cli.review import _combined_prompt, _helper_identity, resolve_skill
+    from forge_cli.review import _helper_identity, resolve_skill
     _story(repo, tmp_path)
     generation, _pointer = _publish(repo)
     candidate = {key: value for key, value in generation.items() if key != "generation_id"}
     task = next(item for item in json.loads(
         protected_decomposition_state_path(repo).read_text())["tasks"]
         if item["id"] == "T2")
-    prompt = _combined_prompt(task)
     safe_helper = tmp_path / "autoreview"
     safe_helper.write_text("safe helper\n")
     monkeypatch.setenv("AUTOREVIEW", str(safe_helper))
     candidate["helper"] = _helper_identity(resolve_skill(None))[0]
+    stage = next(item for item in stage_helpers.load_stages(repo)["stages"]
+                 if item["id"] == "T2")
+    meaning = stage_helpers.reviewed_meaning_identity(
+        repo, stage, task, candidate["helper"],
+    )
     candidate["input"] = {
-        "sha256": hashlib.sha256(prompt).hexdigest(), "bytes": len(prompt),
+        "sha256": meaning["identity"], "bytes": meaning["bytes"],
     }
     malformed = copy.deepcopy(candidate)
     malformed["raw_result"]["bytes"] += 1
@@ -474,7 +478,7 @@ def test_review_set_recorder_validates_origin_specific_shape_and_raw_bytes(
     wrong_input["input"]["sha256"] = "0" * 64
     code, out = run(repo, "record_review_from_json.py", "--set", "--task", "T2",
                     stdin=json.dumps(wrong_input))
-    assert code != 0 and "current combined prompt" in out
+    assert code != 0 and "current reviewed meaning" in out
 
     stale = copy.deepcopy(candidate)
     token_path = repo / ".factory/stories/ENG-1/review-run.json"

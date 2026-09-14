@@ -186,6 +186,7 @@ def test_legacy_stamp_never_converts_in_normal_runtime(repo, tmp_path):
     write_in_scope(repo, "src/core.py")
     git(repo, "add", "src/core.py")
     git(repo, "commit", "-qm", "work")
+    write_task_proof(repo, "T1", publish_review=True)
     data = load_stages(repo)
     stage = next(s for s in data["stages"] if s["id"] == "T1")
     legacy = {
@@ -200,7 +201,6 @@ def test_legacy_stamp_never_converts_in_normal_runtime(repo, tmp_path):
     stage["local_review_stamp"] = legacy
     from forge_cli.stages import write_stages
     write_stages(repo, data)
-    write_task_proof(repo, "T1", publish_review=True)
 
     assert not stamp_is_fresh(repo, _stage(repo), task_for(repo, "T1"))
 
