@@ -1,8 +1,9 @@
 # Getting Started with Symphony Forge
 
 Symphony Forge is a dual-runtime harness plus doc-driven factory for building
-agent-ready software. Claude Code coordinates; Codex executes. This page is
-the one blessed path from empty directory to first feature PR.
+agent-ready software. Either Claude Code or native Codex coordinates the same
+phase engine, and admitted Codex workers execute bounded task work. This page
+is the one blessed path from empty directory to first feature PR.
 
 **You drive it with sentences, not commands.** Every step below leads with
 what you SAY to Claude Code (or Codex); the command underneath is what the
@@ -123,9 +124,10 @@ gh repo create knacklabs/my-app --private --source . --push
 > That activates `.envrc`, which pins `GSTACK_HOME` to the repo's `.gstack/`
 > — every gstack output (office-hours design docs, decisions, learnings)
 > lands IN the repo, committed and shared, instead of a personal `~/.gstack`.
-> Multiple devs never conflict: JSONL stores union-merge (`.gitattributes`
-> `jsonl-append` driver, auto-registered per clone). Old history on your
-> machine? Say **"migrate my gstack history"** (`./forge gstack migrate`).
+> Append-only Forge ledgers use one record per file. Remaining legacy JSONL
+> stays readable and uses Git's built-in `union` driver; no custom merge driver
+> is registered. Old history on your machine? Say **"migrate my gstack
+> history"** (`./forge gstack migrate`).
 
 ## 4. Discovery and prototype (phases 0a / 0b — lightweight on purpose)
 
@@ -235,10 +237,11 @@ cd ../ENG-123
 python3 factory/scripts/intake.py --issue ENG-123 --title "Build billing dashboard"
 ```
 
-Each story lives in its own isolated worktree and branch with its own committed
-`.factory/` state. Tasks inside that story run sequentially. Stories whose
-roadmap dependencies are done may run in parallel worktrees; `pr_ready.py`
-archives evidence before merge.
+Story intake creates the shared contract in an isolated planning worktree.
+Each leaf task then owns its worktree, branch, proof, and PR. Dependency-ready
+tasks may advance together when their scopes are disjoint, and dependency-ready
+stories may also advance in parallel. Story evidence ships in place under
+`.factory/stories/<key>/`.
 
 1. **Plan (mandatory — enforced)** — say: **"Plan this task."** and switch to
    PLAN MODE (shift+tab). While the task is unplanned, the hook blocks

@@ -26,9 +26,18 @@ It provides:
 
 ## Runtime Modes
 
-Claude Code coordinates discovery, planning, decisions, and orchestration through `codex-plugin-cc`. Its hook always denies product and canon writes; planning exploration is delegated to Codex read-only runs.
+Either Claude Code or native Codex coordinates discovery, planning, decisions,
+and orchestration through the same Forge phase engine. The active coordinator
+owns the human conversation; admitted Codex workers execute bounded
+exploration, implementation, testing, and review. Both runtimes produce the
+same `.factory` contract.
 
-Codex executes exploration, implementation, testing, and the review: the orchestrating session releases ONE three-lens pass per task with `./forge review <task-id>` (Codex-run, never a nested companion job; recorded as that task's proof under accepted 0011, 0054 and 0069), watches it, and loops it until clean, delegating fixes back to Codex. `./forge delegate` is the sole normal write path; a five-file `forge mode degraded` window is the ledgered outage exception. The `.factory` artifacts are required in either route.
+Protected implementation writes run through `./forge delegate`. The
+orchestrating session releases ONE three-lens pass per task with `./forge
+review <task-id>` (Codex-run, never a nested companion job; recorded as that
+task's proof under accepted 0011, 0054 and 0069), watches it, and loops it until
+clean, delegating fixes back to Codex. A five-file `forge mode degraded` window
+is the ledgered outage exception.
 
 ## Phase Contract
 
@@ -105,6 +114,6 @@ Closeout never re-verifies. Story proof is only `outcome.json`
 - Narration budget (conduct §8): one line per state change; findings and refusals always in full; process chatter never.
 - Follow [bounded recovery](docs/QUALITY.md#bounded-recovery) in every phase; repeated unchanged failures need a diagnosed, tested fix before another model run.
 - Review = ONE three-lens pass PER TASK via `./forge review <id>`, run by Codex, looped until clean (review → delegate fixes → re-review) and recorded before `pr-ready` under accepted 0011, 0054 and 0069; never nested reviewers.
-- One worktree/story; sequential tasks; dependency-ready stories may parallelize (0002). Delegation/proof commands are trusted inputs; observed descendant cleanup is not hostile-code containment.
+- Each leaf task owns a worktree and PR; dependency-ready tasks may parallelize only when their measured scopes are disjoint. Delegation/proof commands are trusted inputs; observed descendant cleanup is not hostile-code containment.
 - Keep the template repo independent of any client-specific source repo.
 - Do not keep long policy blocks in `AGENTS.md`; move them into docs.

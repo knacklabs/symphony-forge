@@ -12,9 +12,10 @@
   docs, the decision store, and learnings are committed under
   `.gstack/projects/<slug>/` — shared by every dev, never stranded in a
   personal `~/.gstack`. Machine noise (sessions, analytics, browser profiles)
-  is gitignored; JSONL stores union-merge via the `jsonl-append` driver
-  (registered per clone by the SessionStart hook), so concurrent devs never
-  conflict. History already in a personal store: `./forge gstack migrate`.
+  is gitignored. Append-only Forge ledgers use one record per file; remaining
+  legacy JSONL stays readable and uses Git's built-in `union` driver while it
+  lasts. No custom merge driver is registered. History already in a personal
+  store: `./forge gstack migrate`.
 - Product intent lives in `docs/product/BRIEF.md`.
 - Architecture and decision docs live in the repo under `docs/architecture/` and `docs/decisions/`.
 - Durable project facts live under `docs/memory/`; SessionStart injects its
@@ -22,9 +23,10 @@
 - `docs/decisions/` overrides ambiguous or conflicting architecture guidance.
 
 ## Runtime Modes
-Claude Code coordinates; Codex executes (local sessions and subagents).
-The stack is Claude Code + Codex, deliberately: any future
-orchestration must produce the same `.factory` artifacts.
+Either Claude Code or native Codex coordinates the same Forge phase engine.
+The active coordinator owns the human conversation and orchestration; admitted
+Codex workers execute bounded exploration, implementation, testing, and
+review. Both adapters produce the same `.factory` artifacts.
 
 ### Workflow Modes
 
@@ -141,7 +143,8 @@ session. The `/forge` Claude skill routes all of this.
 
 ## Recurring Findings — a design signal
 
-Review findings accumulate per task (`.factory/history/<issue>/reviews/`;
+Review findings accumulate per task
+(`.factory/stories/<issue>/tasks/<task>/reviews/`;
 findings are structured `{category, area, summary}` per the review schema).
 `./forge findings patterns` clusters them by class; `forge next` and
 `pr_ready` surface any class recorded 3+ times. The rule (decision record
@@ -236,8 +239,8 @@ burden is on ESCALATING, never on deciding.
 Signals are schema-validated (`factory/schemas/signal.json`, attested
 `generated_by`), surfaced by `forge next` and the session-start hook, and
 OPEN SIGNALS BLOCK `pr_ready` — an unanswered contradiction cannot ship.
-The channel is task-scoped: archived to `.factory/history/<issue>/` and
-cleaned at ship, like all task evidence.
+The channel records story and task identity in the append-only signal ledger;
+shipping does not erase that history.
 
 ## Determinism Contract
 
@@ -334,14 +337,15 @@ history, but are exempt from the newer outcome and link requirements.
 `plans/roadmap.json` is the durable, ordered backlog — the role handoff
 artifact (see `docs/ROLES.md`). Its epics and stories are derived from
 confirmed capability specs before sign-off, never hand-authored. Every story
-links its source spec. The roadmap survives every task cycle:
-task-scoped `.factory/decomposition.json` is cleared on each intake, but the
-roadmap is not. Items carry `story`, `acceptance_criteria`, `epic`, `spec`,
+links its source spec. The roadmap survives every task cycle. Story-scoped
+decomposition remains at `.factory/stories/<key>/decomposition.json`, while
+the active-story pointer is worktree-local. Items carry `story`,
+`acceptance_criteria`, `epic`, `spec`,
 `skill` (frontend|backend|fullstack), and `assignee` (set by
 `forge roadmap assign`, validated against the optional `plans/team.json`
 roster, preserved across re-imports). Item lifecycle: `pending` → `active`
-(set by intake) → `done` (set by `pr_ready.py`, with a link to
-`.factory/history/<issue>/`). `forge next` suggests the next pending item
+(set by intake) → `done` (set by story closeout, with a link to
+`.factory/stories/<key>/`). `forge next` suggests the next pending item
 and flags unassigned ones to the EM. Scope changes are PR edits to the
 file — future planning refines the roadmap, it does not silently regenerate
 it; the per-task plan must satisfy the item's `acceptance_criteria`.
@@ -350,36 +354,21 @@ In vendored clients, `.github/workflows/roadmap-gate.yml` arms only when
 an absent or valid epic-less roadmap leaves its gates green, while malformed
 roadmap JSON fails the arming step loudly.
 
-## Concurrency — one story per worktree
+## Concurrency — one worktree and PR per task
 
-Run state is branch-scoped by decision (docs/decisions): each story gets its
-own isolated worktree and branch (intake names it `feat/<key>-<slug>`), carrying its own committed
-`.factory/` state through the loop; `pr_ready.py` archives to
-`.factory/history/<issue>/` before merge, so main only ever accumulates
-history. One active story per worktree — parallel stories = parallel worktrees.
-Roadmap status flips (`active`/`done`) happen on the task branch and merge
-normally; the JSONL stores under `.gstack/` union-merge via the
-`jsonl-append` driver.
+Each leaf task owns an isolated worktree, branch, proof set, and PR. A task
+starts from refreshed trunk only after its dependency markers are present;
+dependency-ready tasks may advance together when their measured scopes are
+disjoint. Story evidence remains under `.factory/stories/<key>/` and ships in
+place, so closeout creates no archive-move conflict.
 
-**The orchestrator parallelizes aggressively when requirements separate.**
-`depends_on` edges on roadmap items are the deterministic separation signal
-(the decomposer derives them from real build-wave dependencies, never blanket
-ordering); `./forge roadmap parallel` prints the ready frontier — pending
-stories whose dependencies are all done — with a `git worktree add` + intake
-command per story. Each worktree is a full checkout on its own branch with
-its own `.factory/` state, so every gate (plan mode lock, plan grill,
-recorders, ship gate) applies per story, concurrently. Implementations may run
-concurrently across those story worktrees. Convergence
-is designed to be conflict-free: `pr_ready.py` DELETES the task-scoped
-`.factory/` state after archiving it (history keeps the record) and reduces
-`run.json` to project fields + `last_shipped`, so merging story branches
-collides on nothing but `plans/roadmap.json` status flips — and
-`./forge roadmap heal` resolves those deterministically (union by key,
-further-along status wins; mid-merge it rebuilds from the merge stages).
-Commit the archive when `pr_ready` tells you to: evidence that isn't
-committed isn't merged.
+Dependency-ready stories may also advance concurrently. `depends_on` edges on
+roadmap items are the deterministic separation signal, and `./forge roadmap
+parallel` prints that ready story frontier. Each worktree uses a git-local
+active pointer while reading the same story-scoped contracts. `./forge roadmap
+heal` resolves concurrent roadmap status changes with its done-wins union.
 
-**Tasks inside one story run in parallel too, when the plan allows it.** The
+**Tasks inside one story may run in parallel when the plan allows it.** The
 order is the task dependency graph (`dependencies` in the decomposition; a task
 without an explicit list follows its predecessor), not the list. `forge task
 start <id>` opens a task's worktree once every dependency's marker is on the
@@ -420,8 +409,8 @@ sequence a JIT contract loop for every pending task:
    `record_grill_from_json.py --gate task --task <id>`
 4. record the human task-plan approval against the same saved revision;
    changed approval-bound content follows the existing amendment route
-5. `forge stage start <id>` (strictly order-enforced; task-level `--parallel`
-   is refused)
+5. `forge stage start <id>` (dependency and scope eligibility are derived;
+   task-level `--parallel` is refused)
 6. `forge delegate <id>` composes the task brief and launches the installed
    companion in the foreground with write access derived from stage state;
    this is the hard gate that refuses a missing, failed, or stale task grill
@@ -506,8 +495,8 @@ There is ONE review per task. `forge review` produces
 the recorded review is the only review gate); no separate stage-local review
 loop exists, and `record_review_from_json.py --aspect stage-local` remains
 only as a manual fallback. `pr_ready.py` refuses while any stage is not done
-or its stamp is stale; `forge next` shows stage progress; the tracker archives
-to `.factory/history/<issue>/` at ship.
+or its stamp is stale; `forge next` shows stage progress; task and story proof
+remain at their scoped `.factory/stories/<issue>/` paths after ship.
 
 The loop is AUTONOMOUS between gates (conduct §7): a clean review IS
 the permission to close the stage and ship the task — the orchestrator never
@@ -603,9 +592,9 @@ Every evidence artifact is stamped with the commit it was recorded at.
 commits, and evidence recorded before the latest code change (commits touching
 only `.factory/`, `plans/`, or `docs/` do not invalidate evidence).
 
-On PR-ready, `pr_ready.py` archives the run artifacts to
-`.factory/history/<issue>/` and moves the plan to `plans/completed/` — the
-durable record of what was decided and what was built.
+On scoped story closeout, `pr_ready.py` writes `shipped.json` in place and
+keeps the story plan and evidence at their recorded paths. Legacy unscoped
+stories still archive until `forge upgrade` migrates them.
 
 ## Execution Order
 1. ensure architecture and decision docs are present in-repo
