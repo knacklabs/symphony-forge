@@ -18803,7 +18803,7 @@ def test_review_codex_helper_policy_refuses_fallback_before_launch(
     _native_review_fixture(repo, tmp_path)
     _write_complete_automated(repo)
     monkeypatch.setattr(review_mod, "_record_codex_run", forbidden)
-    monkeypatch.setattr(review_mod.subprocess, "Popen", forbidden)
+    monkeypatch.setattr(review_mod, "_run_skill", forbidden)
     monkeypatch.setattr(review_mod, "cmd_review_brief", forbidden)
     monkeypatch.setattr(review_mod, "_product_dirty", lambda _base: [])
     monkeypatch.setattr(review_mod, "resolve_review_base", lambda *_args: "base")
@@ -22225,15 +22225,31 @@ def test_task_pr_ready_marker_commit_preserves_unrelated_index(repo, tmp_path):
     hook.chmod(0o755)
     process_env = {**os.environ, **env, "SEAL_PAUSED": str(paused),
                    "SEAL_RELEASE": str(release)}
+    barrier_timeout = 30
+
+    def reap_output(process: subprocess.Popen) -> str:
+        try:
+            return process.communicate(timeout=120)[0]
+        except subprocess.TimeoutExpired:
+            process.kill()
+            return process.communicate()[0]
+
     seal = subprocess.Popen(
         [sys.executable, str(repo / "factory/scripts/forge.py"), "task", "pr-ready", "T1"],
         cwd=repo, env=process_env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
         text=True, encoding="utf-8",
     )
-    deadline = time.monotonic() + 10
+    deadline = time.monotonic() + barrier_timeout
     while not paused.exists() and time.monotonic() < deadline:
         time.sleep(0.05)
-    assert paused.exists() and seal.poll() is None
+    if not paused.exists() or seal.poll() is not None:
+        release.write_text("release after setup timeout\n")
+        out = reap_output(seal)
+        pytest.fail(
+            f"task seal did not reach the pre-commit barrier within "
+            f"{barrier_timeout}s; "
+            f"exit={seal.returncode}, output={out}"
+        )
     lock_waiting = tmp_path / "publisher-lock-waiting"
     publisher_code = (
         "import json,sys; from pathlib import Path; "
@@ -22249,16 +22265,25 @@ def test_task_pr_ready_marker_commit_preserves_unrelated_index(repo, tmp_path):
          str(lock_waiting)], cwd=repo,
         stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, encoding="utf-8",
     )
-    deadline = time.monotonic() + 10
+    deadline = time.monotonic() + barrier_timeout
     while not lock_waiting.exists() and time.monotonic() < deadline:
         time.sleep(0.05)
-    assert lock_waiting.exists() and publisher.poll() is None
+    if not lock_waiting.exists() or publisher.poll() is not None:
+        release.write_text("release after publisher timeout\n")
+        seal_out = reap_output(seal)
+        publisher_out = reap_output(publisher)
+        pytest.fail(
+            "review publisher did not block on the task-seal selection lock "
+            f"within {barrier_timeout}s; seal_exit={seal.returncode}, "
+            f"seal_output={seal_out}; "
+            f"publisher_exit={publisher.returncode}, publisher_output={publisher_out}"
+        )
     assert selected_path.read_bytes() == selected_before
     release.write_text("release\n")
-    out, _ = seal.communicate(timeout=120)
+    out = reap_output(seal)
     assert seal.returncode == 0, out
     marker_commit = head(repo)
-    publish_out, _ = publisher.communicate(timeout=120)
+    publish_out = reap_output(publisher)
     assert publisher.returncode == 0, publish_out
     assert selected_path.read_bytes() != selected_before
     task = next(item for item in json.loads(
