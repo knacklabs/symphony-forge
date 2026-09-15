@@ -4,17 +4,16 @@
     {
       "id": "GATES-1-T1",
       "title": "A question round belongs to its gate and story",
-      "status": "done",
-      "task_sha256": "9b16215dc5a5621a18ee9a46e05704d8125144efb717c50dbe051f6f36efb371"
+      "status": "done"
     },
     {
       "id": "GATES-1-T2",
       "title": "Both grill guards read the ledger the same way",
-      "status": "pending"
+      "status": "done"
     },
     {
       "id": "GATES-1-T3",
-      "title": "One producer says what a gate read, and one predicate says if it is stale",
+      "title": "The requirements gate joins the one definition of product",
       "status": "pending"
     },
     {

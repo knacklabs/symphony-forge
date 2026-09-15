@@ -3,21 +3,21 @@
   "gate": "plan",
   "verdict": "pass",
   "issue": "GATES-1",
-  "summary": "Re-read after T1 replaced its mechanism, then amended again when the task stage raised a signal: the plan asserted a 93-red suite, and a clean sequential run is 942 passed, 0 failed. The 93 was a non-hermetic board probe plus sharding under CPU contention. The baseline comparator T1 carried for that premise is CUT, the task order is now justified by dependency alone, and the Verify Plan states the suite is green. The four coherence findings from the read remain resolved as recorded.",
+  "summary": "The plan has been reshaped three times by its own task-contract reads, and this record describes its CURRENT shape. T1 shipped as one condition in the grill recorder. T2 shipped as one collapsed ledger view after its reads cut an escalation grant (split to T5, whose scoping does not exist) and an outcome field (deferred as D-0032, because the companion is invoked with --json so the griller's verdict marker never ends stdout). T3's read then showed the story's central design was larger than its evidence: the measured cascade was requirements_digest taking the bare default exclusion while every other closeout check calls product_excluded_prefixes, the documented ONE definition of not-product. The full input manifest is deferred as D-0035 and the confirmed spec is amended to match. The owner reversed an earlier ruling so a newly accepted decision no longer stales the requirements gate, and split the story from four tasks to five.",
   "gaps": [
-    "Acceptance criterion 8, the generated-command grammar check, appeared in the plan but no task claimed the next-step renderer and parser surface.",
-    "The manifest named only the gate artifact and the accepted decisions, so a pass could omit a record it actually relied on, validate, and stay fresh after that record changed."
+    "The plan described a manifest across all six gates while the measured cost came from one gate taking a different exclusion list than every other check.",
+    "The four-task graph was settled by an earlier round, but T2's read split out a fifth task with no recorded replacement."
   ],
   "contradictions": [
-    "The plan made every gate manifest-fresh after stage start while also giving T4 a non-manifest selective snapshot, which would have staled every post-stage task pass on any newly accepted decision and broken 0066's binding.",
-    "The task order declared T1 and T2 interchangeable while T1 carries the test-baseline comparator that every later stage needs to close against a 93-red suite."
+    "The plan required every accepted decision to stale a pass, which fired circularly on this very story: recording decision 0067 invalidated the requirements gate that had already read the spec 0067 came from.",
+    "The plan's Technical Approach still specified manifest mechanics \u2014 set comparison, the optional schema field, derived manifests \u2014 after the T3 bullet had been narrowed, so the plan contradicted itself."
   ],
   "resolutions": [
-    "Post-stage task freshness is an exception to the manifest, stated as such: 0066 stands and binds that gate to its objective, criteria, plan contracts, user-facing flag and plan. Superseding 0066 was rejected because 0066 is the promise this story restores.",
-    "The recorder derives the manifest from the final pass payload, resolves every cited record to a repo-relative path, and refuses the pass when a cited input cannot be resolved.",
-    "T3 owns acceptance criterion 8, since it is the task that changes the next-step text and the board.",
-    "The order is now T1, T2, T3, T4, with each later task recording the comparator among its own verify commands.",
-    "The 93-red premise is removed from Scope, Acceptance Criteria, Risks and the Verify Plan; T1 loses the baseline comparator and its committed baseline, and the probe bug is fixed separately."
+    "T3 narrows to passing product_excluded_prefixes inside requirements_digest, with one freshness helper that also accepts the legacy digest so existing passes are not reinterpreted as stale.",
+    "The full manifest, the shared predicate across six gates and the bounded command-grammar check are deferred as D-0035 with a revisit trigger.",
+    "The owner reversed the decision-staleness ruling for the requirements gate on 2026-09-13; the reversal is recorded in the plan's owner rulings and the confirmed spec is amended.",
+    "The five-task graph is recorded as an explicit supersession of the four-task answer, with the reason: T2's read showed the escalation grant rested on scoping the repo does not have.",
+    "The Technical Approach, acceptance summary, risks, verify plan, task order and T4's dependency were all reconciled to the current shape."
   ],
   "open_items": [],
   "questions_asked": 1,
@@ -47,7 +47,7 @@
     "plans/active/GATES-1-gates-stale-only-on-what-they-read.md:216",
     "docs/decisions/0066-closeout-binds-to-the-diff.md:40"
   ],
-  "input_sha256": "1a1dc27e1a6ec81951972052c3cdc5a84733226a3b1c2214b2c2943b1faec639",
-  "recorded_at": "2026-09-13T06:23:46+00:00",
-  "commit": "7bf3951cf5bc96378dc278fc075e239db85f20f3"
+  "input_sha256": "677fa998a064cf76c02e3b2b94261022cb14cee725af4d640f0de54fbb2c0127",
+  "recorded_at": "2026-09-14T06:56:42+00:00",
+  "commit": "27babfa94bc63434ce8682d21b6ae2ec7570ba4e"
 }

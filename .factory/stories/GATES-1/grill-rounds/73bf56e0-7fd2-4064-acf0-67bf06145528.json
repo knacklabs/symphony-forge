@@ -1,0 +1,16 @@
+{
+  "generated_by": "claude-code:plan-mode",
+  "questions": [
+    {
+      "question": "Reading the code shows T3 helps one gate far more than the rest. Scope it to that, or build the full manifest?",
+      "options": [
+        "Narrow T3 to the requirements gate (Recommended)",
+        "Build the full manifest as planned",
+        "Skip to T5, leave T3 for now"
+      ],
+      "chosen": "Narrow T3 to the requirements gate (Recommended)"
+    }
+  ],
+  "at": "2026-09-13T14:16:45.971236+00:00",
+  "session_id": "b4051e43-dbea-4d62-ba73-ae6210455474"
+}

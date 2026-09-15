@@ -2,7 +2,7 @@
 issue: GATES-1
 title: Gates stale only on what they read
 status: approved
-saved: 2026-09-13T06:23:47+00:00
+saved: 2026-09-14T06:56:42+00:00
 story: GATES-1
 decisions_reviewed:
   - 0001-determinism-contract
@@ -90,7 +90,7 @@ Spec: `docs/specs/gates-stale-only-on-what-they-read.md` (confirmed).
 
 ## Scope / Non-goals
 
-In: the input manifest and its recorder validation, one freshness predicate for
+In: the requirements gate joining the shared not-product definition, one freshness predicate for
 every consumer, honouring 0066 for review stamps, same-gate round reuse, and
 ledger terminal states that decide what spends a grill allowance.
 
@@ -100,10 +100,21 @@ already handles without a cascade.
 
 ## Owner rulings
 
-- The manifest hashes EVERY accepted decision, not only cited ones, because
-  authors do not reliably know what they relied on.
-- A pass recorded without a manifest keeps today's tree-based freshness. No
-  manifest is ever backfilled: inferring what a reader read fabricates evidence.
+- A decision record is NOT product for the requirements gate. This REVERSES an
+  earlier ruling on this plan, which said the manifest should hash every accepted
+  decision because authors do not reliably know what they relied on, and that a
+  newly accepted decision should therefore stale a pass. The owner overruled that
+  on 2026-09-13 for this gate, on the evidence that every other closeout check
+  already treats decision records as not-product, and that the rule fired
+  circularly here: recording decision 0067 invalidated the gate that had already
+  read the spec 0067 came from. The other gates keep the old behaviour.
+- The story is FIVE tasks, not four. An earlier round settled "four tasks means
+  four pull requests"; T5 was split out of T2 on 2026-09-13 when T2's cold read
+  showed the escalation grant rested on scoping the repo does not have. The
+  per-task PR standard is unchanged — there is simply one more task.
+- No freshness evidence is ever backfilled: inferring what a reader read
+  fabricates evidence. (Carried forward from the deferred manifest design, which
+  it also governs.)
 - Round reuse is narrowed to the same gate and the same story, never across
   gates, stories or tasks.
 - Decision 0066 stands; stamp deaths are a bug against it, not a reason to
@@ -111,58 +122,59 @@ already handles without a cascade.
 
 ## Acceptance Criteria
 
-Carried verbatim from the confirmed spec; see that file. In summary: a manifest
-of path plus digest on every new pass with recorder validation; edits outside it
-leave a pass valid and edits inside it stale the pass, including a newly accepted
-decision; one predicate used by all six gates, the board and the next-step text;
-review stamps surviving contract re-records that leave the delta unchanged;
-same-gate round reuse with the per-gate floor intact; ledger terminal states
-where a launch whose latest row is failed spends no allowance and blocks no
-further read; and a bounded command-grammar check.
+Carried verbatim from the confirmed spec; see that file. In summary: the
+requirements gate stops staling on inputs every other gate already treats as
+not-product, chiefly decision records; review stamps surviving contract
+re-records that leave the delta unchanged; same-gate round reuse with the
+per-gate floor intact; and a launch whose latest row is failed spending no
+allowance and blocking no further read.
+
+The full input manifest and the bounded command-grammar check are deferred as
+D-0035 with a revisit trigger — see the T3 entry for why the measured cost turned
+out to have a much smaller cause.
 
 ## Technical Approach
 
-**The manifest is data on the grill record.** `factory/schemas/grill.json` gains a
-required `input_manifest` for new passes: an ordered list of `{path, sha256}`,
-with a null digest for an absent input. `record_grill_from_json.py` validates it,
-refusing a manifest that omits the gate's artifact or whose digests disagree with
-the tree.
+**The requirements gate joins the one definition of product.**
+`requirements_digest` (`factory_lib.py`) binds the confirmed spec body to
+`product_tree_digest(root)` — called with NO `exclude` argument, so it uses the
+bare default of `.factory/` and `plans/`. Every other closeout check calls
+`product_excluded_prefixes`, which its own docstring calls "The ONE definition of
+'not product'" and says exists because four lists disagreed and a decision record
+"was not a scope stray but did stale the review stamp". That list also excludes
+`docs/decisions/` and `docs/context/ledger.json`.
 
-**One predicate replaces several checks.** A single function in `factory_lib.py`
-answers freshness from a manifest, and every consumer calls it:
-`forge_cli/plans.py` (which today hashes the confirmed spec plus the whole
-product tree), the gate table in `grill_gates.py`, the board and the next-step
-text. A record without a manifest falls through to today's behaviour, which is
-what keeps legacy passes valid.
+So the requirements gate is the one list that never joined. Accepting a decision
+stales it and nothing else, and it fired on nearly every step of T1 and T2 —
+including commits whose only product change was a decision record this story
+itself wrote. The fix is to pass the shared definition, which is what the
+docstring already claims is universal.
 
-**Post-stage task freshness is an exception to the manifest, not a case of it.**
+**The full manifest is deferred as D-0035.** A path-plus-digest list on every
+pass, recorder validation, one predicate shared by all six gates, the
+accepted-decision set comparison, the optional schema field, and the bounded
+command-grammar check. It remains a coherent design for the four prefix-based
+gates — spec, signoff, epics and plan all stale on whole directory prefixes — but
+no measured cost forces it yet, and the cost that was measured had a one-argument
+cause. The deferral carries a revisit trigger.
+
+**Post-stage task freshness is selective already.**
 The owner ruling above keeps 0066, and 0066 binds a post-stage task pass to its
 objective, criteria, plan contracts, user-facing flag and plan — nothing else. So
 the universal "a newly accepted decision stales a pass" rule does NOT reach the
 post-stage task gate, which would otherwise contradict 0066 by staling every task
 pass the moment any decision is accepted. T4 builds that selective snapshot and
-this is the one gate the manifest does not govern. The alternative, superseding
-0066, was rejected: 0066 is the promise this story is restoring, not revising.
+this gate binds selectively by design. The alternative, superseding 0066, was
+rejected: 0066 is the promise this story is restoring, not revising.
 
 **The pre-stage task guard is untouched, by owner ruling.** Task grounding
 (`factory_lib.py:2304`) deliberately hashes the whole product tree BEFORE stage
 start, which is how work drifting from its contract is caught before
 implementation begins. That guard stays exactly as it is. The task gate moves to
-manifest freshness only after stage start, which is where every case measured on
+selective grounding only after stage start, which is where every case measured on
 the client task occurred. So "all six gates" means all six after stage start; the
 pre-stage task grill keeps whole-tree grounding and a test pins that it still
 stales on an unrelated product file.
-
-**A newly accepted decision is detected by set comparison, not by path.** The
-manifest lists accepted decision ids with digests at record time. Freshness
-compares the CURRENT accepted id set against the recorded one: an id present now
-and absent then stales the pass, as does a digest change on a recorded id. A
-decision that becomes superseded likewise changes the set.
-
-**The schema stays one schema.** `input_manifest` is OPTIONAL in
-`grill.json`, so legacy records remain valid documents; the RECORDER requires it
-for every new pass. That split is what lets one schema describe both without a
-migration.
 
 **Stamps stop reading the contract.** The stamp path binds `delta_id` only, as
 0066 states. The contract digest leaves that comparison.
@@ -199,19 +211,6 @@ D-0032. The launcher runs the companion with `--json`, so the griller's verdict
 marker never ends raw stdout, and detecting a silent read needs payload decoding
 the fix above does not.
 
-**The manifest is derived, never declared.** The recorder builds it from the
-FINAL pass payload rather than trusting an author to list inputs: it resolves
-every record the pass cites to a repo-relative path and refuses the pass when a
-cited input cannot be resolved or does not exist. Without that, a pass could omit
-a record it actually relied on, validate cleanly, and stay fresh after that
-record changed — which is the same blindness this story exists to remove, only
-quieter. The gate's own artifact and the accepted-decision set are always
-included, cited or not.
-
-**The command check is bounded.** A test walks a named set of generated `./forge`
-invocations from next-step text through the real parser, arguments included.
-External programs and placeholders are out of scope.
-
 ## Decisions
 
 Governing: 0066 (a stamp binds the diff — restored, not changed), 0067 (a round
@@ -224,7 +223,7 @@ decision.
 - **Runtime / harness scripts:** the whole change. The recorder, the freshness
   predicate, the gate table, the plans gate, the stamp path, the grill budget
   and the launch ledger.
-- **Data:** `grill.json` gains an OPTIONAL `input_manifest`, and the ledger gains
+- **Data:** the ledger gains
   a terminal state on launch rows. Round records are untouched. No migration,
   because old records stay valid documents and fall through to old behaviour.
 - **API / MCP:** none. No tool, schema or protocol a client consumes changes.
@@ -233,16 +232,21 @@ decision.
 - **UI:** none. The board reads the same records through the new predicate.
 - **Docs:** decision 0067 lands with this work and 0051 is marked superseded.
 - **Security:** neutral. The change loosens WHEN a pass is considered stale, never
-  what a gate judges, and the criteria assert that manifest inputs still stale.
-- **Tests:** one existing regression in `factory/tests/test_gates.py:8583` asserts
-  the inverse of the new rule and is replaced by name.
+  what a gate judges, and the criteria assert that a real product change still stales.
+- **Tests:** none replaced. An earlier draft claimed
+  `factory/tests/test_gates.py:8583` asserted the inverse of the new rule; reading
+  it shows `test_plan_save_refuses_without_fresh_requirements_grill` asserts
+  behaviour this story PRESERVES — editing the confirmed spec stales the pass, and
+  so does adding a real product file. That claim was true only of the deferred
+  manifest design, under which an unrelated product file would have stopped
+  staling.
 
 ## Task Decomposition
 
 FIVE tasks. The plan gate read this twice and each round asked the plan to
 specify a mechanism at code level; four distinct mechanisms are involved, and
 that depth belongs in a task contract rather than here. Splitting also lets the
-two small mechanisms land while the manifest work is still being designed.
+two small mechanisms land independently of one another.
 
 - **T1 Round reuse at its own gate (0067).** The recorder's consumption walk
   stops spending a pass's own recorded rounds, and a gate that is not
@@ -272,27 +276,37 @@ two small mechanisms land while the manifest work is still being designed.
   existing cap test — and an atomic claim, since two launches can both observe an
   unspent grant. The spend rule follows the confirmed spec: the grant is spent
   when the granted read COMPLETES, not only when it answers. Depends on T2.
-- **T3 The manifest producer and freshness predicate.** ONE authoritative
-  per-gate producer of manifest inputs, returning normalised repo-relative paths
-  rather than the display text gate locators return today, and handling the
-  composite signoff gate (BRIEF plus every spec plus the roadmap). The optional
-  schema field, recorder validation, the single freshness predicate, and the
-  accepted-decision set comparison. The pre-stage task guard is untouched per
-  owner ruling. T3 also OWNS acceptance criterion 8, the generated-command
-  grammar check, because it is the task that changes the next-step text and the
-  board: it names the generated `./forge` invocations and walks them through the
-  real parser, arguments included. Depends on T1 only for the comparator; T4
-  depends on it.
-- **T4 Post-stage task freshness under 0066.** The canonical selective task
-  snapshot: a file-only manifest would stale on `write_scope`, `required_tests`
-  or `verify_commands`, while omitting the decomposition would miss a changed
-  objective or criteria. Preserves 0066's post-stage binding rather than
-  replacing it, and restores the stamp path to `delta_id` only. Depends on T3.
+- **T3 The requirements gate joins the one definition of product.**
+  `requirements_digest` binds the confirmed spec body to
+  `product_tree_digest(root)` with the BARE default exclusion — `.factory/` and
+  `plans/` only. Every other closeout check calls `product_excluded_prefixes`,
+  whose own docstring calls it "The ONE definition of 'not product'" and says it
+  exists because four lists disagreed. That list also excludes `docs/decisions/`
+  and `docs/context/ledger.json`. So accepting a decision stales the requirements
+  gate and nothing else — the cascade that fired on nearly every step of T1 and
+  T2. T3 is that one argument, plus the tests that pin it. The pre-stage task
+  guard is untouched per owner ruling.
+
+  The full manifest — a path-plus-digest list on every pass, recorder validation,
+  and one predicate shared by all six gates — is deferred as D-0035 with a
+  revisit trigger. It stays a coherent design for the four prefix-based gates,
+  but no measured cost forces it yet. Acceptance criterion 8, the
+  generated-command grammar check, goes with it; nothing in this story now
+  changes the next-step text.
+- **T4 Post-stage task freshness under 0066.** NOTE: `grounding_digest` already
+  drops the product tree once `in_stage` is true, with a comment explaining that
+  binding to it after work starts makes the gate self-defeating. Before writing
+  T4's contract, read that and establish what is actually missing — it may be
+  smaller than written here, or already done. The canonical selective task
+  snapshot must still cover `write_scope`, `required_tests` and
+  `verify_commands`, and must not omit the decomposition or a changed objective
+  would slip through. Preserves 0066's post-stage binding rather than replacing
+  it, and restores the stamp path to `delta_id` only. Independent of T3.
 
 Order: T1, then T2, then T3, then T4, with T5 after T2. The order is by
-dependency: T4 needs T3's manifest, T5 needs T2's collapsed terminal-launch view
-to decide when a granted read has been spent, and T1 and T2 are independent of
-both. Nothing is sequenced by a shared verification helper, because
+dependency: T5 needs T2's collapsed terminal-launch view to decide when a granted
+read has been spent. T4 no longer depends on T3, since the manifest it was to
+consume is deferred. Nothing is sequenced by a shared verification helper, because
 none is needed — see the note on the suite below.
 
 T5 was split out of T2 when T2's contract was read cold. T2 was carrying two
@@ -302,11 +316,9 @@ second turned out to rest on scoping the repo does not have.
 
 ## Risks
 
-- Loosening staleness could blind a gate. The criteria assert both directions:
-  edits inside the manifest must still stale a pass, including a newly accepted
-  decision.
-- The dual freshness path exists until legacy passes age out. It is deliberate
-  and the alternative forces a re-grill on every in-flight task at vendor time.
+- Loosening staleness could blind a gate. The criteria assert both directions: a
+  real product change must still stale the requirements gate, and only the paths
+  every other check already treats as not-product stop counting.
 - An earlier draft of this plan said the suite was 93 red and made T1 carry a
   baseline comparator so a stage could close against it. That was wrong twice
   over. `already_serving` answered "is ANY board up" rather than "is a board for
@@ -320,8 +332,12 @@ second turned out to rest on scoping the repo does not have.
 ## Verify Plan
 
 `uv run --with pytest --with psutil python -m pytest factory/tests -q`, which is
-green; the named new suites for manifest freshness, round reuse,
-ledger terminal states and the command grammar; `./forge doctor`; and, per
-decision 0055, Ruff format and lint plus Pyright over the changed Python. Those
-three are not wired into verify today, so this task wires them for its own files
-rather than claiming a baseline it does not run.
+green, plus the named new suites per task.
+
+Decision 0055's static checks are NOT run by these tasks, and that is now
+sanctioned rather than silent. 0055 was amended on 2026-09-14: the baseline binds
+a task only once Ruff and Pyright are CONFIGURED and wired into verify and CI,
+and until then a task must not contract those commands — an unrunnable verify
+command fails at the seal, after implementation and review have already passed,
+which is exactly how T1's seal failed. Configuring the baseline is ledgered as
+D-0036 with an owner and a revisit trigger.

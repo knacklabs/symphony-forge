@@ -18827,48 +18827,31 @@ def test_review_preflight_refuses_other_task_or_story_proof(repo, tmp_path):
     assert code != 0 and "verify.json is not recorded for task T1" in out
 
 
-def test_review_codex_helper_policy_refuses_fallback_before_launch(
-        repo, tmp_path, monkeypatch, capsys):
+def test_review_pins_sol_and_never_requests_a_retired_model():
     import forge_cli.review as review_mod
 
-    safe = tmp_path / "autoreview"
-    safe.write_text("safe helper\n")
-    monkeypatch.delenv("AUTOREVIEW", raising=False)
-    monkeypatch.setattr(review_mod, "DEFAULT_SKILL", safe)
-    review_mod._require_safe_codex_review_helper(review_mod.resolve_skill(None))
-
-    def forbidden(*_args, **_kwargs):
-        pytest.fail("unsafe helper reached the review ledger or process launch")
-
-    unsafe = tmp_path / "old-autoreview"
-    unsafe.write_text(
-        'DEFAULT_CODEX_ACCESS_FALLBACK_MODEL = "gpt-5.6-terra"\n'
+    argv = review_mod._skill_argv(
+        skill=Path("/x/autoreview"), base_sha="base", prompt_rel="p.md",
+        json_out=Path("/tmp/out.json"), engine="codex", max_priority="P3",
     )
-    _native_review_fixture(repo, tmp_path)
-    _write_complete_automated(repo)
-    monkeypatch.setattr(review_mod, "_record_codex_run", forbidden)
-    monkeypatch.setattr(review_mod, "_run_skill", forbidden)
-    monkeypatch.setattr(review_mod, "cmd_review_brief", forbidden)
-    monkeypatch.setattr(review_mod, "_product_dirty", lambda _base: [])
-    monkeypatch.setattr(review_mod, "resolve_review_base", lambda *_args: head(repo))
-    monkeypatch.setattr(review_mod, "review_excluded_prefixes", lambda _base: ())
-    monkeypatch.setattr(review_mod, "_require_git",
-                        lambda _base, _what, *args: head(repo) if args[0] == "rev-parse"
-                        else "src/app.py")
-    with pytest.raises(SystemExit) as error:
-        review_mod.cmd_review(argparse.Namespace(
-            id="T1", reject=None, lens=None, repo=str(repo), skill=str(unsafe),
-            engine="codex", max_priority="P1",
-        ))
-    assert error.value.code == 1
-    assert "Update the selected autoreview helper" in capsys.readouterr().out
+    assert argv[argv.index("--model") + 1] == review_mod.CODEX_REVIEW_MODEL
+    assert not any("terra" in part.lower() for part in argv)
+    assert "--fallback-model" not in argv
+    review_mod._require_safe_codex_review_helper(argv)
 
-    selected = review_mod.resolve_skill(str(safe))
-    selected.unlink()
-    with pytest.raises(SystemExit) as error:
-        review_mod._require_safe_codex_review_helper(selected)
-    assert error.value.code == 1
-    assert "could not read" in capsys.readouterr().out
+
+def test_review_refuses_an_argv_that_could_reach_terra(capsys):
+    import forge_cli.review as review_mod
+
+    for bad in (
+        ["--engine", "codex"],
+        ["--model", "gpt-5.6-terra"],
+        ["--model", "gpt-5.6-sol", "--x", "terra"],
+    ):
+        with pytest.raises(SystemExit) as error:
+            review_mod._require_safe_codex_review_helper(bad)
+        assert error.value.code == 1
+        assert "retired model" in capsys.readouterr().out
 
 
 def test_review_codex_engine_pins_sol_high(tmp_path, monkeypatch):

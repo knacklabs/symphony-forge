@@ -45,41 +45,55 @@ here. And scope widening already has a sanctioned non-cascading path in
 
 ## Behaviour
 
-**A gate stales when its inputs change, not when the tree moves.** Each recorded
-pass carries an input manifest: an ordered list of entries, each a repo-relative
-POSIX path and the SHA-256 of that path's bytes at record time. A deleted or
-absent input records an explicit null digest, so its later appearance stales the
-pass. The recorder validates the manifest: it refuses a pass whose manifest omits
-the artifact under the gate, and it recomputes every digest against the tree at
-record time, so a manifest cannot claim a state the repository does not have.
+**A gate stales when its inputs change, not when the tree moves.** The general
+form of this is an input manifest — a path-plus-digest list on every pass, with
+one freshness predicate reading it — and that design is deferred as D-0035 with a
+revisit trigger. Reading the machinery showed the cost this story was written to
+remove had a far smaller cause, and the manifest is not needed to remove it.
 
-The manifest covers three things: the artifact under the gate, every handover
-record the pass cites, and the applicable decision set. Applicable means every
-decision whose status is accepted at record time, listed by id and digest. That
-rule is deterministic and needs no judgement from the recorder. A decision that
-becomes accepted after the pass was recorded stales it, because the pass was
-ground on a corpus that no longer holds.
+**One list never joined the one definition.** `product_excluded_prefixes` is
+documented as "The ONE definition of 'not product'" and exists because four lists
+disagreed — its own example being that a decision record "was not a scope stray
+but did stale the review stamp". It excludes `.factory/`, `plans/`,
+`docs/decisions/` and `docs/context/ledger.json`. `requirements_digest` never
+asked it: it takes the bare default of `.factory/` and `plans/` only. So a
+decision record is product to the requirements gate and to nothing else, and
+accepting a decision stales it alone.
+
+That is the cascade this story removes. It fired on nearly every step of T1 and
+T2, including the circular case where recording a decision invalidated the gate
+that had already read the spec that decision came from.
+
+**A newly accepted decision no longer stales the requirements gate.** An earlier
+ruling here said the opposite: every accepted decision belongs in the manifest
+because authors do not reliably know what they relied on. The owner reversed that
+on 2026-09-13 for this gate, on the evidence above. The other gates are unchanged,
+and the reversal is recorded in the plan's owner rulings.
 
 **The pre-stage task guard is an explicit exception.** Task grounding hashes the
 whole product tree BEFORE its stage starts, which is how work drifting from its
 contract is caught before implementation begins. That guard is untouched. The
-task gate moves to manifest freshness only after stage start, which is where
-every measured case occurred, so "all gates" below means all gates after stage
-start.
+task gate keeps whole-tree grounding before stage start by owner ruling, and
+already drops the product tree once the stage opens.
 
-**One predicate decides freshness, everywhere.** A single manifest-freshness
-check is the only thing that answers "is this pass still valid", and every
-consumer uses it: the spec, requirements, epics, plan, signoff and task gates,
-the board, and the next-step text. Today the requirements gate hashes the
-confirmed spec plus the whole product tree, and task grounding folds in the
-product tree before stage start; both move onto the predicate.
+**One helper decides requirements freshness.** Two consumers compare a stored
+digest against a fresh recomputation today — the plan-save gate and the
+next-step text — and both move behind one helper. Two places answering one
+freshness question independently is the same shape as the defect above, and
+leaving one inline would replant it.
+
+A single predicate across ALL gates, the board and the next-step text is the
+deferred manifest design (D-0035), not this story.
 
 **Passes recorded before this lands keep the behaviour they were recorded
-under.** A pass with no manifest is judged by today's tree-based freshness, and
-only passes recorded afterwards get the new rule. Nothing in flight breaks, here
-or in a client repo mid-vendor, and the new behaviour arrives as work
-re-records. Manifests are never backfilled: inferring what a reader read would be
-fabricating evidence.
+under.** Changing an exclusion changes the digest, so a stored value would stop
+matching a recomputation and every existing pass would read as stale at once —
+the very cascade this story removes, delivered to everyone in one go. The helper
+therefore accepts the legacy digest as well, exactly as `grounding_matches`
+already does for task grounding: the legacy digest covers a superset of the
+inputs, so anything it accepts the new rule accepts too. Nothing in flight
+breaks, here or in a client repo mid-vendor. Freshness evidence is never
+backfilled: inferring what a reader read would be fabricating evidence.
 
 **A review stamp binds the diff, as decision 0066 already requires.** A contract
 edit that leaves the reviewed delta unchanged never invalidates a stamp. This is
@@ -110,27 +124,21 @@ the behaviour.
 
 ## Acceptance criteria
 
-1. Every gate pass recorded after this lands carries an input manifest of
-   repo-relative path plus content digest, covering the artifact, the cited
-   handover records, and every accepted decision at record time. The recorder
-   refuses a manifest omitting the gate's artifact, and refuses one whose digests
-   do not match the tree. Asserted for all six gates in the gate table.
-2. Editing a product file absent from a pass's manifest leaves that pass valid,
-   asserted for all six gates.
-3. Editing anything present in the manifest stales the pass, asserted for all
-   six gates, including a decision that was read but not cited. A decision newly
-   accepted after the pass was recorded also stales it.
-3b. One manifest-freshness predicate answers every freshness question, asserted
-   by the spec, requirements, epics, plan, signoff and post-stage task gates, the
-   board and the next-step text all resolving through it. The PRE-stage task
-   grill keeps whole-tree grounding, asserted by a test that an unrelated product
-   file still stales it. The requirements gate no longer
-   hashes the whole product tree, and its existing regression expecting an
-   arbitrary new product file to stale a pass is replaced by one asserting the
-   opposite, with the replacement named.
-3c. A pass recorded WITHOUT a manifest keeps today's tree-based freshness,
-   asserted against a fixture recorded in the old shape. No manifest is ever
-   backfilled.
+1. `requirements_digest` excludes exactly what `product_excluded_prefixes`
+   excludes, rather than the bare default it takes today. The exclusion SET is
+   asserted, not one example path, so the next list to drift is caught.
+2. Accepting a decision record no longer stales a recorded requirements pass, and
+   neither does a change to `docs/context/ledger.json`. Asserted both ways.
+3. Editing the confirmed spec body still stales it, and so does changing a real
+   product file. The gate is corrected, not disabled.
+3b. No other gate's freshness moves. The spec, signoff, epics and plan gates keep
+   their prefix-based rule, and the PRE-stage task grill keeps whole-tree
+   grounding by owner ruling — asserted by a test that an unrelated product file
+   still stales it.
+3c. A requirements pass recorded BEFORE this lands keeps its settled meaning:
+   changing the digest's exclusions must not reinterpret stored records into
+   staleness all at once. Asserted against a fixture recorded in the old shape.
+   (The general input-manifest design is deferred as D-0035.)
 4. A stage review stamp survives a contract re-record that leaves the delta
    unchanged, asserted end to end through a stamp, a contract edit and a stage
    close, per decision 0066.

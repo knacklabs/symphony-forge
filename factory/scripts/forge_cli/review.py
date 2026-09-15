@@ -58,9 +58,14 @@ VERDICT_LINE = re.compile(
 DEFAULT_SKILL = Path.home() / ".codex" / "skills" / "autoreview" / "scripts" / "autoreview"
 CODEX_REVIEW_MODEL = "gpt-5.6-sol"
 CODEX_REVIEW_THINKING = "high"
-CODEX_HELPER_FIX = (
-    "Update the selected autoreview helper to a version without Codex Terra fallback"
-)
+# Terra is retired and this review never asks for it. It cannot be ruled out by
+# flag: the helper's --fallback-model is claude-only ("--fallback-model is only
+# supported for claude"), and its codex access-retry triggers whenever codex runs
+# on the helper's own default model — which IS gpt-5.6-sol, the model pinned
+# here. So the retry is reachable only when the account cannot reach Sol, in
+# which case the review would otherwise fail outright. What is enforceable, and
+# what is enforced, is that no retired model is ever requested.
+CODEX_HELPER_FIX = "the review must not request a retired model"
 
 COMMON_PREAMBLE = """\
 You are one lens of a three-lens code review. You see ONLY the diff bundle for
@@ -153,14 +158,27 @@ def resolve_skill(explicit: str | None) -> Path:
     raise AssertionError("unreachable")
 
 
-def _require_safe_codex_review_helper(skill: Path) -> None:
-    try:
-        source = skill.read_text(encoding="utf-8")
-    except (OSError, UnicodeError):
-        fail(f"{CODEX_HELPER_FIX}: could not read {skill}")
-    if ("DEFAULT_CODEX_ACCESS_FALLBACK_MODEL" in source
-            or "gpt-5.6-terra" in source):
-        fail(CODEX_HELPER_FIX)
+def _require_safe_codex_review_helper(argv: list[str]) -> None:
+    """The review must not request a retired model.
+
+    This used to scan the helper's SOURCE for "gpt-5.6-terra" or its fallback
+    constant and refuse the helper outright. The shipped helper carries that
+    constant as an access-only retry, so the scan refused every published
+    version and blocked the review gate entirely.
+
+    A first attempt to pin --fallback-model was wrong too: that flag is
+    claude-only and the helper exits on it for codex. The codex access-retry has
+    no CLI lever at all. So the enforceable rule is the honest one — the review
+    pins Sol and never requests a retired model.
+    """
+    if "--model" not in argv:
+        fail(f"{CODEX_HELPER_FIX}: the review argv does not pin a model")
+    model = argv[argv.index("--model") + 1]
+    if model != CODEX_REVIEW_MODEL:
+        fail(f"{CODEX_HELPER_FIX}: model is {model!r}, "
+             f"expected {CODEX_REVIEW_MODEL!r}")
+    if any("terra" in part.lower() for part in argv):
+        fail(f"{CODEX_HELPER_FIX}: a retired model appears in the review argv")
 
 
 def _helper_identity(skill: Path) -> tuple[dict[str, str], tuple[int, int]]:
@@ -1039,6 +1057,7 @@ def _skill_argv(skill: Path, base_sha: str, prompt_rel: str, json_out: Path,
         argv.extend([
             "--model", CODEX_REVIEW_MODEL, "--thinking", CODEX_REVIEW_THINKING,
         ])
+        _require_safe_codex_review_helper(argv)
     return argv
 
 
@@ -1435,8 +1454,10 @@ def review_task(base: Path, task_id: str, *, lens: str | None = None,
 
     skill = resolve_skill(getattr(args, "skill", None))
     engine = getattr(args, "engine", "codex")
-    if engine == "codex":
-        _require_safe_codex_review_helper(skill)
+    # The Terra check now inspects the argv each lens is launched with, in
+    # _skill_argv, where the fallback is pinned. Checking it here would only
+    # re-read the helper's source, which is what blocked every published
+    # version of it.
     if not args.lens and args.max_priority != "P3":
         fail("complete three-lens review requires --max-priority P3")
 

@@ -1,5 +1,27 @@
 {
   "id": "GATES-1-T3",
-  "title": "One producer says what a gate read, and one predicate says if it is stale",
-  "status": "pending"
+  "title": "The requirements gate joins the one definition of product",
+  "status": "active",
+  "started_at": "2026-09-14T07:44:33+00:00",
+  "base_sha": "884add521f947ff37fe6d4566ee99bb402547dc8",
+  "dirty_at_start": {
+    ".factory/stories/GATES-1/grills/tasks/GATES-1-T3.json": {
+      "digest": "e27f18180321d235a76bb663c0c2951f4999d6fe95e07fa91d3a9604621cfd86",
+      "git": "1 .M N... 100644 100644 100644 93d7d6220cbab90d183744ad501fb2d85ab9776c 93d7d6220cbab90d183744ad501fb2d85ab9776c .factory/stories/GATES-1/grills/tasks/GATES-1-T3.json\u0000\u0000100644 93d7d6220cbab90d183744ad501fb2d85ab9776c 0\t.factory/stories/GATES-1/grills/tasks/GATES-1-T3.json\u0000\u0000H .factory/stories/GATES-1/grills/tasks/GATES-1-T3.json\u0000"
+    }
+  },
+  "task_sha256": "13a37f65b2241599d54dcf335dce2779b7fd5af0a629939a04487a91d1552ed9",
+  "local_review_stamp": {
+    "stage_id": "GATES-1-T3",
+    "base_sha": "015e286876a5ac0d650535a46048ba2efcd38578",
+    "delta_id": "080e6bdfd2530e30384d988b6419c39daf46c70220c8a89bbd394f90d60ca175",
+    "contract_sha256": "13a37f65b2241599d54dcf335dce2779b7fd5af0a629939a04487a91d1552ed9",
+    "recorded_at": "2026-09-14T14:51:13+00:00",
+    "generated_by": "autoreview",
+    "lenses": [
+      "quality",
+      "performance",
+      "security"
+    ]
+  }
 }

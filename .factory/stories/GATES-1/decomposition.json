@@ -4,7 +4,7 @@
   "story": "GATES-1",
   "epic": "accountable-engineering",
   "plan_file": "plans/active/GATES-1-gates-stale-only-on-what-they-read.md",
-  "plan_sha256": "1a1dc27e1a6ec81951972052c3cdc5a84733226a3b1c2214b2c2943b1faec639",
+  "plan_sha256": "3f01ce2837c7d1f3d88f390abb7929023f32c30db70216af8f34859d8e64fe87",
   "tasks": [
     {
       "id": "GATES-1-T1",
@@ -223,18 +223,129 @@
     },
     {
       "id": "GATES-1-T3",
-      "title": "One producer says what a gate read, and one predicate says if it is stale",
-      "objective": "A single authoritative per-gate producer returns normalised repo-relative manifest inputs, including the composite signoff gate, replacing the display text locators return today. grill.json gains an optional input_manifest that the recorder requires for new passes and validates against the tree. One freshness predicate answers every consumer. A newly accepted decision is detected by comparing accepted id sets. The pre-stage task guard is untouched.",
+      "title": "The requirements gate joins the one definition of product",
+      "objective": "requirements_digest takes the bare default exclusion while every other closeout check calls product_excluded_prefixes, the documented ONE definition of not-product, which also excludes docs/decisions/ and docs/context/ledger.json \u2014 so accepting a decision stales the requirements gate alone. It passes the shared definition, and freshness moves behind one helper that also accepts the legacy digest so existing passes are not reinterpreted as stale. Both consumers ask that helper instead of comparing inline.",
       "acceptance_criteria": [
-        "One per-gate producer returns normalised repo-relative input paths for all six gates, including the composite signoff gate",
-        "The recorder requires a manifest for new passes, refuses one omitting the gate artifact, and refuses digests that disagree with the tree",
-        "A pass recorded without a manifest keeps tree-based freshness, asserted against a legacy fixture, and no manifest is ever backfilled",
-        "Editing a product file absent from the manifest leaves the pass valid; editing anything present stales it",
-        "A decision newly accepted or newly superseded after recording stales the pass, detected by accepted id set comparison",
-        "One predicate answers freshness for every consumer, and the pre-stage task grill still stales on an unrelated product file"
+        "requirements_digest excludes exactly what product_excluded_prefixes excludes, asserted as a SET rather than one example path",
+        "Accepting a decision record no longer stales a recorded requirements pass",
+        "A change to docs/context/ledger.json no longer stales a recorded requirements pass",
+        "Editing the confirmed spec body still stales it",
+        "Changing a real product file still stales it",
+        "A requirements pass recorded under the old exclusions is still accepted, so existing passes are not reinterpreted as stale",
+        "Both consumers resolve freshness through one helper rather than comparing digests inline",
+        "No other gate's freshness changes, asserted against the prefix-based gates and the pre-stage task grill"
       ],
       "depends_on": [],
-      "user_facing": false
+      "user_facing": false,
+      "plan_contracts": [
+        {
+          "id": "GATES-1-T3-C1",
+          "statement": "requirements_digest excludes exactly what product_excluded_prefixes excludes, asserted as a SET rather than one example path",
+          "source": "plans/active/GATES-1-gates-stale-only-on-what-they-read.md \u00a7 Acceptance Criteria"
+        },
+        {
+          "id": "GATES-1-T3-C2",
+          "statement": "Accepting a decision record no longer stales a recorded requirements pass",
+          "source": "plans/active/GATES-1-gates-stale-only-on-what-they-read.md \u00a7 Acceptance Criteria"
+        },
+        {
+          "id": "GATES-1-T3-C3",
+          "statement": "A change to docs/context/ledger.json no longer stales a recorded requirements pass",
+          "source": "plans/active/GATES-1-gates-stale-only-on-what-they-read.md \u00a7 Acceptance Criteria"
+        },
+        {
+          "id": "GATES-1-T3-C4",
+          "statement": "Editing the confirmed spec body still stales it",
+          "source": "plans/active/GATES-1-gates-stale-only-on-what-they-read.md \u00a7 Acceptance Criteria"
+        },
+        {
+          "id": "GATES-1-T3-C5",
+          "statement": "Changing a real product file still stales it",
+          "source": "plans/active/GATES-1-gates-stale-only-on-what-they-read.md \u00a7 Acceptance Criteria"
+        },
+        {
+          "id": "GATES-1-T3-C6",
+          "statement": "A requirements pass recorded under the old exclusions is still accepted, so existing passes are not reinterpreted as stale",
+          "source": "plans/active/GATES-1-gates-stale-only-on-what-they-read.md \u00a7 Acceptance Criteria"
+        },
+        {
+          "id": "GATES-1-T3-C7",
+          "statement": "Both consumers resolve freshness through one helper rather than comparing digests inline",
+          "source": "plans/active/GATES-1-gates-stale-only-on-what-they-read.md \u00a7 Acceptance Criteria"
+        },
+        {
+          "id": "GATES-1-T3-C8",
+          "statement": "No other gate's freshness changes, asserted against the prefix-based gates and the pre-stage task grill",
+          "source": "plans/active/GATES-1-gates-stale-only-on-what-they-read.md \u00a7 Acceptance Criteria"
+        }
+      ],
+      "required_tests": [
+        {
+          "id": "test_requirements_digest_uses_the_shared_exclusion_definition",
+          "path": "factory/tests/test_requirements_freshness.py",
+          "command": "uv run --with pytest --with psutil python -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_a_decision_record_does_not_stale_the_requirements_gate",
+          "path": "factory/tests/test_requirements_freshness.py",
+          "command": "uv run --with pytest --with psutil python -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_the_context_ledger_does_not_stale_the_requirements_gate",
+          "path": "factory/tests/test_requirements_freshness.py",
+          "command": "uv run --with pytest --with psutil python -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_editing_the_confirmed_spec_still_stales_it",
+          "path": "factory/tests/test_requirements_freshness.py",
+          "command": "uv run --with pytest --with psutil python -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_a_real_product_change_still_stales_it",
+          "path": "factory/tests/test_requirements_freshness.py",
+          "command": "uv run --with pytest --with psutil python -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_a_pass_recorded_under_the_old_exclusions_is_still_accepted",
+          "path": "factory/tests/test_requirements_freshness.py",
+          "command": "uv run --with pytest --with psutil python -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_both_consumers_resolve_freshness_through_the_helper",
+          "path": "factory/tests/test_requirements_freshness.py",
+          "command": "uv run --with pytest --with psutil python -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_the_prefix_gates_and_pre_stage_task_grill_are_unchanged",
+          "path": "factory/tests/test_requirements_freshness.py",
+          "command": "uv run --with pytest --with psutil python -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        }
+      ],
+      "write_scope": [
+        "factory/scripts/factory_lib.py",
+        "factory/scripts/forge_cli/plans.py",
+        "factory/scripts/forge_cli/phase.py",
+        "factory/tests/test_requirements_freshness.py"
+      ],
+      "verify_commands": [
+        "uv run --with pytest --with psutil python -m pytest factory/tests -q"
+      ],
+      "reviewer_focus": [
+        "That the exclusion comes from product_excluded_prefixes rather than a second hand-written list, since a duplicated list IS the defect",
+        "That a pass recorded under the old exclusions is still accepted, or this change stales every in-flight story at once \u2014 the cascade it exists to remove",
+        "That BOTH consumers go through the helper: leaving one inline comparison replants the seed",
+        "That the spec body remains part of the digest, and a real product change still stales, so the gate is corrected rather than disabled",
+        "That the exclusion SET is asserted rather than one example path",
+        "That no other gate moves: the prefix gates and the pre-stage task grill are out of scope, and D-0035 owns the manifest"
+      ],
+      "review_budget": {
+        "max_changed_files": 4,
+        "max_changed_lines": 300,
+        "reason": "The shared exclusion passed inside requirements_digest, one freshness helper that also accepts the legacy digest, both consumers switched to it, and one new suite. The full manifest this task originally carried is deferred as D-0035 after reading showed the measured cascade had a one-argument cause; the owner reversed the decision-staleness ruling to allow it, and the confirmed spec is amended to match."
+      },
+      "dependencies": [
+        "GATES-1-T1"
+      ]
     },
     {
       "id": "GATES-1-T4",
@@ -250,7 +361,10 @@
       "depends_on": [
         "GATES-1-T3"
       ],
-      "user_facing": false
+      "user_facing": false,
+      "dependencies": [
+        "GATES-1-T3"
+      ]
     },
     {
       "id": "GATES-1-T5",
@@ -267,9 +381,12 @@
       "depends_on": [
         "GATES-1-T2"
       ],
-      "user_facing": false
+      "user_facing": false,
+      "dependencies": [
+        "GATES-1-T2"
+      ]
     }
   ],
   "project": "",
-  "commit": "7bf3951cf5bc96378dc278fc075e239db85f20f3"
+  "commit": "4672acf4f8828054cc3356c8ba10231a672c504e"
 }
