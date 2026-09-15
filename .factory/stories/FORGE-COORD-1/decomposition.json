@@ -664,7 +664,8 @@
         ".github/workflows/factory-scaffold.yml",
         "factory/tests/test_closeout_mode_from_markers.py",
         "factory/schemas/delegation.json",
-        "factory/tests/test_native_launch.py"
+        "factory/tests/test_native_launch.py",
+        "factory/scripts/record_review_from_json.py"
       ],
       "plan_contracts": [
         {
@@ -1012,9 +1013,9 @@
         "Run or explicitly account for real Claude and Codex native Plan Mode approval smoke tests and live `gh pr view 109` / `gh pr view 110` evidence before backfill."
       ],
       "review_budget": {
-        "max_changed_files": 100,
+        "max_changed_files": 101,
         "max_changed_lines": 14500,
-        "reason": "Lean recovery PR2 spans native approval eligibility, context-file security including native Windows protected DACL proof, narrowed delegation, reviewed-meaning close reuse, clean-target and independently covered Lean migration/deletion including sealed fixed-proof migration, three-profile pruning with settings/profile preservation, PR-link repair, docs/runtime alignment, and the amended Portable PR3 handoff; stop for amendment if measured diff exceeds this budget. One-time 2026-09-15 amendment from 96 to 97 changed files solely for the existing factory-scaffold Windows PR job to run the native protected-DACL context-file selector; no product check is removed, and the 14,500-line ceiling and native Windows proof obligation remain. One-time current-main integration amendment from 97 to 99 changed files covers only the imported PR 219 closeout-marker fixture and the existing delegation schema field needed to seal terminal cold-result bytes; no proof or platform check is removed, and the 14,500-line ceiling remains. One-time current-main security proof amendment from 99 to 100 changed files adds only existing test_native_launch.py to check the already approved captured native cold-result byte identity through its stable scanner spy; the 14,500-line ceiling, required selectors, and native Windows CI obligation remain."
+        "reason": "Lean recovery PR2 spans native approval eligibility, context-file security including native Windows protected DACL proof, narrowed delegation, reviewed-meaning close reuse, clean-target and independently covered Lean migration/deletion including sealed fixed-proof migration, three-profile pruning with settings/profile preservation, PR-link repair, docs/runtime alignment, and the amended Portable PR3 handoff; stop for amendment if measured diff exceeds this budget. One-time 2026-09-15 amendment from 96 to 97 changed files solely for the existing factory-scaffold Windows PR job to run the native protected-DACL context-file selector; no product check is removed, and the 14,500-line ceiling and native Windows proof obligation remain. One-time current-main integration amendment from 97 to 99 changed files covers only the imported PR 219 closeout-marker fixture and the existing delegation schema field needed to seal terminal cold-result bytes; no proof or platform check is removed, and the 14,500-line ceiling remains. One-time current-main security proof amendment from 99 to 100 changed files adds only existing test_native_launch.py to check the already approved captured native cold-result byte identity through its stable scanner spy; the 14,500-line ceiling, required selectors, and native Windows CI obligation remain. One-time current-main integration correction from 100 to 101 measured changed files accounts only for the existing codex_runtime.py native-result parser, which must consume the captured terminal bytes used by the approved cold-proof hash. The exact public review recorder is added to write scope so the already approved reviewed-meaning close contract rejects replay at its stable --set interface. This is measurement and ownership only; no acceptance, tests, Windows obligation, or 14,500-line ceiling is removed."
       }
     },
     {
@@ -1112,5 +1113,5 @@
   "epic": "symphony-forge",
   "plan_file": "plans/active/FORGE-COORD-1-either-claude-or-codex-coordinates-the-same-forge-workflow.md",
   "plan_sha256": "704e22e69b3722fc885bd09231691a18c2afc01b0982a112bb7b5118744f1723",
-  "commit": "b4a64c88c06f684ab1a32f2bae8a8a5c8a759fbe"
+  "commit": "fd28cbbb801ce73b51ac4d8ac5ca32f028913d0a"
 }
