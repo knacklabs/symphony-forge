@@ -8,9 +8,11 @@ cause in its brief, and merges into the tool's own chunk shape.
 """
 from __future__ import annotations
 
+import ast
 import base64
 import copy
 import json
+import subprocess
 import sys
 from pathlib import Path
 
@@ -27,8 +29,8 @@ from forge_cli.review import (  # noqa: E402
     _actual_passes, _project_combined_report, codex_runs_path, review_task,
 )
 from forge_cli.review_groups import (  # noqa: E402
-    SPLIT_ENV, diagnose_refusal, flatten_passes, is_review_noise, merge_group_reports,
-    plan_groups, review_split_bytes,
+    SPLIT_ENV, diagnose_refusal, diff_bytes_by_path, flatten_passes, group_commits,
+    is_review_noise, merge_group_reports, plan_groups, review_split_bytes, run_groups,
 )
 from forge_cli.review_launcher import CODEX_BIN_ENV  # noqa: E402
 
@@ -161,6 +163,78 @@ def _ledger_starts(repo: Path) -> int:
 
 
 # ------------------------------------------------------------- the pieces
+
+
+def test_grouped_diff_covers_exact_git_paths_and_preserves_the_tip_tree(tmp_path):
+    target = tmp_path / "path-repo"
+    target.mkdir()
+    git(target, "init", "-q")
+    (target / "old.py").write_text("old\n")
+    (target / "a.py").write_text("base\n")
+    git(target, "add", "-A")
+    git(target, "commit", "-qm", "base")
+    base = head(target)
+    git(target, "mv", "old.py", "new.py")
+    (target / "a.py").write_text("tip\n")
+    for rel in ("é.py", "with space.py", "[ab].py"):
+        (target / rel).write_text(rel + "\n")
+    git(target, "add", "-A")
+    git(target, "commit", "-qm", "tip")
+    tip = head(target)
+
+    def changed(left: str, right: str) -> list[str]:
+        proc = subprocess.run(
+            ["git", "diff", "--no-renames", "--name-only", "-z", f"{left}...{right}"],
+            cwd=target, capture_output=True, check=True,
+        )
+        return [item.decode("utf-8") for item in proc.stdout.split(b"\0") if item]
+
+    expected = changed(base, tip)
+    sizes = diff_bytes_by_path(target, base)
+    assert set(sizes) == set(expected)
+    assert {"old.py", "new.py", "a.py", "[ab].py", "é.py", "with space.py"} <= set(sizes)
+    assigned = plan_groups(sizes, 1)
+    assert all(len(paths) == 1 for paths in assigned)
+    assert len([rel for paths in assigned for rel in paths]) == len(sizes)
+    full_tree = git(target, "rev-parse", f"{tip}^{{tree}}")
+    union = set()
+    for index, paths in enumerate(assigned):
+        group_base, group_tip = group_commits(
+            target, base, tip, paths, tmp_path / f"group-{index}.index")
+        group_paths = changed(group_base, group_tip)
+        assert set(group_paths) == set(paths)
+        assert not union.intersection(group_paths)
+        union.update(group_paths)
+        assert git(target, "rev-parse", f"{group_tip}^{{tree}}") == full_tree
+        if paths == ["[ab].py"]:
+            assert subprocess.run(
+                ["git", "cat-file", "-e", f"{group_base}:[ab].py"],
+                cwd=target, capture_output=True,
+            ).returncode != 0
+    assert union == set(expected)
+
+
+def test_json_null_is_refused_three_times_and_keeps_each_raw_attempt(
+        tmp_path, monkeypatch, capsys):
+    monkeypatch.setattr(review_mod, "_record_codex_run", lambda *args: "test-run")
+    monkeypatch.setattr(review_mod, "_stamp_codex_run", lambda *args, **kwargs: None)
+    monkeypatch.setattr(review_mod, "_close_codex_run", lambda *args: None)
+    logs = tmp_path / "logs"
+    groups = [{"label": "group-1", "worktree": tmp_path}]
+
+    def argv_for(_group, json_out, _extra_prompt):
+        return [sys.executable, "-c",
+                "from pathlib import Path; import sys; Path(sys.argv[1]).write_text('null')",
+                str(json_out)]
+
+    with pytest.raises(SystemExit):
+        run_groups(groups=groups, prompt_rel="test", log_dir=logs,
+                   ledger_root=tmp_path, argv_for=argv_for, validate=_actual_passes)
+    assert groups[0]["attempts"] == 3
+    assert "group-1 was refused 3 times" in capsys.readouterr().out
+    assert "report" not in groups[0]
+    assert [path.read_bytes() for path in sorted(logs.glob("group-1.attempt*.json"))] == [
+        b"null", b"null", b"null"]
 
 
 def test_lock_and_generated_files_are_noise_and_product_code_is_not():
@@ -413,8 +487,9 @@ def test_each_group_gets_its_own_launcher_and_is_told_the_tree_is_readable(
         assert launcher.parent == lib.git_control_dir(repo) / "review-launcher" / "T1" / label / "bin"
         script = (launcher.parent / "codex_in_worktree.py").read_text(encoding="utf-8")
         assert Path(seen[f"{label}.attempt1"]["cwd"]).name == label
-        assert f"WORKTREE = {seen[f'{label}.attempt1']['cwd']!r}" in script \
-            or seen[f"{label}.attempt1"]["cwd"] in script
+        assignment = next(line for line in script.splitlines() if line.startswith("WORKTREE = "))
+        worktree = ast.literal_eval(ast.parse(assignment).body[0].value)
+        assert Path(worktree).resolve() == Path(seen[f"{label}.attempt1"]["cwd"]).resolve()
         launchers.add(launcher)
         note = seen[f"{label}.attempt1"]["prompts"][0]
         assert "ARE in the tree at HEAD" in note and "never write partial or missing" in note
