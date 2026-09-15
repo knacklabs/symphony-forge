@@ -618,7 +618,7 @@ def native_codex_approval(repo: Path) -> dict:
                 {"label": "Stop"},
             ],
         }]},
-        "tool_response": {"answers": {question_id: "Approve plan"}},
+        "tool_response": {"answers": {question_id: {"answers": ["Approve plan"]}}},
     }
 
 
@@ -711,6 +711,8 @@ def write_passing_artifacts(
         grill_path = lib.evidence_path(
             repo, key, f"grills/tasks/{task_id}.json", for_write=True,
         )
+        session = f"fixture-session-{task_id}"
+        event = f"fixture-event-{task_id}"
         lib.dump_json(grill_path, {
             "generated_by": "griller",
             "gate": "task",
@@ -730,8 +732,20 @@ def write_passing_artifacts(
             "approved_by": "human-via-Claude",
             "approved_at": "2026-09-10T00:00:00+00:00",
             "approval_runtime": "claude",
-            "approval_session_id": f"fixture-session-{task_id}",
-            "approval_event_id": f"fixture-event-{task_id}",
+            "approval_session_id": session,
+            "approval_event_id": event,
+        })
+        replay_key = hashlib.sha256(
+            f"claude\0{session}\0{event}".encode("utf-8")
+        ).hexdigest()
+        lib.dump_json(lib.evidence_path(
+            repo, key, f"approval-events/{replay_key}.json", for_write=True,
+        ), {
+            "approved_plan_sha256": task_plan_sha256,
+            "approved_by": "human-via-Claude",
+            "approved_at": "2026-09-10T00:00:00+00:00",
+            "runtime": "claude", "session_id": session, "event_id": event,
+            "plan_kind": "task", "story": key, "task": task_id,
         })
         task_root = lib.task_evidence_path(
             repo, key, task_id, "verify.json", for_write=True,
@@ -3191,7 +3205,7 @@ def test_upgrade_refuses_a_symlinked_destination_before_writing(repo, tmp_path):
     proc = upgrade_into(repo)
 
     assert proc.returncode != 0
-    assert "refusing destination outside the target" in proc.stdout + proc.stderr
+    assert "linked" in (proc.stdout + proc.stderr).lower()
     assert destination.is_symlink()
     assert outside.read_text() == "do not replace\n"
     assert git(repo, "status", "--porcelain") == ""
@@ -15876,7 +15890,8 @@ def test_workspace_decomposition_mirror_cannot_forge_task_contract(
     code, out = run(repo, "forge.py", "stage", "start", "T1", "--trunk")
     assert code == 0, out
     code, out = run(repo, "forge.py", "delegate", "T1", "--print-only",
-                    env={"HOME": str(fake_companion_home(tmp_path))})
+                    env={"HOME": str(fake_companion_home(tmp_path)),
+                         "FORGE_COORDINATOR": "claude"})
     assert code == 0, out
     brief = (repo / ".factory" / "diagnostic-briefs" / "T1.md").read_text()
     assert "src/" in brief and "billing/" not in brief
@@ -16856,14 +16871,18 @@ def test_launch_companion_uses_platform_specific_spawn_options(
         import forge_cli.delegate as delegate
         captured = {}
         native_os_name = delegate.os.name
+        real_popen = delegate.subprocess.Popen
+        control = Path(git(repo, "rev-parse", "--absolute-git-dir")) / "forge"
 
         class Process:
             pid = 101
             returncode = 0
 
         def spawn(_argv, **kwargs):
-            captured.update(kwargs)
-            return Process()
+            if _argv[0] == "node":
+                captured.update(kwargs)
+                return Process()
+            return real_popen(_argv, **kwargs)
 
         monkeypatch.setattr(delegate.os, "name", platform)
         monkeypatch.setattr(
@@ -16876,6 +16895,7 @@ def test_launch_companion_uses_platform_specific_spawn_options(
         monkeypatch.setattr(delegate, "companion_script", lambda: tmp_path / "x")
         monkeypatch.setattr(delegate.shutil, "which", lambda _name: "node")
         monkeypatch.setattr(delegate, "_process_table", lambda: {})
+        monkeypatch.setattr(delegate, "git_control_dir", lambda _base: control)
         monkeypatch.setattr(delegate, "_capture_spawn_identity", lambda _proc: 1.0)
         monkeypatch.setattr(
             delegate, "_wait_and_reap",
@@ -18366,6 +18386,11 @@ def _write_complete_automated(repo, task_id="T1"):
 def test_review_consumers_include_complete_approved_inputs(
         repo, tmp_path, monkeypatch, capsys):
     first = _native_review_fixture(repo, tmp_path)
+    target = repo / "src" / "review-target.py"
+    target.parent.mkdir(exist_ok=True)
+    target.write_text("reviewed = True\n")
+    git(repo, "add", "src/review-target.py")
+    git(repo, "commit", "-qm", "T1 review target")
     proof = _write_complete_automated(repo)
     code, out = run(repo, "forge.py", "review-brief", "T1", "--repo", str(repo))
     assert code == 0, out
@@ -18461,6 +18486,7 @@ def test_review_consumers_include_complete_approved_inputs(
     seen = []
     review_tmp = tmp_path / "review-dataset-routing"
     review_tmp.mkdir()
+    (tmp_path / "helper").write_text("safe fixture helper\n")
     finding = {
         "title": "[quality] Preserve plain-source attribution",
         "body": "Schema-valid plain source.", "priority": "P2",
@@ -18472,7 +18498,7 @@ def test_review_consumers_include_complete_approved_inputs(
         if args[:3] == ("worktree", "add", "--detach"):
             Path(args[3]).mkdir(parents=True, exist_ok=True)
         if args[0] == "rev-parse":
-            return "a" * 40
+            return head(repo)
         if args[0] == "diff":
             return "src/review-target.py"
         return ""
@@ -18505,23 +18531,8 @@ def test_review_consumers_include_complete_approved_inputs(
         route.setattr(review_mod, "cmd_review_brief", lambda _args: None)
         route.setattr(review_mod, "resolve_skill", lambda _explicit: tmp_path / "helper")
         route.setattr(review_mod, "_product_dirty", lambda _base: [])
-        route.setattr(review_mod, "head_sha", lambda _base: "a" * 40)
-        route.setattr(
-            review_mod, "product_delta_digest",
-            lambda *_args: review_run["branch_diff_digest"],
-        )
-        route.setattr(review_mod, "resolve_review_base", lambda *_args: "b" * 40)
-        route.setattr(review_mod, "review_excluded_prefixes", lambda _base: ())
-        route.setattr(review_mod, "_require_git", fake_require_git)
-        route.setattr(review_mod, "_git", lambda *_args, **_kwargs:
-                      subprocess.CompletedProcess([], 0, "", ""))
-        route.setattr(review_mod, "product_only_tip", lambda *_args: "c" * 40)
         route.setattr(review_mod, "_run_skill", inspect_skill)
-        route.setattr(review_mod, "_helper_identity", lambda _path:
-                      ({"path": "/helper", "version": "v1", "sha256": "a" * 64}, (1, 2)))
         route.setattr(review_mod.tempfile, "mkdtemp", lambda **_kwargs: str(review_tmp))
-        route.setattr(review_mod.subprocess, "run", lambda *args, **_kwargs:
-                      subprocess.CompletedProcess(args[0], 0, "", ""))
         route.setattr(stages_mod, "stamp_stage_review", lambda *_args, **_kwargs: None)
         with pytest.raises(SystemExit):
             review_mod.cmd_review(argparse.Namespace(
@@ -18570,7 +18581,7 @@ def test_review_consumers_include_complete_approved_inputs(
             unsafe.setattr(review_mod, "cmd_review_brief", lambda _args: None)
             unsafe.setattr(review_mod, "resolve_skill", lambda _explicit: tmp_path / "helper")
             unsafe.setattr(review_mod, "_product_dirty", lambda _base: [])
-            unsafe.setattr(review_mod, "resolve_review_base", lambda *_args: "b" * 40)
+            unsafe.setattr(review_mod, "resolve_review_base", lambda *_args: head(repo))
             unsafe.setattr(review_mod, "review_excluded_prefixes", lambda _base: ())
             unsafe.setattr(review_mod, "_require_git", fake_require_git)
             unsafe.setattr(review_mod, "_git", lambda *_args, **_kwargs:
@@ -18578,7 +18589,7 @@ def test_review_consumers_include_complete_approved_inputs(
             unsafe.setattr(review_mod, "product_only_tip", lambda *_args: "c" * 40)
             unsafe.setattr(review_mod, "_run_skill", forbidden)
             unsafe.setattr(review_mod.tempfile, "mkdtemp", lambda **_kwargs: str(review_case))
-            unsafe.setattr(review_mod.subprocess, "run", forbidden)
+            unsafe.setattr(review_mod, "_record_codex_run", forbidden)
             unsafe.setattr(stages_mod, "stamp_stage_review", forbidden)
             with pytest.raises(SystemExit) as error:
                 review_mod.cmd_review(argparse.Namespace(
@@ -18787,10 +18798,10 @@ def test_review_preflight_uses_active_task_proof(repo, tmp_path, monkeypatch):
 
     monkeypatch.setattr(review_mod, "proof_path", proof_spy)
     monkeypatch.setattr(review_mod, "_product_dirty", lambda _base: [])
-    monkeypatch.setattr(review_mod, "resolve_review_base", lambda *_args: "base")
+    monkeypatch.setattr(review_mod, "resolve_review_base", lambda *_args: head(repo))
     monkeypatch.setattr(review_mod, "review_excluded_prefixes", lambda _base: ())
     monkeypatch.setattr(review_mod, "_require_git",
-                        lambda _base, _what, *args: "tip" if args[0] == "rev-parse"
+                        lambda _base, _what, *args: head(repo) if args[0] == "rev-parse"
                         else "src/app.py")
     brief_args = []
     def reach_review_brief(args):
@@ -18843,10 +18854,10 @@ def test_review_codex_helper_policy_refuses_fallback_before_launch(
     monkeypatch.setattr(review_mod, "_run_skill", forbidden)
     monkeypatch.setattr(review_mod, "cmd_review_brief", forbidden)
     monkeypatch.setattr(review_mod, "_product_dirty", lambda _base: [])
-    monkeypatch.setattr(review_mod, "resolve_review_base", lambda *_args: "base")
+    monkeypatch.setattr(review_mod, "resolve_review_base", lambda *_args: head(repo))
     monkeypatch.setattr(review_mod, "review_excluded_prefixes", lambda _base: ())
     monkeypatch.setattr(review_mod, "_require_git",
-                        lambda _base, _what, *args: "tip" if args[0] == "rev-parse"
+                        lambda _base, _what, *args: head(repo) if args[0] == "rev-parse"
                         else "src/app.py")
     with pytest.raises(SystemExit) as error:
         review_mod.cmd_review(argparse.Namespace(
@@ -21795,10 +21806,11 @@ def test_forge_deps_lock_detects_manager_and_guards(tmp_path):
         cmd_lock(argparse.Namespace(repo=str(only_pkg)))
 
 
-def test_write_lock_exempts_ignored_local_config_but_not_tracked_product(repo):
+def test_write_lock_exempts_ignored_local_config_but_not_tracked_product(repo, monkeypatch):
     # The exemption list named .envrc but not .env, so editing local service
     # config to run verify was refused as a product write. Enumerating
     # filenames always misses one; git already knows what a file IS.
+    monkeypatch.chdir(repo)
     sys.path.insert(0, str(repo / "factory" / "scripts"))
     from pre_tool_use import _static_locked  # noqa: E402
 

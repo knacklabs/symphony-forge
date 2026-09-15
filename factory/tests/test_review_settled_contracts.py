@@ -22,7 +22,7 @@ import pytest
 
 from test_gates import (  # noqa: I001 — test_gates puts factory/scripts on sys.path
     DECOMP, STAGE_TASK, _write_complete_automated, git, head, intake,
-    record_skeleton_then_frontier, record_task_grill, repo, run, save_plan,
+    load_factory_lib, record_skeleton_then_frontier, record_task_grill, repo, run, save_plan,
     sign_off, skeletal_stage_task, write_stages,
 )
 from factory_lib import (  # noqa: E402
@@ -48,6 +48,31 @@ def test_plan_sections_are_picked_by_header_word():
     assert [h for h, _ in picked] == ["Decisions", "Owner rulings (Ravi)"]
     assert picked[0][1] == "0154 amended; 0118."
     assert picked[1][1] == "- rows are recoverable-only"
+
+
+def _fixture_approve_t2(repo) -> None:
+    lib = load_factory_lib(repo)
+    plan = lib.evidence_path(repo, "ENG-1", "task-plans/T2.md")
+    digest = lib.plan_digest_without_assumptions(plan)
+    grill_path = lib.evidence_path(repo, "ENG-1", "grills/tasks/T2.json")
+    grill = load_json(grill_path)
+    session, event = "fixture-session-T2", "fixture-event-T2"
+    approved_at = "2026-09-10T00:00:00+00:00"
+    grill.update({
+        "approved_task_plan_sha256": digest, "approved_by": "human-via-Claude",
+        "approved_at": approved_at, "approval_runtime": "claude",
+        "approval_session_id": session, "approval_event_id": event,
+    })
+    lib.dump_json(grill_path, grill)
+    replay_key = hashlib.sha256(f"claude\0{session}\0{event}".encode()).hexdigest()
+    lib.dump_json(lib.evidence_path(
+        repo, "ENG-1", f"approval-events/{replay_key}.json", for_write=True,
+    ), {
+        "approved_plan_sha256": digest, "approved_by": "human-via-Claude",
+        "approved_at": approved_at, "runtime": "claude",
+        "session_id": session, "event_id": event, "plan_kind": "task",
+        "story": "ENG-1", "task": "T2",
+    })
 
 
 def _story(repo, tmp_path, *, t1_status: str = "done") -> None:
@@ -98,8 +123,9 @@ def _story(repo, tmp_path, *, t1_status: str = "done") -> None:
     stages = load_stages(repo)
     stages["stages"][1]["status"] = "active"
     write_stages(repo, stages)
-    code, out = record_task_grill(repo, t2)
+    code, out = record_task_grill(repo, t2, approve=False)
     assert code == 0, out
+    _fixture_approve_t2(repo)
     _write_complete_automated(repo, "T2")
 
 
@@ -111,6 +137,7 @@ def test_brief_carries_plan_decisions_and_sealed_contracts(repo, tmp_path):
         protected_decomposition_state_path(repo), default={})["tasks"] if t["id"] == "T2")
     code, out = record_task_grill(repo, task)
     assert code == 0, out
+    _fixture_approve_t2(repo)
     brief = "\n".join(_task_section(task, repo))
     assert "Settled — do not relitigate" in brief
     assert "0154 (amended): old rows are not listed." in brief

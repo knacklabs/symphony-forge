@@ -16,14 +16,16 @@ work.
 """
 from __future__ import annotations
 
+import hashlib
 import json
 import sys
 from pathlib import Path
 
 from test_gates import (  # noqa: F401
-    HARNESS, STAGE_TASK, fake_companion_env, git, intake, load_factory_lib,
+    HARNESS, STAGE_TASK, _seed_cold_launch, fake_companion_env, git, intake, load_factory_lib,
     native_claude_approval, post_hook, record_skeleton_then_frontier,
     record_task_grill, repo, run, save_plan, sign_off, story_state,
+    task_grill_payload,
 )
 
 sys.path.insert(0, str(HARNESS / "factory" / "scripts"))
@@ -147,6 +149,12 @@ def test_a_change_to_what_was_agreed_still_reaches_the_human(repo: Path,
         saved.read_text(encoding="utf-8")
         + "\nThe query now takes an `asOf` instant.\n", encoding="utf-8")
 
+    code, out = run(repo, "forge.py", "stage", "start", "T1", "--trunk")
+    assert code != 0 and "task grill is STALE" in out, out
+    _seed_cold_launch(repo, "task", hashlib.sha256(saved.read_bytes()).hexdigest(), "T1")
+    code, out = run(repo, "record_grill_from_json.py", "--gate", "task",
+                    "--task", "T1", stdin=json.dumps(task_grill_payload(STAGE_TASK)))
+    assert code == 0, out
     code, out = run(repo, "forge.py", "stage", "start", "T1", "--trunk")
     assert code != 0 and "Task plan approval required" in out, out
     code, out = post_hook(repo, native_claude_approval(repo))
