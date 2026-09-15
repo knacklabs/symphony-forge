@@ -14603,14 +14603,8 @@ def test_proof_reaps_spawn_when_process_identity_probe_fails(
     assert spawned["stderr"].errors == "replace"
 
 
-def test_stage_done_ignores_a_brief_rewritten_by_proof_commands(repo, tmp_path):
-    """The launch attests that Codex wrote inside THIS stage; the brief's
-    bytes are not part of that. Binding the launch to the brief digest meant a
-    re-composed brief (any contract re-record) orphaned every launch and the
-    only way back was a Codex run that changed nothing. A proof command that
-    rewrites the brief therefore changes nothing the seal depends on -- and
-    every input the launch binding still has lives in protected authority,
-    which a proof command may not touch (that refusal is tested separately)."""
+def test_stage_done_refuses_a_current_brief_rewritten_by_proof_commands(repo, tmp_path):
+    """A write launch must bind the current brief bytes before sealing."""
     command = ("python3 -c \"from pathlib import Path; "
                "p=Path('.factory/briefs/T1.md'); "
                "p.write_text(p.read_text() + 'changed')\"")
@@ -14619,8 +14613,9 @@ def test_stage_done_ignores_a_brief_rewritten_by_proof_commands(repo, tmp_path):
     write_in_scope(repo, "src/core.py")
     stamp_and_commit(repo, "src/core.py")
     code, out = run(repo, "forge.py", "stage", "done", "T1")
-    assert code == 0, out
-    assert measured_stage(repo)["status"] == "done"
+    assert code != 0, out
+    assert "has no successful write launch bound to this stage" in out, out
+    assert measured_stage(repo)["status"] == "active"
 
 
 def test_stage_start_gates_on_dependencies_not_list_order(repo, tmp_path):

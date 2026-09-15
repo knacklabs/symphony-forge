@@ -312,9 +312,8 @@ def test_task_close_goes_from_built_to_pr_and_is_idempotent(repo, tmp_path):
 
 
 def test_task_close_reopens_a_done_stage_whose_diff_moved(repo, tmp_path):
-    """A post-seal fix used to need `reopen --review-fix` and the whole
-    ladder again. Now the same command notices the delta moved, reopens the
-    stage itself, and goes straight to the one review the new diff owes."""
+    """A moved post-seal diff reopens the stage, but stale verify and test
+    proof must stop review before the helper launches."""
     env = _ship_ready(repo, tmp_path)
     code, out = run(repo, "forge.py", "task", "close", "T1",
                     "--skill", str(tmp_path / "no-such-autoreview"), env=env)
@@ -325,12 +324,11 @@ def test_task_close_reopens_a_done_stage_whose_diff_moved(repo, tmp_path):
     git(repo, "commit", "-qm", "post-seal fix")
     code, out = run(repo, "forge.py", "task", "close", "T1",
                     "--skill", str(tmp_path / "no-such-autoreview"), env=env)
-    # It got as far as the review -- which is exactly what the new diff owes
-    # -- and nothing else was demanded on the way. The review's own inputs
-    # (story verify/tests, the autoreview skill) are what stop it here.
     assert code != 0, out
-    assert ("autoreview skill not found" in out
-            or "is not recorded for ENG-1; review runs after" in out), out
+    assert "review proof preflight failed before helper launch" in out, out
+    assert "product content changed after verify proof was recorded" in out, out
+    assert "product content changed after tests proof was recorded" in out, out
+    assert "autoreview skill not found" not in out, out
     assert "reopened: the diff moved" in out
     stage = _stage(repo)
     assert stage["status"] == "active"
