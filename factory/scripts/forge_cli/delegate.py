@@ -1230,7 +1230,10 @@ def _run_windows_path_script(script: str, path: Path, sid: str = "") -> subproce
 
 def _windows_acl_state(path: Path) -> dict:
     script = (
-        "$ErrorActionPreference='Stop';$a=Get-Acl -LiteralPath $inputData.path; "
+        "$ErrorActionPreference='Stop';"
+        "if ([IO.Directory]::Exists($inputData.path)) {"
+        "$a=[IO.Directory]::GetAccessControl($inputData.path)"
+        "} else {$a=[IO.File]::GetAccessControl($inputData.path)};"
         "$sid=[Security.Principal.SecurityIdentifier];"
         "[pscustomobject]@{Owner=$a.GetOwner($sid).Value;"
         "Protected=$a.AreAccessRulesProtected;"
