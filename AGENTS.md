@@ -100,7 +100,7 @@ Closeout never re-verifies. Story proof is only `outcome.json`
 - Keep tasks bounded and capability-driven; plans bind one roadmap story and attest all active decisions.
 - The session write lock is always armed: delegate locked writes; use `forge mode degraded` only during a companion outage.
 - Do not decompose by document file or arbitrary file count, nor bypass `verify.py` with ad hoc validation commands.
-- Evidence enters `.factory/` only via schema-validated recorders (pinned `generated_by`), never by hand.
+- Evidence enters `.factory/` only via schema-validated recorders (pinned `generated_by`), never by hand. Preserve the approval-path and captured-context boundaries in `docs/specs/dual-coordinator-parity.md`; cold proof binds the launched result bytes.
 - Narration budget (conduct §8): one line per state change; findings and refusals always in full; process chatter never.
 - Follow [bounded recovery](docs/QUALITY.md#bounded-recovery) in every phase; repeated unchanged failures need a diagnosed, tested fix before another model run.
 - Use one integrated `./forge task close <id>` proof/review/finish cycle: preflight launch, review bounds, and required-test paths before expensive proof; recheck mutable state at finish; run only one full factory suite at a time on a shared host.

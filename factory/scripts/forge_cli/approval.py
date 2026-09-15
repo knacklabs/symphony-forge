@@ -13,7 +13,7 @@ from pathlib import Path
 from typing import Any
 
 from factory_lib import (
-    _plan_body_digest_bytes, _task_plan_state, dump_json, evidence_path,
+    _plan_body_digest_bytes, _safe_review_leaf, _task_plan_state, dump_json, evidence_path,
     factory_dir, load_json, now_iso,
     plan_digest_without_assumptions, protected_decomposition_state_path,
     require_grill, run_state_path, task_frontier_state,
@@ -39,16 +39,27 @@ def _text(value: object) -> str:
     return value.strip() if isinstance(value, str) else ""
 
 
+def _plan_path(base: Path, relative: object) -> Path | None:
+    if (not isinstance(relative, str) or not relative
+            or Path(relative).is_absolute() or ".." in Path(relative).parts):
+        return None
+    path = base / relative
+    return path if _safe_review_leaf(base, path, required=True) else None
+
+
+def _require_safe_plan(base: Path, path: Path) -> None:
+    if (".." in path.parts
+            or not _safe_review_leaf(base, path, required=True)):
+        raise ApprovalRefused("approval plan must be a contained regular non-linked file")
+
+
 def _story_candidate(base: Path) -> ApprovalCandidate | None:
     state = load_json(run_state_path(base), default={})
     status = state.get("plan_status")
     if status not in {"awaiting-approval", "approved"}:
         return None
-    relative = state.get("plan_file")
-    if not isinstance(relative, str) or not relative:
-        return None
-    path = base / relative
-    if not path.is_file():
+    path = _plan_path(base, state.get("plan_file"))
+    if path is None:
         return None
     story = _text(state.get("story")) or _text(state.get("issue_key"))
     if not story:
@@ -94,10 +105,9 @@ def _task_candidate(base: Path) -> ApprovalCandidate | None:
     story = _text(state.get("story")) or _text(state.get("issue_key"))
     if not story:
         return None
-    relative = state.get("plan_file")
-    story_plan = base / relative if isinstance(relative, str) else None
+    story_plan = _plan_path(base, state.get("plan_file"))
     if (state.get("plan_status") != "approved"
-            or story_plan is None or not story_plan.is_file()):
+            or story_plan is None):
         return None
     story_digest = plan_digest_without_assumptions(story_plan)
     decomposition = load_json(
@@ -218,6 +228,7 @@ def _event_runtime(payload: dict[str, Any], runtime: str | None) -> tuple[str, s
 
 
 def _approve_story(base: Path, candidate: ApprovalCandidate, record: dict[str, Any]) -> None:
+    _require_safe_plan(base, candidate.path)
     text = candidate.path.read_text(encoding="utf-8")
     updated, count = re.subn(
         r"(?m)^(status:\s*)awaiting-approval\s*$", r"\1approved", text, count=1,
@@ -229,8 +240,10 @@ def _approve_story(base: Path, candidate: ApprovalCandidate, record: dict[str, A
             )
         updated = text
     # The status line is frontmatter and excluded by the shared semantic digest.
+    _require_safe_plan(base, candidate.path)
     candidate.path.write_text(updated, encoding="utf-8")
     if plan_digest_without_assumptions(candidate.path) != candidate.digest:
+        _require_safe_plan(base, candidate.path)
         candidate.path.write_text(text, encoding="utf-8")
         raise ApprovalRefused("story plan digest changed while approval was recorded")
     dump_json(candidate.evidence, record)
@@ -257,9 +270,11 @@ def _approve_task(candidate: ApprovalCandidate, record: dict[str, Any]) -> None:
     dump_json(candidate.evidence, grill)
 
 
-def _restore_files(snapshots: dict[Path, bytes | None]) -> None:
+def _restore_files(snapshots: dict[Path, bytes | None], base: Path, plan: Path) -> None:
     """Best-effort rollback for a failed multi-file approval publication."""
     for path, body in snapshots.items():
+        if path == plan and not _safe_review_leaf(base, path, required=True):
+            continue
         if body is None:
             path.unlink(missing_ok=True)
         else:
@@ -288,6 +303,7 @@ def record_native_approval(
                 f"candidate; found {len(candidates)}"
             )
         candidate = candidates[0]
+        _require_safe_plan(base, candidate.path)
         if displayed_digest != candidate.digest:
             raise ApprovalRefused("native approval displayed digest is stale")
 
@@ -347,6 +363,6 @@ def record_native_approval(
             else:
                 _approve_task(candidate, record)
         except Exception:
-            _restore_files(snapshots)
+            _restore_files(snapshots, base, candidate.path)
             raise
         return record

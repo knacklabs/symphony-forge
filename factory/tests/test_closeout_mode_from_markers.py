@@ -67,6 +67,7 @@ def test_a_task_marker_on_the_trunk_makes_the_story_task_level(repo, tmp_path):
     assert any("T2" in problem for problem in task_level), task_level
     code, out = run(repo, "pr_ready.py")
     assert code != 0, out
+    assert "every task must have its committed pr-ready marker on the trunk; missing: T2" in out
     assert "stage completion: T2 not done" in out
     # The story-wide chain is not asked for any more.
     assert "successful .factory/verify.json" not in out

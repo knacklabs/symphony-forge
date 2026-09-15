@@ -340,3 +340,57 @@ def test_native_approval_reuses_existing_story_and_task_approval_storage(
     }
     assert not lib._task_plan_approval_matches_digest(
         repo, task_row, legacy, task.digest)
+
+
+@pytest.mark.parametrize("kind", ["absolute", "traversal", "symlink", "hardlink", "ancestor"])
+def test_native_approval_refuses_unsafe_story_plan_without_external_write(repo, tmp_path, kind):
+    import os
+    candidate = _story_candidate(repo)
+    event = _event(candidate)
+    outside = tmp_path / "external-plan.md"
+    original = candidate.path.read_bytes()
+    outside.write_bytes(original)
+    lib = load_factory_lib(repo)
+    state_path = lib.run_state_path(repo)
+    state = json.loads(state_path.read_text())
+    if kind == "absolute":
+        state["plan_file"] = str(outside)
+    elif kind == "traversal":
+        state["plan_file"] = os.path.relpath(outside, repo)
+    elif kind == "ancestor":
+        parent = repo / "linked-plans"
+        parent.symlink_to(tmp_path, target_is_directory=True)
+        state["plan_file"] = "linked-plans/external-plan.md"
+    else:
+        candidate.path.unlink()
+        if kind == "symlink":
+            candidate.path.symlink_to(outside)
+        else:
+            os.link(outside, candidate.path)
+    lib.dump_json(state_path, state)
+    before = state_path.read_bytes()
+    with pytest.raises(approval.ApprovalRefused):
+        approval.record_native_approval(repo, event, runtime="claude")
+    assert outside.read_bytes() == original
+    assert state_path.read_bytes() == before
+    assert not candidate.evidence.exists()
+
+
+def test_native_approval_rechecks_replaced_plan_before_publication(repo, tmp_path, monkeypatch):
+    candidate = _story_candidate(repo)
+    event = _event(candidate)
+    outside = tmp_path / "external-plan.md"
+    outside.write_bytes(candidate.path.read_bytes())
+    before = outside.read_bytes()
+    original_approve = approval._approve_story
+
+    def replace_before_write(base, selected, record):
+        selected.path.unlink()
+        selected.path.symlink_to(outside)
+        original_approve(base, selected, record)
+
+    monkeypatch.setattr(approval, "_approve_story", replace_before_write)
+    with pytest.raises(approval.ApprovalRefused, match="non-linked"):
+        approval.record_native_approval(repo, event, runtime="claude")
+    assert outside.read_bytes() == before
+    assert not candidate.evidence.exists()

@@ -157,7 +157,7 @@ def test_one_cold_grill_full_disposition_replaces_round_floors_and_frontier_fake
      {"gaps": ["Substituted finding."], "contradictions": []}, "must match"),
     ({"gaps": ["Cold finding."], "contradictions": ["Cold contradiction."]},
      {"gaps": ["Cold finding."], "contradictions": []}, "must match"),
-    ("not JSON", {"gaps": [], "contradictions": []}, "not JSON"),
+    ("not JSON", {"gaps": [], "contradictions": []}, "terminal output hash"),
     ({"gaps": []}, {"gaps": [], "contradictions": []}, "invalid shape"),
     ({"gaps": [""], "contradictions": []},
      {"gaps": [], "contradictions": []}, "invalid shape"),
@@ -221,6 +221,7 @@ def test_native_cold_grill_uses_recorded_message_findings(
                    output_path=str(output))
         if row["launch_status"] == "succeeded":
             row["session_id"] = "cold-session"
+            row["output_sha256"] = hashlib.sha256(output.read_bytes()).hexdigest()
     ledger.write_text("".join(json.dumps(row) + "\n" for row in rows),
                       encoding="utf-8")
     payload = {
@@ -282,3 +283,59 @@ def test_recovery_override_removes_round_ledgers_without_losing_cold_read_proof(
     schema = json.loads((repo / "factory/schemas/grill.json").read_text())
     assert "cold_input_sha256" in schema["optional"]
     assert "finding_dispositions" in schema["required"]
+
+
+@pytest.mark.parametrize("tamper", ["rewrite", "missing_hash"])
+def test_cold_grill_refuses_output_changed_after_terminal_publication(repo, tmp_path, tamper):
+    from forge_cli.delegate import delegations_path
+    sign_off(repo)
+    intake(repo)
+    draft = tmp_path / "plan.md"
+    draft.write_text(plan_draft(repo), encoding="utf-8")
+    _seed_cold_launch(repo, "plan", hashlib.sha256(draft.read_bytes()).hexdigest())
+    ledger = delegations_path(repo)
+    rows = [json.loads(line) for line in ledger.read_text().splitlines()]
+    if tamper == "rewrite":
+        Path(rows[-1]["output_path"]).write_text(json.dumps({
+            "status": 0, "threadId": "fixture-session",
+            "rawOutput": json.dumps({"gaps": ["replacement"], "contradictions": []}),
+        }))
+    else:
+        rows[-1].pop("output_sha256")
+        ledger.write_text("".join(json.dumps(row) + "\n" for row in rows))
+    payload = {"generated_by": "griller", "gate": "plan", "verdict": "pass",
+               "gaps": [], "contradictions": [], "resolutions": [],
+               "finding_dispositions": []}
+    code, out = run(repo, "record_grill_from_json.py", "--gate", "plan",
+                    "--input-digest", str(draft), stdin=json.dumps(payload))
+    assert code != 0 and "terminal output hash" in out
+    assert not (repo / ".factory/stories/ENG-1/grills/plan.json").exists()
+
+
+def test_task_cold_grill_crlf_uses_same_text_digest_as_launch(repo):
+    from test_gates import STAGE_TASK, seed_task_grill_frontier, task_grill_payload
+    seed_task_grill_frontier(repo, STAGE_TASK)
+    plan = repo / ".factory/task-plans/T1.md"
+    plan.write_bytes(plan.read_bytes().replace(b"\n", b"\r\n"))
+    cold = hashlib.sha256(plan.read_text(encoding="utf-8").encode()).hexdigest()
+    _seed_cold_launch(repo, "task", cold, "T1")
+    code, out = run(repo, "record_grill_from_json.py", "--gate", "task", "--task", "T1",
+                    stdin=json.dumps(task_grill_payload(STAGE_TASK)))
+    assert code == 0, out
+    lib = load_factory_lib(repo)
+    result = json.loads(lib.evidence_path(repo, "TEST-1", "grills/tasks/T1.json").read_text())
+    assert result["cold_input_sha256"] == result["final_artifact_sha256"] == cold
+    assert result["task_plan_sha256"] == lib.plan_digest_without_assumptions(plan)
+
+
+def test_native_result_scanner_uses_captured_bytes_after_path_replacement(tmp_path):
+    from forge_cli.codex_runtime import scan_native_result
+    data = (json.dumps({"type": "thread.started", "thread_id": "captured"}) + "\n"
+            + json.dumps({"type": "item.completed", "item": {
+                "type": "agent_message", "text": "captured finding"}}) + "\n"
+            + json.dumps({"type": "turn.completed"}) + "\n").encode()
+    path = tmp_path / "output.jsonl"
+    path.write_bytes(b"replacement, not JSON")
+    result = scan_native_result(path, data=data)
+    assert result.session_id == "captured" and result.message == "captured finding"
+    assert not result.error

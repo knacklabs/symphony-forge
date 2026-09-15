@@ -188,9 +188,10 @@ def test_native_launch_registers_before_stdin_and_records_terminal_identity(
     scan_calls = []
     real_scan = codex_runtime.scan_native_result
 
-    def scan(path):
+    def scan(path, *, data=None):
         scan_calls.append(path)
-        return real_scan(path)
+        assert data is not None
+        return real_scan(path, data=data)
 
     monkeypatch.setattr(codex_runtime, "scan_native_result", scan)
     monkeypatch.setattr(delegate, "_process_table", lambda: {})

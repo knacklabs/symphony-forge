@@ -76,7 +76,7 @@ def test_hook_refuses_write_outside_narrowed_delegate_scope():
     assert not path_in_scope("src/pkg-other/x", ["src/pkg/"])
 
 
-@pytest.mark.skipif(sys.platform == "win32", reason="tests POSIX source ownership and modes")
+@pytest.mark.skipif(sys.platform == "win32", reason="tests POSIX snapshot ownership and modes")
 def test_context_file_security_no_follow_modes_identity_capacity_and_cleanup(
         tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     secure = tmp_path / "secure"
@@ -104,17 +104,13 @@ def test_context_file_security_no_follow_modes_identity_capacity_and_cleanup(
         delegate._cleanup_private_context(snapshot, identity, "")
     assert not root.exists()
 
-    source.chmod(0o644)
-    with monkeypatch.context() as patch:
-        patch.setattr(delegate, "_create_private_directory",
-                      lambda *_args: pytest.fail("created a public-source snapshot"))
-        with pytest.raises(SystemExit):
-            delegate.secure_context_snapshot(source)
+    for mode in (0o644, 0o444):
+        source.chmod(mode)
+        _text, _metadata, snapshot, identity = delegate.secure_context_snapshot(source)
+        assert snapshot.stat().st_mode & 0o777 == 0o600
+        assert snapshot.parent.stat().st_mode & 0o777 == 0o700
+        delegate._cleanup_private_context(snapshot, identity, "")
     source.chmod(0o600)
-    with monkeypatch.context() as patch:
-        patch.setattr(delegate.os, "geteuid", lambda: os.stat(source).st_uid + 1)
-        with pytest.raises(SystemExit):
-            delegate.secure_context_snapshot(source)
     extra_link = secure / "extra-link.md"
     os.link(source, extra_link)
     with pytest.raises(SystemExit):
@@ -165,17 +161,24 @@ def test_context_file_native_windows_protected_dacl_owner_reopen_and_stale_clean
     delegate._require_windows_private_acl(snapshot, sid)
     delegate._cleanup_private_context(snapshot, identity, sid)
     assert not snapshot.parent.exists()
-    result = subprocess.run(
-        ["icacls", str(source), "/grant", "*S-1-5-11:(R)"],
-        capture_output=True, text=True,
-    )
-    assert result.returncode == 0, result.stderr
-    with pytest.raises(SystemExit):
-        delegate.secure_context_snapshot(source)
-    result = subprocess.run(
-        ["icacls", str(source), "/remove", "*S-1-5-11",
-         "/grant:r", f"*{sid}:(R)"], capture_output=True, text=True,
-    )
-    assert result.returncode == 0, result.stderr
-    with pytest.raises(SystemExit):
-        delegate.secure_context_snapshot(source)
+    try:
+        result = subprocess.run(
+            ["icacls", str(source), "/grant", "*S-1-5-11:(R)"],
+            capture_output=True, text=True,
+        )
+        assert result.returncode == 0, result.stderr
+        _text, _metadata, snapshot, identity = delegate.secure_context_snapshot(source)
+        delegate._require_windows_private_acl(snapshot, sid)
+        delegate._require_windows_private_acl(snapshot.parent, sid)
+        delegate._cleanup_private_context(snapshot, identity, sid)
+        result = subprocess.run(
+            ["icacls", str(source), "/remove", "*S-1-5-11",
+             "/grant:r", f"*{sid}:(R)"], capture_output=True, text=True,
+        )
+        assert result.returncode == 0, result.stderr
+        _text, _metadata, snapshot, identity = delegate.secure_context_snapshot(source)
+        delegate._require_windows_private_acl(snapshot, sid)
+        delegate._require_windows_private_acl(snapshot.parent, sid)
+        delegate._cleanup_private_context(snapshot, identity, sid)
+    finally:
+        delegate._protect_windows_path(source, sid)

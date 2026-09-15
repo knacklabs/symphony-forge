@@ -12,7 +12,9 @@ of what blocked) but never satisfies a gate.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
+import os
 import re
 import stat
 import sys
@@ -97,15 +99,24 @@ def _cold_launch_result(root: Path, gate: str, task_id: str) -> tuple[str, dict]
     output = Path(output_text)
     try:
         info = output.lstat()
-        result = output.read_bytes()
+        if (stat.S_ISLNK(info.st_mode) or not stat.S_ISREG(info.st_mode)
+                or info.st_nlink != 1):
+            raise SystemExit(f"{gate} cold-read result identity is invalid")
+        descriptor = os.open(output, os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0))
+        with os.fdopen(descriptor, "rb") as stream:
+            opened = os.fstat(stream.fileno())
+            if ((opened.st_dev, opened.st_ino) != (info.st_dev, info.st_ino)
+                    or not stat.S_ISREG(opened.st_mode) or opened.st_nlink != 1):
+                raise SystemExit(f"{gate} cold-read result identity is invalid")
+            result = stream.read()
     except OSError:
         raise SystemExit(f"{gate} cold-read result is unavailable")
-    if (stat.S_ISLNK(info.st_mode) or not stat.S_ISREG(info.st_mode)
-            or info.st_nlink != 1 or not result):
-        raise SystemExit(f"{gate} cold-read result identity is invalid")
+    if (not result or terminal.get("output_sha256")
+            != hashlib.sha256(result).hexdigest()):
+        raise SystemExit(f"{gate} cold-read result does not match its terminal output hash")
     if terminal.get("transport") == "native":
         from forge_cli.codex_runtime import native_argv_valid, scan_native_result
-        native_result = scan_native_result(output)
+        native_result = scan_native_result(output, data=result)
         if (not _non_empty_string(terminal.get("session_id"))
                 or terminal.get("session_id") != native_result.session_id
                 or native_result.error
@@ -453,12 +464,9 @@ payload["recorded_at"] = now_iso()
 payload["commit"] = head_sha(root)
 active_story = load_json(run_state_path(root), default={}).get("issue_key", "")
 _gate = get_gate(args.gate)
-if args.gate == "task":
-    final_digest = sha256_of(task_plan)
-else:
-    _label, artifact = _gate.locate(root, args.task or "", args.input_digest or "")
-    from forge_cli.grill import _artifact_digest
-    final_digest = _artifact_digest(artifact)
+_label, artifact = _gate.locate(root, args.task or "", args.input_digest or "")
+from forge_cli.grill import _artifact_digest
+final_digest = _artifact_digest(artifact)
 _cold_digest, _cold_findings = _cold_launch_result(root, args.gate, args.task or "")
 _validate_dispositions(payload, _cold_digest, final_digest, _cold_findings)
 

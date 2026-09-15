@@ -1452,9 +1452,6 @@ def secure_context_snapshot(
     windows_sid = ""
     if os.name == "nt":
         windows_sid = _windows_current_sid()
-        _require_windows_private_acl(source, windows_sid)
-    elif before.st_uid != os.geteuid() or before.st_mode & 0o077:
-        fail("--context-file source must belong to the current user and be private")
     flags = os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0)
     descriptor = os.open(source, flags)
     try:
@@ -1463,14 +1460,6 @@ def secure_context_snapshot(
                 or _is_link_or_reparse(opened) or not stat.S_ISREG(opened.st_mode)
                 or opened.st_nlink != 1):
             fail("--context-file identity changed before snapshot")
-        if windows_sid:
-            current = source.lstat()
-            if ((current.st_dev, current.st_ino) != (opened.st_dev, opened.st_ino)
-                    or _is_link_or_reparse(current) or current.st_nlink != 1):
-                fail("--context-file source changed before ACL verification")
-            _require_windows_private_acl(source, windows_sid)
-        elif opened.st_uid != os.geteuid() or opened.st_mode & 0o077:
-            fail("--context-file source lost its private POSIX ownership or mode")
         data = b""
         while len(data) <= CONTEXT_MAX_BYTES:
             chunk = os.read(descriptor, min(65536, CONTEXT_MAX_BYTES + 1 - len(data)))
@@ -1483,14 +1472,10 @@ def secure_context_snapshot(
         if ((after.st_dev, after.st_ino, after.st_size, after.st_mtime_ns)
                 != (opened.st_dev, opened.st_ino, opened.st_size, opened.st_mtime_ns)):
             fail("--context-file identity changed during snapshot")
-        if windows_sid:
-            current = source.lstat()
-            if ((current.st_dev, current.st_ino) != (after.st_dev, after.st_ino)
-                    or _is_link_or_reparse(current) or current.st_nlink != 1):
-                fail("--context-file source changed during ACL verification")
-            _require_windows_private_acl(source, windows_sid)
-        elif after.st_uid != os.geteuid() or after.st_mode & 0o077:
-            fail("--context-file source lost its private POSIX ownership or mode")
+        current = source.lstat()
+        if ((current.st_dev, current.st_ino) != (after.st_dev, after.st_ino)
+                or _is_link_or_reparse(current) or current.st_nlink != 1):
+            fail("--context-file source changed during snapshot")
     finally:
         os.close(descriptor)
     try:
@@ -1812,14 +1797,16 @@ def launch_companion(
             retry = "forge fix" if mode else "forge delegate"
             fail("delegation brief changed while the companion was running; launch "
                  f"evidence was not recorded — rerun `{retry}`")
+        output_bytes = output_path.read_bytes()
         terminal = {
             **record, "at": now_iso(), "launch_status": "succeeded",
             "exit_code": proc.returncode,
+            "output_sha256": hashlib.sha256(output_bytes).hexdigest(),
         }
         if runtime == "codex":
             from .codex_runtime import scan_native_result
 
-            native_result = scan_native_result(output_path)
+            native_result = scan_native_result(output_path, data=output_bytes)
             if native_result.error:
                 _revoke_native_write_admission(base, record)
                 failed = {
@@ -1943,6 +1930,7 @@ def cmd_delegate(args: argparse.Namespace) -> None:
     context_metadata = None
     context_snapshot = None
     context_snapshot_identity = None
+    model, effort = pinned_run_config(base)
     if getattr(args, "context_file", None):
         (context_text, context_metadata, context_snapshot,
          context_snapshot_identity) = secure_context_snapshot(
@@ -1950,7 +1938,6 @@ def cmd_delegate(args: argparse.Namespace) -> None:
     canonical_path = brief_path(base, args.id)
     path = (diagnostic_briefs_dir(base) / f"{args.id}.md"
             if args.print_only or not write else canonical_path)
-    model, effort = pinned_run_config(base)
     try:
         launch_companion(
             base,

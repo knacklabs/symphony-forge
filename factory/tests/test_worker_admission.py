@@ -941,3 +941,21 @@ def test_lean_stop_does_not_exempt_untrusted_or_non_grill_launch(
     output = _invoke_worker(proc, {"handoff": "untrusted"})
     result = json.loads(output)
     assert result.get("decision") == "block" and "Do not stop here" in result["reason"]
+
+
+def test_context_config_failure_creates_no_private_snapshot(repo, tmp_path, monkeypatch):
+    from forge_cli import delegate
+    _seed_contract(repo)
+    (_control(repo) / "stages.json").write_text(
+        json.dumps({"issue": "STORY-1", "stages": []}))
+    source = tmp_path / "context.md"
+    source.write_text("sensitive context")
+    def bad_config(_base):
+        raise SystemExit("invalid pinned model")
+    monkeypatch.setattr(delegate, "pinned_run_config", bad_config)
+    monkeypatch.setattr(delegate, "secure_context_snapshot",
+                        lambda _source: pytest.fail("created a snapshot before valid config"))
+    with pytest.raises(SystemExit, match="invalid pinned model"):
+        delegate.cmd_delegate(argparse.Namespace(
+            repo=str(repo), id="T1", read_only=True, scope=[], background=False,
+            context_file=str(source), print_only=False))

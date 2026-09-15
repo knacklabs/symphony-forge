@@ -466,7 +466,8 @@ def _seed_cold_launch(repo: Path, gate: str, digest: str, task_id: str = "",
         {**common, "launch_status": "running", "pid": 12345,
          "pgid": 12345, "pid_started": "fixture"},
         {**common, "launch_status": "succeeded", "pid": 12345,
-         "pgid": 12345, "pid_started": "fixture", "exit_code": 0},
+         "pgid": 12345, "pid_started": "fixture", "exit_code": 0,
+         "output_sha256": hashlib.sha256(output.read_bytes()).hexdigest()},
     ])
     path.write_text("".join(json.dumps(row) + "\n" for row in rows),
                     encoding="utf-8")
@@ -15742,6 +15743,8 @@ def test_delegate_records_ledger_entry(repo, tmp_path):
     assert entry["generated_by"] == "orchestrator" and entry["model"]
     assert entry["launch_status"] == "succeeded"
     assert entry["launch_id"] == lines[0]["launch_id"] == lines[1]["launch_id"]
+    assert entry["output_sha256"] == hashlib.sha256(
+        Path(entry["output_path"]).read_bytes()).hexdigest()
     assert "/1.0.0/scripts/codex-companion.mjs" in entry["companion_path"]
     assert entry["stage_started_at"] and entry["task_sha256"] and entry["argv_sha256"]
     assert entry["argv"][1] == entry["companion_path"]
