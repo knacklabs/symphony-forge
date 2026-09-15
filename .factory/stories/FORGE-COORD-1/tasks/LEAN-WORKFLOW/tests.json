@@ -1,17 +1,18 @@
 {
-  "commit": "98910985a3000505c35a2623621ce2633fa773b0",
+  "commit": "34d504179a84be878ce0ce5bb2e9c4a816e3aab0",
   "automated": {
     "generated_by": "implementer",
     "status": "passed",
-    "summary": "LEAN-WORKFLOW at 98910985a300 passed dual-runtime and factory scaffold checks, the full source factory suite (1074 passed, 4 skipped in 879.34s (0:14:39)), and all 51 declared required selectors with zero JUnit ID or path misses.",
+    "summary": "LEAN-WORKFLOW at 34d504179a84be878ce0ce5bb2e9c4a816e3aab0 passed the declared full verifier: dual-runtime and factory scaffold checks exited 0; the source factory suite passed 1133 tests, skipped 4, in 919.66s. Current-head Linux scaffold CI passed 1129 tests with 8 skips, and native Windows hook gates passed 24 tests with 1 skip. The 51 declared selectors have not yet been rerun against this head.",
     "blocking_findings": [],
     "commands_run": [
-      "./forge task close LEAN-WORKFLOW (integrated verifier and 51 declared required-test commands)",
+      "python3 factory/scripts/verify.py",
       "python3 factory/scripts/check_encoding_hygiene.py",
       "python3 factory/scripts/check_board_complete.py",
-      "git diff --check"
+      "git diff --check",
+      "gh pr checks 229 (current-head required PR checks green)"
     ],
-    "pass_fail_summary": "1074 passed, 4 skipped in 879.34s (0:14:39); dual-runtime and scaffold exited 0; 51 declared selectors passed, 0 failed, 0 measured JUnit misses.",
+    "pass_fail_summary": "Current local full verifier: 1133 passed, 4 skipped in 919.66s; structural and scaffold exits 0. Current-head Linux CI: 1129 passed, 8 skipped in 976.22s; native Windows CI: 24 passed, 1 skipped. Encoding, Board, and diff checks exited 0. Current-head 51 declared selectors remain pending.",
     "reviewed_scope": [
       "factory/scripts/forge_cli/stages.py",
       "factory/scripts/factory_lib.py",
@@ -21,39 +22,31 @@
       "factory/scripts/forge_cli/approval.py",
       "factory/scripts/forge_cli/upgrade.py",
       "factory/scripts/forge_cli/review.py",
+      "factory/scripts/forge_cli/stages.py",
       "factory/tests/test_proof_reuse.py",
       "factory/tests/test_delegate_scope.py",
       ".github/workflows/factory-scaffold.yml",
-      "AGENTS.md",
-      "factory/scripts/forge_cli/grill.py",
-      "factory/scripts/record_grill_from_json.py",
-      "factory/scripts/forge_cli/delegate.py",
-      "factory/tests/test_lean_workflow.py",
-      "factory/tests/test_approval_hooks.py",
-      "factory/tests/test_review_task_delta.py"
+      "AGENTS.md"
     ],
     "remaining_gaps": [
-      "A real Claude ExitPlanMode UI approval event was not exercised on this text desktop host; supported native hook event/refusal fixtures passed in the full factory suite.",
-      "A real Codex synchronous Plan Mode approval UI event was not exercised on this text desktop host; the supported nested answers envelope and refusal fixtures passed in the full factory suite.",
-      "Native Windows protected-DACL selector is selected in factory-scaffold pull-request CI; that host proof is pending until the PR Windows job passes."
+      "Run the 51 declared required selectors against current product head via the task close workflow and inspect zero JUnit ID/path misses before review.",
+      "Run and inspect a real Claude successful ExitPlanMode approval event in the disposable native fixture, binding exact digest and stable runtime/session/event identity.",
+      "Run and inspect real Codex synchronous Request changes, cancellation, and Approve plan events in the disposable native fixture; only approval may write an exact-digest record."
     ],
     "manual_validation_steps": [
       "Live gh pr view 109 --repo knacklabs/symphony-forge --json number,state,headRefOid,mergeCommit,mergedAt,baseRefName on 2026-09-15 returned MERGED to main, head c4c2fd9d89e8446327125da5a6bc74d335910a47, merge 8f1d0530b29083c4b7a0978bebb86fd9b0e1f23c, mergedAt 2026-08-19T03:37:09Z; recorder-generated .factory/events/3679bb571b304025956aa2f6ac141e9d.json links FORGE-CFS-1 to #109 (commit 32b3ee6).",
       "Live gh pr view 110 --repo knacklabs/symphony-forge --json number,state,headRefOid,mergeCommit,mergedAt,baseRefName on 2026-09-15 returned MERGED to main, head bac5bdb4b5007a331f8e98037cbe55332a3b72b6, merge 6320c1a6e67ba0614ee960f57baf3605811b0d86, mergedAt 2026-08-19T17:25:32Z; recorder-generated .factory/events/31d5e07187fb4d9fab0a47009e90331b.json links FORGE-ACC-3 to #110 (commit 32b3ee6)."
     ],
     "tests_added_or_updated": [
-      "factory/tests/test_proof_reuse.py: content-bound receipt reuse, ephemeral uv tools, metadata-only HEAD and Board inputs",
-      "factory/tests/test_delegate_scope.py: native Windows protected-DACL context-file case",
-      "factory/tests/test_lean_workflow.py and test_gates.py: cold findings match actual result, malformed or substituted findings refuse",
-      "factory/tests/test_approval_hooks.py: cross-story replay and relocated legacy tombstone refuse",
-      "factory/tests/test_proof_reuse.py: equivalent Board argv invalidates receipt reuse",
-      "factory/tests/test_review_task_delta.py: chunked quality prompt only asks for visible contracts",
-      "factory/tests/test_delegate_scope.py: private source ownership, rights, hardlink and native Windows DACL cases"
+      "factory/tests/test_delegate_scope.py: native Windows private context fixture constructs a protected current-SID-only DACL and confirms source restoration",
+      "factory/tests/test_gates.py: cold-plan saved text digest and deterministic hosted-runner main remote HEAD fixtures",
+      "factory/tests/test_proof_reuse.py: identity-stable disposable Git fixture",
+      "factory/tests/test_review_task_delta.py: fake review helper receives required raw report fields"
     ],
     "non_blocking_findings": [],
     "residual_risks": [],
-    "recorded_at": "2026-09-15T12:51:22+00:00",
-    "commit": "98910985a3000505c35a2623621ce2633fa773b0"
+    "recorded_at": "2026-09-15T18:59:57+00:00",
+    "commit": "34d504179a84be878ce0ce5bb2e9c4a816e3aab0"
   },
-  "updated_at": "2026-09-15T12:51:22+00:00"
+  "updated_at": "2026-09-15T18:59:57+00:00"
 }
