@@ -170,10 +170,25 @@ def test_windows_path_script_transports_shell_sensitive_unicode_path_as_data(
 
 @pytest.mark.skipif(sys.platform != "win32", reason="requires native Windows ACLs")
 def test_context_file_native_windows_protected_dacl_owner_reopen_and_stale_cleanup(
-        tmp_path: Path):
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     source = tmp_path / "private ' ; [x] $(exit 1).md"
     source.write_text("windows context", encoding="utf-8")
     sid = delegate._windows_current_sid()
+    original = delegate._run_windows_path_script
+
+    def diagnose(script, path, sid=""):
+        result = original(script, path, sid)
+        if path == source:
+            print(json.dumps({
+                "returncode": result.returncode,
+                "stdout": result.stdout[:8192],
+                "stderr": result.stderr[:8192],
+                "stdout_length": len(result.stdout),
+                "stderr_length": len(result.stderr),
+            }, ensure_ascii=True))
+        return result
+
+    monkeypatch.setattr(delegate, "_run_windows_path_script", diagnose)
     delegate._protect_windows_path(source, sid)
     text, _metadata, snapshot, identity = delegate.secure_context_snapshot(source)
     assert text == "windows context"
