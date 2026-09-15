@@ -1,0 +1,1 @@
+{"event": "signal-contradiction", "generated_by": "implementer", "at": "2026-09-15T07:39:36+00:00", "story": "FORGE-COORD-1", "detail": "Upstream-only factory/tests/test_requirements_freshness.py from GATES #226 asserts the retired _require_matching_requirements_grill and requirements_digest_matches normal consumers; LEAN-WORKFLOW appr"}
