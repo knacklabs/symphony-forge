@@ -4653,6 +4653,784 @@
         ]
       },
       "launch_id": "launch-683c8a23b8fc4cedb77127f74b8f60f7"
+    },
+    {
+      "generated_by": "record_decomposition_from_json",
+      "recorded_at": "2026-09-15T08:36:07+00:00",
+      "story": "FORGE-COORD-1",
+      "task_id": "LEAN-WORKFLOW",
+      "stage_started_at": "2026-09-14T03:54:21+00:00",
+      "stage_base_sha": "6ae2dea1b7417fff4c9c3fc3552488a8378aacd4",
+      "source_grill_input_sha256": "43d01570b3513deb340b8ea9b1a0a2d0017b10ad036899bca2ee6deef8a31441",
+      "story_plan_sha256": "704e22e69b3722fc885bd09231691a18c2afc01b0982a112bb7b5118744f1723",
+      "task_plan_sha256": "698eabb8e42d6bf7a7aa42269228ec2ff95e89dbc25da9369207f85b73082d27",
+      "semantic_grounding_sha256": "7a37272a2687cfa6ef10c576b85efbe4889ace0980aa2cbb279a8c17550623d5",
+      "from_task_sha256": "7c8d341db0b18f2fd82f3719972255907a9b24906c667218f0b3fe09687ea3d2",
+      "to_task_sha256": "73c31a5863e1502816039018a7bee7dd9844e0b4cfd7a566d67e7284c1869f65",
+      "from_measurement": {
+        "write_scope": [
+          "AGENTS.md",
+          "WORKFLOW.md",
+          "docs/FACTORY.md",
+          "docs/QUALITY.md",
+          "docs/ROLES.md",
+          "docs/getting-started.md",
+          "docs/architecture/dual-coordinator-parity.md",
+          "docs/specs/dual-coordinator-parity.md",
+          "docs/specs/plan-approval.md",
+          "docs/specs/delegation-boundary.md",
+          "docs/specs/conflict-free-story-state.md",
+          "factory/skills/forge.md",
+          "factory/prompts/planner.md",
+          "factory/prompts/griller.md",
+          "factory/prompts/decomposer.md",
+          "factory/prompts/reviewer.md",
+          "harness.yaml",
+          ".codex/config.toml",
+          ".codex/hooks.json",
+          ".claude/settings.json",
+          ".claude/CLAUDE.md",
+          ".github/workflows/pr-link.yml",
+          ".codex/agents/architect.toml",
+          ".codex/agents/backend.toml",
+          ".codex/agents/debugger.toml",
+          ".codex/agents/explorer.toml",
+          ".codex/agents/frontend.toml",
+          ".codex/agents/griller.toml",
+          ".codex/agents/lite.toml",
+          ".codex/agents/performance.toml",
+          ".codex/agents/planner.toml",
+          ".codex/agents/refactorer.toml",
+          ".codex/agents/security.toml",
+          ".codex/agents/tester.toml",
+          "factory/scripts/forge.py",
+          "factory/scripts/factory_lib.py",
+          "factory/scripts/pre_tool_use.py",
+          "factory/scripts/post_tool_use.py",
+          "factory/scripts/check_dual_runtime.py",
+          "factory/scripts/session_start.py",
+          "factory/scripts/record_grill_from_json.py",
+          "factory/scripts/grill_gates.py",
+          "factory/scripts/record_decomposition_from_json.py",
+          "factory/scripts/record_test_from_json.py",
+          "factory/scripts/verify.py",
+          "factory/scripts/check_task_proof.py",
+          "factory/scripts/forge_cli/plans.py",
+          "factory/scripts/forge_cli/tasks.py",
+          "factory/scripts/forge_cli/phase.py",
+          "factory/scripts/forge_cli/approval.py",
+          "factory/scripts/forge_cli/ceremony.py",
+          "factory/scripts/forge_cli/delegate.py",
+          "factory/scripts/forge_cli/stages.py",
+          "factory/scripts/forge_cli/grill.py",
+          "factory/scripts/forge_cli/readiness.py",
+          "factory/scripts/forge_cli/upgrade.py",
+          "factory/scripts/forge_cli/audit.py",
+          "factory/scripts/forge_cli/close.py",
+          "factory/scripts/forge_cli/review.py",
+          "factory/scripts/forge_cli/review_brief.py",
+          "factory/scripts/forge_cli/signal.py",
+          "factory/scripts/forge_cli/scaffold.py",
+          "factory/scripts/forge_cli/doctor.py",
+          "factory/scripts/forge_cli/board.py",
+          "factory/scripts/forge_cli/codex_runtime.py",
+          "factory/scripts/forge_cli/worker_admission.py",
+          "factory/schemas/lean-workflow-migration.json",
+          "factory/schemas/grill.json",
+          "factory/schemas/grill-round.json",
+          "factory/schemas/plan-mode-marker.json",
+          "factory/tests/test_gates.py",
+          "factory/tests/test_native_setup.py",
+          "factory/tests/test_one_grill.py",
+          "factory/tests/test_round_provenance.py",
+          "factory/tests/test_grill_carries_answers.py",
+          "factory/tests/test_board_approval_gate.py",
+          "factory/tests/test_plan_against_reality.py",
+          "factory/tests/test_gate_table_e2e.py",
+          "factory/tests/test_grill_release.py",
+          "factory/tests/test_ask_gate.py",
+          "factory/tests/test_proof_read_path.py",
+          "factory/tests/test_review_settled_contracts.py",
+          "factory/tests/test_review_task_delta.py",
+          "factory/tests/test_gate_table.py",
+          "factory/tests/test_close_binds_to_the_diff.py",
+          "factory/tests/test_worker_admission.py",
+          "factory/tests/test_lean_workflow.py",
+          "factory/tests/test_approval_hooks.py",
+          "factory/tests/test_upgrade_lean_workflow.py",
+          "factory/tests/test_delegate_scope.py",
+          "factory/tests/test_proof_reuse.py",
+          "factory/tests/test_pr_link_workflow.py",
+          "factory/tests/test_regrill_scope.py",
+          ".factory/migrations/lean-workflow-v2.json",
+          ".factory/events/",
+          "factory/tests/test_grill_budget.py",
+          "factory/tests/test_lifecycle_end_to_end.py",
+          "factory/tests/test_review_lenses_in_parallel.py",
+          "factory/tests/test_seal_measures.py",
+          "factory/tests/test_stop_less_often.py",
+          ".github/workflows/roadmap-gate.yml",
+          "docs/decisions/0049-per-task-review-proof.md",
+          "docs/decisions/0064-lean-delivery-and-durable-history.md",
+          "plans/active/FORGE-WIN-3-delegation-runs-on-native-windows.md",
+          "plans/active/upgrade-doc-contract-safety-task-plan.md",
+          "factory/scripts/pr_ready.py",
+          "factory/scripts/check_encoding_hygiene.py",
+          "factory/tests/test_requirements_freshness.py"
+        ],
+        "required_tests": [
+          {
+            "id": "test_native_approval_refuses_zero_multiple_candidates_replay_and_missing_identity",
+            "path": "factory/tests/test_approval_hooks.py",
+            "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+          },
+          {
+            "id": "test_native_approval_records_human_via_runtime_identity_without_display_name",
+            "path": "factory/tests/test_approval_hooks.py",
+            "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+          },
+          {
+            "id": "test_native_approval_reuses_existing_story_and_task_approval_storage",
+            "path": "factory/tests/test_approval_hooks.py",
+            "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+          },
+          {
+            "id": "test_native_plan_mode_approval_records_exact_digest_for_claude_exit_plan_mode",
+            "path": "factory/tests/test_lean_workflow.py",
+            "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+          },
+          {
+            "id": "test_native_plan_mode_approval_records_exact_digest_for_codex_sync_approval",
+            "path": "factory/tests/test_lean_workflow.py",
+            "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+          },
+          {
+            "id": "test_native_approval_refuses_stale_wrong_runtime_canceled_async_and_unsupported_payloads",
+            "path": "factory/tests/test_lean_workflow.py",
+            "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+          },
+          {
+            "id": "test_normal_flow_no_longer_requires_requirements_grill_manual_approval_or_second_save",
+            "path": "factory/tests/test_lean_workflow.py",
+            "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+          },
+          {
+            "id": "test_delegate_scope_must_be_strict_subset_of_approved_write_scope",
+            "path": "factory/tests/test_delegate_scope.py",
+            "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+          },
+          {
+            "id": "test_delegate_scope_is_bound_to_brief_launch_identity_and_existing_write_scope",
+            "path": "factory/tests/test_delegate_scope.py",
+            "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+          },
+          {
+            "id": "test_hook_refuses_write_outside_narrowed_delegate_scope",
+            "path": "factory/tests/test_delegate_scope.py",
+            "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+          },
+          {
+            "id": "test_delegate_brief_carries_criteria_and_scope",
+            "path": "factory/tests/test_gates.py",
+            "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+          },
+          {
+            "id": "test_native_worker_patch_add_update_delete_and_move_is_admitted",
+            "path": "factory/tests/test_worker_admission.py",
+            "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+          },
+          {
+            "id": "test_context_file_security_no_follow_modes_identity_capacity_and_cleanup",
+            "path": "factory/tests/test_delegate_scope.py",
+            "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+          },
+          {
+            "id": "test_context_file_native_windows_protected_dacl_owner_reopen_and_stale_cleanup",
+            "path": "factory/tests/test_delegate_scope.py",
+            "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+          },
+          {
+            "id": "test_context_file_launch_uses_one_handle_snapshot_and_metadata_only_evidence",
+            "path": "factory/tests/test_worker_admission.py",
+            "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+          },
+          {
+            "id": "test_unchanged_test_verify_and_selected_review_inputs_reuse_success_without_rerun",
+            "path": "factory/tests/test_proof_reuse.py",
+            "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+          },
+          {
+            "id": "test_changed_unknown_partial_or_generated_output_identity_forces_fresh_run",
+            "path": "factory/tests/test_proof_reuse.py",
+            "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+          },
+          {
+            "id": "test_reuse_identity_is_proof_type_specific_and_reviewed_meaning_bound",
+            "path": "factory/tests/test_proof_reuse.py",
+            "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+          },
+          {
+            "id": "test_selected_review_reuses_for_bookkeeping_only_changes_and_preserves_original_provenance",
+            "path": "factory/tests/test_proof_reuse.py",
+            "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+          },
+          {
+            "id": "test_selected_review_reruns_for_changed_acceptance_security_migration_or_evidence",
+            "path": "factory/tests/test_proof_reuse.py",
+            "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+          },
+          {
+            "id": "test_selected_upgrade_generation_requires_exact_sealed_binding",
+            "path": "factory/tests/test_review_settled_contracts.py",
+            "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+          },
+          {
+            "id": "test_selected_review_reviewed_meaning_includes_ci_generated_outputs_and_review_instructions",
+            "path": "factory/tests/test_review_task_delta.py",
+            "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+          },
+          {
+            "id": "test_selected_review_reruns_for_substantive_automated_evidence_change",
+            "path": "factory/tests/test_review_task_delta.py",
+            "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+          },
+          {
+            "id": "test_lean_migration_refuses_dirty_checkout_before_writing",
+            "path": "factory/tests/test_upgrade_lean_workflow.py",
+            "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+          },
+          {
+            "id": "test_lean_migration_force_cannot_bypass_dirty_tree_refusal",
+            "path": "factory/tests/test_upgrade_lean_workflow.py",
+            "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+          },
+          {
+            "id": "test_lean_migration_independent_raw_walk_covers_each_candidate_exactly_once",
+            "path": "factory/tests/test_upgrade_lean_workflow.py",
+            "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+          },
+          {
+            "id": "test_lean_migration_inventories_hashes_temp_validates_publishes_and_reads_back",
+            "path": "factory/tests/test_upgrade_lean_workflow.py",
+            "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+          },
+          {
+            "id": "test_lean_migration_refuses_malformed_mixed_partial_conflicting_or_linked_inputs",
+            "path": "factory/tests/test_upgrade_lean_workflow.py",
+            "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+          },
+          {
+            "id": "test_lean_migration_is_idempotent_for_byte_identical_retry_and_refuses_unequal_partial_retry",
+            "path": "factory/tests/test_upgrade_lean_workflow.py",
+            "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+          },
+          {
+            "id": "test_lean_migration_forces_fresh_review_for_active_old_proof_and_migrates_only_exact_sealed_proof",
+            "path": "factory/tests/test_upgrade_lean_workflow.py",
+            "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+          },
+          {
+            "id": "test_normal_runtime_refuses_lean_removed_formats_with_upgrade_guidance",
+            "path": "factory/tests/test_upgrade_lean_workflow.py",
+            "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+          },
+          {
+            "id": "test_codex_hook_readiness_requires_exact_enabled_trusted_source",
+            "path": "factory/tests/test_native_setup.py",
+            "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+          },
+          {
+            "id": "test_codex_hook_readiness_accepts_only_identical_inherited_worktree_hooks",
+            "path": "factory/tests/test_native_setup.py",
+            "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+          },
+          {
+            "id": "test_model_policy_selects_sol_work_and_luna_lite",
+            "path": "factory/tests/test_native_setup.py",
+            "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+          },
+          {
+            "id": "test_active_model_policy_has_no_forbidden_execution_surface",
+            "path": "factory/tests/test_gate_table.py",
+            "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+          },
+          {
+            "id": "test_project_agents_init_upgrade_and_preserve_client_additions",
+            "path": "factory/tests/test_gates.py",
+            "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+          },
+          {
+            "id": "test_recovery_profile_override_keeps_only_three_forge_profiles",
+            "path": "factory/tests/test_native_setup.py",
+            "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+          },
+          {
+            "id": "test_upgrade_preserves_client_profiles_while_removing_retired_forge_profiles",
+            "path": "factory/tests/test_gates.py",
+            "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+          },
+          {
+            "id": "test_upgrade_preserves_project_settings_and_refuses_unknown_same_name_profile_rows",
+            "path": "factory/tests/test_gates.py",
+            "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+          },
+          {
+            "id": "test_pr_link_workflow_stages_per_event_files_not_legacy_jsonl",
+            "path": "factory/tests/test_pr_link_workflow.py",
+            "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+          },
+          {
+            "id": "test_pr_link_workflow_status_description_names_per_event_link_commit",
+            "path": "factory/tests/test_pr_link_workflow.py",
+            "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+          },
+          {
+            "id": "test_verified_forge_acc3_and_cfs1_pr_links_make_board_complete",
+            "path": "factory/tests/test_pr_link_workflow.py",
+            "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+          },
+          {
+            "id": "test_history_merges_legacy_and_per_file_events",
+            "path": "factory/tests/test_gates.py",
+            "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+          },
+          {
+            "id": "test_pr_link_event_survives_a_clone_with_no_remote",
+            "path": "factory/tests/test_gates.py",
+            "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+          },
+          {
+            "id": "test_forge_history_shows_the_pr_link",
+            "path": "factory/tests/test_gates.py",
+            "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+          },
+          {
+            "id": "test_signal_ruling_hydration_survives_lean_lifecycle_state_changes",
+            "path": "factory/tests/test_gates.py",
+            "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+          },
+          {
+            "id": "test_generated_review_inputs_are_included_in_reviewed_meaning",
+            "path": "factory/tests/test_review_task_delta.py",
+            "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+          },
+          {
+            "id": "factory/tests/test_regrill_scope.py",
+            "path": "factory/tests/test_regrill_scope.py",
+            "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools FORGE_REQUIRED_SELECTOR={id} uv run --python 3.11 --with pytest --with psutil python -m pytest {path} -o junit_family=legacy --junitxml={report}"
+          },
+          {
+            "id": "test_one_cold_grill_full_disposition_replaces_round_floors_and_frontier_fake",
+            "path": "factory/tests/test_lean_workflow.py",
+            "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+          },
+          {
+            "id": "test_recovery_override_removes_round_ledgers_without_losing_cold_read_proof",
+            "path": "factory/tests/test_lean_workflow.py",
+            "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+          },
+          {
+            "id": "test_lean_docs_match_single_cold_grill_runtime",
+            "path": "factory/tests/test_plan_against_reality.py",
+            "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+          },
+          {
+            "id": "test_native_approval_no_longer_routes_through_board_or_manual_approve",
+            "path": "factory/tests/test_board_approval_gate.py",
+            "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+          }
+        ],
+        "verify_commands": [
+          "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python factory/scripts/verify.py",
+          "python3 factory/scripts/check_dual_runtime.py",
+          "python3 factory/scripts/check_encoding_hygiene.py",
+          "python3 factory/scripts/check_board_complete.py",
+          "git diff --check"
+        ]
+      },
+      "to_measurement": {
+        "write_scope": [
+          "AGENTS.md",
+          "WORKFLOW.md",
+          "docs/FACTORY.md",
+          "docs/QUALITY.md",
+          "docs/ROLES.md",
+          "docs/getting-started.md",
+          "docs/architecture/dual-coordinator-parity.md",
+          "docs/specs/dual-coordinator-parity.md",
+          "docs/specs/plan-approval.md",
+          "docs/specs/delegation-boundary.md",
+          "docs/specs/conflict-free-story-state.md",
+          "factory/skills/forge.md",
+          "factory/prompts/planner.md",
+          "factory/prompts/griller.md",
+          "factory/prompts/decomposer.md",
+          "factory/prompts/reviewer.md",
+          "harness.yaml",
+          ".codex/config.toml",
+          ".codex/hooks.json",
+          ".claude/settings.json",
+          ".claude/CLAUDE.md",
+          ".github/workflows/pr-link.yml",
+          ".codex/agents/architect.toml",
+          ".codex/agents/backend.toml",
+          ".codex/agents/debugger.toml",
+          ".codex/agents/explorer.toml",
+          ".codex/agents/frontend.toml",
+          ".codex/agents/griller.toml",
+          ".codex/agents/lite.toml",
+          ".codex/agents/performance.toml",
+          ".codex/agents/planner.toml",
+          ".codex/agents/refactorer.toml",
+          ".codex/agents/security.toml",
+          ".codex/agents/tester.toml",
+          "factory/scripts/forge.py",
+          "factory/scripts/factory_lib.py",
+          "factory/scripts/pre_tool_use.py",
+          "factory/scripts/post_tool_use.py",
+          "factory/scripts/check_dual_runtime.py",
+          "factory/scripts/session_start.py",
+          "factory/scripts/record_grill_from_json.py",
+          "factory/scripts/grill_gates.py",
+          "factory/scripts/record_decomposition_from_json.py",
+          "factory/scripts/record_test_from_json.py",
+          "factory/scripts/verify.py",
+          "factory/scripts/check_task_proof.py",
+          "factory/scripts/forge_cli/plans.py",
+          "factory/scripts/forge_cli/tasks.py",
+          "factory/scripts/forge_cli/phase.py",
+          "factory/scripts/forge_cli/approval.py",
+          "factory/scripts/forge_cli/ceremony.py",
+          "factory/scripts/forge_cli/delegate.py",
+          "factory/scripts/forge_cli/stages.py",
+          "factory/scripts/forge_cli/grill.py",
+          "factory/scripts/forge_cli/readiness.py",
+          "factory/scripts/forge_cli/upgrade.py",
+          "factory/scripts/forge_cli/audit.py",
+          "factory/scripts/forge_cli/close.py",
+          "factory/scripts/forge_cli/review.py",
+          "factory/scripts/forge_cli/review_brief.py",
+          "factory/scripts/forge_cli/signal.py",
+          "factory/scripts/forge_cli/scaffold.py",
+          "factory/scripts/forge_cli/doctor.py",
+          "factory/scripts/forge_cli/board.py",
+          "factory/scripts/forge_cli/codex_runtime.py",
+          "factory/scripts/forge_cli/worker_admission.py",
+          "factory/schemas/lean-workflow-migration.json",
+          "factory/schemas/grill.json",
+          "factory/schemas/grill-round.json",
+          "factory/schemas/plan-mode-marker.json",
+          "factory/tests/test_gates.py",
+          "factory/tests/test_native_setup.py",
+          "factory/tests/test_one_grill.py",
+          "factory/tests/test_round_provenance.py",
+          "factory/tests/test_grill_carries_answers.py",
+          "factory/tests/test_board_approval_gate.py",
+          "factory/tests/test_plan_against_reality.py",
+          "factory/tests/test_gate_table_e2e.py",
+          "factory/tests/test_grill_release.py",
+          "factory/tests/test_ask_gate.py",
+          "factory/tests/test_proof_read_path.py",
+          "factory/tests/test_review_settled_contracts.py",
+          "factory/tests/test_review_task_delta.py",
+          "factory/tests/test_gate_table.py",
+          "factory/tests/test_close_binds_to_the_diff.py",
+          "factory/tests/test_worker_admission.py",
+          "factory/tests/test_lean_workflow.py",
+          "factory/tests/test_approval_hooks.py",
+          "factory/tests/test_upgrade_lean_workflow.py",
+          "factory/tests/test_delegate_scope.py",
+          "factory/tests/test_proof_reuse.py",
+          "factory/tests/test_pr_link_workflow.py",
+          "factory/tests/test_regrill_scope.py",
+          ".factory/migrations/lean-workflow-v2.json",
+          ".factory/events/",
+          "factory/tests/test_grill_budget.py",
+          "factory/tests/test_lifecycle_end_to_end.py",
+          "factory/tests/test_review_lenses_in_parallel.py",
+          "factory/tests/test_seal_measures.py",
+          "factory/tests/test_stop_less_often.py",
+          ".github/workflows/roadmap-gate.yml",
+          "docs/decisions/0049-per-task-review-proof.md",
+          "docs/decisions/0064-lean-delivery-and-durable-history.md",
+          "plans/active/FORGE-WIN-3-delegation-runs-on-native-windows.md",
+          "plans/active/upgrade-doc-contract-safety-task-plan.md",
+          "factory/scripts/pr_ready.py",
+          "factory/scripts/check_encoding_hygiene.py",
+          "factory/tests/test_requirements_freshness.py",
+          "factory/board/index.html"
+        ],
+        "required_tests": [
+          {
+            "id": "test_native_approval_refuses_zero_multiple_candidates_replay_and_missing_identity",
+            "path": "factory/tests/test_approval_hooks.py",
+            "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+          },
+          {
+            "id": "test_native_approval_records_human_via_runtime_identity_without_display_name",
+            "path": "factory/tests/test_approval_hooks.py",
+            "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+          },
+          {
+            "id": "test_native_approval_reuses_existing_story_and_task_approval_storage",
+            "path": "factory/tests/test_approval_hooks.py",
+            "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+          },
+          {
+            "id": "test_native_plan_mode_approval_records_exact_digest_for_claude_exit_plan_mode",
+            "path": "factory/tests/test_lean_workflow.py",
+            "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+          },
+          {
+            "id": "test_native_plan_mode_approval_records_exact_digest_for_codex_sync_approval",
+            "path": "factory/tests/test_lean_workflow.py",
+            "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+          },
+          {
+            "id": "test_native_approval_refuses_stale_wrong_runtime_canceled_async_and_unsupported_payloads",
+            "path": "factory/tests/test_lean_workflow.py",
+            "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+          },
+          {
+            "id": "test_normal_flow_no_longer_requires_requirements_grill_manual_approval_or_second_save",
+            "path": "factory/tests/test_lean_workflow.py",
+            "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+          },
+          {
+            "id": "test_delegate_scope_must_be_strict_subset_of_approved_write_scope",
+            "path": "factory/tests/test_delegate_scope.py",
+            "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+          },
+          {
+            "id": "test_delegate_scope_is_bound_to_brief_launch_identity_and_existing_write_scope",
+            "path": "factory/tests/test_delegate_scope.py",
+            "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+          },
+          {
+            "id": "test_hook_refuses_write_outside_narrowed_delegate_scope",
+            "path": "factory/tests/test_delegate_scope.py",
+            "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+          },
+          {
+            "id": "test_delegate_brief_carries_criteria_and_scope",
+            "path": "factory/tests/test_gates.py",
+            "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+          },
+          {
+            "id": "test_native_worker_patch_add_update_delete_and_move_is_admitted",
+            "path": "factory/tests/test_worker_admission.py",
+            "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+          },
+          {
+            "id": "test_context_file_security_no_follow_modes_identity_capacity_and_cleanup",
+            "path": "factory/tests/test_delegate_scope.py",
+            "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+          },
+          {
+            "id": "test_context_file_native_windows_protected_dacl_owner_reopen_and_stale_cleanup",
+            "path": "factory/tests/test_delegate_scope.py",
+            "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+          },
+          {
+            "id": "test_context_file_launch_uses_one_handle_snapshot_and_metadata_only_evidence",
+            "path": "factory/tests/test_worker_admission.py",
+            "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+          },
+          {
+            "id": "test_unchanged_test_verify_and_selected_review_inputs_reuse_success_without_rerun",
+            "path": "factory/tests/test_proof_reuse.py",
+            "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+          },
+          {
+            "id": "test_changed_unknown_partial_or_generated_output_identity_forces_fresh_run",
+            "path": "factory/tests/test_proof_reuse.py",
+            "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+          },
+          {
+            "id": "test_reuse_identity_is_proof_type_specific_and_reviewed_meaning_bound",
+            "path": "factory/tests/test_proof_reuse.py",
+            "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+          },
+          {
+            "id": "test_selected_review_reuses_for_bookkeeping_only_changes_and_preserves_original_provenance",
+            "path": "factory/tests/test_proof_reuse.py",
+            "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+          },
+          {
+            "id": "test_selected_review_reruns_for_changed_acceptance_security_migration_or_evidence",
+            "path": "factory/tests/test_proof_reuse.py",
+            "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+          },
+          {
+            "id": "test_selected_upgrade_generation_requires_exact_sealed_binding",
+            "path": "factory/tests/test_review_settled_contracts.py",
+            "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+          },
+          {
+            "id": "test_selected_review_reviewed_meaning_includes_ci_generated_outputs_and_review_instructions",
+            "path": "factory/tests/test_review_task_delta.py",
+            "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+          },
+          {
+            "id": "test_selected_review_reruns_for_substantive_automated_evidence_change",
+            "path": "factory/tests/test_review_task_delta.py",
+            "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+          },
+          {
+            "id": "test_lean_migration_refuses_dirty_checkout_before_writing",
+            "path": "factory/tests/test_upgrade_lean_workflow.py",
+            "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+          },
+          {
+            "id": "test_lean_migration_force_cannot_bypass_dirty_tree_refusal",
+            "path": "factory/tests/test_upgrade_lean_workflow.py",
+            "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+          },
+          {
+            "id": "test_lean_migration_independent_raw_walk_covers_each_candidate_exactly_once",
+            "path": "factory/tests/test_upgrade_lean_workflow.py",
+            "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+          },
+          {
+            "id": "test_lean_migration_inventories_hashes_temp_validates_publishes_and_reads_back",
+            "path": "factory/tests/test_upgrade_lean_workflow.py",
+            "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+          },
+          {
+            "id": "test_lean_migration_refuses_malformed_mixed_partial_conflicting_or_linked_inputs",
+            "path": "factory/tests/test_upgrade_lean_workflow.py",
+            "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+          },
+          {
+            "id": "test_lean_migration_is_idempotent_for_byte_identical_retry_and_refuses_unequal_partial_retry",
+            "path": "factory/tests/test_upgrade_lean_workflow.py",
+            "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+          },
+          {
+            "id": "test_lean_migration_forces_fresh_review_for_active_old_proof_and_migrates_only_exact_sealed_proof",
+            "path": "factory/tests/test_upgrade_lean_workflow.py",
+            "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+          },
+          {
+            "id": "test_normal_runtime_refuses_lean_removed_formats_with_upgrade_guidance",
+            "path": "factory/tests/test_upgrade_lean_workflow.py",
+            "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+          },
+          {
+            "id": "test_codex_hook_readiness_requires_exact_enabled_trusted_source",
+            "path": "factory/tests/test_native_setup.py",
+            "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+          },
+          {
+            "id": "test_codex_hook_readiness_accepts_only_identical_inherited_worktree_hooks",
+            "path": "factory/tests/test_native_setup.py",
+            "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+          },
+          {
+            "id": "test_model_policy_selects_sol_work_and_luna_lite",
+            "path": "factory/tests/test_native_setup.py",
+            "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+          },
+          {
+            "id": "test_active_model_policy_has_no_forbidden_execution_surface",
+            "path": "factory/tests/test_gate_table.py",
+            "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+          },
+          {
+            "id": "test_project_agents_init_upgrade_and_preserve_client_additions",
+            "path": "factory/tests/test_gates.py",
+            "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+          },
+          {
+            "id": "test_recovery_profile_override_keeps_only_three_forge_profiles",
+            "path": "factory/tests/test_native_setup.py",
+            "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+          },
+          {
+            "id": "test_upgrade_preserves_client_profiles_while_removing_retired_forge_profiles",
+            "path": "factory/tests/test_gates.py",
+            "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+          },
+          {
+            "id": "test_upgrade_preserves_project_settings_and_refuses_unknown_same_name_profile_rows",
+            "path": "factory/tests/test_gates.py",
+            "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+          },
+          {
+            "id": "test_pr_link_workflow_stages_per_event_files_not_legacy_jsonl",
+            "path": "factory/tests/test_pr_link_workflow.py",
+            "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+          },
+          {
+            "id": "test_pr_link_workflow_status_description_names_per_event_link_commit",
+            "path": "factory/tests/test_pr_link_workflow.py",
+            "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+          },
+          {
+            "id": "test_verified_forge_acc3_and_cfs1_pr_links_make_board_complete",
+            "path": "factory/tests/test_pr_link_workflow.py",
+            "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+          },
+          {
+            "id": "test_history_merges_legacy_and_per_file_events",
+            "path": "factory/tests/test_gates.py",
+            "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+          },
+          {
+            "id": "test_pr_link_event_survives_a_clone_with_no_remote",
+            "path": "factory/tests/test_gates.py",
+            "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+          },
+          {
+            "id": "test_forge_history_shows_the_pr_link",
+            "path": "factory/tests/test_gates.py",
+            "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+          },
+          {
+            "id": "test_signal_ruling_hydration_survives_lean_lifecycle_state_changes",
+            "path": "factory/tests/test_gates.py",
+            "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+          },
+          {
+            "id": "test_generated_review_inputs_are_included_in_reviewed_meaning",
+            "path": "factory/tests/test_review_task_delta.py",
+            "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+          },
+          {
+            "id": "factory/tests/test_regrill_scope.py",
+            "path": "factory/tests/test_regrill_scope.py",
+            "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools FORGE_REQUIRED_SELECTOR={id} uv run --python 3.11 --with pytest --with psutil python -m pytest {path} -o junit_family=legacy --junitxml={report}"
+          },
+          {
+            "id": "test_one_cold_grill_full_disposition_replaces_round_floors_and_frontier_fake",
+            "path": "factory/tests/test_lean_workflow.py",
+            "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+          },
+          {
+            "id": "test_recovery_override_removes_round_ledgers_without_losing_cold_read_proof",
+            "path": "factory/tests/test_lean_workflow.py",
+            "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+          },
+          {
+            "id": "test_lean_docs_match_single_cold_grill_runtime",
+            "path": "factory/tests/test_plan_against_reality.py",
+            "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+          },
+          {
+            "id": "test_native_approval_no_longer_routes_through_board_or_manual_approve",
+            "path": "factory/tests/test_board_approval_gate.py",
+            "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+          }
+        ],
+        "verify_commands": [
+          "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python factory/scripts/verify.py",
+          "python3 factory/scripts/check_dual_runtime.py",
+          "python3 factory/scripts/check_encoding_hygiene.py",
+          "python3 factory/scripts/check_board_complete.py",
+          "git diff --check"
+        ]
+      },
+      "launch_id": "launch-683c8a23b8fc4cedb77127f74b8f60f7"
     }
   ]
 }
