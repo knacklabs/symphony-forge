@@ -19,7 +19,7 @@ from pathlib import Path
 from test_gates import (  # noqa: F401
     HARNESS, STAGE_TASK, git, intake, load_factory_lib, record_skeleton_then_frontier,
     native_claude_approval, post_hook, record_task_grill, repo, run, save_plan,
-    sign_off, story_state, view_plan_on_board,
+    sign_off, story_state,
 )
 
 sys.path.insert(0, str(HARNESS / "factory" / "scripts"))
@@ -62,7 +62,6 @@ def test_a_plan_edited_after_approval_cannot_reuse_stale_native_authority(
     record_skeleton_then_frontier(repo, [STAGE_TASK])
     code, out = record_task_grill(repo, STAGE_TASK, approve=False)
     assert code == 0, out
-    view_plan_on_board(repo, "T1")
     code, out = post_hook(repo, native_claude_approval(repo))
     assert code == 0, out
 
@@ -115,7 +114,6 @@ def test_an_unapproved_plan_edit_still_needs_a_regrill(repo: Path, tmp_path):
     saved = story_state(repo) / "task-plans" / "T1.md"
     saved.write_text(saved.read_text(encoding="utf-8") + "\nEdited pre-approval.\n",
                      encoding="utf-8")
-    view_plan_on_board(repo, "T1")
     code, out = run(repo, "forge.py", "stage", "start", "T1", "--trunk")
     assert code != 0, out
     assert "STALE" in out and "record_grill_from_json.py" in out
@@ -137,7 +135,6 @@ def test_stage_start_refuses_when_task_start_was_skipped(repo: Path, tmp_path):
     record_skeleton_then_frontier(repo, [STAGE_TASK])
     code, out = record_task_grill(repo, STAGE_TASK, approve=False)
     assert code == 0, out
-    view_plan_on_board(repo, "T1")
     code, out = post_hook(repo, native_claude_approval(repo))
     assert code == 0, out
 

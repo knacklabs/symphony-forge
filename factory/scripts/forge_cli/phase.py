@@ -145,24 +145,6 @@ def _task_count_hint(base: Path, state: dict) -> str:
             "holds either way.")
 
 
-def _board_handoff(base: Path) -> str:
-    """The board URL, and whether it is already up.
-
-    `forge next` used to state that the plan "is now visible on the board"
-    without checking one was running or naming where it is. The human then had
-    nothing to open, so the review happened in chat — the exact thing the rule
-    forbids. Say the address, and say plainly when nothing is serving it.
-    """
-    from .board import DEFAULT_PORT, already_serving
-    url = f"http://127.0.0.1:{DEFAULT_PORT}/"
-    try:
-        live = already_serving(DEFAULT_PORT, base)
-    except Exception:
-        live = False
-    return (f"The board is running at {url}." if live
-            else f"NO BOARD IS RUNNING — start one: `./forge board` ({url}).")
-
-
 _PARALLEL_COMMANDS = {
     "await-merge": "./forge task close {id} (seals it and opens its own PR; merge in dependency order)",
     "delegate": "./forge delegate {id} from inside its worktree",

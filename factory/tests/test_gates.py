@@ -464,17 +464,6 @@ def _seed_cold_launch(repo: Path, gate: str, digest: str, task_id: str = "") -> 
                     encoding="utf-8")
 
 
-def view_plan_on_board(repo: Path, task_id: str, story: str = "") -> None:
-    """Record what the board records when a human opens the story drawer."""
-    lib = load_factory_lib(repo)
-    key = story or lib.load_json(
-        lib.run_state_path(repo), default={}).get("issue_key", "")
-    plan = lib.evidence_path(repo, key, f"task-plans/{task_id}.md")
-    if plan.is_file():
-        lib.record_plan_view(
-            repo, key, task_id, lib.plan_digest_without_assumptions(plan))
-
-
 def delegate_task_grill_test(test):
     """Keep the required test IDs selectable by the stage's focused keyword."""
     test.delegate_task_grill = True
@@ -18057,6 +18046,7 @@ def test_board_serves_live_lifecycle_state(repo, tmp_path, monkeypatch):
 
     sys.path.insert(0, str(HARNESS / "factory" / "scripts"))
     import factory_lib
+    from forge_cli import board as board_mod
     from forge_cli.board import make_server
     # make_server puts this process in board mode (fetch window, git memos);
     # restore CLI mode for every test that runs after this one.
@@ -18106,6 +18096,26 @@ def test_board_serves_live_lifecycle_state(repo, tmp_path, monkeypatch):
             f"{base_url}/api/story/ENG-1", timeout=5).read())
         assert detail["key"] == "ENG-1" and "## Surface Impact" in detail["plan_body"]
         assert {c["label"] for c in detail["readiness"]} >= {"plan saved"}
+        # A clean task plan can be displayed without recording a browser view
+        # as approval authority in the worktree's Git-control directory.
+        plan = factory_lib.evidence_path(
+            repo, "ENG-1", "task-plans/T1.md", for_write=True)
+        plan.parent.mkdir(parents=True, exist_ok=True)
+        plan.write_text("# T1\n\nThe final plan.\n", encoding="utf-8")
+        receipt = factory_lib.git_control_dir(repo) / "board-views.json"
+        assert not receipt.exists()
+        original_story_detail = board_mod.story_detail
+        monkeypatch.setattr(board_mod, "story_detail", lambda root, key: {
+            "key": key,
+            "tasks": [{"id": "T1", "plan_state": "clean",
+                       "plan": plan.read_text(encoding="utf-8"),
+                       "plan_path": plan.relative_to(repo).as_posix()}],
+        })
+        clean_detail = json.loads(urllib.request.urlopen(
+            f"{base_url}/api/story/ENG-1", timeout=5).read())
+        assert clean_detail["tasks"][0]["plan"] == plan.read_text(encoding="utf-8")
+        assert not receipt.exists()
+        monkeypatch.setattr(board_mod, "story_detail", original_story_detail)
         try:
             urllib.request.urlopen(f"{base_url}/api/story/nope", timeout=5)
             raise AssertionError("unknown story must 404")
