@@ -362,7 +362,7 @@ def _combined_prompt(task: dict, *, repo_readable: bool = True) -> bytes:
     ]
     if len("\n".join(minimum)) > 3000:
         fail("combined review boilerplate cannot fit the helper's 3000-character "
-             "overall_explanation limit; reduce the approved contract count")
+             "overall_explanation limit")
     chunk_verdict_rule = (
         "In a chunked run, each quality pass emits a VERDICT record only for "
         "contracts it can judge from that pass's evidence. If a contract's "
@@ -1868,7 +1868,7 @@ def review_task(base: Path, task_id: str, *, lens: str | None = None,
             # after the review folder is removed.
             from factory_lib import git_control_dir
             codex_bin = str(write_launcher(
-                git_control_dir(base) / "review-launcher" / args.id, worktree))
+                git_control_dir(base) / "review-launcher" / args.id, worktree.resolve()))
             print("review runs inside the reviewed worktree, read-only: a verdict "
                   "on unchanged code is read, not guessed (0076)", flush=True)
         else:

@@ -38,8 +38,16 @@ def _two_task_story(repo, tmp_path):
     decomposition_path.write_text(json.dumps(decomposition))
     (scoped / "decomposition.json").write_text(json.dumps(decomposition))
     configure_origin_main(repo, tmp_path / "closeout-origin.git")
+    marker = task_marker_path("ENG-1", "T1")
+    git(repo, "rm", "-q", marker)
+    git(repo, "commit", "-q", "-m", "start story without T1 marker")
+    git(repo, "push", "-q", "origin", "HEAD:main")
+    assert not (repo / marker).exists()
+    assert not git(repo, "ls-tree", "-r", "--name-only", "origin/main", "--", marker)
     pointer = json.loads((control / "run.json").read_text())
-    assert "base_main_sha" not in pointer  # the story's own pointer never has it
+    pointer.pop("base_main_sha", None)
+    (control / "run.json").write_text(json.dumps(pointer))
+    assert "base_main_sha" not in pointer  # exercise marker-based story classification
     return scoped
 
 
@@ -59,8 +67,7 @@ def test_a_task_marker_on_the_trunk_makes_the_story_task_level(repo, tmp_path):
     assert any("T2" in problem for problem in task_level), task_level
     code, out = run(repo, "pr_ready.py")
     assert code != 0, out
-    assert "all task markers on origin/main before story closeout" in out
-    assert "T2" in out
+    assert "stage completion: T2 not done" in out
     # The story-wide chain is not asked for any more.
     assert "successful .factory/verify.json" not in out
     assert ".factory/tests.json:functional" not in out
@@ -114,7 +121,9 @@ def test_an_adopted_marker_closes_without_proof_and_readopt_makes_one(repo, tmp_
     git(repo, "push", "-q", "origin", "HEAD:main")
     assert any("T1" in p for p in task_proof_problems(repo, "ENG-1", t1))
 
-    gh_env, _argv = fake_gh_env(tmp_path)
+    readopt_gh = tmp_path / "readopt-gh"
+    readopt_gh.mkdir()
+    gh_env, _argv = fake_gh_env(readopt_gh)
     code, out = run(repo, "forge.py", "task", "reconcile", "T1", "--readopt", "short",
                     env=gh_env)
     assert code != 0 and "a dozen characters" in out, out
@@ -128,6 +137,9 @@ def test_an_adopted_marker_closes_without_proof_and_readopt_makes_one(repo, tmp_
     assert "re-adopted" in git(repo, "log", "-1", "--format=%s")
     assert any("re-adopted: proof predates" in str(e.get("detail", ""))
                for e in load_events(repo) if e.get("event") == "stage-reconciled")
+    git(repo, "push", "-q", "origin", "HEAD:main")
     # Committed and adopted: closeout asks this task for no proof at all.
     assert task_proof_problems(repo, "ENG-1", t1) == []
-    assert not any("T1" in p for p in require_closeout_order(repo))
+    closeout = require_closeout_order(repo)
+    assert any("T2 not done" in p for p in closeout), closeout
+    assert not any("T1" in p for p in closeout), "\n".join(closeout)
