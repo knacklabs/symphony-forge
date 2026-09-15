@@ -660,7 +660,8 @@
         "factory/tests/test_requirements_freshness.py",
         "factory/board/index.html",
         ".envrc",
-        "factory/scripts/forge_cli/AGENTS.md"
+        "factory/scripts/forge_cli/AGENTS.md",
+        ".github/workflows/factory-scaffold.yml"
       ],
       "plan_contracts": [
         {
@@ -787,11 +788,6 @@
         },
         {
           "id": "test_context_file_security_no_follow_modes_identity_capacity_and_cleanup",
-          "path": "factory/tests/test_delegate_scope.py",
-          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
-        },
-        {
-          "id": "test_context_file_native_windows_protected_dacl_owner_reopen_and_stale_cleanup",
           "path": "factory/tests/test_delegate_scope.py",
           "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
         },
@@ -1112,6 +1108,6 @@
   "story": "FORGE-COORD-1",
   "epic": "symphony-forge",
   "plan_file": "plans/active/FORGE-COORD-1-either-claude-or-codex-coordinates-the-same-forge-workflow.md",
-  "commit": "be834318f65b5d2c8fe278c7e61dba9e399ac7e6",
+  "commit": "3fb4d2543ce572e0f18fd2c207b2d1e7d50eb33a",
   "plan_sha256": "704e22e69b3722fc885bd09231691a18c2afc01b0982a112bb7b5118744f1723"
 }
