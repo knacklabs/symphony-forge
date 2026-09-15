@@ -1,0 +1,10 @@
+{
+  "applies_to": [
+    "factory/tests/**"
+  ],
+  "generated_by": "Codex",
+  "lesson": "Not a defect (0053): The committed Lean checkout has the exact new hook matrix and the focused test asserts it. The compatibility test only admits a stronger inherited sibling-worktree PreToolUse matcher superset routing to the same trusted hook; all other registrations and source semantics must match. Decision 0053 preserves the legitimate worker route while stronger hooks remain active. — raised as \"Remove compatibility that certifies the retired hook matrix as ready (factory/tests/test_native_setup.py:182): The new regression expects readiness to succeed w\"",
+  "severity": "medium",
+  "source": "review reject LEAN-WORKFLOW quality",
+  "topic": "rejected-review-finding-quality"
+}

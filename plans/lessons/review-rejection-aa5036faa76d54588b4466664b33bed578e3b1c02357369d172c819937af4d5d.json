@@ -1,0 +1,10 @@
+{
+  "applies_to": [
+    "factory/scripts/forge_cli/**"
+  ],
+  "generated_by": "Codex",
+  "lesson": "Not a defect (0052): An initial awaiting story plan needs its matching passing cold grill. Once approved, an edited plan goes back to its human approver for a new exact-digest native approval; Decision 0052 and Lean Decision 0064 explicitly avoid another cold read solely for a postapproval amendment. — raised as \"Require a fresh grill before reapproving an edited story plan (factory/scripts/forge_cli/approval.py:71): When an already-approved story plan's live digest chan\"",
+  "severity": "medium",
+  "source": "review reject LEAN-WORKFLOW security",
+  "topic": "rejected-review-finding-security"
+}

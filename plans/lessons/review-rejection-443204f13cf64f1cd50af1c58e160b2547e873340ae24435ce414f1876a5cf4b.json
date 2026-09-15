@@ -1,0 +1,10 @@
+{
+  "applies_to": [
+    "factory/tests/**"
+  ],
+  "generated_by": "Codex",
+  "lesson": "Not a defect (NATIVE-FOREGROUND-ACTIVATE-C3): The named malformed-output test already imports _combined_prompt locally once and asserts its bytes contain the exact quality-only VERDICT instruction. This preserves the earlier completed combined-review contract; there is no missing test assertion. — raised as \"Restore the required combined-prompt placement assertion (factory/tests/test_review_task_delta.py:442): The reviewer focus explicitly requires this malformed-ou\"",
+  "severity": "medium",
+  "source": "review reject LEAN-WORKFLOW quality",
+  "topic": "rejected-review-finding-quality"
+}

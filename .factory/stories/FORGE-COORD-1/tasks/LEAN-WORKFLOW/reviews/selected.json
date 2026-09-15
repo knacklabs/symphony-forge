@@ -1,9 +1,9 @@
 {
-  "delta_id": "3e057a1b18bd87d56ca190cfc52efddf88e3687592744176601ab971697db155",
+  "delta_id": "ea7eb2adb8289e9452bfd5124007a14df03fb0513f6035ec5c3ce9767d59c234",
   "format": "forge-review-selection/v1",
-  "generation_id": "b78db9d354f10609e6b0f97c904d063fa8076742ce912b751b695d2dbe374afa",
-  "generation_sha256": "5c7bfbdaa09b962fef492d5ba462b09d4786dafb74c032d63b61361cd7d40c5a",
-  "selected_at": "2026-09-14T17:58:15+00:00",
+  "generation_id": "c2ef917fd36bfd8fb29dbb6539e862a1bc4f00dfae53c40d51e0d128fa39568c",
+  "generation_sha256": "c825c858af14e81f9aa9772d003c771f2cd2ec3b5952d437b3ef310e266d67c8",
+  "selected_at": "2026-09-15T11:58:44+00:00",
   "story": "FORGE-COORD-1",
   "task_id": "LEAN-WORKFLOW"
 }
