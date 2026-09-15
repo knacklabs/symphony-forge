@@ -38,11 +38,12 @@ def _stop(step: str, why: str, then: str) -> None:
 def cmd_task_close(args: argparse.Namespace) -> None:
     from .review import _product_dirty, review_task
     from .stages import (
-        _find, _finish_stage, load_stages, reopen_stage_for_review_fix,
+        _find, _finish_stage, _measure, _require_successful_launch,
+        load_stages, reopen_stage_for_review_fix,
         run_stage_proof, stamp_is_fresh, task_for,
     )
     from .tasks import seal_task
-    from .delegate import delegation_exclusion
+    from .delegate import delegation_exclusion, load_delegations
 
     base = Path(args.repo).resolve() if args.repo else repo_root()
     task_id = args.id
@@ -86,6 +87,16 @@ def cmd_task_close(args: argparse.Namespace) -> None:
             print(f"{task_id} reopened: the diff moved since it was sealed.")
 
     if stage.get("status") == "active":
+        # These checks do not need proof or a review. Keep the final checks in
+        # _finish_stage too: the stage or product can change while proof runs.
+        load_delegations(base)
+        measured = _measure(base, task_id, stage, task)
+        if strays := measured.get("strays"):
+            print(f"NOTE: {task_id} preflight measured paths outside write_scope: "
+                  f"{', '.join(strays)}. This scope measurement is advisory.",
+                  flush=True)
+        _require_successful_launch(base, task_id, stage, task)
+
         # 5. Proof first. A failing required test is the cheapest stop there
         #    is, and finding it after a review turned every test fix into a
         #    review as well.

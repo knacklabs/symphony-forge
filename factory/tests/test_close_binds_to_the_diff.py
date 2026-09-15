@@ -15,9 +15,12 @@ branch collides with every other.
 from __future__ import annotations
 
 import json
+import shlex
 import subprocess
 import sys
 from pathlib import Path
+
+import pytest
 
 from test_gates import (  # noqa: F401
     DECOMP, HARNESS, STAGE_TASK, delegation_ledger, fake_gh_env, git, head,
@@ -362,6 +365,79 @@ def test_task_close_stops_early_and_names_the_next_step(repo, tmp_path):
     code, out = run(repo, "forge.py", "task", "close", "T1")
     assert code != 0, out
     assert "close stopped at tree" in out and "commit the product tree" in out
+
+
+@pytest.mark.parametrize("invalid", ["launch", "measurement"])
+def test_task_close_checks_stage_inputs_before_running_proof(repo, tmp_path, invalid):
+    env = _ship_ready(repo, tmp_path)
+    marker = tmp_path / "proof-started"
+    command = shlex.join([
+        sys.executable, "-c",
+        f"from pathlib import Path; Path({str(marker)!r}).touch()",
+    ])
+    code, out = _rerecord(repo, {**STAGE_TASK, "verify_commands": [command]})
+    assert code == 0, out
+    if invalid == "launch":
+        delegation_ledger(repo).write_text("", encoding="utf-8")
+        expected = "no successful write launch"
+    else:
+        write_in_scope(repo, "src/core.py", "# oversized change\n" * 801)
+        git(repo, "add", "src/core.py")
+        git(repo, "commit", "-qm", "exceed the hard review bound")
+        expected = "more than TWICE"
+
+    code, out = run(repo, "forge.py", "task", "close", "T1", env=env)
+
+    assert not marker.exists(), "proof ran before the invalid stage was rejected"
+    assert code != 0 and expected in out, out
+
+
+def test_task_close_checks_every_required_path_before_running_proof(repo, tmp_path):
+    env = _ship_ready(repo, tmp_path)
+    marker = tmp_path / "proof-started"
+    command = shlex.join([
+        sys.executable, "-c",
+        f"from pathlib import Path; Path({str(marker)!r}).touch()",
+    ])
+    required = [*STAGE_TASK["required_tests"], {
+        "id": "test_missing", "path": "missing_proof.py",
+        "command": "python3 {path} {id} {report}",
+    }]
+    code, out = _rerecord(repo, {
+        **STAGE_TASK, "required_tests": required, "verify_commands": [command],
+    })
+    assert code == 0, out
+
+    code, out = run(repo, "forge.py", "task", "close", "T1", env=env)
+
+    assert code != 0 and "required test 'test_missing' is missing" in out, out
+    assert not marker.exists(), "verification ran before all required paths were checked"
+
+
+def test_required_input_is_rechecked_after_an_earlier_test_runs(tmp_path, capsys):
+    from forge_cli.stages import _run_required_tests
+
+    runner = tmp_path / "runner.py"
+    runner.write_text(
+        "import sys\nfrom pathlib import Path\n"
+        "source, name, report = sys.argv[1:]\n"
+        "if source == 'first.py':\n    Path('second.py').unlink()\n"
+        "Path(report).write_text('<testsuite><testcase name=\"' + name + "
+        "'\" file=\"' + source + '\"/></testsuite>')\n",
+        encoding="utf-8",
+    )
+    for name in ("first.py", "second.py"):
+        (tmp_path / name).touch()
+    command = shlex.join([sys.executable, str(runner), "{path}", "{id}", "{report}"])
+    task = {"required_tests": [
+        {"id": "test_first", "path": "first.py", "command": command},
+        {"id": "test_second", "path": "second.py", "command": command},
+    ]}
+
+    with pytest.raises(SystemExit):
+        _run_required_tests(tmp_path, "T1", task)
+
+    assert "required test 'test_second' is missing" in capsys.readouterr().out
 
 
 # ------------------------------------------------- the contracts say close

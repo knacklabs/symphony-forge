@@ -1649,6 +1649,16 @@ def _junit_case_attributed(case, rel: str) -> bool:
             or candidate.endswith("/" + declared))
 
 
+def _require_test_input(base: Path, stage_id: str, proof: dict) -> None:
+    """Validate a test input both before proof and immediately before use."""
+    if not isinstance(proof, dict) or not all(
+            isinstance(proof.get(key), str) for key in ("id", "path", "command")):
+        fail(f"{stage_id} carries a legacy or malformed required_tests entry "
+             f"{proof!r}. Re-record the decomposition with id, path and command.")
+    if not (base / proof["path"]).is_file():
+        fail(f"{stage_id} required test {proof['id']!r} is missing: {proof['path']}")
+
+
 def _run_required_tests(base: Path, stage_id: str, task: dict) -> list[str]:
     """Run every required test; refuse when one FAILS or never ran. A recorded
     id that matches no testcase (or one attributed to another path) is a
@@ -1662,15 +1672,10 @@ def _run_required_tests(base: Path, stage_id: str, task: dict) -> list[str]:
 
     misses: list[str] = []
     for proof in task.get("required_tests") or []:
-        if not isinstance(proof, dict) or not all(
-                isinstance(proof.get(key), str) for key in ("id", "path", "command")):
-            fail(f"{stage_id} carries a legacy or malformed required_tests entry "
-                 f"{proof!r}. Re-record the decomposition with id, path and command.")
+        _require_test_input(base, stage_id, proof)
         test_id = proof["id"]
         rel = proof["path"]
         command = proof["command"]
-        if not (base / rel).is_file():
-            fail(f"{stage_id} required test {test_id!r} is missing: {rel}")
         with tempfile.TemporaryDirectory(prefix="forge-required-test-") as tmp:
             report = Path(tmp) / "junit.xml"
             tokens = [token.replace("{report}", str(report))
@@ -2012,6 +2017,8 @@ def run_stage_proof(base: Path, stage_id: str, task: dict) -> tuple[dict, dict, 
     out so `task close` can run the proof BEFORE spending a review on a tree
     that would have failed it anyway.
     """
+    for proof in task.get("required_tests") or []:
+        _require_test_input(base, stage_id, proof)
     proof_tree = product_tree_snapshot(base)
     authority_tree = protected_authority_snapshot(base)
     verify_identity = proof_identity(

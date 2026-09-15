@@ -12,6 +12,7 @@ from pathlib import Path
 from urllib.parse import unquote, urlsplit
 
 from factory_lib import (
+    plan_digest_without_assumptions,
     read_selected_review_generation, task_evidence_path,
     evidence_path, load_json, now_iso, parse_sections,
     repo_root, run_state_path, task_rows,
@@ -691,7 +692,7 @@ def task_plan_view(base: Path, key: str, task: dict, grill: dict | None) -> dict
     text (fresh, not stale). A saved-but-not-yet-grill-clean plan is withheld
     entirely (never sent, so it cannot leak through the raw-json view either), so
     a human first sees a task plan on the board only after it survives grilling,
-    at which point it is theirs to approve.
+    at which point it can be read here. Approval occurs through native Plan Mode.
 
     plan_state is 'none' (no plan saved), 'ungrilled' (saved, never survived a
     grill), 'stale' (it DID pass, and the plan text changed afterwards), or
