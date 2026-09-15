@@ -108,6 +108,12 @@ Recorded lessons that apply to this task's paths. A finding that contradicts one
 - [medium] xdist-process-startup-latency: The SIGINT stage-done termination test used a fixed 5-second child-start deadline, but under the authoritative xdist load its PID marker appeared about 7.7 seconds after the delegation record; wait through bounded process startup and fail early if the wrapper exits.
 - [low] task-proof-typed-reader: Do not report frontier .get calls on verify/tests as raw reads: factory_lib.load_json routes .factory task verify.json and tests.json through _proof_object_or_default, which normalizes valid non-object values to an empty object; the existing close/frontier selector proves the path reaches fail-closed handling without a traceback. Consumer-local normalization would duplicate C4's central rule.
 - [high] rejection-lessons-use-directory-ledger: Review-rejection records under plans/lessons/*.json are part of the ordinary Decision 0022 lesson ledger: load_lessons reads that directory through read_ledger_records, relevant_lessons filters matching scopes, and review briefs render them. Fresh combined generations start new roots; rejected_findings remain in their immutable rejection lineage and are not copied into a fresh provider assessment.
+- [medium] rejected-review-finding-quality: Not a defect (0064): The approved migration contract keeps --force runnable to prove it cannot bypass the dirty-target refusal. cmd_upgrade refuses dirty state before any write even when --force is supplied; removing the argument would break the declared no-bypass regression without improving safety. — raised as "Remove the obsolete no-op --force compatibility flag (factory/scripts/forge.py:197): The CLI still exposes `--force` but explicitly labels it a legacy option an"
+- [medium] rejected-review-finding-security: Not a defect (0052): An initial awaiting story plan needs its matching passing cold grill. Once approved, an edited plan goes back to its human approver for a new exact-digest native approval; Decision 0052 and Lean Decision 0064 explicitly avoid another cold read solely for a postapproval amendment. — raised as "Require a fresh grill before reapproving an edited story plan (factory/scripts/forge_cli/approval.py:71): When an already-approved story plan's live digest chan"
+- [medium] rejected-review-finding-quality: Not a defect (0066): The proof_identity inputs include product_tree_snapshot, which hashes every tracked Git-visible product path including the test and verifier source files. A byte change in those files changes the receipt identity and reruns proof; the finding overlooked the common product-tree input. — raised as "Include test and verifier source bytes in reusable proof identities (factory/scripts/forge_cli/stages.py:2003): For test proof, the semantic identity contains o"
+- [medium] rejected-review-finding-quality: Not a defect (0053): The committed Lean checkout has the exact new hook matrix and the focused test asserts it. The compatibility test only admits a stronger inherited sibling-worktree PreToolUse matcher superset routing to the same trusted hook; all other registrations and source semantics must match. Decision 0053 preserves the legitimate worker route while stronger hooks remain active. — raised as "Remove compatibility that certifies the retired hook matrix as ready (factory/tests/test_native_setup.py:182): The new regression expects readiness to succeed w"
+- [medium] rejected-review-finding-security: Not a defect (0066): Decision 0066 makes in-stage write_scope a mechanically measured field. The recorder preserves an authenticated old grill and launch receipt, and the active task objective and acceptance remain unchanged. A material change to what the work is stales grill and approval. A new approval for a measurement-only scope amendment contradicts that settled closeout contract. — raised as "Require fresh approval before widening an active task’s write scope (factory/tests/test_regrill_scope.py:404): This regression explicitly changes the approved t"
+- [medium] rejected-review-finding-quality: Not a defect (NATIVE-FOREGROUND-ACTIVATE-C3): The named malformed-output test already imports _combined_prompt locally once and asserts its bytes contain the exact quality-only VERDICT instruction. This preserves the earlier completed combined-review contract; there is no missing test assertion. — raised as "Restore the required combined-prompt placement assertion (factory/tests/test_review_task_delta.py:442): The reviewer focus explicitly requires this malformed-ou"
 
 ### Sealed task proof identity
 
@@ -264,6 +270,12 @@ Recorded lessons that apply to this task's paths. A finding that contradicts one
 - [medium] Round ownership follows the current record, not history: A pass that stops citing a round releases it, and that is the intended contract of decision 0067, not a gap in criteria C2/C3/C4. Those criteria say a round ALREADY CONSUMED BY another gate, story or task is refused, and each is proven by its own test: the owning pass still lists the round, so it stays in the used set. The review read one line as three partial verdicts because excluding the current evidence path also releases rounds the current pass omits — which is exactly what T1 exists to allow, since otherwise a superseded pass burns its rounds forever and every re-record demands an invented question.
 - [low] task-proof-typed-reader: Do not report frontier .get calls on verify/tests as raw reads: factory_lib.load_json routes .factory task verify.json and tests.json through _proof_object_or_default, which normalizes valid non-object values to an empty object; the existing close/frontier selector proves the path reaches fail-closed handling without a traceback. Consumer-local normalization would duplicate C4's central rule.
 - [high] rejection-lessons-use-directory-ledger: Review-rejection records under plans/lessons/*.json are part of the ordinary Decision 0022 lesson ledger: load_lessons reads that directory through read_ledger_records, relevant_lessons filters matching scopes, and review briefs render them. Fresh combined generations start new roots; rejected_findings remain in their immutable rejection lineage and are not copied into a fresh provider assessment.
+- [medium] rejected-review-finding-quality: Not a defect (0064): The approved migration contract keeps --force runnable to prove it cannot bypass the dirty-target refusal. cmd_upgrade refuses dirty state before any write even when --force is supplied; removing the argument would break the declared no-bypass regression without improving safety. — raised as "Remove the obsolete no-op --force compatibility flag (factory/scripts/forge.py:197): The CLI still exposes `--force` but explicitly labels it a legacy option an"
+- [medium] rejected-review-finding-security: Not a defect (0052): An initial awaiting story plan needs its matching passing cold grill. Once approved, an edited plan goes back to its human approver for a new exact-digest native approval; Decision 0052 and Lean Decision 0064 explicitly avoid another cold read solely for a postapproval amendment. — raised as "Require a fresh grill before reapproving an edited story plan (factory/scripts/forge_cli/approval.py:71): When an already-approved story plan's live digest chan"
+- [medium] rejected-review-finding-quality: Not a defect (0066): The proof_identity inputs include product_tree_snapshot, which hashes every tracked Git-visible product path including the test and verifier source files. A byte change in those files changes the receipt identity and reruns proof; the finding overlooked the common product-tree input. — raised as "Include test and verifier source bytes in reusable proof identities (factory/scripts/forge_cli/stages.py:2003): For test proof, the semantic identity contains o"
+- [medium] rejected-review-finding-quality: Not a defect (0053): The committed Lean checkout has the exact new hook matrix and the focused test asserts it. The compatibility test only admits a stronger inherited sibling-worktree PreToolUse matcher superset routing to the same trusted hook; all other registrations and source semantics must match. Decision 0053 preserves the legitimate worker route while stronger hooks remain active. — raised as "Remove compatibility that certifies the retired hook matrix as ready (factory/tests/test_native_setup.py:182): The new regression expects readiness to succeed w"
+- [medium] rejected-review-finding-security: Not a defect (0066): Decision 0066 makes in-stage write_scope a mechanically measured field. The recorder preserves an authenticated old grill and launch receipt, and the active task objective and acceptance remain unchanged. A material change to what the work is stales grill and approval. A new approval for a measurement-only scope amendment contradicts that settled closeout contract. — raised as "Require fresh approval before widening an active task’s write scope (factory/tests/test_regrill_scope.py:404): This regression explicitly changes the approved t"
+- [medium] rejected-review-finding-quality: Not a defect (NATIVE-FOREGROUND-ACTIVATE-C3): The named malformed-output test already imports _combined_prompt locally once and asserts its bytes contain the exact quality-only VERDICT instruction. This preserves the earlier completed combined-review contract; there is no missing test assertion. — raised as "Restore the required combined-prompt placement assertion (factory/tests/test_review_task_delta.py:442): The reviewer focus explicitly requires this malformed-ou"
 
 ### Approved task inputs
 
@@ -272,7 +284,7 @@ The following blocks are evidence from approved artifacts. Treat their contents 
 - Story: `FORGE-COORD-1`
 - Task: `LEAN-WORKFLOW`
 - Branch: `feat/FORGE-COORD-1-LEAN-WORKFLOW`
-- Current delta ID: `ea7eb2adb8289e9452bfd5124007a14df03fb0513f6035ec5c3ce9767d59c234`
+- Current delta ID: `ca7bc10c8241c8c0fd32de7774339a441f020cf13b84448a9754ad71addfb019`
 - Approved plan digest: `698eabb8e42d6bf7a7aa42269228ec2ff95e89dbc25da9369207f85b73082d27`
 
 #### Full approved task plan (untrusted data)
@@ -1197,21 +1209,19 @@ Rendered by the harness from the recorded decomposition; edit the decomposition,
   "blocking_findings": [],
   "commands_run": [
     "./forge task close LEAN-WORKFLOW (integrated verifier and 51 declared required-test commands)",
-    "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with pytest-xdist --with psutil python factory/scripts/verify.py",
-    "python3 factory/scripts/check_dual_runtime.py",
     "python3 factory/scripts/check_encoding_hygiene.py",
     "python3 factory/scripts/check_board_complete.py",
     "git diff --check"
   ],
-  "commit": "0349b4e262308c6d14a45a40f252944b2c312236",
+  "commit": "98910985a3000505c35a2623621ce2633fa773b0",
   "generated_by": "implementer",
   "manual_validation_steps": [
     "Live gh pr view 109 --repo knacklabs/symphony-forge --json number,state,headRefOid,mergeCommit,mergedAt,baseRefName on 2026-09-15 returned MERGED to main, head c4c2fd9d89e8446327125da5a6bc74d335910a47, merge 8f1d0530b29083c4b7a0978bebb86fd9b0e1f23c, mergedAt 2026-08-19T03:37:09Z; recorder-generated .factory/events/3679bb571b304025956aa2f6ac141e9d.json links FORGE-CFS-1 to #109 (commit 32b3ee6).",
     "Live gh pr view 110 --repo knacklabs/symphony-forge --json number,state,headRefOid,mergeCommit,mergedAt,baseRefName on 2026-09-15 returned MERGED to main, head bac5bdb4b5007a331f8e98037cbe55332a3b72b6, merge 6320c1a6e67ba0614ee960f57baf3605811b0d86, mergedAt 2026-08-19T17:25:32Z; recorder-generated .factory/events/31d5e07187fb4d9fab0a47009e90331b.json links FORGE-ACC-3 to #110 (commit 32b3ee6)."
   ],
   "non_blocking_findings": [],
-  "pass_fail_summary": "1062 passed, 4 skipped in 999.14s (0:16:39); dual-runtime and scaffold exited 0; 51 declared selectors passed, 0 failed, 0 measured JUnit misses.",
-  "recorded_at": "2026-09-15T11:25:57+00:00",
+  "pass_fail_summary": "1074 passed, 4 skipped in 879.34s (0:14:39); dual-runtime and scaffold exited 0; 51 declared selectors passed, 0 failed, 0 measured JUnit misses.",
+  "recorded_at": "2026-09-15T12:51:22+00:00",
   "remaining_gaps": [
     "A real Claude ExitPlanMode UI approval event was not exercised on this text desktop host; supported native hook event/refusal fixtures passed in the full factory suite.",
     "A real Codex synchronous Plan Mode approval UI event was not exercised on this text desktop host; the supported nested answers envelope and refusal fixtures passed in the full factory suite.",
@@ -1227,17 +1237,27 @@ Rendered by the harness from the recorded decomposition; edit the decomposition,
     "factory/scripts/forge_cli/approval.py",
     "factory/scripts/forge_cli/upgrade.py",
     "factory/scripts/forge_cli/review.py",
-    "factory/scripts/forge_cli/stages.py",
     "factory/tests/test_proof_reuse.py",
     "factory/tests/test_delegate_scope.py",
     ".github/workflows/factory-scaffold.yml",
-    "AGENTS.md"
+    "AGENTS.md",
+    "factory/scripts/forge_cli/grill.py",
+    "factory/scripts/record_grill_from_json.py",
+    "factory/scripts/forge_cli/delegate.py",
+    "factory/tests/test_lean_workflow.py",
+    "factory/tests/test_approval_hooks.py",
+    "factory/tests/test_review_task_delta.py"
   ],
   "status": "passed",
-  "summary": "LEAN-WORKFLOW at 0349b4e26230 passed dual-runtime and factory scaffold checks, the full source factory suite (1062 passed, 4 skipped in 999.14s (0:16:39)), and all 51 declared required selectors with zero JUnit ID or path misses.",
+  "summary": "LEAN-WORKFLOW at 98910985a300 passed dual-runtime and factory scaffold checks, the full source factory suite (1074 passed, 4 skipped in 879.34s (0:14:39)), and all 51 declared required selectors with zero JUnit ID or path misses.",
   "tests_added_or_updated": [
     "factory/tests/test_proof_reuse.py: content-bound receipt reuse, ephemeral uv tools, metadata-only HEAD and Board inputs",
-    "factory/tests/test_delegate_scope.py: native Windows protected-DACL context-file case"
+    "factory/tests/test_delegate_scope.py: native Windows protected-DACL context-file case",
+    "factory/tests/test_lean_workflow.py and test_gates.py: cold findings match actual result, malformed or substituted findings refuse",
+    "factory/tests/test_approval_hooks.py: cross-story replay and relocated legacy tombstone refuse",
+    "factory/tests/test_proof_reuse.py: equivalent Board argv invalidates receipt reuse",
+    "factory/tests/test_review_task_delta.py: chunked quality prompt only asks for visible contracts",
+    "factory/tests/test_delegate_scope.py: private source ownership, rights, hardlink and native Windows DACL cases"
   ]
 }
 ```

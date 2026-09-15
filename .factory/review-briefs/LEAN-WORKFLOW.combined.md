@@ -47,7 +47,8 @@ line per plan contract listed under the target task's "Plan contracts" in .facto
 
 VERDICT <contract-id>: implemented|partial|missing — <file:line evidence>
 
-Every listed contract must get a line. Do not rename contract ids.
+In a one-pass run every listed contract must get a line. Do not rename contract ids.
+In a chunked run, each quality pass must emit exact VERDICT lines for every contract it can judge from that pass's evidence. If a contract's evidence is absent from this chunk, omit its line; do not call it partial or missing solely because this chunk lacks its files. A genuine observed defect remains partial or missing. Across all passes every target contract must have an implemented verdict; an unverdicted contract fails closed. In a one-pass run, verdict every contract.
 
 For each contract, emit a verdict — implemented | partial | missing — with file:line evidence, recorded as contract_verdicts in the quality artifact. Then review the diff normally; the contract check does not replace the quality/performance/security lenses.
 

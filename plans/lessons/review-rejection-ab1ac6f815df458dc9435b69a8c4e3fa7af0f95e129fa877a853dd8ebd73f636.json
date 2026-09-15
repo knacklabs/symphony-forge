@@ -1,0 +1,10 @@
+{
+  "applies_to": [
+    "factory/scripts/forge_cli/**"
+  ],
+  "generated_by": "Codex",
+  "lesson": "Not a defect (NATIVE-FOREGROUND-ACTIVATE-C3): Not a defect: review_task constructs args = _Args() and assigns args.id = task_id before the cited proof preflight (factory/scripts/forge_cli/review.py:1416-1423); the entry point completed this seven-pass review. — raised as \"Use the function argument instead of undefined `args` (factory/scripts/forge_cli/review.py:1453): `review_task()` has no local or global `args`, but the new pro\"",
+  "severity": "medium",
+  "source": "review reject LEAN-WORKFLOW quality",
+  "topic": "rejected-review-finding-quality"
+}
