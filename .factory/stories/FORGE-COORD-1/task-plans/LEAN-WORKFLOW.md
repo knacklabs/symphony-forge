@@ -701,6 +701,10 @@ Rendered by the harness from the recorded decomposition; edit the decomposition,
 - factory/scripts/pr_ready.py
 - factory/scripts/check_encoding_hygiene.py
 
+**Scope amendments** (measured paths the scope did not name, recorded with `forge stage amend-scope`)
+
+- factory/scripts/record_review_from_json.py -- The public review-generation recorder validation in record_review_from_json.py is required for Lean selected-review input and current reviewed-meaning identity; it was omitted from the task write_scope while its reviewed-meaning caller changed. Stage measurement identified this exact single path, with no other scope addition.
+
 **Required tests** (run by `stage done`)
 
 - `test_native_approval_refuses_zero_multiple_candidates_replay_and_missing_identity` -- `UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}` (factory/tests/test_approval_hooks.py)
