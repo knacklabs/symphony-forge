@@ -1,18 +1,24 @@
 {
-  "commit": "34d504179a84be878ce0ce5bb2e9c4a816e3aab0",
+  "commit": "f2b41a0039fd72d8126465771fd647478d03ced1",
   "automated": {
     "generated_by": "implementer",
     "status": "passed",
-    "summary": "LEAN-WORKFLOW at 34d504179a84be878ce0ce5bb2e9c4a816e3aab0 passed the declared full verifier: dual-runtime and factory scaffold checks exited 0; the source factory suite passed 1133 tests, skipped 4, in 919.66s. Current-head Linux scaffold CI passed 1129 tests with 8 skips, and native Windows hook gates passed 24 tests with 1 skip. The 51 declared selectors have not yet been rerun against this head.",
+    "summary": "LEAN-WORKFLOW at f2b41a0039fd72d8126465771fd647478d03ced1 passed the official pre-review stage proof runner with all five declared verify commands and all 51 declared required selectors. The full factory suite passed 1133 tests, skipped 4, in 1075.95s; the selector receipt reports zero JUnit ID/path misses. Current published product head 34d5041 also has green Linux scaffold CI (1129 passed, 8 skipped) and native Windows hook gates (24 passed, 1 skipped). Real native Claude/Codex Plan Mode smokes remain pending.",
     "blocking_findings": [],
     "commands_run": [
-      "python3 factory/scripts/verify.py",
+      "forge_cli.stages.run_stage_proof(base, \"LEAN-WORKFLOW\", task_for(base, \"LEAN-WORKFLOW\")) via PYTHONPATH=factory/scripts python3",
+      "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with pytest-xdist --with psutil python factory/scripts/verify.py",
+      "python3 factory/scripts/check_dual_runtime.py",
       "python3 factory/scripts/check_encoding_hygiene.py",
       "python3 factory/scripts/check_board_complete.py",
       "git diff --check",
-      "gh pr checks 229 (current-head required PR checks green)"
+      "51 declared required-test commands from the recorded decomposition, each with a fresh JUnit report",
+      "gh pr checks 229 (published current-product head required checks green)",
+      "./forge project audit --repo . (expected two unrelated pending-story spec gaps)",
+      "./forge delegate LEAN-WORKFLOW --scope factory/scripts/forge_cli/delegate.py --print-only",
+      "./forge delegate LEAN-WORKFLOW --print-only"
     ],
-    "pass_fail_summary": "Current local full verifier: 1133 passed, 4 skipped in 919.66s; structural and scaffold exits 0. Current-head Linux CI: 1129 passed, 8 skipped in 976.22s; native Windows CI: 24 passed, 1 skipped. Encoding, Board, and diff checks exited 0. Current-head 51 declared selectors remain pending.",
+    "pass_fail_summary": "Official stage proof: full verifier 1133 passed, 4 skipped in 1075.95s; dual-runtime, scaffold, encoding, Board, and diff checks exited 0; all 51 declared required tests passed with 0 measured JUnit ID/path misses. Current-product Linux CI 1129 passed/8 skipped; Windows CI 24 passed/1 skipped. Project audit alone reports two unrelated pending-story spec gaps.",
     "reviewed_scope": [
       "factory/scripts/forge_cli/stages.py",
       "factory/scripts/factory_lib.py",
@@ -29,13 +35,15 @@
       "AGENTS.md"
     ],
     "remaining_gaps": [
-      "Run the 51 declared required selectors against current product head via the task close workflow and inspect zero JUnit ID/path misses before review.",
       "Run and inspect a real Claude successful ExitPlanMode approval event in the disposable native fixture, binding exact digest and stable runtime/session/event identity.",
       "Run and inspect real Codex synchronous Request changes, cancellation, and Approve plan events in the disposable native fixture; only approval may write an exact-digest record."
     ],
     "manual_validation_steps": [
       "Live gh pr view 109 --repo knacklabs/symphony-forge --json number,state,headRefOid,mergeCommit,mergedAt,baseRefName on 2026-09-15 returned MERGED to main, head c4c2fd9d89e8446327125da5a6bc74d335910a47, merge 8f1d0530b29083c4b7a0978bebb86fd9b0e1f23c, mergedAt 2026-08-19T03:37:09Z; recorder-generated .factory/events/3679bb571b304025956aa2f6ac141e9d.json links FORGE-CFS-1 to #109 (commit 32b3ee6).",
-      "Live gh pr view 110 --repo knacklabs/symphony-forge --json number,state,headRefOid,mergeCommit,mergedAt,baseRefName on 2026-09-15 returned MERGED to main, head bac5bdb4b5007a331f8e98037cbe55332a3b72b6, merge 6320c1a6e67ba0614ee960f57baf3605811b0d86, mergedAt 2026-08-19T17:25:32Z; recorder-generated .factory/events/31d5e07187fb4d9fab0a47009e90331b.json links FORGE-ACC-3 to #110 (commit 32b3ee6)."
+      "Live gh pr view 110 --repo knacklabs/symphony-forge --json number,state,headRefOid,mergeCommit,mergedAt,baseRefName on 2026-09-15 returned MERGED to main, head bac5bdb4b5007a331f8e98037cbe55332a3b72b6, merge 6320c1a6e67ba0614ee960f57baf3605811b0d86, mergedAt 2026-08-19T17:25:32Z; recorder-generated .factory/events/31d5e07187fb4d9fab0a47009e90331b.json links FORGE-ACC-3 to #110 (commit 32b3ee6).",
+      "On 2026-09-15, `./forge project audit --repo .` returned only two unrelated pending-story spec gaps: ship-clears-forge-authority and stage-done-proof-runner-robust missing spec.",
+      "On 2026-09-15, `./forge delegate LEAN-WORKFLOW --scope factory/scripts/forge_cli/delegate.py --print-only` rendered exactly that single write path; no launch occurred.",
+      "On 2026-09-15, `./forge delegate LEAN-WORKFLOW --print-only` rendered the same approved write-path set as the recorded decomposition; no launch occurred."
     ],
     "tests_added_or_updated": [
       "factory/tests/test_delegate_scope.py: native Windows private context fixture constructs a protected current-SID-only DACL and confirms source restoration",
@@ -43,10 +51,12 @@
       "factory/tests/test_proof_reuse.py: identity-stable disposable Git fixture",
       "factory/tests/test_review_task_delta.py: fake review helper receives required raw report fields"
     ],
-    "non_blocking_findings": [],
+    "non_blocking_findings": [
+      "Project audit reports two pending-story spec gaps outside LEAN-WORKFLOW: ship-clears-forge-authority and stage-done-proof-runner-robust are missing spec."
+    ],
     "residual_risks": [],
-    "recorded_at": "2026-09-15T18:59:57+00:00",
-    "commit": "34d504179a84be878ce0ce5bb2e9c4a816e3aab0"
+    "recorded_at": "2026-09-15T19:42:56+00:00",
+    "commit": "f2b41a0039fd72d8126465771fd647478d03ced1"
   },
-  "updated_at": "2026-09-15T18:59:57+00:00"
+  "updated_at": "2026-09-15T19:42:56+00:00"
 }
