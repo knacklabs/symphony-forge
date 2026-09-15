@@ -219,7 +219,7 @@ def test_combined_review_projects_tagged_lenses_and_preserves_ordered_pass_verdi
 
 def test_combined_review_refuses_incomplete_noncontiguous_missing_copied_or_mixed_output(capsys):
     from forge_cli.review import _combined_prompt
-    assert b"Put VERDICT lines only inside the quality assessment" in _combined_prompt({})
+    assert b"a verdict is a finding record" in _combined_prompt({})
     provider = _provider_report("preface\n" + _combined_explanation(
             "VERDICT C1: implemented — src/a.py:1", "measured", "bounded",
         ).replace(
@@ -461,6 +461,11 @@ def test_review_set_recorder_validates_origin_specific_shape_and_raw_bytes(
     malformed["raw_result"]["bytes"] += 1
     code, out = run(repo, "record_review_from_json.py", "--set", "--task", "T2",
                     stdin=json.dumps(malformed))
+    assert code != 0 and "decoded byte count" in out
+    fallback = copy.deepcopy(malformed)
+    fallback["input"] = meaning["accepted_inputs"][1]
+    code, out = run(repo, "record_review_from_json.py", "--set", "--task", "T2",
+                    stdin=json.dumps(fallback))
     assert code != 0 and "decoded byte count" in out
     empty_raw = {"encoding": "base64", "sha256": hashlib.sha256(b"").hexdigest(),
                  "bytes": 0, "data": ""}
@@ -746,9 +751,10 @@ def test_chunked_quality_prompt_omits_unobserved_verdicts_and_aggregation_fails_
     task = {"id": "T1", "plan_contracts": [
         {"id": "T1-AC1"}, {"id": "T1-AC2"}, {"id": "T1-AC3"}]}
     prompt = _combined_prompt(task).decode("utf-8")
-    assert "If a contract's evidence is absent from this chunk, omit its line" in prompt
+    assert "If a contract's evidence is absent from this chunk, omit its record" in prompt
     assert "do not call it partial or missing solely because this chunk lacks" in prompt
-    assert "In a one-pass run every listed contract must get a line" in prompt
+    assert "In a one-pass run, verdict every contract" in prompt
+    assert "never a line in overall_explanation" in prompt
     reviewed = {"overall_explanation": "preserved passes", "findings": [],
                 "pass_reports": [
                     {"report": {"overall_explanation":

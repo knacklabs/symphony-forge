@@ -639,6 +639,13 @@ def cmd_task_reconcile(args: argparse.Namespace) -> None:
     already = _git(
         base, "cat-file", "-e", f"origin/{default_branch}:{marker.as_posix()}",
     ).returncode == 0
+    readopt = (getattr(args, "readopt", None) or "").strip()
+    if readopt and not already:
+        fail(f"--readopt adopts a task whose marker is already on origin/"
+             f"{default_branch}; {args.id} has none there. Reconcile it plainly.")
+    if readopt and len(readopt) < 12:
+        fail("--readopt takes the reason (a dozen characters at least): why this "
+             "task's recorded proof cannot satisfy the current proof predicate")
 
     # A task whose work shipped out of band is PENDING on every checkout that did
     # not run it — a fresh clone, a sibling worktree, or this one after a
@@ -703,6 +710,24 @@ def cmd_task_reconcile(args: argparse.Namespace) -> None:
         # is genuinely on the trunk already.
         payload["reconciled"] = True
         dump_json(base / marker, payload)
+    elif readopt:
+        # The marker on the trunk is real and its work shipped; only its proof
+        # predates the current predicate (a proof-format change, or proof that
+        # never reached the trunk). Re-mark it ADOPTED with its own identity
+        # untouched, so every gate reads it the way it reads any adopted task.
+        shipped = _require_git(
+            base, "reading the trunk marker", "show",
+            f"origin/{default_branch}:{marker.as_posix()}")
+        try:
+            payload = json.loads(shipped)
+        except json.JSONDecodeError as exc:
+            fail(f"the marker for {args.id} on origin/{default_branch} is not JSON: {exc}")
+        if not isinstance(payload, dict) or payload.get("task_id") != args.id:
+            fail(f"the marker for {args.id} on origin/{default_branch} is not its own")
+        if payload.get("reconciled") is True:
+            print(f"{args.id} is already adopted on origin/{default_branch}.")
+        payload["reconciled"] = True
+        dump_json(base / marker, payload)
 
     # Flip the stage to done directly (bypassing the unsatisfiable stage-done
     # gates) and stamp its task digest so the row reads 'done' locally too.
@@ -713,9 +738,11 @@ def cmd_task_reconcile(args: argparse.Namespace) -> None:
         stage["task_sha256"] = task_digest(task)
     write_stages(base, data)
     append_event(base, "stage-reconciled", actor="orchestrator", story=key,
-                 detail=f"{args.id} adopted as shipped out of band "
-                        f"(marker {'confirmed on trunk' if already else 'written'}, "
-                        "no PR)")
+                 detail=(f"{args.id} re-adopted: {readopt} (trunk marker re-marked "
+                         "reconciled, no PR)" if readopt else
+                         f"{args.id} adopted as shipped out of band "
+                         f"(marker {'confirmed on trunk' if already else 'written'}, "
+                         "no PR)"))
 
     # Commit the marker + committed stage mirror as an evidence-only commit the
     # command owns. No push, no PR — the work already shipped; this records it so
@@ -727,7 +754,8 @@ def cmd_task_reconcile(args: argparse.Namespace) -> None:
         _git(base, "add", "--", *to_add)
     if _git(base, "diff", "--cached", "--quiet").returncode != 0:
         _require_git(base, "committing the reconcile marker", "commit", "-m",
-                     f"{key} {args.id}: task reconcile marker (adopted as shipped)")
+                     f"{key} {args.id}: task reconcile marker "
+                     f"({'re-adopted: ' + readopt if readopt else 'adopted as shipped'})")
         print(f"Reconciled {args.id}: marker {marker.as_posix()} written, stage "
               "done, evidence committed. Push this branch and open a PR so the "
               f"marker lands on origin/{default_branch}, then rerun `forge next`.")

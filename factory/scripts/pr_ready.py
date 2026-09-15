@@ -14,6 +14,7 @@ from factory_lib import (
     now_iso,
     protected_decomposition_state_path,
     repo_root,
+    run_is_task_level,
     review_dir,
     run_state_path,
     story_dir,

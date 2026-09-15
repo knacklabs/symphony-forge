@@ -289,6 +289,12 @@ def main() -> None:
         help="the task's original branch for the marker (default: "
              "feat/<story>-<task>)",
     )
+    p_task_reconcile.add_argument(
+        "--readopt", metavar="REASON",
+        help="the task's marker is already on the trunk but its recorded proof "
+             "cannot satisfy the current proof predicate (a proof-format change, "
+             "or proof that never reached the trunk): re-mark that marker adopted, "
+             "with REASON on the timeline, so closeout reads it as adopted work")
     p_task_reconcile.add_argument("--repo")
     p_task_reconcile.set_defaults(func=tasks_mod.cmd_task_reconcile)
     p_task_plan = task_sub.add_parser("plan", help="manage a task plan")
@@ -652,12 +658,38 @@ def main() -> None:
         "--reject", metavar="MATCH",
         help="do not run: move the one recorded blocking finding of --lens whose "
              "text contains MATCH into rejected_findings because it contradicts an "
-             "accepted contract (--reason, --cite required); ledgers the contract "
-             "as a lesson and stamps the stage when no lens blocks any more")
-    p_review.add_argument("--reason", help="with --reject: why it is not a defect")
+             "accepted contract (--reason and --cite), or is wrong on a line the "
+             "reviewer did not open (--reason and --evidence); ledgers it as a "
+             "lesson and stamps the stage when no lens blocks any more")
+    p_review.add_argument(
+        "--triage", metavar="MATCH",
+        help="do not run: record the host's verdict on the one recorded blocking "
+             "finding of --lens whose text contains MATCH, BEFORE the fix round. "
+             "--real takes --evidence <file:line> (the line that proves it) and "
+             "one --instance <file:line> per place the same contract still fails; "
+             "--not-a-defect takes --evidence (the line that refutes it) and "
+             "--reason. The fix brief carries the triage beside the finding, and "
+             "`forge delegate` warns on any finding left without one")
+    p_review.add_argument(
+        "--real", action="store_true",
+        help="with --triage: the finding is a defect")
+    p_review.add_argument(
+        "--not-a-defect", dest="not_a_defect", action="store_true",
+        help="with --triage: the finding is wrong; --evidence names the line that shows it")
+    p_review.add_argument(
+        "--evidence", metavar="FILE:LINE",
+        help="with --triage or --reject: a line in this worktree you opened")
+    p_review.add_argument(
+        "--instance", action="append", default=[], metavar="FILE:LINE",
+        help="with --triage --real: a place the same contract applies and still "
+             "fails (repeat for each)")
+    p_review.add_argument(
+        "--keep", help="with --triage --real: what the fix must leave unchanged, "
+                       "the other side of the rule")
+    p_review.add_argument("--reason", help="with --reject or --triage: why")
     p_review.add_argument(
         "--cite", help="with --reject: the decision, plan line or sealed contract")
-    p_review.add_argument("--by", help="with --reject: the recording agent")
+    p_review.add_argument("--by", help="with --reject or --triage: the recording agent")
     p_review.add_argument("--repo")
     p_review.set_defaults(func=review_mod.cmd_review)
 

@@ -424,7 +424,11 @@ sequence a JIT contract loop for every pending task:
     window or assumption; derives the product delta (`delta_id`, the hash of
     `base..HEAD` on product paths); runs the declared verify commands and
     required tests; and runs the ONE three-lens review only when no review
-    stamp already covers that exact delta. One Codex helper call publishes one
+    stamp already covers that exact delta. The review runs INSIDE the reviewed
+    worktree, read-only (0076): the diff is the subject, and a verdict or
+    finding about code the diff does not show -- a callee, a file a contract
+    names, the other places a contract covers -- is read there and cited by
+    line, never guessed; "cannot verify from the diff" is not a verdict. One Codex helper call publishes one
     immutable raw-plus-three-lens generation, then selects its task-scoped
     pointer last. Before closing the stage, `close` requires complete task-owned
     automated proof and conditional functional proof.
@@ -433,7 +437,17 @@ sequence a JIT contract loop for every pending task:
     findings are recorded follow-ups. The coordinator sends all blocking
     findings from the joined round back to Codex in one fix batch (`forge
     delegate <id>`), commits the fix, and reruns `close`; it never asks the
-    human who should fix them. A finding that contradicts an accepted decision,
+    human who should fix them. It never relays a finding unread: the
+    coordinator TRIAGES each one first -- opens the cited line and the code it
+    calls, decides real or not with a file:line it read, and for a real one
+    searches the repo for every other place the same contract applies -- and
+    records it (`forge review <id> --triage "<text>" --lens <l> --real
+    --evidence <file:line> --instance <file:line> ... [--keep "<what must not
+    change>"] --by <agent>`, or `--not-a-defect --evidence <file:line> --reason
+    ...`). The fix brief carries the triage beside each finding, and `forge
+    delegate` warns on any left without one. A finding relayed unread is how
+    one class of defect costs one round per file (WF-1 T5: six reviews, eight
+    fix rounds; decision 0075). A finding that contradicts an accepted decision,
     a plan section or a sealed contract is not a defect: `forge review <id>
     --reject "<text>" --lens <l> --reason ... --cite
     <decision|contract|section> --by <agent>` records the rejection and the

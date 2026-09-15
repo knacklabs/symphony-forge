@@ -1044,9 +1044,15 @@ def reviewed_meaning_identity(
         inputs, sort_keys=True, separators=(",", ":"), ensure_ascii=False,
     ).encode("utf-8")
     from .review import _combined_prompt
-    prompt = _combined_prompt(task)
+    prompts = [_combined_prompt(task, repo_readable=readable)
+               for readable in (True, False)]
+    prompt = prompts[0]
     return {
         "identity": hashlib.sha256(prompt).hexdigest(), "bytes": len(prompt),
+        "accepted_inputs": [
+            {"sha256": hashlib.sha256(body).hexdigest(), "bytes": len(body)}
+            for body in prompts
+        ],
         "semantic_identity": hashlib.sha256(canonical).hexdigest(),
         "semantic_bytes": len(canonical), "inputs": inputs,
     }
@@ -1074,9 +1080,8 @@ def stamp_is_fresh(base: Path, stage: dict, task: dict) -> bool:
         return False
     if generation.get("origin") in {"combined", "rejection"}:
         meaning = reviewed_meaning_identity(base, stage, task, generation.get("helper"))
-        if (generation.get("input") != {
-                "sha256": meaning["identity"], "bytes": meaning["bytes"]
-            } or stamp.get("reviewed_meaning") != meaning["semantic_identity"]):
+        if (generation.get("input") not in meaning["accepted_inputs"]
+                or stamp.get("reviewed_meaning") != meaning["semantic_identity"]):
             return False
     return True
 

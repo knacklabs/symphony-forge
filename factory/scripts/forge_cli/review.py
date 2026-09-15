@@ -67,13 +67,38 @@ CODEX_REVIEW_THINKING = "high"
 # what is enforced, is that no retired model is ever requested.
 CODEX_HELPER_FIX = "the review must not request a retired model"
 
+# The reviewer's working folder IS the reviewed worktree, read-only (decision
+# 0076): a verdict about code the diff does not show is read, not guessed.
 COMMON_PREAMBLE = """\
-You are one lens of a three-lens code review. You see ONLY the diff bundle for
-this task (no repository access), so judge what the diff shows and say so when
-something cannot be verified from it. Report every finding with its
+You are one lens of a three-lens code review. The diff bundle is the subject.
+Your working folder is the reviewed repository at the task tip, READ-ONLY; the
+skill's note that the sandbox is empty does not apply to this run. Judge the
+diff first. When a verdict or a finding depends on code the diff does not show
+-- the callee of a changed line, a file a contract names, the other places a
+contract covers -- open it (cat, sed -n, rg) and cite the line you read.
+"Cannot verify from the diff" is not a verdict and not a finding: a partial or
+missing verdict names the line that fails, and a finding about unchanged code
+names the line that shows the defect. Read to resolve, not to roam: no finding
+on code the diff neither touches nor calls. Report every finding with its
 file_path and line. Use ONLY these categories: bug, security, regression,
 test_gap, maintainability. Priorities: P0/P1 block the task; P2/P3 must be
 resolved or explicitly deferred with a reason before it ships.
+"""
+
+# The fallback when the tree cannot be offered (another engine, codex not on
+# PATH, or FORGE_REVIEW_EMPTY_WORKSPACE set): the reviewer is told so, and told
+# that what it cannot see is not thereby partial.
+DIFF_ONLY_PREAMBLE = """\
+You are one lens of a three-lens code review. You see ONLY the diff bundle for
+this task (no repository access). Judge what the diff shows. What the diff does
+not show is not thereby partial or missing: a contract whose evidence lies in
+unchanged code, or a call whose callee you cannot open, is verdicted
+implemented with the evidence "not in the bundle: <the file you would need>"
+so the host checks that line; reserve partial and missing for a line in the
+bundle that fails the contract. Report every
+finding with its file_path and line. Use ONLY these categories: bug, security,
+regression, test_gap, maintainability. Priorities: P0/P1 block the task; P2/P3
+must be resolved or explicitly deferred with a reason before it ships.
 """
 
 LENS_FOCUS = {
@@ -119,6 +144,32 @@ line per plan contract listed under "Plan contracts" below, exactly in this form
 VERDICT <contract-id>: implemented|partial|missing — <file:line evidence>
 
 Every listed contract must get a line. Do not rename contract ids.
+"""
+
+# A verdict as a finding RECORD: the combined review's summary box is capped at
+# 3,000 characters by the helper's schema, and one VERDICT line per contract
+# inside it overflowed on WF-1A T1 (3,027 characters, cut mid-word before the
+# security end marker; the hour-long run was refused). A record has its own
+# 2,000-character body and there is no limit on how many records a pass
+# carries, so the box no longer grows with the plan (decision 0077).
+VERDICT_RECORD = re.compile(
+    r"^VERDICT\s+(?P<id>[A-Za-z0-9._:-]+)\s*:\s*"
+    r"(?P<verdict>implemented|partial|missing)\s*$",
+    re.IGNORECASE,
+)
+VERDICT_RECORD_FORMAT = """\
+CONTRACT VERDICTS (mandatory, machine-parsed). For EVERY plan contract
+listed under the target task's "Plan contracts" in {dataset}, add one finding
+RECORD, never a line in overall_explanation:
+
+- title: exactly `[quality] VERDICT <contract-id>: implemented|partial|missing`
+- body: the file:line you read and one sentence of evidence (the tree is
+  readable; a verdict on code the diff does not show is read, not guessed)
+- code_location: that file and line; priority: P3; category: maintainability
+
+Every listed contract must get a record, in every pass. Do not rename contract
+ids. A verdict record is not a defect: it is lifted out of the findings before
+they are counted. Keep overall_explanation to the three short assessments.
 """
 
 SECTION_MARKERS = tuple(
@@ -179,6 +230,26 @@ def _require_safe_codex_review_helper(argv: list[str]) -> None:
              f"expected {CODEX_REVIEW_MODEL!r}")
     if any("terra" in part.lower() for part in argv):
         fail(f"{CODEX_HELPER_FIX}: a retired model appears in the review argv")
+
+
+# What the recorder reads from a combined run. An installed helper that does
+# not write these ran for an hour on WF-1A T1 (2026-09-14) and its 29
+# findings were then refused at record time; the coordinator triaged them
+# from the log by hand. Refuse before the run instead.
+REQUIRED_HELPER_OUTPUT = ("review_status", "provider_report")
+
+
+def _require_current_review_helper(skill: Path) -> None:
+    try:
+        source = skill.read_text(encoding="utf-8")
+    except (OSError, UnicodeError):
+        return  # an unreadable or absent helper is refused by _helper_identity
+    missing = [key for key in REQUIRED_HELPER_OUTPUT if key not in source]
+    if missing:
+        fail(f"the installed autoreview helper at {skill} predates the combined "
+             f"review output the recorder reads (it never writes "
+             f"{', '.join(missing)}); a run would finish and then be refused at "
+             "record time. Run `./forge doctor --fix` to refresh it, then retry.")
 
 
 def _helper_identity(skill: Path) -> tuple[dict[str, str], tuple[int, int]]:
@@ -264,24 +335,27 @@ def _product_dirty(base: Path) -> list[str]:
     return dirty
 
 
-def _lens_prompt(task: dict, lens: str, base: Path | None = None) -> bytes:
+def _lens_prompt(task: dict, lens: str, base: Path | None = None, *,
+                 repo_readable: bool = True) -> bytes:
+    preamble = COMMON_PREAMBLE if repo_readable else DIFF_ONLY_PREAMBLE
     lines = [f"# Review brief — {task.get('id', '')} — {lens} lens", "",
-             COMMON_PREAMBLE, LENS_FOCUS[lens], LEFTOVER_INSTRUCTION]
+             preamble, LENS_FOCUS[lens], LEFTOVER_INSTRUCTION]
     if lens == "quality":
         lines += [QUALITY_VERDICT_FORMAT, VERDICT_INSTRUCTION, ""]
     lines += _task_section(task, None)
     return ("\n".join(lines).rstrip() + "\n").encode()
 
 
-def _combined_prompt(task: dict) -> bytes:
+def _combined_prompt(task: dict, *, repo_readable: bool = True) -> bytes:
     contracts = [
         str(contract.get("id")) for contract in task.get("plan_contracts") or []
         if isinstance(contract, dict) and isinstance(contract.get("id"), str)
     ]
+    # The box holds markers and three short assessments only; verdicts are
+    # records (VERDICT_RECORD_FORMAT), so this never depends on len(contracts).
     minimum = [
-        "BEGIN FORGE ASSESSMENT quality",
-        *(f"VERDICT {contract}: implemented — file:line evidence" for contract in contracts),
-        "quality assessment", "END FORGE ASSESSMENT quality",
+        "BEGIN FORGE ASSESSMENT quality", "quality assessment",
+        "END FORGE ASSESSMENT quality",
         "BEGIN FORGE ASSESSMENT performance", "performance assessment",
         "END FORGE ASSESSMENT performance", "BEGIN FORGE ASSESSMENT security",
         "security assessment", "END FORGE ASSESSMENT security",
@@ -289,18 +363,10 @@ def _combined_prompt(task: dict) -> bytes:
     if len("\n".join(minimum)) > 3000:
         fail("combined review boilerplate cannot fit the helper's 3000-character "
              "overall_explanation limit; reduce the approved contract count")
-    combined_verdict_format = QUALITY_VERDICT_FORMAT.replace(
-        'listed under "Plan contracts" below',
-        f'listed under the target task\'s "Plan contracts" in {REVIEW_DATASET_REL}',
-    ).replace(
-        "Every listed contract must get a line. Do not rename contract ids.",
-        "In a one-pass run every listed contract must get a line. "
-        "Do not rename contract ids.",
-    )
-    combined_verdict_format += (
-        "In a chunked run, each quality pass must emit exact VERDICT lines for "
-        "every contract it can judge from that pass's evidence. If a contract's "
-        "evidence is absent from this chunk, omit its line; do not call it "
+    chunk_verdict_rule = (
+        "In a chunked run, each quality pass emits a VERDICT record only for "
+        "contracts it can judge from that pass's evidence. If a contract's "
+        "evidence is absent from this chunk, omit its record; do not call it "
         "partial or missing solely because this chunk lacks its files. "
         "A genuine observed defect remains partial or missing. Across all passes "
         "every target contract must have an implemented verdict; an unverdicted "
@@ -308,7 +374,8 @@ def _combined_prompt(task: dict) -> bytes:
     )
     lines = [
         f"# Review brief — {task.get('id', '')} — combined review", "",
-        COMMON_PREAMBLE.replace("one lens of a three-lens", "the three-lens"),
+        (COMMON_PREAMBLE if repo_readable else DIFF_ONLY_PREAMBLE).replace(
+            "one lens of a three-lens", "the three-lens"),
         "The target task's complete Plan contracts and Reviewer focus are supplied "
         f"in `{REVIEW_DATASET_REL}`; use that dataset for task-specific review "
         "requirements.", "",
@@ -320,11 +387,14 @@ def _combined_prompt(task: dict) -> bytes:
         "<performance assessment>", "END FORGE ASSESSMENT performance",
         "BEGIN FORGE ASSESSMENT security", "<security assessment>",
         "END FORGE ASSESSMENT security", "",
-        "Put VERDICT lines only inside the quality assessment, never in surrounding "
-        "prose or the performance or security assessments.", "",
+        "Keep each assessment short, a few sentences: overall_explanation is capped "
+        "at 3000 characters in total and holds ONLY these three assessments. Never "
+        "write VERDICT lines in it; a verdict is a finding record.", "",
         "Prefix every finding title with exactly one matching token: [quality] , "
         "[performance] , or [security] .", "", LENS_FOCUS["quality"],
-        combined_verdict_format, VERDICT_INSTRUCTION, "", LENS_FOCUS["performance"],
+        VERDICT_RECORD_FORMAT.format(dataset=REVIEW_DATASET_REL),
+        chunk_verdict_rule, "",
+        LENS_FOCUS["performance"],
         LENS_FOCUS["security"], LEFTOVER_INSTRUCTION, "",
     ]
     return ("\n".join(lines).rstrip() + "\n").encode()
@@ -611,6 +681,7 @@ def _project_combined_report(
     retained_raw: list[dict] = []
     projected_fingerprints: set[tuple[str, int, int, str]] = set()
     seen_merge_keys: set[tuple[str, int, str, str]] = set()
+    verdict_lines: list[str] = []
     for label, provider in passes:
         if not isinstance(provider.get("findings", []), list):
             fail("combined review pass findings must be a list")
@@ -620,10 +691,24 @@ def _project_combined_report(
             prior_lens = fingerprint_lenses.setdefault(fingerprint, lens)
             if prior_lens != lens:
                 fail("combined review contains a cross-lens duplicate normalized finding")
+            record = VERDICT_RECORD.match(clean["title"])
+            if record and lens != "quality":
+                fail("a VERDICT record carries the [quality] tag; found one under "
+                     f"[{lens}]: {clean['title']}")
             if fingerprint not in projected_fingerprints:
                 projected_fingerprints.add(fingerprint)
-                retained.append((lens, clean))
-                by_lens[lens].append(clean)
+                if record:
+                    # Lifted out of the findings: it feeds contract_verdicts
+                    # and is never a defect, whatever priority it carries.
+                    where = clean["code_location"]
+                    at = f"{where['file_path']}:{where['line']}"
+                    body = " ".join(str(clean.get("body", "")).split())
+                    verdict_lines.append(
+                        f"VERDICT {record['id']}: {record['verdict'].lower()} — "
+                        + (body if at in body else f"{at} {body}"))
+                else:
+                    retained.append((lens, clean))
+                    by_lens[lens].append(clean)
             if merge_key not in seen_merge_keys:
                 seen_merge_keys.add(merge_key)
                 merged = copy.deepcopy(finding)
@@ -660,7 +745,8 @@ def _project_combined_report(
         artifacts[lens] = _artifact(
             lens, task, lens_report, scope, base_sha, tip_sha, skills_used,
             all_tasks, started, excluded,
-            verdict_texts=[section["quality"] for section in sections]
+            verdict_texts=[*(section["quality"] for section in sections),
+                           *verdict_lines]
             if lens == "quality" else None,
         )
     return artifacts
@@ -818,18 +904,26 @@ def _next_hint(task_id: str, stage_status: str, blocking: int, caveats: int) -> 
     # decided: fixing a finding the review just raised is the work, and it goes
     # to Codex like every other write.
     if blocking:
-        return (f"NEXT: {blocking} blocking finding(s) -- delegate the fixes "
-                f"to Codex (`./forge delegate {task_id}`), commit, then "
-                f"`./forge task close {task_id}`: it re-reviews the new diff, "
-                "and a done stage reopens itself for the fix. Loop until no "
-                "lens blocks. Do this WITHOUT asking the human to choose: a "
-                "blocking finding cannot be deferred or shipped past (the seal "
-                "refuses it). A finding that contradicts an accepted contract "
-                "is not a defect: record the contract as a lesson "
-                "(`./forge lesson add`) so the next round carries it. Host-side "
-                "fixing is the single exception, and only when the defect cannot "
-                "be reproduced or fixed inside the Codex sandbox -- then open a "
-                "ledgered degraded window and say why.")
+        return (f"NEXT: {blocking} blocking finding(s) -- triage them yourself "
+                "BEFORE any fix round. For each: open the cited line and the code "
+                "it calls, and decide real or not with a file:line you read; for a "
+                "real one, search the repo for every other place the same contract "
+                f"applies. Record it: `./forge review {task_id} --triage \"<text>\" "
+                "--lens <l> --real --evidence <file:line> --instance <file:line> "
+                "[--instance ...] [--keep \"<what must not change>\"] --by <agent>`, "
+                "or `--not-a-defect --evidence <file:line> --reason \"...\"`. Then "
+                f"delegate the fixes to Codex (`./forge delegate {task_id}`): the "
+                "brief carries your triage beside each finding and warns on any "
+                f"you skipped. Commit, then `./forge task close {task_id}`: it "
+                "re-reviews the new diff, and a done stage reopens itself for the "
+                "fix. Loop until no lens blocks. Do this WITHOUT asking the human "
+                "to choose: a blocking finding cannot be deferred or shipped past "
+                "(the seal refuses it). A finding that contradicts an accepted "
+                "contract is `--reject` with `--cite`, which ledgers the contract "
+                "as a lesson (`./forge lesson add` carries anything else the next "
+                "round must know). Host-side fixing is the single exception, and "
+                "only when the defect cannot be reproduced or fixed inside the "
+                "Codex sandbox -- then open a ledgered degraded window and say why.")
     seal = f"`./forge task close {task_id}` measures, closes and seals it"
     if caveats:
         return (f"NEXT: no blocking finding; {caveats} non-blocking finding(s) "
@@ -1059,7 +1153,8 @@ def _close_codex_run(root: Path, run_id: str, returncode) -> None:
 
 
 def _skill_argv(skill: Path, base_sha: str, prompt_rel: str, json_out: Path,
-                engine: str, max_priority: str) -> list[str]:
+                engine: str, max_priority: str,
+                codex_bin: str | None = None) -> list[str]:
     argv = [
         sys.executable, str(skill), "--mode", "branch", "--base", base_sha,
         "--engine", engine, "--max-priority", max_priority,
@@ -1071,13 +1166,19 @@ def _skill_argv(skill: Path, base_sha: str, prompt_rel: str, json_out: Path,
             "--model", CODEX_REVIEW_MODEL, "--thinking", CODEX_REVIEW_THINKING,
         ])
         _require_safe_codex_review_helper(argv)
+    if codex_bin:
+        # The launcher that starts Codex inside the reviewed worktree instead
+        # of the skill's empty folder (review_launcher, decision 0076).
+        argv += ["--codex-bin", codex_bin]
     return argv
 
 
 def _run_skill(skill: Path, worktree: Path, base_sha: str, prompt_rel: str,
                json_out: Path, engine: str, max_priority: str,
-               ledger_root: Path | None = None, *, return_raw: bool = False):
-    argv = _skill_argv(skill, base_sha, prompt_rel, json_out, engine, max_priority)
+               ledger_root: Path | None = None, *, return_raw: bool = False,
+               codex_bin: str | None = None):
+    argv = _skill_argv(skill, base_sha, prompt_rel, json_out, engine, max_priority,
+                       codex_bin)
     # The ledger goes to the REPO's control dir: the review worktree is removed
     # when the review ends and its control dir pruned with it, so rows written
     # there never reach `forge codex status`.
@@ -1113,15 +1214,22 @@ def _run_skill(skill: Path, worktree: Path, base_sha: str, prompt_rel: str,
 
 
 def reject_finding(base: Path, task_id: str, lens: str, match: str, *,
-                   reason: str, cite: str, by: str) -> dict:
+                   reason: str, cite: str = "", by: str, evidence: str = "") -> dict:
     """Move a recorded blocking finding that contradicts an accepted contract
     out of the blocking list, ledger the contract as a lesson so the next
     round's brief carries it, and stamp the stage if no lens blocks any more.
 
     Rejection is for contradictions of settled decisions, never for taste:
-    `cite` names the decision, plan line or sealed contract. The finding stays
-    in the artifact under `rejected_findings` with the reason, so the record
-    shows what was raised and why it did not block."""
+    `cite` names the decision, plan line or sealed contract. The other ground
+    is `evidence`: a file:line in this worktree that shows the finding is
+    factually wrong -- the callee the reviewer did not open. On WF-1 T5 eleven
+    of the first twenty-five blockers died on such a line (`request()` already
+    threw on a non-2xx; the write DTOs accepted no siteId), and with no way to
+    record that, each refutation went through the lessons ledger instead
+    (decision 0075). It is recorded as the citation `evidence <file:line>`, so
+    the generation format is unchanged. The finding stays in the artifact
+    under `rejected_findings` with the reason, so the record shows what was
+    raised and why it did not block."""
     from factory_lib import (
         effective_review_base, now_iso, product_delta_digest,
         publish_review_generation, read_selected_review_generation,
@@ -1130,15 +1238,25 @@ def reject_finding(base: Path, task_id: str, lens: str, match: str, *,
 
     if lens not in LENSES:
         fail(f"--lens must be one of {', '.join(LENSES)}")
-    for name, value in (("--reason", reason), ("--cite", cite), ("--by", by)):
+    for name, value in (("--reason", reason), ("--by", by)):
         if not (value or "").strip():
-            fail(f"{name} must be non-empty: a rejection names the accepted "
-                 "contract it rests on")
+            fail(f"{name} must be non-empty: a rejection says why, and who")
+    if bool((cite or "").strip()) == bool((evidence or "").strip()):
+        fail("--cite or --evidence must be non-empty (one of them): a rejection "
+             "names the accepted contract it rests on, or the file:line in this "
+             "worktree that shows the finding is wrong")
     state = load_json(run_state_path(base), default={})
     story = state.get("issue_key") or state.get("story")
     if not isinstance(story, str) or not story:
         fail("review reject requires an active story")
-    resolved, settled_text = _cite_resolves(base, story, cite, task_id)
+    proof = (verify_evidence_line(base, evidence, flag="--evidence")
+             if (evidence or "").strip() else "")
+    if proof:
+        cite = f"evidence {proof}"
+        resolved, settled_text = cite, ""
+    else:
+        cite = cite.strip()
+        resolved, settled_text = _cite_resolves(base, story, cite, task_id)
     if not resolved:
         fail(f"--cite {cite!r} names nothing settled. A rejection cites a decision "
              "record (its NNNN id under docs/decisions/), a plan contract id of a "
@@ -1164,8 +1282,8 @@ def reject_finding(base: Path, task_id: str, lens: str, match: str, *,
     if len(hits) > 1:
         fail(f"{len(hits)} blocking {lens} findings match {match!r}; narrow it")
     finding = hits[0]
-    shared = _shared_terms(finding, settled_text)
-    if not shared:
+    shared = _shared_terms(finding, settled_text) if settled_text else []
+    if settled_text and not shared:
         fail(f"--cite {cite!r} resolves to {resolved}, but that text shares no "
              "substantive term with the finding; a citation must be ABOUT the "
              "finding it sets aside. Cite the decision, contract or section that "
@@ -1229,9 +1347,10 @@ def reject_finding(base: Path, task_id: str, lens: str, match: str, *,
         expected_source_id=generation["generation_id"], update_stamp=True,
         lesson_records=[(lesson_rel, lesson_body)],
     )
+    ground = (f"proof: {proof}" if proof
+              else f"cite: {resolved} (shared terms: {', '.join(shared[:4])})")
     print(f"Rejected {lens} finding: {summary}\n  reason: {reason.strip()}\n  "
-          f"cite: {resolved} (shared terms: {', '.join(shared[:4])})\n  "
-          f"ledgered as a lesson for {', '.join(applies_to)}")
+          f"{ground}\n  ledgered as a lesson for {', '.join(applies_to)}")
     if blocking:
         print(f"No stamp: {blocking} blocking {lens} finding(s) remain")
     else:
@@ -1246,6 +1365,195 @@ def reject_finding(base: Path, task_id: str, lens: str, match: str, *,
                   + ("`./forge stage done` then " if stage.get("status") == "active" else "")
                   + f"`./forge task pr-ready {task_id}`.")
     return updated
+
+
+def _line_count(path: Path) -> int:
+    try:
+        with path.open("rb") as handle:
+            return sum(1 for _ in handle)
+    except OSError:
+        return -1
+
+
+def verify_evidence_line(base: Path, ref: str, *, flag: str) -> str:
+    """A `file:line` that exists in this worktree, normalised. A triage rests
+    on a line someone opened; a file that is not there, or a line past the
+    end, is a claim, not a proof."""
+    text = (ref or "").strip().strip("`'\"")
+    match = re.fullmatch(r"(.+?):(\d+)", text)
+    if not match:
+        fail(f"{flag} must be <file>:<line> (a line you opened), got {ref!r}")
+    rel = match.group(1).replace("\\", "/")
+    while rel.startswith("./"):
+        rel = rel[2:]
+    line = int(match.group(2))
+    path = base / rel
+    if not path.is_file():
+        fail(f"{flag} {rel}:{line} names a file that does not exist in this worktree")
+    total = _line_count(path)
+    if line < 1 or line > total:
+        fail(f"{flag} {rel}:{line} is past the end of the file ({total} line(s))")
+    return f"{rel}:{line}"
+
+
+def triage_path(base: Path, story: str, task_id: str, *, for_write: bool = False) -> Path:
+    """Beside the task's review generations, never inside them: the
+    generations are immutable and validated field by field."""
+    from factory_lib import task_evidence_path
+    return task_evidence_path(base, story, task_id, "review-triage.json",
+                              for_write=for_write)
+
+
+def triage_records(base: Path, story: str, task_id: str) -> list[dict]:
+    data = load_json(triage_path(base, story, task_id), default={})
+    records = data.get("findings") if isinstance(data, dict) else None
+    return [r for r in records or [] if isinstance(r, dict)]
+
+
+def _finding_key(finding) -> str:
+    return (json.dumps(finding, sort_keys=True) if isinstance(finding, dict)
+            else str(finding))
+
+
+def triage_for(records: list[dict], lens: str, finding, delta_id: str = "") -> dict | None:
+    """The triage recorded against THIS finding of THIS review: same lens, same
+    finding text, and the same product delta, so a triage of last round's
+    finding never dresses this round's. A rejection republishes the same delta
+    under a new generation, so the other findings' triage survives it."""
+    key = _finding_key(finding)
+    for record in records:
+        if record.get("lens") != lens or _finding_key(record.get("finding")) != key:
+            continue
+        if delta_id and record.get("delta_id") not in (None, "", delta_id):
+            continue
+        return record
+    return None
+
+
+def selected_generation(base: Path, story: str, task_id: str) -> dict | None:
+    """The selected complete review generation, or None when there is none
+    that reads back whole."""
+    from factory_lib import read_selected_review_generation
+    generation, _selection, problems = read_selected_review_generation(
+        base, story, task_id)
+    if problems or not isinstance(generation, dict):
+        return None
+    return generation
+
+
+def blocking_with_triage(base: Path, story: str, task_id: str, *,
+                         generation: dict | None = None
+                         ) -> list[tuple[str, dict, dict | None]]:
+    """(lens, finding, triage-or-None) for every blocking finding of the
+    selected generation (or the one given)."""
+    if generation is None:
+        generation = selected_generation(base, story, task_id)
+    if not isinstance(generation, dict):
+        return []
+    records = triage_records(base, story, task_id)
+    delta_id = str(generation.get("delta_id") or "")
+    out: list[tuple[str, dict, dict | None]] = []
+    for lens in LENSES:
+        artifact = (generation.get("lenses") or {}).get(lens, {})
+        if not isinstance(artifact, dict):
+            continue
+        for finding in artifact.get("blocking_findings") or []:
+            if isinstance(finding, dict):
+                out.append((lens, finding, triage_for(records, lens, finding, delta_id)))
+    return out
+
+
+def untriaged_blocking(base: Path, story: str, task_id: str) -> tuple[int, int]:
+    """(untriaged, total) blocking findings recorded for the task."""
+    rows = blocking_with_triage(base, story, task_id)
+    return sum(1 for _, _, triage in rows if triage is None), len(rows)
+
+
+def triage_finding(base: Path, task_id: str, lens: str, match: str, *, real: bool,
+                   evidence: str, instances: list[str], keep: str, reason: str,
+                   by: str) -> dict:
+    """Record the host's verdict on one recorded blocking finding BEFORE the
+    fix round: real, with the line that proves it and every place the same
+    contract still fails; or not a defect, with the line that refutes it.
+
+    WF-1 T5 (2026-09-12/13) took six reviews and eight fix rounds. Eleven of
+    the first twenty-five blockers were wrong and died only when someone
+    opened the callee; the real ones were relayed to the worker one file at a
+    time, so the same class of defect came back from the next file in each of
+    four consecutive rounds. The coordinator had the whole repo and the time.
+    This is that check as a recorded step between review and delegate: the
+    fix brief carries the triage beside each finding, and `forge delegate`
+    warns on any finding left without one (decision 0075)."""
+    from factory_lib import (
+        dump_json, effective_review_base, now_iso, product_delta_digest,
+        read_selected_review_generation,
+    )
+    if lens not in LENSES:
+        fail(f"--lens must be one of {', '.join(LENSES)}")
+    if not (by or "").strip():
+        fail("--by must name who triaged it")
+    state = load_json(run_state_path(base), default={})
+    story = state.get("issue_key") or state.get("story")
+    if not isinstance(story, str) or not story:
+        fail("review triage requires an active story")
+    if not real:
+        if not (reason or "").strip():
+            fail("--not-a-defect needs --reason: what the line at --evidence shows "
+                 "that the finding missed")
+        return reject_finding(base, task_id, lens, match, reason=reason, cite="",
+                              evidence=evidence, by=by)
+    delta_id = product_delta_digest(base, effective_review_base(base, task_id))
+    generation, _selection, problems = read_selected_review_generation(
+        base, story, task_id, expected_delta_id=delta_id,
+    )
+    if problems or not isinstance(generation, dict):
+        fail("cannot triage from selected proof: " + "; ".join(
+            problems or ["no selected complete review generation"]
+        ) + f"; run `forge review {task_id}` on this tree, then triage what it raises")
+    artifact = (generation.get("lenses") or {}).get(lens) or {}
+    needle = match.strip().lower()
+    hits = [f for f in artifact.get("blocking_findings") or []
+            if needle in json.dumps(f).lower()]
+    if not hits:
+        fail(f"no blocking {lens} finding matches {match!r}")
+    if len(hits) > 1:
+        fail(f"{len(hits)} blocking {lens} findings match {match!r}; narrow it")
+    finding = hits[0]
+    proof = verify_evidence_line(base, evidence, flag="--evidence")
+    where = [verify_evidence_line(base, item, flag="--instance")
+             for item in instances or []]
+    if not where:
+        fail("--real needs at least one --instance <file:line>: every place the "
+             "same contract applies and still fails, so the fix round closes the "
+             "class and not the one file the review cited. If the cited line is "
+             "the only place, pass it as the instance.")
+    at = now_iso()
+    record = {
+        "lens": lens, "finding": finding, "verdict": "real", "evidence": proof,
+        "instances": where, "keep": (keep or "").strip(),
+        "reason": (reason or "").strip(), "triaged_by": by.strip(),
+        "triaged_at": at, "delta_id": str(generation.get("delta_id") or ""),
+        "generation_id": str(generation.get("generation_id") or ""),
+        "task_id": task_id,
+    }
+    data = load_json(triage_path(base, story, task_id), default={})
+    if not isinstance(data, dict):
+        data = {}
+    key = _finding_key(finding)
+    kept = [r for r in data.get("findings") or [] if isinstance(r, dict)
+            and not (r.get("lens") == lens and _finding_key(r.get("finding")) == key)]
+    data["findings"] = kept + [record]
+    dump_json(triage_path(base, story, task_id, for_write=True), data)
+    summary = (str(finding.get("summary", ""))[:160] if isinstance(finding, dict)
+               else str(finding)[:160])
+    left, total = untriaged_blocking(base, story, task_id)
+    tail = ("`./forge delegate` carries the triage beside each finding" if not left
+            else f"{left} still untriaged")
+    print(f"Triaged {lens} finding as REAL: {summary}\n  proof: {proof}\n  "
+          f"fix at every one of: {', '.join(where)}"
+          + (f"\n  keep: {record['keep']}" if record["keep"] else "")
+          + f"\n  {total - left} of {total} blocking finding(s) triaged; {tail}")
+    return record
 
 
 def rejected_findings_report(base: Path, story: str, task_id: str) -> str:
@@ -1272,7 +1580,9 @@ def rejected_findings_report(base: Path, story: str, task_id: str) -> str:
         return ""
     return ("## Review findings rejected on a citation\n\n"
             "The reviewer raised these as blocking; the coordinator set them aside "
-            "as contradicting settled text. Check the citation before merging.\n\n"
+            "as contradicting settled text, or as wrong on a line the reviewer did "
+            "not open (cited as `evidence <file:line>`). Check the citation or the "
+            "line before merging.\n\n"
             + "\n".join(lines) + "\n")
 
 
@@ -1362,10 +1672,24 @@ def _shared_terms(finding: dict | str, source: str) -> list[str]:
 
 def cmd_review(args: argparse.Namespace) -> None:
     base = Path(args.repo).resolve() if args.repo else repo_root()
+    if getattr(args, "triage", None):
+        real = bool(getattr(args, "real", False))
+        wrong = bool(getattr(args, "not_a_defect", False))
+        if real == wrong:
+            fail("--triage takes exactly one of --real or --not-a-defect")
+        triage_finding(base, args.id, getattr(args, "lens", None) or "",
+                       args.triage, real=real,
+                       evidence=getattr(args, "evidence", "") or "",
+                       instances=list(getattr(args, "instance", None) or []),
+                       keep=getattr(args, "keep", "") or "",
+                       reason=getattr(args, "reason", "") or "",
+                       by=getattr(args, "by", "") or "")
+        return
     if getattr(args, "reject", None):
         reject_finding(base, args.id, getattr(args, "lens", None) or "",
                        args.reject, reason=getattr(args, "reason", "") or "",
                        cite=getattr(args, "cite", "") or "",
+                       evidence=getattr(args, "evidence", "") or "",
                        by=getattr(args, "by", "") or "")
         return
     outcome = review_task(
@@ -1471,6 +1795,8 @@ def review_task(base: Path, task_id: str, *, lens: str | None = None,
     # _skill_argv, where the fallback is pinned. Checking it here would only
     # re-read the helper's source, which is what blocked every published
     # version of it.
+    from .review_launcher import repo_readable, write_launcher
+    readable, why_not = repo_readable(engine)
     if not args.lens and args.max_priority != "P3":
         fail("complete three-lens review requires --max-priority P3")
 
@@ -1495,7 +1821,8 @@ def review_task(base: Path, task_id: str, *, lens: str | None = None,
     prompt_names = lenses if args.lens else ["combined"]
     for name in prompt_names:
         rel = f"review-briefs/{args.id}.{name}.md"
-        body = _lens_prompt(task, name, base) if args.lens else _combined_prompt(task)
+        body = (_lens_prompt(task, name, base, repo_readable=readable) if args.lens
+                else _combined_prompt(task, repo_readable=readable))
         if not safe_factory_write_bytes(base, rel, body):
             fail(f"could not write .factory/{rel}")
         prompts[name] = (f".factory/{rel}", body)
@@ -1534,13 +1861,31 @@ def review_task(base: Path, task_id: str, *, lens: str | None = None,
             if not safe_factory_write_bytes(worktree, factory_rel, body):
                 fail(f"unsafe detached review destination: {worktree / rel}")
         name = prompt_names[0]
+        codex_bin = None
+        if readable:
+            # The launcher lives in the control dir, never in the reviewed tree
+            # (the skill refuses an in-repo binary), and its launch.log stays
+            # after the review folder is removed.
+            from factory_lib import git_control_dir
+            codex_bin = str(write_launcher(
+                git_control_dir(base) / "review-launcher" / args.id, worktree))
+            print("review runs inside the reviewed worktree, read-only: a verdict "
+                  "on unchanged code is read, not guessed (0076)", flush=True)
+        else:
+            print(f"review sees only the diff bundle ({why_not}); the brief tells "
+                  "it not to mark unseen code partial", flush=True)
         print(f"== {name} review: releasing Codex over {len(scope)} path(s) "
               f"({base_sha[:7]}..{review_tip[:7]}, task tip {tip_sha[:7]}) ==",
               flush=True)
+        if not args.lens:
+            _require_current_review_helper(skill)
         helper_before, helper_file_before = _helper_identity(skill)
+        # The launcher travels only when there is one, so a runner that knows
+        # nothing of it (a test double, an older override) keeps working.
         result = _run_skill(
             skill, worktree, base_sha, prompts[name][0], tmp / f"{name}.json",
             engine, args.max_priority, ledger_root=base, return_raw=not args.lens,
+            **({"codex_bin": codex_bin} if codex_bin else {}),
         )
         if args.lens:
             reviewed = result
@@ -1588,10 +1933,6 @@ def review_task(base: Path, task_id: str, *, lens: str | None = None,
                 "commit": tip_sha,
             })
         prompt_body = prompts["combined"][1]
-        from .stages import reviewed_meaning_identity
-        reviewed_meaning = reviewed_meaning_identity(
-            base, stage, task, helper_before,
-        )
         candidate = {
             "format": "forge-review-generation/v1", "origin": "combined",
             "generated_by": "autoreview", "story": story, "task_id": args.id,
@@ -1600,8 +1941,8 @@ def review_task(base: Path, task_id: str, *, lens: str | None = None,
             "inspected_commit": tip_sha,
             "delta_id": token.get("branch_diff_digest"),
             "helper": helper_before,
-            "input": {"sha256": reviewed_meaning["identity"],
-                      "bytes": reviewed_meaning["bytes"]},
+            "input": {"sha256": hashlib.sha256(prompt_body).hexdigest(),
+                      "bytes": len(prompt_body)},
             "raw_result": {"encoding": "base64",
                            "sha256": hashlib.sha256(raw_result).hexdigest(),
                            "bytes": len(raw_result),

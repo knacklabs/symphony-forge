@@ -136,11 +136,8 @@ if args.set:
     if payload.get("helper") != expected_helper:
         raise SystemExit("review generation helper does not match the installed helper")
     meaning = reviewed_meaning_identity(root, stage, task, expected_helper)
-    expected_input = {
-        "sha256": meaning["identity"], "bytes": meaning["bytes"],
-    }
-    if payload.get("input") != expected_input:
-        raise SystemExit("review generation input does not match the current reviewed meaning")
+    if payload.get("input") not in meaning["accepted_inputs"]:
+        raise SystemExit("review generation input does not match the current reviewed meaning (either combined prompt)")
     if payload.get("lenses") != rederive_combined_lenses(root, payload):
         raise SystemExit("review generation lenses do not match the raw helper result")
     generation, selection = publish_review_generation(
