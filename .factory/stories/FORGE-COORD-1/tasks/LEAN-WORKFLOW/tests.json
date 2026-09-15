@@ -1,15 +1,19 @@
 {
-  "commit": "74dff74952c3cc64fa3bb20379f10f2d70aa1420",
+  "commit": "0349b4e262308c6d14a45a40f252944b2c312236",
   "automated": {
     "generated_by": "implementer",
     "status": "passed",
-    "summary": "LEAN-WORKFLOW current commit 74dff74952c3 passed the repository verifier (dual-runtime, scaffold, full factory suite: 1060 passed, 4 skipped in 2699.92s (0:44:59)) and eight focused completed-launch checks.",
+    "summary": "LEAN-WORKFLOW at 0349b4e26230 passed dual-runtime and factory scaffold checks, the full source factory suite (1062 passed, 4 skipped in 999.14s (0:16:39)), and all 51 declared required selectors with zero JUnit ID or path misses.",
     "blocking_findings": [],
     "commands_run": [
-      "UV_CACHE_DIR=/tmp/forge-lean-main-full-cache-20260915 UV_TOOL_DIR=/tmp/forge-lean-main-full-tools-20260915 UV_PYTHON=3.11 uv run --python 3.11 --with pytest --with psutil python factory/scripts/verify.py > /private/tmp/forge-lean-main-full-verify-final-20260915.log 2>&1",
-      "UV_CACHE_DIR=/tmp/forge-lean-main-full-cache-20260915 UV_TOOL_DIR=/tmp/forge-lean-main-full-tools-20260915 UV_PYTHON=3.11 uv run --python 3.11 --with pytest --with psutil python -m pytest factory/tests/test_gates.py::test_stage_done_ignores_a_brief_rewritten_by_proof_commands factory/tests/test_regrill_scope.py::test_measurement_receipt_authenticates_its_native_launch_not_a_later_one factory/tests/test_gates.py::test_stage_done_rejects_unbound_launch_argv factory/tests/test_gates.py::test_stage_done_rejects_incomplete_success_lifecycle factory/tests/test_gates.py::test_require_successful_launch_accepts_windows_node_exe -q > /private/tmp/forge-lean-main-completed-launch-proof-20260915.log 2>&1"
+      "./forge task close LEAN-WORKFLOW (integrated verifier and 51 declared required-test commands)",
+      "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with pytest-xdist --with psutil python factory/scripts/verify.py",
+      "python3 factory/scripts/check_dual_runtime.py",
+      "python3 factory/scripts/check_encoding_hygiene.py",
+      "python3 factory/scripts/check_board_complete.py",
+      "git diff --check"
     ],
-    "pass_fail_summary": "1060 passed, 4 skipped in 2699.92s (0:44:59); full structural and scaffold checks exited 0; eight focused launch/receipt cases passed, zero failed.",
+    "pass_fail_summary": "1062 passed, 4 skipped in 999.14s (0:16:39); dual-runtime and scaffold exited 0; 51 declared selectors passed, 0 failed, 0 measured JUnit misses.",
     "reviewed_scope": [
       "factory/scripts/forge_cli/stages.py",
       "factory/scripts/factory_lib.py",
@@ -18,21 +22,30 @@
       "docs/specs/delegation-boundary.md",
       "factory/scripts/forge_cli/approval.py",
       "factory/scripts/forge_cli/upgrade.py",
-      "factory/scripts/forge_cli/review.py"
+      "factory/scripts/forge_cli/review.py",
+      "factory/scripts/forge_cli/stages.py",
+      "factory/tests/test_proof_reuse.py",
+      "factory/tests/test_delegate_scope.py",
+      ".github/workflows/factory-scaffold.yml",
+      "AGENTS.md"
     ],
     "remaining_gaps": [
       "A real Claude ExitPlanMode UI approval event was not exercised on this text desktop host; supported native hook event/refusal fixtures passed in the full factory suite.",
-      "A real Codex synchronous Plan Mode approval UI event was not exercised on this text desktop host; the supported nested answers envelope and refusal fixtures passed in the full factory suite."
+      "A real Codex synchronous Plan Mode approval UI event was not exercised on this text desktop host; the supported nested answers envelope and refusal fixtures passed in the full factory suite.",
+      "Native Windows protected-DACL selector is selected in factory-scaffold pull-request CI; that host proof is pending until the PR Windows job passes."
     ],
     "manual_validation_steps": [
       "Live gh pr view 109 --repo knacklabs/symphony-forge --json number,state,headRefOid,mergeCommit,mergedAt,baseRefName on 2026-09-15 returned MERGED to main, head c4c2fd9d89e8446327125da5a6bc74d335910a47, merge 8f1d0530b29083c4b7a0978bebb86fd9b0e1f23c, mergedAt 2026-08-19T03:37:09Z; recorder-generated .factory/events/3679bb571b304025956aa2f6ac141e9d.json links FORGE-CFS-1 to #109 (commit 32b3ee6).",
       "Live gh pr view 110 --repo knacklabs/symphony-forge --json number,state,headRefOid,mergeCommit,mergedAt,baseRefName on 2026-09-15 returned MERGED to main, head bac5bdb4b5007a331f8e98037cbe55332a3b72b6, merge 6320c1a6e67ba0614ee960f57baf3605811b0d86, mergedAt 2026-08-19T17:25:32Z; recorder-generated .factory/events/31d5e07187fb4d9fab0a47009e90331b.json links FORGE-ACC-3 to #110 (commit 32b3ee6)."
     ],
+    "tests_added_or_updated": [
+      "factory/tests/test_proof_reuse.py: content-bound receipt reuse, ephemeral uv tools, metadata-only HEAD and Board inputs",
+      "factory/tests/test_delegate_scope.py: native Windows protected-DACL context-file case"
+    ],
     "non_blocking_findings": [],
     "residual_risks": [],
-    "tests_added_or_updated": [],
-    "recorded_at": "2026-09-15T07:14:03+00:00",
-    "commit": "74dff74952c3cc64fa3bb20379f10f2d70aa1420"
+    "recorded_at": "2026-09-15T11:25:57+00:00",
+    "commit": "0349b4e262308c6d14a45a40f252944b2c312236"
   },
-  "updated_at": "2026-09-15T07:14:03+00:00"
+  "updated_at": "2026-09-15T11:25:57+00:00"
 }
