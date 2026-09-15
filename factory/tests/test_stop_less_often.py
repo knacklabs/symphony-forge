@@ -53,17 +53,9 @@ def test_an_edited_story_plan_routes_to_native_reapproval_without_a_cold_read(
     assert grill.read_bytes() == original_grill
 
 
-def test_a_plan_edited_after_approval_goes_to_the_human_not_the_grill(
+def test_a_plan_edited_after_approval_cannot_reuse_stale_native_authority(
         repo: Path, tmp_path):
-    """The rule the human asked for: strict, but not another cold read.
-
-    The grill already converged on this design and a human signed it off. When
-    the words then change, another adversarial read is not what is missing —
-    the human is, because they approved specific text and it is no longer that
-    text. One reworded sentence used to cost a full grill round; worse, a real
-    design change could be cleared by an agent re-grilling rather than by the
-    person who approved the original.
-    """
+    """An old approval alone cannot authenticate a newly edited artifact."""
     sign_off(repo)
     intake(repo)
     save_plan(repo, tmp_path)
@@ -71,13 +63,12 @@ def test_a_plan_edited_after_approval_goes_to_the_human_not_the_grill(
     code, out = record_task_grill(repo, STAGE_TASK, approve=False)
     assert code == 0, out
     view_plan_on_board(repo, "T1")
-    code, out = post_hook(repo, native_claude_approval())
+    code, out = post_hook(repo, native_claude_approval(repo))
     assert code == 0, out
 
     saved = story_state(repo) / "task-plans" / "T1.md"
     grill_path = story_state(repo) / "grills" / "tasks" / "T1.json"
     original_grill = json.loads(grill_path.read_text())
-    original_plan_digest = original_grill["task_plan_sha256"]
     preserved_cold_proof = {
         field: original_grill.get(field)
         for field in (
@@ -98,50 +89,17 @@ def test_a_plan_edited_after_approval_goes_to_the_human_not_the_grill(
 
     code, out = run(repo, "forge.py", "stage", "start", "T1", "--trunk")
     assert code != 0, out
-    assert "Task plan approval required" in out
-    reapproval_event = native_claude_approval()
-    code, out = post_hook(repo, reapproval_event)
-    assert code == 0, out
-    amended_grill = json.loads(grill_path.read_text())
-    assert amended_grill["task_plan_sha256"] == original_plan_digest
-    assert amended_grill["approved_task_plan_sha256"] != original_plan_digest
-    assert {
-        field: amended_grill.get(field) for field in preserved_cold_proof
-    } == preserved_cold_proof
+    assert "task grill is STALE" in out
     lib = load_factory_lib(repo)
-    assert lib._task_plan_approval_matches_digest(
-        amended_grill, lib.plan_digest_without_assumptions(saved),
-    )
-    events = task_approval_events()
-    assert len(events) == 2
-    assert original_plan_digest in {
-        event["approved_plan_sha256"] for event in events
-    }
-
-    # A second edit still routes to the human; it does not pretend the cold
-    # reader saw either amendment or require a new cold launch.
-    saved.write_text(saved.read_text(encoding="utf-8") + "\nSecond reworded line.\n",
-                     encoding="utf-8")
-    code, out = run(repo, "forge.py", "stage", "start", "T1", "--trunk")
-    assert code != 0 and "Task plan approval required" in out, out
-    previous_digest = amended_grill["approved_task_plan_sha256"]
-    code, out = post_hook(repo, reapproval_event)
-    assert code == 0, out
-    replayed_grill = json.loads(grill_path.read_text())
-    assert replayed_grill["approved_task_plan_sha256"] == previous_digest
     assert not lib._task_plan_approval_matches_digest(
-        replayed_grill, lib.plan_digest_without_assumptions(saved),
+        repo, STAGE_TASK, original_grill,
+        lib.plan_digest_without_assumptions(saved),
     )
-    code, out = post_hook(repo, native_claude_approval())
-    assert code == 0, out
-    assert len(task_approval_events()) == 3
-    final_grill = json.loads(grill_path.read_text())
+    assert len(task_approval_events()) == 1
     assert {
-        field: final_grill.get(field) for field in preserved_cold_proof
+        field: json.loads(grill_path.read_text()).get(field)
+        for field in preserved_cold_proof
     } == preserved_cold_proof
-
-    code, out = run(repo, "forge.py", "stage", "start", "T1", "--trunk")
-    assert code == 0, out
 
 
 def test_an_unapproved_plan_edit_still_needs_a_regrill(repo: Path, tmp_path):
@@ -180,7 +138,7 @@ def test_stage_start_refuses_when_task_start_was_skipped(repo: Path, tmp_path):
     code, out = record_task_grill(repo, STAGE_TASK, approve=False)
     assert code == 0, out
     view_plan_on_board(repo, "T1")
-    code, out = post_hook(repo, native_claude_approval())
+    code, out = post_hook(repo, native_claude_approval(repo))
     assert code == 0, out
 
     code, out = run(repo, "forge.py", "stage", "start", "T1")

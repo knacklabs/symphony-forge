@@ -147,8 +147,9 @@ Rules:
   `python3 factory/scripts/forge.py plan save --from <plan-file> --story
   <story-key>`. This records it as `awaiting-approval`.
 - Saving leaves the grilled plan at `awaiting-approval`. Present the exact final
-  artifact in native Plan Mode. A successful Claude `ExitPlanMode`, or the exact
-  synchronous Codex `Approve plan / Request changes / Stop` question, records
+  artifact in native Plan Mode. A successful Claude `ExitPlanMode` binds its exact
+  plan input; Codex uses the completed id-keyed `approve_plan_<digest>` question
+  `Approve exact plan digest <digest>?` with `Approve plan / Request changes / Stop`, and records
   approval through the shared recorder. Never use the board, a manual approve
   command, or a second unchanged save as approval evidence. `update_run.py`
   refuses implementation until native approval binds the final digest.

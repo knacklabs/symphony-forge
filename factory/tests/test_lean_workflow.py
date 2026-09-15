@@ -17,17 +17,22 @@ sys.path.insert(0, str(HARNESS / "factory" / "scripts"))
 from forge_cli import approval  # noqa: E402
 
 
-def _codex_event(choice: str = "Approve plan", *, async_: bool = False) -> dict:
-    question = "Approve this exact plan?"
+def _codex_event(
+    digest: str, choice: str = "Approve plan", *, async_: bool = False,
+) -> dict:
+    question_id = f"approve_plan_{digest}"
+    question = f"Approve exact plan digest {digest}?"
     return {
         "tool_name": "request_user_input", "session_id": f"s-{uuid.uuid4().hex}",
         "tool_use_id": f"e-{uuid.uuid4().hex}", "async": async_,
         "tool_input": {"questions": [{
-            "header": "Approve plan", "question": question,
+            "id": question_id, "header": "Approve plan", "question": question,
             "options": [{"label": value} for value in
                         ("Approve plan", "Request changes", "Stop")],
         }]},
-        "tool_response": {"answers": {question: choice}},
+        "tool_response": {"answers": {
+            question_id: {"answers": [choice]},
+        }},
     }
 
 
@@ -52,7 +57,7 @@ def test_native_plan_mode_approval_records_exact_digest_for_claude_exit_plan_mod
         repo: Path, tmp_path: Path):
     plan, digest = _awaiting_story(repo, tmp_path)
     record = approval.record_native_approval(
-        repo, native_claude_approval(), runtime="claude")
+        repo, native_claude_approval(repo), runtime="claude")
     assert record["approved_plan_sha256"] == digest
     assert "status: approved" in plan.read_text()
     assert json.loads(load_factory_lib(repo).run_state_path(repo).read_text())[
@@ -62,7 +67,8 @@ def test_native_plan_mode_approval_records_exact_digest_for_claude_exit_plan_mod
 def test_native_plan_mode_approval_records_exact_digest_for_codex_sync_approval(
         repo: Path, tmp_path: Path):
     plan, digest = _awaiting_story(repo, tmp_path)
-    record = approval.record_native_approval(repo, _codex_event(), runtime="codex")
+    record = approval.record_native_approval(
+        repo, _codex_event(digest), runtime="codex")
     assert record["approved_plan_sha256"] == digest
     assert record["approved_by"] == "human-via-Codex"
     assert "status: approved" in plan.read_text()
@@ -73,12 +79,20 @@ def test_native_approval_refuses_stale_wrong_runtime_canceled_async_and_unsuppor
     _plan, digest = _awaiting_story(repo, tmp_path)
     candidate = approval.eligible_candidates(repo)[0]
     monkeypatch.setattr(approval, "eligible_candidates", lambda _base: [candidate])
+    cancelled = _codex_event(digest)
+    cancelled["tool_response"]["cancelled"] = True
+    failed = _codex_event(digest)
+    failed["tool_response"]["is_error"] = True
     cases = [
-        ({**native_claude_approval(), "digest": "0" * 64}, "claude"),
-        (native_claude_approval(), "codex"),
-        ({**native_claude_approval(), "cancelled": True}, "claude"),
-        (_codex_event(async_=True), "codex"),
-        ({**_codex_event(), "tool_name": "optional_question"}, "codex"),
+        ({**native_claude_approval(repo),
+          "tool_input": {"plan": "# stale plan\n"}}, "claude"),
+        (native_claude_approval(repo), "codex"),
+        ({**native_claude_approval(repo), "cancelled": True}, "claude"),
+        (_codex_event(digest, async_=True), "codex"),
+        ({**_codex_event(digest), "cancelled": True}, "codex"),
+        (cancelled, "codex"),
+        (failed, "codex"),
+        ({**_codex_event(digest), "tool_name": "optional_question"}, "codex"),
     ]
     for event, runtime in cases:
         with pytest.raises(approval.ApprovalRefused):
@@ -89,7 +103,8 @@ def test_native_approval_refuses_stale_wrong_runtime_canceled_async_and_unsuppor
 def test_normal_flow_no_longer_requires_requirements_grill_manual_approval_or_second_save(
         repo: Path, tmp_path: Path):
     plan, digest = _awaiting_story(repo, tmp_path)
-    approval.record_native_approval(repo, native_claude_approval(), runtime="claude")
+    approval.record_native_approval(
+        repo, native_claude_approval(repo), runtime="claude")
     state = json.loads(load_factory_lib(repo).run_state_path(repo).read_text())
     assert state["plan_status"] == "approved"
     assert state["approved_plan_sha256"] == digest
@@ -131,6 +146,47 @@ def test_one_cold_grill_full_disposition_replaces_round_floors_and_frontier_fake
     assert stored["cold_input_sha256"] == cold
     assert stored["final_artifact_sha256"] != cold
     assert "frontier_empty" not in stored and "rounds" not in stored
+
+
+@pytest.mark.parametrize(("tamper", "message"), [
+    ("process", "lifecycle is not authentic"),
+    ("write", "lifecycle is not authentic"),
+    ("argv", "argv identity is invalid"),
+    ("result", "result is unavailable"),
+])
+def test_cold_grill_requires_an_authentic_read_only_launch(
+        repo: Path, tmp_path: Path, tamper: str, message: str):
+    sign_off(repo)
+    intake(repo)
+    draft = tmp_path / "plan.md"
+    draft.write_text(plan_draft(repo), encoding="utf-8")
+    _seed_cold_launch(repo, "plan", hashlib.sha256(draft.read_bytes()).hexdigest())
+    from forge_cli.delegate import delegations_path
+    ledger = delegations_path(repo)
+    rows = [json.loads(line) for line in ledger.read_text(encoding="utf-8").splitlines()]
+    if tamper == "process":
+        rows[-1]["pid"] += 1
+    elif tamper == "write":
+        for row in rows:
+            row["write"] = True
+    elif tamper == "argv":
+        for row in rows:
+            row["argv"].append("--unexpected")
+    else:
+        for row in rows:
+            row["output_path"] = str(tmp_path / "missing-result.log")
+    ledger.write_text("".join(json.dumps(row) + "\n" for row in rows),
+                      encoding="utf-8")
+    payload = {
+        "generated_by": "griller", "gate": "plan", "verdict": "pass",
+        "gaps": [], "contradictions": [], "resolutions": [],
+        "finding_dispositions": [],
+    }
+    code, output = run(
+        repo, "record_grill_from_json.py", "--gate", "plan",
+        "--input-digest", str(draft), stdin=json.dumps(payload),
+    )
+    assert code != 0 and message in output
 
 
 def test_recovery_override_removes_round_ledgers_without_losing_cold_read_proof(

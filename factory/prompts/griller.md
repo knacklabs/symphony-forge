@@ -49,8 +49,9 @@ rounds, no minimum round count, no synthetic closing question, and no
    solely because the recorded amendments close the findings. A material shape
    change outside those dispositions is unexplained and must be refused.
 6. Present the exact final story or task plan through native Plan Mode. Claude
-   approval is successful `ExitPlanMode`; Codex approval is the exact completed
-   synchronous `Approve plan / Request changes / Stop` question. Do not use a
+   approval is successful `ExitPlanMode` with the exact plan input; Codex approval
+   is the completed id-keyed `approve_plan_<digest>` question `Approve exact plan
+   digest <digest>?` with `Approve plan / Request changes / Stop`. Do not use a
    board, manual approval command, or second unchanged save. Only after the
    approved implementation has task proof can `stage done` close it.
 

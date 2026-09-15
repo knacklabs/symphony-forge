@@ -13,6 +13,8 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
+import stat
 import sys
 from pathlib import Path
 
@@ -34,7 +36,7 @@ def _non_empty_string(value: object) -> bool:
 
 
 def _cold_launch_digest(root: Path, gate: str, task_id: str) -> str:
-    from forge_cli.delegate import load_delegations
+    from forge_cli.delegate import argv_digest, load_delegations
     label = f"grill-{gate}" + (f"-{task_id}" if task_id else "")
     story = load_json(run_state_path(root), default={}).get("issue_key", "")
     spec = get_gate(gate)
@@ -43,22 +45,88 @@ def _cold_launch_digest(root: Path, gate: str, task_id: str) -> str:
                       spec.evidence_name(task_id)), default={},
     )
     since = str(previous.get("recorded_at") or "")
-    latest: dict[str, dict] = {}
+    launches: dict[str, list[dict]] = {}
     for row in load_delegations(root):
         if (row.get("task") == label
                 and (not spec.story_scoped or row.get("story") == story)
                 and str(row.get("at") or "") > since
                 and isinstance(row.get("launch_id"), str)):
-            latest[row["launch_id"]] = row
-    completed = [row for row in latest.values()
-                 if row.get("launch_status") == "succeeded"]
+            launches.setdefault(row["launch_id"], []).append(row)
+    completed = [rows for rows in launches.values()
+                 if rows[-1].get("launch_status") == "succeeded"]
     if len(completed) != 1:
         raise SystemExit(
             f"{gate} grill requires exactly one successful independent cold-read "
             f"launch since its last pass; found {len(completed)}"
         )
-    digest = completed[0].get("task_sha256")
-    if not isinstance(digest, str) or len(digest) != 64:
+    rows = completed[0]
+    terminal = rows[-1]
+    immutable = (
+        "task", "story", "brief_sha256", "task_sha256", "write", "model",
+        "effort", "argv", "argv_sha256", "transport", "brief_path",
+        "output_path", "stderr_path",
+    )
+    if (len(rows) != 3
+            or [row.get("launch_status") for row in rows]
+            != ["starting", "running", "succeeded"]
+            or any(any(row.get(field) != rows[0].get(field) for field in immutable)
+                   for row in rows[1:])
+            or any(rows[1].get(field) != terminal.get(field)
+                   for field in ("pid", "pgid", "pid_started"))
+            or terminal.get("write") is not False
+            or terminal.get("exit_code") != 0
+            or not isinstance(terminal.get("pid"), int)
+            or not isinstance(terminal.get("pgid"), int)
+            or not _non_empty_string(terminal.get("pid_started"))):
+        raise SystemExit(f"{gate} cold-read launch lifecycle is not authentic")
+    argv = terminal.get("argv")
+    if (not isinstance(argv, list) or not argv
+            or any(not isinstance(token, str) for token in argv)
+            or terminal.get("argv_sha256") != argv_digest(argv)):
+        raise SystemExit(f"{gate} cold-read launch argv identity is invalid")
+    brief = root / ".factory" / (
+        f"grill-brief-{gate}" + (f"-{task_id}" if task_id else "") + ".md"
+    )
+    if (terminal.get("brief_path") != brief.relative_to(root).as_posix()
+            or not brief.is_file()
+            or terminal.get("brief_sha256") != sha256_of(brief)):
+        raise SystemExit(f"{gate} cold-read launch brief identity is invalid")
+    output_text = terminal.get("output_path")
+    if not _non_empty_string(output_text):
+        raise SystemExit(f"{gate} cold-read launch has no durable result identity")
+    output = Path(output_text)
+    try:
+        info = output.lstat()
+        result = output.read_bytes()
+    except OSError:
+        raise SystemExit(f"{gate} cold-read result is unavailable")
+    if (stat.S_ISLNK(info.st_mode) or not stat.S_ISREG(info.st_mode)
+            or info.st_nlink != 1 or not result):
+        raise SystemExit(f"{gate} cold-read result identity is invalid")
+    if terminal.get("transport") == "native":
+        from forge_cli.codex_runtime import native_argv_valid, scan_native_result
+        native_result = scan_native_result(output)
+        if (not _non_empty_string(terminal.get("session_id"))
+                or terminal.get("session_id") != native_result.session_id
+                or native_result.error
+                or not native_result.message
+                or not native_argv_valid(terminal, root, [])):
+            raise SystemExit(f"{gate} native cold-read has no session identity")
+    else:
+        companion = terminal.get("companion_path")
+        prompts = {str(brief), brief.relative_to(root).as_posix()}
+        expected = [[
+            argv[0], companion, "task", "--json", "--cwd", str(root),
+            "--model", terminal.get("model"), "--effort", terminal.get("effort"),
+            "--prompt-file", prompt,
+        ] for prompt in prompts]
+        if (terminal.get("transport") is not None
+                or not _non_empty_string(companion)
+                or Path(argv[0]).stem.lower() != "node"
+                or argv not in expected):
+            raise SystemExit(f"{gate} cold-read transport identity is invalid")
+    digest = terminal.get("task_sha256")
+    if not isinstance(digest, str) or not re.fullmatch(r"[0-9a-f]{64}", digest):
         raise SystemExit(f"{gate} cold-read launch has no exact input digest")
     return digest
 
@@ -229,6 +297,15 @@ if any(
     raise SystemExit(
         "--task-digest is no longer accepted; the digest is derived from the "
         "protected contract, approved plan, and product tree"
+    )
+
+if any(
+    (arg == "--gate" and index + 1 < len(sys.argv) and sys.argv[index + 1] == "requirements")
+    or arg == "--gate=requirements"
+    for index, arg in enumerate(sys.argv[1:], 1)
+):
+    raise SystemExit(
+        "requirements grill is a Lean-removed format; run forge upgrade"
     )
 
 parser = argparse.ArgumentParser(description="Record a handover/plan grill from structured JSON")

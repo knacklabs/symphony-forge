@@ -413,12 +413,12 @@ def record_task_grill(repo: Path, task: dict, verdict: str = "pass",
     )
     if code != 0 or verdict != "pass" or not approve:
         return code, plan_out + out
-    code, approve_out = post_hook(repo, native_claude_approval())
+    code, approve_out = post_hook(repo, native_claude_approval(repo))
     return code, out + plan_out + approve_out
 
 
 def _seed_cold_launch(repo: Path, gate: str, digest: str, task_id: str = "") -> None:
-    from forge_cli.delegate import delegations_path
+    from forge_cli.delegate import argv_digest, delegations_path
     label = f"grill-{gate}" + (f"-{task_id}" if task_id else "")
     path = delegations_path(repo)
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -427,14 +427,39 @@ def _seed_cold_launch(repo: Path, gate: str, digest: str, task_id: str = "") -> 
         rows = [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines()
                 if line.strip()]
     rows = [row for row in rows if row.get("task") != label]
-    rows.append({
-            "launch_id": f"launch-test-{uuid.uuid4().hex}",
-            "task": label,
-            "story": run_state(repo).get("issue_key", ""),
-            "at": datetime.now().astimezone().isoformat(),
-            "launch_status": "succeeded",
-            "task_sha256": digest,
-        })
+    launch_id = f"launch-test-{uuid.uuid4().hex}"
+    suffix = f"-{task_id}" if task_id else ""
+    brief = repo / ".factory" / f"grill-brief-{gate}{suffix}.md"
+    brief.write_text("fixture cold-read brief\n", encoding="utf-8")
+    output = repo / ".factory" / f"{launch_id}.stdout.log"
+    output.write_text("fixture cold-reader result\n", encoding="utf-8")
+    argv = ["node", "/fixture/companion.js", "task", "--json",
+            "--cwd", str(repo), "--model", "fixture", "--effort", "high",
+            "--prompt-file", str(brief)]
+    common = {
+        "launch_id": launch_id,
+        "task": label,
+        "story": run_state(repo).get("issue_key", ""),
+        "at": datetime.now().astimezone().isoformat(),
+        "brief_sha256": hashlib.sha256(brief.read_bytes()).hexdigest(),
+        "brief_path": brief.relative_to(repo).as_posix(),
+        "task_sha256": digest,
+        "write": False,
+        "model": "fixture",
+        "effort": "high",
+        "argv": argv,
+        "argv_sha256": argv_digest(argv),
+        "companion_path": "/fixture/companion.js",
+        "output_path": str(output),
+        "stderr_path": str(output.with_suffix(".stderr.log")),
+    }
+    rows.extend([
+        {**common, "launch_status": "starting"},
+        {**common, "launch_status": "running", "pid": 12345,
+         "pgid": 12345, "pid_started": "fixture"},
+        {**common, "launch_status": "succeeded", "pid": 12345,
+         "pgid": 12345, "pid_started": "fixture", "exit_code": 0},
+    ])
     path.write_text("".join(json.dumps(row) + "\n" for row in rows),
                     encoding="utf-8")
 
@@ -554,25 +579,37 @@ def save_plan(repo: Path, tmp_path: Path) -> tuple[int, str]:
                     "--story", story)
     if code != 0 or "awaiting-approval" not in out:
         return code, out
-    return post_hook(repo, native_claude_approval())
+    return post_hook(repo, native_claude_approval(repo))
 
 
-def native_claude_approval() -> dict:
+def _approval_candidate(repo: Path):
+    from forge_cli.approval import eligible_candidates
+    candidates = eligible_candidates(repo)
+    assert len(candidates) == 1
+    return candidates[0]
+
+
+def native_claude_approval(repo: Path) -> dict:
+    candidate = _approval_candidate(repo)
     return {
         "tool_name": "ExitPlanMode",
         "session_id": f"session-{uuid.uuid4().hex}",
         "tool_use_id": f"event-{uuid.uuid4().hex}",
+        "tool_input": {"plan": candidate.path.read_text(encoding="utf-8")},
         "tool_response": {"status": "success"},
     }
 
 
-def native_codex_approval() -> dict:
-    question = "Approve this exact plan?"
+def native_codex_approval(repo: Path) -> dict:
+    candidate = _approval_candidate(repo)
+    question_id = f"approve_plan_{candidate.digest}"
+    question = f"Approve exact plan digest {candidate.digest}?"
     return {
         "tool_name": "request_user_input",
         "session_id": f"session-{uuid.uuid4().hex}",
         "tool_use_id": f"event-{uuid.uuid4().hex}",
         "tool_input": {"questions": [{
+            "id": question_id,
             "header": "Approve plan",
             "question": question,
             "options": [
@@ -581,7 +618,7 @@ def native_codex_approval() -> dict:
                 {"label": "Stop"},
             ],
         }]},
-        "tool_response": {"answers": {question: "Approve plan"}},
+        "tool_response": {"answers": {question_id: "Approve plan"}},
     }
 
 
@@ -8840,7 +8877,7 @@ def test_codex_sync_question_passes_pre_hook_then_records_approval(repo, tmp_pat
                     "--story", "ENG-1")
     assert code == 0 and "awaiting-approval" in out, out
 
-    event = native_codex_approval()
+    event = native_codex_approval(repo)
     code, out = hook(repo, event)
     assert code == 0 and '"permissionDecision": "deny"' not in out, out
     code, out = post_hook(repo, event)
@@ -8998,7 +9035,7 @@ def test_plan_save_requires_a_fresh_same_issue_grill(repo, tmp_path):
     assert code == 0, out
     code, out = save_plan_raw(repo, tmp_path)
     assert code == 0 and "awaiting-approval" in out, out
-    code, out = post_hook(repo, native_claude_approval())
+    code, out = post_hook(repo, native_claude_approval(repo))
     assert code == 0, out
     assert run_state(repo)["plan_status"] == "approved"
 def test_plan_grill_recorder_stamps_the_active_issue(repo, tmp_path):
@@ -9058,7 +9095,7 @@ def test_plan_save_requires_decision_coverage_and_no_open_contradiction(repo, tm
     code, out = run(repo, "forge.py", "plan", "save", "--from", str(draft),
                     "--story", "ENG-1")
     assert code == 0 and "awaiting-approval" in out, out
-    code, out = post_hook(repo, native_claude_approval())
+    code, out = post_hook(repo, native_claude_approval(repo))
     assert code == 0, out
     saved = next((repo / "plans" / "active").glob("ENG-1-*.md")).read_text()
     assert "story: ENG-1" in saved
@@ -17498,7 +17535,7 @@ def test_stage_start_and_delegate_refuse_without_approved_task_plan(repo, tmp_pa
     code, out = run(repo, "forge.py", "stage", "start", "T1", "--trunk")
     assert code != 0 and "Task plan approval required" in out
 
-    code, out = post_hook(repo, native_claude_approval())
+    code, out = post_hook(repo, native_claude_approval(repo))
     assert code == 0, out
     code, out = run(repo, "forge.py", "stage", "start", "T1", "--trunk")
     assert code == 0, out
@@ -17507,7 +17544,7 @@ def test_stage_start_and_delegate_refuse_without_approved_task_plan(repo, tmp_pa
     code, out = run(
         repo, "forge.py", "delegate", "T1", env=fake_companion_env(tmp_path),
     )
-    assert code != 0 and "Task plan approval required" in out
+    assert code != 0 and "task grill is STALE" in out
     rows = [json.loads(line) for line in delegation_ledger(repo).read_text().splitlines()]
     assert not any(row.get("task") == "T1" for row in rows)
 
@@ -17549,7 +17586,7 @@ def test_forge_next_and_board_route_author_task_plan_and_await_approval(
     assert code == 0, out
     assert_route("await-approval", "await-approval", "native Plan Mode")
 
-    code, out = post_hook(repo, native_claude_approval())
+    code, out = post_hook(repo, native_claude_approval(repo))
     assert code == 0, out
     assert task_frontier_state(repo)[0] == "stage-start"
     assert task_rows(repo)[0]["state"] == "grilled"

@@ -1,0 +1,1 @@
+{"event": "signal-resolved", "generated_by": "orchestrator", "at": "2026-09-14T18:46:33+00:00", "story": "FORGE-COORD-1", "detail": "S-0035-5060: Resolved without scope expansion: reviewed_meaning_identity now exposes exact combined-prompt identity for generation.input and a separate semantic_identity used only by local_review_stamp.reviewed_me"}

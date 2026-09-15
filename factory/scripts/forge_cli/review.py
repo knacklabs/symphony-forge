@@ -1346,6 +1346,33 @@ def cmd_review(args: argparse.Namespace) -> None:
                      outcome["caveats"]))
 
 
+def pre_review_proof_problems(
+    base: Path, story: str, task_id: str, base_sha: str, tip_sha: str,
+) -> list[str]:
+    """Validate only proof needed before first review; review itself is absent."""
+    from factory_lib import _proof_commit_problems
+    from .readiness import tests_passed, verify_passed
+    verify = load_json(
+        proof_path(base, story, "verify.json", task_id=task_id), default={},
+    )
+    tests = load_json(
+        proof_path(base, story, "tests.json", task_id=task_id), default={},
+    )
+    automated = tests.get("automated") if isinstance(tests, dict) else None
+    problems = []
+    if not isinstance(verify, dict) or not verify_passed(verify):
+        problems.append(f"verify.json is not passing for task {task_id}")
+    if (not isinstance(automated, dict) or automated.get("status") != "passed"
+            or not tests_passed(automated)):
+        problems.append(f"tests.json automated proof is not passing for task {task_id}")
+    if not problems:
+        problems.extend(_proof_commit_problems(
+            base, task_id, [("verify", verify), ("tests", tests)],
+            base=base_sha, seal=tip_sha,
+        ))
+    return problems
+
+
 def review_task(base: Path, task_id: str, *, lens: str | None = None,
                 engine: str = "codex", max_priority: str = "P3",
                 skill: str | None = None) -> dict:
@@ -1391,6 +1418,12 @@ def review_task(base: Path, task_id: str, *, lens: str | None = None,
 
     tip_sha = _require_git(base, "resolving HEAD", "rev-parse", "--verify", "HEAD^{commit}")
     base_sha = resolve_review_base(base, stage, state, tip_sha)
+    freshness = pre_review_proof_problems(
+        base, story, args.id, base_sha, tip_sha,
+    )
+    if freshness:
+        fail("review proof preflight failed before helper launch:\n"
+             + "\n".join(freshness))
     excluded = review_excluded_prefixes(base)
     scope = sorted(
         p for p in _require_git(base, "listing the task diff", "diff",

@@ -1,0 +1,13 @@
+{
+  "event": "open",
+  "id": "Q-0172-48df",
+  "profile": "degraded",
+  "reason": "LEAN-WORKFLOW delegated writer self-host gate compares an immutable historical launch receipt to a regenerated current brief, blocking the authorized correction follow-up",
+  "started_at": "2026-09-14T19:25:13+00:00",
+  "max_files": 5,
+  "files": [],
+  "harness_source": true,
+  "kind": "degraded",
+  "task_id": "LEAN-WORKFLOW",
+  "story": "FORGE-COORD-1"
+}

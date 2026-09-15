@@ -181,6 +181,15 @@ def _append_native_launch(repo: Path, task: dict, launch_id: str) -> None:
     })
 
 
+def _fake_companion_env(tmp_path: Path) -> dict[str, str]:
+    from test_gates import _fake_psutil_module, fake_companion_env  # noqa: E402
+
+    return {
+        **fake_companion_env(tmp_path),
+        "PYTHONPATH": str(_fake_psutil_module(tmp_path)),
+    }
+
+
 # --------------------------------------------------------------- bookkeeping
 @pytest.mark.parametrize("field,value", [
     ("review_budget", {"max_changed_files": 999, "max_changed_lines": 9,
@@ -375,7 +384,7 @@ def test_a_second_delegate_after_committing_needs_no_new_grill(repo: Path, tmp_p
     harness used to demand a fresh grill before it would let anyone write.
     """
     from test_gates import (  # noqa: E402
-        DECOMP, STAGE_TASK, fake_companion_env, start_stage,
+        DECOMP, STAGE_TASK, start_stage,
     )
 
     start_stage(repo, tmp_path, STAGE_TASK)
@@ -418,7 +427,7 @@ def test_a_second_delegate_after_committing_needs_no_new_grill(repo: Path, tmp_p
     # The fix round. No re-grill or re-approval; a real narrowed launch proves
     # the retry receives only its proper subset of the now-approved scope.
     code, out = run(repo, "forge.py", "delegate", "T1", "--scope", "src/",
-                    env=fake_companion_env(tmp_path))
+                    env=_fake_companion_env(tmp_path))
     assert code == 0, (
         "delegate still demands a fresh grill after the implementation was "
         f"committed — the loop is intact:\n{out}")
@@ -454,7 +463,7 @@ def test_a_second_delegate_after_committing_needs_no_new_grill(repo: Path, tmp_p
 
 
 def test_measurement_receipt_authenticates_its_native_launch_not_a_later_one(
-        repo: Path, tmp_path):
+        repo: Path, tmp_path, capsys):
     from test_gates import DECOMP, STAGE_TASK, start_stage  # noqa: E402
     from forge_cli.stages import _require_successful_launch  # noqa: E402
 
@@ -469,10 +478,28 @@ def test_measurement_receipt_authenticates_its_native_launch_not_a_later_one(
     )
     assert code == 0, out
 
-    _append_native_launch(repo, widened, "launch-later-valid")
+    # The receipt authenticates its historical launch and result. Regenerating
+    # the current brief after an in-scope correction must not rewrite or stale
+    # that immutable anchor.
+    from forge_cli.delegate import brief_path  # noqa: E402
+    current_brief = brief_path(repo, "T1")
+    current_brief.write_text(
+        current_brief.read_text(encoding="utf-8") + "\nRegenerated brief.\n",
+        encoding="utf-8",
+    )
     lib = load_factory_lib(repo)
+    lib.require_task_grill(repo, "T1", widened)
+
+    _append_native_launch(repo, widened, "launch-later-valid")
     stage = lib.task_stage_record(repo, "T1")
     assert _require_successful_launch(repo, "T1", stage, widened) == ""
+
+    current_brief_bytes = current_brief.read_bytes()
+    current_brief.write_bytes(current_brief_bytes + b"stale current launch\n")
+    with pytest.raises(SystemExit):
+        _require_successful_launch(repo, "T1", stage, widened)
+    assert "no successful write launch" in capsys.readouterr().out
+    current_brief.write_bytes(current_brief_bytes)
 
     original_output.write_text(
         '{"type":"thread.started","thread_id":"receipt-origin"}\n',
@@ -514,7 +541,7 @@ def test_measurement_amendment_without_a_bound_launch_writes_nothing(
 def test_story_plan_reapproval_rebinds_an_active_task_without_restarting_it(
         repo: Path, tmp_path):
     from test_gates import (  # noqa: E402
-        DECOMP, STAGE_TASK, fake_companion_env, native_claude_approval,
+        DECOMP, STAGE_TASK, native_claude_approval,
         post_hook, run_state, start_stage, story_state,
     )
 
@@ -558,7 +585,7 @@ def test_story_plan_reapproval_rebinds_an_active_task_without_restarting_it(
     amended_story_digest = lib.plan_digest_without_assumptions(plan)
     code, out = run(repo, "forge.py", "next")
     assert code == 0 and "awaiting amended-plan approval" in out, out
-    code, out = post_hook(repo, native_claude_approval())
+    code, out = post_hook(repo, native_claude_approval(repo))
     assert code == 0, out
     assert run_state(repo)["approved_plan_sha256"] == amended_story_digest
     approval_record = json.loads(
@@ -572,7 +599,7 @@ def test_story_plan_reapproval_rebinds_an_active_task_without_restarting_it(
     # decomposition must first publish the new story binding.
     code, out = run(
         repo, "forge.py", "delegate", "T1",
-        env=fake_companion_env(tmp_path),
+        env=_fake_companion_env(tmp_path),
     )
     assert code != 0 and "task grill is STALE" in out, out
 
@@ -605,7 +632,7 @@ def test_story_plan_reapproval_rebinds_an_active_task_without_restarting_it(
 
     code, out = run(
         repo, "forge.py", "delegate", "T1",
-        env=fake_companion_env(tmp_path),
+        env=_fake_companion_env(tmp_path),
     )
     assert code == 0, out
 
@@ -617,7 +644,7 @@ def test_story_plan_reapproval_rebinds_an_active_task_without_restarting_it(
     write_stages(repo, stages)
     code, out = run(
         repo, "forge.py", "delegate", "T1",
-        env=fake_companion_env(tmp_path),
+        env=_fake_companion_env(tmp_path),
     )
     assert code != 0 and "task grill is STALE" in out, out
 
@@ -625,7 +652,7 @@ def test_story_plan_reapproval_rebinds_an_active_task_without_restarting_it(
 def test_story_plan_reapproval_preserves_an_active_task_without_receipts(
         repo: Path, tmp_path):
     from test_gates import (  # noqa: E402
-        DECOMP, STAGE_TASK, fake_companion_env, native_claude_approval,
+        DECOMP, STAGE_TASK, native_claude_approval,
         post_hook, run_state, start_stage, story_state,
     )
 
@@ -642,7 +669,7 @@ def test_story_plan_reapproval_preserves_an_active_task_without_receipts(
         encoding="utf-8",
     )
 
-    code, out = post_hook(repo, native_claude_approval())
+    code, out = post_hook(repo, native_claude_approval(repo))
     assert code == 0, out
     first_amended_digest = run_state(repo)["approved_plan_sha256"]
     code, out = run(
@@ -655,7 +682,7 @@ def test_story_plan_reapproval_preserves_an_active_task_without_receipts(
 
     code, out = run(
         repo, "forge.py", "delegate", "T1",
-        env=fake_companion_env(tmp_path),
+        env=_fake_companion_env(tmp_path),
     )
     assert code == 0, out
 
@@ -663,7 +690,7 @@ def test_story_plan_reapproval_preserves_an_active_task_without_receipts(
         plan.read_text(encoding="utf-8") + "\nSecond approved amendment.\n",
         encoding="utf-8",
     )
-    code, out = post_hook(repo, native_claude_approval())
+    code, out = post_hook(repo, native_claude_approval(repo))
     assert code == 0, out
     second_amended_digest = run_state(repo)["approved_plan_sha256"]
     code, out = run(
@@ -678,7 +705,7 @@ def test_story_plan_reapproval_preserves_an_active_task_without_receipts(
     assert lib.task_stage_record(repo, "T1") == stage_before
     code, out = run(
         repo, "forge.py", "delegate", "T1",
-        env=fake_companion_env(tmp_path),
+        env=_fake_companion_env(tmp_path),
     )
     assert code == 0, out
 
@@ -689,16 +716,16 @@ def test_story_plan_reapproval_preserves_an_active_task_without_receipts(
     )
     code, out = run(
         repo, "forge.py", "delegate", "T1",
-        env=fake_companion_env(tmp_path),
+        env=_fake_companion_env(tmp_path),
     )
-    assert code != 0 and "Task plan approval required" in out, out
+    assert code != 0 and "task grill is STALE" in out, out
 
 
 def test_a_contract_change_still_stops_the_next_delegate(repo: Path, tmp_path):
     # The other half: the gate must still refuse when what was authorised
     # actually changed, or the fix has simply removed the gate.
     from test_gates import (  # noqa: E402
-        STAGE_TASK, fake_companion_env, start_stage,
+        STAGE_TASK, start_stage,
     )
     from factory_lib import (  # noqa: E402
         dump_json, load_json, protected_decomposition_state_path,
@@ -714,6 +741,6 @@ def test_a_contract_change_still_stops_the_next_delegate(repo: Path, tmp_path):
     dump_json(path, decomposition)
 
     code, out = run(repo, "forge.py", "delegate", "T1",
-                    env=fake_companion_env(tmp_path))
+                    env=_fake_companion_env(tmp_path))
     assert code != 0, f"a widened write scope no longer stops delegate:\n{out}"
     assert "STALE" in out or "grill" in out.lower()

@@ -336,8 +336,8 @@ def test_context_file_launch_uses_one_handle_snapshot_and_metadata_only_evidence
 
     def fake_launch(base, **kwargs):
         captured.update(kwargs)
-        assert kwargs["context_snapshot"].is_file()
-        assert kwargs["context_snapshot"].read_text() == "one stable snapshot"
+        assert kwargs["context_text"] == "one stable snapshot"
+        assert kwargs["context_snapshot_identity"]
         return {"launch_status": "succeeded"}
 
     monkeypatch.setattr(delegate, "launch_companion", fake_launch)

@@ -2249,7 +2249,13 @@ def require_closeout_order(root: Path) -> list[str]:
         evidence_path(root, key, f"reviews/{aspect}.json")
         for aspect in ("quality", "performance", "security")
     ]
-    if any(path.is_file() for path in fixed_reviews):
+    selected_missing = any(
+        not evidence_path(
+            root, key, f"tasks/{task.get('id')}/reviews/selected.json",
+        ).is_file()
+        for task in tasks
+    )
+    if selected_missing and any(path.is_file() for path in fixed_reviews):
         problems.append(
             "legacy fixed review proof is no longer runtime authority; "
             "run `forge upgrade`"
@@ -3351,7 +3357,14 @@ def task_plan_binding_digest(root: Path, task_id: str, grill: dict) -> str:
     if not plan.is_file():
         return ""
     digest = plan_digest_without_assumptions(plan)
-    if not _task_plan_approval_matches_digest(grill, digest):
+    task = next(
+        (item for item in load_json(
+            protected_decomposition_state_path(root), default={}
+        ).get("tasks", [])
+         if isinstance(item, dict) and item.get("id") == task_id),
+        {"id": task_id},
+    )
+    if not _task_plan_approval_matches_digest(root, task, grill, digest):
         return ""
     return digest
 
@@ -3521,7 +3534,7 @@ def validated_measurement_launch(
             return None
         return entry
     return entry if _successful_launch_entry_valid(
-        root, task_id, stage, entry,
+        root, task_id, stage, entry, current_brief_required=False,
     ) else None
 
 
@@ -3551,8 +3564,14 @@ def _measurement_continuity_matches(
     )
     permitted_story_digests = {story_digest}
     permitted_story_digests.update(previous_story_digests)
-    task_plan_digest = task_plan_binding_digest(root, task_id, grill)
-    if not story_digest or not task_plan_digest:
+    task_plan = evidence_path(
+        root, _active_story_key(root), f"task-plans/{task_id}.md",
+    )
+    task_plan_digest = (
+        plan_digest_without_assumptions(task_plan) if task_plan.is_file() else ""
+    )
+    if (not story_digest or not task_plan_digest
+            or grill.get("approved_task_plan_sha256") != task_plan_digest):
         return False
     current_task_sha256 = task_digest(task)
     if stage.get("status") == "done":
@@ -4245,19 +4264,26 @@ def _task_contract_complete(task: dict) -> bool:
     )
 
 
-def _native_task_approval_recorded(grill: dict) -> bool:
-    """Whether the current task approval came from the shared native recorder."""
+def _native_task_approval_recorded(
+    root: Path, task: dict, grill: dict, digest: str | None = None,
+) -> bool:
+    """Whether the task approval matches its immutable consumed-event record."""
     runtime = grill.get("approval_runtime")
     expected_actor = {
         "claude": "human-via-Claude",
         "codex": "human-via-Codex",
     }.get(runtime)
-    digest = grill.get("approved_task_plan_sha256")
-    return bool(
+    approved_digest = grill.get("approved_task_plan_sha256")
+    task_id = str(task.get("id") or "")
+    story = _active_story_key(root)
+    valid = bool(
         expected_actor
         and grill.get("approved_by") == expected_actor
-        and isinstance(digest, str)
-        and re.fullmatch(r"[0-9a-f]{64}", digest)
+        and isinstance(approved_digest, str)
+        and re.fullmatch(r"[0-9a-f]{64}", approved_digest)
+        and (digest is None or approved_digest == digest)
+        and story
+        and task_id
         and all(
             isinstance(grill.get(field), str) and grill[field].strip()
             for field in (
@@ -4265,19 +4291,40 @@ def _native_task_approval_recorded(grill: dict) -> bool:
             )
         )
     )
+    if not valid:
+        return False
+    session = grill["approval_session_id"]
+    event = grill["approval_event_id"]
+    replay_key = hashlib.sha256(
+        f"{runtime}\0{session}\0{event}".encode("utf-8")
+    ).hexdigest()
+    replay = load_json(
+        evidence_path(root, story, f"approval-events/{replay_key}.json"),
+        default={},
+    )
+    expected = {
+        "approved_plan_sha256": approved_digest,
+        "approved_by": expected_actor,
+        "approved_at": grill["approved_at"],
+        "runtime": runtime,
+        "session_id": session,
+        "event_id": event,
+        "plan_kind": "task",
+        "story": story,
+        "task": task_id,
+    }
+    return replay == expected
 
 
-def _task_plan_approval_matches_digest(grill: dict, digest: str) -> bool:
+def _task_plan_approval_matches_digest(
+    root: Path, task: dict, grill: dict, digest: str,
+) -> bool:
     """Whether current approval authority binds this task-plan digest."""
-    return bool(
-        isinstance(grill.get("approved_by"), str)
-        and grill["approved_by"].strip()
-        and isinstance(grill.get("approved_at"), str)
-        and grill["approved_at"].strip()
-        and grill.get("approved_task_plan_sha256") == digest
-        and (
-            grill.get("task_plan_sha256") == digest
-            or _native_task_approval_recorded(grill)
+    return (
+        _native_task_approval_recorded(root, task, grill, digest)
+        or (
+            grill.get("approved_task_plan_sha256") == digest
+            and _measurement_continuity_matches(root, task, grill)
         )
     )
 
@@ -4289,10 +4336,8 @@ def _task_grill_fresh(root: Path, task: dict, grill: dict) -> bool:
     )
     if not plan.is_file():
         return False
-    plan_provenance_ok = (
-        grill.get("task_plan_sha256") == plan_digest_without_assumptions(plan)
-        or _native_task_approval_recorded(grill)
-    )
+    digest = plan_digest_without_assumptions(plan)
+    plan_provenance_ok = grill.get("task_plan_sha256") == digest
     try:
         grounded = task_grill_grounding_matches(root, task, grill)
     except SystemExit:
@@ -4320,11 +4365,10 @@ def _task_plan_state(root: Path, task: dict, grill: dict) -> str:
         return "author-task-plan"
     digest = plan_digest_without_assumptions(plan)
     cold_read_matches = grill.get("task_plan_sha256") == digest
-    native_approval = _native_task_approval_recorded(grill)
-    approved = _task_plan_approval_matches_digest(grill, digest)
+    approved = _task_plan_approval_matches_digest(root, task, grill, digest)
     if approved:
         return "approved"
-    if cold_read_matches or native_approval:
+    if cold_read_matches:
         return "await-approval"
     return "grill"
 

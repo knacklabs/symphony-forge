@@ -543,8 +543,10 @@ Story and task plans use the coordinator's native Plan Mode. Each plan gets
 one independent cold read at Sol/high. The cold proof binds the exact input it
 read; `finding_dispositions` maps every finding, and `amendments` explains every
 change between that input and the final artifact. The exact final plan is then
-shown in Plan Mode. A successful Claude `ExitPlanMode`, or Codex's exact
-synchronous `Approve plan / Request changes / Stop` question, records the human
+shown in Plan Mode. A successful Claude `ExitPlanMode` binds its exact
+`tool_input.plan`; Codex uses the synchronous `approve_plan_<digest>` question
+`Approve exact plan digest <digest>?` with `Approve plan / Request changes / Stop`
+and an id-keyed answer. Either records the human
 approval against the final digest through the shared recorder. There is no
 requirements grill, compulsory human round, `frontier_empty` question, manual
 `plan approve` / `task approve` command, board approval, or second unchanged

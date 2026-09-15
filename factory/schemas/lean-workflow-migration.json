@@ -8,7 +8,10 @@
     "input_inventory_digest": "str",
     "output_digest": "str",
     "installed_runtime_digest": "str",
+    "installed_runtime": "list",
     "entries": "list",
+    "outputs": "list",
+    "preserved_entries": "list",
     "recorded_at": "str"
   }
 }

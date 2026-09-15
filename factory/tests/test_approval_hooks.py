@@ -13,27 +13,31 @@ sys.path.insert(0, str(HARNESS / "factory" / "scripts"))
 from forge_cli import approval  # noqa: E402
 
 
-def _event(runtime: str = "claude") -> dict:
+def _event(candidate: approval.ApprovalCandidate, runtime: str = "claude") -> dict:
     common = {
         "session_id": f"session-{uuid.uuid4().hex}",
         "tool_use_id": f"event-{uuid.uuid4().hex}",
     }
     if runtime == "claude":
         return {**common, "tool_name": "ExitPlanMode",
+                "tool_input": {"plan": candidate.path.read_text(encoding="utf-8")},
                 "tool_response": {"status": "success"}}
-    question = "Approve this exact plan?"
+    question_id = f"approve_plan_{candidate.digest}"
+    question = f"Approve exact plan digest {candidate.digest}?"
     return {
         **common,
         "tool_name": "request_user_input",
         "tool_input": {"questions": [{
-            "header": "Approve plan", "question": question,
+            "id": question_id, "header": "Approve plan", "question": question,
             "options": [
                 {"label": "Approve plan"},
                 {"label": "Request changes"},
                 {"label": "Stop"},
             ],
         }]},
-        "tool_response": {"answers": {question: "Approve plan"}},
+        "tool_response": {
+            "answers": {question_id: {"answers": ["Approve plan"]}},
+        },
     }
 
 
@@ -80,7 +84,7 @@ def test_approved_story_edit_is_the_only_candidate_and_rebinds_atomically(
         repo: Path):
     candidate = _story_candidate(repo)
     original = approval.record_native_approval(
-        repo, _event(), runtime="claude",
+        repo, _event(candidate), runtime="claude",
     )
     candidate.path.write_text(
         candidate.path.read_text(encoding="utf-8") + "\nApproved amendment.\n",
@@ -104,10 +108,11 @@ def test_approved_story_edit_is_the_only_candidate_and_rebinds_atomically(
         ),
     )
 
-    stale = {**_event(), "digest": original["approved_plan_sha256"]}
-    with pytest.raises(approval.ApprovalRefused, match="digest is stale"):
+    stale = _event(candidates[0])
+    stale["tool_input"] = {"plan": "# stale plan\n"}
+    with pytest.raises(approval.ApprovalRefused, match="displayed digest is stale"):
         approval.record_native_approval(repo, stale, runtime="claude")
-    cancelled = {**_event(), "cancelled": True}
+    cancelled = {**_event(candidates[0]), "cancelled": True}
     with pytest.raises(approval.ApprovalRefused, match="unsuccessful"):
         approval.record_native_approval(repo, cancelled, runtime="claude")
     assert (
@@ -124,7 +129,7 @@ def test_approved_story_edit_is_the_only_candidate_and_rebinds_atomically(
     assert state["approved_plan_sha256"] == original["approved_plan_sha256"]
 
     amended = approval.record_native_approval(
-        repo, _event(), runtime="claude",
+        repo, _event(candidates[0]), runtime="claude",
     )
     state = json.loads(lib.run_state_path(repo).read_text())
     assert amended["approved_plan_sha256"] == amended_digest
@@ -151,7 +156,7 @@ def test_approved_story_edit_is_the_only_candidate_and_rebinds_atomically(
 def test_task_approval_waits_for_story_approval_and_decomposition_rebinding(
         repo: Path, monkeypatch: pytest.MonkeyPatch):
     story = _story_candidate(repo)
-    approval.record_native_approval(repo, _event(), runtime="claude")
+    approval.record_native_approval(repo, _event(story), runtime="claude")
     lib = load_factory_lib(repo)
     task = {"id": "T1"}
     monkeypatch.setattr(
@@ -189,23 +194,23 @@ def test_task_approval_waits_for_story_approval_and_decomposition_rebinding(
 
 def test_native_approval_refuses_zero_multiple_candidates_replay_and_missing_identity(
         repo: Path, monkeypatch: pytest.MonkeyPatch):
+    candidate = _story_candidate(repo)
     monkeypatch.setattr(approval, "eligible_candidates", lambda _base: [])
     with pytest.raises(approval.ApprovalRefused, match="found 0"):
-        approval.record_native_approval(repo, _event(), runtime="claude")
+        approval.record_native_approval(repo, _event(candidate), runtime="claude")
 
-    candidate = _story_candidate(repo)
     monkeypatch.setattr(
         approval, "eligible_candidates", lambda _base: [candidate, candidate])
     with pytest.raises(approval.ApprovalRefused, match="found 2"):
-        approval.record_native_approval(repo, _event(), runtime="claude")
+        approval.record_native_approval(repo, _event(candidate), runtime="claude")
 
     monkeypatch.setattr(approval, "eligible_candidates", lambda _base: [candidate])
-    missing = _event()
+    missing = _event(candidate)
     missing.pop("tool_use_id")
     with pytest.raises(approval.ApprovalRefused, match="stable session and event"):
         approval.record_native_approval(repo, missing, runtime="claude")
 
-    event = _event()
+    event = _event(candidate)
     approval.record_native_approval(repo, event, runtime="claude")
     with pytest.raises(approval.ApprovalRefused, match="already consumed"):
         approval.record_native_approval(repo, event, runtime="claude")
@@ -216,7 +221,7 @@ def test_native_approval_records_human_via_runtime_identity_without_display_name
         repo: Path, monkeypatch: pytest.MonkeyPatch, runtime: str):
     candidate = _story_candidate(repo)
     monkeypatch.setattr(approval, "eligible_candidates", lambda _base: [candidate])
-    event = _event(runtime)
+    event = _event(candidate, runtime)
     record = approval.record_native_approval(repo, event, runtime=runtime)
     assert record["approved_by"] == f"human-via-{runtime.capitalize()}"
     assert record["session_id"] == event["session_id"]
@@ -224,11 +229,50 @@ def test_native_approval_records_human_via_runtime_identity_without_display_name
     assert "name" not in record
 
 
+def test_codex_approval_uses_question_id_and_requires_displayed_digest(
+        repo: Path, monkeypatch: pytest.MonkeyPatch):
+    candidate = _story_candidate(repo)
+    monkeypatch.setattr(approval, "eligible_candidates", lambda _base: [candidate])
+    question_id = f"approve_plan_{candidate.digest}"
+    malformed_answers = [
+        {question_id: "Approve plan"},
+        {question_id: {}},
+        {question_id: {"answers": []}},
+        {question_id: {"answers": ["Approve plan", "Approve plan"]}},
+        {question_id: {"answers": [1]}},
+        {question_id: {"answers": ["Request changes"]}},
+        {"wrong-question-id": {"answers": ["Approve plan"]}},
+    ]
+    for answers in malformed_answers:
+        event = _event(candidate, "codex")
+        event["tool_response"]["answers"] = answers
+        with pytest.raises(approval.ApprovalRefused, match="unsupported"):
+            approval.record_native_approval(repo, event, runtime="codex")
+
+    event = _event(candidate, "codex")
+    event["tool_input"]["questions"][0]["question"] = "Approve this plan?"
+    with pytest.raises(approval.ApprovalRefused, match="unsupported"):
+        approval.record_native_approval(repo, event, runtime="codex")
+
+    stale_digest = "0" * 64
+    stale_id = f"approve_plan_{stale_digest}"
+    event = _event(candidate, "codex")
+    event["tool_input"]["questions"][0].update({
+        "id": stale_id,
+        "question": f"Approve exact plan digest {stale_digest}?",
+    })
+    event["tool_response"]["answers"] = {
+        stale_id: {"answers": ["Approve plan"]},
+    }
+    with pytest.raises(approval.ApprovalRefused, match="displayed digest is stale"):
+        approval.record_native_approval(repo, event, runtime="codex")
+
+
 def test_native_approval_reuses_existing_story_and_task_approval_storage(
         repo: Path, monkeypatch: pytest.MonkeyPatch):
     story = _story_candidate(repo)
     monkeypatch.setattr(approval, "eligible_candidates", lambda _base: [story])
-    record = approval.record_native_approval(repo, _event(), runtime="claude")
+    record = approval.record_native_approval(repo, _event(story), runtime="claude")
     assert json.loads(story.evidence.read_text())["approved_plan_sha256"] == record[
         "approved_plan_sha256"]
 
@@ -241,7 +285,28 @@ def test_native_approval_reuses_existing_story_and_task_approval_storage(
         load_factory_lib(repo).plan_digest_without_assumptions(plan), grill,
     )
     monkeypatch.setattr(approval, "eligible_candidates", lambda _base: [task])
-    task_record = approval.record_native_approval(repo, _event("codex"), runtime="codex")
+    task_record = approval.record_native_approval(
+        repo, _event(task, "codex"), runtime="codex")
     stored = json.loads(grill.read_text())
     assert stored["approved_task_plan_sha256"] == task_record["approved_plan_sha256"]
     assert stored["approval_event_id"] == task_record["event_id"]
+    lib = load_factory_lib(repo)
+    task_row = {"id": "T1"}
+    assert lib._task_plan_approval_matches_digest(
+        repo, task_row, stored, task.digest)
+
+    replay = next(
+        path for path in (story.evidence.parent / "approval-events").glob("*.json")
+        if json.loads(path.read_text()).get("task") == "T1"
+    )
+    replay.unlink()
+    assert not lib._task_plan_approval_matches_digest(
+        repo, task_row, stored, task.digest)
+    legacy = {
+        "approved_task_plan_sha256": task.digest,
+        "approved_by": "Legacy Human",
+        "approved_at": "2026-01-01T00:00:00+00:00",
+        "task_plan_sha256": task.digest,
+    }
+    assert not lib._task_plan_approval_matches_digest(
+        repo, task_row, legacy, task.digest)

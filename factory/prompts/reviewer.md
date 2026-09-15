@@ -22,6 +22,9 @@ instructions/helper/configuration, generated semantic inputs, and product
 delta. Only explicitly canonicalized recorder bookkeeping and timestamps are
 ignored; unknown, partial, or substantive change forces a fresh helper call and
 preserves the original raw provenance.
+The selected generation's `input` separately preserves the exact combined
+prompt SHA256 and byte count sent to the helper. Never substitute the canonical
+reviewed-meaning digest for that immutable input provenance.
 
 Loop discipline (carried over from the retired subagent panel): scope-freeze —
 review the diff that exists, do not expand scope; verify findings against the

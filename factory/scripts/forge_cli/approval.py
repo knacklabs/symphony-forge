@@ -13,7 +13,7 @@ from pathlib import Path
 from typing import Any
 
 from factory_lib import (
-    _task_plan_state, dump_json, evidence_path, load_json, now_iso,
+    _plan_body_digest_bytes, _task_plan_state, dump_json, evidence_path, load_json, now_iso,
     plan_digest_without_assumptions, protected_decomposition_state_path,
     require_grill, run_state_path, task_frontier_state,
 )
@@ -134,58 +134,86 @@ def _event_identity(payload: dict[str, Any]) -> tuple[str, str]:
     return session, event
 
 
-def _claude_approved(payload: dict[str, Any]) -> bool:
+def _claude_approved(payload: dict[str, Any]) -> str:
     if payload.get("tool_name") != "ExitPlanMode":
-        return False
+        return ""
     response = payload.get("tool_response")
     if payload.get("is_error") is True or payload.get("cancelled") is True:
-        return False
+        return ""
     if isinstance(response, dict):
         if response.get("is_error") is True or response.get("cancelled") is True:
-            return False
+            return ""
         status = _text(response.get("status")).lower()
         if status in {"cancelled", "rejected", "error", "failed"}:
-            return False
+            return ""
     # PostToolUse is emitted only after a successful tool completion.  An
     # absent response is not success: tests and alternate hosts can call the
     # recorder directly, and must provide completion evidence.
-    return response not in (None, False, "")
+    if response in (None, False, ""):
+        return ""
+    tool_input = payload.get("tool_input")
+    plan = tool_input.get("plan") if isinstance(tool_input, dict) else None
+    if not isinstance(plan, str) or not plan:
+        return ""
+    return _plan_body_digest_bytes(plan.encode("utf-8"))
 
 
-def _codex_approved(payload: dict[str, Any]) -> bool:
+def _codex_approved(payload: dict[str, Any]) -> str:
     if payload.get("tool_name") != "request_user_input":
-        return False
+        return ""
     if payload.get("async") is True or payload.get("tool_name") == "request_user_input_async":
-        return False
+        return ""
     tool_input = payload.get("tool_input")
     response = payload.get("tool_response")
+    if payload.get("is_error") is True or payload.get("cancelled") is True:
+        return ""
+    if isinstance(response, dict):
+        if response.get("is_error") is True or response.get("cancelled") is True:
+            return ""
+        status = _text(response.get("status")).lower()
+        if status in {"cancelled", "rejected", "error", "failed"}:
+            return ""
     questions = tool_input.get("questions") if isinstance(tool_input, dict) else None
     answers = response.get("answers") if isinstance(response, dict) else None
     if not isinstance(questions, list) or len(questions) != 1 or not isinstance(answers, dict):
-        return False
+        return ""
     question = questions[0]
     if not isinstance(question, dict):
-        return False
+        return ""
     labels = [entry.get("label") if isinstance(entry, dict) else entry
               for entry in question.get("options", [])]
     if labels != ["Approve plan", "Request changes", "Stop"]:
-        return False
+        return ""
     prompt = _text(question.get("question"))
     header = _text(question.get("header"))
-    if header != "Approve plan" or not prompt:
-        return False
-    return answers.get(prompt) == "Approve plan"
+    question_id = _text(question.get("id"))
+    match = re.fullmatch(r"approve_plan_([0-9a-f]{64})", question_id)
+    if header != "Approve plan" or match is None:
+        return ""
+    digest = match.group(1)
+    if prompt != f"Approve exact plan digest {digest}?":
+        return ""
+    if set(answers) != {question_id}:
+        return ""
+    answer = answers.get(question_id)
+    selected = answer.get("answers") if isinstance(answer, dict) else None
+    if (not isinstance(selected, list) or len(selected) != 1
+            or not isinstance(selected[0], str)):
+        return ""
+    return digest if selected[0] == "Approve plan" else ""
 
 
-def _event_runtime(payload: dict[str, Any], runtime: str | None) -> str:
+def _event_runtime(payload: dict[str, Any], runtime: str | None) -> tuple[str, str]:
     value = (runtime or _text(payload.get("runtime")) or
              _text(os.environ.get("FORGE_COORDINATOR"))).lower()
     if value not in {"claude", "codex"}:
         raise ApprovalRefused("native approval runtime must be claude or codex")
-    approved = _claude_approved(payload) if value == "claude" else _codex_approved(payload)
-    if not approved:
+    displayed_digest = (
+        _claude_approved(payload) if value == "claude" else _codex_approved(payload)
+    )
+    if not displayed_digest:
         raise ApprovalRefused(f"unsupported or unsuccessful {value} approval event")
-    return value
+    return value, displayed_digest
 
 
 def _approve_story(base: Path, candidate: ApprovalCandidate, record: dict[str, Any]) -> None:
@@ -248,7 +276,7 @@ def record_native_approval(
     """
     if not isinstance(payload, dict):
         raise ApprovalRefused("native approval payload must be an object")
-    selected_runtime = _event_runtime(payload, runtime)
+    selected_runtime, displayed_digest = _event_runtime(payload, runtime)
     session_id, event_id = _event_identity(payload)
     from .delegate import delegation_exclusion
     with delegation_exclusion(base, "native-approval", kind="approval"):
@@ -259,9 +287,8 @@ def record_native_approval(
                 f"candidate; found {len(candidates)}"
             )
         candidate = candidates[0]
-        supplied = _text(payload.get("plan_sha256")) or _text(payload.get("digest"))
-        if supplied and supplied != candidate.digest:
-            raise ApprovalRefused("native approval digest is stale")
+        if displayed_digest != candidate.digest:
+            raise ApprovalRefused("native approval displayed digest is stale")
 
         replay_dir = evidence_path(base, candidate.story, "approval-events", for_write=True)
         replay_dir.mkdir(parents=True, exist_ok=True)

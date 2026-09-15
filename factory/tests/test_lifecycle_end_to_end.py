@@ -58,7 +58,7 @@ def test_approval_to_pr_without_asking_the_human_anything_settled(
     assert code == 0, out
 
     # ---- approval: consume the native Plan Mode approval event --------------
-    code, out = post_hook(repo, native_claude_approval())
+    code, out = post_hook(repo, native_claude_approval(repo))
     assert code == 0, out
 
     # ---- the stage opens: from here the run is the agent's ----------------
@@ -139,7 +139,7 @@ def test_a_change_to_what_was_agreed_still_reaches_the_human(repo: Path,
     record_skeleton_then_frontier(repo, [STAGE_TASK])
     code, out = record_task_grill(repo, STAGE_TASK, approve=False)
     assert code == 0, out
-    code, out = post_hook(repo, native_claude_approval())
+    code, out = post_hook(repo, native_claude_approval(repo))
     assert code == 0, out
 
     saved = story_state(repo) / "task-plans" / "T1.md"
@@ -149,7 +149,7 @@ def test_a_change_to_what_was_agreed_still_reaches_the_human(repo: Path,
 
     code, out = run(repo, "forge.py", "stage", "start", "T1", "--trunk")
     assert code != 0 and "Task plan approval required" in out, out
-    code, out = post_hook(repo, native_claude_approval())
+    code, out = post_hook(repo, native_claude_approval(repo))
     assert code == 0, out
     code, out = run(repo, "forge.py", "stage", "start", "T1", "--trunk")
     assert code == 0, out

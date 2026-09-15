@@ -83,21 +83,56 @@ def test_selected_review_reviewed_meaning_includes_ci_generated_outputs_and_revi
 def test_selected_review_reruns_for_substantive_automated_evidence_change(
         repo, monkeypatch):
     lib, task, stage, helper = _meaning_fixture(repo, monkeypatch)
-    before = stage_helpers.reviewed_meaning_identity(repo, stage, task, helper)["identity"]
+    before = stage_helpers.reviewed_meaning_identity(
+        repo, stage, task, helper)["semantic_identity"]
     proof = lib.proof_path(repo, "S1", "tests.json", task_id="T1")
     evidence = json.loads(proof.read_text())
     evidence["automated"]["cases"].append("new semantic case")
     proof.write_text(json.dumps(evidence), encoding="utf-8")
     assert stage_helpers.reviewed_meaning_identity(
-        repo, stage, task, helper)["identity"] != before
+        repo, stage, task, helper)["semantic_identity"] != before
 
 
 def test_generated_review_inputs_are_included_in_reviewed_meaning(repo, monkeypatch):
     _lib, task, stage, helper = _meaning_fixture(repo, monkeypatch)
-    before = stage_helpers.reviewed_meaning_identity(repo, stage, task, helper)["identity"]
+    before = stage_helpers.reviewed_meaning_identity(
+        repo, stage, task, helper)["semantic_identity"]
     (repo / "ci/generated.json").write_text('{"contract": "v2"}\n', encoding="utf-8")
     assert stage_helpers.reviewed_meaning_identity(
-        repo, stage, task, helper)["identity"] != before
+        repo, stage, task, helper)["semantic_identity"] != before
+
+
+def test_review_preflight_refuses_stale_proof_before_helper_launch(repo):
+    from forge_cli.review import pre_review_proof_problems
+    lib = load_factory_lib(repo)
+    story, task = "S1", "T1"
+    proof_root = lib.proof_path(repo, story, "tests.json", task_id=task).parent
+    proof_root.mkdir(parents=True, exist_ok=True)
+    proof_commit = git(repo, "rev-parse", "HEAD").strip()
+    (proof_root / "verify.json").write_text(json.dumps({
+        "ok": True, "commit": proof_commit,
+    }), encoding="utf-8")
+    (proof_root / "tests.json").write_text(json.dumps({
+        "commit": proof_commit,
+        "automated": {"status": "passed", "blocking_findings": []},
+    }), encoding="utf-8")
+    git(repo, "add", ".factory")
+    git(repo, "commit", "-q", "-m", "proof fixtures")
+    bookkeeping_head = git(repo, "rev-parse", "HEAD").strip()
+    assert pre_review_proof_problems(
+        repo, story, task, proof_commit, bookkeeping_head,
+    ) == []
+
+    changed = repo / "src/review-change.py"
+    changed.parent.mkdir(exist_ok=True)
+    changed.write_text("changed = True\n", encoding="utf-8")
+    git(repo, "add", "src/review-change.py")
+    git(repo, "commit", "-q", "-m", "product changed after proof")
+    stale_head = git(repo, "rev-parse", "HEAD").strip()
+    assert any("product content changed" in problem for problem in
+               pre_review_proof_problems(
+                   repo, story, task, proof_commit, stale_head,
+               ))
 
 
 def _combined_explanation(quality: str, performance: str, security: str) -> str:

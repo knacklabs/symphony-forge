@@ -138,7 +138,7 @@ def test_one_plan_grill_before_save_still_matches_after_save(repo, tmp_path):
     assert "saved:" in active.read_text(encoding="utf-8")
     assert (plan_digest_without_assumptions(draft)
             == plan_digest_without_assumptions(active))
-    code, out = post_hook(repo, native_claude_approval())
+    code, out = post_hook(repo, native_claude_approval(repo))
     assert code == 0, out
     assert "status: approved" in active.read_text(encoding="utf-8")
 

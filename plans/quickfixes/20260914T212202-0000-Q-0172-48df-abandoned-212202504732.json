@@ -1,0 +1,10 @@
+{
+  "event": "abandoned",
+  "id": "Q-0172-48df",
+  "profile": "degraded",
+  "reason": "The Codex desktop apply_patch adapter did not invoke the repository PreToolUse claim hook, so Q-0172 recorded zero files. Preserve the actual three-file Main-authored historical-brief bootstrap diff without treating this empty ledger window as completion proof; normal registered delegation is now unblocked and must make the distinct answer-envelope fix and verify the retained repair.",
+  "opened_reason": "LEAN-WORKFLOW delegated writer self-host gate compares an immutable historical launch receipt to a regenerated current brief, blocking the authorized correction follow-up",
+  "started_at": "2026-09-14T19:25:13+00:00",
+  "completed_at": "2026-09-14T21:22:02+00:00",
+  "files": []
+}

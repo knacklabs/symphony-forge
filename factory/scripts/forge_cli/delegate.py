@@ -26,6 +26,7 @@ import re
 import shlex
 import shutil
 import signal
+import stat
 import subprocess
 import tempfile
 import time
@@ -1253,12 +1254,13 @@ def narrowed_scope(approved: list[str], requested: list[str]) -> list[str]:
     """Validate a repeatable proper-subset selection against effective scope."""
     from .worker_admission import path_in_scope
     approved_clean = [_normal_scope_entry(item) for item in approved]
-    selected = list(dict.fromkeys(_normal_scope_entry(item) for item in requested))
+    selected = [_normal_scope_entry(item) for item in requested]
+    if len(set(selected)) != len(selected):
+        fail("--scope refuses duplicate normalized entries")
     if not selected:
         return approved_clean
     for entry in selected:
-        probe = entry.rstrip("/")
-        if not path_in_scope(probe, approved_clean):
+        if not path_in_scope(entry, approved_clean):
             fail(f"--scope {entry!r} is outside the effective approved write scope")
     if set(selected) == set(approved_clean):
         fail("--scope must narrow to a proper subset; omit it for the full effective scope")
@@ -1269,38 +1271,151 @@ def narrowed_scope(approved: list[str], requested: list[str]) -> list[str]:
     return selected
 
 
+def _is_link_or_reparse(info: os.stat_result) -> bool:
+    return bool(
+        stat.S_ISLNK(info.st_mode)
+        or getattr(info, "st_file_attributes", 0) & 0x400
+    )
+
+
 def _verify_context_ancestors(path: Path) -> None:
     current = path.parent
     while True:
         info = current.lstat()
-        if __import__("stat").S_ISLNK(info.st_mode):
-            fail(f"--context-file refuses symlinked ancestor {current}")
+        if _is_link_or_reparse(info):
+            fail(f"--context-file refuses linked or reparse ancestor {current}")
         if current == current.parent:
             return
         current = current.parent
 
 
-def secure_context_snapshot(source: Path) -> tuple[str, dict, Path]:
+def _create_private_directory(path: Path, windows_sid: str) -> None:
+    if not windows_sid:
+        path.mkdir(mode=0o700)
+        return
+    script = (
+        "$sid=New-Object Security.Principal.SecurityIdentifier($args[1]);"
+        "$acl=New-Object Security.AccessControl.DirectorySecurity;"
+        "$acl.SetOwner($sid);$acl.SetAccessRuleProtection($true,$false);"
+        "$rule=New-Object Security.AccessControl.FileSystemAccessRule("
+        "$sid,'FullControl','ContainerInherit,ObjectInherit','None','Allow');"
+        "$acl.AddAccessRule($rule);"
+        "[IO.Directory]::CreateDirectory($args[0],$acl)|Out-Null"
+    )
+    result = subprocess.run(
+        ["powershell", "-NoProfile", "-NonInteractive", "-Command", script,
+         str(path), windows_sid], capture_output=True, text=True, encoding="utf-8",
+    )
+    if result.returncode:
+        fail("--context-file could not create a protected private directory")
+    _require_windows_private_acl(path, windows_sid)
+
+
+def _validate_private_file(
+    path: Path, windows_sid: str,
+    expected_identity: tuple[int, int, int, str],
+) -> None:
+    info = path.lstat()
+    if (_is_link_or_reparse(info) or not stat.S_ISREG(info.st_mode)
+            or info.st_nlink != 1
+            or (info.st_dev, info.st_ino, info.st_size) != expected_identity[:3]):
+        fail("secure context snapshot failed identity verification")
+    descriptor = os.open(path, os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0))
+    digest = hashlib.sha256()
+    try:
+        opened = os.fstat(descriptor)
+        if ((opened.st_dev, opened.st_ino, opened.st_size)
+                != expected_identity[:3]):
+            fail("secure context snapshot changed before validation")
+        while chunk := os.read(descriptor, 65536):
+            digest.update(chunk)
+    finally:
+        os.close(descriptor)
+    if digest.hexdigest() != expected_identity[3]:
+        fail("secure context snapshot content changed before validation")
+    if windows_sid:
+        _require_windows_private_acl(path, windows_sid)
+    elif info.st_uid != os.geteuid() or stat.S_IMODE(info.st_mode) != 0o600:
+        fail("secure context snapshot lost its private POSIX ownership or mode")
+
+
+def _write_private_file(
+    path: Path, data: bytes, windows_sid: str,
+) -> tuple[int, int, int, str]:
+    flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, "O_NOFOLLOW", 0)
+    if windows_sid:
+        script = (
+            "$sid=New-Object Security.Principal.SecurityIdentifier($args[1]);"
+            "$acl=New-Object Security.AccessControl.FileSecurity;"
+            "$acl.SetOwner($sid);$acl.SetAccessRuleProtection($true,$false);"
+            "$rule=New-Object Security.AccessControl.FileSystemAccessRule("
+            "$sid,'FullControl','Allow');$acl.AddAccessRule($rule);"
+            "$fs=New-Object IO.FileStream($args[0],[IO.FileMode]::CreateNew,"
+            "[IO.FileSystemRights]::FullControl,[IO.FileShare]::None,4096,"
+            "[IO.FileOptions]::None,$acl);$fs.Dispose()"
+        )
+        result = subprocess.run(
+            ["powershell", "-NoProfile", "-NonInteractive", "-Command", script,
+             str(path), windows_sid], capture_output=True, text=True,
+            encoding="utf-8",
+        )
+        if result.returncode:
+            fail("--context-file could not create a protected private file")
+        _require_windows_private_acl(path, windows_sid)
+        flags = os.O_WRONLY | getattr(os, "O_NOFOLLOW", 0)
+    descriptor = os.open(path, flags, 0o600)
+    try:
+        opened = os.fstat(descriptor)
+        if _is_link_or_reparse(opened) or not stat.S_ISREG(opened.st_mode):
+            fail("secure context snapshot is not a regular private file")
+        view = memoryview(data)
+        while view:
+            written_count = os.write(descriptor, view)
+            if written_count <= 0:
+                fail("secure context snapshot write did not complete")
+            view = view[written_count:]
+        os.fsync(descriptor)
+        written = os.fstat(descriptor)
+    finally:
+        os.close(descriptor)
+    identity = (written.st_dev, written.st_ino, written.st_size,
+                hashlib.sha256(data).hexdigest())
+    _validate_private_file(path, windows_sid, identity)
+    return identity
+
+
+def _cleanup_private_context(
+    snapshot: Path, snapshot_identity: tuple[int, int, int, str], windows_sid: str,
+    extra: tuple[Path, tuple[int, int, int, str]] | None = None,
+) -> None:
+    _validate_private_file(snapshot, windows_sid, snapshot_identity)
+    if extra:
+        _validate_private_file(extra[0], windows_sid, extra[1])
+        extra[0].unlink()
+    snapshot.unlink()
+    directory = snapshot.parent
+    info = directory.lstat()
+    if _is_link_or_reparse(info) or not stat.S_ISDIR(info.st_mode):
+        fail("secure context directory changed before cleanup")
+    if windows_sid:
+        _require_windows_private_acl(directory, windows_sid)
+    elif info.st_uid != os.geteuid() or stat.S_IMODE(info.st_mode) != 0o700:
+        fail("secure context directory lost its private POSIX ownership or mode")
+    directory.rmdir()
+
+
+def secure_context_snapshot(
+    source: Path,
+) -> tuple[str, dict, Path, tuple[int, int, int, str]]:
     """Read one stable no-follow context handle into a private transient copy."""
-    import stat
     source = source.expanduser().absolute()
     _verify_context_ancestors(source)
     before = source.lstat()
-    if stat.S_ISLNK(before.st_mode) or not stat.S_ISREG(before.st_mode):
+    if _is_link_or_reparse(before) or not stat.S_ISREG(before.st_mode):
         fail("--context-file must be a regular non-linked file")
     windows_sid = ""
-    if os.name != "nt":
-        if before.st_uid != os.geteuid():
-            fail("--context-file must be owned by the effective current user")
-        if stat.S_IMODE(before.st_mode) != 0o600:
-            fail("--context-file must have POSIX mode 0600")
-        parent = source.parent.lstat()
-        if parent.st_uid != os.geteuid() or stat.S_IMODE(parent.st_mode) != 0o700:
-            fail("--context-file parent must be current-user owned with POSIX mode 0700")
-    else:
+    if os.name == "nt":
         windows_sid = _windows_current_sid()
-        _require_windows_private_acl(source.parent, windows_sid)
-        _require_windows_private_acl(source, windows_sid)
     flags = os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0)
     descriptor = os.open(source, flags)
     try:
@@ -1325,29 +1440,17 @@ def secure_context_snapshot(source: Path) -> tuple[str, dict, Path]:
         text = data.decode("utf-8")
     except UnicodeDecodeError:
         fail("--context-file must contain exact UTF-8")
-    directory = Path(tempfile.mkdtemp(prefix="forge-context-"))
-    os.chmod(directory, 0o700)
-    if windows_sid:
-        _protect_windows_path(directory, windows_sid)
+    directory = (Path(tempfile.gettempdir()).resolve()
+                 / f"forge-context-{uuid.uuid4().hex}")
+    _verify_context_ancestors(directory)
+    _create_private_directory(directory, windows_sid)
     snapshot = directory / "context.txt"
-    out = os.open(snapshot, os.O_WRONLY | os.O_CREAT | os.O_EXCL
-                  | getattr(os, "O_NOFOLLOW", 0), 0o600)
-    try:
-        os.write(out, data)
-        os.fsync(out)
-    finally:
-        os.close(out)
-    if windows_sid:
-        _protect_windows_path(snapshot, windows_sid)
-    check = snapshot.lstat()
-    if stat.S_ISLNK(check.st_mode) or check.st_size != len(data):
-        shutil.rmtree(directory, ignore_errors=True)
-        fail("secure context snapshot failed identity verification")
+    identity = _write_private_file(snapshot, data, windows_sid)
     metadata = {
         "supplied": True, "bytes": len(data),
         "snapshot_id": f"context-{uuid.uuid4().hex}",
     }
-    return text, metadata, snapshot
+    return text, metadata, snapshot, identity
 
 
 def launch_companion(
@@ -1357,7 +1460,9 @@ def launch_companion(
         story: str = "", background: bool = False, print_only: bool = False,
         stage_started_at: str = "", mode: str = "",
         context_text: str = "", context_metadata: dict | None = None,
-        context_snapshot: Path | None = None) -> dict | None:
+        context_snapshot: Path | None = None,
+        context_snapshot_identity: tuple[int, int, int, str] | None = None,
+) -> dict | None:
     """Write a brief and run the selected protected launch lifecycle."""
     from .codex_runtime import coordinator_runtime
 
@@ -1384,6 +1489,15 @@ def launch_companion(
     stderr_path: Path | None = None
     launch_text = text + (("\n\n## Ephemeral supplied context\n\n" + context_text)
                           if context_text else "")
+    windows_sid = (_windows_current_sid()
+                   if os.name == "nt" and context_snapshot else "")
+    prompt_private: tuple[Path, tuple[int, int, int, str]] | None = None
+    pending_prompt: tuple[Path, bytes] | None = None
+    if context_snapshot is not None:
+        assert context_snapshot_identity is not None
+        _validate_private_file(
+            context_snapshot, windows_sid, context_snapshot_identity,
+        )
     if runtime == "codex":
         from .codex_runtime import native_argv
 
@@ -1403,12 +1517,16 @@ def launch_companion(
         if not node:
             fail("node is required to launch the Codex companion — run `./forge doctor --fix`")
         companion = companion_script()
+        logs = delegations_path(base).parent / "companion-runs"
+        logs.mkdir(parents=True, exist_ok=True)
+        output_path = logs / f"{launch_id}.stdout.log"
+        stderr_path = logs / f"{launch_id}.stderr.log"
         prompt_path = path
         if context_text:
             assert context_snapshot is not None
             prompt_path = context_snapshot.parent / "brief.md"
-            prompt_path.write_text(launch_text, encoding="utf-8")
-            os.chmod(prompt_path, 0o600)
+            prompt_bytes = launch_text.encode("utf-8")
+            pending_prompt = (prompt_path, prompt_bytes)
         prompt_arg = str(prompt_path) if prompt_path.is_absolute() else prompt_path.relative_to(base).as_posix()
         argv = [
             node, str(companion), "task", "--json", "--cwd", str(base),
@@ -1426,7 +1544,10 @@ def launch_companion(
           f"{shlex.join(argv)}{launch_detail}")
     if print_only:
         if context_snapshot is not None:
-            shutil.rmtree(context_snapshot.parent, ignore_errors=True)
+            _cleanup_private_context(
+                context_snapshot, context_snapshot_identity, windows_sid,
+                prompt_private,
+            )
         return None
     if runtime == "codex" and write:
         from .doctor import codex_hook_readiness
@@ -1460,7 +1581,12 @@ def launch_companion(
             "stderr_path": str(stderr_path),
         })
     else:
-        record["companion_path"] = str(companion)
+        record.update({
+            "companion_path": str(companion),
+            "brief_path": rel,
+            "output_path": str(output_path),
+            "stderr_path": str(stderr_path),
+        })
     if story:
         record["story"] = story
     if write_scope is not None:
@@ -1483,11 +1609,18 @@ def launch_companion(
     stdout_log = None
     stderr_log = None
     try:
-        if output_path:
+        if runtime == "codex":
             # Native stdout is a JSONL protocol: invalid UTF-8 must fail the run,
             # not be rewritten into evidence that the runtime did not emit.
             stdout_log = open(output_path, "w+t", encoding="utf-8")
             stderr_log = open(stderr_path, "w+t", encoding="utf-8")
+        elif output_path:
+            stdout_log = open(
+                output_path, "w+t", encoding="utf-8", errors="replace",
+            )
+            stderr_log = open(
+                stderr_path, "w+t", encoding="utf-8", errors="replace",
+            )
         else:
             # Companion output is display-only and has historically been tolerant
             # of malformed worker bytes; preserve that audited behavior unchanged.
@@ -1516,6 +1649,12 @@ def launch_companion(
     append_delegation(base, record)
     try:
         try:
+            if pending_prompt:
+                prompt_path, prompt_bytes = pending_prompt
+                prompt_identity = _write_private_file(
+                    prompt_path, prompt_bytes, windows_sid,
+                )
+                prompt_private = (prompt_path, prompt_identity)
             process_env = os.environ.copy()
             process_env["FORGE_PROCESS_TOKEN"] = process_token
             if runtime == "codex":
@@ -1682,7 +1821,10 @@ def launch_companion(
                 proc is None or not _process_group_alive(proc.pid)):
             _release_delegation_lock(lock, record["launch_id"])
         if context_snapshot is not None:
-            shutil.rmtree(context_snapshot.parent, ignore_errors=True)
+            _cleanup_private_context(
+                context_snapshot, context_snapshot_identity, windows_sid,
+                prompt_private,
+            )
 
 
 def cmd_delegate(args: argparse.Namespace) -> None:
@@ -1732,8 +1874,10 @@ def cmd_delegate(args: argparse.Namespace) -> None:
     context_text = ""
     context_metadata = None
     context_snapshot = None
+    context_snapshot_identity = None
     if getattr(args, "context_file", None):
-        context_text, context_metadata, context_snapshot = secure_context_snapshot(
+        (context_text, context_metadata, context_snapshot,
+         context_snapshot_identity) = secure_context_snapshot(
             Path(args.context_file))
     canonical_path = brief_path(base, args.id)
     path = (diagnostic_briefs_dir(base) / f"{args.id}.md"
@@ -1757,10 +1901,14 @@ def cmd_delegate(args: argparse.Namespace) -> None:
             context_text=context_text,
             context_metadata=context_metadata,
             context_snapshot=context_snapshot,
+            context_snapshot_identity=context_snapshot_identity,
         )
     finally:
-        if context_snapshot is not None:
-            shutil.rmtree(context_snapshot.parent, ignore_errors=True)
+        if context_snapshot is not None and context_snapshot.exists():
+            _cleanup_private_context(
+                context_snapshot, context_snapshot_identity,
+                _windows_current_sid() if os.name == "nt" else "",
+            )
     if args.print_only:
         return
     append_event(base, "delegated", actor="orchestrator", story=story,

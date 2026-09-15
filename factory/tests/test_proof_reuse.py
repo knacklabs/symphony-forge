@@ -69,7 +69,19 @@ def test_changed_unknown_partial_or_generated_output_identity_forces_fresh_run(
     assert stages.proof_identity(repo, changed, "tests")["identity"] != before
     changed["required_tests"][0]["command"] = "missing-tool --strict"
     identity = stages.proof_identity(repo, changed, "tests")
-    assert identity["inputs"]["tools"][0]["available"] is False
+    assert identity["inputs"]["tools"][0]["reusable"] is False
+    assert identity["reusable"] is False
+
+    generated = repo / "generated.json"
+    generated.write_text("one\n", encoding="utf-8")
+    with_generated = {**task, "generated_semantic_inputs": ["generated.json"]}
+    before_generated = stages.proof_identity(repo, with_generated, "verify")
+    generated.write_text("two\n", encoding="utf-8")
+    after_generated = stages.proof_identity(repo, with_generated, "verify")
+    assert before_generated["identity"] != after_generated["identity"]
+    assert before_generated["inputs"]["generated_inputs"]["generated.json"][
+        "sha256"] != after_generated["inputs"]["generated_inputs"][
+            "generated.json"]["sha256"]
 
 
 def test_reuse_identity_is_proof_type_specific_and_reviewed_meaning_bound(
@@ -82,9 +94,11 @@ def test_reuse_identity_is_proof_type_specific_and_reviewed_meaning_bound(
     assert stages.proof_identity(repo, changed, "tests")["identity"] != tests_before
     assert stages.proof_identity(repo, changed, "verify")["identity"] == verify_before
     stage, helper = _seed_review(repo, monkeypatch, task)
-    meaning = stages.reviewed_meaning_identity(repo, stage, task, helper)["identity"]
+    meaning = stages.reviewed_meaning_identity(
+        repo, stage, task, helper)["semantic_identity"]
     changed["acceptance_criteria"] = ["different"]
-    assert stages.reviewed_meaning_identity(repo, stage, changed, helper)["identity"] != meaning
+    assert stages.reviewed_meaning_identity(
+        repo, stage, changed, helper)["semantic_identity"] != meaning
 
 
 def test_selected_review_reuses_for_bookkeeping_only_changes_and_preserves_original_provenance(
@@ -108,7 +122,8 @@ def test_selected_review_reruns_for_changed_acceptance_security_migration_or_evi
         repo: Path, monkeypatch):
     task = _task()
     stage, helper = _seed_review(repo, monkeypatch, task)
-    before = stages.reviewed_meaning_identity(repo, stage, task, helper)["identity"]
+    before = stages.reviewed_meaning_identity(
+        repo, stage, task, helper)["semantic_identity"]
     for field, value in (
         ("acceptance_criteria", ["changed"]),
         ("reviewer_focus", ["changed security"]),
@@ -117,10 +132,11 @@ def test_selected_review_reruns_for_changed_acceptance_security_migration_or_evi
         changed = copy.deepcopy(task)
         changed[field] = value
         assert stages.reviewed_meaning_identity(
-            repo, stage, changed, helper)["identity"] != before
+            repo, stage, changed, helper)["semantic_identity"] != before
     lib = load_factory_lib(repo)
     proof = lib.proof_path(repo, "S1", "tests.json", task_id="T1")
     data = json.loads(proof.read_text())
     data["automated"]["cases"].append("substantive")
     proof.write_text(json.dumps(data), encoding="utf-8")
-    assert stages.reviewed_meaning_identity(repo, stage, task, helper)["identity"] != before
+    assert stages.reviewed_meaning_identity(
+        repo, stage, task, helper)["semantic_identity"] != before

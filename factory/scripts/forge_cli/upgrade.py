@@ -62,6 +62,37 @@ RETIRED_FORGE_PROFILE_HASHES = {
 }
 LEAN_MIGRATION_VERSION = "lean-workflow-v2"
 LEAN_LENSES = ("performance", "quality", "security")
+LEAN_RUNTIME_PATHS = (
+    "factory/scripts/forge_cli/approval.py",
+    "factory/scripts/post_tool_use.py",
+    ".codex/config.toml",
+    ".codex/hooks.json",
+    ".claude/settings.json",
+)
+
+
+def _linked_or_reparse(info: os.stat_result) -> bool:
+    return bool(__import__("stat").S_ISLNK(info.st_mode)
+                or getattr(info, "st_file_attributes", 0) & 0x400)
+
+
+def _require_unlinked_path(target: Path, path: Path) -> None:
+    """Refuse a link/reparse leaf or ancestor without rejecting a resolved root."""
+    try:
+        relative = path.relative_to(target)
+    except ValueError:
+        fail(f"Lean migration path escapes the target: {path}")
+    current = target
+    for part in relative.parts:
+        current /= part
+        if not current.exists() and not current.is_symlink():
+            continue
+        try:
+            info = current.lstat()
+        except OSError as exc:
+            fail(f"Lean migration cannot inspect {current}: {exc}")
+        if _linked_or_reparse(info):
+            fail(f"Lean migration refuses linked or reparse path {current}")
 
 
 def _lean_family(relative: str, data: bytes | None = None) -> str:
@@ -89,7 +120,8 @@ def _lean_family(relative: str, data: bytes | None = None) -> str:
     if re.fullmatch(r"\.factory/(?:stories/[^/]+/)?plan-mode/[^/]+\.json", relative):
         return "plan-mode-marker"
     if re.fullmatch(
-            r"\.factory/stories/[^/]+/tasks/[^/]+/reviews/(?:quality|performance|security)\.json",
+            r"\.factory/stories/[^/]+/(?:tasks/[^/]+/reviews|reviews)/"
+            r"(?:quality|performance|security)\.json",
             relative):
         return "fixed-review-lens"
     if (relative == ".factory/stages.json"
@@ -103,6 +135,8 @@ def lean_primary_inventory(target: Path) -> list[dict]:
     candidates: list[Path] = []
     roots = [target / ".factory", target / ".codex" / "agents"]
     config = target / ".codex" / "config.toml"
+    for path in [*roots, config]:
+        _require_unlinked_path(target, path)
     if config.exists() or config.is_symlink():
         candidates.append(config)
     for root in roots:
@@ -112,9 +146,11 @@ def lean_primary_inventory(target: Path) -> list[dict]:
             fail(f"Lean migration refuses linked inventory root {root}")
         for directory, names, files in os.walk(root, followlinks=False):
             current = Path(directory)
+            _require_unlinked_path(target, current)
             if current == target / ".factory":
                 names[:] = [name for name in names if name != "history"]
-            linked = [name for name in names if (current / name).is_symlink()]
+            linked = [name for name in names
+                      if _linked_or_reparse((current / name).lstat())]
             if linked:
                 fail(f"Lean migration refuses linked directory {current / linked[0]}")
             for name in files:
@@ -145,12 +181,13 @@ def lean_raw_inventory(target: Path) -> list[dict]:
     rows: list[dict] = []
     starts = [target / ".factory", target / ".codex" / "agents"]
     config = target / ".codex" / "config.toml"
+    for path in [*starts, config]:
+        _require_unlinked_path(target, path)
     stack = [path for path in starts if path.exists() or path.is_symlink()]
     files = [config] if config.exists() or config.is_symlink() else []
     while stack:
         directory = stack.pop()
-        if directory.is_symlink():
-            fail(f"Lean raw inventory refuses linked root {directory}")
+        _require_unlinked_path(target, directory)
         try:
             children = list(os.scandir(directory))
         except OSError as exc:
@@ -159,7 +196,7 @@ def lean_raw_inventory(target: Path) -> list[dict]:
             path = Path(child.path)
             if path == target / ".factory" / "history":
                 continue
-            if child.is_symlink():
+            if child.is_symlink() or _linked_or_reparse(child.stat(follow_symlinks=False)):
                 rel = path.relative_to(target).as_posix()
                 # Any link in a fixed legacy root makes coverage unverifiable.
                 fail(f"Lean raw inventory refuses linked entry {rel}")
@@ -196,8 +233,9 @@ def lean_raw_inventory(target: Path) -> list[dict]:
             family = "manual-plan-approval"
         elif "/plan-mode/" in relative and relative.endswith(".json"):
             family = "plan-mode-marker"
-        elif "/tasks/" in relative and "/reviews/" in relative \
-                and relative.rsplit("/", 1)[-1] in {f"{lens}.json" for lens in LEAN_LENSES}:
+        elif re.fullmatch(
+                r"\.factory/stories/[^/]+/(?:tasks/[^/]+/reviews|reviews)/"
+                r"(?:quality|performance|security)\.json", relative):
             family = "fixed-review-lens"
         elif (relative == ".factory/stages.json" or "/stages/" in relative) \
                 and b'"local_review_stamp"' in data and b'"reviewed_meaning"' not in data:
@@ -214,6 +252,124 @@ def _inventory_digest(entries: list[dict]) -> str:
     return hashlib.sha256(json.dumps(
         entries, sort_keys=True, separators=(",", ":"), ensure_ascii=False,
     ).encode("utf-8")).hexdigest()
+
+
+def _runtime_inventory(target: Path) -> list[dict]:
+    paths = [target / relative for relative in LEAN_RUNTIME_PATHS]
+    return [{"path": path.relative_to(target).as_posix(),
+             "sha256": hashlib.sha256(path.read_bytes()).hexdigest()}
+            for path in paths if path.is_file() and not path.is_symlink()]
+
+
+def _validate_completed_manifest(target: Path, saved: dict) -> None:
+    from factory_lib import validate_review_document
+    installed_runtime = saved.get("installed_runtime")
+    preserved_entries = saved.get("preserved_entries")
+    if (saved.get("generated_by") != "upgrade"
+            or saved.get("version") != LEAN_MIGRATION_VERSION
+            or not isinstance(saved.get("recorded_at"), str)
+            or not saved["recorded_at"].strip()
+            or not isinstance(saved.get("completed_at"), str)
+            or not saved["completed_at"].strip()
+            or not isinstance(saved.get("entries"), list)
+            or not isinstance(installed_runtime, list)
+            or not isinstance(preserved_entries, list)
+            or any(not isinstance(row, dict)
+                   or set(row) != {"path", "sha256"}
+                   or not isinstance(row["path"], str)
+                   or not isinstance(row["sha256"], str)
+                   or not re.fullmatch(r"[0-9a-f]{64}", row["sha256"])
+                   for row in installed_runtime)
+            or len(installed_runtime) != len(LEAN_RUNTIME_PATHS)
+            or {row["path"] for row in installed_runtime}
+            != set(LEAN_RUNTIME_PATHS)
+            or saved.get("input_inventory_digest")
+            != _inventory_digest(saved.get("entries") or [])
+            or saved.get("installed_runtime_digest")
+            != _inventory_digest(installed_runtime)
+            or any(entry not in saved["entries"]
+                   or entry.get("family") != "fixed-review-lens"
+                   for entry in preserved_entries
+                   if isinstance(entry, dict))
+            or any(not isinstance(entry, dict) for entry in preserved_entries)):
+        fail("Lean migration completed manifest is incomplete or tampered")
+    outputs = saved.get("outputs")
+    if not isinstance(outputs, list):
+        fail("Lean migration completed manifest has no durable output inventory")
+    for row in outputs:
+        if not isinstance(row, dict) or set(row) != {
+                "story", "task_id", "generation_id", "generation_sha256"}:
+            fail("Lean migration completed manifest output is malformed")
+        if (not all(isinstance(row[field], str) and row[field]
+                    for field in row)
+                or not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]*", row["story"])
+                or not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]*", row["task_id"])
+                or not re.fullmatch(r"[0-9a-f]{64}", row["generation_id"])
+                or not re.fullmatch(r"[0-9a-f]{64}", row["generation_sha256"])):
+            fail("Lean migration completed manifest output identity is malformed")
+        root = (target / ".factory" / "stories" / row["story"] / "tasks"
+                / row["task_id"] / "reviews")
+        generation_path = root / "generations" / f"{row['generation_id']}.json"
+        selection_path = root / "selected.json"
+        _require_unlinked_path(target, generation_path)
+        _require_unlinked_path(target, selection_path)
+        try:
+            generation_bytes = generation_path.read_bytes()
+            generation = json.loads(generation_bytes)
+            selection = json.loads(selection_path.read_text(encoding="utf-8"))
+            validate_review_document(target, generation)
+        except (OSError, UnicodeDecodeError, json.JSONDecodeError, SystemExit) as exc:
+            fail(f"Lean migration durable review output is invalid: {exc}")
+        if (generation.get("generation_id") != row["generation_id"]
+                or generation.get("story") != row["story"]
+                or generation.get("task_id") != row["task_id"]
+                or hashlib.sha256(generation_bytes).hexdigest()
+                != row["generation_sha256"]
+                or selection.get("story") != row["story"]
+                or selection.get("task_id") != row["task_id"]
+                or selection.get("generation_id") != row["generation_id"]
+                or selection.get("generation_sha256") != row["generation_sha256"]
+                or generation.get("origin") != "upgrade"):
+            fail("Lean migration durable review output identity is tampered")
+    expected_output = hashlib.sha256(json.dumps(
+        outputs, sort_keys=True, separators=(",", ":"),
+    ).encode()).hexdigest()
+    if saved.get("output_digest") != expected_output:
+        fail("Lean migration completed output digest is tampered")
+
+
+def _prepare_review_outputs(target: Path, migration: dict) -> None:
+    from factory_lib import (
+        review_generation_bytes, review_generation_id, validate_review_document,
+    )
+    prepared = []
+    with tempfile.TemporaryDirectory(prefix="forge-lean-preflight-") as temporary:
+        build = Path(temporary)
+        for index, (candidate, _sources) in enumerate(
+                migration.get("review_candidates") or []):
+            validate_review_document(target, candidate, allow_missing_generation_id=True)
+            generation = {**candidate, "generation_id": review_generation_id(candidate)}
+            validate_review_document(target, generation)
+            body = review_generation_bytes(generation)
+            staged = build / f"{index}-{generation['generation_id']}.json"
+            staged.write_bytes(body)
+            if staged.read_bytes() != body:
+                fail("Lean migration temporary review readback differs")
+            validate_review_document(target, json.loads(staged.read_text(encoding="utf-8")))
+            reviews = (target / ".factory" / "stories" / candidate["story"]
+                       / "tasks" / candidate["task_id"] / "reviews")
+            generation_path = reviews / "generations" / f"{generation['generation_id']}.json"
+            for path in (generation_path, reviews / "selected.json"):
+                _require_unlinked_path(target, path)
+                assert_target_file_destination(target, path)
+            prepared.append({
+                "candidate": candidate, "generation_id": generation["generation_id"],
+                "generation_sha256": hashlib.sha256(body).hexdigest(),
+            })
+    manifest = target / ".factory" / "migrations" / f"{LEAN_MIGRATION_VERSION}.json"
+    _require_unlinked_path(target, manifest)
+    assert_target_file_destination(target, manifest)
+    migration["prepared_reviews"] = prepared
 
 
 def preflight_lean_migration(target: Path) -> dict | None:
@@ -239,58 +395,83 @@ def preflight_lean_migration(target: Path) -> dict | None:
         saved = load_json(manifest, default={})
         if saved.get("version") != LEAN_MIGRATION_VERSION:
             fail("Lean migration found an unequal partial retry; restore or complete the original checkout")
-        if not primary:
-            return None
         if saved.get("completed_at"):
-            fail("Lean migration found an unequal partial retry; restore or complete the original checkout")
+            _validate_completed_manifest(target, saved)
+            if primary != saved.get("preserved_entries"):
+                fail("Lean migration found an unequal partial retry; restore or complete the original checkout")
+            return None
         if saved.get("entries") != primary:
             fail("Lean migration found an unequal partial retry; restore or complete the original checkout")
         migration = {"entries": primary,
                      "input_inventory_digest": saved.get("input_inventory_digest"),
                      "resume": True}
         migration["review_candidates"] = _fixed_review_candidates(target, migration)
+        _prepare_review_outputs(target, migration)
         return migration
     migration = {"entries": primary,
                  "input_inventory_digest": _inventory_digest(primary)}
     migration["review_candidates"] = _fixed_review_candidates(target, migration)
+    _prepare_review_outputs(target, migration)
     return migration
 
 
 def _fixed_review_candidates(target: Path, migration: dict) -> list[tuple[dict, list[Path]]]:
-    from factory_lib import validate_review_document
+    from factory_lib import _committed_task_marker, validate_payload, validate_review_document
     grouped: dict[tuple[str, str], list[dict]] = {}
     for entry in migration["entries"]:
         if entry["family"] != "fixed-review-lens":
             continue
         parts = Path(entry["path"]).parts
-        story, task = parts[2], parts[4]
+        story = parts[2]
+        task = parts[4] if parts[3] == "tasks" else ""
         grouped.setdefault((story, task), []).append(entry)
     candidates = []
-    for (story, task), entries in sorted(grouped.items()):
-        marker = target / ".factory" / "stories" / story / "tasks" / task / "pr-ready.json"
-        if not marker.is_file() or marker.is_symlink():
-            continue  # active old proof is intentionally retired and reviewed fresh
-        marker_data = load_json(marker, default={})
-        sealed = marker_data.get("commit")
-        if not isinstance(sealed, str) or not sealed:
-            fail(f"sealed fixed review {story}/{task} has no exact marker commit")
+    for (story, path_task), entries in sorted(grouped.items()):
+        lenses = {}
+        for entry in entries:
+            try:
+                value = json.loads((target / entry["path"]).read_text(encoding="utf-8"))
+                if not isinstance(value, dict):
+                    raise ValueError("expected an object")
+                validate_payload(target, "review", value)
+            except (OSError, UnicodeDecodeError, json.JSONDecodeError,
+                    ValueError, SystemExit) as exc:
+                fail(f"fixed review input {entry['path']} is malformed: {exc}")
+            lens = Path(entry["path"]).stem
+            if value.get("aspect") not in {None, lens}:
+                fail(f"fixed review input {entry['path']} has mixed lens identity")
+            lenses[lens] = value
+        # Individually valid but incomplete sets are inert display history.
+        if set(lenses) != set(LEAN_LENSES):
+            continue
+        task_ids = {str(value.get("task_id") or "") for value in lenses.values()}
+        if len(task_ids) != 1 or not next(iter(task_ids)):
+            fail(f"sealed fixed review {story} cannot identify exactly one task")
+        task = next(iter(task_ids))
+        if path_task and task != path_task:
+            fail(f"sealed fixed review {story}/{path_task} has mixed task identity")
         by_lens = {Path(entry["path"]).stem: entry for entry in entries}
-        if set(by_lens) != set(LEAN_LENSES):
-            fail(f"sealed fixed review {story}/{task} is partial")
-        lenses = {
-            lens: load_json(target / by_lens[lens]["path"], default={})
-            for lens in LEAN_LENSES
-        }
         deltas = {value.get("branch_diff_digest") for value in lenses.values()
                   if isinstance(value, dict)}
         if len(deltas) != 1 or not next(iter(deltas), ""):
             fail(f"sealed fixed review {story}/{task} has conflicting delta identity")
+        marker = target / ".factory" / "stories" / story / "tasks" / task / "pr-ready.json"
+        _require_unlinked_path(target, marker)
+        if not marker.is_file():
+            continue  # active old proof is intentionally retired and reviewed fresh
+        marker_data = load_json(marker, default={})
+        committed, marker_problem = _committed_task_marker(
+            target, story, task, marker_data, None,
+        )
+        if marker_problem or committed is None:
+            fail(f"sealed fixed review {story}/{task} marker is invalid: "
+                 f"{marker_problem or 'not committed'}")
+        sealed = committed["commit"]
         candidate = {
             "format": "forge-review-generation/v1", "origin": "upgrade",
             "generated_by": "upgrade", "story": story, "task_id": task,
             "inspected_commit": sealed, "delta_id": next(iter(deltas)),
-            "lenses": lenses, "recorded_at": __import__("datetime").datetime.now(
-                __import__("datetime").timezone.utc).isoformat(),
+            "lenses": lenses, "recorded_at": marker_data["sealed_at"],
             "upgrade": {
                 "inventory_digest": migration["input_inventory_digest"],
                 "source_kind": "sealed", "sealed_commit": sealed,
@@ -314,16 +495,20 @@ def apply_lean_migration(target: Path, migration: dict | None) -> None:
         review_generation_id, validate_payload, validate_review_document,
     )
     review_candidates = migration.get("review_candidates") or []
-    runtime_paths = [
-        target / "factory" / "scripts" / "forge_cli" / "approval.py",
-        target / "factory" / "scripts" / "post_tool_use.py",
-        target / ".codex" / "config.toml",
-        target / ".codex" / "hooks.json",
-        target / ".claude" / "settings.json",
+    runtime = _runtime_inventory(target)
+    prepared = {
+        row["generation_id"]: row
+        for row in migration.get("prepared_reviews") or []
+    }
+    promoted_paths = {
+        path.relative_to(target).as_posix()
+        for _candidate, paths in review_candidates for path in paths
+    }
+    preserved_entries = [
+        entry for entry in migration["entries"]
+        if entry["family"] == "fixed-review-lens"
+        and entry["path"] not in promoted_paths
     ]
-    runtime = [{"path": path.relative_to(target).as_posix(),
-                "sha256": hashlib.sha256(path.read_bytes()).hexdigest()}
-               for path in runtime_paths if path.is_file() and not path.is_symlink()]
     # Build every durable output away from the target first. Publication starts
     # only after schema validation and byte readback of the whole build.
     with tempfile.TemporaryDirectory(prefix="forge-lean-build-") as temporary:
@@ -345,8 +530,14 @@ def apply_lean_migration(target: Path, migration: dict | None) -> None:
                 fail("Lean migration temporary review readback differs")
             validate_review_document(target, json.loads(path.read_text(encoding="utf-8")))
             digest = hashlib.sha256(body).hexdigest()
+            prepared_row = prepared.get(generation["generation_id"])
+            if (not prepared_row
+                    or prepared_row.get("generation_sha256") != digest
+                    or prepared_row.get("candidate") != candidate):
+                fail("Lean migration prepared review changed after preflight")
             built_generations.append((candidate, generation["generation_id"], digest))
             outputs.append({
+                "story": candidate["story"], "task_id": candidate["task_id"],
                 "generation_id": generation["generation_id"],
                 "generation_sha256": digest,
             })
@@ -357,7 +548,10 @@ def apply_lean_migration(target: Path, migration: dict | None) -> None:
             "output_digest": hashlib.sha256(json.dumps(
                 outputs, sort_keys=True, separators=(",", ":")).encode()).hexdigest(),
             "installed_runtime_digest": _inventory_digest(runtime),
-            "entries": migration["entries"], "recorded_at": now_iso(),
+            "installed_runtime": runtime,
+            "entries": migration["entries"], "outputs": outputs,
+            "preserved_entries": preserved_entries,
+            "recorded_at": now_iso(),
         }
         validate_payload(target, "lean-workflow-migration", manifest)
         built_manifest = build / f"{LEAN_MIGRATION_VERSION}.json"
@@ -400,6 +594,10 @@ def apply_lean_migration(target: Path, migration: dict | None) -> None:
                     or "hooks = true" not in path.read_text(encoding="utf-8") \
                     or "codex_hooks = true" in path.read_text(encoding="utf-8"):
                 fail("Lean migration did not install the current Codex hook flag")
+            continue
+        if entry["family"] == "fixed-review-lens" and not any(
+                path == target / entry["path"]
+                for _candidate, paths in review_candidates for path in paths):
             continue
         if path.is_symlink() or not path.is_file() \
                 or hashlib.sha256(path.read_bytes()).hexdigest() != entry["sha256"]:

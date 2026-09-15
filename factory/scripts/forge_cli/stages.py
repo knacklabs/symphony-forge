@@ -1043,8 +1043,13 @@ def reviewed_meaning_identity(
     canonical = json.dumps(
         inputs, sort_keys=True, separators=(",", ":"), ensure_ascii=False,
     ).encode("utf-8")
-    return {"identity": hashlib.sha256(canonical).hexdigest(),
-            "bytes": len(canonical), "inputs": inputs}
+    from .review import _combined_prompt
+    prompt = _combined_prompt(task)
+    return {
+        "identity": hashlib.sha256(prompt).hexdigest(), "bytes": len(prompt),
+        "semantic_identity": hashlib.sha256(canonical).hexdigest(),
+        "semantic_bytes": len(canonical), "inputs": inputs,
+    }
 
 
 def stamp_is_fresh(base: Path, stage: dict, task: dict) -> bool:
@@ -1071,7 +1076,7 @@ def stamp_is_fresh(base: Path, stage: dict, task: dict) -> bool:
         meaning = reviewed_meaning_identity(base, stage, task, generation.get("helper"))
         if (generation.get("input") != {
                 "sha256": meaning["identity"], "bytes": meaning["bytes"]
-            } or stamp.get("reviewed_meaning") != meaning["identity"]):
+            } or stamp.get("reviewed_meaning") != meaning["semantic_identity"]):
             return False
     return True
 
@@ -1111,7 +1116,7 @@ def stamp_stage_review(base: Path, stage_id: str, *, generated_by: str = "autore
                 and generation.get("origin") in {"combined", "rejection"}:
             stamp["reviewed_meaning"] = reviewed_meaning_identity(
                 base, stage, task, generation.get("helper"),
-            )["identity"]
+            )["semantic_identity"]
         stage["local_review_stamp"] = stamp
         write_stages(base, data)
     append_event(base, "review-stage-local", actor=generated_by,
@@ -1472,8 +1477,15 @@ def _host_window_covering(base: Path, stage: dict, task: dict) -> dict | None:
 
 
 def _successful_launch_entry_valid(
-        base: Path, stage_id: str, stage: dict, entry: dict | None) -> bool:
-    """Return whether this exact terminal row proves a stage-bound write."""
+        base: Path, stage_id: str, stage: dict, entry: dict | None, *,
+        current_brief_required: bool = True) -> bool:
+    """Return whether this exact terminal row proves a stage-bound write.
+
+    A current launch must bind the current rendered brief.  A launch selected
+    by an immutable measurement receipt instead authenticates the historical
+    row and result that created the receipt; later valid brief regeneration
+    must not rewrite that historical anchor.
+    """
     from .codex_runtime import native_argv_valid, parse_native_result
     from .delegate import argv_digest, brief_path, delegations_path
 
@@ -1511,6 +1523,23 @@ def _successful_launch_entry_valid(
         )
     elif transport is None:
         prompts = (str(brief), brief.relative_to(base).as_posix())
+        context = entry.get("context")
+        if (isinstance(context, dict)
+                and context.get("supplied") is True
+                and isinstance(context.get("bytes"), int)
+                and context["bytes"] >= 0
+                and isinstance(context.get("snapshot_id"), str)
+                and re.fullmatch(r"context-[0-9a-f]{32}", context["snapshot_id"])
+                and isinstance(argv, list) and "--prompt-file" in argv):
+            prompt_index = argv.index("--prompt-file") + 1
+            if prompt_index < len(argv):
+                transient = Path(argv[prompt_index])
+                if (transient.is_absolute() and transient.name == "brief.md"
+                        and re.fullmatch(r"forge-context-[0-9a-f]{32}",
+                                         transient.parent.name)
+                        and transient.parent.parent
+                        == Path(tempfile.gettempdir()).resolve()):
+                    prompts += (str(transient),)
         argv_valid = (
             isinstance(argv, list)
             and bool(argv)
@@ -1526,12 +1555,20 @@ def _successful_launch_entry_valid(
         )
     else:
         argv_valid = False
+    brief_digest = entry.get("brief_sha256") if entry else None
+    brief_valid = (
+        brief_digest == sha256_of(brief)
+        if current_brief_required
+        else isinstance(brief_digest, str)
+        and re.fullmatch(r"[0-9a-f]{64}", brief_digest) is not None
+    )
     valid = (
         entry
         and entry.get("launch_status") == "succeeded"
         and entry.get("exit_code") == 0
         and entry.get("write") is True
         and entry.get("stage_started_at") == stage.get("started_at")
+        and brief_valid
         and argv_valid
     )
     return bool(valid)
@@ -1827,23 +1864,84 @@ def _run_verify_commands(base: Path, stage_id: str, task: dict) -> None:
                  f"{command}\n" + "\n".join(tail[-15:]))
 
 
-def _proof_tool_identity(command: str) -> dict[str, object]:
+def _file_identity(path: Path) -> dict[str, object]:
+    info = path.stat()
+    return {
+        "path": str(path), "size": info.st_size, "mtime_ns": info.st_mtime_ns,
+        "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+    }
+
+
+def _proof_tool_identity(base: Path, command: str) -> dict[str, object]:
+    """Resolve only the Python command shapes Forge declares for proof reuse."""
     tokens = shlex.split(command)
     while tokens and "=" in tokens[0] and not tokens[0].startswith("="):
         tokens.pop(0)
-    executable = shutil.which(tokens[0]) if tokens else None
-    if not executable:
-        return {"command": tokens[0] if tokens else "", "available": False}
-    path = Path(executable).resolve()
+    if not tokens:
+        return {"command": "", "reusable": False}
+    outer = shutil.which(tokens[0])
+    if not outer:
+        return {"command": tokens[0], "reusable": False}
+    outer_path = Path(outer).resolve()
     try:
-        info = path.stat()
-        digest = hashlib.sha256(path.read_bytes()).hexdigest()
+        runner = _file_identity(outer_path)
     except OSError:
-        return {"command": tokens[0], "available": False}
-    return {
-        "command": tokens[0], "path": str(path), "size": info.st_size,
-        "mtime_ns": info.st_mtime_ns, "sha256": digest,
-    }
+        return {"command": tokens[0], "reusable": False}
+    name = outer_path.name.lower()
+    dependencies: list[str] = []
+    probe: list[str]
+    if re.fullmatch(r"python(?:3(?:\.\d+)?)?(?:\.exe)?", name):
+        probe = [str(outer_path)]
+        if len(tokens) > 2 and tokens[1:3] == ["-m", "pytest"]:
+            dependencies.append("pytest")
+    elif name in {"uv", "uv.exe"} and len(tokens) > 2 and tokens[1] == "run":
+        python_index = next((index for index, token in enumerate(tokens[2:], 2)
+                             if re.fullmatch(r"python(?:3(?:\.\d+)?)?(?:\.exe)?",
+                                             Path(token).name.lower())), -1)
+        if python_index < 0:
+            return {"command": tokens[0], "runner": runner, "reusable": False}
+        probe = tokens[:python_index + 1]
+        for index, token in enumerate(tokens[2:python_index], 2):
+            if token == "--with" and index + 1 < python_index:
+                dependencies.append(tokens[index + 1])
+            elif token.startswith("--with="):
+                dependencies.append(token.split("=", 1)[1])
+        if tokens[python_index + 1:python_index + 3] == ["-m", "pytest"]:
+            dependencies.append("pytest")
+    else:
+        return {"command": tokens[0], "runner": runner, "reusable": False}
+    script = (
+        "import hashlib,importlib.metadata as m,json,pathlib,sys;"
+        "rows=[];"
+        "deps=json.loads(sys.argv[1]);"
+        "[(lambda d: rows.append({'name':d.metadata.get('Name',''),'version':d.version,"
+        "'metadata_sha256':hashlib.sha256((d.read_text('METADATA') or '').encode()).hexdigest(),"
+        "'record_sha256':hashlib.sha256((d.read_text('RECORD') or '').encode()).hexdigest()}))"
+        "(m.distribution(x)) for x in deps];"
+        "print(json.dumps({'executable':sys.executable,'version':sys.version,'dependencies':rows},sort_keys=True))"
+    )
+    normalized_dependencies = sorted({
+        match.group(0) for value in dependencies
+        if (match := re.match(r"[A-Za-z0-9_.-]+", value))
+    })
+    try:
+        resolved = subprocess.run(
+            [*probe, "-c", script, json.dumps(normalized_dependencies)], cwd=base,
+            capture_output=True, text=True, encoding="utf-8", timeout=60,
+        )
+        detail = json.loads(resolved.stdout) if resolved.returncode == 0 else None
+        interpreter = Path(detail["executable"]).resolve() if isinstance(detail, dict) else None
+        if not interpreter or not interpreter.is_file():
+            raise ValueError
+        return {
+            "command": tokens[0], "runner": runner,
+            "interpreter": _file_identity(interpreter),
+            "python_version": detail["version"],
+            "dependencies": detail["dependencies"], "reusable": True,
+        }
+    except (OSError, ValueError, KeyError, json.JSONDecodeError,
+            subprocess.TimeoutExpired):
+        return {"command": tokens[0], "runner": runner, "reusable": False}
 
 
 def proof_identity(
@@ -1866,16 +1964,31 @@ def proof_identity(
             "verify_commands": commands,
             "generated_inputs": task.get("generated_semantic_inputs") or [],
         }
+    generated: dict[str, dict[str, object] | None] = {}
+    for relative in task.get("generated_semantic_inputs") or []:
+        path = base / str(relative)
+        try:
+            data = path.read_bytes()
+            generated[str(relative)] = {
+                "bytes": len(data), "sha256": hashlib.sha256(data).hexdigest(),
+            }
+        except OSError:
+            generated[str(relative)] = None
+    tools = [_proof_tool_identity(base, command) for command in commands]
+    reusable = (all(tool.get("reusable") is True for tool in tools)
+                and all(value is not None for value in generated.values()))
     inputs: dict[str, object] = {
         "kind": kind,
         "product_tree": snapshot,
         "semantic": semantic,
-        "tools": [_proof_tool_identity(command) for command in commands],
+        "generated_inputs": generated,
+        "tools": tools,
     }
     canonical = json.dumps(
         inputs, sort_keys=True, separators=(",", ":"), ensure_ascii=False,
     ).encode("utf-8")
-    return {"identity": hashlib.sha256(canonical).hexdigest(), "inputs": inputs}
+    return {"identity": hashlib.sha256(canonical).hexdigest(), "inputs": inputs,
+            "reusable": reusable}
 
 
 def _proof_receipt(base: Path, stage_id: str, kind: str) -> dict:
@@ -1916,9 +2029,11 @@ def run_stage_proof(base: Path, stage_id: str, task: dict) -> tuple[dict, dict, 
     )
     verify_receipt = _proof_receipt(base, stage_id, "verify")
     test_receipt = _proof_receipt(base, stage_id, "tests")
-    reuse_verify = (verify_receipt.get("status") == "passed"
+    reuse_verify = (verify_identity.get("reusable") is True
+                    and verify_receipt.get("status") == "passed"
                     and verify_receipt.get("identity") == verify_identity["identity"])
-    reuse_tests = (test_receipt.get("status") == "passed"
+    reuse_tests = (test_identity.get("reusable") is True
+                   and test_receipt.get("status") == "passed"
                    and test_receipt.get("identity") == test_identity["identity"])
     test_id_misses = list(test_receipt.get("test_id_misses") or []) \
         if reuse_tests else []

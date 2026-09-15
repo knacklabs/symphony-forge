@@ -143,13 +143,19 @@ Successful tests, verify, and selected review may be reused only through their
 existing stage receipts. Test identity includes product bytes, exact command,
 selectors, test configuration, and tool versions. Verify identity includes
 product bytes, argv, configuration, tool versions, and generated semantic
-inputs. Review additionally requires the existing stamp-token delta binding and
+input byte hashes. Supported Python and `uv run` receipts bind the resolved
+interpreter and requested distribution metadata; an unavailable or unknown
+runner shape is never reusable. Review additionally requires the existing
+stamp-token delta binding and
 the current reviewed-meaning identity: approved semantic task brief, effective
 acceptance/security/migration semantics, substantive automated evidence,
 review instructions/helper/configuration, generated semantic inputs, and the
 product delta. Recorder timestamps and explicitly canonicalized bookkeeping may
 reuse; unknown, partial, or changed substantive input forces a fresh run while
 the original raw provenance stays immutable.
+The immutable selected generation `input` separately hashes the exact combined
+prompt bytes sent to the helper; it is never replaced by the semantic reuse
+digest in `local_review_stamp.reviewed_meaning`.
 
 This used to be one set of artifacts per STORY, rewritten by each task in
 turn: a story's review described whichever task ran last, and a task PR could
