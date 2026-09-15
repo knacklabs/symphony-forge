@@ -226,8 +226,10 @@ def test_native_approval_refuses_cross_story_host_event_replay_without_mutation(
     approval.record_native_approval(repo, event, runtime="claude")
     lib = load_factory_lib(repo)
     tombstone = next((first.evidence.parent / "approval-events").glob("*.json"))
-    if location == "archived":
-        destination = repo / ".factory" / "history" / first.story / "approval-events" / tombstone.name
+    destination = tombstone
+    if location in {"archived", "legacy"}:
+        destination = (repo / ".factory" / "history" / first.story / "approval-events"
+                       if location == "archived" else repo / ".factory" / "approval-events") / tombstone.name
         destination.parent.mkdir(parents=True, exist_ok=True)
         tombstone.rename(destination)
     (repo / ".factory" / "stories" / "APPROVE-2").mkdir(parents=True)
@@ -241,6 +243,7 @@ def test_native_approval_refuses_cross_story_host_event_replay_without_mutation(
     assert (second.path.read_bytes(), lib.run_state_path(repo).read_bytes(),
             second.evidence.read_bytes() if second.evidence.exists() else None) == before
     assert not (repo / ".factory" / "stories" / second.story / "approval-events").exists()
+    assert destination.is_file()
 
 
 @pytest.mark.parametrize("runtime", ["claude", "codex"])

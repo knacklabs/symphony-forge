@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import os
+import subprocess
 import sys
 from pathlib import Path
 
@@ -74,8 +76,9 @@ def test_hook_refuses_write_outside_narrowed_delegate_scope():
     assert not path_in_scope("src/pkg-other/x", ["src/pkg/"])
 
 
+@pytest.mark.skipif(sys.platform == "win32", reason="tests POSIX source ownership and modes")
 def test_context_file_security_no_follow_modes_identity_capacity_and_cleanup(
-        tmp_path: Path):
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     secure = tmp_path / "secure"
     secure.mkdir(mode=0o700)
     secure.chmod(0o700)
@@ -102,11 +105,21 @@ def test_context_file_security_no_follow_modes_identity_capacity_and_cleanup(
     assert not root.exists()
 
     source.chmod(0o644)
-    text, _, ordinary_snapshot, ordinary_identity = (
+    with monkeypatch.context() as patch:
+        patch.setattr(delegate, "_create_private_directory",
+                      lambda *_args: pytest.fail("created a public-source snapshot"))
+        with pytest.raises(SystemExit):
+            delegate.secure_context_snapshot(source)
+    source.chmod(0o600)
+    with monkeypatch.context() as patch:
+        patch.setattr(delegate.os, "geteuid", lambda: os.stat(source).st_uid + 1)
+        with pytest.raises(SystemExit):
+            delegate.secure_context_snapshot(source)
+    extra_link = secure / "extra-link.md"
+    os.link(source, extra_link)
+    with pytest.raises(SystemExit):
         delegate.secure_context_snapshot(source)
-    )
-    assert text == "private context"
-    delegate._cleanup_private_context(ordinary_snapshot, ordinary_identity, "")
+    extra_link.unlink()
     link = secure / "link.md"
     link.symlink_to(source)
     with pytest.raises(SystemExit):
@@ -119,18 +132,22 @@ def test_context_file_security_no_follow_modes_identity_capacity_and_cleanup(
 def test_windows_private_acl_validation_refuses_extra_allow_aces(
         tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     sid = "S-1-5-21-123"
-    monkeypatch.setattr(delegate, "_windows_acl_state", lambda _path: {
+    state = {
         "Owner": sid, "Protected": True,
-        "Access": [{"Identity": sid, "Type": "Allow", "Inherited": False}],
-    })
+        "Access": [{"Identity": sid, "Type": "Allow", "Inherited": False,
+                    "Rights": 0x1F01FF}],
+    }
+    monkeypatch.setattr(delegate, "_windows_acl_state", lambda _path: state)
     delegate._require_windows_private_acl(tmp_path, sid)
-    monkeypatch.setattr(delegate, "_windows_acl_state", lambda _path: {
-        "Owner": sid, "Protected": True,
-        "Access": [
-            {"Identity": sid, "Type": "Allow", "Inherited": False},
-            {"Identity": "S-1-5-21-999", "Type": "Allow", "Inherited": False},
-        ],
-    })
+    state["Access"][0].pop("Rights")
+    with pytest.raises(SystemExit):
+        delegate._require_windows_private_acl(tmp_path, sid)
+    state["Access"][0]["Rights"] = 0x20089
+    with pytest.raises(SystemExit):
+        delegate._require_windows_private_acl(tmp_path, sid)
+    state["Access"][0]["Rights"] = 0x1F01FF
+    state["Access"].append({"Identity": "S-1-5-21-999", "Type": "Allow",
+                            "Inherited": False, "Rights": 0x20089})
     with pytest.raises(SystemExit):
         delegate._require_windows_private_acl(tmp_path, sid)
 
@@ -138,12 +155,27 @@ def test_windows_private_acl_validation_refuses_extra_allow_aces(
 @pytest.mark.skipif(sys.platform != "win32", reason="requires native Windows ACLs")
 def test_context_file_native_windows_protected_dacl_owner_reopen_and_stale_cleanup(
         tmp_path: Path):
-    source = tmp_path / "ordinary-context.md"
+    source = tmp_path / "private-context.md"
     source.write_text("windows context", encoding="utf-8")
-    text, _metadata, snapshot, identity = delegate.secure_context_snapshot(source)
     sid = delegate._windows_current_sid()
+    delegate._protect_windows_path(source, sid)
+    text, _metadata, snapshot, identity = delegate.secure_context_snapshot(source)
     assert text == "windows context"
     delegate._require_windows_private_acl(snapshot.parent, sid)
     delegate._require_windows_private_acl(snapshot, sid)
     delegate._cleanup_private_context(snapshot, identity, sid)
     assert not snapshot.parent.exists()
+    result = subprocess.run(
+        ["icacls", str(source), "/grant", "*S-1-5-11:(R)"],
+        capture_output=True, text=True,
+    )
+    assert result.returncode == 0, result.stderr
+    with pytest.raises(SystemExit):
+        delegate.secure_context_snapshot(source)
+    result = subprocess.run(
+        ["icacls", str(source), "/remove", "*S-1-5-11",
+         "/grant:r", f"*{sid}:(R)"], capture_output=True, text=True,
+    )
+    assert result.returncode == 0, result.stderr
+    with pytest.raises(SystemExit):
+        delegate.secure_context_snapshot(source)

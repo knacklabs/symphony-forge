@@ -1196,10 +1196,14 @@ def _windows_current_sid() -> str:
 
 def _windows_acl_state(path: Path) -> dict:
     script = (
-        "$a=Get-Acl -LiteralPath $args[0]; "
-        "[pscustomobject]@{Owner=$a.Owner;Protected=$a.AreAccessRulesProtected;"
-        "Access=@($a.Access|%{[pscustomobject]@{Identity=$_.IdentityReference.Value;"
-        "Type=$_.AccessControlType.ToString();Inherited=$_.IsInherited}})}|"
+        "$ErrorActionPreference='Stop';$a=Get-Acl -LiteralPath $args[0]; "
+        "$sid=[Security.Principal.SecurityIdentifier];"
+        "[pscustomobject]@{Owner=$a.GetOwner($sid).Value;"
+        "Protected=$a.AreAccessRulesProtected;"
+        "Access=@($a.GetAccessRules($true,$true,$sid)|%{[pscustomobject]@{"
+        "Identity=$_.IdentityReference.Value;"
+        "Type=$_.AccessControlType.ToString();Inherited=$_.IsInherited;"
+        "Rights=[int]$_.FileSystemRights}})}|"
         "ConvertTo-Json -Compress -Depth 4"
     )
     result = subprocess.run(
@@ -1220,12 +1224,18 @@ def _require_windows_private_acl(path: Path, sid: str) -> None:
     access = state.get("Access")
     if isinstance(access, dict):
         access = [access]
-    allowed = [row for row in access or []
-               if isinstance(row, dict) and row.get("Type") == "Allow"]
-    owner = str(state.get("Owner") or "")
-    if (state.get("Protected") is not True or sid not in owner
-            or not allowed or any(sid not in str(row.get("Identity") or "")
-                                  or row.get("Inherited") is True for row in allowed)):
+    # Read, write, delete, and delete children cover source, snapshot, and
+    # private-directory cleanup; generated ACLs grant FullControl.
+    required_rights = 0x20089 | 0x116 | 0x10000
+    if path.is_dir():
+        required_rights |= 0x40
+    if (state.get("Protected") is not True or state.get("Owner") != sid
+            or not isinstance(access, list) or not access
+            or any(not isinstance(row, dict) or row.get("Identity") != sid
+                   or row.get("Type") != "Allow" or row.get("Inherited") is not False
+                   or type(row.get("Rights")) is not int
+                   or row["Rights"] & required_rights != required_rights
+                   for row in access)):
         fail("--context-file requires a protected DACL allowing only the current user SID")
 
 
@@ -1411,17 +1421,31 @@ def secure_context_snapshot(
     source = source.expanduser().absolute()
     _verify_context_ancestors(source)
     before = source.lstat()
-    if _is_link_or_reparse(before) or not stat.S_ISREG(before.st_mode):
+    if (_is_link_or_reparse(before) or not stat.S_ISREG(before.st_mode)
+            or before.st_nlink != 1):
         fail("--context-file must be a regular non-linked file")
     windows_sid = ""
     if os.name == "nt":
         windows_sid = _windows_current_sid()
+        _require_windows_private_acl(source, windows_sid)
+    elif before.st_uid != os.geteuid() or before.st_mode & 0o077:
+        fail("--context-file source must belong to the current user and be private")
     flags = os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0)
     descriptor = os.open(source, flags)
     try:
         opened = os.fstat(descriptor)
-        if (opened.st_dev, opened.st_ino) != (before.st_dev, before.st_ino):
+        if ((opened.st_dev, opened.st_ino) != (before.st_dev, before.st_ino)
+                or _is_link_or_reparse(opened) or not stat.S_ISREG(opened.st_mode)
+                or opened.st_nlink != 1):
             fail("--context-file identity changed before snapshot")
+        if windows_sid:
+            current = source.lstat()
+            if ((current.st_dev, current.st_ino) != (opened.st_dev, opened.st_ino)
+                    or _is_link_or_reparse(current) or current.st_nlink != 1):
+                fail("--context-file source changed before ACL verification")
+            _require_windows_private_acl(source, windows_sid)
+        elif opened.st_uid != os.geteuid() or opened.st_mode & 0o077:
+            fail("--context-file source lost its private POSIX ownership or mode")
         data = b""
         while len(data) <= CONTEXT_MAX_BYTES:
             chunk = os.read(descriptor, min(65536, CONTEXT_MAX_BYTES + 1 - len(data)))
@@ -1434,6 +1458,14 @@ def secure_context_snapshot(
         if ((after.st_dev, after.st_ino, after.st_size, after.st_mtime_ns)
                 != (opened.st_dev, opened.st_ino, opened.st_size, opened.st_mtime_ns)):
             fail("--context-file identity changed during snapshot")
+        if windows_sid:
+            current = source.lstat()
+            if ((current.st_dev, current.st_ino) != (after.st_dev, after.st_ino)
+                    or _is_link_or_reparse(current) or current.st_nlink != 1):
+                fail("--context-file source changed during ACL verification")
+            _require_windows_private_acl(source, windows_sid)
+        elif after.st_uid != os.geteuid() or after.st_mode & 0o077:
+            fail("--context-file source lost its private POSIX ownership or mode")
     finally:
         os.close(descriptor)
     try:
