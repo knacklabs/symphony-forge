@@ -1,19 +1,17 @@
 {
-  "commit": "0349b4e262308c6d14a45a40f252944b2c312236",
+  "commit": "98910985a3000505c35a2623621ce2633fa773b0",
   "automated": {
     "generated_by": "implementer",
     "status": "passed",
-    "summary": "LEAN-WORKFLOW at 0349b4e26230 passed dual-runtime and factory scaffold checks, the full source factory suite (1062 passed, 4 skipped in 999.14s (0:16:39)), and all 51 declared required selectors with zero JUnit ID or path misses.",
+    "summary": "LEAN-WORKFLOW at 98910985a300 passed dual-runtime and factory scaffold checks, the full source factory suite (1074 passed, 4 skipped in 879.34s (0:14:39)), and all 51 declared required selectors with zero JUnit ID or path misses.",
     "blocking_findings": [],
     "commands_run": [
       "./forge task close LEAN-WORKFLOW (integrated verifier and 51 declared required-test commands)",
-      "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with pytest-xdist --with psutil python factory/scripts/verify.py",
-      "python3 factory/scripts/check_dual_runtime.py",
       "python3 factory/scripts/check_encoding_hygiene.py",
       "python3 factory/scripts/check_board_complete.py",
       "git diff --check"
     ],
-    "pass_fail_summary": "1062 passed, 4 skipped in 999.14s (0:16:39); dual-runtime and scaffold exited 0; 51 declared selectors passed, 0 failed, 0 measured JUnit misses.",
+    "pass_fail_summary": "1074 passed, 4 skipped in 879.34s (0:14:39); dual-runtime and scaffold exited 0; 51 declared selectors passed, 0 failed, 0 measured JUnit misses.",
     "reviewed_scope": [
       "factory/scripts/forge_cli/stages.py",
       "factory/scripts/factory_lib.py",
@@ -23,11 +21,16 @@
       "factory/scripts/forge_cli/approval.py",
       "factory/scripts/forge_cli/upgrade.py",
       "factory/scripts/forge_cli/review.py",
-      "factory/scripts/forge_cli/stages.py",
       "factory/tests/test_proof_reuse.py",
       "factory/tests/test_delegate_scope.py",
       ".github/workflows/factory-scaffold.yml",
-      "AGENTS.md"
+      "AGENTS.md",
+      "factory/scripts/forge_cli/grill.py",
+      "factory/scripts/record_grill_from_json.py",
+      "factory/scripts/forge_cli/delegate.py",
+      "factory/tests/test_lean_workflow.py",
+      "factory/tests/test_approval_hooks.py",
+      "factory/tests/test_review_task_delta.py"
     ],
     "remaining_gaps": [
       "A real Claude ExitPlanMode UI approval event was not exercised on this text desktop host; supported native hook event/refusal fixtures passed in the full factory suite.",
@@ -40,12 +43,17 @@
     ],
     "tests_added_or_updated": [
       "factory/tests/test_proof_reuse.py: content-bound receipt reuse, ephemeral uv tools, metadata-only HEAD and Board inputs",
-      "factory/tests/test_delegate_scope.py: native Windows protected-DACL context-file case"
+      "factory/tests/test_delegate_scope.py: native Windows protected-DACL context-file case",
+      "factory/tests/test_lean_workflow.py and test_gates.py: cold findings match actual result, malformed or substituted findings refuse",
+      "factory/tests/test_approval_hooks.py: cross-story replay and relocated legacy tombstone refuse",
+      "factory/tests/test_proof_reuse.py: equivalent Board argv invalidates receipt reuse",
+      "factory/tests/test_review_task_delta.py: chunked quality prompt only asks for visible contracts",
+      "factory/tests/test_delegate_scope.py: private source ownership, rights, hardlink and native Windows DACL cases"
     ],
     "non_blocking_findings": [],
     "residual_risks": [],
-    "recorded_at": "2026-09-15T11:25:57+00:00",
-    "commit": "0349b4e262308c6d14a45a40f252944b2c312236"
+    "recorded_at": "2026-09-15T12:51:22+00:00",
+    "commit": "98910985a3000505c35a2623621ce2633fa773b0"
   },
-  "updated_at": "2026-09-15T11:25:57+00:00"
+  "updated_at": "2026-09-15T12:51:22+00:00"
 }
