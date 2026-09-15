@@ -346,7 +346,8 @@ def _lens_prompt(task: dict, lens: str, base: Path | None = None, *,
     return ("\n".join(lines).rstrip() + "\n").encode()
 
 
-def _combined_prompt(task: dict, *, repo_readable: bool = True) -> bytes:
+def _combined_prompt(task: dict, *, repo_readable: bool = True,
+                     semantic_identity: str = "") -> bytes:
     contracts = [
         str(contract.get("id")) for contract in task.get("plan_contracts") or []
         if isinstance(contract, dict) and isinstance(contract.get("id"), str)
@@ -397,6 +398,8 @@ def _combined_prompt(task: dict, *, repo_readable: bool = True) -> bytes:
         LENS_FOCUS["performance"],
         LENS_FOCUS["security"], LEFTOVER_INSTRUCTION, "",
     ]
+    if semantic_identity:
+        lines.extend(["Reviewed meaning SHA-256: " + semantic_identity, ""])
     return ("\n".join(lines).rstrip() + "\n").encode()
 
 
@@ -1800,11 +1803,17 @@ def review_task(base: Path, task_id: str, *, lens: str | None = None,
     if not args.lens and args.max_priority != "P3":
         fail("complete three-lens review requires --max-priority P3")
 
+    from .stages import reviewed_meaning_identity
+    helper_before, helper_file_before = _helper_identity(skill)
+    meaning = reviewed_meaning_identity(base, stage, task, helper_before)
     # Mint the branch review run the recorder binds every artifact to.
     cmd_review_brief(argparse.Namespace(
         id=None, all=True, repo=str(base), review_task=args.id,
     ))
     dataset_body = (base / REVIEW_DATASET_REL).read_bytes()
+    if reviewed_meaning_identity(base, stage, task, helper_before) != meaning:
+        fail("reviewed meaning changed while rendering the reviewer dataset; "
+             "nothing published")
     token = load_json(base / ".factory" / "stories" / story / "review-run.json", default={})
     if token.get("task_id") != args.id:
         fail("review-run token does not match the reviewed task")
@@ -1822,7 +1831,9 @@ def review_task(base: Path, task_id: str, *, lens: str | None = None,
     for name in prompt_names:
         rel = f"review-briefs/{args.id}.{name}.md"
         body = (_lens_prompt(task, name, base, repo_readable=readable) if args.lens
-                else _combined_prompt(task, repo_readable=readable))
+                else _combined_prompt(
+                    task, repo_readable=readable,
+                    semantic_identity=meaning["semantic_identity"]))
         if not safe_factory_write_bytes(base, rel, body):
             fail(f"could not write .factory/{rel}")
         prompts[name] = (f".factory/{rel}", body)
@@ -1831,8 +1842,6 @@ def review_task(base: Path, task_id: str, *, lens: str | None = None,
     worktree = tmp / "wt"
     reviewed: dict = {}
     raw_result = b""
-    helper_before: dict[str, str] = {}
-    helper_file_before: tuple[int, int] = (0, 0)
     try:
         # A clean detached checkout at the task tip: the skill refuses to finish
         # if the reviewed tree changes mid-run, and the main tree is exactly
@@ -1879,7 +1888,6 @@ def review_task(base: Path, task_id: str, *, lens: str | None = None,
               flush=True)
         if not args.lens:
             _require_current_review_helper(skill)
-        helper_before, helper_file_before = _helper_identity(skill)
         # The launcher travels only when there is one, so a runner that knows
         # nothing of it (a test double, an older override) keeps working.
         result = _run_skill(

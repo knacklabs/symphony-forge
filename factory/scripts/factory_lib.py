@@ -3041,6 +3041,15 @@ def publish_review_generation(
     with delegation_exclusion(
         root, task_id, kind="review-selection",
     ):
+        if update_stamp and generation.get("origin") in {"combined", "rejection"}:
+            from forge_cli.stages import (
+                load_stages, require_current_review_meaning, task_for,
+            )
+            stage = next((row for row in load_stages(root).get("stages", [])
+                          if row.get("id") == task_id), {})
+            require_current_review_meaning(
+                root, stage, task_for(root, task_id), generation,
+            )
         current = None
         selection_path = root / selection_rel
         if selection_path.exists() or selection_path.is_symlink():

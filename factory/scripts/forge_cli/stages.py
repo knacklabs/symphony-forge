@@ -1044,7 +1044,9 @@ def reviewed_meaning_identity(
         inputs, sort_keys=True, separators=(",", ":"), ensure_ascii=False,
     ).encode("utf-8")
     from .review import _combined_prompt
-    prompts = [_combined_prompt(task, repo_readable=readable)
+    semantic_identity = hashlib.sha256(canonical).hexdigest()
+    prompts = [_combined_prompt(task, repo_readable=readable,
+                                semantic_identity=semantic_identity)
                for readable in (True, False)]
     prompt = prompts[0]
     return {
@@ -1053,9 +1055,20 @@ def reviewed_meaning_identity(
             {"sha256": hashlib.sha256(body).hexdigest(), "bytes": len(body)}
             for body in prompts
         ],
-        "semantic_identity": hashlib.sha256(canonical).hexdigest(),
+        "semantic_identity": semantic_identity,
         "semantic_bytes": len(canonical), "inputs": inputs,
     }
+
+
+def require_current_review_meaning(
+        base: Path, stage: dict, task: dict, generation: dict,
+) -> dict:
+    """Require the immutable prompt hash to bind the meaning being published."""
+    meaning = reviewed_meaning_identity(base, stage, task, generation.get("helper"))
+    if generation.get("input") not in meaning["accepted_inputs"]:
+        fail("review generation input does not match the current reviewed meaning; "
+             "run a fresh review before publishing or stamping")
+    return meaning
 
 
 def stamp_is_fresh(base: Path, stage: dict, task: dict) -> bool:
@@ -1119,8 +1132,8 @@ def stamp_stage_review(base: Path, stage_id: str, *, generated_by: str = "autore
         )
         if not problems and isinstance(generation, dict) \
                 and generation.get("origin") in {"combined", "rejection"}:
-            stamp["reviewed_meaning"] = reviewed_meaning_identity(
-                base, stage, task, generation.get("helper"),
+            stamp["reviewed_meaning"] = require_current_review_meaning(
+                base, stage, task, generation,
             )["semantic_identity"]
         stage["local_review_stamp"] = stamp
         write_stages(base, data)

@@ -195,6 +195,9 @@ def _publish(repo, blocking=(), *, recorded_at="2026-09-11T01:00:00+00:00"):
         "raw_result": {"encoding": "base64", "sha256": hashlib.sha256(raw).hexdigest(),
                        "bytes": len(raw), "data": base64.b64encode(raw).decode()},
         "lenses": lenses, "recorded_at": recorded_at}
+    from forge_cli.stages import reviewed_meaning_identity
+    meaning = reviewed_meaning_identity(repo, stage, task, candidate["helper"])
+    candidate["input"] = {"sha256": meaning["identity"], "bytes": meaning["bytes"]}
     return publish_review_generation(repo, "ENG-1", "T2", candidate)
 
 

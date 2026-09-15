@@ -102,6 +102,113 @@ def test_generated_review_inputs_are_included_in_reviewed_meaning(repo, monkeypa
         repo, stage, task, helper)["semantic_identity"] != before
 
 
+@pytest.mark.parametrize("change", ["automated", "generated"])
+def test_public_review_set_refuses_old_meaning_even_after_token_remint(
+        repo, tmp_path, monkeypatch, change):
+    from test_review_settled_contracts import _publish, _story
+    from factory_lib import proof_path, protected_decomposition_state_path
+    from forge_cli.review import _helper_identity
+    _story(repo, tmp_path)
+    helper = tmp_path / "autoreview"
+    helper.write_text("fixture helper\n")
+    monkeypatch.setenv("AUTOREVIEW", str(helper))
+    decomposition_path = protected_decomposition_state_path(repo)
+    decomposition = json.loads(decomposition_path.read_text())
+    task = next(item for item in decomposition["tasks"] if item["id"] == "T2")
+    generated = repo / ".factory/generated-review-input.json"
+    generated.write_text('"before"\n')
+    task["generated_semantic_inputs"] = [generated.relative_to(repo).as_posix()]
+    decomposition_path.write_text(json.dumps(decomposition))
+    generation, _ = _publish(repo)
+    candidate = {key: value for key, value in generation.items() if key != "generation_id"}
+    candidate["helper"] = _helper_identity(helper)[0]
+
+    def stage():
+        return next(row for row in stage_helpers.load_stages(repo)["stages"]
+                    if row["id"] == "T2")
+
+    meaning = stage_helpers.reviewed_meaning_identity(repo, stage(), task, candidate["helper"])
+    candidate["input"] = {"sha256": meaning["identity"], "bytes": meaning["bytes"]}
+    command = ("record_review_from_json.py", "--set", "--task", "T2")
+    code, out = run(repo, *command, stdin=json.dumps(candidate))
+    assert code == 0, out
+    assert stage_helpers.stamp_is_fresh(repo, stage(), task)
+    pointer = proof_path(repo, "ENG-1", "reviews/selected.json", task_id="T2")
+    selected_before = pointer.read_bytes()
+    if change == "automated":
+        proof = proof_path(repo, "ENG-1", "tests.json", task_id="T2")
+        data = json.loads(proof.read_text())
+        data["automated"]["commands_run"].append("pytest changed-substantive-check")
+        proof.write_text(json.dumps(data))
+    else:
+        generated.write_text('"after"\n')
+    assert not stage_helpers.stamp_is_fresh(repo, stage(), task)
+    code, out = run(repo, *command, stdin=json.dumps(candidate))
+    assert code != 0 and "current reviewed meaning" in out
+    code, out = run(repo, "forge.py", "review-brief", "--all")
+    assert code == 0, out
+    token = json.loads((repo / ".factory/stories/ENG-1/review-run.json").read_text())
+    candidate["brief_sha256"] = token["brief_sha256"]
+    candidate["review_run_id"] = token["review_run_id"]
+    for lens in candidate["lenses"].values():
+        lens["review_run_id"] = token["review_run_id"]
+        lens["brief_sha256"] = token["brief_sha256"]
+    code, out = run(repo, *command, stdin=json.dumps(candidate))
+    assert code != 0 and "current reviewed meaning" in out
+    assert pointer.read_bytes() == selected_before
+    assert not stage_helpers.stamp_is_fresh(repo, stage(), task)
+
+
+def test_review_publication_and_direct_stamp_recheck_meaning(repo, tmp_path, capsys):
+    from test_review_settled_contracts import _publish, _story
+    from factory_lib import proof_path, publish_review_generation
+    _story(repo, tmp_path)
+    generation, _ = _publish(repo)
+    candidate = {key: value for key, value in generation.items() if key != "generation_id"}
+    stage_helpers.stamp_stage_review(repo, "T2")
+    pointer = proof_path(repo, "ENG-1", "reviews/selected.json", task_id="T2")
+    before = pointer.read_bytes()
+
+    def change_evidence():
+        path = proof_path(repo, "ENG-1", "tests.json", task_id="T2")
+        data = json.loads(path.read_text())
+        data["automated"]["commands_run"].append("pytest changed-after-preflight")
+        path.write_text(json.dumps(data))
+
+    with pytest.raises(SystemExit):
+        publish_review_generation(
+            repo, "ENG-1", "T2", candidate, update_stamp=True,
+            on_selection_lock_wait=change_evidence,
+        )
+    assert "current reviewed meaning" in capsys.readouterr().out
+    assert pointer.read_bytes() == before
+    with pytest.raises(SystemExit):
+        stage_helpers.stamp_stage_review(repo, "T2")
+    assert "current reviewed meaning" in capsys.readouterr().out
+
+
+def test_review_prompt_binding_reuses_bookkeeping_after_token_remint(repo, tmp_path):
+    from test_review_settled_contracts import _publish, _story
+    from factory_lib import proof_path, publish_review_generation
+    _story(repo, tmp_path)
+    generation, _ = _publish(repo)
+    candidate = {key: value for key, value in generation.items() if key != "generation_id"}
+    stage_helpers.stamp_stage_review(repo, "T2")
+    proof = proof_path(repo, "ENG-1", "tests.json", task_id="T2")
+    data = json.loads(proof.read_text())
+    data["automated"]["recorded_at"] = "2026-09-15T00:00:00+00:00"
+    proof.write_text(json.dumps(data))
+    code, out = run(repo, "forge.py", "review-brief", "--all")
+    assert code == 0, out
+    published, _ = publish_review_generation(
+        repo, "ENG-1", "T2", candidate, update_stamp=True,
+    )
+    assert published["generation_id"] == generation["generation_id"]
+    stage = next(row for row in stage_helpers.load_stages(repo)["stages"]
+                 if row["id"] == "T2")
+    assert stage_helpers.stamp_is_fresh(repo, stage, stage_helpers.task_for(repo, "T2"))
+
+
 def test_review_preflight_refuses_stale_proof_before_helper_launch(repo):
     from forge_cli.review import pre_review_proof_problems
     lib = load_factory_lib(repo)
