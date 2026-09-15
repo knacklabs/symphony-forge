@@ -702,6 +702,8 @@ Rendered by the harness from the recorded decomposition; edit the decomposition,
 - factory/scripts/check_encoding_hygiene.py
 - factory/tests/test_requirements_freshness.py
 - factory/board/index.html
+- .envrc
+- factory/scripts/forge_cli/AGENTS.md
 
 **Scope amendments** (measured paths the scope did not name, recorded with `forge stage amend-scope`)
 
@@ -764,7 +766,7 @@ Rendered by the harness from the recorded decomposition; edit the decomposition,
 
 **Verify commands**
 
-- `UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python factory/scripts/verify.py`
+- `UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with pytest-xdist --with psutil python factory/scripts/verify.py`
 - `python3 factory/scripts/check_dual_runtime.py`
 - `python3 factory/scripts/check_encoding_hygiene.py`
 - `python3 factory/scripts/check_board_complete.py`

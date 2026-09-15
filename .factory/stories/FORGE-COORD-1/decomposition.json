@@ -658,7 +658,9 @@
         "factory/scripts/pr_ready.py",
         "factory/scripts/check_encoding_hygiene.py",
         "factory/tests/test_requirements_freshness.py",
-        "factory/board/index.html"
+        "factory/board/index.html",
+        ".envrc",
+        "factory/scripts/forge_cli/AGENTS.md"
       ],
       "plan_contracts": [
         {
@@ -985,7 +987,7 @@
         }
       ],
       "verify_commands": [
-        "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python factory/scripts/verify.py",
+        "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with pytest-xdist --with psutil python factory/scripts/verify.py",
         "python3 factory/scripts/check_dual_runtime.py",
         "python3 factory/scripts/check_encoding_hygiene.py",
         "python3 factory/scripts/check_board_complete.py",
@@ -1110,6 +1112,6 @@
   "story": "FORGE-COORD-1",
   "epic": "symphony-forge",
   "plan_file": "plans/active/FORGE-COORD-1-either-claude-or-codex-coordinates-the-same-forge-workflow.md",
-  "commit": "f9ebae389443d1708140f629fcd1e1867301b08b",
+  "commit": "be834318f65b5d2c8fe278c7e61dba9e399ac7e6",
   "plan_sha256": "704e22e69b3722fc885bd09231691a18c2afc01b0982a112bb7b5118744f1723"
 }
