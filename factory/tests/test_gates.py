@@ -12384,6 +12384,7 @@ def configure_origin_main(repo: Path, remote: Path) -> None:
     if "origin" not in git(repo, "remote").split():
         git(repo, "remote", "add", "origin", str(remote))
     git(repo, "push", "-q", "origin", f"{head(repo)}:refs/heads/main")
+    git(remote, "symbolic-ref", "HEAD", "refs/heads/main")
 
 
 def publish_task_marker(repo: Path, key: str, task_id: str) -> Path:
@@ -12419,6 +12420,7 @@ def prepare_task_pr_ready(repo: Path, tmp_path: Path) -> Path:
         # the local tracking ref, so base_main_sha stays stable while pushes work
         main_sha = git(repo, "rev-parse", "origin/main")
         git(repo, "push", "-q", str(remote), f"{main_sha}:refs/heads/main")
+    git(remote, "symbolic-ref", "HEAD", "refs/heads/main")
     start_stage(repo, tmp_path, STAGE_TASK, launch=False)
     code, out = run(repo, "forge.py", "delegate", "T1", "--print-only",
                     env=fake_companion_env(tmp_path))
