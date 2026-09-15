@@ -255,6 +255,27 @@ def test_metadata_only_head_and_effective_board_inputs(repo: Path):
             != before["inputs"]["tools"][1])
 
 
+def test_equivalent_board_argv_binds_inputs_and_unknown_shape_forces_fresh(
+        repo: Path):
+    script = repo / "factory/scripts/check_board_complete.py"
+    task = {**_task(), "verify_commands": [
+        f"UV_CACHE_DIR=/tmp/forge-lean-uv-cache python3 {script}"]}
+    before = stages.proof_identity(repo, task, "verify")
+    assert before["reusable"] is True
+    assert before["inputs"]["board_inputs"] is not None
+    event = repo / ".factory/events/board-link.json"
+    event.parent.mkdir(parents=True, exist_ok=True)
+    event.write_text(json.dumps({"event": "pr-linked", "story": "S1"}), encoding="utf-8")
+    after = stages.proof_identity(repo, task, "verify")
+    assert after["identity"] != before["identity"]
+    unknown = {**task, "verify_commands": [
+        "python3 -u factory/scripts/check_board_complete.py"]}
+    assert stages.proof_identity(repo, unknown, "verify")["reusable"] is False
+    malformed = {**task, "verify_commands": [
+        "python3 'factory/scripts/check_board_complete.py"]}
+    assert stages.proof_identity(repo, malformed, "verify")["reusable"] is False
+
+
 def test_probe_changes_interpreter_dependency_and_runner_inputs(repo: Path, monkeypatch):
     state, runner = _fake_uv_probe(repo, monkeypatch)
     command = "uv run --python 3.11 --with pytest python -m pytest tests/a.py"

@@ -41,24 +41,24 @@ def _event(candidate: approval.ApprovalCandidate, runtime: str = "claude") -> di
     }
 
 
-def _story_candidate(repo: Path) -> approval.ApprovalCandidate:
+def _story_candidate(repo: Path, story: str = "APPROVE-1") -> approval.ApprovalCandidate:
     lib = load_factory_lib(repo)
-    plan = repo / "plans" / "active" / "APPROVE-1-plan.md"
+    plan = repo / "plans" / "active" / f"{story}-plan.md"
     plan.parent.mkdir(parents=True, exist_ok=True)
     plan.write_text("---\nstatus: awaiting-approval\n---\n\n# Plan\n", encoding="utf-8")
     lib.dump_json(lib.run_state_path(repo), {
-        "issue_key": "APPROVE-1", "story": "APPROVE-1",
+        "issue_key": story, "story": story,
         "plan_status": "awaiting-approval",
         "plan_file": plan.relative_to(repo).as_posix(),
     })
     digest = lib.plan_digest_without_assumptions(plan)
     lib.dump_json(
         lib.evidence_path(
-            repo, "APPROVE-1", "grills/plan.json", for_write=True,
+            repo, story, "grills/plan.json", for_write=True,
         ),
         {
             "verdict": "pass", "commit": lib.head_sha(repo),
-            "issue": "APPROVE-1", "input_sha256": digest,
+            "issue": story, "input_sha256": digest,
         },
     )
     candidate = approval._story_candidate(repo)
@@ -214,6 +214,33 @@ def test_native_approval_refuses_zero_multiple_candidates_replay_and_missing_ide
     approval.record_native_approval(repo, event, runtime="claude")
     with pytest.raises(approval.ApprovalRefused, match="already consumed"):
         approval.record_native_approval(repo, event, runtime="claude")
+
+
+@pytest.mark.parametrize("location", ["scoped", "archived", "legacy"])
+def test_native_approval_refuses_cross_story_host_event_replay_without_mutation(
+        repo: Path, location: str):
+    if location != "legacy":
+        (repo / ".factory" / "stories" / "APPROVE-1").mkdir(parents=True)
+    first = _story_candidate(repo)
+    event = _event(first)
+    approval.record_native_approval(repo, event, runtime="claude")
+    lib = load_factory_lib(repo)
+    tombstone = next((first.evidence.parent / "approval-events").glob("*.json"))
+    if location == "archived":
+        destination = repo / ".factory" / "history" / first.story / "approval-events" / tombstone.name
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        tombstone.rename(destination)
+    (repo / ".factory" / "stories" / "APPROVE-2").mkdir(parents=True)
+    second = _story_candidate(repo, "APPROVE-2")
+    assert second.digest == first.digest
+    event["tool_input"]["plan"] = second.path.read_text(encoding="utf-8")
+    before = (second.path.read_bytes(), lib.run_state_path(repo).read_bytes(),
+              second.evidence.read_bytes() if second.evidence.exists() else None)
+    with pytest.raises(approval.ApprovalRefused, match="already consumed"):
+        approval.record_native_approval(repo, event, runtime="claude")
+    assert (second.path.read_bytes(), lib.run_state_path(repo).read_bytes(),
+            second.evidence.read_bytes() if second.evidence.exists() else None) == before
+    assert not (repo / ".factory" / "stories" / second.story / "approval-events").exists()
 
 
 @pytest.mark.parametrize("runtime", ["claude", "codex"])

@@ -740,6 +740,37 @@ def test_contract_verdicts_read_every_preserved_pass_report_and_keep_the_worst()
     assert "no VERDICT line" not in out["T1-AC1"]["evidence"]
 
 
+def test_chunked_quality_prompt_omits_unobserved_verdicts_and_aggregation_fails_closed():
+    from forge_cli.review import _combined_prompt, _contract_verdicts
+
+    task = {"id": "T1", "plan_contracts": [
+        {"id": "T1-AC1"}, {"id": "T1-AC2"}, {"id": "T1-AC3"}]}
+    prompt = _combined_prompt(task).decode("utf-8")
+    assert "If a contract's evidence is absent from this chunk, omit its line" in prompt
+    assert "do not call it partial or missing solely because this chunk lacks" in prompt
+    assert "In a one-pass run every listed contract must get a line" in prompt
+    reviewed = {"overall_explanation": "preserved passes", "findings": [],
+                "pass_reports": [
+                    {"report": {"overall_explanation":
+                                "VERDICT T1-AC1: implemented — src/a.py:1", "findings": []}},
+                    {"report": {"overall_explanation":
+                                "VERDICT T1-AC2: implemented — src/b.py:1", "findings": []}},
+                ]}
+    verdicts = {row["contract_id"]: row for row in
+                _contract_verdicts(task, reviewed, [task], {})}
+    assert verdicts["T1-AC1"]["verdict"] == "implemented"
+    assert verdicts["T1-AC2"]["verdict"] == "implemented"
+    assert verdicts["T1-AC3"]["verdict"] == "partial"
+    reviewed["pass_reports"].append({"report": {"overall_explanation":
+                               "VERDICT T1-AC3: implemented — src/c.py:1", "findings": []}})
+    assert all(row["verdict"] == "implemented" for row in
+               _contract_verdicts(task, reviewed, [task], {}))
+    reviewed["pass_reports"][0]["report"]["overall_explanation"] += (
+        "\nVERDICT T1-AC2: partial — src/b.py:9 observed defect")
+    assert {row["contract_id"]: row["verdict"] for row in
+            _contract_verdicts(task, reviewed, [task], {})}["T1-AC2"] == "partial"
+
+
 def test_every_lens_brief_hunts_for_compatibility_leftovers():
     """Owner ruling: no legacy code. Every lens prompt carries the leftover
     instruction (wrappers, shims, aliases, retained symbols, dead branches,

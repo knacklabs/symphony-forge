@@ -1872,7 +1872,10 @@ def _file_identity(path: Path) -> dict[str, object]:
 
 def _proof_tool_identity(base: Path, command: str) -> dict[str, object]:
     """Resolve only the Python command shapes Forge declares for proof reuse."""
-    tokens = shlex.split(command)
+    try:
+        tokens = shlex.split(command)
+    except ValueError:
+        return {"command": command, "reusable": False}
     environment = os.environ.copy()
     while tokens and re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*=.*", tokens[0]):
         key, value = tokens.pop(0).split("=", 1)
@@ -1986,6 +1989,25 @@ def _board_proof_inputs(base: Path) -> dict[str, object]:
     }
 
 
+def _board_command_kind(base: Path, command: str) -> str:
+    """Classify direct Board invocation without treating unknown shapes as reusable."""
+    if "check_board_complete.py" not in command:
+        return "absent"
+    try:
+        tokens = shlex.split(command)
+    except ValueError:
+        return "unknown"
+    while tokens and re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*=.*", tokens[0]):
+        tokens.pop(0)
+    if (len(tokens) == 2
+            and re.fullmatch(r"python(?:3(?:\.\d+)?)?(?:\.exe)?",
+                             Path(tokens[0]).name.lower())
+            and os.path.abspath(base / tokens[1]) ==
+            os.path.abspath(base / "factory/scripts/check_board_complete.py")):
+        return "direct"
+    return "unknown"
+
+
 def proof_identity(
         base: Path, task: dict, kind: str, *, product_tree: dict | None = None,
 ) -> dict[str, object]:
@@ -2020,17 +2042,18 @@ def proof_identity(
         except OSError:
             generated[str(relative)] = None
     tools = [_proof_tool_identity(base, command) for command in commands]
+    board_commands = ([_board_command_kind(base, command) for command in commands]
+                      if kind == "verify" else [])
     board_inputs = None
-    if kind == "verify" and "python3 factory/scripts/check_board_complete.py" in commands:
+    if "direct" in board_commands:
         try:
             board_inputs = _board_proof_inputs(base)
         except (OSError, ValueError, TypeError, KeyError):
             board_inputs = None
     reusable = (all(tool.get("reusable") is True for tool in tools)
                 and all(value is not None for value in generated.values())
-                and (kind != "verify" or
-                     "python3 factory/scripts/check_board_complete.py" not in commands
-                     or board_inputs is not None))
+                and "unknown" not in board_commands
+                and ("direct" not in board_commands or board_inputs is not None))
     inputs: dict[str, object] = {
         "kind": kind,
         "product_tree": reuse_tree,

@@ -13,7 +13,8 @@ from pathlib import Path
 from typing import Any
 
 from factory_lib import (
-    _plan_body_digest_bytes, _task_plan_state, dump_json, evidence_path, load_json, now_iso,
+    _plan_body_digest_bytes, _task_plan_state, dump_json, evidence_path,
+    factory_dir, load_json, now_iso,
     plan_digest_without_assumptions, protected_decomposition_state_path,
     require_grill, run_state_path, task_frontier_state,
 )
@@ -290,14 +291,25 @@ def record_native_approval(
         if displayed_digest != candidate.digest:
             raise ApprovalRefused("native approval displayed digest is stale")
 
-        replay_dir = evidence_path(base, candidate.story, "approval-events", for_write=True)
-        replay_dir.mkdir(parents=True, exist_ok=True)
         replay_key = __import__("hashlib").sha256(
             f"{selected_runtime}\0{session_id}\0{event_id}".encode("utf-8")
         ).hexdigest()
-        replay_path = replay_dir / f"{replay_key}.json"
-        if replay_path.exists():
+        # The host event is global to this checkout, not to the current story.
+        # Check all live layouts before creating even the current directory.
+        root = factory_dir(base)
+        previous = [root / "approval-events" / f"{replay_key}.json"]
+        for parent in (root / "stories", root / "history"):
+            if parent.is_dir():
+                previous.extend(parent.glob(f"*/approval-events/{replay_key}.json"))
+        if any(path.exists() or path.is_symlink() for path in previous):
             raise ApprovalRefused("native approval event was already consumed")
+        replay_dir = evidence_path(
+            base, candidate.story, "approval-events", for_write=True,
+        )
+        replay_path = replay_dir / f"{replay_key}.json"
+        if replay_path.exists() or replay_path.is_symlink():
+            raise ApprovalRefused("native approval event was already consumed")
+        replay_dir.mkdir(parents=True, exist_ok=True)
 
         record: dict[str, Any] = {
             "approved_plan_sha256": candidate.digest,

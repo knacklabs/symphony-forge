@@ -292,6 +292,19 @@ def _combined_prompt(task: dict) -> bytes:
     combined_verdict_format = QUALITY_VERDICT_FORMAT.replace(
         'listed under "Plan contracts" below',
         f'listed under the target task\'s "Plan contracts" in {REVIEW_DATASET_REL}',
+    ).replace(
+        "Every listed contract must get a line. Do not rename contract ids.",
+        "In a one-pass run every listed contract must get a line. "
+        "Do not rename contract ids.",
+    )
+    combined_verdict_format += (
+        "In a chunked run, each quality pass must emit exact VERDICT lines for "
+        "every contract it can judge from that pass's evidence. If a contract's "
+        "evidence is absent from this chunk, omit its line; do not call it "
+        "partial or missing solely because this chunk lacks its files. "
+        "A genuine observed defect remains partial or missing. Across all passes "
+        "every target contract must have an implemented verdict; an unverdicted "
+        "contract fails closed. In a one-pass run, verdict every contract.\n"
     )
     lines = [
         f"# Review brief — {task.get('id', '')} — combined review", "",
