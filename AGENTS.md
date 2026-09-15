@@ -55,7 +55,7 @@ Default specialist set:
 - `planner-high`
 - `docs-decomposer`
 - `functional-checker` (user-facing tasks only)
-- the autoreview skill (review — all three lenses, one run)
+- autoreview skill (review — three lenses, one run; 0078)
 
 Testing has no separate agent: the implementer writes and records the tests.
 

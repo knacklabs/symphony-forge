@@ -21,9 +21,14 @@ must attest `review-animations`. No attestation, no artifact.
 
 ## Review — one autoreview run, three lenses
 
-Contract: `factory/prompts/reviewer.md`. A single autoreview run in Codex
-(read-only toward product code) reviews the task diff through three lenses in
-one helper call. The recorder validates `factory/schemas/review-set.json`,
+Contract: `factory/prompts/reviewer.md`. One autoreview run in Codex reviews
+the task diff through three lenses in one pass, read-only inside the review
+worktree so it reads the code it judges (0076). A diff too big for one prompt
+runs as parallel groups: one three-lens run per group over its files with the
+whole task tree readable, a refused group retried alone with the cause in its
+brief, the results merged into one record with the worst verdict per contract
+winning; lock and generated files are not sent (0078). The recorder validates
+`factory/schemas/review-set.json`,
 publishes one immutable generation containing the exact raw helper bytes and
 three `factory/schemas/review.json` lens records, then replaces the task's
 `selected.json` pointer last. Combined and rejection records use

@@ -122,7 +122,8 @@ def cmd_task_close(args: argparse.Namespace) -> None:
             if outcome["blocking"]:
                 _stop("review", f"{outcome['blocking']} blocking finding(s)",
                       f"delegate the fixes (`./forge delegate {task_id}`), commit, "
-                      "run close again -- it re-reviews only the new diff")
+                      "run close again -- it reviews the whole task delta, "
+                      "base to tip, and records one new generation")
             stage = _find(load_stages(base), task_id)
         else:
             print(f"{task_id}: review stamp covers this diff ({delta_id[:12]}); "

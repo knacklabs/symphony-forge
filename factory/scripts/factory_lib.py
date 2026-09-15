@@ -1617,14 +1617,41 @@ def _committed_task_marker(
 def _marker_publication_commit(
     root: Path, marker_path: str, *, inspected_head: str = "HEAD",
 ) -> str:
+    """The commit that published the marker's CURRENT SEAL: the earliest
+    commit on the way to `inspected_head` whose marker names the same sealed
+    `commit`. A later rewrite of the same seal's metadata does not move it
+    (proof stays pinned to the publication); a reseal after a post-seal fix
+    names a new commit and moves it to that seal's publication. Before
+    2026-09-15 this was the first commit that ever added the file, so every
+    proof reader compared a resealed task's selected review with the FIRST
+    seal's ("selected review pointer changed after task marker"). A file
+    without a sealed `commit` (a review generation) resolves as before."""
+    def sealed(treeish: str) -> str | None:
+        shown = subprocess.run(
+            ["git", "show", f"{treeish}:{marker_path}"],
+            cwd=root, capture_output=True, env=clean_git_env(),
+        )
+        if shown.returncode != 0:
+            return None
+        try:
+            document = json.loads(shown.stdout.decode("utf-8"))
+        except (UnicodeDecodeError, json.JSONDecodeError):
+            return None
+        value = document.get("commit") if isinstance(document, dict) else None
+        return value if isinstance(value, str) and value else None
+
     proc = subprocess.run(
-        ["git", "log", "--diff-filter=A", "--reverse", "--format=%H",
-         inspected_head, "--", marker_path],
+        ["git", "log", "--reverse", "--format=%H", inspected_head, "--", marker_path],
         cwd=root, capture_output=True, text=True, env=clean_git_env(),
         encoding="utf-8",
     )
-    commits = proc.stdout.splitlines() if proc.returncode == 0 else []
-    return commits[0].strip() if commits else ""
+    commits = proc.stdout.split() if proc.returncode == 0 else []
+    if not commits:
+        return ""
+    current = sealed(inspected_head)
+    if current is None:
+        return commits[0]
+    return next((commit for commit in commits if sealed(commit) == current), "")
 
 
 def _proof_commit_problems(

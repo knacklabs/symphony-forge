@@ -341,6 +341,74 @@ def test_task_close_reopens_a_done_stage_whose_diff_moved(repo, tmp_path):
     assert any(e.get("event") == "stage-reopened" for e in events)
 
 
+FAKE_REVIEW_WITH = r'''
+import json, os, pathlib, sys
+args = sys.argv[1:]
+out = pathlib.Path(args[args.index("--json-output") + 1])
+priority = os.environ["FAKE_PRIORITY"]
+findings = [
+    {"title": "[quality] VERDICT C1: implemented", "body": "src/core.py:1 runs green",
+     "priority": "P3", "confidence": 1, "category": "maintainability",
+     "source_attribution": None, "code_location": {"file_path": "src/core.py", "line": 1}},
+    {"title": "[quality] Name the literal", "body": "src/core.py:1 bare literal",
+     "priority": priority, "confidence": 0.9, "category": "maintainability",
+     "source_attribution": None, "code_location": {"file_path": "src/core.py", "line": 1}},
+]
+provider = {"findings": findings, "overall_correctness": "patch is incorrect",
+            "overall_explanation": (
+                "BEGIN FORGE ASSESSMENT quality\nRead.\nEND FORGE ASSESSMENT quality\n"
+                "BEGIN FORGE ASSESSMENT performance\nFine.\nEND FORGE ASSESSMENT performance\n"
+                "BEGIN FORGE ASSESSMENT security\nSafe.\nEND FORGE ASSESSMENT security"),
+            "overall_confidence": 0.9}
+out.write_text(json.dumps({**provider, "provider_report": provider, "review_status": "findings"},
+                          indent=2) + "\n", encoding="utf-8")
+sys.exit(1)
+'''
+
+
+def _post_seal_fix_with_a_review(repo: Path, tmp_path: Path, priority: str) -> tuple[dict, str]:
+    """Seal T1, move its diff, and close again with a helper that answers
+    with one finding of the given priority."""
+    env = _ship_ready(repo, tmp_path)
+    code, out = run(repo, "forge.py", "task", "close", "T1",
+                    "--skill", str(tmp_path / "no-such-autoreview"), env=env)
+    assert code == 0, out
+    write_in_scope(repo, "src/core.py", "version = 2\n")
+    git(repo, "add", "src/core.py")
+    git(repo, "commit", "-qm", "post-seal fix")
+    write_task_proof(repo, "T1")
+    git(repo, "add", "-A")
+    git(repo, "commit", "-qm", "proof at the new tip")
+    skill = tmp_path / "fake-autoreview.py"
+    skill.write_text(FAKE_REVIEW_WITH, encoding="utf-8")
+    code, out = run(repo, "forge.py", "task", "close", "T1", "--engine", "claude",
+                    "--skill", str(skill), env={**env, "FAKE_PRIORITY": priority})
+    return {"code": code, "env": env, "skill": skill}, out
+
+
+def test_close_says_the_review_covers_the_whole_task_delta(repo, tmp_path):
+    """The stop message promised a re-review of "only the new diff"; a review
+    always covers the task delta, base to tip (0069), and says so."""
+    result, out = _post_seal_fix_with_a_review(repo, tmp_path, "P1")
+    assert result["code"] != 0, out
+    assert "1 blocking finding(s)" in out
+    assert "reviews the whole task delta, base to tip" in out
+    assert "only the new diff" not in out
+
+
+def test_recorded_non_blocking_follow_ups_never_trigger_another_review(repo, tmp_path):
+    """A P2 is a recorded follow-up: the stage seals on the stamp, and a
+    second close finds the stamp fresh and spends no review on it."""
+    result, out = _post_seal_fix_with_a_review(repo, tmp_path, "P2")
+    assert result["code"] == 0, out
+    assert "non-blocking=1" in out
+    assert measured_stage(repo)["status"] == "done"
+    code, out = run(repo, "forge.py", "task", "close", "T1",
+                    "--skill", str(tmp_path / "no-such-autoreview"), env=result["env"])
+    assert code == 0, out
+    assert "is closed and its review covers the current diff" in out
+
+
 def test_task_close_runs_the_proof_before_it_spends_a_review(repo, tmp_path):
     """T2 at 08:25: review clean, then stage done found a failing required
     test, then the fix cost a second review. Proof first means the failing

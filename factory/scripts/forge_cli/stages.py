@@ -2339,6 +2339,23 @@ def reopen_stage_for_review_fix(base: Path, stage_id: str) -> dict:
         target["status"] = "active"
         target["review_fix_reopened_at"] = now_iso()
         target["review_fix_count"] = int(target.get("review_fix_count") or 0) + 1
+        # The marker the seal this fix supersedes left on disk. Until the
+        # stage seals again, the brief and the pre-seal proof check read the
+        # task's inputs from the current tree, not from that marker's commit
+        # (the seal refused every resealed task otherwise, 2026-09-15).
+        story = str(data.get("issue") or "") or str(
+            load_json(run_state_path(base), default={}).get("issue_key") or "")
+        marker = None
+        if story:
+            try:
+                from factory_lib import proof_path
+                marker = load_json(
+                    proof_path(base, story, "pr-ready.json", task_id=stage_id),
+                    default=None)
+            except (SystemExit, ValueError, OSError):
+                marker = None
+        if isinstance(marker, dict) and isinstance(marker.get("commit"), str):
+            target["superseded_marker_commit"] = marker["commit"]
         write_stages(base, data)
     append_event(base, "stage-reopened", actor="implementer",
                  story=data.get("issue", ""),

@@ -98,6 +98,15 @@ def _approved_task_inputs(base: Path, task: dict) -> dict:
     stage = next((row for row in load_stages(base).get("stages", [])
                   if row.get("id") == task_id), {})
     marker = load_json(marker_path, default=None) if stage.get("status") == "done" else None
+    if (isinstance(marker, dict)
+            and marker.get("commit") == stage.get("superseded_marker_commit")):
+        # The marker on disk is the PREVIOUS seal's: a post-seal fix reopened
+        # the stage after it (which recorded the marker it supersedes), and
+        # `task close` is sealing again. Its inputs are the current tree's,
+        # as they were for the brief the re-review wrote; the seal's pre-seal
+        # proof check rendered them from the old sealed commit instead and
+        # refused every resealed task (2026-09-15).
+        marker = None
     historical_marker = None
     treeish = ""
     if marker is not None:

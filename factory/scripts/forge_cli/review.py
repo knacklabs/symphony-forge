@@ -2,15 +2,10 @@
 record the three artifacts as that task's proof (accepted decisions 0011,
 0054 and 0069).
 
-One command replaces the hand-assembled skill invocation the coordinator used
-to get wrong: it pins the task tip in a clean detached worktree (so harness
-writes in the main tree cannot abort the run), reviews the WHOLE task diff from
-the task's recorded base (branch mode; `--mode commit` would see only the last
-commit), runs the autoreview skill once with Codex as the engine, drops findings
-on harness bookkeeping paths, derives each lens artifact, parses
-the quality verdicts from the reviewer's prose, and records all three through
-the existing schema-validated recorder. It always ends by printing the exact
-next command.
+One command pins the task tip in a clean detached worktree, reviews the WHOLE
+task diff from its recorded base, releases one three-lens run for a small diff
+or parallel groups for a diff the helper would chunk (0078), and records one
+selected generation through the schema-validated recorder.
 """
 from __future__ import annotations
 
@@ -170,6 +165,23 @@ RECORD, never a line in overall_explanation:
 Every listed contract must get a record, in every pass. Do not rename contract
 ids. A verdict record is not a defect: it is lifted out of the findings before
 they are counted. Keep overall_explanation to the three short assessments.
+"""
+
+# What a finding states, and what is not one. On WF-1 T5 eleven of the first
+# twenty-five blockers died on a line the reviewer had not read (the callee
+# already threw; the DTO never accepted the field), and the fix rounds they
+# cost were the bulk of the task's five hours (decision 0075).
+FINDING_FORM = """\
+FINDING FORM. Every finding, blocking or not, states in its body: the trigger
+(the input or state that reaches the line), the behaviour the code shows there,
+the contract, decision or rule it breaks, and the concrete risk. A finding
+without a file:line that shows the behaviour is not a finding. Before demanding
+a change, check the approved decisions, rulings and lessons in the dataset; a
+finding that contradicts settled text is rejected on the record. Judge
+reachability only where the evidence shows it: missing context is not proof of
+absent implementation -- read the tree before calling a deliverable absent,
+and name where you looked. A static security finding needs the trust boundary
+and the line, not an executed exploit.
 """
 
 SECTION_MARKERS = tuple(
@@ -392,7 +404,7 @@ def _combined_prompt(task: dict, *, repo_readable: bool = True,
         "at 3000 characters in total and holds ONLY these three assessments. Never "
         "write VERDICT lines in it; a verdict is a finding record.", "",
         "Prefix every finding title with exactly one matching token: [quality] , "
-        "[performance] , or [security] .", "", LENS_FOCUS["quality"],
+        "[performance] , or [security] .", "", FINDING_FORM, "", LENS_FOCUS["quality"],
         VERDICT_RECORD_FORMAT.format(dataset=REVIEW_DATASET_REL),
         chunk_verdict_rule, "",
         LENS_FOCUS["performance"],
@@ -918,8 +930,9 @@ def _next_hint(task_id: str, stage_status: str, blocking: int, caveats: int) -> 
                 f"delegate the fixes to Codex (`./forge delegate {task_id}`): the "
                 "brief carries your triage beside each finding and warns on any "
                 f"you skipped. Commit, then `./forge task close {task_id}`: it "
-                "re-reviews the new diff, and a done stage reopens itself for the "
-                "fix. Loop until no lens blocks. Do this WITHOUT asking the human "
+                "reviews the whole task delta again, and a done stage reopens "
+                "itself for the fix. Loop until no lens blocks. Do this WITHOUT "
+                "asking the human "
                 "to choose: a blocking finding cannot be deferred or shipped past "
                 "(the seal refuses it). A finding that contradicts an accepted "
                 "contract is `--reject` with `--cite`, which ledgers the contract "
@@ -1027,8 +1040,21 @@ def _artifact(
             (f.get("code_location") or {}).get("file_path", "")
         ).startswith(excluded)
     ]
-    blocking = [f for f in findings if f.get("priority") in ("P0", "P1")]
-    non_blocking = [f for f in findings if f.get("priority") not in ("P0", "P1")]
+    blocking = [_structured(f) for f in findings if f.get("priority") in ("P0", "P1")]
+    non_blocking = [_structured(f) for f in findings if f.get("priority") not in ("P0", "P1")]
+    verdicts: list[dict] = []
+    if lens == "quality":
+        verdicts = _contract_verdicts(
+            task, report, all_tasks, started, verdict_texts=verdict_texts)
+        # A partial or missing verdict on one of THIS task's contracts is a
+        # blocking finding, fail-closed. The per-aspect recorder always made
+        # it one; the combined generation (0069) counted only the reviewer's
+        # findings, so a stage was stamped clean over a partial contract and
+        # `task close` sealed it (found by the 0078 group run, 2026-09-15).
+        own = {c.get("id"): c for c in task.get("plan_contracts") or []
+               if isinstance(c, dict)}
+        blocking += [_contract_blocker(own[v["contract_id"]], v) for v in verdicts
+                     if v["verdict"] in ("partial", "missing") and v["contract_id"] in own]
     explanation = re.sub(r"^Chunked review complete\.\s*", "",
                          str(report.get("overall_explanation", "")).strip())
     summary = (
@@ -1042,16 +1068,34 @@ def _artifact(
         "task_id": task.get("id"),
         "score": _score(len(blocking), len(non_blocking)),
         "summary": summary,
-        "blocking_findings": [_structured(f) for f in blocking],
-        "non_blocking_findings": [_structured(f) for f in non_blocking],
+        "blocking_findings": blocking,
+        "non_blocking_findings": non_blocking,
         "recommendation": _recommendation(len(blocking), len(non_blocking)),
         "reviewed_scope": scope,
         "skills_used": skills_used,
     }
     if lens == "quality":
-        artifact["contract_verdicts"] = _contract_verdicts(
-            task, report, all_tasks, started, verdict_texts=verdict_texts)
+        artifact["contract_verdicts"] = verdicts
     return artifact
+
+
+def _contract_blocker(contract: dict, verdict: dict) -> dict:
+    """The blocking finding a partial or missing contract verdict IS, in the
+    same shape as a structured reviewer finding so triage, the fix brief and
+    rejection handle it like any other."""
+    evidence = " ".join(str(verdict.get("evidence") or "").split())
+    at = re.match(r"^(?P<path>[^\s:]+):(?P<line>\d+)\b", evidence)
+    path = at.group("path") if at else ""
+    cid = str(verdict.get("contract_id"))
+    return {
+        "category": f"plan-contract-{verdict['verdict']}",
+        "area": str(contract.get("source") or _area(path)),
+        "summary": f"{cid}: {contract.get('statement', '')} — {verdict['verdict']}: "
+                   f"{evidence}",
+        "file_path": path,
+        "line": int(at.group("line")) if at else None,
+        "title": f"VERDICT {cid}: {verdict['verdict']}",
+    }
 
 
 def product_only_tip(worktree: Path, base_sha: str) -> str:
@@ -1705,6 +1749,86 @@ def cmd_review(args: argparse.Namespace) -> None:
                      outcome["caveats"]))
 
 
+def _write_detached(worktree: Path, detached_writes: list[tuple[str, bytes]]) -> None:
+    """The dataset and brief go into the detached worktree without following
+    anything the checkout may have planted on the way (symlinks, hard links)."""
+    for rel, _body in detached_writes:
+        target = worktree / rel
+        for index, path in enumerate((worktree / Path(*Path(rel).parts[:part]))
+                                     for part in range(1, len(Path(rel).parts) + 1)):
+            try:
+                info = path.lstat()
+            except FileNotFoundError:
+                continue
+            except OSError:
+                fail(f"unsafe detached review destination: {target}")
+            leaf = index == len(Path(rel).parts) - 1
+            if ((leaf and (not stat.S_ISREG(info.st_mode) or info.st_nlink != 1))
+                    or (not leaf and not stat.S_ISDIR(info.st_mode))):
+                fail(f"unsafe detached review destination: {target}")
+    for rel, body in detached_writes:
+        factory_rel = Path(rel).relative_to(".factory").as_posix()
+        if not safe_factory_write_bytes(worktree, factory_rel, body):
+            fail(f"unsafe detached review destination: {worktree / rel}")
+
+
+def _review_in_groups(base: Path, tmp: Path, worktree: Path, base_sha: str,
+                      review_tip: str, groups: list[list[str]], sizes: dict[str, int],
+                      detached_writes: list[tuple[str, bytes]], readable: bool,
+                      launcher_root: Path, skill: Path, engine: str,
+                      max_priority: str, prompt_rel: str, estimate: int,
+                      split_at: int, would_record) -> tuple[dict, bytes]:
+    """One three-lens Codex run per group, all released together; a refused
+    group re-runs alone with the cause in its brief; the results merge into
+    the tool's own chunk shape (decision 0078, review_groups)."""
+    from .review_groups import (
+        flatten_passes, group_commits, group_note, merge_group_reports, run_groups,
+    )
+    from .review_launcher import write_launcher
+
+    every = [path for group in groups for path in group]
+    print(f"review split into {len(groups)} groups: the prompt would be about "
+          f"{estimate // 1000} KB against the tool's {split_at // 1000} KB limit; "
+          "each group is one three-lens Codex run over its files, with the whole "
+          "task tree readable, all released together (0078)", flush=True)
+    briefs = launcher_root / "groups"
+    briefs.mkdir(parents=True, exist_ok=True)
+    specs: list[dict] = []
+    for index, paths in enumerate(groups, 1):
+        label = f"group-{index}"
+        group_dir = tmp / label
+        group_base, group_tip = group_commits(
+            worktree, base_sha, review_tip, paths, tmp / f"{label}.index")
+        _require_git(base, f"creating the {label} worktree", "worktree", "add",
+                     "--detach", str(group_dir), group_tip)
+        _write_detached(group_dir, detached_writes)
+        note = group_note(index, len(groups), paths,
+                          [path for path in every if path not in paths], readable)
+        (briefs / f"{label}.brief.txt").write_text(note, encoding="utf-8")
+        specs.append({
+            "label": label, "worktree": group_dir, "base": group_base, "paths": paths,
+            "codex_bin": str(write_launcher(launcher_root / label, group_dir.resolve()))
+            if readable else None, "note": note,
+        })
+        print(f"  {label}: {len(paths)} path(s), {sum(sizes[p] for p in paths) // 1000} KB "
+              f"of diff ({group_base[:7]}..{group_tip[:7]})", flush=True)
+
+    def argv_for(group: dict, json_out: Path, extra: str | None) -> list[str]:
+        argv = _skill_argv(skill, group["base"], prompt_rel, json_out, engine,
+                           max_priority,
+                           **({"codex_bin": group["codex_bin"]} if group["codex_bin"] else {}))
+        argv += ["--prompt", group["note"]]
+        if extra:
+            argv += ["--prompt", extra]
+        return argv
+
+    done = run_groups(groups=specs, prompt_rel=prompt_rel, log_dir=briefs,
+                      ledger_root=base, argv_for=argv_for, validate=would_record)
+    merged = merge_group_reports(
+        [wrapper for group in done for wrapper in flatten_passes(group["report"])])
+    return merged, (json.dumps(merged, indent=2) + "\n").encode("utf-8")
+
+
 def pre_review_proof_problems(
     base: Path, story: str, task_id: str, base_sha: str, tip_sha: str,
 ) -> list[str]:
@@ -1850,55 +1974,74 @@ def review_task(base: Path, task_id: str, *, lens: str | None = None,
         _require_git(base, "creating the review worktree", "worktree", "add",
                      "--detach", str(worktree), tip_sha)
         review_tip = product_only_tip(worktree, base_sha)
+        from .review_groups import (
+            PROMPT_SLACK, diff_bytes_by_path, is_review_noise, plan_groups,
+            restore_paths_to_base, review_split_bytes,
+        )
+        noise = [path for path in scope if is_review_noise(path)]
+        if noise:
+            # Lockfiles and generated files add bytes and nothing to judge; on
+            # WF-1A T1 the lockfile alone was a chunk's worth. They ship, and
+            # they stay in scope and in the stamp; their bytes are not sent.
+            review_tip = restore_paths_to_base(
+                worktree, base_sha, noise,
+                f"review tip: {len(noise)} lock/generated path(s) at task base "
+                f"{base_sha[:12]}")
+            print(f"review tip excludes {len(noise)} lock/generated path(s); they "
+                  "ship and stay in scope, their bytes are not reviewed: "
+                  f"{', '.join(noise[:4])}{' ...' if len(noise) > 4 else ''}",
+                  flush=True)
         detached_writes = [(REVIEW_DATASET_REL, dataset_body), *prompts.values()]
-        for rel, _body in detached_writes:
-            target = worktree / rel
-            for index, path in enumerate((worktree / Path(*Path(rel).parts[:part]))
-                                         for part in range(1, len(Path(rel).parts) + 1)):
-                try:
-                    info = path.lstat()
-                except FileNotFoundError:
-                    continue
-                except OSError:
-                    fail(f"unsafe detached review destination: {target}")
-                leaf = index == len(Path(rel).parts) - 1
-                if ((leaf and (not stat.S_ISREG(info.st_mode) or info.st_nlink != 1))
-                        or (not leaf and not stat.S_ISDIR(info.st_mode))):
-                    fail(f"unsafe detached review destination: {target}")
-        for rel, body in detached_writes:
-            factory_rel = Path(rel).relative_to(".factory").as_posix()
-            if not safe_factory_write_bytes(worktree, factory_rel, body):
-                fail(f"unsafe detached review destination: {worktree / rel}")
+        _write_detached(worktree, detached_writes)
         name = prompt_names[0]
         codex_bin = None
+        from factory_lib import git_control_dir
+        launcher_root = git_control_dir(base) / "review-launcher" / args.id
         if readable:
             # The launcher lives in the control dir, never in the reviewed tree
             # (the skill refuses an in-repo binary), and its launch.log stays
             # after the review folder is removed.
-            from factory_lib import git_control_dir
-            codex_bin = str(write_launcher(
-                git_control_dir(base) / "review-launcher" / args.id, worktree.resolve()))
+            codex_bin = str(write_launcher(launcher_root, worktree.resolve()))
             print("review runs inside the reviewed worktree, read-only: a verdict "
                   "on unchanged code is read, not guessed (0076)", flush=True)
         else:
             print(f"review sees only the diff bundle ({why_not}); the brief tells "
                   "it not to mark unseen code partial", flush=True)
+        # Split only a diff the tool would chunk anyway (decision 0078): the
+        # tool's limit is on the whole prompt, brief and dataset included.
+        sizes = diff_bytes_by_path(worktree, base_sha)
+        split_at = review_split_bytes()
+        fixed = len(dataset_body) + len(prompts[name][1]) + PROMPT_SLACK
+        estimate = fixed + sum(sizes.values())
+        groups = ([list(sizes)] if args.lens or estimate <= split_at
+                  else plan_groups(sizes, split_at - fixed))
         print(f"== {name} review: releasing Codex over {len(scope)} path(s) "
               f"({base_sha[:7]}..{review_tip[:7]}, task tip {tip_sha[:7]}) ==",
               flush=True)
         if not args.lens:
             _require_current_review_helper(skill)
-        # The launcher travels only when there is one, so a runner that knows
-        # nothing of it (a test double, an older override) keeps working.
-        result = _run_skill(
-            skill, worktree, base_sha, prompts[name][0], tmp / f"{name}.json",
-            engine, args.max_priority, ledger_root=base, return_raw=not args.lens,
-            **({"codex_bin": codex_bin} if codex_bin else {}),
-        )
-        if args.lens:
-            reviewed = result
+        if len(groups) > 1:
+            def _would_record(parsed: dict) -> None:
+                _project_combined_report(task, parsed, scope, base_sha, tip_sha,
+                                         skills_used, all_tasks, started, excluded)
+            reviewed, raw_result = _review_in_groups(
+                base, tmp, worktree, base_sha, review_tip, groups, sizes,
+                detached_writes, readable, launcher_root, skill, engine,
+                args.max_priority, prompts[name][0], estimate, split_at,
+                _would_record)
         else:
-            reviewed, raw_result = result
+            # The launcher travels only when there is one, so a runner that
+            # knows nothing of it (a test double, an older override) keeps
+            # working.
+            result = _run_skill(
+                skill, worktree, base_sha, prompts[name][0], tmp / f"{name}.json",
+                engine, args.max_priority, ledger_root=base, return_raw=not args.lens,
+                **({"codex_bin": codex_bin} if codex_bin else {}),
+            )
+            if args.lens:
+                reviewed = result
+            else:
+                reviewed, raw_result = result
         helper_after, helper_file_after = _helper_identity(skill)
         if helper_after != helper_before or helper_file_after != helper_file_before:
             fail("autoreview helper identity changed during the review; nothing published")
@@ -1906,8 +2049,15 @@ def review_task(base: Path, task_id: str, *, lens: str | None = None,
                 or product_delta_digest(base, base_sha) \
                 != token.get("branch_diff_digest"):
             fail("task product changed during the review; nothing published")
+        if (base / REVIEW_DATASET_REL).read_bytes() != dataset_body \
+                or reviewed_meaning_identity(base, stage, task, helper_before) != meaning:
+            fail("reviewer dataset or current reviewed meaning changed during the review; "
+                 "nothing published")
     finally:
         _git(base, "worktree", "remove", "--force", str(worktree))
+        for group_dir in sorted(tmp.glob("group-*")):
+            if group_dir.is_dir():
+                _git(base, "worktree", "remove", "--force", str(group_dir))
         _git(base, "worktree", "prune")
 
     recorder = base / "factory" / "scripts" / "record_review_from_json.py"
@@ -1969,7 +2119,10 @@ def review_task(base: Path, task_id: str, *, lens: str | None = None,
         if proc.returncode != 0:
             fail(f"recording the combined review generation failed:\n"
                  f"{proc.stdout.strip()}\n{proc.stderr.strip()}")
-        recorded = artifacts
+        # Count what was RECORDED and selected, the same generation close
+        # and the board read, so the outcome printed here is the one the
+        # next step acts on.
+        _blocking, _caveats, recorded = recorded_review_totals(base, story, args.id, LENSES)
     shutil.rmtree(tmp, ignore_errors=True)
 
     blocking_total = sum(len(a.get("blocking_findings") or []) for a in recorded.values())

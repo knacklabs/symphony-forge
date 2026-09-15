@@ -1,15 +1,16 @@
-# Review Prompt — one autoreview run, three lenses
+# Review Prompt — three lenses, one selected generation
 
-Review runs ONCE per task, after `verify.py` passes and the automated testing
-artifact is recorded, and before `task pr-ready`. The orchestrator releases it
-with **`./forge review <task-id>`** (accepted decisions 0011, 0054 and 0069): that command runs
-the autoreview skill with Codex as its engine — one helper call covering all
-three lenses, in a clean worktree pinned at the task tip, over the whole task
-diff from its recorded base — watches it, and records one immutable selected
-generation as the task's proof. NEVER
-hand the review to a nested Codex companion job (that re-triggers the same
-skill one indirection deeper and the companion write-guard refuses it), and
-never hand-write findings inline.
+Review runs after passing verify and automated test proof. The orchestrator
+releases it with **`./forge review <task-id>`** (0011, 0054, 0069). A small
+diff uses one Codex helper call over the whole task diff. A diff that the helper
+would chunk is split into the fewest file groups that fit its prompt limit;
+each group judges all three lenses in ONE pass. Forge releases parallel groups
+together; each sees the whole task tip tree, and a refused group retries alone
+with its cause in the brief (0076, 0078).
+Lock and generated files stay in scope and the stamp but their bytes are not
+sent. The results merge into one immutable selected generation, with the worst
+genuine contract verdict winning (0077). Never hand the review to a nested
+companion job or hand-write findings.
 
 Formal review uses `gpt-5.6-sol` at `high` reasoning. Route fixes back to the
 active `gpt-5.6-sol`/medium implementer and reuse that agent across review loops.
@@ -26,39 +27,40 @@ The selected generation's `input` separately preserves the exact combined
 prompt SHA256 and byte count sent to the helper. Never substitute the canonical
 reviewed-meaning digest for that immutable input provenance.
 
-Loop discipline (carried over from the retired subagent panel): scope-freeze —
-review the diff that exists, do not expand scope; verify findings against the
-actual code before reporting; stop after two fix-verify cycles.
+Loop discipline: review the scoped diff that exists and verify findings against
+the actual code before reporting. The host triages each blocker before a fix
+round with `./forge review <id> --triage` by opening its cited line and callee
+and naming all instances (0075). Repeated identical refusals follow
+`docs/QUALITY.md` "Bounded recovery".
 
-Review depth: run the helper at **`--max-priority P2`**, not the P0-only
-default. P0-only ships correct-but-unmaintainable code — it hides structure,
-validation-depth, and clarity findings that are exactly what keeps a growing
-codebase healthy. P0/P1 findings are blocking; P2 findings are recorded as
-`non_blocking_findings` and MUST be resolved or explicitly deferred (with a
-reason) before the task ships, not silently dropped.
+Review depth: the helper runs at **`--max-priority P3`**, the complete
+three-lens depth `forge review` enforces. P0/P1 findings block the task; P2/P3
+findings are recorded as `non_blocking_findings` and MUST be resolved or
+explicitly deferred (with a reason) before the task ships — never silently
+dropped, and never by themselves the reason for another review.
 
 Procedure:
 
 1. `./forge review <task-id>` does the run: it mints the branch review run
-   (`review-brief --all`, which every recorded artifact is bound to), composes
-   `.factory/review-briefs/<task-id>.<lens>.md` per lens from the task's plan
-   contracts, reviewer focus, and the lens definition below, and runs the skill
-   in **branch mode from the task's recorded base** — the whole task diff
-   (`--mode commit --commit HEAD` would review only the LAST commit of a
-   multi-commit task) — at `--max-priority P2`, with Codex as the engine. The
+   (`review-brief --all`, which the recorded generation is bound to), composes
+   `.factory/review-briefs/<task-id>.combined.md` from the task's plan
+   contracts, reviewer focus and the three lens definitions below, and runs
+   the skill in **branch mode from the task's recorded base** — the whole task
+   diff (`--mode commit --commit HEAD` would review only the LAST commit of a
+   multi-commit task) — at `--max-priority P3`, with Codex as the engine. The
    run is pinned in a clean detached worktree because the skill refuses to
    finish if the reviewed tree changes mid-run and the main tree is where the
-   harness keeps writing. Findings on harness bookkeeping paths (`.factory/`,
-   `plans/`, `docs/decisions/`) are dropped. The quality artifact's
-   `contract_verdicts` are parsed from the reviewer's
-   `VERDICT <contract-id>: implemented|partial|missing — <evidence>` lines; a
-   contract the reviewer did not verdict is recorded as `partial` (fail-closed)
-   so it surfaces as a blocking finding rather than passing silently. Verdicts
+   harness keeps writing. Harness bookkeeping and lock/generated files are put
+   back to the task base in the review tip; bookkeeping findings are dropped.
+   Quality `contract_verdicts` come from `[quality] VERDICT <contract-id>:
+   implemented|partial|missing` finding records (0077). Missing, partial, or
+   unverdicted contracts block rather than passing silently. Verdicts
    are required for the reviewed task's contracts and those of tasks already
    done; tasks that have not started are not verdicted under the accepted
    per-task proof model in 0054, as preserved by 0069.
-2. Review through THREE lenses and emit one JSON per lens matching
-   `factory/schemas/review.json`, each with `"generated_by": "autoreview"`:
+2. Review through THREE lenses in each run. The recorder projects the merged
+   result into three `factory/schemas/review.json` lens records, each with
+   `"generated_by": "autoreview"`:
    - **quality** — correctness, regressions, gaps in the implementer's tests,
      API/contract drift, and **maintainability** — not only where it affects
      defect risk. **Approved-deliverable presence and reachability — check this
@@ -150,11 +152,11 @@ Procedure:
    the trigger for consolidation instead of a fourth patch (WORKFLOW.md
    "Recurring Findings"). Reuse category slugs you have used before; a
    renamed class is an undetected class.
-4. Record each artifact:
-
-```bash
-python3 factory/scripts/record_review_from_json.py --aspect <quality|performance|security> --input <json>
-```
+4. `forge review` records the generation itself
+   (`record_review_from_json.py --set`), replaces the task's `selected.json`
+   pointer last, and stamps the stage when nothing blocks. The per-aspect
+   recorder (`--aspect <lens>`) serves only a diagnostic `--lens` run, which
+   never selects proof.
 
 Afterwards — ONLY if the recorded decomposition has `user_facing: true` — run
 the Sol/high `functional-checker` subagent (`factory/prompts/tester-functional.md`) and

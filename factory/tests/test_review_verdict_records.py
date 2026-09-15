@@ -84,8 +84,13 @@ def test_verdict_records_fill_contract_verdicts_and_never_count_as_findings():
     assert verdicts["C2"]["verdict"] == "implemented"
     assert "src/api.py:3" in verdicts["C2"]["evidence"]
     # The record itself is never a finding, whatever priority it carried; the
-    # recorder turns the partial verdict into its plan-contract-partial blocker.
-    assert quality["blocking_findings"] == []
+    # partial verdict IS the one blocker, fail-closed, in the structured shape.
+    assert [f["category"] for f in quality["blocking_findings"]] == ["plan-contract-partial"]
+    blocker = quality["blocking_findings"][0]
+    assert blocker["summary"].startswith(
+        "C1: the queue is filtered by the server — partial: src/work.py:1")
+    assert (blocker["file_path"], blocker["line"], blocker["area"]) == ("src/work.py", 1, "plan#ac")
+    assert quality["score"] < 8  # below the seal floor: never stamped clean
     assert [f["category"] for f in quality["non_blocking_findings"]] == ["bug"]
     assert not any("VERDICT" in f.get("summary", "") for f in quality["non_blocking_findings"])
     for lens in ("performance", "security"):
