@@ -700,6 +700,7 @@ Rendered by the harness from the recorded decomposition; edit the decomposition,
 - plans/active/upgrade-doc-contract-safety-task-plan.md
 - factory/scripts/pr_ready.py
 - factory/scripts/check_encoding_hygiene.py
+- factory/tests/test_requirements_freshness.py
 
 **Scope amendments** (measured paths the scope did not name, recorded with `forge stage amend-scope`)
 

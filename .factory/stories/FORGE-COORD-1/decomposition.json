@@ -656,7 +656,8 @@
         "plans/active/FORGE-WIN-3-delegation-runs-on-native-windows.md",
         "plans/active/upgrade-doc-contract-safety-task-plan.md",
         "factory/scripts/pr_ready.py",
-        "factory/scripts/check_encoding_hygiene.py"
+        "factory/scripts/check_encoding_hygiene.py",
+        "factory/tests/test_requirements_freshness.py"
       ],
       "plan_contracts": [
         {
@@ -1108,6 +1109,6 @@
   "story": "FORGE-COORD-1",
   "epic": "symphony-forge",
   "plan_file": "plans/active/FORGE-COORD-1-either-claude-or-codex-coordinates-the-same-forge-workflow.md",
-  "commit": "c3ad975119e9fb886024da0780d9b170374f2017",
+  "commit": "f0d8ad047cf75d997feca4e3290e9240ffc729b4",
   "plan_sha256": "704e22e69b3722fc885bd09231691a18c2afc01b0982a112bb7b5118744f1723"
 }
