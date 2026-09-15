@@ -1219,9 +1219,18 @@ def _windows_current_sid() -> str:
     return sid
 
 
+def _run_windows_path_script(script: str, path: Path, sid: str = "") -> subprocess.CompletedProcess:
+    payload = json.dumps({"path": str(path), "sid": sid}, ensure_ascii=True)
+    return subprocess.run(
+        ["powershell", "-NoProfile", "-NonInteractive", "-Command",
+         "$inputData=[Console]::In.ReadToEnd()|ConvertFrom-Json;" + script],
+        input=payload, capture_output=True, text=True, encoding="utf-8",
+    )
+
+
 def _windows_acl_state(path: Path) -> dict:
     script = (
-        "$ErrorActionPreference='Stop';$a=Get-Acl -LiteralPath $args[0]; "
+        "$ErrorActionPreference='Stop';$a=Get-Acl -LiteralPath $inputData.path; "
         "$sid=[Security.Principal.SecurityIdentifier];"
         "[pscustomobject]@{Owner=$a.GetOwner($sid).Value;"
         "Protected=$a.AreAccessRulesProtected;"
@@ -1231,10 +1240,7 @@ def _windows_acl_state(path: Path) -> dict:
         "Rights=[int]$_.FileSystemRights}})}|"
         "ConvertTo-Json -Compress -Depth 4"
     )
-    result = subprocess.run(
-        ["powershell", "-NoProfile", "-NonInteractive", "-Command", script,
-         str(path)], capture_output=True, text=True, encoding="utf-8",
-    )
+    result = _run_windows_path_script(script, path)
     try:
         state = json.loads(result.stdout)
     except (ValueError, TypeError):
@@ -1329,18 +1335,16 @@ def _create_private_directory(path: Path, windows_sid: str) -> None:
         path.mkdir(mode=0o700)
         return
     script = (
-        "$sid=New-Object Security.Principal.SecurityIdentifier($args[1]);"
+        "$ErrorActionPreference='Stop';"
+        "$sid=New-Object Security.Principal.SecurityIdentifier($inputData.sid);"
         "$acl=New-Object Security.AccessControl.DirectorySecurity;"
         "$acl.SetOwner($sid);$acl.SetAccessRuleProtection($true,$false);"
         "$rule=New-Object Security.AccessControl.FileSystemAccessRule("
         "$sid,'FullControl','ContainerInherit,ObjectInherit','None','Allow');"
         "$acl.AddAccessRule($rule);"
-        "[IO.Directory]::CreateDirectory($args[0],$acl)|Out-Null"
+        "[IO.Directory]::CreateDirectory($inputData.path,$acl)|Out-Null"
     )
-    result = subprocess.run(
-        ["powershell", "-NoProfile", "-NonInteractive", "-Command", script,
-         str(path), windows_sid], capture_output=True, text=True, encoding="utf-8",
-    )
+    result = _run_windows_path_script(script, path, windows_sid)
     if result.returncode:
         fail("--context-file could not create a protected private directory")
     _require_windows_private_acl(path, windows_sid)
@@ -1380,20 +1384,17 @@ def _write_private_file(
     flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, "O_NOFOLLOW", 0)
     if windows_sid:
         script = (
-            "$sid=New-Object Security.Principal.SecurityIdentifier($args[1]);"
+            "$ErrorActionPreference='Stop';"
+            "$sid=New-Object Security.Principal.SecurityIdentifier($inputData.sid);"
             "$acl=New-Object Security.AccessControl.FileSecurity;"
             "$acl.SetOwner($sid);$acl.SetAccessRuleProtection($true,$false);"
             "$rule=New-Object Security.AccessControl.FileSystemAccessRule("
             "$sid,'FullControl','Allow');$acl.AddAccessRule($rule);"
-            "$fs=New-Object IO.FileStream($args[0],[IO.FileMode]::CreateNew,"
-            "[IO.FileSystemRights]::FullControl,[IO.FileShare]::None,4096,"
+            "$fs=New-Object IO.FileStream($inputData.path,[IO.FileMode]::CreateNew,"
+            "[Security.AccessControl.FileSystemRights]::FullControl,[IO.FileShare]::None,4096,"
             "[IO.FileOptions]::None,$acl);$fs.Dispose()"
         )
-        result = subprocess.run(
-            ["powershell", "-NoProfile", "-NonInteractive", "-Command", script,
-             str(path), windows_sid], capture_output=True, text=True,
-            encoding="utf-8",
-        )
+        result = _run_windows_path_script(script, path, windows_sid)
         if result.returncode:
             fail("--context-file could not create a protected private file")
         _require_windows_private_acl(path, windows_sid)

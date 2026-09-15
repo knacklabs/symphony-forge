@@ -60,6 +60,7 @@ from factory_lib import (
     task_frontier_state, task_rows,
 )
 from grill_gates import GATES
+from forge_cli.grill import _artifact_digest
 from forge_cli.events import load_events
 from forge_cli.stages import load_stages, stage_baseline, task_digest, write_stages
 from record_signoff import REQUIRED_BRIEF_HEADINGS
@@ -408,7 +409,9 @@ def record_task_grill(repo: Path, task: dict, verdict: str = "pass",
         f"task-plans/{task['id']}.md",
     )
     _seed_cold_launch(
-        repo, "task", hashlib.sha256(saved_plan.read_bytes()).hexdigest(), task["id"])
+        repo, "task", _artifact_digest(saved_plan.read_text(encoding="utf-8")),
+        task["id"],
+    )
     code, out = run(
         repo, "record_grill_from_json.py", "--gate", "task",
         "--task", task["id"], stdin=json.dumps(payload),
@@ -6517,7 +6520,7 @@ def test_task_grill_requires_a_saved_plan_and_refuses_a_legacy_retry(repo):
     )
     assert code == 0, out
     _seed_cold_launch(
-        repo, "task", hashlib.sha256(plan.read_bytes()).hexdigest(), "T1",
+        repo, "task", _artifact_digest(plan.read_text(encoding="utf-8")), "T1",
     )
     code, out = run(repo, *command, stdin=json.dumps(payload))
     assert code == 0, out
@@ -6558,7 +6561,8 @@ def test_frontier_orders_task_plan_before_grill(repo, tmp_path):
 
     payload = task_grill_payload(STAGE_TASK)
     saved = story_state(repo) / "task-plans" / "T1.md"
-    _seed_cold_launch(repo, "task", hashlib.sha256(saved.read_bytes()).hexdigest(), "T1")
+    _seed_cold_launch(repo, "task",
+                      _artifact_digest(saved.read_text(encoding="utf-8")), "T1")
     code, out = run(
         repo, "record_grill_from_json.py", "--gate", "task", "--task", "T1",
         stdin=json.dumps(payload),
@@ -6573,7 +6577,7 @@ def test_record_task_grill_writes_per_id_file(repo):
     payload = task_grill_payload(task, task_id=task_id)
     plan = repo / ".factory" / "task-plans" / f"{task_id}.md"
     _seed_cold_launch(
-        repo, "task", hashlib.sha256(plan.read_bytes()).hexdigest(), task_id,
+        repo, "task", _artifact_digest(plan.read_text(encoding="utf-8")), task_id,
     )
 
     code, out = run(repo, "record_grill_from_json.py", "--gate", "task",
@@ -6597,7 +6601,7 @@ def test_record_task_grill_binds_derived_digest(repo):
     payload = task_grill_payload(task)
     plan = repo / ".factory" / "task-plans" / f"{task_id}.md"
     _seed_cold_launch(
-        repo, "task", hashlib.sha256(plan.read_bytes()).hexdigest(), task_id,
+        repo, "task", _artifact_digest(plan.read_text(encoding="utf-8")), task_id,
     )
 
     code, out = run(repo, "record_grill_from_json.py", "--gate", "task",
@@ -6736,8 +6740,10 @@ def test_task_grill_requires_proofs_and_complete_dispositions(repo):
     plan = repo / ".factory/task-plans/T1.md"
 
     def seed(findings=None):
-        _seed_cold_launch(repo, "task", hashlib.sha256(plan.read_bytes()).hexdigest(),
-                          "T1", findings=findings)
+        _seed_cold_launch(
+            repo, "task", _artifact_digest(plan.read_text(encoding="utf-8")),
+            "T1", findings=findings,
+        )
 
     for field in ("inspected_refs", "current_flow", "criteria_map", "decision",
                   "new_abstractions", "finding_dispositions"):
@@ -6810,7 +6816,7 @@ def test_task_grill_block_requires_escalation_packet(repo):
 
     _seed_cold_launch(
         repo, "task",
-        hashlib.sha256((repo / ".factory/task-plans/T1.md").read_bytes()).hexdigest(),
+        _artifact_digest((repo / ".factory/task-plans/T1.md").read_text(encoding="utf-8")),
         "T1",
     )
     code, out = run(repo, *command, stdin=json.dumps(payload))
@@ -13502,7 +13508,7 @@ def test_done_contracts_immutable_and_criteria_map_binds_plan_contracts(
     seed_task_grill_frontier(repo, task)
     _seed_cold_launch(
         repo, "task",
-        hashlib.sha256((repo / ".factory/task-plans/T1.md").read_bytes()).hexdigest(),
+        _artifact_digest((repo / ".factory/task-plans/T1.md").read_text(encoding="utf-8")),
         "T1",
     )
     code, out = run(
@@ -13517,7 +13523,7 @@ def test_done_contracts_immutable_and_criteria_map_binds_plan_contracts(
     seed_task_grill_frontier(repo, mismatched)
     _seed_cold_launch(
         repo, "task",
-        hashlib.sha256((repo / ".factory/task-plans/T1.md").read_bytes()).hexdigest(),
+        _artifact_digest((repo / ".factory/task-plans/T1.md").read_text(encoding="utf-8")),
         "T1",
     )
     code, out = run(
@@ -17595,7 +17601,8 @@ def test_forge_next_and_board_route_author_task_plan_and_await_approval(
     assert_route("grill", "ready", "Grill the saved T1 plan")
     payload = task_grill_payload(STAGE_TASK)
     saved = story_state(repo) / "task-plans" / "T1.md"
-    _seed_cold_launch(repo, "task", hashlib.sha256(saved.read_bytes()).hexdigest(), "T1")
+    _seed_cold_launch(repo, "task",
+                      _artifact_digest(saved.read_text(encoding="utf-8")), "T1")
     code, out = run(
         repo, "record_grill_from_json.py", "--gate", "task", "--task", "T1",
         stdin=json.dumps(payload),
@@ -18504,7 +18511,7 @@ def test_review_consumers_include_complete_approved_inputs(
     seen = []
     review_tmp = tmp_path / "review-dataset-routing"
     review_tmp.mkdir()
-    (tmp_path / "helper").write_text("safe fixture helper\n")
+    (tmp_path / "helper").write_text("review_status provider_report\n")
     finding = {
         "title": "[quality] Preserve plain-source attribution",
         "body": "Schema-valid plain source.", "priority": "P2",
@@ -20436,26 +20443,18 @@ def test_project_agents_init_upgrade_and_preserve_client_additions(
     assert custom.read_text(encoding="utf-8") == 'name = "client-custom"\n'
 
 
-def _retired_profile_bytes(name: str) -> bytes:
-    relative = f".codex/agents/{name}"
-    deleted = subprocess.run(
-        ["git", "log", "-1", "--diff-filter=D", "--format=%H", "--", relative],
-        cwd=HARNESS, capture_output=True, text=True, encoding="utf-8",
-    )
-    assert deleted.returncode == 0 and deleted.stdout.strip(), deleted.stderr
-    result = subprocess.run(
-        ["git", "show", f"{deleted.stdout.strip()}^:{relative}"], cwd=HARNESS,
-        capture_output=True,
-    )
-    assert result.returncode == 0, result.stderr.decode(errors="replace")
-    return result.stdout
-
-
 def test_upgrade_preserves_client_profiles_while_removing_retired_forge_profiles(
         repo: Path):
+    from forge_cli.upgrade import RETIRED_FORGE_PROFILE_HASHES
+    retired_bytes = (
+        'name = "architect"\nmodel = "gpt-5.6-sol"\n'
+        'model_reasoning_effort = "high"\nsandbox_mode = "read-only"\n'
+    ).encode("utf-8")
+    assert (hashlib.sha256(retired_bytes).hexdigest()
+            == RETIRED_FORGE_PROFILE_HASHES["architect.toml"])
     agents = repo / ".codex/agents"
     retired = agents / "architect.toml"
-    retired.write_bytes(_retired_profile_bytes("architect.toml"))
+    retired.write_bytes(retired_bytes)
     modified_same_name = agents / "backend.toml"
     modified_same_name.write_text('model = "client-owned"\n', encoding="utf-8")
     custom = agents / "client-custom.toml"

@@ -7,7 +7,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-from test_gates import HARNESS, load_factory_lib, repo  # noqa: F401
+from test_gates import HARNESS, git, load_factory_lib, repo  # noqa: F401
 
 sys.path.insert(0, str(HARNESS / "factory" / "scripts"))
 from forge_cli import stages  # noqa: E402
@@ -238,10 +238,8 @@ def test_metadata_only_head_and_effective_board_inputs(repo: Path):
     event.parent.mkdir(parents=True, exist_ok=True)
     event.write_text(json.dumps({"event": "verified", "story": "S1"}),
                      encoding="utf-8")
-    subprocess.run(["git", "add", ".factory/events/proof-bookkeeping.json"],
-                   cwd=repo, check=True)
-    subprocess.run(["git", "commit", "-qm", "record evidence"],
-                   cwd=repo, check=True)
+    git(repo, "add", ".factory/events/proof-bookkeeping.json")
+    git(repo, "commit", "-qm", "record evidence")
     after = stages.proof_identity(repo, task, "verify")
     assert stages.product_tree_snapshot(repo)["head"]
     assert after["identity"] == before["identity"]

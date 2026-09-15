@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import os
 import subprocess
 import sys
@@ -148,10 +149,29 @@ def test_windows_private_acl_validation_refuses_extra_allow_aces(
         delegate._require_windows_private_acl(tmp_path, sid)
 
 
+def test_windows_path_script_transports_shell_sensitive_unicode_path_as_data(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    path = tmp_path / "résumé ' ; [x] $(exit 1).md"
+    sid = "S-1-5-21-123"
+    calls = []
+
+    def run(argv, **kwargs):
+        calls.append((argv, kwargs))
+        return subprocess.CompletedProcess(argv, 0, "{}", "")
+
+    monkeypatch.setattr(delegate.subprocess, "run", run)
+    delegate._run_windows_path_script("$inputData.path", path, sid)
+    argv, kwargs = calls[0]
+    assert argv[:4] == ["powershell", "-NoProfile", "-NonInteractive", "-Command"]
+    assert len(argv) == 5 and str(path) not in argv[4] and sid not in argv[4]
+    assert kwargs["input"].isascii()
+    assert json.loads(kwargs["input"]) == {"path": str(path), "sid": sid}
+
+
 @pytest.mark.skipif(sys.platform != "win32", reason="requires native Windows ACLs")
 def test_context_file_native_windows_protected_dacl_owner_reopen_and_stale_cleanup(
         tmp_path: Path):
-    source = tmp_path / "private-context.md"
+    source = tmp_path / "private ' ; [x] $(exit 1).md"
     source.write_text("windows context", encoding="utf-8")
     sid = delegate._windows_current_sid()
     delegate._protect_windows_path(source, sid)
