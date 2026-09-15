@@ -957,7 +957,7 @@
           "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
         },
         {
-          "id": "factory/tests/test_regrill_scope.py",
+          "id": "test_measurement_receipt_authenticates_its_native_launch_not_a_later_one",
           "path": "factory/tests/test_regrill_scope.py",
           "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools FORGE_REQUIRED_SELECTOR={id} uv run --python 3.11 --with pytest --with psutil python -m pytest {path} -o junit_family=legacy --junitxml={report}"
         },
@@ -1108,6 +1108,6 @@
   "story": "FORGE-COORD-1",
   "epic": "symphony-forge",
   "plan_file": "plans/active/FORGE-COORD-1-either-claude-or-codex-coordinates-the-same-forge-workflow.md",
-  "commit": "ea933132f1dc972984e84df83eb9207702f64383",
+  "commit": "6a16de08b33198573e32ca0c02b4fbcc756d78f4",
   "plan_sha256": "704e22e69b3722fc885bd09231691a18c2afc01b0982a112bb7b5118744f1723"
 }
