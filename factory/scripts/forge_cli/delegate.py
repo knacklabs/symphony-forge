@@ -1273,16 +1273,6 @@ def _require_windows_private_acl(path: Path, sid: str) -> None:
         fail("--context-file requires a protected DACL allowing only the current user SID")
 
 
-def _protect_windows_path(path: Path, sid: str) -> None:
-    result = subprocess.run(
-        ["icacls", str(path), "/inheritance:r", "/grant:r", f"*{sid}:(F)"],
-        capture_output=True, text=True, encoding="utf-8",
-    )
-    if result.returncode:
-        fail("--context-file could not install a protected current-user DACL")
-    _require_windows_private_acl(path, sid)
-
-
 def _normal_scope_entry(value: str) -> str:
     raw = value.strip().replace("\\", "/")
     directory = raw.endswith("/")

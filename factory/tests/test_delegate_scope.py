@@ -188,8 +188,22 @@ def test_context_file_native_windows_protected_dacl_owner_reopen_and_stale_clean
             }, ensure_ascii=True))
         return result
 
+    def protect_source():
+        script = (
+            "$ErrorActionPreference='Stop';"
+            "$sid=New-Object Security.Principal.SecurityIdentifier($inputData.sid);"
+            "$acl=New-Object Security.AccessControl.FileSecurity;"
+            "$acl.SetOwner($sid);$acl.SetAccessRuleProtection($true,$false);"
+            "$rule=New-Object Security.AccessControl.FileSystemAccessRule("
+            "$sid,'FullControl','Allow');$acl.AddAccessRule($rule);"
+            "[IO.File]::SetAccessControl($inputData.path,$acl)"
+        )
+        result = delegate._run_windows_path_script(script, source, sid)
+        assert result.returncode == 0, (result.stdout[:8192], result.stderr[:8192])
+        delegate._require_windows_private_acl(source, sid)
+
     monkeypatch.setattr(delegate, "_run_windows_path_script", diagnose)
-    delegate._protect_windows_path(source, sid)
+    protect_source()
     text, _metadata, snapshot, identity = delegate.secure_context_snapshot(source)
     assert text == "windows context"
     delegate._require_windows_private_acl(snapshot.parent, sid)
@@ -216,4 +230,4 @@ def test_context_file_native_windows_protected_dacl_owner_reopen_and_stale_clean
         delegate._require_windows_private_acl(snapshot.parent, sid)
         delegate._cleanup_private_context(snapshot, identity, sid)
     finally:
-        delegate._protect_windows_path(source, sid)
+        protect_source()
