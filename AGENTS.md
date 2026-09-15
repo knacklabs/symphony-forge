@@ -41,19 +41,9 @@ is the ledgered outage exception.
 
 ## Phase Contract
 
-0a. run lightweight discovery without `.factory` ceremony
-0b. prototype freely; save and confirm specs as capabilities emerge
-0c. derive the roadmap from confirmed specs
-1. record client sign-off (the spec/roadmap gate is checked now)
-2. plan one roadmap story and record its ordered task list
-3. wait for approval
-4. per task: plan-mode JIT contract → re-record → grill → stage start → `./forge delegate`; measure under 0018
-5. run deterministic verify
-6. review, once per task after implementation and verify: `./forge review <task-id>` releases Codex for the three lenses and records them as the task's proof under accepted 0054 and 0069, then LOOP — delegate fixes to Codex, re-review — until every lens is clean (never a menu for the human — `docs/QUALITY.md`)
-7. run the functional check when the decomposition says `user_facing: true`
-8. record the shipped outcome, mark PR ready, open the PR to the default branch, and poll CI green (fixing CI failures)
-
-Sign-off requires confirmed specs and a derived roadmap. Later phases require it; implementation needs an approved plan and decomposition.
+Follow `WORKFLOW.md` for discovery through PR delivery, including native
+approval, task execution, proof and review. Sign-off requires confirmed specs
+and a derived roadmap; implementation requires an approved plan and recorded decomposition.
 
 ## Prompt and Agent Use
 
