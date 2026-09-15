@@ -705,6 +705,8 @@ Rendered by the harness from the recorded decomposition; edit the decomposition,
 - .envrc
 - factory/scripts/forge_cli/AGENTS.md
 - .github/workflows/factory-scaffold.yml
+- factory/tests/test_closeout_mode_from_markers.py
+- factory/schemas/delegation.json
 
 **Scope amendments** (measured paths the scope did not name, recorded with `forge stage amend-scope`)
 
@@ -772,5 +774,5 @@ Rendered by the harness from the recorded decomposition; edit the decomposition,
 - `python3 factory/scripts/check_board_complete.py`
 - `git diff --check`
 
-**Review budget.** 97 files / 14500 lines -- Lean recovery PR2 spans native approval eligibility, context-file security including native Windows protected DACL proof, narrowed delegation, reviewed-meaning close reuse, clean-target and independently covered Lean migration/deletion including sealed fixed-proof migration, three-profile pruning with settings/profile preservation, PR-link repair, docs/runtime alignment, and the amended Portable PR3 handoff; stop for amendment if measured diff exceeds this budget. One-time 2026-09-15 amendment from 96 to 97 changed files solely for the existing factory-scaffold Windows PR job to run the native protected-DACL context-file selector; no product check is removed, and the 14,500-line ceiling and native Windows proof obligation remain.
+**Review budget.** 99 files / 14500 lines -- Lean recovery PR2 spans native approval eligibility, context-file security including native Windows protected DACL proof, narrowed delegation, reviewed-meaning close reuse, clean-target and independently covered Lean migration/deletion including sealed fixed-proof migration, three-profile pruning with settings/profile preservation, PR-link repair, docs/runtime alignment, and the amended Portable PR3 handoff; stop for amendment if measured diff exceeds this budget. One-time 2026-09-15 amendment from 96 to 97 changed files solely for the existing factory-scaffold Windows PR job to run the native protected-DACL context-file selector; no product check is removed, and the 14,500-line ceiling and native Windows proof obligation remain. One-time current-main integration amendment from 97 to 99 changed files covers only the imported PR 219 closeout-marker fixture and the existing delegation schema field needed to seal terminal cold-result bytes; no proof or platform check is removed, and the 14,500-line ceiling remains.
 <!-- /forge:contract -->
