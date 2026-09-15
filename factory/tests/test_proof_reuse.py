@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import copy
+import hashlib
 import json
+import subprocess
 import sys
 from pathlib import Path
 
@@ -50,14 +52,50 @@ def _seed_review(repo: Path, monkeypatch, task: dict) -> tuple[dict, dict]:
 def test_unchanged_test_verify_and_selected_review_inputs_reuse_success_without_rerun(
         repo: Path, monkeypatch):
     task = _task()
-    assert stages.proof_identity(repo, task, "tests") == stages.proof_identity(
-        repo, task, "tests")
-    assert stages.proof_identity(repo, task, "verify") == stages.proof_identity(
-        repo, task, "verify")
+    tests = stages.proof_identity(repo, task, "tests")
+    verify = stages.proof_identity(repo, task, "verify")
+    assert tests["reusable"] is True
+    assert verify["reusable"] is True
+    assert tests == stages.proof_identity(repo, task, "tests")
+    assert verify == stages.proof_identity(repo, task, "verify")
     stage, helper = _seed_review(repo, monkeypatch, task)
     assert stages.reviewed_meaning_identity(
         repo, stage, task, helper) == stages.reviewed_meaning_identity(
             repo, stage, task, helper)
+
+
+def test_run_stage_proof_reuses_matching_receipts_by_proof_type(repo: Path, monkeypatch):
+    task = _task()
+    test_file = repo / "tests" / "a.py"
+    test_file.parent.mkdir(parents=True, exist_ok=True)
+    test_file.write_text("pass\n", encoding="utf-8")
+    receipts = {
+        kind: {"status": "passed", "identity":
+               stages.proof_identity(repo, task, kind)["identity"]}
+        for kind in ("verify", "tests")
+    }
+    assert all(stages.proof_identity(repo, task, kind)["reusable"] is True
+               for kind in receipts)
+    calls = []
+    monkeypatch.setattr(stages, "_proof_receipt", lambda _base, _id, kind:
+                        receipts[kind])
+    monkeypatch.setattr(stages, "_run_verify_commands", lambda *_args:
+                        calls.append("verify"))
+    monkeypatch.setattr(stages, "_run_required_tests", lambda *_args:
+                        calls.append("tests") or [])
+    monkeypatch.setattr(stages, "_store_proof_receipt", lambda *_args: None)
+    monkeypatch.setattr(stages, "protected_authority_snapshot",
+                        lambda _base: {"stage": "unchanged"})
+    before = stages.product_tree_snapshot(repo)
+    stages.run_stage_proof(repo, "T1", task)
+    assert calls == []
+    assert stages.product_tree_snapshot(repo) == before
+
+    changed = copy.deepcopy(task)
+    changed["required_tests"][0]["command"] += " --strict"
+    stages.run_stage_proof(repo, "T1", changed)
+    assert calls == ["tests"]
+    assert stages.product_tree_snapshot(repo) == before
 
 
 def test_changed_unknown_partial_or_generated_output_identity_forces_fresh_run(
@@ -92,6 +130,10 @@ def test_reuse_identity_is_proof_type_specific_and_reviewed_meaning_bound(
     changed = copy.deepcopy(task)
     changed["required_tests"][0]["command"] += " --one"
     assert stages.proof_identity(repo, changed, "tests")["identity"] != tests_before
+    assert stages.proof_identity(repo, changed, "verify")["identity"] == verify_before
+    changed = copy.deepcopy(task)
+    changed["acceptance_criteria"] = ["different security contract"]
+    assert stages.proof_identity(repo, changed, "tests")["identity"] == tests_before
     assert stages.proof_identity(repo, changed, "verify")["identity"] == verify_before
     stage, helper = _seed_review(repo, monkeypatch, task)
     meaning = stages.reviewed_meaning_identity(
@@ -140,3 +182,91 @@ def test_selected_review_reruns_for_changed_acceptance_security_migration_or_evi
     proof.write_text(json.dumps(data), encoding="utf-8")
     assert stages.reviewed_meaning_identity(
         repo, stage, task, helper)["semantic_identity"] != before
+
+
+def _fake_uv_probe(repo: Path, monkeypatch) -> tuple[dict, Path]:
+    runner = repo / "fake-uv"
+    runner.write_bytes(b"fake uv runner v1")
+    state = {"interpreter": b"ephemeral Python v1", "dependency": "1"}
+    real_which = stages.shutil.which
+    monkeypatch.setattr(stages.shutil, "which", lambda command, **kwargs:
+                        str(runner) if command == "uv" else
+                        real_which(command, **kwargs))
+
+    def probe(argv, **_kwargs):
+        assert argv[0] == "uv" and "-c" in argv
+        ephemeral = repo / "temporary-interpreter"
+        ephemeral.write_bytes(state["interpreter"])
+        data = {
+            "interpreter_sha256": hashlib.sha256(ephemeral.read_bytes()).hexdigest(),
+            "interpreter_size": ephemeral.stat().st_size,
+            "version": "3.11", "dependencies": [
+                {"name": name, "version": state["dependency"],
+                 "metadata_sha256": "m" * 64, "record_sha256": "r" * 64}
+                for name in json.loads(argv[-1])],
+        }
+        ephemeral.unlink()
+        return subprocess.CompletedProcess(argv, 0, json.dumps(data), "")
+
+    monkeypatch.setattr(stages.subprocess, "run", probe)
+    return state, runner
+
+
+def test_uv_temporary_interpreter_identity_survives_cleanup(repo: Path, monkeypatch):
+    _fake_uv_probe(repo, monkeypatch)
+    command = ("UV_CACHE_DIR=/tmp/forge-lean-uv-cache "
+               "UV_TOOL_DIR=/tmp/forge-lean-uv-tools "
+               "uv run --python 3.11 --with pytest --with psutil "
+               "python -m pytest tests/a.py")
+    first = stages._proof_tool_identity(repo, command)
+    second = stages._proof_tool_identity(repo, command)
+    assert first["reusable"] is True
+    assert first == second
+    assert first["interpreter"]["sha256"]
+    assert not (repo / "temporary-interpreter").exists()
+    assert "path" not in first["interpreter"]
+    assert {row["name"].lower() for row in first["dependencies"]} == {
+        "pytest", "psutil"}
+
+
+def test_metadata_only_head_and_effective_board_inputs(repo: Path):
+    task = {**_task(), "verify_commands": [
+        "python3 factory/scripts/check_board_complete.py", "git diff --check"]}
+    before = stages.proof_identity(repo, task, "verify")
+    assert before["reusable"] is True
+    event = repo / ".factory" / "events" / "proof-bookkeeping.json"
+    event.parent.mkdir(parents=True, exist_ok=True)
+    event.write_text(json.dumps({"event": "verified", "story": "S1"}),
+                     encoding="utf-8")
+    subprocess.run(["git", "add", ".factory/events/proof-bookkeeping.json"],
+                   cwd=repo, check=True)
+    subprocess.run(["git", "commit", "-qm", "record evidence"],
+                   cwd=repo, check=True)
+    after = stages.proof_identity(repo, task, "verify")
+    assert stages.product_tree_snapshot(repo)["head"]
+    assert after["identity"] == before["identity"]
+    event2 = repo / ".factory" / "events" / "pr-link.json"
+    event2.write_text(json.dumps({"event": "pr-linked", "story": "S1"}),
+                      encoding="utf-8")
+    assert stages.proof_identity(repo, task, "verify")["identity"] != before["identity"]
+    subprocess.run(["git", "config", "core.whitespace", "trailing-space"],
+                   cwd=repo, check=True)
+    assert (stages._proof_tool_identity(repo, "git diff --check")
+            != before["inputs"]["tools"][1])
+
+
+def test_probe_changes_interpreter_dependency_and_runner_inputs(repo: Path, monkeypatch):
+    state, runner = _fake_uv_probe(repo, monkeypatch)
+    command = "uv run --python 3.11 --with pytest python -m pytest tests/a.py"
+    base = stages._proof_tool_identity(repo, command)
+    assert base["reusable"] is True
+    state["interpreter"] = b"ephemeral Python v2"
+    changed = stages._proof_tool_identity(repo, command)
+    assert changed["reusable"] is True
+    assert changed["interpreter"] != base["interpreter"]
+    state["interpreter"] = b"ephemeral Python v1"
+    state["dependency"] = "2"
+    changed = stages._proof_tool_identity(repo, command)
+    assert changed["dependencies"] != base["dependencies"]
+    runner.write_bytes(b"fake uv runner v2")
+    assert stages._proof_tool_identity(repo, command)["runner"] != base["runner"]

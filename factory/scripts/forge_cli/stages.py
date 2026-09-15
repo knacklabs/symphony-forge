@@ -1873,11 +1873,13 @@ def _file_identity(path: Path) -> dict[str, object]:
 def _proof_tool_identity(base: Path, command: str) -> dict[str, object]:
     """Resolve only the Python command shapes Forge declares for proof reuse."""
     tokens = shlex.split(command)
-    while tokens and "=" in tokens[0] and not tokens[0].startswith("="):
-        tokens.pop(0)
+    environment = os.environ.copy()
+    while tokens and re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*=.*", tokens[0]):
+        key, value = tokens.pop(0).split("=", 1)
+        environment[key] = value
     if not tokens:
         return {"command": "", "reusable": False}
-    outer = shutil.which(tokens[0])
+    outer = shutil.which(tokens[0], path=environment.get("PATH"))
     if not outer:
         return {"command": tokens[0], "reusable": False}
     outer_path = Path(outer).resolve()
@@ -1885,7 +1887,19 @@ def _proof_tool_identity(base: Path, command: str) -> dict[str, object]:
         runner = _file_identity(outer_path)
     except OSError:
         return {"command": tokens[0], "reusable": False}
-    name = outer_path.name.lower()
+    name = Path(tokens[0]).name.lower()
+    if name in {"git", "git.exe"} and tokens == ["git", "diff", "--check"]:
+        try:
+            config = subprocess.run(
+                [str(outer_path), "config", "--list", "--show-origin", "--null"],
+                cwd=base, capture_output=True, check=True, timeout=20,
+                env=environment,
+            ).stdout
+        except (OSError, subprocess.CalledProcessError, subprocess.TimeoutExpired):
+            return {"command": tokens[0], "runner": runner, "reusable": False}
+        return {"command": tokens[0], "runner": runner,
+                "config_sha256": hashlib.sha256(config).hexdigest(),
+                "reusable": True}
     dependencies: list[str] = []
     probe: list[str]
     if re.fullmatch(r"python(?:3(?:\.\d+)?)?(?:\.exe)?", name):
@@ -1916,7 +1930,10 @@ def _proof_tool_identity(base: Path, command: str) -> dict[str, object]:
         "'metadata_sha256':hashlib.sha256((d.read_text('METADATA') or '').encode()).hexdigest(),"
         "'record_sha256':hashlib.sha256((d.read_text('RECORD') or '').encode()).hexdigest()}))"
         "(m.distribution(x)) for x in deps];"
-        "print(json.dumps({'executable':sys.executable,'version':sys.version,'dependencies':rows},sort_keys=True))"
+        "p=pathlib.Path(sys.executable);"
+        "print(json.dumps({'interpreter_sha256':hashlib.sha256(p.read_bytes()).hexdigest(),"
+        "'interpreter_size':p.stat().st_size,'version':sys.version,"
+        "'dependencies':rows},sort_keys=True))"
     )
     normalized_dependencies = sorted({
         match.group(0) for value in dependencies
@@ -1926,20 +1943,47 @@ def _proof_tool_identity(base: Path, command: str) -> dict[str, object]:
         resolved = subprocess.run(
             [*probe, "-c", script, json.dumps(normalized_dependencies)], cwd=base,
             capture_output=True, text=True, encoding="utf-8", timeout=60,
+            env=environment,
         )
         detail = json.loads(resolved.stdout) if resolved.returncode == 0 else None
-        interpreter = Path(detail["executable"]).resolve() if isinstance(detail, dict) else None
-        if not interpreter or not interpreter.is_file():
+        if (not isinstance(detail, dict)
+                or not re.fullmatch(r"[0-9a-f]{64}", detail["interpreter_sha256"])
+                or not isinstance(detail["interpreter_size"], int)
+                or detail["interpreter_size"] <= 0
+                or not isinstance(detail["version"], str)
+                or not isinstance(detail["dependencies"], list)
+                or len(detail["dependencies"]) != len(normalized_dependencies)):
             raise ValueError
         return {
             "command": tokens[0], "runner": runner,
-            "interpreter": _file_identity(interpreter),
+            "interpreter": {"sha256": detail["interpreter_sha256"],
+                            "size": detail["interpreter_size"]},
             "python_version": detail["version"],
             "dependencies": detail["dependencies"], "reusable": True,
         }
     except (OSError, ValueError, KeyError, json.JSONDecodeError,
-            subprocess.TimeoutExpired):
+            TypeError, subprocess.TimeoutExpired):
         return {"command": tokens[0], "runner": runner, "reusable": False}
+
+
+def _board_proof_inputs(base: Path) -> dict[str, object]:
+    """Capture the non-product inputs read by check_board_complete.py."""
+    from .events import load_events
+    from .roadmap import load_items
+    from factory_lib import factory_dir, story_dir
+
+    done = [item for item in load_items(base) if item.get("status") == "done"]
+    linked = sorted({event.get("story") for event in
+                     load_events(base, event="pr-linked")
+                     if isinstance(event.get("story"), str)})
+    return {
+        "done": done, "linked": linked,
+        "archives": {str(item.get("key", "?")):
+                     (story_dir(base, str(item.get("key", "?"))).is_dir(),
+                      (factory_dir(base) / "history" /
+                       str(item.get("key", "?"))).is_dir())
+                     for item in done},
+    }
 
 
 def proof_identity(
@@ -1951,6 +1995,9 @@ def proof_identity(
     snapshot = (
         product_tree if product_tree is not None else product_tree_snapshot(base)
     )
+    # HEAD still participates in the before/after read-only guard, but a
+    # metadata-only commit must not invalidate byte-identical product proof.
+    reuse_tree = {key: value for key, value in snapshot.items() if key != "head"}
     if kind == "tests":
         declarations = task.get("required_tests") or []
         commands = [entry.get("command", "") for entry in declarations
@@ -1973,13 +2020,23 @@ def proof_identity(
         except OSError:
             generated[str(relative)] = None
     tools = [_proof_tool_identity(base, command) for command in commands]
+    board_inputs = None
+    if kind == "verify" and "python3 factory/scripts/check_board_complete.py" in commands:
+        try:
+            board_inputs = _board_proof_inputs(base)
+        except (OSError, ValueError, TypeError, KeyError):
+            board_inputs = None
     reusable = (all(tool.get("reusable") is True for tool in tools)
-                and all(value is not None for value in generated.values()))
+                and all(value is not None for value in generated.values())
+                and (kind != "verify" or
+                     "python3 factory/scripts/check_board_complete.py" not in commands
+                     or board_inputs is not None))
     inputs: dict[str, object] = {
         "kind": kind,
-        "product_tree": snapshot,
+        "product_tree": reuse_tree,
         "semantic": semantic,
         "generated_inputs": generated,
+        "board_inputs": board_inputs,
         "tools": tools,
     }
     canonical = json.dumps(
