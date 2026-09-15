@@ -330,7 +330,9 @@ def record_grill(repo: Path, gate: str, verdict: str = "pass",
         } for finding in findings]
     label, artifact = GATES[gate].locate(
         repo, "", str(digest_of) if digest_of else "")
-    _seed_cold_launch(repo, gate, hashlib.sha256(artifact.encode()).hexdigest())
+    _seed_cold_launch(repo, gate, hashlib.sha256(artifact.encode()).hexdigest(),
+                      findings={field: payload[field]
+                                for field in ("gaps", "contradictions")})
     extra = ["--input-digest", str(digest_of)] if digest_of else []
     result = run(repo, "record_grill_from_json.py", "--gate", gate, *extra,
                  stdin=json.dumps(payload))
@@ -417,7 +419,8 @@ def record_task_grill(repo: Path, task: dict, verdict: str = "pass",
     return code, out + plan_out + approve_out
 
 
-def _seed_cold_launch(repo: Path, gate: str, digest: str, task_id: str = "") -> None:
+def _seed_cold_launch(repo: Path, gate: str, digest: str, task_id: str = "",
+                      *, findings: dict | None = None) -> None:
     from forge_cli.delegate import argv_digest, delegations_path
     label = f"grill-{gate}" + (f"-{task_id}" if task_id else "")
     path = delegations_path(repo)
@@ -432,7 +435,12 @@ def _seed_cold_launch(repo: Path, gate: str, digest: str, task_id: str = "") -> 
     brief = repo / ".factory" / f"grill-brief-{gate}{suffix}.md"
     brief.write_text("fixture cold-read brief\n", encoding="utf-8")
     output = repo / ".factory" / f"{launch_id}.stdout.log"
-    output.write_text("fixture cold-reader result\n", encoding="utf-8")
+    output.write_text(json.dumps({
+        "status": 0, "threadId": "fixture-session",
+        "rawOutput": json.dumps(findings if findings is not None else {
+            "gaps": [], "contradictions": [],
+        }),
+    }), encoding="utf-8")
     argv = ["node", "/fixture/companion.js", "task", "--json",
             "--cwd", str(repo), "--model", "fixture", "--effort", "high",
             "--prompt-file", str(brief)]
@@ -6726,8 +6734,9 @@ def test_task_grill_requires_proofs_and_complete_dispositions(repo):
     complete = task_grill_payload(task)
     plan = repo / ".factory/task-plans/T1.md"
 
-    def seed():
-        _seed_cold_launch(repo, "task", hashlib.sha256(plan.read_bytes()).hexdigest(), "T1")
+    def seed(findings=None):
+        _seed_cold_launch(repo, "task", hashlib.sha256(plan.read_bytes()).hexdigest(),
+                          "T1", findings=findings)
 
     for field in ("inspected_refs", "current_flow", "criteria_map", "decision",
                   "new_abstractions", "finding_dispositions"):
@@ -6749,7 +6758,7 @@ def test_task_grill_requires_proofs_and_complete_dispositions(repo):
     uncovered = {**task_grill_payload(task, verdict="blocked"),
                  "gaps": [gap], "resolutions": ["The source was recorded."],
                  "finding_dispositions": []}
-    seed()
+    seed({"gaps": [gap], "contradictions": []})
     code, out = record(uncovered)
     assert code != 0 and "map every cold-read finding exactly once" in out
 
@@ -6762,7 +6771,7 @@ def test_task_grill_requires_proofs_and_complete_dispositions(repo):
             "source": "docs/QUALITY.md",
         }],
     }
-    seed()
+    seed({"gaps": [gap], "contradictions": []})
     code, out = record(proved)
     assert code == 0, out
 

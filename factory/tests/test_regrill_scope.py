@@ -13,6 +13,7 @@ bookkeeping, cost a full adversarial round.
 from __future__ import annotations
 
 import copy
+import hashlib
 import json
 import sys
 from pathlib import Path
@@ -318,21 +319,22 @@ def test_in_stage_is_decided_by_the_stage_not_the_caller(repo: Path):
 
 
 # ------------------------------------------------------------- compatibility
-def test_a_grill_recorded_by_older_tooling_still_verifies(repo: Path):
-    """Upgrading must not demand a re-grill of every in-flight task.
-
-    The legacy digest covers a SUPERSET of what the current rule covers, so
-    accepting it as an alternative cannot let through anything the current rule
-    would refuse.
-    """
+def test_a_grill_recorded_by_older_tooling_requires_migration(repo: Path):
+    """The pre-Lean whole-task fingerprint is no normal-runtime authority."""
     lib = _seed(repo)
-    legacy = lib.legacy_grounding_digest(repo, TASK)
-    assert lib.grounding_matches(repo, TASK, legacy, in_stage=True)
+    assert not hasattr(lib, "legacy_grounding_digest")
+    legacy_body = {
+        "contract": TASK,
+        "plan_sha256": lib.plan_digest_without_assumptions(
+            repo / "plans" / "active" / "TEST-1-test-plan.md"),
+        "product_tree_sha256": lib.product_tree_digest(repo),
+    }
+    legacy = hashlib.sha256(json.dumps(
+        legacy_body, sort_keys=True, separators=(",", ":"),
+        ensure_ascii=True).encode()).hexdigest()
+    assert not lib.grounding_matches(repo, TASK, legacy, in_stage=True)
     assert not lib.grounding_matches(repo, TASK, "not-a-digest", in_stage=True)
-
-    # And it is not a bypass: a legacy record whose contract changed is still
-    # refused, because the legacy digest covered that field too.
-    moved = {**TASK, "write_scope": ["src/", "src/extra.ts"]}
+    moved = {**TASK, "acceptance_criteria": ["A new bar for done"]}
     assert not lib.grounding_matches(repo, moved, legacy, in_stage=True)
 
 

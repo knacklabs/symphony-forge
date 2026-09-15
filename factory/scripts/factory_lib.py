@@ -4088,59 +4088,12 @@ def grounding_digest(root: Path, task: dict, *, treeish: str = "",
     return hashlib.sha256(payload.encode()).hexdigest()
 
 
-def legacy_grounding_digest(
-    root: Path,
-    task: dict,
-    *,
-    treeish: str = "",
-    _plan_sha256: str | None = None,
-) -> str:
-    """The pre-split digest: the WHOLE task dict plus the tree, unconditionally.
-
-    Kept so a grill recorded by older tooling still verifies. It is strictly
-    STRICTER than the current rule — it covers every field the current one
-    covers and more — so accepting it as an alternative can never let through
-    something the current rule would refuse.
-    """
-    if _plan_sha256 is None:
-        decomposition = load_json(
-            protected_decomposition_state_path(root), default={},
-        )
-        plan_file = decomposition.get("plan_file") or load_json(
-            run_state_path(root), default={}).get("plan_file")
-        if not isinstance(plan_file, str) or not plan_file.strip():
-            raise SystemExit(
-                "cannot derive the task grounding digest: the protected decomposition "
-                "does not name its approved plan"
-            )
-        plan = (root / plan_file).resolve()
-        if not plan.is_file():
-            raise SystemExit(
-                f"cannot derive the task grounding digest: approved plan {plan_file!r} "
-                "does not exist"
-            )
-        _plan_sha256 = plan_digest_without_assumptions(plan)
-    payload = json.dumps(
-        {
-            "contract": task,
-            "plan_sha256": _plan_sha256,
-            "product_tree_sha256": product_tree_digest(root, treeish),
-        },
-        sort_keys=True,
-        separators=(",", ":"),
-        ensure_ascii=True,
-    )
-    return hashlib.sha256(payload.encode()).hexdigest()
-
-
 def grounding_matches(root: Path, task: dict, recorded: str, *,
                       treeish: str = "", in_stage: bool = False,
                       _plan_sha256: str | None = None) -> bool:
     """Does a recorded grill still bind its inputs?
 
-    Accepts the legacy digest too. That is a compatibility path, not a hole:
-    the legacy digest covers a superset of the inputs, so anything it accepts
-    the current rule would also accept.
+    Accept current grounding and the exact in-stage predecessor rules.
     """
     if not recorded:
         return False
@@ -4179,12 +4132,7 @@ def grounding_matches(root: Path, task: dict, recorded: str, *,
                     return True
             except SystemExit:
                 pass
-    try:
-        return recorded == legacy_grounding_digest(
-            root, task, treeish=treeish, _plan_sha256=_plan_sha256,
-        )
-    except SystemExit:
-        return False
+    return False
 
 
 def _stage_baseline_for(root: Path, task_id: str) -> str:

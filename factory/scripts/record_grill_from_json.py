@@ -35,7 +35,7 @@ def _non_empty_string(value: object) -> bool:
     return isinstance(value, str) and bool(value.strip())
 
 
-def _cold_launch_digest(root: Path, gate: str, task_id: str) -> str:
+def _cold_launch_result(root: Path, gate: str, task_id: str) -> tuple[str, dict]:
     from forge_cli.delegate import argv_digest, load_delegations
     label = f"grill-{gate}" + (f"-{task_id}" if task_id else "")
     story = load_json(run_state_path(root), default={}).get("issue_key", "")
@@ -112,6 +112,7 @@ def _cold_launch_digest(root: Path, gate: str, task_id: str) -> str:
                 or not native_result.message
                 or not native_argv_valid(terminal, root, [])):
             raise SystemExit(f"{gate} native cold-read has no session identity")
+        finding_text = native_result.message
     else:
         companion = terminal.get("companion_path")
         prompts = {str(brief), brief.relative_to(root).as_posix()}
@@ -125,14 +126,41 @@ def _cold_launch_digest(root: Path, gate: str, task_id: str) -> str:
                 or Path(argv[0]).stem.lower() != "node"
                 or argv not in expected):
             raise SystemExit(f"{gate} cold-read transport identity is invalid")
+        try:
+            wrapper = json.loads(result.decode("utf-8"))
+        except UnicodeDecodeError:
+            raise SystemExit(f"{gate} cold-read findings are not UTF-8")
+        except json.JSONDecodeError:
+            raise SystemExit(f"{gate} cold-read result is not JSON")
+        if (not isinstance(wrapper, dict)
+                or wrapper.get("status") != 0
+                or not _non_empty_string(wrapper.get("threadId"))
+                or not _non_empty_string(wrapper.get("rawOutput"))):
+            raise SystemExit(f"{gate} cold-read result has invalid companion shape")
+        finding_text = wrapper["rawOutput"]
+    try:
+        findings = json.loads(finding_text)
+    except json.JSONDecodeError:
+        raise SystemExit(f"{gate} cold-read findings are not JSON")
+    if (not isinstance(findings, dict)
+            or set(findings) != {"gaps", "contradictions"}
+            or any(not isinstance(findings[field], list)
+                   or any(not _non_empty_string(item)
+                          for item in findings[field])
+                   for field in ("gaps", "contradictions"))):
+        raise SystemExit(f"{gate} cold-read findings have invalid shape")
     digest = terminal.get("task_sha256")
     if not isinstance(digest, str) or not re.fullmatch(r"[0-9a-f]{64}", digest):
         raise SystemExit(f"{gate} cold-read launch has no exact input digest")
-    return digest
+    return digest, findings
 
 
-def _validate_dispositions(payload: dict, cold: str, final: str) -> None:
-    findings = [*payload.get("gaps", []), *payload.get("contradictions", [])]
+def _validate_dispositions(payload: dict, cold: str, final: str,
+                           cold_findings: dict) -> None:
+    if any(payload.get(field) != cold_findings[field]
+           for field in ("gaps", "contradictions")):
+        raise SystemExit("grill findings must match the authenticated cold-read result")
+    findings = [*cold_findings["gaps"], *cold_findings["contradictions"]]
     dispositions = payload.get("finding_dispositions")
     if not isinstance(dispositions, list) or len(dispositions) != len(findings):
         raise SystemExit(
@@ -431,11 +459,8 @@ else:
     _label, artifact = _gate.locate(root, args.task or "", args.input_digest or "")
     from forge_cli.grill import _artifact_digest
     final_digest = _artifact_digest(artifact)
-_validate_dispositions(
-    payload,
-    _cold_launch_digest(root, args.gate, args.task or ""),
-    final_digest,
-)
+_cold_digest, _cold_findings = _cold_launch_result(root, args.gate, args.task or "")
+_validate_dispositions(payload, _cold_digest, final_digest, _cold_findings)
 
 
 story = active_story if _gate.story_scoped else ""

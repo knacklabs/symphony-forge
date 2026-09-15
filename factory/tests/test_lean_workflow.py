@@ -121,10 +121,12 @@ def test_one_cold_grill_full_disposition_replaces_round_floors_and_frontier_fake
     draft = tmp_path / "amended.md"
     draft.write_text(plan_draft(repo), encoding="utf-8")
     cold = hashlib.sha256(draft.read_text().encode()).hexdigest()
-    _seed_cold_launch(repo, "plan", cold)
+    finding = "The repository fact is not stated."
+    _seed_cold_launch(repo, "plan", cold, findings={
+        "gaps": [finding], "contradictions": [],
+    })
     draft.write_text(plan_draft(repo, PLAN_BODY + "\nResolved repository fact.\n"),
                      encoding="utf-8")
-    finding = "The repository fact is not stated."
     payload = {
         "generated_by": "griller", "gate": "plan", "verdict": "pass",
         "gaps": [finding], "contradictions": [],
@@ -146,6 +148,89 @@ def test_one_cold_grill_full_disposition_replaces_round_floors_and_frontier_fake
     assert stored["cold_input_sha256"] == cold
     assert stored["final_artifact_sha256"] != cold
     assert "frontier_empty" not in stored and "rounds" not in stored
+
+
+@pytest.mark.parametrize(("cold_result", "submitted", "message"), [
+    ({"gaps": ["Cold finding."], "contradictions": []},
+     {"gaps": [], "contradictions": []}, "must match"),
+    ({"gaps": ["Cold finding."], "contradictions": []},
+     {"gaps": ["Substituted finding."], "contradictions": []}, "must match"),
+    ({"gaps": ["Cold finding."], "contradictions": ["Cold contradiction."]},
+     {"gaps": ["Cold finding."], "contradictions": []}, "must match"),
+    ("not JSON", {"gaps": [], "contradictions": []}, "not JSON"),
+    ({"gaps": []}, {"gaps": [], "contradictions": []}, "invalid shape"),
+    ({"gaps": [""], "contradictions": []},
+     {"gaps": [], "contradictions": []}, "invalid shape"),
+])
+def test_cold_grill_recorder_refuses_substituted_or_malformed_findings(
+        repo: Path, tmp_path: Path, cold_result, submitted, message):
+    sign_off(repo)
+    intake(repo)
+    draft = tmp_path / "plan.md"
+    draft.write_text(plan_draft(repo), encoding="utf-8")
+    _seed_cold_launch(repo, "plan", hashlib.sha256(draft.read_bytes()).hexdigest(),
+                      findings=cold_result if isinstance(cold_result, dict) else None)
+    if isinstance(cold_result, str):
+        from forge_cli.delegate import load_delegations
+        Path(load_delegations(repo)[-1]["output_path"]).write_text(json.dumps({
+            "status": 0, "threadId": "fixture-session",
+            "rawOutput": cold_result,
+        }), encoding="utf-8")
+    submitted_findings = [*submitted["gaps"], *submitted["contradictions"]]
+    payload = {
+        "generated_by": "griller", "gate": "plan", "verdict": "pass",
+        **submitted, "resolutions": ["Resolved in the draft."] * len(submitted_findings),
+        "finding_dispositions": [{
+            "finding": finding, "resolution": "Resolved in the draft.",
+            "source": "factory/scripts/forge_cli/grill.py",
+        } for finding in submitted_findings],
+    }
+    code, output = run(repo, "record_grill_from_json.py", "--gate", "plan",
+                       "--input-digest", str(draft), stdin=json.dumps(payload))
+    assert code != 0 and message in output
+    assert not (repo / ".factory/stories/ENG-1/grills/plan.json").exists()
+
+
+def test_native_cold_grill_uses_recorded_message_findings(
+        repo: Path, tmp_path: Path):
+    from forge_cli.codex_runtime import native_argv
+    from forge_cli.delegate import argv_digest, delegations_path
+
+    sign_off(repo)
+    intake(repo)
+    draft = tmp_path / "plan.md"
+    draft.write_text(plan_draft(repo), encoding="utf-8")
+    _seed_cold_launch(repo, "plan", hashlib.sha256(draft.read_bytes()).hexdigest())
+    ledger = delegations_path(repo)
+    rows = [json.loads(line) for line in ledger.read_text().splitlines()]
+    output = tmp_path / "native-result.jsonl"
+    output.write_text("\n".join([
+        json.dumps({"type": "thread.started", "thread_id": "cold-session"}),
+        json.dumps({"type": "item.completed", "item": {
+            "type": "agent_message", "text": json.dumps({
+                "gaps": ["Native finding."], "contradictions": [],
+            }),
+        }}),
+        json.dumps({"type": "turn.completed"}), "",
+    ]), encoding="utf-8")
+    for row in rows:
+        argv = native_argv("/fixture/codex", repo, row["model"], row["effort"],
+                           False, [])
+        row.update(transport="native", executable_path="/fixture/codex",
+                   argv=argv, argv_sha256=argv_digest(argv),
+                   output_path=str(output))
+        if row["launch_status"] == "succeeded":
+            row["session_id"] = "cold-session"
+    ledger.write_text("".join(json.dumps(row) + "\n" for row in rows),
+                      encoding="utf-8")
+    payload = {
+        "generated_by": "griller", "gate": "plan", "verdict": "pass",
+        "gaps": [], "contradictions": [], "resolutions": [],
+        "finding_dispositions": [],
+    }
+    code, out = run(repo, "record_grill_from_json.py", "--gate", "plan",
+                    "--input-digest", str(draft), stdin=json.dumps(payload))
+    assert code != 0 and "must match the authenticated cold-read result" in out
 
 
 @pytest.mark.parametrize(("tamper", "message"), [

@@ -170,9 +170,12 @@ def _compose_brief(base: Path, gate: str, label: str, artifact: str,
         "",
         "## What to return",
         "",
-        "Findings only: contradictions, gaps, unstated assumptions, and "
-        "anything a reader would have to guess. Say what would break and why. "
-        "Do not record a gate — the coordinating session records it.",
+        "Return one JSON object with exactly two arrays: gaps and "
+        "contradictions. Each entry is a non-empty finding string. Put "
+        "unstated assumptions and anything a reader would have to guess in "
+        "gaps. Return every finding in reading order, with no prose or "
+        "Markdown fence. Do not record a gate — the coordinating session "
+        "records it.",
         "",
     ])
 
