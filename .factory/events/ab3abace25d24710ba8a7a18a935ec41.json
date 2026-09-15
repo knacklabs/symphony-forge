@@ -1,0 +1,1 @@
+{"event": "signal-resolved", "generated_by": "orchestrator", "at": "2026-09-15T06:22:57+00:00", "story": "FORGE-COORD-1", "detail": "S-0036-e4a3: The named test_regrill_scope.py file is already in LEAN-WORKFLOW approved write_scope; the previous four-file launch narrowed its permission. Decision 0066 treats a completed launch brief digest as hi"}

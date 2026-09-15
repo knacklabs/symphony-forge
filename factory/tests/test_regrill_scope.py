@@ -463,7 +463,7 @@ def test_a_second_delegate_after_committing_needs_no_new_grill(repo: Path, tmp_p
 
 
 def test_measurement_receipt_authenticates_its_native_launch_not_a_later_one(
-        repo: Path, tmp_path, capsys):
+        repo: Path, tmp_path):
     from test_gates import DECOMP, STAGE_TASK, start_stage  # noqa: E402
     from forge_cli.stages import _require_successful_launch  # noqa: E402
 
@@ -496,9 +496,7 @@ def test_measurement_receipt_authenticates_its_native_launch_not_a_later_one(
 
     current_brief_bytes = current_brief.read_bytes()
     current_brief.write_bytes(current_brief_bytes + b"stale current launch\n")
-    with pytest.raises(SystemExit):
-        _require_successful_launch(repo, "T1", stage, widened)
-    assert "no successful write launch" in capsys.readouterr().out
+    assert _require_successful_launch(repo, "T1", stage, widened) == ""
     current_brief.write_bytes(current_brief_bytes)
 
     original_output.write_text(

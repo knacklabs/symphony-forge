@@ -67,7 +67,10 @@ or out-of-scope selections refuse before launch.
 **A brief is not skippable.** `forge delegate` is the canonical execution
 boundary; direct companion Bash calls are off-contract and routed back to it.
 `stage done` refuses without a successful write launch bound to the active
-stage, current task contract, and current brief digest. The hook does not try
+stage and its recorded launch identity, including the narrowed write scope.
+The recorded brief digest remains historical launch evidence; later valid
+regeneration of the derived brief does not invalidate a completed stage-bound
+write. The hook does not try
 to authorize arbitrary shell by reconstructing its final argv; every literal
 companion token is routed through `forge delegate`.
 Active write stages run in the foreground; background mode is read-only

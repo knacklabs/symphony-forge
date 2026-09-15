@@ -1477,14 +1477,11 @@ def _host_window_covering(base: Path, stage: dict, task: dict) -> dict | None:
 
 
 def _successful_launch_entry_valid(
-        base: Path, stage_id: str, stage: dict, entry: dict | None, *,
-        current_brief_required: bool = True) -> bool:
+        base: Path, stage_id: str, stage: dict, entry: dict | None) -> bool:
     """Return whether this exact terminal row proves a stage-bound write.
 
-    A current launch must bind the current rendered brief.  A launch selected
-    by an immutable measurement receipt instead authenticates the historical
-    row and result that created the receipt; later valid brief regeneration
-    must not rewrite that historical anchor.
+    The recorded brief digest is historical launch evidence; later brief
+    regeneration must not rewrite that stage-bound anchor.
     """
     from .codex_runtime import native_argv_valid, parse_native_result
     from .delegate import argv_digest, brief_path, delegations_path
@@ -1556,12 +1553,8 @@ def _successful_launch_entry_valid(
     else:
         argv_valid = False
     brief_digest = entry.get("brief_sha256") if entry else None
-    brief_valid = (
-        brief_digest == sha256_of(brief)
-        if current_brief_required
-        else isinstance(brief_digest, str)
-        and re.fullmatch(r"[0-9a-f]{64}", brief_digest) is not None
-    )
+    brief_valid = (isinstance(brief_digest, str)
+                   and re.fullmatch(r"[0-9a-f]{64}", brief_digest) is not None)
     valid = (
         entry
         and entry.get("launch_status") == "succeeded"

@@ -3534,7 +3534,7 @@ def validated_measurement_launch(
             return None
         return entry
     return entry if _successful_launch_entry_valid(
-        root, task_id, stage, entry, current_brief_required=False,
+        root, task_id, stage, entry,
     ) else None
 
 

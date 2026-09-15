@@ -14603,8 +14603,8 @@ def test_proof_reaps_spawn_when_process_identity_probe_fails(
     assert spawned["stderr"].errors == "replace"
 
 
-def test_stage_done_refuses_a_current_brief_rewritten_by_proof_commands(repo, tmp_path):
-    """A write launch must bind the current brief bytes before sealing."""
+def test_stage_done_ignores_a_brief_rewritten_by_proof_commands(repo, tmp_path):
+    """The successful launch binds the stage, not later derived brief bytes."""
     command = ("python3 -c \"from pathlib import Path; "
                "p=Path('.factory/briefs/T1.md'); "
                "p.write_text(p.read_text() + 'changed')\"")
@@ -14613,9 +14613,8 @@ def test_stage_done_refuses_a_current_brief_rewritten_by_proof_commands(repo, tm
     write_in_scope(repo, "src/core.py")
     stamp_and_commit(repo, "src/core.py")
     code, out = run(repo, "forge.py", "stage", "done", "T1")
-    assert code != 0, out
-    assert "has no successful write launch bound to this stage" in out, out
-    assert measured_stage(repo)["status"] == "active"
+    assert code == 0, out
+    assert measured_stage(repo)["status"] == "done"
 
 
 def test_stage_start_gates_on_dependencies_not_list_order(repo, tmp_path):
@@ -15774,7 +15773,7 @@ def test_delegate_print_only_records_no_successful_launch(repo, tmp_path):
     assert code != 0 and "no successful write launch" in out
 
 
-@pytest.mark.parametrize("tamper", ["missing", "digest", "read-only"])
+@pytest.mark.parametrize("tamper", ["missing", "digest", "brief-digest", "read-only"])
 def test_stage_done_rejects_unbound_launch_argv(repo, tmp_path, tamper):
     start_stage(repo, tmp_path, STAGE_TASK)
     ledger = delegation_ledger(repo)
@@ -15783,6 +15782,8 @@ def test_stage_done_rejects_unbound_launch_argv(repo, tmp_path, tamper):
         entry.pop("argv")
     elif tamper == "digest":
         entry["argv_sha256"] = "0" * 64
+    elif tamper == "brief-digest":
+        entry["brief_sha256"] = "invalid"
     else:
         entry["argv"][-1] = "--read-only"
         entry["argv_sha256"] = hashlib.sha256(json.dumps(
