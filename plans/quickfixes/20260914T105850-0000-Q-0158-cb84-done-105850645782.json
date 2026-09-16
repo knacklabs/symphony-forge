@@ -1,0 +1,18 @@
+{
+  "event": "done",
+  "id": "Q-0158-cb84",
+  "profile": "degraded",
+  "kind": "degraded",
+  "reason": "Lean canonical closeout cleanup: normal delegation remains unavailable because this branch's committed hooks differ from the parent worktree; remove duplicate story-proof authority in five approved files and keep Lite plus explicit upgrade refusals.",
+  "started_at": "2026-09-14T10:41:14+00:00",
+  "completed_at": "2026-09-14T10:58:50+00:00",
+  "files": [
+    "factory/scripts/factory_lib.py",
+    "factory/scripts/forge_cli/phase.py",
+    "factory/scripts/pr_ready.py",
+    "factory/tests/test_gates.py",
+    "factory/scripts/forge_cli/board.py"
+  ],
+  "task_id": "LEAN-WORKFLOW",
+  "story": "FORGE-COORD-1"
+}

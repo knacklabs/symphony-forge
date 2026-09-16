@@ -1,0 +1,18 @@
+{
+  "event": "done",
+  "id": "Q-0169-73ba",
+  "profile": "degraded",
+  "kind": "degraded",
+  "reason": "normal delegation is unavailable because this branch's hook runtime differs from the parent; restore governed native reapproval after approved plan edits",
+  "started_at": "2026-09-14T11:47:28+00:00",
+  "completed_at": "2026-09-14T11:49:30+00:00",
+  "files": [
+    "factory/scripts/forge_cli/approval.py",
+    "factory/scripts/forge_cli/phase.py",
+    "factory/scripts/factory_lib.py",
+    "factory/scripts/record_grill_from_json.py",
+    "factory/scripts/record_decomposition_from_json.py"
+  ],
+  "task_id": "LEAN-WORKFLOW",
+  "story": "FORGE-COORD-1"
+}

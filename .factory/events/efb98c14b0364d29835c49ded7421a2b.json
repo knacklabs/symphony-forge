@@ -1,0 +1,1 @@
+{"event": "signal-scope-change", "generated_by": "implementer", "at": "2026-09-14T05:49:52+00:00", "story": "FORGE-COORD-1", "detail": "LEAN-WORKFLOW deletes round-ledger runtime and test_gates helpers, but full verify collects out-of-scope factory/tests/test_round_provenance.py and factory/tests/test_grill_carries_answers.py, which i"}

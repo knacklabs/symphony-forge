@@ -1,38 +1,37 @@
-# Review Prompt — one Codex run, three lenses
+# Review Prompt — three lenses, one selected generation
 
-Review runs ONCE per task, after `verify.py` passes and the automated testing
-artifact is recorded, and before `task pr-ready`. `./forge task close <task-id>`
-releases it (`./forge review <task-id>` alone does the same; decisions 0011,
-0049, 0069): one autoreview call in Codex over the whole task diff from its
-recorded base, in a clean worktree pinned at the task tip, judging quality,
-performance and security in ONE pass, watched, then recorded as ONE immutable
-generation holding three lens records behind one selected pointer. Never one
-run per lens, never recorded by hand: `forge review` runs the recorder itself.
-NEVER hand the review to a nested Codex companion job (that re-triggers the
-same skill one indirection deeper and the companion write-guard refuses it),
-and never hand-write findings inline.
-
-The reviewer reads the tree it judges (0076): Codex runs read-only inside the
-review worktree, so a verdict or a finding on code the diff does not show is
-read, not guessed. A diff too big for one prompt runs as parallel groups: one
-three-lens Codex run per group over its files with the whole task tree
-readable, a refused group retried alone with the cause in its brief, the
-results merged into one record with the worst verdict per contract winning;
-lock and generated files are not sent (0078). Contract verdicts are finding
-records titled `[quality] VERDICT <contract-id>: implemented|partial|missing`
-(0077).
+Review runs after passing verify and automated test proof. The orchestrator
+releases it with **`./forge review <task-id>`** (0011, 0054, 0069). A small
+diff uses one Codex helper call over the whole task diff. A diff that the helper
+would chunk is split into the fewest file groups that fit its prompt limit;
+each group judges all three lenses in ONE pass. Forge releases parallel groups
+together; each sees the whole task tip tree, and a refused group retries alone
+with its cause in the brief (0076, 0078).
+Lock and generated files stay in scope and the stamp but their bytes are not
+sent. The results merge into one immutable selected generation, with the worst
+genuine contract verdict winning (0077). Never hand the review to a nested
+companion job or hand-write findings.
 
 Formal review uses `gpt-5.6-sol` at `high` reasoning. Route fixes back to the
 active `gpt-5.6-sol`/medium implementer and reuse that agent across review loops.
 
-Loop discipline: scope-freeze — review the diff that exists, do not expand
-scope; verify findings against the actual code before reporting. Recovery is
-bounded by `docs/QUALITY.md` "Bounded recovery": after the same action fails
-twice with the same inputs and cause, stop launching model retries and find
-the cause first. The host triages every blocking finding before a fix round
-(`./forge review <id> --triage`, 0075): open the cited line and its callee,
-prove it real or not with a file:line, list every instance; never relay a
-finding unread, never make findings a menu for the human.
+A previously selected clean generation may be reused only when the stage's
+stamp-token delta and current reviewed-meaning identity both match. Reviewed
+meaning includes the approved semantic task brief, effective acceptance,
+security and migration semantics, substantive automated evidence, review
+instructions/helper/configuration, generated semantic inputs, and product
+delta. Only explicitly canonicalized recorder bookkeeping and timestamps are
+ignored; unknown, partial, or substantive change forces a fresh helper call and
+preserves the original raw provenance.
+The selected generation's `input` separately preserves the exact combined
+prompt SHA256 and byte count sent to the helper. Never substitute the canonical
+reviewed-meaning digest for that immutable input provenance.
+
+Loop discipline: review the scoped diff that exists and verify findings against
+the actual code before reporting. The host triages each blocker before a fix
+round with `./forge review <id> --triage` by opening its cited line and callee
+and naming all instances (0075). Repeated identical refusals follow
+`docs/QUALITY.md` "Bounded recovery".
 
 Review depth: the helper runs at **`--max-priority P3`**, the complete
 three-lens depth `forge review` enforces. P0/P1 findings block the task; P2/P3
@@ -51,16 +50,15 @@ Procedure:
    multi-commit task) — at `--max-priority P3`, with Codex as the engine. The
    run is pinned in a clean detached worktree because the skill refuses to
    finish if the reviewed tree changes mid-run and the main tree is where the
-   harness keeps writing. Harness bookkeeping (`.factory/`, `plans/`,
-   `docs/decisions/`) and lock/generated files are put back to the base in
-   the review tip, so the bundle is the product delta only; findings on
-   bookkeeping paths are dropped. The quality record's `contract_verdicts`
-   are lifted from the reviewer's verdict records; a contract with no verdict
-   is recorded `partial` (fail-closed) so it surfaces as a blocking finding
-   rather than passing silently. Verdicts are required for the reviewed
-   task's contracts and those of tasks already done; tasks that have not
-   started are not verdicted (0049).
-2. Review through THREE lenses in that one pass; the recorder projects the one
+   harness keeps writing. Harness bookkeeping and lock/generated files are put
+   back to the task base in the review tip; bookkeeping findings are dropped.
+   Quality `contract_verdicts` come from `[quality] VERDICT <contract-id>:
+   implemented|partial|missing` finding records (0077). Missing, partial, or
+   unverdicted contracts block rather than passing silently. Verdicts
+   are required for the reviewed task's contracts and those of tasks already
+   done; tasks that have not started are not verdicted under the accepted
+   per-task proof model in 0054, as preserved by 0069.
+2. Review through THREE lenses in each run. The recorder projects the merged
    result into three `factory/schemas/review.json` lens records, each with
    `"generated_by": "autoreview"`:
    - **quality** — correctness, regressions, gaps in the implementer's tests,

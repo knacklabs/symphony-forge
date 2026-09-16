@@ -9,58 +9,57 @@ saved: 2026-08-06T07:50:29+00:00
 
 ## Why
 
-`forge plan save` records a plan AND marks it approved in one agent-run step. It
-requires a grill (PH-3), but the grill is self-authored — an agent can record a
-"pass" whose questions it answered itself — and the approval is a command the
-agent runs, not a human decision. Nothing structurally stops an agent from
-planning, grilling, and approving its own plan, then implementing. The always-
-armed lock (0013) blocks product writes without an *approved* plan, but it
-trusts whatever set `approved`.
-
-The harness needs a human approval it cannot forge. Plan mode is where the human
-reviews the plan (`ExitPlanMode`); Claude Code fires no hook on that
-transition (#21282), but every `Write`/`Edit` made inside plan mode carries
-`permission_mode: "plan"`, and the PostToolUse hook records a plan-mode
-marker whose `plan_body_digest` the save/approve recorders require — so plan
-mode IS the authorship proof (decision 0048), while approval remains an
-explicit human-attributed command — the same trust
-model `decision accept` and client sign-off already use. Decision 0029 states
-the design and records this correction.
+Plan approval must come from the host interaction in which the human sees the
+exact final plan. An agent-authored command, a board view, a synthetic closing
+question, or a marker proving only that plan mode was active cannot establish
+that fact. Story and task approval therefore consume the host's native Plan
+Mode completion and share one digest and replay model across Claude and Codex.
 
 ## Behaviour
 
-A plan reaches `approved` only after its plan-mode authorship marker matches
-the current `plan_body_digest` and an explicit human-attributed approval is
-recorded.
+`forge plan save` validates the story plan and stores it once as
+`awaiting-approval`. A successful native approval changes that exact plan to
+`approved`; it does not require a second unchanged save. Task plans use the same
+approval recorder and store the approval on their existing task-grill record.
+There are no normal-flow `plan approve` or `task approve` commands.
 
-- `forge plan approve --by <name>` writes `.factory/plan-approval.json`: the
-  approved plan's BODY digest, the approver, a timestamp. It is refused without a
-  human `--by` — a human chat confirmation, exactly like `decision accept`.
-- `forge plan save` sets `plan_status` to `awaiting-approval`, never directly to
-  `approved`. It refuses to record an approved plan unless a fresh
-  `plan-approval.json` marker matches the plan being saved (digest-bound over the
-  BODY, the same freshness rule the grill uses). Absent, mismatched, or stale
-  marker → refused.
-- Every plan grill delivers ledger-matched `AskUserQuestion` rounds meeting
-  `GATE_ROUND_FLOORS` (plan 2), with `frontier_empty: true` on the final round,
-  before approval. Authoring in plan mode is required proof; the attributed
-  `plan approve` is the recorded human gate.
-- The marker is ephemeral working state (0025): gitignored, per-worktree, good
-  for one save.
+Before either approval, one independent cold grill reads the original plan.
+The cold launch digest is preserved as `cold_input_sha256`. Ordered
+`finding_dispositions` maps every gap and contradiction exactly once to its
+resolution and source. When the final artifact differs, ordered `amendments`
+explains every change and binds the bridge to `final_artifact_sha256`. The cold
+reader is never claimed to have reviewed amended bytes, and amendments alone do
+not require another cold launch.
+
+The shared recorder derives exactly one eligible current-frontier candidate:
+
+- Claude accepts only a successful `ExitPlanMode` PostToolUse event whose
+  `tool_input.plan` bytes produce the displayed current semantic digest.
+- Codex accepts only a completed synchronous `request_user_input` whose single
+  question uses id `approve_plan_<digest>`, prompt `Approve exact plan digest
+  <digest>?`, the exact ordered choices `Approve plan`, `Request changes`, and
+  `Stop`, and whose id-keyed answer is `Approve plan`.
+- Each event binds runtime, stable session and event identity, plan kind, story,
+  task, and current semantic plan digest. Attribution is
+  `human-via-Claude` or `human-via-Codex`; Forge invents no display name.
+- Zero or multiple candidates, replay, missing stable identity, stale digest,
+  cancellation, wrong runtime, asynchronous acknowledgement, unsupported
+  payload, and ordinary optional clarification all refuse without approval.
+
+The story approval remains `.factory/stories/<key>/plan-approval.json`; the
+task approval remains in `.factory/stories/<key>/grills/tasks/<id>.json`. A
+story-scoped consumed-event tombstone prevents replay. These are recorder-owned
+artifacts, never hand-authored state.
 
 ## Acceptance criteria
 
-- `plan save` sets `plan_status` to `awaiting-approval` and refuses to set
-  `approved` unless a fresh `.factory/plan-approval.json` matches the plan's body
-  digest; a stale, mismatched, or absent marker is refused with a message naming
-  the missing approval.
-- `forge plan approve --by <name>` writes the approval marker for the current
-  plan's body digest and is refused without a human `--by`.
-- Plan save and approval refuse unless a plan-mode marker matches the current
-  `plan_body_digest`.
-- The marker binds the exact plan approved: saving a plan whose body digest
-  differs from the marker (an edit after approval) is refused.
-- Implementation stays blocked (`update_run` refuses the implementing phase)
-  until `plan_status` is `approved`, which now requires the human marker.
-- Every existing plan-save gate (grill freshness, decisions_reviewed coverage,
-  contradiction signals, Surface Impact) still runs unchanged.
+- One cold-read/disposition/amendment bridge and one native human approval bind
+  the final story or task plan digest.
+- Story save stops at `awaiting-approval`; native approval advances it without
+  a second save or a manual approval command.
+- Both runtime adapters call the same candidate, digest, replay, attribution,
+  and storage implementation.
+- Editing the plan after approval stales the approval and blocks downstream
+  implementation until the amended final digest is grilled and approved.
+- Existing substantive gates remain: active decisions, contradiction signals,
+  story criteria, task contracts, and the always-armed write boundary.

@@ -146,25 +146,24 @@ Rules:
 - Save the grilled plan into the repo, bound to its roadmap story:
   `python3 factory/scripts/forge.py plan save --from <plan-file> --story
   <story-key>`. This records it as `awaiting-approval`.
-- The grilled plan is now on the board (`awaiting-approval`) — the human reviews
-  it THERE, not as a plan-mode dump in chat. After the human confirms approval
-  in chat, run `./forge plan approve --by "<their name>"`, then rerun
-  `plan save` with the unchanged plan. `update_run.py` refuses implementation
-  until this digest-bound approval makes `plan_status` approved.
-- **Approval LOCKS the contract until the PR opens.** At the moment of approval,
-  hold this rule for the whole story: from sign-off until the PR is opened, any
-  deviation from the approved contract — amending acceptance criteria, changing
-  write_scope, inserting/reordering/removing a task, re-scoping — is NEVER a
-  silent edit. The flow STOPS and goes back to the human:
-  - **Task not started / active (in-flight), not yet shipped:** amend its
-    contract, then re-present to the human, `plan approve --by`, and re-grill
-    before the next delegate/stage close (the recorder marks the grill +
-    approval stale to force this).
-  - **Task done but NOT shipped:** `./forge task reopen <id>` moves it back to
-    active — then re-grill and re-implement.
-  - **Task done AND shipped (merged):** it is immutable; add a NEW follow-up
-    task, never rewrite it.
-  - **Adding a task to the story:** a graph amendment — human approval is
-    mandatory before it runs.
-  You (the coordinator) own this clarity: recognise the deviation, stop, and ask
-  the human. Never reshuffle the graph or re-scope a task on your own authority.
+- Saving leaves the grilled plan at `awaiting-approval`. Present the exact final
+  artifact in native Plan Mode. A successful Claude `ExitPlanMode` binds its exact
+  plan input; Codex uses the completed id-keyed `approve_plan_<digest>` question
+  `Approve exact plan digest <digest>?` with `Approve plan / Request changes / Stop`, and records
+  approval through the shared recorder. Never use the board, a manual approve
+  command, or a second unchanged save as approval evidence. `update_run.py`
+  refuses implementation until native approval binds the final digest.
+- **Approval locks the grounding contract until the PR opens.** Before stage
+  start, changes to the approved execution contract require the amended artifact
+  to be grilled and approved through native Plan Mode. After stage start, record
+  mechanically implied `write_scope`, `required_tests`, `verify_commands` and
+  review-budget corrections honestly; stage measurement enforces them without
+  another cold grill or human approval when the objective, acceptance criteria,
+  plan contracts, `user_facing`, intent and material scope choice are unchanged.
+  A material new choice, changed intent or scope, graph amendment, missing
+  authority or contradiction stops for the human: amend the affected contract,
+  re-grill grounding changes, and present the exact final artifact through
+  native Plan Mode before the next delegate or stage close. Preserve the ordered
+  graph; a new task needs human approval before it runs. For done/unshipped work,
+  `./forge task reopen <id>` precedes amendment and re-implementation. Shipped
+  work is immutable; add a follow-up task.

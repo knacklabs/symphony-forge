@@ -8,7 +8,7 @@ from pathlib import Path
 
 from factory_lib import (
     active_task_id, branch_diff_digest, dump_json, gate, head_sha, load_json, now_iso,
-    effective_review_base, evidence_path, proof_path,
+    effective_review_base, proof_path,
     protected_decomposition_state_path, repo_root,
     product_delta_digest, publish_review_generation, require_skills,
     read_stdin_utf8, run_state_path, story_dir, validate_payload,
@@ -18,7 +18,8 @@ from forge_cli.events import append_event
 from forge_cli.readiness import review_passed
 from forge_cli.review_brief import declared_contracts
 from forge_cli.stages import (
-    load_stages, stage_review_binding, task_for, write_stages,
+    load_stages, reviewed_meaning_identity, stage_review_binding, task_for,
+    write_stages,
 )
 
 
@@ -129,22 +130,14 @@ if args.set:
     if payload.get("inspected_commit") != head_sha(root):
         raise SystemExit("review generation inspected_commit is not current HEAD")
     from forge_cli.review import (
-        _combined_prompt, _helper_identity, rederive_combined_lenses, resolve_skill,
+        _helper_identity, rederive_combined_lenses, resolve_skill,
     )
     expected_helper, _helper_file = _helper_identity(resolve_skill(None))
     if payload.get("helper") != expected_helper:
         raise SystemExit("review generation helper does not match the installed helper")
-    # The brief has two forms: the reviewer read the tree it judged, or it saw
-    # only the diff bundle (another engine, codex off PATH, or
-    # FORGE_REVIEW_EMPTY_WORKSPACE). Either is the current combined prompt.
-    accepted_inputs = []
-    for repo_readable in (True, False):
-        prompt = _combined_prompt(task, repo_readable=repo_readable)
-        accepted_inputs.append({
-            "sha256": hashlib.sha256(prompt).hexdigest(), "bytes": len(prompt),
-        })
-    if payload.get("input") not in accepted_inputs:
-        raise SystemExit("review generation input does not match the current combined prompt")
+    meaning = reviewed_meaning_identity(root, stage, task, expected_helper)
+    if payload.get("input") not in meaning["accepted_inputs"]:
+        raise SystemExit("review generation input does not match the current reviewed meaning (either combined prompt)")
     if payload.get("lenses") != rederive_combined_lenses(root, payload):
         raise SystemExit("review generation lenses do not match the raw helper result")
     generation, selection = publish_review_generation(
@@ -174,7 +167,8 @@ for key in ("blocking_findings", "non_blocking_findings"):
 if args.aspect == "quality" and state.get("decomposition_status") == "recorded":
     decomposition = load_json(protected_decomposition_state_path(root), default={})
     contracts = declared_contracts(decomposition)
-    # Per-task proof (0049): a task's review verdicts the contracts of tasks
+    # Per-task proof (accepted 0054/0069): a task's review verdicts the
+    # contracts of tasks
     # that have started or shipped — its own and the done ones — never those
     # of tasks that have not begun. When every stage is done (story closeout)
     # this is still the full union.

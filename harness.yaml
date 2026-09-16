@@ -91,7 +91,10 @@ phases:
       (/codex:rescue --model gpt-5.6-sol --effort low — read-only by
       default; gpt-5.6-sol --effort high for validation/debugging — read-only;
       raw codex exec is hook-blocked, no exceptions).
-      Approval is the saved plan file, not a flag.
+      Save records one awaiting plan. One independent cold read plus complete
+      finding dispositions and amendments binds the final artifact; successful
+      native Plan Mode completion records its approval. There is no manual
+      approve command or second unchanged save.
   decomposition:
     owner: "codex:docs-decomposer"
     allowed:

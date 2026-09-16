@@ -1,0 +1,17 @@
+{
+  "event": "done",
+  "id": "Q-0155-c45c",
+  "profile": "degraded",
+  "kind": "degraded",
+  "reason": "The full gate run exposed a Lean native-approval regression against Decision 0052 and the approved one-cold-read contract: pre-approval edits and post-approval edits currently collapse into the same impossible approval state. Restore the shared distinction across native candidate selection, frontier/admission freshness, review-brief consumption, and the focused stop-less-often regressions while preserving original cold and approval tombstones. Ordinary delegation remains unavailable because this Lean branch's committed hooks diverge from the parent worktree.",
+  "started_at": "2026-09-14T08:41:07+00:00",
+  "completed_at": "2026-09-14T08:51:36+00:00",
+  "files": [
+    "factory/scripts/factory_lib.py",
+    "factory/scripts/forge_cli/approval.py",
+    "factory/scripts/forge_cli/review_brief.py",
+    "factory/tests/test_stop_less_often.py"
+  ],
+  "task_id": "LEAN-WORKFLOW",
+  "story": "FORGE-COORD-1"
+}

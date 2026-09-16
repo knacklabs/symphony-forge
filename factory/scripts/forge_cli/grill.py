@@ -22,7 +22,7 @@ import argparse
 from pathlib import Path
 
 from factory_lib import load_json, repo_root, run_state_path
-from grill_gates import FLOOR_IS_NOT_A_TARGET, get_gate
+from grill_gates import get_gate
 
 from .common import fail
 
@@ -105,88 +105,6 @@ def _lessons_section(base: Path, gate: str, task_id: str) -> str:
     return "\n".join(lines) + "\n"
 
 
-# The brief travels to the launcher as a file; the reader's prompt budget is
-# finite. Measured on a 44-round story the whole history was 14.5 KB, so this
-# ceiling is a backstop, not a working limit.
-SETTLED_BUDGET_CHARS = 60_000
-
-
-def _settled_rounds(base: Path, gate: str) -> str:
-    """Every question already answered for this story, and the answer.
-
-    Read from the AskUserQuestion ledger the recorder validates against, not
-    from a summary: a summary would be written by the party whose work is being
-    audited, and it would break the provenance the recorder depends on.
-    """
-    try:
-        from factory_lib import evidence_path, load_json, run_state_path
-        story = load_json(run_state_path(base), default={}).get("issue_key", "")
-        directories = [d for d in (
-            evidence_path(base, story, "grill-rounds"),
-            evidence_path(base, None, "grill-rounds"),
-        ) if d.is_dir()]
-    except Exception:
-        return ""
-
-    seen: set[tuple[str, str]] = set()
-    answered: list[tuple[str, str, str]] = []
-    for directory in dict.fromkeys(directories):
-        for path in sorted(directory.glob("*.json")):
-            try:
-                record = load_json(path, default={})
-            except Exception:
-                # One unreadable record costs THAT record. Letting it escape
-                # loses every settled answer, which is the failure this
-                # section exists to prevent.
-                continue
-            if not isinstance(record, dict):
-                continue
-            when = str(record.get("at") or "")
-            for entry in record.get("questions", []):
-                if not isinstance(entry, dict):
-                    continue
-                question = str(entry.get("question") or "").strip()
-                chosen = str(entry.get("chosen") or "").strip()
-                if not question or not chosen:
-                    continue  # an unanswered round settles nothing
-                key = (question, chosen)
-                if key in seen:
-                    continue
-                seen.add(key)
-                answered.append((when, question, chosen))
-    if not answered:
-        return ""
-
-    answered.sort(key=lambda row: row[0])
-    lines = [f"- Q: {q}\n  A: {a}" for _, q, a in answered]
-
-    # Oldest first when it must be cut, and SAID so. A brief that silently
-    # drops content is how a chunked review lost its verdicts.
-    omitted = 0
-    while sum(len(line) for line in lines) > SETTLED_BUDGET_CHARS and len(lines) > 1:
-        lines.pop(0)
-        omitted += 1
-
-    header = [
-        "## Already answered on this story — verify, do not re-ask",
-        "",
-        "These questions were put to the human and answered. Two obligations:",
-        "",
-        "1. Do NOT raise them again as open questions. They are settled.",
-        "2. DO check each answer still holds — that the artifact actually "
-        "honours it, and that it does not contradict another answer, an "
-        "accepted decision, or the constitution. An answer can be wrong, or "
-        "right and never applied. Saying so is part of this read.",
-        "",
-    ]
-    if omitted:
-        header.append(
-            f"[{omitted} earlier answered question(s) omitted for length — "
-            "ask for them if a gap seems to depend on settled ground.]")
-        header.append("")
-    return "\n".join(header + lines) + "\n"
-
-
 def _contract_section(base: Path, gate: str, task_id: str) -> str:
     """The recorded contract, rendered for the cold reader -- for a task gate.
 
@@ -235,6 +153,8 @@ def _compose_brief(base: Path, gate: str, label: str, artifact: str,
         "You did NOT write what follows. Read it cold, as an adversary trying "
         "to break the handover, never as its author defending it. You are "
         "READ-ONLY: return findings, change nothing.",
+        "This is the ONE independent cold read for this gate. Return the "
+        "complete finding set in this pass.",
         "",
         skill_section,
         "",
@@ -244,18 +164,18 @@ def _compose_brief(base: Path, gate: str, label: str, artifact: str,
         "",
         _lessons_section(base, gate, task_id),
         _contract_section(base, gate, task_id),
-        _settled_rounds(base, gate),
         f"## The artifact under interrogation ({label})",
         "",
         artifact,
         "",
         "## What to return",
         "",
-        "Findings only: contradictions, gaps, unstated assumptions, and "
-        "anything a reader would have to guess. Say what would break and why. "
-        "Do not record a gate — the coordinating session records it.",
-        "",
-        FLOOR_IS_NOT_A_TARGET,
+        "Return one JSON object with exactly two arrays: gaps and "
+        "contradictions. Each entry is a non-empty finding string. Put "
+        "unstated assumptions and anything a reader would have to guess in "
+        "gaps. Return every finding in reading order, with no prose or "
+        "Markdown fence. Do not record a gate — the coordinating session "
+        "records it.",
         "",
     ])
 
@@ -319,8 +239,9 @@ def _refuse_past_the_cap(base: Path, ledger_id: str, gate: str,
         "something nobody has decided, and another round cannot settle that — "
         "stories that kept going reached eleven, twenty-six and forty rounds, "
         "the last costing six hours.\n\n"
-        "  Take the open findings to the human, say what you recommend, and "
-        "record what they decide:\n"
+        "  Resolve repository-answerable findings from repository facts. If "
+        "an unresolved material choice remains, take only that choice to the "
+        "human, say what you recommend, and record what they decide:\n"
         "    ./forge signal escalate --missing-decision \"<what nobody has "
         "decided>\" --checked \"contract,plan,constitution,decisions,lessons\"\n"
         "  Grilling continues after that. Recording a pass resets the count."
@@ -338,20 +259,26 @@ def _artifact_digest(artifact: str) -> str:
     return hashlib.sha256(artifact.encode("utf-8")).hexdigest()
 
 
-def _launch_rows(base: Path, ledger_id: str, since: str) -> list[dict]:
+def _launch_rows(
+    base: Path, ledger_id: str, since: str, *, story: str = "",
+) -> list[dict]:
     """Ledger rows for one grill key, newest last, after `since`."""
     from .delegate import load_delegations
     return sorted(
         (row for row in load_delegations(base)
-         if row.get("task") == ledger_id and str(row.get("at") or "") > since),
+         if row.get("task") == ledger_id
+         and (not story or row.get("story") == story)
+         and str(row.get("at") or "") > since),
         key=lambda row: str(row.get("at") or ""),
     )
 
 
-def _latest_launch_rows(base: Path, ledger_id: str, since: str) -> list[dict]:
+def _latest_launch_rows(
+    base: Path, ledger_id: str, since: str, *, story: str = "",
+) -> list[dict]:
     """Latest ledger row for each launch after `since`."""
     latest: dict[str, dict] = {}
-    for row in _launch_rows(base, ledger_id, since):
+    for row in _launch_rows(base, ledger_id, since, story=story):
         if launch_id := row.get("launch_id"):
             latest[launch_id] = row
     return list(latest.values())
@@ -378,9 +305,10 @@ def _refuse_a_second_cold_read(base: Path, ledger_id: str, gate: str,
     exactly when it is wrong: the amendment answers the findings, so a reader
     that never saw them will not check it, it will look for new ones.
 
-    This is not a wall. The findings go to the human, the artifact is amended
-    once, and the pass is recorded against the AMENDED version -- one read,
-    then save. A reread stays available as a CHOICE with a reason, for when
+    This is not a wall. The coordinator resolves repository-answerable
+    findings, escalates only an unresolved material choice, amends the artifact
+    once, and records the pass against the AMENDED version -- one read, then
+    save. A reread stays available as a CHOICE with a reason, for when
     the answers changed the artifact's SHAPE rather than its details; the
     reason is ledgered, and the five-read cap still backstops it.
     """
@@ -388,7 +316,10 @@ def _refuse_a_second_cold_read(base: Path, ledger_id: str, gate: str,
         return
     try:
         since = _last_pass_at(base, gate, task_id)
-        cold = [row for row in _latest_launch_rows(base, ledger_id, since)
+        story = load_json(run_state_path(base), default={}).get("issue_key", "") \
+            if get_gate(gate).story_scoped else ""
+        cold = [row for row in _latest_launch_rows(
+            base, ledger_id, since, story=story)
                 if row.get("launch_status") != "failed"]
         if not cold:
             return
@@ -404,9 +335,10 @@ def _refuse_a_second_cold_read(base: Path, ledger_id: str, gate: str,
         "frontier, and the artifact you amended to close round one becomes "
         "round two's input. Stories that kept re-reading reached eleven, "
         "twenty-six and forty rounds.\n\n"
-        "  One read is the whole grill. Put its findings to the human NOW, "
-        "amend the artifact to what they decided, and record the pass against "
-        "the amended version:\n"
+        "  One read is the whole grill. Resolve repository-answerable findings "
+        "from repository facts. Escalate only an unresolved material choice, "
+        "then amend the artifact once and record the pass against the amended "
+        "version:\n"
         "    python3 factory/scripts/record_grill_from_json.py "
         f"--gate {gate}"
         f"{' --task ' + task_id if task_id else ''} --input <json>\n\n"
@@ -458,9 +390,9 @@ def cmd_grill_run(args: argparse.Namespace) -> None:
     if args.print_only:
         return
     print(
-        "NEXT: put EVERY finding to the human in THIS grill "
-        "(AskUserQuestion -- the ledger the recorder reads), amend the "
-        "artifact to what they decided, then record the pass:\n"
+        "NEXT: resolve repository-answerable findings from repository facts. "
+        "Escalate only an unresolved material choice through the host's "
+        "synchronous question tool, amend the artifact once, then record the pass:\n"
         "  python3 factory/scripts/record_grill_from_json.py "
         f"--gate {gate}"
         f"{' --task ' + task_id if task_id else ''} --input <json>\n"

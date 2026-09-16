@@ -1,0 +1,1 @@
+{"event": "signal-resolved", "generated_by": "orchestrator", "at": "2026-09-14T17:26:12+00:00", "story": "FORGE-COORD-1", "detail": "S-0034-6031: Accepted as a mechanical scope omission: LEAN-WORKFLOW already owns factory/scripts/pr_ready.py and requires check_encoding_hygiene.py; its full-content pins must be updated with the in-scope pr_ready"}

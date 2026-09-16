@@ -1,0 +1,16 @@
+{
+  "event": "done",
+  "id": "Q-0168-9cf5",
+  "profile": "degraded",
+  "kind": "degraded",
+  "reason": "normal delegation is unavailable because this branch's hook runtime differs from the parent; remove stale coordinator, merge-driver, and archive guidance",
+  "started_at": "2026-09-14T11:36:42+00:00",
+  "completed_at": "2026-09-14T11:41:18+00:00",
+  "files": [
+    "AGENTS.md",
+    "WORKFLOW.md",
+    "factory/skills/forge.md"
+  ],
+  "task_id": "LEAN-WORKFLOW",
+  "story": "FORGE-COORD-1"
+}

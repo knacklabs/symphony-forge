@@ -1,0 +1,1 @@
+{"event": "signal-resolved", "generated_by": "orchestrator", "at": "2026-09-15T14:05:37+00:00", "story": "FORGE-COORD-1", "detail": "S-0039-ff9b: The imported assertion expected retired closeout wording. Current main reports T2 stage/trunk marker blockers; the fixture now checks current closeout routing, readopt publishes its disposable marker "}

@@ -1,0 +1,17 @@
+{
+  "event": "done",
+  "id": "Q-0165-9180",
+  "profile": "degraded",
+  "kind": "degraded",
+  "reason": "normal delegation is unavailable because this branch's hook runtime differs from the parent; remove legacy save paths and duplicate proof hashing",
+  "started_at": "2026-09-14T11:18:52+00:00",
+  "completed_at": "2026-09-14T11:23:27+00:00",
+  "files": [
+    "factory/scripts/forge_cli/plans.py",
+    "factory/scripts/forge_cli/tasks.py",
+    "factory/scripts/forge_cli/stages.py",
+    "factory/tests/test_gates.py"
+  ],
+  "task_id": "LEAN-WORKFLOW",
+  "story": "FORGE-COORD-1"
+}

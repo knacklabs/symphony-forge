@@ -82,8 +82,9 @@ def test_a_story_run_never_reaches_for_task_proof(repo):
 
 def test_board_task_progress_uses_selected_generation_only(repo, tmp_path):
     from test_gates import (
-        DECOMP, head, intake, record_skeleton_then_frontier, record_task_grill, save_plan,
-        sign_off, task_with_plan_contracts, write_stages, write_task_proof,
+        DECOMP, git, head, intake, record_skeleton_then_frontier, record_task_grill,
+        run_state, save_plan, sign_off, story_state, task_with_plan_contracts,
+        write_stages, write_task_proof,
     )
     from forge_cli.board import aggregate_state
     sign_off(repo)
@@ -100,6 +101,18 @@ def test_board_task_progress_uses_selected_generation_only(repo, tmp_path):
         "id": "T1", "title": task["title"], "status": "done",
         "base_sha": baseline}]})
     proof = write_task_proof(repo, "T1", publish_review=True)
+    git(repo, "add", proof.relative_to(repo).as_posix(), ".factory/review-briefs/all.md")
+    git(repo, "commit", "-qm", "record T1 proof")
+    seal = head(repo)
+    marker = story_state(repo) / "tasks" / "T1" / "pr-ready.json"
+    _write(marker, {
+        "task_id": "T1", "branch": run_state(repo).get("branch")
+        or git(repo, "branch", "--show-current"),
+        "base_main_sha": git(repo, "rev-parse", "origin/main"),
+        "commit": seal, "sealed_at": "2026-09-10T00:00:00+00:00",
+    })
+    git(repo, "add", "-A")
+    git(repo, "commit", "-qm", "publish task marker")
 
     def proven():
         story = next(item for item in aggregate_state(repo)["stories"]

@@ -1,0 +1,10 @@
+{
+  "applies_to": [
+    "factory/scripts/**"
+  ],
+  "generated_by": "Codex",
+  "lesson": "Not a defect (0064): Not a defect: approved Lean migration explicitly tests forge upgrade --force on a dirty target and requires the same no --force bypass refusal (factory/tests/test_upgrade_lean_workflow.py:53-57; LEAN-WORKFLOW plan lines 94 and 738). The inert option preserves that declared refusal path. — raised as \"Remove the retained no-op `--force` compatibility flag (factory/scripts/forge.py:197): The CLI still accepts `forge upgrade --force`, labels it a legacy option,\"",
+  "severity": "medium",
+  "source": "review reject LEAN-WORKFLOW quality",
+  "topic": "rejected-review-finding-quality"
+}

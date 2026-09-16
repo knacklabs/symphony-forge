@@ -1,0 +1,13 @@
+{
+  "event": "open",
+  "id": "Q-0154-afab",
+  "profile": "degraded",
+  "reason": "Q-0153 verified the two-file gate-order repair, but the host apply_patch transport bypassed Forge's passive file-claim hook and its close record therefore named zero files. Re-authorize and claim the unchanged factory_lib.py and test_stop_less_often.py bytes through the canonical PreToolUse path so the durable ledger matches the actual repair before commit.",
+  "started_at": "2026-09-14T08:33:40+00:00",
+  "max_files": 5,
+  "files": [],
+  "harness_source": true,
+  "kind": "degraded",
+  "task_id": "LEAN-WORKFLOW",
+  "story": "FORGE-COORD-1"
+}

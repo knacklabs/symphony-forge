@@ -1,0 +1,1 @@
+{"event": "signal-contradiction", "generated_by": "implementer", "at": "2026-09-15T13:53:23+00:00", "story": "FORGE-COORD-1", "detail": "LEAN-WORKFLOW imported closeout fixture requires absent T1 marker and fresh fake-gh directory, but canonical prepare_pr_ready_story already publishes T1 on origin/main and creates fake-gh-bin; removin"}

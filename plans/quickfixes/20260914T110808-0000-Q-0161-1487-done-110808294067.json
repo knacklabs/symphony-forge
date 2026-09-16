@@ -1,0 +1,16 @@
+{
+  "event": "done",
+  "id": "Q-0161-1487",
+  "profile": "degraded",
+  "kind": "degraded",
+  "reason": "normal delegation is unavailable because this branch's hook runtime differs from the parent; finish accepted-authority citation replacement",
+  "started_at": "2026-09-14T11:06:27+00:00",
+  "completed_at": "2026-09-14T11:08:08+00:00",
+  "files": [
+    "factory/scripts/record_review_from_json.py",
+    "factory/tests/test_gates.py",
+    ".github/workflows/roadmap-gate.yml"
+  ],
+  "task_id": "LEAN-WORKFLOW",
+  "story": "FORGE-COORD-1"
+}

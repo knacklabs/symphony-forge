@@ -1,0 +1,13 @@
+{
+  "event": "open",
+  "id": "Q-0147-ed41",
+  "profile": "degraded",
+  "reason": "Ordinary delegation is blocked after a recorder-authorized active-stage measurement-only scope amendment; add a protected continuity receipt and its focused regression without changing the original grill or approval.",
+  "started_at": "2026-09-14T06:20:41+00:00",
+  "max_files": 5,
+  "files": [],
+  "harness_source": true,
+  "kind": "degraded",
+  "task_id": "LEAN-WORKFLOW",
+  "story": "FORGE-COORD-1"
+}

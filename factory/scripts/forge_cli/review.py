@@ -1,15 +1,11 @@
 """forge review <task-id> — release Codex for a task's three-lens review and
-record the three artifacts as that task's proof (decisions 0011, 0049).
+record the three artifacts as that task's proof (accepted decisions 0011,
+0054 and 0069).
 
-One command replaces the hand-assembled skill invocation the coordinator used
-to get wrong: it pins the task tip in a clean detached worktree (so harness
-writes in the main tree cannot abort the run), reviews the WHOLE task diff from
-the task's recorded base (branch mode; `--mode commit` would see only the last
-commit), runs the autoreview skill once with Codex as the engine, drops findings
-on harness bookkeeping paths, derives each lens artifact, parses
-the quality verdicts from the reviewer's prose, and records all three through
-the existing schema-validated recorder. It always ends by printing the exact
-next command.
+One command pins the task tip in a clean detached worktree, reviews the WHOLE
+task diff from its recorded base, releases one three-lens run for a small diff
+or parallel groups for a diff the helper would chunk (0078), and records one
+selected generation through the schema-validated recorder.
 """
 from __future__ import annotations
 
@@ -31,7 +27,7 @@ import unicodedata
 from pathlib import Path, PurePosixPath
 
 from factory_lib import (
-    branch_diff_digest, clean_git_env, head_sha, load_json, product_delta_digest,
+    head_sha, load_json, product_delta_digest,
     proof_path, protected_decomposition_state_path, repo_root, run_state_path,
     safe_factory_write_bytes, schema_path,
 )
@@ -362,7 +358,8 @@ def _lens_prompt(task: dict, lens: str, base: Path | None = None, *,
     return ("\n".join(lines).rstrip() + "\n").encode()
 
 
-def _combined_prompt(task: dict, *, repo_readable: bool = True) -> bytes:
+def _combined_prompt(task: dict, *, repo_readable: bool = True,
+                     semantic_identity: str = "") -> bytes:
     contracts = [
         str(contract.get("id")) for contract in task.get("plan_contracts") or []
         if isinstance(contract, dict) and isinstance(contract.get("id"), str)
@@ -379,7 +376,15 @@ def _combined_prompt(task: dict, *, repo_readable: bool = True) -> bytes:
     if len("\n".join(minimum)) > 3000:
         fail("combined review boilerplate cannot fit the helper's 3000-character "
              "overall_explanation limit")
-    del contracts
+    chunk_verdict_rule = (
+        "In a chunked run, each quality pass emits a VERDICT record only for "
+        "contracts it can judge from that pass's evidence. If a contract's "
+        "evidence is absent from this chunk, omit its record; do not call it "
+        "partial or missing solely because this chunk lacks its files. "
+        "A genuine observed defect remains partial or missing. Across all passes "
+        "every target contract must have an implemented verdict; an unverdicted "
+        "contract fails closed. In a one-pass run, verdict every contract.\n"
+    )
     lines = [
         f"# Review brief — {task.get('id', '')} — combined review", "",
         (COMMON_PREAMBLE if repo_readable else DIFF_ONLY_PREAMBLE).replace(
@@ -400,10 +405,13 @@ def _combined_prompt(task: dict, *, repo_readable: bool = True) -> bytes:
         "write VERDICT lines in it; a verdict is a finding record.", "",
         "Prefix every finding title with exactly one matching token: [quality] , "
         "[performance] , or [security] .", "", FINDING_FORM, "", LENS_FOCUS["quality"],
-        VERDICT_RECORD_FORMAT.format(dataset=REVIEW_DATASET_REL), "",
+        VERDICT_RECORD_FORMAT.format(dataset=REVIEW_DATASET_REL),
+        chunk_verdict_rule, "",
         LENS_FOCUS["performance"],
         LENS_FOCUS["security"], LEFTOVER_INSTRUCTION, "",
     ]
+    if semantic_identity:
+        lines.extend(["Reviewed meaning SHA-256: " + semantic_identity, ""])
     return ("\n".join(lines).rstrip() + "\n").encode()
 
 
@@ -761,7 +769,7 @@ def _project_combined_report(
 
 def rederive_combined_lenses(base: Path, candidate: dict) -> dict[str, dict]:
     """Project a combined candidate again from current authoritative task state."""
-    from .stages import load_stages, stage_baseline, task_for
+    from .stages import load_stages, task_for
 
     task_id = str(candidate.get("task_id") or "")
     task = task_for(base, task_id)
@@ -988,7 +996,8 @@ def _contract_verdicts(
 ) -> list[dict]:
     """Verdicts for the reviewed task come from the reviewer; contracts of other
     tasks already done are attested as shipped at their own seal; contracts of
-    tasks that have not started are not required (recorder, decision 0049)."""
+    tasks that have not started are not required under the accepted per-task
+    proof model (recorder, decisions 0054 and 0069)."""
     out: list[dict] = []
     parsed = _parse_verdicts(
         verdict_texts if verdict_texts is not None else _verdict_texts(reviewed)
@@ -1798,7 +1807,7 @@ def _review_in_groups(base: Path, tmp: Path, worktree: Path, base_sha: str,
         (briefs / f"{label}.brief.txt").write_text(note, encoding="utf-8")
         specs.append({
             "label": label, "worktree": group_dir, "base": group_base, "paths": paths,
-            "codex_bin": str(write_launcher(launcher_root / label, group_dir))
+            "codex_bin": str(write_launcher(launcher_root / label, group_dir.resolve()))
             if readable else None, "note": note,
         })
         print(f"  {label}: {len(paths)} path(s), {sum(sizes[p] for p in paths) // 1000} KB "
@@ -1818,6 +1827,33 @@ def _review_in_groups(base: Path, tmp: Path, worktree: Path, base_sha: str,
     merged = merge_group_reports(
         [wrapper for group in done for wrapper in flatten_passes(group["report"])])
     return merged, (json.dumps(merged, indent=2) + "\n").encode("utf-8")
+
+
+def pre_review_proof_problems(
+    base: Path, story: str, task_id: str, base_sha: str, tip_sha: str,
+) -> list[str]:
+    """Validate only proof needed before first review; review itself is absent."""
+    from factory_lib import _proof_commit_problems
+    from .readiness import tests_passed, verify_passed
+    verify = load_json(
+        proof_path(base, story, "verify.json", task_id=task_id), default={},
+    )
+    tests = load_json(
+        proof_path(base, story, "tests.json", task_id=task_id), default={},
+    )
+    automated = tests.get("automated") if isinstance(tests, dict) else None
+    problems = []
+    if not isinstance(verify, dict) or not verify_passed(verify):
+        problems.append(f"verify.json is not passing for task {task_id}")
+    if (not isinstance(automated, dict) or automated.get("status") != "passed"
+            or not tests_passed(automated)):
+        problems.append(f"tests.json automated proof is not passing for task {task_id}")
+    if not problems:
+        problems.extend(_proof_commit_problems(
+            base, task_id, [("verify", verify), ("tests", tests)],
+            base=base_sha, seal=tip_sha,
+        ))
+    return problems
 
 
 def review_task(base: Path, task_id: str, *, lens: str | None = None,
@@ -1865,6 +1901,12 @@ def review_task(base: Path, task_id: str, *, lens: str | None = None,
 
     tip_sha = _require_git(base, "resolving HEAD", "rev-parse", "--verify", "HEAD^{commit}")
     base_sha = resolve_review_base(base, stage, state, tip_sha)
+    freshness = pre_review_proof_problems(
+        base, story, args.id, base_sha, tip_sha,
+    )
+    if freshness:
+        fail("review proof preflight failed before helper launch:\n"
+             + "\n".join(freshness))
     excluded = review_excluded_prefixes(base)
     scope = sorted(
         p for p in _require_git(base, "listing the task diff", "diff",
@@ -1885,11 +1927,17 @@ def review_task(base: Path, task_id: str, *, lens: str | None = None,
     if not args.lens and args.max_priority != "P3":
         fail("complete three-lens review requires --max-priority P3")
 
+    from .stages import reviewed_meaning_identity
+    helper_before, helper_file_before = _helper_identity(skill)
+    meaning = reviewed_meaning_identity(base, stage, task, helper_before)
     # Mint the branch review run the recorder binds every artifact to.
     cmd_review_brief(argparse.Namespace(
         id=None, all=True, repo=str(base), review_task=args.id,
     ))
     dataset_body = (base / REVIEW_DATASET_REL).read_bytes()
+    if reviewed_meaning_identity(base, stage, task, helper_before) != meaning:
+        fail("reviewed meaning changed while rendering the reviewer dataset; "
+             "nothing published")
     token = load_json(base / ".factory" / "stories" / story / "review-run.json", default={})
     if token.get("task_id") != args.id:
         fail("review-run token does not match the reviewed task")
@@ -1907,7 +1955,9 @@ def review_task(base: Path, task_id: str, *, lens: str | None = None,
     for name in prompt_names:
         rel = f"review-briefs/{args.id}.{name}.md"
         body = (_lens_prompt(task, name, base, repo_readable=readable) if args.lens
-                else _combined_prompt(task, repo_readable=readable))
+                else _combined_prompt(
+                    task, repo_readable=readable,
+                    semantic_identity=meaning["semantic_identity"]))
         if not safe_factory_write_bytes(base, rel, body):
             fail(f"could not write .factory/{rel}")
         prompts[name] = (f".factory/{rel}", body)
@@ -1916,8 +1966,6 @@ def review_task(base: Path, task_id: str, *, lens: str | None = None,
     worktree = tmp / "wt"
     reviewed: dict = {}
     raw_result = b""
-    helper_before: dict[str, str] = {}
-    helper_file_before: tuple[int, int] = (0, 0)
     try:
         # A clean detached checkout at the task tip: the skill refuses to finish
         # if the reviewed tree changes mid-run, and the main tree is exactly
@@ -1953,7 +2001,7 @@ def review_task(base: Path, task_id: str, *, lens: str | None = None,
             # The launcher lives in the control dir, never in the reviewed tree
             # (the skill refuses an in-repo binary), and its launch.log stays
             # after the review folder is removed.
-            codex_bin = str(write_launcher(launcher_root, worktree))
+            codex_bin = str(write_launcher(launcher_root, worktree.resolve()))
             print("review runs inside the reviewed worktree, read-only: a verdict "
                   "on unchanged code is read, not guessed (0076)", flush=True)
         else:
@@ -1972,7 +2020,6 @@ def review_task(base: Path, task_id: str, *, lens: str | None = None,
               flush=True)
         if not args.lens:
             _require_current_review_helper(skill)
-        helper_before, helper_file_before = _helper_identity(skill)
         if len(groups) > 1:
             def _would_record(parsed: dict) -> None:
                 _project_combined_report(task, parsed, scope, base_sha, tip_sha,
@@ -2002,6 +2049,10 @@ def review_task(base: Path, task_id: str, *, lens: str | None = None,
                 or product_delta_digest(base, base_sha) \
                 != token.get("branch_diff_digest"):
             fail("task product changed during the review; nothing published")
+        if (base / REVIEW_DATASET_REL).read_bytes() != dataset_body \
+                or reviewed_meaning_identity(base, stage, task, helper_before) != meaning:
+            fail("reviewer dataset or current reviewed meaning changed during the review; "
+                 "nothing published")
     finally:
         _git(base, "worktree", "remove", "--force", str(worktree))
         for group_dir in sorted(tmp.glob("group-*")):
@@ -2028,7 +2079,6 @@ def review_task(base: Path, task_id: str, *, lens: str | None = None,
         recorded = {args.lens: artifact}
     else:
         from factory_lib import now_iso
-        from .stages import stage_baseline
         artifacts = _project_combined_report(
             task, reviewed, scope, base_sha, tip_sha, skills_used, all_tasks,
             started, excluded,

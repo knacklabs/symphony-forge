@@ -1,6 +1,7 @@
 """Native Codex coordinator selection and exact exec contracts."""
 from __future__ import annotations
 
+import io
 import itertools
 import json
 import os
@@ -127,7 +128,7 @@ class NativeResult:
     error: str = ""
 
 
-def scan_native_result(path: Path) -> NativeResult:
+def scan_native_result(path: Path, *, data: bytes | None = None) -> NativeResult:
     """Scan native JSONL once, retaining identity, terminal status, and message."""
     starts: list[dict] = []
     message = ""
@@ -136,7 +137,7 @@ def scan_native_result(path: Path) -> NativeResult:
     syntax_error = ""
     preserve_session = True
     try:
-        with path.open("rb") as stream:
+        with (io.BytesIO(data) if data is not None else path.open("rb")) as stream:
             raw_lines = itertools.chain.from_iterable(
                 block.splitlines(keepends=True) for block in stream)
             for number, raw_line in enumerate(raw_lines, start=1):

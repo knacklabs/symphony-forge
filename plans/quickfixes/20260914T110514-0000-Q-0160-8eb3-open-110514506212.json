@@ -1,0 +1,13 @@
+{
+  "event": "open",
+  "id": "Q-0160-8eb3",
+  "profile": "degraded",
+  "reason": "normal delegation is unavailable because this branch's hook runtime differs from the parent; replace proposed Decision 0049 authority citations",
+  "started_at": "2026-09-14T11:05:14+00:00",
+  "max_files": 5,
+  "files": [],
+  "harness_source": true,
+  "kind": "degraded",
+  "task_id": "LEAN-WORKFLOW",
+  "story": "FORGE-COORD-1"
+}

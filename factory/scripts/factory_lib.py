@@ -43,48 +43,6 @@ def repo_root() -> Path:
     return Path(out.stdout.strip())
 
 
-CEREMONY_POINTER_NAME = "ceremony-target"
-
-
-def ceremony_pointer_path(root: Path) -> Path:
-    return root / ".factory" / CEREMONY_POINTER_NAME
-
-
-def read_ceremony_target(root: Path) -> Path | None:
-    """The validated ceremony-target checkout for ``root``, or None.
-
-    `forge ceremony target set` points one session's interactive ceremony
-    (AskUserQuestion grill rounds, plan-mode markers) at a sibling worktree so
-    a single session can orchestrate a second story there. Fail-open to the
-    session checkout: a missing, unreadable, relative, self-pointing or
-    non-factory target yields None so evidence is never dropped.
-    """
-    try:
-        raw = ceremony_pointer_path(root).read_text(encoding="utf-8").strip()
-    except OSError:
-        return None
-    if not raw:
-        return None
-    target = Path(raw)
-    if not target.is_absolute():
-        return None
-    try:
-        resolved = target.resolve()
-        session = root.resolve()
-    except OSError:
-        return None
-    if resolved == session:
-        return None
-    if not (resolved / ".factory").is_dir():
-        return None
-    if not (resolved / "factory" / "schemas").is_dir():
-        # A bare .factory without the harness schemas would make hook-side
-        # validation fail and silently DROP evidence — only a full factory
-        # checkout qualifies as a ceremony target.
-        return None
-    return resolved
-
-
 def vendored_client(root: Path) -> bool:
     """True when this repo VENDORED the harness — factory/ and the vendored
     adapters/canon are infrastructure a `forge upgrade` may rewrite mid-task, not
@@ -1376,14 +1334,18 @@ def load_review_artifacts(
     require_head: bool = False,
     blockers_only: bool = False,
 ) -> tuple[dict[str, dict], list[str]]:
-    """Load the three review artifacts and return any close-gate problems."""
+    """Load the active Lite window's three ephemeral review artifacts."""
     from forge_cli.readiness import review_passed
 
     reviews: dict[str, dict] = {}
     problems: list[str] = []
     head = head_sha(root) if require_head else None
+    key = _active_story_key(root)
+    active_window = load_json(factory_dir(root) / "quickfix.json", default={})
+    if active_window.get("profile") != "lite":
+        return {}, ["lite review window is not active"]
     for aspect in ("quality", "performance", "security"):
-        path = evidence_path(root, _active_story_key(root), f"reviews/{aspect}.json")
+        path = evidence_path(root, key or None, f"reviews/{aspect}.json")
         data = load_json(path, default={})
         if not data:
             problems.append(str(path.relative_to(root)))
@@ -2031,6 +1993,23 @@ def _modern_task_proof_problems(
         generation.get("lenses", {})
         if isinstance(generation, dict) else {lens: {} for lens in _PROOF_LENSES}
     )
+    declared = [
+        str(contract.get("id") or "")
+        for contract in task.get("plan_contracts") or []
+        if isinstance(contract, dict) and contract.get("id")
+    ]
+    implemented = {
+        verdict.get("contract_id")
+        for verdict in reviews.get("quality", {}).get("contract_verdicts") or []
+        if isinstance(verdict, dict) and verdict.get("verdict") == "implemented"
+    }
+    unverified = [contract_id for contract_id in declared if contract_id not in implemented]
+    if unverified:
+        problems.append(
+            f"{task_id}: quality review must verify every plan contract as "
+            f"implemented; unverified: {', '.join(unverified)} — compose the "
+            "reviewer prompt with `./forge review-brief --all`"
+        )
     if marker_publication_commit:
         proof_root = f".factory/stories/{key}/tasks/{task_id}"
         history_review_paths = set(authoritative_review_paths)
@@ -2149,19 +2128,16 @@ def task_proof_problems(
             return [f"{task_id}: task PR marker is invalid"]
 
     marker_context = None
+    missing_marker = False
     if not preseal:
         marker_context, marker_problem = _committed_task_marker(
             root, key, task_id, marker, reader, inspected_head=inspected_head,
         )
         if marker_problem:
             return [marker_problem]
-        # An ADOPTED marker (`forge task reconcile`) is work that reached the
-        # trunk before the harness could prove it. The PR gate
-        # (check_task_proof) and the frontier (task_marker_on_main) already
-        # accept it without proof; story closeout must say the same, or a story
-        # of adopted tasks can never close (WF-1, 2026-09-14).
         if marker_context is not None and marker_context.get("reconciled") is True:
             return []
+        missing_marker = marker_context is None
 
     expected_head = inspected_head or head_sha(root) or ""
     proof_base = ""
@@ -2243,7 +2219,7 @@ def task_proof_problems(
         review_base = effective_review_base(root, task_id) or proof_base
         expected_review_delta = product_delta_digest(root, review_base)
 
-    return _modern_task_proof_problems(
+    problems = _modern_task_proof_problems(
         root, key, task, read_task,
         expected_head=expected_head,
         marker_publication_commit=marker_publication_commit,
@@ -2262,6 +2238,9 @@ def task_proof_problems(
         selected_upgrade_after_marker=selected_upgrade_after_marker,
         history_head=inspected_head or "HEAD",
     )
+    if missing_marker:
+        problems.insert(0, f"{task_id}: committed pr-ready marker is missing")
+    return problems
 
 
 def run_is_task_level(root: Path, key: str = "", tasks: list[dict] | None = None) -> bool:
@@ -2311,8 +2290,6 @@ def require_closeout_order(root: Path) -> list[str]:
     can answer.
     """
     from forge_cli.outcome import load_outcome
-    from forge_cli.readiness import tests_passed
-
     problems: list[str] = []
     head = head_sha(root)
     expected = head[:8] if head else "missing"
@@ -2326,107 +2303,43 @@ def require_closeout_order(root: Path) -> list[str]:
             "Stage Loop)"
         )
 
-    # WHICH proof closes a story depends on how its work reached the trunk.
-    #
-    # A task-level run ships each task as its own PR, and each of those PRs is
-    # gated on that task's proof — so the story is the sum of its tasks and a
-    # second story-wide pass re-reviews reviewed code. A story-level run has no
-    # per-task PRs and no per-task markers; its work reached the trunk as one
-    # story, so the story-level chain is the only proof there is.
-    #
-    # Selecting on the run mode is what keeps both flows working. Requiring
-    # per-task proof everywhere would strand every story-level run — a
-    # deadlock, since a story-level run cannot produce task markers at all.
     key = _active_story_key(root)
     decomposition = load_json(protected_decomposition_state_path(root), default={})
     tasks = [t for t in decomposition.get("tasks", []) if isinstance(t, dict)]
-    task_level = run_is_task_level(root, key, tasks)
-
-    if task_level and tasks:
+    fixed_reviews = [
+        evidence_path(root, key, f"reviews/{aspect}.json")
+        for aspect in ("quality", "performance", "security")
+    ]
+    selected_missing = any(
+        not evidence_path(
+            root, key, f"tasks/{task.get('id')}/reviews/selected.json",
+        ).is_file()
+        for task in tasks
+    )
+    if selected_missing and any(path.is_file() for path in fixed_reviews):
+        problems.append(
+            "legacy fixed review proof is no longer runtime authority; "
+            "run `forge upgrade`"
+        )
+    trunk = default_trunk_branch(root)
+    trunk_available = bool(tasks) and fetch_trunk(root, trunk)
+    missing_trunk_markers = [
+        str(task.get("id") or "")
+        for task in tasks
+        if not trunk_available or not task_marker_on_main(
+            root, key, str(task.get("id") or ""), refresh=False,
+        )
+    ]
+    if missing_trunk_markers:
+        problems.append(
+            "every task must have its committed pr-ready marker on the trunk; "
+            f"missing: {', '.join(missing_trunk_markers)}"
+        )
+    if tasks:
         for task in tasks:
             problems.extend(task_proof_problems(root, key, task))
     else:
-        verify = load_json(verify_state_path(root), default={})
-        if not verify or not verify.get("ok"):
-            problems.append("successful .factory/verify.json")
-        elif verify.get("commit") != head:
-            stamp = verify.get("commit")
-            shown = stamp[:8] if isinstance(stamp, str) and stamp else "missing"
-            problems.append(
-                f"verify must be stamped at HEAD {expected} (got {shown})"
-            )
-
-        reviews, review_problems = load_review_artifacts(root, require_head=True)
-        problems.extend(review_problems)
-        problems.extend(require_coherent_review_run(root, reviews))
-
-        decomposition = load_json(protected_decomposition_state_path(root), default={})
-        if bool(decomposition.get("user_facing", True)):
-            tests = load_json(tests_state_path(root), default={})
-            functional = tests.get("functional", {}) if tests else {}
-            if not functional:
-                problems.append(".factory/tests.json:functional")
-            elif not tests_passed(functional, functional=True):
-                problems.append(
-                    "functional testing must have no blockers, no failed status and score >= 8"
-                )
-            if functional and tests.get("commit") != head:
-                stamp = tests.get("commit")
-                shown = stamp[:8] if isinstance(stamp, str) and stamp else "missing"
-                problems.append(
-                    f"functional testing must be stamped at HEAD {expected} (got {shown})"
-                )
-
-    # Plan contracts are verified by the task that owns them; the union across
-    # tasks must still account for every declared contract, so a contract
-    # cannot be dropped by being in nobody's task.
-    # Contracts are declared PER TASK (task["plan_contracts"]); there is no
-    # decomposition-level key, so reading one silently found nothing and the
-    # gate passed everything.
-    from forge_cli.review_brief import declared_contracts
-    # An adopted task (committed `reconciled` marker) is accepted without proof,
-    # its contracts included: there is no quality review of it to read.
-    adopted: set[str] = set()
-    for t in tasks:
-        task_id = str(t.get("id") or "")
-        try:
-            committed = _read_git_json(
-                root, f".factory/stories/{key}/tasks/{task_id}/pr-ready.json", "HEAD")
-        except SystemExit:
-            committed = None
-        if isinstance(committed, dict) and committed.get("reconciled") is True:
-            adopted.add(task_id)
-    declared = [
-        c["id"] for t in tasks if str(t.get("id") or "") not in adopted
-        for c in t.get("plan_contracts") or []
-        if isinstance(c, dict) and isinstance(c.get("id"), str)
-    ] if adopted else [c["id"] for c in declared_contracts(decomposition)]
-    if declared:
-        # A contract is verified wherever the proof for it actually lives: in a
-        # task-level run that is the owning task's quality review, in a
-        # story-level run the story's. The GUARANTEE is the same either way —
-        # every declared contract is verified implemented — and it must not
-        # depend on which flow shipped the story, or a contract could be
-        # dropped merely by choosing a flow.
-        sources = ([task_evidence_path(root, key, str(t.get("id") or ""),
-                                       "reviews/quality.json")
-                    for t in tasks] if task_level and tasks else [])
-        sources.append(evidence_path(root, key, "reviews/quality.json"))
-        verified: set[str] = set()
-        for source in sources:
-            if not source.is_file():
-                continue
-            for verdict in load_json(source, default={}).get("contract_verdicts") or []:
-                if (isinstance(verdict, dict)
-                        and verdict.get("verdict") == "implemented"
-                        and isinstance(verdict.get("contract_id"), str)):
-                    verified.add(verdict["contract_id"])
-        unverified = [c for c in declared if c not in verified]
-        if unverified:
-            problems.append(
-                "quality review must verify every plan contract as implemented; "
-                f"unverified: {', '.join(unverified)} — compose the reviewer "
-                "prompt with `./forge review-brief --all`")
+        problems.append("recorded decomposition must contain at least one task")
 
     outcome = load_outcome(root) or {}
     if not outcome.get("outcome"):
@@ -3155,6 +3068,15 @@ def publish_review_generation(
     with delegation_exclusion(
         root, task_id, kind="review-selection",
     ):
+        if update_stamp and generation.get("origin") in {"combined", "rejection"}:
+            from forge_cli.stages import (
+                load_stages, require_current_review_meaning, task_for,
+            )
+            stage = next((row for row in load_stages(root).get("stages", [])
+                          if row.get("id") == task_id), {})
+            require_current_review_meaning(
+                root, stage, task_for(root, task_id), generation,
+            )
         current = None
         selection_path = root / selection_rel
         if selection_path.exists() or selection_path.is_symlink():
@@ -3320,41 +3242,6 @@ def _grill_exempt(rel: str, ignore_names: tuple[str, ...]) -> bool:
     )
 
 
-def board_views_path(root: Path) -> Path:
-    """Per-worktree and uncommitted, beside the delegation ledger.
-
-    "This human saw this plan" is a fact about one machine at one moment, not
-    about the repository, so it never travels in a commit.
-    """
-    return git_control_dir(root) / "board-views.json"
-
-
-def record_plan_view(root: Path, story: str, task_id: str, digest: str) -> None:
-    """The board released this EXACT plan text to a browser.
-
-    One entry per task holding the newest digest seen, not an append-only
-    ledger: the drawer re-polls every few seconds and an ever-growing log of
-    the same fact is noise. A later edit produces a new digest, which lands
-    here only when the board sends the new text — so re-approval after an edit
-    needs the human to look again, exactly as first approval did.
-    """
-    if not (story and task_id and digest):
-        return
-    path = board_views_path(root)
-    views = load_json(path, default={}) or {}
-    key = f"{story}/{task_id}"
-    if views.get(key, {}).get("digest") == digest:
-        return
-    views[key] = {"digest": digest, "at": now_iso()}
-    dump_json(path, views)
-
-
-def plan_was_viewed(root: Path, story: str, task_id: str, digest: str) -> bool:
-    """Whether THIS plan text was put in front of a human on the board."""
-    views = load_json(board_views_path(root), default={}) or {}
-    return views.get(f"{story}/{task_id}", {}).get("digest") == digest
-
-
 def require_grill(
     root: Path,
     gate: str,
@@ -3446,10 +3333,7 @@ def require_task_grill(
             f".factory/grills/tasks/{task_id}.json has no commit stamp — re-record "
             f"with current tooling using `{record_command}`."
         )
-    if not grounding_matches(
-        root, task, data.get("input_sha256"), treeish=treeish,
-        in_stage=task_in_stage(root, task_id),
-    ):
+    if not task_grill_grounding_matches(root, task, data, treeish=treeish):
         # A digest mismatch has two very different causes, and reporting both as
         # "STALE" sent a reader hunting for a content change that never
         # happened. When the grill was ground on a DIFFERENT BASIS than the one
@@ -3477,7 +3361,7 @@ def require_task_grill(
             f"Re-grill and record `{record_command}`; --task-digest was removed "
             "because the digest is derived from the protected contract, approved "
             "plan, and product tree. Tip: record the task grill LAST, immediately "
-            "before `task approve`/`stage start` — committing any tracked file "
+            "before native approval / `stage start` — committing any tracked file "
             "outside .factory/ and plans/ (docs/, factory/scripts/, source) between "
             "grilling and approving changes the product tree and re-stales it."
         )
@@ -3498,6 +3382,366 @@ def task_digest(task: dict) -> str:
         sort_keys=True,
     )
     return hashlib.sha256(payload.encode()).hexdigest()
+
+
+def measurement_contract(task: dict) -> dict:
+    """Return the fields an active stage measures mechanically."""
+    return {field: task.get(field) for field in MEASUREMENT_CONTRACT_FIELDS}
+
+
+def task_plan_binding_digest(root: Path, task_id: str, grill: dict) -> str:
+    """Return the live approved task-plan digest, or ``""`` on any mismatch."""
+    plan = evidence_path(
+        root, _active_story_key(root), f"task-plans/{task_id}.md",
+    )
+    if not plan.is_file():
+        return ""
+    digest = plan_digest_without_assumptions(plan)
+    task = next(
+        (item for item in load_json(
+            protected_decomposition_state_path(root), default={}
+        ).get("tasks", [])
+         if isinstance(item, dict) and item.get("id") == task_id),
+        {"id": task_id},
+    )
+    if not _task_plan_approval_matches_digest(root, task, grill, digest):
+        return ""
+    return digest
+
+
+def story_plan_digest(root: Path) -> str:
+    """Return the live approved story-plan body digest, or ``""``."""
+    decomposition = load_json(protected_decomposition_state_path(root), default={})
+    plan_file = decomposition.get("plan_file")
+    if not isinstance(plan_file, str) or not plan_file.strip():
+        return ""
+    plan = root / plan_file
+    return plan_digest_without_assumptions(plan) if plan.is_file() else ""
+
+
+def _native_story_approval_recorded(
+    root: Path, story: str, record: dict, *, path: Path | None = None,
+) -> bool:
+    """Whether one story-approval record is its real native-event tombstone."""
+    runtime = record.get("runtime")
+    session = record.get("session_id")
+    event = record.get("event_id")
+    expected_actor = {
+        "claude": "human-via-Claude",
+        "codex": "human-via-Codex",
+    }.get(runtime)
+    if (
+        record.get("approved_by") != expected_actor
+        or record.get("plan_kind") != "story"
+        or record.get("story") != story
+        or record.get("task") != ""
+        or re.fullmatch(
+            r"[0-9a-f]{64}", record.get("approved_plan_sha256") or "",
+        ) is None
+        or not all(
+            isinstance(value, str) and value.strip()
+            for value in (record.get("approved_at"), session, event)
+        )
+    ):
+        return False
+    replay_key = hashlib.sha256(
+        f"{runtime}\0{session}\0{event}".encode("utf-8")
+    ).hexdigest()
+    replay = evidence_path(
+        root, story, f"approval-events/{replay_key}.json",
+    )
+    if path is not None and path != replay:
+        return False
+    return load_json(replay, default={}) == record
+
+
+def approved_story_plan_predecessors(
+    root: Path, current_digest: str,
+) -> tuple[str, ...]:
+    """Return authenticated predecessor digests for the current approval.
+
+    The transition is authority only when the live run, selected approval
+    record, and consumed native-event tombstone all name the same story and
+    old-to-new digest pair.  Callers use it narrowly to preserve an unchanged
+    task's cold proof across a human-approved story-plan edit.
+    """
+    if re.fullmatch(r"[0-9a-f]{64}", current_digest or "") is None:
+        return ()
+    state = load_json(run_state_path(root), default={})
+    story = str(state.get("story") or state.get("issue_key") or "").strip()
+    relative = state.get("plan_file")
+    if (
+        not story
+        or state.get("plan_status") != "approved"
+        or state.get("approved_plan_sha256") != current_digest
+        or not isinstance(relative, str)
+    ):
+        return ()
+    plan = root / relative
+    if not plan.is_file() or plan_digest_without_assumptions(plan) != current_digest:
+        return ()
+    record = load_json(
+        evidence_path(root, story, "plan-approval.json"), default={},
+    )
+    if (
+        record.get("approved_plan_sha256") != current_digest
+        or not _native_story_approval_recorded(root, story, record)
+    ):
+        return ()
+
+    predecessors: list[str] = []
+    seen = {current_digest}
+    event_dir = evidence_path(root, story, "approval-events")
+    while True:
+        previous = record.get("previous_approved_plan_sha256")
+        if (
+            re.fullmatch(r"[0-9a-f]{64}", previous or "") is None
+            or previous in seen
+        ):
+            break
+        predecessors.append(previous)
+        seen.add(previous)
+        matches = []
+        for path in event_dir.glob("*.json"):
+            candidate = load_json(path, default={})
+            if (
+                candidate.get("approved_plan_sha256") == previous
+                and _native_story_approval_recorded(
+                    root, story, candidate, path=path,
+                )
+            ):
+                matches.append(candidate)
+        if len(matches) != 1:
+            break
+        record = matches[0]
+    return tuple(predecessors)
+
+
+def validated_measurement_launch(
+    root: Path,
+    task: dict,
+    stage: dict,
+    origin_task_sha256: str,
+    origin_measurement: dict,
+    launch_id: str = "",
+) -> dict | None:
+    """Return the real write launch that anchors a measurement receipt."""
+    from forge_cli.delegate import argv_digest, brief_path, current_delegation
+    from forge_cli.stages import _successful_launch_entry_valid
+
+    task_id = str(task.get("id") or "")
+    entry = current_delegation(
+        root,
+        task_id,
+        stage_started_at=str(stage.get("started_at") or ""),
+        task_sha256=origin_task_sha256,
+        ignore_lock=True,
+    )
+    if not entry:
+        return None
+    if (
+        entry.get("launch_status") != "succeeded"
+        or entry.get("write") is not True
+        or entry.get("story") != _active_story_key(root)
+        or entry.get("stage_started_at") != stage.get("started_at")
+        or entry.get("task_sha256") != origin_task_sha256
+        or entry.get("write_scope") != origin_measurement.get("write_scope")
+        or (launch_id and entry.get("launch_id") != launch_id)
+    ):
+        return None
+    if entry.get("transport") is None:
+        argv = entry.get("argv")
+        brief = brief_path(root, task_id)
+        prompts = (str(brief), brief.relative_to(root).as_posix())
+        expected = [
+            [
+                argv[0], entry.get("companion_path"), "task", "--json",
+                "--cwd", str(root), "--model", entry.get("model"),
+                "--effort", entry.get("effort"), "--prompt-file", prompt,
+                "--write",
+            ]
+            for prompt in prompts
+        ] if isinstance(argv, list) and argv else []
+        if (
+            not isinstance(argv, list)
+            or not argv
+            or not all(isinstance(token, str) for token in argv)
+            or Path(argv[0]).stem.lower() != "node"
+            or entry.get("argv_sha256") != argv_digest(argv)
+            or entry.get("exit_code") != 0
+            or argv not in expected
+        ):
+            return None
+        return entry
+    return entry if _successful_launch_entry_valid(
+        root, task_id, stage, entry,
+    ) else None
+
+
+def _measurement_continuity_matches(
+    root: Path,
+    task: dict,
+    grill: dict,
+    *,
+    allow_unbound_story_reapproval: bool = False,
+) -> bool:
+    """Validate the complete recorder-owned active-stage receipt chain."""
+    task_id = str(task.get("id") or "")
+    stage = task_stage_record(root, task_id)
+    receipts = stage.get("measurement_continuity")
+    if stage.get("status") not in ("active", "done") \
+            or not isinstance(receipts, list) or not receipts:
+        return False
+    story_digest = story_plan_digest(root)
+    decomposition = load_json(
+        protected_decomposition_state_path(root), default={},
+    )
+    transition_is_bound = decomposition.get("plan_sha256") == story_digest
+    previous_story_digests = (
+        approved_story_plan_predecessors(root, story_digest)
+        if transition_is_bound or allow_unbound_story_reapproval
+        else ()
+    )
+    permitted_story_digests = {story_digest}
+    permitted_story_digests.update(previous_story_digests)
+    task_plan = evidence_path(
+        root, _active_story_key(root), f"task-plans/{task_id}.md",
+    )
+    task_plan_digest = (
+        plan_digest_without_assumptions(task_plan) if task_plan.is_file() else ""
+    )
+    if (not story_digest or not task_plan_digest
+            or grill.get("approved_task_plan_sha256") != task_plan_digest):
+        return False
+    current_task_sha256 = task_digest(task)
+    if stage.get("status") == "done":
+        if stage.get("task_sha256") != current_task_sha256:
+            return False
+        first = receipts[0]
+        expected = first.get("from_task_sha256") if isinstance(first, dict) else None
+    else:
+        expected = stage.get("task_sha256")
+    previous_measurement = None
+    origin_task = None
+    origin_measurement = None
+    launch_id = ""
+    required = {
+        "generated_by", "recorded_at", "story", "task_id", "stage_started_at",
+        "stage_base_sha", "source_grill_input_sha256", "story_plan_sha256",
+        "task_plan_sha256", "semantic_grounding_sha256", "from_task_sha256",
+        "to_task_sha256", "from_measurement", "to_measurement", "launch_id",
+    }
+    for index, receipt in enumerate(receipts):
+        if not isinstance(receipt, dict) or set(receipt) != required:
+            return False
+        before = receipt.get("from_measurement")
+        after = receipt.get("to_measurement")
+        receipt_story_digest = receipt.get("story_plan_sha256")
+        if not isinstance(before, dict) or not isinstance(after, dict):
+            return False
+        if set(before) != set(MEASUREMENT_CONTRACT_FIELDS) \
+                or set(after) != set(MEASUREMENT_CONTRACT_FIELDS):
+            return False
+        if (
+            receipt.get("generated_by") != "record_decomposition_from_json"
+            or receipt.get("story") != _active_story_key(root)
+            or receipt.get("task_id") != task_id
+            or receipt.get("stage_started_at") != stage.get("started_at")
+            or receipt.get("stage_base_sha") != stage.get("base_sha")
+            or receipt.get("source_grill_input_sha256") != grill.get("input_sha256")
+            or receipt_story_digest not in permitted_story_digests
+            or receipt.get("task_plan_sha256") != task_plan_digest
+            or receipt.get("semantic_grounding_sha256")
+            != grounding_digest(
+                root,
+                task,
+                in_stage=True,
+                _plan_sha256=receipt_story_digest,
+            )
+            or receipt.get("from_task_sha256") != expected
+            or (previous_measurement is not None and before != previous_measurement)
+        ):
+            return False
+        before_task = {**task, **before}
+        after_task = {**task, **after}
+        if (
+            task_digest(before_task) != receipt.get("from_task_sha256")
+            or task_digest(after_task) != receipt.get("to_task_sha256")
+        ):
+            return False
+        if index == 0:
+            if not grounding_matches(
+                root,
+                before_task,
+                grill.get("input_sha256"),
+                in_stage=True,
+                _plan_sha256=receipt_story_digest,
+            ):
+                return False
+            origin_task = before_task
+            origin_measurement = before
+            launch_id = str(receipt.get("launch_id") or "")
+        elif receipt.get("launch_id") != launch_id:
+            return False
+        expected = receipt.get("to_task_sha256")
+        previous_measurement = after
+    if expected != current_task_sha256 \
+            or previous_measurement != measurement_contract(task):
+        return False
+    assert origin_task is not None and origin_measurement is not None
+    return validated_measurement_launch(
+        root,
+        origin_task,
+        stage,
+        str(receipts[0].get("from_task_sha256") or ""),
+        origin_measurement,
+        launch_id,
+    ) is not None
+
+
+def task_grill_grounding_matches(
+    root: Path,
+    task: dict,
+    grill: dict,
+    *,
+    treeish: str = "",
+    allow_unbound_story_reapproval: bool = False,
+) -> bool:
+    """Accept current grounding or an exact recorder-owned continuity chain."""
+    if grounding_matches(
+        root,
+        task,
+        grill.get("input_sha256"),
+        treeish=treeish,
+        in_stage=task_in_stage(root, str(task.get("id") or "")),
+    ):
+        return True
+    current_story_digest = story_plan_digest(root)
+    decomposition = load_json(
+        protected_decomposition_state_path(root), default={},
+    )
+    transition_is_bound = decomposition.get("plan_sha256") == current_story_digest
+    previous_story_digests = (
+        approved_story_plan_predecessors(root, current_story_digest)
+        if transition_is_bound or allow_unbound_story_reapproval
+        else ()
+    )
+    for previous_story_digest in previous_story_digests:
+        if grounding_matches(
+            root,
+            task,
+            grill.get("input_sha256"),
+            treeish=treeish,
+            in_stage=task_in_stage(root, str(task.get("id") or "")),
+            _plan_sha256=previous_story_digest,
+        ):
+            return True
+    return _measurement_continuity_matches(
+        root,
+        task,
+        grill,
+        allow_unbound_story_reapproval=allow_unbound_story_reapproval,
+    )
 
 
 CONTRACT_BLOCK_START = "<!-- forge:contract -->"
@@ -3533,13 +3777,9 @@ def plan_body_digest(path: Path) -> str:
     """Hash the authored plan body, excluding harness-managed content.
 
     Line endings are normalised to LF before hashing so the digest is stable
-    across platforms and Git's autocrlf. The plan-mode marker's ``sha256_body``
-    is computed here from the plan-mode source, while ``require_plan_mode_marker``
-    recomputes it from the saved/committed task plan. Without normalisation a plan
-    saved by ``write_text()`` on Windows (LF -> CRLF), or checked out on another
-    machine under ``core.autocrlf``, would hash differently from its marker and
-    ``task approve`` would demand a spurious re-grill. Both callers run through
-    this function, so normalising here keeps create and check symmetric on every OS.
+    across platforms and Git's autocrlf. Both the cold-grill bridge and shared
+    native approval recorder use this function; saving on Windows therefore
+    cannot create a spurious approval mismatch.
     """
     return _plan_body_digest_bytes(path.read_bytes())
 
@@ -3562,7 +3802,7 @@ def _plan_body_digest_bytes(raw: bytes) -> str:
     # substitutes a newline for the contract block, and the block is appended
     # after one. Removing it therefore leaves one MORE trailing newline than
     # the file carried before the block existed, so the first render of the
-    # block changed this digest and `task approve` refused with "the plan
+    # block changed this digest and native approval refused with "the plan
     # CHANGED" against byte-identical authored text.
     approved_body = approved_body.rstrip(b"\n") + b"\n"
     return hashlib.sha256(authored + b"\n---\n" + approved_body).hexdigest()
@@ -3676,16 +3916,29 @@ def require_approved_plan_digest(root: Path) -> str:
         if plan is not None and plan.is_file()
         else None
     )
+    live = (
+        plan_digest_without_assumptions(plan)
+        if plan is not None and plan.is_file()
+        else None
+    )
+    if (state.get("plan_status") == "approved"
+            and isinstance(approved, str) and approved
+            and live is not None and live != approved):
+        raise SystemExit(
+            "approved plan binding no longer matches the live plan. Display the "
+            "exact current plan in native Plan Mode and consume a fresh approval; "
+            "a post-approval edit returns to its approver, not another cold read."
+        )
     if (
         not isinstance(approved, str)
         or not approved
         or plan is None
         or not plan.is_file()
-        or plan_digest_without_assumptions(plan) != approved
+        or live != approved
     ):
         raise SystemExit(
             "approved plan binding is missing or no longer matches the live plan. "
-            "Re-grill the current plan and re-approve it."
+            "Complete the current plan grill and native approval."
         )
     return approved
 
@@ -3813,40 +4066,6 @@ def _product_tree_digest_now(root: Path, treeish: str,
     return hashlib.sha256(payload.encode()).hexdigest()
 
 
-def _requirements_digest(root: Path, spec_path: Path,
-                         exclude: tuple[str, ...], treeish: str = "") -> str:
-    raw = spec_path.read_bytes()
-    frontmatter = re.match(br"\A---\r?\n.*?\r?\n---\r?\n", raw, re.DOTALL)
-    body = raw[frontmatter.end():] if frontmatter else raw
-    payload = body + b"\x00" + product_tree_digest(
-        root, treeish, exclude,
-    ).encode("ascii")
-    return hashlib.sha256(payload).hexdigest()
-
-
-def requirements_digest(root: Path, spec_path: Path) -> str:
-    """Bind a confirmed spec body to the current product tree."""
-    return _requirements_digest(root, spec_path, product_excluded_prefixes(root))
-
-
-def requirements_digest_matches(
-    root: Path, spec_path: Path, recorded: str, recorded_commit: str,
-) -> bool:
-    """Accept current requirements proof and proof made with old exclusions."""
-    if not recorded:
-        return False
-    current = requirements_digest(root, spec_path)
-    if recorded == current:
-        return True
-    shared = product_excluded_prefixes(root)
-    legacy = (".factory/", "plans/")
-    return bool(
-        recorded_commit
-        and recorded == _requirements_digest(root, spec_path, legacy, recorded_commit)
-        and current == _requirements_digest(root, spec_path, shared, recorded_commit)
-    )
-
-
 GROUNDING_CONTRACT_FIELDS = (
     # What the task IS. A change here changes the work, so the grill that
     # examined the old version no longer speaks to the new one.
@@ -3891,36 +4110,41 @@ def task_in_stage(root: Path, task_id: str) -> bool:
 
 def grounding_digest(root: Path, task: dict, *, treeish: str = "",
                      in_stage: bool = False,
-                     fields: tuple[str, ...] | None = None) -> str:
+                     fields: tuple[str, ...] | None = None,
+                     _plan_sha256: str | None = None) -> str:
     """Bind a task grill to what the work IS: the substantive contract, the
     approved plan, and — only before the stage opens — the product tree."""
-    decomposition = load_json(protected_decomposition_state_path(root), default={})
-    plan_file = decomposition.get("plan_file")
-    if not isinstance(plan_file, str) or not plan_file.strip():
-        plan_file = load_json(run_state_path(root), default={}).get("plan_file")
-    if not isinstance(plan_file, str) or not plan_file.strip():
-        raise SystemExit(
-            "cannot derive the task grounding digest: the protected decomposition "
-            "does not name its approved plan"
+    if _plan_sha256 is None:
+        decomposition = load_json(
+            protected_decomposition_state_path(root), default={},
         )
-    plan = (root / plan_file).resolve()
-    try:
-        plan.relative_to(root.resolve())
-    except ValueError:
-        raise SystemExit(
-            f"cannot derive the task grounding digest: plan path escapes the repo: "
-            f"{plan_file!r}"
-        )
-    if not plan.is_file():
-        raise SystemExit(
-            f"cannot derive the task grounding digest: approved plan {plan_file!r} "
-            "does not exist"
-        )
+        plan_file = decomposition.get("plan_file")
+        if not isinstance(plan_file, str) or not plan_file.strip():
+            plan_file = load_json(run_state_path(root), default={}).get("plan_file")
+        if not isinstance(plan_file, str) or not plan_file.strip():
+            raise SystemExit(
+                "cannot derive the task grounding digest: the protected decomposition "
+                "does not name its approved plan"
+            )
+        plan = (root / plan_file).resolve()
+        try:
+            plan.relative_to(root.resolve())
+        except ValueError:
+            raise SystemExit(
+                "cannot derive the task grounding digest: plan path escapes the repo: "
+                f"{plan_file!r}"
+            )
+        if not plan.is_file():
+            raise SystemExit(
+                f"cannot derive the task grounding digest: approved plan {plan_file!r} "
+                "does not exist"
+            )
+        _plan_sha256 = plan_digest_without_assumptions(plan)
     if fields is None:
         fields = IN_STAGE_GROUNDING_FIELDS if in_stage else GROUNDING_CONTRACT_FIELDS
     body = {
         "contract": {field: task.get(field) for field in fields},
-        "plan_sha256": plan_digest_without_assumptions(plan),
+        "plan_sha256": _plan_sha256,
     }
     # The product tree is part of the grounding only until the stage opens.
     # Before work starts, the plan was grilled against a codebase and a change
@@ -3939,61 +4163,32 @@ def grounding_digest(root: Path, task: dict, *, treeish: str = "",
     return hashlib.sha256(payload.encode()).hexdigest()
 
 
-def legacy_grounding_digest(root: Path, task: dict, *, treeish: str = "") -> str:
-    """The pre-split digest: the WHOLE task dict plus the tree, unconditionally.
-
-    Kept so a grill recorded by older tooling still verifies. It is strictly
-    STRICTER than the current rule — it covers every field the current one
-    covers and more — so accepting it as an alternative can never let through
-    something the current rule would refuse.
-    """
-    decomposition = load_json(protected_decomposition_state_path(root), default={})
-    plan_file = decomposition.get("plan_file") or load_json(
-        run_state_path(root), default={}).get("plan_file")
-    if not isinstance(plan_file, str) or not plan_file.strip():
-        raise SystemExit(
-            "cannot derive the task grounding digest: the protected decomposition "
-            "does not name its approved plan"
-        )
-    plan = (root / plan_file).resolve()
-    if not plan.is_file():
-        raise SystemExit(
-            f"cannot derive the task grounding digest: approved plan {plan_file!r} "
-            "does not exist"
-        )
-    payload = json.dumps(
-        {
-            "contract": task,
-            "plan_sha256": plan_digest_without_assumptions(plan),
-            "product_tree_sha256": product_tree_digest(root, treeish),
-        },
-        sort_keys=True,
-        separators=(",", ":"),
-        ensure_ascii=True,
-    )
-    return hashlib.sha256(payload.encode()).hexdigest()
-
-
 def grounding_matches(root: Path, task: dict, recorded: str, *,
-                      treeish: str = "", in_stage: bool = False) -> bool:
+                      treeish: str = "", in_stage: bool = False,
+                      _plan_sha256: str | None = None) -> bool:
     """Does a recorded grill still bind its inputs?
 
-    Accepts the legacy digest too. That is a compatibility path, not a hole:
-    the legacy digest covers a superset of the inputs, so anything it accepts
-    the current rule would also accept.
+    Accept current grounding and the exact in-stage predecessor rules.
     """
     if not recorded:
         return False
-    if recorded == grounding_digest(root, task, treeish=treeish,
-                                    in_stage=in_stage):
+    if recorded == grounding_digest(
+        root, task, treeish=treeish, in_stage=in_stage,
+        _plan_sha256=_plan_sha256,
+    ):
         return True
     if in_stage:
         # Recorded in-stage under the previous rule, which still grounded the
         # three measurement fields. Those fields have not moved if this
         # matches, so the record is as good as one made today.
-        if recorded == grounding_digest(root, task, treeish=treeish,
-                                        in_stage=True,
-                                        fields=GROUNDING_CONTRACT_FIELDS):
+        if recorded == grounding_digest(
+            root,
+            task,
+            treeish=treeish,
+            in_stage=True,
+            fields=GROUNDING_CONTRACT_FIELDS,
+            _plan_sha256=_plan_sha256,
+        ):
             return True
         # Stamped BEFORE the stage opened, so the tree was part of it. The
         # stage pinned that same tree as its baseline, so measuring against
@@ -4002,15 +4197,17 @@ def grounding_matches(root: Path, task: dict, recorded: str, *,
         baseline = _stage_baseline_for(root, str(task.get("id") or ""))
         if baseline:
             try:
-                if recorded == grounding_digest(root, task, treeish=baseline,
-                                                in_stage=False):
+                if recorded == grounding_digest(
+                    root,
+                    task,
+                    treeish=baseline,
+                    in_stage=False,
+                    _plan_sha256=_plan_sha256,
+                ):
                     return True
             except SystemExit:
                 pass
-    try:
-        return recorded == legacy_grounding_digest(root, task, treeish=treeish)
-    except SystemExit:
-        return False
+    return False
 
 
 def _stage_baseline_for(root: Path, task_id: str) -> str:
@@ -4055,6 +4252,71 @@ def _task_contract_complete(task: dict) -> bool:
     )
 
 
+def _native_task_approval_recorded(
+    root: Path, task: dict, grill: dict, digest: str | None = None,
+) -> bool:
+    """Whether the task approval matches its immutable consumed-event record."""
+    runtime = grill.get("approval_runtime")
+    expected_actor = {
+        "claude": "human-via-Claude",
+        "codex": "human-via-Codex",
+    }.get(runtime)
+    approved_digest = grill.get("approved_task_plan_sha256")
+    task_id = str(task.get("id") or "")
+    story = _active_story_key(root)
+    valid = bool(
+        expected_actor
+        and grill.get("approved_by") == expected_actor
+        and isinstance(approved_digest, str)
+        and re.fullmatch(r"[0-9a-f]{64}", approved_digest)
+        and (digest is None or approved_digest == digest)
+        and story
+        and task_id
+        and all(
+            isinstance(grill.get(field), str) and grill[field].strip()
+            for field in (
+                "approved_at", "approval_session_id", "approval_event_id",
+            )
+        )
+    )
+    if not valid:
+        return False
+    session = grill["approval_session_id"]
+    event = grill["approval_event_id"]
+    replay_key = hashlib.sha256(
+        f"{runtime}\0{session}\0{event}".encode("utf-8")
+    ).hexdigest()
+    replay = load_json(
+        evidence_path(root, story, f"approval-events/{replay_key}.json"),
+        default={},
+    )
+    expected = {
+        "approved_plan_sha256": approved_digest,
+        "approved_by": expected_actor,
+        "approved_at": grill["approved_at"],
+        "runtime": runtime,
+        "session_id": session,
+        "event_id": event,
+        "plan_kind": "task",
+        "story": story,
+        "task": task_id,
+    }
+    return replay == expected
+
+
+def _task_plan_approval_matches_digest(
+    root: Path, task: dict, grill: dict, digest: str,
+) -> bool:
+    """Whether current approval authority binds this task-plan digest."""
+    return (
+        _native_task_approval_recorded(root, task, grill, digest)
+        or (
+            grill.get("approved_task_plan_sha256") == digest
+            and _measurement_continuity_matches(root, task, grill)
+        )
+    )
+
+
 def _task_grill_fresh(root: Path, task: dict, grill: dict) -> bool:
     task_id = task.get("id")
     plan = evidence_path(
@@ -4062,14 +4324,10 @@ def _task_grill_fresh(root: Path, task: dict, grill: dict) -> bool:
     )
     if not plan.is_file():
         return False
-    plan_provenance_ok = (
-        grill.get("task_plan_sha256") == plan_digest_without_assumptions(plan)
-    )
+    digest = plan_digest_without_assumptions(plan)
+    plan_provenance_ok = grill.get("task_plan_sha256") == digest
     try:
-        grounded = grounding_matches(
-            root, task, grill.get("input_sha256"),
-            in_stage=task_in_stage(root, str(task_id or "")),
-        )
+        grounded = task_grill_grounding_matches(root, task, grill)
     except SystemExit:
         # The approved story plan is gone — e.g. a shipped or archived story
         # whose plan moved out of plans/active/. A grill cannot be "fresh"
@@ -4093,15 +4351,14 @@ def _task_plan_state(root: Path, task: dict, grill: dict) -> str:
     plan = evidence_path(root, key, f"task-plans/{task_id}.md")
     if not plan.is_file():
         return "author-task-plan"
-    approved = (
-        isinstance(grill.get("approved_by"), str)
-        and bool(grill["approved_by"].strip())
-        and isinstance(grill.get("approved_at"), str)
-        and bool(grill["approved_at"].strip())
-        and grill.get("approved_task_plan_sha256")
-        == plan_digest_without_assumptions(plan)
-    )
-    return "approved" if approved else "await-approval"
+    digest = plan_digest_without_assumptions(plan)
+    cold_read_matches = grill.get("task_plan_sha256") == digest
+    approved = _task_plan_approval_matches_digest(root, task, grill, digest)
+    if approved:
+        return "approved"
+    if cold_read_matches:
+        return "await-approval"
+    return "grill"
 
 
 def task_rows(root: Path) -> list[dict]:
@@ -4831,10 +5088,17 @@ def require_ready_task(
         require_task_grill(root, task_id, task, treeish=treeish)
     if require_approval:
         plan_state = _task_plan_state(root, task, grill)
+        if plan_state == "grill":
+            raise SystemExit(
+                f"the {task_id} task grill is STALE — the task plan changed "
+                "before any native approval bound it. Re-grill and record "
+                "`python3 factory/scripts/record_grill_from_json.py --gate task "
+                f"--task {task_id}` against the current plan."
+            )
         if plan_state == "await-approval":
             raise SystemExit(
-                f"Task plan approval required: a human must approve the current "
-                f"{task_id} plan with `./forge task approve {task_id} --by \"<name>\"`."
+                f"Task plan approval required: display the exact current {task_id} "
+                "plan in native Plan Mode and consume its approval event."
             )
     return task
 

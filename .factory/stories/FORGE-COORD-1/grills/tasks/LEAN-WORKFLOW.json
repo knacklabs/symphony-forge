@@ -1,0 +1,128 @@
+{
+  "generated_by": "griller",
+  "gate": "task",
+  "verdict": "pass",
+  "issue": "FORGE-COORD-1",
+  "task_id": "LEAN-WORKFLOW",
+  "summary": "The one completed read-only task cold read (launch 2732e87b5b4c4772b43d4c422ee83258, session 01a09daf-d947-7c53-ad4f-f6f6ba18dce8, original task grounding 0d29041d614648a41b82c48ffabc913213991c7320d641da4dcf7302a517f5cc, brief 96c1236c31bb87a45954c64829c58aa6aa37c96d2565a8006e58c7a0709fefb3) produced eight findings. Each is resolved once in the amended story plan, Lean task plan, and protected 12-criterion contract. Three later requirements-read corrections strengthen context security, independent migration coverage, and clean-target/profile preservation. The later user-selected per-story event-log amendment changes only the Portable handoff: Lean still owns current pr-link staging/backfills and no event-family migration. The cold reader did not inspect the amended bytes. The final Lean task-plan body digest is 698eabb8e42d6bf7a7aa42269228ec2ff95e89dbc25da9369207f85b73082d27.",
+  "gaps": [
+    "The cold-read plan deleted 12 of 15 Forge-owned profiles although active Decision 0074, the then-approved story plan, and a required regression retained all 15.",
+    "The cold-read plan removed grill-round floors and ledgers before the confirmed spec and Decision 0073's then-recorded Shared timing allowed their replacement.",
+    "The cold-read native approval design depended on Claude ExitPlanMode and Codex request_user_input events that Decisions 0029 and 0061 then described as unavailable or ineligible.",
+    "The cold-read plan assigned sealed fixed-proof migration to Lean although the then-confirmed spec and approved story plan assigned that complete migration to Portable.",
+    "The cold-read executable decomposition exposed only two broad Lean criteria/contracts while the task plan promised 12 independently testable outcomes.",
+    "The cold-read protected Lean write scope omitted review.py, review_brief.py, and signal.py even though the story plan assigned Lean behavior in those files.",
+    "The cold-read mandatory context-file security boundary had no implementation stage, focused selector, or reviewer instruction for its no-follow, identity, capacity, private-storage, cleanup, and metadata-only requirements.",
+    "The cold-read plan removed manual approval producers while leaving the replacement native approval storage, schema, atomicity, reader migration, and replay representation undefined."
+  ],
+  "contradictions": [],
+  "resolutions": [
+    "The final story/task plans cite the user's later direct recovery instruction and approved PR2 scope as controlling this bounded recovery, retain exactly planner-high/docs-decomposer/functional-checker as Forge-owned profiles, preserve client-added/client-modified profiles, and replace the stale 15-profile regressions with exact three-profile migration and preservation tests.",
+    "The final plans explicitly apply the later recovery override to the old Decision 0073/spec timing: Lean uses the one completed cold read with a complete one-to-one disposition and final-digest approval, removes compulsory round floors/authority ledgers and fake frontier questions, and leaves broader structured-question and coordinator-journey work to Shared.",
+    "The final plans explicitly apply the later recovery override to Decisions 0029/0054/0061 and bind only successful Claude ExitPlanMode and exact synchronous Codex approval events through one shared recorder, with stable runtime/session/event identity, current-frontier/current-digest eligibility, cancellation/malformed/async/wrong-runtime/replay refusal, and no fabricated display name.",
+    "The final story/decomposition assign Lean the complete fixed-proof candidate universe, lock, safety, origin=upgrade publication, sealed binding, active-proof fresh-review path, and normal fixed-file fallback retirement; Portable now owns only remaining non-review legacy families including the later event-log migration, so ownership is one-time and non-duplicated.",
+    "The protected decomposition now carries exactly the task plan's 12 acceptance criteria and 12 one-to-one plan_contracts, so task grill, stage proof, and review cannot pass on the former two broad statements.",
+    "The protected Lean write scope now has 93 exact entries including factory/scripts/forge_cli/review.py, review_brief.py, and signal.py, plus the focused hydration/review tests and the 96-file/14,500-line stop boundary.",
+    "The final plan assigns context-file work to Stage B and the in-scope delegate/admission/hook/library seams; it adds POSIX and native-Windows DACL selectors, same-user/no-follow/stable-handle/UTF-8/capacity/private-mode/delete/stale-cleanup/metadata-only proof, and explicit reviewer focus.",
+    "The final plan reuses the existing story plan-approval marker and task-grill approval fields behind factory/scripts/forge_cli/approval.py; CLI and runtime hooks are thin adapters, candidate/digest/event replay checks are atomic, re-grill invalidation remains, and no new approval artifact, schema, or parallel authority is introduced."
+  ],
+  "open_items": [],
+  "questions_asked": 1,
+  "rounds": [
+    {
+      "question": "What should happen when any required question exchange for the story is still open?",
+      "options": [
+        "Wait for all (Recommended)",
+        "Allow handoff"
+      ],
+      "chosen": "Wait for all (Recommended)",
+      "frontier_empty": true
+    }
+  ],
+  "inspected_refs": [
+    ".factory/stories/FORGE-COORD-1/task-plans/LEAN-WORKFLOW.md",
+    ".factory/stories/FORGE-COORD-1/decomposition.json",
+    "plans/active/FORGE-COORD-1-either-claude-or-codex-coordinates-the-same-forge-workflow.md",
+    "docs/specs/dual-coordinator-parity.md",
+    "docs/decisions/0029-plan-approval-in-plan-mode.md",
+    "docs/decisions/0061-host-native-human-interaction.md",
+    "docs/decisions/0073-grill-round-reuse-and-empty-frontier-coexist.md",
+    "docs/decisions/0074-user-selects-main-orchestrator-model.md",
+    "factory/scripts/forge_cli/plans.py",
+    "factory/scripts/forge_cli/tasks.py",
+    "factory/scripts/forge_cli/review.py",
+    "factory/scripts/forge_cli/review_brief.py",
+    "factory/scripts/forge_cli/signal.py",
+    "factory/scripts/forge_cli/delegate.py",
+    "factory/scripts/forge_cli/worker_admission.py",
+    "factory/scripts/post_tool_use.py",
+    "factory/scripts/pre_tool_use.py",
+    "factory/scripts/factory_lib.py",
+    "factory/tests/test_gates.py",
+    "factory/tests/test_native_setup.py",
+    "factory/tests/test_review_task_delta.py",
+    "factory/tests/test_worker_admission.py"
+  ],
+  "current_flow": "Cold proof is the single successful native read-only launch 2732e87b5b4c4772b43d4c422ee83258 and its eight findings. The ordered gap/resolution/citation arrays bridge that original input to final task plan digest 698eabb8e42d6bf7a7aa42269228ec2ff95e89dbc25da9369207f85b73082d27 and protected story digest a9a320376907ebb81835bc3a6b722adda63c4f2e5756822b6f3b93d9ed5395de. Record this task grill, bind the standing human approval to the exact task digest, start LEAN-WORKFLOW from merged First trunk, repeat only workspace-local save/grill/approval hydration required by the workspace-first contract without another cold model call, then stage and delegate the approved implementation.",
+  "criteria_map": {
+    "Native approval path: story/task plans approve through the supported Claude and Codex native approval events, not the old manual/board route.": "Resolved cold finding 3: the later explicit user recovery authority permits the exact Claude ExitPlanMode and synchronous Codex request_user_input events; the shared recorder and focused success/refusal tests bind final approval authority.",
+    "Shared recorder identity: the shared approval recorder binds exactly one current-frontier candidate, current digest, runtime, stable session/event identity, plan kind/story/task, replay refusal, and `human-via-Claude` / `human-via-Codex` attribution.": "Resolved cold finding 8: existing story plan-approval marker and task-grill approval fields stay authoritative behind one shared approval.py domain module with current-frontier/digest/runtime/session/event/replay checks and no second approval artifact.",
+    "Ceremony removal: requirements grill, round floors, old round ledgers as authority, fake frontier questions, second unchanged save, and manual plan/task approval leave normal runtime; Lean preserves one independent cold grill plus complete finding disposition, including the three requirements cold-read gap dispositions for context snapshot security, independent migration coverage, and clean-target preservation, explained amendment bridge to the final artifact digest, final human approval on that digest, and refusal for unexplained out-of-disposition changes.": "Resolved cold finding 2: the later recovery instruction explicitly controls the Lean timing; the final plan binds one real cold read, complete ordered disposition, explained amendments, final digest approval, and removes compulsory floors/fake questions without claiming Shared's broader question journey.",
+    "Narrowed delegation: `forge delegate --scope` is a proper-subset narrowing feature, exact approved files are valid subset members, no flag keeps full effective scope, and hook admission enforces the narrowed launch identity.": "The final protected plan binds proper-subset narrowing, exact allowed file equality, no-flag full scope, launch identity, hook admission, and focused scope/refusal tests.",
+    "Content-bound close reuse: test/verify receipts and selected-review reviewed-meaning identity reuse only when their proof-type inputs match; substantive acceptance/security/migration/evidence/review-instruction/product-delta changes force review, while canonicalized bookkeeping/timestamp changes preserve immutable original provenance.": "The final protected plan binds test/verify receipt inputs and selected-review reviewed-meaning identity in existing stage state, with substantive-change invalidation and immutable provenance preservation.",
+    "Lean migration: `forge upgrade` performs clean-checkout preflight with no `--force` bypass, full inventory/hash/classification, independent raw no-follow coverage over fixed legacy roots/exact parents, temp build, validation, publish/readback, idempotent retry, unequal partial refusal, generated `.factory/migrations/lean-workflow-v2.json`, profile/settings preservation, and deletion only after durable current outputs exist.": "Resolved cold findings 1, 2, and 4 plus the requirements gaps: the Lean migration has clean-target refusal with no force bypass, independent raw coverage, full inventory/classification, safe publication/readback/retry, settings/profile preservation, and a generated manifest.",
+    "Fixed-proof migration: Lean migrates sealed fixed-lens proof once into canonical `origin=upgrade` selected generations with the full sealed-proof safety contract, while active old proof requires a fresh review and normal runtime never uses direct fixed-file fallback authority.": "Resolved cold finding 4: Lean exclusively owns the complete fixed-proof candidate-universe/safety/migration/fallback retirement; Portable is amended to only the remaining non-review legacy families including the later user-selected event family.",
+    "Hook/config/profile target: committed Claude/Codex hook matrices, `.codex/config.toml`, `.claude/CLAUDE.md`, and profile installation match the recovery target; only three Forge-owned profiles remain while client-modified/client-added profiles are preserved.": "Resolved cold finding 1: the later explicit recovery instruction overrides the older 15-profile target for this bounded recovery; the contract and tests now require only three Forge-owned profiles while preserving client-added/client-modified profiles.",
+    "PR-link workflow staging: `.github/workflows/pr-link.yml` stages per-event `.factory/events/` files and updates its status/comment wording without returning to `.factory/events.jsonl` writes.": "The final protected plan keeps Lean limited to repairing the currently supported per-event pr-link workflow staging and proves the exact workflow wording/content pins.",
+    "Verified PR-link backfill: only verified PR #109 and #110 links are backfilled through `forge pr-link`, producing recorder-generated event files and clearing those board-completeness failures without touching unrelated spec gaps.": "The final protected plan permits only recorder-generated CFS-1/ACC-3 pr-linked events after exact merged-PR verification and requires the board-completeness repair without fabricated predates evidence.",
+    "Normal-runtime refusal: Lean-removed old formats outside upgrade produce `run forge upgrade` guidance; PR3-owned legacy families stay compatible until Portable handles them.": "The final protected plan separates Lean-removed formats from Portable-owned PR3 families and requires precise run-forge-upgrade guidance without prematurely deleting Portable compatibility.",
+    "Docs/runtime agreement: workflow, docs, specs, prompts, skills, architecture text, reviewer focus, required tests, and design-review status agree with the implemented runtime without duplicating long canon in `AGENTS.md`.": "Resolved cold findings 5, 6, and 7: the protected contract has 12 exact criteria/contracts, complete 93-path scope including review.py/review_brief.py/signal.py, 53 selectors, explicit context security stages/tests/reviewer focus, and docs/runtime/design-review agreement."
+  },
+  "decision": "keep",
+  "new_abstractions": [
+    "factory/scripts/forge_cli/approval.py as the one shared story/task native approval domain module"
+  ],
+  "citations": [
+    {
+      "finding": "The cold-read plan deleted 12 of 15 Forge-owned profiles although active Decision 0074, the then-approved story plan, and a required regression retained all 15.",
+      "source": "task cold read session 01a09daf-d947-7c53-ad4f-f6f6ba18dce8 finding 1; original LEAN-WORKFLOW.md line 93; Decision 0074 line 36; amended Lean plan lines 93,119,329 and three-profile selectors"
+    },
+    {
+      "finding": "The cold-read plan removed grill-round floors and ledgers before the confirmed spec and Decision 0073's then-recorded Shared timing allowed their replacement.",
+      "source": "task cold read session 01a09daf-d947-7c53-ad4f-f6f6ba18dce8 finding 2; confirmed dual-coordinator-parity spec line 42; Decision 0073 line 19; amended Lean plan lines 88,370"
+    },
+    {
+      "finding": "The cold-read native approval design depended on Claude ExitPlanMode and Codex request_user_input events that Decisions 0029 and 0061 then described as unavailable or ineligible.",
+      "source": "task cold read session 01a09daf-d947-7c53-ad4f-f6f6ba18dce8 finding 3; Decisions 0029 lines 39-47 and 0061 line 24; amended Lean plan lines 87,113-115,301,330"
+    },
+    {
+      "finding": "The cold-read plan assigned sealed fixed-proof migration to Lean although the then-confirmed spec and approved story plan assigned that complete migration to Portable.",
+      "source": "task cold read session 01a09daf-d947-7c53-ad4f-f6f6ba18dce8 finding 4; prior confirmed spec line 88; amended story plan lines 155,212,272-273; amended Lean plan lines 94-95,293,360"
+    },
+    {
+      "finding": "The cold-read executable decomposition exposed only two broad Lean criteria/contracts while the task plan promised 12 independently testable outcomes.",
+      "source": "task cold read session 01a09daf-d947-7c53-ad4f-f6f6ba18dce8 finding 5; current decomposition LEAN-WORKFLOW acceptance_criteria and plan_contracts; amended Lean plan Acceptance Criteria 1-12"
+    },
+    {
+      "finding": "The cold-read protected Lean write scope omitted review.py, review_brief.py, and signal.py even though the story plan assigned Lean behavior in those files.",
+      "source": "task cold read session 01a09daf-d947-7c53-ad4f-f6f6ba18dce8 finding 6; current decomposition LEAN-WORKFLOW write_scope; amended Lean plan lines 221-223 and focused review/ruling hydration selectors"
+    },
+    {
+      "finding": "The cold-read mandatory context-file security boundary had no implementation stage, focused selector, or reviewer instruction for its no-follow, identity, capacity, private-storage, cleanup, and metadata-only requirements.",
+      "source": "task cold read session 01a09daf-d947-7c53-ad4f-f6f6ba18dce8 finding 7; amended Lean plan lines 144,274-276,395,456-458,568 and current decomposition reviewer_focus"
+    },
+    {
+      "finding": "The cold-read plan removed manual approval producers while leaving the replacement native approval storage, schema, atomicity, reader migration, and replay representation undefined.",
+      "source": "task cold read session 01a09daf-d947-7c53-ad4f-f6f6ba18dce8 finding 8; factory/scripts/forge_cli/plans.py and tasks.py current approval storage; amended Lean plan lines 132,330"
+    }
+  ],
+  "input_sha256": "43d01570b3513deb340b8ea9b1a0a2d0017b10ad036899bca2ee6deef8a31441",
+  "grounding_basis": "working-tree",
+  "grounding_treeish": "",
+  "task_plan_sha256": "698eabb8e42d6bf7a7aa42269228ec2ff95e89dbc25da9369207f85b73082d27",
+  "recorded_at": "2026-09-14T03:51:09+00:00",
+  "commit": "6ae2dea1b7417fff4c9c3fc3552488a8378aacd4",
+  "approved_task_plan_sha256": "698eabb8e42d6bf7a7aa42269228ec2ff95e89dbc25da9369207f85b73082d27",
+  "approved_by": "Ravi (standing approved recovery PR2 task plan, Codex conversation 2026-09-14)",
+  "approved_at": "2026-09-14T03:51:23+00:00"
+}

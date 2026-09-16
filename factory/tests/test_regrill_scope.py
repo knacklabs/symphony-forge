@@ -12,6 +12,8 @@ bookkeeping, cost a full adversarial round.
 """
 from __future__ import annotations
 
+import copy
+import hashlib
 import json
 import sys
 from pathlib import Path
@@ -58,6 +60,135 @@ def _seed(repo: Path):
     lib.dump_json(control / "decomposition.json",
                   {"plan_file": "plans/active/TEST-1-test-plan.md", "tasks": [TASK]})
     return lib
+
+
+def _seed_pre_stage_grill(repo: Path, task: dict) -> str:
+    """Reproduce the opaque pre-Lean grill carried by the dogfood stage."""
+    lib = load_factory_lib(repo)
+    stage = lib.task_stage_record(repo, task["id"])
+    path = lib.evidence_path(
+        repo, "ENG-1", f"grills/tasks/{task['id']}.json", for_write=True,
+    )
+    grill = lib.load_json(path, default={})
+    grill["input_sha256"] = lib.grounding_digest(
+        repo, task, treeish=stage["base_sha"], in_stage=False,
+    )
+    lib.dump_json(path, grill)
+    return grill["input_sha256"]
+
+
+def _rewrite_launch_as_native(repo: Path, task: dict) -> tuple[str, Path]:
+    """Replace the fixture's one companion lifecycle with valid native proof."""
+    from test_gates import delegation_ledger  # noqa: E402
+    from forge_cli.codex_runtime import native_argv  # noqa: E402
+    from forge_cli.delegate import argv_digest, brief_path  # noqa: E402
+
+    ledger = delegation_ledger(repo)
+    rows = [json.loads(line) for line in ledger.read_text().splitlines()]
+    launch_id = rows[-1]["launch_id"]
+    logs = ledger.parent / "native-runs"
+    logs.mkdir(parents=True, exist_ok=True)
+    output = logs / f"{launch_id}.jsonl"
+    stderr = logs / f"{launch_id}.stderr.log"
+    output.write_text(
+        '{"type":"thread.started","thread_id":"receipt-origin"}\n'
+        '{"type":"turn.completed"}\n',
+        encoding="utf-8",
+    )
+    stderr.write_text("", encoding="utf-8")
+    executable = "/bin/codex"
+    rewritten = []
+    for row in rows:
+        if row.get("launch_id") != launch_id:
+            rewritten.append(row)
+            continue
+        argv = native_argv(
+            executable, repo, row["model"], row["effort"], True,
+            task["write_scope"],
+        )
+        native = {
+            **row,
+            "transport": "native",
+            "executable_path": executable,
+            "brief_path": brief_path(repo, "T1").relative_to(repo).as_posix(),
+            "output_path": str(output),
+            "stderr_path": str(stderr),
+            "write_scope": task["write_scope"],
+            "argv": argv,
+            "argv_sha256": argv_digest(argv),
+        }
+        native.pop("companion_path", None)
+        if native["launch_status"] == "succeeded":
+            native["session_id"] = "receipt-origin"
+        rewritten.append(native)
+    ledger.write_text(
+        "".join(json.dumps(row) + "\n" for row in rewritten),
+        encoding="utf-8",
+    )
+    return launch_id, output
+
+
+def _append_native_launch(repo: Path, task: dict, launch_id: str) -> None:
+    from forge_cli.codex_runtime import native_argv  # noqa: E402
+    from forge_cli.delegate import (  # noqa: E402
+        append_delegation, argv_digest, brief_path, delegations_path,
+    )
+
+    lib = load_factory_lib(repo)
+    stage = lib.task_stage_record(repo, "T1")
+    logs = delegations_path(repo).parent / "native-runs"
+    output = logs / f"{launch_id}.jsonl"
+    stderr = logs / f"{launch_id}.stderr.log"
+    output.write_text(
+        '{"type":"thread.started","thread_id":"receipt-later"}\n'
+        '{"type":"turn.completed"}\n',
+        encoding="utf-8",
+    )
+    stderr.write_text("", encoding="utf-8")
+    executable = "/bin/codex"
+    argv = native_argv(
+        executable, repo, "gpt-5.6-sol", "medium", True,
+        task["write_scope"],
+    )
+    record = {
+        "generated_by": "orchestrator",
+        "at": stage["started_at"],
+        "launch_id": launch_id,
+        "task": "T1",
+        "story": "ENG-1",
+        "brief_sha256": lib.sha256_of(brief_path(repo, "T1")),
+        "task_sha256": lib.task_digest(task),
+        "write": True,
+        "model": "gpt-5.6-sol",
+        "effort": "medium",
+        "write_scope": task["write_scope"],
+        "argv": argv,
+        "argv_sha256": argv_digest(argv),
+        "process_token": f"delegation-{launch_id}",
+        "stage_started_at": stage["started_at"],
+        "transport": "native",
+        "executable_path": executable,
+        "brief_path": brief_path(repo, "T1").relative_to(repo).as_posix(),
+        "output_path": str(output),
+        "stderr_path": str(stderr),
+    }
+    for status in ("starting", "running"):
+        assert append_delegation(repo, {**record, "launch_status": status})
+    assert append_delegation(repo, {
+        **record,
+        "launch_status": "succeeded",
+        "exit_code": 0,
+        "session_id": "receipt-later",
+    })
+
+
+def _fake_companion_env(tmp_path: Path) -> dict[str, str]:
+    from test_gates import _fake_psutil_module, fake_companion_env  # noqa: E402
+
+    return {
+        **fake_companion_env(tmp_path),
+        "PYTHONPATH": str(_fake_psutil_module(tmp_path)),
+    }
 
 
 # --------------------------------------------------------------- bookkeeping
@@ -188,21 +319,22 @@ def test_in_stage_is_decided_by_the_stage_not_the_caller(repo: Path):
 
 
 # ------------------------------------------------------------- compatibility
-def test_a_grill_recorded_by_older_tooling_still_verifies(repo: Path):
-    """Upgrading must not demand a re-grill of every in-flight task.
-
-    The legacy digest covers a SUPERSET of what the current rule covers, so
-    accepting it as an alternative cannot let through anything the current rule
-    would refuse.
-    """
+def test_a_grill_recorded_by_older_tooling_requires_migration(repo: Path):
+    """The pre-Lean whole-task fingerprint is no normal-runtime authority."""
     lib = _seed(repo)
-    legacy = lib.legacy_grounding_digest(repo, TASK)
-    assert lib.grounding_matches(repo, TASK, legacy, in_stage=True)
+    assert not hasattr(lib, "legacy_grounding_digest")
+    legacy_body = {
+        "contract": TASK,
+        "plan_sha256": lib.plan_digest_without_assumptions(
+            repo / "plans" / "active" / "TEST-1-test-plan.md"),
+        "product_tree_sha256": lib.product_tree_digest(repo),
+    }
+    legacy = hashlib.sha256(json.dumps(
+        legacy_body, sort_keys=True, separators=(",", ":"),
+        ensure_ascii=True).encode()).hexdigest()
+    assert not lib.grounding_matches(repo, TASK, legacy, in_stage=True)
     assert not lib.grounding_matches(repo, TASK, "not-a-digest", in_stage=True)
-
-    # And it is not a bypass: a legacy record whose contract changed is still
-    # refused, because the legacy digest covered that field too.
-    moved = {**TASK, "write_scope": ["src/", "src/extra.ts"]}
+    moved = {**TASK, "acceptance_criteria": ["A new bar for done"]}
     assert not lib.grounding_matches(repo, moved, legacy, in_stage=True)
 
 
@@ -254,10 +386,36 @@ def test_a_second_delegate_after_committing_needs_no_new_grill(repo: Path, tmp_p
     harness used to demand a fresh grill before it would let anyone write.
     """
     from test_gates import (  # noqa: E402
-        STAGE_TASK, fake_companion_env, start_stage,
+        DECOMP, STAGE_TASK, start_stage,
     )
 
-    start_stage(repo, tmp_path, STAGE_TASK, launch=False)
+    start_stage(repo, tmp_path, STAGE_TASK)
+    original_grill = _seed_pre_stage_grill(repo, STAGE_TASK)
+
+    # A worker signal reveals one more mechanically measured path. The
+    # recorder proves the original grill + launch before carrying the unchanged
+    # semantic authorization across the wider measurement contract.
+    widened = {**STAGE_TASK, "write_scope": ["src/", "billing/"]}
+    code, out = run(
+        repo,
+        "record_decomposition_from_json.py",
+        stdin=json.dumps({**DECOMP, "tasks": [widened]}),
+    )
+    assert code == 0, out
+    lib = load_factory_lib(repo)
+    grill = lib.load_json(
+        lib.evidence_path(repo, "ENG-1", "grills/tasks/T1.json"), default={},
+    )
+    assert grill["input_sha256"] == original_grill
+    # An identical re-record rebuilds the stage skeleton but must not drop the
+    # receipt that carries authorization across the measurement amendment.
+    code, out = run(
+        repo,
+        "record_decomposition_from_json.py",
+        stdin=json.dumps({**DECOMP, "tasks": [widened]}),
+    )
+    assert code == 0, out
+    assert len(lib.task_stage_record(repo, "T1")["measurement_continuity"]) == 1
 
     # Codex delivers, and the delivery is committed — the step that used to
     # stale the gate.
@@ -268,19 +426,306 @@ def test_a_second_delegate_after_committing_needs_no_new_grill(repo: Path, tmp_p
     git(repo, "-c", "user.email=t@t", "-c", "user.name=t", "commit",
         "-m", "WF-1 T1: the implementation lands")
 
-    # The fix round. No re-grill, no re-approval, no contract edit.
-    code, out = run(repo, "forge.py", "delegate", "T1",
-                    env=fake_companion_env(tmp_path))
+    # The fix round. No re-grill or re-approval; a real narrowed launch proves
+    # the retry receives only its proper subset of the now-approved scope.
+    code, out = run(repo, "forge.py", "delegate", "T1", "--scope", "src/",
+                    env=_fake_companion_env(tmp_path))
     assert code == 0, (
         "delegate still demands a fresh grill after the implementation was "
         f"committed — the loop is intact:\n{out}")
+    from forge_cli.delegate import load_delegations  # noqa: E402
+    succeeded = [
+        row for row in load_delegations(repo)
+        if row.get("task") == "T1" and row.get("launch_status") == "succeeded"
+    ]
+    assert len({row["launch_id"] for row in succeeded}) == 2
+    assert succeeded[-1]["write_scope"] == ["src/"]
+
+    # Stage close rewrites task_sha256 to the final measured contract. The same
+    # immutable receipt must keep completed-task readiness grounded.
+    from forge_cli.stages import load_stages, write_stages  # noqa: E402
+    stages = load_stages(repo)
+    stages["stages"][0]["status"] = "done"
+    stages["stages"][0]["task_sha256"] = lib.task_digest(widened)
+    write_stages(repo, stages)
+    assert lib.require_ready_task(
+        repo, "T1", allow_completed=True, require_approval=False,
+    )["id"] == "T1"
+
+    # The receipt is authority, so a forged field must close the gate again.
+    stages = load_stages(repo)
+    stages["stages"][0]["measurement_continuity"][0][
+        "semantic_grounding_sha256"
+    ] = "0" * 64
+    write_stages(repo, stages)
+    with pytest.raises(SystemExit, match="stage-baseline"):
+        lib.require_ready_task(
+            repo, "T1", allow_completed=True, require_approval=False,
+        )
+
+
+def test_measurement_receipt_authenticates_its_native_launch_not_a_later_one(
+        repo: Path, tmp_path):
+    from test_gates import DECOMP, STAGE_TASK, start_stage  # noqa: E402
+    from forge_cli.stages import _require_successful_launch  # noqa: E402
+
+    start_stage(repo, tmp_path, STAGE_TASK)
+    _seed_pre_stage_grill(repo, STAGE_TASK)
+    _launch_id, original_output = _rewrite_launch_as_native(repo, STAGE_TASK)
+    widened = {**STAGE_TASK, "write_scope": ["src/", "billing/"]}
+    code, out = run(
+        repo,
+        "record_decomposition_from_json.py",
+        stdin=json.dumps({**DECOMP, "tasks": [widened]}),
+    )
+    assert code == 0, out
+
+    # The receipt authenticates its historical launch and result. Regenerating
+    # the current brief after an in-scope correction must not rewrite or stale
+    # that immutable anchor.
+    from forge_cli.delegate import brief_path  # noqa: E402
+    current_brief = brief_path(repo, "T1")
+    current_brief.write_text(
+        current_brief.read_text(encoding="utf-8") + "\nRegenerated brief.\n",
+        encoding="utf-8",
+    )
+    lib = load_factory_lib(repo)
+    lib.require_task_grill(repo, "T1", widened)
+
+    _append_native_launch(repo, widened, "launch-later-valid")
+    stage = lib.task_stage_record(repo, "T1")
+    assert _require_successful_launch(repo, "T1", stage, widened) == ""
+
+    current_brief_bytes = current_brief.read_bytes()
+    current_brief.write_bytes(current_brief_bytes + b"stale current launch\n")
+    assert _require_successful_launch(repo, "T1", stage, widened) == ""
+    current_brief.write_bytes(current_brief_bytes)
+
+    original_output.write_text(
+        '{"type":"thread.started","thread_id":"receipt-origin"}\n',
+        encoding="utf-8",
+    )
+    with pytest.raises(SystemExit, match="STALE"):
+        lib.require_task_grill(repo, "T1", widened)
+
+    original_output.write_text(
+        '{"type":"thread.started","thread_id":"receipt-origin"}\n'
+        '{"type":"turn.completed"}\n',
+        encoding="utf-8",
+    )
+    lib.require_task_grill(repo, "T1", widened)
+
+
+def test_measurement_amendment_without_a_bound_launch_writes_nothing(
+        repo: Path, tmp_path):
+    from test_gates import DECOMP, STAGE_TASK, start_stage  # noqa: E402
+
+    start_stage(repo, tmp_path, STAGE_TASK, launch=False)
+    _seed_pre_stage_grill(repo, STAGE_TASK)
+    lib = load_factory_lib(repo)
+    protected = lib.protected_decomposition_state_path(repo)
+    tracked = lib.decomposition_state_path(repo)
+    before = (protected.read_bytes(), tracked.read_bytes())
+    widened = {**STAGE_TASK, "write_scope": ["src/", "billing/"]}
+
+    code, out = run(
+        repo,
+        "record_decomposition_from_json.py",
+        stdin=json.dumps({**DECOMP, "tasks": [widened]}),
+    )
+
+    assert code != 0 and "exact successful write launch" in out, out
+    assert (protected.read_bytes(), tracked.read_bytes()) == before
+
+
+def test_story_plan_reapproval_rebinds_an_active_task_without_restarting_it(
+        repo: Path, tmp_path):
+    from test_gates import (  # noqa: E402
+        DECOMP, STAGE_TASK, native_claude_approval,
+        post_hook, run_state, start_stage, story_state,
+    )
+
+    start_stage(repo, tmp_path, STAGE_TASK)
+    _seed_pre_stage_grill(repo, STAGE_TASK)
+    widened = {**STAGE_TASK, "write_scope": ["src/", "billing/"]}
+    code, out = run(
+        repo, "record_decomposition_from_json.py",
+        stdin=json.dumps({**DECOMP, "tasks": [widened]}),
+    )
+    assert code == 0, out
+    lib = load_factory_lib(repo)
+    stage_before = lib.task_stage_record(repo, "T1")
+    receipts_before = copy.deepcopy(stage_before["measurement_continuity"])
+    stable_before = {
+        field: copy.deepcopy(stage_before.get(field))
+        for field in ("started_at", "base_sha", "dirty_at_start", "task_sha256")
+    }
+    grill_path = story_state(repo) / "grills" / "tasks" / "T1.json"
+    grill_before = grill_path.read_bytes()
+    task_plan = story_state(repo) / "task-plans" / "T1.md"
+    task_plan_before = task_plan.read_bytes()
+    approval_events = story_state(repo) / "approval-events"
+    task_approval_events_before = sorted(
+        path.read_bytes() for path in approval_events.glob("*.json")
+        if json.loads(path.read_text()).get("task") == "T1"
+    )
+    from forge_cli.delegate import load_delegations  # noqa: E402
+    task_cold_launches_before = [
+        row for row in load_delegations(repo)
+        if row.get("task") == "grill-task-T1"
+    ]
+
+    state = run_state(repo)
+    plan = repo / state["plan_file"]
+    original_story_digest = state["approved_plan_sha256"]
+    plan.write_text(
+        plan.read_text(encoding="utf-8") + "\nApproved story amendment.\n",
+        encoding="utf-8",
+    )
+    amended_story_digest = lib.plan_digest_without_assumptions(plan)
+    code, out = run(repo, "forge.py", "next")
+    assert code == 0 and "awaiting amended-plan approval" in out, out
+    code, out = post_hook(repo, native_claude_approval(repo))
+    assert code == 0, out
+    assert run_state(repo)["approved_plan_sha256"] == amended_story_digest
+    approval_record = json.loads(
+        (story_state(repo) / "plan-approval.json").read_text()
+    )
+    assert approval_record["previous_approved_plan_sha256"] \
+        == original_story_digest
+    assert approval_record["approved_plan_sha256"] == amended_story_digest
+
+    # Reapproval alone is not permission to continue: the protected
+    # decomposition must first publish the new story binding.
+    code, out = run(
+        repo, "forge.py", "delegate", "T1",
+        env=_fake_companion_env(tmp_path),
+    )
+    assert code != 0 and "task grill is STALE" in out, out
+
+    code, out = run(
+        repo, "record_decomposition_from_json.py",
+        stdin=json.dumps({**DECOMP, "tasks": [widened]}),
+    )
+    assert code == 0, out
+    state = run_state(repo)
+    assert state["decomposition_plan_sha256"] == amended_story_digest
+    assert grill_path.read_bytes() == grill_before
+    assert task_plan.read_bytes() == task_plan_before
+    assert sorted(
+        path.read_bytes() for path in approval_events.glob("*.json")
+        if json.loads(path.read_text()).get("task") == "T1"
+    ) == task_approval_events_before
+    assert [
+        row for row in load_delegations(repo)
+        if row.get("task") == "grill-task-T1"
+    ] == task_cold_launches_before
+
+    stage_after = lib.task_stage_record(repo, "T1")
+    assert stage_after["measurement_continuity"] == receipts_before
+    assert {
+        field: stage_after.get(field) for field in stable_before
+    } == stable_before
+    assert lib.task_grill_grounding_matches(repo, widened, json.loads(
+        grill_path.read_text()
+    ))
+
+    code, out = run(
+        repo, "forge.py", "delegate", "T1",
+        env=_fake_companion_env(tmp_path),
+    )
+    assert code == 0, out
+
+    from forge_cli.stages import load_stages, write_stages  # noqa: E402
+    stages = load_stages(repo)
+    stages["stages"][0]["measurement_continuity"][0][
+        "semantic_grounding_sha256"
+    ] = "0" * 64
+    write_stages(repo, stages)
+    code, out = run(
+        repo, "forge.py", "delegate", "T1",
+        env=_fake_companion_env(tmp_path),
+    )
+    assert code != 0 and "task grill is STALE" in out, out
+
+
+def test_story_plan_reapproval_preserves_an_active_task_without_receipts(
+        repo: Path, tmp_path):
+    from test_gates import (  # noqa: E402
+        DECOMP, STAGE_TASK, native_claude_approval,
+        post_hook, run_state, start_stage, story_state,
+    )
+
+    start_stage(repo, tmp_path, STAGE_TASK)
+    lib = load_factory_lib(repo)
+    stage_before = copy.deepcopy(lib.task_stage_record(repo, "T1"))
+    assert not stage_before.get("measurement_continuity")
+    grill_path = story_state(repo) / "grills" / "tasks" / "T1.json"
+    grill_before = grill_path.read_bytes()
+    original_story_digest = run_state(repo)["approved_plan_sha256"]
+    plan = repo / run_state(repo)["plan_file"]
+    plan.write_text(
+        plan.read_text(encoding="utf-8") + "\nApproved story amendment.\n",
+        encoding="utf-8",
+    )
+
+    code, out = post_hook(repo, native_claude_approval(repo))
+    assert code == 0, out
+    first_amended_digest = run_state(repo)["approved_plan_sha256"]
+    code, out = run(
+        repo, "record_decomposition_from_json.py",
+        stdin=json.dumps({**DECOMP, "tasks": [STAGE_TASK]}),
+    )
+    assert code == 0, out
+    assert grill_path.read_bytes() == grill_before
+    assert lib.task_stage_record(repo, "T1") == stage_before
+
+    code, out = run(
+        repo, "forge.py", "delegate", "T1",
+        env=_fake_companion_env(tmp_path),
+    )
+    assert code == 0, out
+
+    plan.write_text(
+        plan.read_text(encoding="utf-8") + "\nSecond approved amendment.\n",
+        encoding="utf-8",
+    )
+    code, out = post_hook(repo, native_claude_approval(repo))
+    assert code == 0, out
+    second_amended_digest = run_state(repo)["approved_plan_sha256"]
+    code, out = run(
+        repo, "record_decomposition_from_json.py",
+        stdin=json.dumps({**DECOMP, "tasks": [STAGE_TASK]}),
+    )
+    assert code == 0, out
+    assert lib.approved_story_plan_predecessors(repo, second_amended_digest) == (
+        first_amended_digest, original_story_digest,
+    )
+    assert grill_path.read_bytes() == grill_before
+    assert lib.task_stage_record(repo, "T1") == stage_before
+    code, out = run(
+        repo, "forge.py", "delegate", "T1",
+        env=_fake_companion_env(tmp_path),
+    )
+    assert code == 0, out
+
+    task_plan = story_state(repo) / "task-plans" / "T1.md"
+    task_plan.write_text(
+        task_plan.read_text(encoding="utf-8") + "\nChanged task meaning.\n",
+        encoding="utf-8",
+    )
+    code, out = run(
+        repo, "forge.py", "delegate", "T1",
+        env=_fake_companion_env(tmp_path),
+    )
+    assert code != 0 and "task grill is STALE" in out, out
 
 
 def test_a_contract_change_still_stops_the_next_delegate(repo: Path, tmp_path):
     # The other half: the gate must still refuse when what was authorised
     # actually changed, or the fix has simply removed the gate.
     from test_gates import (  # noqa: E402
-        STAGE_TASK, fake_companion_env, start_stage,
+        STAGE_TASK, start_stage,
     )
     from factory_lib import (  # noqa: E402
         dump_json, load_json, protected_decomposition_state_path,
@@ -296,6 +741,6 @@ def test_a_contract_change_still_stops_the_next_delegate(repo: Path, tmp_path):
     dump_json(path, decomposition)
 
     code, out = run(repo, "forge.py", "delegate", "T1",
-                    env=fake_companion_env(tmp_path))
+                    env=_fake_companion_env(tmp_path))
     assert code != 0, f"a widened write scope no longer stops delegate:\n{out}"
     assert "STALE" in out or "grill" in out.lower()

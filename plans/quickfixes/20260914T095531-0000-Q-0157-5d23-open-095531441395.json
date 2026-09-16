@@ -1,0 +1,13 @@
+{
+  "event": "open",
+  "id": "Q-0157-5d23",
+  "profile": "degraded",
+  "reason": "The official Lean verifier passed structural and scaffold gates but found four stale compatibility assertions in three test files: a review helper overwrites the legacy stamp under test, two lifecycle tests still call the removed manual task-approve command, and one review-integrity fixture does not bind its candidate to the current reviewed-meaning identity. Ordinary delegation remains unavailable because this Lean branch's committed hooks diverge from the parent worktree. Update only test_close_binds_to_the_diff.py, test_lifecycle_end_to_end.py, and test_review_task_delta.py, then run the four failures and their direct Lean neighbors.",
+  "started_at": "2026-09-14T09:55:31+00:00",
+  "max_files": 5,
+  "files": [],
+  "harness_source": true,
+  "kind": "degraded",
+  "task_id": "LEAN-WORKFLOW",
+  "story": "FORGE-COORD-1"
+}

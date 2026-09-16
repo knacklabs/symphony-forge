@@ -1,0 +1,1 @@
+{"event": "signal-scope-change", "generated_by": "implementer", "at": "2026-09-15T06:20:33+00:00", "story": "FORGE-COORD-1", "detail": "Restoring Decision 0066 historical brief binding makes factory/tests/test_regrill_scope.py::test_measurement_receipt_authenticates_its_native_launch_not_a_later_one obsolete; that file is outside LEAN"}

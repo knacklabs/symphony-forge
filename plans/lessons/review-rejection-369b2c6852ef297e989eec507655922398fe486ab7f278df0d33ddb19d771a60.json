@@ -1,0 +1,10 @@
+{
+  "applies_to": [
+    "factory/scripts/**"
+  ],
+  "generated_by": "Codex",
+  "lesson": "Not a defect (0066): Not a retired requirements-grill format: Decision 0066 expressly accepts a task-grill record made under the prior in-stage rule only while its substantive fields have not moved. grounding_matches reproduces the exact prior digest or pinned stage baseline (factory/scripts/factory_lib.py:4091-4137), and test_regrill_scope.py:258-269 proves a criteria change refuses. — raised as \"Refuse the retained previous grounding format in normal runtime (factory/scripts/factory_lib.py:4105): `grounding_matches` explicitly accepts an in-stage digest\"",
+  "severity": "medium",
+  "source": "review reject LEAN-WORKFLOW quality",
+  "topic": "rejected-review-finding-quality"
+}

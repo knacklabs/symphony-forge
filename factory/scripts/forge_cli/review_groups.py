@@ -32,7 +32,6 @@ import copy
 import io
 import json
 import os
-import re
 import subprocess
 import time
 from pathlib import Path
@@ -96,20 +95,31 @@ def restore_paths_to_base(worktree: Path, base_sha: str, paths: list[str],
 
 def diff_bytes_by_path(worktree: Path, base_sha: str) -> dict[str, int]:
     """Patch bytes per changed path, base..HEAD, in git's own order."""
+    paths_proc = _git(worktree, "diff", "--no-renames", "--name-only", "-z",
+                      f"{base_sha}..HEAD")
+    if paths_proc.returncode != 0:
+        fail("listing review paths failed: " + (paths_proc.stderr.strip() or "git diff"))
+    paths = paths_proc.stdout.split("\0")
+    if paths[-1] == "":
+        paths.pop()
     proc = _git(worktree, "-c", "core.pager=cat", "diff", "--no-color",
-                "--no-ext-diff", f"{base_sha}..HEAD")
+                "--no-ext-diff", "--no-renames", f"{base_sha}..HEAD")
     if proc.returncode != 0:
         fail("listing the review diff failed: " + (proc.stderr.strip() or "git diff"))
     sizes: dict[str, int] = {}
     current = None
+    section = 0
     for line in proc.stdout.split("\n"):
         if line.startswith("diff --git "):
-            match = re.match(r"diff --git a/(.+?) b/(.+)$", line)
-            current = match.group(2) if match else None
-            if current is not None:
-                sizes.setdefault(current, 0)
+            if section >= len(paths):
+                fail("review diff path and patch section counts differ")
+            current = paths[section]
+            section += 1
+            sizes[current] = 0
         if current is not None:
             sizes[current] += len(line.encode("utf-8", "surrogateescape")) + 1
+    if section != len(paths):
+        fail("review diff path and patch section counts differ")
     return sizes
 
 
@@ -153,7 +163,8 @@ def group_commits(worktree: Path, base_sha: str, review_tip: str,
 
     run("reading the review tip", "read-tree", review_tip)
     for rel in group_paths:
-        entry = _git(worktree, "ls-tree", base_sha, "--", rel).stdout.strip()
+        entry = _git(worktree, "--literal-pathspecs", "ls-tree", base_sha,
+                     "--", rel).stdout.strip()
         if entry:
             mode, _kind, sha = entry.split("\t", 1)[0].split()
             run(f"putting {rel} at the task base", "update-index", "--add",
@@ -390,7 +401,7 @@ def run_groups(*, groups: list[dict], prompt_rel: str, log_dir: Path,
                     parsed = json.loads(raw.decode("utf-8"))
                 except (UnicodeDecodeError, json.JSONDecodeError) as exc:
                     problem = f"the review tool produced invalid JSON: {exc}"
-            if parsed is not None and not problem:
+            if not problem:
                 problem = _refusal(validate, parsed)
             if not problem:
                 group["report"], group["raw"] = parsed, raw

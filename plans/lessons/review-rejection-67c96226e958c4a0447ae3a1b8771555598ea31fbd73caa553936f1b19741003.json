@@ -1,0 +1,10 @@
+{
+  "applies_to": [
+    "factory/scripts/**"
+  ],
+  "generated_by": "Codex",
+  "lesson": "Not a defect (0064): The approved migration contract keeps --force runnable to prove it cannot bypass the dirty-target refusal. cmd_upgrade refuses dirty state before any write even when --force is supplied; removing the argument would break the declared no-bypass regression without improving safety. — raised as \"Remove the obsolete no-op --force compatibility flag (factory/scripts/forge.py:197): The CLI still exposes `--force` but explicitly labels it a legacy option an\"",
+  "severity": "medium",
+  "source": "review reject LEAN-WORKFLOW quality",
+  "topic": "rejected-review-finding-quality"
+}

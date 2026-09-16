@@ -102,8 +102,9 @@ jobs:
         run: |
           git config user.name "forge-pr-link[bot]"
           git config user.email "forge-pr-link[bot]@users.noreply.github.com"
-          git add -f .factory/events.jsonl
-          # [skip ci]: the link commit touches only .factory/events.jsonl; without
+          git add -f .factory/events/
+          # [skip ci]: the link commit touches only a per-event .factory/events/
+          # record; without
           # it, the bot-attributed synchronize wave is HELD action_required and
           # strands the PR's checks (D-0017, hit on PRs #72 and #73).
           git commit -m "chore: link PR to ${{ steps.link.outputs.story }} [skip ci]"
@@ -119,5 +120,5 @@ jobs:
           gh api --method POST "repos/$GITHUB_REPOSITORY/statuses/$SHA" \
             -f state=success \
             -f context=scaffold-check \
-            -f "description=carried from $SOURCE_SHA - link commit touches only .factory/events.jsonl" \
+            -f "description=carried from $SOURCE_SHA - link commit touches only per-event .factory/events/" \
             -f target_url="$TARGET_URL"

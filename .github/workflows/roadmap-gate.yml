@@ -69,7 +69,7 @@ jobs:
         # The proof gate otherwise lives only inside `stage done`/`pr-ready`, so
         # a task merged through a direct or story-level PR skipped verify, tests
         # and the three-lens review silently. Checking the PR itself is what
-        # makes the per-task flow un-bypassable (0049).
+        # makes the per-task flow un-bypassable under accepted 0054/0069.
         run: |
           git fetch --no-tags origin "$BASE_REF"
           BASE_SHA="$(git merge-base FETCH_HEAD "$HEAD_SHA")"

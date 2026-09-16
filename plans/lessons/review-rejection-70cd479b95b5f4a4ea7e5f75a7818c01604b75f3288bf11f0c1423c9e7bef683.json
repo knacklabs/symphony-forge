@@ -1,0 +1,10 @@
+{
+  "applies_to": [
+    "factory/tests/**"
+  ],
+  "generated_by": "Codex",
+  "lesson": "Not a defect (0066): Decision 0066 makes in-stage write_scope a mechanically measured field. The recorder preserves an authenticated old grill and launch receipt, and the active task objective and acceptance remain unchanged. A material change to what the work is stales grill and approval. A new approval for a measurement-only scope amendment contradicts that settled closeout contract. — raised as \"Require fresh approval before widening an active task’s write scope (factory/tests/test_regrill_scope.py:404): This regression explicitly changes the approved t\"",
+  "severity": "medium",
+  "source": "review reject LEAN-WORKFLOW security",
+  "topic": "rejected-review-finding-security"
+}

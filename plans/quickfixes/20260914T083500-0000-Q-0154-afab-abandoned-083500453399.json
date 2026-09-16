@@ -1,0 +1,10 @@
+{
+  "event": "abandoned",
+  "id": "Q-0154-afab",
+  "profile": "degraded",
+  "reason": "Abandoned before any file claim: Decision 0052 and the approved Lean task contract explicitly route post-approval task-plan edits back to the approving human without another cold read. The proposed regrill-first repair contradicted that authority and will be removed; a separate bounded repair will restore the approved distinction between pre-approval and post-approval edits.",
+  "opened_reason": "Q-0153 verified the two-file gate-order repair, but the host apply_patch transport bypassed Forge's passive file-claim hook and its close record therefore named zero files. Re-authorize and claim the unchanged factory_lib.py and test_stop_less_often.py bytes through the canonical PreToolUse path so the durable ledger matches the actual repair before commit.",
+  "started_at": "2026-09-14T08:33:40+00:00",
+  "completed_at": "2026-09-14T08:35:00+00:00",
+  "files": []
+}

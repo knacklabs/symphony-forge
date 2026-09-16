@@ -26,25 +26,24 @@ It provides:
 
 ## Runtime Modes
 
-Claude Code coordinates discovery, planning, decisions, and orchestration through `codex-plugin-cc`. Its hook always denies product and canon writes; planning exploration is delegated to Codex read-only runs.
+Either Claude Code or native Codex coordinates discovery, planning, decisions,
+and orchestration through the same Forge phase engine. The active coordinator
+owns the human conversation; admitted Codex workers execute bounded
+exploration, implementation, testing, and review. Both runtimes produce the
+same `.factory` contract.
 
-Codex executes exploration, implementation, testing, and the review: the orchestrating session releases ONE three-lens pass per task with `./forge review <task-id>` (Codex-run, never a nested companion job; recorded as that task's proof — 0011, 0049), watches it, and loops it until clean, delegating fixes back to Codex. `./forge delegate` is the sole normal write path; a five-file `forge mode degraded` window is the ledgered outage exception. The `.factory` artifacts are required in either route.
+Protected implementation writes run through `./forge delegate`. The
+orchestrating session releases ONE three-lens pass per task with `./forge
+review <task-id>` (Codex-run, never a nested companion job; recorded as that
+task's proof under accepted 0011, 0054 and 0069), watches it, and loops it until
+clean, delegating fixes back to Codex. A five-file `forge mode degraded` window
+is the ledgered outage exception.
 
 ## Phase Contract
 
-0a. run lightweight discovery without `.factory` ceremony
-0b. prototype freely; save and confirm specs as capabilities emerge
-0c. derive the roadmap from confirmed specs
-1. record client sign-off (the spec/roadmap gate is checked now)
-2. plan one roadmap story and record its ordered task list
-3. wait for approval
-4. per task: plan-mode JIT contract → re-record → grill → stage start → `./forge delegate`; measure under 0018
-5. run deterministic verify
-6. review, once per task after implementation and verify: `./forge review <task-id>` releases Codex for the three lenses and records them as the task's proof (0049), then LOOP — delegate fixes to Codex, re-review — until every lens is clean (never a menu for the human — `docs/QUALITY.md`)
-7. run the functional check when the decomposition says `user_facing: true`
-8. record the shipped outcome, mark PR ready, open the PR to the default branch, and poll CI green (fixing CI failures)
-
-Sign-off requires confirmed specs and a derived roadmap. Later phases require it; implementation needs an approved plan and decomposition.
+Follow `WORKFLOW.md` for discovery through PR delivery, including native
+approval, task execution, proof and review. Sign-off requires confirmed specs
+and a derived roadmap; implementation requires an approved plan and recorded decomposition.
 
 ## Prompt and Agent Use
 
@@ -101,10 +100,11 @@ Closeout never re-verifies. Story proof is only `outcome.json`
 - Keep tasks bounded and capability-driven; plans bind one roadmap story and attest all active decisions.
 - The session write lock is always armed: delegate locked writes; use `forge mode degraded` only during a companion outage.
 - Do not decompose by document file or arbitrary file count, nor bypass `verify.py` with ad hoc validation commands.
-- Evidence enters `.factory/` only via schema-validated recorders (pinned `generated_by`), never by hand.
+- Evidence enters `.factory/` only via schema-validated recorders (pinned `generated_by`), never by hand. Review publication and stamping must validate the meaning bound in the immutable prompt hash. Preserve the approval-path and captured-context boundaries in `docs/specs/dual-coordinator-parity.md`; cold proof binds the launched result bytes.
 - Narration budget (conduct §8): one line per state change; findings and refusals always in full; process chatter never.
 - Follow [bounded recovery](docs/QUALITY.md#bounded-recovery) in every phase; repeated unchanged failures need a diagnosed, tested fix before another model run.
-- Review = ONE three-lens pass PER TASK via `./forge review <id>`, run by Codex, looped until clean (review → delegate fixes → re-review) and recorded before `pr-ready` (0011, 0049); never nested reviewers.
-- One worktree/story; sequential tasks; dependency-ready stories may parallelize (0002). Delegation/proof commands are trusted inputs; observed descendant cleanup is not hostile-code containment.
+- Use one integrated `./forge task close <id>` proof/review/finish cycle: preflight launch, review bounds, and required-test paths before expensive proof; recheck mutable state at finish; run only one full factory suite at a time on a shared host.
+- Review = ONE three-lens pass PER TASK via `./forge review <id>`, run by Codex, looped until clean (review → delegate fixes → re-review) and recorded before `pr-ready` under accepted 0011, 0054 and 0069; never nested reviewers.
+- Each leaf task owns a worktree and PR; dependency-ready tasks may parallelize only when their measured scopes are disjoint. Delegation/proof commands are trusted inputs; observed descendant cleanup is not hostile-code containment.
 - Keep the template repo independent of any client-specific source repo.
 - Do not keep long policy blocks in `AGENTS.md`; move them into docs.

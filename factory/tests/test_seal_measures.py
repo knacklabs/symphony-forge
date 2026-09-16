@@ -16,7 +16,8 @@ from pathlib import Path
 
 from test_gates import (  # noqa: F401
     DECOMP, HARNESS, STAGE_TASK, check_pr_ticket, git, head, intake,
-    measured_stage, plan_draft, pr_ticket_base, record_grill,
+    measured_stage, native_claude_approval, plan_draft, post_hook,
+    pr_ticket_base, record_grill,
     record_skeleton_then_frontier, record_task_grill, repo, run, save_plan,
     sign_off, stamp_and_commit, start_stage, write_in_scope,
 )
@@ -132,16 +133,14 @@ def test_one_plan_grill_before_save_still_matches_after_save(repo, tmp_path):
     assert code == 0, out
     code, out = run(repo, "forge.py", "plan", "save", "--from", str(draft),
                     "--story", "ENG-1")
-    assert code != 0 and "awaiting-approval" in out, out
+    assert code == 0 and "awaiting-approval" in out, out
     active = next((repo / "plans" / "active").glob("ENG-1-*.md"))
     assert "saved:" in active.read_text(encoding="utf-8")
     assert (plan_digest_without_assumptions(draft)
             == plan_digest_without_assumptions(active))
-    code, out = run(repo, "forge.py", "plan", "approve", "--by", "Ravi")
-    assert code == 0 and "http://127.0.0.1:" in out, out
-    code, out = run(repo, "forge.py", "plan", "save", "--from", str(active),
-                    "--story", "ENG-1")
-    assert code == 0 and "approved" in out, out
+    code, out = post_hook(repo, native_claude_approval(repo))
+    assert code == 0, out
+    assert "status: approved" in active.read_text(encoding="utf-8")
 
 
 def _write_decision(repo: Path, name: str = "0999-measured-not-refused") -> str:

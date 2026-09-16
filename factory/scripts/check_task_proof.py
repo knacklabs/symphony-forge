@@ -2,9 +2,10 @@
 """Require a PR that ships a task to carry that task's recorded proof.
 
 The per-task flow already produces proof — deterministic verify, the recorded
-automated tests, and one three-lens review (0049) — but nothing outside the
-`stage done` / `pr-ready` commands checked it. A task merged through a direct or
-story-level PR therefore shipped green with no verify, no tests and no reviews
+automated tests, and one three-lens review under accepted 0054/0069 — but
+nothing outside the `stage done` / `pr-ready` commands checked it. A task
+merged through a direct or story-level PR therefore shipped green with no
+verify, no tests and no reviews
 recorded, and nothing noticed until someone looked at the board (observed in
 R1-FOUND-2A, 2026-09-03). Gates that live only inside the happy path are
 advisory; this one is on the PR, so skipping the flow cannot merge.
@@ -102,7 +103,7 @@ def main() -> int:
               "(work already on the trunk) — proof not required.")
     if failures:
         print("Task-proof check FAILED: a PR that ships a task must carry that "
-              "task's recorded proof (0049).", file=sys.stderr)
+              "task's recorded proof under accepted 0054/0069.", file=sys.stderr)
         for failure in failures:
             print(f"  - {failure}", file=sys.stderr)
         return 1

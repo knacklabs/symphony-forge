@@ -1,0 +1,10 @@
+{
+  "generated_by": "upgrade",
+  "version": "lean-workflow-v2",
+  "input_inventory_digest": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+  "output_digest": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+  "installed_runtime_digest": "bb4b6c05b41897447063959fc782e9ca4c2e00f9b219559314b725485b91b2e8",
+  "entries": [],
+  "recorded_at": "2026-09-14T05:48:01+00:00",
+  "completed_at": "2026-09-14T05:48:01+00:00"
+}

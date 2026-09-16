@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import base64
+import hashlib
 import json
 import sys
 from pathlib import Path
@@ -15,7 +16,9 @@ from test_gates import (  # noqa: F401
 
 sys.path.insert(0, str(HARNESS / "factory" / "scripts"))
 from forge_cli.review import _helper_identity, codex_runs_path, review_task  # noqa: E402
-from forge_cli.stages import load_stages  # noqa: E402
+from forge_cli.stages import (  # noqa: E402
+    load_stages, reviewed_meaning_identity, task_for,
+)
 
 
 FAKE_REVIEW = r'''
@@ -126,6 +129,14 @@ def test_default_review_uses_one_helper_and_publishes_one_generation(repo, tmp_p
         "starting") == 1
     stage = next(item for item in load_stages(repo)["stages"] if item["id"] == "T1")
     assert stage["local_review_stamp"]["delta_id"] == pointer["delta_id"]
+    meaning = reviewed_meaning_identity(
+        repo, stage, task_for(repo, "T1"), generation["helper"],
+    )
+    assert generation["input"] in meaning["accepted_inputs"]
+    prompt = (repo / ".factory/review-briefs/T1.combined.md").read_bytes()
+    assert generation["input"] == {
+        "sha256": hashlib.sha256(prompt).hexdigest(), "bytes": len(prompt),
+    }
 
 
 def test_review_helper_identity_mismatch_refuses_publication(repo, tmp_path, monkeypatch):
@@ -162,3 +173,52 @@ def test_review_product_change_during_helper_refuses_publication(
         review_task(repo, "T1", skill=str(helper), engine="claude")
     assert "product changed during the review" in capsys.readouterr().out
     assert selection_path.read_bytes() == before
+
+
+def test_helper_result_cannot_stamp_evidence_changed_during_review(
+        repo, tmp_path, monkeypatch, capsys):
+    from forge_cli import review
+    from factory_lib import proof_path
+    _built(repo, tmp_path)
+    original = review._run_skill
+
+    def run_then_change_evidence(*args, **kwargs):
+        result = original(*args, **kwargs)
+        path = proof_path(repo, "ENG-1", "tests.json", task_id="T1")
+        data = json.loads(path.read_text())
+        data["automated"]["commands_run"].append("pytest changed-after-helper")
+        path.write_text(json.dumps(data))
+        return result
+
+    monkeypatch.setattr(review, "_run_skill", run_then_change_evidence)
+    with pytest.raises(SystemExit):
+        review_task(repo, "T1", skill=str(_fake_skill(tmp_path)), engine="claude")
+    assert "current reviewed meaning" in capsys.readouterr().out
+    assert not proof_path(repo, "ENG-1", "reviews/selected.json", task_id="T1").exists()
+
+
+def test_dataset_rendering_refuses_evidence_drift_before_helper(
+        repo, tmp_path, monkeypatch, capsys):
+    from forge_cli import review
+    from factory_lib import proof_path
+    _built(repo, tmp_path)
+    original = review.cmd_review_brief
+    called = []
+
+    def render_then_change_evidence(args):
+        original(args)
+        path = proof_path(repo, "ENG-1", "tests.json", task_id="T1")
+        data = json.loads(path.read_text())
+        data["automated"]["commands_run"].append("pytest changed-during-render")
+        path.write_text(json.dumps(data))
+
+    def helper_must_not_run(*args, **kwargs):
+        called.append(True)
+
+    monkeypatch.setattr(review, "cmd_review_brief", render_then_change_evidence)
+    monkeypatch.setattr(review, "_run_skill", helper_must_not_run)
+    with pytest.raises(SystemExit):
+        review_task(repo, "T1", skill=str(_fake_skill(tmp_path)), engine="claude")
+    assert "changed while rendering" in capsys.readouterr().out
+    assert not called
+    assert not proof_path(repo, "ENG-1", "reviews/selected.json", task_id="T1").exists()

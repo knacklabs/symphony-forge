@@ -1,0 +1,13 @@
+{
+  "event": "open",
+  "id": "Q-0148-e17d",
+  "profile": "degraded",
+  "reason": "The narrowed Lean retry passed grill continuity but native Codex refuses because this task changed .codex/hooks.json while its parent worktree retains the pre-Lean hooks; delete only the two declared obsolete multi-round test modules.",
+  "started_at": "2026-09-14T06:38:24+00:00",
+  "max_files": 5,
+  "files": [],
+  "harness_source": true,
+  "kind": "degraded",
+  "task_id": "LEAN-WORKFLOW",
+  "story": "FORGE-COORD-1"
+}

@@ -16,14 +16,16 @@ work.
 """
 from __future__ import annotations
 
+import hashlib
 import json
 import sys
 from pathlib import Path
 
 from test_gates import (  # noqa: F401
-    HARNESS, STAGE_TASK, fake_companion_env, git, intake, load_factory_lib,
-    record_skeleton_then_frontier, record_task_grill, repo, run, save_plan,
-    sign_off, story_state, view_plan_on_board,
+    HARNESS, STAGE_TASK, _seed_cold_launch, fake_companion_env, git, intake, load_factory_lib,
+    native_claude_approval, post_hook, record_skeleton_then_frontier,
+    record_task_grill, repo, run, save_plan, sign_off, story_state,
+    task_grill_payload,
 )
 
 sys.path.insert(0, str(HARNESS / "factory" / "scripts"))
@@ -57,9 +59,8 @@ def test_approval_to_pr_without_asking_the_human_anything_settled(
     code, out = record_task_grill(repo, STAGE_TASK, approve=False)
     assert code == 0, out
 
-    # ---- approval: the board link is printed, never demanded ---------------
-    code, out = run(repo, "forge.py", "task", "approve", "T1",
-                    "--by", "Nandu")
+    # ---- approval: consume the native Plan Mode approval event --------------
+    code, out = post_hook(repo, native_claude_approval(repo))
     assert code == 0, out
 
     # ---- the stage opens: from here the run is the agent's ----------------
@@ -140,8 +141,7 @@ def test_a_change_to_what_was_agreed_still_reaches_the_human(repo: Path,
     record_skeleton_then_frontier(repo, [STAGE_TASK])
     code, out = record_task_grill(repo, STAGE_TASK, approve=False)
     assert code == 0, out
-    view_plan_on_board(repo, "T1")
-    code, out = run(repo, "forge.py", "task", "approve", "T1", "--by", "Nandu")
+    code, out = post_hook(repo, native_claude_approval(repo))
     assert code == 0, out
 
     saved = story_state(repo) / "task-plans" / "T1.md"
@@ -149,10 +149,18 @@ def test_a_change_to_what_was_agreed_still_reaches_the_human(repo: Path,
         saved.read_text(encoding="utf-8")
         + "\nThe query now takes an `asOf` instant.\n", encoding="utf-8")
 
-    code, out = run(repo, "forge.py", "task", "approve", "T1", "--by", "Nandu")
-    assert code != 0, out
-    assert "CHANGED after" in out and "Nandu" in out
-    assert "does not need another grill" in out
+    code, out = run(repo, "forge.py", "stage", "start", "T1", "--trunk")
+    assert code != 0 and "task grill is STALE" in out, out
+    _seed_cold_launch(repo, "task", hashlib.sha256(saved.read_bytes()).hexdigest(), "T1")
+    code, out = run(repo, "record_grill_from_json.py", "--gate", "task",
+                    "--task", "T1", stdin=json.dumps(task_grill_payload(STAGE_TASK)))
+    assert code == 0, out
+    code, out = run(repo, "forge.py", "stage", "start", "T1", "--trunk")
+    assert code != 0 and "Task plan approval required" in out, out
+    code, out = post_hook(repo, native_claude_approval(repo))
+    assert code == 0, out
+    code, out = run(repo, "forge.py", "stage", "start", "T1", "--trunk")
+    assert code == 0, out
 
 
 def test_widening_the_scope_still_stops_the_next_delegate(repo: Path, tmp_path):

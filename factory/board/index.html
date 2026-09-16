@@ -1277,7 +1277,7 @@
 
 <footer class="wrap">
   <p>Read-only — this board never writes. Work happens in your session: ask what is next, and
-     approve plans in chat, because the grill is bound by digest to the exact plan text.</p>
+     approve the exact final plan in native Plan Mode.</p>
   <p id="lifecycle-footer" hidden>A card sits in the column it is waiting on. ★ marks one you can plan now.</p>
   <p id="dependencies-footer" hidden>Read-only — selecting a node traces its authored dependency path; it never changes the roadmap.</p>
 </footer>
@@ -3465,8 +3465,7 @@ function readinessBlock(detail) {
       <em aria-hidden="true">${c.ok ? "✓" : "✗"}</em>
       <span>${esc(c.label)}${c.ok ? "" : `${detailList(c.detail)}<span class="fix">${esc(c.fix)}</span>`}</span>
     </div>`).join("")}</div>
-    <p class="check-note">Approval happens in chat — the grill is an interrogation bound to
-      the exact plan text, not a button.</p>`;
+    <p class="check-note">Approve the exact final plan in native Plan Mode.</p>`;
 }
 
 function taskBlock(story) {

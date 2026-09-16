@@ -1,0 +1,15 @@
+{
+  "event": "done",
+  "id": "Q-0164-0fba",
+  "profile": "degraded",
+  "kind": "degraded",
+  "reason": "normal delegation is unavailable because this branch's hook runtime differs from the parent; make grill dispositions autonomous",
+  "started_at": "2026-09-14T11:16:09+00:00",
+  "completed_at": "2026-09-14T11:17:03+00:00",
+  "files": [
+    "factory/scripts/forge_cli/grill.py",
+    "factory/tests/test_gates.py"
+  ],
+  "task_id": "LEAN-WORKFLOW",
+  "story": "FORGE-COORD-1"
+}

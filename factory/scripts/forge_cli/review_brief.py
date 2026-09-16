@@ -9,7 +9,8 @@ import subprocess
 from pathlib import Path
 
 from factory_lib import (
-    _committed_task_marker, _plan_body_digest_bytes, _proof_commit_problems,
+    _committed_task_marker, _task_plan_approval_matches_digest,
+    _plan_body_digest_bytes, _proof_commit_problems,
     _read_git_bytes, _read_git_json, _stage_baseline_for, branch_diff_digest,
     active_task_id, head_sha, load_json, now_iso,
     plan_digest_without_assumptions, proof_path,
@@ -164,18 +165,17 @@ def _approved_task_inputs(base: Path, task: dict) -> dict:
         raise SystemExit(
             f"Review brief refused: grill for {task_id} is not a passing grill for this task."
         )
-    if (grill.get("task_plan_sha256") != digest
-            or grill.get("approved_task_plan_sha256") != digest):
-        raise SystemExit(
-            f"Review brief refused: grill/approval for {task_id} is stale or does not "
-            "match the approved task plan."
-        )
     if (not isinstance(grill.get("approved_by"), str)
             or not grill["approved_by"].strip()
             or not isinstance(grill.get("approved_at"), str)
             or not grill["approved_at"].strip()):
         raise SystemExit(
             f"Review brief refused: approved_by and approved_at are required for {task_id}."
+        )
+    if not _task_plan_approval_matches_digest(base, task, grill, digest):
+        raise SystemExit(
+            f"Review brief refused: grill/approval for {task_id} is stale or does not "
+            "match the approved task plan."
         )
     if treeish:
         grill_commit_problems = _proof_commit_problems(

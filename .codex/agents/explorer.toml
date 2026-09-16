@@ -1,4 +1,0 @@
-name = "explorer"
-model = "gpt-5.6-sol"
-model_reasoning_effort = "low"
-sandbox_mode = "read-only"

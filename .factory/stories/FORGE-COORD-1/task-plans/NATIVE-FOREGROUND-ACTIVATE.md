@@ -129,10 +129,6 @@ Rendered by the harness from the recorded decomposition; edit the decomposition,
 - harness.yaml
 - plans/exploration/coordinator-parity-preparation/lean-delivery-graph.json
 
-**Scope amendments** (measured paths the scope did not name, recorded with `forge stage amend-scope`)
-
-- factory/tests/test_task_parallelism.py -- The authoritative full verifier exposed this existing task-parallelism regression fixture as part of the approved immutable-baseline scope-classification change; its six slash expectations must track the directory-marked scope representation.
-
 **Required tests** (run by `stage done`)
 
 - `test_review_consumers_include_complete_approved_inputs` -- `UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path} -k {id} --junitxml={report}` (factory/tests/test_gates.py)

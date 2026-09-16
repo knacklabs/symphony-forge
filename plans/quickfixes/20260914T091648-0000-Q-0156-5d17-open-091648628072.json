@@ -1,0 +1,13 @@
+{
+  "event": "open",
+  "id": "Q-0156-5d17",
+  "profile": "degraded",
+  "reason": "The completed Lean gate suite found three bounded compatibility regressions: one pre-Lean assertion still expects re-grill after a post-approval task-plan rewrite, review-brief validation hides the specific missing approval metadata error behind a generic digest refusal, and native background delegation resolves amended scope before its required foreground-only refusal. Ordinary delegation remains unavailable because this Lean branch's committed hooks diverge from the parent worktree. Repair only test_gates.py, review_brief.py, and delegate.py, then run the three failing selectors and affected neighbors.",
+  "started_at": "2026-09-14T09:16:48+00:00",
+  "max_files": 5,
+  "files": [],
+  "harness_source": true,
+  "kind": "degraded",
+  "task_id": "LEAN-WORKFLOW",
+  "story": "FORGE-COORD-1"
+}

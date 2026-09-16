@@ -225,12 +225,10 @@ permission_mode = payload.get("permission_mode", "")
 # ---------------------------------------------------------------- ask gate --
 # One of the two ways to interrupt the human. The rule itself lives in
 # factory_lib.may_interrupt so this and the Stop hook cannot drift apart.
-if tool_name in {"request_user_input", "request_user_input_async"}:
-    from forge_cli.codex_runtime import coordinator_runtime
-    if coordinator_runtime() == "codex":
-        deny("native Codex question delivery is not supported in this foreground-only "
-             "release; use the main-chat approval path")
-if tool_name == "AskUserQuestion":
+if tool_name == "request_user_input_async":
+    deny("Asynchronous questions are optional clarification only and cannot "
+         "satisfy a required exchange, gate, or approval.")
+if tool_name in {"request_user_input", "AskUserQuestion"}:
     try:
         from factory_lib import may_interrupt
         allowed, reason = may_interrupt(Path.cwd(), spend=True)

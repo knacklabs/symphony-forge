@@ -1,0 +1,13 @@
+{
+  "event": "open",
+  "id": "Q-0171-7d6c",
+  "profile": "degraded",
+  "reason": "native delegate cannot start because Codex loads a semantically compatible but byte-divergent parent worktree hook config",
+  "started_at": "2026-09-14T17:00:50+00:00",
+  "max_files": 5,
+  "files": [],
+  "harness_source": true,
+  "kind": "degraded",
+  "task_id": "LEAN-WORKFLOW",
+  "story": "FORGE-COORD-1"
+}

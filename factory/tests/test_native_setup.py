@@ -28,9 +28,7 @@ def _hook(event: str, source, *, enabled=True, trust="trusted") -> dict:
         "currentHash": "sha256:trusted-by-codex",
     }
     if event == "preToolUse":
-        hook["matcher"] = (
-            "Bash|apply_patch|Edit|Write|request_user_input|request_user_input_async"
-        )
+        hook["matcher"] = "Bash|apply_patch|request_user_input"
     elif event == "postToolUse":
         hook["matcher"] = "^request_user_input$"
     elif event == "sessionStart":
@@ -95,11 +93,10 @@ def test_codex_hook_readiness_requires_exact_enabled_trusted_source(
         doctor, "_codex_hooks_inventory", lambda _binary, _base: (wrong, ""))
     assert "PreToolUse matcher" in doctor.codex_hook_readiness(tmp_path)[1]
 
-    tools = ("Bash", "apply_patch", "Edit", "Write",
-             "request_user_input", "request_user_input_async")
+    tools = ("Bash", "apply_patch", "request_user_input")
     config_path = repo / ".codex" / "hooks.json"
     original_config = config_path.read_bytes()
-    for missing in ("apply_patch", "Edit", "Write"):
+    for missing in tools:
         incomplete = [dict(hook) for hook in valid]
         next(hook for hook in incomplete
              if hook["eventName"] == "preToolUse")["matcher"] = "|".join(
@@ -165,6 +162,121 @@ def test_codex_hook_readiness_accepts_only_identical_inherited_worktree_hooks(
     config.write_text('{"hooks": {"fixture": "diverged"}}\n')
     ok, detail = doctor.codex_hook_readiness(linked)
     assert not ok and "inherited divergent hooks" in detail
+
+    expected = json.loads((HARNESS / ".codex" / "hooks.json").read_text())
+    actual = copy.deepcopy(expected)
+    expected["hooks"]["PreToolUse"][0]["matcher"] = (
+        "Bash|apply_patch|request_user_input"
+    )
+    actual["hooks"]["PreToolUse"][0]["matcher"] = (
+        "Bash|Edit|Write|apply_patch|request_user_input|request_user_input_async"
+    )
+    (linked / ".codex" / "hooks.json").write_text(json.dumps(expected))
+    config.write_text(json.dumps(actual))
+    inherited = [_hook(event, config) for event in doctor.CODEX_HOOK_EVENTS]
+    next(hook for hook in inherited if hook["eventName"] == "preToolUse")[
+        "matcher"
+    ] = actual["hooks"]["PreToolUse"][0]["matcher"]
+    monkeypatch.setattr(
+        doctor, "_codex_hooks_inventory", lambda _binary, _base: (inherited, ""))
+    assert doctor.codex_hook_readiness(linked)[0]
+
+    divergent_root = tmp_path / "divergent"
+    divergent_config = divergent_root / ".codex" / "hooks.json"
+    divergent_config.parent.mkdir(parents=True)
+    divergent_source = copy.deepcopy(actual)
+    divergent_source["hooks"]["Stop"][0]["hooks"][0]["command"] = "exit 0"
+    divergent_config.write_text(json.dumps(divergent_source))
+    mixed = inherited + [
+        _hook(event, divergent_config) for event in doctor.CODEX_HOOK_EVENTS
+    ]
+    monkeypatch.setattr(
+        doctor, "_git_worktree_roots",
+        lambda _base: ({main.resolve(), linked.resolve(), divergent_root.resolve()}, ""),
+    )
+    monkeypatch.setattr(
+        doctor, "_codex_hooks_inventory", lambda _binary, _base: (mixed, ""))
+    ok, detail = doctor.codex_hook_readiness(linked)
+    assert not ok and str(divergent_config) in detail
+
+    monkeypatch.setattr(
+        doctor, "_git_worktree_roots",
+        lambda _base: ({main.resolve(), linked.resolve()}, ""),
+    )
+    monkeypatch.setattr(
+        doctor, "_codex_hooks_inventory", lambda _binary, _base: (inherited, ""))
+    actual["hooks"]["PreToolUse"][0]["hooks"][0]["command"] = "run something else"
+    config.write_text(json.dumps(actual))
+    ok, detail = doctor.codex_hook_readiness(linked)
+    assert not ok and "inherited divergent hooks" in detail
+
+
+def test_inherited_hook_compatibility_is_fail_closed():
+    from forge_cli import doctor
+
+    expected = json.loads((HARNESS / ".codex" / "hooks.json").read_text())
+
+    def encoded(document, *, pretty=False):
+        return json.dumps(
+            document, indent=2 if pretty else None, sort_keys=pretty,
+        ).encode()
+
+    # Formatting and key order are not semantic differences.
+    assert doctor._compatible_hook_source(
+        encoded(expected, pretty=True), encoded(expected),
+    )
+
+    inherited = copy.deepcopy(expected)
+    inherited["hooks"]["PreToolUse"][0]["matcher"] = (
+        "Bash|Edit|Write|apply_patch|request_user_input|request_user_input_async"
+    )
+    expected["hooks"]["PreToolUse"][0]["matcher"] = (
+        "Bash|apply_patch|request_user_input"
+    )
+    assert doctor._compatible_hook_source(encoded(expected), encoded(inherited))
+
+    divergent = []
+
+    missing_alias = copy.deepcopy(inherited)
+    missing_alias["hooks"]["PreToolUse"][0]["matcher"] = "Bash|apply_patch"
+    divergent.append(missing_alias)
+
+    for matcher in ("Bash|.*|apply_patch|request_user_input", "(?:Bash|Edit)"):
+        regex_matcher = copy.deepcopy(inherited)
+        regex_matcher["hooks"]["PreToolUse"][0]["matcher"] = matcher
+        divergent.append(regex_matcher)
+
+    extra_registration = copy.deepcopy(inherited)
+    extra_registration["hooks"]["PreToolUse"].append(
+        copy.deepcopy(extra_registration["hooks"]["PreToolUse"][0])
+    )
+    divergent.append(extra_registration)
+
+    changed_post_matcher = copy.deepcopy(inherited)
+    changed_post_matcher["hooks"]["PostToolUse"][0]["matcher"] = ".*"
+    divergent.append(changed_post_matcher)
+
+    changed_command = copy.deepcopy(inherited)
+    changed_command["hooks"]["Stop"][0]["hooks"][0]["command"] = "exit 0"
+    divergent.append(changed_command)
+
+    changed_metadata = copy.deepcopy(inherited)
+    changed_metadata["hooks"]["Stop"][0]["hooks"][0]["timeout"] = 31
+    divergent.append(changed_metadata)
+
+    extra_event = copy.deepcopy(inherited)
+    extra_event["hooks"]["Unexpected"] = []
+    divergent.append(extra_event)
+
+    extra_top_level = copy.deepcopy(inherited)
+    extra_top_level["unexpected"] = True
+    divergent.append(extra_top_level)
+
+    for document in divergent:
+        assert not doctor._compatible_hook_source(encoded(expected), encoded(document))
+
+    for malformed in (b"{", b"[]", b'{"hooks": []}'):
+        assert not doctor._compatible_hook_source(malformed, malformed)
 
 
 def test_doctor_repairs_only_exact_plugin_max_source(tmp_path, monkeypatch):
@@ -306,17 +418,9 @@ def test_model_policy_selects_sol_work_and_luna_lite():
     }
 
     assert {"model", "model_reasoning_effort", "plan_mode_reasoning_effort"}.isdisjoint(config)
-    assert lanes == {
-        ("gpt-5.6-sol", "low"): {"explorer"},
-        ("gpt-5.6-sol", "medium"): {
-            "backend", "debugger", "frontend", "refactorer", "tester",
-        },
-        ("gpt-5.6-sol", "high"): {
-            "architect", "docs-decomposer", "functional-checker", "griller",
-            "performance", "planner", "planner-high", "security",
-        },
-        ("gpt-5.6-luna", "max"): {"lite"},
-    }
+    assert lanes == {("gpt-5.6-sol", "high"): {
+        "docs-decomposer", "functional-checker", "planner-high",
+    }}
     assert pinned_run_config(HARNESS) == ("gpt-5.6-sol", "medium")
     assert (explore["model"], explore["model_reasoning_effort"]) == (
         "gpt-5.6-sol", "low")
@@ -331,14 +435,27 @@ SESSION_START_SOURCES = ("startup", "resume", "clear", "compact")
 HOOK_TOOL_MATRIX = {
     ".claude/settings.json": {
         "PreToolUse": ("Bash", "AskUserQuestion", "Edit", "Write", "MultiEdit", "NotebookEdit"),
-        "PostToolUse": ("Write", "Edit", "MultiEdit", "AskUserQuestion"),
+        "PostToolUse": ("AskUserQuestion", "ExitPlanMode"),
     },
     ".codex/hooks.json": {
-        "PreToolUse": ("Bash", "Edit", "Write", "apply_patch", "request_user_input",
-                       "request_user_input_async"),
+        "PreToolUse": ("Bash", "apply_patch", "request_user_input"),
         "PostToolUse": ("request_user_input",),
     },
 }
+
+
+def test_recovery_profile_override_keeps_only_three_forge_profiles():
+    config = tomllib.loads(
+        (HARNESS / ".codex/config.toml").read_text(encoding="utf-8"))
+    expected = {"planner-high", "docs-decomposer", "functional-checker"}
+    configured = {
+        name for name, row in config["agents"].items()
+        if isinstance(row, dict) and row.get("config_file")
+    }
+    installed = {
+        path.stem for path in (HARNESS / ".codex/agents").glob("*.toml")
+    }
+    assert configured == expected == installed
 
 
 def _remove_session_start_source(config, missing):

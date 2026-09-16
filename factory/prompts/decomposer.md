@@ -25,9 +25,12 @@ Rules:
   "It is a clean seam" is NOT a reason; seams are always available, so the
   burden is on splitting, never on merging. Each extra task costs a human a
   plan, a grill, an approval, a review and a PR.
-- The floor still binds: a task that cannot be done in one bounded session is
-  refused by the grill no matter how few tasks it buys, and its oversized diff
-  chunks the reviewer so contract verdicts are never emitted.
+- The floor still binds: split a task when implementation, verification, full
+  three-lens review and findings fixes cannot finish in one bounded session, or
+  its diff exceeds what a reviewer can assess reliably at once. Review groups
+  read the whole task tree and join into one immutable record; every plan
+  contract needs a complete verdict, with missing or partial verdicts blocking
+  closeout.
 - BACKEND and FRONTEND are separate tasks, always: they have disjoint write
   scopes, different reviewer focus, and only the frontend one is `user_facing`.
   When either side is still too large for one bounded session, split THAT side

@@ -1,0 +1,17 @@
+{
+  "event": "done",
+  "id": "Q-0163-c908",
+  "profile": "degraded",
+  "kind": "degraded",
+  "reason": "normal delegation is unavailable because this branch's hook runtime differs from the parent; restore native synchronous question approval",
+  "started_at": "2026-09-14T11:12:21+00:00",
+  "completed_at": "2026-09-14T11:15:23+00:00",
+  "files": [
+    "factory/scripts/pre_tool_use.py",
+    "factory/scripts/session_start.py",
+    "factory/tests/test_ask_gate.py",
+    "factory/tests/test_gates.py"
+  ],
+  "task_id": "LEAN-WORKFLOW",
+  "story": "FORGE-COORD-1"
+}

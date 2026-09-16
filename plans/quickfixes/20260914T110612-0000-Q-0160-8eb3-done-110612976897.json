@@ -1,0 +1,18 @@
+{
+  "event": "done",
+  "id": "Q-0160-8eb3",
+  "profile": "degraded",
+  "kind": "degraded",
+  "reason": "normal delegation is unavailable because this branch's hook runtime differs from the parent; replace proposed Decision 0049 authority citations",
+  "started_at": "2026-09-14T11:05:14+00:00",
+  "completed_at": "2026-09-14T11:06:12+00:00",
+  "files": [
+    "AGENTS.md",
+    ".claude/CLAUDE.md",
+    "factory/prompts/reviewer.md",
+    "factory/scripts/forge_cli/review.py",
+    "factory/scripts/check_task_proof.py"
+  ],
+  "task_id": "LEAN-WORKFLOW",
+  "story": "FORGE-COORD-1"
+}

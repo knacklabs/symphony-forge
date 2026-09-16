@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import hashlib
+import argparse
 import json
 import os
 import subprocess
@@ -272,6 +273,7 @@ def test_known_native_launch_reads_delegation_ledger_once(tmp_path, monkeypatch)
     monkeypatch.setattr(admission, "run_state_path", lambda _base: run_path)
     monkeypatch.setattr(admission, "task_digest", lambda _task: "task-digest")
     monkeypatch.setattr(stages, "stage_baseline", lambda *_a: "baseline")
+    monkeypatch.setattr(stages, "effective_scope", lambda _base, _task, scope: list(scope))
     classifications = []
     monkeypatch.setattr(
         admission, "classify_scope_entries",
@@ -316,6 +318,39 @@ def test_known_native_launch_reads_delegation_ledger_once(tmp_path, monkeypatch)
     grant, reason = admission.live_worker_admission(tmp_path)
     assert grant is None and "outside the registered worker process tree" in reason
 
+
+def test_context_file_launch_uses_one_handle_snapshot_and_metadata_only_evidence(
+        repo: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    from forge_cli import delegate
+
+    _seed_contract(repo)
+    (_control(repo) / "stages.json").write_text(
+        json.dumps({"issue": "STORY-1", "stages": []}), encoding="utf-8")
+    secure = tmp_path / "private"
+    secure.mkdir(mode=0o700)
+    secure.chmod(0o700)
+    source = secure / "context.md"
+    source.write_text("one stable snapshot", encoding="utf-8")
+    source.chmod(0o600)
+    captured = {}
+
+    def fake_launch(base, **kwargs):
+        captured.update(kwargs)
+        assert kwargs["context_text"] == "one stable snapshot"
+        assert kwargs["context_snapshot_identity"]
+        return {"launch_status": "succeeded"}
+
+    monkeypatch.setattr(delegate, "launch_companion", fake_launch)
+    delegate.cmd_delegate(argparse.Namespace(
+        repo=str(repo), id="T1", read_only=True, scope=[], background=False,
+        context_file=str(source), print_only=False,
+    ))
+
+    assert captured["context_text"] == "one stable snapshot"
+    assert captured["context_metadata"]["supplied"] is True
+    assert captured["context_metadata"]["bytes"] == len(b"one stable snapshot")
+    assert set(captured["context_metadata"]) == {"supplied", "bytes", "snapshot_id"}
+    assert not captured["context_snapshot"].parent.exists()
 
 def test_native_worker_patch_add_update_delete_and_move_is_admitted(repo, tmp_path):
     brief, digest = _seed_contract(repo)
@@ -906,3 +941,21 @@ def test_lean_stop_does_not_exempt_untrusted_or_non_grill_launch(
     output = _invoke_worker(proc, {"handoff": "untrusted"})
     result = json.loads(output)
     assert result.get("decision") == "block" and "Do not stop here" in result["reason"]
+
+
+def test_context_config_failure_creates_no_private_snapshot(repo, tmp_path, monkeypatch):
+    from forge_cli import delegate
+    _seed_contract(repo)
+    (_control(repo) / "stages.json").write_text(
+        json.dumps({"issue": "STORY-1", "stages": []}))
+    source = tmp_path / "context.md"
+    source.write_text("sensitive context")
+    def bad_config(_base):
+        raise SystemExit("invalid pinned model")
+    monkeypatch.setattr(delegate, "pinned_run_config", bad_config)
+    monkeypatch.setattr(delegate, "secure_context_snapshot",
+                        lambda _source: pytest.fail("created a snapshot before valid config"))
+    with pytest.raises(SystemExit, match="invalid pinned model"):
+        delegate.cmd_delegate(argparse.Namespace(
+            repo=str(repo), id="T1", read_only=True, scope=[], background=False,
+            context_file=str(source), print_only=False))

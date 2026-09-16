@@ -21,13 +21,225 @@ import pytest
 
 from test_gates import (  # noqa: I001 — test_gates puts factory/scripts on sys.path
     DECOMP, _write_complete_automated, git, head, intake, record_task_grill, repo,
-    run, save_plan, sign_off, skeletal_stage_task, task_skeleton,
+    run, save_plan, sign_off, skeletal_stage_task, task_skeleton, load_factory_lib,
 )
+from forge_cli import stages as stage_helpers  # noqa: E402
 from forge_cli.review import (  # noqa: E402
     _actual_passes, _project_combined_report, _tagged_finding, resolve_review_base,
 )
 
 __all__ = ["repo"]
+
+
+def _meaning_fixture(repo, monkeypatch):
+    lib = load_factory_lib(repo)
+    lib.dump_json(lib.run_state_path(repo), {"issue_key": "S1", "story": "S1"})
+    plan = lib.evidence_path(repo, "S1", "task-plans/T1.md", for_write=True)
+    plan.parent.mkdir(parents=True, exist_ok=True)
+    plan.write_text("# reviewed task plan\n", encoding="utf-8")
+    proof = lib.proof_path(repo, "S1", "tests.json", task_id="T1", for_write=True)
+    proof.parent.mkdir(parents=True, exist_ok=True)
+    proof.write_text(json.dumps({
+        "automated": {"status": "passed", "cases": ["baseline"]},
+        "recorded_at": "bookkeeping", "generated_by": "implementer",
+    }), encoding="utf-8")
+    generated = repo / "ci/generated.json"
+    generated.parent.mkdir(parents=True, exist_ok=True)
+    generated.write_text('{"contract": "v1"}\n', encoding="utf-8")
+    task = {
+        "id": "T1", "objective": "review the semantic change",
+        "acceptance_criteria": ["works"],
+        "plan_contracts": [{"id": "C1", "statement": "works", "source": "plan"}],
+        "reviewer_focus": ["security"], "write_scope": ["src/"],
+        "required_tests": [], "verify_commands": [],
+        "generated_semantic_inputs": ["ci/generated.json"],
+    }
+    monkeypatch.setattr(
+        stage_helpers, "stage_review_binding",
+        lambda *_args: {"stage_id": "T1", "base_sha": "b", "delta_id": "d" * 64},
+    )
+    return lib, task, {"id": "T1"}, {
+        "path": "factory/prompts/reviewer.md", "version": "v1",
+        "sha256": "a" * 64,
+    }
+
+
+def test_selected_review_reviewed_meaning_includes_ci_generated_outputs_and_review_instructions(
+        repo, monkeypatch):
+    _lib, task, stage, helper = _meaning_fixture(repo, monkeypatch)
+    meaning = stage_helpers.reviewed_meaning_identity(repo, stage, task, helper)
+    assert meaning["inputs"]["generated_semantic_inputs"] == {
+        "ci/generated.json": hashlib.sha256(
+            (repo / "ci/generated.json").read_bytes()).hexdigest(),
+    }
+    assert set(meaning["inputs"]["review_instructions"]) == {
+        "factory/prompts/reviewer.md", "factory/scripts/forge_cli/review.py",
+        "factory/scripts/forge_cli/review_brief.py", "factory/schemas/review.json",
+    }
+    assert meaning["inputs"]["helper"]["current_sha256"] == hashlib.sha256(
+        (repo / "factory/prompts/reviewer.md").read_bytes()).hexdigest()
+
+
+def test_selected_review_reruns_for_substantive_automated_evidence_change(
+        repo, monkeypatch):
+    lib, task, stage, helper = _meaning_fixture(repo, monkeypatch)
+    before = stage_helpers.reviewed_meaning_identity(
+        repo, stage, task, helper)["semantic_identity"]
+    proof = lib.proof_path(repo, "S1", "tests.json", task_id="T1")
+    evidence = json.loads(proof.read_text())
+    evidence["automated"]["cases"].append("new semantic case")
+    proof.write_text(json.dumps(evidence), encoding="utf-8")
+    assert stage_helpers.reviewed_meaning_identity(
+        repo, stage, task, helper)["semantic_identity"] != before
+
+
+def test_generated_review_inputs_are_included_in_reviewed_meaning(repo, monkeypatch):
+    _lib, task, stage, helper = _meaning_fixture(repo, monkeypatch)
+    before = stage_helpers.reviewed_meaning_identity(
+        repo, stage, task, helper)["semantic_identity"]
+    (repo / "ci/generated.json").write_text('{"contract": "v2"}\n', encoding="utf-8")
+    assert stage_helpers.reviewed_meaning_identity(
+        repo, stage, task, helper)["semantic_identity"] != before
+
+
+@pytest.mark.parametrize("change", ["automated", "generated"])
+def test_public_review_set_refuses_old_meaning_even_after_token_remint(
+        repo, tmp_path, monkeypatch, change):
+    from test_review_settled_contracts import _publish, _story
+    from factory_lib import proof_path, protected_decomposition_state_path
+    from forge_cli.review import _helper_identity
+    _story(repo, tmp_path)
+    helper = tmp_path / "autoreview"
+    helper.write_text("fixture helper\n")
+    monkeypatch.setenv("AUTOREVIEW", str(helper))
+    decomposition_path = protected_decomposition_state_path(repo)
+    decomposition = json.loads(decomposition_path.read_text())
+    task = next(item for item in decomposition["tasks"] if item["id"] == "T2")
+    generated = repo / ".factory/generated-review-input.json"
+    generated.write_text('"before"\n')
+    task["generated_semantic_inputs"] = [generated.relative_to(repo).as_posix()]
+    decomposition_path.write_text(json.dumps(decomposition))
+    generation, _ = _publish(repo)
+    candidate = {key: value for key, value in generation.items() if key != "generation_id"}
+    candidate["helper"] = _helper_identity(helper)[0]
+
+    def stage():
+        return next(row for row in stage_helpers.load_stages(repo)["stages"]
+                    if row["id"] == "T2")
+
+    meaning = stage_helpers.reviewed_meaning_identity(repo, stage(), task, candidate["helper"])
+    candidate["input"] = {"sha256": meaning["identity"], "bytes": meaning["bytes"]}
+    command = ("record_review_from_json.py", "--set", "--task", "T2")
+    code, out = run(repo, *command, stdin=json.dumps(candidate))
+    assert code == 0, out
+    assert stage_helpers.stamp_is_fresh(repo, stage(), task)
+    pointer = proof_path(repo, "ENG-1", "reviews/selected.json", task_id="T2")
+    selected_before = pointer.read_bytes()
+    if change == "automated":
+        proof = proof_path(repo, "ENG-1", "tests.json", task_id="T2")
+        data = json.loads(proof.read_text())
+        data["automated"]["commands_run"].append("pytest changed-substantive-check")
+        proof.write_text(json.dumps(data))
+    else:
+        generated.write_text('"after"\n')
+    assert not stage_helpers.stamp_is_fresh(repo, stage(), task)
+    code, out = run(repo, *command, stdin=json.dumps(candidate))
+    assert code != 0 and "current reviewed meaning" in out
+    code, out = run(repo, "forge.py", "review-brief", "--all")
+    assert code == 0, out
+    token = json.loads((repo / ".factory/stories/ENG-1/review-run.json").read_text())
+    candidate["brief_sha256"] = token["brief_sha256"]
+    candidate["review_run_id"] = token["review_run_id"]
+    for lens in candidate["lenses"].values():
+        lens["review_run_id"] = token["review_run_id"]
+        lens["brief_sha256"] = token["brief_sha256"]
+    code, out = run(repo, *command, stdin=json.dumps(candidate))
+    assert code != 0 and "current reviewed meaning" in out
+    assert pointer.read_bytes() == selected_before
+    assert not stage_helpers.stamp_is_fresh(repo, stage(), task)
+
+
+def test_review_publication_and_direct_stamp_recheck_meaning(repo, tmp_path, capsys):
+    from test_review_settled_contracts import _publish, _story
+    from factory_lib import proof_path, publish_review_generation
+    _story(repo, tmp_path)
+    generation, _ = _publish(repo)
+    candidate = {key: value for key, value in generation.items() if key != "generation_id"}
+    stage_helpers.stamp_stage_review(repo, "T2")
+    pointer = proof_path(repo, "ENG-1", "reviews/selected.json", task_id="T2")
+    before = pointer.read_bytes()
+
+    def change_evidence():
+        path = proof_path(repo, "ENG-1", "tests.json", task_id="T2")
+        data = json.loads(path.read_text())
+        data["automated"]["commands_run"].append("pytest changed-after-preflight")
+        path.write_text(json.dumps(data))
+
+    with pytest.raises(SystemExit):
+        publish_review_generation(
+            repo, "ENG-1", "T2", candidate, update_stamp=True,
+            on_selection_lock_wait=change_evidence,
+        )
+    assert "current reviewed meaning" in capsys.readouterr().out
+    assert pointer.read_bytes() == before
+    with pytest.raises(SystemExit):
+        stage_helpers.stamp_stage_review(repo, "T2")
+    assert "current reviewed meaning" in capsys.readouterr().out
+
+
+def test_review_prompt_binding_reuses_bookkeeping_after_token_remint(repo, tmp_path):
+    from test_review_settled_contracts import _publish, _story
+    from factory_lib import proof_path, publish_review_generation
+    _story(repo, tmp_path)
+    generation, _ = _publish(repo)
+    candidate = {key: value for key, value in generation.items() if key != "generation_id"}
+    stage_helpers.stamp_stage_review(repo, "T2")
+    proof = proof_path(repo, "ENG-1", "tests.json", task_id="T2")
+    data = json.loads(proof.read_text())
+    data["automated"]["recorded_at"] = "2026-09-15T00:00:00+00:00"
+    proof.write_text(json.dumps(data))
+    code, out = run(repo, "forge.py", "review-brief", "--all")
+    assert code == 0, out
+    published, _ = publish_review_generation(
+        repo, "ENG-1", "T2", candidate, update_stamp=True,
+    )
+    assert published["generation_id"] == generation["generation_id"]
+    stage = next(row for row in stage_helpers.load_stages(repo)["stages"]
+                 if row["id"] == "T2")
+    assert stage_helpers.stamp_is_fresh(repo, stage, stage_helpers.task_for(repo, "T2"))
+
+
+def test_review_preflight_refuses_stale_proof_before_helper_launch(repo):
+    from forge_cli.review import pre_review_proof_problems
+    lib = load_factory_lib(repo)
+    story, task = "S1", "T1"
+    proof_root = lib.proof_path(repo, story, "tests.json", task_id=task).parent
+    proof_root.mkdir(parents=True, exist_ok=True)
+    proof_commit = git(repo, "rev-parse", "HEAD").strip()
+    (proof_root / "verify.json").write_text(json.dumps({
+        "ok": True, "commit": proof_commit,
+    }), encoding="utf-8")
+    (proof_root / "tests.json").write_text(json.dumps({
+        "commit": proof_commit,
+        "automated": {"status": "passed", "blocking_findings": []},
+    }), encoding="utf-8")
+    git(repo, "add", ".factory")
+    git(repo, "commit", "-q", "-m", "proof fixtures")
+    bookkeeping_head = git(repo, "rev-parse", "HEAD").strip()
+    assert pre_review_proof_problems(
+        repo, story, task, proof_commit, bookkeeping_head,
+    ) == []
+
+    changed = repo / "src/review-change.py"
+    changed.parent.mkdir(exist_ok=True)
+    changed.write_text("changed = True\n", encoding="utf-8")
+    git(repo, "add", "src/review-change.py")
+    git(repo, "commit", "-q", "-m", "product changed after proof")
+    stale_head = git(repo, "rev-parse", "HEAD").strip()
+    assert any("product content changed" in problem for problem in
+               pre_review_proof_problems(
+                   repo, story, task, proof_commit, stale_head,
+               ))
 
 
 def _combined_explanation(quality: str, performance: str, security: str) -> str:
@@ -333,25 +545,34 @@ def test_review_set_recorder_validates_origin_specific_shape_and_raw_bytes(
         repo, tmp_path, monkeypatch):
     from test_review_settled_contracts import _publish, _story
     from factory_lib import protected_decomposition_state_path, validate_review_document
-    from forge_cli.review import _combined_prompt, _helper_identity, resolve_skill
+    from forge_cli.review import _helper_identity, resolve_skill
     _story(repo, tmp_path)
     generation, _pointer = _publish(repo)
     candidate = {key: value for key, value in generation.items() if key != "generation_id"}
     task = next(item for item in json.loads(
         protected_decomposition_state_path(repo).read_text())["tasks"]
         if item["id"] == "T2")
-    prompt = _combined_prompt(task)
     safe_helper = tmp_path / "autoreview"
     safe_helper.write_text("safe helper\n")
     monkeypatch.setenv("AUTOREVIEW", str(safe_helper))
     candidate["helper"] = _helper_identity(resolve_skill(None))[0]
+    stage = next(item for item in stage_helpers.load_stages(repo)["stages"]
+                 if item["id"] == "T2")
+    meaning = stage_helpers.reviewed_meaning_identity(
+        repo, stage, task, candidate["helper"],
+    )
     candidate["input"] = {
-        "sha256": hashlib.sha256(prompt).hexdigest(), "bytes": len(prompt),
+        "sha256": meaning["identity"], "bytes": meaning["bytes"],
     }
     malformed = copy.deepcopy(candidate)
     malformed["raw_result"]["bytes"] += 1
     code, out = run(repo, "record_review_from_json.py", "--set", "--task", "T2",
                     stdin=json.dumps(malformed))
+    assert code != 0 and "decoded byte count" in out
+    fallback = copy.deepcopy(malformed)
+    fallback["input"] = meaning["accepted_inputs"][1]
+    code, out = run(repo, "record_review_from_json.py", "--set", "--task", "T2",
+                    stdin=json.dumps(fallback))
     assert code != 0 and "decoded byte count" in out
     empty_raw = {"encoding": "base64", "sha256": hashlib.sha256(b"").hexdigest(),
                  "bytes": 0, "data": ""}
@@ -404,7 +625,7 @@ def test_review_set_recorder_validates_origin_specific_shape_and_raw_bytes(
     wrong_input["input"]["sha256"] = "0" * 64
     code, out = run(repo, "record_review_from_json.py", "--set", "--task", "T2",
                     stdin=json.dumps(wrong_input))
-    assert code != 0 and "current combined prompt" in out
+    assert code != 0 and "current reviewed meaning" in out
 
     stale = copy.deepcopy(candidate)
     token_path = repo / ".factory/stories/ENG-1/review-run.json"
@@ -629,6 +850,38 @@ def test_contract_verdicts_read_every_preserved_pass_report_and_keep_the_worst()
     assert "races the index" in out["T1-AC2"]["evidence"]
     assert out["T1-AC3"]["verdict"] == "missing"
     assert "no VERDICT line" not in out["T1-AC1"]["evidence"]
+
+
+def test_chunked_quality_prompt_omits_unobserved_verdicts_and_aggregation_fails_closed():
+    from forge_cli.review import _combined_prompt, _contract_verdicts
+
+    task = {"id": "T1", "plan_contracts": [
+        {"id": "T1-AC1"}, {"id": "T1-AC2"}, {"id": "T1-AC3"}]}
+    prompt = _combined_prompt(task).decode("utf-8")
+    assert "If a contract's evidence is absent from this chunk, omit its record" in prompt
+    assert "do not call it partial or missing solely because this chunk lacks" in prompt
+    assert "In a one-pass run, verdict every contract" in prompt
+    assert "never a line in overall_explanation" in prompt
+    reviewed = {"overall_explanation": "preserved passes", "findings": [],
+                "pass_reports": [
+                    {"report": {"overall_explanation":
+                                "VERDICT T1-AC1: implemented — src/a.py:1", "findings": []}},
+                    {"report": {"overall_explanation":
+                                "VERDICT T1-AC2: implemented — src/b.py:1", "findings": []}},
+                ]}
+    verdicts = {row["contract_id"]: row for row in
+                _contract_verdicts(task, reviewed, [task], {})}
+    assert verdicts["T1-AC1"]["verdict"] == "implemented"
+    assert verdicts["T1-AC2"]["verdict"] == "implemented"
+    assert verdicts["T1-AC3"]["verdict"] == "partial"
+    reviewed["pass_reports"].append({"report": {"overall_explanation":
+                               "VERDICT T1-AC3: implemented — src/c.py:1", "findings": []}})
+    assert all(row["verdict"] == "implemented" for row in
+               _contract_verdicts(task, reviewed, [task], {}))
+    reviewed["pass_reports"][0]["report"]["overall_explanation"] += (
+        "\nVERDICT T1-AC2: partial — src/b.py:9 observed defect")
+    assert {row["contract_id"]: row["verdict"] for row in
+            _contract_verdicts(task, reviewed, [task], {})}["T1-AC2"] == "partial"
 
 
 def test_every_lens_brief_hunts_for_compatibility_leftovers():

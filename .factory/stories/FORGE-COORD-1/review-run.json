@@ -1,7 +1,7 @@
 {
-  "task_id": "NATIVE-FOREGROUND-ACTIVATE",
-  "review_run_id": "124f0a0eea6930bb460eb7a373343e61e3c7001e5c38b4461aa002360e5fb6f7",
-  "brief_sha256": "58a85f30e3b51289329f528629e7b8fb7e66abe778ef8b223dd42b7307e7e0c0",
-  "branch_diff_digest": "e31e38d52ae76ff00dbbffb49955d8196ff6cb7def16631e9fce8558ab735067",
-  "minted_at": "2026-09-14T00:21:49+00:00"
+  "task_id": "LEAN-WORKFLOW",
+  "review_run_id": "7dd6f7a7d7b5fdb16fd7bf4d750e191f59c6add58591ee207c8bdbc665c3c7bf",
+  "brief_sha256": "1baafb56a50468e3fa0063c01ae2a67ad8a193f0fa0721d46d5aed46d5373ad9",
+  "branch_diff_digest": "ca7bc10c8241c8c0fd32de7774339a441f020cf13b84448a9754ad71addfb019",
+  "minted_at": "2026-09-15T12:52:06+00:00"
 }

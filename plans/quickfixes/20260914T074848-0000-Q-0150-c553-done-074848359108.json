@@ -1,0 +1,18 @@
+{
+  "event": "done",
+  "id": "Q-0150-c553",
+  "profile": "degraded",
+  "kind": "degraded",
+  "reason": "The first post-Lean full-suite diagnostic exposed a shared companion-launch prompt-path validation regression plus stale in-scope tests that still assert removed round floors, manual/board approval, or the old griller prompt. Ordinary delegation remains unavailable because the Lean branch's committed hooks diverge from the parent worktree. Repair only stages.py and the four approved in-scope compatibility test files in this batch.",
+  "started_at": "2026-09-14T07:19:54+00:00",
+  "completed_at": "2026-09-14T07:48:48+00:00",
+  "files": [
+    "factory/scripts/forge_cli/stages.py",
+    "factory/tests/test_gates.py",
+    "factory/tests/test_gate_table.py",
+    "factory/tests/test_board_approval_gate.py",
+    "factory/tests/test_plan_against_reality.py"
+  ],
+  "task_id": "LEAN-WORKFLOW",
+  "story": "FORGE-COORD-1"
+}

@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+import copy
 import ctypes
 import hashlib
 import importlib.util
@@ -983,6 +984,45 @@ def _git_worktree_roots(base: Path) -> tuple[set[Path] | None, str]:
     return (roots, "") if roots else (None, "git returned no worktree roots")
 
 
+def _compatible_hook_source(expected: bytes, inherited: bytes) -> bool:
+    """Allow only identical hooks plus extra literal PreToolUse aliases."""
+    try:
+        wanted = json.loads(expected)
+        actual = json.loads(inherited)
+    except (UnicodeDecodeError, json.JSONDecodeError):
+        return False
+    if not isinstance(wanted, dict) or not isinstance(actual, dict):
+        return False
+    wanted_hooks = wanted.get("hooks")
+    actual_hooks = actual.get("hooks")
+    if not isinstance(wanted_hooks, dict) or not isinstance(actual_hooks, dict):
+        return False
+    if wanted == actual:
+        return True
+    normalized = copy.deepcopy(actual)
+    actual_hooks = normalized["hooks"]
+    wanted_pre = wanted_hooks.get("PreToolUse")
+    actual_pre = actual_hooks.get("PreToolUse")
+    if (not isinstance(wanted_pre, list) or not isinstance(actual_pre, list)
+            or len(wanted_pre) != len(actual_pre)):
+        return False
+    for wanted_entry, actual_entry in zip(wanted_pre, actual_pre, strict=True):
+        if not isinstance(wanted_entry, dict) or not isinstance(actual_entry, dict):
+            return False
+        wanted_matcher = wanted_entry.get("matcher")
+        actual_matcher = actual_entry.get("matcher")
+        if not isinstance(wanted_matcher, str) or not isinstance(actual_matcher, str):
+            return False
+        wanted_tools = wanted_matcher.split("|")
+        actual_tools = actual_matcher.split("|")
+        if (any(re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", tool) is None
+                for tool in (*wanted_tools, *actual_tools))
+                or not set(wanted_tools) <= set(actual_tools)):
+            return False
+        actual_entry["matcher"] = wanted_matcher
+    return normalized == wanted
+
+
 def codex_hook_readiness(base: Path) -> tuple[bool, str]:
     """Verify the Codex CLI loads enabled, trusted hooks from this checkout.
 
@@ -1012,8 +1052,10 @@ def codex_hook_readiness(base: Path) -> tuple[bool, str]:
         divergent = {
             Path(str(hook.get("sourcePath", ""))).resolve()
             for hook in loaded_family
-            if Path(str(hook.get("sourcePath", ""))).resolve().read_bytes()
-            != expected_bytes
+            if not _compatible_hook_source(
+                expected_bytes,
+                Path(str(hook.get("sourcePath", ""))).resolve().read_bytes(),
+            )
         }
     except OSError as exc:
         return False, f"cannot compare inherited Codex hook source: {exc}"
@@ -1062,8 +1104,7 @@ def codex_hook_readiness(base: Path) -> tuple[bool, str]:
             for matcher in matchers
         )
 
-    pre_tools = (("Bash",), ("apply_patch",), ("Edit",), ("Write",),
-                 ("request_user_input",), ("request_user_input_async",))
+    pre_tools = (("Bash",), ("apply_patch",), ("request_user_input",))
     missing_matchers = [aliases[0] for aliases in pre_tools
                         if not matcher_covers("preToolUse", aliases)]
     if missing_matchers:

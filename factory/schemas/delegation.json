@@ -25,6 +25,7 @@
     "executable_path": "str",
     "brief_path": "str",
     "output_path": "str",
+    "output_sha256": "str",
     "stderr_path": "str",
     "session_id": "str",
     "resume_session": "str",

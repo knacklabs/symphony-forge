@@ -12,11 +12,10 @@ from pathlib import Path
 from urllib.parse import unquote, urlsplit
 
 from factory_lib import (
-    record_plan_view,
-    task_evidence_path,
+    plan_digest_without_assumptions,
+    read_selected_review_generation, task_evidence_path,
     evidence_path, load_json, now_iso, parse_sections,
-    plan_digest_without_assumptions, repo_root, run_state_path, story_dir, task_rows,
-    proof_read_path,
+    repo_root, run_state_path, task_rows,
 )
 
 # Shipped/archived plans move out of active|completed; scan debt too or a
@@ -29,7 +28,7 @@ from . import fscache
 from .assumptions import open_count as open_assumptions
 from .decisions import decision_records
 from .plans import parse_frontmatter
-from .quickfix import ledger_path, load_active
+from .quickfix import load_active
 from .readiness import review_passed, tests_passed, verify_passed
 from .roadmap import load_roadmap, ready_pending
 from .signal import open_signals
@@ -87,11 +86,7 @@ ASPECTS = ("quality", "performance", "security")
 
 def task_proof_records(base: Path, key: str, task_id: str) -> dict | None:
     """A task's own proof: its verify.json, tests.json and the three lenses of
-    its selected review generation (the fixed lens files for a task recorded
-    before the generation store, decision 0069). None when nothing is
-    recorded. Proof became task-owned and the review became one selected
-    generation; the board kept reading story-level fixed files and showed
-    every task-level story as "not recorded" (WF-1A, 2026-09-15)."""
+    its selected review generation. None when nothing is recorded."""
     try:
         verify = load_json(task_evidence_path(base, key, task_id, "verify.json"), default=None)
         tests = load_json(task_evidence_path(base, key, task_id, "tests.json"), default=None)
@@ -110,10 +105,6 @@ def task_proof_records(base: Path, key: str, task_id: str) -> dict | None:
         lenses = generation.get("lenses") or {}
         reviews = {aspect: lenses.get(aspect) if isinstance(lenses.get(aspect), dict) else None
                    for aspect in ASPECTS}
-    else:
-        for aspect in ASPECTS:
-            path = task_evidence_path(base, key, task_id, f"reviews/{aspect}.json")
-            reviews[aspect] = load_json(path, default=None) if path.is_file() else None
     if verify is None and tests is None and not any(reviews.values()):
         return None
     return {"verify": verify, "tests": tests, "reviews": reviews}
@@ -140,27 +131,36 @@ def rolled_up_evidence(task_proof: dict[str, dict], decomposition: dict) -> dict
     every task's findings."""
     from .readiness import review_passed, tests_passed, verify_passed
 
-    declared = [task.get("id") for task in decomposition.get("tasks") or []
-                if isinstance(task, dict) and isinstance(task.get("id"), str)]
+    declared_tasks = {task["id"]: task for task in decomposition.get("tasks") or []
+                      if isinstance(task, dict) and isinstance(task.get("id"), str)}
+    declared = list(declared_tasks)
     complete = bool(declared) and all(task_id in task_proof for task_id in declared)
-    verifies = {task_id: proof.get("verify") for task_id, proof in task_proof.items()}
-    tests = {task_id: proof.get("tests") for task_id, proof in task_proof.items()}
+    verifies = {task_id: task_proof[task_id].get("verify") for task_id in declared
+                if task_id in task_proof}
+    tests = {task_id: task_proof[task_id].get("tests") for task_id in declared
+             if task_id in task_proof}
     verify = {
         "ok": complete and all(verify_passed(record or {}) for record in verifies.values()),
         "tasks": {task_id: bool(record and verify_passed(record)) for task_id, record in verifies.items()},
     } if any(record for record in verifies.values()) else None
     automated = {
         "status": "passed" if complete and all(
-            isinstance(record, dict) and tests_passed(record.get("automated"))
-            for record in tests.values()) else "incomplete",
-        "tasks": {task_id: bool(isinstance(record, dict) and tests_passed(record.get("automated")))
+            isinstance(record, dict) and tests_passed(record.get("automated")) and (
+                tests_passed(record.get("functional"), functional=True)
+                if declared_tasks[task_id].get("user_facing") else True)
+            for task_id, record in tests.items()) else "incomplete",
+        "tasks": {task_id: bool(isinstance(record, dict)
+                               and tests_passed(record.get("automated")) and (
+                                   tests_passed(record.get("functional"), functional=True)
+                                   if declared_tasks[task_id].get("user_facing") else True))
                   for task_id, record in tests.items()},
     }
     tests_out = {"automated": automated} if any(record for record in tests.values()) else None
     reviews: dict[str, dict | None] = {}
     for aspect in ASPECTS:
-        records = {task_id: proof["reviews"].get(aspect) for task_id, proof in task_proof.items()
-                   if isinstance(proof["reviews"].get(aspect), dict)}
+        records = {task_id: task_proof[task_id]["reviews"].get(aspect)
+                   for task_id in declared if task_id in task_proof
+                   if isinstance(task_proof[task_id]["reviews"].get(aspect), dict)}
         if not records:
             reviews[aspect] = None
             continue
@@ -276,18 +276,34 @@ def _plan_evidence(
             "total": len(stages),
         }
     tasks = merge_task_detail(decomposition, stages, derived_rows)
-    # The same predicates pr_ready gates on: a tick here must mean the gate
-    # would open, not merely that a file is on disk.
-    recorded = load_json(proof_read_path(base, story, "tests.json"), default={})
+    bundles = []
+    for task in tasks:
+        task_id = str(task.get("id") or "")
+        recorded = load_json(
+            task_evidence_path(base, story, task_id, "tests.json"), default={})
+        generation, _selection, review_problems = read_selected_review_generation(
+            base, story, task_id,
+        )
+        bundles.append({
+            "task": task,
+            "verify": load_json(
+                task_evidence_path(base, story, task_id, "verify.json"), default={}),
+            "tests": recorded,
+            "reviews": generation.get("lenses", {})
+            if isinstance(generation, dict) and not review_problems else {},
+        })
     evidence = {
-        "verify": verify_passed(load_json(
-            proof_read_path(base, story, "verify.json"), default={})),
-        "tests": tests_passed(recorded.get("automated")) and (
-            tests_passed(recorded.get("functional"), functional=True)
-            if recorded.get("functional") else True),
+        "verify": bool(bundles) and all(
+            verify_passed(bundle["verify"]) for bundle in bundles),
+        "tests": bool(bundles) and all(
+            tests_passed(bundle["tests"].get("automated")) and (
+                tests_passed(bundle["tests"].get("functional"), functional=True)
+                if bundle["task"].get("user_facing") else True
+            ) for bundle in bundles
+        ),
         "reviews": {
-            aspect: review_passed(load_json(
-                proof_read_path(base, story, f"reviews/{aspect}.json"), default={}))
+            aspect: bool(bundles) and all(
+                review_passed(bundle["reviews"].get(aspect)) for bundle in bundles)
             for aspect in ("quality", "performance", "security")
         },
     }
@@ -792,7 +808,7 @@ def task_plan_view(base: Path, key: str, task: dict, grill: dict | None) -> dict
     text (fresh, not stale). A saved-but-not-yet-grill-clean plan is withheld
     entirely (never sent, so it cannot leak through the raw-json view either), so
     a human first sees a task plan on the board only after it survives grilling,
-    at which point it is theirs to approve.
+    at which point it can be read here. Approval occurs through native Plan Mode.
 
     plan_state is 'none' (no plan saved), 'ungrilled' (saved, never survived a
     grill), 'stale' (it DID pass, and the plan text changed afterwards), or
@@ -1136,28 +1152,23 @@ def task_dossiers(base: Path, key: str, detail: dict) -> list[dict]:
     evidence = detail.get("evidence") or {}
     decomposition = evidence.get("decomposition") or {}
     stages = (evidence.get("stages") or {}).get("stages", [])
-    tests = evidence.get("tests") or {}
-    verify = evidence.get("verify") or {}
-    reviews = evidence.get("reviews") or {}
     task_grills = evidence.get("task_grills") or {}
     spec_path = (detail.get("spec") or {}).get("path", "")
     launches = task_launches(base)
 
-    story_recorded_tests = []
-    for entry in tests.values():
-        if isinstance(entry, dict):
-            story_recorded_tests.extend(entry.get("tests_added_or_updated") or [])
     task_proof = evidence.get("task_proof") or {}
-
     dossiers = []
     for task in merge_task_detail(decomposition, stages, detail.get("task_rows")):
-        own = task_proof.get(str(task.get("id") or "")) or {}
-        own_tests = own.get("tests") if isinstance(own.get("tests"), dict) else {}
-        recorded_tests = list(story_recorded_tests)
-        for entry in own_tests.values():
+        task_id = str(task.get("id") or "")
+        own = task_proof.get(task_id) or task_proof_records(base, key, task_id) or {}
+        tests = own.get("tests") if isinstance(own.get("tests"), dict) else {}
+        verify = own.get("verify") if isinstance(own.get("verify"), dict) else {}
+        own_reviews = {aspect: record for aspect, record in (own.get("reviews") or {}).items()
+                       if isinstance(record, dict)}
+        recorded_tests = []
+        for entry in tests.values():
             if isinstance(entry, dict):
                 recorded_tests.extend(entry.get("tests_added_or_updated") or [])
-        own_verify = own.get("verify") if isinstance(own.get("verify"), dict) else verify
         required = task.get("required_tests") or []
         # A required test counts as proven only if a recorded artifact names it;
         # "tests.json exists" is not evidence that THIS task was covered. Entries
@@ -1166,35 +1177,19 @@ def task_dossiers(base: Path, key: str, detail: dict) -> list[dict]:
         covered = [t for t in required
                    if isinstance((tid := t.get("id") if isinstance(t, dict) else t), str)
                    and any(tid in str(recorded) for recorded in recorded_tests)]
-        # A task's OWN review is all of that task's findings — no attribution
-        # needed, because the review covered that task's diff and nothing else.
-        # The story-scoped fallback still has to guess by matching the task id
-        # in the finding text, which is why per-task storage removes a whole
-        # class of misattribution rather than only a class of overwriting.
-        own_reviews = {aspect: record for aspect, record in (own.get("reviews") or {}).items()
-                       if isinstance(record, dict)}
-
         findings = []
-        for aspect, review in (own_reviews or reviews).items():
+        for aspect, review in own_reviews.items():
             if not isinstance(review, dict):
                 continue
             for finding in (review.get("blocking_findings") or []) + \
                            (review.get("non_blocking_findings") or []):
                 text = finding if isinstance(finding, str) else finding.get("summary", "")
-                area = "" if isinstance(finding, str) else finding.get("area", "")
-                if own_reviews:
-                    findings.append({"aspect": aspect, "summary": text})
-                    continue
-                # Bounded match: a substring test hands TS-3.10's findings to
-                # TS-3.1, which is silent misattribution of review evidence.
-                if re.search(rf"(?<![\w.]){re.escape(task['id'])}(?![\w]|\.\d)",
-                             f"{text} {area}"):
-                    findings.append({"aspect": aspect, "summary": text})
+                findings.append({"aspect": aspect, "summary": text})
         task["proof"] = {
             "required_tests": required,
             "covered_tests": covered,
-            "verify_ok": own_verify.get("ok") is True,
-            "verify_at": own_verify.get("completed_at"),
+            "verify_ok": verify_passed(verify),
+            "verify_at": verify.get("completed_at"),
             "grill": task_grills.get(task["id"]),
             "findings": findings,
             "spec": spec_path,
@@ -1206,29 +1201,9 @@ def task_dossiers(base: Path, key: str, detail: dict) -> list[dict]:
         task["plan_excerpt"] = "" if excerpt.strip() == objective else excerpt
         task.update(task_plan_view(base, key, task, task_grills.get(task["id"])))
         task["progress"] = task_progress(
-            task, launches.get(task["id"]), own_reviews or reviews)
+            task, launches.get(task["id"]), own_reviews)
         dossiers.append(task)
     return dossiers
-
-
-def _record_plan_views(root: Path, key: str, detail: dict | None) -> None:
-    """Note every clean task plan this response carries.
-
-    Failure here must never break the board: the gate refusing to approve is
-    recoverable, a board that 500s while the human is trying to read the plan
-    is not.
-    """
-    if not detail:
-        return
-    try:
-        for task in detail.get("tasks", []):
-            if task.get("plan_state") != "clean" or not task.get("plan"):
-                continue
-            plan_path = root / task["plan_path"]
-            record_plan_view(root, key, task.get("id", ""),
-                             plan_digest_without_assumptions(plan_path))
-    except Exception:
-        pass
 
 
 def make_server(base: Path, port: int) -> ThreadingHTTPServer:
@@ -1275,14 +1250,6 @@ def make_server(base: Path, port: int) -> ThreadingHTTPServer:
             elif route.startswith("/api/story/"):
                 key = unquote(route[len("/api/story/"):])
                 detail = story_detail(root, key)
-                # The drawer is fetched only when a human OPENS that story, and
-                # a task plan reaches it only once its grill is clean. So this
-                # is the moment the plan text actually left the server for a
-                # person to read — the fact `task approve` needs and could
-                # never previously check. `/api/state` is deliberately not
-                # recorded: `already_serving` probes it, and a probe is not a
-                # reader.
-                _record_plan_views(root, key, detail)
                 body = json.dumps(detail or {"error": "unknown story"}).encode()
                 content_type = "application/json; charset=utf-8"
                 status = 200 if detail else 404

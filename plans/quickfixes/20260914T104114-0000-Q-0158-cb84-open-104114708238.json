@@ -1,0 +1,13 @@
+{
+  "event": "open",
+  "id": "Q-0158-cb84",
+  "profile": "degraded",
+  "reason": "Lean canonical closeout cleanup: normal delegation remains unavailable because this branch's committed hooks differ from the parent worktree; remove duplicate story-proof authority in five approved files and keep Lite plus explicit upgrade refusals.",
+  "started_at": "2026-09-14T10:41:14+00:00",
+  "max_files": 5,
+  "files": [],
+  "harness_source": true,
+  "kind": "degraded",
+  "task_id": "LEAN-WORKFLOW",
+  "story": "FORGE-COORD-1"
+}
