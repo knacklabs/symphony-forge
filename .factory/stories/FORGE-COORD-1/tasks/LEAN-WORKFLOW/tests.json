@@ -1,19 +1,12 @@
 {
-  "commit": "2fcdb568c6bdf65588f57263fd6273ccfe9ee727",
+  "commit": "9e15d440385c0c262e341ee397e214501ca2850b",
   "automated": {
     "generated_by": "implementer",
     "status": "passed",
-    "summary": "LEAN-WORKFLOW at 2fcdb568c6bdf65588f57263fd6273ccfe9ee727 passed its canonical current-delta automated proof. The full factory suite passed 1222 tests with 4 skips in 1687.86 seconds; dual-runtime, scaffold, and encoding-hygiene checks were clean. The new selected-generation authority regressions passed in an independent focused run.",
+    "summary": "LEAN-WORKFLOW at 9e15d440385c0c262e341ee397e214501ca2850b passed the supported close proof: the canonical verifier passed 1,242 tests with 4 skips, all 51 declared required-test commands passed with no unmatched selectors, and structural/scaffold checks were clean. Review was not launched because the older tests.json recorder stamp was stale; this record refreshes that proof without rerunning tests.",
     "blocking_findings": [],
     "commands_run": [
-      "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools ./forge task close LEAN-WORKFLOW (internal verify passed; close then stopped at the stale tests-proof preflight)",
-      "python3 factory/scripts/check_dual_runtime.py",
-      "python3 factory/scripts/check_factory_scaffold.py",
-      "python3 factory/scripts/check_encoding_hygiene.py",
-      "uv run --with pytest --with pytest-xdist --with psutil python -m pytest factory/tests -q -n 4 --dist worksteal --durations=20",
-      "uv run --with pytest --with psutil pytest -q factory/tests/test_gates.py::test_phase_derivation_matches_legacy_run_json_semantics factory/tests/test_gates.py::test_board_and_findings_prefer_selected_task_review_over_fixed_diagnostics factory/tests/test_gates.py::test_update_run_enforces_artifact_phase_order factory/tests/test_gates.py::test_selected_review_generation_advances_phase_and_update_run factory/tests/test_plan_against_reality.py::test_normal_review_docs_use_selected_generation_not_fixed_aspect_recorders",
-      "python3 -m py_compile factory/scripts/factory_lib.py factory/scripts/update_run.py factory/scripts/forge_cli/board.py factory/scripts/forge_cli/findings.py",
-      "git diff --check"
+      "./forge task close LEAN-WORKFLOW (canonical verify and all 51 declared required-test commands passed; review preflight stopped before helper launch only for the stale tests.json stamp)"
     ],
     "tests_added_or_updated": [
       "factory/tests/test_approval_hooks.py",
@@ -49,7 +42,7 @@
       "factory/tests/test_upgrade_lean_workflow.py",
       "factory/tests/test_worker_admission.py"
     ],
-    "pass_fail_summary": "Current-head proof passed: 1222 passed and 4 skipped in the full factory suite; 5 focused selected-generation authority regressions passed; declared structural, scaffold, encoding, compile, and diff-hygiene checks passed.",
+    "pass_fail_summary": "Supported current-head close proof passed: 1,242 passed and 4 skipped in the full factory suite; all 51 declared required-test commands passed; zero required-test id misses; review helper was not launched.",
     "remaining_gaps": [
       "Real native Claude and Codex approval interactions remain explicitly user-deferred for later inspection; this automated proof does not claim those interactions passed."
     ],
@@ -165,8 +158,8 @@
     "non_blocking_findings": [],
     "residual_risks": [],
     "manual_validation_steps": [],
-    "recorded_at": "2026-09-16T13:46:55+00:00",
-    "commit": "2fcdb568c6bdf65588f57263fd6273ccfe9ee727"
+    "recorded_at": "2026-09-16T18:29:17+00:00",
+    "commit": "9e15d440385c0c262e341ee397e214501ca2850b"
   },
-  "updated_at": "2026-09-16T13:46:55+00:00"
+  "updated_at": "2026-09-16T18:29:17+00:00"
 }
