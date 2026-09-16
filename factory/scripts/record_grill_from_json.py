@@ -274,11 +274,10 @@ def _validate_dispositions(
         if type(entry.get("delta_index")) is not int:
             raise SystemExit("every grill amendment requires an integer delta_index")
         indexes.append(entry["delta_index"])
-    if cold != final and cold_artifact is None:
+    if cold_artifact is None:
         raise SystemExit("the authenticated cold brief does not contain its exact artifact")
     delta = _artifact_delta(
-        cold_artifact if cold_artifact is not None else final_artifact,
-        final_artifact,
+        cold_artifact, final_artifact,
     )
     if payload.get("artifact_delta", []) != delta:
         raise SystemExit("grill artifact_delta must exactly match the cold-to-final bytes")

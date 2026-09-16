@@ -474,7 +474,8 @@ def test_cold_grill_recorder_refuses_substituted_or_malformed_findings(
     draft = tmp_path / "plan.md"
     draft.write_text(plan_draft(repo), encoding="utf-8")
     _seed_cold_launch(repo, "plan", hashlib.sha256(draft.read_bytes()).hexdigest(),
-                      findings=cold_result if isinstance(cold_result, dict) else None)
+                      findings=cold_result if isinstance(cold_result, dict) else None,
+                      artifact_text=draft.read_text(encoding="utf-8"))
     if isinstance(cold_result, str):
         from forge_cli.delegate import load_delegations
         Path(load_delegations(repo)[-1]["output_path"]).write_text(json.dumps({
@@ -505,7 +506,10 @@ def test_native_cold_grill_uses_recorded_message_findings(
     intake(repo)
     draft = tmp_path / "plan.md"
     draft.write_text(plan_draft(repo), encoding="utf-8")
-    _seed_cold_launch(repo, "plan", hashlib.sha256(draft.read_bytes()).hexdigest())
+    _seed_cold_launch(
+        repo, "plan", hashlib.sha256(draft.read_bytes()).hexdigest(),
+        artifact_text=draft.read_text(encoding="utf-8"),
+    )
     ledger = delegations_path(repo)
     rows = [json.loads(line) for line in ledger.read_text().splitlines()]
     output = tmp_path / "native-result.jsonl"
@@ -551,7 +555,10 @@ def test_cold_grill_requires_an_authentic_read_only_launch(
     intake(repo)
     draft = tmp_path / "plan.md"
     draft.write_text(plan_draft(repo), encoding="utf-8")
-    _seed_cold_launch(repo, "plan", hashlib.sha256(draft.read_bytes()).hexdigest())
+    _seed_cold_launch(
+        repo, "plan", hashlib.sha256(draft.read_bytes()).hexdigest(),
+        artifact_text=draft.read_text(encoding="utf-8"),
+    )
     from forge_cli.delegate import delegations_path
     ledger = delegations_path(repo)
     rows = [json.loads(line) for line in ledger.read_text(encoding="utf-8").splitlines()]
@@ -597,7 +604,10 @@ def test_cold_grill_refuses_output_changed_after_terminal_publication(repo, tmp_
     intake(repo)
     draft = tmp_path / "plan.md"
     draft.write_text(plan_draft(repo), encoding="utf-8")
-    _seed_cold_launch(repo, "plan", hashlib.sha256(draft.read_bytes()).hexdigest())
+    _seed_cold_launch(
+        repo, "plan", hashlib.sha256(draft.read_bytes()).hexdigest(),
+        artifact_text=draft.read_text(encoding="utf-8"),
+    )
     ledger = delegations_path(repo)
     rows = [json.loads(line) for line in ledger.read_text().splitlines()]
     if tamper == "rewrite":

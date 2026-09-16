@@ -4,11 +4,12 @@ from __future__ import annotations
 import json
 import os
 import re
+import subprocess
 from pathlib import Path
 
 from factory_lib import (
-    classify_scope_entries, git_control_dir, load_json, now_iso, run_state_path,
-    sha256_of, task_digest,
+    classify_scope_entries, clean_git_env, git_control_dir, load_json, now_iso,
+    run_state_path, sha256_of, task_digest,
 )
 
 from .delegate import (
@@ -195,9 +196,29 @@ def _stage_contract(base: Path, record: dict) -> tuple[dict | None, str]:
     if any(not path_in_scope(item.rstrip("/"), task_scope) for item in scope):
         return _deny("the protected launch write scope is not a subset of its task")
     from .stages import stage_baseline
+    baseline = stage_baseline(base, stage)
+    for item in scope:
+        if not item.rstrip().endswith("/"):
+            continue
+        path = item.strip().rstrip("/")
+        mode = subprocess.run(
+            ["git", "cat-file", "-t", f"{baseline}:{path}"], cwd=base,
+            capture_output=True, text=True, env=clean_git_env(),
+            encoding="utf-8",
+        )
+        explicitly_approved_directory = any(
+            approved.strip().endswith("/")
+            and path_in_scope(path, [approved.strip()])
+            for approved in task_scope
+        )
+        if ((mode.returncode == 0 and mode.stdout.strip() != "tree")
+                or (mode.returncode != 0 and not explicitly_approved_directory)):
+            return _deny(
+                f"recorded trailing-slash scope is not a baseline directory: {item!r}"
+            )
     return {
         "kind": "stage",
-        "scope": classify_scope_entries(base, scope, stage_baseline(base, stage)),
+        "scope": classify_scope_entries(base, scope, baseline),
     }, ""
 
 

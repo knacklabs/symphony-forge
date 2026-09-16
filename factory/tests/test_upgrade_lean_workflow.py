@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import contextlib
 import hashlib
 import json
 import os
@@ -88,6 +89,25 @@ def test_lean_migration_force_cannot_bypass_dirty_tree_refusal(repo: Path):
     result = _upgrade(repo, "--force")
     assert result.returncode != 0 and "no --force bypass" in result.stdout
     assert legacy.exists()
+
+
+def test_lean_migration_rechecks_cleanliness_after_lock_acquisition(
+        repo: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]):
+    from forge_cli import delegate
+    sentinel = repo / "AGENTS.md"
+    before = sentinel.read_bytes()
+
+    @contextlib.contextmanager
+    def dirty_while_waiting(*_args, **_kwargs):
+        (repo / "concurrent-change.txt").write_text("changed\n", encoding="utf-8")
+        yield
+
+    monkeypatch.setattr(delegate, "delegation_exclusion", dirty_while_waiting)
+    with pytest.raises(SystemExit):
+        upgrade.cmd_upgrade(argparse.Namespace(target=str(repo), force=False))
+    assert "uncommitted changes" in capsys.readouterr().out
+    assert sentinel.read_bytes() == before
+    assert not (repo / ".factory/migrations/lean-workflow-v2.json").exists()
 
 
 def test_lean_migration_independent_raw_walk_covers_each_candidate_exactly_once(
@@ -229,6 +249,8 @@ def test_lean_migration_independent_inventories_cover_every_declared_family(
     (".factory/grills/tasks/T1.json", {"rounds": []}, "old-task-grill"),
     (".factory/plan-approval.json", {"approver": "human"},
      "manual-plan-approval"),
+    (".factory/stories/S1/plan-approval.json", {"runtime": "codex"},
+     "manual-plan-approval"),
     (".factory/plan-mode/old.json", {"generated_by": "old"},
      "plan-mode-marker"),
     (".factory/stories/S1/tasks/T1/reviews/quality.json",
@@ -284,7 +306,11 @@ def test_lean_migration_excludes_and_preserves_current_family_objects(repo: Path
             **_legacy_grill("plan"), "cold_input_sha256": "a" * 64,
         },
         ".factory/plan-approval.json": {
-            "runtime": "codex", "approved_plan_sha256": "a" * 64,
+            "approved_plan_sha256": "a" * 64,
+            "approved_by": "human-via-Codex",
+            "approved_at": "2026-09-15T00:00:00+00:00",
+            "runtime": "codex", "session_id": "session", "event_id": "event",
+            "plan_kind": "story", "story": "S1", "task": "",
         },
         ".factory/stories/S1/stages/T1.json": {
             "local_review_stamp": {"reviewed_meaning": "a" * 64},

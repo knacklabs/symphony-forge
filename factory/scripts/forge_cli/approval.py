@@ -6,6 +6,7 @@ Codex cannot acquire subtly different approval semantics.
 """
 from __future__ import annotations
 
+import json
 import os
 import re
 import stat
@@ -96,8 +97,21 @@ def _require_safe_destination(base: Path, path: Path, *, required: bool) -> None
         ) from exc
 
 
+def _strict_run_state(base: Path) -> dict[str, Any]:
+    """Read approval authority as one contained object or refuse cleanly."""
+    path = run_state_path(base)
+    _require_safe_destination(base, path, required=True)
+    try:
+        value = json.loads(path.read_bytes())
+    except (OSError, UnicodeError, json.JSONDecodeError) as exc:
+        raise ApprovalRefused("native approval run state is unreadable") from exc
+    if not isinstance(value, dict):
+        raise ApprovalRefused("native approval run state must be a JSON object")
+    return value
+
+
 def _story_candidate(base: Path) -> ApprovalCandidate | None:
-    state = load_json(run_state_path(base), default={})
+    state = _strict_run_state(base)
     status = state.get("plan_status")
     if status not in {"awaiting-approval", "approved"}:
         return None
@@ -140,13 +154,13 @@ def _story_candidate(base: Path) -> ApprovalCandidate | None:
 
 
 def _task_candidate(base: Path) -> ApprovalCandidate | None:
+    state = _strict_run_state(base)
     frontier = task_frontier_state(base)
     if frontier is None:
         return None
     frontier_state, task = frontier
     if frontier_state != "await-approval":
         return None
-    state = load_json(run_state_path(base), default={})
     story = _text(state.get("story")) or _text(state.get("issue_key"))
     if not story:
         return None
@@ -298,7 +312,7 @@ def _approve_story(base: Path, candidate: ApprovalCandidate, record: dict[str, A
         raise ApprovalRefused("story plan digest changed while approval was recorded")
     dump_json(candidate.evidence, record)
     state_path = run_state_path(base)
-    state = load_json(state_path, default={})
+    state = _strict_run_state(base)
     state["plan_status"] = "approved"
     state["approved_plan_sha256"] = candidate.digest
     state["updated_at"] = record["approved_at"]

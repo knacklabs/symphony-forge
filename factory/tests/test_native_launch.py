@@ -609,11 +609,12 @@ def test_stale_context_cleanup_refuses_same_size_regular_file_replacement(
 
 
 def test_stale_context_cleanup_preserves_unbound_historical_snapshot(
-        native_repo, monkeypatch, capsys):
+        native_repo, tmp_path, monkeypatch, capsys):
     import forge_cli.delegate as delegate
 
     opaque = "a" * 32
-    directory = Path(tempfile.gettempdir()) / f"forge-context-{opaque}"
+    monkeypatch.setattr(tempfile, "gettempdir", lambda: str(tmp_path))
+    directory = tmp_path / f"forge-context-{opaque}"
     directory.mkdir(mode=0o700)
     directory.chmod(0o700)
     snapshot = directory / "context.txt"

@@ -22,10 +22,10 @@ you what's missing. But this is the shape of the whole system:
 
 ```text
 prototype ▶ spec grills ▶ CONFIRMED SPECS ▶ derived roadmap ▶ sign-off grill
-  ▶ SIGN-OFF ▶ roadmap+team ▶ per task:
-  NATIVE PLAN MODE ▶ one cold grill + dispositions ▶ save awaiting plan ▶
-  native approval of exact final digest ▶
-  decompose (creates the task tracker) ▶ per task: implement (`forge delegate`)
+  ▶ SIGN-OFF ▶ roadmap+team ▶ story plan ▶ one cold grill + dispositions
+  ▶ native approval of the exact final digest ▶ decompose (creates the task tracker)
+  ▶ per leaf: JIT task plan ▶ one cold grill + dispositions ▶ native approval
+  of the exact task digest ▶ implement (`forge delegate`)
   ▶ commit ▶ task proof ▶ `forge task close` runs ONE combined three-lens
   task review ▶ delegate fixes and rerun close until clean ▶ functional
   (if user-facing) ▶ task PR readiness

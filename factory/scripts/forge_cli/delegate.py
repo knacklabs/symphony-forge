@@ -1344,6 +1344,8 @@ def _validate_narrowed_scope_topology(
             fail(f"--scope refuses symlink-ambiguous baseline path {entry!r}")
         if not mode:
             fail(f"--scope path {entry!r} is missing from the immutable baseline")
+        if entry.endswith("/") and mode != "040000":
+            fail(f"--scope trailing slash requires a baseline directory: {entry!r}")
 
         current = base
         missing = False
@@ -1412,10 +1414,11 @@ def _verify_context_ancestors(path: Path) -> None:
         current = current.parent
 
 
-def _create_private_directory(path: Path, windows_sid: str) -> None:
+def _create_private_directory(path: Path, windows_sid: str) -> tuple[int, int]:
     if not windows_sid:
         path.mkdir(mode=0o700)
-        return
+        info = path.lstat()
+        return info.st_dev, info.st_ino
     script = (
         "$ErrorActionPreference='Stop';"
         "$sid=New-Object Security.Principal.SecurityIdentifier($inputData.sid);"
@@ -1428,8 +1431,41 @@ def _create_private_directory(path: Path, windows_sid: str) -> None:
     )
     result = _run_windows_path_script(script, path, windows_sid)
     if result.returncode:
+        if path.exists() and not path.is_symlink():
+            info = path.lstat()
+            _discard_private_context_build(path, (info.st_dev, info.st_ino))
         fail("--context-file could not create a protected private directory")
-    _require_windows_private_acl(path, windows_sid)
+    info = path.lstat()
+    identity = (info.st_dev, info.st_ino)
+    try:
+        _require_windows_private_acl(path, windows_sid)
+    except BaseException:
+        _discard_private_context_build(path, identity)
+        raise
+    return identity
+
+
+def _discard_private_context_build(
+    directory: Path, expected_identity: tuple[int, int],
+) -> None:
+    """Remove only the exact randomized directory created by this process."""
+    try:
+        info = directory.lstat()
+    except FileNotFoundError:
+        return
+    if (_is_link_or_reparse(info) or not stat.S_ISDIR(info.st_mode)
+            or (info.st_dev, info.st_ino) != expected_identity):
+        fail("secure context build changed before failure cleanup")
+    with os.scandir(directory) as stream:
+        entries = list(stream)
+    if any(entry.name != "context.txt" for entry in entries):
+        fail("secure context build contains unknown entries during failure cleanup")
+    for entry in entries:
+        entry_info = entry.stat(follow_symlinks=False)
+        if (_is_link_or_reparse(entry_info) or not stat.S_ISREG(entry_info.st_mode)):
+            fail("secure context build entry changed before failure cleanup")
+        Path(entry.path).unlink()
+    directory.rmdir()
 
 
 def _validate_private_file(
@@ -1698,20 +1734,25 @@ def secure_context_snapshot(
     temporary_root = Path(tempfile.gettempdir()).resolve()
     staging = temporary_root / f"forge-context-build-{nonce.hex()}"
     _verify_context_ancestors(staging)
-    _create_private_directory(staging, windows_sid)
-    snapshot = staging / "context.txt"
-    identity = _write_private_file(snapshot, data, windows_sid)
-    opaque = _bound_context_id(nonce, identity)
-    directory = temporary_root / f"forge-context-{opaque}"
-    staging_identity = staging.lstat()
-    os.rename(staging, directory)
-    published_identity = directory.lstat()
-    if ((published_identity.st_dev, published_identity.st_ino)
-            != (staging_identity.st_dev, staging_identity.st_ino)):
-        fail("secure context directory changed during publication")
-    snapshot = directory / "context.txt"
-    _validate_private_context_directory(directory, windows_sid)
-    _validate_private_file(snapshot, windows_sid, identity)
+    directory_identity = _create_private_directory(staging, windows_sid)
+    directory = staging
+    try:
+        snapshot = staging / "context.txt"
+        identity = _write_private_file(snapshot, data, windows_sid)
+        opaque = _bound_context_id(nonce, identity)
+        published = temporary_root / f"forge-context-{opaque}"
+        os.rename(staging, published)
+        directory = published
+        published_identity = directory.lstat()
+        if ((published_identity.st_dev, published_identity.st_ino)
+                != directory_identity):
+            fail("secure context directory changed during publication")
+        snapshot = directory / "context.txt"
+        _validate_private_context_directory(directory, windows_sid)
+        _validate_private_file(snapshot, windows_sid, identity)
+    except BaseException:
+        _discard_private_context_build(directory, directory_identity)
+        raise
     metadata = {
         "supplied": True, "bytes": len(data),
         "snapshot_id": f"context-{opaque}",

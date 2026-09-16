@@ -577,12 +577,12 @@ def test_the_delegate_brief_carries_the_selected_current_findings(repo, tmp_path
     assert "Review findings to fix" not in before
 
     write_task_proof(repo, "T1", publish_review=True, review_blocked=True)
-    legacy = story_state(repo) / "tasks" / "T1" / "reviews" / "quality.json"
-    stale = json.loads(legacy.read_text())
+    diagnostic = story_state(repo) / "tasks" / "T1" / "reviews" / "quality.json"
+    stale = {"score": 1}
     stale["blocking_findings"] = [{
         "category": "bug", "area": "old.py", "summary": "obsolete finding",
     }]
-    legacy.write_text(json.dumps(stale))
+    diagnostic.write_text(json.dumps(stale))
     after = compose_brief(repo, task, write=True, user_facing=False, story="ENG-1")
     assert "Review findings to fix" in after
     assert "BLOCKING" in after

@@ -155,6 +155,16 @@ def test_delegate_scope_is_bound_to_brief_launch_identity_and_existing_write_sco
     denied = _invoke_worker(worker, _patch("*** Add File: src/b.py", "+no"))
     assert "deny" in denied, denied
 
+    worker, token, launch_id = _start_worker(
+        repo, tmp_path, launch_id="launch-file-as-directory",
+    )
+    _record_launch(
+        repo, worker, token, launch_id, brief_path, digest,
+        write_scope=["src/a.py/"],
+    )
+    denied = _invoke_worker(worker, _patch("*** Add File: src/a.py/child", "+no"))
+    assert "deny" in denied and "baseline directory" in denied, denied
+
 
 def test_full_scope_brief_keeps_worker_owned_task_verification(repo: Path):
     task = {
@@ -232,6 +242,25 @@ def test_context_file_security_no_follow_modes_identity_capacity_and_cleanup(
     source.write_bytes(b"x" * (delegate.CONTEXT_MAX_BYTES + 1))
     with pytest.raises(SystemExit):
         delegate.secure_context_snapshot(source)
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="tests POSIX failure cleanup")
+def test_context_snapshot_failure_removes_its_partial_private_directory(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    source = tmp_path / "context.md"
+    source.write_text("private context", encoding="utf-8")
+    monkeypatch.setattr(delegate.tempfile, "gettempdir", lambda: str(tmp_path))
+
+    def fail_after_create(path, _data, _sid):
+        path.write_text("partial", encoding="utf-8")
+        path.chmod(0o600)
+        raise OSError("disk write failed")
+
+    monkeypatch.setattr(delegate, "_write_private_file", fail_after_create)
+    with pytest.raises(OSError, match="disk write failed"):
+        delegate.secure_context_snapshot(source)
+    assert not list(tmp_path.glob("forge-context-build-*"))
+    assert not list(tmp_path.glob("forge-context-[0-9a-f]*"))
 
 
 def test_context_frame_escapes_closing_delimiter():

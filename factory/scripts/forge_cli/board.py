@@ -289,19 +289,12 @@ def _plan_evidence(
     bundles = []
     for task in tasks:
         task_id = str(task.get("id") or "")
-        recorded = load_json(
-            task_evidence_path(base, story, task_id, "tests.json"), default={})
-        generation, _selection, review_problems = read_selected_review_generation(
-            base, story, task_id,
-            sealed_commit=validated_task_marker_commit(base, story, task_id),
-        )
+        proof = task_proof_records(base, story, task_id) or {}
         bundles.append({
             "task": task,
-            "verify": load_json(
-                task_evidence_path(base, story, task_id, "verify.json"), default={}),
-            "tests": recorded,
-            "reviews": generation.get("lenses", {})
-            if isinstance(generation, dict) and not review_problems else {},
+            "verify": proof.get("verify") or {},
+            "tests": proof.get("tests") or {},
+            "reviews": proof.get("reviews") or {},
         })
     evidence = {
         "verify": bool(bundles) and all(

@@ -66,6 +66,26 @@ LEAN_LENSES = ("performance", "quality", "security")
 LEAN_RETAINED_PROFILES = {
     "planner-high.toml", "docs-decomposer.toml", "functional-checker.toml",
 }
+KNOWN_FORGE_RETAINED_PROFILE_HASHES = {
+    "planner-high.toml": {
+        "ab70ba3f5ac469d63af14a10edf67a2ccdf8a2eab905bf5841fdd85f3f2225fb",
+        "ba68c9092378cb45ba632b76cbb1a3d0e9601da617f4bbc45588a2ada46e912c",
+        "d0dbfbea103f552d31ec233eebb53094d6f21c01be4c8b5d4cf69768beb962d2",
+        "ee02022932efe1dffd4a9e3402ec11df10c60221d3c33513925be7573bcbe96c",
+    },
+    "docs-decomposer.toml": {
+        "4b8ee76734f910c242e15f2b89232b312f10410f22c9c4e3dbdadccbc781d6fa",
+        "ebc2299566ed42b196700ad9393421c79804a737b863db2b0587f79868343f00",
+        "23f1007533de1073e449f2e4b40d277c71e31b8b2256ea87e5594f537968881b",
+        "c2696d86dd5de5098ef7ff9d2b9d77d061a69be7b58e60601544e93ee560da3d",
+    },
+    "functional-checker.toml": {
+        "6411566c800dab5253346c63305fb61d6082533bf0f86d0283f1ecbb67d6d107",
+        "1281c4fa2edbe4bb3f638f292a171b54ef0a677bc558f7b15a229fd2c5a61d3b",
+        "ee780a013410a4f85bab129f8e412388e9b31ea307745d8c5f8117c08dcb7850",
+        "7ef074d4e35b2e72564371a71c7b80f5aaa7495b9d5db30a56da0cb9b9ffc03e",
+    },
+}
 LEAN_RUNTIME_PATHS = (
     "factory/scripts/forge_cli/approval.py",
     "factory/scripts/post_tool_use.py",
@@ -128,7 +148,21 @@ def _lean_family(relative: str, data: bytes | None = None) -> str:
                 or "cold_input_sha256" not in value):
             return "old-task-grill"
     if re.fullmatch(r"\.factory/(?:stories/[^/]+/)?plan-approval\.json", relative):
-        if data and b'"runtime"' not in data:
+        try:
+            approval = json.loads(data.decode("utf-8")) if data else None
+        except (UnicodeDecodeError, json.JSONDecodeError):
+            approval = None
+        native_fields = {
+            "approved_plan_sha256", "approved_by", "approved_at", "runtime",
+            "session_id", "event_id", "plan_kind", "story", "task",
+        }
+        if (not isinstance(approval, dict)
+                or not native_fields.issubset(approval)
+                or approval.get("runtime") not in {"claude", "codex"}
+                or approval.get("plan_kind") not in {"story", "task"}
+                or re.fullmatch(
+                    r"[0-9a-f]{64}", str(approval.get("approved_plan_sha256") or ""),
+                ) is None):
             return "manual-plan-approval"
     if re.fullmatch(r"\.factory/(?:stories/[^/]+/)?plan-mode/[^/]+\.json", relative):
         return "plan-mode-marker"
@@ -510,7 +544,11 @@ def lean_primary_inventory(target: Path) -> list[dict]:
                 if name in RETIRED_FORGE_PROFILE_HASHES:
                     reason, preserve = "client-modified-profile", True
                 elif name in LEAN_RETAINED_PROFILES:
-                    reason = "current-runtime-profile"
+                    if hashlib.sha256(data).hexdigest() in (
+                            KNOWN_FORGE_RETAINED_PROFILE_HASHES[name]):
+                        reason = "current-runtime-profile"
+                    else:
+                        reason, preserve = "client-modified-profile", True
                 else:
                     reason, preserve = "client-added-profile", True
             else:
@@ -866,9 +904,24 @@ def lean_raw_inventory(target: Path) -> list[dict]:
             if (not isinstance(decoded, dict) or "rounds" in decoded
                     or "cold_input_sha256" not in decoded):
                 family = "old-task-grill"
-        elif relative.endswith("/plan-approval.json") \
-                and b'"runtime"' not in data:
-            family = "manual-plan-approval"
+        elif relative.endswith("/plan-approval.json"):
+            try:
+                approval = json.loads(data.decode("utf-8")) if data else None
+            except (UnicodeDecodeError, json.JSONDecodeError):
+                approval = None
+            native_fields = {
+                "approved_plan_sha256", "approved_by", "approved_at", "runtime",
+                "session_id", "event_id", "plan_kind", "story", "task",
+            }
+            if (not isinstance(approval, dict)
+                    or not native_fields.issubset(approval)
+                    or approval.get("runtime") not in {"claude", "codex"}
+                    or approval.get("plan_kind") not in {"story", "task"}
+                    or re.fullmatch(
+                        r"[0-9a-f]{64}",
+                        str(approval.get("approved_plan_sha256") or ""),
+                    ) is None):
+                family = "manual-plan-approval"
         elif "/plan-mode/" in relative and relative.endswith(".json"):
             family = "plan-mode-marker"
         elif re.fullmatch(
@@ -920,7 +973,11 @@ def lean_raw_inventory(target: Path) -> list[dict]:
                 if name in RETIRED_FORGE_PROFILE_HASHES:
                     reason, preserve = "client-modified-profile", True
                 elif name in LEAN_RETAINED_PROFILES:
-                    reason = "current-runtime-profile"
+                    if hashlib.sha256(data).hexdigest() in (
+                            KNOWN_FORGE_RETAINED_PROFILE_HASHES[name]):
+                        reason = "current-runtime-profile"
+                    else:
+                        reason, preserve = "client-modified-profile", True
                 else:
                     reason, preserve = "client-added-profile", True
             else:
@@ -974,10 +1031,50 @@ def _revalidate_lean_inventory(target: Path, migration: dict) -> None:
     if stable(primary) != stable(migration["entries"]):
         fail("Lean migration inventory changed before review publication")
     candidates, sentinels = _fixed_review_plan(target, migration)
-    if candidates != migration.get("review_candidates", []):
-        fail("Lean migration sealed review identity changed before publication")
-    if sentinels != migration.get("review_sentinels", []):
+    expected_candidates = migration.get("review_candidates", [])
+    expected_sentinels = migration.get("review_sentinels", [])
+    candidate_by_task = {
+        (candidate[0]["story"], candidate[0]["task_id"]): candidate
+        for candidate in candidates
+    }
+    sentinel_by_task = {
+        (sentinel["output"]["story"], sentinel["output"]["task_id"]): sentinel
+        for sentinel in sentinels
+    }
+    expected_candidate_by_task = {
+        (candidate[0]["story"], candidate[0]["task_id"]): candidate
+        for candidate in expected_candidates
+    }
+    expected_sentinel_by_task = {
+        (sentinel["output"]["story"], sentinel["output"]["task_id"]): sentinel
+        for sentinel in expected_sentinels
+    }
+    if (set(candidate_by_task) | set(sentinel_by_task)
+            != set(expected_candidate_by_task) | set(expected_sentinel_by_task)):
         fail("Lean migration selected review sentinel changed before publication")
+    for key, expected in expected_sentinel_by_task.items():
+        if sentinel_by_task.get(key) != expected:
+            fail("Lean migration selected review sentinel changed before publication")
+    from factory_lib import review_generation_bytes, review_generation_id
+    for key, (candidate, paths) in expected_candidate_by_task.items():
+        if candidate_by_task.get(key) == (candidate, paths):
+            continue
+        sentinel = sentinel_by_task.get(key)
+        generation_id = review_generation_id(candidate)
+        generation = {**candidate, "generation_id": generation_id}
+        expected_output = {
+            "story": candidate["story"], "task_id": candidate["task_id"],
+            "generation_id": generation_id,
+            "generation_sha256": hashlib.sha256(
+                review_generation_bytes(generation),
+            ).hexdigest(),
+        }
+        if (not sentinel or sentinel.get("output") != expected_output
+                or sentinel.get("sealed_commit")
+                != candidate["upgrade"]["sealed_commit"]
+                or sentinel.get("source_paths")
+                != [path.relative_to(target).as_posix() for path in paths]):
+            fail("Lean migration sealed review identity changed before publication")
 
 
 def _runtime_inventory(target: Path) -> list[dict]:
@@ -1586,6 +1683,16 @@ def _retired_forge_profiles(target: Path) -> tuple[list[Path], list[Path]]:
             continue
         actual = hashlib.sha256(path.read_bytes()).hexdigest()
         (removable if actual == expected else preserved).append(path)
+    for name in LEAN_RETAINED_PROFILES:
+        path = root / name
+        if not path.exists() and not path.is_symlink():
+            continue
+        if path.is_symlink() or not path.is_file():
+            preserved.append(path)
+            continue
+        actual = hashlib.sha256(path.read_bytes()).hexdigest()
+        if actual not in KNOWN_FORGE_RETAINED_PROFILE_HASHES[name]:
+            preserved.append(path)
     return removable, preserved
 # Project-owned: never touched — listed here as the explicit contract.
 # .github/workflows/ is project-owned EXCEPT the harness's own COPY_WORKFLOWS,
@@ -1950,6 +2057,24 @@ def _stale_agents_references(
     return sorted(stale)
 
 
+def _require_clean_upgrade_target(target: Path) -> None:
+    status = subprocess.run(
+        ["git", "status", "--porcelain"], cwd=target, capture_output=True,
+        text=True, encoding="utf-8", errors="surrogateescape",
+    )
+    if status.returncode != 0:
+        fail(
+            f"could not verify that {target} is clean; refusing upgrade: "
+            f"{status.stderr.strip() or 'git status failed'}"
+        )
+    dirty = status.stdout.strip()
+    if dirty:
+        fail(
+            f"{target} has uncommitted changes. Commit or stash first so the upgrade "
+            "is a reviewable diff. Lean migration has no --force bypass."
+        )
+
+
 def cmd_upgrade(args: argparse.Namespace) -> None:
     harness = repo_root()
     target = Path(args.target).resolve()
@@ -1969,25 +2094,12 @@ def cmd_upgrade(args: argparse.Namespace) -> None:
             fail(f"{legacy_run} is unreadable JSON ({exc}); fix or delete it, then rerun")
         except OSError as exc:
             fail(f"{legacy_run} is not a readable file ({exc}); fix or delete it, then rerun")
-    status = subprocess.run(
-        ["git", "status", "--porcelain"], cwd=target, capture_output=True,
-        text=True, encoding="utf-8", errors="surrogateescape",
-    )
-    if status.returncode != 0:
-        fail(
-            f"could not verify that {target} is clean; refusing upgrade: "
-            f"{status.stderr.strip() or 'git status failed'}"
-        )
-    dirty = status.stdout.strip()
-    if dirty:
-        fail(
-            f"{target} has uncommitted changes. Commit or stash first so the upgrade "
-            "is a reviewable diff. Lean migration has no --force bypass."
-        )
+    _require_clean_upgrade_target(target)
     from .delegate import delegation_exclusion
 
     with delegation_exclusion(
             target, "lean-upgrade", kind="review-selection", namespace="state"):
+        _require_clean_upgrade_target(target)
         _cmd_upgrade_locked(args, harness, target)
 
 
@@ -2077,8 +2189,14 @@ def _cmd_upgrade_locked(
     agents = harness / ".codex" / "agents"
     if agents.is_dir():
         for child in agents.iterdir():
+            destination = target / ".codex" / "agents" / child.name
+            if child.name in LEAN_RETAINED_PROFILES and destination.is_file() \
+                    and not destination.is_symlink():
+                existing = hashlib.sha256(destination.read_bytes()).hexdigest()
+                if existing not in KNOWN_FORGE_RETAINED_PROFILE_HASHES[child.name]:
+                    continue
             _replace_path(
-                target, child, target / ".codex" / "agents" / child.name)
+                target, child, destination)
     for rel in CODEX_HARNESS_OWNED_SKILLS:
         src = harness / rel
         if src.exists():

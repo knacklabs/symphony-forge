@@ -69,6 +69,16 @@ def _story_candidate(repo: Path, story: str = "APPROVE-1") -> approval.ApprovalC
     return candidate
 
 
+@pytest.mark.parametrize("body", ["{not json\n", "[]\n"])
+def test_native_approval_malformed_run_state_is_a_controlled_refusal(
+        repo: Path, body: str):
+    lib = load_factory_lib(repo)
+    path = lib.run_state_path(repo)
+    path.write_text(body, encoding="utf-8")
+    with pytest.raises(approval.ApprovalRefused, match="run state"):
+        approval.eligible_candidates(repo)
+
+
 def test_awaiting_story_edit_is_ineligible_until_its_plan_grill_matches(
         repo: Path):
     candidate = _story_candidate(repo)

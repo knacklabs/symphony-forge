@@ -340,9 +340,7 @@ def repo(tmp_path: Path) -> Path:
 
 
 def record_grill(repo: Path, gate: str, verdict: str = "pass",
-                 digest_of: Path | None = None, *,
-                 seed_requirements: bool = True,
-                 plan_mode: bool = True, **over) -> tuple[int, str]:
+                 digest_of: Path | None = None, **over) -> tuple[int, str]:
     payload = {"generated_by": "griller", "gate": gate, "verdict": verdict,
                "gaps": [], "contradictions": [], "resolutions": [],
                "finding_dispositions": [], **over}
@@ -489,7 +487,8 @@ def record_task_grill(repo: Path, task: dict, verdict: str = "pass",
 
 def _seed_cold_launch(repo: Path, gate: str, digest: str, task_id: str = "",
                       *, findings: dict | None = None,
-                      artifact_text: str | None = None) -> None:
+                      artifact_text: str | None = None,
+                      include_artifact_frame: bool = True) -> None:
     from forge_cli.delegate import argv_digest, delegations_path
     label = f"grill-{gate}" + (f"-{task_id}" if task_id else "")
     path = delegations_path(repo)
@@ -503,13 +502,15 @@ def _seed_cold_launch(repo: Path, gate: str, digest: str, task_id: str = "",
     suffix = f"-{task_id}" if task_id else ""
     brief = repo / ".factory" / f"grill-brief-{gate}{suffix}.md"
     from forge_cli.grill import _cold_artifact_frame
-    brief.write_text(
-        ("fixture cold-read brief\n" if artifact_text is None else
-         "fixture cold-read brief\n\n"
-         f"## The artifact under interrogation ({gate})\n\n"
-         f"{_cold_artifact_frame(artifact_text)}\n\n## What to return\n"),
-        encoding="utf-8",
-    )
+    if artifact_text is None:
+        _label, artifact_text = GATES[gate].locate(repo, task_id, "")
+    brief_body = "fixture cold-read brief\n"
+    if include_artifact_frame:
+        brief_body += (
+            f"\n## The artifact under interrogation ({gate})\n\n"
+            f"{_cold_artifact_frame(artifact_text)}\n\n## What to return\n"
+        )
+    brief.write_text(brief_body, encoding="utf-8")
     output = repo / ".factory" / f"{launch_id}.stdout.log"
     output.write_text(json.dumps({
         "status": 0, "threadId": "fixture-session",
@@ -1165,6 +1166,8 @@ def write_task_proof(repo: Path, task_id: str = "T1", *,
             stamp_stage_review(
                 repo, task_id, lenses=("quality", "performance", "security"),
             )
+        for aspect in ("quality", "performance", "security"):
+            (task_root / "reviews" / f"{aspect}.json").unlink()
         # The marker command stages only its marker. Keep the brief in the
         # index so a marker commit carries the exact bytes and approved
         # records its reviews bind.
@@ -1495,6 +1498,13 @@ def test_board_and_findings_prefer_selected_task_review_over_fixed_diagnostics(
     assert [row["summary"] for row in rows].count("selected current finding") == 1
     assert not any(row["category"] == "diagnostic-only" for row in rows)
 
+    tests_path = scoped / "tasks" / "T1" / "tests.json"
+    tests_before = tests_path.read_bytes()
+    tests_path.write_text("{truncated\n", encoding="utf-8")
+    malformed_detail = story_detail(repo, "ENG-1")
+    assert not malformed_detail["evidence"]["tests"]
+    tests_path.write_bytes(tests_before)
+
     legacy = repo / ".factory" / "history" / "LEGACY" / "reviews"
     legacy.mkdir(parents=True)
     (legacy / "quality.json").write_text(json.dumps({
@@ -1744,11 +1754,17 @@ def test_pr_ready_legacy_fixed_review_requires_upgrade(repo, tmp_path):
     assert code == 0, out
     record_skeleton_then_frontier(repo, DECOMP["tasks"])
     write_passing_artifacts(repo, publish_selected=False, legacy_fixed=True)
+    legacy_reviews = repo / ".factory/reviews"
+    task_reviews = story_state(repo, "ENG-1") / "tasks/T1/reviews"
+    task_reviews.mkdir(parents=True, exist_ok=True)
+    for aspect in ("quality", "performance", "security"):
+        shutil.move(legacy_reviews / f"{aspect}.json", task_reviews / f"{aspect}.json")
+    (task_reviews / "selected.json").write_text("{}\n", encoding="utf-8")
     code, out = run(repo, "update_run.py", "--decomposition-status", "recorded")
     assert code == 0, out
     code, out = run(repo, "pr_ready.py")
     assert code != 0 and "run `forge upgrade`" in out, out
-    assert (repo / ".factory/reviews/quality.json").is_file()
+    assert (task_reviews / "quality.json").is_file()
     assert list((repo / "plans/active").glob("ENG-1-*.md"))
     assert not (repo / ".factory/history/ENG-1").exists()
 
@@ -3110,6 +3126,24 @@ def test_update_run_functional_check_refuses_stale_selected_delta(repo, tmp_path
 
     code, out = run(repo, "update_run.py", "--phase", "functional-check")
 
+    assert code != 0 and "current clean selected review generation" in out, out
+
+
+def test_functional_check_paths_terminate_and_refuse_stale_reviewed_meaning(
+        repo, tmp_path):
+    prepare_task_pr_ready(repo, tmp_path)
+    finish_task_for_pr_ready(repo)
+    write_task_proof(repo, "T1", publish_review=True)
+    lib = load_factory_lib(repo)
+    assert lib.load_json(lib.run_state_path(repo))["phase"] == "functional-check"
+
+    decomposition_path = lib.protected_decomposition_state_path(repo)
+    decomposition = json.loads(decomposition_path.read_text())
+    decomposition["tasks"][0]["acceptance_criteria"].append("new semantic requirement")
+    decomposition_path.write_text(json.dumps(decomposition))
+
+    assert lib.load_json(lib.run_state_path(repo))["phase"] != "functional-check"
+    code, out = run(repo, "update_run.py", "--phase", "functional-check")
     assert code != 0 and "current clean selected review generation" in out, out
 
 
@@ -6794,6 +6828,21 @@ def test_record_task_grill_binds_derived_digest(repo):
     assert recorded["input_sha256"] == grounding_digest(repo, task)
 
 
+def test_record_task_grill_requires_authenticated_cold_artifact_frame(repo):
+    task = {**STAGE_TASK, "id": "T1"}
+    seed_task_grill_frontier(repo, task)
+    plan = repo / ".factory/task-plans/T1.md"
+    _seed_cold_launch(
+        repo, "task", _artifact_digest(plan.read_text(encoding="utf-8")), "T1",
+        include_artifact_frame=False,
+    )
+    code, out = run(
+        repo, "record_grill_from_json.py", "--gate", "task", "--task", "T1",
+        stdin=json.dumps(task_grill_payload(task)),
+    )
+    assert code != 0 and "does not contain its exact artifact" in out
+
+
 def test_board_survives_active_story_whose_approved_plan_is_gone(repo):
     # A shipped/archived story can remain the active run pointer while its
     # approved plan has moved out of plans/active/ (its task-plan + grill still
@@ -9105,7 +9154,7 @@ def test_plan_save_accepts_a_plan_authored_in_any_mode(repo, tmp_path):
     intake(repo)
     plan = tmp_path / "normal-mode-plan.md"
     plan.write_text(plan_draft(repo))
-    code, out = record_grill(repo, "plan", digest_of=plan, plan_mode=False)
+    code, out = record_grill(repo, "plan", digest_of=plan)
     assert code == 0, out
 
     code, out = run(repo, "forge.py", "plan", "save", "--from", str(plan),
@@ -20118,6 +20167,28 @@ def test_task_start_creates_before_jit_with_approved_identity(
     plan_dir.unlink()
     shutil.move(external_dir, plan_dir)
 
+    approval_source = story_state(repo, "ENG-1") / "plan-approval.json"
+    approval_bytes = approval_source.read_bytes()
+    external_approval = tmp_path / "external-plan-approval.json"
+    external_approval.write_bytes(approval_bytes)
+    approval_source.unlink()
+    approval_source.symlink_to(external_approval)
+    code, out = run(repo, "forge.py", "task", "start", "T2")
+    assert code != 0 and "story approval source" in out and "linked" in out
+    assert not second_worktree.exists()
+    approval_source.unlink()
+    approval_source.write_bytes(approval_bytes)
+
+    event_dir = approval_source.parent / "approval-events"
+    external_events = tmp_path / "external-approval-events"
+    shutil.move(event_dir, external_events)
+    event_dir.symlink_to(external_events, target_is_directory=True)
+    code, out = run(repo, "forge.py", "task", "start", "T2")
+    assert code != 0 and "story approval event source" in out and "linked" in out
+    assert not second_worktree.exists()
+    event_dir.unlink()
+    shutil.move(external_events, event_dir)
+
     from forge_cli import tasks as tasks_mod
     original_require_git = tasks_mod._require_git
     external_target = tmp_path / "external-hydration-target"
@@ -20707,8 +20778,18 @@ def test_project_agents_init_upgrade_and_preserve_client_additions(
     assert (target / ".codex" / "config.toml").read_bytes() == source_config
     assert (target / ".codex" / "explore.config.toml").read_bytes() == source_explore
 
-    shipped = target / ".codex" / "agents" / sorted(source_agents)[0]
-    shipped.write_text("stale harness-owned config\n", encoding="utf-8")
+    shipped = target / ".codex" / "agents" / "planner-high.toml"
+    shipped.write_text(
+        source_agents["planner-high.toml"].decode("utf-8")
+        .replace(
+            '# Read-only is a role contract enforced by Forge, not an OS sandbox policy.\n'
+            'sandbox_mode = "danger-full-access"',
+            'sandbox_mode = "read-only"',
+        ),
+        encoding="utf-8",
+    )
+    client_modified = target / ".codex" / "agents" / "docs-decomposer.toml"
+    client_modified.write_text("name = \"client-owned\"\n", encoding="utf-8")
     custom = target / ".codex" / "agents" / "client-custom.toml"
     custom.write_text("name = \"client-custom\"\n", encoding="utf-8")
     git(target, "add", "-A")
@@ -20717,10 +20798,10 @@ def test_project_agents_init_upgrade_and_preserve_client_additions(
     monkeypatch.setattr(upgrade, "repo_root", lambda: source)
     upgrade.cmd_upgrade(argparse.Namespace(target=str(target), force=False))
 
-    assert {
-        name: (target / ".codex" / "agents" / name).read_bytes()
-        for name in source_agents
-    } == source_agents
+    assert shipped.read_bytes() == source_agents["planner-high.toml"]
+    assert client_modified.read_text(encoding="utf-8") == 'name = "client-owned"\n'
+    assert (target / ".codex/agents/functional-checker.toml").read_bytes() \
+        == source_agents["functional-checker.toml"]
     assert (target / ".codex" / "config.toml").read_bytes() == source_config
     assert (target / ".codex" / "explore.config.toml").read_bytes() == source_explore
     assert custom.read_text(encoding="utf-8") == 'name = "client-custom"\n'

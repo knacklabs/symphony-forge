@@ -42,9 +42,11 @@ rounds, no minimum round count, no synthetic closing question, and no
    findings from repository facts. Put only genuine choices to the human using
    the host-permitted channel. A finding is not a menu and silence grants no
    authority.
-4. Amend the artifact once. Preserve an ordered one-to-one disposition for
-   every cold finding and explain every change from the cold input to the final
-   artifact. The cold reader did not see the amended bytes; say that plainly.
+4. When the cold read found anything, amend the artifact once. Preserve an
+   ordered one-to-one disposition for every cold finding and explain every
+   change from the cold input to the final artifact. The cold reader did not
+   see the amended bytes; say that plainly. A clean unchanged cold read records
+   directly with no amendment.
 5. Record the pass. A changed artifact does not require another cold launch
    solely because the recorded amendments close the findings. A material shape
    change outside those dispositions is unexplained and must be refused.

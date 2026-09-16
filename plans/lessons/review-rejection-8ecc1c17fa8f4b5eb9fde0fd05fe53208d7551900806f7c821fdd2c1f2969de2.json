@@ -1,0 +1,10 @@
+{
+  "applies_to": [
+    "factory/scripts/forge_cli/**"
+  ],
+  "generated_by": "orchestrator",
+  "lesson": "Not a defect (0077): Accepted Decision 0077 makes contract verdicts proof records rather than defect leads; the owner chunk emits its own verdict, and the scope-retry contract explicitly omits cross-chunk verdict records. — raised as \"Route blocking verdicts back to their owning chunk (factory/scripts/forge_cli/review_groups.py:467): When one chunk reports a scope-rejected `[quality] VERDICT \"",
+  "severity": "medium",
+  "source": "review reject LEAN-WORKFLOW quality",
+  "topic": "rejected-review-finding-quality"
+}

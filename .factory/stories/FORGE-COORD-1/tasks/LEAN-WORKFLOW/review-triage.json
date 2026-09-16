@@ -671,6 +671,374 @@
       "delta_id": "26c0766b56dda19729c9ce7e8714879f2e610e37262ff6118e35adda30576a76",
       "generation_id": "5fbc7c9302a034ab19ce532e3e684ac919aaa7fd0de034ba0954a126cc590f98",
       "task_id": "LEAN-WORKFLOW"
+    },
+    {
+      "lens": "quality",
+      "finding": {
+        "area": "factory/scripts/forge_cli",
+        "category": "bug",
+        "file_path": "factory/scripts/forge_cli/stages.py",
+        "line": 1065,
+        "summary": "Bind missing generated semantic inputs into review identity (factory/scripts/forge_cli/stages.py:1065): When a task newly declares a `generated_semantic_inputs` path that is absent, or replaces one absent path with another, this loop omits the entry and `task_semantics` also omits the declaration itself.",
+        "title": "Bind missing generated semantic inputs into review identity"
+      },
+      "verdict": "real",
+      "evidence": "factory/scripts/forge_cli/stages.py:1065",
+      "instances": [
+        "factory/scripts/forge_cli/stages.py:1065"
+      ],
+      "keep": "Preserve canonical bookkeeping exclusions and immutable original proof provenance.",
+      "reason": "",
+      "triaged_by": "orchestrator",
+      "triaged_at": "2026-09-16T19:20:34+00:00",
+      "delta_id": "86cbed4a09c58baa83b73013f1919b6ff45577435c1d65be95a9fe6cc0518a5e",
+      "generation_id": "7ddc40c69a4db7a35b3fe64913281ee396b063668cabc6ef5164c5af62c29f2f",
+      "task_id": "LEAN-WORKFLOW"
+    },
+    {
+      "lens": "quality",
+      "finding": {
+        "area": "factory/scripts/forge_cli",
+        "category": "bug",
+        "file_path": "factory/scripts/forge_cli/upgrade.py",
+        "line": 977,
+        "summary": "Multiple fixed-proof candidates make migration fail after the first publication (factory/scripts/forge_cli/upgrade.py:977): When two or more sealed fixed-lens triples need promotion, publishing the first pointer makes `_fixed_review_plan` reclassify that task from candidate to sentinel.",
+        "title": "Multiple fixed-proof candidates make migration fail after the first publication"
+      },
+      "verdict": "real",
+      "evidence": "factory/scripts/forge_cli/upgrade.py:977",
+      "instances": [
+        "factory/scripts/forge_cli/upgrade.py:977"
+      ],
+      "keep": "Preserve fixed-input byte binding, pointer-last publication, and idempotent exact retry.",
+      "reason": "",
+      "triaged_by": "orchestrator",
+      "triaged_at": "2026-09-16T19:20:35+00:00",
+      "delta_id": "86cbed4a09c58baa83b73013f1919b6ff45577435c1d65be95a9fe6cc0518a5e",
+      "generation_id": "7ddc40c69a4db7a35b3fe64913281ee396b063668cabc6ef5164c5af62c29f2f",
+      "task_id": "LEAN-WORKFLOW"
+    },
+    {
+      "lens": "quality",
+      "finding": {
+        "area": "factory/tests",
+        "category": "maintainability",
+        "file_path": "factory/tests/test_gates.py",
+        "line": 344,
+        "summary": "Remove the retired grill compatibility parameters (factory/tests/test_gates.py:344): When callers invoke `record_grill`, `seed_requirements` and `plan_mode` are still accepted even though the rewritten body never reads either value; line 9108 consequently appears to exercise `plan_mode=False` while taking the identical path.",
+        "title": "Remove the retired grill compatibility parameters"
+      },
+      "verdict": "real",
+      "evidence": "factory/tests/test_gates.py:344",
+      "instances": [
+        "factory/tests/test_gates.py:344"
+      ],
+      "keep": "Preserve all existing grill fixture behavior while removing the misleading unused arguments.",
+      "reason": "",
+      "triaged_by": "orchestrator",
+      "triaged_at": "2026-09-16T19:20:35+00:00",
+      "delta_id": "86cbed4a09c58baa83b73013f1919b6ff45577435c1d65be95a9fe6cc0518a5e",
+      "generation_id": "7ddc40c69a4db7a35b3fe64913281ee396b063668cabc6ef5164c5af62c29f2f",
+      "task_id": "LEAN-WORKFLOW"
+    },
+    {
+      "lens": "quality",
+      "finding": {
+        "area": "/Users/dev/.codex/plans/symphony-forge+lean-workflow+jit+20260914T071000IST.md#Acceptance Criteria 2",
+        "category": "plan-contract-partial",
+        "file_path": "factory/scripts/forge_cli/tasks.py",
+        "line": 239,
+        "summary": "LEAN-AC-2: Shared recorder identity: the shared approval recorder binds exactly one current-frontier candidate, current digest, runtime, stable session/event identity, plan kind/story/task, replay refusal, and `human-via-Claude` / `human-via-Codex` attribution. \u2014 partial: factory/scripts/forge_cli/tasks.py:239 hydrates shared native approval records into successor workspaces, but the unvalidated source topology leaves their authority vulnerable to linked external state.",
+        "title": "VERDICT LEAN-AC-2: partial"
+      },
+      "verdict": "real",
+      "evidence": "factory/scripts/forge_cli/tasks.py:239",
+      "instances": [
+        "factory/scripts/forge_cli/tasks.py:239"
+      ],
+      "keep": "Preserve exact native approval identity and hydrate only contained authenticated bytes.",
+      "reason": "",
+      "triaged_by": "orchestrator",
+      "triaged_at": "2026-09-16T19:20:35+00:00",
+      "delta_id": "86cbed4a09c58baa83b73013f1919b6ff45577435c1d65be95a9fe6cc0518a5e",
+      "generation_id": "7ddc40c69a4db7a35b3fe64913281ee396b063668cabc6ef5164c5af62c29f2f",
+      "task_id": "LEAN-WORKFLOW"
+    },
+    {
+      "lens": "quality",
+      "finding": {
+        "area": "/Users/dev/.codex/plans/symphony-forge+lean-workflow+jit+20260914T071000IST.md#Acceptance Criteria 3",
+        "category": "plan-contract-partial",
+        "file_path": "factory/prompts/griller.md",
+        "line": 45,
+        "summary": "LEAN-AC-3: Ceremony removal: requirements grill, round floors, old round ledgers as authority, fake frontier questions, second unchanged save, and manual plan/task approval leave normal runtime; Lean preserves one independent cold grill plus complete finding disposition, including the three requirements cold-read gap dispositions for context snapshot security, independent migration coverage, and clean-target preservation, explained amendment bridge to the final artifact digest, final human approval on that digest, and refusal for unexplained out-of-disposition changes. \u2014 partial: factory/prompts/griller.md:45 unconditionally requires an amendment even for a clean cold read, so the documented ceremony-removal flow cannot complete coherently for the zero-finding case.",
+        "title": "VERDICT LEAN-AC-3: partial"
+      },
+      "verdict": "real",
+      "evidence": "factory/prompts/griller.md:45",
+      "instances": [
+        "factory/prompts/griller.md:45"
+      ],
+      "keep": "Preserve one cold read, finding-bound amendments, and exact-final-digest native approval.",
+      "reason": "",
+      "triaged_by": "orchestrator",
+      "triaged_at": "2026-09-16T19:20:36+00:00",
+      "delta_id": "86cbed4a09c58baa83b73013f1919b6ff45577435c1d65be95a9fe6cc0518a5e",
+      "generation_id": "7ddc40c69a4db7a35b3fe64913281ee396b063668cabc6ef5164c5af62c29f2f",
+      "task_id": "LEAN-WORKFLOW"
+    },
+    {
+      "lens": "quality",
+      "finding": {
+        "area": "/Users/dev/.codex/plans/symphony-forge+lean-workflow+jit+20260914T071000IST.md#Acceptance Criteria 4",
+        "category": "plan-contract-partial",
+        "file_path": "factory/scripts/forge_cli/worker_admission.py",
+        "line": 195,
+        "summary": "LEAN-AC-4: Narrowed delegation: `forge delegate --scope` is a proper-subset narrowing feature, exact approved files are valid subset members, no flag keeps full effective scope, and hook admission enforces the narrowed launch identity. \u2014 partial: factory/scripts/forge_cli/worker_admission.py:195 erases a recorded trailing-slash distinction before validating narrowed authority, allowing a blob selection to become directory authority.",
+        "title": "VERDICT LEAN-AC-4: partial"
+      },
+      "verdict": "real",
+      "evidence": "factory/scripts/forge_cli/worker_admission.py:195",
+      "instances": [
+        "factory/scripts/forge_cli/worker_admission.py:195"
+      ],
+      "keep": "Preserve real baseline directory authority and full effective scope when scope is omitted.",
+      "reason": "",
+      "triaged_by": "orchestrator",
+      "triaged_at": "2026-09-16T19:20:36+00:00",
+      "delta_id": "86cbed4a09c58baa83b73013f1919b6ff45577435c1d65be95a9fe6cc0518a5e",
+      "generation_id": "7ddc40c69a4db7a35b3fe64913281ee396b063668cabc6ef5164c5af62c29f2f",
+      "task_id": "LEAN-WORKFLOW"
+    },
+    {
+      "lens": "quality",
+      "finding": {
+        "area": "/Users/dev/.codex/plans/symphony-forge+lean-workflow+jit+20260914T071000IST.md#Acceptance Criteria 5",
+        "category": "plan-contract-partial",
+        "file_path": "factory/scripts/forge_cli/stages.py",
+        "line": 1065,
+        "summary": "LEAN-AC-5: Content-bound close reuse: test/verify receipts and selected-review reviewed-meaning identity reuse only when their proof-type inputs match; substantive acceptance/security/migration/evidence/review-instruction/product-delta changes force review, while canonicalized bookkeeping/timestamp changes preserve immutable original provenance. \u2014 partial: factory/scripts/forge_cli/stages.py:1065 implements reviewed-meaning and proof-reuse identities, but absent declared generated inputs are omitted and can preserve a stale identity.",
+        "title": "VERDICT LEAN-AC-5: partial"
+      },
+      "verdict": "real",
+      "evidence": "factory/scripts/forge_cli/stages.py:1065",
+      "instances": [
+        "factory/scripts/forge_cli/stages.py:1065"
+      ],
+      "keep": "Preserve bookkeeping-only reuse and force new meaning identity for substantive inputs.",
+      "reason": "",
+      "triaged_by": "orchestrator",
+      "triaged_at": "2026-09-16T19:20:37+00:00",
+      "delta_id": "86cbed4a09c58baa83b73013f1919b6ff45577435c1d65be95a9fe6cc0518a5e",
+      "generation_id": "7ddc40c69a4db7a35b3fe64913281ee396b063668cabc6ef5164c5af62c29f2f",
+      "task_id": "LEAN-WORKFLOW"
+    },
+    {
+      "lens": "quality",
+      "finding": {
+        "area": "/Users/dev/.codex/plans/symphony-forge+lean-workflow+jit+20260914T071000IST.md#Acceptance Criteria 6",
+        "category": "plan-contract-partial",
+        "file_path": "factory/scripts/forge_cli/upgrade.py",
+        "line": 977,
+        "summary": "LEAN-AC-6: Lean migration: `forge upgrade` performs clean-checkout preflight with no `--force` bypass, full inventory/hash/classification, independent raw no-follow coverage over fixed legacy roots/exact parents, temp build, validation, publish/readback, idempotent retry, unequal partial refusal, generated `.factory/migrations/lean-workflow-v2.json`, profile/settings preservation, and deletion only after durable current outputs exist. \u2014 partial: factory/scripts/forge_cli/upgrade.py:977 rejects its own first fixed-review publication when another candidate remains, so the required complete migration transaction is not implemented.",
+        "title": "VERDICT LEAN-AC-6: partial"
+      },
+      "verdict": "real",
+      "evidence": "factory/scripts/forge_cli/upgrade.py:977",
+      "instances": [
+        "factory/scripts/forge_cli/upgrade.py:977"
+      ],
+      "keep": "Preserve clean no-force migration, independent inventory parity, pointer-last publication, and exact retry.",
+      "reason": "",
+      "triaged_by": "orchestrator",
+      "triaged_at": "2026-09-16T19:20:37+00:00",
+      "delta_id": "86cbed4a09c58baa83b73013f1919b6ff45577435c1d65be95a9fe6cc0518a5e",
+      "generation_id": "7ddc40c69a4db7a35b3fe64913281ee396b063668cabc6ef5164c5af62c29f2f",
+      "task_id": "LEAN-WORKFLOW"
+    },
+    {
+      "lens": "quality",
+      "finding": {
+        "area": "/Users/dev/.codex/plans/symphony-forge+lean-workflow+jit+20260914T071000IST.md#Acceptance Criteria 7",
+        "category": "plan-contract-partial",
+        "file_path": "factory/scripts/forge_cli/upgrade.py",
+        "line": 977,
+        "summary": "LEAN-AC-7: Fixed-proof migration: Lean migrates sealed fixed-lens proof once into canonical `origin=upgrade` selected generations with the full sealed-proof safety contract, while active old proof requires a fresh review and normal runtime never uses direct fixed-file fallback authority. \u2014 partial: factory/scripts/forge_cli/upgrade.py:977 prevents multiple sealed fixed-proof candidates from being promoted in one migration run.",
+        "title": "VERDICT LEAN-AC-7: partial"
+      },
+      "verdict": "real",
+      "evidence": "factory/scripts/forge_cli/upgrade.py:977",
+      "instances": [
+        "factory/scripts/forge_cli/upgrade.py:977"
+      ],
+      "keep": "Preserve sealed fixed-proof identity and refuse active, partial, mutated, or unrelated proof.",
+      "reason": "",
+      "triaged_by": "orchestrator",
+      "triaged_at": "2026-09-16T19:20:37+00:00",
+      "delta_id": "86cbed4a09c58baa83b73013f1919b6ff45577435c1d65be95a9fe6cc0518a5e",
+      "generation_id": "7ddc40c69a4db7a35b3fe64913281ee396b063668cabc6ef5164c5af62c29f2f",
+      "task_id": "LEAN-WORKFLOW"
+    },
+    {
+      "lens": "quality",
+      "finding": {
+        "area": "/Users/dev/.codex/plans/symphony-forge+lean-workflow+jit+20260914T071000IST.md#Acceptance Criteria 8",
+        "category": "plan-contract-partial",
+        "file_path": "factory/scripts/forge_cli/upgrade.py",
+        "line": 2080,
+        "summary": "LEAN-AC-8: Hook/config/profile target: committed Claude/Codex hook matrices, `.codex/config.toml`, `.claude/CLAUDE.md`, and profile installation match the recovery target; only three Forge-owned profiles remain while client-modified/client-added profiles are preserved. \u2014 partial: factory/scripts/forge_cli/upgrade.py:2080 unconditionally replaces retained same-name profiles instead of preserving client-modified copies.",
+        "title": "VERDICT LEAN-AC-8: partial"
+      },
+      "verdict": "real",
+      "evidence": "factory/scripts/forge_cli/upgrade.py:2080",
+      "instances": [
+        "factory/scripts/forge_cli/upgrade.py:2080"
+      ],
+      "keep": "Preserve the exact three-profile registry, refresh known Forge-owned bytes, and keep unknown client bytes.",
+      "reason": "",
+      "triaged_by": "orchestrator",
+      "triaged_at": "2026-09-16T19:20:38+00:00",
+      "delta_id": "86cbed4a09c58baa83b73013f1919b6ff45577435c1d65be95a9fe6cc0518a5e",
+      "generation_id": "7ddc40c69a4db7a35b3fe64913281ee396b063668cabc6ef5164c5af62c29f2f",
+      "task_id": "LEAN-WORKFLOW"
+    },
+    {
+      "lens": "quality",
+      "finding": {
+        "area": "/Users/dev/.codex/plans/symphony-forge+lean-workflow+jit+20260914T071000IST.md#Acceptance Criteria 11",
+        "category": "plan-contract-partial",
+        "file_path": "factory/scripts/factory_lib.py",
+        "line": 2306,
+        "summary": "LEAN-AC-11: Normal-runtime refusal: Lean-removed old formats outside upgrade produce `run forge upgrade` guidance; PR3-owned legacy families stay compatible until Portable handles them. \u2014 partial: factory/scripts/factory_lib.py:2306 checks the wrong fixed-review directory and conditions guidance on a missing selection, so not every Lean-removed fixed-review shape produces the required upgrade refusal.",
+        "title": "VERDICT LEAN-AC-11: partial"
+      },
+      "verdict": "real",
+      "evidence": "factory/scripts/factory_lib.py:2312",
+      "instances": [
+        "factory/scripts/factory_lib.py:2312"
+      ],
+      "keep": "Preserve selected immutable generations as the only runtime review authority; upgrade remains the converter.",
+      "reason": "",
+      "triaged_by": "orchestrator",
+      "triaged_at": "2026-09-16T19:20:38+00:00",
+      "delta_id": "86cbed4a09c58baa83b73013f1919b6ff45577435c1d65be95a9fe6cc0518a5e",
+      "generation_id": "7ddc40c69a4db7a35b3fe64913281ee396b063668cabc6ef5164c5af62c29f2f",
+      "task_id": "LEAN-WORKFLOW"
+    },
+    {
+      "lens": "quality",
+      "finding": {
+        "area": "/Users/dev/.codex/plans/symphony-forge+lean-workflow+jit+20260914T071000IST.md#Acceptance Criteria 12",
+        "category": "plan-contract-partial",
+        "file_path": "docs/getting-started.md",
+        "line": 28,
+        "summary": "LEAN-AC-12: Docs/runtime agreement: workflow, docs, specs, prompts, skills, architecture text, reviewer focus, required tests, and design-review status agree with the implemented runtime without duplicating long canon in `AGENTS.md`. \u2014 partial: docs/getting-started.md:28 omits the required per-leaf contract, cold grill, and native-approval cycle between decomposition and implementation, so the documentation does not fully agree with runtime.",
+        "title": "VERDICT LEAN-AC-12: partial"
+      },
+      "verdict": "real",
+      "evidence": "docs/getting-started.md:28",
+      "instances": [
+        "docs/getting-started.md:28"
+      ],
+      "keep": "Keep the overview concise and link to canon while restoring the per-leaf JIT cycle.",
+      "reason": "",
+      "triaged_by": "orchestrator",
+      "triaged_at": "2026-09-16T19:20:39+00:00",
+      "delta_id": "86cbed4a09c58baa83b73013f1919b6ff45577435c1d65be95a9fe6cc0518a5e",
+      "generation_id": "7ddc40c69a4db7a35b3fe64913281ee396b063668cabc6ef5164c5af62c29f2f",
+      "task_id": "LEAN-WORKFLOW"
+    },
+    {
+      "lens": "security",
+      "finding": {
+        "area": "factory/scripts/forge_cli",
+        "category": "security",
+        "file_path": "factory/scripts/forge_cli/tasks.py",
+        "line": 239,
+        "summary": "Refuse linked approval sources before task hydration (factory/scripts/forge_cli/tasks.py:239): When the story approval record or its approval-events directory is a symlink, these newly added sources enter the hydration set without the no-follow validation applied to the optional task plan below, and are later read with `read_bytes()`.",
+        "title": "Refuse linked approval sources before task hydration"
+      },
+      "verdict": "real",
+      "evidence": "factory/scripts/forge_cli/tasks.py:239",
+      "instances": [
+        "factory/scripts/forge_cli/tasks.py:239"
+      ],
+      "keep": "Preserve successor hydration while copying only contained no-follow authenticated byte snapshots.",
+      "reason": "",
+      "triaged_by": "orchestrator",
+      "triaged_at": "2026-09-16T19:20:39+00:00",
+      "delta_id": "86cbed4a09c58baa83b73013f1919b6ff45577435c1d65be95a9fe6cc0518a5e",
+      "generation_id": "7ddc40c69a4db7a35b3fe64913281ee396b063668cabc6ef5164c5af62c29f2f",
+      "task_id": "LEAN-WORKFLOW"
+    },
+    {
+      "lens": "security",
+      "finding": {
+        "area": "factory/scripts/forge_cli",
+        "category": "security",
+        "file_path": "factory/scripts/forge_cli/upgrade.py",
+        "line": 2080,
+        "summary": "Preserve client-modified retained profiles instead of overwriting them (factory/scripts/forge_cli/upgrade.py:2080): When a client commits changes to a retained same-name profile such as `planner-high.toml`, inventory labels it `current-runtime-profile` without checking a known Forge-owned hash, and this unconditional `_replace_path` overwrites it with the harness copy.",
+        "title": "Preserve client-modified retained profiles instead of overwriting them"
+      },
+      "verdict": "real",
+      "evidence": "factory/scripts/forge_cli/upgrade.py:2080",
+      "instances": [
+        "factory/scripts/forge_cli/upgrade.py:2080"
+      ],
+      "keep": "Preserve unknown same-name client bytes and refresh only absent or known Forge-owned retained profiles.",
+      "reason": "",
+      "triaged_by": "orchestrator",
+      "triaged_at": "2026-09-16T19:20:39+00:00",
+      "delta_id": "86cbed4a09c58baa83b73013f1919b6ff45577435c1d65be95a9fe6cc0518a5e",
+      "generation_id": "7ddc40c69a4db7a35b3fe64913281ee396b063668cabc6ef5164c5af62c29f2f",
+      "task_id": "LEAN-WORKFLOW"
+    },
+    {
+      "lens": "security",
+      "finding": {
+        "area": "factory/scripts/forge_cli",
+        "category": "security",
+        "file_path": "factory/scripts/forge_cli/worker_admission.py",
+        "line": 195,
+        "summary": "Reject file paths masquerading as narrowed directories (factory/scripts/forge_cli/worker_admission.py:195): When the approved scope contains a directory such as `src/` and the baseline contains the blob `src/a.py`, a caller can request `--scope src/a.py/`: topology validation strips the slash and sees the expected blob, while this admission check also strips the slash and accepts the row before `classify_scope_entries` treats the explicit slash as directory authority.",
+        "title": "Reject file paths masquerading as narrowed directories"
+      },
+      "verdict": "real",
+      "evidence": "factory/scripts/forge_cli/worker_admission.py:195",
+      "instances": [
+        "factory/scripts/forge_cli/worker_admission.py:195"
+      ],
+      "keep": "Preserve real baseline directories with or without a slash and exact baseline blobs without a slash.",
+      "reason": "",
+      "triaged_by": "orchestrator",
+      "triaged_at": "2026-09-16T19:20:40+00:00",
+      "delta_id": "86cbed4a09c58baa83b73013f1919b6ff45577435c1d65be95a9fe6cc0518a5e",
+      "generation_id": "7ddc40c69a4db7a35b3fe64913281ee396b063668cabc6ef5164c5af62c29f2f",
+      "task_id": "LEAN-WORKFLOW"
+    },
+    {
+      "lens": "security",
+      "finding": {
+        "area": "factory/scripts",
+        "category": "security",
+        "file_path": "factory/scripts/record_grill_from_json.py",
+        "line": 277,
+        "summary": "Require the cold artifact frame even for unchanged input (factory/scripts/record_grill_from_json.py:277): When a successful cold-read row has a valid terminal digest equal to the current artifact but its authenticated brief lacks a valid `forge:cold-artifact` frame, this condition does not reject it; the following fallback compares the final artifact with itself and permits a passing grill.",
+        "title": "Require the cold artifact frame even for unchanged input"
+      },
+      "verdict": "real",
+      "evidence": "factory/scripts/record_grill_from_json.py:277",
+      "instances": [
+        "factory/scripts/record_grill_from_json.py:277"
+      ],
+      "keep": "Preserve clean unchanged cold reads only when the authenticated cold artifact frame is present.",
+      "reason": "",
+      "triaged_by": "orchestrator",
+      "triaged_at": "2026-09-16T19:20:40+00:00",
+      "delta_id": "86cbed4a09c58baa83b73013f1919b6ff45577435c1d65be95a9fe6cc0518a5e",
+      "generation_id": "7ddc40c69a4db7a35b3fe64913281ee396b063668cabc6ef5164c5af62c29f2f",
+      "task_id": "LEAN-WORKFLOW"
     }
   ]
 }

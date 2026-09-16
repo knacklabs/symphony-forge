@@ -1063,15 +1063,19 @@ def reviewed_meaning_identity(
         }
     generated = {}
     for relative in task.get("generated_semantic_inputs") or []:
-        if isinstance(relative, str) and (base / relative).is_file():
-            generated[relative] = sha256_of(base / relative)
+        if not isinstance(relative, str):
+            continue
+        path = base / relative
+        generated[relative] = (
+            sha256_of(path) if path.is_file() else "absent"
+        )
     inputs = {
         "task_plan_sha256": plan_digest,
         "task_semantics": _canonical_review_value({
             key: task.get(key) for key in (
                 "objective", "acceptance_criteria", "plan_contracts",
                 "reviewer_focus", "write_scope", "required_tests",
-                "verify_commands",
+                "verify_commands", "generated_semantic_inputs",
             )
         }),
         "task_grill": _canonical_review_envelope(grill),

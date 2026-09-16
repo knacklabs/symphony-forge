@@ -7,6 +7,7 @@ import json
 import os
 import re
 import shutil
+import stat
 import subprocess
 from pathlib import Path
 
@@ -38,6 +39,53 @@ def _require_git(
         detail = proc.stderr.strip() or proc.stdout.strip()
         fail(f"{description} failed" + (f": {detail}" if detail else ""))
     return proc.stdout.strip() if strip else proc.stdout
+
+
+def _contained_regular_bytes(base: Path, source: Path, label: str) -> bytes:
+    """Snapshot one contained authority file without following links."""
+    try:
+        relative = source.relative_to(base)
+    except ValueError:
+        fail(f"task start refused: {label} escapes the source worktree")
+    current = base
+    for part in relative.parts[:-1]:
+        current /= part
+        try:
+            info = current.lstat()
+        except OSError as exc:
+            fail(f"task start refused: {label} ancestor is unreadable: {exc}")
+        if stat.S_ISLNK(info.st_mode) or not stat.S_ISDIR(info.st_mode):
+            fail(f"task start refused: {label} ancestor is linked or not a directory")
+    try:
+        leaf = source.lstat()
+    except OSError as exc:
+        fail(f"task start refused: {label} is unreadable: {exc}")
+    if stat.S_ISLNK(leaf.st_mode) or not stat.S_ISREG(leaf.st_mode) or leaf.st_nlink != 1:
+        fail(f"task start refused: {label} is linked or not a regular file")
+    flags = os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0)
+    try:
+        descriptor = os.open(source, flags)
+    except OSError as exc:
+        fail(f"task start refused: {label} is not a readable regular file: {exc}")
+    try:
+        before = os.fstat(descriptor)
+        if (stat.S_ISLNK(before.st_mode) or not stat.S_ISREG(before.st_mode)
+                or before.st_nlink != 1):
+            fail(f"task start refused: {label} is linked or not a regular file")
+        chunks = []
+        while chunk := os.read(descriptor, 65536):
+            chunks.append(chunk)
+        after = os.fstat(descriptor)
+        if ((after.st_dev, after.st_ino, after.st_size, after.st_mtime_ns)
+                != (before.st_dev, before.st_ino, before.st_size, before.st_mtime_ns)):
+            fail(f"task start refused: {label} changed during hydration")
+        leaf = source.lstat()
+        if ((leaf.st_dev, leaf.st_ino) != (after.st_dev, after.st_ino)
+                or stat.S_ISLNK(leaf.st_mode) or leaf.st_nlink != 1):
+            fail(f"task start refused: {label} identity changed during hydration")
+        return b"".join(chunks)
+    finally:
+        os.close(descriptor)
 
 
 def _default_branch(base: Path) -> str:
@@ -228,13 +276,24 @@ def cmd_task_start(args: argparse.Namespace) -> None:
         Path(".factory") / "stories" / key / "decomposition.json": decomposition_path,
     }
     approval_source = evidence_path(base, key, "plan-approval.json")
-    approval = load_json(approval_source, default={})
+    approval_bytes = _contained_regular_bytes(
+        base, approval_source, "story approval source",
+    )
+    try:
+        approval = json.loads(approval_bytes)
+    except (UnicodeError, json.JSONDecodeError) as exc:
+        fail(f"task start refused: story approval source is invalid JSON: {exc}")
+    if not isinstance(approval, dict):
+        fail("task start refused: story approval source is not a JSON object")
     approval_event_key = hashlib.sha256(
         f"{approval.get('runtime')}\0{approval.get('session_id')}\0"
         f"{approval.get('event_id')}".encode("utf-8")
     ).hexdigest()
     approval_event_source = evidence_path(
         base, key, f"approval-events/{approval_event_key}.json",
+    )
+    approval_event_bytes = _contained_regular_bytes(
+        base, approval_event_source, "story approval event source",
     )
     sources.update({
         Path(".factory") / "stories" / key / "plan-approval.json":
@@ -258,7 +317,20 @@ def cmd_task_start(args: argparse.Namespace) -> None:
             continue
         if source.is_file():
             sources[relative] = source
-    payloads = {relative: source.read_bytes() for relative, source in sources.items()}
+    approval_relative = Path(".factory") / "stories" / key / "plan-approval.json"
+    event_relative = (
+        Path(".factory") / "stories" / key / "approval-events"
+        / f"{approval_event_key}.json"
+    )
+    authenticated = {
+        approval_relative: approval_bytes,
+        event_relative: approval_event_bytes,
+    }
+    payloads = {
+        relative: authenticated[relative]
+        if relative in authenticated else source.read_bytes()
+        for relative, source in sources.items()
+    }
     decomposition_bytes = decomposition_path.read_bytes()
     stages_bytes = (json.dumps({
         "issue": key,

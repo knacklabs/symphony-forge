@@ -186,13 +186,8 @@ def derive_phase(root: Path, state: dict[str, Any]) -> str:
         implied = "testing"
     if (scoped / "tests.json").is_file() and (scoped / "verify.json").is_file():
         implied = "reviewing"
-    task_id = state.get("task_id")
-    if isinstance(task_id, str) and task_id:
-        generation, _selection, problems = read_selected_review_generation(
-            root, key, task_id,
-        )
-        if isinstance(generation, dict) and not problems:
-            implied = "functional-check"
+    if selected_review_ready_for_functional_check(root, state):
+        implied = "functional-check"
 
     order = (
         "discovery", "planning", "decomposing", "awaiting-approval",
@@ -694,6 +689,20 @@ def load_json(path: Path, default: Any = None) -> Any:
     if run_root is not None and isinstance(data, dict):
         data = {**data, "phase": derive_phase(run_root, data)}
     return data
+
+
+def _raw_json_object(path: Path) -> dict[str, Any]:
+    """Read one JSON object without run-state phase derivation."""
+    try:
+        value = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeError, json.JSONDecodeError):
+        return {}
+    return value if isinstance(value, dict) else {}
+
+
+def raw_run_state(root: Path) -> dict[str, Any]:
+    """Read the protected run pointer without recursively deriving its phase."""
+    return _raw_json_object(run_state_path(root))
 
 
 def dump_json(path: Path, data: Any) -> None:
@@ -2312,14 +2321,14 @@ def require_closeout_order(root: Path) -> list[str]:
     fixed_reviews = [
         evidence_path(root, key, f"reviews/{aspect}.json")
         for aspect in ("quality", "performance", "security")
-    ]
-    selected_missing = any(
-        not evidence_path(
-            root, key, f"tasks/{task.get('id')}/reviews/selected.json",
-        ).is_file()
+    ] + [
+        evidence_path(
+            root, key, f"tasks/{task.get('id')}/reviews/{aspect}.json",
+        )
         for task in tasks
-    )
-    if selected_missing and any(path.is_file() for path in fixed_reviews):
+        for aspect in ("quality", "performance", "security")
+    ]
+    if any(path.is_file() for path in fixed_reviews):
         problems.append(
             "legacy fixed review proof is no longer runtime authority; "
             "run `forge upgrade`"
@@ -4258,15 +4267,51 @@ def _stage_baseline_for(root: Path, task_id: str) -> str:
         return ""
 
 
-def effective_review_base(root: Path, task_id: str, tip: str = "") -> str:
+def effective_review_base(
+    root: Path, task_id: str, tip: str = "", state: dict[str, Any] | None = None,
+) -> str:
     """Resolve the task base used by both review publication and proof readers."""
     stage = task_stage_record(root, task_id)
     if not stage:
         return ""
     from forge_cli.review import resolve_review_base
     return resolve_review_base(
-        root, stage, load_json(run_state_path(root), default={}),
+        root, stage, state if isinstance(state, dict) else raw_run_state(root),
         tip or head_sha(root) or "",
+    )
+
+
+def selected_review_ready_for_functional_check(
+    root: Path, state: dict[str, Any] | None = None,
+) -> bool:
+    """Require current clean proof and reviewed meaning before phase advance."""
+    pointer = state if isinstance(state, dict) else raw_run_state(root)
+    story = pointer.get("issue_key") or pointer.get("story")
+    task_id = pointer.get("task_id")
+    if not isinstance(story, str) or not story or not isinstance(task_id, str) or not task_id:
+        return False
+    try:
+        from forge_cli.readiness import review_passed
+        from forge_cli.stages import require_current_review_meaning, task_for
+
+        stage = task_stage_record(root, task_id)
+        task = task_for(root, task_id)
+        review_base = effective_review_base(root, task_id, state=pointer)
+        if not stage or not task or not review_base:
+            return False
+        delta_id = product_delta_digest(root, review_base)
+        generation, _selection, problems = read_selected_review_generation(
+            root, story, task_id, expected_delta_id=delta_id,
+        )
+        if problems or not isinstance(generation, dict):
+            return False
+        require_current_review_meaning(root, stage, task, generation)
+    except (Exception, SystemExit):
+        return False
+    lenses = generation.get("lenses")
+    return isinstance(lenses, dict) and all(
+        review_passed(lenses.get(lens))
+        for lens in ("quality", "performance", "security")
     )
 
 
@@ -4610,8 +4655,7 @@ def task_state_root(root: Path, task_id: str) -> Path:
         return root
     for candidate in linked_worktree_roots(root):
         try:
-            pointer = load_json(git_control_dir(candidate) / "run.json",
-                                default={})
+            pointer = _raw_json_object(git_control_dir(candidate) / "run.json")
         except (OSError, SystemExit):
             continue
         if isinstance(pointer, dict) and pointer.get("task_id") == task_id:

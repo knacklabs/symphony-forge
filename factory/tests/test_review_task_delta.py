@@ -106,6 +106,19 @@ def test_generated_review_inputs_are_included_in_reviewed_meaning(repo, monkeypa
         repo, stage, task, helper)["semantic_identity"] != before
 
 
+def test_missing_generated_review_input_declaration_changes_reviewed_meaning(
+        repo, monkeypatch):
+    _lib, task, stage, helper = _meaning_fixture(repo, monkeypatch)
+    (repo / "ci/generated.json").unlink()
+    first = stage_helpers.reviewed_meaning_identity(repo, stage, task, helper)
+    assert first["inputs"]["generated_semantic_inputs"] == {
+        "ci/generated.json": "absent",
+    }
+    task["generated_semantic_inputs"] = ["ci/other-missing.json"]
+    second = stage_helpers.reviewed_meaning_identity(repo, stage, task, helper)
+    assert second["semantic_identity"] != first["semantic_identity"]
+
+
 @pytest.mark.parametrize("change", ["automated", "generated"])
 def test_public_review_set_refuses_old_meaning_even_after_token_remint(
         repo, tmp_path, monkeypatch, change):
@@ -200,7 +213,7 @@ def test_review_prompt_binding_reuses_bookkeeping_after_token_remint(repo, tmp_p
     stage_helpers.stamp_stage_review(repo, "T2")
     proof = proof_path(repo, "ENG-1", "tests.json", task_id="T2")
     data = json.loads(proof.read_text())
-    data["automated"]["recorded_at"] = "2026-09-15T00:00:00+00:00"
+    data["recorded_at"] = "2026-09-15T00:00:00+00:00"
     proof.write_text(json.dumps(data))
     code, out = run(repo, "forge.py", "review-brief", "--all")
     assert code == 0, out

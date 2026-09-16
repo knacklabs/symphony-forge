@@ -3,12 +3,10 @@ from __future__ import annotations
 
 import argparse
 from factory_lib import (
-    active_task_id, client_signoff, decomposition_state_path, dump_json, load_json,
-    effective_review_base, now_iso, product_delta_digest,
-    read_selected_review_generation, repo_root, run_state_path, tests_state_path,
-    verify_state_path,
+    client_signoff, decomposition_state_path, dump_json, load_json,
+    now_iso, repo_root, run_state_path, selected_review_ready_for_functional_check,
+    tests_state_path, verify_state_path,
 )
-from forge_cli.readiness import review_passed
 
 parser = argparse.ArgumentParser(description="Update factory run state")
 parser.add_argument("--phase")
@@ -33,31 +31,6 @@ GATED_PHASES = {
 }
 
 
-def selected_review_ready(base):
-    state = load_json(run_state_path(base), default={})
-    story = state.get("issue_key") or state.get("story")
-    task_id = active_task_id(base)
-    if not isinstance(story, str) or not story or not task_id:
-        return False
-    try:
-        review_base = effective_review_base(base, task_id)
-        if not review_base:
-            return False
-        delta_id = product_delta_digest(base, review_base)
-        generation, _selection, problems = read_selected_review_generation(
-            base, story, task_id, expected_delta_id=delta_id,
-        )
-    except (Exception, SystemExit):
-        return False
-    lenses = generation.get("lenses") if isinstance(generation, dict) else None
-    return (
-        not problems
-        and isinstance(lenses, dict)
-        and all(review_passed(lenses.get(lens))
-                for lens in ("quality", "performance", "security"))
-    )
-
-
 PHASE_PREREQS = {
     "reviewing": (
         ("successful .factory/verify.json",
@@ -67,7 +40,7 @@ PHASE_PREREQS = {
     ),
     "functional-check": (
         ("the active task's current clean selected review generation",
-         selected_review_ready),
+         selected_review_ready_for_functional_check),
     ),
 }
 
