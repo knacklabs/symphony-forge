@@ -1,9 +1,9 @@
 {
-  "commit": "f2b41a0039fd72d8126465771fd647478d03ced1",
+  "commit": "edd849d179b25d1b3b8cb31f41df275a8685d35f",
   "automated": {
     "generated_by": "implementer",
     "status": "passed",
-    "summary": "LEAN-WORKFLOW at f2b41a0039fd72d8126465771fd647478d03ced1 passed the official pre-review stage proof runner with all five declared verify commands and all 51 declared required selectors. The full factory suite passed 1133 tests, skipped 4, in 1075.95s; the selector receipt reports zero JUnit ID/path misses. Current published product head 34d5041 also has green Linux scaffold CI (1129 passed, 8 skipped) and native Windows hook gates (24 passed, 1 skipped). Real native Claude/Codex Plan Mode smokes remain pending.",
+    "summary": "LEAN-WORKFLOW at edd849d179b25d1b3b8cb31f41df275a8685d35f passed the official pre-review stage proof with all five declared verify commands and all 51 required selectors; test_id_misses=[]. Full factory suite: 1135 passed, 4 skipped in 1206.35s. PR #229 on that head passed Linux scaffold CI (1131 passed, 8 skipped) and native Windows hook gates (24 passed, 1 skipped), with ticket/contract checks green. Real native Claude/Codex Plan Mode smokes remain pending.",
     "blocking_findings": [],
     "commands_run": [
       "forge_cli.stages.run_stage_proof(base, \"LEAN-WORKFLOW\", task_for(base, \"LEAN-WORKFLOW\")) via PYTHONPATH=factory/scripts python3",
@@ -13,12 +13,13 @@
       "python3 factory/scripts/check_board_complete.py",
       "git diff --check",
       "51 declared required-test commands from the recorded decomposition, each with a fresh JUnit report",
-      "gh pr checks 229 (published current-product head required checks green)",
+      "gh pr checks 229 (published edd849d current head required checks green)",
       "./forge project audit --repo . (expected two unrelated pending-story spec gaps)",
       "./forge delegate LEAN-WORKFLOW --scope factory/scripts/forge_cli/delegate.py --print-only",
-      "./forge delegate LEAN-WORKFLOW --print-only"
+      "./forge delegate LEAN-WORKFLOW --print-only",
+      "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest factory/tests/test_gates.py::test_board_task_dossiers_survive_object_form_required_tests factory/tests/test_board_reads_task_proof.py factory/tests/test_board_task_plan_view.py factory/tests/test_board_approval_gate.py -q"
     ],
-    "pass_fail_summary": "Official stage proof: full verifier 1133 passed, 4 skipped in 1075.95s; dual-runtime, scaffold, encoding, Board, and diff checks exited 0; all 51 declared required tests passed with 0 measured JUnit ID/path misses. Current-product Linux CI 1129 passed/8 skipped; Windows CI 24 passed/1 skipped. Project audit alone reports two unrelated pending-story spec gaps.",
+    "pass_fail_summary": "Official stage proof: full verifier 1135 passed, 4 skipped in 1206.35s; dual-runtime, scaffold, encoding, Board, and diff checks exited 0; all 51 declared selectors passed with zero JUnit ID/path misses. Focused direct Board caller plus Board tests: 8 passed. Current-head Linux CI 1131 passed/8 skipped; native Windows CI 24 passed/1 skipped. Project audit alone reports two unrelated pending-story spec gaps.",
     "reviewed_scope": [
       "factory/scripts/forge_cli/stages.py",
       "factory/scripts/factory_lib.py",
@@ -28,11 +29,13 @@
       "factory/scripts/forge_cli/approval.py",
       "factory/scripts/forge_cli/upgrade.py",
       "factory/scripts/forge_cli/review.py",
-      "factory/scripts/forge_cli/stages.py",
       "factory/tests/test_proof_reuse.py",
       "factory/tests/test_delegate_scope.py",
       ".github/workflows/factory-scaffold.yml",
-      "AGENTS.md"
+      "AGENTS.md",
+      "factory/scripts/forge_cli/board.py",
+      "factory/tests/test_board_reads_task_proof.py",
+      "factory/board/index.html"
     ],
     "remaining_gaps": [
       "Run and inspect a real Claude successful ExitPlanMode approval event in the disposable native fixture, binding exact digest and stable runtime/session/event identity.",
@@ -43,20 +46,22 @@
       "Live gh pr view 110 --repo knacklabs/symphony-forge --json number,state,headRefOid,mergeCommit,mergedAt,baseRefName on 2026-09-15 returned MERGED to main, head bac5bdb4b5007a331f8e98037cbe55332a3b72b6, merge 6320c1a6e67ba0614ee960f57baf3605811b0d86, mergedAt 2026-08-19T17:25:32Z; recorder-generated .factory/events/31d5e07187fb4d9fab0a47009e90331b.json links FORGE-ACC-3 to #110 (commit 32b3ee6).",
       "On 2026-09-15, `./forge project audit --repo .` returned only two unrelated pending-story spec gaps: ship-clears-forge-authority and stage-done-proof-runner-robust missing spec.",
       "On 2026-09-15, `./forge delegate LEAN-WORKFLOW --scope factory/scripts/forge_cli/delegate.py --print-only` rendered exactly that single write path; no launch occurred.",
-      "On 2026-09-15, `./forge delegate LEAN-WORKFLOW --print-only` rendered the same approved write-path set as the recorded decomposition; no launch occurred."
+      "On 2026-09-15, `./forge delegate LEAN-WORKFLOW --print-only` rendered the same approved write-path set as the recorded decomposition; no launch occurred.",
+      "After main Board proof fix was merged, full b47cb3a verify surfaced the direct task_dossiers caller missing a precomputed task_proof: 1 failed, 1134 passed, 4 skipped. Canonical task-owned proof fallback in board.py at edd849d fixed the case; its focused check and seven Board checks passed, then full verify passed 1135/4."
     ],
     "tests_added_or_updated": [
       "factory/tests/test_delegate_scope.py: native Windows private context fixture constructs a protected current-SID-only DACL and confirms source restoration",
       "factory/tests/test_gates.py: cold-plan saved text digest and deterministic hosted-runner main remote HEAD fixtures",
       "factory/tests/test_proof_reuse.py: identity-stable disposable Git fixture",
-      "factory/tests/test_review_task_delta.py: fake review helper receives required raw report fields"
+      "factory/tests/test_review_task_delta.py: fake review helper receives required raw report fields",
+      "factory/tests/test_board_reads_task_proof.py: main merged Board task proof and selected-generation regression coverage"
     ],
     "non_blocking_findings": [
       "Project audit reports two pending-story spec gaps outside LEAN-WORKFLOW: ship-clears-forge-authority and stage-done-proof-runner-robust are missing spec."
     ],
     "residual_risks": [],
-    "recorded_at": "2026-09-15T19:42:56+00:00",
-    "commit": "f2b41a0039fd72d8126465771fd647478d03ced1"
+    "recorded_at": "2026-09-16T01:54:28+00:00",
+    "commit": "edd849d179b25d1b3b8cb31f41df275a8685d35f"
   },
-  "updated_at": "2026-09-15T19:42:56+00:00"
+  "updated_at": "2026-09-16T01:54:28+00:00"
 }
