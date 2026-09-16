@@ -97,6 +97,10 @@ def test_run_stage_proof_reuses_matching_receipts_by_proof_type(repo: Path, monk
     assert calls == ["tests"]
     assert stages.product_tree_snapshot(repo) == before
 
+    monkeypatch.setenv("PYTEST_ADDOPTS", "--strict-markers")
+    stages.run_stage_proof(repo, "T1", task)
+    assert calls == ["tests", "verify", "tests"]
+
 
 def test_changed_unknown_partial_or_generated_output_identity_forces_fresh_run(
         repo: Path):
@@ -188,7 +192,7 @@ def _fake_uv_probe(repo: Path, monkeypatch) -> tuple[dict, Path]:
     runner = repo / "fake-uv"
     runner.write_bytes(b"fake uv runner v1")
     state = {"interpreter": b"ephemeral Python v1", "transitive": "1",
-             "probe": "complete"}
+             "probe": "complete", "calls": []}
     real_which = stages.shutil.which
     monkeypatch.setattr(stages.shutil, "which", lambda command, **kwargs:
                         str(runner) if command == "uv" else
@@ -196,6 +200,7 @@ def _fake_uv_probe(repo: Path, monkeypatch) -> tuple[dict, Path]:
 
     def probe(argv, **_kwargs):
         assert argv[0] == "uv" and "-c" in argv
+        state["calls"].append(tuple(argv))
         ephemeral = repo / "temporary-interpreter"
         ephemeral.write_bytes(state["interpreter"])
         dependencies = [
@@ -303,3 +308,96 @@ def test_probe_changes_interpreter_dependency_and_runner_inputs(repo: Path, monk
     assert stages._proof_tool_identity(repo, command)["reusable"] is False
     runner.write_bytes(b"fake uv runner v2")
     assert stages._proof_tool_identity(repo, command)["runner"] != base["runner"]
+
+
+def test_proof_identity_binds_environment_without_persisting_secrets(
+        repo: Path, monkeypatch):
+    _fake_uv_probe(repo, monkeypatch)
+    task = {**_task(),
+            "required_tests": [{**_task()["required_tests"][0],
+                                "command": "uv run --with pytest python tests/a.py"}],
+            "verify_commands": ["uv run --with pytest python -m pytest tests/a.py"]}
+    monkeypatch.setenv("FACTORY_TEST_CMD", "secret-command-one")
+    monkeypatch.setenv("PYTEST_ADDOPTS", "secret-options-one")
+    first = {
+        kind: stages.proof_identity(repo, task, kind, product_tree={})
+        for kind in ("verify", "tests")
+    }
+    serialized = json.dumps(first, sort_keys=True)
+    for secret in (
+            "FACTORY_TEST_CMD", "PYTEST_ADDOPTS", "secret-command-one",
+            "secret-options-one"):
+        assert secret not in serialized
+    assert all(set(identity["inputs"]["tools"][0]["environment"])
+               == {"sha256", "entries"} for identity in first.values())
+
+    monkeypatch.setenv("FACTORY_TEST_CMD", "secret-command-two")
+    changed_command_env = {
+        kind: stages.proof_identity(repo, task, kind, product_tree={})
+        for kind in ("verify", "tests")
+    }
+    assert all(changed_command_env[kind]["identity"] != first[kind]["identity"]
+               for kind in first)
+    monkeypatch.setenv("PYTEST_ADDOPTS", "secret-options-two")
+    changed_generic_env = {
+        kind: stages.proof_identity(repo, task, kind, product_tree={})
+        for kind in ("verify", "tests")
+    }
+    assert all(changed_generic_env[kind]["identity"]
+               != changed_command_env[kind]["identity"] for kind in first)
+
+    monkeypatch.setenv("FORGE_PROCESS_TOKEN", "generated-nonce-one")
+    monkeypatch.setenv("PYTHONUTF8", "0")
+    normalized = {
+        kind: stages.proof_identity(repo, task, kind, product_tree={})["identity"]
+        for kind in ("verify", "tests")
+    }
+    monkeypatch.setenv("FORGE_PROCESS_TOKEN", "generated-nonce-two")
+    monkeypatch.setenv("PYTHONUTF8", "different-fixed-input")
+    assert normalized == {
+        kind: stages.proof_identity(repo, task, kind, product_tree={})["identity"]
+        for kind in ("verify", "tests")
+    }
+
+
+def test_run_stage_proof_memoizes_tool_probe_by_prefix_and_environment(
+        repo: Path, monkeypatch):
+    state, _runner = _fake_uv_probe(repo, monkeypatch)
+    task = {**_task(),
+            "required_tests": [{**_task()["required_tests"][0],
+                                "command": "uv run --with pytest python tests/a.py"}],
+            "verify_commands": ["uv run --with pytest python -m pytest tests/a.py"]}
+    test_file = repo / "tests/a.py"
+    test_file.parent.mkdir(parents=True, exist_ok=True)
+    test_file.write_text("pass\n", encoding="utf-8")
+    monkeypatch.setattr(stages, "product_tree_snapshot", lambda _base: {})
+    monkeypatch.setattr(stages, "protected_authority_snapshot", lambda _base: {})
+    monkeypatch.setattr(stages, "_proof_receipt", lambda *_args: {})
+    monkeypatch.setattr(stages, "_store_proof_receipt", lambda *_args: None)
+    monkeypatch.setattr(stages, "_run_verify_commands", lambda *_args: None)
+    monkeypatch.setattr(stages, "_run_required_tests", lambda *_args: [])
+    stages.run_stage_proof(repo, "T1", task)
+    assert len(state["calls"]) == 1
+
+    memo = {}
+    stages.proof_identity(
+        repo, task, "verify", product_tree={}, tool_probe_memo=memo,
+    )
+    stages.proof_identity(
+        repo, task, "tests", product_tree={}, tool_probe_memo=memo,
+    )
+    assert len(state["calls"]) == 2
+
+    changed = copy.deepcopy(task)
+    changed["verify_commands"][0] = (
+        "uv run --with pytest --with pytest-xdist python -m pytest tests/a.py"
+    )
+    stages.proof_identity(
+        repo, changed, "verify", product_tree={}, tool_probe_memo=memo,
+    )
+    assert len(state["calls"]) == 3
+    monkeypatch.setenv("PYTHONPATH", "different-probe-environment")
+    stages.proof_identity(
+        repo, task, "verify", product_tree={}, tool_probe_memo=memo,
+    )
+    assert len(state["calls"]) == 4

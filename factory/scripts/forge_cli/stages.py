@@ -1916,39 +1916,81 @@ def _file_identity(path: Path) -> dict[str, object]:
     }
 
 
-def _proof_tool_identity(base: Path, command: str) -> dict[str, object]:
-    """Resolve only the Python command shapes Forge declares for proof reuse."""
-    try:
-        tokens = shlex.split(command)
-    except ValueError:
-        return {"command": command, "reusable": False}
+def _proof_environment(
+        command: str, *, fixed_after_assignments: bool,
+) -> tuple[list[str], dict[str, str], dict[str, object]]:
+    """Return parsed argv and a secret-free identity for its effective env."""
+    tokens = shlex.split(command)
     environment = os.environ.copy()
+    # Proof runners always replace this nonce. Keep that fixed override stable
+    # while still binding every other inherited variable an arbitrary command
+    # may read.
+    environment["FORGE_PROCESS_TOKEN"] = "<forge-generated>"
+    if not fixed_after_assignments:
+        environment["PYTHONUTF8"] = "1"
     while tokens and re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*=.*", tokens[0]):
         key, value = tokens.pop(0).split("=", 1)
         environment[key] = value
+    if fixed_after_assignments:
+        environment["PYTHONUTF8"] = "1"
+    canonical = json.dumps(
+        sorted(environment.items()), separators=(",", ":"), ensure_ascii=False,
+    ).encode("utf-8")
+    identity = {
+        "sha256": hashlib.sha256(canonical).hexdigest(),
+        "entries": len(environment),
+    }
+    return tokens, environment, identity
+
+
+def _proof_tool_identity(
+        base: Path, command: str, *, fixed_after_assignments: bool = False,
+        probe_memo: dict[tuple[tuple[str, ...], str], dict[str, object]] | None = None,
+) -> dict[str, object]:
+    """Resolve only the Python command shapes Forge declares for proof reuse."""
+    try:
+        tokens, environment, environment_identity = _proof_environment(
+            command, fixed_after_assignments=fixed_after_assignments,
+        )
+    except ValueError:
+        return {"command": command, "reusable": False}
     if not tokens:
-        return {"command": "", "reusable": False}
+        return {"command": "", "environment": environment_identity,
+                "reusable": False}
     outer = shutil.which(tokens[0], path=environment.get("PATH"))
     if not outer:
-        return {"command": tokens[0], "reusable": False}
+        return {"command": tokens[0], "environment": environment_identity,
+                "reusable": False}
     outer_path = Path(outer).resolve()
     try:
         runner = _file_identity(outer_path)
     except OSError:
-        return {"command": tokens[0], "reusable": False}
+        return {"command": tokens[0], "environment": environment_identity,
+                "reusable": False}
     name = Path(tokens[0]).name.lower()
     if name in {"git", "git.exe"} and tokens == ["git", "diff", "--check"]:
+        probe_argv = (str(outer_path), "config", "--list", "--show-origin", "--null")
+        memo_key = (probe_argv, str(environment_identity["sha256"]))
+        if probe_memo is not None and memo_key in probe_memo:
+            return {**probe_memo[memo_key], "command": tokens[0],
+                    "environment": environment_identity}
         try:
             config = subprocess.run(
-                [str(outer_path), "config", "--list", "--show-origin", "--null"],
+                list(probe_argv),
                 cwd=base, capture_output=True, check=True, timeout=20,
                 env=environment,
             ).stdout
         except (OSError, subprocess.CalledProcessError, subprocess.TimeoutExpired):
-            return {"command": tokens[0], "runner": runner, "reusable": False}
-        return {"command": tokens[0], "runner": runner,
-                "config_sha256": hashlib.sha256(config).hexdigest(),
-                "reusable": True}
+            result = {"command": tokens[0], "runner": runner,
+                      "environment": environment_identity, "reusable": False}
+        else:
+            result = {"command": tokens[0], "runner": runner,
+                      "environment": environment_identity,
+                      "config_sha256": hashlib.sha256(config).hexdigest(),
+                      "reusable": True}
+        if probe_memo is not None:
+            probe_memo[memo_key] = result
+        return dict(result)
     probe: list[str]
     if re.fullmatch(r"python(?:3(?:\.\d+)?)?(?:\.exe)?", name):
         probe = [str(outer_path)]
@@ -1957,10 +1999,16 @@ def _proof_tool_identity(base: Path, command: str) -> dict[str, object]:
                              if re.fullmatch(r"python(?:3(?:\.\d+)?)?(?:\.exe)?",
                                              Path(token).name.lower())), -1)
         if python_index < 0:
-            return {"command": tokens[0], "runner": runner, "reusable": False}
+            return {"command": tokens[0], "runner": runner,
+                    "environment": environment_identity, "reusable": False}
         probe = tokens[:python_index + 1]
     else:
-        return {"command": tokens[0], "runner": runner, "reusable": False}
+        return {"command": tokens[0], "runner": runner,
+                "environment": environment_identity, "reusable": False}
+    memo_key = (tuple(probe), str(environment_identity["sha256"]))
+    if probe_memo is not None and memo_key in probe_memo:
+        return {**probe_memo[memo_key], "command": tokens[0],
+                "environment": environment_identity}
     script = (
         "import hashlib,importlib.metadata as m,json,pathlib,re,sys\n"
         "def digest(d, name):\n"
@@ -2017,8 +2065,9 @@ def _proof_tool_identity(base: Path, command: str) -> dict[str, object]:
         if detail["dependencies"] != sorted(
                 detail["dependencies"], key=lambda row: row["name"]):
             raise ValueError
-        return {
+        result = {
             "command": tokens[0], "runner": runner,
+            "environment": environment_identity,
             "interpreter": {"sha256": detail["interpreter_sha256"],
                             "size": detail["interpreter_size"]},
             "python_version": detail["version"],
@@ -2026,7 +2075,11 @@ def _proof_tool_identity(base: Path, command: str) -> dict[str, object]:
         }
     except (OSError, ValueError, KeyError, json.JSONDecodeError,
             TypeError, subprocess.TimeoutExpired):
-        return {"command": tokens[0], "runner": runner, "reusable": False}
+        result = {"command": tokens[0], "runner": runner,
+                  "environment": environment_identity, "reusable": False}
+    if probe_memo is not None:
+        probe_memo[memo_key] = result
+    return dict(result)
 
 
 def _board_proof_inputs(base: Path) -> dict[str, object]:
@@ -2070,6 +2123,9 @@ def _board_command_kind(base: Path, command: str) -> str:
 
 def proof_identity(
         base: Path, task: dict, kind: str, *, product_tree: dict | None = None,
+        tool_probe_memo: dict[
+            tuple[tuple[str, ...], str], dict[str, object]
+        ] | None = None,
 ) -> dict[str, object]:
     """Content identity for one independently reusable proof type."""
     if kind not in {"tests", "verify"}:
@@ -2101,7 +2157,13 @@ def proof_identity(
             }
         except OSError:
             generated[str(relative)] = None
-    tools = [_proof_tool_identity(base, command) for command in commands]
+    tools = [
+        _proof_tool_identity(
+            base, command, fixed_after_assignments=(kind == "tests"),
+            probe_memo=tool_probe_memo,
+        )
+        for command in commands
+    ]
     board_commands = ([_board_command_kind(base, command) for command in commands]
                       if kind == "verify" else [])
     board_inputs = None
@@ -2161,11 +2223,16 @@ def run_stage_proof(base: Path, stage_id: str, task: dict) -> tuple[dict, dict, 
         _require_test_input(base, stage_id, proof)
     proof_tree = product_tree_snapshot(base)
     authority_tree = protected_authority_snapshot(base)
+    tool_probe_memo: dict[
+        tuple[tuple[str, ...], str], dict[str, object]
+    ] = {}
     verify_identity = proof_identity(
         base, task, "verify", product_tree=proof_tree,
+        tool_probe_memo=tool_probe_memo,
     )
     test_identity = proof_identity(
         base, task, "tests", product_tree=proof_tree,
+        tool_probe_memo=tool_probe_memo,
     )
     verify_receipt = _proof_receipt(base, stage_id, "verify")
     test_receipt = _proof_receipt(base, stage_id, "tests")
