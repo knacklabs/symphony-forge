@@ -1,0 +1,10 @@
+{
+  "event": "open",
+  "id": "Q-0131-cd64",
+  "profile": "quickfix",
+  "reason": "A gate that reads the PR body cannot see a body edit: pr-ticket-check and roadmap-gate trigger on pull_request with the default types, so editing the body to add the Ticket line the failure message asks for re-runs nothing, and a manual re-run replays the stale event payload. Add the edited type so the fix the message requests actually re-runs the gate.",
+  "started_at": "2026-09-12T06:31:57+00:00",
+  "max_files": 5,
+  "files": [],
+  "harness_source": true
+}

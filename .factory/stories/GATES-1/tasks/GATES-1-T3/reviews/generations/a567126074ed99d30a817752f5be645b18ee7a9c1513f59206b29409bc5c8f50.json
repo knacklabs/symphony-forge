@@ -1,0 +1,181 @@
+{
+  "brief_sha256": "32ea74c12fb2ef660cc20e8b22989a58f5074b95e43a2dca343b0b49c14b47e3",
+  "delta_id": "a2d44937e246ddcd3979391fa37bd75cb1b140886ed0955de98bc053aa8f858d",
+  "format": "forge-review-generation/v1",
+  "generated_by": "autoreview",
+  "generation_id": "a567126074ed99d30a817752f5be645b18ee7a9c1513f59206b29409bc5c8f50",
+  "helper": {
+    "path": "/Users/ravikiranvemula/.codex/skills/autoreview/scripts/autoreview",
+    "sha256": "3879ccdd321b0138852896c2cb88c72ec512aa8f896780e8f37a9be79688752c",
+    "version": "b6b616ca3ac65a51776eb4c23aed57abdd34d60f"
+  },
+  "input": {
+    "bytes": 4407,
+    "sha256": "2e32678d1132cdaba4aef1699a5864d56d61efb6a552060b68130e6c64823dee"
+  },
+  "inspected_commit": "93600f95bfa90da9ae1b0a014bbe95c5cb7c6c7c",
+  "lenses": {
+    "performance": {
+      "blocking_findings": [],
+      "branch_diff_digest": "a2d44937e246ddcd3979391fa37bd75cb1b140886ed0955de98bc053aa8f858d",
+      "brief_sha256": "32ea74c12fb2ef660cc20e8b22989a58f5074b95e43a2dca343b0b49c14b47e3",
+      "commit": "93600f95bfa90da9ae1b0a014bbe95c5cb7c6c7c",
+      "generated_by": "autoreview",
+      "non_blocking_findings": [],
+      "recommendation": "approve",
+      "review_run_id": "1584210ce02e506d498c912959e914af4e8de8694400a84f8118625685a31211",
+      "reviewed_scope": [
+        "factory/scripts/factory_lib.py",
+        "factory/scripts/forge_cli/phase.py",
+        "factory/scripts/forge_cli/plans.py",
+        "factory/tests/test_requirements_freshness.py"
+      ],
+      "score": 10,
+      "skills_used": [],
+      "summary": "performance lens over GATES-1-T3 (4 product path(s), 015e286..93600f9, Codex via the autoreview skill): 0 blocking, 0 non-blocking. The fallback can perform a second product-tree digest for legacy or stale records, but the supplied evidence does not establish a production-impacting performance defect.",
+      "task_id": "GATES-1-T3"
+    },
+    "quality": {
+      "blocking_findings": [
+        {
+          "area": "factory/scripts",
+          "category": "bug",
+          "file_path": "factory/scripts/factory_lib.py",
+          "line": 3752,
+          "summary": "Preserve legacy passes across newly excluded changes (factory/scripts/factory_lib.py:3752): A pass recorded with the old digest is accepted only while the old, broader digest still recomputes identically.",
+          "title": "Preserve legacy passes across newly excluded changes"
+        }
+      ],
+      "branch_diff_digest": "a2d44937e246ddcd3979391fa37bd75cb1b140886ed0955de98bc053aa8f858d",
+      "brief_sha256": "32ea74c12fb2ef660cc20e8b22989a58f5074b95e43a2dca343b0b49c14b47e3",
+      "commit": "93600f95bfa90da9ae1b0a014bbe95c5cb7c6c7c",
+      "contract_verdicts": [
+        {
+          "contract_id": "GATES-1-T3-C1",
+          "evidence": "factory/scripts/factory_lib.py:3743 passes product_excluded_prefixes(root)",
+          "verdict": "implemented"
+        },
+        {
+          "contract_id": "GATES-1-T3-C2",
+          "evidence": "factory/scripts/factory_lib.py:3752 rehashes legacy inputs including decisions",
+          "verdict": "partial"
+        },
+        {
+          "contract_id": "GATES-1-T3-C3",
+          "evidence": "factory/scripts/factory_lib.py:3752 rehashes legacy inputs including the context ledger",
+          "verdict": "partial"
+        },
+        {
+          "contract_id": "GATES-1-T3-C4",
+          "evidence": "factory/tests/test_requirements_freshness.py:94 verifies spec-body edits stale the pass",
+          "verdict": "implemented"
+        },
+        {
+          "contract_id": "GATES-1-T3-C5",
+          "evidence": "factory/tests/test_requirements_freshness.py:101 verifies product edits stale the pass",
+          "verdict": "implemented"
+        },
+        {
+          "contract_id": "GATES-1-T3-C6",
+          "evidence": "factory/scripts/factory_lib.py:3752 accepts an unchanged legacy digest",
+          "verdict": "implemented"
+        },
+        {
+          "contract_id": "GATES-1-T3-C7",
+          "evidence": "factory/scripts/forge_cli/plans.py:109 and factory/scripts/forge_cli/phase.py:440 call requirements_digest_matches",
+          "verdict": "implemented"
+        },
+        {
+          "contract_id": "GATES-1-T3-C8",
+          "evidence": "factory/tests/test_requirements_freshness.py:138 asserts the unchanged prefix gates and pre-stage grounding exclusions",
+          "verdict": "implemented"
+        },
+        {
+          "contract_id": "GATES-1-T1-C1",
+          "evidence": "shipped under GATES-1-T1 at its own per-task seal (stage done); unchanged by this task's diff",
+          "verdict": "implemented"
+        },
+        {
+          "contract_id": "GATES-1-T1-C2",
+          "evidence": "shipped under GATES-1-T1 at its own per-task seal (stage done); unchanged by this task's diff",
+          "verdict": "implemented"
+        },
+        {
+          "contract_id": "GATES-1-T1-C3",
+          "evidence": "shipped under GATES-1-T1 at its own per-task seal (stage done); unchanged by this task's diff",
+          "verdict": "implemented"
+        },
+        {
+          "contract_id": "GATES-1-T1-C4",
+          "evidence": "shipped under GATES-1-T1 at its own per-task seal (stage done); unchanged by this task's diff",
+          "verdict": "implemented"
+        },
+        {
+          "contract_id": "GATES-1-T1-C5",
+          "evidence": "shipped under GATES-1-T1 at its own per-task seal (stage done); unchanged by this task's diff",
+          "verdict": "implemented"
+        },
+        {
+          "contract_id": "GATES-1-T1-C6",
+          "evidence": "shipped under GATES-1-T1 at its own per-task seal (stage done); unchanged by this task's diff",
+          "verdict": "implemented"
+        },
+        {
+          "contract_id": "GATES-1-T1-C7",
+          "evidence": "shipped under GATES-1-T1 at its own per-task seal (stage done); unchanged by this task's diff",
+          "verdict": "implemented"
+        },
+        {
+          "contract_id": "GATES-1-T1-C8",
+          "evidence": "shipped under GATES-1-T1 at its own per-task seal (stage done); unchanged by this task's diff",
+          "verdict": "implemented"
+        }
+      ],
+      "generated_by": "autoreview",
+      "non_blocking_findings": [],
+      "recommendation": "request-changes",
+      "review_run_id": "1584210ce02e506d498c912959e914af4e8de8694400a84f8118625685a31211",
+      "reviewed_scope": [
+        "factory/scripts/factory_lib.py",
+        "factory/scripts/forge_cli/phase.py",
+        "factory/scripts/forge_cli/plans.py",
+        "factory/tests/test_requirements_freshness.py"
+      ],
+      "score": 7,
+      "skills_used": [],
+      "summary": "quality lens over GATES-1-T3 (4 product path(s), 015e286..93600f9, Codex via the autoreview skill): 1 blocking, 0 non-blocking. The shared exclusions and consumer helper are reachable, but the legacy fallback preserves old passes only until an excluded file changes. This misses a central in-flight-story case.\nVERDICT GATES-1-T3-C1: implemented — factory/scripts/factory_lib.py:3743 passes product_excluded_prefixes(root)\nVERDICT GATES-1-T3-C2: partial — factory/scripts/factory_lib.py:3752 rehashes legacy inputs including decisions\nVERDICT GATES-1-T3-C3: partial — factory/scripts/factory_lib.py:3752 rehashes legacy inputs including the context ledger\nVERDICT GATES-1-T3-C4: implemented — factory/tests/test_requirements_freshness.py:94 verifies spec-body edits stale the pass\nVERDICT GATES-1-T3-C5: implemented — factory/tests/test_requirements_freshness.py:101 verifies product edits stale the pass\nVERDICT GATES-1-T3-C6: implemented — factory/scripts/factory_lib.py:3752 accepts an unchanged legacy digest\nVERDICT GATES-1-T3-C7: implemented — factory/scripts/forge_cli/plans.py:109 and factory/scripts/forge_cli/phase.py:440 call requirements_digest_matches\nVERDICT GATES-1-T3-C8: implemented — factory/tests/test_requirements_freshness.py:138 asserts the unchanged prefix gates and pre-stage grounding exclusions\nNo prohibited leftover wrapper, alias, or dead branch is shown; the legacy branch is an explicit contract deliverable.",
+      "task_id": "GATES-1-T3"
+    },
+    "security": {
+      "blocking_findings": [],
+      "branch_diff_digest": "a2d44937e246ddcd3979391fa37bd75cb1b140886ed0955de98bc053aa8f858d",
+      "brief_sha256": "32ea74c12fb2ef660cc20e8b22989a58f5074b95e43a2dca343b0b49c14b47e3",
+      "commit": "93600f95bfa90da9ae1b0a014bbe95c5cb7c6c7c",
+      "generated_by": "autoreview",
+      "non_blocking_findings": [],
+      "recommendation": "approve",
+      "review_run_id": "1584210ce02e506d498c912959e914af4e8de8694400a84f8118625685a31211",
+      "reviewed_scope": [
+        "factory/scripts/factory_lib.py",
+        "factory/scripts/forge_cli/phase.py",
+        "factory/scripts/forge_cli/plans.py",
+        "factory/tests/test_requirements_freshness.py"
+      ],
+      "score": 10,
+      "skills_used": [],
+      "summary": "security lens over GATES-1-T3 (4 product path(s), 015e286..93600f9, Codex via the autoreview skill): 0 blocking, 0 non-blocking. No concrete authentication, authorization, injection, secret-handling, or data-exposure defect is evident in the supplied diff.",
+      "task_id": "GATES-1-T3"
+    }
+  },
+  "origin": "combined",
+  "raw_result": {
+    "bytes": 6109,
+    "data": "ewogICJmaW5kaW5ncyI6IFsKICAgIHsKICAgICAgInRpdGxlIjogIltxdWFsaXR5XSBQcmVzZXJ2ZSBsZWdhY3kgcGFzc2VzIGFjcm9zcyBuZXdseSBleGNsdWRlZCBjaGFuZ2VzIiwKICAgICAgImJvZHkiOiAiQSBwYXNzIHJlY29yZGVkIHdpdGggdGhlIG9sZCBkaWdlc3QgaXMgYWNjZXB0ZWQgb25seSB3aGlsZSB0aGUgb2xkLCBicm9hZGVyIGRpZ2VzdCBzdGlsbCByZWNvbXB1dGVzIGlkZW50aWNhbGx5LiBBZnRlciBkZXBsb3ltZW50LCBhZGRpbmcgYSBkZWNpc2lvbiBvciBjaGFuZ2luZyBgZG9jcy9jb250ZXh0L2xlZGdlci5qc29uYCBtYWtlcyB0aGUgZmFsbGJhY2sgZGlnZXN0IGRpZmZlciBiZWNhdXNlIGl0IHN0aWxsIGluY2x1ZGVzIHRob3NlIHBhdGhzLCB3aGlsZSB0aGUgc3RvcmVkIGxlZ2FjeSBoYXNoIGNhbiBuZXZlciBlcXVhbCB0aGUgbmV3IG5hcnJvd2VyIGRpZ2VzdC4gVGh1cyBhbiBpbi1mbGlnaHQgbGVnYWN5IHBhc3MgYmVjb21lcyBzdGFsZSBvbiB0aGUgbmV4dCBuZXdseSBleGNsdWRlZCBjaGFuZ2UsIGNvbnRyYWRpY3RpbmcgQzIvQzMgYW5kIGxlYXZpbmcgdGhlIHJlcG9ydGVkIGRlY2lzaW9uLXN0YWxlbmVzcyBjYXNjYWRlIGluIHBsYWNlIGZvciBleGlzdGluZyBzdG9yaWVzLiBBZGQgY292ZXJhZ2UgZm9yIGEgbGVnYWN5LXJlY29yZGVkIHBhc3MgZm9sbG93ZWQgYnkgZWFjaCBleGNsdWRlZC1wYXRoIGNoYW5nZSBhbmQgcHJvdmlkZSBhIG1pZ3JhdGlvbiByZXByZXNlbnRhdGlvbiB0aGF0IGNhbiBkaXN0aW5ndWlzaCBwcm9kdWN0IGNoYW5nZXMgZnJvbSBuZXdseSBleGNsdWRlZCBjaGFuZ2VzLiIsCiAgICAgICJwcmlvcml0eSI6ICJQMSIsCiAgICAgICJjb25maWRlbmNlIjogMC45OCwKICAgICAgImNhdGVnb3J5IjogImJ1ZyIsCiAgICAgICJjb2RlX2xvY2F0aW9uIjogewogICAgICAgICJmaWxlX3BhdGgiOiAiZmFjdG9yeS9zY3JpcHRzL2ZhY3RvcnlfbGliLnB5IiwKICAgICAgICAibGluZSI6IDM3NTIKICAgICAgfSwKICAgICAgInNvdXJjZV9hdHRyaWJ1dGlvbiI6IG51bGwKICAgIH0KICBdLAogICJvdmVyYWxsX2NvcnJlY3RuZXNzIjogInBhdGNoIGlzIGluY29ycmVjdCIsCiAgIm92ZXJhbGxfZXhwbGFuYXRpb24iOiAiQkVHSU4gRk9SR0UgQVNTRVNTTUVOVCBxdWFsaXR5XG5UaGUgc2hhcmVkIGV4Y2x1c2lvbnMgYW5kIGNvbnN1bWVyIGhlbHBlciBhcmUgcmVhY2hhYmxlLCBidXQgdGhlIGxlZ2FjeSBmYWxsYmFjayBwcmVzZXJ2ZXMgb2xkIHBhc3NlcyBvbmx5IHVudGlsIGFuIGV4Y2x1ZGVkIGZpbGUgY2hhbmdlcy4gVGhpcyBtaXNzZXMgYSBjZW50cmFsIGluLWZsaWdodC1zdG9yeSBjYXNlLlxuVkVSRElDVCBHQVRFUy0xLVQzLUMxOiBpbXBsZW1lbnRlZCBcdTIwMTQgZmFjdG9yeS9zY3JpcHRzL2ZhY3RvcnlfbGliLnB5OjM3NDMgcGFzc2VzIHByb2R1Y3RfZXhjbHVkZWRfcHJlZml4ZXMocm9vdClcblZFUkRJQ1QgR0FURVMtMS1UMy1DMjogcGFydGlhbCBcdTIwMTQgZmFjdG9yeS9zY3JpcHRzL2ZhY3RvcnlfbGliLnB5OjM3NTIgcmVoYXNoZXMgbGVnYWN5IGlucHV0cyBpbmNsdWRpbmcgZGVjaXNpb25zXG5WRVJESUNUIEdBVEVTLTEtVDMtQzM6IHBhcnRpYWwgXHUyMDE0IGZhY3Rvcnkvc2NyaXB0cy9mYWN0b3J5X2xpYi5weTozNzUyIHJlaGFzaGVzIGxlZ2FjeSBpbnB1dHMgaW5jbHVkaW5nIHRoZSBjb250ZXh0IGxlZGdlclxuVkVSRElDVCBHQVRFUy0xLVQzLUM0OiBpbXBsZW1lbnRlZCBcdTIwMTQgZmFjdG9yeS90ZXN0cy90ZXN0X3JlcXVpcmVtZW50c19mcmVzaG5lc3MucHk6OTQgdmVyaWZpZXMgc3BlYy1ib2R5IGVkaXRzIHN0YWxlIHRoZSBwYXNzXG5WRVJESUNUIEdBVEVTLTEtVDMtQzU6IGltcGxlbWVudGVkIFx1MjAxNCBmYWN0b3J5L3Rlc3RzL3Rlc3RfcmVxdWlyZW1lbnRzX2ZyZXNobmVzcy5weToxMDEgdmVyaWZpZXMgcHJvZHVjdCBlZGl0cyBzdGFsZSB0aGUgcGFzc1xuVkVSRElDVCBHQVRFUy0xLVQzLUM2OiBpbXBsZW1lbnRlZCBcdTIwMTQgZmFjdG9yeS9zY3JpcHRzL2ZhY3RvcnlfbGliLnB5OjM3NTIgYWNjZXB0cyBhbiB1bmNoYW5nZWQgbGVnYWN5IGRpZ2VzdFxuVkVSRElDVCBHQVRFUy0xLVQzLUM3OiBpbXBsZW1lbnRlZCBcdTIwMTQgZmFjdG9yeS9zY3JpcHRzL2ZvcmdlX2NsaS9wbGFucy5weToxMDkgYW5kIGZhY3Rvcnkvc2NyaXB0cy9mb3JnZV9jbGkvcGhhc2UucHk6NDQwIGNhbGwgcmVxdWlyZW1lbnRzX2RpZ2VzdF9tYXRjaGVzXG5WRVJESUNUIEdBVEVTLTEtVDMtQzg6IGltcGxlbWVudGVkIFx1MjAxNCBmYWN0b3J5L3Rlc3RzL3Rlc3RfcmVxdWlyZW1lbnRzX2ZyZXNobmVzcy5weToxMzggYXNzZXJ0cyB0aGUgdW5jaGFuZ2VkIHByZWZpeCBnYXRlcyBhbmQgcHJlLXN0YWdlIGdyb3VuZGluZyBleGNsdXNpb25zXG5ObyBwcm9oaWJpdGVkIGxlZnRvdmVyIHdyYXBwZXIsIGFsaWFzLCBvciBkZWFkIGJyYW5jaCBpcyBzaG93bjsgdGhlIGxlZ2FjeSBicmFuY2ggaXMgYW4gZXhwbGljaXQgY29udHJhY3QgZGVsaXZlcmFibGUuXG5FTkQgRk9SR0UgQVNTRVNTTUVOVCBxdWFsaXR5XG5CRUdJTiBGT1JHRSBBU1NFU1NNRU5UIHBlcmZvcm1hbmNlXG5UaGUgZmFsbGJhY2sgY2FuIHBlcmZvcm0gYSBzZWNvbmQgcHJvZHVjdC10cmVlIGRpZ2VzdCBmb3IgbGVnYWN5IG9yIHN0YWxlIHJlY29yZHMsIGJ1dCB0aGUgc3VwcGxpZWQgZXZpZGVuY2UgZG9lcyBub3QgZXN0YWJsaXNoIGEgcHJvZHVjdGlvbi1pbXBhY3RpbmcgcGVyZm9ybWFuY2UgZGVmZWN0LlxuRU5EIEZPUkdFIEFTU0VTU01FTlQgcGVyZm9ybWFuY2VcbkJFR0lOIEZPUkdFIEFTU0VTU01FTlQgc2VjdXJpdHlcbk5vIGNvbmNyZXRlIGF1dGhlbnRpY2F0aW9uLCBhdXRob3JpemF0aW9uLCBpbmplY3Rpb24sIHNlY3JldC1oYW5kbGluZywgb3IgZGF0YS1leHBvc3VyZSBkZWZlY3QgaXMgZXZpZGVudCBpbiB0aGUgc3VwcGxpZWQgZGlmZi5cbkVORCBGT1JHRSBBU1NFU1NNRU5UIHNlY3VyaXR5IiwKICAib3ZlcmFsbF9jb25maWRlbmNlIjogMC45NywKICAicHJvdmlkZXJfcmVwb3J0IjogewogICAgImZpbmRpbmdzIjogWwogICAgICB7CiAgICAgICAgInRpdGxlIjogIltxdWFsaXR5XSBQcmVzZXJ2ZSBsZWdhY3kgcGFzc2VzIGFjcm9zcyBuZXdseSBleGNsdWRlZCBjaGFuZ2VzIiwKICAgICAgICAiYm9keSI6ICJBIHBhc3MgcmVjb3JkZWQgd2l0aCB0aGUgb2xkIGRpZ2VzdCBpcyBhY2NlcHRlZCBvbmx5IHdoaWxlIHRoZSBvbGQsIGJyb2FkZXIgZGlnZXN0IHN0aWxsIHJlY29tcHV0ZXMgaWRlbnRpY2FsbHkuIEFmdGVyIGRlcGxveW1lbnQsIGFkZGluZyBhIGRlY2lzaW9uIG9yIGNoYW5naW5nIGBkb2NzL2NvbnRleHQvbGVkZ2VyLmpzb25gIG1ha2VzIHRoZSBmYWxsYmFjayBkaWdlc3QgZGlmZmVyIGJlY2F1c2UgaXQgc3RpbGwgaW5jbHVkZXMgdGhvc2UgcGF0aHMsIHdoaWxlIHRoZSBzdG9yZWQgbGVnYWN5IGhhc2ggY2FuIG5ldmVyIGVxdWFsIHRoZSBuZXcgbmFycm93ZXIgZGlnZXN0LiBUaHVzIGFuIGluLWZsaWdodCBsZWdhY3kgcGFzcyBiZWNvbWVzIHN0YWxlIG9uIHRoZSBuZXh0IG5ld2x5IGV4Y2x1ZGVkIGNoYW5nZSwgY29udHJhZGljdGluZyBDMi9DMyBhbmQgbGVhdmluZyB0aGUgcmVwb3J0ZWQgZGVjaXNpb24tc3RhbGVuZXNzIGNhc2NhZGUgaW4gcGxhY2UgZm9yIGV4aXN0aW5nIHN0b3JpZXMuIEFkZCBjb3ZlcmFnZSBmb3IgYSBsZWdhY3ktcmVjb3JkZWQgcGFzcyBmb2xsb3dlZCBieSBlYWNoIGV4Y2x1ZGVkLXBhdGggY2hhbmdlIGFuZCBwcm92aWRlIGEgbWlncmF0aW9uIHJlcHJlc2VudGF0aW9uIHRoYXQgY2FuIGRpc3Rpbmd1aXNoIHByb2R1Y3QgY2hhbmdlcyBmcm9tIG5ld2x5IGV4Y2x1ZGVkIGNoYW5nZXMuIiwKICAgICAgICAicHJpb3JpdHkiOiAiUDEiLAogICAgICAgICJjb25maWRlbmNlIjogMC45OCwKICAgICAgICAiY2F0ZWdvcnkiOiAiYnVnIiwKICAgICAgICAiY29kZV9sb2NhdGlvbiI6IHsKICAgICAgICAgICJmaWxlX3BhdGgiOiAiZmFjdG9yeS9zY3JpcHRzL2ZhY3RvcnlfbGliLnB5IiwKICAgICAgICAgICJsaW5lIjogMzc1MgogICAgICAgIH0sCiAgICAgICAgInNvdXJjZV9hdHRyaWJ1dGlvbiI6IG51bGwKICAgICAgfQogICAgXSwKICAgICJvdmVyYWxsX2NvcnJlY3RuZXNzIjogInBhdGNoIGlzIGluY29ycmVjdCIsCiAgICAib3ZlcmFsbF9leHBsYW5hdGlvbiI6ICJCRUdJTiBGT1JHRSBBU1NFU1NNRU5UIHF1YWxpdHlcblRoZSBzaGFyZWQgZXhjbHVzaW9ucyBhbmQgY29uc3VtZXIgaGVscGVyIGFyZSByZWFjaGFibGUsIGJ1dCB0aGUgbGVnYWN5IGZhbGxiYWNrIHByZXNlcnZlcyBvbGQgcGFzc2VzIG9ubHkgdW50aWwgYW4gZXhjbHVkZWQgZmlsZSBjaGFuZ2VzLiBUaGlzIG1pc3NlcyBhIGNlbnRyYWwgaW4tZmxpZ2h0LXN0b3J5IGNhc2UuXG5WRVJESUNUIEdBVEVTLTEtVDMtQzE6IGltcGxlbWVudGVkIFx1MjAxNCBmYWN0b3J5L3NjcmlwdHMvZmFjdG9yeV9saWIucHk6Mzc0MyBwYXNzZXMgcHJvZHVjdF9leGNsdWRlZF9wcmVmaXhlcyhyb290KVxuVkVSRElDVCBHQVRFUy0xLVQzLUMyOiBwYXJ0aWFsIFx1MjAxNCBmYWN0b3J5L3NjcmlwdHMvZmFjdG9yeV9saWIucHk6Mzc1MiByZWhhc2hlcyBsZWdhY3kgaW5wdXRzIGluY2x1ZGluZyBkZWNpc2lvbnNcblZFUkRJQ1QgR0FURVMtMS1UMy1DMzogcGFydGlhbCBcdTIwMTQgZmFjdG9yeS9zY3JpcHRzL2ZhY3RvcnlfbGliLnB5OjM3NTIgcmVoYXNoZXMgbGVnYWN5IGlucHV0cyBpbmNsdWRpbmcgdGhlIGNvbnRleHQgbGVkZ2VyXG5WRVJESUNUIEdBVEVTLTEtVDMtQzQ6IGltcGxlbWVudGVkIFx1MjAxNCBmYWN0b3J5L3Rlc3RzL3Rlc3RfcmVxdWlyZW1lbnRzX2ZyZXNobmVzcy5weTo5NCB2ZXJpZmllcyBzcGVjLWJvZHkgZWRpdHMgc3RhbGUgdGhlIHBhc3NcblZFUkRJQ1QgR0FURVMtMS1UMy1DNTogaW1wbGVtZW50ZWQgXHUyMDE0IGZhY3RvcnkvdGVzdHMvdGVzdF9yZXF1aXJlbWVudHNfZnJlc2huZXNzLnB5OjEwMSB2ZXJpZmllcyBwcm9kdWN0IGVkaXRzIHN0YWxlIHRoZSBwYXNzXG5WRVJESUNUIEdBVEVTLTEtVDMtQzY6IGltcGxlbWVudGVkIFx1MjAxNCBmYWN0b3J5L3NjcmlwdHMvZmFjdG9yeV9saWIucHk6Mzc1MiBhY2NlcHRzIGFuIHVuY2hhbmdlZCBsZWdhY3kgZGlnZXN0XG5WRVJESUNUIEdBVEVTLTEtVDMtQzc6IGltcGxlbWVudGVkIFx1MjAxNCBmYWN0b3J5L3NjcmlwdHMvZm9yZ2VfY2xpL3BsYW5zLnB5OjEwOSBhbmQgZmFjdG9yeS9zY3JpcHRzL2ZvcmdlX2NsaS9waGFzZS5weTo0NDAgY2FsbCByZXF1aXJlbWVudHNfZGlnZXN0X21hdGNoZXNcblZFUkRJQ1QgR0FURVMtMS1UMy1DODogaW1wbGVtZW50ZWQgXHUyMDE0IGZhY3RvcnkvdGVzdHMvdGVzdF9yZXF1aXJlbWVudHNfZnJlc2huZXNzLnB5OjEzOCBhc3NlcnRzIHRoZSB1bmNoYW5nZWQgcHJlZml4IGdhdGVzIGFuZCBwcmUtc3RhZ2UgZ3JvdW5kaW5nIGV4Y2x1c2lvbnNcbk5vIHByb2hpYml0ZWQgbGVmdG92ZXIgd3JhcHBlciwgYWxpYXMsIG9yIGRlYWQgYnJhbmNoIGlzIHNob3duOyB0aGUgbGVnYWN5IGJyYW5jaCBpcyBhbiBleHBsaWNpdCBjb250cmFjdCBkZWxpdmVyYWJsZS5cbkVORCBGT1JHRSBBU1NFU1NNRU5UIHF1YWxpdHlcbkJFR0lOIEZPUkdFIEFTU0VTU01FTlQgcGVyZm9ybWFuY2VcblRoZSBmYWxsYmFjayBjYW4gcGVyZm9ybSBhIHNlY29uZCBwcm9kdWN0LXRyZWUgZGlnZXN0IGZvciBsZWdhY3kgb3Igc3RhbGUgcmVjb3JkcywgYnV0IHRoZSBzdXBwbGllZCBldmlkZW5jZSBkb2VzIG5vdCBlc3RhYmxpc2ggYSBwcm9kdWN0aW9uLWltcGFjdGluZyBwZXJmb3JtYW5jZSBkZWZlY3QuXG5FTkQgRk9SR0UgQVNTRVNTTUVOVCBwZXJmb3JtYW5jZVxuQkVHSU4gRk9SR0UgQVNTRVNTTUVOVCBzZWN1cml0eVxuTm8gY29uY3JldGUgYXV0aGVudGljYXRpb24sIGF1dGhvcml6YXRpb24sIGluamVjdGlvbiwgc2VjcmV0LWhhbmRsaW5nLCBvciBkYXRhLWV4cG9zdXJlIGRlZmVjdCBpcyBldmlkZW50IGluIHRoZSBzdXBwbGllZCBkaWZmLlxuRU5EIEZPUkdFIEFTU0VTU01FTlQgc2VjdXJpdHkiLAogICAgIm92ZXJhbGxfY29uZmlkZW5jZSI6IDAuOTcKICB9LAogICJyZXZpZXdfc3RhdHVzIjogImZpbmRpbmdzIgp9Cg==",
+    "encoding": "base64",
+    "sha256": "89da7d599b974aae8194a1fe5ac34d0ccc85730e3999b46d21591fc85ac53d42"
+  },
+  "recorded_at": "2026-09-14T10:54:22+00:00",
+  "review_run_id": "1584210ce02e506d498c912959e914af4e8de8694400a84f8118625685a31211",
+  "story": "GATES-1",
+  "task_id": "GATES-1-T3"
+}

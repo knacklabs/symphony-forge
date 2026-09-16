@@ -1,0 +1,18 @@
+{
+  "event": "done",
+  "id": "Q-0136-f170",
+  "profile": "degraded",
+  "kind": "degraded",
+  "reason": "Provenance repair for Q-0135: the desktop apply_patch adapter made the already-verified five-file bridge fix without invoking the repository PreToolUse hook, so its passive file manifest remained empty. Record those exact existing task paths; make no further source edits.",
+  "started_at": "2026-09-12T03:27:41+00:00",
+  "completed_at": "2026-09-12T03:27:41+00:00",
+  "files": [
+    "factory/scripts/forge_cli/delegate.py",
+    "factory/scripts/pre_tool_use.py",
+    "factory/tests/test_close_binds_to_the_diff.py",
+    "factory/tests/test_gates.py",
+    "factory/tests/test_worker_admission.py"
+  ],
+  "task_id": "NATIVE-FOREGROUND-ACTIVATE",
+  "story": "FORGE-COORD-1"
+}

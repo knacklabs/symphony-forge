@@ -1,0 +1,1 @@
+{"event": "signal-blocked", "generated_by": "autoreview", "at": "2026-09-12T01:53:47+00:00", "story": "FORGE-COORD-1", "detail": "Final remediation audit found four current P1 gaps: cross-process retry cannot recover the crashed publisher's old-PID two-link temporary; public --set does not bind token.branch_diff_digest or recomp"}

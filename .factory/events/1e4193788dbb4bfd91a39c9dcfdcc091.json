@@ -1,0 +1,1 @@
+{"event": "signal-scope-change", "generated_by": "implementer", "at": "2026-09-12T02:09:05+00:00", "story": "FORGE-COORD-1", "detail": "Blocking review findings require factory/scripts/pre_tool_use.py, factory/scripts/check_dual_runtime.py, factory/tests/test_native_setup.py, and the codex invocation regression test, but the protected"}

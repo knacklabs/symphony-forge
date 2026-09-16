@@ -32,6 +32,20 @@ An explicitly unelevated sandbox is deferred. The companion does not expose an
 unelevated sandbox option, and Forge does not change user-global Codex
 configuration to simulate one. Run Forge from a normal, unelevated prompt.
 
+The worker's commands run as a separate local account (`CodexSandboxOnline`
+once decision 0068 applies; `CodexSandboxOffline` before it). Codex grants
+that account read access to the whole disk, but Windows ACLs still deny it
+the user profile root (`C:\Users\<you>`) and per-user caches such as
+`%LOCALAPPDATA%\node\corepack` and `%LOCALAPPDATA%\pnpm\store`. Seen
+on a client: Vitest's esbuild config loader walked up from the worktree and
+died with `Cannot read directory "../../../../../..": Access is denied`, and
+`pnpm` failed with `EPERM` before starting because Corepack could not open
+its cache. Forge does not change ACLs. Two remedies were seen to work on that
+client: declare test commands as `node_modules\.bin\vitest ... --configLoader
+runner` (the runner loader does not walk parent folders, and the local binary
+avoids Corepack), or have an administrator grant the two sandbox accounts read
+access to the profile root and those two cache folders.
+
 ## Encoding
 
 Forge repository text and machine-consumed text use explicit UTF-8 on every
@@ -50,3 +64,14 @@ surface enforced by the current checker.
 WSL2 is optional, not a prerequisite. Use it as an escape hatch when policy or
 machine configuration prevents the supported native Windows path from
 converging; inside WSL2, follow the normal Linux setup.
+
+## Review lenses read the worktree
+
+`forge review` starts each lens inside the review worktree, read-only, through
+a launcher that also carries `[windows] sandbox = "elevated"` and the real
+`CODEX_HOME` past the skill's isolation (decision 0076). It needs the elevated
+sandbox set up once on the machine (the `.sandbox` folders under
+`~/.codex`); until then the lens's shell commands fail with "blocked by
+policy" or error 1223, and the fix is to run one interactive Codex session
+with the sandbox enabled so it completes set-up. Each run appends the exact
+Codex command it started to `.git/forge/review-launcher/<task>/bin/launch.log`.

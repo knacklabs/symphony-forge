@@ -3,10 +3,11 @@
 ## Summary
 
 Symphony Forge is KnackLabs's process harness for building applications with
-Claude Code coordinating and Codex executing. It turns in-repo architecture and
+either Claude Code or native Codex coordinating and delegated Codex workers executing. It turns in-repo architecture and
 decision documents into shipped software through a fixed sequence — discovery,
 confirmed capability specs, a derived roadmap, client sign-off, one planned
-story at a time, bounded tasks, deterministic verification, one autoreview pass,
+story at a time, bounded tasks, deterministic verification, one independent
+review lifecycle with quality, performance, and security assessments,
 and a recorded outcome — and it enforces that sequence in code rather than in
 instructions an agent can talk itself out of.
 
@@ -21,7 +22,7 @@ history and receives the machinery by copy, then upgrades in place.
 
 ## Users
 
-- **Developers** running a delivery loop with Claude Code and Codex, who want
+- **Developers** running a delivery loop through Claude Code or native Codex, who want
   the next action to be deterministic rather than remembered.
 - **Maintainers of this repo**, who dogfood the harness on itself — every gate
   here is exercised by the work that changes it.
@@ -45,9 +46,10 @@ repository and reproducible in a fresh worktree.
   derived from confirmed specs; the client signs off once, and that sign-off
   gates every later phase.
 - One roadmap story is planned, grilled, and approved, then decomposed into
-  bounded sequential tasks; each task is delegated with a composed brief,
-  measured on its own diff, and reviewed locally before it commits.
-- Verification, tests, three review lenses, and an outcome are recorded through
+  bounded dependency-aware tasks; each task owns a worktree, is delegated with
+  a composed brief, implements and tests its change, runs deterministic
+  verification, and loops through independent review and fixes until clean.
+- Verification, tests, one review lifecycle with three assessments, and an outcome are recorded through
   schema-validated commands, and `pr_ready` refuses until all of them exist.
 - Dependency-ready stories fan out into separate worktrees; their roadmap
   status flips converge deterministically on merge.
@@ -81,15 +83,17 @@ repository and reproducible in a fresh worktree.
 
 - Two runtimes must stay in lockstep: the same contract in `AGENTS.md` and its
   Claude adapter, verified by `check_dual_runtime.py`.
-- Claude Code coordinates; Codex executes. Review is one autoreview pass run by
+- Claude Code or native Codex coordinates; only an admitted delegated Codex worker writes product. Review is one autoreview operation run by
   the orchestrating session, never a nested reviewer.
 - The vendored gate surface is frozen between vendorings and hash-checked, so
   client repos cannot drift from the machinery they were given.
 - Evidence enters `.factory/` only through recording commands that validate
   against `factory/schemas/`, including a pinned `generated_by`.
-- The planning lock is always armed; the only exits are an approved plan with a
-  recorded decomposition, or a bounded, ledgered quickfix window.
-- One story per worktree, tasks strictly sequential inside it.
+- The planning lock is always armed. Full work requires an approved plan and
+  decomposition; bounded ledgered quickfix and Lite windows are the other
+  planning-lock exits. The degraded window is the separate five-file delegated-
+  writer outage valve.
+- One story is planned at a time; each task owns a worktree, and dependency-ready tasks may overlap only with disjoint protected scopes.
 - The board is read-only and derives everything from committed artifacts; it
   never approves.
 - This repository stays independent of any client source repo.

@@ -1,0 +1,12 @@
+{
+  "event": "done",
+  "id": "Q-0140-ea35",
+  "profile": "degraded",
+  "kind": "degraded",
+  "reason": "Ordinary delegation cannot consume the parent verifier's two exact task_parallelism failures: launch-a8c964 ended without a completed turn, and the succeeding launch-7b4b26 reported implementation complete with zero edits while the recorded failures remain. Main will update only the two stale trailing-slash expectations in factory/tests/test_task_parallelism.py, run those selectors, and close the five-file window.",
+  "started_at": "2026-09-12T18:38:18+00:00",
+  "completed_at": "2026-09-12T18:40:43+00:00",
+  "files": [],
+  "task_id": "NATIVE-FOREGROUND-ACTIVATE",
+  "story": "FORGE-COORD-1"
+}

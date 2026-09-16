@@ -1,0 +1,12 @@
+{
+  "topic": "active-rereview-preserves-live-contract",
+  "lesson": "A reopened or active task review brief must use the current approved plan, spec, decomposition and task contract. Prior marker inputs are historical proof only after the task is sealed; substituting them during active re-review hides approved amendments. Add a regression for an active review-fix task with a prior marker.",
+  "source": "20a42eb7fd9260d4da2609f6d702a2f7ab98c45790b78703f0dfde158bc18d6c",
+  "applies_to": [
+    "factory/scripts/forge_cli/review_brief.py",
+    "factory/tests/test_review_settled_contracts.py"
+  ],
+  "severity": "high",
+  "generated_by": "autoreview",
+  "added_at": "2026-09-12T03:28:49+00:00"
+}

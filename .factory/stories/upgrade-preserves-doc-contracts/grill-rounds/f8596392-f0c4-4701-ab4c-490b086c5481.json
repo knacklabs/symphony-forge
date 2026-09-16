@@ -1,0 +1,16 @@
+{
+  "generated_by": "claude-code:plan-mode",
+  "questions": [
+    {
+      "question": "The input manifest needs a digest per input. How far should it reach for decisions?",
+      "options": [
+        "All active decisions for that gate (Recommended)",
+        "Only cited records",
+        "Artifact only"
+      ],
+      "chosen": "All active decisions for that gate (Recommended)"
+    }
+  ],
+  "at": "2026-09-11T17:16:38.862062+00:00",
+  "session_id": "b4051e43-dbea-4d62-ba73-ae6210455474"
+}

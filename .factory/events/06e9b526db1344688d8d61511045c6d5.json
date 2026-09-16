@@ -1,0 +1,1 @@
+{"event": "signal-resolved", "generated_by": "orchestrator", "at": "2026-09-12T01:40:58+00:00", "story": "FORGE-COORD-1", "detail": "S-0019-ddc9: Rerun C8 inside this admitted native worker. Target the protected task plan, not the story plan: .factory/stories/FORGE-COORD-1/task-plans/NATIVE-FOREGROUND-ACTIVATE.md. Its current exact context is l"}

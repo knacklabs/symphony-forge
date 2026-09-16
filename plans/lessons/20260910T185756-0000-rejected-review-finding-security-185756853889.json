@@ -1,0 +1,11 @@
+{
+  "topic": "rejected-review-finding-security",
+  "lesson": "Not a defect (0018): Decision 0018 treats delegation and proof commands as trusted repository inputs and defers hostile-worker containment until untrusted commands or third-party worker code receive write access. This task explicitly authorizes changes to the hook and admission source in its approved 24-path scope, so requiring immutable enforcement source during those edits adds a containment capability beyond that accepted trust model. The recorded C8 test still requires direct protected writes to be denied, and current scope, process identity, revocation and protected Git-control authority must remain fail-closed; this ruling does not excuse any defect in those checks. \u2014 raised as \"[P1] Do not let a worker rewrite its own authorization hook (factory/scripts/pre_tool_use.py:803): The new admission branch allows every in-scope product write,\"",
+  "source": "review reject NATIVE-FOREGROUND-ACTIVATE security at 2026-09-10T18:57:56+00:00",
+  "applies_to": [
+    "factory/scripts/**"
+  ],
+  "severity": "medium",
+  "generated_by": "orchestrator",
+  "added_at": "2026-09-10T18:57:56+00:00"
+}

@@ -1,0 +1,1 @@
+{"event": "signal-resolved", "generated_by": "orchestrator", "at": "2026-09-12T00:54:12+00:00", "story": "FORGE-COORD-1", "detail": "S-0018-ac35: Use the current indexed constitution: constitution/README.md and the standards it lists. For this Python harness remediation, constitution/01-monorepo-standard.md plus the applicable 05-testing-standa"}

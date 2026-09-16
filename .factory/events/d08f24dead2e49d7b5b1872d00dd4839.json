@@ -1,0 +1,1 @@
+{"event": "signal-resolved", "generated_by": "orchestrator", "at": "2026-09-13T10:17:14+00:00", "story": "FORGE-COORD-1", "detail": "S-0031-120f: Run only these six pytest node IDs: factory/tests/test_review_task_delta.py::test_combined_review_projects_tagged_lenses_and_preserves_ordered_pass_verdicts; factory/tests/test_review_task_delta.py::t"}

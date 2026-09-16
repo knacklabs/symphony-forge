@@ -1,0 +1,43 @@
+{
+  "commit": "44a7a3bdc42fa228f891a609a3510abd15d0cbf0",
+  "automated": {
+    "generated_by": "implementer",
+    "status": "passed",
+    "summary": "At 44a7a3b, the selected formal review's last blocking quality gap is closed. Combined-review instructions now place verdict lines only in quality, and publication refuses both ordinary and newline-split verdict grammar in every non-quality region. The exact existing selector, prompt assertion, and cumulative path/line gates are green.",
+    "blocking_findings": [],
+    "commands_run": [
+      "Registered Sol/medium verdict-placement workers completed under the exact two-file scope; final session 01a09d69-de62-73a3-a230-d6be27bab5e7 changed only factory/scripts/forge_cli/review.py and factory/tests/test_review_task_delta.py.",
+      "UV_CACHE_DIR=/tmp/forge-review-verdict-uv-cache UV_TOOL_DIR=/tmp/forge-review-verdict-uv-tool uv run --python 3.11 --with pytest --with psutil python -m pytest factory/tests/test_review_task_delta.py -k test_combined_review_refuses_incomplete_noncontiguous_missing_copied_or_mixed_output --junitxml=/tmp/native-foreground-verdict-final.xml -> 1 passed, 0 failures, 0 errors, 0 skips, 10 deselected.",
+      "git diff --name-only acf284c -- excluding .factory/** and plans/** -> exactly factory/scripts/forge_cli/review.py and factory/tests/test_review_task_delta.py.",
+      "git diff --numstat 499c358 -- excluding .factory/** and plans/** -> exactly ten authorized product/test paths and 400 added-plus-deleted lines; git diff --check -> clean.",
+      "Parent-owned task close at b257e46 completed the authoritative 70 required selectors and five parent verify commands. Every later product change is confined to review prompt/projection behavior and its exact existing selectors, each rerun green at the corresponding product tree."
+    ],
+    "tests_added_or_updated": [
+      "factory/tests/test_review_task_delta.py"
+    ],
+    "pass_fail_summary": "The current verdict-boundary selector passed with no skips at the exact 44a7a3b product tree. Historical task-close proof remains 70 selectors and five parent verify commands green at b257e46; subsequent changes are isolated review-path corrections with focused green proof. The final cumulative repair is exactly ten paths and 400 lines.",
+    "remaining_gaps": [],
+    "reviewed_scope": [
+      "factory/scripts/check_task_proof.py",
+      "factory/scripts/factory_lib.py",
+      "factory/scripts/forge.py",
+      "factory/scripts/forge_cli/delegate.py",
+      "factory/scripts/forge_cli/review.py",
+      "factory/scripts/pre_tool_use.py",
+      "factory/tests/test_gates.py",
+      "factory/tests/test_review_task_delta.py",
+      "factory/tests/test_stop_less_often.py",
+      "factory/tests/test_worker_admission.py"
+    ],
+    "skills_used": [
+      "forge",
+      "ponytail"
+    ],
+    "non_blocking_findings": [],
+    "residual_risks": [],
+    "manual_validation_steps": [],
+    "recorded_at": "2026-09-14T01:01:04+00:00",
+    "commit": "44a7a3bdc42fa228f891a609a3510abd15d0cbf0"
+  },
+  "updated_at": "2026-09-14T01:01:04+00:00"
+}

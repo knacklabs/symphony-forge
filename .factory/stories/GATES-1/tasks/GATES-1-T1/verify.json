@@ -1,0 +1,28 @@
+{
+  "ok": true,
+  "completed_at": "2026-09-12T12:13:43+00:00",
+  "commit": "b32834d61038e82525488e864bb0331fd94de66b",
+  "results": [
+    {
+      "command": "python3 factory/scripts/check_dual_runtime.py",
+      "exit_code": 0,
+      "stdout": "WARNING: commit e900fcf5 accepting docs/decisions/0032-jit-task-planning.md lacks a `Confirmed-by:` trailer (convention-level check).\nWARNING: commit 785dba9c accepting docs/decisions/0033-gate-a-declares-all-work-records.md lacks a `Confirmed-by:` trailer (convention-level check).\nWARNING: commit 0f17e888 accepting docs/decisions/0034-vendored-docs-are-client-safe.md lacks a `Confirmed-by:` trailer (convention-level check).\nWARNING: commit fd798874 accepting docs/decisions/0040-windows-user-scope-first-elevation-deferred.md lacks a `Confirmed-by:` trailer (convention-level check).\nWARNING: commit 5195b56d accepting docs/decisions/0044-accountable-engineering-loop.md lacks a `Confirmed-by:` trailer (convention-level check).\nWARNING: commit 5195b56d accepting docs/decisions/0045-conflict-free-story-state.md lacks a `Confirmed-by:` trailer (convention-level check).\nWARNING: commit 2f3cb20b accepting docs/decisions/0048-plan-mode-and-grill-provenance.md lacks a `Confirmed-by:` trailer (convention-level check).\nWARNING: commit 92b87f98 accepting docs/decisions/0050-plan-authoring-is-mode-agnostic.md lacks a `Confirmed-by:` trailer (convention-level check).\nWARNING: commit 5c83a6c4 accepting docs/decisions/0066-closeout-binds-to-the-diff.md lacks a `Confirmed-by:` trailer (convention-level check).\nWARNING: commit a09c7c8b accepting docs/decisions/0067-rounds-rebind-to-their-gate.md lacks a `Confirmed-by:` trailer (convention-level check).\nWARNING: commit 0900de06 accepting docs/decisions/0068-worker-commands-may-reach-the-network.md lacks a `Confirmed-by:` trailer (convention-level check).\ncheck_dual_runtime: clean.\n",
+      "stderr": "",
+      "phase": "structural"
+    },
+    {
+      "command": "python3 factory/scripts/check_factory_scaffold.py",
+      "exit_code": 0,
+      "stdout": "Factory scaffold OK\n",
+      "stderr": "",
+      "phase": "typecheck"
+    },
+    {
+      "command": "uv run --with pytest --with psutil python -m pytest factory/tests -q",
+      "exit_code": 0,
+      "stdout": "........................................................................ [  7%]\n........................................................................ [ 15%]\n........................................................................ [ 22%]\n.......s................................................................ [ 30%]\n........................................................................ [ 37%]\n........................................................................ [ 45%]\n........................................................................ [ 52%]\n........................................................................ [ 60%]\n........................................................................ [ 68%]\n.....................................................ss................. [ 75%]\n........................................................................ [ 83%]\n........................................................................ [ 90%]\n........................................................................ [ 98%]\n................                                                         [100%]\n949 passed, 3 skipped in 1819.88s (0:30:19)\n",
+      "stderr": "",
+      "phase": "tests"
+    }
+  ]
+}

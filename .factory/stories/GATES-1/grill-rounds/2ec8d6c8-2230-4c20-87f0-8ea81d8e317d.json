@@ -1,0 +1,16 @@
+{
+  "generated_by": "claude-code:plan-mode",
+  "questions": [
+    {
+      "question": "A pre-stage task grill deliberately hashes the whole product tree, which catches drift before a stage starts. Does the manifest rule apply to it?",
+      "options": [
+        "Keep the whole-tree guard before stage start (Recommended)",
+        "Apply the manifest rule everywhere",
+        "Decide it during implementation"
+      ],
+      "chosen": "Keep the whole-tree guard before stage start (Recommended)"
+    }
+  ],
+  "at": "2026-09-11T18:06:52.921194+00:00",
+  "session_id": "b4051e43-dbea-4d62-ba73-ae6210455474"
+}

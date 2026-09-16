@@ -1,0 +1,1 @@
+{"event": "signal-blocked", "generated_by": "autoreview", "at": "2026-09-12T01:55:55+00:00", "story": "FORGE-COORD-1", "detail": "Combined review found four P1 correctness gaps: cross-PID immutable review recovery, review-token delta/run binding, rejection against the effective review base, and sealed historical proof depending "}

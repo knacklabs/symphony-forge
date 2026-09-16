@@ -1,0 +1,25 @@
+{
+  "generated_by": "claude-code:plan-mode",
+  "questions": [
+    {
+      "question": "Existing gate passes have no input manifest. What happens to them when this lands?",
+      "options": [
+        "Old passes keep old behaviour (Recommended)",
+        "Stale every old pass",
+        "Backfill manifests"
+      ],
+      "chosen": "Old passes keep old behaviour (Recommended)"
+    },
+    {
+      "question": "Decision 0051 says no round is reused across grills. Dropping the per-recording question needs that relaxed. How far?",
+      "options": [
+        "Same gate and story only (Recommended)",
+        "Reuse freely within a story",
+        "Keep 0051 as is"
+      ],
+      "chosen": "Same gate and story only (Recommended)"
+    }
+  ],
+  "at": "2026-09-11T17:49:20.701150+00:00",
+  "session_id": "b4051e43-dbea-4d62-ba73-ae6210455474"
+}

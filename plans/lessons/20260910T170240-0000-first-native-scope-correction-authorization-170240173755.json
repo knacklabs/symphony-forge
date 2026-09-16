@@ -1,0 +1,13 @@
+{
+  "topic": "first-native-scope-correction-authorization",
+  "lesson": "For NATIVE-FOREGROUND-ACTIVATE, preserve the original 24-file/4000-line estimate and report the measured overrun honestly. The user gave standing approval for all work on 2026-09-10 and subsequently requested fixes using all lessons; under accepted0064 the necessary C9 regression-fixture changes in test_review_settled_contracts.py and test_review_task_delta.py were bound through normal stage amend-scope at 2026-09-10T13:37:27Z, without changing task behavior, hiding cases, truncating review inputs, or overriding the installed helper safeguards. The approved plan and actual C8 launch remain unchanged historical authority; the scope amendment and complete measured result must accompany review.",
+  "source": "User standing authorization 2026-09-10T02:33:59Z; accepted0064; normal stage amend-scope NATIVE-FOREGROUND-ACTIVATE 2026-09-10T13:37:27Z",
+  "applies_to": [
+    "factory/tests/test_review_settled_contracts.py",
+    "factory/tests/test_review_task_delta.py",
+    "factory/scripts/forge_cli/review.py"
+  ],
+  "severity": "high",
+  "generated_by": "orchestrator",
+  "added_at": "2026-09-10T17:02:40+00:00"
+}

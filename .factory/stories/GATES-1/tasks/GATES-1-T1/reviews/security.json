@@ -1,0 +1,22 @@
+{
+  "generated_by": "autoreview",
+  "task_id": "GATES-1-T1",
+  "score": 10,
+  "summary": "security lens over GATES-1-T1 (3 product path(s), 069d179..b32834d, Codex via the autoreview skill at --max-priority P2): 0 blocking, 0 non-blocking. The current evidence path is scoped by gate, story, and task, so excluding it from prior-consumption checks enables only the intended same-scope re-recording. Other evidence paths remain consumption barriers, preserving refusal across gates, stories, and task IDs. The diff introduces no concrete authentication, authorization, injection, secret-handling, or data-exposure defect, and contains no compatibility shim or retained legacy implementation.",
+  "blocking_findings": [],
+  "non_blocking_findings": [],
+  "recommendation": "approve",
+  "reviewed_scope": [
+    "factory/board/example/plans/roadmap.json",
+    "factory/scripts/record_grill_from_json.py",
+    "factory/tests/test_round_provenance.py"
+  ],
+  "skills_used": [],
+  "aspect": "security",
+  "review_run_id": "1dc110f27362ba773ebf72288ed2c9d33c70e6490a6c484032dcab6b1f8c079f",
+  "brief_sha256": "0ef98f5606a5fa86c70d3259f29d7b92aaab386c7c8923f13136b4d7b41b1819",
+  "branch_diff_digest": "2b1c0be8d62ce66ee1121035887209ed7c7e25936587679d845890648a66e5b3",
+  "residual_risks": [],
+  "recorded_at": "2026-09-12T12:18:32+00:00",
+  "commit": "b32834d61038e82525488e864bb0331fd94de66b"
+}

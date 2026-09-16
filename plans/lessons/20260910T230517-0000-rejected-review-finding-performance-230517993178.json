@@ -1,0 +1,11 @@
+{
+  "topic": "rejected-review-finding-performance",
+  "lesson": "Not a defect (0066): Accepted Decision 0066 requires Claude coordination to continue through the same codex-plugin-cc route. The current producer in delegate.py exports FORGE_PROCESS_TOKEN for both runtimes and FORGE_LAUNCH_ID only for native Codex. worker_admission.py therefore resolves that token to exactly one protected current Claude companion record, while native records still require the explicit launch identity. Removing this branch would break the supported current Claude write path; it is not obsolete compatibility code. Keep all exact record, process ancestry, task lock, stage, scope and revocation checks. The misleading legacy terminology will be corrected without changing authority. \u2014 raised as \"[P1] Remove the legacy companion-token admission path (factory/scripts/forge_cli/worker_admission.py:188): When `FORGE_LAUNCH_ID` is absent, this branch reconst\"",
+  "source": "review reject NATIVE-FOREGROUND-ACTIVATE performance at 2026-09-10T23:05:17+00:00",
+  "applies_to": [
+    "factory/scripts/forge_cli/**"
+  ],
+  "severity": "medium",
+  "generated_by": "orchestrator",
+  "added_at": "2026-09-10T23:05:17+00:00"
+}

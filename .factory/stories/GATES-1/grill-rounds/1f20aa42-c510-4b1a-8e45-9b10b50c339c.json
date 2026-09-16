@@ -1,0 +1,16 @@
+{
+  "generated_by": "claude-code:plan-mode",
+  "questions": [
+    {
+      "question": "The plan gate keeps finding depth because one plan carries four separate mechanisms. Split GATES-1?",
+      "options": [
+        "Split into four tasks (Recommended)",
+        "Keep grinding one plan",
+        "Cut to the two cheap mechanisms"
+      ],
+      "chosen": "Split into four tasks (Recommended)"
+    }
+  ],
+  "at": "2026-09-11T18:33:02.136052+00:00",
+  "session_id": "b4051e43-dbea-4d62-ba73-ae6210455474"
+}

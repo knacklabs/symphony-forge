@@ -1,0 +1,1 @@
+{"event": "signal-scope-change", "generated_by": "implementer", "at": "2026-09-12T00:50:32+00:00", "story": "FORGE-COORD-1", "detail": "Blocking review findings require edits to factory/scripts/pre_tool_use.py and factory/scripts/check_dual_runtime.py, but the protected plan limits this remaining delegate to its exact 18-path subset, "}

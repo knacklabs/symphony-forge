@@ -1,0 +1,37 @@
+{
+  "commit": "b32834d61038e82525488e864bb0331fd94de66b",
+  "automated": {
+    "generated_by": "implementer",
+    "status": "pass",
+    "summary": "Seven new tests in factory/tests/test_round_provenance.py cover the one condition this task changes: a pass no longer spends the rounds recorded at its own evidence path, so re-recording the same gate for the same story and task reuses them even when the submitted round set differs from the one stored, while a different gate, story or task still refuses. The floor of one real round per gate is asserted both ways, and global gates are asserted unchanged. Three existing gate tests that an earlier draft broke (intake, adhoc capture, and the next/board route) pass again after that draft's global-gate narrowing was reverted.",
+    "blocking_findings": [],
+    "commands_run": [
+      "uv run --with pytest --with psutil python -m pytest factory/tests/test_round_provenance.py -q",
+      "uv run --with pytest --with psutil python -m pytest factory/tests -q",
+      "python3 factory/scripts/verify.py"
+    ],
+    "tests_added_or_updated": [
+      "factory/tests/test_round_provenance.py::test_re_recording_the_same_gate_reuses_its_round_after_an_edit",
+      "factory/tests/test_round_provenance.py::test_a_round_is_refused_at_a_different_gate",
+      "factory/tests/test_round_provenance.py::test_a_round_is_refused_for_a_different_story",
+      "factory/tests/test_round_provenance.py::test_a_round_is_refused_for_a_different_task_id",
+      "factory/tests/test_round_provenance.py::test_a_global_gate_is_unchanged_when_no_story_is_active",
+      "factory/tests/test_round_provenance.py::test_a_story_gate_still_consumes_a_pre_story_round",
+      "factory/tests/test_round_provenance.py::test_the_floor_of_one_real_round_per_gate_still_holds"
+    ],
+    "pass_fail_summary": "7 passed in the new suite; 948 passed, 3 skipped, 0 failed across factory/tests; verify.py exit 0",
+    "remaining_gaps": [
+      "Decision 0055's lint, format and type checks are recorded as this task's verify commands but are not wired into verify.py or CI; that belongs to T3, which already changes the verify path."
+    ],
+    "reviewed_scope": [
+      "factory/scripts/record_grill_from_json.py",
+      "factory/tests/test_round_provenance.py"
+    ],
+    "non_blocking_findings": [],
+    "residual_risks": [],
+    "manual_validation_steps": [],
+    "recorded_at": "2026-09-12T12:15:13+00:00",
+    "commit": "b32834d61038e82525488e864bb0331fd94de66b"
+  },
+  "updated_at": "2026-09-12T12:15:13+00:00"
+}

@@ -1,0 +1,1 @@
+{"event": "signal-resolved", "generated_by": "orchestrator", "at": "2026-09-12T17:28:42+00:00", "story": "FORGE-COORD-1", "detail": "S-0028-8bd1: Use strict UTF-8 decoding for this git cat-file -t subprocess by removing only errors=surrogateescape in classify_scope_entries; the command's stdout is the ASCII object type. Do not edit check_encodi"}

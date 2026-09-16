@@ -1,0 +1,14 @@
+{
+  "event": "done",
+  "id": "Q-0141-00da",
+  "profile": "degraded",
+  "kind": "degraded",
+  "reason": "The Codex app apply_patch tool bypassed Forge degraded-file claim tracking, leaving Q-0140 as an honest zero-file diagnostic window. Reapply the exact already-green task_parallelism expectation patch through the repository PreToolUse hook so the single changed file is ledgered.",
+  "started_at": "2026-09-12T18:42:14+00:00",
+  "completed_at": "2026-09-12T18:43:33+00:00",
+  "files": [
+    "factory/tests/test_task_parallelism.py"
+  ],
+  "task_id": "NATIVE-FOREGROUND-ACTIVATE",
+  "story": "FORGE-COORD-1"
+}

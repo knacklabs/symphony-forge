@@ -1,0 +1,16 @@
+{
+  "generated_by": "claude-code:plan-mode",
+  "questions": [
+    {
+      "question": "Getting this plan recorded has itself cost five extra gate records. Should the two quick mechanisms jump the queue?",
+      "options": [
+        "Follow the plan order (Recommended)",
+        "Pull the two quick ones out as a fix window",
+        "Stop after the plan and resume later"
+      ],
+      "chosen": "Follow the plan order (Recommended)"
+    }
+  ],
+  "at": "2026-09-12T03:00:03.946806+00:00",
+  "session_id": "b4051e43-dbea-4d62-ba73-ae6210455474"
+}

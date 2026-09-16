@@ -1,0 +1,13 @@
+{
+  "event": "open",
+  "id": "Q-0129-d7f1",
+  "profile": "degraded",
+  "reason": "The approved native foreground task cannot be delegated in this managed linked-worktree sandbox: forge delegate cannot create its protected shared .git/worktrees lock (Operation not permitted).",
+  "started_at": "2026-09-10T11:13:09+00:00",
+  "max_files": 5,
+  "files": [],
+  "harness_source": true,
+  "kind": "degraded",
+  "task_id": "NATIVE-FOREGROUND-ACTIVATE",
+  "story": "FORGE-COORD-1"
+}
