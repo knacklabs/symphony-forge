@@ -8,12 +8,12 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
-import shutil
-import subprocess
-import tempfile
 import os
 import re
+import shutil
 import stat
+import subprocess
+import tempfile
 from pathlib import Path
 
 from factory_lib import (
@@ -63,6 +63,9 @@ RETIRED_FORGE_PROFILE_HASHES = {
 }
 LEAN_MIGRATION_VERSION = "lean-workflow-v2"
 LEAN_LENSES = ("performance", "quality", "security")
+LEAN_RETAINED_PROFILES = {
+    "planner-high.toml", "docs-decomposer.toml", "functional-checker.toml",
+}
 LEAN_RUNTIME_PATHS = (
     "factory/scripts/forge_cli/approval.py",
     "factory/scripts/post_tool_use.py",
@@ -132,6 +135,223 @@ def _lean_family(relative: str, data: bytes | None = None) -> str:
     return ""
 
 
+def _legacy_json_shape_reason(family: str, value: object) -> str:
+    """Return why a recognized Lean-owned JSON artifact is not historical proof."""
+    if not isinstance(value, dict):
+        return "legacy artifact is not a JSON object"
+
+    def fields(required: dict[str, type]) -> str:
+        missing = [name for name, expected in required.items()
+                   if not isinstance(value.get(name), expected)]
+        return ("legacy artifact has invalid or missing field(s): "
+                + ", ".join(missing)) if missing else ""
+
+    if family == "grill-round":
+        return fields({
+            "generated_by": str, "questions": list, "at": str,
+            "session_id": str,
+        })
+    if family in {
+            "requirements-grill", "old-plan-grill", "old-task-grill"}:
+        reason = fields({
+            "generated_by": str, "gate": str, "verdict": str,
+            "gaps": list, "contradictions": list, "resolutions": list,
+        })
+        expected_gate = {
+            "requirements-grill": "requirements",
+            "old-plan-grill": "plan",
+            "old-task-grill": "task",
+        }[family]
+        if not reason and value.get("gate") != expected_gate:
+            return f"legacy artifact gate is not {expected_gate!r}"
+        if not reason and family == "old-task-grill" \
+                and not isinstance(value.get("rounds"), list):
+            return "legacy task grill has no rounds list"
+        return reason
+    if family == "manual-plan-approval":
+        reason = fields({
+            "approved_plan_sha256": str, "issue": str, "story": str,
+            "approver": str, "at": str,
+        })
+        if not reason and not re.fullmatch(
+                r"[0-9a-f]{64}", value["approved_plan_sha256"]):
+            return "legacy approval digest is not a SHA-256 identity"
+        return reason
+    if family == "plan-mode-marker":
+        reason = fields({
+            "generated_by": str, "path": str, "sha256": str,
+            "sha256_body": str, "at": str, "session_id": str,
+        })
+        if not reason and any(not re.fullmatch(r"[0-9a-f]{64}", value[name])
+                              for name in ("sha256", "sha256_body")):
+            return "legacy plan-mode marker has an invalid digest"
+        return reason
+    if family == "fixed-review-lens":
+        reason = fields({
+            "generated_by": str, "task_id": str, "score": int,
+            "summary": str, "blocking_findings": list,
+            "branch_diff_digest": str,
+        })
+        if not reason and not re.fullmatch(
+                r"[0-9a-f]{64}", value["branch_diff_digest"]):
+            return "fixed review lens has an invalid delta identity"
+        return reason
+    if family == "legacy-stage-stamp":
+        records = value.get("stages") if "stages" in value else [value]
+        if not isinstance(records, list) or not records:
+            return "legacy stage state has no stage records"
+        stamps = [record.get("local_review_stamp")
+                  for record in records if isinstance(record, dict)
+                  and "local_review_stamp" in record]
+        if not stamps:
+            return "legacy stage state has no local review stamp"
+        if any(not isinstance(stamp, dict) for stamp in stamps):
+            return "legacy local review stamp is not an object"
+        if any("reviewed_meaning" in stamp for stamp in stamps):
+            return "legacy stage state contains a current review stamp"
+        for stamp in stamps:
+            common = {
+                "stage_id": str, "base_sha": str, "recorded_at": str,
+                "generated_by": str,
+            }
+            missing = [name for name, expected in common.items()
+                       if not isinstance(stamp.get(name), expected)]
+            if missing:
+                return ("legacy local review stamp has invalid or missing field(s): "
+                        + ", ".join(missing))
+            if "delta_id" in stamp:
+                if not isinstance(stamp["delta_id"], str):
+                    return "legacy local review stamp has invalid delta identity"
+            elif any(not isinstance(stamp.get(name), str) for name in (
+                    "task_sha256", "brief_sha256", "product_tree_digest")):
+                return "legacy local review stamp has no historical binding"
+    return ""
+
+
+def _entry_identity(relative: str) -> dict:
+    parts = Path(relative).parts
+    identity: dict[str, object] = {"source_paths": [relative]}
+    if len(parts) > 2 and parts[:2] == (".factory", "stories"):
+        identity["story"] = parts[2]
+    if len(parts) > 5 and parts[3] == "tasks":
+        identity["task_id"] = parts[4]
+    elif "/grills/tasks/" in relative:
+        identity["task_id"] = Path(relative).stem
+    return identity
+
+
+def _classify_fixed_review_coverage(target: Path, entries: list[dict]) -> None:
+    """Mark display-only fixed proof before any migration output is built."""
+    from factory_lib import (
+        _committed_task_marker, product_delta_digest,
+        read_selected_review_generation,
+    )
+
+    def invalidate(rows: list[dict], reason: str) -> None:
+        for row in rows:
+            row.update(classification="invalid", reason=reason)
+
+    grouped: dict[tuple[str, str], list[dict]] = {}
+    for entry in entries:
+        if (entry.get("family") != "fixed-review-lens"
+                or entry.get("classification") == "invalid"):
+            continue
+        parts = Path(entry["path"]).parts
+        story = parts[2]
+        path_task = parts[4] if parts[3] == "tasks" else ""
+        grouped.setdefault((story, path_task), []).append(entry)
+    resolved: dict[tuple[str, str], list[list[dict]]] = {}
+    for (story, path_task), rows in grouped.items():
+        values = [json.loads((target / row["path"]).read_text(encoding="utf-8"))
+                  for row in rows]
+        task_ids = {value["task_id"] for value in values}
+        task = next(iter(task_ids)) if len(task_ids) == 1 else ""
+        if not task or (path_task and task != path_task):
+            for row in rows:
+                row.update(classification="invalid",
+                           reason="fixed review has mixed task identity")
+            continue
+        for row in rows:
+            row["story"], row["task_id"] = story, task
+            row["source_paths"] = sorted(item["path"] for item in rows)
+        resolved.setdefault((story, task), []).append(rows)
+    for (story, task), families in resolved.items():
+        if len(families) != 1:
+            for rows in families:
+                for row in rows:
+                    row.update(classification="invalid",
+                               reason="fixed review is multiply bound")
+            continue
+        rows = families[0]
+        lenses = {Path(row["path"]).stem for row in rows}
+        if lenses != set(LEAN_LENSES):
+            for row in rows:
+                row.update(classification="excluded",
+                           reason="incomplete fixed review is display-only",
+                           preserve=True)
+            continue
+        marker = (target / ".factory" / "stories" / story / "tasks" / task
+                  / "pr-ready.json")
+        _require_unlinked_path(target, marker)
+        if not marker.is_file():
+            for row in rows:
+                row.update(classification="excluded",
+                           reason="active fixed review requires a fresh review",
+                           preserve=True)
+            continue
+        marker_bytes = marker.read_bytes()
+        try:
+            marker_value = json.loads(marker_bytes)
+        except (UnicodeDecodeError, json.JSONDecodeError):
+            invalidate(rows, "sealed fixed review marker is malformed")
+            continue
+        if not isinstance(marker_value, dict):
+            invalidate(rows, "sealed fixed review marker is malformed")
+            continue
+        deltas = {value["branch_diff_digest"] for value in values}
+        if len(deltas) != 1:
+            invalidate(rows, "sealed fixed review has conflicting delta identity")
+            continue
+        committed, marker_problem = _committed_task_marker(
+            target, story, task, marker_value, None,
+        )
+        if marker_problem or committed is None:
+            invalidate(rows, "sealed fixed review marker is invalid: "
+                       + (marker_problem or "not committed"))
+            continue
+        sealed = committed["commit"]
+        expected_delta = product_delta_digest(
+            target, marker_value.get("base_main_sha", ""), sealed,
+        )
+        if deltas != {expected_delta}:
+            invalidate(rows, "sealed fixed review delta does not match its marker")
+            continue
+        selection = (target / ".factory" / "stories" / story / "tasks" / task
+                     / "reviews" / "selected.json")
+        _require_unlinked_path(target, selection)
+        if selection.exists() or selection.is_symlink():
+            generation, pointer, problems = read_selected_review_generation(
+                target, story, task, expected_delta_id=expected_delta,
+                sealed_commit=sealed,
+            )
+            if (problems or not isinstance(generation, dict)
+                    or not isinstance(pointer, dict)
+                    or generation.get("inspected_commit") != sealed):
+                invalidate(rows, "mixed canonical and fixed review proof: "
+                           + "; ".join(
+                               problems or ["selected proof lacks exact sealed binding"],
+                           ))
+                continue
+        marker_identity = {
+            "path": marker.relative_to(target).as_posix(),
+            "sha256": hashlib.sha256(marker_bytes).hexdigest(),
+            "commit": sealed,
+        }
+        for row in rows:
+            row.update(reason="sealed complete fixed review",
+                       marker_identity=marker_identity)
+
+
 def lean_primary_inventory(target: Path) -> list[dict]:
     """Discover only the declared Lean legacy roots and candidate parents."""
     candidates: list[Path] = []
@@ -154,26 +374,23 @@ def lean_primary_inventory(target: Path) -> list[dict]:
         if path.exists() or path.is_symlink():
             candidates.append(path)
 
-    def matching(parent: Path, names: set[str] | None = None) -> None:
+    def matching(parent: Path) -> None:
         if not directory(parent):
             return
         try:
             children = list(os.scandir(parent))
         except OSError as exc:
             fail(f"Lean migration cannot inspect candidate parent {parent}: {exc}")
-        for child in children:
-            if ((names is None and child.name.endswith(".json"))
-                    or (names is not None and child.name in names)):
-                candidates.append(Path(child.path))
+        candidates.extend(Path(child.path) for child in children)
 
     config = target / ".codex/config.toml"
     exact(config)
-    matching(target / ".codex/agents", set(RETIRED_FORGE_PROFILE_HASHES))
+    matching(target / ".codex/agents")
 
     factory = target / ".factory"
     if directory(factory):
         matching(factory / "grill-rounds")
-        matching(factory / "grills", {"requirements.json", "plan.json"})
+        matching(factory / "grills")
         matching(factory / "grills/tasks")
         exact(factory / "plan-approval.json")
         matching(factory / "plan-mode")
@@ -186,12 +403,12 @@ def lean_primary_inventory(target: Path) -> list[dict]:
                         or not entry.is_dir(follow_symlinks=False)):
                     fail(f"Lean migration refuses linked or non-directory candidate parent {story}")
                 matching(story / "grill-rounds")
-                matching(story / "grills", {"requirements.json", "plan.json"})
+                matching(story / "grills")
                 matching(story / "grills/tasks")
                 exact(story / "plan-approval.json")
                 matching(story / "plan-mode")
                 matching(story / "stages")
-                matching(story / "reviews", {f"{lens}.json" for lens in LEAN_LENSES})
+                matching(story / "reviews")
                 tasks = story / "tasks"
                 if directory(tasks):
                     for task_entry in os.scandir(tasks):
@@ -200,8 +417,7 @@ def lean_primary_inventory(target: Path) -> list[dict]:
                                 or not task_entry.is_dir(follow_symlinks=False)):
                             fail("Lean migration refuses linked or non-directory "
                                  f"candidate parent {task}")
-                        matching(task / "reviews", {
-                            f"{lens}.json" for lens in LEAN_LENSES})
+                        matching(task / "reviews")
     entries = []
     for path in sorted(set(candidates)):
         relative = path.relative_to(target).as_posix()
@@ -209,18 +425,308 @@ def lean_primary_inventory(target: Path) -> list[dict]:
             info = path.lstat()
         except OSError as exc:
             fail(f"Lean migration cannot inventory {relative}: {exc}")
-        if (_linked_or_reparse(info)
-                or not stat.S_ISREG(info.st_mode)
-                or info.st_nlink != 1):
+        if _linked_or_reparse(info):
+            fail(f"Lean migration refuses linked or non-regular candidate {relative}")
+        if stat.S_ISDIR(info.st_mode):
+            if (relative.endswith("/grills/tasks")
+                    or relative.endswith("/reviews/generations")):
+                entries.append({
+                    "path": relative, "family": "", "type": "directory",
+                    "classification": "excluded",
+                    "reason": ("canonical-review-output"
+                               if relative.endswith("/reviews/generations")
+                               else "current-container"),
+                    "preserve": True,
+                    **_entry_identity(relative),
+                })
+                continue
+            fail(f"Lean migration refuses unexpected directory candidate {relative}")
+        if not stat.S_ISREG(info.st_mode) or info.st_nlink != 1:
             fail(f"Lean migration refuses linked or non-regular candidate {relative}")
         data = path.read_bytes()
         family = _lean_family(relative, data)
-        if family:
-            entries.append({
-                "path": relative, "family": family, "type": "file",
-                "sha256": hashlib.sha256(data).hexdigest(), "bytes": len(data),
-            })
+        if not data and not family:
+            if relative.endswith("/grills/plan.json") \
+                    or relative == ".factory/grills/plan.json":
+                family = "old-plan-grill"
+            elif "/grills/tasks/" in relative and relative.endswith(".json"):
+                family = "old-task-grill"
+            elif relative.endswith("/plan-approval.json") \
+                    or relative == ".factory/plan-approval.json":
+                family = "manual-plan-approval"
+            elif relative == ".factory/stages.json" or "/stages/" in relative:
+                family = "legacy-stage-stamp"
+        invalid_reason = ""
+        zero_byte_legacy = not data and (
+            bool(family)
+            or relative == ".factory/stages.json"
+            or bool(re.fullmatch(
+                r"\.factory/(?:stories/[^/]+/)?(?:grills/(?:plan|requirements)"
+                r"|grills/tasks/[^/]+|plan-approval|stages/[^/]+)\.json",
+                relative,
+            ))
+        )
+        if zero_byte_legacy:
+            invalid_reason = "zero-byte legacy artifact"
+        elif family and family not in {"old-hook-flag", "retired-forge-profile"}:
+            try:
+                invalid_reason = _legacy_json_shape_reason(
+                    family, json.loads(data.decode("utf-8")),
+                )
+            except (UnicodeDecodeError, json.JSONDecodeError):
+                invalid_reason = "legacy artifact is malformed JSON"
+        reason = f"Lean-owned legacy {family}" if family else ""
+        preserve = False
+        if invalid_reason:
+            reason = invalid_reason
+        elif not family:
+            if relative == ".codex/config.toml":
+                reason = "current-runtime"
+            elif relative.startswith(".codex/agents/"):
+                name = path.name
+                if name in RETIRED_FORGE_PROFILE_HASHES:
+                    reason, preserve = "client-modified-profile", True
+                elif name in LEAN_RETAINED_PROFILES:
+                    reason = "current-runtime-profile"
+                else:
+                    reason, preserve = "client-added-profile", True
+            else:
+                reason, preserve = (
+                    "canonical-review-output"
+                    if relative.endswith("/reviews/selected.json")
+                    else "current-or-project-owned"
+                ), True
+        entries.append({
+            "path": relative, "family": family, "type": "file",
+            "sha256": hashlib.sha256(data).hexdigest(), "bytes": len(data),
+            "classification": ("invalid" if invalid_reason else
+                               "eligible" if family else "excluded"),
+            "reason": reason, "preserve": preserve,
+            **_entry_identity(relative),
+        })
+    _classify_fixed_review_coverage(target, entries)
     return entries
+
+
+def _raw_json_shape_reason(family: str, value: object) -> str:
+    """Independently validate JSON recognized by the raw coverage pass."""
+    if not isinstance(value, dict):
+        return "legacy artifact is not a JSON object"
+
+    def required_fields(required: dict[str, type]) -> str:
+        invalid = [key for key, expected in required.items()
+                   if not isinstance(value.get(key), expected)]
+        return ("legacy artifact has invalid or missing field(s): "
+                + ", ".join(invalid)) if invalid else ""
+
+    if family == "grill-round":
+        return required_fields({
+            "generated_by": str, "questions": list, "at": str,
+            "session_id": str,
+        })
+    if family in {
+            "requirements-grill", "old-plan-grill", "old-task-grill"}:
+        problem = required_fields({
+            "generated_by": str, "gate": str, "verdict": str,
+            "gaps": list, "contradictions": list, "resolutions": list,
+        })
+        required_gate = {
+            "requirements-grill": "requirements",
+            "old-plan-grill": "plan",
+            "old-task-grill": "task",
+        }[family]
+        if not problem and value.get("gate") != required_gate:
+            return f"legacy artifact gate is not {required_gate!r}"
+        if (not problem and family == "old-task-grill"
+                and not isinstance(value.get("rounds"), list)):
+            return "legacy task grill has no rounds list"
+        return problem
+    if family == "manual-plan-approval":
+        problem = required_fields({
+            "approved_plan_sha256": str, "issue": str, "story": str,
+            "approver": str, "at": str,
+        })
+        if (not problem and not re.fullmatch(
+                r"[0-9a-f]{64}", value["approved_plan_sha256"])):
+            return "legacy approval digest is not a SHA-256 identity"
+        return problem
+    if family == "plan-mode-marker":
+        problem = required_fields({
+            "generated_by": str, "path": str, "sha256": str,
+            "sha256_body": str, "at": str, "session_id": str,
+        })
+        if (not problem and any(not re.fullmatch(r"[0-9a-f]{64}", value[key])
+                                for key in ("sha256", "sha256_body"))):
+            return "legacy plan-mode marker has an invalid digest"
+        return problem
+    if family == "fixed-review-lens":
+        problem = required_fields({
+            "generated_by": str, "task_id": str, "score": int,
+            "summary": str, "blocking_findings": list,
+            "branch_diff_digest": str,
+        })
+        if (not problem and not re.fullmatch(
+                r"[0-9a-f]{64}", value["branch_diff_digest"])):
+            return "fixed review lens has an invalid delta identity"
+        return problem
+    if family == "legacy-stage-stamp":
+        records = value.get("stages") if "stages" in value else [value]
+        if not isinstance(records, list) or not records:
+            return "legacy stage state has no stage records"
+        stamps = [record.get("local_review_stamp")
+                  for record in records if isinstance(record, dict)
+                  and "local_review_stamp" in record]
+        if not stamps:
+            return "legacy stage state has no local review stamp"
+        if any(not isinstance(stamp, dict) for stamp in stamps):
+            return "legacy local review stamp is not an object"
+        if any("reviewed_meaning" in stamp for stamp in stamps):
+            return "legacy stage state contains a current review stamp"
+        for stamp in stamps:
+            required = {
+                "stage_id": str, "base_sha": str, "recorded_at": str,
+                "generated_by": str,
+            }
+            invalid = [key for key, expected in required.items()
+                       if not isinstance(stamp.get(key), expected)]
+            if invalid:
+                return ("legacy local review stamp has invalid or missing field(s): "
+                        + ", ".join(invalid))
+            if "delta_id" in stamp:
+                if not isinstance(stamp["delta_id"], str):
+                    return "legacy local review stamp has invalid delta identity"
+            elif any(not isinstance(stamp.get(key), str) for key in (
+                    "task_sha256", "brief_sha256", "product_tree_digest")):
+                return "legacy local review stamp has no historical binding"
+    return ""
+
+
+def _raw_entry_identity(relative: str) -> dict:
+    """Independently derive normalized source identity for raw coverage."""
+    segments = tuple(relative.split("/"))
+    identity: dict[str, object] = {"source_paths": [relative]}
+    if len(segments) > 2 and segments[:2] == (".factory", "stories"):
+        identity["story"] = segments[2]
+    if len(segments) > 5 and segments[3] == "tasks":
+        identity["task_id"] = segments[4]
+    elif "/grills/tasks/" in relative:
+        identity["task_id"] = relative.rsplit("/", 1)[-1].removesuffix(".json")
+    return identity
+
+
+def _raw_classify_fixed_review_coverage(target: Path, rows: list[dict]) -> None:
+    """Independently classify fixed review groups found by raw coverage."""
+    from factory_lib import (
+        _committed_task_marker, product_delta_digest,
+        read_selected_review_generation,
+    )
+
+    def mark_invalid(group: list[dict], problem: str) -> None:
+        for item in group:
+            item.update(classification="invalid", reason=problem)
+
+    groups: dict[tuple[str, str], list[dict]] = {}
+    for row in rows:
+        if (row.get("family") != "fixed-review-lens"
+                or row.get("classification") == "invalid"):
+            continue
+        segments = tuple(row["path"].split("/"))
+        story = segments[2]
+        path_task = segments[4] if segments[3] == "tasks" else ""
+        groups.setdefault((story, path_task), []).append(row)
+
+    resolved: dict[tuple[str, str], list[list[dict]]] = {}
+    for (story, path_task), group in groups.items():
+        values = [json.loads((target / row["path"]).read_text(encoding="utf-8"))
+                  for row in group]
+        task_ids = {value["task_id"] for value in values}
+        task = next(iter(task_ids)) if len(task_ids) == 1 else ""
+        if not task or (path_task and task != path_task):
+            mark_invalid(group, "fixed review has mixed task identity")
+            continue
+        source_paths = sorted(row["path"] for row in group)
+        for row in group:
+            row.update(story=story, task_id=task, source_paths=source_paths)
+        resolved.setdefault((story, task), []).append(group)
+
+    for (story, task), task_groups in resolved.items():
+        if len(task_groups) != 1:
+            for group in task_groups:
+                mark_invalid(group, "fixed review is multiply bound")
+            continue
+        group = task_groups[0]
+        lenses = {row["path"].rsplit("/", 1)[-1].removesuffix(".json")
+                  for row in group}
+        if lenses != set(LEAN_LENSES):
+            for row in group:
+                row.update(classification="excluded",
+                           reason="incomplete fixed review is display-only",
+                           preserve=True)
+            continue
+        marker = (target / ".factory" / "stories" / story / "tasks" / task
+                  / "pr-ready.json")
+        _require_unlinked_path(target, marker)
+        if not marker.is_file():
+            for row in group:
+                row.update(classification="excluded",
+                           reason="active fixed review requires a fresh review",
+                           preserve=True)
+            continue
+        marker_bytes = marker.read_bytes()
+        try:
+            marker_value = json.loads(marker_bytes)
+        except (UnicodeDecodeError, json.JSONDecodeError):
+            mark_invalid(group, "sealed fixed review marker is malformed")
+            continue
+        if not isinstance(marker_value, dict):
+            mark_invalid(group, "sealed fixed review marker is malformed")
+            continue
+        deltas = {value["branch_diff_digest"] for value in values}
+        if len(deltas) != 1:
+            mark_invalid(group,
+                         "sealed fixed review has conflicting delta identity")
+            continue
+        committed, marker_problem = _committed_task_marker(
+            target, story, task, marker_value, None,
+        )
+        if marker_problem or committed is None:
+            mark_invalid(group, "sealed fixed review marker is invalid: "
+                         + (marker_problem or "not committed"))
+            continue
+        sealed = committed["commit"]
+        expected_delta = product_delta_digest(
+            target, marker_value.get("base_main_sha", ""), sealed,
+        )
+        if deltas != {expected_delta}:
+            mark_invalid(group,
+                         "sealed fixed review delta does not match its marker")
+            continue
+        selected = (target / ".factory" / "stories" / story / "tasks" / task
+                    / "reviews" / "selected.json")
+        _require_unlinked_path(target, selected)
+        if selected.exists() or selected.is_symlink():
+            generation, pointer, problems = read_selected_review_generation(
+                target, story, task, expected_delta_id=expected_delta,
+                sealed_commit=sealed,
+            )
+            if (problems or not isinstance(generation, dict)
+                    or not isinstance(pointer, dict)
+                    or generation.get("inspected_commit") != sealed):
+                mark_invalid(group, "mixed canonical and fixed review proof: "
+                             + "; ".join(
+                                 problems or [
+                                     "selected proof lacks exact sealed binding",
+                                 ],
+                             ))
+                continue
+        marker_identity = {
+            "path": marker.relative_to(target).as_posix(),
+            "sha256": hashlib.sha256(marker_bytes).hexdigest(),
+            "commit": sealed,
+        }
+        for row in group:
+            row.update(reason="sealed complete fixed review",
+                       marker_identity=marker_identity)
 
 
 def lean_raw_inventory(target: Path) -> list[dict]:
@@ -249,18 +755,15 @@ def lean_raw_inventory(target: Path) -> list[dict]:
         if path.exists() or path.is_symlink():
             files.append(path)
 
-    def raw_matches(parent: Path, names: set[str] | None = None) -> None:
-        for child in raw_parent(parent):
-            if ((names is None and child.name.endswith(".json"))
-                    or (names is not None and child.name in names)):
-                files.append(Path(child.path))
+    def raw_matches(parent: Path) -> None:
+        files.extend(Path(child.path) for child in raw_parent(parent))
 
     raw_exact(target / ".codex/config.toml")
-    raw_matches(target / ".codex/agents", set(RETIRED_FORGE_PROFILE_HASHES))
+    raw_matches(target / ".codex/agents")
     factory = target / ".factory"
     if raw_parent(factory):
         raw_matches(factory / "grill-rounds")
-        raw_matches(factory / "grills", {"requirements.json", "plan.json"})
+        raw_matches(factory / "grills")
         raw_matches(factory / "grills/tasks")
         raw_exact(factory / "plan-approval.json")
         raw_matches(factory / "plan-mode")
@@ -272,30 +775,42 @@ def lean_raw_inventory(target: Path) -> list[dict]:
                     or not story_entry.is_dir(follow_symlinks=False)):
                 fail(f"Lean raw inventory refuses linked or non-directory candidate parent {story}")
             raw_matches(story / "grill-rounds")
-            raw_matches(story / "grills", {"requirements.json", "plan.json"})
+            raw_matches(story / "grills")
             raw_matches(story / "grills/tasks")
             raw_exact(story / "plan-approval.json")
             raw_matches(story / "plan-mode")
             raw_matches(story / "stages")
-            raw_matches(story / "reviews", {
-                f"{lens}.json" for lens in LEAN_LENSES})
+            raw_matches(story / "reviews")
             for task_entry in raw_parent(story / "tasks"):
                 task = Path(task_entry.path)
                 if (task_entry.is_symlink()
                         or not task_entry.is_dir(follow_symlinks=False)):
                     fail("Lean raw inventory refuses linked or non-directory "
                          f"candidate parent {task}")
-                raw_matches(task / "reviews", {
-                    f"{lens}.json" for lens in LEAN_LENSES})
+                raw_matches(task / "reviews")
     for path in sorted(set(files)):
         relative = path.relative_to(target).as_posix()
         try:
             info = path.lstat()
         except OSError as exc:
             fail(f"Lean raw inventory cannot inspect candidate {relative}: {exc}")
-        if (_linked_or_reparse(info)
-                or not stat.S_ISREG(info.st_mode)
-                or info.st_nlink != 1):
+        if _linked_or_reparse(info):
+            fail(f"Lean raw inventory refuses linked or non-regular candidate {relative}")
+        if stat.S_ISDIR(info.st_mode):
+            if (relative.endswith("/grills/tasks")
+                    or relative.endswith("/reviews/generations")):
+                rows.append({
+                    "path": relative, "family": "", "type": "directory",
+                    "classification": "excluded",
+                    "reason": ("canonical-review-output"
+                               if relative.endswith("/reviews/generations")
+                               else "current-container"),
+                    "preserve": True,
+                    **_raw_entry_identity(relative),
+                })
+                continue
+            fail(f"Lean raw inventory refuses unexpected directory candidate {relative}")
+        if not stat.S_ISREG(info.st_mode) or info.st_nlink != 1:
             fail(f"Lean raw inventory refuses linked or non-regular candidate {relative}")
         data = path.read_bytes()
         family = ""
@@ -331,18 +846,104 @@ def lean_raw_inventory(target: Path) -> list[dict]:
         elif (relative == ".factory/stages.json" or "/stages/" in relative) \
                 and b'"local_review_stamp"' in data and b'"reviewed_meaning"' not in data:
             family = "legacy-stage-stamp"
-        if family:
-            rows.append({
-                "path": relative, "family": family, "type": "file",
-                "sha256": hashlib.sha256(data).hexdigest(), "bytes": len(data),
-            })
+        if not data and not family:
+            if relative.endswith("/grills/plan.json") \
+                    or relative == ".factory/grills/plan.json":
+                family = "old-plan-grill"
+            elif "/grills/tasks/" in relative and relative.endswith(".json"):
+                family = "old-task-grill"
+            elif relative.endswith("/plan-approval.json") \
+                    or relative == ".factory/plan-approval.json":
+                family = "manual-plan-approval"
+            elif relative == ".factory/stages.json" or "/stages/" in relative:
+                family = "legacy-stage-stamp"
+        invalid_reason = ""
+        zero_byte_legacy = not data and (
+            bool(family)
+            or relative == ".factory/stages.json"
+            or bool(re.fullmatch(
+                r"\.factory/(?:stories/[^/]+/)?(?:grills/(?:plan|requirements)"
+                r"|grills/tasks/[^/]+|plan-approval|stages/[^/]+)\.json",
+                relative,
+            ))
+        )
+        if zero_byte_legacy:
+            invalid_reason = "zero-byte legacy artifact"
+        elif family and family not in {"old-hook-flag", "retired-forge-profile"}:
+            try:
+                invalid_reason = _raw_json_shape_reason(
+                    family, json.loads(data.decode("utf-8")),
+                )
+            except (UnicodeDecodeError, json.JSONDecodeError):
+                invalid_reason = "legacy artifact is malformed JSON"
+        reason = f"Lean-owned legacy {family}" if family else ""
+        preserve = False
+        if invalid_reason:
+            reason = invalid_reason
+        elif not family:
+            if relative == ".codex/config.toml":
+                reason = "current-runtime"
+            elif relative.startswith(".codex/agents/"):
+                name = path.name
+                if name in RETIRED_FORGE_PROFILE_HASHES:
+                    reason, preserve = "client-modified-profile", True
+                elif name in LEAN_RETAINED_PROFILES:
+                    reason = "current-runtime-profile"
+                else:
+                    reason, preserve = "client-added-profile", True
+            else:
+                reason, preserve = (
+                    "canonical-review-output"
+                    if relative.endswith("/reviews/selected.json")
+                    else "current-or-project-owned"
+                ), True
+        rows.append({
+            "path": relative, "family": family, "type": "file",
+            "sha256": hashlib.sha256(data).hexdigest(), "bytes": len(data),
+            "classification": ("invalid" if invalid_reason else
+                               "eligible" if family else "excluded"),
+            "reason": reason, "preserve": preserve,
+            **_raw_entry_identity(relative),
+        })
+    _raw_classify_fixed_review_coverage(target, rows)
     return rows
 
 
 def _inventory_digest(entries: list[dict]) -> str:
+    identity_entries = [
+        entry for entry in entries
+        if entry.get("reason") != "canonical-review-output"
+    ]
     return hashlib.sha256(json.dumps(
-        entries, sort_keys=True, separators=(",", ":"), ensure_ascii=False,
+        identity_entries, sort_keys=True, separators=(",", ":"), ensure_ascii=False,
     ).encode("utf-8")).hexdigest()
+
+
+def _revalidate_lean_inventory(target: Path, migration: dict) -> None:
+    """Refuse source, classification, or marker drift before pointer publish."""
+    primary = lean_primary_inventory(target)
+    raw = lean_raw_inventory(target)
+    if primary != raw:
+        fail("Lean migration independent raw inventory changed before publication")
+    replaced_paths = {
+        entry["path"] for entry in migration["entries"]
+        if entry.get("family") in {"old-hook-flag", "retired-forge-profile"}
+    }
+
+    def stable(entries: list[dict]) -> list[dict]:
+        return [
+            entry for entry in entries
+            if entry["path"] not in replaced_paths
+            and entry.get("reason") != "canonical-review-output"
+        ]
+
+    if stable(primary) != stable(migration["entries"]):
+        fail("Lean migration inventory changed before review publication")
+    candidates, sentinels = _fixed_review_plan(target, migration)
+    if candidates != migration.get("review_candidates", []):
+        fail("Lean migration sealed review identity changed before publication")
+    if sentinels != migration.get("review_sentinels", []):
+        fail("Lean migration selected review sentinel changed before publication")
 
 
 def _runtime_inventory(target: Path) -> list[dict]:
@@ -353,7 +954,10 @@ def _runtime_inventory(target: Path) -> list[dict]:
 
 
 def _validate_completed_manifest(target: Path, saved: dict) -> None:
-    from factory_lib import validate_review_document
+    from factory_lib import (
+        _committed_task_marker, product_delta_digest,
+        read_selected_review_generation, validate_review_document,
+    )
     installed_runtime = saved.get("installed_runtime")
     preserved_entries = saved.get("preserved_entries")
     if (saved.get("generated_by") != "upgrade"
@@ -379,7 +983,8 @@ def _validate_completed_manifest(target: Path, saved: dict) -> None:
             or saved.get("installed_runtime_digest")
             != _inventory_digest(installed_runtime)
             or any(entry not in saved["entries"]
-                   or entry.get("family") != "fixed-review-lens"
+                   or not (entry.get("preserve") is True
+                           or entry.get("family") == "fixed-review-lens")
                    for entry in preserved_entries
                    if isinstance(entry, dict))
             or any(not isinstance(entry, dict) for entry in preserved_entries)):
@@ -411,6 +1016,7 @@ def _validate_completed_manifest(target: Path, saved: dict) -> None:
             validate_review_document(target, generation)
         except (OSError, UnicodeDecodeError, json.JSONDecodeError, SystemExit) as exc:
             fail(f"Lean migration durable review output is invalid: {exc}")
+        marker_data = load_json(root.parent / "pr-ready.json", default={})
         if (generation.get("generation_id") != row["generation_id"]
                 or generation.get("story") != row["story"]
                 or generation.get("task_id") != row["task_id"]
@@ -420,8 +1026,23 @@ def _validate_completed_manifest(target: Path, saved: dict) -> None:
                 or selection.get("task_id") != row["task_id"]
                 or selection.get("generation_id") != row["generation_id"]
                 or selection.get("generation_sha256") != row["generation_sha256"]
-                or generation.get("origin") != "upgrade"):
+                or generation.get("inspected_commit") != marker_data.get("commit")):
             fail("Lean migration durable review output identity is tampered")
+        committed, marker_problem = _committed_task_marker(
+            target, row["story"], row["task_id"], marker_data, None,
+        )
+        if marker_problem or committed is None:
+            fail("Lean migration durable review output marker is invalid")
+        expected_delta = product_delta_digest(
+            target, marker_data.get("base_main_sha", ""), committed["commit"],
+        )
+        selected, _pointer, problems = read_selected_review_generation(
+            target, row["story"], row["task_id"],
+            expected_delta_id=expected_delta, sealed_commit=committed["commit"],
+        )
+        if (problems or not isinstance(selected, dict)
+                or selected.get("inspected_commit") != committed["commit"]):
+            fail("Lean migration durable review output lacks exact sealed binding")
     expected_output = hashlib.sha256(json.dumps(
         outputs, sort_keys=True, separators=(",", ":"),
     ).encode()).hexdigest()
@@ -450,12 +1071,17 @@ def _prepare_review_outputs(target: Path, migration: dict) -> None:
             reviews = (target / ".factory" / "stories" / candidate["story"]
                        / "tasks" / candidate["task_id"] / "reviews")
             generation_path = reviews / "generations" / f"{generation['generation_id']}.json"
-            for path in (generation_path, reviews / "selected.json"):
+            selection_path = reviews / "selected.json"
+            for path in (generation_path, selection_path):
                 _require_unlinked_path(target, path)
                 assert_target_file_destination(target, path)
+            already_published = _exact_review_output_exists(
+                target, candidate, generation["generation_id"], body,
+            )
             prepared.append({
                 "candidate": candidate, "generation_id": generation["generation_id"],
                 "generation_sha256": hashlib.sha256(body).hexdigest(),
+                "already_published": already_published,
             })
     manifest = target / ".factory" / "migrations" / f"{LEAN_MIGRATION_VERSION}.json"
     _require_unlinked_path(target, manifest)
@@ -465,11 +1091,17 @@ def _prepare_review_outputs(target: Path, migration: dict) -> None:
 
 def preflight_lean_migration(target: Path) -> dict | None:
     manifest = target / ".factory" / "migrations" / f"{LEAN_MIGRATION_VERSION}.json"
+    _require_unlinked_path(target, manifest)
     primary = lean_primary_inventory(target)
     raw = lean_raw_inventory(target)
     if primary != raw:
         fail("Lean migration independent raw inventory does not exactly match primary classification")
     for entry in primary:
+        if entry.get("classification") == "invalid":
+            fail(f"Lean migration found invalid {entry['family']} input "
+                 f"{entry['path']}: {entry['reason']}")
+        if entry.get("classification") != "eligible":
+            continue
         if entry["family"] in {"old-hook-flag", "retired-forge-profile"}:
             continue
         try:
@@ -488,35 +1120,85 @@ def preflight_lean_migration(target: Path) -> dict | None:
             fail("Lean migration found an unequal partial retry; restore or complete the original checkout")
         if saved.get("completed_at"):
             _validate_completed_manifest(target, saved)
-            if primary != saved.get("preserved_entries"):
+            output_paths = {
+                f".factory/stories/{row['story']}/tasks/{row['task_id']}"
+                "/reviews/selected.json"
+                for row in saved.get("outputs") or []
+            } | {
+                f".factory/stories/{row['story']}/tasks/{row['task_id']}"
+                "/reviews/generations"
+                for row in saved.get("outputs") or []
+            }
+            current_preserved = [
+                entry for entry in primary
+                if (entry.get("preserve")
+                    or entry.get("classification") == "eligible")
+                and entry["path"] not in output_paths
+            ]
+            saved_preserved = [
+                entry for entry in saved.get("preserved_entries") or []
+                if entry.get("path") not in output_paths
+            ]
+            if current_preserved != saved_preserved:
                 fail("Lean migration found an unequal partial retry; restore or complete the original checkout")
             return None
-        if saved.get("entries") != primary:
+        saved_identity = [
+            entry for entry in saved.get("entries") or []
+            if entry.get("reason") != "canonical-review-output"
+        ]
+        primary_identity = [
+            entry for entry in primary
+            if entry.get("reason") != "canonical-review-output"
+        ]
+        if saved_identity != primary_identity:
             fail("Lean migration found an unequal partial retry; restore or complete the original checkout")
-        migration = {"entries": primary,
+        migration = {"entries": saved["entries"],
                      "input_inventory_digest": saved.get("input_inventory_digest"),
                      "resume": True}
-        migration["review_candidates"] = _fixed_review_candidates(target, migration)
+        (migration["review_candidates"],
+         migration["review_sentinels"]) = _fixed_review_plan(target, migration)
         _prepare_review_outputs(target, migration)
         return migration
     migration = {"entries": primary,
                  "input_inventory_digest": _inventory_digest(primary)}
-    migration["review_candidates"] = _fixed_review_candidates(target, migration)
+    (migration["review_candidates"],
+     migration["review_sentinels"]) = _fixed_review_plan(target, migration)
     _prepare_review_outputs(target, migration)
     return migration
 
 
-def _fixed_review_candidates(target: Path, migration: dict) -> list[tuple[dict, list[Path]]]:
-    from factory_lib import _committed_task_marker, validate_payload, validate_review_document
+def _fixed_review_candidates(
+        target: Path, migration: dict,
+) -> list[tuple[dict, list[Path]]]:
+    candidates, _sentinels = _fixed_review_plan(target, migration)
+    return candidates
+
+
+def _fixed_review_plan(
+        target: Path, migration: dict,
+) -> tuple[list[tuple[dict, list[Path]]], list[dict]]:
+    from factory_lib import (
+        _committed_task_marker, product_delta_digest,
+        read_selected_review_generation, validate_payload,
+        validate_review_document,
+    )
+    invalid = [entry for entry in migration["entries"]
+               if entry.get("family") == "fixed-review-lens"
+               and entry.get("classification") == "invalid"]
+    if invalid:
+        fail("Lean migration found invalid fixed-review-lens input "
+             f"{invalid[0]['path']}: {invalid[0]['reason']}")
     grouped: dict[tuple[str, str], list[dict]] = {}
     for entry in migration["entries"]:
-        if entry["family"] != "fixed-review-lens":
+        if (entry.get("classification") != "eligible"
+                or entry["family"] != "fixed-review-lens"):
             continue
         parts = Path(entry["path"]).parts
         story = parts[2]
         task = parts[4] if parts[3] == "tasks" else ""
         grouped.setdefault((story, task), []).append(entry)
     candidates = []
+    sentinels = []
     for (story, path_task), entries in sorted(grouped.items()):
         lenses = {}
         for entry in entries:
@@ -558,6 +1240,36 @@ def _fixed_review_candidates(target: Path, migration: dict) -> list[tuple[dict, 
             fail(f"sealed fixed review {story}/{task} marker is invalid: "
                  f"{marker_problem or 'not committed'}")
         sealed = committed["commit"]
+        expected_delta = product_delta_digest(
+            target, marker_data.get("base_main_sha", ""), sealed,
+        )
+        if deltas != {expected_delta}:
+            fail(f"sealed fixed review {story}/{task} delta does not match its marker")
+        selection_path = (target / ".factory" / "stories" / story / "tasks"
+                          / task / "reviews" / "selected.json")
+        _require_unlinked_path(target, selection_path)
+        if selection_path.exists() or selection_path.is_symlink():
+            generation, selection, problems = read_selected_review_generation(
+                target, story, task, expected_delta_id=expected_delta,
+                sealed_commit=sealed,
+            )
+            if (problems or not isinstance(generation, dict)
+                    or not isinstance(selection, dict)
+                    or generation.get("inspected_commit") != sealed):
+                fail("Lean migration refuses mixed canonical and fixed review proof: "
+                     + "; ".join(problems or ["selected proof lacks exact sealed binding"]))
+            sentinels.append({
+                "output": {
+                    "story": story, "task_id": task,
+                    "generation_id": generation["generation_id"],
+                    "generation_sha256": selection["generation_sha256"],
+                },
+                "sealed_commit": sealed,
+                "selection_sha256": hashlib.sha256(
+                    selection_path.read_bytes()).hexdigest(),
+                "source_paths": [entry["path"] for entry in entries],
+            })
+            continue
         candidate = {
             "format": "forge-review-generation/v1", "origin": "upgrade",
             "generated_by": "upgrade", "story": story, "task_id": task,
@@ -575,17 +1287,91 @@ def _fixed_review_candidates(target: Path, migration: dict) -> list[tuple[dict, 
         }
         validate_review_document(target, candidate, allow_missing_generation_id=True)
         candidates.append((candidate, [target / entry["path"] for entry in entries]))
-    return candidates
+    return candidates, sentinels
+
+
+def _exact_review_output_exists(
+        target: Path, candidate: dict, generation_id: str, body: bytes) -> bool:
+    """Reuse only an exact interrupted migration publication; refuse mixed proof."""
+    from factory_lib import validate_review_document
+    reviews = (target / ".factory" / "stories" / candidate["story"]
+               / "tasks" / candidate["task_id"] / "reviews")
+    selection_path = reviews / "selected.json"
+    if not selection_path.exists() and not selection_path.is_symlink():
+        return False
+    generation_path = reviews / "generations" / f"{generation_id}.json"
+    try:
+        selection = json.loads(selection_path.read_text(encoding="utf-8"))
+        generation_bytes = generation_path.read_bytes()
+        generation = json.loads(generation_bytes)
+        validate_review_document(target, selection)
+        validate_review_document(target, generation)
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError, SystemExit) as exc:
+        fail(f"Lean migration refuses mixed canonical and fixed review proof: {exc}")
+    expected_sha = hashlib.sha256(body).hexdigest()
+    if (generation_bytes != body
+            or selection.get("story") != candidate["story"]
+            or selection.get("task_id") != candidate["task_id"]
+            or selection.get("generation_id") != generation_id
+            or selection.get("generation_sha256") != expected_sha):
+        fail("Lean migration refuses mixed canonical and fixed review proof")
+    return True
+
+
+def _publish_upgrade_review(
+        target: Path, migration: dict, candidate: dict,
+        expected_id: str, expected_sha: str) -> tuple[dict, dict]:
+    """Publish one upgrade generation with inventory and selection serialized."""
+    from factory_lib import (
+        _publish_immutable_review_file, _replace_review_selection, now_iso,
+        read_selected_review_generation, review_generation_bytes,
+        validate_review_document,
+    )
+    from .delegate import delegation_exclusion
+
+    generation = {**candidate, "generation_id": expected_id}
+    body = review_generation_bytes(generation)
+    reviews = (target / ".factory" / "stories" / candidate["story"]
+               / "tasks" / candidate["task_id"] / "reviews")
+    generation_path = reviews / "generations" / f"{expected_id}.json"
+    selection_path = reviews / "selected.json"
+    with delegation_exclusion(
+            target, candidate["task_id"], kind="review-selection"):
+        _revalidate_lean_inventory(target, migration)
+        if _exact_review_output_exists(target, candidate, expected_id, body):
+            selection = json.loads(selection_path.read_text(encoding="utf-8"))
+        else:
+            _publish_immutable_review_file(target, generation_path, body)
+            selection = {
+                "format": "forge-review-selection/v1",
+                "story": candidate["story"], "task_id": candidate["task_id"],
+                "generation_id": expected_id,
+                "generation_sha256": expected_sha,
+                "delta_id": candidate["delta_id"], "selected_at": now_iso(),
+            }
+            validate_review_document(target, selection)
+            _replace_review_selection(target, selection_path, selection)
+        published, _pointer, problems = read_selected_review_generation(
+            target, candidate["story"], candidate["task_id"],
+            expected_delta_id=candidate["delta_id"],
+            sealed_commit=candidate["upgrade"]["sealed_commit"],
+        )
+        if (problems or not isinstance(published, dict)
+                or published.get("generation_id") != expected_id):
+            fail("selected upgrade review failed readback: "
+                 + "; ".join(problems or ["wrong selected generation"]))
+    return generation, selection
 
 
 def apply_lean_migration(target: Path, migration: dict | None) -> None:
     if migration is None:
         return
     from factory_lib import (
-        dump_json, now_iso, publish_review_generation, review_generation_bytes,
-        review_generation_id, validate_payload, validate_review_document,
+        dump_json, now_iso, review_generation_bytes, review_generation_id,
+        validate_payload, validate_review_document,
     )
     review_candidates = migration.get("review_candidates") or []
+    review_sentinels = migration.get("review_sentinels") or []
     runtime = _runtime_inventory(target)
     prepared = {
         row["generation_id"]: row
@@ -594,18 +1380,24 @@ def apply_lean_migration(target: Path, migration: dict | None) -> None:
     promoted_paths = {
         path.relative_to(target).as_posix()
         for _candidate, paths in review_candidates for path in paths
+    } | {
+        path for sentinel in review_sentinels
+        for path in sentinel["source_paths"]
     }
     preserved_entries = [
         entry for entry in migration["entries"]
-        if entry["family"] == "fixed-review-lens"
-        and entry["path"] not in promoted_paths
+        if entry.get("preserve") is True
+        or (entry["family"] == "fixed-review-lens"
+            and entry["path"] not in promoted_paths)
     ]
     # Build every durable output away from the target first. Publication starts
     # only after schema validation and byte readback of the whole build.
     with tempfile.TemporaryDirectory(prefix="forge-lean-build-") as temporary:
         build = Path(temporary)
         built_generations: list[tuple[dict, str, str]] = []
-        outputs: list[dict[str, str]] = []
+        outputs: list[dict[str, str]] = [
+            sentinel["output"] for sentinel in review_sentinels
+        ]
         for index, (candidate, _paths) in enumerate(review_candidates):
             validate_review_document(target, candidate, allow_missing_generation_id=True)
             generation = dict(candidate)
@@ -633,6 +1425,8 @@ def apply_lean_migration(target: Path, migration: dict | None) -> None:
                 "generation_sha256": digest,
             })
 
+        _revalidate_lean_inventory(target, migration)
+
         manifest = {
             "generated_by": "upgrade", "version": LEAN_MIGRATION_VERSION,
             "input_inventory_digest": migration["input_inventory_digest"],
@@ -651,8 +1445,8 @@ def apply_lean_migration(target: Path, migration: dict | None) -> None:
             fail("Lean migration temporary manifest readback differs")
 
         for candidate, expected_id, expected_sha in built_generations:
-            generation, selection = publish_review_generation(
-                target, candidate["story"], candidate["task_id"], candidate,
+            generation, selection = _publish_upgrade_review(
+                target, migration, candidate, expected_id, expected_sha,
             )
             if (generation["generation_id"] != expected_id
                     or selection["generation_sha256"] != expected_sha):
@@ -677,6 +1471,8 @@ def apply_lean_migration(target: Path, migration: dict | None) -> None:
     # Durable selected outputs and manifest now exist. Retire exactly the
     # inventoried bytes, refusing identity drift instead of deleting by name.
     for entry in migration["entries"]:
+        if entry.get("classification") != "eligible":
+            continue
         path = target / entry["path"]
         if not path.exists():
             continue
@@ -686,9 +1482,8 @@ def apply_lean_migration(target: Path, migration: dict | None) -> None:
                     or "codex_hooks = true" in path.read_text(encoding="utf-8"):
                 fail("Lean migration did not install the current Codex hook flag")
             continue
-        if entry["family"] == "fixed-review-lens" and not any(
-                path == target / entry["path"]
-                for _candidate, paths in review_candidates for path in paths):
+        if (entry["family"] == "fixed-review-lens"
+                and entry["path"] not in promoted_paths):
             continue
         if path.is_symlink() or not path.is_file() \
                 or hashlib.sha256(path.read_bytes()).hexdigest() != entry["sha256"]:
@@ -1111,15 +1906,30 @@ def cmd_upgrade(args: argparse.Namespace) -> None:
             fail(f"{legacy_run} is unreadable JSON ({exc}); fix or delete it, then rerun")
         except OSError as exc:
             fail(f"{legacy_run} is not a readable file ({exc}); fix or delete it, then rerun")
-    dirty = subprocess.run(
+    status = subprocess.run(
         ["git", "status", "--porcelain"], cwd=target, capture_output=True,
         text=True, encoding="utf-8", errors="surrogateescape",
-    ).stdout.strip()
+    )
+    if status.returncode != 0:
+        fail(
+            f"could not verify that {target} is clean; refusing upgrade: "
+            f"{status.stderr.strip() or 'git status failed'}"
+        )
+    dirty = status.stdout.strip()
     if dirty:
         fail(
             f"{target} has uncommitted changes. Commit or stash first so the upgrade "
             "is a reviewable diff. Lean migration has no --force bypass."
         )
+    from .delegate import delegation_exclusion
+
+    with delegation_exclusion(
+            target, "lean-upgrade", kind="review-selection", namespace="state"):
+        _cmd_upgrade_locked(args, harness, target)
+
+
+def _cmd_upgrade_locked(
+        args: argparse.Namespace, harness: Path, target: Path) -> None:
     _retired_profiles, preserved_profiles = _retired_forge_profiles(target)
     lean_migration = preflight_lean_migration(target)
     _check_legacy_retirable(target, harness)
