@@ -1,0 +1,1 @@
+{"event": "signal-blocked", "generated_by": "implementer", "at": "2026-09-12T01:38:54+00:00", "story": "FORGE-COORD-1", "detail": "The real apply_patch probe containing literal marker THIS PATCH MUST NEVER EXECUTE returned only an absent-context verification failure, not a correlated PreToolUse deny response; protected plan hash "}

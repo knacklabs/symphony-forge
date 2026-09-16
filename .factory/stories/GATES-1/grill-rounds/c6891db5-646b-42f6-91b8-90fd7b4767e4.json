@@ -1,0 +1,16 @@
+{
+  "generated_by": "claude-code:plan-mode",
+  "questions": [
+    {
+      "question": "Four tasks means four pull requests under the per-task standard. Keep that here?",
+      "options": [
+        "Four pull requests (Recommended)",
+        "Two pull requests",
+        "One pull request at the end"
+      ],
+      "chosen": "Four pull requests (Recommended)"
+    }
+  ],
+  "at": "2026-09-12T02:09:16.722980+00:00",
+  "session_id": "b4051e43-dbea-4d62-ba73-ae6210455474"
+}

@@ -1,0 +1,16 @@
+{
+  "generated_by": "claude-code:plan-mode",
+  "questions": [
+    {
+      "question": "Accept decision 0067, which retires 0051 and lets a round be reused within its own gate and story?",
+      "options": [
+        "Accept it (Recommended)",
+        "Read it first",
+        "Do not retire 0051"
+      ],
+      "chosen": "Accept it (Recommended)"
+    }
+  ],
+  "at": "2026-09-11T18:16:49.863565+00:00",
+  "session_id": "b4051e43-dbea-4d62-ba73-ae6210455474"
+}

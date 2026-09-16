@@ -1,0 +1,15 @@
+{
+  "generated_by": "claude-code:plan-mode",
+  "questions": [
+    {
+      "question": "Strict-role specification amendment: should Decision 0053 make the coordinator wording neutral while preserving the enforced delegated-Codex-writer boundary and the bounded degraded-mode outage valve?",
+      "options": [
+        "Apply coordinator-neutral amendment (Recommended)",
+        "Keep Claude-only wording"
+      ],
+      "chosen": "Apply coordinator-neutral amendment (Recommended)"
+    }
+  ],
+  "at": "2026-09-11T12:15:33.585420+00:00",
+  "session_id": "3c1b11cc-64be-4434-ac15-a68d46d93985"
+}

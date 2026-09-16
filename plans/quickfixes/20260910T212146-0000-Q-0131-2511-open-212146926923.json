@@ -1,0 +1,13 @@
+{
+  "event": "open",
+  "id": "Q-0131-2511",
+  "profile": "degraded",
+  "reason": "managed sandbox blocks the active task delegation lock in the protected Git-control directory",
+  "started_at": "2026-09-10T21:21:46+00:00",
+  "max_files": 5,
+  "files": [],
+  "harness_source": true,
+  "kind": "degraded",
+  "task_id": "NATIVE-FOREGROUND-ACTIVATE",
+  "story": "FORGE-COORD-1"
+}

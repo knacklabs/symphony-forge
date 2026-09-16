@@ -1,0 +1,1 @@
+{"event": "signal-blocked", "generated_by": "implementer", "at": "2026-09-11T00:39:22+00:00", "story": "FORGE-COORD-1", "detail": "The exact frozen public apply_patch payload is denied before execution because pre_tool_use classifies codex-exec fixture text inside an apply_patch payload as a live shell invocation; all 13 files re"}

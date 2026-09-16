@@ -1,0 +1,10 @@
+{
+  "event": "open",
+  "id": "Q-0131-d9b6",
+  "profile": "quickfix",
+  "reason": "The harness-rendered contract block invalidates the plan approval it promises not to affect. strip_derived_sections substitutes a newline for a block that was appended after one, so the stripped body carries one more trailing newline than the file had before the block existed, and plan_body_digest hashes that difference. task approve then refuses with 'the plan CHANGED after <name> approved it' when the authored text is byte-identical. Normalise the approved body's trailing newlines before hashing.",
+  "started_at": "2026-09-11T15:54:18+00:00",
+  "max_files": 5,
+  "files": [],
+  "harness_source": true
+}

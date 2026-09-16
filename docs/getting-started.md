@@ -244,7 +244,7 @@ archives evidence before merge.
    product-code edits and writing Codex delegation, so there is no way to
    "just start coding". Plan per `factory/prompts/planner.md`; exploration is
    delegated, never done by Claude Code itself:
-   `/codex:rescue --model gpt-5.6-terra --effort high` (read-only by default;
+   `/codex:rescue --model gpt-5.6-sol --effort low` (read-only by default;
    raw `codex exec` is hook-blocked, no exceptions).
    `planner-high` in Codex is the sanctioned alternate. New decisions get
    records. **Before approval, grilling the plan is mandatory** — say:

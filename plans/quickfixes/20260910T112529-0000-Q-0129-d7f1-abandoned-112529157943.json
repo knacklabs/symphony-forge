@@ -1,0 +1,10 @@
+{
+  "event": "abandoned",
+  "id": "Q-0129-d7f1",
+  "profile": "degraded",
+  "reason": "The admitted worker mistakenly attempted nested coordination after compaction. Its launch was interrupted through the normal Forge handler and its authority revoked. This empty window made no claimed product writes and is not completion proof; the host coordinator can acquire the protected lock normally.",
+  "opened_reason": "The approved native foreground task cannot be delegated in this managed linked-worktree sandbox: forge delegate cannot create its protected shared .git/worktrees lock (Operation not permitted).",
+  "started_at": "2026-09-10T11:13:09+00:00",
+  "completed_at": "2026-09-10T11:25:29+00:00",
+  "files": []
+}

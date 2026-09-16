@@ -1,0 +1,184 @@
+{
+  "brief_sha256": "c50fe0cc06c079bd2d27f7f040ca542bc113dc5629ccd636c7a2cf5c2cbd31db",
+  "delta_id": "b9cf9a20debff569b64b3b73806599a5387baa4b4b08ab5598400342b758d268",
+  "format": "forge-review-generation/v1",
+  "generated_by": "autoreview",
+  "generation_id": "ecf8909e2abb54c1e67ea2f780fe9e730e00ab6ca37269f68eb3c69842c8c006",
+  "helper": {
+    "path": "/Users/ravikiranvemula/.codex/skills/autoreview/scripts/autoreview",
+    "sha256": "3879ccdd321b0138852896c2cb88c72ec512aa8f896780e8f37a9be79688752c",
+    "version": "b6b616ca3ac65a51776eb4c23aed57abdd34d60f"
+  },
+  "input": {
+    "bytes": 4407,
+    "sha256": "2e32678d1132cdaba4aef1699a5864d56d61efb6a552060b68130e6c64823dee"
+  },
+  "inspected_commit": "a0f26d9d79ed789db9624c6cf894bd0c10302dd9",
+  "lenses": {
+    "performance": {
+      "blocking_findings": [],
+      "branch_diff_digest": "b9cf9a20debff569b64b3b73806599a5387baa4b4b08ab5598400342b758d268",
+      "brief_sha256": "c50fe0cc06c079bd2d27f7f040ca542bc113dc5629ccd636c7a2cf5c2cbd31db",
+      "commit": "a0f26d9d79ed789db9624c6cf894bd0c10302dd9",
+      "generated_by": "autoreview",
+      "non_blocking_findings": [],
+      "recommendation": "approve",
+      "review_run_id": "be6a8839998e2fdce78e2ee354e67b6bc90558cd4a7bf9e4e0fe2db157cd8ba2",
+      "reviewed_scope": [
+        "factory/board/example/plans/roadmap.json",
+        "factory/scripts/factory_lib.py",
+        "factory/scripts/forge_cli/phase.py",
+        "factory/scripts/forge_cli/plans.py",
+        "factory/tests/test_requirements_freshness.py"
+      ],
+      "score": 10,
+      "skills_used": [],
+      "summary": "performance lens over GATES-1-T3 (5 product path(s), 015e286..a0f26d9, Codex via the autoreview skill): 0 blocking, 0 non-blocking. No actionable performance defect is shown. A nonmatching proof can require both current and legacy digest calculations, but this is a bounded CLI freshness check and is necessary for the migration behavior.",
+      "task_id": "GATES-1-T3"
+    },
+    "quality": {
+      "blocking_findings": [],
+      "branch_diff_digest": "b9cf9a20debff569b64b3b73806599a5387baa4b4b08ab5598400342b758d268",
+      "brief_sha256": "c50fe0cc06c079bd2d27f7f040ca542bc113dc5629ccd636c7a2cf5c2cbd31db",
+      "commit": "a0f26d9d79ed789db9624c6cf894bd0c10302dd9",
+      "contract_verdicts": [
+        {
+          "contract_id": "GATES-1-T3-C1",
+          "evidence": "factory/scripts/factory_lib.py:3741",
+          "verdict": "implemented"
+        },
+        {
+          "contract_id": "GATES-1-T3-C2",
+          "evidence": "factory/tests/test_requirements_freshness.py:65",
+          "verdict": "implemented"
+        },
+        {
+          "contract_id": "GATES-1-T3-C3",
+          "evidence": "factory/tests/test_requirements_freshness.py:72",
+          "verdict": "implemented"
+        },
+        {
+          "contract_id": "GATES-1-T3-C4",
+          "evidence": "factory/tests/test_requirements_freshness.py:79",
+          "verdict": "implemented"
+        },
+        {
+          "contract_id": "GATES-1-T3-C5",
+          "evidence": "factory/tests/test_requirements_freshness.py:86",
+          "verdict": "implemented"
+        },
+        {
+          "contract_id": "GATES-1-T3-C6",
+          "evidence": "factory/scripts/factory_lib.py:3744",
+          "verdict": "implemented"
+        },
+        {
+          "contract_id": "GATES-1-T3-C7",
+          "evidence": "factory/scripts/forge_cli/plans.py:109",
+          "verdict": "implemented"
+        },
+        {
+          "contract_id": "GATES-1-T3-C8",
+          "evidence": "factory/tests/test_requirements_freshness.py:125",
+          "verdict": "implemented"
+        },
+        {
+          "contract_id": "GATES-1-T1-C1",
+          "evidence": "shipped under GATES-1-T1 at its own per-task seal (stage done); unchanged by this task's diff",
+          "verdict": "implemented"
+        },
+        {
+          "contract_id": "GATES-1-T1-C2",
+          "evidence": "shipped under GATES-1-T1 at its own per-task seal (stage done); unchanged by this task's diff",
+          "verdict": "implemented"
+        },
+        {
+          "contract_id": "GATES-1-T1-C3",
+          "evidence": "shipped under GATES-1-T1 at its own per-task seal (stage done); unchanged by this task's diff",
+          "verdict": "implemented"
+        },
+        {
+          "contract_id": "GATES-1-T1-C4",
+          "evidence": "shipped under GATES-1-T1 at its own per-task seal (stage done); unchanged by this task's diff",
+          "verdict": "implemented"
+        },
+        {
+          "contract_id": "GATES-1-T1-C5",
+          "evidence": "shipped under GATES-1-T1 at its own per-task seal (stage done); unchanged by this task's diff",
+          "verdict": "implemented"
+        },
+        {
+          "contract_id": "GATES-1-T1-C6",
+          "evidence": "shipped under GATES-1-T1 at its own per-task seal (stage done); unchanged by this task's diff",
+          "verdict": "implemented"
+        },
+        {
+          "contract_id": "GATES-1-T1-C7",
+          "evidence": "shipped under GATES-1-T1 at its own per-task seal (stage done); unchanged by this task's diff",
+          "verdict": "implemented"
+        },
+        {
+          "contract_id": "GATES-1-T1-C8",
+          "evidence": "shipped under GATES-1-T1 at its own per-task seal (stage done); unchanged by this task's diff",
+          "verdict": "implemented"
+        }
+      ],
+      "generated_by": "autoreview",
+      "non_blocking_findings": [
+        {
+          "area": "factory/board/example/plans",
+          "category": "maintainability",
+          "file_path": "factory/board/example/plans/roadmap.json",
+          "line": 84,
+          "summary": "Remove the unrelated roadmap timestamp change (factory/board/example/plans/roadmap.json:84): The approved write scope contains only the four implementation/test files, and this task does not modify the example roadmap.",
+          "title": "Remove the unrelated roadmap timestamp change"
+        }
+      ],
+      "recommendation": "approve-with-caveats",
+      "review_run_id": "be6a8839998e2fdce78e2ee354e67b6bc90558cd4a7bf9e4e0fe2db157cd8ba2",
+      "reviewed_scope": [
+        "factory/board/example/plans/roadmap.json",
+        "factory/scripts/factory_lib.py",
+        "factory/scripts/forge_cli/phase.py",
+        "factory/scripts/forge_cli/plans.py",
+        "factory/tests/test_requirements_freshness.py"
+      ],
+      "score": 9,
+      "skills_used": [],
+      "summary": "quality lens over GATES-1-T3 (5 product path(s), 015e286..a0f26d9, Codex via the autoreview skill): 0 blocking, 1 non-blocking. The requirements-freshness implementation is present and reachable through both consumers, and the tests cover the requested behavior. One unrelated, out-of-scope roadmap timestamp remains and should be removed before shipping.\nVERDICT GATES-1-T3-C1: implemented — factory/scripts/factory_lib.py:3741\nVERDICT GATES-1-T3-C2: implemented — factory/tests/test_requirements_freshness.py:65\nVERDICT GATES-1-T3-C3: implemented — factory/tests/test_requirements_freshness.py:72\nVERDICT GATES-1-T3-C4: implemented — factory/tests/test_requirements_freshness.py:79\nVERDICT GATES-1-T3-C5: implemented — factory/tests/test_requirements_freshness.py:86\nVERDICT GATES-1-T3-C6: implemented — factory/scripts/factory_lib.py:3744\nVERDICT GATES-1-T3-C7: implemented — factory/scripts/forge_cli/plans.py:109\nVERDICT GATES-1-T3-C8: implemented — factory/tests/test_requirements_freshness.py:125\nCompatibility leftovers: none shown in the diff.",
+      "task_id": "GATES-1-T3"
+    },
+    "security": {
+      "blocking_findings": [],
+      "branch_diff_digest": "b9cf9a20debff569b64b3b73806599a5387baa4b4b08ab5598400342b758d268",
+      "brief_sha256": "c50fe0cc06c079bd2d27f7f040ca542bc113dc5629ccd636c7a2cf5c2cbd31db",
+      "commit": "a0f26d9d79ed789db9624c6cf894bd0c10302dd9",
+      "generated_by": "autoreview",
+      "non_blocking_findings": [],
+      "recommendation": "approve",
+      "review_run_id": "be6a8839998e2fdce78e2ee354e67b6bc90558cd4a7bf9e4e0fe2db157cd8ba2",
+      "reviewed_scope": [
+        "factory/board/example/plans/roadmap.json",
+        "factory/scripts/factory_lib.py",
+        "factory/scripts/forge_cli/phase.py",
+        "factory/scripts/forge_cli/plans.py",
+        "factory/tests/test_requirements_freshness.py"
+      ],
+      "score": 10,
+      "skills_used": [],
+      "summary": "security lens over GATES-1-T3 (5 product path(s), 015e286..a0f26d9, Codex via the autoreview skill): 0 blocking, 0 non-blocking. No concrete security defect or credential exposure is shown in the supplied change.",
+      "task_id": "GATES-1-T3"
+    }
+  },
+  "origin": "combined",
+  "raw_result": {
+    "bytes": 4701,
+    "data": "ewogICJmaW5kaW5ncyI6IFsKICAgIHsKICAgICAgInRpdGxlIjogIltxdWFsaXR5XSBSZW1vdmUgdGhlIHVucmVsYXRlZCByb2FkbWFwIHRpbWVzdGFtcCBjaGFuZ2UiLAogICAgICAiYm9keSI6ICJUaGUgYXBwcm92ZWQgd3JpdGUgc2NvcGUgY29udGFpbnMgb25seSB0aGUgZm91ciBpbXBsZW1lbnRhdGlvbi90ZXN0IGZpbGVzLCBhbmQgdGhpcyB0YXNrIGRvZXMgbm90IG1vZGlmeSB0aGUgZXhhbXBsZSByb2FkbWFwLiBBZHZhbmNpbmcgYHVwZGF0ZWRfYXRgIHdoaWxlIGxlYXZpbmcgdGhlIHJvYWRtYXAgY29udGVudCB1bmNoYW5nZWQgY3JlYXRlcyBhbiBpbmFjY3VyYXRlIG1vZGlmaWNhdGlvbiByZWNvcmQgYW5kIGFkZHMgdW5yZWxhdGVkIHByb2R1Y3QgY2h1cm4gdG8gdGhlIHRhc2sgZGVsdGEuIFJldmVydCB0aGlzIGxpbmUgb3IgZXhwbGljaXRseSBtb3ZlIGl0IHRvIHRoZSB3b3JrIHRoYXQgYWN0dWFsbHkgY2hhbmdlcyB0aGUgcm9hZG1hcC4iLAogICAgICAicHJpb3JpdHkiOiAiUDMiLAogICAgICAiY29uZmlkZW5jZSI6IDAuOTksCiAgICAgICJjYXRlZ29yeSI6ICJtYWludGFpbmFiaWxpdHkiLAogICAgICAiY29kZV9sb2NhdGlvbiI6IHsKICAgICAgICAiZmlsZV9wYXRoIjogImZhY3RvcnkvYm9hcmQvZXhhbXBsZS9wbGFucy9yb2FkbWFwLmpzb24iLAogICAgICAgICJsaW5lIjogODQKICAgICAgfSwKICAgICAgInNvdXJjZV9hdHRyaWJ1dGlvbiI6IG51bGwKICAgIH0KICBdLAogICJvdmVyYWxsX2NvcnJlY3RuZXNzIjogInBhdGNoIGlzIGluY29ycmVjdCIsCiAgIm92ZXJhbGxfZXhwbGFuYXRpb24iOiAiQkVHSU4gRk9SR0UgQVNTRVNTTUVOVCBxdWFsaXR5XG5UaGUgcmVxdWlyZW1lbnRzLWZyZXNobmVzcyBpbXBsZW1lbnRhdGlvbiBpcyBwcmVzZW50IGFuZCByZWFjaGFibGUgdGhyb3VnaCBib3RoIGNvbnN1bWVycywgYW5kIHRoZSB0ZXN0cyBjb3ZlciB0aGUgcmVxdWVzdGVkIGJlaGF2aW9yLiBPbmUgdW5yZWxhdGVkLCBvdXQtb2Ytc2NvcGUgcm9hZG1hcCB0aW1lc3RhbXAgcmVtYWlucyBhbmQgc2hvdWxkIGJlIHJlbW92ZWQgYmVmb3JlIHNoaXBwaW5nLlxuVkVSRElDVCBHQVRFUy0xLVQzLUMxOiBpbXBsZW1lbnRlZCBcdTIwMTQgZmFjdG9yeS9zY3JpcHRzL2ZhY3RvcnlfbGliLnB5OjM3NDFcblZFUkRJQ1QgR0FURVMtMS1UMy1DMjogaW1wbGVtZW50ZWQgXHUyMDE0IGZhY3RvcnkvdGVzdHMvdGVzdF9yZXF1aXJlbWVudHNfZnJlc2huZXNzLnB5OjY1XG5WRVJESUNUIEdBVEVTLTEtVDMtQzM6IGltcGxlbWVudGVkIFx1MjAxNCBmYWN0b3J5L3Rlc3RzL3Rlc3RfcmVxdWlyZW1lbnRzX2ZyZXNobmVzcy5weTo3MlxuVkVSRElDVCBHQVRFUy0xLVQzLUM0OiBpbXBsZW1lbnRlZCBcdTIwMTQgZmFjdG9yeS90ZXN0cy90ZXN0X3JlcXVpcmVtZW50c19mcmVzaG5lc3MucHk6NzlcblZFUkRJQ1QgR0FURVMtMS1UMy1DNTogaW1wbGVtZW50ZWQgXHUyMDE0IGZhY3RvcnkvdGVzdHMvdGVzdF9yZXF1aXJlbWVudHNfZnJlc2huZXNzLnB5Ojg2XG5WRVJESUNUIEdBVEVTLTEtVDMtQzY6IGltcGxlbWVudGVkIFx1MjAxNCBmYWN0b3J5L3NjcmlwdHMvZmFjdG9yeV9saWIucHk6Mzc0NFxuVkVSRElDVCBHQVRFUy0xLVQzLUM3OiBpbXBsZW1lbnRlZCBcdTIwMTQgZmFjdG9yeS9zY3JpcHRzL2ZvcmdlX2NsaS9wbGFucy5weToxMDlcblZFUkRJQ1QgR0FURVMtMS1UMy1DODogaW1wbGVtZW50ZWQgXHUyMDE0IGZhY3RvcnkvdGVzdHMvdGVzdF9yZXF1aXJlbWVudHNfZnJlc2huZXNzLnB5OjEyNVxuQ29tcGF0aWJpbGl0eSBsZWZ0b3ZlcnM6IG5vbmUgc2hvd24gaW4gdGhlIGRpZmYuXG5FTkQgRk9SR0UgQVNTRVNTTUVOVCBxdWFsaXR5XG5CRUdJTiBGT1JHRSBBU1NFU1NNRU5UIHBlcmZvcm1hbmNlXG5ObyBhY3Rpb25hYmxlIHBlcmZvcm1hbmNlIGRlZmVjdCBpcyBzaG93bi4gQSBub25tYXRjaGluZyBwcm9vZiBjYW4gcmVxdWlyZSBib3RoIGN1cnJlbnQgYW5kIGxlZ2FjeSBkaWdlc3QgY2FsY3VsYXRpb25zLCBidXQgdGhpcyBpcyBhIGJvdW5kZWQgQ0xJIGZyZXNobmVzcyBjaGVjayBhbmQgaXMgbmVjZXNzYXJ5IGZvciB0aGUgbWlncmF0aW9uIGJlaGF2aW9yLlxuRU5EIEZPUkdFIEFTU0VTU01FTlQgcGVyZm9ybWFuY2VcbkJFR0lOIEZPUkdFIEFTU0VTU01FTlQgc2VjdXJpdHlcbk5vIGNvbmNyZXRlIHNlY3VyaXR5IGRlZmVjdCBvciBjcmVkZW50aWFsIGV4cG9zdXJlIGlzIHNob3duIGluIHRoZSBzdXBwbGllZCBjaGFuZ2UuXG5FTkQgRk9SR0UgQVNTRVNTTUVOVCBzZWN1cml0eSIsCiAgIm92ZXJhbGxfY29uZmlkZW5jZSI6IDAuOTcsCiAgInByb3ZpZGVyX3JlcG9ydCI6IHsKICAgICJmaW5kaW5ncyI6IFsKICAgICAgewogICAgICAgICJ0aXRsZSI6ICJbcXVhbGl0eV0gUmVtb3ZlIHRoZSB1bnJlbGF0ZWQgcm9hZG1hcCB0aW1lc3RhbXAgY2hhbmdlIiwKICAgICAgICAiYm9keSI6ICJUaGUgYXBwcm92ZWQgd3JpdGUgc2NvcGUgY29udGFpbnMgb25seSB0aGUgZm91ciBpbXBsZW1lbnRhdGlvbi90ZXN0IGZpbGVzLCBhbmQgdGhpcyB0YXNrIGRvZXMgbm90IG1vZGlmeSB0aGUgZXhhbXBsZSByb2FkbWFwLiBBZHZhbmNpbmcgYHVwZGF0ZWRfYXRgIHdoaWxlIGxlYXZpbmcgdGhlIHJvYWRtYXAgY29udGVudCB1bmNoYW5nZWQgY3JlYXRlcyBhbiBpbmFjY3VyYXRlIG1vZGlmaWNhdGlvbiByZWNvcmQgYW5kIGFkZHMgdW5yZWxhdGVkIHByb2R1Y3QgY2h1cm4gdG8gdGhlIHRhc2sgZGVsdGEuIFJldmVydCB0aGlzIGxpbmUgb3IgZXhwbGljaXRseSBtb3ZlIGl0IHRvIHRoZSB3b3JrIHRoYXQgYWN0dWFsbHkgY2hhbmdlcyB0aGUgcm9hZG1hcC4iLAogICAgICAgICJwcmlvcml0eSI6ICJQMyIsCiAgICAgICAgImNvbmZpZGVuY2UiOiAwLjk5LAogICAgICAgICJjYXRlZ29yeSI6ICJtYWludGFpbmFiaWxpdHkiLAogICAgICAgICJjb2RlX2xvY2F0aW9uIjogewogICAgICAgICAgImZpbGVfcGF0aCI6ICJmYWN0b3J5L2JvYXJkL2V4YW1wbGUvcGxhbnMvcm9hZG1hcC5qc29uIiwKICAgICAgICAgICJsaW5lIjogODQKICAgICAgICB9LAogICAgICAgICJzb3VyY2VfYXR0cmlidXRpb24iOiBudWxsCiAgICAgIH0KICAgIF0sCiAgICAib3ZlcmFsbF9jb3JyZWN0bmVzcyI6ICJwYXRjaCBpcyBpbmNvcnJlY3QiLAogICAgIm92ZXJhbGxfZXhwbGFuYXRpb24iOiAiQkVHSU4gRk9SR0UgQVNTRVNTTUVOVCBxdWFsaXR5XG5UaGUgcmVxdWlyZW1lbnRzLWZyZXNobmVzcyBpbXBsZW1lbnRhdGlvbiBpcyBwcmVzZW50IGFuZCByZWFjaGFibGUgdGhyb3VnaCBib3RoIGNvbnN1bWVycywgYW5kIHRoZSB0ZXN0cyBjb3ZlciB0aGUgcmVxdWVzdGVkIGJlaGF2aW9yLiBPbmUgdW5yZWxhdGVkLCBvdXQtb2Ytc2NvcGUgcm9hZG1hcCB0aW1lc3RhbXAgcmVtYWlucyBhbmQgc2hvdWxkIGJlIHJlbW92ZWQgYmVmb3JlIHNoaXBwaW5nLlxuVkVSRElDVCBHQVRFUy0xLVQzLUMxOiBpbXBsZW1lbnRlZCBcdTIwMTQgZmFjdG9yeS9zY3JpcHRzL2ZhY3RvcnlfbGliLnB5OjM3NDFcblZFUkRJQ1QgR0FURVMtMS1UMy1DMjogaW1wbGVtZW50ZWQgXHUyMDE0IGZhY3RvcnkvdGVzdHMvdGVzdF9yZXF1aXJlbWVudHNfZnJlc2huZXNzLnB5OjY1XG5WRVJESUNUIEdBVEVTLTEtVDMtQzM6IGltcGxlbWVudGVkIFx1MjAxNCBmYWN0b3J5L3Rlc3RzL3Rlc3RfcmVxdWlyZW1lbnRzX2ZyZXNobmVzcy5weTo3MlxuVkVSRElDVCBHQVRFUy0xLVQzLUM0OiBpbXBsZW1lbnRlZCBcdTIwMTQgZmFjdG9yeS90ZXN0cy90ZXN0X3JlcXVpcmVtZW50c19mcmVzaG5lc3MucHk6NzlcblZFUkRJQ1QgR0FURVMtMS1UMy1DNTogaW1wbGVtZW50ZWQgXHUyMDE0IGZhY3RvcnkvdGVzdHMvdGVzdF9yZXF1aXJlbWVudHNfZnJlc2huZXNzLnB5Ojg2XG5WRVJESUNUIEdBVEVTLTEtVDMtQzY6IGltcGxlbWVudGVkIFx1MjAxNCBmYWN0b3J5L3NjcmlwdHMvZmFjdG9yeV9saWIucHk6Mzc0NFxuVkVSRElDVCBHQVRFUy0xLVQzLUM3OiBpbXBsZW1lbnRlZCBcdTIwMTQgZmFjdG9yeS9zY3JpcHRzL2ZvcmdlX2NsaS9wbGFucy5weToxMDlcblZFUkRJQ1QgR0FURVMtMS1UMy1DODogaW1wbGVtZW50ZWQgXHUyMDE0IGZhY3RvcnkvdGVzdHMvdGVzdF9yZXF1aXJlbWVudHNfZnJlc2huZXNzLnB5OjEyNVxuQ29tcGF0aWJpbGl0eSBsZWZ0b3ZlcnM6IG5vbmUgc2hvd24gaW4gdGhlIGRpZmYuXG5FTkQgRk9SR0UgQVNTRVNTTUVOVCBxdWFsaXR5XG5CRUdJTiBGT1JHRSBBU1NFU1NNRU5UIHBlcmZvcm1hbmNlXG5ObyBhY3Rpb25hYmxlIHBlcmZvcm1hbmNlIGRlZmVjdCBpcyBzaG93bi4gQSBub25tYXRjaGluZyBwcm9vZiBjYW4gcmVxdWlyZSBib3RoIGN1cnJlbnQgYW5kIGxlZ2FjeSBkaWdlc3QgY2FsY3VsYXRpb25zLCBidXQgdGhpcyBpcyBhIGJvdW5kZWQgQ0xJIGZyZXNobmVzcyBjaGVjayBhbmQgaXMgbmVjZXNzYXJ5IGZvciB0aGUgbWlncmF0aW9uIGJlaGF2aW9yLlxuRU5EIEZPUkdFIEFTU0VTU01FTlQgcGVyZm9ybWFuY2VcbkJFR0lOIEZPUkdFIEFTU0VTU01FTlQgc2VjdXJpdHlcbk5vIGNvbmNyZXRlIHNlY3VyaXR5IGRlZmVjdCBvciBjcmVkZW50aWFsIGV4cG9zdXJlIGlzIHNob3duIGluIHRoZSBzdXBwbGllZCBjaGFuZ2UuXG5FTkQgRk9SR0UgQVNTRVNTTUVOVCBzZWN1cml0eSIsCiAgICAib3ZlcmFsbF9jb25maWRlbmNlIjogMC45NwogIH0sCiAgInJldmlld19zdGF0dXMiOiAiZmluZGluZ3MiCn0K",
+    "encoding": "base64",
+    "sha256": "25300717449be4130c0fb3c2c4eb101afd108168076b9a99437a155c781eade0"
+  },
+  "recorded_at": "2026-09-14T09:36:53+00:00",
+  "review_run_id": "be6a8839998e2fdce78e2ee354e67b6bc90558cd4a7bf9e4e0fe2db157cd8ba2",
+  "story": "GATES-1",
+  "task_id": "GATES-1-T3"
+}

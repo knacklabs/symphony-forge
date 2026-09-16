@@ -1,0 +1,16 @@
+{
+  "event": "done",
+  "id": "Q-0132-4258",
+  "profile": "degraded",
+  "kind": "degraded",
+  "reason": "Native delegation is unavailable for an approved mid-stage amendment: worker admission compares the newly approved launch contract with the historical stage-start digest and denies every scoped write. Host recovery is limited to worker_admission.py, its focused test, and reversing this failed launch own partial .claude/CLAUDE.md hunk so the frozen patch can be reapplied through the registered writer. Preserve the measured baseline and all approval/process/lock gates.",
+  "started_at": "2026-09-10T21:25:41+00:00",
+  "completed_at": "2026-09-10T21:29:10+00:00",
+  "files": [
+    ".claude/CLAUDE.md",
+    "factory/scripts/forge_cli/worker_admission.py",
+    "factory/tests/test_worker_admission.py"
+  ],
+  "task_id": "NATIVE-FOREGROUND-ACTIVATE",
+  "story": "FORGE-COORD-1"
+}

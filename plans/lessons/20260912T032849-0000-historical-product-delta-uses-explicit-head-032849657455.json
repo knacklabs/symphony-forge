@@ -1,0 +1,13 @@
+{
+  "topic": "historical-product-delta-uses-explicit-head",
+  "lesson": "When product_delta_digest receives an explicit historical head, hash base..head rather than the current index; the head may select paths but cannot leave content on moving workspace state. Preserve mixed product, metadata and proof commits and add a same-path later-edit regression.",
+  "source": ".factory/stories/FORGE-COORD-1/tasks/NATIVE-FOREGROUND-ACTIVATE/verify.json",
+  "applies_to": [
+    "factory/scripts/factory_lib.py",
+    "factory/tests/test_gates.py",
+    "factory/tests/test_review_task_delta.py"
+  ],
+  "severity": "high",
+  "generated_by": "autoreview",
+  "added_at": "2026-09-12T03:28:49+00:00"
+}

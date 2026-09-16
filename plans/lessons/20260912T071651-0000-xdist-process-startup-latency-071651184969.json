@@ -1,0 +1,11 @@
+{
+  "topic": "xdist-process-startup-latency",
+  "lesson": "The SIGINT stage-done termination test used a fixed 5-second child-start deadline, but under the authoritative xdist load its PID marker appeared about 7.7 seconds after the delegation record; wait through bounded process startup and fail early if the wrapper exits.",
+  "source": "verify-cf0eb51-20260912T071444Z",
+  "applies_to": [
+    "factory/tests/test_gates.py"
+  ],
+  "severity": "medium",
+  "generated_by": "orchestrator",
+  "added_at": "2026-09-12T07:16:51+00:00"
+}

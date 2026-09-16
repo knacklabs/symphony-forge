@@ -35,7 +35,7 @@ Codex is the executor for everything that touches the codebase: exploration, imp
 - **Every Codex release is watched.** Workers raise contradiction, confusion, blocked, or scope-change signals and pause; the orchestrating session resolves the signal and resumes. Nothing is fire-and-forget.
 - **Review is one Codex run per task**, three lenses (quality, performance, security), looped with fix delegations until every lens is clean, then recorded as that task's proof.
 - **Evidence enters `.factory/` only through schema-validated recorders.** Each artifact names its generator, and the generator must be on the allowlist in `harness.yaml`.
-- **Reasoning is set per phase**, not globally: `gpt-5.6-sol` at medium for implementation, `gpt-5.6-terra` at high for read-only exploration, `xhigh` reserved for plan validation and root-cause work.
+- **The user and host select the main coordinator model and reasoning.** Forge-managed lanes stay pinned: Sol/low for exploration; Sol/high for planning, architecture, grilling, formal review and functional checking; Sol/medium for implementation and review fixes; Luna/max only for formal Lite fixes.
 
 The full contract is in [`AGENTS.md`](AGENTS.md), which both runtimes read. A Codex-only mode, in which Codex coordinates as well as executes, is planned; the gates, recorders, and evidence contract do not change. If the companion is unavailable, [Degraded Mode](docs/degraded-mode.md) is the ledgered exception.
 
@@ -199,7 +199,7 @@ your behalf, not for you to type.
 | workspace | "Scaffold the workspace" | Codex `/codex:rescue` + `SCAFFOLD_PROMPT.md` | nx workspace |
 | stories + distribution (PM/EM) | "Review the roadmap", "assign ENG-101 to alice" | `./forge roadmap list` / `assign` / `team set` | derived stories with spec links, criteria, and `@assignee` |
 | intake | "Start the next task on the roadmap" | `/forge` → `intake.py` | `.factory/run.json` |
-| plan | "Plan this task" | Claude PLAN MODE, forced by the hook (or Codex `planner-high`); exploration ONLY via `/codex:rescue --model gpt-5.6-terra --effort high`, read-only | grilled plan → `./forge plan save` → `plans/active/` |
+| plan | "Plan this task" | Claude PLAN MODE, forced by the hook (or Codex `planner-high`); exploration ONLY via `/codex:rescue --model gpt-5.6-sol --effort low`, read-only | grilled plan → `./forge plan save` → `plans/active/` |
 | decompose | "Decompose it" | `docs-decomposer` | `record_decomposition_from_json.py` (incl. `user_facing`) |
 | implement + test | "Implement it" / "work the next stage" | Codex `/codex:rescue --background` per stage (implementer writes the tests); `user_facing` tasks MUST use `emil-design-eng` + `frontend-design` (attested in `skills_used`, enforced by the recorder); each stage ends LOCAL autoreview → commit | `./forge stage start/done` → `.factory/stages.json`; `record_test_from_json.py --kind automated` |
 | lessons | "what did we learn about these files?" / "remember this" | none; deterministic ledger | `./forge lesson relevant` / `add` → `plans/lessons.jsonl` (schema-validated, deduped) |

@@ -1,0 +1,16 @@
+{
+  "generated_by": "claude-code:plan-mode",
+  "questions": [
+    {
+      "question": "Your earlier ruling says a newly accepted decision SHOULD stale a pass. My T3 reverses that. Which holds?",
+      "options": [
+        "Reverse it: decisions stop staling requirements (Recommended)",
+        "Keep the ruling: a new decision stales",
+        "Split the difference"
+      ],
+      "chosen": "Reverse it: decisions stop staling requirements (Recommended)"
+    }
+  ],
+  "at": "2026-09-13T15:59:06.441722+00:00",
+  "session_id": "b4051e43-dbea-4d62-ba73-ae6210455474"
+}

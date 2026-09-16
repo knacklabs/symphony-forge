@@ -1,0 +1,1 @@
+{"event": "signal-resolved", "generated_by": "orchestrator", "at": "2026-09-13T15:41:27+00:00", "story": "FORGE-COORD-1", "detail": "S-0032-9086: The managed Codex workspace-write sandbox cannot write this linked worktree's external Git control directory, and the official delegate launcher deliberately grants only exact in-repo .codex files. Th"}

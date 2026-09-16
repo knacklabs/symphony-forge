@@ -1,0 +1,8 @@
+{
+  "task_id": "NATIVE-FOREGROUND-ACTIVATE",
+  "branch": "feat/FORGE-COORD-1-NATIVE-FOREGROUND-ACTIVATE",
+  "base_main_sha": "c9a705bc315d4677309815eb03b58e61e7957e50",
+  "review_base_sha": "e17f44f850b7d1574c7438bf641c69c70e5dcd38",
+  "commit": "8a92cbe682fe49c0a2b72c236b2f96b7d6f068a2",
+  "sealed_at": "2026-09-14T01:19:21+00:00"
+}

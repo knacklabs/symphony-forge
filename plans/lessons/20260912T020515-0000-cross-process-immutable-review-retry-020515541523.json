@@ -1,0 +1,12 @@
+{
+  "topic": "cross-process-immutable-review-retry",
+  "lesson": "Review generation retry must recover a crashed publisher's old-PID temporary hard link only when exactly one same-directory candidate is a regular two-link alias of the destination with byte-identical content; ambiguous, foreign, or mismatched candidates must refuse. Add a true old-PID or subprocess regression and preserve the pointer.",
+  "source": "S-0022-ec00",
+  "applies_to": [
+    "factory/scripts/factory_lib.py",
+    "factory/tests/test_gates.py"
+  ],
+  "severity": "high",
+  "generated_by": "autoreview",
+  "added_at": "2026-09-12T02:05:15+00:00"
+}

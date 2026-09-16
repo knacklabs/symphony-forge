@@ -44,29 +44,27 @@ Codex executes exploration, implementation, testing, and the review: the orchest
 7. run the functional check when the decomposition says `user_facing: true`
 8. record the shipped outcome, mark PR ready, open the PR to the default branch, and poll CI green (fixing CI failures)
 
-Recording sign-off requires confirmed specs plus a derived roadmap. Later
-phases require sign-off; implementation also requires a plan and decomposition.
+Sign-off requires confirmed specs and a derived roadmap. Later phases require it; implementation needs an approved plan and decomposition.
 
 ## Prompt and Agent Use
 
 Prompt files under `factory/prompts/` are phase contracts. They are invoked explicitly by the parent session; hooks only load context and enforce gates.
 
+Use the host's structured request tool for every user-facing question it permits. In Codex Default mode, use `request_user_input` for all optional questions; ask approvals and permissions directly in chat when the host reserves them for that channel, and state that restriction. When an approval gate is waiting, end the update with a direct approval question that names the exact artifact or digest.
+
 Default specialist set:
 - `planner-high`
 - `docs-decomposer`
 - `functional-checker` (user-facing tasks only)
-- the autoreview skill (review — all three lenses, one run)
+- autoreview skill (review — three lenses, one run; 0078)
 
 Testing has no separate agent: the implementer writes and records the tests.
 
 ## Reasoning Defaults
 
-- planning / decomposition / architecture reconciliation: `high`
-- read-only rescue (`/codex:rescue`, no `--write`) — reads only what its brief names, never the whole read order: `gpt-5.6-terra` @ `high` for code exploration, `gpt-5.6-sol` @ `xhigh` for plan validation / debugging / root-cause (the hard-thinking lane, not the default)
-- implementation: `gpt-5.6-sol` @ `medium` (`high` for migrations/cross-domain/security)
-- review and testing agents: explicit per-agent overrides
-
-Do not default the entire repo to `high` reasoning for every task.
+Main model/reasoning are host/user choices. Forge pins:
+`.codex/config.toml`, `.codex/agents/*.toml`, `harness.yaml`; exploration Sol/low; planning/decomposition/architecture/grilling Sol/high;
+implementation/review fixes reuse the active Sol/medium implementer; formal Lite Luna/max; formal review/functional checks Sol/high.
 
 ## Deterministic Commands
 
@@ -86,24 +84,26 @@ python3 factory/scripts/pr_ready.py
 
 ## Hard Gates
 
-Proof belongs to the TASK that made it — under
-`.factory/stories/<key>/tasks/<id>/`: `verify.json`, `tests.json`,
-`reviews/{quality,performance,security}.json`. Plan, `run.json` and
-`decomposition.json` stay story-scoped.
+Task proof lives in `.factory/stories/<key>/tasks/<id>/`:
+`verify.json`, `tests.json`, and `reviews/selected.json` with its immutable
+selected-generation lineage. Fixed lens files are diagnostic or migration
+input only. Plan, `run.json` and
+`decomposition.json` stay story-scoped. Review inputs and local/CI/board proof checks follow `docs/specs/dual-coordinator-parity.md`.
 
-A STORY ships when every task marker is on the trunk with clean proof;
-closeout re-verifies nothing. Its only story-scoped proof is `outcome.json`
-(`./forge outcome set`) — the one question no task can answer.
+A story ships with every task marker and clean proof on trunk.
+Closeout never re-verifies. Story proof is only `outcome.json`
+(`./forge outcome set`).
 
 ## Non-Negotiables
 
-- The constitution binds HOW code is written (not just conduct) for EVERY executor — Claude, Codex, or any subagent, any environment: follow the `constitution/README.md` coding standards at implement/grill/review, cite them, never re-derive. Approval then LOCKS the contract until the PR opens — any post-approval change stops for the human (done+shipped is immutable → new task; done-but-unshipped → `forge task reopen`; active → amend + re-grill); never reshuffle the graph on your own authority.
-- Run ponytail on EVERY code change (write OR edit), any executor — Claude, Codex, or any subagent: climb the minimal-diff ladder (necessity/YAGNI → reuse what exists → stdlib → native → installed dep → one line → minimum viable), lazy but never negligent (never drop validation, error handling, security, or accessibility). The delegate brief always inlines it and review enforces it (harness.yaml implementation notes); it is not a record-time gate.
+- Constitution binds every executor/environment: follow/cite `constitution/README.md`; never re-derive. Approval locks the contract to PR open; all later changes need human authorization: shipped → new task; done/unshipped → `forge task reopen`; active → amend + re-grill; never reshuffle the graph unilaterally.
+- Every executor applies Ponytail to code edits: YAGNI → reuse → stdlib → native → installed dep → one line → minimum viable. Preserve validation, error handling, security, accessibility. Brief-inlined; review-enforced; no recording gate.
 - Keep tasks bounded and capability-driven; plans bind one roadmap story and attest all active decisions.
 - The session write lock is always armed: delegate locked writes; use `forge mode degraded` only during a companion outage.
 - Do not decompose by document file or arbitrary file count, nor bypass `verify.py` with ad hoc validation commands.
 - Evidence enters `.factory/` only via schema-validated recorders (pinned `generated_by`), never by hand.
 - Narration budget (conduct §8): one line per state change; findings and refusals always in full; process chatter never.
+- Follow [bounded recovery](docs/QUALITY.md#bounded-recovery) in every phase; repeated unchanged failures need a diagnosed, tested fix before another model run.
 - Review = ONE three-lens pass PER TASK via `./forge review <id>`, run by Codex, looped until clean (review → delegate fixes → re-review) and recorded before `pr-ready` (0011, 0049); never nested reviewers.
 - One worktree/story; sequential tasks; dependency-ready stories may parallelize (0002). Delegation/proof commands are trusted inputs; observed descendant cleanup is not hostile-code containment.
 - Keep the template repo independent of any client-specific source repo.

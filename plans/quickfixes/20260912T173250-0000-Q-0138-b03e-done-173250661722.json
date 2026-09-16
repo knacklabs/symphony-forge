@@ -1,0 +1,12 @@
+{
+  "event": "done",
+  "id": "Q-0138-b03e",
+  "profile": "degraded",
+  "kind": "degraded",
+  "reason": "task-scoped encoding verifier fix cannot reach the delegated worker; retry uses a hook-visible bounded patch after Q-0137 claimed zero files",
+  "started_at": "2026-09-12T17:32:38+00:00",
+  "completed_at": "2026-09-12T17:32:50+00:00",
+  "files": [],
+  "task_id": "NATIVE-FOREGROUND-ACTIVATE",
+  "story": "FORGE-COORD-1"
+}

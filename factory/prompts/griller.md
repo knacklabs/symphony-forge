@@ -15,8 +15,8 @@ authored the plan, the JIT task contract, or the decomposition, it MUST run that
 grill in a SEPARATE agent that did not author the artifact — a read-only Codex
 pass reading the plan/contract cold, released with
 `./forge grill run --gate <gate>` (ledgered, so a killed launcher is still
-visible to `forge codex status`; it pins gpt-5.6-terra @ xhigh from
-harness.yaml) — rather than certify its own work inline. Codex on `gpt-5.6-terra` @ xhigh
+visible to `forge codex status`; it pins gpt-5.6-sol @ high from
+harness.yaml) — rather than certify its own work inline. Codex on `gpt-5.6-sol` @ high
 is the required cold reader for planning grills: a fresh model context fully
 independent of the authoring session, and because it is read-only it never
 writes, so the write-lock that gates the write companion does not apply. Do NOT

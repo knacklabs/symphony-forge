@@ -4,6 +4,10 @@ name: roadmap-gate
 # clients that have not authored a roadmap with epics yet.
 on:
   pull_request:
+    # This gate reads the PR BODY, and its failure message tells you to edit
+    # that body. Without `edited` the edit re-runs nothing and a manual re-run
+    # replays the stale event payload, so the instruction cannot be followed.
+    types: [opened, synchronize, reopened, edited]
   push:
 
 permissions:

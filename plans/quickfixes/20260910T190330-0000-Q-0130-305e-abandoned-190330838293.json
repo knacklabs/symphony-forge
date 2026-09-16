@@ -1,0 +1,10 @@
+{
+  "event": "abandoned",
+  "id": "Q-0130-305e",
+  "profile": "degraded",
+  "reason": "The user-authorized Sol/medium host edit changed only harness.yaml and the real YAML/runtime readers validate the new pins, but this desktop subagent tool write was not registered in Q-0130-305e: its file ledger remains empty. Do not claim this as a tracked degraded completion. Preserve the actual source diff and record this tracking limitation; the new task-plan approval, registered Sol launch, verification and independent review must supply delivery proof.",
+  "opened_reason": "User explicitly replaced the model policy: Sol low exploration, Sol high planning/grilling, Sol medium implementation and review fixes, Luna max Lite, no Terra in either coordinator. The current fixed implementation launcher selects Luna/max and exposes no model override, so it cannot start an allowed Sol/medium writer to repair its own configuration. This is a one-file, user-authorized harness.yaml model-policy bootstrap in the existing host-exception window, not a provider outage; close the window after the configuration edit and resume canonical Sol launches.",
+  "started_at": "2026-09-10T18:59:36+00:00",
+  "completed_at": "2026-09-10T19:03:30+00:00",
+  "files": []
+}

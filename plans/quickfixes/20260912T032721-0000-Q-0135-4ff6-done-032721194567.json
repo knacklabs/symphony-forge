@@ -1,0 +1,12 @@
+{
+  "event": "done",
+  "id": "Q-0135-4ff6",
+  "profile": "degraded",
+  "kind": "degraded",
+  "reason": "Normal delegate handoff is unusable: the generated fix brief reads obsolete legacy lens files instead of the authoritative selected current-delta generation, repeatedly hiding current blockers and forcing out-of-scope signals. Use the five-file outage window only to repair that bridge, the confirmed lexical apply_patch scope bypass, and their focused regressions/test typo.",
+  "started_at": "2026-09-12T03:15:52+00:00",
+  "completed_at": "2026-09-12T03:27:21+00:00",
+  "files": [],
+  "task_id": "NATIVE-FOREGROUND-ACTIVATE",
+  "story": "FORGE-COORD-1"
+}

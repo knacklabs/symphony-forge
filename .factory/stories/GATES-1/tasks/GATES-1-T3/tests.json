@@ -1,0 +1,39 @@
+{
+  "commit": "05772e2d3318dbe79b3711ec8be9d597db5c017f",
+  "automated": {
+    "generated_by": "implementer",
+    "status": "passed",
+    "summary": "Eight tests pin both directions of the requirements gate's freshness. The exclusion is asserted as a SET against product_excluded_prefixes rather than one example path, so the next list to drift is caught. A decision record and the context ledger no longer stale a recorded pass; editing the confirmed spec body and changing a real product file both still do, so the gate is corrected rather than disabled. A pass recorded under the old exclusions is still accepted, which is what stops this change reinterpreting every in-flight story as stale at once. Both consumers are asserted to resolve through the shared helper, and the prefix gates and the pre-stage task grill are asserted unchanged.",
+    "blocking_findings": [],
+    "commands_run": [
+      "uv run --with pytest --with psutil python -m pytest factory/tests/test_requirements_freshness.py -q",
+      "python3 factory/scripts/verify.py"
+    ],
+    "tests_added_or_updated": [
+      "factory/tests/test_requirements_freshness.py::test_requirements_digest_uses_the_shared_exclusion_definition",
+      "factory/tests/test_requirements_freshness.py::test_a_decision_record_does_not_stale_the_requirements_gate",
+      "factory/tests/test_requirements_freshness.py::test_the_context_ledger_does_not_stale_the_requirements_gate",
+      "factory/tests/test_requirements_freshness.py::test_editing_the_confirmed_spec_still_stales_it",
+      "factory/tests/test_requirements_freshness.py::test_a_real_product_change_still_stales_it",
+      "factory/tests/test_requirements_freshness.py::test_a_pass_recorded_under_the_old_exclusions_is_still_accepted",
+      "factory/tests/test_requirements_freshness.py::test_both_consumers_resolve_freshness_through_the_helper",
+      "factory/tests/test_requirements_freshness.py::test_the_prefix_gates_and_pre_stage_task_grill_are_unchanged"
+    ],
+    "pass_fail_summary": "8 passed in the new suite; verify.py exit 0 outside the sandbox",
+    "remaining_gaps": [
+      "The full input manifest across all six gates is deferred as D-0035; decision 0055's static checks are not run here per its 2026-09-14 amendment, with configuration ledgered as D-0036."
+    ],
+    "reviewed_scope": [
+      "factory/scripts/factory_lib.py",
+      "factory/scripts/forge_cli/plans.py",
+      "factory/scripts/forge_cli/phase.py",
+      "factory/tests/test_requirements_freshness.py"
+    ],
+    "non_blocking_findings": [],
+    "residual_risks": [],
+    "manual_validation_steps": [],
+    "recorded_at": "2026-09-14T14:12:11+00:00",
+    "commit": "05772e2d3318dbe79b3711ec8be9d597db5c017f"
+  },
+  "updated_at": "2026-09-14T14:12:11+00:00"
+}

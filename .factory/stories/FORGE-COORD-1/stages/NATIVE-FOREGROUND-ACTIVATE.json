@@ -1,0 +1,31 @@
+{
+  "id": "NATIVE-FOREGROUND-ACTIVATE",
+  "title": "Native foreground and complete first-task proof",
+  "status": "active",
+  "started_at": "2026-09-11T20:20:25+00:00",
+  "base_sha": "c9a705bc315d4677309815eb03b58e61e7957e50",
+  "dirty_at_start": {
+    ".factory/stories/FORGE-COORD-1/decomposition.json": {
+      "digest": "1957e2a8070ceb2d612d298aac5c4d9acc8ce5efb4bfcd788c573c017de23ee6",
+      "git": "? .factory/stories/FORGE-COORD-1/decomposition.json\u0000\u0000\u0000"
+    },
+    ".factory/stories/FORGE-COORD-1/grill-rounds/f31c009a-7746-4eea-896a-d233829fec3a.json": {
+      "digest": "3523d21478e7e4655e11153f3c651419660b39b0fb2705ac5b9153913b02ad27",
+      "git": "? .factory/stories/FORGE-COORD-1/grill-rounds/f31c009a-7746-4eea-896a-d233829fec3a.json\u0000\u0000\u0000"
+    },
+    ".factory/stories/FORGE-COORD-1/grills/tasks/NATIVE-FOREGROUND-ACTIVATE.json": {
+      "digest": "239bccb4f5f04ae4c70dc05859cf55cf54195680a7c6aea53c63e9892cab873b",
+      "git": "? .factory/stories/FORGE-COORD-1/grills/tasks/NATIVE-FOREGROUND-ACTIVATE.json\u0000\u0000\u0000"
+    },
+    ".factory/stories/FORGE-COORD-1/task-plans/NATIVE-FOREGROUND-ACTIVATE.md": {
+      "digest": "bc99583eae4def6897c08f22a6605992b8cc3dcbd3dfd62a9f72c09073390d34",
+      "git": "? .factory/stories/FORGE-COORD-1/task-plans/NATIVE-FOREGROUND-ACTIVATE.md\u0000\u0000\u0000"
+    },
+    "plans/active/FORGE-COORD-1-either-claude-or-codex-coordinates-the-same-forge-workflow.md": {
+      "digest": "b36baf9f6d3d626c2b769c60ad21b540e2985c635b50f71d445db5aeb0ab0f08",
+      "git": "? plans/active/FORGE-COORD-1-either-claude-or-codex-coordinates-the-same-forge-workflow.md\u0000\u0000\u0000"
+    }
+  },
+  "task_sha256": "d3728cec5c5340cda760ad3c5efcf2461aa125ae28a562aa57816815dd402a2a",
+  "incomplete": "Final cheap-family audit: the compositional SHELL_WORD now covers escaped and concatenated fragments, but its double-quoted ordinary branch still includes backslash instead of consuming backslash-plus-next as the sole escape unit. Use the approved pattern shape with escaped non-newline units and ordinary nonquote/nonbackslash units. Combined projection also still accepts the exact lone second tag '[quality]  [security]' because LENS_TAGS includes trailing spaces; reject equality with each stripped tag as well as a tagged prefix, and add that case to the existing mutator table. Keep all current green family cases."
+}

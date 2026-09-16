@@ -1,0 +1,1 @@
+{"event": "signal-scope-change", "generated_by": "implementer", "at": "2026-09-13T02:28:28+00:00", "story": "FORGE-COORD-1", "detail": "The required test_reject_republishes_one_complete_pointer_selected_set now fails because its valid helper fixture in factory/tests/test_review_settled_contracts.py omits mandatory source_attribution: "}

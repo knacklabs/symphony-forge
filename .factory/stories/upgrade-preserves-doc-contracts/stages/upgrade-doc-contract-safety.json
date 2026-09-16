@@ -1,0 +1,5 @@
+{
+  "id": "upgrade-doc-contract-safety",
+  "title": "Upgrade detects diverged doc contracts and reports them truthfully",
+  "status": "pending"
+}

@@ -1,0 +1,1 @@
+{"event": "signal-confusion", "generated_by": "implementer", "at": "2026-09-12T06:34:29+00:00", "story": "FORGE-COORD-1", "detail": "The protected brief names constitution/01-code-quality.md as a binding reviewer-focus source, but that file does not exist and constitution/README.md instead indexes 01-monorepo-standard.md; please co"}

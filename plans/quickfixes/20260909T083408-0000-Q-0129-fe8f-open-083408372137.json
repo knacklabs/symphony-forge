@@ -1,0 +1,10 @@
+{
+  "event": "open",
+  "id": "Q-0129-fe8f",
+  "profile": "quickfix",
+  "reason": "review scope drops vendored harness machinery",
+  "started_at": "2026-09-09T08:34:08+00:00",
+  "max_files": 5,
+  "files": [],
+  "harness_source": true
+}

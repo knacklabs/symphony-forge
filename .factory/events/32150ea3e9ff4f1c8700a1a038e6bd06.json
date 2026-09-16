@@ -1,0 +1,1 @@
+{"event": "signal-resolved", "generated_by": "orchestrator", "at": "2026-09-11T22:40:44+00:00", "story": "FORGE-COORD-1", "detail": "S-0015-ff86: Keep the approved 18-path remaining-delegate boundary. This repeats resolved signal S-0014-2460: commit 81f7666 already corrected factory/scripts/pre_tool_use.py and factory/scripts/check_dual_runtime"}

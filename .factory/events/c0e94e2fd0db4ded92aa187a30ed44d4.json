@@ -1,0 +1,1 @@
+{"event": "signal-scope-change", "generated_by": "implementer", "at": "2026-09-12T02:06:55+00:00", "story": "FORGE-COORD-1", "detail": "Recorded review requires fixes in factory/scripts/pre_tool_use.py and factory/scripts/check_dual_runtime.py, but the protected task plan limits this delegate to 18 other paths; those findings need a s"}

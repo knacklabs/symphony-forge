@@ -1,0 +1,35 @@
+{
+  "commit": "f52c4c20c6da712b8dc250fb1b2a1903cf29db0e",
+  "automated": {
+    "generated_by": "implementer",
+    "status": "pass",
+    "summary": "Six new tests in factory/tests/test_grill_budget.py seed REAL ledger lifecycles rather than synthetic single rows: starting/running/failed, starting/running/succeeded, and standalone starting and running launches. They assert that a failed lifecycle neither counts toward the cap nor blocks the repeat-read guard (the guard refused it before), that a succeeded lifecycle still counts so the budget is not disabled, that a launch in flight counts, that both guards agree on the same collapsed view, and that no new field is written to the delegation ledger.",
+    "blocking_findings": [],
+    "commands_run": [
+      "uv run --with pytest --with psutil python -m pytest factory/tests/test_grill_budget.py -q",
+      "python3 factory/scripts/verify.py"
+    ],
+    "tests_added_or_updated": [
+      "factory/tests/test_grill_budget.py::test_a_failed_lifecycle_does_not_count_toward_the_cap",
+      "factory/tests/test_grill_budget.py::test_a_failed_lifecycle_does_not_block_the_repeat_read_guard",
+      "factory/tests/test_grill_budget.py::test_a_succeeded_lifecycle_still_counts",
+      "factory/tests/test_grill_budget.py::test_a_launch_still_in_flight_counts",
+      "factory/tests/test_grill_budget.py::test_both_guards_agree_on_the_same_collapsed_view",
+      "factory/tests/test_grill_budget.py::test_no_new_ledger_field_is_written"
+    ],
+    "pass_fail_summary": "6 passed in the new suite; 30 passed across the impacted guard suites; verify.py exit 0 outside the sandbox",
+    "remaining_gaps": [
+      "An answered/interrupted outcome for a read that exits zero without a verdict is deferred as D-0032: the companion is invoked with --json, so detecting it needs payload decoding this task does not do."
+    ],
+    "reviewed_scope": [
+      "factory/scripts/forge_cli/grill.py",
+      "factory/tests/test_grill_budget.py"
+    ],
+    "non_blocking_findings": [],
+    "residual_risks": [],
+    "manual_validation_steps": [],
+    "recorded_at": "2026-09-13T07:55:09+00:00",
+    "commit": "f52c4c20c6da712b8dc250fb1b2a1903cf29db0e"
+  },
+  "updated_at": "2026-09-13T07:55:09+00:00"
+}

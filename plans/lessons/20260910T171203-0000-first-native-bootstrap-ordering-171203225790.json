@@ -1,0 +1,12 @@
+{
+  "topic": "first-native-bootstrap-ordering",
+  "lesson": "For NATIVE-FOREGROUND-ACTIVATE-C5, accepted0059/0063 and the approved task plan require the old source-plan/grill ordering only for the historical bootstrap performed before this implementation; subsequent task starts after the change ships create the workspace before target JIT, including the first task of a later story. Do not add a special task-ID switch. The source approval was recorded at 2026-09-10T08:47:29Z before actual target preparation at 08:51:05Z; the separate retrospective immutable-7a462bc probe at 17:10:19Z demonstrates missing source plan and missing grill each refuse without allocating a branch or worktree, and is not represented as an earlier live action.",
+  "source": "Accepted0059/0063; target task-plan section 3 and C5; first-incumbent-bootstrap-probe.json from immutable 7a462bc",
+  "applies_to": [
+    "factory/scripts/forge_cli/tasks.py",
+    "factory/tests/test_gates.py"
+  ],
+  "severity": "high",
+  "generated_by": "orchestrator",
+  "added_at": "2026-09-10T17:12:03+00:00"
+}

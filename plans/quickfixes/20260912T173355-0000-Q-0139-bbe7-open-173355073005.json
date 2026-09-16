@@ -1,0 +1,13 @@
+{
+  "event": "open",
+  "id": "Q-0139-bbe7",
+  "profile": "degraded",
+  "reason": "Codex app exec tool is not mapped to Forge Bash claims; manually route the exact one-file patch through PreToolUse before applying",
+  "started_at": "2026-09-12T17:33:55+00:00",
+  "max_files": 5,
+  "files": [],
+  "harness_source": true,
+  "kind": "degraded",
+  "task_id": "NATIVE-FOREGROUND-ACTIVATE",
+  "story": "FORGE-COORD-1"
+}

@@ -1,0 +1,1 @@
+{"event": "signal-blocked", "generated_by": "implementer", "at": "2026-09-10T21:19:57+00:00", "story": "FORGE-COORD-1", "detail": "NATIVE-FOREGROUND-ACTIVATE brief grants write access, but protected admission reports the bound task stage is no longer active and forge next shows the stage pending; the orchestrator must reopen/star"}

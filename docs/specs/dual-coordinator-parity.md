@@ -2,621 +2,137 @@
 slug: dual-coordinator-parity
 title: Either Claude or Codex can coordinate the same Forge workflow
 status: confirmed
-saved: 2026-09-10T08:26:21+00:00
+saved: 2026-09-13T15:07:23+00:00
 ---
 
 # Either Claude or Codex can coordinate the same Forge workflow
 
-This revision retains the coordinator contract and acceptance coverage while
-applying accepted Decision 0064. Its managed frontmatter and confirmation
-records determine approval status. Specification text supplies neither an
-implementation claim nor a task marker or proof artifact.
+This revision replaces the confirmed revision at commit `33c9bdf`, whose complete managed specification has SHA256 `cb0e454d73d76d12e7d1367ac12b5098f9bd1cfa6f0db9917312bae4d8dc86df`. It keeps the approved eight-task delivery while making combined review, human questions, hook results, task workspaces, setup, retention, native contribution, quality, and platform evidence falsifiable.
 
-## What changed in this revision
-
-Compared with the confirmed 824baed4 revision of the source specification,
-this draft applies accepted 0064: one current task brief, risk-based coherent
-task boundaries, carried standing authorization, one combined lossless review,
-and durable event/client retention. It removes only repeated ceremony and the
-obsolete fixed 120000/180000-byte clauses. It also carries the ten audited
-client failures into explicit owner obligations. The prior confirmed revision
-and its comparison remain recoverable through the existing Git artifact and
-approval records; this revision does not replace those records.
+This document states intended capability and acceptance outcomes. It is not implementation proof, a task marker, architecture, or permission to mutate an external repository. The managed header, grill, confirmation record, approved story plan, decomposition, task plans, task proof, and trunk markers retain their existing roles.
 
 ## Why
 
-Developers must be able to use Claude Code with its existing Codex
-rescue/companion route or native Codex CLI/Desktop as the Forge interface.
-Changing the coordinator must not change the phase engine, human approvals,
-worker policy, protected authority, tests, review, evidence, or shipping gates.
-Native preparation exposed missing human-answer provenance, runtime
-registration, setup ownership, worker admission, and task-proof paths. Prepared
-native bytes retain their source and review provenance. An approved support
-task reviews and delivers them completely, but they are never credited as that
-worker's new contribution.
+Main aligned the Product Brief so its summary, flows, and constraints state interchangeable coordination, task-owned workspaces, and dependency-ready scheduling. The confirmed `strict-role-split` capability uses coordinator-neutral wording while preserving the enforced coordinator-versus-delegated-writer boundary and degraded-mode valve. Those committed documents remain current inputs to the amended story plan.
 
-Decision 0064 makes one current task brief the working contract. Main retains
-project/story intent, dependency graph, scheduling, and required human
-decisions. Each task owner takes its own worktree through JIT planning,
-delegated implementation, tests, verification, review, PR, and green CI.
-Existing approval, admission, proof, and trunk-marker records remain the
-authority. Repeated story/task grills, approval ceremonies, and separate review
-launches are removed only when they duplicate the same current binding. A
-material new choice, changed intent or scope, missing authority, or
-contradiction still stops dependent work for the developer.
+Every accepted decision returned by `./forge decision list --active` binds this capability, and the approved story plan must attest that exact corpus. Decision 0069 supplies the accepted one-generation review amendment. Once saved and approved, the final amended FORGE-COORD-1 story plan, its matching decomposition, and each current task plan are the complete delivery graph and exact task-scope authority. This specification names capability outcomes and the D-0034 and one-time-migration ownership constraints without duplicating the graph. First versions the shared review-publication design under `docs/architecture/`; later owners extend that architecture before implementing enduring lifecycle, recovery, observability, migration, or integration mechanics.
 
-The installed autoreview helper has an observed 512000-byte prompt capacity
-and lossless chunking. This is tool capacity, not a new Forge policy. The old
-120000-byte product and 180000-byte review limits are removed from this
-contract. Boundaries follow coherent behavior, ownership, changed file/line
-risk, and actual complete review capacity. In the roadmap and 0058, "existing
-review limits" means the installed helper's enforced safeguards and complete
-lossless coverage, as amended by 0064; 512000 is an observation, not a pinned
-replacement limit. Do not edit or override helper capacity to admit a task.
-Remeasure the entire final input, use supported chunks, and split the task if
-complete input cannot fit the helper's actual safeguards. No input may be
-truncated, omitted, or declared clean without all three assessments.
+The amended story artifacts must assign the complete D-0034 combined-review capability to `NATIVE-FOREGROUND-ACTIVATE`; its successor consumes that proof and does not reimplement it. The currently protected older plan, decomposition, and task plan remain inoperative for this new work until the amended artifacts replace them through the normal save, grill, approval, and decomposition recorders. Changing an owner, task boundary, external permission, or closure obligation after that approval requires the existing contract-amendment route.
 
 ## Behaviour
 
-### One contract and shared authority
+### One workflow and one current brief
 
-Main owns confirmed intent, story planning, the frozen decomposition,
-dependency scheduling, story decisions, and the human conversation. Each task
-owns one current brief containing behavior, boundaries, owner, tests, review
-focus, relevant decisions, and settled rulings. Derive execution and review
-inputs from that brief and existing digest-bound plan, approval, and proof
-records. Do not add another plan, approval ledger, review registry,
-coordinator registry, or protected-ruling database.
+Claude Code and native Codex expose the same Forge phase engine and the same approval, admission, write-scope, test, verification, review, functional-proof, PR, CI, marker, and closeout requirements. Host interfaces may differ; authority and evidence may not.
 
-Standing authorization covers unchanged in-scope work, technical corrections,
-and retries. Bind concrete revisions through existing commands and recorders.
-When a decision is needed, present the changed artifact with one concise
-recommendation, tradeoff, and consequence. Silence, continuation, workflow
-status, mode change, or technical pass is not approval. Dependent work waits
-for required answers; independent ready work continues. Carry settled rulings
-through the existing task brief/contract and recorder family into every fresh
-worker and reviewer.
+Main carries the recorded product and story intent, dependency graph, and scheduling, and presents and records human decisions through their owning commands. The developer makes those decisions and alone supplies acceptance, sign-off, and approval. A task owner carries its task-owned worktree from detailed JIT contract through green CI. Each task has one current brief containing its outcome, boundaries, owner, relevant decisions, checks, and settled rulings. Existing digest-bound approval and proof records remain authoritative. Do not add an independent review authority; the task-local `selected.json` authorized by Decision 0069 is the sole review selector.
 
-Both adapters use the same Forge phases and protected state. Coordinator
-product/canon writes remain locked. Planning/docs, recorder-mediated evidence,
-prototypes, and normal Git operations retain their existing exceptions. A
-delegated worker writes only when registered admission, stage, brief, task
-digest, process identity, and derived scope match. Environment claims, copied
-workspace state, and role names cannot grant authority.
+Standing authorization carries through unchanged in-scope execution, technical corrections, and retries. A material change to intent, scope, permission, migration, security, lifecycle, ownership, or an unresolved contradiction still requires the developer. An unanswered required question pauses the addressed work and every causally dependent contract. Separately owned dependency-ready work whose authorization and contract cannot change with the answer may continue. The recorded `Wait for all` answer governs a cooperative coordinator transfer directed by the developer or host: they switch only after every required structured or ordinary-chat exchange for the story has returned or been cancelled. It does not create a story-wide execution pause. Silence, cancellation, or a missing answer grants no authority.
 
-Decision 0062 defaults read-only exploration and routine implementation to
-Luna/max, validation/debugging to Sol/xhigh, and cold-read grilling to
-Terra/xhigh. Other specialist settings retain their authority. Optional
-explorer/validator presets are read-only and get resolved settings at dispatch;
-they do not restore retired writer definitions. Forge remains the launcher;
-direct native writer or certifying-griller transport is deferred.
+The protected write boundary is determined by the existing path classifier and protected-state gates. Managed state such as confirmed-spec status/frontmatter, decisions, approved plans, and protected evidence changes only through its owning commands and lifecycle. During authorized planning, Main may directly author ordinary versioned planning sources such as the Brief, architecture, guides, and a draft spec body; direct text edits do not create managed confirmation, approval, or evidence. After plan approval, the task contract assigns both product and enduring-documentation changes to the task owner and review checks that ownership. Product and canon paths use the mechanically enforced registered worker path with matching task, stage, process, lock, brief, and derived scope authority. Existing orchestration-surface classifications for `docs/`, `plans/`, `prototype/`, `.gstack/`, and named repository metadata stay unchanged; the contract does not claim that those paths acquire a phase-dependent hook lock. The existing ledgered five-file `forge mode degraded` window remains the sole outage exception for direct protected implementation and never grants a second ordinary writer route.
 
-### Human interaction and exact question identity
+### Human questions and coordinator changes
 
-Required decisions and approvals use the host's permitted interface. In Codex
-Default, main asks required questions and approvals in ordinary chat; the
-synchronous request-user-input tool is optional and host-permitted. Claude
-keeps AskUserQuestion. No manual Plan-mode switch, asynchronous approval
-tool, private host patch, or repeated “continue” is required. Optional
-unanswered questions do not stop work supported by existing facts.
+Ordinary host chat is the permitted transport for necessary decisions and approvals when host rules prohibit a structured question tool. Authority comes from the owning decision or approval command against the exact revision; the transcript is not another ledger. Silence, cancellation, or a missing answer grants no authority.
 
-For each structured round actually used, preserve runtime, session, tool-call,
-question, answer, story, and event identity. Native certification reads the
-completed PostToolUse payload: questions from tool_input.questions and the
-answer from tool_response.answers[question_id].answers. The raw request
-notification, serverRequest/resolved event, cancellation, error, cleanup
-acknowledgment, empty result, or multiple answers cannot certify a round. One
-nonempty non-whitespace offered-option or free-text answer is valid; retain its
-exact submitted text, without coercing it to an option label. A free-text
-answer is not approval. Replay, mismatch, wrong story, malformed payload,
-cancellation, and missing event refuse. Question age adds no expiry.
+A successful structured-question call writes one immutable event. Its identity binds runtime, session, event, and question index, and the record preserves exact gate scope, input, question, options, and nonblank answer. A multi-question call is atomic for authority: cancellation, omission, or failure records no eligible partial answer. When no story is active, spec, signoff, and epics rounds use empty story and task. When those gates run from an active story location, Decision 0067 binds that story and an empty task. Requirements and plan rounds bind the story and an empty task; task rounds bind both. Optional non-gate clarification uses empty scope and digest and cannot satisfy a gate or approval.
 
-After LEAN-WORKFLOW ships, each approval-bound artifact records
-`design_review: required|routine` in its existing frontmatter. Missing or unknown values
-mean required. Main records required for permissions, security boundaries,
-destructive operations, data migration, substantial architecture changes, or
-material changes to those designs. Routine requires an explicit rationale that
-none of those triggers applies; workers cannot downgrade the bound choice.
-Both adapters use the same phase-engine predicate. Classification and its
-rationale are authored, digest-bound content, never excluded managed metadata.
-The following existing inputs own the classification and proof binding:
+The recorder compares identity, scope, input digest, content, and answer. One recorded pass may claim each matched question only once. Accepted Decision 0067 permits that same question to be reused only when re-recording the same gate for the same story and task and the question's input digest still equals the artifact being recorded. Reuse across another gate, story, task, or input revision, duplicate use within one pass, cancellation, missing answers, wrong binding, duplicate identity, and legacy records without this identity cannot create authority. If an answer changes an approval-bound artifact, the earlier round remains audit context for the choice but cannot authorize the new bytes. The owning decision or approval independently binds the final revision, and the final grill uses a fresh eligible round or, after Shared ships, the independently ledgered empty-frontier path. Neither route claims that the final artifact was the input to the earlier question, and no revision-mapping protocol is added. Historical completed grills remain readable under their original contract and are never synthesized or rebound.
 
-| Gate | Classification input | Existing record and binding |
-|---|---|---|
-| spec | Selected capability Markdown | Global grills/spec.json; exact spec SHA256. |
-| requirements | Story-linked confirmed capability | Story grills/requirements.json; requirements_digest(spec, product tree). |
-| epics | All capability specs referenced by the proposed roadmap; any required/missing classification requires review | Global grills/epics.json; exact proposed roadmap SHA256 plus cited spec digests. No new JSON classification authority. |
-| signoff | Product BRIEF and participating capability specs; any required/missing classification requires review | Global grills/signoff.json; existing commit/guarded-input freshness plus SHA256 of the complete Gate.locate handover text. |
-| plan | Story-plan Markdown | Story grills/plan.json; existing authored plan digest. |
-| task | Current task-plan Markdown | Story grills/tasks/<id>.json; task-plan digest plus existing protected-contract/product grounding digest. |
+Until `SHARED-COORDINATOR-JOURNEY` ships this native path, incumbent grill floors and recorder provenance remain required. After it ships, an independently ledgered cold read with no human frontier may record zero rounds when its launch, input digest, complete finding-resolution map, and empty-frontier result agree. That map is an ordered list of exact `{finding, resolution, source}` objects: every cold-read finding appears exactly once, no extra or duplicate entry is allowed, each resolution is nonblank, and each source names the repository authority or human record that settles it; an empty list is valid only when the cold read returned no findings. Decision 0073 preserves Decision 0071's future empty-frontier floor while superseding its stale no-reuse wording; Decision 0067 remains the sole rule for same-gate re-recording. A human finding still requires either an eligible structured answer or the accepted decision/approval record that owns the exact choice.
 
-Use the existing evidence_path layout, Gate.locate readers and recorder digest
-functions; the table adds no registry. A shared read must explicitly name every
-gate, include each complete located input and grounding, and return a separate
-assessed verdict/frontier for each. Each existing record retains its own exact
-input binding, with the actual launch and inspected paths/digests in its
-existing summary/inspected_refs. Missing inputs, unassessed gates or a changed
-binding refuse. Reading common context never certifies another gate. The
-current one-gate launcher grants no shared-read capability; LEAN-WORKFLOW must
-implement and test this behavior before it is usable. Routine work skips
-duplicate cold reads, not authorization, admission, tests, review or CI. No new
-risk ledger is introduced. First retains current prerequisites until Lean ships.
-The six existing grill types retain freshness, finding resolution, artifact/grounding digest,
-and explicit empty-frontier checks. Top-level frontier_empty: true is canonical
-for empty or populated rounds. An existing round-bearing payload may retain
-final-round frontier_empty: true when the top-level field is absent; explicit
-top-level false refuses. Empty rounds without canonical true refuse. Structured
-rounds are eligible and single-use. There is no compulsory human round and no
-invented answer.
+Before asking a necessary ordinary-chat question, Shared extends the existing signal family so Main can raise a `required-question` blocked signal bound to the story and sorted affected task/artifact identities. Resolution requires the exact owning decision or approval record path and SHA256, and consumers validate that authority before treating the signal as closed. Existing worker-produced signals retain their current producer contract. Abandonment leaves the required-question signal open, so session start, the next-step view, readiness, and a later coordinator can observe the unanswered question and must ask again; before Shared ships, no cross-session ordinary-chat recovery capability is claimed. Decision 0053 permits a cooperative coordinator change only between tasks. Forge can require the prior task marker and green CI on refreshed trunk, no active worker, and no open required-question signal for the story. The developer or host directs the switch after stopping the old coordinator; Forge does not record or mechanically verify that stop, observe an unrecorded partial structured exchange, fence a stale session, or prevent concurrent coordinators. The new coordinator resumes through `forge next`. This story adds no chat transcript ledger, live handoff, coordinator registry, or fencing mechanism; stale resumption and concurrent coordination are outside its capability.
 
-For a first approval-bound artifact or material revision, save the exact draft,
-identify the last confirmed revision, preserve its artifact/commit/body digest
-through the existing scratchpad and committed event, show the full artifact
-and comparison, and display it in main chat or a supported fallback. A
-queued/stale/failed/wrong reader is not presentation. Ask explicit approval
-only after display through the existing host interface; a grill or technical
-pass is not approval. Ambiguous, refused, canceled, or missing answers remain
-awaiting approval. Unchanged standing authorization and in-scope technical
-corrections update the brief and existing binding without repeated ceremony.
-Material choice, intent/scope, authority, or contradiction repeats the current
-applicable design-scrutiny and approval path. The first 0063 native task keeps current
-source/target gates until LEAN-WORKFLOW ships.
+### Adapter events and native lifecycle
 
-### Workspaces, first native task, and worker lifecycle
+Both adapters implement and validate this event matrix:
 
-Under 0059, create or safely attach a dependency-ready task worktree at
-refreshed trunk before that task's detailed plan or grill. Require the approved
-story, its matching decomposition, exact story/task identity, fetched trunk
-commit and all effective dependency markers on that trunk. An open PR, green
-CI or worker message does not satisfy a dependency. Preserve the approved IDs,
-order and dependency graph. A valid attachment
-is clean, unowned, registered, and in the same Git common directory; validate
-before hydration and publish ownership last. A verified retry returns the
-existing owner without resetting it or creating a duplicate. Creation grants
-no product write authority. Omitted/empty dependencies follow the immediate
-predecessor; an explicit list names dependencies. Concurrent tasks require
-distinct worktrees and disjoint protected scopes. A task enriches only its
-permitted fields. Missing/conflicting owner state refuses without overwrite.
-After trunk integration, refresh non-owner rows from incorporated trunk while
-retaining the owner's contract, approvals, and stage baseline.
+| Adapter event | Required observation |
+|---|---|
+| `SessionStart` | On startup, resume, clear, and compact sources, invoke the installed session-start owner and emit the current phase, task, and bounded context. When a host cannot block on a nonzero hook result, the adapter records the failure and must not claim successful context hydration. |
+| `PreCompact` | Invoke the installed pre-compact owner and replace the current scratchpad snapshot durably on success. When a host cannot block compaction on failure, it records the failure and the resulting session cannot claim a fresh snapshot. |
+| `PreToolUse` | Invoke the installed policy owner for every shell, write, and question tool the adapter exposes; a supported denial prevents the tool call. |
+| `PostToolUse` | For every structured-question tool the adapter exposes, capture exactly one eligible round per successfully completed question; an absent capture cannot certify provenance. |
+| `Stop` | Invoke the installed continuation owner. A successful protected predicate may require continuation and return its refusal reason; owner import, input, repository, state, or re-entry failure follows the documented fail-open host behavior and records that no continuation proof was produced. |
 
-The first native foreground support task is the only 0063 exception. In the
-planning checkout it needs a complete source contract, independent grill, and
-actual approval before the existing task-start command creates its worktree.
-In that target, freshly ground behavior, scope, tests, and dependencies are
-written, grilled, and approved before stage start or native delegation. A
-placeholder/incomplete source contract refuses; source-bound proof cannot
-satisfy target proof. The first task repairs successor workspace creation
-ordering. Later tasks use the normal 0059 workspace-first route. A
-forge stage start --trunk route is not an alternative.
+Both shipped adapters expose or map all five event rows. The architecture names the exact current tool matchers: Claude captures completed `AskUserQuestion`; Codex captures completed synchronous `request_user_input`; asynchronous issuance is not completion evidence. A newly exposed tool must be mapped before parity can be claimed. The validator checks committed configuration, installed owner, invocation, observable success/failure, and the host's real blocking capability. CLI evidence never certifies Desktop behaviour.
 
-Accepted 0058 permits explicitly scoped native bootstrap support tasks to use
-the validated isolated candidate. Validate exact scope, target preparation,
-baseline, predecessor markers, and review boundaries before implementation.
-Preserve sequential merges and normal task PR gates. Original prepared bytes
-retain source, commit, and review provenance but do not count as the worker's
-delegated contribution. Native write-hook activation and legitimate worker
-admission land together. A preparation patch, draft graph, temporary path, or
-diagnostic receipt never authorizes writes or proves release. Versioned
-`plans/exploration/coordinator-parity-preparation/lean-delivery-graph.json`
-assigns every original path/hunk to its complete-review owner and names the
-exact reproducible preparation artifacts. The approved story plan binds its
-SHA256 before any support-task contract is recorded. The committed
-`native-foreground-preparation-inventory.json` in that directory binds the
-first allocation to trunk 824baed4, its 109953-byte patch SHA256
-bee122bb370177ededefb5fe81a82f8c600f69af8502e151956ec7b8afed29e2
-and all 16 prepared file hashes. Revalidate against fetched trunk in the actual
-target; local paths and source approvals do not replace target proof.
+Existing timeline events remain best-effort diagnostics under Decision 0017. They are not mandatory task proof. Focused hook tests, `check_dual_runtime.py`, and the recorder-produced automated report carry the required proof and logs; missing, failed, or overstated observations block. A Stop failure may follow the host's documented fail-open behavior, but cannot count as successful continuation proof.
 
-Forge is the sole launcher. An admitted worker binds launch ID, live process
-identity, target worktree, stage incarnation, task contract, brief, and
-derived write scope in protected Git-control state. It starts unadmitted;
-registration must complete before writes. Registration/startup/process
-discovery failure grants no authority. Failure before process creation records
-failure without invented PID or exit code; verified cleanup precedes terminal
-publication once a process exists. Cancellation revokes before cleanup, failed
-cleanup leaves revocation, and completion/failure/stage closure revokes too.
-Resume requires fresh preflight and launch; session identity/history never
-revives authority. Companion workers still pass admission with native hooks.
-Retain existing POSIX signal-mask restoration and Windows process guards.
+Forge is the ordinary writer launcher; the existing bounded degraded window is the documented outage valve. A native worker starts without write authority and gains it only after protected registration binds the live process, task, worktree, stage, brief, and scope. Cancellation revokes authority before cleanup. Success, failure, dead process, released lock, or closed stage removes admission through the existing lifecycle state. Resume performs fresh preflight and never revives authority from session history. Background status, cancel, resume, recovery, explore, and read-only helper behaviour remains unsupported until the approved delivery graph's native-lifecycle task ships it. That task may detach only read-only helpers and lifecycle supervisors; implementation writers remain foreground and stage-bound. Background write admission remains refused and has no owner in this story; permitting it requires a later explicit decision and delivery contract.
 
-Both routes expose the same start/running/terminal lifecycle, status, recovery,
-logs, proof, and scope checks. Background success requires protected
-registration; detached readers remain observable/cancelable. Read-only work
-cannot satisfy a write launch. Startup, resume, clear, compaction, question,
-and Stop interception use installed registrations; removing one fails
-validation. CLI evidence does not certify Desktop.
+Lifecycle failures follow Constitution 07. An otherwise-unhandled native lifecycle exception reaches the top-level boundary, returns nonzero with a stable sanitized error ID, writes one structured error carrying that `errorId` and the launch's distinct `correlationId`, and increments `forge_native_unexpected_errors_total` exactly once using bounded labels. `correlationId` is the workflow trace key; `errorId` joins the sanitized terminal failure to its one structured error row. Tests prove both fields and their link, redaction, counter behavior, correlation, and truthful propagation. Decision 0060's narrow POSIX child signal-mask restoration remains intact; a pre-process failure cannot invent process identity or exit status, and post-process terminal publication follows verified cleanup.
 
-Protected Git-local stage settings must be genuinely readable by the admitted
-worker through an existing protected seam. A writable mirror, copied token,
-environment claim, or instruction to skip lifecycle/recorders is not a fix.
-A host brief snapshot is informational and cannot replace protected admission
-or closeout; reproduce and test the actual denial/read path before claiming
-repair.
+### Workspaces and recovery
 
-### Setup, ownership, upgrade, and retired presets
+After the first-task exception in Decision 0063, `task start` creates the task worktree from refreshed trunk before task-plan save, grill, and approval. Its explicit attach route accepts only a clean, registered, unowned worktree from the same Git common directory at that refreshed trunk commit, with matching branch, story, task, decomposition, and dependency markers. Omitted or empty dependencies fall back to the immediate predecessor; a nonempty list selects exactly those dependencies. Creation or attachment grants no write authority. An open PR, green CI, or worker message is never dependency proof. Dependency-ready tasks may overlap only in distinct worktrees with disjoint protected scopes.
 
-Setup precedence is explicit --coordinator, FORGE_COORDINATOR, unambiguous
-detection, then TTY choice. Empty/canceled/EOF/invalid/ambiguous/unattended
-no-choice refuses before install and prints both commands. CODEX_THREAD_ID or
-CODEX_SHELL detects Codex; CLAUDECODE detects Claude; both is ambiguous. Pass
-the choice to both doctors without persisting it. POSIX stays ./setup; Windows
-keeps forge.cmd and user-scope behavior. Codex setup does not start Claude.
+The legacy plan-before-worktree test is removed. `stage start --trunk` may remain a legacy route but cannot satisfy this capability's task-owned-workspace acceptance. Prepared first-task bytes retain their source and target provenance and never count as the admitted worker's contribution. Recovery preserves task identity, base, owner, stage, approvals, and sealed proof; ambiguous or conflicting state refuses without destructive repair.
 
-Fresh, adopted, and upgraded clients receive both adapters; inert .claude is
-not a runtime dependency. Existing COPY_CODEX, GATE_FILES, ownership,
-conflict, replacement, and vendor-integrity rules remain authoritative.
-Preserve client settings, skills, agents, CI, local configuration, history,
-hotfixes, and dirty state. Refuse unsafe targets, report conflicts, and never
-silently delete client files.
+### Context and continuation
 
-Remove only unchanged harness-owned copies of planner-high, docs-decomposer,
-and functional-checker definitions plus obsolete delivery/scaffold-check
-requirements. Preserve logical phase roles, prompts, producer identities,
-model policy, and gates. Preserve modified, client-owned, or unverifiable
-copies and report a user decision; never delete by filename alone. New
-deliveries omit retired definitions. Optional read-only presets do not
-recreate them or become native writer authority.
+The approved delivery graph's workflow task must support one optional context-file input on a grill launch. A caller may omit it; when supplied, the caller selects one regular UTF-8 file inside or outside the repository as untrusted supplemental context. It cannot alter the primary artifact, story, gate, task, decisions, scope, evidence, or authority.
 
-### Review, quality, dogfood, and delivery
+A supplied context file is captured once without following links or replacement, validated as a regular UTF-8 file, and bound in memory by its byte count and content identity. The complete primary artifact, framing, and captured context must fit both the installed component limit and the local allocation safeguard measured in UTF-8 bytes. If either limit is unknown, only that context-file launch refuses and names the unknown limit; ordinary launches without supplemental context retain their existing behavior. A grill never partitions, truncates, silently omits, reopens, or searches the artifact or context. Oversize input refuses before launch with required and available sizes, and instructions in supplemental context never grant authority. Captured bytes live only in a randomized regular single-link file with mode `0600` beneath a dedicated per-user `0700` transient directory and are deleted after terminal publication. Durable logs and evidence retain only whether context was supplied, its byte count, and a random opaque context ID; they never retain its bytes, content digest, or source path. Recovery may delete a stale transient only when it is an owned regular single-link file with the required mode beneath that exact directory and its filename matches the recorded launch/context ID; otherwise it refuses unchanged.
 
-Every task keeps deterministic verification, implementer-owned tests,
-conditional functional proof, independent review, PR, and green CI. Main
-launches one `forge review <task-id>` operation under accepted 0011/0064; the
-implementer cannot self-certify and nested reviewers are prohibited. On
-findings, main delegates fixes and repeats review until every assessment is
-clean. Proposed 0049 is not authorization for changing review execution. The first
-native task uses the current three-lens execution. After LEAN-WORKFLOW ships,
-one combined review has explicit quality, performance, and security
-assessments bound to the same diff/input and uses the installed lossless chunk
-helper. Every chunk must finish. Include formatting/AST/comments/directives,
-tests, generated semantic output, and exceptions in the review. Mechanical
-formatting and semantic repairs may be separate coherent tasks where risk
-requires. No truncation, blanket suppression, artificial clean result, cap
-override, or unassessed lens pass is permitted. Use coherent capability and
-file/line risk bounds instead of obsolete byte splitting.
+### Independent review and task proof
 
-The review-only parity checkpoint may create/reuse a Git-only draft PR after
-normal contribution, verification, and independent review. Its body names
-every missing required platform result and accepted unobserved platform limitation. It stays unmerged and receives no Forge task-ready
-marker while required platform proof is incomplete. It is not forge task pr-ready and
-does not bypass guard, admission, review, or protected state. After complete
-proof, the same task repeats readiness/review as needed, seals normally, and
-reaches refreshed trunk before closeout. No duplicate PR, marker, proof, or
-fabricated readiness is allowed. Use normal Git push and gh PR lookup/create
---draft/checks operations, not forge task pr-ready, for this checkpoint. Before
-reuse or creation, match the verified origin repository, head repository and
-branch, base branch, and exact reviewed head commit. Query existing PRs with
-that repository/head/base; an uncertain, failed or ambiguous lookup stops
-creation. If creation returns an uncertain result, query again before any
-retry; never create blindly. Preserve the existing PR identity in the current
-scratchpad/report and reuse it after required platform proof is complete. Normal readiness
-creates the eventual task marker once and retries preserve its identity and
-timestamp. These requirements belong to Shared's PR retry path and Integration's
-actual checkpoint; no new PR registry or marker substitute is introduced.
+Every task has one review lifecycle after implementation, meaningful tests, and deterministic verification. The orchestrator owns that lifecycle; the implementer cannot self-certify and no nested reviewer is permitted. Each initial or post-fix default review invokes the installed helper exactly once and creates an immutable generation only after the complete raw result and all three projected lenses validate. A failed, missing, stale, malformed, interrupted, or helper-identity-mismatched attempt leaves only its ordinary run diagnostics and publishes no generation or pointer; a failure after pointer replacement may leave only the already complete selected generation for the existing stamp-retry path. Every valid generation assesses quality, performance, and security against the same complete task-specific input and diff. A blocking generation becomes selected and revokes clean status; fixes require a new full generation. Only the selected clean generation certifies task proof.
 
-The platform evidence contract follows accepted 0065-ci-platform-evidence,
-which amends 0064's six-live-cell requirement. Require actual local macOS
-native CLI and Desktop proof plus Ubuntu 24.04 LTS x64 and native Windows CI.
-Keep the six existing labels for platform coverage accounting. Each row says
-whether its evidence is live runtime, CI regression/package smoke, or
-unobserved; a passed CI row never claims an authenticated live runtime or
-Desktop interaction. WSL cannot satisfy native Windows.
+The complete D-0034 capability belongs to NATIVE-FOREGROUND-ACTIVATE: one default review invokes the installed reviewer once, preserves every completed provider pass and the exact raw result, derives three genuine task-owned lens projections, and publishes one immutable complete generation before replacing its small selector last. Combined, citation-rejection, and sealed-upgrade origins remain distinguishable and carry only truthful provenance. Missing, incomplete, copied, mixed-binding, stale, tampered, or interrupted output fails closed without displacing the last complete selection. A single-lens run is diagnostic and cannot publish or certify a complete review. Architecture and task contracts own filenames and schema fields.
 
-The required rows are native-cli-macos and native-desktop-macos with actual
-local proof, native-cli-linux-ubuntu-24.04-x64 with Ubuntu CI proof, and
-native-cli-windows with native Windows CI proof. CI preserves the full Ubuntu
-harness suite and existing native Windows gates, and exercises native
-launcher/admission, hooks, recovery and portable-delivery regressions on the
-actual runner OS. Install the real Codex CLI package at an explicit reviewed
-version and record its version/help smoke outcome. An authenticated native
-task uses only existing authorized CI authentication when available; otherwise
-state that live-task behavior is unobserved. Package/help smoke certifies only
-package/argument-parser startup. Fixture normalization remains regression
-proof. Required CI commands must succeed and collect meaningful tests; empty
-or wholly skipped selections cannot pass.
+Each provider pass carries distinct, ordered, nonempty quality, performance, and security assessments and the existing machine-readable quality verdict. Authoritative raw output and provider findings are never truncated or replaced by another summarizer; multi-pass output retains every ordered pass, and the synthesized top-level findings must match the preserved passes using the installed helper's path, line, exact-category, and normalized tagged-title merge behavior. Every finding belongs to exactly one lens through its leading lens tag. Lens projection and remediation use a separate normalized fingerprint: repository-relative path, the provider's one integer line as both normalized start and end, and the normalized tag-free title. Same-lens projection keeps only the first provider finding for that fingerprint while raw and top-level records remain lossless; the same fingerprint under different lenses refuses. Assessment text carries no separately parsed fingerprint grammar. Existing verdict, score, recommendation, and worst-result rules determine blocking status, and any blocking lens blocks the task. Architecture and task contracts own the exact marker grammar, field bounds, and normalization algorithm.
 
-Retain native-desktop-linux-ubuntu-24.04-x64 and native-desktop-windows as
-unobserved when no genuine Desktop host is available. Their absence, and
-unavailable authenticated CLI observations beyond required CI coverage, are
-accepted limitations under 0065 and do not block this delivery. Record those
-limitations explicitly; never mark an unrun Desktop observation passed or
-infer it from CLI/CI. Any actually observed correctness/security failure,
-including in a normally unobserved path, still blocks readiness.
+Review publication and reading are scoped to the exact story, task, review generation, task input, and branch diff. One classifier in `factory_lib.py` supplies the same excluded prefixes and sorted committed product paths to review scope, current binary branch-diff hashing, and historical branch-diff hashing. Genuine-contribution proof cites its qualifying path and hunk inside that same branch diff and correlates it with admitted write and terminal evidence; no product-tree snapshot or second digest is introduced. A later or concurrent task review cannot replace another task's active or sealed proof. Pre-seal readers use the current selected complete generation. Normal sealed readers use the selected generation at the marker commit; the one-time legacy migration exception below binds a later upgrade generation to that immutable marker. Runtime readers never fall back to fixed review paths.
 
-Each row records actual OS/CPU, tested revision, runtime/build where installed,
-evidence kind, commands/interactions and durable logs. Live Mac observations
-identify trusted hook registrations, startup/resume/clear/compact, denied
-coordinator writes, admitted work and truthful terminal outcomes. Include
-completed question/event identity and mapping when an optional structured
-interaction is supported and actually used; otherwise use the permitted
-main-chat route and state the unavailable optional mechanism. Missing required
-behavior or an observed failure blocks; optional interactions are not invented.
+PORTABLE-DELIVERY-MIGRATION owns the one-time client upgrade migration. Before any target write, one fresh walk of both fixed-review roots builds a complete candidate universe. Every discovered candidate path is represented exactly once in a sorted coverage manifest as `eligible`, `excluded`, or `invalid`, with story/task identity, source paths, byte identities when readable, marker identity when present, and a reason. Eligible means a regular non-linked task-scoped fixed three-lens set, or a story-scoped fixed set whose own identity plus shipped history binds it to exactly one immutable task marker. Active, otherwise unshipped, incomplete-but-well-formed, multiply-bound, or unidentified sets are excluded and remain display-only; active work instead receives a fresh ordinary combined review. Malformed, linked, colliding, replaced, or ambiguous candidates are invalid and block the whole migration. A second independent walk must reproduce the complete universe count, classifications, and digest before mutation, so a classifier omission cannot disappear from both sides. Zero eligible sets may pass when the universe is empty or every discovered candidate is explicitly excluded; any invalid candidate refuses. Only eligible rows enter the migration inventory, and only after complete coverage validates may upgrade publish and read back a sealed-upgrade generation and selector. The later selection is valid only when its sealed-commit binding equals the immutable marker. Byte-identical retry is idempotent and fixed files become inert.
 
-The final integration implementer authors the existing
-factory/schemas/test-automated.json payload with generated_by: implementer;
-record_test_from_json.py --kind automated writes
-.factory/stories/FORGE-COORD-1/tasks/FORGE-COORD-1.1/tests.json. Use only the
-existing fields status, summary, commands_run, pass_fail_summary,
-remaining_gaps and blocking_findings. pass_fail_summary contains each existing
-label exactly once: native-cli-macos, native-desktop-macos,
-native-cli-linux-ubuntu-24.04-x64,
-native-desktop-linux-ubuntu-24.04-x64, native-cli-windows and
-native-desktop-windows. Each row states passed/failed/unobserved and its
-explicit evidence kind and references. Actual commands/interactions go in
-commands_run. Every failure and unobserved limitation appears in remaining_gaps.
-Actual failures and missing required evidence also appear in blocking_findings.
-The accepted unavailable Desktop/live-CLI observations remain limitations
-without becoming blockers merely because they were not observed. State the
-CI-backed coverage limitation in summary. Aggregate status and required
-verification pass only when the four required rows, other task checks and
-required client proof pass and no actual blocker remains. C10 propagates that
-result to local, committed-CI, board and seal checks. Independent review checks
-required results and limitations against actual logs. Evidence kind is text
-in existing fields, not a schema property, new report or second authority.
+Rejecting one finding reads the selected combined or rejection generation and creates an `origin=rejection` successor bound to that immediate source and the same combined root. Each successor preserves exact raw helper bytes, prior history, and unaffected lenses, changes only the cited projection, and appends the exact unique finding, reason, citation, actor, and durable lesson identity before pointer-last publication. Upgrade, fixed-only, unselected, copied, stale, incomplete-source, unrelated, no-match, ambiguous, and already-rejected sources refuse without changing selection.
 
-Main creates a separate fresh Task tracker client under /tmp with private
-origin, meaningful CI, and normal confirmed-spec/story/task lifecycle. It is
-a dogfood consumer, not harness-task contribution. Its UI task is user_facing
-true and must show real functional proof. Its admitted worker contributes real
-code, tests, verification, review, functional evidence, PR, and green CI.
-Forge parity integration is user_facing false under the current per-task
-definition but still needs the required platform results and lifecycle proof. Record exact
-client repository, commits, PR, and logs in the existing report; missing
-client proof blocks the claim.
+Local readiness, committed CI, the board, task PR readiness, and seal use the same task-aware proof predicate. Another task’s or story-level proof cannot fill a missing task artifact. A refusal changes no marker, Git, PR, or proof state.
 
-Accepted 0055/0056 quality rollout has bounded mechanical predecessors,
-separately reviewed semantic repairs, then mandatory Ruff 0.16.6 and Pyright
-1.1.411 over authored Python/tests with identical local/CI checks. Missing
-configuration and deliberate violations fail. Generated clients declare their
-own stack checks. Staging delays activation but never weakens final coverage.
-Full quality and parity ship only after activated quality, AC1-AC12, C1-C10,
-and the required local Mac and Linux/Windows CI results pass, with unobserved live-platform limitations stated.
+There is no mandatory preliminary independent inspection. Under Decision 0072, only `QUALITY-BASELINE` may open a draft PR early, and only when its required platform CI result cannot run otherwise after all predecessors close under incumbent CI. It is CI transport and grants no Forge proof, review, readiness, or seal authority. After the complete platform report passes, run one fresh formal review generation, reach ordinary readiness and seal, and promote the same draft. Without that CI need, open the PR only after seal.
 
-### Durable decisions, events, and client migration
+### Setup, retention, quality, and rollout
 
-Active decision output is generated from the existing parser and remains a
-view, never a second authority. Keep numeric IDs, paths, references,
-supersession links, and decision files. Existing root JSONL and historical
-idless copies remain readable and unchanged. At shipped-story retention,
-compact only attributed per-file events with actual payload/filename stable
-IDs into one atomic events.bundle.json container with format, story, and an
-events array of explicit IDs. Remove a source only after exact normalized
-comparison. Distinct IDs with equal text remain distinct. Different/malformed
-bundle, conflicting duplicate ID, missing story, or source mismatch refuses
-without deletion; identical bundle is a no-op. There is no sidecar, database,
-heuristic deduplication, Git history rewrite, or legacy events.jsonl rewrite.
-Proof, markers, and task seals remain shipping authority.
+Setup and repair select one coordinator for the current invocation using, in order, one valid explicit choice, one valid configured environment choice, one unambiguous detected host family, or an interactive terminal choice. A valid higher tier suppresses disagreement below it; multiple explicit values, an invalid selected tier, cancellation, end-of-input, or unattended ambiguity refuses before repair. The choice is not persisted. Init, adopt, and upgrade always install and preserve both adapters. Decision 0074 leaves the main coordinator model and reasoning to the user and host, so `.codex/config.toml` omits the three top-level main selectors; Forge-managed workers, exploration, grills, review, Lite, and named subagents retain explicit repository pins. Native operation never depends on Claude state. Architecture and task contracts own the concrete flags and host-detection signals.
 
-Use `.factory/stories/<KEY>/events.bundle.json` for scoped stories and
-`.factory/history/<KEY>/events.bundle.json` for legacy stories, with
-`format: forge-event-bundle/v1`, matching story and explicit event IDs. The
-existing event reader adds only those validated bundles while preserving its
-legacy JSONL and loose-file behavior; identical stable IDs deduplicate across
-bundle/loose sources during interrupted cleanup, conflicting content refuses.
-Do not read old idless history copies as new live events. After shipped proof
-is durable, write a sibling temporary file and atomically replace the bundle
-path; remove loose sources only after reading back and exactly comparing the
-durable bundle. Partial failure leaves sources and hard-gate proof intact.
+Event retention follows Decision 0064. The immutable bundle contains validated shipped-story events keyed by their lowercase 32-hex source filename stems and preserves each parsed payload exactly. Preview binds apply; source deletion requires exact durable readback. If a new eligible event appears after publication, preview and apply refuse, leave it loose and unchanged, and report its ID. Retry may delete only loose events already represented by identical members. V1 creates no successor shard and never rewrites the bundle. Legacy JSONL and historical copies remain byte-immutable.
 
-Use existing forge upgrade for one isolated migration per Git common
-directory. A dirty client gets an isolated upgrade worktree when its common
-directory can be safely resolved; preserve the original dirty checkout and
-hotfixes. Defer only that client's unsafe, shared, ambiguous, or unresolvable
-migration and continue independent authorized client migrations. Upgrade only
-owned machinery/doc contracts; client decisions, settings, CI, and evidence
-remain intact. The existing three-path ephemeral run-log allowlist is
-unchanged. Event cleanup cannot waive proof, markers, readiness, or shipping.
+`PORTABLE-DELIVERY-MIGRATION` must implement, verify, review, merge, and mark the client-safe capability before any external rollout. External rollout then uses only the exact repository inventory and branch/push/PR authorization bound into the approved amended story plan, refreshes each remote default-branch base, isolates dirty checkouts, preserves client work, and records real PR/check/CI outcomes as story-level evidence. Decision 0064 governs retention behaviour but is not cited as naming those repositories or granting their GitHub permissions. Missing or ambiguous bound inventory/authorization refuses external mutation.
 
-## Ten retained client failures and owner obligations
+The approved delivery graph's format task first commits the exact approved quality requirements and final Ruff configuration, then performs complete mechanical formatting over every tracked Python file below `factory/scripts/` and `factory/tests/`, including fixtures, with semantic-equivalence and preservation proof. The graph's quality task consumes the committed requirements and Ruff configuration bytes unchanged, owns Pyright configuration and enforcement, changes source bytes as needed to fix remaining semantic diagnostics, and runs the identical explicit source set locally and in CI. Client code outside those roots uses the client’s declared stack checks. Missing tools/configuration, omitted covered files, no-op checks, and planted lint/format/type violations fail.
 
-The following audit findings are implementation obligations, not completion
-claims. Each owner adds focused positive, negative, tamper, and recovery
-regressions where relevant.
+Platform evidence follows Decision 0065: real local macOS CLI and Desktop observations plus meaningful Ubuntu 24.04 x64 and native Windows CI regressions are required. Package/version/help smoke proves only installation and argument-parser startup. The task contract pins the exact package version used for a reproducible run and records it; this capability specification makes no unsupported fixture or model-floor claim. Only unavailable Linux or Windows live CLI/Desktop runtime observations may remain explicit accepted limitations. Missing local macOS CLI or Desktop evidence, a missing required CI row, or any observed failure blocks. WSL cannot certify native Windows.
 
-1. Review preflight reads story proof while producers write task proof.
-   NATIVE-FOREGROUND-ACTIVATE owns the first-task fix: review resolves
-   verify/tests through proof_path with exact task ID and refuses story,
-   sibling, absent, or stale proof. Add review.py as path 24 to the existing
-   23-path first scope.
-2. The actual question ledger can be omitted during task hydration.
-   SHARED-COORDINATOR-JOURNEY carries exact existing story/task question
-   records and identities into target ceremony context, without reviving a
-   plan-mode gate or inventing a ledger.
-3. Generated snapshots and migration input can consume complete-review
-   capacity. LEAN-WORKFLOW keeps generated SQL/snapshots/journals in semantic
-   and security review with an explicit measured risk contract, never blanket
-   exclusion or truncation.
-4. Git-local stage wording can make protected state appear invisible to an
-   admitted sandbox. The current production probe can read the Git control
-   directory and run forge next, so no read denial is claimed. LEAN-WORKFLOW
-   owns the phase/status wording repair; NATIVE-FOREGROUND-ACTIVATE only
-   probes actual native read and protected-write denial in its existing tests.
-   No writable snapshot/token, environment claim, or recorder bypass is a fix.
-5. Broad .github ownership hides client CI. LEAN-WORKFLOW treats only the
-   four exact factory-owned workflows as harness machinery and all other
-   .github paths as product input in measurement, review, readiness staleness,
-   scaffold/upgrade, and vendor integrity.
-6. Settled lint/engineering rulings disappear in fresh workers.
-   LEAN-WORKFLOW propagates each current task ruling through the existing
-   brief/contract and recorders, bound to story, task, contract, and signal.
-   Material scope/acceptance changes still amend, re-grill, and re-approve.
-7. Resume can choose the wrong proof chain when base_main_sha is absent.
-   SHARED-COORDINATOR-JOURNEY preserves task, owner, branch, worktree, base
-   commit, and task-level closeout mode; ambiguous recovery refuses.
-8. An older task can fall back to another task or story proof.
-   NATIVE-FOREGROUND-ACTIVATE owns task-bound readers and C10: an unqualified
-   T2 or story singleton cannot satisfy T1. Valid historical proof remains
-   readable only when its owner, task identity, and historical binding are
-   established; a legitimate shipped marker cannot pollute a current T3
-   singleton.
-9. Resume/migration can rewrite sealed records. SHARED-COORDINATOR-JOURNEY
-   preserves sealed task/stage/approval/proof bytes and refuses destructive or
-   uncertain migration; reconciliation uses existing owner/trunk rules.
-10. Sibling/trunk integration can overwrite sealed records.
-    SHARED-COORDINATOR-JOURNEY reconciles common-directory ownership and
-    immutable trunk markers without replacing an owner's sealed contract/proof,
-    retaining task identity through refresh and retry.
-
-The eight owners are NATIVE-FOREGROUND-ACTIVATE, LEAN-WORKFLOW,
-NATIVE-LIFECYCLE, SHARED-COORDINATOR-JOURNEY, PORTABLE-DELIVERY-MIGRATION,
-FORMAT-SOURCES, QUALITY-BASELINE, and FORGE-COORD-1.1. They replace the
-unapproved 39-row graph while preserving its preparation. Background lifecycle
-belongs to NATIVE-LIFECYCLE; interaction/recovery to
-SHARED-COORDINATOR-JOURNEY; decisions/events/clients to
-PORTABLE-DELIVERY-MIGRATION; source repairs to FORMAT-SOURCES; staged checks
-to QUALITY-BASELINE; integrated parity to FORGE-COORD-1.1. LEAN-WORKFLOW is
-user_facing false (backend gates, proof, CLI/docs). SHARED-COORDINATOR-JOURNEY
-is user_facing true for the actual board/coordinator UI journey. The separate
-Task tracker UI leaf is true; Forge integration is false despite live proof.
-These are ownership candidates, not approved wildcard scopes.
+The separate installed-client dogfood starts only after the mandatory-quality task marker required by the approved graph reaches trunk and follows its own normal task lifecycle, tests, independent review, functional proof, PR, and green CI. It is external evidence for the graph's integration task and never counts as another harness task or as the harness worker’s contribution.
 
 ## Acceptance criteria
 
-1. Required Codex Default decisions and approvals use ordinary main chat and
-   existing revision-bound commands without a tool-round prerequisite. Real
-   permitted CLI/Desktop structured questions pass the same provenance checks
-   as Claude across pre-story, current-story, other-story, malformed-story,
-   and historical eventless cases. Missing/canceled/mismatched/replayed,
-   empty/whitespace-only/multiple answers refuse. Offered-option and free-text
-   answers preserve exact text. All six grills use canonical frontier_empty:
-   true when appropriate, retain stated final-round compatibility, reject
-   explicit false/unsupported empty rounds, and add no question expiry.
-2. Both coordinators are denied direct locked writes while legitimate
-   delegated workers perform approved work. Registration timing, failed
-   admission, cancellation, revocation, expiry, resume, cleanup, and terminal
-   truth are tested.
-3. Codex-only launch, status, recovery, and setup require no Claude executable,
-   process, plugin metadata, or environment state. Static vendored Claude files
-   and the working companion/rescue route remain supported.
-4. Worker model/effort and every approval, admission, verification, review,
-   functional, PR, marker, and shipping gate are coordinator-independent.
-5. Startup, resume, clear, compaction, question, and Stop interception use
-   installed runtime registrations. Removing a required registration from one
-   adapter or both fails parity validation.
-6. At the review-only draft checkpoint, delegation, deterministic verification,
-   lossless independent review, and honest source proof run without fabricated
-   evidence; incomplete platform proof remains explicit. Final readiness,
-   marker, shipping, and closeout require the local Mac and Linux/Windows CI results and task/worktree/
-   shipping checks. Support-task proof remains separate; platform coverage rows
-   cover native Codex only, and CI-backed rows state only their observed coverage.
-7. After separately approved 0058 support tasks, final integration uses the
-   approved stage route, real schema recorders, actual runtime evidence, and
-   an unmerged review-only draft with no task marker. Missing required proof blocks
-   readiness; accepted unavailable-platform limitations remain explicit, and complete required proof permits the same task's normal closure.
-8. Setup honors explicit/environment/detected/interactive selection and
-   cancel/EOF refusal before install, passes selection to both doctors, and
-   preserves project configuration, historical evidence, and both adapters in
-   fresh, adopted, and upgraded clients.
-9. Both coordinators continue authorized work and resume after required
-   answers without repeated continuation prompts. Optional work continues when
-   facts suffice. Existing grill launcher context-file input uses a trusted
-   readable UTF-8 path whose separately labeled untrusted contents cannot alter
-   artifact identity, scope, decisions, evidence, or read-only authority;
-   missing files refuse. Existing material-shape reread preserves nonblank
-   reason and refuses blank reason, missing-reason second read, or beyond-cap
-   reread. No new evidence family is added.
-10. Coordinator switching occurs only at completed-task boundary after
-    active-worker checks and actual no-pending-question observation in the
-    existing test report. Active work, incomplete proof, unanswered/canceled
-    approval, and conflicting workers refuse; no cross-session registry exists.
-11. Shared presentation is required before first approval and every material
-    spec/plan revision; unchanged technical corrections within standing
-    authorization carry the existing binding without repeated ceremony. Main
-    owns story planning, grill, approval, frozen decomposition, scheduling,
-    and human questions; each task owns JIT through PR/green CI in its
-    worktree. The first native task performs the full 0063 source-contract
-    then target-contract sequence and refuses placeholders/source-bound proof;
-    its current gates remain until LEAN-WORKFLOW ships. Exercise owner
-    reads/retries, disjoint dependency-ready work, task-only enrichment, safe
-    trunk reconciliation, real handles, stable/custom titles, scratchpad
-    recovery, quiet results, host restrictions, and the unchanged Claude
-    route. No new management framework is introduced.
-12. Separately approved quality predecessors retain verification/review. Final
-    activation covers authored source/tests with pinned Ruff lint/format and
-    Pyright, identical local/CI checks, missing-configuration and deliberate
-    violation refusals, and client stack checks. No suppression, truncation,
-    review-limit bypass, or artificial clean result is allowed; the activated
-    baseline passes on integrated parity before shipping.
+1. **Human answers.** Both coordinators accept the same permitted human decisions. New structured rounds bind runtime, session, fresh event ID, question index, exact scope/input/content, and answer; multi-question calls are all-or-nothing, optional non-gate rounds cannot satisfy a gate, same-gate/story/task re-recording follows Decision 0067, and cross-binding replay, cancellation, malformed answers, wrong binding, and legacy reuse refuse.
+2. **Protected writes.** On paths the existing classifier protects, coordinator and unregistered writes are denied, admitted task-scoped writes succeed, and stale, revoked, wrong-task, or wrong-worktree authority refuses. Task ownership and review cover changed orchestration-surface documentation without claiming a new phase-dependent hook lock.
+3. **Native independence.** Native launch, status, recovery, setup, and proof do not depend on Claude or plugin state, while the Claude route keeps equivalent gates. Decision 0060's narrow POSIX signal-mask restoration and truthful pre/post-process failure rules remain covered.
+4. **Worker policy and gates.** Both coordinators preserve the same pinned Forge-managed worker and subagent lanes, worker admission, approvals, tests, review, PR, CI, and closeout gates; each main coordinator inherits the user's host-selected model and reasoning under Decision 0074. Review tests enforce one helper call and immutable generation per attempt, exact lens parsing, rejection successors, blocking selection, and clean-selected-only certification.
+5. **Hook delivery.** Both adapters validate the five-row event matrix, exact current tool matchers, and each host's real blocking capability. Focused tests and the automated report prove success, failure, a structured error with distinct linked `correlationId` and `errorId`, redaction, one metric increment, trace correlation, and truthful propagation; omissions or overstatement fail.
+6. **Honest evidence.** Preparation and diagnostic output are labelled as such. For task-bound gates, only recorder-produced exact-task current proof satisfies the gate; global and story gates use their existing scoped recorder identities.
+7. **Genuine native delivery.** Using the same binary branch-diff identity from recorded task base to contribution commit, task evidence identifies at least one qualifying in-scope hunk, correlates it to the admitted launch and terminal row, and ties it to an acceptance criterion or blocking finding. Comments, formatting-only edits, proof metadata, and prepared or pre-admission bytes do not qualify. The selected independent review verifies the cited hunk. No product-tree snapshot, second digest, preliminary review, or proof protocol is added.
+8. **Safe setup, upgrade, and retention.** Setup selects one coordinator for the invocation; init, adopt, and upgrade preserve both adapters plus client settings, client-added agents, CI, history, hotfixes, and dirty state. Retention tests prove shipped eligibility, distinct IDs, collisions, readback before deletion, byte-identical retry, late-event refusal, and immutable legacy/history/bundle files.
+9. **Continuation and context.** Settled rulings reach fresh workers; unaffected authorized work continues; the optional context input is supported and, when supplied, is complete and capacity-checked or refuses before launch without truncation. Tests prove private transient permissions, terminal deletion, bounded verified stale cleanup, and that durable logs/evidence contain only supplied/not-supplied, byte count, and an opaque context ID.
+10. **Coordinator change.** A developer- or host-directed cooperative change occurs only between completed tasks, with the task marker and green CI on refreshed trunk, no active worker, and no open required ordinary-chat question signal for the story. The developer or host stops the old coordinator and the new coordinator resumes through `forge next`; Forge does not record or mechanically prove that stop, an absent partial structured exchange, stale resumption, or concurrent coordination. Those capabilities remain outside this story. Shared tests the observable gates and required-question signal provenance only.
+11. **Developer journey.** Both coordinators show one exact protected story/task snapshot whose artifact digests match, preserve the exact owner/worktree/base/stage tuple, retry only a byte-identical operation or a freshly validated unchanged head, and refuse stale, ambiguous, or conflicting recovery before mutation. Empty dependencies inherit the immediate predecessor; an explicit nonempty list selects exactly those dependencies. The board derives the same snapshot and cannot show another task's review as current proof.
+12. **Full quality, retention, and platform proof.** The complete pinned source/test quality baseline, required local Mac CLI/Desktop evidence, required Linux/Windows CI, retention proof, dogfood proof, and authorized external rollout evidence pass before parity ships; Toolshed counts as resolved only while D-0033 remains an explicit zero-mutation deferral whose identity-and-authorization trigger has not fired.
 
-## Parity contract labels C1-C10
+## Parity labels
 
-C1. Setup uses explicit flag, environment, unambiguous detection, then TTY-only
-interactive choice. Ambiguous/no-choice unattended runs, cancellation, EOF,
-and unknown runtime refuse before installation; both doctor calls receive the
-same choice and Codex has no Claude dependency.
+- **C1 Setup:** per-invocation selection, refusal, and dual-adapter preservation are equivalent.
+- **C2 Questions:** event/question identity, exact scope/input/content, eligibility, single use within one pass, and Decision 0067 same-gate/story/task re-recording are enforced consistently; historical grills remain readable and legacy records cannot be newly consumed.
+- **C3 Hooks:** the five-row adapter matrix and exact current tool matchers are installed, validated, and exercised on applicable runtimes.
+- **C4 Lifecycle:** launch, registration, status, cancellation, terminal state, revocation, recovery, distinct linked workflow/error identities, structured errors, bounded metrics, trace correlation, signal-mask behavior, and refusal are truthful.
+- **C5 Distribution:** both adapters, the Decision 0074 user-selected main policy, the pinned Forge-managed team registry, and validated event retention survive init, adopt, upgrade, and client preservation.
+- **C6 Context:** complete grounded inputs and settled rulings cross fresh contexts without creating authority; a supplied optional context file is never truncated, uses private transient storage, is deleted at terminal publication, leaves no sensitive durable path/digest/bytes, and an oversized or unknown-capacity context launch refuses.
+- **C7 Delivery:** task-owned planning through green CI, conditional functional proof, between-task coordinator changes, and dependency-ready scheduling preserve the approved graph.
+- **C8 Evidence:** real native contribution, required platform checks, accepted limitations, and dogfood evidence are stated without substitution.
+- **C9 Review input:** each review receives the complete approved task contract, automated report, exact diff, and relevant decisions.
+- **C10 Proof:** every consumer uses the same exact-task complete-proof predicate, current or sealed selected review generation, conditional functional proof, and verified one-time upgrade provenance.
 
-C2. New Claude/Codex structured events preserve actual story, session, event,
-tool-call, question, and answer identity. Story gates reject other-story or
-unbound claims; project gates accept valid pre-story/current-story claims.
-Replay, cancellation, malformed, and mismatch fail while completed historical
-grills remain valid. Required Codex approvals use ordinary chat; optional
-structured rounds and technical passes never imply approval.
-
-C3. Each adapter requires startup, question, compaction, write-policy,
-completion, and Stop handlers, including startup/resume/clear/compact
-SessionStart. Removing/replacing any required source in one or both adapters
-fails validation.
-
-C4. Foreground/background startup failure before process creation publishes
-failure without PID or exit code. Registered workers retain process-bound
-admission, verified cleanup, revocation, observable status, refusal of expired
-authority, and refusal of incomplete output.
-
-C5. Init/adopt/upgrade deliver native assets through ownership and target
-boundary checks, preserve client settings/historical proof, retain Claude,
-and retire only unchanged harness-owned presets.
-
-C6. Optional untrusted context reaches required cold readers through the
-existing launcher without changing artifact identity, finding resolution,
-frontier checks, model policy, or read-only authority. The current brief and
-recorders carry settled facts; no compulsory round, forced closing question,
-clean-next-round instruction, or new evidence family is added. Reread reason
-and refusals are preserved. forge next routes active missing/draft specs before
-requirements and authorized work continues after answers/gates.
-
-C7. Lifecycle coverage proves approved delegation, task-scoped tests/reviews,
-conditional functional proof, completed-task handoff, active-worker refusal,
-and actual no-pending-question observation. Unanswered/canceled/replayed
-questions do not satisfy approval; no cross-session registry exists.
-
-C8. A real native worker contributes after stage start and before stage done,
-passes verification and independent review, and records all required
-local Mac and Linux/Windows CI results before final parity readiness/shipping, with unavailable live-platform observations reported honestly.
-
-C9. Task, branch, and autoreview briefs include complete approval-bound task
-plan and automated-test report. Prose deliverables remain valid when the
-approved plan/contract and actual reports let review assess them. Missing,
-unapproved, stale plan text, or incomplete validation refuses. Cleanup retains
-required Claude and historical consumers. Review reads proof by exact task
-identity.
-
-C10. Managed save metadata preserves an unchanged story-plan grill while
-substantive changes invalidate it. Readiness requires task verify, automated
-tests, three explicit review assessments, and conditional functional proof.
-Shared predicates reject blockers even with passed status and require
-functional proof for user-facing tasks. Task readers reject unqualified
-cross-task/story fallback while retaining historically bound proof. They retain
-history compatibility and never use a legitimate shipped marker as a current
-task singleton.
-
-## Proof and handoff boundary
-
-The platform evidence contract, separate /tmp Task tracker client, first native
-source/target transition, original preparation bytes, ten client failures,
-AC1-AC12, and C1-C10 are closure obligations. C1-C10 alone cannot establish
-whole-spec closure. Before recording contracts, map each criterion to an
-owning task and actual evidence. Support tasks may own complete prepared native
-changes, workflow/workspace/delivery changes, or quality predecessors under
-0058/0055/0056; final parity owns integrated behavior and confirms activated
-quality and required local Mac/Linux/Windows CI proof, with live-platform limitations stated. No omitted or partially reviewed bytes may ship.
-
-The approved roadmap amendment at e218db6 and reviewed proposal digest
-c37199034d36f19942d133c691a5bc234df1f756a9c1347ae176640090af27ab remain
-history. Preserve story/epic identity, order, unrelated fields, and no task
-IDs in story depends_on. Exact scopes/tests are bound by saved story/task
-plans; the replaced 39-row graph is not an approved wildcard. Temporary
-review, /tmp, and preparation paths are inputs until needed facts are
-preserved in repository-owned records. This draft does not authorize
-implementation, merge, or release outside the approved task route. Platform evidence follows accepted 0065; CI is never represented as unobserved live Desktop behavior.
+The story closes only when every task marker required by the bound approved story plan is on trunk, AC1–AC12 and C1–C10 pass, the Brief has been aligned through its normal owner, mandatory quality and retention are active, required platform and dogfood proof is complete, every externally authorized rollout row is resolved, with Toolshed resolved only by the still-untriggered zero-mutation D-0033 deferral or by a later authorized rollout, and the existing story outcome is recorded. The plan and decomposition own the complete graph; changing the current D-0034 or one-time-migration owner also amends this capability contract. Existing structured-question, event, and review evidence families may gain the fields and task-scoped selection defined here, but they remain the same authority chain: no parallel permission source, second registry, or separate review procedure is introduced.

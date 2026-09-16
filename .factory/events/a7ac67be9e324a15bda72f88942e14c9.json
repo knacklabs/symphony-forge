@@ -1,0 +1,1 @@
+{"event": "signal-resolved", "generated_by": "orchestrator", "at": "2026-09-12T00:49:07+00:00", "story": "FORGE-COORD-1", "detail": "S-0016-a4f6: Fix within the approved remaining-delegate boundary; no plan or scope change. Add review-run task identity, resolve omitted --task from the authoritative active task, and refuse token/task mismatch. R"}

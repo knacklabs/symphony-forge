@@ -1,0 +1,86 @@
+{
+  "generated_by": "autoreview",
+  "task_id": "GATES-1-T1",
+  "score": 9,
+  "summary": "quality lens over GATES-1-T1 (3 product path(s), 069d179..b32834d, Codex via the autoreview skill at --max-priority P2): 0 blocking, 1 non-blocking. VERDICT GATES-1-T1-C1: implemented \u2014 factory/scripts/record_grill_from_json.py:93 excludes the current evidence path regardless of round-set equality\nVERDICT GATES-1-T1-C2: partial \u2014 factory/scripts/record_grill_from_json.py:93 allows an omitted prior round to lose its cross-gate ownership\nVERDICT GATES-1-T1-C3: partial \u2014 factory/scripts/record_grill_from_json.py:93 can release an omitted global round for reuse by another story\nVERDICT GATES-1-T1-C4: partial \u2014 factory/scripts/record_grill_from_json.py:93 can release an omitted prior round for another task id\nVERDICT GATES-1-T1-C5: implemented \u2014 factory/scripts/record_grill_from_json.py:57 retains active-story and global directories\nVERDICT GATES-1-T1-C6: implemented \u2014 factory/tests/test_round_provenance.py:134 covers a pre-story round at a story gate\nVERDICT GATES-1-T1-C7: implemented \u2014 factory/tests/test_round_provenance.py:141 asserts rejection without a round and invokes the successful one-round case\nVERDICT GATES-1-T1-C8: implemented \u2014 factory/scripts/record_grill_from_json.py:93 changes only consumption validation, and the recorded untouched ledger-shape suite passes\n\nThe intended same-pass re-recording works, but replacing rather than extending its round set can erase ownership evidence and permit prohibited reuse elsewhere.",
+  "blocking_findings": [
+    {
+      "category": "plan-contract-partial",
+      "area": "plans/active/GATES-1-gates-stale-only-on-what-they-read.md \u00a7 Acceptance Criteria",
+      "summary": "GATES-1-T1-C2: A round already consumed by a pass at a different gate is refused"
+    },
+    {
+      "category": "plan-contract-partial",
+      "area": "plans/active/GATES-1-gates-stale-only-on-what-they-read.md \u00a7 Acceptance Criteria",
+      "summary": "GATES-1-T1-C3: A round already consumed by a pass for a different story is refused"
+    },
+    {
+      "category": "plan-contract-partial",
+      "area": "plans/active/GATES-1-gates-stale-only-on-what-they-read.md \u00a7 Acceptance Criteria",
+      "summary": "GATES-1-T1-C4: A round already consumed by a pass for a different task id is refused"
+    }
+  ],
+  "non_blocking_findings": [
+    {
+      "category": "bug",
+      "area": "factory/scripts",
+      "summary": "Re-recording can release previously consumed rounds to other gates (factory/scripts/record_grill_from_json.py:93): When a pass at `current_path` is re-recorded with a replacement set that omits an old round, this unconditional skip permits the update."
+    }
+  ],
+  "recommendation": "approve-with-caveats",
+  "reviewed_scope": [
+    "factory/board/example/plans/roadmap.json",
+    "factory/scripts/record_grill_from_json.py",
+    "factory/tests/test_round_provenance.py"
+  ],
+  "skills_used": [],
+  "contract_verdicts": [
+    {
+      "contract_id": "GATES-1-T1-C1",
+      "verdict": "implemented",
+      "evidence": "factory/scripts/record_grill_from_json.py:93 excludes the current evidence path regardless of round-set equality"
+    },
+    {
+      "contract_id": "GATES-1-T1-C2",
+      "verdict": "partial",
+      "evidence": "factory/scripts/record_grill_from_json.py:93 allows an omitted prior round to lose its cross-gate ownership"
+    },
+    {
+      "contract_id": "GATES-1-T1-C3",
+      "verdict": "partial",
+      "evidence": "factory/scripts/record_grill_from_json.py:93 can release an omitted global round for reuse by another story"
+    },
+    {
+      "contract_id": "GATES-1-T1-C4",
+      "verdict": "partial",
+      "evidence": "factory/scripts/record_grill_from_json.py:93 can release an omitted prior round for another task id"
+    },
+    {
+      "contract_id": "GATES-1-T1-C5",
+      "verdict": "implemented",
+      "evidence": "factory/scripts/record_grill_from_json.py:57 retains active-story and global directories"
+    },
+    {
+      "contract_id": "GATES-1-T1-C6",
+      "verdict": "implemented",
+      "evidence": "factory/tests/test_round_provenance.py:134 covers a pre-story round at a story gate"
+    },
+    {
+      "contract_id": "GATES-1-T1-C7",
+      "verdict": "implemented",
+      "evidence": "factory/tests/test_round_provenance.py:141 asserts rejection without a round and invokes the successful one-round case"
+    },
+    {
+      "contract_id": "GATES-1-T1-C8",
+      "verdict": "implemented",
+      "evidence": "factory/scripts/record_grill_from_json.py:93 changes only consumption validation, and the recorded untouched ledger-shape suite passes"
+    }
+  ],
+  "aspect": "quality",
+  "review_run_id": "1dc110f27362ba773ebf72288ed2c9d33c70e6490a6c484032dcab6b1f8c079f",
+  "brief_sha256": "0ef98f5606a5fa86c70d3259f29d7b92aaab386c7c8923f13136b4d7b41b1819",
+  "branch_diff_digest": "2b1c0be8d62ce66ee1121035887209ed7c7e25936587679d845890648a66e5b3",
+  "residual_risks": [],
+  "recorded_at": "2026-09-12T12:18:32+00:00",
+  "commit": "b32834d61038e82525488e864bb0331fd94de66b"
+}

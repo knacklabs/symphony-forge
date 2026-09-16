@@ -1,0 +1,12 @@
+{
+  "topic": "review-token-binds-current-delta",
+  "lesson": "Public combined-review publication must require token.branch_diff_digest to equal the candidate and current effective delta and must recompute review_run_id from brief_sha256 plus that delta. Add a regression where an old token is paired with a reprojected current candidate.",
+  "source": "S-0022-ec00",
+  "applies_to": [
+    "factory/scripts/record_review_from_json.py",
+    "factory/tests/test_review_task_delta.py"
+  ],
+  "severity": "high",
+  "generated_by": "autoreview",
+  "added_at": "2026-09-12T02:05:15+00:00"
+}

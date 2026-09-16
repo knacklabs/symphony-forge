@@ -1,0 +1,16 @@
+{
+  "generated_by": "claude-code:plan-mode",
+  "questions": [
+    {
+      "question": "symphony-forge has an in-flight story, upgrade-preserves-doc-contracts, that GATES-1 would displace. How do you want to handle it?",
+      "options": [
+        "Park it deliberately and start GATES-1 (Recommended)",
+        "Finish that story first",
+        "Tell me what that story is for"
+      ],
+      "chosen": "Park it deliberately and start GATES-1 (Recommended)"
+    }
+  ],
+  "at": "2026-09-11T17:38:26.035327+00:00",
+  "session_id": "b4051e43-dbea-4d62-ba73-ae6210455474"
+}

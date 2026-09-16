@@ -1,0 +1,10 @@
+{
+  "event": "open",
+  "id": "Q-0133-1c6f",
+  "profile": "quickfix",
+  "reason": "already_serving(port) returns True for ANY running board, not one serving this repo: it only checks that /api/state has a root, never that the root matches. So a board open on another checkout makes 'forge board' print 'already running' and open someone else's board, and makes 'forge next' claim a board is up for a repo that has none. It also makes test_gates non-hermetic \u2014 the suite fails on a developer machine purely because a board happens to be running.",
+  "started_at": "2026-09-12T08:08:23+00:00",
+  "max_files": 5,
+  "files": [],
+  "harness_source": true
+}
