@@ -1,0 +1,10 @@
+{
+  "event": "done",
+  "id": "Q-0150-6dd7",
+  "profile": "degraded",
+  "kind": "degraded",
+  "reason": "Add the regression tests for the two autoreview findings on PR #200 that the P2 pass caught and my hand-verification missed: scope-blindness must not be inferred from prose that a genuine chunk-oriented defect can contain, and a contract no pass attested must block rather than satisfy the gate. The reviewer supplied a concrete counter-example ('retry is missing from chunk processing at worker.py:42'), which becomes the pinned case so the narrowed matcher cannot regress to the two-independent-signals form.",
+  "started_at": "2026-09-16T04:32:54+00:00",
+  "completed_at": "2026-09-16T04:32:54+00:00",
+  "files": []
+}

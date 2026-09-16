@@ -1,0 +1,11 @@
+{
+  "event": "open",
+  "id": "Q-0151-fbce",
+  "profile": "degraded",
+  "reason": "Drop the unverified verdict from PR #200 entirely and keep upstream's fail-closed partial. Autoreview's P1 said an absent verdict must stay blocking; merging origin/main into the branch then surfaced test_a_contract_with_neither_record_nor_line_is_partial_fail_closed, which main has carried since 1941dc6d and which asserts exactly that. unverified appears zero times on main and only in my branch (review.py 3, recorder 6, schema 1), so it is my invention and it regresses a guarantee upstream already makes and tests. Reverting the three files' unverified handling to origin/main is smaller than patching it to block, removes a verdict value from the schema, and stops the divergence.",
+  "started_at": "2026-09-16T04:34:17+00:00",
+  "max_files": 5,
+  "files": [],
+  "harness_source": true,
+  "kind": "degraded"
+}
