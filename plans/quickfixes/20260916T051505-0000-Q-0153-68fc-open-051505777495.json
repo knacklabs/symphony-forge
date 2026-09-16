@@ -1,0 +1,11 @@
+{
+  "event": "open",
+  "id": "Q-0153-68fc",
+  "profile": "degraded",
+  "reason": "Add the regression coverage autoreview asked for (P2) on the sibling-worktree governance switch in pre_tool_use.py. I had shipped that fix untested and said so rather than implying coverage; the reviewer correctly called the absence a defect, because an ungoverned write is exactly the failure the hook exists to prevent and nothing would notice if the switch regressed. The test creates a real sibling worktree and invokes the hook with an absolute Edit target inside it, asserting the write is judged against THAT checkout rather than the session cwd's.",
+  "started_at": "2026-09-16T05:15:05+00:00",
+  "max_files": 5,
+  "files": [],
+  "harness_source": true,
+  "kind": "degraded"
+}
