@@ -83,7 +83,13 @@ else:
     findings.append(record("C2", "implemented", "src/c.py", 1, "read from the tree"))
 findings.append({"title": "[quality] Name the queue limit", "body": "50 is a bare literal",
                  "priority": "P2", "confidence": 0.8, "category": "maintainability",
-                 "source_attribution": None, "code_location": {"file_path": "src/a.py", "line": 1}})
+                 "source_attribution": None,
+                 "code_location": {"file_path": diff[0] if diff else "src/a.py", "line": 1}})
+if os.environ.get("FAKE_DEFECT_OUTSIDE") == label:
+    findings.append({"title": "[security] Token echoed", "body": "logs the token",
+                     "priority": "P1", "confidence": 0.9, "category": "security",
+                     "source_attribution": None,
+                     "code_location": {"file_path": "src/z.py", "line": 1}})
 explanation = ("BEGIN FORGE ASSESSMENT quality\nRead.\nEND FORGE ASSESSMENT quality\n"
                "BEGIN FORGE ASSESSMENT performance\nNo repeated work.\n"
                "END FORGE ASSESSMENT performance\n"
@@ -93,9 +99,16 @@ if fail_once or os.environ.get("FAKE_FAIL_ALWAYS") == label:
     explanation = explanation.replace("END FORGE ASSESSMENT security", "")
 provider = {"findings": findings, "overall_correctness": "patch is incorrect",
             "overall_explanation": explanation, "overall_confidence": 0.9}
-out.write_text(json.dumps({**provider, "provider_report": provider, "review_status": "findings"},
-                          indent=2) + "\n", encoding="utf-8")
-sys.exit(1)
+# Like the tool: a finding located outside the bundle is set aside verbatim,
+# the result is incomplete, and the exit code is 2.
+kept = [f for f in findings if f["code_location"]["file_path"] in diff]
+aside = [f for f in findings if f["code_location"]["file_path"] not in diff]
+report = {**provider, "findings": kept, "provider_report": provider,
+          "review_status": "incomplete" if aside else "findings"}
+if aside:
+    report["scope_rejected_findings"] = aside
+out.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
+sys.exit(2 if aside else 1)
 '''
 
 
@@ -321,7 +334,12 @@ def test_a_big_diff_runs_as_parallel_groups_each_seeing_its_files_and_the_whole_
     verdicts = {v["contract_id"]: v["verdict"] for v in generation["lenses"]["quality"]["contract_verdicts"]}
     assert verdicts == {"C1": "implemented", "C2": "partial"}
     assert outcome["blocking"] == 1 and outcome["stamped"] is False  # the partial contract
-    assert outcome["caveats"] == 1  # the P2, once, though three groups raised it
+    assert outcome["caveats"] == 3  # one P2 per group, each located in its own bundle
+    # Every group's C2 record was located in src/c.py: set aside by the tool
+    # in the two groups that do not hold it, counted by forge, and the
+    # partial from the group that holds it wins.
+    assert raw["review_status"] == "incomplete"
+    assert len(raw["scope_rejected_findings"]) == 4  # C1 x2 (a.py) + C2 x2 (c.py) from the other groups
     assert "pnpm-lock.yaml" in generation["lenses"]["quality"]["reviewed_scope"]
 
 
@@ -417,7 +435,8 @@ def test_each_group_gets_its_own_launcher_and_is_told_the_tree_is_readable(
             or seen[f"{label}.attempt1"]["cwd"] in script
         launchers.add(launcher)
         note = seen[f"{label}.attempt1"]["prompts"][0]
-        assert "ARE in the tree at HEAD" in note and "never write partial or missing" in note
+        assert "ARE in the tree at HEAD" in note
+        assert "set aside by the review tool and counted by the harness" in note
     assert len(launchers) == 3
 
 
@@ -441,3 +460,105 @@ def test_the_contracts_describe_one_pass_parallel_groups_and_p3_depth():
     prompt = review_mod._combined_prompt({"id": "T1", "plan_contracts": TASK_CONTRACTS}).decode()
     assert "FINDING FORM" in prompt and "missing context is not proof" in prompt
     assert "not an executed exploit" in prompt
+
+
+# --------------------------------------------- verdict records set aside
+
+
+def test_a_set_aside_verdict_record_is_counted_and_a_set_aside_defect_is_refused():
+    task = {"id": "T1", "plan_contracts": TASK_CONTRACTS}
+    in_bundle = _finding("[quality] VERDICT C1: implemented", "src/a.py", 1,
+                         "src/a.py:1 filters", priority="P3", category="maintainability")
+    outside = _finding("[quality] VERDICT C2: partial", "src/c.py", 1,
+                       "src/c.py:1 reads history with no check", priority="P3",
+                       category="maintainability")
+    provider = {"findings": [in_bundle, outside], "overall_correctness": "patch is correct",
+                "overall_explanation": _wrapper([])["overall_explanation"],
+                "overall_confidence": 0.9}
+    # What the tool writes for a bundle of src/a.py alone.
+    wrapper = {**copy.deepcopy(provider), "findings": [copy.deepcopy(in_bundle)],
+               "provider_report": copy.deepcopy(provider),
+               "scope_rejected_findings": [copy.deepcopy(outside)], "review_status": "incomplete"}
+    assert [label for label, _ in _actual_passes(wrapper)] == ["pass 1/1"]
+    lenses = _project_combined_report(task, wrapper, ["src/a.py"], "a" * 40, "b" * 40, [],
+                                      [task], {"T1": "active"}, ())
+    verdicts = {v["contract_id"]: v["verdict"] for v in lenses["quality"]["contract_verdicts"]}
+    assert verdicts == {"C1": "implemented", "C2": "partial"}
+    assert [f["category"] for f in lenses["quality"]["blocking_findings"]] == ["plan-contract-partial"]
+    assert lenses["quality"]["non_blocking_findings"] == []  # a record is never a finding
+    # A set-aside DEFECT is the tool's rule doing its job: refused as before.
+    defect = _finding("[security] Token echoed", "src/z.py", 1, priority="P1", category="security")
+    provider2 = {**copy.deepcopy(provider), "findings": [in_bundle, defect],
+                 "overall_correctness": "patch is incorrect"}
+    refused = {**copy.deepcopy(provider2), "findings": [copy.deepcopy(in_bundle)],
+               "provider_report": copy.deepcopy(provider2),
+               "scope_rejected_findings": [copy.deepcopy(defect)], "review_status": "incomplete"}
+    with pytest.raises(SystemExit):
+        _actual_passes(refused)
+    # And the trust check: kept plus set-aside must be the raw findings, exactly.
+    tampered = copy.deepcopy(wrapper)
+    tampered["scope_rejected_findings"][0]["body"] = "edited after the fact"
+    with pytest.raises(SystemExit):
+        _actual_passes(tampered)
+
+
+def test_wf_bio_1_t2_shape_a_docs_only_group_sets_aside_every_code_verdict():
+    """WF-BIO-1 T2, 2026-09-16: group 1 held 66 code files and recorded all ten
+    contracts (C2 partial) plus two P2s; group 2 held two docs files, kept one
+    record located in a doc and had nine set aside for citing group 1's
+    code. Forge refused group 2 three times. Now the merge counts the nine,
+    the worst verdict wins, and the close ends at C2 partial."""
+    ids = [f"T2-C{n}" for n in range(1, 11)]
+    task = {"id": "T2", "plan_contracts": [
+        {"id": cid, "statement": f"contract {cid}", "source": "plan"} for cid in ids]}
+    code = {cid: f"apps/api/src/{cid.lower()}.ts" for cid in ids}
+    docs = ["docs/architecture/permission-matrix.md", "docs/context/field-matrix.md"]
+
+    def record(cid, verdict, path):
+        return _finding(f"[quality] VERDICT {cid}: {verdict}", path, 7,
+                        f"{path}:7 evidence", priority="P3", category="maintainability")
+    g1_findings = [record(cid, "partial" if cid == "T2-C2" else "implemented", code[cid])
+                   for cid in ids] + [
+        _finding("[performance] Batch punch inserts", code["T2-C5"], 80),
+        _finding("[security] Make failed-authentication admission atomic", code["T2-C1"], 31,
+                 category="security")]
+    group_1 = _wrapper(g1_findings)
+    g2_all = [record(cid, "implemented", code[cid]) for cid in ids if cid != "T2-C9"] + [
+        record("T2-C9", "implemented", docs[0])]
+    g2_provider = {"findings": g2_all, "overall_correctness": "patch is correct",
+                   "overall_explanation": _wrapper([])["overall_explanation"],
+                   "overall_confidence": 0.96}
+    group_2 = {**copy.deepcopy(g2_provider), "findings": [copy.deepcopy(g2_all[-1])],
+               "provider_report": copy.deepcopy(g2_provider),
+               "scope_rejected_findings": [copy.deepcopy(f) for f in g2_all[:-1]],
+               "review_status": "incomplete"}
+
+    merged = merge_group_reports([*flatten_passes(group_1), *flatten_passes(group_2)])
+    assert merged["review_status"] == "incomplete" and len(merged["scope_rejected_findings"]) == 9
+    assert [label for label, _ in _actual_passes(merged)] == ["chunk 1/2", "chunk 2/2"]
+    scope = sorted(set(code.values()) | set(docs))
+    lenses = _project_combined_report(task, merged, scope, "a" * 40, "b" * 40, [], [task],
+                                      {"T2": "active"}, ())
+    verdicts = {v["contract_id"]: v["verdict"] for v in lenses["quality"]["contract_verdicts"]}
+    assert verdicts == {cid: ("partial" if cid == "T2-C2" else "implemented") for cid in ids}
+    assert [f["category"] for f in lenses["quality"]["blocking_findings"]] == ["plan-contract-partial"]
+    assert len(lenses["performance"]["non_blocking_findings"]) == 1
+    assert len(lenses["security"]["non_blocking_findings"]) == 1
+    assert lenses["quality"]["non_blocking_findings"] == []
+
+
+def test_a_group_with_a_set_aside_defect_retries_with_the_files_named(
+        repo, tmp_path, monkeypatch, capsys):
+    _built(repo, tmp_path)
+    monkeypatch.setenv("FAKE_SEEN", str(tmp_path / "seen"))
+    monkeypatch.setenv(SPLIT_ENV, "1")
+    monkeypatch.setenv("FAKE_DEFECT_OUTSIDE", "group-2")  # every attempt, so it stops
+    with pytest.raises(SystemExit):
+        review_task(repo, "T1", skill=str(_fake_skill(tmp_path)), engine="claude")
+    printed = capsys.readouterr().out
+    assert "group-2 refused (combined review helper result is non-certifying)" in printed
+    seen = _seen(tmp_path)
+    retry = seen["group-2.attempt2"]["prompts"][1]
+    assert retry.startswith("RETRY 2: Your previous pass was refused: the review tool set aside")
+    assert "[security] Token echoed @ src/z.py" in retry
+    assert "located in one of this bundle's files: src/b.py" in retry

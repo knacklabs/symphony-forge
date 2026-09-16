@@ -551,11 +551,43 @@ def _validate_processed_report(report: object, required: set[str]) -> dict:
     return report
 
 
+def _is_verdict_record(finding: object) -> bool:
+    """A quality-lens VERDICT record, by its title alone."""
+    title = finding.get("title") if isinstance(finding, dict) else None
+    tag = "[quality] "
+    if not isinstance(title, str) or not title.startswith(tag):
+        return False
+    return bool(VERDICT_RECORD.match(" ".join(
+        unicodedata.normalize("NFC", title[len(tag):]).split())))
+
+
+def set_aside_verdict_records(report: dict) -> list[dict]:
+    """The verdict records the helper set aside as outside its diff scope.
+
+    The helper's scope rule is for defects: a defect must be in the diff it
+    was handed. A verdict record is an attestation forge asked for, and the
+    reviewer cites the line it read wherever it is (0076): unchanged code in
+    one call, another group's file in a split. The helper keeps what it sets
+    aside verbatim under scope_rejected_findings and marks the result
+    incomplete; forge validates those records itself and counts them. Any
+    other set-aside item is a defect the helper would not certify, and the
+    result is refused as before (WF-BIO-1 T2, 2026-09-16)."""
+    rejected = report.get("scope_rejected_findings")
+    if rejected is None:
+        return []
+    if not isinstance(rejected, list) or not rejected \
+            or not all(_is_verdict_record(finding) for finding in rejected):
+        fail("combined review helper result is non-certifying")
+    return rejected
+
+
 def _validate_certifying_wrapper(report: dict) -> None:
-    if (not report["findings"] and report["overall_correctness"] == "patch is incorrect") or any(
+    set_aside = set_aside_verdict_records(report)
+    if (not report["findings"] and not set_aside
+            and report["overall_correctness"] == "patch is incorrect") or any(
             field in report for field in (
-            "scope_rejected_findings", "priority_filtered_findings",
-            "attribution_rejected_findings", "missing_required_findings")):
+            "priority_filtered_findings", "attribution_rejected_findings",
+            "missing_required_findings")):
         fail("combined review helper result is non-certifying")
     provider = report["provider_report"]
     if any(report[field] != provider[field]
@@ -565,7 +597,17 @@ def _validate_certifying_wrapper(report: dict) -> None:
     for finding in normalized:
         finding["code_location"]["file_path"] = _normalized_helper_path(
             finding["code_location"]["file_path"])
-    if report["findings"] != normalized:
+    # Kept findings and set-aside verdict records are the raw findings, each
+    # once, in the reviewer's order: nothing dropped, nothing invented.
+    kept, aside = list(report["findings"]), list(set_aside)
+    for finding in normalized:
+        if kept and kept[0] == finding:
+            kept.pop(0)
+        elif aside and aside[0] == finding:
+            aside.pop(0)
+        else:
+            fail("combined review accepted findings do not match its raw provider report")
+    if kept or aside:
         fail("combined review accepted findings do not match its raw provider report")
 
 
@@ -592,14 +634,20 @@ def _actual_passes(report: object) -> list[tuple[str, dict]]:
         processed = _validate_processed_report(report, {"provider_report", "review_status"})
         _validate_provider_report(processed["provider_report"])
         _validate_review_status(processed)
-        if processed["review_status"] not in {"findings", "scoped-clean"}:
-            fail("combined review helper result is non-certifying")
         _validate_certifying_wrapper(processed)
+        if processed["review_status"] not in {"findings", "scoped-clean"} and not (
+                processed["review_status"] == "incomplete"
+                and set_aside_verdict_records(processed)):
+            fail("combined review helper result is non-certifying")
         return [("pass 1/1", processed)]
     _validate_processed_report(report, {"pass_reports", "review_status"})
     _validate_review_status(report)
-    if report["review_status"] not in {"findings", "scoped-clean"} or any(
-            field in report for field in REPORT_METADATA_FIELDS - {"available_source_records"}):
+    set_aside_verdict_records(report)  # refuses anything but verdict records
+    if any(field in report for field in REPORT_METADATA_FIELDS
+           - {"available_source_records", "scope_rejected_findings"}):
+        fail("combined review helper result is non-certifying")
+    if report["review_status"] not in {"findings", "scoped-clean"} and not (
+            report["review_status"] == "incomplete" and report.get("scope_rejected_findings")):
         fail("combined review helper result is non-certifying")
     entries = report.get("pass_reports")
     if not isinstance(entries, list) or not entries:
@@ -724,6 +772,23 @@ def _project_combined_report(
                         f"{label}:\n\n{merged['body']}", 2000,
                     )
                 retained_raw.append(merged)
+        for finding in set_aside_verdict_records(provider):
+            # A verdict record the helper set aside as outside its diff scope:
+            # forge's to count. It is never a finding, so it joins the verdict
+            # texts only; the worst verdict per contract still wins.
+            lens, clean, fingerprint, _merge_key = _tagged_finding(finding)
+            record = VERDICT_RECORD.match(clean["title"])
+            if lens != "quality" or not record:
+                fail("combined review set aside a finding that is not a verdict record")
+            if fingerprint in projected_fingerprints:
+                continue
+            projected_fingerprints.add(fingerprint)
+            where = clean["code_location"]
+            at = f"{where['file_path']}:{where['line']}"
+            body = " ".join(str(clean.get("body", "")).split())
+            verdict_lines.append(
+                f"VERDICT {record['id']}: {record['verdict'].lower()} — "
+                + (body if at in body else f"{at} {body}"))
         pass_findings.append(by_lens)
     findings = report.get("findings", [])
     if not isinstance(findings, list):
@@ -1239,7 +1304,7 @@ def _run_skill(skill: Path, worktree: Path, base_sha: str, prompt_rel: str,
         returncode = process.wait()
     finally:
         _close_codex_run(ledger, started, getattr(process, "returncode", None))
-    if returncode not in (0, 1):  # 1 == findings present, not an error
+    if returncode not in (0, 1, 2):  # 1: findings; 2: incomplete, judged below
         fail(f"autoreview exited {returncode} for {prompt_rel}; see its output above")
     if not json_out.is_file():
         fail(f"autoreview produced no JSON for {prompt_rel} (the run aborted?)")

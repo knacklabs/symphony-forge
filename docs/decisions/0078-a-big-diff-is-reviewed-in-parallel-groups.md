@@ -66,6 +66,13 @@ and the stamp; their bytes are not sent to the reviewer.
   proof check rendered the brief section from the previous marker's
   commit and refused the resealed task. A pre-seal check now reads the
   current inputs, as the brief it checks was written from.
+- A verdict record is forge's to scope, a defect is the helper's. The
+  helper sets aside any finding located outside its bundle; a set-aside
+  verdict record (a contract read in another group's file, or in
+  unchanged code, 0076) is validated and counted by forge, and its trust
+  check is exact: kept findings plus set-aside records are the raw
+  findings. A set-aside defect still refuses the result. Found on
+  WF-BIO-1 T2 (2026-09-16), where a two-file docs group could never pass.
 - The reviewer never sees a lockfile diff; `package.json` changes are still
   reviewed. A folder named `generated/` is treated as generated output.
 - `FORGE_REVIEW_SPLIT_BYTES` lowers the split point for probes and tests.

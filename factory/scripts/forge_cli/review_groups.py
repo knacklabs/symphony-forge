@@ -183,35 +183,52 @@ def group_note(index: int, total: int, paths: list[str], others: list[str],
     ]
     if repo_readable:
         lines += [
-            f"The task's other changed files ({len(others)}) are not in this bundle "
-            "but ARE in the tree at HEAD, your working folder, exactly as they will "
-            "ship:", listed(others), "",
-            "Review the bundle's files through all three lenses. For a contract "
-            "whose implementation lies in a file outside this bundle, open that "
-            "file in the tree (cat, sed -n, rg) and give the verdict you can prove "
-            "from the line you read; never write partial or missing because a "
-            "change is not in this bundle. Raise findings only on the bundle's "
-            "files and the code they call.",
+            f"The task's other changed files ({len(others)}) are reviewed by the "
+            "other groups. They ARE in the tree at HEAD, your working folder, "
+            "exactly as they will ship:", listed(others), "",
+            "Review the bundle's files through all three lenses; raise findings "
+            "only on the bundle's files and the code they call, located in the "
+            "bundle. Record a verdict for every contract you can prove from a line "
+            "you read, with that line as its location, wherever the line is; a "
+            "verdict record located outside this bundle is set aside by the "
+            "review tool and counted by the harness. A contract you cannot prove "
+            "from what you read is left for the group that holds its code: write "
+            "no record for it.",
         ]
     else:
         lines += [
-            f"The task's other changed files ({len(others)}) are not visible to "
-            "you:", listed(others), "",
-            "Review the bundle's files through all three lenses. A contract whose "
-            "evidence lies in a file you cannot see is verdicted implemented with "
-            "the evidence \"not in the bundle: <file>\"; reserve partial and "
-            "missing for a line in this bundle that fails the contract.",
+            f"The task's other changed files ({len(others)}) are reviewed by the "
+            "other groups and are not visible to you:", listed(others), "",
+            "Review the bundle's files through all three lenses; raise findings "
+            "only on the bundle's files. Record a verdict only for a contract "
+            "whose evidence is in this bundle; the others are recorded by the "
+            "groups that hold their code.",
         ]
-    lines += ["", "Every group's result is merged: your findings are kept, and the "
-              "worst verdict per contract wins, so a partial you can prove is never "
-              "outvoted."]
+    lines += ["", "Every group's result is merged: your findings are kept, the "
+              "worst verdict per contract wins, and a contract no group records "
+              "is partial, fail-closed."]
     return "\n".join(lines)
 
 
-def diagnose_refusal(problem: str) -> str:
+def diagnose_refusal(problem: str, parsed: dict | None = None,
+                     paths: list[str] | None = None) -> str:
     """Turn a refusal into the one instruction the retry needs."""
     text = problem.lower()
     quoted = problem.strip().rstrip(".")
+    rejected = parsed.get("scope_rejected_findings") if isinstance(parsed, dict) else None
+    from .review import _is_verdict_record
+    # Set-aside verdict records are counted, not a refusal; only a set-aside
+    # DEFECT is what the reviewer must move or drop.
+    if isinstance(rejected, list) and any(not _is_verdict_record(f) for f in rejected):
+        named = [
+            f"{finding.get('title', '?')} @ "
+            f"{(finding.get('code_location') or {}).get('file_path', '?')}"
+            for finding in rejected if isinstance(finding, dict)]
+        return (f"Your previous pass was refused: the review tool set aside "
+                f"{len(rejected)} finding(s) located outside this bundle and at least "
+                "one is not a verdict record: " + "; ".join(named[:6]) + ". A defect "
+                "finding must be located in one of this bundle's files: "
+                + ", ".join(paths or []) + ". Move it there or drop it.")
     if "within 3000 characters" in text:
         return ("Your previous pass overflowed overall_explanation (the tool caps it "
                 "at 3000 characters). Keep each of the three assessments to a few "
@@ -294,7 +311,20 @@ def merge_group_reports(wrappers: list[dict]) -> dict:
     if len(labelled) == 1:
         report.update(copy.deepcopy(labelled[0][1]))
         report["findings"] = findings
-    report["review_status"] = "findings" if findings else "scoped-clean"
+    for field in ("scope_rejected_findings", "priority_filtered_findings",
+                  "attribution_rejected_findings"):
+        retained = [copy.deepcopy(finding) for _, wrapper in labelled
+                    for finding in wrapper.get(field) or []]
+        if retained:
+            report[field] = retained
+    incomplete = any(report.get(field) for field in (
+        "scope_rejected_findings", "missing_required_findings",
+        "attribution_rejected_findings"))
+    report["review_status"] = (
+        "incomplete" if incomplete else "findings" if findings
+        else "filtered" if report.get("priority_filtered_findings")
+        else "incorrect" if report["overall_correctness"] == "patch is incorrect"
+        else "scoped-clean")
     return report
 
 
@@ -380,7 +410,7 @@ def run_groups(*, groups: list[dict], prompt_rel: str, log_dir: Path,
             problem = ""
             parsed = None
             raw = b""
-            if item["returncode"] not in (0, 1):
+            if item["returncode"] not in (0, 1, 2):  # 2: incomplete, judged by the validators
                 problem = f"the review tool exited {item['returncode']}"
             elif not item["json"].is_file():
                 problem = "the review tool produced no JSON"
@@ -401,7 +431,7 @@ def run_groups(*, groups: list[dict], prompt_rel: str, log_dir: Path,
                      f"({label}.attempt*.log and .json); read them, fix the cause, "
                      "rerun the review.")
             group["extra_prompt"] = (f"RETRY {group['attempts'] + 1}: "
-                                     + diagnose_refusal(problem))
+                                     + diagnose_refusal(problem, parsed, group.get("paths") or []))
             print(f"== {label} refused ({problem}); retrying it alone with the cause "
                   f"in its brief (attempt {group['attempts'] + 1}) ==", flush=True)
             still.append(group)
