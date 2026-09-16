@@ -741,6 +741,36 @@ def test_an_edit_into_a_sibling_worktree_is_governed_by_that_worktree(repo, tmp_
             "a product write into a sibling worktree was neither denied nor "
             f"claimed by a window — it escaped governance: {out!r}"
         )
+
+        # A NESTED Git root on the way up must not stop the search. A vendored
+        # dependency or sub-project carrying its own .git used to be picked as
+        # the governing root; it has no factory/scripts, so resolution gave up
+        # and fell back to the session cwd — ungoverned again.
+        nested = sibling / "vendor" / "sub-project"
+        (nested / ".git").mkdir(parents=True, exist_ok=True)
+        deep = nested / "apps" / "core" / "src" / "deep.ts"
+        deep.parent.mkdir(parents=True, exist_ok=True)
+        deep.write_text("export const y = 2;\n")
+
+        code, out = run(repo, "pre_tool_use.py",
+                        stdin=_json.dumps({
+                            "tool_name": "Edit",
+                            "tool_input": {"file_path": str(deep)},
+                        }),
+                        env={"FORGE_PROCESS_TOKEN": "", "FORGE_LAUNCH_ID": ""})
+        assert code == 0, out
+        decision = _json.loads(out) if out.strip().startswith("{") else {}
+        governed_nested = (
+            "deny" in out
+            or "lockout" in out
+            or "degraded" in out
+            or decision.get("hookSpecificOutput", {}).get("permissionDecision")
+            in {"deny", "ask"}
+        )
+        assert governed_nested, (
+            "a write beneath a NESTED git root escaped governance — the search "
+            f"stopped at the nested root instead of the harness worktree: {out!r}"
+        )
     finally:
         subprocess.run(["git", "worktree", "remove", "--force", str(sibling)],
                        cwd=repo, check=False, capture_output=True)

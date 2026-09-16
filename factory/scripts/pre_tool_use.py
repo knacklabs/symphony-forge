@@ -991,8 +991,16 @@ if tool_name in EDIT_TOOLS:
         try:
             _target.relative_to(root.resolve())
         except ValueError:
-            _alt = next((p for p in _target.parents if (p / ".git").exists()), None)
-            if _alt is not None and (_alt / "factory" / "scripts").is_dir():
+            # Keep walking outward to the first parent that is a HARNESS
+            # checkout. Stopping at the first `.git` and then validating it
+            # gave up whenever a nested Git root sat on the way up — a
+            # vendored dependency, a sub-project, any checkout inside the
+            # tree — and fell back to session-cwd governance, which is the
+            # ungoverned write this block exists to prevent.
+            _alt = next((p for p in _target.parents
+                         if (p / ".git").exists()
+                         and (p / "factory" / "scripts").is_dir()), None)
+            if _alt is not None:
                 root = _alt
 unmerged = _unmerged_paths(root)
 recovery = _git_recovery(command, root, unmerged) if unmerged else None
