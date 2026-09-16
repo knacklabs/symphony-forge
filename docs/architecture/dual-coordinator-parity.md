@@ -77,8 +77,8 @@ For fixed review proof, eligible rows are marker-bound sealed three-lens sets. A
 
 For already sealed legacy tasks, the current migration pointer is valid only when its generation's sealed-commit binding exactly equals the immutable marker. A replacement, mismatch, malformed set, mixed state, collision, linked path, or ambiguous owner refuses. Byte-identical retry is idempotent. Runtime readers never fall back to fixed paths.
 
-The first event bundle for a shipped story is immutable. A later eligible event makes preview and apply refuse while leaving that event loose and unchanged. Retry may delete only loose events already represented by identical bundle members. V1 adds no successor shard.
-
 ## Successor ownership
 
 `NATIVE-LIFECYCLE` owns detached read-only helpers, lifecycle recovery, cancellation, correlated errors, metrics, and signal behavior. `SHARED-COORDINATOR-JOURNEY` owns broader question identity, workspace-first task ownership, board state, and between-task coordinator changes. `PORTABLE-DELIVERY-MIGRATION` owns the remaining legacy layout families, setup delivery, event retention, and client rollout support; it preserves Lean's three-profile registry and does not reintroduce retired profiles or fixed-review fallback. Each successor updates this architecture before changing an enduring boundary.
+
+Portable also owns the event-family migration. The first event bundle for a shipped story is immutable. A later eligible event makes preview and apply refuse while leaving that event loose and unchanged. Retry may delete only loose events already represented by identical bundle members. V1 adds no successor shard.

@@ -37,6 +37,7 @@ import json
 import os
 import subprocess
 import time
+import unicodedata
 from pathlib import Path
 
 from .common import fail
@@ -340,7 +341,7 @@ def run_groups(*, groups: list[dict], prompt_rel: str, log_dir: Path,
             "scope_correction": False, "retry_cause": "",
         })
         for path in group.get("paths", []):
-            owners.setdefault(path, []).append(group)
+            owners.setdefault(unicodedata.normalize("NFC", path), []).append(group)
 
     def schedule(targets: dict[str, dict], group: dict) -> None:
         if group["attempts"] >= MAX_GROUP_RETRIES + 1:
@@ -474,16 +475,26 @@ def run_groups(*, groups: list[dict], prompt_rel: str, log_dir: Path,
 
                     for finding in retained_local:
                         path = finding["code_location"]["file_path"]
-                        if path not in group.get("paths", []):
+                        normalized_path = unicodedata.normalize("NFC", path)
+                        group_paths = {
+                            unicodedata.normalize("NFC", item)
+                            for item in group.get("paths", [])
+                        }
+                        if normalized_path not in group_paths:
                             fail(f"{label} retained a local finding outside its assigned "
                                  f"paths: {path}")
                         add_lead(group, finding)
                     for finding in scope_rejected:
                         path = finding["code_location"]["file_path"]
-                        if path in group.get("paths", []):
+                        normalized_path = unicodedata.normalize("NFC", path)
+                        group_paths = {
+                            unicodedata.normalize("NFC", item)
+                            for item in group.get("paths", [])
+                        }
+                        if normalized_path in group_paths:
                             fail(f"{label} returned contradictory scope metadata for its "
                                  f"own path {path}")
-                        matches = owners.get(path, [])
+                        matches = owners.get(normalized_path, [])
                         if len(matches) != 1:
                             detail = "outside the full group union" if not matches else "ambiguous"
                             fail(f"{label} rejected finding path {path} is {detail}; refusing "

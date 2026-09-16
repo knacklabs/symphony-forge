@@ -25,10 +25,10 @@ prototype ▶ spec grills ▶ CONFIRMED SPECS ▶ derived roadmap ▶ sign-off g
   ▶ SIGN-OFF ▶ roadmap+team ▶ per task:
   NATIVE PLAN MODE ▶ one cold grill + dispositions ▶ save awaiting plan ▶
   native approval of exact final digest ▶
-  decompose (creates the stage tracker) ▶ per stage: implement (`forge delegate`)
-  ▶ LOCAL autoreview until clean ▶ commit ▶ stage done ▶ … ▶ verify ▶
-  ONE branch autoreview ▶ functional (if user-facing) ▶ assumptions guided ▶
-  pr_ready (stages done + refactor ratchet) ▶ archive
+  decompose (creates the task tracker) ▶ per task: implement (`forge delegate`)
+  ▶ commit ▶ task proof ▶ `forge task close` runs ONE combined three-lens
+  task review ▶ delegate fixes and rerun close until clean ▶ functional
+  (if user-facing) ▶ task PR readiness ▶ archive
 ```
 
 - **Grills** are adversarial gaps/contradictions passes: each spec

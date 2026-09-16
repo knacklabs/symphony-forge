@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import json
+import subprocess
 import sys
 
 from test_gates import HARNESS
@@ -29,15 +31,48 @@ def test_pr_link_workflow_status_description_names_per_event_link_commit():
 
 
 def test_verified_forge_acc3_and_cfs1_pr_links_make_board_complete():
+    recorder_commit = "32b3ee692e361b831b31075758c2c374fa2f613e"
     expected = {
-        "FORGE-CFS-1": "knacklabs/symphony-forge#109",
-        "FORGE-ACC-3": "knacklabs/symphony-forge#110",
+        ".factory/events/3679bb571b304025956aa2f6ac141e9d.json": {
+            "event": "pr-linked", "generated_by": "orchestrator",
+            "at": "2026-09-14T04:10:40+00:00", "story": "FORGE-CFS-1",
+            "detail": "knacklabs/symphony-forge#109",
+        },
+        ".factory/events/31d5e07187fb4d9fab0a47009e90331b.json": {
+            "event": "pr-linked", "generated_by": "orchestrator",
+            "at": "2026-09-14T04:10:40+00:00", "story": "FORGE-ACC-3",
+            "detail": "knacklabs/symphony-forge#110",
+        },
     }
-    links = {
-        event.get("story"): event.get("detail")
-        for event in load_events(HARNESS, event="pr-linked")
-        if event.get("story") in expected
+    merges = {
+        "8f1d0530b29083c4b7a0978bebb86fd9b0e1f23c":
+            "FORGE-CFS-1: conflict-free story state — overlapping PRs stop colliding on .factory (#109)",
+        "6320c1a6e67ba0614ee960f57baf3605811b0d86":
+            "FORGE-ACC-3: approval and closeout integrity (+ 0047 task-level shipping) (#110)",
     }
-    assert links == expected
+    for commit, subject in merges.items():
+        assert subprocess.run(
+            ["git", "log", "-1", "--format=%s", commit], cwd=HARNESS,
+            capture_output=True, text=True, check=True,
+        ).stdout.strip() == subject
+    for path, payload in expected.items():
+        recorded = subprocess.run(
+            ["git", "show", f"{recorder_commit}:{path}"], cwd=HARNESS,
+            capture_output=True, text=True, check=True,
+        ).stdout
+        assert json.loads(recorded) == payload
+        assert json.loads((HARNESS / path).read_text(encoding="utf-8")) == payload
+    links = [
+        event for event in load_events(HARNESS, event="pr-linked")
+        if event in expected.values()
+    ]
+    assert sorted(links, key=lambda row: row["story"]) == sorted(
+        expected.values(), key=lambda row: row["story"])
+    legacy = (HARNESS / ".factory/events.jsonl").read_text(encoding="utf-8")
+    assert not any(
+        json.loads(line) in expected.values()
+        for line in legacy.splitlines() if line.strip()
+    )
     problems = board_problems(HARNESS)
-    assert not any(story in problem for story in expected for problem in problems)
+    stories = {payload["story"] for payload in expected.values()}
+    assert not any(story in problem for story in stories for problem in problems)

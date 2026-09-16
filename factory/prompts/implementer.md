@@ -131,5 +131,10 @@ Rules:
   The orchestrator records the story-wide testing artifact after all sequential
   stages are complete.
 - Before handoff, inspect the final diff and report changed files, test results,
-  assumptions, and any remaining gap. Do not modify `.factory` evidence files
-  directly; assumption and signal commands remain the sanctioned exceptions.
+  assumptions, and any remaining gap. Report every assigned requirement in one
+  row naming its concrete code or documentation change and the actual focused
+  command/result; a row without actual proof remains incomplete. The
+  orchestrator checks the complete checklist before task-wide proof and formal
+  review; the final three-lens review remains authoritative. Do not modify
+  `.factory` evidence files directly; assumption and signal commands remain the
+  sanctioned exceptions.

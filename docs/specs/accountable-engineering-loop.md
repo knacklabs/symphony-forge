@@ -102,6 +102,11 @@ implementation does not enforce it end to end:
   PR-ready proof to the reviewed delta. Standing human authorization carries
   through bounded corrections; material task-contract or intent changes
   still take the current reapproval and regrill path.
+  Before task-wide proof and formal review, the orchestrator checks the
+  implementer's handoff checklist: every assigned requirement names its
+  concrete code or documentation change and actual focused command/result.
+  Any row without actual proof remains incomplete; the final three-lens
+  review remains authoritative.
 - **Bounded outage exception.** A degraded window may open during an active
   stage only for the documented bounded host/companion outage exception.
   Lite and quickfix retain their separate profiles and do not become a general

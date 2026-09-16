@@ -831,23 +831,6 @@ def write_passing_artifacts(
     brief.parent.mkdir(parents=True, exist_ok=True)
     brief.write_text("\n".join(brief_lines).rstrip() + "\n", encoding="utf-8")
     brief_sha256 = hashlib.sha256(brief.read_bytes()).hexdigest()
-    raw_report = {
-        "findings": [],
-        "overall_correctness": "patch is correct",
-        "overall_explanation":
-            "BEGIN FORGE ASSESSMENT quality\nquality\n"
-            "END FORGE ASSESSMENT quality\n"
-            "BEGIN FORGE ASSESSMENT performance\nfast\n"
-            "END FORGE ASSESSMENT performance\n"
-            "BEGIN FORGE ASSESSMENT security\nsafe\n"
-            "END FORGE ASSESSMENT security",
-        "overall_confidence": 0.9,
-    }
-    raw = json.dumps({
-        **raw_report,
-        "provider_report": raw_report,
-        "review_status": "scoped-clean",
-    }, sort_keys=True).encode()
     helper = {
         "path": "/fixture/autoreview", "version": "fixture", "sha256": "a" * 64,
     }
@@ -857,28 +840,11 @@ def write_passing_artifacts(
             repo, key, task_id, "pr-ready.json",
         ).is_file():
             continue
-        delta_id = lib.product_delta_digest(
-            repo, lib.effective_review_base(repo, task_id, sha),
-        )
+        task_base = lib.effective_review_base(repo, task_id, sha)
+        delta_id = lib.product_delta_digest(repo, task_base)
         selected_review_run_id = hashlib.sha256(
             (brief_sha256 + delta_id).encode()
         ).hexdigest()
-        lenses = {
-            aspect: {
-                "task_id": task_id,
-                "generated_by": "autoreview",
-                "score": 10,
-                "summary": f"{aspect} review passed",
-                "blocking_findings": [],
-                "non_blocking_findings": [],
-                "recommendation": "approve",
-                "commit": sha,
-                "review_run_id": selected_review_run_id,
-                "brief_sha256": brief_sha256,
-                "branch_diff_digest": delta_id,
-            }
-            for aspect in ("quality", "performance", "security")
-        }
         task_contract_verdicts = contract_verdicts
         if verify_contracts and task_contract_verdicts is None:
             task_contract_verdicts = [
@@ -889,8 +855,57 @@ def write_passing_artifacts(
                 }
                 for contract in task.get("plan_contracts", [])
             ]
-        if task_contract_verdicts is not None:
-            lenses["quality"]["contract_verdicts"] = task_contract_verdicts
+        from forge_cli.review import (  # noqa: E402
+            _project_combined_report, review_excluded_prefixes,
+        )
+        excluded = review_excluded_prefixes(repo)
+        scope = sorted(
+            path for path in git(
+                repo, "diff", "--name-only", f"{task_base}...{sha}",
+            ).splitlines()
+            if path.strip() and not path.startswith(excluded)
+        )
+        anchor = scope[0] if scope else "factory/tests/test_gates.py"
+        verdicts = task_contract_verdicts or []
+        findings = [
+            {
+                "title": f"[quality] VERDICT {row['contract_id']}: {row['verdict']}",
+                "body": f"{anchor}:1 {row['evidence']}",
+                "priority": "P3", "confidence": 1,
+                "category": "maintainability", "source_attribution": None,
+                "code_location": {"file_path": anchor, "line": 1},
+            }
+            for row in verdicts
+        ]
+        raw_report = {
+            "findings": findings,
+            "overall_correctness": "patch is incorrect" if findings else "patch is correct",
+            "overall_explanation":
+                "BEGIN FORGE ASSESSMENT quality\nquality\n"
+                "END FORGE ASSESSMENT quality\n"
+                "BEGIN FORGE ASSESSMENT performance\nfast\n"
+                "END FORGE ASSESSMENT performance\n"
+                "BEGIN FORGE ASSESSMENT security\nsafe\n"
+                "END FORGE ASSESSMENT security",
+            "overall_confidence": 0.9,
+        }
+        report = {
+            **raw_report, "provider_report": raw_report,
+            "review_status": "findings" if findings else "scoped-clean",
+        }
+        raw = json.dumps(report, sort_keys=True).encode()
+        started = {row["id"]: row["status"] for row in stages["stages"]}
+        lenses = _project_combined_report(
+            task, report, scope, task_base, sha, [], decomposition["tasks"],
+            started, excluded,
+        )
+        for lens in lenses.values():
+            lens.update({
+                "commit": sha,
+                "review_run_id": selected_review_run_id,
+                "brief_sha256": brief_sha256,
+                "branch_diff_digest": delta_id,
+            })
         from forge_cli.stages import reviewed_meaning_identity  # noqa: E402
         stage = next(row for row in stages["stages"] if row["id"] == task_id)
         meaning = reviewed_meaning_identity(repo, stage, task, helper)
@@ -18064,6 +18079,18 @@ def test_precompact_scratchpad_snapshots_facts_and_findings(repo, tmp_path):
     # a shipped task wipes the pad — session noise never crosses tasks
     run(repo, "forge.py", "stage", "done", "T1")
     write_passing_artifacts(repo, verify_contracts=True)
+    task_root = load_factory_lib(repo).task_evidence_path(
+        repo, "ENG-1", "T1", "selected.json",
+    ).parent
+    selected = json.loads((task_root / "reviews/selected.json").read_text())
+    generation = json.loads((
+        task_root / "reviews/generations" / f"{selected['generation_id']}.json"
+    ).read_text())
+    raw_review = json.loads(base64.b64decode(generation["raw_result"]["data"]))
+    assert raw_review["findings"][0]["title"] == "[quality] VERDICT C1: implemented"
+    assert generation["lenses"]["quality"]["contract_verdicts"][0][
+        "contract_id"
+    ] == "C1"
     run(repo, "update_run.py", "--decomposition-status", "recorded")
     run(repo, "forge.py", "assumptions", "resolve", "A-0001",
         "--status", "confirmed", "--notes", "60s confirmed with EM")

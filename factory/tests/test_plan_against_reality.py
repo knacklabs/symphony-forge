@@ -113,6 +113,34 @@ def test_lean_docs_match_single_cold_grill_runtime(repo: Path):
     assert "frontier_empty" not in recorder and "grill-rounds" not in recorder
 
 
+def test_lean_handoff_and_close_docs_match_runtime_ownership(repo: Path):
+    getting_started = (HARNESS / "docs/getting-started.md").read_text(encoding="utf-8")
+    architecture = (HARNESS / "docs/architecture/dual-coordinator-parity.md").read_text(
+        encoding="utf-8")
+    griller = (HARNESS / "factory/prompts/griller.md").read_text(encoding="utf-8")
+    implementer = (HARNESS / "factory/prompts/implementer.md").read_text(encoding="utf-8")
+    loop = (HARNESS / "docs/specs/accountable-engineering-loop.md").read_text(
+        encoding="utf-8")
+
+    assert "LOCAL autoreview" not in getting_started
+    assert "branch autoreview" not in getting_started
+    for current in ("task proof", "`forge task close`", "combined three-lens",
+                    "delegate fixes and rerun close until clean", "task PR readiness"):
+        assert current in getting_started
+    lean, successors = architecture.split("## Successor ownership", 1)
+    assert "first event bundle" not in lean.lower()
+    assert "Portable also owns the event-family migration" in successors
+    assert "`user_facing` is true exactly for tasks that change frontend or UI behavior" \
+        in griller
+    assert "every user-visible behavior" not in griller
+    for text in (implementer, loop):
+        flat = _flat(text)
+        assert "every assigned requirement" in flat
+        assert "actual focused" in flat
+        assert "remains incomplete" in flat
+        assert "three-lens review remains authoritative" in flat
+
+
 # ------------------------------------------------------------- dead code ---
 def test_the_plan_mode_marker_recording_is_gone(repo: Path):
     """Decision 0050 removed the gate; nothing has read a marker since.

@@ -538,6 +538,47 @@ def test_scope_only_exit_two_routes_owner_lead_and_keeps_each_accepted_pass(
     assert outcome["blocking"] == 2  # routed P1 plus C2 partial
 
 
+def test_scope_routing_matches_canonically_equivalent_unicode_paths(
+        tmp_path, monkeypatch):
+    monkeypatch.setattr(review_mod, "_record_codex_run", lambda *args: "test-run")
+    monkeypatch.setattr(review_mod, "_stamp_codex_run", lambda *args, **kwargs: None)
+    monkeypatch.setattr(review_mod, "_close_codex_run", lambda *args: None)
+    decomposed = "src/cafe\u0301.py"
+    composed = "src/café.py"
+    routed = _finding("[security] Normalize access", composed, 1, category="security")
+    provider = _wrapper([routed])["provider_report"]
+    scope_only = {
+        **provider, "findings": [], "provider_report": provider,
+        "scope_rejected_findings": [routed], "review_status": "incomplete",
+    }
+    clean = _wrapper([])
+    groups = [
+        {"label": "source", "worktree": tmp_path, "paths": ["src/a.py"]},
+        {"label": "owner", "worktree": tmp_path, "paths": [decomposed]},
+    ]
+
+    def argv_for(group, json_out, _extra_prompt):
+        rejected = group["label"] == "source" and group["attempts"] == 1
+        payload = scope_only if rejected else clean
+        return [
+            sys.executable, "-c",
+            "from pathlib import Path; import sys; "
+            "Path(sys.argv[1]).write_text(sys.argv[2], encoding='utf-8'); "
+            "raise SystemExit(int(sys.argv[3]))",
+            str(json_out), json.dumps(payload, ensure_ascii=False),
+            "2" if rejected else "0",
+        ]
+
+    run_groups(
+        groups=groups, prompt_rel="unicode", log_dir=tmp_path / "logs",
+        ledger_root=tmp_path, argv_for=argv_for, validate=_actual_passes,
+    )
+
+    assert groups[1]["attempts"] == 2
+    assert groups[1]["lead_findings"] == [routed]
+    assert groups[1]["lead_findings"][0]["code_location"]["file_path"] == composed
+
+
 def test_scope_rejected_source_reassesses_its_retained_local_finding_from_a_lead(
         repo, tmp_path, monkeypatch):
     _built(repo, tmp_path)

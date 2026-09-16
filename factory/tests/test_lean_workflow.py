@@ -157,10 +157,25 @@ def test_native_plan_mode_approval_records_exact_digest_for_codex_sync_approval(
 
 
 def test_native_approval_refuses_stale_wrong_runtime_canceled_async_and_unsupported_payloads(
-        repo: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
-    _plan, digest = _awaiting_story(repo, tmp_path)
+        repo: Path, tmp_path: Path):
+    plan, digest = _awaiting_story(repo, tmp_path)
+    lib = load_factory_lib(repo)
+    run_path = lib.run_state_path(repo)
     candidate = approval.eligible_candidates(repo)[0]
-    monkeypatch.setattr(approval, "eligible_candidates", lambda _base: [candidate])
+
+    def authority_snapshot() -> tuple[bytes, bytes, tuple[bytes, ...], tuple]:
+        approval_events = candidate.evidence.parent / "approval-events"
+        frontier = tuple(
+            (row.kind, row.story, row.task, row.path, row.digest, row.evidence)
+            for row in approval.eligible_candidates(repo)
+        )
+        return (
+            plan.read_bytes(), run_path.read_bytes(),
+            tuple(path.read_bytes() for path in sorted(approval_events.glob("*.json"))),
+            frontier,
+        )
+
+    before = authority_snapshot()
     cancelled = _codex_event(digest)
     cancelled["tool_response"]["cancelled"] = True
     failed = _codex_event(digest)
@@ -179,7 +194,9 @@ def test_native_approval_refuses_stale_wrong_runtime_canceled_async_and_unsuppor
     for event, runtime in cases:
         with pytest.raises(approval.ApprovalRefused):
             approval.record_native_approval(repo, event, runtime=runtime)
-    assert approval.eligible_candidates(repo)[0].digest == digest
+        assert authority_snapshot() == before
+    assert approval.eligible_candidates(repo) == [candidate]
+    assert candidate.digest == digest
 
 
 def test_normal_flow_no_longer_requires_requirements_grill_manual_approval_or_second_save(
