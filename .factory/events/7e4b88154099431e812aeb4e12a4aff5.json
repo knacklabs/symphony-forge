@@ -1,0 +1,1 @@
+{"event": "signal-resolved", "generated_by": "orchestrator", "at": "2026-09-12T01:54:20+00:00", "story": "FORGE-COORD-1", "detail": "S-0022-ec00: Fix all four in one bounded Sol/medium batch within the already approved remaining-delegate paths and 3,200-line cap; no plan/scope change. For crash recovery, handle a different retry PID by discover"}

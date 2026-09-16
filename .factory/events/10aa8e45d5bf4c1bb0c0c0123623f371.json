@@ -1,0 +1,1 @@
+{"event": "signal-resolved", "generated_by": "orchestrator", "at": "2026-09-12T02:12:44+00:00", "story": "FORGE-COORD-1", "detail": "S-0026-9c54: Do not edit pre_tool_use.py, check_dual_runtime.py, or test_native_setup.py. Those stale fixed-lens findings are already fixed in commit 81f7666 and duplicate resolved S-0014/S-0015/S-0017/S-0024/S-00"}

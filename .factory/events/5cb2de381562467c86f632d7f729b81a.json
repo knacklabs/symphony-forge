@@ -1,0 +1,1 @@
+{"event": "signal-resolved", "generated_by": "orchestrator", "at": "2026-09-12T02:07:14+00:00", "story": "FORGE-COORD-1", "detail": "S-0025-b8d5: Do not edit pre_tool_use.py or check_dual_runtime.py. Their security findings are stale and already fixed in commit 81f7666; this duplicates resolved S-0014, S-0015, S-0017, and S-0024. The four high-"}

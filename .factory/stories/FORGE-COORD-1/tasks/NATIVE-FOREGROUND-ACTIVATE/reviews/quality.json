@@ -1,0 +1,194 @@
+{
+  "generated_by": "autoreview",
+  "task_id": "NATIVE-FOREGROUND-ACTIVATE",
+  "score": 0,
+  "summary": "quality lens over NATIVE-FOREGROUND-ACTIVATE (71 product path(s), c9a705b..ea0a3d3, Codex via the autoreview skill at --max-priority P2): 5 blocking, 2 non-blocking. Review passes returned. chunk 1/3: 3 finding(s), chunk 2/3: 3 finding(s), chunk 3/3: 1 finding(s). See preserved pass reports for provider conclusions.",
+  "blocking_findings": [
+    {
+      "category": "bug",
+      "area": "factory/scripts/forge_cli",
+      "summary": "[P1] Use the function parameters instead of undefined `args` (factory/scripts/forge_cli/review.py:1148): `review_task()` has no `args` variable, but the new preflight dereferences `args.id` (and later dereferences `args` again when resolving the helper)."
+    },
+    {
+      "category": "bug",
+      "area": "factory/scripts",
+      "summary": "[P1] Recover the prior process's temporary hard link (factory/scripts/factory_lib.py:2936): Crash recovery checks only the temporary filename containing the current PID."
+    },
+    {
+      "category": "security",
+      "area": "factory/scripts",
+      "summary": "Bind public review publication to the token's delta (factory/scripts/record_review_from_json.py:120): The `--set` path verifies only that the candidate's `review_run_id` and `brief_sha256` equal the saved token."
+    },
+    {
+      "category": "test_gap",
+      "area": "factory/tests",
+      "summary": "Complete the required live C8 denial proof (factory/tests/test_worker_admission.py:290): This test merely sends a Bash payload containing `./forge next` to `pre_tool_use` and asserts that the hook permits it; it never executes the command."
+    },
+    {
+      "category": "bug",
+      "area": "factory/tests",
+      "summary": "Fix the undefined task in the narrative-contract test (factory/tests/test_gates.py:11353): `test_recorder_holds_the_task_narrative_contract` passes `task` to `record_task_grill`, but no such local is defined; the fixture's defined task is `first`."
+    },
+    {
+      "category": "plan-contract-partial",
+      "area": "docs/specs/dual-coordinator-parity.md (AC1-5, AC7, AC10-11); docs/decisions/0063-first-native-task-workspace-bootstrap.md; plans/exploration/coordinator-parity-preparation/lean-delivery-graph.json; /Users/dev/.codex/plans/symphony-forge+native-foreground-target-jit+20260910.md; tests: test_native_launch_registers_before_stdin_and_records_terminal_identity, test_native_zero_exit_without_completed_turn_is_failed, test_native_worker_patch_add_update_delete_and_move_is_admitted, test_foreground_cleanup_revokes_admission_before_signals",
+      "summary": "NATIVE-FOREGROUND-ACTIVATE-C2: Process-bound admission remains truthful: foreground launch registers before stdin with terminal identity, zero-exit without completed turn is failed, and native write admission covers add/update/delete/move only after registration. Cancellation writes the existing durable revocation marker before cleanup signals; terminal success/failure plus dead process and released matching lock revoke completion; non-active stage incarnation revokes stage closure. Admission requires an exact starting/running row, live matching process ancestry, held matching lock, active matching stage and no explicit revocation; failed cleanup never invents success and no new completion tombstone is introduced."
+    },
+    {
+      "category": "plan-contract-partial",
+      "area": "docs/specs/dual-coordinator-parity.md (AC1-5, AC7, AC10-11); docs/decisions/0063-first-native-task-workspace-bootstrap.md; plans/active/FORGE-COORD-1-either-claude-or-codex-coordinates-the-same-forge-workflow.md lines 146-154 and 179-181; explicit user authorization on 2026-09-11; /Users/dev/.codex/plans/symphony-forge+native-foreground-combined-review+20260911.md; twenty-two focused combined-review, closeout and strict-task-proof selectors",
+      "summary": "NATIVE-FOREGROUND-ACTIVATE-C3: C9 review inputs are complete and task-specific: task, branch and combined review receive the full approved target task plan, approval/grill fields, digest identity, current delta identity and resolved automated report; missing, unapproved, stale, summarized, truncated or future-row-substituted inputs refuse. Each initial or post-fix default `./forge review <task-id>` creates one schema-exact content-addressed immutable `origin=combined` generation containing RFC4648 base64 of the exact pre-parse helper output bytes, composes one combined prompt and calls the installed helper exactly once. The recorder-enforced `factory/schemas/review-set.json` validates citation-based `origin=rejection` and one-time `origin=upgrade`. Public `--set` accepts only combined output and rederives all three lenses exactly from its raw bytes and authoritative task state before publication. The schema and recorder also enforce the helper schema's 3,000-character `overall_explanation` maximum and required-boilerplate preflight, exact full-line `BEGIN FORGE ASSESSMENT <lens>` and `END FORGE ASSESSMENT <lens>` markers in quality/performance/security order, exact chunk order, one exact `[quality] `, `[performance] `, or `[security] ` title tag per finding with end line equal to the helper's sole line, the normalized path/line/title duplicate fingerprint, existing score/recommendation and worst quality-verdict rules, quality verdicts only from each pass's validated quality block, before/after helper identity verification, a cross-platform review-selection lock with rejection compare-and-swap, and generation-first/pointer-last publication whose pointer replacement is the commit point. `generation_id` is the lowercase SHA256 of canonical sorted compact UTF-8 JSON for every generation field except `generation_id`; the generation file includes that ID, every read recomputes it, all existing ancestors are real non-symlink directories and existing/new leaves are regular single-link files, a byte-identical retry succeeds, and an unequal same-ID collision refuses. A blocking complete generation publishes and revokes clean status; only the selected clean current-delta generation certifies proof. A single-lens run remains diagnostic and cannot publish, stamp, revoke, or otherwise compete with the selected complete generation. A rejection may extend only the selected combined generation, binds its source generation file SHA256 and ID, preserves the exact decoded `raw_result` bytes and unaffected lenses, and refuses rejection, upgrade, unselected, fixed-only, or unrelated sources. First and Lean produce only recorder-backed exact-task AC6 proof and label preparation or diagnostics as non-proof."
+    },
+    {
+      "category": "plan-contract-partial",
+      "area": "docs/specs/dual-coordinator-parity.md (AC1-5, AC7, AC10-11); docs/decisions/0063-first-native-task-workspace-bootstrap.md; plans/active/FORGE-COORD-1-either-claude-or-codex-coordinates-the-same-forge-workflow.md lines 146-154 and 179-181; explicit user authorization on 2026-09-11; /Users/dev/.codex/plans/symphony-forge+native-foreground-combined-review+20260911.md; twenty-two focused combined-review, closeout and strict-task-proof selectors",
+      "summary": "NATIVE-FOREGROUND-ACTIVATE-C4: C10 proof uses one task-aware predicate for local worktree, committed CI, board/readiness, `forge task close` and pre-seal gating. Every pre-seal consumer resolves the one immutable generation named and hashed by the task-scoped `selected.json` pointer; that generation contains raw output and all three lens records and is bound to the same current `delta_id` produced by the inherited `product_delta_digest` seam. Normal sealed reads use the pointer from the marker commit; only Portable may later supply an `origin=upgrade` pointer whose sealed-commit binding exactly equals that immutable marker. The pointer publishes last, and any absent, fixed-only, incomplete, malformed, copied, mixed, stale, tampered or interrupted set refuses while leaving the prior complete pointer unchanged. `forge task close`, stage/frontier routing, CI and board task progress skip review only for the selected clean current-delta generation through one shared predicate; refusal mutates no marker, Git, PR, stage or proof state, and runtime readers never fall back to fixed quality/performance/security files or story-level proof for a task-owned artifact."
+    },
+    {
+      "category": "plan-contract-missing",
+      "area": "docs/specs/dual-coordinator-parity.md (AC1-5, AC7, AC10-11); docs/decisions/0063-first-native-task-workspace-bootstrap.md; plans/exploration/coordinator-parity-preparation/lean-delivery-graph.json; /Users/dev/.codex/plans/symphony-forge+native-foreground-target-jit+20260910.md; tests: test_review_preflight_uses_active_task_proof, test_review_preflight_refuses_other_task_or_story_proof",
+      "summary": "NATIVE-FOREGROUND-ACTIVATE-C7: Own-task review preflight uses `proof_path(base, story, artifact, task_id=args.id)` for the active task, accepts only own-task proof, and refuses story or other-task proof without helper fallback."
+    },
+    {
+      "category": "plan-contract-partial",
+      "area": "docs/specs/dual-coordinator-parity.md (AC1-5, AC7, AC10-11); docs/decisions/0063-first-native-task-workspace-bootstrap.md; plans/exploration/coordinator-parity-preparation/lean-delivery-graph.json; /Users/dev/.codex/plans/symphony-forge+native-foreground-target-jit+20260910.md; tests: test_native_worker_reads_state_without_protected_write_authority, test_any_protected_revocation_marker_denies_admission",
+      "summary": "NATIVE-FOREGROUND-ACTIVATE-C8: The real admitted native worker proves protected-state read by executing forge next against the correct story/task/stage, then exercises the actual native tool hook against the protected task plan with harmless absent patch context. Only an actual correlated PreToolUse deny event counts: the existing automated report receipt, protected registered terminal row and durable tool log must identify the same native launch/session/tool call and actual hook-denial response. The existing implemented plan-contract review verdict checks that correlation; unchanged bytes, context/patch failure or a synthetic payload never certify denial. The one shared review-set schema is introduced here; no second review registry or CI/C10 evidence parser is introduced."
+    }
+  ],
+  "non_blocking_findings": [
+    {
+      "category": "regression",
+      "area": "WORKFLOW.md",
+      "summary": "[P2] Remove the deleted `--sequential` workflow instruction (WORKFLOW.md:440): The updated workflow still says that the lenses use one Codex process each and directs users to `--sequential`, while this patch removes that option from both review and task-close parsers and replaces the three-process runner with one combined helper call."
+    },
+    {
+      "category": "test_gap",
+      "area": "factory/tests",
+      "summary": "Add terminal launches to the Stop exemption test matrix (factory/tests/test_worker_admission.py:696): The Stop-specific negative matrix covers unknown or changed bindings, write launches, dead identities, and revocation, but never a launch whose lifecycle has reached `failed` or `succeeded`."
+    }
+  ],
+  "recommendation": "request-changes",
+  "reviewed_scope": [
+    ".claude/CLAUDE.md",
+    ".claude/settings.json",
+    ".codex/agents/AGENTS.md",
+    ".codex/agents/architect.toml",
+    ".codex/agents/backend.toml",
+    ".codex/agents/debugger.toml",
+    ".codex/agents/docs-decomposer.toml",
+    ".codex/agents/explorer.toml",
+    ".codex/agents/frontend.toml",
+    ".codex/agents/functional-checker.toml",
+    ".codex/agents/griller.toml",
+    ".codex/agents/lite.toml",
+    ".codex/agents/performance.toml",
+    ".codex/agents/planner-high.toml",
+    ".codex/agents/planner.toml",
+    ".codex/agents/refactorer.toml",
+    ".codex/agents/security.toml",
+    ".codex/agents/tester.toml",
+    ".codex/config.toml",
+    ".codex/explore.config.toml",
+    ".codex/hooks.json",
+    "AGENTS.md",
+    "README.md",
+    "WORKFLOW.md",
+    "docs/FACTORY.md",
+    "docs/QUALITY.md",
+    "docs/ROLES.md",
+    "docs/architecture/dual-coordinator-parity.md",
+    "docs/degraded-mode.md",
+    "docs/getting-started.md",
+    "docs/product/BRIEF.md",
+    "docs/specs/dual-coordinator-parity.md",
+    "docs/specs/strict-role-split.md",
+    "factory/prompts/griller.md",
+    "factory/prompts/implementer.md",
+    "factory/prompts/planner.md",
+    "factory/prompts/reviewer.md",
+    "factory/schemas/delegation.json",
+    "factory/schemas/review-set.json",
+    "factory/scripts/check_dual_runtime.py",
+    "factory/scripts/check_encoding_hygiene.py",
+    "factory/scripts/check_task_proof.py",
+    "factory/scripts/factory_lib.py",
+    "factory/scripts/forge.py",
+    "factory/scripts/forge_cli/close.py",
+    "factory/scripts/forge_cli/codex_runtime.py",
+    "factory/scripts/forge_cli/delegate.py",
+    "factory/scripts/forge_cli/doctor.py",
+    "factory/scripts/forge_cli/phase.py",
+    "factory/scripts/forge_cli/review.py",
+    "factory/scripts/forge_cli/review_brief.py",
+    "factory/scripts/forge_cli/stages.py",
+    "factory/scripts/forge_cli/tasks.py",
+    "factory/scripts/forge_cli/worker_admission.py",
+    "factory/scripts/pre_tool_use.py",
+    "factory/scripts/record_review_from_json.py",
+    "factory/scripts/session_start.py",
+    "factory/scripts/stop_continue.py",
+    "factory/skills/forge.md",
+    "factory/tests/test_close_binds_to_the_diff.py",
+    "factory/tests/test_gate_table.py",
+    "factory/tests/test_gates.py",
+    "factory/tests/test_grill_release.py",
+    "factory/tests/test_native_launch.py",
+    "factory/tests/test_native_setup.py",
+    "factory/tests/test_proof_read_path.py",
+    "factory/tests/test_review_lenses_in_parallel.py",
+    "factory/tests/test_review_settled_contracts.py",
+    "factory/tests/test_review_task_delta.py",
+    "factory/tests/test_worker_admission.py",
+    "harness.yaml"
+  ],
+  "skills_used": [],
+  "contract_verdicts": [
+    {
+      "contract_id": "NATIVE-FOREGROUND-ACTIVATE-C1",
+      "verdict": "implemented",
+      "evidence": ".codex/config.toml:24 registers the Sol-based role policy and the adapter hook changes are present."
+    },
+    {
+      "contract_id": "NATIVE-FOREGROUND-ACTIVATE-C2",
+      "verdict": "partial",
+      "evidence": "factory/tests/test_worker_admission.py:696 omits terminal launches from the Stop-specific negative matrix."
+    },
+    {
+      "contract_id": "NATIVE-FOREGROUND-ACTIVATE-C3",
+      "verdict": "partial",
+      "evidence": "factory/scripts/forge_cli/review.py:1148 makes the combined-review entry point fail before helper launch, and factory/scripts/factory_lib.py:2936 omits old-PID retry recovery."
+    },
+    {
+      "contract_id": "NATIVE-FOREGROUND-ACTIVATE-C4",
+      "verdict": "partial",
+      "evidence": "factory/scripts/factory_lib.py:2936 can strand a selected-generation publication after the specified crash window."
+    },
+    {
+      "contract_id": "NATIVE-FOREGROUND-ACTIVATE-C5",
+      "verdict": "implemented",
+      "evidence": "WORKFLOW.md:413 documents the workspace-before-JIT task-contract order preserved by this change."
+    },
+    {
+      "contract_id": "NATIVE-FOREGROUND-ACTIVATE-C6",
+      "verdict": "implemented",
+      "evidence": "factory/scripts/forge.py:20 restricts native status to proven-dead grill rows, while native background dispatch is refused."
+    },
+    {
+      "contract_id": "NATIVE-FOREGROUND-ACTIVATE-C7",
+      "verdict": "missing",
+      "evidence": "factory/scripts/forge_cli/review.py:1148 attempts the own-task proof lookup through an undefined name, so the required preflight cannot execute."
+    },
+    {
+      "contract_id": "NATIVE-FOREGROUND-ACTIVATE-C8",
+      "verdict": "partial",
+      "evidence": "factory/scripts/forge_cli/delegate.py:1342 implements the registration-before-stdin prerequisite, but this chunk does not provide line-level evidence of the required live correlated denial proof."
+    }
+  ],
+  "aspect": "quality",
+  "review_run_id": "51f94c858393c4204a4eceeccb96f596d35e3f7c75d0432825683d7a4638233a",
+  "brief_sha256": "015a4e0b904db4cb1b56e9742d8e012a9a2e3b4a29683e6ac6d6ea800c59377f",
+  "branch_diff_digest": "faa0a33f40a9f54252107720cd3183e15978365566807af0750f63120c7c5a44",
+  "residual_risks": [],
+  "recorded_at": "2026-09-12T02:48:19+00:00",
+  "commit": "ea0a3d36be0960c95136ff1b47fe276cc3e565c9"
+}

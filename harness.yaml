@@ -23,15 +23,15 @@ precedence:
 
 modes:
   lite:
-    model: "gpt-5.6-terra"
-    reasoning: "high"
+    model: "gpt-5.6-luna"
+    reasoning: "max"
     bound: 5
-  # The cold reader. griller.md requires gpt-5.6-terra at xhigh: a fresh model
-  # context independent of whoever authored the artifact. Pinned here rather
-  # than hardcoded in the launcher, beside every other model pin.
+  # The cold reader uses a fresh model context independent of whoever authored
+  # the artifact. Its model is pinned here, beside every other model pin, rather
+  # than hardcoded in the launcher.
   grill:
-    model: "gpt-5.6-terra"
-    reasoning: "xhigh"
+    model: "gpt-5.6-sol"
+    reasoning: "high"
     bound: 0
 
 phases:
@@ -72,8 +72,8 @@ phases:
   planning:
     owner: "claude-code:plan-mode"
     alternate: "codex:planner-high"
-    exploration: "/codex:rescue --model gpt-5.6-terra --effort high (read-only by default) — NEVER Claude Code itself, NEVER raw codex exec"
-    validation: "/codex:rescue --model gpt-5.6-sol --effort xhigh (read-only) — plan validation, debugging, root-cause; the hard-thinking lane, not the default"
+    exploration: "/codex:rescue --model gpt-5.6-sol --effort low (read-only by default) — NEVER Claude Code itself, NEVER raw codex exec"
+    validation: "/codex:rescue --model gpt-5.6-sol --effort high (read-only) — plan validation, debugging, root-cause; the hard-thinking lane, not the default"
     contract: "factory/prompts/planner.md"
     plan_artifact: "plans/active/<issue>-<slug>.md via forge.py plan save"
     decisions: "docs/decisions/ records BEFORE decomposition is recorded"
@@ -88,8 +88,8 @@ phases:
       the contract is identical: same sections (incl. Decisions), same
       forge.py plan save step, same gates. When planning in Claude, delegate
       ALL codebase exploration to Codex read-only runs
-      (/codex:rescue --model gpt-5.6-terra --effort high — read-only by
-      default; gpt-5.6-sol --effort xhigh for validation/debugging — read-only;
+      (/codex:rescue --model gpt-5.6-sol --effort low — read-only by
+      default; gpt-5.6-sol --effort high for validation/debugging — read-only;
       raw codex exec is hook-blocked, no exceptions).
       Approval is the saved plan file, not a flag.
   decomposition:
@@ -104,8 +104,6 @@ phases:
   implementation:
     owner: "codex:/codex:rescue"
     model: "gpt-5.6-sol"
-    # Floor, not a ceiling. Escalate with `./forge delegate <id> --effort high`
-    # for migrations, cross-domain work, or security-sensitive changes.
     reasoning: "medium"
     prompts: "factory/prompts/implementer.md"
     required_skills: # ENFORCED by feature type — the decomposition's user_facing flag:
@@ -152,7 +150,8 @@ phases:
     allowed:
       - "autoreview"
     contract: "factory/prompts/reviewer.md"
-    schema: "factory/schemas/review.json"
+    schema: "factory/schemas/review-set.json"
+    lens_schema: "factory/schemas/review.json"
     required_skills: # enforced: user-facing review artifacts must attest this in skills_used
       user_facing:
         - "review-animations"
@@ -160,9 +159,12 @@ phases:
       Loaded as INPUT to autoreview's quality lens, not a second reviewer —
       the artifact stays generated_by: autoreview.
     notes: >-
-      ONE autoreview run reviews through three lenses (quality incl.
+      ONE autoreview helper call reviews through three lenses (quality incl.
       over-engineering AND cyclomatic complexity, performance, security) and
-      emits the three gate artifacts. The quality lens ALWAYS assesses
+      publishes one immutable raw-plus-three-lens generation, then selected.json.
+      Citation rejections append lesson-backed immutable successors; sealed-only
+      legacy upgrade copies lens proof without fabricating helper provenance.
+      Diagnostic --aspect artifacts never certify task proof. The quality lens ALWAYS assesses
       cyclomatic complexity — excessively tangled control flow is a blocking
       `cyclomatic-complexity` finding. Never nest reviewers; never review inline in the
       coordinating session.

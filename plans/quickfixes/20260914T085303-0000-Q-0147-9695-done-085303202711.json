@@ -1,0 +1,9 @@
+{
+  "event": "done",
+  "id": "Q-0147-9695",
+  "profile": "quickfix",
+  "reason": "forge review is blocked repo-wide: a guard added with the shared team model policy refuses any autoreview helper whose source contains 'gpt-5.6-terra' or DEFAULT_CODEX_ACCESS_FALLBACK_MODEL, but the upstream helper still ships that constant as an access-only retry. The helper cannot be updated to satisfy it. Pin the fallback in our own invocation instead, so Terra can never be selected, and assert that rather than scanning a third party's source.",
+  "started_at": "2026-09-14T08:51:18+00:00",
+  "completed_at": "2026-09-14T08:53:03+00:00",
+  "files": []
+}

@@ -1,0 +1,9 @@
+{
+  "event": "done",
+  "id": "Q-0134-3615",
+  "profile": "quickfix",
+  "reason": "Two decisions share number 0067 on main: 0067-rounds-rebind-to-their-gate (merged 12:18 via #210) and 0067-worker-commands-may-reach-the-network (merged 16:22 via #209, in flight when the first landed). check_dual_runtime is red on main. The later arrival renumbers to 0068.",
+  "started_at": "2026-09-12T11:26:15+00:00",
+  "completed_at": "2026-09-12T11:26:42+00:00",
+  "files": []
+}

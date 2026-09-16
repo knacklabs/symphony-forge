@@ -1,0 +1,52 @@
+{
+  "generated_by": "griller",
+  "gate": "plan",
+  "verdict": "pass",
+  "issue": "FORGE-COORD-1",
+  "summary": "Resolved the cold reader's stale approval and budget-authority finding in the already-approved story plan without changing production behavior or the eight-task graph.",
+  "gaps": [
+    "The approved story plan body still said the Decision 0074 amendment remained awaiting recorder-bound approval even though its frontmatter and recorded plan state were approved, and it omitted the diagnosed post-c9a85e9 fixture continuation plus the original-versus-measured budget account."
+  ],
+  "contradictions": [],
+  "resolutions": [
+    "The candidate now states that the 2026-09-12 chain and Decision 0074 amendment were recorder-bound approved on 2026-09-13, separates the current task-plan approval, and appends the exact three-path fixture continuation with original 24-file/4,000-line estimate, measured 122-path/15,061-line integrated delta, 14-path/95-line correction, and current 180-file/18,000-line ceiling."
+  ],
+  "open_items": [],
+  "questions_asked": 2,
+  "frontier_empty": true,
+  "rounds": [
+    {
+      "question": "When CI requires a PR, which delivery rule should Forge use?",
+      "options": [
+        "CI transport only (Recommended)",
+        "Full checkpoint"
+      ],
+      "chosen": "CI transport only (Recommended)"
+    },
+    {
+      "question": "What should happen when any required question exchange for the story is still open?",
+      "options": [
+        "Wait for all (Recommended)",
+        "Allow handoff"
+      ],
+      "chosen": "Wait for all (Recommended)",
+      "frontier_empty": true
+    }
+  ],
+  "inspected_refs": [
+    "plans/active/FORGE-COORD-1-either-claude-or-codex-coordinates-the-same-forge-workflow.md",
+    ".factory/stories/FORGE-COORD-1/task-plans/NATIVE-FOREGROUND-ACTIVATE.md",
+    ".factory/stories/FORGE-COORD-1/decomposition.json",
+    "plans/lessons/20260910T170240-0000-first-native-scope-correction-authorization-170240173755.json"
+  ],
+  "current_flow": "Save this exact corrected story-plan digest awaiting approval, bind the standing user authorization, save it unchanged as approved, re-record the unchanged eight-task decomposition against the new digest, then record the resolved current task grill and launch only the three-path fixture repair.",
+  "citations": [
+    {
+      "finding": "The approved story plan body still said the Decision 0074 amendment remained awaiting recorder-bound approval even though its frontmatter and recorded plan state were approved, and it omitted the diagnosed post-c9a85e9 fixture continuation plus the original-versus-measured budget account.",
+      "source": "current cold-read task grill finding 4 and 5; active story plan approval paragraph and transition; scope-correction lesson; measured e17f44f..c9a85e9 product delta"
+    }
+  ],
+  "input_sha256": "c605101d86582523c618eb7fbe236ccc103b96743d039926f418dc6540a3fd7c",
+  "recorded_at": "2026-09-13T17:35:37+00:00",
+  "commit": "c9a85e9722983787797edd82556e713986948c20"
+}

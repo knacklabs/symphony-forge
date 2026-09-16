@@ -1,0 +1,14 @@
+{
+  "topic": "first-native-existing-launch-history",
+  "lesson": "For NATIVE-FOREGROUND-ACTIVATE-C6, native resume argv construction and launch parameters are removed; foreground gate reads remain permitted and forge explore has no parser in the delivered checkout. The shared protected ledger contains 96 real native resume_session lifecycle rows from 32 earlier exploration launches, so schema/binding and exact historical argv validation preserve real recorded identity rather than adding a dispatch path; do not delete those records or describe them as hypothetical compatibility. General native resume remains refused before dispatch.",
+  "source": "/Users/dev/.codex/reviews/forge-lean-20260910/native-existing-resume-records.json; approved task C6 operation table",
+  "applies_to": [
+    "factory/scripts/forge_cli/codex_runtime.py",
+    "factory/scripts/forge_cli/delegate.py",
+    "factory/scripts/forge_cli/worker_admission.py",
+    "factory/schemas/delegation.json"
+  ],
+  "severity": "high",
+  "generated_by": "orchestrator",
+  "added_at": "2026-09-10T17:13:35+00:00"
+}

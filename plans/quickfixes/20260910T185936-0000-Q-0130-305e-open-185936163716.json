@@ -1,0 +1,13 @@
+{
+  "event": "open",
+  "id": "Q-0130-305e",
+  "profile": "degraded",
+  "reason": "User explicitly replaced the model policy: Sol low exploration, Sol high planning/grilling, Sol medium implementation and review fixes, Luna max Lite, no Terra in either coordinator. The current fixed implementation launcher selects Luna/max and exposes no model override, so it cannot start an allowed Sol/medium writer to repair its own configuration. This is a one-file, user-authorized harness.yaml model-policy bootstrap in the existing host-exception window, not a provider outage; close the window after the configuration edit and resume canonical Sol launches.",
+  "started_at": "2026-09-10T18:59:36+00:00",
+  "max_files": 5,
+  "files": [],
+  "harness_source": true,
+  "kind": "degraded",
+  "task_id": "NATIVE-FOREGROUND-ACTIVATE",
+  "story": "FORGE-COORD-1"
+}

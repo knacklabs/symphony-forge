@@ -1,0 +1,16 @@
+{
+  "generated_by": "claude-code:plan-mode",
+  "questions": [
+    {
+      "question": "Nothing carries the gate to the hook today. How should a round learn which gate it belongs to?",
+      "options": [
+        "Grill writes a session-scoped context file (Recommended)",
+        "Extend the run pointer",
+        "Gate and story only, drop task"
+      ],
+      "chosen": "Grill writes a session-scoped context file (Recommended)"
+    }
+  ],
+  "at": "2026-09-12T04:24:24.511357+00:00",
+  "session_id": "b4051e43-dbea-4d62-ba73-ae6210455474"
+}

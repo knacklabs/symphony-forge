@@ -2,34 +2,83 @@
   "generated_by": "griller",
   "gate": "spec",
   "verdict": "pass",
+  "issue": "FORGE-COORD-1",
+  "summary": "Resolved all seven findings from the single permitted Sol/high specification cold read, native session 01a09b3b-5320-7993-8d7a-c206eff0fb6a. The amended capability now separates audit context from final-revision authority, limits cooperative transfer to observable gates, gives ordinary-chat recovery and context cleanup explicit owners, and defines non-vacuous migration and lifecycle identities.",
   "gaps": [
-    "Grill applicability was not deterministic across the two coordinators.",
-    "Review capacity was ambiguous against the roadmap and Decision 0058.",
-    "The workspace contract omitted explicit approved-story, decomposition, identity and trunk-dependency bindings.",
-    "Coordinator review ownership and the delegated fix/re-review loop were not explicit.",
-    "The six-cell report did not name its existing artifact, producer or aggregate predicate.",
-    "Event compaction lacked exact storage, format, reader compatibility and atomicity boundaries.",
-    "Prepared-byte provenance did not name its durable inventory, baseline and versioned ownership graph.",
-    "Follow-up requirements read needed exact per-gate classification inputs and independent digest bindings for shared design reads.",
-    "The review-only draft PR checkpoint needed its explicit safe-reuse and uncertain-lookup contract restored."
+    "Question provenance could not survive an answer-driven amendment because the old round digest and final artifact digest differed.",
+    "The required old-coordinator-stopped proof named no authoritative producer, schema, record, freshness rule, or verifier.",
+    "The current worker-only signal channel could not carry the proposed orchestrator-produced ordinary-chat authority.",
+    "Enduring documentation was described as mechanically worker-locked even though the existing classifier keeps documentation as an orchestration surface.",
+    "Context-file permissions, deletion, recovery, and sensitive durable-metadata constraints were absent from acceptance proof.",
+    "Migration coverage compared eligible inventory with an undefined fresh-walk population, making exclusions or omissions vacuously pass or impossible.",
+    "The lifecycle contract ambiguously made error ID the trace join key despite Constitution 05 requiring correlationId for workflow tracing."
   ],
   "contradictions": [],
   "resolutions": [
-    "After LEAN-WORKFLOW ships, the approval-bound artifact records design_review required/routine in existing frontmatter. Missing/unknown means required; the named sensitive-change triggers require design scrutiny and routine classification needs a no-trigger rationale. Workers cannot downgrade it. Both adapters use the same predicate. One actual assessment may cover several applicable gates only with complete reviewed inputs and independent existing digest bindings. The first task retains all current gates until changed enforcement ships; no current pass is fabricated from this future rule.",
-    "Accepted 0064 explicitly amends the obsolete fixed-cap interpretation of 0058. The specification defines existing review limits as the installed helpers actual safeguards and complete lossless coverage, not a pinned 512000-byte Forge limit. Measure complete final inputs, use supported chunks and split if intact input cannot fit; no helper cap is edited or overridden. This implements the users already approved simplification while preserving the roadmap criterion.",
-    "The specification restores approved story, matching decomposition, exact story/task identity, fetched trunk commit and all effective dependency markers; open PR, green CI and messages are explicitly insufficient. It preserves fixed IDs/order/dependencies and the existing clean, unowned, same-common-directory attachment and publish-owner-last requirements under 0059.",
-    "The specification names main-launched forge review under accepted 0011/0064, prohibits self-certification and nested reviewers, and requires delegated fixes followed by review until every assessment is clean. Proposed 0049 is explicitly not authority. First uses current three-lens execution; LEAN later implements one combined operation with genuine linked lens artifacts.",
-    "The specification retains factory/schemas/test-automated.json, implementer production, the existing recorder/task path and six fixed labels. Accepted0065 applies the users explicit CI-only Linux/Windows ruling: actual local Mac CLI/Desktop and meaningful Ubuntu24.04 x64/nativeWindows CI are required. CI rows explicitly state regression/package-smoke evidence and unavailable authenticated behavior; Desktop observations stay unobserved limitations. Required evidence or any actual failure blocks aggregate readiness; accepted unavailable-platform limitations remain in remaining_gaps without fabricated passes. Existing fields and C10 propagate the honest aggregate; no new schema/matrix.",
-    "The specification names scoped and legacy events.bundle.json paths, format forge-event-bundle/v1, matching story/explicit IDs, validated reader union and identical-ID deduplication during interrupted cleanup. Conflicts refuse; legacy idless history stays unchanged and unread as new live events. After shipped proof is durable, sibling temporary write plus atomic replacement precedes read-back exact comparison and source removal. Failure preserves loose sources and hard proof.",
-    "The specification names the existing committed native-foreground-preparation-inventory.json, exact824baed4 baseline, 109953-byte bee122 patch and16 prepared-file hashes. It requires the complete versioned lean-delivery graph and reproducible artifacts to allocate all original paths/hunks and be SHA-bound by the approved story plan before any support-task contract. Main is publishing that graph and exact patches before plan approval; the spec does not treat temporary paths or source approvals as target authority.",
-    "The saved specification now maps all six gates to their exact existing classification input, record and digest. Epics derives classification from linked capability specs rather than adding JSON authority; signoff includes its complete located handover. Classification/rationale stay authored and digest-bound. A shared read explicitly names every gate, includes complete located/grounding inputs, returns independently assessed frontiers and binds each existing record; current one-gate launches cannot claim this future capability. LEAN owns implementation and refusal regressions before the feature is usable.",
-    "The checkpoint now names normal Git/gh draft operations instead of forge task pr-ready, matches origin/head repository/head branch/base/reviewed commit, refuses creation after uncertain or ambiguous lookup, and re-queries after uncertain creation. It preserves one PR identity and eventual marker identity/timestamp. Shared owns the retry mechanism and Integration its live checkpoint; no new registry or authority is introduced."
+    "Reuse now requires the same gate, story, task, and input digest. An answer-driven edit makes the earlier round audit context only; an owning decision or approval independently binds the final revision, whose grill uses a fresh round or Shared empty-frontier proof. No revision mapping is claimed.",
+    "Coordinator change is explicitly cooperative and developer- or host-directed. Forge gates only marker, CI, active-worker, and open required-question state; it neither records nor proves the old-session stop and makes no partial-session, stale-session, or concurrency fencing claim.",
+    "Shared now owns an explicit extension of the existing signal family: Main-produced required-question signals bind story and sorted affected tasks/artifacts, and resolution binds a validated owning decision or approval path and SHA256. Existing worker signals keep their producer contract; no cross-session recovery is claimed before Shared ships.",
+    "The specification now follows the existing classifier. Product and canon remain mechanically protected; task ownership and review govern post-approval orchestration-surface documentation without claiming a new phase-dependent hook lock.",
+    "Context bytes now use a randomized regular single-link mode-0600 file under a per-user mode-0700 transient directory, are deleted after terminal publication, and have narrowly verified stale cleanup. Durable logs retain only supplied state, byte count, and random opaque ID, never source path, content digest, or bytes; AC9 and C6 require those tests.",
+    "A full candidate-universe manifest classifies every discovered root candidate exactly once as eligible, excluded, or invalid. An independent second walk must match its count, classifications, and digest; invalid rows block, and zero eligible passes only for an empty or wholly explicit-exclusion universe.",
+    "correlationId is now the distinct workflow trace key. errorId joins one sanitized terminal failure to its one structured error row; tests require both fields and their link."
   ],
-  "rounds": [],
   "open_items": [],
-  "frontier_empty": true,
-  "summary": "Actual independent native Forge spec read launch-4b859e18db2b416a9ca56133b022b179, session01a08a2e-3a40-7651-b52b-719ebf1f6013 completed with these seven findings. Main adjudicated and resolved them in the saved current specification and accepted0064, with the existing one-read resolution procedure. This technical record claims no new implementation, worker contribution or platform proof; confirmation uses the users standing authorization for the accepted lean workflow and client migration. Actual subsequent requirements read launch-8eab636cdde543289b4958af475583d7, session01a08a40-f15e-74e3-bc7d-d3de778fb3c0 supplied these two additional clarifications. They are technical corrections within accepted0064 and the existing checkpoint scope, resolved without another cold read. Its third suggestion to mandate Native receipt A is rejected in the requirements disposition because that answer was explicitly limited to one2026-09-08 hook-delivery probe, not a product naming requirement. The users subsequent explicit CI-only Linux/Windows ruling is recorded in accepted0065; main amended only platform acceptance and its exact report interpretation while preserving all other resolved findings. No additional cold read or actual CI/runtime pass is claimed.",
-  "input_sha256": "9b94b886b837e5547f754031097fa85852a83be6d4f33c61fcfe3bbf2e080265",
-  "recorded_at": "2026-09-10T08:26:21+00:00",
-  "commit": "120c6b607afc4cb5f58f35e579bd4f04c3009436"
+  "questions_asked": 1,
+  "rounds": [
+    {
+      "question": "Spec amendment for FORGE-COORD-1: should the already-approved 2026-09-11 change move the complete one-call combined review into NATIVE-FOREGROUND-ACTIVATE now, while the 17 repository-answerable cold-read findings are corrected in the resolved draft?",
+      "options": [
+        "Move it now (Recommended)",
+        "Keep it in LEAN-WORKFLOW"
+      ],
+      "chosen": "Move it now (Recommended)",
+      "frontier_empty": true
+    }
+  ],
+  "inspected_refs": [
+    "docs/specs/dual-coordinator-parity.md",
+    "docs/specs/strict-role-split.md",
+    "docs/architecture/dual-coordinator-parity.md",
+    "docs/decisions/0067-rounds-rebind-to-their-gate.md",
+    "factory/scripts/forge_cli/signal.py",
+    "factory/schemas/signal.json",
+    "factory/scripts/forge_cli/repo_kind.py",
+    "factory/scripts/pre_tool_use.py",
+    "constitution/05-logging-and-observability.md"
+  ],
+  "current_flow": "Record this resolved spec pass against the amended draft, confirm it, then re-record the requirements pass against that confirmed revision before saving the exact amended story plan.",
+  "citations": [
+    {
+      "finding": "answer-driven revision binding",
+      "ref": "docs/decisions/0067-rounds-rebind-to-their-gate.md"
+    },
+    {
+      "finding": "cooperative transfer limits",
+      "ref": "docs/specs/dual-coordinator-parity.md"
+    },
+    {
+      "finding": "required-question signal evolution",
+      "ref": "factory/scripts/forge_cli/signal.py and factory/schemas/signal.json"
+    },
+    {
+      "finding": "documentation classification",
+      "ref": "docs/specs/strict-role-split.md and factory/scripts/forge_cli/repo_kind.py"
+    },
+    {
+      "finding": "context retention and cleanup",
+      "ref": "docs/specs/dual-coordinator-parity.md and constitution/05-logging-and-observability.md"
+    },
+    {
+      "finding": "migration universe coverage",
+      "ref": "docs/specs/dual-coordinator-parity.md"
+    },
+    {
+      "finding": "workflow and error identities",
+      "ref": "constitution/05-logging-and-observability.md"
+    }
+  ],
+  "input_sha256": "df89e6ffbe02e808bac86113edc8f85ed6383532f9b14f41a725ec2cf2d8ee2f",
+  "recorded_at": "2026-09-13T15:07:46+00:00",
+  "commit": "08068416106335412b9b1b3c27ba52aebc3cbf8f"
 }

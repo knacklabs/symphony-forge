@@ -1,0 +1,1 @@
+{"event": "signal-confusion", "generated_by": "implementer", "at": "2026-09-13T10:16:31+00:00", "story": "FORGE-COORD-1", "detail": "The continuation brief requires only the six focused selectors named in the task plan, but it does not identify those selectors; provide their exact test IDs/commands before worker verification."}

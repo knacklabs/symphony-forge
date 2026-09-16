@@ -1,8 +1,9 @@
 ---
-status: accepted
+status: superseded
 confirmed_by: "Nandu"
 date: 2026-09-05
 stories: [upgrade-preserves-doc-contracts]
+superseded_by: 0067-rounds-rebind-to-their-gate
 ---
 
 # Every grill gate is ledger-matched and floors at one round

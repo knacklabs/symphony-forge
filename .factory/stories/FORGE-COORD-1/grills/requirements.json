@@ -1,0 +1,39 @@
+{
+  "generated_by": "griller",
+  "gate": "requirements",
+  "verdict": "pass",
+  "issue": "FORGE-COORD-1",
+  "summary": "The current cold reader rechecked the confirmed requirements while diagnosing the closeout continuation. The product tree moved only through the approved integrated implementation and its focused corrections; the confirmed capability boundary is unchanged and the fixture repair adds no behavior.",
+  "gaps": [],
+  "contradictions": [],
+  "resolutions": [],
+  "open_items": [],
+  "questions_asked": 1,
+  "frontier_empty": true,
+  "rounds": [
+    {
+      "question": "Dual-coordinator review migration: should Forge remove ongoing fixed-path review compatibility and use one Portable-owned upgrade migration into canonical task-scoped selected review sets?",
+      "options": [
+        "Use one-time upgrade migration (Recommended)",
+        "Keep ongoing fixed-path fallback"
+      ],
+      "chosen": "Use one-time upgrade migration (Recommended)",
+      "frontier_empty": true
+    }
+  ],
+  "inspected_refs": [
+    "docs/specs/dual-coordinator-parity.md",
+    "docs/architecture/dual-coordinator-parity.md",
+    "docs/product/BRIEF.md",
+    "plans/active/FORGE-COORD-1-either-claude-or-codex-coordinates-the-same-forge-workflow.md",
+    ".factory/stories/FORGE-COORD-1/decomposition.json",
+    ".factory/stories/FORGE-COORD-1/task-plans/NATIVE-FOREGROUND-ACTIVATE.md",
+    "factory/tests/test_board_load_time.py",
+    "factory/tests/test_gates.py"
+  ],
+  "current_flow": "Keep the confirmed capability unchanged, correct only story-plan approval and measured-history wording, rebind the unchanged eight-task graph, and repair the two stale fixtures plus AGENTS.md line hygiene before resuming close.",
+  "citations": [],
+  "input_sha256": "2731481c616ce7c5c5a416c50dc56b0c4f9d71af4edd0208509c4ec38b736435",
+  "recorded_at": "2026-09-13T17:36:06+00:00",
+  "commit": "c9a85e9722983787797edd82556e713986948c20"
+}

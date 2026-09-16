@@ -1,0 +1,15 @@
+{
+  "generated_by": "claude-code:plan-mode",
+  "questions": [
+    {
+      "question": "Spec amendment for FORGE-COORD-1: should the already-approved 2026-09-11 change move the complete one-call combined review into NATIVE-FOREGROUND-ACTIVATE now, while the 17 repository-answerable cold-read findings are corrected in the resolved draft?",
+      "options": [
+        "Move it now (Recommended)",
+        "Keep it in LEAN-WORKFLOW"
+      ],
+      "chosen": "Move it now (Recommended)"
+    }
+  ],
+  "at": "2026-09-11T11:33:25.978261+00:00",
+  "session_id": "be00c158-1f01-4e95-be51-f9e530567040"
+}

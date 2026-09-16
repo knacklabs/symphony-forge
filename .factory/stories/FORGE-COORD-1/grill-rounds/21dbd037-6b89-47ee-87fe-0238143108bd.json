@@ -1,0 +1,23 @@
+{
+  "generated_by": "claude-code:plan-mode",
+  "questions": [
+    {
+      "question": "When CI requires a PR, which delivery rule should Forge use?",
+      "options": [
+        "CI transport only (Recommended)",
+        "Full checkpoint"
+      ],
+      "chosen": "CI transport only (Recommended)"
+    },
+    {
+      "question": "What should happen when any required question exchange for the story is still open?",
+      "options": [
+        "Wait for all (Recommended)",
+        "Allow handoff"
+      ],
+      "chosen": "Wait for all (Recommended)"
+    }
+  ],
+  "at": "2026-09-11T13:33:13.792884+00:00",
+  "session_id": "07a37d4a-84a4-4927-baee-c1914506faa4"
+}

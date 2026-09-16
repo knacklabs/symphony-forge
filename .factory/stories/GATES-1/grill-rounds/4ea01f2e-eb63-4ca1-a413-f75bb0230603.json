@@ -1,0 +1,16 @@
+{
+  "generated_by": "claude-code:plan-mode",
+  "questions": [
+    {
+      "question": "Is a plan complete when it delegates mechanism design to its four task contracts, or must it specify all four first?",
+      "options": [
+        "Record it and decompose (Recommended)",
+        "Specify all four in the plan first",
+        "Narrow the story instead"
+      ],
+      "chosen": "Record it and decompose (Recommended)"
+    }
+  ],
+  "at": "2026-09-12T02:05:51.126814+00:00",
+  "session_id": "b4051e43-dbea-4d62-ba73-ae6210455474"
+}

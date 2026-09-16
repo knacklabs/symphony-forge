@@ -1,0 +1,1 @@
+{"event": "signal-blocked", "generated_by": "implementer", "at": "2026-09-13T15:39:19+00:00", "story": "FORGE-COORD-1", "detail": "The registered integration worker cannot run the required git fetch origin main: the managed sandbox denies writing the linked worktree shared FETCH_HEAD at /Users/dev/Workdir/symphony-forge-native-do"}

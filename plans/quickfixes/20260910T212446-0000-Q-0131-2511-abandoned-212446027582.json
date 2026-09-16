@@ -1,0 +1,10 @@
+{
+  "event": "abandoned",
+  "id": "Q-0131-2511",
+  "profile": "degraded",
+  "reason": "The admitted native worker attempted nested coordination after a real stage-contract admission failure. The host interrupted its launcher through the normal handler; the failed terminal and revocation marker are preserved. This empty window claimed no files and does not prove completion. The host can open the protected lock; the actual defect is admission comparing the current approved contract to the historical stage-start digest.",
+  "opened_reason": "managed sandbox blocks the active task delegation lock in the protected Git-control directory",
+  "started_at": "2026-09-10T21:21:46+00:00",
+  "completed_at": "2026-09-10T21:24:46+00:00",
+  "files": []
+}

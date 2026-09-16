@@ -1,0 +1,1 @@
+{"event": "signal-confusion", "generated_by": "implementer", "at": "2026-09-12T00:53:42+00:00", "story": "FORGE-COORD-1", "detail": "Reviewer focus requires constitution/01-code-quality.md, but that file does not exist and constitution/README.md lists 01-monorepo-standard.md instead; confirm the indexed constitution plus 05/07/09 a"}

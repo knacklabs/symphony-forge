@@ -1,0 +1,1 @@
+{"event": "signal-resolved", "generated_by": "orchestrator", "at": "2026-09-10T11:25:29+00:00", "story": "FORGE-COORD-1", "detail": "S-0011-88cb: The PermissionError came from recursive forge delegate inside the admitted worker sandbox, not from the host coordinator launch route. The coordinator interrupted launch-e01a8d98ddcc481fb3941dc0bc2c15"}

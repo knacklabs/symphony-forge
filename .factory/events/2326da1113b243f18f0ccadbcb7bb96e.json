@@ -1,0 +1,1 @@
+{"event": "signal-contradiction", "generated_by": "implementer", "at": "2026-09-12T07:33:28+00:00", "story": "GATES-1", "detail": "The approved plan says the clean main suite has 93 failing node IDs, but a clean clone of current HEAD 8518291 produced 99 (24+25+24+26 across four deterministic node shards); recording either set wit"}

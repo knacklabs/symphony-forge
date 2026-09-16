@@ -1,0 +1,1 @@
+{"event": "signal-confusion", "generated_by": "implementer", "at": "2026-09-12T01:43:35+00:00", "story": "FORGE-COORD-1", "detail": "The task reviewer focus requires constitution/01-code-quality.md, but that file is absent and constitution/README.md does not list it; please resolve whether the indexed constitution sources are the i"}

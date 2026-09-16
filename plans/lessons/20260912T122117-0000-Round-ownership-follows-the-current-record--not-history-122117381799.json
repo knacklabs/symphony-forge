@@ -1,0 +1,11 @@
+{
+  "topic": "Round ownership follows the current record, not history",
+  "lesson": "A pass that stops citing a round releases it, and that is the intended contract of decision 0067, not a gap in criteria C2/C3/C4. Those criteria say a round ALREADY CONSUMED BY another gate, story or task is refused, and each is proven by its own test: the owning pass still lists the round, so it stays in the used set. The review read one line as three partial verdicts because excluding the current evidence path also releases rounds the current pass omits \u2014 which is exactly what T1 exists to allow, since otherwise a superseded pass burns its rounds forever and every re-record demands an invented question.",
+  "source": ".factory/stories/GATES-1/tasks/GATES-1-T1/reviews/quality.json",
+  "applies_to": [
+    "factory/scripts/record_grill_from_json.py"
+  ],
+  "severity": "medium",
+  "generated_by": "orchestrator",
+  "added_at": "2026-09-12T12:21:17+00:00"
+}

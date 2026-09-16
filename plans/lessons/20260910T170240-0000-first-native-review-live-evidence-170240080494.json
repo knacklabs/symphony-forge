@@ -1,0 +1,13 @@
+{
+  "topic": "first-native-review-live-evidence",
+  "lesson": "For NATIVE-FOREGROUND-ACTIVATE-C8, a generic file:line verdict about the admission implementation is insufficient: the approved task plan requires an independent check of the complete supplied receipt and transcript, with concrete launch/session/tool-call/denial-event/hash identities recorded in the implemented verdict. Verify the actual correlation and explicit PreToolUse denial; do not infer live proof from unchanged bytes, fixtures, or this lesson.",
+  "source": "NATIVE-FOREGROUND-ACTIVATE task plan C8 and Manual Verification; first independent review c21b80b quality verdict C8 omitted required live correlation",
+  "applies_to": [
+    "factory/scripts/pre_tool_use.py",
+    "factory/scripts/forge_cli/review.py",
+    "factory/scripts/forge_cli/worker_admission.py"
+  ],
+  "severity": "high",
+  "generated_by": "orchestrator",
+  "added_at": "2026-09-10T17:02:40+00:00"
+}

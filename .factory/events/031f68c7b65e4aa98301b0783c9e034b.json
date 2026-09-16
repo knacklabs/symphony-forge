@@ -1,0 +1,1 @@
+{"event": "signal-resolved", "generated_by": "orchestrator", "at": "2026-09-10T21:20:55+00:00", "story": "FORGE-COORD-1", "detail": "S-0012-94f5: The task contract and stop hook confirm the implementation stage remains authorized; the mismatch is protected worktree stage state. Resolve locally, activate the recorded stage in this task worktree,"}

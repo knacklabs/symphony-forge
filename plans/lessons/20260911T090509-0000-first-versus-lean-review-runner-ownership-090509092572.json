@@ -1,0 +1,11 @@
+{
+  "topic": "combined-review-owner-is-first",
+  "lesson": "Decision 0067 and the approved FORGE-COORD-1 amendment move the complete one-helper, immutable-generation and pointer-last review contract into NATIVE-FOREGROUND-ACTIVATE. LEAN-WORKFLOW consumes that selected proof and must not reimplement D-0032.",
+  "source": "docs/decisions/0067-combined-review-generation.md; approved FORGE-COORD-1 plan lines 146-154",
+  "applies_to": [
+    "factory/scripts/forge_cli/review.py"
+  ],
+  "severity": "high",
+  "generated_by": "orchestrator",
+  "added_at": "2026-09-11T09:05:09+00:00"
+}

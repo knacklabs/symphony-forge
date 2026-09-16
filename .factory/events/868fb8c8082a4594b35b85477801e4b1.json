@@ -1,0 +1,1 @@
+{"event": "signal-resolved", "generated_by": "orchestrator", "at": "2026-09-11T00:54:04+00:00", "story": "FORGE-COORD-1", "detail": "S-0013-0640: Confirmed native hook defect: the direct Codex shell matcher scanned structured apply_patch content and rejected quoted test fixtures. The saved hook-content-recovery plan and recorded task contract a"}

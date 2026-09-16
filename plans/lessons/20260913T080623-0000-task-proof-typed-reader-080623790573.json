@@ -1,0 +1,12 @@
+{
+  "topic": "task-proof-typed-reader",
+  "lesson": "Do not report frontier .get calls on verify/tests as raw reads: factory_lib.load_json routes .factory task verify.json and tests.json through _proof_object_or_default, which normalizes valid non-object values to an empty object; the existing close/frontier selector proves the path reaches fail-closed handling without a traceback. Consumer-local normalization would duplicate C4's central rule.",
+  "source": "00115737d89ddbe20abcf5c564c6ed2a9818968da41e30a7667b92a3430d6b7f",
+  "applies_to": [
+    "factory/scripts/factory_lib.py",
+    "factory/tests/test_gates.py"
+  ],
+  "severity": "low",
+  "generated_by": "autoreview",
+  "added_at": "2026-09-13T08:06:23+00:00"
+}

@@ -1,0 +1,629 @@
+{
+  "generated_by": "docs-decomposer",
+  "user_facing": true,
+  "tasks": [
+    {
+      "id": "NATIVE-FOREGROUND-ACTIVATE",
+      "title": "Native foreground and complete first-task proof",
+      "objective": "Close the blocking quality finding in combined review generation 5481a5ca443a9e37ee30a0c43853a6e75437f087cd5e1a87289b7f528e8e4835. After _pass_sections validates the six exact ordered markers, reject every VERDICT_LINE match outside the quality span, including the preface, both interstitial regions, the performance and security bodies, and the epilogue. Search the original non-quality spans separately so joining cannot synthesize a boundary match; keep verdict parsing inside quality unchanged. State the same quality-only placement rule in the combined provider prompt. Extend the existing malformed-output selector with all six placements while retaining valid ordinary prose. Change only factory/scripts/forge_cli/review.py and factory/tests/test_review_task_delta.py. Main owns recorders, Git, proof, review, close, PR, and CI. Keep the cumulative post-499c358 ten-path repair within 400 added-plus-deleted lines.",
+      "dependencies": [],
+      "user_facing": false,
+      "acceptance_criteria": [
+        "NATIVE-FOREGROUND-ACTIVATE preserves the full target hook configuration and Claude parity: native hook JSON stays scoped, `.claude/settings.json` gains clear registration, `check_dual_runtime.py` verifies independent and both-adapter omissions, and official hook readiness remains trusted. As an explicitly additional user-requested overlay, First owns every current model-policy hunk without moving any original prepared path/hunk allocation: owning harness/launcher, active project profiles and guidance, all 15 committed team agent definitions, exact init/upgrade distribution proof, top-level main-selector omission, and same-plugin Luna/max doctor compatibility. The main coordinator model and reasoning are selected by the user and host, including Terra when the user chooses it. Exploration uses Sol/low; planning, decomposition, architecture, plan validation and grills use Sol/high; implementation, technical test verification and autoreview fixes use Sol/medium, with formal Lite as Luna/max; formal autoreview and functional checking use Sol/high; no Forge-managed delegated or subagent lane uses Terra. Decision 0074 supersedes Decision 0070 for current model policy, retains every Forge-managed pin and team definition, and preserves Decision 0031's Lite lifecycle. The original Luna/max C8 evidence remains unchanged history, not selector authority. Ordinary `forge delegate` exposes no public `--effort` override and derives Sol/medium solely from harness.yaml; the internal companion/runtime effort field and recorded launch argv remain explicit. Review execution pins Codex to Sol/high and refuses an unreadable or known Terra-fallback helper before brief publication or launch. Shell-wrapped raw Codex detection consumes supported option operands before command detection: Bash `-o/+o`, `-O/+O`, `--rcfile`, `--init-file`, including whitespace-separated, clustered, and attached forms, and zsh `-o/+o`, including whitespace-separated and attached forms. Operand values remain data even when they contain `c`, `codex`, or shell-looking text. It treats `c` only as a real short option, stops at `--` or the first script operand, and refuses nested raw launch before execution. Direct and supported wrapped raw launches normalize both slash styles before comparing the platform basenames codex, codex.exe, and codex.cmd; quoted absolute Windows paths and executable suffixes cannot bypass the protected launch path. Raw detection remains quote-aware for whitespace-bearing global option operands and environment-assignment values in direct, wrapped, pipeline, and substitution forms; already-parsed Codex argv is classified directly without re-stringifying it. Raw-Codex regex candidates are accepted only at active shell boundaries: quoted or escaped assignment/query/pipeline data, single-quoted substitution text, and inert nested-shell data cannot deny, while active separators, later real launches, backticks, and command substitution inside double quotes still deny at both top-level and nested-shell checks. An active $() or backtick body uses fresh inner command context and restores its outer quote only at a real unquoted/unescaped close, so a later launch inside the body denies even under outer double quotes while nested, quoted, and escaped delimiters stay data. Raw detection recognizes active group and process-substitution boundaries only when `(` is not immediately preceded by a word, assignment, array/function, arithmetic, or extglob prefix character. Inside an active $() frame, each unquoted ordinary `(` increments the frame depth and only the matching outer `)` restores the surrounding quote; nested substitutions, backticks, quotes, and escapes retain their existing handling. Raw Codex at group start, after a nested group or substitution, and inside active backtick or process substitution denies, while arrays, escaped openers, quoted group-like data, arithmetic-like forms, and extglob-like forms remain inert. The shell builtin exec is an active optional command prefix: literal or quoted exec, --, -c/-l/-cl, spaced or attached/clustered -a, command -- exec, later separators/pipelines, active substitutions, and nested shell commands cannot launch raw Codex. Values consumed as exec argv0, command -v/-V queries, prose, and exec tokens behind env/nohup/xargs remain data. `_wrapped_codex_exec` remains exactly as it was at c462478, with no exec parser or compensating env/nohup/nice/xargs branches; external `/tmp/exec` and exec tokens behind wrappers remain ordinary argv data. The finite matrix includes command -p and --, attached quoted/mixed/backslash argv0 after active boundaries, and the exact allowed forms `exec -a 'codex exec' printf '%s' safe`, `exec -cla codex exec x`, and `exec -acl label codex exec x`. The final correction contains no `active_group_boundary` helper: CODEX_EXEC_INVOCATION carries the exact `(?<![\\w=(@?!+*$])\\(\\s*` group/process-substitution boundary. The deny matrix includes the literal `f(){(codex exec x);}; f` form and the same grouped function body inside `$()`, proving a raw launch after `{(` cannot hide.",
+        "Process-bound admission remains truthful: foreground launch registers before stdin with terminal identity and writes exact UTF-8 prompt bytes independent of the host locale, zero-exit without completed turn is failed, and native write admission covers add/update/delete/move only after registration. Cancellation writes the existing durable revocation marker before cleanup signals; terminal success/failure plus dead process and released matching lock revoke completion; non-active stage incarnation revokes stage closure. Admission requires an exact starting/running row, live matching process ancestry, held matching lock, active matching stage and no explicit revocation; failed cleanup never invents success and no new completion tombstone is introduced. Worker admission and stage coverage use one immutable-baseline-aware scope rule: a Git tree or explicit trailing slash is a directory, while a blob, symlink, or absent path is exact. Exact equality remains allowed; descendants require directory classification, and the mutable working tree cannot widen authority. Native Codex receives binary stdin bytes equal to the exact multiline prompt encoded as UTF-8, with no platform newline translation. An ordinary terminal row certifies completion only when argv exactly matches the command derived from its own recorded and baseline-classified scope; scope-less legacy argv is never current selector authority. Structured patch normalization preserves an exact lexical symlink leaf so its authorized delete or move can proceed, while any symlinked or escaping ancestor still refuses. The required Delete/Move-source symlink regression creates its test-owned symlinks unconditionally and never converts OSError into a passing skip.",
+        "C9 review inputs are complete and task-specific: task, branch and combined review receive the full approved task plan, approval/grill fields, digest, current delta and resolved automated report; missing, stale, summarized, truncated or substituted inputs refuse. Each default `forge review` calls the installed helper once and creates one schema-exact immutable generation with RFC4648 base64 of exact pre-parse output and three genuine lens records. Combined/rejection retain real helper/input/raw/run/brief provenance; upgrade losslessly copies sealed legacy lenses with inventory/source hashes and marker identity and fabricates none. Public `--set` derives or compares the installed helper path/version/hash, exact `_combined_prompt(task)` bytes/hash/count, current run/brief, task token and current delta before accepting raw output; it rederives lenses and refuses caller mismatch. Provider passes are authoritative. Forge reconstructs and validates the top-level list in pass order with the helper's unchanged `(NFC POSIX path, integer line, exact category, normalized tagged title)` merge key and chunk prefix/2,000-character bound; raw and top-level findings remain lossless and mixed source attribution refuses. Lens projection and remediation use the separate `(NFC POSIX path, integer line as normalized start/end, normalized tag-free title)` fingerprint. Same-lens duplicates keep only the first projected provider record, preserving its category and metadata; the same fingerprint under different lenses refuses. Assessment prose carries no parsed fingerprint grammar, and rejection identity remains SHA256 of canonical path/line/title JSON. Require exact ordered full-line lens markers, chunk order, one lens tag, the 3,000-character explanation bound, quality verdicts only inside quality blocks, and existing score/recommendation/worst-verdict rules. Verify helper identity before/after launch. Under cross-platform review-selection exclusion, revalidate current HEAD/delta immediately before pointer replacement; stale publication refuses. Generation identity is canonical content SHA256; reads recompute it; ancestors are real directories and leaves regular single-link files; identical retry succeeds and unequal collision refuses. A blocking generation selects and revokes clean status; only selected clean/current proof certifies. Rejection may extend selected combined or rejection proof, bind the immediate source SHA/ID and combined root, preserve raw bytes/prior history/unaffected lenses, and append one unique cited finding plus deterministic lesson path/hash. Record or idempotently reuse the lesson before pointer publication; lesson failure preserves selection, later pointer failure may leave a valid reusable lesson, and divergent lesson collision refuses. Upgrade, fixed-only, unselected, copied, stale, incomplete-source, unrelated-citation, no-match, ambiguous and already-rejected findings refuse. Existing regressions prove each refusal preserves selection and prove two sequential successful rejections preserve exact fingerprints, raw bytes, lesson lineage, and clean-checkout sealing. Diagnostics never publish or stamp. First and Lean produce only recorder-backed task proof. Lens-title validation normalizes the tag-free title and rejects any complete quality, performance, or security tag token anywhere in it, including at the beginning, middle, or end after tabs, newlines, or non-breaking spaces normalize to whitespace; plain titles and unrelated bracketed text remain valid. Combined/rejection generation validation always checks decoded raw helper shape even for zero bytes with canonical empty base64/SHA. One-pass and pass wrappers alone carry provider_report; a chunked top-level provider_report is unexpected and refuses before projection or publication. Every decoded non-object helper result, including null, number, list, and string, reaches one controlled invalid-wrapper refusal before membership tests and can never publish. provider_report authority is allowed only when the caller requires it for one-pass or pass wrappers, never through a global allowance.",
+        "C10 uses one task-aware proof predicate for local worktree, CI, board/readiness, `forge task close` and sealing. Pre-seal consumers resolve the immutable generation named and hashed by task `selected.json`, with raw output, three lenses and current `product_delta_digest` identity. Pointer replacement publishes last; absent, fixed-only, incomplete, malformed, copied, mixed, stale, tampered or interrupted proof preserves the prior pointer. Active publication rechecks HEAD/delta while holding review-selection exclusion. Task seal holds that same exclusion from selected-proof validation through marker commit, revalidates the pointer, traverses and validates the complete combined-to-selected rejection ancestry, and stages the pointer, every generation in that lineage, each referenced lesson at its exact path/hash, and `all.md`. A real separate-process regression pauses sealing after marker preparation while the lock remains held, starts publication in a second process, and proves pointer replacement waits until the marker commit finishes; sealed readers load that lineage and its lessons from the marker commit. Only Portable may later publish an upgrade pointer. Sealed readers follow the task's current pointer for an upgrade only when its validated `sealed_commit` exactly equals the inspected task marker; ordinary combined or rejection ancestry remains loaded from that marker commit. Close skips helper only for selected clean/current proof; a post-pointer stamp retry validates and stamps that same generation without another helper. Stage/frontier, CI and board share the predicate; refusal mutates no marker, Git, PR, stage or proof state, and no runtime reader falls back to fixed or story proof. Every verify/tests reader uses one central proof-specific typed-read rule in factory_lib.py: valid non-object JSON is malformed proof, and the existing forge next/phase, board, phase-transition, story-closeout, task-close, frontier and seal consumers reach their inspection, repair or refusal outcomes without calling .get on that value or raising; every out-of-batch consumer module remains byte-identical and only factory_lib.py plus existing in-batch tests may change for this fix. Decision 0066 legacy conversion runs only after selected proof passes; invalid/stale proof leaves caller, authoritative stage and snapshot bytes unchanged. Task-owned proof presence is independent of successful object parsing: a syntactically valid non-object verify.json or tests.json forces modern fail-closed validation and can never enable legacy fallback. With an existing marker and unchanged product delta, an ordinary pr-ready retry runs the sealed predicate and refuses every post-marker proof rewrite before marker, stage, selection, Git, push, or PR mutation; clean unchanged proof reuses the marker, while a genuinely moved product follows the normal reopen, fresh-proof, review, close, and reseal flow. A sealed task with missing task-owned proof never downgrades to fixed story/root verify, tests, or lens files. The shared proof predicate accepts one live marker parameter named `marker`; obsolete compatibility flags and proof-reader closures are absent from both the predicate and the CI gate. The CI gate passes the committed marker directly while preserving the legitimate marker-bound origin=upgrade selection, legacy_artifacts provenance, historical bytes, and all current/sealed validation. The sole fixed-proof migration remains a schema-valid selected origin=upgrade generation whose sealed_commit exactly binds the inspected marker. The `check_task_proof.proof_problems` docstring describes selected task proof and the explicit marker-bound upgrade exception and contains no legacy-fallback claim.",
+        "Workspace-before-JIT honors incumbent 0063. Successor task start checks approved plan/decomposition, task/digest, refreshed trunk and dependency markers, then creates the worktree before JIT save/grill/approval. Attach accepts only a clean, registered, unowned same-common-directory worktree at that trunk commit with matching identity/dependencies. Grounding, JIT approval, stage and registered admission precede writes. After materialization, hydration preflights every destination before payload mutation and preserves Decision 0028's legal in-target file symlink. On refusal it attempts exact worktree removal, deletes the branch only after confirmed removal, and otherwise reports the surviving worktree/registration/branch without inventing cleanup success or mutating external payload state. The shipped-dependency predicate reads one exact fetched origin/trunk snapshot, validates marker identity and ancestry with the fetched SHA, and for an ordinary marker validates the shared exact task proof before any successor branch or worktree allocation. A reconciled marker skips proof only after its identity and ancestry validate; malformed, wrong-task, or proofless markers remain unshipped across task start, board, frontier, and closeout. Existing startup proof covers invalid JSON, non-object, empty-object, wrong-task, invalid-commit, and proofless ordinary dependency markers; each remains unshipped and allocates no task branch or worktree before the validated reconciled positive control.",
+        "Unsupported native operations refuse before side effects: native background/read-only background, general status, live/dead worker status, cancel/resume/jobs, explore, and native question delivery do not compose briefs, spend question eligibility, append ledgers, signal processes, or dispatch children until their successor owners ship. The only native status exception renders already-dead registered native grill rows through existing dead_launches, restricted to strict grill gate/task labels and starting/running rows proven dead; it does not call the general status handler. Preserve unchanged Claude dispatch.",
+        "Own-task review preflight uses `proof_path(base, story, artifact, task_id=args.id)` for the active task, accepts only own-task proof, and refuses story or other-task proof without helper fallback.",
+        "The admitted native worker reads and hashes the exact protected task plan, then exercises the actual native hook against that plan with harmless absent patch context. Only a correlated PreToolUse deny event counts: automated report receipt, registered terminal row and durable tool log identify the same launch/session/tool call and actual denial; unchanged bytes, context failure or synthetic payload never certify it. Main runs current `forge next`, process-heavy/full verification and correlation outside the managed companion. The implemented plan-contract review checks that evidence. The one shared review-set schema is introduced here; no second registry or CI/C10 parser is added.",
+        "Closeout proof matches the hardened marker contract without weakening production validation. The board memo regression counts the current rev-parse probe, proves memo reuse, and invalidates against a schema-valid reconciled marker. The story-closeout regression commits the existing scoped decomposition with T1 proof before marker publication, immediately asserts T1 is valid on trunk, and keeps normal sealed markers unreconciled. AGENTS.md remains semantically complete at no more than 110 lines, and the repository scaffold checker passes.",
+        "Review regression tests are hermetic on clean Ubuntu. The review-set recorder test supplies one test-owned safe helper to both in-process identity derivation and the subprocess recorder; the active-task proof preflight test replaces only helper discovery with a test-owned safe helper; and the rejection-lineage fixture commits existing lifecycle state before its intentional divergent merge and requires src/work.py to be the exact unmerged path before resolution. The three focused nodes pass with no personal AUTOREVIEW installation, without skips or production-code changes."
+      ],
+      "write_scope": [
+        ".claude/CLAUDE.md",
+        ".claude/settings.json",
+        ".codex/agents/AGENTS.md",
+        ".codex/agents/architect.toml",
+        ".codex/agents/backend.toml",
+        ".codex/agents/debugger.toml",
+        ".codex/agents/docs-decomposer.toml",
+        ".codex/agents/explorer.toml",
+        ".codex/agents/frontend.toml",
+        ".codex/agents/functional-checker.toml",
+        ".codex/agents/griller.toml",
+        ".codex/agents/lite.toml",
+        ".codex/agents/performance.toml",
+        ".codex/agents/planner-high.toml",
+        ".codex/agents/planner.toml",
+        ".codex/agents/refactorer.toml",
+        ".codex/agents/security.toml",
+        ".codex/agents/tester.toml",
+        ".codex/config.toml",
+        ".codex/explore.config.toml",
+        ".codex/hooks.json",
+        "AGENTS.md",
+        "README.md",
+        "WORKFLOW.md",
+        "docs/FACTORY.md",
+        "docs/QUALITY.md",
+        "docs/ROLES.md",
+        "docs/architecture/dual-coordinator-parity.md",
+        "docs/decisions/0062-luna-max-exploration-and-implementation.md",
+        "docs/decisions/0070-sol-specialized-workflow-models.md",
+        "docs/degraded-mode.md",
+        "docs/getting-started.md",
+        "docs/product/BRIEF.md",
+        "docs/specs/dual-coordinator-parity.md",
+        "docs/specs/strict-role-split.md",
+        "factory/prompts/griller.md",
+        "factory/prompts/implementer.md",
+        "factory/prompts/planner.md",
+        "factory/prompts/reviewer.md",
+        "factory/schemas/delegation.json",
+        "factory/schemas/review-set.json",
+        "factory/scripts/check_dual_runtime.py",
+        "factory/scripts/check_encoding_hygiene.py",
+        "factory/scripts/check_task_proof.py",
+        "factory/scripts/factory_lib.py",
+        "factory/scripts/forge.py",
+        "factory/scripts/forge_cli/close.py",
+        "factory/scripts/forge_cli/codex_runtime.py",
+        "factory/scripts/forge_cli/delegate.py",
+        "factory/scripts/forge_cli/doctor.py",
+        "factory/scripts/forge_cli/phase.py",
+        "factory/scripts/forge_cli/readiness.py",
+        "factory/scripts/forge_cli/review.py",
+        "factory/scripts/forge_cli/review_brief.py",
+        "factory/scripts/forge_cli/stages.py",
+        "factory/scripts/forge_cli/tasks.py",
+        "factory/scripts/forge_cli/upgrade.py",
+        "factory/scripts/forge_cli/worker_admission.py",
+        "factory/scripts/pre_tool_use.py",
+        "factory/scripts/record_review_from_json.py",
+        "factory/scripts/session_start.py",
+        "factory/scripts/stop_continue.py",
+        "factory/skills/forge.md",
+        "factory/tests/test_gate_table.py",
+        "factory/tests/test_board_load_time.py",
+        "factory/tests/test_gates.py",
+        "factory/tests/test_close_binds_to_the_diff.py",
+        "factory/tests/test_grill_release.py",
+        "factory/tests/test_native_launch.py",
+        "factory/tests/test_native_setup.py",
+        "factory/tests/test_proof_read_path.py",
+        "factory/tests/test_review_lenses_in_parallel.py",
+        "factory/tests/test_review_settled_contracts.py",
+        "factory/tests/test_review_task_delta.py",
+        "factory/tests/test_stop_less_often.py",
+        "factory/tests/test_worker_admission.py",
+        "harness.yaml",
+        "plans/exploration/coordinator-parity-preparation/lean-delivery-graph.json"
+      ],
+      "plan_contracts": [
+        {
+          "id": "NATIVE-FOREGROUND-ACTIVATE-C1",
+          "statement": "NATIVE-FOREGROUND-ACTIVATE preserves the full target hook configuration and Claude parity: native hook JSON stays scoped, `.claude/settings.json` gains clear registration, `check_dual_runtime.py` verifies independent and both-adapter omissions, and official hook readiness remains trusted. As an explicitly additional user-requested overlay, First owns every current model-policy hunk without moving any original prepared path/hunk allocation: owning harness/launcher, active project profiles and guidance, all 15 committed team agent definitions, exact init/upgrade distribution proof, top-level main-selector omission, and same-plugin Luna/max doctor compatibility. The main coordinator model and reasoning are selected by the user and host, including Terra when the user chooses it. Exploration uses Sol/low; planning, decomposition, architecture, plan validation and grills use Sol/high; implementation, technical test verification and autoreview fixes use Sol/medium, with formal Lite as Luna/max; formal autoreview and functional checking use Sol/high; no Forge-managed delegated or subagent lane uses Terra. Decision 0074 supersedes Decision 0070 for current model policy, retains every Forge-managed pin and team definition, and preserves Decision 0031's Lite lifecycle. The original Luna/max C8 evidence remains unchanged history, not selector authority. Ordinary `forge delegate` exposes no public `--effort` override and derives Sol/medium solely from harness.yaml; the internal companion/runtime effort field and recorded launch argv remain explicit. Review execution pins Codex to Sol/high and refuses an unreadable or known Terra-fallback helper before brief publication or launch. Shell-wrapped raw Codex detection consumes supported option operands before command detection: Bash `-o/+o`, `-O/+O`, `--rcfile`, `--init-file`, including whitespace-separated, clustered, and attached forms, and zsh `-o/+o`, including whitespace-separated and attached forms. Operand values remain data even when they contain `c`, `codex`, or shell-looking text. It treats `c` only as a real short option, stops at `--` or the first script operand, and refuses nested raw launch before execution. Direct and supported wrapped raw launches normalize both slash styles before comparing the platform basenames codex, codex.exe, and codex.cmd; quoted absolute Windows paths and executable suffixes cannot bypass the protected launch path. Raw detection remains quote-aware for whitespace-bearing global option operands and environment-assignment values in direct, wrapped, pipeline, and substitution forms; already-parsed Codex argv is classified directly without re-stringifying it. Raw-Codex regex candidates are accepted only at active shell boundaries: quoted or escaped assignment/query/pipeline data, single-quoted substitution text, and inert nested-shell data cannot deny, while active separators, later real launches, backticks, and command substitution inside double quotes still deny at both top-level and nested-shell checks. An active $() or backtick body uses fresh inner command context and restores its outer quote only at a real unquoted/unescaped close, so a later launch inside the body denies even under outer double quotes while nested, quoted, and escaped delimiters stay data. Raw detection recognizes active group and process-substitution boundaries only when `(` is not immediately preceded by a word, assignment, array/function, arithmetic, or extglob prefix character. Inside an active $() frame, each unquoted ordinary `(` increments the frame depth and only the matching outer `)` restores the surrounding quote; nested substitutions, backticks, quotes, and escapes retain their existing handling. Raw Codex at group start, after a nested group or substitution, and inside active backtick or process substitution denies, while arrays, escaped openers, quoted group-like data, arithmetic-like forms, and extglob-like forms remain inert. The shell builtin exec is an active optional command prefix: literal or quoted exec, --, -c/-l/-cl, spaced or attached/clustered -a, command -- exec, later separators/pipelines, active substitutions, and nested shell commands cannot launch raw Codex. Values consumed as exec argv0, command -v/-V queries, prose, and exec tokens behind env/nohup/xargs remain data. `_wrapped_codex_exec` remains exactly as it was at c462478, with no exec parser or compensating env/nohup/nice/xargs branches; external `/tmp/exec` and exec tokens behind wrappers remain ordinary argv data. The finite matrix includes command -p and --, attached quoted/mixed/backslash argv0 after active boundaries, and the exact allowed forms `exec -a 'codex exec' printf '%s' safe`, `exec -cla codex exec x`, and `exec -acl label codex exec x`. The final correction contains no `active_group_boundary` helper: CODEX_EXEC_INVOCATION carries the exact `(?<![\\w=(@?!+*$])\\(\\s*` group/process-substitution boundary. The deny matrix includes the literal `f(){(codex exec x);}; f` form and the same grouped function body inside `$()`, proving a raw launch after `{(` cannot hide.",
+          "source": "docs/specs/dual-coordinator-parity.md (AC1-5, AC7, AC10-11); docs/decisions/0063-first-native-task-workspace-bootstrap.md; docs/decisions/0074-user-selects-main-orchestrator-model.md; amended story plan and model-policy ownership graph; /Users/dev/.codex/plans/symphony-forge+native-foreground-model-policy-amendment+20260911.md; focused policy/distribution/plugin selectors; /Users/dev/.codex/plans/symphony-forge+native-foreground-final-review-amendment+20260912T0805Z.md; test_codex_exec_ban_matches_invocations_not_prose; /Users/dev/.codex/plans/symphony-forge+native-foreground-final-recovery-amendment+20260912T194009IST.md; test_codex_exec_ban_matches_invocations_not_prose; eighth formal review generation 7f454350; test_codex_exec_ban_matches_invocations_not_prose; ninth formal review generation f0ae257e; test_codex_exec_ban_matches_invocations_not_prose; thirteenth formal review generation c5d5836588c7112997f3f64f552cb304d2b85f0040c804ef62a3346580471323; /Users/dev/.codex/plans/symphony-forge+native-foreground-third-review-fixes+20260913T015112IST.md Thirteenth formal review remediation; /Users/dev/.codex/plans/symphony-forge+native-foreground-third-review-fixes+20260913T015112IST.md Fourteenth bounded certification completion; direct parent boundary probes after launch-e087759b593740ef9deb196ba2fa3ebe; formal combined review run 75ae5ed2 and final two-review-fix amendment; same-worker correction after independent full-detector simulation"
+        },
+        {
+          "id": "NATIVE-FOREGROUND-ACTIVATE-C2",
+          "statement": "Process-bound admission remains truthful: foreground launch registers before stdin with terminal identity and writes exact UTF-8 prompt bytes independent of the host locale, zero-exit without completed turn is failed, and native write admission covers add/update/delete/move only after registration. Cancellation writes the existing durable revocation marker before cleanup signals; terminal success/failure plus dead process and released matching lock revoke completion; non-active stage incarnation revokes stage closure. Admission requires an exact starting/running row, live matching process ancestry, held matching lock, active matching stage and no explicit revocation; failed cleanup never invents success and no new completion tombstone is introduced. Worker admission and stage coverage use one immutable-baseline-aware scope rule: a Git tree or explicit trailing slash is a directory, while a blob, symlink, or absent path is exact. Exact equality remains allowed; descendants require directory classification, and the mutable working tree cannot widen authority. Native Codex receives binary stdin bytes equal to the exact multiline prompt encoded as UTF-8, with no platform newline translation. An ordinary terminal row certifies completion only when argv exactly matches the command derived from its own recorded and baseline-classified scope; scope-less legacy argv is never current selector authority. Structured patch normalization preserves an exact lexical symlink leaf so its authorized delete or move can proceed, while any symlinked or escaping ancestor still refuses. The required Delete/Move-source symlink regression creates its test-owned symlinks unconditionally and never converts OSError into a passing skip.",
+          "source": "docs/specs/dual-coordinator-parity.md (AC1-5, AC7, AC10-11); docs/decisions/0063-first-native-task-workspace-bootstrap.md; plans/exploration/coordinator-parity-preparation/lean-delivery-graph.json; /Users/dev/.codex/plans/symphony-forge+native-foreground-target-jit+20260910.md; tests: test_native_launch_registers_before_stdin_and_records_terminal_identity, test_native_zero_exit_without_completed_turn_is_failed, test_native_worker_patch_add_update_delete_and_move_is_admitted, test_foreground_cleanup_revokes_admission_before_signals; /Users/dev/.codex/plans/symphony-forge+native-foreground-final-recovery-amendment+20260912T194009IST.md; test_native_worker_patch_add_update_delete_and_move_is_admitted; eighth formal review generation 7f454350; test_native_launch_registers_before_stdin_and_records_terminal_identity; test_native_worker_patch_add_update_delete_and_move_is_admitted; formal combined review run 75ae5ed2 and final two-review-fix amendment"
+        },
+        {
+          "id": "NATIVE-FOREGROUND-ACTIVATE-C3",
+          "statement": "C9 review inputs are complete and task-specific: task, branch and combined review receive the full approved task plan, approval/grill fields, digest, current delta and resolved automated report; missing, stale, summarized, truncated or substituted inputs refuse. Each default `forge review` calls the installed helper once and creates one schema-exact immutable generation with RFC4648 base64 of exact pre-parse output and three genuine lens records. Combined/rejection retain real helper/input/raw/run/brief provenance; upgrade losslessly copies sealed legacy lenses with inventory/source hashes and marker identity and fabricates none. Public `--set` derives or compares the installed helper path/version/hash, exact `_combined_prompt(task)` bytes/hash/count, current run/brief, task token and current delta before accepting raw output; it rederives lenses and refuses caller mismatch. Provider passes are authoritative. Forge reconstructs and validates the top-level list in pass order with the helper's unchanged `(NFC POSIX path, integer line, exact category, normalized tagged title)` merge key and chunk prefix/2,000-character bound; raw and top-level findings remain lossless and mixed source attribution refuses. Lens projection and remediation use the separate `(NFC POSIX path, integer line as normalized start/end, normalized tag-free title)` fingerprint. Same-lens duplicates keep only the first projected provider record, preserving its category and metadata; the same fingerprint under different lenses refuses. Assessment prose carries no parsed fingerprint grammar, and rejection identity remains SHA256 of canonical path/line/title JSON. Require exact ordered full-line lens markers, chunk order, one lens tag, the 3,000-character explanation bound, quality verdicts only inside quality blocks, and existing score/recommendation/worst-verdict rules. Verify helper identity before/after launch. Under cross-platform review-selection exclusion, revalidate current HEAD/delta immediately before pointer replacement; stale publication refuses. Generation identity is canonical content SHA256; reads recompute it; ancestors are real directories and leaves regular single-link files; identical retry succeeds and unequal collision refuses. A blocking generation selects and revokes clean status; only selected clean/current proof certifies. Rejection may extend selected combined or rejection proof, bind the immediate source SHA/ID and combined root, preserve raw bytes/prior history/unaffected lenses, and append one unique cited finding plus deterministic lesson path/hash. Record or idempotently reuse the lesson before pointer publication; lesson failure preserves selection, later pointer failure may leave a valid reusable lesson, and divergent lesson collision refuses. Upgrade, fixed-only, unselected, copied, stale, incomplete-source, unrelated-citation, no-match, ambiguous and already-rejected findings refuse. Existing regressions prove each refusal preserves selection and prove two sequential successful rejections preserve exact fingerprints, raw bytes, lesson lineage, and clean-checkout sealing. Diagnostics never publish or stamp. First and Lean produce only recorder-backed task proof. Lens-title validation normalizes the tag-free title and rejects any complete quality, performance, or security tag token anywhere in it, including at the beginning, middle, or end after tabs, newlines, or non-breaking spaces normalize to whitespace; plain titles and unrelated bracketed text remain valid. Combined/rejection generation validation always checks decoded raw helper shape even for zero bytes with canonical empty base64/SHA. One-pass and pass wrappers alone carry provider_report; a chunked top-level provider_report is unexpected and refuses before projection or publication. Every decoded non-object helper result, including null, number, list, and string, reaches one controlled invalid-wrapper refusal before membership tests and can never publish. provider_report authority is allowed only when the caller requires it for one-pass or pass wrappers, never through a global allowance.",
+          "source": "docs/specs/dual-coordinator-parity.md (AC1-5, AC7, AC10-11); docs/decisions/0063-first-native-task-workspace-bootstrap.md; plans/active/FORGE-COORD-1-either-claude-or-codex-coordinates-the-same-forge-workflow.md lines 146-154 and 179-181; explicit user authorization on 2026-09-11; /Users/dev/.codex/plans/symphony-forge+native-foreground-combined-review+20260911.md; twenty-three focused combined-review, closeout and strict-task-proof selectors; /Users/dev/.codex/plans/symphony-forge+native-foreground-final-review-amendment+20260912T0805Z.md; test_review_consumers_include_complete_approved_inputs; test_combined_review_refuses_incomplete_noncontiguous_missing_copied_or_mixed_output; /Users/dev/.codex/plans/symphony-forge+native-foreground-final-recovery-amendment+20260912T194009IST.md; test_combined_review_projects_tagged_lenses_and_preserves_ordered_pass_verdicts; test_combined_review_refuses_incomplete_noncontiguous_missing_copied_or_mixed_output; test_reject_republishes_one_complete_pointer_selected_set; ninth formal review generation f0ae257e; test_combined_review_refuses_incomplete_noncontiguous_missing_copied_or_mixed_output; thirteenth formal review generation c5d5836588c7112997f3f64f552cb304d2b85f0040c804ef62a3346580471323; /Users/dev/.codex/plans/symphony-forge+native-foreground-third-review-fixes+20260913T015112IST.md Thirteenth formal review remediation; /Users/dev/.codex/plans/symphony-forge+native-foreground-third-review-fixes+20260913T015112IST.md Fourteenth bounded certification completion; direct parent boundary probes after launch-e087759b593740ef9deb196ba2fa3ebe"
+        },
+        {
+          "id": "NATIVE-FOREGROUND-ACTIVATE-C4",
+          "statement": "C10 uses one task-aware proof predicate for local worktree, CI, board/readiness, `forge task close` and sealing. Pre-seal consumers resolve the immutable generation named and hashed by task `selected.json`, with raw output, three lenses and current `product_delta_digest` identity. Pointer replacement publishes last; absent, fixed-only, incomplete, malformed, copied, mixed, stale, tampered or interrupted proof preserves the prior pointer. Active publication rechecks HEAD/delta while holding review-selection exclusion. Task seal holds that same exclusion from selected-proof validation through marker commit, revalidates the pointer, traverses and validates the complete combined-to-selected rejection ancestry, and stages the pointer, every generation in that lineage, each referenced lesson at its exact path/hash, and `all.md`. A real separate-process regression pauses sealing after marker preparation while the lock remains held, starts publication in a second process, and proves pointer replacement waits until the marker commit finishes; sealed readers load that lineage and its lessons from the marker commit. Only Portable may later publish an upgrade pointer. Sealed readers follow the task's current pointer for an upgrade only when its validated `sealed_commit` exactly equals the inspected task marker; ordinary combined or rejection ancestry remains loaded from that marker commit. Close skips helper only for selected clean/current proof; a post-pointer stamp retry validates and stamps that same generation without another helper. Stage/frontier, CI and board share the predicate; refusal mutates no marker, Git, PR, stage or proof state, and no runtime reader falls back to fixed or story proof. Every verify/tests reader uses one central proof-specific typed-read rule in factory_lib.py: valid non-object JSON is malformed proof, and the existing forge next/phase, board, phase-transition, story-closeout, task-close, frontier and seal consumers reach their inspection, repair or refusal outcomes without calling .get on that value or raising; every out-of-batch consumer module remains byte-identical and only factory_lib.py plus existing in-batch tests may change for this fix. Decision 0066 legacy conversion runs only after selected proof passes; invalid/stale proof leaves caller, authoritative stage and snapshot bytes unchanged. Task-owned proof presence is independent of successful object parsing: a syntactically valid non-object verify.json or tests.json forces modern fail-closed validation and can never enable legacy fallback. With an existing marker and unchanged product delta, an ordinary pr-ready retry runs the sealed predicate and refuses every post-marker proof rewrite before marker, stage, selection, Git, push, or PR mutation; clean unchanged proof reuses the marker, while a genuinely moved product follows the normal reopen, fresh-proof, review, close, and reseal flow. A sealed task with missing task-owned proof never downgrades to fixed story/root verify, tests, or lens files. The shared proof predicate accepts one live marker parameter named `marker`; obsolete compatibility flags and proof-reader closures are absent from both the predicate and the CI gate. The CI gate passes the committed marker directly while preserving the legitimate marker-bound origin=upgrade selection, legacy_artifacts provenance, historical bytes, and all current/sealed validation. The sole fixed-proof migration remains a schema-valid selected origin=upgrade generation whose sealed_commit exactly binds the inspected marker. The `check_task_proof.proof_problems` docstring describes selected task proof and the explicit marker-bound upgrade exception and contains no legacy-fallback claim.",
+          "source": "docs/specs/dual-coordinator-parity.md (AC1-5, AC7, AC10-11); docs/decisions/0063-first-native-task-workspace-bootstrap.md; plans/active/FORGE-COORD-1-either-claude-or-codex-coordinates-the-same-forge-workflow.md lines 146-154 and 179-181; explicit user authorization on 2026-09-11; /Users/dev/.codex/plans/symphony-forge+native-foreground-combined-review+20260911.md; twenty-three focused combined-review, closeout and strict-task-proof selectors; /Users/dev/.codex/plans/symphony-forge+native-foreground-final-recovery-amendment+20260912T194009IST.md; test_active_task_frontier_routes_current_handoff_and_proof; test_the_stamp_survives_everything_that_is_not_the_diff; ninth formal review generation f0ae257e; test_task_proof_ci_uses_sealed_selected_t1_not_later_t2_singleton; test_task_pr_ready_refuses_changed_evidence_after_marker; thirteenth formal review generation c5d5836588c7112997f3f64f552cb304d2b85f0040c804ef62a3346580471323; /Users/dev/.codex/plans/symphony-forge+native-foreground-third-review-fixes+20260913T015112IST.md Thirteenth formal review remediation"
+        },
+        {
+          "id": "NATIVE-FOREGROUND-ACTIVATE-C5",
+          "statement": "Workspace-before-JIT honors incumbent 0063. Successor task start checks approved plan/decomposition, task/digest, refreshed trunk and dependency markers, then creates the worktree before JIT save/grill/approval. Attach accepts only a clean, registered, unowned same-common-directory worktree at that trunk commit with matching identity/dependencies. Grounding, JIT approval, stage and registered admission precede writes. After materialization, hydration preflights every destination before payload mutation and preserves Decision 0028's legal in-target file symlink. On refusal it attempts exact worktree removal, deletes the branch only after confirmed removal, and otherwise reports the surviving worktree/registration/branch without inventing cleanup success or mutating external payload state. The shipped-dependency predicate reads one exact fetched origin/trunk snapshot, validates marker identity and ancestry with the fetched SHA, and for an ordinary marker validates the shared exact task proof before any successor branch or worktree allocation. A reconciled marker skips proof only after its identity and ancestry validate; malformed, wrong-task, or proofless markers remain unshipped across task start, board, frontier, and closeout. Existing startup proof covers invalid JSON, non-object, empty-object, wrong-task, invalid-commit, and proofless ordinary dependency markers; each remains unshipped and allocates no task branch or worktree before the validated reconciled positive control.",
+          "source": "docs/specs/dual-coordinator-parity.md (AC1-5, AC7, AC10-11); docs/decisions/0063-first-native-task-workspace-bootstrap.md; plans/exploration/coordinator-parity-preparation/lean-delivery-graph.json; /Users/dev/.codex/plans/symphony-forge+native-foreground-target-jit+20260910.md; tests: test_task_start_creates_before_jit_with_approved_identity; /Users/dev/.codex/plans/symphony-forge+native-foreground-final-review-amendment+20260912T0805Z.md; test_task_start_creates_before_jit_with_approved_identity; thirteenth formal review generation c5d5836588c7112997f3f64f552cb304d2b85f0040c804ef62a3346580471323; /Users/dev/.codex/plans/symphony-forge+native-foreground-third-review-fixes+20260913T015112IST.md Thirteenth formal review remediation; /Users/dev/.codex/plans/symphony-forge+native-foreground-third-review-fixes+20260913T015112IST.md Fourteenth bounded certification completion; direct parent boundary probes after launch-e087759b593740ef9deb196ba2fa3ebe"
+        },
+        {
+          "id": "NATIVE-FOREGROUND-ACTIVATE-C6",
+          "statement": "Unsupported native operations refuse before side effects: native background/read-only background, general status, live/dead worker status, cancel/resume/jobs, explore, and native question delivery do not compose briefs, spend question eligibility, append ledgers, signal processes, or dispatch children until their successor owners ship. The only native status exception renders already-dead registered native grill rows through existing dead_launches, restricted to strict grill gate/task labels and starting/running rows proven dead; it does not call the general status handler. Preserve unchanged Claude dispatch.",
+          "source": "docs/specs/dual-coordinator-parity.md (AC1-5, AC7, AC10-11); docs/decisions/0063-first-native-task-workspace-bootstrap.md; plans/exploration/coordinator-parity-preparation/lean-delivery-graph.json; /Users/dev/.codex/plans/symphony-forge+native-foreground-target-jit+20260910.md; tests: test_native_unshipped_operations_refuse_before_dispatch"
+        },
+        {
+          "id": "NATIVE-FOREGROUND-ACTIVATE-C7",
+          "statement": "Own-task review preflight uses `proof_path(base, story, artifact, task_id=args.id)` for the active task, accepts only own-task proof, and refuses story or other-task proof without helper fallback.",
+          "source": "docs/specs/dual-coordinator-parity.md (AC1-5, AC7, AC10-11); docs/decisions/0063-first-native-task-workspace-bootstrap.md; plans/exploration/coordinator-parity-preparation/lean-delivery-graph.json; /Users/dev/.codex/plans/symphony-forge+native-foreground-target-jit+20260910.md; tests: test_review_preflight_uses_active_task_proof, test_review_preflight_refuses_other_task_or_story_proof"
+        },
+        {
+          "id": "NATIVE-FOREGROUND-ACTIVATE-C8",
+          "statement": "The admitted native worker reads and hashes the exact protected task plan, then exercises the actual native hook against that plan with harmless absent patch context. Only a correlated PreToolUse deny event counts: automated report receipt, registered terminal row and durable tool log identify the same launch/session/tool call and actual denial; unchanged bytes, context failure or synthetic payload never certify it. Main runs current `forge next`, process-heavy/full verification and correlation outside the managed companion. The implemented plan-contract review checks that evidence. The one shared review-set schema is introduced here; no second registry or CI/C10 parser is added.",
+          "source": "docs/specs/dual-coordinator-parity.md (AC1-5, AC7, AC10-11); docs/decisions/0063-first-native-task-workspace-bootstrap.md; plans/exploration/coordinator-parity-preparation/lean-delivery-graph.json; /Users/dev/.codex/plans/symphony-forge+native-foreground-target-jit+20260910.md; tests: test_native_worker_reads_state_without_protected_write_authority, test_any_protected_revocation_marker_denies_admission"
+        },
+        {
+          "id": "NATIVE-FOREGROUND-ACTIVATE-C9",
+          "statement": "Closeout proof matches the hardened marker contract without weakening production validation. The board memo regression counts the current rev-parse probe, proves memo reuse, and invalidates against a schema-valid reconciled marker. The story-closeout regression commits the existing scoped decomposition with T1 proof before marker publication, immediately asserts T1 is valid on trunk, and keeps normal sealed markers unreconciled. AGENTS.md remains semantically complete at no more than 110 lines, and the repository scaffold checker passes.",
+          "source": "/Users/dev/.codex/plans/symphony-forge+native-foreground-closeout-fixture-repair+20260913T223000IST.md Scope and decisions; failed full verifier at c9a85e9722983787797edd82556e713986948c20; tests: test_board_memo_reuses_git_facts_until_the_files_that_decide_them_change, test_story_closeout_requires_all_task_markers_and_completed_stories_reads_shipped; python3 factory/scripts/check_factory_scaffold.py"
+        },
+        {
+          "id": "NATIVE-FOREGROUND-ACTIVATE-C10",
+          "statement": "Review regression tests are hermetic on clean Ubuntu. The review-set recorder test supplies one test-owned safe helper to both in-process identity derivation and the subprocess recorder; the active-task proof preflight test replaces only helper discovery with a test-owned safe helper; and the rejection-lineage fixture commits existing lifecycle state before its intentional divergent merge and requires src/work.py to be the exact unmerged path before resolution. The three focused nodes pass with no personal AUTOREVIEW installation, without skips or production-code changes.",
+          "source": "/Users/dev/.codex/plans/symphony-forge+native-foreground-ubuntu-fixture-repair+20260914T001500IST.md Scope and decisions; Ubuntu scaffold-check run 34773360292; tests: test_review_set_recorder_validates_origin_specific_shape_and_raw_bytes, test_review_preflight_uses_active_task_proof, test_reject_republishes_one_complete_pointer_selected_set"
+        }
+      ],
+      "required_tests": [
+        {
+          "id": "test_review_consumers_include_complete_approved_inputs",
+          "path": "factory/tests/test_gates.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path} -k {id} --junitxml={report}"
+        },
+        {
+          "id": "test_task_proof_consumers_share_complete_predicate",
+          "path": "factory/tests/test_gates.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path} -k {id} --junitxml={report}"
+        },
+        {
+          "id": "test_task_seal_refuses_incomplete_proof_before_mutation",
+          "path": "factory/tests/test_gates.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path} -k {id} --junitxml={report}"
+        },
+        {
+          "id": "test_task_start_creates_before_jit_with_approved_identity",
+          "path": "factory/tests/test_gates.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path} -k {id} --junitxml={report}"
+        },
+        {
+          "id": "test_native_unshipped_operations_refuse_before_dispatch",
+          "path": "factory/tests/test_gates.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path} -k {id} --junitxml={report}"
+        },
+        {
+          "id": "test_review_preflight_uses_active_task_proof",
+          "path": "factory/tests/test_gates.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path} -k {id} --junitxml={report}"
+        },
+        {
+          "id": "test_review_preflight_refuses_other_task_or_story_proof",
+          "path": "factory/tests/test_gates.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path} -k {id} --junitxml={report}"
+        },
+        {
+          "id": "test_foreground_cleanup_revokes_admission_before_signals",
+          "path": "factory/tests/test_worker_admission.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path} -k {id} --junitxml={report}"
+        },
+        {
+          "id": "test_native_worker_reads_state_without_protected_write_authority",
+          "path": "factory/tests/test_worker_admission.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path} -k {id} --junitxml={report}"
+        },
+        {
+          "id": "test_dual_runtime_checker_requires_each_session_start_source",
+          "path": "factory/tests/test_native_setup.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path} -k {id} --junitxml={report}"
+        },
+        {
+          "id": "test_native_worker_patch_add_update_delete_and_move_is_admitted",
+          "path": "factory/tests/test_worker_admission.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path} -k {id} --junitxml={report}"
+        },
+        {
+          "id": "test_any_protected_revocation_marker_denies_admission",
+          "path": "factory/tests/test_worker_admission.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path} -k {id} --junitxml={report}"
+        },
+        {
+          "id": "test_native_launch_registers_before_stdin_and_records_terminal_identity",
+          "path": "factory/tests/test_native_launch.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path} -k {id} --junitxml={report}"
+        },
+        {
+          "id": "test_native_zero_exit_without_completed_turn_is_failed",
+          "path": "factory/tests/test_native_launch.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path} -k {id} --junitxml={report}"
+        },
+        {
+          "id": "test_codex_hook_readiness_requires_exact_enabled_trusted_source",
+          "path": "factory/tests/test_native_setup.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path} -k {id} --junitxml={report}"
+        },
+        {
+          "id": "test_model_policy_selects_sol_work_and_luna_lite",
+          "path": "factory/tests/test_native_setup.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path} -k {id} --junitxml={report}"
+        },
+        {
+          "id": "test_active_model_policy_has_no_forbidden_execution_surface",
+          "path": "factory/tests/test_gate_table.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path} -k {id} --junitxml={report}"
+        },
+        {
+          "id": "test_project_agents_init_upgrade_and_preserve_client_additions",
+          "path": "factory/tests/test_gates.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path} -k {id} --junitxml={report}"
+        },
+        {
+          "id": "test_doctor_repairs_only_exact_plugin_max_source",
+          "path": "factory/tests/test_native_setup.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path} -k {id} --junitxml={report}"
+        },
+        {
+          "id": "test_review_codex_helper_policy_refuses_fallback_before_launch",
+          "path": "factory/tests/test_gates.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path} -k {id} --junitxml={report}"
+        },
+        {
+          "id": "test_review_codex_engine_pins_sol_high",
+          "path": "factory/tests/test_gates.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path} -k {id} --junitxml={report}"
+        },
+        {
+          "id": "test_planning_lock_forces_plan_mode",
+          "path": "factory/tests/test_gates.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path} -k {id} --junitxml={report}"
+        },
+        {
+          "id": "test_codex_exec_ban_matches_invocations_not_prose",
+          "path": "factory/tests/test_gates.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path} -k {id} --junitxml={report}"
+        },
+        {
+          "id": "test_review_product_dirty_preserves_porcelain_status_prefix",
+          "path": "factory/tests/test_gates.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path} -k {id} --junitxml={report}"
+        },
+        {
+          "id": "test_session_start_routes_native_questions_to_main_chat",
+          "path": "factory/tests/test_gates.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path} -k {id} --junitxml={report}"
+        },
+        {
+          "id": "test_review_all_bounds_sealed_task_inputs_after_successor_product",
+          "path": "factory/tests/test_gates.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path} -k {id} --junitxml={report}"
+        },
+        {
+          "id": "test_task_proof_ci_uses_sealed_selected_t1_not_later_t2_singleton",
+          "path": "factory/tests/test_gates.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path} -k {id} --junitxml={report}"
+        },
+        {
+          "id": "test_native_log_open_failure_releases_lock_without_lifecycle_rows",
+          "path": "factory/tests/test_native_launch.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path} -k {id} --junitxml={report}"
+        },
+        {
+          "id": "test_known_native_launch_reads_delegation_ledger_once",
+          "path": "factory/tests/test_worker_admission.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path} -k {id} --junitxml={report}"
+        },
+        {
+          "id": "test_current_claude_companion_token_resolves_protected_worker",
+          "path": "factory/tests/test_worker_admission.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path} -k {id} --junitxml={report}"
+        },
+        {
+          "id": "test_active_task_frontier_routes_current_handoff_and_proof",
+          "path": "factory/tests/test_gates.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path} -k {id} --junitxml={report}"
+        },
+        {
+          "id": "test_next_prose_reconciles_handoffs_without_blind_retry",
+          "path": "factory/tests/test_gates.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path} -k {id} --junitxml={report}"
+        },
+        {
+          "id": "test_lean_stop_allows_authenticated_registered_worker_handoff",
+          "path": "factory/tests/test_worker_admission.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path} -k {id} --junitxml={report}"
+        },
+        {
+          "id": "test_lean_stop_allows_authenticated_live_native_read_only_grill",
+          "path": "factory/tests/test_worker_admission.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path} -k {id} --junitxml={report}"
+        },
+        {
+          "id": "test_lean_stop_does_not_exempt_untrusted_or_non_grill_launch",
+          "path": "factory/tests/test_worker_admission.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path} -k {id} --junitxml={report}"
+        },
+        {
+          "id": "test_next_early_grill_guidance_uses_gate_floor_and_stops_native",
+          "path": "factory/tests/test_gates.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path} -k {id} --junitxml={report}"
+        },
+        {
+          "id": "test_next_only_offers_signoff_grill_for_complete_inputs",
+          "path": "factory/tests/test_gates.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path} -k {id} --junitxml={report}"
+        },
+        {
+          "id": "test_next_native_requirements_question_stops_at_unsupported_delivery",
+          "path": "factory/tests/test_gates.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path} -k {id} --junitxml={report}"
+        },
+        {
+          "id": "test_task_pr_ready_retry_reuses_unchanged_committed_marker",
+          "path": "factory/tests/test_gates.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path} -k {id} --junitxml={report}"
+        },
+        {
+          "id": "test_task_pr_ready_refuses_changed_evidence_after_marker",
+          "path": "factory/tests/test_gates.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path} -k {id} --junitxml={report}"
+        },
+        {
+          "id": "test_task_pr_ready_marker_commit_preserves_unrelated_index",
+          "path": "factory/tests/test_gates.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path} -k {id} --junitxml={report}"
+        },
+        {
+          "id": "test_review_brief_mints_run_id_and_lenses_echo_it",
+          "path": "factory/tests/test_gates.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path} -k {id} --junitxml={report}"
+        },
+        {
+          "id": "test_pr_ready_refuses_incoherent_lens_set",
+          "path": "factory/tests/test_gates.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path} -k {id} --junitxml={report}"
+        },
+        {
+          "id": "test_combined_review_projects_tagged_lenses_and_preserves_ordered_pass_verdicts",
+          "path": "factory/tests/test_review_task_delta.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path} -k {id} --junitxml={report}"
+        },
+        {
+          "id": "test_combined_review_refuses_incomplete_noncontiguous_missing_copied_or_mixed_output",
+          "path": "factory/tests/test_review_task_delta.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path} -k {id} --junitxml={report}"
+        },
+        {
+          "id": "test_combined_review_publication_is_pointer_last_and_failure_atomic",
+          "path": "factory/tests/test_gates.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path} -k {id} --junitxml={report}"
+        },
+        {
+          "id": "test_single_lens_review_preserves_cli_without_publishing_an_incomplete_set",
+          "path": "factory/tests/test_gates.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path} -k {id} --junitxml={report}"
+        },
+        {
+          "id": "test_reject_republishes_one_complete_pointer_selected_set",
+          "path": "factory/tests/test_review_settled_contracts.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path} -k {id} --junitxml={report}"
+        },
+        {
+          "id": "test_a_task_run_does_not_fall_back_to_the_story_copy",
+          "path": "factory/tests/test_proof_read_path.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path} -k {id} --junitxml={report}"
+        },
+        {
+          "id": "test_default_review_uses_one_helper_and_publishes_one_generation",
+          "path": "factory/tests/test_review_lenses_in_parallel.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path} -k {id} --junitxml={report}"
+        },
+        {
+          "id": "test_review_generation_id_recomputes_and_tamper_refuses",
+          "path": "factory/tests/test_gates.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path} -k {id} --junitxml={report}"
+        },
+        {
+          "id": "test_review_generation_retry_and_collision_are_safe",
+          "path": "factory/tests/test_gates.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path} -k {id} --junitxml={report}"
+        },
+        {
+          "id": "test_selected_upgrade_generation_requires_exact_sealed_binding",
+          "path": "factory/tests/test_review_settled_contracts.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path} -k {id} --junitxml={report}"
+        },
+        {
+          "id": "test_rejection_compare_and_swap_refuses_interleaved_selection",
+          "path": "factory/tests/test_review_settled_contracts.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path} -k {id} --junitxml={report}"
+        },
+        {
+          "id": "test_board_task_progress_uses_selected_generation_only",
+          "path": "factory/tests/test_proof_read_path.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path} -k {id} --junitxml={report}"
+        },
+        {
+          "id": "test_close_and_frontier_use_selected_current_delta",
+          "path": "factory/tests/test_gates.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path} -k {id} --junitxml={report}"
+        },
+        {
+          "id": "test_review_set_recorder_validates_origin_specific_shape_and_raw_bytes",
+          "path": "factory/tests/test_review_task_delta.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path} -k {id} --junitxml={report}"
+        },
+        {
+          "id": "test_review_helper_identity_mismatch_refuses_publication",
+          "path": "factory/tests/test_review_lenses_in_parallel.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path} -k {id} --junitxml={report}"
+        },
+        {
+          "id": "test_the_stamp_survives_everything_that_is_not_the_diff",
+          "path": "factory/tests/test_close_binds_to_the_diff.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path} -k {id} --junitxml={report}"
+        },
+        {
+          "id": "test_closed_in_scope_degraded_window_is_the_stages_write_launch",
+          "path": "factory/tests/test_seal_measures.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path} -k {id} --junitxml={report}"
+        },
+        {
+          "id": "test_quality_review_requires_contract_verdicts",
+          "path": "factory/tests/test_gates.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path} -k {id} --junitxml={report}"
+        },
+        {
+          "id": "test_the_effort_escalation_harness_yaml_documents_is_reachable",
+          "path": "factory/tests/test_stop_less_often.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path} -k {id} --junitxml={report}"
+        },
+        {
+          "id": "test_board_memo_reuses_git_facts_until_the_files_that_decide_them_change",
+          "path": "factory/tests/test_board_load_time.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-closeout-uv-cache UV_TOOL_DIR=/tmp/forge-closeout-uv-tool uv run --with pytest --with psutil pytest -q {path}::{id} --junitxml={report}"
+        },
+        {
+          "id": "test_story_closeout_requires_all_task_markers_and_completed_stories_reads_shipped",
+          "path": "factory/tests/test_gates.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-closeout-uv-cache UV_TOOL_DIR=/tmp/forge-closeout-uv-tool uv run --with pytest --with psutil pytest -q {path}::{id} --junitxml={report}"
+        },
+        {
+          "id": "test_task_proof_refuses_working_tree_marker_different_from_head",
+          "path": "factory/tests/test_gates.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-review-p1-uv-cache UV_TOOL_DIR=/tmp/forge-review-p1-uv-tool uv run --python 3.11 --with pytest --with psutil python -m pytest {path} -k {id} --junitxml={report}"
+        },
+        {
+          "id": "test_task_proof_allows_mixed_product_and_metadata_commits",
+          "path": "factory/tests/test_gates.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-review-p1-uv-cache UV_TOOL_DIR=/tmp/forge-review-p1-uv-tool uv run --python 3.11 --with pytest --with psutil python -m pytest {path} -k {id} --junitxml={report}"
+        },
+        {
+          "id": "test_worker_add_or_update_symlink_leaf_is_denied",
+          "path": "factory/tests/test_worker_admission.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-review-p1-uv-cache UV_TOOL_DIR=/tmp/forge-review-p1-uv-tool uv run --python 3.11 --with pytest --with psutil python -m pytest {path} -k {id} --junitxml={report}"
+        },
+        {
+          "id": "test_worker_symlink_entry_is_denied",
+          "path": "factory/tests/test_worker_admission.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-review-p1-uv-cache UV_TOOL_DIR=/tmp/forge-review-p1-uv-tool uv run --python 3.11 --with pytest --with psutil python -m pytest {path} -k {id} --junitxml={report}"
+        },
+        {
+          "id": "test_task_proof_refuses_committed_null_marker",
+          "path": "factory/tests/test_gates.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-review-p1-uv-cache UV_TOOL_DIR=/tmp/forge-review-p1-uv-tool uv run --python 3.11 --with pytest --with psutil python -m pytest {path} -k {id} --junitxml={report}"
+        },
+        {
+          "id": "test_task_proof_ci_seal_and_later_mutation",
+          "path": "factory/tests/test_gates.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-review-final-uv-cache UV_TOOL_DIR=/tmp/forge-review-final-uv-tool uv run --python 3.11 --with pytest --with psutil python -m pytest {path} -k {id} --junitxml={report}"
+        }
+      ],
+      "verify_commands": [
+        "python3 factory/scripts/check_agents_hygiene.py",
+        "python3 factory/scripts/check_factory_scaffold.py",
+        "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python factory/scripts/check_encoding_hygiene.py",
+        "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest factory/tests/test_native_launch.py factory/tests/test_native_setup.py factory/tests/test_worker_admission.py -q",
+        "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python factory/scripts/verify.py",
+        "python3 -c \"import subprocess,sys; actual=set(subprocess.check_output(['git','diff','--name-only','acf284c','--',':!.factory/**',':!plans/**'],text=True).splitlines()); expected={'factory/scripts/forge_cli/review.py','factory/tests/test_review_task_delta.py'}; print('correction paths',sorted(actual)); sys.exit(0 if actual==expected else 1)\"",
+        "python3 -c \"import subprocess,sys; rows=[line.split('\\t') for line in subprocess.check_output(['git','diff','--numstat','499c358','--',':!.factory/**',':!plans/**'],text=True).splitlines()]; expected={'factory/scripts/check_task_proof.py','factory/scripts/factory_lib.py','factory/scripts/forge.py','factory/scripts/forge_cli/delegate.py','factory/scripts/forge_cli/review.py','factory/scripts/pre_tool_use.py','factory/tests/test_gates.py','factory/tests/test_review_task_delta.py','factory/tests/test_stop_less_often.py','factory/tests/test_worker_admission.py'}; actual={row[2] for row in rows}; total=sum(int(row[0])+int(row[1]) for row in rows); print('cumulative paths',sorted(actual),'lines',total); sys.exit(0 if actual==expected and total<=400 else 1)\"",
+        "git diff --check"
+      ],
+      "review_budget": {
+        "max_changed_files": 180,
+        "max_changed_lines": 18000,
+        "reason": "The cumulative task remains inside the approved 180-file/18,000-line seal ceiling. Relative to 499c358, the formal-review continuation may change only the existing ten product/test paths and no more than 400 added-plus-deleted lines. This last correction is confined to review.py and test_review_task_delta.py: reject verdict grammar in every non-quality span, align the combined prompt with that rule, and cover the six placements in the existing selector. Exclude only recorder-owned .factory/** state; no architecture, decision, dependency, schema, migration format, skip, helper, config, or unrelated product path may change. Final closure also runs the pinned acf284c exact-two-path check, the pinned 499c358 exact-ten-path and 400-line check including the working tree, and git diff --check in addition to the parent five verify commands."
+      },
+      "reviewer_focus": [
+        "Review the complete accumulated task delta against every acceptance criterion and constitution/09-agent-conduct.md sections 2 through 4. Treat every prior marker, review-brief, structured-patch, raw-exec, symlink-skip, compatibility-leftover, and lens-tag finding as blocking history and require each to be closed.",
+        "For the final shell correction, require no `active_group_boundary` helper and require the exact `(?<![\\w=(@?!+*$])\\(\\s*` alternative in CODEX_EXEC_INVOCATION, the literal `f(){(codex exec x);}; f` denial and its nested-$() counterpart. Preserve the depth-aware frames, quote, escape, nested-substitution and backtick handling, the complete exec option grammar, and `_wrapped_codex_exec` exactly as at c462478 without a generic shell parser.",
+        "Require the check_task_proof proof_problems docstring to describe selected task proof plus the marker-bound upgrade exception with no legacy-fallback claim. Require no public `forge delegate --effort` surface or dead override branch while preserving harness-derived Sol/medium and internal companion/runtime effort argv. Require the shared proof predicate to expose only the live marker parameter, with no discarded compatibility readers or CI closures, while preserving valid origin=upgrade migration provenance and validation.",
+        "Require every VERDICT_LINE match, including VERDICT and its contract id split across a newline, to appear inside the quality assessment: preface, quality/performance interstitial, performance body, performance/security interstitial, security body, and epilogue must all refuse. Require separate original prefix/suffix span scans so no joined boundary can synthesize a match. Require the combined provider prompt to state the same placement rule. Preserve quality parsing, exact markers, ordinary prose, standalone lens prompts, helper argv, full dataset, full diff, and provider semantics. Keep the post-499c358 ten-path cumulative repair within 400 changed lines. The existing malformed-output selector must also contain exactly one local import of _combined_prompt and assert that its output contains the exact quality-only instruction; this is the remaining two-line acceptance gap. Do not alter the current production implementation or six split-line placement cases. Preserve both forms at the same 400-line total by assigning the ordinary single-line verdict for the preface case and the newline-split verdict for the other five cases inside the existing prose loop; move rather than add a test line.",
+        "Keep overall_explanation at most 2200 characters. Emit one compact truthful C1-C10 verdict line with file:line evidence per contract, three distinct short lens assessments, and all six exact full-line BEGIN/END FORGE ASSESSMENT markers. Keep full finding bodies in findings; omit no evidence, verdict, lens, or marker."
+      ]
+    },
+    {
+      "id": "LEAN-WORKFLOW",
+      "title": "One brief and one complete independent review",
+      "objective": "One brief and standing authorization under Decision0074 model policy and Decision0068 worker networking: Authoritative task brief with derived metadata; actual standing authorization reused for in-scope work; remove compulsory requirements/story/task certification and repeated human approval rituals in every producer and consumer. The complete combined-review protocol is First-owned. Add --context-file only to forge grill run with one no-follow immutable UTF-8 snapshot, exact identity/capacity/refusal proof, mode-0600 storage below a per-user mode-0700 transient directory, terminal deletion, verified stale cleanup, metadata-only durable evidence, and an 8,388,608-byte local allocation ceiling. Update workflow, quality, roles and architecture docs in the same task before the new approval boundary ships.",
+      "dependencies": [
+        "NATIVE-FOREGROUND-ACTIVATE"
+      ],
+      "user_facing": false,
+      "acceptance_criteria": [
+        "LEAN-WORKFLOW consumes First's Decision0074 model policy, Decision0068 worker-network rule, and complete gates, carries continuation/context rulings into fresh workers, preserves developer journey proof inputs, and replaces repeated certification with one authoritative brief while retaining existing proof/refusal authority. Only `forge grill run --context-file` accepts supplemental context. It rejects symlink/reparse ancestors and leaves, opens one regular-file handle without following links, requires stable pre-open/handle/post-read identity, and launches one immutable UTF-8 snapshot bound in memory by hash/count. The snapshot is a randomized regular single-link mode-0600 file under a per-user mode-0700 transient directory, is deleted after terminal publication, and stale cleanup requires exact owner/type/link/mode/directory/launch identity. Durable logs/evidence retain only supplied state, byte count, and opaque context ID, never source path, content digest, or bytes. Its fixed local limit is 8,388,608 bytes; an unknown installed-component byte limit refuses. Capacity includes exact primary brief/framing/context bytes. A grill always sends the one complete framed input unchanged, never partitions it, and refuses an oversized input with required bytes and both limits. Any future partitioned consumer needs a separately approved capability and cannot satisfy a grill gate. It owns its AC6 evidence boundary: diagnostics and preparation stay labelled, and only recorder-produced exact-task proof may satisfy a task gate. Its owning docs ship with the behavior.",
+        "LEAN-WORKFLOW owns the roadmap acceptance that both coordinators preserve existing worker policy and every Forge gate while consuming First's complete combined-review proof without reimplementing it."
+      ]
+    },
+    {
+      "id": "NATIVE-LIFECYCLE",
+      "title": "Native detached read-only lifecycle and helpers",
+      "objective": "Native detached read-only lifecycle and helpers: detached supervisor/request/launch for read-only helpers plus jobs/status/cancel/resume/explore; process identity, recovery, locking and truthful cleanup; preserve native_jobs/cmd_cancel and both original cancellation tests. Implementation writers remain foreground and stage-bound; background write admission stays refused and has no owner in this story. It owns constitution-compliant structured lifecycle logging, bounded existing retries, redaction, cancel ordering and truthful surfaced terminal errors. A top-level native launcher/supervisor Exception boundary produces one sanitized terminal failure with a stable errorId linked to the launch's distinct correlationId and nonzero result and increments durable structured forge_native_unexpected_errors_total exactly once with bounded labels and matching correlation. Emit constitution-exact structured JSON only through the Local console logger; treat human stderr as operator UI and task JSONL as durable evidence, include a sanitized stack trace at the top-level exception boundary, and update factory and architecture docs in the same task.",
+      "dependencies": [
+        "LEAN-WORKFLOW"
+      ],
+      "user_facing": false,
+      "acceptance_criteria": [
+        "NATIVE-LIFECYCLE delivers native independence and protected-write lifecycle behavior through foreground admitted writers plus detached read-only supervisor/request/launch, jobs/status/cancel/resume/explore, process identity, recovery, locking and truthful cleanup while preserving worker policy and the between-task coordinator-change boundary. Logger tests require exact fields and console-only transport; operator UI and evidence are not logger transports.",
+        "NATIVE-LIFECYCLE keeps background/status/cancel/resume/explore unsupported until this owner lands, then replaces only the first task refusals with proved native lifecycle behavior and both original cancellation regressions. When those transitions occur, structured correlated/redacted logs and focused retry/cancel/terminal error tests are mandatory. The top-level unexpected-Exception boundary, nonzero result and exactly-once correlated error-metric increment with correlationId as workflow trace key and errorId joining the terminal failure to its structured error row are mandatory. Detached implementation writers remain forbidden; enabling them requires a later explicit decision and task contract."
+      ]
+    },
+    {
+      "id": "SHARED-COORDINATOR-JOURNEY",
+      "title": "Coordinator questions, task ownership and reliable continuation",
+      "objective": "Coordinator questions, task ownership and reliable continuation: atomic structured-call event identity (runtime/session/event/question-index) with exact scope, input digest, requiredness, content and exact nonblank label-or-free-form answer; same-gate/story/task reuse only for an unchanged input digest; answer-driven revisions use fresh-round or independently ledgered empty-frontier proof. Extend the existing signal family with Main-produced required-question signals bound to story and sorted affected tasks/artifacts and validated decision/approval resolution, while preserving worker-signal provenance. Deliver workspace-first task creation and safe attach, protected owner/location identity, board/queue and safe resume. Coordinator change is a developer/host-directed cooperative between-task action gated only by observable marker/CI/worker/question state; Forge claims no stop proof or stale/concurrent fencing. Update workflow, roles, getting-started and architecture docs in the same task.",
+      "dependencies": [
+        "NATIVE-LIFECYCLE"
+      ],
+      "user_facing": true,
+      "acceptance_criteria": [
+        "SHARED-COORDINATOR-JOURNEY proves real human answers, worker policy, lifecycle/question hooks, continuation and developer journey behavior through Decision0073 same-gate/story/task/unchanged-input round reuse, atomic structured-call identity and verbatim label-or-free-form answers, where any missing/canceled question invalidates every partial answer in that call, main-only decisions/display, model/settings policy, workspace-first creation and safe attachment, board/queue ownership and safe resume/reconciliation. Committed Claude/Codex matchers, check_dual_runtime.py, focused hook tests and the recorder-produced automated report prove delivery and real host blocking capability; timeline events remain best-effort diagnostics and cannot satisfy task proof. Its owning docs must ship with the behavior.",
+        "SHARED-COORDINATOR-JOURNEY owns actual board journey behavior and functional proof while preserving stable task identity, same-PR retry, quiet continuation and exact current artifact display for both coordinators. Gate questions bind runtime/session/event/question-index plus exact story/gate/task/input/requiredness/content and answer; a partial call grants no authority. Reuse requires the same gate, story, task, and input digest. An answer-driven artifact revision uses a fresh eligible round or independently ledgered empty-frontier proof; its owning decision/approval independently binds the final revision. Shared extends the existing signal family with an orchestrator-produced required-question blocked record bound to the story and sorted affected tasks/artifacts; resolution requires a validated owning decision or approval path and SHA256, while existing worker signals keep their producer contract. Before Shared ships no cross-session ordinary-chat recovery is claimed. The recorded Wait-for-all answer governs only developer/host-directed cooperative transfer. Forge checks refreshed marker/green CI, worker state, and required-question signals; it neither records/proves the old-session stop nor fences partial, stale, or concurrent coordinators. The receiver resumes through forge next."
+      ]
+    },
+    {
+      "id": "PORTABLE-DELIVERY-MIGRATION",
+      "title": "Portable setup, durable history and existing-client migration",
+      "objective": "Portable setup, durable history and existing-client migration: ./setup and forge doctor choose claude or codex per invocation from explicit argument, environment, one detected host, then TTY and refuse ambiguity before repair without persisting the choice; init/adopt/upgrade preserve both adapters. Client rollout exercises the First-owned Decision0074 team registry through existing init full-tree copy and upgrade same-name refresh while preserving distinct client-added agents. Under one cross-platform exclusion lock, upgrade builds a complete fixed-review candidate-universe manifest classifying every discovered path as eligible, excluded, or invalid and independently rewalks its count/classifications/digest before writes, excludes every active or unmarked well-formed fixed set for fresh ordinary combined review and migrates only exactly marker-bound sealed state into origin=upgrade generations and selected pointers, and supports failure-atomic per-task commits plus byte-identical whole-inventory resume without runtime fallback. The task ships verified client-safe upgrade and compaction before Main performs the three configured-client rollout; Toolshed remains a zero-mutation D-0033 deferral until its identity and authority are supplied. The upgrade representation uses honest origin-specific fields and never fabricates missing provider provenance; update factory, README, getting-started and architecture docs in the same task.",
+      "dependencies": [
+        "SHARED-COORDINATOR-JOURNEY"
+      ],
+      "user_facing": false,
+      "acceptance_criteria": [
+        "PORTABLE-DELIVERY-MIGRATION preserves native independence, lifecycle hook delivery, per-invocation setup/doctor selection, dual-adapter client preservation, Decision0074 registry refresh, derived active decisions and safe retention. Selection uses the first applicable tier: one valid explicit argument, else one valid FORGE_COORDINATOR, else exactly one detected host, else TTY. A higher tier suppresses lower-tier disagreement; multiple explicit values, invalid selected value, cancellation, EOF or missing TTY answer refuse before repair. Detecting both or neither host reaches TTY. Selection is not persisted. One cross-platform exclusion lock covers the whole review migration. Before the first target write, one fresh walk represents every discovered candidate path exactly once as eligible, excluded, or invalid; an independent second walk must match the universe count, classifications, and digest. Invalid malformed/linked/colliding/replaced/ambiguous rows block. Zero eligible passes only for an empty universe or explicit exclusions. Eligible marker-bound sealed rows form the sorted migration inventory, which is revalidated with complete coverage under the same lock before every pointer commit. Every active or unmarked well-formed fixed set is excluded and must receive a fresh ordinary combined review against current task state. Sealed proof binds the immutable marker commit and exact fixed bytes. It creates and reads back immutable origin=upgrade generations and pointer-last per-task commits. A sealed reader accepts that later pointer only for an exact marker-commit binding. If a later task fails, matching committed tasks remain valid, untouched tasks retain inert fixed files, and a byte-identical retry with the same inventory digest completes only missing tasks; any drift refuses before another pointer. Replacement, mismatch, mixed, malformed, colliding, linked or ambiguous input refuses without another target mutation. Unbound archives stay display-only and fixed files are never runtime fallback. Its owning docs and migration schema contract must ship with the behavior. Portable proves and ships this capability before any external client mutation; the later client PRs are story-level evidence and never Portable task proof.",
+        "PORTABLE-DELIVERY-MIGRATION preserves legacy JSONL/history bytes and compacts only validated live attributed per-file sources into the first immutable events.bundle.json. The lowercase 32-hex source filename stem is the authoritative ID; each member is {id: stem, payload: validated original event object}. Preview digest binds apply and deletion requires content-identical durable readback. First publication is atomic no-overwrite. Retry deletes only identical loose members already represented. A later eligible event makes preview and apply refuse, remains loose and unchanged, and reports its ID. V1 creates no successor shard or bundle rewrite."
+      ]
+    },
+    {
+      "id": "FORMAT-SOURCES",
+      "title": "Complete pure mechanical Python formatting",
+      "objective": "Complete pure mechanical Python formatting: first create and commit requirements-quality.txt with ruff==0.16.6, pyright==1.1.411, pytest==9.1.1, pytest-xdist==3.8.0 and psutil==7.2.2 plus the final ruff.toml; then run Ruff 0.16.6 formatting over exactly every tracked *.py below factory/scripts/ and factory/tests/; no semantic fixes or scope omissions; preserve tests and comments/directives; one coherent reviewable formatting task using complete lossless review inputs. Update quality docs for the pinned formatter contract in the same task.",
+      "dependencies": [
+        "PORTABLE-DELIVERY-MIGRATION"
+      ],
+      "user_facing": false,
+      "acceptance_criteria": [
+        "FORMAT-SOURCES owns mandatory full quality for pure mechanical Ruff 0.16.6 formatting over exactly every tracked `*.py` below `factory/scripts/` and `factory/tests/`, including tracked fixtures, with exact reproduction, AST equivalence, comment/directive preservation, complete tests and independent review of every exception. The five exactly pinned requirements and final Ruff configuration exist in the Format commit before formatting and become byte-identical inputs to Quality. Its quality documentation ships with the format contract.",
+        "FORMAT-SOURCES replaces the former QF-01 through QF-19 buckets without semantic changes or omitted source ranges."
+      ]
+    },
+    {
+      "id": "QUALITY-BASELINE",
+      "title": "Semantic fixes and mandatory full quality baseline",
+      "objective": "Semantic fixes and mandatory full quality baseline: consume Format's requirements-quality.txt and ruff.toml byte-for-byte, own pyrightconfig.json and the quality runner, and never change formatter configuration or behavior. Fix every remaining Ruff 0.16.6/Pyright 1.1.411 diagnostic against the actual post-format tree; cover exactly every tracked *.py below factory/scripts/ and factory/tests/ locally and in CI; enforce missing coverage/configuration/tool and deliberate violations; and run meaningful client-language validation. Of the two owned workflows, only factory-scaffold.yml keeps pull_request plus its existing main push and hosts the quality/platform checks. harness-health.yml receives no pull-request trigger because its write-authorized upgrade proposal remains limited to existing trusted main-push/manual-dispatch events. .envrc and Ubuntu/Windows dependency installs consume the same pinned requirements. Update quality and architecture docs in the same task.",
+      "dependencies": [
+        "FORMAT-SOURCES"
+      ],
+      "user_facing": false,
+      "acceptance_criteria": [
+        "QUALITY-BASELINE owns mandatory full quality by resolving all remaining Ruff 0.16.6/Pyright 1.1.411 diagnostics with actual semantic fixes and enforcing the identical exact set of every tracked `*.py` below `factory/scripts/` and `factory/tests/` locally and in CI. It consumes Format's requirements-quality.txt and ruff.toml byte-for-byte, owns Pyright configuration and activation, and cannot change formatter behavior. Only factory-scaffold.yml has a pull-request trigger; it retains the existing main push and runs the same quality/platform checks on both. harness-health.yml receives no pull-request trigger and retains mutation only on existing trusted main-push/manual events. Pytest, pytest-xdist and psutil are pinned alongside Ruff and Pyright rather than installed separately. The owning docs are required before client rollout.",
+        "QUALITY-BASELINE replaces QS-01 through QS-12 and QA-01, including missing-tool/configuration and planted-violation failures plus meaningful client-language validation."
+      ]
+    },
+    {
+      "id": "FORGE-COORD-1.1",
+      "title": "Complete native parity and installed-client dogfood",
+      "objective": "Complete native parity and installed-client dogfood: Full integrated AC1-12 and roadmap acceptance; mandatory local Mac CLI/Desktop and Linux/Windows CI proof, complete logs and explicit Linux/Windows live-runtime limitations; the one authorized `/tmp` Task tracker client at private `vrknetha/symphony-forge-tasktracker-dogfood`, collision-safe origin creation/reuse, clean install, declared lint/type/build/test checks, and recorded create/list/complete persistence. The separate client starts only after QUALITY-BASELINE reaches trunk and remains on its own lifecycle; Integration requires its exact task marker, reviewed PR, functional proof and green CI. Before closing, require human-merged and verified cadence, myclaw and knacklabs-ats rollout PR/CI outcomes plus a Toolshed row that stays paused with zero mutation until its exact remote/default-branch identity is supplied and approved from the merged Portable trunk revision. Run the one formal combined review only after required platform evidence is complete, then use ordinary task pr-ready/PR/CI.",
+      "dependencies": [
+        "QUALITY-BASELINE"
+      ],
+      "user_facing": false,
+      "acceptance_criteria": [
+        "FORGE-COORD-1.1 closes AC1 through AC12 and the current roadmap acceptance for both coordinators, including Decision 0074 main-selection/managed-lane policy, preservation of Forge gates, cooperative-transfer observable gates without a fencing claim, real native Codex without Claude/plugin state, complete approved native support, quality predecessors and final parity integration, including one exact digest-matched protected story/task snapshot and exact owner/worktree/base/stage tuple with byte-identical or freshly validated unchanged-head retry. The three configured client rows bind exact canonical repository/default-branch identities, fetched bases, final Quality-or-later source revision, PRs, checks, CI, human merge, and verified resulting default-branch tip. Cadence is knacklabs/cadence@main, MyClaw resolves its configured alias to knacklabs/gantry@main, and KnackLabs ATS is knacklabs/knacklabs-ats@develop. Toolshed has no configured remote and remains paused with zero mutation under D-0033 until the user supplies and approves its exact owner/repository, default branch, and mutation authority; that explicit limitation does not block the three configured client proofs or Integration.",
+        "FORGE-COORD-1.1 proves required local Mac CLI and Desktop observations and meaningful Ubuntu24.04 x64/native Windows CI; only unavailable Linux/Windows authenticated live CLI/Desktop observations may be accepted0065 limitations, while Mac evidence cannot be waived, plus, after the Quality marker reaches trunk, the one user-authorized installed-client Task tracker exception: private origin/CI, clean harness install, declared lint/type/build/test checks, recorded create/list/complete persistence, admitted contribution, client-owned proof, review, functional proof, PR and green CI. Integration refuses until the client task marker, reviewed PR, functional proof and green CI match its cited repository/commit; there is no ninth harness task or surrogate cross-repo ID.",
+        "FORGE-COORD-1.1 encodes pass_fail_summary as one JSON array string with exactly these labels in order: native-cli-macos, native-desktop-macos, native-cli-linux-ubuntu-24.04-x64, native-desktop-linux-ubuntu-24.04-x64, native-cli-windows, and native-desktop-windows. Every row has exactly label/status/evidence_kind/os/cpu/revision/runtime/commands/logs. Its own json.loads validator resolves logs and client proof, derives aggregate status and rejects malformed/duplicate/missing/contradictory/unresolved evidence; C10 consumes the review-bound aggregate. One review lifecycle whose selected clean immutable generation binds the complete updated platform report before ordinary readiness and PR/CI. Integration cites separate durable native lifecycle, Mac CLI/Desktop and Task tracker interaction logs with exact correlations; one producer cannot certify another surface."
+      ]
+    }
+  ],
+  "project": "",
+  "story": "FORGE-COORD-1",
+  "epic": "symphony-forge",
+  "plan_file": "plans/active/FORGE-COORD-1-either-claude-or-codex-coordinates-the-same-forge-workflow.md",
+  "commit": "44a7a3bdc42fa228f891a609a3510abd15d0cbf0",
+  "plan_sha256": "c605101d86582523c618eb7fbe236ccc103b96743d039926f418dc6540a3fd7c"
+}

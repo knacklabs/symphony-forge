@@ -1,0 +1,12 @@
+{
+  "event": "done",
+  "id": "Q-0137-87fa",
+  "profile": "degraded",
+  "kind": "degraded",
+  "reason": "task-scoped verifier fix cannot reach the delegated worker after three routed handoffs; active signal was misbound to the story",
+  "started_at": "2026-09-12T17:31:39+00:00",
+  "completed_at": "2026-09-12T17:32:02+00:00",
+  "files": [],
+  "task_id": "NATIVE-FOREGROUND-ACTIVATE",
+  "story": "FORGE-COORD-1"
+}

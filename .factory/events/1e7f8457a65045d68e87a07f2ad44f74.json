@@ -1,0 +1,1 @@
+{"event": "signal-resolved", "generated_by": "orchestrator", "at": "2026-09-12T01:56:01+00:00", "story": "FORGE-COORD-1", "detail": "S-0023-bc73: Fix all four P1 findings in one remaining delegate pass. Stay within the approved task write scope, preserve the combined-generation schema, use the immutable sealed commit for historical validation, "}

@@ -1,0 +1,16 @@
+{
+  "generated_by": "claude-code:plan-mode",
+  "questions": [
+    {
+      "question": "Reading the recorder shows provenance can live there, with no hook or session-context changes. Take the simpler design?",
+      "options": [
+        "Yes, stamp provenance in the recorder (Recommended)",
+        "Keep the session-context design",
+        "Explore before deciding"
+      ],
+      "chosen": "Yes, stamp provenance in the recorder (Recommended)"
+    }
+  ],
+  "at": "2026-09-12T05:42:57.244896+00:00",
+  "session_id": "b4051e43-dbea-4d62-ba73-ae6210455474"
+}

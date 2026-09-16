@@ -1,0 +1,11 @@
+{
+  "topic": "runtime-specific-routing-fixtures",
+  "lesson": "Runtime-specific routing fixtures must explicitly set FORGE_COORDINATOR to the runtime they assert, so running the suite from native Codex cannot silently turn an incumbent Claude requirements-round assertion into a native-question expectation. Full verification at d0237a5 found exactly test_forge_next_routes_requirements_round_first failing for this reason; keep its full stale-grounding and ordering assertions, pin its Claude fixture, and retain the separate passing test_next_native_requirements_question_stops_at_unsupported_delivery coverage.",
+  "source": "/Users/dev/.codex/reviews/forge-lean-20260910/process-recovery-full-verify-d0237a5-failure/verify.json",
+  "applies_to": [
+    "factory/tests/test_gates.py"
+  ],
+  "severity": "medium",
+  "generated_by": "orchestrator",
+  "added_at": "2026-09-11T03:58:54+00:00"
+}

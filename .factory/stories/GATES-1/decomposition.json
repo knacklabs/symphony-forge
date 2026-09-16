@@ -1,0 +1,392 @@
+{
+  "generated_by": "claude-code:plan-mode",
+  "user_facing": false,
+  "story": "GATES-1",
+  "epic": "accountable-engineering",
+  "plan_file": "plans/active/GATES-1-gates-stale-only-on-what-they-read.md",
+  "plan_sha256": "3f01ce2837c7d1f3d88f390abb7929023f32c30db70216af8f34859d8e64fe87",
+  "tasks": [
+    {
+      "id": "GATES-1-T1",
+      "title": "A question round belongs to its gate and story",
+      "objective": "A pass stops treating its own recorded rounds as spent, so re-recording the same gate for the same story and task reuses them and needs no invented question, while every other pass still spends them so a round never crosses to a different gate, story or task. That is the whole change: one condition in the consumption walk. Provenance is read from where evidence already lives, so no round, schema, hook or global-gate behaviour changes. Implements decision 0067.",
+      "acceptance_criteria": [
+        "Re-recording the same gate for the same story and task consumes its own existing round and requires no new question, including when the submitted round set differs from the one already stored",
+        "A round already consumed by a pass at a different gate is refused",
+        "A round already consumed by a pass for a different story is refused",
+        "A round already consumed by a pass for a different task id is refused",
+        "A gate that is not story-scoped is unchanged: it still reads the active story's rounds as well as the global ones",
+        "A story-scoped gate still consumes rounds asked before any story existed",
+        "The floor of at least one real round per gate still holds, asserted both ways",
+        "No round record, schema or hook changes, asserted by the existing ledger round shape test still passing untouched"
+      ],
+      "depends_on": [],
+      "user_facing": false,
+      "write_scope": [
+        "factory/scripts/record_grill_from_json.py",
+        "factory/tests/test_round_provenance.py"
+      ],
+      "plan_contracts": [
+        {
+          "id": "GATES-1-T1-C1",
+          "statement": "Re-recording the same gate for the same story and task consumes its own existing round and requires no new question, including when the submitted round set differs from the one already stored",
+          "source": "plans/active/GATES-1-gates-stale-only-on-what-they-read.md \u00a7 Acceptance Criteria"
+        },
+        {
+          "id": "GATES-1-T1-C2",
+          "statement": "A round already consumed by a pass at a different gate is refused",
+          "source": "plans/active/GATES-1-gates-stale-only-on-what-they-read.md \u00a7 Acceptance Criteria"
+        },
+        {
+          "id": "GATES-1-T1-C3",
+          "statement": "A round already consumed by a pass for a different story is refused",
+          "source": "plans/active/GATES-1-gates-stale-only-on-what-they-read.md \u00a7 Acceptance Criteria"
+        },
+        {
+          "id": "GATES-1-T1-C4",
+          "statement": "A round already consumed by a pass for a different task id is refused",
+          "source": "plans/active/GATES-1-gates-stale-only-on-what-they-read.md \u00a7 Acceptance Criteria"
+        },
+        {
+          "id": "GATES-1-T1-C5",
+          "statement": "A gate that is not story-scoped is unchanged: it still reads the active story's rounds as well as the global ones",
+          "source": "plans/active/GATES-1-gates-stale-only-on-what-they-read.md \u00a7 Acceptance Criteria"
+        },
+        {
+          "id": "GATES-1-T1-C6",
+          "statement": "A story-scoped gate still consumes rounds asked before any story existed",
+          "source": "plans/active/GATES-1-gates-stale-only-on-what-they-read.md \u00a7 Acceptance Criteria"
+        },
+        {
+          "id": "GATES-1-T1-C7",
+          "statement": "The floor of at least one real round per gate still holds, asserted both ways",
+          "source": "plans/active/GATES-1-gates-stale-only-on-what-they-read.md \u00a7 Acceptance Criteria"
+        },
+        {
+          "id": "GATES-1-T1-C8",
+          "statement": "No round record, schema or hook changes, asserted by the existing ledger round shape test still passing untouched",
+          "source": "plans/active/GATES-1-gates-stale-only-on-what-they-read.md \u00a7 Acceptance Criteria"
+        }
+      ],
+      "verify_commands": [
+        "uv run --with pytest --with psutil python -m pytest factory/tests -q",
+        "./forge doctor"
+      ],
+      "required_tests": [
+        {
+          "id": "test_re_recording_the_same_gate_reuses_its_round_after_an_edit",
+          "path": "factory/tests/test_round_provenance.py",
+          "command": "uvx --with pytest python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_a_round_is_refused_at_a_different_gate",
+          "path": "factory/tests/test_round_provenance.py",
+          "command": "uvx --with pytest python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_a_round_is_refused_for_a_different_story",
+          "path": "factory/tests/test_round_provenance.py",
+          "command": "uvx --with pytest python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_a_round_is_refused_for_a_different_task_id",
+          "path": "factory/tests/test_round_provenance.py",
+          "command": "uvx --with pytest python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_a_global_gate_is_unchanged_when_no_story_is_active",
+          "path": "factory/tests/test_round_provenance.py",
+          "command": "uvx --with pytest python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_a_story_gate_still_consumes_a_pre_story_round",
+          "path": "factory/tests/test_round_provenance.py",
+          "command": "uvx --with pytest python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_the_floor_of_one_real_round_per_gate_still_holds",
+          "path": "factory/tests/test_round_provenance.py",
+          "command": "uvx --with pytest python3 -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        }
+      ],
+      "review_budget": {
+        "max_changed_files": 2,
+        "max_changed_lines": 200,
+        "reason": "One condition in the recorder's consumption walk and one new suite. Two earlier drafts were cut by evidence: the baseline comparator (the 93-red premise was an artefact) and the global-gate narrowing (0051's hole does not exist, and narrowing broke spec/signoff/epics, which two gate tests caught)."
+      },
+      "reviewer_focus": [
+        "That the context outlives the cold reader and is cleared only when the gate pass records, since the human question comes after the reader exits",
+        "That writer and reader resolve the same directory under a ceremony target, which silently misrouted rounds before",
+        "That a task grill's rounds carry its declared task id, and empty means only a gate with no task",
+        "That legacy and scoped rounds of identical text cannot consume one another in any scan order",
+        "That the baseline comparator fails on a NEW failure rather than merely counting"
+      ]
+    },
+    {
+      "id": "GATES-1-T2",
+      "title": "Both grill guards read the ledger the same way",
+      "objective": "Every launch appends starting, running, then a terminal row, and neither grill guard collapses them \u2014 so filtering rows by status cannot exclude a failed launch, whose starting and running rows still carry its id. The cap counts every launch regardless, and the repeat-read guard's existing failed-filter does not work. Both adopt one view that collapses rows by launch_id to the latest, so a launch whose latest row is failed spends no allowance and blocks no further read. No new ledger field.",
+      "acceptance_criteria": [
+        "Rows are collapsed by launch_id to the latest row, and both guards consume that same view",
+        "A launch whose lifecycle ends starting, running, failed does not count toward the cap",
+        "That same failed launch does not make the repeat-read guard refuse, which it does today",
+        "A launch whose lifecycle ends starting, running, succeeded still counts, so the budget is not disabled",
+        "A launch whose latest row is starting or running counts as a read in flight",
+        "No new field is written to the delegation ledger, and launch_status keeps its existing values"
+      ],
+      "depends_on": [],
+      "user_facing": false,
+      "plan_contracts": [
+        {
+          "id": "GATES-1-T2-C1",
+          "statement": "Rows are collapsed by launch_id to the latest row, and both guards consume that same view",
+          "source": "plans/active/GATES-1-gates-stale-only-on-what-they-read.md \u00a7 Acceptance Criteria"
+        },
+        {
+          "id": "GATES-1-T2-C2",
+          "statement": "A launch whose lifecycle ends starting, running, failed does not count toward the cap",
+          "source": "plans/active/GATES-1-gates-stale-only-on-what-they-read.md \u00a7 Acceptance Criteria"
+        },
+        {
+          "id": "GATES-1-T2-C3",
+          "statement": "That same failed launch does not make the repeat-read guard refuse, which it does today",
+          "source": "plans/active/GATES-1-gates-stale-only-on-what-they-read.md \u00a7 Acceptance Criteria"
+        },
+        {
+          "id": "GATES-1-T2-C4",
+          "statement": "A launch whose lifecycle ends starting, running, succeeded still counts, so the budget is not disabled",
+          "source": "plans/active/GATES-1-gates-stale-only-on-what-they-read.md \u00a7 Acceptance Criteria"
+        },
+        {
+          "id": "GATES-1-T2-C5",
+          "statement": "A launch whose latest row is starting or running counts as a read in flight",
+          "source": "plans/active/GATES-1-gates-stale-only-on-what-they-read.md \u00a7 Acceptance Criteria"
+        },
+        {
+          "id": "GATES-1-T2-C6",
+          "statement": "No new field is written to the delegation ledger, and launch_status keeps its existing values",
+          "source": "plans/active/GATES-1-gates-stale-only-on-what-they-read.md \u00a7 Acceptance Criteria"
+        }
+      ],
+      "write_scope": [
+        "factory/scripts/forge_cli/grill.py",
+        "factory/tests/test_grill_budget.py"
+      ],
+      "required_tests": [
+        {
+          "id": "test_a_failed_lifecycle_does_not_count_toward_the_cap",
+          "path": "factory/tests/test_grill_budget.py",
+          "command": "uv run --with pytest --with psutil python -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_a_failed_lifecycle_does_not_block_the_repeat_read_guard",
+          "path": "factory/tests/test_grill_budget.py",
+          "command": "uv run --with pytest --with psutil python -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_a_succeeded_lifecycle_still_counts",
+          "path": "factory/tests/test_grill_budget.py",
+          "command": "uv run --with pytest --with psutil python -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_a_launch_still_in_flight_counts",
+          "path": "factory/tests/test_grill_budget.py",
+          "command": "uv run --with pytest --with psutil python -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_both_guards_agree_on_the_same_collapsed_view",
+          "path": "factory/tests/test_grill_budget.py",
+          "command": "uv run --with pytest --with psutil python -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_no_new_ledger_field_is_written",
+          "path": "factory/tests/test_grill_budget.py",
+          "command": "uv run --with pytest --with psutil python -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        }
+      ],
+      "verify_commands": [
+        "uv run --with pytest --with psutil python -m pytest factory/tests -q"
+      ],
+      "review_budget": {
+        "max_changed_files": 2,
+        "max_changed_lines": 200,
+        "reason": "One collapsed terminal-launch view in grill.py consumed by both guards, and one new suite seeding real row lifecycles. Two earlier drafts were cut by their own cold reads: the outcome field (the companion emits JSON, D-0032) and the escalation grant (scoping does not exist, split to T5)."
+      },
+      "reviewer_focus": [
+        "That rows are collapsed by launch_id to the LATEST row, since a failed launch's starting and running rows are not failed and defeated the previous row-level filter",
+        "That the repeat-read guard's existing filter is actually fixed, not merely copied: it looks correct today and is not",
+        "That tests seed real lifecycles \u2014 starting, running, failed and starting, running, succeeded, plus standalone starting and running \u2014 rather than synthetic single rows",
+        "That a successful launch still spends an allowance, or the budget is disabled rather than corrected",
+        "That nothing new is written to the ledger, since the fix is to READ what was always there",
+        "That no answered/interrupted outcome sneaks in: deferred as D-0032 because the companion is invoked with --json"
+      ]
+    },
+    {
+      "id": "GATES-1-T3",
+      "title": "The requirements gate joins the one definition of product",
+      "objective": "requirements_digest takes the bare default exclusion while every other closeout check calls product_excluded_prefixes, the documented ONE definition of not-product, which also excludes docs/decisions/ and docs/context/ledger.json \u2014 so accepting a decision stales the requirements gate alone. It passes the shared definition, and freshness moves behind one helper that also accepts the legacy digest so existing passes are not reinterpreted as stale. Both consumers ask that helper instead of comparing inline.",
+      "acceptance_criteria": [
+        "requirements_digest excludes exactly what product_excluded_prefixes excludes, asserted as a SET rather than one example path",
+        "Accepting a decision record no longer stales a recorded requirements pass",
+        "A change to docs/context/ledger.json no longer stales a recorded requirements pass",
+        "Editing the confirmed spec body still stales it",
+        "Changing a real product file still stales it",
+        "A requirements pass recorded under the old exclusions is still accepted, so existing passes are not reinterpreted as stale",
+        "Both consumers resolve freshness through one helper rather than comparing digests inline",
+        "No other gate's freshness changes, asserted against the prefix-based gates and the pre-stage task grill"
+      ],
+      "depends_on": [],
+      "user_facing": false,
+      "plan_contracts": [
+        {
+          "id": "GATES-1-T3-C1",
+          "statement": "requirements_digest excludes exactly what product_excluded_prefixes excludes, asserted as a SET rather than one example path",
+          "source": "plans/active/GATES-1-gates-stale-only-on-what-they-read.md \u00a7 Acceptance Criteria"
+        },
+        {
+          "id": "GATES-1-T3-C2",
+          "statement": "Accepting a decision record no longer stales a recorded requirements pass",
+          "source": "plans/active/GATES-1-gates-stale-only-on-what-they-read.md \u00a7 Acceptance Criteria"
+        },
+        {
+          "id": "GATES-1-T3-C3",
+          "statement": "A change to docs/context/ledger.json no longer stales a recorded requirements pass",
+          "source": "plans/active/GATES-1-gates-stale-only-on-what-they-read.md \u00a7 Acceptance Criteria"
+        },
+        {
+          "id": "GATES-1-T3-C4",
+          "statement": "Editing the confirmed spec body still stales it",
+          "source": "plans/active/GATES-1-gates-stale-only-on-what-they-read.md \u00a7 Acceptance Criteria"
+        },
+        {
+          "id": "GATES-1-T3-C5",
+          "statement": "Changing a real product file still stales it",
+          "source": "plans/active/GATES-1-gates-stale-only-on-what-they-read.md \u00a7 Acceptance Criteria"
+        },
+        {
+          "id": "GATES-1-T3-C6",
+          "statement": "A requirements pass recorded under the old exclusions is still accepted, so existing passes are not reinterpreted as stale",
+          "source": "plans/active/GATES-1-gates-stale-only-on-what-they-read.md \u00a7 Acceptance Criteria"
+        },
+        {
+          "id": "GATES-1-T3-C7",
+          "statement": "Both consumers resolve freshness through one helper rather than comparing digests inline",
+          "source": "plans/active/GATES-1-gates-stale-only-on-what-they-read.md \u00a7 Acceptance Criteria"
+        },
+        {
+          "id": "GATES-1-T3-C8",
+          "statement": "No other gate's freshness changes, asserted against the prefix-based gates and the pre-stage task grill",
+          "source": "plans/active/GATES-1-gates-stale-only-on-what-they-read.md \u00a7 Acceptance Criteria"
+        }
+      ],
+      "required_tests": [
+        {
+          "id": "test_requirements_digest_uses_the_shared_exclusion_definition",
+          "path": "factory/tests/test_requirements_freshness.py",
+          "command": "uv run --with pytest --with psutil python -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_a_decision_record_does_not_stale_the_requirements_gate",
+          "path": "factory/tests/test_requirements_freshness.py",
+          "command": "uv run --with pytest --with psutil python -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_the_context_ledger_does_not_stale_the_requirements_gate",
+          "path": "factory/tests/test_requirements_freshness.py",
+          "command": "uv run --with pytest --with psutil python -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_editing_the_confirmed_spec_still_stales_it",
+          "path": "factory/tests/test_requirements_freshness.py",
+          "command": "uv run --with pytest --with psutil python -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_a_real_product_change_still_stales_it",
+          "path": "factory/tests/test_requirements_freshness.py",
+          "command": "uv run --with pytest --with psutil python -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_a_pass_recorded_under_the_old_exclusions_is_still_accepted",
+          "path": "factory/tests/test_requirements_freshness.py",
+          "command": "uv run --with pytest --with psutil python -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_both_consumers_resolve_freshness_through_the_helper",
+          "path": "factory/tests/test_requirements_freshness.py",
+          "command": "uv run --with pytest --with psutil python -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_the_prefix_gates_and_pre_stage_task_grill_are_unchanged",
+          "path": "factory/tests/test_requirements_freshness.py",
+          "command": "uv run --with pytest --with psutil python -m pytest {path}::{id} -q -o junit_family=legacy --junitxml={report}"
+        }
+      ],
+      "write_scope": [
+        "factory/scripts/factory_lib.py",
+        "factory/scripts/forge_cli/plans.py",
+        "factory/scripts/forge_cli/phase.py",
+        "factory/tests/test_requirements_freshness.py"
+      ],
+      "verify_commands": [
+        "uv run --with pytest --with psutil python -m pytest factory/tests -q"
+      ],
+      "reviewer_focus": [
+        "That the exclusion comes from product_excluded_prefixes rather than a second hand-written list, since a duplicated list IS the defect",
+        "That a pass recorded under the old exclusions is still accepted, or this change stales every in-flight story at once \u2014 the cascade it exists to remove",
+        "That BOTH consumers go through the helper: leaving one inline comparison replants the seed",
+        "That the spec body remains part of the digest, and a real product change still stales, so the gate is corrected rather than disabled",
+        "That the exclusion SET is asserted rather than one example path",
+        "That no other gate moves: the prefix gates and the pre-stage task grill are out of scope, and D-0035 owns the manifest"
+      ],
+      "review_budget": {
+        "max_changed_files": 4,
+        "max_changed_lines": 300,
+        "reason": "The shared exclusion passed inside requirements_digest, one freshness helper that also accepts the legacy digest, both consumers switched to it, and one new suite. The full manifest this task originally carried is deferred as D-0035 after reading showed the measured cascade had a one-argument cause; the owner reversed the decision-staleness ruling to allow it, and the confirmed spec is amended to match."
+      },
+      "dependencies": [
+        "GATES-1-T1"
+      ]
+    },
+    {
+      "id": "GATES-1-T4",
+      "title": "Post-stage task freshness keeps its selective binding",
+      "objective": "Post-stage task freshness uses a canonical selective snapshot rather than a path manifest, so it stales on a changed objective, criteria or plan contract without staling on write_scope, required_tests or verify_commands. The stamp path binds delta_id only, restoring what decision 0066 already requires, so a contract re-record that leaves the delta unchanged never invalidates a clean review.",
+      "acceptance_criteria": [
+        "Post-stage task freshness uses a selective snapshot preserving decision 0066's binding, not a file-only manifest",
+        "A changed objective, acceptance criterion or plan contract stales the task pass",
+        "A changed write_scope, required_tests or verify_commands does not stale it",
+        "A stage review stamp survives a contract re-record that leaves the reviewed delta unchanged",
+        "A stamp does not survive a change to the reviewed delta itself"
+      ],
+      "depends_on": [
+        "GATES-1-T3"
+      ],
+      "user_facing": false,
+      "dependencies": [
+        "GATES-1-T3"
+      ]
+    },
+    {
+      "id": "GATES-1-T5",
+      "title": "An escalation grants exactly one further read, for that gate and task",
+      "objective": "Recording an escalation grants exactly one further cold read scoped to the gate and task it was raised for, and that grant passes BOTH the cap and the repeat-read guard. Today an open escalation clears the cap alone, so the human is told grilling continues and is then refused by a second guard. The grant is claimed atomically and spent when the granted read completes, per the confirmed spec.",
+      "acceptance_criteria": [
+        "An escalation record carries the gate and task it was raised for",
+        "An open escalation grants one further read for that gate and task, and not for any other",
+        "The granted read passes both the cap and the repeat-read guard",
+        "The grant is claimed atomically, so two concurrent launches cannot both spend it",
+        "The grant is spent when the granted read completes, per the confirmed spec",
+        "A second read without a new escalation is refused"
+      ],
+      "depends_on": [
+        "GATES-1-T2"
+      ],
+      "user_facing": false,
+      "dependencies": [
+        "GATES-1-T2"
+      ]
+    }
+  ],
+  "project": "",
+  "commit": "4672acf4f8828054cc3356c8ba10231a672c504e"
+}

@@ -1,0 +1,28 @@
+{
+  "generated_by": "autoreview",
+  "task_id": "GATES-1-T1",
+  "score": 7,
+  "summary": "performance lens over GATES-1-T1 (3 product path(s), 069d179..b32834d, Codex via the autoreview skill at --max-priority P2): 1 blocking, 0 non-blocking. The functional change shown does not introduce a material performance regression, but the diff violates the review brief's explicit blocking rule against `legacy` naming. That leaves the task's leftovers contract partial until the fixture is renamed.",
+  "blocking_findings": [
+    {
+      "category": "maintainability",
+      "area": "factory/tests",
+      "summary": "[P1] Remove the forbidden legacy naming from the new fixture (factory/tests/test_round_provenance.py:134): The new test labels its pre-story round `legacy`."
+    }
+  ],
+  "non_blocking_findings": [],
+  "recommendation": "request-changes",
+  "reviewed_scope": [
+    "factory/board/example/plans/roadmap.json",
+    "factory/scripts/record_grill_from_json.py",
+    "factory/tests/test_round_provenance.py"
+  ],
+  "skills_used": [],
+  "aspect": "performance",
+  "review_run_id": "1dc110f27362ba773ebf72288ed2c9d33c70e6490a6c484032dcab6b1f8c079f",
+  "brief_sha256": "0ef98f5606a5fa86c70d3259f29d7b92aaab386c7c8923f13136b4d7b41b1819",
+  "branch_diff_digest": "2b1c0be8d62ce66ee1121035887209ed7c7e25936587679d845890648a66e5b3",
+  "residual_risks": [],
+  "recorded_at": "2026-09-12T12:18:32+00:00",
+  "commit": "b32834d61038e82525488e864bb0331fd94de66b"
+}

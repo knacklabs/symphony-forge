@@ -971,10 +971,32 @@
       "depends_on": [],
       "origin": "adhoc",
       "spec": "docs/specs/dual-coordinator-parity.md"
+    },
+    {
+      "key": "GATES-1",
+      "title": "Gates stale only on what they read",
+      "story": "As someone shipping a task through the factory, I want a gate to stay valid unless something it actually read changed, so that passing gates are not re-run for edits they never saw.",
+      "acceptance_criteria": [
+        "Every recorded gate pass carries an input manifest of identifier plus content digest, covering the artifact, cited records and the applicable active decisions, across all six gates",
+        "Editing a product file absent from a pass's manifest leaves that pass valid",
+        "Editing anything in the manifest stales the pass, including a decision read but not cited",
+        "A review stamp survives a contract re-record that leaves the delta unchanged, per decision 0066",
+        "Re-recording a gate after resolving findings needs no new question round, while the floor of one real round per gate still holds",
+        "A cold read that fails on the launcher or tool leaves the grill budget unchanged",
+        "Recording an escalation permits exactly one further read for that gate and task, clearing both the cap and the repeat-read guard",
+        "A named set of generated forge invocations in next-step text parses against the real command grammar"
+      ],
+      "order": 47,
+      "status": "active",
+      "epic": "accountable-engineering",
+      "skill": "backend",
+      "kind": "refactor",
+      "depends_on": [],
+      "spec": "docs/specs/gates-stale-only-on-what-they-read.md"
     }
   ],
   "generated_by": "human",
-  "updated_at": "2026-09-08T06:25:50+00:00",
+  "updated_at": "2026-09-13T05:32:06+00:00",
   "epics": [
     {
       "id": "symphony-forge",

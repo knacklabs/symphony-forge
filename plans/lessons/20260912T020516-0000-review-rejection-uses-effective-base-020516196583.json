@@ -1,0 +1,12 @@
+{
+  "topic": "review-rejection-uses-effective-base",
+  "lesson": "Finding rejection and review-set status must derive the expected delta through the shared effective stage review binding, including after a trunk merge touches the same path. Add a post-merge same-path regression.",
+  "source": "S-0022-ec00",
+  "applies_to": [
+    "factory/scripts/forge_cli/review.py",
+    "factory/tests/test_review_settled_contracts.py"
+  ],
+  "severity": "high",
+  "generated_by": "autoreview",
+  "added_at": "2026-09-12T02:05:16+00:00"
+}

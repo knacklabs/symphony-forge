@@ -1,0 +1,12 @@
+{
+  "topic": "sealed-proof-never-reads-moving-main",
+  "lesson": "Historical sealed proof validation must derive its review base from immutable commit or proof inputs and must never consult live origin/main; advancing origin/main to the marker publication commit must leave unchanged proof valid. Preserve the exact generation schema and add the regression.",
+  "source": "S-0022-ec00",
+  "applies_to": [
+    "factory/scripts/factory_lib.py",
+    "factory/tests/test_proof_read_path.py"
+  ],
+  "severity": "high",
+  "generated_by": "autoreview",
+  "added_at": "2026-09-12T02:05:16+00:00"
+}

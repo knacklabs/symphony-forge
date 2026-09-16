@@ -1,0 +1,1 @@
+{"event": "signal-host-exception", "generated_by": "implementer", "at": "2026-09-10T11:13:14+00:00", "story": "FORGE-COORD-1", "detail": "The native delegate cannot acquire its protected lock because this managed linked-worktree sandbox denies writes to the shared .git/worktrees control directory; a bounded degraded window is required f"}
