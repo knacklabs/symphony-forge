@@ -662,3 +662,33 @@ def test_vendored_client_review_excludes_the_harness_machinery(repo):
     harness_only = review_excluded_prefixes(repo)
     assert set(harness_only) == set(HARNESS_PREFIXES) | set(WORKFLOW_PATHS)
     assert "factory/" not in harness_only
+
+
+def test_a_clients_own_ci_is_product_not_vendored_machinery(repo):
+    """`.github/` must NOT be a harness-machinery prefix.
+
+    The harness vendors no workflow into a client — VENDOR_MANIFEST.json has no
+    entry under `.github/` — so a client's CI is its own product. While the
+    prefix was excluded, the review bundle reset `.github/` to the task base,
+    so a lens judging an acceptance criterion that REQUIRES a CI change saw a
+    local gate wired to a step that was not there and correctly called the
+    criterion partial. Any such criterion was permanently unprovable.
+    """
+    from forge_cli.review import review_excluded_prefixes
+    from forge_cli.stages import HARNESS_MACHINERY_PATHS
+
+    assert ".github/" not in HARNESS_MACHINERY_PATHS
+    assert not any(p.startswith(".github") for p in HARNESS_MACHINERY_PATHS)
+    # Nor via the composed exclusion list a review bundle actually reads.
+    assert ".github/" not in review_excluded_prefixes(repo)
+    # The genuinely vendored machinery is still excluded.
+    for vendored in ("factory/", "constitution/", ".claude/", ".codex/"):
+        assert vendored in HARNESS_MACHINERY_PATHS
+
+    # And nothing under a manifest entry claims .github.
+    manifest = repo / "VENDOR_MANIFEST.json"
+    if manifest.is_file():
+        import json as _json
+        entries = _json.loads(manifest.read_text())
+        paths = entries if isinstance(entries, list) else entries.get("paths", [])
+        assert not [p for p in paths if str(p).startswith(".github")]
