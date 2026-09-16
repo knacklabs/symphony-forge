@@ -10,6 +10,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
       # This workflow is VENDORED into every client repo, so each step has to be
       # true in both places. The checks below are: they lint whatever repo they
       # find. The last two are not — they exercise the harness's own machinery

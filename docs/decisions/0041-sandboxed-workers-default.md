@@ -1,8 +1,9 @@
 ---
-status: accepted
+status: superseded
 confirmed_by: "Ravi (vrknetha)"
 date: 2026-08-13
 stories: [FORGE-WIN-SBX]
+superseded_by: 0049-full-access-for-forge-managed-codex-chats
 ---
 
 # Sandboxed Workers Default

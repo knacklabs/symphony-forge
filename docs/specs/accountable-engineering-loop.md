@@ -71,10 +71,11 @@ implementation does not enforce it end to end:
   `plans/`) — a policy target (measured p90s: 5/256 product-only, 20/672
   all-paths). Tasks may lower it; raising it requires a written reason.
   `stage done` measures the completed diff and reports an over-budget result
-  with the whole change visible. A measured scope or budget amendment does not
-  require another cold read when task meaning is unchanged; a material change
-  to the task contract or intent still follows the current reapproval and
-  regrill gates.
+  with the whole change visible. A result above twice the declared line budget
+  refuses closure and instructs the operator to split the task. A measured
+  scope or budget amendment does not require another cold read when task
+  meaning is unchanged; a material change to the task contract or intent still
+  follows the current reapproval and regrill gates.
 - **Contracts feed review (FORGE-REV-2).** Recording the frontier task's JIT
   contract lands its grilled `criteria_map` as that task's `plan_contracts`,
   so the quality review must verdict each criterion implemented and

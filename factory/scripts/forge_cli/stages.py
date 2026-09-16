@@ -287,7 +287,8 @@ def write_skeleton(base: Path, issue: str, tasks: list[dict]) -> None:
                           if k in ("status", "started_at", "completed_at",
                                    "base_sha", "dirty_at_start", "task_sha256",
                                    "incomplete", "local_review_stamp",
-                                   "contract_changed", "reopen_base_sha")})
+                                   "contract_changed", "reopen_base_sha",
+                                   "proof_receipts")})
             stage["title"] = task["title"]
         stages.append(stage)
     write_stages(base, {"issue": issue, "stages": stages})
@@ -2023,11 +2024,9 @@ def _proof_tool_identity(
             probe_memo[memo_key] = result
         return dict(result)
     probe: list[str]
+    python_args: list[str]
     if re.fullmatch(r"python(?:3(?:\.\d+)?)?(?:\.exe)?", name):
-        if any(Path(token).as_posix().endswith("factory/scripts/verify.py")
-               for token in tokens[1:]):
-            return {"command": tokens[0], "runner": runner,
-                    "environment": environment_identity, "reusable": False}
+        python_args = tokens[1:]
         probe = [str(outer_path)]
     elif name in {"uv", "uv.exe"} and len(tokens) > 2 and tokens[1] == "run":
         python_index = next((index for index, token in enumerate(tokens[2:], 2)
@@ -2036,18 +2035,38 @@ def _proof_tool_identity(
         if python_index < 0:
             return {"command": tokens[0], "runner": runner,
                     "environment": environment_identity, "reusable": False}
-        if any(Path(token).as_posix().endswith("factory/scripts/verify.py")
-               for token in tokens[python_index + 1:]):
-            return {"command": tokens[0], "runner": runner,
-                    "environment": environment_identity, "reusable": False}
+        python_args = tokens[python_index + 1:]
         probe = tokens[:python_index + 1]
     else:
         return {"command": tokens[0], "runner": runner,
                 "environment": environment_identity, "reusable": False}
+    canonical_verify = (
+        len(python_args) == 1
+        and os.path.abspath(base / python_args[0])
+        == os.path.abspath(base / "factory/scripts/verify.py")
+    )
+    board_check = (
+        len(python_args) == 1
+        and os.path.abspath(base / python_args[0])
+        == os.path.abspath(base / "factory/scripts/check_board_complete.py")
+    )
+    module = python_args[1] if len(python_args) >= 2 \
+        and python_args[0] == "-m" else ""
+    if not canonical_verify and not board_check \
+            and module not in {"pytest", "compileall"}:
+        return {"command": tokens[0], "runner": runner,
+                "environment": environment_identity, "reusable": False}
+    canonical_inputs = _canonical_verify_inputs(base) if canonical_verify else None
+    if canonical_verify and canonical_inputs is None:
+        return {"command": tokens[0], "runner": runner,
+                "environment": environment_identity, "reusable": False}
     memo_key = (tuple(probe), str(environment_identity["sha256"]))
     if probe_memo is not None and memo_key in probe_memo:
-        return {**probe_memo[memo_key], "command": tokens[0],
-                "environment": environment_identity}
+        cached = {**probe_memo[memo_key], "command": tokens[0],
+                  "environment": environment_identity}
+        if canonical_inputs is not None:
+            cached["canonical_verify_inputs"] = canonical_inputs
+        return cached
     script = (
         "import hashlib,importlib.metadata as m,json,pathlib,re,sys\n"
         "def digest(d, name):\n"
@@ -2118,7 +2137,48 @@ def _proof_tool_identity(
                   "environment": environment_identity, "reusable": False}
     if probe_memo is not None:
         probe_memo[memo_key] = result
+    if canonical_inputs is not None:
+        result["canonical_verify_inputs"] = canonical_inputs
     return dict(result)
+
+
+def _canonical_verify_inputs(base: Path) -> dict[str, object] | None:
+    """Bind the workflow state read by the repository's canonical verifier."""
+    try:
+        from factory_lib import (
+            client_signoff, evidence_path, plan_digest_without_assumptions,
+            protected_decomposition_state_path, run_state_path,
+        )
+
+        state = load_json(run_state_path(base), default={})
+        story = str(state.get("story") or state.get("issue_key") or "")
+        plan_file = state.get("plan_file")
+        plan = base / plan_file if isinstance(plan_file, str) else None
+        approval = evidence_path(base, story, "plan-approval.json") if story else None
+        decomposition = protected_decomposition_state_path(base)
+
+        def identity(path: Path | None) -> dict[str, object] | None:
+            if path is None or not path.is_file():
+                return None
+            body = path.read_bytes()
+            return {"bytes": len(body), "sha256": hashlib.sha256(body).hexdigest()}
+
+        signed, signoff_reason = client_signoff(base)
+        return {
+            "run": {key: state.get(key) for key in (
+                "issue_key", "story", "plan_status", "plan_file",
+                "approved_plan_sha256", "decomposition_status",
+            )},
+            "plan_digest": (
+                plan_digest_without_assumptions(plan)
+                if plan is not None and plan.is_file() else None
+            ),
+            "approval": identity(approval),
+            "decomposition": identity(decomposition),
+            "signoff": {"accepted": signed, "reason": signoff_reason},
+        }
+    except (OSError, TypeError, ValueError, SystemExit):
+        return None
 
 
 def _board_proof_inputs(base: Path) -> dict[str, object]:

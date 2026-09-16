@@ -1,0 +1,16 @@
+{
+  "topic": "authenticated-context-transport",
+  "lesson": "A private prompt pathname plus before-and-after hashing does not authenticate what the companion opened. For supplemental context, pass the already assembled exact prompt bytes through companion stdin, bind their digest in launch evidence, and retain read compatibility for historical prompt-file rows.",
+  "source": "review-generation-04f956183b8048373babf12674b1baf4263b5da61ab26abc7014d1c44233e537",
+  "applies_to": [
+    "factory/scripts/forge_cli/delegate.py",
+    "factory/scripts/forge_cli/stages.py",
+    "factory/scripts/record_grill_from_json.py",
+    "factory/tests/test_delegate_scope.py",
+    "factory/tests/test_gates.py",
+    "factory/tests/test_native_launch.py"
+  ],
+  "severity": "high",
+  "generated_by": "orchestrator",
+  "added_at": "2026-09-16T09:31:25+00:00"
+}

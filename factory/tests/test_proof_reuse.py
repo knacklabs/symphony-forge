@@ -24,7 +24,7 @@ def _task() -> dict:
         "reviewer_focus": ["security", "migration"],
         "write_scope": ["src/a.py"],
         "required_tests": [{"id": "test_a", "path": "tests/a.py",
-                            "command": "python tests/a.py --case test_a"}],
+                            "command": "python -m pytest tests/a.py -k test_a"}],
         "verify_commands": ["python -m compileall src"],
     }
 
@@ -287,6 +287,22 @@ def test_equivalent_board_argv_binds_inputs_and_unknown_shape_forces_fresh(
     malformed = {**task, "verify_commands": [
         "python3 'factory/scripts/check_board_complete.py"]}
     assert stages.proof_identity(repo, malformed, "verify")["reusable"] is False
+
+
+def test_canonical_verifier_binds_workflow_inputs_and_unknown_python_reruns(
+        repo: Path):
+    command = "python3 factory/scripts/verify.py"
+    first = stages._proof_tool_identity(repo, command)
+    assert first["reusable"] is True
+    assert first["canonical_verify_inputs"]
+    state = load_factory_lib(repo).run_state_path(repo)
+    state.parent.mkdir(parents=True, exist_ok=True)
+    state.write_text(json.dumps({"issue_key": "changed"}), encoding="utf-8")
+    second = stages._proof_tool_identity(repo, command)
+    assert second["canonical_verify_inputs"] != first["canonical_verify_inputs"]
+    assert stages._proof_tool_identity(
+        repo, "python3 factory/scripts/check_dual_runtime.py",
+    )["reusable"] is False
 
 
 def test_probe_changes_interpreter_dependency_and_runner_inputs(repo: Path, monkeypatch):

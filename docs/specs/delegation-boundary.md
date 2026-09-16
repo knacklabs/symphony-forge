@@ -94,11 +94,9 @@ each required test while binding all proofs to one final snapshot. Source-text
 inference is not test evidence. Commands must invoke the runner directly —
 prose, shells, and `env` wrappers are refused at record time.
 
-**Tasks are sequential; stories may be parallel.** One story owns one isolated
-Git worktree. Its task stages run strictly in decomposition order, so two tasks
-never edit that worktree concurrently and task-level `--parallel` is refused.
-The roadmap's story dependency graph decides which stories are ready at the
-same time; independent ready stories may run in separate worktrees.
+**Dependency-ready tasks may be parallel.** Every leaf owns an isolated task
+worktree and PR. Dependency order still binds, and siblings overlap only when
+their measured scopes are disjoint; overlapping scopes remain serialized.
 
 **Partial delivery is sayable.** `forge stage done --incomplete "<what is
 missing>"` leaves the stage open and records the gap, so a worker that

@@ -25,26 +25,24 @@ red row and rerun the command.
 ## Delegation
 
 Native Windows delegation is supported. `forge delegate` launches, supervises,
-and reaps the Codex worker tree on Windows, and a write delegation passes
-`--write` to select the companion's workspace-write sandbox.
+and reaps the Codex worker tree on Windows. Forge-managed native Codex chats
+and committed agent profiles use `danger-full-access`; write capability still
+comes from the active Forge stage, scope, admission, and hooks rather than the
+OS sandbox policy.
 
 An explicitly unelevated sandbox is deferred. The companion does not expose an
 unelevated sandbox option, and Forge does not change user-global Codex
 configuration to simulate one. Run Forge from a normal, unelevated prompt.
 
-The worker's commands run as a separate local account (`CodexSandboxOnline`
-once decision 0068 applies; `CodexSandboxOffline` before it). Codex grants
-that account read access to the whole disk, but Windows ACLs still deny it
-the user profile root (`C:\Users\<you>`) and per-user caches such as
-`%LOCALAPPDATA%\node\corepack` and `%LOCALAPPDATA%\pnpm\store`. Seen
-on a client: Vitest's esbuild config loader walked up from the worktree and
-died with `Cannot read directory "../../../../../..": Access is denied`, and
-`pnpm` failed with `EPERM` before starting because Corepack could not open
-its cache. Forge does not change ACLs. Two remedies were seen to work on that
-client: declare test commands as `node_modules\.bin\vitest ... --configLoader
-runner` (the runner loader does not walk parent folders, and the local binary
-avoids Corepack), or have an administrator grant the two sandbox accounts read
-access to the profile root and those two cache folders.
+Full access avoids the Codex sandbox account and its process-discovery,
+psutil, sysctl, profile, and per-user-cache boundaries for trusted
+Forge-managed native chats. Forge does not treat host access as task authority:
+the lifecycle, hooks, write scope, worker admission, proof, and review gates
+still enforce what the chat may do.
+
+The official Claude `codex-plugin-cc` 1.0.6 route still hardcodes its own
+workspace-write/read-only app-server policies. Upstream PR 742 is unreleased
+and task-only; do not patch installed plugin files or claim that route is fixed.
 
 ## Encoding
 

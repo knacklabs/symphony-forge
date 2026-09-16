@@ -389,6 +389,12 @@ def test_a_second_delegate_after_committing_needs_no_new_grill(repo: Path, tmp_p
         DECOMP, STAGE_TASK, start_stage,
     )
 
+    (repo / "src").mkdir()
+    (repo / "src" / "existing.ts").write_text(
+        "export const existing = true;\n", encoding="utf-8")
+    git(repo, "add", "src/existing.ts")
+    git(repo, "-c", "user.email=t@t", "-c", "user.name=t", "commit",
+        "-m", "seed immutable source ownership")
     start_stage(repo, tmp_path, STAGE_TASK)
     original_grill = _seed_pre_stage_grill(repo, STAGE_TASK)
 

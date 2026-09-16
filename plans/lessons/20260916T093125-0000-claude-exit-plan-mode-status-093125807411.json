@@ -1,0 +1,13 @@
+{
+  "topic": "claude-exit-plan-mode-status",
+  "lesson": "A documented Claude ExitPlanMode response may omit status only when it returns the exact displayed plan and a boolean isAgent. If status is present, accept only success, succeeded, or completed; unknown, pending, and negative statuses must fail closed without mutation.",
+  "source": "review-generation-04f956183b8048373babf12674b1baf4263b5da61ab26abc7014d1c44233e537",
+  "applies_to": [
+    "factory/scripts/forge_cli/approval.py",
+    "factory/tests/test_lean_workflow.py",
+    "factory/tests/test_approval_hooks.py"
+  ],
+  "severity": "high",
+  "generated_by": "orchestrator",
+  "added_at": "2026-09-16T09:31:25+00:00"
+}

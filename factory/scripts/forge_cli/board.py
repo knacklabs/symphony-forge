@@ -15,7 +15,7 @@ from factory_lib import (
     plan_digest_without_assumptions,
     read_selected_review_generation, task_evidence_path,
     evidence_path, load_json, now_iso, parse_sections,
-    repo_root, run_state_path, task_rows,
+    repo_root, run_state_path, task_rows, validated_task_marker_commit,
 )
 
 # Shipped/archived plans move out of active|completed; scan debt too or a
@@ -98,7 +98,10 @@ def task_proof_records(base: Path, key: str, task_id: str) -> dict | None:
     reviews: dict[str, dict | None] = {aspect: None for aspect in ASPECTS}
     generation = None
     try:
-        generation, _selection, problems = read_selected_review_generation(base, key, task_id)
+        generation, _selection, problems = read_selected_review_generation(
+            base, key, task_id,
+            sealed_commit=validated_task_marker_commit(base, key, task_id),
+        )
         if problems:
             generation = None
     except (SystemExit, OSError, ValueError):
@@ -290,6 +293,7 @@ def _plan_evidence(
             task_evidence_path(base, story, task_id, "tests.json"), default={})
         generation, _selection, review_problems = read_selected_review_generation(
             base, story, task_id,
+            sealed_commit=validated_task_marker_commit(base, story, task_id),
         )
         bundles.append({
             "task": task,

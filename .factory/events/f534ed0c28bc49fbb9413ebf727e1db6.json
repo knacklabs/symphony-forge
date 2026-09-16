@@ -1,0 +1,1 @@
+{"event": "signal-contradiction", "generated_by": "autoreview", "at": "2026-09-16T15:27:47+00:00", "story": "FORGE-COORD-1", "detail": "The cold-read guard treats every latest starting or running ledger row as permanently consumed even when dead_launches proves its process is gone, contradicting the binding retry-after-failed-or-stale"}

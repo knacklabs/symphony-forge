@@ -1,0 +1,10 @@
+{
+  "applies_to": [
+    "/Users/dev/.codex/plans/symphony-forge+lean-workflow+jit+20260914T071000IST.md#Acceptance Criteria 2"
+  ],
+  "generated_by": "Codex",
+  "lesson": "Not a defect (evidence factory/tests/test_lean_workflow.py:364): The exact active-or-done coldless task predicate is the accepted one-time in-flight Decision 0066 transition bridge. Pending, stale, partial, native-identity, or changed records refuse; removing it would force a second cold read for already active work. — raised as \"LEAN-AC-2: Shared recorder identity: the shared approval recorder binds exactly one current-frontier candidate, current digest, runtime, stable session/event id\"",
+  "severity": "medium",
+  "source": "review reject LEAN-WORKFLOW quality",
+  "topic": "rejected-review-finding-quality"
+}

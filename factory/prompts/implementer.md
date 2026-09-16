@@ -62,6 +62,12 @@ Rules:
 - Read `AGENTS.md`, `WORKFLOW.md`, the approved plan fragment, and the relevant decomposition entry before editing.
 - Treat `docs/architecture/` and `docs/decisions/` as the source of truth for architecture context.
 - Use deterministic verify wrappers, not ad hoc shell commands.
+- After this managed environment has proved process-table access unavailable
+  with `ProcessDiscoveryError` from macOS `sysctl`/psutil permission denial,
+  do not spend another task-wide process-dependent verifier run here. Run every
+  named focused regression for the correction, report the exact environmental
+  block without calling it green, and return so Main can run the canonical full
+  verifier once in its permissive environment.
 - Forge launches you as `gpt-5.6-sol` at `medium` reasoning (`harness.yaml`):
   bounded tasks with an approved plan rarely need more from the flagship.
   Review fixes reuse this active implementer. If the task turns out not to be

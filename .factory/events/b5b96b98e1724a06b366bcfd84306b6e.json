@@ -1,0 +1,1 @@
+{"event": "signal-resolved", "generated_by": "orchestrator", "at": "2026-09-16T16:05:41+00:00", "story": "FORGE-COORD-1", "detail": "S-0046-e199: The old workspace-write launch was terminated after preserving its partial diff. Resume under a fresh Forge-managed danger-full-access launch and finish the same authorized amendment."}

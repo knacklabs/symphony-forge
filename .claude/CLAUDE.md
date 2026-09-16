@@ -22,8 +22,8 @@ The user and host select the main coordinator model and reasoning; Forge-managed
   workers raise contradiction/confusion/blocked/scope-change and PAUSE — `./forge
   signal resolve <id>`, then resume. Then `./forge task close <id>`: ONE command — proof, review only if the diff moved, measure, stage done, seal, PR; re-run after any fix. Partial work is `stage done --incomplete "<gap>"`.
 - PARALLELIZE whenever separation allows: `./forge roadmap parallel` → one
-  worktree + companion per unblocked story. Tasks inside a story stay sequential;
-  parallel work belongs in separate story worktrees (WORKFLOW.md Concurrency).
+  task-owned worktree + companion per dependency-ready leaf. Sibling tasks may
+  overlap only when their measured scopes are disjoint (WORKFLOW.md Concurrency).
 - The Stop-hook review gate must stay DISABLED (`/codex:setup --disable-review-gate`).
 - If the plugin is unavailable, follow `docs/degraded-mode.md`.
 

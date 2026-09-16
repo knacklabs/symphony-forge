@@ -116,11 +116,11 @@ The payload matches `factory/schemas/grill.json` and uses
   ],
   "artifact_delta": [
     {
-      "cold_start": 1,
-      "cold_end": 1,
+      "cold_start": 0,
+      "cold_end": 0,
       "cold": "",
-      "final_start": 1,
-      "final_end": 2,
+      "final_start": 0,
+      "final_end": 1,
       "final": "Exact inserted line including its newline\\n"
     }
   ],

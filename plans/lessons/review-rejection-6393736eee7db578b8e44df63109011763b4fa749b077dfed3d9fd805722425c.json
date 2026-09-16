@@ -1,0 +1,10 @@
+{
+  "applies_to": [
+    "factory/tests/**"
+  ],
+  "generated_by": "Codex",
+  "lesson": "Not a defect (evidence docs/specs/dual-coordinator-parity.md:74): The contract permits any regular UTF-8 caller source and requires Forge to capture it into a private owner-only snapshot. Requiring the untrusted source itself to be private would contradict that boundary. — raised as \"Enforce private permissions on the supplied context file (factory/tests/test_native_launch.py:479): When `--context-file` points to a source in a shared/travers\"",
+  "severity": "medium",
+  "source": "review reject LEAN-WORKFLOW security",
+  "topic": "rejected-review-finding-security"
+}

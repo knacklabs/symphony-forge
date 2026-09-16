@@ -15,7 +15,7 @@ from pathlib import Path
 
 from factory_lib import (
     evidence_path, factory_dir, load_json, read_selected_review_generation,
-    repo_root, run_state_path, story_dir,
+    repo_root, run_state_path, story_dir, validated_task_marker_commit,
 )
 from .roadmap import load_items
 
@@ -75,6 +75,9 @@ def collect(base: Path) -> list[dict]:
             for task_id in selected_tasks:
                 generation, _selection, problems = read_selected_review_generation(
                     base, task, task_id,
+                    sealed_commit=validated_task_marker_commit(
+                        base, task, task_id,
+                    ),
                 )
                 if problems or not isinstance(generation, dict):
                     continue

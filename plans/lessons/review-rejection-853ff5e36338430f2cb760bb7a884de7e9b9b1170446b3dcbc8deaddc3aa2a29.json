@@ -1,0 +1,10 @@
+{
+  "applies_to": [
+    "/Users/dev/.codex/plans/symphony-forge+lean-workflow+jit+20260914T071000IST.md#Acceptance Criteria 11"
+  ],
+  "generated_by": "Codex",
+  "lesson": "Not a defect (evidence docs/specs/delegation-boundary.md:71): The 32-hex form is immutable historical completed launch evidence, not authority for creating a new context snapshot. New snapshots require bound 64-hex IDs and stale cleanup remains strict. — raised as \"LEAN-AC-11: Normal-runtime refusal: Lean-removed old formats outside upgrade produce `run forge upgrade` guidance; PR3-owned legacy families stay compatible unt\"",
+  "severity": "medium",
+  "source": "review reject LEAN-WORKFLOW quality",
+  "topic": "rejected-review-finding-quality"
+}

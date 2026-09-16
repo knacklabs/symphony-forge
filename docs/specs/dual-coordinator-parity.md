@@ -71,7 +71,11 @@ The legacy plan-before-worktree test is removed. `stage start --trunk` may remai
 
 ### Context and continuation
 
-The approved delivery graph's workflow task must support one optional context-file input on a grill launch. A caller may omit it; when supplied, the caller selects one regular UTF-8 file inside or outside the repository as untrusted supplemental context. It cannot alter the primary artifact, story, gate, task, decisions, scope, evidence, or authority.
+The approved delivery graph's workflow task supports one optional context-file
+input on delegated and grill launches. A caller may omit it; when supplied,
+the caller selects one regular UTF-8 file inside or outside the repository as
+untrusted supplemental context. It cannot alter the primary artifact, story,
+gate, task, decisions, scope, evidence, or authority.
 
 A supplied context file is captured once through one open handle without following links or replacement, validated as a regular UTF-8 file, and bound in memory by its byte count and file identity. The complete primary artifact, framing, and captured context must fit both the installed component limit and the local allocation safeguard measured in UTF-8 bytes. If either limit is unknown, only that context-file launch refuses and names the unknown limit; ordinary launches without supplemental context retain their existing behavior. A grill never partitions, truncates, silently omits, reopens the source, or searches the artifact or context. Oversize input refuses before launch with required and available sizes, and instructions in supplemental context never grant authority. On POSIX, captured bytes live in a randomized regular single-link `0600` file beneath a same-user `0700` transient directory. Native Windows applies and verifies an owner-only protected DACL, rejects extra access entries, and reopens the same file identity before launch. The snapshot is deleted after terminal publication. Durable logs and evidence retain only whether context was supplied, its byte count, and a random opaque context ID; they never retain bytes, content digest, or source path. Recovery may delete a stale transient only when owner, type, link count, mode or DACL, exact directory, file identity, and recorded launch/context filename all match; otherwise it refuses unchanged.
 

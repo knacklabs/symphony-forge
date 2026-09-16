@@ -109,6 +109,26 @@ def test_lean_migration_independent_raw_walk_covers_each_candidate_exactly_once(
         upgrade.preflight_lean_migration(repo)
 
 
+def test_lean_grill_classification_uses_only_parsed_top_level_fields(repo: Path):
+    legacy = _legacy_grill("plan")
+    legacy["gaps"] = ['text mentions "cold_input_sha256" but is not a field']
+    old = repo / ".factory/grills/plan.json"
+    old.parent.mkdir(parents=True, exist_ok=True)
+    old.write_text(json.dumps(legacy), encoding="utf-8")
+    current = repo / ".factory/grills/tasks/T1.json"
+    current.parent.mkdir(parents=True, exist_ok=True)
+    current.write_text(json.dumps({
+        "cold_input_sha256": "a" * 64,
+        "gaps": ['text mentions "rounds" but is not a field'],
+    }), encoding="utf-8")
+
+    primary = {row["path"]: row for row in upgrade.lean_primary_inventory(repo)}
+    raw = {row["path"]: row for row in upgrade.lean_raw_inventory(repo)}
+    assert primary == raw
+    assert primary[old.relative_to(repo).as_posix()]["family"] == "old-plan-grill"
+    assert primary[current.relative_to(repo).as_posix()]["family"] == ""
+
+
 def test_lean_raw_inventory_does_not_reuse_primary_classifiers_or_identities(
         repo: Path, monkeypatch: pytest.MonkeyPatch):
     eligible = _legacy_round(repo)
@@ -391,6 +411,30 @@ def test_lean_migration_is_idempotent_for_byte_identical_retry_and_refuses_unequ
     git(repo, "commit", "-q", "-m", "unequal partial")
     third = _upgrade(repo)
     assert third.returncode != 0 and "unequal partial" in third.stdout
+
+
+def test_completed_lean_migration_validates_converted_stage_output_on_retry(
+        repo: Path, capsys: pytest.CaptureFixture[str]):
+    stage = repo / ".factory/stories/S1/stages/T1.json"
+    stage.parent.mkdir(parents=True, exist_ok=True)
+    stage.write_text(json.dumps({
+        "id": "T1",
+        "local_review_stamp": {
+            "stage_id": "T1", "base_sha": "a" * 40,
+            "delta_id": "b" * 64,
+            "recorded_at": "2026-01-01T00:00:00+00:00",
+            "generated_by": "autoreview",
+        },
+    }), encoding="utf-8")
+    migration = upgrade.preflight_lean_migration(repo)
+    assert migration is not None
+    upgrade.apply_lean_migration(repo, migration)
+    assert "local_review_stamp" not in json.loads(stage.read_text())
+    assert upgrade.preflight_lean_migration(repo) is None
+    stage.write_text('{}\n', encoding="utf-8")
+    with pytest.raises(SystemExit):
+        upgrade.preflight_lean_migration(repo)
+    assert "converted output identity" in capsys.readouterr().out
 
 
 def test_lean_migration_resumes_durable_manifest_before_input_deletion(

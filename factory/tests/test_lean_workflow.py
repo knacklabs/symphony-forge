@@ -100,9 +100,11 @@ def test_review_identity_preserves_nested_domain_metadata_and_refuses_compound_t
     ) == {"automated": {"extension": {
         "at": "scan time", "commit": "security source",
     }}}
-    assert stages._proof_tool_identity(
+    canonical = stages._proof_tool_identity(
         repo, "python3 factory/scripts/verify.py",
-    )["reusable"] is False
+    )
+    assert canonical["reusable"] is True
+    assert canonical["canonical_verify_inputs"]
     assert stages._proof_tool_identity(
         repo, "python3 -m pytest factory/tests/test_gates.py && git status",
     )["reusable"] is False

@@ -110,25 +110,40 @@ def test_native_argv_binds_policy_without_resume_dispatch(tmp_path):
     assert native_argv_valid(entry, tmp_path, [])
     assert argv[-1] == "-"
     assert argv[argv.index("--enable") + 1] == "hooks"
-    assert argv[argv.index("--sandbox") + 1] == "read-only"
+    assert argv[argv.index("--sandbox") + 1] == "danger-full-access"
     assert 'approval_policy="never"' in argv
+    assert "--add-dir" not in argv
     with pytest.raises(TypeError):
         native_argv(
             "/bin/codex", tmp_path, "model", "high", False,
             resume_session="thread-1",
         )
+    retired = list(argv)
+    retired[retired.index("danger-full-access")] = "read-only"
+    assert native_argv_valid(
+        {**entry, "argv": retired, "launch_status": "succeeded"},
+        tmp_path,
+        [],
+    )
+    assert not native_argv_valid({**entry, "argv": retired}, tmp_path, [])
     historical = {
         **entry,
-        "argv": [*argv[:-1], "resume", "thread-1", "-"],
+        "argv": [*retired[:-1], "resume", "thread-1", "-"],
         "resume_session": "thread-1",
         "launch_status": "succeeded",
     }
     assert native_argv_valid(historical, tmp_path, [])
     assert not native_argv_valid(
         {**historical, "launch_status": "running"}, tmp_path, [])
+    assert not native_argv_valid(
+        {**historical, "argv": [*argv[:-1], "resume", "thread-1", "-"]},
+        tmp_path,
+        [],
+    )
 
 
-def test_native_write_argv_grants_only_exact_codex_scope_files(tmp_path):
+def test_native_write_argv_uses_full_access_and_validates_exact_retired_scope(
+        tmp_path):
     (tmp_path / ".codex/agents").mkdir(parents=True)
     outside = tmp_path / "outside"
     outside.mkdir()
@@ -149,35 +164,63 @@ def test_native_write_argv_grants_only_exact_codex_scope_files(tmp_path):
         "executable_path": "/bin/codex", "argv": argv,
         "model": "model", "effort": "high", "write": True,
     }
-    grants = [
-        argv[index + 1] for index, token in enumerate(argv)
-        if token == "--add-dir"
-    ]
-    assert grants == [
+    retired_grants = [
         ".codex/agents/new.toml",
         ".codex/config.toml",
         ".codex/hooks.json",
     ]
+    assert argv[argv.index("--sandbox") + 1] == "danger-full-access"
+    assert "--add-dir" not in argv
     assert argv[-1] == "-"
     assert native_argv_valid(entry, tmp_path, scope)
-    assert not native_argv_valid(entry, tmp_path, [])
-    legacy = native_argv(
-        "/bin/codex", tmp_path, "model", "high", True, [])
-    for launch_status in ("running", "failed", "succeeded"):
+    assert native_argv_valid(entry, tmp_path, [])
+
+    retired = list(argv)
+    retired[retired.index("danger-full-access")] = "workspace-write"
+    retired[-1:-1] = [
+        token
+        for path in retired_grants
+        for token in ("--add-dir", path)
+    ]
+    for launch_status in ("failed", "succeeded"):
+        assert native_argv_valid(
+            {**entry, "argv": retired, "launch_status": launch_status},
+            tmp_path,
+            scope,
+        )
+    for launch_status in (None, "starting", "running"):
+        candidate = {**entry, "argv": retired}
+        if launch_status is not None:
+            candidate["launch_status"] = launch_status
+        assert not native_argv_valid(candidate, tmp_path, scope)
+    malformed = [
+        [*retired[:-1], "--add-dir", ".codex/extra.toml", "-"],
+        [*retired[:retired.index("--add-dir")],
+         "--add-dir", retired_grants[1],
+         "--add-dir", retired_grants[0],
+         *retired[retired.index("--add-dir") + 4:]],
+        [*retired[:-1], "unexpected", "-"],
+    ]
+    for historical_argv in malformed:
         assert not native_argv_valid(
-            {**entry, "argv": legacy, "launch_status": launch_status},
-            tmp_path, scope)
+            {**entry, "argv": historical_argv, "launch_status": "succeeded"},
+            tmp_path,
+            scope,
+        )
     historical = {
         **entry,
-        "argv": [*legacy[:-1], "resume", "thread-1", "-"],
+        "argv": [*retired[:-1], "resume", "thread-1", "-"],
         "resume_session": "thread-1",
         "launch_status": "succeeded",
     }
     assert native_argv_valid(historical, tmp_path, scope)
     assert not native_argv_valid(
         {**historical, "launch_status": "running"}, tmp_path, scope)
-    assert "--add-dir" not in native_argv(
-        "/bin/codex", tmp_path, "model", "high", False, scope)
+    assert not native_argv_valid(
+        {**historical, "argv": [*historical["argv"][:-1], "extra", "-"]},
+        tmp_path,
+        scope,
+    )
 
 
 def test_native_launch_registers_before_stdin_and_records_terminal_identity(

@@ -229,8 +229,10 @@ def _codex_approved(payload: dict[str, Any]) -> str:
     if isinstance(response, dict):
         if response.get("is_error") is True or response.get("cancelled") is True:
             return ""
-        status = _text(response.get("status")).lower()
-        if status in {"cancelled", "rejected", "error", "failed"}:
+        status_value = response.get("status")
+        status = _text(status_value).lower()
+        if (status_value is not None
+                and status not in {"success", "succeeded", "completed"}):
             return ""
     questions = tool_input.get("questions") if isinstance(tool_input, dict) else None
     answers = response.get("answers") if isinstance(response, dict) else None

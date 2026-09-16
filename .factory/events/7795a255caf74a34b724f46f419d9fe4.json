@@ -1,0 +1,1 @@
+{"event": "signal-resolved", "generated_by": "orchestrator", "at": "2026-09-16T15:27:41+00:00", "story": "FORGE-COORD-1", "detail": "S-0042-240f: The task contract is authoritative: every selected --scope path, including an exact approved file member, must already be owned by the immutable stage baseline and must refuse if missing. Remove the e"}

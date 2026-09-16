@@ -116,7 +116,8 @@ def cmd_plan_save(args: argparse.Namespace) -> None:
         base, story, f"grills/tasks/{args.id}.json", for_write=True,
     )
     grill = load_json(grill_path, default={})
-    if grill and "task_plan_sha256" not in grill:
+    if grill_path.exists() and (
+            not isinstance(grill, dict) or "task_plan_sha256" not in grill):
         fail(f"task plan save refused: {args.id} has a legacy task grill. Run "
              "`forge upgrade` to retire the old format before saving.")
     dest.parent.mkdir(parents=True, exist_ok=True)
@@ -226,6 +227,21 @@ def cmd_task_start(args: argparse.Namespace) -> None:
         plan_relative: plan_source,
         Path(".factory") / "stories" / key / "decomposition.json": decomposition_path,
     }
+    approval_source = evidence_path(base, key, "plan-approval.json")
+    approval = load_json(approval_source, default={})
+    approval_event_key = hashlib.sha256(
+        f"{approval.get('runtime')}\0{approval.get('session_id')}\0"
+        f"{approval.get('event_id')}".encode("utf-8")
+    ).hexdigest()
+    approval_event_source = evidence_path(
+        base, key, f"approval-events/{approval_event_key}.json",
+    )
+    sources.update({
+        Path(".factory") / "stories" / key / "plan-approval.json":
+            approval_source,
+        Path(".factory") / "stories" / key / "approval-events"
+        / f"{approval_event_key}.json": approval_event_source,
+    })
     # Plan content can hydrate a successor workspace, but its source grill is
     # approval authority and must be recorded afresh in the new target.
     optional_sources = {

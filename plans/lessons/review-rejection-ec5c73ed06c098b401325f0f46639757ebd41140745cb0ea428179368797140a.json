@@ -1,0 +1,10 @@
+{
+  "applies_to": [
+    "factory/scripts/**"
+  ],
+  "generated_by": "Codex",
+  "lesson": "Not a defect (evidence factory/tests/test_lean_workflow.py:363): The exact active-or-done coldless predicate is an explicitly tested one-time in-flight Decision 0066 transition bridge with strict time, digest, grounding, stage, and no-native-identity checks; pending or changed records refuse. — raised as \"Remove the coldless task-approval compatibility path (factory/scripts/factory_lib.py:4332): For an active or done task carrying a pre-Lean coldless grill, this \"",
+  "severity": "medium",
+  "source": "review reject LEAN-WORKFLOW security",
+  "topic": "rejected-review-finding-security"
+}

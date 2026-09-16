@@ -1,0 +1,1 @@
+{"event": "signal-contradiction", "generated_by": "autoreview", "at": "2026-09-16T15:28:33+00:00", "story": "FORGE-COORD-1", "detail": "Codex request_user_input still grants plan approval and current specs/tests require that permission transport, contradicting accepted Decisions 0054 and 0061 that question responses are not approval a"}

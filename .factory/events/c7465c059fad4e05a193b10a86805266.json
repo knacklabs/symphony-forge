@@ -1,0 +1,1 @@
+{"event": "signal-blocked", "generated_by": "implementer", "at": "2026-09-16T15:58:07+00:00", "story": "FORGE-COORD-1", "detail": "Updating codex_runtime to reject running old-policy argv correctly invalidated this worker's own workspace-write launch before the remaining test edits; preserve the partial diff and re-delegate under"}

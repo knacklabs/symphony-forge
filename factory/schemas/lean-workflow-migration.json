@@ -13,5 +13,8 @@
     "outputs": "list",
     "preserved_entries": "list",
     "recorded_at": "str"
+  },
+  "optional": {
+    "converted_outputs": "list"
   }
 }

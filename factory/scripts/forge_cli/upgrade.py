@@ -113,10 +113,19 @@ def _lean_family(relative: str, data: bytes | None = None) -> str:
     if re.fullmatch(r"\.factory/(?:stories/[^/]+/)?grills/requirements\.json", relative):
         return "requirements-grill"
     if re.fullmatch(r"\.factory/(?:stories/[^/]+/)?grills/plan\.json", relative):
-        if data and b'"cold_input_sha256"' not in data:
+        try:
+            value = json.loads(data.decode("utf-8")) if data else None
+        except (UnicodeDecodeError, json.JSONDecodeError):
+            value = None
+        if not isinstance(value, dict) or "cold_input_sha256" not in value:
             return "old-plan-grill"
     if re.fullmatch(r"\.factory/(?:stories/[^/]+/)?grills/tasks/[^/]+\.json", relative):
-        if data and (b'"rounds"' in data or b'"cold_input_sha256"' not in data):
+        try:
+            value = json.loads(data.decode("utf-8")) if data else None
+        except (UnicodeDecodeError, json.JSONDecodeError):
+            value = None
+        if (not isinstance(value, dict) or "rounds" in value
+                or "cold_input_sha256" not in value):
             return "old-task-grill"
     if re.fullmatch(r"\.factory/(?:stories/[^/]+/)?plan-approval\.json", relative):
         if data and b'"runtime"' not in data:
@@ -226,6 +235,20 @@ def _legacy_json_shape_reason(family: str, value: object) -> str:
                     "task_sha256", "brief_sha256", "product_tree_digest")):
                 return "legacy local review stamp has no historical binding"
     return ""
+
+
+def _converted_stage_bytes(data: bytes) -> bytes:
+    """Build the durable current stage-state bytes from one legacy input."""
+    value = json.loads(data.decode("utf-8"))
+    if not isinstance(value, dict):
+        raise ValueError("legacy stage state is not an object")
+    records = value.get("stages") if isinstance(value.get("stages"), list) else [value]
+    for record in records:
+        if isinstance(record, dict):
+            stamp = record.get("local_review_stamp")
+            if isinstance(stamp, dict) and "reviewed_meaning" not in stamp:
+                record.pop("local_review_stamp", None)
+    return (json.dumps(value, indent=2) + "\n").encode("utf-8")
 
 
 def _entry_identity(relative: str) -> dict:
@@ -828,12 +851,21 @@ def lean_raw_inventory(target: Path) -> list[dict]:
                 or relative == ".factory/grills/requirements.json":
             family = "requirements-grill"
         elif (relative.endswith("/grills/plan.json")
-              or relative == ".factory/grills/plan.json") \
-                and b'"cold_input_sha256"' not in data:
-            family = "old-plan-grill"
-        elif "/grills/tasks/" in relative and relative.endswith(".json") \
-                and (b'"rounds"' in data or b'"cold_input_sha256"' not in data):
-            family = "old-task-grill"
+              or relative == ".factory/grills/plan.json"):
+            try:
+                decoded = json.loads(data.decode("utf-8"))
+            except (UnicodeDecodeError, json.JSONDecodeError):
+                decoded = None
+            if not isinstance(decoded, dict) or "cold_input_sha256" not in decoded:
+                family = "old-plan-grill"
+        elif "/grills/tasks/" in relative and relative.endswith(".json"):
+            try:
+                decoded = json.loads(data.decode("utf-8"))
+            except (UnicodeDecodeError, json.JSONDecodeError):
+                decoded = None
+            if (not isinstance(decoded, dict) or "rounds" in decoded
+                    or "cold_input_sha256" not in decoded):
+                family = "old-task-grill"
         elif relative.endswith("/plan-approval.json") \
                 and b'"runtime"' not in data:
             family = "manual-plan-approval"
@@ -991,6 +1023,27 @@ def _validate_completed_manifest(target: Path, saved: dict) -> None:
                    if isinstance(entry, dict))
             or any(not isinstance(entry, dict) for entry in preserved_entries)):
         fail("Lean migration completed manifest is incomplete or tampered")
+    converted_outputs = saved.get("converted_outputs")
+    if converted_outputs is None and not any(
+            entry.get("family") == "legacy-stage-stamp"
+            for entry in saved.get("entries") or []):
+        converted_outputs = []
+    if (not isinstance(converted_outputs, list)
+            or any(not isinstance(row, dict) or set(row) != {"path", "sha256"}
+                   or not isinstance(row["path"], str)
+                   or re.fullmatch(r"[0-9a-f]{64}", row["sha256"]) is None
+                   for row in converted_outputs)):
+        fail("Lean migration completed manifest has invalid converted outputs")
+    for row in converted_outputs:
+        path = target / row["path"]
+        _require_unlinked_path(target, path)
+        try:
+            digest = hashlib.sha256(path.read_bytes()).hexdigest()
+        except OSError as exc:
+            fail(f"Lean migration durable converted output is missing: {exc}")
+        if digest != row["sha256"]:
+            fail("Lean migration durable converted output identity is tampered")
+
     outputs = saved.get("outputs")
     if not isinstance(outputs, list):
         fail("Lean migration completed manifest has no durable output inventory")
@@ -1131,6 +1184,9 @@ def preflight_lean_migration(target: Path) -> dict | None:
                 "/reviews/generations"
                 for row in saved.get("outputs") or []
             }
+            output_paths.update(
+                row["path"] for row in saved.get("converted_outputs") or []
+            )
             current_preserved = [
                 entry for entry in primary
                 if (entry.get("preserve")
@@ -1392,6 +1448,17 @@ def apply_lean_migration(target: Path, migration: dict | None) -> None:
         or (entry["family"] == "fixed-review-lens"
             and entry["path"] not in promoted_paths)
     ]
+    converted_outputs = []
+    for entry in migration["entries"]:
+        if (entry.get("classification") == "eligible"
+                and entry.get("family") == "legacy-stage-stamp"):
+            converted = _converted_stage_bytes(
+                (target / entry["path"]).read_bytes(),
+            )
+            converted_outputs.append({
+                "path": entry["path"],
+                "sha256": hashlib.sha256(converted).hexdigest(),
+            })
     # Build every durable output away from the target first. Publication starts
     # only after schema validation and byte readback of the whole build.
     with tempfile.TemporaryDirectory(prefix="forge-lean-build-") as temporary:
@@ -1437,6 +1504,7 @@ def apply_lean_migration(target: Path, migration: dict | None) -> None:
             "installed_runtime_digest": _inventory_digest(runtime),
             "installed_runtime": runtime,
             "entries": migration["entries"], "outputs": outputs,
+            "converted_outputs": converted_outputs,
             "preserved_entries": preserved_entries,
             "recorded_at": now_iso(),
         }
@@ -1491,14 +1559,7 @@ def apply_lean_migration(target: Path, migration: dict | None) -> None:
                 or hashlib.sha256(path.read_bytes()).hexdigest() != entry["sha256"]:
             fail(f"Lean migration input changed before deletion: {entry['path']}")
         if entry["family"] == "legacy-stage-stamp":
-            data = load_json(path, default={})
-            records = data.get("stages") if isinstance(data.get("stages"), list) else [data]
-            for record in records:
-                if isinstance(record, dict):
-                    stamp = record.get("local_review_stamp")
-                    if isinstance(stamp, dict) and "reviewed_meaning" not in stamp:
-                        record.pop("local_review_stamp", None)
-            dump_json(path, data)
+            path.write_bytes(_converted_stage_bytes(path.read_bytes()))
         else:
             path.unlink()
 

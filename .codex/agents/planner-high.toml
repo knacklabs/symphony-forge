@@ -2,7 +2,8 @@ name = "planner-high"
 description = "High-reasoning planner for turning in-repo architecture and decision docs into an approved implementation plan."
 model = "gpt-5.6-sol"
 model_reasoning_effort = "high"
-sandbox_mode = "read-only"
+# Read-only is a role contract enforced by Forge, not an OS sandbox policy.
+sandbox_mode = "danger-full-access"
 nickname_candidates = ["Architect", "Planner", "Northstar"]
 developer_instructions = """
 Own planning.

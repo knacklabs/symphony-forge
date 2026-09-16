@@ -1,0 +1,1 @@
+{"event": "signal-resolved", "generated_by": "orchestrator", "at": "2026-09-16T15:28:42+00:00", "story": "FORGE-COORD-1", "detail": "S-0044-9123: Decision 0061 is authoritative and predates this task: remove request_user_input as Codex approval authority while retaining it only for optional questions. Preserve Claude ExitPlanMode. Add the small"}

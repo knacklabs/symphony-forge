@@ -60,6 +60,8 @@ artifacts, never hand-authored state.
 - Both runtime adapters call the same candidate, digest, replay, attribution,
   and storage implementation.
 - Editing the plan after approval stales the approval and blocks downstream
-  implementation until the amended final digest is grilled and approved.
+  implementation until the amended final digest receives a fresh native human
+  approval. It returns directly to the approver; the existing cold read is not
+  repeated solely because approved content was amended.
 - Existing substantive gates remain: active decisions, contradiction signals,
   story criteria, task contracts, and the always-armed write boundary.

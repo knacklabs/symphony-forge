@@ -263,9 +263,13 @@ def _refuse_a_second_cold_read(base: Path, ledger_id: str, gate: str,
         since = _last_pass_at(base, gate, task_id)
         story = load_json(run_state_path(base), default={}).get("issue_key", "") \
             if get_gate(gate).story_scoped else ""
+        from .codex_status import dead_launches
+        dead = {row.get("launch_id") for row in dead_launches(base)}
         cold = [row for row in _latest_launch_rows(
             base, ledger_id, since, story=story)
-                if row.get("launch_status") == "succeeded"]
+                if (row.get("launch_status") == "succeeded"
+                    or (row.get("launch_status") in {"starting", "running"}
+                        and row.get("launch_id") not in dead))]
         if not cold:
             return
     except (Exception, SystemExit):
@@ -295,7 +299,7 @@ def _refuse_a_second_cold_read(base: Path, ledger_id: str, gate: str,
 def cmd_grill_run(args: argparse.Namespace) -> None:
     from .delegate import (
         _cleanup_private_context, _windows_current_sid, launch_companion,
-        mode_run_config, secure_context_snapshot,
+        delegation_exclusion, mode_run_config, secure_context_snapshot,
     )
 
     base = Path(args.repo).resolve() if args.repo else repo_root()
@@ -305,46 +309,53 @@ def cmd_grill_run(args: argparse.Namespace) -> None:
     # a task's delegation, and so concurrent grills of different gates do not
     # collide in the ledger.
     ledger_id = f"grill-{gate}" + (f"-{task_id}" if task_id else "")
-    # Before composing anything: a capped run should not pay for a brief, and
-    # a missing artifact should not report itself ahead of the real problem.
-    _refuse_a_second_cold_read(base, ledger_id, gate, task_id)
+    with delegation_exclusion(
+            base, ledger_id, kind="grill-cold-read", namespace="grill"):
+        # Hold the exact gate/task key across admission and launch so a second
+        # process cannot pass the repeat-read check before the first row lands.
+        _refuse_a_second_cold_read(base, ledger_id, gate, task_id)
 
-    label, artifact = _artifact_text(
-        base, gate, task_id, (getattr(args, "file", "") or "").strip())
-    text = _compose_brief(base, gate, label, artifact, task_id)
-    path = base / ".factory" / f"grill-brief-{gate}" \
-        f"{'-' + task_id if task_id else ''}.md"
-    model, effort, _bound = mode_run_config(base, "grill")
-    context_text = ""
-    context_metadata = None
-    context_snapshot = None
-    context_identity = None
-    if context_file := (getattr(args, "context_file", "") or "").strip():
-        (context_text, context_metadata, context_snapshot,
-         context_identity) = secure_context_snapshot(Path(context_file), base=base)
-    try:
-        launch_companion(
-            base,
-            task_id=ledger_id,
-            text=text,
-            path=path,
-            task_sha256_value=_artifact_digest(artifact),
-            model=model,
-            effort=effort,
-            write=False,          # a cold read never writes, and never authorises
-            story=load_json(run_state_path(base), default={}).get("issue_key", ""),
-            print_only=bool(args.print_only),
-            context_text=context_text,
-            context_metadata=context_metadata,
-            context_snapshot=context_snapshot,
-            context_snapshot_identity=context_identity,
-        )
-    finally:
-        if context_snapshot is not None and context_snapshot.exists():
-            _cleanup_private_context(
-                context_snapshot, context_identity,
-                _windows_current_sid() if __import__("os").name == "nt" else "",
+        label, artifact = _artifact_text(
+            base, gate, task_id, (getattr(args, "file", "") or "").strip())
+        text = _compose_brief(base, gate, label, artifact, task_id)
+        path = base / ".factory" / f"grill-brief-{gate}" \
+            f"{'-' + task_id if task_id else ''}.md"
+        model, effort, _bound = mode_run_config(base, "grill")
+        context_text = ""
+        context_metadata = None
+        context_snapshot = None
+        context_identity = None
+        if context_file := (getattr(args, "context_file", "") or "").strip():
+            (context_text, context_metadata, context_snapshot,
+             context_identity) = secure_context_snapshot(
+                 Path(context_file), base=base,
+             )
+        try:
+            launch_companion(
+                base,
+                task_id=ledger_id,
+                text=text,
+                path=path,
+                task_sha256_value=_artifact_digest(artifact),
+                model=model,
+                effort=effort,
+                write=False,      # cold reads never write or authorize writes
+                story=load_json(
+                    run_state_path(base), default={},
+                ).get("issue_key", ""),
+                print_only=bool(args.print_only),
+                context_text=context_text,
+                context_metadata=context_metadata,
+                context_snapshot=context_snapshot,
+                context_snapshot_identity=context_identity,
             )
+        finally:
+            if context_snapshot is not None and context_snapshot.exists():
+                _cleanup_private_context(
+                    context_snapshot, context_identity,
+                    _windows_current_sid()
+                    if __import__("os").name == "nt" else "",
+                )
     if args.print_only:
         return
     print(

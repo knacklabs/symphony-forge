@@ -1,0 +1,12 @@
+{
+  "event": "done",
+  "id": "Q-0174-10a9",
+  "profile": "degraded",
+  "kind": "degraded",
+  "reason": "The authoritative implementer brief tells proper-subset retry workers to run task-wide verification, overriding untrusted handoff context and causing repeated broad-suite relaunches; the host must make the bounded three-file bootstrap before registered delegation can resume.",
+  "started_at": "2026-09-16T06:01:04+00:00",
+  "completed_at": "2026-09-16T06:02:15+00:00",
+  "files": [],
+  "task_id": "LEAN-WORKFLOW",
+  "story": "FORGE-COORD-1"
+}

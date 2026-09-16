@@ -365,6 +365,35 @@ def test_codex_approval_uses_question_id_and_requires_displayed_digest(
         approval.record_native_approval(repo, event, runtime="codex")
 
 
+@pytest.mark.parametrize("status", ["pending", "unknown", "rejected"])
+def test_codex_approval_refuses_noncompleted_explicit_status_without_mutation(
+        repo: Path, status: str):
+    candidate = _story_candidate(repo)
+    event = _event(candidate, "codex")
+    event["tool_response"]["status"] = status
+    lib = load_factory_lib(repo)
+    before = (candidate.path.read_bytes(), lib.run_state_path(repo).read_bytes())
+
+    with pytest.raises(approval.ApprovalRefused, match="unsuccessful"):
+        approval.record_native_approval(repo, event, runtime="codex")
+
+    assert (candidate.path.read_bytes(), lib.run_state_path(repo).read_bytes()) == before
+    assert not candidate.evidence.exists()
+
+
+@pytest.mark.parametrize("status", [None, "success", "succeeded", "completed"])
+def test_codex_approval_accepts_missing_or_completed_status(
+        repo: Path, status: str | None):
+    candidate = _story_candidate(repo)
+    event = _event(candidate, "codex")
+    if status is not None:
+        event["tool_response"]["status"] = status
+
+    record = approval.record_native_approval(repo, event, runtime="codex")
+
+    assert record["approved_plan_sha256"] == candidate.digest
+
+
 def test_native_approval_reuses_existing_story_and_task_approval_storage(
         repo: Path, monkeypatch: pytest.MonkeyPatch):
     story = _story_candidate(repo)
@@ -407,6 +436,25 @@ def test_native_approval_reuses_existing_story_and_task_approval_storage(
     }
     assert not lib._task_plan_approval_matches_digest(
         repo, task_row, legacy, task.digest)
+
+
+def test_story_approval_digest_requires_native_event_proof_without_backfill(
+        repo: Path):
+    candidate = _story_candidate(repo)
+    lib = load_factory_lib(repo)
+    state_path = lib.run_state_path(repo)
+    state = json.loads(state_path.read_text())
+    state.update(
+        plan_status="approved", approved_plan_sha256=candidate.digest,
+    )
+    lib.dump_json(state_path, state)
+    before = state_path.read_bytes()
+
+    with pytest.raises(SystemExit, match="binding is missing"):
+        lib.require_approved_plan_digest(repo)
+
+    assert state_path.read_bytes() == before
+    assert not candidate.evidence.exists()
 
 
 @pytest.mark.parametrize("kind", ["absolute", "traversal", "symlink", "hardlink", "ancestor"])

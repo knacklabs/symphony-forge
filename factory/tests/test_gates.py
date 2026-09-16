@@ -395,6 +395,38 @@ def task_grill_payload(task: dict, verdict: str = "pass", **over) -> dict:
     return payload
 
 
+def seed_native_story_approval(repo: Path, story: str, digest: str) -> None:
+    session_id = f"session-{uuid.uuid4().hex}"
+    event_id = f"event-{uuid.uuid4().hex}"
+    record = {
+        "approved_plan_sha256": digest,
+        "approved_by": "human-via-Claude",
+        "approved_at": "2026-09-16T00:00:00Z",
+        "runtime": "claude",
+        "session_id": session_id,
+        "event_id": event_id,
+        "plan_kind": "story",
+        "story": story,
+        "task": "",
+    }
+    replay_key = hashlib.sha256(
+        f"claude\0{session_id}\0{event_id}".encode("utf-8")
+    ).hexdigest()
+    lib = load_factory_lib(repo)
+    approval = lib.evidence_path(
+        repo, story, "plan-approval.json", for_write=True,
+    )
+    evidence = approval.parent
+    events = evidence / "approval-events"
+    events.mkdir(parents=True, exist_ok=True)
+    approval.write_text(
+        json.dumps(record, indent=2) + "\n", encoding="utf-8",
+    )
+    (events / f"{replay_key}.json").write_text(
+        json.dumps(record, indent=2) + "\n", encoding="utf-8",
+    )
+
+
 def seed_task_grill_frontier(repo: Path, task: dict) -> None:
     control = Path(git(repo, "rev-parse", "--absolute-git-dir")) / "forge"
     control.mkdir(parents=True, exist_ok=True)
@@ -410,6 +442,7 @@ def seed_task_grill_frontier(repo: Path, task: dict) -> None:
         "plan_status": "approved",
         "approved_plan_sha256": approved_plan_sha256,
     }))
+    seed_native_story_approval(repo, "TEST-1", approved_plan_sha256)
     (control / "decomposition.json").write_text(json.dumps({
         "plan_file": plan.relative_to(repo).as_posix(),
         "plan_sha256": approved_plan_sha256,
@@ -1187,6 +1220,11 @@ def test_new_story_artifacts_record_under_story_dir(repo, tmp_path):
 
     code, out = record_grill(repo, "plan", digest_of=plan)
     assert code == 0, out
+    digest = plan_digest_without_assumptions(plan)
+    state = run_state(repo)
+    state["approved_plan_sha256"] = digest
+    lib.dump_json(lib.run_state_path(repo), state)
+    seed_native_story_approval(repo, "ENG-1", digest)
     record_skeleton_then_frontier(repo, DECOMP["tasks"])
 
     legacy_tests = repo / ".factory" / "tests.json"
@@ -1471,7 +1509,9 @@ def test_board_and_findings_prefer_selected_task_review_over_fixed_diagnostics(
     selected.write_text("{}\n")
     invalid_detail = story_detail(repo, "ENG-1")
     assert not any(invalid_detail["evidence"]["reviews"].values())
-    assert not any(row["category"] == "diagnostic-only" for row in collect(repo))
+    invalid_rows = collect(repo)
+    assert not any(row["category"] == "diagnostic-only" for row in invalid_rows)
+    assert not any(row["summary"] == "selected current finding" for row in invalid_rows)
 
 
 def test_legacy_layout_stays_readable_by_every_consumer(repo):
@@ -3060,6 +3100,29 @@ def test_selected_review_generation_advances_phase_and_update_run(repo, tmp_path
     assert code == 0, out
 
 
+def test_update_run_functional_check_refuses_stale_selected_delta(repo, tmp_path):
+    prepare_task_pr_ready(repo, tmp_path)
+    finish_task_for_pr_ready(repo)
+    write_task_proof(repo, "T1", publish_review=True)
+    write_in_scope(repo, "src/after-review.py")
+    git(repo, "add", "src/after-review.py")
+    git(repo, "commit", "-qm", "move product delta after review")
+
+    code, out = run(repo, "update_run.py", "--phase", "functional-check")
+
+    assert code != 0 and "current clean selected review generation" in out, out
+
+
+def test_update_run_functional_check_refuses_blocking_selected_lens(repo, tmp_path):
+    prepare_task_pr_ready(repo, tmp_path)
+    finish_task_for_pr_ready(repo)
+    write_task_proof(repo, "T1", publish_review=True, review_blocked=True)
+
+    code, out = run(repo, "update_run.py", "--phase", "functional-check")
+
+    assert code != 0 and "current clean selected review generation" in out, out
+
+
 def test_decomposition_not_frozen_by_previous_story_authority(repo, tmp_path):
     # A shipped story whose ship-time clear never ran leaves .git/forge/
     # decomposition.json + stages.json behind. The next story's FIRST
@@ -4236,7 +4299,7 @@ def test_init_and_upgrade_ship_portable_hook_commands(tmp_path):
     main_selectors = {"model", "model_reasoning_effort", "plan_mode_reasoning_effort"}
     assert all(not line.startswith(f"{key} =") for key in main_selectors
                for line in config.read_text().splitlines())
-    assert 'sandbox_mode = "workspace-write"' in config.read_text().splitlines()
+    assert 'sandbox_mode = "danger-full-access"' in config.read_text().splitlines()
     assert "network_access = true" in config.read_text().splitlines()  # 0068
     assert (repo / "forge.cmd").is_file()
     attributes = repo / ".gitattributes"
@@ -4257,8 +4320,8 @@ def test_init_and_upgrade_ship_portable_hook_commands(tmp_path):
     for relative in (".claude/settings.json", ".codex/hooks.json"):
         (repo / relative).write_text(json.dumps({"hooks": {}}) + "\n")
     config.write_text(config.read_text().replace(
-        'sandbox_mode = "workspace-write"',
         'sandbox_mode = "danger-full-access"',
+        'sandbox_mode = "workspace-write"',
     ))
     git(repo, "add", ".claude/settings.json", ".codex/hooks.json",
         ".codex/config.toml", ".gitattributes", "forge.cmd")
@@ -4270,7 +4333,7 @@ def test_init_and_upgrade_ship_portable_hook_commands(tmp_path):
     assert len(commands(repo, ".codex/hooks.json")) == 5
     assert all(not line.startswith(f"{key} =") for key in main_selectors
                for line in config.read_text().splitlines())
-    assert 'sandbox_mode = "workspace-write"' in config.read_text().splitlines()
+    assert 'sandbox_mode = "danger-full-access"' in config.read_text().splitlines()
     assert "network_access = true" in config.read_text().splitlines()  # 0068
     assert (repo / "forge.cmd").is_file()
     assert "forge text eol=lf" in attributes.read_text().splitlines()
@@ -19472,7 +19535,8 @@ def test_task_proof_ci_uses_sealed_selected_t1_not_later_t2_singleton(
     assert not any((story_state(repo) / "tasks/T1" / name).exists()
                    for name in ("verify.json", "tests.json", "reviews/quality.json",
                                 "reviews/performance.json", "reviews/security.json"))
-    save_plan(repo, tmp_path)
+    state = run_state(repo)
+    seed_native_story_approval(repo, "ENG-1", state["approved_plan_sha256"])
     record_skeleton_then_frontier(repo, tasks)
     code, out = record_task_grill(repo, task)
     assert code == 0, out
@@ -20420,8 +20484,11 @@ def test_pr_ready_blocks_on_unverified_plan_contracts(repo, tmp_path):
     assert not any("unverified" in problem for problem in problems), problems
 
 
-def test_pr_ready_refuses_incoherent_lens_set(repo, tmp_path):
-    scoped = prepare_pr_ready_story(repo, tmp_path, scoped_layout=True)
+def test_preseal_validation_refuses_incoherent_lens_set(repo, tmp_path):
+    prepare_task_pr_ready(repo, tmp_path)
+    finish_task_for_pr_ready(repo)
+    scoped = story_state(repo, "ENG-1")
+    write_task_proof(repo, "T1", publish_review=True)
     selection = json.loads(
         (scoped / "tasks/T1/reviews/selected.json").read_text()
     )
@@ -20431,24 +20498,22 @@ def test_pr_ready_refuses_incoherent_lens_set(repo, tmp_path):
     )
     generation = json.loads(generation_path.read_bytes())
     generation["lenses"]["performance"]["review_run_id"] = "different-run"
-    generation_path.write_text(json.dumps(generation))
-    git(repo, "add", generation_path.relative_to(repo).as_posix())
-    git(repo, "commit", "-qm", "tamper with sealed review proof")
 
-    code, out = run(repo, "pr_ready.py")
-    assert code != 0 and "proof changed after task marker" in out
+    lib = load_factory_lib(repo)
+    with pytest.raises(SystemExit, match="performance lens review_run_id"):
+        lib.validate_review_document(repo, generation)
 
 
 def test_pr_ready_refuses_out_of_order_or_dirty_or_unstamped_closeout(repo, tmp_path):
     scoped = prepare_pr_ready_story(repo, tmp_path, scoped_layout=True)
     verify_path = scoped / "tasks/T1/verify.json"
-    verify = json.loads(verify_path.read_text())
+    verify_bytes = verify_path.read_bytes()
 
     # Later evidence cannot make up for a missing verify prerequisite.
     verify_path.unlink()
     code, out = run(repo, "pr_ready.py")
     assert code != 0 and "T1: no passing verify" in out, out
-    verify_path.write_text(json.dumps(verify))
+    verify_path.write_bytes(verify_bytes)
 
     outcome_path = scoped / "outcome.json"
     outcome = json.loads(outcome_path.read_text())
@@ -20625,7 +20690,12 @@ def test_project_agents_init_upgrade_and_preserve_client_additions(
         for path in (source / ".codex" / "agents").glob("*.toml")
     }
     source_config = (source / ".codex" / "config.toml").read_bytes()
+    source_explore = (source / ".codex" / "explore.config.toml").read_bytes()
     assert len(source_agents) == 3
+    assert all(b'sandbox_mode = "danger-full-access"' in data
+               for data in source_agents.values())
+    assert b'sandbox_mode = "danger-full-access"' in source_config
+    assert b'sandbox_mode = "danger-full-access"' in source_explore
 
     target = tmp_path / "app"
     initialized = _init(target)
@@ -20635,6 +20705,7 @@ def test_project_agents_init_upgrade_and_preserve_client_additions(
         for path in (target / ".codex" / "agents").glob("*.toml")
     } == source_agents
     assert (target / ".codex" / "config.toml").read_bytes() == source_config
+    assert (target / ".codex" / "explore.config.toml").read_bytes() == source_explore
 
     shipped = target / ".codex" / "agents" / sorted(source_agents)[0]
     shipped.write_text("stale harness-owned config\n", encoding="utf-8")
@@ -20651,6 +20722,7 @@ def test_project_agents_init_upgrade_and_preserve_client_additions(
         for name in source_agents
     } == source_agents
     assert (target / ".codex" / "config.toml").read_bytes() == source_config
+    assert (target / ".codex" / "explore.config.toml").read_bytes() == source_explore
     assert custom.read_text(encoding="utf-8") == 'name = "client-custom"\n'
 
 
@@ -22280,6 +22352,8 @@ def test_next_prose_reconciles_handoffs_without_blind_retry():
     assert 'elif frontier == "watch-delegate":' in source
     assert 'elif frontier == "inspect-delegate":' in source
     assert 'elif frontier == "inspect-proof":' in source
+    implementing = source.index('phase("implementing")')
+    assert source.rfind('issue = state.get("issue_key")', 0, implementing) > 0
 
 
 def test_next_only_offers_signoff_grill_for_complete_inputs(repo):

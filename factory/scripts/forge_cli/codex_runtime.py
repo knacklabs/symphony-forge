@@ -56,6 +56,32 @@ def native_argv(
         "--config",
         'approval_policy="never"',
         "--sandbox",
+        "danger-full-access",
+    ]
+    argv.append("-")
+    return argv
+
+
+def _legacy_native_argv(
+        executable: str, base: Path, model: str, effort: str, write: bool,
+        write_scope: list[str] | None = None,
+) -> list[str]:
+    """Reconstruct the exact retired sandbox argv for terminal history only."""
+    argv = [
+        executable,
+        "exec",
+        "--json",
+        "--enable",
+        "hooks",
+        "-C",
+        str(base),
+        "--model",
+        model,
+        "--config",
+        f'model_reasoning_effort="{effort}"',
+        "--config",
+        'approval_policy="never"',
+        "--sandbox",
         "workspace-write" if write else "read-only",
     ]
     grants = []
@@ -102,24 +128,24 @@ def native_argv_valid(entry: dict, base: Path, write_scope: list[str]) -> bool:
         entry.get("write") is True,
         write_scope,
     )
-    legacy = native_argv(
+    legacy = _legacy_native_argv(
         executable,
         base,
         str(entry.get("model") or ""),
         str(entry.get("effort") or ""),
         entry.get("write") is True,
-        [],
+        write_scope,
     )
     terminal = entry.get("launch_status") in {"failed", "succeeded"}
     resume_session = entry.get("resume_session")
     if resume_session in (None, ""):
-        return argv == expected
+        return argv == expected or (terminal and argv == legacy)
     if not isinstance(resume_session, str):
         return False
     # Historical completed rows may carry the removed continuation shape. They
     # remain readable, while new launches cannot construct that argv.
     return (terminal
-            and argv[:-3] in (expected[:-1], legacy[:-1])
+            and argv[:-3] == legacy[:-1]
             and argv[-3:] == ["resume", resume_session, "-"])
 
 

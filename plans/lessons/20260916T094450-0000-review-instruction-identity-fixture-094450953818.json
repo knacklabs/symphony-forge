@@ -1,0 +1,12 @@
+{
+  "topic": "review-instruction-identity-fixture",
+  "lesson": "When a production review instruction becomes part of reviewed_meaning_identity, update the explicit instruction-set contract in test_review_task_delta.py so the regression proves the complete bound set.",
+  "source": "native-codex-01a0a98f-07db-7923-a1e2-ac2de24b6b3b",
+  "applies_to": [
+    "factory/tests/test_review_task_delta.py",
+    "factory/scripts/forge_cli/stages.py"
+  ],
+  "severity": "medium",
+  "generated_by": "orchestrator",
+  "added_at": "2026-09-16T09:44:50+00:00"
+}

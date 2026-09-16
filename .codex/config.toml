@@ -4,17 +4,15 @@
 model_verbosity = "low"
 model_reasoning_summary = "concise"
 personality = "pragmatic"
-# Workspace-write by default (decision 0041). Needing broader access means
-# editing this value deliberately in the client repo — the diff-visible edit
-# is the ledgered escape hatch, and `forge upgrade` restores this default.
-sandbox_mode = "workspace-write"
+# Full host access is the Forge-managed default (decision 0049). Forge's
+# lifecycle, write-scope, admission, and hook controls remain authoritative.
+sandbox_mode = "danger-full-access"
 web_search = "cached"
 
 # The commands the worker runs may reach the network (decision 0068): the
 # package registry and the local database, so a task can install what it
-# declares and run the tests it writes. Writes stay confined to the worktree.
-# On Windows this is what routes each command to the CodexSandboxOnline
-# account; the offline account cannot reach even 127.0.0.1.
+# declares and run the tests it writes. This retained workspace-write fallback
+# is not the policy used by Forge-managed full-access chats.
 [sandbox_workspace_write]
 network_access = true
 

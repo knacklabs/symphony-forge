@@ -1,0 +1,1 @@
+{"event": "signal-resolved", "generated_by": "orchestrator", "at": "2026-09-16T15:32:06+00:00", "story": "FORGE-COORD-1", "detail": "S-0045-3566: Correct the host's S-0044 mistake: the task plan's explicit recovery override is the current authority. Preserve Codex request_user_input approval for this Lean bootstrap and do not add an ordinary-ch"}

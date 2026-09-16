@@ -3913,16 +3913,30 @@ def refresh_task_plan_contract(root: Path, task_id: str, task: dict) -> bool:
 def approved_plan_digest(
     root: Path, state: dict[str, Any], plan: Path,
 ) -> str | None:
-    """Return the approval-time digest, backfilling legacy approved runs once."""
+    """Return the digest authorized by a consumed native approval event."""
     digest = state.get("approved_plan_sha256")
-    if isinstance(digest, str) and digest:
-        return digest
-    if "approved_plan_sha256" in state or state.get("plan_status") != "approved":
+    story = str(state.get("story") or state.get("issue_key") or "").strip()
+    if (state.get("plan_status") != "approved"
+            or not story
+            or not isinstance(digest, str)
+            or re.fullmatch(r"[0-9a-f]{64}", digest) is None):
         return None
-    digest = plan_digest_without_assumptions(plan)
-    state["approved_plan_sha256"] = digest
-    dump_json(run_state_path(root), state)
+    record = load_json(
+        evidence_path(root, story, "plan-approval.json"), default={},
+    )
+    if (record.get("approved_plan_sha256") != digest
+            or not _native_story_approval_recorded(root, story, record)):
+        return None
     return digest
+
+
+def validated_task_marker_commit(root: Path, key: str, task_id: str) -> str:
+    """Return a marker's sealed commit without treating it as completion proof."""
+    marker = load_json(root / task_marker_path(key, task_id), default={})
+    committed, problem = _committed_task_marker(
+        root, key, task_id, marker, None,
+    )
+    return "" if problem or committed is None else str(committed["commit"])
 
 
 def require_approved_plan_digest(root: Path) -> str:

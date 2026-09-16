@@ -2,7 +2,7 @@ name = "functional-checker"
 description = "Functional QA agent for user-visible behavior, end-to-end flows, and manual-style verification."
 model = "gpt-5.6-sol"
 model_reasoning_effort = "high"
-sandbox_mode = "workspace-write"
+sandbox_mode = "danger-full-access"
 nickname_candidates = ["Canary", "Scout", "Journey"]
 developer_instructions = """
 Verify the change from the user's point of view.

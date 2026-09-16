@@ -34,7 +34,8 @@ import uuid
 from pathlib import Path
 
 from factory_lib import (
-    git_control_dir, load_json, now_iso, protected_decomposition_state_path,
+    clean_git_env, git_control_dir, load_json, now_iso,
+    protected_decomposition_state_path,
     repo_root, require_ready_task, require_task_worktree, run_state_path,
     safe_factory_append,
     safe_factory_write_bytes, sha256_of, task_digest, validate_payload,
@@ -116,7 +117,7 @@ def delegation_lock_path(base: Path, lock_id: str, *,
                          namespace: str = "task") -> Path:
     if not SAFE_TASK_ID.fullmatch(lock_id):
         fail(f"lock id {lock_id!r} is not a plain identifier")
-    if namespace not in {"task", "state"}:
+    if namespace not in {"task", "state", "grill"}:
         fail(f"lock namespace {namespace!r} is not supported")
     return delegations_path(base).parent / "locks" / namespace / f"{lock_id}.lock"
 
@@ -1315,7 +1316,60 @@ def _normal_scope_entry(value: str) -> str:
     return path + ("/" if directory else "")
 
 
-def narrowed_scope(approved: list[str], requested: list[str]) -> list[str]:
+def _git_scope_mode(base: Path, revision: str, path: str) -> str:
+    result = subprocess.run(
+        ["git", "ls-tree", "-z", revision, "--", path], cwd=base,
+        capture_output=True, env=clean_git_env(),
+    )
+    if result.returncode or not result.stdout:
+        return ""
+    rows = [row for row in result.stdout.split(b"\0") if row]
+    if len(rows) != 1 or b"\t" not in rows[0]:
+        return ""
+    metadata, recorded = rows[0].split(b"\t", 1)
+    if recorded.decode("utf-8", "surrogateescape") != path:
+        return ""
+    return metadata.split(b" ", 1)[0].decode("ascii", "strict")
+
+
+def _validate_narrowed_scope_topology(
+        base: Path, approved: list[str], selected: list[str], revision: str) -> None:
+    """Bind selected descendants to the immutable tree and current topology."""
+    if not revision:
+        fail("--scope cannot validate immutable ownership without a stage baseline")
+    for entry in selected:
+        path = entry.rstrip("/")
+        mode = _git_scope_mode(base, revision, path)
+        if mode == "120000":
+            fail(f"--scope refuses symlink-ambiguous baseline path {entry!r}")
+        if not mode:
+            fail(f"--scope path {entry!r} is missing from the immutable baseline")
+
+        current = base
+        missing = False
+        for part in Path(path).parts:
+            current /= part
+            try:
+                info = current.lstat()
+            except FileNotFoundError:
+                missing = True
+                break
+            except OSError as exc:
+                fail(f"--scope cannot inspect {entry!r}: {exc}")
+            if _is_link_or_reparse(info):
+                fail(f"--scope refuses linked or reparse topology at {current}")
+        if mode and missing:
+            fail(f"--scope path {entry!r} drifted from its immutable baseline")
+        if not missing and mode:
+            current_is_directory = stat.S_ISDIR(current.lstat().st_mode)
+            baseline_is_directory = mode == "040000"
+            if current_is_directory != baseline_is_directory:
+                fail(f"--scope path {entry!r} changed file/directory topology")
+
+
+def narrowed_scope(
+        approved: list[str], requested: list[str], *, base: Path | None = None,
+        revision: str = "") -> list[str]:
     """Validate a repeatable proper-subset selection against effective scope."""
     from .worker_admission import path_in_scope
     approved_clean = [_normal_scope_entry(item) for item in approved]
@@ -1333,6 +1387,10 @@ def narrowed_scope(approved: list[str], requested: list[str]) -> list[str]:
     # having different spelling. Refuse that semantic non-narrowing too.
     if all(path_in_scope(item.rstrip("/"), selected) for item in approved_clean):
         fail("--scope selection covers the full effective scope; omit it instead")
+    if base is not None:
+        _validate_narrowed_scope_topology(
+            base, approved_clean, selected, revision,
+        )
     return selected
 
 
@@ -2168,7 +2226,16 @@ def cmd_delegate(args: argparse.Namespace) -> None:
         task = require_ready_task(base, args.id)
         from .stages import effective_scope
         scope = effective_scope(base, args.id, task.get("write_scope") or [])
-    scope = narrowed_scope(scope, list(getattr(args, "scope", []) or []))
+    requested_scope = list(getattr(args, "scope", []) or [])
+    if requested_scope:
+        from .stages import stage_baseline
+        revision = stage_baseline(base, stage) if active else "HEAD"
+    else:
+        revision = ""
+    scope = narrowed_scope(
+        scope, requested_scope, base=base if requested_scope else None,
+        revision=revision,
+    )
     write = bool(active and scope) and not args.read_only
     task_sha256_value = task_digest(task)
     if write and args.background:

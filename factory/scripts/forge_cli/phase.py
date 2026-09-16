@@ -440,6 +440,7 @@ def cmd_next(args: argparse.Namespace) -> None:
             "record_decomposition_from_json.py and update_run.py --phase "
             "implementing --decomposition-status recorded")
     else:
+        issue = state.get("issue_key")
         open_stages = require_all_stages_done(base)
         from factory_lib import require_closeout_order
         task_closeout = [

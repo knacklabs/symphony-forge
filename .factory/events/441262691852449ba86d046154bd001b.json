@@ -1,0 +1,1 @@
+{"event": "signal-resolved", "generated_by": "orchestrator", "at": "2026-09-16T15:27:54+00:00", "story": "FORGE-COORD-1", "detail": "S-0043-26c4: Hold the exact grill-key cross-process exclusion across admission and launch, but exclude starting/running rows whose launch_id appears in the existing defensive dead_launches result; a live active ro"}

@@ -58,12 +58,38 @@ def test_a_succeeded_terminal_launch_refuses_another_cold_read(repo: Path):
     assert _repeat_read_is_refused(repo)
 
 
-def test_starting_and_running_launches_do_not_consume_the_cold_read(repo: Path):
+def test_starting_and_running_launches_block_an_overlapping_cold_read(
+        repo: Path, monkeypatch):
     _seed(repo)
     _lifecycle(repo, "starting", ("starting",))
     _lifecycle(repo, "running", ("running",))
+    from forge_cli import codex_status  # noqa: E402
+    monkeypatch.setattr(codex_status, "dead_launches", lambda _base: [])
+
+    assert _repeat_read_is_refused(repo)
+
+
+def test_dead_starting_or_running_launch_does_not_consume_cold_read(
+        repo: Path, monkeypatch):
+    _seed(repo)
+    _lifecycle(repo, "stale", ("starting", "running"))
+    from forge_cli import codex_status  # noqa: E402
+    monkeypatch.setattr(
+        codex_status, "dead_launches",
+        lambda _base: [{"launch_id": "stale"}],
+    )
 
     assert not _repeat_read_is_refused(repo)
+
+
+def test_cold_read_exclusion_holds_the_exact_gate_task_lock(repo: Path):
+    from forge_cli import delegate  # noqa: E402
+
+    key = "grill-task-T1"
+    path = delegate.delegation_lock_path(repo, key, namespace="grill")
+    with delegate.delegation_exclusion(
+            repo, key, kind="grill-cold-read", namespace="grill"):
+        assert delegate._lock_is_held(path)
 
 
 def test_launch_lifecycle_rows_are_collapsed_by_launch_id(repo: Path):

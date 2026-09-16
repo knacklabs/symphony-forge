@@ -1,0 +1,1 @@
+{"event": "signal-contradiction", "generated_by": "implementer", "at": "2026-09-16T12:12:04+00:00", "story": "FORGE-COORD-1", "detail": "Requested sole pin 878e9d... resolves to upgrade.py line 1913, but check_encoding_hygiene compares surrogateescape against ast.Call.lineno 1911, so the mandated checker still fails; satisfying it requ"}

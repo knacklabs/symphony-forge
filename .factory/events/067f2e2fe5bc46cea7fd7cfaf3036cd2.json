@@ -1,0 +1,1 @@
+{"event": "signal-confusion", "generated_by": "implementer", "at": "2026-09-16T08:18:14+00:00", "story": "FORGE-COORD-1", "detail": "The selected review is stale after the main merge, but its Claude context transport and prompt/context suffix findings remain unfixed in current HEAD and need an explicit current-delta ruling."}

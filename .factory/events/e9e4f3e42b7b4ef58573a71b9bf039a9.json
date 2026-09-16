@@ -1,0 +1,1 @@
+{"event": "signal-resolved", "generated_by": "orchestrator", "at": "2026-09-16T12:16:08+00:00", "story": "FORGE-COORD-1", "detail": "S-0041-2f3e: Resolved by the orchestrator: the scanner authorizes a surrogateescape subprocess call by the ast.Call start line, so the correct content pin is e7b730a595dde31704ca26b6941be09a2c4788668fe7cce19fa75be"}

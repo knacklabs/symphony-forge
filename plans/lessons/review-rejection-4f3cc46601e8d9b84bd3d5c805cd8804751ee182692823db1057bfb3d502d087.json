@@ -1,0 +1,10 @@
+{
+  "applies_to": [
+    "factory/tests/**"
+  ],
+  "generated_by": "Codex",
+  "lesson": "Not a defect (evidence docs/specs/delegation-boundary.md:71): Completed stage-bound launch evidence remains historical after later format hardening. New context snapshots require identity-bound 64-hex IDs and 32-hex rows cannot authorize new launches or stale cleanup. — raised as \"Reject historical unbound context IDs during stage completion (factory/tests/test_gates.py:21612): When stage completion evaluates a terminal delegation row con\"",
+  "severity": "medium",
+  "source": "review reject LEAN-WORKFLOW security",
+  "topic": "rejected-review-finding-security"
+}

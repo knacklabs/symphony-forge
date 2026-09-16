@@ -1,0 +1,10 @@
+{
+  "applies_to": [
+    "factory/scripts/forge_cli/**"
+  ],
+  "generated_by": "Codex",
+  "lesson": "Not a defect (evidence factory/scripts/forge_cli/upgrade.py:1340): Upgrade pointer publication already takes the same task-id review-selection exclusion as normal publication and revalidates the migration inventory inside it; the outer migration lock protects the wider transaction. — raised as \"Use the same exclusion lock as normal review publication (factory/scripts/forge_cli/upgrade.py:1928): When a normal review publication runs concurrently with `f\"",
+  "severity": "medium",
+  "source": "review reject LEAN-WORKFLOW quality",
+  "topic": "rejected-review-finding-quality"
+}

@@ -1,0 +1,1 @@
+{"event": "signal-contradiction", "generated_by": "autoreview", "at": "2026-09-16T15:27:35+00:00", "story": "FORGE-COORD-1", "detail": "The narrowed-scope fix still permits an exact approved file path that is absent from the immutable baseline, contradicting the task contract's explicit missing-owned refusal and its own topology regre"}

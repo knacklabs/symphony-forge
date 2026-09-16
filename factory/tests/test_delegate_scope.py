@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import argparse
 import json
 import os
 import subprocess
@@ -18,6 +19,13 @@ from test_worker_admission import (  # noqa: E402
 )
 
 
+class _WindowsOS:
+    name = "nt"
+
+    def __getattr__(self, name):
+        return getattr(os, name)
+
+
 def test_delegate_scope_must_be_strict_subset_of_approved_write_scope():
     approved = ["src/a.py", "src/pkg/", "docs/readme.md"]
     assert delegate.narrowed_scope(approved, ["src/a.py"]) == ["src/a.py"]
@@ -31,6 +39,81 @@ def test_delegate_scope_must_be_strict_subset_of_approved_write_scope():
         delegate.narrowed_scope(approved, ["src/a.py", "src\\a.py"])
     with pytest.raises(SystemExit):
         delegate.narrowed_scope(approved, ["src/a.py/"])
+
+
+def test_delegate_scope_validates_immutable_ownership_and_topology(repo: Path):
+    source = repo / "src/pkg/one.py"
+    source.parent.mkdir(parents=True, exist_ok=True)
+    source.write_text("one\n", encoding="utf-8")
+    git = subprocess.run
+    git(["git", "add", "src/pkg/one.py"], cwd=repo, check=True)
+    git(["git", "commit", "-qm", "scope baseline"], cwd=repo, check=True)
+    revision = subprocess.run(
+        ["git", "rev-parse", "HEAD"], cwd=repo, capture_output=True,
+        text=True, check=True,
+    ).stdout.strip()
+    assert delegate.narrowed_scope(
+        ["src/pkg/", "docs/new.md"], ["src/pkg/one.py"],
+        base=repo, revision=revision,
+    ) == ["src/pkg/one.py"]
+    with pytest.raises(SystemExit):
+        delegate.narrowed_scope(
+            ["src/pkg/", "docs/new.md"], ["src/pkg/missing.py"],
+            base=repo, revision=revision,
+        )
+    source.unlink()
+    with pytest.raises(SystemExit):
+        delegate.narrowed_scope(
+            ["src/pkg/", "docs/new.md"], ["src/pkg/one.py"],
+            base=repo, revision=revision,
+        )
+    with pytest.raises(SystemExit):
+        delegate.narrowed_scope(
+            ["src/pkg/", "docs/new.md"], ["docs/new.md"],
+            base=repo, revision=revision,
+        )
+
+
+def test_delegate_scope_public_launch_binds_narrowed_scope(
+        repo: Path, monkeypatch: pytest.MonkeyPatch):
+    task = {
+        "id": "T1", "title": "narrow", "objective": "change one file",
+        "acceptance_criteria": ["one"], "write_scope": ["src/a.py", "src/b.py"],
+        "required_tests": [], "verify_commands": [], "reviewer_focus": [],
+    }
+    for rel in task["write_scope"]:
+        path = repo / rel
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(rel, encoding="utf-8")
+    subprocess.run(["git", "add", *task["write_scope"]], cwd=repo, check=True)
+    subprocess.run(["git", "commit", "-qm", "scope launch baseline"], cwd=repo,
+                   check=True)
+    revision = subprocess.run(
+        ["git", "rev-parse", "HEAD"], cwd=repo, capture_output=True,
+        text=True, check=True,
+    ).stdout.strip()
+    _seed_contract(repo, task)
+    captured = {}
+    from forge_cli import stages
+    monkeypatch.setattr(delegate, "require_task_worktree", lambda _base: None)
+    monkeypatch.setattr(delegate, "require_ready_task", lambda *_args: task)
+    monkeypatch.setattr(stages, "effective_scope", lambda *_args: task["write_scope"])
+    monkeypatch.setattr(stages, "stage_baseline", lambda *_args: revision)
+    monkeypatch.setattr(delegate, "compose_brief", lambda *_args, **_kwargs: "brief")
+    monkeypatch.setattr(delegate, "pinned_run_config", lambda _base: ("model", "medium"))
+    monkeypatch.setattr(
+        delegate, "launch_companion",
+        lambda *_args, **kwargs: captured.update(kwargs),
+    )
+    monkeypatch.setattr(delegate, "append_event", lambda *_args, **_kwargs: None)
+
+    delegate.cmd_delegate(argparse.Namespace(
+        repo=str(repo), id="T1", read_only=False, scope=["src/a.py"],
+        background=False, context_file=None, print_only=False,
+    ))
+
+    assert captured["write"] is True
+    assert captured["write_scope"] == ["src/a.py"]
 
 
 def test_delegate_scope_is_bound_to_brief_launch_identity_and_existing_write_scope(
@@ -182,6 +265,110 @@ def test_windows_private_acl_validation_refuses_extra_allow_aces(
                             "Inherited": False, "Rights": 0x20089})
     with pytest.raises(SystemExit):
         delegate._require_windows_private_acl(tmp_path, sid)
+
+
+def test_windows_context_identity_and_acl_drift_refuse_before_launch(
+        repo: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys):
+    source = tmp_path / "context.md"
+    source.write_text("stable context", encoding="utf-8")
+    text, metadata, snapshot, identity = delegate.secure_context_snapshot(source)
+    snapshot.unlink()
+    snapshot.write_text(text, encoding="utf-8")
+    try:
+        with monkeypatch.context() as guard:
+            guard.setattr(delegate, "os", _WindowsOS())
+            guard.setattr(delegate, "_windows_current_sid", lambda: "S-1-test")
+            guard.setattr(delegate, "_require_windows_private_acl", lambda *_args: None)
+            with pytest.raises(SystemExit):
+                delegate.launch_companion(
+                    repo, task_id="T1", text="brief",
+                    path=repo / ".factory/briefs/context-drift.md",
+                    task_sha256_value="task", model="model", effort="medium",
+                    write=False, print_only=True, context_text=text,
+                    context_metadata=metadata, context_snapshot=snapshot,
+                    context_snapshot_identity=identity,
+                )
+            assert "secure context snapshot failed identity verification" in (
+                capsys.readouterr().out
+            )
+    finally:
+        snapshot.unlink(missing_ok=True)
+        snapshot.parent.rmdir()
+
+    text, metadata, snapshot, identity = delegate.secure_context_snapshot(source)
+    try:
+        with monkeypatch.context() as guard:
+            guard.setattr(delegate, "os", _WindowsOS())
+            guard.setattr(delegate, "_windows_current_sid", lambda: "S-1-test")
+            guard.setattr(
+                delegate, "_require_windows_private_acl",
+                lambda *_args: (_ for _ in ()).throw(SystemExit("ACL drift")),
+            )
+            with pytest.raises(SystemExit, match="ACL drift"):
+                delegate.launch_companion(
+                    repo, task_id="T1", text="brief",
+                    path=repo / ".factory/briefs/context-acl.md",
+                    task_sha256_value="task", model="model", effort="medium",
+                    write=False, print_only=True, context_text=text,
+                    context_metadata=metadata, context_snapshot=snapshot,
+                    context_snapshot_identity=identity,
+                )
+    finally:
+        delegate._cleanup_private_context(snapshot, identity, "")
+
+
+def test_windows_context_identity_and_acl_drift_refuse_stale_cleanup(
+        repo: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys):
+    source = tmp_path / "context.md"
+    source.write_text("stable context", encoding="utf-8")
+
+    def stale_row(metadata):
+        return [{
+            "launch_id": "stale-context", "launch_status": "succeeded",
+            "context": metadata,
+        }]
+
+    _text, metadata, snapshot, identity = delegate.secure_context_snapshot(source)
+    snapshot.unlink()
+    snapshot.write_text("stable context", encoding="utf-8")
+    try:
+        with monkeypatch.context() as guard:
+            guard.setattr(delegate, "os", _WindowsOS())
+            guard.setattr(delegate, "_windows_current_sid", lambda: "S-1-test")
+            guard.setattr(delegate, "_require_windows_private_acl", lambda *_args: None)
+            guard.setattr(delegate, "load_delegations", lambda _base: stale_row(metadata))
+            with pytest.raises(SystemExit):
+                delegate._cleanup_stale_context_snapshots(repo)
+            assert "stale secure context snapshot identity drifted" in (
+                capsys.readouterr().out
+            )
+    finally:
+        snapshot.unlink(missing_ok=True)
+        snapshot.parent.rmdir()
+
+    _text, metadata, snapshot, identity = delegate.secure_context_snapshot(source)
+    try:
+        with monkeypatch.context() as guard:
+            guard.setattr(delegate, "os", _WindowsOS())
+            guard.setattr(delegate, "_windows_current_sid", lambda: "S-1-test")
+            guard.setattr(delegate, "load_delegations", lambda _base: stale_row(metadata))
+            guard.setattr(
+                delegate, "_require_windows_private_acl",
+                lambda *_args: (_ for _ in ()).throw(SystemExit("ACL drift")),
+            )
+            with pytest.raises(SystemExit, match="ACL drift"):
+                delegate._cleanup_stale_context_snapshots(repo)
+    finally:
+        delegate._cleanup_private_context(snapshot, identity, "")
+
+
+def test_implementer_prompt_stops_repeating_blocked_process_verification():
+    prompt = " ".join((HARNESS / "factory/prompts/implementer.md").read_text(
+        encoding="utf-8",
+    ).split())
+    assert "ProcessDiscoveryError" in prompt
+    assert "do not spend another task-wide process-dependent verifier run" in prompt
+    assert "Main can run the canonical full verifier once" in prompt
 
 
 def test_windows_path_script_transports_shell_sensitive_unicode_path_as_data(

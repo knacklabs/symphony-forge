@@ -28,7 +28,7 @@ prototype ▶ spec grills ▶ CONFIRMED SPECS ▶ derived roadmap ▶ sign-off g
   decompose (creates the task tracker) ▶ per task: implement (`forge delegate`)
   ▶ commit ▶ task proof ▶ `forge task close` runs ONE combined three-lens
   task review ▶ delegate fixes and rerun close until clean ▶ functional
-  (if user-facing) ▶ task PR readiness ▶ archive
+  (if user-facing) ▶ task PR readiness
 ```
 
 - **Grills** are adversarial gaps/contradictions passes: each spec

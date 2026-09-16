@@ -140,8 +140,9 @@ not actually the order.
 - The board never writes. Recording stays in the gated commands.
 - No new database, UI framework or build step; the board stays one
   self-contained HTML file.
-- Tasks are still created only after a story's plan is approved, and still run
-  one at a time inside a story worktree.
+- Tasks are still created only after a story's plan is approved. Each leaf owns
+  its task worktree and PR; dependency-ready siblings may overlap only when
+  their measured scopes are disjoint.
 - Existing BRIEF and spec heading vocabulary is not renamed. The only addition
   is `Target Outcome`.
 - Client repos receive the stricter gates at re-vendoring, not retroactively.
