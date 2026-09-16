@@ -1,0 +1,11 @@
+{
+  "event": "open",
+  "id": "Q-0152-779d",
+  "profile": "degraded",
+  "reason": "Revert test_gates.py to main \u2014 its whole diff tested the unverified verdict that has been dropped \u2014 and give the two surviving fixes the coverage they never had. #200's tests were entirely about unverified; the .github/ prefix removal and the sibling-worktree governance fix shipped untested, which is how a PR ends up with two real fixes and no way to notice if either regresses.",
+  "started_at": "2026-09-16T04:54:19+00:00",
+  "max_files": 5,
+  "files": [],
+  "harness_source": true,
+  "kind": "degraded"
+}

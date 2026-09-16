@@ -57,8 +57,14 @@ WORKFLOW_PATHS = (".factory/", "plans/", "docs/context/ledger.json")
 # repo builds these AS product (no constitution/VENDORED_FROM marker), so it
 # keeps the strict set and the per-task scope check stays honest when dogfooding.
 HARNESS_MACHINERY_PATHS = (
-    "factory/", ".claude/", ".codex/", ".github/", "constitution/",
+    "factory/", ".claude/", ".codex/", "constitution/",
     "harness/", ".gstack/",
+    # NOT ".github/": the harness vendors no workflow into a client (no
+    # VENDOR_MANIFEST.json entry is under .github/), so a client's CI is its
+    # OWN product. Excluding the prefix reset it to the task base inside the
+    # review bundle, which made any acceptance criterion that requires a CI
+    # change permanently unprovable — the lens saw a local gate wired to a
+    # step that was not there and correctly called the criterion partial.
     # Top-level vendored harness FILES (not directories) that `forge upgrade`
     # rewrites and a client never authors as its own product. Excluding them
     # keeps the per-task scope/dirt check honest when the coordinator's own
@@ -244,13 +250,30 @@ def write_skeleton(base: Path, issue: str, tasks: list[dict]) -> None:
     # A story decomposed before per-story snapshots existed would lose its stages
     # when the singleton flips to this new story; preserve the outgoing one so a
     # legacy shipped story keeps its task-completion on the board.
-    prior_issue = existing.get("issue")
+    # The mirror, not `existing`, names the outgoing story: the git-local
+    # authority is gone once that story shipped, and then nothing would be
+    # archived before the flip.
+    mirror = load_json(stages_path(base), default={})
+    prior_issue = existing.get("issue") or mirror.get("issue")
     if prior_issue and prior_issue != issue:
         prior_dir = story_dir(base, prior_issue)
         if prior_dir.is_dir() and not load_story_stages(base, prior_issue):
-            _write_story_records(base, prior_issue, existing.get("stages") or [])
+            _write_story_records(base, prior_issue,
+                                 (existing.get("stages")
+                                  or mirror.get("stages") or []))
     previous = ({s.get("id"): s for s in existing.get("stages", [])}
                 if existing.get("issue") == issue else {})
+    if not previous:
+        # The git-local authority is EPHEMERAL — `clear_story_authority` drops it
+        # once a story ships, because it is what keeps reporting an active stage
+        # after ship. So ship -> close -> re-record (the JIT contract for the
+        # next task of a live story) read nothing and rewrote every shipped task
+        # `pending`, destroying exactly the seal tokens #171 exists to preserve.
+        # The committed per-story snapshot holds the same state durably, and it
+        # is what this function is about to overwrite: read it before writing.
+        previous = {s.get("id"): s
+                    for s in (load_story_stages(base, issue).get("stages") or [])
+                    if isinstance(s, dict) and s.get("id")}
     stages = []
     for task in tasks:
         stage = {"id": task["id"], "title": task["title"], "status": "pending"}

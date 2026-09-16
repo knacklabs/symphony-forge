@@ -1,0 +1,13 @@
+{
+  "event": "done",
+  "id": "Q-0131-1453",
+  "profile": "degraded",
+  "kind": "degraded",
+  "reason": "Vendor the task-gate simplicity check authored and proven in the myclaw client repo. The plan gate already hunts a simpler shape and fails over-built plans, and constitution 09-agent-conduct section 2 names the plan grill as where that happens, but the task gate has no simplicity check at all. Observed: a real task grill returned twelve findings on a wide contract without once asking whether the task was over-built, so the orchestrator raised the split question by hand -- exactly the judgement a gate exists to not depend on. No codex CLI on this session's PATH, so delegation is unavailable and this is the bounded exception.",
+  "started_at": "2026-09-11T14:49:05+00:00",
+  "completed_at": "2026-09-11T14:49:33+00:00",
+  "files": [
+    "factory/prompts/griller.md",
+    "constitution/09-agent-conduct.md"
+  ]
+}

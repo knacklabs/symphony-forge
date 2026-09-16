@@ -1,0 +1,10 @@
+{
+  "event": "done",
+  "id": "Q-0149-d993",
+  "profile": "degraded",
+  "kind": "degraded",
+  "reason": "Fix the two defects autoreview found in PR #200 at P2 (its own P0-only default had passed it clean). P1 at review.py:1067 \u2014 when no pass emits a VERDICT line for a contract, the synthesised 'unverified' is accepted by the recorder as satisfying the contract id and recorded non-blocking, so the task-proof gate can pass with nothing attesting the contract; meanwhile the all-not_in_chunk path at :1002 falls back to partial and fails closed, so the same situation has two opposite outcomes. P2 at review.py:987 \u2014 _chunk_blind infers scope blindness from prose keywords (chunk plus a broad absence word), which also matches genuine defects in chunk-oriented code and can reclassify a real partial as blindness. Both fixes are deletions: unverified becomes blocking, and the prose heuristic goes so only the explicit not_in_chunk token counts. Companion cannot make this change; it is a harness-source fix in a repo with no active task.",
+  "started_at": "2026-09-16T04:30:14+00:00",
+  "completed_at": "2026-09-16T04:32:15+00:00",
+  "files": []
+}

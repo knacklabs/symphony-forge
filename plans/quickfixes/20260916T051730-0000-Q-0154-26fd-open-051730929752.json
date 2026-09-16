@@ -1,0 +1,11 @@
+{
+  "event": "open",
+  "id": "Q-0154-26fd",
+  "profile": "degraded",
+  "reason": "Fix autoreview P2 on the sibling-worktree resolution: it takes the FIRST parent carrying .git and only then checks whether that parent is a harness worktree, so a nested Git root on the way up \u2014 a vendored dependency, a sub-project, any checkout inside the tree \u2014 makes it give up and fall back to session-cwd governance, which is the ungoverned-write hole the fix exists to close. Keep walking outward instead, to the first parent that has BOTH .git and factory/scripts. One predicate rather than find-then-validate, and shorter than what it replaces. Adds a nested-root case to the governance test.",
+  "started_at": "2026-09-16T05:17:30+00:00",
+  "max_files": 5,
+  "files": [],
+  "harness_source": true,
+  "kind": "degraded"
+}

@@ -67,7 +67,15 @@ For `--gate task`, also verify:
   explicit where the task changes them.
 - `reviewer_focus` cites load-bearing constitution rules and the risky seams;
   it does not rederive the constitution.
-- `user_facing` is true exactly for tasks that change user-visible behavior.
+- `user_facing` is true exactly for tasks that change frontend or UI behavior.
+- ask whether the contract is simple enough: every acceptance criterion traces
+  to a spec or plan surface, every required test proves a distinct criterion,
+  `write_scope` contains only necessary paths, existing repository machinery is
+  reused before adding a type, helper, port, abstraction, configuration, or
+  flexibility, and a contract too large for one implementation and review is
+  split instead of receiving a larger budget. Name what can be dropped or
+  merged and the smaller shape. Required proof and files needed to satisfy a
+  real criterion are not over-building.
 - the task is one bounded session and applies Ponytail: necessity, reuse,
   stdlib, native platform, installed dependency, one line, minimum viable code.
 - no task promises a deliverable that its scope cannot make reachable.

@@ -1,0 +1,10 @@
+{
+  "event": "open",
+  "id": "Q-0130-711b",
+  "profile": "quickfix",
+  "reason": "Vendor the task-gate simplicity check from the myclaw client repo, where it was authored and proven. The plan gate already hunts a simpler shape and fails over-built plans, and constitution 09-agent-conduct section 2 names the plan grill as where that happens, but the task gate has no simplicity check at all -- it hunts only missing scope, unproven criteria, reachability and the user_facing flag. Observed: a real task grill returned twelve findings on a wide contract without once asking whether the task was over-built, so the orchestrator had to raise the split question by hand. Adds the hunt to the task gate aimed at what a CONTRACT over-builds and extends conduct section 2 to name the task grill beside the plan grill.",
+  "started_at": "2026-09-11T14:48:01+00:00",
+  "max_files": 5,
+  "files": [],
+  "harness_source": true
+}

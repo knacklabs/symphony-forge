@@ -915,3 +915,115 @@ def test_vendored_client_review_excludes_the_harness_machinery(repo):
     harness_only = review_excluded_prefixes(repo)
     assert set(harness_only) == set(HARNESS_PREFIXES) | set(WORKFLOW_PATHS)
     assert "factory/" not in harness_only
+
+
+def test_a_clients_own_ci_is_product_not_vendored_machinery(repo):
+    """`.github/` must NOT be a harness-machinery prefix.
+
+    The harness vendors no workflow into a client — VENDOR_MANIFEST.json has no
+    entry under `.github/` — so a client's CI is its own product. While the
+    prefix was excluded, the review bundle reset `.github/` to the task base,
+    so a lens judging an acceptance criterion that REQUIRES a CI change saw a
+    local gate wired to a step that was not there and correctly called the
+    criterion partial. Any such criterion was permanently unprovable.
+    """
+    from forge_cli.review import review_excluded_prefixes
+    from forge_cli.stages import HARNESS_MACHINERY_PATHS
+
+    assert ".github/" not in HARNESS_MACHINERY_PATHS
+    assert not any(p.startswith(".github") for p in HARNESS_MACHINERY_PATHS)
+    # Nor via the composed exclusion list a review bundle actually reads.
+    assert ".github/" not in review_excluded_prefixes(repo)
+    # The genuinely vendored machinery is still excluded.
+    for vendored in ("factory/", "constitution/", ".claude/", ".codex/"):
+        assert vendored in HARNESS_MACHINERY_PATHS
+
+    # And nothing under a manifest entry claims .github.
+    manifest = repo / "VENDOR_MANIFEST.json"
+    if manifest.is_file():
+        import json as _json
+        entries = _json.loads(manifest.read_text())
+        paths = entries if isinstance(entries, list) else entries.get("paths", [])
+        assert not [p for p in paths if str(p).startswith(".github")]
+
+
+def test_an_edit_into_a_sibling_worktree_is_governed_by_that_worktree(repo, tmp_path):
+    """An Edit/Write whose absolute target lies outside the session cwd's root
+    must be governed by the TARGET checkout's lock and mode window, not the
+    cwd's.
+
+    This is the normal shape of orchestration: the session sits in the planning
+    worktree while the work happens in a task worktree beside it. Before the
+    fix the hook resolved state from the cwd, so such a write was neither
+    locked nor counted against a degraded window — it simply escaped
+    governance.
+    """
+    import json as _json
+    import subprocess
+
+    sibling = tmp_path / "sibling-worktree"
+    subprocess.run(["git", "worktree", "add", "--detach", str(sibling), "HEAD"],
+                   cwd=repo, check=True, capture_output=True)
+    try:
+        target = sibling / "apps" / "core" / "src" / "thing.ts"
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text("export const x = 1;\n")
+
+        code, out = run(repo, "pre_tool_use.py",
+                        stdin=_json.dumps({
+                            "tool_name": "Edit",
+                            "tool_input": {"file_path": str(target)},
+                        }),
+                        env={"FORGE_PROCESS_TOKEN": "", "FORGE_LAUNCH_ID": ""})
+        assert code == 0, out
+
+        # The decision must be made about the SIBLING, so it cites that root's
+        # governance rather than silently allowing an ungoverned product write.
+        # Either outcome proves the switch happened; an unconditional allow
+        # with no reason is the regression this pins.
+        assert out.strip(), "the hook returned nothing for a sibling-worktree edit"
+        decision = _json.loads(out) if out.strip().startswith("{") else {}
+        governed = (
+            "deny" in out
+            or "lockout" in out
+            or "degraded" in out
+            or decision.get("hookSpecificOutput", {}).get("permissionDecision")
+            in {"deny", "ask"}
+        )
+        assert governed, (
+            "a product write into a sibling worktree was neither denied nor "
+            f"claimed by a window — it escaped governance: {out!r}"
+        )
+
+        # A NESTED Git root on the way up must not stop the search. A vendored
+        # dependency or sub-project carrying its own .git used to be picked as
+        # the governing root; it has no factory/scripts, so resolution gave up
+        # and fell back to the session cwd — ungoverned again.
+        nested = sibling / "vendor" / "sub-project"
+        (nested / ".git").mkdir(parents=True, exist_ok=True)
+        deep = nested / "apps" / "core" / "src" / "deep.ts"
+        deep.parent.mkdir(parents=True, exist_ok=True)
+        deep.write_text("export const y = 2;\n")
+
+        code, out = run(repo, "pre_tool_use.py",
+                        stdin=_json.dumps({
+                            "tool_name": "Edit",
+                            "tool_input": {"file_path": str(deep)},
+                        }),
+                        env={"FORGE_PROCESS_TOKEN": "", "FORGE_LAUNCH_ID": ""})
+        assert code == 0, out
+        decision = _json.loads(out) if out.strip().startswith("{") else {}
+        governed_nested = (
+            "deny" in out
+            or "lockout" in out
+            or "degraded" in out
+            or decision.get("hookSpecificOutput", {}).get("permissionDecision")
+            in {"deny", "ask"}
+        )
+        assert governed_nested, (
+            "a write beneath a NESTED git root escaped governance — the search "
+            f"stopped at the nested root instead of the harness worktree: {out!r}"
+        )
+    finally:
+        subprocess.run(["git", "worktree", "remove", "--force", str(sibling)],
+                       cwd=repo, check=False, capture_output=True)
