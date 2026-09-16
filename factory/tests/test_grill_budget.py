@@ -34,84 +34,60 @@ def _lifecycle(repo: Path, launch_id: str, statuses: tuple[str, ...]) -> Path:
     return path
 
 
-def _rounds(repo: Path) -> int:
-    from forge_cli.grill import _rounds_since_last_pass  # noqa: E402
-
-    return _rounds_since_last_pass(repo, "grill-plan", "plan", "")
-
-
 def _repeat_read_is_refused(repo: Path) -> bool:
     from forge_cli.grill import _refuse_a_second_cold_read  # noqa: E402
 
     try:
-        _refuse_a_second_cold_read(repo, "grill-plan", "plan", "", "")
+        _refuse_a_second_cold_read(repo, "grill-plan", "plan", "")
     except SystemExit:
         return True
     return False
 
 
-def test_a_failed_lifecycle_does_not_count_toward_the_cap(repo: Path):
-    _seed(repo)
-    _lifecycle(repo, "failed", ("starting", "running", "failed"))
-
-    assert _rounds(repo) == 0
-
-
-def test_a_failed_lifecycle_does_not_block_the_repeat_read_guard(repo: Path):
+def test_a_failed_terminal_launch_does_not_consume_the_cold_read(repo: Path):
     _seed(repo)
     _lifecycle(repo, "failed", ("starting", "running", "failed"))
 
     assert not _repeat_read_is_refused(repo)
 
 
-def test_a_succeeded_lifecycle_still_counts(repo: Path):
+def test_a_succeeded_terminal_launch_refuses_another_cold_read(repo: Path):
     _seed(repo)
     _lifecycle(repo, "succeeded", ("starting", "running", "succeeded"))
 
-    assert _rounds(repo) == 1
+    assert _repeat_read_is_refused(repo)
 
 
-def test_a_launch_still_in_flight_counts(repo: Path):
+def test_starting_and_running_launches_do_not_consume_the_cold_read(repo: Path):
     _seed(repo)
     _lifecycle(repo, "starting", ("starting",))
     _lifecycle(repo, "running", ("running",))
 
-    assert _rounds(repo) == 2
+    assert not _repeat_read_is_refused(repo)
 
 
-def test_both_guards_agree_on_the_same_collapsed_view(repo: Path, monkeypatch):
+def test_launch_lifecycle_rows_are_collapsed_by_launch_id(repo: Path):
     _seed(repo)
     _lifecycle(repo, "failed", ("starting", "running", "failed"))
     _lifecycle(repo, "succeeded", ("starting", "running", "succeeded"))
-    _lifecycle(repo, "starting", ("starting",))
-    _lifecycle(repo, "running", ("running",))
 
     from forge_cli import grill  # noqa: E402
 
-    original = grill._latest_launch_rows
-    calls: list[tuple[Path, str, str, str]] = []
-
-    def tracked(
-        base: Path, ledger_id: str, since: str, *, story: str = "",
-    ) -> list[dict]:
-        calls.append((base, ledger_id, since, story))
-        return original(base, ledger_id, since, story=story)
-
-    monkeypatch.setattr(grill, "_latest_launch_rows", tracked)
-    assert _rounds(repo) == 3
-    assert _repeat_read_is_refused(repo)
-    assert calls == [
-        (repo, "grill-plan", "", ""),
-        (repo, "grill-plan", "", "ENG-1"),
+    latest = grill._latest_launch_rows(
+        repo, "grill-plan", "", story="ENG-1",
+    )
+    assert [(row["launch_id"], row["launch_status"]) for row in latest] == [
+        ("failed", "failed"),
+        ("succeeded", "succeeded"),
     ]
+    assert _repeat_read_is_refused(repo)
 
 
-def test_no_new_ledger_field_is_written(repo: Path):
+def test_reading_the_guard_does_not_write_a_new_ledger_field(repo: Path):
     _seed(repo)
     path = _lifecycle(repo, "failed", ("starting", "running", "failed"))
     before = path.read_text(encoding="utf-8")
 
-    assert _rounds(repo) == 0
     assert not _repeat_read_is_refused(repo)
     assert path.read_text(encoding="utf-8") == before
     assert all(set(json.loads(line)) == {
