@@ -15705,6 +15705,60 @@ def test_grill_context_file_uses_secure_snapshot_and_parser_has_no_reread(
     assert code == 0 and "--context-file" in out and "--reread" not in out
 
 
+@pytest.mark.parametrize("opaque", ["a" * 32, "b" * 64])
+def test_grill_context_launch_records_bound_stdin_prompt(repo, tmp_path, opaque):
+    from forge_cli.delegate import argv_digest, delegations_path
+
+    sign_off(repo)
+    intake(repo)
+    draft = tmp_path / "context-plan.md"
+    draft.write_text(plan_draft(repo), encoding="utf-8")
+    _label, artifact = GATES["plan"].locate(repo, "", str(draft))
+    digest = hashlib.sha256(artifact.encode()).hexdigest()
+    _seed_cold_launch(repo, "plan", digest, artifact_text=artifact)
+    path = delegations_path(repo)
+    rows = [json.loads(line) for line in path.read_text().splitlines()]
+    prompt = (Path(tempfile.gettempdir()).resolve()
+              / f"forge-context-{opaque}" / "brief.md")
+    for row in rows:
+        row["context"] = {
+            "supplied": True, "bytes": 7,
+            "snapshot_id": f"context-{opaque}",
+        }
+        if len(opaque) == 64:
+            row["prompt_sha256"] = "c" * 64
+
+    for row in rows:
+        row["argv"][-1] = str(prompt.parent.with_name(
+            "forge-context-" + "d" * len(opaque),
+        ) / "brief.md")
+        row["argv_sha256"] = argv_digest(row["argv"])
+    path.write_text("".join(json.dumps(row) + "\n" for row in rows))
+    payload = {
+        "generated_by": "griller", "gate": "plan", "verdict": "pass",
+        "gaps": [], "contradictions": [], "resolutions": [],
+        "finding_dispositions": [],
+    }
+    code, out = run(
+        repo, "record_grill_from_json.py", "--gate", "plan",
+        "--input-digest", str(draft), stdin=json.dumps(payload),
+    )
+    assert code != 0 and "transport identity is invalid" in out
+
+    for row in rows:
+        if len(opaque) == 64:
+            row["argv"] = row["argv"][:-2]
+        else:
+            row["argv"][-1] = str(prompt)
+        row["argv_sha256"] = argv_digest(row["argv"])
+    path.write_text("".join(json.dumps(row) + "\n" for row in rows))
+    code, out = run(
+        repo, "record_grill_from_json.py", "--gate", "plan",
+        "--input-digest", str(draft), stdin=json.dumps(payload),
+    )
+    assert code == 0, out
+
+
 def test_delegate_derives_write_from_stage_state(repo, tmp_path):
     """Write permission stopped being a per-request opinion: three layers
     disagreed on the default and a read-only sandbox can neither write nor ask."""
@@ -21619,13 +21673,16 @@ def test_successful_launch_accepts_historical_and_bound_context_ids(repo, opaque
     brief = repo / ".factory" / "briefs" / "T1.md"
     brief.parent.mkdir(parents=True, exist_ok=True)
     brief.write_text("brief\n", encoding="utf-8")
-    prompt = (Path(tempfile.gettempdir()).resolve()
-              / f"forge-context-{opaque}" / "brief.md")
-    argv = [
+    base_argv = [
         "node", "/opt/codex/codex-companion.mjs", "task", "--json",
         "--cwd", str(repo), "--model", "gpt-test", "--effort", "medium",
-        "--prompt-file", str(prompt), "--write",
     ]
+    if len(opaque) == 32:
+        prompt = (Path(tempfile.gettempdir()).resolve()
+                  / f"forge-context-{opaque}" / "brief.md")
+        argv = base_argv + ["--prompt-file", str(prompt), "--write"]
+    else:
+        argv = base_argv + ["--write"]
     entry = {
         "launch_id": "launch-context", "launch_status": "succeeded",
         "exit_code": 0, "write": True, "stage_started_at": stage["started_at"],
@@ -21637,6 +21694,8 @@ def test_successful_launch_accepts_historical_and_bound_context_ids(repo, opaque
             "snapshot_id": f"context-{opaque}",
         },
     }
+    if len(opaque) == 64:
+        entry["prompt_sha256"] = "c" * 64
 
     assert _successful_launch_entry_valid(repo, "T1", stage, entry)
     entry["context"]["device"] = 1

@@ -200,12 +200,19 @@ def _claude_approved(payload: dict[str, Any]) -> str:
         return ""
     if response.get("is_error") is True or response.get("cancelled") is True:
         return ""
-    if _text(response.get("status")).lower() not in {
-            "success", "succeeded", "completed"}:
-        return ""
     tool_input = payload.get("tool_input")
     plan = tool_input.get("plan") if isinstance(tool_input, dict) else None
     if not isinstance(plan, str) or not plan:
+        return ""
+    status_value = response.get("status")
+    status = _text(status_value).lower()
+    documented_response = (
+        response.get("plan") == plan
+        and isinstance(response.get("isAgent"), bool)
+    )
+    if ((status_value is not None
+         and status not in {"success", "succeeded", "completed"})
+            or (status_value is None and not documented_response)):
         return ""
     return _plan_body_digest_bytes(plan.encode("utf-8"))
 

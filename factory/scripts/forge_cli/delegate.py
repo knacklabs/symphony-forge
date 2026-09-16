@@ -806,11 +806,12 @@ def current_delegation(base: Path, task_id: str, *,
     if not launches:
         return None
     bindings = (
-        "task", "brief_sha256", "task_sha256", "write", "model", "effort",
+        "task", "brief_sha256", "prompt_sha256", "task_sha256", "write",
+        "model", "effort",
         "companion_path", "argv", "argv_sha256", "stage_started_at",
         "process_token", "transport", "executable_path", "brief_path",
         "output_path", "stderr_path", "resume_session", "background",
-        "write_scope",
+        "write_scope", "context",
     )
     completed: list[tuple[int, dict]] = []
     for started, rows in launches.values():
@@ -1678,7 +1679,9 @@ def _context_prompt_limit(runtime: str, component: Path | None) -> int | None:
 
 
 def _framed_context(context_text: str) -> str:
-    return CONTEXT_FRAME_PREFIX + context_text + CONTEXT_FRAME_SUFFIX
+    encoded = json.dumps(context_text, ensure_ascii=False)
+    encoded = encoded.replace("<", r"\u003c").replace(">", r"\u003e")
+    return CONTEXT_FRAME_PREFIX + encoded + CONTEXT_FRAME_SUFFIX
 
 
 def _validate_context_correlation(
@@ -1760,11 +1763,10 @@ def launch_companion(
     executable = ""
     output_path: Path | None = None
     stderr_path: Path | None = None
-    launch_text = text + (_framed_context(context_text) if context_text else "")
+    has_context = context_snapshot is not None
+    launch_text = text + (_framed_context(context_text) if has_context else "")
     windows_sid = (_windows_current_sid()
                    if os.name == "nt" and context_snapshot else "")
-    prompt_private: tuple[Path, tuple[int, int, int, str]] | None = None
-    pending_prompt: tuple[Path, bytes] | None = None
     if context_snapshot is not None:
         assert context_snapshot_identity is not None
         if not isinstance(context_metadata, dict):
@@ -1775,6 +1777,11 @@ def launch_companion(
         _validate_private_file(
             context_snapshot, windows_sid, context_snapshot_identity,
         )
+        captured = context_text.encode("utf-8")
+        if (len(captured) != context_snapshot_identity[2]
+                or hashlib.sha256(captured).hexdigest()
+                != context_snapshot_identity[3]):
+            fail("--context-file captured text does not match its stable snapshot")
     if runtime == "codex":
         from .codex_runtime import native_argv
 
@@ -1799,16 +1806,20 @@ def launch_companion(
         output_path = logs / f"{launch_id}.stdout.log"
         stderr_path = logs / f"{launch_id}.stderr.log"
         prompt_path = path
-        if context_text:
+        if has_context:
             assert context_snapshot is not None
-            prompt_path = context_snapshot.parent / "brief.md"
-            prompt_bytes = launch_text.encode("utf-8")
-            pending_prompt = (prompt_path, prompt_bytes)
-        prompt_arg = str(prompt_path) if prompt_path.is_absolute() else prompt_path.relative_to(base).as_posix()
-        argv = [
-            node, str(companion), "task", "--json", "--cwd", str(base),
-            "--model", model, "--effort", effort, "--prompt-file", prompt_arg,
-        ]
+            argv = [
+                node, str(companion), "task", "--json", "--cwd", str(base),
+                "--model", model, "--effort", effort,
+            ]
+        else:
+            prompt_arg = (str(prompt_path) if prompt_path.is_absolute()
+                          else prompt_path.relative_to(base).as_posix())
+            argv = [
+                node, str(companion), "task", "--json", "--cwd", str(base),
+                "--model", model, "--effort", effort,
+                "--prompt-file", prompt_arg,
+            ]
         if write:
             argv.append("--write")
         if background:
@@ -1837,7 +1848,6 @@ def launch_companion(
         if context_snapshot is not None:
             _cleanup_private_context(
                 context_snapshot, context_snapshot_identity, windows_sid,
-                prompt_private,
             )
         return None
     if runtime == "codex" and write:
@@ -1854,6 +1864,7 @@ def launch_companion(
         "launch_id": launch_id,
         "task": task_id,
         "brief_sha256": brief_digest,
+        "prompt_sha256": hashlib.sha256(launch_text.encode("utf-8")).hexdigest(),
         "task_sha256": task_sha256_value,
         "write": write,
         "model": model,
@@ -1940,12 +1951,6 @@ def launch_companion(
     append_delegation(base, record)
     try:
         try:
-            if pending_prompt:
-                prompt_path, prompt_bytes = pending_prompt
-                prompt_identity = _write_private_file(
-                    prompt_path, prompt_bytes, windows_sid,
-                )
-                prompt_private = (prompt_path, prompt_identity)
             process_env = os.environ.copy()
             process_env["FORGE_PROCESS_TOKEN"] = process_token
             if runtime == "codex":
@@ -1959,12 +1964,13 @@ def launch_companion(
                     else {"start_new_session": True,
                           "preexec_fn": unblock_termination_signals_in_child}
                 )
-                stdio_options = ({"text": False} if runtime == "codex" else {
+                prompt_stdin = runtime == "codex" or has_context
+                stdio_options = ({"text": False} if prompt_stdin else {
                     "text": True, "encoding": "utf-8", "errors": "strict",
                 })
                 proc = subprocess.Popen(
                     argv, cwd=base, stdout=stdout_log, stderr=stderr_log,
-                    stdin=subprocess.PIPE if runtime == "codex" else None,
+                    stdin=subprocess.PIPE if prompt_stdin else None,
                     env=process_env, **stdio_options, **spawn_options,
                 )
                 process_identity = _capture_spawn_identity(proc)
@@ -1982,7 +1988,7 @@ def launch_companion(
                         lock, record["launch_id"], proc.pid,
                         owner_pgid=proc.pid)
                 append_delegation(base, record)
-                if runtime == "codex":
+                if prompt_stdin:
                     assert proc.stdin is not None
                     proc.stdin.write(launch_text.encode("utf-8"))
                     proc.stdin.close()
@@ -2053,10 +2059,6 @@ def launch_companion(
             _validate_private_file(
                 context_snapshot, windows_sid, context_snapshot_identity,
             )
-            if prompt_private is not None:
-                _validate_private_file(
-                    prompt_private[0], windows_sid, prompt_private[1],
-                )
         output_digest = _stable_output_sha256(output_path, stdout_log)
         terminal = {
             **record, "at": now_iso(), "launch_status": "succeeded",
@@ -2131,7 +2133,6 @@ def launch_companion(
         if context_snapshot is not None:
             _cleanup_private_context(
                 context_snapshot, context_snapshot_identity, windows_sid,
-                prompt_private,
             )
 
 

@@ -1,6 +1,7 @@
 """Native Codex uses the protected delegation lifecycle without the plugin."""
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import shutil
@@ -379,9 +380,91 @@ def test_native_context_launch_frames_exact_snapshot_and_cleans_terminal(
 
     prompt = json.loads(capture_path.read_text(encoding="utf-8"))["prompt"]
     assert prompt.startswith("primary\n\n## Untrusted supplemental context")
-    assert "<supplemental-context>\nsupplement\n</supplemental-context>" in prompt
+    assert '<supplemental-context>\n"supplement"\n</supplemental-context>' in prompt
     assert terminal["context"] == metadata
+    assert terminal["prompt_sha256"] == hashlib.sha256(
+        prompt.encode("utf-8"),
+    ).hexdigest()
     assert set(terminal["context"]) == {"supplied", "bytes", "snapshot_id"}
+    assert not snapshot.parent.exists()
+
+
+def test_context_launch_refuses_text_that_does_not_match_stable_snapshot(
+        native_repo, tmp_path, monkeypatch, capsys):
+    import forge_cli.delegate as delegate
+
+    executable = fake_codex(tmp_path)
+    native_env(monkeypatch, tmp_path, executable)
+    source = tmp_path / "context.md"
+    source.write_text("captured", encoding="utf-8")
+    text, metadata, snapshot, identity = delegate.secure_context_snapshot(source)
+    try:
+        with pytest.raises(SystemExit):
+            launch_companion(
+                native_repo, task_id="grill-plan", text="primary",
+                path=native_repo / ".factory" / "grill-brief-plan.md",
+                task_sha256_value="a" * 64, model="model-pin", effort="high",
+                write=False, context_text=text + " drift",
+                context_metadata=metadata, context_snapshot=snapshot,
+                context_snapshot_identity=identity,
+            )
+        assert "does not match its stable snapshot" in capsys.readouterr().out
+        assert load_delegations(native_repo) == []
+    finally:
+        delegate._cleanup_private_context(snapshot, identity, "")
+
+
+def test_claude_context_launch_sends_exact_bound_prompt_over_stdin(
+        native_repo, tmp_path, monkeypatch):
+    import forge_cli.delegate as delegate
+
+    companion = tmp_path / "fixture_companion.py"
+    capture = tmp_path / "companion-capture.json"
+    companion.write_text(
+        "MAX_PROMPT_BYTES = 1048576\n"
+        "import json, os, sys\n"
+        "prompt = sys.stdin.buffer.read().decode('utf-8')\n"
+        "with open(os.environ['FAKE_COMPANION_CAPTURE'], 'w') as stream:\n"
+        "    json.dump({'argv': sys.argv[1:], 'prompt': prompt}, stream)\n"
+        "print(json.dumps({'status': 0, 'threadId': 'fixture', "
+        "'rawOutput': '{}'}))\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("FORGE_COORDINATOR", "claude")
+    monkeypatch.setenv("FAKE_COMPANION_CAPTURE", str(capture))
+    monkeypatch.setattr(delegate, "companion_script", lambda: companion)
+    monkeypatch.setattr(delegate.shutil, "which", lambda _name: sys.executable)
+    monkeypatch.setattr(delegate, "_process_table", lambda: {})
+    monkeypatch.setattr(delegate, "_capture_spawn_identity", lambda _proc: "known")
+    monkeypatch.setattr(
+        delegate, "_wait_and_reap",
+        lambda proc, *_args, **_kwargs: proc.wait() == 0,
+    )
+    source = tmp_path / "context.md"
+    source.write_text("", encoding="utf-8")
+    text, metadata, snapshot, identity = delegate.secure_context_snapshot(source)
+    terminal = launch_companion(
+        native_repo, task_id="grill-plan", text="primary",
+        path=native_repo / ".factory" / "grill-brief-plan.md",
+        task_sha256_value="a" * 64, model="model-pin", effort="high",
+        write=False, context_text=text, context_metadata=metadata,
+        context_snapshot=snapshot, context_snapshot_identity=identity,
+    )
+
+    captured = json.loads(capture.read_text(encoding="utf-8"))
+    prompt = captured["prompt"]
+    assert "--prompt-file" not in captured["argv"]
+    assert prompt.startswith("primary\n\n## Untrusted supplemental context")
+    assert prompt.count("</supplemental-context>") == 1
+    assert json.loads(
+        prompt.split("<supplemental-context>\n", 1)[1].rsplit(
+            "\n</supplemental-context>", 1,
+        )[0]
+    ) == ""
+    assert terminal["prompt_sha256"] == hashlib.sha256(
+        prompt.encode("utf-8"),
+    ).hexdigest()
+    assert terminal["context"] == metadata
     assert not snapshot.parent.exists()
 
 

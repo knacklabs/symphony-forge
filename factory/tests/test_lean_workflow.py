@@ -61,12 +61,89 @@ def _awaiting_story(repo: Path, tmp_path: Path) -> tuple[Path, str]:
 def test_native_plan_mode_approval_records_exact_digest_for_claude_exit_plan_mode(
         repo: Path, tmp_path: Path):
     plan, digest = _awaiting_story(repo, tmp_path)
+    event = native_claude_approval(repo)
+    displayed = event["tool_input"]["plan"]
+    event["tool_response"] = {"plan": displayed, "isAgent": False}
+    rejected = {
+        **event,
+        "tool_response": {**event["tool_response"], "status": "rejected"},
+    }
+    with pytest.raises(approval.ApprovalRefused, match="unsuccessful"):
+        approval.record_native_approval(repo, rejected, runtime="claude")
+    pending = {
+        **event,
+        "tool_response": {**event["tool_response"], "status": "pending"},
+    }
+    with pytest.raises(approval.ApprovalRefused, match="unsuccessful"):
+        approval.record_native_approval(repo, pending, runtime="claude")
     record = approval.record_native_approval(
-        repo, native_claude_approval(repo), runtime="claude")
+        repo, event, runtime="claude")
     assert record["approved_plan_sha256"] == digest
     assert "status: approved" in plan.read_text()
     assert json.loads(load_factory_lib(repo).run_state_path(repo).read_text())[
         "approved_plan_sha256"] == digest
+
+
+def test_review_identity_preserves_nested_domain_metadata_and_refuses_compound_tools(
+        repo: Path):
+    from forge_cli import stages
+
+    value = {
+        "commit": "recorder bookkeeping",
+        "automated": {
+            "generated_by": "implementer",
+            "extension": {"commit": "security source", "at": "scan time"},
+        },
+    }
+    assert stages._canonical_review_envelope(
+        value, nested=frozenset({"automated"}),
+    ) == {"automated": {"extension": {
+        "at": "scan time", "commit": "security source",
+    }}}
+    assert stages._proof_tool_identity(
+        repo, "python3 factory/scripts/verify.py",
+    )["reusable"] is False
+    assert stages._proof_tool_identity(
+        repo, "python3 -m pytest factory/tests/test_gates.py && git status",
+    )["reusable"] is False
+
+
+def test_review_identity_binds_task_grill_and_grouped_runner(repo: Path):
+    from forge_cli import stages
+
+    lib = load_factory_lib(repo)
+    lib.dump_json(lib.run_state_path(repo), {"issue_key": "S1", "story": "S1"})
+    plan = lib.evidence_path(repo, "S1", "task-plans/T1.md", for_write=True)
+    plan.parent.mkdir(parents=True, exist_ok=True)
+    plan.write_text("# exact task plan\n", encoding="utf-8")
+    grill = lib.evidence_path(
+        repo, "S1", "grills/tasks/T1.json", for_write=True,
+    )
+    lib.dump_json(grill, {
+        "verdict": "pass", "approved_by": "human-via-Codex",
+        "approved_at": "old", "commit": "old",
+    })
+    task = {"id": "T1", "acceptance_criteria": ["safe"]}
+    stage = {"id": "T1"}
+    first = stages.reviewed_meaning_identity(repo, stage, task)
+
+    lib.dump_json(grill, {
+        "verdict": "pass", "approved_by": "human-via-Codex",
+        "approved_at": "new", "commit": "new",
+    })
+    assert stages.reviewed_meaning_identity(repo, stage, task) == first
+
+    data = json.loads(grill.read_text())
+    data["approved_by"] = "human-via-Claude"
+    lib.dump_json(grill, data)
+    assert stages.reviewed_meaning_identity(repo, stage, task) != first
+
+    lib.dump_json(grill, {
+        "verdict": "pass", "approved_by": "human-via-Codex",
+    })
+    grouped = repo / "factory/scripts/forge_cli/review_groups.py"
+    grouped.write_text(grouped.read_text() + "\n# changed runner\n")
+    assert stages.reviewed_meaning_identity(repo, stage, task) != first
 
 
 def test_native_plan_mode_approval_records_exact_digest_for_codex_sync_approval(

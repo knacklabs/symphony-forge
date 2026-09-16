@@ -74,7 +74,9 @@ def test_selected_review_reviewed_meaning_includes_ci_generated_outputs_and_revi
     }
     assert set(meaning["inputs"]["review_instructions"]) == {
         "factory/prompts/reviewer.md", "factory/scripts/forge_cli/review.py",
-        "factory/scripts/forge_cli/review_brief.py", "factory/schemas/review.json",
+        "factory/scripts/forge_cli/review_brief.py",
+        "factory/scripts/forge_cli/review_groups.py",
+        "factory/schemas/review.json",
     }
     assert meaning["inputs"]["helper"]["current_sha256"] == hashlib.sha256(
         (repo / "factory/prompts/reviewer.md").read_bytes()).hexdigest()
@@ -87,7 +89,9 @@ def test_selected_review_reruns_for_substantive_automated_evidence_change(
         repo, stage, task, helper)["semantic_identity"]
     proof = lib.proof_path(repo, "S1", "tests.json", task_id="T1")
     evidence = json.loads(proof.read_text())
-    evidence["automated"]["cases"].append("new semantic case")
+    evidence["automated"]["security_scan"] = {
+        "source": {"commit": "new semantic source commit"},
+    }
     proof.write_text(json.dumps(evidence), encoding="utf-8")
     assert stage_helpers.reviewed_meaning_identity(
         repo, stage, task, helper)["semantic_identity"] != before

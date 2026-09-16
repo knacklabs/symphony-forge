@@ -1000,6 +1000,7 @@ def stage_review_binding(base: Path, stage: dict, task: dict) -> dict[str, str]:
 
 _BOOKKEEPING_KEYS = {
     "at", "recorded_at", "updated_at", "selected_at", "completed_at",
+    "approved_at",
     "generated_by", "commit",
 }
 
@@ -1007,11 +1008,22 @@ _BOOKKEEPING_KEYS = {
 def _canonical_review_value(value):
     if isinstance(value, dict):
         return {key: _canonical_review_value(item)
-                for key, item in sorted(value.items())
-                if key not in _BOOKKEEPING_KEYS}
+                for key, item in sorted(value.items())}
     if isinstance(value, list):
         return [_canonical_review_value(item) for item in value]
     return value
+
+
+def _canonical_review_envelope(value, *, nested: frozenset[str] = frozenset()):
+    """Remove recorder metadata only from known artifact envelope levels."""
+    if not isinstance(value, dict):
+        return _canonical_review_value(value)
+    return {
+        key: (_canonical_review_envelope(item)
+              if key in nested else _canonical_review_value(item))
+        for key, item in sorted(value.items())
+        if key not in _BOOKKEEPING_KEYS
+    }
 
 
 def reviewed_meaning_identity(
@@ -1026,10 +1038,14 @@ def reviewed_meaning_identity(
     automated = load_json(
         proof_path(base, story, "tests.json", task_id=task_id), default={},
     )
+    grill = load_json(
+        evidence_path(base, story, f"grills/tasks/{task_id}.json"), default={},
+    )
     instruction_paths = (
         "factory/prompts/reviewer.md",
         "factory/scripts/forge_cli/review.py",
         "factory/scripts/forge_cli/review_brief.py",
+        "factory/scripts/forge_cli/review_groups.py",
         "factory/schemas/review.json",
     )
     instructions = {
@@ -1057,7 +1073,10 @@ def reviewed_meaning_identity(
                 "verify_commands",
             )
         }),
-        "automated_evidence": _canonical_review_value(automated),
+        "task_grill": _canonical_review_envelope(grill),
+        "automated_evidence": _canonical_review_envelope(
+            automated, nested=frozenset({"automated", "functional"}),
+        ),
         "review_instructions": instructions,
         "helper": helper_identity,
         "generated_semantic_inputs": generated,
@@ -1560,8 +1579,9 @@ def _successful_launch_entry_valid(
             and entry.get("argv_sha256") == argv_digest(argv)
         )
     elif transport is None:
-        prompts = (str(brief), brief.relative_to(base).as_posix())
         context = entry.get("context")
+        context_opaque = ""
+        context_valid = context is None
         if (isinstance(context, dict)
                 and set(context) == {"supplied", "bytes", "snapshot_id"}
                 and context.get("supplied") is True
@@ -1572,28 +1592,35 @@ def _successful_launch_entry_valid(
                     r"context-[0-9a-f]{32}(?:[0-9a-f]{32})?",
                     context["snapshot_id"],
                 )
-                and isinstance(argv, list) and "--prompt-file" in argv):
-            prompt_index = argv.index("--prompt-file") + 1
-            if prompt_index < len(argv):
-                transient = Path(argv[prompt_index])
-                if (transient.is_absolute() and transient.name == "brief.md"
-                        and re.fullmatch(
-                            r"forge-context-[0-9a-f]{32}(?:[0-9a-f]{32})?",
-                                         transient.parent.name)
-                        and transient.parent.parent
-                        == Path(tempfile.gettempdir()).resolve()):
-                    prompts += (str(transient),)
+                ):
+            context_opaque = context["snapshot_id"].removeprefix("context-")
+            context_valid = True
+        base_argv = [
+            argv[0] if isinstance(argv, list) and argv else "",
+            entry.get("companion_path"), "task", "--json", "--cwd", str(base),
+            "--model", entry.get("model"), "--effort", entry.get("effort"),
+        ]
+        expected = []
+        if context_valid and not context_opaque:
+            expected = [base_argv + ["--prompt-file", prompt, "--write"]
+                        for prompt in (
+                            str(brief), brief.relative_to(base).as_posix(),
+                        )]
+        elif len(context_opaque) == 64 and re.fullmatch(
+                r"[0-9a-f]{64}", str(entry.get("prompt_sha256") or "")):
+            expected = [base_argv + ["--write"]]
+        elif len(context_opaque) == 32:
+            historical = (Path(tempfile.gettempdir()).resolve()
+                          / f"forge-context-{context_opaque}" / "brief.md")
+            expected = [base_argv + [
+                "--prompt-file", str(historical), "--write",
+            ]]
         argv_valid = (
             isinstance(argv, list)
             and bool(argv)
             and all(isinstance(token, str) for token in argv)
             and Path(argv[0]).stem.lower() == "node"
-            and argv in [[
-                argv[0], entry.get("companion_path"), "task", "--json",
-                "--cwd", str(base), "--model", entry.get("model"),
-                "--effort", entry.get("effort"), "--prompt-file", prompt,
-                "--write",
-            ] for prompt in prompts]
+            and argv in expected
             and entry.get("argv_sha256") == argv_digest(argv)
         )
     else:
@@ -1957,6 +1984,10 @@ def _proof_tool_identity(
     if not tokens:
         return {"command": "", "environment": environment_identity,
                 "reusable": False}
+    if (any(character in command for character in ";|&<>`\n")
+            or "$(" in command):
+        return {"command": tokens[0], "environment": environment_identity,
+                "reusable": False}
     outer = shutil.which(tokens[0], path=environment.get("PATH"))
     if not outer:
         return {"command": tokens[0], "environment": environment_identity,
@@ -1993,12 +2024,20 @@ def _proof_tool_identity(
         return dict(result)
     probe: list[str]
     if re.fullmatch(r"python(?:3(?:\.\d+)?)?(?:\.exe)?", name):
+        if any(Path(token).as_posix().endswith("factory/scripts/verify.py")
+               for token in tokens[1:]):
+            return {"command": tokens[0], "runner": runner,
+                    "environment": environment_identity, "reusable": False}
         probe = [str(outer_path)]
     elif name in {"uv", "uv.exe"} and len(tokens) > 2 and tokens[1] == "run":
         python_index = next((index for index, token in enumerate(tokens[2:], 2)
                              if re.fullmatch(r"python(?:3(?:\.\d+)?)?(?:\.exe)?",
                                              Path(token).name.lower())), -1)
         if python_index < 0:
+            return {"command": tokens[0], "runner": runner,
+                    "environment": environment_identity, "reusable": False}
+        if any(Path(token).as_posix().endswith("factory/scripts/verify.py")
+               for token in tokens[python_index + 1:]):
             return {"command": tokens[0], "runner": runner,
                     "environment": environment_identity, "reusable": False}
         probe = tokens[:python_index + 1]

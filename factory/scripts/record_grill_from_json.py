@@ -19,6 +19,7 @@ import os
 import re
 import stat
 import sys
+import tempfile
 from pathlib import Path
 
 from factory_lib import (
@@ -67,9 +68,10 @@ def _cold_launch_result(
     rows = completed[0]
     terminal = rows[-1]
     immutable = (
-        "task", "story", "brief_sha256", "task_sha256", "write", "model",
+        "task", "story", "brief_sha256", "prompt_sha256", "task_sha256",
+        "write", "model",
         "effort", "argv", "argv_sha256", "transport", "brief_path",
-        "output_path", "stderr_path",
+        "output_path", "stderr_path", "context",
     )
     if (len(rows) != 3
             or [row.get("launch_status") for row in rows]
@@ -101,6 +103,23 @@ def _cold_launch_result(
             or terminal.get("brief_sha256")
             != hashlib.sha256(brief_bytes).hexdigest()):
         raise SystemExit(f"{gate} cold-read launch brief identity is invalid")
+    context = terminal.get("context")
+    context_opaque = ""
+    if context is not None:
+        if (not isinstance(context, dict)
+                or set(context) != {"supplied", "bytes", "snapshot_id"}
+                or context.get("supplied") is not True
+                or type(context.get("bytes")) is not int
+                or context["bytes"] < 0
+                or not isinstance(context.get("snapshot_id"), str)):
+            raise SystemExit(f"{gate} cold-read context identity is invalid")
+        context_opaque = context["snapshot_id"].removeprefix("context-")
+        if not re.fullmatch(
+                r"[0-9a-f]{32}(?:[0-9a-f]{32})?", context_opaque):
+            raise SystemExit(f"{gate} cold-read context identity is invalid")
+        if len(context_opaque) == 64 and not re.fullmatch(
+                r"[0-9a-f]{64}", str(terminal.get("prompt_sha256") or "")):
+            raise SystemExit(f"{gate} cold-read prompt identity is invalid")
     output_text = terminal.get("output_path")
     if not _non_empty_string(output_text):
         raise SystemExit(f"{gate} cold-read launch has no durable result identity")
@@ -134,12 +153,21 @@ def _cold_launch_result(
         finding_text = native_result.message
     else:
         companion = terminal.get("companion_path")
-        prompts = {str(brief), brief.relative_to(root).as_posix()}
-        expected = [[
+        base_argv = [
             argv[0], companion, "task", "--json", "--cwd", str(root),
             "--model", terminal.get("model"), "--effort", terminal.get("effort"),
-            "--prompt-file", prompt,
-        ] for prompt in prompts]
+        ]
+        expected = []
+        if not context_opaque:
+            expected = [base_argv + ["--prompt-file", prompt] for prompt in (
+                str(brief), brief.relative_to(root).as_posix(),
+            )]
+        elif len(context_opaque) == 64:
+            expected = [base_argv]
+        else:
+            historical = (Path(tempfile.gettempdir()).resolve()
+                          / f"forge-context-{context_opaque}" / "brief.md")
+            expected = [base_argv + ["--prompt-file", str(historical)]]
         if (terminal.get("transport") is not None
                 or not _non_empty_string(companion)
                 or Path(argv[0]).stem.lower() != "node"
