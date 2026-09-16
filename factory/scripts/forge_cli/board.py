@@ -1160,7 +1160,7 @@ def task_dossiers(base: Path, key: str, detail: dict) -> list[dict]:
     dossiers = []
     for task in merge_task_detail(decomposition, stages, detail.get("task_rows")):
         task_id = str(task.get("id") or "")
-        own = task_proof.get(task_id) or {}
+        own = task_proof.get(task_id) or task_proof_records(base, key, task_id) or {}
         tests = own.get("tests") if isinstance(own.get("tests"), dict) else {}
         verify = own.get("verify") if isinstance(own.get("verify"), dict) else {}
         own_reviews = {aspect: record for aspect, record in (own.get("reviews") or {}).items()
