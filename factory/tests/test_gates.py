@@ -1419,12 +1419,59 @@ def test_phase_derivation_matches_legacy_run_json_semantics(repo):
     reviews.mkdir()
     for aspect in ("quality", "performance", "security"):
         (reviews / f"{aspect}.json").write_text("{}\n")
-    assert lib.load_json(lib.run_state_path(repo))["phase"] == "functional-check"
+    assert lib.load_json(lib.run_state_path(repo))["phase"] == "reviewing"
     (scoped / "outcome.json").write_text("{}\n")
-    assert lib.load_json(lib.run_state_path(repo))["phase"] == "functional-check"
+    assert lib.load_json(lib.run_state_path(repo))["phase"] == "reviewing"
 
     lib.dump_json(pointer, {"phase": "shipped"})
     assert lib.load_json(lib.run_state_path(repo))["phase"] == "shipped"
+
+
+def test_board_and_findings_prefer_selected_task_review_over_fixed_diagnostics(
+    repo, tmp_path,
+):
+    prepare_task_pr_ready(repo, tmp_path)
+    finish_task_for_pr_ready(repo)
+    write_task_proof(repo, "T1", publish_review=True, review_blocked=True)
+
+    scoped = story_state(repo, "ENG-1")
+    fixed = scoped / "reviews"
+    fixed.mkdir(exist_ok=True)
+    diagnostic = {
+        "score": 1,
+        "blocking_findings": [{
+            "category": "diagnostic-only", "area": "legacy",
+            "summary": "fixed diagnostic must not override selected proof",
+        }],
+    }
+    for aspect in ("quality", "performance", "security"):
+        (fixed / f"{aspect}.json").write_text(json.dumps(diagnostic))
+
+    from forge_cli.board import story_detail
+    detail = story_detail(repo, "ENG-1")
+    assert detail["evidence"]["reviews"]["quality"]["score"] == 10
+    assert detail["evidence"]["reviews"]["security"]["score"] == 7
+
+    from forge_cli.findings import collect
+    rows = collect(repo)
+    assert [row["summary"] for row in rows].count("selected current finding") == 1
+    assert not any(row["category"] == "diagnostic-only" for row in rows)
+
+    legacy = repo / ".factory" / "history" / "LEGACY" / "reviews"
+    legacy.mkdir(parents=True)
+    (legacy / "quality.json").write_text(json.dumps({
+        "non_blocking_findings": [{
+            "category": "legacy-history", "area": "archive",
+            "summary": "legacy fallback remains visible",
+        }],
+    }))
+    assert any(row["category"] == "legacy-history" for row in collect(repo))
+
+    selected = scoped / "tasks" / "T1" / "reviews" / "selected.json"
+    selected.write_text("{}\n")
+    invalid_detail = story_detail(repo, "ENG-1")
+    assert not any(invalid_detail["evidence"]["reviews"].values())
+    assert not any(row["category"] == "diagnostic-only" for row in collect(repo))
 
 
 def test_legacy_layout_stays_readable_by_every_consumer(repo):
@@ -2990,16 +3037,27 @@ def test_update_run_enforces_artifact_phase_order(repo, tmp_path):
     assert code == 0, out
 
     code, out = run(repo, "update_run.py", "--phase", "functional-check")
-    assert code != 0 and "reviews" in out
+    assert code != 0 and "selected review generation" in out
     reviews = repo / ".factory" / "reviews"
     reviews.mkdir(exist_ok=True)
     for aspect in ("quality", "performance", "security"):
         (reviews / f"{aspect}.json").write_text(json.dumps({"score": 9}))
     code, out = run(repo, "update_run.py", "--phase", "functional-check")
-    assert code == 0, out
+    assert code != 0 and "selected review generation" in out
 
     code, out = run(repo, "update_run.py", "--phase", "pr-ready")
     assert code != 0 and "pr_ready.py" in out
+
+
+def test_selected_review_generation_advances_phase_and_update_run(repo, tmp_path):
+    prepare_task_pr_ready(repo, tmp_path)
+    finish_task_for_pr_ready(repo)
+    write_task_proof(repo, "T1", publish_review=True)
+
+    lib = load_factory_lib(repo)
+    assert lib.load_json(lib.run_state_path(repo))["phase"] == "functional-check"
+    code, out = run(repo, "update_run.py", "--phase", "functional-check")
+    assert code == 0, out
 
 
 def test_decomposition_not_frozen_by_previous_story_authority(repo, tmp_path):

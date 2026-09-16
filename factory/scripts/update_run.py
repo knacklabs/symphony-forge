@@ -3,8 +3,9 @@ from __future__ import annotations
 
 import argparse
 from factory_lib import (
-    client_signoff, decomposition_state_path, dump_json, load_json, now_iso, repo_root,
-    review_dir, run_state_path, tests_state_path, verify_state_path,
+    active_task_id, client_signoff, decomposition_state_path, dump_json, load_json,
+    now_iso, read_selected_review_generation, repo_root, run_state_path,
+    tests_state_path, verify_state_path,
 )
 
 parser = argparse.ArgumentParser(description="Update factory run state")
@@ -28,6 +29,20 @@ GATED_PHASES = {
     "functional-check",
     "pr-ready",
 }
+
+
+def selected_review_ready(base):
+    state = load_json(run_state_path(base), default={})
+    story = state.get("issue_key") or state.get("story")
+    task_id = active_task_id(base)
+    if not isinstance(story, str) or not story or not task_id:
+        return False
+    generation, _selection, problems = read_selected_review_generation(
+        base, story, task_id,
+    )
+    return isinstance(generation, dict) and not problems
+
+
 PHASE_PREREQS = {
     "reviewing": (
         ("successful .factory/verify.json",
@@ -35,10 +50,8 @@ PHASE_PREREQS = {
         (".factory/tests.json",
          lambda base: tests_state_path(base).is_file()),
     ),
-    "functional-check": tuple(
-        (f".factory/reviews/{aspect}.json",
-         lambda base, name=aspect: (review_dir(base) / f"{name}.json").is_file())
-        for aspect in ("quality", "performance", "security")
+    "functional-check": (
+        ("the active task's valid selected review generation", selected_review_ready),
     ),
 }
 

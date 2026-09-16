@@ -14,7 +14,8 @@ import argparse
 from pathlib import Path
 
 from factory_lib import (
-    evidence_path, factory_dir, load_json, repo_root, run_state_path, story_dir,
+    evidence_path, factory_dir, load_json, read_selected_review_generation,
+    repo_root, run_state_path, story_dir,
 )
 from .roadmap import load_items
 
@@ -65,6 +66,23 @@ def collect(base: Path) -> list[dict]:
     if active_issue:
         task_keys.add(active_issue)
     for task in sorted(task_keys):
+        task_root = story_dir(base, task) / "tasks"
+        selected_tasks = [
+            path.parent.parent.name
+            for path in sorted(task_root.glob("*/reviews/selected.json"))
+        ]
+        if selected_tasks:
+            for task_id in selected_tasks:
+                generation, _selection, problems = read_selected_review_generation(
+                    base, task, task_id,
+                )
+                if problems or not isinstance(generation, dict):
+                    continue
+                for aspect, data in (generation.get("lenses") or {}).items():
+                    if aspect in {"quality", "performance", "security"} \
+                            and isinstance(data, dict):
+                        rows += _finding_rows(f"{task}/{task_id}", aspect, data)
+            continue
         for aspect in ("quality", "performance", "security"):
             review = evidence_path(base, task, f"reviews/{aspect}.json")
             if not review.is_file():

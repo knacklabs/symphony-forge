@@ -186,10 +186,13 @@ def derive_phase(root: Path, state: dict[str, Any]) -> str:
         implied = "testing"
     if (scoped / "tests.json").is_file() and (scoped / "verify.json").is_file():
         implied = "reviewing"
-    reviews = scoped / "reviews"
-    if all((reviews / f"{aspect}.json").is_file()
-           for aspect in ("quality", "performance", "security")):
-        implied = "functional-check"
+    task_id = state.get("task_id")
+    if isinstance(task_id, str) and task_id:
+        generation, _selection, problems = read_selected_review_generation(
+            root, key, task_id,
+        )
+        if isinstance(generation, dict) and not problems:
+            implied = "functional-check"
 
     order = (
         "discovery", "planning", "decomposing", "awaiting-approval",

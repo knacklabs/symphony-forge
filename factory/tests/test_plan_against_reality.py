@@ -230,3 +230,19 @@ def test_both_authoring_steps_say_the_same_thing(repo: Path):
                    "look up specific facts yourself"):
         assert shared in story, f"story step lost: {shared!r}"
         assert shared in task, f"task step lost: {shared!r}"
+
+
+def test_normal_review_docs_use_selected_generation_not_fixed_aspect_recorders(
+    repo: Path,
+):
+    docs = [
+        (HARNESS / "AGENTS.md").read_text(encoding="utf-8"),
+        (HARNESS / "WORKFLOW.md").read_text(encoding="utf-8"),
+        (HARNESS / "docs" / "getting-started.md").read_text(encoding="utf-8"),
+        (HARNESS / "factory" / "skills" / "forge.md").read_text(encoding="utf-8"),
+    ]
+    assert all("./forge review <task-id>" in text for text in docs)
+    getting_started = docs[2]
+    assert "selected generation" in getting_started
+    assert "record_review_from_json.py --aspect quality" not in getting_started
+    assert "Lite diagnostics" in getting_started

@@ -159,7 +159,7 @@ or route:
 | did any deferral come due | `./forge defer list --open` — resolve fired ones back onto the roadmap (`./forge defer resolve <id> --notes ...`) |
 | record the test results | `python3 factory/scripts/record_test_from_json.py --kind automated\|functional --input <json>` |
 | run verify / does it build | `python3 factory/scripts/verify.py` (never bypass with ad hoc commands) |
-| record the review | `python3 factory/scripts/record_review_from_json.py --aspect quality\|performance\|security --input <json>` |
+| record the review | `./forge review <task-id>` publishes the selected three-lens generation; `record_review_from_json.py --aspect ...` is Lite/diagnostic or one-time migration input only |
 | client signed off | `python3 factory/scripts/record_signoff.py` |
 | harvest context / process the dump | follow `factory/prompts/harvester.md`, then `forge.py context mark ...` |
 | harness status | read `.factory/run.json`; `forge.py context list --pending`; `ls factory/skills/proposed/` |

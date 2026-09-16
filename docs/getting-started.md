@@ -288,14 +288,16 @@ python3 factory/scripts/record_test_from_json.py --kind automated --input /tmp/a
 python3 factory/scripts/verify.py
 ```
 
-4. **Review** — say: **"Review it."** ONE autoreview run in Codex, three
-   lenses (`factory/prompts/reviewer.md`), three recorded artifacts:
+4. **Review** — say: **"Review it."** ONE autoreview run in Codex publishes a
+   validated selected generation containing all three lenses
+   (`factory/prompts/reviewer.md`):
 
 ```bash
-python3 factory/scripts/record_review_from_json.py --aspect quality --input /tmp/quality-review.json
-python3 factory/scripts/record_review_from_json.py --aspect performance --input /tmp/performance-review.json
-python3 factory/scripts/record_review_from_json.py --aspect security --input /tmp/security-review.json
+./forge review <task-id>
 ```
+
+`record_review_from_json.py --aspect ...` is reserved for Lite diagnostics and
+one-time migration input; fixed lens files are not ordinary task proof.
 
 5. **Functional check** — only when the decomposition says
    `user_facing: true`; then: **"Is this PR ready?"**

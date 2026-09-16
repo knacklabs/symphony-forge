@@ -76,7 +76,7 @@ python3 factory/scripts/record_decomposition_from_json.py --input /tmp/decomposi
 python3 factory/scripts/update_run.py --phase awaiting-approval --plan-status awaiting-approval
 python3 factory/scripts/verify.py
 python3 factory/scripts/record_test_from_json.py --kind automated --input /tmp/automated.json
-python3 factory/scripts/record_review_from_json.py --aspect quality --input /tmp/quality.json
+./forge review <task-id>
 ./forge outcome set "<what changed and what someone can now do>"
 python3 factory/scripts/pr_ready.py
 ```

@@ -627,8 +627,8 @@ stories still archive until `forge upgrade` migrates them.
 7. after implementation, run the task's tests and deterministic verify; reuse
    a successful receipt only when that proof type's content-bound identity is
    unchanged
-8. run ONE three-lens review for the task; reuse selected proof only while its
-   stamp-token delta and complete reviewed-meaning identity are unchanged
+8. run `./forge review <task-id>` once for the task; reuse selected proof only
+   while its stamp-token delta and complete reviewed-meaning identity are unchanged
 9. run `functional-checker` when the task has `user_facing: true`
 10. record the shipped outcome with `./forge outcome set "<what changed>"`
 11. run `python3 factory/scripts/pr_ready.py`
@@ -639,5 +639,6 @@ A branch is PR-ready only when:
 - decomposition status is `recorded`
 - deterministic verification passes
 - automated and functional test artifacts exist with no blockers
-- all three review artifacts exist with score >= 8 and no blockers
+- the task's selected review generation contains all three lenses with score
+  >= 8 and no blockers
 - acceptance criteria have direct evidence

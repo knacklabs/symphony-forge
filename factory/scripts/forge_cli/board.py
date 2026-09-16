@@ -92,10 +92,12 @@ def task_proof_records(base: Path, key: str, task_id: str) -> dict | None:
         tests = load_json(task_evidence_path(base, key, task_id, "tests.json"), default=None)
     except ValueError:
         return None
+    selected_recorded = task_evidence_path(
+        base, key, task_id, "reviews/selected.json",
+    ).is_file()
     reviews: dict[str, dict | None] = {aspect: None for aspect in ASPECTS}
     generation = None
     try:
-        from factory_lib import read_selected_review_generation
         generation, _selection, problems = read_selected_review_generation(base, key, task_id)
         if problems:
             generation = None
@@ -105,7 +107,8 @@ def task_proof_records(base: Path, key: str, task_id: str) -> dict | None:
         lenses = generation.get("lenses") or {}
         reviews = {aspect: lenses.get(aspect) if isinstance(lenses.get(aspect), dict) else None
                    for aspect in ASPECTS}
-    if verify is None and tests is None and not any(reviews.values()):
+    if verify is None and tests is None and not any(reviews.values()) \
+            and not selected_recorded:
         return None
     return {"verify": verify, "tests": tests, "reviews": reviews}
 
@@ -739,8 +742,7 @@ def story_detail(base: Path, key: str) -> dict | None:
         for aspect in ("quality", "performance", "security")
     }
     evidence["task_proof"] = story_task_proof(base, key, evidence.get("decomposition") or {})
-    if evidence["task_proof"] and evidence.get("verify") is None \
-            and evidence.get("tests") is None and not any(evidence["reviews"].values()):
+    if evidence["task_proof"]:
         evidence.update(rolled_up_evidence(evidence["task_proof"],
                                            evidence.get("decomposition") or {}))
     grills = evidence_path(base, key, "grills")
