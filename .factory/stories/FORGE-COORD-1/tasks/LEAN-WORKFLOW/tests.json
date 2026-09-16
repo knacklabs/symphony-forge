@@ -1,9 +1,9 @@
 {
-  "commit": "edd849d179b25d1b3b8cb31f41df275a8685d35f",
+  "commit": "b007a2340ec888f62b6fb7c0432c8d04e8578a6d",
   "automated": {
     "generated_by": "implementer",
     "status": "passed",
-    "summary": "LEAN-WORKFLOW at edd849d179b25d1b3b8cb31f41df275a8685d35f passed the official pre-review stage proof with all five declared verify commands and all 51 required selectors; test_id_misses=[]. Full factory suite: 1135 passed, 4 skipped in 1206.35s. PR #229 on that head passed Linux scaffold CI (1131 passed, 8 skipped) and native Windows hook gates (24 passed, 1 skipped), with ticket/contract checks green. Real native Claude/Codex Plan Mode smokes remain pending.",
+    "summary": "LEAN-WORKFLOW at edd849d179b25d1b3b8cb31f41df275a8685d35f passed the official pre-review stage proof with all five declared verify commands and all 51 required selectors; test_id_misses=[]. Full factory suite: 1135 passed, 4 skipped in 1206.35s. PR #229 on that head passed Linux scaffold CI (1131 passed, 8 skipped) and native Windows hook gates (24 passed, 1 skipped), with ticket/contract checks green. Real native Claude/Codex Plan Mode smokes were explicitly deferred by the user on 2026-09-16 for later inspection; no native approval event is claimed.",
     "blocking_findings": [],
     "commands_run": [
       "forge_cli.stages.run_stage_proof(base, \"LEAN-WORKFLOW\", task_for(base, \"LEAN-WORKFLOW\")) via PYTHONPATH=factory/scripts python3",
@@ -37,17 +37,15 @@
       "factory/tests/test_board_reads_task_proof.py",
       "factory/board/index.html"
     ],
-    "remaining_gaps": [
-      "Run and inspect a real Claude successful ExitPlanMode approval event in the disposable native fixture, binding exact digest and stable runtime/session/event identity.",
-      "Run and inspect real Codex synchronous Request changes, cancellation, and Approve plan events in the disposable native fixture; only approval may write an exact-digest record."
-    ],
+    "remaining_gaps": [],
     "manual_validation_steps": [
       "Live gh pr view 109 --repo knacklabs/symphony-forge --json number,state,headRefOid,mergeCommit,mergedAt,baseRefName on 2026-09-15 returned MERGED to main, head c4c2fd9d89e8446327125da5a6bc74d335910a47, merge 8f1d0530b29083c4b7a0978bebb86fd9b0e1f23c, mergedAt 2026-08-19T03:37:09Z; recorder-generated .factory/events/3679bb571b304025956aa2f6ac141e9d.json links FORGE-CFS-1 to #109 (commit 32b3ee6).",
       "Live gh pr view 110 --repo knacklabs/symphony-forge --json number,state,headRefOid,mergeCommit,mergedAt,baseRefName on 2026-09-15 returned MERGED to main, head bac5bdb4b5007a331f8e98037cbe55332a3b72b6, merge 6320c1a6e67ba0614ee960f57baf3605811b0d86, mergedAt 2026-08-19T17:25:32Z; recorder-generated .factory/events/31d5e07187fb4d9fab0a47009e90331b.json links FORGE-ACC-3 to #110 (commit 32b3ee6).",
       "On 2026-09-15, `./forge project audit --repo .` returned only two unrelated pending-story spec gaps: ship-clears-forge-authority and stage-done-proof-runner-robust missing spec.",
       "On 2026-09-15, `./forge delegate LEAN-WORKFLOW --scope factory/scripts/forge_cli/delegate.py --print-only` rendered exactly that single write path; no launch occurred.",
       "On 2026-09-15, `./forge delegate LEAN-WORKFLOW --print-only` rendered the same approved write-path set as the recorded decomposition; no launch occurred.",
-      "After main Board proof fix was merged, full b47cb3a verify surfaced the direct task_dossiers caller missing a precomputed task_proof: 1 failed, 1134 passed, 4 skipped. Canonical task-owned proof fallback in board.py at edd849d fixed the case; its focused check and seven Board checks passed, then full verify passed 1135/4."
+      "After main Board proof fix was merged, full b47cb3a verify surfaced the direct task_dossiers caller missing a precomputed task_proof: 1 failed, 1134 passed, 4 skipped. Canonical task-owned proof fallback in board.py at edd849d fixed the case; its focused check and seven Board checks passed, then full verify passed 1135/4.",
+      "On 2026-09-16, after being told that both disposable native fixtures still had zero approval records and zero captured completion events, the user explicitly authorized merging and continuing and said they would check later. This accounts for the native smoke requirement as an explicit user deferral; it is not evidence that either smoke passed."
     ],
     "tests_added_or_updated": [
       "factory/tests/test_delegate_scope.py: native Windows private context fixture constructs a protected current-SID-only DACL and confirms source restoration",
@@ -57,11 +55,14 @@
       "factory/tests/test_board_reads_task_proof.py: main merged Board task proof and selected-generation regression coverage"
     ],
     "non_blocking_findings": [
-      "Project audit reports two pending-story spec gaps outside LEAN-WORKFLOW: ship-clears-forge-authority and stage-done-proof-runner-robust are missing spec."
+      "Project audit reports two pending-story spec gaps outside LEAN-WORKFLOW: ship-clears-forge-authority and stage-done-proof-runner-robust are missing spec.",
+      "User-deferred follow-up: inspect real Claude ExitPlanMode and Codex request-changes/cancel/approve events in the prepared NATIVE-SMOKE fixtures. No native approval event is currently claimed."
     ],
-    "residual_risks": [],
-    "recorded_at": "2026-09-16T01:54:28+00:00",
-    "commit": "edd849d179b25d1b3b8cb31f41df275a8685d35f"
+    "residual_risks": [
+      "The real native Claude and Codex approval interactions were not observed before merge. Automated hook, identity, replay, rejection, cancellation, and Windows/Linux checks passed; the user accepted this residual interaction risk for later inspection on 2026-09-16."
+    ],
+    "recorded_at": "2026-09-16T03:29:42+00:00",
+    "commit": "b007a2340ec888f62b6fb7c0432c8d04e8578a6d"
   },
-  "updated_at": "2026-09-16T01:54:28+00:00"
+  "updated_at": "2026-09-16T03:29:42+00:00"
 }
