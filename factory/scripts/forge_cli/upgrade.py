@@ -927,7 +927,9 @@ def _revalidate_lean_inventory(target: Path, migration: dict) -> None:
         fail("Lean migration independent raw inventory changed before publication")
     replaced_paths = {
         entry["path"] for entry in migration["entries"]
-        if entry.get("family") in {"old-hook-flag", "retired-forge-profile"}
+        if (entry.get("family") in {"old-hook-flag", "retired-forge-profile"}
+            or entry["path"] in LEAN_RUNTIME_PATHS
+            or entry.get("reason") == "current-runtime-profile")
     }
 
     def stable(entries: list[dict]) -> list[dict]:
