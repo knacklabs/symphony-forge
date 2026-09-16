@@ -172,8 +172,12 @@ def rolled_up_evidence(task_proof: dict[str, dict], decomposition: dict) -> dict
             finding for record in records.values() for finding in record.get("blocking_findings") or []]
         merged["non_blocking_findings"] = [
             finding for record in records.values() for finding in record.get("non_blocking_findings") or []]
-        merged["tasks"] = {task_id: bool(review_passed(record)) for task_id, record in records.items()}
-        if not complete or not all(review_passed(record) for record in records.values()):
+        merged["tasks"] = {
+            task_id: bool(task_id in records and review_passed(records[task_id]))
+            for task_id in declared
+        }
+        if (not complete or len(records) != len(declared)
+                or not all(review_passed(record) for record in records.values())):
             merged["score"] = min(merged.get("score", 0), 7)
         reviews[aspect] = merged
     return {"verify": verify, "tests": tests_out, "reviews": reviews}

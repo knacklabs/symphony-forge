@@ -5,8 +5,10 @@ import io
 import itertools
 import json
 import os
+from contextlib import nullcontext
 from dataclasses import dataclass
 from pathlib import Path, PurePosixPath
+from typing import BinaryIO
 
 
 RUNTIMES = ("claude", "codex")
@@ -128,8 +130,12 @@ class NativeResult:
     error: str = ""
 
 
-def scan_native_result(path: Path, *, data: bytes | None = None) -> NativeResult:
+def scan_native_result(
+    path: Path, *, data: bytes | None = None, stream: BinaryIO | None = None,
+) -> NativeResult:
     """Scan native JSONL once, retaining identity, terminal status, and message."""
+    if data is not None and stream is not None:
+        raise ValueError("native result accepts captured bytes or a stable stream, not both")
     starts: list[dict] = []
     message = ""
     last_type = ""
@@ -137,9 +143,11 @@ def scan_native_result(path: Path, *, data: bytes | None = None) -> NativeResult
     syntax_error = ""
     preserve_session = True
     try:
-        with (io.BytesIO(data) if data is not None else path.open("rb")) as stream:
+        source = (nullcontext(stream) if stream is not None else
+                  io.BytesIO(data) if data is not None else path.open("rb"))
+        with source as opened_stream:
             raw_lines = itertools.chain.from_iterable(
-                block.splitlines(keepends=True) for block in stream)
+                block.splitlines(keepends=True) for block in opened_stream)
             for number, raw_line in enumerate(raw_lines, start=1):
                 terminated = raw_line.endswith((b"\n", b"\r"))
                 if terminated:

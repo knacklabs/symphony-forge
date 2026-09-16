@@ -21,6 +21,7 @@ import shutil
 import signal
 import subprocess
 import sys
+import tempfile
 import threading
 import time
 import types
@@ -98,6 +99,36 @@ def fake_psutil(processes, *, current_user="owner"):
             if pid is None else by_pid[pid]
         ),
     )
+
+
+def test_board_review_rollup_is_incomplete_when_any_task_lacks_a_lens():
+    from forge_cli.board import rolled_up_evidence
+
+    clean = {
+        "score": 10,
+        "blocking_findings": [],
+        "non_blocking_findings": [],
+        "summary": "clean",
+    }
+    decomposition = {"tasks": [{"id": "T1"}, {"id": "T2"}]}
+    task_proof = {
+        "T1": {
+            "verify": {"ok": True},
+            "tests": {"automated": {"status": "passed"}},
+            "reviews": {aspect: clean for aspect in ("quality", "performance", "security")},
+        },
+        "T2": {
+            "verify": {"ok": True},
+            "tests": {"automated": {"status": "passed"}},
+            "reviews": {"quality": clean, "performance": clean, "security": None},
+        },
+    }
+
+    rolled = rolled_up_evidence(task_proof, decomposition)
+
+    assert rolled["reviews"]["quality"]["score"] == 10
+    assert rolled["reviews"]["security"]["score"] == 7
+    assert rolled["reviews"]["security"]["tasks"] == {"T1": True, "T2": False}
 
 
 @pytest.mark.skipif(
@@ -332,6 +363,7 @@ def record_grill(repo: Path, gate: str, verdict: str = "pass",
     label, artifact = GATES[gate].locate(
         repo, "", str(digest_of) if digest_of else "")
     _seed_cold_launch(repo, gate, hashlib.sha256(artifact.encode()).hexdigest(),
+                      artifact_text=artifact,
                       findings={field: payload[field]
                                 for field in ("gaps", "contradictions")})
     extra = ["--input-digest", str(digest_of)] if digest_of else []
@@ -423,7 +455,8 @@ def record_task_grill(repo: Path, task: dict, verdict: str = "pass",
 
 
 def _seed_cold_launch(repo: Path, gate: str, digest: str, task_id: str = "",
-                      *, findings: dict | None = None) -> None:
+                      *, findings: dict | None = None,
+                      artifact_text: str | None = None) -> None:
     from forge_cli.delegate import argv_digest, delegations_path
     label = f"grill-{gate}" + (f"-{task_id}" if task_id else "")
     path = delegations_path(repo)
@@ -436,7 +469,14 @@ def _seed_cold_launch(repo: Path, gate: str, digest: str, task_id: str = "",
     launch_id = f"launch-test-{uuid.uuid4().hex}"
     suffix = f"-{task_id}" if task_id else ""
     brief = repo / ".factory" / f"grill-brief-{gate}{suffix}.md"
-    brief.write_text("fixture cold-read brief\n", encoding="utf-8")
+    from forge_cli.grill import _cold_artifact_frame
+    brief.write_text(
+        ("fixture cold-read brief\n" if artifact_text is None else
+         "fixture cold-read brief\n\n"
+         f"## The artifact under interrogation ({gate})\n\n"
+         f"{_cold_artifact_frame(artifact_text)}\n\n## What to return\n"),
+        encoding="utf-8",
+    )
     output = repo / ".factory" / f"{launch_id}.stdout.log"
     output.write_text(json.dumps({
         "status": 0, "threadId": "fixture-session",
@@ -15614,7 +15654,6 @@ def test_grill_run_routes_only_unresolved_material_choices_to_human(
         repo, monkeypatch, capsys):
     from forge_cli import delegate, grill
 
-    monkeypatch.setattr(grill, "_refuse_past_the_cap", lambda *_args: None)
     monkeypatch.setattr(grill, "_refuse_a_second_cold_read", lambda *_args: None)
     monkeypatch.setattr(grill, "_artifact_text", lambda *_args: ("plan", "body"))
     monkeypatch.setattr(grill, "_compose_brief", lambda *_args: "brief")
@@ -15622,7 +15661,7 @@ def test_grill_run_routes_only_unresolved_material_choices_to_human(
                         lambda *_args: ("gpt-test", "high", 0))
     monkeypatch.setattr(delegate, "launch_companion", lambda *_args, **_kwargs: None)
     args = argparse.Namespace(
-        repo=str(repo), gate="plan", task="", file="", reread="",
+        repo=str(repo), gate="plan", task="", file="", context_file="",
         print_only=False,
     )
 
@@ -15633,6 +15672,34 @@ def test_grill_run_routes_only_unresolved_material_choices_to_human(
     assert "only an unresolved material choice" in output
     assert "synchronous question tool" in output
     assert "EVERY finding" not in output
+
+
+def test_grill_context_file_uses_secure_snapshot_and_parser_has_no_reread(
+        repo, tmp_path, monkeypatch):
+    from forge_cli import delegate, grill
+
+    source = tmp_path / "supplement.md"
+    source.write_text("untrusted material", encoding="utf-8")
+    captured = {}
+    monkeypatch.setattr(grill, "_refuse_a_second_cold_read", lambda *_args: None)
+    monkeypatch.setattr(grill, "_artifact_text", lambda *_args: ("plan", "body"))
+    monkeypatch.setattr(grill, "_compose_brief", lambda *_args: "brief")
+    monkeypatch.setattr(delegate, "mode_run_config",
+                        lambda *_args: ("gpt-test", "high", 0))
+    monkeypatch.setattr(
+        delegate, "launch_companion",
+        lambda *_args, **kwargs: captured.update(kwargs),
+    )
+    grill.cmd_grill_run(argparse.Namespace(
+        repo=str(repo), gate="plan", task="", file="",
+        context_file=str(source), print_only=True,
+    ))
+
+    assert captured["context_text"] == "untrusted material"
+    assert captured["context_metadata"]["supplied"] is True
+    assert not captured["context_snapshot"].parent.exists()
+    code, out = run(repo, "forge.py", "grill", "run", "--help")
+    assert code == 0 and "--context-file" in out and "--reread" not in out
 
 
 def test_delegate_derives_write_from_stage_state(repo, tmp_path):
@@ -21537,6 +21604,40 @@ def test_require_successful_launch_accepts_windows_node_exe(repo):
     _seed_valid_launch(repo, "T1", STAGE_TASK, started_at, "/usr/bin/python3")
     with pytest.raises(SystemExit):
         _require_successful_launch(repo, "T1", stage, STAGE_TASK)
+
+
+@pytest.mark.parametrize("opaque", ["a" * 32, "b" * 64])
+def test_successful_launch_accepts_historical_and_bound_context_ids(repo, opaque):
+    from factory_lib import sha256_of
+    from forge_cli.delegate import argv_digest
+    from forge_cli.stages import _successful_launch_entry_valid
+
+    stage = {"id": "T1", "started_at": "2026-01-01T00:00:00Z"}
+    brief = repo / ".factory" / "briefs" / "T1.md"
+    brief.parent.mkdir(parents=True, exist_ok=True)
+    brief.write_text("brief\n", encoding="utf-8")
+    prompt = (Path(tempfile.gettempdir()).resolve()
+              / f"forge-context-{opaque}" / "brief.md")
+    argv = [
+        "node", "/opt/codex/codex-companion.mjs", "task", "--json",
+        "--cwd", str(repo), "--model", "gpt-test", "--effort", "medium",
+        "--prompt-file", str(prompt), "--write",
+    ]
+    entry = {
+        "launch_id": "launch-context", "launch_status": "succeeded",
+        "exit_code": 0, "write": True, "stage_started_at": stage["started_at"],
+        "brief_sha256": sha256_of(brief), "companion_path": argv[1],
+        "model": "gpt-test", "effort": "medium", "argv": argv,
+        "argv_sha256": argv_digest(argv),
+        "context": {
+            "supplied": True, "bytes": 7,
+            "snapshot_id": f"context-{opaque}",
+        },
+    }
+
+    assert _successful_launch_entry_valid(repo, "T1", stage, entry)
+    entry["context"]["device"] = 1
+    assert not _successful_launch_entry_valid(repo, "T1", stage, entry)
 
 
 def test_vendored_client_extends_workflow_prefixes(repo, tmp_path):

@@ -187,7 +187,8 @@ def test_selected_review_reruns_for_changed_acceptance_security_migration_or_evi
 def _fake_uv_probe(repo: Path, monkeypatch) -> tuple[dict, Path]:
     runner = repo / "fake-uv"
     runner.write_bytes(b"fake uv runner v1")
-    state = {"interpreter": b"ephemeral Python v1", "dependency": "1"}
+    state = {"interpreter": b"ephemeral Python v1", "transitive": "1",
+             "probe": "complete"}
     real_which = stages.shutil.which
     monkeypatch.setattr(stages.shutil, "which", lambda command, **kwargs:
                         str(runner) if command == "uv" else
@@ -197,13 +198,22 @@ def _fake_uv_probe(repo: Path, monkeypatch) -> tuple[dict, Path]:
         assert argv[0] == "uv" and "-c" in argv
         ephemeral = repo / "temporary-interpreter"
         ephemeral.write_bytes(state["interpreter"])
+        dependencies = [
+            {"name": "psutil", "version": "5", "metadata_sha256": "a" * 64,
+             "record_sha256": "b" * 64},
+            {"name": "pytest", "version": "8", "metadata_sha256": "c" * 64,
+             "record_sha256": "d" * 64},
+            {"name": "transitive-package", "version": state["transitive"],
+             "metadata_sha256": "e" * 64, "record_sha256": "f" * 64},
+        ]
+        if state["probe"] == "duplicate":
+            dependencies.append(dict(dependencies[-1]))
+        elif state["probe"] == "incomplete":
+            dependencies[-1]["record_sha256"] = ""
         data = {
             "interpreter_sha256": hashlib.sha256(ephemeral.read_bytes()).hexdigest(),
             "interpreter_size": ephemeral.stat().st_size,
-            "version": "3.11", "dependencies": [
-                {"name": name, "version": state["dependency"],
-                 "metadata_sha256": "m" * 64, "record_sha256": "r" * 64}
-                for name in json.loads(argv[-1])],
+            "version": "3.11", "dependencies": dependencies,
         }
         ephemeral.unlink()
         return subprocess.CompletedProcess(argv, 0, json.dumps(data), "")
@@ -225,8 +235,8 @@ def test_uv_temporary_interpreter_identity_survives_cleanup(repo: Path, monkeypa
     assert first["interpreter"]["sha256"]
     assert not (repo / "temporary-interpreter").exists()
     assert "path" not in first["interpreter"]
-    assert {row["name"].lower() for row in first["dependencies"]} == {
-        "pytest", "psutil"}
+    assert {row["name"] for row in first["dependencies"]} == {
+        "pytest", "psutil", "transitive-package"}
 
 
 def test_metadata_only_head_and_effective_board_inputs(repo: Path):
@@ -284,8 +294,12 @@ def test_probe_changes_interpreter_dependency_and_runner_inputs(repo: Path, monk
     assert changed["reusable"] is True
     assert changed["interpreter"] != base["interpreter"]
     state["interpreter"] = b"ephemeral Python v1"
-    state["dependency"] = "2"
+    state["transitive"] = "2"
     changed = stages._proof_tool_identity(repo, command)
     assert changed["dependencies"] != base["dependencies"]
+    state["probe"] = "incomplete"
+    assert stages._proof_tool_identity(repo, command)["reusable"] is False
+    state["probe"] = "duplicate"
+    assert stages._proof_tool_identity(repo, command)["reusable"] is False
     runner.write_bytes(b"fake uv runner v2")
     assert stages._proof_tool_identity(repo, command)["runner"] != base["runner"]

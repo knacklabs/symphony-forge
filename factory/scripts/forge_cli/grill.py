@@ -19,6 +19,7 @@ coordinator's job through the ledger-matched recorder, exactly as before.
 from __future__ import annotations
 
 import argparse
+import re
 from pathlib import Path
 
 from factory_lib import load_json, repo_root, run_state_path
@@ -166,7 +167,7 @@ def _compose_brief(base: Path, gate: str, label: str, artifact: str,
         _contract_section(base, gate, task_id),
         f"## The artifact under interrogation ({label})",
         "",
-        artifact,
+        _cold_artifact_frame(artifact),
         "",
         "## What to return",
         "",
@@ -180,74 +181,6 @@ def _compose_brief(base: Path, gate: str, label: str, artifact: str,
     ])
 
 
-# Two cold reads without a recordable pass means the grill is no longer
-# converging on the artifact. Round one finds the seam errors, round two
-# checks the fold; every round past that on the stories measured bought only
-# residue an implementer hits anyway (one ran to eleven and asked for help,
-# one to twenty-six, one to forty over six hours; a task grill's third round
-# returned locks, a locale and a bounded key). Past two, the human is brought
-# in or the residue is folded and the work starts.
-ROUNDS_BEFORE_ESCALATING = 2
-
-
-def _rounds_since_last_pass(base: Path, ledger_id: str, gate: str,
-                            task_id: str) -> int:
-    """Cold reads released for this gate since its last recorded pass.
-
-    From the delegation ledger, which carries a row per launch with its pid —
-    a count of runs that actually happened. Distinct launch ids, because one
-    launch appends several rows as it starts, runs and finishes.
-    """
-    try:
-        from factory_lib import (
-            evidence_path, load_json, run_state_path,
-        )
-        from grill_gates import get_gate
-
-        story = load_json(run_state_path(base), default={}).get("issue_key", "")
-        record = load_json(
-            evidence_path(base, story if get_gate(gate).story_scoped else "",
-                          get_gate(gate).evidence_name(task_id)), default={})
-        since = str(record.get("recorded_at") or "")
-        return sum(
-            row.get("launch_status") != "failed"
-            for row in _latest_launch_rows(base, ledger_id, since)
-        )
-    except (Exception, SystemExit):
-        # SystemExit is NOT an Exception: load_delegations calls fail() on a
-        # malformed ledger. Never let the counter refuse a grill it cannot
-        # count — a missed cap costs a round, a false cap costs the story.
-        return 0
-
-
-def _refuse_past_the_cap(base: Path, ledger_id: str, gate: str,
-                         task_id: str) -> None:
-    rounds = _rounds_since_last_pass(base, ledger_id, gate, task_id)
-    if rounds < ROUNDS_BEFORE_ESCALATING:
-        return
-    try:
-        from forge_cli.signal import open_escalation
-        if open_escalation(base):
-            return  # the human has been brought in; carry on
-    except (Exception, SystemExit):
-        return
-
-    fail(
-        f"{rounds} cold reads on --gate {gate} without a recorded pass.\n\n"
-        "  This is no longer a grilling problem. Past a handful of rounds the "
-        "reader has stopped converging on the artifact and started circling "
-        "something nobody has decided, and another round cannot settle that — "
-        "stories that kept going reached eleven, twenty-six and forty rounds, "
-        "the last costing six hours.\n\n"
-        "  Resolve repository-answerable findings from repository facts. If "
-        "an unresolved material choice remains, take only that choice to the "
-        "human, say what you recommend, and record what they decide:\n"
-        "    ./forge signal escalate --missing-decision \"<what nobody has "
-        "decided>\" --checked \"contract,plan,constitution,decisions,lessons\"\n"
-        "  Grilling continues after that. Recording a pass resets the count."
-    )
-
-
 def _artifact_digest(artifact: str) -> str:
     """Digest the exact bytes the reader was shown.
 
@@ -257,6 +190,34 @@ def _artifact_digest(artifact: str) -> str:
     """
     import hashlib
     return hashlib.sha256(artifact.encode("utf-8")).hexdigest()
+
+
+def _cold_artifact_frame(artifact: str) -> str:
+    """Frame exact artifact bytes independently of Markdown headings/newlines."""
+    size = len(artifact.encode("utf-8"))
+    return (
+        f"<!-- forge:cold-artifact sha256={_artifact_digest(artifact)} "
+        f"bytes={size} -->\n{artifact}"
+    )
+
+
+def _cold_artifact_from_brief(brief: bytes, digest: str) -> str | None:
+    """Recover one exact digest-bound artifact frame from authenticated bytes."""
+    if not re.fullmatch(r"[0-9a-f]{64}", digest):
+        return None
+    frame = re.compile(
+        rb"<!-- forge:cold-artifact sha256=" + digest.encode("ascii")
+        + rb" bytes=([0-9]+) -->\n"
+    )
+    matches = list(frame.finditer(brief))
+    if len(matches) != 1:
+        return None
+    start = matches[0].end()
+    end = start + int(matches[0].group(1))
+    if end > len(brief) or not brief[end:].startswith(b"\n\n## What to return\n"):
+        return None
+    artifact = brief[start:end].decode("utf-8")
+    return artifact if _artifact_digest(artifact) == digest else None
 
 
 def _launch_rows(
@@ -296,31 +257,15 @@ def _last_pass_at(base: Path, gate: str, task_id: str) -> str:
 
 
 def _refuse_a_second_cold_read(base: Path, ledger_id: str, gate: str,
-                               task_id: str, reread: str) -> None:
-    """One unconstrained cold read per recorded pass.
-
-    The second read is the one that diverges: it has no memory of what the
-    first found, so it returns a different frontier and the grill never ends.
-    Amending the artifact is exactly when a second read feels necessary and
-    exactly when it is wrong: the amendment answers the findings, so a reader
-    that never saw them will not check it, it will look for new ones.
-
-    This is not a wall. The coordinator resolves repository-answerable
-    findings, escalates only an unresolved material choice, amends the artifact
-    once, and records the pass against the AMENDED version -- one read, then
-    save. A reread stays available as a CHOICE with a reason, for when
-    the answers changed the artifact's SHAPE rather than its details; the
-    reason is ledgered, and the five-read cap still backstops it.
-    """
-    if reread:
-        return
+                               task_id: str) -> None:
+    """Allow exactly one successful cold launch per recorded pass."""
     try:
         since = _last_pass_at(base, gate, task_id)
         story = load_json(run_state_path(base), default={}).get("issue_key", "") \
             if get_gate(gate).story_scoped else ""
         cold = [row for row in _latest_launch_rows(
             base, ledger_id, since, story=story)
-                if row.get("launch_status") != "failed"]
+                if row.get("launch_status") == "succeeded"]
         if not cold:
             return
     except (Exception, SystemExit):
@@ -342,16 +287,16 @@ def _refuse_a_second_cold_read(base: Path, ledger_id: str, gate: str,
         "    python3 factory/scripts/record_grill_from_json.py "
         f"--gate {gate}"
         f"{' --task ' + task_id if task_id else ''} --input <json>\n\n"
-        "  If their answers changed the artifact's SHAPE rather than its "
-        "details, say so and read again:\n"
-        f"    ./forge grill run --gate {gate}"
-        f"{' --task ' + task_id if task_id else ''} "
-        "--reread \"<what changed shape>\""
+        "  The successful cold launch remains authoritative until the pass is "
+        "recorded. Failed launches do not consume it."
     )
 
 
 def cmd_grill_run(args: argparse.Namespace) -> None:
-    from .delegate import launch_companion, mode_run_config
+    from .delegate import (
+        _cleanup_private_context, _windows_current_sid, launch_companion,
+        mode_run_config, secure_context_snapshot,
+    )
 
     base = Path(args.repo).resolve() if args.repo else repo_root()
     gate = args.gate
@@ -362,11 +307,7 @@ def cmd_grill_run(args: argparse.Namespace) -> None:
     ledger_id = f"grill-{gate}" + (f"-{task_id}" if task_id else "")
     # Before composing anything: a capped run should not pay for a brief, and
     # a missing artifact should not report itself ahead of the real problem.
-    _refuse_past_the_cap(base, ledger_id, gate, task_id)
-    # One unconstrained read per recorded pass. Amending the artifact is when
-    # a second read feels necessary and exactly when it diverges.
-    _refuse_a_second_cold_read(base, ledger_id, gate, task_id,
-                               (getattr(args, "reread", "") or "").strip())
+    _refuse_a_second_cold_read(base, ledger_id, gate, task_id)
 
     label, artifact = _artifact_text(
         base, gate, task_id, (getattr(args, "file", "") or "").strip())
@@ -374,19 +315,36 @@ def cmd_grill_run(args: argparse.Namespace) -> None:
     path = base / ".factory" / f"grill-brief-{gate}" \
         f"{'-' + task_id if task_id else ''}.md"
     model, effort, _bound = mode_run_config(base, "grill")
-
-    launch_companion(
-        base,
-        task_id=ledger_id,
-        text=text,
-        path=path,
-        task_sha256_value=_artifact_digest(artifact),
-        model=model,
-        effort=effort,
-        write=False,          # a cold read never writes, and never authorises
-        story=load_json(run_state_path(base), default={}).get("issue_key", ""),
-        print_only=bool(args.print_only),
-    )
+    context_text = ""
+    context_metadata = None
+    context_snapshot = None
+    context_identity = None
+    if context_file := (getattr(args, "context_file", "") or "").strip():
+        (context_text, context_metadata, context_snapshot,
+         context_identity) = secure_context_snapshot(Path(context_file), base=base)
+    try:
+        launch_companion(
+            base,
+            task_id=ledger_id,
+            text=text,
+            path=path,
+            task_sha256_value=_artifact_digest(artifact),
+            model=model,
+            effort=effort,
+            write=False,          # a cold read never writes, and never authorises
+            story=load_json(run_state_path(base), default={}).get("issue_key", ""),
+            print_only=bool(args.print_only),
+            context_text=context_text,
+            context_metadata=context_metadata,
+            context_snapshot=context_snapshot,
+            context_snapshot_identity=context_identity,
+        )
+    finally:
+        if context_snapshot is not None and context_snapshot.exists():
+            _cleanup_private_context(
+                context_snapshot, context_identity,
+                _windows_current_sid() if __import__("os").name == "nt" else "",
+            )
     if args.print_only:
         return
     print(

@@ -12,6 +12,7 @@ of what blocked) but never satisfies a gate.
 from __future__ import annotations
 
 import argparse
+import difflib
 import hashlib
 import json
 import os
@@ -37,7 +38,9 @@ def _non_empty_string(value: object) -> bool:
     return isinstance(value, str) and bool(value.strip())
 
 
-def _cold_launch_result(root: Path, gate: str, task_id: str) -> tuple[str, dict]:
+def _cold_launch_result(
+    root: Path, gate: str, task_id: str,
+) -> tuple[str, dict, str | None]:
     from forge_cli.delegate import argv_digest, load_delegations
     label = f"grill-{gate}" + (f"-{task_id}" if task_id else "")
     story = load_json(run_state_path(root), default={}).get("issue_key", "")
@@ -89,9 +92,14 @@ def _cold_launch_result(root: Path, gate: str, task_id: str) -> tuple[str, dict]
     brief = root / ".factory" / (
         f"grill-brief-{gate}" + (f"-{task_id}" if task_id else "") + ".md"
     )
+    try:
+        brief_bytes = brief.read_bytes()
+    except OSError:
+        brief_bytes = b""
     if (terminal.get("brief_path") != brief.relative_to(root).as_posix()
-            or not brief.is_file()
-            or terminal.get("brief_sha256") != sha256_of(brief)):
+            or not brief_bytes
+            or terminal.get("brief_sha256")
+            != hashlib.sha256(brief_bytes).hexdigest()):
         raise SystemExit(f"{gate} cold-read launch brief identity is invalid")
     output_text = terminal.get("output_path")
     if not _non_empty_string(output_text):
@@ -163,11 +171,40 @@ def _cold_launch_result(root: Path, gate: str, task_id: str) -> tuple[str, dict]
     digest = terminal.get("task_sha256")
     if not isinstance(digest, str) or not re.fullmatch(r"[0-9a-f]{64}", digest):
         raise SystemExit(f"{gate} cold-read launch has no exact input digest")
-    return digest, findings
+    from forge_cli.grill import _cold_artifact_from_brief
+    try:
+        cold_artifact = _cold_artifact_from_brief(brief_bytes, digest)
+    except UnicodeDecodeError:
+        raise SystemExit(f"{gate} cold-read brief artifact is not UTF-8")
+    if (cold_artifact is not None
+            and hashlib.sha256(cold_artifact.encode("utf-8")).hexdigest() != digest):
+        raise SystemExit(f"{gate} cold-read brief artifact does not match its input digest")
+    return digest, findings, cold_artifact
 
 
-def _validate_dispositions(payload: dict, cold: str, final: str,
-                           cold_findings: dict) -> None:
+def _artifact_delta(cold: str, final: str) -> list[dict]:
+    """Return exact changed line spans; equal content is intentionally omitted."""
+    cold_lines = cold.splitlines(keepends=True)
+    final_lines = final.splitlines(keepends=True)
+    return [
+        {
+            "cold_start": left_start,
+            "cold_end": left_end,
+            "cold": "".join(cold_lines[left_start:left_end]),
+            "final_start": right_start,
+            "final_end": right_end,
+            "final": "".join(final_lines[right_start:right_end]),
+        }
+        for tag, left_start, left_end, right_start, right_end
+        in difflib.SequenceMatcher(a=cold_lines, b=final_lines, autojunk=False).get_opcodes()
+        if tag != "equal"
+    ]
+
+
+def _validate_dispositions(
+    payload: dict, cold: str, final: str, cold_findings: dict,
+    cold_artifact: str | None, final_artifact: str,
+) -> None:
     if any(payload.get(field) != cold_findings[field]
            for field in ("gaps", "contradictions")):
         raise SystemExit("grill findings must match the authenticated cold-read result")
@@ -189,6 +226,8 @@ def _validate_dispositions(payload: dict, cold: str, final: str,
     amendments = payload.get("amendments", [])
     if not isinstance(amendments, list):
         raise SystemExit("grill amendments must be a list")
+    disposition_findings = {entry["finding"] for entry in dispositions}
+    indexes = []
     for entry in amendments:
         if (not isinstance(entry, dict)
                 or any(not _non_empty_string(entry.get(field))
@@ -196,11 +235,32 @@ def _validate_dispositions(payload: dict, cold: str, final: str,
             raise SystemExit(
                 "grill amendments require non-empty change, reason, and source"
             )
-    if cold != final and not amendments:
+        bound = entry.get("findings")
+        if (not isinstance(bound, list) or not bound
+                or len(set(bound)) != len(bound)
+                or any(finding not in disposition_findings for finding in bound)):
+            raise SystemExit(
+                "every grill amendment must bind non-duplicate exact cold finding "
+                "dispositions"
+            )
+        if type(entry.get("delta_index")) is not int:
+            raise SystemExit("every grill amendment requires an integer delta_index")
+        indexes.append(entry["delta_index"])
+    if cold != final and cold_artifact is None:
+        raise SystemExit("the authenticated cold brief does not contain its exact artifact")
+    delta = _artifact_delta(
+        cold_artifact if cold_artifact is not None else final_artifact,
+        final_artifact,
+    )
+    if payload.get("artifact_delta", []) != delta:
+        raise SystemExit("grill artifact_delta must exactly match the cold-to-final bytes")
+    if cold != final and (not amendments or sorted(indexes) != list(range(len(delta)))):
         raise SystemExit(
-            "the final artifact differs from the cold-read input; every change "
-            "requires an explained amendment bridge"
+            "the final artifact differs from the cold-read input; every delta "
+            "requires exactly one finding-bound amendment"
         )
+    if cold == final and (amendments or delta or indexes):
+        raise SystemExit("an unchanged artifact cannot carry an amendment bridge")
     payload["cold_input_sha256"] = cold
     payload["final_artifact_sha256"] = final
 
@@ -467,8 +527,12 @@ _gate = get_gate(args.gate)
 _label, artifact = _gate.locate(root, args.task or "", args.input_digest or "")
 from forge_cli.grill import _artifact_digest
 final_digest = _artifact_digest(artifact)
-_cold_digest, _cold_findings = _cold_launch_result(root, args.gate, args.task or "")
-_validate_dispositions(payload, _cold_digest, final_digest, _cold_findings)
+_cold_digest, _cold_findings, _cold_artifact = _cold_launch_result(
+    root, args.gate, args.task or "")
+_validate_dispositions(
+    payload, _cold_digest, final_digest, _cold_findings,
+    _cold_artifact, artifact,
+)
 
 
 story = active_story if _gate.story_scoped else ""

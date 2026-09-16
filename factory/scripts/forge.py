@@ -740,12 +740,8 @@ def main() -> None:
     p_gr.add_argument("--print-only", action="store_true",
                       help="compose and show the brief without releasing Codex")
     p_gr.add_argument(
-        "--reread", default="",
-        help="read again after a cold read that has not been recorded: say "
-             "what changed SHAPE. One read per pass is the default because a "
-             "second one returns a different frontier, not a shorter one — "
-             "resolve the findings and record the pass against the amended "
-             "artifact instead")
+        "--context-file", default="", metavar="PATH",
+        help="capture one untrusted UTF-8 context file for this cold read")
     p_gr.add_argument("--repo")
     p_gr.set_defaults(func=grill_mod.cmd_grill_run)
     p_aud = sub.add_parser("audit",

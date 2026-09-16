@@ -24,6 +24,65 @@ pins apply only to Forge-managed workers, specialists, grills, review, and Lite.
 `./forge <cmd>` (from repo root) is shorthand for
 `python3 factory/scripts/forge.py <cmd>` — either form works everywhere below.
 
+## Codex Desktop: one main chat, separate task chats
+
+Under accepted Decisions 0053, 0059 and 0064, keep one user-facing Codex
+coordinator chat as Main. Main owns project intent, the approved task graph,
+scheduling, human questions and the consolidated progress report. Claude
+keeps its existing coordinator-and-companion route.
+
+- In Codex Desktop, create or reuse one authorized task chat per ready leaf,
+  attached to that task's Forge-registered worktree and branch. Establish the
+  workspace through Forge's task lifecycle before implementation; creating an
+  app chat or worktree alone grants no write authority. Use available host
+  coordination tools; keep the current foreground `./forge delegate` route
+  until native lifecycle support ships. CLI use does not require Desktop.
+- Give each task owner its story/task IDs, objective, approved contract and
+  write scope, dependencies, verification commands, settled decisions and
+  completion criteria. Reuse its existing chat for corrections and retries.
+  Label the host task chat with its story/task ID and worktree. Forge authority
+  stays in existing task records; do not add a chat-ID registry or copy
+  authority into chat messages.
+- Run dependency-ready tasks in parallel only in separate worktrees with
+  disjoint protected scopes. Read readiness from Forge; dependencies require
+  their actual shipped markers on trunk. Preserve the approved graph and
+  serialize overlapping writes and full factory suites on a shared host.
+- Each task chat owns its JIT planning and delivery: admitted implementation
+  through `./forge delegate`, tests, verification, the orchestrator-run
+  `./forge review` and fix loop, and its PR with green CI. Main checks the
+  actual artifacts and PR state before advancing dependent work. A worker's
+  completion message alone is not passing proof or permission to merge.
+- Main monitors task chats and Forge signals, gathers results, and sends
+  bounded corrections to the responsible owner. Resolve issues from existing
+  decisions and standing authorization; bring only missing authority or a
+  material new choice back to the user in the main chat. Continue independent
+  ready work while a dependent task is blocked.
+- When Main dispatches task-owner chats, create or update exactly one recurring
+  30-minute thread heartbeat attached to Main. Inspect and update an existing
+  matching automation instead of duplicating it. Each tick compares with the
+  prior check and inspects actual task-chat/worker status, Forge signals,
+  changed artifacts, tests/review, PRs and CI. Diagnose unchanged failures,
+  repeated retries, redundant broad suites, idle workers and blocking
+  questions; send a bounded correction or use supported cancellation or
+  reconciliation before retrying. Preserve dirty work and evidence, never
+  start a competing writer or weaken a gate, resolve existing-scope blockers
+  under standing authority, and escalate only missing authority or a material
+  new choice. Keep the heartbeat active while dispatched work remains, then
+  pause or finish it on verified completion or explicit user stop. Report only
+  meaningful changes. If host automation is unavailable, say so and continue
+  supported supervision without claiming a heartbeat exists.
+- Main steps in through diagnosis and scoped instructions to the existing
+  owner. Reconcile a stopped worker's result before retrying; preserve its
+  identity and dirty work. Switch coordinators only between completed tasks,
+  after the task marker and green CI reach refreshed trunk, the old coordinator
+  has stopped, and no worker or required question remains active (0053).
+  Unfinished task transfer is not supported; never launch a competing
+  coordinator or writer.
+- Keep coordinating until every dispatched task is completed or has a concrete
+  reported blocker. Report meaningful changes and verified results together;
+  the user should not have to shuttle messages between worker chats. Separate
+  chats do not waive approvals, runtime evidence, review or human merge gates.
+
 ## ALWAYS start here
 
 ```bash

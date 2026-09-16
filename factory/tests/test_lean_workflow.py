@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import difflib
 import hashlib
 import json
 import sys
@@ -9,12 +10,16 @@ from pathlib import Path
 import pytest
 
 from test_gates import (  # noqa: F401
-    HARNESS, PLAN_BODY, _seed_cold_launch, intake, load_factory_lib,
-    native_claude_approval, plan_draft, record_grill, repo, run, sign_off,
+    HARNESS, PLAN_BODY, STAGE_TASK, _seed_cold_launch, intake, load_factory_lib,
+    native_claude_approval, plan_draft, record_grill, repo, run,
+    seed_task_grill_frontier, sign_off, write_stages,
 )
 
 sys.path.insert(0, str(HARNESS / "factory" / "scripts"))
 from forge_cli import approval  # noqa: E402
+from forge_cli.grill import (  # noqa: E402
+    _artifact_digest, _cold_artifact_from_brief, _compose_brief,
+)
 
 
 def _codex_event(
@@ -122,11 +127,21 @@ def test_one_cold_grill_full_disposition_replaces_round_floors_and_frontier_fake
     draft.write_text(plan_draft(repo), encoding="utf-8")
     cold = hashlib.sha256(draft.read_text().encode()).hexdigest()
     finding = "The repository fact is not stated."
-    _seed_cold_launch(repo, "plan", cold, findings={
+    cold_artifact = draft.read_text(encoding="utf-8")
+    _seed_cold_launch(repo, "plan", cold, artifact_text=cold_artifact, findings={
         "gaps": [finding], "contradictions": [],
     })
     draft.write_text(plan_draft(repo, PLAN_BODY + "\nResolved repository fact.\n"),
                      encoding="utf-8")
+    final_artifact = draft.read_text(encoding="utf-8")
+    cold_lines = cold_artifact.splitlines(keepends=True)
+    final_lines = final_artifact.splitlines(keepends=True)
+    delta = [{
+        "cold_start": a, "cold_end": b, "cold": "".join(cold_lines[a:b]),
+        "final_start": c, "final_end": d, "final": "".join(final_lines[c:d]),
+    } for tag, a, b, c, d in difflib.SequenceMatcher(
+        a=cold_lines, b=final_lines, autojunk=False).get_opcodes()
+        if tag != "equal"]
     payload = {
         "generated_by": "griller", "gate": "plan", "verdict": "pass",
         "gaps": [finding], "contradictions": [],
@@ -136,10 +151,12 @@ def test_one_cold_grill_full_disposition_replaces_round_floors_and_frontier_fake
             "source": "factory/scripts/record_grill_from_json.py",
         }],
         "amendments": [{
+            "delta_index": 0, "findings": [finding],
             "change": "Added the repository fact.",
             "reason": "Closes the cold-reader finding.",
             "source": "factory/scripts/record_grill_from_json.py",
         }],
+        "artifact_delta": delta,
     }
     code, out = run(repo, "record_grill_from_json.py", "--gate", "plan",
                     "--input-digest", str(draft), stdin=json.dumps(payload))
@@ -148,6 +165,198 @@ def test_one_cold_grill_full_disposition_replaces_round_floors_and_frontier_fake
     assert stored["cold_input_sha256"] == cold
     assert stored["final_artifact_sha256"] != cold
     assert "frontier_empty" not in stored and "rounds" not in stored
+
+
+def test_cold_to_final_bridge_refuses_missing_duplicate_unbound_and_unexplained(
+        repo: Path, tmp_path: Path):
+    sign_off(repo)
+    intake(repo)
+    draft = tmp_path / "bridge.md"
+    draft.write_text(plan_draft(repo), encoding="utf-8")
+    cold_artifact = draft.read_text(encoding="utf-8")
+    finding = "State the exact repository fact."
+    _seed_cold_launch(
+        repo, "plan", hashlib.sha256(cold_artifact.encode()).hexdigest(),
+        artifact_text=cold_artifact,
+        findings={"gaps": [finding], "contradictions": []},
+    )
+    draft.write_text(cold_artifact + "Resolved fact.\n", encoding="utf-8")
+    final_artifact = draft.read_text(encoding="utf-8")
+    cold_lines = cold_artifact.splitlines(keepends=True)
+    final_lines = final_artifact.splitlines(keepends=True)
+    delta = [{
+        "cold_start": a, "cold_end": b, "cold": "".join(cold_lines[a:b]),
+        "final_start": c, "final_end": d, "final": "".join(final_lines[c:d]),
+    } for tag, a, b, c, d in difflib.SequenceMatcher(
+        a=cold_lines, b=final_lines, autojunk=False).get_opcodes()
+        if tag != "equal"]
+    amendment = {
+        "delta_index": 0, "findings": [finding],
+        "change": "Added the exact repository fact.",
+        "reason": "Closes the authenticated cold finding.",
+        "source": "factory/scripts/record_grill_from_json.py",
+    }
+    base = {
+        "generated_by": "griller", "gate": "plan", "verdict": "pass",
+        "gaps": [finding], "contradictions": [],
+        "resolutions": ["Added the exact repository fact."],
+        "finding_dispositions": [{
+            "finding": finding, "resolution": "Added the exact repository fact.",
+            "source": "factory/scripts/record_grill_from_json.py",
+        }],
+        "amendments": [amendment], "artifact_delta": delta,
+    }
+    variants = [
+        ({**base, "amendments": []}, "every delta"),
+        ({**base, "amendments": [amendment, amendment]}, "every delta"),
+        ({**base, "amendments": [{**amendment, "findings": ["substituted"]}]},
+         "exact cold finding"),
+        ({**base, "artifact_delta": []}, "exactly match"),
+    ]
+    for payload, message in variants:
+        code, out = run(
+            repo, "record_grill_from_json.py", "--gate", "plan",
+            "--input-digest", str(draft), stdin=json.dumps(payload),
+        )
+        assert code != 0 and message in out
+    code, out = run(
+        repo, "record_grill_from_json.py", "--gate", "plan",
+        "--input-digest", str(draft), stdin=json.dumps(base),
+    )
+    assert code == 0, out
+
+
+def test_normal_authority_refuses_coldless_grill_with_upgrade_guidance(repo: Path):
+    lib = load_factory_lib(repo)
+    lib.dump_json(repo / ".factory" / "grills" / "signoff.json", {
+        "verdict": "pass", "commit": lib.head_sha(repo),
+    })
+    with pytest.raises(SystemExit, match="forge upgrade"):
+        lib.require_grill(repo, "signoff", ())
+
+
+def _write_legacy_inflight_grill(repo: Path, status: str = "active"):
+    lib = load_factory_lib(repo)
+    task = STAGE_TASK
+    seed_task_grill_frontier(repo, task)
+    write_stages(repo, {
+        "issue": "TEST-1",
+        "stages": [{
+            "id": "T1", "title": task["title"], "status": status,
+            "started_at": "2026-09-14T00:02:00+00:00",
+            "task_sha256": lib.task_digest(task),
+        }],
+    })
+    plan = lib.evidence_path(repo, "TEST-1", "task-plans/T1.md")
+    digest = lib.plan_digest_without_assumptions(plan)
+    grill = {
+        "generated_by": "griller", "gate": "task", "verdict": "pass",
+        "issue": "TEST-1", "task_id": "T1", "commit": lib.head_sha(repo),
+        "recorded_at": "2026-09-14T00:00:00+00:00",
+        "input_sha256": lib.grounding_digest(repo, task, in_stage=True),
+        "task_plan_sha256": digest,
+        "approved_task_plan_sha256": digest,
+        "approved_by": "Ravi (pre-Lean approval)",
+        "approved_at": "2026-09-14T00:01:00+00:00",
+    }
+    lib.dump_json(
+        lib.evidence_path(repo, "TEST-1", "grills/tasks/T1.json", for_write=True),
+        grill,
+    )
+    return lib, task
+
+
+@pytest.mark.parametrize("status", ["active", "done"])
+def test_exact_inflight_legacy_task_grill_continues_without_second_cold_read(
+        repo: Path, status: str):
+    lib, task = _write_legacy_inflight_grill(repo, status)
+
+    lib.require_task_grill(repo, "T1", task)
+    grill = json.loads(
+        lib.evidence_path(repo, "TEST-1", "grills/tasks/T1.json").read_text()
+    )
+    assert lib._task_grill_fresh(repo, task, grill)
+    assert lib._task_plan_state(repo, task, grill) == "approved"
+
+
+@pytest.mark.parametrize("mutation", [
+    "pending", "grounding", "approval", "story", "task", "timing",
+    "approval-before-recording", "naive-time", "malformed-time", "producer",
+    "gate", "verdict", "stage-digest", "partial-cold", "native-identity",
+    "forged-continuity", "post-start-approval", "missing-approval",
+])
+def test_legacy_task_grill_refuses_frontier_stale_or_unbound_authority(
+        repo: Path, mutation: str):
+    lib, task = _write_legacy_inflight_grill(repo)
+    path = lib.evidence_path(repo, "TEST-1", "grills/tasks/T1.json")
+    grill = json.loads(path.read_text())
+    if mutation == "pending":
+        write_stages(repo, {
+            "issue": "TEST-1",
+            "stages": [{
+                "id": "T1", "title": task["title"], "status": "pending",
+                "started_at": "2026-09-14T00:02:00+00:00",
+            }],
+        })
+    elif mutation == "grounding":
+        grill["input_sha256"] = "0" * 64
+    elif mutation == "approval":
+        grill["approved_task_plan_sha256"] = "0" * 64
+    elif mutation == "story":
+        grill["issue"] = "OTHER"
+    elif mutation == "timing":
+        grill["recorded_at"] = "2026-09-14T00:03:00+00:00"
+    elif mutation == "approval-before-recording":
+        grill["approved_at"] = "2026-09-13T23:59:00+00:00"
+    elif mutation == "post-start-approval":
+        grill["approved_at"] = "2026-09-14T00:03:00+00:00"
+    elif mutation == "missing-approval":
+        grill["approved_by"] = ""
+    elif mutation == "naive-time":
+        grill["approved_at"] = "2026-09-14T00:01:00"
+    elif mutation == "malformed-time":
+        grill["recorded_at"] = "not-a-timestamp"
+    elif mutation == "producer":
+        grill["generated_by"] = "planner"
+    elif mutation == "gate":
+        grill["gate"] = "plan"
+    elif mutation == "verdict":
+        grill["verdict"] = "fail"
+    elif mutation == "stage-digest":
+        stages = json.loads((repo / ".git/forge/stages.json").read_text())
+        stages["stages"][0]["task_sha256"] = "0" * 64
+        write_stages(repo, stages)
+    elif mutation == "forged-continuity":
+        stages = json.loads((repo / ".git/forge/stages.json").read_text())
+        stages["stages"][0]["task_sha256"] = "0" * 64
+        stages["stages"][0]["measurement_continuity"] = [{}]
+        write_stages(repo, stages)
+    elif mutation == "partial-cold":
+        grill["cold_input_sha256"] = "0" * 64
+    elif mutation == "native-identity":
+        grill["approval_runtime"] = "codex"
+    else:
+        grill["task_id"] = "OTHER"
+    lib.dump_json(path, grill)
+
+    with pytest.raises(SystemExit, match="forge upgrade"):
+        lib.require_task_grill(repo, "T1", task)
+
+
+@pytest.mark.parametrize("trailing", ["", "\n"])
+def test_cold_artifact_frame_recovers_heading_like_exact_bytes(
+        repo: Path, trailing: str):
+    artifact = (
+        "# Plan\n\n## What to return\nThis heading is artifact data.\n"
+        "## The artifact under interrogation (nested)\nbody" + trailing
+    )
+    brief = _compose_brief(repo, "plan", "fixture", artifact).encode("utf-8")
+    digest = _artifact_digest(artifact)
+
+    recovered = _cold_artifact_from_brief(brief, digest)
+
+    assert recovered == artifact
+    assert hashlib.sha256(recovered.encode("utf-8")).hexdigest() == digest
 
 
 @pytest.mark.parametrize(("cold_result", "submitted", "message"), [

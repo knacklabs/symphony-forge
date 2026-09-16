@@ -1540,17 +1540,22 @@ def _successful_launch_entry_valid(
         prompts = (str(brief), brief.relative_to(base).as_posix())
         context = entry.get("context")
         if (isinstance(context, dict)
+                and set(context) == {"supplied", "bytes", "snapshot_id"}
                 and context.get("supplied") is True
                 and isinstance(context.get("bytes"), int)
                 and context["bytes"] >= 0
                 and isinstance(context.get("snapshot_id"), str)
-                and re.fullmatch(r"context-[0-9a-f]{32}", context["snapshot_id"])
+                and re.fullmatch(
+                    r"context-[0-9a-f]{32}(?:[0-9a-f]{32})?",
+                    context["snapshot_id"],
+                )
                 and isinstance(argv, list) and "--prompt-file" in argv):
             prompt_index = argv.index("--prompt-file") + 1
             if prompt_index < len(argv):
                 transient = Path(argv[prompt_index])
                 if (transient.is_absolute() and transient.name == "brief.md"
-                        and re.fullmatch(r"forge-context-[0-9a-f]{32}",
+                        and re.fullmatch(
+                            r"forge-context-[0-9a-f]{32}(?:[0-9a-f]{32})?",
                                          transient.parent.name)
                         and transient.parent.parent
                         == Path(tempfile.gettempdir()).resolve()):
@@ -1921,12 +1926,9 @@ def _proof_tool_identity(base: Path, command: str) -> dict[str, object]:
         return {"command": tokens[0], "runner": runner,
                 "config_sha256": hashlib.sha256(config).hexdigest(),
                 "reusable": True}
-    dependencies: list[str] = []
     probe: list[str]
     if re.fullmatch(r"python(?:3(?:\.\d+)?)?(?:\.exe)?", name):
         probe = [str(outer_path)]
-        if len(tokens) > 2 and tokens[1:3] == ["-m", "pytest"]:
-            dependencies.append("pytest")
     elif name in {"uv", "uv.exe"} and len(tokens) > 2 and tokens[1] == "run":
         python_index = next((index for index, token in enumerate(tokens[2:], 2)
                              if re.fullmatch(r"python(?:3(?:\.\d+)?)?(?:\.exe)?",
@@ -1934,35 +1936,34 @@ def _proof_tool_identity(base: Path, command: str) -> dict[str, object]:
         if python_index < 0:
             return {"command": tokens[0], "runner": runner, "reusable": False}
         probe = tokens[:python_index + 1]
-        for index, token in enumerate(tokens[2:python_index], 2):
-            if token == "--with" and index + 1 < python_index:
-                dependencies.append(tokens[index + 1])
-            elif token.startswith("--with="):
-                dependencies.append(token.split("=", 1)[1])
-        if tokens[python_index + 1:python_index + 3] == ["-m", "pytest"]:
-            dependencies.append("pytest")
     else:
         return {"command": tokens[0], "runner": runner, "reusable": False}
     script = (
-        "import hashlib,importlib.metadata as m,json,pathlib,sys;"
-        "rows=[];"
-        "deps=json.loads(sys.argv[1]);"
-        "[(lambda d: rows.append({'name':d.metadata.get('Name',''),'version':d.version,"
-        "'metadata_sha256':hashlib.sha256((d.read_text('METADATA') or '').encode()).hexdigest(),"
-        "'record_sha256':hashlib.sha256((d.read_text('RECORD') or '').encode()).hexdigest()}))"
-        "(m.distribution(x)) for x in deps];"
-        "p=pathlib.Path(sys.executable);"
-        "print(json.dumps({'interpreter_sha256':hashlib.sha256(p.read_bytes()).hexdigest(),"
-        "'interpreter_size':p.stat().st_size,'version':sys.version,"
-        "'dependencies':rows},sort_keys=True))"
+        "import hashlib,importlib.metadata as m,json,pathlib,re,sys\n"
+        "def digest(d, name):\n"
+        "    value = d.read_text(name)\n"
+        "    if value is None:\n"
+        "        raise ValueError(name)\n"
+        "    return hashlib.sha256(value.encode()).hexdigest()\n"
+        "rows = []\n"
+        "for d in m.distributions():\n"
+        "    raw_name = d.metadata.get('Name', '')\n"
+        "    name = re.sub(r'[-_.]+', '-', raw_name).lower()\n"
+        "    if not name or not d.version:\n"
+        "        raise ValueError('distribution identity')\n"
+        "    rows.append({'name': name, 'version': d.version, "
+        "'metadata_sha256': digest(d, 'METADATA'), "
+        "'record_sha256': digest(d, 'RECORD')})\n"
+        "rows.sort(key=lambda row: row['name'])\n"
+        "p = pathlib.Path(sys.executable)\n"
+        "print(json.dumps({'interpreter_sha256': "
+        "hashlib.sha256(p.read_bytes()).hexdigest(), "
+        "'interpreter_size': p.stat().st_size, 'version': sys.version, "
+        "'dependencies': rows}, sort_keys=True))\n"
     )
-    normalized_dependencies = sorted({
-        match.group(0) for value in dependencies
-        if (match := re.match(r"[A-Za-z0-9_.-]+", value))
-    })
     try:
         resolved = subprocess.run(
-            [*probe, "-c", script, json.dumps(normalized_dependencies)], cwd=base,
+            [*probe, "-c", script], cwd=base,
             capture_output=True, text=True, encoding="utf-8", timeout=60,
             env=environment,
         )
@@ -1972,8 +1973,26 @@ def _proof_tool_identity(base: Path, command: str) -> dict[str, object]:
                 or not isinstance(detail["interpreter_size"], int)
                 or detail["interpreter_size"] <= 0
                 or not isinstance(detail["version"], str)
-                or not isinstance(detail["dependencies"], list)
-                or len(detail["dependencies"]) != len(normalized_dependencies)):
+                or not detail["version"]
+                or not isinstance(detail["dependencies"], list)):
+            raise ValueError
+        names: set[str] = set()
+        for row in detail["dependencies"]:
+            if (not isinstance(row, dict)
+                    or set(row) != {"name", "version", "metadata_sha256",
+                                    "record_sha256"}
+                    or not isinstance(row["name"], str)
+                    or row["name"] != re.sub(r"[-_.]+", "-", row["name"]).lower()
+                    or not re.fullmatch(r"[a-z0-9][a-z0-9-]*", row["name"])
+                    or row["name"] in names
+                    or not isinstance(row["version"], str)
+                    or not row["version"]
+                    or not re.fullmatch(r"[0-9a-f]{64}", row["metadata_sha256"])
+                    or not re.fullmatch(r"[0-9a-f]{64}", row["record_sha256"])):
+                raise ValueError
+            names.add(row["name"])
+        if detail["dependencies"] != sorted(
+                detail["dependencies"], key=lambda row: row["name"]):
             raise ValueError
         return {
             "command": tokens[0], "runner": runner,

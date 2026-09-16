@@ -36,6 +36,7 @@
     "approval_session_id": "str",
     "approval_event_id": "str",
     "amendments": "list",
+    "artifact_delta": "list",
     "cold_input_sha256": "str",
     "final_artifact_sha256": "str"
   },

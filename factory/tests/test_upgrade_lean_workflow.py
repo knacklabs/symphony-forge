@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import subprocess
@@ -68,7 +69,44 @@ def test_lean_migration_independent_raw_walk_covers_each_candidate_exactly_once(
         upgrade.preflight_lean_migration(repo)
 
 
-def test_lean_migration_inventories_ignore_history_but_preserve_live_mismatch(
+def test_lean_migration_independent_inventories_cover_every_declared_family(
+        repo: Path, monkeypatch: pytest.MonkeyPatch):
+    def write(relative: str, content: str) -> Path:
+        path = repo / relative
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(content, encoding="utf-8")
+        return path
+
+    profile = b"retired profile\n"
+    monkeypatch.setitem(
+        upgrade.RETIRED_FORGE_PROFILE_HASHES, "retired.toml",
+        hashlib.sha256(profile).hexdigest())
+    path = repo / ".codex/agents/retired.toml"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_bytes(profile)
+    write(".codex/config.toml", "codex_hooks = true\n")
+    write(".factory/grill-rounds/old.json", "{}\n")
+    write(".factory/grills/requirements.json", "{}\n")
+    write(".factory/grills/plan.json", "{}\n")
+    write(".factory/grills/tasks/T1.json", '{"rounds": []}\n')
+    write(".factory/plan-approval.json", "{}\n")
+    write(".factory/plan-mode/old.json", "{}\n")
+    write(".factory/stories/S1/tasks/T1/reviews/quality.json", "{}\n")
+    write(".factory/stories/S1/stages/T1.json",
+          '{"local_review_stamp": "old"}\n')
+
+    primary = upgrade.lean_primary_inventory(repo)
+    raw = upgrade.lean_raw_inventory(repo)
+    assert primary == raw
+    assert {entry["family"] for entry in primary} == {
+        "old-hook-flag", "retired-forge-profile", "grill-round",
+        "requirements-grill", "old-plan-grill", "old-task-grill",
+        "manual-plan-approval", "plan-mode-marker", "fixed-review-lens",
+        "legacy-stage-stamp",
+    }
+
+
+def test_lean_migration_inventories_ignore_paths_outside_declared_legacy_roots(
         repo: Path):
     history = repo / ".factory/history/S1/grill-rounds/old.json"
     history.parent.mkdir(parents=True)
@@ -84,9 +122,9 @@ def test_lean_migration_inventories_ignore_history_but_preserve_live_mismatch(
     assert history_rel not in {entry["path"] for entry in primary}
     assert history_rel not in {entry["path"] for entry in raw}
     assert live_rel not in {entry["path"] for entry in primary}
-    assert [entry["path"] for entry in raw].count(live_rel) == 1
-    with pytest.raises(SystemExit):
-        upgrade.preflight_lean_migration(repo)
+    assert live_rel not in {entry["path"] for entry in raw}
+    assert primary == raw
+    assert upgrade.preflight_lean_migration(repo)["entries"] == []
 
 
 def test_lean_migration_inventories_hashes_temp_validates_publishes_and_reads_back(
@@ -134,8 +172,25 @@ def test_lean_migration_refuses_malformed_mixed_partial_conflicting_or_linked_in
 
     external = repo.parent / "external"
     external.mkdir()
-    linked = repo / ".factory" / "linked"
+    unrelated = repo / ".factory" / "temporary-link"
+    unrelated.symlink_to(external, target_is_directory=True)
+    assert upgrade.lean_primary_inventory(repo) == upgrade.lean_raw_inventory(repo)
+
+    unrelated.unlink()
+    linked = repo / ".factory" / "plan-mode"
     linked.symlink_to(external, target_is_directory=True)
+    with pytest.raises(SystemExit):
+        upgrade.lean_primary_inventory(repo)
+    with pytest.raises(SystemExit):
+        upgrade.lean_raw_inventory(repo)
+    linked.unlink()
+
+    external_file = repo.parent / "external-plan-approval.json"
+    external_file.write_text("{}\n", encoding="utf-8")
+    candidate = repo / ".factory" / "plan-approval.json"
+    candidate.symlink_to(external_file)
+    with pytest.raises(SystemExit):
+        upgrade.lean_primary_inventory(repo)
     with pytest.raises(SystemExit):
         upgrade.lean_raw_inventory(repo)
 

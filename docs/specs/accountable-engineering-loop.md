@@ -70,8 +70,11 @@ implementation does not enforce it end to end:
   (additions+deletions since stage baseline, excluding `.factory/` and
   `plans/`) — a policy target (measured p90s: 5/256 product-only, 20/672
   all-paths). Tasks may lower it; raising it requires a written reason.
-  `stage done` refuses an over-budget diff; the composed brief states the
-  budget so the worker stops and returns `--incomplete` before crossing it.
+  `stage done` measures the completed diff and reports an over-budget result
+  with the whole change visible. A measured scope or budget amendment does not
+  require another cold read when task meaning is unchanged; a material change
+  to the task contract or intent still follows the current reapproval and
+  regrill gates.
 - **Contracts feed review (FORGE-REV-2).** Recording the frontier task's JIT
   contract lands its grilled `criteria_map` as that task's `plan_contracts`,
   so the quality review must verdict each criterion implemented and
@@ -80,49 +83,29 @@ implementation does not enforce it end to end:
 - **Board task visibility.** The board renders the in-flight story's task
   rows — state (skeleton|ready|grilled|active|done), grill freshness, budget
   usage — from the same derivation `forge next` uses.
-- **Division of labor.** Frontier contracts are authored in Claude plan mode
-  from read-only Codex exploration (JIT re-records pin
-  `generated_by: claude-code:plan-mode`); the grill is a second independent
-  read-only pass. Every grill delivers its rounds to the human through
-  AskUserQuestion: repo-answerable questions arrive already answered with
-  citations and a recommended resolution, authority questions (product,
-  scope, architecture, security/privacy, destructive migration, material
-  cost, reliability) arrive as escalation packets. A grill records only
-  after its rounds are sanctioned. Each declared gap needs either a matching
-  rounds entry or a named-source citation. EVERY grill gate — spec, signoff,
-  epics, requirements, plan, task — delivers ledger-matched AskUserQuestion
-  rounds meeting the floor declared in its `grill_gates.GATES` row (one round,
-  a floor and not a target) with `frontier_empty: true` attested on the final
-  round; zero-round grills are refused for every gate. `signoff` and `epics`
-  previously sat outside this check and recorded with none (decision 0048).
-- **Approval and closeout integrity (FORGE-ACC-3).** Approved `plan save`
-  stores an `approved_plan_sha256` (excluding the sanctioned assumptions
-  appendix) that every later gate rederives — an edited plan requires a
-  fresh grill and human approval, and `plan approve` refuses without a
-  fresh matching plan grill on an awaiting plan. After the task grill passes,
-  `forge task approve --by` stamps its human `approved_by`, bound to the same
-  grounding digest; `require_ready_task` refuses without that approval — an
-  approved-then-edited contract needs re-grill and re-approval. `forge next`'s planning branch
-  routes a pre-draft requirements round: the confirmed spec is re-grilled
-  against current repository state (rounds via AskUserQuestion) before
-  story-plan drafting is instructed. The initial decomposition
-  recording refuses execution detail (including `reviewer_focus` and
-  `plan_contracts`) on every task; later recordings freeze the initial
-  id/order/dependency skeleton and permit contract changes only on the
-  frontier; completed task contracts are immutable under a full-contract
-  digest. The per-stage local review is recorded: a clean-review stamp in
-  `stages.json` bound to stage id, task digest, composed-brief SHA,
-  baseline, and the exact pre-commit diff digest — `stage done` refuses a
-  missing or stale stamp, refuses uncommitted or staged product changes,
-  and requires a non-empty committed stage delta. Branch review binds to a
-  fresh `review-brief --all`: all three lenses carry one `review_run_id`,
-  the brief SHA, and the branch diff digest, and the recorder rejects
-  incoherent lens sets. Closeout order is gated: all stages done → branch
-  review → verify → functional (when `user_facing`) → outcome → `pr_ready`,
-  with `pr_ready` also requiring a clean product worktree/index,
-  repo-kind-aware evidence exclusions, and the outcome stamp bound to the
-  same commit. Opening a Lite/quickfix/degraded write window while a stage
-  is active refuses.
+- **One independent cold read.** Each grill gate/pass uses one independently
+  ledgered cold result. Every authenticated finding maps one-to-one to a
+  disposition, and every cold-input-to-final-artifact change has an exact
+  finding-bound amendment bridge. Unexplained changes refuse. Repeated cold
+  rereads, round floors, and fake frontier questions are not authority.
+- **Native revision-bound approval.** Claude and Codex both approve the exact
+  final story or task artifact through the shared recorder and the supported
+  host completion event. The record binds the current digest, plan kind,
+  story/task, runtime, and stable session/event identity; stale, replayed, or
+  ambiguous events refuse. Manual `plan approve` and `task approve` commands
+  are not part of normal runtime.
+- **Task proof and closeout integrity.** Task proof is the task-scoped
+  `verify.json`, `tests.json`, and selected immutable review generation. The
+  orchestrator runs one three-lens task review pass, delegates fixes, and
+  re-reviews until clean; task-local pre-commit review and branch-wide fixed
+  lens files are not authority. Close and seal bind the task marker and
+  PR-ready proof to the reviewed delta. Standing human authorization carries
+  through bounded corrections; material task-contract or intent changes
+  still take the current reapproval and regrill path.
+- **Bounded outage exception.** A degraded window may open during an active
+  stage only for the documented bounded host/companion outage exception.
+  Lite and quickfix retain their separate profiles and do not become a general
+  bypass for active-stage authority.
 
 ## Acceptance criteria
 
@@ -137,26 +120,33 @@ implementation does not enforce it end to end:
   touching only `.factory/` and `plans/` do not.
 - A grill missing any required proof, with an unmapped criterion, an absent
   `new_abstractions` field, or `pass`+split/block is refused; a `block`
-  without an escalation packet is refused; every declared gap needs either a
-  matching structured round or a named-source citation; all rounds are
-  ledger-matched and floored per decision 0048, including zero-gap grills;
-  resolutions are still recorded in the grill payload.
+  without an escalation packet is refused. One independent cold result binds
+  the inspected input; every finding has one disposition, every resulting
+  artifact change has a finding-bound amendment bridge, and unexplained
+  changes refuse without repeated cold reads or round floors.
 - The frontier task's `criteria_map` lands as `plan_contracts`; quality
   review refuses without per-contract verdicts (existing FORGE-REV-2
   enforcement).
 - Default, lowered, justified-higher, and exceeded review budgets behave as
   specified at `stage done`; workflow-evidence paths are excluded from the
   count.
-- Lite, quickfix, and degraded windows are unchanged, except that opening a
-  write window while a stage is active refuses (FORGE-ACC-3).
-- Approved-plan digest, frozen skeleton, immutable completed contracts,
-  recorded local review, commit-before-done, coherent one-run branch review,
-  and closeout ordering behave as specified (FORGE-ACC-3).
+- Native approval records the exact final digest through the supported Claude
+  or Codex completion event and refuses stale, replayed, ambiguous, or
+  identity-free events; manual approval commands are not normal runtime.
+- Task-scoped verify, tests, and selected immutable review proof bind close and
+  seal to the reviewed delta. One orchestrator-run three-lens pass is fixed and
+  re-run after delegated corrections until clean; no task-local or fixed-file
+  review authority returns.
+- Scope and review-budget amendments preserve the current cold result when
+  task meaning is unchanged; material contract or intent changes re-enter the
+  current approval and grill gates. Only the documented bounded degraded
+  host/companion outage exception may open during an active stage.
 
 ## Non-goals
 
 - No per-commit review; review cadence stays decision 0011.
 - No stored `contract_status` field; readiness is derived.
 - No separate `forge stage budget` command; budget reporting rides `stage
-  done` refusals and the board.
-- No changes to Lite/quickfix/degraded window profiles.
+  done` measurement and the board.
+- No general mid-stage escape hatch: the degraded exception stays bounded to
+  a documented host/companion outage, and Lite/quickfix remain separate.

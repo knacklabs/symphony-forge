@@ -99,9 +99,21 @@ The payload matches `factory/schemas/grill.json` and uses
   ],
   "amendments": [
     {
+      "delta_index": 0,
+      "findings": ["Exact cold-read finding"],
       "change": "Exact change from cold input to final artifact",
       "reason": "Why the disposition required it",
       "source": "path, decision, or human-owned record"
+    }
+  ],
+  "artifact_delta": [
+    {
+      "cold_start": 1,
+      "cold_end": 1,
+      "cold": "",
+      "final_start": 1,
+      "final_end": 2,
+      "final": "Exact inserted line including its newline\\n"
     }
   ],
   "inspected_refs": ["path/or/path:symbol"],
@@ -113,7 +125,9 @@ The payload matches `factory/schemas/grill.json` and uses
 ```
 
 An empty `finding_dispositions` list is valid only when both finding lists are
-empty. If cold and final digests differ, `amendments` must be nonempty. The
+empty. If cold and final digests differ, `artifact_delta` must exactly match
+the recorder-derived line spans and every delta index must have exactly one
+amendment bound to one or more exact cold finding dispositions. The
 recorder derives `cold_input_sha256`, `final_artifact_sha256`, task grounding,
 commit, timestamps, and approval fields; never fabricate them.
 

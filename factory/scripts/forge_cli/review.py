@@ -391,7 +391,12 @@ def _combined_prompt(task: dict, *, repo_readable: bool = True,
             "one lens of a three-lens", "the three-lens"),
         "The target task's complete Plan contracts and Reviewer focus are supplied "
         f"in `{REVIEW_DATASET_REL}`; use that dataset for task-specific review "
-        "requirements.", "",
+        "requirements. The rendered dataset is the authoritative review input for "
+        "task lifecycle and evidence records intentionally omitted from the synthetic "
+        "review checkout. Use those rendered records; do not call task proof, an event, "
+        "or lifecycle evidence absent solely because its original `.factory` path is "
+        "absent. Report any real contradiction between the product tree and the rendered "
+        "evidence.", "",
         "Assess quality, performance, and security in one provider pass. In every "
         "provider pass, overall_explanation must contain these exact full-line "
         "markers once, in this order, with a non-empty assessment between each pair:",
@@ -629,6 +634,90 @@ def _actual_passes(report: object) -> list[tuple[str, dict]]:
     if report["overall_correctness"] != expected_correctness:
         fail("combined review aggregate correctness does not match its passes")
     return passes
+
+
+def _scope_only_rejected_findings(report: object) -> tuple[list[dict], list[dict]]:
+    """Validate an exit-2 result whose only incomplete state is scope.
+
+    Retained local and rejected findings are audit input, not accepted review
+    proof. The caller may use them only as untrusted leads for a fresh pass.
+    """
+    other_metadata = REPORT_METADATA_FIELDS - {
+        "scope_rejected_findings", "available_source_records"}
+
+    def normalized(findings: list[dict], *, accepted: bool) -> list[dict]:
+        values = []
+        for finding in copy.deepcopy(findings):
+            _validate_helper_finding(finding, accepted=accepted)
+            finding["code_location"]["file_path"] = _normalized_helper_path(
+                finding["code_location"]["file_path"])
+            values.append(finding)
+        return values
+
+    def ordered(findings: list[dict]) -> list[str]:
+        return sorted(json.dumps(finding, sort_keys=True, ensure_ascii=False)
+                      for finding in findings)
+
+    def validate_pass(processed: dict) -> tuple[list[dict], list[dict]]:
+        if any(field in processed for field in other_metadata):
+            fail("combined review helper exit 2 contains non-scope rejection metadata")
+        provider = processed["provider_report"]
+        _pass_sections(provider)
+        for finding in copy.deepcopy(provider["findings"]):
+            finding["code_location"]["file_path"] = _normalized_helper_path(
+                finding["code_location"]["file_path"])
+            lens, clean, _fingerprint, _merge_key = _tagged_finding(finding)
+            if VERDICT_RECORD.match(clean["title"]) and lens != "quality":
+                fail("a VERDICT record carries the [quality] tag")
+        if any(processed[field] != provider[field]
+               for field in REPORT_FIELDS - {"findings"}):
+            fail("combined review processed result does not match its raw provider report")
+        rejected = processed.get("scope_rejected_findings") or []
+        raw = normalized(provider["findings"], accepted=False)
+        retained = normalized(processed["findings"], accepted=True)
+        refused = normalized(rejected, accepted=False)
+        if ordered(raw) != ordered([*retained, *refused]):
+            fail("combined review processed scope result does not match its raw provider report")
+        return retained, refused
+
+    if not isinstance(report, dict):
+        fail("combined review helper wrapper has invalid fields")
+    if "pass_reports" not in report:
+        processed = _validate_processed_report(
+            report, {"provider_report", "review_status"})
+        _validate_provider_report(processed["provider_report"])
+        _validate_review_status(processed)
+        rejected = processed.get("scope_rejected_findings")
+        if processed["review_status"] != "incomplete" or not rejected:
+            fail("combined review helper exit 2 is not a scope-only rejection")
+        return validate_pass(processed)
+
+    aggregate = _validate_processed_report(report, {"pass_reports", "review_status"})
+    _validate_review_status(aggregate)
+    rejected = aggregate.get("scope_rejected_findings")
+    if (aggregate["review_status"] != "incomplete" or not rejected
+            or any(field in aggregate for field in other_metadata)):
+        fail("combined review helper exit 2 is not a scope-only rejection")
+    entries = aggregate.get("pass_reports")
+    if not isinstance(entries, list) or not entries:
+        fail("combined review pass_reports must be a non-empty list")
+    retained: list[dict] = []
+    refused: list[dict] = []
+    for index, entry in enumerate(entries, 1):
+        expected = f"chunk {index}/{len(entries)}"
+        if (not isinstance(entry, dict) or set(entry) != {"label", "report"}
+                or entry.get("label") != expected):
+            fail(f"combined review pass order must be {expected}")
+        processed = _validate_processed_report(entry.get("report"), {"provider_report"})
+        _validate_provider_report(processed["provider_report"])
+        local, rejected_from_pass = validate_pass(processed)
+        retained.extend(local)
+        refused.extend(rejected_from_pass)
+    if ordered(normalized(rejected, accepted=False)) != ordered(refused):
+        fail("combined review aggregate scope metadata does not match its passes")
+    if ordered(normalized(aggregate["findings"], accepted=True)) != ordered(retained):
+        fail("combined review aggregate findings do not match its passes")
+    return retained, refused
 
 
 def _helper_bounded_field(text: str, limit: int) -> str:
@@ -1824,8 +1913,12 @@ def _review_in_groups(base: Path, tmp: Path, worktree: Path, base_sha: str,
 
     done = run_groups(groups=specs, prompt_rel=prompt_rel, log_dir=briefs,
                       ledger_root=base, argv_for=argv_for, validate=would_record)
-    merged = merge_group_reports(
-        [wrapper for group in done for wrapper in flatten_passes(group["report"])])
+    merged = merge_group_reports([
+        wrapper
+        for group in done
+        for report in group["accepted_reports"]
+        for wrapper in flatten_passes(report)
+    ])
     return merged, (json.dumps(merged, indent=2) + "\n").encode("utf-8")
 
 

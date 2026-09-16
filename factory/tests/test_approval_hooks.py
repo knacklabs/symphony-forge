@@ -59,6 +59,9 @@ def _story_candidate(repo: Path, story: str = "APPROVE-1") -> approval.ApprovalC
         {
             "verdict": "pass", "commit": lib.head_sha(repo),
             "issue": story, "input_sha256": digest,
+            "cold_input_sha256": digest,
+            "final_artifact_sha256": digest,
+            "finding_dispositions": [],
         },
     )
     candidate = approval._story_candidate(repo)
@@ -173,6 +176,9 @@ def test_task_approval_waits_for_story_approval_and_decomposition_rebinding(
     )
     lib.dump_json(task_grill, {
         "verdict": "pass", "task_plan_sha256": task_digest,
+        "cold_input_sha256": task_digest,
+        "final_artifact_sha256": task_digest,
+        "finding_dispositions": [],
     })
     decomposition = lib.protected_decomposition_state_path(repo)
     decomposition.unlink(missing_ok=True)
@@ -190,6 +196,40 @@ def test_task_approval_waits_for_story_approval_and_decomposition_rebinding(
     )
     assert approval._task_candidate(repo) is None
     assert [row.kind for row in approval.eligible_candidates(repo)] == ["story"]
+
+
+def test_task_approval_requires_exact_approval_frontier(
+        repo: Path, monkeypatch: pytest.MonkeyPatch):
+    story = _story_candidate(repo)
+    approval.record_native_approval(repo, _event(story), runtime="claude")
+    lib = load_factory_lib(repo)
+    task = {"id": "T1"}
+    task_plan = lib.evidence_path(
+        repo, "APPROVE-1", "task-plans/T1.md", for_write=True,
+    )
+    task_plan.parent.mkdir(parents=True, exist_ok=True)
+    task_plan.write_text("# Task plan\n", encoding="utf-8")
+    task_digest = lib.plan_digest_without_assumptions(task_plan)
+    task_grill = lib.evidence_path(
+        repo, "APPROVE-1", "grills/tasks/T1.json", for_write=True,
+    )
+    lib.dump_json(task_grill, {
+        "verdict": "pass", "task_plan_sha256": task_digest,
+        "cold_input_sha256": task_digest,
+        "final_artifact_sha256": task_digest,
+        "finding_dispositions": [],
+    })
+    lib.dump_json(lib.protected_decomposition_state_path(repo), {
+        "plan_sha256": story.digest, "tasks": [task],
+    })
+    before = task_grill.read_bytes()
+
+    for action in ("grill", "author-task-plan", "stage-start", "delegate"):
+        monkeypatch.setattr(
+            approval, "task_frontier_state", lambda _base, value=action: (value, task),
+        )
+        assert approval._task_candidate(repo) is None
+        assert task_grill.read_bytes() == before
 
 
 def test_native_approval_refuses_zero_multiple_candidates_replay_and_missing_identity(
@@ -214,6 +254,33 @@ def test_native_approval_refuses_zero_multiple_candidates_replay_and_missing_ide
     approval.record_native_approval(repo, event, runtime="claude")
     with pytest.raises(approval.ApprovalRefused, match="already consumed"):
         approval.record_native_approval(repo, event, runtime="claude")
+
+
+@pytest.mark.parametrize("status", ["", "pending", "unknown", "rejected"])
+def test_claude_approval_requires_affirmative_success_without_mutation(
+        repo: Path, status: str):
+    candidate = _story_candidate(repo)
+    event = _event(candidate)
+    event["tool_response"]["status"] = status
+    lib = load_factory_lib(repo)
+    before = (candidate.path.read_bytes(), lib.run_state_path(repo).read_bytes())
+
+    with pytest.raises(approval.ApprovalRefused, match="unsuccessful"):
+        approval.record_native_approval(repo, event, runtime="claude")
+
+    assert (candidate.path.read_bytes(), lib.run_state_path(repo).read_bytes()) == before
+    assert not candidate.evidence.exists()
+
+
+@pytest.mark.parametrize("status", ["success", "succeeded", "completed"])
+def test_claude_approval_accepts_supported_success_statuses(repo: Path, status: str):
+    candidate = _story_candidate(repo)
+    event = _event(candidate)
+    event["tool_response"]["status"] = status
+
+    record = approval.record_native_approval(repo, event, runtime="claude")
+
+    assert record["approved_plan_sha256"] == candidate.digest
 
 
 @pytest.mark.parametrize("location", ["scoped", "archived", "legacy"])
@@ -394,3 +461,92 @@ def test_native_approval_rechecks_replaced_plan_before_publication(repo, tmp_pat
         approval.record_native_approval(repo, event, runtime="claude")
     assert outside.read_bytes() == before
     assert not candidate.evidence.exists()
+    assert len(list((candidate.evidence.parent / "approval-events").glob("*.json"))) == 1
+
+
+@pytest.mark.parametrize("kind", ["symlink", "hardlink", "ancestor", "replay-ancestor"])
+def test_native_approval_refuses_unsafe_authority_and_replay_destinations(
+        repo: Path, tmp_path: Path, kind: str, monkeypatch: pytest.MonkeyPatch):
+    import os
+
+    (repo / ".factory" / "stories" / "APPROVE-1").mkdir(parents=True)
+    candidate = _story_candidate(repo)
+    monkeypatch.setattr(approval, "eligible_candidates", lambda _base: [candidate])
+    event = _event(candidate)
+    lib = load_factory_lib(repo)
+    state_path = lib.run_state_path(repo)
+    before = (candidate.path.read_bytes(), state_path.read_bytes())
+    outside = tmp_path / "outside"
+    outside.mkdir()
+    external = outside / "authority.json"
+    external.write_text('{"sentinel": true}\n', encoding="utf-8")
+
+    if kind == "symlink":
+        candidate.evidence.symlink_to(external)
+    elif kind == "hardlink":
+        os.link(external, candidate.evidence)
+    elif kind == "ancestor":
+        story_dir = candidate.evidence.parent
+        backup = tmp_path / "story-backup"
+        story_dir.rename(backup)
+        story_dir.symlink_to(outside, target_is_directory=True)
+    else:
+        replay_dir = candidate.evidence.parent / "approval-events"
+        replay_dir.symlink_to(outside, target_is_directory=True)
+
+    with pytest.raises(approval.ApprovalRefused):
+        approval.record_native_approval(repo, event, runtime="claude")
+
+    assert (candidate.path.read_bytes(), state_path.read_bytes()) == before
+    assert external.read_text(encoding="utf-8") == '{"sentinel": true}\n'
+
+
+@pytest.mark.parametrize("kind", ["symlink", "hardlink"])
+def test_native_task_approval_refuses_unsafe_grill_destination(
+        repo: Path, tmp_path: Path, kind: str, monkeypatch: pytest.MonkeyPatch):
+    import os
+
+    plan = repo / ".factory" / "task.md"
+    plan.write_text("# task\n", encoding="utf-8")
+    grill = repo / ".factory" / "task-grill.json"
+    outside = tmp_path / "task-grill.json"
+    outside.write_text('{"verdict":"pass"}\n', encoding="utf-8")
+    if kind == "symlink":
+        grill.symlink_to(outside)
+    else:
+        os.link(outside, grill)
+    task = approval.ApprovalCandidate(
+        "task", "APPROVE-1", "T1", plan,
+        load_factory_lib(repo).plan_digest_without_assumptions(plan), grill,
+    )
+    monkeypatch.setattr(approval, "eligible_candidates", lambda _base: [task])
+    before = outside.read_bytes()
+
+    with pytest.raises(approval.ApprovalRefused, match="destination"):
+        approval.record_native_approval(
+            repo, _event(task, "codex"), runtime="codex")
+
+    assert outside.read_bytes() == before
+
+
+def test_native_story_approval_refuses_unsafe_run_state_without_tombstone(
+        repo: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    candidate = _story_candidate(repo)
+    monkeypatch.setattr(approval, "eligible_candidates", lambda _base: [candidate])
+    lib = load_factory_lib(repo)
+    state = lib.run_state_path(repo)
+    saved = state.read_bytes()
+    outside = tmp_path / "outside-run.json"
+    outside.write_bytes(saved)
+    state.unlink()
+    state.symlink_to(outside)
+    plan_before = candidate.path.read_bytes()
+
+    with pytest.raises(approval.ApprovalRefused, match="destination"):
+        approval.record_native_approval(
+            repo, _event(candidate), runtime="claude")
+
+    assert candidate.path.read_bytes() == plan_before
+    assert outside.read_bytes() == saved
+    assert not candidate.evidence.exists()
+    assert not list(candidate.evidence.parent.glob("approval-events/*.json"))

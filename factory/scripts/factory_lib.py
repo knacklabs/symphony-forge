@@ -3264,6 +3264,13 @@ def require_grill(
             f"contradictions per factory/prompts/griller.md, resolve findings, then record "
             f"`python3 factory/scripts/record_grill_from_json.py --gate {gate}`."
         )
+    if any(field not in data for field in (
+            "cold_input_sha256", "final_artifact_sha256",
+            "finding_dispositions")):
+        raise SystemExit(
+            f"the {gate} grill uses a removed coldless authority format; "
+            "run `forge upgrade` before continuing."
+        )
     if data.get("verdict") != "pass":
         raise SystemExit(
             f".factory/grills/{gate}.json verdict is {data.get('verdict')!r} — resolve the "
@@ -3321,6 +3328,15 @@ def require_task_grill(
         raise SystemExit(
             f"Task grill required first: grill {task_id}, resolve findings, then record "
             f"`{record_command}`."
+        )
+    cold_fields = (
+        "cold_input_sha256", "final_artifact_sha256", "finding_dispositions",
+    )
+    if (any(field not in data for field in cold_fields)
+            and not _legacy_inflight_task_grill(root, task, data, treeish=treeish)):
+        raise SystemExit(
+            f"the {task_id} task grill uses a removed coldless authority format; "
+            "run `forge upgrade` before continuing."
         )
     if data.get("verdict") != "pass":
         raise SystemExit(
@@ -4310,11 +4326,81 @@ def _task_plan_approval_matches_digest(
     """Whether current approval authority binds this task-plan digest."""
     return (
         _native_task_approval_recorded(root, task, grill, digest)
+        or _legacy_inflight_task_grill(root, task, grill)
         or (
             grill.get("approved_task_plan_sha256") == digest
             and _measurement_continuity_matches(root, task, grill)
         )
     )
+
+
+def _legacy_inflight_task_grill(
+    root: Path, task: dict, grill: dict, *, treeish: str = "",
+) -> bool:
+    """Grandfather one exact pre-Lean task authority already in flight.
+
+    These records cannot be upgraded without fabricating cold output fields.
+    Pending tasks and partially converted records remain upgrade-only.
+    """
+    cold_fields = (
+        "cold_input_sha256", "final_artifact_sha256", "finding_dispositions",
+    )
+    if any(field in grill for field in cold_fields):
+        return False
+    task_id = str(task.get("id") or "")
+    stage = task_stage_record(root, task_id)
+    if stage.get("status") not in {"active", "done"}:
+        return False
+
+    def aware_timestamp(value: object) -> datetime | None:
+        if not isinstance(value, str) or not value:
+            return None
+        try:
+            parsed = datetime.fromisoformat(value)
+        except ValueError:
+            return None
+        return parsed if parsed.tzinfo is not None \
+            and parsed.utcoffset() is not None else None
+
+    started_at = aware_timestamp(stage.get("started_at"))
+    recorded_at = aware_timestamp(grill.get("recorded_at"))
+    approved_at = aware_timestamp(grill.get("approved_at"))
+    if not (started_at and recorded_at and approved_at
+            and recorded_at <= approved_at <= started_at):
+        return False
+    story = _active_story_key(root)
+    plan = evidence_path(root, story, f"task-plans/{task_id}.md")
+    if not plan.is_file():
+        return False
+    digest = plan_digest_without_assumptions(plan)
+    current_task_sha256 = task_digest(task)
+    stage_task_sha256 = stage.get("task_sha256")
+    if stage.get("status") == "done" \
+            and stage_task_sha256 != current_task_sha256:
+        return False
+    if stage.get("status") == "active" \
+            and stage_task_sha256 != current_task_sha256 \
+            and not _measurement_continuity_matches(root, task, grill):
+        return False
+    if not (
+        grill.get("generated_by") == "griller"
+        and grill.get("gate") == "task"
+        and grill.get("verdict") == "pass"
+        and grill.get("issue") == story
+        and grill.get("task_id") == task_id
+        and grill.get("task_plan_sha256") == digest
+        and grill.get("approved_task_plan_sha256") == digest
+        and isinstance(grill.get("approved_by"), str)
+        and grill["approved_by"].strip()
+        and not any(field in grill for field in (
+            "approval_runtime", "approval_session_id", "approval_event_id",
+        ))
+    ):
+        return False
+    try:
+        return task_grill_grounding_matches(root, task, grill, treeish=treeish)
+    except SystemExit:
+        return False
 
 
 def _task_grill_fresh(root: Path, task: dict, grill: dict) -> bool:
@@ -4336,11 +4422,15 @@ def _task_grill_fresh(root: Path, task: dict, grill: dict) -> bool:
         # callers that require the plan call grounding_digest directly and
         # still raise.
         return False
+    format_ok = all(field in grill for field in (
+        "cold_input_sha256", "final_artifact_sha256", "finding_dispositions",
+    )) or _legacy_inflight_task_grill(root, task, grill)
     return bool(
         grill.get("verdict") == "pass"
         and grill.get("commit")
         and grounded
         and plan_provenance_ok
+        and format_ok
     )
 
 

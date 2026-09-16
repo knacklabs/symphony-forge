@@ -13,6 +13,7 @@ import subprocess
 import tempfile
 import os
 import re
+import stat
 from pathlib import Path
 
 from factory_lib import (
@@ -132,29 +133,75 @@ def _lean_family(relative: str, data: bytes | None = None) -> str:
 
 
 def lean_primary_inventory(target: Path) -> list[dict]:
+    """Discover only the declared Lean legacy roots and candidate parents."""
     candidates: list[Path] = []
-    roots = [target / ".factory", target / ".codex" / "agents"]
-    config = target / ".codex" / "config.toml"
-    for path in [*roots, config]:
+
+    def directory(path: Path) -> bool:
         _require_unlinked_path(target, path)
-    if config.exists() or config.is_symlink():
-        candidates.append(config)
-    for root in roots:
-        if not root.exists() and not root.is_symlink():
-            continue
-        if root.is_symlink():
-            fail(f"Lean migration refuses linked inventory root {root}")
-        for directory, names, files in os.walk(root, followlinks=False):
-            current = Path(directory)
-            _require_unlinked_path(target, current)
-            if current == target / ".factory":
-                names[:] = [name for name in names if name != "history"]
-            linked = [name for name in names
-                      if _linked_or_reparse((current / name).lstat())]
-            if linked:
-                fail(f"Lean migration refuses linked directory {current / linked[0]}")
-            for name in files:
-                candidates.append(current / name)
+        if not path.exists() and not path.is_symlink():
+            return False
+        try:
+            info = path.lstat()
+        except OSError as exc:
+            fail(f"Lean migration cannot inspect candidate parent {path}: {exc}")
+        if (_linked_or_reparse(info)
+                or not stat.S_ISDIR(info.st_mode)):
+            fail(f"Lean migration refuses linked or non-directory candidate parent {path}")
+        return True
+
+    def exact(path: Path) -> None:
+        _require_unlinked_path(target, path)
+        if path.exists() or path.is_symlink():
+            candidates.append(path)
+
+    def matching(parent: Path, names: set[str] | None = None) -> None:
+        if not directory(parent):
+            return
+        try:
+            children = list(os.scandir(parent))
+        except OSError as exc:
+            fail(f"Lean migration cannot inspect candidate parent {parent}: {exc}")
+        for child in children:
+            if ((names is None and child.name.endswith(".json"))
+                    or (names is not None and child.name in names)):
+                candidates.append(Path(child.path))
+
+    config = target / ".codex/config.toml"
+    exact(config)
+    matching(target / ".codex/agents", set(RETIRED_FORGE_PROFILE_HASHES))
+
+    factory = target / ".factory"
+    if directory(factory):
+        matching(factory / "grill-rounds")
+        matching(factory / "grills", {"requirements.json", "plan.json"})
+        matching(factory / "grills/tasks")
+        exact(factory / "plan-approval.json")
+        matching(factory / "plan-mode")
+        exact(factory / "stages.json")
+        stories = factory / "stories"
+        if directory(stories):
+            for entry in os.scandir(stories):
+                story = Path(entry.path)
+                if (entry.is_symlink()
+                        or not entry.is_dir(follow_symlinks=False)):
+                    fail(f"Lean migration refuses linked or non-directory candidate parent {story}")
+                matching(story / "grill-rounds")
+                matching(story / "grills", {"requirements.json", "plan.json"})
+                matching(story / "grills/tasks")
+                exact(story / "plan-approval.json")
+                matching(story / "plan-mode")
+                matching(story / "stages")
+                matching(story / "reviews", {f"{lens}.json" for lens in LEAN_LENSES})
+                tasks = story / "tasks"
+                if directory(tasks):
+                    for task_entry in os.scandir(tasks):
+                        task = Path(task_entry.path)
+                        if (task_entry.is_symlink()
+                                or not task_entry.is_dir(follow_symlinks=False)):
+                            fail("Lean migration refuses linked or non-directory "
+                                 f"candidate parent {task}")
+                        matching(task / "reviews", {
+                            f"{lens}.json" for lens in LEAN_LENSES})
     entries = []
     for path in sorted(set(candidates)):
         relative = path.relative_to(target).as_posix()
@@ -162,10 +209,10 @@ def lean_primary_inventory(target: Path) -> list[dict]:
             info = path.lstat()
         except OSError as exc:
             fail(f"Lean migration cannot inventory {relative}: {exc}")
-        if path.is_symlink() or not path.is_file() or info.st_nlink != 1:
-            if _lean_family(relative):
-                fail(f"Lean migration refuses linked or non-regular candidate {relative}")
-            continue
+        if (_linked_or_reparse(info)
+                or not stat.S_ISREG(info.st_mode)
+                or info.st_nlink != 1):
+            fail(f"Lean migration refuses linked or non-regular candidate {relative}")
         data = path.read_bytes()
         family = _lean_family(relative, data)
         if family:
@@ -179,33 +226,77 @@ def lean_primary_inventory(target: Path) -> list[dict]:
 def lean_raw_inventory(target: Path) -> list[dict]:
     """Independent no-follow walk; does not call the primary classifier."""
     rows: list[dict] = []
-    starts = [target / ".factory", target / ".codex" / "agents"]
-    config = target / ".codex" / "config.toml"
-    for path in [*starts, config]:
+    files: list[Path] = []
+
+    def raw_parent(path: Path) -> list[os.DirEntry]:
         _require_unlinked_path(target, path)
-    stack = [path for path in starts if path.exists() or path.is_symlink()]
-    files = [config] if config.exists() or config.is_symlink() else []
-    while stack:
-        directory = stack.pop()
-        _require_unlinked_path(target, directory)
+        if not path.exists() and not path.is_symlink():
+            return []
         try:
-            children = list(os.scandir(directory))
+            info = path.lstat()
         except OSError as exc:
-            fail(f"Lean raw inventory cannot read {directory}: {exc}")
-        for child in children:
-            path = Path(child.path)
-            if path == target / ".factory" / "history":
-                continue
-            if child.is_symlink() or _linked_or_reparse(child.stat(follow_symlinks=False)):
-                rel = path.relative_to(target).as_posix()
-                # Any link in a fixed legacy root makes coverage unverifiable.
-                fail(f"Lean raw inventory refuses linked entry {rel}")
-            if child.is_dir(follow_symlinks=False):
-                stack.append(path)
-            elif child.is_file(follow_symlinks=False):
-                files.append(path)
+            fail(f"Lean raw inventory cannot inspect candidate parent {path}: {exc}")
+        if (_linked_or_reparse(info)
+                or not stat.S_ISDIR(info.st_mode)):
+            fail(f"Lean raw inventory refuses linked or non-directory candidate parent {path}")
+        try:
+            return list(os.scandir(path))
+        except OSError as exc:
+            fail(f"Lean raw inventory cannot read candidate parent {path}: {exc}")
+
+    def raw_exact(path: Path) -> None:
+        _require_unlinked_path(target, path)
+        if path.exists() or path.is_symlink():
+            files.append(path)
+
+    def raw_matches(parent: Path, names: set[str] | None = None) -> None:
+        for child in raw_parent(parent):
+            if ((names is None and child.name.endswith(".json"))
+                    or (names is not None and child.name in names)):
+                files.append(Path(child.path))
+
+    raw_exact(target / ".codex/config.toml")
+    raw_matches(target / ".codex/agents", set(RETIRED_FORGE_PROFILE_HASHES))
+    factory = target / ".factory"
+    if raw_parent(factory):
+        raw_matches(factory / "grill-rounds")
+        raw_matches(factory / "grills", {"requirements.json", "plan.json"})
+        raw_matches(factory / "grills/tasks")
+        raw_exact(factory / "plan-approval.json")
+        raw_matches(factory / "plan-mode")
+        raw_exact(factory / "stages.json")
+        story_entries = raw_parent(factory / "stories")
+        for story_entry in story_entries:
+            story = Path(story_entry.path)
+            if (story_entry.is_symlink()
+                    or not story_entry.is_dir(follow_symlinks=False)):
+                fail(f"Lean raw inventory refuses linked or non-directory candidate parent {story}")
+            raw_matches(story / "grill-rounds")
+            raw_matches(story / "grills", {"requirements.json", "plan.json"})
+            raw_matches(story / "grills/tasks")
+            raw_exact(story / "plan-approval.json")
+            raw_matches(story / "plan-mode")
+            raw_matches(story / "stages")
+            raw_matches(story / "reviews", {
+                f"{lens}.json" for lens in LEAN_LENSES})
+            for task_entry in raw_parent(story / "tasks"):
+                task = Path(task_entry.path)
+                if (task_entry.is_symlink()
+                        or not task_entry.is_dir(follow_symlinks=False)):
+                    fail("Lean raw inventory refuses linked or non-directory "
+                         f"candidate parent {task}")
+                raw_matches(task / "reviews", {
+                    f"{lens}.json" for lens in LEAN_LENSES})
     for path in sorted(set(files)):
         relative = path.relative_to(target).as_posix()
+        try:
+            info = path.lstat()
+        except OSError as exc:
+            fail(f"Lean raw inventory cannot inspect candidate {relative}: {exc}")
+        if (_linked_or_reparse(info)
+                or not stat.S_ISREG(info.st_mode)
+                or info.st_nlink != 1):
+            fail(f"Lean raw inventory refuses linked or non-regular candidate {relative}")
         data = path.read_bytes()
         family = ""
         # Deliberately independent spelling of the candidate universe.

@@ -6,6 +6,7 @@ import os
 import shutil
 import subprocess
 import sys
+import tempfile
 import threading
 import time
 from pathlib import Path
@@ -188,10 +189,10 @@ def test_native_launch_registers_before_stdin_and_records_terminal_identity(
     scan_calls = []
     real_scan = codex_runtime.scan_native_result
 
-    def scan(path, *, data=None):
+    def scan(path, *, data=None, stream=None):
         scan_calls.append(path)
-        assert data is not None
-        return real_scan(path, data=data)
+        assert data is None and stream is not None
+        return real_scan(path, stream=stream)
 
     monkeypatch.setattr(codex_runtime, "scan_native_result", scan)
     monkeypatch.setattr(delegate, "_process_table", lambda: {})
@@ -318,6 +319,197 @@ def test_native_log_open_failure_releases_lock_without_lifecycle_rows(
     assert all(handle.closed for handle in opened)
     assert released == [(lock, acquired[0])]
     assert load_delegations(native_repo) == []
+
+
+@pytest.mark.parametrize(("limit", "message"), [
+    (None, "cannot determine the installed component prompt limit"),
+    ("8", "complete prompt requires"),
+])
+def test_context_prompt_capacity_refuses_before_starting_row(
+        native_repo, tmp_path, monkeypatch, capsys, limit, message):
+    import forge_cli.delegate as delegate
+
+    executable = fake_codex(tmp_path)
+    native_env(monkeypatch, tmp_path, executable)
+    if limit is None:
+        monkeypatch.delenv("FORGE_COMPONENT_PROMPT_LIMIT_BYTES", raising=False)
+    else:
+        monkeypatch.setenv("FORGE_COMPONENT_PROMPT_LIMIT_BYTES", limit)
+    source = tmp_path / "context.md"
+    source.write_text("supplement", encoding="utf-8")
+    text, metadata, snapshot, identity = delegate.secure_context_snapshot(source)
+    try:
+        with pytest.raises(SystemExit):
+            launch_companion(
+                native_repo, task_id="grill-plan", text="primary",
+                path=native_repo / ".factory" / "grill-brief-plan.md",
+                task_sha256_value="a" * 64, model="model-pin", effort="high",
+                write=False, context_text=text, context_metadata=metadata,
+                context_snapshot=snapshot, context_snapshot_identity=identity,
+            )
+        assert message in capsys.readouterr().out
+        assert load_delegations(native_repo) == []
+    finally:
+        delegate._cleanup_private_context(snapshot, identity, "")
+
+
+def test_native_context_launch_frames_exact_snapshot_and_cleans_terminal(
+        native_repo, tmp_path, monkeypatch):
+    import forge_cli.delegate as delegate
+
+    executable = fake_codex(tmp_path)
+    capture_path = native_env(monkeypatch, tmp_path, executable)
+    monkeypatch.setenv("FORGE_COMPONENT_PROMPT_LIMIT_BYTES", "1048576")
+    monkeypatch.setattr(delegate, "_process_table", lambda: {})
+    monkeypatch.setattr(delegate, "_capture_spawn_identity", lambda _proc: "known")
+    monkeypatch.setattr(
+        delegate, "_wait_and_reap",
+        lambda proc, *_args, **_kwargs: proc.wait() == 0,
+    )
+    source = tmp_path / "context.md"
+    source.write_text("supplement", encoding="utf-8")
+    text, metadata, snapshot, identity = delegate.secure_context_snapshot(source)
+    terminal = launch_companion(
+        native_repo, task_id="grill-plan", text="primary",
+        path=native_repo / ".factory" / "grill-brief-plan.md",
+        task_sha256_value="a" * 64, model="model-pin", effort="high",
+        write=False, context_text=text, context_metadata=metadata,
+        context_snapshot=snapshot, context_snapshot_identity=identity,
+    )
+
+    prompt = json.loads(capture_path.read_text(encoding="utf-8"))["prompt"]
+    assert prompt.startswith("primary\n\n## Untrusted supplemental context")
+    assert "<supplemental-context>\nsupplement\n</supplemental-context>" in prompt
+    assert terminal["context"] == metadata
+    assert set(terminal["context"]) == {"supplied", "bytes", "snapshot_id"}
+    assert not snapshot.parent.exists()
+
+
+@pytest.mark.parametrize("status", ["succeeded", "running"])
+def test_stale_context_cleanup_is_ledger_correlated_and_bounded(
+        native_repo, tmp_path, monkeypatch, status):
+    import forge_cli.codex_status as codex_status
+    import forge_cli.delegate as delegate
+
+    source = tmp_path / "ordinary-context.md"
+    source.write_text("context", encoding="utf-8")
+    source.chmod(0o644)
+    _text, metadata, snapshot, _identity = delegate.secure_context_snapshot(source)
+    row = {
+        "launch_id": "launch-stale", "launch_status": status,
+        "context": metadata, "pid": 123, "pid_started": "known",
+    }
+    arbitrary = (
+        Path(tempfile.gettempdir())
+        / f"forge-context-not-ledger-owned-{tmp_path.name}"
+    )
+    arbitrary.mkdir(exist_ok=True)
+    (arbitrary / "keep.txt").write_text("keep", encoding="utf-8")
+    monkeypatch.setattr(delegate, "load_delegations", lambda _base: [row])
+    monkeypatch.setattr(
+        codex_status, "dead_launches",
+        lambda _base: [row] if status == "running" else [],
+    )
+    try:
+        delegate._cleanup_stale_context_snapshots(native_repo)
+        assert not snapshot.parent.exists()
+        assert (arbitrary / "keep.txt").read_text(encoding="utf-8") == "keep"
+    finally:
+        shutil.rmtree(arbitrary)
+
+
+@pytest.mark.parametrize("tamper", ["unknown", "link", "identity"])
+def test_stale_context_cleanup_refuses_unknown_link_or_identity_drift(
+        native_repo, tmp_path, monkeypatch, tamper):
+    import forge_cli.delegate as delegate
+
+    source = tmp_path / "context.md"
+    source.write_text("context", encoding="utf-8")
+    _text, metadata, snapshot, identity = delegate.secure_context_snapshot(source)
+    row = {
+        "launch_id": "launch-stale", "launch_status": "failed",
+        "context": dict(metadata),
+    }
+    extra = None
+    if tamper == "unknown":
+        extra = snapshot.parent / "unknown.txt"
+        extra.write_text("unknown", encoding="utf-8")
+    elif tamper == "link":
+        link_target = tmp_path / "target.txt"
+        link_target.write_text("target", encoding="utf-8")
+        snapshot.unlink()
+        snapshot.symlink_to(link_target)
+    else:
+        row["context"]["bytes"] += 1
+    monkeypatch.setattr(delegate, "load_delegations", lambda _base: [row])
+    try:
+        with pytest.raises(SystemExit):
+            delegate._cleanup_stale_context_snapshots(native_repo)
+    finally:
+        if tamper == "link":
+            snapshot.unlink()
+            snapshot.parent.rmdir()
+        else:
+            if extra is not None:
+                extra.unlink()
+            delegate._cleanup_private_context(snapshot, identity, "")
+
+
+def test_stale_context_cleanup_refuses_same_size_regular_file_replacement(
+        native_repo, tmp_path, monkeypatch, capsys):
+    import forge_cli.delegate as delegate
+
+    source = tmp_path / "context.md"
+    source.write_text("context", encoding="utf-8")
+    _text, metadata, snapshot, _identity = delegate.secure_context_snapshot(source)
+    row = {
+        "launch_id": "launch-stale", "launch_status": "failed",
+        "context": metadata,
+    }
+    replacement = snapshot.parent / "replacement.txt"
+    replacement.write_bytes(b"changed")
+    replacement.chmod(0o600)
+    os.replace(replacement, snapshot)
+    monkeypatch.setattr(delegate, "load_delegations", lambda _base: [row])
+
+    try:
+        with pytest.raises(SystemExit):
+            delegate._cleanup_stale_context_snapshots(native_repo)
+        assert "identity drifted" in capsys.readouterr().out
+        assert snapshot.read_bytes() == b"changed"
+    finally:
+        snapshot.unlink()
+        snapshot.parent.rmdir()
+
+
+def test_stale_context_cleanup_preserves_unbound_historical_snapshot(
+        native_repo, monkeypatch, capsys):
+    import forge_cli.delegate as delegate
+
+    opaque = "a" * 32
+    directory = Path(tempfile.gettempdir()) / f"forge-context-{opaque}"
+    directory.mkdir(mode=0o700)
+    directory.chmod(0o700)
+    snapshot = directory / "context.txt"
+    snapshot.write_bytes(b"context")
+    snapshot.chmod(0o600)
+    row = {
+        "launch_id": "launch-historical", "launch_status": "failed",
+        "context": {
+            "supplied": True, "bytes": len(b"context"),
+            "snapshot_id": f"context-{opaque}",
+        },
+    }
+    monkeypatch.setattr(delegate, "load_delegations", lambda _base: [row])
+
+    try:
+        with pytest.raises(SystemExit):
+            delegate._cleanup_stale_context_snapshots(native_repo)
+        assert "no identity binding" in capsys.readouterr().out
+        assert snapshot.read_bytes() == b"context"
+    finally:
+        snapshot.unlink()
+        directory.rmdir()
 
 
 def test_native_zero_exit_without_completed_turn_is_failed(

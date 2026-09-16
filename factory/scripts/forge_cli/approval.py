@@ -8,13 +8,15 @@ from __future__ import annotations
 
 import os
 import re
+import stat
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
 from factory_lib import (
-    _plan_body_digest_bytes, _safe_review_leaf, _task_plan_state, dump_json, evidence_path,
-    factory_dir, load_json, now_iso,
+    _plan_body_digest_bytes, _safe_review_leaf, _task_plan_state,
+    _windows_reparse_point, dump_json, evidence_path, factory_dir, git_control_dir,
+    load_json, now_iso,
     plan_digest_without_assumptions, protected_decomposition_state_path,
     require_grill, run_state_path, task_frontier_state,
 )
@@ -51,6 +53,47 @@ def _require_safe_plan(base: Path, path: Path) -> None:
     if (".." in path.parts
             or not _safe_review_leaf(base, path, required=True)):
         raise ApprovalRefused("approval plan must be a contained regular non-linked file")
+
+
+def _require_safe_destination(base: Path, path: Path, *, required: bool) -> None:
+    try:
+        boundary = base
+        try:
+            relative = path.relative_to(boundary)
+        except ValueError:
+            boundary = git_control_dir(base)
+            relative = path.relative_to(boundary)
+        current = boundary
+        root_info = current.lstat()
+        if (not stat.S_ISDIR(root_info.st_mode) or current.is_symlink()
+                or _windows_reparse_point(current)):
+            raise ApprovalRefused(
+                f"approval destination must be contained and non-linked: {path}"
+            )
+        for index, part in enumerate(relative.parts):
+            current /= part
+            try:
+                info = current.lstat()
+            except FileNotFoundError:
+                if required:
+                    raise ApprovalRefused(
+                        f"approval destination is missing: {path}"
+                    )
+                return
+            leaf = index == len(relative.parts) - 1
+            safe = (
+                stat.S_ISREG(info.st_mode) and info.st_nlink == 1
+                if leaf else stat.S_ISDIR(info.st_mode)
+            )
+            if (not safe or current.is_symlink()
+                    or _windows_reparse_point(current)):
+                raise ApprovalRefused(
+                    f"approval destination must be contained and non-linked: {path}"
+                )
+    except (OSError, ValueError) as exc:
+        raise ApprovalRefused(
+            f"approval destination must be contained and non-linked: {path}"
+        ) from exc
 
 
 def _story_candidate(base: Path) -> ApprovalCandidate | None:
@@ -100,7 +143,9 @@ def _task_candidate(base: Path) -> ApprovalCandidate | None:
     frontier = task_frontier_state(base)
     if frontier is None:
         return None
-    _frontier_state, task = frontier
+    frontier_state, task = frontier
+    if frontier_state != "await-approval":
+        return None
     state = load_json(run_state_path(base), default={})
     story = _text(state.get("story")) or _text(state.get("issue_key"))
     if not story:
@@ -151,16 +196,12 @@ def _claude_approved(payload: dict[str, Any]) -> str:
     response = payload.get("tool_response")
     if payload.get("is_error") is True or payload.get("cancelled") is True:
         return ""
-    if isinstance(response, dict):
-        if response.get("is_error") is True or response.get("cancelled") is True:
-            return ""
-        status = _text(response.get("status")).lower()
-        if status in {"cancelled", "rejected", "error", "failed"}:
-            return ""
-    # PostToolUse is emitted only after a successful tool completion.  An
-    # absent response is not success: tests and alternate hosts can call the
-    # recorder directly, and must provide completion evidence.
-    if response in (None, False, ""):
+    if not isinstance(response, dict):
+        return ""
+    if response.get("is_error") is True or response.get("cancelled") is True:
+        return ""
+    if _text(response.get("status")).lower() not in {
+            "success", "succeeded", "completed"}:
         return ""
     tool_input = payload.get("tool_input")
     plan = tool_input.get("plan") if isinstance(tool_input, dict) else None
@@ -270,15 +311,17 @@ def _approve_task(candidate: ApprovalCandidate, record: dict[str, Any]) -> None:
     dump_json(candidate.evidence, grill)
 
 
-def _restore_files(snapshots: dict[Path, bytes | None], base: Path, plan: Path) -> None:
+def _restore_files(snapshots: dict[Path, bytes | None], base: Path) -> None:
     """Best-effort rollback for a failed multi-file approval publication."""
     for path, body in snapshots.items():
-        if path == plan and not _safe_review_leaf(base, path, required=True):
+        try:
+            _require_safe_destination(
+                base, path, required=path.exists() or path.is_symlink())
+        except ApprovalRefused:
             continue
         if body is None:
             path.unlink(missing_ok=True)
         else:
-            path.parent.mkdir(parents=True, exist_ok=True)
             path.write_bytes(body)
 
 
@@ -325,7 +368,16 @@ def record_native_approval(
         replay_path = replay_dir / f"{replay_key}.json"
         if replay_path.exists() or replay_path.is_symlink():
             raise ApprovalRefused("native approval event was already consumed")
+
+        authority_paths = {candidate.evidence}
+        if candidate.kind == "story":
+            authority_paths.update({candidate.path, run_state_path(base)})
+        for authority_path in authority_paths:
+            _require_safe_destination(
+                base, authority_path, required=authority_path.exists())
+        _require_safe_destination(base, replay_path, required=False)
         replay_dir.mkdir(parents=True, exist_ok=True)
+        _require_safe_destination(base, replay_path, required=False)
 
         record: dict[str, Any] = {
             "approved_plan_sha256": candidate.digest,
@@ -340,9 +392,6 @@ def record_native_approval(
         }
         if candidate.kind == "story" and candidate.previous_digest:
             record["previous_approved_plan_sha256"] = candidate.previous_digest
-        authority_paths = {candidate.evidence}
-        if candidate.kind == "story":
-            authority_paths.update({candidate.path, run_state_path(base)})
         snapshots = {
             path: path.read_bytes() if path.is_file() else None
             for path in authority_paths
@@ -363,6 +412,6 @@ def record_native_approval(
             else:
                 _approve_task(candidate, record)
         except Exception:
-            _restore_files(snapshots, base, candidate.path)
+            _restore_files(snapshots, base)
             raise
         return record

@@ -49,6 +49,9 @@ def test_delegate_scope_is_bound_to_brief_launch_identity_and_existing_write_sco
     )
     scope = brief.split("## Write scope — nothing outside this", 1)[1].split("##", 1)[0]
     assert "src/a.py" in scope and "src/b.py" not in scope
+    assert "Delegation coverage: NARROWED proper subset" in brief
+    assert "Do not run the task-wide required tests or verify commands" in brief
+    assert "orchestrator runs these after scoped fixes" in brief
     assert path_in_scope("src/a.py", ["src/a.py"])
 
     brief_path, digest = _seed_contract(repo, task)
@@ -68,6 +71,26 @@ def test_delegate_scope_is_bound_to_brief_launch_identity_and_existing_write_sco
     )
     denied = _invoke_worker(worker, _patch("*** Add File: src/b.py", "+no"))
     assert "deny" in denied, denied
+
+
+def test_full_scope_brief_keeps_worker_owned_task_verification(repo: Path):
+    task = {
+        "id": "T1", "title": "full", "objective": "change both files",
+        "acceptance_criteria": ["one"], "write_scope": ["src/a.py", "src/b.py"],
+        "required_tests": [], "verify_commands": ["python -m pytest"],
+        "reviewer_focus": [],
+        "review_budget": {"max_changed_files": 3, "max_changed_lines": 50,
+                          "reason": "bounded fixture"},
+    }
+
+    brief = delegate.compose_brief(
+        repo, task, write=True, user_facing=False, story="S1",
+        scope_override=task["write_scope"],
+    )
+
+    assert "Delegation coverage: FULL effective task scope" in brief
+    assert "Verify commands (run them yourself" in brief
+    assert "Do not run the task-wide required tests" not in brief
 
 
 def test_hook_refuses_write_outside_narrowed_delegate_scope():
@@ -93,7 +116,9 @@ def test_context_file_security_no_follow_modes_identity_capacity_and_cleanup(
             "supplied": True, "bytes": len(b"private context"),
             "snapshot_id": metadata["snapshot_id"],
         }
+        assert len(metadata["snapshot_id"].removeprefix("context-")) == 64
         assert "path" not in metadata and "sha256" not in metadata
+        assert snapshot.parent.name == f"forge-{metadata['snapshot_id']}"
         assert snapshot.read_text(encoding="utf-8") == text
         assert snapshot.stat().st_mode & 0o777 == 0o600
         snapshot.write_text("changed context", encoding="utf-8")
