@@ -230,6 +230,11 @@ def _lean_family(relative: str, data: bytes | None = None) -> str:
             r"(?:quality|performance|security)\.json",
             relative):
         return "fixed-review-lens"
+    if re.fullmatch(
+            r"\.factory/history/[^/]+/reviews/"
+            r"(?:quality|performance|security)\.json",
+            relative):
+        return "history-fixed-review-lens"
     if (relative == ".factory/stages.json"
             or re.fullmatch(r"\.factory/stories/[^/]+/stages/[^/]+\.json", relative)):
         try:
@@ -384,6 +389,15 @@ def _legacy_json_shape_reason(family: str, value: object) -> str:
                 and SAFE_COMPONENT.fullmatch(value["task_id"]) is None):
             return "fixed review task identity is not a safe path component"
         return reason
+    if family == "history-fixed-review-lens":
+        reason = fields({
+            "generated_by": str, "score": int, "summary": str,
+            "blocking_findings": list, "non_blocking_findings": list,
+            "aspect": str, "commit": str, "recorded_at": str,
+        })
+        if not reason and not re.fullmatch(r"[0-9a-f]{40}", value["commit"]):
+            return "historical fixed review has an invalid commit identity"
+        return reason
     if family == "legacy-stage-stamp":
         records = value.get("stages") if "stages" in value else [value]
         if not isinstance(records, list) or not records:
@@ -436,7 +450,8 @@ def _converted_stage_bytes(data: bytes) -> bytes:
 def _entry_identity(relative: str) -> dict:
     parts = Path(relative).parts
     identity: dict[str, object] = {"source_paths": [relative]}
-    if len(parts) > 2 and parts[:2] == (".factory", "stories"):
+    if (len(parts) > 2 and parts[0] == ".factory"
+            and parts[1] in {"stories", "history"}):
         identity["story"] = parts[2]
     if len(parts) > 5 and parts[3] == "tasks":
         identity["task_id"] = parts[4]
@@ -610,6 +625,44 @@ def _classify_fixed_review_coverage(target: Path, entries: list[dict]) -> None:
                        marker_identity=marker_identity)
 
 
+def _classify_history_fixed_review_coverage(
+        target: Path, entries: list[dict]) -> None:
+    """Retire only complete fixed review triples from sealed story history."""
+    groups: dict[str, list[dict]] = {}
+    for entry in entries:
+        if (entry.get("family") == "history-fixed-review-lens"
+                and entry.get("classification") != "invalid"):
+            groups.setdefault(Path(entry["path"]).parts[2], []).append(entry)
+    for story, rows in groups.items():
+        problem = ""
+        if {Path(row["path"]).stem for row in rows} != set(LEAN_LENSES):
+            problem = "historical fixed review is incomplete"
+        run = target / ".factory" / "history" / story / "run.json"
+        _require_unlinked_path(target, run)
+        try:
+            info = run.lstat()
+            state = json.loads(run.read_text(encoding="utf-8"))
+        except (OSError, UnicodeDecodeError, json.JSONDecodeError):
+            problem = problem or "historical fixed review has no sealed story state"
+        else:
+            if (not stat.S_ISREG(info.st_mode) or info.st_nlink != 1
+                    or not isinstance(state, dict)
+                    or state.get("issue_key") != story
+                    or state.get("phase") not in {"pr-ready", "done"}):
+                problem = problem or "historical fixed review has no sealed story state"
+        for row in rows:
+            value = json.loads((target / row["path"]).read_text(encoding="utf-8"))
+            if value.get("aspect") != Path(row["path"]).stem:
+                problem = problem or "historical fixed review aspect does not match its path"
+        for row in rows:
+            row.update(
+                classification="invalid" if problem else "eligible",
+                reason=problem or "sealed historical fixed review is retired",
+                preserve=False,
+                source_paths=sorted(item["path"] for item in rows),
+            )
+
+
 def lean_primary_inventory(target: Path) -> list[dict]:
     """Discover only the declared Lean legacy roots and candidate parents."""
     candidates: list[Path] = []
@@ -676,6 +729,15 @@ def lean_primary_inventory(target: Path) -> list[dict]:
                             fail("Lean migration refuses linked or non-directory "
                                  f"candidate parent {task}")
                         matching(task / "reviews")
+        history = factory / "history"
+        if directory(history):
+            for entry in os.scandir(history):
+                story = Path(entry.path)
+                if (entry.is_symlink()
+                        or not entry.is_dir(follow_symlinks=False)):
+                    fail("Lean migration refuses linked or non-directory "
+                         f"candidate parent {story}")
+                matching(story / "reviews")
     entries = []
     for path in sorted(set(candidates)):
         relative = path.relative_to(target).as_posix()
@@ -767,6 +829,7 @@ def lean_primary_inventory(target: Path) -> list[dict]:
             **_entry_identity(relative),
         })
     _classify_fixed_review_coverage(target, entries)
+    _classify_history_fixed_review_coverage(target, entries)
     return entries
 
 
@@ -905,6 +968,15 @@ def _raw_json_shape_reason(family: str, value: object) -> str:
                 and SAFE_COMPONENT.fullmatch(value["task_id"]) is None):
             return "fixed review task identity is not a safe path component"
         return problem
+    if family == "history-fixed-review-lens":
+        problem = required_fields({
+            "generated_by": str, "score": int, "summary": str,
+            "blocking_findings": list, "non_blocking_findings": list,
+            "aspect": str, "commit": str, "recorded_at": str,
+        })
+        if not problem and not re.fullmatch(r"[0-9a-f]{40}", value["commit"]):
+            return "historical fixed review has an invalid commit identity"
+        return problem
     if family == "legacy-stage-stamp":
         records = value.get("stages") if "stages" in value else [value]
         if not isinstance(records, list) or not records:
@@ -944,7 +1016,8 @@ def _raw_entry_identity(relative: str) -> dict:
     """Independently derive normalized source identity for raw coverage."""
     segments = tuple(relative.split("/"))
     identity: dict[str, object] = {"source_paths": [relative]}
-    if len(segments) > 2 and segments[:2] == (".factory", "stories"):
+    if (len(segments) > 2 and segments[0] == ".factory"
+            and segments[1] in {"stories", "history"}):
         identity["story"] = segments[2]
     if len(segments) > 5 and segments[3] == "tasks":
         identity["task_id"] = segments[4]
@@ -1121,6 +1194,46 @@ def _raw_classify_fixed_review_coverage(target: Path, rows: list[dict]) -> None:
                        marker_identity=marker_identity)
 
 
+def _raw_classify_history_fixed_review_coverage(
+        target: Path, rows: list[dict]) -> None:
+    """Independently classify complete fixed triples in sealed history."""
+    groups: dict[str, list[dict]] = {}
+    for row in rows:
+        if (row.get("family") == "history-fixed-review-lens"
+                and row.get("classification") != "invalid"):
+            groups.setdefault(tuple(row["path"].split("/"))[2], []).append(row)
+    for story, group in groups.items():
+        problem = ""
+        if {row["path"].rsplit("/", 1)[-1].removesuffix(".json")
+                for row in group} != set(LEAN_LENSES):
+            problem = "historical fixed review is incomplete"
+        run = target.joinpath(".factory", "history", story, "run.json")
+        _require_unlinked_path(target, run)
+        try:
+            info = run.lstat()
+            state = json.loads(run.read_bytes().decode("utf-8"))
+        except (OSError, UnicodeDecodeError, json.JSONDecodeError):
+            problem = problem or "historical fixed review has no sealed story state"
+        else:
+            if (not stat.S_ISREG(info.st_mode) or info.st_nlink != 1
+                    or not isinstance(state, dict)
+                    or state.get("issue_key") != story
+                    or state.get("phase") not in {"pr-ready", "done"}):
+                problem = problem or "historical fixed review has no sealed story state"
+        for row in group:
+            value = json.loads((target / row["path"]).read_bytes().decode("utf-8"))
+            lens = row["path"].rsplit("/", 1)[-1].removesuffix(".json")
+            if value.get("aspect") != lens:
+                problem = problem or "historical fixed review aspect does not match its path"
+        for row in group:
+            row.update(
+                classification="invalid" if problem else "eligible",
+                reason=problem or "sealed historical fixed review is retired",
+                preserve=False,
+                source_paths=sorted(item["path"] for item in group),
+            )
+
+
 def _raw_inventory_paths(target: Path) -> list[Path]:
     """Enumerate the fixed legacy universe without following any link."""
     files: list[Path] = []
@@ -1179,6 +1292,13 @@ def _raw_inventory_paths(target: Path) -> list[Path]:
                     fail("Lean raw inventory refuses linked or non-directory "
                          f"candidate parent {task}")
                 raw_matches(task / "reviews")
+        for story_entry in raw_parent(factory / "history"):
+            story = Path(story_entry.path)
+            if (story_entry.is_symlink()
+                    or not story_entry.is_dir(follow_symlinks=False)):
+                fail("Lean raw inventory refuses linked or non-directory "
+                     f"candidate parent {story}")
+            raw_matches(story / "reviews")
     return sorted(set(files))
 
 
@@ -1264,6 +1384,10 @@ def _raw_legacy_family(relative: str, data: bytes) -> str:
             r"\.factory/stories/[^/]+/(?:tasks/[^/]+/reviews|reviews)/"
             r"(?:quality|performance|security)\.json", relative):
         family = "fixed-review-lens"
+    elif re.fullmatch(
+            r"\.factory/history/[^/]+/reviews/"
+            r"(?:quality|performance|security)\.json", relative):
+        family = "history-fixed-review-lens"
     elif relative == ".factory/stages.json" or "/stages/" in relative:
         try:
             stage_value = json.loads(data.decode("utf-8"))
@@ -1376,6 +1500,7 @@ def lean_raw_inventory(target: Path) -> list[dict]:
             **_raw_entry_identity(relative),
         })
     _raw_classify_fixed_review_coverage(target, rows)
+    _raw_classify_history_fixed_review_coverage(target, rows)
     return rows
 
 
@@ -1470,6 +1595,12 @@ def _runtime_inventory(target: Path) -> list[dict]:
             for path in paths if path.is_file() and not path.is_symlink()]
 
 
+def _manifest_content_digest(value: dict) -> str:
+    return hashlib.sha256(json.dumps(
+        value, sort_keys=True, separators=(",", ":"), ensure_ascii=False,
+    ).encode("utf-8")).hexdigest()
+
+
 def _is_original_empty_completion(saved: dict) -> bool:
     legacy_keys = {
         "generated_by", "version", "input_inventory_digest", "output_digest",
@@ -1492,7 +1623,9 @@ def _is_original_empty_completion(saved: dict) -> bool:
     )
 
 
-def _validate_completed_manifest(target: Path, saved: dict) -> None:
+def _validate_completed_manifest(
+        target: Path, saved: dict, *, preserve_prior_output_identity: bool = False,
+) -> None:
     from factory_lib import (
         _committed_task_marker, product_delta_digest,
         read_selected_review_generation, validate_review_document,
@@ -1506,6 +1639,20 @@ def _validate_completed_manifest(target: Path, saved: dict) -> None:
         if not _is_original_empty_completion(saved):
             fail("Lean migration completed manifest is incomplete or tampered")
         return
+    prior = saved.get("prior_completion")
+    prior_digest = saved.get("prior_completion_digest")
+    if (prior is None) != (prior_digest is None):
+        fail("Lean migration completed manifest has incomplete prior completion")
+    if prior is not None:
+        if (not isinstance(prior, dict)
+                or "prior_completion" in prior
+                or not isinstance(prior_digest, str)
+                or _manifest_content_digest(prior) != prior_digest
+                or not prior.get("completed_at")):
+            fail("Lean migration completed manifest prior completion is tampered")
+        _validate_completed_manifest(
+            target, prior, preserve_prior_output_identity=True,
+        )
     installed_runtime = saved.get("installed_runtime")
     preserved_entries = saved.get("preserved_entries")
     if (saved.get("generated_by") != "upgrade"
@@ -1604,7 +1751,7 @@ def _validate_completed_manifest(target: Path, saved: dict) -> None:
         )
         if marker_problem or committed is None:
             fail("Lean migration durable review output marker is invalid")
-        expected_delta = product_delta_digest(
+        expected_delta = None if preserve_prior_output_identity else product_delta_digest(
             target, marker_data.get("review_base_sha")
             or marker_data.get("base_main_sha", ""), committed["commit"],
         )
@@ -1703,7 +1850,17 @@ def preflight_lean_migration(target: Path) -> dict | None:
         if saved.get("version") != LEAN_MIGRATION_VERSION:
             fail("Lean migration found an unequal partial retry; restore or complete the original checkout")
         if saved.get("completed_at"):
-            _validate_completed_manifest(target, saved)
+            preserve_prior = (
+                manifest == supplemental_manifest
+                and "prior_completion" not in saved
+                and any(entry.get("classification") == "eligible"
+                        and entry.get("family") == "history-fixed-review-lens"
+                        for entry in primary)
+            )
+            _validate_completed_manifest(
+                target, saved,
+                preserve_prior_output_identity=preserve_prior,
+            )
             if (_is_original_empty_completion(saved)
                     and any(entry.get("classification") == "eligible"
                             for entry in primary)):
@@ -1745,6 +1902,28 @@ def preflight_lean_migration(target: Path) -> dict | None:
                 if entry.get("classification") == "eligible"
                 and entry["path"] not in output_paths
             ]
+            if (manifest == supplemental_manifest
+                    and "prior_completion" not in saved
+                    and current_fixed == saved_fixed
+                    and newly_retired
+                    and all(entry.get("family") == "history-fixed-review-lens"
+                            for entry in newly_retired)):
+                migration = {
+                    "entries": primary,
+                    "input_inventory_digest": _inventory_digest(primary),
+                    "manifest_name": LEAN_MIGRATION_SUPPLEMENT,
+                    "extend_completed_sha256": hashlib.sha256(
+                        manifest.read_bytes(),
+                    ).hexdigest(),
+                    "prior_completion": saved,
+                    "prior_completion_digest": _manifest_content_digest(saved),
+                }
+                (migration["review_candidates"],
+                 migration["review_sentinels"]) = _fixed_review_plan(
+                    target, migration,
+                )
+                _prepare_review_outputs(target, migration)
+                return migration
             if current_fixed != saved_fixed or newly_retired:
                 fail("Lean migration found an unequal partial retry; restore or complete the original checkout")
             return None
@@ -2238,18 +2417,33 @@ def apply_lean_migration(target: Path, migration: dict | None) -> None:
             "preserved_entries": preserved_entries,
             "recorded_at": now_iso(),
         }
+        if "prior_completion" in migration:
+            manifest.update({
+                "prior_completion": migration["prior_completion"],
+                "prior_completion_digest": migration["prior_completion_digest"],
+            })
         validate_payload(target, "lean-workflow-migration", manifest)
         built_manifest = build / f"{LEAN_MIGRATION_VERSION}.json"
         dump_json(built_manifest, manifest)
         if load_json(built_manifest, default={}) != manifest:
             fail("Lean migration temporary manifest readback differs")
 
-        destination = _publish_incomplete_lean_manifest(
-            target, manifest,
-            destination_name=str(
+        destination = (
+            target / ".factory" / "migrations" / str(
                 migration.get("manifest_name")
                 or f"{LEAN_MIGRATION_VERSION}.json"
-            ),
+            )
+        )
+        extension_sha = migration.get("extend_completed_sha256")
+        if extension_sha:
+            _publish_converted_stage(
+                target, destination, built_manifest,
+                original_sha256=extension_sha,
+                output_sha256=hashlib.sha256(built_manifest.read_bytes()).hexdigest(),
+            )
+        destination = _publish_incomplete_lean_manifest(
+            target, manifest,
+            destination_name=destination.name,
         )
         for candidate, expected_id, expected_sha in built_generations:
             generation, selection = _publish_upgrade_review(
