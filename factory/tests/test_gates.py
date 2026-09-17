@@ -1179,6 +1179,78 @@ def write_task_proof(repo: Path, task_id: str = "T1", *,
     return task_root
 
 
+def publish_selected_findings(
+    repo: Path, story: str, findings: list, *,
+    task_id: str = "T1", aspects: tuple[str, ...] = ("quality",),
+) -> None:
+    """Publish validated canonical selected review findings for a fixture task."""
+    lib = load_factory_lib(repo)
+    inspected_commit = head(repo)
+    delta_id = lib.product_delta_digest(
+        repo, lib.effective_review_base(repo, task_id, inspected_commit),
+        inspected_commit,
+    )
+    brief_sha256 = "b" * 64
+    review_run_id = hashlib.sha256(
+        (brief_sha256 + delta_id).encode()
+    ).hexdigest()
+    provider = {
+        "findings": [],
+        "overall_correctness": "patch is correct",
+        "overall_explanation":
+            "BEGIN FORGE ASSESSMENT quality\nquality\n"
+            "END FORGE ASSESSMENT quality\n"
+            "BEGIN FORGE ASSESSMENT performance\nfast\n"
+            "END FORGE ASSESSMENT performance\n"
+            "BEGIN FORGE ASSESSMENT security\nsafe\n"
+            "END FORGE ASSESSMENT security",
+        "overall_confidence": 0.9,
+    }
+    raw = json.dumps({
+        **provider, "provider_report": provider, "review_status": "scoped-clean",
+    }, sort_keys=True).encode()
+    lenses = {}
+    for aspect in ("quality", "performance", "security"):
+        blocking = findings if aspect in aspects else []
+        lenses[aspect] = {
+            "task_id": task_id,
+            "generated_by": "autoreview",
+            "score": max(0, 10 - 3 * len(blocking)),
+            "summary": f"{aspect} fixture review",
+            "blocking_findings": blocking,
+            "non_blocking_findings": [],
+            "recommendation": "request-changes" if blocking else "approve",
+            "commit": inspected_commit,
+            "review_run_id": review_run_id,
+            "brief_sha256": brief_sha256,
+            "branch_diff_digest": delta_id,
+        }
+    lib.publish_review_generation(
+        repo, story, task_id, {
+            "format": "forge-review-generation/v1",
+            "origin": "combined",
+            "generated_by": "autoreview",
+            "story": story,
+            "task_id": task_id,
+            "review_run_id": review_run_id,
+            "brief_sha256": brief_sha256,
+            "inspected_commit": inspected_commit,
+            "delta_id": delta_id,
+            "helper": {
+                "path": "/fixture/autoreview", "version": "fixture",
+                "sha256": "a" * 64,
+            },
+            "input": {"sha256": hashlib.sha256(b"").hexdigest(), "bytes": 0},
+            "raw_result": {
+                "encoding": "base64", "sha256": hashlib.sha256(raw).hexdigest(),
+                "bytes": len(raw), "data": base64.b64encode(raw).decode("ascii"),
+            },
+            "lenses": lenses,
+            "recorded_at": "2026-09-10T00:00:00+00:00",
+        },
+    )
+
+
 def run_state(repo: Path) -> dict:
     lib = load_factory_lib(repo)
     return lib.load_json(lib.run_state_path(repo))
@@ -1397,17 +1469,15 @@ def test_shipped_new_layout_story_visible_to_board_and_consumers(repo):
     board_story(repo, key)
     add_pr_link(repo, key)
     scoped = repo / ".factory" / "stories" / key
-    reviews = scoped / "reviews"
-    reviews.mkdir(parents=True)
+    scoped.mkdir(parents=True)
     (scoped / "shipped.json").write_text("{}\n")
     (scoped / "stages.json").write_text(json.dumps({
         "stages": [{"status": "done"}],
     }))
     finding = {"category": "scoped-proof", "area": "history", "summary": "visible"}
-    for aspect in ("quality", "performance", "security"):
-        (reviews / f"{aspect}.json").write_text(json.dumps({
-            "blocking_findings": [], "non_blocking_findings": [finding],
-        }))
+    publish_selected_findings(
+        repo, key, [finding], aspects=("quality", "performance", "security"),
+    )
     completed = repo / "plans" / "completed" / f"{key}-scoped.md"
     completed.parent.mkdir(parents=True, exist_ok=True)
     completed.write_text(
@@ -1517,6 +1587,13 @@ def test_board_and_findings_refuse_selected_task_review_with_fixed_diagnostics(
             "summary": "legacy fallback remains visible",
         }],
     }))
+    with pytest.raises(SystemExit, match="run forge upgrade"):
+        collect(repo)
+    (legacy / "quality.json").unlink()
+    publish_selected_findings(repo, "LEGACY", [{
+        "category": "legacy-history", "area": "archive",
+        "summary": "migrated history remains visible",
+    }])
     assert any(row["category"] == "legacy-history" for row in collect(repo))
 
     selected = scoped / "tasks" / "T1" / "reviews" / "selected.json"
@@ -12331,22 +12408,18 @@ def test_structured_findings_recorded_and_malformed_refused(repo, tmp_path):
 
 
 def test_recurring_finding_class_surfaces_everywhere(repo, tmp_path):
-    # two shipped tasks + the active one all hit the same class -> RECURRING
-    for issue in ("ENG-7", "ENG-8"):
-        d = repo / ".factory" / "history" / issue / "reviews"
-        d.mkdir(parents=True)
-        (d / "quality.json").write_text(json.dumps({"blocking_findings": [
-            {"category": "validation-gap", "area": "api", "summary": "s"}]}))
-    (repo / ".factory" / "reviews").mkdir(exist_ok=True)
-    (repo / ".factory" / "reviews" / "quality.json").write_text(json.dumps(
-        {"blocking_findings": [{"category": "validation-gap", "area": "api",
-                                "summary": "again"}]}))
+    # Three canonical task generations hit the same class -> RECURRING.
+    finding = {"category": "validation-gap", "area": "api", "summary": "s"}
+    for issue in ("ENG-7", "ENG-8", "ENG-9"):
+        (repo / ".factory" / "history" / issue).mkdir(parents=True)
+        publish_selected_findings(repo, issue, [finding])
     code, out = run(repo, "forge.py", "findings", "patterns")
     assert code == 0 and "RECURRING x3" in out and "design signal" in out
     code, out = run(repo, "forge.py", "next")
     assert code == 0 and "RECURRING" in out
     # distinct classes below the threshold stay a healthy tail
-    (repo / ".factory" / "reviews" / "quality.json").unlink()
+    (story_state(repo, "ENG-9") / "tasks" / "T1" / "reviews"
+     / "selected.json").unlink()
     code, out = run(repo, "forge.py", "findings", "patterns")
     assert "RECURRING" not in out and "watch" in out
 
@@ -18312,10 +18385,10 @@ def test_precompact_scratchpad_snapshots_facts_and_findings(repo, tmp_path):
         "--by", "implementer", "-m", "migrations dir is missing")
     hist = repo / ".factory" / "history"
     for issue in ("ENG-7", "ENG-8", "ENG-9"):
-        d = hist / issue / "reviews"
-        d.mkdir(parents=True)
-        (d / "quality.json").write_text(json.dumps({"blocking_findings": [
-            {"category": "validation-gap", "area": "api", "summary": "s"}]}))
+        (hist / issue).mkdir(parents=True)
+        publish_selected_findings(repo, issue, [{
+            "category": "validation-gap", "area": "api", "summary": "s",
+        }])
     code, out = run(repo, "pre_compact.py", stdin=json.dumps({"trigger": "manual"}))
     assert code == 0, out
     text = pad.read_text()
@@ -18607,10 +18680,8 @@ def test_adopt_normalizes_case_variant_contract_files(repo, tmp_path):
 # -------------------------------------------------- loop-health audit (0008)
 
 def shipped_reviews(repo: Path, task: str, findings: list) -> None:
-    d = repo / ".factory" / "history" / task / "reviews"
-    d.mkdir(parents=True, exist_ok=True)
-    (d / "quality.json").write_text(json.dumps(
-        {"score": 9, "blocking_findings": [], "non_blocking_findings": findings}))
+    (repo / ".factory" / "history" / task).mkdir(parents=True, exist_ok=True)
+    publish_selected_findings(repo, task, findings)
 
 
 def test_audit_flags_ignored_escalation_until_routed(repo):

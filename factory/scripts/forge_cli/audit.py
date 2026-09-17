@@ -34,6 +34,10 @@ from .roadmap import load_items
 DEFERRAL_STALE_DAYS = 60
 
 
+def _story_key(task: str) -> str:
+    return task.split("/", 1)[0]
+
+
 def _shipped(base: Path) -> list[str]:
     history = factory_dir(base) / "history"
     shipped = {p.name for p in history.iterdir() if p.is_dir()} \
@@ -66,7 +70,9 @@ def ignored_escalations(base: Path) -> list[str]:
         if needle and (needle in decision_text or needle in refactor_text):
             continue  # routed: a decision or refactor story names the class
         flag_task = cluster.get("flagged_at", "")
-        ships_since = sum(1 for t in shipped if t > flag_task) if flag_task in shipped else 0
+        flag_story = _story_key(flag_task)
+        ships_since = sum(1 for t in shipped if t > flag_story) \
+            if flag_story in shipped else 0
         if ships_since >= 1:
             out.append(
                 f"IGNORED ESCALATION: {cluster['category']}"
@@ -123,7 +129,12 @@ def review_drift(base: Path) -> list[str]:
     rows_by_task: dict[str, list[dict]] = {}
     for row in collect(base):
         rows_by_task.setdefault(row["task"], []).append(row)
-    shipped_with_findings = [t for t in _shipped(base) if rows_by_task.get(t)]
+    shipped = _shipped(base)
+    shipped_order = {story: index for index, story in enumerate(shipped)}
+    shipped_with_findings = sorted(
+        (task for task in rows_by_task if _story_key(task) in shipped_order),
+        key=lambda task: (shipped_order[_story_key(task)], task),
+    )
     if not shipped_with_findings:
         return []
     latest = shipped_with_findings[-1]
