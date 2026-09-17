@@ -586,6 +586,147 @@ def test_native_approval_reuses_existing_story_and_task_approval_storage(
         repo, task_row, legacy, task.digest)
 
 
+def _lean_bootstrap_grill(lib) -> dict:
+    digest = lib._LEAN_SELF_BOOTSTRAP_DIGEST
+    return {
+        "generated_by": "griller",
+        "gate": "task",
+        "verdict": "pass",
+        "issue": lib._LEAN_SELF_BOOTSTRAP_STORY,
+        "task_id": lib._LEAN_SELF_BOOTSTRAP_TASK,
+        "final_artifact_sha256": lib._LEAN_SELF_BOOTSTRAP_FINAL_ARTIFACT_SHA256,
+        "approved_task_plan_sha256": digest,
+        "approved_by": lib._LEAN_SELF_BOOTSTRAP_ACTOR,
+        "approved_at": "2026-09-18T12:00:00+00:00",
+    }
+
+
+@pytest.mark.parametrize(
+    ("change", "value"),
+    [
+        ("story", "OTHER"),
+        ("task", "OTHER"),
+        ("digest", "0" * 64),
+        ("approved_by", "Other Human"),
+        ("approved_at", "not-a-time"),
+        ("approval_runtime", "claude"),
+    ],
+)
+def test_lean_self_bootstrap_compatibility_is_exact(
+        repo: Path, monkeypatch: pytest.MonkeyPatch, change: str, value: str):
+    lib = load_factory_lib(repo)
+    grill = _lean_bootstrap_grill(lib)
+    task = {"id": lib._LEAN_SELF_BOOTSTRAP_TASK}
+    story = lib._LEAN_SELF_BOOTSTRAP_STORY
+    digest = lib._LEAN_SELF_BOOTSTRAP_DIGEST
+    if change == "story":
+        story = value
+    elif change == "task":
+        task["id"] = value
+    elif change == "digest":
+        digest = value
+    else:
+        grill[change] = value
+    monkeypatch.setattr(lib, "_active_story_key", lambda _root: story)
+    monkeypatch.setattr(
+        lib, "task_grill_grounding_matches",
+        lambda _root, _task, _grill: True,
+    )
+
+    accepted = lib._lean_self_bootstrap_task_grill(repo, task, grill, digest)
+
+    assert accepted is (change not in {
+        "story", "task", "digest", "approved_by", "approved_at",
+        "approval_runtime",
+    })
+
+
+def test_lean_self_bootstrap_records_once_without_native_event_identity(
+        repo: Path, monkeypatch: pytest.MonkeyPatch):
+    lib = load_factory_lib(repo)
+    story = lib._LEAN_SELF_BOOTSTRAP_STORY
+    task_id = lib._LEAN_SELF_BOOTSTRAP_TASK
+    digest = lib._LEAN_SELF_BOOTSTRAP_DIGEST
+    actor = lib._LEAN_SELF_BOOTSTRAP_ACTOR
+    story_digest = "1" * 64
+    task = {"id": task_id}
+    decomposition = lib.protected_decomposition_state_path(repo)
+    lib.dump_json(decomposition, {"plan_sha256": story_digest, "tasks": [task]})
+    story_plan = repo / "plans" / "active" / "lean.md"
+    story_plan.parent.mkdir(parents=True, exist_ok=True)
+    story_plan.write_text(
+        f"# Story\n\n{lib._LEAN_SELF_BOOTSTRAP_CLAUSE}.\n",
+        encoding="utf-8",
+    )
+    lib.dump_json(lib.run_state_path(repo), {
+        "issue_key": story,
+        "story": story,
+        "plan_file": story_plan.relative_to(repo).as_posix(),
+    })
+    task_plan = lib.evidence_path(
+        repo, story, f"task-plans/{task_id}.md", for_write=True,
+    )
+    task_plan.parent.mkdir(parents=True, exist_ok=True)
+    task_plan.write_text("# exact Lean task plan\n", encoding="utf-8")
+    grill_path = lib.evidence_path(
+        repo, story, f"grills/tasks/{task_id}.json", for_write=True,
+    )
+    clean_grill = {
+        "generated_by": "griller",
+        "gate": "task",
+        "verdict": "pass",
+        "gaps": [],
+        "contradictions": [],
+        "resolutions": [],
+        "finding_dispositions": [],
+        "issue": story,
+        "task_id": task_id,
+        "final_artifact_sha256": lib._LEAN_SELF_BOOTSTRAP_FINAL_ARTIFACT_SHA256,
+    }
+    lib.dump_json(grill_path, clean_grill)
+    monkeypatch.setattr(lib, "_active_story_key", lambda _root: story)
+    monkeypatch.setattr(
+        lib, "require_approved_plan_digest", lambda _root: story_digest,
+    )
+    monkeypatch.setattr(
+        lib, "plan_digest_without_assumptions",
+        lambda path: digest if path == task_plan else story_digest,
+    )
+    monkeypatch.setattr(
+        lib.hashlib, "sha256",
+        lambda _body=b"": type("Digest", (), {
+            "hexdigest": lambda self: lib._LEAN_SELF_BOOTSTRAP_FINAL_ARTIFACT_SHA256,
+        })(),
+    )
+    monkeypatch.setattr(
+        lib, "require_task_grill",
+        lambda _root, _task_id, _task, **_kwargs: clean_grill,
+    )
+    monkeypatch.setattr(
+        lib, "task_grill_grounding_matches",
+        lambda _root, _task, _grill: True,
+    )
+
+    recorded = lib.record_lean_self_bootstrap_approval(repo, task_id, actor)
+
+    assert recorded["approved_task_plan_sha256"] == digest
+    assert recorded["approved_by"] == actor
+    assert recorded["approved_at"].endswith("+00:00")
+    assert not any(field in recorded for field in (
+        "approval_runtime", "approval_session_id", "approval_event_id",
+    ))
+    assert lib._task_plan_approval_matches_digest(
+        repo, task, recorded, digest,
+    )
+    assert not list(
+        (grill_path.parent.parent / "approval-events").glob("*.json")
+    )
+    with pytest.raises(SystemExit, match="already consumed"):
+        lib.record_lean_self_bootstrap_approval(repo, task_id, actor)
+    with pytest.raises(SystemExit, match="does not match"):
+        lib.record_lean_self_bootstrap_approval(repo, task_id, "Other Human")
+
+
 def test_story_approval_digest_requires_native_event_proof_without_backfill(
         repo: Path):
     candidate = _story_candidate(repo)

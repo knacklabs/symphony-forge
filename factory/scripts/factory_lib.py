@@ -4497,8 +4497,140 @@ def _task_plan_approval_matches_digest(
     """Whether current approval authority binds this task-plan digest."""
     return (
         _native_task_approval_recorded(root, task, grill, digest)
+        or _lean_self_bootstrap_task_grill(root, task, grill, digest)
         or _legacy_inflight_task_grill(root, task, grill)
     )
+
+
+_LEAN_SELF_BOOTSTRAP_STORY = "FORGE-COORD-1"
+_LEAN_SELF_BOOTSTRAP_TASK = "LEAN-WORKFLOW"
+_LEAN_SELF_BOOTSTRAP_DIGEST = (
+    "5129286f00e80ca96d35decccfa9e4aa896d74fe8d05a4d7fe18cf9b1c4a3034"
+)
+_LEAN_SELF_BOOTSTRAP_FINAL_ARTIFACT_SHA256 = (
+    "2f45654a62ae52fb65f92171d0f5dafa73f0b943390725c03f1c837ef70f5162"
+)
+_LEAN_SELF_BOOTSTRAP_ACTOR = "Ravi Kiran Vemula"
+_LEAN_SELF_BOOTSTRAP_CLAUSE = (
+    "then bootstraps the concrete revision once with actual developer "
+    "identity/time without claiming a new answer or reread"
+)
+
+
+def _lean_self_bootstrap_task_grill(
+    root: Path, task: dict, grill: dict, digest: str,
+) -> bool:
+    """Recognize Lean's one approved, human-attributed bootstrap record.
+
+    The story plan authorized this exact self-bootstrap before the native-only
+    approval path existed.  Keep the exception content-addressed and historical:
+    it cannot approve another story, task, plan revision, actor, or record that
+    claims a native runtime event.
+    """
+    if (
+        _active_story_key(root) != _LEAN_SELF_BOOTSTRAP_STORY
+        or task.get("id") != _LEAN_SELF_BOOTSTRAP_TASK
+        or digest != _LEAN_SELF_BOOTSTRAP_DIGEST
+        or grill.get("issue") != _LEAN_SELF_BOOTSTRAP_STORY
+        or grill.get("task_id") != _LEAN_SELF_BOOTSTRAP_TASK
+        or grill.get("generated_by") != "griller"
+        or grill.get("gate") != "task"
+        or grill.get("verdict") != "pass"
+        or grill.get("final_artifact_sha256")
+        != _LEAN_SELF_BOOTSTRAP_FINAL_ARTIFACT_SHA256
+        or grill.get("approved_task_plan_sha256") != _LEAN_SELF_BOOTSTRAP_DIGEST
+        or grill.get("approved_by") != _LEAN_SELF_BOOTSTRAP_ACTOR
+        or any(field in grill for field in (
+            "approval_runtime", "approval_session_id", "approval_event_id",
+        ))
+    ):
+        return False
+    approved_at = grill.get("approved_at")
+    if not isinstance(approved_at, str) or not approved_at:
+        return False
+    try:
+        timestamp = datetime.fromisoformat(approved_at)
+    except ValueError:
+        return False
+    if timestamp.tzinfo is None or timestamp.utcoffset() is None:
+        return False
+    try:
+        return task_grill_grounding_matches(root, task, grill)
+    except SystemExit:
+        return False
+
+
+def record_lean_self_bootstrap_approval(
+    root: Path, task_id: str, approved_by: str,
+) -> dict:
+    """Consume the exact one-time Lean self-bootstrap authorized by its plan.
+
+    This is deliberately not exposed as a normal-flow CLI after the bootstrap
+    is consumed.  It writes the incumbent human-attributed fields and no native
+    event identity because no Claude/Codex completion event occurred.
+    """
+    story = _active_story_key(root)
+    if (
+        story != _LEAN_SELF_BOOTSTRAP_STORY
+        or task_id != _LEAN_SELF_BOOTSTRAP_TASK
+        or approved_by != _LEAN_SELF_BOOTSTRAP_ACTOR
+    ):
+        raise SystemExit("Lean self-bootstrap approval does not match its authority")
+    decomposition = load_json(
+        protected_decomposition_state_path(root), default={},
+    )
+    task = next(
+        (candidate for candidate in decomposition.get("tasks", [])
+         if isinstance(candidate, dict) and candidate.get("id") == task_id),
+        None,
+    )
+    if task is None:
+        raise SystemExit("Lean self-bootstrap task is absent from the decomposition")
+    approved_story_digest = require_approved_plan_digest(root)
+    if decomposition.get("plan_sha256") != approved_story_digest:
+        raise SystemExit("Lean self-bootstrap decomposition is not story-plan grounded")
+    state = load_json(run_state_path(root), default={})
+    plan_file = state.get("plan_file")
+    if not isinstance(plan_file, str) or not plan_file:
+        raise SystemExit("Lean self-bootstrap story plan is unavailable")
+    story_plan = root / plan_file
+    try:
+        story_text = story_plan.read_text(encoding="utf-8")
+    except (OSError, UnicodeError) as exc:
+        raise SystemExit("Lean self-bootstrap story plan is unreadable") from exc
+    if _LEAN_SELF_BOOTSTRAP_CLAUSE not in story_text:
+        raise SystemExit("Lean self-bootstrap authority clause is absent")
+    task_plan = evidence_path(root, story, f"task-plans/{task_id}.md")
+    if (not task_plan.is_file()
+            or plan_digest_without_assumptions(task_plan)
+            != _LEAN_SELF_BOOTSTRAP_DIGEST):
+        raise SystemExit("Lean self-bootstrap task-plan digest does not match")
+    if hashlib.sha256(task_plan.read_bytes()).hexdigest() \
+            != _LEAN_SELF_BOOTSTRAP_FINAL_ARTIFACT_SHA256:
+        raise SystemExit("Lean self-bootstrap final artifact bytes do not match")
+    grill_path = evidence_path(
+        root, story, f"grills/tasks/{task_id}.json", for_write=True,
+    )
+    grill = load_json(grill_path, default={})
+    approval_fields = (
+        "approved_task_plan_sha256", "approved_by", "approved_at",
+        "approval_runtime", "approval_session_id", "approval_event_id",
+    )
+    if any(field in grill for field in approval_fields):
+        raise SystemExit("Lean self-bootstrap approval was already consumed")
+    require_task_grill(root, task_id, task)
+    if grill.get("final_artifact_sha256") \
+            != _LEAN_SELF_BOOTSTRAP_FINAL_ARTIFACT_SHA256:
+        raise SystemExit("Lean self-bootstrap clean grill does not bind the plan")
+    updated = dict(grill)
+    updated.update({
+        "approved_task_plan_sha256": _LEAN_SELF_BOOTSTRAP_DIGEST,
+        "approved_by": _LEAN_SELF_BOOTSTRAP_ACTOR,
+        "approved_at": now_iso(),
+    })
+    validate_payload(root, "grill", updated)
+    dump_json(grill_path, updated)
+    return updated
 
 
 def _legacy_inflight_task_grill(
