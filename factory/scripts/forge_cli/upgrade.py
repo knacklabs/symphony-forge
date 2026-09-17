@@ -226,7 +226,20 @@ def _lean_family(relative: str, data: bytes | None = None) -> str:
     if re.fullmatch(r"\.factory/(?:stories/[^/]+/)?plan-mode/[^/]+\.json", relative):
         return "plan-mode-marker"
     if re.fullmatch(
-            r"\.factory/stories/[^/]+/(?:tasks/[^/]+/reviews|reviews)/"
+            r"\.factory/stories/[^/]+/reviews/"
+            r"(?:quality|performance|security)\.json",
+            relative):
+        try:
+            value = json.loads(data.decode("utf-8")) if data else None
+        except (UnicodeDecodeError, json.JSONDecodeError):
+            value = None
+        if isinstance(value, dict) and {
+                "aspect", "commit", "brief_sha256", "review_run_id",
+        }.issubset(value):
+            return "story-fixed-review-lens"
+        return "fixed-review-lens"
+    if re.fullmatch(
+            r"\.factory/stories/[^/]+/tasks/[^/]+/reviews/"
             r"(?:quality|performance|security)\.json",
             relative):
         return "fixed-review-lens"
@@ -373,7 +386,7 @@ def _legacy_json_shape_reason(family: str, value: object) -> str:
                               for name in ("sha256", "sha256_body")):
             return "legacy plan-mode marker has an invalid digest"
         return reason
-    if family == "fixed-review-lens":
+    if family in {"fixed-review-lens", "story-fixed-review-lens"}:
         reason = fields({
             "generated_by": str, "score": int,
             "summary": str, "blocking_findings": list,
@@ -663,6 +676,70 @@ def _classify_history_fixed_review_coverage(
             )
 
 
+def _classify_story_fixed_review_coverage(
+        target: Path, entries: list[dict]) -> None:
+    """Retire only complete, coherently identified proof for a shipped story."""
+    groups: dict[str, list[dict]] = {}
+    for entry in entries:
+        if (entry.get("family") == "story-fixed-review-lens"
+                and entry.get("classification") != "invalid"):
+            groups.setdefault(Path(entry["path"]).parts[2], []).append(entry)
+    for story, rows in groups.items():
+        problem = ""
+        if {Path(row["path"]).stem for row in rows} != set(LEAN_LENSES):
+            problem = "story fixed review is incomplete"
+        shipped = target / ".factory" / "stories" / story / "shipped.json"
+        _require_unlinked_path(target, shipped)
+        try:
+            info = shipped.lstat()
+            state = json.loads(shipped.read_text(encoding="utf-8"))
+        except (OSError, UnicodeDecodeError, json.JSONDecodeError):
+            problem = problem or "story fixed review has no sealed story state"
+        else:
+            if (not stat.S_ISREG(info.st_mode) or info.st_nlink != 1
+                    or not isinstance(state, dict)
+                    or state.get("story") != story
+                    or state.get("phase") != "shipped"
+                    or not isinstance(state.get("shipped_at"), str)
+                    or not state["shipped_at"].strip()):
+                problem = problem or "story fixed review has no sealed story state"
+        identities = []
+        for row in rows:
+            value = json.loads((target / row["path"]).read_text(encoding="utf-8"))
+            if value.get("aspect") != Path(row["path"]).stem:
+                problem = problem or "story fixed review aspect does not match its path"
+            identity = tuple(value.get(field) for field in (
+                "commit", "branch_diff_digest", "brief_sha256", "review_run_id",
+            ))
+            if (not isinstance(identity[0], str)
+                    or re.fullmatch(r"[0-9a-f]{40}", identity[0]) is None
+                    or any(not isinstance(value, str)
+                           or re.fullmatch(r"[0-9a-f]{64}", value) is None
+                           for value in identity[1:])):
+                problem = problem or "story fixed review identity is invalid"
+            identities.append(identity)
+        if identities and any(identity != identities[0] for identity in identities[1:]):
+            problem = problem or "story fixed review identity conflicts"
+        identity = (identities[0] if identities
+                    and all(isinstance(item, str) for item in identities[0])
+                    else ("", "", "", ""))
+        story_identity = {
+            "path": shipped.relative_to(target).as_posix(),
+            "sha256": (hashlib.sha256(shipped.read_bytes()).hexdigest()
+                       if shipped.is_file() else ""),
+            "commit": identity[0], "branch_diff_digest": identity[1],
+            "brief_sha256": identity[2], "review_run_id": identity[3],
+        }
+        for row in rows:
+            row.update(
+                classification="invalid" if problem else "eligible",
+                reason=problem or "sealed story fixed review is retired",
+                preserve=False,
+                source_paths=sorted(item["path"] for item in rows),
+                story_identity=story_identity,
+            )
+
+
 def lean_primary_inventory(target: Path) -> list[dict]:
     """Discover only the declared Lean legacy roots and candidate parents."""
     candidates: list[Path] = []
@@ -829,6 +906,7 @@ def lean_primary_inventory(target: Path) -> list[dict]:
             **_entry_identity(relative),
         })
     _classify_fixed_review_coverage(target, entries)
+    _classify_story_fixed_review_coverage(target, entries)
     _classify_history_fixed_review_coverage(target, entries)
     return entries
 
@@ -952,7 +1030,7 @@ def _raw_json_shape_reason(family: str, value: object) -> str:
                                 for key in ("sha256", "sha256_body"))):
             return "legacy plan-mode marker has an invalid digest"
         return problem
-    if family == "fixed-review-lens":
+    if family in {"fixed-review-lens", "story-fixed-review-lens"}:
         problem = required_fields({
             "generated_by": str, "score": int,
             "summary": str, "blocking_findings": list,
@@ -1234,6 +1312,72 @@ def _raw_classify_history_fixed_review_coverage(
             )
 
 
+def _raw_classify_story_fixed_review_coverage(
+        target: Path, rows: list[dict]) -> None:
+    """Independently classify complete fixed triples for shipped stories."""
+    groups: dict[str, list[dict]] = {}
+    for row in rows:
+        if (row.get("family") == "story-fixed-review-lens"
+                and row.get("classification") != "invalid"):
+            groups.setdefault(tuple(row["path"].split("/"))[2], []).append(row)
+    for story, group in groups.items():
+        problem = ""
+        if {row["path"].rsplit("/", 1)[-1].removesuffix(".json")
+                for row in group} != set(LEAN_LENSES):
+            problem = "story fixed review is incomplete"
+        shipped = target.joinpath(".factory", "stories", story, "shipped.json")
+        _require_unlinked_path(target, shipped)
+        try:
+            info = shipped.lstat()
+            state = json.loads(shipped.read_bytes().decode("utf-8"))
+        except (OSError, UnicodeDecodeError, json.JSONDecodeError):
+            problem = problem or "story fixed review has no sealed story state"
+        else:
+            if (not stat.S_ISREG(info.st_mode) or info.st_nlink != 1
+                    or not isinstance(state, dict)
+                    or state.get("story") != story
+                    or state.get("phase") != "shipped"
+                    or not isinstance(state.get("shipped_at"), str)
+                    or not state["shipped_at"].strip()):
+                problem = problem or "story fixed review has no sealed story state"
+        identities = []
+        for row in group:
+            value = json.loads((target / row["path"]).read_bytes().decode("utf-8"))
+            lens = row["path"].rsplit("/", 1)[-1].removesuffix(".json")
+            if value.get("aspect") != lens:
+                problem = problem or "story fixed review aspect does not match its path"
+            identity = tuple(value.get(field) for field in (
+                "commit", "branch_diff_digest", "brief_sha256", "review_run_id",
+            ))
+            if (not isinstance(identity[0], str)
+                    or re.fullmatch(r"[0-9a-f]{40}", identity[0]) is None
+                    or any(not isinstance(item, str)
+                           or re.fullmatch(r"[0-9a-f]{64}", item) is None
+                           for item in identity[1:])):
+                problem = problem or "story fixed review identity is invalid"
+            identities.append(identity)
+        if identities and any(identity != identities[0] for identity in identities[1:]):
+            problem = problem or "story fixed review identity conflicts"
+        identity = (identities[0] if identities
+                    and all(isinstance(item, str) for item in identities[0])
+                    else ("", "", "", ""))
+        story_identity = {
+            "path": shipped.relative_to(target).as_posix(),
+            "sha256": (hashlib.sha256(shipped.read_bytes()).hexdigest()
+                       if shipped.is_file() else ""),
+            "commit": identity[0], "branch_diff_digest": identity[1],
+            "brief_sha256": identity[2], "review_run_id": identity[3],
+        }
+        for row in group:
+            row.update(
+                classification="invalid" if problem else "eligible",
+                reason=problem or "sealed story fixed review is retired",
+                preserve=False,
+                source_paths=sorted(item["path"] for item in group),
+                story_identity=story_identity,
+            )
+
+
 def _raw_inventory_paths(target: Path) -> list[Path]:
     """Enumerate the fixed legacy universe without following any link."""
     files: list[Path] = []
@@ -1381,7 +1525,17 @@ def _raw_legacy_family(relative: str, data: bytes) -> str:
     elif "/plan-mode/" in relative and relative.endswith(".json"):
         family = "plan-mode-marker"
     elif re.fullmatch(
-            r"\.factory/stories/[^/]+/(?:tasks/[^/]+/reviews|reviews)/"
+            r"\.factory/stories/[^/]+/reviews/"
+            r"(?:quality|performance|security)\.json", relative):
+        try:
+            decoded = json.loads(data.decode("utf-8"))
+        except (UnicodeDecodeError, json.JSONDecodeError):
+            decoded = None
+        family = ("story-fixed-review-lens" if isinstance(decoded, dict)
+                  and {"aspect", "commit", "brief_sha256", "review_run_id"}
+                  .issubset(decoded) else "fixed-review-lens")
+    elif re.fullmatch(
+            r"\.factory/stories/[^/]+/tasks/[^/]+/reviews/"
             r"(?:quality|performance|security)\.json", relative):
         family = "fixed-review-lens"
     elif re.fullmatch(
@@ -1500,6 +1654,7 @@ def lean_raw_inventory(target: Path) -> list[dict]:
             **_raw_entry_identity(relative),
         })
     _raw_classify_fixed_review_coverage(target, rows)
+    _raw_classify_story_fixed_review_coverage(target, rows)
     _raw_classify_history_fixed_review_coverage(target, rows)
     return rows
 
@@ -1645,7 +1800,6 @@ def _validate_completed_manifest(
         fail("Lean migration completed manifest has incomplete prior completion")
     if prior is not None:
         if (not isinstance(prior, dict)
-                or "prior_completion" in prior
                 or not isinstance(prior_digest, str)
                 or _manifest_content_digest(prior) != prior_digest
                 or not prior.get("completed_at")):
@@ -1850,11 +2004,13 @@ def preflight_lean_migration(target: Path) -> dict | None:
         if saved.get("version") != LEAN_MIGRATION_VERSION:
             fail("Lean migration found an unequal partial retry; restore or complete the original checkout")
         if saved.get("completed_at"):
+            supplemental_families = {
+                "history-fixed-review-lens", "story-fixed-review-lens",
+            }
             preserve_prior = (
                 manifest == supplemental_manifest
-                and "prior_completion" not in saved
                 and any(entry.get("classification") == "eligible"
-                        and entry.get("family") == "history-fixed-review-lens"
+                        and entry.get("family") in supplemental_families
                         for entry in primary)
             )
             _validate_completed_manifest(
@@ -1892,9 +2048,14 @@ def preflight_lean_migration(target: Path) -> dict | None:
                 if entry.get("family") == "fixed-review-lens"
                 and entry["path"] not in output_paths
             ]
+            current_story_paths = {
+                entry["path"] for entry in primary
+                if entry.get("family") == "story-fixed-review-lens"
+            }
             saved_fixed = [
                 entry for entry in saved.get("preserved_entries") or []
                 if entry.get("family") == "fixed-review-lens"
+                and entry.get("path") not in current_story_paths
                 and entry.get("path") not in output_paths
             ]
             newly_retired = [
@@ -1903,10 +2064,9 @@ def preflight_lean_migration(target: Path) -> dict | None:
                 and entry["path"] not in output_paths
             ]
             if (manifest == supplemental_manifest
-                    and "prior_completion" not in saved
                     and current_fixed == saved_fixed
                     and newly_retired
-                    and all(entry.get("family") == "history-fixed-review-lens"
+                    and all(entry.get("family") in supplemental_families
                             for entry in newly_retired)):
                 migration = {
                     "entries": primary,

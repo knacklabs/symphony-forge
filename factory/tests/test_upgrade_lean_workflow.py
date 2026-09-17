@@ -111,6 +111,28 @@ def _history_fixed_review(repo: Path, story: str = "H1") -> Path:
     return reviews
 
 
+def _story_fixed_review(repo: Path, story: str = "S2") -> Path:
+    root = repo / ".factory" / "stories" / story
+    reviews = root / "reviews"
+    reviews.mkdir(parents=True, exist_ok=True)
+    (root / "shipped.json").write_text(json.dumps({
+        "generated_by": "orchestrator", "story": story, "phase": "shipped",
+        "shipped_at": "2026-01-01T00:00:00+00:00",
+    }), encoding="utf-8")
+    identity = {
+        "commit": "a" * 40, "branch_diff_digest": "b" * 64,
+        "brief_sha256": "c" * 64, "review_run_id": "d" * 64,
+    }
+    for lens in upgrade.LEAN_LENSES:
+        value = _fixed_lens()
+        value.pop("task_id")
+        value.update(identity, aspect=lens,
+                     recorded_at="2026-01-01T00:00:00+00:00")
+        (reviews / f"{lens}.json").write_text(
+            json.dumps(value), encoding="utf-8")
+    return reviews
+
+
 def test_lean_migration_refuses_dirty_checkout_before_writing(repo: Path):
     legacy = _legacy_round(repo)
     before = legacy.read_bytes()
@@ -206,6 +228,47 @@ def test_lean_inventories_cover_only_complete_sealed_history_review_triples(
     assert {row["reason"] for row in partial
             if row["family"] == "history-fixed-review-lens"} == {
         "historical fixed review is incomplete",
+    }
+
+
+def test_lean_inventories_cover_only_complete_coherent_shipped_story_review_triples(
+        repo: Path):
+    reviews = _story_fixed_review(repo)
+    primary = upgrade.lean_primary_inventory(repo)
+    raw = upgrade.lean_raw_inventory(repo)
+
+    assert primary == raw
+    rows = [row for row in primary
+            if row["family"] == "story-fixed-review-lens"]
+    assert len(rows) == 3
+    assert {row["classification"] for row in rows} == {"eligible"}
+    assert {row["reason"] for row in rows} == {
+        "sealed story fixed review is retired",
+    }
+    assert all(len(row["source_paths"]) == 3
+               and row["story_identity"]["commit"] == "a" * 40
+               and len(row["story_identity"]["sha256"]) == 64
+               for row in rows)
+
+    quality = reviews / "quality.json"
+    changed = json.loads(quality.read_text(encoding="utf-8"))
+    changed["review_run_id"] = "e" * 64
+    quality.write_text(json.dumps(changed), encoding="utf-8")
+    conflicted = upgrade.lean_primary_inventory(repo)
+    assert conflicted == upgrade.lean_raw_inventory(repo)
+    assert {row["reason"] for row in conflicted
+            if row["family"] == "story-fixed-review-lens"} == {
+        "story fixed review identity conflicts",
+    }
+
+    changed["review_run_id"] = "d" * 64
+    changed["commit"] = []
+    quality.write_text(json.dumps(changed), encoding="utf-8")
+    malformed = upgrade.lean_primary_inventory(repo)
+    assert malformed == upgrade.lean_raw_inventory(repo)
+    assert {row["reason"] for row in malformed
+            if row["family"] == "story-fixed-review-lens"} == {
+        "story fixed review identity is invalid",
     }
 
 
@@ -1004,6 +1067,63 @@ def test_completed_supplement_retires_later_history_fixed_reviews_once(
     assert {entry["family"] for entry in completed["entries"]
             if entry["path"].startswith(".factory/history/H1/reviews/")} == {
         "history-fixed-review-lens",
+    }
+    assert upgrade.preflight_lean_migration(repo) is None
+
+
+def test_completed_history_supplement_retires_previously_excluded_story_fixed_reviews(
+        repo: Path):
+    empty_digest = upgrade._inventory_digest([])
+    manifest = repo / ".factory/migrations/lean-workflow-v2.json"
+    manifest.parent.mkdir(parents=True, exist_ok=True)
+    manifest.write_text(json.dumps({
+        "generated_by": "upgrade", "version": "lean-workflow-v2",
+        "input_inventory_digest": empty_digest, "output_digest": empty_digest,
+        "installed_runtime_digest": (
+            "bb4b6c05b41897447063959fc782e9ca4c2e00f9b219559314b725485b91b2e8"
+        ),
+        "entries": [], "recorded_at": "2026-09-14T05:48:01+00:00",
+        "completed_at": "2026-09-14T05:48:01+00:00",
+    }) + "\n", encoding="utf-8")
+
+    history = _history_fixed_review(repo)
+    first = upgrade.preflight_lean_migration(repo)
+    assert first is not None
+    upgrade.apply_lean_migration(repo, first)
+    assert not any((history / f"{lens}.json").exists()
+                   for lens in upgrade.LEAN_LENSES)
+
+    reviews = _story_fixed_review(repo)
+    supplement = manifest.with_name(upgrade.LEAN_MIGRATION_SUPPLEMENT)
+    legacy = json.loads(supplement.read_text(encoding="utf-8"))
+    for row in upgrade.lean_primary_inventory(repo):
+        if row["family"] != "story-fixed-review-lens":
+            continue
+        old = {
+            **row, "family": "fixed-review-lens", "classification": "excluded",
+            "reason": "unattributed story fixed review requires a fresh review",
+            "preserve": True,
+        }
+        old.pop("story_identity")
+        legacy["entries"].append(old)
+        legacy["preserved_entries"].append(old)
+    legacy["entries"].sort(key=lambda row: row["path"])
+    legacy["input_inventory_digest"] = upgrade._inventory_digest(legacy["entries"])
+    supplement.write_text(json.dumps(legacy) + "\n", encoding="utf-8")
+
+    extension = upgrade.preflight_lean_migration(repo)
+    assert extension is not None
+    assert extension["prior_completion"] == legacy
+    assert extension["prior_completion_digest"] == upgrade._manifest_content_digest(legacy)
+    upgrade.apply_lean_migration(repo, extension)
+
+    assert not any((reviews / f"{lens}.json").exists()
+                   for lens in upgrade.LEAN_LENSES)
+    completed = json.loads(supplement.read_text(encoding="utf-8"))
+    assert completed["prior_completion"] == legacy
+    assert {entry["family"] for entry in completed["entries"]
+            if entry["path"].startswith(".factory/stories/S2/reviews/")} == {
+        "story-fixed-review-lens",
     }
     assert upgrade.preflight_lean_migration(repo) is None
 
