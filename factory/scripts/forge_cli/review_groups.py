@@ -198,14 +198,16 @@ def group_note(index: int, total: int, paths: list[str], others: list[str],
     ]
     if repo_readable:
         lines += [
-            f"The task's other changed files ({len(others)}) are not in this bundle "
-            "but ARE in the tree at HEAD, your working folder, exactly as they will "
-            "ship:", listed(others), "",
-            "Review this chunk's changed files through all three lenses. Other "
-            "HEAD files are context only: you may cite them in a finding body, but "
-            "every emitted finding, including VERDICT, must use a file_path from "
-            "this chunk's changed-file list. Omit a contract wholly owned by another "
-            "chunk; never invent an implemented verdict or a local anchor.",
+            f"The task's other changed files ({len(others)}) are reviewed by the "
+            "other groups. They ARE in the tree at HEAD, your working folder, "
+            "exactly as they will ship:", listed(others), "",
+            "Review this chunk's changed files through all three lenses. A defect "
+            "finding must use a file_path from this chunk's changed-file list. "
+            "Record a verdict for every contract you can prove from a line you "
+            "read, with that line as its location, wherever the line is; a verdict "
+            "record located outside this chunk is set aside by the review tool and "
+            "counted by the harness. Omit a contract you cannot prove, and never "
+            "invent an implemented verdict or a local anchor.",
         ]
     else:
         lines += [
@@ -217,15 +219,31 @@ def group_note(index: int, total: int, paths: list[str], others: list[str],
             "chunk; never invent an implemented verdict or a local anchor.",
         ]
     lines += ["", "Every chunk's accepted result is merged. The final union requires "
-              "every task contract, and the worst supported verdict per contract "
-              "wins, so a partial you can prove is never outvoted."]
+              "every task contract, the worst supported verdict per contract wins, "
+              "and a contract no group records is partial, fail-closed."]
     return "\n".join(lines)
 
 
-def diagnose_refusal(problem: str) -> str:
+def diagnose_refusal(problem: str, parsed: dict | None = None,
+                     paths: list[str] | None = None) -> str:
     """Turn a refusal into the one instruction the retry needs."""
     text = problem.lower()
     quoted = problem.strip().rstrip(".")
+    rejected = parsed.get("scope_rejected_findings") if isinstance(parsed, dict) else None
+    if isinstance(rejected, list):
+        from .review import _is_verdict_record
+        defects = [finding for finding in rejected if not _is_verdict_record(finding)]
+        if defects:
+            named = [
+                f"{finding.get('title', '?')} @ "
+                f"{(finding.get('code_location') or {}).get('file_path', '?')}"
+                for finding in defects if isinstance(finding, dict)
+            ]
+            return ("Your previous pass was refused: the review tool set aside "
+                    f"{len(rejected)} finding(s) located outside this chunk and at "
+                    "least one is not a verdict record: " + "; ".join(named[:6])
+                    + ". A defect finding must be located in one of this chunk's "
+                    "files: " + ", ".join(paths or []) + ". Move it there or drop it.")
     if "within 3000 characters" in text:
         return ("Your previous pass overflowed overall_explanation (the tool caps it "
                 "at 3000 characters). Keep each of the three assessments to a few "
@@ -308,7 +326,20 @@ def merge_group_reports(wrappers: list[dict]) -> dict:
     if len(labelled) == 1:
         report.update(copy.deepcopy(labelled[0][1]))
         report["findings"] = findings
-    report["review_status"] = "findings" if findings else "scoped-clean"
+    for field in ("scope_rejected_findings", "priority_filtered_findings",
+                  "attribution_rejected_findings"):
+        retained = [copy.deepcopy(finding) for _, wrapper in labelled
+                    for finding in wrapper.get(field) or []]
+        if retained:
+            report[field] = retained
+    incomplete = any(report.get(field) for field in (
+        "scope_rejected_findings", "missing_required_findings",
+        "attribution_rejected_findings"))
+    report["review_status"] = (
+        "incomplete" if incomplete else "findings" if findings
+        else "filtered" if report.get("priority_filtered_findings")
+        else "incorrect" if report["overall_correctness"] == "patch is incorrect"
+        else "scoped-clean")
     return report
 
 
@@ -338,7 +369,7 @@ def run_groups(*, groups: list[dict], prompt_rel: str, log_dir: Path,
         group.update({
             "attempts": 0, "extra_prompt": None, "seconds": 0,
             "accepted_reports": [], "lead_findings": [], "lead_keys": set(),
-            "scope_correction": False, "retry_cause": "",
+            "scope_correction": False, "retry_cause": "", "retry_parsed": None,
         })
         for path in group.get("paths", []):
             owners.setdefault(unicodedata.normalize("NFC", path), []).append(group)
@@ -352,7 +383,8 @@ def run_groups(*, groups: list[dict], prompt_rel: str, log_dir: Path,
     def retry_prompt(group: dict) -> str:
         parts = []
         if group["retry_cause"]:
-            parts.append(diagnose_refusal(group["retry_cause"]))
+            parts.append(diagnose_refusal(
+                group["retry_cause"], group["retry_parsed"], group.get("paths") or []))
         if group["scope_correction"]:
             allowed = "\n".join(f"- {path}" for path in group.get("paths", []))
             parts.append(
@@ -441,12 +473,14 @@ def run_groups(*, groups: list[dict], prompt_rel: str, log_dir: Path,
                 except (UnicodeDecodeError, json.JSONDecodeError) as exc:
                     problem = f"the review tool produced invalid JSON: {exc}"
             if not problem and item["returncode"] == 2:
-                scope_problem = _refusal(_scope_only_rejected_findings, parsed)
-                if scope_problem:
-                    problem = ("the review tool exit 2 was not a valid scope-only "
-                               f"rejection: {scope_problem}")
-                else:
-                    scope_findings = _scope_only_rejected_findings(copy.deepcopy(parsed))
+                certifying_problem = _refusal(validate, parsed)
+                if certifying_problem:
+                    scope_problem = _refusal(_scope_only_rejected_findings, parsed)
+                    if scope_problem:
+                        problem = ("the review tool exit 2 was not a valid scope-only "
+                                   f"rejection: {scope_problem}")
+                    else:
+                        scope_findings = _scope_only_rejected_findings(copy.deepcopy(parsed))
             elif not problem and item["returncode"] not in (0, 1):
                 problem = f"the review tool exited {item['returncode']}"
             if not problem and scope_findings is None:
@@ -456,6 +490,7 @@ def run_groups(*, groups: list[dict], prompt_rel: str, log_dir: Path,
                     retained_local, scope_rejected = scope_findings
                     group["scope_correction"] = True
                     group["retry_cause"] = ""
+                    group["retry_parsed"] = None
                     if group["attempts"] > MAX_GROUP_RETRIES:
                         fail(f"{label} was scope-refused {group['attempts']} times; its "
                              f"attempts are kept under {log_dir.as_posix()}; fix the "
@@ -507,6 +542,7 @@ def run_groups(*, groups: list[dict], prompt_rel: str, log_dir: Path,
                     group["accepted_reports"].append(copy.deepcopy(parsed))
                     group["report"], group["raw"] = parsed, raw
                     group["retry_cause"] = ""
+                    group["retry_parsed"] = None
                 continue
             if group["attempts"] > MAX_GROUP_RETRIES:
                 fail(f"{label} was refused {group['attempts']} times; last cause: "
@@ -514,6 +550,7 @@ def run_groups(*, groups: list[dict], prompt_rel: str, log_dir: Path,
                      f"({label}.attempt*.log and .json); read them, fix the cause, "
                      "rerun the review.")
             group["retry_cause"] = problem
+            group["retry_parsed"] = copy.deepcopy(parsed)
             schedule(retrying, group)
             print(f"== {label} refused ({problem}); retrying it alone with the cause "
                   f"in its brief (attempt {group['attempts'] + 1}) ==", flush=True)

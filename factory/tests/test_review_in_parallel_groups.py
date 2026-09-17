@@ -597,24 +597,30 @@ def test_scope_rejected_source_reassesses_its_retained_local_finding_from_a_lead
     assert [finding["title"] for finding in findings] == ["Ephemeral local defect"]
 
 
-def test_cross_group_verdict_is_not_routed_as_a_defect_lead(
+def test_cross_group_verdict_is_counted_without_routing_or_retry(
         repo, tmp_path, monkeypatch):
     _built(repo, tmp_path)
     monkeypatch.setenv("FAKE_SEEN", str(tmp_path / "seen"))
     monkeypatch.setenv(SPLIT_ENV, "1")
     monkeypatch.setenv("FAKE_SCOPE_VERDICT_ONCE", "group-1:src/c.py:C2")
-    review_task(repo, "T1", skill=str(_fake_skill(tmp_path)), engine="claude")
+    outcome = review_task(repo, "T1", skill=str(_fake_skill(tmp_path)), engine="claude")
 
     seen = _seen(tmp_path)
     assert set(seen) == {
-        "group-1.attempt1", "group-1.attempt2",
-        "group-2.attempt1", "group-3.attempt1",
+        "group-1.attempt1", "group-2.attempt1", "group-3.attempt1",
     }
-    retry = seen["group-1.attempt2"]["prompts"][1]
-    assert "Omit cross-chunk VERDICT records" in retry
-    assert "UNTRUSTED REVIEW LEADS" in retry  # the retained local defect is reassessed
-    assert "VERDICT C1" not in retry  # the retained local verdict is not a defect lead
-    assert "cross-group verdict must be omitted" not in retry
+    generation = _generation(repo)
+    raw = json.loads(base64.b64decode(generation["raw_result"]["data"], validate=True))
+    assert raw["review_status"] == "incomplete"
+    assert [row["title"] for row in raw["scope_rejected_findings"]] == [
+        "[quality] VERDICT C2: implemented",
+    ]
+    verdicts = {
+        row["contract_id"]: row["verdict"]
+        for row in generation["lenses"]["quality"]["contract_verdicts"]
+    }
+    assert verdicts == {"C1": "implemented", "C2": "partial"}
+    assert outcome["blocking"] == 1
 
 
 @pytest.mark.parametrize("mode", ["FAKE_NON_SCOPE_EXIT2", "FAKE_MALFORMED_EXIT2"])
@@ -768,7 +774,7 @@ def test_each_group_gets_its_own_launcher_and_is_told_the_tree_is_readable(
         launchers.add(launcher)
         note = seen[f"{label}.attempt1"]["prompts"][0]
         assert "ARE in the tree at HEAD" in note
-        assert "Other HEAD files are context only" in note
+        assert "set aside by the review tool and counted by the harness" in note
     assert len(launchers) == 3
 
 
@@ -794,3 +800,34 @@ def test_the_contracts_describe_one_pass_parallel_groups_and_p3_depth():
     assert "not an executed exploit" in prompt
     assert "rendered dataset is the authoritative review input" in prompt
     assert "absent solely because its original `.factory` path is absent" in prompt
+
+
+def test_a_set_aside_verdict_record_is_counted_and_a_set_aside_defect_is_refused():
+    task = {"id": "T1", "plan_contracts": TASK_CONTRACTS}
+    in_bundle = _finding("[quality] VERDICT C1: implemented", "src/a.py", 1,
+                         "src/a.py:1 filters", priority="P3", category="maintainability")
+    outside = _finding("[quality] VERDICT C2: partial", "src/c.py", 1,
+                       "src/c.py:1 reads history with no check", priority="P3",
+                       category="maintainability")
+    provider = {"findings": [in_bundle, outside], "overall_correctness": "patch is correct",
+                "overall_explanation": _wrapper([])["overall_explanation"],
+                "overall_confidence": 0.9}
+    wrapper = {**copy.deepcopy(provider), "findings": [copy.deepcopy(in_bundle)],
+               "provider_report": copy.deepcopy(provider),
+               "scope_rejected_findings": [copy.deepcopy(outside)],
+               "review_status": "incomplete"}
+    assert [label for label, _ in _actual_passes(wrapper)] == ["pass 1/1"]
+    lenses = _project_combined_report(task, wrapper, ["src/a.py"], "a" * 40, "b" * 40,
+                                      [], [task], {"T1": "active"}, ())
+    verdicts = {v["contract_id"]: v["verdict"]
+                for v in lenses["quality"]["contract_verdicts"]}
+    assert verdicts == {"C1": "implemented", "C2": "partial"}
+    defect = _finding("[security] Token echoed", "src/z.py", 1,
+                      priority="P1", category="security")
+    provider["findings"] = [in_bundle, defect]
+    refused = {**copy.deepcopy(provider), "findings": [copy.deepcopy(in_bundle)],
+               "provider_report": copy.deepcopy(provider),
+               "scope_rejected_findings": [copy.deepcopy(defect)],
+               "review_status": "incomplete"}
+    with pytest.raises(SystemExit):
+        _actual_passes(refused)
