@@ -2653,11 +2653,6 @@ def _incomplete_lean_resume_paths(
         if _resume_harness_path_matches(harness, target, relative):
             allowed.add(relative)
             continue
-        if (relative.startswith(".codex/agents/")
-                and Path(relative).name in RETIRED_FORGE_PROFILE_HASHES
-                and not (target / relative).exists()):
-            allowed.add(relative)
-            continue
     return allowed
 
 

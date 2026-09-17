@@ -715,6 +715,35 @@ def test_public_upgrade_resumes_migration_then_finishes_vendoring(
     assert "Resumed and completed Lean migration" in capsys.readouterr().out
 
 
+def test_lean_migration_resume_refuses_uninventoried_profile_deletion(
+        repo: Path, monkeypatch: pytest.MonkeyPatch):
+    legacy = _legacy_round(repo)
+    migration = upgrade.preflight_lean_migration(repo)
+    assert migration is not None
+
+    def interrupt(*_args, **_kwargs):
+        raise OSError("simulated interruption")
+
+    with monkeypatch.context() as patch:
+        patch.setattr(Path, "unlink", interrupt)
+        with pytest.raises(OSError, match="simulated interruption"):
+            upgrade.apply_lean_migration(repo, migration)
+
+    git(repo, "add", "-A")
+    git(repo, "commit", "-q", "-m", "persist interrupted migration")
+    profile = repo / ".codex/agents/architect.toml"
+    profile.parent.mkdir(parents=True, exist_ok=True)
+    profile.write_text('model = "client-owned"\n', encoding="utf-8")
+    git(repo, "add", profile.relative_to(repo).as_posix())
+    git(repo, "commit", "-q", "-m", "add unrelated client profile")
+    profile.unlink()
+
+    refused = _upgrade(repo)
+    assert refused.returncode != 0
+    assert "uncommitted changes" in refused.stdout
+    assert legacy.exists()
+
+
 def test_lean_migration_persists_resume_state_before_review_pointer(
         repo: Path, monkeypatch: pytest.MonkeyPatch):
     reviews = _sealed_fixed_review(repo)
