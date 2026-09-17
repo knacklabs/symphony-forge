@@ -532,6 +532,10 @@ def _classify_fixed_review_coverage(target: Path, entries: list[dict]) -> None:
                            reason="incomplete fixed review is display-only",
                            preserve=True)
             continue
+        deltas = {value["branch_diff_digest"] for value in values}
+        if len(deltas) != 1:
+            invalidate(rows, "sealed fixed review has conflicting delta identity")
+            continue
         marker = (target / ".factory" / "stories" / story / "tasks" / task
                   / "pr-ready.json")
         _require_unlinked_path(target, marker)
@@ -585,11 +589,6 @@ def _classify_fixed_review_coverage(target: Path, entries: list[dict]) -> None:
                            preserve=True)
             continue
         else:
-            deltas = {value["branch_diff_digest"] for value in values}
-            if len(deltas) != 1:
-                invalidate(rows,
-                           "sealed fixed review has conflicting delta identity")
-                continue
             if deltas != {expected_delta}:
                 invalidate(rows,
                            "sealed fixed review delta does not match its marker")
@@ -1036,6 +1035,10 @@ def _raw_classify_fixed_review_coverage(target: Path, rows: list[dict]) -> None:
                            reason="incomplete fixed review is display-only",
                            preserve=True)
             continue
+        deltas = {value["branch_diff_digest"] for value in values}
+        if len(deltas) != 1:
+            mark_invalid(group, "sealed fixed review has conflicting delta identity")
+            continue
         marker = (target / ".factory" / "stories" / story / "tasks" / task
                   / "pr-ready.json")
         _require_unlinked_path(target, marker)
@@ -1091,11 +1094,6 @@ def _raw_classify_fixed_review_coverage(target: Path, rows: list[dict]) -> None:
                            preserve=True)
             continue
         else:
-            deltas = {value["branch_diff_digest"] for value in values}
-            if len(deltas) != 1:
-                mark_invalid(group,
-                             "sealed fixed review has conflicting delta identity")
-                continue
             if deltas != {expected_delta}:
                 mark_invalid(group,
                              "sealed fixed review delta does not match its marker")
