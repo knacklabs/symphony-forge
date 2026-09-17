@@ -102,6 +102,50 @@ def test_run_stage_proof_reuses_matching_receipts_by_proof_type(repo: Path, monk
     assert calls == ["tests", "verify", "tests"]
 
 
+def test_review_preflight_requires_current_test_and_verify_receipt_identities(
+        repo: Path, monkeypatch: pytest.MonkeyPatch):
+    from forge_cli.review import pre_review_proof_problems
+    from factory_lib import (
+        dump_json, proof_path, protected_decomposition_state_path, run_state_path,
+    )
+
+    task = _task()
+    dump_json(run_state_path(repo), {"story": "S1", "issue_key": "S1"})
+    dump_json(protected_decomposition_state_path(repo), {"tasks": [task]})
+    commit = subprocess.run(
+        ["git", "rev-parse", "HEAD"], cwd=repo, check=True,
+        capture_output=True, text=True,
+    ).stdout.strip()
+    proof_root = proof_path(repo, "S1", "tests.json", task_id="T1").parent
+    proof_root.mkdir(parents=True, exist_ok=True)
+    dump_json(proof_root / "verify.json", {"ok": True, "commit": commit})
+    dump_json(proof_root / "tests.json", {
+        "commit": commit,
+        "automated": {"status": "passed", "blocking_findings": []},
+    })
+    receipts = {
+        kind: {"status": "passed", "identity":
+               stages.proof_identity(repo, task, kind)["identity"]}
+        for kind in ("verify", "tests")
+    }
+    stages.write_stages(repo, {"issue": "S1", "stages": [{
+        "id": "T1", "status": "active", "proof_receipts": receipts,
+    }]})
+
+    assert pre_review_proof_problems(repo, "S1", "T1", commit, commit) == []
+
+    current_identity = stages.proof_identity
+
+    def changed_identity(*args, **kwargs):
+        value = current_identity(*args, **kwargs)
+        return {**value, "identity": "0" * 64}
+
+    monkeypatch.setattr(stages, "proof_identity", changed_identity)
+    problems = pre_review_proof_problems(repo, "S1", "T1", commit, commit)
+    assert any("tests proof receipt identity is stale" in problem
+               for problem in problems), problems
+
+
 def test_changed_unknown_partial_or_generated_output_identity_forces_fresh_run(
         repo: Path):
     task = _task()

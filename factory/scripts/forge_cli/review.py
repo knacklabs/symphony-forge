@@ -1994,6 +1994,9 @@ def pre_review_proof_problems(
     """Validate only proof needed before first review; review itself is absent."""
     from factory_lib import _proof_commit_problems
     from .readiness import tests_passed, verify_passed
+    from .stages import (
+        _proof_receipt, load_stages, product_tree_snapshot, proof_identity, task_for,
+    )
     verify = load_json(
         proof_path(base, story, "verify.json", task_id=task_id), default={},
     )
@@ -2012,6 +2015,28 @@ def pre_review_proof_problems(
             base, task_id, [("verify", verify), ("tests", tests)],
             base=base_sha, seal=tip_sha,
         ))
+    task = task_for(base, task_id)
+    stage = next(
+        (row for row in load_stages(base).get("stages", [])
+         if isinstance(row, dict) and row.get("id") == task_id),
+        None,
+    )
+    if task and stage:
+        product_tree = product_tree_snapshot(base)
+        probe_memo = {}
+        for kind in ("verify", "tests"):
+            current = proof_identity(
+                base, task, kind, product_tree=product_tree,
+                tool_probe_memo=probe_memo,
+            )
+            receipt = _proof_receipt(base, task_id, kind)
+            if (current.get("reusable") is not True
+                    or receipt.get("status") != "passed"
+                    or receipt.get("identity") != current.get("identity")):
+                problems.append(
+                    f"{kind} proof receipt identity is stale for task {task_id}; "
+                    "rerun task proof before review"
+                )
     return problems
 
 

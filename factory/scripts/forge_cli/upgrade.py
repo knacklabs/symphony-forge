@@ -62,6 +62,7 @@ RETIRED_FORGE_PROFILE_HASHES = {
     "tester.toml": "a6770f50e9b9bc772c883e9edd6aa112b30260a78aa9915cb94f1c98b48ed7f6",
 }
 LEAN_MIGRATION_VERSION = "lean-workflow-v2"
+LEAN_MIGRATION_SUPPLEMENT = "lean-workflow-v2-supplement.json"
 LEAN_ORIGINAL_EMPTY_RUNTIME_DIGEST = (
     "bb4b6c05b41897447063959fc782e9ca4c2e00f9b219559314b725485b91b2e8"
 )
@@ -525,6 +526,8 @@ def _classify_fixed_review_coverage(target: Path, entries: list[dict]) -> None:
                                reason="fixed review is multiply bound")
             continue
         rows = families[0]
+        values = [json.loads((target / row["path"]).read_text(encoding="utf-8"))
+                  for row in rows]
         lenses = {Path(row["path"]).stem for row in rows}
         if lenses != set(LEAN_LENSES):
             for row in rows:
@@ -1027,6 +1030,8 @@ def _raw_classify_fixed_review_coverage(target: Path, rows: list[dict]) -> None:
                 mark_invalid(group, "fixed review is multiply bound")
             continue
         group = task_groups[0]
+        values = [json.loads((target / row["path"]).read_text(encoding="utf-8"))
+                  for row in group]
         lenses = {row["path"].rsplit("/", 1)[-1].removesuffix(".json")
                   for row in group}
         if lenses != set(LEAN_LENSES):
@@ -1649,8 +1654,21 @@ def _prepare_review_outputs(target: Path, migration: dict) -> None:
 
 
 def preflight_lean_migration(target: Path) -> dict | None:
-    manifest = target / ".factory" / "migrations" / f"{LEAN_MIGRATION_VERSION}.json"
-    _require_unlinked_path(target, manifest)
+    original_manifest = (
+        target / ".factory" / "migrations" / f"{LEAN_MIGRATION_VERSION}.json"
+    )
+    supplemental_manifest = original_manifest.with_name(LEAN_MIGRATION_SUPPLEMENT)
+    _require_unlinked_path(target, original_manifest)
+    _require_unlinked_path(target, supplemental_manifest)
+    manifest = original_manifest
+    if supplemental_manifest.exists() or supplemental_manifest.is_symlink():
+        if not original_manifest.is_file():
+            fail("Lean migration supplement has no durable original completion")
+        original = load_json(original_manifest, default={})
+        _validate_completed_manifest(target, original)
+        if not _is_original_empty_completion(original):
+            fail("Lean migration supplement does not follow the original empty completion")
+        manifest = supplemental_manifest
     primary = lean_primary_inventory(target)
     raw = lean_raw_inventory(target)
     if primary != raw:
@@ -1684,7 +1702,7 @@ def preflight_lean_migration(target: Path) -> dict | None:
                 migration = {
                     "entries": primary,
                     "input_inventory_digest": _inventory_digest(primary),
-                    "replace_original_empty_completion": True,
+                    "manifest_name": LEAN_MIGRATION_SUPPLEMENT,
                 }
                 (migration["review_candidates"],
                  migration["review_sentinels"]) = _fixed_review_plan(
@@ -1754,7 +1772,7 @@ def preflight_lean_migration(target: Path) -> dict | None:
                 break
         if not monotonic:
             fail("Lean migration found an unequal partial retry; restore or complete the original checkout")
-        migration = {**saved, "resume": True}
+        migration = {**saved, "resume": True, "manifest_name": manifest.name}
         (migration["review_candidates"],
          migration["review_sentinels"]) = _fixed_review_plan(target, migration)
         _prepare_review_outputs(target, migration)
@@ -2024,25 +2042,17 @@ def _publish_upgrade_review(
 
 
 def _publish_incomplete_lean_manifest(
-        target: Path, manifest: dict, *, replace_original_empty: bool = False,
+        target: Path, manifest: dict, *, destination_name: str,
 ) -> Path:
     """Persist resumable transaction state before any canonical pointer moves."""
     from factory_lib import dump_json
 
     destination = (
-        target / ".factory" / "migrations" / f"{LEAN_MIGRATION_VERSION}.json"
+        target / ".factory" / "migrations" / destination_name
     )
     if destination.exists() or destination.is_symlink():
         _require_single_link_manifest(target, destination)
         existing = load_json(destination, default={})
-        if replace_original_empty:
-            _validate_completed_manifest(target, existing)
-            if not _is_original_empty_completion(existing):
-                fail("Lean migration manifest retry differs from the durable original")
-            dump_json(destination, manifest)
-            if load_json(destination, default={}) != manifest:
-                fail("Lean migration manifest readback differs")
-            return destination
         comparable = {
             key: value for key, value in existing.items()
             if key not in {"recorded_at", "completed_at"}
@@ -2060,6 +2070,54 @@ def _publish_incomplete_lean_manifest(
     if load_json(destination, default={}) != manifest:
         fail("Lean migration manifest readback differs")
     return destination
+
+
+def _publish_converted_stage(
+        target: Path, destination: Path, built: Path, *, original_sha256: str,
+        output_sha256: str) -> None:
+    """Atomically replace one exact inventoried stage file from the temp build."""
+    _require_unlinked_path(target, destination)
+    assert_target_file_destination(target, destination)
+    body = built.read_bytes()
+    if hashlib.sha256(body).hexdigest() != output_sha256:
+        fail("Lean migration temporary converted stage identity changed")
+    current = destination.read_bytes()
+    current_sha256 = hashlib.sha256(current).hexdigest()
+    if current_sha256 == output_sha256:
+        return
+    if current_sha256 != original_sha256:
+        fail("Lean migration input changed before conversion")
+    temporary = destination.with_name(f".{destination.name}.{os.getpid()}.lean.tmp")
+    assert_target_file_destination(target, temporary)
+    publication_mode = stat.S_IMODE(destination.lstat().st_mode)
+    descriptor = os.open(
+        temporary, os.O_WRONLY | os.O_CREAT | os.O_EXCL
+        | getattr(os, "O_NOFOLLOW", 0) | getattr(os, "O_BINARY", 0),
+        publication_mode,
+    )
+    try:
+        try:
+            if hasattr(os, "fchmod"):
+                os.fchmod(descriptor, publication_mode)
+            view = memoryview(body)
+            while view:
+                written = os.write(descriptor, view)
+                if written <= 0:
+                    fail("Lean migration converted-stage temporary write was incomplete")
+                view = view[written:]
+            os.fsync(descriptor)
+        finally:
+            os.close(descriptor)
+        if temporary.read_bytes() != body:
+            fail("Lean migration converted-stage temporary readback differs")
+        os.replace(temporary, destination)
+        published = destination.read_bytes()
+        if (published != body
+                or hashlib.sha256(published).hexdigest() != output_sha256):
+            fail("Lean migration converted-stage publication readback differs")
+    finally:
+        if temporary.exists() and not temporary.is_symlink():
+            temporary.unlink()
 
 
 def apply_lean_migration(target: Path, migration: dict | None) -> None:
@@ -2090,6 +2148,7 @@ def apply_lean_migration(target: Path, migration: dict | None) -> None:
             and entry["path"] not in promoted_paths)
     ]
     converted_outputs = []
+    converted_bodies: dict[str, bytes] = {}
     for entry in migration["entries"]:
         if (entry.get("classification") == "eligible"
                 and entry.get("family") == "legacy-stage-stamp"):
@@ -2100,10 +2159,23 @@ def apply_lean_migration(target: Path, migration: dict | None) -> None:
                 "path": entry["path"],
                 "sha256": hashlib.sha256(converted).hexdigest(),
             })
+            converted_bodies[entry["path"]] = converted
     # Build every durable output away from the target first. Publication starts
     # only after schema validation and byte readback of the whole build.
     with tempfile.TemporaryDirectory(prefix="forge-lean-build-") as temporary:
         build = Path(temporary)
+        built_converted: dict[str, Path] = {}
+        for index, row in enumerate(converted_outputs):
+            path = build / "stages" / f"{index}.json"
+            assert_target_destination(build, path.parent).mkdir(
+                parents=True, exist_ok=True,
+            )
+            body = converted_bodies[row["path"]]
+            path.write_bytes(body)
+            if (path.read_bytes() != body
+                    or hashlib.sha256(path.read_bytes()).hexdigest() != row["sha256"]):
+                fail("Lean migration temporary converted stage readback differs")
+            built_converted[row["path"]] = path
         built_generations: list[tuple[dict, str, str]] = []
         outputs: list[dict[str, str]] = (
             list(migration.get("outputs") or [])
@@ -2164,8 +2236,9 @@ def apply_lean_migration(target: Path, migration: dict | None) -> None:
 
         destination = _publish_incomplete_lean_manifest(
             target, manifest,
-            replace_original_empty=(
-                migration.get("replace_original_empty_completion") is True
+            destination_name=str(
+                migration.get("manifest_name")
+                or f"{LEAN_MIGRATION_VERSION}.json"
             ),
         )
         for candidate, expected_id, expected_sha in built_generations:
@@ -2175,6 +2248,13 @@ def apply_lean_migration(target: Path, migration: dict | None) -> None:
             if (generation["generation_id"] != expected_id
                     or selection["generation_sha256"] != expected_sha):
                 fail("Lean migration published review differs from temporary build")
+        entries_by_path = {entry["path"]: entry for entry in migration["entries"]}
+        for row in converted_outputs:
+            entry = entries_by_path[row["path"]]
+            _publish_converted_stage(
+                target, target / row["path"], built_converted[row["path"]],
+                original_sha256=entry["sha256"], output_sha256=row["sha256"],
+            )
 
     # Durable selected outputs and manifest now exist. Retire exactly the
     # inventoried bytes, refusing identity drift instead of deleting by name.
@@ -2207,7 +2287,7 @@ def apply_lean_migration(target: Path, migration: dict | None) -> None:
                 continue
             if current_digest != entry["sha256"]:
                 fail(f"Lean migration input changed before conversion: {entry['path']}")
-            path.write_bytes(converted)
+            fail(f"Lean migration converted stage was not atomically published: {entry['path']}")
         else:
             if hashlib.sha256(path.read_bytes()).hexdigest() != entry["sha256"]:
                 fail(f"Lean migration input changed before deletion: {entry['path']}")

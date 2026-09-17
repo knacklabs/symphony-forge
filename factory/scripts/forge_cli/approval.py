@@ -303,7 +303,12 @@ def _codex_approved(payload: dict[str, Any]) -> str:
 
 
 def _event_runtime(payload: dict[str, Any], runtime: str | None) -> tuple[str, str]:
-    value = (runtime or _text(payload.get("runtime")) or
+    payload_runtime = _text(payload.get("runtime")).lower()
+    adapter_runtime = _text(runtime).lower()
+    if (adapter_runtime and payload_runtime
+            and adapter_runtime != payload_runtime):
+        raise ApprovalRefused("native approval payload runtime contradicts its adapter")
+    value = (adapter_runtime or payload_runtime or
              _text(os.environ.get("FORGE_COORDINATOR"))).lower()
     if value not in {"claude", "codex"}:
         raise ApprovalRefused("native approval runtime must be claude or codex")
@@ -349,6 +354,8 @@ def _approve_task(candidate: ApprovalCandidate, record: dict[str, Any]) -> None:
         raise ApprovalRefused("task cold-read proof disappeared during approval")
     if candidate.previous_digest:
         grill["previous_approved_task_plan_sha256"] = candidate.previous_digest
+    if "final_artifact_sha256" in grill:
+        grill["final_artifact_sha256"] = candidate.digest
     grill.update({
         "approved_task_plan_sha256": candidate.digest,
         "approved_by": record["approved_by"],

@@ -582,7 +582,8 @@ def test_lean_migration_is_idempotent_for_byte_identical_retry_and_refuses_unequ
 
 
 def test_completed_lean_migration_allows_live_stage_evolution_but_refuses_legacy(
-        repo: Path, capsys: pytest.CaptureFixture[str]):
+        repo: Path, capsys: pytest.CaptureFixture[str],
+        monkeypatch: pytest.MonkeyPatch):
     stage = repo / ".factory/stories/S1/stages/T1.json"
     stage.parent.mkdir(parents=True, exist_ok=True)
     stage.write_text(json.dumps({
@@ -596,7 +597,17 @@ def test_completed_lean_migration_allows_live_stage_evolution_but_refuses_legacy
     }), encoding="utf-8")
     migration = upgrade.preflight_lean_migration(repo)
     assert migration is not None
-    upgrade.apply_lean_migration(repo, migration)
+    replaced = []
+    real_replace = upgrade.os.replace
+
+    def observed_replace(source, destination):
+        replaced.append(Path(destination))
+        return real_replace(source, destination)
+
+    with monkeypatch.context() as patch:
+        patch.setattr(upgrade.os, "replace", observed_replace)
+        upgrade.apply_lean_migration(repo, migration)
+    assert stage in replaced
     assert "local_review_stamp" not in json.loads(stage.read_text())
     assert upgrade.preflight_lean_migration(repo) is None
     stage.write_text('{}\n', encoding="utf-8")
@@ -855,7 +866,7 @@ def test_original_empty_completion_transitions_to_current_inventory(repo: Path):
     empty_digest = upgrade._inventory_digest([])
     manifest = repo / ".factory/migrations/lean-workflow-v2.json"
     manifest.parent.mkdir(parents=True, exist_ok=True)
-    manifest.write_text(json.dumps({
+    original = {
         "generated_by": "upgrade",
         "version": "lean-workflow-v2",
         "input_inventory_digest": empty_digest,
@@ -866,7 +877,9 @@ def test_original_empty_completion_transitions_to_current_inventory(repo: Path):
         "entries": [],
         "recorded_at": "2026-09-14T05:48:01+00:00",
         "completed_at": "2026-09-14T05:48:01+00:00",
-    }) + "\n", encoding="utf-8")
+    }
+    manifest.write_text(json.dumps(original) + "\n", encoding="utf-8")
+    original_bytes = manifest.read_bytes()
     stage = repo / ".factory/stories/S1/stages/T1.json"
     stage.parent.mkdir(parents=True, exist_ok=True)
     stage.write_text(json.dumps({
@@ -881,10 +894,12 @@ def test_original_empty_completion_transitions_to_current_inventory(repo: Path):
 
     migration = upgrade.preflight_lean_migration(repo)
     assert migration is not None
-    assert migration["replace_original_empty_completion"] is True
+    assert migration["manifest_name"] == upgrade.LEAN_MIGRATION_SUPPLEMENT
     upgrade.apply_lean_migration(repo, migration)
 
-    completed = json.loads(manifest.read_text(encoding="utf-8"))
+    assert manifest.read_bytes() == original_bytes
+    supplement = manifest.with_name(upgrade.LEAN_MIGRATION_SUPPLEMENT)
+    completed = json.loads(supplement.read_text(encoding="utf-8"))
     assert "completed_at" in completed
     assert any(
         entry["path"] == ".factory/stories/S1/stages/T1.json"
@@ -894,6 +909,13 @@ def test_original_empty_completion_transitions_to_current_inventory(repo: Path):
     )
     assert "local_review_stamp" not in json.loads(stage.read_text(encoding="utf-8"))
     assert upgrade.preflight_lean_migration(repo) is None
+
+    stage.write_text(json.dumps({
+        "id": "T1", "local_review_stamp": {"stage_id": "T1"},
+    }), encoding="utf-8")
+    with pytest.raises(SystemExit):
+        upgrade.preflight_lean_migration(repo)
+    assert manifest.read_bytes() == original_bytes
 
 
 def test_completed_lean_manifest_allows_mutable_preserved_records_and_profiles(

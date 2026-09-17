@@ -624,14 +624,17 @@ stories still archive until `forge upgrade` migrates them.
    digest, start the stage, then delegate it; `delegate --scope` may repeat to
    select a proper subset of the approved effective scope, while omission uses
    the full scope
-7. after implementation, run the task's tests and deterministic verify; reuse
-   a successful receipt only when that proof type's content-bound identity is
-   unchanged
-8. run `./forge review <task-id>` once for the task; reuse selected proof only
-   while its stamp-token delta and complete reviewed-meaning identity are unchanged
+7. after implementation, run `./forge task close <task-id>` as the integrated
+   normal operation: it runs or content-safely reuses the task's tests and
+   deterministic verify, runs or safely reuses the one complete review, and
+   finishes the stage only when that proof is clean and current
+8. if close reports blocking review findings, delegate the fixes and rerun the
+   same integrated close operation; selected proof reuses only while its
+   stamp-token delta and complete reviewed-meaning identity are unchanged
 9. run `functional-checker` when the task has `user_facing: true`
 10. record the shipped outcome with `./forge outcome set "<what changed>"`
-11. run `python3 factory/scripts/pr_ready.py`
+11. run `./forge task pr-ready <task-id>` for the task PR; after every task is
+    shipped, run `python3 factory/scripts/pr_ready.py` for story readiness
 
 ## PR Ready Contract
 A branch is PR-ready only when:

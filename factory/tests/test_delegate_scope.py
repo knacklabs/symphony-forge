@@ -205,6 +205,38 @@ def test_delegate_scope_is_bound_to_brief_launch_identity_and_existing_write_sco
     assert "deny" in denied and "baseline directory" in denied, denied
 
 
+def test_narrowed_launch_admission_classifies_bare_approved_tree(
+        repo: Path, tmp_path: Path):
+    owned = repo / "src/owned.py"
+    owned.parent.mkdir(parents=True, exist_ok=True)
+    owned.write_text("before\n", encoding="utf-8")
+    subprocess.run(["git", "add", "src/owned.py"], cwd=repo, check=True)
+    subprocess.run(["git", "commit", "-qm", "bare tree scope baseline"],
+                   cwd=repo, check=True)
+    task = {
+        "id": "T1", "title": "narrow", "objective": "change one file",
+        "acceptance_criteria": ["one"],
+        "write_scope": ["src", "docs/other.py"],
+        "required_tests": [], "verify_commands": [], "reviewer_focus": [],
+    }
+    brief_path, digest = _seed_contract(repo, task)
+    subprocess.run(
+        ["git", "update-ref", "refs/forge/stage/T1", "HEAD"],
+        cwd=repo, check=True,
+    )
+    worker, token, launch_id = _start_worker(repo, tmp_path)
+    _record_launch(
+        repo, worker, token, launch_id, brief_path, digest,
+        write_scope=["src/owned.py"],
+    )
+
+    admitted = _invoke_worker(
+        worker, _patch("*** Update File: src/owned.py", "@@", "-before", "+after"),
+    )
+
+    assert "deny" not in admitted, admitted
+
+
 def test_full_scope_brief_keeps_worker_owned_task_verification(repo: Path):
     task = {
         "id": "T1", "title": "full", "objective": "change both files",

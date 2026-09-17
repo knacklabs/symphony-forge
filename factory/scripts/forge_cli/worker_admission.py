@@ -193,10 +193,12 @@ def _stage_contract(base: Path, record: dict) -> tuple[dict | None, str]:
     if (not isinstance(scope, list) or not scope
             or any(not isinstance(item, str) or not item.strip() for item in scope)):
         return _deny("the protected native launch has no valid recorded write scope")
-    if any(not path_in_scope(item.rstrip("/"), task_scope) for item in scope):
-        return _deny("the protected launch write scope is not a subset of its task")
     from .stages import stage_baseline
     baseline = stage_baseline(base, stage)
+    classified_task_scope = classify_scope_entries(base, task_scope, baseline)
+    if any(not path_in_scope(item.rstrip("/"), classified_task_scope)
+           for item in scope):
+        return _deny("the protected launch write scope is not a subset of its task")
     for item in scope:
         if not item.rstrip().endswith("/"):
             continue

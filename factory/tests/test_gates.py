@@ -9705,8 +9705,12 @@ def test_story_closeout_requires_all_task_markers_and_completed_stories_reads_sh
     )
     assert code == 0, out
     closeout_base = head(repo)
+    local_tests = scoped / "tasks" / "T2" / "tests.json"
+    local_tests_bytes = local_tests.read_bytes()
+    local_tests.write_text("{}\n", encoding="utf-8")
     code, out = run(repo, "pr_ready.py")
     assert code == 0 and "shipped in place" in out, out
+    local_tests.write_bytes(local_tests_bytes)
     assert (scoped / "shipped.json").is_file()
     assert roadmap_items(repo)["ENG-1"]["status"] == "done"
 

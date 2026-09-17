@@ -278,6 +278,17 @@ def test_approved_story_edit_is_the_only_candidate_and_rebinds_atomically(
     replay.write_text("[]\n", encoding="utf-8")
     assert lib.approved_story_plan_predecessors(repo, amended_digest) == ()
     replay.write_bytes(replay_bytes)
+    predecessor = next(
+        path for path in (candidate.evidence.parent / "approval-events").glob("*.json")
+        if json.loads(path.read_text()).get("event_id") == original["event_id"]
+    )
+    predecessor_bytes = predecessor.read_bytes()
+    predecessor.unlink()
+    assert lib.approved_story_plan_predecessors(repo, amended_digest) == ()
+    predecessor.write_bytes(predecessor_bytes)
+    assert lib.approved_story_plan_predecessors(repo, amended_digest) == (
+        original["approved_plan_sha256"],
+    )
 
 
 def test_task_approval_waits_for_story_approval_and_decomposition_rebinding(
@@ -443,6 +454,11 @@ def test_native_approval_records_human_via_runtime_identity_without_display_name
     candidate = _story_candidate(repo)
     monkeypatch.setattr(approval, "eligible_candidates", lambda _base: [candidate])
     event = _event(candidate, runtime)
+    event["runtime"] = "codex" if runtime == "claude" else "claude"
+    with pytest.raises(approval.ApprovalRefused, match="contradicts its adapter"):
+        approval.record_native_approval(repo, event, runtime=runtime)
+    assert not candidate.evidence.exists()
+    event.pop("runtime")
     record = approval.record_native_approval(repo, event, runtime=runtime)
     assert record["approved_by"] == f"human-via-{runtime.capitalize()}"
     assert record["session_id"] == event["session_id"]

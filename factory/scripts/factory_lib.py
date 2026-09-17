@@ -2362,10 +2362,7 @@ def require_closeout_order(root: Path) -> list[str]:
             "every task must have its committed pr-ready marker on the trunk; "
             f"missing: {', '.join(missing_trunk_markers)}"
         )
-    if tasks:
-        for task in tasks:
-            problems.extend(task_proof_problems(root, key, task))
-    else:
+    if not tasks:
         problems.append("recorded decomposition must contain at least one task")
 
     outcome = load_outcome(root) or {}
@@ -3561,8 +3558,6 @@ def approved_story_plan_predecessors(
             or previous in seen
         ):
             break
-        predecessors.append(previous)
-        seen.add(previous)
         matches = []
         for path in event_dir.glob("*.json"):
             candidate = load_json(path, default={})
@@ -3576,6 +3571,8 @@ def approved_story_plan_predecessors(
                 matches.append(candidate)
         if len(matches) != 1:
             break
+        predecessors.append(previous)
+        seen.add(previous)
         record = matches[0]
     return tuple(predecessors)
 
