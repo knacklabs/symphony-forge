@@ -156,8 +156,9 @@ proof are on trunk, record the story outcome and run `pr_ready.py`; no second
 story review or verify is required. Follow `docs/QUALITY.md` bounded recovery
 when progress stalls.
 
-Store the decomposition in `.factory/decomposition.json` — that artifact is
-canonical. Mirroring into a tracker (Linear, GitHub Issues, Jira) is optional.
+Store the decomposition in `.factory/stories/<key>/decomposition.json` — that
+story-scoped artifact is canonical. Mirroring into a tracker (Linear, GitHub
+Issues, Jira) is optional.
 Order is derived, never authored (decision 0021): the array is the execution
 sequence and a task's `dependencies` may only name an earlier task.
 

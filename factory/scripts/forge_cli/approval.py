@@ -127,7 +127,8 @@ def _story_candidate(base: Path) -> ApprovalCandidate | None:
         grill = load_json(
             evidence_path(base, story, "grills/plan.json"), default={},
         )
-        if (grill.get("issue") != story
+        if (not isinstance(grill, dict)
+                or grill.get("issue") != story
                 or grill.get("input_sha256") != digest):
             return None
         try:
@@ -172,7 +173,8 @@ def _task_candidate(base: Path) -> ApprovalCandidate | None:
     decomposition = load_json(
         protected_decomposition_state_path(base), default={},
     )
-    if (state.get("approved_plan_sha256") != story_digest
+    if (not isinstance(decomposition, dict)
+            or state.get("approved_plan_sha256") != story_digest
             or decomposition.get("plan_sha256") != story_digest):
         return None
     task_id = _text(task.get("id"))
@@ -181,7 +183,8 @@ def _task_candidate(base: Path) -> ApprovalCandidate | None:
     plan = evidence_path(base, story, f"task-plans/{task_id}.md")
     grill_path = evidence_path(base, story, f"grills/tasks/{task_id}.json")
     grill = load_json(grill_path, default={})
-    if not plan.is_file() or grill.get("verdict") != "pass":
+    if (not isinstance(grill, dict) or not plan.is_file()
+            or grill.get("verdict") != "pass"):
         return None
     digest = plan_digest_without_assumptions(plan)
     if _task_plan_state(base, task, grill) != "await-approval":

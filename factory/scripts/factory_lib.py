@@ -3537,7 +3537,9 @@ def approved_story_plan_predecessors(
             evidence_path(root, story, "plan-approval.json"), default={},
         )
     except (OSError, UnicodeError, json.JSONDecodeError):
-        return None
+        return ()
+    if not isinstance(record, dict):
+        return ()
     if (
         record.get("approved_plan_sha256") != current_digest
         or not _native_story_approval_recorded(root, story, record)
@@ -3560,7 +3562,8 @@ def approved_story_plan_predecessors(
         for path in event_dir.glob("*.json"):
             candidate = load_json(path, default={})
             if (
-                candidate.get("approved_plan_sha256") == previous
+                isinstance(candidate, dict)
+                and candidate.get("approved_plan_sha256") == previous
                 and _native_story_approval_recorded(
                     root, story, candidate, path=path,
                 )

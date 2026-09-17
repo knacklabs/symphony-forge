@@ -67,9 +67,13 @@ def test_delegate_scope_validates_immutable_ownership_and_topology(repo: Path):
             ["src/pkg/", "docs/new.md"], ["src/pkg/one.py"],
             base=repo, revision=revision,
         )
+    assert delegate.narrowed_scope(
+        ["src/pkg/", "docs/new.md"], ["docs/new.md"],
+        base=repo, revision=revision,
+    ) == ["docs/new.md"]
     with pytest.raises(SystemExit):
         delegate.narrowed_scope(
-            ["src/pkg/", "docs/new.md"], ["docs/new.md"],
+            ["src/pkg/", "docs/new.md"], ["docs/undeclared.md"],
             base=repo, revision=revision,
         )
 
@@ -114,6 +118,20 @@ def test_delegate_scope_public_launch_binds_narrowed_scope(
 
     assert captured["write"] is True
     assert captured["write_scope"] == ["src/a.py"]
+
+    captured.clear()
+    monkeypatch.setattr(
+        stages, "effective_scope",
+        lambda *_args: [*task["write_scope"], "docs/amended.md"],
+    )
+    delegate.cmd_delegate(argparse.Namespace(
+        repo=str(repo), id="T1", read_only=True, scope=[],
+        background=False, context_file=None, print_only=False,
+    ))
+    assert captured["write"] is False
+    assert captured["write_scope"] == [
+        "src/a.py", "src/b.py", "docs/amended.md",
+    ]
 
 
 def test_delegate_scope_is_bound_to_brief_launch_identity_and_existing_write_scope(
@@ -242,6 +260,29 @@ def test_context_file_security_no_follow_modes_identity_capacity_and_cleanup(
     source.write_bytes(b"x" * (delegate.CONTEXT_MAX_BYTES + 1))
     with pytest.raises(SystemExit):
         delegate.secure_context_snapshot(source)
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="tests POSIX directory mode")
+def test_context_directory_is_revalidated_immediately_before_launch(
+        repo: Path, tmp_path: Path, capsys: pytest.CaptureFixture[str]):
+    source = tmp_path / "context.md"
+    source.write_text("stable context", encoding="utf-8")
+    text, metadata, snapshot, identity = delegate.secure_context_snapshot(source)
+    snapshot.parent.chmod(0o755)
+    try:
+        with pytest.raises(SystemExit):
+            delegate.launch_companion(
+                repo, task_id="T1", text="brief",
+                path=repo / ".factory/briefs/context-directory-drift.md",
+                task_sha256_value="task", model="model", effort="medium",
+                write=False, print_only=True, context_text=text,
+                context_metadata=metadata, context_snapshot=snapshot,
+                context_snapshot_identity=identity,
+            )
+        assert "directory lost its private POSIX" in capsys.readouterr().out
+    finally:
+        snapshot.parent.chmod(0o700)
+        delegate._cleanup_private_context(snapshot, identity, "")
 
 
 @pytest.mark.skipif(sys.platform == "win32", reason="tests POSIX failure cleanup")

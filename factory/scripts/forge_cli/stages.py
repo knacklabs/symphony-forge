@@ -1971,6 +1971,30 @@ def _file_identity(path: Path) -> dict[str, object]:
     }
 
 
+def _stable_pytest_config_identity(path: Path) -> dict[str, object]:
+    """Hash one regular config through the same no-follow file identity."""
+    info = path.lstat()
+    if (not stat.S_ISREG(info.st_mode) or stat.S_ISLNK(info.st_mode)
+            or info.st_nlink != 1):
+        raise ValueError("pytest config is linked or nonregular")
+    descriptor = os.open(path, os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0))
+    try:
+        opened = os.fstat(descriptor)
+        body = b""
+        while chunk := os.read(descriptor, 65536):
+            body += chunk
+        current = path.lstat()
+    finally:
+        os.close(descriptor)
+    if ((opened.st_dev, opened.st_ino, opened.st_size, opened.st_mtime_ns)
+            != (current.st_dev, current.st_ino, current.st_size, current.st_mtime_ns)
+            or opened.st_nlink != 1):
+        raise ValueError("pytest config identity changed")
+    return {
+        "size": opened.st_size, "sha256": hashlib.sha256(body).hexdigest(),
+    }
+
+
 def _explicit_pytest_config_identity(
     base: Path, python_args: list[str], environment: dict[str, str],
 ) -> dict[str, object] | None:
@@ -2005,26 +2029,29 @@ def _explicit_pytest_config_identity(
         raise ValueError("ambiguous pytest config path")
     path = Path(values[0])
     path = path if path.is_absolute() else base / path
-    info = path.lstat()
-    if (not stat.S_ISREG(info.st_mode) or stat.S_ISLNK(info.st_mode)
-            or info.st_nlink != 1):
-        raise ValueError("pytest config is linked or nonregular")
-    descriptor = os.open(path, os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0))
-    try:
-        opened = os.fstat(descriptor)
-        body = b""
-        while chunk := os.read(descriptor, 65536):
-            body += chunk
-        current = path.lstat()
-    finally:
-        os.close(descriptor)
-    if ((opened.st_dev, opened.st_ino, opened.st_size, opened.st_mtime_ns)
-            != (current.st_dev, current.st_ino, current.st_size, current.st_mtime_ns)
-            or opened.st_nlink != 1):
-        raise ValueError("pytest config identity changed")
-    return {
-        "size": opened.st_size, "sha256": hashlib.sha256(body).hexdigest(),
-    }
+    return _stable_pytest_config_identity(path)
+
+
+def _implicit_pytest_config_identity(base: Path) -> list[dict[str, object]]:
+    """Bind every config pytest can discover from the invocation directory."""
+    identities: list[dict[str, object]] = []
+    current = base.resolve()
+    ancestor = 0
+    while True:
+        for name in ("pytest.ini", ".pytest.ini", "pyproject.toml", "tox.ini",
+                     "setup.cfg"):
+            path = current / name
+            if not path.exists() and not path.is_symlink():
+                continue
+            identity = _stable_pytest_config_identity(path)
+            identities.append({
+                "name": name, "ancestor": ancestor,
+                **identity,
+            })
+        if current == current.parent:
+            return identities
+        current = current.parent
+        ancestor += 1
 
 
 def _proof_environment(
@@ -2033,6 +2060,7 @@ def _proof_environment(
     """Return parsed argv and a secret-free identity for its effective env."""
     tokens = shlex.split(command)
     environment = os.environ.copy()
+    inherited_python_utf8 = environment.get("PYTHONUTF8")
     # Proof runners always replace this nonce. Keep that fixed override stable
     # while still binding every other inherited variable an arbitrary command
     # may read.
@@ -2050,6 +2078,10 @@ def _proof_environment(
     identity = {
         "sha256": hashlib.sha256(canonical).hexdigest(),
         "entries": len(environment),
+        "inherited_pythonutf8_sha256": hashlib.sha256(
+            ("<unset>" if inherited_python_utf8 is None
+             else inherited_python_utf8).encode("utf-8")
+        ).hexdigest(),
     }
     return tokens, environment, identity
 
@@ -2144,16 +2176,21 @@ def _proof_tool_identity(
         return {"command": tokens[0], "runner": runner,
                 "environment": environment_identity, "reusable": False}
     try:
-        pytest_config = (
-            _explicit_pytest_config_identity(base, python_args, environment)
-            if module == "pytest" else None
-        )
+        pytest_config = None
+        if module == "pytest":
+            pytest_config = _explicit_pytest_config_identity(
+                base, python_args, environment,
+            )
+            if pytest_config is None:
+                pytest_config = _implicit_pytest_config_identity(base)
     except (OSError, ValueError):
         return {"command": tokens[0], "runner": runner,
                 "environment": environment_identity, "reusable": False}
     memo_probe = tuple(probe)
     if pytest_config is not None:
-        memo_probe += ("<pytest-config>", str(pytest_config["sha256"]))
+        memo_probe += ("<pytest-config>", hashlib.sha256(json.dumps(
+            pytest_config, sort_keys=True, separators=(",", ":"),
+        ).encode("utf-8")).hexdigest())
     memo_key = (memo_probe, str(environment_identity["sha256"]))
     if probe_memo is not None and memo_key in probe_memo:
         cached = {**probe_memo[memo_key], "command": tokens[0],

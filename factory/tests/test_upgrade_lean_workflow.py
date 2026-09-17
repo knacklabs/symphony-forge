@@ -76,6 +76,24 @@ def _fixed_lens(
     }
 
 
+def _sealed_fixed_review(repo: Path, story: str = "S1", task: str = "T1") -> Path:
+    base = git(repo, "rev-parse", "HEAD").strip()
+    branch = git(repo, "branch", "--show-current").strip()
+    reviews = repo / f".factory/stories/{story}/tasks/{task}/reviews"
+    reviews.mkdir(parents=True, exist_ok=True)
+    for lens in upgrade.LEAN_LENSES:
+        (reviews / f"{lens}.json").write_text(
+            json.dumps(_fixed_lens(task)), encoding="utf-8",
+        )
+    (reviews.parent / "pr-ready.json").write_text(json.dumps({
+        "task_id": task, "branch": branch, "base_main_sha": base,
+        "commit": base, "sealed_at": "2026-09-15T00:00:00+00:00",
+    }), encoding="utf-8")
+    git(repo, "add", ".factory/stories")
+    git(repo, "commit", "-q", "-m", "sealed fixed proof fixture")
+    return reviews
+
+
 def test_lean_migration_refuses_dirty_checkout_before_writing(repo: Path):
     legacy = _legacy_round(repo)
     before = legacy.read_bytes()
@@ -643,7 +661,7 @@ def test_lean_migration_resumes_durable_manifest_before_input_deletion(
     assert "completed_at" in json.loads(manifest.read_text())
 
 
-def test_public_upgrade_resumes_after_vendoring_without_revendoring(
+def test_public_upgrade_resumes_migration_then_finishes_vendoring(
         repo: Path, monkeypatch: pytest.MonkeyPatch,
         capsys: pytest.CaptureFixture[str]):
     legacy = _legacy_round(repo)
@@ -664,16 +682,83 @@ def test_public_upgrade_resumes_after_vendoring_without_revendoring(
     assert manifest.is_file()
     assert "completed_at" not in json.loads(manifest.read_text())
 
-    def unexpected_vendoring(*_args, **_kwargs):
-        raise AssertionError("resume reran vendoring")
+    original_copytree = upgrade.guarded_copytree
+    copied = 0
+
+    def observed_vendoring(*args, **kwargs):
+        nonlocal copied
+        copied += 1
+        return original_copytree(*args, **kwargs)
 
     with monkeypatch.context() as patch:
-        patch.setattr(upgrade, "guarded_copytree", unexpected_vendoring)
-        patch.setattr(upgrade, "_replace_path", unexpected_vendoring)
+        patch.setattr(upgrade, "guarded_copytree", observed_vendoring)
         upgrade.cmd_upgrade(argparse.Namespace(target=str(repo), force=False))
     assert not legacy.exists()
     assert "completed_at" in json.loads(manifest.read_text())
+    assert copied > 0
     assert "Resumed and completed Lean migration" in capsys.readouterr().out
+
+
+def test_lean_migration_persists_resume_state_before_review_pointer(
+        repo: Path, monkeypatch: pytest.MonkeyPatch):
+    reviews = _sealed_fixed_review(repo)
+    migration = upgrade.preflight_lean_migration(repo)
+    assert migration is not None
+    publish = upgrade._publish_upgrade_review
+
+    def publish_then_interrupt(*args, **kwargs):
+        publish(*args, **kwargs)
+        raise OSError("interrupted after pointer publication")
+
+    with monkeypatch.context() as patch:
+        patch.setattr(upgrade, "_publish_upgrade_review", publish_then_interrupt)
+        with pytest.raises(OSError, match="after pointer publication"):
+            upgrade.apply_lean_migration(repo, migration)
+    manifest = repo / ".factory/migrations/lean-workflow-v2.json"
+    assert manifest.is_file()
+    assert "completed_at" not in json.loads(manifest.read_text())
+    assert (reviews / "selected.json").is_file()
+
+    resumed = upgrade.preflight_lean_migration(repo)
+    assert resumed is not None and resumed["resume"] is True
+    upgrade.apply_lean_migration(repo, resumed)
+    assert "completed_at" in json.loads(manifest.read_text())
+    assert not any((reviews / f"{lens}.json").exists()
+                   for lens in upgrade.LEAN_LENSES)
+
+
+def test_lean_migration_resumes_after_one_fixed_lens_was_deleted(
+        repo: Path, monkeypatch: pytest.MonkeyPatch):
+    reviews = _sealed_fixed_review(repo)
+    migration = upgrade.preflight_lean_migration(repo)
+    assert migration is not None
+    original_unlink = Path.unlink
+    deleted = 0
+
+    def interrupt_after_one_lens(path: Path, *args, **kwargs):
+        nonlocal deleted
+        if path.parent == reviews and path.name in {
+                f"{lens}.json" for lens in upgrade.LEAN_LENSES}:
+            if deleted == 1:
+                raise OSError("interrupted after one fixed lens")
+            deleted += 1
+        return original_unlink(path, *args, **kwargs)
+
+    with monkeypatch.context() as patch:
+        patch.setattr(Path, "unlink", interrupt_after_one_lens)
+        with pytest.raises(OSError, match="after one fixed lens"):
+            upgrade.apply_lean_migration(repo, migration)
+    assert deleted == 1
+
+    resumed = upgrade.preflight_lean_migration(repo)
+    assert resumed is not None and resumed["resume"] is True
+    upgrade.apply_lean_migration(repo, resumed)
+    assert not any((reviews / f"{lens}.json").exists()
+                   for lens in upgrade.LEAN_LENSES)
+    manifest = json.loads((
+        repo / ".factory/migrations/lean-workflow-v2.json"
+    ).read_text())
+    assert "completed_at" in manifest
 
 
 def test_completed_lean_manifest_allows_later_runtime_versions(repo: Path):

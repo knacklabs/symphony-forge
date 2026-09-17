@@ -271,6 +271,13 @@ def test_approved_story_edit_is_the_only_candidate_and_rebinds_atomically(
     replay.write_text(json.dumps({**amended, "story": "OTHER"}))
     assert lib.approved_story_plan_predecessors(repo, amended_digest) == ()
     replay.write_bytes(replay_bytes)
+    approval_bytes = candidate.evidence.read_bytes()
+    candidate.evidence.write_text("[]\n", encoding="utf-8")
+    assert lib.approved_story_plan_predecessors(repo, amended_digest) == ()
+    candidate.evidence.write_bytes(approval_bytes)
+    replay.write_text("[]\n", encoding="utf-8")
+    assert lib.approved_story_plan_predecessors(repo, amended_digest) == ()
+    replay.write_bytes(replay_bytes)
 
 
 def test_task_approval_waits_for_story_approval_and_decomposition_rebinding(

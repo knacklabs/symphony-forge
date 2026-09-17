@@ -376,7 +376,8 @@ def test_proof_identity_binds_environment_without_persisting_secrets(
             "secret-options-one"):
         assert secret not in serialized
     assert all(set(identity["inputs"]["tools"][0]["environment"])
-               == {"sha256", "entries"} for identity in first.values())
+               == {"sha256", "entries", "inherited_pythonutf8_sha256"}
+               for identity in first.values())
 
     monkeypatch.setenv("FACTORY_TEST_CMD", "secret-command-two")
     changed_command_env = {
@@ -401,7 +402,7 @@ def test_proof_identity_binds_environment_without_persisting_secrets(
     }
     monkeypatch.setenv("FORGE_PROCESS_TOKEN", "generated-nonce-two")
     monkeypatch.setenv("PYTHONUTF8", "different-fixed-input")
-    assert normalized == {
+    assert normalized != {
         kind: stages.proof_identity(repo, task, kind, product_tree={})["identity"]
         for kind in ("verify", "tests")
     }
@@ -432,6 +433,20 @@ def test_pytest_addopts_config_bytes_are_bound_without_persisting_paths(
     assert conflict["reusable"] is False
     monkeypatch.setenv("PYTEST_ADDOPTS", "-c 'unterminated")
     assert stages._proof_tool_identity(repo, command)["reusable"] is False
+
+
+def test_implicitly_discovered_pytest_config_bytes_are_bound(
+        repo: Path, monkeypatch):
+    _fake_uv_probe(repo, monkeypatch)
+    config = repo / "pytest.ini"
+    config.write_text("[pytest]\naddopts = -q\n", encoding="utf-8")
+    command = "uv run --with pytest python -m pytest tests/a.py"
+    first = stages._proof_tool_identity(repo, command)
+    assert first["reusable"] is True
+    assert str(repo) not in json.dumps(first["pytest_config"], sort_keys=True)
+    config.write_text("[pytest]\naddopts = -x\n", encoding="utf-8")
+    changed = stages._proof_tool_identity(repo, command)
+    assert changed["pytest_config"] != first["pytest_config"]
 
 
 def test_run_stage_proof_memoizes_tool_probe_by_prefix_and_environment(

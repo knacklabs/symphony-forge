@@ -188,6 +188,19 @@ def _lean_family(relative: str, data: bytes | None = None) -> str:
                 or not native_fields.issubset(approval)
                 or approval.get("runtime") not in {"claude", "codex"}
                 or approval.get("plan_kind") not in {"story", "task"}
+                or approval.get("approved_by") != {
+                    "claude": "human-via-Claude",
+                    "codex": "human-via-Codex",
+                }.get(approval.get("runtime"))
+                or any(not isinstance(approval.get(field), str)
+                       or not approval[field].strip()
+                       for field in ("approved_at", "session_id", "event_id",
+                                     "story"))
+                or (approval.get("plan_kind") == "story"
+                    and approval.get("task") != "")
+                or (approval.get("plan_kind") == "task"
+                    and (not isinstance(approval.get("task"), str)
+                         or not approval["task"].strip()))
                 or re.fullmatch(
                     r"[0-9a-f]{64}", str(approval.get("approved_plan_sha256") or ""),
                 ) is None):
@@ -978,9 +991,8 @@ def _raw_classify_fixed_review_coverage(target: Path, rows: list[dict]) -> None:
                        marker_identity=marker_identity)
 
 
-def lean_raw_inventory(target: Path) -> list[dict]:
-    """Independent no-follow walk; does not call the primary classifier."""
-    rows: list[dict] = []
+def _raw_inventory_paths(target: Path) -> list[Path]:
+    """Enumerate the fixed legacy universe without following any link."""
     files: list[Path] = []
 
     def raw_parent(path: Path) -> list[os.DirEntry]:
@@ -1037,7 +1049,125 @@ def lean_raw_inventory(target: Path) -> list[dict]:
                     fail("Lean raw inventory refuses linked or non-directory "
                          f"candidate parent {task}")
                 raw_matches(task / "reviews")
-    for path in sorted(set(files)):
+    return sorted(set(files))
+
+
+def _raw_legacy_family(relative: str, data: bytes) -> str:
+    """Classify one raw candidate independently of the primary pass."""
+    family = ""
+    if relative == ".codex/config.toml" and b"codex_hooks = true" in data:
+        family = "old-hook-flag"
+    elif relative.startswith(".codex/agents/"):
+        name = relative.rsplit("/", 1)[-1]
+        if (name in RETIRED_FORGE_PROFILE_HASHES
+                and hashlib.sha256(data).hexdigest()
+                == RETIRED_FORGE_PROFILE_HASHES[name]):
+            family = "retired-forge-profile"
+    elif "/grill-rounds/" in relative and relative.endswith(".json"):
+        family = "grill-round"
+    elif relative.endswith("/grills/requirements.json") \
+            or relative == ".factory/grills/requirements.json":
+        family = "requirements-grill"
+    elif (relative.endswith("/grills/plan.json")
+          or relative == ".factory/grills/plan.json"):
+        try:
+            decoded = json.loads(data.decode("utf-8"))
+        except (UnicodeDecodeError, json.JSONDecodeError):
+            decoded = None
+        cold_fields = {
+            "cold_input_sha256", "final_artifact_sha256",
+            "finding_dispositions", "amendments", "artifact_delta",
+        }
+        if (not isinstance(decoded, dict)
+                or "cold_input_sha256" not in decoded
+                or (cold_fields.intersection(decoded)
+                    and _raw_json_shape_reason("old-plan-grill", decoded))):
+            family = "old-plan-grill"
+    elif "/grills/tasks/" in relative and relative.endswith(".json"):
+        try:
+            decoded = json.loads(data.decode("utf-8"))
+        except (UnicodeDecodeError, json.JSONDecodeError):
+            decoded = None
+        cold_fields = {
+            "cold_input_sha256", "final_artifact_sha256",
+            "finding_dispositions", "amendments", "artifact_delta",
+        }
+        if (not isinstance(decoded, dict) or "rounds" in decoded
+                or "cold_input_sha256" not in decoded
+                or (cold_fields.intersection(decoded)
+                    and _raw_json_shape_reason("old-task-grill", decoded))):
+            family = "old-task-grill"
+    elif relative.endswith("/plan-approval.json"):
+        try:
+            approval = json.loads(data.decode("utf-8")) if data else None
+        except (UnicodeDecodeError, json.JSONDecodeError):
+            approval = None
+        native_fields = {
+            "approved_plan_sha256", "approved_by", "approved_at", "runtime",
+            "session_id", "event_id", "plan_kind", "story", "task",
+        }
+        if (not isinstance(approval, dict)
+                or not native_fields.issubset(approval)
+                or approval.get("runtime") not in {"claude", "codex"}
+                or approval.get("plan_kind") not in {"story", "task"}
+                or approval.get("approved_by") != {
+                    "claude": "human-via-Claude",
+                    "codex": "human-via-Codex",
+                }.get(approval.get("runtime"))
+                or any(not isinstance(approval.get(field), str)
+                       or not approval[field].strip()
+                       for field in ("approved_at", "session_id", "event_id",
+                                     "story"))
+                or (approval.get("plan_kind") == "story"
+                    and approval.get("task") != "")
+                or (approval.get("plan_kind") == "task"
+                    and (not isinstance(approval.get("task"), str)
+                         or not approval["task"].strip()))
+                or re.fullmatch(
+                    r"[0-9a-f]{64}",
+                    str(approval.get("approved_plan_sha256") or ""),
+                ) is None):
+            family = "manual-plan-approval"
+    elif "/plan-mode/" in relative and relative.endswith(".json"):
+        family = "plan-mode-marker"
+    elif re.fullmatch(
+            r"\.factory/stories/[^/]+/(?:tasks/[^/]+/reviews|reviews)/"
+            r"(?:quality|performance|security)\.json", relative):
+        family = "fixed-review-lens"
+    elif relative == ".factory/stages.json" or "/stages/" in relative:
+        try:
+            stage_value = json.loads(data.decode("utf-8"))
+        except (UnicodeDecodeError, json.JSONDecodeError):
+            stage_value = None
+        stage_records = stage_value.get("stages") \
+            if isinstance(stage_value, dict) and "stages" in stage_value \
+            else [stage_value]
+        stage_stamps = [
+            record.get("local_review_stamp") for record in stage_records
+            if isinstance(record, dict) and "local_review_stamp" in record
+        ]
+        if stage_stamps and not all(
+                isinstance(stamp, dict) and "reviewed_meaning" in stamp
+                for stamp in stage_stamps):
+            family = "legacy-stage-stamp"
+    if not data and not family:
+        if (relative.endswith("/grills/plan.json")
+                or relative == ".factory/grills/plan.json"):
+            family = "old-plan-grill"
+        elif "/grills/tasks/" in relative and relative.endswith(".json"):
+            family = "old-task-grill"
+        elif (relative.endswith("/plan-approval.json")
+              or relative == ".factory/plan-approval.json"):
+            family = "manual-plan-approval"
+        elif relative == ".factory/stages.json" or "/stages/" in relative:
+            family = "legacy-stage-stamp"
+    return family
+
+
+def lean_raw_inventory(target: Path) -> list[dict]:
+    """Build the independent classified inventory from the raw no-follow walk."""
+    rows: list[dict] = []
+    for path in _raw_inventory_paths(target):
         relative = path.relative_to(target).as_posix()
         try:
             info = path.lstat()
@@ -1062,100 +1192,7 @@ def lean_raw_inventory(target: Path) -> list[dict]:
         if not stat.S_ISREG(info.st_mode) or info.st_nlink != 1:
             fail(f"Lean raw inventory refuses linked or non-regular candidate {relative}")
         data = path.read_bytes()
-        family = ""
-        # Deliberately independent spelling of the candidate universe.
-        if relative == ".codex/config.toml" and b"codex_hooks = true" in data:
-            family = "old-hook-flag"
-        elif relative.startswith(".codex/agents/"):
-            name = relative.rsplit("/", 1)[-1]
-            if (name in RETIRED_FORGE_PROFILE_HASHES
-                    and hashlib.sha256(data).hexdigest() == RETIRED_FORGE_PROFILE_HASHES[name]):
-                family = "retired-forge-profile"
-        elif "/grill-rounds/" in relative and relative.endswith(".json"):
-            family = "grill-round"
-        elif relative.endswith("/grills/requirements.json") \
-                or relative == ".factory/grills/requirements.json":
-            family = "requirements-grill"
-        elif (relative.endswith("/grills/plan.json")
-              or relative == ".factory/grills/plan.json"):
-            try:
-                decoded = json.loads(data.decode("utf-8"))
-            except (UnicodeDecodeError, json.JSONDecodeError):
-                decoded = None
-            cold_fields = {
-                "cold_input_sha256", "final_artifact_sha256",
-                "finding_dispositions", "amendments", "artifact_delta",
-            }
-            if (not isinstance(decoded, dict)
-                    or "cold_input_sha256" not in decoded
-                    or (cold_fields.intersection(decoded)
-                        and _raw_json_shape_reason("old-plan-grill", decoded))):
-                family = "old-plan-grill"
-        elif "/grills/tasks/" in relative and relative.endswith(".json"):
-            try:
-                decoded = json.loads(data.decode("utf-8"))
-            except (UnicodeDecodeError, json.JSONDecodeError):
-                decoded = None
-            cold_fields = {
-                "cold_input_sha256", "final_artifact_sha256",
-                "finding_dispositions", "amendments", "artifact_delta",
-            }
-            if (not isinstance(decoded, dict) or "rounds" in decoded
-                    or "cold_input_sha256" not in decoded
-                    or (cold_fields.intersection(decoded)
-                        and _raw_json_shape_reason("old-task-grill", decoded))):
-                family = "old-task-grill"
-        elif relative.endswith("/plan-approval.json"):
-            try:
-                approval = json.loads(data.decode("utf-8")) if data else None
-            except (UnicodeDecodeError, json.JSONDecodeError):
-                approval = None
-            native_fields = {
-                "approved_plan_sha256", "approved_by", "approved_at", "runtime",
-                "session_id", "event_id", "plan_kind", "story", "task",
-            }
-            if (not isinstance(approval, dict)
-                    or not native_fields.issubset(approval)
-                    or approval.get("runtime") not in {"claude", "codex"}
-                    or approval.get("plan_kind") not in {"story", "task"}
-                    or re.fullmatch(
-                        r"[0-9a-f]{64}",
-                        str(approval.get("approved_plan_sha256") or ""),
-                    ) is None):
-                family = "manual-plan-approval"
-        elif "/plan-mode/" in relative and relative.endswith(".json"):
-            family = "plan-mode-marker"
-        elif re.fullmatch(
-                r"\.factory/stories/[^/]+/(?:tasks/[^/]+/reviews|reviews)/"
-                r"(?:quality|performance|security)\.json", relative):
-            family = "fixed-review-lens"
-        elif relative == ".factory/stages.json" or "/stages/" in relative:
-            try:
-                stage_value = json.loads(data.decode("utf-8"))
-            except (UnicodeDecodeError, json.JSONDecodeError):
-                stage_value = None
-            stage_records = stage_value.get("stages") \
-                if isinstance(stage_value, dict) and "stages" in stage_value \
-                else [stage_value]
-            stage_stamps = [
-                record.get("local_review_stamp") for record in stage_records
-                if isinstance(record, dict) and "local_review_stamp" in record
-            ]
-            if stage_stamps and not all(
-                    isinstance(stamp, dict) and "reviewed_meaning" in stamp
-                    for stamp in stage_stamps):
-                family = "legacy-stage-stamp"
-        if not data and not family:
-            if relative.endswith("/grills/plan.json") \
-                    or relative == ".factory/grills/plan.json":
-                family = "old-plan-grill"
-            elif "/grills/tasks/" in relative and relative.endswith(".json"):
-                family = "old-task-grill"
-            elif relative.endswith("/plan-approval.json") \
-                    or relative == ".factory/plan-approval.json":
-                family = "manual-plan-approval"
-            elif relative == ".factory/stages.json" or "/stages/" in relative:
-                family = "legacy-stage-stamp"
+        family = _raw_legacy_family(relative, data)
         invalid_reason = ""
         zero_byte_legacy = not data and (
             bool(family)
@@ -1234,11 +1271,16 @@ def _revalidate_lean_inventory(target: Path, migration: dict) -> None:
             or entry["path"] in LEAN_RUNTIME_PATHS
             or entry.get("reason") == "current-runtime-profile")
     }
+    retired_review_paths = {
+        path for sentinel in migration.get("review_sentinels") or []
+        for path in sentinel.get("source_paths") or []
+    }
 
     def stable(entries: list[dict]) -> list[dict]:
         return [
             entry for entry in entries
             if entry["path"] not in replaced_paths
+            and entry["path"] not in retired_review_paths
             and entry.get("reason") != "canonical-review-output"
         ]
 
@@ -1534,7 +1576,9 @@ def preflight_lean_migration(target: Path) -> dict | None:
             if (original is not None
                     and original.get("classification") == "eligible"
                     and (path in LEAN_RUNTIME_PATHS
-                         or original.get("family") == "legacy-stage-stamp")
+                         or original.get("family") in {
+                             "legacy-stage-stamp", "fixed-review-lens",
+                         })
                     and current.get("classification") == "excluded"):
                 continue
             monotonic = False
@@ -1547,9 +1591,7 @@ def preflight_lean_migration(target: Path) -> dict | None:
                 break
         if not monotonic:
             fail("Lean migration found an unequal partial retry; restore or complete the original checkout")
-        migration = {"entries": saved["entries"],
-                     "input_inventory_digest": saved.get("input_inventory_digest"),
-                     "resume": True}
+        migration = {**saved, "resume": True}
         (migration["review_candidates"],
          migration["review_sentinels"]) = _fixed_review_plan(target, migration)
         _prepare_review_outputs(target, migration)
@@ -1595,6 +1637,62 @@ def _fixed_review_plan(
     candidates = []
     sentinels = []
     for (story, path_task), entries in sorted(grouped.items()):
+        source_paths = [target / entry["path"] for entry in entries]
+        missing_sources = [
+            path for path in source_paths
+            if not path.exists() and not path.is_symlink()
+        ]
+        if missing_sources:
+            if not migration.get("resume"):
+                fail(f"fixed review input {missing_sources[0]} disappeared")
+            task_ids = {str(entry.get("task_id") or "") for entry in entries}
+            if len(task_ids) != 1 or not next(iter(task_ids)):
+                fail(f"sealed fixed review {story} cannot identify exactly one task")
+            task = next(iter(task_ids))
+            expected = [
+                row for row in migration.get("outputs") or []
+                if row.get("story") == story and row.get("task_id") == task
+            ]
+            marker = (target / ".factory" / "stories" / story / "tasks" / task
+                      / "pr-ready.json")
+            marker_data = load_json(marker, default={})
+            committed, marker_problem = _committed_task_marker(
+                target, story, task, marker_data, None,
+            )
+            if marker_problem or committed is None or len(expected) != 1:
+                fail(f"sealed fixed review {story}/{task} cannot resume: "
+                     f"{marker_problem or 'durable output is missing'}")
+            sealed = committed["commit"]
+            expected_delta = product_delta_digest(
+                target, marker_data.get("base_main_sha", ""), sealed,
+            )
+            generation, selection, problems = read_selected_review_generation(
+                target, story, task, expected_delta_id=expected_delta,
+                sealed_commit=sealed,
+            )
+            output = expected[0]
+            if (problems or not isinstance(generation, dict)
+                    or not isinstance(selection, dict)
+                    or generation.get("generation_id") != output.get("generation_id")
+                    or selection.get("generation_sha256")
+                    != output.get("generation_sha256")):
+                fail("Lean migration cannot resume partially retired fixed proof: "
+                     + "; ".join(problems or ["durable output identity changed"]))
+            for entry, path in zip(entries, source_paths):
+                if path in missing_sources:
+                    continue
+                if (path.is_symlink() or not path.is_file()
+                        or hashlib.sha256(path.read_bytes()).hexdigest()
+                        != entry["sha256"]):
+                    fail(f"fixed review input {entry['path']} changed during resume")
+            sentinels.append({
+                "output": output, "sealed_commit": sealed,
+                "selection_sha256": hashlib.sha256(
+                    (marker.parent / "reviews" / "selected.json").read_bytes(),
+                ).hexdigest(),
+                "source_paths": [entry["path"] for entry in entries],
+            })
+            continue
         lenses = {}
         for entry in entries:
             try:
@@ -1758,6 +1856,35 @@ def _publish_upgrade_review(
     return generation, selection
 
 
+def _publish_incomplete_lean_manifest(target: Path, manifest: dict) -> Path:
+    """Persist resumable transaction state before any canonical pointer moves."""
+    from factory_lib import dump_json
+
+    destination = (
+        target / ".factory" / "migrations" / f"{LEAN_MIGRATION_VERSION}.json"
+    )
+    if destination.exists() or destination.is_symlink():
+        _require_single_link_manifest(target, destination)
+        existing = load_json(destination, default={})
+        comparable = {
+            key: value for key, value in existing.items()
+            if key not in {"recorded_at", "completed_at"}
+        }
+        expected = {
+            key: value for key, value in manifest.items() if key != "recorded_at"
+        }
+        if comparable != expected:
+            fail("Lean migration manifest retry differs from the durable original")
+        return destination
+    assert_target_destination(target, destination.parent).mkdir(
+        parents=True, exist_ok=True,
+    )
+    dump_json(destination, manifest)
+    if load_json(destination, default={}) != manifest:
+        fail("Lean migration manifest readback differs")
+    return destination
+
+
 def apply_lean_migration(target: Path, migration: dict | None) -> None:
     if migration is None:
         return
@@ -1801,9 +1928,11 @@ def apply_lean_migration(target: Path, migration: dict | None) -> None:
     with tempfile.TemporaryDirectory(prefix="forge-lean-build-") as temporary:
         build = Path(temporary)
         built_generations: list[tuple[dict, str, str]] = []
-        outputs: list[dict[str, str]] = [
-            sentinel["output"] for sentinel in review_sentinels
-        ]
+        outputs: list[dict[str, str]] = (
+            list(migration.get("outputs") or [])
+            if migration.get("resume") else
+            [sentinel["output"] for sentinel in review_sentinels]
+        )
         for index, (candidate, _paths) in enumerate(review_candidates):
             validate_review_document(target, candidate, allow_missing_generation_id=True)
             generation = dict(candidate)
@@ -1825,11 +1954,16 @@ def apply_lean_migration(target: Path, migration: dict | None) -> None:
                     or prepared_row.get("candidate") != candidate):
                 fail("Lean migration prepared review changed after preflight")
             built_generations.append((candidate, generation["generation_id"], digest))
-            outputs.append({
+            output = {
                 "story": candidate["story"], "task_id": candidate["task_id"],
                 "generation_id": generation["generation_id"],
                 "generation_sha256": digest,
-            })
+            }
+            if migration.get("resume"):
+                if output not in outputs:
+                    fail("Lean migration prepared review is absent from durable state")
+            else:
+                outputs.append(output)
 
         _revalidate_lean_inventory(target, migration)
 
@@ -1851,6 +1985,7 @@ def apply_lean_migration(target: Path, migration: dict | None) -> None:
         if load_json(built_manifest, default={}) != manifest:
             fail("Lean migration temporary manifest readback differs")
 
+        destination = _publish_incomplete_lean_manifest(target, manifest)
         for candidate, expected_id, expected_sha in built_generations:
             generation, selection = _publish_upgrade_review(
                 target, migration, candidate, expected_id, expected_sha,
@@ -1858,23 +1993,6 @@ def apply_lean_migration(target: Path, migration: dict | None) -> None:
             if (generation["generation_id"] != expected_id
                     or selection["generation_sha256"] != expected_sha):
                 fail("Lean migration published review differs from temporary build")
-
-    destination = target / ".factory" / "migrations" / f"{LEAN_MIGRATION_VERSION}.json"
-    if destination.exists():
-        _require_single_link_manifest(target, destination)
-        existing = load_json(destination, default={})
-        comparable = {key: value for key, value in existing.items()
-                      if key not in {"recorded_at", "completed_at"}}
-        expected = {key: value for key, value in manifest.items() if key != "recorded_at"}
-        if comparable != expected:
-            fail("Lean migration manifest retry differs from the durable original")
-    else:
-        assert_target_destination(target, destination.parent).mkdir(
-            parents=True, exist_ok=True,
-        )
-        dump_json(destination, manifest)
-        if load_json(destination, default={}) != manifest:
-            fail("Lean migration manifest readback differs")
 
     # Durable selected outputs and manifest now exist. Retire exactly the
     # inventoried bytes, refusing identity drift instead of deleting by name.
@@ -1893,12 +2011,24 @@ def apply_lean_migration(target: Path, migration: dict | None) -> None:
         if (entry["family"] == "fixed-review-lens"
                 and entry["path"] not in promoted_paths):
             continue
-        if path.is_symlink() or not path.is_file() \
-                or hashlib.sha256(path.read_bytes()).hexdigest() != entry["sha256"]:
+        if path.is_symlink() or not path.is_file():
             fail(f"Lean migration input changed before deletion: {entry['path']}")
         if entry["family"] == "legacy-stage-stamp":
-            path.write_bytes(_converted_stage_bytes(path.read_bytes()))
+            current = path.read_bytes()
+            converted = _converted_stage_bytes(current)
+            expected = next(
+                row["sha256"] for row in converted_outputs
+                if row["path"] == entry["path"]
+            )
+            current_digest = hashlib.sha256(current).hexdigest()
+            if current_digest == expected:
+                continue
+            if current_digest != entry["sha256"]:
+                fail(f"Lean migration input changed before conversion: {entry['path']}")
+            path.write_bytes(converted)
         else:
+            if hashlib.sha256(path.read_bytes()).hexdigest() != entry["sha256"]:
+                fail(f"Lean migration input changed before deletion: {entry['path']}")
             path.unlink()
 
     completed = load_json(destination, default={})
@@ -2477,7 +2607,7 @@ def _cmd_upgrade_locked(
     if lean_migration and lean_migration.get("resume") is True:
         apply_lean_migration(target, lean_migration)
         print(f"Resumed and completed Lean migration in {target}")
-        return
+        lean_migration = None
     _check_legacy_retirable(target, harness)
 
     # factory/skills is mixed ownership too: the `skills` CLI installs

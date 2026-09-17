@@ -1343,7 +1343,8 @@ def _validate_narrowed_scope_topology(
         if mode == "120000":
             fail(f"--scope refuses symlink-ambiguous baseline path {entry!r}")
         if not mode:
-            fail(f"--scope path {entry!r} is missing from the immutable baseline")
+            if entry not in approved or entry.endswith("/"):
+                fail(f"--scope path {entry!r} is missing from the immutable baseline")
         if entry.endswith("/") and mode != "040000":
             fail(f"--scope trailing slash requires a baseline directory: {entry!r}")
 
@@ -1879,6 +1880,9 @@ def launch_companion(
         _validate_context_correlation(
             context_snapshot, context_metadata, context_snapshot_identity,
         )
+        _validate_private_context_directory(
+            context_snapshot.parent, windows_sid,
+        )
         _validate_private_file(
             context_snapshot, windows_sid, context_snapshot_identity,
         )
@@ -2271,6 +2275,7 @@ def cmd_delegate(args: argparse.Namespace) -> None:
     if active and not args.read_only:
         require_task_worktree(base)
         task = require_ready_task(base, args.id)
+    if active:
         from .stages import effective_scope
         scope = effective_scope(base, args.id, task.get("write_scope") or [])
     requested_scope = list(getattr(args, "scope", []) or [])
