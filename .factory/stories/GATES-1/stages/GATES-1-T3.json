@@ -10,18 +10,5 @@
       "git": "1 .M N... 100644 100644 100644 93d7d6220cbab90d183744ad501fb2d85ab9776c 93d7d6220cbab90d183744ad501fb2d85ab9776c .factory/stories/GATES-1/grills/tasks/GATES-1-T3.json\u0000\u0000100644 93d7d6220cbab90d183744ad501fb2d85ab9776c 0\t.factory/stories/GATES-1/grills/tasks/GATES-1-T3.json\u0000\u0000H .factory/stories/GATES-1/grills/tasks/GATES-1-T3.json\u0000"
     }
   },
-  "task_sha256": "13a37f65b2241599d54dcf335dce2779b7fd5af0a629939a04487a91d1552ed9",
-  "local_review_stamp": {
-    "stage_id": "GATES-1-T3",
-    "base_sha": "015e286876a5ac0d650535a46048ba2efcd38578",
-    "delta_id": "080e6bdfd2530e30384d988b6419c39daf46c70220c8a89bbd394f90d60ca175",
-    "contract_sha256": "13a37f65b2241599d54dcf335dce2779b7fd5af0a629939a04487a91d1552ed9",
-    "recorded_at": "2026-09-14T14:51:13+00:00",
-    "generated_by": "autoreview",
-    "lenses": [
-      "quality",
-      "performance",
-      "security"
-    ]
-  }
+  "task_sha256": "13a37f65b2241599d54dcf335dce2779b7fd5af0a629939a04487a91d1552ed9"
 }
