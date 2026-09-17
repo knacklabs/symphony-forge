@@ -1375,19 +1375,25 @@ def narrowed_scope(
     """Validate a repeatable proper-subset selection against effective scope."""
     from .worker_admission import path_in_scope
     approved_clean = [_normal_scope_entry(item) for item in approved]
+    approved_membership = approved_clean
+    if base is not None and revision:
+        from factory_lib import classify_scope_entries
+        approved_membership = classify_scope_entries(
+            base, approved_clean, revision,
+        )
     selected = [_normal_scope_entry(item) for item in requested]
     if len(set(selected)) != len(selected):
         fail("--scope refuses duplicate normalized entries")
     if not selected:
         return approved_clean
     for entry in selected:
-        if not path_in_scope(entry, approved_clean):
+        if not path_in_scope(entry, approved_membership):
             fail(f"--scope {entry!r} is outside the effective approved write scope")
     if set(selected) == set(approved_clean):
         fail("--scope must narrow to a proper subset; omit it for the full effective scope")
     # A selected parent directory can cover the entire approved set despite
     # having different spelling. Refuse that semantic non-narrowing too.
-    if all(path_in_scope(item.rstrip("/"), selected) for item in approved_clean):
+    if all(path_in_scope(item.rstrip("/"), selected) for item in approved_membership):
         fail("--scope selection covers the full effective scope; omit it instead")
     if base is not None:
         _validate_narrowed_scope_topology(

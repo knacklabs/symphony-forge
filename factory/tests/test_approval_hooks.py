@@ -93,6 +93,37 @@ def test_awaiting_story_edit_is_ineligible_until_its_plan_grill_matches(
     assert grill.read_bytes() == original_grill
 
 
+def test_native_approval_revalidates_candidate_before_first_mutation(
+        repo: Path, monkeypatch: pytest.MonkeyPatch):
+    candidate = _story_candidate(repo)
+    event = _event(candidate)
+    calls = 0
+
+    def changing_candidates(_base: Path):
+        nonlocal calls
+        calls += 1
+        return [candidate] if calls == 1 else []
+
+    monkeypatch.setattr(approval, "eligible_candidates", changing_candidates)
+    with pytest.raises(approval.ApprovalRefused, match="changed before publication"):
+        approval.record_native_approval(repo, event, runtime="claude")
+    assert not (candidate.evidence.parent / "approval-events").exists()
+    assert "status: awaiting-approval" in candidate.path.read_text(encoding="utf-8")
+
+
+def test_phase_refuses_approved_status_without_native_approval_authority(
+        repo: Path):
+    from forge_cli.phase import _approved_plan_changed
+
+    candidate = _story_candidate(repo)
+    approval.record_native_approval(repo, _event(candidate), runtime="claude")
+    lib = load_factory_lib(repo)
+    state = json.loads(lib.run_state_path(repo).read_text(encoding="utf-8"))
+    assert _approved_plan_changed(repo, state) is False
+    candidate.evidence.unlink()
+    assert _approved_plan_changed(repo, state) is True
+
+
 def test_approved_story_edit_is_the_only_candidate_and_rebinds_atomically(
         repo: Path):
     candidate = _story_candidate(repo)

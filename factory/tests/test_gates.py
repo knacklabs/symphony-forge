@@ -16465,6 +16465,46 @@ def test_safe_factory_windows_helper_refuses_reparse_components(
         target, parts, os.O_WRONLY | os.O_CREAT) is None
 
 
+def test_raw_run_state_skips_review_phase_reconstruction(repo, monkeypatch):
+    factory_lib = load_factory_lib(repo)
+    state_path = factory_lib.run_state_path(repo)
+    factory_lib.dump_json(
+        state_path, {"issue_key": "RAW-1", "phase": "reviewing"},
+    )
+    factory_lib.story_dir(repo, "RAW-1").mkdir(parents=True, exist_ok=True)
+    calls = []
+    monkeypatch.setattr(
+        factory_lib, "selected_review_ready_for_functional_check",
+        lambda *_args, **_kwargs: calls.append("derived") or False,
+    )
+    assert factory_lib.raw_run_state(repo)["issue_key"] == "RAW-1"
+    assert calls == []
+    assert factory_lib.derive_phase(
+        repo, factory_lib.raw_run_state(repo),
+    ) == "reviewing"
+    assert calls == ["derived"]
+    hook = (repo / "factory/scripts/pre_tool_use.py").read_text(encoding="utf-8")
+    assert "json.loads(state_path.read_text" in hook
+
+
+@pytest.mark.parametrize("reparse_part", ["authority", "approval.json"])
+def test_task_approval_hydration_refuses_windows_reparse_components(
+        tmp_path, monkeypatch, reparse_part):
+    from forge_cli import tasks
+
+    root = tmp_path / "repo"
+    authority = root / "authority"
+    authority.mkdir(parents=True)
+    source = authority / "approval.json"
+    source.write_text("{}\n", encoding="utf-8")
+    reparse = authority if reparse_part == "authority" else source
+    monkeypatch.setattr(
+        tasks, "_windows_reparse_point", lambda path: path == reparse,
+    )
+    with pytest.raises(SystemExit):
+        tasks._contained_regular_bytes(root, source, "story approval")
+
+
 def test_review_generation_refuses_windows_reparse_ancestor(tmp_path, monkeypatch):
     factory_lib = load_factory_lib(HARNESS)
     root = tmp_path / "repo"
@@ -18925,9 +18965,13 @@ def test_review_consumers_include_complete_approved_inputs(
         def forbidden(*_args, **_kwargs):
             pytest.fail("review helper or recorder launched after unsafe destination")
 
-        with monkeypatch.context() as unsafe:
-            unsafe.setattr(review_mod, "cmd_review_brief", lambda _args: None)
-            unsafe.setattr(review_mod, "resolve_skill", lambda _explicit: tmp_path / "helper")
+            with monkeypatch.context() as unsafe:
+                unsafe.setattr(review_mod, "cmd_review_brief", lambda _args: None)
+                unsafe.setattr(
+                    review_mod, "render_review_dataset",
+                    lambda *_args: dataset_bytes,
+                )
+                unsafe.setattr(review_mod, "resolve_skill", lambda _explicit: tmp_path / "helper")
             unsafe.setattr(review_mod, "_product_dirty", lambda _base: [])
             unsafe.setattr(review_mod, "resolve_review_base", lambda *_args: head(repo))
             unsafe.setattr(review_mod, "review_excluded_prefixes", lambda _base: ())

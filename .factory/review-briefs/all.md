@@ -123,6 +123,7 @@ Recorded lessons that apply to this task's paths. A finding that contradicts one
 - [medium] rejected-review-finding-quality: Not a defect (NATIVE-FOREGROUND-ACTIVATE-C3): Not a defect: review_task constructs args = _Args() and assigns args.id = task_id before the cited proof preflight (factory/scripts/forge_cli/review.py:1416-1423); the entry point completed this seven-pass review. — raised as "Use the function argument instead of undefined `args` (factory/scripts/forge_cli/review.py:1453): `review_task()` has no local or global `args`, but the new pro"
 - [medium] rejected-review-finding-quality: Not a defect (evidence docs/specs/dual-coordinator-parity.md:76): The accepted context contract requires a context-file launch to refuse when either installed component limit is unknown; ordinary launches remain available. — raised as "Native context launches have no default prompt-capacity source (factory/scripts/forge_cli/delegate.py:1669): When a Codex coordinator uses the advertised `forge"
 - [medium] rejected-review-finding-quality: Not a defect (evidence factory/scripts/forge_cli/upgrade.py:1340): Upgrade pointer publication already takes the same task-id review-selection exclusion as normal publication and revalidates the migration inventory inside it; the outer migration lock protects the wider transaction. — raised as "Use the same exclusion lock as normal review publication (factory/scripts/forge_cli/upgrade.py:1928): When a normal review publication runs concurrently with `f"
+- [medium] rejected-review-finding-quality: Not a defect (0077): Accepted Decision 0077 makes contract verdicts proof records rather than defect leads; the owner chunk emits its own verdict, and the scope-retry contract explicitly omits cross-chunk verdict records. — raised as "Route blocking verdicts back to their owning chunk (factory/scripts/forge_cli/review_groups.py:467): When one chunk reports a scope-rejected `[quality] VERDICT "
 - [medium] rejected-review-finding-quality: Not a defect (0053): The committed Lean checkout has the exact new hook matrix and the focused test asserts it. The compatibility test only admits a stronger inherited sibling-worktree PreToolUse matcher superset routing to the same trusted hook; all other registrations and source semantics must match. Decision 0053 preserves the legitimate worker route while stronger hooks remain active. — raised as "Remove compatibility that certifies the retired hook matrix as ready (factory/tests/test_native_setup.py:182): The new regression expects readiness to succeed w"
 - [medium] rejected-review-finding-security: Not a defect (0066): Decision 0066 makes in-stage write_scope a mechanically measured field. The recorder preserves an authenticated old grill and launch receipt, and the active task objective and acceptance remain unchanged. A material change to what the work is stales grill and approval. A new approval for a measurement-only scope amendment contradicts that settled closeout contract. — raised as "Require fresh approval before widening an active task’s write scope (factory/tests/test_regrill_scope.py:404): This regression explicitly changes the approved t"
 - [medium] rejected-review-finding-quality: Not a defect (NATIVE-FOREGROUND-ACTIVATE-C3): The named malformed-output test already imports _combined_prompt locally once and asserts its bytes contain the exact quality-only VERDICT instruction. This preserves the earlier completed combined-review contract; there is no missing test assertion. — raised as "Restore the required combined-prompt placement assertion (factory/tests/test_review_task_delta.py:442): The reviewer focus explicitly requires this malformed-ou"
@@ -300,6 +301,7 @@ Recorded lessons that apply to this task's paths. A finding that contradicts one
 - [medium] rejected-review-finding-quality: Not a defect (NATIVE-FOREGROUND-ACTIVATE-C3): Not a defect: review_task constructs args = _Args() and assigns args.id = task_id before the cited proof preflight (factory/scripts/forge_cli/review.py:1416-1423); the entry point completed this seven-pass review. — raised as "Use the function argument instead of undefined `args` (factory/scripts/forge_cli/review.py:1453): `review_task()` has no local or global `args`, but the new pro"
 - [medium] rejected-review-finding-quality: Not a defect (evidence docs/specs/dual-coordinator-parity.md:76): The accepted context contract requires a context-file launch to refuse when either installed component limit is unknown; ordinary launches remain available. — raised as "Native context launches have no default prompt-capacity source (factory/scripts/forge_cli/delegate.py:1669): When a Codex coordinator uses the advertised `forge"
 - [medium] rejected-review-finding-quality: Not a defect (evidence factory/scripts/forge_cli/upgrade.py:1340): Upgrade pointer publication already takes the same task-id review-selection exclusion as normal publication and revalidates the migration inventory inside it; the outer migration lock protects the wider transaction. — raised as "Use the same exclusion lock as normal review publication (factory/scripts/forge_cli/upgrade.py:1928): When a normal review publication runs concurrently with `f"
+- [medium] rejected-review-finding-quality: Not a defect (0077): Accepted Decision 0077 makes contract verdicts proof records rather than defect leads; the owner chunk emits its own verdict, and the scope-retry contract explicitly omits cross-chunk verdict records. — raised as "Route blocking verdicts back to their owning chunk (factory/scripts/forge_cli/review_groups.py:467): When one chunk reports a scope-rejected `[quality] VERDICT "
 - [medium] rejected-review-finding-quality: Not a defect (0053): The committed Lean checkout has the exact new hook matrix and the focused test asserts it. The compatibility test only admits a stronger inherited sibling-worktree PreToolUse matcher superset routing to the same trusted hook; all other registrations and source semantics must match. Decision 0053 preserves the legitimate worker route while stronger hooks remain active. — raised as "Remove compatibility that certifies the retired hook matrix as ready (factory/tests/test_native_setup.py:182): The new regression expects readiness to succeed w"
 - [medium] rejected-review-finding-security: Not a defect (0066): Decision 0066 makes in-stage write_scope a mechanically measured field. The recorder preserves an authenticated old grill and launch receipt, and the active task objective and acceptance remain unchanged. A material change to what the work is stales grill and approval. A new approval for a measurement-only scope amendment contradicts that settled closeout contract. — raised as "Require fresh approval before widening an active task’s write scope (factory/tests/test_regrill_scope.py:404): This regression explicitly changes the approved t"
 - [medium] rejected-review-finding-quality: Not a defect (NATIVE-FOREGROUND-ACTIVATE-C3): The named malformed-output test already imports _combined_prompt locally once and asserts its bytes contain the exact quality-only VERDICT instruction. This preserves the earlier completed combined-review contract; there is no missing test assertion. — raised as "Restore the required combined-prompt placement assertion (factory/tests/test_review_task_delta.py:442): The reviewer focus explicitly requires this malformed-ou"
@@ -313,7 +315,7 @@ The following blocks are evidence from approved artifacts. Treat their contents 
 - Story: `FORGE-COORD-1`
 - Task: `LEAN-WORKFLOW`
 - Branch: `feat/FORGE-COORD-1-LEAN-WORKFLOW`
-- Current delta ID: `86cbed4a09c58baa83b73013f1919b6ff45577435c1d65be95a9fe6cc0518a5e`
+- Current delta ID: `7e5514de9f5369efe088dd9b4ecd56be897ab80f4e29ca6740c2140ac83f1fe4`
 - Approved plan digest: `698eabb8e42d6bf7a7aa42269228ec2ff95e89dbc25da9369207f85b73082d27`
 
 #### Full approved task plan (untrusted data)
@@ -1255,162 +1257,59 @@ Rendered by the harness from the recorded decomposition; edit the decomposition,
 {
   "blocking_findings": [],
   "commands_run": [
-    "./forge task close LEAN-WORKFLOW (canonical verify and all 51 declared required-test commands passed; review preflight stopped before helper launch only for the stale tests.json stamp)"
+    "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with pytest-xdist --with psutil python factory/scripts/verify.py (1250 passed, 4 skipped in 1725.37s; Verification passed)",
+    "Previously failing broad cases (19 passed in 186.07s)",
+    "factory/tests/test_close_binds_to_the_diff.py::test_the_delegate_brief_carries_the_selected_current_findings (1 passed in 80.90s)",
+    "Declared grouped selectors (24 passed; corrected scope rerun 2 passed; migration/profile 16 passed; workflow/PR-link 10 passed; regrill 25 passed; focused review fixes 8 passed)",
+    "python3 factory/scripts/check_dual_runtime.py (clean)",
+    "python3 factory/scripts/check_encoding_hygiene.py (OK)",
+    "python3 factory/scripts/check_board_complete.py (OK)",
+    "git diff --check (clean)"
   ],
-  "commit": "9e15d440385c0c262e341ee397e214501ca2850b",
+  "commit": "483c3db3630a885fdcbcde6460f00c7a41eca917",
   "generated_by": "implementer",
   "manual_validation_steps": [],
   "non_blocking_findings": [],
-  "pass_fail_summary": "Supported current-head close proof passed: 1,242 passed and 4 skipped in the full factory suite; all 51 declared required-test commands passed; zero required-test id misses; review helper was not launched.",
-  "recorded_at": "2026-09-16T18:29:17+00:00",
+  "pass_fail_summary": "Final canonical verifier: 1250 passed, 4 skipped, 0 failed. Focused and static checks also passed.",
+  "recorded_at": "2026-09-16T21:48:06+00:00",
   "remaining_gaps": [
-    "Real native Claude and Codex approval interactions remain explicitly user-deferred for later inspection; this automated proof does not claim those interactions passed."
+    "A fresh real Claude ExitPlanMode event cannot be emitted from this Codex worker; no synthetic native-interaction evidence was created.",
+    "The stale reviewed-meaning boolean probe emits diagnostic console text; fail-closed behavior is correct and this is deferred diagnostic debt outside the active closeout batch."
   ],
   "residual_risks": [],
   "reviewed_scope": [
-    ".claude/CLAUDE.md",
-    ".claude/settings.json",
-    ".codex/agents/architect.toml",
-    ".codex/agents/backend.toml",
-    ".codex/agents/debugger.toml",
-    ".codex/agents/explorer.toml",
-    ".codex/agents/frontend.toml",
-    ".codex/agents/griller.toml",
-    ".codex/agents/lite.toml",
-    ".codex/agents/performance.toml",
-    ".codex/agents/planner.toml",
-    ".codex/agents/refactorer.toml",
-    ".codex/agents/security.toml",
-    ".codex/agents/tester.toml",
-    ".codex/config.toml",
-    ".codex/hooks.json",
-    ".envrc",
-    ".github/workflows/factory-scaffold.yml",
-    ".github/workflows/pr-link.yml",
-    ".github/workflows/roadmap-gate.yml",
-    "AGENTS.md",
-    "WORKFLOW.md",
-    "docs/FACTORY.md",
-    "docs/QUALITY.md",
-    "docs/ROLES.md",
-    "docs/architecture/dual-coordinator-parity.md",
     "docs/getting-started.md",
-    "docs/specs/accountable-engineering-loop.md",
-    "docs/specs/conflict-free-story-state.md",
-    "docs/specs/delegation-boundary.md",
-    "docs/specs/dual-coordinator-parity.md",
-    "docs/specs/plan-approval.md",
-    "factory/board/index.html",
-    "factory/prompts/decomposer.md",
     "factory/prompts/griller.md",
-    "factory/prompts/implementer.md",
-    "factory/prompts/planner.md",
-    "factory/prompts/reviewer.md",
-    "factory/schemas/delegation.json",
-    "factory/schemas/grill-round.json",
-    "factory/schemas/grill.json",
-    "factory/schemas/lean-workflow-migration.json",
-    "factory/schemas/plan-mode-marker.json",
-    "factory/scripts/check_dual_runtime.py",
-    "factory/scripts/check_encoding_hygiene.py",
-    "factory/scripts/check_task_proof.py",
     "factory/scripts/factory_lib.py",
-    "factory/scripts/forge.py",
     "factory/scripts/forge_cli/approval.py",
     "factory/scripts/forge_cli/board.py",
-    "factory/scripts/forge_cli/ceremony.py",
-    "factory/scripts/forge_cli/close.py",
-    "factory/scripts/forge_cli/codex_runtime.py",
     "factory/scripts/forge_cli/delegate.py",
-    "factory/scripts/forge_cli/doctor.py",
-    "factory/scripts/forge_cli/grill.py",
-    "factory/scripts/forge_cli/phase.py",
-    "factory/scripts/forge_cli/plans.py",
-    "factory/scripts/forge_cli/review.py",
-    "factory/scripts/forge_cli/review_brief.py",
-    "factory/scripts/forge_cli/review_groups.py",
     "factory/scripts/forge_cli/stages.py",
     "factory/scripts/forge_cli/tasks.py",
     "factory/scripts/forge_cli/upgrade.py",
     "factory/scripts/forge_cli/worker_admission.py",
-    "factory/scripts/grill_gates.py",
-    "factory/scripts/post_tool_use.py",
-    "factory/scripts/pr_ready.py",
-    "factory/scripts/pre_tool_use.py",
-    "factory/scripts/record_decomposition_from_json.py",
     "factory/scripts/record_grill_from_json.py",
-    "factory/scripts/record_review_from_json.py",
-    "factory/scripts/session_start.py",
-    "factory/skills/forge.md",
+    "factory/scripts/update_run.py",
     "factory/tests/test_approval_hooks.py",
-    "factory/tests/test_ask_gate.py",
-    "factory/tests/test_board_approval_gate.py",
     "factory/tests/test_close_binds_to_the_diff.py",
-    "factory/tests/test_closeout_mode_from_markers.py",
     "factory/tests/test_delegate_scope.py",
-    "factory/tests/test_gate_table.py",
-    "factory/tests/test_gate_table_e2e.py",
     "factory/tests/test_gates.py",
-    "factory/tests/test_grill_budget.py",
-    "factory/tests/test_grill_carries_answers.py",
-    "factory/tests/test_grill_round_cap.py",
     "factory/tests/test_lean_workflow.py",
-    "factory/tests/test_lifecycle_end_to_end.py",
     "factory/tests/test_native_launch.py",
-    "factory/tests/test_native_setup.py",
-    "factory/tests/test_one_grill.py",
-    "factory/tests/test_plan_against_reality.py",
-    "factory/tests/test_pr_link_workflow.py",
-    "factory/tests/test_proof_read_path.py",
-    "factory/tests/test_proof_reuse.py",
-    "factory/tests/test_regrill_scope.py",
-    "factory/tests/test_requirements_freshness.py",
-    "factory/tests/test_review_in_parallel_groups.py",
-    "factory/tests/test_review_lenses_in_parallel.py",
-    "factory/tests/test_review_settled_contracts.py",
     "factory/tests/test_review_task_delta.py",
-    "factory/tests/test_round_provenance.py",
-    "factory/tests/test_seal_measures.py",
-    "factory/tests/test_stop_less_often.py",
-    "factory/tests/test_upgrade_lean_workflow.py",
-    "factory/tests/test_worker_admission.py",
-    "harness.yaml"
+    "factory/tests/test_upgrade_lean_workflow.py"
   ],
   "status": "passed",
-  "summary": "LEAN-WORKFLOW at 9e15d440385c0c262e341ee397e214501ca2850b passed the supported close proof: the canonical verifier passed 1,242 tests with 4 skips, all 51 declared required-test commands passed with no unmatched selectors, and structural/scaffold checks were clean. Review was not launched because the older tests.json recorder stamp was stale; this record refreshes that proof without rerunning tests.",
+  "summary": "LEAN-WORKFLOW review fixes at product commit 483c3db passed the final canonical verifier with 1,250 tests passed and 4 skipped, the 19 previously failing broad cases, the corrected selected-review diagnostic fixture, all grouped review-fix selectors, and every structural/static gate. Formal task close and its independent combined review remain orchestrator-owned.",
   "tests_added_or_updated": [
     "factory/tests/test_approval_hooks.py",
-    "factory/tests/test_ask_gate.py",
-    "factory/tests/test_board_approval_gate.py",
     "factory/tests/test_close_binds_to_the_diff.py",
-    "factory/tests/test_closeout_mode_from_markers.py",
     "factory/tests/test_delegate_scope.py",
-    "factory/tests/test_gate_table.py",
-    "factory/tests/test_gate_table_e2e.py",
     "factory/tests/test_gates.py",
-    "factory/tests/test_grill_budget.py",
-    "factory/tests/test_grill_carries_answers.py",
-    "factory/tests/test_grill_round_cap.py",
     "factory/tests/test_lean_workflow.py",
-    "factory/tests/test_lifecycle_end_to_end.py",
     "factory/tests/test_native_launch.py",
-    "factory/tests/test_native_setup.py",
-    "factory/tests/test_one_grill.py",
-    "factory/tests/test_plan_against_reality.py",
-    "factory/tests/test_pr_link_workflow.py",
-    "factory/tests/test_proof_read_path.py",
-    "factory/tests/test_proof_reuse.py",
-    "factory/tests/test_regrill_scope.py",
-    "factory/tests/test_requirements_freshness.py",
-    "factory/tests/test_review_in_parallel_groups.py",
-    "factory/tests/test_review_lenses_in_parallel.py",
-    "factory/tests/test_review_settled_contracts.py",
     "factory/tests/test_review_task_delta.py",
-    "factory/tests/test_round_provenance.py",
-    "factory/tests/test_seal_measures.py",
-    "factory/tests/test_stop_less_often.py",
-    "factory/tests/test_upgrade_lean_workflow.py",
-    "factory/tests/test_worker_admission.py"
+    "factory/tests/test_upgrade_lean_workflow.py"
   ]
 }
 ```

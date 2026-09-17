@@ -1,0 +1,16 @@
+{
+  "event": "done",
+  "id": "Q-0183-ce5a",
+  "profile": "degraded",
+  "kind": "degraded",
+  "reason": "repair delegate-preflight recursion introduced by interrupted Codex run so normal delegation can resume",
+  "started_at": "2026-09-16T23:18:10+00:00",
+  "completed_at": "2026-09-16T23:23:15+00:00",
+  "files": [
+    "factory/scripts/factory_lib.py",
+    "factory/scripts/forge_cli/stages.py",
+    "factory/scripts/forge_cli/review_brief.py"
+  ],
+  "task_id": "LEAN-WORKFLOW",
+  "story": "FORGE-COORD-1"
+}

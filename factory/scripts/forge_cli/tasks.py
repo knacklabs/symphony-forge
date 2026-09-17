@@ -12,7 +12,7 @@ import subprocess
 from pathlib import Path
 
 from factory_lib import (
-    _committed_task_marker,
+    _committed_task_marker, _windows_reparse_point,
     clean_git_env, default_trunk_branch, dump_json, evidence_path,
     git_control_dir, load_json, now_iso,
     repo_root, require_approved_plan_digest,
@@ -54,13 +54,15 @@ def _contained_regular_bytes(base: Path, source: Path, label: str) -> bytes:
             info = current.lstat()
         except OSError as exc:
             fail(f"task start refused: {label} ancestor is unreadable: {exc}")
-        if stat.S_ISLNK(info.st_mode) or not stat.S_ISDIR(info.st_mode):
+        if (stat.S_ISLNK(info.st_mode) or not stat.S_ISDIR(info.st_mode)
+                or _windows_reparse_point(current)):
             fail(f"task start refused: {label} ancestor is linked or not a directory")
     try:
         leaf = source.lstat()
     except OSError as exc:
         fail(f"task start refused: {label} is unreadable: {exc}")
-    if stat.S_ISLNK(leaf.st_mode) or not stat.S_ISREG(leaf.st_mode) or leaf.st_nlink != 1:
+    if (stat.S_ISLNK(leaf.st_mode) or not stat.S_ISREG(leaf.st_mode)
+            or leaf.st_nlink != 1 or _windows_reparse_point(source)):
         fail(f"task start refused: {label} is linked or not a regular file")
     flags = os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0)
     try:
@@ -70,7 +72,9 @@ def _contained_regular_bytes(base: Path, source: Path, label: str) -> bytes:
     try:
         before = os.fstat(descriptor)
         if (stat.S_ISLNK(before.st_mode) or not stat.S_ISREG(before.st_mode)
-                or before.st_nlink != 1):
+                or before.st_nlink != 1
+                or getattr(before, "st_file_attributes", 0)
+                & stat.FILE_ATTRIBUTE_REPARSE_POINT):
             fail(f"task start refused: {label} is linked or not a regular file")
         chunks = []
         while chunk := os.read(descriptor, 65536):
@@ -81,7 +85,8 @@ def _contained_regular_bytes(base: Path, source: Path, label: str) -> bytes:
             fail(f"task start refused: {label} changed during hydration")
         leaf = source.lstat()
         if ((leaf.st_dev, leaf.st_ino) != (after.st_dev, after.st_ino)
-                or stat.S_ISLNK(leaf.st_mode) or leaf.st_nlink != 1):
+                or stat.S_ISLNK(leaf.st_mode) or leaf.st_nlink != 1
+                or _windows_reparse_point(source)):
             fail(f"task start refused: {label} identity changed during hydration")
         return b"".join(chunks)
     finally:

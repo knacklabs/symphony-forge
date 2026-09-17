@@ -12,7 +12,7 @@ from factory_lib import (
     _committed_task_marker, _task_plan_approval_matches_digest,
     _plan_body_digest_bytes, _proof_commit_problems,
     _read_git_bytes, _read_git_json, _stage_baseline_for, branch_diff_digest,
-    active_task_id, head_sha, load_json, now_iso,
+    active_task_id, head_sha, load_json, now_iso, raw_run_state,
     plan_digest_without_assumptions, proof_path,
     effective_review_base, product_delta_digest,
     protected_decomposition_state_path, repo_root, require_task_grill,
@@ -86,7 +86,7 @@ def _lessons_section(base: Path, task: dict) -> list[str]:
 
 def _approved_task_inputs(base: Path, task: dict) -> dict:
     """Load and validate the exact inputs every task review must receive."""
-    state = load_json(run_state_path(base), default={})
+    state = raw_run_state(base)
     story = state.get("issue_key") or state.get("story")
     task_id = task.get("id")
     if not isinstance(story, str) or not story or not isinstance(task_id, str) or not task_id:
@@ -319,7 +319,7 @@ def render_approved_inputs_section(inputs: dict) -> list[str]:
 
 def _sealed_proof_section(base: Path, task: dict) -> list[str]:
     """Render bounded identity for an already-sealed task in an --all brief."""
-    state = load_json(run_state_path(base), default={})
+    state = raw_run_state(base)
     story = state.get("issue_key") or state.get("story")
     task_id = task.get("id")
     marker = load_json(
@@ -429,7 +429,7 @@ def _settled_section(base: Path, task: dict) -> list[str]:
     fix broke the story's pinned scenario). Those are proposals to change a
     decision, not findings against the diff; the brief says so."""
     from .stages import load_stages
-    state = load_json(run_state_path(base), default={})
+    state = raw_run_state(base)
     issue = state.get("issue_key") or state.get("story") or ""
     lines: list[str] = []
     plan_files = sorted((base / "plans" / "active").glob(f"{issue}-*.md")) if issue else []
@@ -468,6 +468,59 @@ def _settled_section(base: Path, task: dict) -> list[str]:
             ""] + lines
 
 
+def render_review_brief(
+    base: Path, selected: list[dict], title: str, *, all_tasks: bool,
+    reviewed_task: str = "",
+) -> tuple[bytes, dict | None, str]:
+    """Purely render the authoritative review dataset and its active inputs."""
+    lines = [title, "", VERDICT_INSTRUCTION, ""]
+    from .stages import load_stages
+    statuses = {
+        row.get("id"): row.get("status")
+        for row in load_stages(base).get("stages", [])
+        if isinstance(row, dict)
+    }
+    reviewed_task = reviewed_task or active_task_id(base)
+    if not reviewed_task:
+        reviewed_task = next(
+            (task_id for task_id, status in statuses.items()
+             if status == "active"),
+            "",
+        )
+    reviewed_inputs = None
+    for task in selected:
+        # The explicit review target receives complete approved inputs even when
+        # its stage is done. Other done tasks retain bounded identity only when
+        # they have actually been sealed; future tasks are contract context.
+        status = statuses.get(task.get("id"))
+        full_inputs = not all_tasks or task.get("id") == reviewed_task
+        approved_inputs = None
+        if full_inputs:
+            approved_inputs = _approved_task_inputs(base, task)
+            if task.get("id") == reviewed_task:
+                reviewed_inputs = approved_inputs
+        lines.extend(_task_section(
+            task, base, full_inputs=full_inputs,
+            sealed_context=(all_tasks and status == "done"
+                            and task.get("id") != reviewed_task),
+            approved_inputs=approved_inputs,
+        ))
+    return (("\n".join(lines).rstrip() + "\n").encode(), reviewed_inputs,
+            reviewed_task)
+
+
+def render_review_dataset(base: Path, reviewed_task: str) -> bytes:
+    """Render the same branch-wide bytes used by review launch and close reuse."""
+    decomposition = load_json(protected_decomposition_state_path(base), default={})
+    tasks = [task for task in decomposition.get("tasks") or []
+             if isinstance(task, dict)]
+    body, _inputs, _reviewed_task = render_review_brief(
+        base, tasks, "# Branch-wide plan-contract review brief",
+        all_tasks=True, reviewed_task=reviewed_task,
+    )
+    return body
+
+
 def cmd_review_brief(args: argparse.Namespace) -> None:
     base = Path(args.repo).resolve() if args.repo else repo_root()
     decomposition = load_json(protected_decomposition_state_path(base), default={})
@@ -490,44 +543,16 @@ def cmd_review_brief(args: argparse.Namespace) -> None:
         filename = f"{args.id}.md"
         title = f"# Plan-contract review brief — {args.id}"
 
-    lines = [title, "", VERDICT_INSTRUCTION, ""]
-    from .stages import load_stages
-    statuses = {
-        row.get("id"): row.get("status")
-        for row in load_stages(base).get("stages", [])
-        if isinstance(row, dict)
-    }
     reviewed_task = getattr(args, "review_task", "") or active_task_id(base)
-    if not reviewed_task:
-        reviewed_task = next(
-            (task_id for task_id, status in statuses.items()
-             if status == "active"),
-            "",
-        )
-    reviewed_inputs = None
-    for task in selected:
-        # The explicit review target receives complete approved inputs even when
-        # its stage is done. Other done tasks retain bounded identity only when
-        # they have actually been sealed; future tasks are contract context.
-        status = statuses.get(task.get("id"))
-        full_inputs = not args.all or task.get("id") == reviewed_task
-        approved_inputs = None
-        if full_inputs:
-            approved_inputs = _approved_task_inputs(base, task)
-            if task.get("id") == reviewed_task:
-                reviewed_inputs = approved_inputs
-        lines.extend(_task_section(
-            task, base, full_inputs=full_inputs,
-            sealed_context=(args.all and status == "done"
-                            and task.get("id") != reviewed_task),
-            approved_inputs=approved_inputs,
-        ))
+    body, reviewed_inputs, reviewed_task = render_review_brief(
+        base, selected, title, all_tasks=args.all,
+        reviewed_task=reviewed_task,
+    )
     relative = f"review-briefs/{filename}"
-    body = ("\n".join(lines).rstrip() + "\n").encode()
     if not safe_factory_write_bytes(base, relative, body):
         raise SystemExit(f"Could not safely write .factory/{relative}")
     if args.all:
-        state = load_json(run_state_path(base), default={})
+        state = raw_run_state(base)
         story = state.get("issue_key")
         if not isinstance(story, str) or not story:
             raise SystemExit("Cannot mint a branch review run without an active story.")

@@ -340,19 +340,37 @@ def _measurement_receipt(
     """Build a continuity receipt after every original binding re-validates."""
     task_id = str(target.get("id") or "")
     task_plan_sha256 = task_plan_binding_digest(root, task_id, grill)
-    story_plan_sha256 = story_plan_digest(root)
-    semantic = grounding_digest(root, target, in_stage=True)
+    current_story_plan_sha256 = story_plan_digest(root)
+    receipts = stage.get("measurement_continuity")
+    story_plan_sha256 = current_story_plan_sha256
+    if isinstance(receipts, list) and receipts:
+        predecessor = receipts[0].get("story_plan_sha256")
+        permitted = {
+            current_story_plan_sha256,
+            *approved_story_plan_predecessors(root, current_story_plan_sha256),
+        }
+        if predecessor not in permitted:
+            raise SystemExit(
+                f"decomposition task {task_id}: measurement continuity is not "
+                "bound to the current or an approved predecessor story plan; "
+                "no decomposition state was written"
+            )
+        story_plan_sha256 = predecessor
+    semantic = grounding_digest(
+        root, target, in_stage=True, _plan_sha256=story_plan_sha256,
+    )
     if (
         not task_plan_sha256
         or not story_plan_sha256
-        or semantic != grounding_digest(root, source, in_stage=True)
+        or semantic != grounding_digest(
+            root, source, in_stage=True, _plan_sha256=story_plan_sha256,
+        )
     ):
         raise SystemExit(
             f"decomposition task {task_id}: cannot preserve the task grill across "
             "this measurement amendment because its approved story or task plan "
             "binding changed; no decomposition state was written"
         )
-    receipts = stage.get("measurement_continuity")
     if isinstance(receipts, list) and receipts:
         launch_id = receipts[0].get("launch_id")
         origin_measurement = receipts[0].get("from_measurement")

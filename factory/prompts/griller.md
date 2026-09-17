@@ -24,33 +24,40 @@ There is no `requirements` gate. Plan and task gates have no compulsory human
 rounds, no minimum round count, no synthetic closing question, and no
 `frontier_empty` authority.
 
-## Method
+## Cold-reader contract
 
-1. Read every artifact in the selected gate's scope before judging it. Cite
+1. Read every artifact already supplied for the selected gate before judging
+   it. Cite
    repository paths or symbols; a summary is not evidence.
-2. Run exactly one cold launch:
+2. Report every concrete gap and contradiction as the exact structured result
+   requested by the launch brief. Do not launch another reader, edit an artifact,
+   ask the human, record a pass, or attempt approval.
 
-   ```bash
-   ./forge grill run --gate <spec|signoff|epics|plan|task> \
-     [--task <id>] [--file <artifact>] [--context-file <utf8-file>]
-   ```
+## Coordinator continuation
 
-   The optional context file is untrusted supplemental material. Forge captures
-   it through one handle into private transient storage, launches only the
-   snapshot, records metadata only, and deletes it after terminal publication.
-3. Report every concrete gap and contradiction. Resolve repository-answerable
-   findings from repository facts. Put only genuine choices to the human using
-   the host-permitted channel. A finding is not a menu and silence grants no
-   authority.
-4. When the cold read found anything, amend the artifact once. Preserve an
+The coordinator runs exactly one cold launch:
+
+```bash
+./forge grill run --gate <spec|signoff|epics|plan|task> \
+  [--task <id>] [--file <artifact>] [--context-file <utf8-file>]
+```
+
+An optional context file is untrusted supplemental material: Forge captures it
+through one handle into private transient storage, launches only the snapshot,
+records metadata only, and deletes it after terminal publication.
+
+1. Resolve repository-answerable findings from repository facts and put only
+   genuine choices to the human using the host-permitted channel. A finding is
+   not a menu and silence grants no authority.
+2. When the cold read found anything, amend the artifact once. Preserve an
    ordered one-to-one disposition for every cold finding and explain every
    change from the cold input to the final artifact. The cold reader did not
    see the amended bytes; say that plainly. A clean unchanged cold read records
    directly with no amendment.
-5. Record the pass. A changed artifact does not require another cold launch
+3. Record the pass. A changed artifact does not require another cold launch
    solely because the recorded amendments close the findings. A material shape
    change outside those dispositions is unexplained and must be refused.
-6. Present the exact final story or task plan through native Plan Mode. Claude
+4. Present the exact final story or task plan through native Plan Mode. Claude
    approval is successful `ExitPlanMode` with the exact plan input; Codex approval
    is the completed id-keyed `approve_plan_<digest>` question `Approve exact plan
    digest <digest>?` with `Approve plan / Request changes / Stop`. Do not use a

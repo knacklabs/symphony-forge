@@ -654,3 +654,26 @@ def test_native_result_scanner_uses_captured_bytes_after_path_replacement(tmp_pa
     result = scan_native_result(path, data=data)
     assert result.session_id == "captured" and result.message == "captured finding"
     assert not result.error
+
+
+def test_live_findings_refuse_fixed_proof_only_for_the_active_story(
+        repo: Path, monkeypatch: pytest.MonkeyPatch):
+    from forge_cli import findings
+
+    lib = load_factory_lib(repo)
+    lib.dump_json(lib.run_state_path(repo), {"issue_key": "ACTIVE", "story": "ACTIVE"})
+    historical = lib.story_dir(repo, "HIST") / "reviews" / "quality.json"
+    historical.parent.mkdir(parents=True, exist_ok=True)
+    historical.write_text(json.dumps({
+        "blocking_findings": ["historical display finding"],
+    }), encoding="utf-8")
+    monkeypatch.setattr(
+        findings, "load_items", lambda _base: [{"key": "HIST"}, {"key": "ACTIVE"}],
+    )
+    assert any(row["task"] == "HIST" for row in findings.collect(repo))
+
+    active = lib.story_dir(repo, "ACTIVE") / "reviews" / "quality.json"
+    active.parent.mkdir(parents=True, exist_ok=True)
+    active.write_text(json.dumps({"blocking_findings": []}), encoding="utf-8")
+    with pytest.raises(SystemExit, match="run forge upgrade"):
+        findings.collect(repo)

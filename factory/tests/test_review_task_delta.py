@@ -73,7 +73,8 @@ def test_selected_review_reviewed_meaning_includes_ci_generated_outputs_and_revi
             (repo / "ci/generated.json").read_bytes()).hexdigest(),
     }
     assert set(meaning["inputs"]["review_instructions"]) == {
-        "factory/prompts/reviewer.md", "factory/scripts/forge_cli/review.py",
+        "factory/prompts/reviewer.md", "factory/scripts/record_review_from_json.py",
+        "factory/scripts/forge_cli/review.py",
         "factory/scripts/forge_cli/review_brief.py",
         "factory/scripts/forge_cli/review_groups.py",
         "factory/schemas/review.json",
@@ -104,6 +105,21 @@ def test_generated_review_inputs_are_included_in_reviewed_meaning(repo, monkeypa
     (repo / "ci/generated.json").write_text('{"contract": "v2"}\n', encoding="utf-8")
     assert stage_helpers.reviewed_meaning_identity(
         repo, stage, task, helper)["semantic_identity"] != before
+
+
+def test_authoritative_rendered_review_dataset_is_bound_into_meaning(
+        repo, monkeypatch):
+    _lib, task, stage, helper = _meaning_fixture(repo, monkeypatch)
+    dataset = repo / ".factory/review-briefs/all.md"
+    dataset.parent.mkdir(parents=True, exist_ok=True)
+    dataset.write_text("# authoritative dataset\n", encoding="utf-8")
+    before = stage_helpers.reviewed_meaning_identity(
+        repo, stage, task, helper,
+    )["semantic_identity"]
+    dataset.write_text("# substantively changed dataset\n", encoding="utf-8")
+    assert stage_helpers.reviewed_meaning_identity(
+        repo, stage, task, helper,
+    )["semantic_identity"] != before
 
 
 def test_missing_generated_review_input_declaration_changes_reviewed_meaning(

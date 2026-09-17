@@ -35,6 +35,7 @@ from factory_lib import (
 from .common import fail
 from .review_brief import (
     LEFTOVER_INSTRUCTION, VERDICT_INSTRUCTION, _task_section, cmd_review_brief,
+    render_review_dataset,
 )
 # Reuse the task module's git helpers rather than adding another lossless
 # capture site: theirs is already reviewed and content-pinned for path output.
@@ -2022,13 +2023,18 @@ def review_task(base: Path, task_id: str, *, lens: str | None = None,
 
     from .stages import reviewed_meaning_identity
     helper_before, helper_file_before = _helper_identity(skill)
-    meaning = reviewed_meaning_identity(base, stage, task, helper_before)
+    prospective_dataset = render_review_dataset(base, args.id)
+    meaning = reviewed_meaning_identity(
+        base, stage, task, helper_before,
+        review_dataset=prospective_dataset,
+    )
     # Mint the branch review run the recorder binds every artifact to.
     cmd_review_brief(argparse.Namespace(
         id=None, all=True, repo=str(base), review_task=args.id,
     ))
     dataset_body = (base / REVIEW_DATASET_REL).read_bytes()
-    if reviewed_meaning_identity(base, stage, task, helper_before) != meaning:
+    if dataset_body != prospective_dataset \
+            or reviewed_meaning_identity(base, stage, task, helper_before) != meaning:
         fail("reviewed meaning changed while rendering the reviewer dataset; "
              "nothing published")
     token = load_json(base / ".factory" / "stories" / story / "review-run.json", default={})

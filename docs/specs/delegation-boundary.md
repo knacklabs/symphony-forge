@@ -117,8 +117,9 @@ expected to attest them, and `--fix` installs what is missing.
   missing declared test, or a failing per-task verify command.
 - A stage cannot close with different staged and worktree content for the same
   path, or after proof code changes product or protected authority state.
-- Task-level `--parallel` is refused; task stages run in order inside one story
-  worktree.
+- Task-level `--parallel` is refused. Dependency-ready sibling tasks may run
+  concurrently only in isolated task worktrees with disjoint measured scopes;
+  overlapping scopes remain serialized.
 - A decomposition recording prose where a command belongs is refused.
 - A stage without a successful fresh write launch through `forge delegate`
   cannot close; direct literal companion Bash calls are routed to that command.

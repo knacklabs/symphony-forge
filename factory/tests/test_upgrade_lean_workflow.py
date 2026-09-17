@@ -502,6 +502,37 @@ def test_completed_lean_manifest_allows_later_runtime_versions(repo: Path):
     assert upgrade.preflight_lean_migration(repo) is None
 
 
+def test_completed_lean_manifest_allows_mutable_preserved_records_and_profiles(
+        repo: Path):
+    grill = repo / ".factory/stories/S1/grills/plan.json"
+    grill.parent.mkdir(parents=True, exist_ok=True)
+    grill.write_text(json.dumps({"cold_input_sha256": "a" * 64}) + "\n")
+    profile = repo / ".codex/agents/client.toml"
+    profile.parent.mkdir(parents=True, exist_ok=True)
+    profile.write_text('name = "client"\n', encoding="utf-8")
+    legacy = _legacy_round(repo)
+    migration = upgrade.preflight_lean_migration(repo)
+    assert migration is not None
+    upgrade.apply_lean_migration(repo, migration)
+    assert not legacy.exists()
+    grill.write_text(json.dumps({"cold_input_sha256": "b" * 64}) + "\n")
+    profile.write_text('name = "client-updated"\n', encoding="utf-8")
+    assert upgrade.preflight_lean_migration(repo) is None
+
+
+def test_lean_migration_refuses_hard_linked_completion_manifest(
+        repo: Path, tmp_path: Path):
+    outside = tmp_path / "outside-manifest.json"
+    outside.write_text("{}\n", encoding="utf-8")
+    manifest = repo / ".factory/migrations/lean-workflow-v2.json"
+    manifest.parent.mkdir(parents=True, exist_ok=True)
+    os.link(outside, manifest)
+    before = outside.read_bytes()
+    with pytest.raises(SystemExit):
+        upgrade.preflight_lean_migration(repo)
+    assert outside.read_bytes() == before
+
+
 def test_completed_lean_manifest_tracks_intentionally_preserved_fixed_proof(
         repo: Path):
     fixed = repo / ".factory/stories/S1/tasks/T1/reviews/quality.json"

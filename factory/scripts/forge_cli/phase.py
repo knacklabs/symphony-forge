@@ -8,7 +8,7 @@ import subprocess
 from pathlib import Path
 
 from factory_lib import (
-    client_signoff, evidence_path, load_json, repo_root,
+    approved_plan_digest, client_signoff, evidence_path, load_json, repo_root,
     plan_digest_without_assumptions, require_all_stages_done, run_state_path,
     task_frontier_state,
 )
@@ -20,7 +20,7 @@ from .signal import open_signals
 
 
 def _approved_plan_changed(base: Path, state: dict) -> bool:
-    """Whether an approved story plan now has different semantic bytes."""
+    """Whether an approved story plan lacks exact current native authority."""
     if state.get("plan_status") != "approved":
         return False
     approved = state.get("approved_plan_sha256")
@@ -28,9 +28,11 @@ def _approved_plan_changed(base: Path, state: dict) -> bool:
     if (not isinstance(approved, str)
             or re.fullmatch(r"[0-9a-f]{64}", approved) is None
             or not isinstance(relative, str)):
-        return False
+        return True
     plan = base / relative
-    return plan.is_file() and plan_digest_without_assumptions(plan) != approved
+    if not plan.is_file() or plan_digest_without_assumptions(plan) != approved:
+        return True
+    return approved_plan_digest(base, state, plan) != approved
 
 
 def _auto_heal_roadmap_after_merge(base: Path) -> None:

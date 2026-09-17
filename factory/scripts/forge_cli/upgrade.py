@@ -119,6 +119,20 @@ def _require_unlinked_path(target: Path, path: Path) -> None:
             fail(f"Lean migration refuses linked or reparse path {current}")
 
 
+def _require_single_link_manifest(target: Path, manifest: Path) -> None:
+    """Require a contained ordinary manifest before every in-place write."""
+    _require_unlinked_path(target, manifest)
+    if not manifest.exists():
+        return
+    try:
+        info = manifest.lstat()
+    except OSError as exc:
+        fail(f"Lean migration cannot inspect manifest: {exc}")
+    if (not stat.S_ISREG(info.st_mode) or info.st_nlink != 1
+            or _linked_or_reparse(info)):
+        fail("Lean migration manifest is linked or not a regular file")
+
+
 def _lean_family(relative: str, data: bytes | None = None) -> str:
     """Primary classifier for formats removed by Lean."""
     if relative == ".codex/config.toml" and data and b"codex_hooks = true" in data:
@@ -1265,8 +1279,7 @@ def preflight_lean_migration(target: Path) -> dict | None:
             fail(f"Lean migration found malformed {entry['family']} input "
                  f"{entry['path']}: expected a JSON object")
     if manifest.exists() or manifest.is_symlink():
-        if manifest.is_symlink() or not manifest.is_file():
-            fail("Lean migration manifest is linked or not a regular file")
+        _require_single_link_manifest(target, manifest)
         saved = load_json(manifest, default={})
         if saved.get("version") != LEAN_MIGRATION_VERSION:
             fail("Lean migration found an unequal partial retry; restore or complete the original checkout")
@@ -1284,17 +1297,22 @@ def preflight_lean_migration(target: Path) -> dict | None:
             output_paths.update(
                 row["path"] for row in saved.get("converted_outputs") or []
             )
-            current_preserved = [
+            current_fixed = [
                 entry for entry in primary
-                if (entry.get("preserve")
-                    or entry.get("classification") == "eligible")
+                if entry.get("family") == "fixed-review-lens"
                 and entry["path"] not in output_paths
             ]
-            saved_preserved = [
+            saved_fixed = [
                 entry for entry in saved.get("preserved_entries") or []
-                if entry.get("path") not in output_paths
+                if entry.get("family") == "fixed-review-lens"
+                and entry.get("path") not in output_paths
             ]
-            if current_preserved != saved_preserved:
+            newly_retired = [
+                entry for entry in primary
+                if entry.get("classification") == "eligible"
+                and entry["path"] not in output_paths
+            ]
+            if current_fixed != saved_fixed or newly_retired:
                 fail("Lean migration found an unequal partial retry; restore or complete the original checkout")
             return None
         saved_identity = [
@@ -1621,6 +1639,7 @@ def apply_lean_migration(target: Path, migration: dict | None) -> None:
 
     destination = target / ".factory" / "migrations" / f"{LEAN_MIGRATION_VERSION}.json"
     if destination.exists():
+        _require_single_link_manifest(target, destination)
         existing = load_json(destination, default={})
         comparable = {key: value for key, value in existing.items()
                       if key not in {"recorded_at", "completed_at"}}
@@ -1664,6 +1683,7 @@ def apply_lean_migration(target: Path, migration: dict | None) -> None:
     if not completed.get("completed_at"):
         completed["completed_at"] = now_iso()
         validate_payload(target, "lean-workflow-migration", completed)
+        _require_single_link_manifest(target, destination)
         dump_json(destination, completed)
         if load_json(destination, default={}) != completed:
             fail("Lean migration completion readback differs")

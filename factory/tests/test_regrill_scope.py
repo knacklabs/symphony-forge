@@ -636,6 +636,21 @@ def test_story_plan_reapproval_rebinds_an_active_task_without_restarting_it(
         grill_path.read_text()
     ))
 
+    widened_again = {**widened, "write_scope": ["src/", "billing/", "ops/"]}
+    code, out = run(
+        repo, "record_decomposition_from_json.py",
+        stdin=json.dumps({**DECOMP, "tasks": [widened_again]}),
+    )
+    assert code == 0, out
+    receipts = lib.task_stage_record(repo, "T1")["measurement_continuity"]
+    assert len(receipts) == 2
+    assert {row["story_plan_sha256"] for row in receipts} == {
+        original_story_digest,
+    }
+    assert lib.task_grill_grounding_matches(repo, widened_again, json.loads(
+        grill_path.read_text()
+    ))
+
     code, out = run(
         repo, "forge.py", "delegate", "T1",
         env=_fake_companion_env(tmp_path),

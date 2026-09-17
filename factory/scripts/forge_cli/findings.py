@@ -86,6 +86,15 @@ def collect(base: Path) -> list[dict]:
                             and isinstance(data, dict):
                         rows += _finding_rows(f"{task}/{task_id}", aspect, data)
             continue
+        fixed = [
+            evidence_path(base, task, f"reviews/{aspect}.json")
+            for aspect in ("quality", "performance", "security")
+        ]
+        if task == active_issue and any(path.is_file() for path in fixed):
+            raise SystemExit(
+                f"story {task} has retired fixed review proof; run forge upgrade "
+                "before reading live findings"
+            )
         for aspect in ("quality", "performance", "security"):
             review = evidence_path(base, task, f"reviews/{aspect}.json")
             if not review.is_file():

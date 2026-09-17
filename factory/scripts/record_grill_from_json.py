@@ -39,9 +39,8 @@ def _non_empty_string(value: object) -> bool:
     return isinstance(value, str) and bool(value.strip())
 
 
-def _cold_launch_result(
-    root: Path, gate: str, task_id: str,
-) -> tuple[str, dict, str | None]:
+def _cold_launch_terminal(root: Path, gate: str, task_id: str) -> tuple[dict, list[str]]:
+    """Select one launch and validate its immutable lifecycle and argv."""
     from forge_cli.delegate import argv_digest, load_delegations
     label = f"grill-{gate}" + (f"-{task_id}" if task_id else "")
     story = load_json(run_state_path(root), default={}).get("issue_key", "")
@@ -91,6 +90,13 @@ def _cold_launch_result(
             or any(not isinstance(token, str) for token in argv)
             or terminal.get("argv_sha256") != argv_digest(argv)):
         raise SystemExit(f"{gate} cold-read launch argv identity is invalid")
+    return terminal, argv
+
+
+def _cold_launch_brief(
+    root: Path, gate: str, task_id: str, terminal: dict,
+) -> tuple[Path, bytes, str]:
+    """Validate the exact brief bytes and optional context identity."""
     brief = root / ".factory" / (
         f"grill-brief-{gate}" + (f"-{task_id}" if task_id else "") + ".md"
     )
@@ -120,6 +126,11 @@ def _cold_launch_result(
         if len(context_opaque) == 64 and not re.fullmatch(
                 r"[0-9a-f]{64}", str(terminal.get("prompt_sha256") or "")):
             raise SystemExit(f"{gate} cold-read prompt identity is invalid")
+    return brief, brief_bytes, context_opaque
+
+
+def _cold_result_bytes(terminal: dict, gate: str) -> tuple[Path, bytes]:
+    """Read the authenticated result once without following links."""
     output_text = terminal.get("output_path")
     if not _non_empty_string(output_text):
         raise SystemExit(f"{gate} cold-read launch has no durable result identity")
@@ -141,6 +152,14 @@ def _cold_launch_result(
     if (not result or terminal.get("output_sha256")
             != hashlib.sha256(result).hexdigest()):
         raise SystemExit(f"{gate} cold-read result does not match its terminal output hash")
+    return output, result
+
+
+def _cold_finding_text(
+    root: Path, gate: str, terminal: dict, argv: list[str], brief: Path,
+    context_opaque: str, output: Path, result: bytes,
+) -> str:
+    """Validate native or companion transport and return exact finding text."""
     if terminal.get("transport") == "native":
         from forge_cli.codex_runtime import native_argv_valid, scan_native_result
         native_result = scan_native_result(output, data=result)
@@ -150,7 +169,7 @@ def _cold_launch_result(
                 or not native_result.message
                 or not native_argv_valid(terminal, root, [])):
             raise SystemExit(f"{gate} native cold-read has no session identity")
-        finding_text = native_result.message
+        return native_result.message
     else:
         companion = terminal.get("companion_path")
         base_argv = [
@@ -184,7 +203,11 @@ def _cold_launch_result(
                 or not _non_empty_string(wrapper.get("threadId"))
                 or not _non_empty_string(wrapper.get("rawOutput"))):
             raise SystemExit(f"{gate} cold-read result has invalid companion shape")
-        finding_text = wrapper["rawOutput"]
+        return wrapper["rawOutput"]
+
+
+def _cold_findings(gate: str, finding_text: str) -> dict:
+    """Validate the cold reader's intentionally small result schema."""
     try:
         findings = json.loads(finding_text)
     except json.JSONDecodeError:
@@ -196,6 +219,21 @@ def _cold_launch_result(
                           for item in findings[field])
                    for field in ("gaps", "contradictions"))):
         raise SystemExit(f"{gate} cold-read findings have invalid shape")
+    return findings
+
+
+def _cold_launch_result(
+    root: Path, gate: str, task_id: str,
+) -> tuple[str, dict, str | None]:
+    terminal, argv = _cold_launch_terminal(root, gate, task_id)
+    brief, brief_bytes, context_opaque = _cold_launch_brief(
+        root, gate, task_id, terminal,
+    )
+    output, result = _cold_result_bytes(terminal, gate)
+    finding_text = _cold_finding_text(
+        root, gate, terminal, argv, brief, context_opaque, output, result,
+    )
+    findings = _cold_findings(gate, finding_text)
     digest = terminal.get("task_sha256")
     if not isinstance(digest, str) or not re.fullmatch(r"[0-9a-f]{64}", digest):
         raise SystemExit(f"{gate} cold-read launch has no exact input digest")

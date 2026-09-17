@@ -195,6 +195,18 @@ def eligible_candidates(base: Path) -> list[ApprovalCandidate]:
             if candidate is not None]
 
 
+def _require_current_candidate(base: Path, candidate: ApprovalCandidate) -> None:
+    """Re-select the exact frontier authority immediately before publication."""
+    current = eligible_candidates(base)
+    if current != [candidate]:
+        raise ApprovalRefused(
+            "native approval candidate changed before publication"
+        )
+    _require_safe_plan(base, candidate.path)
+    if plan_digest_without_assumptions(candidate.path) != candidate.digest:
+        raise ApprovalRefused("native approval candidate digest changed before publication")
+
+
 def _event_identity(payload: dict[str, Any]) -> tuple[str, str]:
     session = _text(payload.get("session_id")) or _text(payload.get("conversation_id"))
     event = (_text(payload.get("event_id")) or _text(payload.get("tool_use_id"))
@@ -399,6 +411,7 @@ def record_native_approval(
             _require_safe_destination(
                 base, authority_path, required=authority_path.exists())
         _require_safe_destination(base, replay_path, required=False)
+        _require_current_candidate(base, candidate)
         replay_dir.mkdir(parents=True, exist_ok=True)
         _require_safe_destination(base, replay_path, required=False)
 

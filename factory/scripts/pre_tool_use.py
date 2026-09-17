@@ -1020,7 +1020,13 @@ if tool_name in EDIT_TOOLS and unmerged:
             deny("Conflicted files must be resolved with git-native recovery, not content hand-writes.")
 
 try:
-    run_state = load_json(run_state_path(root), default={})
+    state_path = run_state_path(root)
+    run_state = (
+        json.loads(state_path.read_text(encoding="utf-8"))
+        if state_path.is_file() else {}
+    )
+    if not isinstance(run_state, dict):
+        raise TypeError("run state must be a JSON object")
 except (json.JSONDecodeError, OSError, TypeError, ValueError) as exc:
     denylist_fallback(payload, type(exc).__name__)
 

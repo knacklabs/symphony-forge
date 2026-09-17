@@ -132,9 +132,7 @@ def evidence_path(
 
 
 def _active_story_key(root: Path) -> str:
-    state = load_json(run_state_path(root), default={})
-    key = state.get("issue_key") or state.get("story")
-    return key if isinstance(key, str) else ""
+    return active_story_key(root)
 
 
 _RUN_STATE_ROOTS: dict[Path, Path] = {}
@@ -778,7 +776,7 @@ def active_task_id(root: Path) -> str:
     story-scoped evidence, which is what makes the change backward compatible
     rather than a flag day.
     """
-    pointer = load_json(run_state_path(root), default={})
+    pointer = raw_run_state(root)
     task_id = pointer.get("task_id") if isinstance(pointer, dict) else ""
     return task_id if isinstance(task_id, str) else ""
 
@@ -2731,9 +2729,16 @@ def _rejection_successor_problems(
     lens = changed[0]
     original = source_lenses[lens]
     blocking = original.get("blocking_findings") or []
-    matches = [finding for finding in blocking
-               if review_finding_fingerprint(finding)
-               == entry.get("finding_fingerprint")]
+    matches = []
+    for finding in blocking:
+        try:
+            fingerprint = review_finding_fingerprint(finding)
+        except SystemExit:
+            # Unlocated contract verdicts are valid review records, but cannot
+            # be the exact located finding selected for rejection.
+            continue
+        if fingerprint == entry.get("finding_fingerprint"):
+            matches.append(finding)
     if len(matches) != 1:
         problems.append("rejection history does not identify one source blocking finding")
         return problems
@@ -3495,7 +3500,7 @@ def approved_story_plan_predecessors(
     """
     if re.fullmatch(r"[0-9a-f]{64}", current_digest or "") is None:
         return ()
-    state = load_json(run_state_path(root), default={})
+    state = raw_run_state(root)
     story = str(state.get("story") or state.get("issue_key") or "").strip()
     relative = state.get("plan_file")
     if (
@@ -3554,7 +3559,7 @@ def validated_measurement_launch(
     launch_id: str = "",
 ) -> dict | None:
     """Return the real write launch that anchors a measurement receipt."""
-    from forge_cli.delegate import argv_digest, brief_path, current_delegation
+    from forge_cli.delegate import current_delegation
     from forge_cli.stages import _successful_launch_entry_valid
 
     task_id = str(task.get("id") or "")
@@ -3577,33 +3582,88 @@ def validated_measurement_launch(
         or (launch_id and entry.get("launch_id") != launch_id)
     ):
         return None
-    if entry.get("transport") is None:
-        argv = entry.get("argv")
-        brief = brief_path(root, task_id)
-        prompts = (str(brief), brief.relative_to(root).as_posix())
-        expected = [
-            [
-                argv[0], entry.get("companion_path"), "task", "--json",
-                "--cwd", str(root), "--model", entry.get("model"),
-                "--effort", entry.get("effort"), "--prompt-file", prompt,
-                "--write",
-            ]
-            for prompt in prompts
-        ] if isinstance(argv, list) and argv else []
-        if (
-            not isinstance(argv, list)
-            or not argv
-            or not all(isinstance(token, str) for token in argv)
-            or Path(argv[0]).stem.lower() != "node"
-            or entry.get("argv_sha256") != argv_digest(argv)
-            or entry.get("exit_code") != 0
-            or argv not in expected
-        ):
-            return None
-        return entry
     return entry if _successful_launch_entry_valid(
         root, task_id, stage, entry,
     ) else None
+
+
+def _measurement_receipt_chain_matches(
+    root: Path,
+    task: dict,
+    stage: dict,
+    grill: dict,
+    receipts: list,
+    *,
+    permitted_story_digests: set[str],
+    task_plan_digest: str,
+    expected: object,
+) -> tuple[dict, dict, str] | None:
+    """Validate immutable receipt shape, grounding, links, and launch identity."""
+    task_id = str(task.get("id") or "")
+    previous_measurement = None
+    origin_task = None
+    origin_measurement = None
+    launch_id = ""
+    required = {
+        "generated_by", "recorded_at", "story", "task_id", "stage_started_at",
+        "stage_base_sha", "source_grill_input_sha256", "story_plan_sha256",
+        "task_plan_sha256", "semantic_grounding_sha256", "from_task_sha256",
+        "to_task_sha256", "from_measurement", "to_measurement", "launch_id",
+    }
+    for index, receipt in enumerate(receipts):
+        if not isinstance(receipt, dict) or set(receipt) != required:
+            return None
+        before = receipt.get("from_measurement")
+        after = receipt.get("to_measurement")
+        receipt_story_digest = receipt.get("story_plan_sha256")
+        current_launch_id = receipt.get("launch_id")
+        if (not isinstance(before, dict) or not isinstance(after, dict)
+                or not isinstance(current_launch_id, str)
+                or re.fullmatch(r"[A-Za-z0-9._-]+", current_launch_id) is None):
+            return None
+        if set(before) != set(MEASUREMENT_CONTRACT_FIELDS) \
+                or set(after) != set(MEASUREMENT_CONTRACT_FIELDS):
+            return None
+        if (
+            receipt.get("generated_by") != "record_decomposition_from_json"
+            or receipt.get("story") != _active_story_key(root)
+            or receipt.get("task_id") != task_id
+            or receipt.get("stage_started_at") != stage.get("started_at")
+            or receipt.get("stage_base_sha") != stage.get("base_sha")
+            or receipt.get("source_grill_input_sha256") != grill.get("input_sha256")
+            or receipt_story_digest not in permitted_story_digests
+            or receipt.get("task_plan_sha256") != task_plan_digest
+            or receipt.get("semantic_grounding_sha256")
+            != grounding_digest(
+                root, task, in_stage=True, _plan_sha256=receipt_story_digest,
+            )
+            or receipt.get("from_task_sha256") != expected
+            or (previous_measurement is not None and before != previous_measurement)
+        ):
+            return None
+        before_task = {**task, **before}
+        after_task = {**task, **after}
+        if (task_digest(before_task) != receipt.get("from_task_sha256")
+                or task_digest(after_task) != receipt.get("to_task_sha256")):
+            return None
+        if index == 0:
+            if not grounding_matches(
+                root, before_task, grill.get("input_sha256"), in_stage=True,
+                _plan_sha256=receipt_story_digest,
+            ):
+                return None
+            origin_task = before_task
+            origin_measurement = before
+            launch_id = current_launch_id
+        elif current_launch_id != launch_id:
+            return None
+        expected = receipt.get("to_task_sha256")
+        previous_measurement = after
+    if (expected != task_digest(task)
+            or previous_measurement != measurement_contract(task)
+            or origin_task is None or origin_measurement is None):
+        return None
+    return origin_task, origin_measurement, launch_id
 
 
 def _measurement_continuity_matches(
@@ -3649,74 +3709,15 @@ def _measurement_continuity_matches(
         expected = first.get("from_task_sha256") if isinstance(first, dict) else None
     else:
         expected = stage.get("task_sha256")
-    previous_measurement = None
-    origin_task = None
-    origin_measurement = None
-    launch_id = ""
-    required = {
-        "generated_by", "recorded_at", "story", "task_id", "stage_started_at",
-        "stage_base_sha", "source_grill_input_sha256", "story_plan_sha256",
-        "task_plan_sha256", "semantic_grounding_sha256", "from_task_sha256",
-        "to_task_sha256", "from_measurement", "to_measurement", "launch_id",
-    }
-    for index, receipt in enumerate(receipts):
-        if not isinstance(receipt, dict) or set(receipt) != required:
-            return False
-        before = receipt.get("from_measurement")
-        after = receipt.get("to_measurement")
-        receipt_story_digest = receipt.get("story_plan_sha256")
-        if not isinstance(before, dict) or not isinstance(after, dict):
-            return False
-        if set(before) != set(MEASUREMENT_CONTRACT_FIELDS) \
-                or set(after) != set(MEASUREMENT_CONTRACT_FIELDS):
-            return False
-        if (
-            receipt.get("generated_by") != "record_decomposition_from_json"
-            or receipt.get("story") != _active_story_key(root)
-            or receipt.get("task_id") != task_id
-            or receipt.get("stage_started_at") != stage.get("started_at")
-            or receipt.get("stage_base_sha") != stage.get("base_sha")
-            or receipt.get("source_grill_input_sha256") != grill.get("input_sha256")
-            or receipt_story_digest not in permitted_story_digests
-            or receipt.get("task_plan_sha256") != task_plan_digest
-            or receipt.get("semantic_grounding_sha256")
-            != grounding_digest(
-                root,
-                task,
-                in_stage=True,
-                _plan_sha256=receipt_story_digest,
-            )
-            or receipt.get("from_task_sha256") != expected
-            or (previous_measurement is not None and before != previous_measurement)
-        ):
-            return False
-        before_task = {**task, **before}
-        after_task = {**task, **after}
-        if (
-            task_digest(before_task) != receipt.get("from_task_sha256")
-            or task_digest(after_task) != receipt.get("to_task_sha256")
-        ):
-            return False
-        if index == 0:
-            if not grounding_matches(
-                root,
-                before_task,
-                grill.get("input_sha256"),
-                in_stage=True,
-                _plan_sha256=receipt_story_digest,
-            ):
-                return False
-            origin_task = before_task
-            origin_measurement = before
-            launch_id = str(receipt.get("launch_id") or "")
-        elif receipt.get("launch_id") != launch_id:
-            return False
-        expected = receipt.get("to_task_sha256")
-        previous_measurement = after
-    if expected != current_task_sha256 \
-            or previous_measurement != measurement_contract(task):
+    chain = _measurement_receipt_chain_matches(
+        root, task, stage, grill, receipts,
+        permitted_story_digests=permitted_story_digests,
+        task_plan_digest=task_plan_digest,
+        expected=expected,
+    )
+    if chain is None:
         return False
-    assert origin_task is not None and origin_measurement is not None
+    origin_task, origin_measurement, launch_id = chain
     return validated_measurement_launch(
         root,
         origin_task,

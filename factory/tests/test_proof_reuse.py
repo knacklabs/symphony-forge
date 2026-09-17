@@ -126,6 +126,23 @@ def test_changed_unknown_partial_or_generated_output_identity_forces_fresh_run(
             "generated.json"]["sha256"]
 
 
+def test_explicit_external_pytest_config_bytes_bind_reusable_proof(
+        repo: Path, tmp_path: Path):
+    config = tmp_path / "shared-pytest.ini"
+    config.write_text("[pytest]\naddopts = -q\n", encoding="utf-8")
+    task = _task()
+    task["required_tests"][0]["command"] = (
+        f"python -m pytest -c {config} tests/a.py -k test_a"
+    )
+    before = stages.proof_identity(repo, task, "tests")
+    assert before["reusable"] is True
+    config.write_text("[pytest]\naddopts = -q --strict-markers\n", encoding="utf-8")
+    after = stages.proof_identity(repo, task, "tests")
+    assert after["identity"] != before["identity"]
+    config.unlink()
+    assert stages.proof_identity(repo, task, "tests")["reusable"] is False
+
+
 def test_reuse_identity_is_proof_type_specific_and_reviewed_meaning_bound(
         repo: Path, monkeypatch):
     task = _task()
@@ -145,6 +162,20 @@ def test_reuse_identity_is_proof_type_specific_and_reviewed_meaning_bound(
     changed["acceptance_criteria"] = ["different"]
     assert stages.reviewed_meaning_identity(
         repo, stage, changed, helper)["semantic_identity"] != meaning
+
+
+def test_authoritative_rendered_review_dataset_is_bound_into_meaning(
+        repo: Path, monkeypatch):
+    task = _task()
+    stage, helper = _seed_review(repo, monkeypatch, task)
+    dataset = repo / ".factory" / "review-briefs" / "all.md"
+    dataset.parent.mkdir(parents=True, exist_ok=True)
+    dataset.write_text("first authoritative dataset\n", encoding="utf-8")
+    before = stages.reviewed_meaning_identity(
+        repo, stage, task, helper)["semantic_identity"]
+    dataset.write_text("changed authoritative dataset\n", encoding="utf-8")
+    assert stages.reviewed_meaning_identity(
+        repo, stage, task, helper)["semantic_identity"] != before
 
 
 def test_selected_review_reuses_for_bookkeeping_only_changes_and_preserves_original_provenance(

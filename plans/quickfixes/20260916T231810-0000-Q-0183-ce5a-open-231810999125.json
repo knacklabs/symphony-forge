@@ -1,0 +1,13 @@
+{
+  "event": "open",
+  "id": "Q-0183-ce5a",
+  "profile": "degraded",
+  "reason": "repair delegate-preflight recursion introduced by interrupted Codex run so normal delegation can resume",
+  "started_at": "2026-09-16T23:18:10+00:00",
+  "max_files": 5,
+  "files": [],
+  "harness_source": true,
+  "kind": "degraded",
+  "task_id": "LEAN-WORKFLOW",
+  "story": "FORGE-COORD-1"
+}

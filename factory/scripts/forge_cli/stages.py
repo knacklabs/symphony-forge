@@ -19,6 +19,7 @@ import re
 import shlex
 import shutil
 import signal
+import stat
 import subprocess
 import tempfile
 import uuid
@@ -26,8 +27,8 @@ import xml.etree.ElementTree as ET
 from pathlib import Path
 
 from factory_lib import (
-    clean_git_env, decomposition_state_path, dump_json, evidence_path,
-    git_control_dir, head_sha, load_json, now_iso,
+    clean_git_env, decomposition_state_path, dump_json, evidence_path, factory_dir,
+    git_control_dir, head_sha, load_json, now_iso, raw_run_state,
     plan_digest_without_assumptions, protected_decomposition_state_path,
     repo_root, require_approved_plan_digest,
     require_ready_task, require_task_worktree, run_state_path,
@@ -231,7 +232,7 @@ def write_stages(base: Path, data: dict) -> None:
     alone, so two parallel task PRs never rewrite the same file; the story
     worktree writes every record plus the `.factory/stages.json` mirror."""
     dump_json(authoritative_stages_path(base), data)
-    own_task = load_json(run_state_path(base), default={}).get("task_id")
+    own_task = raw_run_state(base).get("task_id")
     own_task = own_task if isinstance(own_task, str) else ""
     if not own_task:
         safe_factory_write_json(base, stages_path(base).name, data)
@@ -298,7 +299,7 @@ def load_stages(base: Path) -> dict:
     protected = authoritative_stages_path(base)
     if protected.is_file():
         data = load_json(protected, default={})
-        current_issue = load_json(run_state_path(base), default={}).get("issue_key")
+        current_issue = raw_run_state(base).get("issue_key")
         # No active story means no active stage: leftover authority from a
         # shipped story (its clear never ran, or a stale git-local file) must
         # not report a phantom active stage that blocks every new work window.
@@ -1028,7 +1029,8 @@ def _canonical_review_envelope(value, *, nested: frozenset[str] = frozenset()):
 
 
 def reviewed_meaning_identity(
-        base: Path, stage: dict, task: dict, helper: dict | None = None,
+        base: Path, stage: dict, task: dict, helper: dict | None = None, *,
+        review_dataset: bytes | None = None,
 ) -> dict[str, object]:
     """Meaning a selected review covers, excluding recorder-only bookkeeping."""
     from factory_lib import active_story_key, proof_path
@@ -1044,6 +1046,7 @@ def reviewed_meaning_identity(
     )
     instruction_paths = (
         "factory/prompts/reviewer.md",
+        "factory/scripts/record_review_from_json.py",
         "factory/scripts/forge_cli/review.py",
         "factory/scripts/forge_cli/review_brief.py",
         "factory/scripts/forge_cli/review_groups.py",
@@ -1087,6 +1090,26 @@ def reviewed_meaning_identity(
         "generated_semantic_inputs": generated,
         "product_delta": stage_review_binding(base, stage, task)["delta_id"],
     }
+    dataset = review_dataset
+    if dataset is None:
+        dataset_path = factory_dir(base) / "review-briefs" / "all.md"
+        try:
+            dataset_info = dataset_path.lstat()
+        except FileNotFoundError:
+            from .review_brief import render_review_dataset
+            dataset = render_review_dataset(base, task_id)
+        except OSError:
+            dataset = b"invalid-review-dataset:unreadable"
+        else:
+            if (stat.S_ISREG(dataset_info.st_mode) and dataset_info.st_nlink == 1
+                    and not stat.S_ISLNK(dataset_info.st_mode)):
+                try:
+                    dataset = dataset_path.read_bytes()
+                except OSError:
+                    dataset = b"invalid-review-dataset:unreadable"
+            else:
+                dataset = b"invalid-review-dataset:linked-or-nonregular"
+    inputs["review_dataset_sha256"] = hashlib.sha256(dataset).hexdigest()
     canonical = json.dumps(
         inputs, sort_keys=True, separators=(",", ":"), ensure_ascii=False,
     ).encode("utf-8")
@@ -1948,6 +1971,53 @@ def _file_identity(path: Path) -> dict[str, object]:
     }
 
 
+def _explicit_pytest_config_identity(
+    base: Path, python_args: list[str],
+) -> dict[str, object] | None:
+    """Bind one explicit pytest config without following or trusting its location."""
+    values: list[str] = []
+    args = python_args[2:]
+    index = 0
+    while index < len(args):
+        token = args[index]
+        if token in {"-c", "--config-file"}:
+            if index + 1 >= len(args):
+                raise ValueError("missing pytest config path")
+            values.append(args[index + 1])
+            index += 2
+            continue
+        if token.startswith("--config-file="):
+            values.append(token.split("=", 1)[1])
+        index += 1
+    if not values:
+        return None
+    if len(values) != 1 or not values[0]:
+        raise ValueError("ambiguous pytest config path")
+    path = Path(values[0])
+    path = path if path.is_absolute() else base / path
+    info = path.lstat()
+    if (not stat.S_ISREG(info.st_mode) or stat.S_ISLNK(info.st_mode)
+            or info.st_nlink != 1):
+        raise ValueError("pytest config is linked or nonregular")
+    descriptor = os.open(path, os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0))
+    try:
+        opened = os.fstat(descriptor)
+        body = b""
+        while chunk := os.read(descriptor, 65536):
+            body += chunk
+        current = path.lstat()
+    finally:
+        os.close(descriptor)
+    if ((opened.st_dev, opened.st_ino, opened.st_size, opened.st_mtime_ns)
+            != (current.st_dev, current.st_ino, current.st_size, current.st_mtime_ns)
+            or opened.st_nlink != 1):
+        raise ValueError("pytest config identity changed")
+    return {
+        "path": str(path), "size": opened.st_size,
+        "sha256": hashlib.sha256(body).hexdigest(),
+    }
+
+
 def _proof_environment(
         command: str, *, fixed_after_assignments: bool,
 ) -> tuple[list[str], dict[str, str], dict[str, object]]:
@@ -2064,12 +2134,25 @@ def _proof_tool_identity(
     if canonical_verify and canonical_inputs is None:
         return {"command": tokens[0], "runner": runner,
                 "environment": environment_identity, "reusable": False}
-    memo_key = (tuple(probe), str(environment_identity["sha256"]))
+    try:
+        pytest_config = (
+            _explicit_pytest_config_identity(base, python_args)
+            if module == "pytest" else None
+        )
+    except (OSError, ValueError):
+        return {"command": tokens[0], "runner": runner,
+                "environment": environment_identity, "reusable": False}
+    memo_probe = tuple(probe)
+    if pytest_config is not None:
+        memo_probe += ("<pytest-config>", str(pytest_config["sha256"]))
+    memo_key = (memo_probe, str(environment_identity["sha256"]))
     if probe_memo is not None and memo_key in probe_memo:
         cached = {**probe_memo[memo_key], "command": tokens[0],
                   "environment": environment_identity}
         if canonical_inputs is not None:
             cached["canonical_verify_inputs"] = canonical_inputs
+        if pytest_config is not None:
+            cached["pytest_config"] = pytest_config
         return cached
     script = (
         "import hashlib,importlib.metadata as m,json,pathlib,re,sys\n"
@@ -2143,6 +2226,8 @@ def _proof_tool_identity(
         probe_memo[memo_key] = result
     if canonical_inputs is not None:
         result["canonical_verify_inputs"] = canonical_inputs
+    if pytest_config is not None:
+        result["pytest_config"] = pytest_config
     return dict(result)
 
 
