@@ -366,14 +366,18 @@ def _legacy_json_shape_reason(family: str, value: object) -> str:
         return reason
     if family == "fixed-review-lens":
         reason = fields({
-            "generated_by": str, "task_id": str, "score": int,
+            "generated_by": str, "score": int,
             "summary": str, "blocking_findings": list,
             "branch_diff_digest": str,
         })
+        if (not reason and "task_id" in value
+                and not isinstance(value["task_id"], str)):
+            return "fixed review task identity is invalid"
         if not reason and not re.fullmatch(
                 r"[0-9a-f]{64}", value["branch_diff_digest"]):
             return "fixed review lens has an invalid delta identity"
-        if not reason and SAFE_COMPONENT.fullmatch(value["task_id"]) is None:
+        if (not reason and "task_id" in value
+                and SAFE_COMPONENT.fullmatch(value["task_id"]) is None):
             return "fixed review task identity is not a safe path component"
         return reason
     if family == "legacy-stage-stamp":
@@ -437,6 +441,29 @@ def _entry_identity(relative: str) -> dict:
     return identity
 
 
+def _unique_decomposition_task(target: Path, story: str) -> str:
+    """Return the sole authoritative task for pre-task-id story proof."""
+    path = target / ".factory" / "stories" / story / "decomposition.json"
+    _require_unlinked_path(target, path)
+    if not path.is_file():
+        return ""
+    try:
+        info = path.lstat()
+        value = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError):
+        return ""
+    if (not stat.S_ISREG(info.st_mode) or info.st_nlink != 1
+            or not isinstance(value, dict) or value.get("story") != story
+            or not isinstance(value.get("tasks"), list)):
+        return ""
+    if len(value["tasks"]) != 1:
+        return ""
+    task = value["tasks"][0]
+    return (task["id"] if isinstance(task, dict)
+            and isinstance(task.get("id"), str)
+            and SAFE_COMPONENT.fullmatch(task["id"]) else "")
+
+
 def _classify_fixed_review_coverage(target: Path, entries: list[dict]) -> None:
     """Mark display-only fixed proof before any migration output is built."""
     from factory_lib import (
@@ -461,8 +488,22 @@ def _classify_fixed_review_coverage(target: Path, entries: list[dict]) -> None:
     for (story, path_task), rows in grouped.items():
         values = [json.loads((target / row["path"]).read_text(encoding="utf-8"))
                   for row in rows]
-        task_ids = {value["task_id"] for value in values}
-        task = next(iter(task_ids)) if len(task_ids) == 1 else ""
+        task_ids = {value.get("task_id") for value in values
+                    if "task_id" in value}
+        if len(task_ids) > 1 or (task_ids and not all(
+                "task_id" in value for value in values)):
+            invalidate(rows, "fixed review has invalid or mixed task identity")
+            continue
+        task = (next(iter(task_ids)) if task_ids else
+                path_task or _unique_decomposition_task(target, story))
+        if not task and not path_task:
+            for row in rows:
+                row.update(
+                    classification="excluded",
+                    reason="unattributed story fixed review requires a fresh review",
+                    preserve=True,
+                )
+            continue
         if (not task or SAFE_COMPONENT.fullmatch(task) is None
                 or (path_task and task != path_task)):
             for row in rows:
@@ -506,10 +547,6 @@ def _classify_fixed_review_coverage(target: Path, entries: list[dict]) -> None:
         if not isinstance(marker_value, dict):
             invalidate(rows, "sealed fixed review marker is malformed")
             continue
-        deltas = {value["branch_diff_digest"] for value in values}
-        if len(deltas) != 1:
-            invalidate(rows, "sealed fixed review has conflicting delta identity")
-            continue
         committed, marker_problem = _committed_task_marker(
             target, story, task, marker_value, None,
         )
@@ -519,11 +556,9 @@ def _classify_fixed_review_coverage(target: Path, entries: list[dict]) -> None:
             continue
         sealed = committed["commit"]
         expected_delta = product_delta_digest(
-            target, marker_value.get("base_main_sha", ""), sealed,
+            target, marker_value.get("review_base_sha")
+            or marker_value.get("base_main_sha", ""), sealed,
         )
-        if deltas != {expected_delta}:
-            invalidate(rows, "sealed fixed review delta does not match its marker")
-            continue
         selection = (target / ".factory" / "stories" / story / "tasks" / task
                      / "reviews" / "selected.json")
         _require_unlinked_path(target, selection)
@@ -539,6 +574,22 @@ def _classify_fixed_review_coverage(target: Path, entries: list[dict]) -> None:
                            + "; ".join(
                                problems or ["selected proof lacks exact sealed binding"],
                            ))
+                continue
+        elif marker_value.get("reconciled") is True:
+            for row in rows:
+                row.update(classification="excluded",
+                           reason="active fixed review requires a fresh review",
+                           preserve=True)
+            continue
+        else:
+            deltas = {value["branch_diff_digest"] for value in values}
+            if len(deltas) != 1:
+                invalidate(rows,
+                           "sealed fixed review has conflicting delta identity")
+                continue
+            if deltas != {expected_delta}:
+                invalidate(rows,
+                           "sealed fixed review delta does not match its marker")
                 continue
         marker_identity = {
             "path": marker.relative_to(target).as_posix(),
@@ -831,14 +882,18 @@ def _raw_json_shape_reason(family: str, value: object) -> str:
         return problem
     if family == "fixed-review-lens":
         problem = required_fields({
-            "generated_by": str, "task_id": str, "score": int,
+            "generated_by": str, "score": int,
             "summary": str, "blocking_findings": list,
             "branch_diff_digest": str,
         })
+        if (not problem and "task_id" in value
+                and not isinstance(value["task_id"], str)):
+            return "fixed review task identity is invalid"
         if (not problem and not re.fullmatch(
                 r"[0-9a-f]{64}", value["branch_diff_digest"])):
             return "fixed review lens has an invalid delta identity"
-        if not problem and SAFE_COMPONENT.fullmatch(value["task_id"]) is None:
+        if (not problem and "task_id" in value
+                and SAFE_COMPONENT.fullmatch(value["task_id"]) is None):
             return "fixed review task identity is not a safe path component"
         return problem
     if family == "legacy-stage-stamp":
@@ -889,6 +944,31 @@ def _raw_entry_identity(relative: str) -> dict:
     return identity
 
 
+def _raw_unique_decomposition_task(target: Path, story: str) -> str:
+    """Independently resolve one task for raw pre-task-id coverage."""
+    path = target.joinpath(
+        ".factory", "stories", story, "decomposition.json",
+    )
+    _require_unlinked_path(target, path)
+    if not path.is_file():
+        return ""
+    try:
+        info = path.lstat()
+        value = json.loads(path.read_bytes().decode("utf-8"))
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError):
+        return ""
+    if (not stat.S_ISREG(info.st_mode) or info.st_nlink != 1
+            or not isinstance(value, dict) or value.get("story") != story
+            or not isinstance(value.get("tasks"), list)):
+        return ""
+    if len(value["tasks"]) != 1:
+        return ""
+    row = value["tasks"][0]
+    return (row["id"] if isinstance(row, dict)
+            and isinstance(row.get("id"), str)
+            and SAFE_COMPONENT.fullmatch(row["id"]) else "")
+
+
 def _raw_classify_fixed_review_coverage(target: Path, rows: list[dict]) -> None:
     """Independently classify fixed review groups found by raw coverage."""
     from factory_lib import (
@@ -914,8 +994,22 @@ def _raw_classify_fixed_review_coverage(target: Path, rows: list[dict]) -> None:
     for (story, path_task), group in groups.items():
         values = [json.loads((target / row["path"]).read_text(encoding="utf-8"))
                   for row in group]
-        task_ids = {value["task_id"] for value in values}
-        task = next(iter(task_ids)) if len(task_ids) == 1 else ""
+        task_ids = {value.get("task_id") for value in values
+                    if "task_id" in value}
+        if len(task_ids) > 1 or (task_ids and not all(
+                "task_id" in value for value in values)):
+            mark_invalid(group, "fixed review has invalid or mixed task identity")
+            continue
+        task = (next(iter(task_ids)) if task_ids else
+                path_task or _raw_unique_decomposition_task(target, story))
+        if not task and not path_task:
+            for row in group:
+                row.update(
+                    classification="excluded",
+                    reason="unattributed story fixed review requires a fresh review",
+                    preserve=True,
+                )
+            continue
         if (not task or SAFE_COMPONENT.fullmatch(task) is None
                 or (path_task and task != path_task)):
             mark_invalid(group, "fixed review has invalid or mixed task identity")
@@ -957,11 +1051,6 @@ def _raw_classify_fixed_review_coverage(target: Path, rows: list[dict]) -> None:
         if not isinstance(marker_value, dict):
             mark_invalid(group, "sealed fixed review marker is malformed")
             continue
-        deltas = {value["branch_diff_digest"] for value in values}
-        if len(deltas) != 1:
-            mark_invalid(group,
-                         "sealed fixed review has conflicting delta identity")
-            continue
         committed, marker_problem = _committed_task_marker(
             target, story, task, marker_value, None,
         )
@@ -971,12 +1060,9 @@ def _raw_classify_fixed_review_coverage(target: Path, rows: list[dict]) -> None:
             continue
         sealed = committed["commit"]
         expected_delta = product_delta_digest(
-            target, marker_value.get("base_main_sha", ""), sealed,
+            target, marker_value.get("review_base_sha")
+            or marker_value.get("base_main_sha", ""), sealed,
         )
-        if deltas != {expected_delta}:
-            mark_invalid(group,
-                         "sealed fixed review delta does not match its marker")
-            continue
         selected = (target / ".factory" / "stories" / story / "tasks" / task
                     / "reviews" / "selected.json")
         _require_unlinked_path(target, selected)
@@ -994,6 +1080,22 @@ def _raw_classify_fixed_review_coverage(target: Path, rows: list[dict]) -> None:
                                      "selected proof lacks exact sealed binding",
                                  ],
                              ))
+                continue
+        elif marker_value.get("reconciled") is True:
+            for row in group:
+                row.update(classification="excluded",
+                           reason="active fixed review requires a fresh review",
+                           preserve=True)
+            continue
+        else:
+            deltas = {value["branch_diff_digest"] for value in values}
+            if len(deltas) != 1:
+                mark_invalid(group,
+                             "sealed fixed review has conflicting delta identity")
+                continue
+            if deltas != {expected_delta}:
+                mark_invalid(group,
+                             "sealed fixed review delta does not match its marker")
                 continue
         marker_identity = {
             "path": marker.relative_to(target).as_posix(),
@@ -1458,7 +1560,8 @@ def _validate_completed_manifest(target: Path, saved: dict) -> None:
         if marker_problem or committed is None:
             fail("Lean migration durable review output marker is invalid")
         expected_delta = product_delta_digest(
-            target, marker_data.get("base_main_sha", ""), committed["commit"],
+            target, marker_data.get("review_base_sha")
+            or marker_data.get("base_main_sha", ""), committed["commit"],
         )
         selected, _pointer, problems = read_selected_review_generation(
             target, row["story"], row["task_id"],
@@ -1678,7 +1781,8 @@ def _fixed_review_plan(
                      f"{marker_problem or 'durable output is missing'}")
             sealed = committed["commit"]
             expected_delta = product_delta_digest(
-                target, marker_data.get("base_main_sha", ""), sealed,
+                target, marker_data.get("review_base_sha")
+                or marker_data.get("base_main_sha", ""), sealed,
             )
             generation, selection, problems = read_selected_review_generation(
                 target, story, task, expected_delta_id=expected_delta,
@@ -1713,6 +1817,8 @@ def _fixed_review_plan(
                 value = json.loads((target / entry["path"]).read_text(encoding="utf-8"))
                 if not isinstance(value, dict):
                     raise ValueError("expected an object")
+                if "task_id" not in value:
+                    value["task_id"] = entry["task_id"]
                 validate_payload(target, "review", value)
             except (OSError, UnicodeDecodeError, json.JSONDecodeError,
                     ValueError, SystemExit) as exc:
@@ -1731,10 +1837,6 @@ def _fixed_review_plan(
         if path_task and task != path_task:
             fail(f"sealed fixed review {story}/{path_task} has mixed task identity")
         by_lens = {Path(entry["path"]).stem: entry for entry in entries}
-        deltas = {value.get("branch_diff_digest") for value in lenses.values()
-                  if isinstance(value, dict)}
-        if len(deltas) != 1 or not next(iter(deltas), ""):
-            fail(f"sealed fixed review {story}/{task} has conflicting delta identity")
         marker = target / ".factory" / "stories" / story / "tasks" / task / "pr-ready.json"
         _require_unlinked_path(target, marker)
         if not marker.is_file():
@@ -1748,10 +1850,9 @@ def _fixed_review_plan(
                  f"{marker_problem or 'not committed'}")
         sealed = committed["commit"]
         expected_delta = product_delta_digest(
-            target, marker_data.get("base_main_sha", ""), sealed,
+            target, marker_data.get("review_base_sha")
+            or marker_data.get("base_main_sha", ""), sealed,
         )
-        if deltas != {expected_delta}:
-            fail(f"sealed fixed review {story}/{task} delta does not match its marker")
         selection_path = (target / ".factory" / "stories" / story / "tasks"
                           / task / "reviews" / "selected.json")
         _require_unlinked_path(target, selection_path)
@@ -1777,6 +1878,12 @@ def _fixed_review_plan(
                 "source_paths": [entry["path"] for entry in entries],
             })
             continue
+        deltas = {value.get("branch_diff_digest") for value in lenses.values()
+                  if isinstance(value, dict)}
+        if len(deltas) != 1 or not next(iter(deltas), ""):
+            fail(f"sealed fixed review {story}/{task} has conflicting delta identity")
+        if deltas != {expected_delta}:
+            fail(f"sealed fixed review {story}/{task} delta does not match its marker")
         candidate = {
             "format": "forge-review-generation/v1", "origin": "upgrade",
             "generated_by": "upgrade", "story": story, "task_id": task,

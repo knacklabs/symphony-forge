@@ -7,6 +7,13 @@
       "outputs": [],
       "notes": "orchestrator-authored exploration brief for the WIN-SBX prompt-file rescue run, not client context; findings are captured in the plan",
       "marked_at": "2026-08-13T05:28:00+00:00"
+    },
+    "lean-upgrade-real-repo-fix.md": {
+      "sha256": "69826fc9b925fce8523d900143140b905f25354a169f0f0e31f2ab4f3adc1e90",
+      "added": "2026-09-17T11:22:24+00:00",
+      "status": "pending",
+      "outputs": [],
+      "notes": ""
     }
   }
 }

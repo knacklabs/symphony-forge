@@ -933,8 +933,16 @@ def test_lean_migration_promotes_valid_task_and_story_scoped_sealed_fixed_proof(
     for (story, task), reviews in roots.items():
         reviews.mkdir(parents=True, exist_ok=True)
         for lens in upgrade.LEAN_LENSES:
+            value = _fixed_lens(task)
+            if story == "S2":
+                value.pop("task_id")
             (reviews / f"{lens}.json").write_text(
-                json.dumps(_fixed_lens(task)), encoding="utf-8")
+                json.dumps(value), encoding="utf-8")
+        if story == "S2":
+            (reviews.parent / "decomposition.json").write_text(json.dumps({
+                "generated_by": "docs-decomposer", "story": story,
+                "tasks": [{"id": task}],
+            }), encoding="utf-8")
         marker = repo / f".factory/stories/{story}/tasks/{task}/pr-ready.json"
         marker.parent.mkdir(parents=True, exist_ok=True)
         marker.write_text(json.dumps({
@@ -972,6 +980,11 @@ def test_lean_migration_promotes_valid_task_and_story_scoped_sealed_fixed_proof(
                          / candidate["task_id"] / "reviews" / "selected.json")
         selected_before[(candidate["story"], candidate["task_id"])] = \
             selected_path.read_bytes()
+    for lens in upgrade.LEAN_LENSES:
+        source = roots[("S1", "T1")] / f"{lens}.json"
+        value = json.loads(source.read_text())
+        value["branch_diff_digest"] = "a" * 64
+        source.write_text(json.dumps(value), encoding="utf-8")
     interrupted_retry = upgrade.preflight_lean_migration(repo)
     assert interrupted_retry is not None
     assert interrupted_retry["review_candidates"] == []
@@ -984,8 +997,41 @@ def test_lean_migration_promotes_valid_task_and_story_scoped_sealed_fixed_proof(
         generation = json.loads((repo / f".factory/stories/{story}/tasks/{task}/reviews/generations/{selected['generation_id']}.json").read_text())
         assert generation["origin"] == "upgrade"
         assert generation["upgrade"]["sealed_commit"] == base
+        assert {value["task_id"] for value in generation["lenses"].values()} == {
+            task,
+        }
     assert not any((root / f"{lens}.json").exists()
                    for root in roots.values() for lens in upgrade.LEAN_LENSES)
+
+
+def test_lean_migration_preserves_ambiguous_pre_task_id_story_review(
+        repo: Path):
+    reviews = repo / ".factory/stories/S2/reviews"
+    reviews.mkdir(parents=True, exist_ok=True)
+    for lens in upgrade.LEAN_LENSES:
+        value = _fixed_lens()
+        value.pop("task_id")
+        (reviews / f"{lens}.json").write_text(
+            json.dumps(value), encoding="utf-8")
+    (reviews.parent / "decomposition.json").write_text(json.dumps({
+        "generated_by": "docs-decomposer", "story": "S2",
+        "tasks": [{"id": "T1"}, {"id": "T2"}],
+    }), encoding="utf-8")
+    git(repo, "add", ".factory/stories/S2")
+    git(repo, "commit", "-q", "-m", "older story review fixture")
+
+    migration = upgrade.preflight_lean_migration(repo)
+    assert migration is not None
+    fixed = [row for row in migration["entries"]
+             if row["family"] == "fixed-review-lens"]
+    assert {row["classification"] for row in fixed} == {"excluded"}
+    assert {row["reason"] for row in fixed} == {
+        "unattributed story fixed review requires a fresh review",
+    }
+    upgrade.apply_lean_migration(repo, migration)
+    assert all((reviews / f"{lens}.json").is_file()
+               for lens in upgrade.LEAN_LENSES)
+    assert upgrade.preflight_lean_migration(repo) is None
 
 
 def test_lean_migration_revalidates_inventory_before_each_pointer_commit(
@@ -1060,6 +1106,34 @@ def test_lean_migration_refuses_mixed_canonical_and_fixed_review_proof(
         upgrade.preflight_lean_migration(repo)
     assert "mixed canonical and fixed review proof" in capsys.readouterr().out
     assert selected.read_bytes() == before
+
+
+def test_lean_migration_preserves_reconciled_fixed_review_without_selection(
+        repo: Path):
+    base = git(repo, "rev-parse", "HEAD").strip()
+    branch = git(repo, "branch", "--show-current").strip()
+    reviews = repo / ".factory/stories/S1/tasks/T1/reviews"
+    reviews.mkdir(parents=True, exist_ok=True)
+    for lens in upgrade.LEAN_LENSES:
+        (reviews / f"{lens}.json").write_text(json.dumps(
+            _fixed_lens(delta="a" * 64),
+        ), encoding="utf-8")
+    (reviews.parent / "pr-ready.json").write_text(json.dumps({
+        "task_id": "T1", "branch": branch, "base_main_sha": base,
+        "commit": base, "sealed_at": "2026-09-15T00:00:00+00:00",
+        "reconciled": True,
+    }), encoding="utf-8")
+    git(repo, "add", ".factory/stories")
+    git(repo, "commit", "-q", "-m", "reconciled fixed proof fixture")
+
+    migration = upgrade.preflight_lean_migration(repo)
+    assert migration is not None
+    fixed = [row for row in migration["entries"]
+             if row["family"] == "fixed-review-lens"]
+    assert {row["classification"] for row in fixed} == {"excluded"}
+    assert {row["reason"] for row in fixed} == {
+        "active fixed review requires a fresh review",
+    }
 
 
 def test_normal_runtime_refuses_lean_removed_formats_with_upgrade_guidance(repo: Path):
