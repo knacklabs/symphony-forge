@@ -182,6 +182,14 @@ def test_selected_review_reuses_for_bookkeeping_only_changes_and_preserves_origi
         repo: Path, monkeypatch):
     task = _task()
     stage, helper = _seed_review(repo, monkeypatch, task)
+    dataset = repo / ".factory" / "review-briefs" / "all.md"
+    dataset.parent.mkdir(parents=True, exist_ok=True)
+    dataset.write_text(
+        "#### Full task-owned automated report (implementer-authored evidence)\n\n"
+        "```json\n{\n  \"cases\": [\"a\"],\n  \"generated_by\": \"implementer\",\n"
+        "  \"recorded_at\": \"old\",\n  \"status\": \"passed\"\n}\n```\n",
+        encoding="utf-8",
+    )
     before = stages.reviewed_meaning_identity(repo, stage, task, helper)
     lib = load_factory_lib(repo)
     proof = lib.proof_path(repo, "S1", "tests.json", task_id="T1")
@@ -189,6 +197,12 @@ def test_selected_review_reuses_for_bookkeeping_only_changes_and_preserves_origi
     data["recorded_at"] = "new"
     data["generated_by"] = "recorder-v2"
     proof.write_text(json.dumps(data), encoding="utf-8")
+    dataset.write_text(
+        dataset.read_text(encoding="utf-8")
+        .replace('"implementer"', '"recorder-v2"')
+        .replace('"old"', '"new"'),
+        encoding="utf-8",
+    )
     after = stages.reviewed_meaning_identity(repo, stage, task, helper)
     assert after["identity"] == before["identity"]
     assert before["inputs"]["automated_evidence"]["automated"] == {

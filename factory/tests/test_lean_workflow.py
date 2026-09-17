@@ -656,7 +656,7 @@ def test_native_result_scanner_uses_captured_bytes_after_path_replacement(tmp_pa
     assert not result.error
 
 
-def test_live_findings_refuse_fixed_proof_only_for_the_active_story(
+def test_live_findings_refuse_fixed_proof_for_active_and_inactive_stories(
         repo: Path, monkeypatch: pytest.MonkeyPatch):
     from forge_cli import findings
 
@@ -670,7 +670,10 @@ def test_live_findings_refuse_fixed_proof_only_for_the_active_story(
     monkeypatch.setattr(
         findings, "load_items", lambda _base: [{"key": "HIST"}, {"key": "ACTIVE"}],
     )
-    assert any(row["task"] == "HIST" for row in findings.collect(repo))
+    with pytest.raises(SystemExit, match="story HIST.*run forge upgrade"):
+        findings.collect(repo)
+
+    historical.unlink()
 
     active = lib.story_dir(repo, "ACTIVE") / "reviews" / "quality.json"
     active.parent.mkdir(parents=True, exist_ok=True)

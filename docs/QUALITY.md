@@ -124,8 +124,8 @@ report that concrete blocker; do not manufacture another review cycle.
   records the artifact; autoreview's quality lens checks coverage honestly
 
 ### functional-checker (conditional)
-- model: `gpt-5.6-sol`, reasoning `high`, `workspace-write` when tooling needs
-  artifacts, otherwise `read-only`
+- model: `gpt-5.6-sol`, reasoning `high`, `danger-full-access` as pinned by the
+  committed functional-checker profile
 - contract: `factory/prompts/tester-functional.md` +
   `factory/schemas/test-functional.json` (`generated_by: functional-checker`)
 - runs only when the decomposition records `user_facing: true`; the ship

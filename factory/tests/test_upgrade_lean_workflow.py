@@ -610,7 +610,7 @@ def test_completed_lean_migration_allows_live_stage_evolution_but_refuses_legacy
 
 
 def test_lean_migration_resumes_durable_manifest_before_input_deletion(
-        repo: Path, monkeypatch: pytest.MonkeyPatch):
+        repo: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     legacy = _legacy_round(repo)
     migration = upgrade.preflight_lean_migration(repo)
     assert migration is not None
@@ -654,6 +654,22 @@ def test_lean_migration_resumes_durable_manifest_before_input_deletion(
     assert refused.returncode != 0 and "uncommitted changes" in refused.stdout
     manifest.write_bytes(manifest_bytes)
     forged_path.unlink()
+
+    outside = tmp_path / "outside-resume.txt"
+    outside.write_text("outside\n", encoding="utf-8")
+    forged = json.loads(manifest.read_text())
+    forged["entries"].append({
+        "path": str(outside), "family": "retired-forge-profile",
+        "type": "file", "sha256": hashlib.sha256(b"outside\n").hexdigest(),
+        "bytes": len(b"outside\n"), "classification": "eligible",
+        "reason": "legacy-format", "preserve": False,
+    })
+    forged["input_inventory_digest"] = upgrade._inventory_digest(forged["entries"])
+    manifest.write_text(json.dumps(forged) + "\n", encoding="utf-8")
+    refused = _upgrade(repo)
+    assert refused.returncode != 0 and "manifest path escapes" in refused.stdout
+    assert outside.read_text(encoding="utf-8") == "outside\n"
+    manifest.write_bytes(manifest_bytes)
 
     resumed = _upgrade(repo)
     assert resumed.returncode == 0, resumed.stdout + resumed.stderr

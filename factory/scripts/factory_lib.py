@@ -2117,14 +2117,19 @@ def task_proof_problems(
     generations are the sole fixed-proof migration representation.
     """
     task_id = str(task.get("id") or "")
-    fixed_reviews = [
-        evidence_path(root, key, f"reviews/{aspect}.json")
+    fixed_review_paths = [
+        f".factory/stories/{key}/reviews/{aspect}.json"
         for aspect in _PROOF_LENSES
     ] + [
-        task_evidence_path(root, key, task_id, f"reviews/{aspect}.json")
+        f".factory/stories/{key}/tasks/{task_id}/reviews/{aspect}.json"
         for aspect in _PROOF_LENSES
     ]
-    if any(path.is_file() for path in fixed_reviews):
+    fixed_review_present = (
+        any(reader(relative) is not None for relative in fixed_review_paths)
+        if reader is not None else
+        any((root / relative).is_file() for relative in fixed_review_paths)
+    )
+    if fixed_review_present:
         return [
             f"{task_id}: legacy fixed review proof is no longer runtime "
             "authority; run `forge upgrade`"

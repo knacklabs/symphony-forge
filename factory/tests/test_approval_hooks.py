@@ -623,6 +623,15 @@ def test_native_approval_refuses_unsafe_story_plan_without_external_write(repo, 
     assert not candidate.evidence.exists()
 
 
+def test_native_approval_refuses_lexically_traversing_destination(repo, tmp_path):
+    outside = tmp_path / "approval.json"
+    lexical_escape = repo / "plans" / ".." / ".." / tmp_path.name / outside.name
+
+    with pytest.raises(approval.ApprovalRefused, match="contained and non-linked"):
+        approval._require_safe_destination(repo, lexical_escape, required=False)
+    assert not outside.exists()
+
+
 def test_native_approval_rechecks_replaced_plan_before_publication(repo, tmp_path, monkeypatch):
     candidate = _story_candidate(repo)
     event = _event(candidate)

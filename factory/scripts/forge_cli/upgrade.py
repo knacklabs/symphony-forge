@@ -14,7 +14,7 @@ import shutil
 import stat
 import subprocess
 import tempfile
-from pathlib import Path
+from pathlib import Path, PurePosixPath, PureWindowsPath
 
 from factory_lib import (
     SIGNOFF_KEY, canonical_signoff_path, head_sha, insert_signoff_pin,
@@ -118,6 +118,20 @@ def _require_unlinked_path(target: Path, path: Path) -> None:
             fail(f"Lean migration cannot inspect {current}: {exc}")
         if _linked_or_reparse(info):
             fail(f"Lean migration refuses linked or reparse path {current}")
+
+
+def _lean_manifest_path(target: Path, relative: object) -> Path:
+    """Resolve one manifest path without permitting lexical target escape."""
+    if not isinstance(relative, str) or not relative or "\\" in relative:
+        fail("Lean migration manifest contains an unsafe path")
+    posix = PurePosixPath(relative)
+    windows = PureWindowsPath(relative)
+    if (posix.is_absolute() or windows.is_absolute()
+            or ".." in posix.parts or "." in posix.parts):
+        fail(f"Lean migration manifest path escapes the target: {relative}")
+    path = target.joinpath(*posix.parts)
+    _require_unlinked_path(target, path)
+    return path
 
 
 def _require_single_link_manifest(target: Path, manifest: Path) -> None:
@@ -1999,7 +2013,7 @@ def apply_lean_migration(target: Path, migration: dict | None) -> None:
     for entry in migration["entries"]:
         if entry.get("classification") != "eligible":
             continue
-        path = target / entry["path"]
+        path = _lean_manifest_path(target, entry["path"])
         if not path.exists():
             continue
         if entry["family"] == "old-hook-flag":
@@ -2046,6 +2060,7 @@ def _retired_forge_profiles(target: Path) -> tuple[list[Path], list[Path]]:
     removable: list[Path] = []
     preserved: list[Path] = []
     root = target / ".codex" / "agents"
+    _require_unlinked_path(target, root)
     for name, expected in RETIRED_FORGE_PROFILE_HASHES.items():
         path = root / name
         if not path.exists() and not path.is_symlink():
@@ -2488,6 +2503,7 @@ def _incomplete_lean_resume_paths(
                 or not isinstance(entry.get("path"), str)
                 or entry["path"] in saved_paths):
             return set()
+        _lean_manifest_path(target, entry["path"])
         saved_paths.add(entry["path"])
         live = current.get(entry["path"])
         if live == entry:
@@ -2535,8 +2551,6 @@ def _incomplete_lean_resume_paths(
                 and not (target / relative).exists()):
             allowed.add(relative)
             continue
-        if relative.startswith(".agents/") and not (target / relative).exists():
-            allowed.add(relative)
     return allowed
 
 

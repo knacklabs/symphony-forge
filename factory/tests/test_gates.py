@@ -13230,6 +13230,19 @@ def test_task_proof_overrides_a_clean_story_record_rather_than_joining_it(
     assert any("security" in p for p in problems)
 
 
+def test_task_proof_detects_retired_fixed_review_in_supplied_snapshot(repo):
+    lib = load_factory_lib(repo)
+    fixed = ".factory/stories/ENG-1/tasks/T1/reviews/quality.json"
+
+    assert lib.task_proof_problems(
+        repo, "ENG-1", {"id": "T1"},
+        reader=lambda relative: {} if relative == fixed else None,
+    ) == [
+        "T1: legacy fixed review proof is no longer runtime authority; "
+        "run `forge upgrade`"
+    ]
+
+
 def test_state_audit_reports_a_stage_split_between_working_copies(repo, tmp_path):
     # The harness gates TRANSITIONS and never re-validates STATE, so a record
     # that stopped being true is invisible. This is the split that made a

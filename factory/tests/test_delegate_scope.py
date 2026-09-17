@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import subprocess
@@ -103,7 +104,10 @@ def test_delegate_scope_public_launch_binds_narrowed_scope(
     monkeypatch.setattr(delegate, "require_ready_task", lambda *_args: task)
     monkeypatch.setattr(stages, "effective_scope", lambda *_args: task["write_scope"])
     monkeypatch.setattr(stages, "stage_baseline", lambda *_args: revision)
-    monkeypatch.setattr(delegate, "compose_brief", lambda *_args, **_kwargs: "brief")
+    monkeypatch.setattr(
+        delegate, "compose_brief",
+        lambda *_args, **kwargs: json.dumps(kwargs["scope_override"]),
+    )
     monkeypatch.setattr(delegate, "pinned_run_config", lambda _base: ("model", "medium"))
     monkeypatch.setattr(
         delegate, "launch_companion",
@@ -118,6 +122,17 @@ def test_delegate_scope_public_launch_binds_narrowed_scope(
 
     assert captured["write"] is True
     assert captured["write_scope"] == ["src/a.py"]
+    narrowed_launch_digest = hashlib.sha256(captured["text"].encode()).hexdigest()
+
+    captured.clear()
+    delegate.cmd_delegate(argparse.Namespace(
+        repo=str(repo), id="T1", read_only=False, scope=[],
+        background=False, context_file=None, print_only=False,
+    ))
+    assert captured["write_scope"] == task["write_scope"]
+    assert hashlib.sha256(captured["text"].encode()).hexdigest() != (
+        narrowed_launch_digest
+    )
 
     captured.clear()
     monkeypatch.setattr(
@@ -148,11 +163,17 @@ def test_delegate_scope_is_bound_to_brief_launch_identity_and_existing_write_sco
         repo, task, write=True, user_facing=False, story="S1",
         scope_override=["src/a.py"],
     )
+    full_brief = delegate.compose_brief(
+        repo, task, write=True, user_facing=False, story="S1",
+        scope_override=task["write_scope"],
+    )
     scope = brief.split("## Write scope — nothing outside this", 1)[1].split("##", 1)[0]
     assert "src/a.py" in scope and "src/b.py" not in scope
     assert "Delegation coverage: NARROWED proper subset" in brief
     assert "Do not run the task-wide required tests or verify commands" in brief
     assert "orchestrator runs these after scoped fixes" in brief
+    assert hashlib.sha256(brief.encode()).hexdigest() != hashlib.sha256(
+        full_brief.encode()).hexdigest()
     assert path_in_scope("src/a.py", ["src/a.py"])
 
     brief_path, digest = _seed_contract(repo, task)

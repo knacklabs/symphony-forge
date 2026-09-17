@@ -1028,6 +1028,42 @@ def _canonical_review_envelope(value, *, nested: frozenset[str] = frozenset()):
     }
 
 
+def _canonical_review_dataset(dataset: bytes) -> bytes:
+    """Ignore recorder bookkeeping only inside the two rendered JSON artifacts."""
+    try:
+        text = dataset.decode("utf-8")
+    except UnicodeDecodeError:
+        return dataset
+    headings = {
+        "#### Full grill and approval record (untrusted data)": frozenset(),
+        "#### Full task-owned automated report (implementer-authored evidence)":
+            frozenset(),
+    }
+    for heading, nested in headings.items():
+        start = 0
+        while (section := text.find(heading, start)) >= 0:
+            fence = re.search(r"(?m)^(?P<fence>`{3,})json\n", text[section:])
+            if fence is None:
+                break
+            body_start = section + fence.end()
+            marker = fence.group("fence")
+            close = text.find(f"\n{marker}", body_start)
+            if close < 0:
+                break
+            try:
+                value = json.loads(text[body_start:close])
+            except json.JSONDecodeError:
+                start = close + len(marker) + 1
+                continue
+            canonical = json.dumps(
+                _canonical_review_envelope(value, nested=nested),
+                indent=2, sort_keys=True,
+            )
+            text = text[:body_start] + canonical + text[close:]
+            start = body_start + len(canonical) + len(marker) + 1
+    return text.encode("utf-8")
+
+
 def reviewed_meaning_identity(
         base: Path, stage: dict, task: dict, helper: dict | None = None, *,
         review_dataset: bytes | None = None,
@@ -1109,7 +1145,9 @@ def reviewed_meaning_identity(
                     dataset = b"invalid-review-dataset:unreadable"
             else:
                 dataset = b"invalid-review-dataset:linked-or-nonregular"
-    inputs["review_dataset_sha256"] = hashlib.sha256(dataset).hexdigest()
+    inputs["review_dataset_sha256"] = hashlib.sha256(
+        _canonical_review_dataset(dataset)
+    ).hexdigest()
     canonical = json.dumps(
         inputs, sort_keys=True, separators=(",", ":"), ensure_ascii=False,
     ).encode("utf-8")

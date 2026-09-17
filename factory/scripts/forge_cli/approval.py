@@ -64,6 +64,10 @@ def _require_safe_destination(base: Path, path: Path, *, required: bool) -> None
         except ValueError:
             boundary = git_control_dir(base)
             relative = path.relative_to(boundary)
+        if relative.is_absolute() or ".." in relative.parts:
+            raise ApprovalRefused(
+                f"approval destination must be contained and non-linked: {path}"
+            )
         current = boundary
         root_info = current.lstat()
         if (not stat.S_ISDIR(root_info.st_mode) or current.is_symlink()

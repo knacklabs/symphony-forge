@@ -75,7 +75,7 @@ def collect(base: Path) -> list[dict]:
             evidence_path(base, task, f"reviews/{aspect}.json")
             for aspect in ("quality", "performance", "security")
         ]
-        if task == active_issue and any(path.is_file() for path in fixed):
+        if any(path.is_file() for path in fixed):
             raise SystemExit(
                 f"story {task} has retired fixed review proof; run forge upgrade "
                 "before reading live findings"
