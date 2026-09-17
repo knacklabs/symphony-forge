@@ -218,10 +218,12 @@ def _stage_contract(base: Path, record: dict) -> tuple[dict | None, str]:
             return _deny(
                 f"recorded trailing-slash scope is not a baseline directory: {item!r}"
             )
-    return {
-        "kind": "stage",
-        "scope": classify_scope_entries(base, scope, baseline),
-    }, ""
+    classified_scope = (
+        classified_task_scope
+        if scope == task_scope
+        else classify_scope_entries(base, scope, baseline)
+    )
+    return {"kind": "stage", "scope": classified_scope}, ""
 
 
 def live_worker_admission(base: Path) -> tuple[dict | None, str]:

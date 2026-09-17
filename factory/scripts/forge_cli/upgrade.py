@@ -2110,6 +2110,8 @@ def _publish_converted_stage(
             os.close(descriptor)
         if temporary.read_bytes() != body:
             fail("Lean migration converted-stage temporary readback differs")
+        temporary = assert_target_file_destination(target, temporary)
+        destination = assert_target_file_destination(target, destination)
         os.replace(temporary, destination)
         published = destination.read_bytes()
         if (published != body

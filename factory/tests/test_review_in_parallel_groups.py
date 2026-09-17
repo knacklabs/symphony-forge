@@ -19,8 +19,9 @@ from pathlib import Path
 import pytest
 
 from test_gates import (  # noqa: F401
-    DECOMP, HARNESS, git, head, intake, load_factory_lib, record_skeleton_then_frontier,
-    record_task_grill, repo, save_plan, sign_off, write_in_scope, write_stages,
+    DECOMP, HARNESS, bind_task_proof_receipts, git, head, intake,
+    load_factory_lib, record_skeleton_then_frontier, record_task_grill, repo,
+    save_plan, sign_off, write_in_scope, write_stages,
 )
 
 sys.path.insert(0, str(HARNESS / "factory" / "scripts"))
@@ -164,6 +165,12 @@ def _built(repo: Path, tmp_path: Path) -> None:
     intake(repo)
     save_plan(repo, tmp_path)
     task = {**DECOMP["tasks"][0], "id": "T1", "write_scope": ["src/", "pnpm-lock.yaml"],
+            "required_tests": [{
+                "id": "test_board_review_rollup_is_incomplete_when_any_task_lacks_a_lens",
+                "path": "factory/tests/test_gates.py",
+                "command": "python3 -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}",
+            }],
+            "verify_commands": ["python3 -m compileall src"],
             "acceptance_criteria": [c["statement"] for c in TASK_CONTRACTS],
             "plan_contracts": TASK_CONTRACTS}
     record_skeleton_then_frontier(repo, [task])
@@ -196,6 +203,13 @@ def _built(repo: Path, tmp_path: Path) -> None:
         path = lib.proof_path(repo, "ENG-1", name, task_id="T1", for_write=True)
         path.parent.mkdir(parents=True, exist_ok=True)
         lib.dump_json(path, body)
+    bind_task_proof_receipts(repo, "T1")
+
+
+def _review_task(repo: Path, *args, **kwargs):
+    """Run review against proof recorded under the test's final environment."""
+    bind_task_proof_receipts(repo, "T1")
+    return review_task(repo, *args, **kwargs)
 
 
 def _seen(tmp_path: Path) -> dict[str, dict]:
@@ -431,7 +445,7 @@ def test_a_big_diff_runs_as_parallel_groups_each_seeing_its_files_and_the_whole_
     _built(repo, tmp_path)
     monkeypatch.setenv("FAKE_SEEN", str(tmp_path / "seen"))
     monkeypatch.setenv(SPLIT_ENV, "1")  # everything is "too big": one group per file
-    outcome = review_task(repo, "T1", skill=str(_fake_skill(tmp_path)), engine="claude")
+    outcome = _review_task(repo, "T1", skill=str(_fake_skill(tmp_path)), engine="claude")
     printed = capsys.readouterr().out
 
     # Three groups, released together (the fake's barrier would otherwise
@@ -482,7 +496,7 @@ def test_a_refused_group_is_retried_alone_with_the_cause_in_its_brief(
     monkeypatch.setenv("FAKE_SEEN", str(tmp_path / "seen"))
     monkeypatch.setenv(SPLIT_ENV, "1")
     monkeypatch.setenv("FAKE_FAIL_ONCE", "group-2")
-    outcome = review_task(repo, "T1", skill=str(_fake_skill(tmp_path)), engine="claude")
+    outcome = _review_task(repo, "T1", skill=str(_fake_skill(tmp_path)), engine="claude")
     printed = capsys.readouterr().out
 
     assert "group-2 refused (combined review pass needs exact full-line" in printed
@@ -512,7 +526,7 @@ def test_scope_only_exit_two_routes_owner_lead_and_keeps_each_accepted_pass(
     monkeypatch.setenv(SPLIT_ENV, "1")
     monkeypatch.setenv("FAKE_SCOPE_ONCE", "group-1:src/b.py")
 
-    outcome = review_task(repo, "T1", skill=str(_fake_skill(tmp_path)), engine="claude")
+    outcome = _review_task(repo, "T1", skill=str(_fake_skill(tmp_path)), engine="claude")
     printed = capsys.readouterr().out
     seen = _seen(tmp_path)
     assert set(seen) == {
@@ -587,7 +601,7 @@ def test_scope_rejected_source_reassesses_its_retained_local_finding_from_a_lead
     monkeypatch.setenv("FAKE_SCOPE_ONCE", "group-1:src/b.py")
     monkeypatch.setenv("FAKE_LOCAL_ON_SCOPE_ONCE", "group-1")
 
-    review_task(repo, "T1", skill=str(_fake_skill(tmp_path)), engine="claude")
+    _review_task(repo, "T1", skill=str(_fake_skill(tmp_path)), engine="claude")
 
     seen = _seen(tmp_path)
     source_retry = seen["group-1.attempt2"]["prompts"][1]
@@ -603,7 +617,7 @@ def test_cross_group_verdict_is_counted_without_routing_or_retry(
     monkeypatch.setenv("FAKE_SEEN", str(tmp_path / "seen"))
     monkeypatch.setenv(SPLIT_ENV, "1")
     monkeypatch.setenv("FAKE_SCOPE_VERDICT_ONCE", "group-1:src/c.py:C2")
-    outcome = review_task(repo, "T1", skill=str(_fake_skill(tmp_path)), engine="claude")
+    outcome = _review_task(repo, "T1", skill=str(_fake_skill(tmp_path)), engine="claude")
 
     seen = _seen(tmp_path)
     assert set(seen) == {
@@ -630,7 +644,7 @@ def test_exit_two_non_scope_or_malformed_output_never_routes_a_lead(
     monkeypatch.setenv("FAKE_SEEN", str(tmp_path / "seen"))
     monkeypatch.setenv(SPLIT_ENV, "1")
     monkeypatch.setenv(mode, "group-1")
-    review_task(repo, "T1", skill=str(_fake_skill(tmp_path)), engine="claude")
+    _review_task(repo, "T1", skill=str(_fake_skill(tmp_path)), engine="claude")
 
     printed = capsys.readouterr().out
     seen = _seen(tmp_path)
@@ -649,7 +663,7 @@ def test_exit_two_scope_metadata_with_missing_markers_is_not_routed(
     monkeypatch.setenv(SPLIT_ENV, "1")
     monkeypatch.setenv("FAKE_SCOPE_ONCE", "group-1:src/b.py")
     monkeypatch.setenv("FAKE_FAIL_ONCE", "group-1")
-    review_task(repo, "T1", skill=str(_fake_skill(tmp_path)), engine="claude")
+    _review_task(repo, "T1", skill=str(_fake_skill(tmp_path)), engine="claude")
 
     printed = capsys.readouterr().out
     seen = _seen(tmp_path)
@@ -668,7 +682,7 @@ def test_scope_rejection_outside_union_fails_closed_without_owner_retry(
     monkeypatch.setenv(SPLIT_ENV, "1")
     monkeypatch.setenv("FAKE_SCOPE_ONCE", "group-1:outside.py")
     with pytest.raises(SystemExit):
-        review_task(repo, "T1", skill=str(_fake_skill(tmp_path)), engine="claude")
+        _review_task(repo, "T1", skill=str(_fake_skill(tmp_path)), engine="claude")
     assert "outside the full group union" in capsys.readouterr().out
     assert set(_seen(tmp_path)) == {
         "group-1.attempt1", "group-2.attempt1", "group-3.attempt1",
@@ -682,7 +696,7 @@ def test_repeated_scope_rejection_uses_the_same_three_attempt_cap(
     monkeypatch.setenv(SPLIT_ENV, "1")
     monkeypatch.setenv("FAKE_SCOPE_ALWAYS", "group-1:src/b.py")
     with pytest.raises(SystemExit):
-        review_task(repo, "T1", skill=str(_fake_skill(tmp_path)), engine="claude")
+        _review_task(repo, "T1", skill=str(_fake_skill(tmp_path)), engine="claude")
     printed = capsys.readouterr().out
     assert "scope-refused 3 times" in printed
     seen = _seen(tmp_path)
@@ -700,7 +714,7 @@ def test_final_union_refuses_a_contract_omitted_by_every_group(
     monkeypatch.setenv("FAKE_SEEN", str(tmp_path / "seen"))
     monkeypatch.setenv(SPLIT_ENV, "1")
     monkeypatch.setenv("FAKE_OMIT_C2", "1")
-    outcome = review_task(repo, "T1", skill=str(_fake_skill(tmp_path)), engine="claude")
+    outcome = _review_task(repo, "T1", skill=str(_fake_skill(tmp_path)), engine="claude")
     verdicts = {
         row["contract_id"]: row["verdict"]
         for row in _generation(repo)["lenses"]["quality"]["contract_verdicts"]
@@ -716,7 +730,7 @@ def test_a_group_refused_three_times_stops_the_review_and_keeps_its_attempts(
     monkeypatch.setenv(SPLIT_ENV, "1")
     monkeypatch.setenv("FAKE_FAIL_ALWAYS", "group-1")
     with pytest.raises(SystemExit):
-        review_task(repo, "T1", skill=str(_fake_skill(tmp_path)), engine="claude")
+        _review_task(repo, "T1", skill=str(_fake_skill(tmp_path)), engine="claude")
     printed = capsys.readouterr().out
     assert "group-1 was refused 3 times; last cause: combined review pass needs" in printed
     assert "read them, fix the cause, rerun the review" in printed
@@ -733,7 +747,7 @@ def test_a_small_diff_is_one_call_as_before_with_the_lockfile_bytes_left_out(
     _built(repo, tmp_path)
     monkeypatch.setenv("FAKE_SEEN", str(tmp_path / "seen"))
     monkeypatch.delenv(SPLIT_ENV, raising=False)
-    outcome = review_task(repo, "T1", skill=str(_fake_skill(tmp_path)), engine="claude")
+    outcome = _review_task(repo, "T1", skill=str(_fake_skill(tmp_path)), engine="claude")
     printed = capsys.readouterr().out
     assert "review split into" not in printed
     assert "review tip excludes 1 lock/generated path(s)" in printed
@@ -758,7 +772,7 @@ def test_each_group_gets_its_own_launcher_and_is_told_the_tree_is_readable(
     monkeypatch.setenv(SPLIT_ENV, "1")
     monkeypatch.setenv(CODEX_BIN_ENV, sys.executable)  # any executable stands in for codex
     monkeypatch.setattr(review_mod, "_require_safe_codex_review_helper", lambda argv: None)
-    review_task(repo, "T1", skill=str(_fake_skill(tmp_path)), engine="codex")
+    _review_task(repo, "T1", skill=str(_fake_skill(tmp_path)), engine="codex")
     seen = _seen(tmp_path)
     lib = load_factory_lib(repo)
     launchers = set()

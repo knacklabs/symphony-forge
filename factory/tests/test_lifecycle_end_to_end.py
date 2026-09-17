@@ -144,11 +144,12 @@ def test_a_change_to_what_was_agreed_still_reaches_the_human(repo: Path,
 
     saved = story_state(repo) / "task-plans" / "T1.md"
     grill = story_state(repo) / "grills" / "tasks" / "T1.json"
+    initial_grill = json.loads(grill.read_text(encoding="utf-8"))
     cold_fields = {
-        field: json.loads(grill.read_text(encoding="utf-8"))[field]
-        for field in ("cold_input_sha256", "final_artifact_sha256",
-                      "finding_dispositions")
+        field: initial_grill[field]
+        for field in ("cold_input_sha256", "finding_dispositions")
     }
+    initial_approved_digest = initial_grill["approved_task_plan_sha256"]
     saved.write_text(
         saved.read_text(encoding="utf-8")
         + "\nThe query now takes an `asOf` instant.\n", encoding="utf-8")
@@ -158,6 +159,9 @@ def test_a_change_to_what_was_agreed_still_reaches_the_human(repo: Path,
     stale_event = native_claude_approval(repo)
     code, out = post_hook(repo, stale_event)
     assert code == 0, out
+    intermediate_approved_digest = json.loads(
+        grill.read_text(encoding="utf-8"),
+    )["approved_task_plan_sha256"]
 
     saved.write_text(
         saved.read_text(encoding="utf-8")
@@ -177,6 +181,14 @@ def test_a_change_to_what_was_agreed_still_reaches_the_human(repo: Path,
     assert code == 0, out
     current_grill = json.loads(grill.read_text(encoding="utf-8"))
     assert {field: current_grill[field] for field in cold_fields} == cold_fields
+    current_digest = load_factory_lib(repo).plan_digest_without_assumptions(saved)
+    assert current_grill["final_artifact_sha256"] == current_digest
+    assert current_grill["approved_task_plan_sha256"] == current_digest
+    assert current_grill["previous_approved_task_plan_sha256"] == \
+        intermediate_approved_digest
+    assert load_factory_lib(repo).approved_task_plan_predecessors(
+        repo, {"id": "T1"}, current_grill,
+    ) == (intermediate_approved_digest, initial_approved_digest)
 
 
 def test_widening_the_scope_still_stops_the_next_delegate(repo: Path, tmp_path):

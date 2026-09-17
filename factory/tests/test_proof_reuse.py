@@ -70,8 +70,7 @@ def test_run_stage_proof_reuses_matching_receipts_by_proof_type(repo: Path, monk
     test_file.parent.mkdir(parents=True, exist_ok=True)
     test_file.write_text("pass\n", encoding="utf-8")
     receipts = {
-        kind: {"status": "passed", "identity":
-               stages.proof_identity(repo, task, kind)["identity"]}
+        kind: {**stages.proof_identity(repo, task, kind), "status": "passed"}
         for kind in ("verify", "tests")
     }
     assert all(stages.proof_identity(repo, task, kind)["reusable"] is True
@@ -124,8 +123,7 @@ def test_review_preflight_requires_current_test_and_verify_receipt_identities(
         "automated": {"status": "passed", "blocking_findings": []},
     })
     receipts = {
-        kind: {"status": "passed", "identity":
-               stages.proof_identity(repo, task, kind)["identity"]}
+        kind: {**stages.proof_identity(repo, task, kind), "status": "passed"}
         for kind in ("verify", "tests")
     }
     stages.write_stages(repo, {"issue": "S1", "stages": [{
@@ -464,6 +462,68 @@ def test_proof_identity_binds_environment_without_persisting_secrets(
         kind: stages.proof_identity(repo, task, kind, product_tree={})["identity"]
         for kind in ("verify", "tests")
     }
+
+
+def test_proof_reuse_refuses_dependency_environment_and_configuration_drift(
+        repo: Path, monkeypatch):
+    state, _runner = _fake_uv_probe(repo, monkeypatch)
+    config = repo / "pytest.ini"
+    config.write_text("[pytest]\naddopts = -q\n", encoding="utf-8")
+    generated = repo / "generated.json"
+    generated.write_text('{"version": 1}\n', encoding="utf-8")
+    task = {
+        **_task(),
+        "required_tests": [{
+            **_task()["required_tests"][0],
+            "command": "uv run --with pytest python -m pytest tests/a.py",
+        }],
+        "verify_commands": [
+            "uv run --with pytest python -m pytest tests/a.py",
+        ],
+        "generated_semantic_inputs": ["generated.json"],
+    }
+    product = {"files": {"src/a.py": "one"}}
+
+    def identities() -> dict[str, str]:
+        return {
+            kind: stages.proof_identity(
+                repo, task, kind, product_tree=product,
+            )["identity"]
+            for kind in ("verify", "tests")
+        }
+
+    baseline = identities()
+    product["files"]["src/a.py"] = "two"
+    assert identities() != baseline
+    product["files"]["src/a.py"] = "one"
+
+    task["required_tests"][0]["command"] += " -k test_a"
+    assert identities()["tests"] != baseline["tests"]
+    task["required_tests"][0]["command"] = (
+        "uv run --with pytest python -m pytest tests/a.py"
+    )
+
+    state["transitive"] = "2"
+    dependency = identities()
+    assert dependency != baseline
+    state["transitive"] = "1"
+
+    monkeypatch.setenv("PYTEST_ADDOPTS", "--strict-markers")
+    environment = identities()
+    assert environment != baseline
+    monkeypatch.delenv("PYTEST_ADDOPTS")
+
+    config.write_text("[pytest]\naddopts = -x\n", encoding="utf-8")
+    assert identities() != baseline
+    config.write_text("[pytest]\naddopts = -q\n", encoding="utf-8")
+
+    generated.write_text('{"version": 2}\n', encoding="utf-8")
+    assert identities()["verify"] != baseline["verify"]
+
+    state["probe"] = "incomplete"
+    assert all(stages.proof_identity(
+        repo, task, kind, product_tree=product,
+    )["reusable"] is False for kind in ("verify", "tests"))
 
 
 def test_pytest_addopts_config_bytes_are_bound_without_persisting_paths(

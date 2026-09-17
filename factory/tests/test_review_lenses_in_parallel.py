@@ -10,8 +10,9 @@ from pathlib import Path
 import pytest
 
 from test_gates import (  # noqa: F401
-    DECOMP, HARNESS, git, head, intake, load_factory_lib, record_skeleton_then_frontier,
-    record_task_grill, repo, save_plan, sign_off, write_in_scope, write_stages,
+    DECOMP, HARNESS, bind_task_proof_receipts, git, head, intake,
+    load_factory_lib, record_skeleton_then_frontier, record_task_grill, repo,
+    save_plan, sign_off, write_in_scope, write_stages,
 )
 
 sys.path.insert(0, str(HARNESS / "factory" / "scripts"))
@@ -70,6 +71,12 @@ def _built(repo: Path, tmp_path: Path) -> None:
     save_plan(repo, tmp_path)
     task = {
         **DECOMP["tasks"][0], "id": "T1", "write_scope": ["src/core.py"],
+        "required_tests": [{
+            "id": "test_board_review_rollup_is_incomplete_when_any_task_lacks_a_lens",
+            "path": "factory/tests/test_gates.py",
+            "command": "python3 -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}",
+        }],
+        "verify_commands": ["python3 -m compileall src"],
         "plan_contracts": [{"id": "C1",
                             "statement": DECOMP["tasks"][0]["acceptance_criteria"][0],
                             "source": "plan"}],
@@ -104,6 +111,7 @@ def _built(repo: Path, tmp_path: Path) -> None:
         path = lib.proof_path(repo, "ENG-1", name, task_id="T1", for_write=True)
         path.parent.mkdir(parents=True, exist_ok=True)
         lib.dump_json(path, body)
+    bind_task_proof_receipts(repo, "T1")
 
 
 def _selection(repo: Path) -> tuple[Path, dict, dict]:
@@ -147,6 +155,7 @@ def test_review_helper_identity_mismatch_refuses_publication(repo, tmp_path, mon
     before = selection_path.read_bytes()
 
     monkeypatch.setenv("FAKE_MUTATE_HELPER", "1")
+    bind_task_proof_receipts(repo, "T1")
     with pytest.raises(SystemExit):
         review_task(repo, "T1", skill=str(helper), engine="claude")
     assert selection_path.read_bytes() == before
@@ -169,6 +178,7 @@ def test_review_product_change_during_helper_refuses_publication(
     before = selection_path.read_bytes()
 
     monkeypatch.setenv("FAKE_MUTATE_PRODUCT", str(repo))
+    bind_task_proof_receipts(repo, "T1")
     with pytest.raises(SystemExit):
         review_task(repo, "T1", skill=str(helper), engine="claude")
     assert "product changed during the review" in capsys.readouterr().out

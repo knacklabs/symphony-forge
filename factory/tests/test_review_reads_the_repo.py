@@ -17,7 +17,7 @@ import pytest
 import sys
 from pathlib import Path
 
-from test_gates import HARNESS, repo  # noqa: F401
+from test_gates import HARNESS, bind_task_proof_receipts, repo  # noqa: F401
 from test_review_lenses_in_parallel import _built  # noqa: F401
 
 sys.path.insert(0, str(HARNESS / "factory" / "scripts"))
@@ -223,6 +223,7 @@ def test_review_hands_the_skill_a_launcher_in_the_control_dir(repo, tmp_path, mo
     # The fake helper is not the pinned upstream helper; the identity check is
     # not what this test is about.
     monkeypatch.setattr(review_mod, "_require_safe_codex_review_helper", lambda skill: None)
+    bind_task_proof_receipts(repo, "T1")
     outcome = review_task(repo, "T1", skill=str(skill), engine="codex")
     assert outcome["stamped"] is True
     printed = capsys.readouterr().out
@@ -249,6 +250,7 @@ def test_the_run_says_so_when_it_falls_back_to_the_diff_only_bundle(repo, tmp_pa
     skill.write_text(FAKE_SKILL, encoding="utf-8")
     monkeypatch.setenv("FAKE_SKILL_SEEN", str(tmp_path / "seen"))
     # Another engine runs where the skill puts it.
+    bind_task_proof_receipts(repo, "T1")
     review_task(repo, "T1", skill=str(skill), engine="claude")
     printed = capsys.readouterr().out
     assert "sees only the diff bundle" in printed and "claude engine" in printed
@@ -265,6 +267,7 @@ def test_the_environment_switch_keeps_the_skill_empty_folder(repo, tmp_path, mon
     monkeypatch.setenv(CODEX_BIN_ENV, sys.executable)
     monkeypatch.setenv(EMPTY_WORKSPACE_ENV, "1")
     monkeypatch.setattr(review_mod, "_require_safe_codex_review_helper", lambda skill: None)
+    bind_task_proof_receipts(repo, "T1")
     review_task(repo, "T1", skill=str(skill), engine="codex")
     printed = capsys.readouterr().out
     assert "sees only the diff bundle" in printed and EMPTY_WORKSPACE_ENV in printed
@@ -290,6 +293,7 @@ def test_an_outdated_helper_is_refused_before_the_run_not_after(repo, tmp_path, 
                    .replace('"provider_report"', '"provider"'), encoding="utf-8")
     seen = tmp_path / "seen"
     monkeypatch.setenv("FAKE_SKILL_SEEN", str(seen))
+    bind_task_proof_receipts(repo, "T1")
     with pytest.raises(SystemExit):
         review_task(repo, "T1", skill=str(old), engine="claude")
     printed = capsys.readouterr().out

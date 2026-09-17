@@ -14,10 +14,12 @@ branch collides with every other.
 """
 from __future__ import annotations
 
+import contextlib
 import json
 import shlex
 import subprocess
 import sys
+from argparse import Namespace
 from pathlib import Path
 
 import pytest
@@ -269,7 +271,20 @@ def _ship_ready(repo: Path, tmp_path: Path) -> dict:
     git(repo, "push", "-q", "origin", f"{head(repo)}:refs/heads/main")
     git(repo, "fetch", "-q", "origin")
     git(repo, "checkout", "-qb", "feat/test-close")
-    start_stage(repo, tmp_path, STAGE_TASK)
+    python = shlex.quote(sys.executable)
+    task = {
+        **STAGE_TASK,
+        "verify_commands": [f"{python} -m compileall src"],
+        "required_tests": [{
+            "id": "test_plan_body_digest_is_line_ending_agnostic",
+            "path": "factory/tests/test_gates.py",
+            "command": (
+                f"{python} -m pytest {{path}}::{{id}} -o junit_family=legacy "
+                "--junitxml={report}"
+            ),
+        }],
+    }
+    start_stage(repo, tmp_path, task)
     write_in_scope(repo, "src/core.py")
     stamp_and_commit(repo)
     # The seal pushes the run pointer's branch; the intake fixture names a
@@ -283,11 +298,14 @@ def _ship_ready(repo: Path, tmp_path: Path) -> dict:
         "base_main_sha": git(repo, "rev-parse", "origin/main"),
     })
     (control / "run.json").write_text(json.dumps(pointer), encoding="utf-8")
-    proof = write_task_proof(repo, "T1", publish_review=True)
+    env, _ = fake_gh_env(tmp_path)
+    with pytest.MonkeyPatch.context() as proof_environment:
+        for key, value in env.items():
+            proof_environment.setenv(key, value)
+        proof = write_task_proof(repo, "T1", publish_review=True)
     git(repo, "add", proof.relative_to(repo).as_posix(),
         ".factory/review-briefs/all.md")
     git(repo, "commit", "-qm", "record T1 proof")
-    env, _ = fake_gh_env(tmp_path)
     return env
 
 
@@ -315,8 +333,8 @@ def test_task_close_goes_from_built_to_pr_and_is_idempotent(repo, tmp_path):
 
 
 def test_task_close_reopens_a_done_stage_whose_diff_moved(repo, tmp_path):
-    """A moved post-seal diff reopens the stage, but stale verify and test
-    proof must stop review before the helper launches."""
+    """A moved post-seal diff reopens the stage, but stale verify proof must
+    stop review after close refreshes its truthful automated test evidence."""
     env = _ship_ready(repo, tmp_path)
     code, out = run(repo, "forge.py", "task", "close", "T1",
                     "--skill", str(tmp_path / "no-such-autoreview"), env=env)
@@ -330,7 +348,7 @@ def test_task_close_reopens_a_done_stage_whose_diff_moved(repo, tmp_path):
     assert code != 0, out
     assert "review proof preflight failed before helper launch" in out, out
     assert "product content changed after verify proof was recorded" in out, out
-    assert "product content changed after tests proof was recorded" in out, out
+    assert "product content changed after tests proof was recorded" not in out, out
     assert "autoreview skill not found" not in out, out
     assert "reopened: the diff moved" in out
     stage = _stage(repo)
@@ -376,7 +394,11 @@ def _post_seal_fix_with_a_review(repo: Path, tmp_path: Path, priority: str) -> t
     write_in_scope(repo, "src/core.py", "version = 2\n")
     git(repo, "add", "src/core.py")
     git(repo, "commit", "-qm", "post-seal fix")
-    write_task_proof(repo, "T1")
+    review_env = {**env, "FAKE_PRIORITY": priority}
+    with pytest.MonkeyPatch.context() as proof_environment:
+        for key, value in review_env.items():
+            proof_environment.setenv(key, value)
+        write_task_proof(repo, "T1")
     task_reviews = story_state(repo) / "tasks" / "T1" / "reviews"
     for aspect in ("quality", "performance", "security"):
         (task_reviews / f"{aspect}.json").unlink()
@@ -385,7 +407,7 @@ def _post_seal_fix_with_a_review(repo: Path, tmp_path: Path, priority: str) -> t
     skill = tmp_path / "fake-autoreview.py"
     skill.write_text(FAKE_REVIEW_WITH, encoding="utf-8")
     code, out = run(repo, "forge.py", "task", "close", "T1", "--engine", "claude",
-                    "--skill", str(skill), env={**env, "FAKE_PRIORITY": priority})
+                    "--skill", str(skill), env=review_env)
     return {"code": code, "env": env, "skill": skill}, out
 
 
@@ -428,6 +450,82 @@ def test_task_close_runs_the_proof_before_it_spends_a_review(repo, tmp_path):
     assert "verify command" in out, out
     assert "autoreview skill not found" not in out, "the review ran before the proof"
     assert "is not recorded for ENG-1" not in out, "the review ran before the proof"
+
+
+def test_task_close_is_the_single_full_suite_owner_and_records_truthful_automated_proof(
+        repo, monkeypatch):
+    from forge_cli import close, delegate, review, stages, tasks
+
+    task = {**STAGE_TASK, "verify_commands": ["canonical verify"]}
+    stage = {"id": "T1", "status": "active", "started_at": "now"}
+    proof_root = story_state(repo) / "tasks" / "T1"
+    proof_root.mkdir(parents=True, exist_ok=True)
+    tests_path = proof_root / "tests.json"
+    tests_path.write_text(json.dumps({
+        "commit": head(repo),
+        "automated": {
+            "generated_by": "implementer", "status": "passed",
+            "summary": "focused checks passed", "blocking_findings": [],
+            "commands_run": ["focused pytest"], "reviewed_scope": ["src/"],
+            "remaining_gaps": [], "recorded_at": "earlier", "commit": head(repo),
+        },
+    }), encoding="utf-8")
+    reviewed = {"done": False}
+
+    monkeypatch.setattr(review, "_product_dirty", lambda _base: [])
+    monkeypatch.setattr(close, "load_json", lambda *_args, **_kwargs: {
+        "issue_key": "ENG-1",
+    })
+    monkeypatch.setattr(close, "task_seal_shared_problems", lambda *_args: [])
+    monkeypatch.setattr(stages, "task_for", lambda *_args: task)
+    monkeypatch.setattr(stages, "load_stages", lambda _base: {"stages": [stage]})
+    monkeypatch.setattr(stages, "stage_review_binding", lambda *_args: {
+        "delta_id": "d" * 64,
+    })
+    monkeypatch.setattr(stages, "_measure", lambda *_args: {"strays": []})
+    monkeypatch.setattr(stages, "_require_successful_launch", lambda *_args: "")
+    monkeypatch.setattr(stages, "stamp_is_fresh", lambda *_args: reviewed["done"])
+    monkeypatch.setattr(delegate, "load_delegations", lambda _base: [])
+    monkeypatch.setattr(
+        delegate, "delegation_exclusion",
+        lambda *_args, **_kwargs: contextlib.nullcontext(),
+    )
+
+    proof = ({}, {}, [])
+
+    def run_proof(_base, _task_id, _task, *, record_close_evidence=False):
+        assert record_close_evidence is True
+        data = json.loads(tests_path.read_text(encoding="utf-8"))
+        data["automated"]["commands_run"].append("canonical verify")
+        tests_path.write_text(json.dumps(data), encoding="utf-8")
+        return proof
+
+    monkeypatch.setattr(stages, "run_stage_proof", run_proof)
+    monkeypatch.setattr(
+        close, "task_proof_problems", lambda *_args, **_kwargs: [],
+    )
+
+    def run_review(*_args, **_kwargs):
+        evidence = json.loads(tests_path.read_text(encoding="utf-8"))
+        assert evidence["automated"]["commands_run"] == [
+            "focused pytest", "canonical verify",
+        ]
+        reviewed["done"] = True
+        return {"blocking": 0}
+
+    monkeypatch.setattr(review, "review_task", run_review)
+    monkeypatch.setattr(
+        stages, "_finish_stage",
+        lambda *_args, **_kwargs: stage.update(status="done"),
+    )
+    monkeypatch.setattr(tasks, "seal_task", lambda *_args: None)
+
+    close.cmd_task_close(Namespace(
+        repo=str(repo), id="T1", engine="codex", max_priority="P3", skill=None,
+    ))
+
+    assert reviewed["done"] is True
+    assert stage["status"] == "done"
 
 
 def test_task_close_stops_early_and_names_the_next_step(repo, tmp_path):

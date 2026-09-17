@@ -33,7 +33,7 @@ from factory_lib import (
     repo_root, require_approved_plan_digest,
     require_ready_task, require_task_worktree, run_state_path,
     safe_factory_write_json, sha256_of, story_dir, task_digest,
-    proof_read_path,
+    proof_path, proof_read_path,
 )
 
 from .common import fail
@@ -1931,7 +1931,35 @@ def _run_required_tests(base: Path, stage_id: str, task: dict) -> list[str]:
     return misses
 
 
-def _run_verify_commands(base: Path, stage_id: str, task: dict) -> None:
+def _canonical_verify_command(base: Path, command: str) -> bool:
+    """Whether a command is the repository's direct canonical verifier."""
+    try:
+        tokens = shlex.split(command)
+    except ValueError:
+        return False
+    while tokens and re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*=.*", tokens[0]):
+        tokens.pop(0)
+    python_index = 0
+    if len(tokens) > 2 and Path(tokens[0]).name.lower() in {"uv", "uv.exe"} \
+            and tokens[1] == "run":
+        python_index = next((
+            index for index, token in enumerate(tokens[2:], 2)
+            if re.fullmatch(r"python(?:3(?:\.\d+)?)?(?:\.exe)?",
+                            Path(token).name.lower())
+        ), -1)
+    if python_index < 0 or len(tokens) != python_index + 2:
+        return False
+    if not re.fullmatch(r"python(?:3(?:\.\d+)?)?(?:\.exe)?",
+                        Path(tokens[python_index]).name.lower()):
+        return False
+    return os.path.abspath(base / tokens[-1]) == os.path.abspath(
+        base / "factory/scripts/verify.py"
+    )
+
+
+def _run_verify_commands(
+    base: Path, stage_id: str, task: dict, canonical_junit: Path | None = None,
+) -> None:
     from .delegate import (
         blocked_termination_signals, _capture_spawn_identity, _process_table,
         _terminate_observed_process_tree, _wait_and_reap,
@@ -1948,6 +1976,9 @@ def _run_verify_commands(base: Path, stage_id: str, task: dict) -> None:
         env = os.environ.copy()
         env["FORGE_PROCESS_TOKEN"] = process_token
         env["PYTHONUTF8"] = "1"
+        if canonical_junit is not None and _canonical_verify_command(
+                base, str(command)):
+            env["FORGE_CANONICAL_JUNIT"] = str(canonical_junit)
         with tempfile.TemporaryFile(
                 mode="w+t", encoding="utf-8", errors="replace"
         ) as stdout_log, tempfile.TemporaryFile(
@@ -1999,6 +2030,34 @@ def _run_verify_commands(base: Path, stage_id: str, task: dict) -> None:
             tail = (stderr or stdout or "").strip().splitlines()
             fail(f"{stage_id} verify command failed (exit {proc.returncode}): "
                  f"{command}\n" + "\n".join(tail[-15:]))
+
+
+def _canonical_junit_satisfies_required_tests(report: Path, task: dict) -> bool:
+    """Accept a canonical report only for one unambiguous pass per declaration."""
+    try:
+        root = ET.parse(report).getroot()
+    except (ET.ParseError, OSError):
+        return False
+    cases = list(root.iter("testcase"))
+    for proof in task.get("required_tests") or []:
+        if not isinstance(proof, dict):
+            return False
+        test_id = proof.get("id")
+        rel = proof.get("path")
+        if not isinstance(test_id, str) or not isinstance(rel, str):
+            return False
+        matches = [
+            case for case in cases
+            if _junit_case_matches_id(case, test_id)
+            and _junit_case_attributed(case, rel)
+        ]
+        if len(matches) != 1:
+            return False
+        case = matches[0]
+        if any(case.find(outcome) is not None
+               for outcome in ("failure", "error", "skipped")):
+            return False
+    return True
 
 
 def _file_identity(path: Path) -> dict[str, object]:
@@ -2467,7 +2526,19 @@ def _proof_receipt(base: Path, stage_id: str, kind: str) -> dict:
     stage = _find(load_stages(base), stage_id)
     receipts = stage.get("proof_receipts")
     value = receipts.get(kind) if isinstance(receipts, dict) else None
-    return value if isinstance(value, dict) else {}
+    if (not isinstance(value, dict)
+            or value.get("status") != "passed"
+            or value.get("reusable") is not True
+            or not isinstance(value.get("inputs"), dict)
+            or not re.fullmatch(r"[0-9a-f]{64}", str(value.get("identity", "")))):
+        return {}
+    canonical = json.dumps(
+        value["inputs"], sort_keys=True, separators=(",", ":"),
+        ensure_ascii=False,
+    ).encode("utf-8")
+    if hashlib.sha256(canonical).hexdigest() != value["identity"]:
+        return {}
+    return value
 
 
 def _store_proof_receipt(
@@ -2483,7 +2554,44 @@ def _store_proof_receipt(
         write_stages(base, data)
 
 
-def run_stage_proof(base: Path, stage_id: str, task: dict) -> tuple[dict, dict, list[str]]:
+def _record_close_automated_evidence(
+        base: Path, stage_id: str, commands: list[str]) -> None:
+    """Extend implementer evidence with the close-owned commands just executed."""
+    if not commands:
+        return
+    state = raw_run_state(base)
+    story = str(state.get("issue_key") or state.get("story") or "")
+    path = proof_path(
+        base, story, "tests.json", task_id=stage_id, for_write=True,
+    )
+    existing = load_json(path, default={})
+    automated = existing.get("automated") if isinstance(existing, dict) else None
+    if not isinstance(automated, dict):
+        fail(f"{stage_id} has no implementer automated evidence to extend with "
+             "the close-owned task proof")
+    prior = automated.get("commands_run")
+    if not isinstance(prior, list):
+        fail(f"{stage_id} automated evidence has malformed commands_run")
+    merged = [str(command) for command in prior]
+    merged.extend(command for command in commands if command not in merged)
+    commit = head_sha(base)
+    automated.update({
+        "status": "passed",
+        "summary": "Focused checks and forge task close proof passed.",
+        "blocking_findings": [],
+        "commands_run": merged,
+        "recorded_at": now_iso(),
+        "commit": commit,
+    })
+    existing["commit"] = commit
+    existing["updated_at"] = now_iso()
+    dump_json(path, existing)
+
+
+def run_stage_proof(
+        base: Path, stage_id: str, task: dict, *,
+        record_close_evidence: bool = False,
+) -> tuple[dict, dict, list[str]]:
     """Run the task's verify commands and required tests, read-only.
 
     Returns the product and authority snapshots the proof ran against and the
@@ -2510,17 +2618,37 @@ def run_stage_proof(base: Path, stage_id: str, task: dict) -> tuple[dict, dict, 
     test_receipt = _proof_receipt(base, stage_id, "tests")
     reuse_verify = (verify_identity.get("reusable") is True
                     and verify_receipt.get("status") == "passed"
-                    and verify_receipt.get("identity") == verify_identity["identity"])
+                    and verify_receipt.get("identity") == verify_identity["identity"]
+                    and verify_receipt.get("inputs") == verify_identity["inputs"])
     reuse_tests = (test_identity.get("reusable") is True
                    and test_receipt.get("status") == "passed"
-                   and test_receipt.get("identity") == test_identity["identity"])
+                   and test_receipt.get("identity") == test_identity["identity"]
+                   and test_receipt.get("inputs") == test_identity["inputs"])
     test_id_misses = list(test_receipt.get("test_id_misses") or []) \
         if reuse_tests else []
-    with termination_signal_guard():
-        if not reuse_verify:
-            _run_verify_commands(base, stage_id, task)
-        if not reuse_tests:
-            test_id_misses = _run_required_tests(base, stage_id, task)
+    commands_run: list[str] = []
+    with tempfile.TemporaryDirectory(prefix="forge-canonical-junit-") as tmp:
+        canonical_junit = Path(tmp) / "pytest.xml"
+        with termination_signal_guard():
+            if not reuse_verify:
+                _run_verify_commands(base, stage_id, task, canonical_junit)
+                commands_run.extend(
+                    str(command) for command in task.get("verify_commands") or []
+                    if str(command).strip()
+                )
+            if not reuse_tests:
+                if canonical_junit.is_file() and \
+                        _canonical_junit_satisfies_required_tests(
+                            canonical_junit, task):
+                    test_id_misses = []
+                else:
+                    test_id_misses = _run_required_tests(base, stage_id, task)
+                    commands_run.extend(
+                        str(proof.get("command"))
+                        for proof in task.get("required_tests") or []
+                        if isinstance(proof, dict)
+                        and str(proof.get("command") or "").strip()
+                    )
     if product_tree_snapshot(base) != proof_tree:
         fail(f"{stage_id} proof commands changed the product tree; verification "
              "must be read-only")
@@ -2532,6 +2660,8 @@ def run_stage_proof(base: Path, stage_id: str, task: dict) -> tuple[dict, dict, 
     if not reuse_tests:
         test_identity = {**test_identity, "test_id_misses": test_id_misses}
         _store_proof_receipt(base, stage_id, "tests", test_identity)
+    if record_close_evidence:
+        _record_close_automated_evidence(base, stage_id, commands_run)
     authority_tree = protected_authority_snapshot(base)
     return proof_tree, authority_tree, test_id_misses
 

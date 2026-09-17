@@ -1032,6 +1032,23 @@ def seal_fixture_tasks(repo: Path, tmp_path: Path, *task_ids: str) -> None:
         assert code == 0, out
 
 
+def bind_task_proof_receipts(repo: Path, task_id: str = "T1") -> None:
+    """Bind fixture proof files to the current production proof identity."""
+    from forge_cli.stages import (  # noqa: E402
+        _store_proof_receipt, product_tree_snapshot, proof_identity, task_for,
+    )
+
+    task = task_for(repo, task_id)
+    product_tree = product_tree_snapshot(repo)
+    probe_memo = {}
+    for kind in ("verify", "tests"):
+        identity = proof_identity(
+            repo, task, kind, product_tree=product_tree,
+            tool_probe_memo=probe_memo,
+        )
+        _store_proof_receipt(repo, task_id, kind, identity)
+
+
 def write_task_proof(repo: Path, task_id: str = "T1", *,
                      commit: str | None = None, user_facing: bool = False,
                      blocked: bool = False,
@@ -1066,6 +1083,7 @@ def write_task_proof(repo: Path, task_id: str = "T1", *,
         }
     if not preserve_existing_proof:
         lib.dump_json(task_root / "tests.json", tests)
+    bind_task_proof_receipts(repo, task_id)
     brief_sha256 = "b" * 64
     branch_digest = lib.branch_diff_digest(repo)
     review_run_id = hashlib.sha256(
@@ -15931,7 +15949,9 @@ def test_delegate_brief_carries_criteria_and_scope(repo, tmp_path):
     assert "src/" in brief                          # write scope
     assert "src/existing_helper.py" in brief        # existing modules
     assert "test_slice" in brief                    # required tests
-    assert "Before you report: run every required test" in brief  # 0068
+    assert "Before you report: run the smallest focused checks" in brief
+    assert "forge task close` owns the one task-wide" in brief
+    assert "run every required test" not in brief
     assert "A test you did not run is not reported as passing" in brief
     assert "the retry path" in brief                # reviewer focus
     assert "Implementer contract" in brief          # the prompt, inlined
@@ -19048,6 +19068,7 @@ def test_review_consumers_include_complete_approved_inputs(
         route.setattr(review_mod, "cmd_review_brief", lambda _args: None)
         route.setattr(review_mod, "resolve_skill", lambda _explicit: tmp_path / "helper")
         route.setattr(review_mod, "_product_dirty", lambda _base: [])
+        route.setattr(review_mod, "pre_review_proof_problems", lambda *_args: [])
         route.setattr(review_mod, "_run_skill", inspect_skill)
         route.setattr(review_mod.tempfile, "mkdtemp", lambda **_kwargs: str(review_tmp))
         route.setattr(stages_mod, "stamp_stage_review", lambda *_args, **_kwargs: None)
@@ -19094,14 +19115,15 @@ def test_review_consumers_include_complete_approved_inputs(
         def forbidden(*_args, **_kwargs):
             pytest.fail("review helper or recorder launched after unsafe destination")
 
-            with monkeypatch.context() as unsafe:
-                unsafe.setattr(review_mod, "cmd_review_brief", lambda _args: None)
-                unsafe.setattr(
-                    review_mod, "render_review_dataset",
-                    lambda *_args: dataset_bytes,
-                )
-                unsafe.setattr(review_mod, "resolve_skill", lambda _explicit: tmp_path / "helper")
+        with monkeypatch.context() as unsafe:
+            unsafe.setattr(review_mod, "cmd_review_brief", lambda _args: None)
+            unsafe.setattr(
+                review_mod, "render_review_dataset",
+                lambda *_args: dataset_bytes,
+            )
+            unsafe.setattr(review_mod, "resolve_skill", lambda _explicit: tmp_path / "helper")
             unsafe.setattr(review_mod, "_product_dirty", lambda _base: [])
+            unsafe.setattr(review_mod, "pre_review_proof_problems", lambda *_args: [])
             unsafe.setattr(review_mod, "resolve_review_base", lambda *_args: head(repo))
             unsafe.setattr(review_mod, "review_excluded_prefixes", lambda _base: ())
             unsafe.setattr(review_mod, "_require_git", fake_require_git)
@@ -22310,6 +22332,92 @@ def test_junit_case_attributed_file_or_classname_suffix():
     assert _junit_case_attributed(vitest, rel)
     assert _junit_case_attributed(withfile, rel)
     assert not _junit_case_attributed(wrong, rel)
+
+
+def test_canonical_junit_satisfies_exact_required_nodes_without_selector_rerun(
+        repo, tmp_path, monkeypatch):
+    import forge_cli.stages as stages
+
+    source = repo / "src/test_core.py"
+    source.parent.mkdir(parents=True, exist_ok=True)
+    source.write_text("def test_slice():\n    pass\n", encoding="utf-8")
+    task = {
+        "verify_commands": ["python3 factory/scripts/verify.py"],
+        "required_tests": [{
+            "id": "test_slice", "path": "src/test_core.py",
+            "command": "python3 -m pytest {path}::{id} --junitxml={report}",
+        }],
+    }
+    monkeypatch.setattr(stages, "proof_identity", lambda *_args, **_kwargs: {
+        "identity": "a" * 64, "inputs": {}, "reusable": True,
+    })
+    monkeypatch.setattr(stages, "_proof_receipt", lambda *_args: {})
+    monkeypatch.setattr(stages, "_store_proof_receipt", lambda *_args: None)
+    monkeypatch.setattr(stages, "product_tree_snapshot", lambda _base: {})
+    monkeypatch.setattr(stages, "protected_authority_snapshot", lambda _base: {})
+
+    def canonical(_base, _stage_id, _task, report):
+        report.write_text(
+            '<testsuite><testcase name="test_slice" '
+            'file="src/test_core.py"/></testsuite>', encoding="utf-8",
+        )
+
+    monkeypatch.setattr(stages, "_run_verify_commands", canonical)
+    monkeypatch.setattr(
+        stages, "_run_required_tests",
+        lambda *_args: pytest.fail("dedicated selector reran after canonical proof"),
+    )
+
+    stages.run_stage_proof(repo, "T1", task)
+
+
+def test_canonical_junit_falls_back_when_required_node_identity_is_missing(
+        repo, tmp_path, monkeypatch):
+    import forge_cli.stages as stages
+
+    task = {"required_tests": [{"id": "test_slice", "path": "src/test_core.py"}]}
+    report = tmp_path / "canonical.xml"
+    variants = (
+        "<testsuite/>",
+        ('<testsuite><testcase name="test_slice" file="src/test_core.py"/>'
+         '<testcase name="test_slice" file="src/test_core.py"/></testsuite>'),
+        ('<testsuite><testcase name="test_slice" file="src/test_core.py">'
+         '<skipped/></testcase></testsuite>'),
+        "not xml",
+    )
+    for body in variants:
+        report.write_text(body, encoding="utf-8")
+        assert not stages._canonical_junit_satisfies_required_tests(report, task)
+
+    source = repo / "src/test_core.py"
+    source.parent.mkdir(parents=True, exist_ok=True)
+    source.write_text("def test_slice():\n    pass\n", encoding="utf-8")
+    runnable = {
+        "verify_commands": ["python3 factory/scripts/verify.py"],
+        "required_tests": [{
+            **task["required_tests"][0],
+            "command": "python3 -m pytest {path}::{id} --junitxml={report}",
+        }],
+    }
+    monkeypatch.setattr(stages, "proof_identity", lambda *_args, **_kwargs: {
+        "identity": "a" * 64, "inputs": {}, "reusable": True,
+    })
+    monkeypatch.setattr(stages, "_proof_receipt", lambda *_args: {})
+    monkeypatch.setattr(stages, "_store_proof_receipt", lambda *_args: None)
+    monkeypatch.setattr(stages, "product_tree_snapshot", lambda _base: {})
+    monkeypatch.setattr(stages, "protected_authority_snapshot", lambda _base: {})
+    monkeypatch.setattr(
+        stages, "_run_verify_commands",
+        lambda _base, _stage, _task, junit: junit.write_text(
+            "<testsuite/>", encoding="utf-8"),
+    )
+    calls = []
+    monkeypatch.setattr(
+        stages, "_run_required_tests", lambda *_args: calls.append("selector") or [],
+    )
+
+    stages.run_stage_proof(repo, "T1", runnable)
+    assert calls == ["selector"]
 
 
 def test_plan_body_digest_is_line_ending_agnostic(tmp_path):

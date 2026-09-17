@@ -18,9 +18,10 @@
     "lean-completed-manifest-compat.md": {
       "sha256": "a01ffdeb66e1ad0e94d9825eac4e394e25ee7070195473d6029bd9747cf2c030",
       "added": "2026-09-17T11:32:22+00:00",
-      "status": "pending",
+      "status": "ignored",
       "outputs": [],
-      "notes": ""
+      "notes": "Ledger entry has no source file in the checkout; its completed-manifest compatibility requirement is already represented by the authorized supplemental historical migration contract and will be tested there. No absent bytes were claimed as reviewed.",
+      "marked_at": "2026-09-17T18:31:06+00:00"
     }
   }
 }

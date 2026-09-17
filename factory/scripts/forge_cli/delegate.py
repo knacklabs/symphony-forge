@@ -1009,15 +1009,12 @@ PONYTAIL_BRIEF = (
 )
 
 
-# The worker can run its own tests (decision 0068); nothing asked it to. It
-# reported "host verification remains required" in 22 of 31 runs and the
-# fix loop paid a round trip per finding.
 BEFORE_YOU_REPORT = (
-    "\n\nBefore you report: run every required test and every verify command "
-    "above from this worktree, and paste each command's summary line into your "
-    "report. A test you did not run is not reported as passing. If a command "
-    "cannot run here, name the command, quote its error, and say what you "
-    "verified instead."
+    "\n\nBefore you report: run the smallest focused checks for the paths you "
+    "changed and paste each command's summary line into your report. "
+    "`forge task close` owns the one task-wide required-test and verification "
+    "run after all scoped work lands. A test you did not run is not reported "
+    "as passing."
 )
 
 
@@ -1145,8 +1142,9 @@ def compose_brief(base: Path, task: dict, *, write: bool, user_facing: bool,
          "task-wide required tests or verify commands; the orchestrator runs them "
          "after all scoped fixes land."
          if narrowed else
-         "Delegation coverage: FULL effective task scope. Run the declared required "
-         "tests and verify commands before returning."),
+         "Delegation coverage: FULL effective task scope. Run the smallest relevant "
+         "focused tests for the paths you change, then return. `forge task close` "
+         "owns the task-wide required tests and verify commands."),
     ]
     body = "\n".join(lines) + "\n"
     body += _section("Constitution — coding standards (BINDING)", CONSTITUTION_BRIEF)
@@ -1175,7 +1173,7 @@ def compose_brief(base: Path, task: dict, *, write: bool, user_facing: bool,
     verify_heading = (
         "Verify commands (task-wide proof; orchestrator runs these after scoped fixes)"
         if narrowed else
-        "Verify commands (run them yourself; they run again when the stage closes)"
+        "Verify commands (task-wide proof; forge task close runs these once)"
     )
     verify_body = "\n".join(
         f"- `{c}`" for c in task.get("verify_commands") or [])

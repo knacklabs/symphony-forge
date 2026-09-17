@@ -504,7 +504,7 @@ its marker to the trunk (via the reconcile PR) and the frontier advances. This
 is a reconcile, not a shortcut: it refuses when the work is not genuinely on the
 trunk, so it can never fabricate a ship.
 
-There is ONE review per task. `forge review` produces
+There is ONE review per task. `./forge review <task-id>` produces
 `.factory/stories/<KEY>/tasks/<id>/reviews/*` and the stage's review stamp in the same run (decision 0001 D6:
 the recorded review is the only review gate); no separate stage-local review
 loop exists, and `record_review_from_json.py --aspect stage-local` remains

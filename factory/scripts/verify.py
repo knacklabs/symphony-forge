@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import argparse
 import os
+import shlex
 import subprocess
 from factory_lib import (active_story_key, head_sha, gate, dump_json, now_iso,
                          proof_path, repo_root, run_cmd, run_state_path,
@@ -99,9 +100,32 @@ commands = [(phase, os.environ.get(variable) or "")
             for phase, variable in _ordered
             if (os.environ.get(variable) or "").strip()]
 
+
+def canonical_junit_command(command: str) -> str:
+    """Attach close-owned JUnit capture only to a direct pytest invocation."""
+    report = os.environ.get("FORGE_CANONICAL_JUNIT", "")
+    if not report:
+        return command
+    try:
+        tokens = shlex.split(command)
+    except ValueError:
+        return command
+    if "-m" not in tokens or any(
+            token == "--junitxml" or token.startswith("--junitxml=")
+            for token in tokens):
+        return command
+    module = tokens.index("-m")
+    if module + 1 >= len(tokens) or tokens[module + 1] != "pytest":
+        return command
+    return shlex.join([
+        *tokens, "-o", "junit_family=legacy", f"--junitxml={report}",
+    ])
+
 results = []
 all_ok = True
 for phase, command in commands:
+    if phase == "tests":
+        command = canonical_junit_command(command)
     if args.print_only:
         print(f"{phase}: {command}")
         continue
