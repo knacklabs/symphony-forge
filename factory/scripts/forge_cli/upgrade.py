@@ -1461,6 +1461,27 @@ def _validate_completed_manifest(target: Path, saved: dict) -> None:
         _committed_task_marker, product_delta_digest,
         read_selected_review_generation, validate_review_document,
     )
+    legacy_keys = {
+        "generated_by", "version", "input_inventory_digest", "output_digest",
+        "installed_runtime_digest", "entries", "recorded_at", "completed_at",
+    }
+    legacy_empty_completion = set(saved) == legacy_keys
+    if legacy_empty_completion:
+        empty_digest = _inventory_digest([])
+        if (saved.get("generated_by") != "upgrade"
+                or saved.get("version") != LEAN_MIGRATION_VERSION
+                or not isinstance(saved.get("recorded_at"), str)
+                or not saved["recorded_at"].strip()
+                or not isinstance(saved.get("completed_at"), str)
+                or not saved["completed_at"].strip()
+                or saved.get("entries") != []
+                or saved.get("input_inventory_digest") != empty_digest
+                or saved.get("output_digest") != empty_digest
+                or re.fullmatch(
+                    r"[0-9a-f]{64}", saved.get("installed_runtime_digest", ""),
+                ) is None):
+            fail("Lean migration completed manifest is incomplete or tampered")
+        return
     installed_runtime = saved.get("installed_runtime")
     preserved_entries = saved.get("preserved_entries")
     if (saved.get("generated_by") != "upgrade"

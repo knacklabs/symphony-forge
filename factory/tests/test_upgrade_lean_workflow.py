@@ -818,6 +818,33 @@ def test_completed_lean_manifest_allows_later_runtime_versions(repo: Path):
     assert upgrade.preflight_lean_migration(repo) is None
 
 
+def test_completed_lean_manifest_accepts_exact_original_empty_shape(repo: Path):
+    empty_digest = upgrade._inventory_digest([])
+    manifest = repo / ".factory/migrations/lean-workflow-v2.json"
+    manifest.parent.mkdir(parents=True, exist_ok=True)
+    original = {
+        "generated_by": "upgrade",
+        "version": "lean-workflow-v2",
+        "input_inventory_digest": empty_digest,
+        "output_digest": empty_digest,
+        "installed_runtime_digest": (
+            "bb4b6c05b41897447063959fc782e9ca4c2e00f9b219559314b725485b91b2e8"
+        ),
+        "entries": [],
+        "recorded_at": "2026-09-14T05:48:01+00:00",
+        "completed_at": "2026-09-14T05:48:01+00:00",
+    }
+    manifest.write_text(json.dumps(original) + "\n", encoding="utf-8")
+
+    assert upgrade.preflight_lean_migration(repo) is None
+    assert json.loads(manifest.read_text(encoding="utf-8")) == original
+
+    original["output_digest"] = "0" * 64
+    manifest.write_text(json.dumps(original) + "\n", encoding="utf-8")
+    with pytest.raises(SystemExit):
+        upgrade.preflight_lean_migration(repo)
+
+
 def test_completed_lean_manifest_allows_mutable_preserved_records_and_profiles(
         repo: Path):
     grill = repo / ".factory/stories/S1/grills/plan.json"
