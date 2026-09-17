@@ -918,6 +918,53 @@ def test_original_empty_completion_transitions_to_current_inventory(repo: Path):
     assert manifest.read_bytes() == original_bytes
 
 
+def test_original_empty_completion_retires_conflicting_fixed_history_with_exact_selected_sentinel(
+        repo: Path):
+    reviews = _sealed_fixed_review(repo)
+    migration = upgrade.preflight_lean_migration(repo)
+    assert migration is not None and len(migration["review_candidates"]) == 1
+    candidate, _sources = migration["review_candidates"][0]
+    from factory_lib import publish_review_generation
+    publish_review_generation(repo, candidate["story"], candidate["task_id"], candidate)
+    selected = reviews / "selected.json"
+    selected_before = selected.read_bytes()
+
+    quality = reviews / "quality.json"
+    value = json.loads(quality.read_text(encoding="utf-8"))
+    value["branch_diff_digest"] = "a" * 64
+    quality.write_text(json.dumps(value), encoding="utf-8")
+
+    empty_digest = upgrade._inventory_digest([])
+    manifest = repo / ".factory/migrations/lean-workflow-v2.json"
+    manifest.parent.mkdir(parents=True, exist_ok=True)
+    manifest.write_text(json.dumps({
+        "generated_by": "upgrade",
+        "version": "lean-workflow-v2",
+        "input_inventory_digest": empty_digest,
+        "output_digest": empty_digest,
+        "installed_runtime_digest": (
+            "bb4b6c05b41897447063959fc782e9ca4c2e00f9b219559314b725485b91b2e8"
+        ),
+        "entries": [],
+        "recorded_at": "2026-09-14T05:48:01+00:00",
+        "completed_at": "2026-09-14T05:48:01+00:00",
+    }) + "\n", encoding="utf-8")
+    original_bytes = manifest.read_bytes()
+
+    supplement = upgrade.preflight_lean_migration(repo)
+    assert supplement is not None
+    assert supplement["manifest_name"] == upgrade.LEAN_MIGRATION_SUPPLEMENT
+    assert supplement["review_candidates"] == []
+    assert len(supplement["review_sentinels"]) == 1
+    upgrade.apply_lean_migration(repo, supplement)
+
+    assert manifest.read_bytes() == original_bytes
+    assert selected.read_bytes() == selected_before
+    assert not any((reviews / f"{lens}.json").exists()
+                   for lens in upgrade.LEAN_LENSES)
+    assert manifest.with_name(upgrade.LEAN_MIGRATION_SUPPLEMENT).is_file()
+
+
 def test_completed_lean_manifest_allows_mutable_preserved_records_and_profiles(
         repo: Path):
     grill = repo / ".factory/stories/S1/grills/plan.json"

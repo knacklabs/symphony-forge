@@ -536,13 +536,20 @@ def _classify_fixed_review_coverage(target: Path, entries: list[dict]) -> None:
                            preserve=True)
             continue
         deltas = {value["branch_diff_digest"] for value in values}
-        if len(deltas) != 1:
+        selection = (target / ".factory" / "stories" / story / "tasks" / task
+                     / "reviews" / "selected.json")
+        _require_unlinked_path(target, selection)
+        if (not selection.exists() and not selection.is_symlink()
+                and len(deltas) != 1):
             invalidate(rows, "sealed fixed review has conflicting delta identity")
             continue
         marker = (target / ".factory" / "stories" / story / "tasks" / task
                   / "pr-ready.json")
         _require_unlinked_path(target, marker)
         if not marker.is_file():
+            if len(deltas) != 1:
+                invalidate(rows, "sealed fixed review has conflicting delta identity")
+                continue
             for row in rows:
                 row.update(classification="excluded",
                            reason="active fixed review requires a fresh review",
@@ -569,9 +576,6 @@ def _classify_fixed_review_coverage(target: Path, entries: list[dict]) -> None:
             target, marker_value.get("review_base_sha")
             or marker_value.get("base_main_sha", ""), sealed,
         )
-        selection = (target / ".factory" / "stories" / story / "tasks" / task
-                     / "reviews" / "selected.json")
-        _require_unlinked_path(target, selection)
         if selection.exists() or selection.is_symlink():
             generation, pointer, problems = read_selected_review_generation(
                 target, story, task, expected_delta_id=expected_delta,
@@ -1041,13 +1045,20 @@ def _raw_classify_fixed_review_coverage(target: Path, rows: list[dict]) -> None:
                            preserve=True)
             continue
         deltas = {value["branch_diff_digest"] for value in values}
-        if len(deltas) != 1:
+        selected = (target / ".factory" / "stories" / story / "tasks" / task
+                    / "reviews" / "selected.json")
+        _require_unlinked_path(target, selected)
+        if (not selected.exists() and not selected.is_symlink()
+                and len(deltas) != 1):
             mark_invalid(group, "sealed fixed review has conflicting delta identity")
             continue
         marker = (target / ".factory" / "stories" / story / "tasks" / task
                   / "pr-ready.json")
         _require_unlinked_path(target, marker)
         if not marker.is_file():
+            if len(deltas) != 1:
+                mark_invalid(group, "sealed fixed review has conflicting delta identity")
+                continue
             for row in group:
                 row.update(classification="excluded",
                            reason="active fixed review requires a fresh review",
@@ -1074,9 +1085,6 @@ def _raw_classify_fixed_review_coverage(target: Path, rows: list[dict]) -> None:
             target, marker_value.get("review_base_sha")
             or marker_value.get("base_main_sha", ""), sealed,
         )
-        selected = (target / ".factory" / "stories" / story / "tasks" / task
-                    / "reviews" / "selected.json")
-        _require_unlinked_path(target, selected)
         if selected.exists() or selected.is_symlink():
             generation, pointer, problems = read_selected_review_generation(
                 target, story, task, expected_delta_id=expected_delta,
