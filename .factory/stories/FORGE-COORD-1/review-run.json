@@ -1,7 +1,7 @@
 {
   "task_id": "LEAN-WORKFLOW",
-  "review_run_id": "7bb42fca6b11ba1ab989a8c159073d357a254fdbf2501f09f2534e5ae61a2287",
-  "brief_sha256": "946d82c7de883fa666f33b00684d2139e3f1f0b59eea207aa579132758858b04",
-  "branch_diff_digest": "944864f175316685969c44338300f3af5d28290f89272d09b6ef05215b132cea",
-  "minted_at": "2026-09-17T02:29:56+00:00"
+  "review_run_id": "a67794f9adbc8e3019af8f637a1227297f5a376e32a7903d5c0a62cf05e485a7",
+  "brief_sha256": "d9419870d958b5fadaddbeb67e0a2d5bfb548692ca7553bd80d23b14504f2c7e",
+  "branch_diff_digest": "cda8f616c81d0799c4145ed64f8a209d24b5a2ed149268248114b87bdc05a42f",
+  "minted_at": "2026-09-17T03:10:46+00:00"
 }

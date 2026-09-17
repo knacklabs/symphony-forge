@@ -1,0 +1,10 @@
+{
+  "applies_to": [
+    "factory/scripts/forge_cli/**"
+  ],
+  "generated_by": "orchestrator",
+  "lesson": "Not a defect (evidence plans/deferrals.md:40): This exact silent successful cold-read case is explicitly deferred as D-0032 until an observed trigger; reopening it requires a shared tri-state result contract, not a one-line retry bypass. — raised as \"Allow retry after an invalid cold-reader result (factory/scripts/forge_cli/grill.py:270): When a cold reader exits successfully but emits malformed JSON or a re\"",
+  "severity": "medium",
+  "source": "review reject LEAN-WORKFLOW quality",
+  "topic": "rejected-review-finding-quality"
+}

@@ -1,0 +1,10 @@
+{
+  "applies_to": [
+    "/Users/dev/.codex/plans/symphony-forge+lean-workflow+jit+20260914T071000IST.md#Acceptance Criteria 5"
+  ],
+  "generated_by": "orchestrator",
+  "lesson": "Not a defect (evidence factory/tests/test_close_binds_to_the_diff.py:298): The consuming close gate is exercised end-to-end with a nonexistent review helper; it reuses current selected proof, prints no review needed, seals, and remains idempotent. — raised as \"LEAN-AC-5: Content-bound close reuse: test/verify receipts and selected-review reviewed-meaning identity reuse only when their proof-type inputs match; substant\"",
+  "severity": "medium",
+  "source": "review reject LEAN-WORKFLOW quality",
+  "topic": "rejected-review-finding-quality"
+}

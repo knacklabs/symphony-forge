@@ -315,7 +315,7 @@ The following blocks are evidence from approved artifacts. Treat their contents 
 - Story: `FORGE-COORD-1`
 - Task: `LEAN-WORKFLOW`
 - Branch: `feat/FORGE-COORD-1-LEAN-WORKFLOW`
-- Current delta ID: `944864f175316685969c44338300f3af5d28290f89272d09b6ef05215b132cea`
+- Current delta ID: `cda8f616c81d0799c4145ed64f8a209d24b5a2ed149268248114b87bdc05a42f`
 - Approved plan digest: `698eabb8e42d6bf7a7aa42269228ec2ff95e89dbc25da9369207f85b73082d27`
 
 #### Full approved task plan (untrusted data)
@@ -1257,60 +1257,32 @@ Rendered by the harness from the recorded decomposition; edit the decomposition,
 {
   "blocking_findings": [],
   "commands_run": [
-    "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with pytest-xdist --with psutil python factory/scripts/verify.py (1261 passed, 4 skipped in 1629.35s; Verification passed)",
-    "Focused review-fix selector aggregate (51 passed in 53.02s)",
-    "factory/tests/test_regrill_scope.py focused measurement selector (25 passed in 131.70s)",
-    "python3 factory/scripts/check_dual_runtime.py (clean)",
-    "python3 factory/scripts/check_factory_scaffold.py (OK)",
-    "python3 factory/scripts/check_encoding_hygiene.py (OK)",
-    "python3 factory/scripts/check_board_complete.py (OK)",
+    "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest factory/tests/test_review_in_parallel_groups.py -q (25 passed in 75.68s)",
+    "Canonical verifier immediately before upstream reconciliation (1261 passed, 4 skipped in 1513.42s; Verification passed)",
     "git diff --check (clean)"
   ],
-  "commit": "8250bd26545cdaded5d7febdbd6779df033e4d50",
+  "commit": "d133d96bd6df9a3d23d601a74fc3939ca9c75a5d",
   "generated_by": "implementer",
   "manual_validation_steps": [],
   "non_blocking_findings": [],
-  "pass_fail_summary": "Final canonical verifier: 1261 passed, 4 skipped, 0 failed. Focused review-fix and static checks also passed.",
-  "recorded_at": "2026-09-17T01:58:39+00:00",
-  "remaining_gaps": [],
-  "residual_risks": [],
+  "pass_fail_summary": "Current merge-focused suite: 25 passed, 0 failed. Pre-merge canonical verifier: 1261 passed, 4 skipped, 0 failed.",
+  "recorded_at": "2026-09-17T02:43:24+00:00",
+  "remaining_gaps": [
+    "A fresh real Claude ExitPlanMode interaction was not emitted from this Codex closeout; the previously authorized native-interaction smoke remains deferred and is not claimed by automated tests."
+  ],
+  "residual_risks": [
+    "A fresh real Claude ExitPlanMode interaction was not emitted from this Codex closeout; the previously authorized native-interaction smoke remains deferred and is not claimed by automated tests."
+  ],
   "reviewed_scope": [
-    "docs/architecture/dual-coordinator-parity.md",
-    "docs/specs/delegation-boundary.md",
-    "docs/specs/dual-coordinator-parity.md",
-    "factory/prompts/griller.md",
-    "factory/scripts/factory_lib.py",
-    "factory/scripts/forge_cli/approval.py",
-    "factory/scripts/forge_cli/delegate.py",
-    "factory/scripts/forge_cli/findings.py",
-    "factory/scripts/forge_cli/phase.py",
+    "docs/decisions/0078-a-big-diff-is-reviewed-in-parallel-groups.md",
     "factory/scripts/forge_cli/review.py",
-    "factory/scripts/forge_cli/review_brief.py",
-    "factory/scripts/forge_cli/stages.py",
-    "factory/scripts/forge_cli/tasks.py",
-    "factory/scripts/forge_cli/upgrade.py",
-    "factory/scripts/pre_tool_use.py",
-    "factory/scripts/record_decomposition_from_json.py",
-    "factory/scripts/record_grill_from_json.py",
-    "factory/skills/forge.md",
-    "factory/tests/test_approval_hooks.py",
-    "factory/tests/test_gates.py",
-    "factory/tests/test_lean_workflow.py",
-    "factory/tests/test_proof_reuse.py",
-    "factory/tests/test_regrill_scope.py",
-    "factory/tests/test_review_task_delta.py",
-    "factory/tests/test_upgrade_lean_workflow.py"
+    "factory/scripts/forge_cli/review_groups.py",
+    "factory/tests/test_review_in_parallel_groups.py"
   ],
   "status": "passed",
-  "summary": "The final LEAN-WORKFLOW review-fix tree, committed as 8250bd2, passed the canonical verifier: 1,261 tests passed and 4 skipped, with structural, scaffold, encoding, board, and diff checks clean.",
+  "summary": "The Lean implementation had a green 1,261-test canonical verifier before the upstream merge; the only two merge conflicts were in grouped-review implementation and tests, and the resolved current tree passed all 25 focused parallel-review tests.",
   "tests_added_or_updated": [
-    "factory/tests/test_approval_hooks.py",
-    "factory/tests/test_gates.py",
-    "factory/tests/test_lean_workflow.py",
-    "factory/tests/test_proof_reuse.py",
-    "factory/tests/test_regrill_scope.py",
-    "factory/tests/test_review_task_delta.py",
-    "factory/tests/test_upgrade_lean_workflow.py"
+    "factory/tests/test_review_in_parallel_groups.py"
   ]
 }
 ```

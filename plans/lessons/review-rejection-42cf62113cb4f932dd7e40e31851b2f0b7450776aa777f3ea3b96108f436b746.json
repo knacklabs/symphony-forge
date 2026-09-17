@@ -1,0 +1,10 @@
+{
+  "applies_to": [
+    "factory/tests/**"
+  ],
+  "generated_by": "orchestrator",
+  "lesson": "Not a defect (evidence factory/tests/test_gates.py:338): The fixture creates only refs/remotes/origin/main and no actual origin remote, and no test call graph reaches both prepare_task_pr_ready and seal_fixture_tasks; there is no current collision. — raised as \"Avoid re-adding the existing origin remote (factory/tests/test_gates.py:1000): When `seal_fixture_tasks` is called after `prepare_task_pr_ready`—as several test\"",
+  "severity": "medium",
+  "source": "review reject LEAN-WORKFLOW quality",
+  "topic": "rejected-review-finding-quality"
+}

@@ -1,0 +1,10 @@
+{
+  "applies_to": [
+    ".github/workflows/**"
+  ],
+  "generated_by": "orchestrator",
+  "lesson": "Not a defect (evidence factory/tests/test_pr_link_workflow.py:64): Both recorder-generated events are present in the live tree, compared byte-for-byte with commit 32b3ee, loaded by the event reader, and clear board completeness. — raised as \"Add the two required recorder-generated PR-link backfills (.github/workflows/pr-link.yml:95): When this branch ships or the required board-completeness check ru\"",
+  "severity": "medium",
+  "source": "review reject LEAN-WORKFLOW quality",
+  "topic": "rejected-review-finding-quality"
+}
