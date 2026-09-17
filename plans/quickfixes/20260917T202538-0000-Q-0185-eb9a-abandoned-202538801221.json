@@ -1,0 +1,10 @@
+{
+  "event": "abandoned",
+  "id": "Q-0185-eb9a",
+  "profile": "degraded",
+  "reason": "Tracking repair could not claim files: this Root exec transport, like Codex Desktop apply_patch in Q-0184 and Q-0172, did not invoke the repository PreToolUse claim hook. Preserve the actual authorized two-file diff and focused proof without claiming Q-0185 tracked it; Main must commit it as the documented host-transport limitation before ordinary delegation.",
+  "opened_reason": "Tracking repair for Q-0184-81c4: its authorized two-file recovery diff exists and passed focused proof, but Codex Desktop apply_patch skipped the repository PreToolUse claim hook; re-register exactly factory/scripts/factory_lib.py and factory/tests/test_approval_hooks.py without relabeling Q-0184",
+  "started_at": "2026-09-17T20:24:55+00:00",
+  "completed_at": "2026-09-17T20:25:38+00:00",
+  "files": []
+}

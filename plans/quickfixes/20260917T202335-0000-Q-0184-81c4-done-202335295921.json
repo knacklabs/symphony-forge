@@ -1,0 +1,12 @@
+{
+  "event": "done",
+  "id": "Q-0184-81c4",
+  "profile": "degraded",
+  "kind": "degraded",
+  "reason": "One-time LEAN-WORKFLOW approval bootstrap authorized by the approved story plan and Root delegated approval: implement only exact FORGE-COORD-1/LEAN-WORKFLOW digest 2f45654a62ae52fb65f92171d0f5dafa73f0b943390725c03f1c837ef70f5162 acceptance, wrong-task/digest/reuse refusal, and focused tests; no native event claim and no normal-flow manual approval",
+  "started_at": "2026-09-17T20:15:50+00:00",
+  "completed_at": "2026-09-17T20:23:35+00:00",
+  "files": [],
+  "task_id": "LEAN-WORKFLOW",
+  "story": "FORGE-COORD-1"
+}

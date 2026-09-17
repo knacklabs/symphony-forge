@@ -530,24 +530,29 @@
     {
       "id": "LEAN-WORKFLOW",
       "title": "One brief and one complete independent review",
-      "objective": "install recovery PR2 by replacing repeated approval/round ceremony with native approval, one cold grill with complete finding disposition, narrowed delegation, mandatory context-file security, content-bound close reuse in existing stage state, Lean-owned migration/deletion for removed formats including sealed fixed-proof migration, three-profile Forge registry reduction, PR-link workflow repair/backfill, docs/spec/architecture/runtime alignment, and the amended Portable PR3 handoff.",
+      "objective": "install recovery PR2 by replacing repeated approval/round ceremony with native approval, one cold grill with complete finding disposition, narrowed delegation, mandatory context-file security, content-bound close reuse in existing stage state, Lean-owned migration/deletion for removed formats including sealed fixed-proof migration, three-profile Forge registry reduction, PR-link workflow repair/backfill, docs/spec/architecture/runtime alignment, and the amended Portable PR3 handoff, plus one close-owned canonical full-suite proof path with exact-identity reuse, canonical JUnit selector proof, measured concurrency, and coverage-preserving fixture optimization.",
       "dependencies": [
         "NATIVE-FOREGROUND-ACTIVATE"
       ],
-      "user_facing": false,
+      "user_facing": true,
       "acceptance_criteria": [
         "Native approval path: story/task plans approve through the supported Claude and Codex native approval events, not the old manual/board route.",
         "Shared recorder identity: the shared approval recorder binds exactly one current-frontier candidate, current digest, runtime, stable session/event identity, plan kind/story/task, replay refusal, and `human-via-Claude` / `human-via-Codex` attribution.",
         "Ceremony removal: requirements grill, round floors, old round ledgers as authority, fake frontier questions, second unchanged save, and manual plan/task approval leave normal runtime; Lean preserves one independent cold grill plus complete finding disposition, including the three requirements cold-read gap dispositions for context snapshot security, independent migration coverage, and clean-target preservation, explained amendment bridge to the final artifact digest, final human approval on that digest, and refusal for unexplained out-of-disposition changes.",
         "Narrowed delegation: `forge delegate --scope` is a proper-subset narrowing feature, exact approved files are valid subset members, no flag keeps full effective scope, and hook admission enforces the narrowed launch identity.",
         "Content-bound close reuse: test/verify receipts and selected-review reviewed-meaning identity reuse only when their proof-type inputs match; substantive acceptance/security/migration/evidence/review-instruction/product-delta changes force review, while canonicalized bookkeeping/timestamp changes preserve immutable original provenance.",
-        "Lean migration: `forge upgrade` performs clean-checkout preflight with no `--force` bypass, full inventory/hash/classification, independent raw no-follow coverage over fixed legacy roots/exact parents, temp build, validation, publish/readback, idempotent retry, unequal partial refusal, generated `.factory/migrations/lean-workflow-v2.json`, profile/settings preservation, and deletion only after durable current outputs exist.",
+        "Lean migration: `forge upgrade` performs clean-checkout preflight with no `--force` bypass, full inventory/hash/classification, independent raw no-follow coverage over fixed legacy roots/exact parents, temp build, validation, publish/readback, profile/settings preservation, and deletion only after durable current outputs exist. Byte-identical retry passes and unequal partial retry refuses, except that a validated original empty completion may publish one bound `lean-workflow-v2-supplement.json` when later merged history introduces newly eligible proof.",
         "Fixed-proof migration: Lean migrates sealed fixed-lens proof once into canonical `origin=upgrade` selected generations with the full sealed-proof safety contract, while active old proof requires a fresh review and normal runtime never uses direct fixed-file fallback authority.",
         "Hook/config/profile target: committed Claude/Codex hook matrices, `.codex/config.toml`, `.claude/CLAUDE.md`, and profile installation match the recovery target; only three Forge-owned profiles remain while client-modified/client-added profiles are preserved.",
         "PR-link workflow staging: `.github/workflows/pr-link.yml` stages per-event `.factory/events/` files and updates its status/comment wording without returning to `.factory/events.jsonl` writes.",
         "Verified PR-link backfill: only verified PR #109 and #110 links are backfilled through `forge pr-link`, producing recorder-generated event files and clearing those board-completeness failures without touching unrelated spec gaps.",
         "Normal-runtime refusal: Lean-removed old formats outside upgrade produce `run forge upgrade` guidance; PR3-owned legacy families stay compatible until Portable handles them.",
-        "Docs/runtime agreement: workflow, docs, specs, prompts, skills, architecture text, reviewer focus, required tests, and design-review status agree with the implemented runtime without duplicating long canon in `AGENTS.md`."
+        "Docs/runtime agreement: workflow, docs, specs, prompts, skills, architecture text, reviewer focus, required tests, and design-review status agree with the implemented runtime without duplicating long canon in `AGENTS.md`.",
+        "Single final proof owner: workers run focused checks only; `forge task close` runs the one canonical full verification suite, records truthful complete automated evidence from that execution before review, and normal plus narrowed delegate briefs state that boundary.",
+        "Exact-identity reuse: any reused test or verification result binds the full product, command, selector, tool, dependency, configuration, environment, and generated-input identity; missing, partial, unknown, or drifted identity refuses reuse.",
+        "Canonical selector proof: when the canonical pytest/JUnit execution truthfully proves every exact declared required-test node id, close consumes that report instead of rerunning selectors; any missing or ambiguous id retains the dedicated required-selector execution and refusal.",
+        "Measured concurrency: the canonical pytest worker count changes from `-n 4` only if an identical controlled 4/6/8 comparison shows a material repeatable improvement without new failures or instability; otherwise `-n 4` remains.",
+        "Prepared fixture optimization: shared initialized/scaffolded test fixtures may be introduced only when measured faster while retaining real init, fresh-install, path-boundary, provenance, and client-scaffold coverage; no required coverage is skipped or weakened."
       ],
       "write_scope": [
         "AGENTS.md",
@@ -679,68 +684,97 @@
         ".codex/agents/planner-high.toml",
         ".codex/agents/docs-decomposer.toml",
         "docs/decisions/0049-full-access-for-forge-managed-codex-chats.md",
-        "docs/windows.md"
+        "docs/windows.md",
+        "factory/tests/test_board_reads_task_proof.py",
+        "factory/tests/test_review_reads_the_repo.py",
+        "docs/decisions/0079-full-access-for-forge-managed-codex-chats.md",
+        ".factory/migrations/lean-workflow-v2-supplement.json"
       ],
       "plan_contracts": [
         {
           "id": "LEAN-AC-1",
           "statement": "Native approval path: story/task plans approve through the supported Claude and Codex native approval events, not the old manual/board route.",
-          "source": "/Users/dev/.codex/plans/symphony-forge+lean-workflow+jit+20260914T071000IST.md#Acceptance Criteria 1"
+          "source": ".factory/stories/FORGE-COORD-1/task-plans/LEAN-WORKFLOW.md#Acceptance Criteria"
         },
         {
           "id": "LEAN-AC-2",
           "statement": "Shared recorder identity: the shared approval recorder binds exactly one current-frontier candidate, current digest, runtime, stable session/event identity, plan kind/story/task, replay refusal, and `human-via-Claude` / `human-via-Codex` attribution.",
-          "source": "/Users/dev/.codex/plans/symphony-forge+lean-workflow+jit+20260914T071000IST.md#Acceptance Criteria 2"
+          "source": ".factory/stories/FORGE-COORD-1/task-plans/LEAN-WORKFLOW.md#Acceptance Criteria"
         },
         {
           "id": "LEAN-AC-3",
           "statement": "Ceremony removal: requirements grill, round floors, old round ledgers as authority, fake frontier questions, second unchanged save, and manual plan/task approval leave normal runtime; Lean preserves one independent cold grill plus complete finding disposition, including the three requirements cold-read gap dispositions for context snapshot security, independent migration coverage, and clean-target preservation, explained amendment bridge to the final artifact digest, final human approval on that digest, and refusal for unexplained out-of-disposition changes.",
-          "source": "/Users/dev/.codex/plans/symphony-forge+lean-workflow+jit+20260914T071000IST.md#Acceptance Criteria 3"
+          "source": ".factory/stories/FORGE-COORD-1/task-plans/LEAN-WORKFLOW.md#Acceptance Criteria"
         },
         {
           "id": "LEAN-AC-4",
           "statement": "Narrowed delegation: `forge delegate --scope` is a proper-subset narrowing feature, exact approved files are valid subset members, no flag keeps full effective scope, and hook admission enforces the narrowed launch identity.",
-          "source": "/Users/dev/.codex/plans/symphony-forge+lean-workflow+jit+20260914T071000IST.md#Acceptance Criteria 4"
+          "source": ".factory/stories/FORGE-COORD-1/task-plans/LEAN-WORKFLOW.md#Acceptance Criteria"
         },
         {
           "id": "LEAN-AC-5",
           "statement": "Content-bound close reuse: test/verify receipts and selected-review reviewed-meaning identity reuse only when their proof-type inputs match; substantive acceptance/security/migration/evidence/review-instruction/product-delta changes force review, while canonicalized bookkeeping/timestamp changes preserve immutable original provenance.",
-          "source": "/Users/dev/.codex/plans/symphony-forge+lean-workflow+jit+20260914T071000IST.md#Acceptance Criteria 5"
+          "source": ".factory/stories/FORGE-COORD-1/task-plans/LEAN-WORKFLOW.md#Acceptance Criteria"
         },
         {
           "id": "LEAN-AC-6",
-          "statement": "Lean migration: `forge upgrade` performs clean-checkout preflight with no `--force` bypass, full inventory/hash/classification, independent raw no-follow coverage over fixed legacy roots/exact parents, temp build, validation, publish/readback, idempotent retry, unequal partial refusal, generated `.factory/migrations/lean-workflow-v2.json`, profile/settings preservation, and deletion only after durable current outputs exist.",
-          "source": "/Users/dev/.codex/plans/symphony-forge+lean-workflow+jit+20260914T071000IST.md#Acceptance Criteria 6"
+          "statement": "Lean migration: `forge upgrade` performs clean-checkout preflight with no `--force` bypass, full inventory/hash/classification, independent raw no-follow coverage over fixed legacy roots/exact parents, temp build, validation, publish/readback, profile/settings preservation, and deletion only after durable current outputs exist. Byte-identical retry passes and unequal partial retry refuses, except that a validated original empty completion may publish one bound `lean-workflow-v2-supplement.json` when later merged history introduces newly eligible proof.",
+          "source": ".factory/stories/FORGE-COORD-1/task-plans/LEAN-WORKFLOW.md#Acceptance Criteria"
         },
         {
           "id": "LEAN-AC-7",
           "statement": "Fixed-proof migration: Lean migrates sealed fixed-lens proof once into canonical `origin=upgrade` selected generations with the full sealed-proof safety contract, while active old proof requires a fresh review and normal runtime never uses direct fixed-file fallback authority.",
-          "source": "/Users/dev/.codex/plans/symphony-forge+lean-workflow+jit+20260914T071000IST.md#Acceptance Criteria 7"
+          "source": ".factory/stories/FORGE-COORD-1/task-plans/LEAN-WORKFLOW.md#Acceptance Criteria"
         },
         {
           "id": "LEAN-AC-8",
           "statement": "Hook/config/profile target: committed Claude/Codex hook matrices, `.codex/config.toml`, `.claude/CLAUDE.md`, and profile installation match the recovery target; only three Forge-owned profiles remain while client-modified/client-added profiles are preserved.",
-          "source": "/Users/dev/.codex/plans/symphony-forge+lean-workflow+jit+20260914T071000IST.md#Acceptance Criteria 8"
+          "source": ".factory/stories/FORGE-COORD-1/task-plans/LEAN-WORKFLOW.md#Acceptance Criteria"
         },
         {
           "id": "LEAN-AC-9",
           "statement": "PR-link workflow staging: `.github/workflows/pr-link.yml` stages per-event `.factory/events/` files and updates its status/comment wording without returning to `.factory/events.jsonl` writes.",
-          "source": "/Users/dev/.codex/plans/symphony-forge+lean-workflow+jit+20260914T071000IST.md#Acceptance Criteria 9"
+          "source": ".factory/stories/FORGE-COORD-1/task-plans/LEAN-WORKFLOW.md#Acceptance Criteria"
         },
         {
           "id": "LEAN-AC-10",
           "statement": "Verified PR-link backfill: only verified PR #109 and #110 links are backfilled through `forge pr-link`, producing recorder-generated event files and clearing those board-completeness failures without touching unrelated spec gaps.",
-          "source": "/Users/dev/.codex/plans/symphony-forge+lean-workflow+jit+20260914T071000IST.md#Acceptance Criteria 10"
+          "source": ".factory/stories/FORGE-COORD-1/task-plans/LEAN-WORKFLOW.md#Acceptance Criteria"
         },
         {
           "id": "LEAN-AC-11",
           "statement": "Normal-runtime refusal: Lean-removed old formats outside upgrade produce `run forge upgrade` guidance; PR3-owned legacy families stay compatible until Portable handles them.",
-          "source": "/Users/dev/.codex/plans/symphony-forge+lean-workflow+jit+20260914T071000IST.md#Acceptance Criteria 11"
+          "source": ".factory/stories/FORGE-COORD-1/task-plans/LEAN-WORKFLOW.md#Acceptance Criteria"
         },
         {
           "id": "LEAN-AC-12",
           "statement": "Docs/runtime agreement: workflow, docs, specs, prompts, skills, architecture text, reviewer focus, required tests, and design-review status agree with the implemented runtime without duplicating long canon in `AGENTS.md`.",
-          "source": "/Users/dev/.codex/plans/symphony-forge+lean-workflow+jit+20260914T071000IST.md#Acceptance Criteria 12"
+          "source": ".factory/stories/FORGE-COORD-1/task-plans/LEAN-WORKFLOW.md#Acceptance Criteria"
+        },
+        {
+          "id": "LEAN-AC-13",
+          "statement": "Single final proof owner: workers run focused checks only; `forge task close` runs the one canonical full verification suite, records truthful complete automated evidence from that execution before review, and normal plus narrowed delegate briefs state that boundary.",
+          "source": ".factory/stories/FORGE-COORD-1/task-plans/LEAN-WORKFLOW.md#Acceptance Criteria"
+        },
+        {
+          "id": "LEAN-AC-14",
+          "statement": "Exact-identity reuse: any reused test or verification result binds the full product, command, selector, tool, dependency, configuration, environment, and generated-input identity; missing, partial, unknown, or drifted identity refuses reuse.",
+          "source": ".factory/stories/FORGE-COORD-1/task-plans/LEAN-WORKFLOW.md#Acceptance Criteria"
+        },
+        {
+          "id": "LEAN-AC-15",
+          "statement": "Canonical selector proof: when the canonical pytest/JUnit execution truthfully proves every exact declared required-test node id, close consumes that report instead of rerunning selectors; any missing or ambiguous id retains the dedicated required-selector execution and refusal.",
+          "source": ".factory/stories/FORGE-COORD-1/task-plans/LEAN-WORKFLOW.md#Acceptance Criteria"
+        },
+        {
+          "id": "LEAN-AC-16",
+          "statement": "Measured concurrency: the canonical pytest worker count changes from `-n 4` only if an identical controlled 4/6/8 comparison shows a material repeatable improvement without new failures or instability; otherwise `-n 4` remains.",
+          "source": ".factory/stories/FORGE-COORD-1/task-plans/LEAN-WORKFLOW.md#Acceptance Criteria"
+        },
+        {
+          "id": "LEAN-AC-17",
+          "statement": "Prepared fixture optimization: shared initialized/scaffolded test fixtures may be introduced only when measured faster while retaining real init, fresh-install, path-boundary, provenance, and client-scaffold coverage; no required coverage is skipped or weakened.",
+          "source": ".factory/stories/FORGE-COORD-1/task-plans/LEAN-WORKFLOW.md#Acceptance Criteria"
         }
       ],
       "required_tests": [
@@ -998,6 +1032,26 @@
           "id": "test_native_approval_no_longer_routes_through_board_or_manual_approve",
           "path": "factory/tests/test_board_approval_gate.py",
           "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_task_close_is_the_single_full_suite_owner_and_records_truthful_automated_proof",
+          "path": "factory/tests/test_close_binds_to_the_diff.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_proof_reuse_refuses_dependency_environment_and_configuration_drift",
+          "path": "factory/tests/test_proof_reuse.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_canonical_junit_satisfies_exact_required_nodes_without_selector_rerun",
+          "path": "factory/tests/test_gates.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_canonical_junit_falls_back_when_required_node_identity_is_missing",
+          "path": "factory/tests/test_gates.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
         }
       ],
       "verify_commands": [
@@ -1008,28 +1062,19 @@
         "git diff --check"
       ],
       "reviewer_focus": [
-        "Prove the new flow removes ceremony only where native approval/proof identity replaces it. No real gate may disappear without an equivalent current authority check.",
-        "Confirm native approval derives exactly one eligible awaiting story/task artifact from the current frontier and refuses zero candidates, multiple candidates, replay, missing stable session/event identity, stale digests, cancellation, wrong runtime, async acknowledgement, unsupported payloads, and optional clarification events.",
-        "Confirm approval records bind runtime, stable session/event identity, plan kind/story/task, current digest, and attribution as `human-via-Claude` or `human-via-Codex` without inventing a display name.",
-        "Confirm one independent cold grill plus ordered one-to-one finding/resolution/source dispositions bridges the exact original cold-read input to the final artifact digest, with final human approval on that digest and refusal for unexplained out-of-disposition changes.",
-        "Confirm `delegate --scope` is a proper-subset narrowing feature, not a bypass; exact approved files are valid subset members and no flag keeps full effective scope.",
-        "Confirm mandatory context-file security for `--context-file`: same-user read/write/delete access only, no-follow, stable identity, one handle/snapshot, UTF-8/capacity, POSIX `0700`/`0600`, native Windows protected DACL with only the current user SID, reopen owner/DACL verification before launch and stale cleanup, refusal for extra allow ACEs/unverifiable ACL/reparse/link/identity drift, and metadata-only evidence.",
-        "Confirm proof reuse is content-bound and fail-closed for tests, verify, and selected review proof.",
-        "Confirm selected-review reuse remains Decision 0066 stamp-token delta-bound and also matches current reviewed-meaning identity: approved semantic task-brief digest, effective acceptance/security/migration semantics, substantive automated evidence, review instructions/helper/config, and product delta.",
-        "Confirm canonicalized recorder bookkeeping and timestamps are the only selected-review changes that may reuse, and that reuse preserves immutable original input/raw provenance.",
-        "Confirm migration has clean-target refusal with no `--force` dirty bypass, full preflight, independent raw no-follow coverage over fixed legacy roots/exact parents with exact once classification comparison, temp validation, readback, idempotent retry, unequal-partial refusal, and a generated `.factory/migrations/lean-workflow-v2.json` manifest.",
-        "Confirm migration preserves project-owned settings plus client-added/client-modified profiles, deletes or replaces only byte/hash-matching Forge-owned installed files, and refuses unknown same-name profile rows.",
-        "Confirm Lean owns sealed fixed-proof migration and three-profile Forge-owned pruning once; Portable must consume those outputs rather than duplicate fixed-review or 15-profile obligations.",
-        "Confirm PR3-owned broad legacy compatibility remains in the amended `PORTABLE-DELIVERY-MIGRATION` row immediately after Lean and does not pull Native or Shared work into PR3.",
-        "Confirm `pr-link.yml` stages per-event records and the two existing missing links are recorder-generated from verified PR evidence.",
-        "Confirm docs/prompts match runtime and do not duplicate long canon in `AGENTS.md`.",
-        "Confirm the task decomposition objective and `acceptance_criteria` are amended now and match the twelve plan contracts one-to-one.",
-        "Run or explicitly account for real Claude and Codex native Plan Mode approval smoke tests and live `gh pr view 109` / `gh pr view 110` evidence before backfill."
+        "Apply constitution/09-agent-conduct.md sections 2-4 and Ponytail: smallest complete change, surgical scope, observable verification.",
+        "Prove native approval and one cold grill retain exact digest, stable event identity, full dispositions, replay refusal, and no fabricated human identity.",
+        "Prove narrowed delegation and optional context-file handling enforce their approved scope and security identities.",
+        "Prove tests, verify, and review reuse fail closed for every product, command, selector, tool, dependency, config, environment, generated-input, or reviewed-meaning drift.",
+        "Prove task close alone owns the canonical full suite, records truthful automated evidence before review, and consumes canonical JUnit only for unambiguous exact required-node passes.",
+        "Confirm the declared 4/6/8 benchmark and conditional fixture experiment meet thresholds without removing real init, fresh-install, boundary, provenance, scaffold, or platform coverage.",
+        "Confirm Lean migration, fixed-proof conversion, profile preservation, supplemental empty-manifest transition, and normal-runtime refusal match the 17 contracts; Portable retains other legacy families.",
+        "Confirm historical Decision 0049 is restored, full-access policy is renumbered, board copy gets functional proof, and PR #109/#110 links remain recorder-generated."
       ],
       "review_budget": {
-        "max_changed_files": 116,
-        "max_changed_lines": 21000,
-        "reason": "Lean recovery PR2 spans native approval eligibility, context-file security including native Windows protected DACL proof, narrowed delegation, reviewed-meaning close reuse, clean-target and independently covered Lean migration/deletion including sealed fixed-proof migration, three-profile pruning with settings/profile preservation, PR-link repair, docs/runtime alignment, and the amended Portable PR3 handoff; stop for amendment if measured diff exceeds this budget. One-time 2026-09-15 amendment from 96 to 97 changed files solely for the existing factory-scaffold Windows PR job to run the native protected-DACL context-file selector; no product check is removed, and the 14,500-line ceiling and native Windows proof obligation remain. One-time current-main integration amendment from 97 to 99 changed files covers only the imported PR 219 closeout-marker fixture and the existing delegation schema field needed to seal terminal cold-result bytes; no proof or platform check is removed, and the 14,500-line ceiling remains. One-time current-main security proof amendment from 99 to 100 changed files adds only existing test_native_launch.py to check the already approved captured native cold-result byte identity through its stable scanner spy; the 14,500-line ceiling, required selectors, and native Windows CI obligation remain. One-time current-main integration correction from 100 to 101 measured changed files accounts only for the existing codex_runtime.py native-result parser, which must consume the captured terminal bytes used by the approved cold-proof hash. The exact public review recorder is added to write scope so the already approved reviewed-meaning close contract rejects replay at its stable --set interface. This is measurement and ownership only; no acceptance, tests, Windows obligation, or 14,500-line ceiling is removed. One-time current-main Decision 0078 integration correction from 101 to 103 measured changed files owns the new grouped-review runner and its focused test, both required to cover exact quoted Unicode paths, both rename endpoints, and malformed per-group output before the approved Lean review can be trusted. This is measured file ownership only; the accepted task objective, acceptance, tests, platform obligation and 14,500-line ceiling remain unchanged. One-time measured Decision 0078 import correction from 103 files/14,500 lines to 104 files/15,000 lines: the newly imported grouped runner and regression count their full 958 lines when Lean repairs their real filename/null coverage defects, leaving only 21 measured lines under the old ceiling. The remaining already scoped native-Windows CI and shallow-fixture fixes, plus the approved AC12 decomposer prompt alignment (one previously unchanged scoped file), require a bounded 500-line continuation. No task objective, acceptance criterion, test, platform proof, or file ownership beyond the already recorded scope is removed; stop again if the revised ceiling is exceeded. Final measured review-fix continuation from 104 files/15,000 lines to 106 files/17,000 lines: the live 2026-09-16 diff measured 104 files/16,417 lines after the approval, context, grill, and grouped-review repairs. The two added owned paths are only factory/prompts/implementer.md, to reconcile proper-subset worker verification with orchestrator-owned task proof, and docs/specs/accountable-engineering-loop.md, to align the accepted one-cold-read and task-proof lifecycle. The remaining already owned grouped-review, proof-reuse, migration, and documentation corrections must fit this ceiling; task objective, twelve acceptance criteria, platform proof, and all required selectors remain unchanged. One-time full-verifier migration correction from 106 to 107 measured files: the final suite exposed the still-present pre-Lean factory/tests/test_grill_round_cap.py, which imports the deliberately retired round-floor API and must be removed alongside the already owned test_grill_budget.py and coldless fixture update. This retires stale tests required by the accepted one-cold-read contract; it does not change task meaning, product scope, required selectors, platform proof, or the 17,000-line ceiling. Follow-up measured line correction from 17,000 to 17,500 lines: after the authorized stale-test cleanup, Forge measures 17,106 changed lines because deleting the 188-line retired round-cap module counts as reviewed deletion work, alongside the current fixture and one-cold lifecycle test updates. The 107-file scope, task meaning, acceptance criteria, required selectors, and platform proof remain unchanged; stop again if 17,500 is exceeded. Review-fix completion amendment from 17,500 to 19,000 lines: the canonical live measurement is 107 files/17,772 lines after the already owned authenticated-stdin transport, fail-closed documented Claude approval handling, complete reviewed-meaning identity, and focused regressions. The remaining already owned Lean migration classification, locking, sealed-delta, PR provenance, and documentation corrections receive 1,228 lines of bounded headroom. No file ownership, task objective, acceptance criterion, required selector, platform proof, or task graph changes; stop again if the measured delta exceeds 19,000 lines. Final consolidated review-fix amendment from 19,000 to 21,000 lines: the exact Forge measurement is 107 files/18,935 lines after the complete independent Lean migration classifier and its required regressions, leaving only 65 lines. The remaining already owned PR-link provenance proof, grouped-review Unicode routing, real approval-frontier rejection proof, production-derived raw-review fixture, runtime/docs ownership corrections, and requirement-to-actual-result handoff guidance must be completed as one coherent batch before whole-task proof and formal re-review. No file ownership, task objective, acceptance criterion, required selector, platform proof, or task graph changes; stop again if the measured delta exceeds 21,000 lines. Final legacy-retirement caller amendment from 107 to 109 measured files: factory/scripts/update_run.py still used fixed lens files as a functional-check phase prerequisite, and factory/scripts/forge_cli/findings.py still ignored canonical selected-generation findings in favor of fixed files. Both paths directly complete the already-approved normal-runtime fixed-proof retirement; no task objective, acceptance criterion, required selector, platform proof, dependency, or 21,000-line ceiling changes. Review-finding documentation ownership amendment from 109 to 110 measured files: docs/specs/project-hierarchy.md repeats the superseded sequential story-worktree rule and must be reconciled with accepted task-owned workspaces alongside the already owned Claude adapter and delegation-boundary spec. This is file ownership and measurement only; task meaning, twelve acceptance criteria, required selectors, platform proof, dependencies, and the 21,000-line ceiling remain unchanged. Explicit user-authorized full-access amendment from 110 to 116 measured files: add the Forge-owned exploration and three specialist agent profiles, the superseding full-access decision, and Windows operator documentation so native Codex Main/task chats use danger-full-access consistently while approval_policy=never, role intent, hook enforcement, lifecycle gates, and the unresolved official Claude plugin limitation remain explicit. No model/effort, task objective, acceptance criterion, required selector, platform obligation, dependency, or task graph changes; stop again if 116 files or 21,000 lines is exceeded."
+        "max_changed_files": 118,
+        "max_changed_lines": 23000,
+        "reason": "User-authorized recovery PR2. The measured advanced-base delta was 116 files / 21,828 lines; the remaining allowance covers the close-owned proof path, two review-fixture owners, and decision-history correction without widening task meaning."
       }
     },
     {
@@ -1127,5 +1172,5 @@
   "epic": "symphony-forge",
   "plan_file": "plans/active/FORGE-COORD-1-either-claude-or-codex-coordinates-the-same-forge-workflow.md",
   "plan_sha256": "704e22e69b3722fc885bd09231691a18c2afc01b0982a112bb7b5118744f1723",
-  "commit": "2fcdb568c6bdf65588f57263fd6273ccfe9ee727"
+  "commit": "a83553425d5956554e3b56be0d4282c2c5681813"
 }

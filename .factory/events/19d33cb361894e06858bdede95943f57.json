@@ -1,0 +1,1 @@
+{"event": "signal-scope-change", "generated_by": "implementer", "at": "2026-09-17T12:10:40+00:00", "story": "FORGE-COORD-1", "detail": "The two audit regressions cannot be migrated to canonical selected generations within factory/tests/test_gates.py alone: findings.collect labels selected rows as story/task, but audit._shipped returns"}

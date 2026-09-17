@@ -1,0 +1,10 @@
+{
+  "applies_to": [
+    "/Users/dev/.codex/plans/symphony-forge+lean-workflow+jit+20260914T071000IST.md#Acceptance Criteria 10"
+  ],
+  "generated_by": "root",
+  "lesson": "Not a defect (evidence .factory/events/31d5e07187fb4d9fab0a47009e90331b.json:1): The required backfills exist as recorder-generated pr-linked events for the two live merged PRs; live read-only verification on 2026-09-17 confirmed PR 109 and PR 110 are MERGED. The acceptance criterion requires the backfill outcome, not a test that mutates GitHub. — raised as \"LEAN-AC-10: Verified PR-link backfill: only verified PR #109 and #110 links are backfilled through `forge pr-link`, producing recorder-generated event files and\"",
+  "severity": "medium",
+  "source": "review reject LEAN-WORKFLOW quality",
+  "topic": "rejected-review-finding-quality"
+}

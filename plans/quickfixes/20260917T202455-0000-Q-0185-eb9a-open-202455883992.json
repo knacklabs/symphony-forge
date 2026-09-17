@@ -1,0 +1,13 @@
+{
+  "event": "open",
+  "id": "Q-0185-eb9a",
+  "profile": "degraded",
+  "reason": "Tracking repair for Q-0184-81c4: its authorized two-file recovery diff exists and passed focused proof, but Codex Desktop apply_patch skipped the repository PreToolUse claim hook; re-register exactly factory/scripts/factory_lib.py and factory/tests/test_approval_hooks.py without relabeling Q-0184",
+  "started_at": "2026-09-17T20:24:55+00:00",
+  "max_files": 5,
+  "files": [],
+  "harness_source": true,
+  "kind": "degraded",
+  "task_id": "LEAN-WORKFLOW",
+  "story": "FORGE-COORD-1"
+}

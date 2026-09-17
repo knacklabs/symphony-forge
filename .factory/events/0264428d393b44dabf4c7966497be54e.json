@@ -1,0 +1,1 @@
+{"event": "signal-resolved", "generated_by": "orchestrator", "at": "2026-09-17T12:11:15+00:00", "story": "FORGE-COORD-1", "detail": "S-0049-a404: Scope expanded to factory/scripts/forge_cli/audit.py plus factory/tests/test_gates.py. Normalize canonical story/task finding labels to their story only where audit compares against shipped story keys"}

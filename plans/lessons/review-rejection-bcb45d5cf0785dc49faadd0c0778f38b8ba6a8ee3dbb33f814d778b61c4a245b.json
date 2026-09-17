@@ -1,0 +1,10 @@
+{
+  "applies_to": [
+    "factory/scripts/**"
+  ],
+  "generated_by": "root",
+  "lesson": "Not a defect (0064): Accepted Decision 0064 removes mandatory budget-driven split clauses, and the approved Lean task plan explicitly keeps this recovery as one task; the full graph freeze implements the current contract. — raised as \"Permit skeletal task appends after the frozen graph prefix (factory/scripts/record_decomposition_from_json.py:523): When a cold grill returns `decision=split` o\"",
+  "severity": "medium",
+  "source": "review reject LEAN-WORKFLOW quality",
+  "topic": "rejected-review-finding-quality"
+}
