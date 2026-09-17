@@ -186,7 +186,12 @@ def _task_candidate(base: Path) -> ApprovalCandidate | None:
     digest = plan_digest_without_assumptions(plan)
     if _task_plan_state(base, task, grill) != "await-approval":
         return None
-    return ApprovalCandidate("task", story, task_id, plan, digest, grill_path)
+    previous_digest = _text(grill.get("approved_task_plan_sha256"))
+    if previous_digest == digest:
+        previous_digest = ""
+    return ApprovalCandidate(
+        "task", story, task_id, plan, digest, grill_path, previous_digest,
+    )
 
 
 def eligible_candidates(base: Path) -> list[ApprovalCandidate]:
@@ -335,6 +340,8 @@ def _approve_task(candidate: ApprovalCandidate, record: dict[str, Any]) -> None:
     grill = load_json(candidate.evidence, default={})
     if not grill:
         raise ApprovalRefused("task cold-read proof disappeared during approval")
+    if candidate.previous_digest:
+        grill["previous_approved_task_plan_sha256"] = candidate.previous_digest
     grill.update({
         "approved_task_plan_sha256": candidate.digest,
         "approved_by": record["approved_by"],
@@ -426,7 +433,7 @@ def record_native_approval(
             "story": candidate.story,
             "task": candidate.task,
         }
-        if candidate.kind == "story" and candidate.previous_digest:
+        if candidate.previous_digest:
             record["previous_approved_plan_sha256"] = candidate.previous_digest
         snapshots = {
             path: path.read_bytes() if path.is_file() else None

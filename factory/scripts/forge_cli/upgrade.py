@@ -93,6 +93,7 @@ LEAN_RUNTIME_PATHS = (
     ".codex/hooks.json",
     ".claude/settings.json",
 )
+SAFE_COMPONENT = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]*\Z")
 
 
 def _linked_or_reparse(info: os.stat_result) -> bool:
@@ -151,15 +152,28 @@ def _lean_family(relative: str, data: bytes | None = None) -> str:
             value = json.loads(data.decode("utf-8")) if data else None
         except (UnicodeDecodeError, json.JSONDecodeError):
             value = None
-        if not isinstance(value, dict) or "cold_input_sha256" not in value:
+        cold_fields = {
+            "cold_input_sha256", "final_artifact_sha256",
+            "finding_dispositions", "amendments", "artifact_delta",
+        }
+        if (not isinstance(value, dict)
+                or "cold_input_sha256" not in value
+                or (cold_fields.intersection(value)
+                    and _current_grill_shape_reason("plan", value))):
             return "old-plan-grill"
     if re.fullmatch(r"\.factory/(?:stories/[^/]+/)?grills/tasks/[^/]+\.json", relative):
         try:
             value = json.loads(data.decode("utf-8")) if data else None
         except (UnicodeDecodeError, json.JSONDecodeError):
             value = None
+        cold_fields = {
+            "cold_input_sha256", "final_artifact_sha256",
+            "finding_dispositions", "amendments", "artifact_delta",
+        }
         if (not isinstance(value, dict) or "rounds" in value
-                or "cold_input_sha256" not in value):
+                or "cold_input_sha256" not in value
+                or (cold_fields.intersection(value)
+                    and _current_grill_shape_reason("task", value))):
             return "old-task-grill"
     if re.fullmatch(r"\.factory/(?:stories/[^/]+/)?plan-approval\.json", relative):
         try:
@@ -187,8 +201,83 @@ def _lean_family(relative: str, data: bytes | None = None) -> str:
         return "fixed-review-lens"
     if (relative == ".factory/stages.json"
             or re.fullmatch(r"\.factory/stories/[^/]+/stages/[^/]+\.json", relative)):
-        if data and b'"local_review_stamp"' in data and b'"reviewed_meaning"' not in data:
+        try:
+            value = json.loads(data.decode("utf-8")) if data else None
+        except (UnicodeDecodeError, json.JSONDecodeError):
+            value = None
+        records = value.get("stages") if isinstance(value, dict) \
+            and "stages" in value else [value]
+        stamps = [record.get("local_review_stamp") for record in records
+                  if isinstance(record, dict) and "local_review_stamp" in record]
+        if stamps and not all(
+                isinstance(stamp, dict) and "reviewed_meaning" in stamp
+                for stamp in stamps):
             return "legacy-stage-stamp"
+    return ""
+
+
+def _current_grill_shape_reason(gate: str, value: object) -> str:
+    """Reject partial or hybrid cold-grill shapes before migration writes."""
+    if not isinstance(value, dict):
+        return "current grill is not a JSON object"
+    if "rounds" in value:
+        return "current grill contains retired rounds"
+    required = {
+        "generated_by": str, "gate": str, "verdict": str,
+        "gaps": list, "contradictions": list, "resolutions": list,
+        "finding_dispositions": list, "cold_input_sha256": str,
+        "final_artifact_sha256": str,
+    }
+    invalid = [name for name, expected in required.items()
+               if not isinstance(value.get(name), expected)]
+    if invalid:
+        return "current grill has invalid or missing field(s): " + ", ".join(invalid)
+    if value.get("gate") != gate:
+        return f"current grill gate is not {gate!r}"
+    if value.get("verdict") not in {"pass", "blocked"}:
+        return "current grill verdict is invalid"
+    if any(re.fullmatch(r"[0-9a-f]{64}", value[name]) is None
+           for name in ("cold_input_sha256", "final_artifact_sha256")):
+        return "current grill has an invalid digest"
+    for optional in ("amendments", "artifact_delta"):
+        if optional in value and not isinstance(value[optional], list):
+            return f"current grill {optional} is invalid"
+    if (value["cold_input_sha256"] != value["final_artifact_sha256"]
+            and (not value.get("amendments") or "artifact_delta" not in value)):
+        return "changed current grill has no amendment bridge"
+    if gate == "plan":
+        for field in ("issue", "input_sha256"):
+            if not isinstance(value.get(field), str) or not value[field].strip():
+                return f"current plan grill has invalid or missing {field}"
+        if re.fullmatch(r"[0-9a-f]{64}", value["input_sha256"]) is None:
+            return "current plan grill has an invalid input digest"
+    if gate == "task":
+        task_required = {
+            "task_id": str, "input_sha256": str, "task_plan_sha256": str,
+            "inspected_refs": list, "current_flow": str,
+            "criteria_map": dict, "decision": str,
+            "new_abstractions": list, "grounding_basis": str,
+            "grounding_treeish": str,
+        }
+        invalid = [name for name, expected in task_required.items()
+                   if not isinstance(value.get(name), expected)]
+        if invalid:
+            return "current task grill has invalid or missing field(s): " + ", ".join(invalid)
+        if (not value["task_id"].strip() or not value["current_flow"].strip()
+                or not value["inspected_refs"]
+                or value["decision"] not in {"keep", "split", "block"}
+                or value["grounding_basis"] not in {"working-tree", "stage-baseline"}
+                or any(not isinstance(item, str) or not item.strip()
+                       for item in value["inspected_refs"])
+                or any(not isinstance(item, str) or not item.strip()
+                       for item in value["new_abstractions"])
+                or any(not isinstance(key, str) or not key
+                       or not isinstance(item, str) or not item.strip()
+                       for key, item in value["criteria_map"].items())):
+            return "current task grill proof fields are invalid"
+        if any(re.fullmatch(r"[0-9a-f]{64}", value[name]) is None
+               for name in ("input_sha256", "task_plan_sha256")):
+            return "current task grill has an invalid proof digest"
     return ""
 
 
@@ -210,6 +299,11 @@ def _legacy_json_shape_reason(family: str, value: object) -> str:
         })
     if family in {
             "requirements-grill", "old-plan-grill", "old-task-grill"}:
+        gate = {"old-plan-grill": "plan", "old-task-grill": "task"}.get(family)
+        if gate and any(name in value for name in (
+                "cold_input_sha256", "final_artifact_sha256",
+                "finding_dispositions", "amendments", "artifact_delta")):
+            return _current_grill_shape_reason(gate, value)
         reason = fields({
             "generated_by": str, "gate": str, "verdict": str,
             "gaps": list, "contradictions": list, "resolutions": list,
@@ -252,6 +346,8 @@ def _legacy_json_shape_reason(family: str, value: object) -> str:
         if not reason and not re.fullmatch(
                 r"[0-9a-f]{64}", value["branch_diff_digest"]):
             return "fixed review lens has an invalid delta identity"
+        if not reason and SAFE_COMPONENT.fullmatch(value["task_id"]) is None:
+            return "fixed review task identity is not a safe path component"
         return reason
     if family == "legacy-stage-stamp":
         records = value.get("stages") if "stages" in value else [value]
@@ -264,8 +360,11 @@ def _legacy_json_shape_reason(family: str, value: object) -> str:
             return "legacy stage state has no local review stamp"
         if any(not isinstance(stamp, dict) for stamp in stamps):
             return "legacy local review stamp is not an object"
-        if any("reviewed_meaning" in stamp for stamp in stamps):
-            return "legacy stage state contains a current review stamp"
+        current = ["reviewed_meaning" in stamp for stamp in stamps]
+        if all(current):
+            return "legacy stage state contains only current review stamps"
+        if any(current):
+            return "legacy stage state mixes current and legacy review stamps"
         for stamp in stamps:
             common = {
                 "stage_id": str, "base_sha": str, "recorded_at": str,
@@ -337,10 +436,11 @@ def _classify_fixed_review_coverage(target: Path, entries: list[dict]) -> None:
                   for row in rows]
         task_ids = {value["task_id"] for value in values}
         task = next(iter(task_ids)) if len(task_ids) == 1 else ""
-        if not task or (path_task and task != path_task):
+        if (not task or SAFE_COMPONENT.fullmatch(task) is None
+                or (path_task and task != path_task)):
             for row in rows:
                 row.update(classification="invalid",
-                           reason="fixed review has mixed task identity")
+                           reason="fixed review has invalid or mixed task identity")
             continue
         for row in rows:
             row["story"], row["task_id"] = story, task
@@ -601,6 +701,74 @@ def _raw_json_shape_reason(family: str, value: object) -> str:
         })
     if family in {
             "requirements-grill", "old-plan-grill", "old-task-grill"}:
+        gate = {"old-plan-grill": "plan", "old-task-grill": "task"}.get(family)
+        if gate and any(name in value for name in (
+                "cold_input_sha256", "final_artifact_sha256",
+                "finding_dispositions", "amendments", "artifact_delta")):
+            if "rounds" in value:
+                return "current grill contains retired rounds"
+            required = {
+                "generated_by": str, "gate": str, "verdict": str,
+                "gaps": list, "contradictions": list, "resolutions": list,
+                "finding_dispositions": list, "cold_input_sha256": str,
+                "final_artifact_sha256": str,
+            }
+            invalid = [name for name, expected in required.items()
+                       if not isinstance(value.get(name), expected)]
+            if invalid:
+                return ("current grill has invalid or missing field(s): "
+                        + ", ".join(invalid))
+            if value.get("gate") != gate:
+                return f"current grill gate is not {gate!r}"
+            if value.get("verdict") not in {"pass", "blocked"}:
+                return "current grill verdict is invalid"
+            if any(re.fullmatch(r"[0-9a-f]{64}", value[name]) is None
+                   for name in ("cold_input_sha256", "final_artifact_sha256")):
+                return "current grill has an invalid digest"
+            for optional in ("amendments", "artifact_delta"):
+                if optional in value and not isinstance(value[optional], list):
+                    return f"current grill {optional} is invalid"
+            if (value["cold_input_sha256"] != value["final_artifact_sha256"]
+                    and (not value.get("amendments")
+                         or "artifact_delta" not in value)):
+                return "changed current grill has no amendment bridge"
+            if gate == "plan":
+                for field in ("issue", "input_sha256"):
+                    if not isinstance(value.get(field), str) or not value[field].strip():
+                        return f"current plan grill has invalid or missing {field}"
+                if re.fullmatch(r"[0-9a-f]{64}", value["input_sha256"]) is None:
+                    return "current plan grill has an invalid input digest"
+            if gate == "task":
+                task_required = {
+                    "task_id": str, "input_sha256": str,
+                    "task_plan_sha256": str, "inspected_refs": list,
+                    "current_flow": str, "criteria_map": dict,
+                    "decision": str, "new_abstractions": list,
+                    "grounding_basis": str, "grounding_treeish": str,
+                }
+                invalid = [name for name, expected in task_required.items()
+                           if not isinstance(value.get(name), expected)]
+                if invalid:
+                    return ("current task grill has invalid or missing field(s): "
+                            + ", ".join(invalid))
+                if (not value["task_id"].strip()
+                        or not value["current_flow"].strip()
+                        or not value["inspected_refs"]
+                        or value["decision"] not in {"keep", "split", "block"}
+                        or value["grounding_basis"] not in {
+                            "working-tree", "stage-baseline"}
+                        or any(not isinstance(item, str) or not item.strip()
+                               for item in value["inspected_refs"])
+                        or any(not isinstance(item, str) or not item.strip()
+                               for item in value["new_abstractions"])
+                        or any(not isinstance(key, str) or not key
+                               or not isinstance(item, str) or not item.strip()
+                               for key, item in value["criteria_map"].items())):
+                    return "current task grill proof fields are invalid"
+                if any(re.fullmatch(r"[0-9a-f]{64}", value[name]) is None
+                       for name in ("input_sha256", "task_plan_sha256")):
+                    return "current task grill has an invalid proof digest"
+            return ""
         problem = required_fields({
             "generated_by": str, "gate": str, "verdict": str,
             "gaps": list, "contradictions": list, "resolutions": list,
@@ -643,6 +811,8 @@ def _raw_json_shape_reason(family: str, value: object) -> str:
         if (not problem and not re.fullmatch(
                 r"[0-9a-f]{64}", value["branch_diff_digest"])):
             return "fixed review lens has an invalid delta identity"
+        if not problem and SAFE_COMPONENT.fullmatch(value["task_id"]) is None:
+            return "fixed review task identity is not a safe path component"
         return problem
     if family == "legacy-stage-stamp":
         records = value.get("stages") if "stages" in value else [value]
@@ -655,8 +825,11 @@ def _raw_json_shape_reason(family: str, value: object) -> str:
             return "legacy stage state has no local review stamp"
         if any(not isinstance(stamp, dict) for stamp in stamps):
             return "legacy local review stamp is not an object"
-        if any("reviewed_meaning" in stamp for stamp in stamps):
-            return "legacy stage state contains a current review stamp"
+        current = ["reviewed_meaning" in stamp for stamp in stamps]
+        if all(current):
+            return "legacy stage state contains only current review stamps"
+        if any(current):
+            return "legacy stage state mixes current and legacy review stamps"
         for stamp in stamps:
             required = {
                 "stage_id": str, "base_sha": str, "recorded_at": str,
@@ -716,8 +889,9 @@ def _raw_classify_fixed_review_coverage(target: Path, rows: list[dict]) -> None:
                   for row in group]
         task_ids = {value["task_id"] for value in values}
         task = next(iter(task_ids)) if len(task_ids) == 1 else ""
-        if not task or (path_task and task != path_task):
-            mark_invalid(group, "fixed review has mixed task identity")
+        if (not task or SAFE_COMPONENT.fullmatch(task) is None
+                or (path_task and task != path_task)):
+            mark_invalid(group, "fixed review has invalid or mixed task identity")
             continue
         source_paths = sorted(row["path"] for row in group)
         for row in group:
@@ -908,15 +1082,28 @@ def lean_raw_inventory(target: Path) -> list[dict]:
                 decoded = json.loads(data.decode("utf-8"))
             except (UnicodeDecodeError, json.JSONDecodeError):
                 decoded = None
-            if not isinstance(decoded, dict) or "cold_input_sha256" not in decoded:
+            cold_fields = {
+                "cold_input_sha256", "final_artifact_sha256",
+                "finding_dispositions", "amendments", "artifact_delta",
+            }
+            if (not isinstance(decoded, dict)
+                    or "cold_input_sha256" not in decoded
+                    or (cold_fields.intersection(decoded)
+                        and _raw_json_shape_reason("old-plan-grill", decoded))):
                 family = "old-plan-grill"
         elif "/grills/tasks/" in relative and relative.endswith(".json"):
             try:
                 decoded = json.loads(data.decode("utf-8"))
             except (UnicodeDecodeError, json.JSONDecodeError):
                 decoded = None
+            cold_fields = {
+                "cold_input_sha256", "final_artifact_sha256",
+                "finding_dispositions", "amendments", "artifact_delta",
+            }
             if (not isinstance(decoded, dict) or "rounds" in decoded
-                    or "cold_input_sha256" not in decoded):
+                    or "cold_input_sha256" not in decoded
+                    or (cold_fields.intersection(decoded)
+                        and _raw_json_shape_reason("old-task-grill", decoded))):
                 family = "old-task-grill"
         elif relative.endswith("/plan-approval.json"):
             try:
@@ -942,9 +1129,22 @@ def lean_raw_inventory(target: Path) -> list[dict]:
                 r"\.factory/stories/[^/]+/(?:tasks/[^/]+/reviews|reviews)/"
                 r"(?:quality|performance|security)\.json", relative):
             family = "fixed-review-lens"
-        elif (relative == ".factory/stages.json" or "/stages/" in relative) \
-                and b'"local_review_stamp"' in data and b'"reviewed_meaning"' not in data:
-            family = "legacy-stage-stamp"
+        elif relative == ".factory/stages.json" or "/stages/" in relative:
+            try:
+                stage_value = json.loads(data.decode("utf-8"))
+            except (UnicodeDecodeError, json.JSONDecodeError):
+                stage_value = None
+            stage_records = stage_value.get("stages") \
+                if isinstance(stage_value, dict) and "stages" in stage_value \
+                else [stage_value]
+            stage_stamps = [
+                record.get("local_review_stamp") for record in stage_records
+                if isinstance(record, dict) and "local_review_stamp" in record
+            ]
+            if stage_stamps and not all(
+                    isinstance(stamp, dict) and "reviewed_meaning" in stamp
+                    for stamp in stage_stamps):
+                family = "legacy-stage-stamp"
         if not data and not family:
             if relative.endswith("/grills/plan.json") \
                     or relative == ".factory/grills/plan.json":
@@ -1145,15 +1345,17 @@ def _validate_completed_manifest(target: Path, saved: dict) -> None:
                    or re.fullmatch(r"[0-9a-f]{64}", row["sha256"]) is None
                    for row in converted_outputs)):
         fail("Lean migration completed manifest has invalid converted outputs")
+    converted_paths = [row["path"] for row in converted_outputs]
+    expected_converted = [
+        entry["path"] for entry in saved["entries"]
+        if entry.get("classification") == "eligible"
+        and entry.get("family") == "legacy-stage-stamp"
+    ]
+    if (len(converted_paths) != len(set(converted_paths))
+            or sorted(converted_paths) != sorted(expected_converted)):
+        fail("Lean migration completed manifest converted-output lineage is tampered")
     for row in converted_outputs:
-        path = target / row["path"]
-        _require_unlinked_path(target, path)
-        try:
-            digest = hashlib.sha256(path.read_bytes()).hexdigest()
-        except OSError as exc:
-            fail(f"Lean migration durable converted output is missing: {exc}")
-        if digest != row["sha256"]:
-            fail("Lean migration durable converted output identity is tampered")
+        _require_unlinked_path(target, target / row["path"])
 
     outputs = saved.get("outputs")
     if not isinstance(outputs, list):
@@ -1315,15 +1517,35 @@ def preflight_lean_migration(target: Path) -> dict | None:
             if current_fixed != saved_fixed or newly_retired:
                 fail("Lean migration found an unequal partial retry; restore or complete the original checkout")
             return None
-        saved_identity = [
-            entry for entry in saved.get("entries") or []
+        saved_identity = {
+            entry["path"]: entry for entry in saved.get("entries") or []
+            if isinstance(entry, dict)
+            and entry.get("reason") != "canonical-review-output"
+        }
+        primary_identity = {
+            entry["path"]: entry for entry in primary
             if entry.get("reason") != "canonical-review-output"
-        ]
-        primary_identity = [
-            entry for entry in primary
-            if entry.get("reason") != "canonical-review-output"
-        ]
-        if saved_identity != primary_identity:
+        }
+        monotonic = True
+        for path, current in primary_identity.items():
+            original = saved_identity.get(path)
+            if current == original:
+                continue
+            if (original is not None
+                    and original.get("classification") == "eligible"
+                    and (path in LEAN_RUNTIME_PATHS
+                         or original.get("family") == "legacy-stage-stamp")
+                    and current.get("classification") == "excluded"):
+                continue
+            monotonic = False
+            break
+        for path, original in saved_identity.items():
+            if path in primary_identity:
+                continue
+            if original.get("classification") != "eligible":
+                monotonic = False
+                break
+        if not monotonic:
             fail("Lean migration found an unequal partial retry; restore or complete the original checkout")
         migration = {"entries": saved["entries"],
                      "input_inventory_digest": saved.get("input_inventory_digest"),
@@ -2077,9 +2299,122 @@ def _stale_agents_references(
     return sorted(stale)
 
 
-def _require_clean_upgrade_target(target: Path) -> None:
+def _resume_harness_path_matches(harness: Path, target: Path, relative: str) -> bool:
+    """Whether one dirty path is the exact result of this harness vendoring it."""
+    source: Path | None = None
+    if _is_harness_owned(relative, harness):
+        source = harness / relative
+    for src_rel, dst_rel in DOC_CONTRACTS:
+        if relative == dst_rel:
+            source = harness / src_rel
+            break
+    destination = target / relative
+    if source is None:
+        return False
+    if not source.exists():
+        return not destination.exists() and not destination.is_symlink()
+    if (not source.is_file() or source.is_symlink()
+            or not destination.is_file() or destination.is_symlink()):
+        return False
+    return destination.read_bytes() == source.read_bytes()
+
+
+def _incomplete_lean_resume_paths(
+        target: Path, harness: Path, changed: set[str]) -> set[str]:
+    """Return authenticated paths an interrupted Lean migration may dirty."""
+    manifest = target / ".factory" / "migrations" / f"{LEAN_MIGRATION_VERSION}.json"
+    if not manifest.exists() and not manifest.is_symlink():
+        return set()
+    _require_single_link_manifest(target, manifest)
+    try:
+        saved = load_json(manifest, default={})
+        from factory_lib import validate_payload
+        validate_payload(target, "lean-workflow-migration", saved)
+    except (OSError, UnicodeError, json.JSONDecodeError, SystemExit):
+        return set()
+    entries = saved.get("entries")
+    if (saved.get("version") != LEAN_MIGRATION_VERSION
+            or saved.get("completed_at")
+            or not isinstance(entries, list)
+            or saved.get("input_inventory_digest") != _inventory_digest(entries)
+            or saved.get("installed_runtime_digest")
+            != _inventory_digest(saved.get("installed_runtime") or [])
+            or saved.get("output_digest") != hashlib.sha256(json.dumps(
+                saved.get("outputs") or [], sort_keys=True,
+                separators=(",", ":"),
+            ).encode()).hexdigest()):
+        return set()
+    try:
+        primary = lean_primary_inventory(target)
+        raw = lean_raw_inventory(target)
+    except SystemExit:
+        return set()
+    if primary != raw:
+        return set()
+    current = {entry["path"]: entry for entry in primary}
+    saved_paths: set[str] = set()
+    for entry in entries:
+        if (not isinstance(entry, dict)
+                or not isinstance(entry.get("path"), str)
+                or entry["path"] in saved_paths):
+            return set()
+        saved_paths.add(entry["path"])
+        live = current.get(entry["path"])
+        if live == entry:
+            continue
+        if (entry.get("classification") == "eligible"
+                and (live is None or live.get("classification") == "excluded")):
+            if live is None and (target / entry["path"]).exists():
+                return set()
+            continue
+        if (_is_harness_owned(entry["path"], harness)
+                and _resume_harness_path_matches(
+                    harness, target, entry["path"])):
+            continue
+        return set()
+    allowed = {manifest.relative_to(target).as_posix()}
+    for entry in entries:
+        if entry.get("classification") == "eligible":
+            allowed.add(entry["path"])
+    for row in saved.get("outputs") or []:
+        if (not isinstance(row, dict)
+                or set(row) != {"story", "task_id", "generation_id",
+                               "generation_sha256"}):
+            return set()
+        story, task, generation = (
+            row.get("story"), row.get("task_id"), row.get("generation_id"),
+        )
+        if (not isinstance(story, str) or SAFE_COMPONENT.fullmatch(story) is None
+                or not isinstance(task, str) or SAFE_COMPONENT.fullmatch(task) is None
+                or not isinstance(generation, str)
+                or re.fullmatch(r"[0-9a-f]{64}", generation) is None):
+            return set()
+        root = f".factory/stories/{story}/tasks/{task}/reviews"
+        allowed.update({
+            f"{root}/selected.json",
+            f"{root}/generations/{generation}.json",
+        })
+    for relative in changed:
+        if relative in allowed:
+            continue
+        if _resume_harness_path_matches(harness, target, relative):
+            allowed.add(relative)
+            continue
+        if (relative.startswith(".codex/agents/")
+                and Path(relative).name in RETIRED_FORGE_PROFILE_HASHES
+                and not (target / relative).exists()):
+            allowed.add(relative)
+            continue
+        if relative.startswith(".agents/") and not (target / relative).exists():
+            allowed.add(relative)
+    return allowed
+
+
+def _require_clean_upgrade_target(
+        target: Path, *, allow_lean_resume: bool = False) -> None:
     status = subprocess.run(
-        ["git", "status", "--porcelain"], cwd=target, capture_output=True,
+        ["git", "status", "--porcelain", "--untracked-files=all"],
+        cwd=target, capture_output=True,
         text=True, encoding="utf-8", errors="surrogateescape",
     )
     if status.returncode != 0:
@@ -2089,6 +2424,18 @@ def _require_clean_upgrade_target(target: Path) -> None:
         )
     dirty = status.stdout.strip()
     if dirty:
+        if allow_lean_resume:
+            changed = {
+                candidate
+                for line in status.stdout.splitlines()
+                for candidate in [line[3:].split(" -> ")[-1].strip().strip('"')]
+                if candidate
+            }
+            allowed = _incomplete_lean_resume_paths(
+                target, repo_root(), changed,
+            )
+            if allowed and changed and changed <= allowed:
+                return
         fail(
             f"{target} has uncommitted changes. Commit or stash first so the upgrade "
             "is a reviewable diff. Lean migration has no --force bypass."
@@ -2114,12 +2461,12 @@ def cmd_upgrade(args: argparse.Namespace) -> None:
             fail(f"{legacy_run} is unreadable JSON ({exc}); fix or delete it, then rerun")
         except OSError as exc:
             fail(f"{legacy_run} is not a readable file ({exc}); fix or delete it, then rerun")
-    _require_clean_upgrade_target(target)
+    _require_clean_upgrade_target(target, allow_lean_resume=True)
     from .delegate import delegation_exclusion
 
     with delegation_exclusion(
             target, "lean-upgrade", kind="review-selection", namespace="state"):
-        _require_clean_upgrade_target(target)
+        _require_clean_upgrade_target(target, allow_lean_resume=True)
         _cmd_upgrade_locked(args, harness, target)
 
 
@@ -2127,6 +2474,10 @@ def _cmd_upgrade_locked(
         args: argparse.Namespace, harness: Path, target: Path) -> None:
     _retired_profiles, preserved_profiles = _retired_forge_profiles(target)
     lean_migration = preflight_lean_migration(target)
+    if lean_migration and lean_migration.get("resume") is True:
+        apply_lean_migration(target, lean_migration)
+        print(f"Resumed and completed Lean migration in {target}")
+        return
     _check_legacy_retirable(target, harness)
 
     # factory/skills is mixed ownership too: the `skills` CLI installs

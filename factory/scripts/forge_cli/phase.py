@@ -21,18 +21,41 @@ from .signal import open_signals
 
 def _approved_plan_changed(base: Path, state: dict) -> bool:
     """Whether an approved story plan lacks exact current native authority."""
+    return _approved_plan_authority_state(base, state) == "changed"
+
+
+def _approved_plan_authority_state(base: Path, state: dict) -> str:
+    """Classify content drift separately from missing or retired authority."""
     if state.get("plan_status") != "approved":
-        return False
+        return "not-approved"
     approved = state.get("approved_plan_sha256")
     relative = state.get("plan_file")
     if (not isinstance(approved, str)
             or re.fullmatch(r"[0-9a-f]{64}", approved) is None
             or not isinstance(relative, str)):
-        return True
+        return "repair"
     plan = base / relative
-    if not plan.is_file() or plan_digest_without_assumptions(plan) != approved:
-        return True
-    return approved_plan_digest(base, state, plan) != approved
+    if not plan.is_file():
+        return "repair"
+    authority = approved_plan_digest(base, state, plan)
+    if authority != approved:
+        story = str(state.get("story") or state.get("issue_key") or "")
+        try:
+            record = load_json(
+                evidence_path(base, story, "plan-approval.json"), default={},
+            )
+        except (OSError, UnicodeError, json.JSONDecodeError):
+            return "repair"
+        legacy = isinstance(record, dict) and all(
+            isinstance(record.get(field), str) and record[field]
+            for field in ("approved_plan_sha256", "approver", "at")
+        ) and "runtime" not in record
+        return "upgrade" if legacy else "repair"
+    return (
+        "current"
+        if plan_digest_without_assumptions(plan) == approved
+        else "changed"
+    )
 
 
 def _auto_heal_roadmap_after_merge(base: Path) -> None:
@@ -391,7 +414,7 @@ def cmd_next(args: argparse.Namespace) -> None:
                          "./forge roadmap derive --input <json>")
             steps.append("[dev] Or start a task directly: python3 factory/scripts/intake.py "
                          "--issue <KEY> --title \"<title>\"")
-    elif _approved_plan_changed(base, state):
+    elif _approved_plan_authority_state(base, state) == "changed":
         phase("awaiting amended-plan approval")
         steps.append(
             f"[dev] The approved story plan changed at {state.get('plan_file')}. "
@@ -400,6 +423,21 @@ def cmd_next(args: argparse.Namespace) -> None:
             "to its approver; do not launch another plan cold read. After approval, "
             "re-record the same decomposition to bind the new story digest. An "
             "unchanged task keeps its existing cold proof and task approval."
+        )
+    elif _approved_plan_authority_state(base, state) == "upgrade":
+        phase("planning authority upgrade required")
+        steps.append(
+            "[dev] The approved plan uses a Lean-retired approval format. Run "
+            "`forge upgrade` before continuing; do not treat it as a content edit "
+            "or fabricate a native approval event."
+        )
+    elif _approved_plan_authority_state(base, state) == "repair":
+        phase("planning authority repair required")
+        steps.append(
+            "[dev] The approved plan's native approval authority is missing or "
+            "malformed. Repair or restore its recorder-generated approval record "
+            "and consumed event tombstone; only actual changed plan bytes route "
+            "directly to native reapproval."
         )
     elif state.get("plan_status") != "approved":
         phase("planning")

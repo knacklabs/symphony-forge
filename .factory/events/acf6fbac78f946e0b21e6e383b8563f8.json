@@ -1,0 +1,1 @@
+{"event": "signal-resolved", "generated_by": "orchestrator", "at": "2026-09-17T05:55:02+00:00", "story": "FORGE-COORD-1", "detail": "S-0047-aeaa: Resolved without widening scope: restored the interrupted delegate's out-of-scope factory/tests/test_board_reads_task_proof.py hunk to HEAD. The required board proof regressions will be placed in alre"}

@@ -15,10 +15,16 @@ coordinator repaired the first read's findings.
 - `epics`: one exact derived-roadmap input against confirmed specs, coverage,
   dependency truth, and acceptance language.
 - `plan`: one exact story plan against its roadmap item, active decisions,
-  architecture, and actual repository state.
+  architecture, and actual repository state. Verify criterion-to-spec coverage,
+  dependency and rollout ordering, public API/data and failure semantics,
+  security and migration boundaries, explicit technology choices, reviewable
+  task seams, and executable acceptance proof. Refuse a plan that drops a real
+  gate without naming its current replacement authority.
 - `task`: one saved JIT task plan against the approved story plan, protected
   decomposition, completed dependency state, constitution references, and the
-  current working tree.
+  current working tree. Verify exact criterion and plan-contract coverage,
+  reachable tests, effective write scope, public API/data and failure behavior,
+  security and migration seams, dependency truth, and reviewable size.
 
 There is no `requirements` gate. Plan and task gates have no compulsory human
 rounds, no minimum round count, no synthetic closing question, and no

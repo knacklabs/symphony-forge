@@ -125,6 +125,14 @@ def story_task_proof(base: Path, key: str, decomposition: dict) -> dict[str, dic
             continue
         proof = task_proof_records(base, key, task_id)
         if proof:
+            from factory_lib import task_proof_problems
+            marker = task_evidence_path(base, key, task_id, "pr-ready.json")
+            try:
+                proof["current"] = not task_proof_problems(
+                    base, key, task, preseal=not marker.is_file(),
+                )
+            except (Exception, SystemExit):
+                proof["current"] = False
             out[task_id] = proof
     return out
 
@@ -140,11 +148,16 @@ def rolled_up_evidence(task_proof: dict[str, dict], decomposition: dict) -> dict
     declared_tasks = {task["id"]: task for task in decomposition.get("tasks") or []
                       if isinstance(task, dict) and isinstance(task.get("id"), str)}
     declared = list(declared_tasks)
-    complete = bool(declared) and all(task_id in task_proof for task_id in declared)
+    complete = bool(declared) and all(
+        task_id in task_proof and task_proof[task_id].get("current", True) is True
+        for task_id in declared
+    )
     verifies = {task_id: task_proof[task_id].get("verify") for task_id in declared
-                if task_id in task_proof}
+                if task_id in task_proof
+                and task_proof[task_id].get("current", True) is True}
     tests = {task_id: task_proof[task_id].get("tests") for task_id in declared
-             if task_id in task_proof}
+             if task_id in task_proof
+             and task_proof[task_id].get("current", True) is True}
     verify = {
         "ok": complete and all(verify_passed(record or {}) for record in verifies.values()),
         "tasks": {task_id: bool(record and verify_passed(record)) for task_id, record in verifies.items()},
@@ -166,6 +179,7 @@ def rolled_up_evidence(task_proof: dict[str, dict], decomposition: dict) -> dict
     for aspect in ASPECTS:
         records = {task_id: task_proof[task_id]["reviews"].get(aspect)
                    for task_id in declared if task_id in task_proof
+                   if task_proof[task_id].get("current", True) is True
                    if isinstance(task_proof[task_id]["reviews"].get(aspect), dict)}
         if not records:
             reviews[aspect] = None
@@ -290,24 +304,37 @@ def _plan_evidence(
     for task in tasks:
         task_id = str(task.get("id") or "")
         proof = task_proof_records(base, story, task_id) or {}
+        from factory_lib import task_proof_problems
+        marker = task_evidence_path(base, story, task_id, "pr-ready.json")
+        try:
+            current = not task_proof_problems(
+                base, story, task, preseal=not marker.is_file(),
+            )
+        except (Exception, SystemExit):
+            current = False
         bundles.append({
             "task": task,
             "verify": proof.get("verify") or {},
             "tests": proof.get("tests") or {},
             "reviews": proof.get("reviews") or {},
+            "current": current,
         })
     evidence = {
         "verify": bool(bundles) and all(
-            verify_passed(bundle["verify"]) for bundle in bundles),
+            bundle["current"] and verify_passed(bundle["verify"])
+            for bundle in bundles),
         "tests": bool(bundles) and all(
-            tests_passed(bundle["tests"].get("automated")) and (
+            bundle["current"]
+            and tests_passed(bundle["tests"].get("automated")) and (
                 tests_passed(bundle["tests"].get("functional"), functional=True)
                 if bundle["task"].get("user_facing") else True
             ) for bundle in bundles
         ),
         "reviews": {
             aspect: bool(bundles) and all(
-                review_passed(bundle["reviews"].get(aspect)) for bundle in bundles)
+                bundle["current"]
+                and review_passed(bundle["reviews"].get(aspect))
+                for bundle in bundles)
             for aspect in ("quality", "performance", "security")
         },
     }
@@ -1164,10 +1191,14 @@ def task_dossiers(base: Path, key: str, detail: dict) -> list[dict]:
     for task in merge_task_detail(decomposition, stages, detail.get("task_rows")):
         task_id = str(task.get("id") or "")
         own = task_proof.get(task_id) or task_proof_records(base, key, task_id) or {}
+        current = own.get("current", True) is True
         tests = own.get("tests") if isinstance(own.get("tests"), dict) else {}
         verify = own.get("verify") if isinstance(own.get("verify"), dict) else {}
         own_reviews = {aspect: record for aspect, record in (own.get("reviews") or {}).items()
                        if isinstance(record, dict)}
+        if not current:
+            tests = {}
+            own_reviews = {}
         recorded_tests = []
         for entry in tests.values():
             if isinstance(entry, dict):
@@ -1191,7 +1222,8 @@ def task_dossiers(base: Path, key: str, detail: dict) -> list[dict]:
         task["proof"] = {
             "required_tests": required,
             "covered_tests": covered,
-            "verify_ok": verify_passed(verify),
+            "current": current,
+            "verify_ok": current and verify_passed(verify),
             "verify_at": verify.get("completed_at"),
             "grill": task_grills.get(task["id"]),
             "findings": findings,

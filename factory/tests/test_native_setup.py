@@ -456,6 +456,8 @@ def test_recovery_profile_override_keeps_only_three_forge_profiles():
         path.stem for path in (HARNESS / ".codex/agents").glob("*.toml")
     }
     assert configured == expected == installed
+    assert config["sandbox_mode"] == "danger-full-access"
+    assert config["approval_policy"] == "never"
 
 
 def _remove_session_start_source(config, missing):

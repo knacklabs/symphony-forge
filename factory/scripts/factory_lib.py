@@ -2117,6 +2117,18 @@ def task_proof_problems(
     generations are the sole fixed-proof migration representation.
     """
     task_id = str(task.get("id") or "")
+    fixed_reviews = [
+        evidence_path(root, key, f"reviews/{aspect}.json")
+        for aspect in _PROOF_LENSES
+    ] + [
+        task_evidence_path(root, key, task_id, f"reviews/{aspect}.json")
+        for aspect in _PROOF_LENSES
+    ]
+    if any(path.is_file() for path in fixed_reviews):
+        return [
+            f"{task_id}: legacy fixed review proof is no longer runtime "
+            "authority; run `forge upgrade`"
+        ]
     task, contract_problem = _task_contract(root, key, task_id, reader)
     if contract_problem:
         return [contract_problem]
@@ -3366,7 +3378,10 @@ def require_task_grill(
             f".factory/grills/tasks/{task_id}.json has no commit stamp — re-record "
             f"with current tooling using `{record_command}`."
         )
-    if not task_grill_grounding_matches(root, task, data, treeish=treeish):
+    if (not task_grill_grounding_matches(root, task, data, treeish=treeish)
+            and not _task_plan_amendment_preserves_cold_proof(
+                root, task, data,
+            )):
         # A digest mismatch has two very different causes, and reporting both as
         # "STALE" sent a reader hunting for a content change that never
         # happened. When the grill was ground on a DIFFERENT BASIS than the one
@@ -3464,7 +3479,8 @@ def _native_story_approval_recorded(
         "codex": "human-via-Codex",
     }.get(runtime)
     if (
-        record.get("approved_by") != expected_actor
+        expected_actor is None
+        or record.get("approved_by") != expected_actor
         or record.get("plan_kind") != "story"
         or record.get("story") != story
         or record.get("task") != ""
@@ -3485,7 +3501,10 @@ def _native_story_approval_recorded(
     )
     if path is not None and path != replay:
         return False
-    return load_json(replay, default={}) == record
+    try:
+        return load_json(replay, default={}) == record
+    except (OSError, UnicodeError, json.JSONDecodeError):
+        return False
 
 
 def approved_story_plan_predecessors(
@@ -3513,9 +3532,12 @@ def approved_story_plan_predecessors(
     plan = root / relative
     if not plan.is_file() or plan_digest_without_assumptions(plan) != current_digest:
         return ()
-    record = load_json(
-        evidence_path(root, story, "plan-approval.json"), default={},
-    )
+    try:
+        record = load_json(
+            evidence_path(root, story, "plan-approval.json"), default={},
+        )
+    except (OSError, UnicodeError, json.JSONDecodeError):
+        return None
     if (
         record.get("approved_plan_sha256") != current_digest
         or not _native_story_approval_recorded(root, story, record)
@@ -3931,10 +3953,14 @@ def approved_plan_digest(
             or not isinstance(digest, str)
             or re.fullmatch(r"[0-9a-f]{64}", digest) is None):
         return None
-    record = load_json(
-        evidence_path(root, story, "plan-approval.json"), default={},
-    )
-    if (record.get("approved_plan_sha256") != digest
+    try:
+        record = load_json(
+            evidence_path(root, story, "plan-approval.json"), default={},
+        )
+    except (OSError, UnicodeError, json.JSONDecodeError):
+        return None
+    if (not isinstance(record, dict)
+            or record.get("approved_plan_sha256") != digest
             or not _native_story_approval_recorded(root, story, record)):
         return None
     return digest
@@ -4365,10 +4391,13 @@ def _native_task_approval_recorded(
     replay_key = hashlib.sha256(
         f"{runtime}\0{session}\0{event}".encode("utf-8")
     ).hexdigest()
-    replay = load_json(
-        evidence_path(root, story, f"approval-events/{replay_key}.json"),
-        default={},
-    )
+    try:
+        replay = load_json(
+            evidence_path(root, story, f"approval-events/{replay_key}.json"),
+            default={},
+        )
+    except (OSError, UnicodeError, json.JSONDecodeError):
+        return False
     expected = {
         "approved_plan_sha256": approved_digest,
         "approved_by": expected_actor,
@@ -4380,7 +4409,81 @@ def _native_task_approval_recorded(
         "story": story,
         "task": task_id,
     }
+    previous = grill.get("previous_approved_task_plan_sha256")
+    if isinstance(previous, str) and previous:
+        expected["previous_approved_plan_sha256"] = previous
     return replay == expected
+
+
+def approved_task_plan_predecessors(
+    root: Path, task: dict, grill: dict,
+) -> tuple[str, ...]:
+    """Return the exact authenticated approval ancestry for one task plan."""
+    if not _native_task_approval_recorded(root, task, grill):
+        return ()
+    story = _active_story_key(root)
+    task_id = str(task.get("id") or "")
+    current = str(grill.get("approved_task_plan_sha256") or "")
+    previous = grill.get("previous_approved_task_plan_sha256")
+    event_dir = evidence_path(root, story, "approval-events")
+    predecessors: list[str] = []
+    seen = {current}
+    while re.fullmatch(r"[0-9a-f]{64}", previous or "") and previous not in seen:
+        matches: list[dict] = []
+        for path in event_dir.glob("*.json"):
+            try:
+                candidate = load_json(path, default={})
+            except (OSError, UnicodeError, json.JSONDecodeError):
+                continue
+            runtime = candidate.get("runtime")
+            session = candidate.get("session_id")
+            event = candidate.get("event_id")
+            actor = {
+                "claude": "human-via-Claude",
+                "codex": "human-via-Codex",
+            }.get(runtime)
+            replay_key = hashlib.sha256(
+                f"{runtime}\0{session}\0{event}".encode("utf-8")
+            ).hexdigest()
+            if (
+                actor is not None
+                and path == event_dir / f"{replay_key}.json"
+                and candidate.get("approved_plan_sha256") == previous
+                and candidate.get("approved_by") == actor
+                and candidate.get("plan_kind") == "task"
+                and candidate.get("story") == story
+                and candidate.get("task") == task_id
+                and all(isinstance(value, str) and value.strip()
+                        for value in (candidate.get("approved_at"), session, event))
+            ):
+                matches.append(candidate)
+        if len(matches) != 1:
+            break
+        predecessors.append(previous)
+        seen.add(previous)
+        previous = matches[0].get("previous_approved_plan_sha256")
+    return tuple(predecessors)
+
+
+def _task_plan_amendment_preserves_cold_proof(
+    root: Path, task: dict, grill: dict,
+) -> bool:
+    """Preserve one cold read through authenticated human-approved amendments."""
+    task_id = str(task.get("id") or "")
+    plan = evidence_path(
+        root, _active_story_key(root), f"task-plans/{task_id}.md",
+    )
+    if not plan.is_file():
+        return False
+    current = plan_digest_without_assumptions(plan)
+    cold = grill.get("task_plan_sha256")
+    approved = grill.get("approved_task_plan_sha256")
+    if (not isinstance(cold, str) or not cold or current == cold
+            or not _native_task_approval_recorded(root, task, grill)):
+        return False
+    return cold == approved or cold in approved_task_plan_predecessors(
+        root, task, grill,
+    )
 
 
 def _task_plan_approval_matches_digest(
@@ -4390,10 +4493,6 @@ def _task_plan_approval_matches_digest(
     return (
         _native_task_approval_recorded(root, task, grill, digest)
         or _legacy_inflight_task_grill(root, task, grill)
-        or (
-            grill.get("approved_task_plan_sha256") == digest
-            and _measurement_continuity_matches(root, task, grill)
-        )
     )
 
 
@@ -4474,7 +4573,10 @@ def _task_grill_fresh(root: Path, task: dict, grill: dict) -> bool:
     if not plan.is_file():
         return False
     digest = plan_digest_without_assumptions(plan)
-    plan_provenance_ok = grill.get("task_plan_sha256") == digest
+    plan_provenance_ok = (
+        grill.get("task_plan_sha256") == digest
+        or _task_plan_amendment_preserves_cold_proof(root, task, grill)
+    )
     try:
         grounded = task_grill_grounding_matches(root, task, grill)
     except SystemExit:
@@ -4509,6 +4611,8 @@ def _task_plan_state(root: Path, task: dict, grill: dict) -> str:
     approved = _task_plan_approval_matches_digest(root, task, grill, digest)
     if approved:
         return "approved"
+    if _task_plan_amendment_preserves_cold_proof(root, task, grill):
+        return "await-approval"
     if cold_read_matches:
         return "await-approval"
     return "grill"

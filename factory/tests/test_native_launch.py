@@ -19,7 +19,7 @@ HARNESS = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(HARNESS / "factory" / "scripts"))
 
 from forge_cli.codex_runtime import (  # noqa: E402
-    native_argv, native_argv_valid, parse_native_result,
+    _legacy_native_argv, native_argv, native_argv_valid, parse_native_result,
     scan_native_result, selected_coordinator,
 )
 from forge_cli.delegate import (  # noqa: E402
@@ -188,6 +188,22 @@ def test_native_write_argv_uses_full_access_and_validates_exact_retired_scope(
             tmp_path,
             scope,
         )
+        unscoped = _legacy_native_argv(
+            "/bin/codex", tmp_path, "model", "high", True, [],
+        )
+        unscoped[-1:] = ["resume", "historical-session", "-"]
+        assert native_argv_valid(
+            {**entry, "argv": unscoped, "launch_status": launch_status,
+             "resume_session": "historical-session"},
+            tmp_path,
+            scope,
+        )
+    assert not native_argv_valid(
+        {**entry, "argv": unscoped, "launch_status": "running",
+         "resume_session": "historical-session"},
+        tmp_path,
+        scope,
+    )
     for launch_status in (None, "starting", "running"):
         candidate = {**entry, "argv": retired}
         if launch_status is not None:

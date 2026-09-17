@@ -518,34 +518,15 @@ with delegation_exclusion(
             task for task in prior_decomposition.get("tasks") or []
             if isinstance(task, dict)
         ]
-        # The prefix of tasks whose work has STARTED (an active or done stage) is
-        # HARD frozen: their ids, order, and dependencies never change here.
-        # Started work is never reordered or removed. (A done contract is frozen
-        # below; an active task's contract may still be amended — that stales its
-        # grill + approval, handled below. To change a task that is done but not
-        # yet shipped, reopen it — `./forge task reopen <id>` — which moves it
-        # back to active; to change shipped work, add a new follow-up task.)
-        started_statuses = {"active", "done"}
-        protected_len = 0
-        for index, task in enumerate(prior_task_list):
-            if stage_statuses.get(task.get("id")) in started_statuses:
-                protected_len = index + 1
-        prior_protected = _task_graph(prior_task_list[:protected_len])
-        if _task_graph(tasks[:protected_len]) != prior_protected:
+        # Approval freezes the complete ID/order/dependency graph. Contract
+        # detail may be enriched JIT, but graph changes require a new plan.
+        if _task_graph(tasks) != _task_graph(prior_task_list):
             raise SystemExit(
-                "decomposition task graph is frozen for work that has started; "
-                "tasks up to the last active/done task (their ids, order, and "
-                "dependencies) must remain an exact prefix — started work is never "
-                "reordered or removed. Reopen a done-but-unshipped task with "
-                "`./forge task reopen <id>` to change it, or add a new follow-up "
-                "task for shipped work."
+                "decomposition task graph is frozen after approval: task ids, "
+                "order, dependencies, and task count cannot change; amend and "
+                "reapprove the story plan before recording a new graph."
             )
-        # Beyond the started prefix the graph MAY change — a pending task may be
-        # reordered or removed, or a newly discovered task inserted among the
-        # pending ones (the mid-story case). That is never a silent reshuffle: it
-        # is an AMENDMENT of an approved plan. Flag it here; below it WITHDRAWS the
-        # plan approval so the flow is stuck until the human re-approves.
-        graph_amended = _task_graph(tasks) != _task_graph(prior_task_list)
+        graph_amended = False
     if frontier_index is not None:
         # Execution detail is authored just-in-time: a pending task may carry it
         # only once every dependency is done (a task without explicit

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import sys
 import uuid
@@ -7,7 +8,10 @@ from pathlib import Path
 
 import pytest
 
-from test_gates import HARNESS, load_factory_lib, repo  # noqa: F401
+from test_gates import (  # noqa: F401
+    HARNESS, intake, load_factory_lib, repo, run, save_plan, sign_off,
+    story_state,
+)
 
 sys.path.insert(0, str(HARNESS / "factory" / "scripts"))
 from forge_cli import approval  # noqa: E402
@@ -113,15 +117,87 @@ def test_native_approval_revalidates_candidate_before_first_mutation(
 
 def test_phase_refuses_approved_status_without_native_approval_authority(
         repo: Path):
-    from forge_cli.phase import _approved_plan_changed
+    from forge_cli.phase import (
+        _approved_plan_authority_state, _approved_plan_changed,
+    )
 
     candidate = _story_candidate(repo)
     approval.record_native_approval(repo, _event(candidate), runtime="claude")
     lib = load_factory_lib(repo)
     state = json.loads(lib.run_state_path(repo).read_text(encoding="utf-8"))
     assert _approved_plan_changed(repo, state) is False
+    authority_bytes = candidate.evidence.read_bytes()
     candidate.evidence.unlink()
-    assert _approved_plan_changed(repo, state) is True
+    assert _approved_plan_changed(repo, state) is False
+    assert _approved_plan_authority_state(repo, state) == "repair"
+    lib.dump_json(candidate.evidence, {
+        "approved_plan_sha256": candidate.digest,
+        "approver": "Legacy Human",
+        "at": "2026-01-01T00:00:00+00:00",
+    })
+    assert _approved_plan_authority_state(repo, state) == "upgrade"
+    candidate.evidence.write_bytes(authority_bytes)
+    candidate.path.write_text(
+        candidate.path.read_text(encoding="utf-8") + "\nChanged bytes.\n",
+        encoding="utf-8",
+    )
+    assert _approved_plan_authority_state(repo, state) == "changed"
+
+
+@pytest.mark.parametrize("body", [b"\xff", b"[]\n"])
+def test_forge_next_routes_malformed_plan_approval_to_authority_repair(
+        repo: Path, tmp_path: Path, body: bytes):
+    sign_off(repo)
+    intake(repo)
+    code, out = save_plan(repo, tmp_path)
+    assert code == 0, out
+    (story_state(repo) / "plan-approval.json").write_bytes(body)
+    code, out = run(repo, "forge.py", "next")
+    assert code == 0, out
+    assert "planning authority repair required" in out
+
+
+def test_story_approval_refuses_unknown_runtime_even_with_matching_replay(
+        repo: Path):
+    candidate = _story_candidate(repo)
+    record = approval.record_native_approval(
+        repo, _event(candidate), runtime="claude",
+    )
+    lib = load_factory_lib(repo)
+    old_replay = next(
+        path for path in candidate.evidence.parent.glob(
+            "approval-events/*.json")
+        if json.loads(path.read_text()).get("event_id") == record["event_id"]
+    )
+    forged = dict(record)
+    forged["runtime"] = "unknown"
+    forged.pop("approved_by")
+    replay_key = hashlib.sha256(
+        f"unknown\0{record['session_id']}\0{record['event_id']}".encode()
+    ).hexdigest()
+    old_replay.unlink()
+    replay = old_replay.parent / f"{replay_key}.json"
+    lib.dump_json(replay, forged)
+    lib.dump_json(candidate.evidence, forged)
+    assert not lib._native_story_approval_recorded(repo, candidate.story, forged)
+    forged.pop("runtime")
+    replay.unlink()
+    replay_key = hashlib.sha256(
+        f"None\0{record['session_id']}\0{record['event_id']}".encode()
+    ).hexdigest()
+    replay = old_replay.parent / f"{replay_key}.json"
+    lib.dump_json(replay, forged)
+    lib.dump_json(candidate.evidence, forged)
+    assert not lib._native_story_approval_recorded(repo, candidate.story, forged)
+
+    for runtime in ("claude", "codex"):
+        control = _story_candidate(repo, story=f"CONTROL-{runtime}")
+        stored = approval.record_native_approval(
+            repo, _event(control, runtime), runtime=runtime,
+        )
+        assert lib._native_story_approval_recorded(
+            repo, control.story, stored,
+        )
 
 
 def test_approved_story_edit_is_the_only_candidate_and_rebinds_atomically(
@@ -466,9 +542,17 @@ def test_native_approval_reuses_existing_story_and_task_approval_storage(
         path for path in (story.evidence.parent / "approval-events").glob("*.json")
         if json.loads(path.read_text()).get("task") == "T1"
     )
+    replay_bytes = replay.read_bytes()
     replay.unlink()
     assert not lib._task_plan_approval_matches_digest(
         repo, task_row, stored, task.digest)
+    replay.write_text("{not json\n", encoding="utf-8")
+    assert not lib._task_plan_approval_matches_digest(
+        repo, task_row, stored, task.digest)
+    replay.write_bytes(b"\xff")
+    assert not lib._task_plan_approval_matches_digest(
+        repo, task_row, stored, task.digest)
+    replay.write_bytes(replay_bytes)
     legacy = {
         "approved_task_plan_sha256": task.digest,
         "approved_by": "Legacy Human",

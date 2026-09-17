@@ -1972,23 +1972,33 @@ def _file_identity(path: Path) -> dict[str, object]:
 
 
 def _explicit_pytest_config_identity(
-    base: Path, python_args: list[str],
+    base: Path, python_args: list[str], environment: dict[str, str],
 ) -> dict[str, object] | None:
     """Bind one explicit pytest config without following or trusting its location."""
     values: list[str] = []
-    args = python_args[2:]
-    index = 0
-    while index < len(args):
-        token = args[index]
-        if token in {"-c", "--config-file"}:
-            if index + 1 >= len(args):
-                raise ValueError("missing pytest config path")
-            values.append(args[index + 1])
-            index += 2
-            continue
-        if token.startswith("--config-file="):
-            values.append(token.split("=", 1)[1])
-        index += 1
+
+    def collect(args: list[str]) -> None:
+        index = 0
+        while index < len(args):
+            token = args[index]
+            if token in {"-c", "--config-file"}:
+                if index + 1 >= len(args):
+                    raise ValueError("missing pytest config path")
+                values.append(args[index + 1])
+                index += 2
+                continue
+            if token.startswith("--config-file="):
+                values.append(token.split("=", 1)[1])
+            elif token.startswith("-c") and token != "-c":
+                values.append(token[2:])
+            index += 1
+
+    collect(python_args[2:])
+    addopts = environment.get("PYTEST_ADDOPTS", "")
+    try:
+        collect(shlex.split(addopts))
+    except ValueError as exc:
+        raise ValueError("malformed PYTEST_ADDOPTS") from exc
     if not values:
         return None
     if len(values) != 1 or not values[0]:
@@ -2013,8 +2023,7 @@ def _explicit_pytest_config_identity(
             or opened.st_nlink != 1):
         raise ValueError("pytest config identity changed")
     return {
-        "path": str(path), "size": opened.st_size,
-        "sha256": hashlib.sha256(body).hexdigest(),
+        "size": opened.st_size, "sha256": hashlib.sha256(body).hexdigest(),
     }
 
 
@@ -2136,7 +2145,7 @@ def _proof_tool_identity(
                 "environment": environment_identity, "reusable": False}
     try:
         pytest_config = (
-            _explicit_pytest_config_identity(base, python_args)
+            _explicit_pytest_config_identity(base, python_args, environment)
             if module == "pytest" else None
         )
     except (OSError, ValueError):

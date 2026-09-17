@@ -30,6 +30,7 @@
     "citations": "list",
     "escalation_packet": "dict",
     "approved_task_plan_sha256": "str",
+    "previous_approved_task_plan_sha256": "str",
     "approved_by": "str",
     "approved_at": "str",
     "approval_runtime": "str",

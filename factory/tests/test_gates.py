@@ -1468,7 +1468,7 @@ def test_phase_derivation_matches_legacy_run_json_semantics(repo):
     assert lib.load_json(lib.run_state_path(repo))["phase"] == "shipped"
 
 
-def test_board_and_findings_prefer_selected_task_review_over_fixed_diagnostics(
+def test_board_and_findings_refuse_selected_task_review_with_fixed_diagnostics(
     repo, tmp_path,
 ):
     prepare_task_pr_ready(repo, tmp_path)
@@ -1490,10 +1490,14 @@ def test_board_and_findings_prefer_selected_task_review_over_fixed_diagnostics(
 
     from forge_cli.board import story_detail
     detail = story_detail(repo, "ENG-1")
-    assert detail["evidence"]["reviews"]["quality"]["score"] == 10
-    assert detail["evidence"]["reviews"]["security"]["score"] == 7
+    assert not any(detail["evidence"]["reviews"].values())
+    assert detail["evidence"]["task_proof"]["T1"]["current"] is False
 
     from forge_cli.findings import collect
+    with pytest.raises(SystemExit, match="run forge upgrade"):
+        collect(repo)
+    for aspect in ("quality", "performance", "security"):
+        (fixed / f"{aspect}.json").unlink()
     rows = collect(repo)
     assert [row["summary"] for row in rows].count("selected current finding") == 1
     assert not any(row["category"] == "diagnostic-only" for row in rows)
@@ -2825,7 +2829,7 @@ def test_update_run_approved_requires_plan_file(repo):
     sign_off(repo)
     intake(repo)
     code, out = run(repo, "update_run.py", "--plan-status", "approved")
-    assert code != 0 and "plan save" in out
+    assert code != 0 and "plan save" in out and "native approval recorder" in out
 
 
 def test_hand_written_plan_cannot_approve_itself(repo):
@@ -3142,9 +3146,45 @@ def test_functional_check_paths_terminate_and_refuse_stale_reviewed_meaning(
     decomposition["tasks"][0]["acceptance_criteria"].append("new semantic requirement")
     decomposition_path.write_text(json.dumps(decomposition))
 
+    from forge_cli.board import story_task_proof, task_dossiers
+    proof = story_task_proof(repo, "ENG-1", decomposition)
+    assert proof["T1"]["current"] is False
+    dossiers = task_dossiers(repo, "ENG-1", {
+        "plan_body": "", "spec": {},
+        "evidence": {
+            "decomposition": decomposition,
+            "stages": json.loads((repo / ".factory/stages.json").read_text()),
+            "task_grills": {}, "task_proof": proof,
+        },
+    })
+    dossier = dossiers[0]
+    assert dossier["proof"]["covered_tests"] == []
+    assert dossier["proof"]["findings"] == []
+    progress = {row["key"]: row["state"] for row in dossier["progress"]["steps"]}
+    assert progress["verify"] != "done"
+    assert progress["tests"] != "done"
+    assert progress["review"] != "done"
+
     assert lib.load_json(lib.run_state_path(repo))["phase"] != "functional-check"
     code, out = run(repo, "update_run.py", "--phase", "functional-check")
     assert code != 0 and "current clean selected review generation" in out, out
+
+
+def test_board_refuses_mixed_selected_and_fixed_review_proof(repo, tmp_path):
+    from forge_cli.board import story_task_proof
+
+    prepare_task_pr_ready(repo, tmp_path)
+    finish_task_for_pr_ready(repo)
+    write_task_proof(repo, "T1", publish_review=True)
+    fixed = story_state(repo) / "tasks/T1/reviews/quality.json"
+    fixed.write_text(json.dumps({"score": 10}) + "\n", encoding="utf-8")
+    decomposition = json.loads(
+        load_factory_lib(repo).protected_decomposition_state_path(repo).read_text()
+    )
+
+    proof = story_task_proof(repo, "ENG-1", decomposition)
+
+    assert proof["T1"]["current"] is False
 
 
 def test_update_run_functional_check_refuses_blocking_selected_lens(repo, tmp_path):
@@ -13179,6 +13219,13 @@ def test_task_proof_overrides_a_clean_story_record_rather_than_joining_it(
     write_task_proof(repo, "T1", publish_review=True, review_blocked=True)
 
     problems = lib.task_proof_problems(repo, "ENG-1", task)
+    assert problems == [
+        "T1: legacy fixed review proof is no longer runtime authority; "
+        "run `forge upgrade`"
+    ]
+    for lens in ("quality", "performance", "security"):
+        lib.evidence_path(repo, "ENG-1", f"reviews/{lens}.json").unlink()
+    problems = lib.task_proof_problems(repo, "ENG-1", task)
     assert problems, "task proof must override the story record, not join it"
     assert any("security" in p for p in problems)
 
@@ -13559,9 +13606,7 @@ def test_initial_recording_is_fully_skeletal_and_graph_freezes(repo, tmp_path):
     )
     assert code == 0, out
 
-    # Nothing has STARTED yet: the pending graph may be reshaped, but every such
-    # change is an APPROVED-PLAN AMENDMENT (it prints the amendment NOTE and marks
-    # the approval/grills stale), never a silent reshuffle.
+    # Approval freezes every graph row, including pending work and task count.
     graph_edits = [
         [{**first, "id": "RENAMED"},
          {**second, "dependencies": ["RENAMED"]}],
@@ -13574,10 +13619,7 @@ def test_initial_recording_is_fully_skeletal_and_graph_freezes(repo, tmp_path):
             repo, "record_decomposition_from_json.py",
             stdin=json.dumps({**DECOMP, "tasks": tasks}),
         )
-        assert code == 0 and "AMENDED" in out, out
-    # Restore the original skeleton for the checks that follow.
-    run(repo, "record_decomposition_from_json.py",
-        stdin=json.dumps({**DECOMP, "tasks": [first, second]}))
+        assert code != 0 and "frozen after approval" in out, out
 
     # Once T1 has STARTED (here: done) its graph position — id, order,
     # dependencies — is HARD frozen; only `forge task reopen` can move started
@@ -13597,7 +13639,7 @@ def test_initial_recording_is_fully_skeletal_and_graph_freezes(repo, tmp_path):
             repo, "record_decomposition_from_json.py",
             stdin=json.dumps({**DECOMP, "tasks": tasks}),
         )
-        assert code != 0 and "frozen for work that has started" in out, out
+        assert code != 0 and "frozen after approval" in out, out
     # Back to pending so the append + frontier-detail checks below are unaffected.
     write_stages(repo, {
         "issue": "ENG-1",
@@ -13614,23 +13656,23 @@ def test_initial_recording_is_fully_skeletal_and_graph_freezes(repo, tmp_path):
         repo, "record_decomposition_from_json.py",
         stdin=json.dumps({**DECOMP, "tasks": [first, second, detailed_append]}),
     )
-    assert code != 0 and "pending non-frontier task must not declare" in out, out
+    assert code != 0 and "frozen after approval" in out, out
     empty_detail_append = {**appended, "write_scope": []}
     code, out = run(
         repo, "record_decomposition_from_json.py",
         stdin=json.dumps({**DECOMP, "tasks": [first, second, empty_detail_append]}),
     )
-    assert code != 0 and "pending non-frontier task must not declare" in out, out
+    assert code != 0 and "frozen after approval" in out, out
     code, out = run(
         repo, "record_decomposition_from_json.py",
         stdin=json.dumps({**DECOMP, "tasks": [first, second, appended]}),
     )
-    assert code == 0, out
+    assert code != 0 and "frozen after approval" in out, out
 
     frontier = {**first, **execution_detail}
     code, out = run(
         repo, "record_decomposition_from_json.py",
-        stdin=json.dumps({**DECOMP, "tasks": [frontier, second, appended]}),
+        stdin=json.dumps({**DECOMP, "tasks": [frontier, second]}),
     )
     assert code == 0, out
     write_stages(repo, {
@@ -13638,13 +13680,12 @@ def test_initial_recording_is_fully_skeletal_and_graph_freezes(repo, tmp_path):
         "stages": [
             {"id": "T1", "title": frontier["title"], "status": "active"},
             {"id": "T2", "title": second["title"], "status": "pending"},
-            {"id": "T3", "title": appended["title"], "status": "pending"},
         ],
     })
     repaired = {**frontier, "write_scope": ["src/", "billing/"]}
     code, out = run(
         repo, "record_decomposition_from_json.py",
-        stdin=json.dumps({**DECOMP, "tasks": [repaired, second, appended]}),
+        stdin=json.dumps({**DECOMP, "tasks": [repaired, second]}),
     )
     assert code == 0, out
 
@@ -17918,7 +17959,7 @@ def test_stage_start_and_delegate_refuse_without_approved_task_plan(repo, tmp_pa
     code, out = run(
         repo, "forge.py", "delegate", "T1", env=fake_companion_env(tmp_path),
     )
-    assert code != 0 and "task grill is STALE" in out
+    assert code != 0 and "Task plan approval required" in out
     rows = [json.loads(line) for line in delegation_ledger(repo).read_text().splitlines()]
     assert not any(row.get("task") == "T1" for row in rows)
 

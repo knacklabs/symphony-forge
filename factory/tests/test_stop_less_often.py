@@ -88,7 +88,7 @@ def test_a_plan_edited_after_approval_cannot_reuse_stale_native_authority(
 
     code, out = run(repo, "forge.py", "stage", "start", "T1", "--trunk")
     assert code != 0, out
-    assert "task grill is STALE" in out
+    assert "Task plan approval required" in out
     lib = load_factory_lib(repo)
     assert not lib._task_plan_approval_matches_digest(
         repo, STAGE_TASK, original_grill,
@@ -99,6 +99,18 @@ def test_a_plan_edited_after_approval_cannot_reuse_stale_native_authority(
         field: json.loads(grill_path.read_text()).get(field)
         for field in preserved_cold_proof
     } == preserved_cold_proof
+    code, out = post_hook(repo, native_claude_approval(repo))
+    assert code == 0, out
+    code, out = run(repo, "forge.py", "stage", "start", "T1", "--trunk")
+    assert code == 0, out
+    updated = json.loads(grill_path.read_text())
+    assert {
+        field: updated.get(field) for field in preserved_cold_proof
+    } == preserved_cold_proof
+    assert len(task_approval_events()) == 2
+    assert lib._task_plan_approval_matches_digest(
+        repo, STAGE_TASK, updated, lib.plan_digest_without_assumptions(saved),
+    )
 
 
 def test_an_unapproved_plan_edit_still_needs_a_regrill(repo: Path, tmp_path):

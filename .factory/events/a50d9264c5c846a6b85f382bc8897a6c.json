@@ -1,0 +1,1 @@
+{"event": "signal-scope-change", "generated_by": "implementer", "at": "2026-09-17T05:51:54+00:00", "story": "FORGE-COORD-1", "detail": "Existing LEAN-WORKFLOW correction batch modifies factory/tests/test_board_reads_task_proof.py, which is outside the declared write scope; stage completion will refuse unless the host adds that path or"}

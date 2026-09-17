@@ -407,6 +407,33 @@ def test_proof_identity_binds_environment_without_persisting_secrets(
     }
 
 
+def test_pytest_addopts_config_bytes_are_bound_without_persisting_paths(
+        repo: Path, monkeypatch):
+    _fake_uv_probe(repo, monkeypatch)
+    config = repo.parent / "private pytest.ini"
+    config.write_text("[pytest]\naddopts = -q\n", encoding="utf-8")
+    monkeypatch.setenv("PYTEST_ADDOPTS", f"-c '{config}'")
+    command = "uv run --with pytest python -m pytest tests/a.py"
+    first = stages._proof_tool_identity(repo, command)
+    assert first["reusable"] is True
+    serialized = json.dumps(first, sort_keys=True)
+    assert str(config) not in serialized
+    config.write_text("[pytest]\naddopts = -x\n", encoding="utf-8")
+    changed = stages._proof_tool_identity(repo, command)
+    assert changed["reusable"] is True
+    assert changed["pytest_config"] != first["pytest_config"]
+    config.unlink()
+    assert stages._proof_tool_identity(repo, command)["reusable"] is False
+
+    config.write_text("[pytest]\n", encoding="utf-8")
+    conflict = stages._proof_tool_identity(
+        repo, f"{command} --config-file={repo / 'pytest.ini'}",
+    )
+    assert conflict["reusable"] is False
+    monkeypatch.setenv("PYTEST_ADDOPTS", "-c 'unterminated")
+    assert stages._proof_tool_identity(repo, command)["reusable"] is False
+
+
 def test_run_stage_proof_memoizes_tool_probe_by_prefix_and_environment(
         repo: Path, monkeypatch):
     state, _runner = _fake_uv_probe(repo, monkeypatch)

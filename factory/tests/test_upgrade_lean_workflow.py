@@ -45,6 +45,25 @@ def _legacy_grill(gate: str) -> dict:
     return value
 
 
+def _current_grill(gate: str, digest: str = "a" * 64) -> dict:
+    value = {
+        "generated_by": "griller", "gate": gate, "verdict": "pass",
+        "gaps": [], "contradictions": [], "resolutions": [],
+        "finding_dispositions": [], "amendments": [], "artifact_delta": [],
+        "cold_input_sha256": digest, "final_artifact_sha256": digest,
+        "issue": "S1", "input_sha256": digest,
+    }
+    if gate == "task":
+        value.update({
+            "task_id": "T1", "task_plan_sha256": digest,
+            "inspected_refs": ["AGENTS.md"], "current_flow": "current flow",
+            "criteria_map": {"criterion": "covered"}, "decision": "keep",
+            "new_abstractions": [], "grounding_basis": "working-tree",
+            "grounding_treeish": "",
+        })
+    return value
+
+
 def _fixed_lens(
         task: str = "T1",
         delta: str = hashlib.sha256(b"").hexdigest(),
@@ -138,7 +157,7 @@ def test_lean_grill_classification_uses_only_parsed_top_level_fields(repo: Path)
     current = repo / ".factory/grills/tasks/T1.json"
     current.parent.mkdir(parents=True, exist_ok=True)
     current.write_text(json.dumps({
-        "cold_input_sha256": "a" * 64,
+        **_current_grill("task"),
         "gaps": ['text mentions "rounds" but is not a field'],
     }), encoding="utf-8")
 
@@ -147,6 +166,60 @@ def test_lean_grill_classification_uses_only_parsed_top_level_fields(repo: Path)
     assert primary == raw
     assert primary[old.relative_to(repo).as_posix()]["family"] == "old-plan-grill"
     assert primary[current.relative_to(repo).as_posix()]["family"] == ""
+
+
+@pytest.mark.parametrize("value", [
+    {"cold_input_sha256": "a" * 64},
+    {"final_artifact_sha256": "a" * 64},
+    {**_current_grill("plan"), "rounds": []},
+])
+def test_lean_grill_inventory_refuses_partial_or_hybrid_current_shapes(
+        repo: Path, value: dict):
+    path = repo / ".factory/grills/plan.json"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(value), encoding="utf-8")
+    primary = upgrade.lean_primary_inventory(repo)
+    raw = upgrade.lean_raw_inventory(repo)
+    assert primary == raw
+    row = next(item for item in primary if item["path"] == ".factory/grills/plan.json")
+    assert row["classification"] == "invalid"
+    with pytest.raises(SystemExit):
+        upgrade.preflight_lean_migration(repo)
+
+
+def test_lean_current_grill_classifier_matches_recorder_required_fields(
+        repo: Path):
+    plan = _current_grill("plan")
+    plan.pop("amendments")
+    plan.pop("artifact_delta")
+    plan_path = repo / ".factory/grills/plan.json"
+    plan_path.parent.mkdir(parents=True, exist_ok=True)
+    plan_path.write_text(json.dumps(plan), encoding="utf-8")
+    primary = upgrade.lean_primary_inventory(repo)
+    raw = upgrade.lean_raw_inventory(repo)
+    assert primary == raw
+    row = next(item for item in primary if item["path"] == ".factory/grills/plan.json")
+    assert row["classification"] == "excluded"
+
+    invalid_cases = []
+    invalid_verdict = _current_grill("task")
+    invalid_verdict["verdict"] = "maybe"
+    invalid_cases.append(invalid_verdict)
+    invalid_digest = _current_grill("task")
+    invalid_digest["task_plan_sha256"] = "not-a-digest"
+    invalid_cases.append(invalid_digest)
+    missing_proof = _current_grill("task")
+    missing_proof.pop("criteria_map")
+    invalid_cases.append(missing_proof)
+    task_path = repo / ".factory/grills/tasks/T1.json"
+    task_path.parent.mkdir(parents=True, exist_ok=True)
+    for value in invalid_cases:
+        task_path.write_text(json.dumps(value), encoding="utf-8")
+        primary = upgrade.lean_primary_inventory(repo)
+        raw = upgrade.lean_raw_inventory(repo)
+        assert primary == raw
+        row = next(item for item in primary if item["path"].endswith("tasks/T1.json"))
+        assert row["classification"] == "invalid"
 
 
 def test_lean_raw_inventory_does_not_reuse_primary_classifiers_or_identities(
@@ -303,7 +376,7 @@ def test_lean_migration_inventories_ignore_paths_outside_declared_legacy_roots(
 def test_lean_migration_excludes_and_preserves_current_family_objects(repo: Path):
     fixtures = {
         ".factory/grills/plan.json": {
-            **_legacy_grill("plan"), "cold_input_sha256": "a" * 64,
+            **_current_grill("plan"),
         },
         ".factory/plan-approval.json": {
             "approved_plan_sha256": "a" * 64,
@@ -421,6 +494,57 @@ def test_lean_migration_refuses_malformed_mixed_partial_conflicting_or_linked_in
     assert "linked or reparse" in capsys.readouterr().out
 
 
+def test_lean_inventory_refuses_unsafe_fixed_task_identity_and_mixed_stage_stamp(
+        repo: Path):
+    fixed_root = repo / ".factory/stories/S1/reviews"
+    fixed_root.mkdir(parents=True, exist_ok=True)
+    for lens in ("quality", "performance", "security"):
+        (fixed_root / f"{lens}.json").write_text(
+            json.dumps(_fixed_lens("../escape")), encoding="utf-8",
+        )
+    tempting_marker = repo / ".factory/stories/S1/escape/pr-ready.json"
+    tempting_marker.parent.mkdir(parents=True, exist_ok=True)
+    tempting_marker.write_text('{"commit":"tempting"}\n', encoding="utf-8")
+    marker_before = tempting_marker.read_bytes()
+    primary = upgrade.lean_primary_inventory(repo)
+    raw = upgrade.lean_raw_inventory(repo)
+    assert primary == raw
+    row = next(item for item in primary if item["path"].endswith("quality.json"))
+    assert row["classification"] == "invalid"
+    with pytest.raises(SystemExit):
+        upgrade.preflight_lean_migration(repo)
+    assert tempting_marker.read_bytes() == marker_before
+
+    for path in fixed_root.glob("*.json"):
+        path.unlink()
+    stage = repo / ".factory/stages.json"
+    stage.write_text(json.dumps({"stages": [
+        {"id": "T1", "local_review_stamp": {
+            "stage_id": "T1", "reviewed_meaning": "a" * 64}},
+        {"id": "T2", "local_review_stamp": {"stage_id": "T2"}},
+    ]}), encoding="utf-8")
+    primary = upgrade.lean_primary_inventory(repo)
+    raw = upgrade.lean_raw_inventory(repo)
+    assert primary == raw
+    row = next(item for item in primary if item["path"] == ".factory/stages.json")
+    assert row["classification"] == "invalid"
+
+    stage.write_text(json.dumps({"stages": [
+        {"id": "T1", "local_review_stamp": {
+            "stage_id": "T1", "reviewed_meaning": "a" * 64}},
+        {"id": "T2", "local_review_stamp": {
+            "stage_id": "T2", "reviewed_meaning": "b" * 64}},
+    ]}), encoding="utf-8")
+    current_primary = upgrade.lean_primary_inventory(repo)
+    current_raw = upgrade.lean_raw_inventory(repo)
+    assert current_primary == current_raw
+    current_row = next(
+        row for row in current_primary if row["path"] == ".factory/stages.json"
+    )
+    assert current_row["classification"] == "excluded"
+    assert current_row["family"] == ""
+
+
 def test_lean_migration_is_idempotent_for_byte_identical_retry_and_refuses_unequal_partial_retry(
         repo: Path):
     legacy = _legacy_round(repo)
@@ -439,7 +563,7 @@ def test_lean_migration_is_idempotent_for_byte_identical_retry_and_refuses_unequ
     assert third.returncode != 0 and "unequal partial" in third.stdout
 
 
-def test_completed_lean_migration_validates_converted_stage_output_on_retry(
+def test_completed_lean_migration_allows_live_stage_evolution_but_refuses_legacy(
         repo: Path, capsys: pytest.CaptureFixture[str]):
     stage = repo / ".factory/stories/S1/stages/T1.json"
     stage.parent.mkdir(parents=True, exist_ok=True)
@@ -458,9 +582,13 @@ def test_completed_lean_migration_validates_converted_stage_output_on_retry(
     assert "local_review_stamp" not in json.loads(stage.read_text())
     assert upgrade.preflight_lean_migration(repo) is None
     stage.write_text('{}\n', encoding="utf-8")
+    assert upgrade.preflight_lean_migration(repo) is None
+    stage.write_text(json.dumps({
+        "id": "T1", "local_review_stamp": {"stage_id": "T1"},
+    }), encoding="utf-8")
     with pytest.raises(SystemExit):
         upgrade.preflight_lean_migration(repo)
-    assert "converted output identity" in capsys.readouterr().out
+    assert "invalid legacy-stage-stamp" in capsys.readouterr().out
 
 
 def test_lean_migration_resumes_durable_manifest_before_input_deletion(
@@ -483,11 +611,69 @@ def test_lean_migration_resumes_durable_manifest_before_input_deletion(
     assert manifest.is_file()
     assert "completed_at" not in json.loads(manifest.read_text())
 
-    resumed = upgrade.preflight_lean_migration(repo)
-    assert resumed is not None and resumed["resume"] is True
-    upgrade.apply_lean_migration(repo, resumed)
+    unrelated_generation = (
+        repo / ".factory/stories/S1/tasks/T1/reviews/generations/unrelated.json"
+    )
+    unrelated_generation.parent.mkdir(parents=True, exist_ok=True)
+    unrelated_generation.write_text("{}\n", encoding="utf-8")
+    refused = _upgrade(repo)
+    assert refused.returncode != 0 and "uncommitted changes" in refused.stdout
+    unrelated_generation.unlink()
+
+    manifest_bytes = manifest.read_bytes()
+    forged_path = repo / "unrelated-resume.txt"
+    forged_path.write_text("forged\n", encoding="utf-8")
+    forged = json.loads(manifest.read_text())
+    forged["entries"].append({
+        "path": "unrelated-resume.txt", "family": "old-plan-grill",
+        "type": "file", "sha256": hashlib.sha256(b"forged\n").hexdigest(),
+        "bytes": len(b"forged\n"), "classification": "eligible",
+        "reason": "legacy-format", "preserve": False,
+    })
+    forged["input_inventory_digest"] = upgrade._inventory_digest(forged["entries"])
+    manifest.write_text(json.dumps(forged) + "\n", encoding="utf-8")
+    refused = _upgrade(repo)
+    assert refused.returncode != 0 and "uncommitted changes" in refused.stdout
+    manifest.write_bytes(manifest_bytes)
+    forged_path.unlink()
+
+    resumed = _upgrade(repo)
+    assert resumed.returncode == 0, resumed.stdout + resumed.stderr
     assert not legacy.exists()
     assert "completed_at" in json.loads(manifest.read_text())
+
+
+def test_public_upgrade_resumes_after_vendoring_without_revendoring(
+        repo: Path, monkeypatch: pytest.MonkeyPatch,
+        capsys: pytest.CaptureFixture[str]):
+    legacy = _legacy_round(repo)
+    git(repo, "add", legacy.relative_to(repo).as_posix())
+    git(repo, "commit", "-q", "-m", "legacy input")
+    original_unlink = Path.unlink
+
+    def interrupted_unlink(path: Path, *args, **kwargs):
+        if path == legacy:
+            raise OSError("public interruption after vendoring")
+        return original_unlink(path, *args, **kwargs)
+
+    with monkeypatch.context() as patch:
+        patch.setattr(Path, "unlink", interrupted_unlink)
+        with pytest.raises(OSError, match="public interruption"):
+            upgrade.cmd_upgrade(argparse.Namespace(target=str(repo), force=False))
+    manifest = repo / ".factory/migrations/lean-workflow-v2.json"
+    assert manifest.is_file()
+    assert "completed_at" not in json.loads(manifest.read_text())
+
+    def unexpected_vendoring(*_args, **_kwargs):
+        raise AssertionError("resume reran vendoring")
+
+    with monkeypatch.context() as patch:
+        patch.setattr(upgrade, "guarded_copytree", unexpected_vendoring)
+        patch.setattr(upgrade, "_replace_path", unexpected_vendoring)
+        upgrade.cmd_upgrade(argparse.Namespace(target=str(repo), force=False))
+    assert not legacy.exists()
+    assert "completed_at" in json.loads(manifest.read_text())
+    assert "Resumed and completed Lean migration" in capsys.readouterr().out
 
 
 def test_completed_lean_manifest_allows_later_runtime_versions(repo: Path):
@@ -506,7 +692,7 @@ def test_completed_lean_manifest_allows_mutable_preserved_records_and_profiles(
         repo: Path):
     grill = repo / ".factory/stories/S1/grills/plan.json"
     grill.parent.mkdir(parents=True, exist_ok=True)
-    grill.write_text(json.dumps({"cold_input_sha256": "a" * 64}) + "\n")
+    grill.write_text(json.dumps(_current_grill("plan")) + "\n")
     profile = repo / ".codex/agents/client.toml"
     profile.parent.mkdir(parents=True, exist_ok=True)
     profile.write_text('name = "client"\n', encoding="utf-8")
@@ -515,7 +701,7 @@ def test_completed_lean_manifest_allows_mutable_preserved_records_and_profiles(
     assert migration is not None
     upgrade.apply_lean_migration(repo, migration)
     assert not legacy.exists()
-    grill.write_text(json.dumps({"cold_input_sha256": "b" * 64}) + "\n")
+    grill.write_text(json.dumps(_current_grill("plan", "b" * 64)) + "\n")
     profile.write_text('name = "client-updated"\n', encoding="utf-8")
     assert upgrade.preflight_lean_migration(repo) is None
 

@@ -7,6 +7,7 @@ personality = "pragmatic"
 # Full host access is the Forge-managed default (decision 0049). Forge's
 # lifecycle, write-scope, admission, and hook controls remain authoritative.
 sandbox_mode = "danger-full-access"
+approval_policy = "never"
 web_search = "cached"
 
 # The commands the worker runs may reach the network (decision 0068): the

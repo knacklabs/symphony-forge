@@ -675,5 +675,8 @@ def test_live_findings_refuse_fixed_proof_only_for_the_active_story(
     active = lib.story_dir(repo, "ACTIVE") / "reviews" / "quality.json"
     active.parent.mkdir(parents=True, exist_ok=True)
     active.write_text(json.dumps({"blocking_findings": []}), encoding="utf-8")
+    selected = lib.story_dir(repo, "ACTIVE") / "tasks/T1/reviews/selected.json"
+    selected.parent.mkdir(parents=True, exist_ok=True)
+    selected.write_text("{}\n", encoding="utf-8")
     with pytest.raises(SystemExit, match="run forge upgrade"):
         findings.collect(repo)

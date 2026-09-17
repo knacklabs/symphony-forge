@@ -41,15 +41,14 @@ is the ledgered outage exception.
 
 ## Phase Contract
 
-Follow `WORKFLOW.md` for discovery through PR delivery, including native
-approval, task execution, proof and review. Sign-off requires confirmed specs
+Follow `WORKFLOW.md` for discovery through PR delivery, including native approval, task execution, proof and review. Sign-off requires confirmed specs
 and a derived roadmap; implementation requires an approved plan and recorded decomposition.
 
 ## Prompt and Agent Use
 
 Prompt files under `factory/prompts/` are phase contracts. They are invoked explicitly by the parent session; hooks only load context and enforce gates. In Codex Desktop, keep one user-facing coordinator and separate task-owner chats/worktrees; follow the [shared Forge guidance](factory/skills/forge.md#codex-desktop-one-main-chat-separate-task-chats) for parallel tasks, monitoring, and ownership recovery.
 
-Use the host's structured request tool for every user-facing question it permits. In Codex Default mode, use `request_user_input` for all optional questions; ask approvals and permissions directly in chat when the host reserves them for that channel, and state that restriction. When an approval gate is waiting, end the update with a direct approval question that names the exact artifact or digest.
+Use the host's structured request tool for every user-facing question it permits. Claude plan authority comes only from a successful `ExitPlanMode` PostToolUse event; Codex plan authority comes only from the exact synchronous digest-bound `request_user_input` approval event defined in `docs/specs/plan-approval.md`. Ordinary direct-chat approval is reserved for permission categories the host cannot deliver through its structured tool and never substitutes for plan authority. When such a host-reserved approval is waiting, end the update with a direct question naming the exact action.
 
 Default specialist set:
 - `planner-high`
@@ -85,17 +84,18 @@ python3 factory/scripts/pr_ready.py
 
 Task proof lives in `.factory/stories/<key>/tasks/<id>/`:
 `verify.json`, `tests.json`, and `reviews/selected.json` with its immutable
-selected-generation lineage. Fixed lens files are diagnostic or migration
-input only. Plan, `run.json` and
+selected-generation lineage. Those output files alone are not current authority:
+their content-bound stage proof receipts and selected reviewed-meaning identity
+must also match; see `docs/QUALITY.md`. Fixed lens files are diagnostic or
+migration input only. Plan, `run.json` and
 `decomposition.json` stay story-scoped. Review inputs and local/CI/board proof checks follow `docs/specs/dual-coordinator-parity.md`.
 
-A story ships with every task marker and clean proof on trunk.
-Closeout never re-verifies. Story proof is only `outcome.json`
-(`./forge outcome set`).
+A story ships with every task marker and clean proof on trunk. Closeout never
+re-verifies. Story proof is only `outcome.json` (`./forge outcome set`).
 
 ## Non-Negotiables
 
-- Constitution binds every executor/environment: follow/cite `constitution/README.md`; never re-derive. Approval locks the contract to PR open; all later changes need human authorization: shipped → new task; done/unshipped → `forge task reopen`; active → amend + re-grill; never reshuffle the graph unilaterally.
+- Constitution binds every executor/environment: follow/cite `constitution/README.md`; never re-derive. Approval locks the contract to PR open; later material changes need human authorization: shipped → new task; done/unshipped → `forge task reopen`; active → amend + fresh native approval under `docs/QUALITY.md`; never reshuffle the graph unilaterally.
 - Every executor applies Ponytail to code edits: YAGNI → reuse → stdlib → native → installed dep → one line → minimum viable. Preserve validation, error handling, security, accessibility. Brief-inlined; review-enforced; no recording gate.
 - Keep tasks bounded and capability-driven; plans bind one roadmap story and attest all active decisions.
 - The session write lock is always armed: delegate locked writes; use `forge mode degraded` only during a companion outage.

@@ -377,6 +377,9 @@ def _post_seal_fix_with_a_review(repo: Path, tmp_path: Path, priority: str) -> t
     git(repo, "add", "src/core.py")
     git(repo, "commit", "-qm", "post-seal fix")
     write_task_proof(repo, "T1")
+    task_reviews = story_state(repo) / "tasks" / "T1" / "reviews"
+    for aspect in ("quality", "performance", "security"):
+        (task_reviews / f"{aspect}.json").unlink()
     git(repo, "add", "-A")
     git(repo, "commit", "-qm", "proof at the new tip")
     skill = tmp_path / "fake-autoreview.py"

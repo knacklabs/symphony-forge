@@ -8,14 +8,15 @@ FIRST, READ THE SYSTEM YOU ARE PLANNING AGAINST. Before writing a rule that
 mentions a type, an enum, a route, a permission code, a migration or a
 decision, open it. Not the architecture note describing it — the file.
 Architecture docs record the system as designed and drift from what was built;
-the cold reader checks what was built, so every gap costs a round. Delegate
+the independent cold reader checks what was built, so every gap becomes a
+finding the plan must disposition. Delegate
 BREADTH to a read-only Codex run when the question is "how does this whole flow
 hang together", and look up specific facts yourself: a summary of a type is not
 the type.
 
 This binds harder for a TASK plan than for a story plan. A task plan names the
 exact surfaces the implementer writes against, so a fact taken from a drifted
-doc does not cost a grill round — it costs a worker paused mid-implementation
+doc costs a worker paused mid-implementation
 against a contract that asked for something that is not there.
 
 Inputs:
@@ -91,8 +92,8 @@ Rules:
   assumptions, present competing interpretations instead of picking
   silently, and every choice in the plan leads with ONE recommendation and
   its reasoning — never an option menu without a stance. Narration budget
-  (conduct §8): the plan presentation and grill rounds are full-prose gate
-  surfaces; between them, narrate one line per state change, report findings
+  (conduct §8): the plan presentation and cold-read findings are full-prose gate
+  surfaces; between gates, narrate one line per state change, report findings
   in full, and omit process chatter.
 - **Simplicity applies to the PLAN, not just the code.** Propose the
   smallest plan that satisfies the acceptance criteria: every task must

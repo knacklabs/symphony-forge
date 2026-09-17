@@ -144,9 +144,21 @@ def native_argv_valid(entry: dict, base: Path, write_scope: list[str]) -> bool:
         return False
     # Historical completed rows may carry the removed continuation shape. They
     # remain readable, while new launches cannot construct that argv.
-    return (terminal
-            and argv[:-3] == legacy[:-1]
-            and argv[-3:] == ["resume", resume_session, "-"])
+    historical = [legacy]
+    if write_scope:
+        historical.append(_legacy_native_argv(
+            executable,
+            base,
+            str(entry.get("model") or ""),
+            str(entry.get("effort") or ""),
+            entry.get("write") is True,
+            [],
+        ))
+    return (
+        terminal
+        and argv[-3:] == ["resume", resume_session, "-"]
+        and any(argv[:-3] == candidate[:-1] for candidate in historical)
+    )
 
 
 @dataclass(frozen=True)
