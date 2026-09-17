@@ -62,6 +62,9 @@ RETIRED_FORGE_PROFILE_HASHES = {
     "tester.toml": "a6770f50e9b9bc772c883e9edd6aa112b30260a78aa9915cb94f1c98b48ed7f6",
 }
 LEAN_MIGRATION_VERSION = "lean-workflow-v2"
+LEAN_ORIGINAL_EMPTY_RUNTIME_DIGEST = (
+    "bb4b6c05b41897447063959fc782e9ca4c2e00f9b219559314b725485b91b2e8"
+)
 LEAN_LENSES = ("performance", "quality", "security")
 LEAN_RETAINED_PROFILES = {
     "planner-high.toml", "docs-decomposer.toml", "functional-checker.toml",
@@ -1456,6 +1459,28 @@ def _runtime_inventory(target: Path) -> list[dict]:
             for path in paths if path.is_file() and not path.is_symlink()]
 
 
+def _is_original_empty_completion(saved: dict) -> bool:
+    legacy_keys = {
+        "generated_by", "version", "input_inventory_digest", "output_digest",
+        "installed_runtime_digest", "entries", "recorded_at", "completed_at",
+    }
+    empty_digest = _inventory_digest([])
+    return (
+        set(saved) == legacy_keys
+        and saved.get("generated_by") == "upgrade"
+        and saved.get("version") == LEAN_MIGRATION_VERSION
+        and isinstance(saved.get("recorded_at"), str)
+        and bool(saved["recorded_at"].strip())
+        and isinstance(saved.get("completed_at"), str)
+        and bool(saved["completed_at"].strip())
+        and saved.get("entries") == []
+        and saved.get("input_inventory_digest") == empty_digest
+        and saved.get("output_digest") == empty_digest
+        and saved.get("installed_runtime_digest")
+        == LEAN_ORIGINAL_EMPTY_RUNTIME_DIGEST
+    )
+
+
 def _validate_completed_manifest(target: Path, saved: dict) -> None:
     from factory_lib import (
         _committed_task_marker, product_delta_digest,
@@ -1467,19 +1492,7 @@ def _validate_completed_manifest(target: Path, saved: dict) -> None:
     }
     legacy_empty_completion = set(saved) == legacy_keys
     if legacy_empty_completion:
-        empty_digest = _inventory_digest([])
-        if (saved.get("generated_by") != "upgrade"
-                or saved.get("version") != LEAN_MIGRATION_VERSION
-                or not isinstance(saved.get("recorded_at"), str)
-                or not saved["recorded_at"].strip()
-                or not isinstance(saved.get("completed_at"), str)
-                or not saved["completed_at"].strip()
-                or saved.get("entries") != []
-                or saved.get("input_inventory_digest") != empty_digest
-                or saved.get("output_digest") != empty_digest
-                or re.fullmatch(
-                    r"[0-9a-f]{64}", saved.get("installed_runtime_digest", ""),
-                ) is None):
+        if not _is_original_empty_completion(saved):
             fail("Lean migration completed manifest is incomplete or tampered")
         return
     installed_runtime = saved.get("installed_runtime")
@@ -1667,6 +1680,20 @@ def preflight_lean_migration(target: Path) -> dict | None:
             fail("Lean migration found an unequal partial retry; restore or complete the original checkout")
         if saved.get("completed_at"):
             _validate_completed_manifest(target, saved)
+            if (_is_original_empty_completion(saved)
+                    and any(entry.get("classification") == "eligible"
+                            for entry in primary)):
+                migration = {
+                    "entries": primary,
+                    "input_inventory_digest": _inventory_digest(primary),
+                    "replace_original_empty_completion": True,
+                }
+                (migration["review_candidates"],
+                 migration["review_sentinels"]) = _fixed_review_plan(
+                    target, migration,
+                )
+                _prepare_review_outputs(target, migration)
+                return migration
             output_paths = {
                 f".factory/stories/{row['story']}/tasks/{row['task_id']}"
                 "/reviews/selected.json"
@@ -1998,7 +2025,9 @@ def _publish_upgrade_review(
     return generation, selection
 
 
-def _publish_incomplete_lean_manifest(target: Path, manifest: dict) -> Path:
+def _publish_incomplete_lean_manifest(
+        target: Path, manifest: dict, *, replace_original_empty: bool = False,
+) -> Path:
     """Persist resumable transaction state before any canonical pointer moves."""
     from factory_lib import dump_json
 
@@ -2008,6 +2037,14 @@ def _publish_incomplete_lean_manifest(target: Path, manifest: dict) -> Path:
     if destination.exists() or destination.is_symlink():
         _require_single_link_manifest(target, destination)
         existing = load_json(destination, default={})
+        if replace_original_empty:
+            _validate_completed_manifest(target, existing)
+            if not _is_original_empty_completion(existing):
+                fail("Lean migration manifest retry differs from the durable original")
+            dump_json(destination, manifest)
+            if load_json(destination, default={}) != manifest:
+                fail("Lean migration manifest readback differs")
+            return destination
         comparable = {
             key: value for key, value in existing.items()
             if key not in {"recorded_at", "completed_at"}
@@ -2127,7 +2164,12 @@ def apply_lean_migration(target: Path, migration: dict | None) -> None:
         if load_json(built_manifest, default={}) != manifest:
             fail("Lean migration temporary manifest readback differs")
 
-        destination = _publish_incomplete_lean_manifest(target, manifest)
+        destination = _publish_incomplete_lean_manifest(
+            target, manifest,
+            replace_original_empty=(
+                migration.get("replace_original_empty_completion") is True
+            ),
+        )
         for candidate, expected_id, expected_sha in built_generations:
             generation, selection = _publish_upgrade_review(
                 target, migration, candidate, expected_id, expected_sha,

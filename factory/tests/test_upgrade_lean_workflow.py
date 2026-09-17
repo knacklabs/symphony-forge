@@ -844,6 +844,57 @@ def test_completed_lean_manifest_accepts_exact_original_empty_shape(repo: Path):
     with pytest.raises(SystemExit):
         upgrade.preflight_lean_migration(repo)
 
+    original["output_digest"] = empty_digest
+    original["installed_runtime_digest"] = "a" * 64
+    manifest.write_text(json.dumps(original) + "\n", encoding="utf-8")
+    with pytest.raises(SystemExit):
+        upgrade.preflight_lean_migration(repo)
+
+
+def test_original_empty_completion_transitions_to_current_inventory(repo: Path):
+    empty_digest = upgrade._inventory_digest([])
+    manifest = repo / ".factory/migrations/lean-workflow-v2.json"
+    manifest.parent.mkdir(parents=True, exist_ok=True)
+    manifest.write_text(json.dumps({
+        "generated_by": "upgrade",
+        "version": "lean-workflow-v2",
+        "input_inventory_digest": empty_digest,
+        "output_digest": empty_digest,
+        "installed_runtime_digest": (
+            "bb4b6c05b41897447063959fc782e9ca4c2e00f9b219559314b725485b91b2e8"
+        ),
+        "entries": [],
+        "recorded_at": "2026-09-14T05:48:01+00:00",
+        "completed_at": "2026-09-14T05:48:01+00:00",
+    }) + "\n", encoding="utf-8")
+    stage = repo / ".factory/stories/S1/stages/T1.json"
+    stage.parent.mkdir(parents=True, exist_ok=True)
+    stage.write_text(json.dumps({
+        "id": "T1",
+        "local_review_stamp": {
+            "stage_id": "T1", "base_sha": "a" * 40,
+            "delta_id": "b" * 64,
+            "recorded_at": "2026-01-01T00:00:00+00:00",
+            "generated_by": "autoreview",
+        },
+    }), encoding="utf-8")
+
+    migration = upgrade.preflight_lean_migration(repo)
+    assert migration is not None
+    assert migration["replace_original_empty_completion"] is True
+    upgrade.apply_lean_migration(repo, migration)
+
+    completed = json.loads(manifest.read_text(encoding="utf-8"))
+    assert "completed_at" in completed
+    assert any(
+        entry["path"] == ".factory/stories/S1/stages/T1.json"
+        and entry["family"] == "legacy-stage-stamp"
+        and entry["classification"] == "eligible"
+        for entry in completed["entries"]
+    )
+    assert "local_review_stamp" not in json.loads(stage.read_text(encoding="utf-8"))
+    assert upgrade.preflight_lean_migration(repo) is None
+
 
 def test_completed_lean_manifest_allows_mutable_preserved_records_and_profiles(
         repo: Path):
