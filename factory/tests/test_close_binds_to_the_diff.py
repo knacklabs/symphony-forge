@@ -658,3 +658,131 @@ def test_a_task_whose_records_moved_after_its_seal_reseals_without_reopen(repo, 
     assert "task records" in shown and "grills/tasks/T1.json" in shown, shown
     lib = load_factory_lib(repo)
     assert lib.task_proof_problems(repo, "ENG-1", task_for(repo, "T1")) == []
+
+
+# ------------------------------------------- one task, the real command sequence
+
+
+def test_one_task_cycle_on_the_real_command_sequence(repo, tmp_path):
+    """The sequence a task really runs after its build, with no hand-made
+    evidence past that point (0079, 0080, 0081): a flaky proof refused at the
+    seal until accepted by name; the seal on a reused proof; a post-seal fix
+    closing again with the proof re-run, ONE review over the whole delta and
+    a reseal; a contract re-grilled and re-approved after the seal closing
+    again without reopen; an oversized review prompt refused with its
+    composition before any reviewer is launched. Every step is read back
+    from the one journal both agents see."""
+    from test_gates import record_task_grill
+    from forge_cli import journal
+    env = _ship_ready(repo, tmp_path)
+    no_skill = str(tmp_path / "no-such-autoreview")
+    skill = tmp_path / "fake-autoreview.py"
+    skill.write_text(FAKE_REVIEW_WITH, encoding="utf-8")
+    review_env = {**env, "FAKE_PRIORITY": "P3"}
+    marker_path = repo / ".factory/stories/ENG-1/tasks/T1/pr-ready.json"
+
+    def entries(kind: str) -> list[dict]:
+        return [e for e in journal.entries(repo, "ENG-1", "T1") if e["kind"] == kind]
+
+    # A proof that fails once and passes on its re-run, recorded while the
+    # stage is still active (the tree is built, the worker's record is in).
+    marker = tmp_path / "flaked-once"
+    flaky = (
+        "python3 -c \"import pathlib, sys; p = pathlib.Path(r'" + str(marker) + "'); "
+        "sys.exit(0) if p.exists() else (p.write_text('1'), sys.exit(1))\""
+    )
+    code, out = _rerecord(repo, {**STAGE_TASK, "verify_commands": [flaky]})
+    assert code == 0, out
+
+    # 1. close: the proof runs, the flake is recorded, the seal refuses it.
+    code, out = run(repo, "forge.py", "task", "close", "T1", "--skill", no_skill, env=env)
+    assert code != 0, out
+    assert "a FLAKE, recorded as J-" in out, out
+    assert "failed once and passed on re-run" in out, out
+    assert "autoreview skill not found" not in out, "a flake is not a reason to review"
+    assert not marker_path.exists()
+    flakes = entries("flake")
+    assert len(flakes) == 1 and flakes[0]["command"] == flaky, flakes
+    assert [e["exit_code"] for e in entries("proof") if e["command"].startswith(flaky)] == [1, 0]
+
+    # Accepted by name, with a reason the journal keeps.
+    code, out = run(repo, "forge.py", "journal", "add", "T1", "--kind", "flake-accepted",
+                    "--command", flaky, "--reason", "the marker file is the test's own state")
+    assert code == 0, out
+
+    # 2. close: the tree and contract are unchanged, so the proof is reused,
+    #    the stamp covers the diff, and the task seals.
+    code, out = run(repo, "forge.py", "task", "close", "T1", "--skill", no_skill, env=env)
+    assert code == 0, out
+    assert "proof reused" in out and "no review needed" in out, out
+    first = json.loads(marker_path.read_text(encoding="utf-8"))
+    assert {"contract", "launch", "exit", "report", "proof", "flake", "flake-accepted"} <= {
+        e["kind"] for e in journal.entries(repo, "ENG-1", "T1")}
+    assert entries("review") == []
+
+    # 3. a post-seal fix: close reopens, re-runs the proof on the new tree,
+    #    runs ONE review over the whole delta, and reseals.
+    write_in_scope(repo, "src/core.py", "version = 2\n")
+    git(repo, "add", "src/core.py")
+    git(repo, "commit", "-qm", "post-seal fix")
+    code, out = run(repo, "forge.py", "task", "close", "T1", "--engine", "claude",
+                    "--skill", str(skill), env=review_env)
+    assert code == 0, out
+    assert "reopened: the diff moved" in out and "proof reused" not in out, out
+    second = json.loads(marker_path.read_text(encoding="utf-8"))
+    assert second["commit"] != first["commit"]
+    assert len(entries("review")) == 1, entries("review")
+    brief = (repo / ".factory/review-briefs/all.md").read_text(encoding="utf-8")
+    assert "### Task journal" in brief, "the reviewer reads the same journal"
+    assert "flake-accepted" in brief, brief[:2000]
+
+    # 4. bookkeeping only: the contract is re-grilled and re-approved after
+    #    the seal; the product did not move, so no reopen, no review, no
+    #    re-run -- the records are committed and the task reseals.
+    code, out = record_task_grill(repo, task_for(repo, "T1"))
+    assert code == 0, out
+    code, out = run(repo, "forge.py", "task", "approve", "T1", "--by", "Nandu")
+    assert code == 0, out
+    code, out = run(repo, "forge.py", "task", "close", "T1", "--skill", no_skill, env=env)
+    assert code == 0, out
+    assert "resealing at" in out and "reopened" not in out, out
+    third = json.loads(marker_path.read_text(encoding="utf-8"))
+    assert third["commit"] != second["commit"]
+    assert _stage(repo).get("superseded_marker_commit") == second["commit"]
+    assert len(entries("review")) == 1
+    lib = load_factory_lib(repo)
+    assert lib.task_proof_problems(repo, "ENG-1", task_for(repo, "T1")) == []
+
+    # 5. a diff whose prompt would not fit is refused with its composition,
+    #    before any reviewer is launched -- never split into file groups.
+    write_in_scope(repo, "src/core.py", "version = 3\n# " + "x" * 6000 + "\n")
+    git(repo, "add", "src/core.py")
+    git(repo, "commit", "-qm", "a change too large for the prompt")
+    code, out = run(repo, "forge.py", "task", "close", "T1", "--engine", "claude",
+                    "--skill", str(skill),
+                    env={**review_env, "FORGE_REVIEW_PROMPT_BYTES": "4000"})
+    assert code != 0, out
+    assert "review prompt would be" in out and "never file groups (0081)" in out, out
+    assert "Largest paths" in out and "src/core.py" in out, out
+    assert len(entries("review")) == 1, "no reviewer was launched"
+
+
+def test_the_review_brief_states_each_amendment_reason_once(repo, tmp_path):
+    """T4 recorded one 500-byte reason against thirty paths; the section
+    repeated it thirty times."""
+    from forge_cli.review_brief import _amendments_section
+    from forge_cli.stages import scope_amendments_path
+    from factory_lib import dump_json
+    start_stage(repo, tmp_path, STAGE_TASK)
+    reason = "PR 184 CI: the alias belongs beside the two existing library aliases"
+    dump_json(scope_amendments_path(repo), {"tasks": {"T1": {
+        "added_paths": ["apps/a.ts", "apps/b.ts", "apps/c.ts", "test/d.ts"],
+        "amendments": [
+            {"reason": reason, "added_paths": ["apps/a.ts", "apps/b.ts", "apps/c.ts"]},
+            {"reason": "the cleanup grace", "added_paths": ["test/d.ts"]},
+        ],
+    }}})
+    section = "\n".join(_amendments_section(repo, {"id": "T1"}))
+    assert section.count(reason) == 1, section
+    assert "- `test/d.ts` -- the cleanup grace" in section
+    assert "  - `apps/a.ts`" in section and "  - `apps/c.ts`" in section

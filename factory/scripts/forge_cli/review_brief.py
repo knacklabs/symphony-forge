@@ -455,8 +455,17 @@ def _amendments_section(base: Path, task: dict) -> list[str]:
              "recorded with a reason. Judge each: does the reason hold, and does "
              "the change belong to this task? A path that does not belong is a "
              "blocking finding.", ""]
-    lines += [f"- `{path}` -- {reasons.get(path) or '(no reason recorded)'}"
-              for path in entry["added_paths"]]
+    # One reason once, its paths under it: T4 recorded one 500-byte reason
+    # against thirty paths and the section repeated it thirty times (16 KB).
+    by_reason: dict[str, list[str]] = {}
+    for path in entry["added_paths"]:
+        by_reason.setdefault(reasons.get(path) or "(no reason recorded)", []).append(path)
+    for reason, paths in by_reason.items():
+        if len(paths) == 1:
+            lines.append(f"- `{paths[0]}` -- {reason}")
+        else:
+            lines.append(f"- {reason}")
+            lines += [f"  - `{path}`" for path in paths]
     lines.append("")
     return lines
 
