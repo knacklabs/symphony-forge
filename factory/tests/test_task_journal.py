@@ -178,3 +178,60 @@ def test_scope_amendments_and_signals_are_journaled(repo, tmp_path):
     assert raised["generated_by"] == "worker" and "ledger column" in raised["body"]
     resolved = next(e for e in items if e["kind"] == "signal-resolved")
     assert "ledger.id" in resolved["body"]
+
+
+def test_a_path_declared_before_the_write_is_in_scope_for_the_brief_and_the_measurement(
+        repo, tmp_path):
+    from forge_cli.delegate import compose_brief
+    start_stage(repo, tmp_path, STAGE_TASK)
+    code, out = run(repo, "forge.py", "stage", "amend-scope", "T1",
+                    "--path", "apps/api/test/database.ts",
+                    "--reason", "the cleanup grace is what blocks the seal", "--by", "Nandu")
+    assert code == 0 and "Declared T1 scope with 1 declared path(s)" in out, out
+    scope = next(e for e in journal.entries(repo, "ENG-1", "T1") if e["kind"] == "scope")
+    assert scope["title"].startswith("scope declared ahead") and scope["paths"] == [
+        "apps/api/test/database.ts"]
+    brief = compose_brief(repo, dict(STAGE_TASK), write=True, user_facing=False, story="ENG-1")
+    section = brief.split("Write scope")[1].split("##")[0]
+    assert "apps/api/test/database.ts" in section
+    write_in_scope(repo, "apps/api/test/database.ts", "export const grace = 30_000;\n")
+    from test_gates import stamp_and_commit
+    stamp_and_commit(repo)
+    code, out = run(repo, "forge.py", "stage", "done", "T1")
+    assert code == 0, out
+    assert "outside its declared write_scope" not in out, out
+
+
+def test_forge_next_names_the_workers_last_exit_and_what_it_cited(repo, tmp_path):
+    start_stage(repo, tmp_path, STAGE_TASK)
+    code, out = run(repo, "forge.py", "next")
+    assert code == 0, out
+    assert "worker for T1 exited at" in out and "with code 0" in out, out
+    assert "forge journal show T1 --since J-1" in out, out
+
+
+def test_a_transient_sharing_violation_is_retried_not_refused(tmp_path, monkeypatch):
+    """Windows: the host's file scanner holds a just-written state file for a
+    moment; the next open fails with EACCES. The harness's own state reads
+    retry for about two seconds instead of refusing a real close with
+    "cannot read changed path"."""
+    import factory_lib
+    monkeypatch.setattr(factory_lib, "RETRY_SHARING_VIOLATIONS", True)
+    monkeypatch.setattr(factory_lib, "_SHARING_RETRY_DELAYS", (0.0, 0.0, 0.0))
+    calls = {"n": 0}
+
+    def flaky_open():
+        calls["n"] += 1
+        if calls["n"] < 3:
+            raise PermissionError(13, "Permission denied")
+        return "ok"
+
+    assert factory_lib.retry_sharing_violation(flaky_open) == "ok" and calls["n"] == 3
+    calls["n"] = -10  # never recovers: the error comes through unchanged
+    with pytest.raises(PermissionError):
+        factory_lib.retry_sharing_violation(flaky_open)
+    monkeypatch.setattr(factory_lib, "RETRY_SHARING_VIOLATIONS", False)
+    calls["n"] = 0
+    with pytest.raises(PermissionError):
+        factory_lib.retry_sharing_violation(flaky_open)
+    assert calls["n"] == 1, "no retry outside Windows"

@@ -361,5 +361,5 @@ def test_a_standalone_review_runs_and_records_the_proof_first(repo, tmp_path, mo
     verify = json.loads((repo / ".factory/stories/ENG-1/tasks/T1/verify.json").read_text(
         encoding="utf-8"))
     assert verify["recorded_by"] == "stage-proof"
-    assert git(repo, "show", "--name-only", "--format=%s", "HEAD~1").startswith(
+    assert git(repo, "show", "--name-only", "--format=%s", "HEAD").startswith(
         "ENG-1 T1: task records")

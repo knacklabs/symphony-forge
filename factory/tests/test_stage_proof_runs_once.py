@@ -9,11 +9,14 @@ over the same tree and contract runs nothing.
 """
 from __future__ import annotations
 
+import re
 import sys
 from pathlib import Path
 
+import pytest
+
 from test_gates import (  # noqa: F401
-    HARNESS, STAGE_TASK, git, head, repo, stamp_and_commit, start_stage,
+    HARNESS, STAGE_TASK, git, head, repo, run, stamp_and_commit, start_stage,
     write_in_scope,
 )
 
@@ -133,3 +136,78 @@ def test_a_user_facing_task_still_owes_its_own_record(repo, tmp_path):
     assert counter.read_text() == "1"
     assert not path.exists(), "the design-skill attestation is the coordinator's"
     assert _evidence(repo, "verify.json")["recorded_by"] == "stage-proof"
+
+
+# ------------------------------------------- flakes, headroom, elapsed (0080)
+
+
+def test_a_command_that_fails_once_and_passes_on_re_run_is_a_recorded_flake(
+        repo, tmp_path, capsys):
+    """T4 hit one 2-second cleanup grace four times in four spec files and
+    re-ran blindly each time. A first failure that passes on re-run is now a
+    recorded flake with its output; the seal refuses until it is fixed or
+    accepted with a reason."""
+    from factory_lib import task_proof_problems
+    from forge_cli import journal
+    marker = tmp_path / "flaked-once"
+    command = (
+        "python3 -c \"import pathlib, sys; p = pathlib.Path(r'" + str(marker) + "'); "
+        "sys.exit(0) if p.exists() else (p.write_text('1'), sys.exit(1))\""
+    )
+    task = {**STAGE_TASK, "verify_commands": [command]}
+    recorded = _built(repo, tmp_path, task)
+    run_stage_proof(repo, "T1", recorded)
+    printed = capsys.readouterr().out
+    assert "running it once more to tell a flake from a defect" in printed
+    assert "a FLAKE, recorded as J-" in printed
+    assert "proof: " in printed and "passed on re-run" in printed
+    verify = _evidence(repo, "verify.json")
+    assert verify["ok"] is True and verify["flakes"][0]["command"] == command
+    entries = journal.entries(repo, "ENG-1", "T1")
+    flake = next(e for e in entries if e["kind"] == "flake")
+    assert flake["command"] == command and verify["flakes"][0]["journal"] == flake["id"]
+    proofs = [e for e in entries if e["kind"] == "proof" and e["command"].startswith(command)]
+    assert [e["exit_code"] for e in proofs] == [1, 0], proofs
+    problems = task_proof_problems(repo, "ENG-1", recorded, preseal=True)
+    assert any("failed once and passed on re-run" in p for p in problems), problems
+    code, out = run(repo, "forge.py", "journal", "add", "T1", "--kind", "flake-accepted",
+                    "--command", command, "--reason", "the marker file is the test's own")
+    assert code == 0, out
+    problems = task_proof_problems(repo, "ENG-1", recorded, preseal=True)
+    assert not any("failed once and passed on re-run" in p for p in problems), problems
+
+
+def test_the_proof_refuses_to_start_without_memory_headroom(
+        repo, tmp_path, monkeypatch, capsys):
+    from forge_cli import stages
+    task, counter = _counting_task(tmp_path)
+    recorded = _built(repo, tmp_path, task)
+    harness = repo / "harness.yaml"
+    text = harness.read_text(encoding="utf-8")
+    if "min_free_memory_gb" in text:
+        text = re.sub(r"min_free_memory_gb:\s*[\d.]+", "min_free_memory_gb: 3", text)
+    else:
+        text += "\nproof:\n  min_free_memory_gb: 3\n"
+    harness.write_text(text, encoding="utf-8")
+    monkeypatch.setattr(stages, "_free_memory_gb", lambda: 1.4)
+    with pytest.raises(SystemExit):
+        run_stage_proof(repo, "T1", recorded)
+    printed = capsys.readouterr()
+    assert "1.4 GB of commit memory free, below the 3 GB floor" in printed.out + printed.err
+    assert counter.read_text() == "0"
+    monkeypatch.setattr(stages, "_free_memory_gb", lambda: 8.0)
+    run_stage_proof(repo, "T1", recorded)
+    assert counter.read_text() == "1"
+
+
+def test_every_proof_command_prints_its_elapsed_time_and_lands_in_the_journal(
+        repo, tmp_path, capsys):
+    from forge_cli import journal
+    task, counter = _counting_task(tmp_path)
+    recorded = _built(repo, tmp_path, task)
+    run_stage_proof(repo, "T1", recorded)
+    printed = capsys.readouterr().out
+    assert "proof: " in printed and "passed (" in printed
+    proofs = [e for e in journal.entries(repo, "ENG-1", "T1") if e["kind"] == "proof"]
+    assert {e["command"] for e in proofs} >= {task["verify_commands"][0], "required test 'test_stage_contract'"}
+    assert all(e["exit_code"] == 0 and "elapsed_s" in e for e in proofs)

@@ -737,7 +737,7 @@ def _wait_and_reap(
         proc: subprocess.Popen[str], token: str = "",
         baseline: dict[int, tuple[int, float]] | None = None,
         foreground_identity: float | str = "",
-        before_cleanup=None) -> bool:
+        before_cleanup=None, service=None) -> bool:
     """Wait for trusted work and reap its observed process tree.
 
     A child can create a new session and leave the leader's process group. PID
@@ -756,6 +756,10 @@ def _wait_and_reap(
             if token:
                 descendants.update(
                     _tagged_processes(token, baseline, current))
+            if service is not None:
+                # Proof requests from the worker (0080): the harness is the
+                # only process waiting here, so it is the one that runs them.
+                service()
             time.sleep(PROCESS_POLL_SECONDS)
         current = _process_table()
         descendants.update(_descendants(proc.pid))
@@ -1010,6 +1014,16 @@ PONYTAIL_BRIEF = (
 # The worker can run its own tests (decision 0068); nothing asked it to. It
 # reported "host verification remains required" in 22 of 31 runs and the
 # fix loop paid a round trip per finding.
+PROOF_ON_THE_HOST = (
+    "\n\nA proof that cannot run in your sandbox (on Windows the profile caches and "
+    "store-linked node_modules are unreadable there): "
+    "`python3 factory/scripts/forge.py proof run --id <required test id>` or "
+    "`... proof run --verify \"<verify command>\"`. The harness runs that declared "
+    "command on the host while you wait, prints its output here and records it "
+    "in the task journal; it runs nothing else. Do not report a proof as "
+    "\"cannot run here\" without having asked."
+)
+
 BEFORE_YOU_REPORT = (
     "\n\nBefore you report: run every required test and every verify command "
     "above from this worktree, and paste each command's summary line into your "
@@ -1249,7 +1263,7 @@ def compose_brief(base: Path, task: dict, *, write: bool, user_facing: bool,
     body += _section("Verify commands (run them yourself to fix what fails; "
                      "`task close` runs them once more as the recorded proof)",
                      "\n".join(f"- `{c}`" for c in task.get("verify_commands") or [])
-                     + BEFORE_YOU_REPORT)
+                     + PROOF_ON_THE_HOST + BEFORE_YOU_REPORT)
     reviewer_focus = task.get("reviewer_focus", "")
     if isinstance(reviewer_focus, list):
         # The decomposition records reviewer_focus as a LIST (the stage-start
@@ -1455,6 +1469,8 @@ def launch_companion(
             if runtime == "codex":
                 process_env["FORGE_LAUNCH_ID"] = launch_id
             process_env["PYTHONUTF8"] = "1"
+            from .proof_requests import service_proof_requests, worker_cache_env
+            process_env.update(worker_cache_env(base))
             with blocked_termination_signals():
                 process_baseline = _process_table()
                 spawn_options = (
@@ -1502,10 +1518,18 @@ def launch_companion(
             # before any terminal launch row is recorded.
             label = "worker" if runtime == "codex" else "companion"
             fail(f"Codex {label} launch could not be registered: {exc}")
+        service = None
+        if write:
+            from .stages import task_for
+            launched_task = task_for(base, task_id)
+            if launched_task:
+                service = lambda: service_proof_requests(  # noqa: E731
+                    base, task_id, launched_task, story)
         try:
             if not _wait_and_reap(
                     proc, process_token, process_baseline, process_identity,
-                    before_cleanup=lambda: _revoke_native_write_admission(base, record)):
+                    before_cleanup=lambda: _revoke_native_write_admission(base, record),
+                    service=service):
                 raise RuntimeError("companion process tree survived termination")
         except BaseException:
             # The outer handler retries cleanup and records a terminal failure
@@ -1641,7 +1665,12 @@ def cmd_delegate(args: argparse.Namespace) -> None:
              "decomposition with id, path and command proof objects")
     stage = next((s for s in load_stages(base).get("stages", [])
                   if s.get("id") == args.id), {})
-    scope = task.get("write_scope") or []
+    # The launch's admitted scope is the contract's plus every amendment,
+    # declared or measured -- the same union the brief and `stage done` use.
+    # Before this the admission gate read the bare contract, so a path the
+    # coordinator had authorised was still refused (T4, 14:03).
+    from .stages import effective_scope
+    scope = effective_scope(base, args.id, task.get("write_scope") or [])
     # Derived, not typed: an active stage is a write run. --read-only is the
     # explicit exception for exploration; an empty scope is an incomplete
     # contract, not an implicit read-only downgrade.
@@ -1649,7 +1678,7 @@ def cmd_delegate(args: argparse.Namespace) -> None:
     if active and not args.read_only:
         require_task_worktree(base)
         task = require_ready_task(base, args.id)
-        scope = task.get("write_scope") or []
+        scope = effective_scope(base, args.id, task.get("write_scope") or [])
     write = bool(active and scope) and not args.read_only
     task_sha256_value = task_digest(task)
     from .codex_runtime import coordinator_runtime

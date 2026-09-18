@@ -724,10 +724,33 @@ def _proof_object_or_default(path: Path | str, data: Any, default: Any) -> Any:
     return data
 
 
+# Windows: a file the harness just wrote can be held for a moment by the
+# host's file scanner, and the next open fails with a sharing violation that
+# Python surfaces as PermissionError. Python, git and node all open with
+# sharing allowed, so the holder is never one of ours; the honest response
+# is git's own on Windows: retry briefly, then fail exactly as before. On
+# WF-BIO-1 T4 this surfaced as "cannot read changed path" on a real close.
+RETRY_SHARING_VIOLATIONS = os.name == "nt"
+_SHARING_RETRY_DELAYS = (0.05, 0.1, 0.2, 0.4, 0.5, 0.5, 0.5)
+
+
+def retry_sharing_violation(action: Callable[[], Any]) -> Any:
+    """Run `action`; on PermissionError (Windows only) wait and try again, up
+    to about two seconds in total, then let the error through unchanged."""
+    for delay in _SHARING_RETRY_DELAYS:
+        try:
+            return action()
+        except PermissionError:
+            if not RETRY_SHARING_VIOLATIONS:
+                raise
+            time.sleep(delay)
+    return action()
+
+
 def load_json(path: Path, default: Any = None) -> Any:
     if not path.exists():
         return default
-    data = json.loads(path.read_text(encoding="utf-8"))
+    data = json.loads(retry_sharing_violation(lambda: path.read_text(encoding="utf-8")))
     data = _proof_object_or_default(path, data, default)
     run_root = _RUN_STATE_ROOTS.get(path)
     if run_root is not None and isinstance(data, dict):
@@ -737,7 +760,8 @@ def load_json(path: Path, default: Any = None) -> Any:
 
 def dump_json(path: Path, data: Any) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
+    body = json.dumps(data, indent=2) + "\n"
+    retry_sharing_violation(lambda: path.write_text(body, encoding="utf-8"))
 
 
 # Git's control dir is constant for a worktree over a process's lifetime, but
@@ -2005,6 +2029,18 @@ def _modern_task_proof_problems(
         problems.append(
             f"{task_id}: no passing verify — from its worktree run "
             "`python3 factory/scripts/verify.py`")
+    # A flake the proof recorded (failed once, passed on re-run) is a defect
+    # until fixed or accepted with a reason in the journal; the seal never
+    # ships a coin flip silently (0080).
+    if reader is None and isinstance(verify, dict):
+        for flake in verify.get("flakes") or []:
+            command = str(flake.get("command") or "") if isinstance(flake, dict) else ""
+            if command and not _flake_accepted(root, key, task_id, command):
+                problems.append(
+                    f"{task_id}: `{command}` failed once and passed on re-run (a "
+                    f"flake, journal {flake.get('journal') or '?'}); fix the test or "
+                    f"accept it: forge journal add {task_id} --kind flake-accepted "
+                    f"--command \"{command}\" --reason \"...\"")
 
     tests = read("tests.json")
     automated = tests.get("automated") if isinstance(tests, dict) else None
@@ -2124,6 +2160,12 @@ def _modern_task_proof_problems(
         )
     )
     return problems
+
+
+def _flake_accepted(root: Path, key: str, task_id: str, command: str) -> bool:
+    from forge_cli.journal import entries
+    return any(entry.get("kind") == "flake-accepted" and entry.get("command") == command
+               for entry in entries(root, key, task_id))
 
 
 def task_proof_problems(

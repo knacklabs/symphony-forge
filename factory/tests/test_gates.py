@@ -13345,7 +13345,16 @@ def test_plan_digest_is_newline_stable_across_record_and_stage_start(repo, tmp_p
 def write_in_scope(repo: Path, rel: str, text: str = "print('work')\n") -> None:
     path = repo / rel
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(text)
+    for attempt in range(6):
+        try:
+            path.write_text(text)
+            return
+        except PermissionError:
+            # Windows: the antivirus scan of the file just written holds it
+            # for a moment; the second open-for-write then fails with EACCES.
+            if attempt == 5:
+                raise
+            time.sleep(0.25 * (attempt + 1))
 
 
 STAGE_TASK = {"id": "T1", "title": "core slice", "write_scope": ["src/"],
