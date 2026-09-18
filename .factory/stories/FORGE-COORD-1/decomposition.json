@@ -623,6 +623,7 @@
         "factory/scripts/forge_cli/codex_runtime.py",
         "factory/scripts/forge_cli/worker_admission.py",
         "factory/schemas/lean-workflow-migration.json",
+        "factory/schemas/test-automated.json",
         "factory/schemas/grill.json",
         "factory/schemas/grill-round.json",
         "factory/schemas/plan-mode-marker.json",
@@ -641,6 +642,8 @@
         "factory/tests/test_review_task_delta.py",
         "factory/tests/test_gate_table.py",
         "factory/tests/test_close_binds_to_the_diff.py",
+        "factory/tests/test_stage_proof_runs_once.py",
+        "factory/tests/test_raw_writes_keep_bytes.py",
         "factory/tests/test_worker_admission.py",
         "factory/tests/test_lean_workflow.py",
         "factory/tests/test_approval_hooks.py",
@@ -659,6 +662,10 @@
         ".github/workflows/roadmap-gate.yml",
         "docs/decisions/0049-per-task-review-proof.md",
         "docs/decisions/0064-lean-delivery-and-durable-history.md",
+        "docs/decisions/0079-a-task-proof-runs-once-per-tree.md",
+        "docs/decisions/0079-native-role-model-routing.md",
+        "docs/decisions/0080-native-role-model-routing.md",
+        "docs/decisions/0074-user-selects-main-orchestrator-model.md",
         "plans/active/FORGE-WIN-3-delegation-runs-on-native-windows.md",
         "plans/active/upgrade-doc-contract-safety-task-plan.md",
         "factory/scripts/pr_ready.py",
@@ -1009,9 +1016,9 @@
           "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
         },
         {
-          "id": "test_measurement_receipt_authenticates_its_native_launch_not_a_later_one",
+          "id": "test_native_preparation_rebinds_after_brief_changes",
           "path": "factory/tests/test_regrill_scope.py",
-          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools FORGE_REQUIRED_SELECTOR={id} uv run --python 3.11 --with pytest --with psutil python -m pytest {path} -o junit_family=legacy --junitxml={report}"
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
         },
         {
           "id": "test_one_cold_grill_full_disposition_replaces_round_floors_and_frontier_fake",
@@ -1172,5 +1179,5 @@
   "epic": "symphony-forge",
   "plan_file": "plans/active/FORGE-COORD-1-either-claude-or-codex-coordinates-the-same-forge-workflow.md",
   "plan_sha256": "704e22e69b3722fc885bd09231691a18c2afc01b0982a112bb7b5118744f1723",
-  "commit": "a83553425d5956554e3b56be0d4282c2c5681813"
+  "commit": "46f06ed24e3a7ae44fc24116088c47a99729baba"
 }

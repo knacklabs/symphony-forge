@@ -199,6 +199,7 @@ Rendered by the harness from the recorded decomposition; edit the decomposition,
 - factory/scripts/forge_cli/codex_runtime.py
 - factory/scripts/forge_cli/worker_admission.py
 - factory/schemas/lean-workflow-migration.json
+- factory/schemas/test-automated.json
 - factory/schemas/grill.json
 - factory/schemas/grill-round.json
 - factory/schemas/plan-mode-marker.json
@@ -217,6 +218,8 @@ Rendered by the harness from the recorded decomposition; edit the decomposition,
 - factory/tests/test_review_task_delta.py
 - factory/tests/test_gate_table.py
 - factory/tests/test_close_binds_to_the_diff.py
+- factory/tests/test_stage_proof_runs_once.py
+- factory/tests/test_raw_writes_keep_bytes.py
 - factory/tests/test_worker_admission.py
 - factory/tests/test_lean_workflow.py
 - factory/tests/test_approval_hooks.py
@@ -235,6 +238,10 @@ Rendered by the harness from the recorded decomposition; edit the decomposition,
 - .github/workflows/roadmap-gate.yml
 - docs/decisions/0049-per-task-review-proof.md
 - docs/decisions/0064-lean-delivery-and-durable-history.md
+- docs/decisions/0079-a-task-proof-runs-once-per-tree.md
+- docs/decisions/0079-native-role-model-routing.md
+- docs/decisions/0080-native-role-model-routing.md
+- docs/decisions/0074-user-selects-main-orchestrator-model.md
 - plans/active/FORGE-WIN-3-delegation-runs-on-native-windows.md
 - plans/active/upgrade-doc-contract-safety-task-plan.md
 - factory/scripts/pr_ready.py
@@ -325,7 +332,7 @@ Rendered by the harness from the recorded decomposition; edit the decomposition,
 - `test_forge_history_shows_the_pr_link` -- `UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}` (factory/tests/test_gates.py)
 - `test_signal_ruling_hydration_survives_lean_lifecycle_state_changes` -- `UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}` (factory/tests/test_gates.py)
 - `test_generated_review_inputs_are_included_in_reviewed_meaning` -- `UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}` (factory/tests/test_review_task_delta.py)
-- `test_measurement_receipt_authenticates_its_native_launch_not_a_later_one` -- `UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools FORGE_REQUIRED_SELECTOR={id} uv run --python 3.11 --with pytest --with psutil python -m pytest {path} -o junit_family=legacy --junitxml={report}` (factory/tests/test_regrill_scope.py)
+- `test_native_preparation_rebinds_after_brief_changes` -- `UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}` (factory/tests/test_regrill_scope.py)
 - `test_one_cold_grill_full_disposition_replaces_round_floors_and_frontier_fake` -- `UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}` (factory/tests/test_lean_workflow.py)
 - `test_recovery_override_removes_round_ledgers_without_losing_cold_read_proof` -- `UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}` (factory/tests/test_lean_workflow.py)
 - `test_lean_docs_match_single_cold_grill_runtime` -- `UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}` (factory/tests/test_plan_against_reality.py)
