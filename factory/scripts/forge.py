@@ -227,6 +227,45 @@ def main() -> None:
     p_assume.add_argument("--repo")
     p_assume.set_defaults(func=plans.cmd_assume)
 
+    from forge_cli import journal as journal_mod
+    p_journal = sub.add_parser(
+        "journal",
+        help="the task journal both agents read: add an entry, show it, or "
+             "report what each side has received (decision 0080)",
+    )
+    journal_sub = p_journal.add_subparsers(dest="journal_command", required=True)
+    p_journal_add = journal_sub.add_parser("add", help="append one validated entry")
+    p_journal_add.add_argument("task", help="task id")
+    p_journal_add.add_argument("--kind", required=True, choices=sorted(journal_mod.KINDS))
+    p_journal_add.add_argument("--title", required=True)
+    p_journal_add.add_argument("--body", default="")
+    p_journal_add.add_argument("--body-file")
+    p_journal_add.add_argument("--by", default="coordinator", choices=journal_mod.ACTORS)
+    p_journal_add.add_argument("--reason")
+    p_journal_add.add_argument("--evidence", help="file:line that proves it")
+    p_journal_add.add_argument("--cite", help="decision, plan section or contract id")
+    p_journal_add.add_argument("--command")
+    p_journal_add.add_argument("--finding", help="the finding id or its summary")
+    p_journal_add.add_argument("--verdict", choices=["real", "not-a-defect"])
+    p_journal_add.add_argument("--status")
+    p_journal_add.add_argument("--launch-id", dest="launch_id")
+    p_journal_add.add_argument("--generation-id", dest="generation_id")
+    p_journal_add.add_argument("--exit-code", dest="exit_code", type=int)
+    p_journal_add.add_argument("--path", dest="paths", action="append", default=[])
+    p_journal_add.add_argument("--repo")
+    p_journal_add.set_defaults(func=journal_mod.cmd_add)
+    p_journal_show = journal_sub.add_parser("show", help="print the journal")
+    p_journal_show.add_argument("task", help="task id")
+    p_journal_show.add_argument("--since", help="only entries after this id")
+    p_journal_show.add_argument("--kind")
+    p_journal_show.add_argument("--repo")
+    p_journal_show.set_defaults(func=journal_mod.cmd_show)
+    p_journal_status = journal_sub.add_parser(
+        "status", help="what the journal holds and what each side has received")
+    p_journal_status.add_argument("task", help="task id")
+    p_journal_status.add_argument("--repo")
+    p_journal_status.set_defaults(func=journal_mod.cmd_status)
+
     p_task = sub.add_parser("task", help="manage per-task plans and approval")
     task_sub = p_task.add_subparsers(dest="task_command", required=True)
     p_task_start = task_sub.add_parser(
