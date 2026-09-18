@@ -287,10 +287,12 @@ def test_known_native_launch_reads_delegation_ledger_once(tmp_path, monkeypatch)
 
     grant, reason = admission.live_worker_admission(tmp_path)
 
-    assert grant == {"kind": "stage", "scope": ["src/"]}
+    assert grant == {"kind": "stage", "scope": ["src/"], "launch_scope": ["src/"]}
     assert reason == ""
     assert calls == [tmp_path]
-    assert classifications == [(tmp_path, ["src/"], "baseline")]
+    # Two classifications: the scope in force (contract plus amendments) for
+    # the paths, and the launch's own recorded scope for the argv check.
+    assert classifications == [(tmp_path, ["src/"], "baseline")] * 2
     assert native_validations == [(rows[-1], tmp_path, ["src/"])]
 
     original_rows = [dict(row) for row in rows]

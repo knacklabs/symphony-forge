@@ -205,9 +205,14 @@ def _stage_contract(base: Path, record: dict) -> tuple[dict | None, str]:
     if not set(scope) <= set(task_scope):
         return _deny("the protected native launch write scope is not covered by its task")
     from .stages import stage_baseline
+    baseline = stage_baseline(base, stage)
     return {
         "kind": "stage",
-        "scope": classify_scope_entries(base, task_scope, stage_baseline(base, stage)),
+        # Paths are admitted against the scope in force; the argv is checked
+        # against the scope THIS launch was built from (its .codex grants),
+        # so an amendment recorded after the launch never invalidates it.
+        "scope": classify_scope_entries(base, task_scope, baseline),
+        "launch_scope": classify_scope_entries(base, list(scope), baseline),
     }, ""
 
 
@@ -297,7 +302,7 @@ def live_worker_admission(base: Path) -> tuple[dict | None, str]:
         try:
             from .codex_runtime import native_argv_valid
             native_shape_valid = native_argv_valid(
-                record, base, contract.get("scope") or [])
+                record, base, contract.get("launch_scope") or contract.get("scope") or [])
         except (ImportError, OSError, TypeError, ValueError):
             native_shape_valid = False
         if not native_shape_valid:
