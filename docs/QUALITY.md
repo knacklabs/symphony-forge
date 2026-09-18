@@ -49,9 +49,9 @@ three `factory/schemas/review.json` lens records, then replaces the task's
 
 The proof runs once per tree. `task close` runs the contract's verify
 commands and required tests, records the run as the task's `verify.json` and
-`tests.json` bound to the product tree digest and the contract, and ships the
-two files in the marker commit; a close over an unchanged tree and contract
-reuses the record. The worker runs the same commands while it works so it can
+`tests.json` bound to the product tree digest and the contract, and commits
+the two files before the review, ahead of the marker commit; a close over an
+unchanged tree and contract reuses the record. The worker runs the same commands while it works so it can
 fix what fails; nobody re-runs them by hand before close (0079).
 
 Never review inline in the coordinating session; never nest reviewers.

@@ -28,8 +28,9 @@ suites, so build, lint and the API suite ran under both.
 records the run as the task's `verify.json` and `tests.json`, bound to the
 product tree digest and the contract that named the commands (`proof_key`).
 A close over the same tree and contract reuses that record and runs nothing;
-a changed tree or contract runs once more. The seal ships the two files in
-the marker commit, so the PR gate reads the proof from the sealed tree.
+a changed tree or contract runs once more. Close commits the two files as
+its own commit before the review, so the commit the marker names already
+holds them and every sealed-state reader finds the proof there.
 
 The worker still runs the same commands while it works, to fix what fails;
 its run is not the proof. Nobody runs `verify.py` or the suite by hand before

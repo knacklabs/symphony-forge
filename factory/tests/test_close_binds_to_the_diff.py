@@ -570,10 +570,13 @@ def test_task_close_records_the_proof_in_the_marker_commit(repo, tmp_path):
         repo, "ENG-1", "T1", "verify.json").relative_to(repo).as_posix()
     tests_rel = task_evidence_path(
         repo, "ENG-1", "T1", "tests.json").relative_to(repo).as_posix()
-    # The harness rewrote verify.json, so the marker commit carries it; the
-    # worker's tests.json was committed unchanged before close and is simply
-    # present in the sealed tree.
-    assert verify_rel in shown and "pr-ready.json" in shown, shown
+    # Close commits the proof it recorded as its own commit before the
+    # review; the marker commit follows and names it. The worker's tests.json
+    # was committed unchanged before close and is simply in the sealed tree.
+    assert "pr-ready.json" in shown and verify_rel not in shown, shown
+    proof_commit = git(repo, "show", "--name-only", "--format=%s", "HEAD~1")
+    assert proof_commit.startswith("ENG-1 T1: task proof"), proof_commit
+    assert verify_rel in proof_commit and tests_rel not in proof_commit, proof_commit
     assert git(repo, "ls-tree", "--name-only", "HEAD", tests_rel) == tests_rel
     verify = json.loads(git(repo, "show", f"HEAD:{verify_rel}"))
     assert verify["recorded_by"] == "stage-proof" and verify["ok"] is True
@@ -605,7 +608,8 @@ def test_task_close_rebinds_a_stale_worker_record_before_the_review(repo, tmp_pa
     it measures the new tree, so the review is reached and the seal follows."""
     from factory_lib import task_evidence_path
     env = _ship_ready(repo, tmp_path)
-    first = head(repo)
+    tests_path = task_evidence_path(repo, "ENG-1", "T1", "tests.json")
+    original = json.loads(tests_path.read_text(encoding="utf-8"))["automated"]["commit"]
     write_in_scope(repo, "src/core.py", "version = 2\n")
     git(repo, "add", "src/core.py")
     git(repo, "commit", "-qm", "fix commit")
@@ -619,5 +623,7 @@ def test_task_close_rebinds_a_stale_worker_record_before_the_review(repo, tmp_pa
     tests = json.loads(task_evidence_path(
         repo, "ENG-1", "T1", "tests.json").read_text(encoding="utf-8"))
     assert tests["automated"]["commit"] == fixed == tests["commit"]
-    assert tests["automated"]["worker_commit"] == first
+    assert tests["automated"]["worker_commit"] == original
     assert tests["automated"]["summary"] == "focused task proof passed"
+    assert git(repo, "show", "--name-only", "--format=%s", "HEAD~1").startswith(
+        "ENG-1 T1: task proof")
