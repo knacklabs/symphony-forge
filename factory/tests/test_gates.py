@@ -4473,6 +4473,18 @@ def test_init_and_upgrade_ship_portable_hook_commands(tmp_path):
         return (command.startswith("sh -c ") and command.endswith(expected_exit)
                 and bool(hook_script_paths(command)))
 
+    def assert_canonical_codex_config(config: Path) -> None:
+        lines = config.read_text().splitlines()
+        assert 'sandbox_mode = "danger-full-access"' in lines
+        assert "[sandbox_workspace_write]" not in lines
+        assert "network_access = true" not in lines
+        assert "hooks = true" in lines
+        assert "multi_agent = true" in lines
+        assert "streamable_shell = true" not in lines
+        assert "skills = true" not in lines
+        assert "max_concurrent_threads_per_session = 6" in lines
+        assert "max_threads = 6" not in lines
+
     repo = tmp_path / "portable-hooks-client"
     initialized = subprocess.run(
         [sys.executable, str(HARNESS / "factory" / "scripts" / "forge.py"),
@@ -4486,8 +4498,7 @@ def test_init_and_upgrade_ship_portable_hook_commands(tmp_path):
     main_selectors = {"model", "model_reasoning_effort", "plan_mode_reasoning_effort"}
     assert all(not line.startswith(f"{key} =") for key in main_selectors
                for line in config.read_text().splitlines())
-    assert 'sandbox_mode = "danger-full-access"' in config.read_text().splitlines()
-    assert "network_access = true" in config.read_text().splitlines()  # 0068
+    assert_canonical_codex_config(config)
     assert (repo / "forge.cmd").is_file()
     attributes = repo / ".gitattributes"
     assert "forge text eol=lf" in attributes.read_text().splitlines()
@@ -4506,10 +4517,15 @@ def test_init_and_upgrade_ship_portable_hook_commands(tmp_path):
     ) + "\n")
     for relative in (".claude/settings.json", ".codex/hooks.json"):
         (repo / relative).write_text(json.dumps({"hooks": {}}) + "\n")
-    config.write_text(config.read_text().replace(
-        'sandbox_mode = "danger-full-access"',
-        'sandbox_mode = "workspace-write"',
-    ))
+    config.write_text(config.read_text()
+                      .replace('sandbox_mode = "danger-full-access"',
+                               'sandbox_mode = "workspace-write"\n\n'
+                               '[sandbox_workspace_write]\n'
+                               'network_access = true')
+                      .replace("hooks = true", "streamable_shell = true\n"
+                               "skills = true")
+                      .replace("max_concurrent_threads_per_session = 6",
+                               "max_threads = 6"))
     git(repo, "add", ".claude/settings.json", ".codex/hooks.json",
         ".codex/config.toml", ".gitattributes", "forge.cmd")
     git(repo, "commit", "-q", "-m", "degrade hook registrations")
@@ -4520,8 +4536,7 @@ def test_init_and_upgrade_ship_portable_hook_commands(tmp_path):
     assert len(commands(repo, ".codex/hooks.json")) == 5
     assert all(not line.startswith(f"{key} =") for key in main_selectors
                for line in config.read_text().splitlines())
-    assert 'sandbox_mode = "danger-full-access"' in config.read_text().splitlines()
-    assert "network_access = true" in config.read_text().splitlines()  # 0068
+    assert_canonical_codex_config(config)
     assert (repo / "forge.cmd").is_file()
     assert "forge text eol=lf" in attributes.read_text().splitlines()
     assert all(

@@ -1,3 +1,5 @@
+#:schema https://developers.openai.com/codex/config-schema.json
+
 # Forge-managed team model routing is committed here and in agents/*.toml.
 # The user and host select the main coordinator model and reasoning.
 # Terse output: artifacts and diffs carry the substance, not prose.
@@ -10,21 +12,12 @@ sandbox_mode = "danger-full-access"
 approval_policy = "never"
 web_search = "cached"
 
-# The commands the worker runs may reach the network (decision 0068): the
-# package registry and the local database, so a task can install what it
-# declares and run the tests it writes. This retained workspace-write fallback
-# is not the policy used by Forge-managed full-access chats.
-[sandbox_workspace_write]
-network_access = true
-
 [features]
 hooks = true
 multi_agent = true
-streamable_shell = true
-skills = true
 
 [agents]
-max_threads = 6
+max_concurrent_threads_per_session = 6
 max_depth = 1
 default_subagent_model = "gpt-5.6-luna"
 default_subagent_reasoning_effort = "max"
