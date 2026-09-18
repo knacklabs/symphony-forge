@@ -32,7 +32,7 @@ from pathlib import Path
 
 from factory_lib import (
     active_story_key, load_json, now_iso, raw_open_flags, repo_root,
-    task_evidence_path, validate_payload,
+    retry_sharing_violation, task_evidence_path, validate_payload,
 )
 
 from .common import fail
@@ -134,7 +134,8 @@ def _next_id(items: list[dict]) -> str:
 def _write_bytes(path: Path, body: bytes, *, append_mode: bool = False) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     flags = os.O_WRONLY | os.O_CREAT | (os.O_APPEND if append_mode else os.O_TRUNC)
-    descriptor = os.open(path, raw_open_flags(flags), 0o600)
+    descriptor = retry_sharing_violation(
+        lambda: os.open(path, raw_open_flags(flags), 0o600))
     try:
         view = memoryview(body)
         while view:

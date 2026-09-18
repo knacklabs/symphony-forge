@@ -17,7 +17,10 @@ import json
 import uuid
 from pathlib import Path
 
-from factory_lib import load_json, now_iso, repo_root, run_state_path, validate_payload
+from factory_lib import (
+    load_json, now_iso, repo_root, retry_sharing_violation, run_state_path,
+    validate_payload,
+)
 
 from .common import fail
 from .events import append_event
@@ -38,7 +41,8 @@ def load_events(base: Path) -> list[dict]:
     path = signals_path(base)
     if not path.exists():
         return []
-    return [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
+    text = retry_sharing_violation(lambda: path.read_text(encoding="utf-8"))
+    return [json.loads(line) for line in text.splitlines() if line.strip()]
 
 
 def open_signals(base: Path) -> list[dict]:
