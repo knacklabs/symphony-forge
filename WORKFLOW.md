@@ -651,7 +651,8 @@ stories still archive until `forge upgrade` migrates them.
    `spawn_agent` message, then record the exact result with `--cold-result` and
    `--preparation-id`), record every finding's
    disposition and amendment, obtain native approval of the final task-plan
-   digest, start the stage, then prepare its canonical delegation; native Codex
+   digest, start the stage, then delegate it through the canonical host-native
+   descriptor; native Codex
    spawns the matching host role and Claude launches the plugin companion.
    `delegate --scope` may repeat to select a proper subset of the approved
    effective scope, while omission uses the full scope

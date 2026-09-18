@@ -77,111 +77,6 @@ def _seed_pre_stage_grill(repo: Path, task: dict) -> str:
     return grill["input_sha256"]
 
 
-def _rewrite_launch_as_native(repo: Path, task: dict) -> tuple[str, Path]:
-    """Replace the fixture's one companion lifecycle with valid native proof."""
-    from test_gates import delegation_ledger  # noqa: E402
-    from forge_cli.codex_runtime import native_argv  # noqa: E402
-    from forge_cli.delegate import argv_digest, brief_path  # noqa: E402
-
-    ledger = delegation_ledger(repo)
-    rows = [json.loads(line) for line in ledger.read_text().splitlines()]
-    launch_id = rows[-1]["launch_id"]
-    logs = ledger.parent / "native-runs"
-    logs.mkdir(parents=True, exist_ok=True)
-    output = logs / f"{launch_id}.jsonl"
-    stderr = logs / f"{launch_id}.stderr.log"
-    output.write_text(
-        '{"type":"thread.started","thread_id":"receipt-origin"}\n'
-        '{"type":"turn.completed"}\n',
-        encoding="utf-8",
-    )
-    stderr.write_text("", encoding="utf-8")
-    executable = "/bin/codex"
-    rewritten = []
-    for row in rows:
-        if row.get("launch_id") != launch_id:
-            rewritten.append(row)
-            continue
-        argv = native_argv(
-            executable, repo, row["model"], row["effort"], True,
-            task["write_scope"],
-        )
-        native = {
-            **row,
-            "transport": "native",
-            "executable_path": executable,
-            "brief_path": brief_path(repo, "T1").relative_to(repo).as_posix(),
-            "output_path": str(output),
-            "stderr_path": str(stderr),
-            "write_scope": task["write_scope"],
-            "argv": argv,
-            "argv_sha256": argv_digest(argv),
-        }
-        native.pop("companion_path", None)
-        if native["launch_status"] == "succeeded":
-            native["session_id"] = "receipt-origin"
-        rewritten.append(native)
-    ledger.write_text(
-        "".join(json.dumps(row) + "\n" for row in rewritten),
-        encoding="utf-8",
-    )
-    return launch_id, output
-
-
-def _append_native_launch(repo: Path, task: dict, launch_id: str) -> None:
-    from forge_cli.codex_runtime import native_argv  # noqa: E402
-    from forge_cli.delegate import (  # noqa: E402
-        append_delegation, argv_digest, brief_path, delegations_path,
-    )
-
-    lib = load_factory_lib(repo)
-    stage = lib.task_stage_record(repo, "T1")
-    logs = delegations_path(repo).parent / "native-runs"
-    output = logs / f"{launch_id}.jsonl"
-    stderr = logs / f"{launch_id}.stderr.log"
-    output.write_text(
-        '{"type":"thread.started","thread_id":"receipt-later"}\n'
-        '{"type":"turn.completed"}\n',
-        encoding="utf-8",
-    )
-    stderr.write_text("", encoding="utf-8")
-    executable = "/bin/codex"
-    argv = native_argv(
-        executable, repo, "gpt-5.6-sol", "medium", True,
-        task["write_scope"],
-    )
-    record = {
-        "generated_by": "orchestrator",
-        "at": stage["started_at"],
-        "launch_id": launch_id,
-        "task": "T1",
-        "story": "ENG-1",
-        "brief_sha256": lib.sha256_of(brief_path(repo, "T1")),
-        "task_sha256": lib.task_digest(task),
-        "write": True,
-        "model": "gpt-5.6-sol",
-        "effort": "medium",
-        "write_scope": task["write_scope"],
-        "argv": argv,
-        "argv_sha256": argv_digest(argv),
-        "process_token": f"delegation-{launch_id}",
-        "stage_started_at": stage["started_at"],
-        "transport": "native",
-        "executable_path": executable,
-        "brief_path": brief_path(repo, "T1").relative_to(repo).as_posix(),
-        "output_path": str(output),
-        "stderr_path": str(stderr),
-    }
-    for status in ("starting", "running"):
-        assert append_delegation(repo, {**record, "launch_status": status})
-    assert append_delegation(repo, {
-        **record,
-        "launch_status": "succeeded",
-        "exit_code": 0,
-        "session_id": "receipt-later",
-    })
-
-
 def _fake_companion_env(tmp_path: Path) -> dict[str, str]:
     from test_gates import _fake_psutil_module, fake_companion_env  # noqa: E402
 
@@ -470,57 +365,50 @@ def test_a_second_delegate_after_committing_needs_no_new_grill(repo: Path, tmp_p
         )
 
 
-def test_measurement_receipt_authenticates_its_native_launch_not_a_later_one(
-        repo: Path, tmp_path):
-    from test_gates import DECOMP, STAGE_TASK, start_stage  # noqa: E402
+def test_native_preparation_rebinds_after_brief_changes(
+        repo: Path, tmp_path, monkeypatch, capsys):
+    from test_gates import STAGE_TASK, start_stage  # noqa: E402
+    from forge_cli.delegate import brief_path, launch_companion  # noqa: E402
     from forge_cli.stages import _require_successful_launch  # noqa: E402
 
-    start_stage(repo, tmp_path, STAGE_TASK)
-    _seed_pre_stage_grill(repo, STAGE_TASK)
-    _launch_id, original_output = _rewrite_launch_as_native(repo, STAGE_TASK)
-    widened = {**STAGE_TASK, "write_scope": ["src/", "billing/"]}
-    code, out = run(
-        repo,
-        "record_decomposition_from_json.py",
-        stdin=json.dumps({**DECOMP, "tasks": [widened]}),
-    )
-    assert code == 0, out
-
-    # The receipt authenticates its historical launch and result. Regenerating
-    # the current brief after an in-scope correction must not rewrite or stale
-    # that immutable anchor.
-    from forge_cli.delegate import brief_path  # noqa: E402
-    current_brief = brief_path(repo, "T1")
-    current_brief.write_text(
-        current_brief.read_text(encoding="utf-8") + "\nRegenerated brief.\n",
-        encoding="utf-8",
-    )
+    monkeypatch.setenv("FORGE_COORDINATOR", "codex")
+    start_stage(repo, tmp_path, STAGE_TASK, launch=False)
     lib = load_factory_lib(repo)
-    lib.require_task_grill(repo, "T1", widened)
-
-    _append_native_launch(repo, widened, "launch-later-valid")
     stage = lib.task_stage_record(repo, "T1")
-    assert _require_successful_launch(repo, "T1", stage, widened) == ""
-
-    current_brief_bytes = current_brief.read_bytes()
-    current_brief.write_bytes(current_brief_bytes + b"stale current launch\n")
-    assert _require_successful_launch(repo, "T1", stage, widened) == ""
-    current_brief.write_bytes(current_brief_bytes)
-
-    original_output.write_text(
-        '{"type":"thread.started","thread_id":"receipt-origin"}\n',
-        encoding="utf-8",
+    path = brief_path(repo, "T1")
+    common = dict(
+        task_id="T1", path=path,
+        task_sha256_value=lib.task_digest(STAGE_TASK), model="ignored",
+        effort="ignored", write=True, story="ENG-1",
+        stage_started_at=stage["started_at"], task_metadata=STAGE_TASK,
     )
-    with pytest.raises(SystemExit, match="STALE"):
-        lib.require_task_grill(repo, "T1", widened)
-
-    original_output.write_text(
-        '{"type":"thread.started","thread_id":"receipt-origin"}\n'
-        '{"type":"turn.completed"}\n',
-        encoding="utf-8",
+    launch_companion(
+        repo, text="# current native brief\n",
+        write_scope=STAGE_TASK["write_scope"], **common,
     )
-    lib.require_task_grill(repo, "T1", widened)
+    assert _require_successful_launch(repo, "T1", stage, STAGE_TASK) == ""
 
+    # Native preparation is a current contract binding, not a process receipt:
+    # changing the canonical brief invalidates it until Forge prepares again.
+    path.write_text(path.read_text(encoding="utf-8") + "stale\n", encoding="utf-8")
+    with pytest.raises(SystemExit):
+        _require_successful_launch(repo, "T1", stage, STAGE_TASK)
+    assert "host-native preparation" in capsys.readouterr().out
+
+    launch_companion(
+        repo, text="# refreshed native brief\n",
+        write_scope=STAGE_TASK["write_scope"], **common,
+    )
+    assert _require_successful_launch(repo, "T1", stage, STAGE_TASK) == ""
+    latest = json.loads(
+        (Path(git(repo, "rev-parse", "--absolute-git-dir")) /
+         "forge" / "delegations.jsonl").read_text().splitlines()[-1]
+    )
+    assert latest["transport"] == "host-native"
+    assert latest["launch_status"] == "prepared"
+    assert latest["argv"] == []
+    for forbidden in ("pid", "process_token", "session_id", "output_path"):
+        assert forbidden not in latest
 
 def test_measurement_amendment_without_a_bound_launch_writes_nothing(
         repo: Path, tmp_path):

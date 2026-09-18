@@ -125,7 +125,9 @@ def test_the_plan_gate_grills_a_draft_that_is_not_saved_yet(repo: Path):
 
 def test_every_grill_goes_out_cold_and_read_only(repo: Path):
     # The grill's whole authority is that a fresh context read it. A grill
-    # released with write access, or on the author's own model, is not one.
+    # released with write access, or without the configured griller role, is
+    # not one. Native dispatch inherits that role's pinned model policy rather
+    # than duplicating model/effort overrides at the call site.
     draft = repo / "draft-plan.md"
     draft.write_text("# Draft\n", encoding="utf-8")
     for args in (("--gate", "plan", "--file", "draft-plan.md"),
@@ -133,7 +135,10 @@ def test_every_grill_goes_out_cold_and_read_only(repo: Path):
         code, out = _grill_launched(repo, *args)
         assert code == 0, out
         assert "Write access: NO" in out
-        assert "gpt-5.6-sol" in out and "high" in out
+        descriptor = json.loads(out.splitlines()[-1])
+        assert descriptor["agent_type"] == "griller"
+        assert descriptor["write"] is False
+        assert "model" not in descriptor and "effort" not in descriptor
 
 
 def test_active_model_policy_has_no_forbidden_execution_surface():

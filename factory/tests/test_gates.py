@@ -69,11 +69,15 @@ from record_signoff import REQUIRED_BRIEF_HEADINGS
 
 def run(repo: Path, script: str, *args: str, stdin: str | None = None,
         env: dict[str, str] | None = None):
+    # Most of this legacy regression module exercises the Claude companion
+    # lifecycle.  Do not let the coordinator hosting pytest silently switch
+    # those fixtures to the process-free native contract; native cases opt in
+    # explicitly with env={"FORGE_COORDINATOR": "codex"}.
     proc = subprocess.run(
         [sys.executable, str(repo / "factory" / "scripts" / script), *args],
         cwd=repo, capture_output=True, text=True, encoding="utf-8",
         input=stdin,
-        env={**os.environ, **(env or {})},
+        env={**os.environ, "FORGE_COORDINATOR": "claude", **(env or {})},
     )
     return proc.returncode, proc.stdout + proc.stderr
 
@@ -7901,18 +7905,18 @@ COMPANION_WRITE = (COMPANION + " --write --prompt-file .factory/briefs/T1.md "
                    "'build the slice'")
 
 
-def test_companion_guard_admits_read_only_and_refuses_write_shapes(repo):
+def test_companion_guard_refuses_every_direct_launch_shape(repo):
     run_state = json.loads((repo / ".factory" / "run.json").read_text())
     assert "issue_key" not in run_state and "plan_status" not in run_state
     assert not (repo / ".factory" / "stages.json").exists()
-    allowed = (
+    direct_launches = (
         "node /x/codex-companion.mjs status --json",
         "node /x/codex-companion.mjs task-resume-candidate --json",
         "node /x/codex-companion.mjs task 'audit how --write is handled'",
         "node /x/codex-companion.mjs task 'trace a;b and $HOME literally'",
         "'node' '/x/codex-companion.mjs' 't''ask' 'map the module'",
     )
-    refused = (
+    direct_launches += (
         "node /x/codex-companion.mjs task '--write' repair",
         "node /x/codex-companion.mjs task --full-auto repair",
         "node /x/codex-companion.mjs setup",
@@ -7923,13 +7927,7 @@ def test_companion_guard_admits_read_only_and_refuses_write_shapes(repo):
     for harness_source in (False, True):
         if harness_source:
             mark_harness_source(repo)
-        for command in allowed:
-            code, out = hook(repo, {
-                "tool_name": "Bash", "permission_mode": "default",
-                "tool_input": {"command": command},
-            })
-            assert code == 0 and "deny" not in out, (harness_source, command)
-        for command in refused:
+        for command in direct_launches:
             code, out = hook(repo, {
                 "tool_name": "Bash", "permission_mode": "default",
                 "tool_input": {"command": command},
@@ -7940,8 +7938,7 @@ def test_companion_guard_admits_read_only_and_refuses_write_shapes(repo):
 
 
 def test_hook_denies_unbriefed_write_delegation(repo, tmp_path):
-    """Every companion WRITE launch is routed to the canonical executor;
-    read-only launches are the rescue exploration lane and pass."""
+    """Every direct companion launch is routed through Forge."""
     start_stage(repo, tmp_path, DELEGATE_TASK, launch=False)
     for mode in ("default", "plan"):
         code, out = hook(repo, {"tool_name": "Bash", "permission_mode": mode,
@@ -7949,7 +7946,7 @@ def test_hook_denies_unbriefed_write_delegation(repo, tmp_path):
         assert "deny" in out and "forge delegate <task-id>" in out, mode
     code, out = hook(repo, {"tool_name": "Bash", "permission_mode": "default",
                             "tool_input": {"command": COMPANION + " 'map it'"}})
-    assert code == 0 and "deny" not in out
+    assert code == 0 and "deny" in out and "forge delegate" in out
 
 
 def test_lockout_denies_product_write_under_approved_plan(repo, tmp_path):
@@ -8002,8 +7999,9 @@ def test_registered_hook_path_keeps_recorder_and_lockout_armed(repo, tmp_path):
         input=json.dumps(payload),
         capture_output=True,
         text=True,
-        env={key: value for key, value in os.environ.items()
-             if key not in {"FORGE_PROCESS_TOKEN", "FORGE_LAUNCH_ID"}},
+        env={**{key: value for key, value in os.environ.items()
+                if key not in {"FORGE_PROCESS_TOKEN", "FORGE_LAUNCH_ID"}},
+             "FORGE_COORDINATOR": "claude"},
     )
 
     assert result.returncode == 0, result.stdout + result.stderr
@@ -8125,7 +8123,7 @@ def test_hook_allows_readonly_companion_mentions(repo):
         assert code == 0 and "deny" not in out, command
 
 
-def test_hook_allows_readonly_companion_task_launch(repo):
+def test_hook_denies_direct_readonly_companion_task_launch(repo):
     brief = repo / "brief.md"
     brief.write_text("Inspect the sender chain.\nKeep this read-only.\n")
     (repo / "brief-link.md").symlink_to(brief)
@@ -8137,7 +8135,7 @@ def test_hook_allows_readonly_companion_task_launch(repo):
     ):
         code, out = hook(repo, {"tool_name": "Bash", "permission_mode": "default",
                                 "tool_input": {"command": command}})
-        assert code == 0 and "deny" not in out, command
+        assert code == 0 and "deny" in out and "forge delegate" in out, command
 
 
 def test_hook_allows_display_options_on_companion_mentions(repo):
@@ -8170,9 +8168,7 @@ def test_hook_still_denies_exec_capable_options_on_companion_mentions(repo):
         assert code == 0 and "deny" in out and "forge delegate" in out, command
 
 
-def test_hook_allows_readonly_companion_result_and_background(repo):
-    # `result` only prints a stored job (the fetch path for a backgrounded
-    # rescue run); `--background` detaches a read-only task. Neither writes.
+def test_hook_denies_direct_companion_result_and_background(repo):
     for command in (
         "node /x/codex-companion.mjs result task-abc123 --json",
         "node /x/codex-companion.mjs result --json",
@@ -8181,7 +8177,7 @@ def test_hook_allows_readonly_companion_result_and_background(repo):
     ):
         code, out = hook(repo, {"tool_name": "Bash", "permission_mode": "default",
                                 "tool_input": {"command": command}})
-        assert code == 0 and "deny" not in out, command
+        assert code == 0 and "deny" in out and "forge delegate" in out, command
     for command in (
         "node /x/codex-companion.mjs cancel task-abc123 --json",
         "node /x/codex-companion.mjs task --background --write 'explore'",
@@ -21938,13 +21934,12 @@ def test_hook_denies_expansion_bearing_companion_launch(repo):
         assert "deny" in out, cmd
 
 
-def test_hook_allows_readonly_companion_prompt_mentioning_write_flag(repo):
-    """A prompt that merely MENTIONS a write flag is not a write launch."""
+def test_hook_denies_direct_companion_prompt_mentioning_write_flag(repo):
     cmd = "node /x/codex-companion.mjs task 'audit how --write is handled'"
     code, out = hook(repo, {"tool_name": "Bash",
                             "permission_mode": "default",
                             "tool_input": {"command": cmd}})
-    assert code == 0 and "deny" not in out, cmd
+    assert code == 0 and "deny" in out and "forge delegate" in out, cmd
     # Even a read-only nested launch is unverifiable and therefore denied.
     nested = "bash -c 'node /x/codex-companion.mjs task \"explore\"'"
     code, out = hook(repo, {"tool_name": "Bash",
@@ -22013,11 +22008,12 @@ def _seed_valid_launch(repo: Path, stage_id: str, task: dict,
     }) for status in ("starting", "running", "succeeded")) + "\n")
 
 
-def test_require_successful_launch_accepts_windows_node_exe(repo):
+def test_require_successful_launch_accepts_windows_node_exe(repo, monkeypatch):
     """On Windows the launcher is `node.EXE`; the argv[0] check must recognise
     it (stem, case-insensitive) on every platform, while a non-node launcher
     stays rejected."""
     from forge_cli.stages import _require_successful_launch
+    monkeypatch.setenv("FORGE_COORDINATOR", "claude")
 
     started_at = "2026-01-01T00:00:00Z"
     stage = {"id": "T1", "started_at": started_at}

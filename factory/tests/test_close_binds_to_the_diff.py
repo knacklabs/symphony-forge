@@ -280,6 +280,7 @@ def _ship_ready(repo: Path, tmp_path: Path) -> dict:
     (control / "run.json").write_text(json.dumps(pointer), encoding="utf-8")
     env, _ = fake_gh_env(tmp_path)
     with pytest.MonkeyPatch.context() as proof_environment:
+        proof_environment.setenv("FORGE_COORDINATOR", "claude")
         for key, value in env.items():
             proof_environment.setenv(key, value)
         proof = write_task_proof(repo, "T1", publish_review=True)
@@ -376,6 +377,7 @@ def _post_seal_fix_with_a_review(repo: Path, tmp_path: Path, priority: str) -> t
     git(repo, "commit", "-qm", "post-seal fix")
     review_env = {**env, "FAKE_PRIORITY": priority}
     with pytest.MonkeyPatch.context() as proof_environment:
+        proof_environment.setenv("FORGE_COORDINATOR", "claude")
         for key, value in review_env.items():
             proof_environment.setenv(key, value)
         write_task_proof(repo, "T1")
