@@ -146,7 +146,9 @@ then pass the digest-bound task grill and record its human approval. Run
 execution detail. `forge next` routes this loop one action at a time.
 
 Each task closes through `forge task close <id>`: after implementation and
-focused checks, commit the product changes; `close` runs the declared proof,
+focused checks, commit the product changes; `close` runs the declared proof
+once and records it as the task's `verify.json` and `tests.json` (a proof
+already recorded for the same tree and contract is reused, not re-run — 0079),
 runs one three-lens review only when the product delta is not already stamped,
 and checks the complete task-owned automated and conditional functional proof
 before it measures and closes the stage, writes the task marker, pushes and

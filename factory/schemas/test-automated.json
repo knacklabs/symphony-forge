@@ -2,7 +2,7 @@
   "artifact": "test-automated",
   "phase": "testing",
   "recorded_by": "record_test_from_json.py --kind automated",
-  "generated_by": ["implementer"],
+  "generated_by": ["implementer", "stage-proof"],
   "required": {
     "generated_by": "str",
     "status": "str",

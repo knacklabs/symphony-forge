@@ -1015,7 +1015,8 @@ BEFORE_YOU_REPORT = (
     "above from this worktree, and paste each command's summary line into your "
     "report. A test you did not run is not reported as passing. If a command "
     "cannot run here, name the command, quote its error, and say what you "
-    "verified instead."
+    "verified instead. Do not run verify.py or record evidence yourself: "
+    "`task close` runs the proof once more and records it (0079)."
 )
 
 
@@ -1159,7 +1160,8 @@ def compose_brief(base: Path, task: dict, *, write: bool, user_facing: bool,
         + ("\n\nThe implementer writes and records the tests; a declared test that "
            "does not exist or whose exact command fails refuses the stage."
            if task.get("required_tests") else ""))
-    body += _section("Verify commands (run them yourself; they run again when the stage closes)",
+    body += _section("Verify commands (run them yourself to fix what fails; "
+                     "`task close` runs them once more as the recorded proof)",
                      "\n".join(f"- `{c}`" for c in task.get("verify_commands") or [])
                      + BEFORE_YOU_REPORT)
     reviewer_focus = task.get("reviewer_focus", "")

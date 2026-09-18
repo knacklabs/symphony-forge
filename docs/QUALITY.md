@@ -47,6 +47,13 @@ three `factory/schemas/review.json` lens records, then replaces the task's
 - **security** — OWASP-style trust boundaries, authn/authz, secrets,
   injection, data exposure, unsafe defaults, abuse paths
 
+The proof runs once per tree. `task close` runs the contract's verify
+commands and required tests, records the run as the task's `verify.json` and
+`tests.json` bound to the product tree digest and the contract, and ships the
+two files in the marker commit; a close over an unchanged tree and contract
+reuses the record. The worker runs the same commands while it works so it can
+fix what fails; nobody re-runs them by hand before close (0079).
+
 Never review inline in the coordinating session; never nest reviewers.
 
 The run is the task's ONLY review: with no blocking (P0/P1) finding it

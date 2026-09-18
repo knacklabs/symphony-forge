@@ -543,9 +543,10 @@ stalls on "should I do this or hand it to Codex?":
   product file (app code, config, tests, schema, fixtures — anything that lands
   in the committed diff) with its own hands.
 - **The coordinator's hands do only orchestration:** author task contracts,
-  compose briefs, delegate, run the checks / `verify.py` / required tests, run
-  the branch autoreview, record evidence via the `record_*` scripts, commit,
-  and — when the story reaches a PR — review that PR.
+  compose briefs, delegate, commit, and run `forge task close` — which runs
+  the proof ONCE, records it, reviews and ships (0079); the coordinator does
+  not re-run the suite or `verify.py` by hand before it — and, when the story
+  reaches a PR, review that PR.
 - **Commit is not a human gate.** After inspecting the bounded diff and green
   focused checks, the coordinator commits the product changes. Deterministic
   verify, task test recording and `forge review <id>` follow that commit;

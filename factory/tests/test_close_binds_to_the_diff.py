@@ -552,3 +552,44 @@ def test_product_dirty_does_not_eat_the_first_path_character(repo):
     # entry precedes it.
     (repo / "src" / "core.py").write_text("v = 2\n", encoding="utf-8")
     assert _product_dirty(repo) == ["src/core.py"]
+
+
+# ------------------------------------------------- the proof runs once (0079)
+
+
+def test_task_close_records_the_proof_in_the_marker_commit(repo, tmp_path):
+    """The PR gate reads verify.json and tests.json from the sealed tree, so
+    the proof close ran ships with the marker."""
+    from factory_lib import task_evidence_path
+    env = _ship_ready(repo, tmp_path)
+    code, out = run(repo, "forge.py", "task", "close", "T1", env=env)
+    assert code == 0, out
+    assert "proof reused" not in out
+    shown = git(repo, "show", "--name-only", "--format=", "HEAD")
+    verify_rel = task_evidence_path(
+        repo, "ENG-1", "T1", "verify.json").relative_to(repo).as_posix()
+    tests_rel = task_evidence_path(
+        repo, "ENG-1", "T1", "tests.json").relative_to(repo).as_posix()
+    assert verify_rel in shown and tests_rel in shown, shown
+    verify = json.loads(git(repo, "show", f"HEAD:{verify_rel}"))
+    assert verify["recorded_by"] == "stage-proof" and verify["ok"] is True
+    assert [entry["status"] for entry in verify["required_tests"]] == ["passed"]
+    tests = json.loads(git(repo, "show", f"HEAD:{tests_rel}"))
+    assert tests["automated"]["generated_by"] == "implementer"
+    assert tests["automated"]["measured"]["proof_key"] == verify["proof_key"]
+
+
+def test_task_close_reuses_the_proof_when_only_bookkeeping_moved(repo, tmp_path):
+    """A second close over the same product tree runs no test: the record
+    from the first close is the proof."""
+    env = _ship_ready(repo, tmp_path)
+    write_in_scope(repo, "src/core.py", "version = 2\n")
+    git(repo, "add", "src/core.py")
+    git(repo, "commit", "-qm", "unreviewed change")
+    skill = str(tmp_path / "no-such-autoreview")
+    code, out = run(repo, "forge.py", "task", "close", "T1", "--skill", skill, env=env)
+    assert code != 0 and "autoreview skill not found" in out, out
+    assert "proof reused" not in out
+    code, out = run(repo, "forge.py", "task", "close", "T1", "--skill", skill, env=env)
+    assert code != 0 and "autoreview skill not found" in out, out
+    assert "proof reused" in out, out
