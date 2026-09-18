@@ -34,11 +34,15 @@ the marker commit, so the PR gate reads the proof from the sealed tree.
 The worker still runs the same commands while it works, to fix what fails;
 its run is not the proof. Nobody runs `verify.py` or the suite by hand before
 close for a task-level run. The measurement lives in `verify.json`. The
-worker's own automated record, when the coordinator records one, is never
-edited: the review brief renders it verbatim inside its approved-input
+worker's own automated record keeps its narrative; its commit binds it to a
+tree, and after a fix commit the brief refuses the stale binding, which the
+coordinator used to cure by re-recording the same report at every commit.
+The proof re-binds the record to the measured commit (`worker_commit` keeps
+the original, `bound_by: stage-proof`), and only while no review covers the
+tree: the brief renders the record verbatim inside its approved-input
 section, so an edit after a review would stale that brief. A task without
-one gets the harness record, except a user-facing task, whose record must
-attest the design skills.
+a record gets the harness record, except a user-facing task, whose record
+must attest the design skills.
 
 ## Consequences
 

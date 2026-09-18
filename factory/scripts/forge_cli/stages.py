@@ -1859,17 +1859,21 @@ def reusable_stage_proof(base: Path, stage_id: str, key: str) -> dict | None:
 def record_stage_proof(base: Path, stage_id: str, task: dict, *, key: str,
                        verify_results: list[dict], test_results: list[dict],
                        test_id_misses: list[str]) -> None:
-    """Write what the proof ran as the task's verify.json, and a tests.json
-    record only where none exists.
+    """Write what the proof ran as the task's verify.json, re-bind the worker's
+    tests.json record to the measured commit, or write one where none exists.
 
     The review gate and the task proof predicate read these two files; before
     this they came from a separate `verify.py` run and a hand-typed record, so
     the same commands ran two or three more times per close. The measurement
-    lives in verify.json. The worker's own automated record is never edited:
-    the review brief renders it verbatim inside its approved-input section,
-    so any edit after a review would stale that brief. A task without one
-    gets a harness record, except a user-facing task, whose record must still
-    attest the design skills (require_skills)."""
+    lives in verify.json. The worker's record keeps its narrative; its commit
+    binds it to a tree, and after a fix commit the review brief refuses the
+    stale binding -- the coordinator re-recorded the same report at every
+    commit by hand. The proof re-binds it instead, and only while no review
+    covers the tree: the brief renders the record verbatim inside its
+    approved-input section, so an edit after a review would stale that
+    brief. A task without a record gets a harness record, except a
+    user-facing task, whose record must still attest the design skills
+    (require_skills)."""
     story = active_story_key(base)
     if not story:
         return
@@ -1889,7 +1893,19 @@ def record_stage_proof(base: Path, stage_id: str, task: dict, *, key: str,
     tests = load_json(tests_path, default={})
     if not isinstance(tests, dict):
         tests = {}
-    if isinstance(tests.get("automated"), dict) or bool(task.get("user_facing")):
+    automated = tests.get("automated")
+    if isinstance(automated, dict):
+        if automated.get("commit") == head or _review_covers_tree(base, stage_id, task):
+            return
+        automated.setdefault("worker_commit", automated.get("commit"))
+        automated["commit"] = head
+        automated["bound_by"] = STAGE_PROOF
+        automated["bound_at"] = now
+        tests["commit"] = head
+        tests["updated_at"] = now
+        dump_json(tests_path, tests)
+        return
+    if bool(task.get("user_facing")):
         return
     commands = [str(c) for c in task.get("verify_commands") or [] if str(c).strip()]
     commands += [str(p.get("command")) for p in task.get("required_tests") or []
@@ -1911,6 +1927,13 @@ def record_stage_proof(base: Path, stage_id: str, task: dict, *, key: str,
     tests["commit"] = head
     tests["updated_at"] = now
     dump_json(tests_path, tests)
+
+
+def _review_covers_tree(base: Path, stage_id: str, task: dict) -> bool:
+    """Whether the stage's review stamp covers the product delta as it stands."""
+    stage = next((item for item in load_stages(base).get("stages", [])
+                  if item.get("id") == stage_id), None)
+    return isinstance(stage, dict) and stamp_is_fresh(base, stage, task)
 
 
 def run_stage_proof(base: Path, stage_id: str, task: dict) -> tuple[dict, dict, list[str]]:

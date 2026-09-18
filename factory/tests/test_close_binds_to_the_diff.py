@@ -597,3 +597,27 @@ def test_task_close_reuses_the_proof_when_only_bookkeeping_moved(repo, tmp_path)
     code, out = run(repo, "forge.py", "task", "close", "T1", "--skill", skill, env=env)
     assert code != 0 and "autoreview skill not found" in out, out
     assert "proof reused" in out, out
+
+
+def test_task_close_rebinds_a_stale_worker_record_before_the_review(repo, tmp_path):
+    """After a fix commit the worker's record names the old commit; the brief
+    refused it and the coordinator re-recorded by hand. Close re-binds it when
+    it measures the new tree, so the review is reached and the seal follows."""
+    from factory_lib import task_evidence_path
+    env = _ship_ready(repo, tmp_path)
+    first = head(repo)
+    write_in_scope(repo, "src/core.py", "version = 2\n")
+    git(repo, "add", "src/core.py")
+    git(repo, "commit", "-qm", "fix commit")
+    fixed = head(repo)
+    skill = tmp_path / "fake-autoreview.py"
+    skill.write_text(FAKE_REVIEW_WITH, encoding="utf-8")
+    code, out = run(repo, "forge.py", "task", "close", "T1", "--engine", "claude",
+                    "--skill", str(skill), env={**env, "FAKE_PRIORITY": "P3"})
+    assert "Review brief refused" not in out and "stale commit" not in out, out
+    assert code == 0, out
+    tests = json.loads(task_evidence_path(
+        repo, "ENG-1", "T1", "tests.json").read_text(encoding="utf-8"))
+    assert tests["automated"]["commit"] == fixed == tests["commit"]
+    assert tests["automated"]["worker_commit"] == first
+    assert tests["automated"]["summary"] == "focused task proof passed"

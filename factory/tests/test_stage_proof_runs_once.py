@@ -91,6 +91,26 @@ def test_an_uncommitted_tree_runs_but_is_not_recorded(repo, tmp_path):
     assert _evidence(repo, "verify.json") == before
 
 
+def test_a_stale_worker_record_is_rebound_when_no_review_covers_the_tree(repo, tmp_path):
+    """After a fix commit the worker's record names the old commit and the
+    review brief refuses it; the coordinator used to re-record the same
+    report by hand. The proof re-binds it, narrative untouched."""
+    task, counter = _counting_task(tmp_path)
+    recorded = _built(repo, tmp_path, task)  # record and review at the first tree
+    first = head(repo)
+    write_in_scope(repo, "src/core.py", "version = 2\n")
+    git(repo, "add", "src/core.py")
+    git(repo, "commit", "-qm", "fix commit")
+    run_stage_proof(repo, "T1", recorded)
+    tests = _evidence(repo, "tests.json")
+    automated = tests["automated"]
+    assert automated["commit"] == head(repo) == tests["commit"]
+    assert automated["worker_commit"] == first
+    assert automated["bound_by"] == "stage-proof"
+    assert automated["generated_by"] == "implementer"
+    assert automated["summary"] == "focused task proof passed"
+
+
 def test_a_task_without_a_worker_record_gets_the_harness_record(repo, tmp_path):
     task, counter = _counting_task(tmp_path)
     recorded = _built(repo, tmp_path, task)
