@@ -35,7 +35,10 @@ from forge_cli.findings import _finding_rows  # noqa: E402
 from forge_cli.review import (  # noqa: E402
     LENSES, _project_combined_report, rejected_findings_report,
 )
-from forge_cli.review_brief import _plan_section_bodies, _task_section  # noqa: E402
+from forge_cli import review_brief  # noqa: E402
+from forge_cli.review_brief import (  # noqa: E402
+    _plan_section_bodies, _task_section, render_review_brief,
+)
 from forge_cli.stages import load_stages, stage_baseline, task_digest  # noqa: E402
 
 __all__ = ["repo"]
@@ -147,6 +150,50 @@ def test_brief_carries_plan_decisions_and_sealed_contracts(repo, tmp_path):
     _story_pending["stages"][0]["status"] = "pending"
     write_stages(repo, _story_pending)
     assert "T1-AC1" not in "\n".join(_task_section(task, repo))
+
+
+def test_branch_brief_deduplicates_only_identical_settled_blocks(
+        repo, tmp_path):
+    _story(repo, tmp_path)
+    lib = load_factory_lib(repo)
+    decomposition_path = protected_decomposition_state_path(repo)
+    decomposition = load_json(decomposition_path)
+    t1 = next(task for task in decomposition["tasks"] if task["id"] == "T1")
+    t1["plan_contracts"][0]["statement"] += " " + ("settled-context " * 120)
+    t2 = next(task for task in decomposition["tasks"] if task["id"] == "T2")
+    t3 = {**t2, "id": "T3", "title": "third", "plan_contracts": [{
+        "id": "T3-AC1", "source": "plan#ac",
+        "statement": "third contract",
+    }]}
+    decomposition["tasks"].append(t3)
+    lib.dump_json(decomposition_path, decomposition)
+    stages = load_stages(repo)
+    stages["stages"].append({
+        "id": "T3", "title": "third", "status": "pending",
+        "task_sha256": task_digest(t3), "base_sha": stages["stages"][0]["base_sha"],
+        "started_at": "2026-09-09T02:00:00+00:00", "dirty_at_start": {},
+    })
+    write_stages(repo, stages)
+    tasks = decomposition["tasks"]
+
+    body, _inputs, _reviewed = render_review_brief(
+        repo, tasks, "# review", all_tasks=True, reviewed_task="T2",
+    )
+    rendered = body.decode("utf-8")
+    t1 = next(task for task in tasks if task["id"] == "T1")
+    settled_t1 = "\n".join(review_brief._settled_section(repo, t1)) + "\n"
+    settled_t2 = "\n".join(review_brief._settled_section(repo, t2)) + "\n"
+    settled_t3 = "\n".join(review_brief._settled_section(repo, t3)) + "\n"
+    assert settled_t1 != settled_t2 == settled_t3
+    assert settled_t1 in rendered
+    assert rendered.count(settled_t2) == 1
+    assert "same settled context as Task `T2`" in rendered
+    assert all(f"{task['id']}-AC1" in rendered for task in tasks)
+
+    reference = "\n".join(review_brief._settled_reference("T2")).rstrip()
+    assert reference in rendered
+    expanded = rendered.replace(reference, settled_t2.rstrip(), 1)
+    assert len(body) < len(expanded.encode("utf-8"))
 
 
 def _publish(repo, blocking=(), *, recorded_at="2026-09-11T01:00:00+00:00"):

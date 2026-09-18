@@ -374,6 +374,7 @@ def _sealed_proof_section(base: Path, task: dict) -> list[str]:
 def _task_section(
         task: dict, base: Path | None = None, *, full_inputs: bool = True,
         sealed_context: bool = False, approved_inputs: dict | None = None,
+        settled_section: list[str] | None = None,
 ) -> list[str]:
     task_id = task.get("id", "")
     lines = [f"## Task {task_id}", "", "### Plan contracts", ""]
@@ -399,7 +400,8 @@ def _task_section(
     ])
     if base is not None:
         lines.extend(_amendments_section(base, task))
-        lines.extend(_settled_section(base, task))
+        lines.extend(_settled_section(base, task)
+                     if settled_section is None else settled_section)
         lines.extend(_lessons_section(base, task))
         if full_inputs:
             lines.extend(render_approved_inputs_section(
@@ -500,6 +502,17 @@ def _settled_section(base: Path, task: dict) -> list[str]:
             ""] + lines
 
 
+def _settled_reference(first_task_id: str) -> list[str]:
+    """Point a later task at an identical settled block in this dataset."""
+    return [
+        "### Settled context reference", "",
+        f"This task has the same settled context as Task `{first_task_id}` above "
+        "in this branch-wide review dataset. Use the shared block in "
+        "`.factory/review-briefs/all.md`; no accepted settled contract is omitted.",
+        "",
+    ]
+
+
 def _decision_inputs_section(base: Path, tasks: list[dict]) -> list[str]:
     """Render the shared accepted-decision manifest once for the whole brief."""
     decision_inputs = _current_decision_inputs(base)
@@ -544,6 +557,7 @@ def render_review_brief(
         )
     reviewed_inputs = None
     lines.extend(_decision_inputs_section(base, selected))
+    settled_seen: dict[tuple[str, ...], str] = {}
     for task in selected:
         # The explicit review target receives complete approved inputs even when
         # its stage is done. Other done tasks retain bounded identity only when
@@ -555,11 +569,20 @@ def render_review_brief(
             approved_inputs = _approved_task_inputs(base, task)
             if task.get("id") == reviewed_task:
                 reviewed_inputs = approved_inputs
+        settled = _settled_section(base, task)
+        if all_tasks and settled:
+            settled_key = tuple(settled)
+            first_task_id = settled_seen.get(settled_key)
+            if first_task_id is None:
+                settled_seen[settled_key] = str(task.get("id") or "")
+            else:
+                settled = _settled_reference(first_task_id)
         lines.extend(_task_section(
             task, base, full_inputs=full_inputs,
             sealed_context=(all_tasks and status == "done"
                             and task.get("id") != reviewed_task),
             approved_inputs=approved_inputs,
+            settled_section=settled,
         ))
     return (("\n".join(lines).rstrip() + "\n").encode(), reviewed_inputs,
             reviewed_task)
