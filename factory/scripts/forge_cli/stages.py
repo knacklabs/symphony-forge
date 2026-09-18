@@ -27,13 +27,14 @@ import xml.etree.ElementTree as ET
 from pathlib import Path
 
 from factory_lib import (
-    clean_git_env, decomposition_state_path, dump_json, evidence_path, factory_dir,
-    git_control_dir, head_sha, load_json, now_iso, raw_run_state,
-    plan_digest_without_assumptions, protected_decomposition_state_path,
-    repo_root, require_approved_plan_digest,
+    active_story_key, clean_git_env, decomposition_state_path, dump_json,
+    evidence_path, factory_dir, git_control_dir, head_sha, load_json, now_iso,
+    raw_run_state,
+    plan_digest_without_assumptions, product_tree_digest,
+    protected_decomposition_state_path, repo_root, require_approved_plan_digest,
     require_ready_task, require_task_worktree, run_state_path,
     safe_factory_write_json, sha256_of, story_dir, task_digest,
-    proof_path, proof_read_path,
+    proof_path, proof_read_path, task_evidence_path, validate_payload,
 )
 
 from .common import fail
@@ -1854,7 +1855,8 @@ def _require_test_input(base: Path, stage_id: str, proof: dict) -> None:
         fail(f"{stage_id} required test {proof['id']!r} is missing: {proof['path']}")
 
 
-def _run_required_tests(base: Path, stage_id: str, task: dict) -> list[str]:
+def _run_required_tests(
+        base: Path, stage_id: str, task: dict) -> tuple[list[str], list[dict]]:
     """Run every required test; refuse when one FAILS or never ran. A recorded
     id that matches no testcase (or one attributed to another path) is a
     MEASURED miss — returned, recorded on the stage, never a refusal: the run
@@ -1866,6 +1868,7 @@ def _run_required_tests(base: Path, stage_id: str, task: dict) -> list[str]:
     )
 
     misses: list[str] = []
+    results: list[dict] = []
     for proof in task.get("required_tests") or []:
         _require_test_input(base, stage_id, proof)
         test_id = proof["id"]
@@ -1970,6 +1973,7 @@ def _run_required_tests(base: Path, stage_id: str, task: dict) -> list[str]:
             if not matches:
                 misses.append(f"{test_id!r} was not present in the fresh JUnit "
                               "report (exact id or id-prefix)")
+                results.append({"id": test_id, "path": rel, "status": "unmatched"})
                 continue
             attributed = [
                 case for case in matches
@@ -1978,13 +1982,15 @@ def _run_required_tests(base: Path, stage_id: str, task: dict) -> list[str]:
             if not attributed:
                 misses.append(f"{test_id!r} was not attributed to its declared "
                               f"path {rel!r} in the fresh JUnit report")
+                results.append({"id": test_id, "path": rel, "status": "unattributed"})
                 continue
             if any(case.find("failure") is not None
                    or case.find("error") is not None
                    or case.find("skipped") is not None for case in attributed):
                 fail(f"{stage_id} required test {test_id!r} did not pass in the "
                      "fresh JUnit report")
-    return misses
+            results.append({"id": test_id, "path": rel, "status": "passed"})
+    return misses, results
 
 
 def _canonical_verify_command(base: Path, command: str) -> bool:
@@ -2015,13 +2021,14 @@ def _canonical_verify_command(base: Path, command: str) -> bool:
 
 def _run_verify_commands(
     base: Path, stage_id: str, task: dict, canonical_junit: Path | None = None,
-) -> None:
+) -> list[dict]:
     from .delegate import (
         blocked_termination_signals, _capture_spawn_identity, _process_table,
         _terminate_observed_process_tree, _wait_and_reap,
         unblock_termination_signals_in_child,
     )
 
+    results: list[dict] = []
     for command in task.get("verify_commands") or []:
         if not str(command).strip():
             continue
@@ -2086,6 +2093,133 @@ def _run_verify_commands(
             tail = (stderr or stdout or "").strip().splitlines()
             fail(f"{stage_id} verify command failed (exit {proc.returncode}): "
                  f"{command}\n" + "\n".join(tail[-15:]))
+        results.append({
+            "command": str(command), "exit_code": proc.returncode,
+            "output_tail": _output_tail(stdout, stderr),
+        })
+    return results
+
+
+def _output_tail(stdout: str, stderr: str, lines: int = 40) -> str:
+    """The end of a proof command's output: enough to read a failure from the
+    record, small enough that verify.json stays a record and not a log."""
+    text = (stderr or "").rstrip()
+    if stdout and stdout.strip():
+        text = (text + "\n" if text else "") + stdout.rstrip()
+    return "\n".join(text.splitlines()[-lines:])
+
+
+STAGE_PROOF = "stage-proof"
+
+
+def proof_key(
+        base: Path, task: dict, *,
+        verify_identity: dict[str, object] | None = None,
+        test_identity: dict[str, object] | None = None,
+) -> str:
+    """Return a provenance key derived from the complete proof identities.
+
+    This key is descriptive evidence only. Reuse is authorized by the typed
+    receipts below, which bind command, environment, tool, distribution,
+    generated-input, and product identities independently for verify and tests.
+    """
+    snapshot = product_tree_snapshot(base)
+    memo: dict[tuple[tuple[str, ...], str], dict[str, object]] = {}
+    verify_identity = verify_identity or proof_identity(
+        base, task, "verify", product_tree=snapshot, tool_probe_memo=memo,
+    )
+    test_identity = test_identity or proof_identity(
+        base, task, "tests", product_tree=snapshot, tool_probe_memo=memo,
+    )
+    bound = {
+        "verify": {"identity": verify_identity.get("identity"),
+                   "inputs": verify_identity.get("inputs")},
+        "tests": {"identity": test_identity.get("identity"),
+                  "inputs": test_identity.get("inputs")},
+    }
+    return hashlib.sha256(
+        json.dumps(bound, sort_keys=True, separators=(",", ":")).encode()
+    ).hexdigest()
+
+
+def record_stage_proof(base: Path, stage_id: str, task: dict, *, key: str,
+                       verify_results: list[dict], test_results: list[dict],
+                       test_id_misses: list[str]) -> None:
+    """Write what the proof ran as the task's verify.json, re-bind the worker's
+    tests.json record to the measured commit, or write one where none exists.
+
+    The review gate and the task proof predicate read these two files; before
+    this they came from a separate `verify.py` run and a hand-typed record, so
+    the same commands ran two or three more times per close. The measurement
+    lives in verify.json. The worker's record keeps its narrative; its commit
+    binds it to a tree, and after a fix commit the review brief refuses the
+    stale binding -- the coordinator re-recorded the same report at every
+    commit by hand. The proof re-binds it instead, and only while no review
+    covers the tree: the brief renders the record verbatim inside its
+    approved-input section, so an edit after a review would stale that
+    brief. A task without a record gets a harness record, except a
+    user-facing task, whose record must still attest the design skills
+    (require_skills)."""
+    story = active_story_key(base)
+    if not story:
+        return
+    head = head_sha(base)
+    now = now_iso()
+    tree = product_tree_digest(base)
+    dump_json(
+        task_evidence_path(base, story, stage_id, "verify.json", for_write=True),
+        {
+            "ok": True, "completed_at": now, "commit": head, "task_id": stage_id,
+            "recorded_by": STAGE_PROOF, "tree_digest": tree, "proof_key": key,
+            "results": verify_results, "required_tests": test_results,
+            "test_id_misses": list(test_id_misses),
+        },
+    )
+    tests_path = task_evidence_path(base, story, stage_id, "tests.json", for_write=True)
+    tests = load_json(tests_path, default={})
+    if not isinstance(tests, dict):
+        tests = {}
+    automated = tests.get("automated")
+    if isinstance(automated, dict):
+        if automated.get("commit") == head or _review_covers_tree(base, stage_id, task):
+            return
+        automated.setdefault("worker_commit", automated.get("commit"))
+        automated["commit"] = head
+        automated["bound_by"] = STAGE_PROOF
+        automated["bound_at"] = now
+        tests["commit"] = head
+        tests["updated_at"] = now
+        dump_json(tests_path, tests)
+        return
+    if bool(task.get("user_facing")):
+        return
+    commands = [str(c) for c in task.get("verify_commands") or [] if str(c).strip()]
+    commands += [str(p.get("command")) for p in task.get("required_tests") or []
+                 if isinstance(p, dict)]
+    automated = {
+        "generated_by": STAGE_PROOF, "status": "passed",
+        "summary": (f"task close ran {len(verify_results)} verify command(s) "
+                    f"and {len(test_results)} required test(s) at "
+                    f"{head[:12]}; all passed"),
+        "blocking_findings": [], "commands_run": commands,
+        "tests_added_or_updated": [], "remaining_gaps": [],
+        # The review brief refuses an empty scope; the harness ran the
+        # proof over the contract's write scope.
+        "reviewed_scope": [str(s) for s in task.get("write_scope") or []],
+        "recorded_at": now, "commit": head,
+    }
+    validate_payload(base, "test-automated", automated)
+    tests["automated"] = automated
+    tests["commit"] = head
+    tests["updated_at"] = now
+    dump_json(tests_path, tests)
+
+
+def _review_covers_tree(base: Path, stage_id: str, task: dict) -> bool:
+    """Whether the stage's review stamp covers the product delta as it stands."""
+    stage = next((item for item in load_stages(base).get("stages", [])
+                  if item.get("id") == stage_id), None)
+    return isinstance(stage, dict) and stamp_is_fresh(base, stage, task)
 
 
 def _canonical_junit_satisfies_required_tests(report: Path, task: dict) -> bool:
@@ -2609,40 +2743,6 @@ def _store_proof_receipt(
         write_stages(base, data)
 
 
-def _record_close_automated_evidence(
-        base: Path, stage_id: str, commands: list[str]) -> None:
-    """Extend implementer evidence with the close-owned commands just executed."""
-    if not commands:
-        return
-    state = raw_run_state(base)
-    story = str(state.get("issue_key") or state.get("story") or "")
-    path = proof_path(
-        base, story, "tests.json", task_id=stage_id, for_write=True,
-    )
-    existing = load_json(path, default={})
-    automated = existing.get("automated") if isinstance(existing, dict) else None
-    if not isinstance(automated, dict):
-        fail(f"{stage_id} has no implementer automated evidence to extend with "
-             "the close-owned task proof")
-    prior = automated.get("commands_run")
-    if not isinstance(prior, list):
-        fail(f"{stage_id} automated evidence has malformed commands_run")
-    merged = [str(command) for command in prior]
-    merged.extend(command for command in commands if command not in merged)
-    commit = head_sha(base)
-    automated.update({
-        "status": "passed",
-        "summary": "Focused checks and forge task close proof passed.",
-        "blocking_findings": [],
-        "commands_run": merged,
-        "recorded_at": now_iso(),
-        "commit": commit,
-    })
-    existing["commit"] = commit
-    existing["updated_at"] = now_iso()
-    dump_json(path, existing)
-
-
 def run_stage_proof(
         base: Path, stage_id: str, task: dict, *,
         record_close_evidence: bool = False,
@@ -2654,6 +2754,13 @@ def run_stage_proof(
     required-test ids that matched no case, for the close to record. Factored
     out so `task close` can run the proof BEFORE spending a review on a tree
     that would have failed it anyway.
+
+    A passing receipt is reused only when its complete command, environment,
+    tool, distribution, generated-input, and product identities match (0079).
+    Unknown command shapes remain conservative and run again. Before this
+    integrated proof, the full suite ran here, again in `verify.py` so the
+    review had a verify.json, and again by hand before each close: four to five
+    runs per fix cycle on WF-BIO-1 T4.
     """
     for proof in task.get("required_tests") or []:
         _require_test_input(base, stage_id, proof)
@@ -2682,12 +2789,21 @@ def run_stage_proof(
                    and test_receipt.get("inputs") == test_identity["inputs"])
     test_id_misses = list(test_receipt.get("test_id_misses") or []) \
         if reuse_tests else []
+    key = proof_key(
+        base, task, verify_identity=verify_identity,
+        test_identity=test_identity,
+    )
+    verify_results: list[dict] = []
+    test_results: list[dict] = []
     commands_run: list[str] = []
     with tempfile.TemporaryDirectory(prefix="forge-canonical-junit-") as tmp:
         canonical_junit = Path(tmp) / "pytest.xml"
         with termination_signal_guard():
             if not reuse_verify:
-                _run_verify_commands(base, stage_id, task, canonical_junit)
+                result = _run_verify_commands(
+                    base, stage_id, task, canonical_junit,
+                )
+                verify_results = result if isinstance(result, list) else []
                 commands_run.extend(
                     str(command) for command in task.get("verify_commands") or []
                     if str(command).strip()
@@ -2697,8 +2813,21 @@ def run_stage_proof(
                         _canonical_junit_satisfies_required_tests(
                             canonical_junit, task):
                     test_id_misses = []
+                    test_results = [
+                        {"id": str(proof.get("id")),
+                         "path": str(proof.get("path")), "status": "passed"}
+                        for proof in task.get("required_tests") or []
+                        if isinstance(proof, dict)
+                    ]
                 else:
-                    test_id_misses = _run_required_tests(base, stage_id, task)
+                    result = _run_required_tests(base, stage_id, task)
+                    if isinstance(result, tuple):
+                        test_id_misses, test_results = result
+                    else:
+                        # Keep older test doubles source-compatible while the
+                        # production runner always returns both provenance
+                        # lists.
+                        test_id_misses = list(result or [])
                     commands_run.extend(
                         str(proof.get("command"))
                         for proof in task.get("required_tests") or []
@@ -2716,8 +2845,30 @@ def run_stage_proof(
     if not reuse_tests:
         test_identity = {**test_identity, "test_id_misses": test_id_misses}
         _store_proof_receipt(base, stage_id, "tests", test_identity)
-    if record_close_evidence:
-        _record_close_automated_evidence(base, stage_id, commands_run)
+    if not reuse_verify or not reuse_tests:
+        if not verify_results or not test_results:
+            state = raw_run_state(base)
+            story = str(state.get("issue_key") or state.get("story") or "")
+            existing = load_json(
+                task_evidence_path(base, story, stage_id, "verify.json"),
+                default={},
+            ) if story else {}
+            if isinstance(existing, dict):
+                if not verify_results and isinstance(existing.get("results"), list):
+                    verify_results = existing["results"]
+                if not test_results and isinstance(
+                        existing.get("required_tests"), list):
+                    test_results = existing["required_tests"]
+        if proof_tree.get("dirty"):
+            print(f"{stage_id}: proof ran against uncommitted product paths; "
+                  "not recorded. Commit, then close.")
+        else:
+            record_stage_proof(
+                base, stage_id, task, key=key,
+                verify_results=verify_results,
+                test_results=test_results,
+                test_id_misses=test_id_misses,
+            )
     authority_tree = protected_authority_snapshot(base)
     if proof_context is not None:
         proof_context.clear()

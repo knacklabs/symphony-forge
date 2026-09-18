@@ -67,7 +67,7 @@ when the repo has a repeated bottleneck that justifies another role.
 
 The user and host select the main coordinator model and reasoning; the
 repository does not set either at the top level. Native dispatch names a
-configured role and passes no model or reasoning override. Decision 0079
+configured role and passes no model or reasoning override. Decision 0080
 defines the role defaults:
 
 - routine implementation, automated tests, diagnosed or review fixes,
@@ -171,7 +171,11 @@ require launch-process proof. The task scope, diff, tests, deterministic verify,
 independent review and PR gates remain unchanged.
 
 Each task closes through `forge task close <id>`: after implementation and
-focused checks, commit the product changes; `close` runs the declared proof,
+focused checks, commit the product changes; `close` runs the declared proof
+once for that close and records it as the task's `verify.json` and `tests.json`.
+A later close reuses a passing proof only when its complete command,
+environment, tool, distribution, generated-input, and product identities
+match; unknown command shapes stay conservative and run again (0079). It
 runs one three-lens review only when the product delta is not already stamped,
 and checks the complete task-owned automated and conditional functional proof
 before it measures and closes the stage, writes the task marker, pushes and

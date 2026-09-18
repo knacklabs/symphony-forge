@@ -34,10 +34,10 @@ child roles are pinned as follows:
 Routine implementation and automated tests use Luna/max. Diagnosed fixes return
 to a Luna/max implementation role; `debugger` is for difficult diagnosis, not
 the subsequent edit. Documentation edits and mechanical refactors are
-execution work and use Luna/max. Native dispatch names
-the role and does not duplicate model or reasoning overrides at the call site.
-Formal code review stays exclusively with the unchanged, externally maintained
-Autoreview skill, which may manage its own internal Codex or agent calls.
+execution work and use Luna/max. Native dispatch names the role and does not
+duplicate model or reasoning overrides at the call site. Formal code review
+stays exclusively with the unchanged, externally maintained Autoreview skill,
+which may manage its own internal Codex or agent calls.
 
 The main coordinator model and reasoning remain the user's and host's choice.
 No Forge configuration may select Luna with low reasoning.

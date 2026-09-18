@@ -34,10 +34,10 @@ from test_gates import (  # noqa: F401
 sys.path.insert(0, str(HARNESS / "factory" / "scripts"))
 from factory_lib import (  # noqa: E402
     load_json, plan_digest_without_assumptions, product_delta_digest,
-    protected_decomposition_state_path,
+    protected_decomposition_state_path, task_evidence_path,
 )
 from forge_cli.stages import (  # noqa: E402
-    load_stages, stamp_is_fresh, task_digest, task_for,
+    load_stages, stamp_is_fresh, task_digest, task_for, write_stages,
 )
 
 
@@ -314,8 +314,7 @@ def test_task_close_goes_from_built_to_pr_and_is_idempotent(repo, tmp_path):
 
 
 def test_task_close_reopens_a_done_stage_whose_diff_moved(repo, tmp_path):
-    """A moved post-seal diff reopens the stage, but stale verify proof must
-    stop review after close refreshes its truthful automated test evidence."""
+    """A moved post-seal diff gets a fresh proof before review is launched."""
     env = _ship_ready(repo, tmp_path)
     code, out = run(repo, "forge.py", "task", "close", "T1",
                     "--skill", str(tmp_path / "no-such-autoreview"), env=env)
@@ -327,10 +326,9 @@ def test_task_close_reopens_a_done_stage_whose_diff_moved(repo, tmp_path):
     code, out = run(repo, "forge.py", "task", "close", "T1",
                     "--skill", str(tmp_path / "no-such-autoreview"), env=env)
     assert code != 0, out
-    assert "review proof preflight failed before helper launch" in out, out
-    assert "product content changed after verify proof was recorded" in out, out
-    assert "product content changed after tests proof was recorded" not in out, out
-    assert "autoreview skill not found" not in out, out
+    assert "autoreview skill not found" in out, out
+    assert "review proof preflight failed before helper launch" not in out, out
+    assert "T1: task proof committed" in out, out
     assert "reopened: the diff moved" in out
     stage = _stage(repo)
     assert stage["status"] == "active"
@@ -476,9 +474,7 @@ def test_task_close_is_the_single_full_suite_owner_and_records_truthful_automate
     proof = ({}, {}, [])
     fresh_context = {"proofs": "from-close"}
 
-    def run_proof(_base, _task_id, _task, *, record_close_evidence=False,
-                  proof_context=None):
-        assert record_close_evidence is True
+    def run_proof(_base, _task_id, _task, *, proof_context=None):
         assert proof_context == {}
         proof_context.update(fresh_context)
         data = json.loads(tests_path.read_text(encoding="utf-8"))
@@ -487,6 +483,12 @@ def test_task_close_is_the_single_full_suite_owner_and_records_truthful_automate
         return proof
 
     monkeypatch.setattr(stages, "run_stage_proof", run_proof)
+
+    def commit_proof(_base, _story, _task_id, proof, *, proof_context=None):
+        assert proof_context == fresh_context
+        return proof
+
+    monkeypatch.setattr(close, "_commit_task_proof", commit_proof)
     monkeypatch.setattr(
         close, "task_proof_problems", lambda *_args, **_kwargs: [],
     )
@@ -702,3 +704,88 @@ def test_product_dirty_does_not_eat_the_first_path_character(repo):
     # entry precedes it.
     (repo / "src" / "core.py").write_text("v = 2\n", encoding="utf-8")
     assert _product_dirty(repo) == ["src/core.py"]
+
+
+# ------------------------------------------------- the proof runs once (0079)
+
+
+def test_task_close_records_the_proof_in_the_marker_commit(repo, tmp_path):
+    """The PR gate reads verify.json and tests.json from the sealed tree, so
+    the proof close ran ships with the marker."""
+    from factory_lib import task_evidence_path
+    env = _ship_ready(repo, tmp_path)
+    # The fixture starts with a worker proof. Remove only its typed receipts so
+    # this close exercises the fresh stage-proof -> proof commit -> seal path.
+    stages = load_stages(repo)
+    for stage in stages["stages"]:
+        if stage.get("id") == "T1":
+            stage.pop("proof_receipts", None)
+    write_stages(repo, stages)
+    code, out = run(repo, "forge.py", "task", "close", "T1", env=env)
+    assert code == 0, out
+    assert "proof reused" not in out
+    shown = git(repo, "show", "--name-only", "--format=", "HEAD")
+    verify_rel = task_evidence_path(
+        repo, "ENG-1", "T1", "verify.json").relative_to(repo).as_posix()
+    tests_rel = task_evidence_path(
+        repo, "ENG-1", "T1", "tests.json").relative_to(repo).as_posix()
+    # Close commits the proof it recorded as its own commit before the
+    # review; the marker commit follows and names it. The worker's tests.json
+    # was committed unchanged before close and is simply in the sealed tree.
+    assert "pr-ready.json" in shown and verify_rel not in shown, shown
+    proof_commit = git(repo, "show", "--name-only", "--format=%s", "HEAD~1")
+    assert proof_commit.startswith("ENG-1 T1: task proof"), proof_commit
+    assert verify_rel in proof_commit and tests_rel not in proof_commit, proof_commit
+    assert git(repo, "ls-tree", "--name-only", "HEAD", tests_rel) == tests_rel
+    verify = json.loads(git(repo, "show", f"HEAD:{verify_rel}"))
+    assert verify["recorded_by"] == "stage-proof" and verify["ok"] is True
+    assert [entry["status"] for entry in verify["required_tests"]] == ["passed"]
+    tests = json.loads(git(repo, "show", f"HEAD:{tests_rel}"))
+    assert tests["automated"]["generated_by"] == "implementer"
+    assert "measured" not in tests["automated"], "the worker's record is never edited"
+
+
+def test_task_close_reuses_the_proof_when_only_bookkeeping_moved(repo, tmp_path):
+    """A second close over the same product tree runs no test: the record
+    from the first close is the proof."""
+    env = _ship_ready(repo, tmp_path)
+    write_in_scope(repo, "src/core.py", "version = 2\n")
+    git(repo, "add", "src/core.py")
+    git(repo, "commit", "-qm", "unreviewed change")
+    skill = str(tmp_path / "no-such-autoreview")
+    code, out = run(repo, "forge.py", "task", "close", "T1", "--skill", skill, env=env)
+    assert code != 0 and "autoreview skill not found" in out, out
+    assert "proof reused" not in out
+    verify_path = task_evidence_path(repo, "ENG-1", "T1", "verify.json")
+    first_verify = verify_path.read_bytes()
+    code, out = run(repo, "forge.py", "task", "close", "T1", "--skill", skill, env=env)
+    assert code != 0 and "autoreview skill not found" in out, out
+    assert "T1: task proof committed" not in out, out
+    assert verify_path.read_bytes() == first_verify
+
+
+def test_task_close_rebinds_a_stale_worker_record_before_the_review(repo, tmp_path):
+    """After a fix commit the worker's record names the old commit; the brief
+    refused it and the coordinator re-recorded by hand. Close re-binds it when
+    it measures the new tree, so the review is reached and the seal follows."""
+    from factory_lib import task_evidence_path
+    env = _ship_ready(repo, tmp_path)
+    tests_path = task_evidence_path(repo, "ENG-1", "T1", "tests.json")
+    original = json.loads(tests_path.read_text(encoding="utf-8"))["automated"]["commit"]
+    write_in_scope(repo, "src/core.py", "version = 2\n")
+    git(repo, "add", "src/core.py")
+    git(repo, "commit", "-qm", "fix commit")
+    fixed = head(repo)
+    skill = tmp_path / "fake-autoreview.py"
+    skill.write_text(FAKE_REVIEW_WITH, encoding="utf-8")
+    code, out = run(repo, "forge.py", "task", "close", "T1", "--engine", "claude",
+                    "--skill", str(skill), env={**env, "FAKE_PRIORITY": "P3"})
+    assert "Review brief refused" not in out and "stale commit" not in out, out
+    assert code == 0, out
+    tests = json.loads(task_evidence_path(
+        repo, "ENG-1", "T1", "tests.json").read_text(encoding="utf-8"))
+    assert tests["automated"]["commit"] == fixed == tests["commit"]
+    assert tests["automated"]["worker_commit"] == original
+    assert tests["automated"]["summary"] == "focused task proof passed"
+    assert git(repo, "show", "--name-only", "--format=%s", "HEAD~1").startswith(
+        "ENG-1 T1: task proof")

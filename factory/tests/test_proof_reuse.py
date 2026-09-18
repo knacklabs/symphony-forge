@@ -7,6 +7,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+import pytest
+
 from test_gates import HARNESS, git, load_factory_lib, repo  # noqa: F401
 
 sys.path.insert(0, str(HARNESS / "factory" / "scripts"))
@@ -234,6 +236,39 @@ def test_close_context_allows_one_fresh_nonreusable_proof_then_refuses_drift(
                    )), "protected-authority drift must refuse review"
     finally:
         authority_drift.unlink()
+
+
+def test_authoritative_proof_reads_refuse_without_recording_passing_evidence(
+        repo: Path, monkeypatch: pytest.MonkeyPatch):
+    """Unreadable lifecycle authority must abort proof recording loudly."""
+    from factory_lib import task_evidence_path
+
+    task = {**_task(), "verify_commands": [], "required_tests": []}
+    verify_path = task_evidence_path(
+        repo, "S1", "T1", "verify.json", for_write=True,
+    )
+    monkeypatch.setattr(stages, "product_tree_snapshot", lambda _base: {})
+    monkeypatch.setattr(stages, "protected_authority_snapshot", lambda _base: {})
+    monkeypatch.setattr(stages, "_proof_receipt", lambda *_args: {})
+    monkeypatch.setattr(stages, "_store_proof_receipt", lambda *_args: None)
+
+    def refuse_run_state(_base):
+        raise OSError("protected run pointer unreadable")
+
+    monkeypatch.setattr(stages, "raw_run_state", refuse_run_state)
+    with pytest.raises(OSError, match="protected run pointer unreadable"):
+        stages.run_stage_proof(repo, "T1", task)
+    assert not verify_path.exists()
+
+    monkeypatch.setattr(stages, "raw_run_state", lambda _base: {"issue_key": "S1"})
+
+    def refuse_story(_base):
+        raise ValueError("active story authority unreadable")
+
+    monkeypatch.setattr(stages, "active_story_key", refuse_story)
+    with pytest.raises(ValueError, match="active story authority unreadable"):
+        stages.run_stage_proof(repo, "T1", task)
+    assert not verify_path.exists()
 
 
 def test_changed_unknown_partial_or_generated_output_identity_forces_fresh_run(
@@ -671,6 +706,10 @@ def test_run_stage_proof_memoizes_tool_probe_by_prefix_and_environment(
     test_file.write_text("pass\n", encoding="utf-8")
     monkeypatch.setattr(stages, "product_tree_snapshot", lambda _base: {})
     monkeypatch.setattr(stages, "protected_authority_snapshot", lambda _base: {})
+    # This identity-memoization fixture has no lifecycle pointer by design;
+    # make that absent story explicit without masking authoritative read errors.
+    monkeypatch.setattr(stages, "raw_run_state", lambda _base: {})
+    monkeypatch.setattr(stages, "active_story_key", lambda _base: "")
     monkeypatch.setattr(stages, "_proof_receipt", lambda *_args: {})
     monkeypatch.setattr(stages, "_store_proof_receipt", lambda *_args: None)
     monkeypatch.setattr(stages, "_run_verify_commands", lambda *_args: None)

@@ -47,6 +47,16 @@ three `factory/schemas/review.json` lens records, then replaces the task's
 - **security** — OWASP-style trust boundaries, authn/authz, secrets,
   injection, data exposure, unsafe defaults, abuse paths
 
+`task close` owns one integrated proof attempt: it runs the contract's verify
+commands and required tests, records the run as the task's `verify.json` and
+`tests.json` bound to the product tree and contract, and commits changed proof
+files before review, ahead of the marker commit. A later close may reuse a
+passing receipt only when the command, environment, tool, distribution,
+generated-input, and product identities are all complete and unchanged;
+unknown command shapes remain conservative and run again. The worker runs the
+same commands while it works so it can fix what fails; the coordinator does
+not run them by hand before close (0079).
+
 Never review inline in the coordinating session; never nest reviewers.
 Forge-managed autoreview is an authenticated, externally maintained black box;
 it may invoke Codex or agents internally. The raw/direct/nested `codex exec`

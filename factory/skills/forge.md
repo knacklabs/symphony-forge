@@ -20,7 +20,7 @@ scope the plan does not cover.
 
 The user and host select the main coordinator model and reasoning. Native
 dispatch passes no model or reasoning override; the selected configured role's
-defaults apply. Decision 0079 routes routine implementation, automated tests,
+defaults apply. Decision 0080 routes routine implementation, automated tests,
 diagnosed or review fixes, documentation edits, and mechanical refactors to
 Luna/max; read-heavy exploration and dependency tracing to Terra/high; and
 planning, decomposition, difficult diagnosis, independent grills, and final
@@ -98,7 +98,9 @@ For an approved Full task, the implementer owns focused checks and a truthful
 automated report. Commit the completed product changes, then let ONE
 `forge task close <id>` own final task-wide verification, required-test proof,
 and independent review. Complete any required functional check and resume
-that same close; unchanged valid proof is reused. Never run standalone full
+that same close; a passing proof is reused only when its complete command,
+environment, tool, distribution, generated-input, and product identities
+remain unchanged. Unknown command shapes run again conservatively. Never run standalone full
 verification before close or reconstruct close as separate review/stage/PR
 commands. Check the complete declared selectors and prerequisites together
 before an expensive run; keep build-dependent checks after their prerequisites.

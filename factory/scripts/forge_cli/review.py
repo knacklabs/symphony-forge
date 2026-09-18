@@ -2148,8 +2148,8 @@ def review_task(base: Path, task_id: str, *, lens: str | None = None,
     for artifact in ("verify.json", "tests.json"):
         if not proof_path(base, story, artifact, task_id=args.id).is_file():
             fail(f"{artifact} is not recorded for task {args.id}; review runs after "
-                 "`python3 factory/scripts/verify.py` and "
-                 "`record_test_from_json.py --kind automated`")
+                 f"the proof -- `./forge task close {args.id}` runs and records "
+                 "it once before review (0079).")
 
     tip_sha = _require_git(base, "resolving HEAD", "rev-parse", "--verify", "HEAD^{commit}")
     base_sha = resolve_review_base(base, stage, state, tip_sha)

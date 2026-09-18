@@ -32,7 +32,7 @@ routes preserve the active task, worktree and effective scope and produce the sa
 process identity or lifecycle proof.
 
 The main coordinator model and reasoning remain the user's and host's choice.
-Decision 0079 routes native roles by work: Luna/max handles routine
+Decision 0080 routes native roles by work: Luna/max handles routine
 implementation, automated tests, diagnosed or review fixes, documentation
 edits, and mechanical refactors; Terra/high handles read-heavy exploration and
 dependency tracing; Sol/high handles planning, decomposition, difficult
@@ -574,10 +574,10 @@ stalls on "should I do this or hand it to Codex?":
   follows this ownership rule without pretending Forge can mechanically
   distinguish Main from a host subagent process.
 - **The coordinator's hands do only orchestration:** author task contracts,
-  compose briefs, delegate, run the checks / `verify.py` / required tests,
-  invoke the unchanged externally maintained Autoreview skill for the branch
-  review, record evidence via the `record_*` scripts, commit,
-  and — when the story reaches a PR — review that PR.
+  compose briefs, delegate, inspect the bounded diff and focused checks, then
+  run `forge task close` — which runs the proof ONCE, records it, reviews and
+  ships (0079); the coordinator does not re-run the suite or `verify.py` by
+  hand before it — and, when the story reaches a PR, review that PR.
 - **Commit is not a human gate.** After inspecting the bounded diff and green
   focused checks, the coordinator commits the product changes. Deterministic
   verify, task test recording and `forge review <id>` follow that commit;
@@ -673,12 +673,15 @@ stories still archive until `forge upgrade` migrates them.
    `delegate --scope` may repeat to select a proper subset of the approved
    effective scope, while omission uses the full scope
 7. after implementation, run `./forge task close <task-id>` as the integrated
-   normal operation: it runs or content-safely reuses the task's tests and
-   deterministic verify, runs or safely reuses the one complete review, and
-   finishes the stage only when that proof is clean and current
+   normal operation: it runs the task's tests and deterministic verify, or
+   reuses passing receipts only when their complete identities are unchanged;
+   unknown command shapes run again conservatively. It runs or safely reuses
+   the one complete review and finishes the stage only when that proof is
+   clean and current
 8. if close reports blocking review findings, delegate the fixes and rerun the
    same integrated close operation; selected proof reuses only while its
-   stamp-token delta and complete reviewed-meaning identity are unchanged
+   stamp-token delta, complete proof identities, and reviewed-meaning identity
+   are unchanged
 9. run the Sol/high `functional-checker` when the task has `user_facing: true`
 10. record the shipped outcome with `./forge outcome set "<what changed>"`
 11. run `./forge task pr-ready <task-id>` for the task PR; after every task is

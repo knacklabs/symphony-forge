@@ -53,7 +53,7 @@ Testing has no separate agent: the implementer writes and records the tests.
 ## Reasoning Defaults
 
 Main coordinator model/reasoning are user/host choices; native dispatch passes no override.
-0079 routes Luna/max to routine work (implementation, tests, diagnosed fixes,
+0080 routes Luna/max to routine work (implementation, tests, diagnosed fixes,
 docs edits, mechanical refactors); Terra/high to read-heavy exploration/dependency
 tracing; Sol/high to planning, decomposition, difficult diagnosis, independent
 grills, final functional checks. Formal review: unchanged external Autoreview

@@ -6,7 +6,7 @@ the command. `./forge next` tags each step with the role that acts —
 
 The user and host select the main coordinator model and reasoning. Native
 dispatch names a configured role and passes no model or reasoning override.
-Decision 0079 routes routine implementation, automated tests, diagnosed or
+Decision 0080 routes routine implementation, automated tests, diagnosed or
 review fixes, documentation edits, and mechanical refactors to Luna/max;
 read-heavy exploration and dependency tracing to Terra/high; and planning,
 decomposition, difficult diagnosis, independent grills, and final functional

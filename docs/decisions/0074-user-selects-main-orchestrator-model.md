@@ -4,7 +4,7 @@ confirmed_by: "User (explicit main coordinator model-selection instruction, Code
 date: 2026-09-13
 stories: [FORGE-COORD-1]
 supersedes: 0070-sol-specialized-workflow-models
-superseded_by: 0079-native-role-model-routing
+superseded_by: 0080-native-role-model-routing
 ---
 
 # User selects the main coordinator model

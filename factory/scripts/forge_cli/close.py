@@ -35,6 +35,54 @@ def _stop(step: str, why: str, then: str) -> None:
     fail(f"close stopped at {step}: {why}\n  NEXT: {then}")
 
 
+def _commit_task_proof(
+        base: Path, story: str, task_id: str,
+        proof: tuple[dict, dict, list[str]], *,
+        proof_context: dict[str, object] | None = None,
+) -> tuple[dict, dict, list[str]]:
+    """Ship the proof close just recorded as its own commit, before the review.
+
+    Every sealed-state reader reads a task's evidence at the commit the marker
+    names. Evidence committed only with the marker sat one commit later: the
+    re-bound tests.json was in the marker commit while the sealed product
+    commit still held the old record, and the brief's re-rendered
+    approved-input section could not be found. The coordinator used to commit
+    evidence by hand before close, which hid this. Only the head moves here;
+    the product tree the proof attested is checked again before its snapshot
+    is replaced.
+    """
+    from factory_lib import task_evidence_path
+    from .stages import product_tree_snapshot, protected_authority_snapshot
+    from .tasks import _require_git
+
+    rels = [
+        path.relative_to(base).as_posix()
+        for path in (task_evidence_path(base, story, task_id, name)
+                     for name in ("verify.json", "tests.json"))
+        if path.is_file()
+    ]
+    if not rels or not _require_git(
+            base, "checking the task proof", "status", "--porcelain", "--", *rels):
+        return proof
+    _require_git(base, "staging the task proof", "add", "--", *rels)
+    _require_git(base, "committing the task proof", "commit", "-q", "--only",
+                 "-m", f"{story} {task_id}: task proof", "--", *rels)
+    proof_tree, authority_tree, misses = proof
+    after = product_tree_snapshot(base)
+    if ({key: value for key, value in after.items() if key != "head"}
+            != {key: value for key, value in proof_tree.items() if key != "head"}):
+        fail(f"{task_id}: product tree moved while the task proof was committed")
+    current_authority = protected_authority_snapshot(base)
+    if current_authority != authority_tree:
+        fail(f"{task_id}: protected Forge authority moved while the task proof "
+             "was committed")
+    if proof_context is not None:
+        proof_context["product_tree"] = after
+        proof_context["authority_tree"] = current_authority
+    print(f"{task_id}: task proof committed ({after.get('head', '')[:12]}).")
+    return after, current_authority, misses
+
+
 def cmd_task_close(args: argparse.Namespace) -> None:
     from .review import _product_dirty, review_task
     from .stages import (
@@ -101,8 +149,9 @@ def cmd_task_close(args: argparse.Namespace) -> None:
         #    is, and finding it after a review turned every test fix into a
         #    review as well.
         proof_context: dict[str, object] = {}
-        proof = run_stage_proof(
-            base, task_id, task, record_close_evidence=True,
+        proof = _commit_task_proof(
+            base, story, task_id,
+            run_stage_proof(base, task_id, task, proof_context=proof_context),
             proof_context=proof_context,
         )
 
