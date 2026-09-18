@@ -437,6 +437,11 @@ def test_model_policy_routes_native_children_by_role():
         "gpt-5.6-sol", "high")
 
 
+def test_model_policy_selects_sol_work_and_luna_lite():
+    """Keep the approved task contract bound to the expanded routing check."""
+    test_model_policy_routes_native_children_by_role()
+
+
 SESSION_START_ADAPTERS = (".codex/hooks.json", ".claude/settings.json")
 SESSION_START_SOURCES = ("startup", "resume", "clear", "compact")
 HOOK_TOOL_MATRIX = {
