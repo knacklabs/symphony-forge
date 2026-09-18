@@ -2123,7 +2123,9 @@ def proof_key(
     receipts below, which bind command, environment, tool, distribution,
     generated-input, and product identities independently for verify and tests.
     """
-    snapshot = product_tree_snapshot(base)
+    snapshot = None
+    if verify_identity is None or test_identity is None:
+        snapshot = product_tree_snapshot(base)
     memo: dict[tuple[tuple[str, ...], str], dict[str, object]] = {}
     verify_identity = verify_identity or proof_identity(
         base, task, "verify", product_tree=snapshot, tool_probe_memo=memo,

@@ -19110,7 +19110,10 @@ def test_review_consumers_include_complete_approved_inputs(
         route.setattr(review_mod, "cmd_review_brief", lambda _args: None)
         route.setattr(review_mod, "resolve_skill", lambda _explicit: tmp_path / "helper")
         route.setattr(review_mod, "_product_dirty", lambda _base: [])
-        route.setattr(review_mod, "pre_review_proof_problems", lambda *_args: [])
+        route.setattr(
+            review_mod, "pre_review_proof_problems",
+            lambda *_args, **_kwargs: [],
+        )
         route.setattr(review_mod, "_run_skill", inspect_skill)
         route.setattr(review_mod.tempfile, "mkdtemp", lambda **_kwargs: str(review_tmp))
         route.setattr(stages_mod, "stamp_stage_review", lambda *_args, **_kwargs: None)
@@ -19165,7 +19168,10 @@ def test_review_consumers_include_complete_approved_inputs(
             )
             unsafe.setattr(review_mod, "resolve_skill", lambda _explicit: tmp_path / "helper")
             unsafe.setattr(review_mod, "_product_dirty", lambda _base: [])
-            unsafe.setattr(review_mod, "pre_review_proof_problems", lambda *_args: [])
+            unsafe.setattr(
+                review_mod, "pre_review_proof_problems",
+                lambda *_args, **_kwargs: [],
+            )
             unsafe.setattr(review_mod, "resolve_review_base", lambda *_args: head(repo))
             unsafe.setattr(review_mod, "review_excluded_prefixes", lambda _base: ())
             unsafe.setattr(review_mod, "_require_git", fake_require_git)
