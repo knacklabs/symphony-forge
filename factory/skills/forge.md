@@ -73,7 +73,42 @@ coordinator-and-`codex-plugin-cc` companion route.
   blocker. Resolve matters already covered by the contract without asking the
   user again; escalate only missing authority or a material new choice.
 
-## ALWAYS start here
+## Choose the smallest complete route
+
+Choose from the existing routes before creating workflow state. State the
+route and reason in one sentence; developers provide answers and approvals,
+not commands or a mode-selection checklist. Reuse applicable authorization
+already given in the conversation; never invent an approval or its actor.
+
+| Request and current state | Route |
+|---|---|
+| Explanation, code lookup, status, or diagnosis without edits | Answer or inspect directly. Use a status command only when its result is needed; do not create an intake, plan, window, or review. |
+| Correction within an active approved task | Resume that task and its eligible worker. Keep its accepted scope and approvals; collect all known blockers into one focused fix batch. Never open Lite beside an active stage. |
+| Small, understood, supervised fix with no active stage | Prefer existing reviewed Lite when the work fits its five-product-file bound and applicable human authorization. Record the real authorizing actor and reason with `forge mode lite`; focused checks, one independent review pass, `forge mode done`, then the repository's PR/CI flow. A small diff alone does not establish low risk. |
+| New capability, unclear acceptance, changed contract, or consequential security/data/migration boundary | Full workflow: resolve the uncertainty, approve the exact story/task, then execute autonomously to PR. |
+| Explicit trace-only quickfix or a qualifying companion outage | Use only that existing bounded exception. Quickfix records a write window; it does not establish reviewed completion. Degraded mode retains its outage conditions. |
+
+Lite's recorded authorization, scope bound, review and CI still apply. If the
+chosen route is no longer sufficient, preserve the work and use the existing
+amendment or Full path; do not silently expand its authority. Do not prompt for
+an authorization already provided, or attribute an agent's choice as a native
+human approval event.
+
+For an approved Full task, the implementer owns focused checks and a truthful
+automated report. Commit the completed product changes, then let ONE
+`forge task close <id>` own final task-wide verification, required-test proof,
+and independent review. Complete any required functional check and resume
+that same close; unchanged valid proof is reused. Never run standalone full
+verification before close or reconstruct close as separate review/stage/PR
+commands. Check the complete declared selectors and prerequisites together
+before an expensive run; keep build-dependent checks after their prerequisites.
+
+Only P2/P3 findings become recorded follow-ups with a reason and revisit
+trigger; they do not start another cleanup/review cycle. When the latest
+published head satisfies required proof and CI and merge is authorized, merge
+and continue. P0/P1 findings and failed required checks must be resolved first.
+
+## For workflow execution, start here
 
 ```bash
 ./forge next
@@ -91,8 +126,8 @@ or route:
 | planning | Plan per `factory/prompts/planner.md`. Native Codex spawns the configured Sol/high `planner-high` role without model/reasoning overrides; Claude delegates read-heavy exploration via the Terra/high `explorer` lane and validation/architecture with Sol/high, read-only — never Claude Code itself, never raw `codex exec` |
 | decomposing | run docs-decomposer per task, record with `record_decomposition_from_json.py` (schema incl. `user_facing`) |
 | implementing | Follow the one frontier action printed by `./forge next`: enter plan mode and author/re-record the JIT contract; run the task griller; `forge stage start`; or `forge delegate`. In native Codex, send the complete prepared descriptor and context metadata in the actual `spawn_agent` message to the named role, without model/reasoning overrides. The implementer writes and records the tests; user-facing tasks MUST load + attest emil-design-eng + frontend-design in `skills_used` (recorder-enforced; harness.yaml `required_skills`) |
-| verifying | `python3 factory/scripts/verify.py` |
-| reviewing | Run `./forge review <id>` from the orchestrating session after committing product changes and recording verify/tests; delegate blocking findings as one fix batch, refresh proof, and re-review under `docs/QUALITY.md` bounded recovery |
+| verifying | For an active task, use its existing `./forge task close <id>` owner; do not start a competing or standalone full verifier. |
+| reviewing | Continue the task-close owner and its independent review. Batch blocking fixes, run focused checks, commit, then resume close under `docs/QUALITY.md` bounded recovery. |
 | functional-check | only shown when the task is user-facing; run the Sol/high `functional-checker` |
 | harvest pending | follow `factory/prompts/harvester.md` |
 | anything with a command | run the command verbatim |
@@ -123,7 +158,7 @@ or route:
 | save and approve a plan | Run one independent cold grill against the draft and complete its disposition/amendment bridge; then `python3 factory/scripts/forge.py plan save --from <plan-file> --story <key>` once and show those exact final bytes in native Plan Mode. Successful Claude `ExitPlanMode` binds its exact plan input; Codex uses id `approve_plan_<digest>`, prompt `Approve exact plan digest <digest>?`, and an id-keyed `Approve plan` answer |
 | show implementation progress / how far along are we / show the board | `./forge board` — see "Show, don't recite" below. `./forge plan list` is the text fallback |
 | review the plan / let me read the plan | present the exact final plan through native Plan Mode; `./forge board` is a read-only status view and never an approval transport |
-| I need a small fix without a plan | `./forge quickfix start "<reason>"` — a bounded, ledgered window (5 product files) that the hook tracks; close it with `./forge quickfix done`. Exceeding the budget forces plan mode, and pr_ready refuses to ship with a window open |
+| I need a small fix without a plan | Apply the route table above. Prefer reviewed Lite for an eligible, authorized standalone fix: `./forge mode lite --by "<authorizing actor>" --reason "<why>"`; close with `./forge mode done` after focused checks and clean required review. Quickfix is the distinct trace-only exception, never a review shortcut. |
 | why is my edit blocked | the planning lock is ALWAYS armed (decision 0013): product writes need an approved plan or an open quickfix. `.factory/` is never hand-written; recorded state comes from the record_* scripts |
 | record the decomposition | `python3 factory/scripts/record_decomposition_from_json.py --input <json>`, then `update_run.py --phase implementing --decomposition-status recorded` |
 | record a decision | `./forge decision new <slug>` — draft only; it is stamped with the active story so the board can show which decisions came out of this work |
@@ -137,7 +172,7 @@ or route:
 | worker hit a contradiction / is confused / blocked / scope shifted | `./forge signal raise --kind <k> --by <agent> -m "..."` then PAUSE — the orchestrator monitors `.factory/signals.jsonl`, resolves, resumes |
 | a worker signal is open (orchestrator) | `./forge signal list --open` → inspect the signal and its worker state → resolve the cause with `./forge signal resolve <id> --notes "<answer>"`. Resume only a live paused worker; otherwise reconcile its result before deciding whether new delegation is needed. Open signals block pr_ready |
 | review / guide the assumptions (orchestrator) | `./forge assumptions list --open`, then `./forge assumptions resolve <id> --status confirmed\|fix-needed\|promoted --notes "..."` — pr_ready refuses unguided rows |
-| work the next stage / where am I in the task | Run `./forge next` and follow the current frontier. After implementation and focused tests: commit product changes → deterministic verify and task test recording → `./forge review <id>` → functional check if required → `./forge stage done <id>` → `./forge task pr-ready <id>` → CI and merge (WORKFLOW.md Stage Loop; `docs/QUALITY.md` bounded recovery) |
+| work the next stage / where am I in the task | Run `./forge next` when the frontier is unknown. After implementation, focused tests and truthful implementer test recording: commit product changes → ONE `./forge task close <id>` → functional check if required and resume close → current-head CI and authorized merge. Close owns final verification, review, stage completion and PR preparation (WORKFLOW.md Stage Loop; `docs/QUALITY.md` bounded recovery). |
 | delegate this task / hand it to Codex | `./forge delegate <task-id>` — validates the active task, worktree and effective scope, builds the brief, and records the native preparation row including any narrowed scope. Spawn the matching role-based host subagent from its dispatch information without model/reasoning overrides; Forge never calls `codex exec`. Under Claude, the command launches the protected `codex-plugin-cc` companion |
 | is Codex stuck? / did it actually do anything | In native Codex use the host's normal subagent status and coordination tools; Forge adds no lifecycle feature locks. Under Claude, `./forge codex status` remains an advisory view of companion jobs and never a gate |
 | it only did part of the job | `./forge stage done <id> --incomplete "<what is missing>"` — the stage stays active and the gap enters the timeline |

@@ -474,9 +474,13 @@ def test_task_close_is_the_single_full_suite_owner_and_records_truthful_automate
     )
 
     proof = ({}, {}, [])
+    fresh_context = {"proofs": "from-close"}
 
-    def run_proof(_base, _task_id, _task, *, record_close_evidence=False):
+    def run_proof(_base, _task_id, _task, *, record_close_evidence=False,
+                  proof_context=None):
         assert record_close_evidence is True
+        assert proof_context == {}
+        proof_context.update(fresh_context)
         data = json.loads(tests_path.read_text(encoding="utf-8"))
         data["automated"]["commands_run"].append("canonical verify")
         tests_path.write_text(json.dumps(data), encoding="utf-8")
@@ -487,7 +491,8 @@ def test_task_close_is_the_single_full_suite_owner_and_records_truthful_automate
         close, "task_proof_problems", lambda *_args, **_kwargs: [],
     )
 
-    def run_review(*_args, **_kwargs):
+    def run_review(*_args, **kwargs):
+        assert kwargs["proof_context"] == fresh_context
         evidence = json.loads(tests_path.read_text(encoding="utf-8"))
         assert evidence["automated"]["commands_run"] == [
             "focused pytest", "canonical verify",

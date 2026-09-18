@@ -100,8 +100,10 @@ def cmd_task_close(args: argparse.Namespace) -> None:
         # 5. Proof first. A failing required test is the cheapest stop there
         #    is, and finding it after a review turned every test fix into a
         #    review as well.
+        proof_context: dict[str, object] = {}
         proof = run_stage_proof(
             base, task_id, task, record_close_evidence=True,
+            proof_context=proof_context,
         )
 
         # 6. Review only if no stamp covers THIS delta.
@@ -120,7 +122,8 @@ def cmd_task_close(args: argparse.Namespace) -> None:
             outcome = review_task(
                 base, task_id, engine=getattr(args, "engine", "codex"),
                 max_priority=getattr(args, "max_priority", "P3"),
-                skill=getattr(args, "skill", None))
+                skill=getattr(args, "skill", None),
+                proof_context=proof_context)
             if outcome["blocking"]:
                 _stop("review", f"{outcome['blocking']} blocking finding(s)",
                       f"delegate the fixes (`./forge delegate {task_id}`), commit, "

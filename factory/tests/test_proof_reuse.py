@@ -144,6 +144,98 @@ def test_review_preflight_requires_current_test_and_verify_receipt_identities(
                for problem in problems), problems
 
 
+def test_close_context_allows_one_fresh_nonreusable_proof_then_refuses_drift(
+        repo: Path, monkeypatch: pytest.MonkeyPatch):
+    """Close may review a successful unknown-runner proof once; direct review cannot."""
+    from forge_cli.review import pre_review_proof_problems
+    from factory_lib import (
+        dump_json, proof_path, protected_decomposition_state_path, run_state_path,
+    )
+
+    task = {
+        **_task(),
+        "required_tests": [],
+        "verify_commands": ["python3 factory/scripts/check_dual_runtime.py"],
+        "generated_semantic_inputs": ["generated.json"],
+    }
+    generated = repo / "generated.json"
+    generated.write_text("one\n", encoding="utf-8")
+    dump_json(run_state_path(repo), {"story": "S1", "issue_key": "S1"})
+    dump_json(protected_decomposition_state_path(repo), {"tasks": [task]})
+    commit = subprocess.run(
+        ["git", "rev-parse", "HEAD"], cwd=repo, check=True,
+        capture_output=True, text=True,
+    ).stdout.strip()
+    proof_root = proof_path(repo, "S1", "tests.json", task_id="T1").parent
+    proof_root.mkdir(parents=True, exist_ok=True)
+    dump_json(proof_root / "verify.json", {"ok": True, "commit": commit})
+    dump_json(proof_root / "tests.json", {
+        "commit": commit,
+        "automated": {"status": "passed", "blocking_findings": []},
+    })
+    stages.write_stages(repo, {"issue": "S1", "stages": [{
+        "id": "T1", "status": "active", "proof_receipts": {},
+    }]})
+    monkeypatch.setattr(stages, "_run_verify_commands", lambda *_args: None)
+
+    context: dict[str, object] = {}
+    stages.run_stage_proof(repo, "T1", task, proof_context=context)
+    verify_receipt = stages._proof_receipt(repo, "T1", "verify")
+    original_stages = copy.deepcopy(stages.load_stages(repo))
+    assert verify_receipt["status"] == "passed"
+    assert verify_receipt["reusable"] is False
+    assert context["proofs"]["verify"]["executed"] is True
+    direct_problems = pre_review_proof_problems(repo, "S1", "T1", commit, commit)
+    assert any("verify proof receipt identity is stale" in problem
+               for problem in direct_problems)
+    assert pre_review_proof_problems(
+        repo, "S1", "T1", commit, commit, proof_context=context,
+    ) == []
+    metadata_context = copy.deepcopy(context)
+    metadata_context["product_tree"]["head"] = "metadata-only-commit"
+    assert pre_review_proof_problems(
+        repo, "S1", "T1", commit, commit, proof_context=metadata_context,
+    ) == []
+    assert metadata_context["product_tree"] == stages.product_tree_snapshot(repo)
+
+    tampered = stages.load_stages(repo)
+    tampered["stages"][0]["proof_receipts"]["verify"]["identity"] = "0" * 64
+    stages.write_stages(repo, tampered)
+    assert any("verify proof receipt identity is stale" in problem
+               for problem in pre_review_proof_problems(
+                   repo, "S1", "T1", commit, commit, proof_context=context
+               )), "tampered receipt must refuse review"
+
+    # Restore the exact receipt, then prove environment, product and protected-
+    # authority drift are rejected even with the fresh in-memory context.
+    stages.write_stages(repo, original_stages)
+    monkeypatch.setenv("LEAN_CONTEXT_DRIFT", "changed")
+    assert any("verify proof receipt identity is stale" in problem
+               for problem in pre_review_proof_problems(
+                   repo, "S1", "T1", commit, commit, proof_context=context
+               )), "environment drift must refuse review"
+    monkeypatch.delenv("LEAN_CONTEXT_DRIFT")
+    (repo / "src").mkdir()
+    (repo / "src" / "a.py").write_text("drift\n", encoding="utf-8")
+    assert any("product tree changed" in problem
+               for problem in pre_review_proof_problems(
+                   repo, "S1", "T1", commit, commit, proof_context=context
+               )), "product drift must refuse review"
+    (repo / "src" / "a.py").unlink()
+
+    lib = load_factory_lib(repo)
+    authority_drift = lib.git_control_dir(repo) / "context-drift"
+    authority_drift.write_text("drift\n", encoding="utf-8")
+    try:
+        assert any("protected authority changed" in problem
+                   for problem in pre_review_proof_problems(
+                       repo, "S1", "T1", commit, commit,
+                       proof_context=context,
+                   )), "protected-authority drift must refuse review"
+    finally:
+        authority_drift.unlink()
+
+
 def test_changed_unknown_partial_or_generated_output_identity_forces_fresh_run(
         repo: Path):
     task = _task()

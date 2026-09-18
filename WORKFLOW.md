@@ -455,8 +455,10 @@ sequence a JIT contract loop for every pending task:
 7. the orchestrator inspects the diff and rejects overbuilt code
 8. that stage's assumption rows are validated (`forge assumptions list --open`)
 9. smallest relevant checks run
-10. commit the product changes, run deterministic verify, and record the task's
-    automated tests.
+10. record the implementer's focused automated-test evidence, including every
+    assigned acceptance result and remaining risk, then commit the completed
+    product changes. Check all declared selectors and prerequisites together;
+    do not run a standalone task-wide verifier before the next step.
 11. `forge task close <id>` — one resumable command from a built task to its
     open PR. It requires a clean committed product tree and no open signal,
     window or assumption; derives the product delta (`delta_id`, the hash of

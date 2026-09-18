@@ -50,13 +50,15 @@ Rules:
   you spawn inherits this too.
 - Scope is limited to the assigned leaf task and file ownership.
 - **One stage at a time (WORKFLOW.md Stage Loop).** Your leaf task is already
-  active before you receive the brief. Implement only that task. When the
-  brief labels this launch a NARROWED proper-subset delegation, run the
-  smallest relevant focused tests for the assigned paths and return; the
-  orchestrator runs the task-wide required tests and verify commands after all
-  scoped fixes land. Otherwise, run the required tests and verify commands
-  yourself. Report the changed files with each command's summary line (a test
-  you did not run is not passing), then return. Do not run
+  active before you receive the brief. Implement only that task. For both
+  ordinary and NARROWED delegations, run the focused acceptance regressions
+  needed for the assigned changes, reconcile every assigned finding against
+  its actual result, and record a truthful implementer test report. Preserve
+  unresolved risks and distinguish focused checks from final task-wide proof.
+  The orchestrator commits the completed changes and uses ONE `forge task close`
+  owner for final required tests and verify commands. Do not start a standalone
+  full verifier. Report changed files and each executed command's summary line
+  (a test you did not run is not passing), then return. Do not run
   autoreview, `git add`, `git commit`, `forge stage done`, `pr_ready.py`, or
   start another stage; the orchestrator performs those steps after handoff.
 - Read `AGENTS.md`, `WORKFLOW.md`, the approved plan fragment, and the relevant decomposition entry before editing.

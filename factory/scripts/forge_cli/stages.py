@@ -2584,7 +2584,6 @@ def _proof_receipt(base: Path, stage_id: str, kind: str) -> dict:
     value = receipts.get(kind) if isinstance(receipts, dict) else None
     if (not isinstance(value, dict)
             or value.get("status") != "passed"
-            or value.get("reusable") is not True
             or not isinstance(value.get("inputs"), dict)
             or not re.fullmatch(r"[0-9a-f]{64}", str(value.get("identity", "")))):
         return {}
@@ -2647,6 +2646,7 @@ def _record_close_automated_evidence(
 def run_stage_proof(
         base: Path, stage_id: str, task: dict, *,
         record_close_evidence: bool = False,
+        proof_context: dict[str, object] | None = None,
 ) -> tuple[dict, dict, list[str]]:
     """Run the task's verify commands and required tests, read-only.
 
@@ -2719,6 +2719,26 @@ def run_stage_proof(
     if record_close_evidence:
         _record_close_automated_evidence(base, stage_id, commands_run)
     authority_tree = protected_authority_snapshot(base)
+    if proof_context is not None:
+        proof_context.clear()
+        proof_context.update({
+            "product_tree": proof_tree,
+            "authority_tree": authority_tree,
+            "proofs": {
+                "verify": {
+                    "status": "passed",
+                    "executed": not reuse_verify,
+                    "identity": verify_identity["identity"],
+                    "inputs": verify_identity["inputs"],
+                },
+                "tests": {
+                    "status": "passed",
+                    "executed": not reuse_tests,
+                    "identity": test_identity["identity"],
+                    "inputs": test_identity["inputs"],
+                },
+            },
+        })
     return proof_tree, authority_tree, test_id_misses
 
 

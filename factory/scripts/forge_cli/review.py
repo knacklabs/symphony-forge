@@ -1989,13 +1989,15 @@ def _review_in_groups(base: Path, tmp: Path, worktree: Path, base_sha: str,
 
 
 def pre_review_proof_problems(
-    base: Path, story: str, task_id: str, base_sha: str, tip_sha: str,
+    base: Path, story: str, task_id: str, base_sha: str, tip_sha: str, *,
+    proof_context: dict[str, object] | None = None,
 ) -> list[str]:
     """Validate only proof needed before first review; review itself is absent."""
     from factory_lib import _proof_commit_problems
     from .readiness import tests_passed, verify_passed
     from .stages import (
-        _proof_receipt, load_stages, product_tree_snapshot, proof_identity, task_for,
+        _proof_receipt, load_stages, product_tree_snapshot, proof_identity,
+        protected_authority_snapshot, task_for,
     )
     verify = load_json(
         proof_path(base, story, "verify.json", task_id=task_id), default={},
@@ -2023,6 +2025,52 @@ def pre_review_proof_problems(
     )
     if task and stage:
         product_tree = product_tree_snapshot(base)
+        context_problems: list[str] = []
+        context_proofs = None
+        if proof_context is not None:
+            if not isinstance(proof_context, dict):
+                context_problems.append("close proof context is malformed")
+            else:
+                expected_product = proof_context.get("product_tree")
+                if expected_product != product_tree:
+                    same_product = (
+                        isinstance(expected_product, dict)
+                        and isinstance(product_tree, dict)
+                        and {
+                            key: value for key, value in expected_product.items()
+                            if key != "head"
+                        } == {
+                            key: value for key, value in product_tree.items()
+                            if key != "head"
+                        }
+                    )
+                    if same_product:
+                        # Close may commit only its proof/evidence before
+                        # review. Refresh the in-memory snapshot for that
+                        # metadata-only HEAD move after rechecking every
+                        # product byte and index/worktree identity above.
+                        proof_context["product_tree"] = product_tree
+                    else:
+                        context_problems.append(
+                            "close proof context product tree changed before review"
+                        )
+            try:
+                authority_tree = protected_authority_snapshot(base)
+            except (OSError, ValueError, SystemExit) as exc:
+                context_problems.append(
+                    f"close proof context authority could not be read: {exc}"
+                )
+            else:
+                if (isinstance(proof_context, dict)
+                        and proof_context.get("authority_tree") != authority_tree):
+                    context_problems.append(
+                        "close proof context protected authority changed before review"
+                    )
+            if isinstance(proof_context, dict):
+                context_proofs = proof_context.get("proofs")
+                if not isinstance(context_proofs, dict):
+                    context_problems.append("close proof context has no proof identities")
+        problems.extend(context_problems)
         probe_memo = {}
         for kind in ("verify", "tests"):
             current = proof_identity(
@@ -2030,9 +2078,28 @@ def pre_review_proof_problems(
                 tool_probe_memo=probe_memo,
             )
             receipt = _proof_receipt(base, task_id, kind)
-            if (current.get("reusable") is not True
-                    or receipt.get("status") != "passed"
-                    or receipt.get("identity") != current.get("identity")):
+            ordinary_match = (
+                current.get("reusable") is True
+                and receipt.get("status") == "passed"
+                and receipt.get("identity") == current.get("identity")
+                and receipt.get("inputs") == current.get("inputs")
+            )
+            context_entry = (
+                context_proofs.get(kind)
+                if isinstance(context_proofs, dict) else None
+            )
+            close_match = (
+                not context_problems
+                and isinstance(context_entry, dict)
+                and context_entry.get("status") == "passed"
+                and context_entry.get("executed") is True
+                and receipt.get("status") == "passed"
+                and receipt.get("identity") == context_entry.get("identity")
+                and receipt.get("inputs") == context_entry.get("inputs")
+                and current.get("identity") == context_entry.get("identity")
+                and current.get("inputs") == context_entry.get("inputs")
+            )
+            if not ordinary_match and not close_match:
                 problems.append(
                     f"{kind} proof receipt identity is stale for task {task_id}; "
                     "rerun task proof before review"
@@ -2042,7 +2109,8 @@ def pre_review_proof_problems(
 
 def review_task(base: Path, task_id: str, *, lens: str | None = None,
                 engine: str = "codex", max_priority: str = "P3",
-                skill: str | None = None) -> dict:
+                skill: str | None = None,
+                proof_context: dict[str, object] | None = None) -> dict:
     """Release the three-lens review for one task and record its proof.
 
     Returns {"blocking", "caveats", "stamped", "stage_status"}. `cmd_review`
@@ -2086,7 +2154,7 @@ def review_task(base: Path, task_id: str, *, lens: str | None = None,
     tip_sha = _require_git(base, "resolving HEAD", "rev-parse", "--verify", "HEAD^{commit}")
     base_sha = resolve_review_base(base, stage, state, tip_sha)
     freshness = pre_review_proof_problems(
-        base, story, args.id, base_sha, tip_sha,
+        base, story, args.id, base_sha, tip_sha, proof_context=proof_context,
     )
     if freshness:
         fail("review proof preflight failed before helper launch:\n"
