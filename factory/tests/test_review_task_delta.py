@@ -918,9 +918,7 @@ def test_chunked_quality_prompt_omits_unobserved_verdicts_and_aggregation_fails_
 
 
 def test_every_lens_brief_hunts_for_compatibility_leftovers():
-    """Owner ruling: no legacy code. Every lens prompt carries the leftover
-    instruction (wrappers, shims, aliases, retained symbols, dead branches,
-    'legacy' naming are blocking and verdict the contract partial)."""
+    """Every lens names the concrete impact required to block a leftover."""
     from forge_cli.review import _lens_prompt
     from forge_cli.review_brief import LEFTOVER_INSTRUCTION
 
@@ -928,7 +926,9 @@ def test_every_lens_brief_hunts_for_compatibility_leftovers():
     for lens in ("quality", "performance", "security"):
         text = _lens_prompt(task, lens).decode()
         assert LEFTOVER_INSTRUCTION in text, lens
-        assert "BLOCKING" in LEFTOVER_INSTRUCTION
+        assert "P0/P1" in LEFTOVER_INSTRUCTION
+        assert "P2/P3 follow-up" in LEFTOVER_INSTRUCTION
+        assert "cleanup alone does not make the contract partial" in LEFTOVER_INSTRUCTION
 
 
 def test_vendored_client_review_excludes_the_harness_machinery(repo):

@@ -623,6 +623,58 @@ def test_uv_temporary_interpreter_identity_survives_cleanup(repo: Path, monkeypa
         "pytest", "psutil", "transitive-package"}
 
 
+def test_direct_python_probe_keeps_the_executed_venv_entrypoint(
+        repo: Path, monkeypatch):
+    """A venv symlink must remain the probe executable, not its base Python."""
+    target = repo / "base-python"
+    entrypoint = repo / "venv-python"
+    target.write_bytes(b"base interpreter")
+    entrypoint.symlink_to(target)
+    detail = {
+        "interpreter_sha256": hashlib.sha256(target.read_bytes()).hexdigest(),
+        "interpreter_size": target.stat().st_size,
+        "version": "3.11",
+        "dependencies": [],
+    }
+    probes = []
+
+    monkeypatch.setattr(stages.shutil, "which", lambda _name, **_kwargs:
+                        str(entrypoint))
+
+    def run(argv, **_kwargs):
+        probes.append(argv)
+        return subprocess.CompletedProcess(argv, 0, json.dumps(detail), "")
+
+    monkeypatch.setattr(stages.subprocess, "run", run)
+    identity = stages._proof_tool_identity(
+        repo, "python3 -m compileall src",
+    )
+    assert identity["reusable"] is True
+    assert probes and probes[0][0] == str(entrypoint)
+    assert identity["runner"]["path"] == str(target)
+
+
+def test_dedicated_proof_does_not_bind_an_unrelated_canonical_test_runner(
+        repo: Path, monkeypatch):
+    source = repo / "tests" / "a.py"
+    source.parent.mkdir(parents=True, exist_ok=True)
+    source.write_text("def test_a():\n    pass\n", encoding="utf-8")
+    (repo / "src").mkdir()
+    task = {
+        **_task(),
+        "verify_commands": ["python3 -m compileall src"],
+    }
+    monkeypatch.setenv("FACTORY_TEST_CMD", "python3 -m pytest tests")
+    before = stages.proof_identity(repo, task, "tests")
+    assert "canonical_test_tool" not in before["inputs"]["semantic"]
+
+    cache = repo / "tests" / "__pycache__"
+    cache.mkdir()
+    (cache / "a.cpython-311.pyc").write_bytes(b"pytest cache")
+    after = stages.proof_identity(repo, task, "tests")
+    assert after["identity"] == before["identity"]
+
+
 def test_metadata_only_head_and_effective_board_inputs(repo: Path):
     task = {**_task(), "verify_commands": [
         "python3 factory/scripts/check_board_complete.py", "git diff --check"]}

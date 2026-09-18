@@ -2087,7 +2087,13 @@ def _canonical_test_command_for_task(base: Path, task: dict) -> str:
     from the command visible to close. Dedicated selectors are cheap and are
     the safe fallback whenever that producer binding is ambiguous.
     """
-    pytest_runtime_keys = {"PYTEST_CURRENT_TEST", "PYTEST_VERSION"}
+    # These are assigned by pytest-xdist for the hosting worker. They do not
+    # alter collection or test semantics of the child verifier; every proof
+    # identity still binds their actual values through _proof_environment.
+    pytest_runtime_keys = {
+        "PYTEST_CURRENT_TEST", "PYTEST_VERSION", "PYTEST_XDIST_WORKER",
+        "PYTEST_XDIST_WORKER_COUNT", "PYTEST_XDIST_TESTRUNUID",
+    }
     if any(key.startswith("PYTEST_") and key not in pytest_runtime_keys and value
            for key, value in os.environ.items()):
         return ""
@@ -2691,9 +2697,15 @@ def _proof_tool_identity(
     if not outer:
         return {"command": tokens[0], "environment": environment_identity,
                 "reusable": False}
-    outer_path = Path(outer).resolve()
+    outer_path = Path(outer)
+    resolved_outer_path = outer_path.resolve()
     try:
-        runner = _file_identity(outer_path)
+        # Keep the command's executable path for the probe. Resolving a venv
+        # symlink here can silently replace its interpreter with the base
+        # Python, changing its installed distributions while the command still
+        # names the venv entry point. Hash the resolved target for stable
+        # runner identity, but execute the path the command actually resolved.
+        runner = _file_identity(resolved_outer_path)
     except OSError:
         return {"command": tokens[0], "environment": environment_identity,
                 "reusable": False}
@@ -3038,7 +3050,12 @@ def proof_identity(
         for command in commands
     ]
     if kind == "tests":
-        canonical_command = _factory_test_command(base)
+        # The full-suite command is an input to the required-test receipt only
+        # when one of this task's verify commands can actually produce the
+        # canonical JUnit report consumed by close. Dedicated compile/build
+        # verifiers do not read FACTORY_TEST_CMD; binding an unrelated producer
+        # would make their receipt drift when pytest creates its own caches.
+        canonical_command = _canonical_test_command_for_task(base, task)
         semantic["canonical_test_command_sha256"] = (
             hashlib.sha256(canonical_command.encode("utf-8")).hexdigest()
             if canonical_command else ""

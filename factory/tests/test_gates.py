@@ -3423,13 +3423,22 @@ def test_pr_ready_rejects_unstamped_evidence(repo, tmp_path):
     seal_fixture_tasks(repo, tmp_path)
     verify = story_state(repo) / "tasks" / "T1" / "verify.json"
     verify.write_text(json.dumps({"ok": True}))  # no commit stamp
+    git(repo, "add", verify.relative_to(repo).as_posix())
+    git(repo, "commit", "-qm", "remove verify proof stamp from trunk")
+    git(repo, "push", "-q", "origin", "HEAD:main")
+    lib = load_factory_lib(repo)
+    assert any(
+        "verify proof has no valid commit stamp" in problem
+        for problem in lib.task_proof_problems(repo, "ENG-1", {"id": "T1"})
+    )
     code, out = run(repo, "pr_ready.py")
-    assert code != 0 and "verify proof has no valid commit stamp" in out
+    assert code != 0 and "committed pr-ready marker" in out
 
 
 def test_pr_ready_rejects_stale_evidence_after_code_change(repo, tmp_path):
     ready_task(repo, tmp_path)
     seal_fixture_tasks(repo, tmp_path)
+    valid_head = head(repo)
     verify = story_state(repo) / "tasks" / "T1" / "verify.json"
     verify_bytes = verify.read_bytes()
     (repo / "app.py").write_text("print('changed after evidence')\n")
@@ -3438,10 +3447,19 @@ def test_pr_ready_rejects_stale_evidence_after_code_change(repo, tmp_path):
     stale = json.loads(verify_bytes)
     stale["commit"] = head(repo)
     verify.write_text(json.dumps(stale))
-    code, out = run(repo, "pr_ready.py")
-    assert code != 0 and (
-        "verify proof commit is outside the task base-to-seal range" in out
+    git(repo, "add", verify.relative_to(repo).as_posix())
+    git(repo, "commit", "-qm", "publish stale proof on trunk")
+    git(repo, "push", "-q", "origin", "HEAD:main")
+    lib = load_factory_lib(repo)
+    assert any(
+        "verify.json proof changed after task marker" in problem
+        for problem in lib.task_proof_problems(repo, "ENG-1", {"id": "T1"})
     )
+    git(repo, "reset", "--hard", "-q", valid_head)
+    code, out = run(repo, "pr_ready.py")
+    assert code != 0 and "committed pr-ready marker" in out
+    git(repo, "push", "-q", "--force", "origin", f"{valid_head}:main")
+    git(repo, "reset", "--hard", "-q", valid_head)
     verify.write_bytes(verify_bytes)
     code, out = run(
         repo, "forge.py", "outcome", "set",
@@ -6521,8 +6539,21 @@ def test_functional_check_required_when_user_facing(repo, tmp_path):
     tests = json.loads(tests_path.read_text())
     del tests["functional"]
     tests_path.write_text(json.dumps(tests))
+    # PR readiness reads the proof from the fetched trunk marker commit. Make
+    # the negative fixture corrupt that authoritative copy rather than the
+    # intentionally stale local checkout.
+    git(repo, "add", tests_path.relative_to(repo).as_posix())
+    git(repo, "commit", "-qm", "remove functional proof from trunk")
+    git(repo, "push", "-q", "origin", "HEAD:main")
+    lib = load_factory_lib(repo)
+    assert any(
+        "functional check is required" in problem
+        for problem in lib.task_proof_problems(
+            repo, "ENG-1", {"id": "T1", "user_facing": True}
+        )
+    )
     code, out = run(repo, "pr_ready.py")
-    assert code != 0 and "functional" in out
+    assert code != 0 and "committed pr-ready marker" in out
 
 
 # --------------------------------------------------------------------- adopt
@@ -9787,12 +9818,25 @@ def test_story_closeout_requires_all_task_markers_and_completed_stories_reads_sh
     )
     assert code == 0, out
     closeout_base = head(repo)
+    valid_head = closeout_base
     local_tests = scoped / "tasks" / "T2" / "tests.json"
     local_tests_bytes = local_tests.read_bytes()
     local_tests.write_text("{}\n", encoding="utf-8")
+    git(repo, "add", local_tests.relative_to(repo).as_posix())
+    git(repo, "commit", "-qm", "remove T2 tests proof from trunk")
+    git(repo, "push", "-q", "origin", "HEAD:main")
+    lib = load_factory_lib(repo)
+    task2 = next(task for task in decomposition["tasks"] if task["id"] == "T2")
+    assert any(
+        "no passing automated tests" in problem
+        for problem in lib.task_proof_problems(repo, "ENG-1", task2)
+    )
+    git(repo, "reset", "--hard", "-q", valid_head)
     code, out = run(repo, "pr_ready.py")
-    assert code != 0 and "tests proof" in out, out
+    assert code != 0 and "committed pr-ready marker" in out, out
     assert not (scoped / "shipped.json").exists()
+    git(repo, "push", "-q", "--force", "origin", f"{valid_head}:main")
+    git(repo, "reset", "--hard", "-q", valid_head)
     local_tests.write_bytes(local_tests_bytes)
     code, out = run(repo, "pr_ready.py")
     assert code == 0 and "shipped in place" in out, out
@@ -11742,6 +11786,9 @@ def test_board_task_rows_carry_their_own_plan_spec_and_proof(repo, tmp_path):
     save_plan(repo, tmp_path)
     run(repo, "record_decomposition_from_json.py", stdin=json.dumps(DECOMP))
     write_passing_artifacts(repo)
+    # A done row is authoritative only when its marker and proof are durable
+    # on trunk; a local stage status alone is not board proof.
+    seal_fixture_tasks(repo, tmp_path)
     detail = story_detail(repo, "ENG-1")
     task = detail["tasks"][0]
     assert task["objective"] and task["acceptance_criteria"]
@@ -20765,13 +20812,24 @@ def test_preseal_validation_refuses_incoherent_lens_set(repo, tmp_path):
 
 def test_pr_ready_refuses_out_of_order_or_dirty_or_unstamped_closeout(repo, tmp_path):
     scoped = prepare_pr_ready_story(repo, tmp_path, scoped_layout=True)
+    valid_head = head(repo)
     verify_path = scoped / "tasks/T1/verify.json"
     verify_bytes = verify_path.read_bytes()
 
     # Later evidence cannot make up for a missing verify prerequisite.
     verify_path.unlink()
+    git(repo, "add", verify_path.relative_to(repo).as_posix())
+    git(repo, "commit", "-qm", "remove verify proof from trunk")
+    git(repo, "push", "-q", "origin", "HEAD:main")
+    lib = load_factory_lib(repo)
+    assert any(
+        "no passing verify" in problem
+        for problem in lib.task_proof_problems(repo, "ENG-1", {"id": "T1"})
+    )
     code, out = run(repo, "pr_ready.py")
-    assert code != 0 and "T1: no passing verify" in out, out
+    assert code != 0 and "committed pr-ready marker" in out, out
+    git(repo, "reset", "--hard", "-q", valid_head)
+    git(repo, "push", "-q", "--force", "origin", f"{valid_head}:main")
     verify_path.write_bytes(verify_bytes)
 
     outcome_path = scoped / "outcome.json"

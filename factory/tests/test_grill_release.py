@@ -72,7 +72,7 @@ def test_griller_contract_names_the_ledgered_release(repo):
         encoding="utf-8")
     assert "./forge grill run --gate" in contract
     assert "/codex:rescue" not in contract
-    assert "read-only" in contract and "stage done" in contract
+    assert "read-only" in contract and "task close" in contract
 
 
 def test_grill_skill_section_inlines_the_technique_not_the_pointer(repo):

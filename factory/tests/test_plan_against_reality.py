@@ -241,7 +241,10 @@ def test_normal_review_docs_use_selected_generation_not_fixed_aspect_recorders(
         (HARNESS / "docs" / "getting-started.md").read_text(encoding="utf-8"),
         (HARNESS / "factory" / "skills" / "forge.md").read_text(encoding="utf-8"),
     ]
-    assert all("./forge review <task-id>" in text for text in docs)
+    assert "./forge task close <task-id>" in docs[0]
+    assert "forge task close <id>" in docs[1]
+    assert "forge task close" in docs[3]
+    assert "./forge review <task-id>" in docs[2]
     getting_started = docs[2]
     assert "selected generation" in getting_started
     assert "record_review_from_json.py --aspect quality" not in getting_started
