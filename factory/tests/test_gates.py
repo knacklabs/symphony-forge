@@ -9686,16 +9686,18 @@ def test_story_closeout_requires_all_task_markers_and_completed_stories_reads_sh
         ]})
         code, out = record_task_grill(repo, task)
         assert code == 0, out
-        proof = write_task_proof(
-            repo, task_id, user_facing=task.get(
-                "user_facing", decomposition.get("user_facing", False)),
-            publish_review=True,
-            contract_verdicts=[
-                {"contract_id": contract["id"], "verdict": "implemented",
-                 "evidence": "src/app.py:1"}
-                for contract in task["plan_contracts"]
-            ],
-        )
+        with pytest.MonkeyPatch.context() as proof_environment:
+            proof_environment.setenv("FORGE_COORDINATOR", "claude")
+            proof = write_task_proof(
+                repo, task_id, user_facing=task.get(
+                    "user_facing", decomposition.get("user_facing", False)),
+                publish_review=True,
+                contract_verdicts=[
+                    {"contract_id": contract["id"], "verdict": "implemented",
+                     "evidence": "src/app.py:1"}
+                    for contract in task["plan_contracts"]
+                ],
+            )
         proof_files = proof.relative_to(repo).as_posix()
         git(repo, "add", proof_files, ".factory/review-briefs/all.md", (scoped / "decomposition.json").relative_to(repo).as_posix())
         git(repo, "commit", "-q", "-m", f"record {task_id} proof")
@@ -9735,8 +9737,11 @@ def test_story_closeout_requires_all_task_markers_and_completed_stories_reads_sh
     local_tests_bytes = local_tests.read_bytes()
     local_tests.write_text("{}\n", encoding="utf-8")
     code, out = run(repo, "pr_ready.py")
-    assert code == 0 and "shipped in place" in out, out
+    assert code != 0 and "tests proof" in out, out
+    assert not (scoped / "shipped.json").exists()
     local_tests.write_bytes(local_tests_bytes)
+    code, out = run(repo, "pr_ready.py")
+    assert code == 0 and "shipped in place" in out, out
     assert (scoped / "shipped.json").is_file()
     assert roadmap_items(repo)["ENG-1"]["status"] == "done"
 
@@ -14903,6 +14908,7 @@ def test_stage_done_termination_signal_reaps_active_proof(
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True,
+        env={**os.environ, "FORGE_COORDINATOR": "claude"},
     )
     marker = repo / ".factory" / "proof-child.pid"
     for _ in range(240):
