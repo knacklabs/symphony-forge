@@ -1850,14 +1850,8 @@ def reusable_stage_proof(base: Path, stage_id: str, key: str) -> dict | None:
         return None
     verify = load_json(
         task_evidence_path(base, story, stage_id, "verify.json"), default=None)
-    tests = load_json(
-        task_evidence_path(base, story, stage_id, "tests.json"), default=None)
     if (not isinstance(verify, dict) or verify.get("recorded_by") != STAGE_PROOF
             or verify.get("ok") is not True or verify.get("proof_key") != key):
-        return None
-    automated = tests.get("automated") if isinstance(tests, dict) else None
-    measured = automated.get("measured") if isinstance(automated, dict) else None
-    if not isinstance(measured, dict) or measured.get("proof_key") != key:
         return None
     return verify
 
@@ -1865,25 +1859,23 @@ def reusable_stage_proof(base: Path, stage_id: str, key: str) -> dict | None:
 def record_stage_proof(base: Path, stage_id: str, task: dict, *, key: str,
                        verify_results: list[dict], test_results: list[dict],
                        test_id_misses: list[str]) -> None:
-    """Write what the proof ran as the task's verify.json and tests.json.
+    """Write what the proof ran as the task's verify.json, and a tests.json
+    record only where none exists.
 
     The review gate and the task proof predicate read these two files; before
     this they came from a separate `verify.py` run and a hand-typed record, so
-    the same commands ran two or three more times per close. The worker's own
-    automated record, when one was recorded, is kept and gains the measured
-    run; a task without one gets a harness record, except a user-facing task,
-    whose record must still attest the design skills (require_skills)."""
+    the same commands ran two or three more times per close. The measurement
+    lives in verify.json. The worker's own automated record is never edited:
+    the review brief renders it verbatim inside its approved-input section,
+    so any edit after a review would stale that brief. A task without one
+    gets a harness record, except a user-facing task, whose record must still
+    attest the design skills (require_skills)."""
     story = active_story_key(base)
     if not story:
         return
     head = head_sha(base)
     now = now_iso()
     tree = product_tree_digest(base)
-    measured = {
-        "recorded_by": STAGE_PROOF, "recorded_at": now, "commit": head,
-        "tree_digest": tree, "proof_key": key,
-        "required_tests": test_results, "test_id_misses": list(test_id_misses),
-    }
     dump_json(
         task_evidence_path(base, story, stage_id, "verify.json", for_write=True),
         {
@@ -1897,33 +1889,24 @@ def record_stage_proof(base: Path, stage_id: str, task: dict, *, key: str,
     tests = load_json(tests_path, default={})
     if not isinstance(tests, dict):
         tests = {}
-    automated = tests.get("automated")
-    if isinstance(automated, dict):
-        # The record now describes the run the harness measured at this
-        # commit; the review brief refuses a record whose commit differs
-        # from tests.json's, and re-recording the same narrative after every
-        # fix commit was the busywork this removes.
-        automated["measured"] = measured
-        automated["commit"] = head
-    elif not bool(task.get("user_facing")):
-        commands = [str(c) for c in task.get("verify_commands") or [] if str(c).strip()]
-        commands += [str(p.get("command")) for p in task.get("required_tests") or []
-                     if isinstance(p, dict)]
-        automated = {
-            "generated_by": STAGE_PROOF, "status": "passed",
-            "summary": (f"task close ran {len(verify_results)} verify command(s) "
-                        f"and {len(test_results)} required test(s) at "
-                        f"{head[:12]}; all passed"),
-            "blocking_findings": [], "commands_run": commands,
-            "tests_added_or_updated": [], "remaining_gaps": [],
-            # The review brief refuses an empty scope; the harness ran the
-            # proof over the contract's write scope.
-            "reviewed_scope": [str(s) for s in task.get("write_scope") or []],
-            "recorded_at": now, "commit": head, "measured": measured,
-        }
-        validate_payload(base, "test-automated", automated)
-    else:
+    if isinstance(tests.get("automated"), dict) or bool(task.get("user_facing")):
         return
+    commands = [str(c) for c in task.get("verify_commands") or [] if str(c).strip()]
+    commands += [str(p.get("command")) for p in task.get("required_tests") or []
+                 if isinstance(p, dict)]
+    automated = {
+        "generated_by": STAGE_PROOF, "status": "passed",
+        "summary": (f"task close ran {len(verify_results)} verify command(s) "
+                    f"and {len(test_results)} required test(s) at "
+                    f"{head[:12]}; all passed"),
+        "blocking_findings": [], "commands_run": commands,
+        "tests_added_or_updated": [], "remaining_gaps": [],
+        # The review brief refuses an empty scope; the harness ran the
+        # proof over the contract's write scope.
+        "reviewed_scope": [str(s) for s in task.get("write_scope") or []],
+        "recorded_at": now, "commit": head,
+    }
+    validate_payload(base, "test-automated", automated)
     tests["automated"] = automated
     tests["commit"] = head
     tests["updated_at"] = now

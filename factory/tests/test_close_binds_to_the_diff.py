@@ -576,7 +576,7 @@ def test_task_close_records_the_proof_in_the_marker_commit(repo, tmp_path):
     assert [entry["status"] for entry in verify["required_tests"]] == ["passed"]
     tests = json.loads(git(repo, "show", f"HEAD:{tests_rel}"))
     assert tests["automated"]["generated_by"] == "implementer"
-    assert tests["automated"]["measured"]["proof_key"] == verify["proof_key"]
+    assert "measured" not in tests["automated"], "the worker's record is never edited"
 
 
 def test_task_close_reuses_the_proof_when_only_bookkeeping_moved(repo, tmp_path):

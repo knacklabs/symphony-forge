@@ -46,6 +46,8 @@ def _built(repo: Path, tmp_path: Path, task: dict) -> dict:
 def test_the_proof_is_recorded_and_reused_for_an_unchanged_tree(repo, tmp_path):
     task, counter = _counting_task(tmp_path)
     recorded = _built(repo, tmp_path, task)
+    tests_path = task_evidence_path(repo, "ENG-1", "T1", "tests.json")
+    worker_record = tests_path.read_bytes()
 
     run_stage_proof(repo, "T1", recorded)
     assert counter.read_text() == "1"
@@ -54,10 +56,8 @@ def test_the_proof_is_recorded_and_reused_for_an_unchanged_tree(repo, tmp_path):
     assert verify["commit"] == head(repo) and verify["tree_digest"] and verify["proof_key"]
     assert [entry["status"] for entry in verify["required_tests"]] == ["passed"]
     assert verify["results"][0]["exit_code"] == 0
-    tests = _evidence(repo, "tests.json")
-    assert tests["automated"]["generated_by"] == "implementer"  # the worker's report is kept
-    assert tests["automated"]["measured"]["proof_key"] == verify["proof_key"]
-    assert tests["commit"] == head(repo) == tests["automated"]["commit"]
+    # The worker's report is untouched: the review brief renders it verbatim.
+    assert tests_path.read_bytes() == worker_record
 
     run_stage_proof(repo, "T1", recorded)
     assert counter.read_text() == "1", "same tree, same contract: nothing ran"
@@ -100,7 +100,8 @@ def test_a_task_without_a_worker_record_gets_the_harness_record(repo, tmp_path):
     assert automated["generated_by"] == "stage-proof" and automated["status"] == "passed"
     assert automated["commands_run"][0] == task["verify_commands"][0]
     assert automated["reviewed_scope"] == task["write_scope"]
-    assert automated["measured"]["required_tests"][0]["status"] == "passed"
+    assert automated["commit"] == head(repo)
+    assert _evidence(repo, "verify.json")["required_tests"][0]["status"] == "passed"
 
 
 def test_a_user_facing_task_still_owes_its_own_record(repo, tmp_path):

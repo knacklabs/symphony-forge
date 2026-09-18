@@ -33,8 +33,10 @@ the marker commit, so the PR gate reads the proof from the sealed tree.
 
 The worker still runs the same commands while it works, to fix what fails;
 its run is not the proof. Nobody runs `verify.py` or the suite by hand before
-close for a task-level run. The worker's own automated record, when the
-coordinator records one, is kept and gains the measured run; a task without
+close for a task-level run. The measurement lives in `verify.json`. The
+worker's own automated record, when the coordinator records one, is never
+edited: the review brief renders it verbatim inside its approved-input
+section, so an edit after a review would stale that brief. A task without
 one gets the harness record, except a user-facing task, whose record must
 attest the design skills.
 
@@ -44,8 +46,8 @@ attest the design skills.
 - A metadata-only commit (evidence, a converted brief, a lesson) costs no
   test minutes at close.
 - `verify.json` gains `recorded_by`, `tree_digest`, `proof_key`,
-  `required_tests` and `test_id_misses`; `tests.json.automated` gains
-  `measured`. Readers use `ok`, `commit` and `status` as before.
+  `required_tests` and `test_id_misses`. Readers use `ok`, `commit` and
+  `status` as before.
 - `verify.py` remains the story-level and standalone tool; the `.envrc`
   phases describe that run, the decomposition's `verify_commands` the task's.
 - Required tests still run one process per id after the suites; reading them
