@@ -31,6 +31,17 @@ routes preserve the active task, worktree and effective scope and produce the sa
 `.factory` artifacts, but native delivery deliberately has no Forge-managed
 process identity or lifecycle proof.
 
+The main coordinator model and reasoning remain the user's and host's choice.
+Decision 0079 routes native roles by work: Luna/max handles routine
+implementation, automated tests, diagnosed or review fixes, documentation
+edits, and mechanical refactors; Terra/high handles read-heavy exploration and
+dependency tracing; Sol/high handles planning, decomposition, difficult
+diagnosis, independent grills, and final functional checks. A difficult
+diagnosis returns its resolved edit to the Luna/max execution role. Formal code
+review stays exclusively with the unchanged, externally maintained Autoreview
+skill, which may choose its own internal Codex or agent calls. No Forge or
+native lane selects Luna/low.
+
 ### Workflow Modes
 
 - **Full** is the standard workflow: an approved plan proceeds through bounded
@@ -561,8 +572,9 @@ stalls on "should I do this or hand it to Codex?":
   follows this ownership rule without pretending Forge can mechanically
   distinguish Main from a host subagent process.
 - **The coordinator's hands do only orchestration:** author task contracts,
-  compose briefs, delegate, run the checks / `verify.py` / required tests, run
-  the branch autoreview, record evidence via the `record_*` scripts, commit,
+  compose briefs, delegate, run the checks / `verify.py` / required tests,
+  invoke the unchanged externally maintained Autoreview skill for the branch
+  review, record evidence via the `record_*` scripts, commit,
   and — when the story reaches a PR — review that PR.
 - **Commit is not a human gate.** After inspecting the bounded diff and green
   focused checks, the coordinator commits the product changes. Deterministic
@@ -593,11 +605,13 @@ and an id-keyed answer. Either records the human
 approval against the final digest through the shared recorder. There is no
 requirements grill, compulsory human round, `frontier_empty` question, manual
 `plan approve` / `task approve` command, board approval, or second unchanged
-save in the normal flow. Claude delegates exploration through
-`/codex:rescue --model gpt-5.6-sol --effort low`, read-only, and validation or
-architecture with `--effort high`; it never runs raw `codex exec`. Native
-Codex uses the configured `planner-high` role through host `spawn_agent`
-without an override; that role's configured defaults apply. The plan follows
+save in the normal flow. Claude delegates read-heavy exploration through
+`/codex:rescue --model gpt-5.6-terra --effort high`, read-only, and uses
+Sol/high for validation or architecture; it never runs raw `codex exec`.
+Native Codex uses the configured `planner-high` role through host `spawn_agent`
+without an override; that role's Sol/high defaults apply. Decomposition uses
+Sol/high, difficult diagnosis uses Sol/high before its Luna/max fix, and the
+independent grill uses Sol/high. The plan follows
 `factory/prompts/planner.md`, including the mandatory **Decisions** section: every choice not derivable from BRIEF,
 architecture, or existing records becomes a `docs/decisions/` record
 (`forge.py decision new`) before decomposition is recorded. `forge.py plan
@@ -663,7 +677,7 @@ stories still archive until `forge upgrade` migrates them.
 8. if close reports blocking review findings, delegate the fixes and rerun the
    same integrated close operation; selected proof reuses only while its
    stamp-token delta and complete reviewed-meaning identity are unchanged
-9. run `functional-checker` when the task has `user_facing: true`
+9. run the Sol/high `functional-checker` when the task has `user_facing: true`
 10. record the shipped outcome with `./forge outcome set "<what changed>"`
 11. run `./forge task pr-ready <task-id>` for the task PR; after every task is
     shipped, run `python3 factory/scripts/pr_ready.py` for story readiness

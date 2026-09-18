@@ -52,10 +52,10 @@ SAFE_TASK_ID = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]*\Z")
 # A brief is read by a model, so an inlined rule set that runs to thousands of
 # lines crowds out the task. Enough to carry the rules, not the whole course.
 SKILL_INLINE_CHARS = 12000
-DEFAULT_MODEL = "gpt-5.6-sol"
-DEFAULT_EFFORT = "medium"
+DEFAULT_MODEL = "gpt-5.6-luna"
+DEFAULT_EFFORT = "max"
 NATIVE_AGENT_TYPES = {
-    "architect", "backend", "debugger", "docs-decomposer", "explorer",
+    "architect", "coder", "debugger", "docs-decomposer", "explorer",
     "frontend", "functional-checker", "griller", "lite", "performance",
     "planner", "planner-high", "refactorer", "security", "tester", "worker",
 }
@@ -1806,6 +1806,21 @@ def native_agent_type(task_id: str, task: dict | None = None, *,
         return "lite"
     if task_id.startswith("grill-"):
         return "griller"
+
+    # A debugger is reserved for a genuinely difficult diagnosis. A routine
+    # fix may mention debugging, a regression, or a root cause while still
+    # belonging to a Luna implementation role. The explicit marker is carried
+    # by a prepared task when the coordinator has made that distinction.
+    diagnosis = " ".join(
+        str(task.get(key) or "")
+        for key in ("diagnosis", "diagnostic", "diagnostic_mode", "difficulty")
+    ).lower()
+    difficult_diagnosis = task.get("difficult_diagnosis") is True or any(
+        marker in diagnosis
+        for marker in ("difficult", "complex", "hard", "deep")
+    )
+    if difficult_diagnosis:
+        return "debugger"
     if not write:
         return "explorer"
 
@@ -1822,15 +1837,15 @@ def native_agent_type(task_id: str, task: dict | None = None, *,
         return "performance"
     if any(token in haystack for token in ("refactor", "restructure")):
         return "refactorer"
-    if any(token in haystack for token in ("debug", "regression", "root cause")):
-        return "debugger"
     if any(path.endswith((".tsx", ".jsx", ".css", ".scss"))
            or any(part in path for part in ("frontend/", "components/", "ui/"))
            for path in scope):
         return "frontend"
     if any(token in haystack for token in ("architecture", "architectural")):
         return "architect"
-    return "backend"
+    if any(token in haystack for token in ("backend", "server", "api", "data")):
+        return "coder"
+    return "worker"
 
 
 def _validate_context_correlation(

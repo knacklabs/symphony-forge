@@ -392,7 +392,7 @@ def test_doctor_repairs_only_exact_plugin_max_source(tmp_path, monkeypatch):
     assert snapshot() == before
 
 
-def test_model_policy_selects_sol_work_and_luna_lite():
+def test_model_policy_routes_native_children_by_role():
     from forge_cli.delegate import mode_run_config, pinned_run_config
     from forge_cli.review import CODEX_REVIEW_MODEL, CODEX_REVIEW_THINKING
 
@@ -418,12 +418,19 @@ def test_model_policy_selects_sol_work_and_luna_lite():
     }
 
     assert {"model", "model_reasoning_effort", "plan_mode_reasoning_effort"}.isdisjoint(config)
-    assert lanes == {("gpt-5.6-sol", "high"): {
-        "docs-decomposer", "functional-checker", "planner-high",
-    }}
-    assert pinned_run_config(HARNESS) == ("gpt-5.6-sol", "medium")
+    assert lanes == {
+        ("gpt-5.6-luna", "max"): {
+            "coder", "frontend", "lite", "refactorer", "tester", "worker",
+        },
+        ("gpt-5.6-terra", "high"): {"explorer"},
+        ("gpt-5.6-sol", "high"): {
+            "architect", "debugger", "docs-decomposer", "functional-checker",
+            "griller", "performance", "planner", "planner-high", "security",
+        },
+    }
+    assert pinned_run_config(HARNESS) == ("gpt-5.6-luna", "max")
     assert (explore["model"], explore["model_reasoning_effort"]) == (
-        "gpt-5.6-sol", "low")
+        "gpt-5.6-terra", "high")
     assert mode_run_config(HARNESS, "grill")[:2] == ("gpt-5.6-sol", "high")
     assert mode_run_config(HARNESS, "lite")[:2] == ("gpt-5.6-luna", "max")
     assert (CODEX_REVIEW_MODEL, CODEX_REVIEW_THINKING) == (
@@ -444,10 +451,14 @@ HOOK_TOOL_MATRIX = {
 }
 
 
-def test_recovery_profile_override_keeps_only_three_forge_profiles():
+def test_recovery_profile_override_keeps_the_complete_routed_registry():
     config = tomllib.loads(
         (HARNESS / ".codex/config.toml").read_text(encoding="utf-8"))
-    expected = {"planner-high", "docs-decomposer", "functional-checker"}
+    expected = {
+        "architect", "coder", "debugger", "docs-decomposer", "explorer",
+        "frontend", "functional-checker", "griller", "lite", "performance",
+        "planner", "planner-high", "refactorer", "security", "tester", "worker",
+    }
     configured = {
         name for name, row in config["agents"].items()
         if isinstance(row, dict) and row.get("config_file")

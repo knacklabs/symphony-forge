@@ -10,6 +10,7 @@ import sys
 import tempfile
 import threading
 import time
+import tomllib
 from pathlib import Path
 
 import pytest
@@ -24,6 +25,7 @@ from forge_cli.codex_runtime import (  # noqa: E402
 )
 from forge_cli.delegate import (  # noqa: E402
     append_delegation, argv_digest, launch_companion, load_delegations,
+    native_agent_type,
 )
 from forge_cli.stages import _require_successful_launch, task_digest  # noqa: E402
 from factory_lib import sha256_of  # noqa: E402
@@ -99,6 +101,62 @@ def test_runtime_selection_is_explicit_then_native_then_legacy(monkeypatch):
     assert selected_coordinator("claude") == "claude"
     with pytest.raises(SystemExit, match="claude.*codex"):
         selected_coordinator("other")
+
+
+def test_native_role_registry_pins_lanes_and_keeps_debugger_for_hard_diagnosis():
+    config = tomllib.loads(
+        (HARNESS / ".codex" / "config.toml").read_text(encoding="utf-8"))
+    explore = tomllib.loads(
+        (HARNESS / ".codex" / "explore.config.toml").read_text(encoding="utf-8"))
+    assert (config["agents"]["default_subagent_model"],
+            config["agents"]["default_subagent_reasoning_effort"]) == (
+        "gpt-5.6-luna", "max")
+    assert (explore["model"], explore["model_reasoning_effort"]) == (
+        "gpt-5.6-terra", "high")
+
+    expected = {
+        "coder": ("gpt-5.6-luna", "max"),
+        "frontend": ("gpt-5.6-luna", "max"),
+        "tester": ("gpt-5.6-luna", "max"),
+        "refactorer": ("gpt-5.6-luna", "max"),
+        "worker": ("gpt-5.6-luna", "max"),
+        "lite": ("gpt-5.6-luna", "max"),
+        "explorer": ("gpt-5.6-terra", "high"),
+        "architect": ("gpt-5.6-sol", "high"),
+        "debugger": ("gpt-5.6-sol", "high"),
+        "planner": ("gpt-5.6-sol", "high"),
+        "planner-high": ("gpt-5.6-sol", "high"),
+        "docs-decomposer": ("gpt-5.6-sol", "high"),
+        "griller": ("gpt-5.6-sol", "high"),
+        "security": ("gpt-5.6-sol", "high"),
+        "performance": ("gpt-5.6-sol", "high"),
+        "functional-checker": ("gpt-5.6-sol", "high"),
+    }
+    actual = {}
+    for name, row in config["agents"].items():
+        if not isinstance(row, dict) or "config_file" not in row:
+            continue
+        profile = tomllib.loads(
+            (HARNESS / ".codex" / row["config_file"]).read_text(
+                encoding="utf-8"))
+        actual[name] = (profile["model"], profile["model_reasoning_effort"])
+    assert actual == expected
+    assert all(model != "gpt-5.6-luna" or effort == "max"
+               for model, effort in actual.values())
+
+    assert native_agent_type(
+        "fix-regression", {"title": "ordinary diagnosed regression fix"},
+        write=True,
+    ) == "worker"
+    assert native_agent_type(
+        "diagnose-hard", {"difficult_diagnosis": True}, write=True,
+    ) == "debugger"
+    assert native_agent_type(
+        "diagnose-hard", {"diagnosis": "difficult root cause"}, write=False,
+    ) == "debugger"
+    assert native_agent_type(
+        "api-work", {"title": "Implement the backend API"}, write=True,
+    ) == "coder"
 
 
 def test_codex_delegate_prepares_host_native_role_without_process_launch_or_pins(

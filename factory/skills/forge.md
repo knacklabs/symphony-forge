@@ -20,8 +20,16 @@ scope the plan does not cover.
 
 The user and host select the main coordinator model and reasoning. Native
 dispatch passes no model or reasoning override; the selected configured role's
-defaults apply and may themselves pin either value. Command-managed Claude
-companions, grills, review, and Lite retain their declared profiles.
+defaults apply. Decision 0079 routes routine implementation, automated tests,
+diagnosed or review fixes, documentation edits, and mechanical refactors to
+Luna/max; read-heavy exploration and dependency tracing to Terra/high; and
+planning, decomposition, difficult diagnosis, independent grills, and final
+functional checks to Sol/high. A difficult diagnosis returns its resolved edit
+to Luna/max. Formal code review stays exclusively with the unchanged,
+externally maintained Autoreview skill, which may choose its own internal
+Codex or agent calls. No Forge or native lane selects Luna/low. Native
+transport remains process-free: Forge prepares the descriptor and the host
+owns subagent lifecycle without process or authorship-attribution proof.
 
 `./forge <cmd>` (from repo root) is shorthand for
 `python3 factory/scripts/forge.py <cmd>` — either form works everywhere below.
@@ -80,12 +88,12 @@ or route:
 |---|---|
 | discovery/prototype | gstack `/office-hours` for the discovery conversation; prototype freely |
 | roadmap missing | confirm captured specs, run the project-level decomposition (`factory/prompts/decomposer.md`), then `./forge roadmap derive --input <json>` |
-| planning | Plan per `factory/prompts/planner.md`. Native Codex spawns the configured `planner-high` role without model/reasoning overrides; the role defaults apply. Claude delegates exploration via `/codex:rescue --model gpt-5.6-sol --effort low` and validation/architecture with `--effort high`, read-only — never Claude Code itself, never raw `codex exec` |
+| planning | Plan per `factory/prompts/planner.md`. Native Codex spawns the configured Sol/high `planner-high` role without model/reasoning overrides; Claude delegates read-heavy exploration via the Terra/high `explorer` lane and validation/architecture with Sol/high, read-only — never Claude Code itself, never raw `codex exec` |
 | decomposing | run docs-decomposer per task, record with `record_decomposition_from_json.py` (schema incl. `user_facing`) |
 | implementing | Follow the one frontier action printed by `./forge next`: enter plan mode and author/re-record the JIT contract; run the task griller; `forge stage start`; or `forge delegate`. In native Codex, send the complete prepared descriptor and context metadata in the actual `spawn_agent` message to the named role, without model/reasoning overrides. The implementer writes and records the tests; user-facing tasks MUST load + attest emil-design-eng + frontend-design in `skills_used` (recorder-enforced; harness.yaml `required_skills`) |
 | verifying | `python3 factory/scripts/verify.py` |
 | reviewing | Run `./forge review <id>` from the orchestrating session after committing product changes and recording verify/tests; delegate blocking findings as one fix batch, refresh proof, and re-review under `docs/QUALITY.md` bounded recovery |
-| functional-check | only shown when the task is user-facing; run `functional-checker` |
+| functional-check | only shown when the task is user-facing; run the Sol/high `functional-checker` |
 | harvest pending | follow `factory/prompts/harvester.md` |
 | anything with a command | run the command verbatim |
 
@@ -191,7 +199,10 @@ instead of narrating it:
   subagents without dispatch-time model/reasoning overrides; Claude uses its protected plugin
   companion. See `harness.yaml` for artifact producers; recorders refuse
   artifacts from unpinned generators.
-- Review is the orchestrating session's unchanged Forge-managed autoreview black box (0011), looped review → Codex fixes findings → re-review until clean. Its authenticated internal Codex/agent use is allowed; never review inline or nest reviewers.
+- Review is the orchestrating session's unchanged, externally maintained
+  Autoreview skill (0011), looped review → Luna/max Codex fixes findings →
+  re-review until clean. Its authenticated internal Codex/agent use is allowed
+  and follows its own policy; never review inline or nest reviewers.
 - Never set a decision to `accepted`, never flip `client_signoff`, never
   activate a proposed skill without an explicit human confirmation — the
   human decides; a clear in-chat statement lets you run the recording

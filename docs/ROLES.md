@@ -4,10 +4,18 @@ The harness is prompt-first for every role: say the phrase, the agent runs
 the command. `./forge next` tags each step with the role that acts —
 `[PM]`, `[EM]`, `[dev]`. This page is the map per seat.
 
-The user and host select the main coordinator model and reasoning. The committed
-Forge-managed role registry and model pins live in `.codex/config.toml`,
-`.codex/agents/*.toml`, and `harness.yaml`; reuse the active Sol/medium
-implementer for review fixes.
+The user and host select the main coordinator model and reasoning. Native
+dispatch names a configured role and passes no model or reasoning override.
+Decision 0079 routes routine implementation, automated tests, diagnosed or
+review fixes, documentation edits, and mechanical refactors to Luna/max;
+read-heavy exploration and dependency tracing to Terra/high; and planning,
+decomposition, difficult diagnosis, independent grills, and final functional
+checks to Sol/high. A difficult diagnosis returns its edit to Luna/max. Formal
+code review remains exclusively the unchanged, externally maintained Autoreview
+skill, whose internal model or agent calls are its own policy. No Forge or
+native lane selects Luna/low. The native transport stays process-free: Forge
+prepares the descriptor and the host owns subagent lifecycle without
+Forge-managed process attribution.
 
 ## PM — product manager
 

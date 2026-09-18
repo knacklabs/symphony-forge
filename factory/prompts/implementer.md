@@ -68,10 +68,13 @@ Rules:
   named focused regression for the correction, report the exact environmental
   block without calling it green, and return so Main can run the canonical full
   verifier once in its permissive environment.
-- Forge launches you as `gpt-5.6-sol` at `medium` reasoning (`harness.yaml`):
-  bounded tasks with an approved plan rarely need more from the flagship.
-  Review fixes reuse this active implementer. If the task turns out not to be
-  bounded, report back instead of changing the model or grinding.
+- Forge launches routine implementation, testing, frontend work, refactors,
+  documentation edits, and diagnosed fixes as `gpt-5.6-luna` at `max` reasoning
+  (`harness.yaml`). Difficult diagnosis is the separate Sol/high debugger lane;
+  once its root cause is known, return the actual edit to the matching Luna/max
+  implementation role. Review fixes reuse that active implementation role. If
+  the task turns out not to be bounded, report back instead of changing the
+  model or grinding.
 - Keep diffs tight. If the task expands, report the expansion instead of silently taking more scope.
 - **Assumptions are recorded, never silent.** Whenever you make a call the
   approved plan does not cover — an interpretation of ambiguous acceptance

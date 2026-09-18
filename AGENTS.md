@@ -26,7 +26,7 @@ It provides:
 
 ## Runtime Modes
 
-Claude uses the protected `codex-plugin-cc` companion; native Codex uses role-based `spawn_agent` subagents. `./forge delegate` validates and prepares the brief; native dispatch passes no model/reasoning override. Raw/direct/nested `codex exec` and direct plugin shell launch are denied for manual delegation. Authenticated autoreview is an external black box and may invoke Codex or agents internally. Forge keeps task, worktree, scope, proof and PR gates, but adds no native process/PID or lifecycle lock and claims no process attribution.
+Claude uses protected `codex-plugin-cc`; native Codex uses host `spawn_agent`. `forge delegate` validates and prepares briefs; native dispatch passes no model/reasoning override. Raw/nested `codex exec` and direct plugin shell launch are denied for manual delegation. Autoreview is an external black box and may use Codex or agents. Forge keeps task/worktree/scope/proof/PR gates without native process/PID/lifecycle lock or attribution.
 
 ## Phase Contract
 
@@ -52,10 +52,13 @@ Testing has no separate agent: the implementer writes and records the tests.
 
 ## Reasoning Defaults
 
-Main model/reasoning are host/user choices. Native dispatch passes no override;
-the selected configured role's defaults apply and may pin either value.
-Command-managed Claude companions, grills, review, and Lite retain their
-declared profiles.
+Main coordinator model/reasoning are user/host choices; native dispatch passes no override.
+0079 routes Luna/max to routine work (implementation, tests, diagnosed fixes,
+docs edits, mechanical refactors); Terra/high to read-heavy exploration/dependency
+tracing; Sol/high to planning, decomposition, difficult diagnosis, independent
+grills, final functional checks. Formal review: unchanged external Autoreview
+(internals own policy); no lane selects Luna/low. Native transport process-free;
+no Forge lifecycle/authorship proof.
 
 ## Deterministic Commands
 
@@ -101,7 +104,7 @@ re-verifies. Story proof is only `outcome.json` (`./forge outcome set`).
 - Narration budget (conduct §8): one line per state change; findings and refusals always in full; process chatter never.
 - Follow [bounded recovery](docs/QUALITY.md#bounded-recovery) in every phase; repeated unchanged failures need a diagnosed, tested fix before another model run.
 - Use one integrated `./forge task close <id>` proof/review/finish cycle: preflight launch, review bounds, and required-test paths before expensive proof; recheck mutable state at finish; run only one full factory suite at a time on a shared host.
-- Review = ONE three-lens pass PER TASK via `./forge review <id>`, run by the Forge-managed autoreview black box, looped until clean (review → delegate fixes → re-review) and recorded before `pr-ready` under accepted 0011, 0054 and 0069; never review inline or nest reviewers.
+- Review = ONE three-lens pass PER TASK via `./forge review <id>`, run exclusively by the unchanged, externally maintained Autoreview skill, looped until clean (review → delegate Luna/max fixes → re-review) and recorded before `pr-ready` under accepted 0011, 0054 and 0069; its internal Codex or agent calls follow its own policy; never review inline or nest reviewers.
 - Each leaf task owns a worktree and PR; dependency-ready tasks may parallelize only when their measured scopes are disjoint. Delegation/proof commands are trusted inputs; observed descendant cleanup is not hostile-code containment.
 - Keep the template repo independent of any client-specific source repo.
 - Do not keep long policy blocks in `AGENTS.md`; move them into docs.

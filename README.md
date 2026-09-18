@@ -1,6 +1,6 @@
 # Symphony Forge
 
-A governed delivery harness that turns a repo's architecture and decision docs into shipped, reviewed code. **Claude Code coordinates. Codex executes.** Built and run by KnackLabs for client delivery, from discovery and client sign-off through scaffolding, per-feature delivery, and a self-evolving record of every decision.
+A governed delivery harness that turns a repo's architecture and decision docs into shipped, reviewed code. **Claude Code or native Codex coordinates; role-based Codex workers execute.** Built and run by KnackLabs for client delivery, from discovery and client sign-off through scaffolding, per-feature delivery, and a self-evolving record of every decision.
 
 ## In two minutes
 
@@ -30,14 +30,14 @@ That third row is why this exists. The spec optimises for velocity inside a high
 
 ## Where Codex sits
 
-Codex is the executor for everything that touches the codebase: exploration, implementation, tests, and the review. Claude Code never writes product code itself; its hook denies those writes and routes them through `./forge delegate`, which composes a brief and runs the installed [codex-plugin-cc](https://github.com/openai/codex-plugin-cc) companion with a fixed, shell-free argv.
+Codex is the delegated executor for exploration, implementation, and tests. Formal code review stays with the unchanged, externally maintained Autoreview skill. Claude Code never writes product code itself; its hook denies those writes and routes them through `./forge delegate`, which composes a brief and runs the installed [codex-plugin-cc](https://github.com/openai/codex-plugin-cc) companion with a fixed, shell-free argv.
 
 - **Every Codex release is watched.** Workers raise contradiction, confusion, blocked, or scope-change signals and pause; the orchestrating session resolves the signal and resumes. Nothing is fire-and-forget.
-- **Review is one Codex run per task**, three lenses (quality, performance, security), looped with fix delegations until every lens is clean, then recorded as that task's proof.
+- **Review is one Autoreview run per task**, three lenses (quality, performance, security), looped with Luna/max fix delegations until every lens is clean, then recorded as that task's proof.
 - **Evidence enters `.factory/` only through schema-validated recorders.** Each artifact names its generator, and the generator must be on the allowlist in `harness.yaml`.
-- **The user and host select the main coordinator model and reasoning.** Forge-managed lanes stay pinned: Sol/low for exploration; Sol/high for planning, architecture, grilling, formal review and functional checking; Sol/medium for implementation and review fixes; Luna/max only for formal Lite fixes.
+- **The user and host select the main coordinator model and reasoning.** Native role routing uses Luna/max for routine implementation, automated tests, diagnosed or review fixes, documentation edits, and mechanical refactors; Terra/high for read-heavy exploration and dependency tracing; and Sol/high for planning, decomposition, difficult diagnosis, independent grills, and final functional checks. Formal code review remains exclusively the unchanged, externally maintained Autoreview skill and may use its own internal Codex or agent calls. No Forge lane selects Luna/low.
 
-The full contract is in [`AGENTS.md`](AGENTS.md), which both runtimes read. A Codex-only mode, in which Codex coordinates as well as executes, is planned; the gates, recorders, and evidence contract do not change. If the companion is unavailable, [Degraded Mode](docs/degraded-mode.md) is the ledgered exception.
+The full contract is in [`AGENTS.md`](AGENTS.md), which both runtimes read. Either Claude Code or native Codex may coordinate as well as execute through the same gates, recorders, and evidence contract. If the companion is unavailable, [Degraded Mode](docs/degraded-mode.md) is the ledgered exception.
 
 ## Quick Start (devs)
 
@@ -199,13 +199,13 @@ your behalf, not for you to type.
 | workspace | "Scaffold the workspace" | Codex `/codex:rescue` + `SCAFFOLD_PROMPT.md` | nx workspace |
 | stories + distribution (PM/EM) | "Review the roadmap", "assign ENG-101 to alice" | `./forge roadmap list` / `assign` / `team set` | derived stories with spec links, criteria, and `@assignee` |
 | intake | "Start the next task on the roadmap" | `/forge` → `intake.py` | `.factory/run.json` |
-| plan | "Plan this task" | Claude PLAN MODE, forced by the hook (or Codex `planner-high`); exploration ONLY via `/codex:rescue --model gpt-5.6-sol --effort low`, read-only | grilled plan → `./forge plan save` → `plans/active/` |
+| plan | "Plan this task" | Claude PLAN MODE, forced by the hook (or Codex `planner-high` at Sol/high); read-heavy exploration via the Terra/high `explorer` role, read-only | grilled plan → `./forge plan save` → `plans/active/` |
 | decompose | "Decompose it" | `docs-decomposer` | `record_decomposition_from_json.py` (incl. `user_facing`) |
-| implement + test | "Implement it" / "work the next stage" | Codex `/codex:rescue --background` per stage (implementer writes the tests); `user_facing` tasks MUST use `emil-design-eng` + `frontend-design` (attested in `skills_used`, enforced by the recorder); each stage ends LOCAL autoreview → commit | `./forge stage start/done` → `.factory/stages.json`; `record_test_from_json.py --kind automated` |
+| implement + test | "Implement it" / "work the next stage" | Codex role worker at Luna/max per stage (implementer writes the tests); diagnosed or review fixes, documentation edits, and mechanical refactors use the same lane; `user_facing` tasks MUST use `emil-design-eng` + `frontend-design` (attested in `skills_used`, enforced by the recorder); each stage ends LOCAL autoreview → commit | `./forge stage start/done` → `.factory/stages.json`; `record_test_from_json.py --kind automated` |
 | lessons | "what did we learn about these files?" / "remember this" | none; deterministic ledger | `./forge lesson relevant` / `add` → `plans/lessons.jsonl` (schema-validated, deduped) |
 | verify | "Run verify" | none; deterministic script | `verify.py` → `.factory/verify.json` |
-| review | "Review it" | **autoreview** (ONE Codex run, three lenses) | `record_review_from_json.py` ×3 |
-| functional check | only if `user_facing: true` | `functional-checker` subagent | `record_test_from_json.py --kind functional` |
+| review | "Review it" | **unchanged externally maintained Autoreview skill** (ONE run, three lenses; its internals are its own policy) | `record_review_from_json.py` ×3 |
+| functional check | only if `user_facing: true` | `functional-checker` subagent at Sol/high | `record_test_from_json.py --kind functional` |
 | ship | "Is this PR ready?" | none; deterministic gate (refuses unguided assumptions, missing/stale evidence) | `pr_ready.py` → archives + roadmap done |
 | guide assumptions (orchestrator) | "review the assumptions" | `./forge assumptions list --open` / `resolve` | `plans/assumptions.md`; the ship gate reads it |
 | context dump | drop files in `docs/context/`, then "scan the context" | `/forge` → `./forge context scan` | `docs/context/ledger.json` |

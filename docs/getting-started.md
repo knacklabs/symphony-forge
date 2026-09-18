@@ -6,6 +6,15 @@ phase engine. Claude uses `codex-plugin-cc`; native Codex assigns bounded task
 work to role-based host subagents. This page is the one blessed path from empty
 directory to first feature PR.
 
+The user and host choose the main coordinator model and reasoning. Native role
+routing uses Luna/max for routine implementation, automated tests, diagnosed or
+review fixes, documentation edits, and mechanical refactors; Terra/high for
+read-heavy exploration and dependency tracing; and Sol/high for planning,
+decomposition, difficult diagnosis, independent grills, and final functional
+checks. Formal code review remains exclusively the unchanged, externally
+maintained Autoreview skill and may use its own internal Codex or agent calls.
+No Forge or native lane selects Luna/low.
+
 **You drive it with sentences, not commands.** Every step below leads with
 what you SAY to Claude Code (or Codex); the command underneath is what the
 agent runs for you — the deterministic contract, and your fallback in
@@ -250,8 +259,8 @@ stories may also advance in parallel. Story evidence ships in place under
    PLAN MODE (shift+tab). While the task is unplanned, the hook blocks
    product-code edits and writing Codex delegation, so there is no way to
    "just start coding". Plan per `factory/prompts/planner.md`. Claude delegates
-   exploration via `/codex:rescue --model gpt-5.6-sol --effort low`
-   (read-only); raw `codex exec` is blocked. Native Codex spawns the configured
+   read-heavy exploration via the Terra/high `explorer` role (read-only); raw
+   `codex exec` is blocked. Native Codex spawns the configured Sol/high
    `planner-high` role without a model or reasoning override. New decisions get
    records. **Before approval, one independent cold grill is mandatory** — say:
    **"Grill me on this plan"** (`/grill-me`); the verdict is recorded
@@ -284,8 +293,9 @@ python3 factory/scripts/update_run.py --phase implementing --plan-status approve
    task at a time. In native Codex, that command validates the task, prepares
    the canonical brief, and records a preparation row including any narrowed
    scope; the coordinator then spawns the matching configured
-   host role without model or reasoning overrides; the configured role's
-   defaults apply and may pin either value. Raw/direct/nested `codex exec` and
+   host role without model or reasoning overrides. Routine implementation,
+   automated tests, diagnosed or review fixes, documentation edits, and
+   mechanical refactors use the Luna/max role. Raw/direct/nested `codex exec` and
    direct plugin shell launch stay off-contract and hook-denied for general or
    manual delegation. Claude keeps its protected
    `codex-plugin-cc` launch. Forge enforces the active task, worktree and
@@ -305,7 +315,8 @@ python3 factory/scripts/record_test_from_json.py --kind automated --input /tmp/a
 python3 factory/scripts/verify.py
 ```
 
-4. **Review** — say: **"Review it."** ONE autoreview run in Codex publishes a
+4. **Review** — say: **"Review it."** ONE run of the unchanged, externally
+   maintained Autoreview skill publishes a
    validated selected generation containing all three lenses
    (`factory/prompts/reviewer.md`):
 
@@ -313,15 +324,17 @@ python3 factory/scripts/verify.py
 ./forge review <task-id>
 ```
 
-Forge-managed autoreview is an authenticated, externally maintained black box
-and may invoke Codex or agents internally; the general/manual delegation ban on
-raw or nested `codex exec` does not constrain that helper.
+Forge-managed Autoreview is an authenticated, externally maintained black box
+and may invoke Codex or agents internally; those internals are its own policy.
+The general/manual delegation ban on raw or nested `codex exec` does not
+constrain that helper.
 
 `record_review_from_json.py --aspect ...` is reserved for Lite diagnostics and
 one-time migration input; fixed lens files are not ordinary task proof.
 
 5. **Functional check** — only when the decomposition says
-   `user_facing: true`; then: **"Is this PR ready?"**
+   `user_facing: true`; the final check uses the Sol/high `functional-checker`;
+   then: **"Is this PR ready?"**
 
 ```bash
 python3 factory/scripts/record_test_from_json.py --kind functional --input /tmp/functional-test.json

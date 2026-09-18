@@ -200,10 +200,10 @@ def test_forge_next_repeats_the_split_where_it_is_needed():
 
 # ------------------------------------------------------- reachable escalation
 def test_the_effort_escalation_harness_yaml_documents_is_reachable(repo: Path):
-    """Decision 0074 pins managed implementation to Sol/medium."""
+    """Decision 0079 pins routine implementation to Luna/max."""
     from forge_cli.delegate import pinned_run_config
 
-    assert pinned_run_config(HARNESS) == ("gpt-5.6-sol", "medium")
+    assert pinned_run_config(HARNESS) == ("gpt-5.6-luna", "max")
     for args in (("--effort", "low"), ("--effort", "medium"),
                  ("--effort", "high"), ("--effort", "xhigh"),
                  ("--effort", "maximum"), ("--effort=medium",)):

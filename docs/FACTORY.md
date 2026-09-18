@@ -66,35 +66,31 @@ when the repo has a repeated bottleneck that justifies another role.
 ## Reasoning Matrix
 
 The user and host select the main coordinator model and reasoning; the
-repository does not set either at the top level. Native dispatch passes no
-model or reasoning override; the selected role's configured defaults apply and
-may themselves pin either value. The profiles below apply to command-managed
-Claude companions or specialist commands that explicitly own a profile.
+repository does not set either at the top level. Native dispatch names a
+configured role and passes no model or reasoning override. Decision 0079
+defines the role defaults:
 
-- native Codex role-based subagents
-  - dispatch: pass no model/reasoning override; use the configured role defaults
-- Claude planner / decomposer / architecture reconciler
-  - model: `gpt-5.6-sol`
-  - reasoning: `high`
-- Claude code exploration (planning phase)
-  - model: `gpt-5.6-sol`
-  - reasoning: `low`
-  - via `/codex:rescue --model gpt-5.6-sol --effort low` (read-only by default) — Claude Code never explores application code itself; raw `codex exec` is hook-blocked, no exceptions
-- Claude delegated implementation default
-  - model: `gpt-5.6-sol`
-  - reasoning: `medium`
-  - reuse the active implementer for review fixes
-- command-managed formal Lite fix
-  - model: `gpt-5.6-luna`
-  - reasoning: `max`
-- review (autoreview run)
-  - model: `gpt-5.6-sol`
-  - reasoning: `high`
-- command-managed functional checker
-  - model: `gpt-5.6-sol`
-  - reasoning: `high`
+- routine implementation, automated tests, diagnosed or review fixes,
+  documentation edits, and mechanical refactors (`coder`, `frontend`,
+  `tester`, `refactorer`, `worker`, the default implementation role, and
+  bounded `lite`) use `gpt-5.6-luna` at `max` reasoning;
+- read-heavy exploration and dependency tracing (`explorer`) use
+  `gpt-5.6-terra` at `high` reasoning;
+- planning and decomposition (`architect`, `planner`, `planner-high`, and
+  `docs-decomposer`), difficult diagnosis (`debugger`), independent grills
+  (`griller`), and final functional checks (`functional-checker`) use
+  `gpt-5.6-sol` at `high` reasoning;
+- formal code review uses only the unchanged, externally maintained Autoreview
+  skill. Its internal Codex or agent calls are its own policy and are not a
+  Forge-native role override.
 
-Defaulting all work to `high` is a bad tradeoff for cost, latency, and focus.
+A difficult diagnosis returns its resolved edit to the Luna/max execution
+role. No Forge or native configuration selects Luna with low reasoning.
+Native transport remains process-free: Forge prepares the validated dispatch
+descriptor, Main sends it to the host role, and the host owns subagent
+lifecycle. Forge adds no process, session, PID, launch-token,
+foreground/background, status, cancellation, resume, recovery, or
+authorship-attribution proof.
 
 ## In-Repo Docs Contract
 

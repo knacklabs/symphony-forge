@@ -268,6 +268,8 @@ Rendered by the harness from the recorded decomposition; edit the decomposition,
 
 **Scope amendments** (measured paths the scope did not name, recorded with `forge stage amend-scope`)
 
+- .codex/agents/worker.toml -- Apply the user-approved native child model routing decision and distribute the worker role profile.
+- README.md -- Align public documentation with the user-approved Luna/Terra/Sol native child routing while keeping Autoreview unchanged.
 - docs/degraded-mode.md -- User-authorized native-mode contract amendment requires updating the remaining runtime callers, protected delegation schema, strict role contract, product brief, and degraded-mode guidance so Codex uses role-based host subagents without nested exec or process locks.
 - docs/product/BRIEF.md -- User-authorized native-mode contract amendment requires updating the remaining runtime callers, protected delegation schema, strict role contract, product brief, and degraded-mode guidance so Codex uses role-based host subagents without nested exec or process locks.
 - docs/specs/strict-role-split.md -- User-authorized native-mode contract amendment requires updating the remaining runtime callers, protected delegation schema, strict role contract, product brief, and degraded-mode guidance so Codex uses role-based host subagents without nested exec or process locks.

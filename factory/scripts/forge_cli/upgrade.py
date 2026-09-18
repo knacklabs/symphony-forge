@@ -68,7 +68,15 @@ LEAN_ORIGINAL_EMPTY_RUNTIME_DIGEST = (
 )
 LEAN_LENSES = ("performance", "quality", "security")
 LEAN_RETAINED_PROFILES = {
-    "planner-high.toml", "docs-decomposer.toml", "functional-checker.toml",
+    # Keep the complete routed registry here for legacy inventory records. The
+    # source registry is still read from the harness at upgrade time; these
+    # names let a client-created scaffold classify every current role before
+    # the source tree is copied over it.
+    "architect.toml", "coder.toml", "debugger.toml",
+    "docs-decomposer.toml", "explorer.toml", "frontend.toml",
+    "functional-checker.toml", "griller.toml", "lite.toml",
+    "performance.toml", "planner-high.toml", "planner.toml",
+    "refactorer.toml", "security.toml", "tester.toml", "worker.toml",
 }
 KNOWN_FORGE_RETAINED_PROFILE_HASHES = {
     "planner-high.toml": {
@@ -98,6 +106,30 @@ LEAN_RUNTIME_PATHS = (
     ".claude/settings.json",
 )
 SAFE_COMPONENT = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]*\Z")
+
+
+def _forge_profile_hashes(harness: Path) -> dict[str, set[str]]:
+    """Return known Forge bytes for every profile in the current registry.
+
+    The retired hashes are intentionally kept separate: an old Sol profile is
+    a migration input even when its filename is also present in the current
+    registry. Current source bytes are added at runtime so adding a routed
+    role does not require another hard-coded hash update here.
+    """
+    known = {
+        name: set(hashes)
+        for name, hashes in KNOWN_FORGE_RETAINED_PROFILE_HASHES.items()
+    }
+    agents = harness / ".codex" / "agents"
+    if not agents.is_dir() or agents.is_symlink():
+        return known
+    for path in agents.iterdir():
+        if (path.suffix != ".toml" or path.is_symlink() or not path.is_file()):
+            continue
+        known.setdefault(path.name, set()).add(
+            hashlib.sha256(path.read_bytes()).hexdigest()
+        )
+    return known
 
 
 def _linked_or_reparse(info: os.stat_result) -> bool:
@@ -885,7 +917,7 @@ def lean_primary_inventory(target: Path) -> list[dict]:
                     reason, preserve = "client-modified-profile", True
                 elif name in LEAN_RETAINED_PROFILES:
                     if hashlib.sha256(data).hexdigest() in (
-                            KNOWN_FORGE_RETAINED_PROFILE_HASHES[name]):
+                            KNOWN_FORGE_RETAINED_PROFILE_HASHES.get(name, set())):
                         reason = "current-runtime-profile"
                     else:
                         reason, preserve = "client-modified-profile", True
@@ -1633,7 +1665,7 @@ def lean_raw_inventory(target: Path) -> list[dict]:
                     reason, preserve = "client-modified-profile", True
                 elif name in LEAN_RETAINED_PROFILES:
                     if hashlib.sha256(data).hexdigest() in (
-                            KNOWN_FORGE_RETAINED_PROFILE_HASHES[name]):
+                            KNOWN_FORGE_RETAINED_PROFILE_HASHES.get(name, set())):
                         reason = "current-runtime-profile"
                     else:
                         reason, preserve = "client-modified-profile", True
@@ -2667,12 +2699,23 @@ def apply_lean_migration(target: Path, migration: dict | None) -> None:
             fail("Lean migration completion readback differs")
 
 
-def _retired_forge_profiles(target: Path) -> tuple[list[Path], list[Path]]:
-    """Classify old same-name rows without treating a client edit as ours."""
+def _retired_forge_profiles(
+        target: Path, known_profile_hashes: dict[str, set[str]] | None = None,
+) -> tuple[list[Path], list[Path]]:
+    """Classify old rows without treating a client edit as ours.
+
+    Current profile names can overlap the retired registry. An exact retired
+    byte sequence is removable; a different sequence under that name remains
+    client-owned unless it is a known Forge version.
+    """
     removable: list[Path] = []
     preserved: list[Path] = []
     root = target / ".codex" / "agents"
     _require_unlinked_path(target, root)
+    known_profile_hashes = known_profile_hashes or {
+        name: set(hashes)
+        for name, hashes in KNOWN_FORGE_RETAINED_PROFILE_HASHES.items()
+    }
     for name, expected in RETIRED_FORGE_PROFILE_HASHES.items():
         path = root / name
         if not path.exists() and not path.is_symlink():
@@ -2682,7 +2725,7 @@ def _retired_forge_profiles(target: Path) -> tuple[list[Path], list[Path]]:
             continue
         actual = hashlib.sha256(path.read_bytes()).hexdigest()
         (removable if actual == expected else preserved).append(path)
-    for name in LEAN_RETAINED_PROFILES:
+    for name in set(LEAN_RETAINED_PROFILES) | set(known_profile_hashes):
         path = root / name
         if not path.exists() and not path.is_symlink():
             continue
@@ -2690,7 +2733,10 @@ def _retired_forge_profiles(target: Path) -> tuple[list[Path], list[Path]]:
             preserved.append(path)
             continue
         actual = hashlib.sha256(path.read_bytes()).hexdigest()
-        if actual not in KNOWN_FORGE_RETAINED_PROFILE_HASHES[name]:
+        if (name in RETIRED_FORGE_PROFILE_HASHES
+                and actual == RETIRED_FORGE_PROFILE_HASHES[name]):
+            continue
+        if actual not in known_profile_hashes.get(name, set()):
             preserved.append(path)
     return removable, preserved
 # Project-owned: never touched — listed here as the explicit contract.
@@ -3223,7 +3269,10 @@ def cmd_upgrade(args: argparse.Namespace) -> None:
 
 def _cmd_upgrade_locked(
         args: argparse.Namespace, harness: Path, target: Path) -> None:
-    _retired_profiles, preserved_profiles = _retired_forge_profiles(target)
+    known_profile_hashes = _forge_profile_hashes(harness)
+    _retired_profiles, preserved_profiles = _retired_forge_profiles(
+        target, known_profile_hashes,
+    )
     lean_migration = preflight_lean_migration(target)
     if lean_migration and lean_migration.get("resume") is True:
         apply_lean_migration(target, lean_migration)
@@ -3309,13 +3358,25 @@ def _cmd_upgrade_locked(
     # Same mixed-ownership rule: refresh each harness-shipped agent and each
     # allowlisted harness skill; leave client-added entries alone.
     agents = harness / ".codex" / "agents"
+    deferred_profile_replacements: list[tuple[Path, Path]] = []
     if agents.is_dir():
         for child in agents.iterdir():
             destination = target / ".codex" / "agents" / child.name
-            if child.name in LEAN_RETAINED_PROFILES and destination.is_file() \
+            if child.suffix == ".toml" and destination.is_file() \
                     and not destination.is_symlink():
                 existing = hashlib.sha256(destination.read_bytes()).hexdigest()
-                if existing not in KNOWN_FORGE_RETAINED_PROFILE_HASHES[child.name]:
+                if (child.name in RETIRED_FORGE_PROFILE_HASHES
+                        and existing == RETIRED_FORGE_PROFILE_HASHES[child.name]):
+                    # Lean migration inventories and removes the exact old
+                    # bytes. Install the current same-name role only after
+                    # that durable removal so revalidation cannot mistake the
+                    # replacement for tampered migration input.
+                    deferred_profile_replacements.append((child, destination))
+                    continue
+                if existing not in known_profile_hashes.get(child.name, set()):
+                    # A same-name profile with unknown bytes is a distinct
+                    # client profile. The current source still installs any
+                    # missing role and refreshes known Forge versions.
                     continue
             _replace_path(
                 target, child, destination)
@@ -3363,6 +3424,9 @@ def _cmd_upgrade_locked(
         assert_target_destination(keep_root, keep_root), ignore_errors=True)
 
     apply_lean_migration(target, lean_migration)
+
+    for source, destination in deferred_profile_replacements:
+        _replace_path(target, source, destination)
 
     retired_legacy = _retire_legacy_agents(target)
 

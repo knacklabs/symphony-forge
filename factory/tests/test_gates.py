@@ -25,6 +25,7 @@ import tempfile
 import threading
 import time
 import types
+import tomllib
 import urllib.error
 import urllib.request
 import uuid
@@ -20898,7 +20899,13 @@ def test_project_agents_init_upgrade_and_preserve_client_additions(
     }
     source_config = (source / ".codex" / "config.toml").read_bytes()
     source_explore = (source / ".codex" / "explore.config.toml").read_bytes()
-    assert len(source_agents) == 3
+    configured_profiles = {
+        Path(row["config_file"]).name
+        for row in tomllib.loads(source_config.decode("utf-8"))["agents"].values()
+        if isinstance(row, dict) and row.get("config_file")
+    }
+    assert configured_profiles
+    assert set(source_agents) == configured_profiles
     assert all(b'sandbox_mode = "danger-full-access"' in data
                for data in source_agents.values())
     assert b'sandbox_mode = "danger-full-access"' in source_config
@@ -20968,7 +20975,12 @@ def test_upgrade_preserves_client_profiles_while_removing_retired_forge_profiles
         cwd=HARNESS, capture_output=True, text=True,
     )
     assert result.returncode == 0, result.stdout + result.stderr
-    assert not retired.exists()
+    current_architect = HARNESS / ".codex" / "agents" / "architect.toml"
+    if current_architect.exists():
+        assert retired.read_bytes() == current_architect.read_bytes()
+        assert retired.read_bytes() != retired_bytes
+    else:
+        assert not retired.exists()
     assert modified_same_name.read_text() == 'model = "client-owned"\n'
     assert custom.read_text() == 'model = "client-owned"\n'
 
@@ -20980,6 +20992,7 @@ def test_upgrade_preserves_project_settings_and_refuses_unknown_same_name_profil
     outside = tmp_path / "outside.toml"
     outside.write_text('model = "outside"\n', encoding="utf-8")
     linked = repo / ".codex/agents/security.toml"
+    linked.unlink()
     linked.symlink_to(outside)
     git(repo, "add", "-A")
     git(repo, "commit", "-q", "-m", "project settings and invalid profile row")

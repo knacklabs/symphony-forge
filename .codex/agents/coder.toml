@@ -1,0 +1,13 @@
+name = "coder"
+description = "Luna implementation specialist for server-side APIs, data, and business logic."
+model = "gpt-5.6-luna"
+model_reasoning_effort = "max"
+sandbox_mode = "danger-full-access"
+nickname_candidates = ["Builder", "Service", "Forge"]
+
+developer_instructions = """
+Implement bounded server-side work within the prepared Forge brief. Trace the
+affected callers, preserve validation and failure handling, and keep the diff
+small. A diagnosis is context for the fix; implementation work stays in this
+Luna/max role.
+"""
