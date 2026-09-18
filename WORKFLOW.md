@@ -24,9 +24,12 @@
 
 ## Runtime Modes
 Either Claude Code or native Codex coordinates the same Forge phase engine.
-The active coordinator owns the human conversation and orchestration; admitted
-Codex workers execute bounded exploration, implementation, testing, and
-review. Both adapters produce the same `.factory` artifacts.
+Claude dispatches protected work through `codex-plugin-cc`. Native Codex uses
+the host's role-based `spawn_agent` subagents. Dispatch passes no model or
+reasoning override, so the selected configured role's defaults apply. Both
+routes preserve the active task, worktree and effective scope and produce the same
+`.factory` artifacts, but native delivery deliberately has no Forge-managed
+process identity or lifecycle proof.
 
 ### Workflow Modes
 
@@ -80,6 +83,16 @@ non-passing, or stale record. Other verdicts land in
 `record_grill_from_json.py` (schema-validated, `generated_by: griller`).
 Findings must resolve into contract/doc edits or decision records before a
 `pass` is recordable.
+
+In native Codex, `forge grill run ...` prepares one self-contained descriptor
+bound to the exact artifact and returns its preparation ID; it launches no
+helper or `codex exec`. Main puts the complete descriptor, including all
+context metadata, in the actual message to the configured `griller` role. It
+then records that subagent's exact JSON with
+`record_grill_from_json.py --cold-result <path> --preparation-id <id>` plus the
+gate/task arguments. The recorder validates the result/preparation binding
+without PID, session, or process-lifecycle proof. Claude retains the protected
+command-managed cold-reader lifecycle.
 
 ## Context Inbox & Doc Upkeep
 
@@ -202,10 +215,11 @@ unchanged failures require a diagnosed and tested fix before another model run.
 
 ## Event-Driven Delegation — signals
 
-Delegation is not fire-and-forget. While a delegated companion runs, the
-orchestrator WATCHES `.factory/signals.jsonl` (Claude's Monitor tool on the
-file, alongside the companion job status). Stage write launches run in the
-foreground; only read-only exploration may run in the background. A worker raises a
+Delegation is not fire-and-forget. Under Claude, the orchestrator watches
+`.factory/signals.jsonl` and the plugin companion job. Under native Codex, it
+uses the host's ordinary subagent coordination features; Forge adds no
+foreground/background, status, cancel, resume, process, session or PID rules.
+A worker raises a
 signal the moment it hits a `contradiction` (plan vs decision vs doc),
 genuine `confusion`, a hard `blocked`, or a `scope-change` — via
 `forge.py signal raise --kind <k> --by <agent> -m "<sentence>"` — and PAUSES
@@ -288,10 +302,11 @@ downstream remains enforced at the artifact gates.
 Decision 0032 adds a deterministic per-task grill to Full-mode execution. For
 each pending leaf the prescribed order is author the contract → re-record the
 decomposition → pass the digest-bound `task` grill → `forge stage start`
-→ `forge delegate`. `stage start` establishes the measured work boundary;
-the write-delegation path is the hard enforcement point and refuses a missing,
-non-passing, or stale `.factory/grills/tasks/<id>.json`. Read-only delegation
-does not cross that write gate.
+→ `forge delegate`. `stage start` establishes the measured work boundary and
+`forge delegate` validates it, refusing a missing, non-passing, or stale
+`.factory/grills/tasks/<id>.json`. In native Codex the coordinator then spawns
+the matching host role from the prepared brief; in Claude the command launches
+the protected plugin companion.
 
 The PR boundary has one client-vendored CI contract:
 `.github/workflows/roadmap-gate.yml`. On pull requests it requires every
@@ -405,15 +420,27 @@ sequence a JIT contract loop for every pending task:
 2. re-record the decomposition with that contract, then save the plan-mode
    result at `.factory/stories/<KEY>/task-plans/<id>.md`
 3. run `factory/prompts/griller.md` with `--gate task` against that saved
-   revision, resolve its findings, and record the pass for that id:
-   `record_grill_from_json.py --gate task --task <id>`
+   revision and resolve its findings. Native Codex prepares the griller
+   descriptor, dispatches the full descriptor through `spawn_agent`, and
+   records the exact returned JSON with
+   `record_grill_from_json.py --gate task --task <id> --cold-result <path>
+   --preparation-id <id>`; Claude keeps its command-managed cold-reader path
 4. record the human task-plan approval against the same saved revision;
    changed approval-bound content follows the existing amendment route
 5. `forge stage start <id>` (dependency and scope eligibility are derived;
    task-level `--parallel` is refused)
-6. `forge delegate <id>` composes the task brief and launches the installed
-   companion in the foreground with write access derived from stage state;
-   this is the hard gate that refuses a missing, failed, or stale task grill
+6. `forge delegate <id>` composes and validates the task brief. In native
+   Codex it records a preparation row bound to task, worktree, stage, brief
+   digest and effective or narrowed scope, prints dispatch information, and
+   the coordinator spawns the matching
+   configured role without model/reasoning overrides; that role's configured
+   defaults apply. It never invokes `codex exec`. Raw/direct/nested
+   `codex exec` and direct plugin shell launch remain off-contract and
+   hook-denied for general or manual delegation in both runtimes. This ban does
+   not constrain the authenticated Forge-managed autoreview black box, which
+   may invoke Codex or agents internally. In Claude
+   it launches the protected plugin companion. The command refuses a missing,
+   failed, or stale task grill
 7. the orchestrator inspects the diff and rejects overbuilt code
 8. that stage's assumption rows are validated (`forge assumptions list --open`)
 9. smallest relevant checks run
@@ -451,10 +478,9 @@ sequence a JIT contract loop for every pending task:
     a plan section or a sealed contract is not a defect: `forge review <id>
     --reject "<text>" --lens <l> --reason ... --cite
     <decision|contract|section> --by <agent>` records the rejection and the
-    settled contract. The one exception to re-delegating is a fix that cannot
-    be verified inside the companion sandbox (for example, it needs Docker or a
-    folder its account cannot read): use the bounded degraded route and record
-    the host exception.
+    settled contract. On the Claude route, a fix that cannot be verified inside
+    the plugin companion sandbox uses the bounded degraded route and records the
+    host exception. Native subagents use the host environment directly.
 
     With clean proof and review, `close` measures the task, marks the stage done,
     writes the task marker, pushes, and opens the PR. It stops at the first
@@ -463,15 +489,18 @@ sequence a JIT contract loop for every pending task:
     `close` with its base, contract and approval intact. Write-scope strays, a
     review-budget overrun and a required-test id that matched no JUnit case are
     measured and recorded, not refused. A delta above twice the declared line
-    budget still refuses. A closed degraded window with at most five in-scope
-    files may satisfy the stage's write launch when no Codex launch exists.
+    budget still refuses. Native closeout requires the current preparation row,
+    including any narrowed scope, but no launch-process proof. On
+    the Claude route, a closed degraded window with at most five in-scope files
+    may satisfy the companion-launch requirement when the plugin is unavailable.
 
    What each closeout record binds to — and so what can stale it:
    the review stamp binds to `delta_id` and nothing else (a contract
    re-record, a decision record, a scope amendment or an evidence commit
-   changes no product byte and stales no review); the delegate launch binds
-   to the stage (Codex wrote inside it; the contract at launch time is kept as
-   evidence, not required to match); after stage start the task grill binds to
+   changes no product byte and stales no review); the prepared delegation binds
+   the brief and effective scope. Claude additionally records its protected
+   companion launch, while native delivery deliberately records no process
+   attribution; after stage start the task grill binds to
    objective, acceptance criteria, plan contracts, `user_facing` and the plan
    (`write_scope`, `required_tests` and `verify_commands` are MEASUREMENT
    fields — `stage done` enforces them by measuring and running them, so
@@ -524,13 +553,13 @@ the approved plan, a human-only act, or scope the plan does not cover.
 After task-plan sign-off, the division of labour is FIXED, so a task never
 stalls on "should I do this or hand it to Codex?":
 
-- **Every product change is Codex's, via `forge delegate`.** Not only the
-  initial implementation — EVERY fix that diff inspection, the checks, verify,
-  or autoreview demand. A one-line config tweak, a dependency bump, a test
-  rename, a "trivial" correction: each is a fresh `forge delegate` against the
-  same contract, then re-inspect / re-review. The coordinator NEVER edits a
-  product file (app code, config, tests, schema, fixtures — anything that lands
-  in the committed diff) with its own hands.
+- **Every product change is assigned to a Codex worker.** In native Codex,
+  `forge delegate` prepares the canonical dispatch and Main sends it to the
+  matching role-based host subagent. In Claude, `forge delegate` launches the
+  protected plugin companion. Every implementation or review-fix batch follows
+  the same task contract, then Main re-inspects and re-reviews it. Native mode
+  follows this ownership rule without pretending Forge can mechanically
+  distinguish Main from a host subagent process.
 - **The coordinator's hands do only orchestration:** author task contracts,
   compose briefs, delegate, run the checks / `verify.py` / required tests, run
   the branch autoreview, record evidence via the `record_*` scripts, commit,
@@ -540,8 +569,8 @@ stalls on "should I do this or hand it to Codex?":
   verify, task test recording and `forge review <id>` follow that commit;
   clean proof permits stage closure and publication (conduct §7 autonomy).
   Continue without asking for another permission to commit.
-- **The one exception — a logged host-exception.** When a required product
-  change is PROVABLY impossible in the companion's environment (no Docker, or
+- **The Claude exception — a logged host-exception.** When a required product
+  change is PROVABLY impossible in the plugin companion's environment (no Docker, or
   a folder its sandbox account cannot read, that the change or its verification
   needs — the network and the local database are reachable since decision 0068),
   the coordinator may make the MINIMAL change on the host and MUST record why
@@ -564,13 +593,11 @@ and an id-keyed answer. Either records the human
 approval against the final digest through the shared recorder. There is no
 requirements grill, compulsory human round, `frontier_empty` question, manual
 `plan approve` / `task approve` command, board approval, or second unchanged
-save in the normal flow. (Exploration
-delegated to Codex: `/codex:rescue --model gpt-5.6-sol --effort low` —
-read-only by default, never Claude Code itself, never raw `codex exec`; plan
-validation and architecture work use `--model gpt-5.6-sol --effort high`,
-still read-only, while debugging fixes stay with the Sol/medium implementer);
-devs may instead use the
-`planner-high` Codex agent — the contract is identical either way. The plan follows
+save in the normal flow. Claude delegates exploration through
+`/codex:rescue --model gpt-5.6-sol --effort low`, read-only, and validation or
+architecture with `--effort high`; it never runs raw `codex exec`. Native
+Codex uses the configured `planner-high` role through host `spawn_agent`
+without an override; that role's configured defaults apply. The plan follows
 `factory/prompts/planner.md`, including the mandatory **Decisions** section: every choice not derivable from BRIEF,
 architecture, or existing records becomes a `docs/decisions/` record
 (`forge.py decision new`) before decomposition is recorded. `forge.py plan
@@ -619,11 +646,15 @@ stories still archive until `forge upgrade` migrates them.
 4. record client sign-off
 5. plan one roadmap story and record its ordered task list
 6. for each leaf task: author its complete contract, re-record the
-   decomposition, run one independent cold task grill, record every finding's
+   decomposition, run one independent cold task grill (native: prepare one
+   griller descriptor, include it and its context metadata in the actual
+   `spawn_agent` message, then record the exact result with `--cold-result` and
+   `--preparation-id`), record every finding's
    disposition and amendment, obtain native approval of the final task-plan
-   digest, start the stage, then delegate it; `delegate --scope` may repeat to
-   select a proper subset of the approved effective scope, while omission uses
-   the full scope
+   digest, start the stage, then prepare its canonical delegation; native Codex
+   spawns the matching host role and Claude launches the plugin companion.
+   `delegate --scope` may repeat to select a proper subset of the approved
+   effective scope, while omission uses the full scope
 7. after implementation, run `./forge task close <task-id>` as the integrated
    normal operation: it runs or content-safely reuses the task's tests and
    deterministic verify, runs or safely reuses the one complete review, and

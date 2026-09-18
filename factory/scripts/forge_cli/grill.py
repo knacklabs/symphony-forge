@@ -268,6 +268,8 @@ def _refuse_a_second_cold_read(base: Path, ledger_id: str, gate: str,
         cold = [row for row in _latest_launch_rows(
             base, ledger_id, since, story=story)
                 if (row.get("launch_status") == "succeeded"
+                    or (row.get("launch_status") == "prepared"
+                        and row.get("transport") == "host-native")
                     or (row.get("launch_status") in {"starting", "running"}
                         and row.get("launch_id") not in dead))]
         if not cold:
@@ -330,8 +332,9 @@ def cmd_grill_run(args: argparse.Namespace) -> None:
              context_identity) = secure_context_snapshot(
                  Path(context_file), base=base,
              )
+        result = None
         try:
-            launch_companion(
+            result = launch_companion(
                 base,
                 task_id=ledger_id,
                 text=text,
@@ -348,6 +351,8 @@ def cmd_grill_run(args: argparse.Namespace) -> None:
                 context_metadata=context_metadata,
                 context_snapshot=context_snapshot,
                 context_snapshot_identity=context_identity,
+                context_source_path=context_file,
+                emit_descriptor=False,
             )
         finally:
             if context_snapshot is not None and context_snapshot.exists():
@@ -356,14 +361,95 @@ def cmd_grill_run(args: argparse.Namespace) -> None:
                     _windows_current_sid()
                     if __import__("os").name == "nt" else "",
                 )
-    if args.print_only:
+    preparation_id = ""
+    if isinstance(result, dict) and result.get("action") == "spawn_agent":
+        # `launch_companion` deliberately exposes one uniform descriptor for
+        # implementation and read-only work. A grill needs a stronger handoff:
+        # its result is later admitted by preparation id, so print one complete
+        # griller descriptor containing every value the host and recorder need.
+        story = load_json(run_state_path(base), default={}).get("issue_key", "")
+        if args.print_only:
+            brief_sha256 = __import__("hashlib").sha256(
+                path.read_bytes()).hexdigest()
+            cold_input_sha256 = _artifact_digest(artifact)
+        else:
+            rows = [row for row in _launch_rows(base, ledger_id, "", story=story)
+                    if row.get("transport") == "host-native"
+                    and row.get("launch_status") == "prepared"]
+            if not rows:
+                fail("host-native grill preparation was not recorded")
+            prepared = rows[-1]
+            preparation_id = str(prepared.get("launch_id") or "")
+            if not preparation_id:
+                fail("host-native grill preparation has no preparation id")
+            brief_sha256 = prepared.get("brief_sha256")
+            cold_input_sha256 = prepared.get("task_sha256")
+        response_schema = {
+            "type": "object",
+            "additionalProperties": False,
+            "required": ["gaps", "contradictions"],
+            "properties": {
+                "gaps": {
+                    "type": "array",
+                    "items": {"type": "string", "minLength": 1},
+                },
+                "contradictions": {
+                    "type": "array",
+                    "items": {"type": "string", "minLength": 1},
+                },
+            },
+        }
+        result.update({
+            "repo": str(base),
+            "story": story,
+            "gate": gate,
+            "target_task": task_id,
+            "brief_sha256": brief_sha256,
+            "cold_input_sha256": cold_input_sha256,
+            "response_schema": response_schema,
+        })
+        if preparation_id:
+            result["preparation_id"] = preparation_id
+        context = result.get("context_file")
+        context_instruction = ""
+        if isinstance(context, dict):
+            context_instruction = (
+                " Supplemental context: path="
+                f"{context.get('source_path')} bytes={context.get('bytes')} "
+                f"sha256={context.get('sha256')}. Read it only when both the "
+                "byte count and SHA-256 still match."
+            )
+        result["message"] = (
+            f"Act as the griller role. Repository: {base}. Story: {story or '(none)'}. "
+            f"Gate: {gate}. Task: {task_id or '(none)'}. Read only {result['brief_path']} "
+            f"whose SHA-256 is {brief_sha256}; the framed cold input "
+            f"SHA-256 is {cold_input_sha256}. Change no files. Return JSON "
+            "only, exactly matching response_schema, with every finding in reading "
+            f"order.{context_instruction}"
+            + (f" Preparation id: {preparation_id}." if preparation_id else "")
+        )
+        print(__import__("json").dumps(result, sort_keys=True))
+        if args.print_only:
+            return
+        print(
+            "NEXT: dispatch the printed descriptor with the host's spawn_agent "
+            "tool (or followup_task when that task name is already live). Save "
+            "the agent's JSON-only response as a regular UTF-8 file. After the "
+            "reader returns, resolve its findings and record the grill pass."
+        )
+    elif args.print_only:
         return
+    native_args = (
+        f" --cold-result <result.json> --preparation-id {preparation_id}"
+        if preparation_id else ""
+    )
     print(
         "NEXT: resolve repository-answerable findings from repository facts. "
         "Escalate only an unresolved material choice through the host's "
         "synchronous question tool, amend the artifact once, then record the pass:\n"
         "  python3 factory/scripts/record_grill_from_json.py "
         f"--gate {gate}"
-        f"{' --task ' + task_id if task_id else ''} --input <json>\n"
+        f"{' --task ' + task_id if task_id else ''} --input <json>"
+        f"{native_args}\n"
         "This is the whole grill. Do not cold-read again: a second read "
         "returns a different frontier, not a shorter one.")

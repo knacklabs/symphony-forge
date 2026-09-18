@@ -3,7 +3,9 @@
 ## Summary
 
 Symphony Forge is KnackLabs's process harness for building applications with
-either Claude Code or native Codex coordinating and delegated Codex workers executing. It turns in-repo architecture and
+either Claude Code or native Codex coordinating and Codex workers executing.
+Claude uses `codex-plugin-cc`; native Codex uses configured host role subagents.
+It turns in-repo architecture and
 decision documents into shipped software through a fixed sequence — discovery,
 confirmed capability specs, a derived roadmap, client sign-off, one planned
 story at a time, bounded tasks, deterministic verification, one independent
@@ -46,8 +48,10 @@ repository and reproducible in a fresh worktree.
   derived from confirmed specs; the client signs off once, and that sign-off
   gates every later phase.
 - One roadmap story is planned, grilled, and approved, then decomposed into
-  bounded dependency-aware tasks; each task owns a worktree, is delegated with
-  a composed brief, implements and tests its change, runs deterministic
+  bounded dependency-aware tasks; each task owns a worktree. `forge delegate`
+  validates and prepares its brief; Claude launches the plugin companion and
+  native Codex spawns a configured host role. The worker implements and tests
+  its change, runs deterministic
   verification, and loops through independent review and fixes until clean.
 - Verification, tests, one review lifecycle with three assessments, and an outcome are recorded through
   schema-validated commands, and `pr_ready` refuses until all of them exist.
@@ -83,16 +87,27 @@ repository and reproducible in a fresh worktree.
 
 - Two runtimes must stay in lockstep: the same contract in `AGENTS.md` and its
   Claude adapter, verified by `check_dual_runtime.py`.
-- Claude Code or native Codex coordinates; only an admitted delegated Codex worker writes product. Review is one autoreview operation run by
-  the orchestrating session, never a nested reviewer.
+- Claude Code or native Codex coordinates. Claude writes through an admitted
+  plugin companion; native task work uses configured host role subagents after
+  a prepared delegation row. Native enforcement binds the active task,
+  worktree, stage and effective scope without process attribution. Review is
+  one unchanged Forge-managed autoreview operation released by the
+  orchestrating session, never an inline or nested reviewer. Its authenticated,
+  externally maintained helper is a black box and may invoke Codex or agents
+  internally.
 - The vendored gate surface is frozen between vendorings and hash-checked, so
   client repos cannot drift from the machinery they were given.
 - Evidence enters `.factory/` only through recording commands that validate
   against `factory/schemas/`, including a pinned `generated_by`.
 - The planning lock is always armed. Full work requires an approved plan and
   decomposition; bounded ledgered quickfix and Lite windows are the other
-  planning-lock exits. The degraded window is the separate five-file delegated-
-  writer outage valve.
+  planning-lock exits. The degraded window is the separate five-file Claude
+  plugin outage valve.
+- Raw, direct, or nested `codex exec` and direct plugin shell launch remain
+  off-contract and hook-denied for general/manual delegation. This does not
+  constrain the authenticated autoreview helper's internal implementation.
+  Native status, cancel, resume, background and other host lifecycle features
+  stay available.
 - One story is planned at a time; each task owns a worktree, and dependency-ready tasks may overlap only with disjoint protected scopes.
 - The board is read-only and derives everything from committed artifacts; it
   never approves.

@@ -2,8 +2,9 @@
 
 Symphony Forge is a dual-runtime harness plus doc-driven factory for building
 agent-ready software. Either Claude Code or native Codex coordinates the same
-phase engine, and admitted Codex workers execute bounded task work. This page
-is the one blessed path from empty directory to first feature PR.
+phase engine. Claude uses `codex-plugin-cc`; native Codex assigns bounded task
+work to role-based host subagents. This page is the one blessed path from empty
+directory to first feature PR.
 
 **You drive it with sentences, not commands.** Every step below leads with
 what you SAY to Claude Code (or Codex); the command underneath is what the
@@ -25,7 +26,8 @@ prototype ▶ spec grills ▶ CONFIRMED SPECS ▶ derived roadmap ▶ sign-off g
   ▶ SIGN-OFF ▶ roadmap+team ▶ story plan ▶ one cold grill + dispositions
   ▶ native approval of the exact final digest ▶ decompose (creates the task tracker)
   ▶ per leaf: JIT task plan ▶ one cold grill + dispositions ▶ native approval
-  of the exact task digest ▶ implement (`forge delegate`)
+  of the exact task digest ▶ prepare (`forge delegate`) ▶ native role subagent
+  or Claude plugin companion implements
   ▶ commit ▶ task proof ▶ `forge task close` runs ONE combined three-lens
   task review ▶ delegate fixes and rerun close until clean ▶ functional
   (if user-facing) ▶ task PR readiness
@@ -34,11 +36,12 @@ prototype ▶ spec grills ▶ CONFIRMED SPECS ▶ derived roadmap ▶ sign-off g
 - **Grills** are adversarial gaps/contradictions passes: each spec
   confirmation, sign-off, and every plan approval (`/grill-me`) require the
   relevant fresh pass.
-- One **write gate** is always armed: product edits are denied until the plan
-  is saved, unless a bounded `forge quickfix start` window is open.
-  `forge delegate` is the only implementation boundary; `/codex:rescue`
-  remains the sanctioned read-only planning explorer. Raw `codex exec` is
-  always denied.
+- One **task gate** is always armed: product edits require an approved plan and
+  current task scope unless a bounded `forge quickfix start` window is open.
+  `forge delegate` validates and prepares the canonical implementation brief.
+  Native Codex then uses a role-based host `spawn_agent`; Claude launches its
+  protected plugin companion. Raw/direct/nested `codex exec` and direct plugin
+  shell launch are off-contract and hook-denied in both runtimes.
 - Every artifact is **attested**: `generated_by` on the allowlist,
   `skills_used` mandatory on user-facing work, commit-stamped and fresh.
 - The **ship gate** additionally demands orchestrator guidance on every
@@ -246,15 +249,19 @@ stories may also advance in parallel. Story evidence ships in place under
 1. **Plan (mandatory — enforced)** — say: **"Plan this task."** and switch to
    PLAN MODE (shift+tab). While the task is unplanned, the hook blocks
    product-code edits and writing Codex delegation, so there is no way to
-   "just start coding". Plan per `factory/prompts/planner.md`; exploration is
-   delegated, never done by Claude Code itself:
-   `/codex:rescue --model gpt-5.6-sol --effort low` (read-only by default;
-   raw `codex exec` is hook-blocked, no exceptions).
-   `planner-high` in Codex is the sanctioned alternate. New decisions get
+   "just start coding". Plan per `factory/prompts/planner.md`. Claude delegates
+   exploration via `/codex:rescue --model gpt-5.6-sol --effort low`
+   (read-only); raw `codex exec` is blocked. Native Codex spawns the configured
+   `planner-high` role without a model or reasoning override. New decisions get
    records. **Before approval, one independent cold grill is mandatory** — say:
    **"Grill me on this plan"** (`/grill-me`); the verdict is recorded
    (`record_grill_from_json.py --gate plan`) with every finding disposed and
-   every amendment explained. Then say: **"Save the plan."** The save records
+   every amendment explained. In native Codex, `forge grill run --gate plan
+   ...` prepares one griller descriptor; put the complete descriptor and its
+   context metadata in the actual `spawn_agent` message, then record the exact
+   returned JSON with `record_grill_from_json.py --gate plan --cold-result
+   <path> --preparation-id <id>`. Claude keeps its command-managed cold-reader
+   lifecycle. Then say: **"Save the plan."** The save records
    `awaiting-approval`; approve the exact displayed final plan through native
    Plan Mode. There is no board approval, manual approve command, or second
    unchanged save.
@@ -274,8 +281,18 @@ python3 factory/scripts/update_run.py --phase implementing --plan-status approve
 
 3. **Implement** — say: **"Implement it."** The orchestrator runs
    `./forge stage start <id>` and then `./forge delegate <id>` for one bounded
-   task at a time. Write delegations stay in the foreground so stage close
-   cannot race a worker that is still editing. Feature type routes the design
+   task at a time. In native Codex, that command validates the task, prepares
+   the canonical brief, and records a preparation row including any narrowed
+   scope; the coordinator then spawns the matching configured
+   host role without model or reasoning overrides; the configured role's
+   defaults apply and may pin either value. Raw/direct/nested `codex exec` and
+   direct plugin shell launch stay off-contract and hook-denied for general or
+   manual delegation. Claude keeps its protected
+   `codex-plugin-cc` launch. Forge enforces the active task, worktree and
+   effective scope but does not restrict native foreground/background, status,
+   cancel, resume or other
+   host collaboration features, and closeout does not require native process
+   proof. Feature type routes the design
    skills, ENFORCED at record time: `user_facing: true`
    tasks MUST load `emil-design-eng` + `frontend-design` and attest them in
    the artifact's `skills_used` — the recorder refuses otherwise
@@ -295,6 +312,10 @@ python3 factory/scripts/verify.py
 ```bash
 ./forge review <task-id>
 ```
+
+Forge-managed autoreview is an authenticated, externally maintained black box
+and may invoke Codex or agents internally; the general/manual delegation ban on
+raw or nested `codex exec` does not constrain that helper.
 
 `record_review_from_json.py --aspect ...` is reserved for Lite diagnostics and
 one-time migration input; fixed lens files are not ordinary task proof.
@@ -352,8 +373,9 @@ python3 factory/scripts/check_agents_hygiene.py # AGENTS.md size + links
 python3 factory/scripts/check_factory_scaffold.py
 ```
 
-If codex-plugin-cc is unavailable, see `docs/degraded-mode.md` — same phase
-prompts, same artifacts, direct `codex exec`.
+If `codex-plugin-cc` is unavailable while using Claude, see
+`docs/degraded-mode.md`. Native Codex does not depend on that plugin and uses
+host subagents; neither route falls back to direct `codex exec`.
 
 ## Migrating an existing repo into the harness
 

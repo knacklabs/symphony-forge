@@ -1,0 +1,13 @@
+{
+  "event": "open",
+  "id": "Q-0186-a85b",
+  "profile": "degraded",
+  "reason": "Bootstrap the user-authorized Codex-native subagent path: the current protected writer contract only admits a nested codex exec process, so the hook and delegate must change before native subagents can write normally.",
+  "started_at": "2026-09-18T00:09:27+00:00",
+  "max_files": 5,
+  "files": [],
+  "harness_source": true,
+  "kind": "degraded",
+  "task_id": "LEAN-WORKFLOW",
+  "story": "FORGE-COORD-1"
+}

@@ -18,70 +18,52 @@ Report progress and keep driving; stop only for an open signal, a gate
 refusal you cannot resolve within the approved plan, a human-only act, or
 scope the plan does not cover.
 
-The user and host select the main coordinator model and reasoning. Repository
-pins apply only to Forge-managed workers, specialists, grills, review, and Lite.
+The user and host select the main coordinator model and reasoning. Native
+dispatch passes no model or reasoning override; the selected configured role's
+defaults apply and may themselves pin either value. Command-managed Claude
+companions, grills, review, and Lite retain their declared profiles.
 
 `./forge <cmd>` (from repo root) is shorthand for
 `python3 factory/scripts/forge.py <cmd>` — either form works everywhere below.
 
-## Codex Desktop: one main chat, separate task chats
+## Codex native: use host subagents
 
-Under accepted Decisions 0053, 0059 and 0064, keep one user-facing Codex
-coordinator chat as Main. Main owns project intent, the approved task graph,
-scheduling, human questions and the consolidated progress report. Claude
-keeps its existing coordinator-and-companion route.
+Under accepted Decisions 0053, 0059 and 0064, the user-facing Codex session is
+Main. Main owns intent, the approved graph, scheduling, human questions and the
+consolidated result. Current-task work runs through the host's native
+role-based `spawn_agent` subagents. Claude keeps its protected
+coordinator-and-`codex-plugin-cc` companion route.
 
-- In Codex Desktop, create or reuse one authorized task chat per ready leaf,
-  attached to that task's Forge-registered worktree and branch. Establish the
-  workspace through Forge's task lifecycle before implementation; creating an
-  app chat or worktree alone grants no write authority. Use available host
-  coordination tools; keep the current foreground `./forge delegate` route
-  until native lifecycle support ships. CLI use does not require Desktop.
-- Give each task owner its story/task IDs, objective, approved contract and
-  write scope, dependencies, verification commands, settled decisions and
-  completion criteria. Reuse its existing chat for corrections and retries.
-  Label the host task chat with its story/task ID and worktree. Forge authority
-  stays in existing task records; do not add a chat-ID registry or copy
-  authority into chat messages.
-- Run dependency-ready tasks in parallel only in separate worktrees with
-  disjoint protected scopes. Read readiness from Forge; dependencies require
-  their actual shipped markers on trunk. Preserve the approved graph and
-  serialize overlapping writes and full factory suites on a shared host.
-- Each task chat owns its JIT planning and delivery: admitted implementation
-  through `./forge delegate`, tests, verification, the orchestrator-run
-  `./forge review` and fix loop, and its PR with green CI. Main checks the
-  actual artifacts and PR state before advancing dependent work. A worker's
-  completion message alone is not passing proof or permission to merge.
-- Main monitors task chats and Forge signals, gathers results, and sends
-  bounded corrections to the responsible owner. Resolve issues from existing
-  decisions and standing authorization; bring only missing authority or a
-  material new choice back to the user in the main chat. Continue independent
-  ready work while a dependent task is blocked.
-- When Main dispatches task-owner chats, create or update exactly one recurring
-  30-minute thread heartbeat attached to Main. Inspect and update an existing
-  matching automation instead of duplicating it. Each tick compares with the
-  prior check and inspects actual task-chat/worker status, Forge signals,
-  changed artifacts, tests/review, PRs and CI. Diagnose unchanged failures,
-  repeated retries, redundant broad suites, idle workers and blocking
-  questions; send a bounded correction or use supported cancellation or
-  reconciliation before retrying. Preserve dirty work and evidence, never
-  start a competing writer or weaken a gate, resolve existing-scope blockers
-  under standing authority, and escalate only missing authority or a material
-  new choice. Keep the heartbeat active while dispatched work remains, then
-  pause or finish it on verified completion or explicit user stop. Report only
-  meaningful changes. If host automation is unavailable, say so and continue
-  supported supervision without claiming a heartbeat exists.
-- Main steps in through diagnosis and scoped instructions to the existing
-  owner. Reconcile a stopped worker's result before retrying; preserve its
-  identity and dirty work. Switch coordinators only between completed tasks,
-  after the task marker and green CI reach refreshed trunk, the old coordinator
-  has stopped, and no worker or required question remains active (0053).
-  Unfinished task transfer is not supported; never launch a competing
-  coordinator or writer.
-- Keep coordinating until every dispatched task is completed or has a concrete
-  reported blocker. Report meaningful changes and verified results together;
-  the user should not have to shuttle messages between worker chats. Separate
-  chats do not waive approvals, runtime evidence, review or human merge gates.
+- Run `./forge delegate <task-id>` first. In native Codex it validates the
+  current task, grill, stage and requested scope, writes the canonical brief,
+  records a preparation row (including narrowed scope), and prints dispatch
+  information. It does not run `codex exec` or launch a
+  child process. Raw/direct/nested `codex exec` and direct plugin shell launch
+  are off-contract and hook-denied for general or manual delegation in both
+  runtimes. Forge-managed autoreview is an authenticated external black box and
+  may invoke Codex or agents internally; this ban does not constrain it.
+  Spawn the matching configured role (`worker`, `planner-high`,
+  `docs-decomposer`, `functional-checker`, or another defined specialist) with
+  that brief and omit model/reasoning overrides so the selected role's
+  configured defaults apply.
+- Give the subagent bounded ownership: story/task IDs, objective, approved
+  contract and scope, dependencies, checks, settled decisions and completion
+  criteria. Tell it that other agents share the checkout and it must preserve
+  their work. Reuse or follow up with the responsible subagent for corrections
+  when the host supports that operation.
+- Forge does not register or fence native subagent processes or sessions. It
+  adds no PID, ancestry, launch-token, foreground/background, status, cancel,
+  resume, or recovery restrictions to host-native collaboration. Use those host
+  features normally. Consequently native delivery has no mechanical
+  process-attribution claim; correctness is established by the approved task
+  scope, inspected diff, tests, deterministic verify, independent review and PR
+  gates.
+- Run dependency-ready work in parallel only where the approved graph and
+  worktree/scope rules permit it. A subagent's completion message is not proof:
+  Main inspects the diff and recorded artifacts before advancing the task.
+- Keep coordinating until each dispatched subtask completes or has a concrete
+  blocker. Resolve matters already covered by the contract without asking the
+  user again; escalate only missing authority or a material new choice.
 
 ## ALWAYS start here
 
@@ -98,9 +80,9 @@ or route:
 |---|---|
 | discovery/prototype | gstack `/office-hours` for the discovery conversation; prototype freely |
 | roadmap missing | confirm captured specs, run the project-level decomposition (`factory/prompts/decomposer.md`), then `./forge roadmap derive --input <json>` |
-| planning | plan per `factory/prompts/planner.md` (Claude plan mode default, `planner-high` Codex agent alternate); exploration ONLY via `/codex:rescue --model gpt-5.6-sol --effort low` (read-only by default); plan validation and architecture via `/codex:rescue --model gpt-5.6-sol --effort high` (read-only) — never Claude Code itself, never raw codex exec |
+| planning | Plan per `factory/prompts/planner.md`. Native Codex spawns the configured `planner-high` role without model/reasoning overrides; the role defaults apply. Claude delegates exploration via `/codex:rescue --model gpt-5.6-sol --effort low` and validation/architecture with `--effort high`, read-only — never Claude Code itself, never raw `codex exec` |
 | decomposing | run docs-decomposer per task, record with `record_decomposition_from_json.py` (schema incl. `user_facing`) |
-| implementing | Follow the one frontier action printed by `./forge next`: enter plan mode and author/re-record the JIT contract; run the task griller; `forge stage start`; or `forge delegate`. The implementer writes and records the tests; user-facing tasks MUST load + attest emil-design-eng + frontend-design in `skills_used` (recorder-enforced; harness.yaml `required_skills`) |
+| implementing | Follow the one frontier action printed by `./forge next`: enter plan mode and author/re-record the JIT contract; run the task griller; `forge stage start`; or `forge delegate`. In native Codex, send the complete prepared descriptor and context metadata in the actual `spawn_agent` message to the named role, without model/reasoning overrides. The implementer writes and records the tests; user-facing tasks MUST load + attest emil-design-eng + frontend-design in `skills_used` (recorder-enforced; harness.yaml `required_skills`) |
 | verifying | `python3 factory/scripts/verify.py` |
 | reviewing | Run `./forge review <id>` from the orchestrating session after committing product changes and recording verify/tests; delegate blocking findings as one fix batch, refresh proof, and re-review under `docs/QUALITY.md` bounded recovery |
 | functional-check | only shown when the task is user-facing; run `functional-checker` |
@@ -120,8 +102,8 @@ or route:
 | what's left to build / show the roadmap | `./forge roadmap list` (`--pending` for what's next; grouped by epic, shows @assignee) |
 | what can run in parallel / fan out the work | `./forge roadmap parallel` — the dependency-ready story frontier. Each leaf task owns a worktree and PR; dependency-ready tasks may advance together only when their measured scopes are disjoint |
 | roadmap merge conflict / duplicate items after merging branches | `./forge roadmap heal` — deterministic union (done-wins); mid-merge it rebuilds from the merge stages, then `git add plans/roadmap.json` |
-| grill the handover / stress-test before a gate | `factory/prompts/griller.md` — one question at a time vs the actual docs; resolve findings; record `record_grill_from_json.py --gate spec\|signoff\|epics\|plan\|task`. Spec confirm, sign-off, legacy roadmap import, plan save, and task start refuse without their required fresh pass |
-| grill me on this plan | `/grill-me` against the draft plan (satisfies the plan-gate contract), then record `--gate plan` — mandatory before `plan save` |
+| grill the handover / stress-test before a gate | `factory/prompts/griller.md` — one question at a time vs the actual docs. Native: `forge grill run ...` prepares one descriptor; put it and its context metadata in the actual `spawn_agent` message to `griller`, resolve findings, then record the exact JSON with `record_grill_from_json.py --cold-result <path> --preparation-id <id>` plus `--gate spec\|signoff\|epics\|plan\|task`. Claude keeps its command-managed cold reader. Required gates refuse without their fresh pass |
+| grill me on this plan | `/grill-me` against the draft plan (satisfies the plan-gate contract), then use the runtime-specific grill route above with `--gate plan` — mandatory before `plan save` |
 | capture a capability spec | `./forge spec save <slug> --from <draft.md>`; confirmation requires a digest-bound spec grill, then `./forge spec confirm <slug>` |
 | here's the derived project backlog | `./forge roadmap derive --input <json>` (pre-sign-off, every story links a confirmed spec) |
 | add a story to the roadmap | `./forge roadmap add <KEY> "<title>" --story "As a <user>, I ... so that ..." --ac "<criterion>" --spec docs/specs/<slug>.md --epic <epic> --skill frontend\|backend\|fullstack [--depends-on <KEY>]` — story and at least one criterion are required |
@@ -148,8 +130,8 @@ or route:
 | a worker signal is open (orchestrator) | `./forge signal list --open` → inspect the signal and its worker state → resolve the cause with `./forge signal resolve <id> --notes "<answer>"`. Resume only a live paused worker; otherwise reconcile its result before deciding whether new delegation is needed. Open signals block pr_ready |
 | review / guide the assumptions (orchestrator) | `./forge assumptions list --open`, then `./forge assumptions resolve <id> --status confirmed\|fix-needed\|promoted --notes "..."` — pr_ready refuses unguided rows |
 | work the next stage / where am I in the task | Run `./forge next` and follow the current frontier. After implementation and focused tests: commit product changes → deterministic verify and task test recording → `./forge review <id>` → functional check if required → `./forge stage done <id>` → `./forge task pr-ready <id>` → CI and merge (WORKFLOW.md Stage Loop; `docs/QUALITY.md` bounded recovery) |
-| delegate this task / hand it to Codex | `./forge delegate <task-id>` — builds the current story brief, derives the write flag from stage state, launches the companion without a shell, and records evidence used by `stage done`; repeat `--scope <repo-path>` to choose a proper subset of the approved effective scope, or omit it for the full scope; `--print-only` is diagnostic and cannot satisfy the gate |
-| is Codex stuck? / did it actually do anything | `./forge codex status` — status, phase, write flag and age per job; flags a run that has not moved and a read-only run launched while a stage is active. Advisory, never a gate |
+| delegate this task / hand it to Codex | `./forge delegate <task-id>` — validates the active task, worktree and effective scope, builds the brief, and records the native preparation row including any narrowed scope. Spawn the matching role-based host subagent from its dispatch information without model/reasoning overrides; Forge never calls `codex exec`. Under Claude, the command launches the protected `codex-plugin-cc` companion |
+| is Codex stuck? / did it actually do anything | In native Codex use the host's normal subagent status and coordination tools; Forge adds no lifecycle feature locks. Under Claude, `./forge codex status` remains an advisory view of companion jobs and never a gate |
 | it only did part of the job | `./forge stage done <id> --incomplete "<what is missing>"` — the stage stays active and the gap enters the timeline |
 | are we fixing the same thing again | `./forge findings patterns` — a class at 3+ hits gets a refactor story + decision, never a fourth patch |
 | what did we learn about these files | `./forge lesson relevant --files <paths>` — run BEFORE planning/implementing |
@@ -205,10 +187,11 @@ instead of narrating it:
 
 ## Hard rules
 
-- Implementation is delegated to Codex; planning exploration is Codex
-  read-only. See `harness.yaml` for phase owners — it is the ALLOWLIST;
-  recorders refuse artifacts from unpinned generators.
-- Review is the orchestrating session's autoreview (0011), looped review → Codex fixes findings → re-review until clean — never a Codex review job, never nested reviewers.
+- Implementation is delegated to Codex. Native Codex uses role-based host
+  subagents without dispatch-time model/reasoning overrides; Claude uses its protected plugin
+  companion. See `harness.yaml` for artifact producers; recorders refuse
+  artifacts from unpinned generators.
+- Review is the orchestrating session's unchanged Forge-managed autoreview black box (0011), looped review → Codex fixes findings → re-review until clean. Its authenticated internal Codex/agent use is allowed; never review inline or nest reviewers.
 - Never set a decision to `accepted`, never flip `client_signoff`, never
   activate a proposed skill without an explicit human confirmation — the
   human decides; a clear in-chat statement lets you run the recording

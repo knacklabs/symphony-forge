@@ -39,7 +39,10 @@
     "amendments": "list",
     "artifact_delta": "list",
     "cold_input_sha256": "str",
-    "final_artifact_sha256": "str"
+    "final_artifact_sha256": "str",
+    "transport": "str",
+    "preparation_id": "str",
+    "result_sha256": "str"
   },
   "verdict_note": "verdict: pass | blocked. One independent cold read binds cold_input_sha256. finding_dispositions maps every finding once, amendments explain changes to final_artifact_sha256, and native human approval binds that final digest."
 }

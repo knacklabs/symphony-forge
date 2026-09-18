@@ -377,7 +377,8 @@ def main() -> None:
     p_ma.add_argument("--repo")
     p_ma.set_defaults(func=quickfix_mod.cmd_mode_abandon)
 
-    p_fix = sub.add_parser("fix", help="launch a bounded fix in an open lite window")
+    p_fix = sub.add_parser(
+        "fix", help="prepare or run a bounded fix in an open lite window")
     p_fix.add_argument("description")
     p_fix.add_argument("--repo")
     p_fix.set_defaults(func=fix_mod.cmd_fix)
@@ -611,7 +612,7 @@ def main() -> None:
         help="drop a shipped/orphaned story's git-local authority (idempotent)")
     p_sclr.add_argument("--repo")
     p_sclr.set_defaults(func=stages_mod.cmd_clear)
-    p_cx = sub.add_parser("codex", help="delegated Codex runs (diagnostics)")
+    p_cx = sub.add_parser("codex", help="delegated runtime diagnostics")
     cx_sub = p_cx.add_subparsers(dest="codex_command", required=True)
     p_cxs = cx_sub.add_parser("status", help="is the delegated run still moving?")
     p_cxs.add_argument("--stale-minutes", type=int, default=codex_status.STALL_MINUTES,
@@ -620,21 +621,25 @@ def main() -> None:
     p_cxs.add_argument("--repo")
     p_cxs.set_defaults(func=_native_dead_grill_status)
 
-    p_del = sub.add_parser("delegate", help="compose the brief and launch one task")
+    p_del = sub.add_parser(
+        "delegate",
+        help="compose a brief and prepare or run its delegation",
+        description="Compose a brief and prepare or run its delegation.",
+    )
     p_del.add_argument("id", help="task id from the recorded decomposition")
     p_del.add_argument("--read-only", action="store_true",
                        help="exploration run: override the derived write flag")
     p_del.add_argument("--background", action="store_true",
-                       help="background exploration only; active write stages refuse it")
+                       help="request background execution from the active runtime")
     p_del.add_argument("--print-only", action="store_true",
-                       help="print the argv without launching or recording evidence")
+                       help="print the dispatch descriptor or launch details without running it")
     p_del.add_argument(
         "--scope", action="append", default=[], metavar="PATH",
         help="narrow a write launch to this approved file/directory (repeatable; "
              "the selected set must be a proper subset)")
     p_del.add_argument(
         "--context-file", metavar="PATH",
-        help="secure same-user UTF-8 context snapshot supplied only to this launch")
+        help="validate one same-user UTF-8 context file for this delegation")
     p_del.add_argument("--repo")
     p_del.set_defaults(func=delegate_mod.cmd_delegate)
 
@@ -726,10 +731,10 @@ def main() -> None:
     p_ll.set_defaults(func=lessons_mod.cmd_list)
 
     p_grill = sub.add_parser(
-        "grill", help="release the read-only cold reader for a gate")
+        "grill", help="prepare or release the read-only cold reader for a gate")
     grill_sub = p_grill.add_subparsers(dest="grill_command", required=True)
     p_gr = grill_sub.add_parser(
-        "run", help="cold-read an artifact through the ledgered launcher")
+        "run", help="prepare or run one cold read of an artifact")
     from grill_gates import gate_names
     p_gr.add_argument("--gate", required=True, choices=gate_names())
     p_gr.add_argument("--task", default="", help="task id for --gate task")
@@ -738,7 +743,7 @@ def main() -> None:
         help="the artifact to grill for gates that interrogate a CHOSEN one "
              "(--gate spec/epics, and a --gate plan draft before it is saved)")
     p_gr.add_argument("--print-only", action="store_true",
-                      help="compose and show the brief without releasing Codex")
+                      help="compose and show the dispatch without releasing a reader")
     p_gr.add_argument(
         "--context-file", default="", metavar="PATH",
         help="capture one untrusted UTF-8 context file for this cold read")

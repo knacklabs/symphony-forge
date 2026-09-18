@@ -268,6 +268,10 @@ Rendered by the harness from the recorded decomposition; edit the decomposition,
 
 **Scope amendments** (measured paths the scope did not name, recorded with `forge stage amend-scope`)
 
+- docs/degraded-mode.md -- User-authorized native-mode contract amendment requires updating the remaining runtime callers, protected delegation schema, strict role contract, product brief, and degraded-mode guidance so Codex uses role-based host subagents without nested exec or process locks.
+- docs/product/BRIEF.md -- User-authorized native-mode contract amendment requires updating the remaining runtime callers, protected delegation schema, strict role contract, product brief, and degraded-mode guidance so Codex uses role-based host subagents without nested exec or process locks.
+- docs/specs/strict-role-split.md -- User-authorized native-mode contract amendment requires updating the remaining runtime callers, protected delegation schema, strict role contract, product brief, and degraded-mode guidance so Codex uses role-based host subagents without nested exec or process locks.
+- factory/scripts/forge_cli/fix.py -- User-authorized native-mode contract amendment requires updating the remaining runtime callers, protected delegation schema, strict role contract, product brief, and degraded-mode guidance so Codex uses role-based host subagents without nested exec or process locks.
 - factory/scripts/record_review_from_json.py -- The public review-generation recorder validation in record_review_from_json.py is required for Lean selected-review input and current reviewed-meaning identity; it was omitted from the task write_scope while its reviewed-meaning caller changed. Stage measurement identified this exact single path, with no other scope addition.
 
 **Required tests** (run by `stage done`)

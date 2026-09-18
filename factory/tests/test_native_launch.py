@@ -101,6 +101,98 @@ def test_runtime_selection_is_explicit_then_native_then_legacy(monkeypatch):
         selected_coordinator("other")
 
 
+def test_codex_delegate_prepares_host_native_role_without_process_launch_or_pins(
+        native_repo, monkeypatch):
+    """The CLI prepares work; the Codex host owns native subagent dispatch."""
+    import forge_cli.delegate as delegate
+
+    monkeypatch.setenv("FORGE_COORDINATOR", "codex")
+    real_popen = delegate.subprocess.Popen
+
+    def guarded_popen(argv, *args, **kwargs):
+        if argv and Path(str(argv[0])).name.lower().startswith("codex"):
+            pytest.fail("Codex native delegation launched a nested Codex CLI")
+        return real_popen(argv, *args, **kwargs)
+
+    monkeypatch.setattr(delegate.subprocess, "Popen", guarded_popen)
+    monkeypatch.setattr(
+        delegate.shutil, "which",
+        lambda *_a, **_k: pytest.fail("Codex native delegation resolved a CLI"),
+    )
+    descriptor = launch_companion(
+        native_repo,
+        task_id="T1",
+        text="# bounded task\n",
+        path=native_repo / ".factory/briefs/T1.md",
+        task_sha256_value="a" * 64,
+        model="must-not-be-forwarded",
+        effort="must-not-be-forwarded",
+        write=True,
+        write_scope=["src/"],
+        background=True,
+        story="STORY-1",
+        stage_started_at="stage-1",
+    )
+
+    assert descriptor["action"] == "spawn_agent"
+    assert descriptor["agent_type"] != "default"
+    assert descriptor["write_scope"] == ["src/"]
+    assert descriptor["background"] is True
+    assert "not alone" in descriptor["message"]
+    assert descriptor["followup_action"] == "followup_task"
+    assert descriptor["target"] == descriptor["task_name"]
+    assert "spawn_agent" in descriptor["dispatch_guidance"]
+    assert "followup_task" in descriptor["dispatch_guidance"]
+    assert not ({"model", "thinking", "reasoning", "reasoning_effort"} & descriptor.keys())
+
+    prepared = load_delegations(native_repo)[-1]
+    assert prepared["transport"] == "host-native"
+    assert prepared["launch_status"] == "prepared"
+    assert prepared["task"] == "T1"
+    assert prepared["story"] == "STORY-1"
+    assert prepared["stage_started_at"] == "stage-1"
+    assert prepared["brief_sha256"] == hashlib.sha256(
+        (native_repo / ".factory/briefs/T1.md").read_bytes()
+    ).hexdigest()
+    assert prepared["task_sha256"] == "a" * 64
+    assert prepared["write_scope"] == ["src/"]
+    assert not ({"pid", "pgid", "pid_started", "process_token", "session_id"} & prepared.keys())
+
+
+def test_native_context_descriptor_delivers_validated_source_metadata(
+        native_repo, tmp_path, monkeypatch, capsys):
+    import forge_cli.delegate as delegate
+
+    monkeypatch.setenv("FORGE_COORDINATOR", "codex")
+    source = tmp_path / "private-context.md"
+    secret = "untrusted supplemental detail"
+    source.write_text(secret, encoding="utf-8")
+    text, metadata, snapshot, identity = delegate.secure_context_snapshot(
+        source, base=native_repo,
+    )
+
+    descriptor = launch_companion(
+        native_repo, task_id="grill-plan", text="# primary\n",
+        path=native_repo / ".factory/grill-brief-plan.md",
+        task_sha256_value="b" * 64, model="ignored", effort="ignored",
+        write=False, context_text=text, context_metadata=metadata,
+        context_snapshot=snapshot, context_snapshot_identity=identity,
+        context_source_path=str(source),
+    )
+
+    expected = {
+        "source_path": str(source.absolute()),
+        "bytes": len(secret.encode("utf-8")),
+        "sha256": hashlib.sha256(secret.encode("utf-8")).hexdigest(),
+        "snapshot_id": metadata["snapshot_id"],
+    }
+    assert descriptor["context_file"] == expected
+    assert load_delegations(native_repo)[-1]["context_file"] == expected
+    assert source.read_text(encoding="utf-8") == secret
+    assert not snapshot.parent.exists()
+    assert secret not in capsys.readouterr().out
+
+
 def test_native_argv_binds_policy_without_resume_dispatch(tmp_path):
     argv = native_argv("/bin/codex", tmp_path, "model", "high", False)
     entry = {
@@ -239,213 +331,12 @@ def test_native_write_argv_uses_full_access_and_validates_exact_retired_scope(
     )
 
 
-def test_native_launch_registers_before_stdin_and_records_terminal_identity(
-        native_repo, tmp_path, monkeypatch):
-    import forge_cli.codex_runtime as codex_runtime
-    import forge_cli.delegate as delegate
-
-    executable = fake_codex(tmp_path)
-    capture_path = native_env(monkeypatch, tmp_path, executable)
-    scan_calls = []
-    real_scan = codex_runtime.scan_native_result
-
-    def scan(path, *, data=None, stream=None):
-        scan_calls.append(path)
-        assert data is None and stream is not None
-        return real_scan(path, stream=stream)
-
-    monkeypatch.setattr(codex_runtime, "scan_native_result", scan)
-    monkeypatch.setattr(delegate, "_process_table", lambda: {})
-    monkeypatch.setattr(delegate, "_capture_spawn_identity", lambda _proc: "known")
-    monkeypatch.setattr(
-        delegate, "_wait_and_reap",
-        lambda proc, *_args, **_kwargs: proc.wait() == 0,
-    )
-    real_popen = delegate.subprocess.Popen
-    stdin_snapshots = []
-    stdin_writes = []
-    popen_options = {}
-
-    class StdinProxy:
-        def __init__(self, stream):
-            self.stream = stream
-
-        def write(self, data):
-            stdin_snapshots.append([
-                row["launch_status"] for row in load_delegations(native_repo)
-            ])
-            stdin_writes.append(data)
-            return self.stream.write(data)
-
-        def close(self):
-            return self.stream.close()
-
-        def __getattr__(self, name):
-            return getattr(self.stream, name)
-
-    def popen(*args, **kwargs):
-        native_launch = args[0][0] == str(executable)
-        if native_launch:
-            popen_options.update(kwargs)
-        process = real_popen(*args, **kwargs)
-        if native_launch:
-            process.stdin = StdinProxy(process.stdin)
-        return process
-
-    monkeypatch.setattr(delegate.subprocess, "Popen", popen)
-    brief = native_repo / ".factory" / "briefs" / "T1.md"
-    prompt = "fixture prompt — नमस्ते\nsecond line\nlast line"
-    terminal = launch_companion(
-        native_repo,
-        task_id="T1",
-        text=prompt,
-        path=brief,
-        task_sha256_value="task-digest",
-        model="model-pin",
-        effort="medium",
-        write=False,
-    )
-    capture = json.loads(capture_path.read_text())
-    rows = load_delegations(native_repo)
-    assert [row["launch_status"] for row in rows] == [
-        "starting", "running", "succeeded",
-    ]
-    assert stdin_snapshots == [["starting", "running"]]
-    assert stdin_writes == [prompt.encode("utf-8")]
-    assert terminal["transport"] == "native"
-    assert terminal["pid_started"] == "known"
-    assert terminal["session_id"] == "thread-fixture"
-    assert terminal["brief_path"] == ".factory/briefs/T1.md"
-    assert Path(terminal["output_path"]).is_file()
-    assert Path(terminal["stderr_path"]).is_file()
-    assert capture["prompt"] == prompt
-    assert popen_options["text"] is False
-    assert "encoding" not in popen_options
-    assert "errors" not in popen_options
-    assert capture["token"] == terminal["process_token"]
-    assert capture["launch_id"] == terminal["launch_id"]
-    assert capture["argv"][-1] == "-"
-    assert scan_calls == [Path(terminal["output_path"])]
 
 
-@pytest.mark.parametrize("failed_open", [1, 2])
-def test_native_log_open_failure_releases_lock_without_lifecycle_rows(
-        native_repo, tmp_path, monkeypatch, failed_open):
-    import builtins
-    import forge_cli.delegate as delegate
-    import forge_cli.doctor as doctor
-
-    executable = fake_codex(tmp_path)
-    native_env(monkeypatch, tmp_path, executable)
-    monkeypatch.setattr(doctor, "codex_hook_readiness", lambda _base: (True, ""))
-    lock = object()
-    acquired = []
-    released = []
-    monkeypatch.setattr(
-        delegate, "_acquire_delegation_lock",
-        lambda _base, _task, launch_id: acquired.append(launch_id) or lock,
-    )
-    monkeypatch.setattr(
-        delegate, "_release_delegation_lock",
-        lambda handle, launch_id: released.append((handle, launch_id)),
-    )
-    real_open = builtins.open
-    opened = []
-    calls = 0
-
-    def fail_log_open(path, *args, **kwargs):
-        nonlocal calls
-        if "native-runs" in Path(path).parts:
-            calls += 1
-            if calls == failed_open:
-                raise OSError("injected log-open failure")
-            handle = real_open(path, *args, **kwargs)
-            opened.append(handle)
-            return handle
-        return real_open(path, *args, **kwargs)
-
-    monkeypatch.setattr(builtins, "open", fail_log_open)
-    with pytest.raises(OSError, match="injected log-open failure"):
-        launch_companion(
-            native_repo,
-            task_id="T1",
-            text="fixture prompt",
-            path=native_repo / ".factory" / "briefs" / "T1.md",
-            task_sha256_value="task-digest",
-            model="model-pin",
-            effort="medium",
-            write=True,
-        )
-    assert all(handle.closed for handle in opened)
-    assert released == [(lock, acquired[0])]
-    assert load_delegations(native_repo) == []
 
 
-@pytest.mark.parametrize(("limit", "message"), [
-    (None, "cannot determine the installed component prompt limit"),
-    ("8", "complete prompt requires"),
-])
-def test_context_prompt_capacity_refuses_before_starting_row(
-        native_repo, tmp_path, monkeypatch, capsys, limit, message):
-    import forge_cli.delegate as delegate
-
-    executable = fake_codex(tmp_path)
-    native_env(monkeypatch, tmp_path, executable)
-    if limit is None:
-        monkeypatch.delenv("FORGE_COMPONENT_PROMPT_LIMIT_BYTES", raising=False)
-    else:
-        monkeypatch.setenv("FORGE_COMPONENT_PROMPT_LIMIT_BYTES", limit)
-    source = tmp_path / "context.md"
-    source.write_text("supplement", encoding="utf-8")
-    text, metadata, snapshot, identity = delegate.secure_context_snapshot(source)
-    try:
-        with pytest.raises(SystemExit):
-            launch_companion(
-                native_repo, task_id="grill-plan", text="primary",
-                path=native_repo / ".factory" / "grill-brief-plan.md",
-                task_sha256_value="a" * 64, model="model-pin", effort="high",
-                write=False, context_text=text, context_metadata=metadata,
-                context_snapshot=snapshot, context_snapshot_identity=identity,
-            )
-        assert message in capsys.readouterr().out
-        assert load_delegations(native_repo) == []
-    finally:
-        delegate._cleanup_private_context(snapshot, identity, "")
 
 
-def test_native_context_launch_frames_exact_snapshot_and_cleans_terminal(
-        native_repo, tmp_path, monkeypatch):
-    import forge_cli.delegate as delegate
-
-    executable = fake_codex(tmp_path)
-    capture_path = native_env(monkeypatch, tmp_path, executable)
-    monkeypatch.setenv("FORGE_COMPONENT_PROMPT_LIMIT_BYTES", "1048576")
-    monkeypatch.setattr(delegate, "_process_table", lambda: {})
-    monkeypatch.setattr(delegate, "_capture_spawn_identity", lambda _proc: "known")
-    monkeypatch.setattr(
-        delegate, "_wait_and_reap",
-        lambda proc, *_args, **_kwargs: proc.wait() == 0,
-    )
-    source = tmp_path / "context.md"
-    source.write_text("supplement", encoding="utf-8")
-    text, metadata, snapshot, identity = delegate.secure_context_snapshot(source)
-    terminal = launch_companion(
-        native_repo, task_id="grill-plan", text="primary",
-        path=native_repo / ".factory" / "grill-brief-plan.md",
-        task_sha256_value="a" * 64, model="model-pin", effort="high",
-        write=False, context_text=text, context_metadata=metadata,
-        context_snapshot=snapshot, context_snapshot_identity=identity,
-    )
-
-    prompt = json.loads(capture_path.read_text(encoding="utf-8"))["prompt"]
-    assert prompt.startswith("primary\n\n## Untrusted supplemental context")
-    assert '<supplemental-context>\n"supplement"\n</supplemental-context>' in prompt
-    assert terminal["context"] == metadata
-    assert terminal["prompt_sha256"] == hashlib.sha256(
-        prompt.encode("utf-8"),
-    ).hexdigest()
-    assert set(terminal["context"]) == {"supplied", "bytes", "snapshot_id"}
-    assert not snapshot.parent.exists()
 
 
 def test_context_launch_refuses_text_that_does_not_match_stable_snapshot(
@@ -655,96 +546,12 @@ def test_stale_context_cleanup_preserves_unbound_historical_snapshot(
         directory.rmdir()
 
 
-def test_native_zero_exit_without_completed_turn_is_failed(
-        native_repo, tmp_path, monkeypatch, capsys):
-    executable = fake_codex(tmp_path, terminal="item.completed")
-    native_env(monkeypatch, tmp_path, executable)
-    with pytest.raises(SystemExit):
-        launch_companion(
-            native_repo,
-            task_id="T1",
-            text="fixture prompt",
-            path=native_repo / ".factory" / "briefs" / "T1.md",
-            task_sha256_value="task-digest",
-            model="model-pin",
-            effort="medium",
-            write=False,
-        )
-    assert "turn.completed" in capsys.readouterr().out
-    failed = load_delegations(native_repo)[-1]
-    assert failed["launch_status"] == "failed"
-    assert failed["session_id"] == "thread-fixture"
 
 
-def test_native_protocol_failure_revokes_write_admission(
-        native_repo, tmp_path, monkeypatch):
-    executable = fake_codex(tmp_path, terminal="item.completed")
-    native_env(monkeypatch, tmp_path, executable)
-    import forge_cli.doctor as doctor
-
-    monkeypatch.setattr(doctor, "codex_hook_readiness", lambda _base: (True, ""))
-    with pytest.raises(SystemExit):
-        launch_companion(
-            native_repo,
-            task_id="T1",
-            text="fixture prompt",
-            path=native_repo / ".factory" / "briefs" / "T1.md",
-            task_sha256_value="task-digest",
-            model="model-pin",
-            effort="medium",
-            write=True,
-        )
-    rows = load_delegations(native_repo)
-    launch_id = rows[0]["launch_id"]
-    marker = native_repo / ".git" / "forge" / "revoked-launches" / f"{launch_id}.json"
-    assert marker.is_file()
-    assert rows[-1]["launch_status"] == "failed"
 
 
-def test_native_write_fails_closed_when_hooks_are_not_ready(
-        native_repo, tmp_path, monkeypatch, capsys):
-    executable = fake_codex(tmp_path)
-    native_env(monkeypatch, tmp_path, executable)
-    import forge_cli.doctor as doctor
-
-    monkeypatch.setattr(
-        doctor, "codex_hook_readiness",
-        lambda _base: (False, "exact repo hook source is not trusted"),
-    )
-    with pytest.raises(SystemExit):
-        launch_companion(
-            native_repo,
-            task_id="T1",
-            text="fixture prompt",
-            path=native_repo / ".factory" / "briefs" / "T1.md",
-            task_sha256_value="task-digest",
-            model="model-pin",
-            effort="medium",
-            write=True,
-        )
-    assert "exact repo hook source is not trusted" in capsys.readouterr().out
-    assert load_delegations(native_repo) == []
 
 
-def test_native_nonzero_failure_retains_real_session_identity(
-        native_repo, tmp_path, monkeypatch):
-    executable = fake_codex(tmp_path, terminal="turn.failed", exit_code=3)
-    native_env(monkeypatch, tmp_path, executable)
-    with pytest.raises(SystemExit):
-        launch_companion(
-            native_repo,
-            task_id="explore",
-            text="fixture prompt",
-            path=native_repo / ".factory" / "briefs" / "explore.md",
-            task_sha256_value="",
-            model="model-pin",
-            effort="high",
-            write=False,
-        )
-    failed = load_delegations(native_repo)[-1]
-    assert failed["launch_status"] == "failed"
-    assert failed["exit_code"] == 3
-    assert failed["session_id"] == "thread-fixture"
 
 
 def test_native_identity_survives_only_a_truncated_jsonl_tail(tmp_path):
@@ -773,133 +580,3 @@ def test_native_identity_survives_only_a_truncated_jsonl_tail(tmp_path):
         b'broken: \xe2\n'
     )
     assert scan_native_result(output).session_id == ""
-
-
-def test_stage_launch_gate_requires_exact_native_terminal_stream(
-        native_repo, tmp_path):
-    task = {"id": "T1", "write_scope": [".codex/hooks.json"]}
-    stage = {"started_at": "2026-01-01T00:00:00Z"}
-    launch_id = "launch-stage-fixture"
-    brief = native_repo / ".factory" / "briefs" / "T1.md"
-    brief.parent.mkdir(parents=True)
-    brief.write_text("brief")
-    logs = Path(subprocess.run(
-        ["git", "rev-parse", "--absolute-git-dir"], cwd=native_repo,
-        check=True, capture_output=True, text=True,
-    ).stdout.strip()) / "forge" / "native-runs"
-    logs.mkdir(parents=True)
-    output = logs / f"{launch_id}.jsonl"
-    stderr = logs / f"{launch_id}.stderr.log"
-    output.write_text(
-        '{"type":"thread.started","thread_id":"thread-fixture"}\n'
-        '{"type":"turn.completed"}\n'
-    )
-    stderr.write_text("")
-    argv = native_argv(
-        "/bin/codex", native_repo, "model", "medium", True,
-        task["write_scope"],
-    )
-    record = {
-        "generated_by": "orchestrator", "at": stage["started_at"],
-        "launch_id": launch_id, "task": "T1",
-        "brief_sha256": sha256_of(brief), "task_sha256": task_digest(task),
-        "write": True, "model": "model", "effort": "medium",
-        "write_scope": task["write_scope"],
-        "argv": argv, "argv_sha256": argv_digest(argv),
-        "process_token": f"delegation-{launch_id}",
-        "stage_started_at": stage["started_at"], "transport": "native",
-        "executable_path": "/bin/codex",
-        "brief_path": ".factory/briefs/T1.md",
-        "output_path": str(output), "stderr_path": str(stderr),
-    }
-    for status in ("starting", "running"):
-        append_delegation(native_repo, {**record, "launch_status": status})
-    append_delegation(native_repo, {
-        **record, "launch_status": "succeeded", "exit_code": 0,
-        "session_id": "thread-fixture",
-    })
-    _require_successful_launch(native_repo, "T1", stage, task)
-    output.write_text('{"type":"thread.started","thread_id":"thread-fixture"}\n')
-    with pytest.raises(SystemExit):
-        _require_successful_launch(native_repo, "T1", stage, task)
-
-
-def test_concurrent_native_terminal_is_idempotent_and_retry_can_close_stage(
-        native_repo):
-    task = {"id": "T1", "write_scope": ["src/"]}
-    stage = {"started_at": "2026-01-01T00:00:00Z"}
-    brief = native_repo / ".factory" / "briefs" / "T1.md"
-    brief.parent.mkdir(parents=True)
-    brief.write_text("brief")
-    git_dir = Path(subprocess.run(
-        ["git", "rev-parse", "--absolute-git-dir"], cwd=native_repo,
-        check=True, capture_output=True, text=True,
-    ).stdout.strip())
-    logs = git_dir / "forge" / "native-runs"
-    logs.mkdir(parents=True)
-
-    def record(launch_id: str) -> dict:
-        output = logs / f"{launch_id}.jsonl"
-        stderr = logs / f"{launch_id}.stderr.log"
-        argv = native_argv(
-            "/bin/codex", native_repo, "model", "medium", True,
-            task["write_scope"],
-        )
-        return {
-            "generated_by": "orchestrator", "at": stage["started_at"],
-            "launch_id": launch_id, "task": "T1",
-            "brief_sha256": sha256_of(brief),
-            "task_sha256": task_digest(task), "write": True,
-            "write_scope": task["write_scope"],
-            "model": "model", "effort": "medium", "argv": argv,
-            "argv_sha256": argv_digest(argv),
-            "process_token": f"delegation-{launch_id}",
-            "stage_started_at": stage["started_at"], "transport": "native",
-            "executable_path": "/bin/codex",
-            "brief_path": ".factory/briefs/T1.md",
-            "output_path": str(output), "stderr_path": str(stderr),
-        }
-
-    first = record("launch-first")
-    append_delegation(native_repo, {**first, "launch_status": "starting"})
-    append_delegation(native_repo, {**first, "launch_status": "running"})
-    barrier = threading.Barrier(2)
-    errors = []
-
-    def finish(status: str) -> None:
-        try:
-            barrier.wait()
-            append_delegation(native_repo, {
-                **first, "launch_status": status,
-                "exit_code": 0 if status == "succeeded" else 1,
-                "session_id": "thread-first",
-            })
-        except BaseException as exc:  # surfaced below instead of lost in thread
-            errors.append(exc)
-
-    workers = [threading.Thread(target=finish, args=(status,))
-               for status in ("failed", "succeeded")]
-    for worker in workers:
-        worker.start()
-    for worker in workers:
-        worker.join()
-    assert errors == []
-    first_rows = [row for row in load_delegations(native_repo)
-                  if row["launch_id"] == "launch-first"]
-    assert len([row for row in first_rows
-                if row["launch_status"] in {"failed", "succeeded"}]) == 1
-
-    retry = record("launch-retry")
-    output = Path(retry["output_path"])
-    output.write_text(
-        '{"type":"thread.started","thread_id":"thread-retry"}\n'
-        '{"type":"turn.completed"}\n'
-    )
-    Path(retry["stderr_path"]).write_text("")
-    append_delegation(native_repo, {**retry, "launch_status": "starting"})
-    append_delegation(native_repo, {**retry, "launch_status": "running"})
-    append_delegation(native_repo, {
-        **retry, "launch_status": "succeeded", "exit_code": 0,
-        "session_id": "thread-retry",
-    })
-    _require_successful_launch(native_repo, "T1", stage, task)

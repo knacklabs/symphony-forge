@@ -36,14 +36,17 @@ def cmd_fix(args: argparse.Namespace) -> None:
     model, effort, bound = mode_run_config(base, LITE)
     if window.get("max_files") != bound:
         fail(f"the open lite window does not match modes.lite bound {bound}")
+    from .codex_runtime import coordinator_runtime
+    native = coordinator_runtime() == "codex"
     contract = {
         "acceptance_criteria": [description],
         "required_tests": [],
         "verify_commands": [],
         "write_scope": [],
     }
+    result = None
     try:
-        launch_companion(
+        result = launch_companion(
             base,
             task_id=window["id"],
             text=_brief(window, description),
@@ -52,10 +55,19 @@ def cmd_fix(args: argparse.Namespace) -> None:
             model=model,
             effort=effort,
             write=True,
+            write_scope=[] if native else None,
             mode=LITE,
         )
     finally:
         # Record what terra just touched — its writes are uncommitted, so this
         # is the working-tree manifest. `mode done` re-measures the committed
         # base_sha..HEAD diff for the budget and the final ledger record.
-        record_files(base, _lite_dirty_product_files(base))
+        if not (isinstance(result, dict)
+                and result.get("transport") == "host-native"):
+            record_files(base, _lite_dirty_product_files(base))
+    if isinstance(result, dict) and result.get("action") == "spawn_agent":
+        print(
+            "NEXT: dispatch the printed descriptor with the host's spawn_agent "
+            "tool (or followup_task when that task name is already live). After "
+            "the subagent finishes, inspect its changes and run `./forge mode done`."
+        )

@@ -6,10 +6,13 @@ This document is the operating contract for the factory beyond the short root `A
 
 ## Runtime
 
-Either Claude Code or native Codex may coordinate the same phase engine. Codex
-workers execute exploration, implementation, testing, and review; the active
-coordinator owns the human conversation and orchestration. Both adapters must
-produce the identical repo contract and `.factory` artifacts.
+Either Claude Code or native Codex may coordinate the same phase engine. Claude
+dispatches Codex through `codex-plugin-cc`; native Codex uses role-based host
+`spawn_agent` subagents. Native dispatch passes no model/reasoning override, so
+the selected configured role's defaults apply. The active
+coordinator owns the human conversation and orchestration. Both routes preserve
+the same task scope and `.factory` contract, while native delivery makes no
+Forge-managed process-attribution claim.
 
 ## Prompt Usage Model
 
@@ -63,27 +66,31 @@ when the repo has a repeated bottleneck that justifies another role.
 ## Reasoning Matrix
 
 The user and host select the main coordinator model and reasoning; the
-repository does not set either at the top level. Use strong reasoning
-selectively for Forge-managed lanes.
+repository does not set either at the top level. Native dispatch passes no
+model or reasoning override; the selected role's configured defaults apply and
+may themselves pin either value. The profiles below apply to command-managed
+Claude companions or specialist commands that explicitly own a profile.
 
-- planner / decomposer / architecture reconciler
+- native Codex role-based subagents
+  - dispatch: pass no model/reasoning override; use the configured role defaults
+- Claude planner / decomposer / architecture reconciler
   - model: `gpt-5.6-sol`
   - reasoning: `high`
-- code exploration (planning phase)
+- Claude code exploration (planning phase)
   - model: `gpt-5.6-sol`
   - reasoning: `low`
   - via `/codex:rescue --model gpt-5.6-sol --effort low` (read-only by default) — Claude Code never explores application code itself; raw `codex exec` is hook-blocked, no exceptions
-- delegated implementation default
+- Claude delegated implementation default
   - model: `gpt-5.6-sol`
   - reasoning: `medium`
   - reuse the active implementer for review fixes
-- formal Lite fix
+- command-managed formal Lite fix
   - model: `gpt-5.6-luna`
   - reasoning: `max`
 - review (autoreview run)
   - model: `gpt-5.6-sol`
   - reasoning: `high`
-- functional checker
+- command-managed functional checker
   - model: `gpt-5.6-sol`
   - reasoning: `high`
 
@@ -141,8 +148,31 @@ commands, required tests, and reviewer focus. Re-record the decomposition,
 save the plan-mode result at `.factory/stories/<KEY>/task-plans/<id>.md`,
 run one independent cold grill, record its complete finding dispositions and
 amendment bridge, then record native human approval of the final digest. Run
-`forge stage start <id>`, then `forge delegate <id>`. Do not guess later-task
+`forge stage start <id>`, then `forge delegate <id>`. Under native Codex, use
+the returned canonical brief and dispatch data to spawn the matching configured
+role through the host; the command records a preparation row including any
+narrowed scope, and Forge does not invoke `codex exec`. Under Claude, the
+command launches the protected plugin companion. Do not guess later-task
 execution detail. `forge next` routes this loop one action at a time.
+
+For that native cold grill, `forge grill run ...` prepares one descriptor bound
+to the exact artifact. Main includes the complete descriptor and all context
+metadata in the actual `spawn_agent` message to the configured `griller` role,
+then records its exact JSON with `record_grill_from_json.py --cold-result
+<path> --preparation-id <id>` plus the gate/task arguments. Claude retains its
+command-managed cold-reader lifecycle.
+
+Raw/direct/nested `codex exec` and direct plugin shell launch are off-contract
+and hook-denied for general or manual delegation in both runtimes. The
+authenticated Forge-managed autoreview helper is an externally maintained
+black box and may invoke Codex or agents internally. Native writes still
+require the active task, matching worktree and effective scope.
+
+Forge applies no native process/session/PID registration,
+foreground/background policy, or status/cancel/resume/recovery restriction.
+Native host features stay available as designed, and stage close does not
+require launch-process proof. The task scope, diff, tests, deterministic verify,
+independent review and PR gates remain unchanged.
 
 Each task closes through `forge task close <id>`: after implementation and
 focused checks, commit the product changes; `close` runs the declared proof,

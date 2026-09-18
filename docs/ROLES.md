@@ -59,5 +59,10 @@ prototype ──[spec grills]──▶ confirmed specs ──▶ derived roadmap
 Every handoff is an artifact plus a gate. Plan and task handoffs use one
 independent cold grill whose exact input, complete finding dispositions, and
 amendments bind the final artifact; native Plan Mode records the human's exact
-digest approval. Other handover grills retain their owning recorder. Never a
-conversation that evaporates. Humans accept; agents do the rest.
+digest approval. In native Codex, `forge grill run ...` prepares one griller
+descriptor; Main sends that complete descriptor and its context metadata in the
+actual `spawn_agent` message, then records the exact returned JSON through
+`record_grill_from_json.py --cold-result <path> --preparation-id <id>`. Claude
+keeps its command-managed cold-reader lifecycle. Other handover grills retain
+their owning recorder. Never a conversation that evaporates. Humans accept;
+agents do the rest.

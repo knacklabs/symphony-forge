@@ -1739,7 +1739,15 @@ def cmd_doctor(args: argparse.Namespace) -> None:
     checks.extend(windows_install_checks)
 
     checks.append(_psutil_check(fix=args.fix))
-    checks.append(_codex_sandbox_python_check())
+    from .codex_runtime import coordinator_runtime
+    if coordinator_runtime() == "codex":
+        checks.append(_check(
+            "codex-sandbox python", True,
+            "host-native subagents use the host runtime; no nested Codex CLI "
+            "sandbox is launched", "", required=False,
+        ))
+    else:
+        checks.append(_codex_sandbox_python_check())
 
     if repo:
         checks.extend(hook_health_checks(repo))

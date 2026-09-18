@@ -119,70 +119,50 @@ def test_stage_done_requires_review_after_semantic_contract_rerecord(repo, tmp_p
     assert "STALE stage-local review stamp" in out
 
 
-def test_native_stage_done_keeps_launch_scope_but_rereviews_changed_meaning(
-        repo, tmp_path):
-    """Launch attribution survives, but changed review semantics do not reuse."""
-    from forge_cli.codex_runtime import native_argv
-    from forge_cli.delegate import argv_digest, brief_path
+def test_native_stage_done_requires_current_scope_bound_preparation(
+        repo, tmp_path, monkeypatch, capsys):
+    """Host-native close binds preparation without inventing PID evidence."""
+    from forge_cli.delegate import brief_path, launch_companion
+    from forge_cli.stages import _require_successful_launch
 
-    launched_task = {
-        **STAGE_TASK,
-        "write_scope": ["src/", ".codex/launch-grant.json"],
-    }
-    start_stage(repo, tmp_path, launched_task)
-    ledger = delegation_ledger(repo)
-    rows = [json.loads(line) for line in ledger.read_text().splitlines()]
-    launch_id = rows[-1]["launch_id"]
-    output = ledger.parent / "native-runs" / f"{launch_id}.jsonl"
-    stderr = ledger.parent / "native-runs" / f"{launch_id}.stderr.log"
-    output.parent.mkdir(parents=True, exist_ok=True)
-    output.write_text(
-        '{"type":"thread.started","thread_id":"native-fixture"}\n'
-        '{"type":"turn.completed"}\n',
-        encoding="utf-8",
-    )
-    stderr.write_text("", encoding="utf-8")
+    monkeypatch.setenv("FORGE_COORDINATOR", "codex")
+    start_stage(repo, tmp_path, STAGE_TASK, launch=False)
+    stage, task = _stage(repo), task_for(repo, "T1")
+    with pytest.raises(SystemExit):
+        _require_successful_launch(repo, "T1", stage, task)
+    assert "preparation" in capsys.readouterr().out.lower()
 
-    executable = "/usr/bin/codex"
-    native_rows = []
-    for row in rows:
-        if row.get("task") != "T1":
-            native_rows.append(row)
-            continue
-        argv = native_argv(
-            executable, repo, row["model"], row["effort"], True,
-            launched_task["write_scope"],
-        )
-        native = {
-            **row,
-            "transport": "native",
-            "executable_path": executable,
-            "brief_path": brief_path(repo, "T1").relative_to(repo).as_posix(),
-            "output_path": str(output),
-            "stderr_path": str(stderr),
-            "write_scope": launched_task["write_scope"],
-            "argv": argv,
-            "argv_sha256": argv_digest(argv),
-        }
-        native.pop("companion_path", None)
-        if native["launch_status"] == "succeeded":
-            native["session_id"] = "native-fixture"
-        native_rows.append(native)
-    ledger.write_text(
-        "".join(json.dumps(row) + "\n" for row in native_rows),
-        encoding="utf-8",
+    common = dict(
+        task_id="T1", text="# T1 native brief\n", path=brief_path(repo, "T1"),
+        task_sha256_value=task_digest(task), model="ignored", effort="ignored",
+        write=True, story="ENG-1", stage_started_at=stage["started_at"],
+        task_metadata=task,
     )
+    launch_companion(repo, write_scope=["other/"], **common)
+    with pytest.raises(SystemExit):
+        _require_successful_launch(repo, "T1", stage, task)
+    assert "scope" in capsys.readouterr().out.lower()
+
+    launch_companion(repo, write_scope=task["write_scope"], **common)
+    assert _require_successful_launch(repo, "T1", stage, task) == ""
+
+    brief_path(repo, "T1").write_text("# stale native brief\n", encoding="utf-8")
+    with pytest.raises(SystemExit):
+        _require_successful_launch(repo, "T1", stage, task)
+    assert "brief" in capsys.readouterr().out.lower()
+    launch_companion(repo, write_scope=task["write_scope"], **common)
+    assert _require_successful_launch(repo, "T1", stage, task) == ""
 
     write_in_scope(repo, "src/core.py")
+    git(repo, "add", "src/core.py")
+    git(repo, "commit", "-qm", "native host work")
+    write_task_proof(repo, "T1", publish_review=True)
     stamp_and_commit(repo)
-    changed_task = {
-        **launched_task,
-        "write_scope": ["src/", ".codex/current-grant.json"],
-    }
-    code, out = _rerecord(repo, changed_task)
+    code, out = run(
+        repo, "forge.py", "stage", "done", "T1",
+        env={"FORGE_COORDINATOR": "codex"},
+    )
     assert code == 0, out
-    code, out = run(repo, "forge.py", "stage", "done", "T1")
-    assert code != 0 and "STALE stage-local review stamp" in out, out
 
 
 def test_legacy_stamp_never_converts_in_normal_runtime(repo, tmp_path):

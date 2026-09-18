@@ -1706,10 +1706,66 @@ def _successful_launch_entry_valid(
     return bool(valid)
 
 
+def _host_native_preparation_valid(
+        base: Path, stage_id: str, stage: dict, task: dict) -> bool:
+    """Validate the latest process-free host-native dispatch preparation."""
+    from .delegate import argv_digest, brief_path, load_delegations
+
+    try:
+        candidates = [
+            row for row in load_delegations(base)
+            if row.get("transport") == "host-native"
+            and row.get("task") == stage_id
+            and row.get("stage_started_at") == stage.get("started_at")
+            and row.get("write") is True
+        ]
+    except (OSError, SystemExit, ValueError):
+        return False
+    if not candidates:
+        return False
+    entry = candidates[-1]
+    brief = brief_path(base, stage_id)
+    scope = entry.get("write_scope")
+    effective = effective_scope(base, stage_id, task.get("write_scope") or [])
+    if (
+        entry.get("launch_status") != "prepared"
+        or entry.get("write") is not True
+        or entry.get("task_sha256") != task_digest(task)
+        or entry.get("model") != ""
+        or entry.get("effort") != ""
+        or entry.get("argv") != []
+        or entry.get("argv_sha256") != argv_digest([])
+        or any(key in entry for key in (
+            "pid", "pgid", "pid_started", "process_token", "session_id",
+            "output_path", "stderr_path", "executable_path", "companion_path",
+        ))
+        or not isinstance(scope, list)
+        or not scope
+        or any(not isinstance(item, str) or not item.strip() for item in scope)
+        or any(not _covered(item.rstrip("/"), effective) for item in scope)
+        or brief.is_symlink()
+        or not brief.is_file()
+        or entry.get("brief_path") != brief.relative_to(base).as_posix()
+        or entry.get("brief_sha256") != sha256_of(brief)
+    ):
+        return False
+    return True
+
+
 def _require_successful_launch(base: Path, stage_id: str, stage: dict,
                                task: dict) -> str:
-    """Refuse without a successful Codex write launch or a covering host-fix
-    window. Returns the window id when a window satisfied it, else ""."""
+    """Require current native preparation or completed companion write proof."""
+    from .codex_runtime import coordinator_runtime
+    if coordinator_runtime() == "codex":
+        if _host_native_preparation_valid(base, stage_id, stage, task):
+            return ""
+        fail(
+            f"{stage_id} has no current host-native preparation bound to this "
+            "stage, brief, task contract, and effective write scope. Run "
+            f"`forge delegate {stage_id}`, dispatch its spawn_agent/followup_task "
+            "descriptor through the host, then retry stage close."
+        )
+
     from .delegate import current_delegation
 
     # Any contract version: the launch proves Codex wrote inside THIS stage.

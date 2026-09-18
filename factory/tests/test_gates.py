@@ -7711,6 +7711,7 @@ def test_assumptions_archive_compacts_resolved_rows(repo, tmp_path):
 
 def hook(repo: Path, payload: dict) -> tuple[int, str]:
     return run(repo, "pre_tool_use.py", stdin=json.dumps(payload), env={
+        "FORGE_COORDINATOR": "claude",
         "FORGE_PROCESS_TOKEN": "", "FORGE_LAUNCH_ID": "",
     })
 
@@ -8299,23 +8300,20 @@ def test_planning_lock_forces_plan_mode(repo, tmp_path):
         code, out = hook(repo, {"tool_name": "Write", "permission_mode": "default",
                                 "tool_input": {"file_path": str(repo / ok_path)}})
         assert "deny" not in out, ok_path
-    # raw codex exec is off-contract in ANY phase — route to Forge exploration
+    # raw codex exec is off-contract in ANY phase — route through the active runtime
     code, out = hook(repo, {"tool_name": "Bash", "permission_mode": "default",
                             "tool_input": {"command": "codex exec 'implement the thing'"}})
-    assert "deny" in out and "current coordinator chat" in out
+    assert "deny" in out and "native subagent tools" in out and "codex-plugin-cc" in out
     code, out = hook(repo, {"tool_name": "Bash", "permission_mode": "default",
                             "tool_input": {"command":
                                            "codex exec --profile explore -s read-only 'map it'"}})
-    assert "deny" in out and "current coordinator chat" in out
-    # Companion denial keys on WRITE INTENT, not on the companion itself: the
-    # codex-exec denial points at Forge's exploration route, so denying every
-    # invocation made exploration impossible from the orchestrator (0341332).
-    # A read-only exploration run passes; a write launch
-    # stays delegate-owned.
+    assert "deny" in out and "native subagent tools" in out and "codex-plugin-cc" in out
+    # Direct plugin shell launches are off-contract too. Claude owns the
+    # companion internally through forge delegate, including exploration.
     companion = "node /x/codex-companion.mjs task --model gpt-5.6-terra 'map the module'"
     code, out = hook(repo, {"tool_name": "Bash", "permission_mode": "default",
                             "tool_input": {"command": companion}})
-    assert "deny" not in out
+    assert "deny" in out and "codex-plugin-cc" in out
     code, out = hook(repo, {"tool_name": "Bash", "permission_mode": "default",
                             "tool_input": {"command": companion + " --write"}})
     assert "deny" in out and "forge delegate" in out
@@ -8323,7 +8321,7 @@ def test_planning_lock_forces_plan_mode(repo, tmp_path):
     code, out = hook(repo, {"tool_name": "Bash", "permission_mode": "default",
                             "tool_input": {"command":
                                            "FACTORY_DEGRADED=1 codex exec -s read-only 'map it'"}})
-    assert "deny" in out and "current coordinator chat" in out
+    assert "deny" in out and "native subagent tools" in out and "codex-plugin-cc" in out
     # Approval and decomposition authorize delegation, never session writes.
     save_plan(repo, tmp_path)
     code, out = hook(repo, {"tool_name": "Edit", "permission_mode": "default",
@@ -8349,7 +8347,7 @@ def test_planning_lock_forces_plan_mode(repo, tmp_path):
     # ...but raw codex exec stays off-contract even after approval
     code, out = hook(repo, {"tool_name": "Bash", "permission_mode": "default",
                             "tool_input": {"command": "codex exec 'build it'"}})
-    assert "deny" in out and "current coordinator chat" in out
+    assert "deny" in out and "native subagent tools" in out and "codex-plugin-cc" in out
 
 
 def test_planning_lock_is_always_armed_and_guards_bash_writes(repo):
@@ -12302,7 +12300,7 @@ def test_review_hardening_guards(repo, tmp_path):
     assert "deny" in out and "forge delegate" in out
     code, out = hook(repo, {"tool_name": "Bash", "permission_mode": "default",
                             "tool_input": {"command": "codex --profile explore exec 'x'"}})
-    assert "deny" in out and "current coordinator chat" in out
+    assert "deny" in out and "native subagent tools" in out and "codex-plugin-cc" in out
 
 
 def test_review_product_dirty_preserves_porcelain_status_prefix(repo, monkeypatch):
@@ -19472,117 +19470,31 @@ def test_review_codex_engine_pins_sol_high(tmp_path, monkeypatch):
         "--dataset", ".factory/review-briefs/all.md", "--json-output", str(report),
     ]
 
-def test_native_unshipped_operations_refuse_before_dispatch(
-        repo, tmp_path, monkeypatch, capsys):
-    import forge as cli
-    from forge_cli import delegate, codex_status
+def test_native_mode_denies_nested_cli_and_plugin_launches(repo):
+    for command in (
+        "codex exec inspect",
+        "bash -c 'codex exec inspect'",
+        "node /x/codex-companion.mjs task --write go",
+    ):
+        code, output = run(repo, "pre_tool_use.py", stdin=json.dumps({
+            "tool_name": "Bash", "tool_input": {"command": command},
+        }), env={"FORGE_COORDINATOR": "codex"})
+        assert code == 0 and "deny" in output.lower(), output
+        if "codex exec" in command:
+            assert "native subagent" in output.lower(), output
+        else:
+            assert "companion launches are off-contract" in output.lower(), output
 
-    task = _native_review_fixture(repo, tmp_path)
-    lib = load_factory_lib(repo)
-    roots = [repo / ".factory", lib.git_control_dir(repo)]
-    snapshot = lambda: {str(p): p.read_bytes() for root in roots
-                        for p in root.rglob("*") if p.is_file()}
-    before = snapshot()
-    explore_prompt = tmp_path / "explore.md"
-    explore_prompt.write_text("Inspect the current task contract.\n")
-    monkeypatch.setenv("FORGE_COORDINATOR", "codex")
-    args = argparse.Namespace(id="T1", repo=str(repo), read_only=False,
-                              background=True, print_only=False, effort="")
-    def forbidden(*_args, **_kwargs):
-        pytest.fail("unsupported native operation dispatched or mutated state")
 
-    with monkeypatch.context() as guard:
-        guard.setattr(delegate, "require_task_worktree", lambda _base: None)
-        guard.setattr(delegate, "require_ready_task", lambda *_args: task)
-        for name in ("compose_brief", "append_delegation", "append_event",
-                     "_acquire_delegation_lock", "safe_factory_write_bytes"):
-            guard.setattr(delegate, name, forbidden)
-        guard.setattr(delegate.subprocess, "Popen", forbidden)
-        guard.setattr(os, "kill", forbidden)
-        for read_only in (False, True):
-            for print_only in (False, True):
-                args.read_only, args.print_only = read_only, print_only
-                with pytest.raises(SystemExit) as error:
-                    delegate.cmd_delegate(args)
-                assert error.value.code == 1 and "foreground-only" in capsys.readouterr().out
-            with pytest.raises(SystemExit) as error:
-                delegate.launch_companion(
-                    repo, task_id="T1", text="unused", path=repo / ".factory/unused.md",
-                    task_sha256_value=task_digest(task), model="gpt-test",
-                    effort="medium", write=not read_only, background=True,
-                )
-            assert error.value.code == 1 and "foreground-only" in capsys.readouterr().out
-        for words in (("codex", "cancel", "T1"), ("codex", "resume", "T1"),
-                      ("codex", "resume", "T1", "--background"),
-                      ("codex", "jobs"), ("explore",), ("explore", "--background")):
-            guard.setattr(sys, "argv", ["forge", *words])
-            with pytest.raises(SystemExit) as error:
-                cli.main()
-            assert error.value.code == 2
-        for words in (
-            ("explore", "--prompt-file", str(explore_prompt)),
-            ("explore", "--prompt-file", str(explore_prompt), "--background"),
-        ):
-            guard.setattr(sys, "argv", ["forge", *words])
-            with pytest.raises(SystemExit) as error:
-                cli.main()
-            assert error.value.code == 2
+def test_delegate_help_describes_runtime_neutral_preparation(repo):
+    code, output = run(repo, "forge.py", "delegate", "--help")
+    assert code == 0, output
+    lowered = output.lower()
+    assert "request background execution from the active runtime" in lowered
+    assert "print the dispatch" in lowered
+    assert "foreground-only" not in lowered
+    assert "codex" not in lowered and "claude" not in lowered
 
-        rows = []
-        guard.setattr(delegate, "load_delegations", lambda _base: rows)
-        guard.setattr(delegate, "_pid_alive", lambda pid: pid == 11)
-        guard.setattr(delegate, "_process_start_identity", lambda _pid: "known")
-        guard.setattr(codex_status, "cmd_status", forbidden)
-        status_args = argparse.Namespace(repo=str(repo))
-        def row(task_id, *, pid=12, transport="native", status="running"):
-            return dict(launch_id=task_id, task=task_id, pid=pid,
-                        pid_started="known", transport=transport,
-                        launch_status=status, output_path="native.jsonl",
-                        stderr_path="native.stderr")
-        for invalid in ([], [row("T1")], [row("T1", pid=11)],
-                        [row("grill-task-T1", pid=11)], [row("grill-plan", status="failed")],
-                        [row("grill-plan", transport="companion")], [row("grill-unknown")],
-                        [row("grill-plan/T1")], [row("grill-plan-T1")],
-                        [row("grill-signoff-anything")]):
-            rows[:] = invalid
-            with pytest.raises(SystemExit, match="no eligible dead native grill"):
-                cli._native_dead_grill_status(status_args)
-        capsys.readouterr()
-        rows[:] = [row("T1"), row("grill-plan"), row("grill-task-T1")]
-        cli._native_dead_grill_status(status_args)
-        output = capsys.readouterr().out
-        assert "[DEAD GRILL] grill-task-T1" in output
-        assert "[DEAD GRILL] grill-plan" in output
-        assert "native.jsonl" in output and "native.stderr" in output
-        assert "[DEAD GRILL] T1" not in output
-    code, output = run(repo, "pre_tool_use.py", stdin=json.dumps({
-        "tool_name": "request_user_input", "tool_input": {"questions": []},
-    }), env={"FORGE_COORDINATOR": "codex"})
-    assert code == 0 and "deny" in output and "signal escalate" in output
-    code, output = run(repo, "pre_tool_use.py", stdin=json.dumps({
-        "tool_name": "request_user_input_async", "tool_input": {"questions": []},
-    }), env={"FORGE_COORDINATOR": "codex"})
-    assert code == 0 and "deny" in output and "optional clarification" in output
-    code, output = run(repo, "pre_tool_use.py", stdin=json.dumps({
-        "tool_name": "Bash", "tool_input": {"command": "codex exec 'inspect'"},
-    }), env={"FORGE_COORDINATOR": "codex"})
-    assert code == 0 and "deny" in output and "current coordinator chat" in output
-    assert "forge explore" not in output
-    assert snapshot() == before
-
-    # The supported Claude status and read-only background routes still dispatch.
-    monkeypatch.setenv("FORGE_COORDINATOR", "claude")
-    calls = []
-    monkeypatch.setattr(codex_status, "cmd_status", lambda value: calls.append(value))
-    cli._native_dead_grill_status(status_args)
-    assert calls == [status_args]
-    monkeypatch.setattr(delegate, "compose_brief", lambda *_a, **_k: "context")
-    monkeypatch.setattr(delegate, "pinned_run_config", lambda _base: ("gpt-test", "medium"))
-    monkeypatch.setattr(delegate, "launch_companion", lambda *_a, **kwargs: calls.append(kwargs))
-    monkeypatch.setattr(delegate, "append_event", lambda *_a, **_k: None)
-    args.read_only, args.print_only = True, False
-    delegate.cmd_delegate(args)
-    assert calls[-1]["background"] is True and calls[-1]["write"] is False
 
 def test_task_proof_consumers_share_complete_predicate(repo, tmp_path):
     sign_off(repo)

@@ -58,6 +58,26 @@ def test_a_succeeded_terminal_launch_refuses_another_cold_read(repo: Path):
     assert _repeat_read_is_refused(repo)
 
 
+def test_a_host_native_preparation_consumes_the_cold_read(repo: Path):
+    """Preparing the cold reader is the native release budget boundary.
+
+    The host owns ``spawn_agent``, so Forge never receives a child-process
+    terminal row.  Allowing a second preparation would therefore release a
+    second independent reader before the first result is recorded.
+    """
+    _seed(repo)
+    path = _lifecycle(repo, "native-preparation", ("prepared",))
+    row = json.loads(path.read_text(encoding="utf-8"))
+    row.update({
+        "transport": "host-native",
+        "preparation_id": "native-preparation",
+        "artifact_sha256": "a" * 64,
+    })
+    path.write_text(json.dumps(row) + "\n", encoding="utf-8")
+
+    assert _repeat_read_is_refused(repo)
+
+
 def test_starting_and_running_launches_block_an_overlapping_cold_read(
         repo: Path, monkeypatch):
     _seed(repo)

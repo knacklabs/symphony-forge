@@ -210,9 +210,9 @@ try:
         client_signoff, load_json, repo_root, run_state_path,
     )
     from forge_cli.context import context_files, context_paths, scan_inbox
+    from forge_cli.codex_runtime import coordinator_runtime
     from forge_cli.quickfix import DEGRADED, claim_files, load_active, profile_of
     from forge_cli.repo_kind import is_harness_source_repo, locked_repo_path
-    from forge_cli.worker_admission import live_worker_admission, path_in_scope
 except (ImportError, SyntaxError) as exc:
     denylist_fallback(payload, type(exc).__name__)
 
@@ -220,15 +220,16 @@ tool_name = payload.get("tool_name", "")
 tool_input = payload.get("tool_input") or {}
 command = (tool_input.get("command") or "").strip()
 permission_mode = payload.get("permission_mode", "")
+native_codex = coordinator_runtime() == "codex"
 
 
 # ---------------------------------------------------------------- ask gate --
 # One of the two ways to interrupt the human. The rule itself lives in
 # factory_lib.may_interrupt so this and the Stop hook cannot drift apart.
-if tool_name == "request_user_input_async":
+if not native_codex and tool_name == "request_user_input_async":
     deny("Asynchronous questions are optional clarification only and cannot "
          "satisfy a required exchange, gate, or approval.")
-if tool_name in {"request_user_input", "AskUserQuestion"}:
+if not native_codex and tool_name in {"request_user_input", "AskUserQuestion"}:
     try:
         from factory_lib import may_interrupt
         allowed, reason = may_interrupt(Path.cwd(), spend=True)
@@ -956,7 +957,8 @@ def _wrapped_codex_exec(tokens: list[str]) -> bool:
     return False
 
 check_bypass = ["pnpm test", "pnpm lint", "pnpm typecheck", "pnpm check:all"]
-if any(token in command for token in check_bypass) and "factory/scripts/verify.py" not in command:
+if (not native_codex and any(token in command for token in check_bypass)
+        and "factory/scripts/verify.py" not in command):
     deny(
         "Use `python3 factory/scripts/verify.py` so verification artifacts stay deterministic."
     )
@@ -1083,28 +1085,58 @@ locked_targets = list(dict.fromkeys(
     if (rel := product_path(raw, root, is_harness)) is not None
 ))
 scoped_targets = write_targets if tool_name == PATCH_TOOL else locked_targets
-worker, worker_error = live_worker_admission(root)
-if scoped_targets and worker_error:
-    deny(worker_error)
-if scoped_targets and worker:
-    marker_targeted = any(_contains_marker(rel) for rel in scoped_targets)
-    if marker_targeted and worker["kind"] != "stage":
-        deny(MARKER_PLAN_ONLY_MSG)
-    if worker["kind"] == "stage":
-        outside = [rel for rel in scoped_targets
-                   if not path_in_scope(rel, worker["scope"])]
-        if outside:
-            deny("Registered worker write is outside the protected task scope: "
-                 + ", ".join(outside))
-    elif worker["kind"] == "lite":
-        claimed, _ = claim_files(root, locked_targets)
-        if not claimed:
-            deny(QUICKFIX_LIMIT_MSG)
-    else:
-        deny("Forge worker write admission returned an unknown grant kind.")
+if native_codex:
+    if scoped_targets:
+        if window:
+            if command and has_opaque_product_write(command, root, is_harness):
+                deny(OPAQUE_DEGRADED_MSG)
+            if any(_contains_marker(rel) for rel in scoped_targets):
+                deny(MARKER_PLAN_ONLY_MSG)
+            claimed, _ = claim_files(root, locked_targets)
+            if not claimed:
+                deny(QUICKFIX_LIMIT_MSG)
+        else:
+            try:
+                from forge_cli.worker_admission import (
+                    native_stage_admission, path_in_scope,
+                )
+            except (ImportError, SyntaxError) as exc:
+                denylist_fallback(payload, type(exc).__name__)
+            worker, worker_error = native_stage_admission(root)
+            if worker_error:
+                deny(worker_error)
+            outside = [rel for rel in scoped_targets
+                       if not path_in_scope(rel, worker["scope"])]
+            if outside:
+                deny("Host-native write is outside the active task scope: "
+                     + ", ".join(outside))
 else:
-    guard_product_writes(write_targets, root,
-                         command=command if tool_name == "Bash" else "")
+    try:
+        from forge_cli.worker_admission import live_worker_admission, path_in_scope
+    except (ImportError, SyntaxError) as exc:
+        denylist_fallback(payload, type(exc).__name__)
+    worker, worker_error = live_worker_admission(root)
+    if scoped_targets and worker_error:
+        deny(worker_error)
+    if scoped_targets and worker:
+        marker_targeted = any(_contains_marker(rel) for rel in scoped_targets)
+        if marker_targeted and worker["kind"] != "stage":
+            deny(MARKER_PLAN_ONLY_MSG)
+        if worker["kind"] == "stage":
+            outside = [rel for rel in scoped_targets
+                       if not path_in_scope(rel, worker["scope"])]
+            if outside:
+                deny("Registered worker write is outside the protected task scope: "
+                     + ", ".join(outside))
+        elif worker["kind"] == "lite":
+            claimed, _ = claim_files(root, locked_targets)
+            if not claimed:
+                deny(QUICKFIX_LIMIT_MSG)
+        else:
+            deny("Forge worker write admission returned an unknown grant kind.")
+    else:
+        guard_product_writes(write_targets, root,
+                             command=command if tool_name == "Bash" else "")
 # A heredoc whose ONLY consumer is a data sink (cat/tee/printf/echo writing
 # to a file) is data, never argv: its body is dropped before the companion
 # classification so a note that mentions the companion, or holds a quote or
@@ -1161,20 +1193,6 @@ has_companion = (
            for token in shell_tokens)
     or "codexcompanion" in compact_command
 )
-# Read-only companion runs are the /codex:rescue exploration lane and
-# pass — but ONLY in a shape whose argv the hook can prove from text: a
-# single simple command, no shell metacharacters, launching the
-# companion directly (optionally via node). Anything else that mentions
-# the companion is either a safe display command (rg/cat/...) or an
-# unverifiable launch, which is denied: shell text cannot bound a child
-# interpreter's computed argv, so we never try.
-# `result <job-id>` only prints a stored job's output — the fetch path for a
-# backgrounded read-only /codex:rescue run; `--background` merely detaches a
-# read-only `task`. Neither can write (writes need --write, never allowlisted).
-# `cancel`, `setup` and `task-worker` mutate state and stay denied.
-READONLY_COMPANION_VERBS = {"status", "task", "task-resume-candidate", "result"}
-READONLY_COMPANION_FLAGS = {"--model", "--effort", "--json", "--background"}
-COMPANION_NAME = re.compile(r"codex-companion(?:\.mjs)?")
 # No shell-capable pagers (less/more run "+!cmd" startup commands).
 DISPLAY_SAFE_ARGV0 = {
     "rg", "grep", "cat", "head", "tail", "printf", "echo",
@@ -1239,76 +1257,16 @@ quoted_display = (
 )
 if codex_match and not codex_help and not quoted_display:
     deny(
-        "Direct `codex exec` is off-contract. Use `./forge delegate <task-id>` "
-        "for protected implementation; keep read-only exploration in the current "
-        "coordinator chat. Native background and explore commands are unavailable "
-        "in this release."
+        "Direct `codex exec` is off-contract. In Codex, use the host's native "
+        "subagent tools with the descriptor from `./forge delegate <task-id>`; "
+        "in Claude, use the Forge-managed codex-plugin-cc path."
     )
 
 
-def _companion_readonly_launch_ok():
-    """True iff the command is a provably read-only companion launch."""
-    if _has_active_shell_syntax(command):
-        return False
-    if not shell_tokens:
-        return False
-    argv0 = Path(shell_tokens[0]).name
-    comp_idx = None
-    for idx, token in enumerate(shell_tokens):
-        if COMPANION_NAME.fullmatch(Path(token).name):
-            comp_idx = idx
-            break
-    if comp_idx is None:
-        # Companion referenced only inside larger tokens (prose/paths):
-        # display commands may show it; anything else is unverifiable.
-        return argv0 in DISPLAY_SAFE_ARGV0 and _display_safe(shell_tokens)
-    if comp_idx == 0 or (comp_idx == 1 and argv0 in ("node", "nodejs")):
-        rest = shell_tokens[comp_idx + 1:]
-        # Verb allowlist, not a flag denylist: other subcommands (setup,
-        # cancel, task-worker) mutate state without any write flag. Options
-        # are default-deny too: --cwd can retarget other repos, and future
-        # flags should not be trusted implicitly. The equals-sign form of
-        # --prompt-file stays explicitly unsupported because it is not the
-        # exact allowlisted flag and therefore fails the argv check below.
-        if not rest or rest[0] not in READONLY_COMPANION_VERBS:
-            return False
-        args = rest[1:]
-        prompt_flags = [idx for idx, token in enumerate(args)
-                        if token == "--prompt-file"]
-        if prompt_flags:
-            if rest[0] != "task" or len(prompt_flags) != 1:
-                return False
-            prompt_idx = prompt_flags[0]
-            if prompt_idx + 1 >= len(args) or args[prompt_idx + 1].startswith("-"):
-                return False
-            prompt_path = Path(args[prompt_idx + 1])
-            if prompt_path.is_absolute() or ".." in prompt_path.parts:
-                return False
-            try:
-                resolved_root = root.resolve()
-                resolved_prompt = (resolved_root / prompt_path).resolve()
-                valid_prompt = (resolved_prompt.is_relative_to(resolved_root)
-                                and resolved_prompt.is_file())
-            except (OSError, RuntimeError):
-                valid_prompt = False
-            if not valid_prompt:
-                return False
-            args = args[:prompt_idx] + args[prompt_idx + 2:]
-        return all(
-            not token.startswith("-") or token in READONLY_COMPANION_FLAGS
-            for token in args
-        )
-    # Companion path appears under another executor (xargs, env, sh -c,
-    # an interpreter): the final argv cannot be established from text.
-    return argv0 in DISPLAY_SAFE_ARGV0 and _display_safe(shell_tokens)
-
-
-if tool_name == "Bash" and has_companion and not _companion_readonly_launch_ok():
-    deny("Companion launches are off-contract unless they are a provably "
-         "read-only direct invocation (no write flags, no shell "
-         "metacharacters, no wrapping executor). Use `./forge delegate "
-         "<task-id>` for write work; it owns the argv launch and records "
-         "evidence that `forge stage done` can verify.")
+if tool_name == "Bash" and has_companion and not quoted_display:
+    deny("Companion launches are off-contract. Use `./forge delegate <task-id>`; "
+         "Codex dispatches its host-native subagent descriptor and Claude owns "
+         "the codex-plugin-cc launch internally.")
 
 if run_state and not client_signoff(root)[0]:
     advancing = any(script in command for script in PHASE_ADVANCING)

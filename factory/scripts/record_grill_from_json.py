@@ -248,6 +248,123 @@ def _cold_launch_result(
     return digest, findings, cold_artifact
 
 
+def _regular_utf8_bytes(path: Path, gate: str) -> tuple[bytes, str]:
+    """Read a native handoff result without accepting links or byte drift."""
+    try:
+        info = path.lstat()
+        if (stat.S_ISLNK(info.st_mode) or not stat.S_ISREG(info.st_mode)
+                or info.st_nlink != 1):
+            raise SystemExit(f"{gate} host-native cold result is not a regular file")
+        identity = (info.st_dev, info.st_ino, info.st_size, info.st_mtime_ns)
+        descriptor = os.open(path, os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0))
+        with os.fdopen(descriptor, "rb") as stream:
+            opened = os.fstat(stream.fileno())
+            if ((opened.st_dev, opened.st_ino, opened.st_size,
+                 opened.st_mtime_ns) != identity
+                    or not stat.S_ISREG(opened.st_mode) or opened.st_nlink != 1):
+                raise SystemExit(f"{gate} host-native cold result identity changed")
+            data = stream.read()
+            after = os.fstat(stream.fileno())
+            current = path.lstat()
+            if ((after.st_dev, after.st_ino, after.st_size,
+                 after.st_mtime_ns) != identity
+                    or (current.st_dev, current.st_ino, current.st_size,
+                        current.st_mtime_ns) != identity
+                    or stat.S_ISLNK(current.st_mode)
+                    or not stat.S_ISREG(current.st_mode)
+                    or current.st_nlink != 1):
+                raise SystemExit(f"{gate} host-native cold result changed while read")
+    except OSError:
+        raise SystemExit(f"{gate} host-native cold result is unavailable")
+    if not data:
+        raise SystemExit(f"{gate} host-native cold result is empty")
+    try:
+        text = data.decode("utf-8")
+    except UnicodeDecodeError:
+        raise SystemExit(f"{gate} host-native cold result is not UTF-8")
+    return data, text
+
+
+def _native_cold_launch_result(
+    root: Path, gate: str, task_id: str, result_path: Path,
+    preparation_id: str,
+) -> tuple[str, dict, str | None, str]:
+    """Admit one process-free host-native griller preparation and its result."""
+    from forge_cli.delegate import argv_digest, load_delegations
+    from forge_cli.grill import _cold_artifact_from_brief
+
+    if not re.fullmatch(r"launch-[0-9a-f]{32}", preparation_id):
+        raise SystemExit(f"{gate} host-native preparation id is invalid")
+    label = f"grill-{gate}" + (f"-{task_id}" if task_id else "")
+    story = load_json(run_state_path(root), default={}).get("issue_key", "")
+    spec = get_gate(gate)
+    previous = load_json(
+        evidence_path(root, story if spec.story_scoped else "",
+                      spec.evidence_name(task_id)), default={},
+    )
+    since = str(previous.get("recorded_at") or "")
+    rows = [row for row in load_delegations(root)
+            if row.get("launch_id") == preparation_id
+            and row.get("task") == label
+            and (not spec.story_scoped or row.get("story") == story)
+            and str(row.get("at") or "") > since]
+    if len(rows) != 1:
+        raise SystemExit(
+            f"{gate} grill requires exactly one matching host-native prepared "
+            f"row; found {len(rows)}"
+        )
+    prepared = rows[0]
+    forbidden_fragments = (
+        "pid", "session", "token", "output", "process", "stderr",
+        "companion", "exit_code",
+    )
+    forbidden = [key for key in prepared
+                 if any(fragment in key.lower()
+                        for fragment in forbidden_fragments)]
+    if forbidden:
+        raise SystemExit(
+            f"{gate} host-native preparation carries process claims: "
+            + ", ".join(sorted(forbidden))
+        )
+    argv = prepared.get("argv")
+    if (prepared.get("launch_status") != "prepared"
+            or prepared.get("transport") != "host-native"
+            or str(prepared.get("story") or "") != str(story or "")
+            or prepared.get("write") is not False
+            or prepared.get("agent_type") != "griller"
+            or argv != []
+            or prepared.get("argv_sha256") != argv_digest([])
+            or prepared.get("model") != ""
+            or prepared.get("effort") != ""):
+        raise SystemExit(f"{gate} host-native cold-read preparation is invalid")
+
+    brief = root / ".factory" / (
+        f"grill-brief-{gate}" + (f"-{task_id}" if task_id else "") + ".md"
+    )
+    try:
+        brief_bytes = brief.read_bytes()
+    except OSError:
+        brief_bytes = b""
+    digest = prepared.get("task_sha256")
+    if (prepared.get("brief_path") != brief.relative_to(root).as_posix()
+            or not brief_bytes
+            or prepared.get("brief_sha256")
+            != hashlib.sha256(brief_bytes).hexdigest()
+            or not isinstance(digest, str)
+            or not re.fullmatch(r"[0-9a-f]{64}", digest)):
+        raise SystemExit(f"{gate} host-native cold-read brief identity is invalid")
+    try:
+        cold_artifact = _cold_artifact_from_brief(brief_bytes, digest)
+    except UnicodeDecodeError:
+        raise SystemExit(f"{gate} host-native cold-read artifact is not UTF-8")
+    if cold_artifact is None:
+        raise SystemExit(f"{gate} host-native cold-read input digest is invalid")
+
+    result_bytes, finding_text = _regular_utf8_bytes(result_path, gate)
+    findings = _cold_findings(gate, finding_text)
+    return digest, findings, cold_artifact, hashlib.sha256(result_bytes).hexdigest()
+
+
 def _artifact_delta(cold: str, final: str) -> list[dict]:
     """Return exact changed line spans; equal content is intentionally omitted."""
     cold_lines = cold.splitlines(keepends=True)
@@ -480,7 +597,21 @@ parser.add_argument("--input-digest", dest="input_digest",
                          "--gate spec/epics, the plan draft for --gate plan); its sha256 binds "
                          "the grill to THAT version. Required for epics and plan gates.")
 parser.add_argument("--task", help="Task id for --gate task.")
+parser.add_argument(
+    "--cold-result",
+    help="Regular UTF-8 file containing a host-native griller's JSON-only result.",
+)
+parser.add_argument(
+    "--preparation-id",
+    help="Host-native preparation_id printed by `forge grill run`.",
+)
 args = parser.parse_args()
+
+if bool(args.cold_result) != bool(args.preparation_id):
+    raise SystemExit(
+        "--cold-result and --preparation-id are required together for a "
+        "host-native grill result"
+    )
 
 if args.input:
     payload = json.loads(Path(args.input).read_text(encoding="utf-8"))
@@ -592,8 +723,18 @@ _gate = get_gate(args.gate)
 _label, artifact = _gate.locate(root, args.task or "", args.input_digest or "")
 from forge_cli.grill import _artifact_digest
 final_digest = _artifact_digest(artifact)
-_cold_digest, _cold_findings, _cold_artifact = _cold_launch_result(
-    root, args.gate, args.task or "")
+if args.cold_result:
+    _cold_digest, _cold_findings, _cold_artifact, _result_sha256 = \
+        _native_cold_launch_result(
+            root, args.gate, args.task or "",
+            Path(args.cold_result).expanduser(), args.preparation_id,
+        )
+    payload["transport"] = "host-native"
+    payload["preparation_id"] = args.preparation_id
+    payload["result_sha256"] = _result_sha256
+else:
+    _cold_digest, _cold_findings, _cold_artifact = _cold_launch_result(
+        root, args.gate, args.task or "")
 _validate_dispositions(
     payload, _cold_digest, final_digest, _cold_findings,
     _cold_artifact, artifact,

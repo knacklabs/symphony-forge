@@ -9,9 +9,10 @@ saved: 2026-07-27T12:06:47+00:00
 
 ## Capability
 
-The Claude→Codex handoff becomes an instrumented boundary. Three facts that
-are today decided by judgement — *may this run write?*, *did it finish?*,
-*what does it know?* — become artifacts a script can check and refuse on.
+The coordinator→Codex handoff is a briefed, bounded boundary. Forge validates
+what the task may change and what proof must pass. Claude retains an
+instrumented plugin-companion lifecycle; native Codex delegates through the
+host's role-based subagents without adding another process manager.
 
 ## Why
 
@@ -32,54 +33,52 @@ Four reported failures, each traced to a mechanical cause:
 
 ## Behaviour
 
-**A delegation is a briefed, recorded act.** `forge delegate <task-id>`
-composes a brief from artifacts that already exist — the task's objective,
-acceptance criteria, `write_scope`, `required_tests`, `reviewer_focus`, the
-implementer prompt, the active decisions, the lessons matching the task's
-paths, and the modules already present in that scope — writes it to
-`.factory/briefs/<task-id>.md`, invokes the installed companion directly with
-a subprocess argument vector, and records running and terminal evidence with
-one launch id and the brief's digest. Stage close refuses while any matching
-launch remains active. An OS-backed single-writer lock in Git's
-protected control directory prevents canonical-brief rewrites and is held by
-stage close through its persisted done transition; a shared state lock
-serializes stage-state changes and revalidates stage identity. Retry reconciles
-a dead interruption, and every terminal path reaps the process group plus
-trusted descendants observed during execution and a post-exit quiet window on
-TERM, HUP and QUIT. PID start identity prevents a recycled PID
-from being mistaken for the original worker; an unverified reused process group
-blocks retry and is never signalled. Authoritative launch evidence,
-decomposition, and stage state are protected with the locks; their `.factory/`
-copies are best-effort, non-authoritative mirrors. `--print-only` never counts
-as a launch.
+**A delegation is briefed and validated.** `forge delegate <task-id>` composes
+a canonical brief from the task objective, acceptance criteria, `write_scope`,
+`required_tests`, `reviewer_focus`, implementer prompt, active decisions,
+matching lessons, and existing modules. It writes
+`.factory/briefs/<task-id>.md` after validating the current task, grill, stage,
+worktree and effective scope.
+
+In native Codex the command records a preparation row binding task, worktree,
+stage, brief digest and effective or narrowed scope, returns dispatch
+information, and stops. Main calls
+the host's role-based `spawn_agent` with the matching configured role and the
+canonical brief, omitting model and reasoning overrides so that role's
+configured defaults apply and may pin either value. Forge never invokes
+`codex exec`, registers the native process/session, or
+wraps host collaboration in a second lifecycle. In Claude, the same command
+continues to invoke the protected `codex-plugin-cc` companion and retains that
+route's launch, terminal, lock and cleanup evidence.
 
 **Write permission is derived, not typed.** An active stage with a non-empty
 `write_scope` is a write run. `--read-only` is the explicit exception.
 
 `forge delegate <task-id> --scope <repo-path> [--scope ...]` may narrow a
-write launch to a proper subset of the effective approved scope. One exact
+write dispatch to a proper subset of the effective approved scope. One exact
 approved file is a valid member. The normalized subset is stored in the
-existing delegation `write_scope`, included in the brief and launch identity,
-and enforced by admission hooks; it creates no second scope ledger. Omitting
+existing delegation `write_scope`, included in the brief, and recorded in the
+native preparation row; Claude also binds it into companion launch identity.
+It creates no second scope ledger. Omitting
 the flag uses the complete effective scope. Equal, empty, escaping, duplicate,
-or out-of-scope selections refuse before launch.
+or out-of-scope selections refuse before dispatch.
 
-**A brief is not skippable.** `forge delegate` is the canonical execution
-boundary; direct companion Bash calls are off-contract and routed back to it.
-`stage done` refuses without a successful write launch bound to the active
-stage and its recorded launch identity, including the narrowed write scope.
-The recorded brief digest remains historical launch evidence; later valid
-regeneration of the derived brief does not invalidate a completed stage-bound
-write. The hook does not try
-to authorize arbitrary shell by reconstructing its final argv; every literal
-companion token is routed through `forge delegate`.
-Active write stages run in the foreground; background mode is read-only
-exploration because a queued worker cannot be included in the final measurement.
+**A brief is not skippable.** `forge delegate` is the canonical validation and
+brief-preparation boundary. Raw/direct/nested `codex exec` and direct plugin
+shell launch are off-contract and hook-denied in both runtimes. In
+native mode stage close requires the current preparation row but no launch ID,
+terminal row, process token, PID ancestry or held lock. Later valid regeneration
+of the derived brief does not invalidate completed task proof. Claude retains
+its successful plugin-launch requirement and degraded-mode outage valve.
+
+**Native host features stay at their defaults.** Forge adds no native
+foreground/background rule and no status, cancel, resume, recovery, signal,
+process-cleanup or session-fencing restriction. Those operations belong to the
+host. This deliberately removes mechanical native authorship attribution.
 
 **Completion is a measurement.** `forge stage done` refuses unless the diff
 since the stage's base commit is non-empty, every changed product path is
-covered by the task's `write_scope`, a successful write launch was recorded,
-every `required_tests` proof names an existing repo-relative path, its
+covered by the task's `write_scope`, every `required_tests` proof names an existing repo-relative path, its
 runner-owned command exits green, and its fresh JUnit report names the declared
 test; every `verify_commands` entry also runs green. Required tests use
 `{id, path, command}` objects whose command includes runner-native `{path}` and
@@ -102,10 +101,10 @@ their measured scopes are disjoint; overlapping scopes remain serialized.
 missing>"` leaves the stage open and records the gap, so a worker that
 finished 60% has vocabulary other than silence.
 
-**A stalled run is visible without being asked for.** `forge codex status`
-reads the plugin's job registry and reports each job's status, phase, write
-flag and age, flagging a long-running job with no phase change and a
-`write: false` job launched while a stage was active.
+**Status uses the owning runtime.** Native Codex uses the host's normal
+subagent status and coordination tools without Forge restrictions. Under
+Claude, `forge codex status` reads the plugin job registry as an advisory view;
+it is never a gate.
 
 **A skill the harness demands must be loadable where it is attested.**
 `forge doctor` checks the required and advised skills against every runtime
@@ -121,8 +120,10 @@ expected to attest them, and `--fix` installs what is missing.
   concurrently only in isolated task worktrees with disjoint measured scopes;
   overlapping scopes remain serialized.
 - A decomposition recording prose where a command belongs is refused.
-- A stage without a successful fresh write launch through `forge delegate`
-  cannot close; direct literal companion Bash calls are routed to that command.
+- Native Codex closeout requires a validated canonical delegation but no
+  launch-process proof. Claude closeout retains its protected companion launch
+  requirement or documented degraded-mode substitute. Direct `codex exec` is
+  rejected in either route.
 - New decompositions reject opaque `required_tests` strings; each required
   test is a runner-owned `{id, path, command}` proof executed at stage close
   and confirmed through fresh JUnit XML written at `{report}`. The testcase
@@ -133,20 +134,20 @@ expected to attest them, and `--fix` installs what is missing.
 - A narrowed delegation records and enforces only its proper approved subset;
   omission retains the full effective scope and no parallel scope authority is
   created.
-- `forge codex status` reports the write flag per job and flags a stalled one.
+- Native host status/cancel/resume/background features remain available without
+  Forge policy. Claude `forge codex status` remains advisory.
 - `forge doctor` reports a required skill that a runtime cannot load.
 - `forge next` names the delegation step.
 
 ## Boundaries
 
-`forge codex status` reads a third-party path; it is a diagnostic and must
-never be able to block a ship. The board stays read-only — delegation state is
-CLI-surfaced this round. Existing shipped history keeps its prose
-`verify_commands`; only new decompositions are refused.
+`forge codex status` reads a third-party path on the Claude route; it is a
+diagnostic and must never block a ship. The board stays read-only. Existing
+shipped history keeps its prose `verify_commands`; only new decompositions are
+refused.
 
-Delegation and proof commands are trusted repository inputs. Process groups,
-PID identity, inherited launch tokens, termination handlers, and a post-exit
-quiet window provide deterministic cleanup for ordinary detached children;
-they are not a hostile-code sandbox against a process that deliberately
-double-forks and clears its environment. Supporting untrusted commands requires
-the separately deferred, digest-pinned container runtime boundary.
+Delegation and proof commands are trusted repository inputs. Claude's process
+group, PID identity, launch-token and cleanup behavior remains specific to its
+plugin companion. Native Codex makes no equivalent containment, cleanup or
+authorship claim; the host owns its subagent processes and Forge judges the
+result through task scope and proof gates.

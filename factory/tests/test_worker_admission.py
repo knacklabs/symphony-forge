@@ -38,6 +38,7 @@ def _control(repo: Path) -> Path:
 def _hook(repo: Path, payload: dict, env: dict[str, str] | None = None) -> str:
     child_env = {key: value for key, value in os.environ.items()
                  if key not in {"FORGE_PROCESS_TOKEN", "FORGE_LAUNCH_ID"}}
+    child_env["FORGE_COORDINATOR"] = "claude"
     child_env.update(env or {})
     proc = subprocess.run(
         [sys.executable, str(repo / "factory/scripts/pre_tool_use.py")],
@@ -118,6 +119,7 @@ def _start_worker(repo: Path, tmp_path: Path, *, launch_id: str = "launch-test",
     token = f"delegation-{launch_id}"
     env = {
         **os.environ,
+        "FORGE_COORDINATOR": "claude",
         "FORGE_PROCESS_TOKEN": token,
         "FORGE_LAUNCH_ID": launch_id,
     }
@@ -198,6 +200,74 @@ def _invoke_worker(proc: subprocess.Popen[str], payload: dict) -> str:
     proc.wait(timeout=10)
     assert proc.returncode == 0, (proc.stderr.read() if proc.stderr else "")
     return output
+
+
+def test_codex_native_host_needs_active_stage_but_no_process_identity(repo):
+    """Stage and scope authorize native work; PID/session/token/lock do not."""
+    denied = _hook(repo, _patch(
+        "*** Add File: src/native.py", "+native",
+    ), {"FORGE_COORDINATOR": "codex"})
+    assert "deny" in denied.lower() and "active task stage" in denied.lower(), denied
+
+    _seed_contract(repo)
+    admitted = _hook(repo, _patch(
+        "*** Add File: src/native.py", "+native",
+    ), {"FORGE_COORDINATOR": "codex"})
+    assert "deny" not in admitted.lower(), admitted
+
+    from forge_cli.stages import scope_amendments_path
+    scope_amendments_path(repo).write_text(json.dumps({
+        "tasks": {"T1": {"added_paths": ["amended/"]}},
+    }), encoding="utf-8")
+    amended = _hook(repo, _patch(
+        "*** Add File: amended/native.py", "+native",
+    ), {"FORGE_COORDINATOR": "codex"})
+    assert "deny" not in amended.lower(), amended
+
+    outside = _hook(repo, _patch(
+        "*** Add File: other/native.py", "+native",
+    ), {"FORGE_COORDINATOR": "codex"})
+    assert "deny" in outside.lower() and "scope" in outside.lower(), outside
+
+
+def test_codex_native_host_denies_direct_and_nested_codex_exec(repo):
+    for command in (
+        "codex exec inspect",
+        "bash -c 'codex exec inspect'",
+    ):
+        output = _hook(repo, {
+            "tool_name": "Bash",
+            "permission_mode": "default",
+            "tool_input": {"command": command},
+        }, {"FORGE_COORDINATOR": "codex"})
+        assert "deny" in output.lower() and "native subagent" in output.lower(), output
+
+
+def test_codex_read_only_delegate_uses_diagnostic_brief(repo, monkeypatch):
+    from forge_cli import delegate
+
+    _seed_contract(repo)
+    (_control(repo) / "stages.json").write_text(
+        json.dumps({"issue": "STORY-1", "stages": []}), encoding="utf-8",
+    )
+    canonical = repo / ".factory/briefs/T1.md"
+    original = canonical.read_bytes()
+    captured = {}
+
+    def fake_launch(base, **kwargs):
+        captured.update(kwargs)
+        return {"action": "spawn_agent"}
+
+    monkeypatch.setenv("FORGE_COORDINATOR", "codex")
+    monkeypatch.setattr(delegate, "launch_companion", fake_launch)
+    monkeypatch.setattr(delegate, "append_event", lambda *_a, **_k: None)
+    delegate.cmd_delegate(argparse.Namespace(
+        repo=str(repo), id="T1", read_only=True, scope=[], background=False,
+        context_file="", print_only=False, effort="",
+    ))
+
+    assert captured["path"] == repo / ".factory/diagnostic-briefs/T1.md"
+    assert canonical.read_bytes() == original
 
 
 def test_known_native_launch_reads_delegation_ledger_once(tmp_path, monkeypatch):
@@ -387,8 +457,8 @@ def test_worker_add_or_update_symlink_leaf_is_denied(
     assert "deny" in output and "cannot prove its write paths" in output
 
 
-def test_native_worker_reads_state_without_protected_write_authority(
-        repo, tmp_path, monkeypatch, capsys):
+def test_companion_worker_reads_state_without_protected_write_authority(
+        repo, tmp_path):
     brief, digest = _seed_contract(repo)
     proc, token, launch_id = _start_worker(repo, tmp_path, launch_id="launch-read")
     _record_launch(repo, proc, token, launch_id, brief, digest)
@@ -411,99 +481,6 @@ def test_native_worker_reads_state_without_protected_write_authority(
     assert "deny" in write_output and "never hand-written" in write_output
     assert brief.read_bytes() == protected_before
 
-    from forge_cli import codex_runtime, delegate
-    from forge_cli.stages import _require_successful_launch
-
-    row = json.loads(
-        (_control(repo) / "delegations.jsonl").read_text().splitlines()[-1]
-    )
-    row.update({
-        "launch_status": "succeeded", "exit_code": 0, "session_id": "session",
-        "output_path": str(_control(repo) / "native-runs" /
-                           f"{row['launch_id']}.jsonl"),
-        "stderr_path": str(_control(repo) / "native-runs" /
-                           f"{row['launch_id']}.stderr.log"),
-    })
-    row.pop("write_scope")
-    monkeypatch.setattr(delegate, "current_delegation", lambda *_a, **_k: row)
-    monkeypatch.setattr(codex_runtime, "parse_native_result", lambda _path: "session")
-    monkeypatch.setattr(codex_runtime, "native_argv_valid", lambda *_a: True)
-    with pytest.raises(SystemExit):
-        _require_successful_launch(
-            repo, "T1", {"started_at": "stage-1"}, TASK,
-        )
-    assert "no successful write launch" in capsys.readouterr().out
-
-
-@pytest.mark.parametrize("cleanup_succeeds", [True, False])
-def test_foreground_cleanup_revokes_admission_before_signals(
-        repo, tmp_path, monkeypatch, cleanup_succeeds):
-    import forge_cli.delegate as delegate
-    import forge_cli.worker_admission as admission
-    import forge_cli.doctor as doctor
-    from forge_cli.delegate import load_delegations
-
-    class FakeStdin:
-        def write(self, _value):
-            return None
-
-        def close(self):
-            return None
-
-    class FakeProcess:
-        pid = 4242
-        returncode = None
-        stdin = FakeStdin()
-
-    process = FakeProcess()
-    events = []
-    monkeypatch.setenv("FORGE_COORDINATOR", "codex")
-    monkeypatch.setattr(delegate.shutil, "which", lambda _name: "/usr/bin/codex")
-    monkeypatch.setattr(doctor, "codex_hook_readiness", lambda _base: (True, ""))
-    monkeypatch.setattr(delegate, "_process_table", lambda: {})
-    monkeypatch.setattr(delegate, "_capture_spawn_identity", lambda _proc: "4242.0")
-    real_popen = delegate.subprocess.Popen
-
-    def spawn(argv, *args, **kwargs):
-        if argv and argv[0] == "/usr/bin/codex":
-            return process
-        return real_popen(argv, *args, **kwargs)
-
-    monkeypatch.setattr(delegate.subprocess, "Popen", spawn)
-
-    def fail_wait(*_args, **_kwargs):
-        raise RuntimeError("cleanup unavailable")
-
-    monkeypatch.setattr(delegate, "_wait_and_reap", fail_wait)
-    monkeypatch.setattr(delegate, "_process_group_alive", lambda _pid: False)
-
-    def cleanup(*_args):
-        launch_id = load_delegations(repo)[-1]["launch_id"]
-        events.append(admission.worker_admission_revoked(repo, launch_id))
-        return cleanup_succeeds
-
-    monkeypatch.setattr(delegate, "_terminate_observed_process_tree", cleanup)
-    with pytest.raises(RuntimeError, match="cleanup unavailable"):
-        delegate.launch_companion(
-            repo,
-            task_id="T1",
-            text="fixture prompt",
-            path=repo / ".factory" / "briefs" / "T1.md",
-            task_sha256_value="task-digest",
-            model="model-pin",
-            effort="medium",
-            write=True,
-        )
-
-    assert events == [True]
-    rows = load_delegations(repo)
-    terminal = [
-        row for row in rows
-        if row["launch_status"] in {"failed", "succeeded"}
-    ]
-    assert [row["launch_status"] for row in terminal] == (
-        ["failed"] if cleanup_succeeds else []
-    )
 
 
 def test_stage_worker_may_change_repo_marker_only_when_scope_names_it(repo, tmp_path):
@@ -775,6 +752,56 @@ def test_terminal_launch_never_retains_write_admission(repo, tmp_path, terminal)
         }) + "\n")
     output = _invoke_worker(proc, _patch("*** Add File: src/new.py", "+new"))
     assert "deny" in output and "not exclusively running" in output
+
+
+def test_native_lite_fix_prepares_without_stage_and_keeps_window_budget(
+        repo, monkeypatch, capsys):
+    from forge_cli import fix
+    from forge_cli.delegate import load_delegations
+
+    (repo / ".factory/harness-source.json").write_text("{}\n", encoding="utf-8")
+    window_id = "Q-0002-native-lite"
+    (repo / ".factory/quickfix.json").write_text(json.dumps({
+        "id": window_id,
+        "profile": "lite",
+        "reason": "bounded host-native fix",
+        "started_at": "2026-09-18T00:00:00Z",
+        "max_files": 5,
+        "files": [],
+        "harness_source": True,
+        "base_sha": git(repo, "rev-parse", "HEAD"),
+    }), encoding="utf-8")
+    monkeypatch.setenv("FORGE_COORDINATOR", "codex")
+
+    fix.cmd_fix(argparse.Namespace(
+        description="repair a bounded native issue", repo=str(repo),
+    ))
+
+    output = capsys.readouterr().out
+    assert '"transport": "host-native"' in output
+    assert "NEXT: dispatch" in output
+    prepared = load_delegations(repo)[-1]
+    assert prepared["transport"] == "host-native"
+    assert prepared["launch_status"] == "prepared"
+    assert prepared["mode"] == "lite"
+    assert prepared["task"] == window_id
+    assert prepared["write_scope"] == []
+    assert not ({"pid", "session_id", "process_token"} & prepared.keys())
+
+    for index in range(5):
+        admitted = _hook(repo, _patch(
+            f"*** Add File: src/lite-{index}.py", "+new",
+        ), {"FORGE_COORDINATOR": "codex"})
+        assert "deny" not in admitted.lower(), admitted
+    refused = _hook(repo, _patch(
+        "*** Add File: src/lite-over-budget.py", "+new",
+    ), {"FORGE_COORDINATOR": "codex"})
+    assert "deny" in refused.lower() and "five-file" in refused.lower(), refused
+
+    protected = _hook(repo, _patch(
+        "*** Update File: .factory/quickfix.json", "@@", "-{}", "+{}",
+    ), {"FORGE_COORDINATOR": "codex"})
+    assert "deny" in protected.lower() and "never hand-written" in protected.lower(), protected
 
 
 def test_live_lite_worker_uses_current_window_and_file_budget(repo, tmp_path):

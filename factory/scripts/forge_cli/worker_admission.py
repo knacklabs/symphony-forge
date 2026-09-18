@@ -29,6 +29,54 @@ def _deny(reason: str) -> tuple[None, str]:
     return None, f"Forge worker write admission refused: {reason}"
 
 
+def native_stage_admission(base: Path) -> tuple[dict | None, str]:
+    """Authorize host-native writes from the current active task contract.
+
+    Native subagents belong to the host, so Forge has no truthful PID, token,
+    process tree, or launch lock to authenticate. The durable authority is the
+    active stage and its effective scope; the hook applies that scope to every
+    concrete write target.
+    """
+    from factory_lib import protected_decomposition_state_path
+    from .stages import effective_scope, stage_baseline
+
+    stages = [
+        row for row in load_stages(base).get("stages", [])
+        if isinstance(row, dict) and row.get("status") == "active"
+    ]
+    if len(stages) != 1:
+        return _deny(
+            "host-native writes require exactly one current active task stage"
+        )
+    stage = stages[0]
+    task_id = stage.get("id")
+    if not isinstance(task_id, str) or not task_id:
+        return _deny("the active task stage has no task id")
+    decomposition = load_json(
+        protected_decomposition_state_path(base), default={},
+    )
+    task = next((
+        row for row in decomposition.get("tasks", [])
+        if isinstance(row, dict) and row.get("id") == task_id
+    ), None)
+    if task is None:
+        return _deny("the active task is missing from the protected decomposition")
+    scope = effective_scope(base, task_id, task.get("write_scope") or [])
+    if not scope or any(
+        not isinstance(entry, str) or not entry.strip() for entry in scope
+    ):
+        return _deny("the active task has no valid effective write scope")
+    try:
+        classified = classify_scope_entries(base, scope, stage_baseline(base, stage))
+    except (OSError, subprocess.SubprocessError, SystemExit, ValueError) as exc:
+        return _deny(f"the active task scope cannot be resolved: {exc}")
+    return {
+        "kind": "stage",
+        "task": task_id,
+        "scope": classified,
+    }, ""
+
+
 def _revocation_path(base: Path, launch_id: str) -> Path:
     if not SAFE_TASK_ID.fullmatch(launch_id):
         raise ValueError("launch id is not a plain identifier")

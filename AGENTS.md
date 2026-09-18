@@ -26,18 +26,7 @@ It provides:
 
 ## Runtime Modes
 
-Either Claude Code or native Codex coordinates discovery, planning, decisions,
-and orchestration through the same Forge phase engine. The active coordinator
-owns the human conversation; admitted Codex workers execute bounded
-exploration, implementation, testing, and review. Both runtimes produce the
-same `.factory` contract.
-
-Protected implementation writes run through `./forge delegate`. The
-orchestrating session releases ONE three-lens pass per task with `./forge
-review <task-id>` (Codex-run, never a nested companion job; recorded as that
-task's proof under accepted 0011, 0054 and 0069), watches it, and loops it until
-clean, delegating fixes back to Codex. A five-file `forge mode degraded` window
-is the ledgered outage exception.
+Claude uses the protected `codex-plugin-cc` companion; native Codex uses role-based `spawn_agent` subagents. `./forge delegate` validates and prepares the brief; native dispatch passes no model/reasoning override. Raw/direct/nested `codex exec` and direct plugin shell launch are denied for manual delegation. Authenticated autoreview is an external black box and may invoke Codex or agents internally. Forge keeps task, worktree, scope, proof and PR gates, but adds no native process/PID or lifecycle lock and claims no process attribution.
 
 ## Phase Contract
 
@@ -46,9 +35,12 @@ and a derived roadmap; implementation requires an approved plan and recorded dec
 
 ## Prompt and Agent Use
 
-Prompt files under `factory/prompts/` are phase contracts. They are invoked explicitly by the parent session; hooks only load context and enforce gates. In Codex Desktop, keep one user-facing coordinator and separate task-owner chats/worktrees; follow the [shared Forge guidance](factory/skills/forge.md#codex-desktop-one-main-chat-separate-task-chats) for parallel tasks, monitoring, and ownership recovery.
+Prompt files under `factory/prompts/` are phase contracts; hooks load context and enforce gates. Native Codex uses configured role subagents for task work and cold grills. Put each full descriptor and its context metadata in the actual spawn message, then record the exact grill result. See [shared Forge guidance](factory/skills/forge.md#codex-native-use-host-subagents).
 
-Use the host's structured request tool for every user-facing question it permits. Claude plan authority comes only from a successful `ExitPlanMode` PostToolUse event; Codex plan authority comes only from the exact synchronous digest-bound `request_user_input` approval event defined in `docs/specs/plan-approval.md`. Ordinary direct-chat approval is reserved for permission categories the host cannot deliver through its structured tool and never substitutes for plan authority. When such a host-reserved approval is waiting, end the update with a direct question naming the exact action.
+Use the host's structured request tool for every supported user question. Claude
+plan authority is a successful `ExitPlanMode`; Codex plan authority is the
+digest-bound synchronous approval in `docs/specs/plan-approval.md`. Direct chat
+never substitutes for plan authority.
 
 Default specialist set:
 - `planner-high`
@@ -60,9 +52,10 @@ Testing has no separate agent: the implementer writes and records the tests.
 
 ## Reasoning Defaults
 
-Main model/reasoning are host/user choices. Forge pins:
-`.codex/config.toml`, `.codex/agents/*.toml`, `harness.yaml`; exploration Sol/low; planning/decomposition/architecture/grilling Sol/high;
-implementation/review fixes reuse the active Sol/medium implementer; formal Lite Luna/max; formal review/functional checks Sol/high.
+Main model/reasoning are host/user choices. Native dispatch passes no override;
+the selected configured role's defaults apply and may pin either value.
+Command-managed Claude companions, grills, review, and Lite retain their
+declared profiles.
 
 ## Deterministic Commands
 
@@ -98,13 +91,17 @@ re-verifies. Story proof is only `outcome.json` (`./forge outcome set`).
 - Constitution binds every executor/environment: follow/cite `constitution/README.md`; never re-derive. Approval locks the contract to PR open; later material changes need human authorization: shipped → new task; done/unshipped → `forge task reopen`; active → amend + fresh native approval under `docs/QUALITY.md`; never reshuffle the graph unilaterally.
 - Every executor applies Ponytail to code edits: YAGNI → reuse → stdlib → native → installed dep → one line → minimum viable. Preserve validation, error handling, security, accessibility. Brief-inlined; review-enforced; no recording gate.
 - Keep tasks bounded and capability-driven; plans bind one roadmap story and attest all active decisions.
-- The session write lock is always armed: delegate locked writes; use `forge mode degraded` only during a companion outage.
+- Plan, task-scope and protected-state gates remain armed. Claude uses its
+  plugin companion and degraded outage valve; native uses host subagents
+  without Forge process identity or lifecycle locks.
 - Do not decompose by document file or arbitrary file count, nor bypass `verify.py` with ad hoc validation commands.
-- Evidence enters `.factory/` only via schema-validated recorders (pinned `generated_by`), never by hand. Review publication and stamping must validate the meaning bound in the immutable prompt hash. Preserve the approval-path and captured-context boundaries in `docs/specs/dual-coordinator-parity.md`; cold proof binds the launched result bytes.
+- Evidence enters `.factory/` only through schema-validated recorders. Review
+  publication validates the immutable prompt meaning; preserve the approval and
+  captured-context boundaries in `docs/specs/dual-coordinator-parity.md`.
 - Narration budget (conduct §8): one line per state change; findings and refusals always in full; process chatter never.
 - Follow [bounded recovery](docs/QUALITY.md#bounded-recovery) in every phase; repeated unchanged failures need a diagnosed, tested fix before another model run.
 - Use one integrated `./forge task close <id>` proof/review/finish cycle: preflight launch, review bounds, and required-test paths before expensive proof; recheck mutable state at finish; run only one full factory suite at a time on a shared host.
-- Review = ONE three-lens pass PER TASK via `./forge review <id>`, run by Codex, looped until clean (review → delegate fixes → re-review) and recorded before `pr-ready` under accepted 0011, 0054 and 0069; never nested reviewers.
+- Review = ONE three-lens pass PER TASK via `./forge review <id>`, run by the Forge-managed autoreview black box, looped until clean (review → delegate fixes → re-review) and recorded before `pr-ready` under accepted 0011, 0054 and 0069; never review inline or nest reviewers.
 - Each leaf task owns a worktree and PR; dependency-ready tasks may parallelize only when their measured scopes are disjoint. Delegation/proof commands are trusted inputs; observed descendant cleanup is not hostile-code containment.
 - Keep the template repo independent of any client-specific source repo.
 - Do not keep long policy blocks in `AGENTS.md`; move them into docs.

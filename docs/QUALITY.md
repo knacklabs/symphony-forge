@@ -48,8 +48,19 @@ three `factory/schemas/review.json` lens records, then replaces the task's
   injection, data exposure, unsafe defaults, abuse paths
 
 Never review inline in the coordinating session; never nest reviewers.
+Forge-managed autoreview is an authenticated, externally maintained black box;
+it may invoke Codex or agents internally. The raw/direct/nested `codex exec`
+ban applies to general or manual delegation and does not prohibit the review
+helper's authenticated internal implementation.
 
 Before approval, one independent cold grill reads the exact original plan.
+In native Codex, `forge grill run ...` prepares one self-contained griller
+descriptor. Main puts the complete descriptor, including any context metadata,
+in the actual `spawn_agent` message, then records the exact returned JSON with
+`record_grill_from_json.py --cold-result <path> --preparation-id <id>` plus the
+gate/task arguments. The recorder validates the result/preparation binding;
+native proof does not depend on a helper PID or process lifecycle. Claude keeps
+the command-managed cold-reader lifecycle.
 Every reported gap or contradiction has one ordered `finding_dispositions`
 entry, and every change to the final artifact has an explained `amendments`
 entry. Native human approval binds the resulting final digest. This is
