@@ -1,5 +1,5 @@
 {
-  "commit": "fe9e27b0cc14f962700fb0d1034be05e6b4bde4b",
+  "commit": "31ec5d3f53736986fee47c59993ae35564b23ff3",
   "automated": {
     "generated_by": "implementer",
     "status": "passed",
@@ -75,7 +75,10 @@
     "non_blocking_findings": [],
     "manual_validation_steps": [],
     "recorded_at": "2026-09-18T13:19:00+00:00",
-    "commit": "fe9e27b0cc14f962700fb0d1034be05e6b4bde4b"
+    "commit": "31ec5d3f53736986fee47c59993ae35564b23ff3",
+    "worker_commit": "fe9e27b0cc14f962700fb0d1034be05e6b4bde4b",
+    "bound_by": "stage-proof",
+    "bound_at": "2026-09-18T13:50:44+00:00"
   },
-  "updated_at": "2026-09-18T13:19:00+00:00"
+  "updated_at": "2026-09-18T13:50:44+00:00"
 }

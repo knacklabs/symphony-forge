@@ -1,28 +1,314 @@
 {
-  "ok": false,
-  "completed_at": "2026-09-18T13:12:46+00:00",
-  "commit": "1b46e258f0792146b656287943d659a0bbe4372b",
+  "ok": true,
+  "completed_at": "2026-09-18T13:50:44+00:00",
+  "commit": "31ec5d3f53736986fee47c59993ae35564b23ff3",
+  "task_id": "LEAN-WORKFLOW",
+  "recorded_by": "stage-proof",
+  "tree_digest": "ebb81522bcc04b269709836e24aea2bc90edd81eef4354ad490b6f29beb823da",
+  "proof_key": "ee330b705f0465d1352681ac3dd96f2bda11445822f525ff34433129eb95fce8",
   "results": [
+    {
+      "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with pytest-xdist --with psutil python factory/scripts/verify.py",
+      "exit_code": 0,
+      "output_tail": "task base advanced 6ae2dea1b741 -> 9e08774ba497: the trunk was merged into this branch after the stage began; only the branch's own delta since it diverged from the trunk is reviewed\ntask base advanced 6ae2dea1b741 -> 9e08774ba497: the trunk was merged into this branch after the stage began; only the branch's own delta since it diverged from the trunk is reviewed\nVerification passed"
+    },
     {
       "command": "python3 factory/scripts/check_dual_runtime.py",
       "exit_code": 0,
-      "stdout": "WARNING: commit e900fcf5 accepting docs/decisions/0032-jit-task-planning.md lacks a `Confirmed-by:` trailer (convention-level check).\nWARNING: commit 785dba9c accepting docs/decisions/0033-gate-a-declares-all-work-records.md lacks a `Confirmed-by:` trailer (convention-level check).\nWARNING: commit 0f17e888 accepting docs/decisions/0034-vendored-docs-are-client-safe.md lacks a `Confirmed-by:` trailer (convention-level check).\nWARNING: commit fd798874 accepting docs/decisions/0040-windows-user-scope-first-elevation-deferred.md lacks a `Confirmed-by:` trailer (convention-level check).\nWARNING: commit 5195b56d accepting docs/decisions/0044-accountable-engineering-loop.md lacks a `Confirmed-by:` trailer (convention-level check).\nWARNING: commit 5195b56d accepting docs/decisions/0045-conflict-free-story-state.md lacks a `Confirmed-by:` trailer (convention-level check).\nWARNING: commit 2f3cb20b accepting docs/decisions/0048-plan-mode-and-grill-provenance.md lacks a `Confirmed-by:` trailer (convention-level check).\nWARNING: commit 407d1e2c accepting docs/decisions/0049-full-access-for-forge-managed-codex-chats.md lacks a `Confirmed-by:` trailer (convention-level check).\nWARNING: commit 92b87f98 accepting docs/decisions/0050-plan-authoring-is-mode-agnostic.md lacks a `Confirmed-by:` trailer (convention-level check).\nWARNING: commit 5c83a6c4 accepting docs/decisions/0066-closeout-binds-to-the-diff.md lacks a `Confirmed-by:` trailer (convention-level check).\nWARNING: commit a09c7c8b accepting docs/decisions/0067-rounds-rebind-to-their-gate.md lacks a `Confirmed-by:` trailer (convention-level check).\nWARNING: commit 0900de06 accepting docs/decisions/0068-worker-commands-may-reach-the-network.md lacks a `Confirmed-by:` trailer (convention-level check).\nWARNING: commit aaebe9c8 accepting docs/decisions/0075-findings-are-triaged-by-the-host-before-a-fix-round.md lacks a `Confirmed-by:` trailer (convention-level check).\nWARNING: commit aaebe9c8 accepting docs/decisions/0076-review-lenses-read-the-tree-they-judge.md lacks a `Confirmed-by:` trailer (convention-level check).\nWARNING: commit 06a91a3d accepting docs/decisions/0077-contract-verdicts-are-finding-records.md lacks a `Confirmed-by:` trailer (convention-level check).\nWARNING: commit 1941dc6d accepting docs/decisions/0078-a-big-diff-is-reviewed-in-parallel-groups.md lacks a `Confirmed-by:` trailer (convention-level check).\nWARNING: commit 9e08774b accepting docs/decisions/0079-a-task-proof-runs-once-per-tree.md lacks a `Confirmed-by:` trailer (convention-level check).\ncheck_dual_runtime: clean.\n",
-      "stderr": "",
-      "phase": "structural"
+      "output_tail": "WARNING: commit e900fcf5 accepting docs/decisions/0032-jit-task-planning.md lacks a `Confirmed-by:` trailer (convention-level check).\nWARNING: commit 785dba9c accepting docs/decisions/0033-gate-a-declares-all-work-records.md lacks a `Confirmed-by:` trailer (convention-level check).\nWARNING: commit 0f17e888 accepting docs/decisions/0034-vendored-docs-are-client-safe.md lacks a `Confirmed-by:` trailer (convention-level check).\nWARNING: commit fd798874 accepting docs/decisions/0040-windows-user-scope-first-elevation-deferred.md lacks a `Confirmed-by:` trailer (convention-level check).\nWARNING: commit 5195b56d accepting docs/decisions/0044-accountable-engineering-loop.md lacks a `Confirmed-by:` trailer (convention-level check).\nWARNING: commit 5195b56d accepting docs/decisions/0045-conflict-free-story-state.md lacks a `Confirmed-by:` trailer (convention-level check).\nWARNING: commit 2f3cb20b accepting docs/decisions/0048-plan-mode-and-grill-provenance.md lacks a `Confirmed-by:` trailer (convention-level check).\nWARNING: commit 407d1e2c accepting docs/decisions/0049-full-access-for-forge-managed-codex-chats.md lacks a `Confirmed-by:` trailer (convention-level check).\nWARNING: commit 92b87f98 accepting docs/decisions/0050-plan-authoring-is-mode-agnostic.md lacks a `Confirmed-by:` trailer (convention-level check).\nWARNING: commit 5c83a6c4 accepting docs/decisions/0066-closeout-binds-to-the-diff.md lacks a `Confirmed-by:` trailer (convention-level check).\nWARNING: commit a09c7c8b accepting docs/decisions/0067-rounds-rebind-to-their-gate.md lacks a `Confirmed-by:` trailer (convention-level check).\nWARNING: commit 0900de06 accepting docs/decisions/0068-worker-commands-may-reach-the-network.md lacks a `Confirmed-by:` trailer (convention-level check).\nWARNING: commit aaebe9c8 accepting docs/decisions/0075-findings-are-triaged-by-the-host-before-a-fix-round.md lacks a `Confirmed-by:` trailer (convention-level check).\nWARNING: commit aaebe9c8 accepting docs/decisions/0076-review-lenses-read-the-tree-they-judge.md lacks a `Confirmed-by:` trailer (convention-level check).\nWARNING: commit 06a91a3d accepting docs/decisions/0077-contract-verdicts-are-finding-records.md lacks a `Confirmed-by:` trailer (convention-level check).\nWARNING: commit 1941dc6d accepting docs/decisions/0078-a-big-diff-is-reviewed-in-parallel-groups.md lacks a `Confirmed-by:` trailer (convention-level check).\nWARNING: commit 9e08774b accepting docs/decisions/0079-a-task-proof-runs-once-per-tree.md lacks a `Confirmed-by:` trailer (convention-level check).\ncheck_dual_runtime: clean."
     },
     {
-      "command": "python3 factory/scripts/check_factory_scaffold.py",
+      "command": "python3 factory/scripts/check_encoding_hygiene.py",
       "exit_code": 0,
-      "stdout": "Factory scaffold OK\n",
-      "stderr": "",
-      "phase": "typecheck"
+      "output_tail": "encoding hygiene: OK"
     },
     {
-      "command": "uv run --with pytest --with pytest-xdist --with psutil python -m pytest factory/tests -q -n 8 --dist worksteal --durations=20 -o junit_family=legacy --junitxml=/var/folders/qx/hb4gz1yx5tq7d2c45c79cf600000gn/T/forge-canonical-junit-fje5wc8l/pytest.xml",
-      "exit_code": 1,
-      "stdout": "bringing up nodes...\nbringing up nodes...\n\n........................................................................ [  5%]\n........................................................................ [ 10%]\n........................................................................ [ 16%]\n........................................................................ [ 21%]\n........................................................................ [ 27%]\n........................................................................ [ 32%]\n........................................................................ [ 37%]\n........................................................................ [ 43%]\n........................................................................ [ 48%]\n........................................................................ [ 54%]\n........................................................................ [ 59%]\n........................................................................ [ 65%]\n.......................................s................................ [ 70%]\n........................................................................ [ 75%]\n............................ss...................................s...... [ 81%]\n........................................................................ [ 86%]\n.........F.............................................................F [ 92%]\n........................................................................ [ 97%]\n................................                                         [100%]\n=================================== FAILURES ===================================\n________ test_stage_proof_reuses_one_input_snapshot_for_both_identities ________\n[gw2] darwin -- Python 3.11.13 /tmp/forge-lean-uv-cache/builds-v0/.tmpXLhFT3/bin/python\n\nrepo = PosixPath('/private/var/folders/qx/hb4gz1yx5tq7d2c45c79cf600000gn/T/pytest-of-dev/pytest-3654/popen-gw2/test_stage_proof_reuses_one_in0/app')\nmonkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x1089fd550>\n\n    def test_stage_proof_reuses_one_input_snapshot_for_both_identities(repo, monkeypatch):\n        import forge_cli.stages as stages\n    \n        original = stages.product_tree_snapshot\n        calls = []\n    \n        def counted(base):\n            calls.append(base)\n            return original(base)\n    \n        monkeypatch.setattr(stages, \"product_tree_snapshot\", counted)\n        monkeypatch.setattr(stages, \"protected_authority_snapshot\",\n                            lambda *_args: {\"authority\": \"unchanged\"})\n        monkeypatch.setattr(stages, \"_proof_receipt\", lambda *_args: {})\n        monkeypatch.setattr(stages, \"_store_proof_receipt\", lambda *_args: None)\n    \n        stages.run_stage_proof(\n            repo, \"T1\", {\"verify_commands\": [], \"required_tests\": []},\n        )\n    \n>       assert calls == [repo, repo]\nE       AssertionError: assert [PosixPath('/...one_in0/app')] == [PosixPath('/...one_in0/app')]\nE         \nE         Left contains one more item: PosixPath('/private/var/folders/qx/hb4gz1yx5tq7d2c45c79cf600000gn/T/pytest-of-dev/pytest-3654/popen-gw2/test_stage_proof_reuses_one_in0/app')\nE         Use -v to get more diff\n\nfactory/tests/test_gates.py:14635: AssertionError\n____________ test_review_consumers_include_complete_approved_inputs ____________\n[gw7] darwin -- Python 3.11.13 /tmp/forge-lean-uv-cache/builds-v0/.tmpXLhFT3/bin/python\n\nrepo = PosixPath('/private/var/folders/qx/hb4gz1yx5tq7d2c45c79cf600000gn/T/pytest-of-dev/pytest-3654/popen-gw7/test_review_consumers_include_0/app')\ntmp_path = PosixPath('/private/var/folders/qx/hb4gz1yx5tq7d2c45c79cf600000gn/T/pytest-of-dev/pytest-3654/popen-gw7/test_review_consumers_include_0')\nmonkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10b9eae50>\ncapsys = <_pytest.capture.CaptureFixture object at 0x10b9e8550>\n\n    def test_review_consumers_include_complete_approved_inputs(\n            repo, tmp_path, monkeypatch, capsys):\n        first = _native_review_fixture(repo, tmp_path)\n        target = repo / \"src\" / \"review-target.py\"\n        target.parent.mkdir(exist_ok=True)\n        target.write_text(\"reviewed = True\\n\")\n        git(repo, \"add\", \"src/review-target.py\")\n        git(repo, \"commit\", \"-qm\", \"T1 review target\")\n        proof = _write_complete_automated(repo)\n        code, out = run(repo, \"forge.py\", \"review-brief\", \"T1\", \"--repo\", str(repo))\n        assert code == 0, out\n        brief = (repo / out.strip()).read_text()\n        plan_text = (story_state(repo) / \"task-plans\" / \"T1.md\").read_text()\n        grill_path = story_state(repo) / \"grills\" / \"tasks\" / \"T1.json\"\n        grill = json.loads(grill_path.read_text())\n        automated = json.loads((proof / \"tests.json\").read_text())[\"automated\"]\n        full_grill = json.dumps(grill, indent=2, sort_keys=True)\n        full_automated = json.dumps(automated, indent=2, sort_keys=True)\n        state = run_state(repo)\n        branch = state.get(\"branch\") or git(repo, \"branch\", \"--show-current\")\n        assert all(token in brief for token in (\n            f\"- Story: `{state['issue_key']}`\", \"- Task: `T1`\", f\"- Branch: `{branch}`\",\n            \"- Current delta ID: `\",\n            \"#### Full approved task plan\", \"#### Full grill and approval record\",\n            '\"approved_by\": \"human-via-Claude\"', '\"approved_task_plan_sha256\"',\n            \"#### Full task-owned automated report\",\n            plan_text, full_grill, full_automated,\n        ))\n        import forge_cli.review as review_mod\n        from forge_cli.review import _combined_prompt, _lens_prompt\n        from forge_cli.review_brief import _task_section\n        for lens in (\"quality\", \"performance\", \"security\"):\n            prompt = _lens_prompt(first, lens, repo).decode()\n            assert all(token in prompt for token in (\n                \"## Task T1\", \"**C1**\", \"focus one\",\n            ))\n            assert all(token not in prompt for token in (\n                \"### Approved task inputs\", plan_text, full_grill, full_automated,\n            ))\n        task_section = \"\\n\".join(_task_section(first, None)).rstrip() + \"\\n\"\n        combined = _combined_prompt(first).decode()\n        assert all(token in combined for token in (\n            \"BEGIN FORGE ASSESSMENT quality\",\n            \"BEGIN FORGE ASSESSMENT performance\",\n            \"BEGIN FORGE ASSESSMENT security\",\n            \"Prefix every finding title with exactly one matching token\",\n            \"target task's complete Plan contracts and Reviewer focus\",\n            f'in `{review_mod.REVIEW_DATASET_REL}`',\n            f'listed under the target task\\'s \"Plan contracts\" in '\n            f\"{review_mod.REVIEW_DATASET_REL}\",\n        ))\n        assert 'listed under \"Plan contracts\" below' not in combined\n        assert task_section not in combined\n        brief_path = repo / \".factory\" / \"review-briefs\" / \"T1.md\"\n        prior_brief = brief_path.read_bytes()\n        code, out = run(repo, \"forge.py\", \"review-brief\", \"--all\", \"--repo\", str(repo))\n        assert code == 0, out\n        branch = (repo / out.strip()).read_text()\n        current = branch.split(\"## Task T1\", 1)[1].split(\"## Task T2\", 1)[0]\n        assert \"#### Full approved task plan\" in current\n        assert \"#### Full task-owned automated report\" in current\n        future = branch.split(\"## Task T2\", 1)[1]\n        assert \"### Approved task inputs\" not in future\n    \n        # A prior marker is historical proof, not authority for an active review-fix\n        # task. Active re-review must keep using the current approved inputs.\n        marker = proof / \"pr-ready.json\"\n        marker.write_text(\"{}\")\n        from forge_cli.review_brief import _approved_task_inputs\n        active_inputs = _approved_task_inputs(repo, first)\n        assert active_inputs[\"plan_text\"] == plan_text\n        assert f\"- Current delta ID: `{active_inputs['delta_id']}`\" in brief\n        marker.unlink()\n    \n        write_stages(repo, {\"issue\": \"ENG-1\", \"stages\": [\n            {\"id\": \"T1\", \"title\": first[\"title\"], \"status\": \"done\"},\n            {\"id\": \"T2\", \"title\": \"future\", \"status\": \"pending\"},\n        ]})\n        from forge_cli.review_brief import cmd_review_brief\n        cmd_review_brief(argparse.Namespace(\n            id=None, all=True, repo=str(repo), review_task=\"T1\",\n        ))\n        done_current = (repo / \".factory/review-briefs/all.md\").read_text().split(\n            \"## Task T1\", 1)[1].split(\"## Task T2\", 1)[0]\n        assert \"#### Full approved task plan\" in done_current\n        assert \"#### Full task-owned automated report\" in done_current\n    \n        from forge_cli import stages as stages_mod\n        dataset_path = repo / review_mod.REVIEW_DATASET_REL\n        dataset_bytes = dataset_path.read_bytes()\n        assert all(token.encode() in dataset_bytes for token in (\n            plan_text, full_grill, full_automated,\n        ))\n        assert dataset_bytes.count(task_section.encode()) == 1\n        review_run = json.loads((story_state(repo) / \"review-run.json\").read_text())\n        assert review_run[\"brief_sha256\"] == hashlib.sha256(dataset_bytes).hexdigest()\n        assert (\n            f\"- Current delta ID: `{review_run['branch_diff_digest']}`\".encode()\n            in dataset_bytes\n        )\n        seen = []\n        review_tmp = tmp_path / \"review-dataset-routing\"\n        review_tmp.mkdir()\n        (tmp_path / \"helper\").write_text(\"review_status provider_report\\n\")\n        finding = {\n            \"title\": \"[quality] Preserve plain-source attribution\",\n            \"body\": \"Schema-valid plain source.\", \"priority\": \"P2\",\n            \"confidence\": 0.9, \"category\": \"bug\", \"source_attribution\": None,\n            \"code_location\": {\"file_path\": \"src/review-target.py\", \"line\": 1},\n        }\n    \n        def fake_require_git(_base, _what, *args, **_kwargs):\n            if args[:3] == (\"worktree\", \"add\", \"--detach\"):\n                Path(args[3]).mkdir(parents=True, exist_ok=True)\n            if args[0] == \"rev-parse\":\n                return head(repo)\n            if args[0] == \"diff\":\n                return \"src/review-target.py\"\n            return \"\"\n    \n        def inspect_skill(_skill, worktree, _base_sha, prompt_rel, _json_out,\n                          _engine, _max_priority, ledger_root=None, return_raw=False):\n            assert ledger_root == repo\n            assert return_raw is True\n            prompt_bytes = (worktree / prompt_rel).read_bytes()\n            copied_dataset = (worktree / review_mod.REVIEW_DATASET_REL).read_bytes()\n            seen.append((prompt_rel, prompt_bytes, copied_dataset))\n            provider = {\n                \"overall_correctness\": \"patch is incorrect\",\n                \"overall_confidence\": 0.9,\n                \"overall_explanation\":\n                    \"BEGIN FORGE ASSESSMENT quality\\n\"\n                    \"VERDICT C1: implemented \u2014 complete dataset routed\\n\"\n                    \"END FORGE ASSESSMENT quality\\n\"\n                    \"BEGIN FORGE ASSESSMENT performance\\nfast\\n\"\n                    \"END FORGE ASSESSMENT performance\\n\"\n                    \"BEGIN FORGE ASSESSMENT security\\nsafe\\n\"\n                    \"END FORGE ASSESSMENT security\",\n                \"findings\": [finding],\n            }\n            report = {**copy.deepcopy(provider), \"provider_report\": provider,\n                      \"review_status\": \"findings\"}\n            return report, json.dumps(report).encode()\n    \n        with monkeypatch.context() as route:\n            route.setattr(review_mod, \"cmd_review_brief\", lambda _args: None)\n            route.setattr(review_mod, \"resolve_skill\", lambda _explicit: tmp_path / \"helper\")\n            route.setattr(review_mod, \"_product_dirty\", lambda _base: [])\n            route.setattr(review_mod, \"pre_review_proof_problems\", lambda *_args: [])\n            route.setattr(review_mod, \"_run_skill\", inspect_skill)\n            route.setattr(review_mod.tempfile, \"mkdtemp\", lambda **_kwargs: str(review_tmp))\n            route.setattr(stages_mod, \"stamp_stage_review\", lambda *_args, **_kwargs: None)\n            with pytest.raises(SystemExit):\n>               review_mod.cmd_review(argparse.Namespace(\n                    id=\"T1\", reject=None, lens=None, repo=str(repo),\n                    skill=str(tmp_path / \"fake-autoreview\"), engine=\"claude\",\n                    max_priority=\"P2\",\n                ))\n\nfactory/tests/test_gates.py:19118: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \nfactory/scripts/forge_cli/review.py:1897: in cmd_review\n    outcome = review_task(\n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\nbase = PosixPath('/private/var/folders/qx/hb4gz1yx5tq7d2c45c79cf600000gn/T/pytest-of-dev/pytest-3654/popen-gw7/test_review_consumers_include_0/app')\ntask_id = 'T1', lens = None, engine = 'claude', max_priority = 'P2'\nskill = '/private/var/folders/qx/hb4gz1yx5tq7d2c45c79cf600000gn/T/pytest-of-dev/pytest-3654/popen-gw7/test_review_consumers_include_0/fake-autoreview'\nproof_context = None\n\n    def review_task(base: Path, task_id: str, *, lens: str | None = None,\n                    engine: str = \"codex\", max_priority: str = \"P3\",\n                    skill: str | None = None,\n                    proof_context: dict[str, object] | None = None) -> dict:\n        \"\"\"Release the three-lens review for one task and record its proof.\n    \n        Returns {\"blocking\", \"caveats\", \"stamped\", \"stage_status\"}. `cmd_review`\n        prints the next-step hint; `task close` reads the numbers and decides.\n        \"\"\"\n        from .stages import load_stages, task_for\n    \n        class _Args:  # the body below reads these as it always did\n            pass\n        args = _Args()\n        args.id = task_id\n        args.lens = lens\n        args.engine = engine\n        args.max_priority = max_priority\n        args.skill = skill\n    \n        task = task_for(base, args.id)\n        if not task:\n            fail(f\"task {args.id} is not in the recorded decomposition\")\n        stages = load_stages(base).get(\"stages\") or []\n        started = {s.get(\"id\"): s.get(\"status\") for s in stages if isinstance(s, dict)}\n        stage = next((s for s in stages if s.get(\"id\") == args.id), {})\n        if started.get(args.id) not in (\"active\", \"done\"):\n            fail(f\"task {args.id} has not started (stage '{started.get(args.id)}'); \"\n                 \"review runs once implementation is complete and verified\")\n        dirty = _product_dirty(base)\n        if dirty:\n            fail(f\"commit the task's work first \u2014 uncommitted product paths: \"\n                 f\"{', '.join(dirty[:6])}{' \u2026' if len(dirty) > 6 else ''}\")\n    \n        state = load_json(run_state_path(base), default={})\n        story = state.get(\"issue_key\") or state.get(\"story\")\n        if not isinstance(story, str) or not story:\n            fail(\"review requires an active story\")\n        for artifact in (\"verify.json\", \"tests.json\"):\n            if not proof_path(base, story, artifact, task_id=args.id).is_file():\n                fail(f\"{artifact} is not recorded for task {args.id}; review runs after \"\n                     f\"the proof -- `./forge task close {args.id}` runs and records \"\n                     \"it once before review (0079).\")\n    \n        tip_sha = _require_git(base, \"resolving HEAD\", \"rev-parse\", \"--verify\", \"HEAD^{commit}\")\n        base_sha = resolve_review_base(base, stage, state, tip_sha)\n>       freshness = pre_review_proof_problems(\n            base, story, args.id, base_sha, tip_sha, proof_context=proof_context,\n        )\nE       TypeError: test_review_consumers_include_complete_approved_inputs.<locals>.<lambda>() got an unexpected keyword argument 'proof_context'\n\nfactory/scripts/forge_cli/review.py:2156: TypeError\n----------------------------- Captured stdout call -----------------------------\n.factory/review-briefs/all.md\n============================= slowest 20 durations =============================\n179.31s call     factory/tests/test_task_parallelism.py::test_tasks_with_disjoint_scopes_run_side_by_side_in_their_own_worktrees\n140.76s call     factory/tests/test_close_binds_to_the_diff.py::test_recorded_non_blocking_follow_ups_never_trigger_another_review\n107.75s call     factory/tests/test_gates.py::test_story_closeout_requires_all_task_markers_and_completed_stories_reads_shipped\n94.00s call     factory/tests/test_gates.py::test_stage_loop_orders_execution_and_gates_pr_ready\n93.46s call     factory/tests/test_close_binds_to_the_diff.py::test_close_says_the_review_covers_the_whole_task_delta\n91.25s call     factory/tests/test_close_binds_to_the_diff.py::test_task_close_rebinds_a_stale_worker_record_before_the_review\n88.00s call     factory/tests/test_close_binds_to_the_diff.py::test_task_close_records_the_proof_in_the_marker_commit\n86.74s call     factory/tests/test_close_binds_to_the_diff.py::test_task_close_reopens_a_done_stage_whose_diff_moved\n75.45s call     factory/tests/test_gates.py::test_task_proof_consumers_share_complete_predicate\n75.13s call     factory/tests/test_close_binds_to_the_diff.py::test_task_close_goes_from_built_to_pr_and_is_idempotent\n61.61s call     factory/tests/test_gates.py::test_stage_done_refuses_missing_required_test\n60.46s call     factory/tests/test_gates.py::test_board_shows_shipped_story_tasks_when_plan_left_active_and_completed\n58.08s call     factory/tests/test_gates.py::test_task_pr_ready_retry_reuses_unchanged_committed_marker\n54.98s call     factory/tests/test_close_binds_to_the_diff.py::test_task_close_reuses_the_proof_when_only_bookkeeping_moved\n54.21s call     factory/tests/test_gates.py::test_stage_done_accepts_committed_directory_replacement_after_proof\n52.32s call     factory/tests/test_gates.py::test_overlapping_write_launch_stays_invalid_until_all_are_terminal\n51.43s call     factory/tests/test_gates.py::test_stage_done_refuses_empty_diff\n50.82s call     factory/tests/test_gates.py::test_read_only_diagnostic_does_not_revoke_write_launch\n50.61s call     factory/tests/test_gates.py::test_pr_ready_refuses_out_of_order_or_dirty_or_unstamped_closeout\n49.99s call     factory/tests/test_gates.py::test_stage_done_sees_deleted_initial_untracked_path\n=========================== short test summary info ============================\nFAILED factory/tests/test_gates.py::test_stage_proof_reuses_one_input_snapshot_for_both_identities\nFAILED factory/tests/test_gates.py::test_review_consumers_include_complete_approved_inputs\n2 failed, 1322 passed, 4 skipped in 1316.15s (0:21:56)\n",
-      "stderr": "",
-      "phase": "tests"
+      "command": "python3 factory/scripts/check_board_complete.py",
+      "exit_code": 0,
+      "output_tail": "Board completeness check OK: every done story has durable ship evidence."
+    },
+    {
+      "command": "git diff --check",
+      "exit_code": 0,
+      "output_tail": ""
     }
-  ]
+  ],
+  "required_tests": [
+    {
+      "id": "test_native_approval_refuses_zero_multiple_candidates_replay_and_missing_identity",
+      "path": "factory/tests/test_approval_hooks.py",
+      "status": "passed"
+    },
+    {
+      "id": "test_native_approval_records_human_via_runtime_identity_without_display_name",
+      "path": "factory/tests/test_approval_hooks.py",
+      "status": "passed"
+    },
+    {
+      "id": "test_native_approval_reuses_existing_story_and_task_approval_storage",
+      "path": "factory/tests/test_approval_hooks.py",
+      "status": "passed"
+    },
+    {
+      "id": "test_native_plan_mode_approval_records_exact_digest_for_claude_exit_plan_mode",
+      "path": "factory/tests/test_lean_workflow.py",
+      "status": "passed"
+    },
+    {
+      "id": "test_native_plan_mode_approval_records_exact_digest_for_codex_sync_approval",
+      "path": "factory/tests/test_lean_workflow.py",
+      "status": "passed"
+    },
+    {
+      "id": "test_native_approval_refuses_stale_wrong_runtime_canceled_async_and_unsupported_payloads",
+      "path": "factory/tests/test_lean_workflow.py",
+      "status": "passed"
+    },
+    {
+      "id": "test_normal_flow_no_longer_requires_requirements_grill_manual_approval_or_second_save",
+      "path": "factory/tests/test_lean_workflow.py",
+      "status": "passed"
+    },
+    {
+      "id": "test_delegate_scope_must_be_strict_subset_of_approved_write_scope",
+      "path": "factory/tests/test_delegate_scope.py",
+      "status": "passed"
+    },
+    {
+      "id": "test_delegate_scope_is_bound_to_brief_launch_identity_and_existing_write_scope",
+      "path": "factory/tests/test_delegate_scope.py",
+      "status": "passed"
+    },
+    {
+      "id": "test_hook_refuses_write_outside_narrowed_delegate_scope",
+      "path": "factory/tests/test_delegate_scope.py",
+      "status": "passed"
+    },
+    {
+      "id": "test_delegate_brief_carries_criteria_and_scope",
+      "path": "factory/tests/test_gates.py",
+      "status": "passed"
+    },
+    {
+      "id": "test_native_worker_patch_add_update_delete_and_move_is_admitted",
+      "path": "factory/tests/test_worker_admission.py",
+      "status": "passed"
+    },
+    {
+      "id": "test_context_file_security_no_follow_modes_identity_capacity_and_cleanup",
+      "path": "factory/tests/test_delegate_scope.py",
+      "status": "passed"
+    },
+    {
+      "id": "test_context_file_launch_uses_one_handle_snapshot_and_metadata_only_evidence",
+      "path": "factory/tests/test_worker_admission.py",
+      "status": "passed"
+    },
+    {
+      "id": "test_unchanged_test_verify_and_selected_review_inputs_reuse_success_without_rerun",
+      "path": "factory/tests/test_proof_reuse.py",
+      "status": "passed"
+    },
+    {
+      "id": "test_changed_unknown_partial_or_generated_output_identity_forces_fresh_run",
+      "path": "factory/tests/test_proof_reuse.py",
+      "status": "passed"
+    },
+    {
+      "id": "test_reuse_identity_is_proof_type_specific_and_reviewed_meaning_bound",
+      "path": "factory/tests/test_proof_reuse.py",
+      "status": "passed"
+    },
+    {
+      "id": "test_selected_review_reuses_for_bookkeeping_only_changes_and_preserves_original_provenance",
+      "path": "factory/tests/test_proof_reuse.py",
+      "status": "passed"
+    },
+    {
+      "id": "test_selected_review_reruns_for_changed_acceptance_security_migration_or_evidence",
+      "path": "factory/tests/test_proof_reuse.py",
+      "status": "passed"
+    },
+    {
+      "id": "test_selected_upgrade_generation_requires_exact_sealed_binding",
+      "path": "factory/tests/test_review_settled_contracts.py",
+      "status": "passed"
+    },
+    {
+      "id": "test_selected_review_reviewed_meaning_includes_ci_generated_outputs_and_review_instructions",
+      "path": "factory/tests/test_review_task_delta.py",
+      "status": "passed"
+    },
+    {
+      "id": "test_selected_review_reruns_for_substantive_automated_evidence_change",
+      "path": "factory/tests/test_review_task_delta.py",
+      "status": "passed"
+    },
+    {
+      "id": "test_lean_migration_refuses_dirty_checkout_before_writing",
+      "path": "factory/tests/test_upgrade_lean_workflow.py",
+      "status": "passed"
+    },
+    {
+      "id": "test_lean_migration_force_cannot_bypass_dirty_tree_refusal",
+      "path": "factory/tests/test_upgrade_lean_workflow.py",
+      "status": "passed"
+    },
+    {
+      "id": "test_lean_migration_independent_raw_walk_covers_each_candidate_exactly_once",
+      "path": "factory/tests/test_upgrade_lean_workflow.py",
+      "status": "passed"
+    },
+    {
+      "id": "test_lean_migration_inventories_hashes_temp_validates_publishes_and_reads_back",
+      "path": "factory/tests/test_upgrade_lean_workflow.py",
+      "status": "passed"
+    },
+    {
+      "id": "test_lean_migration_refuses_malformed_mixed_partial_conflicting_or_linked_inputs",
+      "path": "factory/tests/test_upgrade_lean_workflow.py",
+      "status": "passed"
+    },
+    {
+      "id": "test_lean_migration_is_idempotent_for_byte_identical_retry_and_refuses_unequal_partial_retry",
+      "path": "factory/tests/test_upgrade_lean_workflow.py",
+      "status": "passed"
+    },
+    {
+      "id": "test_lean_migration_forces_fresh_review_for_active_old_proof_and_migrates_only_exact_sealed_proof",
+      "path": "factory/tests/test_upgrade_lean_workflow.py",
+      "status": "passed"
+    },
+    {
+      "id": "test_normal_runtime_refuses_lean_removed_formats_with_upgrade_guidance",
+      "path": "factory/tests/test_upgrade_lean_workflow.py",
+      "status": "passed"
+    },
+    {
+      "id": "test_codex_hook_readiness_requires_exact_enabled_trusted_source",
+      "path": "factory/tests/test_native_setup.py",
+      "status": "passed"
+    },
+    {
+      "id": "test_codex_hook_readiness_accepts_only_identical_inherited_worktree_hooks",
+      "path": "factory/tests/test_native_setup.py",
+      "status": "passed"
+    },
+    {
+      "id": "test_model_policy_selects_sol_work_and_luna_lite",
+      "path": "factory/tests/test_native_setup.py",
+      "status": "passed"
+    },
+    {
+      "id": "test_active_model_policy_has_no_forbidden_execution_surface",
+      "path": "factory/tests/test_gate_table.py",
+      "status": "passed"
+    },
+    {
+      "id": "test_project_agents_init_upgrade_and_preserve_client_additions",
+      "path": "factory/tests/test_gates.py",
+      "status": "passed"
+    },
+    {
+      "id": "test_recovery_profile_override_keeps_only_three_forge_profiles",
+      "path": "factory/tests/test_native_setup.py",
+      "status": "passed"
+    },
+    {
+      "id": "test_upgrade_preserves_client_profiles_while_removing_retired_forge_profiles",
+      "path": "factory/tests/test_gates.py",
+      "status": "passed"
+    },
+    {
+      "id": "test_upgrade_preserves_project_settings_and_refuses_unknown_same_name_profile_rows",
+      "path": "factory/tests/test_gates.py",
+      "status": "passed"
+    },
+    {
+      "id": "test_pr_link_workflow_stages_per_event_files_not_legacy_jsonl",
+      "path": "factory/tests/test_pr_link_workflow.py",
+      "status": "passed"
+    },
+    {
+      "id": "test_pr_link_workflow_status_description_names_per_event_link_commit",
+      "path": "factory/tests/test_pr_link_workflow.py",
+      "status": "passed"
+    },
+    {
+      "id": "test_verified_forge_acc3_and_cfs1_pr_links_make_board_complete",
+      "path": "factory/tests/test_pr_link_workflow.py",
+      "status": "passed"
+    },
+    {
+      "id": "test_history_merges_legacy_and_per_file_events",
+      "path": "factory/tests/test_gates.py",
+      "status": "passed"
+    },
+    {
+      "id": "test_pr_link_event_survives_a_clone_with_no_remote",
+      "path": "factory/tests/test_gates.py",
+      "status": "passed"
+    },
+    {
+      "id": "test_forge_history_shows_the_pr_link",
+      "path": "factory/tests/test_gates.py",
+      "status": "passed"
+    },
+    {
+      "id": "test_signal_ruling_hydration_survives_lean_lifecycle_state_changes",
+      "path": "factory/tests/test_gates.py",
+      "status": "passed"
+    },
+    {
+      "id": "test_generated_review_inputs_are_included_in_reviewed_meaning",
+      "path": "factory/tests/test_review_task_delta.py",
+      "status": "passed"
+    },
+    {
+      "id": "test_native_preparation_rebinds_after_brief_changes",
+      "path": "factory/tests/test_regrill_scope.py",
+      "status": "passed"
+    },
+    {
+      "id": "test_one_cold_grill_full_disposition_replaces_round_floors_and_frontier_fake",
+      "path": "factory/tests/test_lean_workflow.py",
+      "status": "passed"
+    },
+    {
+      "id": "test_recovery_override_removes_round_ledgers_without_losing_cold_read_proof",
+      "path": "factory/tests/test_lean_workflow.py",
+      "status": "passed"
+    },
+    {
+      "id": "test_lean_docs_match_single_cold_grill_runtime",
+      "path": "factory/tests/test_plan_against_reality.py",
+      "status": "passed"
+    },
+    {
+      "id": "test_native_approval_no_longer_routes_through_board_or_manual_approve",
+      "path": "factory/tests/test_board_approval_gate.py",
+      "status": "passed"
+    },
+    {
+      "id": "test_task_close_is_the_single_full_suite_owner_and_records_truthful_automated_proof",
+      "path": "factory/tests/test_close_binds_to_the_diff.py",
+      "status": "passed"
+    },
+    {
+      "id": "test_proof_reuse_refuses_dependency_environment_and_configuration_drift",
+      "path": "factory/tests/test_proof_reuse.py",
+      "status": "passed"
+    },
+    {
+      "id": "test_canonical_junit_satisfies_exact_required_nodes_without_selector_rerun",
+      "path": "factory/tests/test_gates.py",
+      "status": "passed"
+    },
+    {
+      "id": "test_canonical_junit_falls_back_when_required_node_identity_is_missing",
+      "path": "factory/tests/test_gates.py",
+      "status": "passed"
+    }
+  ],
+  "test_id_misses": []
 }
