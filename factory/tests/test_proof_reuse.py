@@ -238,6 +238,70 @@ def test_close_context_allows_one_fresh_nonreusable_proof_then_refuses_drift(
         authority_drift.unlink()
 
 
+def test_board_proof_inputs_round_trip_through_fresh_review_and_drift(
+        repo: Path):
+    """Board archive inputs keep their shape through receipt persistence."""
+    from forge_cli.review import pre_review_proof_problems
+    from factory_lib import (
+        dump_json, proof_path, protected_decomposition_state_path, run_state_path,
+    )
+
+    task = {
+        **_task(),
+        "required_tests": [],
+        "verify_commands": ["python3 factory/scripts/check_board_complete.py"],
+    }
+    dump_json(repo / "plans" / "roadmap.json", {"items": [{
+        "key": "DONE-1", "title": "completed story", "status": "done",
+        "outcome": "shipped",
+    }]})
+    (repo / ".factory" / "history" / "DONE-1").mkdir(
+        parents=True, exist_ok=True,
+    )
+    events = repo / ".factory" / "events"
+    events.mkdir(parents=True, exist_ok=True)
+    (events / "done-story.json").write_text(
+        json.dumps({"event": "pr-linked", "story": "DONE-1"}),
+        encoding="utf-8",
+    )
+    board_inputs = stages._board_proof_inputs(repo)
+    assert board_inputs["archives"] == {"DONE-1": [False, True]}
+    legacy_inputs = copy.deepcopy(board_inputs)
+    legacy_inputs["archives"] = {
+        key: tuple(flags) for key, flags in legacy_inputs["archives"].items()
+    }
+    assert json.loads(json.dumps(legacy_inputs)) != legacy_inputs
+
+    dump_json(run_state_path(repo), {"story": "S1", "issue_key": "S1"})
+    dump_json(protected_decomposition_state_path(repo), {"tasks": [task]})
+    commit = subprocess.run(
+        ["git", "rev-parse", "HEAD"], cwd=repo, check=True,
+        capture_output=True, text=True,
+    ).stdout.strip()
+    proof_root = proof_path(repo, "S1", "tests.json", task_id="T1").parent
+    proof_root.mkdir(parents=True, exist_ok=True)
+    stages.write_stages(repo, {"issue": "S1", "stages": [{
+        "id": "T1", "status": "active", "proof_receipts": {},
+    }]})
+
+    context: dict[str, object] = {}
+    stages.run_stage_proof(repo, "T1", task, proof_context=context)
+    receipt = stages._proof_receipt(repo, "T1", "verify")
+    assert receipt["inputs"] == context["proofs"]["verify"]["inputs"]
+    assert pre_review_proof_problems(
+        repo, "S1", "T1", commit, commit, proof_context=context,
+    ) == []
+
+    event = repo / ".factory" / "events" / "pr-link.json"
+    event.parent.mkdir(parents=True, exist_ok=True)
+    event.write_text(json.dumps({"event": "pr-linked", "story": "S1"}),
+                     encoding="utf-8")
+    assert any("verify proof receipt identity is stale" in problem
+               for problem in pre_review_proof_problems(
+                   repo, "S1", "T1", commit, commit, proof_context=context
+               )), "board input drift must refuse review"
+
+
 def test_authoritative_proof_reads_refuse_without_recording_passing_evidence(
         repo: Path, monkeypatch: pytest.MonkeyPatch):
     """Unreadable lifecycle authority must abort proof recording loudly."""

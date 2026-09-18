@@ -2618,9 +2618,9 @@ def _board_proof_inputs(base: Path) -> dict[str, object]:
     return {
         "done": done, "linked": linked,
         "archives": {str(item.get("key", "?")):
-                     (story_dir(base, str(item.get("key", "?"))).is_dir(),
+                     [story_dir(base, str(item.get("key", "?"))).is_dir(),
                       (factory_dir(base) / "history" /
-                       str(item.get("key", "?"))).is_dir())
+                       str(item.get("key", "?"))).is_dir()]
                      for item in done},
     }
 
