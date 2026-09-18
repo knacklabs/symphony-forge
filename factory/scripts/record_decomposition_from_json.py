@@ -521,6 +521,14 @@ with delegation_exclusion(
             refresh_task_plan_contract(root, task_id, new)
         except Exception:
             pass
+    # An active task's journal carries every contract it was built against.
+    from factory_lib import active_story_key
+    from forge_cli.stages import journal_contract
+    active_ids = {stage.get("id") for stage in stages_data.get("stages") or []
+                  if isinstance(stage, dict) and stage.get("status") == "active"}
+    for task_id, new in current_tasks.items():
+        if task_id in active_ids:
+            journal_contract(root, active_story_key(root), new)
     for task_id, was_reviewed, grounding_moved, measurement_moved in changed_active:
         if grounding_moved:
             print(

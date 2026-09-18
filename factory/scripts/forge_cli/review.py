@@ -1316,6 +1316,53 @@ def _run_skill(skill: Path, worktree: Path, base_sha: str, prompt_rel: str,
     return (parsed, raw) if return_raw else parsed
 
 
+def _journal_verdict(base: Path, story: str, task_id: str, kind: str, finding,
+                     verdict: str, evidence: str, body: str) -> None:
+    """A triage verdict or a refusal, with its evidence, in the task journal
+    (0080): the next brief and the next review read it from there."""
+    from .journal import append
+    summary = (str(finding.get("summary", ""))[:160] if isinstance(finding, dict)
+               else str(finding)[:160])
+    fields = {"finding": summary, "evidence": evidence}
+    if kind == "triage":
+        fields["verdict"] = verdict
+    try:
+        append(base, story, task_id, kind=kind, by="coordinator",
+               title=("triaged real: " if kind == "triage" else "refused: ") + summary,
+               body=body, **fields)
+    except SystemExit as exc:
+        print(f"journal: {kind} not recorded: {exc}")
+
+
+def _journal_review(base: Path, story: str, task_id: str, recorded: dict) -> None:
+    """The generation's findings, verbatim, as one journal entry (0080)."""
+    from factory_lib import read_selected_review_generation
+    from .journal import append
+    generation, _selection, problems = read_selected_review_generation(base, story, task_id)
+    generation_id = (str(generation.get("generation_id") or "")
+                     if isinstance(generation, dict) and not problems else "")
+    lines: list[str] = []
+    blocking = 0
+    for lens, artifact in recorded.items():
+        if not isinstance(artifact, dict):
+            continue
+        lines.append(f"[{lens}] score {artifact.get('score', '?')} "
+                     f"{artifact.get('recommendation', '')}")
+        for finding in artifact.get("blocking_findings") or []:
+            blocking += 1
+            lines.append(f"- BLOCKING {finding.get('category', '')}: {finding.get('summary', '')}"
+                         + (f" ({finding.get('area')})" if finding.get("area") else ""))
+        for finding in artifact.get("non_blocking_findings") or []:
+            lines.append(f"- follow-up {finding.get('category', '')}: {finding.get('summary', '')}"
+                         + (f" ({finding.get('area')})" if finding.get("area") else ""))
+    try:
+        append(base, story, task_id, kind="review", by="harness",
+               title=f"review {generation_id[:12] or 'generation'}: {blocking} blocking",
+               body="\n".join(lines), generation_id=generation_id or "unknown")
+    except SystemExit as exc:
+        print(f"journal: review not recorded: {exc}")
+
+
 def reject_finding(base: Path, task_id: str, lens: str, match: str, *,
                    reason: str, cite: str = "", by: str, evidence: str = "") -> dict:
     """Move a recorded blocking finding that contradicts an accepted contract
@@ -1450,6 +1497,8 @@ def reject_finding(base: Path, task_id: str, lens: str, match: str, *,
         expected_source_id=generation["generation_id"], update_stamp=True,
         lesson_records=[(lesson_rel, lesson_body)],
     )
+    _journal_verdict(base, story, task_id, "refusal", finding, "not-a-defect",
+                     cite.strip(), reason.strip())
     ground = (f"proof: {proof}" if proof
               else f"cite: {resolved} (shared terms: {', '.join(shared[:4])})")
     print(f"Rejected {lens} finding: {summary}\n  reason: {reason.strip()}\n  "
@@ -1647,6 +1696,10 @@ def triage_finding(base: Path, task_id: str, lens: str, match: str, *, real: boo
             and not (r.get("lens") == lens and _finding_key(r.get("finding")) == key)]
     data["findings"] = kept + [record]
     dump_json(triage_path(base, story, task_id, for_write=True), data)
+    _journal_verdict(base, story, task_id, "triage", finding, "real", proof,
+                     f"Fix at EVERY one of: {', '.join(where)}."
+                     + (f"\nKeep unchanged: {record['keep']}" if record["keep"] else "")
+                     + (f"\nWhy: {record['reason']}" if record["reason"] else ""))
     summary = (str(finding.get("summary", ""))[:160] if isinstance(finding, dict)
                else str(finding)[:160])
     left, total = untriaged_blocking(base, story, task_id)
@@ -1828,63 +1881,6 @@ def _write_detached(worktree: Path, detached_writes: list[tuple[str, bytes]]) ->
             fail(f"unsafe detached review destination: {worktree / rel}")
 
 
-def _review_in_groups(base: Path, tmp: Path, worktree: Path, base_sha: str,
-                      review_tip: str, groups: list[list[str]], sizes: dict[str, int],
-                      detached_writes: list[tuple[str, bytes]], readable: bool,
-                      launcher_root: Path, skill: Path, engine: str,
-                      max_priority: str, prompt_rel: str, estimate: int,
-                      split_at: int, would_record) -> tuple[dict, bytes]:
-    """One three-lens Codex run per group, all released together; a refused
-    group re-runs alone with the cause in its brief; the results merge into
-    the tool's own chunk shape (decision 0078, review_groups)."""
-    from .review_groups import (
-        flatten_passes, group_commits, group_note, merge_group_reports, run_groups,
-    )
-    from .review_launcher import write_launcher
-
-    every = [path for group in groups for path in group]
-    print(f"review split into {len(groups)} groups: the prompt would be about "
-          f"{estimate // 1000} KB against the tool's {split_at // 1000} KB limit; "
-          "each group is one three-lens Codex run over its files, with the whole "
-          "task tree readable, all released together (0078)", flush=True)
-    briefs = launcher_root / "groups"
-    briefs.mkdir(parents=True, exist_ok=True)
-    specs: list[dict] = []
-    for index, paths in enumerate(groups, 1):
-        label = f"group-{index}"
-        group_dir = tmp / label
-        group_base, group_tip = group_commits(
-            worktree, base_sha, review_tip, paths, tmp / f"{label}.index")
-        _require_git(base, f"creating the {label} worktree", "worktree", "add",
-                     "--detach", str(group_dir), group_tip)
-        _write_detached(group_dir, detached_writes)
-        note = group_note(index, len(groups), paths,
-                          [path for path in every if path not in paths], readable)
-        (briefs / f"{label}.brief.txt").write_text(note, encoding="utf-8")
-        specs.append({
-            "label": label, "worktree": group_dir, "base": group_base, "paths": paths,
-            "codex_bin": str(write_launcher(launcher_root / label, group_dir))
-            if readable else None, "note": note,
-        })
-        print(f"  {label}: {len(paths)} path(s), {sum(sizes[p] for p in paths) // 1000} KB "
-              f"of diff ({group_base[:7]}..{group_tip[:7]})", flush=True)
-
-    def argv_for(group: dict, json_out: Path, extra: str | None) -> list[str]:
-        argv = _skill_argv(skill, group["base"], prompt_rel, json_out, engine,
-                           max_priority,
-                           **({"codex_bin": group["codex_bin"]} if group["codex_bin"] else {}))
-        argv += ["--prompt", group["note"]]
-        if extra:
-            argv += ["--prompt", extra]
-        return argv
-
-    done = run_groups(groups=specs, prompt_rel=prompt_rel, log_dir=briefs,
-                      ledger_root=base, argv_for=argv_for, validate=would_record)
-    merged = merge_group_reports(
-        [wrapper for group in done for wrapper in flatten_passes(group["report"])])
-    return merged, (json.dumps(merged, indent=2) + "\n").encode("utf-8")
-
-
 def review_task(base: Path, task_id: str, *, lens: str | None = None,
                 engine: str = "codex", max_priority: str = "P3",
                 skill: str | None = None) -> dict:
@@ -1993,9 +1989,9 @@ def review_task(base: Path, task_id: str, *, lens: str | None = None,
         _require_git(base, "creating the review worktree", "worktree", "add",
                      "--detach", str(worktree), tip_sha)
         review_tip = product_only_tip(worktree, base_sha)
-        from .review_groups import (
-            PROMPT_SLACK, diff_bytes_by_path, is_review_noise, plan_groups,
-            restore_paths_to_base, review_split_bytes,
+        from .review_bundle import (
+            PROMPT_SLACK, diff_bytes_by_path, is_review_noise, restore_paths_to_base,
+            review_prompt_limit,
         )
         noise = [path for path in scope if is_review_noise(path)]
         if noise:
@@ -2026,42 +2022,46 @@ def review_task(base: Path, task_id: str, *, lens: str | None = None,
         else:
             print(f"review sees only the diff bundle ({why_not}); the brief tells "
                   "it not to mark unseen code partial", flush=True)
-        # Split only a diff the tool would chunk anyway (decision 0078): the
-        # tool's limit is on the whole prompt, brief and dataset included.
+        # One reviewer sees the whole diff with the whole tree (0076). A prompt
+        # the tool would chunk is refused with its composition, never dealt
+        # into file groups (decision 0081): a reviewer holding one file cannot
+        # prove a contract, and on WF-BIO-1 T4 fifty one-file groups invented
+        # eight "partial" verdicts on code that had passed an hour earlier.
         sizes = diff_bytes_by_path(worktree, base_sha)
-        split_at = review_split_bytes()
-        fixed = len(dataset_body) + len(prompts[name][1]) + PROMPT_SLACK
-        estimate = fixed + sum(sizes.values())
-        groups = ([list(sizes)] if args.lens or estimate <= split_at
-                  else plan_groups(sizes, split_at - fixed))
+        limit = review_prompt_limit()
+        brief_bytes, prompt_bytes = len(dataset_body), len(prompts[name][1])
+        diff_bytes = sum(sizes.values())
+        estimate = brief_bytes + prompt_bytes + PROMPT_SLACK + diff_bytes
+        print(f"review prompt: brief {brief_bytes // 1000} KB + prompt "
+              f"{prompt_bytes // 1000} KB + diff {diff_bytes // 1000} KB over "
+              f"{len(sizes)} path(s) = {estimate // 1000} KB of the tool's "
+              f"{limit // 1000} KB", flush=True)
+        if estimate > limit:
+            largest = sorted(sizes.items(), key=lambda item: -item[1])[:5]
+            fail(f"review prompt would be {estimate // 1000} KB against the tool's "
+                 f"{limit // 1000} KB limit (brief {brief_bytes // 1000} KB, diff "
+                 f"{diff_bytes // 1000} KB over {len(sizes)} paths). A review is one "
+                 "reviewer over the whole diff, never file groups (0081): exclude "
+                 "generated files, trim what the brief carries, or split the task. "
+                 "Largest paths: "
+                 + ", ".join(f"{path} ({size // 1000} KB)" for path, size in largest))
         print(f"== {name} review: releasing Codex over {len(scope)} path(s) "
               f"({base_sha[:7]}..{review_tip[:7]}, task tip {tip_sha[:7]}) ==",
               flush=True)
         if not args.lens:
             _require_current_review_helper(skill)
         helper_before, helper_file_before = _helper_identity(skill)
-        if len(groups) > 1:
-            def _would_record(parsed: dict) -> None:
-                _project_combined_report(task, parsed, scope, base_sha, tip_sha,
-                                         skills_used, all_tasks, started, excluded)
-            reviewed, raw_result = _review_in_groups(
-                base, tmp, worktree, base_sha, review_tip, groups, sizes,
-                detached_writes, readable, launcher_root, skill, engine,
-                args.max_priority, prompts[name][0], estimate, split_at,
-                _would_record)
+        # The launcher travels only when there is one, so a runner that knows
+        # nothing of it (a test double, an older override) keeps working.
+        result = _run_skill(
+            skill, worktree, base_sha, prompts[name][0], tmp / f"{name}.json",
+            engine, args.max_priority, ledger_root=base, return_raw=not args.lens,
+            **({"codex_bin": codex_bin} if codex_bin else {}),
+        )
+        if args.lens:
+            reviewed = result
         else:
-            # The launcher travels only when there is one, so a runner that
-            # knows nothing of it (a test double, an older override) keeps
-            # working.
-            result = _run_skill(
-                skill, worktree, base_sha, prompts[name][0], tmp / f"{name}.json",
-                engine, args.max_priority, ledger_root=base, return_raw=not args.lens,
-                **({"codex_bin": codex_bin} if codex_bin else {}),
-            )
-            if args.lens:
-                reviewed = result
-            else:
-                reviewed, raw_result = result
+            reviewed, raw_result = result
         helper_after, helper_file_after = _helper_identity(skill)
         if helper_after != helper_before or helper_file_after != helper_file_before:
             fail("autoreview helper identity changed during the review; nothing published")
@@ -2071,9 +2071,6 @@ def review_task(base: Path, task_id: str, *, lens: str | None = None,
             fail("task product changed during the review; nothing published")
     finally:
         _git(base, "worktree", "remove", "--force", str(worktree))
-        for group_dir in sorted(tmp.glob("group-*")):
-            if group_dir.is_dir():
-                _git(base, "worktree", "remove", "--force", str(group_dir))
         _git(base, "worktree", "prune")
 
     recorder = base / "factory" / "scripts" / "record_review_from_json.py"
@@ -2155,6 +2152,7 @@ def review_task(base: Path, task_id: str, *, lens: str | None = None,
     else:
         print(f"Published one complete review generation for {args.id}; selected.json "
               "was replaced after generation readback.")
+        _journal_review(base, story, args.id, recorded)
     return {
         "blocking": blocking_total,
         "caveats": caveats_total,

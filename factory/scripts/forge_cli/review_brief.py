@@ -71,14 +71,60 @@ def _lessons_section(base: Path, task: dict) -> list[str]:
     if not hits:
         return []
     lines = ["### Lessons in force", "",
-             "Recorded lessons that apply to this task's paths. A finding that "
-             "contradicts one is not a defect unless it shows the lesson itself "
-             "is wrong; say so explicitly instead of re-raising it.", ""]
+             "Recorded lessons that apply to this task's paths, one line each; the "
+             "full text is under `plans/lessons/`. A finding that contradicts one "
+             "is not a defect unless it shows the lesson itself is wrong; say so "
+             "explicitly instead of re-raising it.", ""]
+    seen: set[str] = set()
     for lesson in hits:
         topic = str(lesson.get("topic", "")).strip()
-        body = str(lesson.get("lesson", "")).strip()
+        # Refusals live in the journal now; the rejection lesson stays as the
+        # generation's immutable evidence and is not repeated here. On
+        # WF-BIO-1 T4 the lesson text, pasted once per task section, was 243
+        # KB of a 472 KB brief.
+        if topic.startswith("rejected-review-finding-") or topic in seen:
+            continue
+        seen.add(topic)
+        body = " ".join(str(lesson.get("lesson", "")).split())
+        if len(body) > 240:
+            body = body[:237].rstrip() + "..."
         severity = str(lesson.get("severity", "")).strip()
         lines.append(f"- [{severity}] {topic}: {body}")
+    if len(lines) == 5:
+        return []
+    lines.append("")
+    return lines
+
+
+def _journal_section(base: Path, task: dict) -> list[str]:
+    """The reviewed task's standing journal entries (decision 0080): the
+    coordinator's decisions and notes, scope changes, triage verdicts and
+    refusals with their evidence."""
+    from .journal import entries, standing, task_journal_relpath
+    state = load_json(run_state_path(base), default={})
+    story = state.get("issue_key") or state.get("story") or ""
+    task_id = str(task.get("id") or "")
+    if not story or not task_id:
+        return []
+    items = [e for e in standing(entries(base, story, task_id))
+             if e.get("kind") != "contract"]
+    if not items:
+        return []
+    lines = ["### Task journal -- decisions, triage and refusals on this task", "",
+             "Recorded through `forge journal add` and the harness; the full record "
+             f"is `{task_journal_relpath(base, story, task_id)}`. A refused finding "
+             "carries the evidence that refuted it; raising it again without new "
+             "evidence is not a finding.", ""]
+    for entry in items:
+        meta = "; ".join(
+            f"{key}: {', '.join(map(str, entry[key])) if isinstance(entry.get(key), list) else entry.get(key)}"
+            for key in ("verdict", "evidence", "cite", "paths", "reason")
+            if entry.get(key) not in (None, "", []))
+        lines.append(f"- {entry.get('id')} [{entry.get('kind')}] {entry.get('title')}"
+                     + (f" -- {meta}" if meta else ""))
+        body = " ".join(str(entry.get("body") or "").split())
+        if body:
+            lines.append(f"  {body[:400]}{'...' if len(body) > 400 else ''}")
     lines.append("")
     return lines
 
@@ -151,6 +197,10 @@ def _approved_task_inputs(base: Path, task: dict) -> dict:
         digest = plan_digest_without_assumptions(plan)
     if not plan_text.strip():
         raise SystemExit(f"Review brief refused: task plan for {task_id} is empty.")
+    # The harness-rendered contract block duplicates the decomposition the
+    # brief already carries; the digest excludes it, so does the brief.
+    from factory_lib import strip_derived_sections
+    plan_text = strip_derived_sections(plan_text.encode("utf-8")).decode("utf-8")
 
     grill_path = task_root / "grills" / "tasks" / f"{task_id}.json"
     if treeish:
@@ -366,15 +416,22 @@ def _task_section(
         "",
     ])
     if base is not None:
+        if not full_inputs:
+            # Another task is context for the reviewed one: its contracts and,
+            # when sealed, its identity -- not its amendments, rulings and
+            # lessons again. On WF-BIO-1 T4 those repeated per task section
+            # made the brief 472 KB of a 480 KB limit and the split collapsed
+            # to one file per group (decision 0080).
+            if sealed_context:
+                lines.extend(_sealed_proof_section(base, task))
+            return lines
         lines.extend(_amendments_section(base, task))
         lines.extend(_settled_section(base, task))
+        lines.extend(_journal_section(base, task))
         lines.extend(_lessons_section(base, task))
-        if full_inputs:
-            lines.extend(render_approved_inputs_section(
-                approved_inputs or _approved_task_inputs(base, task)
-            ))
-        elif sealed_context:
-            lines.extend(_sealed_proof_section(base, task))
+        lines.extend(render_approved_inputs_section(
+            approved_inputs or _approved_task_inputs(base, task)
+        ))
     return lines
 
 

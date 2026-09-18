@@ -8,7 +8,11 @@ from pathlib import Path
 
 import pytest
 
-from test_gates import HARNESS, intake, repo, run, sign_off  # noqa: F401
+from test_gates import (  # noqa: F401
+    HARNESS, STAGE_TASK, delegation_ledger, intake, repo, run,
+    sign_off, start_stage, write_in_scope,
+)
+from forge_cli.delegate import brief_path  # noqa: E402
 
 sys.path.insert(0, str(HARNESS / "factory" / "scripts"))
 from forge_cli import journal  # noqa: E402
@@ -109,3 +113,68 @@ def test_cli_adds_shows_and_reports_status(repo):
     code, out = run(repo, "forge.py", "journal", "add", "T1", "--kind", "proof",
                     "--title", "x", "--command", "c", "--exit-code", "0")
     assert code != 0 and "coordinator entry cannot be of kind" in out, out
+
+
+# ------------------------------------------------ the harness writes it (0080)
+
+
+def test_stage_start_and_delegate_write_contract_launch_and_exit(repo, tmp_path):
+    start_stage(repo, tmp_path, STAGE_TASK)
+    items = journal.entries(repo, "ENG-1", "T1")
+    kinds = [e["kind"] for e in items]
+    assert kinds[0] == "contract" and "launch" in kinds and "exit" in kinds, kinds
+    contract = items[0]
+    assert "Objective: Build the core slice" in contract["body"]
+    assert "stage_contract_proof.py" in contract["body"]
+    launch = next(e for e in items if e["kind"] == "launch")
+    assert launch["journal_head"] == "J-1", launch  # the contract was all it carried
+    exit_entry = next(e for e in items if e["kind"] == "exit")
+    assert exit_entry["launch_id"] == launch["launch_id"] and exit_entry["exit_code"] == 0
+    ledger = [json.loads(line) for line in delegation_ledger(repo).read_text(
+        encoding="utf-8").splitlines() if line.strip()]
+    assert ledger[0]["journal_head"] == "J-1"
+    brief = brief_path(repo, "T1").read_text(encoding="utf-8")
+    assert "Task journal -- what the coordinator sees, you see" in brief
+    assert "Standing instructions (apply regardless of age)" in brief
+    assert "J-1 · contract · harness" in brief
+    assert "acted on: J-..." in brief
+
+
+def test_the_next_brief_carries_notes_and_everything_since_the_last_launch(repo, tmp_path):
+    from forge_cli.delegate import compose_brief
+    start_stage(repo, tmp_path, STAGE_TASK)
+    code, out = run(repo, "forge.py", "journal", "add", "T1", "--kind", "note",
+                    "--title", "Heartbeat every five minutes",
+                    "--body", "Nandu decided it in chat; default 300, not 60.")
+    assert code == 0, out
+    task = dict(STAGE_TASK)
+    brief = compose_brief(repo, task, write=True, user_facing=False, story="ENG-1")
+    assert "Heartbeat every five minutes" in brief
+    assert "Nandu decided it in chat" in brief
+    head = next(e for e in journal.entries(repo, "ENG-1", "T1")
+                if e["kind"] == "launch")["journal_head"]
+    assert f"New since your last launch (after {head})" in brief
+    assert "exited with code 0" in brief  # the worker's own earlier exit
+
+
+def test_scope_amendments_and_signals_are_journaled(repo, tmp_path):
+    start_stage(repo, tmp_path, STAGE_TASK)
+    write_in_scope(repo, "billing/ledger.py")
+    code, out = run(repo, "forge.py", "stage", "amend-scope", "T1",
+                    "--reason", "the ledger row is part of this slice", "--by", "Nandu")
+    assert code == 0, out
+    code, out = run(repo, "forge.py", "signal", "raise", "--kind", "confusion",
+                    "--message", "which ledger column is the key?", "--by", "implementer")
+    assert code == 0, out
+    signal_id = out.split("Signal ")[1].split()[0]
+    code, out = run(repo, "forge.py", "signal", "resolve", signal_id,
+                    "--notes", "ledger.id, see the plan")
+    assert code == 0, out
+    items = journal.entries(repo, "ENG-1", "T1")
+    scope = next(e for e in items if e["kind"] == "scope")
+    assert scope["paths"] == ["billing/ledger.py"]
+    assert scope["reason"] == "the ledger row is part of this slice"
+    raised = next(e for e in items if e["kind"] == "signal")
+    assert raised["generated_by"] == "worker" and "ledger column" in raised["body"]
+    resolved = next(e for e in items if e["kind"] == "signal-resolved")
+    assert "ledger.id" in resolved["body"]

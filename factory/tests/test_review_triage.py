@@ -88,6 +88,12 @@ def test_a_real_triage_records_proof_and_instances_and_the_brief_carries_them(re
     assert record["triaged_by"] == "orchestrator"
     assert record["delta_id"] == generation["delta_id"]
     assert record["generation_id"] == generation["generation_id"]
+    # The verdict is in the task journal, where the next brief and review read it.
+    from forge_cli.journal import entries as journal_entries
+    verdicts = [e for e in journal_entries(repo, "ENG-1", "T2") if e["kind"] == "triage"]
+    assert len(verdicts) == 1 and verdicts[0]["verdict"] == "real"
+    assert verdicts[0]["evidence"] == "src/work.py:1"
+    assert "Fix at EVERY one of: src/work.py:1, src/other.py:2." in verdicts[0]["body"]
     # The generation itself is untouched: a real finding still blocks the close.
     after_gen = selected_generation(repo, "ENG-1", "T2")
     assert after_gen["generation_id"] == generation["generation_id"]
@@ -162,6 +168,10 @@ def test_not_a_defect_rejects_on_a_proof_line_without_a_citation(repo, tmp_path)
                for p in lessons)
     report = rejected_findings_report(repo, "ENG-1", "T2")
     assert "cites: evidence src/work.py:1" in report
+    from forge_cli.journal import entries as journal_entries
+    refusals = [e for e in journal_entries(repo, "ENG-1", "T2") if e["kind"] == "refusal"]
+    assert len(refusals) == 1 and refusals[0]["evidence"] == "evidence src/work.py:1"
+    assert "stays editable" in refusals[0]["finding"]
     # The other finding is still blocking, and still untriaged.
     assert untriaged_blocking(repo, "ENG-1", "T2") == (1, 1)
     # `--reject` accepts the same ground directly, and still needs one of the two.

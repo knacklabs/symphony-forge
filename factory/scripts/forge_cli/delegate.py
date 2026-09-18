@@ -1016,7 +1016,9 @@ BEFORE_YOU_REPORT = (
     "report. A test you did not run is not reported as passing. If a command "
     "cannot run here, name the command, quote its error, and say what you "
     "verified instead. Do not run verify.py or record evidence yourself: "
-    "`task close` runs the proof once more and records it (0079)."
+    "`task close` runs the proof once more and records it (0079). End the "
+    "report with `acted on: J-...` naming the journal entries you acted on, "
+    "and `not applicable: J-... -- why` for the rest (0080)."
 )
 
 
@@ -1102,6 +1104,90 @@ def _review_findings_section(base: Path, task: dict, story: str) -> str:
                     "\n\n".join(parts))
 
 
+def _journal_sections(base: Path, story: str, task_id: str) -> str:
+    """The task journal, the one channel both agents read (decision 0080).
+
+    Two views rendered from the same file: the standing instructions (the
+    latest contract, every decision, note, scope change, refusal and accepted
+    flake), and everything appended since this worker's last launch (exits,
+    its own earlier reports, proof output, signals). Review findings and
+    their triage ride in the findings section above, from the same records.
+    The file is named so the worker can open the rest."""
+    from .journal import entries, render_entries, since, standing, task_journal_relpath
+    if not story or not task_id:
+        return ""
+    items = entries(base, story, task_id)
+    rel = task_journal_relpath(base, story, task_id)
+    intro = (f"The complete record of this task is `{rel}`: every decision, note, "
+             "proof output, review, triage, refusal, scope change, and your own "
+             "earlier reports. Read it before you edit. In your final report, "
+             "cite the entry ids you acted on (`acted on: J-3, J-7`) and say why "
+             "for any you did not (`not applicable: J-9 -- ...`).")
+    title = "Task journal -- what the coordinator sees, you see"
+    if not items:
+        return _section(title, intro + "\n\n(empty so far)")
+    last_launch = next((e for e in reversed(items) if e.get("kind") == "launch"), None)
+    head = str(last_launch.get("journal_head") or "") if last_launch else ""
+    stand = [e for e in standing(items) if e.get("kind") != "triage"]
+    seen = {e.get("id") for e in stand}
+    fresh = [e for e in since(items, head)
+             if e.get("kind") not in ("review", "triage", "launch", "brief")
+             and e.get("id") not in seen]
+    label = (f"New since your last launch (after {head})" if head
+             else "New since the task started")
+    return _section(title, intro + "\n\n"
+                    + render_entries(stand, heading="Standing instructions (apply regardless of age)")
+                    + "\n" + render_entries(fresh, heading=label))
+
+
+def _journal_launch(base: Path, story: str, task_id: str, launch_id: str, *,
+                    note: str) -> str:
+    """Record the launch; return the journal head the brief carried."""
+    if not story:
+        return ""
+    from .journal import append, entries, head_id
+    head = head_id(entries(base, story, task_id))
+    try:
+        append(base, story, task_id, kind="launch", by="harness",
+               title=f"worker launch {launch_id[-8:]}", body=note,
+               launch_id=launch_id, journal_head=head)
+    except SystemExit as exc:
+        print(f"journal: launch not recorded: {exc}")
+    return head
+
+
+def _journal_exit(base: Path, story: str, task_id: str, launch_id: str,
+                  code: object, stderr: str, message: str = "") -> None:
+    """Record the exit, and the worker's report verbatim with the journal
+    entries it says it acted on. Before this a worker that exited at 01:41
+    was believed running until 02:26 (WF-BIO-1 T4)."""
+    if not story:
+        return
+    import re
+    from .journal import append, entries
+    tail = "\n".join((stderr or "").rstrip().splitlines()[-40:])
+    try:
+        exit_code = int(code) if code is not None else -1
+    except (TypeError, ValueError):
+        exit_code = -1
+    try:
+        append(base, story, task_id, kind="exit", by="harness",
+               title=f"worker {launch_id[-8:]} exited with code {exit_code}",
+               body=tail, launch_id=launch_id, exit_code=exit_code)
+        if message:
+            known = {e.get("id") for e in entries(base, story, task_id)}
+            cited = sorted({m for m in re.findall(r"\bJ-\d+\b", message) if m in known},
+                           key=lambda s: int(s[2:]))
+            append(base, story, task_id, kind="report", by="worker",
+                   title=f"worker {launch_id[-8:]} report", body=message,
+                   launch_id=launch_id, acted_on=cited)
+            if not cited:
+                print("journal: the worker's report cites no journal entry "
+                      "(`acted on: J-...`); read it against the journal yourself")
+    except SystemExit as exc:
+        print(f"journal: exit not recorded: {exc}")
+
+
 def compose_brief(base: Path, task: dict, *, write: bool, user_facing: bool,
                   story: str) -> str:
     # Contract scope plus every measured amendment: what `stage done` will
@@ -1171,10 +1257,15 @@ def compose_brief(base: Path, task: dict, *, write: bool, user_facing: bool,
         reviewer_focus = "\n".join(f"- {item}" for item in reviewer_focus)
     body += _section("Reviewer focus", reviewer_focus)
     body += _review_findings_section(base, task, story)
+    body += _journal_sections(base, story, str(task.get("id") or ""))
     decisions = [r for r in decision_records(base) if r["status"] == "accepted"]
     body += _section("Active decisions — binding", "\n".join(
         f"- {r['id']}: {r['title']}" for r in decisions))
-    lessons = relevant_lessons(base, scope)
+    # Rejected-finding lessons are superseded by the journal's refusals; the
+    # file stays as the generation's immutable evidence, the brief does not
+    # repeat it (WF-BIO-1 T4: 26 such lessons matched every path).
+    lessons = [le for le in relevant_lessons(base, scope)
+               if not str(le.get("topic", "")).startswith("rejected-review-finding-")]
     body += _section("Lessons recorded against these paths", "\n".join(
         f"- {le.get('lesson', '')}" for le in lessons))
     # A parallel worker must not ask what a sibling task already settled: the
@@ -1352,6 +1443,10 @@ def launch_companion(
 
     for candidate in handled_signals:
         signal.signal(candidate, handle_termination)
+    record["journal_head"] = _journal_launch(
+        base, story, task_id, launch_id,
+        note=f"brief {rel} sha256 {brief_digest[:12]}; {model} {effort}; "
+             f"write={'yes' if write else 'no'}")
     append_delegation(base, record)
     try:
         try:
@@ -1438,6 +1533,7 @@ def launch_companion(
                     failed["session_id"] = session_id
             append_delegation(base, failed)
             terminal_recorded = True
+            _journal_exit(base, story, task_id, launch_id, proc.returncode, stderr)
             if runtime == "codex":
                 detail = stderr.strip()
                 fail(f"Codex worker launch failed (exit {proc.returncode})"
@@ -1474,10 +1570,15 @@ def launch_companion(
                     failed["session_id"] = session_id
                 append_delegation(base, failed)
                 terminal_recorded = True
+                _journal_exit(base, story, task_id, launch_id, proc.returncode,
+                              native_result.error)
                 fail(native_result.error)
             terminal["session_id"] = native_result.session_id
         published = append_delegation(base, terminal)
         terminal_recorded = True
+        _journal_exit(base, story, task_id, launch_id, proc.returncode, stderr,
+                      message=(native_result.message
+                               if runtime == "codex" and native_result else ""))
         if runtime == "codex" and not published:
             existing = next(
                 row for row in reversed(load_delegations(base))

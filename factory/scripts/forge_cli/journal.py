@@ -74,6 +74,11 @@ def journal_paths(base: Path, story: str, task_id: str) -> tuple[Path, Path, Pat
     return record, record.with_name("journal.md"), record.with_name("journal")
 
 
+def task_journal_relpath(base: Path, story: str, task_id: str) -> str:
+    """Where a reader opens the rendered journal, relative to the repo."""
+    return journal_paths(base, story, task_id)[1].relative_to(base).as_posix()
+
+
 def entries(base: Path, story: str, task_id: str) -> list[dict]:
     record = task_evidence_path(base, story, task_id, "journal.jsonl")
     try:

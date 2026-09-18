@@ -197,6 +197,25 @@ def _refuse_sibling_scope(base: Path, message: str, refs: list[str]) -> None:
                  "serialise them); this run keeps to its own scope.")
 
 
+def _journal_signal(base: Path, kind: str, by: str, title: str, body: str) -> None:
+    """A signal and its resolution are part of the task's record (0080)."""
+    from factory_lib import active_task_id
+    from .journal import append
+    state = load_json(run_state_path(base), default={})
+    story = state.get("issue_key") or state.get("story") or ""
+    task_id = active_task_id(base)
+    if not task_id:
+        from .stages import load_stages
+        task_id = next((s.get("id") for s in load_stages(base).get("stages", [])
+                        if isinstance(s, dict) and s.get("status") == "active"), "")
+    if not story or not task_id:
+        return
+    try:
+        append(base, story, str(task_id), kind=kind, by=by, title=title, body=body)
+    except SystemExit as exc:
+        print(f"journal: signal not recorded: {exc}")
+
+
 def cmd_raise(args: argparse.Namespace) -> None:
     base = Path(args.repo).resolve() if args.repo else repo_root()
     if args.kind not in KINDS:
@@ -224,6 +243,8 @@ def cmd_raise(args: argparse.Namespace) -> None:
     _append(base, event)
     append_event(base, f"signal-{args.kind}", actor=args.by, story=issue,
                  detail=payload["message"][:200])
+    _journal_signal(base, "signal", "worker", f"{args.kind} signal {event['id']}",
+                    payload["message"])
     print(f"Signal {event['id']} raised ({args.kind}) for task {issue or '?'}")
     print("PAUSE this thread; the orchestrator resolves and resumes you.")
 
@@ -239,6 +260,8 @@ def cmd_resolve(args: argparse.Namespace) -> None:
     issue = load_json(run_state_path(base), default={}).get("issue_key", "")
     append_event(base, "signal-resolved", actor="orchestrator", story=issue,
                  detail=f"{args.id}: {args.notes.strip()[:200]}")
+    _journal_signal(base, "signal-resolved", "coordinator", f"{args.id} resolved",
+                    args.notes.strip())
     print(f"Signal {args.id} resolved")
 
 

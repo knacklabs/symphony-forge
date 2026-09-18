@@ -626,8 +626,13 @@ def seal_task(base: Path, task_id: str) -> None:
             # refuses a path changed after the marker (0079).
             evidence_paths = [
                 path for path in (marker.parent / "verify.json",
-                                  marker.parent / "tests.json")
+                                  marker.parent / "tests.json",
+                                  marker.parent / "journal.jsonl",
+                                  marker.parent / "journal.md")
                 if (base / path).is_file()
+            ] + [
+                path.relative_to(base)
+                for path in sorted((base / marker.parent / "journal").glob("*.txt"))
             ]
             proof_paths = [marker, *selected_paths, *evidence_paths]
             # Exclusion keeps the selected pointer and its complete lineage fixed

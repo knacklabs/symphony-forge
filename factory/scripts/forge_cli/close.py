@@ -52,12 +52,10 @@ def _commit_task_proof(base: Path, story: str, task_id: str,
     from .stages import product_tree_snapshot
     from .tasks import _require_git
 
-    rels = [
-        path.relative_to(base).as_posix()
-        for path in (task_evidence_path(base, story, task_id, name)
-                     for name in ("verify.json", "tests.json"))
-        if path.is_file()
-    ]
+    evidence = [task_evidence_path(base, story, task_id, name)
+                for name in ("verify.json", "tests.json", "journal.jsonl", "journal.md")]
+    evidence += sorted(task_evidence_path(base, story, task_id, "journal").glob("*.txt"))
+    rels = [path.relative_to(base).as_posix() for path in evidence if path.is_file()]
     if not rels or not _require_git(
             base, "checking the task proof", "status", "--porcelain", "--", *rels):
         return proof

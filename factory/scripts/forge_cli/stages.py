@@ -845,6 +845,29 @@ def amended_scope_paths(base: Path, task_id: str) -> list[str]:
     return [p for p in paths if isinstance(p, str) and p]
 
 
+def journal_contract(base: Path, story: str, task: dict) -> None:
+    """The recorded contract as the journal's standing first entry (0080);
+    re-recorded on every contract change, deduplicated by the journal."""
+    from .journal import append
+    task_id = str(task.get("id") or "")
+    if not story or not task_id:
+        return
+    lines = [f"Objective: {task.get('objective', '')}", "", "Acceptance criteria:"]
+    lines += [f"- {c}" for c in task.get("acceptance_criteria") or []]
+    lines += ["", "Write scope:"] + [f"- {s}" for s in task.get("write_scope") or []]
+    lines += ["", "Required tests:"] + [
+        f"- {t.get('id')}: `{t.get('command')}` ({t.get('path')})"
+        for t in task.get("required_tests") or [] if isinstance(t, dict)]
+    lines += ["", "Verify commands:"] + [
+        f"- `{c}`" for c in task.get("verify_commands") or []]
+    try:
+        append(base, story, task_id, kind="contract", by="harness",
+               title=f"contract {task_digest(task)[:12]}: {task.get('title', '')}",
+               body="\n".join(lines))
+    except SystemExit as exc:
+        print(f"journal: contract not recorded: {exc}")
+
+
 def effective_scope(base: Path, task_id: str, scope: list[str]) -> list[str]:
     return list(scope) + amended_scope_paths(base, task_id)
 
@@ -1241,6 +1264,7 @@ def _cmd_start_locked(args: argparse.Namespace, base: Path) -> None:
     stage["task_sha256"] = task_digest(current_task)
     append_event(base, "stage-start", actor="implementer", story=data.get("issue", ""),
                  detail=f"{args.id} {stage.get('title', '')}")
+    journal_contract(base, str(data.get("issue") or ""), current_task)
     stage.pop("parallel", None)
     write_stages(base, data)
     print(f"Stage {args.id} active — {stage.get('title')}")
@@ -2256,6 +2280,15 @@ def cmd_amend_scope(args) -> None:
         "measured_head": head_sha(base),
     })
     dump_json(scope_amendments_path(base), record)
+    from .journal import append as journal_append
+    try:
+        journal_append(
+            base, str(load_json(run_state_path(base), default={}).get("issue_key") or ""),
+            args.id, kind="scope", by="coordinator",
+            title=f"scope amended: {len(strays)} measured path(s)",
+            body=reason, paths=sorted(strays), reason=reason)
+    except SystemExit as exc:
+        print(f"journal: scope not recorded: {exc}")
     from factory_lib import refresh_task_plan_contract
     refresh_task_plan_contract(base, args.id, task)
     print(f"Amended {args.id} scope with {len(strays)} measured path(s): "
