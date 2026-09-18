@@ -1,5 +1,5 @@
 {
-  "commit": "4056a77ff008165168a61af4a76045de7b4bee00",
+  "commit": "fe9e27b0cc14f962700fb0d1034be05e6b4bde4b",
   "automated": {
     "generated_by": "implementer",
     "status": "passed",
@@ -10,6 +10,7 @@
       "UV_CACHE_DIR=/tmp/forge-lean-uv-cache uv run --with pytest --with psutil python -m pytest factory/tests/test_stage_proof_runs_once.py -q => 6 passed in 60.46s",
       "UV_CACHE_DIR=/tmp/forge-lean-uv-cache uv run --with pytest --with psutil python -m pytest factory/tests/test_close_binds_to_the_diff.py -q -k 'task_close_reopens_a_done_stage_whose_diff_moved or task_close_records_the_proof_in_the_marker_commit or task_close_reuses_the_proof_when_only_bookkeeping_moved' => 3 passed, 22 deselected in 61.86s",
       "UV_CACHE_DIR=/tmp/forge-lean-uv-cache uv run --with pytest --with psutil python -m pytest factory/tests/test_raw_writes_keep_bytes.py -q => 5 passed in 0.24s",
+      "UV_CACHE_DIR=/tmp/forge-lean-uv-cache uv run --with pytest --with psutil python -m pytest factory/tests/test_gates.py factory/tests/test_proof_reuse.py -q -k 'test_stage_proof_reuses_one_input_snapshot_for_both_identities or test_review_consumers_include_complete_approved_inputs' => 2 passed, 762 deselected in 74.41s",
       "git diff --check && python3 -m py_compile factory/scripts/forge_cli/stages.py factory/scripts/forge_cli/close.py factory/scripts/forge_cli/delegate.py factory/scripts/forge_cli/worker_admission.py factory/scripts/forge_cli/review.py => passed",
       "rg -n '^(<<<<<<<|=======|>>>>>>>)' WORKFLOW.md factory/scripts/forge_cli/close.py factory/scripts/forge_cli/delegate.py factory/scripts/forge_cli/stages.py factory/scripts/forge_cli/worker_admission.py => passed with no conflict markers",
       "Historical evidence preserved from tests.json recorded 2026-09-18T11:36:42+00:00 and bound to 2a2f4076c3f256ee5007c4c2e6281bc1c998b574; not rerun by this correction: declared required test nodes from the protected LEAN-WORKFLOW contract (52 passed in 45.05s)",
@@ -44,13 +45,15 @@
       "factory/tests/test_close_binds_to_the_diff.py",
       "factory/tests/test_raw_writes_keep_bytes.py"
     ],
-    "pass_fail_summary": "35 focused test cases passed; 0 failed, 0 errors, 0 skips in the reported runs.\nHistorical evidence preserved from tests.json recorded 2026-09-18T11:36:42+00:00 and bound to 2a2f4076c3f256ee5007c4c2e6281bc1c998b574; not rerun by this correction: All six controlled benchmark runs and both setup-profile runs passed 90/90 tests. n8 passed the speed and stability gates; prepared-fixture profiling did not reach its trigger.",
+    "pass_fail_summary": "37 focused test cases passed; 0 failed, 0 errors, 0 skips in the reported runs.\nHistorical evidence preserved from tests.json recorded 2026-09-18T11:36:42+00:00 and bound to 2a2f4076c3f256ee5007c4c2e6281bc1c998b574; not rerun by this correction: All six controlled benchmark runs and both setup-profile runs passed 90/90 tests. n8 passed the speed and stability gates; prepared-fixture profiling did not reach its trigger.",
     "reviewed_scope": [
       "single close-owned proof path and complete reusable proof identities",
       "fresh nonreusable close context through proof-only commit into review",
       "conservative direct-review refusal and receipt/environment/product/authority drift",
       "authoritative lifecycle read refusal propagates without recording passing evidence",
       "metadata-only HEAD refresh after the proof evidence commit",
+      "single product-tree snapshot reuse when complete proof identities are supplied",
+      "review preflight fixture compatibility with proof_context",
       "truthful stage-proof worker provenance and Windows raw-open portability",
       "single-owner workflow documentation and decision 0080 references"
     ],
@@ -71,8 +74,8 @@
     ],
     "non_blocking_findings": [],
     "manual_validation_steps": [],
-    "recorded_at": "2026-09-18T12:50:14+00:00",
-    "commit": "4056a77ff008165168a61af4a76045de7b4bee00"
+    "recorded_at": "2026-09-18T13:19:00+00:00",
+    "commit": "fe9e27b0cc14f962700fb0d1034be05e6b4bde4b"
   },
-  "updated_at": "2026-09-18T12:50:14+00:00"
+  "updated_at": "2026-09-18T13:19:00+00:00"
 }
