@@ -7,8 +7,8 @@ import re
 from pathlib import Path
 
 from factory_lib import (
-    classify_scope_entries, git_control_dir, load_json, now_iso, run_state_path,
-    sha256_of, task_digest,
+    classify_scope_entries, git_control_dir, load_json, now_iso, raw_open_flags,
+    run_state_path, sha256_of, task_digest,
 )
 
 from .delegate import (
@@ -39,7 +39,7 @@ def revoke_worker_admission(base: Path, record: dict) -> None:
     launch_id = str(record.get("launch_id") or "")
     path = _revocation_path(base, launch_id)
     path.parent.mkdir(parents=True, exist_ok=True)
-    flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL
+    flags = raw_open_flags(os.O_WRONLY | os.O_CREAT | os.O_EXCL)
     if hasattr(os, "O_NOFOLLOW"):
         flags |= os.O_NOFOLLOW
     try:

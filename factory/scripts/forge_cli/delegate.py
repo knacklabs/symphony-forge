@@ -34,8 +34,8 @@ from pathlib import Path
 
 from factory_lib import (
     git_control_dir, load_json, now_iso, protected_decomposition_state_path,
-    repo_root, require_ready_task, require_task_worktree, run_state_path,
-    safe_factory_append,
+    raw_open_flags, repo_root, require_ready_task, require_task_worktree,
+    run_state_path, safe_factory_append,
     safe_factory_write_bytes, sha256_of, task_digest, validate_payload,
 )
 
@@ -179,7 +179,8 @@ def _append_delegation_line(base: Path, record: dict) -> None:
     # cannot modify.
     path = delegations_path(base)
     path.parent.mkdir(parents=True, exist_ok=True)
-    descriptor = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_APPEND, 0o600)
+    descriptor = os.open(
+        path, raw_open_flags(os.O_WRONLY | os.O_CREAT | os.O_APPEND), 0o600)
     try:
         os.write(descriptor, line)
     finally:

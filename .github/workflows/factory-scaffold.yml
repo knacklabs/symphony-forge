@@ -137,4 +137,5 @@ jobs:
             factory/tests/test_gates.py::test_windows_delegation_success_round_trips_unicode_handoff `
             factory/tests/test_gates.py::test_companion_guard_admits_read_only_and_refuses_write_shapes `
             factory/tests/test_gates.py::test_lockout_denies_product_write_under_approved_plan `
-            factory/tests/test_gates.py::test_degraded_window_allows_and_ledgers_product_write -q
+            factory/tests/test_gates.py::test_degraded_window_allows_and_ledgers_product_write `
+            factory/tests/test_raw_writes_keep_bytes.py -q

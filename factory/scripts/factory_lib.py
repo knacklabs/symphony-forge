@@ -1153,6 +1153,19 @@ def _has_origin(root: Path) -> bool:
     return _board_memo(f"board:has_origin:{git_dir}", stamp, ask)
 
 
+def raw_open_flags(flags: int) -> int:
+    """Flags for an os.open() whose written bytes must land on disk unchanged.
+
+    On Windows a descriptor opened without O_BINARY is text-mode: the C runtime
+    rewrites every LF in os.write() as CRLF. The review brief's sha256 was
+    taken from the LF body in memory and checked against the file, so every
+    close on a Windows host refused with "review brief hash does not match the
+    saved all.md" until the file was converted by hand. Every raw open the
+    harness writes bytes through takes its flags from here.
+    """
+    return flags | getattr(os, "O_BINARY", 0)
+
+
 def _windows_reparse_point(path: Path) -> bool:
     info = os.lstat(path)
     return bool(
@@ -1181,7 +1194,7 @@ def _safe_factory_nt_open(
         leaf = parent / parts[-1]
         if os.path.lexists(leaf) and _windows_reparse_point(leaf):
             return None
-        return os.open(leaf, flags, 0o600)
+        return os.open(leaf, raw_open_flags(flags), 0o600)
     except OSError:
         return None
 
@@ -3066,11 +3079,10 @@ def _publish_immutable_review_file(root: Path, destination: Path, body: bytes) -
         return
     if not _safe_review_leaf(root, temporary, required=False, create_parents=True):
         raise SystemExit(f"unsafe review generation temporary path: {temporary}")
-    # O_BINARY: on Windows a descriptor without it is text-mode, every newline
-    # in the body lands as CRLF, and the readback below refused every
-    # generation (temporary readback differs): no review could publish.
-    flags = (os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, "O_NOFOLLOW", 0)
-             | getattr(os, "O_BINARY", 0))
+    # The readback below compares bytes: raw_open_flags keeps LF as LF on
+    # Windows, or every generation refused (temporary readback differs).
+    flags = raw_open_flags(
+        os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, "O_NOFOLLOW", 0))
     descriptor = os.open(temporary, flags, 0o600)
     try:
         info = os.fstat(descriptor)
@@ -3108,9 +3120,10 @@ def _replace_review_selection(root: Path, destination: Path, selection: dict) ->
     temporary = destination.with_name(f".{destination.name}.{os.getpid()}.tmp")
     if not _safe_review_leaf(root, temporary, required=False, create_parents=True):
         raise SystemExit(f"unsafe review selection temporary path: {temporary}")
-    descriptor = os.open(  # O_BINARY: see _publish_immutable_review_file
-        temporary, os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, "O_NOFOLLOW", 0)
-        | getattr(os, "O_BINARY", 0), 0o600,
+    descriptor = os.open(  # raw_open_flags: see _publish_immutable_review_file
+        temporary, raw_open_flags(
+            os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, "O_NOFOLLOW", 0)),
+        0o600,
     )
     try:
         view = memoryview(body)
