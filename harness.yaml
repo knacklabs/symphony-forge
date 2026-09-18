@@ -138,7 +138,14 @@ phases:
     owner: "codex:implementer"
     allowed:
       - "implementer"
+      - "stage-proof"
     schema: "factory/schemas/test-automated.json"
+    note: >
+      `task close` runs the contract's verify commands and required tests
+      once and records the run itself (decision 0079); when no implementer
+      record exists for a non-user-facing task, the record it writes is
+      generated_by stage-proof. A user-facing task keeps the implementer's
+      record, which attests the design skills.
     functional:
       owner: "codex:functional-checker"
       allowed:
