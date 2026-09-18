@@ -253,7 +253,13 @@ def test_full_scope_brief_keeps_worker_owned_task_verification(repo: Path):
     )
 
     assert "Delegation coverage: FULL effective task scope" in brief
-    assert "Verify commands (run them yourself" in brief
+    assert (
+        "Verify commands (task-wide proof; forge task close runs these once)" in brief
+    )
+    assert (
+        "`forge task close` owns the task-wide required tests and verify commands"
+        in brief
+    )
     assert "Do not run the task-wide required tests" not in brief
 
 

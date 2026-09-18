@@ -3377,6 +3377,7 @@ def ready_task(repo: Path, tmp_path: Path) -> None:
 
 def test_pr_ready_rejects_unstamped_evidence(repo, tmp_path):
     ready_task(repo, tmp_path)
+    seal_fixture_tasks(repo, tmp_path)
     verify = story_state(repo) / "tasks" / "T1" / "verify.json"
     verify.write_text(json.dumps({"ok": True}))  # no commit stamp
     code, out = run(repo, "pr_ready.py")
@@ -3385,14 +3386,26 @@ def test_pr_ready_rejects_unstamped_evidence(repo, tmp_path):
 
 def test_pr_ready_rejects_stale_evidence_after_code_change(repo, tmp_path):
     ready_task(repo, tmp_path)
+    seal_fixture_tasks(repo, tmp_path)
+    verify = story_state(repo) / "tasks" / "T1" / "verify.json"
+    verify_bytes = verify.read_bytes()
     (repo / "app.py").write_text("print('changed after evidence')\n")
     git(repo, "add", "app.py")
     git(repo, "commit", "-q", "-m", "code change after evidence")
+    stale = json.loads(verify_bytes)
+    stale["commit"] = head(repo)
+    verify.write_text(json.dumps(stale))
     code, out = run(repo, "pr_ready.py")
-    assert code != 0 and "product content changed after verify proof" in out
-    # Re-recording at the new commit clears it
-    write_passing_artifacts(repo)
-    seal_fixture_tasks(repo, tmp_path)
+    assert code != 0 and (
+        "verify proof commit is outside the task base-to-seal range" in out
+    )
+    verify.write_bytes(verify_bytes)
+    code, out = run(
+        repo, "forge.py", "outcome", "set",
+        "The invoice list now loads for every account and can be filtered by date, "
+        "which previously required a support request.",
+    )
+    assert code == 0, out
     code, out = run(repo, "pr_ready.py")
     assert code == 0, out
 
@@ -6444,6 +6457,7 @@ def test_functional_check_required_when_user_facing(repo, tmp_path):
     record_skeleton_then_frontier(repo, [task])
     run(repo, "update_run.py", "--decomposition-status", "recorded")
     write_passing_artifacts(repo)
+    seal_fixture_tasks(repo, tmp_path)
     f = story_state(repo)
     tests_path = f / "tasks" / "T1" / "tests.json"
     tests = json.loads(tests_path.read_text())
@@ -18878,7 +18892,7 @@ def test_decomposition_recorder_validates_plan_contracts(repo, tmp_path):
     assert [item["id"] for item in recorded["tasks"][1]["plan_contracts"]] == ["C2"]
 
 
-def _native_review_fixture(repo, tmp_path):
+def _native_review_fixture(repo, tmp_path, *, reusable_proof=False):
     sign_off(repo)
     intake(repo)
     save_plan(repo, tmp_path)
@@ -18889,6 +18903,18 @@ def _native_review_fixture(repo, tmp_path):
             "source": "plan.md#first",
         }],
     }
+    if reusable_proof:
+        first.update({
+            "required_tests": [{
+                "id": "test_review_preflight_uses_active_task_proof",
+                "path": "factory/tests/test_gates.py",
+                "command": (
+                    "python3 -m pytest {path}::{id} -o junit_family=legacy "
+                    "--junitxml={report}"
+                ),
+            }],
+            "verify_commands": ["python3 -m compileall factory/scripts"],
+        })
     second = {"id": "T2", "title": "future", "objective": "future",
               "acceptance_criteria": ["future works"], "dependencies": ["T1"]}
     record_skeleton_then_frontier(repo, [first, second])
@@ -19322,7 +19348,7 @@ def test_review_all_bounds_sealed_task_inputs_after_successor_product(repo, tmp_
 
 
 def test_review_preflight_uses_active_task_proof(repo, tmp_path, monkeypatch):
-    _native_review_fixture(repo, tmp_path)
+    _native_review_fixture(repo, tmp_path, reusable_proof=True)
     _write_complete_automated(repo)
     import forge_cli.review as review_mod
 
@@ -19351,6 +19377,7 @@ def test_review_preflight_uses_active_task_proof(repo, tmp_path, monkeypatch):
         brief_args.append(args)
         raise ReachedReviewBrief
     monkeypatch.setattr(review_mod, "cmd_review_brief", reach_review_brief)
+    bind_task_proof_receipts(repo)
     with pytest.raises(ReachedReviewBrief):
         review_mod.cmd_review(argparse.Namespace(
             id="T1", reject=None, lens=None, repo=str(repo), skill=None,
