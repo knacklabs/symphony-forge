@@ -570,7 +570,11 @@ def test_task_close_records_the_proof_in_the_marker_commit(repo, tmp_path):
         repo, "ENG-1", "T1", "verify.json").relative_to(repo).as_posix()
     tests_rel = task_evidence_path(
         repo, "ENG-1", "T1", "tests.json").relative_to(repo).as_posix()
-    assert verify_rel in shown and tests_rel in shown, shown
+    # The harness rewrote verify.json, so the marker commit carries it; the
+    # worker's tests.json was committed unchanged before close and is simply
+    # present in the sealed tree.
+    assert verify_rel in shown and "pr-ready.json" in shown, shown
+    assert git(repo, "ls-tree", "--name-only", "HEAD", tests_rel) == tests_rel
     verify = json.loads(git(repo, "show", f"HEAD:{verify_rel}"))
     assert verify["recorded_by"] == "stage-proof" and verify["ok"] is True
     assert [entry["status"] for entry in verify["required_tests"]] == ["passed"]
