@@ -1816,6 +1816,19 @@ def _require_successful_launch(base: Path, stage_id: str, stage: dict,
          "reopen one).")
 
 
+def _junit_case_name_parts(case) -> tuple[str, str]:
+    """Return the qualified-name context and leaf for one JUnit case."""
+    name = " ".join(str(case.get("name", "")).split())
+    separators = (" > ", " › ", "::")
+    position, separator = max(
+        ((name.rfind(value), value) for value in separators),
+        default=(-1, ""),
+    )
+    if position < 0:
+        return "", name
+    return name[:position].strip(), name[position + len(separator):].strip()
+
+
 def _junit_case_matches_id(case, test_id: str) -> bool:
     """A JUnit <testcase> identifies the required test when its name equals the
     id, its leaf name does, OR the recorded id is a prefix of either (after
@@ -1844,6 +1857,33 @@ def _junit_case_matches_id(case, test_id: str) -> bool:
                         and re.match(r"\s*[\[(]", c[len(wanted):]) is not None)
         for c in candidates
     )
+
+
+def _junit_required_case_matches(
+        cases: list[ET.Element], test_id: str, rel: str,
+) -> tuple[list[ET.Element], str]:
+    """Return all distinct, same-owner cases for one required test.
+
+    A bare required id may represent a parametrized function, but it must not
+    collapse duplicate cases or cases from another file/class/describe owner.
+    """
+    matches = [case for case in cases
+               if _junit_case_matches_id(case, test_id)]
+    if not matches:
+        return [], "missing"
+    owners: list[tuple[str, str, str]] = []
+    leaves: list[str] = []
+    for case in matches:
+        if not _junit_case_attributed(case, rel):
+            return [], "unattributed"
+        context, leaf = _junit_case_name_parts(case)
+        file_name = " ".join(str(case.get("file", "")).split())
+        class_name = " ".join(str(case.get("classname", "")).split())
+        owners.append((file_name, class_name, context))
+        leaves.append(leaf)
+    if len(set(owners)) != 1 or len(set(leaves)) != len(leaves):
+        return [], "ambiguous"
+    return matches, ""
 
 
 def _junit_case_attributed(case, rel: str) -> bool:
@@ -1981,32 +2021,27 @@ def _run_required_tests(
             except (ET.ParseError, OSError) as exc:
                 fail(f"{stage_id} required test {test_id!r} produced invalid "
                      f"JUnit proof: {exc}")
-            matches = [
-                case for case in root.iter("testcase")
-                if _junit_case_matches_id(case, test_id)
-            ]
-            if not matches:
+            matches, match_problem = _junit_required_case_matches(
+                list(root.iter("testcase")), test_id, rel,
+            )
+            if match_problem == "missing":
                 misses.append(f"{test_id!r} was not present in the fresh JUnit "
                               "report (exact id or id-prefix)")
                 results.append({"id": test_id, "path": rel, "status": "unmatched"})
                 continue
-            if len(matches) != 1:
+            if match_problem == "ambiguous":
                 misses.append(f"{test_id!r} was ambiguous in the fresh JUnit "
                               "report")
                 results.append({"id": test_id, "path": rel, "status": "ambiguous"})
                 continue
-            attributed = [
-                case for case in matches
-                if _junit_case_attributed(case, rel)
-            ]
-            if not attributed:
+            if match_problem == "unattributed":
                 misses.append(f"{test_id!r} was not attributed to its declared "
                               f"path {rel!r} in the fresh JUnit report")
                 results.append({"id": test_id, "path": rel, "status": "unattributed"})
                 continue
             if any(case.find("failure") is not None
                    or case.find("error") is not None
-                   or case.find("skipped") is not None for case in attributed):
+                   or case.find("skipped") is not None for case in matches):
                 fail(f"{stage_id} required test {test_id!r} did not pass in the "
                      "fresh JUnit report")
             results.append({"id": test_id, "path": rel, "status": "passed"})
@@ -2530,15 +2565,13 @@ def _canonical_junit_satisfies_required_tests(
                 or _pytest_identity_projection(required_tool)
                 != _pytest_identity_projection(canonical_tool)):
             return False
-        matches = [
-            case for case in cases
-            if _junit_case_matches_id(case, test_id)
-            and _junit_case_attributed(case, rel)
-        ]
-        if len(matches) != 1:
+        matches, match_problem = _junit_required_case_matches(
+            cases, test_id, rel,
+        )
+        if match_problem or not matches:
             return False
-        case = matches[0]
         if any(case.find(outcome) is not None
+               for case in matches
                for outcome in ("failure", "error", "skipped")):
             return False
     return True

@@ -14774,6 +14774,81 @@ def test_stage_done_matches_required_test_by_id_prefix(repo, tmp_path):
     assert measured_stage(repo)["measured"]["test_id_misses"] == []
 
 
+def test_stage_done_accepts_all_distinct_parameterized_required_cases(
+        repo, tmp_path):
+    test_id = "test_runtime"
+    path = "src/test_core.py"
+    task = {**STAGE_TASK, "required_tests": [{
+        "id": test_id, "path": path,
+        "command": "python3 -m pytest {path}::{id} -q "
+                   "-o junit_family=legacy --junitxml={report}",
+    }]}
+    start_stage(repo, tmp_path, task)
+    write_in_scope(repo, "src/core.py")
+    write_in_scope(
+        repo, path,
+        "import pytest\n\n"
+        "@pytest.mark.parametrize('runtime', ['claude', 'codex'])\n"
+        "def test_runtime(runtime):\n"
+        "    pass\n",
+    )
+    stamp_and_commit(repo)
+    code, out = run(repo, "forge.py", "stage", "done", "T1")
+    assert code == 0, out
+    assert measured_stage(repo)["measured"]["test_id_misses"] == []
+
+
+def test_stage_done_refuses_parameterized_cases_from_different_owners(
+        repo, tmp_path):
+    test_id = "test_runtime"
+    path = "src/test_core.py"
+    task = {**STAGE_TASK, "required_tests": [{
+        "id": test_id, "path": path,
+        "command": "python3 -m pytest {path} -q -k {id} "
+                   "-o junit_family=legacy --junitxml={report}",
+    }]}
+    start_stage(repo, tmp_path, task)
+    write_in_scope(repo, "src/core.py")
+    write_in_scope(
+        repo, path,
+        "import pytest\n\n"
+        "class TestClaudeRuntime:\n"
+        "    @pytest.mark.parametrize('runtime', ['claude'])\n"
+        "    def test_runtime(self, runtime):\n"
+        "        pass\n\n"
+        "class TestCodexRuntime:\n"
+        "    @pytest.mark.parametrize('runtime', ['codex'])\n"
+        "    def test_runtime(self, runtime):\n"
+        "        pass\n",
+    )
+    stamp_and_commit(repo)
+    code, out = run(repo, "forge.py", "stage", "done", "T1")
+    assert code != 0 and "ambiguous" in out, out
+
+
+def test_stage_done_refuses_a_failed_parameterized_required_case(
+        repo, tmp_path):
+    test_id = "test_runtime"
+    path = "src/test_core.py"
+    task = {**STAGE_TASK, "required_tests": [{
+        "id": test_id, "path": path,
+        "command": "python3 -m pytest {path}::{id} -q "
+                   "-o junit_family=legacy --junitxml={report}",
+    }]}
+    start_stage(repo, tmp_path, task)
+    write_in_scope(repo, "src/core.py")
+    write_in_scope(
+        repo, path,
+        "import pytest\n\n"
+        "@pytest.mark.parametrize('runtime', ['claude', 'codex'])\n"
+        "def test_runtime(runtime):\n"
+        "    assert runtime == 'claude'\n",
+    )
+    stamp_and_commit(repo)
+    code, out = run(repo, "forge.py", "stage", "done", "T1")
+    assert code != 0 and "failed (exit" in out, out
+
+
 def test_stage_done_records_a_required_test_id_that_matched_no_case(
         repo, tmp_path):
     # A green runner without the declared node is not proof of the contract.
@@ -22403,7 +22478,13 @@ def test_canonical_junit_satisfies_exact_required_nodes_without_selector_rerun(
 
     source = repo / "src/test_core.py"
     source.parent.mkdir(parents=True, exist_ok=True)
-    source.write_text("def test_slice():\n    pass\n", encoding="utf-8")
+    source.write_text(
+        "import pytest\n\n"
+        "@pytest.mark.parametrize('runtime', ['claude', 'codex'])\n"
+        "def test_slice(runtime):\n"
+        "    pass\n",
+        encoding="utf-8",
+    )
     task = {
         "verify_commands": ["python3 factory/scripts/verify.py"],
         "required_tests": [{
@@ -22425,8 +22506,10 @@ def test_canonical_junit_satisfies_exact_required_nodes_without_selector_rerun(
 
     def canonical(_base, _stage_id, _task, report):
         report.write_text(
-            '<testsuite><testcase name="test_slice" '
-            'file="src/test_core.py"/></testsuite>', encoding="utf-8",
+            '<testsuite>'
+            '<testcase name="test_slice [claude]" file="src/test_core.py"/>'
+            '<testcase name="test_slice [codex]" file="src/test_core.py"/>'
+            '</testsuite>', encoding="utf-8",
         )
 
     monkeypatch.setattr(stages, "_run_verify_commands", canonical)
@@ -22499,6 +22582,10 @@ def test_canonical_junit_falls_back_when_required_node_identity_is_missing(
         "<testsuite/>",
         ('<testsuite><testcase name="test_slice" file="src/test_core.py"/>'
          '<testcase name="test_slice" file="src/test_core.py"/></testsuite>'),
+        ('<testsuite><testcase classname="ClaudeRuntime" '
+         'name="test_slice [claude]" file="src/test_core.py"/>'
+         '<testcase classname="CodexRuntime" '
+         'name="test_slice [codex]" file="src/test_core.py"/></testsuite>'),
         ('<testsuite><testcase name="test_slice" file="src/test_core.py">'
          '<skipped/></testcase></testsuite>'),
         "not xml",
