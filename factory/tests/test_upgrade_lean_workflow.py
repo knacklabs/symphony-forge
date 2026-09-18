@@ -35,6 +35,20 @@ def _legacy_round(target: Path) -> Path:
     return path
 
 
+def _legacy_stage(target: Path, task: str) -> Path:
+    path = target / f".factory/stories/S1/stages/{task}.json"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps({
+        "id": task,
+        "local_review_stamp": {
+            "stage_id": task, "base_sha": "a" * 40,
+            "delta_id": "b" * 64, "recorded_at": "2026-01-01T00:00:00+00:00",
+            "generated_by": "autoreview",
+        },
+    }), encoding="utf-8")
+    return path
+
+
 def _legacy_grill(gate: str) -> dict:
     value = {
         "generated_by": "griller", "gate": gate, "verdict": "pass",
@@ -923,6 +937,121 @@ def test_lean_migration_resumes_after_one_fixed_lens_was_deleted(
     assert "completed_at" in manifest
 
 
+@pytest.mark.parametrize("count", [1, 2])
+def test_lean_migration_resumes_after_each_converted_stage_was_published(
+        repo: Path, count: int, monkeypatch: pytest.MonkeyPatch):
+    stages = [_legacy_stage(repo, f"T{index}") for index in range(count)]
+    migration = upgrade.preflight_lean_migration(repo)
+    assert migration is not None
+    publish = upgrade._publish_converted_stage
+    published = 0
+
+    def publish_then_interrupt(target, destination, built, **kwargs):
+        nonlocal published
+        result = publish(target, destination, built, **kwargs)
+        if destination in stages:
+            published += 1
+            if published == count:
+                raise OSError("interrupted after converted stage")
+        return result
+
+    with monkeypatch.context() as patch:
+        patch.setattr(upgrade, "_publish_converted_stage", publish_then_interrupt)
+        with pytest.raises(OSError, match="after converted stage"):
+            upgrade.apply_lean_migration(repo, migration)
+
+    resumed = upgrade.preflight_lean_migration(repo)
+    assert resumed is not None and resumed["resume"] is True
+    upgrade.apply_lean_migration(repo, resumed)
+    manifest = json.loads((repo / ".factory/migrations/lean-workflow-v2.json").read_text())
+    assert manifest.get("completed_at")
+    assert all("local_review_stamp" not in json.loads(path.read_text())
+               for path in stages)
+
+
+def test_lean_migration_resumes_after_one_of_two_ordinary_sources_was_deleted(
+        repo: Path, monkeypatch: pytest.MonkeyPatch):
+    first = _legacy_round(repo)
+    second = first.with_name("second.json")
+    second.write_bytes(first.read_bytes())
+    migration = upgrade.preflight_lean_migration(repo)
+    assert migration is not None
+    unlink = Path.unlink
+    deleted = 0
+
+    def unlink_then_interrupt(path: Path, *args, **kwargs):
+        nonlocal deleted
+        result = unlink(path, *args, **kwargs)
+        if path in {first, second}:
+            deleted += 1
+            if deleted == 1:
+                raise OSError("interrupted after ordinary deletion")
+        return result
+
+    with monkeypatch.context() as patch:
+        patch.setattr(Path, "unlink", unlink_then_interrupt)
+        with pytest.raises(OSError, match="after ordinary deletion"):
+            upgrade.apply_lean_migration(repo, migration)
+
+    resumed = upgrade.preflight_lean_migration(repo)
+    assert resumed is not None and resumed["resume"] is True
+    upgrade.apply_lean_migration(repo, resumed)
+    assert not first.exists() and not second.exists()
+
+
+@pytest.mark.parametrize("mutation", ["missing", "tampered"])
+def test_lean_migration_refuses_missing_or_tampered_converted_stage(
+        repo: Path, mutation: str, monkeypatch: pytest.MonkeyPatch,
+        capsys: pytest.CaptureFixture[str]):
+    stage = _legacy_stage(repo, "T1")
+    migration = upgrade.preflight_lean_migration(repo)
+    assert migration is not None
+    publish = upgrade._publish_converted_stage
+
+    def publish_then_interrupt(target, destination, built, **kwargs):
+        result = publish(target, destination, built, **kwargs)
+        if destination == stage:
+            raise OSError("interrupted after converted stage")
+        return result
+
+    with monkeypatch.context() as patch:
+        patch.setattr(upgrade, "_publish_converted_stage", publish_then_interrupt)
+        with pytest.raises(OSError, match="after converted stage"):
+            upgrade.apply_lean_migration(repo, migration)
+
+    if mutation == "missing":
+        stage.unlink()
+    else:
+        value = json.loads(stage.read_text())
+        value["id"] = "tampered"
+        stage.write_text(json.dumps(value), encoding="utf-8")
+    with pytest.raises(SystemExit):
+        upgrade.preflight_lean_migration(repo)
+    assert "unequal partial retry" in capsys.readouterr().out
+
+
+def test_original_empty_completion_accepts_requirements_grill_supplement(repo: Path):
+    empty_digest = upgrade._inventory_digest([])
+    manifest = repo / ".factory/migrations/lean-workflow-v2.json"
+    manifest.parent.mkdir(parents=True, exist_ok=True)
+    manifest.write_text(json.dumps({
+        "generated_by": "upgrade", "version": "lean-workflow-v2",
+        "input_inventory_digest": empty_digest, "output_digest": empty_digest,
+        "installed_runtime_digest": upgrade.LEAN_ORIGINAL_EMPTY_RUNTIME_DIGEST,
+        "entries": [], "recorded_at": "2026-09-14T05:48:01+00:00",
+        "completed_at": "2026-09-14T05:48:01+00:00",
+    }) + "\n", encoding="utf-8")
+    grill = repo / ".factory/grills/requirements.json"
+    grill.parent.mkdir(parents=True, exist_ok=True)
+    grill.write_text(json.dumps(_legacy_grill("requirements")) + "\n",
+                     encoding="utf-8")
+
+    migration = upgrade.preflight_lean_migration(repo)
+    assert migration is not None
+    assert any(entry["family"] == "requirements-grill"
+               for entry in migration["entries"])
+
+
 def test_completed_lean_manifest_allows_later_runtime_versions(repo: Path):
     legacy = _legacy_round(repo)
     git(repo, "add", legacy.relative_to(repo).as_posix())
@@ -933,6 +1062,67 @@ def test_completed_lean_manifest_allows_later_runtime_versions(repo: Path):
     runtime.write_text(runtime.read_text(encoding="utf-8") + "\n# later runtime\n",
                        encoding="utf-8")
     assert upgrade.preflight_lean_migration(repo) is None
+
+
+@pytest.mark.parametrize("family", ["old-hook-flag", "retired-forge-profile"])
+def test_original_empty_completion_refuses_non_proof_supplement_inputs(
+        repo: Path, family: str, monkeypatch: pytest.MonkeyPatch,
+        capsys: pytest.CaptureFixture[str]):
+    empty_digest = upgrade._inventory_digest([])
+    manifest = repo / ".factory/migrations/lean-workflow-v2.json"
+    manifest.parent.mkdir(parents=True, exist_ok=True)
+    manifest.write_text(json.dumps({
+        "generated_by": "upgrade", "version": "lean-workflow-v2",
+        "input_inventory_digest": empty_digest, "output_digest": empty_digest,
+        "installed_runtime_digest": upgrade.LEAN_ORIGINAL_EMPTY_RUNTIME_DIGEST,
+        "entries": [], "recorded_at": "2026-09-14T05:48:01+00:00",
+        "completed_at": "2026-09-14T05:48:01+00:00",
+    }) + "\n", encoding="utf-8")
+    if family == "old-hook-flag":
+        path = repo / ".codex/config.toml"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text("codex_hooks = true\n", encoding="utf-8")
+    else:
+        path = repo / ".codex/agents/architect.toml"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        body = b'model = "retired"\n'
+        path.write_bytes(body)
+        monkeypatch.setattr(
+            upgrade, "RETIRED_FORGE_PROFILE_HASHES",
+            {"architect.toml": hashlib.sha256(body).hexdigest()},
+        )
+    with pytest.raises(SystemExit):
+        upgrade.preflight_lean_migration(repo)
+    assert "non-proof" in capsys.readouterr().out
+
+
+def test_original_empty_completion_refuses_mixed_proof_and_non_proof_inputs(
+        repo: Path, capsys: pytest.CaptureFixture[str]):
+    empty_digest = upgrade._inventory_digest([])
+    manifest = repo / ".factory/migrations/lean-workflow-v2.json"
+    manifest.parent.mkdir(parents=True, exist_ok=True)
+    manifest.write_text(json.dumps({
+        "generated_by": "upgrade", "version": "lean-workflow-v2",
+        "input_inventory_digest": empty_digest, "output_digest": empty_digest,
+        "installed_runtime_digest": upgrade.LEAN_ORIGINAL_EMPTY_RUNTIME_DIGEST,
+        "entries": [], "recorded_at": "2026-09-14T05:48:01+00:00",
+        "completed_at": "2026-09-14T05:48:01+00:00",
+    }) + "\n", encoding="utf-8")
+    config = repo / ".codex/config.toml"
+    config.parent.mkdir(parents=True, exist_ok=True)
+    config.write_text("codex_hooks = true\n", encoding="utf-8")
+    stage = repo / ".factory/stories/S1/stages/T1.json"
+    stage.parent.mkdir(parents=True, exist_ok=True)
+    stage.write_text(json.dumps({
+        "id": "T1", "local_review_stamp": {"stage_id": "T1",
+                                               "base_sha": "a" * 40,
+                                               "delta_id": "b" * 64,
+                                               "recorded_at": "2026-01-01T00:00:00+00:00",
+                                               "generated_by": "autoreview"},
+    }), encoding="utf-8")
+    with pytest.raises(SystemExit):
+        upgrade.preflight_lean_migration(repo)
+    assert "non-proof" in capsys.readouterr().out
 
 
 def test_completed_lean_manifest_accepts_exact_original_empty_shape(repo: Path):

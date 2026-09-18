@@ -417,6 +417,78 @@ def test_selected_upgrade_generation_requires_exact_sealed_binding(repo, tmp_pat
         repo, "ENG-1", "T2", sealed_commit="e" * 40)[2][0]
 
 
+def test_locationless_contract_verdict_has_stable_rejection_identity():
+    from forge_cli.review import _contract_blocker
+
+    finding = _contract_blocker(
+        {"source": "plans/active/story.md#AC17", "statement": "fixture proof"},
+        {"contract_id": "T2-AC17", "verdict": "missing",
+         "evidence": "the reviewer emitted no verdict"},
+    )
+    fingerprint = review_finding_fingerprint(finding)
+    assert fingerprint == review_finding_fingerprint(copy.deepcopy(finding))
+    malformed = {**finding, "summary": "copied ordinary finding"}
+    with pytest.raises(SystemExit, match="file_path, line, and title"):
+        review_finding_fingerprint(malformed)
+
+
+def test_locationless_contract_rejection_records_lineage_and_refuses_stale_source(
+        repo, tmp_path):
+    from forge_cli.review import _contract_blocker
+
+    _story(repo, tmp_path)
+    combined, _pointer = _publish(repo)
+    finding = _contract_blocker(
+        {"source": "plans/active/story.md#T2-AC1",
+         "statement": "the next slice runs green"},
+        {"contract_id": "T2-AC1", "verdict": "missing",
+         "evidence": "the reviewer emitted no verdict"},
+    )
+    candidate = copy.deepcopy(combined)
+    candidate.pop("generation_id")
+    candidate["recorded_at"] = "2026-09-11T02:00:00+00:00"
+    quality = candidate["lenses"]["quality"]
+    quality["blocking_findings"] = [finding]
+    quality["score"] = 7
+    quality["recommendation"] = "request-changes"
+    quality["contract_verdicts"] = [{
+        "contract_id": "T2-AC1", "verdict": "missing",
+        "evidence": "the reviewer emitted no verdict",
+    }]
+    root, _root_pointer = publish_review_generation(
+        repo, "ENG-1", "T2", candidate,
+    )
+
+    code, output = run(
+        repo, "forge.py", "review", "T2", "--reject", "T2-AC1",
+        "--lens", "quality", "--reason", "contract is covered by the fix",
+        "--evidence", "src/work.py:1", "--by", "autoreview",
+    )
+    assert code == 0, output
+    selected, _selection, problems = read_selected_review_generation(
+        repo, "ENG-1", "T2",
+    )
+    assert not problems and selected["origin"] == "rejection"
+    assert selected["rejection"]["history"][0]["finding_fingerprint"] == (
+        review_finding_fingerprint(finding)
+    )
+
+    stale = read_selected_review_generation(
+        repo, "ENG-1", "T2", expected_delta_id="f" * 64,
+    )[2]
+    assert any("stale" in problem for problem in stale)
+
+    root_path = repo / ".factory/stories/ENG-1/tasks/T2/reviews/generations" / (
+        root["generation_id"] + ".json")
+    hidden = root_path.with_suffix(".missing")
+    root_path.rename(hidden)
+    try:
+        broken = read_selected_review_generation(repo, "ENG-1", "T2")[2]
+        assert any("source is invalid" in problem for problem in broken)
+    finally:
+        hidden.rename(root_path)
+
+
 def test_rejection_compare_and_swap_refuses_interleaved_selection(
         repo, tmp_path, monkeypatch):
     import factory_lib as lib

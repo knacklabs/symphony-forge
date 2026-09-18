@@ -8,7 +8,6 @@ from test_gates import HARNESS
 
 sys.path.insert(0, str(HARNESS / "factory" / "scripts"))
 from check_board_complete import board_problems  # noqa: E402
-from forge_cli.events import load_events  # noqa: E402
 
 
 def _workflow() -> str:
@@ -62,12 +61,24 @@ def test_verified_forge_acc3_and_cfs1_pr_links_make_board_complete():
         ).stdout
         assert json.loads(recorded) == payload
         assert json.loads((HARNESS / path).read_text(encoding="utf-8")) == payload
-    links = [
-        event for event in load_events(HARNESS, event="pr-linked")
-        if event in expected.values()
+    changed_paths = subprocess.run(
+        ["git", "diff-tree", "--no-commit-id", "--name-only", "-r",
+         f"{recorder_commit}^", recorder_commit, "--", ".factory/events/"],
+        cwd=HARNESS, capture_output=True, text=True, check=True,
+    ).stdout.splitlines()
+    changed_events = [
+        json.loads(subprocess.run(
+            ["git", "show", f"{recorder_commit}:{path}"], cwd=HARNESS,
+            capture_output=True, text=True, check=True,
+        ).stdout)
+        for path in changed_paths
     ]
-    assert sorted(links, key=lambda row: row["story"]) == sorted(
+    backfilled = [event for event in changed_events if event.get("event") == "pr-linked"]
+    assert sorted(backfilled, key=lambda row: row["story"]) == sorted(
         expected.values(), key=lambda row: row["story"])
+    # Inspect the actual backfill commit's event delta; historical event files
+    # remain valid context and are not filtered out of the corpus assertion.
+    assert all(event in expected.values() for event in backfilled)
     legacy = (HARNESS / ".factory/events.jsonl").read_text(encoding="utf-8")
     assert not any(
         json.loads(line) in expected.values()

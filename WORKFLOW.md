@@ -5,7 +5,8 @@
   it is the canonical state.
 - An external tracker (Linear, GitHub Issues, Jira) is OPTIONAL: when one is
   used, roadmap stories are mirrored into it. Decomposition and task state
-  remain in the repo under `.factory/decomposition.json` and `plans/`.
+  remain in the repo under `.factory/stories/<key>/decomposition.json` and
+  `plans/`; `.factory/decomposition.json` is upgrade-only legacy input.
 - GitHub mirrors branch, PR, checks, and review evidence.
 - gstack output is PROJECT-LOCAL: `.envrc` pins `GSTACK_HOME` to
   `<repo>/.gstack` (activate with `direnv allow`), so office-hours design
@@ -508,9 +509,11 @@ sequence a JIT contract loop for every pending task:
     may satisfy the companion-launch requirement when the plugin is unavailable.
 
    What each closeout record binds to — and so what can stale it:
-   the review stamp binds to `delta_id` and nothing else (a contract
-   re-record, a decision record, a scope amendment or an evidence commit
-   changes no product byte and stales no review); the prepared delegation binds
+   the review stamp binds to the product `delta_id` and the substantive
+   reviewed meaning. Canonicalized bookkeeping changes, including the
+   independently recorded functional continuation, do not stale that meaning;
+   a contract, acceptance, security, migration, evidence, review-instruction,
+   or product change does. The prepared delegation binds
    the brief and effective scope. Claude additionally records its protected
    companion launch, while native delivery deliberately records no process
    attribution; after stage start the task grill binds to

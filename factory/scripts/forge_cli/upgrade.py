@@ -1701,6 +1701,34 @@ def _inventory_digest(entries: list[dict]) -> str:
     ).encode("utf-8")).hexdigest()
 
 
+def _resume_converted_outputs(migration: dict) -> dict[str, str] | None:
+    """Return the authenticated stage bytes recorded before an interruption."""
+    raw = migration.get("converted_outputs")
+    rows = [] if raw is None else raw
+    if not isinstance(rows, list):
+        return None
+    result: dict[str, str] = {}
+    for row in rows:
+        if (not isinstance(row, dict) or set(row) != {"path", "sha256"}
+                or not isinstance(row.get("path"), str)
+                or not isinstance(row.get("sha256"), str)
+                or re.fullmatch(r"[0-9a-f]{64}", row["sha256"]) is None):
+            return None
+        if row["path"] in result:
+            return None
+        result[row["path"]] = row["sha256"]
+    return result
+
+
+def _resume_stage_bytes_match(target: Path, path: str, expected: str) -> bool:
+    candidate = target / path
+    try:
+        return (candidate.is_file() and not candidate.is_symlink()
+                and hashlib.sha256(candidate.read_bytes()).hexdigest() == expected)
+    except OSError:
+        return False
+
+
 def _revalidate_lean_inventory(target: Path, migration: dict) -> None:
     """Refuse source, classification, or marker drift before pointer publish."""
     primary = lean_primary_inventory(target)
@@ -1726,7 +1754,37 @@ def _revalidate_lean_inventory(target: Path, migration: dict) -> None:
             and entry.get("reason") != "canonical-review-output"
         ]
 
-    if stable(primary) != stable(migration["entries"]):
+    current = {
+        entry["path"]: entry for entry in stable(primary)
+    }
+    expected = {
+        entry["path"]: entry for entry in stable(migration["entries"])
+    }
+    converted = _resume_converted_outputs(migration)
+    if converted is None:
+        fail("Lean migration converted-output lineage is malformed")
+    if set(current) - set(expected):
+        fail("Lean migration inventory changed before review publication")
+    for path, original in expected.items():
+        live = current.get(path)
+        if live == original:
+            continue
+        if (migration.get("resume") and
+                original.get("classification") == "eligible"
+                and original.get("family") == "legacy-stage-stamp"
+                and path in converted
+                and live is not None
+                and live.get("classification") == "excluded"
+                and _resume_stage_bytes_match(target, path, converted[path])):
+            continue
+        if (migration.get("resume")
+                and original.get("classification") == "eligible"
+                and original.get("family") != "legacy-stage-stamp"
+                and original.get("preserve") is False
+                and live is None
+                and not (target / path).exists()
+                and not (target / path).is_symlink()):
+            continue
         fail("Lean migration inventory changed before review publication")
     candidates, sentinels = _fixed_review_plan(target, migration)
     expected_candidates = migration.get("review_candidates", [])
@@ -2038,9 +2096,13 @@ def preflight_lean_migration(target: Path) -> dict | None:
         if saved.get("version") != LEAN_MIGRATION_VERSION:
             fail("Lean migration found an unequal partial retry; restore or complete the original checkout")
         if saved.get("completed_at"):
-            supplemental_families = {
-                "history-fixed-review-lens", "story-fixed-review-lens",
+            non_proof_families = {
+                "old-hook-flag", "retired-forge-profile",
             }
+            supplemental_families = {
+                entry.get("family") for entry in primary
+                if entry.get("classification") == "eligible"
+            } - non_proof_families
             preserve_prior = (
                 manifest == supplemental_manifest
                 and any(entry.get("classification") == "eligible"
@@ -2051,9 +2113,19 @@ def preflight_lean_migration(target: Path) -> dict | None:
                 target, saved,
                 preserve_prior_output_identity=preserve_prior,
             )
+            eligible_current = [
+                entry for entry in primary
+                if entry.get("classification") == "eligible"
+            ]
             if (_is_original_empty_completion(saved)
-                    and any(entry.get("classification") == "eligible"
-                            for entry in primary)):
+                    and any(entry.get("family") in non_proof_families
+                            for entry in eligible_current)):
+                fail(
+                    "Lean migration original-empty supplement refuses non-proof "
+                    "runtime/profile inputs"
+                )
+            if (_is_original_empty_completion(saved)
+                    and eligible_current):
                 migration = {
                     "entries": primary,
                     "input_inventory_digest": _inventory_digest(primary),
@@ -2133,26 +2205,47 @@ def preflight_lean_migration(target: Path) -> dict | None:
             if entry.get("reason") != "canonical-review-output"
         }
         monotonic = True
+        converted = _resume_converted_outputs(saved)
+        if converted is None:
+            fail("Lean migration converted-output lineage is malformed")
         for path, current in primary_identity.items():
             original = saved_identity.get(path)
             if current == original:
                 continue
             if (original is not None
                     and original.get("classification") == "eligible"
-                    and (path in LEAN_RUNTIME_PATHS
-                         or original.get("family") in {
-                             "legacy-stage-stamp", "fixed-review-lens",
-                         })
                     and current.get("classification") == "excluded"):
-                continue
+                if (original.get("family") == "legacy-stage-stamp"
+                        and path in converted
+                        and _resume_stage_bytes_match(
+                            target, path, converted[path],
+                        )):
+                    continue
+                if (original.get("family") == "fixed-review-lens"
+                        and current.get("sha256") == original.get("sha256")):
+                    continue
+                if path in LEAN_RUNTIME_PATHS:
+                    continue
             monotonic = False
             break
         for path, original in saved_identity.items():
             if path in primary_identity:
                 continue
-            if original.get("classification") != "eligible":
+            if original.get("classification") == "eligible":
+                # A converted stage must still be present with the exact
+                # durable bytes recorded before the interruption.  The
+                # ordinary deletion exception applies only to an inventoried
+                # source that the migration owns and removes; preserved
+                # eligible inputs and converted stages cannot disappear.
+                if (original.get("family") != "legacy-stage-stamp"
+                        and original.get("preserve") is False
+                        and not (target / path).exists()
+                        and not (target / path).is_symlink()):
+                    continue
                 monotonic = False
                 break
+            monotonic = False
+            break
         if not monotonic:
             fail("Lean migration found an unequal partial retry; restore or complete the original checkout")
         migration = {**saved, "resume": True, "manifest_name": manifest.name}
@@ -3179,6 +3272,17 @@ def _incomplete_lean_resume_paths(
                 separators=(",", ":"),
             ).encode()).hexdigest()):
         return set()
+    converted = _resume_converted_outputs(saved)
+    if converted is None:
+        return set()
+    converted_paths = {
+        entry["path"] for entry in entries
+        if isinstance(entry, dict)
+        and entry.get("classification") == "eligible"
+        and entry.get("family") == "legacy-stage-stamp"
+    }
+    if set(converted) != converted_paths:
+        return set()
     try:
         primary = lean_primary_inventory(target)
         raw = lean_raw_inventory(target)
@@ -3198,11 +3302,18 @@ def _incomplete_lean_resume_paths(
         live = current.get(entry["path"])
         if live == entry:
             continue
-        if (entry.get("classification") == "eligible"
-                and (live is None or live.get("classification") == "excluded")):
-            if live is None and (target / entry["path"]).exists():
-                return set()
-            continue
+        if entry.get("classification") == "eligible":
+            if entry.get("family") == "legacy-stage-stamp":
+                if (live is None
+                        or live.get("classification") != "excluded"
+                        or not _resume_stage_bytes_match(
+                            target, entry["path"], converted.get(entry["path"], ""),
+                        )):
+                    return set()
+                continue
+            if (live is None and not (target / entry["path"]).exists()
+                    and not (target / entry["path"]).is_symlink()):
+                continue
         if (_is_harness_owned(entry["path"], harness)
                 and _resume_harness_path_matches(
                     harness, target, entry["path"])):

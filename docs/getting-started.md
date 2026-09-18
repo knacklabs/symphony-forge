@@ -312,8 +312,11 @@ python3 factory/scripts/update_run.py --phase implementing --plan-status approve
 
 ```bash
 python3 factory/scripts/record_test_from_json.py --kind automated --input /tmp/automated-test.json
-python3 factory/scripts/verify.py
 ```
+
+The implementer runs focused checks and records them. The coordinator's
+`forge task close <task-id>` owns the one canonical full verifier and records
+its complete automated evidence before review.
 
 4. **Review** — say: **"Review it."** ONE run of the unchanged, externally
    maintained Autoreview skill publishes a

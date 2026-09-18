@@ -22486,12 +22486,18 @@ def test_canonical_junit_satisfies_exact_required_nodes_without_selector_rerun(
         encoding="utf-8",
     )
     task = {
-        "verify_commands": ["python3 factory/scripts/verify.py"],
+        "verify_commands": [
+            "UV_CACHE_DIR=/tmp/forge-lean-uv-cache "
+            "UV_TOOL_DIR=/tmp/forge-lean-uv-tools "
+            "python3 factory/scripts/verify.py",
+        ],
         "required_tests": [{
             "id": "test_slice", "path": "src/test_core.py",
             "command": "python3 -m pytest {path}::{id} --junitxml={report}",
         }],
     }
+    monkeypatch.setenv("UV_CACHE_DIR", "/tmp/forge-lean-uv-cache")
+    monkeypatch.setenv("UV_TOOL_DIR", "/tmp/forge-lean-uv-tools")
     monkeypatch.setenv("FACTORY_TEST_CMD", "python3 -m pytest src")
     monkeypatch.setattr(stages, "proof_identity", lambda *_args, **_kwargs: {
         "identity": "a" * 64, "inputs": {}, "reusable": True,

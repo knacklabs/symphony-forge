@@ -27,7 +27,7 @@ def _task() -> dict:
         "write_scope": ["src/a.py"],
         "required_tests": [{"id": "test_a", "path": "tests/a.py",
                             "command": "python -m pytest tests/a.py -k test_a"}],
-        "verify_commands": ["python -m compileall src"],
+        "verify_commands": ["python -m compileall factory/scripts"],
     }
 
 
@@ -537,6 +537,28 @@ def test_selected_review_reuses_for_bookkeeping_only_changes_and_preserves_origi
         "status": "passed", "cases": ["a"]}
 
 
+def test_functional_continuation_does_not_stale_automated_review_meaning(
+        repo: Path, monkeypatch):
+    task = _task()
+    stage, helper = _seed_review(repo, monkeypatch, task)
+    lib = load_factory_lib(repo)
+    proof = lib.proof_path(repo, "S1", "tests.json", task_id="T1")
+    data = json.loads(proof.read_text(encoding="utf-8"))
+    data["functional"] = {
+        "generated_by": "functional-checker", "status": "passed", "score": 9,
+    }
+    proof.write_text(json.dumps(data), encoding="utf-8")
+    before = stages.reviewed_meaning_identity(repo, stage, task, helper)
+    data["functional"]["score"] = 8
+    proof.write_text(json.dumps(data), encoding="utf-8")
+    after_functional = stages.reviewed_meaning_identity(repo, stage, task, helper)
+    assert after_functional["identity"] == before["identity"]
+    data["automated"]["cases"].append("substantive-change")
+    proof.write_text(json.dumps(data), encoding="utf-8")
+    after_automated = stages.reviewed_meaning_identity(repo, stage, task, helper)
+    assert after_automated["identity"] != before["identity"]
+
+
 def test_selected_review_reruns_for_changed_acceptance_security_migration_or_evidence(
         repo: Path, monkeypatch):
     task = _task()
@@ -645,13 +667,56 @@ def test_direct_python_probe_keeps_the_executed_venv_entrypoint(
         probes.append(argv)
         return subprocess.CompletedProcess(argv, 0, json.dumps(detail), "")
 
+    snapshot = stages.product_tree_snapshot(repo)
+    allowed_product_paths = {
+        (repo / relative).resolve()
+        for field in ("tracked", "dirty")
+        for relative in (snapshot.get(field) or {})
+    }
     monkeypatch.setattr(stages.subprocess, "run", run)
     identity = stages._proof_tool_identity(
-        repo, "python3 -m compileall src",
+        repo, "python3 -m compileall factory/scripts",
+        allowed_product_paths=allowed_product_paths,
     )
     assert identity["reusable"] is True
     assert probes and probes[0][0] == str(entrypoint)
     assert identity["runner"]["path"] == str(target)
+
+
+def test_compileall_reuse_binds_explicit_visible_sources_and_refuses_unknowns(
+        repo: Path):
+    known = stages._proof_tool_identity(
+        repo, "python3 -m compileall factory/scripts",
+    )
+    assert known["reusable"] is True
+    assert known["compileall_inputs"]
+
+    for command in (
+            "python3 -m compileall",
+            "python3 -m compileall -q",
+            "python3 -m compileall /tmp/forge-external-source",
+    ):
+        assert stages._proof_tool_identity(repo, command)["reusable"] is False
+
+    ignored = repo / "ignored-sources"
+    ignored.mkdir()
+    (repo / ".gitignore").write_text("ignored-sources/\n", encoding="utf-8")
+    (ignored / "source.py").write_text("value = 1\n", encoding="utf-8")
+    assert stages._proof_tool_identity(
+        repo, "python3 -m compileall ignored-sources",
+    )["reusable"] is False
+
+    linked_file = repo / "linked.py"
+    linked_file.symlink_to(repo / "factory/scripts/forge.py")
+    assert stages._proof_tool_identity(
+        repo, "python3 -m compileall linked.py",
+    )["reusable"] is False
+
+    linked_parent = repo / "linked-parent"
+    linked_parent.symlink_to(repo / "factory/scripts")
+    assert stages._proof_tool_identity(
+        repo, "python3 -m compileall linked-parent",
+    )["reusable"] is False
 
 
 def test_dedicated_proof_does_not_bind_an_unrelated_canonical_test_runner(
@@ -662,7 +727,7 @@ def test_dedicated_proof_does_not_bind_an_unrelated_canonical_test_runner(
     (repo / "src").mkdir()
     task = {
         **_task(),
-        "verify_commands": ["python3 -m compileall src"],
+        "verify_commands": ["python3 -m compileall factory/scripts"],
     }
     monkeypatch.setenv("FACTORY_TEST_CMD", "python3 -m pytest tests")
     before = stages.proof_identity(repo, task, "tests")

@@ -2691,7 +2691,28 @@ def review_finding_fingerprint(finding: object) -> str:
             or not isinstance(identity["line"], int) or isinstance(identity["line"], bool)
             or identity["line"] < 1 or not isinstance(identity["title"], str)
             or not identity["title"]):
-        raise SystemExit("review finding identity needs file_path, line, and title")
+        title = identity["title"]
+        category = finding.get("category")
+        area = finding.get("area")
+        summary = finding.get("summary")
+        match = (re.fullmatch(
+            r"VERDICT (?P<contract>[A-Za-z0-9._:-]+): "
+            r"(?P<verdict>partial|missing)", str(title or ""),
+        ) if isinstance(title, str) else None)
+        if (finding.get("file_path") == "" and finding.get("line") is None
+                and match and category == f"plan-contract-{match['verdict']}"
+                and isinstance(area, str) and area.strip()
+                and isinstance(summary, str)
+                and summary.startswith(f"{match['contract']}:")):
+            identity = {
+                "kind": "plan-contract-verdict",
+                "area": area,
+                "contract_id": match["contract"],
+                "verdict": match["verdict"],
+                "summary": summary,
+            }
+        else:
+            raise SystemExit("review finding identity needs file_path, line, and title")
     canonical = json.dumps(
         identity, sort_keys=True, separators=(",", ":"), ensure_ascii=False,
     ).encode("utf-8")
@@ -2761,8 +2782,8 @@ def _rejection_successor_problems(
         try:
             fingerprint = review_finding_fingerprint(finding)
         except SystemExit:
-            # Unlocated contract verdicts are valid review records, but cannot
-            # be the exact located finding selected for rejection.
+            # Malformed ordinary findings cannot be the exact source selected
+            # for rejection; the count check below refuses the successor.
             continue
         if fingerprint == entry.get("finding_fingerprint"):
             matches.append(finding)

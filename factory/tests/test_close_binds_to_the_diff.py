@@ -438,6 +438,11 @@ def test_task_close_is_the_single_full_suite_owner_and_records_truthful_automate
 
     task = {**STAGE_TASK, "verify_commands": ["canonical verify"]}
     stage = {"id": "T1", "status": "active", "started_at": "now"}
+    (repo / ".factory" / "run.json").write_text(
+        json.dumps({"issue_key": "ENG-1", "story": "ENG-1"}),
+        encoding="utf-8",
+    )
+    story_state(repo).mkdir(parents=True, exist_ok=True)
     proof_root = story_state(repo) / "tasks" / "T1"
     proof_root.mkdir(parents=True, exist_ok=True)
     tests_path = proof_root / "tests.json"
@@ -448,6 +453,11 @@ def test_task_close_is_the_single_full_suite_owner_and_records_truthful_automate
             "summary": "focused checks passed", "blocking_findings": [],
             "commands_run": ["focused pytest"], "reviewed_scope": ["src/"],
             "remaining_gaps": [], "recorded_at": "earlier", "commit": head(repo),
+        },
+        "functional": {
+            "generated_by": "functional-checker", "status": "passed",
+            "score": 9, "blocking_findings": [],
+            "commands_run": ["manual functional"],
         },
     }), encoding="utf-8")
     reviewed = {"done": False}
@@ -477,9 +487,19 @@ def test_task_close_is_the_single_full_suite_owner_and_records_truthful_automate
     def run_proof(_base, _task_id, _task, *, proof_context=None):
         assert proof_context == {}
         proof_context.update(fresh_context)
-        data = json.loads(tests_path.read_text(encoding="utf-8"))
-        data["automated"]["commands_run"].append("canonical verify")
-        tests_path.write_text(json.dumps(data), encoding="utf-8")
+        stages.record_stage_proof(
+            repo, _task_id, _task, key="proof-key",
+            verify_results=[{
+                "command": "canonical verify", "status": "passed",
+                "exit_code": 0,
+            }],
+            test_results=[{
+                "id": "test_stage_contract", "path": "stage_contract_proof.py",
+                "status": "passed",
+            }],
+            test_id_misses=[], close_owned=True,
+            commands_run=["canonical verify"],
+        )
         return proof
 
     monkeypatch.setattr(stages, "run_stage_proof", run_proof)
@@ -496,9 +516,15 @@ def test_task_close_is_the_single_full_suite_owner_and_records_truthful_automate
     def run_review(*_args, **kwargs):
         assert kwargs["proof_context"] == fresh_context
         evidence = json.loads(tests_path.read_text(encoding="utf-8"))
-        assert evidence["automated"]["commands_run"] == [
-            "focused pytest", "canonical verify",
-        ]
+        automated = evidence["automated"]
+        assert automated["commands_run"] == ["focused pytest", "canonical verify"]
+        assert "close-owned proof:" in automated["pass_fail_summary"]
+        assert automated["bound_by"] == "stage-proof"
+        assert evidence["functional"] == {
+            "generated_by": "functional-checker", "status": "passed",
+            "score": 9, "blocking_findings": [],
+            "commands_run": ["manual functional"],
+        }
         reviewed["done"] = True
         return {"blocking": 0}
 
@@ -515,6 +541,32 @@ def test_task_close_is_the_single_full_suite_owner_and_records_truthful_automate
 
     assert reviewed["done"] is True
     assert stage["status"] == "done"
+
+
+def test_fresh_close_owned_report_lists_only_executed_commands(repo, monkeypatch):
+    from forge_cli import stages
+
+    task = {**STAGE_TASK, "user_facing": False}
+    (repo / ".factory" / "run.json").write_text(
+        json.dumps({"issue_key": "ENG-1", "story": "ENG-1"}),
+        encoding="utf-8",
+    )
+    story_state(repo).mkdir(parents=True, exist_ok=True)
+    monkeypatch.setattr(stages, "_review_covers_tree", lambda *_args: False)
+    stages.record_stage_proof(
+        repo, "T1", task, key="proof-key",
+        verify_results=[{"command": "true", "exit_code": 0}],
+        test_results=[{"id": "test_stage_contract", "path": "stage_contract_proof.py",
+                       "status": "passed"}],
+        test_id_misses=[], close_owned=True, commands_run=["true"],
+    )
+    evidence = json.loads(
+        (story_state(repo) / "tasks/T1/tests.json").read_text(encoding="utf-8")
+    )
+    automated = evidence["automated"]
+    assert automated["commands_run"] == ["true"]
+    assert "executed commands=1" in automated["summary"]
+    assert "required test command" not in automated["commands_run"]
 
 
 def test_task_close_stops_early_and_names_the_next_step(repo, tmp_path):

@@ -21,7 +21,8 @@ Prompt files under `factory/prompts/` are explicit phase contracts.
 They are used in three ways:
 - `SessionStart` reports run state
 - `PreToolUse` guards Bash commands at phase gates
-- `Stop` enforces active-stage continuation while implementation artifacts are incomplete
+- Claude's `Stop` hook enforces active-stage continuation while implementation
+  artifacts are incomplete; native Codex `Stop` is advisory and host-owned.
 - the parent Codex session explicitly loads the relevant phase prompt before acting
 - custom agents use their own `.codex/agents/*.toml` instructions as role-specific prompts
 

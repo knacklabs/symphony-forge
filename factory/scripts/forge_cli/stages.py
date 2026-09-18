@@ -1056,6 +1056,14 @@ def _canonical_review_dataset(dataset: bytes) -> bytes:
             except json.JSONDecodeError:
                 start = close + len(marker) + 1
                 continue
+            if heading == "#### Full task-owned automated report (implementer-authored evidence)":
+                # Functional evidence is recorded independently after the code
+                # review.  Keep it in tests.json for the task-proof gate, but
+                # do not make that later report invalidate the review's code
+                # meaning or its rendered approved-input bytes.
+                if isinstance(value, dict):
+                    value = dict(value)
+                    value.pop("functional", None)
             canonical = json.dumps(
                 _canonical_review_envelope(value, nested=nested),
                 indent=2, sort_keys=True,
@@ -1111,6 +1119,8 @@ def reviewed_meaning_identity(
         generated[relative] = (
             sha256_of(path) if path.is_file() else "absent"
         )
+    automated_meaning = dict(automated) if isinstance(automated, dict) else {}
+    automated_meaning.pop("functional", None)
     inputs = {
         "task_plan_sha256": plan_digest,
         "task_semantics": _canonical_review_value({
@@ -1122,7 +1132,7 @@ def reviewed_meaning_identity(
         }),
         "task_grill": _canonical_review_envelope(grill),
         "automated_evidence": _canonical_review_envelope(
-            automated, nested=frozenset({"automated", "functional"}),
+            automated_meaning, nested=frozenset({"automated"}),
         ),
         "review_instructions": instructions,
         "accepted_decisions": [
@@ -2054,8 +2064,10 @@ def _canonical_verify_command(base: Path, command: str) -> bool:
         tokens = shlex.split(command)
     except ValueError:
         return False
-    while tokens and re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*=.*", tokens[0]):
-        tokens.pop(0)
+    prefix = _canonical_verifier_prefix(tokens)
+    if prefix is None:
+        return False
+    _assignments, tokens = prefix
     python_index = 0
     if len(tokens) > 2 and Path(tokens[0]).name.lower() in {"uv", "uv.exe"} \
             and tokens[1] == "run":
@@ -2072,6 +2084,34 @@ def _canonical_verify_command(base: Path, command: str) -> bool:
     return os.path.abspath(base / tokens[-1]) == os.path.abspath(
         base / "factory/scripts/verify.py"
     )
+
+
+def _canonical_verifier_prefix(
+        tokens: list[str],
+) -> tuple[list[tuple[str, str]], list[str]] | None:
+    """Strip the small launcher prefix the canonical verifier owns.
+
+    The close command is launched with uv's cache and tool directories in its
+    environment.  Those two values affect which interpreter and distributions
+    the verifier can load, so they belong in the producer identity.  Other
+    inline assignments can change the verifier's selected command or pytest's
+    semantics; an unknown assignment is therefore an explicit conservative
+    fallback rather than something this parser guesses about.
+    """
+    assignments: list[tuple[str, str]] = []
+    remaining = list(tokens)
+    while remaining and re.fullmatch(
+            r"[A-Za-z_][A-Za-z0-9_]*=.*", remaining[0]):
+        name, value = remaining.pop(0).split("=", 1)
+        if name not in {"UV_CACHE_DIR", "UV_TOOL_DIR"}:
+            return None
+        if (not value or not Path(value).is_absolute()
+                or any(character in value for character in ";&|<>`\n")):
+            return None
+        if any(previous == name for previous, _value in assignments):
+            return None
+        assignments.append((name, value))
+    return assignments, remaining
 
 
 def _factory_env_from_envrc(base: Path) -> dict[str, str]:
@@ -2142,12 +2182,24 @@ def _canonical_test_command_for_task(base: Path, task: dict) -> str:
         tokens = shlex.split(candidates[0])
     except ValueError:
         return ""
-    # The verifier shell can replace the test command or its pytest environment
-    # before verify.py starts. Do not infer those effects from a second parser;
-    # run each declared selector instead.
-    while tokens and re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*=.*", tokens[0]):
+    prefix = _canonical_verifier_prefix(tokens)
+    if prefix is None:
         return ""
-    return _factory_test_command(base)
+    assignments, _remaining = prefix
+    command = _factory_test_command(base)
+    if not command:
+        return ""
+    try:
+        producer = shlex.split(command)
+    except ValueError:
+        return ""
+    if not producer:
+        return ""
+    # The prefix is inherited by verify.py's FACTORY_TEST_CMD child. Keep it
+    # on the canonical producer command so its effective environment and uv
+    # tool identity are compared with the required selectors.
+    return shlex.join([*(f"{name}={value}" for name, value in assignments),
+                       *producer])
 
 
 def _pytest_collection_paths(
@@ -2306,6 +2358,81 @@ def _pytest_semantic_args(command: str) -> list[str] | None:
     return result
 
 
+def _compileall_source_inputs(
+        base: Path, python_args: list[str],
+        allowed_product_paths: set[Path] | None,
+) -> list[str] | None:
+    """Resolve the complete, Git-visible Python inputs of compileall.
+
+    ``compileall`` without an explicit source reads ``sys.path`` and a
+    directory recursively reads every Python file beneath it.  Neither is a
+    complete proof input unless the files can be enumerated and every source
+    is part of the product snapshot.  Refuse symlinks, external paths,
+    options with runner-specific semantics, and untracked/ignored sources;
+    explicit regular files and ordinary tracked directories remain reusable.
+    """
+    if len(python_args) < 3 or python_args[0:2] != ["-m", "compileall"]:
+        return None
+    if allowed_product_paths is None:
+        snapshot = product_tree_snapshot(base)
+        allowed_product_paths = {
+            (base / relative).resolve()
+            for field in ("tracked", "dirty")
+            for relative in (snapshot.get(field) or {})
+        }
+    product_paths = {path.resolve() for path in allowed_product_paths}
+    inputs: set[Path] = set()
+    for raw in python_args[2:]:
+        if raw.startswith("-"):
+            return None
+        candidate = Path(raw)
+        candidate = candidate if candidate.is_absolute() else base / candidate
+        try:
+            relative_candidate = candidate.relative_to(base)
+        except ValueError:
+            return None
+        current_candidate = base
+        if any(
+                (current_candidate := current_candidate / part).is_symlink()
+                for part in relative_candidate.parts
+        ):
+            return None
+        try:
+            candidate = candidate.resolve(strict=True)
+        except OSError:
+            return None
+        if base.resolve() not in candidate.parents and candidate != base.resolve():
+            return None
+        if candidate.is_file():
+            if candidate.suffix != ".py" or candidate not in product_paths:
+                return None
+            inputs.add(candidate)
+            continue
+        if not candidate.is_dir():
+            return None
+        found = False
+        for current, directories, files in os.walk(candidate, followlinks=False):
+            current_path = Path(current)
+            if any((current_path / name).is_symlink() for name in directories):
+                return None
+            for name in files:
+                path = current_path / name
+                if path.is_symlink():
+                    return None
+                if path.suffix != ".py":
+                    continue
+                found = True
+                resolved = path.resolve()
+                if resolved not in product_paths:
+                    return None
+                inputs.add(resolved)
+        if not found:
+            return None
+    if not inputs:
+        return None
+    return sorted(path.relative_to(base.resolve()).as_posix() for path in inputs)
+
+
 def _run_verify_commands(
     base: Path, stage_id: str, task: dict, canonical_junit: Path | None = None,
 ) -> list[dict]:
@@ -2433,7 +2560,9 @@ def proof_key(
 
 def record_stage_proof(base: Path, stage_id: str, task: dict, *, key: str,
                        verify_results: list[dict], test_results: list[dict],
-                       test_id_misses: list[str]) -> None:
+                       test_id_misses: list[str],
+                       close_owned: bool = False,
+                       commands_run: list[str] | None = None) -> None:
     """Write what the proof ran as the task's verify.json, re-bind the worker's
     tests.json record to the measured commit, or write one where none exists.
 
@@ -2470,7 +2599,55 @@ def record_stage_proof(base: Path, stage_id: str, task: dict, *, key: str,
         tests = {}
     automated = tests.get("automated")
     if isinstance(automated, dict):
-        if automated.get("commit") == head or _review_covers_tree(base, stage_id, task):
+        if _review_covers_tree(base, stage_id, task):
+            return
+        if close_owned:
+            if (automated.get("status") != "passed"
+                    or automated.get("blocking_findings")):
+                fail(
+                    f"{stage_id} has an existing automated report that is not "
+                    "a passing close-owned proof; refusing to overwrite it"
+                )
+            worker_commit = automated.get("commit")
+            if worker_commit and worker_commit != head:
+                automated.setdefault("worker_commit", worker_commit)
+            actual_commands = [
+                str(command) for command in (commands_run or [])
+                if str(command).strip()
+            ]
+            existing_commands = [
+                str(command) for command in automated.get("commands_run") or []
+                if str(command).strip()
+            ]
+            for command in actual_commands:
+                if command not in existing_commands:
+                    existing_commands.append(command)
+            automated["commands_run"] = existing_commands
+            summary = str(automated.get("pass_fail_summary") or "").rstrip()
+            covered = [
+                str(result.get("id")) for result in test_results
+                if isinstance(result, dict) and str(result.get("id") or "").strip()
+            ]
+            marker = (
+                "close-owned proof: "
+                f"{len(verify_results)} verifier result(s), "
+                f"{len(test_results)} required test result(s) passed; "
+                f"covered ids={','.join(covered) if covered else '<none>'}; "
+                f"executed commands={len(actual_commands)}; backing=verify.json"
+            )
+            if marker not in summary:
+                automated["pass_fail_summary"] = (
+                    f"{summary}\n{marker}" if summary else marker
+                )
+            automated["bound_by"] = STAGE_PROOF
+            automated["bound_at"] = now
+            automated["commit"] = head
+            tests["commit"] = head
+            tests["updated_at"] = now
+            validate_payload(base, "test-automated", automated)
+            dump_json(tests_path, tests)
+            return
+        if automated.get("commit") == head:
             return
         automated.setdefault("worker_commit", automated.get("commit"))
         automated["commit"] = head
@@ -2482,14 +2659,33 @@ def record_stage_proof(base: Path, stage_id: str, task: dict, *, key: str,
         return
     if bool(task.get("user_facing")):
         return
-    commands = [str(c) for c in task.get("verify_commands") or [] if str(c).strip()]
-    commands += [str(p.get("command")) for p in task.get("required_tests") or []
-                 if isinstance(p, dict)]
+    actual_commands = [
+        str(command) for command in (commands_run or [])
+        if str(command).strip()
+    ]
+    commands = actual_commands if close_owned else [
+        str(c) for c in task.get("verify_commands") or [] if str(c).strip()
+    ]
+    if not close_owned:
+        commands += [str(p.get("command")) for p in task.get("required_tests") or []
+                     if isinstance(p, dict)]
+    covered_ids = ",".join(
+        str(result.get("id")) for result in test_results
+        if isinstance(result, dict) and str(result.get("id") or "").strip()
+    ) or "<none>"
+    summary = (
+        "close-owned proof: "
+        f"{len(verify_results)} verifier result(s), "
+        f"{len(test_results)} required test result(s) passed; "
+        f"covered ids={covered_ids}; "
+        f"executed commands={len(actual_commands)}; backing=verify.json"
+        if close_owned else
+        f"task close ran {len(verify_results)} verify command(s) and "
+        f"{len(test_results)} required test(s) at {head[:12]}; all passed"
+    )
     automated = {
         "generated_by": STAGE_PROOF, "status": "passed",
-        "summary": (f"task close ran {len(verify_results)} verify command(s) "
-                    f"and {len(test_results)} required test(s) at "
-                    f"{head[:12]}; all passed"),
+        "summary": summary,
         "blocking_findings": [], "commands_run": commands,
         "tests_added_or_updated": [], "remaining_gaps": [],
         # The review brief refuses an empty scope; the harness ran the
@@ -2497,6 +2693,8 @@ def record_stage_proof(base: Path, stage_id: str, task: dict, *, key: str,
         "reviewed_scope": [str(s) for s in task.get("write_scope") or []],
         "recorded_at": now, "commit": head,
     }
+    if close_owned:
+        automated["pass_fail_summary"] = summary
     validate_payload(base, "test-automated", automated)
     tests["automated"] = automated
     tests["commit"] = head
@@ -2799,6 +2997,14 @@ def _proof_tool_identity(
             and module not in {"pytest", "compileall"}:
         return {"command": tokens[0], "runner": runner,
                 "environment": environment_identity, "reusable": False}
+    compileall_inputs = None
+    if module == "compileall":
+        compileall_inputs = _compileall_source_inputs(
+            base, python_args, allowed_product_paths,
+        )
+        if compileall_inputs is None:
+            return {"command": tokens[0], "runner": runner,
+                    "environment": environment_identity, "reusable": False}
     if module == "pytest":
         collection_paths = _pytest_collection_paths(base, command)
         if collection_paths is None:
@@ -2931,6 +3137,8 @@ def _proof_tool_identity(
             "python_version": detail["version"],
             "dependencies": detail["dependencies"], "reusable": True,
         }
+        if compileall_inputs is not None:
+            result["compileall_inputs"] = compileall_inputs
     except (OSError, ValueError, KeyError, json.JSONDecodeError,
             TypeError, subprocess.TimeoutExpired):
         result = {"command": tokens[0], "runner": runner,
@@ -3267,7 +3475,23 @@ def run_stage_proof(
     if not reuse_tests:
         test_identity = {**test_identity, "test_id_misses": test_id_misses}
         _store_proof_receipt(base, stage_id, "tests", test_identity)
-    if not reuse_verify or not reuse_tests:
+    close_owned = record_close_evidence or proof_context is not None
+    close_record_needed = close_owned
+    if close_owned and reuse_verify and reuse_tests:
+        state = raw_run_state(base)
+        story = str(state.get("issue_key") or state.get("story") or "")
+        existing = load_json(
+            task_evidence_path(base, story, stage_id, "tests.json"),
+            default={},
+        ) if story else {}
+        automated = existing.get("automated") if isinstance(existing, dict) else {}
+        close_record_needed = (
+            not isinstance(automated, dict)
+            or "close-owned proof:" not in str(
+                automated.get("pass_fail_summary") or ""
+            )
+        )
+    if close_record_needed or not reuse_verify or not reuse_tests:
         if not verify_results or not test_results:
             state = raw_run_state(base)
             story = str(state.get("issue_key") or state.get("story") or "")
@@ -3290,6 +3514,8 @@ def run_stage_proof(
                 verify_results=verify_results,
                 test_results=test_results,
                 test_id_misses=test_id_misses,
+                close_owned=close_record_needed,
+                commands_run=commands_run,
             )
     authority_tree = protected_authority_snapshot(base)
     if proof_context is not None:
