@@ -627,3 +627,34 @@ def test_task_close_rebinds_a_stale_worker_record_before_the_review(repo, tmp_pa
     assert tests["automated"]["summary"] == "focused task proof passed"
     assert git(repo, "show", "--name-only", "--format=%s", "HEAD~1").startswith(
         "ENG-1 T1: task proof")
+
+
+# ------------------------------------------- records moved, product did not
+
+
+def test_a_task_whose_records_moved_after_its_seal_reseals_without_reopen(repo, tmp_path):
+    """T4 at 13:34: a grill re-recorded after the marker was "outside the task
+    base-to-seal range", close called the task already closed, and only `task
+    reopen` got out. Product unchanged, records moved: close commits the
+    records, supersedes the old marker and seals again."""
+    from test_gates import record_task_grill
+    env = _ship_ready(repo, tmp_path)
+    code, out = run(repo, "forge.py", "task", "close", "T1", env=env)
+    assert code == 0, out
+    marker_path = repo / ".factory/stories/ENG-1/tasks/T1/pr-ready.json"
+    first = json.loads(marker_path.read_text(encoding="utf-8"))
+    code, out = record_task_grill(repo, task_for(repo, "T1"))
+    assert code == 0, out
+    code, out = run(repo, "forge.py", "task", "approve", "T1", "--by", "Nandu")
+    assert code == 0, out
+    code, out = run(repo, "forge.py", "task", "close", "T1", env=env)
+    assert code == 0, out
+    assert "resealing at" in out and "records committed" in out, out
+    second = json.loads(marker_path.read_text(encoding="utf-8"))
+    assert second["commit"] != first["commit"]
+    assert _stage(repo).get("superseded_marker_commit") == first["commit"]
+    # The records are in the tree the new marker names, ahead of the marker.
+    shown = git(repo, "show", "--name-only", "--format=%s", f"{second['commit']}")
+    assert "task records" in shown and "grills/tasks/T1.json" in shown, shown
+    lib = load_factory_lib(repo)
+    assert lib.task_proof_problems(repo, "ENG-1", task_for(repo, "T1")) == []

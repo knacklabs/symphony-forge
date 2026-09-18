@@ -131,3 +131,19 @@ def test_the_record_title_form_is_strict():
     assert VERDICT_RECORD.match("VERDICT WF1-T5-C16: Implemented")
     assert not VERDICT_RECORD.match("VERDICT C7: partial — src/x.py:1")  # evidence goes in the body
     assert not VERDICT_RECORD.match("Paginate the approval queue")
+
+
+def test_a_contract_blocker_always_has_a_finding_identity():
+    """A verdict whose evidence names no line is anchored to the contract's
+    source: on T4 a blank line here broke every later --reject."""
+    from factory_lib import review_finding_fingerprint
+    from forge_cli.review import _contract_blocker
+    contract = {"id": "C2", "statement": "the history read is authorised",
+                "source": "plans/active/TEST-1-test-plan.md#acceptance-criteria"}
+    anchored = _contract_blocker(contract, {"contract_id": "C2", "verdict": "partial",
+                                            "evidence": "src/x.py:7 no check"})
+    assert (anchored["file_path"], anchored["line"]) == ("src/x.py", 7)
+    blank = _contract_blocker(contract, {"contract_id": "C2", "verdict": "missing",
+                                         "evidence": "reviewer verdict"})
+    assert (blank["file_path"], blank["line"]) == ("plans/active/TEST-1-test-plan.md", 1)
+    assert review_finding_fingerprint(blank) and review_finding_fingerprint(anchored)

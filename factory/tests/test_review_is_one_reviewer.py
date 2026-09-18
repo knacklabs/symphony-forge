@@ -166,6 +166,8 @@ def _generation(repo: Path) -> dict:
 
 
 def _ledger_starts(repo: Path) -> int:
+    if not codex_runs_path(repo).is_file():
+        return 0
     rows = [json.loads(line) for line in codex_runs_path(repo).read_text().splitlines()]
     return sum(1 for row in rows if row.get("kind") == "review" and row["status"] == "starting")
 
@@ -343,3 +345,21 @@ def test_the_contracts_describe_one_reviewer_and_p3_depth():
     prompt = review_mod._combined_prompt({"id": "T1", "plan_contracts": TASK_CONTRACTS}).decode()
     assert "FINDING FORM" in prompt and "missing context is not proof" in prompt
     assert "not an executed exploit" in prompt
+
+
+def test_a_standalone_review_runs_and_records_the_proof_first(repo, tmp_path, monkeypatch):
+    """`forge review` runs after the proof, as close does: the brief reads a
+    proof bound to this tree instead of refusing a hand-typed record."""
+    from test_gates import run
+    _built(repo, tmp_path)
+    monkeypatch.setenv("FAKE_SEEN", str(tmp_path / "seen"))
+    monkeypatch.delenv(PROMPT_ENV, raising=False)
+    code, out = run(repo, "forge.py", "review", "T1", "--skill", str(_fake_skill(tmp_path)),
+                    "--engine", "claude", env={"FAKE_SEEN": str(tmp_path / "seen")})
+    assert code == 0, out
+    assert "task proof committed" in out, out
+    verify = json.loads((repo / ".factory/stories/ENG-1/tasks/T1/verify.json").read_text(
+        encoding="utf-8"))
+    assert verify["recorded_by"] == "stage-proof"
+    assert git(repo, "show", "--name-only", "--format=%s", "HEAD~1").startswith(
+        "ENG-1 T1: task records")

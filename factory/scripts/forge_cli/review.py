@@ -1141,15 +1141,20 @@ def _contract_blocker(contract: dict, verdict: dict) -> dict:
     rejection handle it like any other."""
     evidence = " ".join(str(verdict.get("evidence") or "").split())
     at = re.match(r"^(?P<path>[^\s:]+):(?P<line>\d+)\b", evidence)
-    path = at.group("path") if at else ""
     cid = str(verdict.get("contract_id"))
+    # A finding's identity is file, line and title (review_finding_fingerprint).
+    # A verdict whose evidence names no line is anchored to the contract's own
+    # source, so it can be triaged and refused like any other finding: on
+    # WF-BIO-1 T4 a blank line number here broke every later `--reject`.
+    source = str(contract.get("source") or "").split("#", 1)[0].strip()
+    path = at.group("path") if at else (source or "plans")
     return {
         "category": f"plan-contract-{verdict['verdict']}",
         "area": str(contract.get("source") or _area(path)),
         "summary": f"{cid}: {contract.get('statement', '')} — {verdict['verdict']}: "
                    f"{evidence}",
         "file_path": path,
-        "line": int(at.group("line")) if at else None,
+        "line": int(at.group("line")) if at else 1,
         "title": f"VERDICT {cid}: {verdict['verdict']}",
     }
 
@@ -1848,6 +1853,18 @@ def cmd_review(args: argparse.Namespace) -> None:
                        evidence=getattr(args, "evidence", "") or "",
                        by=getattr(args, "by", "") or "")
         return
+    # The review runs after the proof, here as in `task close`: the proof is
+    # run (or reused) and recorded, so the brief reads a record bound to this
+    # tree instead of refusing a hand-recorded one as stale (0079, 0080).
+    from .stages import load_stages, run_stage_proof, task_for
+    stage = next((item for item in load_stages(base).get("stages", [])
+                  if isinstance(item, dict) and item.get("id") == args.id), {})
+    if stage.get("status") == "active" and not getattr(args, "lens", None):
+        from .close import _commit_task_proof
+        state = load_json(run_state_path(base), default={})
+        story = str(state.get("issue_key") or state.get("story") or "")
+        _commit_task_proof(base, story, args.id,
+                           run_stage_proof(base, args.id, task_for(base, args.id)))
     outcome = review_task(
         base, args.id, lens=getattr(args, "lens", None),
         engine=getattr(args, "engine", "codex"),

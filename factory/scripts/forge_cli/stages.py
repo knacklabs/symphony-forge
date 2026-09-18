@@ -845,6 +845,69 @@ def amended_scope_paths(base: Path, task_id: str) -> list[str]:
     return [p for p in paths if isinstance(p, str) and p]
 
 
+TASK_RECORD_NAMES = ("verify.json", "tests.json", "journal.jsonl", "journal.md")
+
+
+def task_record_paths(base: Path, story: str, task_id: str) -> list[str]:
+    """Every file the task's proof and approval rest on, relative to the repo."""
+    from factory_lib import evidence_path, task_evidence_path
+    paths = [task_evidence_path(base, story, task_id, name) for name in TASK_RECORD_NAMES]
+    paths += sorted(task_evidence_path(base, story, task_id, "journal").glob("*.txt"))
+    paths += [evidence_path(base, story, f"grills/tasks/{task_id}.json"),
+              evidence_path(base, story, f"task-plans/{task_id}.md")]
+    return [path.relative_to(base).as_posix() for path in paths if path.is_file()]
+
+
+def commit_task_records(base: Path, story: str, task_id: str) -> str:
+    """Commit the task's records when any moved; return the new head or "".
+
+    Sealed-state readers read a task's evidence at the commit the marker
+    names, so a record committed only with the marker sits one commit too
+    late (0079), and a grill re-recorded after a seal that never reached the
+    sealed tree was refused at the seal as outside the task's range
+    (WF-BIO-1 T4, 13:34)."""
+    rels = task_record_paths(base, story, task_id)
+    if not rels:
+        return ""
+    status = subprocess.run(
+        ["git", "status", "--porcelain", "--", *rels], cwd=base,
+        capture_output=True, text=True, encoding="utf-8", env=clean_git_env(),
+    )
+    if status.returncode != 0:
+        fail("checking the task records failed: " + status.stderr.strip())
+    if not status.stdout.strip():
+        return ""
+    for description, argv in (
+            ("staging the task records", ["add", "--", *rels]),
+            ("committing the task records",
+             ["commit", "-q", "--only", "-m", f"{story} {task_id}: task records", "--", *rels])):
+        proc = subprocess.run(["git", *argv], cwd=base, capture_output=True, text=True,
+                              encoding="utf-8", env=clean_git_env())
+        if proc.returncode != 0:
+            fail(f"{description} failed: " + (proc.stderr.strip() or proc.stdout.strip()))
+    return head_sha(base) or ""
+
+
+def supersede_marker(base: Path, task_id: str, commit: str) -> str:
+    """Record that the marker naming `commit` is superseded by the seal about
+    to be written; return the previous value so a refused re-seal can restore
+    it. The brief and the pre-seal proof check ignore a superseded marker."""
+    from .delegate import delegation_exclusion
+    with delegation_exclusion(base, "stages", kind="stage-state", namespace="state"):
+        data = load_stages(base)
+        stage = next((item for item in data.get("stages") or []
+                      if isinstance(item, dict) and item.get("id") == task_id), None)
+        if stage is None:
+            fail(f"task {task_id} is not in the current decomposition")
+        previous = str(stage.get("superseded_marker_commit") or "")
+        if commit:
+            stage["superseded_marker_commit"] = commit
+        else:
+            stage.pop("superseded_marker_commit", None)
+        write_stages(base, data)
+    return previous
+
+
 def journal_contract(base: Path, story: str, task: dict) -> None:
     """The recorded contract as the journal's standing first entry (0080);
     re-recorded on every contract change, deduplicated by the journal."""

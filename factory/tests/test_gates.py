@@ -12598,8 +12598,10 @@ def test_task_start_creates_worktree_off_main_and_gates_on_predecessor_marker(
     }
     assert all(destination.read_bytes() == sources[name].read_bytes()
                for name, destination in destinations.items())
+    # The grill travels with the plan it binds to; freshness is judged at
+    # stage start, and this seeded record is not a fresh task grill.
     target_grill = story_state(second_worktree, key) / "grills/tasks/T2.json"
-    assert not target_grill.exists()
+    assert target_grill.read_bytes() == sources["grill"].read_bytes()
     code, out = run(second_worktree, "forge.py", "stage", "start", "T2")
     assert code != 0 and "grill" in out.lower(), out
     control = Path(git(second_worktree, "rev-parse", "--absolute-git-dir")) / "forge"
@@ -19919,7 +19921,7 @@ def test_task_start_creates_before_jit_with_approved_identity(
     target_plan = second_worktree / ".factory/stories/ENG-1/task-plans/T2.md"
     target_grill = second_worktree / ".factory/stories/ENG-1/grills/tasks/T2.json"
     assert target_plan.read_bytes() == source_plan
-    assert not target_grill.exists()
+    assert target_grill.is_file()  # hydrated; stage start judges its freshness
     code, out = run(second_worktree, "forge.py", "stage", "start", "T2")
     assert code != 0 and "grill" in out.lower()
 
