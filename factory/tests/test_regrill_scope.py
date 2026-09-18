@@ -214,22 +214,13 @@ def test_in_stage_is_decided_by_the_stage_not_the_caller(repo: Path):
 
 
 # ------------------------------------------------------------- compatibility
-def test_a_grill_recorded_by_older_tooling_requires_migration(repo: Path):
-    """The pre-Lean whole-task fingerprint is no normal-runtime authority."""
+def test_a_grill_recorded_by_older_tooling_still_verifies(repo: Path):
+    """An unchanged in-flight task keeps the exact Decision 0066 bridge."""
     lib = _seed(repo)
-    assert not hasattr(lib, "legacy_grounding_digest")
-    legacy_body = {
-        "contract": TASK,
-        "plan_sha256": lib.plan_digest_without_assumptions(
-            repo / "plans" / "active" / "TEST-1-test-plan.md"),
-        "product_tree_sha256": lib.product_tree_digest(repo),
-    }
-    legacy = hashlib.sha256(json.dumps(
-        legacy_body, sort_keys=True, separators=(",", ":"),
-        ensure_ascii=True).encode()).hexdigest()
-    assert not lib.grounding_matches(repo, TASK, legacy, in_stage=True)
+    legacy = lib.legacy_grounding_digest(repo, TASK)
+    assert lib.grounding_matches(repo, TASK, legacy, in_stage=True)
     assert not lib.grounding_matches(repo, TASK, "not-a-digest", in_stage=True)
-    moved = {**TASK, "acceptance_criteria": ["A new bar for done"]}
+    moved = {**TASK, "write_scope": ["src/", "src/extra.ts"]}
     assert not lib.grounding_matches(repo, moved, legacy, in_stage=True)
 
 

@@ -27,16 +27,14 @@ VERDICT_INSTRUCTION = (
     "replace the quality/performance/security lenses."
 )
 
-# Every lens hunts for code the diff kept only for compatibility: the owner's
-# standing ruling is "we don't need legacy code", and a leftover that survives
-# review ships. Rendered beside the lens focus in every brief.
+# Every lens may call out compatibility or dead code when it creates a concrete
+# risk. Rendered beside the lens focus in every brief.
 LEFTOVER_INSTRUCTION = (
-    "LEFTOVERS (blocking): the diff must carry no code kept only for "
-    "compatibility — no wrapper or shim over its replacement, no re-export or "
-    "alias kept 'for callers', no renamed-but-retained symbol, no dead branch "
-    "behind a removed feature, no 'legacy'/'deprecated'/'backward' naming or "
-    "comment. Report each as a BLOCKING finding with file:line and verdict the "
-    "contract it belongs to as partial; a clean diff says so in one line."
+    "LEFTOVERS: report compatibility, dead, or style-only code only when it "
+    "creates a concrete P0/P1 correctness, security, data-loss, or contract "
+    "risk, with file:line evidence. Otherwise record it as a P2/P3 follow-up "
+    "or say that no blocking leftover exists; cleanup alone does not make the "
+    "contract partial."
 )
 
 
@@ -282,6 +280,40 @@ def _approved_task_inputs(base: Path, task: dict) -> dict:
     }
 
 
+def _current_decision_inputs(base: Path) -> list[dict[str, object]]:
+    """Capture accepted decision bytes for the detached review context.
+
+    Review bundles intentionally put ``docs/decisions`` back at the task base
+    so planning bookkeeping is not treated as product delta. The reviewer
+    still needs the current accepted corpus when a decision was added after
+    that base, so the review launcher carries these exact bytes as ephemeral
+    context files and binds each one by digest in the dataset.
+    """
+    from .decisions import decision_records
+
+    inputs: list[dict[str, object]] = []
+    for record in decision_records(base):
+        if record.get("status") != "accepted":
+            continue
+        path = Path(record["path"])
+        try:
+            relative = path.relative_to(base).as_posix()
+            body = path.read_bytes()
+        except (KeyError, OSError, ValueError) as exc:
+            raise SystemExit(
+                f"review decision context is unreadable: {path} ({exc})"
+            ) from exc
+        decision_id = str(record.get("id") or path.stem)
+        inputs.append({
+            "id": decision_id,
+            "source": relative,
+            "detached": f".factory/review-briefs/decisions/{decision_id}.md",
+            "body": body,
+            "sha256": hashlib.sha256(body).hexdigest(),
+        })
+    return inputs
+
+
 def _untrusted_fence(content: str, language: str) -> tuple[str, str]:
     """Return an info opener and closing fence longer than any content run."""
     longest = max((len(run) for run in re.findall(r"`+", content)), default=0)
@@ -468,6 +500,29 @@ def _settled_section(base: Path, task: dict) -> list[str]:
             ""] + lines
 
 
+def _decision_inputs_section(base: Path, tasks: list[dict]) -> list[str]:
+    """Render the shared accepted-decision manifest once for the whole brief."""
+    decision_inputs = _current_decision_inputs(base)
+    if not decision_inputs:
+        return []
+    task_ids = [str(task.get("id")) for task in tasks if task.get("id")]
+    applies_to = ", ".join(f"`{task_id}`" for task_id in task_ids) or "the review"
+    lines = [
+        "### Accepted decision inputs carried into the detached review", "",
+        f"This manifest applies to task sections {applies_to}. The review "
+        "worktree carries these current accepted decision bytes under "
+        "`.factory/review-briefs/decisions/`; the source paths are shown only "
+        "as provenance. Bind findings to the decision text in that detached "
+        "context, and treat a digest mismatch as a stale review.", "",
+    ]
+    lines.extend(
+        f"- `{item['source']}` -> `{item['detached']}` "
+        f"(sha256 `{item['sha256']}`)"
+        for item in decision_inputs
+    )
+    return lines + [""]
+
+
 def render_review_brief(
     base: Path, selected: list[dict], title: str, *, all_tasks: bool,
     reviewed_task: str = "",
@@ -488,6 +543,7 @@ def render_review_brief(
             "",
         )
     reviewed_inputs = None
+    lines.extend(_decision_inputs_section(base, selected))
     for task in selected:
         # The explicit review target receives complete approved inputs even when
         # its stage is done. Other done tasks retain bounded identity only when

@@ -37,10 +37,11 @@ three `factory/schemas/review.json` lens records, then replaces the task's
 
 - **quality** — correctness, regressions, maintainability-as-risk, test
   gaps, contract drift, over-engineering (constitution-mandated structure
-  exempt), and **cyclomatic complexity** — assessed on EVERY review, with
-  excessively tangled control flow a blocking `cyclomatic-complexity`
-  finding; for user-facing diffs touching motion, the `review-animations`
-  skill feeds this lens (harness.yaml `ui_guidance`)
+  exempt), and **cyclomatic complexity** — assessed on EVERY review. Excessive
+  branching is blocking only when it creates a concrete P0/P1 correctness,
+  security, or operational risk; otherwise it is a follow-up. For user-facing
+  diffs touching motion, the `review-animations` skill feeds this lens
+  (harness.yaml `ui_guidance`)
 - **performance** — hot paths, algorithmic complexity, query fanout, I/O
   amplification, memory churn, concurrency bottlenecks; measured evidence
   distinguished from inference
@@ -53,9 +54,9 @@ commands and required tests, records the run as the task's `verify.json` and
 files before review, ahead of the marker commit. A later close may reuse a
 passing receipt only when the command, environment, tool, distribution,
 generated-input, and product identities are all complete and unchanged;
-unknown command shapes remain conservative and run again. The worker runs the
-same commands while it works so it can fix what fails; the coordinator does
-not run them by hand before close (0079).
+unknown command shapes remain conservative and run again. Workers run focused
+checks while implementing so they can fix what fails; the coordinator does
+not run the task-wide proof by hand before close (0079).
 
 Never review inline in the coordinating session; never nest reviewers.
 Forge-managed autoreview is an authenticated, externally maintained black box;
@@ -146,7 +147,7 @@ report that concrete blocker; do not manufacture another review cycle.
 
 ### functional-checker (conditional)
 - model: `gpt-5.6-sol`, reasoning `high`, `danger-full-access` as pinned by the
-  committed functional-checker profile
+  committed functional-checker profile and Decision 0081
 - contract: `factory/prompts/tester-functional.md` +
   `factory/schemas/test-functional.json` (`generated_by: functional-checker`)
 - runs only when the decomposition records `user_facing: true`; the ship

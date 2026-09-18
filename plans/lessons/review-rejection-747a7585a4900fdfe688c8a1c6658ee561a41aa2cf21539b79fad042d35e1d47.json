@@ -1,0 +1,10 @@
+{
+  "applies_to": [
+    "factory/tests/**"
+  ],
+  "generated_by": "Codex Root (delegated coordinator)",
+  "lesson": "Not a defect (evidence docs/decisions/0080-native-role-model-routing.md:54): Accepted0080 supersedes the earlier three-profile target: init and upgrade distribute the complete explicitly routed native role registry while preserving distinct client profiles. Restoring three roles would contradict the user-approved routing. — raised as \"Enforce the three-profile recovery target instead of the full registry (factory/tests/test_gates.py:20929): When init or upgrade is tested against the current s\"",
+  "severity": "medium",
+  "source": "review reject LEAN-WORKFLOW quality",
+  "topic": "rejected-review-finding-quality"
+}

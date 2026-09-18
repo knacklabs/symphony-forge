@@ -598,7 +598,8 @@ def cmd_next(args: argparse.Namespace) -> None:
                 elif frontier == "verify":
                     steps.append(
                         f"[dev] {task_id} has a successful bound handoff. Run its "
-                        "deterministic verification: python3 factory/scripts/verify.py"
+                        "focused checks while working, then let the task owner run "
+                        f"the final proof: ./forge task close {task_id}"
                     )
                 elif frontier == "commit":
                     steps.append(
@@ -609,8 +610,8 @@ def cmd_next(args: argparse.Namespace) -> None:
                 elif frontier == "tests":
                     steps.append(
                         f"[dev] {task_id} still needs passing task-owned test proof. "
-                        "Run its required tests and record the result with "
-                        "record_test_from_json.py."
+                        "Run focused checks while working; the final required-test "
+                        f"proof belongs to ./forge task close {task_id}."
                     )
                 elif frontier == "functional":
                     steps.append(
@@ -653,13 +654,13 @@ def cmd_next(args: argparse.Namespace) -> None:
                     )
                 elif frontier == "review":
                     steps.append(
-                        f"[dev] {task_id} still needs clean task-owned review proof: "
-                        f"./forge review {task_id}"
+                        f"[dev] {task_id} still needs clean task-owned review proof. "
+                        f"Resume its close owner: ./forge task close {task_id}"
                     )
                 elif frontier == "stage-done":
                     steps.append(
                         f"[dev] {task_id} has its bound handoff and clean proof. "
-                        f"Close the stage: ./forge stage done {task_id}"
+                        f"Finish the integrated close: ./forge task close {task_id}"
                     )
                 elif frontier == "await-merge":
                     steps.append(

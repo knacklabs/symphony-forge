@@ -86,6 +86,33 @@ def _seed_contract(repo: Path, task: dict = TASK) -> tuple[Path, str]:
     return brief, digest
 
 
+def _record_native_preparation(
+        repo: Path, brief: Path, digest: str, scope: list[str]) -> None:
+    argv_digest = hashlib.sha256(
+        json.dumps([], separators=(",", ":")).encode()
+    ).hexdigest()
+    (_control(repo) / "delegations.jsonl").write_text(
+        json.dumps({
+            "generated_by": "orchestrator",
+            "at": "2026-09-18T00:00:00Z",
+            "transport": "host-native",
+            "task": "T1",
+            "stage_started_at": "stage-1",
+            "launch_status": "prepared",
+            "write": True,
+            "task_sha256": digest,
+            "write_scope": scope,
+            "model": "",
+            "effort": "",
+            "argv": [],
+            "argv_sha256": argv_digest,
+            "brief_path": brief.relative_to(repo).as_posix(),
+            "brief_sha256": hashlib.sha256(brief.read_bytes()).hexdigest(),
+        }) + "\n",
+        encoding="utf-8",
+    )
+
+
 def _worker_script(tmp_path: Path) -> Path:
     script = tmp_path / "hook_worker.py"
     script.write_text(
@@ -209,7 +236,8 @@ def test_codex_native_host_needs_active_stage_but_no_process_identity(repo):
     ), {"FORGE_COORDINATOR": "codex"})
     assert "deny" in denied.lower() and "active task stage" in denied.lower(), denied
 
-    _seed_contract(repo)
+    brief, digest = _seed_contract(repo)
+    _record_native_preparation(repo, brief, digest, ["src/"])
     admitted = _hook(repo, _patch(
         "*** Add File: src/native.py", "+native",
     ), {"FORGE_COORDINATOR": "codex"})
@@ -219,6 +247,11 @@ def test_codex_native_host_needs_active_stage_but_no_process_identity(repo):
     scope_amendments_path(repo).write_text(json.dumps({
         "tasks": {"T1": {"added_paths": ["amended/"]}},
     }), encoding="utf-8")
+    narrowed = _hook(repo, _patch(
+        "*** Add File: amended/not-yet-prepared.py", "+refused",
+    ), {"FORGE_COORDINATOR": "codex"})
+    assert "deny" in narrowed.lower() and "scope" in narrowed.lower(), narrowed
+    _record_native_preparation(repo, brief, digest, ["src/", "amended/"])
     amended = _hook(repo, _patch(
         "*** Add File: amended/native.py", "+native",
     ), {"FORGE_COORDINATOR": "codex"})
@@ -802,6 +835,19 @@ def test_native_lite_fix_prepares_without_stage_and_keeps_window_budget(
         "*** Update File: .factory/quickfix.json", "@@", "-{}", "+{}",
     ), {"FORGE_COORDINATOR": "codex"})
     assert "deny" in protected.lower() and "never hand-written" in protected.lower(), protected
+
+
+def test_native_quickfix_window_is_recording_only(repo):
+    (repo / ".factory/harness-source.json").write_text("{}\n", encoding="utf-8")
+    (repo / ".factory/quickfix.json").write_text(json.dumps({
+        "id": "Q-quickfix-native", "profile": "quickfix",
+        "reason": "historical native window", "max_files": 5, "files": [],
+        "harness_source": True,
+    }), encoding="utf-8")
+    refused = _hook(repo, _patch(
+        "*** Add File: src/quickfix-native.py", "+refused",
+    ), {"FORGE_COORDINATOR": "codex"})
+    assert "deny" in refused.lower() and "recording-only" in refused.lower(), refused
 
 
 def test_live_lite_worker_uses_current_window_and_file_budget(repo, tmp_path):

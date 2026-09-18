@@ -1,0 +1,10 @@
+{
+  "applies_to": [
+    ".factory/stories/FORGE-COORD-1/task-plans/LEAN-WORKFLOW.md#Acceptance Criteria"
+  ],
+  "generated_by": "Codex Root (delegated coordinator)",
+  "lesson": "Not a defect (evidence docs/specs/dual-coordinator-parity.md:102): The accepted native contract explicitly validates a source descriptor and leaves consumption to the host; it makes no content-delivery claim. Immutable snapshot transport applies to command-managed grill/Claude routes. Requiring that transport for the native route contradicts docs/specs/dual-coordinator-parity.md:102-110. Existing command-managed protection is retained. The separate fresh-cold-reader reuse finding remains open and will be fixed. — raised as \"LEAN-AC-3: Ceremony removal: requirements grill, round floors, old round ledgers as authority, fake frontier questions, second unchanged save, and manual plan/t\"",
+  "severity": "medium",
+  "source": "review reject LEAN-WORKFLOW quality",
+  "topic": "rejected-review-finding-quality"
+}

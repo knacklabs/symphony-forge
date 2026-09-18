@@ -695,7 +695,8 @@
         "factory/tests/test_board_reads_task_proof.py",
         "factory/tests/test_review_reads_the_repo.py",
         "docs/decisions/0079-full-access-for-forge-managed-codex-chats.md",
-        ".factory/migrations/lean-workflow-v2-supplement.json"
+        ".factory/migrations/lean-workflow-v2-supplement.json",
+        "docs/decisions/0081-full-access-for-forge-managed-codex-chats.md"
       ],
       "plan_contracts": [
         {
@@ -1079,9 +1080,9 @@
         "Confirm historical Decision 0049 is restored, full-access policy is renumbered, board copy gets functional proof, and PR #109/#110 links remain recorder-generated."
       ],
       "review_budget": {
-        "max_changed_files": 118,
-        "max_changed_lines": 23000,
-        "reason": "User-authorized recovery PR2. The measured advanced-base delta was 116 files / 21,828 lines; the remaining allowance covers the close-owned proof path, two review-fixture owners, and decision-history correction without widening task meaning."
+        "max_changed_files": 132,
+        "max_changed_lines": 28500,
+        "reason": "Root measured the current accumulated product delta against merged main9e08774:127paths,19535added+7232deleted=26767lines. User-authorized final correction of selected4a19627 findings, existing proof-owner/priority guidance, and the already-promised full-access decision renumbering receives bounded allowance132paths/28500lines. No task graph or acceptance change."
       }
     },
     {
@@ -1179,5 +1180,5 @@
   "epic": "symphony-forge",
   "plan_file": "plans/active/FORGE-COORD-1-either-claude-or-codex-coordinates-the-same-forge-workflow.md",
   "plan_sha256": "704e22e69b3722fc885bd09231691a18c2afc01b0982a112bb7b5118744f1723",
-  "commit": "46f06ed24e3a7ae44fc24116088c47a99729baba"
+  "commit": "9ae732d285e13374bb0434459b5a9318c51f377b"
 }

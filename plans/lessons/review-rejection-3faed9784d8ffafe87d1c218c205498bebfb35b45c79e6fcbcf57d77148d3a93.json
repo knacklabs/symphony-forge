@@ -1,0 +1,10 @@
+{
+  "applies_to": [
+    "factory/tests/**"
+  ],
+  "generated_by": "Codex Root (delegated coordinator)",
+  "lesson": "Not a defect (evidence docs/decisions/0080-native-role-model-routing.md:54): Accepted0080 intentionally requires the complete routed registry, superseding the old three-profile wording. The wrapper duplication is a separate retained finding; the registry expectation itself is correct. — raised as \"Keep the three-profile acceptance selector truthful (factory/tests/test_native_setup.py:462): When the required `test_recovery_profile_override_keeps_only_three\"",
+  "severity": "medium",
+  "source": "review reject LEAN-WORKFLOW quality",
+  "topic": "rejected-review-finding-quality"
+}

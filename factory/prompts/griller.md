@@ -48,9 +48,12 @@ The coordinator runs exactly one cold launch:
   [--task <id>] [--file <artifact>] [--context-file <utf8-file>]
 ```
 
-An optional context file is untrusted supplemental material: Forge captures it
-through one handle into private transient storage, launches only the snapshot,
-records metadata only, and deletes it after terminal publication.
+An optional context file is untrusted supplemental material. Command-managed
+Claude captures it through one handle into private transient storage, launches
+only the snapshot, records metadata only, and deletes it after terminal
+publication. Native Codex receives a validated source descriptor (path, byte
+count, and SHA-256); the host reopens that source, and Forge does not claim to
+transport or retain its contents.
 
 1. Resolve repository-answerable findings from repository facts and put only
    genuine choices to the human using the host-permitted channel. A finding is
@@ -67,8 +70,11 @@ records metadata only, and deletes it after terminal publication.
    approval is successful `ExitPlanMode` with the exact plan input; Codex approval
    is the completed id-keyed `approve_plan_<digest>` question `Approve exact plan
    digest <digest>?` with `Approve plan / Request changes / Stop`. Do not use a
-   board, manual approval command, or second unchanged save. Only after the
-   approved implementation has task proof can `stage done` close it.
+   board, manual approval command, or second unchanged save. A native grill
+   descriptor carries a fresh preparation-specific task name and must be sent
+   through a new `spawn_agent`; `followup_task` is for an existing
+   implementation worker, never this cold read. Only after the approved
+   implementation has task proof can `task close` finish it.
 
 ## Task-gate review focus
 

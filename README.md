@@ -6,7 +6,7 @@ A governed delivery harness that turns a repo's architecture and decision docs i
 
 - **What it is.** A process harness you vendor into an application repo. Agents write the code; deterministic gates decide what is allowed to ship; every change carries schema-validated evidence of how it was verified.
 - **Where it comes from.** OpenAI's Symphony spec (April 2026): stop supervising agent sessions, start assigning objectives. Forge is that philosophy engineered into a runnable harness. See [Where this comes from](#where-this-comes-from).
-- **How it differs.** Hybrid runtime today (Claude Code coordinates, Codex executes), with a Codex-only runtime planned on the same artifact contract. The repo rather than the issue tracker is the control plane, and governance is enforced instead of left as a non-goal.
+- **How it differs.** Claude Code or native Codex coordinates while role-based Codex workers execute through one artifact contract. The repo rather than the issue tracker is the control plane, and governance is enforced instead of left as a non-goal.
 - **Proof it runs.** It is live on client delivery. The [board screenshot](#the-lifecycle) below is a real client project mid-delivery, not a mock.
 - **Where to verify.** [`WORKFLOW.md`](WORKFLOW.md) is the phase contract, [`harness.yaml`](harness.yaml) declares which tool owns each phase, [`AGENTS.md`](AGENTS.md) is the agent contract, and [The Gates](#the-gates) lists every refusal and the script that enforces it.
 
@@ -20,7 +20,7 @@ Its thesis: the bottleneck in agentic development was never agent speed, it was 
 
 | | Symphony (the spec) | Symphony Forge |
 |---|---|---|
-| **Runtime** | Codex, over an app-server protocol | **Claude Code coordinates, Codex executes.** A Codex-only runtime, where Codex also coordinates, is planned. The `.factory` artifact contract is the invariant: either runtime must produce the same evidence. |
+| **Runtime** | Codex, over an app-server protocol | **Claude Code or native Codex coordinates, Codex executes.** The `.factory` artifact contract is the invariant across both runtimes. |
 | **Source of truth** | The issue tracker is the control plane | **The repo** owns workflow policy, plans, decisions and evidence. An external tracker (Linear, GitHub Issues, Jira) is optional and merely mirrored. |
 | **Governance** | An explicit non-goal. The spec declines to mandate any approval, sandbox, or operator-confirmation posture | **[The gates](#the-gates).** Sign-off, planning lock, evidence attestation, ship gate. Refusals, not suggestions. |
 

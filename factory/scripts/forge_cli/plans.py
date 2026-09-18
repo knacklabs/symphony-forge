@@ -200,6 +200,9 @@ def cmd_save(args: argparse.Namespace) -> None:
     dest.write_text(header + body, encoding="utf-8")
     if state:
         state["plan_status"] = status
+        # Keep the evidence/grill namespace in the run state when an explicit
+        # issue is supplied; the roadmap story may intentionally be different.
+        state["issue_key"] = issue
         state["plan_file"] = dest.relative_to(base).as_posix()
         state["story"] = story
         state.pop("approved_plan_sha256", None)

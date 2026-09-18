@@ -1024,6 +1024,141 @@ def test_original_empty_completion_transitions_to_current_inventory(repo: Path):
     assert manifest.read_bytes() == original_bytes
 
 
+def test_supplemental_empty_completion_resume_binds_original_manifest(
+        repo: Path, monkeypatch: pytest.MonkeyPatch):
+    empty_digest = upgrade._inventory_digest([])
+    manifest = repo / ".factory/migrations/lean-workflow-v2.json"
+    manifest.parent.mkdir(parents=True, exist_ok=True)
+    original = {
+        "generated_by": "upgrade",
+        "version": "lean-workflow-v2",
+        "input_inventory_digest": empty_digest,
+        "output_digest": empty_digest,
+        "installed_runtime_digest": (
+            "bb4b6c05b41897447063959fc782e9ca4c2e00f9b219559314b725485b91b2e8"
+        ),
+        "entries": [],
+        "recorded_at": "2026-09-14T05:48:01+00:00",
+        "completed_at": "2026-09-14T05:48:01+00:00",
+    }
+    manifest.write_text(json.dumps(original) + "\n", encoding="utf-8")
+    stage = repo / ".factory/stories/S1/stages/T1.json"
+    stage.parent.mkdir(parents=True, exist_ok=True)
+    stage.write_text(json.dumps({
+        "id": "T1",
+        "local_review_stamp": {
+            "stage_id": "T1", "base_sha": "a" * 40,
+            "delta_id": "b" * 64,
+            "recorded_at": "2026-01-01T00:00:00+00:00",
+            "generated_by": "autoreview",
+        },
+    }), encoding="utf-8")
+    migration = upgrade.preflight_lean_migration(repo)
+    assert migration is not None
+    assert migration["prior_completion"] == original
+    assert migration["prior_completion_digest"] == upgrade._manifest_content_digest(original)
+    supplement = manifest.with_name(upgrade.LEAN_MIGRATION_SUPPLEMENT)
+    real_publish = upgrade._publish_converted_stage
+
+    def interrupt_before_stage_publication(target, destination, built, **kwargs):
+        if destination == stage:
+            raise OSError("interrupted supplemental migration")
+        return real_publish(target, destination, built, **kwargs)
+
+    with monkeypatch.context() as patch:
+        patch.setattr(upgrade, "_publish_converted_stage",
+                      interrupt_before_stage_publication)
+        with pytest.raises(OSError, match="supplemental migration"):
+            upgrade.apply_lean_migration(repo, migration)
+    assert supplement.is_file()
+    interrupted = json.loads(supplement.read_text(encoding="utf-8"))
+    assert "completed_at" not in interrupted
+    assert interrupted["prior_completion"] == original
+
+    original_bytes = manifest.read_bytes()
+    altered = {**original, "output_digest": "0" * 64}
+    manifest.write_text(json.dumps(altered) + "\n", encoding="utf-8")
+    with pytest.raises(SystemExit):
+        upgrade.preflight_lean_migration(repo)
+    manifest.write_bytes(original_bytes)
+
+    resumed = upgrade.preflight_lean_migration(repo)
+    assert resumed is not None and resumed["resume"] is True
+    upgrade.apply_lean_migration(repo, resumed)
+    completed = json.loads(supplement.read_text(encoding="utf-8"))
+    assert completed["prior_completion"] == original
+    assert completed["prior_completion_digest"] == upgrade._manifest_content_digest(original)
+    assert "completed_at" in completed
+    assert upgrade.preflight_lean_migration(repo) is None
+
+
+def test_public_upgrade_resumes_authenticated_empty_completion_supplement(
+        repo: Path, monkeypatch: pytest.MonkeyPatch,
+        capsys: pytest.CaptureFixture[str]):
+    empty_digest = upgrade._inventory_digest([])
+    manifest = repo / ".factory/migrations/lean-workflow-v2.json"
+    manifest.parent.mkdir(parents=True, exist_ok=True)
+    original = {
+        "generated_by": "upgrade",
+        "version": "lean-workflow-v2",
+        "input_inventory_digest": empty_digest,
+        "output_digest": empty_digest,
+        "installed_runtime_digest": (
+            "bb4b6c05b41897447063959fc782e9ca4c2e00f9b219559314b725485b91b2e8"
+        ),
+        "entries": [],
+        "recorded_at": "2026-09-14T05:48:01+00:00",
+        "completed_at": "2026-09-14T05:48:01+00:00",
+    }
+    manifest.write_text(json.dumps(original) + "\n", encoding="utf-8")
+    stage = repo / ".factory/stories/S1/stages/T1.json"
+    stage.parent.mkdir(parents=True, exist_ok=True)
+    stage.write_text(json.dumps({
+        "id": "T1",
+        "local_review_stamp": {
+            "stage_id": "T1", "base_sha": "a" * 40,
+            "delta_id": "b" * 64,
+            "recorded_at": "2026-01-01T00:00:00+00:00",
+            "generated_by": "autoreview",
+        },
+    }), encoding="utf-8")
+    # The public command's clean-tree preflight must see the committed original
+    # completion and stage as the authenticated source of the supplement.
+    git(repo, "add", manifest.relative_to(repo).as_posix(),
+        stage.relative_to(repo).as_posix())
+    git(repo, "commit", "-q", "-m", "seed empty completion supplement")
+
+    real_publish = upgrade._publish_converted_stage
+
+    def interrupted_publish(target, destination, built, **kwargs):
+        if destination == stage:
+            raise OSError("public supplemental interruption")
+        return real_publish(target, destination, built, **kwargs)
+
+    with monkeypatch.context() as patch:
+        patch.setattr(upgrade, "_publish_converted_stage", interrupted_publish)
+        with pytest.raises(OSError, match="public supplemental interruption"):
+            upgrade.cmd_upgrade(argparse.Namespace(target=str(repo), force=False))
+    supplement = manifest.with_name(upgrade.LEAN_MIGRATION_SUPPLEMENT)
+    assert supplement.is_file()
+    assert "completed_at" not in json.loads(supplement.read_text(encoding="utf-8"))
+
+    original_bytes = manifest.read_bytes()
+    altered = {**original, "output_digest": "0" * 64}
+    manifest.write_text(json.dumps(altered) + "\n", encoding="utf-8")
+    with pytest.raises(SystemExit):
+        upgrade.cmd_upgrade(argparse.Namespace(target=str(repo), force=False))
+    assert "uncommitted changes" in capsys.readouterr().out
+    manifest.write_bytes(original_bytes)
+
+    upgrade.cmd_upgrade(argparse.Namespace(target=str(repo), force=False))
+    completed = json.loads(supplement.read_text(encoding="utf-8"))
+    assert "completed_at" in completed
+    assert "local_review_stamp" not in json.loads(stage.read_text(encoding="utf-8"))
+    assert "Resumed and completed Lean migration" in capsys.readouterr().out
+    assert upgrade.preflight_lean_migration(repo) is None
+
+
 def test_completed_supplement_retires_later_history_fixed_reviews_once(
         repo: Path, monkeypatch: pytest.MonkeyPatch):
     _sealed_fixed_review(repo)

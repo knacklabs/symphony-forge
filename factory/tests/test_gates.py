@@ -3270,6 +3270,44 @@ def test_functional_check_paths_terminate_and_refuse_stale_reviewed_meaning(
     assert code != 0 and "current clean selected review generation" in out, out
 
 
+def test_functional_check_checks_lens_cleanliness_before_reviewed_meaning(
+        tmp_path, monkeypatch):
+    import factory_lib as lib
+    import forge_cli.readiness as readiness
+    import forge_cli.stages as stages
+
+    state = {"issue_key": "ENG-1", "task_id": "T1"}
+    stage = {"id": "T1", "status": "active"}
+    task = {"id": "T1"}
+    monkeypatch.setattr(lib, "task_stage_record", lambda *_args: stage)
+    monkeypatch.setattr(stages, "task_for", lambda *_args: task)
+    monkeypatch.setattr(lib, "effective_review_base", lambda *_args, **_kwargs: "base")
+    monkeypatch.setattr(lib, "product_delta_digest", lambda *_args: "delta")
+    monkeypatch.setattr(
+        lib, "read_selected_review_generation",
+        lambda *_args, **_kwargs: (generation, {}, []),
+    )
+
+    meaning_calls = []
+
+    def stale_meaning(*_args):
+        meaning_calls.append(True)
+        raise SystemExit("stale reviewed meaning")
+
+    monkeypatch.setattr(stages, "require_current_review_meaning", stale_meaning)
+    generation = {"lenses": {
+        "quality": {"score": 9, "blocking_findings": ["still open"]},
+        "performance": {"score": 9, "blocking_findings": []},
+        "security": {"score": 9, "blocking_findings": []},
+    }}
+    assert lib.selected_review_ready_for_functional_check(tmp_path, state) is False
+    assert meaning_calls == []
+
+    generation["lenses"]["quality"]["blocking_findings"] = []
+    assert lib.selected_review_ready_for_functional_check(tmp_path, state) is False
+    assert meaning_calls == [True]
+
+
 def test_board_refuses_mixed_selected_and_fixed_review_proof(repo, tmp_path):
     from forge_cli.board import story_task_proof
 
@@ -14691,9 +14729,7 @@ def test_stage_done_matches_required_test_by_id_prefix(repo, tmp_path):
 
 def test_stage_done_records_a_required_test_id_that_matched_no_case(
         repo, tmp_path):
-    # The run PASSED; only the recorded id lined up with nothing. That is a
-    # bookkeeping miss, measured and recorded — a failed or never-run test is
-    # still a refusal (see the missing-file and failing cases).
+    # A green runner without the declared node is not proof of the contract.
     test_id = "test_slice"
     path = "src/test_core.py"
     task = {**STAGE_TASK, "required_tests": [{
@@ -14706,12 +14742,8 @@ def test_stage_done_records_a_required_test_id_that_matched_no_case(
     write_in_scope(repo, path, "def test_other():\n    pass\n")
     stamp_and_commit(repo)
     code, out = run(repo, "forge.py", "stage", "done", "T1")
-    assert code == 0, out
-    assert "NOTE" in out and "not present in the fresh JUnit report" in out
-    misses = measured_stage(repo)["measured"]["test_id_misses"]
-    assert len(misses) == 1 and "'test_slice'" in misses[0]
-    code, out = run(repo, "forge.py", "stage", "list")
-    assert code == 0 and "required-test id misses" in out, out
+    assert code != 0 and "not present in the fresh JUnit report" in out, out
+    assert measured_stage(repo).get("status") == "active"
 
 
 def test_stage_done_runs_environment_prefixed_required_test(repo, tmp_path):
@@ -14745,10 +14777,8 @@ def test_stage_done_binds_required_test_to_declared_path(repo, tmp_path):
     write_in_scope(repo, "src/test_other.py", "def test_slice():\n    pass\n")
     stamp_and_commit(repo)
     code, out = run(repo, "forge.py", "stage", "done", "T1")
-    # A case attributed to another path is a recorded miss, not a refusal.
-    assert code == 0 and "not attributed" in out and path in out, out
-    misses = measured_stage(repo)["measured"]["test_id_misses"]
-    assert len(misses) == 1 and "not attributed" in misses[0]
+    assert code != 0 and "not attributed" in out and path in out, out
+    assert measured_stage(repo).get("status") == "active"
 
 
 def test_stage_done_refuses_required_test_product_mutation(repo, tmp_path):
@@ -22323,12 +22353,16 @@ def test_canonical_junit_satisfies_exact_required_nodes_without_selector_rerun(
             "command": "python3 -m pytest {path}::{id} --junitxml={report}",
         }],
     }
+    monkeypatch.setenv("FACTORY_TEST_CMD", "python3 -m pytest src")
     monkeypatch.setattr(stages, "proof_identity", lambda *_args, **_kwargs: {
         "identity": "a" * 64, "inputs": {}, "reusable": True,
     })
     monkeypatch.setattr(stages, "_proof_receipt", lambda *_args: {})
     monkeypatch.setattr(stages, "_store_proof_receipt", lambda *_args: None)
-    monkeypatch.setattr(stages, "product_tree_snapshot", lambda _base: {})
+    monkeypatch.setattr(
+        stages, "product_tree_snapshot",
+        lambda _base: {"tracked": {"src/test_core.py": "fixture"}, "dirty": {}},
+    )
     monkeypatch.setattr(stages, "protected_authority_snapshot", lambda _base: {})
 
     def canonical(_base, _stage_id, _task, report):
@@ -22344,6 +22378,57 @@ def test_canonical_junit_satisfies_exact_required_nodes_without_selector_rerun(
     )
 
     stages.run_stage_proof(repo, "T1", task)
+
+
+def test_canonical_junit_binds_to_the_actual_verifier_producer(
+        repo, tmp_path, monkeypatch):
+    import forge_cli.stages as stages
+
+    source = repo / "src/test_core.py"
+    source.parent.mkdir(parents=True, exist_ok=True)
+    source.write_text("def test_slice():\n    pass\n", encoding="utf-8")
+    task = {
+        "verify_commands": [
+            "FACTORY_TEST_CMD='python3 -m pytest src -p custom_plugin' "
+            "python3 factory/scripts/verify.py",
+        ],
+        "required_tests": [{
+            "id": "test_slice", "path": "src/test_core.py",
+            "command": "python3 -m pytest {path}::{id} --junitxml={report}",
+        }],
+    }
+    # The parent environment advertises a different command. The verifier's
+    # leading assignment is the actual producer, so the report cannot be
+    # substituted for the dedicated selector.
+    monkeypatch.setenv("FACTORY_TEST_CMD", "python3 -m pytest src")
+    monkeypatch.setattr(stages, "proof_identity", lambda *_args, **_kwargs: {
+        "identity": "a" * 64, "inputs": {}, "reusable": True,
+    })
+    monkeypatch.setattr(stages, "_proof_receipt", lambda *_args: {})
+    monkeypatch.setattr(stages, "_store_proof_receipt", lambda *_args: None)
+    monkeypatch.setattr(stages, "product_tree_snapshot", lambda _base: {})
+    monkeypatch.setattr(stages, "protected_authority_snapshot", lambda _base: {})
+
+    def canonical(_base, _stage_id, _task, report):
+        report.write_text(
+            '<testsuite><testcase name="test_slice" '
+            'file="src/test_core.py"/></testsuite>', encoding="utf-8",
+        )
+
+    monkeypatch.setattr(stages, "_run_verify_commands", canonical)
+    calls = []
+    monkeypatch.setattr(
+        stages, "_run_required_tests",
+        lambda *_args: calls.append("selector") or ([], []),
+    )
+
+    stages.run_stage_proof(repo, "T1", task)
+    assert calls == ["selector"]
+
+    monkeypatch.setenv("PYTEST_ADDOPTS", "-p custom_plugin")
+    assert stages._canonical_test_command_for_task(
+        repo, {**task, "verify_commands": ["python3 factory/scripts/verify.py"]},
+    ) == ""
 
 
 def test_canonical_junit_falls_back_when_required_node_identity_is_missing(
@@ -22388,7 +22473,8 @@ def test_canonical_junit_falls_back_when_required_node_identity_is_missing(
     )
     calls = []
     monkeypatch.setattr(
-        stages, "_run_required_tests", lambda *_args: calls.append("selector") or [],
+        stages, "_run_required_tests",
+        lambda *_args: calls.append("selector") or ([], []),
     )
 
     stages.run_stage_proof(repo, "T1", runnable)

@@ -115,8 +115,9 @@ def _seed_native_plan_grill(repo: Path, tmp_path: Path, monkeypatch, capsys,
         repo=str(repo), gate="plan", task="", file=str(draft),
         context_file="", print_only=print_only,
     ))
+    emitted = capsys.readouterr().out
     rows = []
-    for line in capsys.readouterr().out.splitlines():
+    for line in emitted.splitlines():
         try:
             value = json.loads(line)
         except json.JSONDecodeError:
@@ -125,14 +126,14 @@ def _seed_native_plan_grill(repo: Path, tmp_path: Path, monkeypatch, capsys,
             rows.append(value)
     assert len(rows) == 1, "native grill must emit exactly one dispatch descriptor"
     descriptor = next(row for row in rows if "response_schema" in row)
-    return draft, descriptor
+    return draft, descriptor, emitted
 
 
 def test_native_grill_print_only_emits_one_complete_unrecorded_preview(
         repo, tmp_path, monkeypatch, capsys):
     from forge_cli.delegate import load_delegations
 
-    _draft, descriptor = _seed_native_plan_grill(
+    _draft, descriptor, _emitted = _seed_native_plan_grill(
         repo, tmp_path, monkeypatch, capsys, print_only=True)
 
     assert descriptor["agent_type"] == "griller"
@@ -145,11 +146,11 @@ def test_native_grill_print_only_emits_one_complete_unrecorded_preview(
 
 def test_native_grill_prepares_one_self_contained_griller_descriptor(
         repo, tmp_path, monkeypatch, capsys):
-    draft, descriptor = _seed_native_plan_grill(
+    draft, descriptor, emitted = _seed_native_plan_grill(
         repo, tmp_path, monkeypatch, capsys)
 
     assert descriptor["action"] == "spawn_agent"
-    assert descriptor["followup_action"] == "followup_task"
+    assert "followup_action" not in descriptor
     assert descriptor["agent_type"] == "griller"
     assert descriptor["repo"] == str(repo)
     assert descriptor["story"] == "ENG-1"
@@ -166,6 +167,11 @@ def test_native_grill_prepares_one_self_contained_griller_descriptor(
     assert descriptor["response_schema"]["additionalProperties"] is False
     assert "Return JSON only" in descriptor["message"]
     assert descriptor["preparation_id"] in descriptor["message"]
+    assert "_cold_" in descriptor["task_name"]
+    assert "Do not reuse an existing task with followup_task" in descriptor[
+        "dispatch_guidance"]
+    assert "spawn_agent tool." in emitted
+    assert "or followup_task" not in emitted
     assert not ({"pid", "process_token", "session_id", "model", "effort"}
                 & descriptor.keys())
 
@@ -191,7 +197,7 @@ def _record_native_plan_grill(repo: Path, draft: Path, descriptor: dict,
 
 def test_native_grill_records_exact_returned_json_with_preparation_binding(
         repo, tmp_path, monkeypatch, capsys):
-    draft, descriptor = _seed_native_plan_grill(
+    draft, descriptor, _emitted = _seed_native_plan_grill(
         repo, tmp_path, monkeypatch, capsys)
     (code, out), result = _record_native_plan_grill(
         repo, draft, descriptor, tmp_path)
@@ -208,7 +214,7 @@ def test_native_grill_records_exact_returned_json_with_preparation_binding(
 
 def test_native_grill_refuses_wrong_preparation_id(
         repo, tmp_path, monkeypatch, capsys):
-    draft, descriptor = _seed_native_plan_grill(
+    draft, descriptor, _emitted = _seed_native_plan_grill(
         repo, tmp_path, monkeypatch, capsys)
     (code, out), _result = _record_native_plan_grill(
         repo, draft, descriptor, tmp_path, preparation_id="wrong-preparation")
@@ -222,7 +228,7 @@ def test_native_grill_refuses_tampered_preparation(
         repo, tmp_path, monkeypatch, capsys, tamper):
     from forge_cli.delegate import delegations_path
 
-    draft, descriptor = _seed_native_plan_grill(
+    draft, descriptor, _emitted = _seed_native_plan_grill(
         repo, tmp_path, monkeypatch, capsys)
     ledger = delegations_path(repo)
     rows = [json.loads(line) for line in ledger.read_text(encoding="utf-8").splitlines()]

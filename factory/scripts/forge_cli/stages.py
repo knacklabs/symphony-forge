@@ -1093,6 +1093,8 @@ def reviewed_meaning_identity(
         relative: sha256_of(base / relative)
         for relative in instruction_paths if (base / relative).is_file()
     }
+    from .review_brief import _current_decision_inputs
+    decision_inputs = _current_decision_inputs(base)
     helper_identity = helper if isinstance(helper, dict) else {}
     helper_path = Path(str(helper_identity.get("path") or ""))
     if helper_path and not helper_path.is_absolute():
@@ -1123,6 +1125,16 @@ def reviewed_meaning_identity(
             automated, nested=frozenset({"automated", "functional"}),
         ),
         "review_instructions": instructions,
+        "accepted_decisions": [
+            {
+                "id": item["id"],
+                "source": item["source"],
+                "detached": item["detached"],
+                "sha256": item["sha256"],
+                "bytes": len(item["body"]),
+            }
+            for item in decision_inputs
+        ],
         "helper": helper_identity,
         "generated_semantic_inputs": generated,
         "product_delta": stage_review_binding(base, stage, task)["delta_id"],
@@ -1707,9 +1719,9 @@ def _successful_launch_entry_valid(
     return bool(valid)
 
 
-def _host_native_preparation_valid(
-        base: Path, stage_id: str, stage: dict, task: dict) -> bool:
-    """Validate the latest process-free host-native dispatch preparation."""
+def _host_native_preparation_scope(
+        base: Path, stage_id: str, stage: dict, task: dict) -> list[str] | None:
+    """Return the validated scope from the latest native preparation."""
     from .delegate import argv_digest, brief_path, load_delegations
 
     try:
@@ -1721,9 +1733,9 @@ def _host_native_preparation_valid(
             and row.get("write") is True
         ]
     except (OSError, SystemExit, ValueError):
-        return False
+        return None
     if not candidates:
-        return False
+        return None
     entry = candidates[-1]
     brief = brief_path(base, stage_id)
     scope = entry.get("write_scope")
@@ -1749,8 +1761,14 @@ def _host_native_preparation_valid(
         or entry.get("brief_path") != brief.relative_to(base).as_posix()
         or entry.get("brief_sha256") != sha256_of(brief)
     ):
-        return False
-    return True
+        return None
+    return list(scope)
+
+
+def _host_native_preparation_valid(
+        base: Path, stage_id: str, stage: dict, task: dict) -> bool:
+    """Validate the latest process-free host-native dispatch preparation."""
+    return _host_native_preparation_scope(base, stage_id, stage, task) is not None
 
 
 def _require_successful_launch(base: Path, stage_id: str, stage: dict,
@@ -1857,10 +1875,7 @@ def _require_test_input(base: Path, stage_id: str, proof: dict) -> None:
 
 def _run_required_tests(
         base: Path, stage_id: str, task: dict) -> tuple[list[str], list[dict]]:
-    """Run every required test; refuse when one FAILS or never ran. A recorded
-    id that matches no testcase (or one attributed to another path) is a
-    MEASURED miss — returned, recorded on the stage, never a refusal: the run
-    passed, only the bookkeeping did not line up."""
+    """Run every required test and return only uniquely proven declarations."""
     from .delegate import (
         blocked_termination_signals, _capture_spawn_identity, _process_table,
         _terminate_observed_process_tree, _wait_and_reap,
@@ -1975,6 +1990,11 @@ def _run_required_tests(
                               "report (exact id or id-prefix)")
                 results.append({"id": test_id, "path": rel, "status": "unmatched"})
                 continue
+            if len(matches) != 1:
+                misses.append(f"{test_id!r} was ambiguous in the fresh JUnit "
+                              "report")
+                results.append({"id": test_id, "path": rel, "status": "ambiguous"})
+                continue
             attributed = [
                 case for case in matches
                 if _junit_case_attributed(case, rel)
@@ -2017,6 +2037,232 @@ def _canonical_verify_command(base: Path, command: str) -> bool:
     return os.path.abspath(base / tokens[-1]) == os.path.abspath(
         base / "factory/scripts/verify.py"
     )
+
+
+def _factory_env_from_envrc(base: Path) -> dict[str, str]:
+    """Read the simple FACTORY exports that verify.py loads from .envrc."""
+    path = base / ".envrc"
+    try:
+        lines = path.read_text(encoding="utf-8").splitlines()
+    except OSError:
+        return {}
+    vendored = (base / "constitution" / "VENDORED_FROM").is_file()
+    skipping = False
+    found: dict[str, str] = {}
+    for line in lines:
+        stripped = line.strip()
+        if stripped.startswith("if ") and "VENDORED_FROM" in stripped:
+            skipping = vendored
+            continue
+        if stripped in {"fi", "else"}:
+            skipping = False
+            continue
+        if skipping or not stripped.startswith("export FACTORY_"):
+            continue
+        name, _, value = stripped[len("export "):].partition("=")
+        if not name.endswith("_CMD"):
+            continue
+        value = value.strip()
+        if len(value) >= 2 and value[0] == value[-1] and value[0] in "\"'":
+            value = value[1:-1]
+        if "$" not in value:
+            found[name] = value
+    return found
+
+
+def _factory_test_command(base: Path) -> str:
+    """Resolve the declared full test command without executing a shell."""
+    current = (os.environ.get("FACTORY_TEST_CMD") or "").strip()
+    if current:
+        return current
+    return _factory_env_from_envrc(base).get("FACTORY_TEST_CMD", "")
+
+
+def _canonical_test_command_for_task(base: Path, task: dict) -> str:
+    """Resolve a full-suite command only when the verifier producer is unique.
+
+    ``verify.py`` reads its test command in the verifier subprocess. A leading
+    assignment on the task's verifier command, or an inherited ``PYTEST_*``
+    override, can therefore produce a JUnit report under different semantics
+    from the command visible to close. Dedicated selectors are cheap and are
+    the safe fallback whenever that producer binding is ambiguous.
+    """
+    pytest_runtime_keys = {"PYTEST_CURRENT_TEST", "PYTEST_VERSION"}
+    if any(key.startswith("PYTEST_") and key not in pytest_runtime_keys and value
+           for key, value in os.environ.items()):
+        return ""
+    candidates = [
+        str(command) for command in task.get("verify_commands") or []
+        if str(command).strip() and _canonical_verify_command(base, str(command))
+    ]
+    if len(candidates) != 1:
+        return ""
+    try:
+        tokens = shlex.split(candidates[0])
+    except ValueError:
+        return ""
+    # The verifier shell can replace the test command or its pytest environment
+    # before verify.py starts. Do not infer those effects from a second parser;
+    # run each declared selector instead.
+    while tokens and re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*=.*", tokens[0]):
+        return ""
+    return _factory_test_command(base)
+
+
+def _pytest_collection_paths(
+        base: Path, command: str, *, require_broad: bool = False,
+) -> list[Path] | None:
+    """Return explicit pytest collection roots for a shell-free command."""
+    try:
+        tokens, _environment, _identity = _proof_environment(
+            command, fixed_after_assignments=True,
+        )
+    except ValueError:
+        return None
+    if any(character in command for character in ";|&<>`\n") or "$(" in command:
+        return None
+    module = next((index for index, token in enumerate(tokens[:-1])
+                   if token == "-m" and tokens[index + 1] == "pytest"), -1)
+    if module < 0:
+        return None
+    args = tokens[module + 2:]
+    selectors = ("-k", "--keyword", "-m", "--markexpr", "--ignore",
+                 "--deselect", "--pyargs")
+    if require_broad and any(
+            token in selectors or token.startswith(
+                ("--ignore=", "--deselect=", "-k=", "--keyword=", "-m="))
+            for token in args):
+        return None
+    value_options = {
+        "-c", "--config-file", "-o", "--override-ini", "--junitxml",
+        "--maxfail", "-n", "--dist", "--durations", "--tb", "--color",
+        "--capture", "--log-level", "--basetemp", "--cov", "--cov-report",
+        "-k", "--keyword", "-m", "--markexpr", "--ignore", "--deselect",
+    }
+    paths: list[Path] = []
+    index = 0
+    while index < len(args):
+        token = args[index]
+        if token in value_options:
+            index += 2
+            continue
+        if token.startswith("-"):
+            index += 1
+            continue
+        raw = token.split("::", 1)[0]
+        candidate = Path(raw)
+        resolved = (candidate if candidate.is_absolute() else base / candidate).resolve()
+        if resolved.exists() or resolved == base.resolve() \
+                or base.resolve() in resolved.parents:
+            paths.append(resolved)
+        index += 1
+    return paths or None
+
+
+def _proof_command_with_test_inputs(command: str, path: str, test_id: str) -> str:
+    """Resolve the recorder's test placeholders before binding collection paths."""
+    try:
+        return command.format(path=path, id=test_id, report="{report}")
+    except (IndexError, KeyError, ValueError):
+        return command
+
+
+def _ignored_pytest_sources(base: Path, directory: Path) -> bool:
+    """Refuse a directory proof when Git reports an ignored collection input."""
+    try:
+        relative = directory.relative_to(base).as_posix() or "."
+        proc = subprocess.run(
+            ["git", "status", "--porcelain=v1", "--ignored",
+             "--untracked-files=normal", "-z", "--", relative],
+            cwd=base, capture_output=True, env=clean_git_env(), timeout=20,
+        )
+    except (OSError, subprocess.TimeoutExpired, ValueError):
+        return True
+    if proc.returncode != 0:
+        return True
+    for entry in proc.stdout.split(b"\0"):
+        if not entry.startswith(b"!! "):
+            continue
+        return True
+    return False
+
+
+def _pytest_identity_projection(identity: dict[str, object]) -> dict[str, object]:
+    """Keep the runtime/config identity while ignoring command spelling."""
+    return {
+        key: identity.get(key)
+        for key in ("environment", "interpreter", "python_version",
+                    "dependencies", "pytest_config", "pytest_semantics")
+        if key in identity
+    }
+
+
+def _pytest_semantic_args(command: str) -> list[str] | None:
+    """Normalize pytest options that can change what a run executes."""
+    try:
+        tokens, _environment, _identity = _proof_environment(
+            command, fixed_after_assignments=True,
+        )
+    except ValueError:
+        return None
+    module = next((index for index, token in enumerate(tokens[:-1])
+                   if token == "-m" and tokens[index + 1] == "pytest"), -1)
+    if module < 0:
+        return None
+    args = tokens[module + 2:]
+    collection = ("-k", "--keyword", "-m", "--markexpr", "--ignore",
+                  "--deselect", "--pyargs")
+    safe_with_value = {
+        "-n", "--numprocesses", "--dist", "--durations", "--junitxml",
+        "--tb", "--color", "--capture", "--show-capture", "--log-level",
+        "--maxfail", "--basetemp", "--cov", "--cov-report",
+    }
+    result: list[str] = []
+    index = 0
+    while index < len(args):
+        token = args[index]
+        if token.startswith("--") and "=" in token:
+            option, value = token.split("=", 1)
+            if option in collection:
+                index += 1
+                continue
+            if option in safe_with_value or option in {"--disable-warnings",
+                                                        "--no-header", "--no-summary"}:
+                index += 1
+                continue
+            result.append(token)
+            index += 1
+            continue
+        if token in collection:
+            index += 2
+            continue
+        if token in safe_with_value:
+            index += 2
+            continue
+        if token in {"-q", "--quiet", "-v", "--verbose", "--disable-warnings",
+                     "--no-header", "--no-summary"}:
+            index += 1
+            continue
+        if token in {"-o", "--override-ini"}:
+            value = args[index + 1] if index + 1 < len(args) else ""
+            if value == "junit_family=legacy":
+                index += 2
+                continue
+            result.extend((token, value))
+            index += 2
+            continue
+        if token.startswith("-"):
+            result.append(token)
+            if index + 1 < len(args) and not args[index + 1].startswith("-"):
+                result.append(args[index + 1])
+                index += 2
+            else:
+                index += 1
+            continue
+        # Collection paths and node ids are intentionally excluded: the
+        # canonical report is accepted only after each declared path is covered.
+        index += 1
+    return result
 
 
 def _run_verify_commands(
@@ -2224,8 +2470,29 @@ def _review_covers_tree(base: Path, stage_id: str, task: dict) -> bool:
     return isinstance(stage, dict) and stamp_is_fresh(base, stage, task)
 
 
-def _canonical_junit_satisfies_required_tests(report: Path, task: dict) -> bool:
-    """Accept a canonical report only for one unambiguous pass per declaration."""
+def _canonical_junit_satisfies_required_tests(
+        report: Path, task: dict, *, base: Path | None = None,
+        canonical_command: str = "",
+) -> bool:
+    """Accept a full-suite report only when its runtime and collection cover match."""
+    if base is None or not canonical_command:
+        return False
+    generated_paths = {
+        (base / str(relative)).resolve()
+        for relative in task.get("generated_semantic_inputs") or []
+    }
+    canonical_paths = _pytest_collection_paths(
+        base, canonical_command, require_broad=True,
+    )
+    if canonical_paths is None:
+        return False
+    canonical_tool = _proof_tool_identity(
+        base, canonical_command, fixed_after_assignments=False,
+        allowed_generated_paths=generated_paths,
+        environment_overrides=_factory_env_from_envrc(base),
+    )
+    if canonical_tool.get("reusable") is not True:
+        return False
     try:
         root = ET.parse(report).getroot()
     except (ET.ParseError, OSError):
@@ -2237,6 +2504,25 @@ def _canonical_junit_satisfies_required_tests(report: Path, task: dict) -> bool:
         test_id = proof.get("id")
         rel = proof.get("path")
         if not isinstance(test_id, str) or not isinstance(rel, str):
+            return False
+        required_path = (base / rel).resolve()
+        if not any(
+            candidate == required_path
+            or (candidate.is_dir() and required_path == candidate)
+            or (candidate.is_dir() and candidate in required_path.parents)
+            for candidate in canonical_paths
+        ):
+            return False
+        required_command = _proof_command_with_test_inputs(
+            str(proof.get("command") or ""), rel, test_id,
+        )
+        required_tool = _proof_tool_identity(
+            base, required_command, fixed_after_assignments=True,
+            allowed_generated_paths=generated_paths,
+        )
+        if (required_tool.get("reusable") is not True
+                or _pytest_identity_projection(required_tool)
+                != _pytest_identity_projection(canonical_tool)):
             return False
         matches = [
             case for case in cases
@@ -2345,10 +2631,14 @@ def _implicit_pytest_config_identity(base: Path) -> list[dict[str, object]]:
 
 def _proof_environment(
         command: str, *, fixed_after_assignments: bool,
+        environment_overrides: dict[str, str] | None = None,
 ) -> tuple[list[str], dict[str, str], dict[str, object]]:
     """Return parsed argv and a secret-free identity for its effective env."""
     tokens = shlex.split(command)
     environment = os.environ.copy()
+    if environment_overrides:
+        for key, value in environment_overrides.items():
+            environment.setdefault(key, value)
     inherited_python_utf8 = environment.get("PYTHONUTF8")
     # Proof runners always replace this nonce. Keep that fixed override stable
     # while still binding every other inherited variable an arbitrary command
@@ -2378,11 +2668,15 @@ def _proof_environment(
 def _proof_tool_identity(
         base: Path, command: str, *, fixed_after_assignments: bool = False,
         probe_memo: dict[tuple[tuple[str, ...], str], dict[str, object]] | None = None,
+        allowed_generated_paths: set[Path] | None = None,
+        allowed_product_paths: set[Path] | None = None,
+        environment_overrides: dict[str, str] | None = None,
 ) -> dict[str, object]:
     """Resolve only the Python command shapes Forge declares for proof reuse."""
     try:
         tokens, environment, environment_identity = _proof_environment(
             command, fixed_after_assignments=fixed_after_assignments,
+            environment_overrides=environment_overrides,
         )
     except ValueError:
         return {"command": command, "reusable": False}
@@ -2460,18 +2754,55 @@ def _proof_tool_identity(
             and module not in {"pytest", "compileall"}:
         return {"command": tokens[0], "runner": runner,
                 "environment": environment_identity, "reusable": False}
+    if module == "pytest":
+        collection_paths = _pytest_collection_paths(base, command)
+        if collection_paths is None:
+            return {"command": tokens[0], "runner": runner,
+                    "environment": environment_identity, "reusable": False}
+        allowed = {path.resolve() for path in (allowed_generated_paths or set())}
+        if allowed_product_paths is None:
+            snapshot = product_tree_snapshot(base)
+            visible = {
+                (base / relative).resolve()
+                for field in ("tracked", "dirty")
+                for relative in (snapshot.get(field) or {})
+            }
+        else:
+            visible = {path.resolve() for path in allowed_product_paths}
+        for candidate in collection_paths:
+            if candidate in allowed:
+                continue
+            if candidate.is_dir():
+                inside_base = (candidate == base.resolve()
+                               or base.resolve() in candidate.parents)
+                visible_under = inside_base and not _ignored_pytest_sources(
+                    base, candidate,
+                ) and any(
+                    path == candidate or candidate in path.parents
+                    for path in visible
+                )
+            else:
+                visible_under = candidate in visible
+            if not visible_under:
+                return {"command": tokens[0], "runner": runner,
+                        "environment": environment_identity, "reusable": False}
     canonical_inputs = _canonical_verify_inputs(base) if canonical_verify else None
     if canonical_verify and canonical_inputs is None:
         return {"command": tokens[0], "runner": runner,
                 "environment": environment_identity, "reusable": False}
     try:
         pytest_config = None
+        pytest_semantics = None
         if module == "pytest":
             pytest_config = _explicit_pytest_config_identity(
                 base, python_args, environment,
             )
             if pytest_config is None:
                 pytest_config = _implicit_pytest_config_identity(base)
+            pytest_semantics = _pytest_semantic_args(command)
+            if pytest_semantics is None:
+                return {"command": tokens[0], "runner": runner,
+                        "environment": environment_identity, "reusable": False}
     except (OSError, ValueError):
         return {"command": tokens[0], "runner": runner,
                 "environment": environment_identity, "reusable": False}
@@ -2488,6 +2819,8 @@ def _proof_tool_identity(
             cached["canonical_verify_inputs"] = canonical_inputs
         if pytest_config is not None:
             cached["pytest_config"] = pytest_config
+        if pytest_semantics is not None:
+            cached["pytest_semantics"] = pytest_semantics
         return cached
     script = (
         "import hashlib,importlib.metadata as m,json,pathlib,re,sys\n"
@@ -2563,6 +2896,8 @@ def _proof_tool_identity(
         result["canonical_verify_inputs"] = canonical_inputs
     if pytest_config is not None:
         result["pytest_config"] = pytest_config
+    if pytest_semantics is not None:
+        result["pytest_semantics"] = pytest_semantics
     return dict(result)
 
 
@@ -2661,9 +2996,15 @@ def proof_identity(
     reuse_tree = {key: value for key, value in snapshot.items() if key != "head"}
     if kind == "tests":
         declarations = task.get("required_tests") or []
-        commands = [entry.get("command", "") for entry in declarations
-                    if isinstance(entry, dict)]
-        semantic = declarations
+        commands = [
+            _proof_command_with_test_inputs(
+                str(entry.get("command") or ""),
+                str(entry.get("path") or ""),
+                str(entry.get("id") or ""),
+            )
+            for entry in declarations if isinstance(entry, dict)
+        ]
+        semantic = {"required_tests": declarations}
     else:
         commands = [str(command) for command in task.get("verify_commands") or []]
         semantic = {
@@ -2671,8 +3012,10 @@ def proof_identity(
             "generated_inputs": task.get("generated_semantic_inputs") or [],
         }
     generated: dict[str, dict[str, object] | None] = {}
+    generated_paths: set[Path] = set()
     for relative in task.get("generated_semantic_inputs") or []:
         path = base / str(relative)
+        generated_paths.add(path.resolve())
         try:
             data = path.read_bytes()
             generated[str(relative)] = {
@@ -2680,13 +3023,38 @@ def proof_identity(
             }
         except OSError:
             generated[str(relative)] = None
+    allowed_product_paths = {
+        (base / relative).resolve()
+        for field in ("tracked", "dirty")
+        for relative in (snapshot.get(field) or {})
+    }
     tools = [
         _proof_tool_identity(
             base, command, fixed_after_assignments=(kind == "tests"),
             probe_memo=tool_probe_memo,
+            allowed_generated_paths=generated_paths,
+            allowed_product_paths=allowed_product_paths,
         )
         for command in commands
     ]
+    if kind == "tests":
+        canonical_command = _factory_test_command(base)
+        semantic["canonical_test_command_sha256"] = (
+            hashlib.sha256(canonical_command.encode("utf-8")).hexdigest()
+            if canonical_command else ""
+        )
+        if canonical_command:
+            canonical_tool = _proof_tool_identity(
+                base, canonical_command, fixed_after_assignments=False,
+                probe_memo=tool_probe_memo,
+                allowed_generated_paths=generated_paths,
+                allowed_product_paths=allowed_product_paths,
+                environment_overrides=_factory_env_from_envrc(base),
+            )
+            semantic["canonical_test_tool"] = {
+                key: value for key, value in canonical_tool.items()
+                if key not in {"command", "runner"}
+            }
     board_commands = ([_board_command_kind(base, command) for command in commands]
                       if kind == "verify" else [])
     board_inputs = None
@@ -2813,7 +3181,9 @@ def run_stage_proof(
             if not reuse_tests:
                 if canonical_junit.is_file() and \
                         _canonical_junit_satisfies_required_tests(
-                            canonical_junit, task):
+                            canonical_junit, task, base=base,
+                            canonical_command=_canonical_test_command_for_task(
+                                base, task)):
                     test_id_misses = []
                     test_results = [
                         {"id": str(proof.get("id")),
@@ -2823,13 +3193,10 @@ def run_stage_proof(
                     ]
                 else:
                     result = _run_required_tests(base, stage_id, task)
-                    if isinstance(result, tuple):
-                        test_id_misses, test_results = result
-                    else:
-                        # Keep older test doubles source-compatible while the
-                        # production runner always returns both provenance
-                        # lists.
-                        test_id_misses = list(result or [])
+                    if not isinstance(result, tuple) or len(result) != 2:
+                        fail(f"{stage_id} required-test runner returned malformed "
+                             "proof results")
+                    test_id_misses, test_results = result
                     commands_run.extend(
                         str(proof.get("command"))
                         for proof in task.get("required_tests") or []
@@ -2842,6 +3209,9 @@ def run_stage_proof(
     if protected_authority_snapshot(base) != authority_tree:
         fail(f"{stage_id} proof commands changed protected Forge authority; "
              "stage completion refused")
+    if test_id_misses:
+        fail(f"{stage_id} required-test identity was not proven by the fresh "
+             "JUnit report: " + "; ".join(test_id_misses))
     if not reuse_verify:
         _store_proof_receipt(base, stage_id, "verify", verify_identity)
     if not reuse_tests:

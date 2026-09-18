@@ -244,6 +244,116 @@ def test_review_hands_the_skill_a_launcher_in_the_control_dir(repo, tmp_path, mo
     assert "READ-ONLY" in brief and "not a verdict" in brief
 
 
+def test_review_carries_current_accepted_decisions_into_detached_tree(
+        repo, tmp_path, monkeypatch):
+    _built(repo, tmp_path)
+    decision = repo / "docs/decisions/0082-detached-current.md"
+    decision_body = """---
+status: accepted
+confirmed_by: human
+date: 2026-09-19
+stories: [ENG-1]
+---
+
+# Detached current decision
+
+The detached review must read this current accepted contract.
+"""
+    decision.write_text(decision_body, encoding="utf-8")
+    skill = tmp_path / "fake-autoreview.py"
+    skill.write_text(
+        FAKE_SKILL.replace(
+            'assert "### Approved task inputs" in dataset.read_text(encoding="utf-8")',
+            'assert "### Approved task inputs" in dataset.read_text(encoding="utf-8")\n'
+            'assert dataset.read_text(encoding="utf-8").count("docs/decisions/0082-detached-current.md") == 1\n'
+            'assert pathlib.Path(".factory/review-briefs/decisions/0082-detached-current.md").read_text(encoding="utf-8") == os.environ["EXPECTED_DECISION"]',
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("EXPECTED_DECISION", decision_body)
+    monkeypatch.setenv("FAKE_SKILL_SEEN", str(tmp_path / "seen"))
+    monkeypatch.setattr(review_mod, "_require_safe_codex_review_helper", lambda skill: None)
+    bind_task_proof_receipts(repo, "T1")
+    outcome = review_task(repo, "T1", skill=str(skill), engine="claude")
+    assert outcome["stamped"] is True
+
+
+def test_review_refuses_accepted_decision_change_during_dataset_render(
+        repo, tmp_path, monkeypatch, capsys):
+    _built(repo, tmp_path)
+    decision = repo / "docs/decisions/0082-detached-current.md"
+    original_body = """---
+status: accepted
+confirmed_by: human
+date: 2026-09-19
+stories: [ENG-1]
+---
+
+# Detached current decision
+
+The original bytes are part of the review meaning.
+"""
+    decision.write_text(original_body, encoding="utf-8")
+    skill = tmp_path / "fake-autoreview.py"
+    skill.write_text(FAKE_SKILL, encoding="utf-8")
+    monkeypatch.setattr(review_mod, "_require_safe_codex_review_helper", lambda skill: None)
+    bind_task_proof_receipts(repo, "T1")
+    original_render = review_mod.cmd_review_brief
+    launched = []
+
+    def render_then_change(args):
+        original_render(args)
+        decision.write_text(original_body + "\nChanged after rendering.\n",
+                            encoding="utf-8")
+
+    def helper_must_not_run(*args, **kwargs):
+        launched.append(True)
+
+    monkeypatch.setattr(review_mod, "cmd_review_brief", render_then_change)
+    monkeypatch.setattr(review_mod, "_run_skill", helper_must_not_run)
+    with pytest.raises(SystemExit):
+        review_task(repo, "T1", skill=str(skill), engine="claude")
+    assert "reviewed meaning changed while rendering" in capsys.readouterr().out
+    assert not launched
+
+
+def test_review_refuses_accepted_decision_deletion_during_dataset_render(
+        repo, tmp_path, monkeypatch, capsys):
+    _built(repo, tmp_path)
+    decision = repo / "docs/decisions/0082-detached-current.md"
+    decision.write_text("""---
+status: accepted
+confirmed_by: human
+date: 2026-09-19
+stories: [ENG-1]
+---
+
+# Detached current decision
+
+The current accepted decision must remain present.
+""", encoding="utf-8")
+    skill = tmp_path / "fake-autoreview.py"
+    skill.write_text(FAKE_SKILL, encoding="utf-8")
+    monkeypatch.setattr(review_mod, "_require_safe_codex_review_helper", lambda skill: None)
+    bind_task_proof_receipts(repo, "T1")
+    original_render = review_mod.cmd_review_brief
+    launched = []
+
+    def render_then_delete(args):
+        original_render(args)
+        decision.unlink()
+
+    def helper_must_not_run(*args, **kwargs):
+        launched.append(True)
+
+    monkeypatch.setattr(review_mod, "cmd_review_brief", render_then_delete)
+    monkeypatch.setattr(review_mod, "_run_skill", helper_must_not_run)
+    with pytest.raises(SystemExit):
+        review_task(repo, "T1", skill=str(skill), engine="claude")
+    assert "reviewed meaning changed while rendering" in capsys.readouterr().out
+    assert not launched
+
+
 def test_the_run_says_so_when_it_falls_back_to_the_diff_only_bundle(repo, tmp_path, monkeypatch, capsys):
     _built(repo, tmp_path)
     skill = tmp_path / "fake-autoreview.py"

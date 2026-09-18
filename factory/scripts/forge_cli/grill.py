@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import argparse
 import re
+import uuid
 from pathlib import Path
 
 from factory_lib import load_json, repo_root, run_state_path
@@ -327,6 +328,7 @@ def cmd_grill_run(args: argparse.Namespace) -> None:
         context_metadata = None
         context_snapshot = None
         context_identity = None
+        native_task_name = f"{ledger_id}-cold-{uuid.uuid4().hex[:12]}"
         if context_file := (getattr(args, "context_file", "") or "").strip():
             (context_text, context_metadata, context_snapshot,
              context_identity) = secure_context_snapshot(
@@ -352,6 +354,7 @@ def cmd_grill_run(args: argparse.Namespace) -> None:
                 context_snapshot=context_snapshot,
                 context_snapshot_identity=context_identity,
                 context_source_path=context_file,
+                native_task_name=native_task_name,
                 emit_descriptor=False,
             )
         finally:
@@ -428,12 +431,22 @@ def cmd_grill_run(args: argparse.Namespace) -> None:
             f"order.{context_instruction}"
             + (f" Preparation id: {preparation_id}." if preparation_id else "")
         )
+        result["dispatch_guidance"] = (
+            f"Use the host's spawn_agent tool with task_name "
+            f"{result.get('task_name')!r} for this fresh cold read. Do not "
+            "reuse an existing task with followup_task."
+        )
+        # A cold reader is a fresh host task.  The implementation worker may
+        # use followup_task, but carrying that action on this descriptor lets
+        # callers accidentally reuse the reader that is meant to be
+        # independent.
+        result.pop("followup_action", None)
         print(__import__("json").dumps(result, sort_keys=True))
         if args.print_only:
             return
         print(
             "NEXT: dispatch the printed descriptor with the host's spawn_agent "
-            "tool (or followup_task when that task name is already live). Save "
+            "tool. Save "
             "the agent's JSON-only response as a regular UTF-8 file. After the "
             "reader returns, resolve its findings and record the grill pass."
         )

@@ -1,0 +1,10 @@
+{
+  "applies_to": [
+    "factory/scripts/forge_cli/**"
+  ],
+  "generated_by": "Codex Root (delegated coordinator)",
+  "lesson": "Not a defect (evidence docs/specs/dual-coordinator-parity.md:102): The accepted native contract explicitly validates a source descriptor and leaves consumption to the host; it makes no content-delivery claim. Immutable snapshot transport applies to command-managed grill/Claude routes. Requiring that transport for the native route contradicts docs/specs/dual-coordinator-parity.md:102-110. Existing command-managed protection is retained. — raised as \"Deliver captured context bytes instead of reopening the source path (factory/scripts/forge_cli/grill.py:417): When native `forge grill run --context-file` is us\"",
+  "severity": "medium",
+  "source": "review reject LEAN-WORKFLOW security",
+  "topic": "rejected-review-finding-security"
+}

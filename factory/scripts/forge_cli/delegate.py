@@ -1907,6 +1907,7 @@ def launch_companion(
         context_snapshot_identity: tuple[int, int, int, str] | None = None,
         context_source_path: str = "",
         task_metadata: dict | None = None,
+        native_task_name: str = "",
         emit_descriptor: bool = True,
 ) -> dict | None:
     """Write a brief, then launch Claude's companion or describe native work."""
@@ -1956,7 +1957,7 @@ def launch_companion(
             task_id, task_metadata, write=write, mode=mode,
         )
         task_name = re.sub(
-            r"[^a-z0-9_]+", "_", task_id.lower(),
+            r"[^a-z0-9_]+", "_", (native_task_name or task_id).lower(),
         ).strip("_") or "forge_task"
         message = (
             f"Read {rel} and complete task {task_id}. You are not alone in "

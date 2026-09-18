@@ -272,6 +272,7 @@ Rendered by the harness from the recorded decomposition; edit the decomposition,
 - factory/tests/test_review_reads_the_repo.py
 - docs/decisions/0079-full-access-for-forge-managed-codex-chats.md
 - .factory/migrations/lean-workflow-v2-supplement.json
+- docs/decisions/0081-full-access-for-forge-managed-codex-chats.md
 
 **Scope amendments** (measured paths the scope did not name, recorded with `forge stage amend-scope`)
 
@@ -350,5 +351,5 @@ Rendered by the harness from the recorded decomposition; edit the decomposition,
 - `python3 factory/scripts/check_board_complete.py`
 - `git diff --check`
 
-**Review budget.** 118 files / 23000 lines -- User-authorized recovery PR2. The measured advanced-base delta was 116 files / 21,828 lines; the remaining allowance covers the close-owned proof path, two review-fixture owners, and decision-history correction without widening task meaning.
+**Review budget.** 132 files / 28500 lines -- Root measured the current accumulated product delta against merged main9e08774:127paths,19535added+7232deleted=26767lines. User-authorized final correction of selected4a19627 findings, existing proof-owner/priority guidance, and the already-promised full-access decision renumbering receives bounded allowance132paths/28500lines. No task graph or acceptance change.
 <!-- /forge:contract -->

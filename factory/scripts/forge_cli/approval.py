@@ -125,14 +125,17 @@ def _story_candidate(base: Path) -> ApprovalCandidate | None:
     story = _text(state.get("story")) or _text(state.get("issue_key"))
     if not story:
         return None
+    # The issue owns the cold grill; the roadmap story owns approval authority.
+    # They may differ when `plan save` receives both --issue and --story.
+    issue = _text(state.get("issue_key")) or story
     digest = plan_digest_without_assumptions(path)
     previous_digest = ""
     if status == "awaiting-approval":
         grill = load_json(
-            evidence_path(base, story, "grills/plan.json"), default={},
+            evidence_path(base, issue, "grills/plan.json"), default={},
         )
         if (not isinstance(grill, dict)
-                or grill.get("issue") != story
+                or grill.get("issue") != issue
                 or grill.get("input_sha256") != digest):
             return None
         try:

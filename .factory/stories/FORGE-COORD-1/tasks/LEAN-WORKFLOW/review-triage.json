@@ -2640,6 +2640,29 @@
       "delta_id": "cd63cd986bfc72e7591ce344c82154a7a66ff7a26ff175725a8f67608c350c3b",
       "generation_id": "b877880ce5aebdc9a9a29991f71307fd8f795b7b061e2482edc529733d6dd69c",
       "task_id": "LEAN-WORKFLOW"
+    },
+    {
+      "lens": "quality",
+      "finding": {
+        "area": "factory/scripts/forge_cli",
+        "category": "bug",
+        "file_path": "factory/scripts/forge_cli/grill.py",
+        "line": 435,
+        "summary": "Require a fresh agent for each independent cold read (factory/scripts/forge_cli/grill.py:435): When a host-native griller task name is already live from an earlier pass or story, this guidance explicitly permits `followup_task`, which resumes the existing agent with its prior conversational context.",
+        "title": "Require a fresh agent for each independent cold read"
+      },
+      "verdict": "real",
+      "evidence": "factory/scripts/forge_cli/grill.py:435",
+      "instances": [
+        "factory/scripts/forge_cli/grill.py:435"
+      ],
+      "keep": "Preserve reusable implementation workers and process-free native host ownership; only independent cold readers need a fresh agent.",
+      "reason": "The native grill dispatch currently permits followup_task against a prior reader, so a supposedly independent cold read can inherit prior task context.",
+      "triaged_by": "Codex Root (delegated coordinator)",
+      "triaged_at": "2026-09-18T17:37:58+00:00",
+      "delta_id": "0f1d5edb9e4e968edc015d0eaabdba31af68d9e44bb06f71262f691591699bef",
+      "generation_id": "ee02d44d11f6e6ee59a0a6e675dc4df4a57b33b3e32ff2430fc5b5f52ec52f59",
+      "task_id": "LEAN-WORKFLOW"
     }
   ]
 }

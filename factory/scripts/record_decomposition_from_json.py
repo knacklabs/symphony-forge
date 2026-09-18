@@ -503,7 +503,6 @@ with delegation_exclusion(
         "write_scope", "required_tests", "verify_commands", "reviewer_focus",
         "plan_contracts", "review_budget",
     )
-    graph_amended = False
     if first_recording:
         for task in tasks:
             for field in execution_fields:
@@ -526,7 +525,6 @@ with delegation_exclusion(
                 "order, dependencies, and task count cannot change; amend and "
                 "reapprove the story plan before recording a new graph."
             )
-        graph_amended = False
     if frontier_index is not None:
         # Execution detail is authored just-in-time: a pending task may carry it
         # only once every dependency is done (a task without explicit
@@ -707,28 +705,6 @@ with delegation_exclusion(
                 "For a substantive scope change prefer a follow-up task rather than re-approving "
                 "completed work.\n"
             )
-    if graph_amended:
-        # A pending task was inserted, reordered, or removed after the plan was
-        # approved. Allowed — but NEVER silently. Mirror the active-contract-change
-        # discipline above: the plan approval and the affected task grills are now
-        # STALE and do not carry to the amended graph. We do not flip plan_status
-        # here (that would deadlock the recorder, which itself requires an approved
-        # plan to re-record the amendment's own detail); the missing/stale frontier
-        # grill mechanically blocks delegate, and this NOTE + the constitution's
-        # "any post-approval change stops for the human" rule carry the rest.
-        # Started work is untouched (frozen above); this only reshapes the pending
-        # tail.
-        print(
-            "\nNOTE: the task graph was AMENDED beyond the started prefix (a pending "
-            "task was inserted, reordered, or removed). This is an amendment of an "
-            "APPROVED plan — its approval and the affected task grills are now STALE "
-            "and do NOT carry to the amended graph.\n"
-            "Re-present the amended plan to the HUMAN, then before any stage start / "
-            "delegate:\n"
-            "  consume the successful native Plan Mode approval event\n"
-            "  python3 factory/scripts/record_grill_from_json.py --gate task "
-            "--task <frontier-id>\n"
-        )
     payload["commit"] = head_sha(root)
     dump_json(protected_decomposition_state_path(root), payload)
     dump_json(decomposition_state_path(root, for_write=True), payload)

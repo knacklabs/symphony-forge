@@ -23,14 +23,15 @@ from factory_lib import load_json, task_evidence_path  # noqa: E402
 from forge_cli.stages import run_stage_proof, task_for  # noqa: E402
 
 
-def _counting_task(tmp_path: Path, **over) -> tuple[dict, Path]:
+def _counting_task(repo: Path, tmp_path: Path, **over) -> tuple[dict, Path]:
     counter = tmp_path / "proof-runs.txt"
     counter.write_text("0")
     # A python -c shell command is deliberately non-reusable: arbitrary code
     # has no complete runner/config identity. Use a supported pytest command
     # while keeping the counter so this test proves receipt reuse rather than
     # weakening the conservative unknown-runner rule.
-    test_file = tmp_path / "count_proof.py"
+    test_file = repo / "factory" / "tests" / "count_proof.py"
+    test_file.parent.mkdir(parents=True, exist_ok=True)
     test_file.write_text(
         "from pathlib import Path\n"
         "\n"
@@ -39,7 +40,7 @@ def _counting_task(tmp_path: Path, **over) -> tuple[dict, Path]:
         "    path.write_text(str(int(path.read_text()) + 1))\n",
         encoding="utf-8",
     )
-    command = f"python3 -m pytest {shlex.quote(str(test_file))} -q"
+    command = f"python3 -m pytest {shlex.quote(test_file.relative_to(repo).as_posix())} -q"
     return {**STAGE_TASK, "verify_commands": [command], **over}, counter
 
 
@@ -55,7 +56,7 @@ def _built(repo: Path, tmp_path: Path, task: dict) -> dict:
 
 
 def test_the_proof_is_recorded_and_reused_for_an_unchanged_tree(repo, tmp_path):
-    task, counter = _counting_task(tmp_path)
+    task, counter = _counting_task(repo, tmp_path)
     recorded = _built(repo, tmp_path, task)
     tests_path = task_evidence_path(repo, "ENG-1", "T1", "tests.json")
     worker_record = tests_path.read_bytes()
@@ -75,7 +76,7 @@ def test_the_proof_is_recorded_and_reused_for_an_unchanged_tree(repo, tmp_path):
 
 
 def test_a_changed_tree_or_contract_runs_the_proof_again(repo, tmp_path):
-    task, counter = _counting_task(tmp_path)
+    task, counter = _counting_task(repo, tmp_path)
     recorded = _built(repo, tmp_path, task)
     run_stage_proof(repo, "T1", recorded)
     assert counter.read_text() == "1"
@@ -95,7 +96,7 @@ def test_a_changed_tree_or_contract_runs_the_proof_again(repo, tmp_path):
 
 
 def test_an_uncommitted_tree_runs_but_is_not_recorded(repo, tmp_path):
-    task, counter = _counting_task(tmp_path)
+    task, counter = _counting_task(repo, tmp_path)
     recorded = _built(repo, tmp_path, task)
     run_stage_proof(repo, "T1", recorded)
     before = _evidence(repo, "verify.json")
@@ -110,7 +111,7 @@ def test_a_stale_worker_record_is_rebound_when_no_review_covers_the_tree(repo, t
     """After a fix commit the worker's record names the old commit and the
     review brief refuses it; the coordinator used to re-record the same
     report by hand. The proof re-binds it, narrative untouched."""
-    task, counter = _counting_task(tmp_path)
+    task, counter = _counting_task(repo, tmp_path)
     recorded = _built(repo, tmp_path, task)  # record and review at the first tree
     worker_commit = _evidence(repo, "tests.json")["automated"]["commit"]
     write_in_scope(repo, "src/core.py", "version = 2\n")
@@ -127,7 +128,7 @@ def test_a_stale_worker_record_is_rebound_when_no_review_covers_the_tree(repo, t
 
 
 def test_a_task_without_a_worker_record_gets_the_harness_record(repo, tmp_path):
-    task, counter = _counting_task(tmp_path)
+    task, counter = _counting_task(repo, tmp_path)
     recorded = _built(repo, tmp_path, task)
     task_evidence_path(repo, "ENG-1", "T1", "tests.json").unlink()
     run_stage_proof(repo, "T1", recorded)
@@ -140,7 +141,7 @@ def test_a_task_without_a_worker_record_gets_the_harness_record(repo, tmp_path):
 
 
 def test_a_user_facing_task_still_owes_its_own_record(repo, tmp_path):
-    task, counter = _counting_task(tmp_path, user_facing=True)
+    task, counter = _counting_task(repo, tmp_path, user_facing=True)
     recorded = _built(repo, tmp_path, task)
     path = task_evidence_path(repo, "ENG-1", "T1", "tests.json")
     path.unlink()

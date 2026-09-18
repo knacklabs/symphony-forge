@@ -38,7 +38,9 @@ def native_stage_admission(base: Path) -> tuple[dict | None, str]:
     concrete write target.
     """
     from factory_lib import protected_decomposition_state_path
-    from .stages import effective_scope, stage_baseline
+    from .stages import (
+        _host_native_preparation_scope, stage_baseline,
+    )
 
     stages = [
         row for row in load_stages(base).get("stages", [])
@@ -61,11 +63,12 @@ def native_stage_admission(base: Path) -> tuple[dict | None, str]:
     ), None)
     if task is None:
         return _deny("the active task is missing from the protected decomposition")
-    scope = effective_scope(base, task_id, task.get("write_scope") or [])
-    if not scope or any(
-        not isinstance(entry, str) or not entry.strip() for entry in scope
-    ):
-        return _deny("the active task has no valid effective write scope")
+    scope = _host_native_preparation_scope(base, task_id, stage, task)
+    if scope is None:
+        return _deny(
+            "the active task has no current host-native preparation bound to "
+            "its stage, brief, task contract, and narrowed write scope"
+        )
     try:
         classified = classify_scope_entries(base, scope, stage_baseline(base, stage))
     except (OSError, subprocess.SubprocessError, SystemExit, ValueError) as exc:

@@ -34,8 +34,8 @@ from factory_lib import (
 
 from .common import fail
 from .review_brief import (
-    LEFTOVER_INSTRUCTION, VERDICT_INSTRUCTION, _task_section, cmd_review_brief,
-    render_review_dataset,
+    LEFTOVER_INSTRUCTION, VERDICT_INSTRUCTION, _current_decision_inputs,
+    _task_section, cmd_review_brief, render_review_dataset,
 )
 # Reuse the task module's git helpers rather than adding another lossless
 # capture site: theirs is already reviewed and content-pinned for path output.
@@ -108,13 +108,14 @@ deliverable is a blocking finding even when the rest is clean. Flag
 single-responsibility violations and incoherent file/folder organisation against
 the reviewer focus (never a mandated layout). Structure-for-growth in shared
 infrastructure is NOT over-engineering; reserve that finding for speculative
-abstraction. Enforce the minimal-diff discipline (a new dependency where the
+abstraction or a concrete P0/P1 risk. Enforce the minimal-diff discipline (a new dependency where the
 stdlib suffices, reimplementing an existing helper, sprawl where a surgical
 change would do) — but a diff that drops validation, error handling, security, or
 accessibility to look smaller is the OPPOSITE finding. The constitution's coding
 standards are law: flag deviations you can see in the diff. Assess cyclomatic
 complexity of every changed function; genuinely knotted control flow (roughly
->10 independent paths) is blocking and must name its decomposition.
+>10 independent paths) is a P0/P1 finding only when it creates a concrete
+correctness, security, or operational risk, and must name its decomposition.
 """,
     "performance": """\
 LENS: PERFORMANCE. Hot paths, algorithmic complexity, query fanout (N+1),
@@ -2181,7 +2182,13 @@ def review_task(base: Path, task_id: str, *, lens: str | None = None,
 
     from .stages import reviewed_meaning_identity
     helper_before, helper_file_before = _helper_identity(skill)
+    decision_inputs = _current_decision_inputs(base)
     prospective_dataset = render_review_dataset(base, args.id)
+    for item in decision_inputs:
+        marker = str(item["sha256"]).encode("ascii")
+        if marker not in prospective_dataset:
+            fail("reviewed dataset omitted an accepted decision input; "
+                 "nothing published")
     meaning = reviewed_meaning_identity(
         base, stage, task, helper_before,
         review_dataset=prospective_dataset,
@@ -2248,8 +2255,22 @@ def review_task(base: Path, task_id: str, *, lens: str | None = None,
                   "ship and stay in scope, their bytes are not reviewed: "
                   f"{', '.join(noise[:4])}{' ...' if len(noise) > 4 else ''}",
                   flush=True)
-        detached_writes = [(REVIEW_DATASET_REL, dataset_body), *prompts.values()]
+        detached_writes = [
+            (REVIEW_DATASET_REL, dataset_body), *prompts.values(),
+            *[(str(item["detached"]), bytes(item["body"]))
+              for item in decision_inputs],
+        ]
         _write_detached(worktree, detached_writes)
+        for item in decision_inputs:
+            context_path = worktree / str(item["detached"])
+            try:
+                context_body = context_path.read_bytes()
+            except OSError as exc:
+                fail(f"detached review decision context is unreadable: "
+                     f"{context_path} ({exc})")
+            if context_body != item["body"]:
+                fail("detached review decision context changed while preparing "
+                     "the reviewer worktree; nothing published")
         name = prompt_names[0]
         codex_bin = None
         from factory_lib import git_control_dir

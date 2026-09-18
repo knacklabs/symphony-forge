@@ -12,17 +12,14 @@ It provides:
 - autoreview-owned review
 - PR-ready proof artifacts
 
-## Mandatory Read Order
+## Context and Read Order
 
-1. `WORKFLOW.md`
-2. `docs/FACTORY.md`
-3. `docs/QUALITY.md` and `docs/ROLES.md`
-4. `harness.yaml`
-5. `constitution/README.md`
-6. `docs/product/BRIEF.md`
-7. `docs/architecture/` and confirmed capability specs under `docs/specs/`
-8. active decisions — `./forge decision list --active`, not raw `docs/decisions/`
-9. the derived roadmap, active plan, and decomposition artifacts
+Read the nearest `AGENTS.md`, the active brief, the binding decisions and
+contracts, and the source and tests affected by the current request. A new or
+changed capability also reads the applicable architecture, confirmed specs,
+product brief, active decisions, roadmap, plan, and decomposition. Status,
+Lite, and prepared correction work does not reread unrelated canon; the
+constitution and accepted contracts remain binding for every executor.
 
 ## Runtime Modes
 
@@ -69,9 +66,7 @@ Lost? `./forge next` prints the current phase and exact next actions.
 python3 factory/scripts/intake.py --issue ENG-123 --title "Feature title"
 python3 factory/scripts/record_decomposition_from_json.py --input /tmp/decomposition.json
 python3 factory/scripts/update_run.py --phase awaiting-approval --plan-status awaiting-approval
-python3 factory/scripts/verify.py
-python3 factory/scripts/record_test_from_json.py --kind automated --input /tmp/automated.json
-./forge review <task-id>
+./forge task close <task-id>
 ./forge outcome set "<what changed and what someone can now do>"
 python3 factory/scripts/pr_ready.py
 ```
@@ -104,7 +99,7 @@ re-verifies. Story proof is only `outcome.json` (`./forge outcome set`).
 - Narration budget (conduct §8): one line per state change; findings and refusals always in full; process chatter never.
 - Follow [bounded recovery](docs/QUALITY.md#bounded-recovery) in every phase; repeated unchanged failures need a diagnosed, tested fix before another model run.
 - Use one integrated `./forge task close <id>` proof/review/finish cycle: preflight launch, review bounds, and required-test paths before expensive proof; recheck mutable state at finish; run only one full factory suite at a time on a shared host.
-- Review = ONE three-lens pass PER TASK via `./forge review <id>`, run exclusively by the unchanged, externally maintained Autoreview skill, looped until clean (review → delegate Luna/max fixes → re-review) and recorded before `pr-ready` under accepted 0011, 0054 and 0069; its internal Codex or agent calls follow its own policy; never review inline or nest reviewers.
+- Review = ONE three-lens pass PER TASK owned by `./forge task close <id>` and run exclusively by the unchanged, externally maintained Autoreview skill, looped until clean (review → delegate Luna/max fixes → re-review) and recorded before `pr-ready` under accepted 0011, 0054 and 0069; `./forge review <id>` remains an explicit diagnostic/loop command; its internal Codex or agent calls follow its own policy; never review inline or nest reviewers.
 - Each leaf task owns a worktree and PR; dependency-ready tasks may parallelize only when their measured scopes are disjoint. Delegation/proof commands are trusted inputs; observed descendant cleanup is not hostile-code containment.
 - Keep the template repo independent of any client-specific source repo.
 - Do not keep long policy blocks in `AGENTS.md`; move them into docs.

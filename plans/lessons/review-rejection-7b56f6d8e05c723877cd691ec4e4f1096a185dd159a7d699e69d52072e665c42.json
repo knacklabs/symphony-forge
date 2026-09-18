@@ -1,0 +1,10 @@
+{
+  "applies_to": [
+    "factory/tests/**"
+  ],
+  "generated_by": "Codex Root (delegated coordinator)",
+  "lesson": "Not a defect (evidence docs/specs/dual-coordinator-parity.md:102): The accepted native contract explicitly validates a source descriptor and leaves consumption to the host; it makes no content-delivery claim. Immutable snapshot transport applies to command-managed grill/Claude routes. Requiring that transport for the native route contradicts docs/specs/dual-coordinator-parity.md:102-110. Existing command-managed protection is retained. — raised as \"Preserve authenticated context until host-native dispatch (factory/tests/test_native_launch.py:250): When a Codex `--context-file` launch is prepared, `launch_c\"",
+  "severity": "medium",
+  "source": "review reject LEAN-WORKFLOW security",
+  "topic": "rejected-review-finding-security"
+}

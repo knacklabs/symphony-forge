@@ -1,0 +1,10 @@
+{
+  "applies_to": [
+    "docs/**"
+  ],
+  "generated_by": "Codex Root (delegated coordinator)",
+  "lesson": "Not a defect (evidence docs/specs/dual-coordinator-parity.md:102): The accepted native contract explicitly validates a source descriptor and leaves consumption to the host; it makes no content-delivery claim. Immutable snapshot transport applies to command-managed grill/Claude routes. Requiring that transport for the native route contradicts docs/specs/dual-coordinator-parity.md:102-110. Existing command-managed protection is retained. — raised as \"Transport captured grill context instead of reopening its source path (docs/windows.md:81): When a native cold grill uses `--context-file` and that source chang\"",
+  "severity": "medium",
+  "source": "review reject LEAN-WORKFLOW security",
+  "topic": "rejected-review-finding-security"
+}

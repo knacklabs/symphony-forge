@@ -20,7 +20,6 @@ from factory_lib import (
     story_dir,
     story_uses_scoped_layout,
     task_seal_shared_problems,
-    task_proof_problems,
     tests_state_path,
     verify_state_path,
     require_closeout_order,
@@ -93,15 +92,6 @@ if not decomposition:
     missing.append(".factory/decomposition.json")
 closeout_problems = require_closeout_order(root)
 missing.extend(closeout_problems)
-
-# A marker on trunk proves that a task was sealed, but its proof must still be
-# unchanged. Reuse the same marker-bound predicate as CI and board readers so a
-# deleted or rewritten proof cannot turn a story closeout into a false pass.
-if not any(problem.startswith("every task must have its committed pr-ready marker")
-           for problem in closeout_problems):
-    for task in decomposition.get("tasks", []):
-        if isinstance(task, dict):
-            missing.extend(task_proof_problems(root, issue_key, task))
 
 # Automated tests, the three lenses and the plan-contract verdicts are all
 # proven PER TASK and gated on each task's PR; require_closeout_order reads

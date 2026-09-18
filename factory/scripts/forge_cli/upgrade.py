@@ -2033,6 +2033,8 @@ def preflight_lean_migration(target: Path) -> dict | None:
     if manifest.exists() or manifest.is_symlink():
         _require_single_link_manifest(target, manifest)
         saved = load_json(manifest, default={})
+        if not isinstance(saved, dict):
+            fail("Lean migration manifest must be a JSON object")
         if saved.get("version") != LEAN_MIGRATION_VERSION:
             fail("Lean migration found an unequal partial retry; restore or complete the original checkout")
         if saved.get("completed_at"):
@@ -2056,6 +2058,8 @@ def preflight_lean_migration(target: Path) -> dict | None:
                     "entries": primary,
                     "input_inventory_digest": _inventory_digest(primary),
                     "manifest_name": LEAN_MIGRATION_SUPPLEMENT,
+                    "prior_completion": saved,
+                    "prior_completion_digest": _manifest_content_digest(saved),
                 }
                 (migration["review_candidates"],
                  migration["review_sentinels"]) = _fixed_review_plan(
@@ -3126,8 +3130,21 @@ def _incomplete_lean_resume_paths(
         target: Path, harness: Path, changed: set[str]) -> set[str]:
     """Return authenticated paths an interrupted Lean migration may dirty."""
     manifest = target / ".factory" / "migrations" / f"{LEAN_MIGRATION_VERSION}.json"
+    supplemental = manifest.with_name(LEAN_MIGRATION_SUPPLEMENT)
     if not manifest.exists() and not manifest.is_symlink():
-        return set()
+        if not supplemental.exists() and not supplemental.is_symlink():
+            return set()
+    if supplemental.exists() or supplemental.is_symlink():
+        if not manifest.is_file() or manifest.is_symlink():
+            return set()
+        try:
+            original = load_json(manifest, default={})
+            if (not isinstance(original, dict)
+                    or not _is_original_empty_completion(original)):
+                return set()
+        except (OSError, UnicodeError, json.JSONDecodeError):
+            return set()
+        manifest = supplemental
     _require_single_link_manifest(target, manifest)
     try:
         saved = load_json(manifest, default={})
@@ -3135,6 +3152,21 @@ def _incomplete_lean_resume_paths(
         validate_payload(target, "lean-workflow-migration", saved)
     except (OSError, UnicodeError, json.JSONDecodeError, SystemExit):
         return set()
+    if not isinstance(saved, dict):
+        return set()
+    if manifest == supplemental:
+        try:
+            original = load_json(
+                target / ".factory" / "migrations"
+                / f"{LEAN_MIGRATION_VERSION}.json", default={},
+            )
+        except (OSError, UnicodeError, json.JSONDecodeError):
+            return set()
+        if (not isinstance(original, dict)
+                or saved.get("prior_completion") != original
+                or saved.get("prior_completion_digest")
+                != _manifest_content_digest(original)):
+            return set()
     entries = saved.get("entries")
     if (saved.get("version") != LEAN_MIGRATION_VERSION
             or saved.get("completed_at")

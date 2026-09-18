@@ -14,8 +14,11 @@ from test_gates import HARNESS, repo  # noqa: F401
 from test_review_lenses_in_parallel import _built, _fake_skill
 
 sys.path.insert(0, str(HARNESS / "factory" / "scripts"))
+import factory_lib  # noqa: E402
+from forge_cli import board  # noqa: E402
 from forge_cli.board import rolled_up_evidence, story_detail, task_proof_records  # noqa: E402
 from forge_cli.review import review_task  # noqa: E402
+from forge_cli.stages import write_stages  # noqa: E402
 
 
 def test_the_board_reads_task_level_proof_and_the_selected_generation(repo, tmp_path):
@@ -60,3 +63,92 @@ def test_a_story_row_passes_only_when_every_task_recorded_and_passed():
     assert rolled["tests"]["automated"]["status"] == "passed"
     assert rolled["reviews"]["quality"]["score"] == 9  # the lowest task's record is shown
     assert rolled["reviews"]["quality"]["summary"] == "T1: fine; T2: fine"
+
+
+def test_active_task_uses_current_generation_while_done_task_uses_sealed_marker(
+        repo, tmp_path, monkeypatch):
+    _built(repo, tmp_path)
+    task_root = repo / ".factory" / "stories" / "ENG-1" / "tasks" / "T1"
+    (task_root / "reviews").mkdir(parents=True, exist_ok=True)
+    (task_root / "reviews" / "selected.json").write_text("{}\n", encoding="utf-8")
+    # This is the retained marker from the prior seal. Its presence must not
+    # make a reopened/active task read the old selected generation.
+    (task_root / "pr-ready.json").write_text("{\"commit\": \"A\"}\n", encoding="utf-8")
+
+    sealed = {
+        "lenses": {
+            "quality": {"summary": "sealed A"},
+            "performance": {"summary": "sealed A"},
+            "security": {"summary": "sealed A"},
+        },
+    }
+    current = {
+        "lenses": {
+            "quality": {"summary": "current B"},
+            "performance": {"summary": "current B"},
+            "security": {"summary": "current B"},
+        },
+    }
+    selected_commits = []
+
+    def read_selected(_base, _key, _task_id, *, sealed_commit="", **_kwargs):
+        selected_commits.append(sealed_commit)
+        return (sealed if sealed_commit == "marker-A" else current, {}, [])
+
+    monkeypatch.setattr(board, "read_selected_review_generation", read_selected)
+    monkeypatch.setattr(
+        board, "validated_task_marker_commit", lambda *_args: "marker-A",
+    )
+
+    # `task_rows` derives await-merge from a durable done stage whose marker is
+    # not on the trunk. Proof selection must still use that durable status.
+    write_stages(repo, {"issue": "ENG-1", "stages": [
+        {"id": "T1", "title": "core slice", "status": "done"},
+    ]})
+    monkeypatch.setattr(factory_lib, "_has_origin", lambda _root: True)
+    monkeypatch.setattr(factory_lib, "fetch_trunk", lambda *_args, **_kwargs: True)
+    monkeypatch.setattr(
+        factory_lib, "task_marker_on_main", lambda *_args, **_kwargs: False,
+    )
+    rows = factory_lib.task_rows(repo)
+    assert rows[0]["state"] == "await-merge"
+    stages = board._stages_for(repo, "ENG-1")["stages"]
+    merged = board.merge_task_detail(
+        {"tasks": [{"id": "T1"}]}, stages, rows,
+    )
+    assert merged[0]["status"] == "done"
+    assert merged[0]["state"] == "await-merge"
+    await_merge_statuses = board._task_proof_statuses(stages, merged)
+    assert await_merge_statuses == {"T1": "done"}
+
+    active = board.task_proof_records(repo, "ENG-1", "T1", task_status="active")
+    done = board.task_proof_records(repo, "ENG-1", "T1", task_status="done")
+
+    assert active["reviews"]["quality"]["summary"] == "current B"
+    assert done["reviews"]["quality"]["summary"] == "sealed A"
+    assert selected_commits == ["", "marker-A"]
+
+    proof_calls = []
+
+    def proof_problems(_base, _key, _task, *, preseal=False, **_kwargs):
+        proof_calls.append(preseal)
+        return []
+
+    monkeypatch.setattr(factory_lib, "task_proof_problems", proof_problems)
+    decomposition = {"tasks": [{"id": "T1"}]}
+    active_proof = board.story_task_proof(
+        repo, "ENG-1", decomposition, task_statuses={"T1": "active"},
+    )
+    done_proof = board.story_task_proof(
+        repo, "ENG-1", decomposition, task_statuses={"T1": "done"},
+    )
+    await_merge = board.story_task_proof(
+        repo, "ENG-1", decomposition, task_statuses=await_merge_statuses,
+    )
+
+    assert active_proof["T1"]["current"] is True
+    assert done_proof["T1"]["current"] is True
+    assert await_merge["T1"]["reviews"]["quality"]["summary"] == "sealed A"
+    assert await_merge["T1"]["current"] is True
+    assert selected_commits == ["", "marker-A", "", "marker-A", "marker-A"]
+    assert proof_calls == [True, False, False]

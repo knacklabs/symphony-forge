@@ -89,6 +89,37 @@ def test_a_marker_committed_in_the_tree_counts_before_it_reaches_the_trunk(repo,
     assert run_is_task_level(repo) is True
 
 
+def test_pr_ready_uses_the_fetched_trunk_proof_when_local_checkout_is_old(
+        repo, tmp_path):
+    prepare_pr_ready_story(repo, tmp_path, scoped_layout=True)
+    tests = repo / ".factory/stories/ENG-1/tasks/T1/tests.json"
+    payload = json.loads(tests.read_text(encoding="utf-8"))
+    payload["automated"]["status"] = "failed"
+    tests.write_text(json.dumps(payload) + "\n", encoding="utf-8")
+
+    code, out = run(repo, "pr_ready.py")
+    assert code == 0, out
+    assert "shipped in place" in out
+
+
+def test_pr_ready_refuses_proof_changed_on_the_current_trunk(
+        repo, tmp_path):
+    prepare_pr_ready_story(repo, tmp_path, scoped_layout=True)
+    local_head = git(repo, "rev-parse", "HEAD")
+    tests = repo / ".factory/stories/ENG-1/tasks/T1/tests.json"
+    payload = json.loads(tests.read_text(encoding="utf-8"))
+    payload["automated"]["status"] = "failed"
+    tests.write_text(json.dumps(payload) + "\n", encoding="utf-8")
+    git(repo, "add", tests.relative_to(repo).as_posix())
+    git(repo, "commit", "-qm", "tamper current trunk proof")
+    git(repo, "push", "-q", "origin", "HEAD:main")
+    git(repo, "reset", "--hard", "-q", local_head)
+
+    code, out = run(repo, "pr_ready.py")
+    assert code != 0
+    assert "committed pr-ready marker on the trunk" in out
+
+
 def test_the_pointer_field_still_wins_inside_a_task_worktree(repo, tmp_path):
     _two_task_story(repo, tmp_path)
     control = delegation_ledger(repo).parent

@@ -76,7 +76,8 @@ foreground/background rule and no status, cancel, resume, recovery, signal,
 process-cleanup or session-fencing restriction. Those operations belong to the
 host. This deliberately removes mechanical native authorship attribution.
 
-**Completion is a measurement.** `forge stage done` refuses unless the diff
+**Completion is a measurement.** `forge task close` owns the integrated proof
+and review sequence. Its final `stage done` step refuses unless the diff
 since the stage's base commit is non-empty, every changed product path is
 covered by the task's `write_scope`, every `required_tests` proof names an existing repo-relative path, its
 runner-owned command exits green, and its fresh JUnit report names the declared

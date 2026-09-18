@@ -392,7 +392,7 @@ def test_doctor_repairs_only_exact_plugin_max_source(tmp_path, monkeypatch):
     assert snapshot() == before
 
 
-def test_model_policy_routes_native_children_by_role():
+def test_model_policy_selects_sol_work_and_luna_lite():
     from forge_cli.delegate import mode_run_config, pinned_run_config
     from forge_cli.review import CODEX_REVIEW_MODEL, CODEX_REVIEW_THINKING
 
@@ -437,11 +437,6 @@ def test_model_policy_routes_native_children_by_role():
         "gpt-5.6-sol", "high")
 
 
-def test_model_policy_selects_sol_work_and_luna_lite():
-    """Keep the approved task contract bound to the expanded routing check."""
-    test_model_policy_routes_native_children_by_role()
-
-
 SESSION_START_ADAPTERS = (".codex/hooks.json", ".claude/settings.json")
 SESSION_START_SOURCES = ("startup", "resume", "clear", "compact")
 HOOK_TOOL_MATRIX = {
@@ -456,7 +451,8 @@ HOOK_TOOL_MATRIX = {
 }
 
 
-def test_recovery_profile_override_keeps_the_complete_routed_registry():
+def test_recovery_profile_override_keeps_only_three_forge_profiles():
+    """The retained selector now checks the complete Decision 0080 registry."""
     config = tomllib.loads(
         (HARNESS / ".codex/config.toml").read_text(encoding="utf-8"))
     expected = {
@@ -474,11 +470,6 @@ def test_recovery_profile_override_keeps_the_complete_routed_registry():
     assert configured == expected == installed
     assert config["sandbox_mode"] == "danger-full-access"
     assert config["approval_policy"] == "never"
-
-
-def test_recovery_profile_override_keeps_only_three_forge_profiles():
-    """Keep the approved task contract bound to the complete registry check."""
-    test_recovery_profile_override_keeps_the_complete_routed_registry()
 
 
 def _remove_session_start_source(config, missing):

@@ -9,8 +9,8 @@ from pathlib import Path
 import pytest
 
 from test_gates import (  # noqa: F401
-    HARNESS, intake, load_factory_lib, repo, run, save_plan, sign_off,
-    story_state,
+    HARNESS, ensure_story, intake, load_factory_lib, plan_draft, record_grill,
+    repo, run, save_plan, sign_off, story_state,
 )
 
 sys.path.insert(0, str(HARNESS / "factory" / "scripts"))
@@ -71,6 +71,46 @@ def _story_candidate(repo: Path, story: str = "APPROVE-1") -> approval.ApprovalC
     candidate = approval._story_candidate(repo)
     assert candidate is not None
     return candidate
+
+
+def test_plan_save_keeps_issue_grill_and_story_approval_authority(
+        repo: Path, tmp_path: Path):
+    sign_off(repo)
+    intake(repo, "ISSUE-I", "Invoices")
+    ensure_story(repo, "STORY-S", "Roadmap story")
+    draft = tmp_path / "distinct-identities.md"
+    draft.write_text(plan_draft(repo), encoding="utf-8")
+    code, output = record_grill(repo, "plan", digest_of=draft)
+    assert code == 0, output
+
+    code, output = run(
+        repo, "forge.py", "plan", "save", "--from", str(draft),
+        "--issue", "ISSUE-I", "--story", "STORY-S",
+    )
+    assert code == 0, output
+    candidates = approval.eligible_candidates(repo)
+    assert len(candidates) == 1
+    candidate = candidates[0]
+    assert candidate.story == "STORY-S"
+
+    lib = load_factory_lib(repo)
+    grill = json.loads(
+        lib.evidence_path(repo, "ISSUE-I", "grills/plan.json").read_text()
+    )
+    assert grill["issue"] == "ISSUE-I"
+    record = approval.record_native_approval(
+        repo, _event(candidate), runtime="claude",
+    )
+    assert record["story"] == "STORY-S"
+    assert json.loads(
+        lib.evidence_path(repo, "STORY-S", "plan-approval.json").read_text()
+    )["story"] == "STORY-S"
+    state = json.loads(lib.run_state_path(repo).read_text())
+    assert state["issue_key"] == "ISSUE-I"
+    assert state["story"] == "STORY-S"
+    # The normal implementation consumer must resolve authority through the
+    # roadmap story after native approval, while the grill remains issue-scoped.
+    assert lib.require_approved_plan_digest(repo) == candidate.digest
 
 
 @pytest.mark.parametrize("body", ["{not json\n", "[]\n"])

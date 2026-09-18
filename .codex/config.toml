@@ -6,7 +6,7 @@
 model_verbosity = "low"
 model_reasoning_summary = "concise"
 personality = "pragmatic"
-# Full host access is the Forge-managed default (decision 0049). Forge's
+# Full host access is the Forge-managed default (decision 0081). Forge's
 # lifecycle, write-scope, admission, and hook controls remain authoritative.
 sandbox_mode = "danger-full-access"
 approval_policy = "never"

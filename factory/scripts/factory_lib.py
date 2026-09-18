@@ -4250,12 +4250,56 @@ def grounding_digest(root: Path, task: dict, *, treeish: str = "",
     return hashlib.sha256(payload.encode()).hexdigest()
 
 
+def legacy_grounding_digest(
+        root: Path, task: dict, *, treeish: str = "",
+        _plan_sha256: str | None = None,
+) -> str:
+    """Return the exact pre-Lean in-flight grill fingerprint.
+
+    Decision 0066 permits one already-open task to carry its old whole-task
+    grounding while its substantive inputs remain unchanged.  This recognises
+    that one serialized shape only; it does not make other retired grill
+    formats runtime authority.
+    """
+    if _plan_sha256 is None:
+        decomposition = load_json(
+            protected_decomposition_state_path(root), default={},
+        )
+        plan_file = decomposition.get("plan_file") or load_json(
+            run_state_path(root), default={},
+        ).get("plan_file")
+        if not isinstance(plan_file, str) or not plan_file.strip():
+            raise SystemExit(
+                "cannot derive the task grounding digest: the protected decomposition "
+                "does not name its approved plan"
+            )
+        plan = (root / plan_file).resolve()
+        if not plan.is_file():
+            raise SystemExit(
+                f"cannot derive the task grounding digest: approved plan {plan_file!r} "
+                "does not exist"
+            )
+        _plan_sha256 = plan_digest_without_assumptions(plan)
+    payload = json.dumps(
+        {
+            "contract": task,
+            "plan_sha256": _plan_sha256,
+            "product_tree_sha256": product_tree_digest(root, treeish),
+        },
+        sort_keys=True,
+        separators=(",", ":"),
+        ensure_ascii=True,
+    )
+    return hashlib.sha256(payload.encode()).hexdigest()
+
+
 def grounding_matches(root: Path, task: dict, recorded: str, *,
                       treeish: str = "", in_stage: bool = False,
                       _plan_sha256: str | None = None) -> bool:
     """Does a recorded grill still bind its inputs?
 
-    Accept current grounding and the exact in-stage predecessor rules.
+    Accept current grounding, exact in-stage predecessor rules, or the one
+    authenticated pre-Lean in-flight shape from Decision 0066.
     """
     if not recorded:
         return False
@@ -4294,7 +4338,12 @@ def grounding_matches(root: Path, task: dict, recorded: str, *,
                     return True
             except SystemExit:
                 pass
-    return False
+    try:
+        return recorded == legacy_grounding_digest(
+            root, task, treeish=treeish, _plan_sha256=_plan_sha256,
+        )
+    except SystemExit:
+        return False
 
 
 def _stage_baseline_for(root: Path, task_id: str) -> str:
@@ -4350,14 +4399,16 @@ def selected_review_ready_for_functional_check(
         )
         if problems or not isinstance(generation, dict):
             return False
+        lenses = generation.get("lenses")
+        if not isinstance(lenses, dict) or not all(
+            review_passed(lenses.get(lens))
+            for lens in ("quality", "performance", "security")
+        ):
+            return False
         require_current_review_meaning(root, stage, task, generation)
     except (Exception, SystemExit):
         return False
-    lenses = generation.get("lenses")
-    return isinstance(lenses, dict) and all(
-        review_passed(lenses.get(lens))
-        for lens in ("quality", "performance", "security")
-    )
+    return True
 
 
 _TASK_CONTRACT_FIELDS = (

@@ -1088,6 +1088,12 @@ scoped_targets = write_targets if tool_name == PATCH_TOOL else locked_targets
 if native_codex:
     if scoped_targets:
         if window:
+            from forge_cli.quickfix import DEGRADED, LITE, profile_of
+            if profile_of(window) not in {LITE, DEGRADED}:
+                deny(
+                    "Host-native product writes require an authorized Lite or "
+                    "degraded window; ordinary quickfix is recording-only."
+                )
             if command and has_opaque_product_write(command, root, is_harness):
                 deny(OPAQUE_DEGRADED_MSG)
             if any(_contains_marker(rel) for rel in scoped_targets):

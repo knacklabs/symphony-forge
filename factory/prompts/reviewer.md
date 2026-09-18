@@ -1,7 +1,8 @@
 # Review Prompt — three lenses, one selected generation
 
-Review runs after passing verify and automated test proof. The orchestrator
-releases it with **`./forge review <task-id>`** (0011, 0054, 0069). A small
+Review runs inside the task-close owner after focused implementation checks and
+its integrated verify/test proof. The owner releases it through
+**`./forge task close <task-id>`** (0011, 0054, 0069). A small
 diff uses one Codex helper call over the whole task diff. A diff that the helper
 would chunk is split into the fewest file groups that fit its prompt limit;
 each group judges all three lenses in ONE pass. Forge releases parallel groups
@@ -41,7 +42,7 @@ dropped, and never by themselves the reason for another review.
 
 Procedure:
 
-1. `./forge review <task-id>` does the run: it mints the branch review run
+1. `./forge task close <task-id>` does the final run: it mints the branch review run
    (`review-brief --all`, which the recorded generation is bound to), composes
    `.factory/review-briefs/<task-id>.combined.md` from the task's plan
    contracts, reviewer focus and the three lens definitions below, and runs

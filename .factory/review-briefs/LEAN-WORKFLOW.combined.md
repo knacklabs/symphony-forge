@@ -92,4 +92,4 @@ Use category `security` for these findings.
 
 LEFTOVERS (blocking): the diff must carry no code kept only for compatibility — no wrapper or shim over its replacement, no re-export or alias kept 'for callers', no renamed-but-retained symbol, no dead branch behind a removed feature, no 'legacy'/'deprecated'/'backward' naming or comment. Report each as a BLOCKING finding with file:line and verdict the contract it belongs to as partial; a clean diff says so in one line.
 
-Reviewed meaning SHA-256: 9e12ee0ff75bacc473123bf1053f09a8221bcd9779de757b57c89bf790cf481e
+Reviewed meaning SHA-256: 41e64015c1e96d401b29284e85b91a33ac222cda2762092f067af1523e19acda

@@ -95,12 +95,6 @@ def collect(base: Path) -> list[dict]:
                             and isinstance(data, dict):
                         rows += _finding_rows(f"{task}/{task_id}", aspect, data)
             continue
-        for aspect in ("quality", "performance", "security"):
-            review = evidence_path(base, task, f"reviews/{aspect}.json")
-            if not review.is_file():
-                continue
-            data = load_json(review, default={})
-            rows += _finding_rows(task, aspect, data)
     if not active_issue:
         for review in sorted((factory_dir(base) / "reviews").glob("*.json")):
             data = load_json(review, default={})

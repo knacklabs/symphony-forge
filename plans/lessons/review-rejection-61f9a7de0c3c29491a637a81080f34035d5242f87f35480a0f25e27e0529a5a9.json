@@ -1,0 +1,10 @@
+{
+  "applies_to": [
+    "factory/scripts/**"
+  ],
+  "generated_by": "Codex Root (delegated coordinator)",
+  "lesson": "Not a defect (evidence docs/decisions/0080-native-role-model-routing.md:45): The accepted host-native contract delegates subagent identity and lifecycle to the host and explicitly adds no authorship-attribution proof. The trusted coordinator records the actual child result against the prepared artifact; this is not a human approval event. Demanding a new native session/process/event authentication mechanism contradicts0080. Existing plan human-approval identity remains mandatory. — raised as \"Bind host-native cold results to an actual griller event (factory/scripts/record_grill_from_json.py:367): When the recorder is invoked with `--cold-result` and \"",
+  "severity": "medium",
+  "source": "review reject LEAN-WORKFLOW security",
+  "topic": "rejected-review-finding-security"
+}

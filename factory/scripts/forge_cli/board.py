@@ -84,7 +84,9 @@ def _stages_for(base: Path, story: str) -> dict:
 ASPECTS = ("quality", "performance", "security")
 
 
-def task_proof_records(base: Path, key: str, task_id: str) -> dict | None:
+def task_proof_records(
+    base: Path, key: str, task_id: str, *, task_status: str | None = None,
+) -> dict | None:
     """A task's own proof: its verify.json, tests.json and the three lenses of
     its selected review generation. None when nothing is recorded."""
     try:
@@ -100,7 +102,10 @@ def task_proof_records(base: Path, key: str, task_id: str) -> dict | None:
     try:
         generation, _selection, problems = read_selected_review_generation(
             base, key, task_id,
-            sealed_commit=validated_task_marker_commit(base, key, task_id),
+            sealed_commit=(
+                validated_task_marker_commit(base, key, task_id)
+                if task_status == "done" else ""
+            ),
         )
         if problems:
             generation = None
@@ -116,20 +121,46 @@ def task_proof_records(base: Path, key: str, task_id: str) -> dict | None:
     return {"verify": verify, "tests": tests, "reviews": reviews}
 
 
-def story_task_proof(base: Path, key: str, decomposition: dict) -> dict[str, dict]:
+def _task_proof_statuses(
+    stages: list[dict], tasks: list[dict],
+) -> dict[str, str]:
+    """Use durable stage status for proof selection, then fill stage-less rows."""
+    statuses = {
+        str(stage.get("id")): str(stage.get("status") or "")
+        for stage in stages
+        if isinstance(stage, dict) and stage.get("id")
+    }
+    for task in tasks:
+        task_id = str(task.get("id") or "")
+        if task_id:
+            statuses.setdefault(task_id, str(task.get("status") or ""))
+    return statuses
+
+
+def story_task_proof(
+    base: Path, key: str, decomposition: dict,
+    *, task_statuses: dict[str, str] | None = None,
+) -> dict[str, dict]:
     """Every task's own proof, in decomposition order, tasks without any left out."""
+    if task_statuses is None:
+        task_statuses = _task_proof_statuses(
+            (_stages_for(base, key).get("stages") or []),
+            decomposition.get("tasks") or [],
+        )
     out: dict[str, dict] = {}
     for task in decomposition.get("tasks") or []:
         task_id = task.get("id") if isinstance(task, dict) else None
         if not isinstance(task_id, str) or not task_id:
             continue
-        proof = task_proof_records(base, key, task_id)
+        status = task_statuses.get(task_id)
+        proof = task_proof_records(
+            base, key, task_id, task_status=status,
+        )
         if proof:
             from factory_lib import task_proof_problems
-            marker = task_evidence_path(base, key, task_id, "pr-ready.json")
             try:
                 proof["current"] = not task_proof_problems(
-                    base, key, task, preseal=not marker.is_file(),
+                    base, key, task, preseal=status != "done",
                 )
             except (Exception, SystemExit):
                 proof["current"] = False
@@ -261,10 +292,15 @@ def _proven_tasks(base: Path, key: str, tasks: list[dict],
     if shipped or not total or not key:
         return {"done": total if shipped else 0, "total": total}
     from factory_lib import task_proof_problems
+    task_statuses = _task_proof_statuses(
+        (_stages_for(base, key).get("stages") or []), tasks,
+    )
     done = 0
     for task in tasks:
         try:
-            if not task_proof_problems(base, key, task):
+            if not task_proof_problems(
+                    base, key, task,
+                    preseal=task_statuses.get(task.get("id")) != "done"):
                 done += 1
         except (Exception, SystemExit):
             continue
@@ -300,15 +336,18 @@ def _plan_evidence(
             "total": len(stages),
         }
     tasks = merge_task_detail(decomposition, stages, derived_rows)
+    task_statuses = _task_proof_statuses(stages, tasks)
     bundles = []
     for task in tasks:
         task_id = str(task.get("id") or "")
-        proof = task_proof_records(base, story, task_id) or {}
+        proof = task_proof_records(
+            base, story, task_id, task_status=task_statuses.get(task_id),
+        ) or {}
         from factory_lib import task_proof_problems
-        marker = task_evidence_path(base, story, task_id, "pr-ready.json")
         try:
             current = not task_proof_problems(
-                base, story, task, preseal=not marker.is_file(),
+                base, story, task,
+                preseal=task_statuses.get(task_id) != "done",
             )
         except (Exception, SystemExit):
             current = False
@@ -342,7 +381,9 @@ def _plan_evidence(
             and not any(evidence["reviews"].values()):
         # A task-level run records nothing at the story level: the story's
         # rows are what its tasks recorded, every task counted.
-        task_proof = story_task_proof(base, story, decomposition)
+        task_proof = story_task_proof(
+            base, story, decomposition, task_statuses=task_statuses,
+        )
         if task_proof:
             rolled = rolled_up_evidence(task_proof, decomposition)
             evidence = {
@@ -765,7 +806,18 @@ def story_detail(base: Path, key: str) -> dict | None:
             evidence_path(base, key, f"reviews/{aspect}.json"), default=None)
         for aspect in ("quality", "performance", "security")
     }
-    evidence["task_proof"] = story_task_proof(base, key, evidence.get("decomposition") or {})
+    detail_task_rows = task_rows(base) if active == key else []
+    detail_tasks = merge_task_detail(
+        evidence.get("decomposition") or {},
+        (evidence.get("stages") or {}).get("stages", []),
+        detail_task_rows if active == key else None,
+    )
+    evidence["task_proof"] = story_task_proof(
+        base, key, evidence.get("decomposition") or {},
+        task_statuses=_task_proof_statuses(
+            (evidence.get("stages") or {}).get("stages", []), detail_tasks,
+        ),
+    )
     if evidence["task_proof"]:
         evidence.update(rolled_up_evidence(evidence["task_proof"],
                                            evidence.get("decomposition") or {}))
@@ -797,7 +849,7 @@ def story_detail(base: Path, key: str) -> dict | None:
     detail = {"key": key, "project": project_identity(base), "epic": epic,
               "story": story, "plan": plan, "plan_body": plan_body,
               "spec": spec, "evidence": evidence}
-    detail["task_rows"] = task_rows(base) if active == key else []
+    detail["task_rows"] = detail_task_rows
     detail["tasks"] = task_dossiers(base, key, detail)
     detail["readiness"] = approval_readiness(base, detail)
     return detail
@@ -1190,7 +1242,10 @@ def task_dossiers(base: Path, key: str, detail: dict) -> list[dict]:
     dossiers = []
     for task in merge_task_detail(decomposition, stages, detail.get("task_rows")):
         task_id = str(task.get("id") or "")
-        own = task_proof.get(task_id) or task_proof_records(base, key, task_id) or {}
+        task_status = _task_proof_statuses(stages, [task]).get(task_id)
+        own = task_proof.get(task_id) or task_proof_records(
+            base, key, task_id, task_status=task_status,
+        ) or {}
         current = own.get("current", True) is True
         tests = own.get("tests") if isinstance(own.get("tests"), dict) else {}
         verify = own.get("verify") if isinstance(own.get("verify"), dict) else {}

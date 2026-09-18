@@ -53,6 +53,9 @@ def _seed_review(repo: Path, monkeypatch, task: dict) -> tuple[dict, dict]:
 
 def test_unchanged_test_verify_and_selected_review_inputs_reuse_success_without_rerun(
         repo: Path, monkeypatch):
+    source = repo / "tests" / "a.py"
+    source.parent.mkdir(parents=True, exist_ok=True)
+    source.write_text("def test_a():\n    pass\n", encoding="utf-8")
     task = _task()
     tests = stages.proof_identity(repo, task, "tests")
     verify = stages.proof_identity(repo, task, "verify")
@@ -83,7 +86,7 @@ def test_run_stage_proof_reuses_matching_receipts_by_proof_type(repo: Path, monk
     monkeypatch.setattr(stages, "_run_verify_commands", lambda *_args:
                         calls.append("verify"))
     monkeypatch.setattr(stages, "_run_required_tests", lambda *_args:
-                        calls.append("tests") or [])
+                        calls.append("tests") or ([], []))
     monkeypatch.setattr(stages, "_store_proof_receipt", lambda *_args: None)
     monkeypatch.setattr(stages, "protected_authority_snapshot",
                         lambda _base: {"stage": "unchanged"})
@@ -110,6 +113,9 @@ def test_review_preflight_requires_current_test_and_verify_receipt_identities(
         dump_json, proof_path, protected_decomposition_state_path, run_state_path,
     )
 
+    source = repo / "tests" / "a.py"
+    source.parent.mkdir(parents=True, exist_ok=True)
+    source.write_text("def test_a():\n    pass\n", encoding="utf-8")
     task = _task()
     dump_json(run_state_path(repo), {"story": "S1", "issue_key": "S1"})
     dump_json(protected_decomposition_state_path(repo), {"tasks": [task]})
@@ -361,6 +367,9 @@ def test_changed_unknown_partial_or_generated_output_identity_forces_fresh_run(
 
 def test_explicit_external_pytest_config_bytes_bind_reusable_proof(
         repo: Path, tmp_path: Path):
+    source = repo / "tests" / "a.py"
+    source.parent.mkdir(parents=True, exist_ok=True)
+    source.write_text("def test_a():\n    pass\n", encoding="utf-8")
     config = tmp_path / "shared-pytest.ini"
     config.write_text("[pytest]\naddopts = -q\n", encoding="utf-8")
     task = _task()
@@ -374,6 +383,92 @@ def test_explicit_external_pytest_config_bytes_bind_reusable_proof(
     assert after["identity"] != before["identity"]
     config.unlink()
     assert stages.proof_identity(repo, task, "tests")["reusable"] is False
+
+
+def test_ignored_pytest_collection_source_is_never_reusable_after_mutation(
+        repo: Path):
+    ignored = repo / "local-only" / "test_ignored.py"
+    ignored.parent.mkdir(parents=True, exist_ok=True)
+    (repo / ".gitignore").write_text("local-only/\n", encoding="utf-8")
+    ignored.write_text("def test_local_only():\n    pass\n", encoding="utf-8")
+    command = "python3 -m pytest local-only/test_ignored.py -q"
+    task = {**_task(), "verify_commands": [command]}
+
+    before = stages.proof_identity(repo, task, "verify")
+    assert before["reusable"] is False
+    ignored.write_text("def test_local_only():\n    assert False\n", encoding="utf-8")
+    after = stages.proof_identity(repo, task, "verify")
+    assert after["reusable"] is False
+
+
+@pytest.mark.parametrize("collection_path", ["sibling-tests", "."])
+def test_ignored_pytest_sibling_blocks_directory_collection_reuse(
+        repo: Path, collection_path: str):
+    directory = repo / "sibling-tests" if collection_path != "." else repo
+    directory.mkdir(parents=True, exist_ok=True)
+    tracked = directory / "test_tracked.py"
+    ignored = (directory / "test_ignored.py" if collection_path != "."
+               else repo / "local-only" / "test_ignored.py")
+    ignored.parent.mkdir(parents=True, exist_ok=True)
+    tracked.write_text("def test_tracked():\n    pass\n", encoding="utf-8")
+    ignored.write_text("def test_ignored():\n    pass\n", encoding="utf-8")
+    (repo / ".gitignore").write_text(
+        ("sibling-tests/test_ignored.py\n" if collection_path != "."
+         else "local-only/\n"), encoding="utf-8",
+    )
+    task = {
+        **_task(),
+        "verify_commands": [f"python3 -m pytest {collection_path} -q"],
+    }
+
+    before = stages.proof_identity(repo, task, "verify")
+    assert before["reusable"] is False
+    ignored.write_text("def test_ignored():\n    assert False\n", encoding="utf-8")
+    after = stages.proof_identity(repo, task, "verify")
+    assert after["reusable"] is False
+
+
+def test_canonical_junit_requires_matching_pytest_semantics_and_environment(
+        repo: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    source = repo / "tests" / "a.py"
+    source.parent.mkdir(parents=True, exist_ok=True)
+    source.write_text("def test_a():\n    pass\n", encoding="utf-8")
+    report = tmp_path / "canonical.xml"
+    report.write_text(
+        '<testsuite><testcase name="test_a" file="tests/a.py"/></testsuite>',
+        encoding="utf-8",
+    )
+    task = {"required_tests": [{
+        "id": "test_a", "path": "tests/a.py",
+        "command": "python3 -m pytest {path}::{id} --junitxml={report}",
+    }]}
+    monkeypatch.setenv("FACTORY_TEST_CMD", "python3 -m pytest tests")
+    assert stages._canonical_junit_satisfies_required_tests(
+        report, task, base=repo,
+        canonical_command="python3 -m pytest tests",
+    )
+
+    monkeypatch.setenv(
+        "FACTORY_TEST_CMD", "python3 -m pytest tests -p custom_plugin",
+    )
+    assert not stages._canonical_junit_satisfies_required_tests(
+        report, task, base=repo,
+        canonical_command="python3 -m pytest tests -p custom_plugin",
+    )
+
+    monkeypatch.setenv(
+        "FACTORY_TEST_CMD", "python3 -m pytest tests -o strict_markers=true",
+    )
+    assert not stages._canonical_junit_satisfies_required_tests(
+        report, task, base=repo,
+        canonical_command="python3 -m pytest tests -o strict_markers=true",
+    )
+
+    monkeypatch.setenv("FACTORY_TEST_CMD", "PYTHONUTF8=0 python3 -m pytest tests")
+    assert not stages._canonical_junit_satisfies_required_tests(
+        report, task, base=repo,
+        canonical_command="PYTHONUTF8=0 python3 -m pytest tests",
+    )
 
 
 def test_reuse_identity_is_proof_type_specific_and_reviewed_meaning_bound(
@@ -469,14 +564,20 @@ def test_selected_review_reruns_for_changed_acceptance_security_migration_or_evi
 def _fake_uv_probe(repo: Path, monkeypatch) -> tuple[dict, Path]:
     runner = repo / "fake-uv"
     runner.write_bytes(b"fake uv runner v1")
+    source = repo / "tests" / "a.py"
+    source.parent.mkdir(parents=True, exist_ok=True)
+    source.write_text("def test_a():\n    pass\n", encoding="utf-8")
     state = {"interpreter": b"ephemeral Python v1", "transitive": "1",
              "probe": "complete", "calls": []}
     real_which = stages.shutil.which
+    real_run = stages.subprocess.run
     monkeypatch.setattr(stages.shutil, "which", lambda command, **kwargs:
                         str(runner) if command == "uv" else
                         real_which(command, **kwargs))
 
     def probe(argv, **_kwargs):
+        if argv[0] != "uv":
+            return real_run(argv, **_kwargs)
         assert argv[0] == "uv" and "-c" in argv
         state["calls"].append(tuple(argv))
         ephemeral = repo / "temporary-interpreter"
@@ -673,7 +774,11 @@ def test_proof_reuse_refuses_dependency_environment_and_configuration_drift(
         ],
         "generated_semantic_inputs": ["generated.json"],
     }
-    product = {"files": {"src/a.py": "one"}}
+    product = {
+        "files": {"src/a.py": "one"},
+        "tracked": {"tests/a.py": "fixture"},
+        "dirty": {},
+    }
 
     def identities() -> dict[str, str]:
         return {
@@ -768,7 +873,9 @@ def test_run_stage_proof_memoizes_tool_probe_by_prefix_and_environment(
     test_file = repo / "tests/a.py"
     test_file.parent.mkdir(parents=True, exist_ok=True)
     test_file.write_text("pass\n", encoding="utf-8")
-    monkeypatch.setattr(stages, "product_tree_snapshot", lambda _base: {})
+    visible_tree = {"tracked": {"tests/a.py": "fixture"}, "dirty": {}}
+    monkeypatch.setattr(stages, "product_tree_snapshot",
+                        lambda _base: visible_tree)
     monkeypatch.setattr(stages, "protected_authority_snapshot", lambda _base: {})
     # This identity-memoization fixture has no lifecycle pointer by design;
     # make that absent story explicit without masking authoritative read errors.
@@ -777,16 +884,16 @@ def test_run_stage_proof_memoizes_tool_probe_by_prefix_and_environment(
     monkeypatch.setattr(stages, "_proof_receipt", lambda *_args: {})
     monkeypatch.setattr(stages, "_store_proof_receipt", lambda *_args: None)
     monkeypatch.setattr(stages, "_run_verify_commands", lambda *_args: None)
-    monkeypatch.setattr(stages, "_run_required_tests", lambda *_args: [])
+    monkeypatch.setattr(stages, "_run_required_tests", lambda *_args: ([], []))
     stages.run_stage_proof(repo, "T1", task)
     assert len(state["calls"]) == 1
 
     memo = {}
     stages.proof_identity(
-        repo, task, "verify", product_tree={}, tool_probe_memo=memo,
+        repo, task, "verify", product_tree=visible_tree, tool_probe_memo=memo,
     )
     stages.proof_identity(
-        repo, task, "tests", product_tree={}, tool_probe_memo=memo,
+        repo, task, "tests", product_tree=visible_tree, tool_probe_memo=memo,
     )
     assert len(state["calls"]) == 2
 
@@ -795,11 +902,11 @@ def test_run_stage_proof_memoizes_tool_probe_by_prefix_and_environment(
         "uv run --with pytest --with pytest-xdist python -m pytest tests/a.py"
     )
     stages.proof_identity(
-        repo, changed, "verify", product_tree={}, tool_probe_memo=memo,
+        repo, changed, "verify", product_tree=visible_tree, tool_probe_memo=memo,
     )
     assert len(state["calls"]) == 3
     monkeypatch.setenv("PYTHONPATH", "different-probe-environment")
     stages.proof_identity(
-        repo, task, "verify", product_tree={}, tool_probe_memo=memo,
+        repo, task, "verify", product_tree=visible_tree, tool_probe_memo=memo,
     )
     assert len(state["calls"]) == 4

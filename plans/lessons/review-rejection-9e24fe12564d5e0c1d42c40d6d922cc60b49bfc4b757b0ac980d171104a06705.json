@@ -1,0 +1,10 @@
+{
+  "applies_to": [
+    "docs/specs/**"
+  ],
+  "generated_by": "Codex Root (delegated coordinator)",
+  "lesson": "Not a defect (evidence docs/specs/dual-coordinator-parity.md:76): Accepted native policy deliberately removes mechanical native authorship attribution and forbids process/session/PID/token machinery. The distinct real narrowed-scope admission defect remains open and will be fixed using the existing preparation row, without recreating prohibited caller attribution. — raised as \"Bind narrowed scope to the actual native subagent (docs/specs/dual-coordinator-parity.md:76): After `forge delegate --scope` prepares a native dispatch, another\"",
+  "severity": "medium",
+  "source": "review reject LEAN-WORKFLOW security",
+  "topic": "rejected-review-finding-security"
+}
