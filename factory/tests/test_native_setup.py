@@ -476,6 +476,11 @@ def test_recovery_profile_override_keeps_the_complete_routed_registry():
     assert config["approval_policy"] == "never"
 
 
+def test_recovery_profile_override_keeps_only_three_forge_profiles():
+    """Keep the approved task contract bound to the complete registry check."""
+    test_recovery_profile_override_keeps_the_complete_routed_registry()
+
+
 def _remove_session_start_source(config, missing):
     document = json.loads(config.read_text(encoding="utf-8"))
     document["hooks"]["SessionStart"][0]["matcher"] = "|".join(
