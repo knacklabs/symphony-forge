@@ -36,6 +36,30 @@ only, lessons are one line each with the text left in the tree, and rejected
 findings are not repeated as lessons. The journal ships with the task: the
 proof commit and the marker commit carry it.
 
+The proof is written to the same file. Every verify command and required
+test records its exit, elapsed time and output tail as a `proof` entry, so a
+failure is read from the record and not from a scrollback. A command that
+fails once and passes on an immediate re-run is a `flake` entry carrying its
+first output; the seal refuses it until the test is fixed or the coordinator
+records `flake-accepted` for that command with a reason (T4 re-ran one
+2-second cleanup grace four times, blindly). On Windows the proof refuses to
+start below the free commit memory `harness.yaml` sets (`proof:
+min_free_memory_gb`), instead of dying twenty minutes in.
+
+The worker asks for what it cannot run. A proof the sandbox cannot execute
+(on Windows the profile caches and store-linked `node_modules` are
+unreadable by its restricted account) is requested with `forge proof run`;
+the harness waiting on that worker runs exactly that declared command on the
+host, writes the result under `.forge-cache/` where the worker reads it, and
+journals it. Nothing the worker types runs on the host. Worker caches live
+under `<worktree>/.forge-cache/`, excluded from Git.
+
+Scope is declared before the write. `forge stage amend-scope --path <p>
+--reason ...` records a path the coordinator has decided belongs to the task;
+the next write is admitted, the brief shows it and the measurement honours
+it, with no refusal, signal and resume between (T4, 14:03). The launch record
+carries the effective scope and the admission compares against it.
+
 ## Consequences
 
 - Nothing the coordinator records can fail to reach the worker without a
@@ -48,3 +72,7 @@ proof commit and the marker commit carry it.
   because the approved-input section it is compared against changed shape.
 - Lessons remain the durable cross-task ledger; per-task notes go to the
   journal, so the ledger stops growing with fix rounds.
+- `forge next` names the worker's last exit code and what its report cited,
+  from the journal, before proposing the next action.
+- A flake is never shipped silently: it is fixed, or accepted by name with a
+  reason that the journal keeps.

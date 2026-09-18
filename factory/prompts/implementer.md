@@ -52,7 +52,12 @@ Rules:
 - **One stage at a time (WORKFLOW.md Stage Loop).** Your leaf task is already
   active before you receive the brief. Implement only that task, run the
   required tests and verify commands yourself, report the changed files with
-  each command's summary line (a test you did not run is not passing), then
+  each command's summary line (a test you did not run is not passing). A
+  proof your sandbox cannot run (unreadable caches, a bundler that walks
+  above the worktree): `python3 factory/scripts/forge.py proof run --id
+  <test id>` or `--verify "<command>"` — the harness runs that declared
+  command on the host while you wait and prints its output; never report
+  "cannot run here" without having asked. Then
   return. Do not run
   autoreview, `git add`, `git commit`, `forge stage done`, `pr_ready.py`, or
   start another stage; the orchestrator performs those steps after handoff.
@@ -128,5 +133,9 @@ Rules:
   The orchestrator records the story-wide testing artifact after all sequential
   stages are complete.
 - Before handoff, inspect the final diff and report changed files, test results,
-  assumptions, and any remaining gap. Do not modify `.factory` evidence files
-  directly; assumption and signal commands remain the sanctioned exceptions.
+  assumptions, and any remaining gap. Your brief carries the task journal
+  (decision 0080): the entries the coordinator recorded since your last launch
+  are the instructions; end the report with `acted on: J-<n>, J-<m>` naming
+  the entries you acted on, and name any you could not. Do not modify `.factory`
+  evidence files directly; assumption, signal and `proof run` commands remain
+  the sanctioned exceptions.

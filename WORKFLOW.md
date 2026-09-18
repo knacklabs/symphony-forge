@@ -442,7 +442,11 @@ sequence a JIT contract loop for every pending task:
     line, never guessed; "cannot verify from the diff" is not a verdict. One Codex helper call publishes one
     immutable raw-plus-three-lens generation, then selects its task-scoped
     pointer last. Before closing the stage, `close` requires complete task-owned
-    automated proof and conditional functional proof.
+    automated proof and conditional functional proof. Each proof command's
+    exit and output tail land in the task journal (0080); a command that
+    fails once and passes on its immediate re-run is a recorded FLAKE that
+    refuses the seal until the test is fixed or `forge journal add <id> --kind
+    flake-accepted --command "<c>" --reason ...` accepts it by name.
 
     A run with no blocking (P0/P1) finding stamps the stage; non-blocking
     findings are recorded follow-ups. The coordinator sends all blocking
@@ -462,10 +466,13 @@ sequence a JIT contract loop for every pending task:
     a plan section or a sealed contract is not a defect: `forge review <id>
     --reject "<text>" --lens <l> --reason ... --cite
     <decision|contract|section> --by <agent>` records the rejection and the
-    settled contract. The one exception to re-delegating is a fix that cannot
-    be verified inside the companion sandbox (for example, it needs Docker or a
-    folder its account cannot read): use the bounded degraded route and record
-    the host exception.
+    settled contract. A proof the worker cannot run inside its sandbox (a
+    folder its account cannot read, a bundler that walks above the worktree)
+    is not a reason to stop re-delegating: the worker asks with `forge proof
+    run --id <test> | --verify "<command>"` and the harness waiting on it runs
+    that declared command on the host and returns the output (0080). The
+    bounded degraded route remains for a fix that needs the host itself (for
+    example Docker), with the host exception recorded.
 
     With clean proof and review, `close` measures the task, marks the stage done,
     writes the task marker, pushes, and opens the PR. It stops at the first
@@ -489,9 +496,11 @@ sequence a JIT contract loop for every pending task:
    changing them mid-stage re-grills nothing); the plan digest excludes the
    harness-rendered `<!-- forge:contract -->` block, which every task plan
    carries as the rendered, never hand-copied, copy of its contract.
-   Scope is widened with `forge stage amend-scope`, and the measure, the
-   delegate brief, the grill brief and the review brief all read the same
-   effective scope. The explicit verbs remain: `forge review <id>`,
+   Scope is widened with `forge stage amend-scope` -- after the fact from the
+   measured strays, or BEFORE the write with `--path <p> --reason ...` when the
+   coordinator has decided a path belongs to the task -- and the measure, the
+   worker's write admission, the delegate brief, the grill brief and the review
+   brief all read the same effective scope. The explicit verbs remain: `forge review <id>`,
    `forge stage done <id>`, `forge task pr-ready <id>`, and `forge task
    reopen <id> --review-fix`.
 
