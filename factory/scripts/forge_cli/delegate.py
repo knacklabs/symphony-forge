@@ -1122,7 +1122,7 @@ def _journal_sections(base: Path, story: str, task_id: str) -> str:
     """The task journal, the one channel both agents read (decision 0080).
 
     Two views rendered from the same file: the standing instructions (the
-    latest contract, every decision, note, scope change, refusal and accepted
+    latest contract, every decision, note, scope change, refusal and recorded
     flake), and everything appended since this worker's last launch (exits,
     its own earlier reports, proof output, signals). Review findings and
     their triage ride in the findings section above, from the same records.

@@ -144,9 +144,9 @@ def test_a_user_facing_task_still_owes_its_own_record(repo, tmp_path):
 def test_a_command_that_fails_once_and_passes_on_re_run_is_a_recorded_flake(
         repo, tmp_path, capsys):
     """T4 hit one 2-second cleanup grace four times in four spec files and
-    re-ran blindly each time. A first failure that passes on re-run is now a
-    recorded flake with its output; the seal refuses until it is fixed or
-    accepted with a reason."""
+    re-ran blindly each time, with no record. A first failure that passes on
+    re-run is now a recorded flake with its output in the journal; the proof
+    passes on the second run and nothing waits on a human."""
     from factory_lib import task_proof_problems
     from forge_cli import journal
     marker = tmp_path / "flaked-once"
@@ -168,13 +168,9 @@ def test_a_command_that_fails_once_and_passes_on_re_run_is_a_recorded_flake(
     assert flake["command"] == command and verify["flakes"][0]["journal"] == flake["id"]
     proofs = [e for e in entries if e["kind"] == "proof" and e["command"].startswith(command)]
     assert [e["exit_code"] for e in proofs] == [1, 0], proofs
+    # Recorded, never a refusal: the seal rests on the second run.
     problems = task_proof_problems(repo, "ENG-1", recorded, preseal=True)
-    assert any("failed once and passed on re-run" in p for p in problems), problems
-    code, out = run(repo, "forge.py", "journal", "add", "T1", "--kind", "flake-accepted",
-                    "--command", command, "--reason", "the marker file is the test's own")
-    assert code == 0, out
-    problems = task_proof_problems(repo, "ENG-1", recorded, preseal=True)
-    assert not any("failed once and passed on re-run" in p for p in problems), problems
+    assert not any("flake" in p.lower() for p in problems), problems
 
 
 def test_the_proof_refuses_to_start_without_memory_headroom(

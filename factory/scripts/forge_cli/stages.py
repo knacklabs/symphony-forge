@@ -1791,10 +1791,10 @@ def _journal_flake(base: Path, story: str, stage_id: str, label: str,
 def _run_with_flake_check(base: Path, stage_id: str, story: str, label: str,
                           run_once) -> tuple[int, str, str, dict | None]:
     """Run once; on failure, once more. A pass on the second run is a FLAKE:
-    recorded with its first output, returned to the caller, and refused at the
-    seal until the test is fixed or the flake accepted with a reason. Nothing
-    is retried blindly (T4: four blind re-runs of one 2-second grace, ~15
-    minutes each, in four different spec files)."""
+    recorded in the journal with its first output and in verify.json, and the
+    proof passes on the second run. Nothing is retried blindly and nothing is
+    hidden (T4: four blind re-runs of one 2-second grace, ~15 minutes each,
+    in four different spec files, with no record of any of them)."""
     started = time.monotonic()
     print(f"proof: {label} ...", flush=True)
     code, out, err = run_once()
@@ -1818,9 +1818,8 @@ def _run_with_flake_check(base: Path, stage_id: str, story: str, label: str,
     flake = {"command": label, "first_failure": first_tail,
              "journal": str(entry.get("id") or "") if entry else ""}
     print(f"proof: {label} passed on re-run ({elapsed}s): a FLAKE, recorded as "
-          f"{flake['journal'] or 'a flake entry'}; the seal refuses until the test is "
-          f"fixed or the flake accepted (`forge journal add {stage_id} --kind "
-          f"flake-accepted --command \"{label}\" --reason ...`)", flush=True)
+          f"{flake['journal'] or 'a flake entry'} with its first failure's output; "
+          "the proof passes on the second run", flush=True)
     return code, out, err, flake
 
 

@@ -50,7 +50,6 @@ KINDS: dict[str, tuple[tuple[str, ...], tuple[str, ...]]] = {
     "report": (("harness", "worker"), ("launch_id",)),
     "proof": (("harness",), ("command", "exit_code")),
     "flake": (("harness",), ("command",)),
-    "flake-accepted": (("coordinator", "human"), ("command", "reason")),
     "review": (("harness",), ("generation_id",)),
     "triage": (("coordinator",), ("finding", "verdict", "evidence")),
     "refusal": (("coordinator",), ("finding", "evidence")),
@@ -61,7 +60,7 @@ KINDS: dict[str, tuple[tuple[str, ...], tuple[str, ...]]] = {
 }
 # What every brief carries in full, however old: the instructions that stand.
 STANDING_KINDS = (
-    "contract", "decision", "note", "scope", "refusal", "flake-accepted", "triage",
+    "contract", "decision", "note", "scope", "refusal", "flake", "triage",
 )
 INLINE_LIMIT = 6000
 TAIL_LINES = 40

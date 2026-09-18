@@ -208,7 +208,7 @@ evolution:
       One append-only ledger per task that both agents read (decision 0080):
       the harness writes launches, exits, worker reports, proof output, review
       generations and scope; the coordinator writes notes, decisions, triage,
-      refusals and accepted flakes. Nothing in it is hand-written.
+      refusals. Nothing in it is hand-written.
     notes: >-
       The learn->apply loop: record after a repeated failure or accepted
       review finding; `forge lesson relevant` surfaces matching lessons

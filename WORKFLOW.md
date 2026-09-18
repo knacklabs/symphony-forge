@@ -444,9 +444,8 @@ sequence a JIT contract loop for every pending task:
     pointer last. Before closing the stage, `close` requires complete task-owned
     automated proof and conditional functional proof. Each proof command's
     exit and output tail land in the task journal (0080); a command that
-    fails once and passes on its immediate re-run is a recorded FLAKE that
-    refuses the seal until the test is fixed or `forge journal add <id> --kind
-    flake-accepted --command "<c>" --reason ...` accepts it by name.
+    fails once and passes on its immediate re-run is a recorded FLAKE with
+    its first output in the journal, and the proof passes on the second run.
 
     A run with no blocking (P0/P1) finding stamps the stage; non-blocking
     findings are recorded follow-ups. The coordinator sends all blocking

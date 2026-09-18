@@ -40,9 +40,10 @@ The proof is written to the same file. Every verify command and required
 test records its exit, elapsed time and output tail as a `proof` entry, so a
 failure is read from the record and not from a scrollback. A command that
 fails once and passes on an immediate re-run is a `flake` entry carrying its
-first output; the seal refuses it until the test is fixed or the coordinator
-records `flake-accepted` for that command with a reason (T4 re-ran one
-2-second cleanup grace four times, blindly). On Windows the proof refuses to
+first output, and the proof passes on the second run: nothing is re-run
+blindly and nothing is hidden, but nothing waits on a human either (T4
+re-ran one 2-second cleanup grace four times, with no record of any of
+them). On Windows the proof refuses to
 start below the free commit memory `harness.yaml` sets (`proof:
 min_free_memory_gb`), instead of dying twenty minutes in.
 
@@ -74,5 +75,5 @@ carries the effective scope and the admission compares against it.
   journal, so the ledger stops growing with fix rounds.
 - `forge next` names the worker's last exit code and what its report cited,
   from the journal, before proposing the next action.
-- A flake is never shipped silently: it is fixed, or accepted by name with a
-  reason that the journal keeps.
+- A flake is never hidden: the journal both agents read carries the first
+  failure's output, and the seal rests on the second run.

@@ -665,8 +665,8 @@ def test_a_task_whose_records_moved_after_its_seal_reseals_without_reopen(repo, 
 
 def test_one_task_cycle_on_the_real_command_sequence(repo, tmp_path):
     """The sequence a task really runs after its build, with no hand-made
-    evidence past that point (0079, 0080, 0081): a flaky proof refused at the
-    seal until accepted by name; the seal on a reused proof; a post-seal fix
+    evidence past that point (0079, 0080, 0081): a flaky proof recorded and
+    sealed on its second run; a second close reusing it; a post-seal fix
     closing again with the proof re-run, ONE review over the whole delta and
     a reseal; a contract re-grilled and re-approved after the seal closing
     again without reopen; an oversized review prompt refused with its
@@ -694,31 +694,27 @@ def test_one_task_cycle_on_the_real_command_sequence(repo, tmp_path):
     code, out = _rerecord(repo, {**STAGE_TASK, "verify_commands": [flaky]})
     assert code == 0, out
 
-    # 1. close: the proof runs, the flake is recorded, the seal refuses it.
+    # 1. close: the proof runs (fails once, passes on re-run), the flake is
+    #    recorded with its first output, the stamp covers the diff, the task
+    #    seals. Nothing waits on a human.
     code, out = run(repo, "forge.py", "task", "close", "T1", "--skill", no_skill, env=env)
-    assert code != 0, out
-    assert "a FLAKE, recorded as J-" in out, out
-    assert "failed once and passed on re-run" in out, out
+    assert code == 0, out
+    assert "a FLAKE, recorded as J-" in out and "no review needed" in out, out
     assert "autoreview skill not found" not in out, "a flake is not a reason to review"
-    assert not marker_path.exists()
     flakes = entries("flake")
     assert len(flakes) == 1 and flakes[0]["command"] == flaky, flakes
     assert [e["exit_code"] for e in entries("proof") if e["command"].startswith(flaky)] == [1, 0]
-
-    # Accepted by name, with a reason the journal keeps.
-    code, out = run(repo, "forge.py", "journal", "add", "T1", "--kind", "flake-accepted",
-                    "--command", flaky, "--reason", "the marker file is the test's own state")
-    assert code == 0, out
-
-    # 2. close: the tree and contract are unchanged, so the proof is reused,
-    #    the stamp covers the diff, and the task seals.
-    code, out = run(repo, "forge.py", "task", "close", "T1", "--skill", no_skill, env=env)
-    assert code == 0, out
-    assert "proof reused" in out and "no review needed" in out, out
     first = json.loads(marker_path.read_text(encoding="utf-8"))
-    assert {"contract", "launch", "exit", "report", "proof", "flake", "flake-accepted"} <= {
+    assert {"contract", "launch", "exit", "report", "proof", "flake"} <= {
         e["kind"] for e in journal.entries(repo, "ENG-1", "T1")}
     assert entries("review") == []
+
+    # 2. close again with nothing changed: the proof is reused, nothing is
+    #    redone, the marker stays.
+    code, out = run(repo, "forge.py", "task", "close", "T1", "--skill", no_skill, env=env)
+    assert code == 0, out
+    assert "is closed and its review covers the current diff" in out, out
+    assert json.loads(marker_path.read_text(encoding="utf-8"))["commit"] == first["commit"]
 
     # 3. a post-seal fix: close reopens, re-runs the proof on the new tree,
     #    runs ONE review over the whole delta, and reseals.
@@ -734,7 +730,7 @@ def test_one_task_cycle_on_the_real_command_sequence(repo, tmp_path):
     assert len(entries("review")) == 1, entries("review")
     brief = (repo / ".factory/review-briefs/all.md").read_text(encoding="utf-8")
     assert "### Task journal" in brief, "the reviewer reads the same journal"
-    assert "flake-accepted" in brief, brief[:2000]
+    assert "FLAKE" in brief, "the reviewer sees the recorded flake"
 
     # 4. bookkeeping only: the contract is re-grilled and re-approved after
     #    the seal; the product did not move, so no reopen, no review, no

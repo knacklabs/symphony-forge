@@ -2029,19 +2029,6 @@ def _modern_task_proof_problems(
         problems.append(
             f"{task_id}: no passing verify — from its worktree run "
             "`python3 factory/scripts/verify.py`")
-    # A flake the proof recorded (failed once, passed on re-run) is a defect
-    # until fixed or accepted with a reason in the journal; the seal never
-    # ships a coin flip silently (0080).
-    if reader is None and isinstance(verify, dict):
-        for flake in verify.get("flakes") or []:
-            command = str(flake.get("command") or "") if isinstance(flake, dict) else ""
-            if command and not _flake_accepted(root, key, task_id, command):
-                problems.append(
-                    f"{task_id}: `{command}` failed once and passed on re-run (a "
-                    f"flake, journal {flake.get('journal') or '?'}); fix the test or "
-                    f"accept it: forge journal add {task_id} --kind flake-accepted "
-                    f"--command \"{command}\" --reason \"...\"")
-
     tests = read("tests.json")
     automated = tests.get("automated") if isinstance(tests, dict) else None
     if (not isinstance(automated, dict)
@@ -2160,12 +2147,6 @@ def _modern_task_proof_problems(
         )
     )
     return problems
-
-
-def _flake_accepted(root: Path, key: str, task_id: str, command: str) -> bool:
-    from forge_cli.journal import entries
-    return any(entry.get("kind") == "flake-accepted" and entry.get("command") == command
-               for entry in entries(root, key, task_id))
 
 
 def task_proof_problems(

@@ -154,8 +154,8 @@ and checks the complete task-owned automated and conditional functional proof
 before it measures and closes the stage, writes the task marker, pushes and
 opens the PR. Every proof command's exit and output tail are journal entries
 the worker and the coordinator both read; a command that fails once and
-passes on re-run is a recorded flake the seal refuses until it is fixed or
-accepted by name (decision 0080). The lenses run concurrently by default; blocking findings are
+passes on re-run is a recorded flake with its first output in the journal;
+the proof passes on the second run (decision 0080). The lenses run concurrently by default; blocking findings are
 fixed in one delegated batch, committed, and `close` is rerun. Wait for that
 PR's CI and merge before starting the next task. Once every task marker and its
 proof are on trunk, record the story outcome and run `pr_ready.py`; no second
