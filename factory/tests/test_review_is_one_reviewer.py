@@ -48,10 +48,12 @@ args = sys.argv[1:]
 out = pathlib.Path(args[args.index("--json-output") + 1])
 base = args[args.index("--base") + 1]
 prompts = [args[i + 1] for i, a in enumerate(args) if a == "--prompt"]
-note = next((p for p in prompts if p.startswith("REVIEW GROUP")), "")
-match = re.match(r"REVIEW GROUP (\d+) OF (\d+)", note)
-label = f"group-{match.group(1)}" if match else "single"
-total = int(match.group(2)) if match else 1
+note = next((p for p in prompts if p.startswith("REVIEW GROUP") or p.startswith("REVIEW PASS")), "")
+match = re.match(r"REVIEW (GROUP|PASS) (\d+) OF (\d+)", note)
+label = f"{match.group(1).lower()}-{match.group(2)}" if match else "single"
+# Passes run one after another over the whole task; only groups (the old
+# parallel dispatch) ever waited for each other at a barrier.
+total = int(match.group(3)) if match and match.group(1) == "GROUP" else 1
 attempt = int(re.search(r"attempt(\d+)", out.name).group(1)) if "attempt" in out.name else 1
 seen = pathlib.Path(os.environ["FAKE_SEEN"])
 seen.mkdir(parents=True, exist_ok=True)
@@ -241,20 +243,52 @@ def test_a_diff_that_fits_is_one_reviewer_over_the_whole_diff_and_tree(
     assert "pnpm-lock.yaml" in generation["lenses"]["quality"]["reviewed_scope"]
 
 
-def test_a_prompt_over_the_limit_is_refused_with_its_composition_and_nothing_runs(
+def test_a_diff_over_the_limit_is_reviewed_in_passes_over_the_whole_task(
         repo, tmp_path, monkeypatch, capsys):
+    """Never file groups (0081), never a refusal: three product files that
+    cannot share one prompt are three passes, each with the whole brief and
+    the whole tree, each holding one file's diff, merged into one generation
+    whose verdicts are worst-wins across the passes that saw the files."""
+    from forge_cli import review_bundle
     _built(repo, tmp_path)
     monkeypatch.setenv("FAKE_SEEN", str(tmp_path / "seen"))
-    monkeypatch.setenv(PROMPT_ENV, "1")
+    monkeypatch.delenv(PROMPT_ENV, raising=False)
+    real_sizes = review_bundle.diff_bytes_by_path
+    monkeypatch.setattr(review_bundle, "diff_bytes_by_path",
+                        lambda worktree, base: {p: 300_000 for p in real_sizes(worktree, base)})
+    outcome = review_task(repo, "T1", skill=str(_fake_skill(tmp_path)), engine="claude")
+    printed = capsys.readouterr().out
+    assert "WARNING: the diff" in printed and "runs in 3 passes over the whole task" in printed
+    assert "usually two tasks" in printed
+    seen = {p.stem: json.loads(p.read_text()) for p in (tmp_path / "seen").glob("*.json")}
+    held = [seen[f"pass-{i}.attempt1"]["diff"] for i in (1, 2, 3)]
+    assert held == [["src/a.py"], ["src/b.py"], ["src/c.py"]], held
+    for record in (seen[f"pass-{i}.attempt1"] for i in (1, 2, 3)):
+        assert record["tree"]["src/a.py"] is not None, "every pass reads the whole tree"
+        assert any(p.startswith("REVIEW PASS") for p in record["prompts"])
+    assert _ledger_starts(repo) == 3
+    generation = _generation(repo)
+    raw = json.loads(base64.b64decode(generation["raw_result"]["data"], validate=True))
+    assert [p["label"] for p in raw["pass_reports"]] == ["chunk 1/3", "chunk 2/3", "chunk 3/3"]
+    verdicts = {v["contract_id"]: v["verdict"]
+                for v in generation["lenses"]["quality"]["contract_verdicts"]}
+    assert verdicts == {"C1": "implemented", "C2": "partial"}, "worst wins across passes"
+    assert outcome["blocking"] == 1
+
+
+def test_one_path_that_cannot_fit_a_pass_is_refused_as_generated_content(
+        repo, tmp_path, monkeypatch, capsys):
+    from forge_cli import review_bundle
+    _built(repo, tmp_path)
+    monkeypatch.setenv("FAKE_SEEN", str(tmp_path / "seen"))
+    monkeypatch.delenv(PROMPT_ENV, raising=False)
+    monkeypatch.setattr(review_bundle, "diff_bytes_by_path",
+                        lambda worktree, base: {"src/a.py": 10_000_000, "src/b.py": 10})
     with pytest.raises(SystemExit):
         review_task(repo, "T1", skill=str(_fake_skill(tmp_path)), engine="claude")
-    captured = capsys.readouterr()
-    printed = captured.out + captured.err
-    assert "against the tool's 0 KB limit" in printed
-    assert "never file groups (0081)" in printed
-    assert "Largest paths: " in printed and "src/" in printed
-    assert "split into" not in printed
-    assert not (tmp_path / "seen").exists() or not list((tmp_path / "seen").glob("*.json"))
+    printed = capsys.readouterr().out
+    assert "one path alone exceeds the room a review pass has" in printed
+    assert "src/a.py (10000 KB)" in printed and "noise list" in printed
     assert _ledger_starts(repo) == 0
 
 

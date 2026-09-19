@@ -1307,13 +1307,15 @@ def _close_codex_run(root: Path, run_id: str, returncode) -> None:
 
 def _skill_argv(skill: Path, base_sha: str, prompt_rel: str, json_out: Path,
                 engine: str, max_priority: str,
-                codex_bin: str | None = None) -> list[str]:
+                codex_bin: str | None = None, note: str = "") -> list[str]:
     argv = [
         sys.executable, str(skill), "--mode", "branch", "--base", base_sha,
         "--engine", engine, "--max-priority", max_priority,
         "--prompt-file", prompt_rel, "--dataset", REVIEW_DATASET_REL,
         "--json-output", str(json_out),
     ]
+    if note:
+        argv += ["--prompt", note]
     if engine == "codex":
         argv.extend([
             "--model", CODEX_REVIEW_MODEL, "--thinking", CODEX_REVIEW_THINKING,
@@ -1329,9 +1331,9 @@ def _skill_argv(skill: Path, base_sha: str, prompt_rel: str, json_out: Path,
 def _run_skill(skill: Path, worktree: Path, base_sha: str, prompt_rel: str,
                json_out: Path, engine: str, max_priority: str,
                ledger_root: Path | None = None, *, return_raw: bool = False,
-               codex_bin: str | None = None):
+               codex_bin: str | None = None, note: str = ""):
     argv = _skill_argv(skill, base_sha, prompt_rel, json_out, engine, max_priority,
-                       codex_bin)
+                       codex_bin, note)
     # The ledger goes to the REPO's control dir: the review worktree is removed
     # when the review ends and its control dir pruned with it, so rows written
     # there never reach `forge codex status`.
@@ -2116,15 +2118,27 @@ def review_task(base: Path, task_id: str, *, lens: str | None = None,
               f"{prompt_bytes // 1000} KB + diff {diff_bytes // 1000} KB over "
               f"{len(sizes)} path(s) = {estimate // 1000} KB of the tool's "
               f"{limit // 1000} KB", flush=True)
-        if estimate > limit:
-            largest = sorted(sizes.items(), key=lambda item: -item[1])[:5]
-            fail(f"review prompt would be {estimate // 1000} KB against the tool's "
-                 f"{limit // 1000} KB limit (brief {brief_bytes // 1000} KB, diff "
-                 f"{diff_bytes // 1000} KB over {len(sizes)} paths). A review is one "
-                 "reviewer over the whole diff, never file groups (0081): exclude "
-                 "generated files, trim what the brief carries, or split the task. "
-                 "Largest paths: "
-                 + ", ".join(f"{path} ({size // 1000} KB)" for path, size in largest))
+        # A diff that does not fit one prompt is reviewed in passes over the
+        # whole task, never dealt into file groups and never refused (0081):
+        # every pass reads the same brief and tree, only the diff bytes are
+        # split, and the passes merge into one generation. The number of
+        # passes depends on the diff alone; the brief is a function of the
+        # task (0080) and cannot shrink the room the way it did on T4.
+        from .review_passes import merge_pass_reports, pass_note, plan_passes
+        slices = [list(sizes)]
+        if estimate > limit and not args.lens:
+            slices = plan_passes(sizes, limit - brief_bytes - prompt_bytes - PROMPT_SLACK)
+            largest = sorted(sizes.items(), key=lambda item: -item[1])[:3]
+            print(f"WARNING: the diff ({diff_bytes // 1000} KB over {len(sizes)} paths) "
+                  f"does not fit one prompt; the review runs in {len(slices)} passes "
+                  "over the whole task. A diff this size is usually two tasks. "
+                  "Largest paths: "
+                  + ", ".join(f"{path} ({size // 1000} KB)" for path, size in largest),
+                  flush=True)
+        elif estimate > limit:
+            fail(f"a single-lens review prompt would be {estimate // 1000} KB against "
+                 f"the tool's {limit // 1000} KB limit; run the full review, which "
+                 "handles a diff this size in passes")
         print(f"== {name} review: releasing Codex over {len(scope)} path(s) "
               f"({base_sha[:7]}..{review_tip[:7]}, task tip {tip_sha[:7]}) ==",
               flush=True)
@@ -2133,15 +2147,35 @@ def review_task(base: Path, task_id: str, *, lens: str | None = None,
         helper_before, helper_file_before = _helper_identity(skill)
         # The launcher travels only when there is one, so a runner that knows
         # nothing of it (a test double, an older override) keeps working.
-        result = _run_skill(
-            skill, worktree, base_sha, prompts[name][0], tmp / f"{name}.json",
-            engine, args.max_priority, ledger_root=base, return_raw=not args.lens,
-            **({"codex_bin": codex_bin} if codex_bin else {}),
-        )
-        if args.lens:
-            reviewed = result
+        launch = dict(engine=engine, max_priority=args.max_priority, ledger_root=base,
+                      **({"codex_bin": codex_bin} if codex_bin else {}))
+        if len(slices) == 1:
+            result = _run_skill(
+                skill, worktree, base_sha, prompts[name][0], tmp / f"{name}.json",
+                return_raw=not args.lens, **launch)
+            if args.lens:
+                reviewed = result
+            else:
+                reviewed, raw_result = result
         else:
-            reviewed, raw_result = result
+            pass_results: list[dict] = []
+            for index, held in enumerate(slices, 1):
+                others = [path for path in sizes if path not in set(held)]
+                _require_git(worktree, "resetting the review tip for the next pass",
+                             "checkout", "-q", "--detach", review_tip)
+                restore_paths_to_base(
+                    worktree, base_sha, others,
+                    f"review pass {index}/{len(slices)}: other passes' paths at task base")
+                note = pass_note(index, len(slices), held, others, task)
+                print(f"== pass {index}/{len(slices)}: {len(held)} path(s), "
+                      f"{sum(sizes[p] for p in held) // 1000} KB ==", flush=True)
+                processed, _raw = _run_skill(
+                    skill, worktree, base_sha, prompts[name][0],
+                    tmp / f"{name}.pass-{index}.json", return_raw=True, note=note,
+                    **launch)
+                pass_results.append(processed)
+            reviewed = merge_pass_reports(pass_results)
+            raw_result = (json.dumps(reviewed, indent=2, sort_keys=True) + "\n").encode("utf-8")
         helper_after, helper_file_after = _helper_identity(skill)
         if helper_after != helper_before or helper_file_after != helper_file_before:
             fail("autoreview helper identity changed during the review; nothing published")

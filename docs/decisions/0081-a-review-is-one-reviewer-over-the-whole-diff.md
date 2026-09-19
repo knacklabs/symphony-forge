@@ -27,10 +27,16 @@ context under one command and one-file context under another.
 A review is one reviewer over the whole diff with the whole tree readable
 (0076). The harness measures the prompt it is about to send (brief, prompt
 text, diff bytes per path) and prints the composition on every run. A prompt
-over the tool's limit is refused with that composition and the largest paths,
-never dealt into groups: the operator excludes generated files, trims what
-the brief carries (0080 keeps it a function of the task), or splits the task,
-which is what the plan grill asked for in the first place. Lock and generated
+over the tool's limit is never dealt into groups and, since 2026-09-19,
+never refused either: the harness reviews the diff in passes over the whole
+task. Every pass reads the same brief, contracts and journal with the whole
+tree readable; only the diff bytes are split, into contiguous slices in
+git's order; a pass judges findings on what it holds and gives verdicts only
+for contracts bound (`lands_in`, 0082) to files it holds or bound to none;
+the passes merge into one generation with one stamp, worst verdict wins. A
+warning names the pass count and the largest paths, because a diff that
+size is usually two tasks. The one refusal left is a single path that does
+not fit a pass by itself: generated content for the noise list. Lock and generated
 files are still put back to the task base in the review tip (0078); they ship
 and stay in scope, their bytes are not sent.
 

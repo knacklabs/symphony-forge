@@ -24,9 +24,10 @@ must attest `review-animations`. No attestation, no artifact.
 Contract: `factory/prompts/reviewer.md`. One autoreview run in Codex reviews
 the task diff through three lenses in one pass, read-only inside the review
 worktree so it reads the code it judges (0076). The review is one reviewer
-over the whole diff, never file groups: a prompt the tool would chunk is
-refused with its composition (brief, prompt and diff bytes) so the task is
-split or the brief trimmed (0081); lock and generated files are not sent
+over the whole diff, never file groups: a diff too big for one prompt runs
+in passes that each hold the whole task and a slice of the diff, merged into
+one generation, with a warning that a diff that size is usually two tasks
+(0081); lock and generated files are not sent
 (0078). The recorder validates
 `factory/schemas/review-set.json`,
 publishes one immutable generation containing the exact raw helper bytes and
