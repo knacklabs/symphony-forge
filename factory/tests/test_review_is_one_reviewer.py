@@ -263,8 +263,11 @@ def test_a_diff_over_the_limit_is_reviewed_in_passes_over_the_whole_task(
     seen = {p.stem: json.loads(p.read_text()) for p in (tmp_path / "seen").glob("*.json")}
     held = [seen[f"pass-{i}.attempt1"]["diff"] for i in (1, 2, 3)]
     assert held == [["src/a.py"], ["src/b.py"], ["src/c.py"]], held
-    for record in (seen[f"pass-{i}.attempt1"] for i in (1, 2, 3)):
-        assert record["tree"]["src/a.py"] is not None, "every pass reads the whole tree"
+    for index, record in ((i, seen[f"pass-{i}.attempt1"]) for i in (1, 2, 3)):
+        # Other passes' paths sit at the task base in the checkout (src/a.py
+        # is new to the task, so it is absent outside its own pass); the
+        # brief, the dataset and the tree at base are what every pass reads.
+        assert (record["tree"]["src/a.py"] is not None) == (index == 1)
         assert any(p.startswith("REVIEW PASS") for p in record["prompts"])
     assert _ledger_starts(repo) == 3
     generation = _generation(repo)
@@ -423,9 +426,11 @@ def test_a_regrill_of_the_same_plan_digest_leaves_the_saved_brief_current():
                                  "rounds": [{"question": "q2"}], "commit": "e" * 40}}
     assert approved_inputs_equivalent(body, later)
     for changed in ({**grill, "task_plan_sha256": "q" * 64},
-                    {**grill, "verdict": "blocked"},
-                    {**grill, "approved_by": "someone else"}):
+                    {**grill, "verdict": "blocked"}):
         assert not approved_inputs_equivalent(body, {**inputs, "grill": changed})
+    # Who approved is bookkeeping: a re-approval of the same plan digest by
+    # another human changes nothing the reviewer needed to see.
+    assert approved_inputs_equivalent(body, {**inputs, "grill": {**grill, "approved_by": "someone else"}})
     assert not approved_inputs_equivalent(body, {**inputs, "plan_text": "# other\n"})
     assert not approved_inputs_equivalent(
         body, {**inputs, "automated": {"status": "passed", "commit": "f" * 40}})

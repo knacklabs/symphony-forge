@@ -12293,13 +12293,10 @@ def test_stage_loop_orders_execution_and_gates_pr_ready(repo, tmp_path):
     assert (repo / ".factory" / "stages.json").exists()
 
 
-def fake_companion_home(tmp_path: Path) -> Path:
-    home = tmp_path / "home"
-    script = home / ".claude/plugins/cache/openai-codex/codex/1.0.0/scripts/codex-companion.mjs"
-    script.parent.mkdir(parents=True, exist_ok=True)
-    # HOME points here for the launched forge, so the skills the launcher
-    # loads (ponytail) and the grill inlines (grilling) must be here too:
-    # mirror the machine's install, the same files doctor --fix put there.
+def mirror_installed_skills(home: Path) -> None:
+    """HOME points at a fake home for a launched forge, so the skills the
+    launcher loads (ponytail) and the grill inlines (grilling) must be there
+    too: the machine's install, the same files doctor --fix put there."""
     for name in ("ponytail", "grilling", "grill-me"):
         for source in (Path.home() / ".agents" / "skills" / name,
                        Path.home() / ".claude" / "skills" / name,
@@ -12309,6 +12306,13 @@ def fake_companion_home(tmp_path: Path) -> Path:
                 if not target.is_dir():
                     shutil.copytree(source, target)
                 break
+
+
+def fake_companion_home(tmp_path: Path) -> Path:
+    home = tmp_path / "home"
+    script = home / ".claude/plugins/cache/openai-codex/codex/1.0.0/scripts/codex-companion.mjs"
+    script.parent.mkdir(parents=True, exist_ok=True)
+    mirror_installed_skills(home)
     script.write_text(
         "process.stdout.write(JSON.stringify({ok:true, argv:process.argv.slice(2)}));\n"
     )

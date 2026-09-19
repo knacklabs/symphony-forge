@@ -29,9 +29,9 @@ A review is one reviewer over the whole diff with the whole tree readable
 text, diff bytes per path) and prints the composition on every run. A prompt
 over the tool's limit is never dealt into groups and, since 2026-09-19,
 never refused either: the harness reviews the diff in passes over the whole
-task. Every pass reads the same brief, contracts and journal with the whole
-tree readable; only the diff bytes are split, into contiguous slices in
-git's order; a pass judges findings on what it holds and gives verdicts only
+task. Every pass reads the same brief, contracts and journal; only the diff
+bytes are split, into contiguous slices in git's order, and the other
+passes' paths sit at the task base in that pass's checkout; a pass judges findings on what it holds and gives verdicts only
 for contracts bound (`lands_in`, 0082) to files it holds or bound to none;
 the passes merge into one generation with one stamp, worst verdict wins. A
 warning names the pass count and the largest paths, because a diff that

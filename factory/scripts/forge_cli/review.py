@@ -2147,12 +2147,11 @@ def review_task(base: Path, task_id: str, *, lens: str | None = None,
         helper_before, helper_file_before = _helper_identity(skill)
         # The launcher travels only when there is one, so a runner that knows
         # nothing of it (a test double, an older override) keeps working.
-        launch = dict(engine=engine, max_priority=args.max_priority, ledger_root=base,
-                      **({"codex_bin": codex_bin} if codex_bin else {}))
+        launch = {"ledger_root": base, **({"codex_bin": codex_bin} if codex_bin else {})}
         if len(slices) == 1:
             result = _run_skill(
                 skill, worktree, base_sha, prompts[name][0], tmp / f"{name}.json",
-                return_raw=not args.lens, **launch)
+                engine, args.max_priority, return_raw=not args.lens, **launch)
             if args.lens:
                 reviewed = result
             else:
@@ -2171,8 +2170,8 @@ def review_task(base: Path, task_id: str, *, lens: str | None = None,
                       f"{sum(sizes[p] for p in held) // 1000} KB ==", flush=True)
                 processed, _raw = _run_skill(
                     skill, worktree, base_sha, prompts[name][0],
-                    tmp / f"{name}.pass-{index}.json", return_raw=True, note=note,
-                    **launch)
+                    tmp / f"{name}.pass-{index}.json", engine, args.max_priority,
+                    return_raw=True, note=note, **launch)
                 pass_results.append(processed)
             reviewed = merge_pass_reports(pass_results)
             raw_result = (json.dumps(reviewed, indent=2, sort_keys=True) + "\n").encode("utf-8")

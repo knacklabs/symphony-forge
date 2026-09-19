@@ -7,7 +7,8 @@ from pathlib import Path
 
 from test_gates import (  # noqa: F401
     DECOMP, HARNESS, READY_TASK_FIELDS, STAGE_TASK, head, repo, run,
-    sign_off, intake, save_plan, stamp_and_commit, start_stage, write_in_scope,
+    sign_off, intake, save_plan, stamp_and_commit, start_stage, task_skeleton,
+    write_in_scope,
 )
 
 sys.path.insert(0, str(HARNESS / "factory" / "scripts"))
@@ -28,6 +29,8 @@ def test_the_recorder_accepts_a_claim_with_a_place_and_a_proof(repo, tmp_path):
     sign_off(repo)
     intake(repo)
     save_plan(repo, tmp_path)
+    code, out = _record(repo, task_skeleton(STAGE_TASK))  # the skeleton first
+    assert code == 0, out
     code, out = _record(repo, {**STAGE_TASK, "plan_contracts": [CLAIM]})
     assert code == 0, out
     code, out = _record(repo, {**STAGE_TASK, "plan_contracts": [{**CLAIM, "proof": "no_such_test"}]})

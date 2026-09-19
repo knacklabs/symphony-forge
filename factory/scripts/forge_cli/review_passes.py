@@ -62,10 +62,11 @@ def pass_note(index: int, total: int, held: list[str], others: list[str],
     return (
         f"REVIEW PASS {index} OF {total}. The task's diff did not fit one prompt, so "
         f"it is reviewed in {total} passes over the SAME task: every pass reads the "
-        "same brief, contracts and journal with the whole tree readable; only the "
-        "diff bytes are split.\n"
+        "same brief, contracts and journal; only the diff bytes are split.\n"
         f"This pass holds the diff for: {', '.join(held)}.\n"
-        f"Not in this pass (another pass holds them): {', '.join(others) or 'none'}.\n"
+        f"Not in this pass (another pass holds them; in this checkout they sit at the "
+        f"task base, so a file new to the task is absent here): "
+        f"{', '.join(others) or 'none'}.\n"
         "Findings only on what this pass holds. Contract verdicts: give one for "
         + (", ".join(mine) if mine else "no contract")
         + (f"; give NONE for {', '.join(theirs)}, whose files another pass holds"

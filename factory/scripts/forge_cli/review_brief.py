@@ -372,7 +372,7 @@ def render_approved_inputs_section(inputs: dict) -> list[str]:
 # timestamps, rounds and commit but not what the reviewer needed to see, and
 # the review stamp binds to the diff alone (0079): it stales nothing.
 GRILL_IDENTITY = ("gate", "task_id", "verdict", "task_plan_sha256",
-                  "approved_task_plan_sha256", "approved_by")
+                  "approved_task_plan_sha256")
 
 
 def parse_approved_inputs_section(body: str, task_id: str) -> dict | None:
@@ -407,17 +407,28 @@ def parse_approved_inputs_section(body: str, task_id: str) -> dict | None:
         return None
 
 
-def approved_inputs_equivalent(body: str, inputs: dict) -> bool:
-    """True when the saved brief carries the current approved inputs, allowing
-    a grill re-recorded for the same plan digest (see GRILL_IDENTITY)."""
+def approved_inputs_difference(body: str, inputs: dict) -> str:
+    """Empty when the saved brief carries the current approved inputs, allowing
+    a grill re-recorded for the same plan digest (see GRILL_IDENTITY);
+    otherwise what differs."""
     saved = parse_approved_inputs_section(body, str(inputs.get("task_id") or ""))
     if saved is None:
-        return False
+        return "no approved-input section for this task in the saved brief"
+    if saved["plan_text"] != inputs.get("plan_text"):
+        return "the approved plan text changed after the review"
+    if saved["automated"] != inputs.get("automated"):
+        return "the task-owned automated report changed after the review"
     grill, current = saved["grill"], inputs.get("grill") or {}
-    return (saved["plan_text"] == inputs.get("plan_text")
-            and saved["automated"] == inputs.get("automated")
-            and isinstance(grill, dict)
-            and all(grill.get(k) == current.get(k) for k in GRILL_IDENTITY))
+    if not isinstance(grill, dict):
+        return "the saved grill record is not an object"
+    changed = [k for k in GRILL_IDENTITY if grill.get(k) != current.get(k)]
+    if changed:
+        return "the grill's " + ", ".join(changed) + " changed after the review"
+    return ""
+
+
+def approved_inputs_equivalent(body: str, inputs: dict) -> bool:
+    return approved_inputs_difference(body, inputs) == ""
 
 
 def _sealed_proof_section(base: Path, task: dict) -> list[str]:

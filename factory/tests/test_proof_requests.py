@@ -138,9 +138,11 @@ def test_the_delegate_wait_loop_serves_a_request_from_the_companion(repo, tmp_pa
     and exits only once the host has written the result."""
     task, counter = _counting_task(tmp_path)
     start_stage(repo, tmp_path, task)
+    from test_gates import mirror_installed_skills
     home = tmp_path / "asking-home"
     script = home / ".claude/plugins/cache/openai-codex/codex/1.0.0/scripts/codex-companion.mjs"
     script.parent.mkdir(parents=True, exist_ok=True)
+    mirror_installed_skills(home)
     script.write_text(
         "import fs from 'node:fs'; import path from 'node:path';\n"
         "const base = process.cwd();\n"
