@@ -99,8 +99,11 @@ def merge_pass_reports(passes: list[dict]) -> dict:
         set_aside.extend(copy.deepcopy(report.get("scope_rejected_findings") or []))
     incorrect = bool(findings) or any(
         report.get("overall_correctness") == "patch is incorrect" for report in passes)
+    # A pass report inside pass_reports carries the provider report and the
+    # helper's own fields, never review_status: that is the wrapper's alone.
     wrapper = {
-        "pass_reports": [{"label": f"chunk {index}/{total}", "report": report}
+        "pass_reports": [{"label": f"chunk {index}/{total}",
+                          "report": {k: v for k, v in report.items() if k != "review_status"}}
                          for index, report in enumerate(passes, 1)],
         "findings": findings,
         "overall_correctness": "patch is incorrect" if incorrect else "patch is correct",

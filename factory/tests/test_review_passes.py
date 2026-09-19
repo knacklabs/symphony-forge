@@ -37,6 +37,7 @@ def test_a_pass_is_told_what_it_holds_and_which_contracts_are_its():
 def _pass(findings, correctness="patch is correct", confidence=0.9, aside=None):
     report = {"findings": findings, "overall_correctness": correctness,
               "overall_explanation": "x", "overall_confidence": confidence,
+              "review_status": "findings" if findings else "scoped-clean",
               "provider_report": {"findings": findings, "overall_correctness": correctness,
                                   "overall_explanation": "x", "overall_confidence": confidence}}
     if aside:
@@ -57,6 +58,7 @@ def test_passes_merge_into_the_tools_own_chunked_shape():
                    correctness="patch is incorrect", confidence=0.8)
     merged = merge_pass_reports([first, second])
     assert [p["label"] for p in merged["pass_reports"]] == ["chunk 1/2", "chunk 2/2"]
+    assert all("review_status" not in p["report"] for p in merged["pass_reports"])
     assert [f["title"] for f in merged["findings"]] == ["[quality] Name it",
                                                          "[security] Token echoed"]
     assert merged["findings"][0]["body"].startswith("chunk 1/2:")
