@@ -651,8 +651,9 @@ Required run artifacts:
 
 Every evidence artifact is stamped with the commit it was recorded at.
 `pr_ready.py` refuses unstamped artifacts, artifacts spanning different
-commits, and evidence recorded before the latest code change (commits touching
-only `.factory/`, `plans/`, or `docs/` do not invalidate evidence).
+commits, and evidence whose proof-type inputs or substantive reviewed meaning
+changed. Canonicalized bookkeeping and timestamps preserve immutable original
+provenance when those inputs remain unchanged.
 
 On scoped story closeout, `pr_ready.py` writes `shipped.json` in place and
 keeps the story plan and evidence at their recorded paths. Legacy unscoped
@@ -686,9 +687,10 @@ stories still archive until `forge upgrade` migrates them.
    stamp-token delta, complete proof identities, and reviewed-meaning identity
    are unchanged
 9. run the Sol/high `functional-checker` when the task has `user_facing: true`
-10. record the shipped outcome with `./forge outcome set "<what changed>"`
-11. run `./forge task pr-ready <task-id>` for the task PR; after every task is
-    shipped, run `python3 factory/scripts/pr_ready.py` for story readiness
+10. after supported functional recording, rerun `./forge task close <task-id>` to
+    finish, seal, and open the task PR
+11. record the shipped outcome with `./forge outcome set "<what changed>"`, then
+    run `python3 factory/scripts/pr_ready.py` for story readiness
 
 ## PR Ready Contract
 A branch is PR-ready only when:

@@ -11,7 +11,7 @@ from pathlib import Path
 
 import pytest
 
-from test_gates import HARNESS, git, repo, run  # noqa: F401
+from test_gates import HARNESS, git, load_factory_lib, repo, run  # noqa: F401
 
 sys.path.insert(0, str(HARNESS / "factory" / "scripts"))
 from forge_cli import upgrade  # noqa: E402
@@ -903,6 +903,39 @@ def test_lean_migration_persists_resume_state_before_review_pointer(
                    for lens in upgrade.LEAN_LENSES)
 
 
+def test_lean_migration_final_manifest_publication_is_atomic(
+        repo: Path, monkeypatch: pytest.MonkeyPatch):
+    legacy = _legacy_round(repo)
+    migration = upgrade.preflight_lean_migration(repo)
+    assert migration is not None
+    manifest = repo / ".factory/migrations/lean-workflow-v2.json"
+    real_replace = upgrade.os.replace
+    interrupted_bytes: list[bytes] = []
+
+    def interrupt_final(source, destination):
+        if Path(destination) == manifest:
+            interrupted_bytes.append(manifest.read_bytes())
+            raise OSError("interrupted final manifest publication")
+        return real_replace(source, destination)
+
+    with monkeypatch.context() as patch:
+        patch.setattr(upgrade.os, "replace", interrupt_final)
+        with pytest.raises(OSError, match="final manifest publication"):
+            upgrade.apply_lean_migration(repo, migration)
+
+    assert len(interrupted_bytes) == 1
+    incomplete_bytes = interrupted_bytes[0]
+    incomplete = json.loads(incomplete_bytes)
+    assert "completed_at" not in incomplete
+    assert not legacy.exists()
+    assert manifest.read_bytes() == incomplete_bytes
+
+    resumed = upgrade.preflight_lean_migration(repo)
+    assert resumed is not None and resumed["resume"] is True
+    upgrade.apply_lean_migration(repo, resumed)
+    assert "completed_at" in json.loads(manifest.read_text(encoding="utf-8"))
+
+
 def test_lean_migration_resumes_after_one_fixed_lens_was_deleted(
         repo: Path, monkeypatch: pytest.MonkeyPatch):
     reviews = _sealed_fixed_review(repo)
@@ -1062,6 +1095,64 @@ def test_completed_lean_manifest_allows_later_runtime_versions(repo: Path):
     runtime.write_text(runtime.read_text(encoding="utf-8") + "\n# later runtime\n",
                        encoding="utf-8")
     assert upgrade.preflight_lean_migration(repo) is None
+
+
+def test_completed_lean_manifest_keeps_historical_generation_and_reads_current_pointer(
+        repo: Path):
+    _sealed_fixed_review(repo)
+    sealed = git(repo, "rev-parse", "HEAD")
+    migration = upgrade.preflight_lean_migration(repo)
+    assert migration is not None
+    upgrade.apply_lean_migration(repo, migration)
+    manifest_path = repo / ".factory/migrations/lean-workflow-v2.json"
+    saved = json.loads(manifest_path.read_text(encoding="utf-8"))
+    output = saved["outputs"][0]
+    reviews = (repo / ".factory" / "stories" / output["story"]
+               / "tasks" / output["task_id"] / "reviews")
+    historical_path = reviews / "generations" / f"{output['generation_id']}.json"
+    historical_bytes = historical_path.read_bytes()
+
+    (repo / "later.py").write_text("value = 'later'\n", encoding="utf-8")
+    git(repo, "add", "later.py")
+    git(repo, "commit", "-q", "-m", "later task proof")
+    later = git(repo, "rev-parse", "HEAD")
+    lib = load_factory_lib(repo)
+    historical = json.loads(historical_bytes)
+    candidate = {
+        **{key: value for key, value in historical.items()
+           if key != "generation_id"},
+        "inspected_commit": later,
+        "delta_id": lib.product_delta_digest(repo, sealed, later),
+        "upgrade": {
+            **historical["upgrade"],
+            "sealed_commit": later,
+        },
+    }
+    lib.publish_review_generation(repo, "S1", "T1", candidate)
+    marker = reviews.parent / "pr-ready.json"
+    marker.write_text(json.dumps({
+        "task_id": "T1", "branch": git(repo, "branch", "--show-current"),
+        "base_main_sha": sealed, "commit": later,
+        "review_base_sha": sealed, "sealed_at": "2026-09-16T00:00:00+00:00",
+    }), encoding="utf-8")
+    git(repo, "add", marker.relative_to(repo).as_posix(),
+        *[path.relative_to(repo).as_posix() for path in reviews.rglob("*.json")])
+    git(repo, "commit", "-q", "-m", "publish later task proof")
+
+    # A valid later selected generation and marker do not rewrite the migrated
+    # output row or its immutable historical generation bytes.
+    assert upgrade.preflight_lean_migration(repo) is None
+    assert historical_path.read_bytes() == historical_bytes
+
+    current_selection = reviews / "selected.json"
+    selection_bytes = current_selection.read_bytes()
+    current_selection.unlink()
+    with pytest.raises(SystemExit):
+        upgrade.preflight_lean_migration(repo)
+    current_selection.write_bytes(selection_bytes)
+    historical_path.write_bytes(b"{}\n")
+    with pytest.raises(SystemExit):
+        upgrade.preflight_lean_migration(repo)
 
 
 @pytest.mark.parametrize("family", ["old-hook-flag", "retired-forge-profile"])

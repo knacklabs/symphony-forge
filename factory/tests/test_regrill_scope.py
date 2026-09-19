@@ -662,6 +662,57 @@ def test_story_plan_reapproval_preserves_an_active_task_without_receipts(
     assert code != 0 and "Task plan approval required" in out, out
 
 
+def test_story_plan_predecessors_fail_closed_on_malformed_sibling_event(
+        repo: Path):
+    lib = _seed(repo)
+    current_plan = repo / "plans" / "active" / "TEST-1-test-plan.md"
+    current_digest = lib.plan_digest_without_assumptions(current_plan)
+    previous_digest = "a" * 64
+    lib.dump_json(lib.run_state_path(repo), {
+        "story": "TEST-1", "issue_key": "TEST-1",
+        "plan_file": "plans/active/TEST-1-test-plan.md",
+        "plan_status": "approved", "approved_plan_sha256": current_digest,
+    })
+    record = {
+        "runtime": "claude", "approved_by": "human-via-Claude",
+        "plan_kind": "story", "story": "TEST-1", "task": "",
+        "approved_plan_sha256": current_digest,
+        "approved_at": "2026-09-16T00:00:00+00:00",
+        "session_id": "session-current", "event_id": "event-current",
+        "previous_approved_plan_sha256": previous_digest,
+    }
+    approval = lib.evidence_path(
+        repo, "TEST-1", "plan-approval.json", for_write=True,
+    )
+    lib.dump_json(approval, record)
+    events = approval.parent / "approval-events"
+    events.mkdir(parents=True, exist_ok=True)
+
+    def replay_path(value: dict) -> Path:
+        key = hashlib.sha256(
+            f"{value['runtime']}\0{value['session_id']}\0"
+            f"{value['event_id']}".encode("utf-8")
+        ).hexdigest()
+        return events / f"{key}.json"
+
+    lib.dump_json(replay_path(record), record)
+    previous = {
+        **record,
+        "approved_plan_sha256": previous_digest,
+        "approved_at": "2026-09-15T00:00:00+00:00",
+        "session_id": "session-previous", "event_id": "event-previous",
+        "previous_approved_plan_sha256": "",
+    }
+    lib.dump_json(replay_path(previous), previous)
+    malformed = events / "bad.json"
+    malformed.write_bytes(b"{not-json\n")
+    before = {path.name: path.read_bytes() for path in events.glob("*.json")}
+
+    with pytest.raises(SystemExit, match="approval event bad.json"):
+        lib.approved_story_plan_predecessors(repo, current_digest)
+    assert {path.name: path.read_bytes() for path in events.glob("*.json")} == before
+
+
 def test_a_contract_change_still_stops_the_next_delegate(repo: Path, tmp_path):
     # The other half: the gate must still refuse when what was authorised
     # actually changed, or the fix has simply removed the gate.

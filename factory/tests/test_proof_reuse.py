@@ -377,10 +377,12 @@ def test_explicit_external_pytest_config_bytes_bind_reusable_proof(
         f"python -m pytest -c {config} tests/a.py -k test_a"
     )
     before = stages.proof_identity(repo, task, "tests")
-    assert before["reusable"] is True
+    # Config can inject collection paths and has no small complete parser here;
+    # dedicated selectors are the safe fallback.
+    assert before["reusable"] is False
     config.write_text("[pytest]\naddopts = -q --strict-markers\n", encoding="utf-8")
     after = stages.proof_identity(repo, task, "tests")
-    assert after["identity"] != before["identity"]
+    assert after["reusable"] is False
     config.unlink()
     assert stages.proof_identity(repo, task, "tests")["reusable"] is False
 
@@ -399,6 +401,90 @@ def test_ignored_pytest_collection_source_is_never_reusable_after_mutation(
     ignored.write_text("def test_local_only():\n    assert False\n", encoding="utf-8")
     after = stages.proof_identity(repo, task, "verify")
     assert after["reusable"] is False
+
+
+def test_pytest_addopts_external_collection_is_conservative_after_mutation(
+        repo: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    external = tmp_path / "test_external.py"
+    external.write_text("def test_external():\n    pass\n", encoding="utf-8")
+    monkeypatch.setenv("PYTEST_ADDOPTS", str(external))
+    task = {**_task(), "verify_commands": ["python3 -m pytest tests/a.py"]}
+
+    before = stages.proof_identity(repo, task, "verify")
+    assert before["reusable"] is False
+    external.write_text("def test_external():\n    assert False\n", encoding="utf-8")
+    after = stages.proof_identity(repo, task, "verify")
+    assert after["reusable"] is False
+
+
+def test_pytest_nested_config_external_collection_is_conservative_after_mutation(
+        repo: Path, tmp_path: Path):
+    source = repo / "tests" / "sub" / "test_a.py"
+    source.parent.mkdir(parents=True, exist_ok=True)
+    source.write_text("def test_a():\n    pass\n", encoding="utf-8")
+    external = tmp_path / "test_external.py"
+    external.write_text("def test_external():\n    pass\n", encoding="utf-8")
+    (source.parent / "pytest.ini").write_text(
+        f"[pytest]\naddopts = {external}\n", encoding="utf-8",
+    )
+    task = {**_task(), "verify_commands": [
+        "python3 -m pytest tests/sub/test_a.py",
+    ]}
+
+    before = stages.proof_identity(repo, task, "verify")
+    assert before["reusable"] is False
+    external.write_text("def test_external():\n    assert False\n",
+                        encoding="utf-8")
+    after = stages.proof_identity(repo, task, "verify")
+    assert after["reusable"] is False
+
+
+@pytest.mark.parametrize("override", [
+    "-o addopts={external}",
+    "--override-ini addopts={external}",
+    "-o=addopts={external}",
+    "--override-ini=addopts={external}",
+])
+def test_pytest_collection_override_is_conservative_after_mutation(
+        repo: Path, tmp_path: Path, override: str):
+    source = repo / "tests" / "test_a.py"
+    source.parent.mkdir(parents=True, exist_ok=True)
+    source.write_text("def test_a():\n    pass\n", encoding="utf-8")
+    external = tmp_path / "test_external.py"
+    external.write_text("def test_external():\n    pass\n", encoding="utf-8")
+    task = {**_task(), "verify_commands": [
+        f"python3 -m pytest tests/test_a.py {override.format(external=external)}",
+    ]}
+
+    before = stages.proof_identity(repo, task, "verify")
+    assert before["reusable"] is False
+    external.write_text("def test_external():\n    assert False\n",
+                        encoding="utf-8")
+    after = stages.proof_identity(repo, task, "verify")
+    assert after["reusable"] is False
+
+
+def test_pytest_directory_collection_refuses_external_symlink_but_regular_tree(
+        repo: Path, tmp_path: Path):
+    source = repo / "tests" / "test_regular.py"
+    source.parent.mkdir(parents=True, exist_ok=True)
+    source.write_text("def test_regular():\n    pass\n", encoding="utf-8")
+    task = {**_task(), "verify_commands": ["python3 -m pytest tests"]}
+    assert stages.proof_identity(repo, task, "verify")["reusable"] is True
+
+    external = tmp_path / "test_external.py"
+    external.write_text("def test_external():\n    pass\n", encoding="utf-8")
+    linked = repo / "tests" / "test_external.py"
+    linked.symlink_to(external)
+    try:
+        before = stages.proof_identity(repo, task, "verify")
+        assert before["reusable"] is False
+        external.write_text("def test_external():\n    assert False\n",
+                            encoding="utf-8")
+        after = stages.proof_identity(repo, task, "verify")
+        assert after["reusable"] is False
+    finally:
+        linked.unlink()
 
 
 @pytest.mark.parametrize("collection_path", ["sibling-tests", "."])
@@ -789,7 +875,7 @@ def test_canonical_verifier_binds_workflow_inputs_and_unknown_python_reruns(
         repo: Path):
     command = "python3 factory/scripts/verify.py"
     first = stages._proof_tool_identity(repo, command)
-    assert first["reusable"] is True
+    assert first["reusable"] is False
     assert first["canonical_verify_inputs"]
     state = load_factory_lib(repo).run_state_path(repo)
     state.parent.mkdir(parents=True, exist_ok=True)
@@ -876,8 +962,6 @@ def test_proof_identity_binds_environment_without_persisting_secrets(
 def test_proof_reuse_refuses_dependency_environment_and_configuration_drift(
         repo: Path, monkeypatch):
     state, _runner = _fake_uv_probe(repo, monkeypatch)
-    config = repo / "pytest.ini"
-    config.write_text("[pytest]\naddopts = -q\n", encoding="utf-8")
     generated = repo / "generated.json"
     generated.write_text('{"version": 1}\n', encoding="utf-8")
     task = {
@@ -926,8 +1010,11 @@ def test_proof_reuse_refuses_dependency_environment_and_configuration_drift(
     assert environment != baseline
     monkeypatch.delenv("PYTEST_ADDOPTS")
 
+    config = repo / "pytest.ini"
     config.write_text("[pytest]\naddopts = -x\n", encoding="utf-8")
-    assert identities() != baseline
+    assert all(stages.proof_identity(
+        repo, task, kind, product_tree=product,
+    )["reusable"] is False for kind in ("verify", "tests"))
     config.write_text("[pytest]\naddopts = -q\n", encoding="utf-8")
 
     generated.write_text('{"version": 2}\n', encoding="utf-8")
@@ -947,13 +1034,12 @@ def test_pytest_addopts_config_bytes_are_bound_without_persisting_paths(
     monkeypatch.setenv("PYTEST_ADDOPTS", f"-c '{config}'")
     command = "uv run --with pytest python -m pytest tests/a.py"
     first = stages._proof_tool_identity(repo, command)
-    assert first["reusable"] is True
+    assert first["reusable"] is False
     serialized = json.dumps(first, sort_keys=True)
     assert str(config) not in serialized
     config.write_text("[pytest]\naddopts = -x\n", encoding="utf-8")
     changed = stages._proof_tool_identity(repo, command)
-    assert changed["reusable"] is True
-    assert changed["pytest_config"] != first["pytest_config"]
+    assert changed["reusable"] is False
     config.unlink()
     assert stages._proof_tool_identity(repo, command)["reusable"] is False
 
@@ -966,18 +1052,21 @@ def test_pytest_addopts_config_bytes_are_bound_without_persisting_paths(
     assert stages._proof_tool_identity(repo, command)["reusable"] is False
 
 
+@pytest.mark.parametrize("config_name", [
+    "pytest.ini", ".pytest.ini", "pytest.toml", ".pytest.toml",
+    "pyproject.toml", "tox.ini", "setup.cfg",
+])
 def test_implicitly_discovered_pytest_config_bytes_are_bound(
-        repo: Path, monkeypatch):
+        repo: Path, monkeypatch, config_name: str):
     _fake_uv_probe(repo, monkeypatch)
-    config = repo / "pytest.ini"
+    config = repo / config_name
     config.write_text("[pytest]\naddopts = -q\n", encoding="utf-8")
     command = "uv run --with pytest python -m pytest tests/a.py"
     first = stages._proof_tool_identity(repo, command)
-    assert first["reusable"] is True
-    assert str(repo) not in json.dumps(first["pytest_config"], sort_keys=True)
+    assert first["reusable"] is False
     config.write_text("[pytest]\naddopts = -x\n", encoding="utf-8")
     changed = stages._proof_tool_identity(repo, command)
-    assert changed["pytest_config"] != first["pytest_config"]
+    assert changed["reusable"] is False
 
 
 def test_run_stage_proof_memoizes_tool_probe_by_prefix_and_environment(

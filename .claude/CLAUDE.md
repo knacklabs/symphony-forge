@@ -8,8 +8,7 @@ The user and host select the main coordinator model and reasoning; Forge-managed
 ## Role split (enforced)
 
 - Claude Code coordinates: discovery, planning, decisions, orchestration.
-- Codex executes: exploration, implementation, testing, AND the review — ONE
-  three-lens pass PER TASK, run by `./forge task close <id>` (Codex engine, never nested; records the task's proof under accepted 0011/0054/0069), WATCHED; loop triage→fixes→close until clean → PR → poll CI green. TRIAGE before every fix round (`./forge review <id> --triage`, 0075): open the cited line and the code it calls, prove real or not with a file:line, list every place the same contract applies; never relay a finding unread. Never stop at review, and never turn a finding into a menu for the human (AGENTS.md "Review findings are not a menu").
+- Codex executes: exploration, implementation, and testing. `./forge task close <id>` owns the unchanged externally maintained Autoreview helper and records ONE three-lens pass per task; its internal engine is helper policy, never a nested reviewer. WATCH it; loop triage→fixes→close until clean → PR → poll CI green. TRIAGE before every fix round (`./forge review <id> --triage`, 0075): open the cited line and the code it calls, prove real or not with a file:line, list every place the same contract applies; never relay a finding unread. Never stop at review, and never turn a finding into a menu for the human (AGENTS.md "Review findings are not a menu").
 - READ BEFORE YOU ASSERT (planner.md): open the type/enum/route/decision you write a rule about — docs record the design, the grill checks what was built. Delegate BREADTH only: `/codex:rescue` read-only, NEVER raw `codex exec`.
 
 ## codex-plugin-cc

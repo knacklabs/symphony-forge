@@ -3594,7 +3594,15 @@ def approved_story_plan_predecessors(
             break
         matches = []
         for path in event_dir.glob("*.json"):
-            candidate = load_json(path, default={})
+            try:
+                candidate = load_json(path, default={})
+            except (OSError, UnicodeError, json.JSONDecodeError) as exc:
+                # A malformed sibling is an authenticated-history failure. Do
+                # not skip it and grant authority from a different replay.
+                raise SystemExit(
+                    f"cannot authenticate story approval history: "
+                    f"approval event {path.name} is unreadable ({exc})"
+                ) from exc
             if (
                 isinstance(candidate, dict)
                 and candidate.get("approved_plan_sha256") == previous

@@ -2202,37 +2202,17 @@ def _canonical_test_command_for_task(base: Path, task: dict) -> str:
                        *producer])
 
 
-def _pytest_collection_paths(
-        base: Path, command: str, *, require_broad: bool = False,
-) -> list[Path] | None:
-    """Return explicit pytest collection roots for a shell-free command."""
-    try:
-        tokens, _environment, _identity = _proof_environment(
-            command, fixed_after_assignments=True,
-        )
-    except ValueError:
-        return None
-    if any(character in command for character in ";|&<>`\n") or "$(" in command:
-        return None
-    module = next((index for index, token in enumerate(tokens[:-1])
-                   if token == "-m" and tokens[index + 1] == "pytest"), -1)
-    if module < 0:
-        return None
-    args = tokens[module + 2:]
-    selectors = ("-k", "--keyword", "-m", "--markexpr", "--ignore",
-                 "--deselect", "--pyargs")
-    if require_broad and any(
-            token in selectors or token.startswith(
-                ("--ignore=", "--deselect=", "-k=", "--keyword=", "-m="))
-            for token in args):
-        return None
+def _pytest_collection_path_candidates(
+        base: Path, args: list[str],
+) -> list[tuple[Path, Path]] | None:
+    """Return lexical and resolved explicit pytest collection paths."""
     value_options = {
         "-c", "--config-file", "-o", "--override-ini", "--junitxml",
         "--maxfail", "-n", "--dist", "--durations", "--tb", "--color",
         "--capture", "--log-level", "--basetemp", "--cov", "--cov-report",
         "-k", "--keyword", "-m", "--markexpr", "--ignore", "--deselect",
     }
-    paths: list[Path] = []
+    paths: list[tuple[Path, Path]] = []
     index = 0
     while index < len(args):
         token = args[index]
@@ -2244,12 +2224,142 @@ def _pytest_collection_paths(
             continue
         raw = token.split("::", 1)[0]
         candidate = Path(raw)
+        lexical = candidate if candidate.is_absolute() else base / candidate
         resolved = (candidate if candidate.is_absolute() else base / candidate).resolve()
         if resolved.exists() or resolved == base.resolve() \
                 or base.resolve() in resolved.parents:
-            paths.append(resolved)
+            paths.append((lexical, resolved))
         index += 1
     return paths or None
+
+
+def _pytest_collection_paths(
+        base: Path, command: str, *, require_broad: bool = False,
+) -> list[Path] | None:
+    """Return explicit pytest collection roots for a shell-free command."""
+    try:
+        tokens, environment, _identity = _proof_environment(
+            command, fixed_after_assignments=True,
+        )
+    except ValueError:
+        return None
+    if any(character in command for character in ";|&<>`\n") or "$(" in command:
+        return None
+    module = next((index for index, token in enumerate(tokens[:-1])
+                   if token == "-m" and tokens[index + 1] == "pytest"), -1)
+    if module < 0:
+        return None
+    args = tokens[module + 2:]
+    if not _pytest_collection_inputs_known(base, args, environment):
+        return None
+    selectors = ("-k", "--keyword", "-m", "--markexpr", "--ignore",
+                 "--deselect", "--pyargs")
+    if require_broad and any(
+            token in selectors or token.startswith(
+                ("--ignore=", "--deselect=", "-k=", "--keyword=", "-m="))
+            for token in args):
+        return None
+    paths: list[Path] = []
+    for lexical, resolved in _pytest_collection_path_candidates(base, args) or ():
+        if _pytest_path_has_linked_component(base, lexical):
+            return None
+        paths.append(resolved)
+    return paths or None
+
+
+def _pytest_path_has_linked_component(base: Path, candidate: Path) -> bool:
+    """Reject a collection path whose Git-visible spelling follows a link."""
+    try:
+        relative = candidate.relative_to(base)
+    except ValueError:
+        return True
+    current = base
+    for part in relative.parts:
+        current /= part
+        if current.is_symlink():
+            return True
+    return False
+
+
+def _pytest_directory_has_linked_input(directory: Path) -> bool:
+    """Reject directory collection when any descendant follows a symlink."""
+    try:
+        for current, directories, files in os.walk(directory, followlinks=False):
+            current_path = Path(current)
+            if any((current_path / name).is_symlink() for name in directories):
+                return True
+            if any((current_path / name).is_symlink() for name in files):
+                return True
+    except OSError:
+        return True
+    return False
+
+
+def _pytest_collection_inputs_known(
+        base: Path, args: list[str], environment: dict[str, str],
+) -> bool:
+    """Reject collection reuse when pytest adds unknown collection inputs.
+
+    The normal direct command binds its explicit collection paths.  Pytest
+    configuration can add paths and collection rules through several formats
+    and multiline syntaxes; treating an unparsed config as empty would make a
+    stale receipt look complete.  Dedicated selectors are the conservative
+    fallback for any nonempty addopts or discovered/explicit config.
+    """
+    try:
+        if shlex.split(environment.get("PYTEST_ADDOPTS", "")):
+            return False
+    except ValueError:
+        return False
+    override_values: list[str] = []
+    index = 0
+    while index < len(args):
+        token = args[index]
+        if token in {"-o", "--override-ini"}:
+            if index + 1 >= len(args):
+                return False
+            override_values.append(args[index + 1])
+            index += 2
+            continue
+        if token.startswith("--override-ini="):
+            override_values.append(token.split("=", 1)[1])
+        elif token.startswith("-o="):
+            override_values.append(token[3:])
+        elif token.startswith("-o") and len(token) > 2:
+            override_values.append(token[2:])
+        index += 1
+    for value in override_values:
+        key, separator, setting = value.partition("=")
+        if (not separator or key.strip().casefold() != "junit_family"
+                or setting.strip().casefold() != "legacy"):
+            return False
+    config_requested = any(
+        token == "-c" or token == "--config-file"
+        or token.startswith("--config-file=")
+        or (token.startswith("-c") and token != "-c")
+        for token in args
+    )
+    if config_requested:
+        return False
+    config_names = (
+        "pytest.ini", ".pytest.ini", "pytest.toml", ".pytest.toml",
+        "pyproject.toml", "tox.ini", "setup.cfg",
+    )
+    scan_roots = [base.resolve()]
+    for lexical, _resolved in _pytest_collection_path_candidates(base, args) or ():
+        scan_roots.append(lexical if lexical.is_dir() else lexical.parent)
+    seen_roots: set[Path] = set()
+    for root in scan_roots:
+        current = root.absolute()
+        while current not in seen_roots:
+            seen_roots.add(current)
+            if any((current / name).exists() or (current / name).is_symlink()
+                   for name in config_names):
+                return False
+            if current == current.parent:
+                break
+            current = current.parent
+    return True
 
 
 def _proof_command_with_test_inputs(command: str, path: str, test_id: str) -> str:
@@ -3028,7 +3138,7 @@ def _proof_tool_identity(
                                or base.resolve() in candidate.parents)
                 visible_under = inside_base and not _ignored_pytest_sources(
                     base, candidate,
-                ) and any(
+                ) and not _pytest_directory_has_linked_input(candidate) and any(
                     path == candidate or candidate in path.parents
                     for path in visible
                 )
@@ -3038,9 +3148,19 @@ def _proof_tool_identity(
                 return {"command": tokens[0], "runner": runner,
                         "environment": environment_identity, "reusable": False}
     canonical_inputs = _canonical_verify_inputs(base) if canonical_verify else None
-    if canonical_verify and canonical_inputs is None:
-        return {"command": tokens[0], "runner": runner,
-                "environment": environment_identity, "reusable": False}
+    if canonical_verify:
+        if canonical_inputs is None:
+            return {"command": tokens[0], "runner": runner,
+                    "environment": environment_identity, "reusable": False}
+        # The verifier is an aggregate shell pipeline whose phase tools and
+        # effective environment are not completely modeled by this helper.
+        # Preserve workflow-input metadata, but never reuse its receipt.
+        return {
+            "command": tokens[0], "runner": runner,
+            "environment": environment_identity,
+            "canonical_verify_inputs": canonical_inputs,
+            "reusable": False,
+        }
     try:
         pytest_config = None
         pytest_semantics = None

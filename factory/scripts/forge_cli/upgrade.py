@@ -1979,16 +1979,14 @@ def _validate_completed_manifest(
         except (OSError, UnicodeDecodeError, json.JSONDecodeError, SystemExit) as exc:
             fail(f"Lean migration durable review output is invalid: {exc}")
         marker_data = load_json(root.parent / "pr-ready.json", default={})
-        if (generation.get("generation_id") != row["generation_id"]
-                or generation.get("story") != row["story"]
-                or generation.get("task_id") != row["task_id"]
-                or hashlib.sha256(generation_bytes).hexdigest()
-                != row["generation_sha256"]
-                or selection.get("story") != row["story"]
-                or selection.get("task_id") != row["task_id"]
-                or selection.get("generation_id") != row["generation_id"]
-                or selection.get("generation_sha256") != row["generation_sha256"]
-                or generation.get("inspected_commit") != marker_data.get("commit")):
+        historical_identity_ok = (
+            generation.get("generation_id") == row["generation_id"]
+            and generation.get("story") == row["story"]
+            and generation.get("task_id") == row["task_id"]
+            and hashlib.sha256(generation_bytes).hexdigest()
+            == row["generation_sha256"]
+        )
+        if not historical_identity_ok:
             fail("Lean migration durable review output identity is tampered")
         committed, marker_problem = _committed_task_marker(
             target, row["story"], row["task_id"], marker_data, None,
@@ -2734,6 +2732,9 @@ def apply_lean_migration(target: Path, migration: dict | None) -> None:
             target, manifest,
             destination_name=destination.name,
         )
+        incomplete_manifest_sha256 = hashlib.sha256(
+            destination.read_bytes(),
+        ).hexdigest()
         for candidate, expected_id, expected_sha in built_generations:
             generation, selection = _publish_upgrade_review(
                 target, migration, candidate, expected_id, expected_sha,
@@ -2791,7 +2792,19 @@ def apply_lean_migration(target: Path, migration: dict | None) -> None:
         completed["completed_at"] = now_iso()
         validate_payload(target, "lean-workflow-migration", completed)
         _require_single_link_manifest(target, destination)
-        dump_json(destination, completed)
+        with tempfile.TemporaryDirectory(prefix="forge-lean-complete-") as temporary:
+            built_completed = Path(temporary) / destination.name
+            dump_json(built_completed, completed)
+            if load_json(built_completed, default={}) != completed:
+                fail("Lean migration completion temporary readback differs")
+            completed_sha256 = hashlib.sha256(
+                built_completed.read_bytes(),
+            ).hexdigest()
+            _publish_converted_stage(
+                target, destination, built_completed,
+                original_sha256=incomplete_manifest_sha256,
+                output_sha256=completed_sha256,
+            )
         if load_json(destination, default={}) != completed:
             fail("Lean migration completion readback differs")
 

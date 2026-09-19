@@ -19,6 +19,7 @@ import os
 import re
 import shutil
 import signal
+import shlex
 import subprocess
 import sys
 import tempfile
@@ -22470,6 +22471,46 @@ def test_junit_case_attributed_file_or_classname_suffix():
     assert _junit_case_attributed(vitest, rel)
     assert _junit_case_attributed(withfile, rel)
     assert not _junit_case_attributed(wrong, rel)
+
+
+def test_verify_canonical_junit_preserves_shell_text_and_captures_direct_pytest(
+        repo: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    source = (HARNESS / "factory" / "scripts" / "verify.py").read_text(
+        encoding="utf-8",
+    )
+    function = next(
+        node for node in ast.parse(source).body
+        if isinstance(node, ast.FunctionDef)
+        and node.name == "canonical_junit_command"
+    )
+    namespace = {"Path": Path, "os": os, "re": re, "shlex": shlex}
+    exec(compile(ast.Module(body=[function], type_ignores=[]),
+                 "verify.py", "exec"), namespace)
+    report = tmp_path / "junit report.xml"
+    monkeypatch.setenv("FORGE_CANONICAL_JUNIT", str(report))
+    canonical = namespace["canonical_junit_command"]
+    direct = "python3 -m pytest tests/test_direct.py -q"
+    augmented = canonical(direct)
+    assert augmented.startswith(direct + " -o junit_family=legacy")
+    for command in (
+            "PYTEST_PATH=tests python3 -m pytest \"$PYTEST_PATH\"",
+            "python3 -m pytest \"$TEST_PATH\"",
+            "python3 -m pytest tests/test_direct.py && echo done",
+            "python3 -m pytest 'C:\\Tests\\test_direct.py'",
+            "python3 -m pytest C:/Tests/test_direct.py",
+            "python3 -m pytest %TEST_PATH%",
+    ):
+        assert canonical(command) == command
+
+    test_file = repo / "tests" / "test_direct.py"
+    test_file.parent.mkdir(parents=True, exist_ok=True)
+    test_file.write_text("def test_direct():\n    pass\n", encoding="utf-8")
+    result = subprocess.run(
+        augmented, cwd=repo, shell=True, capture_output=True, text=True,
+    )
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert report.is_file()
+    assert "test_direct" in report.read_text(encoding="utf-8")
 
 
 def test_canonical_junit_satisfies_exact_required_nodes_without_selector_rerun(

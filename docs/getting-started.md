@@ -285,7 +285,7 @@ stories may also advance in parallel. Story evidence ships in place under
 
 ```bash
 python3 factory/scripts/record_decomposition_from_json.py --input /tmp/decomposition.json
-python3 factory/scripts/update_run.py --phase implementing --plan-status approved --decomposition-status recorded
+python3 factory/scripts/update_run.py --phase implementing --decomposition-status recorded
 ```
 
 3. **Implement** — say: **"Implement it."** The orchestrator runs

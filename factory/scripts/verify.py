@@ -3,8 +3,10 @@ from __future__ import annotations
 
 import argparse
 import os
+import re
 import shlex
 import subprocess
+from pathlib import Path
 from factory_lib import (active_story_key, head_sha, gate, dump_json, now_iso,
                          proof_path, repo_root, run_cmd, run_state_path,
                          verify_state_path, load_json)
@@ -102,9 +104,20 @@ commands = [(phase, os.environ.get(variable) or "")
 
 
 def canonical_junit_command(command: str) -> str:
-    """Attach close-owned JUnit capture only to a direct pytest invocation."""
+    """Attach JUnit capture while preserving a recognized shell command."""
     report = os.environ.get("FORGE_CANONICAL_JUNIT", "")
     if not report:
+        return command
+    if os.name == "nt":
+        # shlex.quote emits POSIX shell syntax; dedicated selectors preserve
+        # native cmd/PowerShell semantics until a native augmenter exists.
+        return command
+    # Shell syntax and Windows quoting cannot be reconstructed faithfully with
+    # POSIX shlex.  Leave those commands byte-for-byte unchanged so dedicated
+    # selectors remain the proof path.
+    if any(character in command for character in ";|&<>`\n()$%^"):
+        return command
+    if re.search(r"(?:^|[\s\"'])[A-Za-z]:[\\/]", command):
         return command
     try:
         tokens = shlex.split(command)
@@ -117,9 +130,28 @@ def canonical_junit_command(command: str) -> str:
     module = tokens.index("-m")
     if module + 1 >= len(tokens) or tokens[module + 1] != "pytest":
         return command
-    return shlex.join([
-        *tokens, "-o", "junit_family=legacy", f"--junitxml={report}",
-    ])
+    prefix = tokens[:module]
+    while prefix and "=" in prefix[0] and not prefix[0].startswith("="):
+        prefix.pop(0)
+    if not prefix:
+        return command
+    executable = Path(prefix[-1]).name.lower()
+    direct_python = bool(re.fullmatch(
+        r"python(?:3(?:\.\d+)?)?(?:\.exe)?", executable,
+    ))
+    direct_uv = (
+        len(prefix) >= 2
+        and Path(prefix[0]).name.lower() in {"uv", "uv.exe"}
+        and prefix[1] == "run"
+        and direct_python
+    )
+    if not direct_python and not direct_uv:
+        return command
+    if any(token == "--junitxml" or token.startswith("--junitxml=")
+           for token in tokens):
+        return command
+    # Appending preserves assignments, quoting, and path spelling exactly.
+    return command + " -o junit_family=legacy --junitxml=" + shlex.quote(report)
 
 results = []
 all_ok = True
