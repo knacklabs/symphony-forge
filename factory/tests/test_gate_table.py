@@ -11,6 +11,7 @@ behave. Each level below is a level further from the change.
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 import sys
 import tomllib
@@ -69,15 +70,19 @@ def test_the_table_is_the_only_list_of_gates():
 #      yet", which is what pushed the coordinator off the ledgered path.
 # --------------------------------------------------------------------------
 
-def _grill(repo: Path, *args: str):
+def _grill(repo: Path, *args: str, env: dict[str, str] | None = None):
+    # Same rule as test_gates.run: the coordinator hosting pytest must not
+    # decide which dispatch contract a fixture exercises. Default to the Claude
+    # companion; native cases opt in with env={"FORGE_COORDINATOR": "codex"}.
     proc = subprocess.run(
         [sys.executable, str(repo / "factory" / "scripts" / "forge.py"),
          "grill", "run", *args, "--print-only"],
-        cwd=repo, capture_output=True, text=True)
+        cwd=repo, capture_output=True, text=True,
+        env={**os.environ, "FORGE_COORDINATOR": "claude", **(env or {})})
     return proc.returncode, proc.stdout + proc.stderr
 
 
-def _grill_launched(repo: Path, *args: str):
+def _grill_launched(repo: Path, *args: str, env: dict[str, str] | None = None):
     """For assertions about a SUCCESSFUL release.
 
     Composing the argv needs the Codex companion installed, which a CI runner
@@ -85,7 +90,7 @@ def _grill_launched(repo: Path, *args: str):
     companion exists; the same ground is covered in-process, with no install,
     by test_gate_table_e2e.py.
     """
-    code, out = _grill(repo, *args)
+    code, out = _grill(repo, *args, env=env)
     if code != 0 and "Codex companion installation" in out:
         pytest.skip("no Codex companion installed in this environment")
     return code, out
@@ -132,7 +137,8 @@ def test_every_grill_goes_out_cold_and_read_only(repo: Path):
     draft.write_text("# Draft\n", encoding="utf-8")
     for args in (("--gate", "plan", "--file", "draft-plan.md"),
                  ("--gate", "signoff")):
-        code, out = _grill_launched(repo, *args)
+        code, out = _grill_launched(
+            repo, *args, env={"FORGE_COORDINATOR": "codex"})
         assert code == 0, out
         assert "Write access: NO" in out
         descriptor = json.loads(out.splitlines()[-1])
