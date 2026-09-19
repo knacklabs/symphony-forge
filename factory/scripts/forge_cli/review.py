@@ -1322,13 +1322,14 @@ def _run_skill(skill: Path, worktree: Path, base_sha: str, prompt_rel: str,
 
 
 def _journal_verdict(base: Path, story: str, task_id: str, kind: str, finding,
-                     verdict: str, evidence: str, body: str) -> None:
+                     verdict: str, evidence: str, body: str, **extra) -> None:
     """A triage verdict or a refusal, with its evidence, in the task journal
     (0080): the next brief and the next review read it from there."""
     from .journal import append
     summary = (str(finding.get("summary", ""))[:160] if isinstance(finding, dict)
                else str(finding)[:160])
-    fields = {"finding": summary, "evidence": evidence}
+    fields = {"finding": summary, "evidence": evidence,
+              **{k: v for k, v in extra.items() if v not in (None, "", [])}}
     if kind == "triage":
         fields["verdict"] = verdict
     try:
@@ -1553,23 +1554,34 @@ def verify_evidence_line(base: Path, ref: str, *, flag: str) -> str:
     return f"{rel}:{line}"
 
 
-def triage_path(base: Path, story: str, task_id: str, *, for_write: bool = False) -> Path:
-    """Beside the task's review generations, never inside them: the
-    generations are immutable and validated field by field."""
-    from factory_lib import task_evidence_path
-    return task_evidence_path(base, story, task_id, "review-triage.json",
-                              for_write=for_write)
-
-
 def triage_records(base: Path, story: str, task_id: str) -> list[dict]:
-    data = load_json(triage_path(base, story, task_id), default={})
-    records = data.get("findings") if isinstance(data, dict) else None
-    return [r for r in records or [] if isinstance(r, dict)]
+    """Every triage ruling, from the one journal both agents read (0080). A
+    ruling used to live in review-triage.json beside a summary copy in the
+    journal; two records of one decision, and the harness acted on the one
+    nobody read. The latest ruling for a finding wins."""
+    from .journal import entries
+    out: list[dict] = []
+    for entry in entries(base, story, task_id):
+        if entry.get("kind") != "triage":
+            continue
+        out.append({
+            "lens": entry.get("lens", ""), "finding_key": entry.get("finding_key", ""),
+            "finding": entry.get("finding", ""), "verdict": entry.get("verdict", ""),
+            "evidence": entry.get("evidence", ""), "instances": list(entry.get("paths") or []),
+            "keep": entry.get("keep", ""), "reason": entry.get("reason", ""),
+            "triaged_by": entry.get("by_name", ""), "triaged_at": entry.get("at", ""),
+            "delta_id": entry.get("delta_id", ""),
+            "generation_id": entry.get("generation_id", ""), "task_id": task_id,
+            "journal_id": entry.get("id", ""),
+        })
+    return out
 
 
 def _finding_key(finding) -> str:
-    return (json.dumps(finding, sort_keys=True) if isinstance(finding, dict)
+    """A finding's identity for triage: the digest of its recorded JSON."""
+    text = (json.dumps(finding, sort_keys=True) if isinstance(finding, dict)
             else str(finding))
+    return hashlib.sha256(text.encode("utf-8")).hexdigest()
 
 
 def triage_for(records: list[dict], lens: str, finding, delta_id: str = "") -> dict | None:
@@ -1578,8 +1590,8 @@ def triage_for(records: list[dict], lens: str, finding, delta_id: str = "") -> d
     finding never dresses this round's. A rejection republishes the same delta
     under a new generation, so the other findings' triage survives it."""
     key = _finding_key(finding)
-    for record in records:
-        if record.get("lens") != lens or _finding_key(record.get("finding")) != key:
+    for record in reversed(records):  # the latest ruling for a finding wins
+        if record.get("lens") != lens or record.get("finding_key") != key:
             continue
         if delta_id and record.get("delta_id") not in (None, "", delta_id):
             continue
@@ -1693,18 +1705,15 @@ def triage_finding(base: Path, task_id: str, lens: str, match: str, *, real: boo
         "generation_id": str(generation.get("generation_id") or ""),
         "task_id": task_id,
     }
-    data = load_json(triage_path(base, story, task_id), default={})
-    if not isinstance(data, dict):
-        data = {}
-    key = _finding_key(finding)
-    kept = [r for r in data.get("findings") or [] if isinstance(r, dict)
-            and not (r.get("lens") == lens and _finding_key(r.get("finding")) == key)]
-    data["findings"] = kept + [record]
-    dump_json(triage_path(base, story, task_id, for_write=True), data)
+    # The ruling is one journal entry; the fix brief, the untriaged warning
+    # and the next review all read it from there (0080).
     _journal_verdict(base, story, task_id, "triage", finding, "real", proof,
                      f"Fix at EVERY one of: {', '.join(where)}."
                      + (f"\nKeep unchanged: {record['keep']}" if record["keep"] else "")
-                     + (f"\nWhy: {record['reason']}" if record["reason"] else ""))
+                     + (f"\nWhy: {record['reason']}" if record["reason"] else ""),
+                     lens=lens, finding_key=_finding_key(finding), paths=where,
+                     keep=record["keep"], reason=record["reason"], by_name=by.strip(),
+                     delta_id=record["delta_id"], generation_id=record["generation_id"])
     summary = (str(finding.get("summary", ""))[:160] if isinstance(finding, dict)
                else str(finding)[:160])
     left, total = untriaged_blocking(base, story, task_id)

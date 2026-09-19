@@ -29,6 +29,11 @@
     "journal_head": "str",
     "attachment": "str",
     "truncated": "bool",
-    "elapsed_s": "int"
+    "elapsed_s": "int",
+    "lens": "str",
+    "finding_key": "str",
+    "delta_id": "str",
+    "keep": "str",
+    "by_name": "str"
   }
 }

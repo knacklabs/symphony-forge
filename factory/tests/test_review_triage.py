@@ -38,8 +38,9 @@ def _t2_task(repo):
         protected_decomposition_state_path(repo), default={})["tasks"] if t["id"] == "T2")
 
 
-def _triage_file(repo):
-    return task_evidence_path(repo, "ENG-1", "T2", "review-triage.json")
+def _triage_entries(repo):
+    from forge_cli.journal import entries as journal_entries
+    return [e for e in journal_entries(repo, "ENG-1", "T2") if e["kind"] == "triage"]
 
 
 def _built(repo, tmp_path, blocking):
@@ -82,10 +83,12 @@ def test_a_real_triage_records_proof_and_instances_and_the_brief_carries_them(re
     assert "Triaged security finding as REAL" in out
     assert "fix at every one of: src/work.py:1, src/other.py:2" in out
     assert "1 of 1 blocking finding(s) triaged" in out
-    record = load_json(_triage_file(repo), default={})["findings"][0]
-    assert "stays editable" in record["finding"]["summary"] and record["verdict"] == "real"
-    assert record["instances"] == ["src/work.py:1", "src/other.py:2"]
-    assert record["triaged_by"] == "orchestrator"
+    # One record of the ruling, in the journal both agents read; no side file.
+    assert not task_evidence_path(repo, "ENG-1", "T2", "review-triage.json").exists()
+    record = _triage_entries(repo)[0]
+    assert "stays editable" in record["finding"] and record["verdict"] == "real"
+    assert record["paths"] == ["src/work.py:1", "src/other.py:2"]
+    assert record["by_name"] == "orchestrator" and record["lens"] == "security"
     assert record["delta_id"] == generation["delta_id"]
     assert record["generation_id"] == generation["generation_id"]
     # The verdict is in the task journal, where the next brief and review read it.
@@ -135,7 +138,7 @@ def test_a_triage_rests_on_lines_that_exist(repo, tmp_path):
                     "--instance", "src/work.py:9")
     assert code != 0 and "--instance src/work.py:9 is past the end" in out, out
     # Nothing was recorded by any refused attempt.
-    assert not _triage_file(repo).exists()
+    assert _triage_entries(repo) == []
     # Exactly one verdict flag.
     code, out = run(repo, "forge.py", "review", "T2", "--triage", "stays editable",
                     "--lens", "security", "--evidence", "src/work.py:1", "--by", "o")
