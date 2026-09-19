@@ -73,27 +73,27 @@ def test_griller_contract_names_the_ledgered_release(repo):
 
 
 def test_grill_skill_section_is_matt_pococks_grilling_and_nothing_else(repo, monkeypatch):
-    # The technique ships with the harness (factory/skills/grilling), so every
-    # clone and runner inlines the same text; `grill-me` is a 164-byte pointer
-    # ("Call the Skill tool with 'grilling'") and is never what the reader gets.
+    # The technique is the installed mattpocock/skills `grilling` (doctor --fix
+    # puts it in both runtimes; CI installs it before the suite). `grill-me` is
+    # a 164-byte pointer ("Call the Skill tool with 'grilling'") and is never
+    # what the reader gets; without the skill the grill is refused, not improvised.
     sys.path.insert(0, str(repo / "factory" / "scripts"))
     import forge_cli.delegate as delegate
     from forge_cli.grill import _grill_skill_section  # noqa: E402
 
-    section = _grill_skill_section(repo)
+    section = _grill_skill_section()
     assert "Interrogation technique" in section
     assert "design tree" in section, "Matt Pocock's grilling technique"
     assert "Call the Skill tool" not in section
-    # No stand-in: without the skill the grill is refused, not improvised.
     monkeypatch.setattr(delegate, "_skill_text", lambda *_a, **_k: "")
     with pytest.raises(SystemExit):
-        _grill_skill_section(repo)
+        _grill_skill_section()
 
 
 def test_every_write_launch_loads_ponytail_whatever_the_brief_says(repo, tmp_path, monkeypatch):
     """The launcher, not the brief's author, loads the skill: a bare brief
     still reaches the worker with ponytail as its first section, from the
-    copy vendored with the harness."""
+    installed mattpocock/skills pack."""
     sys.path.insert(0, str(repo / "factory" / "scripts"))
     import forge_cli.delegate as delegate
     from forge_cli.delegate import brief_path, compose_brief, launch_companion

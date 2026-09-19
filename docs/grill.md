@@ -1,6 +1,6 @@
 # Grilling: the coordinator's contract
 
-What the coordinating session does around a cold read: who may record which gate, why one cold read is the whole grill, what the reader is and is not told, and how the outcome is recorded. The cold reader's own contract (what to hunt at each gate) is `factory/prompts/griller.md`; the technique is the `grilling` skill vendored at `factory/skills/grilling/SKILL.md`.
+What the coordinating session does around a cold read: who may record which gate, why one cold read is the whole grill, what the reader is and is not told, and how the outcome is recorded. The cold reader's own contract (what to hunt at each gate) is `factory/prompts/griller.md`; the technique is Matt Pocock's `grilling` skill, installed by `./forge doctor --fix`.
 
 **Independence is the whole point.** A grill has value only when the party
 running it did NOT author the artifact under interrogation — a self-grill

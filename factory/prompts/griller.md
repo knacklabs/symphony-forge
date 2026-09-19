@@ -9,11 +9,11 @@ your fresh, passing record.
 Released only through `./forge grill run --gate <gate>` (how the coordinator releases, records and approves a grill is `docs/grill.md`). It is read-only, so it takes no delegation lock and can never satisfy `stage done`. Recording the gate stays yours — the cold read only returns findings.
 
 The technique is Matt Pocock's `grilling` skill — the design tree, the
-frontier, numbered questions with recommended answers — and nothing else. It
-ships with the harness (`factory/skills/grilling/SKILL.md`) and `./forge grill
-run` inlines it into the brief, so every reader gets the same text whatever
-its runtime resolves; a harness without it refuses to grill. This contract is
-the harness-side floor; `grilling` is the technique.
+frontier, numbered questions with recommended answers — and nothing else.
+`./forge doctor --fix` installs it (mattpocock/skills) into both runtimes and
+`./forge grill run` inlines it into the brief, so every reader gets the same
+text whatever its runtime resolves; a machine without it refuses to grill.
+This contract is the harness-side floor; `grilling` is the technique.
 
 `grill-me` is only the HUMAN alias: typing `/grill-me` redirects to `grilling`.
 It carries `disable-model-invocation: true`, so no model invokes it and none

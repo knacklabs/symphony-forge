@@ -39,18 +39,18 @@ def _artifact_text(base: Path, gate: str, task_id: str,
     return get_gate(gate).locate(base, task_id, file_arg)
 
 
-def _grill_skill_section(base: Path) -> str:
+def _grill_skill_section() -> str:
     """The grill technique is Matt Pocock's `grilling` skill, inlined from the
-    copy vendored with the harness (factory/skills/grilling). Nothing else is
-    ever substituted: `grill-me` is only the human's `/grill-me` alias (a
-    pointer at `grilling`), and a written stand-in would be a different
-    technique under the same name. Missing skill, refused grill."""
+    installed pack. Nothing else is ever substituted: `grill-me` is only the
+    human's `/grill-me` alias (a pointer at `grilling`), and a written
+    stand-in would be a different technique under the same name. Missing
+    skill, refused grill."""
     from .delegate import _skill_text
 
-    text = _skill_text("grilling", base)
+    text = _skill_text("grilling")
     if not text or "Call the Skill tool" in text:
-        fail("the `grilling` skill is missing (factory/skills/grilling/SKILL.md "
-             "ships with the harness) -- run `./forge doctor --fix`")
+        fail("the `grilling` skill is not installed in ~/.claude/skills or "
+             "~/.codex/skills -- run `./forge doctor --fix` (installs mattpocock/skills into ~/.claude/skills and mirrors it into ~/.codex/skills)")
     return ("## Interrogation technique\n\n"
             "Run the interrogation this way. The harness contract above "
             "is the floor; this is the technique.\n\n" + text)
@@ -212,7 +212,7 @@ def _compose_brief(base: Path, gate: str, label: str, artifact: str,
     contract = base / "factory" / "prompts" / "griller.md"
     contract_text = (contract.read_text(encoding="utf-8")
                      if contract.is_file() else "")
-    skill_section = _grill_skill_section(base)
+    skill_section = _grill_skill_section()
     return "\n".join([
         f"# Cold-read grill — gate: {gate} — {label}",
         "",

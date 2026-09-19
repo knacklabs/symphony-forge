@@ -953,14 +953,12 @@ def existing_modules(base: Path, scope: list[str]) -> list[str]:
     return found
 
 
-def _skill_text(skill: str, base: Path | None = None) -> str:
-    """A skill's text: the copy vendored with the harness first (every clone
-    and runner has it), then either runtime's user install."""
-    candidates = ([base / "factory" / "skills" / skill / "SKILL.md"] if base else []) + [
-        Path.home() / ".claude" / "skills" / skill / "SKILL.md",
-        Path.home() / ".codex" / "skills" / skill / "SKILL.md",
-    ]
-    for candidate in candidates:
+def _skill_text(skill: str) -> str:
+    """A skill's text from either runtime's install (mattpocock/skills, put
+    there by `forge doctor --fix`). Never a copy kept in the repo: one source,
+    refreshed by the same install everywhere."""
+    for candidate in (Path.home() / ".claude" / "skills" / skill / "SKILL.md",
+                      Path.home() / ".codex" / "skills" / skill / "SKILL.md"):
         if candidate.is_file():
             return candidate.read_text(encoding="utf-8")[:SKILL_INLINE_CHARS]
     return ""
@@ -1000,14 +998,13 @@ CONSTITUTION_BRIEF = (
 BINDING_SKILLS = ("ponytail",)
 
 
-def binding_skills_preamble(base: Path) -> str:
+def binding_skills_preamble() -> str:
     parts = []
     for skill in BINDING_SKILLS:
-        skill_text = _skill_text(skill, base)
+        skill_text = _skill_text(skill)
         if not skill_text:
-            fail(f"the `{skill}` skill is missing (factory/skills/{skill}/SKILL.md "
-                 "ships with the harness; ~/.claude/skills or ~/.codex/skills also "
-                 "serve) -- run `./forge doctor --fix`")
+            fail(f"the `{skill}` skill is not installed in ~/.claude/skills or "
+                 f"~/.codex/skills -- run `./forge doctor --fix` (installs mattpocock/skills into ~/.claude/skills and mirrors it into ~/.codex/skills)")
         parts.append(_section(
             f"{skill} skill -- loaded for this run, BINDING on every line you write",
             skill_text))
@@ -1289,7 +1286,7 @@ def compose_brief(base: Path, task: dict, *, write: bool, user_facing: bool,
         body += _section("Implementer contract", prompt.read_text(encoding="utf-8"))
     if user_facing:
         for skill in required_skills(base):
-            text = _skill_text(skill, base)
+            text = _skill_text(skill)
             body += _section(
                 f"Design rules — {skill} (inlined; your runtime cannot load it)",
                 text or f"NOT INSTALLED on this machine. `./forge doctor --fix` "
@@ -1319,7 +1316,7 @@ def launch_companion(
     launch_id = f"launch-{uuid.uuid4().hex}"
     runtime = coordinator_runtime()
     if write:
-        text = binding_skills_preamble(base) + text
+        text = binding_skills_preamble() + text
     if runtime == "codex" and background:
         fail("native Codex delegation is foreground-only in this release; "
              "background/read-only background is owned by NATIVE-LIFECYCLE")

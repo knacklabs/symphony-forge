@@ -70,6 +70,9 @@ jobs:
       # monkeypatch. Distribute per test (worksteal), never per file —
       # test_gates.py holds ~700 of the 890 tests, and loadfile pinned all of
       # them to one worker (23 min, barely better than serial).
+      - name: Install the skills the harness loads (mattpocock/skills)
+        if: steps.repo_kind.outputs.is_harness == 'true'
+        run: npx -y skills add mattpocock/skills -g --copy --all
       - name: Gate regression tests
         if: steps.repo_kind.outputs.is_harness == 'true'
         run: |
