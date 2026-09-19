@@ -670,9 +670,9 @@ def test_one_task_cycle_on_the_real_command_sequence(repo, tmp_path):
     sealed on its second run; a second close reusing it; a post-seal fix
     closing again with the proof re-run, ONE review over the whole delta and
     a reseal; a contract re-grilled and re-approved after the seal closing
-    again without reopen; an oversized review prompt refused with its
-    composition before any reviewer is launched. Every step is read back
-    from the one journal both agents see."""
+    again without reopen; a single file too big for any review pass refused
+    as generated content before any reviewer is launched. Every step is read
+    back from the one journal both agents see."""
     from test_gates import record_task_grill
     from forge_cli import journal
     env = _ship_ready(repo, tmp_path)
@@ -750,17 +750,21 @@ def test_one_task_cycle_on_the_real_command_sequence(repo, tmp_path):
     lib = load_factory_lib(repo)
     assert lib.task_proof_problems(repo, "ENG-1", task_for(repo, "T1")) == []
 
-    # 5. a diff whose prompt would not fit is refused with its composition,
-    #    before any reviewer is launched -- never split into file groups.
+    # 5. a diff that does not fit one prompt runs in passes (0081); the one
+    #    thing still refused is a single path that cannot fit a pass by
+    #    itself, which is generated content for the noise list -- and that
+    #    refusal launches no reviewer. The limit leaves room for the brief and
+    #    prompt (about 9 KB here) but not for this 6 KB file.
     write_in_scope(repo, "src/core.py", "version = 3\n# " + "x" * 6000 + "\n")
     git(repo, "add", "src/core.py")
     git(repo, "commit", "-qm", "a change too large for the prompt")
     code, out = run(repo, "forge.py", "task", "close", "T1", "--engine", "claude",
                     "--skill", str(skill),
-                    env={**review_env, "FORGE_REVIEW_PROMPT_BYTES": "4000"})
+                    env={**review_env, "FORGE_REVIEW_PROMPT_BYTES": "20000"})
     assert code != 0, out
-    assert "review prompt would be" in out and "never file groups (0081)" in out, out
-    assert "Largest paths" in out and "src/core.py" in out, out
+    assert "one path alone exceeds the room a review pass has" in out, out
+    assert "src/core.py" in out and "noise list" in out, out
+    assert "never file groups" not in out and "review prompt would be" not in out
     assert len(entries("review")) == 1, "no reviewer was launched"
 
 
