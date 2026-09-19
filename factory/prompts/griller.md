@@ -114,7 +114,11 @@ Five gates, five scopes:
   is the hard refusal point. Interrogate the next leaf task's just-authored
   contract in the re-recorded decomposition against the approved story plan,
   active decisions, and the actual repository state left by completed prior
-  stages. Hunt: assumed files or APIs that prior work did not produce, a
+  stages. Hunt: a `plan_contracts` entry that bundles more than one checkable
+  claim, or names no `lands_in` file and no `proof` test that fails while the
+  claim is unmet (0082: one claim, one place, one proof — a reviewer cannot be
+  "partial" about a test that passed, and every "partial" WF-BIO-1 T5 saw came
+  from paragraph-sized contracts), assumed files or APIs that prior work did not produce, a
   `write_scope` whose AREAS miss where the work must land or reach into areas
   the task has no business in (scope is directory prefixes plus named new
   files — a missing existing file under a declared prefix, a drifted line

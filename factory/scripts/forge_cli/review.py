@@ -362,7 +362,37 @@ def _lens_prompt(task: dict, lens: str, base: Path | None = None, *,
     return ("\n".join(lines).rstrip() + "\n").encode()
 
 
-def _combined_prompt(task: dict, *, repo_readable: bool = True) -> bytes:
+def proven_claims(base: Path, story: str, task: dict) -> dict[str, tuple[str, str]]:
+    """{contract id: (proof test id, test path)} for every claim whose bound
+    test passed in the recorded proof run (0082)."""
+    from factory_lib import task_evidence_path
+    verify = load_json(task_evidence_path(base, story, str(task.get("id") or ""),
+                                          "verify.json"), default={})
+    paths = {p.get("id"): str(p.get("path") or "") for p in task.get("required_tests") or []
+             if isinstance(p, dict)}
+    out: dict[str, tuple[str, str]] = {}
+    for claim in (verify.get("claims") if isinstance(verify, dict) else None) or []:
+        if isinstance(claim, dict) and claim.get("status") == "passed":
+            out[str(claim.get("id"))] = (str(claim.get("proof")), paths.get(claim.get("proof"), ""))
+    return out
+
+
+def _proven_claims_text(proven: dict[str, tuple[str, str]]) -> list[str]:
+    if not proven:
+        return []
+    return [
+        "PROVEN CLAIMS. The recorded proof run passed the test bound to each of "
+        "these contracts, so each is implemented unless you cite a line IN THAT "
+        "TEST showing it does not prove the claim. A partial or missing verdict on "
+        "a proven claim that cites no line in its test is set aside, never a "
+        "finding:", "",
+        *(f"- {cid}: proof `{test_id}` ({path})" for cid, (test_id, path) in sorted(proven.items())),
+        "",
+    ]
+
+
+def _combined_prompt(task: dict, *, repo_readable: bool = True,
+                     proven: dict[str, tuple[str, str]] | None = None) -> bytes:
     contracts = [
         str(contract.get("id")) for contract in task.get("plan_contracts") or []
         if isinstance(contract, dict) and isinstance(contract.get("id"), str)
@@ -401,6 +431,7 @@ def _combined_prompt(task: dict, *, repo_readable: bool = True) -> bytes:
         "Prefix every finding title with exactly one matching token: [quality] , "
         "[performance] , or [security] .", "", FINDING_FORM, "", LENS_FOCUS["quality"],
         VERDICT_RECORD_FORMAT.format(dataset=REVIEW_DATASET_REL), "",
+        *_proven_claims_text(proven or {}),
         LENS_FOCUS["performance"],
         LENS_FOCUS["security"], LEFTOVER_INSTRUCTION, "",
     ]
@@ -725,6 +756,7 @@ def _project_combined_report(
     task: dict, report: dict, scope: list[str], base_sha: str, tip_sha: str,
     skills_used: list[str], all_tasks: list[dict], started: dict[str, str],
     excluded: tuple[str, ...] = HARNESS_PREFIXES,
+    proven: dict[str, tuple[str, str]] | None = None,
 ) -> dict[str, dict]:
     if not isinstance(report, dict):
         fail("combined review result must be a JSON object")
@@ -820,6 +852,7 @@ def _project_combined_report(
             verdict_texts=[*(section["quality"] for section in sections),
                            *verdict_lines]
             if lens == "quality" else None,
+            proven=proven,
         )
     return artifacts
 
@@ -860,6 +893,7 @@ def rederive_combined_lenses(base: Path, candidate: dict) -> dict[str, dict]:
     artifacts = _project_combined_report(
         task, report, scope, base_sha, tip_sha, skills_used, all_tasks, started,
         excluded,
+        proven=proven_claims(base, str(candidate.get("story") or state.get("issue_key") or ""), task),
     )
     for artifact in artifacts.values():
         artifact.update({
@@ -1050,6 +1084,7 @@ def _verdict_texts(reviewed: dict) -> list[str]:
 def _contract_verdicts(
     task: dict, reviewed: dict, all_tasks: list[dict], started: dict[str, str],
     *, verdict_texts: list[str] | None = None,
+    proven: dict[str, tuple[str, str]] | None = None,
 ) -> list[dict]:
     """Verdicts for the reviewed task come from the reviewer; contracts of other
     tasks already done are attested as shipped at their own seal; contracts of
@@ -1068,6 +1103,15 @@ def _contract_verdicts(
             verdict, evidence = "partial", (
                 "the reviewer emitted no VERDICT line for this contract; "
                 "recorded as partial (fail-closed) — re-review or verdict it")
+        bound = (proven or {}).get(cid)
+        if bound and verdict != "implemented" and (not bound[1] or bound[1] not in evidence):
+            # The claim's own test passed (0082). A verdict against it that
+            # cites no line in that test is the reviewer's opinion about a
+            # paragraph, which is what made T5's verdicts flip round to round.
+            evidence = (f"proof {bound[0]} passed in the recorded proof run; the "
+                        f"reviewer's {verdict} verdict cited no line in {bound[1] or 'the test'} "
+                        f"and is set aside: {evidence}")
+            verdict = "implemented"
         out.append({"contract_id": cid, "verdict": verdict, "evidence": evidence})
     for other in all_tasks:
         oid = other.get("id")
@@ -1089,6 +1133,7 @@ def _artifact(
     tip_sha: str, skills_used: list[str], all_tasks: list[dict],
     started: dict[str, str], excluded: tuple[str, ...] = HARNESS_PREFIXES,
     *, verdict_texts: list[str] | None = None,
+    proven: dict[str, tuple[str, str]] | None = None,
 ) -> dict:
     findings = [
         f for f in report.get("findings", [])
@@ -1101,7 +1146,7 @@ def _artifact(
     verdicts: list[dict] = []
     if lens == "quality":
         verdicts = _contract_verdicts(
-            task, report, all_tasks, started, verdict_texts=verdict_texts)
+            task, report, all_tasks, started, verdict_texts=verdict_texts, proven=proven)
         # A partial or missing verdict on one of THIS task's contracts is a
         # blocking finding, fail-closed. The per-aspect recorder always made
         # it one; the combined generation (0069) counted only the reviewer's
@@ -2004,7 +2049,8 @@ def review_task(base: Path, task_id: str, *, lens: str | None = None,
     for name in prompt_names:
         rel = f"review-briefs/{args.id}.{name}.md"
         body = (_lens_prompt(task, name, base, repo_readable=readable) if args.lens
-                else _combined_prompt(task, repo_readable=readable))
+                else _combined_prompt(task, repo_readable=readable,
+                                      proven=proven_claims(base, story, task)))
         if not safe_factory_write_bytes(base, rel, body):
             fail(f"could not write .factory/{rel}")
         prompts[name] = (f".factory/{rel}", body)
@@ -2129,7 +2175,7 @@ def review_task(base: Path, task_id: str, *, lens: str | None = None,
         from .stages import stage_baseline
         artifacts = _project_combined_report(
             task, reviewed, scope, base_sha, tip_sha, skills_used, all_tasks,
-            started, excluded,
+            started, excluded, proven=proven_claims(base, story, task),
         )
         for artifact in artifacts.values():
             artifact.update({

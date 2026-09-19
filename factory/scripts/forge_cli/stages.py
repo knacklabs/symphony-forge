@@ -2082,6 +2082,15 @@ def record_stage_proof(base: Path, stage_id: str, task: dict, *, key: str,
             "recorded_by": STAGE_PROOF, "tree_digest": tree, "proof_key": key,
             "results": verify_results, "required_tests": test_results,
             "test_id_misses": list(test_id_misses), "flakes": list(flakes),
+            # Claims answered by their bound tests (0082): the reviewer only
+            # judges whether the test proves the claim.
+            "claims": [
+                {"id": str(contract.get("id")), "proof": str(contract.get("proof")),
+                 "status": next((str(r.get("status")) for r in test_results
+                                 if r.get("id") == contract.get("proof")), "not run")}
+                for contract in task.get("plan_contracts") or []
+                if isinstance(contract, dict) and contract.get("proof")
+            ],
         },
     )
     tests_path = task_evidence_path(base, story, stage_id, "tests.json", for_write=True)
