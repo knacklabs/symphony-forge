@@ -71,14 +71,60 @@ def _lessons_section(base: Path, task: dict) -> list[str]:
     if not hits:
         return []
     lines = ["### Lessons in force", "",
-             "Recorded lessons that apply to this task's paths. A finding that "
-             "contradicts one is not a defect unless it shows the lesson itself "
-             "is wrong; say so explicitly instead of re-raising it.", ""]
+             "Recorded lessons that apply to this task's paths, one line each; the "
+             "full text is under `plans/lessons/`. A finding that contradicts one "
+             "is not a defect unless it shows the lesson itself is wrong; say so "
+             "explicitly instead of re-raising it.", ""]
+    seen: set[str] = set()
     for lesson in hits:
         topic = str(lesson.get("topic", "")).strip()
-        body = str(lesson.get("lesson", "")).strip()
+        # Refusals live in the journal now; the rejection lesson stays as the
+        # generation's immutable evidence and is not repeated here. On
+        # WF-BIO-1 T4 the lesson text, pasted once per task section, was 243
+        # KB of a 472 KB brief.
+        if topic.startswith("rejected-review-finding-") or topic in seen:
+            continue
+        seen.add(topic)
+        body = " ".join(str(lesson.get("lesson", "")).split())
+        if len(body) > 240:
+            body = body[:237].rstrip() + "..."
         severity = str(lesson.get("severity", "")).strip()
         lines.append(f"- [{severity}] {topic}: {body}")
+    if len(lines) == 4:  # header only: no lesson survived the filter
+        return []
+    lines.append("")
+    return lines
+
+
+def _journal_section(base: Path, task: dict) -> list[str]:
+    """The reviewed task's standing journal entries (decision 0080): the
+    coordinator's decisions and notes, scope changes, triage verdicts and
+    refusals with their evidence."""
+    from .journal import entries, standing, task_journal_relpath
+    state = load_json(run_state_path(base), default={})
+    story = state.get("issue_key") or state.get("story") or ""
+    task_id = str(task.get("id") or "")
+    if not story or not task_id:
+        return []
+    items = [e for e in standing(entries(base, story, task_id))
+             if e.get("kind") != "contract"]
+    if not items:
+        return []
+    lines = ["### Task journal -- decisions, triage and refusals on this task", "",
+             "Recorded through `forge journal add` and the harness; the full record "
+             f"is `{task_journal_relpath(base, story, task_id)}`. A refused finding "
+             "carries the evidence that refuted it; raising it again without new "
+             "evidence is not a finding.", ""]
+    for entry in items:
+        meta = "; ".join(
+            f"{key}: {', '.join(map(str, entry[key])) if isinstance(entry.get(key), list) else entry.get(key)}"
+            for key in ("verdict", "evidence", "cite", "paths", "reason")
+            if entry.get(key) not in (None, "", []))
+        lines.append(f"- {entry.get('id')} [{entry.get('kind')}] {entry.get('title')}"
+                     + (f" -- {meta}" if meta else ""))
+        body = " ".join(str(entry.get("body") or "").split())
+        if body:
+            lines.append(f"  {body[:400]}{'...' if len(body) > 400 else ''}")
     lines.append("")
     return lines
 
@@ -151,6 +197,10 @@ def _approved_task_inputs(base: Path, task: dict) -> dict:
         digest = plan_digest_without_assumptions(plan)
     if not plan_text.strip():
         raise SystemExit(f"Review brief refused: task plan for {task_id} is empty.")
+    # The harness-rendered contract block duplicates the decomposition the
+    # brief already carries; the digest excludes it, so does the brief.
+    from factory_lib import strip_derived_sections
+    plan_text = strip_derived_sections(plan_text.encode("utf-8")).decode("utf-8")
 
     grill_path = task_root / "grills" / "tasks" / f"{task_id}.json"
     if treeish:
@@ -317,6 +367,70 @@ def render_approved_inputs_section(inputs: dict) -> list[str]:
     ]
 
 
+# The grill fields that identify WHAT was approved. A re-grill or a
+# re-approval of the same plan digest after a review changes the record's
+# timestamps, rounds and commit but not what the reviewer needed to see, and
+# the review stamp binds to the diff alone (0079): it stales nothing.
+GRILL_IDENTITY = ("gate", "task_id", "verdict", "task_plan_sha256",
+                  "approved_task_plan_sha256")
+
+
+def parse_approved_inputs_section(body: str, task_id: str) -> dict | None:
+    """The inverse of render_approved_inputs_section: the plan text, grill and
+    automated report a saved brief carries for `task_id`, or None."""
+    marker = f"- Task: `{task_id}`"
+    start = body.find(marker)
+    if start < 0:
+        return None
+    rest = body[start:]
+    blocks = {}
+    for key, heading in (("plan_text", "#### Full approved task plan"),
+                         ("grill", "#### Full grill and approval record"),
+                         ("automated", "#### Full task-owned automated report")):
+        at = rest.find(heading)
+        if at < 0:
+            return None
+        fence_start = rest.find("\n```", at)
+        if fence_start < 0:
+            return None
+        opener_end = rest.find("\n", fence_start + 1)
+        fence = rest[fence_start + 1:opener_end].rstrip("markdownjson")
+        close_at = rest.find("\n" + fence + "\n", opener_end)
+        if close_at < 0:
+            return None
+        blocks[key] = rest[opener_end + 1:close_at]
+    try:
+        return {"plan_text": blocks["plan_text"],
+                "grill": json.loads(blocks["grill"]),
+                "automated": json.loads(blocks["automated"])}
+    except ValueError:
+        return None
+
+
+def approved_inputs_difference(body: str, inputs: dict) -> str:
+    """Empty when the saved brief carries the current approved inputs, allowing
+    a grill re-recorded for the same plan digest (see GRILL_IDENTITY);
+    otherwise what differs."""
+    saved = parse_approved_inputs_section(body, str(inputs.get("task_id") or ""))
+    if saved is None:
+        return "no approved-input section for this task in the saved brief"
+    if saved["plan_text"] != inputs.get("plan_text"):
+        return "the approved plan text changed after the review"
+    if saved["automated"] != inputs.get("automated"):
+        return "the task-owned automated report changed after the review"
+    grill, current = saved["grill"], inputs.get("grill") or {}
+    if not isinstance(grill, dict):
+        return "the saved grill record is not an object"
+    changed = [k for k in GRILL_IDENTITY if grill.get(k) != current.get(k)]
+    if changed:
+        return "the grill's " + ", ".join(changed) + " changed after the review"
+    return ""
+
+
+def approved_inputs_equivalent(body: str, inputs: dict) -> bool:
+    return approved_inputs_difference(body, inputs) == ""
+
+
 def _sealed_proof_section(base: Path, task: dict) -> list[str]:
     """Render bounded identity for an already-sealed task in an --all brief."""
     state = load_json(run_state_path(base), default={})
@@ -366,15 +480,22 @@ def _task_section(
         "",
     ])
     if base is not None:
+        if not full_inputs:
+            # Another task is context for the reviewed one: its contracts and,
+            # when sealed, its identity -- not its amendments, rulings and
+            # lessons again. On WF-BIO-1 T4 those repeated per task section
+            # made the brief 472 KB of a 480 KB limit and the split collapsed
+            # to one file per group (decision 0080).
+            if sealed_context:
+                lines.extend(_sealed_proof_section(base, task))
+            return lines
         lines.extend(_amendments_section(base, task))
         lines.extend(_settled_section(base, task))
+        lines.extend(_journal_section(base, task))
         lines.extend(_lessons_section(base, task))
-        if full_inputs:
-            lines.extend(render_approved_inputs_section(
-                approved_inputs or _approved_task_inputs(base, task)
-            ))
-        elif sealed_context:
-            lines.extend(_sealed_proof_section(base, task))
+        lines.extend(render_approved_inputs_section(
+            approved_inputs or _approved_task_inputs(base, task)
+        ))
     return lines
 
 
@@ -398,8 +519,17 @@ def _amendments_section(base: Path, task: dict) -> list[str]:
              "recorded with a reason. Judge each: does the reason hold, and does "
              "the change belong to this task? A path that does not belong is a "
              "blocking finding.", ""]
-    lines += [f"- `{path}` -- {reasons.get(path) or '(no reason recorded)'}"
-              for path in entry["added_paths"]]
+    # One reason once, its paths under it: T4 recorded one 500-byte reason
+    # against thirty paths and the section repeated it thirty times (16 KB).
+    by_reason: dict[str, list[str]] = {}
+    for path in entry["added_paths"]:
+        by_reason.setdefault(reasons.get(path) or "(no reason recorded)", []).append(path)
+    for reason, paths in by_reason.items():
+        if len(paths) == 1:
+            lines.append(f"- `{paths[0]}` -- {reason}")
+        else:
+            lines.append(f"- {reason}")
+            lines += [f"  - `{path}`" for path in paths]
     lines.append("")
     return lines
 

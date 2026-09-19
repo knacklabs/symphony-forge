@@ -6,6 +6,12 @@
 # dev choice. Changes land by PR only.
 version: 1
 
+# Proof headroom: `task close` refuses to start the proof below this much free
+# commit memory (GB, Windows) instead of dying twenty minutes in (WF-BIO-1 T4,
+# three times). 0 disables the check.
+proof:
+  min_free_memory_gb: 2
+
 # The project's client sign-off, pinned to the ONE decision record that carries
 # it. Sign-off happens once for the project (WORKFLOW.md: the gate sits between
 # prototype and planning), so this is an identity, not a convention — every
@@ -189,6 +195,20 @@ evolution:
       - "planner-high"
       - "orchestrator"
       - "human"
+  journal:
+    artifact: ".factory/stories/<story>/tasks/<task>/journal.jsonl via ./forge journal add and the harness"
+    schema: "factory/schemas/journal-entry.json"
+    allowed:
+      - "harness"
+      - "coordinator"
+      - "worker"
+      - "reviewer"
+      - "human"
+    note: >
+      One append-only ledger per task that both agents read (decision 0080):
+      the harness writes launches, exits, worker reports, proof output, review
+      generations and scope; the coordinator writes notes, decisions, triage,
+      refusals. Nothing in it is hand-written.
     notes: >-
       The learn->apply loop: record after a repeated failure or accepted
       review finding; `forge lesson relevant` surfaces matching lessons

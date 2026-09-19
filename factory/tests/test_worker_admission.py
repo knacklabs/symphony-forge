@@ -272,6 +272,7 @@ def test_known_native_launch_reads_delegation_ledger_once(tmp_path, monkeypatch)
     monkeypatch.setattr(admission, "run_state_path", lambda _base: run_path)
     monkeypatch.setattr(admission, "task_digest", lambda _task: "task-digest")
     monkeypatch.setattr(stages, "stage_baseline", lambda *_a: "baseline")
+    monkeypatch.setattr(stages, "amended_scope_paths", lambda *_a: [])
     classifications = []
     monkeypatch.setattr(
         admission, "classify_scope_entries",
@@ -286,10 +287,12 @@ def test_known_native_launch_reads_delegation_ledger_once(tmp_path, monkeypatch)
 
     grant, reason = admission.live_worker_admission(tmp_path)
 
-    assert grant == {"kind": "stage", "scope": ["src/"]}
+    assert grant == {"kind": "stage", "scope": ["src/"], "launch_scope": ["src/"]}
     assert reason == ""
     assert calls == [tmp_path]
-    assert classifications == [(tmp_path, ["src/"], "baseline")]
+    # Two classifications: the scope in force (contract plus amendments) for
+    # the paths, and the launch's own recorded scope for the argv check.
+    assert classifications == [(tmp_path, ["src/"], "baseline")] * 2
     assert native_validations == [(rows[-1], tmp_path, ["src/"])]
 
     original_rows = [dict(row) for row in rows]
@@ -566,6 +569,50 @@ def test_any_protected_revocation_marker_denies_admission(
     finally:
         proc.terminate()
         proc.wait(timeout=10)
+
+
+def test_a_path_declared_after_launch_is_admitted_without_a_relaunch(repo, tmp_path):
+    """WF-BIO-1 T4, 14:03: the coordinator authorised the shared test helper,
+    the worker's write was still refused, and a signal, a resolve and a resume
+    followed. Admission reads the effective scope -- contract plus amendments
+    -- at the time of the write, so a `stage amend-scope --path` while the
+    worker runs is honoured by its next write."""
+    from forge_cli.stages import scope_amendments_path
+    brief, digest = _seed_contract(repo)
+    proc, token, launch_id = _start_worker(repo, tmp_path)
+    _record_launch(repo, proc, token, launch_id, brief, digest)  # scope: src/
+    scope_amendments_path(repo).write_text(json.dumps({"tasks": {"T1": {
+        "added_paths": ["test/database.ts"],
+        "amendments": [{"at": "2026-09-07T00:00:00Z", "by": "Nandu",
+                        "reason": "the cleanup grace is what blocks the seal",
+                        "added_paths": ["test/database.ts"], "intended": True,
+                        "measured_from": "", "measured_head": ""}],
+    }}}), encoding="utf-8")
+    output = _invoke_worker(proc, _patch("*** Add File: test/database.ts", "+grace"))
+    assert "deny" not in output, output
+
+
+def test_a_launch_recorded_with_the_amended_scope_is_admitted(repo, tmp_path):
+    """The launch record carries the union the delegate was admitted with;
+    the admission accepts it because every entry is one the task was given."""
+    from forge_cli.stages import scope_amendments_path
+    brief, digest = _seed_contract(repo)
+    scope_amendments_path(repo).write_text(json.dumps({"tasks": {"T1": {
+        "added_paths": ["test/database.ts"], "amendments": []}}}), encoding="utf-8")
+    proc, token, launch_id = _start_worker(repo, tmp_path)
+    _record_launch(repo, proc, token, launch_id, brief, digest,
+                   write_scope=["src/", "test/database.ts"])
+    output = _invoke_worker(proc, _patch("*** Add File: test/database.ts", "+grace"))
+    assert "deny" not in output, output
+
+
+def test_a_launch_scope_the_task_was_never_given_is_denied(repo, tmp_path):
+    brief, digest = _seed_contract(repo)
+    proc, token, launch_id = _start_worker(repo, tmp_path)
+    _record_launch(repo, proc, token, launch_id, brief, digest,
+                   write_scope=["src/", "secrets/"])
+    output = _invoke_worker(proc, _patch("*** Add File: src/new.py", "+new"))
+    assert "deny" in output and "not covered by its task" in output
 
 
 def test_contract_mutation_and_out_of_scope_move_are_denied(repo, tmp_path):

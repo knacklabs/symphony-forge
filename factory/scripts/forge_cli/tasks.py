@@ -332,11 +332,16 @@ def cmd_task_start(args: argparse.Namespace) -> None:
         plan_relative: plan_source,
         Path(".factory") / "stories" / key / "decomposition.json": decomposition_path,
     }
-    # Plan content can hydrate a successor workspace, but its source grill is
-    # approval authority and must be recorded afresh in the new target.
+    # The task plan travels, and so do the grill and approval bound to it:
+    # `stage start` judges their freshness against the hydrated contract and
+    # refuses by name when stale. Dropping them cost a fresh Codex cold read
+    # and a human approval per worktree, or a hand restore from the commit
+    # (WF-BIO-1 T4, 17 Sep 20:12).
     optional_sources = {
         Path(".factory") / "stories" / key / "task-plans" / f"{args.id}.md":
             evidence_path(base, key, f"task-plans/{args.id}.md"),
+        Path(".factory") / "stories" / key / "grills" / "tasks" / f"{args.id}.json":
+            evidence_path(base, key, f"grills/tasks/{args.id}.json"),
     }
     for relative, source in optional_sources.items():
         try:
@@ -385,8 +390,8 @@ def cmd_task_start(args: argparse.Namespace) -> None:
             for name in ("decomposition.json", "stages.json", "run.json")
         }
 
-        # A fetched trunk can contain this task's earlier approval record. Keep
-        # it in Git history, but require a fresh target grill and approval.
+        # A fetched trunk can contain an older copy of this task's grill; the
+        # hydrated record below replaces it, and a symlink is never followed.
         if target_grill.exists() or target_grill.is_symlink():
             target_grill.unlink()
         for relative, content in payloads.items():
@@ -556,6 +561,12 @@ def seal_task(base: Path, task_id: str) -> None:
             f"origin/{default_branch}", "HEAD",
         )
 
+    # Records re-recorded after a seal (a grill, an approval, the journal,
+    # the proof) must be in the tree the marker names; commit them first.
+    from .stages import commit_task_records, supersede_marker
+    records_commit = commit_task_records(base, key, args.id)
+    if records_commit:
+        print(f"Task {args.id}: records committed at {records_commit[:12]}.")
     commit = _require_git(
         base, "resolving task HEAD", "rev-parse", "--verify", "HEAD^{commit}",
     )
@@ -582,10 +593,34 @@ def seal_task(base: Path, task_id: str) -> None:
     )
     same_seal = False
     if product_unchanged:
+        # As the PR gate will read it: at the marker's commit. A record
+        # committed just now sits AFTER that commit, and the gate refuses a
+        # record changed after the marker, so records that moved reseal even
+        # when the proof still holds (a re-grill of the same plan digest is
+        # bookkeeping for the review, not for the marker).
         proof_problems = task_proof_problems(base, key, task)
-        if proof_problems:
-            fail("Task proof changed after its marker:\n- " + "\n- ".join(proof_problems))
-        same_seal = True
+        if not proof_problems and not records_commit:
+            same_seal = True
+        else:
+            if not proof_problems:
+                proof_problems = [f"task records committed at {records_commit[:12]}, "
+                                  "after the marker"]
+            # The product did not move but the proof did -- a grill or approval
+            # re-recorded after the marker, a journal entry, a refreshed proof.
+            # T4 (2026-09-18, 13:34): the old range ended at the first marker's
+            # commit, close called the task already closed, and only `task
+            # reopen` got out. Reseal instead: the old marker is superseded and
+            # the new one names the tree that holds the records.
+            previous = supersede_marker(base, args.id, reusable["commit"])
+            current = task_proof_problems(base, key, task, preseal=True)
+            if current:
+                supersede_marker(base, args.id, previous)
+                fail("Task proof changed after task marker "
+                     f"{reusable['commit'][:12]} and does not hold on the current "
+                     "tree:\n- " + "\n- ".join(current))
+            print(f"Task {args.id}: its proof moved after the marker at "
+                  f"{reusable['commit'][:12]} ({'; '.join(proof_problems)[:160]}); "
+                  f"resealing at {commit[:12]}.")
     if same_seal:
         commit = reusable["commit"]
         print(f"Task {args.id} already sealed at {commit[:12]}; the product "
@@ -626,8 +661,13 @@ def seal_task(base: Path, task_id: str) -> None:
             # refuses a path changed after the marker (0079).
             evidence_paths = [
                 path for path in (marker.parent / "verify.json",
-                                  marker.parent / "tests.json")
+                                  marker.parent / "tests.json",
+                                  marker.parent / "journal.jsonl",
+                                  marker.parent / "journal.md")
                 if (base / path).is_file()
+            ] + [
+                path.relative_to(base)
+                for path in sorted((base / marker.parent / "journal").glob("*.txt"))
             ]
             proof_paths = [marker, *selected_paths, *evidence_paths]
             # Exclusion keeps the selected pointer and its complete lineage fixed

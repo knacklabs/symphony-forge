@@ -12293,10 +12293,26 @@ def test_stage_loop_orders_execution_and_gates_pr_ready(repo, tmp_path):
     assert (repo / ".factory" / "stages.json").exists()
 
 
+def mirror_installed_skills(home: Path) -> None:
+    """HOME points at a fake home for a launched forge, so the skills the
+    launcher loads (ponytail) and the grill inlines (grilling) must be there
+    too: the machine's install, the same files doctor --fix put there."""
+    for name in ("ponytail", "grilling", "grill-me"):
+        for source in (Path.home() / ".agents" / "skills" / name,
+                       Path.home() / ".claude" / "skills" / name,
+                       Path.home() / ".codex" / "skills" / name):
+            if (source / "SKILL.md").is_file():
+                target = home / ".agents" / "skills" / name
+                if not target.is_dir():
+                    shutil.copytree(source, target)
+                break
+
+
 def fake_companion_home(tmp_path: Path) -> Path:
     home = tmp_path / "home"
     script = home / ".claude/plugins/cache/openai-codex/codex/1.0.0/scripts/codex-companion.mjs"
     script.parent.mkdir(parents=True, exist_ok=True)
+    mirror_installed_skills(home)
     script.write_text(
         "process.stdout.write(JSON.stringify({ok:true, argv:process.argv.slice(2)}));\n"
     )
@@ -12598,8 +12614,10 @@ def test_task_start_creates_worktree_off_main_and_gates_on_predecessor_marker(
     }
     assert all(destination.read_bytes() == sources[name].read_bytes()
                for name, destination in destinations.items())
+    # The grill travels with the plan it binds to; freshness is judged at
+    # stage start, and this seeded record is not a fresh task grill.
     target_grill = story_state(second_worktree, key) / "grills/tasks/T2.json"
-    assert not target_grill.exists()
+    assert target_grill.read_bytes() == sources["grill"].read_bytes()
     code, out = run(second_worktree, "forge.py", "stage", "start", "T2")
     assert code != 0 and "grill" in out.lower(), out
     control = Path(git(second_worktree, "rev-parse", "--absolute-git-dir")) / "forge"
@@ -13343,7 +13361,16 @@ def test_plan_digest_is_newline_stable_across_record_and_stage_start(repo, tmp_p
 def write_in_scope(repo: Path, rel: str, text: str = "print('work')\n") -> None:
     path = repo / rel
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(text)
+    for attempt in range(6):
+        try:
+            path.write_text(text)
+            return
+        except PermissionError:
+            # Windows: the antivirus scan of the file just written holds it
+            # for a moment; the second open-for-write then fails with EACCES.
+            if attempt == 5:
+                raise
+            time.sleep(0.25 * (attempt + 1))
 
 
 STAGE_TASK = {"id": "T1", "title": "core slice", "write_scope": ["src/"],
@@ -18425,7 +18452,11 @@ def test_review_consumers_include_complete_approved_inputs(
     code, out = run(repo, "forge.py", "review-brief", "T1", "--repo", str(repo))
     assert code == 0, out
     brief = (repo / out.strip()).read_text()
-    plan_text = (story_state(repo) / "task-plans" / "T1.md").read_text()
+    from factory_lib import strip_derived_sections
+    # The brief carries the plan without its harness-rendered contract block
+    # (0080): the decomposition the brief already holds is not pasted twice.
+    plan_text = strip_derived_sections(
+        (story_state(repo) / "task-plans" / "T1.md").read_bytes()).decode("utf-8")
     grill_path = story_state(repo) / "grills" / "tasks" / "T1.json"
     grill = json.loads(grill_path.read_text())
     automated = json.loads((proof / "tests.json").read_text())["automated"]
@@ -18841,6 +18872,7 @@ def test_review_preflight_uses_active_task_proof(repo, tmp_path, monkeypatch):
         pass
 
     monkeypatch.setattr(review_mod, "proof_path", proof_spy)
+    monkeypatch.setattr(review_mod, "_run_standalone_proof", lambda *_a: None)
     monkeypatch.setattr(review_mod, "_product_dirty", lambda _base: [])
     monkeypatch.setattr(review_mod, "resolve_review_base", lambda *_args: "base")
     monkeypatch.setattr(review_mod, "review_excluded_prefixes", lambda _base: ())
@@ -18872,7 +18904,13 @@ def test_review_preflight_refuses_other_task_or_story_proof(repo, tmp_path):
     (other / "verify.json").write_text(json.dumps({"ok": True}))
     (other / "tests.json").write_text(json.dumps({"automated": {"status": "passed"}}))
     code, out = run(repo, "forge.py", "review", "T1", "--repo", str(repo))
-    assert code != 0 and "verify.json is not recorded for task T1" in out
+    # The review no longer refuses over a missing task proof: it runs and
+    # records T1's own (0079, 0080). Another task's record is never T1's.
+    assert code != 0, out
+    assert "verify.json is not recorded for task T1" not in out, out
+    own = json.loads((scoped / "tasks" / "T1" / "verify.json").read_text(encoding="utf-8"))
+    assert own["recorded_by"] == "stage-proof" and own["ok"] is True
+    assert json.loads((other / "verify.json").read_text()) == {"ok": True}
 
 def test_review_pins_sol_and_never_requests_a_retired_model():
     """The retired model must be unreachable, checked where it is decided.
@@ -19919,7 +19957,7 @@ def test_task_start_creates_before_jit_with_approved_identity(
     target_plan = second_worktree / ".factory/stories/ENG-1/task-plans/T2.md"
     target_grill = second_worktree / ".factory/stories/ENG-1/grills/tasks/T2.json"
     assert target_plan.read_bytes() == source_plan
-    assert not target_grill.exists()
+    assert target_grill.is_file()  # hydrated; stage start judges its freshness
     code, out = run(second_worktree, "forge.py", "stage", "start", "T2")
     assert code != 0 and "grill" in out.lower()
 

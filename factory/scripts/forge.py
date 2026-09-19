@@ -227,6 +227,60 @@ def main() -> None:
     p_assume.add_argument("--repo")
     p_assume.set_defaults(func=plans.cmd_assume)
 
+    from forge_cli import journal as journal_mod
+    p_journal = sub.add_parser(
+        "journal",
+        help="the task journal both agents read: add an entry, show it, or "
+             "report what each side has received (decision 0080)",
+    )
+    journal_sub = p_journal.add_subparsers(dest="journal_command", required=True)
+    p_journal_add = journal_sub.add_parser("add", help="append one validated entry")
+    p_journal_add.add_argument("task", help="task id")
+    p_journal_add.add_argument("--kind", required=True, choices=sorted(journal_mod.KINDS))
+    p_journal_add.add_argument("--title", required=True)
+    p_journal_add.add_argument("--body", default="")
+    p_journal_add.add_argument("--body-file")
+    p_journal_add.add_argument("--by", default="coordinator", choices=journal_mod.ACTORS)
+    p_journal_add.add_argument("--reason")
+    p_journal_add.add_argument("--evidence", help="file:line that proves it")
+    p_journal_add.add_argument("--cite", help="decision, plan section or contract id")
+    p_journal_add.add_argument("--command")
+    p_journal_add.add_argument("--finding", help="the finding id or its summary")
+    p_journal_add.add_argument("--verdict", choices=["real", "not-a-defect"])
+    p_journal_add.add_argument("--status")
+    p_journal_add.add_argument("--launch-id", dest="launch_id")
+    p_journal_add.add_argument("--generation-id", dest="generation_id")
+    p_journal_add.add_argument("--exit-code", dest="exit_code", type=int)
+    p_journal_add.add_argument("--path", dest="paths", action="append", default=[])
+    p_journal_add.add_argument("--repo")
+    p_journal_add.set_defaults(func=journal_mod.cmd_add)
+    p_journal_show = journal_sub.add_parser("show", help="print the journal")
+    p_journal_show.add_argument("task", help="task id")
+    p_journal_show.add_argument("--since", help="only entries after this id")
+    p_journal_show.add_argument("--kind")
+    p_journal_show.add_argument("--repo")
+    p_journal_show.set_defaults(func=journal_mod.cmd_show)
+    p_journal_status = journal_sub.add_parser(
+        "status", help="what the journal holds and what each side has received")
+    p_journal_status.add_argument("task", help="task id")
+    p_journal_status.add_argument("--repo")
+    p_journal_status.set_defaults(func=journal_mod.cmd_status)
+
+    from forge_cli import proof_requests as proof_mod
+    p_proof = sub.add_parser(
+        "proof",
+        help="proofs the worker cannot run in its sandbox: ask the host (0080)")
+    proof_sub = p_proof.add_subparsers(dest="proof_command", required=True)
+    p_proof_run = proof_sub.add_parser(
+        "run", help="ask the harness waiting on this worker to run one declared "
+                    "proof on the host and print its output")
+    p_proof_run.add_argument("--id", help="a required-test id from the task contract")
+    p_proof_run.add_argument("--verify", help="a verify command exactly as the contract declares it")
+    p_proof_run.add_argument("--timeout", type=float, default=3600.0,
+                             help="seconds to wait for the host (default 3600)")
+    p_proof_run.add_argument("--repo")
+    p_proof_run.set_defaults(func=proof_mod.cmd_proof_run)
+
     p_task = sub.add_parser("task", help="manage per-task plans and approval")
     task_sub = p_task.add_subparsers(dest="task_command", required=True)
     p_task_start = task_sub.add_parser(
@@ -609,6 +663,10 @@ def main() -> None:
     p_sa.add_argument("id")
     p_sa.add_argument("--reason", required=True,
                       help="why these paths belong to this task")
+    p_sa.add_argument("--path", dest="paths", action="append", default=[],
+                      help="declare a path this task will touch outside its scope, "
+                           "BEFORE the write; the next launch and the measurement "
+                           "honour it (0080)")
     p_sa.add_argument("--by", default="",
                       help="who recorded the amendment")
     p_sa.add_argument("--repo")

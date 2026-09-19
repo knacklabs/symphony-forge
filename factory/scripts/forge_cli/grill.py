@@ -40,36 +40,20 @@ def _artifact_text(base: Path, gate: str, task_id: str,
 
 
 def _grill_skill_section() -> str:
-    """The grill technique, INLINED rather than named.
-
-    Naming a skill only works if the reader's runtime resolves it. `grill-me`
-    is a 164-byte STUB whose body is "Call the Skill tool with 'grilling'",
-    carrying `disable-model-invocation: true` — so no model invokes it, and a
-    reader told to would find a redirect it may not follow. `doctor` mirrors
-    the real `grilling` into ~/.codex/skills as well, so the technique IS
-    reachable there; inlining is the belt to that braces, for a machine where
-    `doctor --fix` has not run.
-
-    `_skill_text` already looks in BOTH runtimes' skill directories, which is
-    what lets the Claude-side text travel to Codex inside the brief. Prefer the
-    real skill, accept grill-me only when it is not merely the stub, and carry
-    a written floor when neither is installed — the same reason delegate
-    inlines ponytail instead of trusting a per-machine install.
-    """
+    """The grill technique is Matt Pocock's `grilling` skill, inlined from the
+    installed pack. Nothing else is ever substituted: `grill-me` is only the
+    human's `/grill-me` alias (a pointer at `grilling`), and a written
+    stand-in would be a different technique under the same name. Missing
+    skill, refused grill."""
     from .delegate import _skill_text
 
-    for name in ("grilling", "grill-me"):
-        text = _skill_text(name)
-        # The stub points at a tool the reader may not have; it is not technique.
-        if text and "Call the Skill tool" not in text:
-            return ("## Interrogation technique\n\n"
-                    "Run the interrogation this way. The harness contract above "
-                    "is the floor; this is the technique.\n\n" + text)
+    text = _skill_text("grilling")
+    if not text or "Call the Skill tool" in text:
+        fail("the `grilling` skill is not installed in ~/.agents/skills, ~/.claude/skills "
+             "or ~/.codex/skills -- run `./forge doctor --fix` (mattpocock/skills for grilling, DietrichGebert/ponytail for ponytail, mirrored into ~/.codex/skills)")
     return ("## Interrogation technique\n\n"
-            "No grill skill is installed (`./forge doctor --fix` installs it). "
-            "Interrogate to the harness contract above: one line of questioning "
-            "at a time, press each answer until it is concrete and checkable, "
-            "and surface every place the artifact leaves the reader to guess.")
+            "Run the interrogation this way. The harness contract above "
+            "is the floor; this is the technique.\n\n" + text)
 
 
 def _lessons_section(base: Path, gate: str, task_id: str) -> str:

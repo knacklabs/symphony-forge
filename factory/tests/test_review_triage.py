@@ -38,8 +38,9 @@ def _t2_task(repo):
         protected_decomposition_state_path(repo), default={})["tasks"] if t["id"] == "T2")
 
 
-def _triage_file(repo):
-    return task_evidence_path(repo, "ENG-1", "T2", "review-triage.json")
+def _triage_entries(repo):
+    from forge_cli.journal import entries as journal_entries
+    return [e for e in journal_entries(repo, "ENG-1", "T2") if e["kind"] == "triage"]
 
 
 def _built(repo, tmp_path, blocking):
@@ -82,12 +83,20 @@ def test_a_real_triage_records_proof_and_instances_and_the_brief_carries_them(re
     assert "Triaged security finding as REAL" in out
     assert "fix at every one of: src/work.py:1, src/other.py:2" in out
     assert "1 of 1 blocking finding(s) triaged" in out
-    record = load_json(_triage_file(repo), default={})["findings"][0]
-    assert "stays editable" in record["finding"]["summary"] and record["verdict"] == "real"
-    assert record["instances"] == ["src/work.py:1", "src/other.py:2"]
-    assert record["triaged_by"] == "orchestrator"
+    # One record of the ruling, in the journal both agents read; no side file.
+    assert not task_evidence_path(repo, "ENG-1", "T2", "review-triage.json").exists()
+    record = _triage_entries(repo)[0]
+    assert "stays editable" in record["finding"] and record["verdict"] == "real"
+    assert record["paths"] == ["src/work.py:1", "src/other.py:2"]
+    assert record["by_name"] == "orchestrator" and record["lens"] == "security"
     assert record["delta_id"] == generation["delta_id"]
     assert record["generation_id"] == generation["generation_id"]
+    # The verdict is in the task journal, where the next brief and review read it.
+    from forge_cli.journal import entries as journal_entries
+    verdicts = [e for e in journal_entries(repo, "ENG-1", "T2") if e["kind"] == "triage"]
+    assert len(verdicts) == 1 and verdicts[0]["verdict"] == "real"
+    assert verdicts[0]["evidence"] == "src/work.py:1"
+    assert "Fix at EVERY one of: src/work.py:1, src/other.py:2." in verdicts[0]["body"]
     # The generation itself is untouched: a real finding still blocks the close.
     after_gen = selected_generation(repo, "ENG-1", "T2")
     assert after_gen["generation_id"] == generation["generation_id"]
@@ -106,8 +115,12 @@ def test_a_real_triage_records_proof_and_instances_and_the_brief_carries_them(re
                     "--lens", "security", "--real", "--evidence", "src/other.py:1",
                     "--instance", "src/other.py:1", "--by", "orchestrator")
     assert code == 0, out
-    records = load_json(_triage_file(repo), default={})["findings"]
-    assert len(records) == 1 and records[0]["evidence"] == "src/other.py:1"
+    # Re-triaged: a second entry; the latest ruling for the finding wins.
+    from forge_cli.review import triage_for, triage_records
+    records = triage_records(repo, "ENG-1", "T2")
+    assert len(records) == 2 and records[-1]["evidence"] == "src/other.py:1"
+    assert triage_for(records, "security", generation["lenses"]["security"]["blocking_findings"][0]
+                      )["evidence"] == "src/other.py:1"
 
 
 def test_a_triage_rests_on_lines_that_exist(repo, tmp_path):
@@ -129,7 +142,7 @@ def test_a_triage_rests_on_lines_that_exist(repo, tmp_path):
                     "--instance", "src/work.py:9")
     assert code != 0 and "--instance src/work.py:9 is past the end" in out, out
     # Nothing was recorded by any refused attempt.
-    assert not _triage_file(repo).exists()
+    assert _triage_entries(repo) == []
     # Exactly one verdict flag.
     code, out = run(repo, "forge.py", "review", "T2", "--triage", "stays editable",
                     "--lens", "security", "--evidence", "src/work.py:1", "--by", "o")
@@ -162,6 +175,10 @@ def test_not_a_defect_rejects_on_a_proof_line_without_a_citation(repo, tmp_path)
                for p in lessons)
     report = rejected_findings_report(repo, "ENG-1", "T2")
     assert "cites: evidence src/work.py:1" in report
+    from forge_cli.journal import entries as journal_entries
+    refusals = [e for e in journal_entries(repo, "ENG-1", "T2") if e["kind"] == "refusal"]
+    assert len(refusals) == 1 and refusals[0]["evidence"] == "evidence src/work.py:1"
+    assert "stays editable" in refusals[0]["finding"]
     # The other finding is still blocking, and still untriaged.
     assert untriaged_blocking(repo, "ENG-1", "T2") == (1, 1)
     # `--reject` accepts the same ground directly, and still needs one of the two.

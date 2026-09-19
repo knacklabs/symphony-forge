@@ -1931,7 +1931,10 @@ def cmd_doctor(args: argparse.Namespace) -> None:
     # it points at too.
     grilling = home / ".claude" / "skills" / "grilling"
     grilling_codex = home / ".codex" / "skills" / "grilling"
+    ponytail = home / ".claude" / "skills" / "ponytail"
+    ponytail_codex = home / ".codex" / "skills" / "ponytail"
     for source, target, label in ((grill_me, grill_me_codex, "grill-me"),
+                                  (ponytail, ponytail_codex, "ponytail"),
                                   (grilling, grilling_codex, "grilling")):
         if (args.fix and (source / "SKILL.md").is_file()
                 and not (target / "SKILL.md").is_file()):

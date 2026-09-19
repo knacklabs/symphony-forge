@@ -30,7 +30,7 @@ The user and host select the main coordinator model and reasoning; Forge-managed
 ## Ground rules
 - Session write lock always armed; plan authoring is mode-agnostic (0050) — never switch the session's mode to write a plan, and no mode unlocks product/canon: delegate
   writes, or during a companion outage `forge mode degraded start --reason`. Grill
-  (`/grill-me`) = ONE read-only Codex `gpt-5.6-sol` @ high cold read (you authored it — never a Claude sub-agent, never inline), WATCHED. That is the WHOLE grill: resolve what the REPO answers yourself, put only the rest to the human in that grill (AskUserQuestion), amend once, record the pass against the amended version. Never cold-read twice — a second read returns a DIFFERENT frontier, not a shorter one. The plan then shows on the BOARD, the human reviews it THERE (not chat) and approves
+  (Matt Pocock's `grilling` skill, `/grill-me` is its alias) = ONE read-only Codex `gpt-5.6-sol` @ high cold read (you authored it — never a Claude sub-agent, never inline), WATCHED. That is the WHOLE grill: resolve what the REPO answers yourself, put only the rest to the human in that grill (AskUserQuestion), amend once, record the pass against the amended version. Never cold-read twice — a second read returns a DIFFERENT frontier, not a shorter one. The plan then shows on the BOARD, the human reviews it THERE (not chat) and approves
   EXACTLY ONCE — `./forge plan approve --by "<name>"` + re-save. Never approve twice.
 - Decisions: `./forge decision new <slug>`; acceptance is HUMAN chat
   confirmation — then run accept/sign-off yourself, `--by "<name>"` + trailer.

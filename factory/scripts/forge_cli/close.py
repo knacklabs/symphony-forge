@@ -48,22 +48,11 @@ def _commit_task_proof(base: Path, story: str, task_id: str,
     the product tree the proof attested is checked again before its snapshot
     is replaced.
     """
-    from factory_lib import task_evidence_path
-    from .stages import product_tree_snapshot
-    from .tasks import _require_git
+    from .stages import commit_task_records, product_tree_snapshot
 
-    rels = [
-        path.relative_to(base).as_posix()
-        for path in (task_evidence_path(base, story, task_id, name)
-                     for name in ("verify.json", "tests.json"))
-        if path.is_file()
-    ]
-    if not rels or not _require_git(
-            base, "checking the task proof", "status", "--porcelain", "--", *rels):
+    if not commit_task_records(base, story, task_id,
+                               message=f"{story} {task_id}: task proof"):
         return proof
-    _require_git(base, "staging the task proof", "add", "--", *rels)
-    _require_git(base, "committing the task proof", "commit", "-q", "--only",
-                 "-m", f"{story} {task_id}: task proof", "--", *rels)
     proof_tree, authority_tree, misses = proof
     after = product_tree_snapshot(base)
     if ({key: value for key, value in after.items() if key != "head"}

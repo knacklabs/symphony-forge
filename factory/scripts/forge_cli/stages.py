@@ -21,12 +21,14 @@ import shutil
 import signal
 import subprocess
 import tempfile
+import time
 import uuid
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
 from factory_lib import (
     active_story_key, clean_git_env, decomposition_state_path, dump_json,
+    retry_sharing_violation,
     git_control_dir, head_sha, load_json, now_iso,
     product_tree_digest,
     protected_decomposition_state_path, repo_root, require_approved_plan_digest,
@@ -482,7 +484,7 @@ def _digest(base: Path, rel: str,
             digest.update(b"directory")
         else:
             digest.update(str(mode).encode())
-            digest.update(path.read_bytes())
+            digest.update(retry_sharing_violation(path.read_bytes))
         return digest.hexdigest()
     except FileNotFoundError:
         return ""
@@ -843,6 +845,106 @@ def amended_scope_paths(base: Path, task_id: str) -> list[str]:
     entry = (record.get("tasks") or {}).get(task_id) or {}
     paths = entry.get("added_paths") or []
     return [p for p in paths if isinstance(p, str) and p]
+
+
+TASK_RECORD_NAMES = ("verify.json", "tests.json", "journal.jsonl", "journal.md")
+
+
+def task_record_paths(base: Path, story: str, task_id: str) -> list[str]:
+    """Every file the task's proof and approval rest on, relative to the repo."""
+    from factory_lib import evidence_path, task_evidence_path
+    paths = [task_evidence_path(base, story, task_id, name) for name in TASK_RECORD_NAMES]
+    paths += sorted(task_evidence_path(base, story, task_id, "journal").glob("*.txt"))
+    paths += [evidence_path(base, story, f"grills/tasks/{task_id}.json"),
+              evidence_path(base, story, f"task-plans/{task_id}.md")]
+    return [path.relative_to(base).as_posix() for path in paths if path.is_file()]
+
+
+def _git_identity_args(base: Path) -> list[str]:
+    """`-c user.name/email` only when the repo has none configured (a bare CI
+    runner); the operator's own identity is never overridden."""
+    for key in ("user.name", "user.email"):
+        probe = subprocess.run(["git", "config", key], cwd=base, capture_output=True,
+                               text=True, encoding="utf-8", env=clean_git_env())
+        if probe.returncode != 0 or not probe.stdout.strip():
+            return ["-c", "user.name=forge", "-c", "user.email=forge@local"]
+    return []
+
+
+def commit_task_records(base: Path, story: str, task_id: str,
+                        message: str = "") -> str:
+    """Commit the task's records when any moved; return the new head or "".
+
+    Sealed-state readers read a task's evidence at the commit the marker
+    names, so a record committed only with the marker sits one commit too
+    late (0079), and a grill re-recorded after a seal that never reached the
+    sealed tree was refused at the seal as outside the task's range
+    (WF-BIO-1 T4, 13:34)."""
+    rels = task_record_paths(base, story, task_id)
+    if not rels:
+        return ""
+    status = subprocess.run(
+        ["git", "status", "--porcelain", "--", *rels], cwd=base,
+        capture_output=True, text=True, encoding="utf-8", env=clean_git_env(),
+    )
+    if status.returncode != 0:
+        fail("checking the task records failed: " + status.stderr.strip())
+    if not status.stdout.strip():
+        return ""
+    subject = message or f"{story} {task_id}: task records"
+    identity = _git_identity_args(base)
+    for description, argv in (
+            ("staging the task records", ["add", "--", *rels]),
+            ("committing the task records",
+             [*identity, "commit", "-q", "--only", "-m", subject, "--", *rels])):
+        proc = subprocess.run(["git", *argv], cwd=base, capture_output=True, text=True,
+                              encoding="utf-8", env=clean_git_env())
+        if proc.returncode != 0:
+            fail(f"{description} failed: " + (proc.stderr.strip() or proc.stdout.strip()))
+    return head_sha(base) or ""
+
+
+def supersede_marker(base: Path, task_id: str, commit: str) -> str:
+    """Record that the marker naming `commit` is superseded by the seal about
+    to be written; return the previous value so a refused re-seal can restore
+    it. The brief and the pre-seal proof check ignore a superseded marker."""
+    from .delegate import delegation_exclusion
+    with delegation_exclusion(base, "stages", kind="stage-state", namespace="state"):
+        data = load_stages(base)
+        stage = next((item for item in data.get("stages") or []
+                      if isinstance(item, dict) and item.get("id") == task_id), None)
+        if stage is None:
+            fail(f"task {task_id} is not in the current decomposition")
+        previous = str(stage.get("superseded_marker_commit") or "")
+        if commit:
+            stage["superseded_marker_commit"] = commit
+        else:
+            stage.pop("superseded_marker_commit", None)
+        write_stages(base, data)
+    return previous
+
+
+def journal_contract(base: Path, story: str, task: dict) -> None:
+    """The recorded contract as the journal's standing first entry (0080);
+    re-recorded on every contract change, deduplicated by the journal."""
+    from .journal import append
+    task_id = str(task.get("id") or "")
+    if not story or not task_id:
+        return
+    lines = [f"Objective: {task.get('objective', '')}", "", "Acceptance criteria:"]
+    lines += [f"- {c}" for c in task.get("acceptance_criteria") or []]
+    lines += ["", "Write scope:"] + [f"- {s}" for s in task.get("write_scope") or []]
+    lines += ["", "Required tests:"] + [
+        f"- {t.get('id')}: `{t.get('command')}` ({t.get('path')})"
+        for t in task.get("required_tests") or [] if isinstance(t, dict)]
+    lines += ["", "Verify commands:"] + [
+        f"- `{c}`" for c in task.get("verify_commands") or []]
+    try:
+        append(base, story, task_id, kind="contract", by="harness",
+               title=f"contract {task_digest(task)[:12]}: {task.get('title', '')}",
+               body="\n".join(lines))
+    except SystemExit as exc:
+        print(f"journal: contract not recorded: {exc}")
 
 
 def effective_scope(base: Path, task_id: str, scope: list[str]) -> list[str]:
@@ -1241,6 +1343,7 @@ def _cmd_start_locked(args: argparse.Namespace, base: Path) -> None:
     stage["task_sha256"] = task_digest(current_task)
     append_event(base, "stage-start", actor="implementer", story=data.get("issue", ""),
                  detail=f"{args.id} {stage.get('title', '')}")
+    journal_contract(base, str(data.get("issue") or ""), current_task)
     stage.pop("parallel", None)
     write_stages(base, data)
     print(f"Stage {args.id} active — {stage.get('title')}")
@@ -1593,20 +1696,157 @@ def _junit_case_attributed(case, rel: str) -> bool:
             or candidate.endswith("/" + declared))
 
 
-def _run_required_tests(
-        base: Path, stage_id: str, task: dict) -> tuple[list[str], list[dict]]:
-    """Run every required test; refuse when one FAILS or never ran. A recorded
-    id that matches no testcase (or one attributed to another path) is a
-    MEASURED miss — returned, recorded on the stage, never a refusal: the run
-    passed, only the bookkeeping did not line up."""
+def _execute(base: Path, stage_id: str, label: str, *, env: dict[str, str],
+             process_token: str, command: str | None = None,
+             tokens: list[str] | None = None) -> tuple[int, str, str]:
+    """Run one proof command to completion and reap everything it spawned.
+
+    Returns (exit code, stdout, stderr). Shared by the verify commands and the
+    required tests; the callers decide what a non-zero exit means."""
     from .delegate import (
         blocked_termination_signals, _capture_spawn_identity, _process_table,
         _terminate_observed_process_tree, _wait_and_reap,
         unblock_termination_signals_in_child,
     )
+    proc: subprocess.Popen[str] | None = None
+    process_baseline: dict[int, tuple[int, str]] | None = None
+    process_identity = ""
+    with tempfile.TemporaryFile(
+            mode="w+t", encoding="utf-8", errors="replace"
+    ) as stdout_log, tempfile.TemporaryFile(
+            mode="w+t", encoding="utf-8", errors="replace"
+    ) as stderr_log:
+        try:
+            with blocked_termination_signals():
+                process_baseline = _process_table()
+                spawn_options = (
+                    {"creationflags": subprocess.CREATE_NEW_PROCESS_GROUP}
+                    if os.name == "nt"
+                    else {"start_new_session": True,
+                          "preexec_fn": unblock_termination_signals_in_child}
+                )
+                if tokens is not None and os.name == "nt":
+                    # Windows CreateProcess cannot launch npm-style .cmd shims
+                    # (npx, tsc, vitest, ...) directly with shell=False, so a
+                    # bare `npx ...` required-test command fails with WinError
+                    # 2. Run the command line through the shell so PATHEXT
+                    # resolves the shim; the reaper works off a process-table
+                    # snapshot, so the extra cmd.exe layer is still terminated.
+                    proc = subprocess.Popen(
+                        subprocess.list2cmdline(tokens), cwd=base,
+                        stdout=stdout_log, stderr=stderr_log, text=True,
+                        env=env, shell=True, **spawn_options,
+                    )
+                elif tokens is not None:
+                    proc = subprocess.Popen(
+                        tokens, cwd=base, stdout=stdout_log,
+                        stderr=stderr_log, text=True, env=env,
+                        **spawn_options,
+                    )
+                else:
+                    proc = subprocess.Popen(
+                        str(command), cwd=base, shell=True, stdout=stdout_log,
+                        stderr=stderr_log, text=True, env=env,
+                        **spawn_options,
+                    )
+                process_identity = _capture_spawn_identity(proc)
+            if not _wait_and_reap(
+                    proc, process_token, process_baseline, process_identity):
+                fail(f"{stage_id} {label} left a process tree alive; "
+                     "verification must be terminal")
+        except OSError as exc:
+            if proc is not None:
+                with blocked_termination_signals():
+                    _terminate_observed_process_tree(
+                        proc, process_token, process_baseline, process_identity)
+            action = "could not start" if proc is None else "could not be registered"
+            fail(f"{stage_id} {label} {action}: {exc}")
+        except BaseException:
+            if proc is not None:
+                with blocked_termination_signals():
+                    _terminate_observed_process_tree(
+                        proc, process_token, process_baseline, process_identity)
+            raise
+        stdout_log.seek(0)
+        stderr_log.seek(0)
+        return proc.returncode, stdout_log.read(), stderr_log.read()
 
+
+def _journal_proof(base: Path, story: str, stage_id: str, label: str, code: int,
+                   tail: str, elapsed: int) -> None:
+    """Every proof command's exit and output tail, in the task journal (0080):
+    a failure is read from the record, not from a 20-minute-old scrollback."""
+    if not story:
+        return
+    from .journal import append
+    try:
+        append(base, story, stage_id, kind="proof", by="harness",
+               title=f"{label}: {'passed' if code == 0 else f'failed (exit {code})'} "
+                     f"in {elapsed}s",
+               body=tail, command=label, exit_code=int(code), elapsed_s=int(elapsed))
+    except SystemExit as exc:
+        print(f"journal: proof not recorded: {exc}")
+
+
+def _journal_flake(base: Path, story: str, stage_id: str, label: str,
+                   first_tail: str) -> dict | None:
+    if not story:
+        return None
+    from .journal import append
+    try:
+        return append(base, story, stage_id, kind="flake", by="harness",
+                      title=f"FLAKE: {label} failed once and passed on re-run",
+                      body=first_tail, command=label)
+    except SystemExit as exc:
+        print(f"journal: flake not recorded: {exc}")
+        return None
+
+
+def _run_with_flake_check(base: Path, stage_id: str, story: str, label: str,
+                          run_once) -> tuple[int, str, str, dict | None]:
+    """Run once; on failure, once more. A pass on the second run is a FLAKE:
+    recorded in the journal with its first output and in verify.json, and the
+    proof passes on the second run. Nothing is retried blindly and nothing is
+    hidden (T4: four blind re-runs of one 2-second grace, ~15 minutes each,
+    in four different spec files, with no record of any of them)."""
+    started = time.monotonic()
+    print(f"proof: {label} ...", flush=True)
+    code, out, err = run_once()
+    elapsed = int(time.monotonic() - started)
+    _journal_proof(base, story, stage_id, label, code, _output_tail(out, err), elapsed)
+    if code == 0:
+        print(f"proof: {label} passed ({elapsed}s)", flush=True)
+        return code, out, err, None
+    first_tail = _output_tail(out, err)
+    print(f"proof: {label} failed (exit {code}, {elapsed}s); running it once more "
+          "to tell a flake from a defect", flush=True)
+    started = time.monotonic()
+    code, out, err = run_once()
+    elapsed = int(time.monotonic() - started)
+    _journal_proof(base, story, stage_id, f"{label} (re-run)", code,
+                   _output_tail(out, err), elapsed)
+    if code != 0:
+        print(f"proof: {label} failed again (exit {code}, {elapsed}s)", flush=True)
+        return code, out, err, None
+    entry = _journal_flake(base, story, stage_id, label, first_tail)
+    flake = {"command": label, "first_failure": first_tail,
+             "journal": str(entry.get("id") or "") if entry else ""}
+    print(f"proof: {label} passed on re-run ({elapsed}s): a FLAKE, recorded as "
+          f"{flake['journal'] or 'a flake entry'} with its first failure's output; "
+          "the proof passes on the second run", flush=True)
+    return code, out, err, flake
+
+
+def _run_required_tests(
+        base: Path, stage_id: str, task: dict, story: str = "",
+) -> tuple[list[str], list[dict], list[dict]]:
+    """Run every required test; refuse when one FAILS or never ran. A recorded
+    id that matches no testcase (or one attributed to another path) is a
+    MEASURED miss — returned, recorded on the stage, never a refusal: the run
+    passed, only the bookkeeping did not line up."""
     misses: list[str] = []
     results: list[dict] = []
+    flakes: list[dict] = []
     for proof in task.get("required_tests") or []:
         if not isinstance(proof, dict) or not all(
                 isinstance(proof.get(key), str) for key in ("id", "path", "command")):
@@ -1629,77 +1869,22 @@ def _run_required_tests(
                 name, value = tokens.pop(0).split("=", 1)
                 env[name] = value
             env["PYTHONUTF8"] = "1"
-            proc: subprocess.Popen[str] | None = None
-            process_baseline: dict[int, tuple[int, str]] | None = None
-            process_identity = ""
-            stdout = ""
-            stderr = ""
-            with tempfile.TemporaryFile(
-                    mode="w+t", encoding="utf-8", errors="replace"
-            ) as stdout_log, tempfile.TemporaryFile(
-                    mode="w+t", encoding="utf-8", errors="replace"
-            ) as stderr_log:
-                try:
-                    with blocked_termination_signals():
-                        process_baseline = _process_table()
-                        spawn_options = (
-                            {"creationflags": subprocess.CREATE_NEW_PROCESS_GROUP}
-                            if os.name == "nt"
-                            else {"start_new_session": True,
-                                  "preexec_fn": unblock_termination_signals_in_child}
-                        )
-                        if os.name == "nt":
-                            # Windows CreateProcess cannot launch npm-style .cmd
-                            # shims (npx, tsc, vitest, ...) directly with
-                            # shell=False, so a bare `npx ...` required-test
-                            # command fails with WinError 2. Run the command line
-                            # through the shell so PATHEXT resolves the shim. The
-                            # reaper works off a process-table snapshot, so the
-                            # extra cmd.exe layer is still terminated.
-                            proc = subprocess.Popen(
-                                subprocess.list2cmdline(tokens), cwd=base,
-                                stdout=stdout_log, stderr=stderr_log, text=True,
-                                env=env, shell=True, **spawn_options,
-                            )
-                        else:
-                            proc = subprocess.Popen(
-                                tokens, cwd=base, stdout=stdout_log,
-                                stderr=stderr_log, text=True, env=env,
-                                **spawn_options,
-                            )
-                        process_identity = _capture_spawn_identity(proc)
-                    if not _wait_and_reap(
-                            proc, process_token, process_baseline,
-                            process_identity):
-                        fail(f"{stage_id} required test {test_id!r} left a "
-                             "process tree alive; proof must be terminal")
-                except OSError as exc:
-                    if proc is not None:
-                        with blocked_termination_signals():
-                            _terminate_observed_process_tree(
-                                proc, process_token, process_baseline,
-                                process_identity)
-                    action = (
-                        "could not start" if proc is None
-                        else "could not be registered"
-                    )
-                    fail(f"{stage_id} required test {test_id!r} "
-                         f"{action}: {exc}")
-                except BaseException:
-                    if proc is not None:
-                        with blocked_termination_signals():
-                            _terminate_observed_process_tree(
-                                proc, process_token, process_baseline,
-                                process_identity)
-                    raise
-                stdout_log.seek(0)
-                stderr_log.seek(0)
-                stdout = stdout_log.read()
-                stderr = stderr_log.read()
-            if proc.returncode != 0:
+            label = f"required test {test_id!r}"
+
+            def run_once(tokens=tokens, env=env, process_token=process_token,
+                         label=label, report=report):
+                report.unlink(missing_ok=True)
+                return _execute(base, stage_id, label, env=env,
+                                process_token=process_token, tokens=tokens)
+
+            code, stdout, stderr, flake = _run_with_flake_check(
+                base, stage_id, story, label, run_once)
+            if flake:
+                flakes.append({**flake, "test_id": test_id})
+            if code != 0:
                 tail = (stderr or stdout or "").strip().splitlines()
                 fail(f"{stage_id} required test {test_id!r} failed "
-                     f"(exit {proc.returncode}): {command}\n"
+                     f"(exit {code}): {command}\n"
                      + "\n".join(tail[-15:]))
             if not report.is_file():
                 fail(f"{stage_id} required test {test_id!r} produced no fresh "
@@ -1733,83 +1918,40 @@ def _run_required_tests(
                 fail(f"{stage_id} required test {test_id!r} did not pass in the "
                      "fresh JUnit report")
             results.append({"id": test_id, "path": rel, "status": "passed"})
-    return misses, results
+    return misses, results, flakes
 
 
-def _run_verify_commands(base: Path, stage_id: str, task: dict) -> list[dict]:
-    from .delegate import (
-        blocked_termination_signals, _capture_spawn_identity, _process_table,
-        _terminate_observed_process_tree, _wait_and_reap,
-        unblock_termination_signals_in_child,
-    )
-
+def _run_verify_commands(
+        base: Path, stage_id: str, task: dict, story: str = "",
+) -> tuple[list[dict], list[dict]]:
     results: list[dict] = []
+    flakes: list[dict] = []
     for command in task.get("verify_commands") or []:
         if not str(command).strip():
             continue
-        proc: subprocess.Popen[str] | None = None
-        process_baseline: dict[int, tuple[int, str]] | None = None
-        process_identity = ""
         process_token = f"verify-{uuid.uuid4().hex}"
         env = os.environ.copy()
         env["FORGE_PROCESS_TOKEN"] = process_token
         env["PYTHONUTF8"] = "1"
-        with tempfile.TemporaryFile(
-                mode="w+t", encoding="utf-8", errors="replace"
-        ) as stdout_log, tempfile.TemporaryFile(
-                mode="w+t", encoding="utf-8", errors="replace"
-        ) as stderr_log:
-            try:
-                with blocked_termination_signals():
-                    process_baseline = _process_table()
-                    spawn_options = (
-                        {"creationflags": subprocess.CREATE_NEW_PROCESS_GROUP}
-                        if os.name == "nt"
-                        else {"start_new_session": True,
-                              "preexec_fn": unblock_termination_signals_in_child}
-                    )
-                    proc = subprocess.Popen(
-                        str(command), cwd=base, shell=True, stdout=stdout_log,
-                        stderr=stderr_log, text=True, env=env,
-                        **spawn_options,
-                    )
-                    process_identity = _capture_spawn_identity(proc)
-                if not _wait_and_reap(
-                        proc, process_token, process_baseline,
-                        process_identity):
-                    fail(f"{stage_id} verify command left a process tree alive; "
-                         "verification must be terminal")
-            except OSError as exc:
-                if proc is not None:
-                    with blocked_termination_signals():
-                        _terminate_observed_process_tree(
-                            proc, process_token, process_baseline,
-                            process_identity)
-                action = (
-                    "could not start" if proc is None
-                    else "could not be registered"
-                )
-                fail(f"{stage_id} verify command {action}: {exc}")
-            except BaseException:
-                if proc is not None:
-                    with blocked_termination_signals():
-                        _terminate_observed_process_tree(
-                            proc, process_token, process_baseline,
-                            process_identity)
-                raise
-            stdout_log.seek(0)
-            stderr_log.seek(0)
-            stdout = stdout_log.read()
-            stderr = stderr_log.read()
-        if proc.returncode != 0:
+        label = str(command)
+
+        def run_once(command=command, env=env, process_token=process_token):
+            return _execute(base, stage_id, "verify command", env=env,
+                            process_token=process_token, command=str(command))
+
+        code, stdout, stderr, flake = _run_with_flake_check(
+            base, stage_id, story, label, run_once)
+        if flake:
+            flakes.append(flake)
+        if code != 0:
             tail = (stderr or stdout or "").strip().splitlines()
-            fail(f"{stage_id} verify command failed (exit {proc.returncode}): "
+            fail(f"{stage_id} verify command failed (exit {code}): "
                  f"{command}\n" + "\n".join(tail[-15:]))
         results.append({
-            "command": str(command), "exit_code": proc.returncode,
+            "command": str(command), "exit_code": code,
             "output_tail": _output_tail(stdout, stderr),
         })
-    return results
+    return results, flakes
 
 
 def _output_tail(stdout: str, stderr: str, lines: int = 40) -> str:
@@ -1856,9 +1998,62 @@ def reusable_stage_proof(base: Path, stage_id: str, key: str) -> dict | None:
     return verify
 
 
+def _free_memory_gb() -> float | None:
+    """Free commit memory on Windows (RAM plus page file left to promise);
+    None elsewhere. T4's .exe packaging died of this three times, twenty
+    minutes into each run, with 1.47 GB left of a 37.55 GB commit limit."""
+    if os.name != "nt":
+        return None
+    import ctypes
+
+    class _Status(ctypes.Structure):
+        _fields_ = [("dwLength", ctypes.c_ulong), ("dwMemoryLoad", ctypes.c_ulong),
+                    ("ullTotalPhys", ctypes.c_ulonglong), ("ullAvailPhys", ctypes.c_ulonglong),
+                    ("ullTotalPageFile", ctypes.c_ulonglong),
+                    ("ullAvailPageFile", ctypes.c_ulonglong),
+                    ("ullTotalVirtual", ctypes.c_ulonglong),
+                    ("ullAvailVirtual", ctypes.c_ulonglong),
+                    ("ullAvailExtendedVirtual", ctypes.c_ulonglong)]
+
+    status = _Status()
+    status.dwLength = ctypes.sizeof(_Status)
+    try:
+        if not ctypes.windll.kernel32.GlobalMemoryStatusEx(ctypes.byref(status)):
+            return None
+    except (AttributeError, OSError):
+        return None
+    return status.ullAvailPageFile / 1e9
+
+
+def proof_memory_floor_gb(base: Path) -> float:
+    """harness.yaml `proof: min_free_memory_gb`; 0 disables the check."""
+    try:
+        text = (base / "harness.yaml").read_text(encoding="utf-8")
+    except OSError:
+        return 0.0
+    block = re.search(r"^proof:\n((?:  .*\n|\n)*)", text, re.MULTILINE)
+    found = re.search(r"^  min_free_memory_gb:\s*([\d.]+)",
+                      block.group(1) if block else "", re.MULTILINE)
+    try:
+        return float(found.group(1)) if found else 0.0
+    except ValueError:
+        return 0.0
+
+
+def _require_memory_headroom(base: Path, stage_id: str) -> None:
+    floor = proof_memory_floor_gb(base)
+    free = _free_memory_gb()
+    if floor and free is not None and free < floor:
+        fail(f"{stage_id}: {free:.1f} GB of commit memory free, below the {floor:g} GB "
+             "floor harness.yaml sets for the proof (proof.min_free_memory_gb). Close "
+             "what is holding it (T4: a browser at 12 GB and five duplicate dev "
+             "servers) or lower the floor; refusing here costs a second, failing "
+             "inside the proof cost twenty minutes each time.")
+
+
 def record_stage_proof(base: Path, stage_id: str, task: dict, *, key: str,
                        verify_results: list[dict], test_results: list[dict],
-                       test_id_misses: list[str]) -> None:
+                       test_id_misses: list[str], flakes: list[dict] = ()) -> None:
     """Write what the proof ran as the task's verify.json, re-bind the worker's
     tests.json record to the measured commit, or write one where none exists.
 
@@ -1886,7 +2081,16 @@ def record_stage_proof(base: Path, stage_id: str, task: dict, *, key: str,
             "ok": True, "completed_at": now, "commit": head, "task_id": stage_id,
             "recorded_by": STAGE_PROOF, "tree_digest": tree, "proof_key": key,
             "results": verify_results, "required_tests": test_results,
-            "test_id_misses": list(test_id_misses),
+            "test_id_misses": list(test_id_misses), "flakes": list(flakes),
+            # Claims answered by their bound tests (0082): the reviewer only
+            # judges whether the test proves the claim.
+            "claims": [
+                {"id": str(contract.get("id")), "proof": str(contract.get("proof")),
+                 "status": next((str(r.get("status")) for r in test_results
+                                 if r.get("id") == contract.get("proof")), "not run")}
+                for contract in task.get("plan_contracts") or []
+                if isinstance(contract, dict) and contract.get("proof")
+            ],
         },
     )
     tests_path = task_evidence_path(base, story, stage_id, "tests.json", for_write=True)
@@ -1960,9 +2164,13 @@ def run_stage_proof(base: Path, stage_id: str, task: dict) -> tuple[dict, dict, 
             print(f"{stage_id}: proof reused; the product tree and contract are "
                   f"unchanged since {recorded.get('completed_at', '')}.")
             return proof_tree, authority_tree, misses
+    _require_memory_headroom(base, stage_id)
+    story = active_story_key(base)
     with termination_signal_guard():
-        verify_results = _run_verify_commands(base, stage_id, task)
-        test_id_misses, test_results = _run_required_tests(base, stage_id, task)
+        verify_results, verify_flakes = _run_verify_commands(base, stage_id, task, story)
+        test_id_misses, test_results, test_flakes = _run_required_tests(
+            base, stage_id, task, story)
+    flakes = verify_flakes + test_flakes
     if product_tree_snapshot(base) != proof_tree:
         fail(f"{stage_id} proof commands changed the product tree; verification "
              "must be read-only")
@@ -1976,7 +2184,7 @@ def run_stage_proof(base: Path, stage_id: str, task: dict) -> tuple[dict, dict, 
         record_stage_proof(base, stage_id, task, key=key,
                            verify_results=verify_results,
                            test_results=test_results,
-                           test_id_misses=test_id_misses)
+                           test_id_misses=test_id_misses, flakes=flakes)
     return proof_tree, authority_tree, test_id_misses
 
 
@@ -2226,19 +2434,34 @@ def cmd_amend_scope(args) -> None:
     if not base_sha:
         fail(f"{args.id} has no stage baseline to measure from; start the stage "
              "before amending its scope.")
-    # The SAME measurement `stage done` performs -- that is what bounds this.
-    product = [
-        path for path in changed_paths(base, base_sha,
-                                       stage.get("dirty_at_start", {}))
-        if not path.startswith(workflow_prefixes(base))
-    ]
-    strays = out_of_scope(
-        base, product, effective_scope(base, args.id, scope), base_sha,
-    )
-    if not strays:
-        fail(f"{args.id} has no measured path outside its scope — nothing to "
-             "amend. If `stage done` is refusing, it is refusing for another "
-             "reason; read the refusal.")
+    intended = [p.strip().replace("\\", "/").lstrip("./")
+                for p in (getattr(args, "paths", None) or []) if p.strip()]
+    for path in intended:
+        if path.startswith("/") or ".." in Path(path).parts or not path:
+            fail(f"--path {path!r} must be a path inside the repo")
+    if intended:
+        # Declared before the write (0080): the coordinator decided a path
+        # belongs to this task; the next launch's admission and the stage
+        # measurement honour it, so a fix in shared test code no longer costs
+        # a refused write, a signal and a resume (T4, 14:03).
+        strays = sorted(set(intended) - set(effective_scope(base, args.id, scope)))
+        if not strays:
+            fail(f"{args.id} already covers {', '.join(intended)}; nothing to declare")
+    else:
+        # The SAME measurement `stage done` performs -- that is what bounds this.
+        product = [
+            path for path in changed_paths(base, base_sha,
+                                           stage.get("dirty_at_start", {}))
+            if not path.startswith(workflow_prefixes(base))
+        ]
+        strays = out_of_scope(
+            base, product, effective_scope(base, args.id, scope), base_sha,
+        )
+        if not strays:
+            fail(f"{args.id} has no measured path outside its scope — nothing to "
+                 "amend. If `stage done` is refusing, it is refusing for another "
+                 "reason; read the refusal. To authorise a path BEFORE it is "
+                 "written, pass --path.")
 
     record = load_json(scope_amendments_path(base), default={})
     if not isinstance(record, dict):
@@ -2252,13 +2475,25 @@ def cmd_amend_scope(args) -> None:
         "by": args.by or "",
         "reason": reason,
         "added_paths": sorted(strays),
+        "intended": bool(intended),
         "measured_from": base_sha,
         "measured_head": head_sha(base),
     })
     dump_json(scope_amendments_path(base), record)
+    from .journal import append as journal_append
+    try:
+        journal_append(
+            base, str(load_json(run_state_path(base), default={}).get("issue_key") or ""),
+            args.id, kind="scope", by="coordinator",
+            title=(f"scope declared ahead: {len(strays)} path(s)" if intended
+                   else f"scope amended: {len(strays)} measured path(s)"),
+            body=reason, paths=sorted(strays), reason=reason)
+    except SystemExit as exc:
+        print(f"journal: scope not recorded: {exc}")
     from factory_lib import refresh_task_plan_contract
     refresh_task_plan_contract(base, args.id, task)
-    print(f"Amended {args.id} scope with {len(strays)} measured path(s): "
+    print(f"{'Declared' if intended else 'Amended'} {args.id} scope with {len(strays)} "
+          f"{'declared' if intended else 'measured'} path(s): "
           f"{', '.join(sorted(strays)[:6])}"
           f"{'…' if len(strays) > 6 else ''} — contract, grill and delegate "
           f"launch untouched; `forge stage done {args.id}` can proceed")

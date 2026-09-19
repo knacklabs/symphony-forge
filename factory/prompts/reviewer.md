@@ -14,11 +14,11 @@ and never hand-write findings inline.
 
 The reviewer reads the tree it judges (0076): Codex runs read-only inside the
 review worktree, so a verdict or a finding on code the diff does not show is
-read, not guessed. A diff too big for one prompt runs as parallel groups: one
-three-lens Codex run per group over its files with the whole task tree
-readable, a refused group retried alone with the cause in its brief, the
-results merged into one record with the worst verdict per contract winning;
-lock and generated files are not sent (0078). Contract verdicts are finding
+read, not guessed. The review is ONE pass by one reviewer over the whole
+diff when it fits one prompt, and otherwise passes that each hold the whole
+task and a slice of the diff, merged into one generation; never file groups: a
+reviewer holding one file cannot prove a contract (0081); lock and generated files are not sent
+(0078). Contract verdicts are finding
 records titled `[quality] VERDICT <contract-id>: implemented|partial|missing`
 (0077).
 

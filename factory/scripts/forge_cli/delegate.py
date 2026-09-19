@@ -737,7 +737,7 @@ def _wait_and_reap(
         proc: subprocess.Popen[str], token: str = "",
         baseline: dict[int, tuple[int, float]] | None = None,
         foreground_identity: float | str = "",
-        before_cleanup=None) -> bool:
+        before_cleanup=None, service=None) -> bool:
     """Wait for trusted work and reap its observed process tree.
 
     A child can create a new session and leave the leader's process group. PID
@@ -756,6 +756,10 @@ def _wait_and_reap(
             if token:
                 descendants.update(
                     _tagged_processes(token, baseline, current))
+            if service is not None:
+                # Proof requests from the worker (0080): the harness is the
+                # only process waiting here, so it is the one that runs them.
+                service()
             time.sleep(PROCESS_POLL_SECONDS)
         current = _process_table()
         descendants.update(_descendants(proc.pid))
@@ -950,7 +954,13 @@ def existing_modules(base: Path, scope: list[str]) -> list[str]:
 
 
 def _skill_text(skill: str) -> str:
-    for candidate in (Path.home() / ".claude" / "skills" / skill / "SKILL.md",
+    """A skill's text from either runtime's install (mattpocock/skills, put
+    there by `forge doctor --fix`). Never a copy kept in the repo: one source,
+    refreshed by the same install everywhere."""
+    # ~/.agents/skills is where the `skills` installer keeps the pack itself;
+    # the runtime dirs hold its copies (a fresh runner has only the first).
+    for candidate in (Path.home() / ".agents" / "skills" / skill / "SKILL.md",
+                      Path.home() / ".claude" / "skills" / skill / "SKILL.md",
                       Path.home() / ".codex" / "skills" / skill / "SKILL.md"):
         if candidate.is_file():
             return candidate.read_text(encoding="utf-8")[:SKILL_INLINE_CHARS]
@@ -985,38 +995,47 @@ CONSTITUTION_BRIEF = (
 )
 
 
-PONYTAIL_BRIEF = (
-    "Ponytail is the BINDING minimal-diff coding discipline for every line you "
-    "write or edit — hold it strictly, but it is a habit, not a mechanical gate. "
-    "Understand the problem and TRACE the affected code first, then climb this "
-    "ladder and STOP at the first rung that works: (1) does it need to exist at "
-    "all? skip speculative features (YAGNI); (2) already in this codebase? reuse "
-    "it; (3) does the stdlib provide it? use it; (4) a native platform feature? "
-    "prefer it; (5) an already-installed dependency? use it before adding one; "
-    "(6) can it be one line? one line beats fifty; (7) only then, the minimum "
-    "viable code that solves the ACTUAL problem. Shortest diff, shortest "
-    "explanation.\n\n"
-    "Lazy, NOT negligent — NEVER simplify away trust-boundary/input validation, "
-    "error handling that prevents data loss, security, accessibility basics, "
-    "explicitly-requested functionality, hardware calibration knobs, or the one "
-    "runnable self-check for non-trivial logic. Mark a deliberate corner cut with "
-    "an inline `ponytail: <limitation>, <upgrade path if scale matters>` comment "
-    "so it can be harvested later. Ponytail trims SPECULATIVE code; it NEVER "
-    "overrides the constitution's mandated structure (modules, DTOs, the response "
-    "envelope, provider pattern) — that structure is law, not bloat."
-)
+# Loaded into every write launch by the launcher itself, whoever composed the
+# brief and whatever the worker's runtime resolves. A missing skill refuses
+# the launch; the harness never substitutes a paraphrase for the technique.
+BINDING_SKILLS = ("ponytail",)
+
+
+def binding_skills_preamble() -> str:
+    parts = []
+    for skill in BINDING_SKILLS:
+        skill_text = _skill_text(skill)
+        if not skill_text:
+            fail(f"the `{skill}` skill is not installed in ~/.agents/skills, ~/.claude/skills "
+                 f"or ~/.codex/skills -- run `./forge doctor --fix` (mattpocock/skills for grilling, DietrichGebert/ponytail for ponytail, mirrored into ~/.codex/skills)")
+        parts.append(_section(
+            f"{skill} skill -- loaded for this run, BINDING on every line you write",
+            skill_text))
+    return "".join(parts)
 
 
 # The worker can run its own tests (decision 0068); nothing asked it to. It
 # reported "host verification remains required" in 22 of 31 runs and the
 # fix loop paid a round trip per finding.
+PROOF_ON_THE_HOST = (
+    "\n\nA proof that cannot run in your sandbox (on Windows the profile caches and "
+    "store-linked node_modules are unreadable there): "
+    "`python3 factory/scripts/forge.py proof run --id <required test id>` or "
+    "`... proof run --verify \"<verify command>\"`. The harness runs that declared "
+    "command on the host while you wait, prints its output here and records it "
+    "in the task journal; it runs nothing else. Do not report a proof as "
+    "\"cannot run here\" without having asked."
+)
+
 BEFORE_YOU_REPORT = (
     "\n\nBefore you report: run every required test and every verify command "
     "above from this worktree, and paste each command's summary line into your "
     "report. A test you did not run is not reported as passing. If a command "
     "cannot run here, name the command, quote its error, and say what you "
     "verified instead. Do not run verify.py or record evidence yourself: "
-    "`task close` runs the proof once more and records it (0079)."
+    "`task close` runs the proof once more and records it (0079). End the "
+    "report with `acted on: J-...` naming the journal entries you acted on, "
+    "and `not applicable: J-... -- why` for the rest (0080)."
 )
 
 
@@ -1102,6 +1121,90 @@ def _review_findings_section(base: Path, task: dict, story: str) -> str:
                     "\n\n".join(parts))
 
 
+def _journal_sections(base: Path, story: str, task_id: str) -> str:
+    """The task journal, the one channel both agents read (decision 0080).
+
+    Two views rendered from the same file: the standing instructions (the
+    latest contract, every decision, note, scope change, refusal and recorded
+    flake), and everything appended since this worker's last launch (exits,
+    its own earlier reports, proof output, signals). Review findings and
+    their triage ride in the findings section above, from the same records.
+    The file is named so the worker can open the rest."""
+    from .journal import entries, render_entries, since, standing, task_journal_relpath
+    if not story or not task_id:
+        return ""
+    items = entries(base, story, task_id)
+    rel = task_journal_relpath(base, story, task_id)
+    intro = (f"The complete record of this task is `{rel}`: every decision, note, "
+             "proof output, review, triage, refusal, scope change, and your own "
+             "earlier reports. Read it before you edit. In your final report, "
+             "cite the entry ids you acted on (`acted on: J-3, J-7`) and say why "
+             "for any you did not (`not applicable: J-9 -- ...`).")
+    title = "Task journal -- what the coordinator sees, you see"
+    if not items:
+        return _section(title, intro + "\n\n(empty so far)")
+    last_launch = next((e for e in reversed(items) if e.get("kind") == "launch"), None)
+    head = str(last_launch.get("journal_head") or "") if last_launch else ""
+    stand = [e for e in standing(items) if e.get("kind") != "triage"]
+    seen = {e.get("id") for e in stand}
+    fresh = [e for e in since(items, head)
+             if e.get("kind") not in ("review", "triage", "launch", "brief")
+             and e.get("id") not in seen]
+    label = (f"New since your last launch (after {head})" if head
+             else "New since the task started")
+    return _section(title, intro + "\n\n"
+                    + render_entries(stand, heading="Standing instructions (apply regardless of age)")
+                    + "\n" + render_entries(fresh, heading=label))
+
+
+def _journal_launch(base: Path, story: str, task_id: str, launch_id: str, *,
+                    note: str) -> str:
+    """Record the launch; return the journal head the brief carried."""
+    if not story:
+        return ""
+    from .journal import append, entries, head_id
+    head = head_id(entries(base, story, task_id))
+    try:
+        append(base, story, task_id, kind="launch", by="harness",
+               title=f"worker launch {launch_id[-8:]}", body=note,
+               launch_id=launch_id, journal_head=head)
+    except SystemExit as exc:
+        print(f"journal: launch not recorded: {exc}")
+    return head
+
+
+def _journal_exit(base: Path, story: str, task_id: str, launch_id: str,
+                  code: object, stderr: str, message: str = "") -> None:
+    """Record the exit, and the worker's report verbatim with the journal
+    entries it says it acted on. Before this a worker that exited at 01:41
+    was believed running until 02:26 (WF-BIO-1 T4)."""
+    if not story:
+        return
+    import re
+    from .journal import append, entries
+    tail = "\n".join((stderr or "").rstrip().splitlines()[-40:])
+    try:
+        exit_code = int(code) if code is not None else -1
+    except (TypeError, ValueError):
+        exit_code = -1
+    try:
+        append(base, story, task_id, kind="exit", by="harness",
+               title=f"worker {launch_id[-8:]} exited with code {exit_code}",
+               body=tail, launch_id=launch_id, exit_code=exit_code)
+        if message:
+            known = {e.get("id") for e in entries(base, story, task_id)}
+            cited = sorted({m for m in re.findall(r"\bJ-\d+\b", message) if m in known},
+                           key=lambda s: int(s[2:]))
+            append(base, story, task_id, kind="report", by="worker",
+                   title=f"worker {launch_id[-8:]} report", body=message,
+                   launch_id=launch_id, acted_on=cited)
+            if not cited:
+                print("journal: the worker's report cites no journal entry "
+                      "(`acted on: J-...`); read it against the journal yourself")
+    except SystemExit as exc:
+        print(f"journal: exit not recorded: {exc}")
+
+
 def compose_brief(base: Path, task: dict, *, write: bool, user_facing: bool,
                   story: str) -> str:
     # Contract scope plus every measured amendment: what `stage done` will
@@ -1138,13 +1241,6 @@ def compose_brief(base: Path, task: dict, *, write: bool, user_facing: bool,
     ]
     body = "\n".join(lines) + "\n"
     body += _section("Constitution — coding standards (BINDING)", CONSTITUTION_BRIEF)
-    body += _section(
-        "Ponytail — minimal-diff coding discipline (BINDING)",
-        "LOAD and RUN the `ponytail` skill from your Codex skills dir "
-        "(`~/.codex/skills/ponytail`, installed by `./forge doctor --fix`) and hold "
-        "it on every line you write or edit. Its rules are reproduced below as the "
-        "binding floor in case your runtime cannot load it:\n\n"
-        + (_skill_text("ponytail") or PONYTAIL_BRIEF))
     body += _section("Objective", task.get("objective", ""))
     body += _section("Acceptance criteria", "\n".join(
         f"- {c}" for c in task.get("acceptance_criteria") or []))
@@ -1163,7 +1259,7 @@ def compose_brief(base: Path, task: dict, *, write: bool, user_facing: bool,
     body += _section("Verify commands (run them yourself to fix what fails; "
                      "`task close` runs them once more as the recorded proof)",
                      "\n".join(f"- `{c}`" for c in task.get("verify_commands") or [])
-                     + BEFORE_YOU_REPORT)
+                     + PROOF_ON_THE_HOST + BEFORE_YOU_REPORT)
     reviewer_focus = task.get("reviewer_focus", "")
     if isinstance(reviewer_focus, list):
         # The decomposition records reviewer_focus as a LIST (the stage-start
@@ -1171,10 +1267,15 @@ def compose_brief(base: Path, task: dict, *, write: bool, user_facing: bool,
         reviewer_focus = "\n".join(f"- {item}" for item in reviewer_focus)
     body += _section("Reviewer focus", reviewer_focus)
     body += _review_findings_section(base, task, story)
+    body += _journal_sections(base, story, str(task.get("id") or ""))
     decisions = [r for r in decision_records(base) if r["status"] == "accepted"]
     body += _section("Active decisions — binding", "\n".join(
         f"- {r['id']}: {r['title']}" for r in decisions))
-    lessons = relevant_lessons(base, scope)
+    # Rejected-finding lessons are superseded by the journal's refusals; the
+    # file stays as the generation's immutable evidence, the brief does not
+    # repeat it (WF-BIO-1 T4: 26 such lessons matched every path).
+    lessons = [le for le in relevant_lessons(base, scope)
+               if not str(le.get("topic", "")).startswith("rejected-review-finding-")]
     body += _section("Lessons recorded against these paths", "\n".join(
         f"- {le.get('lesson', '')}" for le in lessons))
     # A parallel worker must not ask what a sibling task already settled: the
@@ -1217,6 +1318,8 @@ def launch_companion(
     # credential to secret scanners.
     launch_id = f"launch-{uuid.uuid4().hex}"
     runtime = coordinator_runtime()
+    if write:
+        text = binding_skills_preamble() + text
     if runtime == "codex" and background:
         fail("native Codex delegation is foreground-only in this release; "
              "background/read-only background is owned by NATIVE-LIFECYCLE")
@@ -1352,6 +1455,10 @@ def launch_companion(
 
     for candidate in handled_signals:
         signal.signal(candidate, handle_termination)
+    record["journal_head"] = _journal_launch(
+        base, story, task_id, launch_id,
+        note=f"brief {rel} sha256 {brief_digest[:12]}; {model} {effort}; "
+             f"write={'yes' if write else 'no'}")
     append_delegation(base, record)
     try:
         try:
@@ -1360,6 +1467,8 @@ def launch_companion(
             if runtime == "codex":
                 process_env["FORGE_LAUNCH_ID"] = launch_id
             process_env["PYTHONUTF8"] = "1"
+            from .proof_requests import service_proof_requests, worker_cache_env
+            process_env.update(worker_cache_env(base))
             with blocked_termination_signals():
                 process_baseline = _process_table()
                 spawn_options = (
@@ -1407,10 +1516,18 @@ def launch_companion(
             # before any terminal launch row is recorded.
             label = "worker" if runtime == "codex" else "companion"
             fail(f"Codex {label} launch could not be registered: {exc}")
+        service = None
+        if write:
+            from .stages import task_for
+            launched_task = task_for(base, task_id)
+            if launched_task:
+                service = lambda: service_proof_requests(  # noqa: E731
+                    base, task_id, launched_task, story)
         try:
             if not _wait_and_reap(
                     proc, process_token, process_baseline, process_identity,
-                    before_cleanup=lambda: _revoke_native_write_admission(base, record)):
+                    before_cleanup=lambda: _revoke_native_write_admission(base, record),
+                    service=service):
                 raise RuntimeError("companion process tree survived termination")
         except BaseException:
             # The outer handler retries cleanup and records a terminal failure
@@ -1438,6 +1555,7 @@ def launch_companion(
                     failed["session_id"] = session_id
             append_delegation(base, failed)
             terminal_recorded = True
+            _journal_exit(base, story, task_id, launch_id, proc.returncode, stderr)
             if runtime == "codex":
                 detail = stderr.strip()
                 fail(f"Codex worker launch failed (exit {proc.returncode})"
@@ -1474,10 +1592,16 @@ def launch_companion(
                     failed["session_id"] = session_id
                 append_delegation(base, failed)
                 terminal_recorded = True
+                _journal_exit(base, story, task_id, launch_id, proc.returncode,
+                              native_result.error)
                 fail(native_result.error)
             terminal["session_id"] = native_result.session_id
         published = append_delegation(base, terminal)
         terminal_recorded = True
+        _journal_exit(base, story, task_id, launch_id, proc.returncode, stderr,
+                      message=(native_result.message
+                               if runtime == "codex" and native_result
+                               else stdout))
         if runtime == "codex" and not published:
             existing = next(
                 row for row in reversed(load_delegations(base))
@@ -1540,7 +1664,12 @@ def cmd_delegate(args: argparse.Namespace) -> None:
              "decomposition with id, path and command proof objects")
     stage = next((s for s in load_stages(base).get("stages", [])
                   if s.get("id") == args.id), {})
-    scope = task.get("write_scope") or []
+    # The launch's admitted scope is the contract's plus every amendment,
+    # declared or measured -- the same union the brief and `stage done` use.
+    # Before this the admission gate read the bare contract, so a path the
+    # coordinator had authorised was still refused (T4, 14:03).
+    from .stages import effective_scope
+    scope = effective_scope(base, args.id, task.get("write_scope") or [])
     # Derived, not typed: an active stage is a write run. --read-only is the
     # explicit exception for exploration; an empty scope is an incomplete
     # contract, not an implicit read-only downgrade.
@@ -1548,7 +1677,7 @@ def cmd_delegate(args: argparse.Namespace) -> None:
     if active and not args.read_only:
         require_task_worktree(base)
         task = require_ready_task(base, args.id)
-        scope = task.get("write_scope") or []
+        scope = effective_scope(base, args.id, task.get("write_scope") or [])
     write = bool(active and scope) and not args.read_only
     task_sha256_value = task_digest(task)
     from .codex_runtime import coordinator_runtime

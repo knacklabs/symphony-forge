@@ -117,6 +117,12 @@ on the selected task:
   measures and records the exact paths anyway (`stage amend-scope` exists for
   the rest). A prefix covers everything beneath it.
 - `verify_commands`
+- `plan_contracts` — ONE checkable claim per entry (decision 0082):
+  `statement` is a single sentence, `lands_in` the repo-relative file the
+  claim lands in, `proof` the `required_tests` id that fails while the claim
+  is unmet. Guidance (which endpoint to call, what the envelope looks like)
+  belongs in the objective or the plan, never in the claim. A paragraph with
+  five claims is five contracts; the proof run then answers each one.
 - `required_tests` — executable proof objects shaped exactly as
   `{"id":"testcase name","path":"repo/relative/test file","command":"exact runner command"}`.
   The command must be one shell-free runner invocation and include `{path}` and

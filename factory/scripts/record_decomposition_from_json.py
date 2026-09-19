@@ -184,16 +184,38 @@ for pos, task in enumerate(tasks, 1):
         raise SystemExit(
             f"decomposition task {task_id}: plan_contracts must be a list"
         )
+    declared_tests = {
+        proof.get("id") for proof in task.get("required_tests") or []
+        if isinstance(proof, dict) and isinstance(proof.get("id"), str)
+    }
     for contract_pos, contract in enumerate(plan_contracts, 1):
-        if not isinstance(contract, dict) or set(contract) != {
-                "id", "statement", "source"} or not all(
+        # A contract is a claim with a place and a proof (0082): `statement`
+        # is the claim, `lands_in` the file it lands in, `proof` the required
+        # test that fails while the claim is unmet. The proof run then answers
+        # the verdict; a reviewer cannot be "partial" about a test that passed.
+        required, optional = {"id", "statement", "source"}, {"lands_in", "proof"}
+        if not isinstance(contract, dict) or not required <= set(contract) \
+                or set(contract) - required - optional or not all(
                     isinstance(contract.get(key), str) and contract[key].strip()
-                    for key in ("id", "statement", "source")
+                    for key in contract
                 ):
             raise SystemExit(
                 f"decomposition task {task_id}: plan_contracts entry "
-                f"{contract_pos} needs exactly non-empty id, statement and "
-                "source strings."
+                f"{contract_pos} needs non-empty id, statement and source "
+                "strings (and optionally lands_in and proof)."
+            )
+        if "proof" in contract and contract["proof"] not in declared_tests:
+            raise SystemExit(
+                f"decomposition task {task_id}: plan_contracts entry "
+                f"{contract_pos} names proof {contract['proof']!r}, which is not "
+                "one of this task's required_tests ids."
+            )
+        if "lands_in" in contract and (
+                "\\" in contract["lands_in"] or contract["lands_in"].startswith("/")
+                or ".." in PurePosixPath(contract["lands_in"]).parts):
+            raise SystemExit(
+                f"decomposition task {task_id}: plan_contracts entry "
+                f"{contract_pos} lands_in must be a repo-relative posix path."
             )
         contract_id = contract["id"]
         if contract_id in seen_contract_ids:
@@ -521,6 +543,14 @@ with delegation_exclusion(
             refresh_task_plan_contract(root, task_id, new)
         except Exception:
             pass
+    # An active task's journal carries every contract it was built against.
+    from factory_lib import active_story_key
+    from forge_cli.stages import journal_contract
+    active_ids = {stage.get("id") for stage in stages_data.get("stages") or []
+                  if isinstance(stage, dict) and stage.get("status") == "active"}
+    for task_id, new in current_tasks.items():
+        if task_id in active_ids:
+            journal_contract(root, active_story_key(root), new)
     for task_id, was_reviewed, grounding_moved, measurement_moved in changed_active:
         if grounding_moved:
             print(

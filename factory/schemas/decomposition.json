@@ -19,5 +19,5 @@
     "build_waves": "list",
     "status": "str"
   },
-  "task_plan_contracts_note": "Each task may declare plan_contracts as a list of entries {id, statement, source}, where source names the plan file and section. The recorder requires exactly those three non-empty string keys and contract ids unique across the whole decomposition."
+  "task_plan_contracts_note": "Each task may declare plan_contracts as a list of entries {id, statement, source, lands_in?, proof?}: statement is ONE checkable claim, source names the plan file and section, lands_in the repo-relative file the claim lands in, and proof the id of the required test that fails while the claim is unmet (decision 0082). The recorder requires non-empty strings, proof to name one of the task's required_tests, and contract ids unique across the whole decomposition."
 }

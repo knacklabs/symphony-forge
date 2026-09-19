@@ -191,6 +191,35 @@ def _parallel_frontier(base: Path, first_id: str) -> list[str]:
     return lines
 
 
+def _worker_exit_lines(base: Path) -> list[str]:
+    from factory_lib import active_story_key, active_task_id, load_json, run_state_path
+    from .stages import load_stages
+    story = active_story_key(base)
+    task_id = active_task_id(base) or next(
+        (s.get("id") for s in load_stages(base).get("stages", [])
+         if isinstance(s, dict) and s.get("status") == "active"), "")
+    if not story or not task_id:
+        return []
+    from .journal import entries
+    items = entries(base, story, str(task_id))
+    last_launch = next((e for e in reversed(items) if e.get("kind") == "launch"), None)
+    last_exit = next((e for e in reversed(items) if e.get("kind") == "exit"), None)
+    if not last_exit or not last_launch:
+        return []
+    if last_exit.get("launch_id") != last_launch.get("launch_id"):
+        return []  # the latest launch has not exited: it is running
+    report = next((e for e in reversed(items) if e.get("kind") == "report"
+                   and e.get("launch_id") == last_exit.get("launch_id")), None)
+    cited = report.get("acted_on") if report else None
+    what = (f"its report cites {', '.join(map(str, cited))}" if cited
+            else "its report cites no journal entry" if report
+            else "no report was recorded")
+    return [f"[orchestrator] worker for {task_id} exited at "
+            f"{str(last_exit.get('at', ''))[:16]} with code {last_exit.get('exit_code')}; "
+            f"{what}. Read `forge journal show {task_id} --since "
+            f"{last_launch.get('journal_head') or 'J-0'}` before the next action."]
+
+
 def cmd_next(args: argparse.Namespace) -> None:
     base = Path(args.repo).resolve() if args.repo else repo_root()
     from .codex_runtime import coordinator_runtime
@@ -250,6 +279,10 @@ def cmd_next(args: argparse.Namespace) -> None:
             "log first. Only launch the supported normal action after deciding "
             "what work, if any, remains."
         )
+    # The worker's last exit and what its report cited, from the journal: a
+    # worker that exited at 01:41 was believed running until 02:26 (T4).
+    for line in _worker_exit_lines(base):
+        steps.append(line)
     open_sigs = open_signals(base)
     if open_sigs:
         ids = ", ".join(s["id"] for s in open_sigs[:3])

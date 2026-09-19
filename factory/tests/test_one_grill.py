@@ -197,7 +197,7 @@ def _grill_payload(gaps: list[str]) -> dict:
 
 
 def test_the_griller_contract_no_longer_says_loop(repo: Path):
-    text = (HARNESS / "factory" / "prompts" / "griller.md").read_text(
+    text = (HARNESS / "docs" / "grill.md").read_text(
         encoding="utf-8")
     flat = " ".join(text.split())
     assert "Codex grill again, until a round is clean" not in flat

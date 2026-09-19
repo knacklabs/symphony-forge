@@ -1,0 +1,39 @@
+{
+  "artifact": "journal-entry",
+  "phase": "any",
+  "recorded_by": "forge journal add, and the harness on launch, exit, proof, review and scope",
+  "generated_by": ["harness", "coordinator", "worker", "reviewer", "human"],
+  "required": {
+    "generated_by": "str",
+    "id": "str",
+    "at": "str",
+    "kind": "str",
+    "task_id": "str",
+    "title": "str",
+    "body": "str",
+    "digest": "str"
+  },
+  "optional": {
+    "launch_id": "str",
+    "exit_code": "int",
+    "command": "str",
+    "generation_id": "str",
+    "finding": "str",
+    "verdict": "str",
+    "evidence": "str",
+    "cite": "str",
+    "reason": "str",
+    "paths": "list",
+    "status": "str",
+    "acted_on": "list",
+    "journal_head": "str",
+    "attachment": "str",
+    "truncated": "bool",
+    "elapsed_s": "int",
+    "lens": "str",
+    "finding_key": "str",
+    "delta_id": "str",
+    "keep": "str",
+    "by_name": "str"
+  }
+}

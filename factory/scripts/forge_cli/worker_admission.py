@@ -182,20 +182,37 @@ def _stage_contract(base: Path, record: dict) -> tuple[dict | None, str]:
     story = run.get("story") or run.get("issue_key")
     if record.get("story") and record.get("story") != story:
         return _deny("the active story changed after launch")
-    task_scope = task.get("write_scope") or []
-    if not task_scope or any(not isinstance(item, str) or not item.strip()
-                             for item in task_scope):
+    contract_scope = task.get("write_scope") or []
+    if not contract_scope or any(not isinstance(item, str) or not item.strip()
+                                 for item in contract_scope):
         return _deny("the protected task has no valid write scope")
+    # The scope in force is the contract plus every recorded amendment,
+    # declared ahead (`stage amend-scope --path`) or measured -- the same union
+    # the brief, the launch and `stage done` use. Read at admission time, so a
+    # path the coordinator authorises while the worker runs is honoured by its
+    # next write, with no refusal, signal and resume in between (T4, 14:03).
+    from .stages import amended_scope_paths
+    task_scope = list(contract_scope) + [
+        path for path in amended_scope_paths(base, str(task_id or ""))
+        if path not in contract_scope]
     scope = record.get("write_scope") if record.get("transport") == "native" else task_scope
     if (not isinstance(scope, list) or not scope
             or any(not isinstance(item, str) or not item.strip() for item in scope)):
         return _deny("the protected native launch has no valid recorded write scope")
-    if scope != task_scope:
-        return _deny("the protected native launch write scope does not match its task")
+    # A launch recorded before an amendment carries the narrower scope; one
+    # recorded after carries the union. Either is admitted, but never a scope
+    # the task was not given.
+    if not set(scope) <= set(task_scope):
+        return _deny("the protected native launch write scope is not covered by its task")
     from .stages import stage_baseline
+    baseline = stage_baseline(base, stage)
     return {
         "kind": "stage",
-        "scope": classify_scope_entries(base, scope, stage_baseline(base, stage)),
+        # Paths are admitted against the scope in force; the argv is checked
+        # against the scope THIS launch was built from (its .codex grants),
+        # so an amendment recorded after the launch never invalidates it.
+        "scope": classify_scope_entries(base, task_scope, baseline),
+        "launch_scope": classify_scope_entries(base, list(scope), baseline),
     }, ""
 
 
@@ -285,7 +302,7 @@ def live_worker_admission(base: Path) -> tuple[dict | None, str]:
         try:
             from .codex_runtime import native_argv_valid
             native_shape_valid = native_argv_valid(
-                record, base, contract.get("scope") or [])
+                record, base, contract.get("launch_scope") or contract.get("scope") or [])
         except (ImportError, OSError, TypeError, ValueError):
             native_shape_valid = False
         if not native_shape_valid:

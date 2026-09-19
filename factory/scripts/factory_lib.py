@@ -724,10 +724,33 @@ def _proof_object_or_default(path: Path | str, data: Any, default: Any) -> Any:
     return data
 
 
+# Windows: a file the harness just wrote can be held for a moment by the
+# host's file scanner, and the next open fails with a sharing violation that
+# Python surfaces as PermissionError. Python, git and node all open with
+# sharing allowed, so the holder is never one of ours; the honest response
+# is git's own on Windows: retry briefly, then fail exactly as before. On
+# WF-BIO-1 T4 this surfaced as "cannot read changed path" on a real close.
+RETRY_SHARING_VIOLATIONS = os.name == "nt"
+_SHARING_RETRY_DELAYS = (0.05, 0.1, 0.2, 0.4, 0.5, 0.5, 0.5)
+
+
+def retry_sharing_violation(action: Callable[[], Any]) -> Any:
+    """Run `action`; on PermissionError (Windows only) wait and try again, up
+    to about two seconds in total, then let the error through unchanged."""
+    for delay in _SHARING_RETRY_DELAYS:
+        try:
+            return action()
+        except PermissionError:
+            if not RETRY_SHARING_VIOLATIONS:
+                raise
+            time.sleep(delay)
+    return action()
+
+
 def load_json(path: Path, default: Any = None) -> Any:
     if not path.exists():
         return default
-    data = json.loads(path.read_text(encoding="utf-8"))
+    data = json.loads(retry_sharing_violation(lambda: path.read_text(encoding="utf-8")))
     data = _proof_object_or_default(path, data, default)
     run_root = _RUN_STATE_ROOTS.get(path)
     if run_root is not None and isinstance(data, dict):
@@ -737,7 +760,8 @@ def load_json(path: Path, default: Any = None) -> Any:
 
 def dump_json(path: Path, data: Any) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
+    body = json.dumps(data, indent=2) + "\n"
+    retry_sharing_violation(lambda: path.write_text(body, encoding="utf-8"))
 
 
 # Git's control dir is constant for a worktree over a process's lifetime, but
@@ -1868,7 +1892,10 @@ def _current_task_review_inputs(
     if raw_plan is None:
         return None, [f"{task_id}: current approved task plan is missing"]
     try:
-        plan_text = raw_plan.decode("utf-8")
+        # The brief carries the plan without its harness-rendered contract
+        # block (0080); the section this check looks for must be rendered
+        # from the same text, or every saved brief reads as stale.
+        plan_text = strip_derived_sections(raw_plan).decode("utf-8")
     except UnicodeDecodeError:
         return None, [f"{task_id}: current approved task plan is not UTF-8"]
     grill = read_json(grill_path)
@@ -1959,17 +1986,25 @@ def _review_input_problems(
         return problems + input_problems
     assert inputs is not None
     try:
-        from forge_cli.review_brief import render_approved_inputs_section
+        from forge_cli.review_brief import (
+            approved_inputs_difference, render_approved_inputs_section,
+        )
         section = "\n".join(render_approved_inputs_section(inputs))
     except (AttributeError, TypeError, ValueError, SystemExit) as exc:
         return problems + [
             f"{task_id}: cannot render the complete approved-input section: {exc}"
         ]
+    # Verbatim, or equivalent: a grill re-recorded after the review for the
+    # same plan digest changes timestamps and rounds, not what the reviewer
+    # saw, and the review binds to the diff alone (0079). Before this, every
+    # re-grill after a seal read as a stale brief and forced a re-review.
     if body.count(section) != 1:
-        problems.append(
-            f"{task_id}: saved review brief does not contain exactly one current "
-            "complete approved-input section"
-        )
+        difference = approved_inputs_difference(body, inputs)
+        if difference:
+            problems.append(
+                f"{task_id}: saved review brief does not contain exactly one current "
+                f"complete approved-input section ({difference})"
+            )
     return problems
 
 
@@ -2005,7 +2040,6 @@ def _modern_task_proof_problems(
         problems.append(
             f"{task_id}: no passing verify — from its worktree run "
             "`python3 factory/scripts/verify.py`")
-
     tests = read("tests.json")
     automated = tests.get("automated") if isinstance(tests, dict) else None
     if (not isinstance(automated, dict)
