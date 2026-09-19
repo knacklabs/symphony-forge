@@ -1,11 +1,11 @@
 {
   "ok": true,
-  "completed_at": "2026-09-19T00:57:13+00:00",
-  "commit": "b1cc76d3efc4e725368ac6e629774a2aa3be35c2",
+  "completed_at": "2026-09-19T02:05:47+00:00",
+  "commit": "e4e59d0ac24643300a1e96bf51b2534da2e50032",
   "task_id": "LEAN-WORKFLOW",
   "recorded_by": "stage-proof",
-  "tree_digest": "536e094834c72e410f7f18e0532de759d6903ef29985e9b41ca56f17b9fc4360",
-  "proof_key": "2a9a6fd70d3a508e43388a0e8e9f64c636d56944a48dbd53f2c7d89ef99d64f4",
+  "tree_digest": "79f4cc856d3128dc27d08801a11107bb04caf52220ade4e97f597dba7b00bd0d",
+  "proof_key": "a344c055394cded2f8c02701b9c22434d7ca1af57ffcaf72cb6713880a6ced7d",
   "results": [
     {
       "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with pytest-xdist --with psutil python factory/scripts/verify.py",
