@@ -26,6 +26,8 @@ def _approved_plan_changed(base: Path, state: dict) -> bool:
 
 def _approved_plan_authority_state(base: Path, state: dict) -> str:
     """Classify content drift separately from missing or retired authority."""
+    from .approval import ApprovalRefused, _require_safe_destination
+
     if state.get("plan_status") != "approved":
         return "not-approved"
     approved = state.get("approved_plan_sha256")
@@ -35,21 +37,32 @@ def _approved_plan_authority_state(base: Path, state: dict) -> str:
             or not isinstance(relative, str)):
         return "repair"
     plan = base / relative
-    if not plan.is_file():
+    if Path(relative).is_absolute() or ".." in Path(relative).parts:
+        return "repair"
+    try:
+        _require_safe_destination(base, plan, required=True)
+    except ApprovalRefused:
+        return "repair"
+    story = str(state.get("story") or state.get("issue_key") or "")
+    issue = str(state.get("issue_key") or story)
+    if (not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]*", story)
+            or not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]*", issue)):
+        return "repair"
+    try:
+        evidence = evidence_path(base, story, "plan-approval.json")
+        _require_safe_destination(base, evidence, required=True)
+        record = json.loads(evidence.read_text(encoding="utf-8"))
+    except (ApprovalRefused, OSError, UnicodeError, json.JSONDecodeError):
         return "repair"
     authority = approved_plan_digest(base, state, plan)
     if authority != approved:
-        story = str(state.get("story") or state.get("issue_key") or "")
-        try:
-            record = load_json(
-                evidence_path(base, story, "plan-approval.json"), default={},
-            )
-        except (OSError, UnicodeError, json.JSONDecodeError):
-            return "repair"
         legacy = isinstance(record, dict) and all(
             isinstance(record.get(field), str) and record[field]
-            for field in ("approved_plan_sha256", "approver", "at")
-        ) and "runtime" not in record
+            for field in ("approved_plan_sha256", "issue", "story", "approver", "at")
+        ) and record.get("approved_plan_sha256") == approved \
+            and record.get("issue") == issue \
+            and record.get("story") == story \
+            and "runtime" not in record
         return "upgrade" if legacy else "repair"
     return (
         "current"
@@ -427,18 +440,35 @@ def cmd_next(args: argparse.Namespace) -> None:
     elif _approved_plan_authority_state(base, state) == "upgrade":
         phase("planning authority upgrade required")
         steps.append(
-            "[dev] The approved plan uses a Lean-retired approval format. Run "
-            "`forge upgrade` before continuing; do not treat it as a content edit "
-            "or fabricate a native approval event."
+            "[dev] The approved plan uses a Lean-retired approval format. Display "
+            "its exact unchanged bytes in native Plan Mode, consume one genuine "
+            "human approval event, then retry `forge upgrade`; do not treat it as "
+            "a content edit or fabricate a native approval event."
         )
     elif _approved_plan_authority_state(base, state) == "repair":
         phase("planning authority repair required")
-        steps.append(
-            "[dev] The approved plan's native approval authority is missing or "
-            "malformed. Repair or restore its recorder-generated approval record "
-            "and consumed event tombstone; only actual changed plan bytes route "
-            "directly to native reapproval."
-        )
+        recovery = []
+        try:
+            from .approval import ApprovalRefused, eligible_candidates
+            candidates = eligible_candidates(base)
+            recovery = [candidate for candidate in candidates
+                        if candidate.kind == "story"]
+        except (ApprovalRefused, OSError, ValueError, SystemExit):
+            recovery = []
+        if len(recovery) == 1:
+            steps.append(
+                "[dev] A completed Lean migration removed the old approval "
+                "record. Display the exact unchanged plan bytes in native Plan "
+                "Mode and consume one genuine human approval event; then run "
+                "`forge next` again."
+            )
+        else:
+            steps.append(
+                "[dev] The approved plan's native approval authority is missing "
+                "or malformed. Repair or restore its recorder-generated approval "
+                "record and consumed event tombstone; only actual changed plan "
+                "bytes route directly to native reapproval."
+            )
     elif state.get("plan_status") != "approved":
         phase("planning")
         issue = state.get("issue_key")

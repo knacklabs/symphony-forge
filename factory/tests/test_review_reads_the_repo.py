@@ -22,6 +22,8 @@ from test_review_lenses_in_parallel import _built  # noqa: F401
 
 sys.path.insert(0, str(HARNESS / "factory" / "scripts"))
 import forge_cli.review as review_mod  # noqa: E402
+import forge_cli.review_brief as review_brief_mod  # noqa: E402
+import forge_cli.decisions as decisions_mod  # noqa: E402
 from factory_lib import git_control_dir  # noqa: E402
 from forge_cli.review import (  # noqa: E402
     COMMON_PREAMBLE, DIFF_ONLY_PREAMBLE, _combined_prompt, _lens_prompt, _skill_argv,
@@ -352,6 +354,37 @@ The current accepted decision must remain present.
         review_task(repo, "T1", skill=str(skill), engine="claude")
     assert "reviewed meaning changed while rendering" in capsys.readouterr().out
     assert not launched
+
+
+@pytest.mark.parametrize("linked_ancestor", [False, True])
+def test_review_context_refuses_linked_accepted_decision_bytes(
+        repo, tmp_path, monkeypatch, linked_ancestor):
+    """Detached review context must never export bytes through a link."""
+    _built(repo, tmp_path)
+    private = tmp_path / "private-decisions"
+    private.mkdir()
+    private_decision = private / "0082-linked.md"
+    private_decision.write_text(
+        "---\nstatus: accepted\nconfirmed_by: human\n---\n\n# Private\n",
+        encoding="utf-8",
+    )
+    if linked_ancestor:
+        linked_directory = repo / "linked-decisions"
+        linked_directory.symlink_to(private, target_is_directory=True)
+        decision_path = linked_directory / private_decision.name
+        monkeypatch.setattr(
+            decisions_mod, "decision_records",
+            lambda _base: [{"id": "0082-linked", "status": "accepted",
+                            "path": decision_path}],
+        )
+    else:
+        decision_path = repo / "docs" / "decisions" / private_decision.name
+        decision_path.symlink_to(private_decision)
+
+    with pytest.raises(SystemExit, match="unsafe review proof path"):
+        review_brief_mod._current_decision_inputs(repo)
+    assert not (repo / ".factory" / "review-briefs" / "decisions" /
+                "0082-linked.md").exists()
 
 
 def test_the_run_says_so_when_it_falls_back_to_the_diff_only_bundle(repo, tmp_path, monkeypatch, capsys):

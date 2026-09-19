@@ -2185,7 +2185,19 @@ def _canonical_test_command_for_task(base: Path, task: dict) -> str:
     prefix = _canonical_verifier_prefix(tokens)
     if prefix is None:
         return ""
-    assignments, _remaining = prefix
+    assignments, remaining = prefix
+    # A wrapped verifier can choose a different uv environment or command
+    # than the one visible to close.  Its JUnit is therefore diagnostic only;
+    # dedicated selectors must run unless the producer is the direct
+    # repository verifier with only harmless leading assignments.
+    if (len(remaining) != 2
+            or not re.fullmatch(
+                r"python(?:3(?:\.\d+)?)?(?:\.exe)?",
+                Path(remaining[0]).name.lower(),
+            )
+            or os.path.abspath(base / remaining[1])
+            != os.path.abspath(base / "factory/scripts/verify.py")):
+        return ""
     command = _factory_test_command(base)
     if not command:
         return ""
@@ -3216,21 +3228,73 @@ def _proof_tool_identity(
             cached["pytest_semantics"] = pytest_semantics
         return cached
     script = (
-        "import hashlib,importlib.metadata as m,json,pathlib,re,sys\n"
+        "import csv,hashlib,importlib.metadata as m,json,pathlib,re,stat,sys\n"
         "def digest(d, name):\n"
         "    value = d.read_text(name)\n"
         "    if value is None:\n"
         "        raise ValueError(name)\n"
         "    return hashlib.sha256(value.encode()).hexdigest()\n"
+        "def recorded_files(d, dist_name):\n"
+        "    raw = d.read_text('RECORD')\n"
+        "    if raw is None:\n"
+        "        raise ValueError('RECORD')\n"
+        "    rows = []\n"
+        "    for fields in csv.reader(raw.splitlines()):\n"
+        "        if not fields or not fields[0]:\n"
+        "            continue\n"
+        "        relative = fields[0]\n"
+        "        is_pth = pathlib.PurePosixPath(relative).suffix == '.pth'\n"
+        "        if (is_pth and (dist_name != 'setuptools'\n"
+        "                or pathlib.PurePosixPath(relative).name\n"
+        "                != 'distutils-precedence.pth')):\n"
+        "            raise ValueError('unmodeled path entry')\n"
+        "        path = pathlib.Path(d.locate_file(relative))\n"
+        "        optional_bytecode = (pathlib.PurePosixPath(relative).suffix\n"
+        "                             == '.pyc'\n"
+        "                             and '__pycache__' in pathlib.PurePosixPath(\n"
+        "                                 relative).parts)\n"
+        "        try:\n"
+        "            info = path.lstat()\n"
+        "        except FileNotFoundError:\n"
+        "            if optional_bytecode:\n"
+        "                continue\n"
+        "            raise ValueError('missing recorded file')\n"
+        "        except OSError:\n"
+        "            raise ValueError('unreadable recorded file')\n"
+        "        if path.is_symlink() or not stat.S_ISREG(info.st_mode):\n"
+        "            raise ValueError('linked or non-regular recorded file')\n"
+        "        body = path.read_bytes()\n"
+        "        if is_pth:\n"
+        "            expected = (\"import os; var = 'SETUPTOOLS_USE_DISTUTILS'; \"\n"
+        "                        \"enabled = os.environ.get(var, 'local') == 'local'; \"\n"
+        "                        \"enabled and __import__('_distutils_hack').add_shim();\")\n"
+        "            if body.decode('utf-8').strip() != expected:\n"
+        "                raise ValueError('unmodeled pth contents')\n"
+        "        rows.append([relative, len(body), hashlib.sha256(body).hexdigest()])\n"
+        "    if not rows:\n"
+        "        raise ValueError('empty RECORD')\n"
+        "    rows.sort(key=lambda row: row[0])\n"
+        "    encoded = json.dumps(rows, separators=(',', ':'),\n"
+        "                          ensure_ascii=False).encode()\n"
+        "    return len(rows), hashlib.sha256(encoded).hexdigest()\n"
         "rows = []\n"
         "for d in m.distributions():\n"
         "    raw_name = d.metadata.get('Name', '')\n"
         "    name = re.sub(r'[-_.]+', '-', raw_name).lower()\n"
         "    if not name or not d.version:\n"
         "        raise ValueError('distribution identity')\n"
+        "    direct_url = d.read_text('direct_url.json')\n"
+        "    if direct_url:\n"
+        "        info = json.loads(direct_url)\n"
+        "        if (isinstance(info, dict) and isinstance(\n"
+        "                info.get('dir_info'), dict)\n"
+        "                and info['dir_info'].get('editable') is True):\n"
+        "            raise ValueError('editable distribution')\n"
+        "    files_count, files_sha256 = recorded_files(d, name)\n"
         "    rows.append({'name': name, 'version': d.version, "
         "'metadata_sha256': digest(d, 'METADATA'), "
-        "'record_sha256': digest(d, 'RECORD')})\n"
+        "'record_sha256': digest(d, 'RECORD'), "
+        "'files_count': files_count, 'files_sha256': files_sha256})\n"
         "rows.sort(key=lambda row: row['name'])\n"
         "p = pathlib.Path(sys.executable)\n"
         "print(json.dumps({'interpreter_sha256': "
@@ -3257,7 +3321,8 @@ def _proof_tool_identity(
         for row in detail["dependencies"]:
             if (not isinstance(row, dict)
                     or set(row) != {"name", "version", "metadata_sha256",
-                                    "record_sha256"}
+                                    "record_sha256", "files_count",
+                                    "files_sha256"}
                     or not isinstance(row["name"], str)
                     or row["name"] != re.sub(r"[-_.]+", "-", row["name"]).lower()
                     or not re.fullmatch(r"[a-z0-9][a-z0-9-]*", row["name"])
@@ -3265,7 +3330,11 @@ def _proof_tool_identity(
                     or not isinstance(row["version"], str)
                     or not row["version"]
                     or not re.fullmatch(r"[0-9a-f]{64}", row["metadata_sha256"])
-                    or not re.fullmatch(r"[0-9a-f]{64}", row["record_sha256"])):
+                    or not re.fullmatch(r"[0-9a-f]{64}", row["record_sha256"])
+                    or not isinstance(row["files_count"], int)
+                    or isinstance(row["files_count"], bool)
+                    or row["files_count"] <= 0
+                    or not re.fullmatch(r"[0-9a-f]{64}", row["files_sha256"])):
                 raise ValueError
             names.add(row["name"])
         if detail["dependencies"] != sorted(

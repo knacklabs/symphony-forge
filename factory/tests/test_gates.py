@@ -7806,6 +7806,44 @@ def hook(repo: Path, payload: dict) -> tuple[int, str]:
     })
 
 
+def native_hook(repo: Path, payload: dict) -> tuple[int, str]:
+    return run(repo, "pre_tool_use.py", stdin=json.dumps(payload), env={
+        "FORGE_COORDINATOR": "codex",
+        "FORGE_PROCESS_TOKEN": "", "FORGE_LAUNCH_ID": "",
+    })
+
+
+def test_native_apply_patch_preserves_planning_and_product_admission(repo: Path):
+    def patch_for(*paths: str) -> str:
+        return "*** Begin Patch\n" + "\n".join(
+            f"*** Update File: {path}\n@@\n+content\n" for path in paths
+        ) + "*** End Patch"
+
+    code, out = native_hook(repo, {
+        "tool_name": "apply_patch", "permission_mode": "default",
+        "tool_input": {"command": patch_for("plans/draft.md")},
+    })
+    assert code == 0 and "deny" not in out, out
+
+    code, out = native_hook(repo, {
+        "tool_name": "apply_patch", "permission_mode": "default",
+        "tool_input": {"command": patch_for("src/app.ts")},
+    })
+    assert code == 0 and "deny" in out and "active task stage" in out, out
+
+    code, out = native_hook(repo, {
+        "tool_name": "apply_patch", "permission_mode": "default",
+        "tool_input": {"command": patch_for("plans/draft.md", "src/app.ts")},
+    })
+    assert code == 0 and "deny" in out and "active task stage" in out, out
+
+    code, out = native_hook(repo, {
+        "tool_name": "apply_patch", "permission_mode": "default",
+        "tool_input": {"command": patch_for(".factory/run.json")},
+    })
+    assert code == 0 and "never hand-written" in out, out
+
+
 def post_hook(repo: Path, payload: dict) -> tuple[int, str]:
     return run(repo, "forge.py", "hook", "post_tool_use", stdin=json.dumps(payload))
 
@@ -22685,6 +22723,68 @@ def test_canonical_junit_binds_to_the_actual_verifier_producer(
     assert stages._canonical_test_command_for_task(
         repo, {**task, "verify_commands": ["python3 factory/scripts/verify.py"]},
     ) == ""
+
+
+def test_wrapped_canonical_verifier_junit_falls_back_to_required_selector(
+        repo, monkeypatch, capsys):
+    """A uv-wrapped verifier must not donate a JUnit report to close."""
+    import forge_cli.stages as stages
+
+    source = repo / "src/test_core.py"
+    source.parent.mkdir(parents=True, exist_ok=True)
+    source.write_text(
+        "import pytest\n\n"
+        "@pytest.mark.parametrize('case', ['pass', 'fail'])\n"
+        "def test_slice(case):\n"
+        "    assert case == 'pass'\n",
+        encoding="utf-8",
+    )
+    task = {
+        "verify_commands": [
+            "UV_CACHE_DIR=/tmp/forge-lean-uv-cache "
+            "UV_TOOL_DIR=/tmp/forge-lean-uv-tools "
+            "uv run --python 3.11 --with pytest --with pytest-xdist "
+            "python factory/scripts/verify.py",
+        ],
+        "required_tests": [{
+            "id": "test_slice", "path": "src/test_core.py",
+            "command": "python3 -m pytest {path}::{id} -q "
+                       "-o junit_family=legacy --junitxml={report}",
+        }],
+    }
+    # The wrapped verifier's producer only reports the passing parameter. The
+    # required selector must still execute the real bare-id selection and
+    # refuse on the failing parameter when the producer is not safely bound.
+    monkeypatch.setenv(
+        "FACTORY_TEST_CMD", "python3 -m pytest src/test_core.py::test_slice[pass]",
+    )
+    monkeypatch.setattr(stages, "proof_identity", lambda *_args, **_kwargs: {
+        "identity": "a" * 64, "inputs": {}, "reusable": True,
+    })
+    monkeypatch.setattr(stages, "_proof_receipt", lambda *_args: {})
+    monkeypatch.setattr(stages, "_store_proof_receipt", lambda *_args: None)
+    monkeypatch.setattr(
+        stages, "product_tree_snapshot",
+        lambda _base: {"tracked": {"src/test_core.py": "fixture"}, "dirty": {}},
+    )
+    monkeypatch.setattr(stages, "protected_authority_snapshot", lambda _base: {})
+
+    def wrapped_canonical(_base, _stage_id, _task, report):
+        report.write_text(
+            '<testsuite><testcase name="test_slice [claude]" '
+            'file="src/test_core.py"/><testcase name="test_slice [codex]" '
+            'file="src/test_core.py"/></testsuite>',
+            encoding="utf-8",
+        )
+        return [{"command": "uv run ... verify.py", "status": "passed"}]
+
+    monkeypatch.setattr(stages, "_run_verify_commands", wrapped_canonical)
+
+    assert stages._canonical_test_command_for_task(repo, task) == ""
+    with pytest.raises(SystemExit) as error:
+        stages.run_stage_proof(repo, "T1", task)
+    assert error.value.code == 1
+    assert "required test 'test_slice' failed" in capsys.readouterr().out
 
 
 def test_canonical_junit_falls_back_when_required_node_identity_is_missing(

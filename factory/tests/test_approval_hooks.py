@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import subprocess
 import sys
 import uuid
 from pathlib import Path
@@ -9,12 +10,12 @@ from pathlib import Path
 import pytest
 
 from test_gates import (  # noqa: F401
-    HARNESS, ensure_story, intake, load_factory_lib, plan_draft, record_grill,
-    repo, run, save_plan, sign_off, story_state,
+    HARNESS, ensure_story, git, intake, load_factory_lib, plan_draft,
+    record_grill, repo, run, save_plan, sign_off, story_state,
 )
 
 sys.path.insert(0, str(HARNESS / "factory" / "scripts"))
-from forge_cli import approval  # noqa: E402
+from forge_cli import approval, upgrade  # noqa: E402
 
 
 def _event(candidate: approval.ApprovalCandidate, runtime: str = "claude") -> dict:
@@ -172,6 +173,7 @@ def test_phase_refuses_approved_status_without_native_approval_authority(
     assert _approved_plan_authority_state(repo, state) == "repair"
     lib.dump_json(candidate.evidence, {
         "approved_plan_sha256": candidate.digest,
+        "issue": candidate.story, "story": candidate.story,
         "approver": "Legacy Human",
         "at": "2026-01-01T00:00:00+00:00",
     })
@@ -182,6 +184,232 @@ def test_phase_refuses_approved_status_without_native_approval_authority(
         encoding="utf-8",
     )
     assert _approved_plan_authority_state(repo, state) == "changed"
+
+
+def test_legacy_exact_plan_approval_is_reachable_and_upgrade_refuses_before_mutation(
+        repo: Path, capsys: pytest.CaptureFixture[str]):
+    candidate = _story_candidate(repo)
+    lib = load_factory_lib(repo)
+    candidate.path.write_text(
+        candidate.path.read_text(encoding="utf-8").replace(
+            "status: awaiting-approval", "status: approved", 1,
+        ),
+        encoding="utf-8",
+    )
+    state_path = lib.run_state_path(repo)
+    state = json.loads(state_path.read_text(encoding="utf-8"))
+    state.update(plan_status="approved", approved_plan_sha256=candidate.digest)
+    lib.dump_json(state_path, state)
+    lib.dump_json(candidate.evidence, {
+        "approved_plan_sha256": candidate.digest,
+        "issue": candidate.story, "story": candidate.story,
+        "approver": "Legacy Human", "at": "2026-01-01T00:00:00+00:00",
+    })
+    recovered = approval.eligible_candidates(repo)
+    assert recovered == [candidate]
+    before = {
+        path: path.read_bytes() if path.exists() else None
+        for path in (candidate.path, candidate.evidence, state_path)
+    }
+    with pytest.raises(SystemExit):
+        upgrade.preflight_lean_migration(repo)
+    assert "genuine native approval" in capsys.readouterr().out
+    assert {
+        path: path.read_bytes() if path.exists() else None
+        for path in before
+    } == before
+
+    approval.record_native_approval(repo, _event(recovered[0]), runtime="claude")
+    assert approval.eligible_candidates(repo) == []
+
+
+def _completed_deleted_plan_approval_fixture(repo: Path):
+    sign_off(repo)
+    intake(repo)
+    candidate = _story_candidate(repo)
+    lib = load_factory_lib(repo)
+    legacy = {
+        "approved_plan_sha256": candidate.digest,
+        "issue": candidate.story, "story": candidate.story,
+        "approver": "Legacy Human", "at": "2026-01-01T00:00:00+00:00",
+    }
+    lib.dump_json(candidate.evidence, legacy)
+    lib.dump_json(repo / ".factory" / "grills" / "plan.json", {
+        "generated_by": "griller", "gate": "plan", "verdict": "pass",
+        "gaps": [], "contradictions": [], "resolutions": [],
+    })
+    migration = upgrade.preflight_lean_migration(repo)
+    assert migration is not None
+    upgrade.apply_lean_migration(repo, migration)
+    assert not candidate.evidence.exists()
+    state = json.loads(lib.run_state_path(repo).read_text(encoding="utf-8"))
+    state.update(plan_status="approved", approved_plan_sha256=candidate.digest)
+    lib.dump_json(lib.run_state_path(repo), state)
+    return candidate, repo / ".factory" / "migrations" / "lean-workflow-v2.json"
+
+
+def test_completed_deleted_plan_approval_manifest_offers_one_native_candidate(
+        repo: Path):
+    candidate, _manifest = _completed_deleted_plan_approval_fixture(repo)
+
+    recovered = approval.eligible_candidates(repo)
+    assert len(recovered) == 1
+    assert recovered[0].kind == "story"
+    code, output = run(repo, "forge.py", "next")
+    assert code == 0, output
+    assert "native Plan Mode" in output
+    approval.record_native_approval(
+        repo, _event(recovered[0], "codex"), runtime="codex",
+    )
+    assert approval.eligible_candidates(repo) == []
+
+
+@pytest.mark.parametrize("mutation", ["missing", "tampered", "wrong-path", "digest"])
+def test_completed_deleted_plan_approval_refuses_incomplete_manifest_lineage(
+        repo: Path, mutation: str):
+    _candidate, manifest_path = _completed_deleted_plan_approval_fixture(repo)
+    if mutation == "missing":
+        manifest_path.unlink()
+    else:
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        entry = next(
+            row for row in manifest["entries"]
+            if row.get("family") == "manual-plan-approval"
+        )
+        if mutation == "tampered":
+            manifest["completed_at"] = ""
+        elif mutation == "wrong-path":
+            entry["path"] = "plans/active/not-the-approved-plan.json"
+        else:
+            entry["sha256"] = "0" * 64
+        manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+    assert approval.eligible_candidates(repo) == []
+
+
+def test_completed_deleted_plan_approval_searches_authenticated_prior_completion(
+        repo: Path, monkeypatch):
+    """A later supported supplement keeps the deleted approval in prior data."""
+    from test_upgrade_lean_workflow import _history_fixed_review, _sealed_fixed_review
+
+    sign_off(repo)
+    intake(repo)
+    _sealed_fixed_review(repo)
+    candidate = _story_candidate(repo)
+    lib = load_factory_lib(repo)
+    lib.dump_json(candidate.evidence, {
+        "approved_plan_sha256": candidate.digest,
+        "issue": candidate.story, "story": candidate.story,
+        "approver": "Legacy Human", "at": "2026-01-01T00:00:00+00:00",
+    })
+    lib.dump_json(repo / ".factory" / "grills" / "plan.json", {
+        "generated_by": "griller", "gate": "plan", "verdict": "pass",
+        "gaps": [], "contradictions": [], "resolutions": [],
+    })
+    empty_digest = upgrade._inventory_digest([])
+    manifest = repo / ".factory" / "migrations" / "lean-workflow-v2.json"
+    manifest.parent.mkdir(parents=True, exist_ok=True)
+    manifest.write_text(json.dumps({
+        "generated_by": "upgrade", "version": "lean-workflow-v2",
+        "input_inventory_digest": empty_digest, "output_digest": empty_digest,
+        "installed_runtime_digest": (
+            "bb4b6c05b41897447063959fc782e9ca4c2e00f9b219559314b725485b91b2e8"
+        ),
+        "entries": [], "recorded_at": "2026-09-14T05:48:01+00:00",
+        "completed_at": "2026-09-14T05:48:01+00:00",
+    }) + "\n", encoding="utf-8")
+
+    first = upgrade.preflight_lean_migration(repo)
+    assert first is not None
+    upgrade.apply_lean_migration(repo, first)
+    supplement = manifest.with_name(upgrade.LEAN_MIGRATION_SUPPLEMENT)
+    prior = json.loads(supplement.read_text(encoding="utf-8"))
+    assert any(entry.get("family") == "manual-plan-approval"
+               for entry in prior["entries"])
+
+    state = json.loads(lib.run_state_path(repo).read_text(encoding="utf-8"))
+    state.update(plan_status="approved", approved_plan_sha256=candidate.digest)
+    lib.dump_json(lib.run_state_path(repo), state)
+    _history_fixed_review(repo)
+    import factory_lib
+    monkeypatch.setattr(factory_lib, "product_delta_digest", lambda *_args: "f" * 64)
+    extension = upgrade.preflight_lean_migration(repo)
+    assert extension is not None
+    upgrade.apply_lean_migration(repo, extension)
+    completed = json.loads(supplement.read_text(encoding="utf-8"))
+    assert completed["prior_completion"] == prior
+    assert any(entry.get("family") == "manual-plan-approval"
+               for entry in completed["prior_completion"]["entries"])
+    assert approval.eligible_candidates(repo) == [candidate]
+
+
+def test_public_upgrade_retry_after_native_reapproval_does_not_keep_legacy_gate(
+        repo: Path):
+    candidate = _story_candidate(repo)
+    lib = load_factory_lib(repo)
+    candidate.path.write_text(
+        candidate.path.read_text(encoding="utf-8").replace(
+            "status: awaiting-approval", "status: approved", 1,
+        ),
+        encoding="utf-8",
+    )
+    state_path = lib.run_state_path(repo)
+    state = json.loads(state_path.read_text(encoding="utf-8"))
+    state.update(plan_status="approved", approved_plan_sha256=candidate.digest)
+    lib.dump_json(state_path, state)
+    lib.dump_json(candidate.evidence, {
+        "approved_plan_sha256": candidate.digest,
+        "issue": candidate.story, "story": candidate.story,
+        "approver": "Legacy Human", "at": "2026-01-01T00:00:00+00:00",
+    })
+    lib.dump_json(repo / ".factory" / "grills" / "plan.json", {
+        "generated_by": "griller", "gate": "plan", "verdict": "pass",
+        "gaps": [], "contradictions": [], "resolutions": [],
+    })
+
+    def public_upgrade():
+        return subprocess.run(
+            [sys.executable, str(HARNESS / "factory/scripts/forge.py"),
+             "upgrade", "--target", str(repo)],
+            cwd=HARNESS, capture_output=True, text=True,
+        )
+
+    git(repo, "add", "-A")
+    git(repo, "commit", "-qm", "legacy approval recovery fixture")
+    first = public_upgrade()
+    code, output = first.returncode, first.stdout + first.stderr
+    assert code != 0
+    assert "genuine native approval" in output
+
+    recovered = approval.eligible_candidates(repo)
+    assert recovered == [candidate]
+    approval.record_native_approval(repo, _event(candidate), runtime="claude")
+    git(repo, "add", "-A")
+    git(repo, "commit", "-qm", "native approval recovery fixture")
+    second = public_upgrade()
+    assert second.returncode == 0, second.stdout + second.stderr
+    assert "genuine native approval" not in second.stdout + second.stderr
+    assert approval.eligible_candidates(repo) == []
+
+
+def test_legacy_plan_approval_requires_exact_issue_and_story_binding(repo: Path):
+    candidate = _story_candidate(repo)
+    lib = load_factory_lib(repo)
+    candidate.path.write_text(
+        candidate.path.read_text(encoding="utf-8").replace(
+            "status: awaiting-approval", "status: approved", 1,
+        ),
+        encoding="utf-8",
+    )
+    state_path = lib.run_state_path(repo)
+    state = json.loads(state_path.read_text(encoding="utf-8"))
+    state.update(plan_status="approved", approved_plan_sha256=candidate.digest)
+    lib.dump_json(state_path, state)
+    lib.dump_json(candidate.evidence, {
+        "approved_plan_sha256": candidate.digest,
+        "issue": "OTHER-ISSUE", "story": candidate.story,
+        "approver": "Legacy Human", "at": "2026-01-01T00:00:00+00:00",
+    })
+    assert approval.eligible_candidates(repo) == []
 
 
 @pytest.mark.parametrize("body", [b"\xff", b"[]\n"])

@@ -675,8 +675,11 @@ def _fake_uv_probe(repo: Path, monkeypatch) -> tuple[dict, Path]:
     source = repo / "tests" / "a.py"
     source.parent.mkdir(parents=True, exist_ok=True)
     source.write_text("def test_a():\n    pass\n", encoding="utf-8")
+    consumer = repo / "installed-package" / "module.py"
+    consumer.parent.mkdir(parents=True, exist_ok=True)
+    consumer.write_text("VALUE = 1\n", encoding="utf-8")
     state = {"interpreter": b"ephemeral Python v1", "transitive": "1",
-             "probe": "complete", "calls": []}
+             "probe": "complete", "calls": [], "consumer": consumer}
     real_which = stages.shutil.which
     real_run = stages.subprocess.run
     monkeypatch.setattr(stages.shutil, "which", lambda command, **kwargs:
@@ -690,13 +693,22 @@ def _fake_uv_probe(repo: Path, monkeypatch) -> tuple[dict, Path]:
         state["calls"].append(tuple(argv))
         ephemeral = repo / "temporary-interpreter"
         ephemeral.write_bytes(state["interpreter"])
+        try:
+            consumer_digest = hashlib.sha256(
+                state["consumer"].read_bytes()
+            ).hexdigest()
+        except OSError:
+            consumer_digest = ""
         dependencies = [
             {"name": "psutil", "version": "5", "metadata_sha256": "a" * 64,
-             "record_sha256": "b" * 64},
+             "record_sha256": "b" * 64, "files_count": 1,
+             "files_sha256": "1" * 64},
             {"name": "pytest", "version": "8", "metadata_sha256": "c" * 64,
-             "record_sha256": "d" * 64},
+             "record_sha256": "d" * 64, "files_count": 1,
+             "files_sha256": "2" * 64},
             {"name": "transitive-package", "version": state["transitive"],
-             "metadata_sha256": "e" * 64, "record_sha256": "f" * 64},
+             "metadata_sha256": "e" * 64, "record_sha256": "f" * 64,
+             "files_count": 1, "files_sha256": consumer_digest},
         ]
         if state["probe"] == "duplicate":
             dependencies.append(dict(dependencies[-1]))
@@ -906,6 +918,135 @@ def test_probe_changes_interpreter_dependency_and_runner_inputs(repo: Path, monk
     assert stages._proof_tool_identity(repo, command)["reusable"] is False
     runner.write_bytes(b"fake uv runner v2")
     assert stages._proof_tool_identity(repo, command)["runner"] != base["runner"]
+
+
+def test_dependency_file_bytes_bind_reuse_and_missing_files_refuse(
+        repo: Path, monkeypatch):
+    state, _runner = _fake_uv_probe(repo, monkeypatch)
+    command = "uv run --python 3.11 --with pytest python -m pytest tests/a.py"
+    baseline = stages._proof_tool_identity(repo, command)
+    assert baseline["reusable"] is True
+    state["consumer"].write_text("VALUE = 2\n", encoding="utf-8")
+    changed = stages._proof_tool_identity(repo, command)
+    assert changed["reusable"] is True
+    assert changed["dependencies"] != baseline["dependencies"]
+    state["consumer"].unlink()
+    assert stages._proof_tool_identity(repo, command)["reusable"] is False
+
+
+def test_dependency_probe_hashes_real_recorded_files_and_refuses_editable_dist(
+        repo: Path, monkeypatch):
+    """Exercise the embedded probe against a real RECORD, not mocked rows."""
+    site = repo / "probe-site"
+    dist_info = site / "setuptools-80.9.0.dist-info"
+    site.mkdir()
+    dist_info.mkdir()
+    module = site / "fixture_module.py"
+    module.write_text("VALUE = 1\n", encoding="utf-8")
+    metadata = dist_info / "METADATA"
+    metadata.write_text(
+        "Metadata-Version: 2.1\nName: setuptools\nVersion: 80.9.0\n",
+        encoding="utf-8",
+    )
+    pth = site / "distutils-precedence.pth"
+    pth.write_text(
+        "import os; var = 'SETUPTOOLS_USE_DISTUTILS'; "
+        "enabled = os.environ.get(var, 'local') == 'local'; "
+        "enabled and __import__('_distutils_hack').add_shim();\n",
+        encoding="utf-8",
+    )
+    (dist_info / "RECORD").write_text(
+        "fixture_module.py,,\n"
+        "distutils-precedence.pth,,\n"
+        "setuptools-80.9.0.dist-info/METADATA,,\n"
+        "setuptools-80.9.0.dist-info/RECORD,,\n",
+        encoding="utf-8",
+    )
+
+    real_which = stages.shutil.which
+    real_run = stages.subprocess.run
+    monkeypatch.setattr(
+        stages.shutil, "which",
+        lambda command, **kwargs: (
+            sys.executable if command == "python3"
+            else real_which(command, **kwargs)
+        ),
+    )
+
+    def run_with_fixture_discovery(argv, *args, **kwargs):
+        # Keep the production probe source unchanged. Only its distribution
+        # discovery is replaced, so all RECORD parsing and byte hashing run in
+        # a real interpreter.
+        if (len(argv) >= 3 and argv[0] == sys.executable
+                and argv[-2] == "-c"):
+            script = argv[-1]
+            bootstrap = (
+                "import importlib.metadata as _metadata, pathlib\n"
+                "_metadata.distributions = lambda: "
+                f"[_metadata.PathDistribution(pathlib.Path({str(dist_info)!r}))]\n"
+                f"exec({script!r}, globals(), globals())\n"
+            )
+            argv = [*argv[:-1], bootstrap]
+        return real_run(argv, *args, **kwargs)
+
+    monkeypatch.setattr(stages.subprocess, "run", run_with_fixture_discovery)
+    command = "python3 -m compileall factory/scripts"
+    baseline = stages._proof_tool_identity(repo, command)
+    assert baseline["reusable"] is True, baseline
+    baseline_dependency = baseline["dependencies"][0]
+    assert baseline_dependency["name"] == "setuptools"
+    assert baseline_dependency["files_count"] == 4
+
+    metadata.write_text(
+        "Metadata-Version: 2.1\nName: unrelated-dist\nVersion: 80.9.0\n",
+        encoding="utf-8",
+    )
+    assert stages._proof_tool_identity(repo, command)["reusable"] is False
+    metadata.write_text(
+        "Metadata-Version: 2.1\nName: setuptools\nVersion: 80.9.0\n",
+        encoding="utf-8",
+    )
+
+    module.write_text("VALUE = 2\n", encoding="utf-8")
+    changed = stages._proof_tool_identity(repo, command)
+    assert changed["reusable"] is True
+    assert changed["dependencies"] != baseline["dependencies"]
+    assert changed["dependencies"][0]["files_sha256"] != \
+        baseline_dependency["files_sha256"]
+
+    module.unlink()
+    assert stages._proof_tool_identity(repo, command)["reusable"] is False
+
+    module.write_text("VALUE = 3\n", encoding="utf-8")
+    pth.write_text(pth.read_text(encoding="utf-8") + "import unrelated\n",
+                   encoding="utf-8")
+    assert stages._proof_tool_identity(repo, command)["reusable"] is False
+    pth.write_text(
+        "import os; var = 'SETUPTOOLS_USE_DISTUTILS'; "
+        "enabled = os.environ.get(var, 'local') == 'local'; "
+        "enabled and __import__('_distutils_hack').add_shim();\n",
+        encoding="utf-8",
+    )
+    linked_cache = site / "__pycache__" / "fixture_module.cpython-311.pyc"
+    linked_cache.parent.mkdir()
+    linked_target = repo / "linked-bytecode-target"
+    linked_target.write_bytes(b"linked bytecode")
+    linked_cache.symlink_to(linked_target)
+    (dist_info / "RECORD").write_text(
+        "fixture_module.py,,\n"
+        "distutils-precedence.pth,,\n"
+        "__pycache__/fixture_module.cpython-311.pyc,,\n"
+        "setuptools-80.9.0.dist-info/METADATA,,\n"
+        "setuptools-80.9.0.dist-info/RECORD,,\n",
+        encoding="utf-8",
+    )
+    assert stages._proof_tool_identity(repo, command)["reusable"] is False
+
+    (dist_info / "direct_url.json").write_text(
+        json.dumps({"url": str(site), "dir_info": {"editable": True}}),
+        encoding="utf-8",
+    )
+    assert stages._proof_tool_identity(repo, command)["reusable"] is False
 
 
 def test_proof_identity_binds_environment_without_persisting_secrets(

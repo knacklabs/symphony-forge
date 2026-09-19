@@ -67,6 +67,25 @@ LEAN_ORIGINAL_EMPTY_RUNTIME_DIGEST = (
     "bb4b6c05b41897447063959fc782e9ca4c2e00f9b219559314b725485b91b2e8"
 )
 LEAN_LENSES = ("performance", "quality", "security")
+
+_FIXED_REVIEW_OPTIONAL_LIST_FIELDS = (
+    "non_blocking_findings", "rejected_findings", "residual_risks",
+    "reviewed_scope", "skills_used", "contract_verdicts",
+)
+_FIXED_REVIEW_OPTIONAL_STRING_FIELDS = (
+    "task_id", "recommendation", "review_run_id", "brief_sha256",
+    "branch_diff_digest",
+)
+
+
+def _fixed_review_optional_fields_reason(value: dict) -> str:
+    for field in _FIXED_REVIEW_OPTIONAL_LIST_FIELDS:
+        if field in value and not isinstance(value[field], list):
+            return f"fixed review {field} is invalid"
+    for field in _FIXED_REVIEW_OPTIONAL_STRING_FIELDS:
+        if field in value and not isinstance(value[field], str):
+            return f"fixed review {field} is invalid"
+    return ""
 LEAN_RETAINED_PROFILES = {
     # Keep the complete routed registry here for legacy inventory records. The
     # source registry is still read from the harness at upgrade time; these
@@ -424,6 +443,16 @@ def _legacy_json_shape_reason(family: str, value: object) -> str:
             "summary": str, "blocking_findings": list,
             "branch_diff_digest": str,
         })
+        if (not reason and (value["generated_by"] != "autoreview"
+                            or isinstance(value["score"], bool)
+                            or not 0 <= value["score"] <= 10
+                            or not value["summary"].strip())):
+            return "fixed review lens has invalid proof fields"
+        if (not reason and "non_blocking_findings" in value
+                and not isinstance(value["non_blocking_findings"], list)):
+            return "fixed review lens has invalid non-blocking findings"
+        if not reason:
+            reason = _fixed_review_optional_fields_reason(value)
         if (not reason and "task_id" in value
                 and not isinstance(value["task_id"], str)):
             return "fixed review task identity is invalid"
@@ -440,6 +469,15 @@ def _legacy_json_shape_reason(family: str, value: object) -> str:
             "blocking_findings": list, "non_blocking_findings": list,
             "aspect": str, "commit": str, "recorded_at": str,
         })
+        if (not reason and (value["generated_by"] != "autoreview"
+                            or isinstance(value["score"], bool)
+                            or not 0 <= value["score"] <= 10
+                            or not value["summary"].strip()
+                            or value["aspect"] not in LEAN_LENSES
+                            or not value["recorded_at"].strip())):
+            return "historical fixed review has invalid proof fields"
+        if not reason:
+            reason = _fixed_review_optional_fields_reason(value)
         if not reason and not re.fullmatch(r"[0-9a-f]{40}", value["commit"]):
             return "historical fixed review has an invalid commit identity"
         return reason
@@ -1068,6 +1106,16 @@ def _raw_json_shape_reason(family: str, value: object) -> str:
             "summary": str, "blocking_findings": list,
             "branch_diff_digest": str,
         })
+        if (not problem and (value["generated_by"] != "autoreview"
+                             or isinstance(value["score"], bool)
+                             or not 0 <= value["score"] <= 10
+                             or not value["summary"].strip())):
+            return "fixed review lens has invalid proof fields"
+        if (not problem and "non_blocking_findings" in value
+                and not isinstance(value["non_blocking_findings"], list)):
+            return "fixed review lens has invalid non-blocking findings"
+        if not problem:
+            problem = _fixed_review_optional_fields_reason(value)
         if (not problem and "task_id" in value
                 and not isinstance(value["task_id"], str)):
             return "fixed review task identity is invalid"
@@ -1084,6 +1132,15 @@ def _raw_json_shape_reason(family: str, value: object) -> str:
             "blocking_findings": list, "non_blocking_findings": list,
             "aspect": str, "commit": str, "recorded_at": str,
         })
+        if (not problem and (value["generated_by"] != "autoreview"
+                             or isinstance(value["score"], bool)
+                             or not 0 <= value["score"] <= 10
+                             or not value["summary"].strip()
+                             or value["aspect"] not in LEAN_LENSES
+                             or not value["recorded_at"].strip())):
+            return "historical fixed review has invalid proof fields"
+        if not problem:
+            problem = _fixed_review_optional_fields_reason(value)
         if not problem and not re.fullmatch(r"[0-9a-f]{40}", value["commit"]):
             return "historical fixed review has an invalid commit identity"
         return problem
@@ -2137,7 +2194,57 @@ def _prepare_review_outputs(target: Path, migration: dict) -> None:
     migration["prepared_reviews"] = prepared
 
 
+def _legacy_plan_approval_requires_native(target: Path) -> bool:
+    """Refuse migration until an unchanged legacy approval is consumed natively."""
+    try:
+        from factory_lib import (
+            _read_review_bytes, evidence_path,
+            plan_digest_without_assumptions, run_state_path,
+        )
+        state = load_json(run_state_path(target), default={})
+        if not isinstance(state, dict) or state.get("plan_status") != "approved":
+            return False
+        relative = state.get("plan_file")
+        approved = state.get("approved_plan_sha256")
+        if (not isinstance(relative, str) or Path(relative).is_absolute()
+                or ".." in Path(relative).parts
+                or not isinstance(approved, str)
+                or re.fullmatch(r"[0-9a-f]{64}", approved) is None):
+            return False
+        plan = target / relative
+        if (Path(relative).is_absolute() or ".." in Path(relative).parts):
+            return False
+        _read_review_bytes(target, plan)
+        digest = plan_digest_without_assumptions(plan)
+        if digest != approved:
+            return False
+        story = str(state.get("story") or state.get("issue_key") or "").strip()
+        issue = str(state.get("issue_key") or story).strip()
+        if (not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]*", story)
+                or not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]*", issue)):
+            return False
+        evidence = evidence_path(target, story, "plan-approval.json")
+        record = json.loads(_read_review_bytes(target, evidence))
+        return (
+            isinstance(record, dict)
+            and record.get("approved_plan_sha256") == digest
+            and record.get("issue") == issue
+            and record.get("story") == story
+            and all(isinstance(record.get(field), str) and record[field].strip()
+                    for field in ("approver", "at"))
+            and "runtime" not in record
+        )
+    except (OSError, UnicodeError, ValueError, TypeError, json.JSONDecodeError,
+            SystemExit):
+        return False
+
+
 def preflight_lean_migration(target: Path) -> dict | None:
+    if _legacy_plan_approval_requires_native(target):
+        fail(
+            "Lean migration requires a genuine native approval for the unchanged "
+            "plan; run `forge next`, approve that exact plan, then retry `forge upgrade`."
+        )
     original_manifest = (
         target / ".factory" / "migrations" / f"{LEAN_MIGRATION_VERSION}.json"
     )

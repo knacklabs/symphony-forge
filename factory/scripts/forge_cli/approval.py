@@ -19,6 +19,7 @@ from factory_lib import (
     _windows_reparse_point, dump_json, evidence_path, factory_dir, git_control_dir,
     load_json, now_iso,
     plan_digest_without_assumptions, protected_decomposition_state_path,
+    approved_plan_digest,
     require_grill, run_state_path, task_frontier_state,
 )
 
@@ -114,6 +115,73 @@ def _strict_run_state(base: Path) -> dict[str, Any]:
     return value
 
 
+def _safe_key(value: str) -> bool:
+    return bool(re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]*", value))
+
+
+def _legacy_plan_approval(
+        base: Path, issue: str, story: str, path: Path, evidence: Path,
+        digest: str) -> bool:
+    """Recognize one exact, old manual approval without treating it as authority."""
+    if not _safe_key(issue) or not _safe_key(story):
+        return False
+    try:
+        _require_safe_destination(base, path, required=True)
+        _require_safe_destination(base, evidence, required=True)
+        record = json.loads(evidence.read_text(encoding="utf-8"))
+    except (ApprovalRefused, OSError, UnicodeError, json.JSONDecodeError):
+        return False
+    return (
+        isinstance(record, dict)
+        and record.get("approved_plan_sha256") == digest
+        and record.get("issue") == issue
+        and record.get("story") == story
+        and all(_text(record.get(field)) for field in ("approver", "at"))
+        and "runtime" not in record
+    )
+
+
+def _completed_deleted_plan_approval(base: Path, story: str, evidence: Path) -> bool:
+    """Use only validated migration lineage after the old approval was deleted."""
+    if evidence.exists() or evidence.is_symlink():
+        return False
+    try:
+        _require_safe_destination(base, evidence, required=False)
+        relative = evidence.relative_to(base).as_posix()
+    except (ApprovalRefused, ValueError):
+        return False
+    try:
+        from .upgrade import _validate_completed_manifest
+    except ImportError:
+        return False
+    for name in ("lean-workflow-v2.json", "lean-workflow-v2-supplement.json"):
+        manifest = factory_dir(base) / "migrations" / name
+        try:
+            _require_safe_destination(base, manifest, required=True)
+            value = json.loads(manifest.read_text(encoding="utf-8"))
+        except (ApprovalRefused, OSError, UnicodeError, json.JSONDecodeError):
+            continue
+        if not isinstance(value, dict) or not value.get("completed_at"):
+            continue
+        try:
+            _validate_completed_manifest(base, value)
+        except SystemExit:
+            continue
+        current = value
+        while isinstance(current, dict):
+            for entry in current.get("entries") or []:
+                if (isinstance(entry, dict)
+                        and entry.get("path") == relative
+                        and entry.get("family") == "manual-plan-approval"
+                        and entry.get("classification") == "eligible"
+                        and entry.get("preserve") is False
+                        and isinstance(entry.get("sha256"), str)
+                        and re.fullmatch(r"[0-9a-f]{64}", entry["sha256"])):
+                    return True
+            current = current.get("prior_completion")
+    return False
+
+
 def _story_candidate(base: Path) -> ApprovalCandidate | None:
     state = _strict_run_state(base)
     status = state.get("plan_status")
@@ -128,6 +196,8 @@ def _story_candidate(base: Path) -> ApprovalCandidate | None:
     # The issue owns the cold grill; the roadmap story owns approval authority.
     # They may differ when `plan save` receives both --issue and --story.
     issue = _text(state.get("issue_key")) or story
+    if not _safe_key(issue) or not _safe_key(story):
+        return None
     digest = plan_digest_without_assumptions(path)
     previous_digest = ""
     if status == "awaiting-approval":
@@ -150,8 +220,19 @@ def _story_candidate(base: Path) -> ApprovalCandidate | None:
     else:
         approved = state.get("approved_plan_sha256")
         if (not isinstance(approved, str)
-                or re.fullmatch(r"[0-9a-f]{64}", approved) is None
-                or approved == digest):
+                or re.fullmatch(r"[0-9a-f]{64}", approved) is None):
+            return None
+        evidence = evidence_path(base, story, "plan-approval.json", for_write=True)
+        if approved == digest:
+            if _legacy_plan_approval(
+                    base, issue, story, path, evidence, digest):
+                return ApprovalCandidate(
+                    "story", story, "", path, digest, evidence,
+                )
+            if _completed_deleted_plan_approval(base, story, evidence):
+                return ApprovalCandidate(
+                    "story", story, "", path, digest, evidence,
+                )
             return None
         previous_digest = approved
     return ApprovalCandidate(
@@ -177,6 +258,8 @@ def _task_candidate(base: Path) -> ApprovalCandidate | None:
             or story_plan is None):
         return None
     story_digest = plan_digest_without_assumptions(story_plan)
+    if approved_plan_digest(base, state, story_plan) != story_digest:
+        return None
     decomposition = load_json(
         protected_decomposition_state_path(base), default={},
     )

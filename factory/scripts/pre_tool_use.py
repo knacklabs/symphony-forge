@@ -1084,7 +1084,11 @@ locked_targets = list(dict.fromkeys(
     rel for raw in write_targets
     if (rel := product_path(raw, root, is_harness)) is not None
 ))
-scoped_targets = write_targets if tool_name == PATCH_TOOL else locked_targets
+scoped_targets = (
+    locked_targets
+    if native_codex
+    else (write_targets if tool_name == PATCH_TOOL else locked_targets)
+)
 if native_codex:
     if scoped_targets:
         if window:

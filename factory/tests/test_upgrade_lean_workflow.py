@@ -489,6 +489,73 @@ def test_lean_migration_refuses_family_specific_malformed_objects(
     assert path.read_bytes() == before
 
 
+@pytest.mark.parametrize(("field", "value"), [
+    ("score", True),
+    ("score", 11),
+    ("generated_by", "griller"),
+])
+def test_history_fixed_review_schema_is_checked_by_both_inventories(
+        repo: Path, field: str, value: object,
+        capsys: pytest.CaptureFixture[str]):
+    reviews = _history_fixed_review(repo)
+    lens = reviews / "quality.json"
+    data = json.loads(lens.read_text(encoding="utf-8"))
+    data[field] = value
+    lens.write_text(json.dumps(data), encoding="utf-8")
+
+    primary = {row["path"]: row for row in upgrade.lean_primary_inventory(repo)}
+    raw = {row["path"]: row for row in upgrade.lean_raw_inventory(repo)}
+    relative = lens.relative_to(repo).as_posix()
+    assert primary[relative]["classification"] == "invalid"
+    assert raw[relative]["classification"] == "invalid"
+    assert primary[relative]["reason"] == raw[relative]["reason"]
+    with pytest.raises(SystemExit):
+        upgrade.preflight_lean_migration(repo)
+    assert "invalid history-fixed-review-lens" in capsys.readouterr().out
+
+
+@pytest.mark.parametrize("maker", [_history_fixed_review, _story_fixed_review],
+                         ids=["history", "story"])
+@pytest.mark.parametrize("field", [
+    "score", "generated_by", "non_blocking_findings", "task_id",
+    "rejected_findings", "residual_risks", "recommendation",
+    "reviewed_scope", "skills_used", "contract_verdicts", "review_run_id",
+    "brief_sha256", "branch_diff_digest",
+])
+def test_fixed_review_schema_negatives_cover_both_retirement_families(
+        repo: Path, maker, field: str,
+        capsys: pytest.CaptureFixture[str]):
+    reviews = maker(repo)
+    lens = reviews / "quality.json"
+    data = json.loads(lens.read_text(encoding="utf-8"))
+    data[field] = {
+        "score": True,
+        "generated_by": "griller",
+        "non_blocking_findings": "invalid",
+        "task_id": [],
+        "rejected_findings": "invalid",
+        "residual_risks": "invalid",
+        "recommendation": [],
+        "reviewed_scope": "invalid",
+        "skills_used": "invalid",
+        "contract_verdicts": "invalid",
+        "review_run_id": [],
+        "brief_sha256": [],
+        "branch_diff_digest": [],
+    }[field]
+    lens.write_text(json.dumps(data), encoding="utf-8")
+
+    primary = {row["path"]: row for row in upgrade.lean_primary_inventory(repo)}
+    raw = {row["path"]: row for row in upgrade.lean_raw_inventory(repo)}
+    relative = lens.relative_to(repo).as_posix()
+    assert primary[relative]["classification"] == "invalid"
+    assert raw[relative]["classification"] == "invalid"
+    assert primary[relative]["reason"] == raw[relative]["reason"]
+    with pytest.raises(SystemExit):
+        upgrade.preflight_lean_migration(repo)
+    assert "invalid" in capsys.readouterr().out
+
+
 def test_lean_migration_inventories_ignore_paths_outside_declared_legacy_roots(
         repo: Path):
     history = repo / ".factory/history/S1/grill-rounds/old.json"

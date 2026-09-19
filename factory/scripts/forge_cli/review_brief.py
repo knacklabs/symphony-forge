@@ -11,7 +11,8 @@ from pathlib import Path
 from factory_lib import (
     _committed_task_marker, _task_plan_approval_matches_digest,
     _plan_body_digest_bytes, _proof_commit_problems,
-    _read_git_bytes, _read_git_json, _stage_baseline_for, branch_diff_digest,
+    _read_git_bytes, _read_git_json, _read_review_bytes, _stage_baseline_for,
+    branch_diff_digest,
     active_task_id, head_sha, load_json, now_iso, raw_run_state,
     plan_digest_without_assumptions, proof_path,
     effective_review_base, product_delta_digest,
@@ -298,7 +299,7 @@ def _current_decision_inputs(base: Path) -> list[dict[str, object]]:
         path = Path(record["path"])
         try:
             relative = path.relative_to(base).as_posix()
-            body = path.read_bytes()
+            body = _read_review_bytes(base, path)
         except (KeyError, OSError, ValueError) as exc:
             raise SystemExit(
                 f"review decision context is unreadable: {path} ({exc})"
