@@ -110,6 +110,9 @@ jobs:
       - name: Install harness test runner
         if: steps.repo_kind.outputs.is_harness == 'true'
         run: python -m pip install --quiet pytest psutil
+      - name: Install the skills the harness loads (mattpocock/skills)
+        if: steps.repo_kind.outputs.is_harness == 'true'
+        run: npx -y skills add mattpocock/skills -g --copy --all
       - name: Prove native launcher and armed hook gates
         if: steps.repo_kind.outputs.is_harness == 'true'
         shell: pwsh

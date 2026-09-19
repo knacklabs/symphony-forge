@@ -957,7 +957,10 @@ def _skill_text(skill: str) -> str:
     """A skill's text from either runtime's install (mattpocock/skills, put
     there by `forge doctor --fix`). Never a copy kept in the repo: one source,
     refreshed by the same install everywhere."""
-    for candidate in (Path.home() / ".claude" / "skills" / skill / "SKILL.md",
+    # ~/.agents/skills is where the `skills` installer keeps the pack itself;
+    # the runtime dirs hold its copies (a fresh runner has only the first).
+    for candidate in (Path.home() / ".agents" / "skills" / skill / "SKILL.md",
+                      Path.home() / ".claude" / "skills" / skill / "SKILL.md",
                       Path.home() / ".codex" / "skills" / skill / "SKILL.md"):
         if candidate.is_file():
             return candidate.read_text(encoding="utf-8")[:SKILL_INLINE_CHARS]
