@@ -102,7 +102,7 @@ def test_the_reader_is_never_told_where_to_concentrate(repo: Path):
     for steer in ("concentrate", "focus on", "look here", "since the last round"):
         assert steer not in text, f"the brief steers the reader: {steer!r}"
 
-    contract = (HARNESS / "factory" / "prompts" / "griller.md").read_text(
+    contract = (HARNESS / "docs" / "grill.md").read_text(
         encoding="utf-8")
     assert "Do NOT tell the reader where to concentrate" in contract
     assert "tell it to concentrate there" not in contract

@@ -2,7 +2,7 @@
 """Record a handover grill (.factory/grills/<gate>.json).
 
 A grill is the adversarial gap/contradiction interrogation run BEFORE a
-handover gate (factory/prompts/griller.md): `signoff` protects the client->PM
+handover gate (docs/grill.md): `signoff` protects the client->PM
 gate, `epics` protects the PM->EM gate. The downstream gate scripts
 (record_signoff.py, forge roadmap import) refuse without a fresh, passing
 grill — recording a verdict here is what makes "we checked for gaps" a fact
@@ -142,7 +142,7 @@ def _validate_round_provenance(
             "question (\"any remaining gap before we hand off?\"), answer it, "
             "and mark that entry \"frontier_empty\": true. If it is not "
             "closed, the grill has not converged and another round is the "
-            "honest answer (factory/prompts/griller.md)."
+            "honest answer (docs/grill.md)."
         )
 
 

@@ -63,7 +63,7 @@ human-confirmed record. The per-task human gate is plan approval, not a second
 sign-off.
 
 Every handover gate is preceded by a recorded GRILL
-(`factory/prompts/griller.md`): an adversarial gaps-and-contradictions
+(`factory/prompts/griller.md`; the coordinator's rules in `docs/grill.md`): an adversarial gaps-and-contradictions
 interrogation of what one role hands the next. Confirming each spec requires a
 fresh pass bound to that spec. Five scopes are enforced: `spec`, `signoff`,
 `epics`, `plan`, and `task`. The first four cover capability confirmation,
