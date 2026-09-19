@@ -10,6 +10,8 @@ complaint).
 from __future__ import annotations
 
 import sys
+
+import pytest
 from pathlib import Path
 
 from test_gates import HARNESS, git, load_factory_lib, repo, run  # noqa: F401
@@ -70,16 +72,49 @@ def test_griller_contract_names_the_ledgered_release(repo):
     assert "read-only" in contract and "stage done" in contract
 
 
-def test_grill_skill_section_inlines_the_technique_not_the_pointer(repo):
-    # What doctor installs as `grill-me` is a stub whose whole body is "Call
-    # the Skill tool with 'grilling'". Naming it would hand a Codex reader a
-    # pointer to a skill its runtime may not have, so the technique is inlined
-    # — the same reason delegate inlines ponytail rather than trusting an
-    # install to be present.
+def test_grill_skill_section_is_matt_pococks_grilling_and_nothing_else(repo, monkeypatch):
+    # The technique ships with the harness (factory/skills/grilling), so every
+    # clone and runner inlines the same text; `grill-me` is a 164-byte pointer
+    # ("Call the Skill tool with 'grilling'") and is never what the reader gets.
     sys.path.insert(0, str(repo / "factory" / "scripts"))
+    import forge_cli.delegate as delegate
     from forge_cli.grill import _grill_skill_section  # noqa: E402
 
-    section = _grill_skill_section()
-    assert "Call the Skill tool" not in section, (
-        "the stub is a pointer, not technique — it must never be inlined")
+    section = _grill_skill_section(repo)
     assert "Interrogation technique" in section
+    assert "design tree" in section, "Matt Pocock's grilling technique"
+    assert "Call the Skill tool" not in section
+    # No stand-in: without the skill the grill is refused, not improvised.
+    monkeypatch.setattr(delegate, "_skill_text", lambda *_a, **_k: "")
+    with pytest.raises(SystemExit):
+        _grill_skill_section(repo)
+
+
+def test_every_write_launch_loads_ponytail_whatever_the_brief_says(repo, tmp_path, monkeypatch):
+    """The launcher, not the brief's author, loads the skill: a bare brief
+    still reaches the worker with ponytail as its first section, from the
+    copy vendored with the harness."""
+    sys.path.insert(0, str(repo / "factory" / "scripts"))
+    import forge_cli.delegate as delegate
+    from forge_cli.delegate import brief_path, compose_brief, launch_companion
+
+    monkeypatch.setenv("FORGE_COORDINATOR", "claude")
+    monkeypatch.setattr(delegate, "companion_script", lambda: tmp_path / "companion.mjs")
+    monkeypatch.setattr(delegate.shutil, "which", lambda _name: "node")
+    path = brief_path(repo, "T1")
+    launch_companion(repo, task_id="T1", text="# bare brief\n", path=path,
+                     task_sha256_value="d" * 64, model="m", effort="medium",
+                     write=True, print_only=True)
+    saved = path.read_text(encoding="utf-8")
+    preamble = saved.split("# bare brief")[0]
+    assert "## ponytail skill -- loaded for this run" in preamble, saved[:300]
+    assert "Stop at the first rung that holds" in preamble
+    # A read-only launch (a grill) does not get it.
+    launch_companion(repo, task_id="T1", text="# read only\n", path=path,
+                     task_sha256_value="d" * 64, model="m", effort="medium",
+                     write=False, print_only=True)
+    assert "ponytail skill" not in path.read_text(encoding="utf-8")
+    # The brief composer no longer carries its own copy: one source, the launcher.
+    from test_gates import STAGE_TASK
+    composed = compose_brief(repo, dict(STAGE_TASK), write=True, user_facing=False, story="ENG-1")
+    assert "loaded for this run" not in composed and "LOAD and RUN" not in composed

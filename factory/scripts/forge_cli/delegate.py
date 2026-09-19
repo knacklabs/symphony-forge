@@ -953,9 +953,14 @@ def existing_modules(base: Path, scope: list[str]) -> list[str]:
     return found
 
 
-def _skill_text(skill: str) -> str:
-    for candidate in (Path.home() / ".claude" / "skills" / skill / "SKILL.md",
-                      Path.home() / ".codex" / "skills" / skill / "SKILL.md"):
+def _skill_text(skill: str, base: Path | None = None) -> str:
+    """A skill's text: the copy vendored with the harness first (every clone
+    and runner has it), then either runtime's user install."""
+    candidates = ([base / "factory" / "skills" / skill / "SKILL.md"] if base else []) + [
+        Path.home() / ".claude" / "skills" / skill / "SKILL.md",
+        Path.home() / ".codex" / "skills" / skill / "SKILL.md",
+    ]
+    for candidate in candidates:
         if candidate.is_file():
             return candidate.read_text(encoding="utf-8")[:SKILL_INLINE_CHARS]
     return ""
@@ -989,26 +994,24 @@ CONSTITUTION_BRIEF = (
 )
 
 
-PONYTAIL_BRIEF = (
-    "Ponytail is the BINDING minimal-diff coding discipline for every line you "
-    "write or edit — hold it strictly, but it is a habit, not a mechanical gate. "
-    "Understand the problem and TRACE the affected code first, then climb this "
-    "ladder and STOP at the first rung that works: (1) does it need to exist at "
-    "all? skip speculative features (YAGNI); (2) already in this codebase? reuse "
-    "it; (3) does the stdlib provide it? use it; (4) a native platform feature? "
-    "prefer it; (5) an already-installed dependency? use it before adding one; "
-    "(6) can it be one line? one line beats fifty; (7) only then, the minimum "
-    "viable code that solves the ACTUAL problem. Shortest diff, shortest "
-    "explanation.\n\n"
-    "Lazy, NOT negligent — NEVER simplify away trust-boundary/input validation, "
-    "error handling that prevents data loss, security, accessibility basics, "
-    "explicitly-requested functionality, hardware calibration knobs, or the one "
-    "runnable self-check for non-trivial logic. Mark a deliberate corner cut with "
-    "an inline `ponytail: <limitation>, <upgrade path if scale matters>` comment "
-    "so it can be harvested later. Ponytail trims SPECULATIVE code; it NEVER "
-    "overrides the constitution's mandated structure (modules, DTOs, the response "
-    "envelope, provider pattern) — that structure is law, not bloat."
-)
+# Loaded into every write launch by the launcher itself, whoever composed the
+# brief and whatever the worker's runtime resolves. A missing skill refuses
+# the launch; the harness never substitutes a paraphrase for the technique.
+BINDING_SKILLS = ("ponytail",)
+
+
+def binding_skills_preamble(base: Path) -> str:
+    parts = []
+    for skill in BINDING_SKILLS:
+        skill_text = _skill_text(skill, base)
+        if not skill_text:
+            fail(f"the `{skill}` skill is missing (factory/skills/{skill}/SKILL.md "
+                 "ships with the harness; ~/.claude/skills or ~/.codex/skills also "
+                 "serve) -- run `./forge doctor --fix`")
+        parts.append(_section(
+            f"{skill} skill -- loaded for this run, BINDING on every line you write",
+            skill_text))
+    return "".join(parts)
 
 
 # The worker can run its own tests (decision 0068); nothing asked it to. It
@@ -1238,13 +1241,6 @@ def compose_brief(base: Path, task: dict, *, write: bool, user_facing: bool,
     ]
     body = "\n".join(lines) + "\n"
     body += _section("Constitution — coding standards (BINDING)", CONSTITUTION_BRIEF)
-    body += _section(
-        "Ponytail — minimal-diff coding discipline (BINDING)",
-        "LOAD and RUN the `ponytail` skill from your Codex skills dir "
-        "(`~/.codex/skills/ponytail`, installed by `./forge doctor --fix`) and hold "
-        "it on every line you write or edit. Its rules are reproduced below as the "
-        "binding floor in case your runtime cannot load it:\n\n"
-        + (_skill_text("ponytail") or PONYTAIL_BRIEF))
     body += _section("Objective", task.get("objective", ""))
     body += _section("Acceptance criteria", "\n".join(
         f"- {c}" for c in task.get("acceptance_criteria") or []))
@@ -1293,7 +1289,7 @@ def compose_brief(base: Path, task: dict, *, write: bool, user_facing: bool,
         body += _section("Implementer contract", prompt.read_text(encoding="utf-8"))
     if user_facing:
         for skill in required_skills(base):
-            text = _skill_text(skill)
+            text = _skill_text(skill, base)
             body += _section(
                 f"Design rules — {skill} (inlined; your runtime cannot load it)",
                 text or f"NOT INSTALLED on this machine. `./forge doctor --fix` "
@@ -1322,6 +1318,8 @@ def launch_companion(
     # credential to secret scanners.
     launch_id = f"launch-{uuid.uuid4().hex}"
     runtime = coordinator_runtime()
+    if write:
+        text = binding_skills_preamble(base) + text
     if runtime == "codex" and background:
         fail("native Codex delegation is foreground-only in this release; "
              "background/read-only background is owned by NATIVE-LIFECYCLE")

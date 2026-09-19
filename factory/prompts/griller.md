@@ -27,14 +27,15 @@ defending it.
 RELEASE IT THROUGH THE HARNESS. `./forge grill run --gate <gate>` composes the cold-read brief (this contract plus the artifact) and releases Codex through the SAME ledgered launcher a delegation uses: the pid is recorded before the wait, so a grill whose launcher is killed still shows up in `forge codex status` instead of vanishing. It is read-only, so it takes no delegation lock and can never satisfy `stage done`. Recording the gate stays yours — the cold read only returns findings.
 
 The technique is Matt Pocock's `grilling` skill — the design tree, the
-frontier, numbered questions with recommended answers. `doctor --fix` installs
-it into BOTH runtimes, and `./forge grill run` also inlines it into the brief,
-so a reader reaches it whether or not its runtime resolves skills. This
-contract is the harness-side floor; `grilling` is the technique.
+frontier, numbered questions with recommended answers — and nothing else. It
+ships with the harness (`factory/skills/grilling/SKILL.md`) and `./forge grill
+run` inlines it into the brief, so every reader gets the same text whatever
+its runtime resolves; a harness without it refuses to grill. This contract is
+the harness-side floor; `grilling` is the technique.
 
-`grill-me` is the HUMAN entry point — you type `/grill-me` and it redirects to
-`grilling`. It carries `disable-model-invocation: true`, so no model invokes it
-and none should be told to.
+`grill-me` is only the HUMAN alias: typing `/grill-me` redirects to `grilling`.
+It carries `disable-model-invocation: true`, so no model invokes it and none
+should be told to.
 
 WHICH RUNTIME CAN RECORD WHICH GATE — get this wrong and you will chase a
 refusal you cannot satisfy. ALL SIX gates match the AskUserQuestion ledger and
