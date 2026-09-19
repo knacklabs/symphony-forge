@@ -593,11 +593,18 @@ def seal_task(base: Path, task_id: str) -> None:
     )
     same_seal = False
     if product_unchanged:
-        # As the PR gate will read it: at the marker's commit.
+        # As the PR gate will read it: at the marker's commit. A record
+        # committed just now sits AFTER that commit, and the gate refuses a
+        # record changed after the marker, so records that moved reseal even
+        # when the proof still holds (a re-grill of the same plan digest is
+        # bookkeeping for the review, not for the marker).
         proof_problems = task_proof_problems(base, key, task)
-        if not proof_problems:
+        if not proof_problems and not records_commit:
             same_seal = True
         else:
+            if not proof_problems:
+                proof_problems = [f"task records committed at {records_commit[:12]}, "
+                                  "after the marker"]
             # The product did not move but the proof did -- a grill or approval
             # re-recorded after the marker, a journal entry, a refreshed proof.
             # T4 (2026-09-18, 13:34): the old range ended at the first marker's

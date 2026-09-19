@@ -30,7 +30,7 @@ def test_a_pass_is_told_what_it_holds_and_which_contracts_are_its():
     note = pass_note(1, 2, ["src/a.py", "src/b.py"], ["src/c.py"], task)
     assert note.startswith("REVIEW PASS 1 OF 2")
     assert "holds the diff for: src/a.py, src/b.py" in note
-    assert "Not in this pass (another pass holds them): src/c.py" in note
+    assert "Not in this pass (another pass holds them; " in note and "): src/c.py" in note
     assert "give one for C1, C3" in note and "give NONE for C2" in note
 
 
