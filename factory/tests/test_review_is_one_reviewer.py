@@ -362,4 +362,37 @@ def test_a_standalone_review_runs_and_records_the_proof_first(repo, tmp_path, mo
         encoding="utf-8"))
     assert verify["recorded_by"] == "stage-proof"
     assert git(repo, "show", "--name-only", "--format=%s", "HEAD").startswith(
-        "ENG-1 T1: task records")
+        "ENG-1 T1: task proof")
+
+
+
+def test_a_regrill_of_the_same_plan_digest_leaves_the_saved_brief_current():
+    """T4 13:34: a grill re-recorded after the seal made the saved brief
+    'stale' and only a re-review or `task reopen` got out. The brief carries
+    the plan, the grill and the worker's report; a later grill with the same
+    plan digest and verdict is bookkeeping, and the check says so."""
+    from forge_cli.review_brief import (
+        approved_inputs_equivalent, parse_approved_inputs_section,
+        render_approved_inputs_section,
+    )
+    grill = {"gate": "task", "task_id": "T1", "verdict": "pass", "approved_by": "Nandu",
+             "task_plan_sha256": "p" * 64, "approved_task_plan_sha256": "p" * 64,
+             "recorded_at": "2026-09-18T10:00:00+00:00", "rounds": [{"question": "q"}]}
+    inputs = {"story": "ENG-1", "task_id": "T1", "branch": "feat/x", "delta_id": "d" * 64,
+              "plan_sha256": "p" * 64, "plan_text": "# T1\n\nbody with ``` fence\n",
+              "grill": grill, "automated": {"status": "passed", "commit": "c" * 40}}
+    body = "# brief\n\n" + "\n".join(render_approved_inputs_section(inputs)) + "\n"
+    saved = parse_approved_inputs_section(body, "T1")
+    assert saved == {"plan_text": inputs["plan_text"], "grill": grill,
+                     "automated": inputs["automated"]}
+    later = {**inputs, "grill": {**grill, "recorded_at": "2026-09-19T08:00:00+00:00",
+                                 "rounds": [{"question": "q2"}], "commit": "e" * 40}}
+    assert approved_inputs_equivalent(body, later)
+    for changed in ({**grill, "task_plan_sha256": "q" * 64},
+                    {**grill, "verdict": "blocked"},
+                    {**grill, "approved_by": "someone else"}):
+        assert not approved_inputs_equivalent(body, {**inputs, "grill": changed})
+    assert not approved_inputs_equivalent(body, {**inputs, "plan_text": "# other\n"})
+    assert not approved_inputs_equivalent(
+        body, {**inputs, "automated": {"status": "passed", "commit": "f" * 40}})
+    assert parse_approved_inputs_section(body, "T2") is None

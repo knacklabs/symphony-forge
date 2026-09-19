@@ -1986,13 +1986,19 @@ def _review_input_problems(
         return problems + input_problems
     assert inputs is not None
     try:
-        from forge_cli.review_brief import render_approved_inputs_section
+        from forge_cli.review_brief import (
+            approved_inputs_equivalent, render_approved_inputs_section,
+        )
         section = "\n".join(render_approved_inputs_section(inputs))
     except (AttributeError, TypeError, ValueError, SystemExit) as exc:
         return problems + [
             f"{task_id}: cannot render the complete approved-input section: {exc}"
         ]
-    if body.count(section) != 1:
+    # Verbatim, or equivalent: a grill re-recorded after the review for the
+    # same plan digest changes timestamps and rounds, not what the reviewer
+    # saw, and the review binds to the diff alone (0079). Before this, every
+    # re-grill after a seal read as a stale brief and forced a re-review.
+    if body.count(section) != 1 and not approved_inputs_equivalent(body, inputs):
         problems.append(
             f"{task_id}: saved review brief does not contain exactly one current "
             "complete approved-input section"

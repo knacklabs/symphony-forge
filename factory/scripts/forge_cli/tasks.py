@@ -608,8 +608,9 @@ def seal_task(base: Path, task_id: str) -> None:
             current = task_proof_problems(base, key, task, preseal=True)
             if current:
                 supersede_marker(base, args.id, previous)
-                fail("Task proof changed after its marker and does not hold on "
-                     "the current tree:\n- " + "\n- ".join(current))
+                fail("Task proof changed after task marker "
+                     f"{reusable['commit'][:12]} and does not hold on the current "
+                     "tree:\n- " + "\n- ".join(current))
             print(f"Task {args.id}: its proof moved after the marker at "
                   f"{reusable['commit'][:12]} ({'; '.join(proof_problems)[:160]}); "
                   f"resealing at {commit[:12]}.")

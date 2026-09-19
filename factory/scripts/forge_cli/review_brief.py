@@ -367,6 +367,59 @@ def render_approved_inputs_section(inputs: dict) -> list[str]:
     ]
 
 
+# The grill fields that identify WHAT was approved. A re-grill or a
+# re-approval of the same plan digest after a review changes the record's
+# timestamps, rounds and commit but not what the reviewer needed to see, and
+# the review stamp binds to the diff alone (0079): it stales nothing.
+GRILL_IDENTITY = ("gate", "task_id", "verdict", "task_plan_sha256",
+                  "approved_task_plan_sha256", "approved_by")
+
+
+def parse_approved_inputs_section(body: str, task_id: str) -> dict | None:
+    """The inverse of render_approved_inputs_section: the plan text, grill and
+    automated report a saved brief carries for `task_id`, or None."""
+    marker = f"- Task: `{task_id}`"
+    start = body.find(marker)
+    if start < 0:
+        return None
+    rest = body[start:]
+    blocks = {}
+    for key, heading in (("plan_text", "#### Full approved task plan"),
+                         ("grill", "#### Full grill and approval record"),
+                         ("automated", "#### Full task-owned automated report")):
+        at = rest.find(heading)
+        if at < 0:
+            return None
+        fence_start = rest.find("\n```", at)
+        if fence_start < 0:
+            return None
+        opener_end = rest.find("\n", fence_start + 1)
+        fence = rest[fence_start + 1:opener_end].rstrip("markdownjson")
+        close_at = rest.find("\n" + fence + "\n", opener_end)
+        if close_at < 0:
+            return None
+        blocks[key] = rest[opener_end + 1:close_at]
+    try:
+        return {"plan_text": blocks["plan_text"],
+                "grill": json.loads(blocks["grill"]),
+                "automated": json.loads(blocks["automated"])}
+    except ValueError:
+        return None
+
+
+def approved_inputs_equivalent(body: str, inputs: dict) -> bool:
+    """True when the saved brief carries the current approved inputs, allowing
+    a grill re-recorded for the same plan digest (see GRILL_IDENTITY)."""
+    saved = parse_approved_inputs_section(body, str(inputs.get("task_id") or ""))
+    if saved is None:
+        return False
+    grill, current = saved["grill"], inputs.get("grill") or {}
+    return (saved["plan_text"] == inputs.get("plan_text")
+            and saved["automated"] == inputs.get("automated")
+            and isinstance(grill, dict)
+            and all(grill.get(k) == current.get(k) for k in GRILL_IDENTITY))
+
+
 def _sealed_proof_section(base: Path, task: dict) -> list[str]:
     """Render bounded identity for an already-sealed task in an --all brief."""
     state = load_json(run_state_path(base), default={})

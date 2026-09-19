@@ -625,8 +625,9 @@ def test_task_close_rebinds_a_stale_worker_record_before_the_review(repo, tmp_pa
     assert tests["automated"]["commit"] == fixed == tests["commit"]
     assert tests["automated"]["worker_commit"] == original
     assert tests["automated"]["summary"] == "focused task proof passed"
-    assert git(repo, "show", "--name-only", "--format=%s", "HEAD~1").startswith(
-        "ENG-1 T1: task proof")
+    # proof commit -> records commit (the review's journal entries) -> marker
+    subjects = git(repo, "log", "--format=%s", "-4").splitlines()
+    assert "ENG-1 T1: task proof" in subjects, subjects
 
 
 # ------------------------------------------- records moved, product did not
