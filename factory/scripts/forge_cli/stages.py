@@ -860,7 +860,19 @@ def task_record_paths(base: Path, story: str, task_id: str) -> list[str]:
     return [path.relative_to(base).as_posix() for path in paths if path.is_file()]
 
 
-def commit_task_records(base: Path, story: str, task_id: str) -> str:
+def _git_identity_args(base: Path) -> list[str]:
+    """`-c user.name/email` only when the repo has none configured (a bare CI
+    runner); the operator's own identity is never overridden."""
+    for key in ("user.name", "user.email"):
+        probe = subprocess.run(["git", "config", key], cwd=base, capture_output=True,
+                               text=True, encoding="utf-8", env=clean_git_env())
+        if probe.returncode != 0 or not probe.stdout.strip():
+            return ["-c", "user.name=forge", "-c", "user.email=forge@local"]
+    return []
+
+
+def commit_task_records(base: Path, story: str, task_id: str,
+                        message: str = "") -> str:
     """Commit the task's records when any moved; return the new head or "".
 
     Sealed-state readers read a task's evidence at the commit the marker
@@ -879,10 +891,12 @@ def commit_task_records(base: Path, story: str, task_id: str) -> str:
         fail("checking the task records failed: " + status.stderr.strip())
     if not status.stdout.strip():
         return ""
+    subject = message or f"{story} {task_id}: task records"
+    identity = _git_identity_args(base)
     for description, argv in (
             ("staging the task records", ["add", "--", *rels]),
             ("committing the task records",
-             ["commit", "-q", "--only", "-m", f"{story} {task_id}: task records", "--", *rels])):
+             [*identity, "commit", "-q", "--only", "-m", subject, "--", *rels])):
         proc = subprocess.run(["git", *argv], cwd=base, capture_output=True, text=True,
                               encoding="utf-8", env=clean_git_env())
         if proc.returncode != 0:

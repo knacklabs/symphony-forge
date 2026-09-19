@@ -1831,6 +1831,21 @@ def _shared_terms(finding: dict | str, source: str) -> list[str]:
     return sorted(terms(finding_text) & terms(source))
 
 
+def _run_standalone_proof(base: Path, task_id: str) -> None:
+    """Run (or reuse) and commit the active task's proof before a standalone
+    review, as `task close` does (0079, 0080)."""
+    from .stages import load_stages, run_stage_proof, task_for
+    stage = next((item for item in load_stages(base).get("stages", [])
+                  if isinstance(item, dict) and item.get("id") == task_id), {})
+    if stage.get("status") != "active":
+        return
+    from .close import _commit_task_proof
+    state = load_json(run_state_path(base), default={})
+    story = str(state.get("issue_key") or state.get("story") or "")
+    _commit_task_proof(base, story, task_id,
+                       run_stage_proof(base, task_id, task_for(base, task_id)))
+
+
 def cmd_review(args: argparse.Namespace) -> None:
     base = Path(args.repo).resolve() if args.repo else repo_root()
     if getattr(args, "triage", None):
@@ -1856,15 +1871,8 @@ def cmd_review(args: argparse.Namespace) -> None:
     # The review runs after the proof, here as in `task close`: the proof is
     # run (or reused) and recorded, so the brief reads a record bound to this
     # tree instead of refusing a hand-recorded one as stale (0079, 0080).
-    from .stages import load_stages, run_stage_proof, task_for
-    stage = next((item for item in load_stages(base).get("stages", [])
-                  if isinstance(item, dict) and item.get("id") == args.id), {})
-    if stage.get("status") == "active" and not getattr(args, "lens", None):
-        from .close import _commit_task_proof
-        state = load_json(run_state_path(base), default={})
-        story = str(state.get("issue_key") or state.get("story") or "")
-        _commit_task_proof(base, story, args.id,
-                           run_stage_proof(base, args.id, task_for(base, args.id)))
+    if not getattr(args, "lens", None):
+        _run_standalone_proof(base, args.id)
     outcome = review_task(
         base, args.id, lens=getattr(args, "lens", None),
         engine=getattr(args, "engine", "codex"),

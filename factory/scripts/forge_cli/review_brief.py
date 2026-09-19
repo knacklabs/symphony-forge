@@ -90,7 +90,7 @@ def _lessons_section(base: Path, task: dict) -> list[str]:
             body = body[:237].rstrip() + "..."
         severity = str(lesson.get("severity", "")).strip()
         lines.append(f"- [{severity}] {topic}: {body}")
-    if len(lines) == 5:
+    if len(lines) == 4:  # header only: no lesson survived the filter
         return []
     lines.append("")
     return lines

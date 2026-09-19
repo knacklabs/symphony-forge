@@ -1602,7 +1602,8 @@ def launch_companion(
         terminal_recorded = True
         _journal_exit(base, story, task_id, launch_id, proc.returncode, stderr,
                       message=(native_result.message
-                               if runtime == "codex" and native_result else ""))
+                               if runtime == "codex" and native_result
+                               else stdout))
         if runtime == "codex" and not published:
             existing = next(
                 row for row in reversed(load_delegations(base))

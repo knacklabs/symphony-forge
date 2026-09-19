@@ -18436,7 +18436,11 @@ def test_review_consumers_include_complete_approved_inputs(
     code, out = run(repo, "forge.py", "review-brief", "T1", "--repo", str(repo))
     assert code == 0, out
     brief = (repo / out.strip()).read_text()
-    plan_text = (story_state(repo) / "task-plans" / "T1.md").read_text()
+    from factory_lib import strip_derived_sections
+    # The brief carries the plan without its harness-rendered contract block
+    # (0080): the decomposition the brief already holds is not pasted twice.
+    plan_text = strip_derived_sections(
+        (story_state(repo) / "task-plans" / "T1.md").read_bytes()).decode("utf-8")
     grill_path = story_state(repo) / "grills" / "tasks" / "T1.json"
     grill = json.loads(grill_path.read_text())
     automated = json.loads((proof / "tests.json").read_text())["automated"]
@@ -18852,6 +18856,7 @@ def test_review_preflight_uses_active_task_proof(repo, tmp_path, monkeypatch):
         pass
 
     monkeypatch.setattr(review_mod, "proof_path", proof_spy)
+    monkeypatch.setattr(review_mod, "_run_standalone_proof", lambda *_a: None)
     monkeypatch.setattr(review_mod, "_product_dirty", lambda _base: [])
     monkeypatch.setattr(review_mod, "resolve_review_base", lambda *_args: "base")
     monkeypatch.setattr(review_mod, "review_excluded_prefixes", lambda _base: ())
@@ -18883,7 +18888,13 @@ def test_review_preflight_refuses_other_task_or_story_proof(repo, tmp_path):
     (other / "verify.json").write_text(json.dumps({"ok": True}))
     (other / "tests.json").write_text(json.dumps({"automated": {"status": "passed"}}))
     code, out = run(repo, "forge.py", "review", "T1", "--repo", str(repo))
-    assert code != 0 and "verify.json is not recorded for task T1" in out
+    # The review no longer refuses over a missing task proof: it runs and
+    # records T1's own (0079, 0080). Another task's record is never T1's.
+    assert code != 0, out
+    assert "verify.json is not recorded for task T1" not in out, out
+    own = json.loads((scoped / "tasks" / "T1" / "verify.json").read_text(encoding="utf-8"))
+    assert own["recorded_by"] == "stage-proof" and own["ok"] is True
+    assert json.loads((other / "verify.json").read_text()) == {"ok": True}
 
 def test_review_pins_sol_and_never_requests_a_retired_model():
     """The retired model must be unreachable, checked where it is decided.

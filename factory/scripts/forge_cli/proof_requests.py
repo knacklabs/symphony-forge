@@ -51,15 +51,16 @@ def results_dir(base: Path) -> Path:
 
 def ensure_cache_excluded(base: Path) -> None:
     """`.forge-cache/` never reaches the stage measurement or a commit."""
-    probe = subprocess.run(
-        ["git", "rev-parse", "--git-path", "info/exclude"], cwd=base,
-        capture_output=True, text=True, env=clean_git_env(), encoding="utf-8",
-    )
+    try:
+        probe = subprocess.run(
+            ["git", "rev-parse", "--git-path", "info/exclude"], cwd=base,
+            capture_output=True, text=True, env=clean_git_env(), encoding="utf-8",
+        )
+    except Exception:  # noqa: BLE001 - never fail a launch over the exclude line
+        return
     if probe.returncode != 0 or not probe.stdout.strip():
         return
-    exclude = Path(probe.stdout.strip())
-    if not exclude.is_absolute():
-        exclude = base / exclude
+    exclude = base / probe.stdout.strip()  # absolute output wins the join
     line = f"{CACHE_DIR}/"
     try:
         current = exclude.read_text(encoding="utf-8") if exclude.is_file() else ""
@@ -77,15 +78,15 @@ def ensure_cache_excluded(base: Path) -> None:
 def worker_cache_env(base: Path) -> dict[str, str]:
     """Cache locations for the worker, inside the worktree it can read."""
     root = cache_dir(base)
-    env = {
-        "COREPACK_HOME": str(root / "corepack"),
-        "npm_config_cache": str(root / "npm"),
-        "XDG_CACHE_HOME": str(root / "xdg"),
+    dirs = {
+        "COREPACK_HOME": root / "corepack",
+        "npm_config_cache": root / "npm",
+        "XDG_CACHE_HOME": root / "xdg",
     }
-    for path in list(env.values()) + [str(requests_dir(base)), str(results_dir(base))]:
-        Path(path).mkdir(parents=True, exist_ok=True)
+    for path in list(dirs.values()) + [requests_dir(base), results_dir(base)]:
+        path.mkdir(parents=True, exist_ok=True)
     ensure_cache_excluded(base)
-    return env
+    return {key: str(path) for key, path in dirs.items()}
 
 
 def declared_proofs(task: dict) -> list[dict]:

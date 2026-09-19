@@ -50,7 +50,8 @@ def _commit_task_proof(base: Path, story: str, task_id: str,
     """
     from .stages import commit_task_records, product_tree_snapshot
 
-    if not commit_task_records(base, story, task_id):
+    if not commit_task_records(base, story, task_id,
+                               message=f"{story} {task_id}: task proof"):
         return proof
     proof_tree, authority_tree, misses = proof
     after = product_tree_snapshot(base)

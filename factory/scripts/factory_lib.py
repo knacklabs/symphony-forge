@@ -1892,7 +1892,10 @@ def _current_task_review_inputs(
     if raw_plan is None:
         return None, [f"{task_id}: current approved task plan is missing"]
     try:
-        plan_text = raw_plan.decode("utf-8")
+        # The brief carries the plan without its harness-rendered contract
+        # block (0080); the section this check looks for must be rendered
+        # from the same text, or every saved brief reads as stale.
+        plan_text = strip_derived_sections(raw_plan).decode("utf-8")
     except UnicodeDecodeError:
         return None, [f"{task_id}: current approved task plan is not UTF-8"]
     grill = read_json(grill_path)
