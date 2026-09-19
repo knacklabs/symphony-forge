@@ -115,8 +115,12 @@ def test_a_real_triage_records_proof_and_instances_and_the_brief_carries_them(re
                     "--lens", "security", "--real", "--evidence", "src/other.py:1",
                     "--instance", "src/other.py:1", "--by", "orchestrator")
     assert code == 0, out
-    records = load_json(_triage_file(repo), default={})["findings"]
-    assert len(records) == 1 and records[0]["evidence"] == "src/other.py:1"
+    # Re-triaged: a second entry; the latest ruling for the finding wins.
+    from forge_cli.review import triage_for, triage_records
+    records = triage_records(repo, "ENG-1", "T2")
+    assert len(records) == 2 and records[-1]["evidence"] == "src/other.py:1"
+    assert triage_for(records, "security", generation["lenses"]["security"]["blocking_findings"][0]
+                      )["evidence"] == "src/other.py:1"
 
 
 def test_a_triage_rests_on_lines_that_exist(repo, tmp_path):

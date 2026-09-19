@@ -70,9 +70,13 @@ jobs:
       # monkeypatch. Distribute per test (worksteal), never per file —
       # test_gates.py holds ~700 of the 890 tests, and loadfile pinned all of
       # them to one worker (23 min, barely better than serial).
-      - name: Install the skills the harness loads (mattpocock/skills)
+      - name: Install the skills the harness loads (mattpocock/skills, DietrichGebert/ponytail)
         if: steps.repo_kind.outputs.is_harness == 'true'
-        run: npx -y skills add mattpocock/skills -g --copy --all
+        run: |
+          npx -y skills add mattpocock/skills -g --copy --all
+          git clone --depth 1 https://github.com/DietrichGebert/ponytail.git /tmp/ponytail
+          mkdir -p ~/.claude/skills
+          cp -r /tmp/ponytail/skills/ponytail ~/.claude/skills/ponytail
       - name: Gate regression tests
         if: steps.repo_kind.outputs.is_harness == 'true'
         run: |
@@ -110,9 +114,14 @@ jobs:
       - name: Install harness test runner
         if: steps.repo_kind.outputs.is_harness == 'true'
         run: python -m pip install --quiet pytest psutil
-      - name: Install the skills the harness loads (mattpocock/skills)
+      - name: Install the skills the harness loads (mattpocock/skills, DietrichGebert/ponytail)
         if: steps.repo_kind.outputs.is_harness == 'true'
-        run: npx -y skills add mattpocock/skills -g --copy --all
+        shell: pwsh
+        run: |
+          npx -y skills add mattpocock/skills -g --copy --all
+          git clone --depth 1 https://github.com/DietrichGebert/ponytail.git "$env:TEMP\ponytail"
+          New-Item -ItemType Directory -Force "$HOME\.claude\skills" | Out-Null
+          Copy-Item -Recurse -Force "$env:TEMP\ponytail\skills\ponytail" "$HOME\.claude\skills\ponytail"
       - name: Prove native launcher and armed hook gates
         if: steps.repo_kind.outputs.is_harness == 'true'
         shell: pwsh

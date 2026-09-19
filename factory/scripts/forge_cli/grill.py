@@ -49,8 +49,8 @@ def _grill_skill_section() -> str:
 
     text = _skill_text("grilling")
     if not text or "Call the Skill tool" in text:
-        fail("the `grilling` skill is not installed in ~/.claude/skills or "
-             "~/.codex/skills -- run `./forge doctor --fix` (installs mattpocock/skills into ~/.claude/skills and mirrors it into ~/.codex/skills)")
+        fail("the `grilling` skill is not installed in ~/.agents/skills, ~/.claude/skills "
+             "or ~/.codex/skills -- run `./forge doctor --fix` (mattpocock/skills for grilling, DietrichGebert/ponytail for ponytail, mirrored into ~/.codex/skills)")
     return ("## Interrogation technique\n\n"
             "Run the interrogation this way. The harness contract above "
             "is the floor; this is the technique.\n\n" + text)

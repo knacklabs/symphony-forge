@@ -1006,8 +1006,8 @@ def binding_skills_preamble() -> str:
     for skill in BINDING_SKILLS:
         skill_text = _skill_text(skill)
         if not skill_text:
-            fail(f"the `{skill}` skill is not installed in ~/.claude/skills or "
-                 f"~/.codex/skills -- run `./forge doctor --fix` (installs mattpocock/skills into ~/.claude/skills and mirrors it into ~/.codex/skills)")
+            fail(f"the `{skill}` skill is not installed in ~/.agents/skills, ~/.claude/skills "
+                 f"or ~/.codex/skills -- run `./forge doctor --fix` (mattpocock/skills for grilling, DietrichGebert/ponytail for ponytail, mirrored into ~/.codex/skills)")
         parts.append(_section(
             f"{skill} skill -- loaded for this run, BINDING on every line you write",
             skill_text))
