@@ -22568,6 +22568,74 @@ def test_canonical_junit_satisfies_exact_required_nodes_without_selector_rerun(
     stages.run_stage_proof(repo, "T1", task)
 
 
+def test_canonical_partial_parameterized_report_falls_back_to_required_selector(
+        repo, tmp_path, monkeypatch, capsys):
+    import forge_cli.stages as stages
+
+    source = repo / "src/test_core.py"
+    source.parent.mkdir(parents=True, exist_ok=True)
+    source.write_text(
+        "import pytest\n\n"
+        "@pytest.mark.parametrize('case', ['pass', 'fail'])\n"
+        "def test_slice(case):\n"
+        "    assert case == 'pass'\n",
+        encoding="utf-8",
+    )
+    task = {
+        "verify_commands": [
+            "UV_CACHE_DIR=/tmp/forge-lean-uv-cache "
+            "UV_TOOL_DIR=/tmp/forge-lean-uv-tools "
+            "python3 factory/scripts/verify.py",
+        ],
+        "required_tests": [{
+            "id": "test_slice", "path": "src/test_core.py",
+            "command": "python3 -m pytest {path}::{id} -q "
+                       "-o junit_family=legacy --junitxml={report}",
+        }],
+    }
+    monkeypatch.setenv("UV_CACHE_DIR", "/tmp/forge-lean-uv-cache")
+    monkeypatch.setenv("UV_TOOL_DIR", "/tmp/forge-lean-uv-tools")
+    monkeypatch.setenv(
+        "FACTORY_TEST_CMD", "python3 -m pytest src/test_core.py::test_slice[pass]",
+    )
+    monkeypatch.setattr(stages, "proof_identity", lambda *_args, **_kwargs: {
+        "identity": "a" * 64, "inputs": {}, "reusable": True,
+    })
+    monkeypatch.setattr(stages, "_proof_receipt", lambda *_args: {})
+    monkeypatch.setattr(stages, "_store_proof_receipt", lambda *_args: None)
+    monkeypatch.setattr(
+        stages, "product_tree_snapshot",
+        lambda _base: {"tracked": {"src/test_core.py": "fixture"}, "dirty": {}},
+    )
+    monkeypatch.setattr(stages, "protected_authority_snapshot", lambda _base: {})
+
+    def partial_canonical(_base, _stage, _task, report):
+        report.write_text(
+            '<testsuite><testcase name="test_slice [pass]" '
+            'file="src/test_core.py"/></testsuite>', encoding="utf-8",
+        )
+        return [{"command": "python3 factory/scripts/verify.py", "status": "passed"}]
+
+    monkeypatch.setattr(stages, "_run_verify_commands", partial_canonical)
+
+    # RED: without the broad-collection guard, a canonical report produced by
+    # the single [pass] node is accepted as proof of the bare test id and the
+    # failing [fail] member is never run by the dedicated selector.
+    real_node_guard = stages._pytest_collection_has_node_selector
+    with monkeypatch.context() as red:
+        red.setattr(stages, "_pytest_collection_has_node_selector",
+                    lambda _args: False)
+        stages.run_stage_proof(repo, "T1", task)
+
+    # GREEN: the same tracked fixture and producer report are rejected for
+    # broad reuse, so the actual required selector runs both parameters.
+    monkeypatch.setattr(stages, "_pytest_collection_has_node_selector", real_node_guard)
+    with pytest.raises(SystemExit) as error:
+        stages.run_stage_proof(repo, "T1", task)
+    assert error.value.code == 1
+    assert "required test 'test_slice' failed" in capsys.readouterr().out
+
+
 def test_canonical_junit_binds_to_the_actual_verifier_producer(
         repo, tmp_path, monkeypatch):
     import forge_cli.stages as stages

@@ -846,6 +846,136 @@ def test_public_upgrade_resumes_migration_then_finishes_vendoring(
     assert "Resumed and completed Lean migration" in capsys.readouterr().out
 
 
+@pytest.mark.parametrize("interrupt_phase", ("before-profile", "after-profile"))
+def test_public_upgrade_resumes_profile_replacement_transaction(
+        repo: Path, monkeypatch: pytest.MonkeyPatch, interrupt_phase: str):
+    retired_bytes = (
+        'name = "architect"\nmodel = "gpt-5.6-sol"\n'
+        'model_reasoning_effort = "high"\nsandbox_mode = "read-only"\n'
+    ).encode("utf-8")
+    profile = repo / ".codex/agents/architect.toml"
+    profile.write_bytes(retired_bytes)
+    legacy = _legacy_round(repo)
+    git(repo, "add", "-A")
+    git(repo, "commit", "-q", "-m", "retired profile and legacy input")
+
+    manifest = repo / ".factory/migrations/lean-workflow-v2.json"
+    current_profile = HARNESS / ".codex/agents/architect.toml"
+    real_publish = upgrade._publish_converted_stage
+    profile_published = False
+
+    def interrupt(target, destination, built, **kwargs):
+        nonlocal profile_published
+        if destination == profile:
+            if interrupt_phase == "before-profile":
+                raise OSError("interrupted before profile replacement")
+            result = real_publish(target, destination, built, **kwargs)
+            profile_published = True
+            return result
+        if (interrupt_phase == "after-profile"
+                and destination == manifest and profile_published):
+            raise OSError("interrupted after profile replacement")
+        return real_publish(target, destination, built, **kwargs)
+
+    with monkeypatch.context() as patch:
+        patch.setattr(upgrade, "_publish_converted_stage", interrupt)
+        with pytest.raises(OSError, match="interrupted"):
+            upgrade.cmd_upgrade(argparse.Namespace(target=str(repo), force=False))
+
+    partial = json.loads(manifest.read_text(encoding="utf-8"))
+    assert "completed_at" not in partial
+    assert partial["profile_replacements"] == [{
+        "path": ".codex/agents/architect.toml",
+        "sha256": hashlib.sha256(current_profile.read_bytes()).hexdigest(),
+    }]
+    if interrupt_phase == "before-profile":
+        assert not profile.exists()
+    else:
+        assert profile.read_bytes() == current_profile.read_bytes()
+
+    upgrade.cmd_upgrade(argparse.Namespace(target=str(repo), force=False))
+    completed = json.loads(manifest.read_text(encoding="utf-8"))
+    assert completed["completed_at"]
+    assert profile.read_bytes() == current_profile.read_bytes()
+    assert not legacy.exists()
+
+    # A clean committed retry is a no-op and keeps the replacement bytes.
+    git(repo, "add", "-A")
+    git(repo, "commit", "-q", "-m", "complete profile replacement")
+    upgrade.cmd_upgrade(argparse.Namespace(target=str(repo), force=False))
+    assert profile.read_bytes() == current_profile.read_bytes()
+
+
+def test_public_upgrade_profile_resume_refuses_client_modified_destination(
+        repo: Path, monkeypatch: pytest.MonkeyPatch):
+    retired_bytes = (
+        'name = "architect"\nmodel = "gpt-5.6-sol"\n'
+        'model_reasoning_effort = "high"\nsandbox_mode = "read-only"\n'
+    ).encode("utf-8")
+    profile = repo / ".codex/agents/architect.toml"
+    profile.write_bytes(retired_bytes)
+    _legacy_round(repo)
+    git(repo, "add", "-A")
+    git(repo, "commit", "-q", "-m", "retired profile and legacy input")
+    real_publish = upgrade._publish_converted_stage
+
+    def interrupt(target, destination, built, **kwargs):
+        if destination == profile:
+            raise OSError("interrupted before profile replacement")
+        return real_publish(target, destination, built, **kwargs)
+
+    with monkeypatch.context() as patch:
+        patch.setattr(upgrade, "_publish_converted_stage", interrupt)
+        with pytest.raises(OSError, match="before profile"):
+            upgrade.cmd_upgrade(argparse.Namespace(target=str(repo), force=False))
+
+    profile.write_text('model = "client-owned"\n', encoding="utf-8")
+    refused = _upgrade(repo)
+    assert refused.returncode != 0
+    assert "uncommitted changes" in refused.stdout
+    assert profile.read_text(encoding="utf-8") == 'model = "client-owned"\n'
+
+
+def test_public_upgrade_profile_resume_refuses_source_drift(
+        repo: Path, monkeypatch: pytest.MonkeyPatch,
+        capsys: pytest.CaptureFixture[str]):
+    retired_bytes = (
+        'name = "architect"\nmodel = "gpt-5.6-sol"\n'
+        'model_reasoning_effort = "high"\nsandbox_mode = "read-only"\n'
+    ).encode("utf-8")
+    profile = repo / ".codex/agents/architect.toml"
+    profile.write_bytes(retired_bytes)
+    _legacy_round(repo)
+    git(repo, "add", "-A")
+    git(repo, "commit", "-q", "-m", "retired profile and legacy input")
+    real_publish = upgrade._publish_converted_stage
+
+    def interrupt(target, destination, built, **kwargs):
+        if destination == profile:
+            raise OSError("interrupted before profile replacement")
+        return real_publish(target, destination, built, **kwargs)
+
+    with monkeypatch.context() as patch:
+        patch.setattr(upgrade, "_publish_converted_stage", interrupt)
+        with pytest.raises(OSError, match="before profile"):
+            upgrade.cmd_upgrade(argparse.Namespace(target=str(repo), force=False))
+
+    source = HARNESS / ".codex/agents/architect.toml"
+    original_digest = upgrade._profile_replacement_source_digest
+
+    def drifted_digest(candidate: Path) -> str:
+        if candidate == source:
+            return "0" * 64
+        return original_digest(candidate)
+
+    with monkeypatch.context() as patch:
+        patch.setattr(upgrade, "_profile_replacement_source_digest", drifted_digest)
+        with pytest.raises(SystemExit):
+            upgrade.cmd_upgrade(argparse.Namespace(target=str(repo), force=False))
+    assert "profile source changed" in capsys.readouterr().out
+    assert not profile.exists()
+
+
 def test_lean_migration_resume_refuses_uninventoried_profile_deletion(
         repo: Path, monkeypatch: pytest.MonkeyPatch):
     legacy = _legacy_round(repo)

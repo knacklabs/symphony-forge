@@ -1720,6 +1720,93 @@ def _resume_converted_outputs(migration: dict) -> dict[str, str] | None:
     return result
 
 
+def _profile_replacement_hashes(
+        migration: dict,
+) -> dict[str, str] | None:
+    """Read the authenticated current-profile bytes bound to a migration."""
+    raw = migration.get("profile_replacements")
+    if raw is None:
+        return {}
+    if not isinstance(raw, list):
+        return None
+    result: dict[str, str] = {}
+    for row in raw:
+        if (not isinstance(row, dict) or set(row) != {"path", "sha256"}
+                or not isinstance(row.get("path"), str)
+                or not isinstance(row.get("sha256"), str)
+                or re.fullmatch(r"[0-9a-f]{64}", row["sha256"]) is None):
+            return None
+        parts = Path(row["path"]).parts
+        if (len(parts) != 3 or parts[:2] != (".codex", "agents")
+                or SAFE_COMPONENT.fullmatch(parts[2]) is None
+                or parts[2] not in RETIRED_FORGE_PROFILE_HASHES
+                or row["path"] in result):
+            return None
+        result[row["path"]] = row["sha256"]
+    return result
+
+
+def _profile_replacement_candidates(
+        harness: Path, target: Path, migration: dict | None = None,
+) -> list[tuple[Path, Path]]:
+    """Return exact retired-profile replacements safe for this migration."""
+    expected = {}
+    if migration is not None:
+        expected = _profile_replacement_hashes(migration)
+        if expected is None:
+            fail("Lean migration profile replacement metadata is malformed")
+    rows: list[tuple[Path, Path]] = []
+    if expected:
+        candidates = [
+            (harness / relative, target / relative)
+            for relative in expected
+        ]
+    else:
+        agents = harness / ".codex" / "agents"
+        candidates = []
+        if agents.is_dir() and not agents.is_symlink():
+            for source in agents.iterdir():
+                if source.name not in RETIRED_FORGE_PROFILE_HASHES:
+                    continue
+                candidates.append((source, target / ".codex" / "agents" / source.name))
+    for source, destination in candidates:
+        relative = destination.relative_to(target).as_posix()
+        if (source.is_symlink() or not source.is_file()):
+            fail(f"Lean migration current profile source is not a regular file: {relative}")
+        source_sha256 = _profile_replacement_source_digest(source)
+        expected_sha256 = expected.get(relative)
+        if expected_sha256 is not None and source_sha256 != expected_sha256:
+            fail(f"Lean migration current profile source changed: {relative}")
+        if destination.exists() or destination.is_symlink():
+            if destination.is_symlink() or not destination.is_file():
+                if expected_sha256 is not None:
+                    fail(f"Lean migration current profile destination is linked: {relative}")
+                continue
+            destination_sha256 = hashlib.sha256(destination.read_bytes()).hexdigest()
+            allowed = {RETIRED_FORGE_PROFILE_HASHES[source.name], source_sha256}
+            if destination_sha256 not in allowed:
+                if expected_sha256 is not None:
+                    fail(f"Lean migration current profile destination was modified: {relative}")
+                continue
+            if expected_sha256 is None and destination_sha256 != RETIRED_FORGE_PROFILE_HASHES[source.name]:
+                continue
+        elif expected_sha256 is None:
+            continue
+        rows.append((source, destination))
+    if expected:
+        found = {
+            destination.relative_to(target).as_posix() for _source, destination in rows
+        }
+        if found != set(expected):
+            fail("Lean migration current profile replacement set changed")
+    return rows
+
+
+def _profile_replacement_source_digest(source: Path) -> str:
+    """Hash one harness profile while keeping source drift testable."""
+    return hashlib.sha256(source.read_bytes()).hexdigest()
+
+
 def _resume_stage_bytes_match(target: Path, path: str, expected: str) -> bool:
     candidate = target / path
     try:
@@ -2193,6 +2280,11 @@ def preflight_lean_migration(target: Path) -> dict | None:
             if current_fixed != saved_fixed or newly_retired:
                 fail("Lean migration found an unequal partial retry; restore or complete the original checkout")
             return None
+        profile_replacements = _profile_replacement_hashes(saved)
+        if profile_replacements is None:
+            fail("Lean migration profile replacement metadata is malformed")
+        if profile_replacements:
+            _profile_replacement_candidates(repo_root(), target, saved)
         saved_identity = {
             entry["path"]: entry for entry in saved.get("entries") or []
             if isinstance(entry, dict)
@@ -2221,6 +2313,10 @@ def preflight_lean_migration(target: Path) -> dict | None:
                     continue
                 if (original.get("family") == "fixed-review-lens"
                         and current.get("sha256") == original.get("sha256")):
+                    continue
+                if (original.get("family") == "retired-forge-profile"
+                        and path in profile_replacements
+                        and current.get("sha256") == profile_replacements[path]):
                     continue
                 if path in LEAN_RUNTIME_PATHS:
                     continue
@@ -2548,22 +2644,30 @@ def _publish_incomplete_lean_manifest(
 
 def _publish_converted_stage(
         target: Path, destination: Path, built: Path, *, original_sha256: str,
-        output_sha256: str) -> None:
+        output_sha256: str, allow_missing: bool = False) -> None:
     """Atomically replace one exact inventoried stage file from the temp build."""
     _require_unlinked_path(target, destination)
     assert_target_file_destination(target, destination)
     body = built.read_bytes()
     if hashlib.sha256(body).hexdigest() != output_sha256:
         fail("Lean migration temporary converted stage identity changed")
-    current = destination.read_bytes()
-    current_sha256 = hashlib.sha256(current).hexdigest()
+    try:
+        current = destination.read_bytes()
+    except FileNotFoundError:
+        if not allow_missing:
+            raise
+        current_sha256 = None
+    else:
+        current_sha256 = hashlib.sha256(current).hexdigest()
     if current_sha256 == output_sha256:
         return
-    if current_sha256 != original_sha256:
+    if current_sha256 is not None and current_sha256 != original_sha256:
         fail("Lean migration input changed before conversion")
     temporary = destination.with_name(f".{destination.name}.{os.getpid()}.lean.tmp")
     assert_target_file_destination(target, temporary)
-    publication_mode = stat.S_IMODE(destination.lstat().st_mode)
+    publication_mode = stat.S_IMODE(
+        (destination if current_sha256 is not None else built).lstat().st_mode,
+    )
     descriptor = os.open(
         temporary, os.O_WRONLY | os.O_CREAT | os.O_EXCL
         | getattr(os, "O_NOFOLLOW", 0) | getattr(os, "O_BINARY", 0),
@@ -2596,7 +2700,10 @@ def _publish_converted_stage(
             temporary.unlink()
 
 
-def apply_lean_migration(target: Path, migration: dict | None) -> None:
+def apply_lean_migration(
+        target: Path, migration: dict | None, *,
+        profile_replacements: list[tuple[Path, Path]] | None = None,
+) -> None:
     if migration is None:
         return
     from factory_lib import (
@@ -2610,6 +2717,42 @@ def apply_lean_migration(target: Path, migration: dict | None) -> None:
         row["generation_id"]: row
         for row in migration.get("prepared_reviews") or []
     }
+    saved_profile_replacements = _profile_replacement_hashes(migration)
+    if saved_profile_replacements is None:
+        fail("Lean migration profile replacement metadata is malformed")
+    profile_replacements = profile_replacements or []
+    if saved_profile_replacements and not profile_replacements:
+        fail("Lean migration current profile replacements are missing")
+    replacement_inputs: list[tuple[Path, Path, bytes, str, str]] = []
+    replacement_rows: dict[str, str] = {}
+    entries_by_path = {
+        entry["path"]: entry for entry in migration.get("entries") or []
+        if isinstance(entry, dict) and isinstance(entry.get("path"), str)
+    }
+    for source, destination in profile_replacements:
+        relative = destination.relative_to(target).as_posix()
+        entry = entries_by_path.get(relative)
+        if (not isinstance(entry, dict)
+                or entry.get("classification") != "eligible"
+                or entry.get("family") != "retired-forge-profile"
+                or entry.get("sha256") != RETIRED_FORGE_PROFILE_HASHES.get(
+                    destination.name)):
+            fail(f"Lean migration profile replacement is not an inventoried retired input: {relative}")
+        if source.is_symlink() or not source.is_file():
+            fail(f"Lean migration current profile source is not a regular file: {relative}")
+        body = source.read_bytes()
+        source_sha256 = hashlib.sha256(body).hexdigest()
+        if (relative in replacement_rows
+                or (saved_profile_replacements
+                    and saved_profile_replacements.get(relative) != source_sha256)):
+            fail(f"Lean migration current profile source changed: {relative}")
+        replacement_rows[relative] = source_sha256
+        replacement_inputs.append((
+            source, destination, body, entry["sha256"], source_sha256,
+        ))
+    if saved_profile_replacements and set(replacement_rows) != set(
+            saved_profile_replacements):
+        fail("Lean migration current profile replacement set changed")
     promoted_paths = {
         path.relative_to(target).as_posix()
         for _candidate, paths in review_candidates for path in paths
@@ -2652,6 +2795,21 @@ def apply_lean_migration(target: Path, migration: dict | None) -> None:
                     or hashlib.sha256(path.read_bytes()).hexdigest() != row["sha256"]):
                 fail("Lean migration temporary converted stage readback differs")
             built_converted[row["path"]] = path
+        built_profile_replacements: list[tuple[Path, bytes, str, str]] = []
+        for index, (_source, destination, body, original_sha256,
+                    output_sha256) in enumerate(replacement_inputs):
+            path = build / "profiles" / f"{index}-{destination.name}"
+            assert_target_destination(build, path.parent).mkdir(
+                parents=True, exist_ok=True,
+            )
+            path.write_bytes(body)
+            if (path.read_bytes() != body
+                    or hashlib.sha256(path.read_bytes()).hexdigest()
+                    != output_sha256):
+                fail("Lean migration temporary profile readback differs")
+            built_profile_replacements.append(
+                (destination, body, original_sha256, output_sha256),
+            )
         built_generations: list[tuple[dict, str, str]] = []
         outputs: list[dict[str, str]] = (
             list(migration.get("outputs") or [])
@@ -2704,6 +2862,11 @@ def apply_lean_migration(target: Path, migration: dict | None) -> None:
             "preserved_entries": preserved_entries,
             "recorded_at": now_iso(),
         }
+        if replacement_rows:
+            manifest["profile_replacements"] = [
+                {"path": path, "sha256": replacement_rows[path]}
+                for path in sorted(replacement_rows)
+            ]
         if "prior_completion" in migration:
             manifest.update({
                 "prior_completion": migration["prior_completion"],
@@ -2752,6 +2915,11 @@ def apply_lean_migration(target: Path, migration: dict | None) -> None:
 
     # Durable selected outputs and manifest now exist. Retire exactly the
     # inventoried bytes, refusing identity drift instead of deleting by name.
+    replacement_by_path = {
+        profile_destination: output_sha256
+        for profile_destination, _body, _original_sha256, output_sha256
+        in built_profile_replacements
+    }
     for entry in migration["entries"]:
         if entry.get("classification") != "eligible":
             continue
@@ -2766,6 +2934,12 @@ def apply_lean_migration(target: Path, migration: dict | None) -> None:
             continue
         if (entry["family"] == "fixed-review-lens"
                 and entry["path"] not in promoted_paths):
+            continue
+        expected_profile_sha256 = replacement_by_path.get(path)
+        if expected_profile_sha256 is not None and path.is_file() \
+                and not path.is_symlink() \
+                and hashlib.sha256(path.read_bytes()).hexdigest() \
+                == expected_profile_sha256:
             continue
         if path.is_symlink() or not path.is_file():
             fail(f"Lean migration input changed before deletion: {entry['path']}")
@@ -2786,6 +2960,26 @@ def apply_lean_migration(target: Path, migration: dict | None) -> None:
             if hashlib.sha256(path.read_bytes()).hexdigest() != entry["sha256"]:
                 fail(f"Lean migration input changed before deletion: {entry['path']}")
             path.unlink()
+
+    # The first temporary build directory has been removed by this point. Keep
+    # the authenticated bytes and materialize a fresh short-lived source for
+    # each publication so an interruption after deletion can resume safely.
+    with tempfile.TemporaryDirectory(prefix="forge-profile-build-") as temporary:
+        profile_build = Path(temporary)
+        for index, (profile_destination, body, original_sha256,
+                    output_sha256) in enumerate(built_profile_replacements):
+            built = profile_build / f"{index}-{profile_destination.name}"
+            built.write_bytes(body)
+            if (built.read_bytes() != body
+                    or hashlib.sha256(built.read_bytes()).hexdigest()
+                    != output_sha256):
+                fail("Lean migration temporary profile readback differs")
+            _publish_converted_stage(
+                target, profile_destination, built,
+                original_sha256=original_sha256,
+                output_sha256=output_sha256,
+                allow_missing=True,
+            )
 
     completed = load_json(destination, default={})
     if not completed.get("completed_at"):
@@ -3260,6 +3454,18 @@ def _incomplete_lean_resume_paths(
         return set()
     if not isinstance(saved, dict):
         return set()
+    profile_replacements = _profile_replacement_hashes(saved)
+    if profile_replacements is None:
+        return set()
+    for relative, expected_sha256 in profile_replacements.items():
+        source = harness / relative
+        try:
+            source_sha256 = (None if source.is_symlink() or not source.is_file()
+                             else hashlib.sha256(source.read_bytes()).hexdigest())
+        except OSError:
+            source_sha256 = None
+        if source_sha256 != expected_sha256:
+            return set()
     if manifest == supplemental:
         try:
             original = load_json(
@@ -3429,9 +3635,20 @@ def _cmd_upgrade_locked(
     _retired_profiles, preserved_profiles = _retired_forge_profiles(
         target, known_profile_hashes,
     )
+    deferred_profile_replacements = _profile_replacement_candidates(
+        harness, target,
+    )
+    profile_replacements_applied = False
     lean_migration = preflight_lean_migration(target)
     if lean_migration and lean_migration.get("resume") is True:
-        apply_lean_migration(target, lean_migration)
+        deferred_profile_replacements = _profile_replacement_candidates(
+            harness, target, lean_migration,
+        )
+        apply_lean_migration(
+            target, lean_migration,
+            profile_replacements=deferred_profile_replacements,
+        )
+        profile_replacements_applied = True
         print(f"Resumed and completed Lean migration in {target}")
         lean_migration = None
     _check_legacy_retirable(target, harness)
@@ -3514,7 +3731,6 @@ def _cmd_upgrade_locked(
     # Same mixed-ownership rule: refresh each harness-shipped agent and each
     # allowlisted harness skill; leave client-added entries alone.
     agents = harness / ".codex" / "agents"
-    deferred_profile_replacements: list[tuple[Path, Path]] = []
     if agents.is_dir():
         for child in agents.iterdir():
             destination = target / ".codex" / "agents" / child.name
@@ -3527,7 +3743,8 @@ def _cmd_upgrade_locked(
                     # bytes. Install the current same-name role only after
                     # that durable removal so revalidation cannot mistake the
                     # replacement for tampered migration input.
-                    deferred_profile_replacements.append((child, destination))
+                    if (child, destination) not in deferred_profile_replacements:
+                        deferred_profile_replacements.append((child, destination))
                     continue
                 if existing not in known_profile_hashes.get(child.name, set()):
                     # A same-name profile with unknown bytes is a distinct
@@ -3579,10 +3796,15 @@ def _cmd_upgrade_locked(
     shutil.rmtree(
         assert_target_destination(keep_root, keep_root), ignore_errors=True)
 
-    apply_lean_migration(target, lean_migration)
-
-    for source, destination in deferred_profile_replacements:
-        _replace_path(target, source, destination)
+    if lean_migration is not None:
+        apply_lean_migration(
+            target, lean_migration,
+            profile_replacements=deferred_profile_replacements,
+        )
+        profile_replacements_applied = True
+    if not profile_replacements_applied:
+        for source, destination in deferred_profile_replacements:
+            _replace_path(target, source, destination)
 
     retired_legacy = _retire_legacy_agents(target)
 

@@ -2233,6 +2233,26 @@ def _pytest_collection_path_candidates(
     return paths or None
 
 
+def _pytest_collection_has_node_selector(args: list[str]) -> bool:
+    """Whether explicit pytest collection names include a ``::`` node."""
+    value_options = {
+        "-c", "--config-file", "-o", "--override-ini", "--junitxml",
+        "--maxfail", "-n", "--dist", "--durations", "--tb", "--color",
+        "--capture", "--log-level", "--basetemp", "--cov", "--cov-report",
+        "-k", "--keyword", "-m", "--markexpr", "--ignore", "--deselect",
+    }
+    index = 0
+    while index < len(args):
+        token = args[index]
+        if token in value_options:
+            index += 2
+            continue
+        if not token.startswith("-") and "::" in token:
+            return True
+        index += 1
+    return False
+
+
 def _pytest_collection_paths(
         base: Path, command: str, *, require_broad: bool = False,
 ) -> list[Path] | None:
@@ -2251,6 +2271,8 @@ def _pytest_collection_paths(
         return None
     args = tokens[module + 2:]
     if not _pytest_collection_inputs_known(base, args, environment):
+        return None
+    if require_broad and _pytest_collection_has_node_selector(args):
         return None
     selectors = ("-k", "--keyword", "-m", "--markexpr", "--ignore",
                  "--deselect", "--pyargs")
