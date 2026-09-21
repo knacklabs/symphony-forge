@@ -337,6 +337,9 @@ def cmd_adopt(args: argparse.Namespace) -> None:
                      'export GSTACK_HOME="$PWD/.gstack"\n')
         created.append(".envrc (GSTACK_HOME appended; re-run `direnv allow`)")
     assert_target_file_destination(target, target / ".gitattributes")
+    from .scaffold import ensure_harness_yaml_pins
+    for key in ensure_harness_yaml_pins(target, harness):
+        created.append(f"harness.yaml ({key} pin appended; project-owned, not rewritten)")
     if ensure_jsonl_attributes(target, harness):
         created.append(".gitattributes (missing JSONL merge rules added)")
     brief_src = harness / "harness" / "nestjs-react" / "BRIEF_TEMPLATE.md"

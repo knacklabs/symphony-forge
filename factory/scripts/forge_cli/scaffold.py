@@ -41,6 +41,7 @@ DOC_CONTRACTS = [
     ("docs/decisions/README.md", "docs/decisions/README.md"),
     ("docs/FACTORY.md", "docs/FACTORY.md"),
     ("docs/QUALITY.md", "docs/QUALITY.md"),
+    ("docs/grill.md", "docs/grill.md"),
     ("docs/ROLES.md", "docs/ROLES.md"),
     ("docs/harness-philosophy.md", "docs/harness-philosophy.md"),
     ("docs/degraded-mode.md", "docs/degraded-mode.md"),
@@ -251,6 +252,52 @@ def ensure_onboarding(target: Path, name: str) -> bool:
     with readme.open("a", encoding="utf-8") as fh:
         fh.write(f"\n{ONBOARDING_SECTION}")
     return True
+
+
+# harness.yaml is project-owned: upgrade never rewrites it, so a pin the
+# harness needs there (a schema's generator allowlist, a proof floor) must be
+# appended when missing, never assumed. Without the journal pin the dual
+# runtime check fails outright on every client taking decision 0080.
+HARNESS_YAML_PINS: tuple[tuple[str, str], ...] = (
+    ("journal", """\
+# Pinned by forge upgrade (decision 0080): the task journal's actors. Every
+# generator a schema names must be mentioned here (check_dual_runtime).
+journal:
+  artifact: ".factory/stories/<story>/tasks/<task>/journal.jsonl via ./forge journal add and the harness"
+  schema: "factory/schemas/journal-entry.json"
+  allowed:
+    - "harness"
+    - "coordinator"
+    - "worker"
+    - "reviewer"
+    - "human"
+"""),
+    ("proof", """\
+# Proof headroom (decision 0080): `task close` refuses to start the proof
+# below this much free commit memory (GB, Windows). 0 disables the check.
+proof:
+  min_free_memory_gb: 2
+"""),
+)
+
+
+def ensure_harness_yaml_pins(target: Path, harness: Path) -> list[str]:
+    """Append each missing pin to the project's harness.yaml; return the keys
+    added. A symlinked or absent file is left alone, like the sign-off pin."""
+    manifest_yaml = target / "harness.yaml"
+    if not manifest_yaml.exists() or manifest_yaml.is_symlink():
+        return []
+    manifest_yaml = assert_target_file_destination(target, manifest_yaml)
+    text = manifest_yaml.read_text(encoding="utf-8")
+    added: list[str] = []
+    for key, block in HARNESS_YAML_PINS:
+        if re.search(rf"^\s*{key}:\s*$", text, re.MULTILINE):
+            continue
+        text = text.rstrip("\n") + "\n\n" + block
+        added.append(key)
+    if added:
+        manifest_yaml.write_text(text, encoding="utf-8")
+    return added
 
 
 def ensure_jsonl_attributes(target: Path, harness: Path) -> bool:

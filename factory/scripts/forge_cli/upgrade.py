@@ -574,6 +574,9 @@ def cmd_upgrade(args: argparse.Namespace) -> None:
         ensured.append(".envrc (run `direnv allow` in the repo)")
     if ensure_jsonl_attributes(target, harness):
         ensured.append(".gitattributes (missing JSONL merge rules added)")
+    from .scaffold import ensure_harness_yaml_pins
+    for key in ensure_harness_yaml_pins(target, harness):
+        ensured.append(f"harness.yaml ({key} pin added; project-owned, appended not rewritten)")
 
     # Sign-off moved from a per-worktree run.json flag to a committed
     # harness.yaml pin. A project that signed off under the old scheme keeps

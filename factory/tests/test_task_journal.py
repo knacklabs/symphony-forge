@@ -235,3 +235,25 @@ def test_a_transient_sharing_violation_is_retried_not_refused(tmp_path, monkeypa
     with pytest.raises(PermissionError):
         factory_lib.retry_sharing_violation(flaky_open)
     assert calls["n"] == 1, "no retry outside Windows"
+
+
+def test_upgrade_appends_the_journal_and_proof_pins_to_a_project_owned_harness_yaml(tmp_path):
+    """harness.yaml is project-owned and never rewritten by upgrade. The
+    journal schema pins five actors and the dual-runtime check requires each
+    to be mentioned there, so a client taking 0080 failed that check until
+    someone edited the file by hand (2026-09-21). Upgrade appends the pins."""
+    from forge_cli.scaffold import ensure_harness_yaml_pins
+    project = tmp_path / "client"
+    project.mkdir()
+    original = "version: 1\nsignoff_record: \"docs/decisions/0001.md\"\nlessons:\n  path: plans/lessons\n"
+    (project / "harness.yaml").write_text(original, encoding="utf-8")
+    assert ensure_harness_yaml_pins(project, HARNESS) == ["journal", "proof"]
+    text = (project / "harness.yaml").read_text(encoding="utf-8")
+    assert text.startswith(original.rstrip("\n")), "project content is kept, verbatim"
+    for actor in ("harness", "coordinator", "worker", "reviewer", "human"):
+        assert f'- "{actor}"' in text
+    assert "min_free_memory_gb: 2" in text
+    assert ensure_harness_yaml_pins(project, HARNESS) == [], "idempotent"
+    # The harness's own manifest already carries both under evolution.journal
+    # and proof:, so nothing is appended there.
+    assert ensure_harness_yaml_pins(HARNESS, HARNESS) == []
