@@ -400,6 +400,20 @@ if args.gate == "task":
             f"task grill requires a saved task plan first: run `./forge task plan "
             f"save {args.task} --from <path>`"
         )
+    # The grounding digest folds in the product tree of the directory this
+    # runs in. Recorded from the story worktree while the task has its own,
+    # the grill reads as stale in the task worktree for a reason nobody can
+    # see from either side (WF-2 T1, 2026-09-21): refuse here, and name the
+    # worktree, the same way stage start and delegate refuse from the wrong tree.
+    from factory_lib import task_state_root
+    _home = task_state_root(root, args.task)
+    if _home.resolve() != root.resolve():
+        raise SystemExit(
+            f"--gate task for {args.task} must be recorded from the task's own "
+            f"worktree, {_home}: the grounding digest folds in the product tree of "
+            "the directory it runs in, so a grill recorded here reads as stale "
+            "there. Run the grill and its approval from that worktree."
+        )
     task = _validate_task_grill(root, payload, args.task)
     for field in ("approved_task_plan_sha256", "approved_by", "approved_at"):
         payload.pop(field, None)

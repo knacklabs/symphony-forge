@@ -13237,6 +13237,27 @@ def test_task_stage_resolves_from_the_tasks_own_worktree(repo, tmp_path):
     assert lib.task_state_root(repo, "T1").resolve() == worktree.resolve()
 
 
+def test_a_task_grill_is_recorded_from_the_tasks_own_worktree_only(repo, tmp_path):
+    """WF-2 T1 (2026-09-21): the first grill was recorded from the story
+    worktree; the task's own worktree then read it as stale, for a reason
+    invisible from either directory. The recorder refuses and names the tree."""
+    lib = load_factory_lib(repo)
+    sign_off(repo)
+    intake(repo)
+    save_plan(repo, tmp_path)
+    record_skeleton_then_frontier(repo, [STAGE_TASK])
+    worktree = tmp_path / "repo-T1"
+    git(repo, "worktree", "add", "-q", "-b", "feat/ENG-1-T1", str(worktree))
+    control = Path(git(worktree, "rev-parse", "--absolute-git-dir")) / "forge"
+    control.mkdir(parents=True, exist_ok=True)
+    lib.dump_json(control / "run.json",
+                  {"issue_key": "ENG-1", "task_id": "T1", "branch": "feat/ENG-1-T1"})
+    code, out = record_task_grill(repo, STAGE_TASK, approve=False)
+    assert code != 0, out
+    assert "must be recorded from the task's own worktree" in out, out
+    assert worktree.name in out, out
+
+
 def test_task_grill_names_a_basis_mismatch_instead_of_reporting_stale(
         repo, tmp_path):
     # A digest mismatch has two very different causes. Reporting a
