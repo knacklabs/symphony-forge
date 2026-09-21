@@ -13223,6 +13223,19 @@ def test_task_stage_resolves_from_the_tasks_own_worktree(repo, tmp_path):
     # A task with no worktree falls back to the local copy rather than guessing.
     assert lib.task_state_root(repo, "T-none").resolve() == repo.resolve()
 
+    # Another story's T1 is not this story's T1. WF-2's fresh T1 resolved to
+    # the merged WF-BIO-1 T1 worktree and `forge next` said to close a task
+    # that had not started (2026-09-21).
+    other = tmp_path / "repo-WF2"
+    git(repo, "worktree", "add", "-q", "-b", "feat/WF-2", str(other))
+    lib.dump_json(control(other) / "run.json", {"issue_key": "WF-2"})
+    lib.dump_json(control(other) / "stages.json", {"issue": "WF-2", "stages": [
+        {"id": "T1", "title": "wf-2 backend", "status": "pending"}]})
+    assert lib.task_state_root(other, "T1").resolve() == other.resolve()
+    assert lib.task_stage_record(other, "T1").get("status") == "pending"
+    # And ENG-1 still finds its own T1 worktree from its own directory.
+    assert lib.task_state_root(repo, "T1").resolve() == worktree.resolve()
+
 
 def test_task_grill_names_a_basis_mismatch_instead_of_reporting_stale(
         repo, tmp_path):

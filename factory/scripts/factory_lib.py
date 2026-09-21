@@ -4291,14 +4291,23 @@ def task_state_root(root: Path, task_id: str) -> Path:
     """
     if not task_id:
         return root
+    # A task id is unique inside its story only. A merged story's worktrees
+    # keep advertising their task ids, so WF-2's T1 resolved to WF-BIO-1's T1
+    # worktree and read a stage done since September 16 (2026-09-21): match
+    # the story as well, from the pointer's own `story`/`issue_key`.
+    story = active_story_key(root)
     for candidate in linked_worktree_roots(root):
         try:
             pointer = load_json(git_control_dir(candidate) / "run.json",
                                 default={})
         except (OSError, SystemExit):
             continue
-        if isinstance(pointer, dict) and pointer.get("task_id") == task_id:
-            return candidate
+        if not isinstance(pointer, dict) or pointer.get("task_id") != task_id:
+            continue
+        theirs = str(pointer.get("story") or pointer.get("issue_key") or "")
+        if story and theirs and theirs != story:
+            continue
+        return candidate
     return root
 
 
