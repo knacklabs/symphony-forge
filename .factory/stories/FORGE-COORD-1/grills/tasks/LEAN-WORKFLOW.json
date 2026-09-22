@@ -4,147 +4,96 @@
   "verdict": "pass",
   "issue": "FORGE-COORD-1",
   "task_id": "LEAN-WORKFLOW",
-  "summary": "One authenticated cold read (gpt-5.6-sol@high, read-only) returned four gaps and four contradictions. All eight were answerable from repository facts and were resolved against the repo, not escalated; no owner choice remained. The task plan was amended once and the pass is recorded against the amended version.",
+  "summary": "Second authenticated cold read (gpt-6-sol, read-only) after the GPT-6 model migration returned three gaps and three contradictions. All six were answerable from repository facts; none required escalation. One finding corrected a factual error the previous revision of this plan had asserted about AC16.",
   "gaps": [
-    "The `user_facing: true` amendment has no falsifiable functional target. `.factory/stories/FORGE-COORD-1/task-plans/LEAN-WORKFLOW.md:21` refers only to an unspecified board-wording change; Verification Plan step 6 merely requests a functional checker, and Manual Verification step 8 says to confirm \u201cboard wording\u201d without naming the route, exact copy, prior state, or expected observable result.",
-    "The native-approval security boundary omits accepted Decision 0082. The implementation contract and reviewer focus require stable Codex session/event identity but never state that authenticity rests on invocation of the exact hash-approved hook, provides no signed-host provenance, and excludes synthetic same-user invocation (`docs/decisions/0082-codex-hook-trust-boundary.md:17-28`). That is a load-bearing trust seam for AC1-AC2.",
-    "AC16 and AC17 have no falsifiable required test or verify command. The protected decomposition\u2019s 55 required tests cover AC13-AC15 but none validates the 4/6/8 timing arithmetic, the 15% repeatability limit, the 25% setup predicate, the fixture-adoption decision, or retained coverage. `factory/schemas/test-automated.json:6-18` accepts free-form command and summary strings, so merely recording benchmark prose in `tests.json` does not enforce either criterion.",
-    "The handover does not make its closing command reachable from the current authoritative runtime state. `./forge next` routes to GATES-1 and refuses on its retired fixed proof, while the shared protected `.git/forge/run.json` names GATES-1; the plan nevertheless proceeds directly to `./forge task close LEAN-WORKFLOW` without specifying a validated FORGE-COORD-1 reactivation or attach transition that preserves the other active story."
+    "The effective write scope does not cover four files already changed since the stated base: `factory/scripts/check_agents_hygiene.py`, `factory/scripts/forge_cli/context.py`, `factory/scripts/forge_cli/quickfix.py`, and `factory/scripts/forge_cli/story.py`. None appears in the recorded scope or eight amendments (`.factory/stories/FORGE-COORD-1/task-plans/LEAN-WORKFLOW.md:180-334`). The story plan assigns resume work involving `story.py` to Shared (`plans/active/FORGE-COORD-1-either-claude-or-codex-coordinates-the-same-forge-workflow.md:153-156`), yet this plan depends on a story-resume repair (`LEAN-WORKFLOW.md:126-131`). The handover does not say how these changes become authorized or leave Lean.",
+    "AC16 and AC17 still have no required test or verify command that checks the benchmark arithmetic, adoption thresholds, setup-share predicate, or retained fixture coverage (`.factory/stories/FORGE-COORD-1/decomposition.json:780-788,1065-1078`). Historical timings and conclusions are free-form `tests.json` entries (`.factory/stories/FORGE-COORD-1/tasks/LEAN-WORKFLOW/tests.json:63-73`; `factory/schemas/test-automated.json:6-18`), so the declared proof cannot falsify an incorrect adoption decision.",
+    "The task now spans 132 product files and 32,873 added-plus-deleted lines against a recorded 28,500-line review budget (`.factory/stories/FORGE-COORD-1/decomposition.json:1082-1085`). The plan calls the overrun a note (`LEAN-WORKFLOW.md:106-111`) but gives no smaller reviewable shape or specific reason this remains one bounded implementation and review, as required by `constitution/09-agent-conduct.md:21-33`."
   ],
   "contradictions": [
-    "The decision grounding is stale and internally impossible. `.factory/stories/FORGE-COORD-1/task-plans/LEAN-WORKFLOW.md:8` claims the accepted corpus only through 0078, but the active corpus includes accepted 0079, 0080, 0081, and 0082. Lines 50-51 still call the full-access destination Decision 0079 even though 0079 is now `a-task-proof-runs-once-per-tree`, 0080 is native role routing, and the accepted full-access decision is 0081.",
-    "The three-profile acceptance target contradicts current authority and its own required test. The plan\u2019s scope and AC8 require only three Forge-owned profiles (`LEAN-WORKFLOW.md:17,62`), while accepted Decision 0080 requires the complete routed role registry (`docs/decisions/0080-native-role-model-routing.md:23-40,54-59`) and `factory/tests/test_native_setup.py:454-469` asserts sixteen installed/configured agent roles rather than three.",
-    "The \u201cCurrent implementation blockers\u201d section is not current. `LEAN-WORKFLOW.md:81` presents the `a835534` 36-failure run and four nonexistent selectors as the outstanding state, but committed `verify.json` records all five verify commands and all 55 required selectors passing at `c8f7128`, and the inspected HEAD is later still at `678f233`. The plan does not identify the actual remaining work for that tree.",
-    "The stated base and review limits disagree with both the current tree and the authoritative contract. `LEAN-WORKFLOW.md:83,96-97` says `git merge-base HEAD origin/main` must equal `aa8b519c1e1e` and uses a 118-file/23,000-line ceiling; the command currently returns `9e08774ba4973f54d0b2805f6f84b633eb2c31ff`, while the rendered protected contract sets 132 files/28,500 lines and contains 134 base scope entries plus eight recorded scope amendments."
+    "AC8 requires the complete sixteen-role registry while the authoritative recorded objective and matching criterion still require only three Forge-owned profiles (`.factory/stories/FORGE-COORD-1/task-plans/LEAN-WORKFLOW.md:62,158,169`; `.factory/stories/FORGE-COORD-1/decomposition.json:533,546`). The plan acknowledges that decomposition must be amended but presents the incompatible contract as the current handover. Decision 0080 and the named required test require the full registry (`docs/decisions/0080-native-role-model-routing.md:54-59`; `factory/tests/test_native_setup.py:456-472`).",
+    "The plan claims agreement with accepted decisions through 0082 (`LEAN-WORKFLOW.md:8,17,66`), but accepted Decision 0080 pins GPT-5.6 Luna, Terra, and Sol (`docs/decisions/0080-native-role-model-routing.md:23-32`), while current profiles and `harness.yaml` pin GPT-6 Luna and Sol (`.codex/agents/explorer.toml:3`; `.codex/agents/worker.toml:3`; `harness.yaml:26-33`). The plan names no superseding authority for that model-routing change.",
+    "The plan says AC16 holds by non-adoption and that the canonical worker count remains `-n 4` (`LEAN-WORKFLOW.md:113-116`). The current verifier command is `-n 8` (`.envrc:20`), and the task's recorded benchmark explicitly says to adopt eight workers (`.factory/stories/FORGE-COORD-1/tasks/LEAN-WORKFLOW/tests.json:63-70`). Its verification step also orders a 4/6/8 benchmark (`LEAN-WORKFLOW.md:135-136`), contradicting the claimed no-benchmark disposition."
   ],
   "resolutions": [
-    "Named an exact, falsifiable functional target in Manual Verification 8: serve factory/board/index.html and read the footer.wrap first paragraph and the readinessBlock check-note; the PRIOR chat-approval strings must be absent and \"Approve the exact final plan in native Plan Mode.\" must appear in both. Verified against the committed diff of factory/board/index.html at 9e08774b..HEAD.",
-    "Recorded accepted Decision 0082 (docs/decisions/0082-codex-hook-trust-boundary.md) as the load-bearing trust seam under AC1-AC2: authenticity rests on invocation of the exact hash-approved project hook plus exact digest, runtime, session, event, tool, payload, cancellation, replay and candidate validation; no signed host attestation is claimed and synthetic same-user invocation is not excluded. The formal review assesses 0082.",
-    "AC16 and AC17 hold by NON-ADOPTION and owe no benchmark: factory/tests/conftest.py is untouched on this branch, so no shared fixture optimisation exists, and nothing in the tree sets a worker count other than the canonical -n 4. Both criteria are conditional permissions; adopting either would first require the recorded 4/6/8 comparison. Recorded in the plan.",
-    "Documented the supported reactivation: the git-local control dir is per-worktree and absent in a fresh checkout, so ./forge next routes to GATES-1 and refuses on its retired fixed proof. ./forge story resume FORGE-COORD-1 rebuilds the pointer, protected decomposition and stage tracker from committed state without disturbing GATES-1, and is the prerequisite for ./forge task close LEAN-WORKFLOW.",
-    "Corrected the decision grounding: frontmatter active_decisions_reviewed now reads 'accepted corpus through 0082'. The accepted full-access decision is 0081-full-access-for-forge-managed-codex-chats.md; 0079 is a-task-proof-runs-once-per-tree and 0080 is native-role-model-routing, so neither is the full-access destination. Verified by listing docs/decisions/.",
-    "Corrected the profile target: the shipped tree carries sixteen .codex/agents/*.toml profiles and sixteen config_file agents in .codex/config.toml, matching accepted Decision 0080 and the body of test_recovery_profile_override_keeps_only_three_forge_profiles. Scope and AC8 now state the complete Decision 0080 registry. The selector keeps its legacy NAME because required-test ids bind by id. The rendered contract Objective still says 'three-profile Forge registry reduction' and needs a decomposition amendment through record_decomposition_from_json.py; the rendered block is not hand-edited.",
-    "Replaced the stale blockers section with the state measured on 2026-09-22 at HEAD 678f2331: the five declared verify commands and 55 required selectors PASS, while the repo-wide gate suite reports 18 failed / 1419 passed / 4 skipped, all reproducing at pristine c2b1b474. Eleven share one root cause: _persist_prepared_lean_manifest (upgrade.py:3022) validates against <target>/factory/schemas/lean-workflow-migration.json before vendoring installs it; it must validate against runtime_source.",
-    "Corrected the base and limits: git merge-base HEAD origin/main is 9e08774ba4973f54d0b2805f6f84b633eb2c31ff (origin/main is already contained in this branch), not aa8b519c1e1e. The contract sets 132 files / 28,500 lines and 142 allowed paths (134 base entries plus 8 recorded amendments). The measured product delta is 132 files / 32,789 lines; a budget overrun is a RECORDED NOTE, not a refusal (stages.py:1483), the only hard refusal being a delta above twice the line budget."
+    "Named all four out-of-scope files in the plan -- check_agents_hygiene.py, forge_cli/context.py, forge_cli/story.py and forge_cli/quickfix.py -- and the route that authorises them:  at stage done, which exists for measured paths a task touched but did not declare. quickfix.py was already changed on the branch before the handover. The story.py change is the narrow approval-binding repair  itself demanded, not Shared's broader resume feature.",
+    "The benchmark evidence exists and is specific (medians, percentages, adoption verdict) in the task's tests.json, so the adoption decision is auditable. What is missing is a MACHINE-CHECKABLE assertion, because test-automated.json accepts free-form command and summary strings. A benchmark-shaped evidence schema is a NEW evidence schema, which this task's scope explicitly excludes, so it is carried as a named follow-up rather than silently claimed as covered.",
+    "Recorded why this stays one bounded implementation: native approval, removal of the formats it replaces, the one-time migration of those formats, and the close-owned proof path are mutually dependent, and landing them separately would ship a half-migrated harness that refuses its own recorded evidence in between. The reviewable shape is bounded by the Decision 0078 parallel-group review, which splits the diff for reading without splitting the change.",
+    "Already dispositioned in the previous revision and unchanged: the rendered contract Objective still says 'three-profile Forge registry reduction' and requires a decomposition amendment through record_decomposition_from_json.py. The plan states this and deliberately does not hand-edit the rendered contract block. The tree, Decision 0080 and the named required test all agree on the sixteen-role registry.",
+    "Named the superseding authority: docs/decisions/0083-native-role-model-routing-on-gpt-6.md, drafted with the GPT-6 change and PROPOSED pending owner acceptance in chat. Until it is accepted the tree and 0080 disagree, and the plan now names that disagreement rather than implying agreement.",
+    "CORRECTED a factual error this plan previously asserted. AC16 does NOT hold by non-adoption: the 4/6/8 comparison was run and recorded (medians n4 186.099s, n6 177.336s, n8 153.966s; n8 17.27% faster, both runs passing, 5.97% apart, inside the 15% limit), the gate passed, and the canonical worker count moved to -n 8, which .envrc:20 runs today. AC17 does hold by non-adoption with its predicate recorded: profiled setup share below 25% in both baselines."
   ],
   "finding_dispositions": [
     {
-      "finding": "The `user_facing: true` amendment has no falsifiable functional target. `.factory/stories/FORGE-COORD-1/task-plans/LEAN-WORKFLOW.md:21` refers only to an unspecified board-wording change; Verification Plan step 6 merely requests a functional checker, and Manual Verification step 8 says to confirm \u201cboard wording\u201d without naming the route, exact copy, prior state, or expected observable result.",
-      "resolution": "Named an exact, falsifiable functional target in Manual Verification 8: serve factory/board/index.html and read the footer.wrap first paragraph and the readinessBlock check-note; the PRIOR chat-approval strings must be absent and \"Approve the exact final plan in native Plan Mode.\" must appear in both. Verified against the committed diff of factory/board/index.html at 9e08774b..HEAD.",
+      "finding": "The effective write scope does not cover four files already changed since the stated base: `factory/scripts/check_agents_hygiene.py`, `factory/scripts/forge_cli/context.py`, `factory/scripts/forge_cli/quickfix.py`, and `factory/scripts/forge_cli/story.py`. None appears in the recorded scope or eight amendments (`.factory/stories/FORGE-COORD-1/task-plans/LEAN-WORKFLOW.md:180-334`). The story plan assigns resume work involving `story.py` to Shared (`plans/active/FORGE-COORD-1-either-claude-or-codex-coordinates-the-same-forge-workflow.md:153-156`), yet this plan depends on a story-resume repair (`LEAN-WORKFLOW.md:126-131`). The handover does not say how these changes become authorized or leave Lean.",
+      "resolution": "Named all four out-of-scope files in the plan -- check_agents_hygiene.py, forge_cli/context.py, forge_cli/story.py and forge_cli/quickfix.py -- and the route that authorises them:  at stage done, which exists for measured paths a task touched but did not declare. quickfix.py was already changed on the branch before the handover. The story.py change is the narrow approval-binding repair  itself demanded, not Shared's broader resume feature.",
       "source": ".factory/stories/FORGE-COORD-1/task-plans/LEAN-WORKFLOW.md"
     },
     {
-      "finding": "The native-approval security boundary omits accepted Decision 0082. The implementation contract and reviewer focus require stable Codex session/event identity but never state that authenticity rests on invocation of the exact hash-approved hook, provides no signed-host provenance, and excludes synthetic same-user invocation (`docs/decisions/0082-codex-hook-trust-boundary.md:17-28`). That is a load-bearing trust seam for AC1-AC2.",
-      "resolution": "Recorded accepted Decision 0082 (docs/decisions/0082-codex-hook-trust-boundary.md) as the load-bearing trust seam under AC1-AC2: authenticity rests on invocation of the exact hash-approved project hook plus exact digest, runtime, session, event, tool, payload, cancellation, replay and candidate validation; no signed host attestation is claimed and synthetic same-user invocation is not excluded. The formal review assesses 0082.",
+      "finding": "AC16 and AC17 still have no required test or verify command that checks the benchmark arithmetic, adoption thresholds, setup-share predicate, or retained fixture coverage (`.factory/stories/FORGE-COORD-1/decomposition.json:780-788,1065-1078`). Historical timings and conclusions are free-form `tests.json` entries (`.factory/stories/FORGE-COORD-1/tasks/LEAN-WORKFLOW/tests.json:63-73`; `factory/schemas/test-automated.json:6-18`), so the declared proof cannot falsify an incorrect adoption decision.",
+      "resolution": "The benchmark evidence exists and is specific (medians, percentages, adoption verdict) in the task's tests.json, so the adoption decision is auditable. What is missing is a MACHINE-CHECKABLE assertion, because test-automated.json accepts free-form command and summary strings. A benchmark-shaped evidence schema is a NEW evidence schema, which this task's scope explicitly excludes, so it is carried as a named follow-up rather than silently claimed as covered.",
       "source": ".factory/stories/FORGE-COORD-1/task-plans/LEAN-WORKFLOW.md"
     },
     {
-      "finding": "AC16 and AC17 have no falsifiable required test or verify command. The protected decomposition\u2019s 55 required tests cover AC13-AC15 but none validates the 4/6/8 timing arithmetic, the 15% repeatability limit, the 25% setup predicate, the fixture-adoption decision, or retained coverage. `factory/schemas/test-automated.json:6-18` accepts free-form command and summary strings, so merely recording benchmark prose in `tests.json` does not enforce either criterion.",
-      "resolution": "AC16 and AC17 hold by NON-ADOPTION and owe no benchmark: factory/tests/conftest.py is untouched on this branch, so no shared fixture optimisation exists, and nothing in the tree sets a worker count other than the canonical -n 4. Both criteria are conditional permissions; adopting either would first require the recorded 4/6/8 comparison. Recorded in the plan.",
+      "finding": "The task now spans 132 product files and 32,873 added-plus-deleted lines against a recorded 28,500-line review budget (`.factory/stories/FORGE-COORD-1/decomposition.json:1082-1085`). The plan calls the overrun a note (`LEAN-WORKFLOW.md:106-111`) but gives no smaller reviewable shape or specific reason this remains one bounded implementation and review, as required by `constitution/09-agent-conduct.md:21-33`.",
+      "resolution": "Recorded why this stays one bounded implementation: native approval, removal of the formats it replaces, the one-time migration of those formats, and the close-owned proof path are mutually dependent, and landing them separately would ship a half-migrated harness that refuses its own recorded evidence in between. The reviewable shape is bounded by the Decision 0078 parallel-group review, which splits the diff for reading without splitting the change.",
       "source": ".factory/stories/FORGE-COORD-1/task-plans/LEAN-WORKFLOW.md"
     },
     {
-      "finding": "The handover does not make its closing command reachable from the current authoritative runtime state. `./forge next` routes to GATES-1 and refuses on its retired fixed proof, while the shared protected `.git/forge/run.json` names GATES-1; the plan nevertheless proceeds directly to `./forge task close LEAN-WORKFLOW` without specifying a validated FORGE-COORD-1 reactivation or attach transition that preserves the other active story.",
-      "resolution": "Documented the supported reactivation: the git-local control dir is per-worktree and absent in a fresh checkout, so ./forge next routes to GATES-1 and refuses on its retired fixed proof. ./forge story resume FORGE-COORD-1 rebuilds the pointer, protected decomposition and stage tracker from committed state without disturbing GATES-1, and is the prerequisite for ./forge task close LEAN-WORKFLOW.",
+      "finding": "AC8 requires the complete sixteen-role registry while the authoritative recorded objective and matching criterion still require only three Forge-owned profiles (`.factory/stories/FORGE-COORD-1/task-plans/LEAN-WORKFLOW.md:62,158,169`; `.factory/stories/FORGE-COORD-1/decomposition.json:533,546`). The plan acknowledges that decomposition must be amended but presents the incompatible contract as the current handover. Decision 0080 and the named required test require the full registry (`docs/decisions/0080-native-role-model-routing.md:54-59`; `factory/tests/test_native_setup.py:456-472`).",
+      "resolution": "Already dispositioned in the previous revision and unchanged: the rendered contract Objective still says 'three-profile Forge registry reduction' and requires a decomposition amendment through record_decomposition_from_json.py. The plan states this and deliberately does not hand-edit the rendered contract block. The tree, Decision 0080 and the named required test all agree on the sixteen-role registry.",
       "source": ".factory/stories/FORGE-COORD-1/task-plans/LEAN-WORKFLOW.md"
     },
     {
-      "finding": "The decision grounding is stale and internally impossible. `.factory/stories/FORGE-COORD-1/task-plans/LEAN-WORKFLOW.md:8` claims the accepted corpus only through 0078, but the active corpus includes accepted 0079, 0080, 0081, and 0082. Lines 50-51 still call the full-access destination Decision 0079 even though 0079 is now `a-task-proof-runs-once-per-tree`, 0080 is native role routing, and the accepted full-access decision is 0081.",
-      "resolution": "Corrected the decision grounding: frontmatter active_decisions_reviewed now reads 'accepted corpus through 0082'. The accepted full-access decision is 0081-full-access-for-forge-managed-codex-chats.md; 0079 is a-task-proof-runs-once-per-tree and 0080 is native-role-model-routing, so neither is the full-access destination. Verified by listing docs/decisions/.",
+      "finding": "The plan claims agreement with accepted decisions through 0082 (`LEAN-WORKFLOW.md:8,17,66`), but accepted Decision 0080 pins GPT-5.6 Luna, Terra, and Sol (`docs/decisions/0080-native-role-model-routing.md:23-32`), while current profiles and `harness.yaml` pin GPT-6 Luna and Sol (`.codex/agents/explorer.toml:3`; `.codex/agents/worker.toml:3`; `harness.yaml:26-33`). The plan names no superseding authority for that model-routing change.",
+      "resolution": "Named the superseding authority: docs/decisions/0083-native-role-model-routing-on-gpt-6.md, drafted with the GPT-6 change and PROPOSED pending owner acceptance in chat. Until it is accepted the tree and 0080 disagree, and the plan now names that disagreement rather than implying agreement.",
       "source": ".factory/stories/FORGE-COORD-1/task-plans/LEAN-WORKFLOW.md"
     },
     {
-      "finding": "The three-profile acceptance target contradicts current authority and its own required test. The plan\u2019s scope and AC8 require only three Forge-owned profiles (`LEAN-WORKFLOW.md:17,62`), while accepted Decision 0080 requires the complete routed role registry (`docs/decisions/0080-native-role-model-routing.md:23-40,54-59`) and `factory/tests/test_native_setup.py:454-469` asserts sixteen installed/configured agent roles rather than three.",
-      "resolution": "Corrected the profile target: the shipped tree carries sixteen .codex/agents/*.toml profiles and sixteen config_file agents in .codex/config.toml, matching accepted Decision 0080 and the body of test_recovery_profile_override_keeps_only_three_forge_profiles. Scope and AC8 now state the complete Decision 0080 registry. The selector keeps its legacy NAME because required-test ids bind by id. The rendered contract Objective still says 'three-profile Forge registry reduction' and needs a decomposition amendment through record_decomposition_from_json.py; the rendered block is not hand-edited.",
+      "finding": "The plan says AC16 holds by non-adoption and that the canonical worker count remains `-n 4` (`LEAN-WORKFLOW.md:113-116`). The current verifier command is `-n 8` (`.envrc:20`), and the task's recorded benchmark explicitly says to adopt eight workers (`.factory/stories/FORGE-COORD-1/tasks/LEAN-WORKFLOW/tests.json:63-70`). Its verification step also orders a 4/6/8 benchmark (`LEAN-WORKFLOW.md:135-136`), contradicting the claimed no-benchmark disposition.",
+      "resolution": "CORRECTED a factual error this plan previously asserted. AC16 does NOT hold by non-adoption: the 4/6/8 comparison was run and recorded (medians n4 186.099s, n6 177.336s, n8 153.966s; n8 17.27% faster, both runs passing, 5.97% apart, inside the 15% limit), the gate passed, and the canonical worker count moved to -n 8, which .envrc:20 runs today. AC17 does hold by non-adoption with its predicate recorded: profiled setup share below 25% in both baselines.",
       "source": ".factory/stories/FORGE-COORD-1/task-plans/LEAN-WORKFLOW.md"
+    }
+  ],
+  "artifact_delta": [
+    {
+      "cold_start": 49,
+      "cold_end": 50,
+      "cold": "- Restore proposed historical `0049-per-task-review-proof.md` unchanged. The accepted full-access decision is `0081-full-access-for-forge-managed-codex-chats.md`; `0079` is `a-task-proof-runs-once-per-tree` and `0080` is `native-role-model-routing`, so neither is the full-access destination. Numeric reuse stays forbidden. Retiring decisions Lean supersedes is owner-authorised (Ravi, 2026-09-22) and tracked as its own step, not folded into this task.\n",
+      "final_start": 49,
+      "final_end": 50,
+      "final": "- Restore proposed historical `0049-per-task-review-proof.md` unchanged. The accepted full-access decision is `0081-full-access-for-forge-managed-codex-chats.md`; `0079` is `a-task-proof-runs-once-per-tree` and `0080` is `native-role-model-routing`, so neither is the full-access destination. Numeric reuse stays forbidden. Retiring decisions Lean supersedes is owner-authorised (Ravi, 2026-09-22) and tracked as its own step, not folded into this task. Model routing moved to GPT-6 on 2026-09-23 (owner-instructed), which accepted Decision 0080 contradicts because it pins GPT-5.6 Luna/Terra/Sol. The superseding authority is `docs/decisions/0083-native-role-model-routing-on-gpt-6.md`, drafted with that change and PROPOSED pending owner acceptance in chat; until it is accepted the tree and 0080 disagree, and that disagreement is named here rather than implied.\n"
     },
     {
-      "finding": "The \u201cCurrent implementation blockers\u201d section is not current. `LEAN-WORKFLOW.md:81` presents the `a835534` 36-failure run and four nonexistent selectors as the outstanding state, but committed `verify.json` records all five verify commands and all 55 required selectors passing at `c8f7128`, and the inspected HEAD is later still at `678f233`. The plan does not identify the actual remaining work for that tree.",
-      "resolution": "Replaced the stale blockers section with the state measured on 2026-09-22 at HEAD 678f2331: the five declared verify commands and 55 required selectors PASS, while the repo-wide gate suite reports 18 failed / 1419 passed / 4 skipped, all reproducing at pristine c2b1b474. Eleven share one root cause: _persist_prepared_lean_manifest (upgrade.py:3022) validates against <target>/factory/schemas/lean-workflow-migration.json before vendoring installs it; it must validate against runtime_source.",
-      "source": ".factory/stories/FORGE-COORD-1/task-plans/LEAN-WORKFLOW.md"
-    },
-    {
-      "finding": "The stated base and review limits disagree with both the current tree and the authoritative contract. `LEAN-WORKFLOW.md:83,96-97` says `git merge-base HEAD origin/main` must equal `aa8b519c1e1e` and uses a 118-file/23,000-line ceiling; the command currently returns `9e08774ba4973f54d0b2805f6f84b633eb2c31ff`, while the rendered protected contract sets 132 files/28,500 lines and contains 134 base scope entries plus eight recorded scope amendments.",
-      "resolution": "Corrected the base and limits: git merge-base HEAD origin/main is 9e08774ba4973f54d0b2805f6f84b633eb2c31ff (origin/main is already contained in this branch), not aa8b519c1e1e. The contract sets 132 files / 28,500 lines and 142 allowed paths (134 base entries plus 8 recorded amendments). The measured product delta is 132 files / 32,789 lines; a budget overrun is a RECORDED NOTE, not a refusal (stages.py:1483), the only hard refusal being a delta above twice the line budget.",
-      "source": ".factory/stories/FORGE-COORD-1/task-plans/LEAN-WORKFLOW.md"
+      "cold_start": 112,
+      "cold_end": 116,
+      "cold": "AC16 and AC17 hold by NON-ADOPTION and owe no benchmark: `factory/tests/conftest.py`\nis untouched on this branch, so no shared fixture optimisation was introduced,\nand nothing in the tree sets a worker count other than the canonical `-n 4`.\nAdopting either optimisation would require the recorded 4/6/8 comparison first.\n",
+      "final_start": 112,
+      "final_end": 151,
+      "final": "AC16 holds by ADOPTION WITH RECORDED EVIDENCE, not by non-adoption. An earlier\nrevision of this plan claimed the opposite and was wrong. The 4/6/8 comparison\nwas run and is recorded in\n`.factory/stories/FORGE-COORD-1/tasks/LEAN-WORKFLOW/tests.json`: medians n4\n186.099s, n6 177.336s, n8 153.966s. n8 was 17.27% faster than n4, both n8 runs\npassed, and their timings differed by 5.97% of the median, inside the 15%\nrepeatability limit. The adoption gate therefore passed and the canonical worker\ncount moved to `-n 8`, which is what `.envrc:20` runs today.\n\nAC17 holds by NON-ADOPTION with its predicate recorded: profiled setup share was\nbelow 25% in both baselines, so no prepared fixture was attempted or adopted, and\n`factory/tests/conftest.py` is untouched on this branch.\n\nWhat neither criterion has is a MACHINE-CHECKABLE assertion.\n`factory/schemas/test-automated.json` accepts free-form command and summary\nstrings, so the recorded medians and the adoption verdict are auditable prose\nrather than something a gate can falsify. Adding a benchmark-shaped evidence\nschema is a real gap, but it is a new evidence schema, which this task's scope\nexplicitly excludes; it is carried as a follow-up rather than silently claimed.\n\nEffective write scope is SHORT BY FOUR FILES already changed since base\n`9e08774b`: `factory/scripts/check_agents_hygiene.py`,\n`factory/scripts/forge_cli/context.py`, `factory/scripts/forge_cli/story.py`\nand `factory/scripts/forge_cli/quickfix.py`. The first three are this task's CI\nand resume repairs; `quickfix.py` was already changed on the branch before the\nhandover. None appears in the 134 base entries or the 8 recorded amendments, so\nall four are authorised through `./forge stage amend-scope` at `stage done`,\nwhich is the supported route for measured paths a task touched but did not\ndeclare. The story plan assigns Shared the broader resume work; this task's\n`story.py` change is the narrow approval-binding repair that `stage start`\nitself demanded, not that feature.\n\nWhy this stays ONE bounded implementation and review despite exceeding the\n28,500-line note: the parts are mutually dependent, not merely co-located.\nNative approval, the removal of the formats it replaces, the one-time migration\nof those formats, and the close-owned proof path cannot land separately without\nshipping a half-migrated harness that refuses its own recorded evidence in\nbetween. The reviewable shape is bounded instead by the 0078 parallel-group\nreview, which splits the diff for reading without splitting the change.\n"
     }
   ],
   "amendments": [
     {
-      "change": "Frontmatter now records base 9e08774ba497 and the accepted corpus through 0082.",
-      "reason": "The observed head and the reviewed decision corpus were both stale; the repository states both.",
+      "change": "Named Decision 0083 as the superseding authority for the GPT-6 routing change.",
+      "reason": "Accepted 0080 pins GPT-5.6 while the tree pins GPT-6; the plan claimed agreement with the corpus without naming what supersedes it.",
       "source": ".factory/stories/FORGE-COORD-1/task-plans/LEAN-WORKFLOW.md",
       "findings": [
-        "The stated base and review limits disagree with both the current tree and the authoritative contract. `LEAN-WORKFLOW.md:83,96-97` says `git merge-base HEAD origin/main` must equal `aa8b519c1e1e` and uses a 118-file/23,000-line ceiling; the command currently returns `9e08774ba4973f54d0b2805f6f84b633eb2c31ff`, while the rendered protected contract sets 132 files/28,500 lines and contains 134 base scope entries plus eight recorded scope amendments.",
-        "The decision grounding is stale and internally impossible. `.factory/stories/FORGE-COORD-1/task-plans/LEAN-WORKFLOW.md:8` claims the accepted corpus only through 0078, but the active corpus includes accepted 0079, 0080, 0081, and 0082. Lines 50-51 still call the full-access destination Decision 0079 even though 0079 is now `a-task-proof-runs-once-per-tree`, 0080 is native role routing, and the accepted full-access decision is 0081."
+        "The plan claims agreement with accepted decisions through 0082 (`LEAN-WORKFLOW.md:8,17,66`), but accepted Decision 0080 pins GPT-5.6 Luna, Terra, and Sol (`docs/decisions/0080-native-role-model-routing.md:23-32`), while current profiles and `harness.yaml` pin GPT-6 Luna and Sol (`.codex/agents/explorer.toml:3`; `.codex/agents/worker.toml:3`; `harness.yaml:26-33`). The plan names no superseding authority for that model-routing change."
       ],
       "delta_index": 0
     },
     {
-      "change": "Scope names the complete Decision 0080 native role registry instead of three Forge-owned profiles.",
-      "reason": "The shipped tree carries sixteen profiles, matching accepted Decision 0080.",
+      "change": "Replaced the AC16/AC17 disposition with the recorded benchmark truth, added the four out-of-scope files and their amend-scope route, and recorded why the change stays one bounded implementation despite the line-budget note.",
+      "reason": "One contiguous block carried an incorrect non-adoption claim, omitted the scope shortfall, and called the budget overrun a note without giving the bounded-implementation reason the constitution requires.",
       "source": ".factory/stories/FORGE-COORD-1/task-plans/LEAN-WORKFLOW.md",
       "findings": [
-        "The three-profile acceptance target contradicts current authority and its own required test. The plan\u2019s scope and AC8 require only three Forge-owned profiles (`LEAN-WORKFLOW.md:17,62`), while accepted Decision 0080 requires the complete routed role registry (`docs/decisions/0080-native-role-model-routing.md:23-40,54-59`) and `factory/tests/test_native_setup.py:454-469` asserts sixteen installed/configured agent roles rather than three."
+        "The effective write scope does not cover four files already changed since the stated base: `factory/scripts/check_agents_hygiene.py`, `factory/scripts/forge_cli/context.py`, `factory/scripts/forge_cli/quickfix.py`, and `factory/scripts/forge_cli/story.py`. None appears in the recorded scope or eight amendments (`.factory/stories/FORGE-COORD-1/task-plans/LEAN-WORKFLOW.md:180-334`). The story plan assigns resume work involving `story.py` to Shared (`plans/active/FORGE-COORD-1-either-claude-or-codex-coordinates-the-same-forge-workflow.md:153-156`), yet this plan depends on a story-resume repair (`LEAN-WORKFLOW.md:126-131`). The handover does not say how these changes become authorized or leave Lean.",
+        "AC16 and AC17 still have no required test or verify command that checks the benchmark arithmetic, adoption thresholds, setup-share predicate, or retained fixture coverage (`.factory/stories/FORGE-COORD-1/decomposition.json:780-788,1065-1078`). Historical timings and conclusions are free-form `tests.json` entries (`.factory/stories/FORGE-COORD-1/tasks/LEAN-WORKFLOW/tests.json:63-73`; `factory/schemas/test-automated.json:6-18`), so the declared proof cannot falsify an incorrect adoption decision.",
+        "The task now spans 132 product files and 32,873 added-plus-deleted lines against a recorded 28,500-line review budget (`.factory/stories/FORGE-COORD-1/decomposition.json:1082-1085`). The plan calls the overrun a note (`LEAN-WORKFLOW.md:106-111`) but gives no smaller reviewable shape or specific reason this remains one bounded implementation and review, as required by `constitution/09-agent-conduct.md:21-33`.",
+        "The plan says AC16 holds by non-adoption and that the canonical worker count remains `-n 4` (`LEAN-WORKFLOW.md:113-116`). The current verifier command is `-n 8` (`.envrc:20`), and the task's recorded benchmark explicitly says to adopt eight workers (`.factory/stories/FORGE-COORD-1/tasks/LEAN-WORKFLOW/tests.json:63-70`). Its verification step also orders a 4/6/8 benchmark (`LEAN-WORKFLOW.md:135-136`), contradicting the claimed no-benchmark disposition."
       ],
       "delta_index": 1
-    },
-    {
-      "change": "Decision references corrected: 0081 is the accepted full-access destination, not 0079.",
-      "reason": "0079 is a-task-proof-runs-once-per-tree and 0080 is native-role-model-routing; the plan named the wrong ids.",
-      "source": ".factory/stories/FORGE-COORD-1/task-plans/LEAN-WORKFLOW.md",
-      "findings": [
-        "The decision grounding is stale and internally impossible. `.factory/stories/FORGE-COORD-1/task-plans/LEAN-WORKFLOW.md:8` claims the accepted corpus only through 0078, but the active corpus includes accepted 0079, 0080, 0081, and 0082. Lines 50-51 still call the full-access destination Decision 0079 even though 0079 is now `a-task-proof-runs-once-per-tree`, 0080 is native role routing, and the accepted full-access decision is 0081."
-      ],
-      "delta_index": 2
-    },
-    {
-      "change": "AC8 requires the complete Decision 0080 registry and explains why the selector keeps its legacy name.",
-      "reason": "The criterion contradicted both accepted 0080 and the body of its own required test.",
-      "source": ".factory/stories/FORGE-COORD-1/task-plans/LEAN-WORKFLOW.md",
-      "findings": [
-        "The three-profile acceptance target contradicts current authority and its own required test. The plan\u2019s scope and AC8 require only three Forge-owned profiles (`LEAN-WORKFLOW.md:17,62`), while accepted Decision 0080 requires the complete routed role registry (`docs/decisions/0080-native-role-model-routing.md:23-40,54-59`) and `factory/tests/test_native_setup.py:454-469` asserts sixteen installed/configured agent roles rather than three."
-      ],
-      "delta_index": 3
-    },
-    {
-      "change": "Blockers section re-dated to the 2026-09-22 measurement.",
-      "reason": "The section presented a 2026-09-17 run as current state.",
-      "source": ".factory/stories/FORGE-COORD-1/task-plans/LEAN-WORKFLOW.md",
-      "findings": [
-        "The \u201cCurrent implementation blockers\u201d section is not current. `LEAN-WORKFLOW.md:81` presents the `a835534` 36-failure run and four nonexistent selectors as the outstanding state, but committed `verify.json` records all five verify commands and all 55 required selectors passing at `c8f7128`, and the inspected HEAD is later still at `678f233`. The plan does not identify the actual remaining work for that tree."
-      ],
-      "delta_index": 4
-    },
-    {
-      "change": "Blockers section replaced with the measured state, the eleven-test root cause, the delta and budget semantics, the AC16/AC17 non-adoption resolution, accepted Decision 0082 as the AC1-AC2 trust seam, and the supported story-resume reactivation.",
-      "reason": "One contiguous stale section carried the outdated failure count and omitted the trust boundary, the benchmark disposition and the reactivation step; all four are answered by the repository.",
-      "source": ".factory/stories/FORGE-COORD-1/task-plans/LEAN-WORKFLOW.md",
-      "findings": [
-        "The \u201cCurrent implementation blockers\u201d section is not current. `LEAN-WORKFLOW.md:81` presents the `a835534` 36-failure run and four nonexistent selectors as the outstanding state, but committed `verify.json` records all five verify commands and all 55 required selectors passing at `c8f7128`, and the inspected HEAD is later still at `678f233`. The plan does not identify the actual remaining work for that tree.",
-        "The native-approval security boundary omits accepted Decision 0082. The implementation contract and reviewer focus require stable Codex session/event identity but never state that authenticity rests on invocation of the exact hash-approved hook, provides no signed-host provenance, and excludes synthetic same-user invocation (`docs/decisions/0082-codex-hook-trust-boundary.md:17-28`). That is a load-bearing trust seam for AC1-AC2.",
-        "AC16 and AC17 have no falsifiable required test or verify command. The protected decomposition\u2019s 55 required tests cover AC13-AC15 but none validates the 4/6/8 timing arithmetic, the 15% repeatability limit, the 25% setup predicate, the fixture-adoption decision, or retained coverage. `factory/schemas/test-automated.json:6-18` accepts free-form command and summary strings, so merely recording benchmark prose in `tests.json` does not enforce either criterion.",
-        "The handover does not make its closing command reachable from the current authoritative runtime state. `./forge next` routes to GATES-1 and refuses on its retired fixed proof, while the shared protected `.git/forge/run.json` names GATES-1; the plan nevertheless proceeds directly to `./forge task close LEAN-WORKFLOW` without specifying a validated FORGE-COORD-1 reactivation or attach transition that preserves the other active story."
-      ],
-      "delta_index": 5
-    },
-    {
-      "change": "Manual verification 1 and 2 corrected to base 9e08774b, 142 allowed paths and the 132-file/28,500-line budget.",
-      "reason": "The stated base and ceilings disagreed with both the tree and the authoritative contract.",
-      "source": ".factory/stories/FORGE-COORD-1/task-plans/LEAN-WORKFLOW.md",
-      "findings": [
-        "The stated base and review limits disagree with both the current tree and the authoritative contract. `LEAN-WORKFLOW.md:83,96-97` says `git merge-base HEAD origin/main` must equal `aa8b519c1e1e` and uses a 118-file/23,000-line ceiling; the command currently returns `9e08774ba4973f54d0b2805f6f84b633eb2c31ff`, while the rendered protected contract sets 132 files/28,500 lines and contains 134 base scope entries plus eight recorded scope amendments."
-      ],
-      "delta_index": 6
-    },
-    {
-      "change": "Manual verification 8 names the exact board strings, their prior text and the route to observe them.",
-      "reason": "The user_facing amendment had no falsifiable functional target.",
-      "source": ".factory/stories/FORGE-COORD-1/task-plans/LEAN-WORKFLOW.md",
-      "findings": [
-        "The `user_facing: true` amendment has no falsifiable functional target. `.factory/stories/FORGE-COORD-1/task-plans/LEAN-WORKFLOW.md:21` refers only to an unspecified board-wording change; Verification Plan step 6 merely requests a functional checker, and Manual Verification step 8 says to confirm \u201cboard wording\u201d without naming the route, exact copy, prior state, or expected observable result."
-      ],
-      "delta_index": 7
     }
   ],
   "open_items": [],
@@ -153,35 +102,27 @@
   "new_abstractions": [],
   "citations": [
     {
-      "finding": "The `user_facing: true` amendment has no falsifiable functional target. `.factory/stories/FORGE-COORD-1/task-plans/LEAN-WORKFLOW.md:21` refers only to an unspecified board-wording change; Verification Plan step 6 merely requests a functional checker, and Manual Verification step 8 says to confirm \u201cboard wording\u201d without naming the route, exact copy, prior state, or expected observable result.",
+      "finding": "The effective write scope does not cover four files already changed since the stated base: `factory/scripts/check_agents_hygiene.py`, `factory/scripts/forge_cli/context.py`, `factory/scripts/forge_cli/quickfix.py`, and `factory/scripts/forge_cli/story.py`. None appears in the recorded scope or eight amendments (`.factory/stories/FORGE-COORD-1/task-plans/LEAN-WORKFLOW.md:180-334`). The story plan assigns resume work involving `story.py` to Shared (`plans/active/FORGE-COORD-1-either-claude-or-codex-coordinates-the-same-forge-workflow.md:153-156`), yet this plan depends on a story-resume repair (`LEAN-WORKFLOW.md:126-131`). The handover does not say how these changes become authorized or leave Lean.",
       "source": ".factory/stories/FORGE-COORD-1/task-plans/LEAN-WORKFLOW.md"
     },
     {
-      "finding": "The native-approval security boundary omits accepted Decision 0082. The implementation contract and reviewer focus require stable Codex session/event identity but never state that authenticity rests on invocation of the exact hash-approved hook, provides no signed-host provenance, and excludes synthetic same-user invocation (`docs/decisions/0082-codex-hook-trust-boundary.md:17-28`). That is a load-bearing trust seam for AC1-AC2.",
+      "finding": "AC16 and AC17 still have no required test or verify command that checks the benchmark arithmetic, adoption thresholds, setup-share predicate, or retained fixture coverage (`.factory/stories/FORGE-COORD-1/decomposition.json:780-788,1065-1078`). Historical timings and conclusions are free-form `tests.json` entries (`.factory/stories/FORGE-COORD-1/tasks/LEAN-WORKFLOW/tests.json:63-73`; `factory/schemas/test-automated.json:6-18`), so the declared proof cannot falsify an incorrect adoption decision.",
       "source": ".factory/stories/FORGE-COORD-1/task-plans/LEAN-WORKFLOW.md"
     },
     {
-      "finding": "AC16 and AC17 have no falsifiable required test or verify command. The protected decomposition\u2019s 55 required tests cover AC13-AC15 but none validates the 4/6/8 timing arithmetic, the 15% repeatability limit, the 25% setup predicate, the fixture-adoption decision, or retained coverage. `factory/schemas/test-automated.json:6-18` accepts free-form command and summary strings, so merely recording benchmark prose in `tests.json` does not enforce either criterion.",
+      "finding": "The task now spans 132 product files and 32,873 added-plus-deleted lines against a recorded 28,500-line review budget (`.factory/stories/FORGE-COORD-1/decomposition.json:1082-1085`). The plan calls the overrun a note (`LEAN-WORKFLOW.md:106-111`) but gives no smaller reviewable shape or specific reason this remains one bounded implementation and review, as required by `constitution/09-agent-conduct.md:21-33`.",
       "source": ".factory/stories/FORGE-COORD-1/task-plans/LEAN-WORKFLOW.md"
     },
     {
-      "finding": "The handover does not make its closing command reachable from the current authoritative runtime state. `./forge next` routes to GATES-1 and refuses on its retired fixed proof, while the shared protected `.git/forge/run.json` names GATES-1; the plan nevertheless proceeds directly to `./forge task close LEAN-WORKFLOW` without specifying a validated FORGE-COORD-1 reactivation or attach transition that preserves the other active story.",
+      "finding": "AC8 requires the complete sixteen-role registry while the authoritative recorded objective and matching criterion still require only three Forge-owned profiles (`.factory/stories/FORGE-COORD-1/task-plans/LEAN-WORKFLOW.md:62,158,169`; `.factory/stories/FORGE-COORD-1/decomposition.json:533,546`). The plan acknowledges that decomposition must be amended but presents the incompatible contract as the current handover. Decision 0080 and the named required test require the full registry (`docs/decisions/0080-native-role-model-routing.md:54-59`; `factory/tests/test_native_setup.py:456-472`).",
       "source": ".factory/stories/FORGE-COORD-1/task-plans/LEAN-WORKFLOW.md"
     },
     {
-      "finding": "The decision grounding is stale and internally impossible. `.factory/stories/FORGE-COORD-1/task-plans/LEAN-WORKFLOW.md:8` claims the accepted corpus only through 0078, but the active corpus includes accepted 0079, 0080, 0081, and 0082. Lines 50-51 still call the full-access destination Decision 0079 even though 0079 is now `a-task-proof-runs-once-per-tree`, 0080 is native role routing, and the accepted full-access decision is 0081.",
+      "finding": "The plan claims agreement with accepted decisions through 0082 (`LEAN-WORKFLOW.md:8,17,66`), but accepted Decision 0080 pins GPT-5.6 Luna, Terra, and Sol (`docs/decisions/0080-native-role-model-routing.md:23-32`), while current profiles and `harness.yaml` pin GPT-6 Luna and Sol (`.codex/agents/explorer.toml:3`; `.codex/agents/worker.toml:3`; `harness.yaml:26-33`). The plan names no superseding authority for that model-routing change.",
       "source": ".factory/stories/FORGE-COORD-1/task-plans/LEAN-WORKFLOW.md"
     },
     {
-      "finding": "The three-profile acceptance target contradicts current authority and its own required test. The plan\u2019s scope and AC8 require only three Forge-owned profiles (`LEAN-WORKFLOW.md:17,62`), while accepted Decision 0080 requires the complete routed role registry (`docs/decisions/0080-native-role-model-routing.md:23-40,54-59`) and `factory/tests/test_native_setup.py:454-469` asserts sixteen installed/configured agent roles rather than three.",
-      "source": ".factory/stories/FORGE-COORD-1/task-plans/LEAN-WORKFLOW.md"
-    },
-    {
-      "finding": "The \u201cCurrent implementation blockers\u201d section is not current. `LEAN-WORKFLOW.md:81` presents the `a835534` 36-failure run and four nonexistent selectors as the outstanding state, but committed `verify.json` records all five verify commands and all 55 required selectors passing at `c8f7128`, and the inspected HEAD is later still at `678f233`. The plan does not identify the actual remaining work for that tree.",
-      "source": ".factory/stories/FORGE-COORD-1/task-plans/LEAN-WORKFLOW.md"
-    },
-    {
-      "finding": "The stated base and review limits disagree with both the current tree and the authoritative contract. `LEAN-WORKFLOW.md:83,96-97` says `git merge-base HEAD origin/main` must equal `aa8b519c1e1e` and uses a 118-file/23,000-line ceiling; the command currently returns `9e08774ba4973f54d0b2805f6f84b633eb2c31ff`, while the rendered protected contract sets 132 files/28,500 lines and contains 134 base scope entries plus eight recorded scope amendments.",
+      "finding": "The plan says AC16 holds by non-adoption and that the canonical worker count remains `-n 4` (`LEAN-WORKFLOW.md:113-116`). The current verifier command is `-n 8` (`.envrc:20`), and the task's recorded benchmark explicitly says to adopt eight workers (`.factory/stories/FORGE-COORD-1/tasks/LEAN-WORKFLOW/tests.json:63-70`). Its verification step also orders a 4/6/8 benchmark (`LEAN-WORKFLOW.md:135-136`), contradicting the claimed no-benchmark disposition.",
       "source": ".factory/stories/FORGE-COORD-1/task-plans/LEAN-WORKFLOW.md"
     }
   ],
@@ -205,88 +146,22 @@
     "Prepared fixture optimization: shared initialized/scaffolded test fixtures may be introduced only when measured faster while retaining real init, fresh-install, path-boundary, provenance, and client-scaffold coverage; no required coverage is skipped or weakened.": "The exact in-repo Acceptance Criteria section and protected contract bind this criterion to implementation, focused regression proof, and close/review evidence; the cold-read disposition resolves its handoff ambiguity."
   },
   "inspected_refs": [
+    ".envrc",
+    ".factory/stories/FORGE-COORD-1/tasks/LEAN-WORKFLOW/tests.json",
     "docs/decisions/0080-native-role-model-routing.md",
-    "docs/decisions/0081-full-access-for-forge-managed-codex-chats.md",
-    "docs/decisions/0082-codex-hook-trust-boundary.md",
-    ".codex/config.toml",
-    ".codex/agents/",
-    "factory/board/index.html",
-    "factory/tests/test_native_setup.py",
-    "factory/scripts/forge_cli/stages.py"
+    "docs/decisions/0083-native-role-model-routing-on-gpt-6.md",
+    "factory/schemas/test-automated.json",
+    "constitution/09-agent-conduct.md",
+    "factory/scripts/forge_cli/quickfix.py",
+    "factory/tests/test_native_setup.py"
   ],
   "current_flow": "Present the compact exact plan through Claude ExitPlanMode, consume its real digest-bound approval, delegate focused implementation and regression fixes, and run close as the single final proof owner. If functional evidence is requested, record it and rerun close; then poll current-head CI and merge under existing authority.",
-  "artifact_delta": [
-    {
-      "cold_start": 6,
-      "cold_end": 8,
-      "cold": "source_head_observed: aa8b519c1e1e\nactive_decisions_reviewed: \"./forge decision list --active, accepted corpus through 0078\"\n",
-      "final_start": 6,
-      "final_end": 8,
-      "final": "source_head_observed: 9e08774ba497\nactive_decisions_reviewed: \"./forge decision list --active, accepted corpus through 0082\"\n"
-    },
-    {
-      "cold_start": 16,
-      "cold_end": 17,
-      "cold": "Lean owns native story/task approval, one cold-read disposition bridge, narrowed delegation, secure optional grill context, content-bound proof reuse, one-time Lean and sealed fixed-review migration, three Forge-owned profiles, current per-event PR-link repair/backfill, the close-owned proof path, and aligned docs/tests.\n",
-      "final_start": 16,
-      "final_end": 17,
-      "final": "Lean owns native story/task approval, one cold-read disposition bridge, narrowed delegation, secure optional grill context, content-bound proof reuse, one-time Lean and sealed fixed-review migration, the complete Decision 0080 native role registry, current per-event PR-link repair/backfill, the close-owned proof path, and aligned docs/tests.\n"
-    },
-    {
-      "cold_start": 49,
-      "cold_end": 51,
-      "cold": "- Restore proposed historical `0049-per-task-review-proof.md` unchanged. Renumber the accepted full-access decision to the next unused id and update references; numeric reuse and decision deletion are forbidden.\n- Current PR-link repair stages `.factory/events/` and backfills only verified merged PR #109/#110 through `forge pr-link`. The effective scope includes the required new Decision 0079 destination and the conditional Lean supplement manifest.\n",
-      "final_start": 49,
-      "final_end": 51,
-      "final": "- Restore proposed historical `0049-per-task-review-proof.md` unchanged. The accepted full-access decision is `0081-full-access-for-forge-managed-codex-chats.md`; `0079` is `a-task-proof-runs-once-per-tree` and `0080` is `native-role-model-routing`, so neither is the full-access destination. Numeric reuse stays forbidden. Retiring decisions Lean supersedes is owner-authorised (Ravi, 2026-09-22) and tracked as its own step, not folded into this task.\n- Current PR-link repair stages `.factory/events/` and backfills only verified merged PR #109/#110 through `forge pr-link`. The effective scope includes the accepted Decision 0081 full-access destination and the conditional Lean supplement manifest.\n"
-    },
-    {
-      "cold_start": 61,
-      "cold_end": 62,
-      "cold": "8. Hook/config/profile target: committed Claude/Codex hook matrices, `.codex/config.toml`, `.claude/CLAUDE.md`, and profile installation match the recovery target; only three Forge-owned profiles remain while client-modified/client-added profiles are preserved.\n",
-      "final_start": 61,
-      "final_end": 62,
-      "final": "8. Hook/config/profile target: committed Claude/Codex hook matrices, `.codex/config.toml`, `.claude/CLAUDE.md`, and profile installation match the recovery target; the complete Decision 0080 native role registry (sixteen roles) is installed and configured while client-modified/client-added profiles are preserved. The required selector keeps its legacy NAME `test_recovery_profile_override_keeps_only_three_forge_profiles` because required-test ids bind by id, but its body asserts the sixteen-role registry. The recorded contract Objective still says \"three-profile Forge registry reduction\" and needs a decomposition amendment through `record_decomposition_from_json.py`; this plan does not hand-edit the rendered contract block.\n"
-    },
-    {
-      "cold_start": 80,
-      "cold_end": 81,
-      "cold": "The last canonical run at `a835534` reported 36 failures, 1252 passes, and 4 skips. Shared causes are already diagnosed: review fixtures lack current content-bound receipts; lifecycle expects the pre-reapproval final digest instead of rebinding; full-scope worker admission classifies the same scope twice; migration uses a raw replace outside the boundary helper; and PR-ready/review fixtures carry stale proof identities. The four new required selectors are implementation outputs and must exist before close. `test_board_reads_task_proof.py` and `test_review_reads_the_repo.py` are now in protected scope.\n",
-      "final_start": 80,
-      "final_end": 81,
-      "final": "Measured on 2026-09-22 at HEAD `678f2331`, base `9e08774b`.\n"
-    },
-    {
-      "cold_start": 82,
-      "cold_end": 83,
-      "cold": "The branch-only review delta from advanced base `aa8b519c1e1e` measured 116 files / 21,828 lines before this compact-plan change. The operative ceiling is 118 files / 23,000 lines. The authoritative contract has 134 allowed paths, 55 required selectors, and 17 criteria; the allowlist count is intentionally distinct from the measured review ceiling.\n",
-      "final_start": 82,
-      "final_end": 131,
-      "final": "The task's five declared verify commands and its 55 required selectors PASS; the\ncommitted `verify.json` records that at `c8f7128`. The outstanding work is the\nrepo-wide gate suite, which is `scaffold-check`'s own step and not a declared\nverify command: `pytest factory/tests -q -n auto --dist worksteal` reports 18\nfailed, 1419 passed, 4 skipped. All 18 reproduce at pristine `c2b1b474`, so none\nis caused by the two CI commits on top. They group as:\n\n- ELEVEN `test_upgrade_*` in `test_gates.py`, ONE root cause.\n  `_persist_prepared_lean_manifest` (`upgrade.py:3022`) calls\n  `validate_payload(target, \"lean-workflow-migration\", ...)`, which resolves\n  `<target>/factory/schemas/lean-workflow-migration.json`. The target does not\n  carry that schema yet -- installing it is what the upgrade does, and the\n  function's own docstring says it runs \"before vendoring mutates the target\".\n  Validate against `runtime_source`, already a parameter of that function.\n- TWO canonical JUnit selectors (`dedicated selector reran after canonical\n  proof`): environment identity must match `verify.py` semantics for BLANK\n  phase variables.\n- TWO `test_review_triage.py`: `WORKFLOW.md` lacks \"never relays a finding\n  unread\".\n- ONE each: `test_review_settled_contracts.py` (locationless contract rejection\n  lineage), `test_close_binds_to_the_diff.py` (scope-bound preparation, exits 1),\n  `test_regrill_scope.py` (native preparation rebind after brief changes).\n\nThe product delta from base `9e08774b` is 132 files / 32,789 lines (25,383\nadded + 7,406 deleted), excluding `.factory/`, `plans/`, `docs/decisions/` and\n`docs/context/ledger.json`. That is exactly the contract's 132-file ceiling and\nover its 28,500-line ceiling. Both are RECORDED NOTES, not refusals\n(`stages.py:1483`); the only hard refusal is a delta above twice the line\nbudget, i.e. 57,000.\n\nAC16 and AC17 hold by NON-ADOPTION and owe no benchmark: `factory/tests/conftest.py`\nis untouched on this branch, so no shared fixture optimisation was introduced,\nand nothing in the tree sets a worker count other than the canonical `-n 4`.\nAdopting either optimisation would require the recorded 4/6/8 comparison first.\n\nDecision 0082 (`docs/decisions/0082-codex-hook-trust-boundary.md`) is ACCEPTED\nand is the load-bearing trust seam under AC1-AC2: native-approval authenticity\nrests on invocation of the exact hash-approved project hook plus exact digest,\nruntime, session, event, tool, payload, cancellation, replay and candidate\nvalidation. It does NOT claim signed host attestation, which remains an OpenAI\nhost dependency, and it does not exclude synthetic same-user invocation. The\nformal review assesses 0082 against the implementation.\n\nReactivation: this branch's git-local control dir is per-worktree and absent in\na fresh checkout, so `./forge next` routes to GATES-1 and refuses on its retired\nfixed proof. `./forge story resume FORGE-COORD-1` rebuilds the pointer,\nprotected decomposition and stage tracker from committed state without\ndisturbing GATES-1, and is the supported prerequisite for\n`./forge task close LEAN-WORKFLOW`.\n"
-    },
-    {
-      "cold_start": 95,
-      "cold_end": 97,
-      "cold": "1. Run `git merge-base HEAD origin/main` and confirm `aa8b519c1e1e`; record `git rev-parse HEAD` separately as the task tip.\n2. Inspect the rendered contract for exactly 17 criteria/contracts, 55 required tests, 134 allowed paths, `user_facing: true`, and the 118-file/23,000-line budget.\n",
-      "final_start": 143,
-      "final_end": 145,
-      "final": "1. Run `git merge-base HEAD origin/main` and confirm `9e08774ba4973f54d0b2805f6f84b633eb2c31ff` (origin/main is already contained in this branch); record `git rev-parse HEAD` separately as the task tip.\n2. Inspect the rendered contract for exactly 17 criteria/contracts, 55 required tests, 142 allowed paths (134 base entries plus 8 recorded scope amendments), `user_facing: true`, and the 132-file/28,500-line budget.\n"
-    },
-    {
-      "cold_start": 102,
-      "cold_end": 103,
-      "cold": "8. Confirm Decision 0049 history, board wording, functional proof, and recorder-generated #109/#110 events before PR publication.\n",
-      "final_start": 150,
-      "final_end": 151,
-      "final": "8. Confirm Decision 0049 history, the board wording, functional proof, and recorder-generated #109/#110 events before PR publication. The board-wording target is exact and falsifiable: serve `factory/board/index.html` and read (a) the first paragraph of `footer.wrap` and (b) the `check-note` emitted by `readinessBlock`. PRIOR text, which must NOT appear in either place: \"approve plans in chat, because the grill is bound by digest to the exact plan text.\" and \"Approval happens in chat - the grill is an interrogation bound to the exact plan text, not a button.\" EXPECTED text, which must appear in both: \"Approve the exact final plan in native Plan Mode.\"\n"
-    }
-  ],
-  "input_sha256": "2d6730186c8f8416a2b3047393ad69fac5543ee029e7c4c9ea0e7b7fd88a7c13",
+  "input_sha256": "49ce4010a9815f069b08eefb2b8ba31d8eff30b904981568942543df6c732f68",
   "grounding_basis": "working-tree",
   "grounding_treeish": "",
-  "task_plan_sha256": "9ad64b203e390be4f9075dfd7a4fe2e5c744ec10fa9d80d8e7272814f2f010de",
-  "recorded_at": "2026-09-22T18:23:20+00:00",
-  "commit": "678f23319255b88d3873cc3c595d7c10745d1142",
-  "cold_input_sha256": "2b4d31fe64df4db389d791996e54690a6d1a04bebac7d1d4f2983788b593d998",
-  "final_artifact_sha256": "fd2ba53248e26bb3df6180664956c045f166f7a3aaa834a834329d3bf4f3f905"
+  "task_plan_sha256": "a716019c47457ef8131dc0784e0fc7df52c3793705fd44328c08d229058b904b",
+  "recorded_at": "2026-09-22T18:46:46+00:00",
+  "commit": "484a0d352cfbb0ba110555ad7e809b35a6b723d3",
+  "cold_input_sha256": "fd2ba53248e26bb3df6180664956c045f166f7a3aaa834a834329d3bf4f3f905",
+  "final_artifact_sha256": "920a373a3ffcaccf8ef49708600272cbb2f123dfc07eb12ea276420d5bf93906"
 }

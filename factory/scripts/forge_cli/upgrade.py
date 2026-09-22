@@ -3019,7 +3019,18 @@ def _persist_prepared_lean_manifest(
         runtime_source, target, preserve_sources or {}, profile_replacements,
     )
     manifest["upgrade_resume"] = migration["upgrade_resume"]
-    validate_payload(target, "lean-workflow-migration", manifest)
+    # This publishes retry state BEFORE vendoring mutates the target, so a target
+    # upgrading from a release without this schema does not carry it yet --
+    # installing it is what the upgrade is about to do. Divert to the executing
+    # harness, which is the authenticated source of the same schema, ONLY when
+    # the target schema is absent. Catching read errors instead would swallow a
+    # genuine IO fault that callers rely on surfacing.
+    from factory_lib import schema_path
+    schema_owner = (
+        target if schema_path(target, "lean-workflow-migration").is_file()
+        else runtime_source
+    )
+    validate_payload(schema_owner, "lean-workflow-migration", manifest)
     destination_name = str(
         migration.get("manifest_name") or f"{LEAN_MIGRATION_VERSION}.json"
     )

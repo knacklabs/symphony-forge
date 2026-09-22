@@ -2394,7 +2394,16 @@ def cmd_delegate(args: argparse.Namespace) -> None:
         if left and write and args.print_only:
             # A preview remains available for diagnosis, but its brief and
             # descriptor carry no write authority that could be copied into a
-            # host launch while triage is still missing.
+            # host launch while triage is still missing. Say that out loud where
+            # the coordinator is looking (decision 0075) rather than downgrading
+            # the preview silently.
+            print(
+                f"WARNING: {left} of {total} blocking finding(s) on {args.id} "
+                "are untriaged -- this preview carries no write authority. Open "
+                "the cited line and the code it calls, then triage each before "
+                f"launching a writer: {triage_workflow(args.id)}",
+                flush=True,
+            )
             write = False
         elif left and write:
             generation_id = str((generation or {}).get("generation_id") or "unknown")

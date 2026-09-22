@@ -21123,6 +21123,9 @@ def _copy_harness_source(tmp_path: Path) -> Path:
     return source
 
 
+_HISTORICAL_FORGE_PLANNER_HIGH = b'name = "planner-high"\ndescription = "High-reasoning planner for turning in-repo architecture and decision docs into an approved implementation plan."\nmodel = "gpt-5.6-sol"\nmodel_reasoning_effort = "high"\nsandbox_mode = "read-only"\nnickname_candidates = ["Architect", "Planner", "Northstar"]\ndeveloper_instructions = """\nOwn planning.\n\nFocus on:\n- clarifying vague requirements into concrete acceptance criteria\n- reconciling architecture and decision docs\n- producing a decision-complete implementation plan\n- identifying risks, sequencing, and verification strategy\n\nDo not start implementation.\nDo not decompose into coding tasks unless the plan is approved enough to support bounded execution.\n\nOutput these sections exactly (contract: factory/prompts/planner.md):\n- Problem\n- Scope / Non-goals\n- Acceptance Criteria\n- Technical Approach\n- Decisions (each new decision recorded via forge.py decision new and referenced by docs/decisions/ path; write "No new decisions" if none)\n- Task Decomposition\n- Risks\n- Verify Plan\n"""\n'
+
+
 def test_project_agents_init_upgrade_and_preserve_client_additions(
     tmp_path: Path, monkeypatch,
 ):
@@ -21160,15 +21163,14 @@ def test_project_agents_init_upgrade_and_preserve_client_additions(
     assert (target / ".codex" / "explore.config.toml").read_bytes() == source_explore
 
     shipped = target / ".codex" / "agents" / "planner-high.toml"
-    shipped.write_text(
-        source_agents["planner-high.toml"].decode("utf-8")
-        .replace(
-            '# Read-only is a role contract enforced by Forge, not an OS sandbox policy.\n'
-            'sandbox_mode = "danger-full-access"',
-            'sandbox_mode = "read-only"',
-        ),
-        encoding="utf-8",
-    )
+    # A FROZEN historical Forge profile. Its sha256 is pinned in
+    # KNOWN_FORGE_RETAINED_PROFILE_HASHES, which is what makes the upgrade treat
+    # it as ours and restore it. This used to be derived from the CURRENT source
+    # by swapping one line, which only worked while current source sat on the
+    # same lineage as the pinned hashes; when the model pin moved to GPT-6 that
+    # derivation produced bytes that never shipped, so the upgrade correctly read
+    # them as client-owned and preserved them. Do NOT modernise these bytes.
+    shipped.write_bytes(_HISTORICAL_FORGE_PLANNER_HIGH)
     client_modified = target / ".codex" / "agents" / "docs-decomposer.toml"
     client_modified.write_text("name = \"client-owned\"\n", encoding="utf-8")
     custom = target / ".codex" / "agents" / "client-custom.toml"
@@ -21191,8 +21193,11 @@ def test_project_agents_init_upgrade_and_preserve_client_additions(
 def test_upgrade_preserves_client_profiles_while_removing_retired_forge_profiles(
         repo: Path):
     from forge_cli.upgrade import RETIRED_FORGE_PROFILE_HASHES
+    # RETIRED_FORGE_PROFILE_HASHES pins the sha256 of the profile as it was when
+    # it was retired. These are historical bytes: they keep the model id of that
+    # era and must NOT be moved forward with the live pins.
     retired_bytes = (
-        'name = "architect"\nmodel = "gpt-6-sol"\n'
+        'name = "architect"\nmodel = "gpt-5.6-sol"\n'
         'model_reasoning_effort = "high"\nsandbox_mode = "read-only"\n'
     ).encode("utf-8")
     assert (hashlib.sha256(retired_bytes).hexdigest()

@@ -997,8 +997,11 @@ def test_public_upgrade_resumes_after_post_migration_finalization_failure(
 @pytest.mark.parametrize("interrupt_phase", ("before-profile", "after-profile"))
 def test_public_upgrade_resumes_profile_replacement_transaction(
         repo: Path, monkeypatch: pytest.MonkeyPatch, interrupt_phase: str):
+    # Historical bytes: RETIRED_FORGE_PROFILE_HASHES pins this exact sequence,
+    # so it keeps the model id of the era it was retired in and must NOT be
+    # moved forward with the live pins.
     retired_bytes = (
-        'name = "architect"\nmodel = "gpt-6-sol"\n'
+        'name = "architect"\nmodel = "gpt-5.6-sol"\n'
         'model_reasoning_effort = "high"\nsandbox_mode = "read-only"\n'
     ).encode("utf-8")
     profile = repo / ".codex/agents/architect.toml"
@@ -1056,8 +1059,11 @@ def test_public_upgrade_resumes_profile_replacement_transaction(
 
 def test_public_upgrade_profile_resume_refuses_client_modified_destination(
         repo: Path, monkeypatch: pytest.MonkeyPatch):
+    # Historical bytes: RETIRED_FORGE_PROFILE_HASHES pins this exact sequence,
+    # so it keeps the model id of the era it was retired in and must NOT be
+    # moved forward with the live pins.
     retired_bytes = (
-        'name = "architect"\nmodel = "gpt-6-sol"\n'
+        'name = "architect"\nmodel = "gpt-5.6-sol"\n'
         'model_reasoning_effort = "high"\nsandbox_mode = "read-only"\n'
     ).encode("utf-8")
     profile = repo / ".codex/agents/architect.toml"
@@ -1087,8 +1093,11 @@ def test_public_upgrade_profile_resume_refuses_client_modified_destination(
 def test_public_upgrade_profile_resume_refuses_source_drift(
         repo: Path, monkeypatch: pytest.MonkeyPatch,
         capsys: pytest.CaptureFixture[str]):
+    # Historical bytes: RETIRED_FORGE_PROFILE_HASHES pins this exact sequence,
+    # so it keeps the model id of the era it was retired in and must NOT be
+    # moved forward with the live pins.
     retired_bytes = (
-        'name = "architect"\nmodel = "gpt-6-sol"\n'
+        'name = "architect"\nmodel = "gpt-5.6-sol"\n'
         'model_reasoning_effort = "high"\nsandbox_mode = "read-only"\n'
     ).encode("utf-8")
     profile = repo / ".codex/agents/architect.toml"

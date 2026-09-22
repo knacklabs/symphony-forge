@@ -47,7 +47,7 @@ Workers run focused checks only. `forge task close` is the sole final proof owne
 - `--context-file` remains optional for `forge grill run`. When supplied, its no-follow, stable identity, UTF-8/capacity, owner-only POSIX or Windows ACL, snapshot, cleanup, and metadata-only evidence rules are mandatory.
 - Test and verify reuse bind product bytes, exact argv/selectors, runner/interpreter/dependency metadata, pytest and verifier configuration, relevant environment, and generated semantic inputs. Missing, partial, unknown, or drifted identity reruns. Selected review also binds Decision 0066 delta plus current task meaning, automated evidence, review instructions, helper/config, and immutable raw provenance.
 - Lean migration requires clean-target zero-write refusal, no `--force` bypass, independent raw no-follow inventory coverage, exact-once classification, hashes, temporary build, validation, atomic publication/readback, and deletion only after durable output. A validated original empty completion may create one bound `lean-workflow-v2-supplement.json` when later merged history introduces eligible proof; every other unequal/partial retry refuses.
-- Restore proposed historical `0049-per-task-review-proof.md` unchanged. The accepted full-access decision is `0081-full-access-for-forge-managed-codex-chats.md`; `0079` is `a-task-proof-runs-once-per-tree` and `0080` is `native-role-model-routing`, so neither is the full-access destination. Numeric reuse stays forbidden. Retiring decisions Lean supersedes is owner-authorised (Ravi, 2026-09-22) and tracked as its own step, not folded into this task.
+- Restore proposed historical `0049-per-task-review-proof.md` unchanged. The accepted full-access decision is `0081-full-access-for-forge-managed-codex-chats.md`; `0079` is `a-task-proof-runs-once-per-tree` and `0080` is `native-role-model-routing`, so neither is the full-access destination. Numeric reuse stays forbidden. Retiring decisions Lean supersedes is owner-authorised (Ravi, 2026-09-22) and tracked as its own step, not folded into this task. Model routing moved to GPT-6 on 2026-09-23 (owner-instructed), which accepted Decision 0080 contradicts because it pins GPT-5.6 Luna/Terra/Sol. The superseding authority is `docs/decisions/0083-native-role-model-routing-on-gpt-6.md`, drafted with that change and PROPOSED pending owner acceptance in chat; until it is accepted the tree and 0080 disagree, and that disagreement is named here rather than implied.
 - Current PR-link repair stages `.factory/events/` and backfills only verified merged PR #109/#110 through `forge pr-link`. The effective scope includes the accepted Decision 0081 full-access destination and the conditional Lean supplement manifest.
 
 ## Acceptance Criteria
@@ -110,10 +110,45 @@ over its 28,500-line ceiling. Both are RECORDED NOTES, not refusals
 (`stages.py:1483`); the only hard refusal is a delta above twice the line
 budget, i.e. 57,000.
 
-AC16 and AC17 hold by NON-ADOPTION and owe no benchmark: `factory/tests/conftest.py`
-is untouched on this branch, so no shared fixture optimisation was introduced,
-and nothing in the tree sets a worker count other than the canonical `-n 4`.
-Adopting either optimisation would require the recorded 4/6/8 comparison first.
+AC16 holds by ADOPTION WITH RECORDED EVIDENCE, not by non-adoption. An earlier
+revision of this plan claimed the opposite and was wrong. The 4/6/8 comparison
+was run and is recorded in
+`.factory/stories/FORGE-COORD-1/tasks/LEAN-WORKFLOW/tests.json`: medians n4
+186.099s, n6 177.336s, n8 153.966s. n8 was 17.27% faster than n4, both n8 runs
+passed, and their timings differed by 5.97% of the median, inside the 15%
+repeatability limit. The adoption gate therefore passed and the canonical worker
+count moved to `-n 8`, which is what `.envrc:20` runs today.
+
+AC17 holds by NON-ADOPTION with its predicate recorded: profiled setup share was
+below 25% in both baselines, so no prepared fixture was attempted or adopted, and
+`factory/tests/conftest.py` is untouched on this branch.
+
+What neither criterion has is a MACHINE-CHECKABLE assertion.
+`factory/schemas/test-automated.json` accepts free-form command and summary
+strings, so the recorded medians and the adoption verdict are auditable prose
+rather than something a gate can falsify. Adding a benchmark-shaped evidence
+schema is a real gap, but it is a new evidence schema, which this task's scope
+explicitly excludes; it is carried as a follow-up rather than silently claimed.
+
+Effective write scope is SHORT BY FOUR FILES already changed since base
+`9e08774b`: `factory/scripts/check_agents_hygiene.py`,
+`factory/scripts/forge_cli/context.py`, `factory/scripts/forge_cli/story.py`
+and `factory/scripts/forge_cli/quickfix.py`. The first three are this task's CI
+and resume repairs; `quickfix.py` was already changed on the branch before the
+handover. None appears in the 134 base entries or the 8 recorded amendments, so
+all four are authorised through `./forge stage amend-scope` at `stage done`,
+which is the supported route for measured paths a task touched but did not
+declare. The story plan assigns Shared the broader resume work; this task's
+`story.py` change is the narrow approval-binding repair that `stage start`
+itself demanded, not that feature.
+
+Why this stays ONE bounded implementation and review despite exceeding the
+28,500-line note: the parts are mutually dependent, not merely co-located.
+Native approval, the removal of the formats it replaces, the one-time migration
+of those formats, and the close-owned proof path cannot land separately without
+shipping a half-migrated harness that refuses its own recorded evidence in
+between. The reviewable shape is bounded instead by the 0078 parallel-group
+review, which splits the diff for reading without splitting the change.
 
 Decision 0082 (`docs/decisions/0082-codex-hook-trust-boundary.md`) is ACCEPTED
 and is the load-bearing trust seam under AC1-AC2: native-approval authenticity

@@ -491,8 +491,9 @@ sequence a JIT contract loop for every pending task:
     `delegate`, and `task close` all enforce triage of the selected generation's
     actionable P0/P1 defect findings. Synthetic `plan-contract-partial` and
     `plan-contract-missing` rows remain acceptance blockers to implement and
-    re-review, but are not host defect triage. The coordinator never relays an
-    actionable finding unread: it TRIAGES each one first -- opens the cited line and the code it
+    re-review, but are not host defect triage.
+    The coordinator never relays a finding unread: it TRIAGES every actionable
+    one first -- opens the cited line and the code it
     calls, decides real or not with a file:line it read, and for a real one
     searches the repo for every other place the same contract applies -- and
     records it (`forge review <id> --triage "<text>" --lens <l> --real
