@@ -1,0 +1,10 @@
+{
+  "applies_to": [
+    ".factory/stories/FORGE-COORD-1/task-plans/LEAN-WORKFLOW.md#Acceptance Criteria"
+  ],
+  "generated_by": "Root",
+  "lesson": "Not a defect (evidence factory/scripts/factory_lib.py:4543): P2 consistency hardening, not an authority bypass: exact current replay is validated first and predecessor grant requires exactly one parsed digest/runtime/actor/story/task/hash-filename match. A malformed required predecessor yields no matching ancestor and fails closed. Skipping an unrelated malformed sibling does not grant authority. Retain consistent diagnostic hardening in Shared under user P0/P1 threshold. — raised as \"LEAN-AC-2: Shared recorder identity: the shared approval recorder binds exactly one current-frontier candidate, current digest, runtime, stable session/event id\"",
+  "severity": "medium",
+  "source": "review reject LEAN-WORKFLOW quality",
+  "topic": "rejected-review-finding-quality"
+}

@@ -98,7 +98,9 @@ For an approved Full task, the implementer owns focused checks and a truthful
 automated report. Commit the completed product changes, then let ONE
 `forge task close <id>` own final task-wide verification, required-test proof,
 and independent review. Complete any required functional check and resume
-that same close; a passing proof is reused only when its complete command,
+that same close by rerunning `./forge task close <id>` after recording
+user-facing functional proof; the unchanged selected review is reused and the
+stage is sealed. A passing proof is reused only when its complete command,
 environment, tool, distribution, generated-input, and product identities
 remain unchanged. Unknown command shapes run again conservatively. Never run standalone full
 verification before close or reconstruct close as separate review/stage/PR
@@ -109,6 +111,11 @@ Only P2/P3 findings become recorded follow-ups with a reason and revisit
 trigger; they do not start another cleanup/review cycle. When the latest
 published head satisfies required proof and CI and merge is authorized, merge
 and continue. P0/P1 findings and failed required checks must be resolved first.
+Before any review-fix write delegation, triage every actionable P0/P1 defect
+finding in the selected generation with `./forge review <id> --triage ...`;
+`forge next`, `forge delegate`, and `forge task close` enforce this frontier.
+Synthetic partial/missing plan-contract blockers remain acceptance blockers to
+implement and re-review, but do not require host defect triage.
 
 ## For workflow execution, start here
 
@@ -130,7 +137,7 @@ or route:
 | implementing | Follow the one frontier action printed by `./forge next`: enter plan mode and author/re-record the JIT contract; run the task griller; `forge stage start`; or `forge delegate`. In native Codex, send the complete prepared descriptor and context metadata in the actual `spawn_agent` message to the named role, without model/reasoning overrides. The implementer writes and records the tests; user-facing tasks MUST load + attest emil-design-eng + frontend-design in `skills_used` (recorder-enforced; harness.yaml `required_skills`) |
 | verifying | For an active task, use its existing `./forge task close <id>` owner; do not start a competing or standalone full verifier. |
 | reviewing | Continue the task-close owner and its independent review. Batch blocking fixes, run focused checks, commit, then resume close under `docs/QUALITY.md` bounded recovery. |
-| functional-check | only shown when the task is user-facing; run the Sol/high `functional-checker` |
+| functional-check | only shown when the task is user-facing; run the Sol/high `functional-checker`, record its proof, then rerun `./forge task close <id>` so the unchanged selected review is reused and the stage is sealed |
 | harvest pending | follow `factory/prompts/harvester.md` |
 | anything with a command | run the command verbatim |
 
@@ -147,8 +154,8 @@ or route:
 | what's left to build / show the roadmap | `./forge roadmap list` (`--pending` for what's next; grouped by epic, shows @assignee) |
 | what can run in parallel / fan out the work | `./forge roadmap parallel` — the dependency-ready story frontier. Each leaf task owns a worktree and PR; dependency-ready tasks may advance together only when their measured scopes are disjoint |
 | roadmap merge conflict / duplicate items after merging branches | `./forge roadmap heal` — deterministic union (done-wins); mid-merge it rebuilds from the merge stages, then `git add plans/roadmap.json` |
-| grill the handover / stress-test before a gate | `factory/prompts/griller.md` — one question at a time vs the actual docs. Native: `forge grill run ...` prepares one descriptor; put it and its context metadata in the actual `spawn_agent` message to `griller`, resolve findings, then record the exact JSON with `record_grill_from_json.py --cold-result <path> --preparation-id <id>` plus `--gate spec\|signoff\|epics\|plan\|task`. Claude keeps its command-managed cold reader. Required gates refuse without their fresh pass |
-| grill me on this plan | run the one host-specific independent cold grill against the draft plan with `--gate plan`, complete its dispositions, and use that result before `plan save` — mandatory before `plan save` |
+| grill the handover / stress-test before a gate | `factory/prompts/griller.md` — one question at a time vs the actual docs. For a native plan grill, run `./forge grill run --gate plan --file <plan-file>`, put the complete descriptor and context metadata in the actual `spawn_agent` message to `griller`, resolve findings, then record the exact JSON with `python3 factory/scripts/record_grill_from_json.py --gate plan --input <grill-json> --input-digest <plan-file> --cold-result <path> --preparation-id <id>`. For a native task grill, use `./forge grill run --gate task --task <id>` and `python3 factory/scripts/record_grill_from_json.py --gate task --task <id> --input <grill-json> --cold-result <path> --preparation-id <id>`. Claude keeps its command-managed cold reader. Required gates refuse without their fresh pass |
+| grill me on this plan | run the one host-specific independent cold grill against the draft plan with `./forge grill run --gate plan --file <plan-file>`, complete its dispositions, and use `python3 factory/scripts/record_grill_from_json.py --gate plan --input <grill-json> --input-digest <plan-file>` for a command-managed result or `python3 factory/scripts/record_grill_from_json.py --gate plan --input <grill-json> --input-digest <plan-file> --cold-result <path> --preparation-id <id>` for the native result before `plan save` — mandatory before `plan save` |
 | capture a capability spec | `./forge spec save <slug> --from <draft.md>`; confirmation requires a digest-bound spec grill, then `./forge spec confirm <slug>` |
 | here's the derived project backlog | `./forge roadmap derive --input <json>` (pre-sign-off, every story links a confirmed spec) |
 | add a story to the roadmap | `./forge roadmap add <KEY> "<title>" --story "As a <user>, I ... so that ..." --ac "<criterion>" --spec docs/specs/<slug>.md --epic <epic> --skill frontend\|backend\|fullstack [--depends-on <KEY>]` — story and at least one criterion are required |
@@ -157,7 +164,7 @@ or route:
 | assign a story / distribute work (EM) | `./forge roadmap assign <KEY> --to <dev>` — checked against the roster; match story skill to dev skills |
 | who does what / role handoffs | `docs/ROLES.md` — forge next tags every step [PM]/[EM]/[dev] |
 | start a task / new feature | `python3 factory/scripts/intake.py --issue <KEY> --title "<title>"` — then check `forge.py context list --pending` BEFORE planning |
-| save and approve a plan | Run one independent cold grill against the draft and complete its disposition/amendment bridge; then `python3 factory/scripts/forge.py plan save --from <plan-file> --story <key>` once and show those exact final bytes in native Plan Mode. Successful Claude `ExitPlanMode` binds its exact plan input; Codex uses id `approve_plan_<digest>`, prompt `Approve exact plan digest <digest>?`, and an id-keyed `Approve plan` answer |
+| save and approve a plan | Run one independent cold grill against the draft and complete its disposition/amendment bridge; then `python3 factory/scripts/forge.py plan save --from <plan-file> --story <key>` once and show those exact final bytes in native Plan Mode. If an already approved plan is amended before stage start, record the bridge against that existing cold proof and return directly to exact native approval; do not launch a second cold grill solely for changed bytes. Successful Claude `ExitPlanMode` binds its exact plan input; Codex uses id `approve_plan_<digest>`, prompt `Approve exact plan digest <digest>?`, and an id-keyed `Approve plan` answer |
 | show implementation progress / how far along are we / show the board | `./forge board` — see "Show, don't recite" below. `./forge plan list` is the text fallback |
 | review the plan / let me read the plan | present the exact final plan through native Plan Mode; `./forge board` is a read-only status view and never an approval transport |
 | I need a small fix without a plan | Apply the route table above. Prefer reviewed Lite for an eligible, authorized standalone fix: `./forge mode lite --by "<authorizing actor>" --reason "<why>"`; close with `./forge mode done` after focused checks and clean required review. Quickfix is the distinct trace-only exception, never a review shortcut. |

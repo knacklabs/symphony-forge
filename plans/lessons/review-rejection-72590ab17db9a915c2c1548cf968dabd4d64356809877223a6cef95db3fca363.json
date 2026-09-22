@@ -1,0 +1,10 @@
+{
+  "applies_to": [
+    ".factory/stories/FORGE-COORD-1/task-plans/LEAN-WORKFLOW.md#Acceptance Criteria"
+  ],
+  "generated_by": "Root",
+  "lesson": "Not a defect (evidence factory/scripts/forge_cli/plans.py:70): P2 guidance defect: forge next can omit re-grill guidance after a pre-approval edit, but plan save checks the actual current digest and refuses with explicit re-grill instruction. No stale approval or write authority passes. Retain as Shared routing follow-up under user P0/P1 merge threshold. — raised as \"LEAN-AC-3: Ceremony removal: requirements grill, round floors, old round ledgers as authority, fake frontier questions, second unchanged save, and manual plan/t\"",
+  "severity": "medium",
+  "source": "review reject LEAN-WORKFLOW quality",
+  "topic": "rejected-review-finding-quality"
+}

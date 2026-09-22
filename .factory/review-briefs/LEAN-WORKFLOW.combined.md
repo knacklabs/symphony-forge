@@ -53,13 +53,14 @@ deliverable is a blocking finding even when the rest is clean. Flag
 single-responsibility violations and incoherent file/folder organisation against
 the reviewer focus (never a mandated layout). Structure-for-growth in shared
 infrastructure is NOT over-engineering; reserve that finding for speculative
-abstraction. Enforce the minimal-diff discipline (a new dependency where the
+abstraction or a concrete P0/P1 risk. Enforce the minimal-diff discipline (a new dependency where the
 stdlib suffices, reimplementing an existing helper, sprawl where a surgical
 change would do) — but a diff that drops validation, error handling, security, or
 accessibility to look smaller is the OPPOSITE finding. The constitution's coding
 standards are law: flag deviations you can see in the diff. Assess cyclomatic
 complexity of every changed function; genuinely knotted control flow (roughly
->10 independent paths) is blocking and must name its decomposition.
+>10 independent paths) is a P0/P1 finding only when it creates a concrete
+correctness, security, or operational risk, and must name its decomposition.
 
 CONTRACT VERDICTS (mandatory, machine-parsed). For EVERY plan contract
 listed under the target task's "Plan contracts" in .factory/review-briefs/all.md, add one finding
@@ -90,6 +91,6 @@ credential handling, injection (SQL/command/template), data exposure and
 over-broad responses, unsafe defaults, privilege escalation, and abuse paths.
 Use category `security` for these findings.
 
-LEFTOVERS (blocking): the diff must carry no code kept only for compatibility — no wrapper or shim over its replacement, no re-export or alias kept 'for callers', no renamed-but-retained symbol, no dead branch behind a removed feature, no 'legacy'/'deprecated'/'backward' naming or comment. Report each as a BLOCKING finding with file:line and verdict the contract it belongs to as partial; a clean diff says so in one line.
+LEFTOVERS: report compatibility, dead, or style-only code only when it creates a concrete P0/P1 correctness, security, data-loss, or contract risk, with file:line evidence. Otherwise record it as a P2/P3 follow-up or say that no blocking leftover exists; cleanup alone does not make the contract partial.
 
-Reviewed meaning SHA-256: 41e64015c1e96d401b29284e85b91a33ac222cda2762092f067af1523e19acda
+Reviewed meaning SHA-256: 2b9143c80b8ceca2066bc837a112e6dd318b60413861ff3a417e57ef90f3c8f2

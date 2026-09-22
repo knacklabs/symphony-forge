@@ -1,0 +1,10 @@
+{
+  "applies_to": [
+    "factory/tests/**"
+  ],
+  "generated_by": "Root",
+  "lesson": "Not a defect (0052): False P1: accepted0052:53-55 and plan-approval.md62-65 intentionally permit direct fresh exact-digest native human reapproval after a previously approved edit. Initial cold-to-first-final disposition differs from subsequent authenticated human amendment. Current replay/current digest/predecessor ancestry remain required; no stale approval or unauthorized bytes pass. Active task plan81 explicitly requires final digest rebinding. Preserve settled lifecycle regression; historical bridge wording clarity is P2 only. — raised as \"Preserve the cold-to-final bridge when reapproving amended plans (factory/tests/test_lifecycle_end_to_end.py:178): After an already approved task plan receives \"",
+  "severity": "medium",
+  "source": "review reject LEAN-WORKFLOW security",
+  "topic": "rejected-review-finding-security"
+}

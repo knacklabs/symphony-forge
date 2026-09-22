@@ -2663,6 +2663,1193 @@
       "delta_id": "0f1d5edb9e4e968edc015d0eaabdba31af68d9e44bb06f71262f691591699bef",
       "generation_id": "ee02d44d11f6e6ee59a0a6e675dc4df4a57b33b3e32ff2430fc5b5f52ec52f59",
       "task_id": "LEAN-WORKFLOW"
+    },
+    {
+      "lens": "quality",
+      "finding": {
+        "area": "factory/scripts/forge_cli",
+        "category": "bug",
+        "file_path": "factory/scripts/forge_cli/stages.py",
+        "line": 2473,
+        "summary": "Record the close-owned proof in the automated report (factory/scripts/forge_cli/stages.py:2473): When `tests.json` already contains the normal implementer-authored `automated` object, a fresh `forge task close` returns here if that report already names HEAD; on a moved HEAD, the adjacent branch merely rewrites its commit.",
+        "title": "Record the close-owned proof in the automated report"
+      },
+      "verdict": "real",
+      "evidence": "factory/scripts/forge_cli/stages.py:2473",
+      "instances": [
+        "factory/scripts/forge_cli/stages.py:2473",
+        "factory/tests/test_close_binds_to_the_diff.py:481"
+      ],
+      "keep": "Preserve current proof, scope, provenance and user P0/P1-only merge policy; group shared roots in one focused batch.",
+      "reason": "P1: preserve truthful worker provenance and add actual completed close-owned command/results before review; same-head and moved-head must not merely return/restamp. Preserve skills, gaps and independent functional evidence.",
+      "triaged_by": "Root",
+      "triaged_at": "2026-09-18T21:48:55+00:00",
+      "delta_id": "6d3019213a897c4bfc14695cb6c3cdea1e5e8db35d11728dce91d67526c42fa4",
+      "generation_id": "19b8dbfe3ef724ff4e637d08dc9f0b5cb4b92661046e761b63acb943b15e80b0",
+      "task_id": "LEAN-WORKFLOW"
+    },
+    {
+      "lens": "quality",
+      "finding": {
+        "area": "factory/tests",
+        "category": "test_gap",
+        "file_path": "factory/tests/test_close_binds_to_the_diff.py",
+        "line": 481,
+        "summary": "Exercise the real proof recorder instead of fabricating canonical evidence (factory/tests/test_close_binds_to_the_diff.py:481): When `forge task close` starts with an implementer-authored `tests.json`, this test double manually appends `canonical verify` to that report at line 481.",
+        "title": "Exercise the real proof recorder instead of fabricating canonical evidence"
+      },
+      "verdict": "real",
+      "evidence": "factory/tests/test_close_binds_to_the_diff.py:481",
+      "instances": [
+        "factory/tests/test_close_binds_to_the_diff.py:481",
+        "factory/scripts/forge_cli/stages.py:2473"
+      ],
+      "keep": "Preserve current proof, scope, provenance and user P0/P1-only merge policy; group shared roots in one focused batch.",
+      "reason": "P1 duplicate of recorder root: replace report-writing test double with real recorder/close interface coverage; no fabricated canonical marker.",
+      "triaged_by": "Root",
+      "triaged_at": "2026-09-18T21:48:56+00:00",
+      "delta_id": "6d3019213a897c4bfc14695cb6c3cdea1e5e8db35d11728dce91d67526c42fa4",
+      "generation_id": "19b8dbfe3ef724ff4e637d08dc9f0b5cb4b92661046e761b63acb943b15e80b0",
+      "task_id": "LEAN-WORKFLOW"
+    },
+    {
+      "lens": "performance",
+      "finding": {
+        "area": "factory/scripts/forge_cli",
+        "category": "bug",
+        "file_path": "factory/scripts/forge_cli/stages.py",
+        "line": 2148,
+        "summary": "Preserve canonical-JUnit reuse through safe verifier assignments (factory/scripts/forge_cli/stages.py:2148): The approved task's sole canonical verifier begins with `UV_CACHE_DIR=.",
+        "title": "Preserve canonical-JUnit reuse through safe verifier assignments"
+      },
+      "verdict": "real",
+      "evidence": "factory/scripts/forge_cli/stages.py:2148",
+      "instances": [
+        "factory/scripts/forge_cli/stages.py:2148"
+      ],
+      "keep": "Preserve current proof, scope, provenance and user P0/P1-only merge policy; group shared roots in one focused batch.",
+      "reason": "P1 delivery requirement: actual task uses UV_CACHE_DIR and UV_TOOL_DIR assignments. Bind their effective environment/tool identity and consume exact fresh JUnit; unknown assignments or selection/config drift still falls back conservatively.",
+      "triaged_by": "Root",
+      "triaged_at": "2026-09-18T21:48:57+00:00",
+      "delta_id": "6d3019213a897c4bfc14695cb6c3cdea1e5e8db35d11728dce91d67526c42fa4",
+      "generation_id": "19b8dbfe3ef724ff4e637d08dc9f0b5cb4b92661046e761b63acb943b15e80b0",
+      "task_id": "LEAN-WORKFLOW"
+    },
+    {
+      "lens": "quality",
+      "finding": {
+        "area": "factory/scripts/forge_cli",
+        "category": "bug",
+        "file_path": "factory/scripts/forge_cli/upgrade.py",
+        "line": 1729,
+        "summary": "Resuming after stage conversion always fails inventory revalidation (factory/scripts/forge_cli/upgrade.py:1729): Trigger: an upgrade is interrupted after an eligible `legacy-stage-stamp` has been atomically converted but before the migration manifest receives `completed_at`\u2014for example, a later legacy-file deletion fails or the process exits.",
+        "title": "Resuming after stage conversion always fails inventory revalidation"
+      },
+      "verdict": "real",
+      "evidence": "factory/scripts/forge_cli/upgrade.py:1729",
+      "instances": [
+        "factory/scripts/forge_cli/upgrade.py:1729",
+        "factory/scripts/forge_cli/upgrade.py:2140"
+      ],
+      "keep": "Preserve current proof, scope, provenance and user P0/P1-only merge policy; group shared roots in one focused batch.",
+      "reason": "P1 reproduced after1/2stage conversions and ordinary source deletion. Resume only exact durable converted hashes or missing previously eligible deletable sources; missing/tampered stages and other changed entries refuse. Retain independent inventory and sentinel guards.",
+      "triaged_by": "Root",
+      "triaged_at": "2026-09-18T21:48:57+00:00",
+      "delta_id": "6d3019213a897c4bfc14695cb6c3cdea1e5e8db35d11728dce91d67526c42fa4",
+      "generation_id": "19b8dbfe3ef724ff4e637d08dc9f0b5cb4b92661046e761b63acb943b15e80b0",
+      "task_id": "LEAN-WORKFLOW"
+    },
+    {
+      "lens": "quality",
+      "finding": {
+        "area": "factory/scripts/forge_cli",
+        "category": "bug",
+        "file_path": "factory/scripts/forge_cli/upgrade.py",
+        "line": 2054,
+        "summary": "Restrict the supplement to newly merged historical proof (factory/scripts/forge_cli/upgrade.py:2054): When an original empty migration completion exists and any newly eligible legacy artifact appears, line 2054 accepts it for the one permitted supplement regardless of its family.",
+        "title": "Restrict the supplement to newly merged historical proof"
+      },
+      "verdict": "real",
+      "evidence": "factory/scripts/forge_cli/upgrade.py:2054",
+      "instances": [
+        "factory/scripts/forge_cli/upgrade.py:2054"
+      ],
+      "keep": "Preserve current proof, scope, provenance and user P0/P1-only merge policy; group shared roots in one focused batch.",
+      "reason": "Partially real: original-empty supplement must not admit non-proof old-hook-flag/retired-forge-profile changes. Do NOT adopt a review/stage-only whitelist: requirements/plan grills are themselves proof; the diagnostic claim excluding requirements-grill was withdrawn. Preserve all eligible evidence/proof families and existing intentional stage/fixed positives; mixed non-proof rows refuse before writes.",
+      "triaged_by": "Root",
+      "triaged_at": "2026-09-18T21:48:58+00:00",
+      "delta_id": "6d3019213a897c4bfc14695cb6c3cdea1e5e8db35d11728dce91d67526c42fa4",
+      "generation_id": "19b8dbfe3ef724ff4e637d08dc9f0b5cb4b92661046e761b63acb943b15e80b0",
+      "task_id": "LEAN-WORKFLOW"
+    },
+    {
+      "lens": "quality",
+      "finding": {
+        "area": ".factory/stories/FORGE-COORD-1/task-plans/LEAN-WORKFLOW.md#Acceptance Criteria",
+        "category": "plan-contract-partial",
+        "file_path": "WORKFLOW.md",
+        "line": 511,
+        "summary": "LEAN-AC-5: Content-bound close reuse: test/verify receipts and selected-review reviewed-meaning identity reuse only when their proof-type inputs match; substantive acceptance/security/migration/evidence/review-instruction/product-delta changes force review, while canonicalized bookkeeping/timestamp changes preserve immutable original provenance. \u2014 partial: WORKFLOW.md:511 incorrectly states that review freshness binds only the product delta, omitting the contract\u2019s required reviewed-meaning identity.",
+        "title": "VERDICT LEAN-AC-5: partial"
+      },
+      "verdict": "real",
+      "evidence": "WORKFLOW.md:511",
+      "instances": [
+        "WORKFLOW.md:511"
+      ],
+      "keep": "Preserve current proof, scope, provenance and user P0/P1-only merge policy; group shared roots in one focused batch.",
+      "reason": "P2 documentation correction incidental to mandatory close/evidence repair: describe delta plus substantive reviewed meaning, with bookkeeping canonicalization. Not an independent P1 or reason for a separate cleanup cycle.",
+      "triaged_by": "Root",
+      "triaged_at": "2026-09-18T21:48:59+00:00",
+      "delta_id": "6d3019213a897c4bfc14695cb6c3cdea1e5e8db35d11728dce91d67526c42fa4",
+      "generation_id": "19b8dbfe3ef724ff4e637d08dc9f0b5cb4b92661046e761b63acb943b15e80b0",
+      "task_id": "LEAN-WORKFLOW"
+    },
+    {
+      "lens": "quality",
+      "finding": {
+        "area": ".factory/stories/FORGE-COORD-1/task-plans/LEAN-WORKFLOW.md#Acceptance Criteria",
+        "category": "plan-contract-partial",
+        "file_path": "docs/architecture/dual-coordinator-parity.md",
+        "line": 97,
+        "summary": "LEAN-AC-6: Lean migration: `forge upgrade` performs clean-checkout preflight with no `--force` bypass, full inventory/hash/classification, independent raw no-follow coverage over fixed legacy roots/exact parents, temp build, validation, publish/readback, profile/settings preservation, and deletion only after durable current outputs exist. Byte-identical retry passes and unequal partial retry refuses, except that a validated original empty completion may publish one bound `lean-workflow-v2-supplement.json` when later merged history introduces newly eligible proof. \u2014 partial: docs/architecture/dual-coordinator-parity.md:97 omits the approved empty-completion supplement path and instead declares every unequal partial retry refused.",
+        "title": "VERDICT LEAN-AC-6: partial"
+      },
+      "verdict": "real",
+      "evidence": "docs/architecture/dual-coordinator-parity.md:97",
+      "instances": [
+        "docs/architecture/dual-coordinator-parity.md:97"
+      ],
+      "keep": "Preserve current proof, scope, provenance and user P0/P1-only merge policy; group shared roots in one focused batch.",
+      "reason": "P2 docs accompaniment to mandatory migration repair: add exact validated-original-empty supplement exception, original binding and conservative non-proof refusal; do not invent review-only family limit.",
+      "triaged_by": "Root",
+      "triaged_at": "2026-09-18T21:48:59+00:00",
+      "delta_id": "6d3019213a897c4bfc14695cb6c3cdea1e5e8db35d11728dce91d67526c42fa4",
+      "generation_id": "19b8dbfe3ef724ff4e637d08dc9f0b5cb4b92661046e761b63acb943b15e80b0",
+      "task_id": "LEAN-WORKFLOW"
+    },
+    {
+      "lens": "quality",
+      "finding": {
+        "area": ".factory/stories/FORGE-COORD-1/task-plans/LEAN-WORKFLOW.md#Acceptance Criteria",
+        "category": "plan-contract-partial",
+        "file_path": "factory/tests/test_pr_link_workflow.py",
+        "line": 65,
+        "summary": "LEAN-AC-10: Verified PR-link backfill: only verified PR #109 and #110 links are backfilled through `forge pr-link`, producing recorder-generated event files and clearing those board-completeness failures without touching unrelated spec gaps. \u2014 partial: factory/tests/test_pr_link_workflow.py:65 filters the loaded event corpus to the two expected payloads before comparison, so it proves their presence but not the contract's prohibition on additional backfills.",
+        "title": "VERDICT LEAN-AC-10: partial"
+      },
+      "verdict": "real",
+      "evidence": "factory/tests/test_pr_link_workflow.py:65",
+      "instances": [
+        "factory/tests/test_pr_link_workflow.py:65"
+      ],
+      "keep": "Preserve current proof, scope, provenance and user P0/P1-only merge policy; group shared roots in one focused batch.",
+      "reason": "P2 focused coverage correction in this existing mandatory batch: prove only109/110 backfill operation introduced these events by actual operation/commit delta, not by filtering all historical legitimate links. Preserve recorder-generated provenance.",
+      "triaged_by": "Root",
+      "triaged_at": "2026-09-18T21:49:00+00:00",
+      "delta_id": "6d3019213a897c4bfc14695cb6c3cdea1e5e8db35d11728dce91d67526c42fa4",
+      "generation_id": "19b8dbfe3ef724ff4e637d08dc9f0b5cb4b92661046e761b63acb943b15e80b0",
+      "task_id": "LEAN-WORKFLOW"
+    },
+    {
+      "lens": "quality",
+      "finding": {
+        "area": ".factory/stories/FORGE-COORD-1/task-plans/LEAN-WORKFLOW.md#Acceptance Criteria",
+        "category": "plan-contract-partial",
+        "file_path": "WORKFLOW.md",
+        "line": 8,
+        "summary": "LEAN-AC-11: Normal-runtime refusal: Lean-removed old formats outside upgrade produce `run forge upgrade` guidance; PR3-owned legacy families stay compatible until Portable handles them. \u2014 partial: WORKFLOW.md:8 continues to present the legacy singleton decomposition path as normal canonical state rather than upgrade-only compatibility.",
+        "title": "VERDICT LEAN-AC-11: partial"
+      },
+      "verdict": "real",
+      "evidence": "WORKFLOW.md:8",
+      "instances": [
+        "WORKFLOW.md:8"
+      ],
+      "keep": "Preserve current proof, scope, provenance and user P0/P1-only merge policy; group shared roots in one focused batch.",
+      "reason": "P2 docs correction: current canonical decomposition is story-scoped; singleton is migration input only.",
+      "triaged_by": "Root",
+      "triaged_at": "2026-09-18T21:49:01+00:00",
+      "delta_id": "6d3019213a897c4bfc14695cb6c3cdea1e5e8db35d11728dce91d67526c42fa4",
+      "generation_id": "19b8dbfe3ef724ff4e637d08dc9f0b5cb4b92661046e761b63acb943b15e80b0",
+      "task_id": "LEAN-WORKFLOW"
+    },
+    {
+      "lens": "quality",
+      "finding": {
+        "area": ".factory/stories/FORGE-COORD-1/task-plans/LEAN-WORKFLOW.md#Acceptance Criteria",
+        "category": "plan-contract-partial",
+        "file_path": "docs/FACTORY.md",
+        "line": 24,
+        "summary": "LEAN-AC-12: Docs/runtime agreement: workflow, docs, specs, prompts, skills, architecture text, reviewer focus, required tests, and design-review status agree with the implemented runtime without duplicating long canon in `AGENTS.md`. \u2014 partial: docs/FACTORY.md:24 claims universal Stop enforcement even though the documented native adapter contract makes native Stop advisory only.",
+        "title": "VERDICT LEAN-AC-12: partial"
+      },
+      "verdict": "real",
+      "evidence": "docs/FACTORY.md:24",
+      "instances": [
+        "docs/FACTORY.md:24"
+      ],
+      "keep": "Preserve current proof, scope, provenance and user P0/P1-only merge policy; group shared roots in one focused batch.",
+      "reason": "P2 docs correction: Claude host Stop enforcement versus advisory native Stop under accepted0080; no native lifecycle/authorship machinery.",
+      "triaged_by": "Root",
+      "triaged_at": "2026-09-18T21:49:01+00:00",
+      "delta_id": "6d3019213a897c4bfc14695cb6c3cdea1e5e8db35d11728dce91d67526c42fa4",
+      "generation_id": "19b8dbfe3ef724ff4e637d08dc9f0b5cb4b92661046e761b63acb943b15e80b0",
+      "task_id": "LEAN-WORKFLOW"
+    },
+    {
+      "lens": "quality",
+      "finding": {
+        "area": ".factory/stories/FORGE-COORD-1/task-plans/LEAN-WORKFLOW.md#Acceptance Criteria",
+        "category": "plan-contract-partial",
+        "file_path": "docs/getting-started.md",
+        "line": 315,
+        "summary": "LEAN-AC-13: Single final proof owner: workers run focused checks only; `forge task close` runs the one canonical full verification suite, records truthful complete automated evidence from that execution before review, and normal plus narrowed delegate briefs state that boundary. \u2014 partial: docs/getting-started.md:315 instructs the implementation worker to invoke the canonical verifier directly instead of leaving task-wide proof execution and recording to `forge task close`.",
+        "title": "VERDICT LEAN-AC-13: partial"
+      },
+      "verdict": "real",
+      "evidence": "docs/getting-started.md:315",
+      "instances": [
+        "docs/getting-started.md:315"
+      ],
+      "keep": "Preserve current proof, scope, provenance and user P0/P1-only merge policy; group shared roots in one focused batch.",
+      "reason": "P2 documentation accompaniment to P1 single-proof-owner repair: worker focused checks; coordinator task close owns full verify. Remove contradictory ordinary worker raw verifier guidance.",
+      "triaged_by": "Root",
+      "triaged_at": "2026-09-18T21:49:02+00:00",
+      "delta_id": "6d3019213a897c4bfc14695cb6c3cdea1e5e8db35d11728dce91d67526c42fa4",
+      "generation_id": "19b8dbfe3ef724ff4e637d08dc9f0b5cb4b92661046e761b63acb943b15e80b0",
+      "task_id": "LEAN-WORKFLOW"
+    },
+    {
+      "lens": "quality",
+      "finding": {
+        "area": ".factory/stories/FORGE-COORD-1/task-plans/LEAN-WORKFLOW.md#Acceptance Criteria",
+        "category": "plan-contract-partial",
+        "file_path": "factory/scripts/forge_cli/stages.py",
+        "line": 2799,
+        "summary": "LEAN-AC-14: Exact-identity reuse: any reused test or verification result binds the full product, command, selector, tool, dependency, configuration, environment, and generated-input identity; missing, partial, unknown, or drifted identity refuses reuse. \u2014 partial: factory/scripts/forge_cli/stages.py:2799 accepts compileall as reusable without establishing complete input identity, so exact-identity reuse is partial.",
+        "title": "VERDICT LEAN-AC-14: partial"
+      },
+      "verdict": "real",
+      "evidence": "factory/scripts/forge_cli/stages.py:2799",
+      "instances": [
+        "factory/scripts/forge_cli/stages.py:2799"
+      ],
+      "keep": "Preserve current proof, scope, provenance and user P0/P1-only merge policy; group shared roots in one focused batch.",
+      "reason": "P2 exact-identity gap paired with mandatory proof-identity work: compileall may reuse only if complete actual source/tool/config inputs are bound; ignored/external/unknown inputs conservatively refuse. Do not broaden directory/cache exemptions or invent generic proof reuse.",
+      "triaged_by": "Root",
+      "triaged_at": "2026-09-18T21:49:03+00:00",
+      "delta_id": "6d3019213a897c4bfc14695cb6c3cdea1e5e8db35d11728dce91d67526c42fa4",
+      "generation_id": "19b8dbfe3ef724ff4e637d08dc9f0b5cb4b92661046e761b63acb943b15e80b0",
+      "task_id": "LEAN-WORKFLOW"
+    },
+    {
+      "lens": "quality",
+      "finding": {
+        "area": ".factory/stories/FORGE-COORD-1/task-plans/LEAN-WORKFLOW.md#Acceptance Criteria",
+        "category": "plan-contract-partial",
+        "file_path": "factory/scripts/forge_cli/stages.py",
+        "line": 2148,
+        "summary": "LEAN-AC-15: Canonical selector proof: when the canonical pytest/JUnit execution truthfully proves every exact declared required-test node id, close consumes that report instead of rerunning selectors; any missing or ambiguous id retains the dedicated required-selector execution and refusal. \u2014 partial: factory/scripts/forge_cli/stages.py:2148 rejects the task's cache-prefixed canonical verifier, preventing its exact JUnit report from satisfying declared selectors.",
+        "title": "VERDICT LEAN-AC-15: partial"
+      },
+      "verdict": "real",
+      "evidence": "factory/scripts/forge_cli/stages.py:2148",
+      "instances": [
+        "factory/scripts/forge_cli/stages.py:2148"
+      ],
+      "keep": "Preserve current proof, scope, provenance and user P0/P1-only merge policy; group shared roots in one focused batch.",
+      "reason": "P1 duplicate of cache-prefixed canonical JUnit root. Use same fix and focused producer identity regression, not another implementation or verification pass.",
+      "triaged_by": "Root",
+      "triaged_at": "2026-09-18T21:49:03+00:00",
+      "delta_id": "6d3019213a897c4bfc14695cb6c3cdea1e5e8db35d11728dce91d67526c42fa4",
+      "generation_id": "19b8dbfe3ef724ff4e637d08dc9f0b5cb4b92661046e761b63acb943b15e80b0",
+      "task_id": "LEAN-WORKFLOW"
+    },
+    {
+      "lens": "quality",
+      "finding": {
+        "area": "docs",
+        "category": "bug",
+        "file_path": "docs/getting-started.md",
+        "line": 288,
+        "summary": "Remove the approval flag that the documented command always rejects (docs/getting-started.md:288): After native approval and decomposition, following this command passes `--plan-status approved`, but `factory/scripts/update_run.py:71-78` unconditionally rejects that argument because only the native approval recorder may set it.",
+        "title": "Remove the approval flag that the documented command always rejects"
+      },
+      "verdict": "real",
+      "evidence": "docs/getting-started.md:288",
+      "instances": [
+        "docs/getting-started.md:288"
+      ],
+      "keep": "Preserve exact proof identity, immutable review lineage, current pointer validation, shell command semantics, and fail-closed approval. Focused checks only in worker; Root owns final close.",
+      "reason": "P2: Remove the approval flag that the documented command always rejects (docs/getting-started.md:288): After native approval and decomposition, following this command passes `--plan-status approved`, but `factory/scripts/update_run.py:71-78` unconditionally rejects that argument because only the native approval recorder may set it. Root read-only diagnosis confirms the root. Fix once in the already-required P1 correction batch; duplicate acceptance verdicts share their root regression.",
+      "triaged_by": "Root",
+      "triaged_at": "2026-09-18T23:49:19+00:00",
+      "delta_id": "957a821fdaa53d07cd3a983cd26f83658c9c97c97e128cad0b24ca315d6df289",
+      "generation_id": "87d938fe31107f235d6db6ccd62ce4df67cfead67da2bdb3da483bca4b9040c5",
+      "task_id": "LEAN-WORKFLOW"
+    },
+    {
+      "lens": "quality",
+      "finding": {
+        "area": "factory/scripts/forge_cli",
+        "category": "bug",
+        "file_path": "factory/scripts/forge_cli/stages.py",
+        "line": 3138,
+        "summary": "Bind canonical-verifier receipts to every phase tool (factory/scripts/forge_cli/stages.py:3138): When `verify.py` is the declared verifier and a structural, typecheck, quality, or test-phase executable/dependency changes in place without changing the environment strings or repository bytes, this branch probes only the outer Python environment and still marks the verifier reusable.",
+        "title": "Bind canonical-verifier receipts to every phase tool"
+      },
+      "verdict": "real",
+      "evidence": "factory/scripts/forge_cli/stages.py:3138",
+      "instances": [
+        "factory/scripts/forge_cli/stages.py:3138"
+      ],
+      "keep": "Preserve exact proof identity, immutable review lineage, current pointer validation, shell command semantics, and fail-closed approval. Focused checks only in worker; Root owns final close.",
+      "reason": "P1: Bind canonical-verifier receipts to every phase tool (factory/scripts/forge_cli/stages.py:3138): When `verify.py` is the declared verifier and a structural, typecheck, quality, or test-phase executable/dependency changes in place without changing the environment strings or repository bytes, this branch probes only the outer Python environment and still marks the verifier reusable. Root read-only diagnosis confirms the root. Fix once in the already-required P1 correction batch; duplicate acceptance verdicts share their root regression.",
+      "triaged_by": "Root",
+      "triaged_at": "2026-09-18T23:49:20+00:00",
+      "delta_id": "957a821fdaa53d07cd3a983cd26f83658c9c97c97e128cad0b24ca315d6df289",
+      "generation_id": "87d938fe31107f235d6db6ccd62ce4df67cfead67da2bdb3da483bca4b9040c5",
+      "task_id": "LEAN-WORKFLOW"
+    },
+    {
+      "lens": "quality",
+      "finding": {
+        "area": "factory/scripts/forge_cli",
+        "category": "bug",
+        "file_path": "factory/scripts/forge_cli/stages.py",
+        "line": 2221,
+        "summary": "Include pytest collection paths injected through addopts (factory/scripts/forge_cli/stages.py:2221): When a pytest command names a tracked directory but `PYTEST_ADDOPTS` or the pytest config's `addopts` also names an ignored or external test file, this line derives collection inputs only from the command's tokens.",
+        "title": "Include pytest collection paths injected through addopts"
+      },
+      "verdict": "real",
+      "evidence": "factory/scripts/forge_cli/stages.py:2221",
+      "instances": [
+        "factory/scripts/forge_cli/stages.py:2221"
+      ],
+      "keep": "Preserve exact proof identity, immutable review lineage, current pointer validation, shell command semantics, and fail-closed approval. Focused checks only in worker; Root owns final close.",
+      "reason": "P1: Include pytest collection paths injected through addopts (factory/scripts/forge_cli/stages.py:2221): When a pytest command names a tracked directory but `PYTEST_ADDOPTS` or the pytest config's `addopts` also names an ignored or external test file, this line derives collection inputs only from the command's tokens. Root read-only diagnosis confirms the root. Fix once in the already-required P1 correction batch; duplicate acceptance verdicts share their root regression.",
+      "triaged_by": "Root",
+      "triaged_at": "2026-09-18T23:49:21+00:00",
+      "delta_id": "957a821fdaa53d07cd3a983cd26f83658c9c97c97e128cad0b24ca315d6df289",
+      "generation_id": "87d938fe31107f235d6db6ccd62ce4df67cfead67da2bdb3da483bca4b9040c5",
+      "task_id": "LEAN-WORKFLOW"
+    },
+    {
+      "lens": "quality",
+      "finding": {
+        "area": "factory/scripts/forge_cli",
+        "category": "bug",
+        "file_path": "factory/scripts/forge_cli/stages.py",
+        "line": 3280,
+        "summary": "Reject tracked pytest symlinks that resolve outside the repository (factory/scripts/forge_cli/stages.py:3280): When an explicitly collected, Git-tracked test file is a symlink to an external file, resolving every tracked path here puts the external target into `allowed_product_paths`.",
+        "title": "Reject tracked pytest symlinks that resolve outside the repository"
+      },
+      "verdict": "real",
+      "evidence": "factory/scripts/forge_cli/stages.py:3280",
+      "instances": [
+        "factory/scripts/forge_cli/stages.py:3280"
+      ],
+      "keep": "Preserve exact proof identity, immutable review lineage, current pointer validation, shell command semantics, and fail-closed approval. Focused checks only in worker; Root owns final close.",
+      "reason": "P1: Reject tracked pytest symlinks that resolve outside the repository (factory/scripts/forge_cli/stages.py:3280): When an explicitly collected, Git-tracked test file is a symlink to an external file, resolving every tracked path here puts the external target into `allowed_product_paths`. Root read-only diagnosis confirms the root. Fix once in the already-required P1 correction batch; duplicate acceptance verdicts share their root regression.",
+      "triaged_by": "Root",
+      "triaged_at": "2026-09-18T23:49:21+00:00",
+      "delta_id": "957a821fdaa53d07cd3a983cd26f83658c9c97c97e128cad0b24ca315d6df289",
+      "generation_id": "87d938fe31107f235d6db6ccd62ce4df67cfead67da2bdb3da483bca4b9040c5",
+      "task_id": "LEAN-WORKFLOW"
+    },
+    {
+      "lens": "quality",
+      "finding": {
+        "area": "factory/scripts/forge_cli",
+        "category": "bug",
+        "file_path": "factory/scripts/forge_cli/upgrade.py",
+        "line": 1989,
+        "summary": "Do not bind a completed migration to the mutable selected review (factory/scripts/forge_cli/upgrade.py:1989): Trigger: a sealed, fixed-proof task is migrated, then the supported done-but-unshipped reopen/review/close flow publishes a new selected generation and marker.",
+        "title": "Do not bind a completed migration to the mutable selected review"
+      },
+      "verdict": "real",
+      "evidence": "factory/scripts/forge_cli/upgrade.py:1989",
+      "instances": [
+        "factory/scripts/forge_cli/upgrade.py:1989"
+      ],
+      "keep": "Preserve exact proof identity, immutable review lineage, current pointer validation, shell command semantics, and fail-closed approval. Focused checks only in worker; Root owns final close.",
+      "reason": "P1: Do not bind a completed migration to the mutable selected review (factory/scripts/forge_cli/upgrade.py:1989): Trigger: a sealed, fixed-proof task is migrated, then the supported done-but-unshipped reopen/review/close flow publishes a new selected generation and marker. Root read-only diagnosis confirms the root. Fix once in the already-required P1 correction batch; duplicate acceptance verdicts share their root regression.",
+      "triaged_by": "Root",
+      "triaged_at": "2026-09-18T23:49:22+00:00",
+      "delta_id": "957a821fdaa53d07cd3a983cd26f83658c9c97c97e128cad0b24ca315d6df289",
+      "generation_id": "87d938fe31107f235d6db6ccd62ce4df67cfead67da2bdb3da483bca4b9040c5",
+      "task_id": "LEAN-WORKFLOW"
+    },
+    {
+      "lens": "quality",
+      "finding": {
+        "area": "factory/scripts",
+        "category": "bug",
+        "file_path": "factory/scripts/verify.py",
+        "line": 120,
+        "summary": "Preserve shell semantics when adding canonical JUnit output (factory/scripts/verify.py:120): When task close sets `FORGE_CANONICAL_JUNIT`, this line rebuilds the configured shell command with POSIX `shlex.join`.",
+        "title": "Preserve shell semantics when adding canonical JUnit output"
+      },
+      "verdict": "real",
+      "evidence": "factory/scripts/verify.py:120",
+      "instances": [
+        "factory/scripts/verify.py:120"
+      ],
+      "keep": "Preserve exact proof identity, immutable review lineage, current pointer validation, shell command semantics, and fail-closed approval. Focused checks only in worker; Root owns final close.",
+      "reason": "P1: Preserve shell semantics when adding canonical JUnit output (factory/scripts/verify.py:120): When task close sets `FORGE_CANONICAL_JUNIT`, this line rebuilds the configured shell command with POSIX `shlex.join`. Root read-only diagnosis confirms the root. Fix once in the already-required P1 correction batch; duplicate acceptance verdicts share their root regression.",
+      "triaged_by": "Root",
+      "triaged_at": "2026-09-18T23:49:23+00:00",
+      "delta_id": "957a821fdaa53d07cd3a983cd26f83658c9c97c97e128cad0b24ca315d6df289",
+      "generation_id": "87d938fe31107f235d6db6ccd62ce4df67cfead67da2bdb3da483bca4b9040c5",
+      "task_id": "LEAN-WORKFLOW"
+    },
+    {
+      "lens": "quality",
+      "finding": {
+        "area": ".factory/stories/FORGE-COORD-1/task-plans/LEAN-WORKFLOW.md#Acceptance Criteria",
+        "category": "plan-contract-partial",
+        "file_path": "factory/tests/test_regrill_scope.py",
+        "line": 642,
+        "summary": "LEAN-AC-2: Shared recorder identity: the shared approval recorder binds exactly one current-frontier candidate, current digest, runtime, stable session/event identity, plan kind/story/task, replay refusal, and `human-via-Claude` / `human-via-Codex` attribution. \u2014 partial: factory/tests/test_regrill_scope.py:642 proves valid story-approval ancestry, but malformed sibling approval-event records can still raise instead of being refused safely.",
+        "title": "VERDICT LEAN-AC-2: partial"
+      },
+      "verdict": "real",
+      "evidence": "factory/tests/test_regrill_scope.py:642",
+      "instances": [
+        "factory/tests/test_regrill_scope.py:642"
+      ],
+      "keep": "Preserve exact proof identity, immutable review lineage, current pointer validation, shell command semantics, and fail-closed approval. Focused checks only in worker; Root owns final close.",
+      "reason": "P2: LEAN-AC-2: Shared recorder identity: the shared approval recorder binds exactly one current-frontier candidate, current digest, runtime, stable session/event identity, plan kind/story/task, replay refusal, and `human-via-Claude` / `human-via-Codex` attribution. \u2014 partial: factory/tests/test_regrill_scope.py:642 proves valid story-approval ancestry, but malformed sibling approval-event records can still raise instead of being refused safely. Root read-only diagnosis confirms the root. Fix once in the already-required P1 correction batch; duplicate acceptance verdicts share their root regression.",
+      "triaged_by": "Root",
+      "triaged_at": "2026-09-18T23:49:23+00:00",
+      "delta_id": "957a821fdaa53d07cd3a983cd26f83658c9c97c97e128cad0b24ca315d6df289",
+      "generation_id": "87d938fe31107f235d6db6ccd62ce4df67cfead67da2bdb3da483bca4b9040c5",
+      "task_id": "LEAN-WORKFLOW"
+    },
+    {
+      "lens": "quality",
+      "finding": {
+        "area": ".factory/stories/FORGE-COORD-1/task-plans/LEAN-WORKFLOW.md#Acceptance Criteria",
+        "category": "plan-contract-partial",
+        "file_path": "factory/skills/forge.md",
+        "line": 151,
+        "summary": "LEAN-AC-3: Ceremony removal: requirements grill, round floors, old round ledgers as authority, fake frontier questions, second unchanged save, and manual plan/task approval leave normal runtime; Lean preserves one independent cold grill plus complete finding disposition, including the three requirements cold-read gap dispositions for context snapshot security, independent migration coverage, and clean-target preservation, explained amendment bridge to the final artifact digest, final human approval on that digest, and refusal for unexplained out-of-disposition changes. \u2014 partial: factory/skills/forge.md:151 directs `/grill-me` followed by the runtime-specific grill even though the contract requires one independent cold grill.",
+        "title": "VERDICT LEAN-AC-3: partial"
+      },
+      "verdict": "real",
+      "evidence": "factory/skills/forge.md:151",
+      "instances": [
+        "factory/skills/forge.md:151"
+      ],
+      "keep": "Preserve exact proof identity, immutable review lineage, current pointer validation, shell command semantics, and fail-closed approval. Focused checks only in worker; Root owns final close.",
+      "reason": "P2: LEAN-AC-3: Ceremony removal: requirements grill, round floors, old round ledgers as authority, fake frontier questions, second unchanged save, and manual plan/task approval leave normal runtime; Lean preserves one independent cold grill plus complete finding disposition, including the three requirements cold-read gap dispositions for context snapshot security, independent migration coverage, and clean-target preservation, explained amendment bridge to the final artifact digest, final human approval on that digest, and refusal for unexplained out-of-disposition changes. \u2014 partial: factory/skills/forge.md:151 directs `/grill-me` followed by the runtime-specific grill even though the contract requires one independent cold grill. Root read-only diagnosis confirms the root. Fix once in the already-required P1 correction batch; duplicate acceptance verdicts share their root regression.",
+      "triaged_by": "Root",
+      "triaged_at": "2026-09-18T23:49:24+00:00",
+      "delta_id": "957a821fdaa53d07cd3a983cd26f83658c9c97c97e128cad0b24ca315d6df289",
+      "generation_id": "87d938fe31107f235d6db6ccd62ce4df67cfead67da2bdb3da483bca4b9040c5",
+      "task_id": "LEAN-WORKFLOW"
+    },
+    {
+      "lens": "quality",
+      "finding": {
+        "area": ".factory/stories/FORGE-COORD-1/task-plans/LEAN-WORKFLOW.md#Acceptance Criteria",
+        "category": "plan-contract-partial",
+        "file_path": "WORKFLOW.md",
+        "line": 655,
+        "summary": "LEAN-AC-5: Content-bound close reuse: test/verify receipts and selected-review reviewed-meaning identity reuse only when their proof-type inputs match; substantive acceptance/security/migration/evidence/review-instruction/product-delta changes force review, while canonicalized bookkeeping/timestamp changes preserve immutable original provenance. \u2014 partial: WORKFLOW.md:655 states that plan- and docs-only changes do not invalidate evidence, contrary to the contract's substantive reviewed-meaning invalidation requirement.",
+        "title": "VERDICT LEAN-AC-5: partial"
+      },
+      "verdict": "real",
+      "evidence": "WORKFLOW.md:655",
+      "instances": [
+        "WORKFLOW.md:655"
+      ],
+      "keep": "Preserve exact proof identity, immutable review lineage, current pointer validation, shell command semantics, and fail-closed approval. Focused checks only in worker; Root owns final close.",
+      "reason": "P2: LEAN-AC-5: Content-bound close reuse: test/verify receipts and selected-review reviewed-meaning identity reuse only when their proof-type inputs match; substantive acceptance/security/migration/evidence/review-instruction/product-delta changes force review, while canonicalized bookkeeping/timestamp changes preserve immutable original provenance. \u2014 partial: WORKFLOW.md:655 states that plan- and docs-only changes do not invalidate evidence, contrary to the contract's substantive reviewed-meaning invalidation requirement. Root read-only diagnosis confirms the root. Fix once in the already-required P1 correction batch; duplicate acceptance verdicts share their root regression.",
+      "triaged_by": "Root",
+      "triaged_at": "2026-09-18T23:49:25+00:00",
+      "delta_id": "957a821fdaa53d07cd3a983cd26f83658c9c97c97e128cad0b24ca315d6df289",
+      "generation_id": "87d938fe31107f235d6db6ccd62ce4df67cfead67da2bdb3da483bca4b9040c5",
+      "task_id": "LEAN-WORKFLOW"
+    },
+    {
+      "lens": "quality",
+      "finding": {
+        "area": ".factory/stories/FORGE-COORD-1/task-plans/LEAN-WORKFLOW.md#Acceptance Criteria",
+        "category": "plan-contract-partial",
+        "file_path": "factory/scripts/forge_cli/upgrade.py",
+        "line": 2794,
+        "summary": "LEAN-AC-6: Lean migration: `forge upgrade` performs clean-checkout preflight with no `--force` bypass, full inventory/hash/classification, independent raw no-follow coverage over fixed legacy roots/exact parents, temp build, validation, publish/readback, profile/settings preservation, and deletion only after durable current outputs exist. Byte-identical retry passes and unequal partial retry refuses, except that a validated original empty completion may publish one bound `lean-workflow-v2-supplement.json` when later merged history introduces newly eligible proof. \u2014 partial: factory/scripts/forge_cli/upgrade.py:2794 implements inventory, validation, conversion, and retry machinery, but finalizes the manifest non-atomically after deleting legacy inputs.",
+        "title": "VERDICT LEAN-AC-6: partial"
+      },
+      "verdict": "real",
+      "evidence": "factory/scripts/forge_cli/upgrade.py:2794",
+      "instances": [
+        "factory/scripts/forge_cli/upgrade.py:2794"
+      ],
+      "keep": "Preserve exact proof identity, immutable review lineage, current pointer validation, shell command semantics, and fail-closed approval. Focused checks only in worker; Root owns final close.",
+      "reason": "P1: LEAN-AC-6: Lean migration: `forge upgrade` performs clean-checkout preflight with no `--force` bypass, full inventory/hash/classification, independent raw no-follow coverage over fixed legacy roots/exact parents, temp build, validation, publish/readback, profile/settings preservation, and deletion only after durable current outputs exist. Byte-identical retry passes and unequal partial retry refuses, except that a validated original empty completion may publish one bound `lean-workflow-v2-supplement.json` when later merged history introduces newly eligible proof. \u2014 partial: factory/scripts/forge_cli/upgrade.py:2794 implements inventory, validation, conversion, and retry machinery, but finalizes the manifest non-atomically after deleting legacy inputs. Root read-only diagnosis confirms the root. Fix once in the already-required P1 correction batch; duplicate acceptance verdicts share their root regression.",
+      "triaged_by": "Root",
+      "triaged_at": "2026-09-18T23:49:25+00:00",
+      "delta_id": "957a821fdaa53d07cd3a983cd26f83658c9c97c97e128cad0b24ca315d6df289",
+      "generation_id": "87d938fe31107f235d6db6ccd62ce4df67cfead67da2bdb3da483bca4b9040c5",
+      "task_id": "LEAN-WORKFLOW"
+    },
+    {
+      "lens": "quality",
+      "finding": {
+        "area": ".factory/stories/FORGE-COORD-1/task-plans/LEAN-WORKFLOW.md#Acceptance Criteria",
+        "category": "plan-contract-partial",
+        "file_path": ".claude/CLAUDE.md",
+        "line": 11,
+        "summary": "LEAN-AC-12: Docs/runtime agreement: workflow, docs, specs, prompts, skills, architecture text, reviewer focus, required tests, and design-review status agree with the implemented runtime without duplicating long canon in `AGENTS.md`. \u2014 partial: .claude/CLAUDE.md:11 still assigns formal review to a Codex engine, contradicting the exclusive external-Autoreview ownership stated by AGENTS.md and README.md, so the changed guidance does not fully agree.",
+        "title": "VERDICT LEAN-AC-12: partial"
+      },
+      "verdict": "real",
+      "evidence": ".claude/CLAUDE.md:11",
+      "instances": [
+        ".claude/CLAUDE.md:11"
+      ],
+      "keep": "Preserve exact proof identity, immutable review lineage, current pointer validation, shell command semantics, and fail-closed approval. Focused checks only in worker; Root owns final close.",
+      "reason": "P2: LEAN-AC-12: Docs/runtime agreement: workflow, docs, specs, prompts, skills, architecture text, reviewer focus, required tests, and design-review status agree with the implemented runtime without duplicating long canon in `AGENTS.md`. \u2014 partial: .claude/CLAUDE.md:11 still assigns formal review to a Codex engine, contradicting the exclusive external-Autoreview ownership stated by AGENTS.md and README.md, so the changed guidance does not fully agree. Root read-only diagnosis confirms the root. Fix once in the already-required P1 correction batch; duplicate acceptance verdicts share their root regression.",
+      "triaged_by": "Root",
+      "triaged_at": "2026-09-18T23:49:26+00:00",
+      "delta_id": "957a821fdaa53d07cd3a983cd26f83658c9c97c97e128cad0b24ca315d6df289",
+      "generation_id": "87d938fe31107f235d6db6ccd62ce4df67cfead67da2bdb3da483bca4b9040c5",
+      "task_id": "LEAN-WORKFLOW"
+    },
+    {
+      "lens": "quality",
+      "finding": {
+        "area": ".factory/stories/FORGE-COORD-1/task-plans/LEAN-WORKFLOW.md#Acceptance Criteria",
+        "category": "plan-contract-partial",
+        "file_path": "WORKFLOW.md",
+        "line": 690,
+        "summary": "LEAN-AC-13: Single final proof owner: workers run focused checks only; `forge task close` runs the one canonical full verification suite, records truthful complete automated evidence from that execution before review, and normal plus narrowed delegate briefs state that boundary. \u2014 partial: WORKFLOW.md:690 bypasses the required second `task close` after functional proof and instead invokes a command that requires the stage already to be done.",
+        "title": "VERDICT LEAN-AC-13: partial"
+      },
+      "verdict": "real",
+      "evidence": "WORKFLOW.md:690",
+      "instances": [
+        "WORKFLOW.md:690"
+      ],
+      "keep": "Preserve exact proof identity, immutable review lineage, current pointer validation, shell command semantics, and fail-closed approval. Focused checks only in worker; Root owns final close.",
+      "reason": "P2: LEAN-AC-13: Single final proof owner: workers run focused checks only; `forge task close` runs the one canonical full verification suite, records truthful complete automated evidence from that execution before review, and normal plus narrowed delegate briefs state that boundary. \u2014 partial: WORKFLOW.md:690 bypasses the required second `task close` after functional proof and instead invokes a command that requires the stage already to be done. Root read-only diagnosis confirms the root. Fix once in the already-required P1 correction batch; duplicate acceptance verdicts share their root regression.",
+      "triaged_by": "Root",
+      "triaged_at": "2026-09-18T23:49:27+00:00",
+      "delta_id": "957a821fdaa53d07cd3a983cd26f83658c9c97c97e128cad0b24ca315d6df289",
+      "generation_id": "87d938fe31107f235d6db6ccd62ce4df67cfead67da2bdb3da483bca4b9040c5",
+      "task_id": "LEAN-WORKFLOW"
+    },
+    {
+      "lens": "quality",
+      "finding": {
+        "area": ".factory/stories/FORGE-COORD-1/task-plans/LEAN-WORKFLOW.md#Acceptance Criteria",
+        "category": "plan-contract-partial",
+        "file_path": "factory/scripts/forge_cli/stages.py",
+        "line": 3138,
+        "summary": "LEAN-AC-14: Exact-identity reuse: any reused test or verification result binds the full product, command, selector, tool, dependency, configuration, environment, and generated-input identity; missing, partial, unknown, or drifted identity refuses reuse. \u2014 partial: factory/scripts/forge_cli/stages.py:3138 marks the canonical verifier reusable after probing its outer interpreter while omitting the identities of phase commands launched by verify.py.",
+        "title": "VERDICT LEAN-AC-14: partial"
+      },
+      "verdict": "real",
+      "evidence": "factory/scripts/forge_cli/stages.py:3138",
+      "instances": [
+        "factory/scripts/forge_cli/stages.py:3138"
+      ],
+      "keep": "Preserve exact proof identity, immutable review lineage, current pointer validation, shell command semantics, and fail-closed approval. Focused checks only in worker; Root owns final close.",
+      "reason": "P1: LEAN-AC-14: Exact-identity reuse: any reused test or verification result binds the full product, command, selector, tool, dependency, configuration, environment, and generated-input identity; missing, partial, unknown, or drifted identity refuses reuse. \u2014 partial: factory/scripts/forge_cli/stages.py:3138 marks the canonical verifier reusable after probing its outer interpreter while omitting the identities of phase commands launched by verify.py. Root read-only diagnosis confirms the root. Fix once in the already-required P1 correction batch; duplicate acceptance verdicts share their root regression.",
+      "triaged_by": "Root",
+      "triaged_at": "2026-09-18T23:49:27+00:00",
+      "delta_id": "957a821fdaa53d07cd3a983cd26f83658c9c97c97e128cad0b24ca315d6df289",
+      "generation_id": "87d938fe31107f235d6db6ccd62ce4df67cfead67da2bdb3da483bca4b9040c5",
+      "task_id": "LEAN-WORKFLOW"
+    },
+    {
+      "lens": "quality",
+      "finding": {
+        "area": ".factory/stories/FORGE-COORD-1/task-plans/LEAN-WORKFLOW.md#Acceptance Criteria",
+        "category": "plan-contract-partial",
+        "file_path": "factory/scripts/verify.py",
+        "line": 120,
+        "summary": "LEAN-AC-15: Canonical selector proof: when the canonical pytest/JUnit execution truthfully proves every exact declared required-test node id, close consumes that report instead of rerunning selectors; any missing or ambiguous id retains the dedicated required-selector execution and refusal. \u2014 partial: factory/scripts/verify.py:120 adds canonical JUnit output, but the unsafe command round-trip can fail before producing the report that exact required-node consumption depends upon.",
+        "title": "VERDICT LEAN-AC-15: partial"
+      },
+      "verdict": "real",
+      "evidence": "factory/scripts/verify.py:120",
+      "instances": [
+        "factory/scripts/verify.py:120"
+      ],
+      "keep": "Preserve exact proof identity, immutable review lineage, current pointer validation, shell command semantics, and fail-closed approval. Focused checks only in worker; Root owns final close.",
+      "reason": "P1: LEAN-AC-15: Canonical selector proof: when the canonical pytest/JUnit execution truthfully proves every exact declared required-test node id, close consumes that report instead of rerunning selectors; any missing or ambiguous id retains the dedicated required-selector execution and refusal. \u2014 partial: factory/scripts/verify.py:120 adds canonical JUnit output, but the unsafe command round-trip can fail before producing the report that exact required-node consumption depends upon. Root read-only diagnosis confirms the root. Fix once in the already-required P1 correction batch; duplicate acceptance verdicts share their root regression.",
+      "triaged_by": "Root",
+      "triaged_at": "2026-09-18T23:49:28+00:00",
+      "delta_id": "957a821fdaa53d07cd3a983cd26f83658c9c97c97e128cad0b24ca315d6df289",
+      "generation_id": "87d938fe31107f235d6db6ccd62ce4df67cfead67da2bdb3da483bca4b9040c5",
+      "task_id": "LEAN-WORKFLOW"
+    },
+    {
+      "lens": "quality",
+      "finding": {
+        "area": "factory/scripts/forge_cli",
+        "category": "bug",
+        "file_path": "factory/scripts/forge_cli/stages.py",
+        "line": 2225,
+        "summary": "Reject parameter-specific node selectors as broad canonical coverage (factory/scripts/forge_cli/stages.py:2225): Trigger: `FACTORY_TEST_CMD` selects one parameterized node, such as `tests/test_x.py::test_case[param1]`, while `required_tests` declares the bare `test_case`.",
+        "title": "Reject parameter-specific node selectors as broad canonical coverage"
+      },
+      "verdict": "real",
+      "evidence": "factory/scripts/forge_cli/stages.py:2225",
+      "instances": [
+        "factory/scripts/forge_cli/stages.py:2225"
+      ],
+      "keep": "Keep full required-node proof and broad collection positive; no new collection registry.",
+      "reason": "P1: canonical one-parameter collection can incorrectly satisfy a required bare node and omit failing other parameters. Refuse node-specific broad recognition and retain dedicated-selector fallback.",
+      "triaged_by": "Root",
+      "triaged_at": "2026-09-19T01:18:52+00:00",
+      "delta_id": "84d7b5b8325a297210d4dc0a0798f1a0cd45c250d11e3eeb5a57e5cce7397e24",
+      "generation_id": "6848e1dda9936fe3318759c6de5db2e7b1f507dc21ddc60a9dded2bad9a6c52b",
+      "task_id": "LEAN-WORKFLOW"
+    },
+    {
+      "lens": "quality",
+      "finding": {
+        "area": "factory/scripts/forge_cli",
+        "category": "bug",
+        "file_path": "factory/scripts/forge_cli/upgrade.py",
+        "line": 3584,
+        "summary": "Keep profile replacement inside the resumable migration transaction (factory/scripts/forge_cli/upgrade.py:3584): When a target contains an exact retired Forge profile, the code defers installing its current replacement until after `apply_lean_migration` has deleted the old profile and marked the manifest complete.",
+        "title": "Keep profile replacement inside the resumable migration transaction"
+      },
+      "verdict": "real",
+      "evidence": "factory/scripts/forge_cli/upgrade.py:3584",
+      "instances": [
+        "factory/scripts/forge_cli/upgrade.py:3584"
+      ],
+      "keep": "Keep independent inventory, client profile preservation, no-follow safety, durable readback and atomic completion.",
+      "reason": "P1: completed manifest is published after old profile deletion but before current replacement; interruption leaves dirty completed checkout that public retry refuses. Move exact replacement inside authenticated resumable transaction before completion.",
+      "triaged_by": "Root",
+      "triaged_at": "2026-09-19T01:18:52+00:00",
+      "delta_id": "84d7b5b8325a297210d4dc0a0798f1a0cd45c250d11e3eeb5a57e5cce7397e24",
+      "generation_id": "6848e1dda9936fe3318759c6de5db2e7b1f507dc21ddc60a9dded2bad9a6c52b",
+      "task_id": "LEAN-WORKFLOW"
+    },
+    {
+      "lens": "quality",
+      "finding": {
+        "area": "factory/scripts/forge_cli",
+        "category": "bug",
+        "file_path": "factory/scripts/forge_cli/phase.py",
+        "line": 430,
+        "summary": "Route legacy approvals to a reachable native reapproval state (factory/scripts/forge_cli/phase.py:430): When an active story has a legacy manual approval and its approved plan bytes are unchanged, this branch directs the operator to `forge upgrade`.",
+        "title": "Route legacy approvals to a reachable native reapproval state"
+      },
+      "verdict": "real",
+      "evidence": "factory/scripts/forge_cli/phase.py:430",
+      "instances": [
+        "factory/scripts/forge_cli/phase.py:430"
+      ],
+      "keep": "Correct in the single six-root batch with focused consumer regression; preserve P2 deferrals and existing authority.",
+      "reason": "P1 active legacy approval cannot reach genuine native reapproval before destructive upgrade; fix future and already-completed migration paths.",
+      "triaged_by": "Root",
+      "triaged_at": "2026-09-19T02:33:20+00:00",
+      "delta_id": "8677598aaff8df20d7b45db8c4a37352aa0935198521fab898ce54a94fbd2444",
+      "generation_id": "7b8aa70b6670ddf6bd72b0ee02ebcd5746c9db3dc75c5425aba135d71276f53b",
+      "task_id": "LEAN-WORKFLOW"
+    },
+    {
+      "lens": "quality",
+      "finding": {
+        "area": "factory/scripts/forge_cli",
+        "category": "bug",
+        "file_path": "factory/scripts/forge_cli/stages.py",
+        "line": 3232,
+        "summary": "Bind dependency file bytes before reusing proof receipts (factory/scripts/forge_cli/stages.py:3232): Trigger: an installed pytest plugin or other dependency file is modified in place, or external editable-install source changes, without rewriting its dist-info METADATA or RECORD.",
+        "title": "Bind dependency file bytes before reusing proof receipts"
+      },
+      "verdict": "real",
+      "evidence": "factory/scripts/forge_cli/stages.py:3232",
+      "instances": [
+        "factory/scripts/forge_cli/stages.py:3232"
+      ],
+      "keep": "Correct in the single six-root batch with focused consumer regression; preserve P2 deferrals and existing authority.",
+      "reason": "P1 unchanged distribution metadata permits stale proof after installed module byte drift.",
+      "triaged_by": "Root",
+      "triaged_at": "2026-09-19T02:33:20+00:00",
+      "delta_id": "8677598aaff8df20d7b45db8c4a37352aa0935198521fab898ce54a94fbd2444",
+      "generation_id": "7b8aa70b6670ddf6bd72b0ee02ebcd5746c9db3dc75c5425aba135d71276f53b",
+      "task_id": "LEAN-WORKFLOW"
+    },
+    {
+      "lens": "quality",
+      "finding": {
+        "area": "factory/scripts/forge_cli",
+        "category": "bug",
+        "file_path": "factory/scripts/forge_cli/stages.py",
+        "line": 2201,
+        "summary": "Preserve the verifier launch environment when reusing canonical JUnit (factory/scripts/forge_cli/stages.py:2201): Trigger: a task invokes `factory/scripts/verify.py` through `uv run --with ...`, while `FACTORY_TEST_CMD` and the required selector use direct `python -m pytest`.",
+        "title": "Preserve the verifier launch environment when reusing canonical JUnit"
+      },
+      "verdict": "real",
+      "evidence": "factory/scripts/forge_cli/stages.py:2201",
+      "instances": [
+        "factory/scripts/forge_cli/stages.py:2201"
+      ],
+      "keep": "Correct in the single six-root batch with focused consumer regression; preserve P2 deferrals and existing authority.",
+      "reason": "P1 wrapped producer environment is discarded and parent identity can incorrectly authorize selector reuse.",
+      "triaged_by": "Root",
+      "triaged_at": "2026-09-19T02:33:21+00:00",
+      "delta_id": "8677598aaff8df20d7b45db8c4a37352aa0935198521fab898ce54a94fbd2444",
+      "generation_id": "7b8aa70b6670ddf6bd72b0ee02ebcd5746c9db3dc75c5425aba135d71276f53b",
+      "task_id": "LEAN-WORKFLOW"
+    },
+    {
+      "lens": "quality",
+      "finding": {
+        "area": "factory/scripts/forge_cli",
+        "category": "bug",
+        "file_path": "factory/scripts/forge_cli/upgrade.py",
+        "line": 421,
+        "summary": "Refuse schema-invalid historical review triples before retiring them (factory/scripts/forge_cli/upgrade.py:421): When a complete shipped-story or history review triple has the expected top-level field types but violates the review schema\u2014for example `score` is outside 0..10\u2014this branch performs only shallow type/digest checks.",
+        "title": "Refuse schema-invalid historical review triples before retiring them"
+      },
+      "verdict": "real",
+      "evidence": "factory/scripts/forge_cli/upgrade.py:421",
+      "instances": [
+        "factory/scripts/forge_cli/upgrade.py:421"
+      ],
+      "keep": "Correct in the single six-root batch with focused consumer regression; preserve P2 deferrals and existing authority.",
+      "reason": "P1 invalid historical proof is eligible for destructive retirement without schema validation.",
+      "triaged_by": "Root",
+      "triaged_at": "2026-09-19T02:33:22+00:00",
+      "delta_id": "8677598aaff8df20d7b45db8c4a37352aa0935198521fab898ce54a94fbd2444",
+      "generation_id": "7b8aa70b6670ddf6bd72b0ee02ebcd5746c9db3dc75c5425aba135d71276f53b",
+      "task_id": "LEAN-WORKFLOW"
+    },
+    {
+      "lens": "quality",
+      "finding": {
+        "area": "factory/scripts",
+        "category": "bug",
+        "file_path": "factory/scripts/pre_tool_use.py",
+        "line": 1087,
+        "summary": "Preserve direct native planning edits through apply_patch (factory/scripts/pre_tool_use.py:1087): When native Codex authors an ordinary planning document through its registered `apply_patch` tool before any active stage, this line assigns every patch path to `scoped_targets`, including exempt `docs/`, `plans/`, and similar orchestration surfaces.",
+        "title": "Preserve direct native planning edits through apply_patch"
+      },
+      "verdict": "real",
+      "evidence": "factory/scripts/pre_tool_use.py:1087",
+      "instances": [
+        "factory/scripts/pre_tool_use.py:1087"
+      ],
+      "keep": "Correct in the single six-root batch with focused consumer regression; preserve P2 deferrals and existing authority.",
+      "reason": "P1 normal authorized pre-stage native planning patches are blocked by bypassing existing product classification.",
+      "triaged_by": "Root",
+      "triaged_at": "2026-09-19T02:33:23+00:00",
+      "delta_id": "8677598aaff8df20d7b45db8c4a37352aa0935198521fab898ce54a94fbd2444",
+      "generation_id": "7b8aa70b6670ddf6bd72b0ee02ebcd5746c9db3dc75c5425aba135d71276f53b",
+      "task_id": "LEAN-WORKFLOW"
+    },
+    {
+      "lens": "quality",
+      "finding": {
+        "area": ".factory/stories/FORGE-COORD-1/task-plans/LEAN-WORKFLOW.md#Acceptance Criteria",
+        "category": "plan-contract-partial",
+        "file_path": "factory/scripts/forge_cli/stages.py",
+        "line": 3232,
+        "summary": "LEAN-AC-5: Content-bound close reuse: test/verify receipts and selected-review reviewed-meaning identity reuse only when their proof-type inputs match; substantive acceptance/security/migration/evidence/review-instruction/product-delta changes force review, while canonicalized bookkeeping/timestamp changes preserve immutable original provenance. \u2014 partial: factory/scripts/forge_cli/stages.py:3232 leaves installed dependency source-byte drift outside the content-bound reusable-proof identity.",
+        "title": "VERDICT LEAN-AC-5: partial"
+      },
+      "verdict": "real",
+      "evidence": "factory/scripts/forge_cli/stages.py:3232",
+      "instances": [
+        "factory/scripts/forge_cli/stages.py:3232"
+      ],
+      "keep": "Correct in the single six-root batch with focused consumer regression; preserve P2 deferrals and existing authority.",
+      "reason": "P1 duplicate of actual dependency byte identity root; one complete correction and consumer regression.",
+      "triaged_by": "Root",
+      "triaged_at": "2026-09-19T02:33:23+00:00",
+      "delta_id": "8677598aaff8df20d7b45db8c4a37352aa0935198521fab898ce54a94fbd2444",
+      "generation_id": "7b8aa70b6670ddf6bd72b0ee02ebcd5746c9db3dc75c5425aba135d71276f53b",
+      "task_id": "LEAN-WORKFLOW"
+    },
+    {
+      "lens": "quality",
+      "finding": {
+        "area": ".factory/stories/FORGE-COORD-1/task-plans/LEAN-WORKFLOW.md#Acceptance Criteria",
+        "category": "plan-contract-partial",
+        "file_path": "factory/scripts/forge_cli/phase.py",
+        "line": 430,
+        "summary": "LEAN-AC-6: Lean migration: `forge upgrade` performs clean-checkout preflight with no `--force` bypass, full inventory/hash/classification, independent raw no-follow coverage over fixed legacy roots/exact parents, temp build, validation, publish/readback, profile/settings preservation, and deletion only after durable current outputs exist. Byte-identical retry passes and unequal partial retry refuses, except that a validated original empty completion may publish one bound `lean-workflow-v2-supplement.json` when later merged history introduces newly eligible proof. \u2014 partial: factory/scripts/forge_cli/phase.py:430 exposes an incomplete legacy-approval migration handoff: upgrade removes the old authority without making the unchanged plan eligible for replacement native approval.",
+        "title": "VERDICT LEAN-AC-6: partial"
+      },
+      "verdict": "real",
+      "evidence": "factory/scripts/forge_cli/phase.py:430",
+      "instances": [
+        "factory/scripts/forge_cli/phase.py:430"
+      ],
+      "keep": "Correct in the single six-root batch with focused consumer regression; preserve P2 deferrals and existing authority.",
+      "reason": "P1 duplicate of reachable legacy native approval recovery root.",
+      "triaged_by": "Root",
+      "triaged_at": "2026-09-19T02:33:24+00:00",
+      "delta_id": "8677598aaff8df20d7b45db8c4a37352aa0935198521fab898ce54a94fbd2444",
+      "generation_id": "7b8aa70b6670ddf6bd72b0ee02ebcd5746c9db3dc75c5425aba135d71276f53b",
+      "task_id": "LEAN-WORKFLOW"
+    },
+    {
+      "lens": "quality",
+      "finding": {
+        "area": ".factory/stories/FORGE-COORD-1/task-plans/LEAN-WORKFLOW.md#Acceptance Criteria",
+        "category": "plan-contract-partial",
+        "file_path": "factory/scripts/forge_cli/stages.py",
+        "line": 3232,
+        "summary": "LEAN-AC-14: Exact-identity reuse: any reused test or verification result binds the full product, command, selector, tool, dependency, configuration, environment, and generated-input identity; missing, partial, unknown, or drifted identity refuses reuse. \u2014 partial: factory/scripts/forge_cli/stages.py:3232 hashes dependency metadata and RECORD text but not the dependency files whose execution results are reused.",
+        "title": "VERDICT LEAN-AC-14: partial"
+      },
+      "verdict": "real",
+      "evidence": "factory/scripts/forge_cli/stages.py:3232",
+      "instances": [
+        "factory/scripts/forge_cli/stages.py:3232"
+      ],
+      "keep": "Correct in the single six-root batch with focused consumer regression; preserve P2 deferrals and existing authority.",
+      "reason": "P1 duplicate of dependency drift-safe proof reuse root.",
+      "triaged_by": "Root",
+      "triaged_at": "2026-09-19T02:33:25+00:00",
+      "delta_id": "8677598aaff8df20d7b45db8c4a37352aa0935198521fab898ce54a94fbd2444",
+      "generation_id": "7b8aa70b6670ddf6bd72b0ee02ebcd5746c9db3dc75c5425aba135d71276f53b",
+      "task_id": "LEAN-WORKFLOW"
+    },
+    {
+      "lens": "security",
+      "finding": {
+        "area": "factory/scripts/forge_cli",
+        "category": "security",
+        "file_path": "factory/scripts/forge_cli/review_brief.py",
+        "line": 301,
+        "summary": "Refuse symlinked decision records before exporting their bytes (factory/scripts/forge_cli/review_brief.py:301): Trigger: a repository contains an accepted-looking `docs/decisions/NNNN-*.md` symlink to a Markdown decision in another private checkout or elsewhere on the host.",
+        "title": "Refuse symlinked decision records before exporting their bytes"
+      },
+      "verdict": "real",
+      "evidence": "factory/scripts/forge_cli/review_brief.py:301",
+      "instances": [
+        "factory/scripts/forge_cli/review_brief.py:301"
+      ],
+      "keep": "Correct in the single six-root batch with focused consumer regression; preserve P2 deferrals and existing authority.",
+      "reason": "P1 normal external review exports private host decision bytes through linked paths; reuse existing no-link reader.",
+      "triaged_by": "Root",
+      "triaged_at": "2026-09-19T02:33:26+00:00",
+      "delta_id": "8677598aaff8df20d7b45db8c4a37352aa0935198521fab898ce54a94fbd2444",
+      "generation_id": "7b8aa70b6670ddf6bd72b0ee02ebcd5746c9db3dc75c5425aba135d71276f53b",
+      "task_id": "LEAN-WORKFLOW"
+    },
+    {
+      "lens": "quality",
+      "finding": {
+        "area": "docs",
+        "category": "bug",
+        "file_path": "docs/getting-started.md",
+        "line": 271,
+        "summary": "Include the required inputs in the native plan-grill recorder command (docs/getting-started.md:271): When a native Codex coordinator follows this blessed plan flow, the shown recorder invocation supplies only `--gate plan`, `--cold-result`, and `--preparation-id`.",
+        "title": "Include the required inputs in the native plan-grill recorder command"
+      },
+      "verdict": "real",
+      "evidence": "docs/getting-started.md:268",
+      "instances": [
+        "factory/prompts/planner.md:140",
+        "factory/skills/forge.md:150",
+        "WORKFLOW.md:99",
+        "docs/FACTORY.md:155"
+      ],
+      "keep": "Preserve one cold result bound to its preparation and retain complete disposition input plus exact plan digest validation.",
+      "reason": "",
+      "triaged_by": "Root",
+      "triaged_at": "2026-09-22T08:15:36+00:00",
+      "delta_id": "fb576037a92f24869cdc5958dc3be0007f66c76bd8258eeaed8341a5168e9c07",
+      "generation_id": "bc6e298315f45946e7bffaec4e8e9372209d349b22d6288485051d32bfafc404",
+      "task_id": "LEAN-WORKFLOW"
+    },
+    {
+      "lens": "quality",
+      "finding": {
+        "area": "docs",
+        "category": "bug",
+        "file_path": "docs/getting-started.md",
+        "line": 340,
+        "summary": "Resume task close after recording functional proof (docs/getting-started.md:340): For a user-facing task, the earlier `forge task close` invocation stops with the stage still active until functional evidence is recorded.",
+        "title": "Resume task close after recording functional proof"
+      },
+      "verdict": "real",
+      "evidence": "docs/getting-started.md:338",
+      "instances": [
+        "docs/ROLES.md:53"
+      ],
+      "keep": "Functional proof preserves the current review and delta, then resumes the same close owner without standalone review, verify, or pr-ready shortcuts.",
+      "reason": "",
+      "triaged_by": "Root",
+      "triaged_at": "2026-09-22T08:15:36+00:00",
+      "delta_id": "fb576037a92f24869cdc5958dc3be0007f66c76bd8258eeaed8341a5168e9c07",
+      "generation_id": "bc6e298315f45946e7bffaec4e8e9372209d349b22d6288485051d32bfafc404",
+      "task_id": "LEAN-WORKFLOW"
+    },
+    {
+      "lens": "quality",
+      "finding": {
+        "area": "factory/prompts",
+        "category": "bug",
+        "file_path": "factory/prompts/planner.md",
+        "line": 158,
+        "summary": "Do not require a second cold grill for pre-stage amendments (factory/prompts/planner.md:158): When an already approved plan is amended before stage start, this instruction requires the amended artifact to be grilled again before native approval.",
+        "title": "Do not require a second cold grill for pre-stage amendments"
+      },
+      "verdict": "real",
+      "evidence": "factory/prompts/planner.md:157",
+      "instances": [
+        "factory/prompts/planner.md:166"
+      ],
+      "keep": "Preserve fresh native approval of exact final bytes and refuse unexplained scope or intent changes while avoiding a second cold read for disposition-covered amendments.",
+      "reason": "",
+      "triaged_by": "Root",
+      "triaged_at": "2026-09-22T08:15:37+00:00",
+      "delta_id": "fb576037a92f24869cdc5958dc3be0007f66c76bd8258eeaed8341a5168e9c07",
+      "generation_id": "bc6e298315f45946e7bffaec4e8e9372209d349b22d6288485051d32bfafc404",
+      "task_id": "LEAN-WORKFLOW"
+    },
+    {
+      "lens": "security",
+      "finding": {
+        "area": "factory/scripts/forge_cli",
+        "category": "security",
+        "file_path": "factory/scripts/forge_cli/delegate.py",
+        "line": 1955,
+        "summary": "Refuse native write delegation when the scope-enforcement hook is unavailable (factory/scripts/forge_cli/delegate.py:1955): Trigger: a Codex coordinator runs a write-enabled `forge delegate` while the installed PreToolUse hook is missing, disabled, or mismatched.",
+        "title": "Refuse native write delegation when the scope-enforcement hook is unavailable"
+      },
+      "verdict": "real",
+      "evidence": "factory/scripts/forge_cli/delegate.py:1955",
+      "instances": [
+        "factory/scripts/forge_cli/delegate.py:2014",
+        "factory/scripts/forge_cli/delegate.py:2387"
+      ],
+      "keep": "Preserve host-native role dispatch with no PID registry or nested codex exec, and do not claim the PATH CLI hook probe certifies Codex Desktop.",
+      "reason": "",
+      "triaged_by": "Root",
+      "triaged_at": "2026-09-22T08:19:15+00:00",
+      "delta_id": "fb576037a92f24869cdc5958dc3be0007f66c76bd8258eeaed8341a5168e9c07",
+      "generation_id": "41f48568cad9f3e5bf77760df0e8658655ccc9bca6607a091dd1bbacf68722a6",
+      "task_id": "LEAN-WORKFLOW"
+    },
+    {
+      "lens": "security",
+      "finding": {
+        "area": "factory/scripts",
+        "category": "security",
+        "file_path": "factory/scripts/post_tool_use.py",
+        "line": 18,
+        "summary": "Authenticate native approval events before recording them (factory/scripts/post_tool_use.py:18): Trigger: while a story or task awaits approval, any shell-capable process can invoke the public `./forge hook post_tool_use` entrypoint and supply JSON containing the current plan bytes plus arbitrary session/event IDs.",
+        "title": "Authenticate native approval events before recording them"
+      },
+      "verdict": "real",
+      "evidence": "factory/scripts/post_tool_use.py:18",
+      "instances": [
+        "factory/scripts/post_tool_use.py:18",
+        "factory/scripts/post_tool_use.py:20"
+      ],
+      "keep": "Preserve one shared recorder, exact digest and frontier checks, replay refusal, irrelevant-payload fail-open behavior, and no manual approval route; require host-verifiable completion provenance.",
+      "reason": "",
+      "triaged_by": "Root",
+      "triaged_at": "2026-09-22T08:19:15+00:00",
+      "delta_id": "fb576037a92f24869cdc5958dc3be0007f66c76bd8258eeaed8341a5168e9c07",
+      "generation_id": "41f48568cad9f3e5bf77760df0e8658655ccc9bca6607a091dd1bbacf68722a6",
+      "task_id": "LEAN-WORKFLOW"
+    },
+    {
+      "lens": "security",
+      "finding": {
+        "area": "factory/scripts",
+        "category": "security",
+        "file_path": "factory/scripts/pre_tool_use.py",
+        "line": 1096,
+        "summary": "Keep the degraded valve Claude-only (factory/scripts/pre_tool_use.py:1096): A native Codex session can open or inherit a `profile=degraded` window and then reach this condition with any concrete locked target; accepting `DEGRADED` here skips `native_stage_admission` and its active-task, preparation, and narrowed-scope checks, leaving only the five-file claim budget.",
+        "title": "Keep the degraded valve Claude-only"
+      },
+      "verdict": "real",
+      "evidence": "factory/scripts/pre_tool_use.py:1096",
+      "instances": [
+        "factory/scripts/pre_tool_use.py:1094",
+        "factory/scripts/forge_cli/quickfix.py:180"
+      ],
+      "keep": "Preserve native Lite behavior and the Claude-only five-file degraded outage path; native degraded state must never bypass active-task scope admission.",
+      "reason": "",
+      "triaged_by": "Root",
+      "triaged_at": "2026-09-22T08:19:16+00:00",
+      "delta_id": "fb576037a92f24869cdc5958dc3be0007f66c76bd8258eeaed8341a5168e9c07",
+      "generation_id": "41f48568cad9f3e5bf77760df0e8658655ccc9bca6607a091dd1bbacf68722a6",
+      "task_id": "LEAN-WORKFLOW"
+    },
+    {
+      "lens": "quality",
+      "finding": {
+        "area": "factory/scripts/forge_cli",
+        "category": "bug",
+        "file_path": "factory/scripts/forge_cli/upgrade.py",
+        "line": 3809,
+        "summary": "Persist resumable state before replacing the target (factory/scripts/forge_cli/upgrade.py:3809): If the upgrade is interrupted after target-tree replacement begins here but before `apply_lean_migration` publishes its incomplete manifest, the checkout becomes dirty without the authenticated state required by `_incomplete_lean_resume_paths`; the next invocation therefore fails the clean-tree gate.",
+        "title": "Persist resumable state before replacing the target"
+      },
+      "verdict": "real",
+      "evidence": "factory/scripts/forge_cli/upgrade.py:3809",
+      "instances": [
+        "factory/scripts/forge_cli/upgrade.py:3809"
+      ],
+      "keep": "Preserve zero-write clean preflight, no-force and no-follow rules, client-owned bytes, authenticated exact retry state, and byte-identical public retry after interruption.",
+      "reason": "",
+      "triaged_by": "Root",
+      "triaged_at": "2026-09-22T08:20:06+00:00",
+      "delta_id": "fb576037a92f24869cdc5958dc3be0007f66c76bd8258eeaed8341a5168e9c07",
+      "generation_id": "39ccbdb093029b8237d00f2673d336908f9c88596bddb5e61a31a0533a39f488",
+      "task_id": "LEAN-WORKFLOW"
+    },
+    {
+      "lens": "security",
+      "finding": {
+        "area": "factory/scripts/forge_cli",
+        "category": "security",
+        "file_path": "factory/scripts/forge_cli/upgrade.py",
+        "line": 2148,
+        "summary": "Bind the selected pointer to the manifest output (factory/scripts/forge_cli/upgrade.py:2148): When a completed migration's `selected.json` is replaced with another schema-valid generation for the same sealed commit and delta, this check accepts it because it verifies only `inspected_commit`; it never compares the returned generation or pointer with the manifest row's `generation_id` and `generation_sha256`.",
+        "title": "Bind the selected pointer to the manifest output"
+      },
+      "verdict": "real",
+      "evidence": "factory/scripts/forge_cli/upgrade.py:2148",
+      "instances": [
+        "factory/scripts/forge_cli/upgrade.py:2148"
+      ],
+      "keep": "Preserve the validated story, task, delta, and sealed commit checks while requiring the exact manifest generation id and generation digest.",
+      "reason": "",
+      "triaged_by": "Root",
+      "triaged_at": "2026-09-22T08:20:07+00:00",
+      "delta_id": "fb576037a92f24869cdc5958dc3be0007f66c76bd8258eeaed8341a5168e9c07",
+      "generation_id": "39ccbdb093029b8237d00f2673d336908f9c88596bddb5e61a31a0533a39f488",
+      "task_id": "LEAN-WORKFLOW"
+    },
+    {
+      "lens": "quality",
+      "finding": {
+        "area": "factory/scripts/forge_cli",
+        "category": "bug",
+        "file_path": "factory/scripts/forge_cli/upgrade.py",
+        "line": 3069,
+        "summary": "Preserve sealed story/history reviews until equivalent proof is published (factory/scripts/forge_cli/upgrade.py:3069): When a shipped story or sealed history contains a complete fixed-review triple, the classifiers mark every lens eligible with `preserve=False`, but only `fixed-review-lens` entries are promoted or exempted; this generic branch then unlinks the `story-fixed-review-lens` and `history-fixed-review-lens` files.",
+        "title": "Preserve sealed story/history reviews until equivalent proof is published"
+      },
+      "verdict": "real",
+      "evidence": "factory/scripts/forge_cli/upgrade.py:3069",
+      "instances": [
+        "factory/scripts/forge_cli/upgrade.py:711",
+        "factory/scripts/forge_cli/upgrade.py:749",
+        "factory/scripts/forge_cli/upgrade.py:3069"
+      ],
+      "keep": "Retain exact story and history review bytes until equivalent canonical task proof exists; never invent task identity or use fixed files as runtime authority.",
+      "reason": "",
+      "triaged_by": "Root",
+      "triaged_at": "2026-09-22T08:20:08+00:00",
+      "delta_id": "fb576037a92f24869cdc5958dc3be0007f66c76bd8258eeaed8341a5168e9c07",
+      "generation_id": "39ccbdb093029b8237d00f2673d336908f9c88596bddb5e61a31a0533a39f488",
+      "task_id": "LEAN-WORKFLOW"
+    },
+    {
+      "lens": "quality",
+      "finding": {
+        "area": "factory/scripts/forge_cli",
+        "category": "bug",
+        "file_path": "factory/scripts/forge_cli/findings.py",
+        "line": 75,
+        "summary": "Reject task-owned fixed review proof (factory/scripts/forge_cli/findings.py:75): When a legacy lens exists at `.factory/stories/<story>/tasks/<task>/reviews/{quality,performance,security}.json`, this preflight checks only the story-level `reviews/` paths, so collection proceeds through a canonical selection or silently omits the task instead of issuing `run forge upgrade`.",
+        "title": "Reject task-owned fixed review proof"
+      },
+      "verdict": "real",
+      "evidence": "factory/scripts/forge_cli/findings.py:75",
+      "instances": [
+        "factory/scripts/forge_cli/findings.py:75"
+      ],
+      "keep": "Preserve canonical selected-generation findings and require forge upgrade for every retired fixed review location.",
+      "reason": "Task-owned fixed review triples are also retired proof and must refuse before collection instead of being silently omitted.",
+      "triaged_by": "Root",
+      "triaged_at": "2026-09-22T08:26:25+00:00",
+      "delta_id": "fb576037a92f24869cdc5958dc3be0007f66c76bd8258eeaed8341a5168e9c07",
+      "generation_id": "39ccbdb093029b8237d00f2673d336908f9c88596bddb5e61a31a0533a39f488",
+      "task_id": "LEAN-WORKFLOW"
+    },
+    {
+      "lens": "quality",
+      "finding": {
+        "area": "factory/scripts/forge_cli",
+        "category": "bug",
+        "file_path": "factory/scripts/forge_cli/stages.py",
+        "line": 2872,
+        "summary": "Bind the injected canonical-JUnit environment before accepting its proof (factory/scripts/forge_cli/stages.py:2872): Trigger: a required test or loaded pytest plugin behaves differently when `FORGE_CANONICAL_JUNIT` is present.",
+        "title": "Bind the injected canonical-JUnit environment before accepting its proof"
+      },
+      "verdict": "real",
+      "evidence": "factory/scripts/forge_cli/stages.py:2872",
+      "instances": [
+        "factory/scripts/forge_cli/stages.py:2602",
+        "factory/scripts/forge_cli/stages.py:2872"
+      ],
+      "keep": "Preserve safe JUnit reuse when command, collection, tool, dependencies, environment, and current product inputs all match.",
+      "reason": "The canonical run injects FORGE_CANONICAL_JUNIT, but the reuse identity does not bind that semantic environment difference.",
+      "triaged_by": "Root",
+      "triaged_at": "2026-09-22T08:26:25+00:00",
+      "delta_id": "fb576037a92f24869cdc5958dc3be0007f66c76bd8258eeaed8341a5168e9c07",
+      "generation_id": "39ccbdb093029b8237d00f2673d336908f9c88596bddb5e61a31a0533a39f488",
+      "task_id": "LEAN-WORKFLOW"
+    },
+    {
+      "lens": "security",
+      "finding": {
+        "area": "factory/scripts/forge_cli",
+        "category": "security",
+        "file_path": "factory/scripts/forge_cli/stages.py",
+        "line": 3349,
+        "summary": "Bind mutable non-distribution Python import sources before reusing proofs (factory/scripts/forge_cli/stages.py:3349): When a pytest or compileall command imports code from a mutable `PYTHONPATH`/`sys.path` directory that is outside the product snapshot and has no distribution metadata, the probe enumerates only `importlib.metadata.distributions()` and still marks the tool reusable here.",
+        "title": "Bind mutable non-distribution Python import sources before reusing proofs"
+      },
+      "verdict": "real",
+      "evidence": "factory/scripts/forge_cli/stages.py:3349",
+      "instances": [
+        "factory/scripts/forge_cli/stages.py:3281",
+        "factory/scripts/forge_cli/stages.py:3349"
+      ],
+      "keep": "Preserve reusable proof for immutable or fully identified Python environments and conservatively rerun on unknown mutable imports.",
+      "reason": "The probe inventories installed distributions but does not bind mutable non-distribution PYTHONPATH or sys.path sources that can change test behavior.",
+      "triaged_by": "Root",
+      "triaged_at": "2026-09-22T08:26:26+00:00",
+      "delta_id": "fb576037a92f24869cdc5958dc3be0007f66c76bd8258eeaed8341a5168e9c07",
+      "generation_id": "39ccbdb093029b8237d00f2673d336908f9c88596bddb5e61a31a0533a39f488",
+      "task_id": "LEAN-WORKFLOW"
+    },
+    {
+      "lens": "security",
+      "finding": {
+        "area": "factory/scripts/forge_cli",
+        "category": "security",
+        "file_path": "factory/scripts/forge_cli/tasks.py",
+        "line": 336,
+        "summary": "Reject linked hydration sources beyond the approval pair (factory/scripts/forge_cli/tasks.py:336): When a task plan, decomposition, or optional authority source is a symlink or sits below a linked/reparse-point ancestor, this fallback calls `source.read_bytes()`, which follows the link.",
+        "title": "Reject linked hydration sources beyond the approval pair"
+      },
+      "verdict": "real",
+      "evidence": "factory/scripts/forge_cli/tasks.py:336",
+      "instances": [
+        "factory/scripts/forge_cli/tasks.py:316",
+        "factory/scripts/forge_cli/tasks.py:336"
+      ],
+      "keep": "Preserve authenticated approval hydration and regular contained optional task-plan hydration while refusing symlinked or linked ancestors before worktree mutation.",
+      "reason": "Only the optional task-plan leaf is checked with resolve; other hydration sources can be read through linked ancestors before destination preflight.",
+      "triaged_by": "Root",
+      "triaged_at": "2026-09-22T08:26:27+00:00",
+      "delta_id": "fb576037a92f24869cdc5958dc3be0007f66c76bd8258eeaed8341a5168e9c07",
+      "generation_id": "39ccbdb093029b8237d00f2673d336908f9c88596bddb5e61a31a0533a39f488",
+      "task_id": "LEAN-WORKFLOW"
     }
   ]
 }

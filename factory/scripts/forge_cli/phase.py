@@ -523,7 +523,27 @@ def cmd_next(args: argparse.Namespace) -> None:
             if frontier_state:
                 frontier, task = frontier_state
                 task_id = task["id"]
-                if frontier == "author-contract":
+                from .review import (
+                    selected_generation, triage_workflow,
+                    untriaged_actionable_blocking,
+                )
+                generation = selected_generation(base, issue, task_id)
+                triage_left, actionable_total = untriaged_actionable_blocking(
+                    base, issue, task_id, generation=generation,
+                )
+                if triage_left:
+                    generation_id = str(
+                        (generation or {}).get("generation_id") or "unknown"
+                    )
+                    steps.append(
+                        f"[dev] REVIEW TRIAGE for {task_id}: selected generation "
+                        f"{generation_id} has {triage_left} of {actionable_total} "
+                        "actionable P0/P1 defect finding(s) untriaged. Before any "
+                        f"write delegation, inspect each cited line and run "
+                        f"{triage_workflow(task_id)}. After every actionable row "
+                        f"is triaged, run `./forge delegate {task_id}`."
+                    )
+                elif frontier == "author-contract":
                     steps.append(
                         f"[dev] Author the contract for {task_id} per "
                         "factory/prompts/planner.md against "

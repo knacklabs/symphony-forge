@@ -1,0 +1,10 @@
+{
+  "applies_to": [
+    "factory/tests/**"
+  ],
+  "generated_by": "Root",
+  "lesson": "Not a defect (evidence factory/tests/test_pr_link_workflow.py:63): False missing-shipping-artifact claim: Root read BOTH current tracked files and exact HEAD blobs, byte-identical recorder events3679bb571b304025956aa2f6ac141e9d and31d5e07187fb4d9fab0a47009e90331b, forFORGE-CFS-1#109 andFORGE-ACC-3#110 at2026-09-14T04:10:40Z. Current full suite1381/4 and exact required regression passed. Product-only detached review intentionally excludes bookkeeping paths; absence there does not mean absent from actual shipping HEAD. Do not recreate or duplicate genuine recorder events. — raised as \"Restore the two required PR-link backfill event files (factory/tests/test_pr_link_workflow.py:63): When the full test suite reaches this assertion, it reads the\"",
+  "severity": "medium",
+  "source": "review reject LEAN-WORKFLOW quality",
+  "topic": "rejected-review-finding-quality"
+}

@@ -1,0 +1,10 @@
+{
+  "applies_to": [
+    "factory/scripts/forge_cli/**"
+  ],
+  "generated_by": "Root",
+  "lesson": "Not a defect (evidence factory/scripts/forge_cli/stages.py:1104): Factually false: reviewed_meaning_identity calls _current_decision_inputs(base) on each evaluation, and binds each current accepted decision id/source/detached/SHA256/byte length at stages.py1104 and1128-1137. _current_decision_inputs rereads each accepted source with path.read_bytes at review_brief.py302-314. review.py2330 compares that fresh identity against the pre-launch meaning before publication, so addition/deletion/body digest drift refuses; it does not derive decision identity only from static all.md. Keep these guards. — raised as \"Revalidate accepted decisions before publishing review proof (factory/scripts/forge_cli/review.py:2330): When an accepted decision is added, edited, or deleted \"",
+  "severity": "medium",
+  "source": "review reject LEAN-WORKFLOW quality",
+  "topic": "rejected-review-finding-quality"
+}

@@ -1,0 +1,10 @@
+{
+  "applies_to": [
+    "factory/tests/**"
+  ],
+  "generated_by": "Root",
+  "lesson": "Not a defect (0079): Accepted 0079 explicitly preserves an already-reviewed automated narrative unchanged, because changing it would invalidate the evidence the reviewer read. Fresh verification still writes current task-owned verify.json and protected proof receipts; this test proves only that already-valid reviewed tests.json is not rewritten. This is required immutable review provenance, not omission of fresh verifier evidence. — raised as \"Preserve close-owned evidence when a review already exists (factory/tests/test_close_binds_to_the_diff.py:790): When `task close` encounters a current selected \"",
+  "severity": "medium",
+  "source": "review reject LEAN-WORKFLOW quality",
+  "topic": "rejected-review-finding-quality"
+}

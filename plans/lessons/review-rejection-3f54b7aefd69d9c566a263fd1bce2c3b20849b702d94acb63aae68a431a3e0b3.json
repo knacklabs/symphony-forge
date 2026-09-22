@@ -1,0 +1,10 @@
+{
+  "applies_to": [
+    "factory/scripts/forge_cli/**"
+  ],
+  "generated_by": "Root",
+  "lesson": "Not a defect (evidence docs/decisions/0080-native-role-model-routing.md:34): The current host contract permits agent_type with inherited full history; only model and reasoning overrides require a non-default fork mode, and this descriptor intentionally omits both overrides. — raised as \"Make the native descriptor spawn the selected role successfully (factory/scripts/forge_cli/delegate.py:2005): Trigger: any role-based native dispatch on Codex M\"",
+  "severity": "medium",
+  "source": "review reject LEAN-WORKFLOW quality",
+  "topic": "rejected-review-finding-quality"
+}

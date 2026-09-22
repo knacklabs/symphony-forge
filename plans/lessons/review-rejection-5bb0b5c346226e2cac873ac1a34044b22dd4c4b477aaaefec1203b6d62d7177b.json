@@ -1,0 +1,10 @@
+{
+  "applies_to": [
+    ".factory/stories/FORGE-COORD-1/task-plans/LEAN-WORKFLOW.md#Acceptance Criteria"
+  ],
+  "generated_by": "Root",
+  "lesson": "Not a defect (evidence factory/prompts/implementer.md:142): P2 trailing prompt wording: story-wide recording sentence is stale; current runtime and leading prompt make task close the final suite/evidence owner, and actual supported current close recorded fivecommands/55selectors before review. Worker did focused checks only. Retain wording correction with existing workflow cleanup, no demonstrated second full-suite command or wrong proof publication from this sentence. — raised as \"LEAN-AC-13: Single final proof owner: workers run focused checks only; `forge task close` runs the one canonical full verification suite, records truthful compl\"",
+  "severity": "medium",
+  "source": "review reject LEAN-WORKFLOW quality",
+  "topic": "rejected-review-finding-quality"
+}

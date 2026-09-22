@@ -1,0 +1,10 @@
+{
+  "applies_to": [
+    "factory/scripts/**"
+  ],
+  "generated_by": "Root",
+  "lesson": "Not a defect (0013): The asserted computed-interpreter-path case exceeds the accepted Bash drift-defense threat model: Decision0013 explicitly makes Bash guarding heuristic, not an adversarial sandbox, with verify/review/pr_ready as backstops. pre_tool_use.py610-617 expressly preserves arbitrary-code/shell-game residuals. Decision0080 also removes native process/authorship containment, while known literal targets continue through native_stage_admission and narrowed path checks at1090-1123. Treating every opaque Python/read command as a product write would violate legitimate inspection and proof commands. This rejection does not waive known literal-target or recognized opaque rm/cp/mv guards; those must still be maintained. — raised as \"Fail closed when native Bash writes have no statically extracted target (factory/scripts/pre_tool_use.py:1091): When native Codex executes a Bash command whose \"",
+  "severity": "medium",
+  "source": "review reject LEAN-WORKFLOW security",
+  "topic": "rejected-review-finding-security"
+}

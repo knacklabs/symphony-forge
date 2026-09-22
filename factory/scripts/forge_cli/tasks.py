@@ -93,6 +93,40 @@ def _contained_regular_bytes(base: Path, source: Path, label: str) -> bytes:
         os.close(descriptor)
 
 
+def _optional_contained_regular_bytes(
+        base: Path, source: Path, label: str) -> bytes | None:
+    """Return one safe optional source snapshot, or None when it is absent.
+
+    Checking the leaf with ``lstat`` alone would mistake a broken symlinked
+    ancestor for an absent optional file. Walk existing ancestors first so a
+    linked/reparse parent is still refused, then delegate the actual byte
+    snapshot and identity checks to the shared contained-file helper.
+    """
+    try:
+        relative = source.relative_to(base)
+    except ValueError:
+        return _contained_regular_bytes(base, source, label)
+    current = base
+    for part in relative.parts[:-1]:
+        current /= part
+        try:
+            info = current.lstat()
+        except FileNotFoundError:
+            return None
+        except OSError:
+            return _contained_regular_bytes(base, source, label)
+        if (stat.S_ISLNK(info.st_mode) or not stat.S_ISDIR(info.st_mode)
+                or _windows_reparse_point(current)):
+            return _contained_regular_bytes(base, source, label)
+    try:
+        source.lstat()
+    except FileNotFoundError:
+        return None
+    except OSError:
+        return _contained_regular_bytes(base, source, label)
+    return _contained_regular_bytes(base, source, label)
+
+
 def _default_branch(base: Path) -> str:
     """The integration branch a task PR targets: origin's default branch, not a
     hardcoded 'main'. Delegates to the single canonical resolver so PR targeting,
@@ -206,7 +240,15 @@ def cmd_task_start(args: argparse.Namespace) -> None:
              f"not {args.id!r}")
     approved_plan_sha256 = require_approved_plan_digest(base)
     decomposition_path = protected_decomposition_state_path(base)
-    decomposition = load_json(decomposition_path, default={})
+    decomposition_bytes = _contained_regular_bytes(
+        git_control_dir(base), decomposition_path, "protected decomposition source",
+    )
+    try:
+        decomposition = json.loads(decomposition_bytes)
+    except (UnicodeError, json.JSONDecodeError) as exc:
+        fail(f"task start refused: protected decomposition is invalid JSON: {exc}")
+    if not isinstance(decomposition, dict):
+        fail("task start refused: protected decomposition is not a JSON object")
     if decomposition.get("story") not in (None, key):
         fail(f"task start refused: protected decomposition belongs to "
              f"{decomposition.get('story')!r}, not {key!r}")
@@ -265,7 +307,9 @@ def cmd_task_start(args: argparse.Namespace) -> None:
     plan_file = state.get("plan_file")
     if not isinstance(plan_file, str) or not plan_file:
         fail("task start requires the approved plan path in the run pointer")
-    plan_source = (base / plan_file).resolve()
+    plan_source = Path(plan_file)
+    if not plan_source.is_absolute():
+        plan_source = base / plan_source
     try:
         plan_relative = plan_source.relative_to(base)
     except ValueError:
@@ -275,11 +319,13 @@ def cmd_task_start(args: argparse.Namespace) -> None:
         or not plan_relative.name.startswith(f"{key}-")
     ):
         fail(f"approved plan must be plans/active/{key}-*.md")
+    plan_bytes = _contained_regular_bytes(
+        base, plan_source, "approved plan source",
+    )
 
-    sources = {
-        plan_relative: plan_source,
-        Path(".factory") / "stories" / key / "decomposition.json": decomposition_path,
-    }
+    decomposition_relative = (
+        Path(".factory") / "stories" / key / "decomposition.json"
+    )
     approval_source = evidence_path(base, key, "plan-approval.json")
     approval_bytes = _contained_regular_bytes(
         base, approval_source, "story approval source",
@@ -300,12 +346,23 @@ def cmd_task_start(args: argparse.Namespace) -> None:
     approval_event_bytes = _contained_regular_bytes(
         base, approval_event_source, "story approval event source",
     )
-    sources.update({
-        Path(".factory") / "stories" / key / "plan-approval.json":
-            approval_source,
+    approval_relative = Path(".factory") / "stories" / key / "plan-approval.json"
+    event_relative = (
         Path(".factory") / "stories" / key / "approval-events"
-        / f"{approval_event_key}.json": approval_event_source,
-    })
+        / f"{approval_event_key}.json"
+    )
+    # Keep one no-follow byte snapshot for every source before the target
+    # worktree is allocated. Approval bytes remain the authenticated records
+    # selected above; they are intentionally copied verbatim into the target.
+    authenticated = {
+        approval_relative: approval_bytes,
+        event_relative: approval_event_bytes,
+    }
+    snapshots: dict[Path, bytes] = {
+        plan_relative: plan_bytes,
+        decomposition_relative: decomposition_bytes,
+        **authenticated,
+    }
     # Plan content can hydrate a successor workspace, but its source grill is
     # approval authority and must be recorded afresh in the new target.
     optional_sources = {
@@ -313,30 +370,12 @@ def cmd_task_start(args: argparse.Namespace) -> None:
             evidence_path(base, key, f"task-plans/{args.id}.md"),
     }
     for relative, source in optional_sources.items():
-        try:
-            if source.resolve(strict=False) != source:
-                fail(f"task start refused: optional source is symlinked: {source}")
-        except (OSError, RuntimeError):
-            fail(f"task start refused: optional source cannot be resolved: {source}")
-        if not source.exists():
-            continue
-        if source.is_file():
-            sources[relative] = source
-    approval_relative = Path(".factory") / "stories" / key / "plan-approval.json"
-    event_relative = (
-        Path(".factory") / "stories" / key / "approval-events"
-        / f"{approval_event_key}.json"
-    )
-    authenticated = {
-        approval_relative: approval_bytes,
-        event_relative: approval_event_bytes,
-    }
-    payloads = {
-        relative: authenticated[relative]
-        if relative in authenticated else source.read_bytes()
-        for relative, source in sources.items()
-    }
-    decomposition_bytes = decomposition_path.read_bytes()
+        optional_bytes = _optional_contained_regular_bytes(
+            base, source, "optional source",
+        )
+        if optional_bytes is not None:
+            snapshots[relative] = optional_bytes
+    payloads: dict[Path, bytes] = dict(snapshots)
     stages_bytes = (json.dumps({
         "issue": key,
         "stages": [

@@ -1090,22 +1090,26 @@ scoped_targets = (
     else (write_targets if tool_name == PATCH_TOOL else locked_targets)
 )
 if native_codex:
+    is_degraded = False
     if scoped_targets:
         if window:
             from forge_cli.quickfix import DEGRADED, LITE, profile_of
-            if profile_of(window) not in {LITE, DEGRADED}:
-                deny(
-                    "Host-native product writes require an authorized Lite or "
-                    "degraded window; ordinary quickfix is recording-only."
-                )
+            profile = profile_of(window)
+            is_degraded = profile == DEGRADED or window.get("kind") == DEGRADED
             if command and has_opaque_product_write(command, root, is_harness):
                 deny(OPAQUE_DEGRADED_MSG)
             if any(_contains_marker(rel) for rel in scoped_targets):
                 deny(MARKER_PLAN_ONLY_MSG)
-            claimed, _ = claim_files(root, locked_targets)
-            if not claimed:
-                deny(QUICKFIX_LIMIT_MSG)
-        else:
+            if profile == LITE and not is_degraded:
+                claimed, _ = claim_files(root, locked_targets)
+                if not claimed:
+                    deny(QUICKFIX_LIMIT_MSG)
+            elif not is_degraded:
+                deny(
+                    "Host-native product writes require an authorized Lite or "
+                    "active task stage; ordinary quickfix is recording-only."
+                )
+        if not window or is_degraded:
             try:
                 from forge_cli.worker_admission import (
                     native_stage_admission, path_in_scope,

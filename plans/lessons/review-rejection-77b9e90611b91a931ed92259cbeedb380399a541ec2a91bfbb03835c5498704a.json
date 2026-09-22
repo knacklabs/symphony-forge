@@ -1,0 +1,10 @@
+{
+  "applies_to": [
+    "factory/tests/**"
+  ],
+  "generated_by": "Root",
+  "lesson": "Not a defect (evidence factory/tests/test_gates.py:22494): P2 test portability defect: production deliberately preserves native Windows command text and falls back safely to dedicated selectors. This POSIX assertion would fail if the whole harness suite were run on Windows, but current required native Windows workflow does not select it. Preserve this honest test-coverage follow-up; do not call native Windows proof passed from this test. — raised as \"Make the canonical-JUnit test honor the Windows fallback (factory/tests/test_gates.py:22494): When this test runs on Windows, `canonical_junit_command` intentio\"",
+  "severity": "medium",
+  "source": "review reject LEAN-WORKFLOW quality",
+  "topic": "rejected-review-finding-quality"
+}

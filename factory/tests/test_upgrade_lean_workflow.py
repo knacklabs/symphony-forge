@@ -232,8 +232,9 @@ def test_lean_inventories_cover_only_complete_sealed_history_review_triples(
     assert {row["story"] for row in rows} == {"H1"}
     assert {row["classification"] for row in rows} == {"eligible"}
     assert {row["reason"] for row in rows} == {
-        "sealed historical fixed review is retired",
+        "sealed historical fixed review is retained",
     }
+    assert all(row["preserve"] is True for row in rows)
     assert all(len(row["source_paths"]) == 3 for row in rows)
 
     (reviews / "security.json").unlink()
@@ -257,9 +258,10 @@ def test_lean_inventories_cover_only_complete_coherent_shipped_story_review_trip
     assert len(rows) == 3
     assert {row["classification"] for row in rows} == {"eligible"}
     assert {row["reason"] for row in rows} == {
-        "sealed story fixed review is retired",
+        "sealed story fixed review is retained",
     }
     assert all(len(row["source_paths"]) == 3
+               and row["preserve"] is True
                and row["story_identity"]["commit"] == "a" * 40
                and len(row["story_identity"]["sha256"]) == 64
                for row in rows)
@@ -913,6 +915,85 @@ def test_public_upgrade_resumes_migration_then_finishes_vendoring(
     assert "Resumed and completed Lean migration" in capsys.readouterr().out
 
 
+def test_public_upgrade_persists_authenticated_resume_before_vendoring(
+        repo: Path, monkeypatch: pytest.MonkeyPatch):
+    legacy = _legacy_round(repo)
+    source_sha256 = hashlib.sha256(legacy.read_bytes()).hexdigest()
+    git(repo, "add", legacy.relative_to(repo).as_posix())
+    git(repo, "commit", "-q", "-m", "legacy migration input")
+    manifest = repo / ".factory/migrations/lean-workflow-v2.json"
+
+    def interrupt_before_apply(*_args, **_kwargs):
+        saved = json.loads(manifest.read_text(encoding="utf-8"))
+        assert "completed_at" not in saved
+        assert saved["installed_runtime"] == upgrade._runtime_inventory(HARNESS)
+        assert next(row for row in saved["entries"]
+                    if row["path"] == legacy.relative_to(repo).as_posix())[
+                        "sha256"] == source_sha256
+        raise OSError("interrupted before migration apply")
+
+    with monkeypatch.context() as patch:
+        patch.setattr(upgrade, "apply_lean_migration", interrupt_before_apply)
+        with pytest.raises(OSError, match="before migration apply"):
+            upgrade.cmd_upgrade(argparse.Namespace(target=str(repo), force=False))
+
+    assert manifest.is_file()
+    upgrade.cmd_upgrade(argparse.Namespace(target=str(repo), force=False))
+    assert not legacy.exists()
+    assert json.loads(manifest.read_text(encoding="utf-8"))["completed_at"]
+
+
+def test_public_upgrade_resumes_after_destination_removal_before_copy(
+        repo: Path, monkeypatch: pytest.MonkeyPatch):
+    """The overall receipt authorizes a retry after rmtree but before copytree."""
+    original_copytree = upgrade.guarded_copytree
+    factory = repo / "factory"
+
+    def interrupt(target, source, destination, **kwargs):
+        if destination == factory:
+            raise OSError("interrupted between destination removal and copy")
+        return original_copytree(target, source, destination, **kwargs)
+
+    with monkeypatch.context() as patch:
+        patch.setattr(upgrade, "guarded_copytree", interrupt)
+        with pytest.raises(OSError, match="between destination removal"):
+            upgrade.cmd_upgrade(argparse.Namespace(target=str(repo), force=False))
+
+    manifest = repo / ".factory/migrations/lean-workflow-v2.json"
+    saved = json.loads(manifest.read_text(encoding="utf-8"))
+    assert not saved["upgrade_resume"].get("completed_at")
+    assert not factory.exists()
+
+    upgrade.cmd_upgrade(argparse.Namespace(target=str(repo), force=False))
+    completed = json.loads(manifest.read_text(encoding="utf-8"))
+    assert completed["upgrade_resume"]["completed_at"]
+    assert factory.is_dir()
+
+
+def test_public_upgrade_resumes_after_post_migration_finalization_failure(
+        repo: Path, monkeypatch: pytest.MonkeyPatch):
+    """A completed Lean migration keeps an authenticated overall retry receipt."""
+    real_scan = upgrade._stale_agents_references
+
+    def interrupt(*_args, **_kwargs):
+        raise OSError("interrupted during finalization")
+
+    with monkeypatch.context() as patch:
+        patch.setattr(upgrade, "_stale_agents_references", interrupt)
+        with pytest.raises(OSError, match="during finalization"):
+            upgrade.cmd_upgrade(argparse.Namespace(target=str(repo), force=False))
+
+    manifest = repo / ".factory/migrations/lean-workflow-v2.json"
+    partial = json.loads(manifest.read_text(encoding="utf-8"))
+    assert partial.get("completed_at")
+    assert not partial["upgrade_resume"].get("completed_at")
+
+    monkeypatch.setattr(upgrade, "_stale_agents_references", real_scan)
+    upgrade.cmd_upgrade(argparse.Namespace(target=str(repo), force=False))
+    completed = json.loads(manifest.read_text(encoding="utf-8"))
+    assert completed["upgrade_resume"]["completed_at"]
+
+
 @pytest.mark.parametrize("interrupt_phase", ("before-profile", "after-profile"))
 def test_public_upgrade_resumes_profile_replacement_transaction(
         repo: Path, monkeypatch: pytest.MonkeyPatch, interrupt_phase: str):
@@ -1294,10 +1375,9 @@ def test_completed_lean_manifest_allows_later_runtime_versions(repo: Path):
     assert upgrade.preflight_lean_migration(repo) is None
 
 
-def test_completed_lean_manifest_keeps_historical_generation_and_reads_current_pointer(
+def test_completed_lean_manifest_refuses_selected_pointer_substitution(
         repo: Path):
     _sealed_fixed_review(repo)
-    sealed = git(repo, "rev-parse", "HEAD")
     migration = upgrade.preflight_lean_migration(repo)
     assert migration is not None
     upgrade.apply_lean_migration(repo, migration)
@@ -1309,36 +1389,19 @@ def test_completed_lean_manifest_keeps_historical_generation_and_reads_current_p
     historical_path = reviews / "generations" / f"{output['generation_id']}.json"
     historical_bytes = historical_path.read_bytes()
 
-    (repo / "later.py").write_text("value = 'later'\n", encoding="utf-8")
-    git(repo, "add", "later.py")
-    git(repo, "commit", "-q", "-m", "later task proof")
-    later = git(repo, "rev-parse", "HEAD")
     lib = load_factory_lib(repo)
     historical = json.loads(historical_bytes)
     candidate = {
         **{key: value for key, value in historical.items()
            if key != "generation_id"},
-        "inspected_commit": later,
-        "delta_id": lib.product_delta_digest(repo, sealed, later),
-        "upgrade": {
-            **historical["upgrade"],
-            "sealed_commit": later,
-        },
+        "recorded_at": "2026-09-16T00:00:00+00:00",
     }
     lib.publish_review_generation(repo, "S1", "T1", candidate)
-    marker = reviews.parent / "pr-ready.json"
-    marker.write_text(json.dumps({
-        "task_id": "T1", "branch": git(repo, "branch", "--show-current"),
-        "base_main_sha": sealed, "commit": later,
-        "review_base_sha": sealed, "sealed_at": "2026-09-16T00:00:00+00:00",
-    }), encoding="utf-8")
-    git(repo, "add", marker.relative_to(repo).as_posix(),
-        *[path.relative_to(repo).as_posix() for path in reviews.rglob("*.json")])
-    git(repo, "commit", "-q", "-m", "publish later task proof")
 
-    # A valid later selected generation and marker do not rewrite the migrated
-    # output row or its immutable historical generation bytes.
-    assert upgrade.preflight_lean_migration(repo) is None
+    # Another schema-valid generation for the same sealed commit and delta
+    # cannot substitute for the exact manifest output.
+    with pytest.raises(SystemExit):
+        upgrade.preflight_lean_migration(repo)
     assert historical_path.read_bytes() == historical_bytes
 
     current_selection = reviews / "selected.json"
@@ -1637,7 +1700,7 @@ def test_public_upgrade_resumes_authenticated_empty_completion_supplement(
     assert upgrade.preflight_lean_migration(repo) is None
 
 
-def test_completed_supplement_retires_later_history_fixed_reviews_once(
+def test_completed_supplement_retains_later_history_fixed_reviews_once(
         repo: Path, monkeypatch: pytest.MonkeyPatch):
     _sealed_fixed_review(repo)
     empty_digest = upgrade._inventory_digest([])
@@ -1664,6 +1727,10 @@ def test_completed_supplement_retires_later_history_fixed_reviews_once(
     assert prior["outputs"]
 
     reviews = _history_fixed_review(repo)
+    review_bytes = {
+        lens: (reviews / f"{lens}.json").read_bytes()
+        for lens in upgrade.LEAN_LENSES
+    }
     import factory_lib
     monkeypatch.setattr(factory_lib, "product_delta_digest", lambda *_args: "f" * 64)
     extension = upgrade.preflight_lean_migration(repo)
@@ -1672,8 +1739,10 @@ def test_completed_supplement_retires_later_history_fixed_reviews_once(
     assert extension["prior_completion_digest"] == upgrade._manifest_content_digest(prior)
     upgrade.apply_lean_migration(repo, extension)
 
-    assert not any((reviews / f"{lens}.json").exists()
-                   for lens in upgrade.LEAN_LENSES)
+    assert {
+        lens: (reviews / f"{lens}.json").read_bytes()
+        for lens in upgrade.LEAN_LENSES
+    } == review_bytes
     completed = json.loads(supplement.read_text(encoding="utf-8"))
     assert completed["prior_completion"] == prior
     assert completed["prior_completion_digest"] == upgrade._manifest_content_digest(prior)
@@ -1684,7 +1753,7 @@ def test_completed_supplement_retires_later_history_fixed_reviews_once(
     assert upgrade.preflight_lean_migration(repo) is None
 
 
-def test_completed_history_supplement_retires_previously_excluded_story_fixed_reviews(
+def test_completed_history_supplement_retains_previously_excluded_story_fixed_reviews(
         repo: Path):
     empty_digest = upgrade._inventory_digest([])
     manifest = repo / ".factory/migrations/lean-workflow-v2.json"
@@ -1703,8 +1772,8 @@ def test_completed_history_supplement_retires_previously_excluded_story_fixed_re
     first = upgrade.preflight_lean_migration(repo)
     assert first is not None
     upgrade.apply_lean_migration(repo, first)
-    assert not any((history / f"{lens}.json").exists()
-                   for lens in upgrade.LEAN_LENSES)
+    assert all((history / f"{lens}.json").is_file()
+               for lens in upgrade.LEAN_LENSES)
 
     reviews = _story_fixed_review(repo)
     supplement = manifest.with_name(upgrade.LEAN_MIGRATION_SUPPLEMENT)
@@ -1724,20 +1793,15 @@ def test_completed_history_supplement_retires_previously_excluded_story_fixed_re
     legacy["input_inventory_digest"] = upgrade._inventory_digest(legacy["entries"])
     supplement.write_text(json.dumps(legacy) + "\n", encoding="utf-8")
 
-    extension = upgrade.preflight_lean_migration(repo)
-    assert extension is not None
-    assert extension["prior_completion"] == legacy
-    assert extension["prior_completion_digest"] == upgrade._manifest_content_digest(legacy)
-    upgrade.apply_lean_migration(repo, extension)
-
-    assert not any((reviews / f"{lens}.json").exists()
-                   for lens in upgrade.LEAN_LENSES)
-    completed = json.loads(supplement.read_text(encoding="utf-8"))
-    assert completed["prior_completion"] == legacy
-    assert {entry["family"] for entry in completed["entries"]
-            if entry["path"].startswith(".factory/stories/S2/reviews/")} == {
-        "story-fixed-review-lens",
+    review_bytes = {
+        lens: (reviews / f"{lens}.json").read_bytes()
+        for lens in upgrade.LEAN_LENSES
     }
+    assert upgrade.preflight_lean_migration(repo) is None
+    assert {
+        lens: (reviews / f"{lens}.json").read_bytes()
+        for lens in upgrade.LEAN_LENSES
+    } == review_bytes
     assert upgrade.preflight_lean_migration(repo) is None
 
 

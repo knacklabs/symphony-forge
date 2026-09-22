@@ -42,6 +42,9 @@ from .review_brief import (
 from .tasks import _git, _require_git
 
 LENSES = ("quality", "performance", "security")
+PLAN_CONTRACT_BLOCKER_CATEGORIES = {
+    "plan-contract-partial", "plan-contract-missing",
+}
 REVIEW_DATASET_REL = ".factory/review-briefs/all.md"
 # Harness bookkeeping is never the subject of a product review.
 HARNESS_PREFIXES = (".factory/", "plans/", "docs/decisions/")
@@ -1478,9 +1481,23 @@ def reject_finding(base: Path, task_id: str, lens: str, match: str, *,
         fail("review rejection requires the selected combined or rejection generation")
     artifact = generation["lenses"][lens]
     needle = match.strip().lower()
-    hits = [f for f in artifact.get("blocking_findings") or []
-            if needle in json.dumps(f).lower()]
+    actionable = [
+        f for f in artifact.get("blocking_findings") or []
+        if isinstance(f, dict)
+        and f.get("category") not in PLAN_CONTRACT_BLOCKER_CATEGORIES
+    ]
+    hits = [f for f in actionable if needle in json.dumps(f).lower()]
     if not hits:
+        contract_hits = [
+            f for f in artifact.get("blocking_findings") or []
+            if isinstance(f, dict)
+            and f.get("category") in PLAN_CONTRACT_BLOCKER_CATEGORIES
+            and needle in json.dumps(f).lower()
+        ]
+        if contract_hits:
+            fail("plan-contract partial/missing verdicts are required acceptance "
+                 "blockers and cannot be rejected as host defect findings; "
+                 f"implement the contract and rerun `./forge task close {task_id}`")
         fail(f"no blocking {lens} finding matches {match!r}")
     if len(hits) > 1:
         fail(f"{len(hits)} blocking {lens} findings match {match!r}; narrow it")
@@ -1666,6 +1683,45 @@ def blocking_with_triage(base: Path, story: str, task_id: str, *,
     return out
 
 
+def actionable_blocking_with_triage(
+        base: Path, story: str, task_id: str, *, generation: dict | None = None,
+) -> list[tuple[str, dict, dict | None]]:
+    """Selected-generation P0/P1 defect rows and their host triage.
+
+    Review recording normalizes reviewer P0/P1 findings into
+    ``blocking_findings``. Partial and missing plan-contract verdicts are
+    synthetic acceptance blockers added to that list afterward; they must be
+    fixed and re-reviewed, but are not defect claims for the host to triage.
+    """
+    return [
+        row for row in blocking_with_triage(
+            base, story, task_id, generation=generation,
+        )
+        if row[1].get("category") not in PLAN_CONTRACT_BLOCKER_CATEGORIES
+    ]
+
+
+def untriaged_actionable_blocking(
+        base: Path, story: str, task_id: str, *, generation: dict | None = None,
+) -> tuple[int, int]:
+    """(untriaged, total) actionable blockers in the selected generation."""
+    rows = actionable_blocking_with_triage(
+        base, story, task_id, generation=generation,
+    )
+    return sum(1 for _, _, triage in rows if triage is None), len(rows)
+
+
+def triage_workflow(task_id: str) -> str:
+    """The exact host workflow required before a review-fix delegation."""
+    return (
+        f'`./forge review {task_id} --triage "<finding text>" '
+        '--lens <quality|performance|security> --real --evidence <file:line> '
+        '--instance <file:line> [--instance <file:line> ...] --by <agent>`; '
+        'when the cited code disproves it, use the same command with '
+        '`--not-a-defect --evidence <file:line> --reason "<why>" --by <agent>`'
+    )
+
+
 def untriaged_blocking(base: Path, story: str, task_id: str) -> tuple[int, int]:
     """(untriaged, total) blocking findings recorded for the task."""
     rows = blocking_with_triage(base, story, task_id)
@@ -1715,9 +1771,23 @@ def triage_finding(base: Path, task_id: str, lens: str, match: str, *, real: boo
         ) + f"; run `forge review {task_id}` on this tree, then triage what it raises")
     artifact = (generation.get("lenses") or {}).get(lens) or {}
     needle = match.strip().lower()
-    hits = [f for f in artifact.get("blocking_findings") or []
-            if needle in json.dumps(f).lower()]
+    actionable = [
+        f for f in artifact.get("blocking_findings") or []
+        if isinstance(f, dict)
+        and f.get("category") not in PLAN_CONTRACT_BLOCKER_CATEGORIES
+    ]
+    hits = [f for f in actionable if needle in json.dumps(f).lower()]
     if not hits:
+        contract_hits = [
+            f for f in artifact.get("blocking_findings") or []
+            if isinstance(f, dict)
+            and f.get("category") in PLAN_CONTRACT_BLOCKER_CATEGORIES
+            and needle in json.dumps(f).lower()
+        ]
+        if contract_hits:
+            fail("plan-contract partial/missing verdicts are required acceptance "
+                 "blockers, not host defect triage; implement the contract and "
+                 f"rerun `./forge task close {task_id}`")
         fail(f"no blocking {lens} finding matches {match!r}")
     if len(hits) > 1:
         fail(f"{len(hits)} blocking {lens} findings match {match!r}; narrow it")

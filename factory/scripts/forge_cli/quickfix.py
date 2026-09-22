@@ -100,6 +100,13 @@ def _open(base: Path, *, profile: str, reason: str, by: str | None = None) -> di
     reason = reason.strip()
     if not reason:
         fail(f"a {profile} window needs a reason")
+    if profile == DEGRADED:
+        from .codex_runtime import coordinator_runtime
+        if coordinator_runtime() == "codex":
+            fail(
+                "degraded mode is Claude-only; Codex must use native stage "
+                "admission and scope"
+            )
     from forge_cli.stages import load_stages
     active_stages = [
         stage.get("id") for stage in load_stages(base).get("stages", [])

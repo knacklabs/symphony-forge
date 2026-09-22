@@ -1,0 +1,10 @@
+{
+  "applies_to": [
+    ".factory/stories/FORGE-COORD-1/task-plans/LEAN-WORKFLOW.md#Acceptance Criteria"
+  ],
+  "generated_by": "Root",
+  "lesson": "Not a defect (evidence README.md:204): P2 stale README table/instruction, already durably assigned to queued five-file README refresh against merged runtime. Current runtime uses one selected-generation review and task close. Raw original findings retained; no new P2-only Lean correction. — raised as \"LEAN-AC-12: Docs/runtime agreement: workflow, docs, specs, prompts, skills, architecture text, reviewer focus, required tests, and design-review status agree wi\"",
+  "severity": "medium",
+  "source": "review reject LEAN-WORKFLOW quality",
+  "topic": "rejected-review-finding-quality"
+}

@@ -21,6 +21,7 @@ from .roadmap import load_items
 
 RECURRING_AT = 3  # same class a third time = stop patching, consolidate
 WATCH_AT = 2
+REVIEW_ASPECTS = ("quality", "performance", "security")
 
 
 def _finding_rows(task: str, aspect: str, data: dict) -> list[dict]:
@@ -67,19 +68,36 @@ def collect(base: Path) -> list[dict]:
         task_keys.add(active_issue)
     for task in sorted(task_keys):
         task_root = story_dir(base, task) / "tasks"
+        fixed = [
+            evidence_path(base, task, f"reviews/{aspect}.json")
+            for aspect in REVIEW_ASPECTS
+        ]
+        task_fixed: list[Path] = []
+        if task_root.is_dir():
+            for task_dir in sorted(task_root.iterdir()):
+                task_fixed.extend(
+                    task_dir / "reviews" / f"{aspect}.json"
+                    for aspect in REVIEW_ASPECTS
+                    if (task_dir / "reviews" / f"{aspect}.json").is_file()
+                )
+        fixed_paths = [path for path in fixed if path.is_file()] + task_fixed
+        if fixed_paths:
+            task_ids = sorted({
+                path.relative_to(task_root).parts[0]
+                for path in task_fixed
+            })
+            if task_ids:
+                detail = f"story {task} task {', '.join(task_ids)}"
+            else:
+                detail = f"story {task}"
+            raise SystemExit(
+                f"{detail} has retired fixed review proof; run forge upgrade "
+                "before reading live findings"
+            )
         selected_tasks = [
             path.parent.parent.name
             for path in sorted(task_root.glob("*/reviews/selected.json"))
         ]
-        fixed = [
-            evidence_path(base, task, f"reviews/{aspect}.json")
-            for aspect in ("quality", "performance", "security")
-        ]
-        if any(path.is_file() for path in fixed):
-            raise SystemExit(
-                f"story {task} has retired fixed review proof; run forge upgrade "
-                "before reading live findings"
-            )
         if selected_tasks:
             for task_id in selected_tasks:
                 generation, _selection, problems = read_selected_review_generation(

@@ -1,0 +1,10 @@
+{
+  "applies_to": [
+    ".factory/stories/FORGE-COORD-1/task-plans/LEAN-WORKFLOW.md#Acceptance Criteria"
+  ],
+  "generated_by": "Root",
+  "lesson": "Not a defect (evidence factory/tests/test_pr_link_workflow.py:64): P2 additional assertion request. Existing test proves the actual backfill event delta is exactly verified109/110, no legacy duplication, and both board failures clear. No unrelated spec gap mutation is demonstrated. Whole-commit/unrelated-gap assertion can be tightened in later cleanup; the product backfill outcome is not missing. — raised as \"LEAN-AC-10: Verified PR-link backfill: only verified PR #109 and #110 links are backfilled through `forge pr-link`, producing recorder-generated event files and\"",
+  "severity": "medium",
+  "source": "review reject LEAN-WORKFLOW quality",
+  "topic": "rejected-review-finding-quality"
+}

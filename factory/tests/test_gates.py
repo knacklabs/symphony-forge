@@ -20491,7 +20491,7 @@ def test_task_start_creates_before_jit_with_approved_identity(
     plan_source.unlink()
     plan_source.symlink_to(external_plan)
     code, out = run(repo, "forge.py", "task", "start", "T2")
-    assert code != 0 and "optional source is symlinked" in out
+    assert code != 0 and "optional source is linked" in out
     assert not second_worktree.exists()
     assert subprocess.run(
         ["git", "show-ref", "--verify", "--quiet", "refs/heads/feat/ENG-1-T2"],
@@ -20501,12 +20501,27 @@ def test_task_start_creates_before_jit_with_approved_identity(
     plan_source.unlink()
     plan_source.write_bytes(source_plan)
 
+    # A hard-linked optional source is also outside the one-owner hydration
+    # contract. It must be rejected before task-start allocates a worktree.
+    plan_source.unlink()
+    os.link(external_plan, plan_source)
+    code, out = run(repo, "forge.py", "task", "start", "T2")
+    assert code != 0 and "optional source is linked" in out
+    assert not second_worktree.exists()
+    assert subprocess.run(
+        ["git", "show-ref", "--verify", "--quiet", "refs/heads/feat/ENG-1-T2"],
+        cwd=repo,
+    ).returncode != 0
+    plan_source.unlink()
+    plan_source.write_bytes(source_plan)
+    external_plan.unlink()
+
     plan_dir = plan_source.parent
     external_dir = tmp_path / "external-task-plans"
     shutil.move(plan_dir, external_dir)
     plan_dir.symlink_to(external_dir, target_is_directory=True)
     code, out = run(repo, "forge.py", "task", "start", "T2")
-    assert code != 0 and "optional source is symlinked" in out
+    assert code != 0 and "optional source" in out and "linked" in out
     assert not second_worktree.exists()
     assert subprocess.run(
         ["git", "show-ref", "--verify", "--quiet", "refs/heads/feat/ENG-1-T2"],

@@ -1,0 +1,10 @@
+{
+  "applies_to": [
+    ".factory/stories/FORGE-COORD-1/task-plans/LEAN-WORKFLOW.md#Acceptance Criteria"
+  ],
+  "generated_by": "Root",
+  "lesson": "Not a defect (evidence factory/scripts/forge_cli/upgrade.py:2172): False one-shot interpretation of accepted supplemental recovery. One supplement preserves authenticated prior_completion lineage for newly eligible merged history; accepted tests1443/1490 require extension. Preserve those semantics. The separate profile-publication transaction P1 is being repaired in this batch. — raised as \"LEAN-AC-6: Lean migration: `forge upgrade` performs clean-checkout preflight with no `--force` bypass, full inventory/hash/classification, independent raw no-fo\"",
+  "severity": "medium",
+  "source": "review reject LEAN-WORKFLOW quality",
+  "topic": "rejected-review-finding-quality"
+}

@@ -1,0 +1,10 @@
+{
+  "applies_to": [
+    ".factory/stories/FORGE-COORD-1/task-plans/LEAN-WORKFLOW.md#Acceptance Criteria"
+  ],
+  "generated_by": "Root",
+  "lesson": "Not a defect (evidence WORKFLOW.md:504): P2 stale prose says missing required JUnit ID is recorded rather than refused; current dedicated selector/identity consumer refuses missing or ambiguous required cases, with actual required regression passing. Correct docs with workflow cleanup; preserve raw finding without claiming implementation lacks the exercised refusal. — raised as \"LEAN-AC-15: Canonical selector proof: when the canonical pytest/JUnit execution truthfully proves every exact declared required-test node id, close consumes tha\"",
+  "severity": "medium",
+  "source": "review reject LEAN-WORKFLOW quality",
+  "topic": "rejected-review-finding-quality"
+}

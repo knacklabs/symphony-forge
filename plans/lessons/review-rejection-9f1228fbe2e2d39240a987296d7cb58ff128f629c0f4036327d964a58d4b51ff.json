@@ -1,0 +1,10 @@
+{
+  "applies_to": [
+    ".factory/stories/FORGE-COORD-1/task-plans/LEAN-WORKFLOW.md#Acceptance Criteria"
+  ],
+  "generated_by": "Root",
+  "lesson": "Not a defect (evidence docs/specs/delegation-boundary.md:79): False contract interpretation: exact approved files do not authorize following a baseline symlink. Existing no-follow topology refuses mode120000 and linked/reparse ancestors to preserve scope confinement. Accepted narrowed scope does not require supporting symlink mutation; changing this would weaken the retained boundary. — raised as \"LEAN-AC-4: Narrowed delegation: `forge delegate --scope` is a proper-subset narrowing feature, exact approved files are valid subset members, no flag keeps full\"",
+  "severity": "medium",
+  "source": "review reject LEAN-WORKFLOW quality",
+  "topic": "rejected-review-finding-quality"
+}

@@ -32,7 +32,7 @@ from factory_lib import sha256_of  # noqa: E402
 
 
 @pytest.fixture()
-def native_repo(tmp_path: Path) -> Path:
+def native_repo(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     base = tmp_path / "repo"
     base.mkdir()
     subprocess.run(["git", "init", "-q", str(base)], check=True)
@@ -40,6 +40,12 @@ def native_repo(tmp_path: Path) -> Path:
     schemas.mkdir(parents=True)
     shutil.copy(HARNESS / "factory/schemas/delegation.json", schemas)
     (base / ".factory").mkdir()
+    # These focused native-launch fixtures do not model a real Codex checkout;
+    # the readiness gate itself has dedicated regression coverage below.
+    from forge_cli import doctor
+    monkeypatch.setattr(
+        doctor, "codex_hook_readiness", lambda _base: (True, "fixture-ready"),
+    )
     return base
 
 
@@ -215,6 +221,71 @@ def test_codex_delegate_prepares_host_native_role_without_process_launch_or_pins
     assert prepared["task_sha256"] == "a" * 64
     assert prepared["write_scope"] == ["src/"]
     assert not ({"pid", "pgid", "pid_started", "process_token", "session_id"} & prepared.keys())
+
+
+def test_native_write_refuses_before_brief_or_preparation_when_hooks_unready(
+        native_repo, monkeypatch, capsys):
+    import forge_cli.doctor as doctor
+    import forge_cli.delegate as delegate
+
+    monkeypatch.setenv("FORGE_COORDINATOR", "codex")
+    monkeypatch.setattr(
+        doctor, "codex_hook_readiness", lambda _base: (False, "fixture hook failure"),
+    )
+    with pytest.raises(SystemExit):
+        delegate.launch_companion(
+            native_repo,
+            task_id="T1",
+            text="# bounded task\n",
+            path=native_repo / ".factory" / "briefs/T1.md",
+            task_sha256_value="a" * 64,
+            model="ignored",
+            effort="ignored",
+            write=True,
+            write_scope=["src/"],
+        )
+
+    assert "hook readiness" in capsys.readouterr().out
+    assert not (native_repo / ".factory" / "briefs" / "T1.md").exists()
+    assert load_delegations(native_repo) == []
+    assert not (native_repo / ".git" / "delegations" / "locks").exists()
+
+
+def test_native_read_only_and_print_only_skip_hook_readiness(
+        native_repo, monkeypatch):
+    import forge_cli.doctor as doctor
+    import forge_cli.delegate as delegate
+
+    monkeypatch.setenv("FORGE_COORDINATOR", "codex")
+    monkeypatch.setattr(
+        doctor, "codex_hook_readiness", lambda _base: (False, "fixture hook failure"),
+    )
+    readonly = delegate.launch_companion(
+        native_repo,
+        task_id="grill-plan",
+        text="# read-only\n",
+        path=native_repo / ".factory" / "diagnostic-briefs/grill-plan.md",
+        task_sha256_value="b" * 64,
+        model="ignored",
+        effort="ignored",
+        write=False,
+    )
+    preview = delegate.launch_companion(
+        native_repo,
+        task_id="T1",
+        text="# preview\n",
+        path=native_repo / ".factory" / "diagnostic-briefs/T1.md",
+        task_sha256_value="c" * 64,
+        model="ignored",
+        effort="ignored",
+        write=True,
+        write_scope=["src/"],
+        print_only=True,
+    )
+    assert readonly["write"] is False
+    assert preview["write"] is True
+    rows = load_delegations(native_repo)
+    assert len(rows) == 1 and rows[0]["write"] is False
 
 
 def test_native_context_descriptor_delivers_validated_source_metadata(

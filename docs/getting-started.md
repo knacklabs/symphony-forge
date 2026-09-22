@@ -39,7 +39,8 @@ prototype ▶ spec grills ▶ CONFIRMED SPECS ▶ derived roadmap ▶ sign-off g
   or Claude plugin companion implements
   ▶ commit ▶ task proof ▶ `forge task close` runs ONE combined three-lens
   task review ▶ delegate fixes and rerun close until clean ▶ functional
-  (if user-facing) ▶ task PR readiness
+  proof (if user-facing) ▶ rerun close to reuse the selected review and seal
+  the stage ▶ task PR readiness
 ```
 
 - **Grills** are adversarial gaps/contradictions passes: each spec
@@ -264,13 +265,18 @@ stories may also advance in parallel. Story evidence ships in place under
    `planner-high` role without a model or reasoning override. New decisions get
    records. **Before approval, one independent cold grill is mandatory** — say:
    **"Grill me on this plan"** (`/grill-me`); the verdict is recorded
-   (`record_grill_from_json.py --gate plan`) with every finding disposed and
-   every amendment explained. In native Codex, `forge grill run --gate plan
-   ...` prepares one griller descriptor; put the complete descriptor and its
-   context metadata in the actual `spawn_agent` message, then record the exact
-   returned JSON with `record_grill_from_json.py --gate plan --cold-result
-   <path> --preparation-id <id>`. Claude keeps its command-managed cold-reader
-   lifecycle. Then say: **"Save the plan."** The save records
+  (`python3 factory/scripts/record_grill_from_json.py --gate plan --input
+  <grill-json> --input-digest <plan-file>`) with every finding disposed and
+  every amendment explained. In native Codex, run `./forge grill run --gate
+  plan --file <plan-file>` to prepare one griller descriptor; put the complete
+  descriptor and its context metadata in the actual `spawn_agent` message,
+  then record the exact returned JSON with `python3
+  factory/scripts/record_grill_from_json.py --gate plan --input <grill-json>
+  --input-digest <plan-file> --cold-result <path> --preparation-id <id>`.
+  Claude keeps its command-managed cold-reader lifecycle. If an already
+  approved plan changes before stage start, record its amendment bridge against
+  the existing cold proof and return directly to native approval; do not launch
+  another cold grill solely for changed bytes. Then say: **"Save the plan."** The save records
    `awaiting-approval`; approve the exact displayed final plan through native
    Plan Mode. There is no board approval, manual approve command, or second
    unchanged save.
@@ -337,10 +343,13 @@ one-time migration input; fixed lens files are not ordinary task proof.
 
 5. **Functional check** — only when the decomposition says
    `user_facing: true`; the final check uses the Sol/high `functional-checker`;
-   then: **"Is this PR ready?"**
+   record the proof, rerun `./forge task close <task-id>` so the unchanged
+   selected review is reused and the stage is sealed, then say: **"Is this PR
+   ready?"**
 
 ```bash
 python3 factory/scripts/record_test_from_json.py --kind functional --input /tmp/functional-test.json
+./forge task close <task-id>
 python3 factory/scripts/pr_ready.py
 ```
 

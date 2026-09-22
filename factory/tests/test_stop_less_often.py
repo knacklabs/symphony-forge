@@ -19,7 +19,7 @@ from pathlib import Path
 from test_gates import (  # noqa: F401
     HARNESS, STAGE_TASK, git, intake, load_factory_lib, record_skeleton_then_frontier,
     native_claude_approval, post_hook, record_task_grill, repo, run, save_plan,
-    sign_off, story_state,
+    sign_off, start_stage, story_state, write_in_scope, write_task_proof,
 )
 
 sys.path.insert(0, str(HARNESS / "factory" / "scripts"))
@@ -196,6 +196,43 @@ def test_forge_next_repeats_the_split_where_it_is_needed():
     assert "ANSWER " in step and "YOURSELF" in step
     assert "Escalate ONLY" in step
     assert "recommendation" in step
+
+
+def test_review_triage_is_the_frontier_and_blocks_only_real_write_launches(
+        repo: Path, tmp_path):
+    start_stage(repo, tmp_path, STAGE_TASK)
+    write_in_scope(repo, "src/core.py", "version = 1\n")
+    git(repo, "add", "src/core.py")
+    git(repo, "commit", "-qm", "reviewed work")
+    write_task_proof(repo, "T1", publish_review=True, review_blocked=True)
+
+    from forge_cli.review import selected_generation
+    generation = selected_generation(repo, "ENG-1", "T1")
+    assert generation is not None
+
+    code, out = run(repo, "forge.py", "next")
+    assert code == 0, out
+    assert "REVIEW TRIAGE for T1" in out
+    assert generation["generation_id"] in out
+    assert "1 of 1 actionable P0/P1 defect finding(s) untriaged" in out
+    assert './forge review T1 --triage "<finding text>"' in out
+    assert "Inspect them, then delegate the bounded fixes" not in out
+
+    code, out = run(
+        repo, "forge.py", "delegate", "T1",
+        env={"FORGE_COORDINATOR": "codex"},
+    )
+    assert code != 0, out
+    assert "write delegation refused" in out
+    assert generation["generation_id"] in out
+    assert './forge review T1 --triage "<finding text>"' in out
+
+    code, out = run(
+        repo, "forge.py", "delegate", "T1", "--print-only",
+        env={"FORGE_COORDINATOR": "codex"},
+    )
+    assert code == 0, out
+    assert "Write access: NO" in out and "not dispatched" in out
 
 
 # ------------------------------------------------------- reachable escalation

@@ -1,0 +1,10 @@
+{
+  "applies_to": [
+    "factory/tests/**"
+  ],
+  "generated_by": "Root",
+  "lesson": "Not a defect (evidence factory/scripts/factory_lib.py:2214): The sealed reader already loads selected proof at marker_publication_commit at2214-2228. The cited negative test deliberately deletes the current canonical selected pointer after sealing; this is unapproved proof-state corruption, not a supported cleanup. Lines2229-2254 refuse replacement/disappearance unless it is a valid marker-bound upgrade, while ordinary sealed proof content still comes from the immutable marker commit. Portable may migrate only through that supported bound path. Do not replace the negative corruption assertion with silent acceptance or make fixed paths authoritative. — raised as \"Preserve marker-committed proof when the live selection disappears (factory/tests/test_proof_read_path.py:124): When a sealed task has a valid `pr-ready` marker\"",
+  "severity": "medium",
+  "source": "review reject LEAN-WORKFLOW quality",
+  "topic": "rejected-review-finding-quality"
+}

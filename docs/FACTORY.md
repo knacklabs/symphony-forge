@@ -152,12 +152,22 @@ narrowed scope, and Forge does not invoke `codex exec`. Under Claude, the
 command launches the protected plugin companion. Do not guess later-task
 execution detail. `forge next` routes this loop one action at a time.
 
-For that native cold grill, `forge grill run ...` prepares one descriptor bound
-to the exact artifact. Main includes the complete descriptor and all context
-metadata in the actual `spawn_agent` message to the configured `griller` role,
-then records its exact JSON with `record_grill_from_json.py --cold-result
-<path> --preparation-id <id>` plus the gate/task arguments. Claude retains its
-command-managed cold-reader lifecycle.
+If an already approved plan is amended before stage start, record the amendment
+bridge against the existing cold proof and return directly to exact native
+approval of the amended digest; do not launch a second cold grill solely for
+changed bytes.
+
+For that native plan grill, `./forge grill run --gate plan --file <plan-file>`
+prepares one descriptor bound to the exact artifact. Main includes the complete
+descriptor and all context metadata in the actual `spawn_agent` message to the
+configured `griller` role, then records its exact JSON with `python3
+factory/scripts/record_grill_from_json.py --gate plan --input <grill-json>
+--input-digest <plan-file> --cold-result <path> --preparation-id <id>`. A
+native task grill uses `./forge grill run --gate task --task <id>` and
+`python3 factory/scripts/record_grill_from_json.py --gate task --task <id>
+--input <grill-json> --cold-result <path> --preparation-id <id>`; task gates
+have no `--input-digest`. Claude retains its command-managed cold-reader
+lifecycle.
 
 Raw/direct/nested `codex exec` and direct plugin shell launch are off-contract
 and hook-denied for general or manual delegation in both runtimes. The
@@ -178,14 +188,16 @@ A later close reuses a passing proof only when its complete command,
 environment, tool, distribution, generated-input, and product identities
 match; unknown command shapes stay conservative and run again (0079). It
 runs one three-lens review only when the product delta is not already stamped,
-and checks the complete task-owned automated and conditional functional proof
-before it measures and closes the stage, writes the task marker, pushes and
-opens the PR. The lenses run concurrently by default; blocking findings are
-fixed in one delegated batch, committed, and `close` is rerun. Wait for that
-PR's CI and merge before starting the next task. Once every task marker and its
-proof are on trunk, record the story outcome and run `pr_ready.py`; no second
-story review or verify is required. Follow `docs/QUALITY.md` bounded recovery
-when progress stalls.
+and checks the complete task-owned automated proof before it measures and
+closes the stage, writes the task marker, pushes and opens the PR. For a
+`user_facing: true` task, close stops until the functional checker records its
+proof; record that proof, then rerun `./forge task close <id>` so the unchanged
+selected review is reused and the stage is sealed. The lenses run concurrently
+by default; blocking findings are fixed in one delegated batch, committed, and
+`close` is rerun. Wait for that PR's CI and merge before starting the next task.
+Once every task marker and its proof are on trunk, record the story outcome and
+run `pr_ready.py`; no second story review or verify is required. Follow
+`docs/QUALITY.md` bounded recovery when progress stalls.
 
 Store the decomposition in `.factory/stories/<key>/decomposition.json` — that
 story-scoped artifact is canonical. Mirroring into a tracker (Linear, GitHub

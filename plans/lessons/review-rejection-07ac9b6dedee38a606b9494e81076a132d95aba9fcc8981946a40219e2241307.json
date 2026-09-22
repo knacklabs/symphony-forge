@@ -1,0 +1,10 @@
+{
+  "applies_to": [
+    "factory/scripts/**"
+  ],
+  "generated_by": "Root",
+  "lesson": "Not a defect (evidence factory/scripts/forge_cli/worker_admission.py:45): P2 robustness under malformed trusted git-local state: load_stages requires a matching nonempty story identity and both native and companion admission refuse without an active stage. The remaining write_stages mirror publication risk is an already-authorized lifecycle corruption path, not unauthorized product admission. Retain a focused refusal-before-mirror-publication follow-up under Shared; user explicitly permits P2 deferral. — raised as \"Fail closed when protected run state is malformed (factory/scripts/factory_lib.py:696): Trigger: the protected run pointer is unreadable, conflict-marked, or va\"",
+  "severity": "medium",
+  "source": "review reject LEAN-WORKFLOW quality",
+  "topic": "rejected-review-finding-quality"
+}

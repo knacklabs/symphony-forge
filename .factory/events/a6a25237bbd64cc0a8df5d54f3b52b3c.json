@@ -1,0 +1,1 @@
+{"event": "signal-resolved", "generated_by": "orchestrator", "at": "2026-09-22T16:22:05+00:00", "story": "FORGE-COORD-1", "detail": "S-0050-d654: User approved on 2026-09-22: trust the hash-approved project hook plus exact digest/session/event/replay validation as the current native approval boundary; signed/unforgeable host attestation remains"}

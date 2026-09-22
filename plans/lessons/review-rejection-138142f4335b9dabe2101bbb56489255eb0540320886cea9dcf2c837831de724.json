@@ -1,0 +1,10 @@
+{
+  "applies_to": [
+    ".factory/stories/FORGE-COORD-1/task-plans/LEAN-WORKFLOW.md#Acceptance Criteria"
+  ],
+  "generated_by": "Root",
+  "lesson": "Not a defect (evidence factory/scripts/forge_cli/stages.py:2873): P2 measured-performance limitation: envrc projection mismatch conservatively reruns required selectors; it never treats missing/ambiguous nodes as a pass. Actual full proof and all55selectors passed. Raw performance finding is P2 and already retained with the measured client-speed owner. No claim of successful end-to-end reuse/client speedup is made. — raised as \"LEAN-AC-15: Canonical selector proof: when the canonical pytest/JUnit execution truthfully proves every exact declared required-test node id, close consumes tha\"",
+  "severity": "medium",
+  "source": "review reject LEAN-WORKFLOW quality",
+  "topic": "rejected-review-finding-quality"
+}

@@ -683,3 +683,11 @@ def test_live_findings_refuse_fixed_proof_for_active_and_inactive_stories(
     selected.write_text("{}\n", encoding="utf-8")
     with pytest.raises(SystemExit, match="run forge upgrade"):
         findings.collect(repo)
+
+    active.unlink()
+    task_fixed = lib.story_dir(repo, "ACTIVE") / "tasks/T1/reviews/quality.json"
+    task_fixed.write_text(json.dumps({
+        "blocking_findings": ["retired task finding"],
+    }), encoding="utf-8")
+    with pytest.raises(SystemExit, match="story ACTIVE task T1.*run forge upgrade"):
+        findings.collect(repo)

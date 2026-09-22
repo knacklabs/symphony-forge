@@ -1,0 +1,10 @@
+{
+  "applies_to": [
+    ".factory/stories/FORGE-COORD-1/task-plans/LEAN-WORKFLOW.md#Acceptance Criteria"
+  ],
+  "generated_by": "Root",
+  "lesson": "Not a defect (evidence factory/scripts/forge_cli/delegate.py:1350): The contract supports exact approved files in a proper subset, not linked-directory traversal or an unrestricted symlink editing API. Regular exact files, including new exact approved destinations, are supported. Symlink/reparse topology is explicitly refused at1350 and1373 as an ambiguous no-follow ownership boundary, consistently with the no-follow context and scope safety requirement. The review infers a required symlink operation that the accepted contract never specifies. Preserve the fail-closed link boundary; broader symlink leaf operation support is separate scope. — raised as \"LEAN-AC-4: Narrowed delegation: `forge delegate --scope` is a proper-subset narrowing feature, exact approved files are valid subset members, no flag keeps full\"",
+  "severity": "medium",
+  "source": "review reject LEAN-WORKFLOW quality",
+  "topic": "rejected-review-finding-quality"
+}

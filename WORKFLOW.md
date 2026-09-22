@@ -96,15 +96,20 @@ non-passing, or stale record. Other verdicts land in
 Findings must resolve into contract/doc edits or decision records before a
 `pass` is recordable.
 
-In native Codex, `forge grill run ...` prepares one self-contained descriptor
-bound to the exact artifact and returns its preparation ID; it launches no
-helper or `codex exec`. Main puts the complete descriptor, including all
-context metadata, in the actual message to the configured `griller` role. It
-then records that subagent's exact JSON with
-`record_grill_from_json.py --cold-result <path> --preparation-id <id>` plus the
-gate/task arguments. The recorder validates the result/preparation binding
-without PID, session, or process-lifecycle proof. Claude retains the protected
-command-managed cold-reader lifecycle.
+In native Codex, `./forge grill run --gate plan --file <plan-file>` prepares
+one self-contained descriptor bound to the exact artifact and returns its
+preparation ID; it launches no helper or `codex exec`. Main puts the complete
+descriptor, including all context metadata, in the actual message to the
+configured `griller` role. It then records that subagent's exact JSON with
+`python3 factory/scripts/record_grill_from_json.py --gate plan --input
+<grill-json> --input-digest <plan-file> --cold-result <path>
+--preparation-id <id>`. A native task grill uses `./forge grill run --gate
+task --task <id>` and `python3 factory/scripts/record_grill_from_json.py --gate
+task --task <id> --input <grill-json> --cold-result <path>
+--preparation-id <id>`; task gates have no `--input-digest`. The recorder
+validates the result/preparation binding without PID, session, or
+process-lifecycle proof. Claude retains the protected command-managed
+cold-reader lifecycle.
 
 ## Context Inbox & Doc Upkeep
 
@@ -435,8 +440,9 @@ sequence a JIT contract loop for every pending task:
    revision and resolve its findings. Native Codex prepares the griller
    descriptor, dispatches the full descriptor through `spawn_agent`, and
    records the exact returned JSON with
-   `record_grill_from_json.py --gate task --task <id> --cold-result <path>
-   --preparation-id <id>`; Claude keeps its command-managed cold-reader path
+   `python3 factory/scripts/record_grill_from_json.py --gate task --task <id>
+   --input <grill-json> --cold-result <path> --preparation-id <id>`; Claude
+   keeps its command-managed cold-reader path
 4. record the human task-plan approval against the same saved revision;
    changed approval-bound content follows the existing amendment route
 5. `forge stage start <id>` (dependency and scope eligibility are derived;
@@ -472,21 +478,30 @@ sequence a JIT contract loop for every pending task:
     line, never guessed; "cannot verify from the diff" is not a verdict. One Codex helper call publishes one
     immutable raw-plus-three-lens generation, then selects its task-scoped
     pointer last. Before closing the stage, `close` requires complete task-owned
-    automated proof and conditional functional proof.
+    automated proof and conditional functional proof. For a `user_facing: true`
+   task, close stops until functional proof is recorded; record it, then rerun
+   `./forge task close <id>` so the unchanged selected review is reused and the
+   stage is sealed.
 
     A run with no blocking (P0/P1) finding stamps the stage; non-blocking
     findings are recorded follow-ups. The coordinator sends all blocking
     findings from the joined round back to Codex in one fix batch (`forge
     delegate <id>`), commits the fix, and reruns `close`; it never asks the
-    human who should fix them. It never relays a finding unread: the
-    coordinator TRIAGES each one first -- opens the cited line and the code it
+    human who should fix them. Before a write delegation, `forge next`,
+    `delegate`, and `task close` all enforce triage of the selected generation's
+    actionable P0/P1 defect findings. Synthetic `plan-contract-partial` and
+    `plan-contract-missing` rows remain acceptance blockers to implement and
+    re-review, but are not host defect triage. The coordinator never relays an
+    actionable finding unread: it TRIAGES each one first -- opens the cited line and the code it
     calls, decides real or not with a file:line it read, and for a real one
     searches the repo for every other place the same contract applies -- and
     records it (`forge review <id> --triage "<text>" --lens <l> --real
     --evidence <file:line> --instance <file:line> ... [--keep "<what must not
     change>"] --by <agent>`, or `--not-a-defect --evidence <file:line> --reason
     ...`). The fix brief carries the triage beside each finding, and `forge
-    delegate` warns on any left without one. A finding relayed unread is how
+    delegate` refuses a write launch while any actionable selected-generation
+    finding is untriaged. Read-only and print-only previews grant no write
+    authority. A finding relayed unread is how
     one class of defect costs one round per file (WF-1 T5: six reviews, eight
     fix rounds; decision 0075). A finding that contradicts an accepted decision,
     a plan section or a sealed contract is not a defect: `forge review <id>
@@ -602,8 +617,11 @@ human-only acts (decisions, sign-off) or unresolvable gate refusals pause it.
 Story and task plans use the coordinator's native Plan Mode. Each plan gets
 one independent cold read at Sol/high. The cold proof binds the exact input it
 read; `finding_dispositions` maps every finding, and `amendments` explains every
-change between that input and the final artifact. The exact final plan is then
-shown in Plan Mode. A successful Claude `ExitPlanMode` binds its exact
+change between that input and the final artifact. If an already approved plan
+changes before stage start, record that amendment bridge against the existing
+cold proof and return directly to native approval of the exact amended digest;
+do not launch a second cold read solely for changed bytes. The exact final plan
+is then shown in Plan Mode. A successful Claude `ExitPlanMode` binds its exact
 `tool_input.plan`; Codex uses the synchronous `approve_plan_<digest>` question
 `Approve exact plan digest <digest>?` with `Approve plan / Request changes / Stop`
 and an id-keyed answer. Either records the human
@@ -666,10 +684,12 @@ stories still archive until `forge upgrade` migrates them.
 4. record client sign-off
 5. plan one roadmap story and record its ordered task list
 6. for each leaf task: author its complete contract, re-record the
-   decomposition, run one independent cold task grill (native: prepare one
-   griller descriptor, include it and its context metadata in the actual
-   `spawn_agent` message, then record the exact result with `--cold-result` and
-   `--preparation-id`), record every finding's
+   decomposition, run one independent cold task grill (native: run `./forge
+   grill run --gate task --task <id>`, include the complete descriptor and its
+   context metadata in the actual `spawn_agent` message, then record the exact
+   result with `python3 factory/scripts/record_grill_from_json.py --gate task
+   --task <id> --input <grill-json> --cold-result <path>
+   --preparation-id <id>`), record every finding's
    disposition and amendment, obtain native approval of the final task-plan
    digest, start the stage, then delegate it through the canonical host-native
    descriptor; native Codex

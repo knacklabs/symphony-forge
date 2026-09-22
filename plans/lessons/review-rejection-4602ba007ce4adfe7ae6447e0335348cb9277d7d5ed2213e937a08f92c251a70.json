@@ -1,0 +1,10 @@
+{
+  "applies_to": [
+    ".factory/stories/FORGE-COORD-1/task-plans/LEAN-WORKFLOW.md#Acceptance Criteria"
+  ],
+  "generated_by": "Root",
+  "lesson": "Not a defect (evidence README.md:207): P2 documentation defect: the output table still says three recorder writes though the implemented flow publishes one selected combined generation. Runtime proof and independent owner are intact. Reconcile this table in the already queued README task; no separate Lean correction cycle under user threshold. — raised as \"LEAN-AC-12: Docs/runtime agreement: workflow, docs, specs, prompts, skills, architecture text, reviewer focus, required tests, and design-review status agree wi\"",
+  "severity": "medium",
+  "source": "review reject LEAN-WORKFLOW quality",
+  "topic": "rejected-review-finding-quality"
+}

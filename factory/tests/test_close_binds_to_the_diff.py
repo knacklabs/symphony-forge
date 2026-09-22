@@ -397,6 +397,11 @@ def test_close_says_the_review_covers_the_whole_task_delta(repo, tmp_path):
     result, out = _post_seal_fix_with_a_review(repo, tmp_path, "P1")
     assert result["code"] != 0, out
     assert "1 blocking finding(s)" in out
+    assert "selected generation" in out
+    assert "1 of 1 actionable P0/P1 defect finding(s) untriaged" in out
+    assert './forge review T1 --triage "<finding text>"' in out
+    assert out.index('./forge review T1 --triage "<finding text>"') \
+        < out.index("./forge delegate T1")
     assert "reviews the whole task delta, base to tip" in out
     assert "only the new diff" not in out
 
@@ -703,6 +708,47 @@ def test_the_review_verdict_is_counted_from_what_was_recorded(repo, tmp_path):
         repo, "ENG-1", "T1", ("quality",))
     assert blocking == 0 and caveats == 0
     assert recorded["quality"]["score"] == 10
+
+
+def test_actionable_review_rows_exclude_plan_contract_acceptance_blockers(
+        repo, tmp_path):
+    from factory_lib import publish_review_generation, read_selected_review_generation
+    from forge_cli.review import (
+        actionable_blocking_with_triage, untriaged_actionable_blocking,
+    )
+
+    start_stage(repo, tmp_path, STAGE_TASK)
+    write_in_scope(repo, "src/core.py")
+    git(repo, "add", "src/core.py")
+    git(repo, "commit", "-qm", "work")
+    write_task_proof(repo, "T1", publish_review=True, review_blocked=True)
+    generation, _selection, problems = read_selected_review_generation(
+        repo, "ENG-1", "T1",
+    )
+    assert not problems and generation is not None
+    candidate = json.loads(json.dumps(generation))
+    candidate.pop("generation_id")
+    candidate["lenses"]["quality"]["blocking_findings"].append({
+        "category": "plan-contract-partial",
+        "area": "src/core.py",
+        "summary": "C1 remains partial",
+        "file_path": "src/core.py",
+        "line": 1,
+        "title": "VERDICT C1: partial",
+    })
+    candidate["lenses"]["quality"].update({
+        "score": 7, "recommendation": "request-changes",
+    })
+    publish_review_generation(
+        repo, "ENG-1", "T1", candidate,
+        expected_source_id=generation["generation_id"],
+    )
+
+    rows = actionable_blocking_with_triage(repo, "ENG-1", "T1")
+    assert [(lens, finding["category"]) for lens, finding, _triage in rows] == [
+        ("security", "security"),
+    ]
+    assert untriaged_actionable_blocking(repo, "ENG-1", "T1") == (1, 1)
 
 
 def test_the_delegate_brief_carries_the_selected_current_findings(repo, tmp_path):

@@ -1,0 +1,10 @@
+{
+  "applies_to": [
+    "factory/scripts/**"
+  ],
+  "generated_by": "Root",
+  "lesson": "Not a defect (evidence factory/scripts/factory_lib.py:2318): P2 legacy compatibility/routing follow-up. Current workflow intentionally requires each task marker and task proof on trunk; a marker-free historical story refuses safely instead of receiving a new aggregate story proof shortcut. No current per-task shipping path is blocked. Legacy closeout recovery/retirement belongs to Portable before any client rollout; user explicitly prioritizes deleting duplicate legacy runtime rather than restoring broad story proof. Retain the compatibility gap and stale helper/test wording, without bypassing task proof. — raised as \"Preserve the supported story-level closeout path (factory/scripts/pr_ready.py:93): When a legacy or explicitly story-level run has completed stages but no per-t\"",
+  "severity": "medium",
+  "source": "review reject LEAN-WORKFLOW quality",
+  "topic": "rejected-review-finding-quality"
+}

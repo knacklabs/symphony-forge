@@ -1,0 +1,10 @@
+{
+  "applies_to": [
+    "factory/tests/**"
+  ],
+  "generated_by": "Root",
+  "lesson": "Not a defect (0077): Accepted 0077 keeps partial/missing contract verdicts in the same finding/rejection lifecycle and preserves raw output; review.py::_contract_blocker explicitly makes them triageable and rejectable. A missing emitted verdict is fail-closed initially, not an irrevocable proof that implementation is missing. The supported host rejection requires exact source generation, current delta/meaning and a concrete settled-contract or source citation; the test also proves stale delta and missing source lineage refusal. Prohibiting this intended supported disposition would contradict that settled lifecycle. — raised as \"Prevent rejection from clearing a missing contract verdict (factory/tests/test_review_settled_contracts.py:467): When a combined review omits `T2-AC1`, this tes\"",
+  "severity": "medium",
+  "source": "review reject LEAN-WORKFLOW quality",
+  "topic": "rejected-review-finding-quality"
+}

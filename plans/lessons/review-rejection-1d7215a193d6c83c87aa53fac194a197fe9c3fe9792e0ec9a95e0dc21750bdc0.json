@@ -1,0 +1,10 @@
+{
+  "applies_to": [
+    "factory/tests/**"
+  ],
+  "generated_by": "Root",
+  "lesson": "Not a defect (0052): False P1 under accepted Decision0052:53-55 and plan-approval.md:62-65: initial cold-to-first-final bridge differs from later authenticated exact-digest human reapproval. Postapproval edits intentionally return directly to the approver; current event/current bytes plus predecessor ancestry are required. Active task plan81 explicitly requires final digest rebinding. Regrill/extra bridge ceremony was previously rejected in Q-0154 and restored in Q-0155/Q-0169/Q-0170. No old approval or stale digest authorizes new bytes. Preserve settled tests; any historical bridge wording ambiguity is P2 provenance clarity, not unauthorized execution. — raised as \"Preserve a valid amendment bridge when reapproving edited plans (factory/tests/test_stop_less_often.py:106): When an already approved task plan is edited and re\"",
+  "severity": "medium",
+  "source": "review reject LEAN-WORKFLOW quality",
+  "topic": "rejected-review-finding-quality"
+}

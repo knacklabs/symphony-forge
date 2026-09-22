@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import argparse
 import contextlib
+import csv
 import hashlib
 import json
 import os
@@ -1947,6 +1948,12 @@ def _run_required_tests(
             env = os.environ.copy()
             process_token = f"proof-{uuid.uuid4().hex}"
             env["FORGE_PROCESS_TOKEN"] = process_token
+            # Required selectors run with the same canonical-JUnit contract as
+            # the aggregate verifier.  Bind the fresh report path even when a
+            # caller inherited a stale value; an explicit leading assignment
+            # remains authoritative because the shell-free runner applies it
+            # below exactly as _proof_environment models it.
+            env["FORGE_CANONICAL_JUNIT"] = str(report)
             while tokens and "=" in tokens[0] and not tokens[0].startswith("="):
                 name, value = tokens.pop(0).split("=", 1)
                 env[name] = value
@@ -2429,7 +2436,8 @@ def _pytest_identity_projection(identity: dict[str, object]) -> dict[str, object
     return {
         key: identity.get(key)
         for key in ("environment", "interpreter", "python_version",
-                    "dependencies", "pytest_config", "pytest_semantics")
+                    "dependencies", "uv_bootstrap", "uv_overlay_sha256",
+                    "pytest_config", "pytest_semantics")
         if key in identity
     }
 
@@ -2853,6 +2861,23 @@ def _review_covers_tree(base: Path, stage_id: str, task: dict) -> bool:
     return isinstance(stage, dict) and stamp_is_fresh(base, stage, task)
 
 
+_CANONICAL_JUNIT_IDENTITY = "<forge-canonical-junit>"
+
+
+def _canonical_junit_environment(report: Path | None = None) -> dict[str, str]:
+    """Return the JUnit environment the canonical proof actually receives.
+
+    The report path is temporary and must not become durable proof input.  A
+    stable marker is used while building a receipt; the live report path is
+    used while comparing a fresh report with required selectors.
+    """
+    return {
+        "FORGE_CANONICAL_JUNIT": (
+            str(report) if report is not None else _CANONICAL_JUNIT_IDENTITY
+        ),
+    }
+
+
 def _canonical_junit_satisfies_required_tests(
         report: Path, task: dict, *, base: Path | None = None,
         canonical_command: str = "",
@@ -2869,10 +2894,13 @@ def _canonical_junit_satisfies_required_tests(
     )
     if canonical_paths is None:
         return False
+    junit_environment = _canonical_junit_environment(report)
+    canonical_environment = _factory_env_from_envrc(base)
+    canonical_environment.update(junit_environment)
     canonical_tool = _proof_tool_identity(
         base, canonical_command, fixed_after_assignments=False,
         allowed_generated_paths=generated_paths,
-        environment_overrides=_factory_env_from_envrc(base),
+        environment_overrides=canonical_environment,
     )
     if canonical_tool.get("reusable") is not True:
         return False
@@ -2902,6 +2930,7 @@ def _canonical_junit_satisfies_required_tests(
         required_tool = _proof_tool_identity(
             base, required_command, fixed_after_assignments=True,
             allowed_generated_paths=generated_paths,
+            environment_overrides=junit_environment,
         )
         if (required_tool.get("reusable") is not True
                 or _pytest_identity_projection(required_tool)
@@ -3017,9 +3046,18 @@ def _proof_environment(
     """Return parsed argv and a secret-free identity for its effective env."""
     tokens = shlex.split(command)
     environment = os.environ.copy()
+    inherited_canonical_junit = environment.get("FORGE_CANONICAL_JUNIT")
     if environment_overrides:
         for key, value in environment_overrides.items():
-            environment.setdefault(key, value)
+            # The canonical verifier unconditionally injects this value into
+            # its child environment.  A caller may have inherited a stale
+            # value, but it cannot replace the value the verifier actually
+            # uses.  Other overrides retain the existing envrc semantics:
+            # exported process values win over declarations from .envrc.
+            if key == "FORGE_CANONICAL_JUNIT":
+                environment[key] = value
+            else:
+                environment.setdefault(key, value)
     inherited_python_utf8 = environment.get("PYTHONUTF8")
     # Proof runners always replace this nonce. Keep that fixed override stable
     # while still binding every other inherited variable an arbitrary command
@@ -3042,8 +3080,163 @@ def _proof_environment(
             ("<unset>" if inherited_python_utf8 is None
              else inherited_python_utf8).encode("utf-8")
         ).hexdigest(),
+        # Canonical and selector runners replace this path with their own
+        # temporary report.  Keep the inherited value bound as well: it is a
+        # caller-controlled input that can affect a plugin before the runner
+        # applies its fresh report path.
+        "inherited_canonical_junit_sha256": hashlib.sha256(
+            ("<unset>" if inherited_canonical_junit is None
+             else inherited_canonical_junit).encode("utf-8")
+        ).hexdigest(),
     }
     return tokens, environment, identity
+
+
+_PYTHON_IMPORT_SUFFIXES = {
+    ".py", ".pyi", ".pyc", ".pth", ".so", ".pyd", ".dll", ".dylib",
+    ".zip", ".egg", ".whl", ".pyz",
+}
+
+
+def _linked_path_component(path: Path, *, stop: Path | None = None) -> bool:
+    """Whether a source path or one of its ancestors is a filesystem link."""
+    current = path.absolute()
+    stop_at = stop.absolute() if stop is not None else None
+    while True:
+        if stop_at is not None and current == stop_at:
+            return False
+        try:
+            if stat.S_ISLNK(current.lstat().st_mode):
+                return True
+        except OSError:
+            return True
+        if current == current.parent:
+            return False
+        current = current.parent
+
+
+def _python_import_files(root: Path) -> set[Path] | None:
+    """Enumerate importable files below one path without following links."""
+    try:
+        if _linked_path_component(root):
+            return None
+        info = root.lstat()
+    except OSError:
+        return None
+    if stat.S_ISLNK(info.st_mode):
+        return None
+    if stat.S_ISREG(info.st_mode):
+        return {root.resolve()} if root.suffix.lower() in _PYTHON_IMPORT_SUFFIXES \
+            else set()
+    if not stat.S_ISDIR(info.st_mode):
+        return None
+    found: set[Path] = set()
+    try:
+        for current, directories, files in os.walk(root, followlinks=False):
+            current_path = Path(current)
+            if any((current_path / name).is_symlink() for name in directories):
+                return None
+            for name in files:
+                path = current_path / name
+                if path.suffix.lower() not in _PYTHON_IMPORT_SUFFIXES:
+                    continue
+                leaf = path.lstat()
+                if (stat.S_ISLNK(leaf.st_mode) or not stat.S_ISREG(leaf.st_mode)
+                        or leaf.st_nlink != 1):
+                    return None
+                # Bytecode caches are derived from their source and are not a
+                # distribution source in their own right.
+                if path.suffix.lower() == ".pyc" \
+                        and "__pycache__" in path.parts:
+                    continue
+                found.add(path.resolve())
+    except OSError:
+        return None
+    return found
+
+
+def _recorded_distribution_files(root: Path) -> set[Path] | None:
+    """Read regular, single-link files named by RECORD below an import root."""
+    records: set[Path] = set()
+    found_record = False
+    try:
+        for current, _directories, files in os.walk(root, followlinks=False):
+            current_path = Path(current)
+            if any((current_path / name).is_symlink() for name in files):
+                return None
+            if "RECORD" not in files \
+                    or not current_path.name.endswith(".dist-info"):
+                continue
+            found_record = True
+            for row in csv.reader((current_path / "RECORD").read_text(
+                    encoding="utf-8").splitlines()):
+                if not row or not row[0]:
+                    continue
+                path = (current_path.parent / row[0]).resolve()
+                root_path = root.resolve()
+                if path != root_path and root_path not in path.parents:
+                    if path.suffix.lower() in _PYTHON_IMPORT_SUFFIXES:
+                        return None
+                    continue
+                info = path.lstat()
+                if (stat.S_ISLNK(info.st_mode) or not stat.S_ISREG(info.st_mode)
+                        or info.st_nlink != 1):
+                    return None
+                records.add(path)
+    except (OSError, UnicodeError, csv.Error):
+        return None
+    return records if found_record else None
+
+
+def _pythonpath_sources_reusable(
+        base: Path, environment: dict[str, str],
+        allowed_product_paths: set[Path] | None,
+) -> bool:
+    """Reject mutable external PYTHONPATH roots without distribution records.
+
+    Product-tree roots are covered by the product snapshot.  An external root
+    is reusable only when every importable file is named by a regular,
+    single-link distribution RECORD; an unknown root can change imports between
+    proof runs even when the interpreter and installed distribution list stay
+    unchanged.
+    """
+    raw = environment.get("PYTHONPATH", "")
+    if not raw:
+        return True
+    base_path = base.resolve()
+    if allowed_product_paths is None:
+        snapshot = product_tree_snapshot(base)
+        allowed_product_paths = {
+            (base / relative).resolve()
+            for field in ("tracked", "dirty")
+            for relative in (snapshot.get(field) or {})
+        }
+    product_paths = {path.resolve() for path in allowed_product_paths}
+    for entry in raw.split(os.pathsep):
+        candidate = (base_path if not entry else Path(entry))
+        if not candidate.is_absolute():
+            candidate = base_path / candidate
+        try:
+            resolved = candidate.resolve(strict=True)
+        except OSError:
+            return False
+        if _linked_path_component(candidate):
+            return False
+        import_files = _python_import_files(resolved)
+        if import_files is None:
+            return False
+        if not import_files:
+            continue
+        if resolved == base_path or base_path in resolved.parents:
+            # Keep this check tied to the supplied snapshot so an external
+            # path cannot be smuggled in through a spelling that resolves into
+            # the product tree.
+            if import_files.issubset(product_paths):
+                continue
+        recorded = _recorded_distribution_files(resolved)
+        if recorded is None or not import_files.issubset(recorded):
+            return False
+    return True
 
 
 def _proof_tool_identity(
@@ -3064,6 +3257,17 @@ def _proof_tool_identity(
     if not tokens:
         return {"command": "", "environment": environment_identity,
                 "reusable": False}
+    if not _pythonpath_sources_reusable(
+            base, environment, allowed_product_paths):
+        return {"command": tokens[0], "environment": environment_identity,
+                "reusable": False}
+    if allowed_product_paths is None:
+        snapshot = product_tree_snapshot(base)
+        allowed_product_paths = {
+            (base / relative).resolve()
+            for field in ("tracked", "dirty")
+            for relative in (snapshot.get(field) or {})
+        }
     if (any(character in command for character in ";|&<>`\n")
             or "$(" in command):
         return {"command": tokens[0], "environment": environment_identity,
@@ -3228,12 +3432,14 @@ def _proof_tool_identity(
             cached["pytest_semantics"] = pytest_semantics
         return cached
     script = (
-        "import csv,hashlib,importlib.metadata as m,json,pathlib,re,stat,sys\n"
+        "import csv,hashlib,importlib.metadata as m,json,os,pathlib,re,stat,sys,sysconfig\n"
         "def digest(d, name):\n"
         "    value = d.read_text(name)\n"
         "    if value is None:\n"
         "        raise ValueError(name)\n"
         "    return hashlib.sha256(value.encode()).hexdigest()\n"
+        "recorded_paths = set()\n"
+        "bootstrap_paths = set()\n"
         "def recorded_files(d, dist_name):\n"
         "    raw = d.read_text('RECORD')\n"
         "    if raw is None:\n"
@@ -3249,6 +3455,14 @@ def _proof_tool_identity(
         "                != 'distutils-precedence.pth')):\n"
         "            raise ValueError('unmodeled path entry')\n"
         "        path = pathlib.Path(d.locate_file(relative))\n"
+        "        distribution_root = pathlib.Path(d.locate_file('')).absolute().resolve()\n"
+        "        resolved_path = path.absolute().resolve()\n"
+        "        if (resolved_path != distribution_root\n"
+        "                and distribution_root not in resolved_path.parents\n"
+        "                and pathlib.PurePosixPath(relative).suffix.lower()\n"
+        "                    in {'.py', '.pyi', '.pyc', '.pth', '.so', '.pyd',\n"
+        "                       '.dll', '.dylib', '.zip', '.egg', '.whl', '.pyz'}):\n"
+        "            raise ValueError('recorded import path escaped distribution root')\n"
         "        optional_bytecode = (pathlib.PurePosixPath(relative).suffix\n"
         "                             == '.pyc'\n"
         "                             and '__pycache__' in pathlib.PurePosixPath(\n"
@@ -3263,6 +3477,8 @@ def _proof_tool_identity(
         "            raise ValueError('unreadable recorded file')\n"
         "        if path.is_symlink() or not stat.S_ISREG(info.st_mode):\n"
         "            raise ValueError('linked or non-regular recorded file')\n"
+        "        if info.st_nlink != 1:\n"
+        "            raise ValueError('multiply-linked recorded file')\n"
         "        body = path.read_bytes()\n"
         "        if is_pth:\n"
         "            expected = (\"import os; var = 'SETUPTOOLS_USE_DISTUTILS'; \"\n"
@@ -3270,6 +3486,7 @@ def _proof_tool_identity(
         "                        \"enabled and __import__('_distutils_hack').add_shim();\")\n"
         "            if body.decode('utf-8').strip() != expected:\n"
         "                raise ValueError('unmodeled pth contents')\n"
+        "        recorded_paths.add(path.resolve())\n"
         "        rows.append([relative, len(body), hashlib.sha256(body).hexdigest()])\n"
         "    if not rows:\n"
         "        raise ValueError('empty RECORD')\n"
@@ -3296,11 +3513,197 @@ def _proof_tool_identity(
         "'record_sha256': digest(d, 'RECORD'), "
         "'files_count': files_count, 'files_sha256': files_sha256})\n"
         "rows.sort(key=lambda row: row['name'])\n"
+        "def under(path, roots):\n"
+        "    return any(path == root or root in path.parents for root in roots)\n"
+        "uv_roots = []\n"
+        "for name in ('UV_CACHE_DIR', 'UV_TOOL_DIR'):\n"
+        "    value = os.environ.get(name)\n"
+        "    if value:\n"
+        "        uv_roots.append(pathlib.Path(value).absolute().resolve())\n"
+        "def under_uv(path):\n"
+        "    return any(path == root or root in path.parents for root in uv_roots)\n"
+        "uv_overlay_digests = set()\n"
+        "def uv_overlay_name(path):\n"
+        "    for index, root in enumerate(uv_roots):\n"
+        "        if path == root or root in path.parents:\n"
+        "            return (index, path.relative_to(root).as_posix())\n"
+        "    raise ValueError('uv overlay path escaped root')\n"
+"def bind_uv_overlay(path, sources):\n"
+"    for source in sources:\n"
+"        if source in recorded_paths or source in bootstrap_paths:\n"
+"            continue\n"
+"        if source.suffix.lower() == '.pth':\n"
+"            # A path configuration file executes at interpreter startup.\n"
+"            # Only the explicitly modelled bootstrap files and recorded\n"
+"            # distribution entries may introduce one; an arbitrary uv\n"
+"            # overlay .pth is an unbound import/code injection surface.\n"
+"            raise ValueError('unmodeled uv overlay pth')\n"
+"        body = regular_bytes(source)\n"
+        "        uv_overlay_digests.add((uv_overlay_name(source), len(body),\n"
+        "                                hashlib.sha256(body).hexdigest()))\n"
+        "def regular_bytes(path):\n"
+        "    try:\n"
+        "        info = path.lstat()\n"
+        "    except OSError:\n"
+        "        raise ValueError('unreadable bootstrap file')\n"
+        "    if (path.is_symlink() or not stat.S_ISREG(info.st_mode)\n"
+        "            or info.st_nlink != 1):\n"
+        "        raise ValueError('linked or non-regular bootstrap file')\n"
+        "    return path.read_bytes()\n"
+        "def collect_uv_bootstrap():\n"
+        "    # uv's ephemeral environment overlays two unrecorded virtualenv\n"
+        "    # shims into site-packages.  Bind only those exact filenames and\n"
+        "    # their bytes; every other importable source still needs RECORD.\n"
+        "    rows = []\n"
+        "    seen = set()\n"
+        "    for index, raw in enumerate(sys.path):\n"
+        "        root = pathlib.Path(raw or '.').absolute()\n"
+        "        if root.name != 'site-packages' or not root.is_dir():\n"
+        "            continue\n"
+        "        virtualenv_pth = root / '_virtualenv.pth'\n"
+        "        if virtualenv_pth.is_file() and regular_bytes(virtualenv_pth).decode(\n"
+        "                'utf-8').strip() == 'import _virtualenv':\n"
+        "            candidate = root / '_virtualenv.py'\n"
+        "            if not candidate.is_file():\n"
+        "                raise ValueError('missing uv virtualenv bootstrap')\n"
+        "            paths = (virtualenv_pth, candidate)\n"
+        "        else:\n"
+        "            paths = ()\n"
+        "        overlay = root / '_uv_ephemeral_overlay.pth'\n"
+        "        if overlay.is_file():\n"
+        "            body = regular_bytes(overlay).decode('utf-8').strip()\n"
+        "            values = re.findall(r'site\\.addsitedir\\(\\\"([^\\\"]+)\\\"\\)', body)\n"
+        "            expected = 'import site; ' + '; '.join(\n"
+        "                'site.addsitedir(\\\"' + value + '\\\")'\n"
+        "                for value in values)\n"
+        "            if (not values or body != expected\n"
+        "                    or any(pathlib.Path(value).resolve()\n"
+        "                           not in {pathlib.Path(item or '.').absolute().resolve()\n"
+        "                                  for item in sys.path}\n"
+        "                           for value in values)):\n"
+        "                raise ValueError('unmodeled uv overlay')\n"
+        "            paths += (overlay,)\n"
+        "        for path in paths:\n"
+        "            resolved = path.resolve()\n"
+        "            if resolved in seen:\n"
+        "                continue\n"
+        "            body = regular_bytes(path)\n"
+        "            seen.add(resolved)\n"
+        "            bootstrap_paths.add(resolved)\n"
+        "            rows.append({\n"
+        "                'path': f'site-packages[{index}]/{path.name}',\n"
+        "                'size': len(body),\n"
+        "                'sha256': hashlib.sha256(body).hexdigest(),\n"
+        "            })\n"
+        "    rows.sort(key=lambda row: row['path'])\n"
+        "    return rows\n"
+        "uv_bootstrap = collect_uv_bootstrap()\n"
+        "product_import_paths = []\n"
+        "import_suffixes = {'.py', '.pyi', '.pyc', '.pth', '.so', '.pyd',\n"
+        "                   '.dll', '.dylib', '.zip', '.egg', '.whl', '.pyz'}\n"
+        "def importable_sources(root):\n"
+        "    if root.is_file():\n"
+        "        if root.suffix.lower() not in import_suffixes:\n"
+        "            return []\n"
+        "        try:\n"
+        "            info = root.lstat()\n"
+        "        except OSError:\n"
+        "            return None\n"
+        "        if (root.is_symlink() or not stat.S_ISREG(info.st_mode)\n"
+        "                or info.st_nlink != 1):\n"
+        "            return None\n"
+        "        return [root.resolve()]\n"
+        "    if not root.is_dir():\n"
+        "        return None\n"
+        "    found = []\n"
+        "    try:\n"
+        "        for current, directories, files in os.walk(\n"
+        "                root, followlinks=False):\n"
+        "            current_path = pathlib.Path(current)\n"
+        "            if any((current_path / name).is_symlink()\n"
+        "                   for name in directories):\n"
+        "                return None\n"
+        "            for name in files:\n"
+        "                candidate = current_path / name\n"
+        "                if candidate.suffix.lower() not in import_suffixes:\n"
+        "                    continue\n"
+        "                try:\n"
+        "                    info = candidate.lstat()\n"
+        "                except OSError:\n"
+        "                    return None\n"
+        "                if (candidate.is_symlink()\n"
+        "                        or not stat.S_ISREG(info.st_mode)\n"
+        "                        or info.st_nlink != 1):\n"
+        "                    return None\n"
+        "                if (candidate.suffix.lower() == '.pyc'\n"
+        "                        and '__pycache__' in candidate.parts):\n"
+        "                    continue\n"
+        "                found.append(candidate.resolve())\n"
+        "    except OSError:\n"
+        "        return None\n"
+        "    return found\n"
+        "def import_sources_known():\n"
+        "    cwd = pathlib.Path.cwd().resolve()\n"
+        "    roots = []\n"
+        "    for key in ('stdlib', 'platstdlib'):\n"
+        "        value = sysconfig.get_paths().get(key)\n"
+        "        if value:\n"
+        "            roots.append(pathlib.Path(value).resolve())\n"
+        "    for raw in sys.path:\n"
+        "        raw_path = pathlib.Path(raw or '.').absolute()\n"
+        "        try:\n"
+        "            current = raw_path\n"
+        "            while True:\n"
+        "                if current.is_symlink() and not under_uv(raw_path.resolve()):\n"
+        "                    return False\n"
+        "                if current == current.parent:\n"
+        "                    break\n"
+        "                current = current.parent\n"
+        "            path = raw_path.resolve()\n"
+        "            if path.is_symlink() and not under_uv(path):\n"
+        "                return False\n"
+        "        except OSError:\n"
+        "            return False\n"
+        "        if under(path, roots):\n"
+        "            continue\n"
+        "        if path == cwd or cwd in path.parents:\n"
+        "            sources = importable_sources(path)\n"
+        "            if sources is None:\n"
+        "                return False\n"
+        "            product_import_paths.extend(str(item) for item in sources)\n"
+        "            continue\n"
+        "        if not path.exists():\n"
+        "            # Python commonly includes a not-yet-created stdlib zip.\n"
+        "            if path.suffix == '.zip' and any(\n"
+        "                    path.parent == root.parent for root in roots):\n"
+        "                continue\n"
+        "            return False\n"
+        "        if path.is_file():\n"
+        "            if (path.resolve() not in recorded_paths\n"
+        "                    and path.resolve() not in bootstrap_paths):\n"
+        "                return False\n"
+        "            continue\n"
+        "        sources = importable_sources(path)\n"
+        "        if sources is None:\n"
+        "            return False\n"
+        "        if under_uv(path):\n"
+        "            bind_uv_overlay(path, sources)\n"
+        "            continue\n"
+        "        if any(source not in recorded_paths\n"
+        "                   and source not in bootstrap_paths for source in sources):\n"
+        "            return False\n"
+        "    return True\n"
         "p = pathlib.Path(sys.executable)\n"
         "print(json.dumps({'interpreter_sha256': "
         "hashlib.sha256(p.read_bytes()).hexdigest(), "
         "'interpreter_size': p.stat().st_size, 'version': sys.version, "
-        "'dependencies': rows}, sort_keys=True))\n"
+        "'dependencies': rows, 'uv_bootstrap': uv_bootstrap,\n"
+        "'uv_overlay_sha256': hashlib.sha256(json.dumps(\n"
+        "    sorted(uv_overlay_digests), separators=(',', ':')).encode()\n"
+        ").hexdigest(),\n"
+        "'import_sources_known': import_sources_known(),\n"
+        "'product_import_paths': sorted(set(product_import_paths))},\n"
+        "              sort_keys=True))\n"
     )
     try:
         resolved = subprocess.run(
@@ -3317,6 +3720,21 @@ def _proof_tool_identity(
                 or not detail["version"]
                 or not isinstance(detail["dependencies"], list)):
             raise ValueError
+        if ("import_sources_known" in detail
+                and detail["import_sources_known"] is not True):
+            raise ValueError("unidentified Python import source")
+        product_imports = detail.get("product_import_paths")
+        if product_imports is not None:
+            if (not isinstance(product_imports, list)
+                    or any(not isinstance(path, str) for path in product_imports)):
+                raise ValueError("invalid product import sources")
+            product_paths = {
+                path.resolve() for path in (allowed_product_paths or set())
+            }
+            for raw_path in product_imports:
+                path = Path(raw_path)
+                if not path.is_absolute() or path.resolve(strict=True) not in product_paths:
+                    raise ValueError("unbound product import source")
         names: set[str] = set()
         for row in detail["dependencies"]:
             if (not isinstance(row, dict)
@@ -3340,13 +3758,42 @@ def _proof_tool_identity(
         if detail["dependencies"] != sorted(
                 detail["dependencies"], key=lambda row: row["name"]):
             raise ValueError
+        bootstrap = detail.get("uv_bootstrap", [])
+        if (not isinstance(bootstrap, list)
+                or any(
+                    not isinstance(row, dict)
+                    or set(row) != {"path", "size", "sha256"}
+                    or not isinstance(row["path"], str)
+                    or not re.fullmatch(
+                        r"site-packages\[\d+\]/(?:_virtualenv\.py|"
+                        r"_virtualenv\.pth|_uv_ephemeral_overlay\.pth)",
+                        row["path"],
+                    )
+                    or not isinstance(row["size"], int)
+                    or isinstance(row["size"], bool)
+                    or row["size"] <= 0
+                    or not re.fullmatch(r"[0-9a-f]{64}", row["sha256"])
+                    for row in bootstrap
+                )
+                or bootstrap != sorted(bootstrap, key=lambda row: row["path"])
+                or len({row["path"] for row in bootstrap}) != len(bootstrap)):
+            raise ValueError("invalid uv bootstrap identity")
+        overlay_sha256 = detail.get(
+            "uv_overlay_sha256", hashlib.sha256(b"[]").hexdigest(),
+        )
+        if not isinstance(overlay_sha256, str) \
+                or not re.fullmatch(r"[0-9a-f]{64}", overlay_sha256):
+            raise ValueError("invalid uv overlay identity")
         result = {
             "command": tokens[0], "runner": runner,
             "environment": environment_identity,
             "interpreter": {"sha256": detail["interpreter_sha256"],
                             "size": detail["interpreter_size"]},
             "python_version": detail["version"],
-            "dependencies": detail["dependencies"], "reusable": True,
+            "dependencies": detail["dependencies"],
+            "uv_bootstrap": bootstrap,
+            "uv_overlay_sha256": overlay_sha256,
+            "reusable": True,
         }
         if compileall_inputs is not None:
             result["compileall_inputs"] = compileall_inputs
@@ -3492,12 +3939,16 @@ def proof_identity(
         for field in ("tracked", "dirty")
         for relative in (snapshot.get(field) or {})
     }
+    junit_environment = (
+        _canonical_junit_environment() if kind == "tests" else None
+    )
     tools = [
         _proof_tool_identity(
             base, command, fixed_after_assignments=(kind == "tests"),
             probe_memo=tool_probe_memo,
             allowed_generated_paths=generated_paths,
             allowed_product_paths=allowed_product_paths,
+            environment_overrides=junit_environment,
         )
         for command in commands
     ]
@@ -3518,7 +3969,10 @@ def proof_identity(
                 probe_memo=tool_probe_memo,
                 allowed_generated_paths=generated_paths,
                 allowed_product_paths=allowed_product_paths,
-                environment_overrides=_factory_env_from_envrc(base),
+                environment_overrides={
+                    **_factory_env_from_envrc(base),
+                    **_canonical_junit_environment(),
+                },
             )
             semantic["canonical_test_tool"] = {
                 key: value for key, value in canonical_tool.items()

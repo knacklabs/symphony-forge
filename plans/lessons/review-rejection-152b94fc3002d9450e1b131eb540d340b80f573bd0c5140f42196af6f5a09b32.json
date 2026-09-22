@@ -1,0 +1,10 @@
+{
+  "applies_to": [
+    ".factory/stories/FORGE-COORD-1/task-plans/LEAN-WORKFLOW.md#Acceptance Criteria"
+  ],
+  "generated_by": "Root",
+  "lesson": "Not a defect (evidence factory/scripts/factory_lib.py:2141): P2 historical error-guidance defect. Normal live reader checks fixed-file presence and returns run forge upgrade; malformed historical reads can raise before producing that guidance. Failure remains closed with no stale proof accepted. Retain controlled historical upgrade guidance for Portable cleanup. — raised as \"LEAN-AC-11: Normal-runtime refusal: Lean-removed old formats outside upgrade produce `run forge upgrade` guidance; PR3-owned legacy families stay compatible unt\"",
+  "severity": "medium",
+  "source": "review reject LEAN-WORKFLOW quality",
+  "topic": "rejected-review-finding-quality"
+}

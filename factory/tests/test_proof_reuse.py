@@ -679,7 +679,10 @@ def _fake_uv_probe(repo: Path, monkeypatch) -> tuple[dict, Path]:
     consumer.parent.mkdir(parents=True, exist_ok=True)
     consumer.write_text("VALUE = 1\n", encoding="utf-8")
     state = {"interpreter": b"ephemeral Python v1", "transitive": "1",
-             "probe": "complete", "calls": [], "consumer": consumer}
+             "probe": "complete", "calls": [], "consumer": consumer,
+             "bootstrap": b"uv bootstrap v1",
+             "bootstrap_pth": b"import _virtualenv\n",
+             "overlay": b"import site; site.addsitedir(\"/uv/archive\")"}
     real_which = stages.shutil.which
     real_run = stages.subprocess.run
     monkeypatch.setattr(stages.shutil, "which", lambda command, **kwargs:
@@ -718,6 +721,20 @@ def _fake_uv_probe(repo: Path, monkeypatch) -> tuple[dict, Path]:
             "interpreter_sha256": hashlib.sha256(ephemeral.read_bytes()).hexdigest(),
             "interpreter_size": ephemeral.stat().st_size,
             "version": "3.11", "dependencies": dependencies,
+            "uv_bootstrap": [{
+                "path": "site-packages[0]/_uv_ephemeral_overlay.pth",
+                "size": len(state["overlay"]),
+                "sha256": hashlib.sha256(state["overlay"]).hexdigest(),
+            }, {
+                "path": "site-packages[0]/_virtualenv.pth",
+                "size": len(state["bootstrap_pth"]),
+                "sha256": hashlib.sha256(state["bootstrap_pth"]).hexdigest(),
+            }, {
+                "path": "site-packages[0]/_virtualenv.py",
+                "size": len(state["bootstrap"]),
+                "sha256": hashlib.sha256(state["bootstrap"]).hexdigest(),
+            }],
+            "import_sources_known": True, "product_import_paths": [],
         }
         ephemeral.unlink()
         return subprocess.CompletedProcess(argv, 0, json.dumps(data), "")
@@ -755,6 +772,8 @@ def test_direct_python_probe_keeps_the_executed_venv_entrypoint(
         "interpreter_size": target.stat().st_size,
         "version": "3.11",
         "dependencies": [],
+        "import_sources_known": True,
+        "product_import_paths": [],
     }
     probes = []
 
@@ -920,6 +939,25 @@ def test_probe_changes_interpreter_dependency_and_runner_inputs(repo: Path, monk
     assert stages._proof_tool_identity(repo, command)["runner"] != base["runner"]
 
 
+def test_uv_bootstrap_overlay_bytes_bind_proof_reuse(repo: Path, monkeypatch):
+    state, _runner = _fake_uv_probe(repo, monkeypatch)
+    command = "uv run --with pytest python -m pytest tests/a.py"
+    baseline = stages._proof_tool_identity(repo, command)
+    assert baseline["reusable"] is True
+    state["bootstrap"] = b"uv bootstrap v2"
+    changed = stages._proof_tool_identity(repo, command)
+    assert changed["reusable"] is True
+    assert changed["uv_bootstrap"] != baseline["uv_bootstrap"]
+    state["bootstrap_pth"] = b"import _virtualenv\n# changed"
+    pth_changed = stages._proof_tool_identity(repo, command)
+    assert pth_changed["reusable"] is True
+    assert pth_changed["uv_bootstrap"] != changed["uv_bootstrap"]
+    state["overlay"] = b"import site; site.addsitedir(\"/uv/other\")"
+    overlay_changed = stages._proof_tool_identity(repo, command)
+    assert overlay_changed["reusable"] is True
+    assert overlay_changed["uv_bootstrap"] != pth_changed["uv_bootstrap"]
+
+
 def test_dependency_file_bytes_bind_reuse_and_missing_files_refuse(
         repo: Path, monkeypatch):
     state, _runner = _fake_uv_probe(repo, monkeypatch)
@@ -984,6 +1022,9 @@ def test_dependency_probe_hashes_real_recorded_files_and_refuses_editable_dist(
                 "import importlib.metadata as _metadata, pathlib\n"
                 "_metadata.distributions = lambda: "
                 f"[_metadata.PathDistribution(pathlib.Path({str(dist_info)!r}))]\n"
+                "import sys as _sys\n"
+                f"_sys.path[:] = [{str(site)!r}] + [entry for entry in _sys.path "
+                "if 'site-packages' not in entry]\n"
                 f"exec({script!r}, globals(), globals())\n"
             )
             argv = [*argv[:-1], bootstrap]
@@ -1068,7 +1109,8 @@ def test_proof_identity_binds_environment_without_persisting_secrets(
             "secret-options-one"):
         assert secret not in serialized
     assert all(set(identity["inputs"]["tools"][0]["environment"])
-               == {"sha256", "entries", "inherited_pythonutf8_sha256"}
+               == {"sha256", "entries", "inherited_pythonutf8_sha256",
+                   "inherited_canonical_junit_sha256"}
                for identity in first.values())
 
     monkeypatch.setenv("FACTORY_TEST_CMD", "secret-command-two")
@@ -1085,6 +1127,18 @@ def test_proof_identity_binds_environment_without_persisting_secrets(
     }
     assert all(changed_generic_env[kind]["identity"]
                != changed_command_env[kind]["identity"] for kind in first)
+
+    monkeypatch.setenv("FORGE_CANONICAL_JUNIT", "inherited-report-one")
+    inherited_one = {
+        kind: stages.proof_identity(repo, task, kind, product_tree={})["identity"]
+        for kind in ("verify", "tests")
+    }
+    monkeypatch.setenv("FORGE_CANONICAL_JUNIT", "inherited-report-two")
+    inherited_two = {
+        kind: stages.proof_identity(repo, task, kind, product_tree={})["identity"]
+        for kind in ("verify", "tests")
+    }
+    assert inherited_one != inherited_two
 
     monkeypatch.setenv("FORGE_PROCESS_TOKEN", "generated-nonce-one")
     monkeypatch.setenv("PYTHONUTF8", "0")
@@ -1165,6 +1219,58 @@ def test_proof_reuse_refuses_dependency_environment_and_configuration_drift(
     assert all(stages.proof_identity(
         repo, task, kind, product_tree=product,
     )["reusable"] is False for kind in ("verify", "tests"))
+
+
+def test_proof_reuse_refuses_mutable_external_pythonpath_but_accepts_product_and_recorded_sources(
+        repo: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    source = repo / "tests" / "a.py"
+    source.parent.mkdir(parents=True, exist_ok=True)
+    source.write_text("def test_a():\n    pass\n", encoding="utf-8")
+    task = {**_task(), "verify_commands": ["python3 -m pytest tests/a.py"]}
+
+    external = tmp_path / "mutable-imports"
+    external.mkdir()
+    (external / "mutable_module.py").write_text(
+        "VALUE = 1\n", encoding="utf-8",
+    )
+    monkeypatch.setenv("PYTHONPATH", str(external))
+    assert stages.proof_identity(repo, task, "verify")["reusable"] is False
+
+    monkeypatch.setenv("PYTHONPATH", str(repo / "tests"))
+    assert stages.proof_identity(repo, task, "verify")["reusable"] is True
+
+    recorded = tmp_path / "recorded-imports"
+    recorded.mkdir()
+    module = recorded / "recorded_module.py"
+    module.write_text("VALUE = 1\n", encoding="utf-8")
+    dist = recorded / "recorded_dist-1.0.dist-info"
+    dist.mkdir()
+    (dist / "METADATA").write_text(
+        "Metadata-Version: 2.1\nName: recorded-dist\nVersion: 1.0\n",
+        encoding="utf-8",
+    )
+    (dist / "RECORD").write_text(
+        "recorded_module.py,,\n"
+        "recorded_dist-1.0.dist-info/METADATA,,\n"
+        "recorded_dist-1.0.dist-info/RECORD,,\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("PYTHONPATH", str(recorded))
+    assert stages.proof_identity(repo, task, "verify")["reusable"] is True
+
+
+def test_proof_reuse_refuses_unbound_import_root_inside_product_tree(
+        repo: Path, monkeypatch: pytest.MonkeyPatch):
+    ignored = repo / "ignored-imports"
+    ignored.mkdir()
+    (repo / ".gitignore").write_text("ignored-imports/\n", encoding="utf-8")
+    (ignored / "mutable_module.py").write_text(
+        "VALUE = 1\n", encoding="utf-8",
+    )
+    task = {**_task(), "verify_commands": ["python3 -m pytest tests/a.py"]}
+
+    monkeypatch.setenv("PYTHONPATH", str(ignored))
+    assert stages.proof_identity(repo, task, "verify")["reusable"] is False
 
 
 def test_pytest_addopts_config_bytes_are_bound_without_persisting_paths(
@@ -1256,4 +1362,10 @@ def test_run_stage_proof_memoizes_tool_probe_by_prefix_and_environment(
     stages.proof_identity(
         repo, task, "verify", product_tree=visible_tree, tool_probe_memo=memo,
     )
-    assert len(state["calls"]) == 4
+    # An unknown external PYTHONPATH is rejected before a child probe starts;
+    # memoization must not turn that conservative refusal into a reusable row.
+    assert len(state["calls"]) == 3
+    assert stages.proof_identity(
+        repo, task, "verify", product_tree=visible_tree,
+        tool_probe_memo=memo,
+    )["reusable"] is False

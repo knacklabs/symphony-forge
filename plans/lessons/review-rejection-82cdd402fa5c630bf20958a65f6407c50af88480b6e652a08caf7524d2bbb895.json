@@ -1,0 +1,10 @@
+{
+  "applies_to": [
+    ".factory/stories/FORGE-COORD-1/task-plans/LEAN-WORKFLOW.md#Acceptance Criteria"
+  ],
+  "generated_by": "Root",
+  "lesson": "Not a defect (evidence .factory/stories/FORGE-COORD-1/tasks/LEAN-WORKFLOW/tests.json:65): False missing implementation inference from omitted reviewer VERDICT. Prepared fixture optimization was not adopted because measured setup21.63%/18.62% stayed below25%; original init/freshinstall/path/provenance coverage retained. Historical measurement remains preserved in current automated evidence. Conditional no-adoption acceptance is met; no new benchmark or invented rollout required. — raised as \"LEAN-AC-17: Prepared fixture optimization: shared initialized/scaffolded test fixtures may be introduced only when measured faster while retaining real init, fr\"",
+  "severity": "medium",
+  "source": "review reject LEAN-WORKFLOW quality",
+  "topic": "rejected-review-finding-quality"
+}

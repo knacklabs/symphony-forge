@@ -263,6 +263,49 @@ def test_codex_native_host_needs_active_stage_but_no_process_identity(repo):
     assert "deny" in outside.lower() and "scope" in outside.lower(), outside
 
 
+def test_inherited_degraded_window_uses_native_stage_admission(repo):
+    """A stale Claude outage window cannot become a native five-file grant."""
+    brief, digest = _seed_contract(repo)
+    (repo / ".factory" / "quickfix.json").write_text(json.dumps({
+        "id": "Q-degraded-inherited",
+        "profile": "degraded",
+        "kind": "degraded",
+        "reason": "historical Claude outage",
+        "max_files": 5,
+        "files": [],
+        "harness_source": True,
+    }), encoding="utf-8")
+
+    denied = _hook(repo, _patch(
+        "*** Add File: src/native.py", "+native",
+    ), {"FORGE_COORDINATOR": "codex"})
+    assert "deny" in denied.lower() and "preparation" in denied.lower(), denied
+
+    _record_native_preparation(repo, brief, digest, ["src/"])
+    admitted = _hook(repo, _patch(
+        "*** Add File: src/native.py", "+native",
+    ), {"FORGE_COORDINATOR": "codex"})
+    assert "deny" not in admitted.lower(), admitted
+
+    outside = _hook(repo, _patch(
+        "*** Add File: other/native.py", "+native",
+    ), {"FORGE_COORDINATOR": "codex"})
+    assert "deny" in outside.lower() and "scope" in outside.lower(), outside
+
+
+def test_codex_cannot_open_degraded_window(repo, monkeypatch, capsys):
+    from forge_cli import quickfix
+
+    monkeypatch.setenv("FORGE_COORDINATOR", "codex")
+    with pytest.raises(SystemExit):
+        quickfix.cmd_degraded_start(argparse.Namespace(
+            repo=str(repo), reason="historical Claude outage",
+        ))
+    assert "Claude-only" in capsys.readouterr().out
+    assert not (repo / ".factory" / "quickfix.json").exists()
+    assert not (repo / "plans" / "quickfixes").exists()
+
+
 def test_codex_native_host_denies_direct_and_nested_codex_exec(repo):
     for command in (
         "codex exec inspect",
@@ -789,6 +832,7 @@ def test_terminal_launch_never_retains_write_admission(repo, tmp_path, terminal)
 
 def test_native_lite_fix_prepares_without_stage_and_keeps_window_budget(
         repo, monkeypatch, capsys):
+    from forge_cli import doctor
     from forge_cli import fix
     from forge_cli.delegate import load_delegations
 
@@ -805,6 +849,9 @@ def test_native_lite_fix_prepares_without_stage_and_keeps_window_budget(
         "base_sha": git(repo, "rev-parse", "HEAD"),
     }), encoding="utf-8")
     monkeypatch.setenv("FORGE_COORDINATOR", "codex")
+    monkeypatch.setattr(
+        doctor, "codex_hook_readiness", lambda _base: (True, "fixture-ready"),
+    )
 
     fix.cmd_fix(argparse.Namespace(
         description="repair a bounded native issue", repo=str(repo),

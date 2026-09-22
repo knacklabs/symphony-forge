@@ -174,10 +174,40 @@ def cmd_task_close(args: argparse.Namespace) -> None:
                 skill=getattr(args, "skill", None),
                 proof_context=proof_context)
             if outcome["blocking"]:
-                _stop("review", f"{outcome['blocking']} blocking finding(s)",
-                      f"delegate the fixes (`./forge delegate {task_id}`), commit, "
-                      "run close again -- it reviews the whole task delta, "
-                      "base to tip, and records one new generation")
+                from .review import (
+                    selected_generation, triage_workflow,
+                    untriaged_actionable_blocking,
+                )
+                generation = selected_generation(base, story, task_id)
+                left, total = untriaged_actionable_blocking(
+                    base, story, task_id, generation=generation,
+                )
+                generation_id = str(
+                    (generation or {}).get("generation_id") or "unknown"
+                )
+                if left:
+                    then = (
+                        f"triage every actionable finding before delegation: "
+                        f"{triage_workflow(task_id)}. Then delegate the fixes "
+                        f"(`./forge delegate {task_id}`), commit, and run close "
+                        "again -- it reviews the whole task delta, base to tip, "
+                        "and records one new generation"
+                    )
+                else:
+                    then = (
+                        "no host defect triage is required; implement the remaining "
+                        "plan-contract acceptance blocker(s) via "
+                        f"`./forge delegate {task_id}`, commit, and run close again "
+                        "-- it reviews the whole task delta, base to tip, and records "
+                        "one new generation"
+                    )
+                _stop(
+                    "review",
+                    f"selected generation {generation_id}: {outcome['blocking']} "
+                    f"blocking finding(s); {left} of {total} actionable P0/P1 "
+                    "defect finding(s) untriaged",
+                    then,
+                )
             stage = _find(load_stages(base), task_id)
         else:
             print(f"{task_id}: review stamp covers this diff ({delta_id[:12]}); "

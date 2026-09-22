@@ -142,8 +142,12 @@ Rules:
   follow `factory/prompts/griller.md --gate plan` directly — interrogating it
   against the story's `acceptance_criteria` (roadmap), accepted decisions,
   and the architecture docs. Resolve findings into the plan or new decision
-  records, then record:
-  `python3 factory/scripts/record_grill_from_json.py --gate plan`.
+  records, then record the complete payload bound to the exact draft:
+  `python3 factory/scripts/record_grill_from_json.py --gate plan --input
+  <grill-json> --input-digest <plan-file>`. For a native Codex result, use
+  `python3 factory/scripts/record_grill_from_json.py --gate plan --input
+  <grill-json> --input-digest <plan-file> --cold-result <path>
+  --preparation-id <id>`.
 - Save the grilled plan into the repo, bound to its roadmap story:
   `python3 factory/scripts/forge.py plan save --from <plan-file> --story
   <story-key>`. This records it as `awaiting-approval`.
@@ -155,16 +159,18 @@ Rules:
   command, or a second unchanged save as approval evidence. `update_run.py`
   refuses implementation until native approval binds the final digest.
 - **Approval locks the grounding contract until the PR opens.** Before stage
-  start, changes to the approved execution contract require the amended artifact
-  to be grilled and approved through native Plan Mode. After stage start, record
-  mechanically implied `write_scope`, `required_tests`, `verify_commands` and
-  review-budget corrections honestly; stage measurement enforces them without
-  another cold grill or human approval when the objective, acceptance criteria,
-  plan contracts, `user_facing`, intent and material scope choice are unchanged.
-  A material new choice, changed intent or scope, graph amendment, missing
-  authority or contradiction stops for the human: amend the affected contract,
-  re-grill grounding changes, and present the exact final artifact through
-  native Plan Mode before the next delegate or stage close. Preserve the ordered
-  graph; a new task needs human approval before it runs. For done/unshipped work,
+  start, an edit to an already approved plan records the finding-bound
+  amendment bridge against the existing cold proof, then returns directly to
+  native Plan Mode for fresh approval of the exact amended digest. Do not launch
+  another cold grill solely because the approved bytes changed. After stage
+  start, record mechanically implied `write_scope`, `required_tests`,
+  `verify_commands` and review-budget corrections honestly; stage measurement
+  enforces them without another cold grill or human approval when the objective,
+  acceptance criteria, plan contracts, `user_facing`, intent and material scope
+  choice are unchanged. A material new choice, changed intent or scope, graph
+  amendment, missing authority or contradiction stops for the human: amend the
+  affected contract and present the exact final artifact through native Plan Mode
+  before the next delegate or stage close. Preserve the ordered graph; a new
+  task needs human approval before it runs. For done/unshipped work,
   `./forge task reopen <id>` precedes amendment and re-implementation. Shipped
   work is immutable; add a follow-up task.

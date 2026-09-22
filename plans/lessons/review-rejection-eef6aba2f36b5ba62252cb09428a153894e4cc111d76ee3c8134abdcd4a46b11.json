@@ -1,0 +1,10 @@
+{
+  "applies_to": [
+    ".factory/stories/FORGE-COORD-1/task-plans/LEAN-WORKFLOW.md#Acceptance Criteria"
+  ],
+  "generated_by": "Root",
+  "lesson": "Not a defect (evidence factory/scripts/record_grill_from_json.py:594): P2 documentation completeness: abbreviated native recorder example omits payload/gate/plan input arguments. Existing supported recorder accepts these and fails closed when missing; no invalid approval or missing runtime implementation. Keep full invocation correction with Shared/docs at next cleanup; do not introduce another P2-only Lean cycle under user merge threshold. — raised as \"LEAN-AC-1: Native approval path: story/task plans approve through the supported Claude and Codex native approval events, not the old manual/board route. — parti\"",
+  "severity": "medium",
+  "source": "review reject LEAN-WORKFLOW quality",
+  "topic": "rejected-review-finding-quality"
+}

@@ -1,0 +1,10 @@
+{
+  "applies_to": [
+    "factory/tests/**"
+  ],
+  "generated_by": "Root",
+  "lesson": "Not a defect (evidence factory/tests/test_review_task_delta.py:360): The actual combined malformed-output test already locally imports _combined_prompt and asserts its verdict-record instruction at360-362; the chunked prompt test additionally checks quality-only contract placement at888-917. The cited recorder-origin/raw-bytes test582 exercises a different interface and need not duplicate the independent prompt regression. No assertion coverage was removed. — raised as \"Restore the required combined-prompt assertion (factory/tests/test_review_task_delta.py:582): When the combined-review prompt loses or weakens its quality-only \"",
+  "severity": "medium",
+  "source": "review reject LEAN-WORKFLOW quality",
+  "topic": "rejected-review-finding-quality"
+}

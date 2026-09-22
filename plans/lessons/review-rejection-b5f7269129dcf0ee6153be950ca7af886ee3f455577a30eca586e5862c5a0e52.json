@@ -1,0 +1,10 @@
+{
+  "applies_to": [
+    ".factory/stories/FORGE-COORD-1/task-plans/LEAN-WORKFLOW.md#Acceptance Criteria"
+  ],
+  "generated_by": "Root",
+  "lesson": "Not a defect (evidence factory/scripts/forge_cli/worker_admission.py:267): P2 matches actual raw finding Preserve baseline-directory semantics for narrowed scopes. Absent narrowed descendant under baseline directory without trailing slash can refuse a valid write; authority is not widened and full effective scope remains supported. Retain precise proper-subset UX correction with Shared; synthetic contract partial does not turn an acknowledged P2 into P1. — raised as \"LEAN-AC-4: Narrowed delegation: `forge delegate --scope` is a proper-subset narrowing feature, exact approved files are valid subset members, no flag keeps full\"",
+  "severity": "medium",
+  "source": "review reject LEAN-WORKFLOW quality",
+  "topic": "rejected-review-finding-quality"
+}

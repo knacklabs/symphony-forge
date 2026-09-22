@@ -1,0 +1,10 @@
+{
+  "applies_to": [
+    ".factory/stories/FORGE-COORD-1/task-plans/LEAN-WORKFLOW.md#Acceptance Criteria"
+  ],
+  "generated_by": "Root",
+  "lesson": "Not a defect (evidence .factory/stories/FORGE-COORD-1/tasks/LEAN-WORKFLOW/tests.json:65): AC17 is conditional on adopting prepared initialized fixtures. Recorded historical setup shares are 21.63% and 18.62%, below the 25% adoption threshold, and no prepared fixture optimization was adopted. Current test setup retains real initialization/scaffold/path/provenance coverage. A missing reviewer VERDICT line does not establish an unmet conditional implementation requirement; the exact no-adoption evidence is present in the task report and preserves its original historical attribution. — raised as \"LEAN-AC-17: Prepared fixture optimization: shared initialized/scaffolded test fixtures may be introduced only when measured faster while retaining real init, fr\"",
+  "severity": "medium",
+  "source": "review reject LEAN-WORKFLOW quality",
+  "topic": "rejected-review-finding-quality"
+}

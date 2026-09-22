@@ -1,0 +1,10 @@
+{
+  "applies_to": [
+    ".factory/stories/FORGE-COORD-1/task-plans/LEAN-WORKFLOW.md#Acceptance Criteria"
+  ],
+  "generated_by": "Root",
+  "lesson": "Not a defect (evidence factory/scripts/forge_cli/review_brief.py:173): P2 historical-provenance defect, previously independently diagnosed and durably deferred: sealed plan/grill are marker-bound but replay lookup is live. This can reject sealed proof or use a replay added after sealing; it cannot approve different plan bytes or bypass active task admission. Shared owns treeish-consistent historical replay. Original defect remains in immutable lineage; no P1 severity is established. — raised as \"LEAN-AC-5: Content-bound close reuse: test/verify receipts and selected-review reviewed-meaning identity reuse only when their proof-type inputs match; substant\"",
+  "severity": "medium",
+  "source": "review reject LEAN-WORKFLOW quality",
+  "topic": "rejected-review-finding-quality"
+}

@@ -1050,16 +1050,27 @@ def _review_findings_section(base: Path, task: dict, story: str) -> str:
     )
     if problems or not isinstance(generation, dict):
         return ""
-    from .review import blocking_with_triage
-    blocking = blocking_with_triage(base, story, task_id, generation=generation)
+    from .review import (
+        PLAN_CONTRACT_BLOCKER_CATEGORIES, actionable_blocking_with_triage,
+    )
+    blocking = actionable_blocking_with_triage(
+        base, story, task_id, generation=generation,
+    )
+    contract_blockers: list[tuple[str, dict]] = []
     caveats: list[tuple[str, dict]] = []
     for lens in ("quality", "performance", "security"):
         artifact = (generation.get("lenses") or {}).get(lens, {})
         if not isinstance(artifact, dict):
             continue
+        contract_blockers += [
+            (lens, finding)
+            for finding in artifact.get("blocking_findings") or []
+            if isinstance(finding, dict)
+            and finding.get("category") in PLAN_CONTRACT_BLOCKER_CATEGORIES
+        ]
         caveats += [(lens, f) for f in artifact.get("non_blocking_findings") or []
                     if isinstance(f, dict)]
-    if not blocking and not caveats:
+    if not blocking and not contract_blockers and not caveats:
         return ""
 
     def line(lens: str, finding: dict) -> str:
@@ -1100,6 +1111,12 @@ def _review_findings_section(base: Path, task: dict, story: str) -> str:
             "the class. Say in a signal why something is not a defect.\n\n"
             f"{done} of {len(blocking)} triaged by the host.\n\n"
             + "\n".join(triaged(*item) for item in blocking))
+    if contract_blockers:
+        parts.append(
+            "Plan-contract acceptance blockers. These partial/missing verdicts "
+            "must be implemented and re-reviewed, but they are synthetic proof "
+            "rows rather than host defect claims and require no review triage.\n\n"
+            + "\n".join(line(*item) for item in contract_blockers))
     if caveats:
         parts.append(
             "Non-blocking follow-ups (fix only when cheap and in scope; "
@@ -1913,10 +1930,19 @@ def launch_companion(
     """Write a brief, then launch Claude's companion or describe native work."""
     from .codex_runtime import coordinator_runtime
 
+    runtime = coordinator_runtime()
+    if runtime == "codex" and write and not print_only:
+        from .doctor import codex_hook_readiness
+        hooks_ready, hook_detail = codex_hook_readiness(base)
+        if not hooks_ready:
+            fail(
+                "native Codex write launch refused: Codex CLI hook readiness "
+                f"is not satisfied ({hook_detail})"
+            )
+
     # Prefixed, not bare hex: a bare 32-character hex string reads as a
     # credential to secret scanners.
     launch_id = f"launch-{uuid.uuid4().hex}"
-    runtime = coordinator_runtime()
     lock = (_acquire_delegation_lock(base, task_id, launch_id)
             if runtime != "codex" and write and not print_only else None)
     if runtime != "codex" and write and not print_only:
@@ -2357,16 +2383,28 @@ def cmd_delegate(args: argparse.Namespace) -> None:
     state = load_json(run_state_path(base), default={})
     story = str(state.get("story") or state.get("issue_key") or "")
     if story:
-        # Not a refusal: the launch goes ahead, and the gap is said out loud
-        # where the coordinator is looking (decision 0075).
-        from .review import untriaged_blocking
-        left, total = untriaged_blocking(base, story, args.id)
-        if left:
-            print(f"WARNING: {left} of {total} blocking finding(s) on {args.id} "
-                  "are untriaged -- the worker gets the raw claim. Open the cited "
-                  "line and the code it calls, then `./forge review "
-                  f"{args.id} --triage ...` before launching (WORKFLOW.md Stage Loop).",
-                  flush=True)
+        from .review import (
+            selected_generation, triage_workflow,
+            untriaged_actionable_blocking,
+        )
+        generation = selected_generation(base, story, args.id)
+        left, total = untriaged_actionable_blocking(
+            base, story, args.id, generation=generation,
+        )
+        if left and write and args.print_only:
+            # A preview remains available for diagnosis, but its brief and
+            # descriptor carry no write authority that could be copied into a
+            # host launch while triage is still missing.
+            write = False
+        elif left and write:
+            generation_id = str((generation or {}).get("generation_id") or "unknown")
+            fail(
+                f"write delegation refused: selected review generation "
+                f"{generation_id} has {left} of {total} actionable P0/P1 defect "
+                f"finding(s) untriaged. Triage each before launching a writer: "
+                f"{triage_workflow(args.id)}. Plan-contract partial/missing "
+                "acceptance blockers do not count as host defect triage."
+            )
     text = compose_brief(base, task, write=write,
                          user_facing=bool(task.get("user_facing")),
                          story=story, scope_override=scope)

@@ -1,0 +1,10 @@
+{
+  "applies_to": [
+    "factory/scripts/forge_cli/**"
+  ],
+  "generated_by": "Root",
+  "lesson": "Not a defect (evidence factory/scripts/forge_cli/phase.py:680): The same implementation-frontier branch already applies per-task design routing at phase.py680-697: author-contract conditionally states the two required UI skills, and recorded user_facing tasks receive the mandatory skills guidance. factory_lib.py3234-3271 independently enforces task skills_used. The cited branch entry491 is not its complete behavior; preserve the later task-specific guard rather than add story-wide routing. — raised as \"Restore mandatory design-skill routing for user-facing work (factory/scripts/forge_cli/phase.py:491): When a decomposed user-facing story reaches any implementa\"",
+  "severity": "medium",
+  "source": "review reject LEAN-WORKFLOW quality",
+  "topic": "rejected-review-finding-quality"
+}

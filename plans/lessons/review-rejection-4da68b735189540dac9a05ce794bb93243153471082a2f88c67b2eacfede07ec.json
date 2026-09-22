@@ -1,0 +1,10 @@
+{
+  "applies_to": [
+    "factory/scripts/forge_cli/**"
+  ],
+  "generated_by": "Root",
+  "lesson": "Not a defect (evidence factory/scripts/factory_lib.py:4462): Rejecting the P1 security classification, not denying the narrower historical-context defect. Independent security diagnosis verified that the immutable sealed grill fixes exact plan digest, actor, timestamp, runtime, session/event, story and task, and this caller only renders completed-task context. Reading the live matching replay can falsely refuse historical context or accept replay bytes added later, but cannot approve different plan bytes or bypass active stage/delegate approval. Record this P2 provenance follow-up: thread treeish to sealed replay loading and test both temporal directions. Under the user's explicit P0/P1-only merge policy this P2 issue is nonblocking; original finding and this limitation remain durable in rejection lineage. — raised as \"Validate sealed approvals from the marker commit (factory/scripts/forge_cli/review_brief.py:173): When a completed task is rendered from its sealed marker, the \"",
+  "severity": "medium",
+  "source": "review reject LEAN-WORKFLOW security",
+  "topic": "rejected-review-finding-security"
+}

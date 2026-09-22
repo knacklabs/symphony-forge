@@ -46,6 +46,16 @@ The shared recorder derives exactly one eligible current-frontier candidate:
   cancellation, wrong runtime, asynchronous acknowledgement, unsupported
   payload, and ordinary optional clarification all refuse without approval.
 
+Current Codex hooks expose no signed or otherwise unforgeable host attestation.
+The current native approval trust boundary is therefore the host's invocation
+of the hash-approved project hook together with these recorder checks; Forge
+does not claim cryptographic or signed host attestation. The recorder still
+requires the exact current digest, runtime, session/event/tool identity,
+supported payload shape, non-cancelled completion, replay refusal, and exactly
+one eligible candidate. A direct or synthetic hook invocation is outside the
+trusted operational boundary and cannot establish native human approval.
+Signed host attestation remains a host dependency.
+
 The story approval remains `.factory/stories/<key>/plan-approval.json`; the
 task approval remains in `.factory/stories/<key>/grills/tasks/<id>.json`. A
 story-scoped consumed-event tombstone prevents replay. These are recorder-owned

@@ -102,6 +102,12 @@ below when a retry makes no progress.
 
 - **Blocking findings** cannot be deferred or shipped past: readiness refuses
   them, so two of those three options never existed.
+- **Host triage** applies to the selected generation's actionable P0/P1 defect
+  findings. `forge delegate` refuses a write launch until each is triaged;
+  `forge next` and `forge task close` name the selected generation, count, and
+  exact `forge review <id> --triage ...` workflow first. Synthetic partial or
+  missing plan-contract verdict blockers still require implementation and a
+  clean re-review, but they are acceptance proof rather than host defect triage.
 - **Non-blocking findings** are recorded follow-ups. Resolve them within the
   current fix batch or explicitly defer them with a reason and revisit trigger.
   Do not start another full review solely to remove an unchanged, recorded

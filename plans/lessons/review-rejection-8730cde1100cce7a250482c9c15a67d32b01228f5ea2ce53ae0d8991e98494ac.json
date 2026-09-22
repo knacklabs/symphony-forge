@@ -1,0 +1,10 @@
+{
+  "applies_to": [
+    "factory/scripts/**"
+  ],
+  "generated_by": "Root",
+  "lesson": "Not a defect (evidence factory/scripts/factory_lib.py:4543): P2 consistency hardening: malformed required predecessor cannot satisfy exact authenticated ancestry; current replay and unique prior digest/runtime/actor/story/task/hash-derived filename are checked. An unrelated malformed sibling does not grant execution authority. Preserve fail-closed required ancestry; global sibling refusal is later diagnostic/availability policy, not demonstrated P1 security bypass. — raised as \"Fail closed on malformed task approval history (factory/scripts/factory_lib.py:4535): Trigger: a reapproved task has valid current and predecessor approval reco\"",
+  "severity": "medium",
+  "source": "review reject LEAN-WORKFLOW security",
+  "topic": "rejected-review-finding-security"
+}

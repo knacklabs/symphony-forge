@@ -1,0 +1,10 @@
+{
+  "applies_to": [
+    "factory/scripts/forge_cli/**"
+  ],
+  "generated_by": "Root",
+  "lesson": "Not a defect (0066): Decision 0066 explicitly retains the explicit low-level verbs while adding task close as the normal integrated coordinator path. A caller deliberately invoking standalone stage done may still establish required proof; removing that compatibility API is not an accepted P1 requirement. Worker and normal coordinator routing uses task close, and this fallback does not skip proof or authorize unreviewed bytes. Any additional retirement or throughput optimization is a P2 follow-up, not a reason for another optional Lean cycle. — raised as \"Prevent standalone stage completion from owning the full proof run (factory/scripts/forge_cli/stages.py:3563): When an operator invokes the still-public `forge \"",
+  "severity": "medium",
+  "source": "review reject LEAN-WORKFLOW quality",
+  "topic": "rejected-review-finding-quality"
+}

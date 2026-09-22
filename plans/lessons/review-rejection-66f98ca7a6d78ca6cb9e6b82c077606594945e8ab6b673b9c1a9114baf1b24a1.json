@@ -1,0 +1,10 @@
+{
+  "applies_to": [
+    "factory/scripts/**"
+  ],
+  "generated_by": "Root",
+  "lesson": "Not a defect (evidence factory/scripts/factory_lib.py:3546): The predecessor binding only preserves unchanged task proof across human plan edits; it does not authorize rewriting the frozen task graph. Authenticated pending-graph amendment is explicitly post-Lean scope. — raised as \"Allow a reapproved story plan to replace the frozen graph (factory/scripts/record_decomposition_from_json.py:522): When a human amends and reapproves the story \"",
+  "severity": "medium",
+  "source": "review reject LEAN-WORKFLOW quality",
+  "topic": "rejected-review-finding-quality"
+}

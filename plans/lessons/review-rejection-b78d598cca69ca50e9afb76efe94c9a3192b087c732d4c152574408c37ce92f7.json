@@ -1,0 +1,10 @@
+{
+  "applies_to": [
+    "factory/scripts/**"
+  ],
+  "generated_by": "Root",
+  "lesson": "Not a defect (evidence factory/scripts/forge_cli/stages.py:3584): P2 standalone diagnostic attribution issue, not a P1 task proof bypass. Supported close snapshots the product and protected authority before all commands, checks both after completion, refuses any drift before publishing receipts/review, and canonical aggregate receipts are now nonreusable. A concurrent commit during raw verify cannot pass this current task-close path. Retain standalone diagnostic snapshot accuracy as follow-up; do not duplicate the authoritative guard inside this release. — raised as \"Freeze the product identity before running verification (factory/scripts/verify.py:160): When another process commits while verification is running, this loop e\"",
+  "severity": "medium",
+  "source": "review reject LEAN-WORKFLOW quality",
+  "topic": "rejected-review-finding-quality"
+}

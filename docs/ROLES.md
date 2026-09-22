@@ -6,6 +6,12 @@ the command. `./forge next` tags each step with the role that acts —
 
 The user and host select the main coordinator model and reasoning. Native
 dispatch names a configured role and passes no model or reasoning override.
+Forge's committed implementation routing is binding: every implementation
+writer, review-fix writer, refactorer, frontend coder, tester implementing
+product changes, and generic worker runs `gpt-5.6-luna` at max reasoning. Host
+generic-role defaults never override this routing; when the host cannot consume
+the repository role config, the coordinator explicitly selects
+`gpt-5.6-luna` at max reasoning.
 Decision 0080 routes routine implementation, automated tests, diagnosed or
 review fixes, documentation edits, and mechanical refactors to Luna/max;
 read-heavy exploration and dependency tracing to Terra/high; and planning,
@@ -53,7 +59,7 @@ Owns one story at a time, on its own branch (see Concurrency in WORKFLOW.md).
 | You do | You say |
 |---|---|
 | Pick your story | "what's next?" — `forge next` names the next pending item (and its assignee); intake creates your branch |
-| Plan → implement → ship | the feature loop: "Plan this task" → one independent cold grill with every finding disposed → native approval of the exact final plan → "Implement it" → "Review it" → "Is this PR ready?" — every step is gated and prompt-first (docs/getting-started.md §8) |
+| Plan → implement → ship | the feature loop: "Plan this task" → one independent cold grill with every finding disposed → native approval of the exact final plan → "Implement it" → "Review it" → functional proof when `user_facing: true` → rerun `./forge task close <id>` to reuse the unchanged selected review and seal the stage → "Is this PR ready?" — every step is gated and prompt-first (docs/getting-started.md §8) |
 | Assumptions | "record an assumption" the moment you make a call the plan doesn't cover |
 | Full-stack vs specialist | your roster `skills` say what the EM routes to you; a story's `skill` field says what it needs |
 
@@ -67,10 +73,18 @@ prototype ──[spec grills]──▶ confirmed specs ──▶ derived roadmap
 Every handoff is an artifact plus a gate. Plan and task handoffs use one
 independent cold grill whose exact input, complete finding dispositions, and
 amendments bind the final artifact; native Plan Mode records the human's exact
-digest approval. In native Codex, `forge grill run ...` prepares one griller
-descriptor; Main sends that complete descriptor and its context metadata in the
-actual `spawn_agent` message, then records the exact returned JSON through
-`record_grill_from_json.py --cold-result <path> --preparation-id <id>`. Claude
-keeps its command-managed cold-reader lifecycle. Other handover grills retain
-their owning recorder. Never a conversation that evaporates. Humans accept;
-agents do the rest.
+digest approval. In native Codex, run `./forge grill run --gate plan --file
+<plan-file>` to prepare one griller descriptor; Main sends that complete
+descriptor and its context metadata in the actual `spawn_agent` message, then
+records the exact returned JSON with `python3
+factory/scripts/record_grill_from_json.py --gate plan --input <grill-json>
+--input-digest <plan-file> --cold-result <path> --preparation-id <id>`. For a
+task grill, run `./forge grill run --gate task --task <id>` and record with
+`python3 factory/scripts/record_grill_from_json.py --gate task --task <id>
+--input <grill-json> --cold-result <path> --preparation-id <id>`; task grills
+have no `--input-digest`. An already
+approved pre-stage plan edit records its amendment bridge against the existing
+cold proof and returns directly to exact native approval; a second cold grill
+is not required solely for changed bytes. Claude keeps its command-managed
+cold-reader lifecycle. Other handover grills retain their owning recorder.
+Never a conversation that evaporates. Humans accept; agents do the rest.

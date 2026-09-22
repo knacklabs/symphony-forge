@@ -1,0 +1,10 @@
+{
+  "applies_to": [
+    "factory/scripts/forge_cli/**"
+  ],
+  "generated_by": "Root",
+  "lesson": "Not a defect (evidence factory/tests/test_upgrade_lean_workflow.py:1443): False contract interpretation: this extends the one authorized supplement with authenticated prior_completion and digest when later merged history introduces eligible proof. Accepted regressions at1443 and1490 require this recovery; removing it strands preserved history. It is not a second independent migration or unequal retry. The separate interrupted-extension recovery limitation stays P2 with Portable. — raised as \"Refuse a second unequal supplement migration (factory/scripts/forge_cli/upgrade.py:2172): When a completed `lean-workflow-v2-supplement.json` already exists and\"",
+  "severity": "medium",
+  "source": "review reject LEAN-WORKFLOW quality",
+  "topic": "rejected-review-finding-quality"
+}
