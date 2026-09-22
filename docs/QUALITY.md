@@ -152,7 +152,7 @@ report that concrete blocker; do not manufacture another review cycle.
   records the artifact; autoreview's quality lens checks coverage honestly
 
 ### functional-checker (conditional)
-- model: `gpt-5.6-sol`, reasoning `high`, `danger-full-access` as pinned by the
+- model: `gpt-6-sol`, reasoning `high`, `danger-full-access` as pinned by the
   committed functional-checker profile and Decision 0081
 - contract: `factory/prompts/tester-functional.md` +
   `factory/schemas/test-functional.json` (`generated_by: functional-checker`)

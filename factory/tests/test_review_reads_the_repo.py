@@ -48,7 +48,7 @@ sys.exit(3)
 # The skill's real argv shape: config overrides with spaces, quotes and
 # Windows paths, then `exec`, the empty workspace under -C, and `-` for stdin.
 SKILL_ARGV = [
-    "--ask-for-approval", "never", "--search", "--model", "gpt-5.6-sol",
+    "--ask-for-approval", "never", "--search", "--model", "gpt-6-sol",
     "-c", 'model_reasoning_effort="high"',
     "-c", 'sqlite_home="C:\\\\Users\\\\someone\\\\Temp\\\\state"',
     "-c", 'shell_environment_policy.set={ GIT_TERMINAL_PROMPT = "0", GIT_PAGER = "cat" }',
@@ -146,7 +146,7 @@ def test_the_launcher_carries_the_windows_sandbox_the_skill_drops(tmp_path, monk
     home = tmp_path / "codex-home"
     home.mkdir()
     (home / "config.toml").write_text(
-        'model = "gpt-5.6-sol"\n\n[features]\nfoo = true\n\n[windows]\n'
+        'model = "gpt-6-sol"\n\n[features]\nfoo = true\n\n[windows]\n'
         'sandbox = "elevated"\n\n[projects."C:\\\\x"]\ntrust_level = "trusted"\n',
         encoding="utf-8")
     (home / ".sandbox").mkdir()  # the elevated sandbox's set-up state lives here

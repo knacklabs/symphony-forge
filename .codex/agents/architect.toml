@@ -1,6 +1,6 @@
 name = "architect"
 description = "High-reasoning architecture specialist."
-model = "gpt-5.6-sol"
+model = "gpt-6-sol"
 model_reasoning_effort = "high"
 sandbox_mode = "danger-full-access"
 nickname_candidates = ["Architect", "Northstar", "Systems"]

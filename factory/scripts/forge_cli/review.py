@@ -55,13 +55,15 @@ VERDICT_LINE = re.compile(
     re.IGNORECASE | re.MULTILINE,
 )
 DEFAULT_SKILL = Path.home() / ".codex" / "skills" / "autoreview" / "scripts" / "autoreview"
-CODEX_REVIEW_MODEL = "gpt-5.6-sol"
+CODEX_REVIEW_MODEL = "gpt-6-sol"
 CODEX_REVIEW_THINKING = "high"
 # Terra is retired and this review never asks for it. It cannot be ruled out by
 # flag: the helper's --fallback-model is claude-only ("--fallback-model is only
 # supported for claude"), and its codex access-retry triggers whenever codex runs
-# on the helper's own default model — which IS gpt-5.6-sol, the model pinned
-# here. So the retry is reachable only when the account cannot reach Sol, in
+# on the helper's OWN default model, which is still gpt-5.6-sol -- the helper is
+# an external skill and this pin does not change it. Because we now pass --model
+# explicitly, codex runs on gpt-6-sol rather than the helper default, so the
+# access-retry is reachable only when the account cannot reach gpt-6-sol, in
 # which case the review would otherwise fail outright. What is enforceable, and
 # what is enforced, is that no retired model is ever requested.
 CODEX_HELPER_FIX = "the review must not request a retired model"

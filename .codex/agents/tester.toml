@@ -1,6 +1,6 @@
 name = "tester"
 description = "Luna implementation specialist for automated tests and test fixes."
-model = "gpt-5.6-luna"
+model = "gpt-6-luna"
 model_reasoning_effort = "max"
 sandbox_mode = "danger-full-access"
 nickname_candidates = ["Probe", "Assert", "Signal"]

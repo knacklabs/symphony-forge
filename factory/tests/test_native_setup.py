@@ -418,23 +418,25 @@ def test_model_policy_selects_sol_work_and_luna_lite():
     }
 
     assert {"model", "model_reasoning_effort", "plan_mode_reasoning_effort"}.isdisjoint(config)
+    # Terra is retired. Exploration keeps a lane of its own, now Sol at medium:
+    # read-heavy tracing does not need the hard-thinking effort level.
     assert lanes == {
-        ("gpt-5.6-luna", "max"): {
+        ("gpt-6-luna", "max"): {
             "coder", "frontend", "lite", "refactorer", "tester", "worker",
         },
-        ("gpt-5.6-terra", "high"): {"explorer"},
-        ("gpt-5.6-sol", "high"): {
+        ("gpt-6-sol", "medium"): {"explorer"},
+        ("gpt-6-sol", "high"): {
             "architect", "debugger", "docs-decomposer", "functional-checker",
             "griller", "performance", "planner", "planner-high", "security",
         },
     }
-    assert pinned_run_config(HARNESS) == ("gpt-5.6-luna", "max")
+    assert pinned_run_config(HARNESS) == ("gpt-6-luna", "max")
     assert (explore["model"], explore["model_reasoning_effort"]) == (
-        "gpt-5.6-terra", "high")
-    assert mode_run_config(HARNESS, "grill")[:2] == ("gpt-5.6-sol", "high")
-    assert mode_run_config(HARNESS, "lite")[:2] == ("gpt-5.6-luna", "max")
+        "gpt-6-sol", "medium")
+    assert mode_run_config(HARNESS, "grill")[:2] == ("gpt-6-sol", "high")
+    assert mode_run_config(HARNESS, "lite")[:2] == ("gpt-6-luna", "max")
     assert (CODEX_REVIEW_MODEL, CODEX_REVIEW_THINKING) == (
-        "gpt-5.6-sol", "high")
+        "gpt-6-sol", "high")
 
 
 SESSION_START_ADAPTERS = (".codex/hooks.json", ".claude/settings.json")

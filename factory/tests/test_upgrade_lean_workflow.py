@@ -998,7 +998,7 @@ def test_public_upgrade_resumes_after_post_migration_finalization_failure(
 def test_public_upgrade_resumes_profile_replacement_transaction(
         repo: Path, monkeypatch: pytest.MonkeyPatch, interrupt_phase: str):
     retired_bytes = (
-        'name = "architect"\nmodel = "gpt-5.6-sol"\n'
+        'name = "architect"\nmodel = "gpt-6-sol"\n'
         'model_reasoning_effort = "high"\nsandbox_mode = "read-only"\n'
     ).encode("utf-8")
     profile = repo / ".codex/agents/architect.toml"
@@ -1057,7 +1057,7 @@ def test_public_upgrade_resumes_profile_replacement_transaction(
 def test_public_upgrade_profile_resume_refuses_client_modified_destination(
         repo: Path, monkeypatch: pytest.MonkeyPatch):
     retired_bytes = (
-        'name = "architect"\nmodel = "gpt-5.6-sol"\n'
+        'name = "architect"\nmodel = "gpt-6-sol"\n'
         'model_reasoning_effort = "high"\nsandbox_mode = "read-only"\n'
     ).encode("utf-8")
     profile = repo / ".codex/agents/architect.toml"
@@ -1088,7 +1088,7 @@ def test_public_upgrade_profile_resume_refuses_source_drift(
         repo: Path, monkeypatch: pytest.MonkeyPatch,
         capsys: pytest.CaptureFixture[str]):
     retired_bytes = (
-        'name = "architect"\nmodel = "gpt-5.6-sol"\n'
+        'name = "architect"\nmodel = "gpt-6-sol"\n'
         'model_reasoning_effort = "high"\nsandbox_mode = "read-only"\n'
     ).encode("utf-8")
     profile = repo / ".codex/agents/architect.toml"

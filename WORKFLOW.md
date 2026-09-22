@@ -35,7 +35,7 @@ process identity or lifecycle proof.
 The main coordinator model and reasoning remain the user's and host's choice.
 Decision 0080 routes native roles by work: Luna/max handles routine
 implementation, automated tests, diagnosed or review fixes, documentation
-edits, and mechanical refactors; Terra/high handles read-heavy exploration and
+edits, and mechanical refactors; Sol/medium handles read-heavy exploration and
 dependency tracing; Sol/high handles planning, decomposition, difficult
 diagnosis, independent grills, and final functional checks. A difficult
 diagnosis returns its resolved edit to the Luna/max execution role. Formal code
@@ -629,7 +629,7 @@ approval against the final digest through the shared recorder. There is no
 requirements grill, compulsory human round, `frontier_empty` question, manual
 `plan approve` / `task approve` command, board approval, or second unchanged
 save in the normal flow. Claude delegates read-heavy exploration through
-`/codex:rescue --model gpt-5.6-terra --effort high`, read-only, and uses
+`/codex:rescue --model gpt-6-sol --effort medium`, read-only, and uses
 Sol/high for validation or architecture; it never runs raw `codex exec`.
 Native Codex uses the configured `planner-high` role through host `spawn_agent`
 without an override; that role's Sol/high defaults apply. Decomposition uses

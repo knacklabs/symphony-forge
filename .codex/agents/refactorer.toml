@@ -1,6 +1,6 @@
 name = "refactorer"
 description = "Luna implementation specialist for behavior-preserving refactors."
-model = "gpt-5.6-luna"
+model = "gpt-6-luna"
 model_reasoning_effort = "max"
 sandbox_mode = "danger-full-access"
 nickname_candidates = ["Shape", "Tidy", "Simplify"]

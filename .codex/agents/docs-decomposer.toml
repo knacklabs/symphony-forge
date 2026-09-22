@@ -1,6 +1,6 @@
 name = "docs-decomposer"
 description = "High-reasoning decomposition agent that converts approved plans and in-repo docs into bounded Linear-ready task graphs."
-model = "gpt-5.6-sol"
+model = "gpt-6-sol"
 model_reasoning_effort = "high"
 # Read-only is a role contract enforced by Forge, not an OS sandbox policy.
 sandbox_mode = "danger-full-access"

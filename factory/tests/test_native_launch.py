@@ -116,27 +116,27 @@ def test_native_role_registry_pins_lanes_and_keeps_debugger_for_hard_diagnosis()
         (HARNESS / ".codex" / "explore.config.toml").read_text(encoding="utf-8"))
     assert (config["agents"]["default_subagent_model"],
             config["agents"]["default_subagent_reasoning_effort"]) == (
-        "gpt-5.6-luna", "max")
+        "gpt-6-luna", "max")
     assert (explore["model"], explore["model_reasoning_effort"]) == (
-        "gpt-5.6-terra", "high")
+        "gpt-6-sol", "medium")
 
     expected = {
-        "coder": ("gpt-5.6-luna", "max"),
-        "frontend": ("gpt-5.6-luna", "max"),
-        "tester": ("gpt-5.6-luna", "max"),
-        "refactorer": ("gpt-5.6-luna", "max"),
-        "worker": ("gpt-5.6-luna", "max"),
-        "lite": ("gpt-5.6-luna", "max"),
-        "explorer": ("gpt-5.6-terra", "high"),
-        "architect": ("gpt-5.6-sol", "high"),
-        "debugger": ("gpt-5.6-sol", "high"),
-        "planner": ("gpt-5.6-sol", "high"),
-        "planner-high": ("gpt-5.6-sol", "high"),
-        "docs-decomposer": ("gpt-5.6-sol", "high"),
-        "griller": ("gpt-5.6-sol", "high"),
-        "security": ("gpt-5.6-sol", "high"),
-        "performance": ("gpt-5.6-sol", "high"),
-        "functional-checker": ("gpt-5.6-sol", "high"),
+        "coder": ("gpt-6-luna", "max"),
+        "frontend": ("gpt-6-luna", "max"),
+        "tester": ("gpt-6-luna", "max"),
+        "refactorer": ("gpt-6-luna", "max"),
+        "worker": ("gpt-6-luna", "max"),
+        "lite": ("gpt-6-luna", "max"),
+        "explorer": ("gpt-6-sol", "medium"),
+        "architect": ("gpt-6-sol", "high"),
+        "debugger": ("gpt-6-sol", "high"),
+        "planner": ("gpt-6-sol", "high"),
+        "planner-high": ("gpt-6-sol", "high"),
+        "docs-decomposer": ("gpt-6-sol", "high"),
+        "griller": ("gpt-6-sol", "high"),
+        "security": ("gpt-6-sol", "high"),
+        "performance": ("gpt-6-sol", "high"),
+        "functional-checker": ("gpt-6-sol", "high"),
     }
     actual = {}
     for name, row in config["agents"].items():
@@ -147,7 +147,7 @@ def test_native_role_registry_pins_lanes_and_keeps_debugger_for_hard_diagnosis()
                 encoding="utf-8"))
         actual[name] = (profile["model"], profile["model_reasoning_effort"])
     assert actual == expected
-    assert all(model != "gpt-5.6-luna" or effort == "max"
+    assert all(model != "gpt-6-luna" or effort == "max"
                for model, effort in actual.values())
 
     assert native_agent_type(

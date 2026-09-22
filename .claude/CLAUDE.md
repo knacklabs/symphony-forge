@@ -29,7 +29,7 @@ The user and host select the main coordinator model and reasoning; Forge-managed
 ## Ground rules
 - Session write lock always armed; plan authoring is mode-agnostic (0050) — never switch the session's mode to write a plan, and no mode unlocks product/canon: delegate
   writes, or during a companion outage `forge mode degraded start --reason`. Grill
-  (`/grill-me`) = ONE read-only Codex `gpt-5.6-sol` @ high cold read (you authored it — never a Claude sub-agent, never inline), WATCHED. That is the WHOLE grill: resolve what the REPO answers yourself, put only the rest to the human, amend once, and record every finding disposition plus the amendment bridge. Never claim the cold reader saw amended bytes. Present the exact final plan through native Plan Mode; successful `ExitPlanMode` records the digest-bound approval. No board approval, manual approve command, or second unchanged save.
+  (`/grill-me`) = ONE read-only Codex `gpt-6-sol` @ high cold read (you authored it — never a Claude sub-agent, never inline), WATCHED. That is the WHOLE grill: resolve what the REPO answers yourself, put only the rest to the human, amend once, and record every finding disposition plus the amendment bridge. Never claim the cold reader saw amended bytes. Present the exact final plan through native Plan Mode; successful `ExitPlanMode` records the digest-bound approval. No board approval, manual approve command, or second unchanged save.
 - Decisions: `./forge decision new <slug>`; acceptance is HUMAN chat
   confirmation — then run accept/sign-off yourself, `--by "<name>"` + trailer.
 - Recording sign-off requires confirmed specs and their derived roadmap.

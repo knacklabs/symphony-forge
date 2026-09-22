@@ -74,13 +74,13 @@ defines the role defaults:
 - routine implementation, automated tests, diagnosed or review fixes,
   documentation edits, and mechanical refactors (`coder`, `frontend`,
   `tester`, `refactorer`, `worker`, the default implementation role, and
-  bounded `lite`) use `gpt-5.6-luna` at `max` reasoning;
+  bounded `lite`) use `gpt-6-luna` at `max` reasoning;
 - read-heavy exploration and dependency tracing (`explorer`) use
-  `gpt-5.6-terra` at `high` reasoning;
+  `gpt-6-sol` at `high` reasoning;
 - planning and decomposition (`architect`, `planner`, `planner-high`, and
   `docs-decomposer`), difficult diagnosis (`debugger`), independent grills
   (`griller`), and final functional checks (`functional-checker`) use
-  `gpt-5.6-sol` at `high` reasoning;
+  `gpt-6-sol` at `high` reasoning;
 - formal code review uses only the unchanged, externally maintained Autoreview
   skill. Its internal Codex or agent calls are its own policy and are not a
   Forge-native role override.

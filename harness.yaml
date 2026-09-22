@@ -23,14 +23,14 @@ precedence:
 
 modes:
   lite:
-    model: "gpt-5.6-luna"
+    model: "gpt-6-luna"
     reasoning: "max"
     bound: 5
   # The cold reader uses a fresh model context independent of whoever authored
   # the artifact. Its model is pinned here, beside every other model pin, rather
   # than hardcoded in the launcher.
   grill:
-    model: "gpt-5.6-sol"
+    model: "gpt-6-sol"
     reasoning: "high"
     bound: 0
 
@@ -72,8 +72,8 @@ phases:
   planning:
     owner: "claude-code:plan-mode"
     alternate: "codex:planner-high"
-    exploration: "/codex:rescue --model gpt-5.6-terra --effort high (read-only by default) — NEVER Claude Code itself, NEVER raw codex exec"
-    validation: "/codex:rescue --model gpt-5.6-sol --effort high (read-only) — plan validation, debugging, root-cause; the hard-thinking lane, not the default"
+    exploration: "/codex:rescue --model gpt-6-sol --effort medium (read-only by default) — NEVER Claude Code itself, NEVER raw codex exec"
+    validation: "/codex:rescue --model gpt-6-sol --effort high (read-only) — plan validation, debugging, root-cause; the hard-thinking lane, not the default"
     contract: "factory/prompts/planner.md"
     plan_artifact: "plans/active/<issue>-<slug>.md via forge.py plan save"
     decisions: "docs/decisions/ records BEFORE decomposition is recorded"
@@ -88,8 +88,8 @@ phases:
       the contract is identical: same sections (incl. Decisions), same
       forge.py plan save step, same gates. When planning in Claude, delegate
       ALL codebase exploration to Codex read-only runs
-      (/codex:rescue --model gpt-5.6-terra --effort high — read-only by
-      default; gpt-5.6-sol --effort high for validation/debugging — read-only;
+      (/codex:rescue --model gpt-6-sol --effort medium — read-only by
+      default; gpt-6-sol --effort high for validation/debugging — read-only;
       raw codex exec is hook-blocked, no exceptions).
       Save records one awaiting plan. One independent cold read plus complete
       finding dispositions and amendments binds the final artifact; successful
@@ -106,7 +106,7 @@ phases:
     notes: "Per-task task graph; records the user_facing flag the ship gate reads."
   implementation:
     owner: "codex:/codex:rescue"
-    model: "gpt-5.6-luna"
+    model: "gpt-6-luna"
     reasoning: "max"
     prompts: "factory/prompts/implementer.md"
     required_skills: # ENFORCED by feature type — the decomposition's user_facing flag:

@@ -1,6 +1,6 @@
 name = "performance"
 description = "Sol high-reasoning specialist for performance diagnosis and measurement."
-model = "gpt-5.6-sol"
+model = "gpt-6-sol"
 model_reasoning_effort = "high"
 sandbox_mode = "danger-full-access"
 nickname_candidates = ["Meter", "Profile", "Tempo"]

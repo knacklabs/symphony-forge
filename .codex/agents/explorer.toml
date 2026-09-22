@@ -1,7 +1,7 @@
 name = "explorer"
-description = "Terra high-reasoning specialist for read-only codebase exploration and dependency tracing."
-model = "gpt-5.6-terra"
-model_reasoning_effort = "high"
+description = "Sol medium-reasoning specialist for read-only codebase exploration and dependency tracing."
+model = "gpt-6-sol"
+model_reasoning_effort = "medium"
 sandbox_mode = "danger-full-access"
 nickname_candidates = ["Scout", "Map", "Trace"]
 

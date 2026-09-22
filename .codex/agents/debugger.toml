@@ -1,6 +1,6 @@
 name = "debugger"
 description = "Sol high-reasoning specialist for difficult diagnosis and root-cause analysis."
-model = "gpt-5.6-sol"
+model = "gpt-6-sol"
 model_reasoning_effort = "high"
 sandbox_mode = "danger-full-access"
 nickname_candidates = ["Sherlock", "Tracer", "Root"]

@@ -52,7 +52,7 @@ Testing has no separate agent: the implementer writes and records the tests.
 
 Main coordinator model/reasoning are user/host choices; native dispatch passes no override.
 0080 routes Luna/max to routine work (implementation, tests, diagnosed fixes,
-docs edits, mechanical refactors); Terra/high to read-heavy exploration/dependency
+docs edits, mechanical refactors); Sol/medium to read-heavy exploration/dependency
 tracing; Sol/high to planning, decomposition, difficult diagnosis, independent
 grills, final functional checks. Formal review: unchanged external Autoreview
 (internals own policy); no lane selects Luna/low. Native transport process-free;

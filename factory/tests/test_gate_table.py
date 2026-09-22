@@ -159,22 +159,22 @@ def test_active_model_policy_has_no_forbidden_execution_surface():
         if isinstance(row, dict) and "config_file" in row
     }
     expected_roles = {
-        "architect": ("gpt-5.6-sol", "high"),
-        "coder": ("gpt-5.6-luna", "max"),
-        "debugger": ("gpt-5.6-sol", "high"),
-        "docs-decomposer": ("gpt-5.6-sol", "high"),
-        "explorer": ("gpt-5.6-terra", "high"),
-        "frontend": ("gpt-5.6-luna", "max"),
-        "functional-checker": ("gpt-5.6-sol", "high"),
-        "griller": ("gpt-5.6-sol", "high"),
-        "lite": ("gpt-5.6-luna", "max"),
-        "performance": ("gpt-5.6-sol", "high"),
-        "planner": ("gpt-5.6-sol", "high"),
-        "planner-high": ("gpt-5.6-sol", "high"),
-        "refactorer": ("gpt-5.6-luna", "max"),
-        "security": ("gpt-5.6-sol", "high"),
-        "tester": ("gpt-5.6-luna", "max"),
-        "worker": ("gpt-5.6-luna", "max"),
+        "architect": ("gpt-6-sol", "high"),
+        "coder": ("gpt-6-luna", "max"),
+        "debugger": ("gpt-6-sol", "high"),
+        "docs-decomposer": ("gpt-6-sol", "high"),
+        "explorer": ("gpt-6-sol", "medium"),
+        "frontend": ("gpt-6-luna", "max"),
+        "functional-checker": ("gpt-6-sol", "high"),
+        "griller": ("gpt-6-sol", "high"),
+        "lite": ("gpt-6-luna", "max"),
+        "performance": ("gpt-6-sol", "high"),
+        "planner": ("gpt-6-sol", "high"),
+        "planner-high": ("gpt-6-sol", "high"),
+        "refactorer": ("gpt-6-luna", "max"),
+        "security": ("gpt-6-sol", "high"),
+        "tester": ("gpt-6-luna", "max"),
+        "worker": ("gpt-6-luna", "max"),
     }
     actual_roles = {
         name: (row["model"], row["model_reasoning_effort"])
@@ -195,16 +195,16 @@ def test_active_model_policy_has_no_forbidden_execution_surface():
         "lite": mode_run_config(HARNESS, "lite")[:2],
         **actual_roles,
     }
-    assert active["implementation"] == ("gpt-5.6-luna", "max")
-    assert active["explore"] == ("gpt-5.6-terra", "high")
-    assert active["grill"] == ("gpt-5.6-sol", "high")
-    assert active["lite"] == ("gpt-5.6-luna", "max")
-    assert all(not (model == "gpt-5.6-luna" and effort == "low")
+    assert active["implementation"] == ("gpt-6-luna", "max")
+    assert active["explore"] == ("gpt-6-sol", "medium")
+    assert active["grill"] == ("gpt-6-sol", "high")
+    assert active["lite"] == ("gpt-6-luna", "max")
+    assert all(not (model == "gpt-6-luna" and effort == "low")
                for model, effort in active.values())
 
     harness = (HARNESS / "harness.yaml").read_text(encoding="utf-8")
-    assert "/codex:rescue --model gpt-5.6-terra --effort high" in harness
-    assert "validation: \"/codex:rescue --model gpt-5.6-sol --effort high" in harness
+    assert "/codex:rescue --model gpt-6-sol --effort medium" in harness
+    assert "validation: \"/codex:rescue --model gpt-6-sol --effort high" in harness
 
 
 def test_the_brief_carries_the_artifact_itself(repo: Path):

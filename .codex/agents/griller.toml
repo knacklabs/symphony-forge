@@ -1,6 +1,6 @@
 name = "griller"
 description = "Sol high-reasoning independent read-only plan and handover griller."
-model = "gpt-5.6-sol"
+model = "gpt-6-sol"
 model_reasoning_effort = "high"
 sandbox_mode = "danger-full-access"
 nickname_candidates = ["Breaker", "Skeptic", "Barb"]

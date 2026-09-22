@@ -4,8 +4,8 @@ task: LEAN-WORKFLOW
 title: Native approval, Lean migration, and one close-owned proof run
 status: draft
 design_review: required
-source_head_observed: aa8b519c1e1e
-active_decisions_reviewed: "./forge decision list --active, accepted corpus through 0078"
+source_head_observed: 9e08774ba497
+active_decisions_reviewed: "./forge decision list --active, accepted corpus through 0082"
 ---
 
 ## Problem
@@ -14,7 +14,7 @@ PR #229 still repeats approval and verification work, and its first complete clo
 
 ## Scope and boundaries
 
-Lean owns native story/task approval, one cold-read disposition bridge, narrowed delegation, secure optional grill context, content-bound proof reuse, one-time Lean and sealed fixed-review migration, three Forge-owned profiles, current per-event PR-link repair/backfill, the close-owned proof path, and aligned docs/tests.
+Lean owns native story/task approval, one cold-read disposition bridge, narrowed delegation, secure optional grill context, content-bound proof reuse, one-time Lean and sealed fixed-review migration, the complete Decision 0080 native role registry, current per-event PR-link repair/backfill, the close-owned proof path, and aligned docs/tests.
 
 Portable owns the later full event-family and bookkeeping consolidation. Native lifecycle and Shared coordinator work remain in their existing tasks. No scheduler, cache, new evidence schema, client rollout, global user configuration, or skipped coverage is authorized.
 
@@ -47,8 +47,8 @@ Workers run focused checks only. `forge task close` is the sole final proof owne
 - `--context-file` remains optional for `forge grill run`. When supplied, its no-follow, stable identity, UTF-8/capacity, owner-only POSIX or Windows ACL, snapshot, cleanup, and metadata-only evidence rules are mandatory.
 - Test and verify reuse bind product bytes, exact argv/selectors, runner/interpreter/dependency metadata, pytest and verifier configuration, relevant environment, and generated semantic inputs. Missing, partial, unknown, or drifted identity reruns. Selected review also binds Decision 0066 delta plus current task meaning, automated evidence, review instructions, helper/config, and immutable raw provenance.
 - Lean migration requires clean-target zero-write refusal, no `--force` bypass, independent raw no-follow inventory coverage, exact-once classification, hashes, temporary build, validation, atomic publication/readback, and deletion only after durable output. A validated original empty completion may create one bound `lean-workflow-v2-supplement.json` when later merged history introduces eligible proof; every other unequal/partial retry refuses.
-- Restore proposed historical `0049-per-task-review-proof.md` unchanged. Renumber the accepted full-access decision to the next unused id and update references; numeric reuse and decision deletion are forbidden.
-- Current PR-link repair stages `.factory/events/` and backfills only verified merged PR #109/#110 through `forge pr-link`. The effective scope includes the required new Decision 0079 destination and the conditional Lean supplement manifest.
+- Restore proposed historical `0049-per-task-review-proof.md` unchanged. The accepted full-access decision is `0081-full-access-for-forge-managed-codex-chats.md`; `0079` is `a-task-proof-runs-once-per-tree` and `0080` is `native-role-model-routing`, so neither is the full-access destination. Numeric reuse stays forbidden. Retiring decisions Lean supersedes is owner-authorised (Ravi, 2026-09-22) and tracked as its own step, not folded into this task.
+- Current PR-link repair stages `.factory/events/` and backfills only verified merged PR #109/#110 through `forge pr-link`. The effective scope includes the accepted Decision 0081 full-access destination and the conditional Lean supplement manifest.
 
 ## Acceptance Criteria
 
@@ -59,7 +59,7 @@ Workers run focused checks only. `forge task close` is the sole final proof owne
 5. Content-bound close reuse: test/verify receipts and selected-review reviewed-meaning identity reuse only when their proof-type inputs match; substantive acceptance/security/migration/evidence/review-instruction/product-delta changes force review, while canonicalized bookkeeping/timestamp changes preserve immutable original provenance.
 6. Lean migration: `forge upgrade` performs clean-checkout preflight with no `--force` bypass, full inventory/hash/classification, independent raw no-follow coverage over fixed legacy roots/exact parents, temp build, validation, publish/readback, profile/settings preservation, and deletion only after durable current outputs exist. Byte-identical retry passes and unequal partial retry refuses, except that a validated original empty completion may publish one bound `lean-workflow-v2-supplement.json` when later merged history introduces newly eligible proof.
 7. Fixed-proof migration: Lean migrates sealed fixed-lens proof once into canonical `origin=upgrade` selected generations with the full sealed-proof safety contract, while active old proof requires a fresh review and normal runtime never uses direct fixed-file fallback authority.
-8. Hook/config/profile target: committed Claude/Codex hook matrices, `.codex/config.toml`, `.claude/CLAUDE.md`, and profile installation match the recovery target; only three Forge-owned profiles remain while client-modified/client-added profiles are preserved.
+8. Hook/config/profile target: committed Claude/Codex hook matrices, `.codex/config.toml`, `.claude/CLAUDE.md`, and profile installation match the recovery target; the complete Decision 0080 native role registry (sixteen roles) is installed and configured while client-modified/client-added profiles are preserved. The required selector keeps its legacy NAME `test_recovery_profile_override_keeps_only_three_forge_profiles` because required-test ids bind by id, but its body asserts the sixteen-role registry. The recorded contract Objective still says "three-profile Forge registry reduction" and needs a decomposition amendment through `record_decomposition_from_json.py`; this plan does not hand-edit the rendered contract block.
 9. PR-link workflow staging: `.github/workflows/pr-link.yml` stages per-event `.factory/events/` files and updates its status/comment wording without returning to `.factory/events.jsonl` writes.
 10. Verified PR-link backfill: only verified PR #109 and #110 links are backfilled through `forge pr-link`, producing recorder-generated event files and clearing those board-completeness failures without touching unrelated spec gaps.
 11. Normal-runtime refusal: Lean-removed old formats outside upgrade produce `run forge upgrade` guidance; PR3-owned legacy families stay compatible until Portable handles them.
@@ -78,9 +78,57 @@ Profile setup time from the same two baseline runs. Attempt a prepared fixture o
 
 ## Current implementation blockers
 
-The last canonical run at `a835534` reported 36 failures, 1252 passes, and 4 skips. Shared causes are already diagnosed: review fixtures lack current content-bound receipts; lifecycle expects the pre-reapproval final digest instead of rebinding; full-scope worker admission classifies the same scope twice; migration uses a raw replace outside the boundary helper; and PR-ready/review fixtures carry stale proof identities. The four new required selectors are implementation outputs and must exist before close. `test_board_reads_task_proof.py` and `test_review_reads_the_repo.py` are now in protected scope.
+Measured on 2026-09-22 at HEAD `678f2331`, base `9e08774b`.
 
-The branch-only review delta from advanced base `aa8b519c1e1e` measured 116 files / 21,828 lines before this compact-plan change. The operative ceiling is 118 files / 23,000 lines. The authoritative contract has 134 allowed paths, 55 required selectors, and 17 criteria; the allowlist count is intentionally distinct from the measured review ceiling.
+The task's five declared verify commands and its 55 required selectors PASS; the
+committed `verify.json` records that at `c8f7128`. The outstanding work is the
+repo-wide gate suite, which is `scaffold-check`'s own step and not a declared
+verify command: `pytest factory/tests -q -n auto --dist worksteal` reports 18
+failed, 1419 passed, 4 skipped. All 18 reproduce at pristine `c2b1b474`, so none
+is caused by the two CI commits on top. They group as:
+
+- ELEVEN `test_upgrade_*` in `test_gates.py`, ONE root cause.
+  `_persist_prepared_lean_manifest` (`upgrade.py:3022`) calls
+  `validate_payload(target, "lean-workflow-migration", ...)`, which resolves
+  `<target>/factory/schemas/lean-workflow-migration.json`. The target does not
+  carry that schema yet -- installing it is what the upgrade does, and the
+  function's own docstring says it runs "before vendoring mutates the target".
+  Validate against `runtime_source`, already a parameter of that function.
+- TWO canonical JUnit selectors (`dedicated selector reran after canonical
+  proof`): environment identity must match `verify.py` semantics for BLANK
+  phase variables.
+- TWO `test_review_triage.py`: `WORKFLOW.md` lacks "never relays a finding
+  unread".
+- ONE each: `test_review_settled_contracts.py` (locationless contract rejection
+  lineage), `test_close_binds_to_the_diff.py` (scope-bound preparation, exits 1),
+  `test_regrill_scope.py` (native preparation rebind after brief changes).
+
+The product delta from base `9e08774b` is 132 files / 32,789 lines (25,383
+added + 7,406 deleted), excluding `.factory/`, `plans/`, `docs/decisions/` and
+`docs/context/ledger.json`. That is exactly the contract's 132-file ceiling and
+over its 28,500-line ceiling. Both are RECORDED NOTES, not refusals
+(`stages.py:1483`); the only hard refusal is a delta above twice the line
+budget, i.e. 57,000.
+
+AC16 and AC17 hold by NON-ADOPTION and owe no benchmark: `factory/tests/conftest.py`
+is untouched on this branch, so no shared fixture optimisation was introduced,
+and nothing in the tree sets a worker count other than the canonical `-n 4`.
+Adopting either optimisation would require the recorded 4/6/8 comparison first.
+
+Decision 0082 (`docs/decisions/0082-codex-hook-trust-boundary.md`) is ACCEPTED
+and is the load-bearing trust seam under AC1-AC2: native-approval authenticity
+rests on invocation of the exact hash-approved project hook plus exact digest,
+runtime, session, event, tool, payload, cancellation, replay and candidate
+validation. It does NOT claim signed host attestation, which remains an OpenAI
+host dependency, and it does not exclude synthetic same-user invocation. The
+formal review assesses 0082 against the implementation.
+
+Reactivation: this branch's git-local control dir is per-worktree and absent in
+a fresh checkout, so `./forge next` routes to GATES-1 and refuses on its retired
+fixed proof. `./forge story resume FORGE-COORD-1` rebuilds the pointer,
+protected decomposition and stage tracker from committed state without
+disturbing GATES-1, and is the supported prerequisite for
+`./forge task close LEAN-WORKFLOW`.
 
 ## Verification Plan
 
@@ -93,14 +141,14 @@ The branch-only review delta from advanced base `aa8b519c1e1e` measured 116 file
 
 ## Manual Verification
 
-1. Run `git merge-base HEAD origin/main` and confirm `aa8b519c1e1e`; record `git rev-parse HEAD` separately as the task tip.
-2. Inspect the rendered contract for exactly 17 criteria/contracts, 55 required tests, 134 allowed paths, `user_facing: true`, and the 118-file/23,000-line budget.
+1. Run `git merge-base HEAD origin/main` and confirm `9e08774ba4973f54d0b2805f6f84b633eb2c31ff` (origin/main is already contained in this branch); record `git rev-parse HEAD` separately as the task tip.
+2. Inspect the rendered contract for exactly 17 criteria/contracts, 55 required tests, 142 allowed paths (134 base entries plus 8 recorded scope amendments), `user_facing: true`, and the 132-file/28,500-line budget.
 3. Exercise one accepted and rejected native approval event and confirm only the accepted current digest writes authority with stable runtime/session/event identity.
 4. Print a narrowed exact-file delegation and a full-scope delegation; confirm both briefs assign task-wide proof to close and hooks refuse writes outside the selected scope.
 5. Change one input in each reuse identity family and confirm only the affected proof reruns; missing identity always reruns.
 6. Inspect canonical JUnit consumption for exact required ids, then remove or make one id ambiguous and confirm dedicated selector fallback/no-match refusal.
 7. Run migration dirty, linked, conflicting, empty-original supplement, byte-identical retry, and unequal retry fixtures; confirm zero-write refusal and readback.
-8. Confirm Decision 0049 history, board wording, functional proof, and recorder-generated #109/#110 events before PR publication.
+8. Confirm Decision 0049 history, the board wording, functional proof, and recorder-generated #109/#110 events before PR publication. The board-wording target is exact and falsifiable: serve `factory/board/index.html` and read (a) the first paragraph of `footer.wrap` and (b) the `check-note` emitted by `readinessBlock`. PRIOR text, which must NOT appear in either place: "approve plans in chat, because the grill is bound by digest to the exact plan text." and "Approval happens in chat - the grill is an interrogation bound to the exact plan text, not a button." EXPECTED text, which must appear in both: "Approve the exact final plan in native Plan Mode."
 
 <!-- forge:contract -->
 ## Contract (recorded)

@@ -8024,7 +8024,7 @@ def test_commit_belt_clean_inbox_is_pass_through(repo):
     assert git(repo, "diff", "--cached", "--name-only") == ""
 
 
-COMPANION = "node /x/codex-companion.mjs task --model gpt-5.6-sol"
+COMPANION = "node /x/codex-companion.mjs task --model gpt-6-sol"
 COMPANION_WRITE = (COMPANION + " --write --prompt-file .factory/briefs/T1.md "
                    "'build the slice'")
 
@@ -9237,7 +9237,7 @@ def test_forge_fix_records_luna_max_write_delegation(repo, tmp_path):
     entry = rows[-1]
     assert entry["launch_status"] == "succeeded"
     assert entry["task"] == window["id"]
-    assert entry["model"] == "gpt-5.6-luna"
+    assert entry["model"] == "gpt-6-luna"
     assert entry["effort"] == "max"
     assert entry["write"] is True
     assert entry["mode"] == "lite"
@@ -9256,7 +9256,7 @@ def test_modes_lite_pins_parse_and_dual_runtime_green(repo):
     sys.path.insert(0, str(repo / "factory" / "scripts"))
     try:
         from forge_cli.delegate import mode_run_config
-        assert mode_run_config(repo, "lite") == ("gpt-5.6-luna", "max", 5)
+        assert mode_run_config(repo, "lite") == ("gpt-6-luna", "max", 5)
     finally:
         sys.path.pop(0)
 
@@ -19633,7 +19633,7 @@ def test_review_refuses_an_argv_that_could_reach_terra(capsys):
     for bad in (
         ["--engine", "codex"],
         ["--model", "gpt-5.6-terra"],
-        ["--model", "gpt-5.6-sol", "--x", "terra"],
+        ["--model", "gpt-6-sol", "--x", "terra"],
     ):
         with pytest.raises(SystemExit) as error:
             review_mod._require_safe_codex_review_helper(bad)
@@ -19672,7 +19672,7 @@ def test_review_codex_engine_pins_sol_high(tmp_path, monkeypatch):
         sys.executable, str(tmp_path / "helper"), "--mode", "branch", "--base", "base",
         "--engine", "codex", "--max-priority", "P1", "--prompt-file", "prompt",
         "--dataset", ".factory/review-briefs/all.md", "--json-output", str(report),
-        "--model", "gpt-5.6-sol", "--thinking", "high",
+        "--model", "gpt-6-sol", "--thinking", "high",
     ]
 
     review_mod._run_skill(
@@ -21192,7 +21192,7 @@ def test_upgrade_preserves_client_profiles_while_removing_retired_forge_profiles
         repo: Path):
     from forge_cli.upgrade import RETIRED_FORGE_PROFILE_HASHES
     retired_bytes = (
-        'name = "architect"\nmodel = "gpt-5.6-sol"\n'
+        'name = "architect"\nmodel = "gpt-6-sol"\n'
         'model_reasoning_effort = "high"\nsandbox_mode = "read-only"\n'
     ).encode("utf-8")
     assert (hashlib.sha256(retired_bytes).hexdigest()

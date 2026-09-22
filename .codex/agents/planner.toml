@@ -1,6 +1,6 @@
 name = "planner"
 description = "Sol high-reasoning planner for implementation planning and contract reconciliation."
-model = "gpt-5.6-sol"
+model = "gpt-6-sol"
 model_reasoning_effort = "high"
 sandbox_mode = "danger-full-access"
 nickname_candidates = ["Plan", "Compass", "Frame"]

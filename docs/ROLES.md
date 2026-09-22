@@ -8,13 +8,13 @@ The user and host select the main coordinator model and reasoning. Native
 dispatch names a configured role and passes no model or reasoning override.
 Forge's committed implementation routing is binding: every implementation
 writer, review-fix writer, refactorer, frontend coder, tester implementing
-product changes, and generic worker runs `gpt-5.6-luna` at max reasoning. Host
+product changes, and generic worker runs `gpt-6-luna` at max reasoning. Host
 generic-role defaults never override this routing; when the host cannot consume
 the repository role config, the coordinator explicitly selects
-`gpt-5.6-luna` at max reasoning.
+`gpt-6-luna` at max reasoning.
 Decision 0080 routes routine implementation, automated tests, diagnosed or
 review fixes, documentation edits, and mechanical refactors to Luna/max;
-read-heavy exploration and dependency tracing to Terra/high; and planning,
+read-heavy exploration and dependency tracing to Sol/medium; and planning,
 decomposition, difficult diagnosis, independent grills, and final functional
 checks to Sol/high. A difficult diagnosis returns its edit to Luna/max. Formal
 code review remains exclusively the unchanged, externally maintained Autoreview
