@@ -28,8 +28,8 @@ from pathlib import Path
 
 from factory_lib import (
     client_signoff, dump_json, load_json, now_iso,
-    protected_decomposition_state_path, repo_root, run_state_path, slugify,
-    story_dir, task_marker_path,
+    plan_digest_without_assumptions, protected_decomposition_state_path,
+    repo_root, run_state_path, slugify, story_dir, task_marker_path,
 )
 
 from .common import fail
@@ -129,6 +129,16 @@ def rebuild_story_authority(base: Path, key: str, decomposition: dict) -> tuple[
         "created_at": existing.get("created_at") or now_iso(),
         "updated_at": now_iso(),
     }
+    # `plan_status: approved` without the digest that proves WHICH plan was
+    # approved leaves every binding gate refusing the story resume just
+    # restored. The approval is committed evidence, so restore it -- but only
+    # while it still matches the live plan. A drifted plan keeps the binding
+    # absent and correctly falls through to re-approval.
+    approval = load_json(story_dir(base, key) / "plan-approval.json", default={})
+    recorded = approval.get("approved_plan_sha256")
+    if (plan is not None and isinstance(recorded, str)
+            and recorded == plan_digest_without_assumptions(plan)):
+        state["approved_plan_sha256"] = recorded
     done_ids = _derive_done_ids(base, key, tasks)
     stages = [
         {

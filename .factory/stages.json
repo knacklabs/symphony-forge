@@ -1,29 +1,44 @@
 {
-  "issue": "GATES-1",
+  "issue": "FORGE-COORD-1",
   "stages": [
     {
-      "id": "GATES-1-T1",
-      "title": "A question round belongs to its gate and story",
+      "id": "NATIVE-FOREGROUND-ACTIVATE",
+      "title": "Native foreground and complete first-task proof",
       "status": "done"
     },
     {
-      "id": "GATES-1-T2",
-      "title": "Both grill guards read the ledger the same way",
-      "status": "done"
-    },
-    {
-      "id": "GATES-1-T3",
-      "title": "The requirements gate joins the one definition of product",
+      "id": "LEAN-WORKFLOW",
+      "title": "One brief and one complete independent review",
       "status": "pending"
     },
     {
-      "id": "GATES-1-T4",
-      "title": "Post-stage task freshness keeps its selective binding",
+      "id": "PORTABLE-DELIVERY-MIGRATION",
+      "title": "Portable setup, durable history and existing-client migration",
       "status": "pending"
     },
     {
-      "id": "GATES-1-T5",
-      "title": "An escalation grants exactly one further read, for that gate and task",
+      "id": "NATIVE-LIFECYCLE",
+      "title": "Native detached read-only lifecycle and helpers",
+      "status": "pending"
+    },
+    {
+      "id": "SHARED-COORDINATOR-JOURNEY",
+      "title": "Coordinator questions, task ownership and reliable continuation",
+      "status": "pending"
+    },
+    {
+      "id": "FORMAT-SOURCES",
+      "title": "Complete pure mechanical Python formatting",
+      "status": "pending"
+    },
+    {
+      "id": "QUALITY-BASELINE",
+      "title": "Semantic fixes and mandatory full quality baseline",
+      "status": "pending"
+    },
+    {
+      "id": "FORGE-COORD-1.1",
+      "title": "Complete native parity and installed-client dogfood",
       "status": "pending"
     }
   ]
