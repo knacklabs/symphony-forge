@@ -17,13 +17,16 @@ root = Path(__file__).resolve().parents[2]
 agents = root / "AGENTS.md"
 text = agents.read_text(encoding="utf-8")
 lines = text.splitlines()
+# Lean renamed the read-order heading. Vendored clients still carry the old
+# spelling until they upgrade, so either satisfies the contract.
 required_markers = [
-    "## What This Repo Is",
-    "## Mandatory Read Order",
-    "## Runtime Modes",
-    "## Hard Gates",
+    ("## What This Repo Is",),
+    ("## Mandatory Read Order", "## Context and Read Order"),
+    ("## Runtime Modes",),
+    ("## Hard Gates",),
 ]
-missing = [marker for marker in required_markers if marker not in text]
+missing = [" or ".join(group) for group in required_markers
+           if not any(marker in text for marker in group)]
 if len(lines) > 110:
     print(f"AGENTS.md is too long: {len(lines)} lines (max 110)")
     sys.exit(1)

@@ -27,8 +27,9 @@ Claude uses protected `codex-plugin-cc`; native Codex uses host `spawn_agent`. `
 
 ## Phase Contract
 
-Follow `WORKFLOW.md` for discovery through PR delivery, including native approval, task execution, proof and review. Sign-off requires confirmed specs
-and a derived roadmap; implementation requires an approved plan and recorded decomposition.
+Follow `WORKFLOW.md` for discovery through PR delivery and `docs/FACTORY.md`
+for the factory reference. Sign-off requires confirmed specs and a derived
+roadmap; implementation requires an approved plan and recorded decomposition.
 
 ## Prompt and Agent Use
 

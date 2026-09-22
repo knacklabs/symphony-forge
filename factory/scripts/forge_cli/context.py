@@ -117,6 +117,11 @@ def _scan_state(base: Path) -> tuple[dict, list[str], list[str]]:
             entry.update({"sha256": digest, "status": "pending", "updated": now_iso()})
     on_disk = {f.relative_to(context_dir).as_posix() for f in context_files(context_dir)}
     for rel in sorted(set(ledger["files"]) - on_disk):
+        # Only the transition is drift. An entry already recorded as removed is
+        # reconciled: a harvested file stays deleted, and re-reporting it left
+        # `context scan --check` permanently red with nothing left to do.
+        if ledger["files"][rel].get("status") == "removed":
+            continue
         drift.append(f"missing (marked removed): {rel}")
         ledger["files"][rel]["status"] = "removed"
     return ledger, drift, refused
