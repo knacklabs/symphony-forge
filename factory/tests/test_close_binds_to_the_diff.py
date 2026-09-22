@@ -126,6 +126,14 @@ def test_native_stage_done_requires_current_scope_bound_preparation(
     from forge_cli.stages import _require_successful_launch
 
     monkeypatch.setenv("FORGE_COORDINATOR", "codex")
+    # This fixture is not a trusted Codex checkout, and the readiness probe
+    # shells out to the real `codex` CLI -- absent in CI, and bound to the
+    # harness rather than this temp repo locally. The gate has its own
+    # regression coverage in test_native_setup.py.
+    from forge_cli import doctor
+    monkeypatch.setattr(
+        doctor, "codex_hook_readiness", lambda _base: (True, "fixture-ready"),
+    )
     start_stage(repo, tmp_path, STAGE_TASK, launch=False)
     stage, task = _stage(repo), task_for(repo, "T1")
     with pytest.raises(SystemExit):
