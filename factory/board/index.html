@@ -456,6 +456,7 @@
     animation-delay: var(--depth-delay, 0ms);
   }
   .dag-edges { overflow: visible; pointer-events: none; }
+  .dag-signals { will-change: transform; }
   .dag-edge, .dag-signal, .dag-globe-edge {
     fill: none; vector-effect: non-scaling-stroke; stroke-linecap: round;
     stroke-linejoin: round; shape-rendering: geometricPrecision;
@@ -583,6 +584,7 @@
   .dag-node.is-upstream .dag-port { border-color: var(--accent); }
   .dag-node.is-downstream .dag-port { border-color: var(--build); }
   .dag-shell.is-forming .dag-node { pointer-events: none; transition: none; }
+  .dag-shell.is-forming .dag-nodes { transform-style: preserve-3d; }
   @media (hover: hover) and (pointer: fine) {
     .dag-node.is-hovered:not(.is-selected) {
       z-index: 4; border-color: var(--accent);
@@ -1330,6 +1332,7 @@
           <div id="dag-scene" class="dag-scene">
             <div id="dag-depths" class="dag-depths" aria-hidden="true"></div>
             <svg id="dag-edges" class="dag-edges" aria-hidden="true"></svg>
+            <svg id="dag-signals" class="dag-edges dag-signals" aria-hidden="true"></svg>
             <div id="dag-nodes" class="dag-nodes"></div>
           </div>
         </div>
@@ -2666,9 +2669,17 @@ function renderDag(state) {
   }).join("");
 
   const svg = $("dag-edges");
-  svg.setAttribute("viewBox", `0 0 ${layout.width} ${layout.height}`);
-  svg.setAttribute("width", String(layout.width));
-  svg.setAttribute("height", String(layout.height));
+  // The flowing signal dashes live in their own SVG, composited as a separate
+  // layer: a stroke-dashoffset animation repaints every frame, and in the
+  // shared SVG each frame re-rasterised all 75 edges (2.3 s of raster per
+  // 3 s of panning with a story selected, 4x CPU throttle; 0.18 s apart).
+  const signals = $("dag-signals");
+  for (const layer of [svg, signals]) {
+    layer.setAttribute("viewBox", `0 0 ${layout.width} ${layout.height}`);
+    layer.setAttribute("width", String(layout.width));
+    layer.setAttribute("height", String(layout.height));
+  }
+  signals.replaceChildren();
   svg.innerHTML = `<defs><marker id="dag-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 1 L 7 4 L 0 7 z" fill="context-stroke"></path></marker></defs>`;
   DAG.edges = layout.edges.map((edge, edgeIndex) => {
     const globeVectors = dagGlobeEdgeVectors(edge);
@@ -2684,7 +2695,8 @@ function renderDag(state) {
     const signal = document.createElementNS(DAG_SVG, "path");
     signal.setAttribute("class", "dag-signal");
     signal.setAttribute("d", data);
-    svg.append(globe, base, signal);
+    svg.append(globe, base);
+    signals.append(signal);
     const length = Math.ceil(base.getTotalLength());
     const edgeDepth = layout.positions.get(edge.to).depth;
     const edgeProgress = layout.maxDepth ? edgeDepth / layout.maxDepth : 0;
@@ -2774,6 +2786,28 @@ function renderDag(state) {
       && DAG.entryPending) scheduleDagEntrance();
 }
 
+// The viewport's size and page position, read once per layout instead of per
+// frame. Reading clientWidth/getBoundingClientRect inside an animation frame,
+// after that frame already moved the nodes, forced a synchronous style +
+// layout of the page: 700 ms at the start of the entrance and 330 ms in the
+// middle of it (4x CPU throttle), and one per pointermove while dragging.
+const DAG_VIEWPORT = {w: 0, h: 0, left: 0, top: 0, fresh: false};
+function dagViewportSize() {
+  if (!DAG_VIEWPORT.fresh || !DAG_VIEWPORT.w) {
+    const el = $("dag-viewport");
+    const rect = el.getBoundingClientRect();
+    Object.assign(DAG_VIEWPORT, {w: el.clientWidth, h: el.clientHeight,
+                                 left: rect.left, top: rect.top, fresh: true});
+  }
+  return DAG_VIEWPORT;
+}
+if ("ResizeObserver" in window) {
+  new ResizeObserver(() => { DAG_VIEWPORT.fresh = false; }).observe($("dag-viewport"));
+}
+// Page scroll moves the viewport's rect, not its size.
+addEventListener("scroll", () => { DAG_VIEWPORT.fresh = false; }, {passive: true, capture: true});
+addEventListener("resize", () => { DAG_VIEWPORT.fresh = false; }, {passive: true});
+
 function dagTransform(view) {
   return `translate3d(${view.x}px, ${view.y}px, 0) scale(${view.scale})`;
 }
@@ -2801,16 +2835,16 @@ function stopDagMotion() {
 }
 
 function dagBounds(scale) {
-  const viewport = $("dag-viewport");
+  const viewport = dagViewportSize();
   const width = (DAG.layout && DAG.layout.width || 0) * scale;
   const height = (DAG.layout && DAG.layout.height || 0) * scale;
   const margin = 48;
-  const horizontal = width <= viewport.clientWidth - margin * 2
-    ? [(viewport.clientWidth - width) / 2, (viewport.clientWidth - width) / 2]
-    : [viewport.clientWidth - width - margin, margin];
-  const vertical = height <= viewport.clientHeight - margin * 2
-    ? [(viewport.clientHeight - height) / 2, (viewport.clientHeight - height) / 2]
-    : [viewport.clientHeight - height - margin, margin];
+  const horizontal = width <= viewport.w - margin * 2
+    ? [(viewport.w - width) / 2, (viewport.w - width) / 2]
+    : [viewport.w - width - margin, margin];
+  const vertical = height <= viewport.h - margin * 2
+    ? [(viewport.h - height) / 2, (viewport.h - height) / 2]
+    : [viewport.h - height - margin, margin];
   return {minX: horizontal[0], maxX: horizontal[1], minY: vertical[0], maxY: vertical[1]};
 }
 
@@ -2854,14 +2888,14 @@ function animateDagView(target, animate = true, duration = 260) {
 
 function fitDag(animate = true) {
   if (!DAG.layout) return;
-  const viewport = $("dag-viewport");
+  const viewport = dagViewportSize();
   const scale = clamp(Math.min(
-    (viewport.clientWidth - 36) / DAG.layout.width,
-    (viewport.clientHeight - 36) / DAG.layout.height,
+    (viewport.w - 36) / DAG.layout.width,
+    (viewport.h - 36) / DAG.layout.height,
   ), .2, 1);
   animateDagView({
-    x: (viewport.clientWidth - DAG.layout.width * scale) / 2,
-    y: (viewport.clientHeight - DAG.layout.height * scale) / 2,
+    x: (viewport.w - DAG.layout.width * scale) / 2,
+    y: (viewport.h - DAG.layout.height * scale) / 2,
     scale,
   }, animate);
   DAG.needsReset = false;
@@ -2869,23 +2903,78 @@ function fitDag(animate = true) {
 
 function frameDagGlobe() {
   if (!DAG.layout) return;
-  const viewport = $("dag-viewport");
+  const viewport = dagViewportSize();
   const {globeCenter, globeRadius} = DAG.layout;
   const sphereWidth = globeRadius.x * 2 + DAG_NODE_W * .7;
   const sphereHeight = globeRadius.y * 2 + DAG_NODE_H * .7;
   const rotatingDiameter = Math.max(sphereWidth, sphereHeight);
   const scale = clamp(Math.min(
-    (viewport.clientWidth - 88) / rotatingDiameter,
-    (viewport.clientHeight - 72) / rotatingDiameter,
+    (viewport.w - 88) / rotatingDiameter,
+    (viewport.h - 72) / rotatingDiameter,
   ), .28, .82);
   animateDagView({
-    x: viewport.clientWidth / 2 - globeCenter.x * scale,
-    y: viewport.clientHeight / 2 - globeCenter.y * scale,
+    x: viewport.w / 2 - globeCenter.x * scale,
+    y: viewport.h / 2 - globeCenter.y * scale,
     scale,
   }, false);
 }
 
-function renderDagGlobeFrame({turn = 0, assemble = 1, unfold = 0}) {
+// Where the entrance is at `elapsed` ms: the same absolute progress the frame
+// loop and the precomputed node keyframes both read.
+function dagEntranceProgress(elapsed) {
+  return {
+    assemble: clamp(elapsed / DAG_GLOBE_ASSEMBLE_MS, 0, 1),
+    turn: dagEaseInOutCubic(clamp(
+      (elapsed - DAG_GLOBE_ROTATE_START_MS) / DAG_GLOBE_ROTATE_MS, 0, 1)),
+    unfold: clamp((elapsed - DAG_GLOBE_UNFOLD_START_MS) / DAG_GLOBE_UNFOLD_MS, 0, 1),
+  };
+}
+
+function dagGlobeNodeState(key, node, point, assemble, unfold) {
+  const position = DAG.layout.positions.get(key);
+  const index = Number(node.dataset.globeIndex || 0);
+  const nodeArrival = dagEaseOutCubic(clamp(assemble * 1.34 - index * .018, 0, 1));
+  const nodeDelay = clamp(position.depth * .018 + index * .0025, 0, .24);
+  const nodeUnfold = dagEaseInOutCubic(clamp(
+    (unfold - nodeDelay) / (1 - nodeDelay), 0, 1));
+  const finalX = position.x + DAG_NODE_W / 2;
+  const finalY = position.y + DAG_NODE_H / 2;
+  const x = dagMix(point.x, finalX, nodeUnfold);
+  const y = dagMix(point.y, finalY, nodeUnfold);
+  const globeScale = (.3 + point.depth * .23) * dagMix(.38, 1, nodeArrival);
+  const scale = dagMix(globeScale, 1, nodeUnfold);
+  const globeOpacity = nodeArrival * (.12 + point.depth * .88);
+  // Front-to-back order as a hair of real depth (the scene is preserve-3d),
+  // not z-index: the compositor sorts it, so the keyframes stay GPU-only.
+  const z = (point.depth - .5) * 4 * (1 - nodeUnfold);
+  return {
+    transform: `translate3d(${(x - finalX).toFixed(1)}px, ${(y - finalY).toFixed(1)}px, ${z.toFixed(2)}px) scale(${scale.toFixed(3)})`,
+    opacity: dagMix(globeOpacity, 1, nodeUnfold).toFixed(3),
+  };
+}
+
+// The whole node flight, sampled once into keyframes and handed to the
+// compositor. Writing 31 inline transforms per frame cost ~35 ms of style
+// recalculation per frame at 4x CPU throttle (each write restyles the node's
+// subtree against the board's full stylesheet); keyframes cost none.
+const DAG_ENTRANCE_SAMPLES = 48;
+function animateDagGlobeNodes() {
+  const frames = new Map([...DAG.nodes.keys()].map(key => [key, []]));
+  for (let i = 0; i <= DAG_ENTRANCE_SAMPLES; i++) {
+    const offset = i / DAG_ENTRANCE_SAMPLES;
+    const {turn, assemble, unfold} = dagEntranceProgress(offset * DAG_GLOBE_TOTAL_MS);
+    const radiusScale = dagMix(.74, 1, dagEaseOutCubic(assemble));
+    for (const [key, node] of DAG.nodes) {
+      const point = projectDagGlobePoint(DAG.layout.globeVectors.get(key), turn, radiusScale);
+      frames.get(key).push({...dagGlobeNodeState(key, node, point, assemble, unfold), offset});
+    }
+  }
+  DAG.entranceAnimations = [...DAG.nodes].map(([key, node]) => node.animate(frames.get(key), {
+    duration: DAG_GLOBE_TOTAL_MS, easing: "linear", fill: "both",
+  }));
+}
+
+function renderDagGlobeFrame({turn = 0, assemble = 1, unfold = 0}, {nodes = true} = {}) {
   if (!DAG.layout) return;
   const radiusScale = dagMix(.74, 1, dagEaseOutCubic(assemble));
   const projected = new Map();
@@ -2893,27 +2982,12 @@ function renderDagGlobeFrame({turn = 0, assemble = 1, unfold = 0}) {
     projected.set(key, projectDagGlobePoint(vector, turn, radiusScale));
   }
 
-  for (const [key, node] of DAG.nodes) {
-    const point = projected.get(key);
-    const position = DAG.layout.positions.get(key);
-    const index = Number(node.dataset.globeIndex || 0);
-    const nodeArrival = dagEaseOutCubic(clamp(assemble * 1.34 - index * .018, 0, 1));
-    const nodeDelay = clamp(position.depth * .018 + index * .0025, 0, .24);
-    const nodeUnfold = dagEaseInOutCubic(clamp(
-      (unfold - nodeDelay) / (1 - nodeDelay), 0, 1));
-    const finalX = position.x + DAG_NODE_W / 2;
-    const finalY = position.y + DAG_NODE_H / 2;
-    const x = dagMix(point.x, finalX, nodeUnfold);
-    const y = dagMix(point.y, finalY, nodeUnfold);
-    const globeScale = (.3 + point.depth * .23) * dagMix(.38, 1, nodeArrival);
-    const scale = dagMix(globeScale, 1, nodeUnfold);
-    const globeOpacity = nodeArrival * (.12 + point.depth * .88);
-    const opacity = dagMix(globeOpacity, 1, nodeUnfold);
-
-    node.style.transform = `translate3d(${(x - finalX).toFixed(1)}px, ${(y - finalY).toFixed(1)}px, 0) scale(${scale.toFixed(3)})`;
-    node.style.opacity = opacity.toFixed(3);
-    const zIndex = String(20 + Math.round(point.depth * 8));
-    if (node.style.zIndex !== zIndex) node.style.zIndex = zIndex;
+  if (nodes) {
+    for (const [key, node] of DAG.nodes) {
+      const state = dagGlobeNodeState(key, node, projected.get(key), assemble, unfold);
+      node.style.transform = state.transform;
+      node.style.opacity = state.opacity;
+    }
   }
 
   for (const edge of DAG.edges) {
@@ -2936,6 +3010,8 @@ function renderDagGlobeFrame({turn = 0, assemble = 1, unfold = 0}) {
 }
 
 function clearDagGlobeFrame() {
+  for (const animation of DAG.entranceAnimations || []) animation.cancel();
+  DAG.entranceAnimations = [];
   for (const node of DAG.nodes.values()) {
     node.style.removeProperty("will-change");
     node.style.removeProperty("transform");
@@ -2967,23 +3043,25 @@ function scheduleDagEntrance() {
   if (DAG.entranceSchedule || DAG.entranceState !== "idle") return;
   DAG.entranceState = "scheduled";
   DAG.entranceSchedule = requestAnimationFrame(() => {
-    DAG.entranceSchedule = 0;
-    if (document.body.dataset.view === "dependencies") playDagEntrance();
-    else DAG.entranceState = "idle";
+    DAG.entranceSchedule = requestAnimationFrame(() => {
+      DAG.entranceSchedule = 0;
+      if (document.body.dataset.view === "dependencies") playDagEntrance();
+      else DAG.entranceState = "idle";
+    });
   });
 }
 
 function resetDagView(animate = true, duration = 260) {
   if (!DAG.layout) return;
-  const viewport = $("dag-viewport");
+  const viewport = dagViewportSize();
   // Start readable and at the root. "Fit" remains available for the whole-map
   // overview; the default should not make every story label microscopic.
-  const scale = clamp((viewport.clientWidth - 56) / DAG.layout.width, .64, 1);
+  const scale = clamp((viewport.w - 56) / DAG.layout.width, .64, 1);
   const root = DAG.layout.orderedLayers[0][0];
   const rootPosition = root && DAG.layout.positions.get(root.key);
   animateDagView({
     x: rootPosition
-      ? viewport.clientWidth / 2 - (rootPosition.x + DAG_NODE_W / 2) * scale
+      ? viewport.w / 2 - (rootPosition.x + DAG_NODE_W / 2) * scale
       : 24,
     y: 24,
     scale,
@@ -3036,22 +3114,22 @@ function playDagEntrance() {
   $("dag-viewport").setAttribute("aria-busy", "true");
   DAG.entranceState = "forming";
   const run = ++DAG.entranceRun;
+  animateDagGlobeNodes();
+  // Frame-loop time and the node animations share one clock, so an edge never
+  // runs ahead of or behind the card it connects.
+  const clock = DAG.entranceAnimations[0];
   const started = performance.now();
   let unfolding = false;
   const total = DAG_GLOBE_TOTAL_MS;
 
   const step = now => {
     if (run !== DAG.entranceRun || DAG.entranceState === "idle") return;
-    const elapsed = clamp(now - started, 0, total);
-    const assemble = clamp(elapsed / DAG_GLOBE_ASSEMBLE_MS, 0, 1);
-    const rotationElapsed = elapsed - DAG_GLOBE_ROTATE_START_MS;
-    const rotationProgress = clamp(rotationElapsed / DAG_GLOBE_ROTATE_MS, 0, 1);
-    const rotation = dagEaseInOutCubic(rotationProgress);
-    const unfoldElapsed = elapsed - DAG_GLOBE_UNFOLD_START_MS;
-    const unfold = clamp(unfoldElapsed / DAG_GLOBE_UNFOLD_MS, 0, 1);
+    const elapsed = clamp(clock && clock.currentTime !== null
+      ? Number(clock.currentTime) : now - started, 0, total);
+    const {turn: rotation, assemble, unfold} = dagEntranceProgress(elapsed);
 
     // Absolute progress—not accumulated angles—guarantees a single 0 → π/2 arc.
-    renderDagGlobeFrame({turn: rotation, assemble, unfold});
+    renderDagGlobeFrame({turn: rotation, assemble, unfold}, {nodes: false});
     if (unfold > 0 && !unfolding) {
       unfolding = true;
       DAG.entranceState = "unfolding";
@@ -3075,12 +3153,12 @@ function playDagEntrance() {
 
 function focusDagStory(key, animate = true, duration = 420) {
   if (!DAG.layout || !DAG.layout.positions.has(key)) return;
-  const viewport = $("dag-viewport");
+  const viewport = dagViewportSize();
   const position = DAG.layout.positions.get(key);
   const scale = clamp(Math.max(DAG.view.scale, 1.02), .2, 1.25);
   animateDagView({
-    x: viewport.clientWidth / 2 - (position.x + DAG_NODE_W / 2) * scale,
-    y: viewport.clientHeight * .46 - (position.y + DAG_NODE_H / 2) * scale,
+    x: viewport.w / 2 - (position.x + DAG_NODE_W / 2) * scale,
+    y: viewport.h * .46 - (position.y + DAG_NODE_H / 2) * scale,
     scale,
   }, animate, duration);
 }
@@ -3235,8 +3313,8 @@ function returnDagToStories(animate = true) {
 function zoomDag(factor, animate = true, point = null) {
   if (!DAG.layout) return;
   stopDagMotion();
-  const viewport = $("dag-viewport");
-  const anchor = point || {x: viewport.clientWidth / 2, y: viewport.clientHeight / 2};
+  const viewport = dagViewportSize();
+  const anchor = point || {x: viewport.w / 2, y: viewport.h / 2};
   const scale = clamp(DAG.view.scale * factor, .2, 1.4);
   const worldX = (anchor.x - DAG.view.x) / DAG.view.scale;
   const worldY = (anchor.y - DAG.view.y) / DAG.view.scale;
@@ -3361,8 +3439,8 @@ dagViewport.addEventListener("pointermove", event => {
   dagViewport.classList.add("is-panning");
   const bounds = dagBounds(DAG.view.scale);
   setDagView({
-    x: rubberAxis(drag.viewX + dx, bounds.minX, bounds.maxX, dagViewport.clientWidth),
-    y: rubberAxis(drag.viewY + dy, bounds.minY, bounds.maxY, dagViewport.clientHeight),
+    x: rubberAxis(drag.viewX + dx, bounds.minX, bounds.maxX, dagViewportSize().w),
+    y: rubberAxis(drag.viewY + dy, bounds.minY, bounds.maxY, dagViewportSize().h),
     scale: DAG.view.scale,
   });
   drag.history.push({x: event.clientX, y: event.clientY, time: performance.now()});
@@ -3390,9 +3468,9 @@ dagViewport.addEventListener("wheel", event => {
   if (!event.deltaY) return;
   event.preventDefault();
   if (DAG.entranceState !== "idle") cancelDagEntrance(true);
-  const rect = dagViewport.getBoundingClientRect();
+  const rect = dagViewportSize();
   const unit = event.deltaMode === 1 ? 16
-    : event.deltaMode === 2 ? dagViewport.clientHeight : 1;
+    : event.deltaMode === 2 ? dagViewportSize().h : 1;
   retargetDagZoom(event.deltaY * unit,
                   {x: event.clientX - rect.left, y: event.clientY - rect.top});
 }, {passive: false});

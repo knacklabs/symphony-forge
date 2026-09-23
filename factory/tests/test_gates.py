@@ -10880,7 +10880,9 @@ def test_dependency_entry_projects_the_same_graph_as_a_quarter_turn_3d_globe():
                page.index("function showBoardView(")]
     projection = dag[dag.index("function projectDagGlobePoint("):
                      dag.index("function dagGlobeEdgePoints(")]
-    globe_frame = dag[dag.index("function renderDagGlobeFrame("):
+    # The frame renderer and the node keyframes share one progress function
+    # and one per-node state function, so the slice starts at the former.
+    globe_frame = dag[dag.index("function dagEntranceProgress("):
                       dag.index("function playDagEntrance(")]
     entrance = dag[dag.index("function playDagEntrance("):
                    dag.index("function focusDagStory(")]
@@ -10914,7 +10916,11 @@ def test_dependency_entry_projects_the_same_graph_as_a_quarter_turn_3d_globe():
     assert "DAG_GLOBE_CURVE_STEPS" in dag and "dagCubicPath" in dag
     assert 'node.style.willChange = "transform, opacity"' not in globe_frame
     assert "node.style.filter" not in globe_frame
-    assert "Math.round(point.depth * 8)" in globe_frame
+    # Front-to-back order is real depth inside the preserve-3d scene, so the
+    # node flight runs as compositor keyframes rather than per-frame z-index.
+    assert "(point.depth - .5) * 4 * (1 - nodeUnfold)" in globe_frame
+    assert "node.animate(frames.get(key)" in globe_frame
+    assert ".dag-shell.is-forming .dag-nodes { transform-style: preserve-3d; }" in page
     assert "(unfold - nodeDelay) / (1 - nodeDelay)" in globe_frame
     assert "(unfold - edgeDelay) / (1 - edgeDelay)" in globe_frame
     assert "var(--depth-duration" in page and "var(--edge-duration" in page
@@ -10923,12 +10929,13 @@ def test_dependency_entry_projects_the_same_graph_as_a_quarter_turn_3d_globe():
     # One bounded 0 → π/2 quarter-turn leads into a morph/unfold and the ordinary
     # dependency camera; re-entering the tab may replay that same sequence.
     assert "renderDagGlobeFrame" in entrance
-    assert "const rotationProgress = clamp" in entrance
-    assert "const rotation = dagEaseInOutCubic(rotationProgress)" in entrance
+    assert "turn: dagEaseInOutCubic(clamp(" in globe_frame
     assert "turn: rotation" in entrance and "unfold" in entrance
+    assert "dagEntranceProgress(elapsed)" in entrance
+    assert "animateDagGlobeNodes()" in entrance
     assert "const total = DAG_GLOBE_TOTAL_MS" in entrance
-    assert "elapsed - DAG_GLOBE_ROTATE_START_MS" in entrance
-    assert "elapsed - DAG_GLOBE_UNFOLD_START_MS" in entrance
+    assert "(elapsed - DAG_GLOBE_ROTATE_START_MS) / DAG_GLOBE_ROTATE_MS" in globe_frame
+    assert "(elapsed - DAG_GLOBE_UNFOLD_START_MS) / DAG_GLOBE_UNFOLD_MS" in globe_frame
     assert "requestAnimationFrame" in entrance
     assert "landDagOnEntryTarget" in entrance
     assert "selectDagEntryTarget" in entrance
