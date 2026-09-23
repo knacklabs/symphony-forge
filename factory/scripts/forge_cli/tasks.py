@@ -12,7 +12,7 @@ import subprocess
 from pathlib import Path
 
 from factory_lib import (
-    _committed_task_marker, _windows_reparse_point,
+    _committed_task_marker, _git_is_ancestor, _windows_reparse_point,
     clean_git_env, default_trunk_branch, dump_json, evidence_path,
     git_control_dir, load_json, now_iso, raw_open_flags,
     repo_root, require_approved_plan_digest,
@@ -39,6 +39,58 @@ def _require_git(
         detail = proc.stderr.strip() or proc.stdout.strip()
         fail(f"{description} failed" + (f": {detail}" if detail else ""))
     return proc.stdout.strip() if strip else proc.stdout
+
+
+def _scoped_changes_are_on_trunk(
+        base: Path, trunk_ref: str, write_scope: list[str]) -> bool:
+    """Check each task-changed path against the trunk's path history."""
+    def path_object(revision: str, path: str) -> str | None:
+        resolved = _git(base, "rev-parse", f"{revision}:{path}")
+        if resolved.returncode != 0:
+            return None
+        kind = _git(base, "cat-file", "-t", resolved.stdout.strip())
+        if kind.returncode != 0 or kind.stdout.strip() != "blob":
+            return None
+        return resolved.stdout.strip()
+
+    if _git_is_ancestor(base, "HEAD", trunk_ref):
+        return True
+
+    merge_base = _git(base, "merge-base", trunk_ref, "HEAD")
+    if merge_base.returncode != 0:
+        return False
+    changed = _git(
+        base, "diff", "--name-only", "--no-renames", "-z",
+        f"{merge_base.stdout.strip()}..HEAD", "--", *write_scope,
+    )
+    if changed.returncode != 0:
+        return False
+
+    paths = [path for path in changed.stdout.split("\0") if path]
+    for path in paths:
+        task_object = path_object("HEAD", path)
+        history = _git(base, "rev-list", trunk_ref, "--", path)
+        if history.returncode != 0:
+            return False
+        matched = False
+        for commit in history.stdout.splitlines():
+            trunk_object = path_object(commit, path)
+            if task_object is not None and trunk_object == task_object:
+                matched = True
+                break
+            if task_object is None and trunk_object is None:
+                parents = _git(base, "rev-list", "--parents", "-n", "1", commit)
+                if parents.returncode != 0:
+                    return False
+                for parent in parents.stdout.splitlines()[0].split()[1:]:
+                    if path_object(parent, path) is not None:
+                        matched = True
+                        break
+                if matched:
+                    break
+        if not matched:
+            return False
+    return True
 
 
 def _contained_regular_bytes(base: Path, source: Path, label: str) -> bytes:
@@ -782,9 +834,8 @@ def cmd_task_reconcile(args: argparse.Namespace) -> None:
     if not write_scope:
         fail(f"task {args.id} has no write_scope; reconcile cannot confirm its "
              "work shipped.")
-    scoped_diff = _git(base, "diff", "--quiet", f"origin/{default_branch}",
-                       "HEAD", "--", *write_scope)
-    if scoped_diff.returncode != 0:
+    trunk_ref = f"origin/{default_branch}"
+    if not _scoped_changes_are_on_trunk(base, trunk_ref, write_scope):
         fail(f"task {args.id} has scoped changes not on origin/{default_branch}; "
              "reconcile only when its write_scope matches the trunk.")
 

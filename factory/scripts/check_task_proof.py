@@ -18,11 +18,11 @@ from __future__ import annotations
 
 import argparse
 import re
-import subprocess
 import sys
 from pathlib import Path
 
 from factory_lib import (
+    _git_is_ancestor,
     _read_git_json,
     product_excluded_prefixes,
     task_proof_problems,
@@ -80,11 +80,7 @@ def reconciled_marker_is_adopted(root: Path, base: str, marker: dict) -> bool:
     commit = marker.get("commit")
     if not isinstance(commit, str) or not commit:
         return False
-    ancestor = subprocess.run(
-        ["git", "merge-base", "--is-ancestor", commit, base], cwd=root,
-        capture_output=True,
-    )
-    if ancestor.returncode != 0:
+    if not _git_is_ancestor(root, commit, base):
         return False
     excluded = product_excluded_prefixes(root)
     changed_paths = git_paths(

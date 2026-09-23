@@ -139,9 +139,21 @@ def test_reconcile_refuses_active_task_with_scoped_changes_off_trunk(repo, tmp_p
     write_stages(repo, stages)
     git(repo, "fetch", "origin", "main")
     source = repo / "src" / "core.py"
-    source.write_text("print('local work not on trunk')\n")
-    git(repo, "add", "src/core.py")
+    shared_task_content = "print('partially merged task work')\n"
+    source.write_text(shared_task_content)
+    extra_source = repo / "src" / "extra.py"
+    extra_source.write_text("print('local work not on trunk')\n")
+    git(repo, "add", "src/core.py", "src/extra.py")
     git(repo, "commit", "-qm", "keep scoped work off trunk")
+
+    trunk = tmp_path / "partial-trunk"
+    base = git(repo, "rev-parse", "origin/main")
+    git(repo, "worktree", "add", "-q", "--detach", str(trunk), base)
+    (trunk / "src" / "core.py").write_text(shared_task_content)
+    git(trunk, "add", "src/core.py")
+    git(trunk, "commit", "-qm", "partially merge task work")
+    git(trunk, "push", "-q", "origin", "HEAD:main")
+    git(repo, "worktree", "remove", "-f", str(trunk))
 
     code, out = run(repo, "forge.py", "task", "reconcile", "T1")
 
@@ -154,7 +166,7 @@ def test_reconcile_refuses_active_task_with_scoped_changes_off_trunk(repo, tmp_p
     marker.write_text(json.dumps({
         "task_id": "T1",
         "branch": git(repo, "symbolic-ref", "--short", "HEAD"),
-        "base_main_sha": git(repo, "rev-parse", "origin/main"),
+        "base_main_sha": base,
         "commit": git(repo, "rev-parse", "HEAD"),
         "sealed_at": "2026-09-23T00:00:00+00:00",
         "reconciled": True,
@@ -164,6 +176,58 @@ def test_reconcile_refuses_active_task_with_scoped_changes_off_trunk(repo, tmp_p
     problems = task_proof_problems(repo, "ENG-1", {"id": "T1"})
     assert any("reconciled marker commit is not an ancestor of origin/main" in p
                for p in problems), problems
+
+
+def test_reconcile_accepts_merged_task_with_later_trunk_edit(repo, tmp_path):
+    from forge_cli.stages import load_stages, write_stages
+
+    _two_task_story(repo, tmp_path)
+    stages = load_stages(repo)
+    stages["stages"][0]["status"] = "active"
+    write_stages(repo, stages)
+    source = repo / "src" / "core.py"
+    source.write_text("print('task work')\n")
+    git(repo, "add", "src/core.py")
+    git(repo, "commit", "-qm", "ship scoped task change")
+
+    trunk = tmp_path / "later-trunk"
+    git(repo, "worktree", "add", "-q", "--detach", str(trunk), "HEAD")
+    (trunk / "src" / "core.py").write_text("print('later trunk edit')\n")
+    git(trunk, "add", "src/core.py")
+    git(trunk, "commit", "-qm", "edit scoped file after task merge")
+    git(trunk, "push", "-q", "origin", "HEAD:main")
+    git(repo, "worktree", "remove", "-f", str(trunk))
+
+    code, out = run(repo, "forge.py", "task", "reconcile", "T1")
+
+    assert code == 0, out
+
+
+def test_reconcile_accepts_squash_merged_task(repo, tmp_path):
+    from forge_cli.stages import load_stages, write_stages
+
+    _two_task_story(repo, tmp_path)
+    stages = load_stages(repo)
+    stages["stages"][0]["status"] = "active"
+    write_stages(repo, stages)
+    base = git(repo, "rev-parse", "HEAD")
+    task_content = "print('squash merged task work')\n"
+    source = repo / "src" / "core.py"
+    source.write_text(task_content)
+    git(repo, "add", "src/core.py")
+    git(repo, "commit", "-qm", "task scoped change")
+
+    trunk = tmp_path / "squash-trunk"
+    git(repo, "worktree", "add", "-q", "--detach", str(trunk), base)
+    (trunk / "src" / "core.py").write_text(task_content)
+    git(trunk, "add", "src/core.py")
+    git(trunk, "commit", "-qm", "squash merge task scoped change")
+    git(trunk, "push", "-q", "origin", "HEAD:main")
+    git(repo, "worktree", "remove", "-f", str(trunk))
+
+    code, out = run(repo, "forge.py", "task", "reconcile", "T1")
+
+    assert code == 0, out
 
 
 def test_reconcile_refuses_active_task_with_empty_write_scope(repo, tmp_path):
