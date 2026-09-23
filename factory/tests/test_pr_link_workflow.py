@@ -30,7 +30,6 @@ def test_pr_link_workflow_status_description_names_per_event_link_commit():
 
 
 def test_verified_forge_acc3_and_cfs1_pr_links_make_board_complete():
-    recorder_commit = "32b3ee692e361b831b31075758c2c374fa2f613e"
     expected = {
         ".factory/events/3679bb571b304025956aa2f6ac141e9d.json": {
             "event": "pr-linked", "generated_by": "orchestrator",
@@ -54,31 +53,44 @@ def test_verified_forge_acc3_and_cfs1_pr_links_make_board_complete():
             ["git", "log", "-1", "--format=%s", commit], cwd=HARNESS,
             capture_output=True, text=True, check=True,
         ).stdout.strip() == subject
+    # Anchor on the commit in this branch's own history that added each link,
+    # never a feature-branch commit a squash merge leaves unreachable.
+    recorders = set()
     for path, payload in expected.items():
+        recorder_commit = subprocess.run(
+            ["git", "log", "--diff-filter=A", "--format=%H", "-1", "--", path],
+            cwd=HARNESS, capture_output=True, text=True, check=True,
+        ).stdout.strip()
+        assert recorder_commit, path
+        recorders.add(recorder_commit)
         recorded = subprocess.run(
             ["git", "show", f"{recorder_commit}:{path}"], cwd=HARNESS,
             capture_output=True, text=True, check=True,
         ).stdout
         assert json.loads(recorded) == payload
         assert json.loads((HARNESS / path).read_text(encoding="utf-8")) == payload
+    # Both links were backfilled together, and that delta adds no other link
+    # for these two stories.
+    assert len(recorders) == 1
+    recorder_commit = recorders.pop()
     changed_paths = subprocess.run(
         ["git", "diff-tree", "--no-commit-id", "--name-only", "-r",
          f"{recorder_commit}^", recorder_commit, "--", ".factory/events/"],
         cwd=HARNESS, capture_output=True, text=True, check=True,
     ).stdout.splitlines()
-    changed_events = [
-        json.loads(subprocess.run(
-            ["git", "show", f"{recorder_commit}:{path}"], cwd=HARNESS,
-            capture_output=True, text=True, check=True,
-        ).stdout)
-        for path in changed_paths
+    stories = {payload["story"] for payload in expected.values()}
+    backfilled = [
+        event for event in (
+            json.loads(subprocess.run(
+                ["git", "show", f"{recorder_commit}:{path}"], cwd=HARNESS,
+                capture_output=True, text=True, check=True,
+            ).stdout)
+            for path in changed_paths
+        )
+        if event.get("event") == "pr-linked" and event.get("story") in stories
     ]
-    backfilled = [event for event in changed_events if event.get("event") == "pr-linked"]
     assert sorted(backfilled, key=lambda row: row["story"]) == sorted(
         expected.values(), key=lambda row: row["story"])
-    # Inspect the actual backfill commit's event delta; historical event files
-    # remain valid context and are not filtered out of the corpus assertion.
-    assert all(event in expected.values() for event in backfilled)
     legacy = (HARNESS / ".factory/events.jsonl").read_text(encoding="utf-8")
     assert not any(
         json.loads(line) in expected.values()
