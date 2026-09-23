@@ -22482,3 +22482,73 @@ def test_task_reconcile_still_refuses_a_pending_task_with_no_marker(
     code, out = run(repo, "forge.py", "task", "reconcile", "T1", env=gh_env)
     assert code != 0
     assert "nothing to reconcile" in out
+
+
+def test_test_status_must_be_a_value_the_proof_gate_accepts(repo, tmp_path):
+    # The gate compares status EXACTLY against "passed". Typing it as a free
+    # string let the recorder accept "pass" and the SEAL reject it, long after
+    # implementation and review had passed. 24 artifacts in this repo carry
+    # "pass" and 19 carry "passed"; the recorder is where that should have been
+    # caught.
+    import json as _json
+    from factory_lib import validate_payload
+
+    good = {
+        "generated_by": "implementer", "status": "passed", "summary": "s",
+        "blocking_findings": [], "commands_run": ["pytest"],
+    }
+    validate_payload(repo, "test-automated", good)
+    validate_payload(repo, "test-automated", {**good, "status": "failed"})
+
+    with pytest.raises(SystemExit) as error:
+        validate_payload(repo, "test-automated", {**good, "status": "pass"})
+    assert "'status' must be one of" in str(error.value)
+
+    schema = _json.loads(
+        (HARNESS / "factory" / "schemas" / "test-automated.json").read_text(
+            encoding="utf-8"))
+    assert schema["allowed"]["status"] == ["passed", "failed"]
+
+
+def test_schema_value_allowlist_only_checks_listed_fields(repo):
+    # The allowlist is opt-in per field: a schema without one behaves as before,
+    # and an absent optional field is not invented.
+    from factory_lib import validate_payload
+
+    payload = {
+        "generated_by": "implementer", "status": "passed", "summary": "s",
+        "blocking_findings": [], "commands_run": ["pytest"],
+        "pass_fail_summary": "anything at all",
+    }
+    validate_payload(repo, "test-automated", payload)
+
+
+def test_close_re_reviews_when_only_the_review_binding_is_stale():
+    # Refreshing proof on an UNCHANGED delta invalidates the recorded reviews
+    # (the brief binds the proof, the reviews bind the brief), and step 6 skips
+    # the review precisely because the delta did not move. close stopped there,
+    # asking for a hash only a review can produce.
+    from factory_lib import proof_problems_need_review
+
+    review_only = [
+        "T1: quality review brief hash does not match the saved all.md",
+        "T1: performance review brief hash does not match the saved all.md",
+    ]
+    assert proof_problems_need_review("T1", review_only)
+
+    mixed = review_only + [
+        "T1: no passing automated tests — run them, then record with "
+        "`python3 factory/scripts/record_test_from_json.py --kind automated "
+        "--input <json>`",
+    ]
+    assert not proof_problems_need_review("T1", mixed)
+    assert not proof_problems_need_review("T1", [])
+
+
+def test_close_retries_the_review_at_most_once():
+    # The retry must be bounded: if step 6 already reviewed this run, a review
+    # binding still stale is a real failure, not something to review again.
+    source = (HARNESS / "factory" / "scripts" / "forge_cli" / "close.py").read_text(
+        encoding="utf-8")
+    assert "reviewed_this_run = False" in source
+    assert "and not reviewed_this_run" in source

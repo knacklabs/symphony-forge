@@ -25,7 +25,7 @@ from pathlib import Path
 
 from factory_lib import (
     load_json, repo_root, run_state_path,
-    task_proof_problems, task_seal_shared_problems,
+    proof_problems_need_review, task_proof_problems, task_seal_shared_problems,
 )
 
 from .common import fail
@@ -142,7 +142,9 @@ def cmd_task_close(args: argparse.Namespace) -> None:
                         base, task_id, lenses=("quality", "performance", "security"),
                     )
                 stage = _find(load_stages(base), task_id)
+        reviewed_this_run = False
         if not stamp_is_fresh(base, stage, task):
+            reviewed_this_run = True
             outcome = review_task(
                 base, task_id, engine=getattr(args, "engine", "codex"),
                 max_priority=getattr(args, "max_priority", "P3"),
@@ -163,6 +165,26 @@ def cmd_task_close(args: argparse.Namespace) -> None:
         #    and resumes without paying for another review after that proof is
         #    recorded.
         proof_problems = task_proof_problems(base, story, task, preseal=True)
+        # A review-only failure is one close can fix itself. The brief binds the
+        # proof, and the reviews bind the brief, so refreshing proof on an
+        # unchanged delta invalidates the recorded reviews -- and step 6 skips
+        # the review precisely because the delta did NOT move. Stopping there
+        # asks the operator to hand-record a hash only a review can produce.
+        # Review once more, then hold the result to the same bar.
+        if (proof_problems and not reviewed_this_run
+                and proof_problems_need_review(task_id, proof_problems)):
+            print(f"{task_id}: the review no longer binds the refreshed proof; "
+                  "re-reviewing the same delta.")
+            outcome = review_task(
+                base, task_id, engine=getattr(args, "engine", "codex"),
+                max_priority=getattr(args, "max_priority", "P3"),
+                skill=getattr(args, "skill", None))
+            if outcome["blocking"]:
+                _stop("review", f"{outcome['blocking']} blocking finding(s)",
+                      f"delegate the fixes (`./forge delegate {task_id}`), commit, "
+                      "run close again")
+            stage = _find(load_stages(base), task_id)
+            proof_problems = task_proof_problems(base, story, task, preseal=True)
         if proof_problems:
             _stop(
                 "task proof", "; ".join(proof_problems),

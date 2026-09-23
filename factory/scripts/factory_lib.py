@@ -2492,6 +2492,16 @@ def validate_payload(root: Path, name: str, payload: dict) -> None:
     for field, kind in schema.get("optional", {}).items():
         if field in payload:
             check(field, kind, payload[field])
+    for field, values in (schema.get("allowed") or {}).items():
+        # A field the gates compare EXACTLY belongs here. Typing it "str" lets the
+        # recorder accept a near-miss the seal then rejects, long after
+        # implementation and review have passed — the tests/status "pass" vs
+        # "passed" split cost exactly that.
+        if field in payload and payload[field] not in values:
+            problems.append(
+                f"'{field}' must be one of {', '.join(map(repr, values))} "
+                f"(got {payload[field]!r})"
+            )
     for field, bounds in (schema.get("ranges") or {}).items():
         value = payload.get(field)
         if isinstance(value, int) and not isinstance(value, bool):
@@ -4468,6 +4478,20 @@ def task_frontier_state(root: Path) -> tuple[str, dict] | None:
         return None
     return _task_action_state(
         root, key, frontier, stage_by_id.get(frontier.get("id"), {})), frontier
+
+
+def proof_problems_need_review(task_id: object, problems: list[str]) -> bool:
+    """True when EVERY problem is one a review clears and nothing else can.
+
+    A brief-hash or review-lineage mismatch is not something an operator can
+    record by hand: the review is what binds those values. `close` used to stop
+    on them and only re-review when the product delta moved, so an evidence-only
+    change left a proof failure the command could never resolve on its own.
+    """
+    return bool(problems) and all(
+        _proof_problem_action(task_id, problem) == "review"
+        for problem in problems
+    )
 
 
 def _proof_problem_action(task_id: object, first: str) -> str:

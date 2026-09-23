@@ -2,13 +2,21 @@
   "artifact": "test-functional",
   "phase": "functional-check",
   "recorded_by": "record_test_from_json.py --kind functional",
-  "generated_by": ["functional-checker"],
+  "generated_by": [
+    "functional-checker"
+  ],
   "required": {
     "generated_by": "str",
     "status": "str",
     "score": "int",
     "summary": "str",
     "blocking_findings": "list"
+  },
+  "allowed": {
+    "status": [
+      "passed",
+      "failed"
+    ]
   },
   "optional": {
     "manual_validation_steps": "list",
@@ -18,6 +26,9 @@
     "reviewed_scope": "list"
   },
   "ranges": {
-    "score": [0, 10]
+    "score": [
+      0,
+      10
+    ]
   }
 }
