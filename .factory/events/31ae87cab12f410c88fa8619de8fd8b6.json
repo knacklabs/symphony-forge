@@ -1,0 +1,1 @@
+{"event": "signal-resolved", "generated_by": "orchestrator", "at": "2026-09-23T10:56:07+00:00", "story": "FORGE-COORD-1", "detail": "S-0052-0034: Not a contradiction. forge stage list: NATIVE-FOREGROUND-ACTIVATE is done [x], LEAN-WORKFLOW is the active stage [>], and no task declares depends_on. The coordinator already delegated this launch to "}

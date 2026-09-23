@@ -1,0 +1,13 @@
+{
+  "event": "open",
+  "id": "Q-0190-5264",
+  "profile": "degraded",
+  "reason": "Owner directed the coordinator to apply accepted Decision 0084 (implementation/lite pins -> gpt-6-sol medium) directly now instead of queuing behind the serialized task write lock; files: harness.yaml, test_native_setup.py, implementer.md, AGENTS.md, WORKFLOW.md (+docs/FACTORY.md)",
+  "started_at": "2026-09-23T11:13:42+00:00",
+  "max_files": 5,
+  "files": [],
+  "harness_source": true,
+  "kind": "degraded",
+  "task_id": "LEAN-WORKFLOW",
+  "story": "FORGE-COORD-1"
+}

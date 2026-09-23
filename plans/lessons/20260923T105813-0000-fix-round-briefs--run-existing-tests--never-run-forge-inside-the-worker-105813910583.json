@@ -1,0 +1,12 @@
+{
+  "topic": "fix-round briefs: run existing tests, never run forge inside the worker",
+  "lesson": "A delegated fix must run the existing test files for every module it touches, not only its new regression, and must never run forge delegate/forge next inside the worker. LEAN-WORKFLOW round 1 shipped three regressions (dropped authority read, native plans/ patch denied, stale encoding pin) that existing tests/checks caught, and two workers paused on self-run forge commands (S-0051, S-0052).",
+  "source": "26989128 S-0051-fc4c S-0052-0034",
+  "applies_to": [
+    "factory/scripts/**",
+    "factory/tests/**"
+  ],
+  "severity": "medium",
+  "generated_by": "orchestrator",
+  "added_at": "2026-09-23T10:58:13+00:00"
+}

@@ -1,0 +1,1 @@
+{"event": "signal-contradiction", "generated_by": "implementer", "at": "2026-09-23T10:53:42+00:00", "story": "FORGE-COORD-1", "detail": "LEAN-WORKFLOW is marked active, but forge delegate refuses it as waiting on NATIVE-FOREGROUND-ACTIVATE; forge next also reports that predecessor colliding with the active LEAN stage. Please resolve ta"}

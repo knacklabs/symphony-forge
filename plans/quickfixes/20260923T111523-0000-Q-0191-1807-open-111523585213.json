@@ -1,0 +1,13 @@
+{
+  "event": "open",
+  "id": "Q-0191-1807",
+  "profile": "degraded",
+  "reason": "Owner-directed pin change follow-up: test_gate_table.py asserts the implementation pin; update it to gpt-6-sol medium (child-role registry assertions unchanged)",
+  "started_at": "2026-09-23T11:15:23+00:00",
+  "max_files": 5,
+  "files": [],
+  "harness_source": true,
+  "kind": "degraded",
+  "task_id": "LEAN-WORKFLOW",
+  "story": "FORGE-COORD-1"
+}
