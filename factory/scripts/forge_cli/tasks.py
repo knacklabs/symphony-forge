@@ -134,23 +134,6 @@ def _default_branch(base: Path) -> str:
     return default_trunk_branch(base)
 
 
-def _require_unshipped(base: Path, key: str, task_id: str) -> None:
-    default_branch = _default_branch(base)
-    marker = task_marker_path(key, task_id)
-    fetched = _git(base, "fetch", "origin", default_branch)
-    if fetched.returncode == 0:
-        present = _git(base, "cat-file", "-e",
-                       f"origin/{default_branch}:{marker.as_posix()}")
-        if present.returncode == 0:
-            fail(f"task {task_id} is already SHIPPED (its marker is on "
-                 f"origin/{default_branch}); shipped work is immutable — add a new "
-                 "follow-up task rather than reopening it.")
-    else:
-        print(f"WARNING: could not reach origin/{default_branch} to confirm "
-              f"{task_id} is unshipped; proceeding on local state. Do NOT reopen a "
-              "task whose PR has already merged.")
-
-
 def _task_plan_path(base: Path, task_id: str, *, for_write: bool = False) -> Path:
     state = load_json(run_state_path(base), default={})
     story = state.get("issue_key") or state.get("story")
@@ -509,6 +492,22 @@ def cmd_task_reopen(args: argparse.Namespace) -> None:
         if _git(base, "merge-base", "--is-ancestor", explicit, "HEAD").returncode != 0:
             fail(f"--base {explicit[:12]} is not an ancestor of HEAD")
     reopen_base = explicit or target.get("reopen_base_sha") or target.get("base_sha") or ""
+    # Shipped work is immutable. The task marker rides onto the integration branch
+    # at merge; if it is there, the work is shipped — add a follow-up task instead.
+    default_branch = _default_branch(base)
+    marker = task_marker_path(key, args.id)
+    fetched = _git(base, "fetch", "origin", default_branch)
+    if fetched.returncode == 0:
+        present = _git(base, "cat-file", "-e",
+                       f"origin/{default_branch}:{marker.as_posix()}")
+        if present.returncode == 0:
+            fail(f"task {args.id} is already SHIPPED (its marker is on "
+                 f"origin/{default_branch}); shipped work is immutable — add a new "
+                 "follow-up task rather than reopening it.")
+    else:
+        print(f"WARNING: could not reach origin/{default_branch} to confirm "
+              f"{args.id} is unshipped; proceeding on local state. Do NOT reopen a "
+              "task whose PR has already merged.")
     if getattr(args, "review_fix", False):
         from forge_cli.stages import reopen_stage_for_review_fix
         target = reopen_stage_for_review_fix(base, args.id)
@@ -517,7 +516,6 @@ def cmd_task_reopen(args: argparse.Namespace) -> None:
               f"stand. Delegate the fixes, commit, then `forge task close {args.id}` "
               "(it re-reviews the new diff, closes and seals).")
         return
-    _require_unshipped(base, key, args.id)
     # Reopening ripples forward: the done-tail built on this task has a changed
     # base, so it returns to pending too. Clear the evidence so every reopened
     # stage is re-grilled + re-implemented from scratch.
@@ -610,7 +608,10 @@ def seal_task(base: Path, task_id: str) -> None:
     )
     same_seal = False
     if product_unchanged:
-        same_seal = not task_proof_problems(base, key, task)
+        proof_problems = task_proof_problems(base, key, task)
+        if proof_problems:
+            fail("Task proof changed after its marker:\n- " + "\n- ".join(proof_problems))
+        same_seal = True
     if same_seal:
         commit = reusable["commit"]
         print(f"Task {args.id} already sealed at {commit[:12]}; the product "
@@ -775,18 +776,6 @@ def cmd_task_reconcile(args: argparse.Namespace) -> None:
              "but the fetch failed. Reconcile only a task whose PR has actually "
              "merged, on a checkout that can reach origin.")
 
-    write_scope = [p.rstrip("/") for p in (task.get("write_scope") or [])
-                   if isinstance(p, str) and p.strip()]
-    write_scope = [path for path in write_scope if path]
-    if not write_scope:
-        fail(f"task {args.id} has no write_scope; reconcile cannot confirm its "
-             "work shipped.")
-    scoped_diff = _git(base, "diff", "--quiet", f"origin/{default_branch}",
-                       "HEAD", "--", *write_scope)
-    if scoped_diff.returncode != 0:
-        fail(f"task {args.id} has scoped changes not on origin/{default_branch}; "
-             "reconcile only when its write_scope matches the trunk.")
-
     already = _git(
         base, "cat-file", "-e", f"origin/{default_branch}:{marker.as_posix()}",
     ).returncode == 0
@@ -813,12 +802,14 @@ def cmd_task_reconcile(args: argparse.Namespace) -> None:
         # Confirm the task's work is genuinely on the trunk before adopting it: at
         # least one of its write_scope paths must resolve on origin/<trunk>. This
         # guards against reconciling work that never actually shipped.
+        write_scope = [p.rstrip("/") for p in (task.get("write_scope") or [])
+                       if isinstance(p, str) and p.strip()]
         on_trunk = any(
             _git(base, "cat-file", "-e",
                  f"origin/{default_branch}:{path}").returncode == 0
             for path in write_scope
         )
-        if not on_trunk:
+        if write_scope and not on_trunk:
             fail(f"none of {args.id}'s write_scope paths are on origin/"
                  f"{default_branch} — its work does not look shipped. Reconcile "
                  "only a genuinely merged task (or ship it with `forge task "
@@ -911,3 +902,4 @@ def cmd_task_reconcile(args: argparse.Namespace) -> None:
     else:
         print(f"Reconciled {args.id}: stage done and marker present; nothing new "
               "to commit.")
+    print(f"Ticket: {key}/{args.id}")

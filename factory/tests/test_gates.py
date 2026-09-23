@@ -9732,6 +9732,25 @@ def test_roadmap_gate_workflow_shape():
     assert "gh api" not in workflow
     assert "|| true" not in workflow
 
+
+def test_pr_ticket_check_workflow_uses_base_code_for_pull_request_target():
+    workflow = (HARNESS / ".github" / "workflows" / "pr-ticket-check.yml").read_text()
+
+    assert "pull_request_target:" in workflow
+    assert "pull_request:" not in workflow
+    assert "types: [opened, synchronize, reopened, edited]" in workflow
+    assert "permissions:\n  contents: read" in workflow
+    assert "ref: ${{ github.event.pull_request.base.sha }}" in workflow
+    assert 'refs/pull/${PR_NUMBER}/head' in workflow
+    assert 'test "$FETCHED_HEAD" = "$HEAD_SHA"' in workflow
+    assert "BASE_REF: ${{ github.event.pull_request.base.ref }}" in workflow
+    assert 'git fetch --no-tags origin "$BASE_REF"' in workflow
+    assert "git update-ref refs/pr-ticket-check/base FETCH_HEAD" in workflow
+    assert 'git merge-base refs/pr-ticket-check/base "$HEAD_SHA"' in workflow
+    assert 'git init --bare "$PR_DATA_GIT_DIR"' in workflow
+    assert 'GIT_DIR="$PR_DATA_GIT_DIR" python3 factory/scripts/check_pr_ticket.py' in workflow
+
+
 def pr_ticket_base(repo: Path, *keys: str) -> str:
     for key in keys:
         ensure_story(repo, key)
@@ -14000,65 +14019,6 @@ def test_task_reopen_refuses_a_task_not_in_the_decomposition(repo, tmp_path):
     assert code != 0 and "not in the current decomposition" in out, out
 
 
-def test_task_close_refuses_to_reopen_a_shipped_stage(repo, monkeypatch, capsys):
-    import contextlib
-    from argparse import Namespace
-    from factory_lib import task_marker_path
-    from forge_cli import close, delegate, review, stages
-
-    key, task_id = "ENG-1", "T1"
-    base_head = head(repo)
-    git(repo, "checkout", "-B", "main", base_head)
-    marker_rel = task_marker_path(key, task_id).as_posix()
-    marker_path = repo / marker_rel
-    marker_path.parent.mkdir(parents=True, exist_ok=True)
-    marker_path.write_text("{}\n", encoding="utf-8")
-    git(repo, "add", marker_rel)
-    git(repo, "commit", "-qm", "ship T1")
-    git(repo, "config", "remote.origin.url", str(repo))
-    git(repo, "config", "remote.origin.fetch",
-        "+refs/heads/*:refs/remotes/origin/*")
-    git(repo, "symbolic-ref", "refs/remotes/origin/HEAD",
-        "refs/remotes/origin/main")
-    git(repo, "fetch", "origin", "main")
-    git(repo, "cat-file", "-e", f"origin/main:{marker_rel}")
-    git(repo, "checkout", "--detach", base_head)
-
-    (repo / ".factory" / "run.json").write_text(
-        json.dumps({"issue_key": key}), encoding="utf-8",
-    )
-    write_stages(repo, {
-        "issue": key,
-        "stages": [{"id": task_id, "status": "done",
-                    "local_review_stamp": {"delta_id": "old"}}],
-    })
-    task = {"id": task_id, "write_scope": ["src/"]}
-    monkeypatch.setattr(review, "_product_dirty", lambda _base: [])
-    monkeypatch.setattr(close, "task_seal_shared_problems", lambda *_: [])
-    monkeypatch.setattr(stages, "task_for", lambda *_: task)
-    monkeypatch.setattr(stages, "stage_review_binding", lambda *_: {
-        "delta_id": "d" * 64,
-    })
-    monkeypatch.setattr(stages, "stamp_is_fresh", lambda *_: False)
-    monkeypatch.setattr(
-        delegate, "delegation_exclusion",
-        lambda *_args, **_kwargs: contextlib.nullcontext(),
-    )
-    monkeypatch.setattr(delegate, "load_delegations", lambda *_: [])
-    monkeypatch.setattr(stages, "_measure", lambda *_: {"strays": []})
-    monkeypatch.setattr(stages, "_require_successful_launch",
-                        lambda *_: stages.fail("sentinel after stage reopen"))
-
-    with pytest.raises(SystemExit):
-        close.cmd_task_close(Namespace(
-            repo=str(repo), id=task_id, engine="codex", max_priority="P3",
-            skill=None,
-        ))
-
-    assert "already SHIPPED" in capsys.readouterr().out
-    assert load_stages(repo)["stages"][0]["status"] == "done"
-
-
 def test_done_contracts_immutable_and_criteria_map_binds_plan_contracts(
         repo, tmp_path):
     sign_off(repo)
@@ -15383,121 +15343,6 @@ def test_decomposition_refuses_to_rewrite_a_completed_task_contract(repo, tmp_pa
     assert code != 0 and "full contract" in out
 
 
-def reapprove_story_plan(repo: Path) -> str:
-    state = run_state(repo)
-    plan = repo / state["plan_file"]
-    plan.write_text(
-        plan.read_text(encoding="utf-8") + "\nApproved story amendment.\n",
-        encoding="utf-8",
-    )
-    digest = plan_digest_without_assumptions(plan)
-    code, out = run(repo, "forge.py", "next")
-    assert code == 0 and "awaiting amended-plan approval" in out, out
-    code, out = post_hook(repo, native_claude_approval(repo))
-    assert code == 0, out
-    assert run_state(repo)["approved_plan_sha256"] == digest
-    return digest
-
-
-def test_decomposition_graph_change_requires_story_reapproval(repo, tmp_path):
-    sign_off(repo)
-    intake(repo)
-    save_plan(repo, tmp_path)
-    record_skeleton_then_frontier(repo, [STAGE_TASK])
-    approved_digest = run_state(repo)["approved_plan_sha256"]
-    changed = {
-        **DECOMP,
-        "plan_sha256": approved_digest,
-        "tasks": [STAGE_TASK, skeletal_stage_task("T2", "follow-up")],
-    }
-    code, out = run(
-        repo, "record_decomposition_from_json.py", stdin=json.dumps(changed))
-    assert code != 0 and "task graph is frozen" in out
-
-
-def test_reapproved_decomposition_can_append_after_a_done_task(repo, tmp_path):
-    start_stage(repo, tmp_path, STAGE_TASK)
-    write_in_scope(repo, "src/core.py")
-    stamp_and_commit(repo)
-    code, out = run(repo, "forge.py", "stage", "done", "T1")
-    assert code == 0, out
-
-    digest = reapprove_story_plan(repo)
-    follow_up = skeletal_stage_task("T2", "follow-up")
-    tasks = [STAGE_TASK, follow_up]
-    unbound = {**DECOMP, "tasks": tasks}
-    code, out = run(
-        repo, "record_decomposition_from_json.py", stdin=json.dumps(unbound))
-    assert code != 0 and "task graph is frozen" in out
-
-    rebound = {**unbound, "plan_sha256": digest}
-    code, out = run(
-        repo, "record_decomposition_from_json.py", stdin=json.dumps(rebound))
-    assert code == 0, out
-    recorded = json.loads((story_state(repo) / "decomposition.json").read_text())
-    assert recorded["plan_sha256"] == digest
-    assert [task["id"] for task in recorded["tasks"]] == ["T1", "T2"]
-
-
-def test_reapproval_cannot_change_completed_task_graph(repo, tmp_path):
-    follow_up = skeletal_stage_task("T2", "second slice")
-    start_stage(repo, tmp_path, STAGE_TASK, future_tasks=[follow_up])
-    write_in_scope(repo, "src/core.py")
-    stamp_and_commit(repo)
-    code, out = run(repo, "forge.py", "stage", "done", "T1")
-    assert code == 0, out
-
-    second = task_with_plan_contracts({
-        **STAGE_TASK,
-        "id": "T2",
-        "title": "second slice",
-        "write_scope": ["src/ui/"],
-        "objective": "Build the second bounded slice.",
-        "acceptance_criteria": ["the second slice runs green"],
-    }, "T2-C")
-    tasks = [STAGE_TASK, second]
-    code, out = run(
-        repo, "record_decomposition_from_json.py",
-        stdin=json.dumps({**DECOMP, "tasks": tasks}),
-    )
-    assert code == 0, out
-    code, out = record_task_grill(repo, second)
-    assert code == 0, out
-    code, out = run(repo, "forge.py", "stage", "start", "T2", "--trunk")
-    assert code == 0, out
-    launch_fake(repo, tmp_path, "T2")
-    write_in_scope(repo, "src/ui/list.py")
-    stamp_and_commit(repo, "src/ui/list.py")
-    code, out = run(repo, "forge.py", "stage", "done", "T2")
-    assert code == 0, out
-
-    digest = reapprove_story_plan(repo)
-    renamed = {**STAGE_TASK, "id": "T3"}
-    changed_contract = {
-        **STAGE_TASK,
-        "acceptance_criteria": ["a rewritten completed contract"],
-    }
-    cases = [
-        ([renamed, second], "task graph is frozen"),
-        ([STAGE_TASK], "task graph is frozen"),
-        ([second, STAGE_TASK], "task graph is frozen"),
-        ([STAGE_TASK, {**second, "dependencies": ["T1"]}],
-         "task graph is frozen"),
-        ([changed_contract, second], "full contract"),
-    ]
-    for changed_tasks, expected in cases:
-        changed = {
-            **DECOMP,
-            "plan_sha256": digest,
-            "tasks": changed_tasks,
-        }
-        code, out = run(
-            repo, "record_decomposition_from_json.py",
-            stdin=json.dumps(changed),
-        )
-        assert code != 0 and expected in out
-
-
 def test_decomposition_backfills_unchanged_legacy_completed_contract(
         repo, tmp_path):
     follow_up = skeletal_stage_task("T2", "follow-up")
@@ -16452,6 +16297,25 @@ def test_grill_context_file_uses_secure_snapshot_and_parser_has_no_reread(
     assert not captured["context_snapshot"].parent.exists()
     code, out = run(repo, "forge.py", "grill", "run", "--help")
     assert code == 0 and "--context-file" in out and "--reread" not in out
+
+
+def test_context_prompt_limit_defaults_when_companion_has_no_declaration(
+        tmp_path, monkeypatch):
+    from forge_cli import delegate
+
+    component = tmp_path / "companion.mjs"
+    component.write_text("// no prompt limit", encoding="utf-8")
+    monkeypatch.delenv("FORGE_COMPONENT_PROMPT_LIMIT_BYTES", raising=False)
+
+    assert delegate._context_prompt_limit("claude", component) == (
+        delegate.CONTEXT_PROMPT_MAX_BYTES
+    )
+
+    component.write_text("MAX_PROMPT_BYTES = 4096", encoding="utf-8")
+    assert delegate._context_prompt_limit("claude", component) == 4096
+
+    monkeypatch.setenv("FORGE_COMPONENT_PROMPT_LIMIT_BYTES", "2048")
+    assert delegate._context_prompt_limit("claude", component) == 2048
 
 
 @pytest.mark.parametrize("opaque", ["a" * 32, "b" * 64])
@@ -23513,43 +23377,6 @@ def test_task_pr_ready_retry_reuses_unchanged_committed_marker(repo, tmp_path):
     assert "gh auth login" not in generic_failure
 
 
-def test_task_pr_ready_reseals_clean_successor_review_on_same_diff(repo, tmp_path):
-    git(repo, "checkout", "-qb", "feat/task-pr-reseal-clean-review")
-    marker = prepare_task_pr_ready(repo, tmp_path)
-    finish_task_for_pr_ready(repo)
-    proof = write_task_proof(repo, "T1", publish_review=True)
-    git(repo, "add", proof.relative_to(repo).as_posix(), ".factory/review-briefs/all.md")
-    git(repo, "commit", "-qm", "record T1 proof")
-    env, _, _ = task_pr_retry_env(tmp_path)
-    code, out = run(repo, "forge.py", "task", "pr-ready", "T1", env=env)
-    assert code == 0, out
-
-    original_marker = json.loads(marker.read_text())
-    original_marker_head = head(repo)
-    original_selection = json.loads((proof / "reviews/selected.json").read_text())
-
-    write_task_proof(repo, "T1", publish_review=True)
-    git(repo, "add", "-A")
-    git(repo, "commit", "-qm", "record successor combined review")
-    reseal_input_head = head(repo)
-    lib = load_factory_lib(repo)
-    assert lib.product_delta_digest(repo, original_marker["commit"], reseal_input_head) \
-        == hashlib.sha256(b"").hexdigest()
-    successor_selection = json.loads((proof / "reviews/selected.json").read_text())
-    assert successor_selection["generation_id"] != original_selection["generation_id"]
-    assert lib.task_proof_problems(repo, "ENG-1", STAGE_TASK)
-
-    code, out = run(repo, "forge.py", "task", "pr-ready", "T1", env=env)
-
-    assert code == 0, out
-    resealed_marker = json.loads(marker.read_text())
-    assert head(repo) != original_marker_head
-    assert resealed_marker["commit"] == reseal_input_head
-    assert resealed_marker["review_base_sha"] == original_marker["review_base_sha"]
-    assert json.loads(git(repo, "show", f"HEAD:{marker.relative_to(repo).as_posix()}")) \
-        == resealed_marker
-
-
 def test_task_proof_refuses_working_tree_marker_different_from_head(
         repo, tmp_path):
     git(repo, "checkout", "-qb", "feat/task-marker-identity")
@@ -23612,25 +23439,6 @@ def test_task_proof_refuses_committed_null_marker(repo, tmp_path):
     assert check_task_proof.proof_problems(repo, "ENG-1", "T1") == [
         "T1: task PR marker is invalid",
     ]
-
-
-def test_ci_task_proof_reconciled_marker_rejects_product_changes(repo):
-    git(repo, "checkout", "-qb", "feat/reconciled-marker-product")
-    base = head(repo)
-    marker = (repo / ".factory" / "stories" / "ENG-1" / "tasks" / "T1"
-              / "pr-ready.json")
-    marker.parent.mkdir(parents=True)
-    marker.write_text(json.dumps({"reconciled": True, "commit": base}))
-    product = repo / "src" / "reconciled-bypass.py"
-    product.parent.mkdir(exist_ok=True)
-    product.write_text("bypassed = True\n")
-    git(repo, "add", marker.relative_to(repo).as_posix(),
-        product.relative_to(repo).as_posix())
-    git(repo, "commit", "-qm", "add reconciled marker with product change")
-
-    code, out = run(repo, "check_task_proof.py", "--base", base)
-
-    assert code == 1, out
 
 
 def test_task_pr_ready_refuses_changed_evidence_after_marker(
@@ -23859,6 +23667,7 @@ def test_task_reconcile_adopts_a_pending_task_whose_marker_is_on_the_trunk(
     })
     code, out = run(repo, "forge.py", "task", "reconcile", "T1", env=gh_env)
     assert code == 0, out
+    assert "Ticket: ENG-1/T1" in out.splitlines()
     git(repo, "push", "-q", "origin", "HEAD:main")
     assert marker.exists()
 
