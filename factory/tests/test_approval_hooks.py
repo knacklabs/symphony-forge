@@ -737,6 +737,22 @@ def test_native_approval_refuses_zero_multiple_candidates_replay_and_missing_ide
         approval.record_native_approval(repo, event, runtime="claude")
 
 
+def test_claude_approval_refusal_reports_uncommitted_decision(repo: Path):
+    candidate = _story_candidate(repo)
+    decision = repo / "docs" / "decisions" / "decision-uncommitted.md"
+    decision.parent.mkdir(parents=True, exist_ok=True)
+    decision.write_text("# Pending decision\n", encoding="utf-8")
+
+    with pytest.raises(approval.ApprovalRefused) as refused:
+        approval.record_native_approval(
+            repo, _event(candidate), runtime="claude",
+        )
+
+    message = str(refused.value)
+    assert decision.relative_to(repo).as_posix() in message
+    assert "commit it, then run `forge grill run` again" in message.lower()
+
+
 def test_codex_approval_refuses_non_list_options_without_raising_type_error(repo):
     candidate = _story_candidate(repo)
     event = _event(candidate, "codex")
