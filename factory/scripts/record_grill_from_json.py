@@ -39,7 +39,9 @@ def _non_empty_string(value: object) -> bool:
     return isinstance(value, str) and bool(value.strip())
 
 
-def _cold_launch_terminal(root: Path, gate: str, task_id: str) -> tuple[dict, list[str]]:
+def _cold_launch_terminal(
+    root: Path, gate: str, task_id: str,
+) -> tuple[dict, list[str], dict | None]:
     """Select one launch and validate its immutable lifecycle and argv."""
     from forge_cli.delegate import argv_digest, load_delegations
     label = f"grill-{gate}" + (f"-{task_id}" if task_id else "")
@@ -50,15 +52,37 @@ def _cold_launch_terminal(root: Path, gate: str, task_id: str) -> tuple[dict, li
                       spec.evidence_name(task_id)), default={},
     )
     since = str(previous.get("recorded_at") or "")
+    scoped_rows = [
+        row for row in load_delegations(root)
+        if row.get("task") == label
+        and (not spec.story_scoped or row.get("story") == story)
+    ]
+    new_rows = [row for row in scoped_rows if str(row.get("at") or "") > since]
     launches: dict[str, list[dict]] = {}
-    for row in load_delegations(root):
-        if (row.get("task") == label
-                and (not spec.story_scoped or row.get("story") == story)
-                and str(row.get("at") or "") > since
-                and isinstance(row.get("launch_id"), str)):
+    for row in new_rows:
+        if isinstance(row.get("launch_id"), str):
             launches.setdefault(row["launch_id"], []).append(row)
-    completed = [rows for rows in launches.values()
-                 if rows[-1].get("launch_status") == "succeeded"]
+    bridge_previous = None
+    if new_rows:
+        completed = [rows for rows in launches.values()
+                     if rows[-1].get("launch_status") == "succeeded"]
+    else:
+        previous_digest = previous.get("cold_input_sha256")
+        if (gate != "plan"
+                or previous.get("verdict") != "pass"
+                or previous.get("transport") == "host-native"
+                or not isinstance(previous_digest, str)
+                or not re.fullmatch(r"[0-9a-f]{64}", previous_digest)):
+            completed = []
+        else:
+            old_launches: dict[str, list[dict]] = {}
+            for row in scoped_rows:
+                if (row.get("task_sha256") == previous_digest
+                        and isinstance(row.get("launch_id"), str)):
+                    old_launches.setdefault(row["launch_id"], []).append(row)
+            completed = [rows for rows in old_launches.values()
+                         if rows[-1].get("launch_status") == "succeeded"]
+            bridge_previous = previous
     if len(completed) != 1:
         raise SystemExit(
             f"{gate} grill requires exactly one successful independent cold-read "
@@ -90,7 +114,7 @@ def _cold_launch_terminal(root: Path, gate: str, task_id: str) -> tuple[dict, li
             or any(not isinstance(token, str) for token in argv)
             or terminal.get("argv_sha256") != argv_digest(argv)):
         raise SystemExit(f"{gate} cold-read launch argv identity is invalid")
-    return terminal, argv
+    return terminal, argv, bridge_previous
 
 
 def _cold_launch_brief(
@@ -224,8 +248,8 @@ def _cold_findings(gate: str, finding_text: str) -> dict:
 
 def _cold_launch_result(
     root: Path, gate: str, task_id: str,
-) -> tuple[str, dict, str | None]:
-    terminal, argv = _cold_launch_terminal(root, gate, task_id)
+) -> tuple[str, dict, str | None, dict | None]:
+    terminal, argv, bridge_previous = _cold_launch_terminal(root, gate, task_id)
     brief, brief_bytes, context_opaque = _cold_launch_brief(
         root, gate, task_id, terminal,
     )
@@ -245,7 +269,7 @@ def _cold_launch_result(
     if (cold_artifact is not None
             and hashlib.sha256(cold_artifact.encode("utf-8")).hexdigest() != digest):
         raise SystemExit(f"{gate} cold-read brief artifact does not match its input digest")
-    return digest, findings, cold_artifact
+    return digest, findings, cold_artifact, bridge_previous
 
 
 def _regular_utf8_bytes(path: Path, gate: str) -> tuple[bytes, str]:
@@ -288,7 +312,7 @@ def _regular_utf8_bytes(path: Path, gate: str) -> tuple[bytes, str]:
 def _native_cold_launch_result(
     root: Path, gate: str, task_id: str, result_path: Path,
     preparation_id: str,
-) -> tuple[str, dict, str | None, str]:
+) -> tuple[str, dict, str | None, str, dict | None]:
     """Admit one process-free host-native griller preparation and its result."""
     from forge_cli.delegate import argv_digest, load_delegations
     from forge_cli.grill import _cold_artifact_from_brief
@@ -303,11 +327,28 @@ def _native_cold_launch_result(
                       spec.evidence_name(task_id)), default={},
     )
     since = str(previous.get("recorded_at") or "")
-    rows = [row for row in load_delegations(root)
-            if row.get("launch_id") == preparation_id
-            and row.get("task") == label
-            and (not spec.story_scoped or row.get("story") == story)
-            and str(row.get("at") or "") > since]
+    scoped_rows = [row for row in load_delegations(root)
+                   if row.get("task") == label
+                   and (not spec.story_scoped or row.get("story") == story)]
+    new_rows = [row for row in scoped_rows
+                if str(row.get("at") or "") > since]
+    bridge_previous = None
+    if new_rows:
+        rows = [row for row in new_rows
+                if row.get("launch_id") == preparation_id]
+    else:
+        previous_digest = previous.get("cold_input_sha256")
+        if (gate == "plan"
+                and previous.get("verdict") == "pass"
+                and previous.get("transport") == "host-native"
+                and previous.get("preparation_id") == preparation_id
+                and isinstance(previous_digest, str)
+                and re.fullmatch(r"[0-9a-f]{64}", previous_digest)):
+            rows = [row for row in scoped_rows
+                    if row.get("launch_id") == preparation_id]
+            bridge_previous = previous
+        else:
+            rows = []
     if len(rows) != 1:
         raise SystemExit(
             f"{gate} grill requires exactly one matching host-native prepared "
@@ -337,6 +378,10 @@ def _native_cold_launch_result(
             or prepared.get("model") != ""
             or prepared.get("effort") != ""):
         raise SystemExit(f"{gate} host-native cold-read preparation is invalid")
+    if (bridge_previous is not None
+            and prepared.get("task_sha256")
+            != bridge_previous.get("cold_input_sha256")):
+        raise SystemExit(f"{gate} host-native bridge input does not match the previous pass")
 
     brief = root / ".factory" / (
         f"grill-brief-{gate}" + (f"-{task_id}" if task_id else "") + ".md"
@@ -362,7 +407,15 @@ def _native_cold_launch_result(
 
     result_bytes, finding_text = _regular_utf8_bytes(result_path, gate)
     findings = _cold_findings(gate, finding_text)
-    return digest, findings, cold_artifact, hashlib.sha256(result_bytes).hexdigest()
+    return (digest, findings, cold_artifact,
+            hashlib.sha256(result_bytes).hexdigest(), bridge_previous)
+
+
+def _validate_bridge_findings(previous: dict | None, payload: dict, gate: str) -> None:
+    if (previous is not None
+            and any(payload.get(field) != previous.get(field)
+                    for field in ("gaps", "contradictions"))):
+        raise SystemExit(f"{gate} bridge findings must match the previous pass")
 
 
 def _artifact_delta(cold: str, final: str) -> list[dict]:
@@ -724,7 +777,8 @@ _label, artifact = _gate.locate(root, args.task or "", args.input_digest or "")
 from forge_cli.grill import _artifact_digest
 final_digest = _artifact_digest(artifact)
 if args.cold_result:
-    _cold_digest, _cold_findings, _cold_artifact, _result_sha256 = \
+    (_cold_digest, _cold_findings, _cold_artifact,
+     _result_sha256, _bridge_previous) = \
         _native_cold_launch_result(
             root, args.gate, args.task or "",
             Path(args.cold_result).expanduser(), args.preparation_id,
@@ -733,8 +787,14 @@ if args.cold_result:
     payload["preparation_id"] = args.preparation_id
     payload["result_sha256"] = _result_sha256
 else:
-    _cold_digest, _cold_findings, _cold_artifact = _cold_launch_result(
-        root, args.gate, args.task or "")
+    (_cold_digest, _cold_findings, _cold_artifact,
+     _bridge_previous) = _cold_launch_result(root, args.gate, args.task or "")
+_validate_bridge_findings(_bridge_previous, payload, args.gate)
+if (_bridge_previous is not None
+        and final_digest == _bridge_previous.get("final_artifact_sha256")):
+    raise SystemExit(
+        f"{args.gate} amendment bridge cannot reuse an unchanged final artifact"
+    )
 _validate_dispositions(
     payload, _cold_digest, final_digest, _cold_findings,
     _cold_artifact, artifact,
