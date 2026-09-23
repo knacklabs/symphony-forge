@@ -222,6 +222,22 @@ def _require_harness_marker(base: Path, active: dict) -> None:
              "machinery.")
 
 
+def _require_lite_repo_kind(base: Path, active: dict) -> None:
+    """Keep lite close classification bound to the repo kind at open."""
+    opened_harness_source = bool(active.get("harness_source"))
+    current_harness_source = is_harness_source_repo(base)
+    if opened_harness_source == current_harness_source:
+        return
+    opened_kind = "harness-source" if opened_harness_source else "client"
+    current_kind = "harness-source" if current_harness_source else "client"
+    marker_state = "present" if current_harness_source else "missing"
+    fail(
+        f"repo kind changed during lite window: opened as {opened_kind} repo, "
+        f"current kind is {current_kind} repo; "
+        f".factory/harness-source.json is now {marker_state}"
+    )
+
+
 def cmd_mode_abandon(args: argparse.Namespace) -> None:
     """Close a crashed mode window without claiming completion."""
     base = Path(args.repo).resolve() if args.repo else repo_root()
@@ -278,7 +294,7 @@ def cmd_mode_done(args: argparse.Namespace) -> None:
         print(f"Degraded mode {active['id']} done ({len(event['files'])} file(s)): "
               f"{active['reason']}")
         return
-    _require_harness_marker(base, active)
+    _require_lite_repo_kind(base, active)
     harness_source = active.get("harness_source")
     dirty = _lite_dirty_product_files(base, harness_source=harness_source)
     if dirty:
@@ -364,9 +380,8 @@ def _lite_product_files(
     base: Path, paths: list[str], *, harness_source: bool | None = None,
 ) -> list[str]:
     """Apply the planning-lock product boundary to repo-relative Git paths."""
-    product_files: set[str] = set()
-    for path in paths:
-        link = base / path
+    product_files: list[str] = []
+    for path in dict.fromkeys(paths):
         current = base
         has_symlink = False
         for part in Path(path).parts:
@@ -380,18 +395,7 @@ def _lite_product_files(
             path, base, harness_source=harness_source,
         )
         if locked_path is not None:
-            product_files.add(locked_path)
-
-        if has_symlink:
-            try:
-                target = link.resolve(strict=False)
-            except (OSError, RuntimeError):
-                continue
-            target_path = locked_repo_path(
-                str(target), base, harness_source=harness_source,
-            )
-            if target_path is not None and not target_path.startswith(".factory/"):
-                product_files.add(target_path)
+            product_files.append(locked_path)
     return sorted(product_files)
 
 

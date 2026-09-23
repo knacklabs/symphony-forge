@@ -9128,7 +9128,9 @@ def test_mode_done_requires_pinned_harness_marker_and_counts_factory(repo):
     write_lite_reviews(repo)
 
     code, out = run(repo, "forge.py", "mode", "done")
-    assert code != 0 and ".factory/harness-source.json is now missing" in out, out
+    assert code != 0, out
+    assert "opened as harness-source repo" in out and "current kind is client repo" in out, out
+    assert ".factory/harness-source.json is now missing" in out, out
 
     marker.write_text('{"role": "harness-source"}\n')
     code, out = run(repo, "forge.py", "mode", "done")
@@ -9138,6 +9140,31 @@ def test_mode_done_requires_pinned_harness_marker_and_counts_factory(repo):
             if json.loads(path.read_text()).get("event") == "done"]
     assert len(done) == 1 and done[0]["files"] == ["factory/scripts/lite_fix.py"]
     assert done[0]["base_sha"] == active["base_sha"]
+
+
+def test_mode_done_refuses_client_to_harness_repo_kind_change(repo):
+    active = open_lite(repo)
+    assert active["harness_source"] is False
+    mark_harness_source(repo)
+    for number in range(6):
+        path = repo / "factory" / "scripts" / f"lite_fix_{number}.py"
+        path.write_text(f"value = {number}\n")
+    product_fix = repo / "src" / "lite_product_fix.py"
+    product_fix.parent.mkdir()
+    product_fix.write_text("fixed = True\n")
+    git(
+        repo, "add", "-f", ".factory/harness-source.json", "factory/scripts",
+        "src/lite_product_fix.py",
+    )
+    git(repo, "commit", "-q", "-m", "add harness marker during lite window")
+    write_lite_reviews(repo)
+
+    code, out = run(repo, "forge.py", "mode", "done")
+
+    assert code != 0, out
+    assert "opened as client repo" in out and "current kind is harness-source repo" in out, out
+    assert ".factory/harness-source.json is now present" in out, out
+    assert (repo / ".factory" / "quickfix.json").exists()
 
 
 def test_lite_close_counts_locked_paths_and_task_seal_reports_dirty_agents(repo):
@@ -9235,7 +9262,30 @@ def test_lite_close_keeps_plain_docs_paths_exempt(repo):
     ) == []
 
 
-def test_lite_budget_counts_symlinks_and_literal_shell_names(repo):
+def test_lite_counts_docs_symlink_into_product_once(repo):
+    from forge_cli.quickfix import _lite_product_files
+
+    source = repo / "src"
+    source.mkdir()
+    (source / "app.py").write_text("app = True\n")
+    docs = repo / "docs"
+    docs.mkdir(exist_ok=True)
+    first_link = docs / "app-link.py"
+    second_link = docs / "app-link-copy.py"
+    first_link.symlink_to(Path("../src/app.py"))
+    second_link.symlink_to(Path("../src/app.py"))
+
+    assert _lite_product_files(
+        repo, ["docs/app-link.py"], harness_source=False,
+    ) == ["src/app.py"]
+    shared_target = _lite_product_files(
+        repo, ["docs/app-link.py", "docs/app-link-copy.py"],
+        harness_source=False,
+    )
+    assert len(shared_target) == 2 and shared_target == ["src/app.py"] * 2
+
+
+def test_lite_budget_counts_symlinks_once_and_literal_shell_names(repo):
     source = repo / "src"
     source.mkdir()
     target = source / "existing.py"
@@ -9260,7 +9310,15 @@ def test_lite_budget_counts_symlinks_and_literal_shell_names(repo):
 
     code, out = run(repo, "forge.py", "mode", "done")
 
-    assert code != 0 and "touches 6 product files" in out, out
+    assert code == 0 and "5 file(s)" in out, out
+    done = [json.loads(path.read_text())
+            for path in (repo / "plans" / "quickfixes").glob("*.json")
+            if json.loads(path.read_text()).get("event") == "done"]
+    assert len(done) == 1
+    assert done[0]["files"] == [
+        "src/cash$name.py", "src/docs-link", "src/outside-link",
+        "src/product-link", "src/tick`name.py",
+    ]
 
 
 def test_mode_done_refuses_over_budget_committed_diff(repo):
