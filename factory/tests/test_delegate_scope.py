@@ -10,7 +10,7 @@ from pathlib import Path
 
 import pytest
 
-from test_gates import HARNESS, repo  # noqa: F401
+from test_gates import GIT_ID, HARNESS, fake_companion_home, repo  # noqa: F401
 
 sys.path.insert(0, str(HARNESS / "factory" / "scripts"))
 from forge_cli import delegate  # noqa: E402
@@ -48,7 +48,7 @@ def test_delegate_scope_validates_immutable_ownership_and_topology(repo: Path):
     source.write_text("one\n", encoding="utf-8")
     git = subprocess.run
     git(["git", "add", "src/pkg/one.py"], cwd=repo, check=True)
-    git(["git", "commit", "-qm", "scope baseline"], cwd=repo, check=True)
+    git(["git", *GIT_ID, "commit", "-qm", "scope baseline"], cwd=repo, check=True)
     revision = subprocess.run(
         ["git", "rev-parse", "HEAD"], cwd=repo, capture_output=True,
         text=True, check=True,
@@ -91,7 +91,7 @@ def test_delegate_scope_public_launch_binds_narrowed_scope(
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(rel, encoding="utf-8")
     subprocess.run(["git", "add", *task["write_scope"]], cwd=repo, check=True)
-    subprocess.run(["git", "commit", "-qm", "scope launch baseline"], cwd=repo,
+    subprocess.run(["git", *GIT_ID, "commit", "-qm", "scope launch baseline"], cwd=repo,
                    check=True)
     revision = subprocess.run(
         ["git", "rev-parse", "HEAD"], cwd=repo, capture_output=True,
@@ -211,7 +211,7 @@ def test_narrowed_launch_admission_classifies_bare_approved_tree(
     owned.parent.mkdir(parents=True, exist_ok=True)
     owned.write_text("before\n", encoding="utf-8")
     subprocess.run(["git", "add", "src/owned.py"], cwd=repo, check=True)
-    subprocess.run(["git", "commit", "-qm", "bare tree scope baseline"],
+    subprocess.run(["git", *GIT_ID, "commit", "-qm", "bare tree scope baseline"],
                    cwd=repo, check=True)
     task = {
         "id": "T1", "title": "narrow", "objective": "change one file",
@@ -396,13 +396,31 @@ def test_windows_private_acl_validation_refuses_extra_allow_aces(
         delegate._require_windows_private_acl(tmp_path, sid)
 
 
+def _replace_with_new_inode(snapshot: Path, text: str) -> None:
+    """Swap the snapshot for identical bytes under a DIFFERENT inode.
+
+    Identity is (st_dev, st_ino, st_size). Unlinking and rewriting identical
+    content lets Linux reuse the freed inode, so the swap was invisible there
+    and passed only on macOS. Creating the replacement while the original still
+    exists forces a distinct inode on every filesystem.
+    """
+    replacement = snapshot.with_name(snapshot.name + ".swap")
+    replacement.write_text(text, encoding="utf-8")
+    before = snapshot.stat().st_ino
+    os.replace(replacement, snapshot)
+    assert snapshot.stat().st_ino != before
+
+
 def test_windows_context_identity_and_acl_drift_refuse_before_launch(
         repo: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys):
     source = tmp_path / "context.md"
     source.write_text("stable context", encoding="utf-8")
+    # CI has no real companion install, and launch_companion checks it before
+    # the context identity this test is about.
+    monkeypatch.setenv("HOME", str(fake_companion_home(tmp_path)))
+    monkeypatch.setenv("FORGE_COORDINATOR", "claude")
     text, metadata, snapshot, identity = delegate.secure_context_snapshot(source)
-    snapshot.unlink()
-    snapshot.write_text(text, encoding="utf-8")
+    _replace_with_new_inode(snapshot, text)
     try:
         with monkeypatch.context() as guard:
             guard.setattr(delegate, "os", _WindowsOS())
@@ -458,8 +476,7 @@ def test_windows_context_identity_and_acl_drift_refuse_stale_cleanup(
         }]
 
     _text, metadata, snapshot, identity = delegate.secure_context_snapshot(source)
-    snapshot.unlink()
-    snapshot.write_text("stable context", encoding="utf-8")
+    _replace_with_new_inode(snapshot, "stable context")
     try:
         with monkeypatch.context() as guard:
             guard.setattr(delegate, "os", _WindowsOS())
