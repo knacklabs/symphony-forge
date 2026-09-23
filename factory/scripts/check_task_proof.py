@@ -10,20 +10,21 @@ recorded, and nothing noticed until someone looked at the board (observed in
 R1-FOUND-2A, 2026-09-03). Gates that live only inside the happy path are
 advisory; this one is on the PR, so skipping the flow cannot merge.
 
-A marker written by `forge task reconcile` is exempt: it ADOPTS work that is
-already on the trunk (the command refuses otherwise), so demanding proof for it
-would only block repairing history — and it cannot be used to skip proof for new
-work, because new work is by definition not yet on the trunk.
+A reconciled marker is exempt only when its recorded commit is already on the
+PR base and the PR changes no product paths. This lets CI accept an adopted
+history repair without letting the marker bypass proof for new product work.
 """
 from __future__ import annotations
 
 import argparse
 import re
+import subprocess
 import sys
 from pathlib import Path
 
 from factory_lib import (
     _read_git_json,
+    product_excluded_prefixes,
     task_proof_problems,
 )
 
@@ -74,6 +75,26 @@ def proof_problems(root: Path, key: str, task_id: str) -> list[str]:
     )
 
 
+def reconciled_marker_is_adopted(root: Path, base: str, marker: dict) -> bool:
+    """Accept reconciliation only for trunk history with no product diff."""
+    commit = marker.get("commit")
+    if not isinstance(commit, str) or not commit:
+        return False
+    ancestor = subprocess.run(
+        ["git", "merge-base", "--is-ancestor", commit, base], cwd=root,
+        capture_output=True,
+    )
+    if ancestor.returncode != 0:
+        return False
+    excluded = product_excluded_prefixes(root)
+    changed_paths = git_paths(
+        root, "diff", "--name-only", "--no-renames", "-z", f"{base}..HEAD",
+    ).split("\0")
+    return not any(
+        path and not path.startswith(excluded) for path in changed_paths
+    )
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--base", required=True, help="base commit for base..HEAD")
@@ -91,7 +112,13 @@ def main() -> int:
     checked: list[str] = []
     for key, task_id, marker in markers:
         if marker.get("reconciled") is True:
-            adopted.append(f"{key}/{task_id}")
+            if reconciled_marker_is_adopted(root, args.base, marker):
+                adopted.append(f"{key}/{task_id}")
+            else:
+                failures.append(
+                    f"{key}/{task_id}: reconciled marker commit must be an "
+                    "ancestor of --base and the PR must change no product paths"
+                )
             continue
         problems = proof_problems(root, key, task_id)
         checked.append(f"{key}/{task_id}")

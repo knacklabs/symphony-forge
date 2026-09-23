@@ -776,6 +776,18 @@ def cmd_task_reconcile(args: argparse.Namespace) -> None:
              "but the fetch failed. Reconcile only a task whose PR has actually "
              "merged, on a checkout that can reach origin.")
 
+    write_scope = [p.rstrip("/") for p in (task.get("write_scope") or [])
+                   if isinstance(p, str) and p.strip()]
+    write_scope = [path for path in write_scope if path]
+    if not write_scope:
+        fail(f"task {args.id} has no write_scope; reconcile cannot confirm its "
+             "work shipped.")
+    scoped_diff = _git(base, "diff", "--quiet", f"origin/{default_branch}",
+                       "HEAD", "--", *write_scope)
+    if scoped_diff.returncode != 0:
+        fail(f"task {args.id} has scoped changes not on origin/{default_branch}; "
+             "reconcile only when its write_scope matches the trunk.")
+
     already = _git(
         base, "cat-file", "-e", f"origin/{default_branch}:{marker.as_posix()}",
     ).returncode == 0
@@ -802,14 +814,12 @@ def cmd_task_reconcile(args: argparse.Namespace) -> None:
         # Confirm the task's work is genuinely on the trunk before adopting it: at
         # least one of its write_scope paths must resolve on origin/<trunk>. This
         # guards against reconciling work that never actually shipped.
-        write_scope = [p.rstrip("/") for p in (task.get("write_scope") or [])
-                       if isinstance(p, str) and p.strip()]
         on_trunk = any(
             _git(base, "cat-file", "-e",
                  f"origin/{default_branch}:{path}").returncode == 0
             for path in write_scope
         )
-        if write_scope and not on_trunk:
+        if not on_trunk:
             fail(f"none of {args.id}'s write_scope paths are on origin/"
                  f"{default_branch} — its work does not look shipped. Reconcile "
                  "only a genuinely merged task (or ship it with `forge task "
