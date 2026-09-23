@@ -1,0 +1,14 @@
+{
+  "event": "done",
+  "id": "Q-0196-ffeb",
+  "profile": "degraded",
+  "kind": "degraded",
+  "reason": "Remove round 8's unreachable story-approval bridge test (finding disproved: record_grill_from_json.py:650 binds input_sha256 to the final amended draft; signal S-0055)",
+  "started_at": "2026-09-23T14:58:17+00:00",
+  "completed_at": "2026-09-23T14:58:47+00:00",
+  "files": [
+    "factory/tests/test_approval_hooks.py"
+  ],
+  "task_id": "LEAN-WORKFLOW",
+  "story": "FORGE-COORD-1"
+}

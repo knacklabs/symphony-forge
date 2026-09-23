@@ -1,0 +1,1 @@
+{"event": "signal-contradiction", "generated_by": "implementer", "at": "2026-09-23T14:55:13+00:00", "story": "FORGE-COORD-1", "detail": "Story approval finding says an amended awaiting plan is ineligible because input_sha256 binds cold bytes, but record_grill_from_json computes input_sha256 from the final artifact; the recorder-backed "}
