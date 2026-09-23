@@ -8527,7 +8527,8 @@ def test_bash_write_guard_classifies_only_real_product_writes(repo):
     assert not decision("make build 2>&1")
     # a heredoc body with an apostrophe must not blind the guard
     assert decision("cat > src/app.ts <<'EOF'\nit's fine\nEOF")
-    assert not decision("echo it's fine")
+    # An unmatched quote cannot be tokenized, so fail closed under the lock.
+    assert decision("echo it's fine")
     assert not decision(
         'git add f && git commit -q -m "fix: quoted \'a > b\' and \\$HOME/x"')
 
@@ -8546,6 +8547,164 @@ def test_bash_write_guard_classifies_only_real_product_writes(repo):
     # allowlisted surfaces stay open
     assert not decision("echo x > factory/board/x.html")
     assert not decision("echo x > plans/roadmap.json")
+
+
+@pytest.mark.parametrize("runtime", ["claude", "codex"])
+@pytest.mark.parametrize("command", [
+    "echo hi>src/a.py",
+    "cmd 2>src/a.py",
+    "cmd 2> src/a.py",
+    "echo hi >| src/a.py",
+    "git checkout HEAD -- src/a.py",
+    "git restore src/a.py",
+    "sed -i s/x/y/ src/a.py plans/note.md",
+    "git apply x.patch",
+])
+def test_locked_bash_write_shapes_are_denied(repo, runtime, command):
+    if command == "git apply x.patch":
+        (repo / "x.patch").write_text(
+            "diff --git a/src/a.py b/src/a.py\n"
+            "--- a/src/a.py\n+++ b/src/a.py\n"
+            "@@ -1 +1 @@\n-old\n+new\n",
+            encoding="utf-8",
+        )
+    runner = hook if runtime == "claude" else native_hook
+    code, out = runner(repo, {
+        "tool_name": "Bash", "permission_mode": "default",
+        "tool_input": {"command": command},
+    })
+    assert code == 0 and "deny" in out, out
+
+
+@pytest.mark.parametrize("runtime", ["claude", "codex"])
+@pytest.mark.parametrize("command", [
+    "echo 'a;b' > src/a.py",
+    "printf 'a|b' > src/a.py",
+    "echo 'a & b' > src/a.py",
+    "echo value \\\n> src/a.py",
+    "echo 'unfinished > src/a.py",
+])
+def test_locked_bash_quoted_separators_and_parse_failures_are_denied(
+        repo, runtime, command):
+    runner = hook if runtime == "claude" else native_hook
+    code, out = runner(repo, {
+        "tool_name": "Bash", "permission_mode": "default",
+        "tool_input": {"command": command},
+    })
+    assert code == 0 and "deny" in out, out
+
+
+@pytest.mark.parametrize("runtime", ["claude", "codex"])
+def test_locked_git_apply_path_options_are_applied_to_numstat(repo, runtime):
+    from pre_tool_use import bash_write_paths
+
+    (repo / "x.patch").write_text(
+        "diff --git a/prefix/a.py b/prefix/a.py\n"
+        "--- a/prefix/a.py\n+++ b/prefix/a.py\n"
+        "@@ -1 +1 @@\n-old\n+new\n",
+        encoding="utf-8",
+    )
+    command = "git apply --directory=src -p2 x.patch"
+    assert bash_write_paths(command, repo) == ["src/a.py"]
+
+    runner = hook if runtime == "claude" else native_hook
+    code, out = runner(repo, {
+        "tool_name": "Bash", "permission_mode": "default",
+        "tool_input": {"command": command},
+    })
+    assert code == 0 and "deny" in out, out
+
+
+@pytest.mark.parametrize("command", [
+    "tee x < in",
+    "tee x <<EOF",
+    "tee x <<-EOF",
+    "tee x <<- EOF",
+    "tee x <<<value",
+])
+def test_bash_input_redirect_operands_are_not_write_targets(repo, command):
+    from pre_tool_use import bash_write_paths
+
+    assert bash_write_paths(command, repo) == ["x"]
+
+
+@pytest.mark.parametrize("runtime", ["claude", "codex"])
+def test_bash_redirect_targets_are_removed_from_sed_operands(repo, runtime):
+    runner = hook if runtime == "claude" else native_hook
+    code, out = runner(repo, {
+        "tool_name": "Bash", "permission_mode": "default",
+        "tool_input": {"command": "echo hi 2>/dev/null"},
+    })
+    assert code == 0 and "deny" not in out, out
+
+    code, out = runner(repo, {
+        "tool_name": "Bash", "permission_mode": "default",
+        "tool_input": {
+            "command": "sed -i s/x/y/ src/a.py 2>/dev/null",
+        },
+    })
+    assert code == 0 and "deny" in out, out
+
+
+@pytest.mark.parametrize("runtime", ["claude", "codex"])
+def test_unreadable_git_apply_patch_is_treated_as_opaque(repo, runtime):
+    runner = hook if runtime == "claude" else native_hook
+    code, out = runner(repo, {
+        "tool_name": "Bash", "permission_mode": "default",
+        "tool_input": {"command": "git apply missing.patch"},
+    })
+    assert code == 0 and "deny" in out, out
+
+
+@pytest.mark.parametrize("runtime", ["claude", "codex"])
+@pytest.mark.parametrize("command", [
+    "sed -i -e s/x/y/ plans/note.md",
+    "sed -i --expression s/x/y/ plans/note.md",
+    "sed -i -f src/script.sed plans/note.md",
+    "sed -i --file src/script.sed plans/note.md",
+])
+def test_sed_script_options_do_not_become_write_targets(repo, runtime, command):
+    runner = hook if runtime == "claude" else native_hook
+    code, out = runner(repo, {
+        "tool_name": "Bash", "permission_mode": "default",
+        "tool_input": {"command": command},
+    })
+    assert code == 0 and "deny" not in out, out
+
+
+def test_multi_file_sed_targets_reach_narrowed_scope_check(repo):
+    from pre_tool_use import bash_write_paths
+    from forge_cli.worker_admission import path_in_scope
+
+    command = "sed -i s/x/y/ in_scope.py out.py"
+    targets = bash_write_paths(command, repo)
+    # This scope covers only the final operand. Every earlier file operand
+    # still has to reach the task-scope check.
+    assert set(targets) == {"in_scope.py", "out.py"}
+    assert any(not path_in_scope(target, ["out.py"]) for target in targets)
+
+    code, out = hook(repo, {
+        "tool_name": "Bash", "permission_mode": "default",
+        "tool_input": {"command": command},
+    })
+    assert code == 0 and "deny" in out, out
+
+
+@pytest.mark.parametrize("runtime", ["claude", "codex"])
+def test_bash_lock_uses_lexical_product_path_for_symlink_leaf(repo, runtime):
+    target = repo / "plans" / "note.md"
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text("note\n", encoding="utf-8")
+    link = repo / "src" / "product-link.py"
+    link.parent.mkdir(parents=True, exist_ok=True)
+    link.symlink_to(target)
+
+    runner = hook if runtime == "claude" else native_hook
+    code, out = runner(repo, {
+        "tool_name": "Bash", "permission_mode": "default",
+        "tool_input": {"command": "echo x > src/product-link.py"},
+    })
+    assert code == 0 and "deny" in out, out
 
 
 def mark_harness_source(repo: Path) -> None:

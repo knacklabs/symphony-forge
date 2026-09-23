@@ -40,6 +40,29 @@ def _repo_from_cwd() -> Path:
                  if (path / ".git").exists()), current)
 
 
+def _harness_checkout(path: Path) -> Path | None:
+    """Return the nearest harness checkout containing this path."""
+    return next((parent for parent in path.parents
+                 if (parent / ".git").exists()
+                 and (parent / "factory" / "scripts").is_dir()), None)
+
+
+def _cross_worktree_target(raw: str, root: Path) -> bool:
+    candidate = Path(raw).expanduser()
+    if not candidate.is_absolute():
+        return False
+    try:
+        checkout = _harness_checkout(candidate.resolve())
+        return checkout is not None and checkout.resolve() != root.resolve()
+    except (OSError, RuntimeError):
+        return False
+
+
+def _deny_cross_worktree_targets(paths: list[str], root: Path) -> None:
+    if any(_cross_worktree_target(path, root) for path in paths):
+        deny("cross-worktree shell write; run it from that worktree")
+
+
 def _unmerged_paths(root: Path) -> set[str]:
     result = subprocess.run(
         ["git", "ls-files", "-u", "-z"], cwd=root, capture_output=True,
@@ -308,18 +331,58 @@ def _lexical_product_path(rel: str, is_harness: bool) -> str | None:
 
 
 def tokenize(segment: str) -> list[str] | None:
-    """Shell tokens, or None when the segment cannot be parsed at all.
+    """Shell tokens, or None when the segment cannot be parsed at all."""
+    try:
+        lexer = shlex.shlex(segment, posix=True, punctuation_chars=True)
+        lexer.whitespace_split = True
+        return list(lexer)
+    except ValueError:
+        return None
 
-    Non-posix mode is the fallback because it survives the apostrophe in a
-    heredoc body (`cat > src/app.ts <<'EOF'\\nit's fine`) that posix mode
-    rejects — losing that would blind the guard to a real product write.
-    """
-    for posix in (True, False):
-        try:
-            return shlex.split(segment, posix=posix)
-        except ValueError:
+
+def split_shell_segments(value: str) -> list[str]:
+    """Split shell commands on unquoted separators, preserving continuations."""
+    segments: list[str] = []
+    segment: list[str] = []
+    quote: str | None = None
+    index = 0
+    while index < len(value):
+        char = value[index]
+        if quote == "'":
+            segment.append(char)
+            if char == quote:
+                quote = None
+            index += 1
             continue
-    return None
+        if char == "\\" and quote != "'":
+            if index + 1 < len(value) and value[index + 1] == "\n":
+                index += 2
+                continue
+            segment.append(char)
+            if index + 1 < len(value):
+                segment.append(value[index + 1])
+                index += 2
+            else:
+                index += 1
+            continue
+        if quote:
+            segment.append(char)
+            if char == quote:
+                quote = None
+        elif char in {"'", '"'}:
+            quote = char
+            segment.append(char)
+        elif char in ";|&\n" and not (
+                char == "|" and index > 0 and value[index - 1] == ">"):
+            if "".join(segment).strip():
+                segments.append("".join(segment))
+            segment = []
+        else:
+            segment.append(char)
+        index += 1
+    if "".join(segment).strip():
+        segments.append("".join(segment))
+    return segments
 
 
 HEREDOC_START = re.compile(r"<<-?\s*[\"']?(\w+)[\"']?")
@@ -348,20 +411,182 @@ def strip_heredoc_bodies(value: str) -> str:
     return "\n".join(kept)
 
 
-def redirect_targets(tokens: list[str]) -> list[str]:
-    """Write targets of unquoted > / >> operators.
+REDIRECT_OPERATOR = re.compile(r"^(?:\d+|&)?>>?\|?$")
+INPUT_REDIRECT_OPERATOR = re.compile(r"^(?:\d+)?(?:<<<|<<-|<<|<)$")
 
-    Token-level so a redirect character INSIDE a quoted argument
-    (git commit -m 'a > b') is text, not a redirect.
-    """
+
+def redirect_targets(tokens: list[str]) -> tuple[list[str], list[str]]:
+    """Return output redirect targets and tokens with redirects removed."""
     targets: list[str] = []
-    for index, token in enumerate(tokens):
-        if token in {">", ">>"}:
-            if index + 1 < len(tokens):
-                targets.append(tokens[index + 1])
-        elif token.startswith(">") and token.lstrip(">"):
-            targets.append(token.lstrip(">"))
-    return targets
+    kept: list[str] = []
+    index = 0
+    while index < len(tokens):
+        token = tokens[index]
+        operator_index = index
+        if (token.isdigit() and index + 1 < len(tokens)
+                and tokens[index + 1] in {">&", "<&"}):
+            index += 3
+            continue
+        if (token.isdigit() and index + 1 < len(tokens)
+                and (REDIRECT_OPERATOR.fullmatch(tokens[index + 1])
+                     or INPUT_REDIRECT_OPERATOR.fullmatch(tokens[index + 1]))):
+            operator_index += 1
+        operator = tokens[operator_index]
+        if REDIRECT_OPERATOR.fullmatch(operator):
+            if operator_index + 1 < len(tokens):
+                targets.append(tokens[operator_index + 1])
+            index = operator_index + 2
+            continue
+        if INPUT_REDIRECT_OPERATOR.fullmatch(operator):
+            # In `<<- EOF`, shlex may separate the tab-stripping marker.
+            operand_index = operator_index + 1
+            if (operator == "<<" and operand_index < len(tokens)
+                    and tokens[operand_index] == "-"):
+                operand_index += 1
+            index = operand_index + 1
+            continue
+        if operator in {">&", "<&"}:
+            index = operator_index + 2
+            continue
+        kept.append(token)
+        index += 1
+    return targets, kept
+
+
+def _sed_write_targets(args: list[str]) -> list[str]:
+    """Return every in-place sed file operand, excluding scripts and flags."""
+    if not any(token == "-i" or token.startswith("-i")
+               or token.startswith("--in-place") for token in args):
+        return []
+    operands: list[str] = []
+    has_script_option = False
+    index = 0
+    while index < len(args):
+        token = args[index]
+        if token == "--":
+            operands.extend(arg for arg in args[index + 1:] if arg)
+            break
+        if token in {"-e", "--expression", "-f", "--file"}:
+            has_script_option = True
+            index += 2
+            continue
+        if (token.startswith("--expression=") or token.startswith("--file=")
+                or (token.startswith("-e") and token != "-e")
+                or (token.startswith("-f") and token != "-f")):
+            has_script_option = True
+            index += 1
+            continue
+        if token.startswith("-"):
+            if token == "-i" and index + 1 < len(args) and args[index + 1] == "":
+                index += 2
+            else:
+                index += 1
+            continue
+        if token:
+            operands.append(token)
+        index += 1
+    return operands if has_script_option else operands[1:]
+
+
+def _git_restore_paths(args: list[str]) -> list[str]:
+    paths: list[str] = []
+    after_separator = False
+    index = 0
+    while index < len(args):
+        token = args[index]
+        if token == "--":
+            after_separator = True
+            index += 1
+            continue
+        if not after_separator and token in {"-s", "--source"}:
+            index += 2
+            continue
+        if (not after_separator and
+                (token.startswith("--source=") or
+                 (token.startswith("-s") and token != "-s"))):
+            index += 1
+            continue
+        if after_separator or not token.startswith("-"):
+            paths.append(token)
+        index += 1
+    return paths
+
+
+GIT_APPLY_VALUE_OPTS = {"-p", "--directory", "--include", "--exclude"}
+
+
+def _git_apply_paths(args: list[str], root: Path) -> list[str] | None:
+    """Read changed paths from git's numstat output, or return None if opaque."""
+    patch_files: list[str] = []
+    path_options: list[str] = []
+    index = 0
+    after_separator = False
+    while index < len(args):
+        token = args[index]
+        if token == "--":
+            after_separator = True
+            index += 1
+            continue
+        if not after_separator and token in GIT_APPLY_VALUE_OPTS:
+            if token in {"-p", "--directory"} and index + 1 < len(args):
+                path_options.extend((token, args[index + 1]))
+            index += 2
+            continue
+        if (not after_separator and any(
+                token.startswith(option + "=")
+                for option in ("--directory", "--include", "--exclude"))):
+            if token.startswith("--directory="):
+                path_options.append(token)
+            index += 1
+            continue
+        if not after_separator and token.startswith("-p") and token != "-p":
+            path_options.append(token)
+            index += 1
+            continue
+        if not after_separator and token.startswith("-"):
+            index += 1
+            continue
+        patch_files.append(token)
+        index += 1
+    if not patch_files:
+        return None
+
+    paths: list[str] = []
+    for patch in patch_files:
+        patch_path = Path(patch).expanduser()
+        if not patch_path.is_absolute():
+            patch_path = root / patch_path
+        try:
+            if not patch_path.is_file():
+                return None
+            result = subprocess.run(
+                ["git", "apply", "--numstat", "-z", *path_options,
+                 str(patch_path)],
+                cwd=root, capture_output=True, text=True,
+                encoding="utf-8", errors="surrogateescape",
+            )
+        except (OSError, subprocess.SubprocessError):
+            return None
+        if result.returncode:
+            return None
+        records = result.stdout.split("\0")
+        index = 0
+        while index < len(records):
+            record = records[index]
+            index += 1
+            if not record:
+                continue
+            fields = record.split("\t", 2)
+            if len(fields) != 3:
+                return None
+            if fields[2]:
+                paths.append(fields[2])
+            else:
+                if index + 1 >= len(records) or not records[index] or not records[index + 1]:
+                    return None
+                paths.extend((records[index], records[index + 1]))
+                index += 2
+    return paths
 
 
 def in_factory_state(raw: str, root: Path) -> bool:
@@ -408,7 +633,7 @@ def git_subcommand(args: list[str]) -> tuple[str | None, list[str]]:
 
 def has_git_commit(value: str) -> bool:
     """True when a shell segment directly invokes `git ... commit`."""
-    for segment in re.split(r"[;&|\n]+", strip_heredoc_bodies(value)):
+    for segment in split_shell_segments(strip_heredoc_bodies(value)):
         tokens = tokenize(segment)
         if tokens is None:
             continue
@@ -463,11 +688,12 @@ def bash_write_paths(value: str, root: Path) -> list[str]:
     found: list[str] = []
     # Newlines separate commands too: without them a multi-line script is one
     # segment, and an earlier command's operand list swallows later lines.
-    for segment in re.split(r"[;&|\n]+", strip_heredoc_bodies(value)):
+    for segment in split_shell_segments(strip_heredoc_bodies(value)):
         tokens = tokenize(segment)
         if tokens is None:
             continue
-        found.extend(redirect_targets(tokens))
+        redirects, tokens = redirect_targets(tokens)
+        found.extend(redirects)
         # Command POSITION only (after env-var prefixes) — the same discipline
         # the codex-exec guard uses. Otherwise prose that merely mentions a
         # tool ("...sed -i, cp, mv...") is parsed as an invocation.
@@ -483,8 +709,7 @@ def bash_write_paths(value: str, root: Path) -> list[str]:
                                 "unlink", "git"}:
             continue
         args = tokens[command_index + 1:]
-        operands = [token for token in args
-                    if not token.startswith("-") and token not in {">", ">>"}]
+        operands = [token for token in args if not token.startswith("-")]
         if command_name == "tee":
             found.extend(operands)
         elif command_name == "touch":
@@ -505,7 +730,13 @@ def bash_write_paths(value: str, root: Path) -> list[str]:
             sub, sub_args = git_subcommand(args)
             if sub in {"rm", "mv"}:
                 found.extend(token for token in sub_args
-                             if not token.startswith("-") and token not in {">", ">>"})
+                             if not token.startswith("-"))
+            elif sub == "restore":
+                found.extend(_git_restore_paths(sub_args))
+            elif sub == "checkout" and "--" in sub_args:
+                found.extend(sub_args[sub_args.index("--") + 1:])
+            elif sub == "apply":
+                found.extend(_git_apply_paths(sub_args, root) or [])
         elif command_name == "cp" and operands:
             # Count each CREATED file (dir destinations expand to dir/basename),
             # so N copies into a machinery dir spend N budget slots, not one.
@@ -517,11 +748,8 @@ def bash_write_paths(value: str, root: Path) -> list[str]:
             created, sources = _copy_operands(operands, args, root)
             found.extend(created)
             found.extend(sources)
-        elif command_name == "sed" and any(
-            token == "-i" or token.startswith("-i") or token.startswith("--in-place")
-            for token in args
-        ) and operands:
-            found.append(operands[-1])
+        elif command_name == "sed":
+            found.extend(_sed_write_targets(args))
     return found
 
 
@@ -607,6 +835,8 @@ def normalized_native_bash_paths(paths: list[str], root: Path) -> list[str] | No
             continue
         candidate = Path(raw).expanduser()
         absolute = candidate if candidate.is_absolute() else lexical_root / candidate
+        if absolute.is_absolute() and _cross_worktree_target(str(absolute), root):
+            return None
         lexical = Path(os.path.abspath(absolute))
         try:
             resolved_parent = lexical.parent.resolve()
@@ -666,9 +896,15 @@ OPAQUE_NATIVE_MSG = (
     "Host-native recursive or globbed product operations cannot be proven "
     "to stay within the active task scope."
 )
+UNPARSEABLE_BASH_MSG = (
+    "Bash command could not be safely parsed, so Forge cannot verify "
+    "that it respects the delegation and planning boundaries. Use "
+    "`./forge delegate <task-id>` for a companion launch."
+)
 
 
-def has_opaque_product_write(command: str, root: Path, is_harness: bool) -> bool:
+def has_opaque_product_write(
+        command: str, root: Path, is_harness: bool) -> bool | None:
     """An op whose exact product-file set can't be read from the literal command,
     so a degraded window cannot claim it: a recursive/globbed/brace DELETE of a product
     path (`rm`/`unlink`/`git rm`), or a recursive/glob-sourced copy/move whose
@@ -677,10 +913,11 @@ def has_opaque_product_write(command: str, root: Path, is_harness: bool) -> bool
     never blocked. Pure shell games and arbitrary code stay a documented residual
     (decision 0013); the repo-kind PIN, not this check, is the security guarantee.
     """
-    for segment in re.split(r"[;&|\n]+", strip_heredoc_bodies(command)):
+    for segment in split_shell_segments(strip_heredoc_bodies(command)):
         tokens = tokenize(segment)
         if tokens is None:
-            continue
+            return None
+        _, tokens = redirect_targets(tokens)
         index = next((i for i, token in enumerate(tokens)
                       if not re.fullmatch(r"\w+=\S*", token)), None)
         if index is None:
@@ -689,6 +926,8 @@ def has_opaque_product_write(command: str, root: Path, is_harness: bool) -> bool
         args = tokens[index + 1:]
         if name == "git":
             sub, args = git_subcommand(args)
+            if sub == "apply" and _git_apply_paths(args, root) is None:
+                return True
             if sub != "rm":
                 continue
             name = "rm"
@@ -716,7 +955,8 @@ def has_opaque_product_write(command: str, root: Path, is_harness: bool) -> bool
     return False
 
 
-def guard_product_writes(targets: list[str], root: Path, command: str = "") -> None:
+def guard_product_writes(targets: list[str], root: Path, command: str = "",
+                         *, lexical_targets: bool = False) -> None:
     window = load_active(root)
     # Effective repo kind: a live marker read, UNLESS a window is open — then
     # the kind pinned at its start wins, so deleting the marker during the window
@@ -731,10 +971,17 @@ def guard_product_writes(targets: list[str], root: Path, command: str = "") -> N
     # product files the literal-target extractor never classifies, so `product`
     # may be empty even though the command hits machinery. Deny before any early
     # return, whether the repo is fully locked or a quickfix is open.
-    if command and has_opaque_product_write(command, root, is_harness):
-        deny(OPAQUE_DEGRADED_MSG if degraded else PLAN_MODE_MSG)
+    if command:
+        opaque = has_opaque_product_write(command, root, is_harness)
+        if opaque is None:
+            deny(UNPARSEABLE_BASH_MSG)
+        if opaque:
+            deny(OPAQUE_DEGRADED_MSG if degraded else PLAN_MODE_MSG)
+    classify = _lexical_product_path if lexical_targets else None
     product = list(dict.fromkeys(
-        rel for raw in targets if (rel := product_path(raw, root, is_harness)) is not None
+        rel for raw in targets
+        if (rel := (classify(raw, is_harness) if classify else
+                    product_path(raw, root, is_harness))) is not None
     ))
     if not product:
         return
@@ -1058,9 +1305,7 @@ if tool_name in EDIT_TOOLS:
             # vendored dependency, a sub-project, any checkout inside the
             # tree — and fell back to session-cwd governance, which is the
             # ungoverned write this block exists to prevent.
-            _alt = next((p for p in _target.parents
-                         if (p / ".git").exists()
-                         and (p / "factory" / "scripts").is_dir()), None)
+            _alt = _harness_checkout(_target)
             if _alt is not None:
                 root = _alt
 unmerged = _unmerged_paths(root)
@@ -1118,12 +1363,20 @@ edit_target = (tool_input.get("file_path") or tool_input.get("notebook_path") or
 write_targets = [edit_target] if tool_name in EDIT_TOOLS and edit_target else []
 if tool_name == "Bash":
     write_targets = bash_write_paths(command, root)
-    if native_codex:
-        write_targets = normalized_native_bash_paths(write_targets, root)
-        if write_targets is None:
-            deny("Host-native Bash writes cannot traverse a symlinked or unresolved parent.")
+    _deny_cross_worktree_targets(write_targets, root)
+    write_targets = normalized_native_bash_paths(write_targets, root)
+    if write_targets is None:
+        deny(
+            "Host-native Bash writes cannot traverse a symlinked or unresolved parent."
+            if native_codex else
+            "Bash writes cannot traverse a symlinked or unresolved parent."
+        )
 elif tool_name == PATCH_TOOL:
     parsed_patch_paths = apply_patch_paths(command)
+    if parsed_patch_paths is not None:
+        _deny_cross_worktree_targets(
+            [raw for _operation, raw in parsed_patch_paths], root,
+        )
     normalized_paths = (
         normalized_patch_paths(parsed_patch_paths, root)
         if parsed_patch_paths is not None else None
@@ -1145,7 +1398,7 @@ is_harness = (
     if window is not None and "harness_source" in window
     else is_harness_source_repo(root)
 )
-if native_codex and tool_name == "Bash":
+if tool_name == "Bash" or native_codex and tool_name == PATCH_TOOL:
     locked_targets = list(dict.fromkeys(
         rel for raw in write_targets
         if (rel := _lexical_product_path(raw, is_harness)) is not None
@@ -1167,10 +1420,13 @@ else:
     scoped_targets = locked_targets
 if native_codex:
     is_degraded = False
-    if scoped_targets:
-        if (command and (window or tool_name == "Bash")
-                and has_opaque_product_write(command, root, is_harness)):
+    if command and tool_name == "Bash":
+        opaque = has_opaque_product_write(command, root, is_harness)
+        if opaque is None:
+            deny(UNPARSEABLE_BASH_MSG)
+        if opaque:
             deny(OPAQUE_DEGRADED_MSG if window else OPAQUE_NATIVE_MSG)
+    if scoped_targets:
         if window:
             from forge_cli.quickfix import DEGRADED, LITE, profile_of
             profile = profile_of(window)
@@ -1227,7 +1483,8 @@ else:
             deny("Forge worker write admission returned an unknown grant kind.")
     else:
         guard_product_writes(write_targets, root,
-                             command=command if tool_name == "Bash" else "")
+                             command=command if tool_name == "Bash" else "",
+                             lexical_targets=tool_name == "Bash")
 # A heredoc whose ONLY consumer is a data sink (cat/tee/printf/echo writing
 # to a file) is data, never argv: its body is dropped before the companion
 # classification so a note that mentions the companion, or holds a quote or
@@ -1271,9 +1528,7 @@ except ValueError:
             re.search(r"\bcodex-companion(?:\.mjs)?\b", shell_shape)
         )
     ):
-        deny("Bash command could not be safely parsed, so Forge cannot verify "
-             "that it respects the delegation and planning boundaries. Use "
-             "`./forge delegate <task-id>` for a companion launch.")
+        deny(UNPARSEABLE_BASH_MSG)
     shell_tokens = []
 compact_command = re.sub(r"[^a-z0-9]", "", shell_shape.lower())
 has_companion = (
