@@ -1060,3 +1060,69 @@ def test_an_edit_into_a_sibling_worktree_is_governed_by_that_worktree(repo, tmp_
     finally:
         subprocess.run(["git", "worktree", "remove", "--force", str(sibling)],
                        cwd=repo, check=False, capture_output=True)
+
+
+@pytest.mark.parametrize("runtime", ["claude", "codex"])
+@pytest.mark.parametrize("target_rel,command_prefix", [
+    ("src/a.py", "echo x > "),
+    ("factory/scripts/forge.py", "rm "),
+])
+def test_bash_write_into_sibling_harness_checkout_is_denied(
+        repo, tmp_path, runtime, target_rel, command_prefix):
+    sibling = tmp_path / "sibling-worktree"
+    subprocess.run(["git", "worktree", "add", "--detach", str(sibling), "HEAD"],
+                   cwd=repo, check=True, capture_output=True)
+    try:
+        target = sibling / target_rel
+        target.parent.mkdir(parents=True, exist_ok=True)
+        if target_rel == "src/a.py":
+            target.write_text("before\n", encoding="utf-8")
+        from pre_tool_use import normalized_native_bash_paths
+        assert normalized_native_bash_paths([str(target)], repo) is None
+        coordinator = "codex" if runtime == "codex" else "claude"
+        code, out = run(
+            repo, "pre_tool_use.py",
+            stdin=json.dumps({
+                "tool_name": "Bash",
+                "tool_input": {"command": command_prefix + str(target)},
+            }),
+            env={"FORGE_COORDINATOR": coordinator,
+                 "FORGE_PROCESS_TOKEN": "", "FORGE_LAUNCH_ID": ""},
+        )
+        assert code == 0, out
+        assert "cross-worktree shell write; run it from that worktree" in out, out
+    finally:
+        subprocess.run(["git", "worktree", "remove", "--force", str(sibling)],
+                       cwd=repo, check=False, capture_output=True)
+
+
+@pytest.mark.parametrize("runtime", ["claude", "codex"])
+def test_apply_patch_into_sibling_harness_checkout_is_denied(repo, tmp_path, runtime):
+    sibling = tmp_path / "sibling-worktree"
+    subprocess.run(["git", "worktree", "add", "--detach", str(sibling), "HEAD"],
+                   cwd=repo, check=True, capture_output=True)
+    try:
+        target = sibling / "src" / "a.py"
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text("before\n", encoding="utf-8")
+        patch = (
+            "*** Begin Patch\n"
+            f"*** Update File: {target}\n"
+            "@@\n+after\n"
+            "*** End Patch"
+        )
+        coordinator = "codex" if runtime == "codex" else "claude"
+        code, out = run(
+            repo, "pre_tool_use.py",
+            stdin=json.dumps({
+                "tool_name": "apply_patch",
+                "tool_input": {"command": patch},
+            }),
+            env={"FORGE_COORDINATOR": coordinator,
+                 "FORGE_PROCESS_TOKEN": "", "FORGE_LAUNCH_ID": ""},
+        )
+        assert code == 0, out
+        assert "cross-worktree shell write; run it from that worktree" in out, out
+    finally:
+        subprocess.run(["git", "worktree", "remove", "--force", str(sibling)],
+                       cwd=repo, check=False, capture_output=True)
