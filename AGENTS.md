@@ -14,12 +14,11 @@ It provides:
 
 ## Context and Read Order
 
-Read the nearest `AGENTS.md`, the active brief, the binding decisions and
-contracts, and the source and tests affected by the current request. A new or
-changed capability also reads the applicable architecture, confirmed specs,
-product brief, active decisions, roadmap, plan, and decomposition. Status,
-Lite, and prepared correction work does not reread unrelated canon; the
-constitution and accepted contracts remain binding for every executor.
+Read nearest `AGENTS.md`, active brief, binding decisions/contracts, and affected
+source/tests. New or changed capabilities also read applicable architecture,
+confirmed specs, product brief, active decisions, roadmap, plan, and decomposition.
+Status, Lite, and prepared corrections skip unrelated canon; constitution and
+accepted contracts bind every executor.
 
 ## Runtime Modes
 
@@ -88,20 +87,17 @@ re-verifies. Story proof is only `outcome.json` (`./forge outcome set`).
 
 ## Non-Negotiables
 
-- Constitution binds every executor/environment: follow/cite `constitution/README.md`; never re-derive. Approval locks the contract to PR open; later material changes need human authorization: shipped → new task; done/unshipped → `forge task reopen`; active → amend + fresh native approval under `docs/QUALITY.md`; never reshuffle the graph unilaterally.
-- Every executor applies Ponytail to code edits: YAGNI → reuse → stdlib → native → installed dep → one line → minimum viable. Preserve validation, error handling, security, accessibility. Brief-inlined; review-enforced; no recording gate.
-- Keep tasks bounded and capability-driven; plans bind one roadmap story and attest all active decisions.
-- Plan, task-scope and protected-state gates remain armed. Claude uses its
-  plugin companion and degraded outage valve; native uses host subagents
-  without Forge process identity or lifecycle locks.
-- Do not decompose by document file or arbitrary file count, nor bypass `verify.py` with ad hoc validation commands.
-- Evidence enters `.factory/` only through schema-validated recorders. Review
-  publication validates the immutable prompt meaning; preserve the approval and
-  captured-context boundaries in `docs/specs/dual-coordinator-parity.md`.
+- Constitution binds every executor/environment: follow/cite `constitution/README.md`; never re-derive. Approval locks contract to PR open; material changes need human authorization: shipped → new task; done/unshipped → `forge task reopen`; active → amend + fresh native approval per `docs/QUALITY.md`; never reshuffle graph alone.
+- Every executor applies Ponytail to code edits: YAGNI → reuse → stdlib → native → installed dep → one line → minimum viable. Keep validation, error handling, security, accessibility; brief-inlined, review-enforced; no recording gate.
+- Bound tasks by capability; each plan binds one roadmap story and attests all active decisions.
+- Plan, task-scope and protected-state gates stay armed. Claude uses its plugin companion and degraded outage valve; native uses host subagents without Forge process identity or lifecycle locks.
+- Do not decompose by document file or arbitrary file count or bypass `verify.py` with ad hoc validation commands.
+- Only schema-validated recorders write evidence into `.factory/`. Review publication validates immutable prompt meaning; preserve approval and captured-context boundaries in `docs/specs/dual-coordinator-parity.md`.
 - Narration budget (conduct §8): one line per state change; findings and refusals always in full; process chatter never.
 - Follow [bounded recovery](docs/QUALITY.md#bounded-recovery) in every phase; repeated unchanged failures need a diagnosed, tested fix before another model run.
-- Use one integrated `./forge task close <id>` proof/review/finish cycle: preflight launch, review bounds, and required-test paths before expensive proof; recheck mutable state at finish; run only one full factory suite at a time on a shared host.
-- Review = ONE three-lens pass PER TASK owned by `./forge task close <id>` and run exclusively by the unchanged, externally maintained Autoreview skill, looped until clean (review → delegate Luna/max fixes → re-review) and recorded before `pr-ready` under accepted 0011, 0054 and 0069; `./forge review <id>` remains an explicit diagnostic/loop command; its internal Codex or agent calls follow its own policy; never review inline or nest reviewers.
-- Each leaf task owns a worktree and PR; dependency-ready tasks may parallelize only when their measured scopes are disjoint. Delegation/proof commands are trusted inputs; observed descendant cleanup is not hostile-code containment.
+- One integrated `./forge task close <id>` cycle owns proof/review/finish: preflight launch, review bounds and required-test paths before expensive proof; recheck mutable state at finish; one full factory suite at a time per shared host.
+- ONE three-lens pass per task is owned by `./forge task close <id>`; only unchanged external Autoreview runs it. Loop review → delegate Luna/max fixes → re-review until clean; record before `pr-ready` per accepted 0011, 0054 and 0069. `./forge review <id>` is diagnostic/loop; its internal Codex/agent calls follow its own policy. Never review inline or nest reviewers.
+- Each leaf task owns a worktree and PR; dependency-ready tasks parallelize only with disjoint measured scopes. Delegation/proof commands are trusted inputs; observed descendant cleanup is not hostile-code containment.
+- Keep Claude/Codex coordinator sessions in the primary checkout's default branch (main worktree); use absolute paths (`git -C` or subprocess cwd) for task/fix worktrees; never `cd` the coordinator shell out of the primary checkout.
 - Keep the template repo independent of any client-specific source repo.
 - Do not keep long policy blocks in `AGENTS.md`; move them into docs.
