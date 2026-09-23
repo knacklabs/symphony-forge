@@ -404,5 +404,11 @@
   "recorded_at": "2026-09-23T03:32:06+00:00",
   "commit": "578e3eb2df5db36194363dfcab951ea3243f5895",
   "cold_input_sha256": "920a373a3ffcaccf8ef49708600272cbb2f123dfc07eb12ea276420d5bf93906",
-  "final_artifact_sha256": "9a81b1e676474cac6a4057ba5a06e4294dc184686143ac080338c47197d1ed08"
+  "final_artifact_sha256": "def7a36257047e777448e56cfd1496c763b81fa1fc6f060ec1b93ab09d6269e5",
+  "approved_task_plan_sha256": "def7a36257047e777448e56cfd1496c763b81fa1fc6f060ec1b93ab09d6269e5",
+  "approved_by": "human-via-Claude",
+  "approved_at": "2026-09-23T05:29:34+00:00",
+  "approval_runtime": "claude",
+  "approval_session_id": "b4051e43-dbea-4d62-ba73-ae6210455474",
+  "approval_event_id": "toolu_011dtrUDRWpH1dHCi7uX7edR"
 }
