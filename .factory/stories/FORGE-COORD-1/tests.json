@@ -1,0 +1,50 @@
+{
+  "commit": "5f349e53adf7ded553ada8276e105493352d2dd7",
+  "functional": {
+    "generated_by": "functional-checker",
+    "status": "pass",
+    "score": 8,
+    "summary": "Claude-native stand-in for the Codex functional-checker, run by owner instruction (no Claude dispatch route exists for that Codex role), at HEAD 15ec0658 after main #242 was merged and ported onto the Lean board. The board was served on port 8794 and driven with Playwright Chromium at 1440x900 and 390x844. footer.wrap's first <p> and all 5 .check-note instances (4 desktop drawers and 1 mobile drawer) read 'Approve the exact final plan in native Plan Mode.' The old chat-approval wording does not appear in the rendered DOM or anywhere under factory/board/. FORGE-COORD-1, FORGE-ACC-3, GATES-1 and plan-mode-and-grill-provenance show '\u2713 plan grill passed', both in the drawer and in /api/story readiness (ok=true). The Overview, Lifecycle, Dependencies and Contributors tabs and the story drawer all rendered with no console errors or warnings, no page errors, no failed requests and no HTTP responses of 400 or higher. /api/state sends an ETag, a conditional GET with it returns 304 with an empty body, and /api/events streams text/event-stream 'state' events (the page reports streaming=true). The drawer is a dialog labelled by its title, with aria-modal=true. Escape closes it and focus returns to the card that opened it. The Contributors tab loads 6 people, and its rows expand and collapse with Enter and Space while keeping focus. The 30/90/All window buttons update aria-pressed and the summary. `./forge next` no longer asks to present the LEAN-WORKFLOW plan; its only LEAN-WORKFLOW item is this functional check. Relative to origin/main, the Lean diff in factory/board/index.html is only the 2 wording lines; every non-blocking finding below is inherited from #242 or pre-existing.",
+    "blocking_findings": [],
+    "non_blocking_findings": [
+      "Inherited from main #242, not from the Lean port (the .board-view CSS is byte-identical to origin/main): at 390px the four-tab tablist (width: max-content, no wrap and no mobile rule) is 403px wide. It clips the 'Contributors' tab label and makes every view scroll horizontally by 27px (previous run: Overview 0px, Lifecycle 20px). A small-screen rule (flex-wrap or overflow-x: auto on nav.board-views) would fix it. See mobile-top.png.",
+      "Pre-existing, not changed by the Lean diff: when the story drawer opens, it focuses its Close button. After the story data loads asynchronously, focus falls back to <body>. The next Tab goes back into the drawer and the trap holds, but screen reader users lose their place for a moment after the load.",
+      "At 390px the Contributors roster table scrolls inside its card (min-width 720px, overflow-x: auto; scrollWidth 751 vs clientWidth 364), so the page itself does not overflow. Last commit and Forge roles columns need a sideways scroll on phones. This is acceptable, and inherited from #242.",
+      "Pre-existing, noted in the previous run: approved or shipped stories still list 'decisions reviewed \u2014 N missing' under a 'blocker before approval' heading."
+    ],
+    "manual_validation_steps": [
+      "./forge board --port 8794, then open http://127.0.0.1:8794/ at 1440x900 and 390x844",
+      "Check that the footer's first paragraph ends with 'approve the exact final plan in native Plan Mode.'",
+      "Lifecycle tab: open the FORGE-COORD-1, FORGE-ACC-3, GATES-1 and plan-mode-and-grill-provenance drawers. Each shows '\u2713 plan grill passed' and the check-note 'Approve the exact final plan in native Plan Mode.' Escape closes the drawer and focus returns to the card.",
+      "Focus each tab (Overview, Lifecycle, Dependencies, Contributors) and press Enter. Each shows its panel, gets aria-selected=true and a 2px solid focus outline.",
+      "Contributors: focus a row and press Enter (it expands with aria-expanded=true and the details show), then Space (it collapses). Click 30 days and check that aria-pressed and the summary update.",
+      "curl -D - /api/state and note the ETag. curl -H 'If-None-Match: <etag>' /api/state returns 304. curl -N /api/events returns 'event: state' with the quoted ETag.",
+      "grep -rni 'approve plans in chat\\|approval happens in chat' factory/board/ returns nothing",
+      "./forge next does not list a 'present the LEAN-WORKFLOW plan' action"
+    ],
+    "residual_risks": [
+      "Only Chromium was exercised. The page was not run in Safari or Firefox, and the EventSource reconnect path was not.",
+      "The SSE check covers the first state event and the page's streaming flag. The check did not cause a state change to watch a live push trigger a re-poll.",
+      "This is a Claude-native stand-in for the Codex functional-checker role, not the Codex role itself.",
+      "No test suite was run, by instruction: a concurrent `forge task close` was running."
+    ],
+    "recommendation": "Pass. The Lean change (native Plan Mode approval wording, \u2713 plan grill passed on the approved stories, no stale plan-presentation prompt) works on the #242-merged board, with a clean console and network, working 304/ETag, and a live SSE stream. Fix the 390px tablist overflow that #242 introduced in a follow-up; it is not a blocker for LEAN-WORKFLOW.",
+    "reviewed_scope": [
+      "factory/board/index.html (footer, drawer check-note, tablist, Contributors view, drawer focus, EventSource wiring)",
+      "/api/state (ETag and conditional 304), /api/events (SSE), /api/story/<key>, /api/contributors",
+      "Overview, Lifecycle, Dependencies and Contributors tabs; story drawers for FORGE-COORD-1, FORGE-ACC-3, GATES-1 and plan-mode-and-grill-provenance",
+      "Viewports 1440x900 and 390x844",
+      "./forge next output"
+    ],
+    "skills_used": [
+      "emil-design-eng",
+      "frontend-design"
+    ],
+    "remaining_gaps": [],
+    "commands_run": [],
+    "tests_added_or_updated": [],
+    "recorded_at": "2026-09-23T15:31:14+00:00",
+    "commit": "5f349e53adf7ded553ada8276e105493352d2dd7"
+  },
+  "updated_at": "2026-09-23T15:31:14+00:00"
+}
