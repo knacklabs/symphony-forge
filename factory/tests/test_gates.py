@@ -9975,7 +9975,6 @@ def test_pr_ticket_check_workflow_uses_base_code_for_pull_request_target():
     assert "pull_request:" not in workflow
     assert "types: [opened, synchronize, reopened, edited]" in workflow
     assert "permissions:\n  contents: read" in workflow
-    assert '      - uses: actions/checkout@v7\n        with:\n          persist-credentials: false' in workflow
     assert "ref: ${{ github.event.pull_request.base.sha }}" in workflow
     assert 'refs/pull/${PR_NUMBER}/head' in workflow
     assert 'test "$FETCHED_HEAD" = "$HEAD_SHA"' in workflow

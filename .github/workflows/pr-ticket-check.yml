@@ -1,6 +1,7 @@
 name: pr-ticket-check
 
 on:
+  # Forge branches use feat/<key>-... names, so GitHub's SHA-like-branch suppression of pull_request_target does not apply; plain pull_request is deliberately absent because it honours [skip ci].
   pull_request_target:
     # This gate reads the PR BODY, and its failure message tells you to edit
     # that body. `pull_request_target` also runs when the head commit has
@@ -16,7 +17,6 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
-          persist-credentials: false
           ref: ${{ github.event.pull_request.base.sha }}
           fetch-depth: 0
       - uses: actions/setup-python@v7

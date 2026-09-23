@@ -1,0 +1,84 @@
+{
+  "event": "done",
+  "id": "Q-0199-858d",
+  "profile": "lite",
+  "by": "Ravi Kiran Vemula",
+  "reason": "Process gaps: ticket check on skip-ci pushes against the current base, context-file limit, reconcile ticket line, gitignored window marker (re-run of abandoned Q-0197-2f7f)",
+  "base_sha": "9a2fdb3155258ece40227f07043ebbd0d7100b82",
+  "started_at": "2026-09-23T19:14:00+00:00",
+  "completed_at": "2026-09-23T19:33:33+00:00",
+  "files": [
+    "factory/scripts/forge_cli/delegate.py",
+    "factory/scripts/forge_cli/tasks.py",
+    "factory/tests/test_gates.py"
+  ],
+  "reviews": {
+    "quality": {
+      "generated_by": "autoreview",
+      "score": 10,
+      "summary": "quality lens over Q-0199-858d (5 product path(s), 9a2fdb3..e30e74e, Codex via the autoreview skill): 0 blocking, 0 non-blocking. The changed paths and their reachable call sites show no actionable correctness defect. The added tests cover the changed prompt-limit fallback and reconcile output; the workflow test checks its configuration statically.",
+      "blocking_findings": [],
+      "non_blocking_findings": [],
+      "recommendation": "approve",
+      "reviewed_scope": [
+        ".github/workflows/pr-ticket-check.yml",
+        ".gitignore",
+        "factory/scripts/forge_cli/delegate.py",
+        "factory/scripts/forge_cli/tasks.py",
+        "factory/tests/test_gates.py"
+      ],
+      "skills_used": [],
+      "contract_verdicts": [],
+      "review_base_sha": "9a2fdb3155258ece40227f07043ebbd0d7100b82",
+      "branch_diff_digest": "27883ffd75228752c780f8bb8844b16d9b0f0a6209a1d933cecf5cd5a704635b",
+      "commit": "e30e74e92099b56a2ab551b29a94fa654217094c",
+      "aspect": "quality",
+      "residual_risks": [],
+      "recorded_at": "2026-09-23T19:30:32+00:00"
+    },
+    "performance": {
+      "generated_by": "autoreview",
+      "score": 10,
+      "summary": "performance lens over Q-0199-858d (5 product path(s), 9a2fdb3..e30e74e, Codex via the autoreview skill): 0 blocking, 0 non-blocking. The workflow adds Git fetches and a local bare repository, but the available evidence shows no actionable performance defect. No runtime measurements were available.",
+      "blocking_findings": [],
+      "non_blocking_findings": [],
+      "recommendation": "approve",
+      "reviewed_scope": [
+        ".github/workflows/pr-ticket-check.yml",
+        ".gitignore",
+        "factory/scripts/forge_cli/delegate.py",
+        "factory/scripts/forge_cli/tasks.py",
+        "factory/tests/test_gates.py"
+      ],
+      "skills_used": [],
+      "review_base_sha": "9a2fdb3155258ece40227f07043ebbd0d7100b82",
+      "branch_diff_digest": "27883ffd75228752c780f8bb8844b16d9b0f0a6209a1d933cecf5cd5a704635b",
+      "commit": "e30e74e92099b56a2ab551b29a94fa654217094c",
+      "aspect": "performance",
+      "residual_risks": [],
+      "recorded_at": "2026-09-23T19:30:32+00:00"
+    },
+    "security": {
+      "generated_by": "autoreview",
+      "score": 10,
+      "summary": "security lens over Q-0199-858d (5 product path(s), 9a2fdb3..e30e74e, Codex via the autoreview skill): 0 blocking, 0 non-blocking. The workflow runs code from the base checkout, verifies the fetched PR commit against the event SHA, and limits the token to read access. No concrete trust-boundary violation is evident from the available evidence.",
+      "blocking_findings": [],
+      "non_blocking_findings": [],
+      "recommendation": "approve",
+      "reviewed_scope": [
+        ".github/workflows/pr-ticket-check.yml",
+        ".gitignore",
+        "factory/scripts/forge_cli/delegate.py",
+        "factory/scripts/forge_cli/tasks.py",
+        "factory/tests/test_gates.py"
+      ],
+      "skills_used": [],
+      "review_base_sha": "9a2fdb3155258ece40227f07043ebbd0d7100b82",
+      "branch_diff_digest": "27883ffd75228752c780f8bb8844b16d9b0f0a6209a1d933cecf5cd5a704635b",
+      "commit": "e30e74e92099b56a2ab551b29a94fa654217094c",
+      "aspect": "security",
+      "residual_risks": [],
+      "recorded_at": "2026-09-23T19:30:32+00:00"
+    }
+  }
+}

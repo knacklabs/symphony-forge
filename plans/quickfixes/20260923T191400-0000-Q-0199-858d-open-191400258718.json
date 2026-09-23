@@ -1,0 +1,12 @@
+{
+  "event": "open",
+  "id": "Q-0199-858d",
+  "profile": "lite",
+  "reason": "Process gaps: ticket check on skip-ci pushes against the current base, context-file limit, reconcile ticket line, gitignored window marker (re-run of abandoned Q-0197-2f7f)",
+  "started_at": "2026-09-23T19:14:00+00:00",
+  "max_files": 5,
+  "files": [],
+  "harness_source": true,
+  "by": "Ravi Kiran Vemula",
+  "base_sha": "9a2fdb3155258ece40227f07043ebbd0d7100b82"
+}
