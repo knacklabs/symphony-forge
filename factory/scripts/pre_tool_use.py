@@ -110,7 +110,8 @@ def _git_recovery(command: str, root: Path, unmerged: set[str]) -> bool | None:
         if skip_value:
             skip_value = False
             continue
-        if arg in {"--pathspec-from-file"}:
+        if (arg == "--pathspec-from-file"
+                or arg.startswith("--pathspec-from-file=")):
             return False
         if arg in {"--source"}:
             skip_value = True
@@ -340,6 +341,39 @@ def tokenize(segment: str) -> list[str] | None:
         return None
 
 
+QUOTED_REDIRECT_CHARS = {"<": "\ue000", ">": "\ue001", "&": "\ue002"}
+
+
+def _protect_quoted_redirect_chars(value: str) -> str:
+    """Keep quoted or escaped redirection punctuation out of shell operators."""
+    result: list[str] = []
+    quote: str | None = None
+    escaped = False
+    for char in value:
+        if escaped:
+            result.append(QUOTED_REDIRECT_CHARS.get(char, char))
+            escaped = False
+            continue
+        if char == "\\" and quote != "'":
+            result.append(char)
+            escaped = True
+            continue
+        if quote:
+            result.append(QUOTED_REDIRECT_CHARS.get(char, char))
+            if char == quote:
+                quote = None
+            continue
+        if char in {"'", '"'}:
+            quote = char
+        result.append(char)
+    return "".join(result)
+
+
+def tokenize_write_command(segment: str) -> list[str] | None:
+    """Tokenize while retaining whether redirection punctuation was quoted."""
+    return tokenize(_protect_quoted_redirect_chars(segment))
+
+
 def split_shell_segments(value: str) -> list[str]:
     """Split shell commands on unquoted separators, preserving continuations."""
     segments: list[str] = []
@@ -373,7 +407,11 @@ def split_shell_segments(value: str) -> list[str]:
             quote = char
             segment.append(char)
         elif char in ";|&\n" and not (
-                char == "|" and index > 0 and value[index - 1] == ">"):
+                (char == "|" and index > 0 and value[index - 1] == ">")
+                or (char == "&" and (
+                    (index > 0 and value[index - 1] == ">")
+                    or (index + 1 < len(value) and value[index + 1] == ">")
+                ))):
             if "".join(segment).strip():
                 segments.append("".join(segment))
             segment = []
@@ -411,8 +449,19 @@ def strip_heredoc_bodies(value: str) -> str:
     return "\n".join(kept)
 
 
-REDIRECT_OPERATOR = re.compile(r"^(?:\d+|&)?>>?\|?$")
-INPUT_REDIRECT_OPERATOR = re.compile(r"^(?:\d+)?(?:<<<|<<-|<<|<)$")
+OUTPUT_REDIRECT = re.compile(
+    r"^(?P<fd>\d*)(?P<operator>&>>|&>|>&|>>|>\||<>|>)"
+    r"(?P<target>.*)$"
+)
+INPUT_REDIRECT = re.compile(
+    r"^(?P<fd>\d*)(?P<operator><<<|<<-|<<|<&|<)(?P<target>.*)$"
+)
+
+
+def _restore_quoted_redirect_chars(tokens: list[str]) -> list[str]:
+    restored = {value: char for char, value in QUOTED_REDIRECT_CHARS.items()}
+    return ["".join(restored.get(char, char) for char in token)
+            for token in tokens]
 
 
 def redirect_targets(tokens: list[str]) -> tuple[list[str], list[str]]:
@@ -422,35 +471,42 @@ def redirect_targets(tokens: list[str]) -> tuple[list[str], list[str]]:
     index = 0
     while index < len(tokens):
         token = tokens[index]
-        operator_index = index
-        if (token.isdigit() and index + 1 < len(tokens)
-                and tokens[index + 1] in {">&", "<&"}):
-            index += 3
+        if token.isdigit() and index + 1 < len(tokens):
+            next_token = tokens[index + 1]
+            next_output = OUTPUT_REDIRECT.match(next_token)
+            next_input = INPUT_REDIRECT.match(next_token)
+            if ((next_output and not next_output.group("fd"))
+                    or (next_input and not next_input.group("fd"))):
+                index += 1
+                token = next_token
+        output = OUTPUT_REDIRECT.match(token)
+        input_redirect = INPUT_REDIRECT.match(token)
+        if output:
+            operator = output.group("operator")
+            target = output.group("target")
+            index += 1
+            if not target and index < len(tokens):
+                target = tokens[index]
+                index += 1
+            if operator != ">&" or (target != "-" and not target.isdigit()):
+                if target:
+                    targets.append(target)
             continue
-        if (token.isdigit() and index + 1 < len(tokens)
-                and (REDIRECT_OPERATOR.fullmatch(tokens[index + 1])
-                     or INPUT_REDIRECT_OPERATOR.fullmatch(tokens[index + 1]))):
-            operator_index += 1
-        operator = tokens[operator_index]
-        if REDIRECT_OPERATOR.fullmatch(operator):
-            if operator_index + 1 < len(tokens):
-                targets.append(tokens[operator_index + 1])
-            index = operator_index + 2
-            continue
-        if INPUT_REDIRECT_OPERATOR.fullmatch(operator):
-            # In `<<- EOF`, shlex may separate the tab-stripping marker.
-            operand_index = operator_index + 1
-            if (operator == "<<" and operand_index < len(tokens)
-                    and tokens[operand_index] == "-"):
-                operand_index += 1
-            index = operand_index + 1
-            continue
-        if operator in {">&", "<&"}:
-            index = operator_index + 2
+        if input_redirect:
+            index += 1
+            if not input_redirect.group("target") and index < len(tokens):
+                if (input_redirect.group("operator") == "<<"
+                        and tokens[index] == "-"):
+                    index += 1
+                if index < len(tokens):
+                    index += 1
             continue
         kept.append(token)
         index += 1
-    return targets, kept
+    return (
+        _restore_quoted_redirect_chars(targets),
+        _restore_quoted_redirect_chars(kept),
+    )
 
 
 def _sed_write_targets(args: list[str]) -> list[str]:
@@ -510,6 +566,17 @@ def _git_restore_paths(args: list[str]) -> list[str]:
             paths.append(token)
         index += 1
     return paths
+
+
+def _has_pathspec_from_file(args: list[str]) -> bool:
+    """Whether git hides its affected paths in a pathspec file option."""
+    for token in args:
+        if token == "--":
+            break
+        if (token == "--pathspec-from-file"
+                or token.startswith("--pathspec-from-file=")):
+            return True
+    return False
 
 
 GIT_APPLY_VALUE_OPTS = {"-p", "--directory", "--include", "--exclude"}
@@ -689,7 +756,7 @@ def bash_write_paths(value: str, root: Path) -> list[str]:
     # Newlines separate commands too: without them a multi-line script is one
     # segment, and an earlier command's operand list swallows later lines.
     for segment in split_shell_segments(strip_heredoc_bodies(value)):
-        tokens = tokenize(segment)
+        tokens = tokenize_write_command(segment)
         if tokens is None:
             continue
         redirects, tokens = redirect_targets(tokens)
@@ -914,7 +981,7 @@ def has_opaque_product_write(
     (decision 0013); the repo-kind PIN, not this check, is the security guarantee.
     """
     for segment in split_shell_segments(strip_heredoc_bodies(command)):
-        tokens = tokenize(segment)
+        tokens = tokenize_write_command(segment)
         if tokens is None:
             return None
         _, tokens = redirect_targets(tokens)
@@ -926,6 +993,9 @@ def has_opaque_product_write(
         args = tokens[index + 1:]
         if name == "git":
             sub, args = git_subcommand(args)
+            if (sub in {"restore", "checkout", "rm", "mv", "apply"}
+                    and _has_pathspec_from_file(args)):
+                return True
             if sub == "apply" and _git_apply_paths(args, root) is None:
                 return True
             if sub != "rm":

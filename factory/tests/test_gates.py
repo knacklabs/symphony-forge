@@ -8555,8 +8555,24 @@ def test_bash_write_guard_classifies_only_real_product_writes(repo):
     "cmd 2>src/a.py",
     "cmd 2> src/a.py",
     "echo hi >| src/a.py",
+    "echo x >& src/a.py",
+    "echo x >&src/a.py",
+    "echo x &> src/a.py",
+    "echo x &>src/a.py",
+    "echo x &>> src/a.py",
+    "echo x &>>src/a.py",
+    "echo x <> src/a.py",
+    "echo x <>src/a.py",
+    "echo x >|src/a.py",
+    "echo x 3>& src/a.py",
+    "echo x 3>&src/a.py",
     "git checkout HEAD -- src/a.py",
     "git restore src/a.py",
+    "git restore --pathspec-from-file=src/paths.txt",
+    "git restore --pathspec-from-file src/paths.txt",
+    "git checkout --pathspec-from-file=src/paths.txt",
+    "git checkout --pathspec-from-file src/paths.txt",
+    "git rm --pathspec-from-file=src/paths.txt",
     "sed -i s/x/y/ src/a.py plans/note.md",
     "git apply x.patch",
 ])
@@ -8574,6 +8590,24 @@ def test_locked_bash_write_shapes_are_denied(repo, runtime, command):
         "tool_input": {"command": command},
     })
     assert code == 0 and "deny" in out, out
+
+
+@pytest.mark.parametrize("runtime", ["claude", "codex"])
+@pytest.mark.parametrize("command", [
+    "make build 2>&1",
+    "echo x >&2",
+    "echo x >&-",
+    "echo x > /dev/null",
+    "echo '>' src/a.py",
+])
+def test_locked_bash_fd_redirects_and_quoted_operators_are_allowed(
+        repo, runtime, command):
+    runner = hook if runtime == "claude" else native_hook
+    code, out = runner(repo, {
+        "tool_name": "Bash", "permission_mode": "default",
+        "tool_input": {"command": command},
+    })
+    assert code == 0 and "deny" not in out, out
 
 
 @pytest.mark.parametrize("runtime", ["claude", "codex"])
