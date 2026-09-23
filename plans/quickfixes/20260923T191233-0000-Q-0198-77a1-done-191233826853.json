@@ -1,0 +1,78 @@
+{
+  "event": "done",
+  "id": "Q-0198-77a1",
+  "profile": "lite",
+  "by": "Ravi Kiran Vemula",
+  "reason": "Verified review gap group g10-upgrade for task LEAN-FIXES (owner: fix P1/P2 now, parallel)",
+  "base_sha": "fd1c6740b1d083ad8beccd5e52f8b3f88d6eb9d7",
+  "started_at": "2026-09-23T17:24:10+00:00",
+  "completed_at": "2026-09-23T19:12:33+00:00",
+  "files": [
+    "factory/scripts/forge_cli/upgrade.py",
+    "factory/tests/test_approval_hooks.py",
+    "factory/tests/test_upgrade_lean_workflow.py"
+  ],
+  "reviews": {
+    "quality": {
+      "generated_by": "autoreview",
+      "score": 10,
+      "summary": "quality lens over Q-0198-77a1 (3 product path(s), fd1c674..3d86701, Codex via the autoreview skill): 0 blocking, 0 non-blocking. The supplied diff shows no actionable correctness defect. The empty checkout prevents verification of unchanged callees, so this assessment is limited to the supplied evidence.",
+      "blocking_findings": [],
+      "non_blocking_findings": [],
+      "recommendation": "approve",
+      "reviewed_scope": [
+        "factory/scripts/forge_cli/upgrade.py",
+        "factory/tests/test_approval_hooks.py",
+        "factory/tests/test_upgrade_lean_workflow.py"
+      ],
+      "skills_used": [],
+      "contract_verdicts": [],
+      "review_base_sha": "fd1c6740b1d083ad8beccd5e52f8b3f88d6eb9d7",
+      "branch_diff_digest": "6f512ab13d1b608d395ec7804ffdbcbca14e4908be7c91b30e9817ec02bab394",
+      "commit": "3d86701de512fe5322f8c7bd878379a40b112528",
+      "aspect": "quality",
+      "residual_risks": [],
+      "recorded_at": "2026-09-23T19:11:54+00:00"
+    },
+    "performance": {
+      "generated_by": "autoreview",
+      "score": 10,
+      "summary": "performance lens over Q-0198-77a1 (3 product path(s), fd1c674..3d86701, Codex via the autoreview skill): 0 blocking, 0 non-blocking. No concrete production performance regression is shown.",
+      "blocking_findings": [],
+      "non_blocking_findings": [],
+      "recommendation": "approve",
+      "reviewed_scope": [
+        "factory/scripts/forge_cli/upgrade.py",
+        "factory/tests/test_approval_hooks.py",
+        "factory/tests/test_upgrade_lean_workflow.py"
+      ],
+      "skills_used": [],
+      "review_base_sha": "fd1c6740b1d083ad8beccd5e52f8b3f88d6eb9d7",
+      "branch_diff_digest": "6f512ab13d1b608d395ec7804ffdbcbca14e4908be7c91b30e9817ec02bab394",
+      "commit": "3d86701de512fe5322f8c7bd878379a40b112528",
+      "aspect": "performance",
+      "residual_risks": [],
+      "recorded_at": "2026-09-23T19:11:54+00:00"
+    },
+    "security": {
+      "generated_by": "autoreview",
+      "score": 10,
+      "summary": "security lens over Q-0198-77a1 (3 product path(s), fd1c674..3d86701, Codex via the autoreview skill): 0 blocking, 0 non-blocking. The supplied evidence shows no concrete trust-boundary or credential-handling defect.",
+      "blocking_findings": [],
+      "non_blocking_findings": [],
+      "recommendation": "approve",
+      "reviewed_scope": [
+        "factory/scripts/forge_cli/upgrade.py",
+        "factory/tests/test_approval_hooks.py",
+        "factory/tests/test_upgrade_lean_workflow.py"
+      ],
+      "skills_used": [],
+      "review_base_sha": "fd1c6740b1d083ad8beccd5e52f8b3f88d6eb9d7",
+      "branch_diff_digest": "6f512ab13d1b608d395ec7804ffdbcbca14e4908be7c91b30e9817ec02bab394",
+      "commit": "3d86701de512fe5322f8c7bd878379a40b112528",
+      "aspect": "security",
+      "residual_risks": [],
+      "recorded_at": "2026-09-23T19:11:54+00:00"
+    }
+  }
+}

@@ -28,6 +28,40 @@ def _upgrade(target: Path, *extra: str) -> subprocess.CompletedProcess[str]:
     )
 
 
+def test_forge_profile_hash_registry_covers_main_history():
+    if git(HARNESS, "rev-parse", "--is-shallow-repository") == "true":
+        pytest.skip("main profile history is unavailable in a shallow clone")
+
+    changes = subprocess.run(
+        ["git", "log", "--raw", "--no-abbrev", "--no-renames", "--format=",
+         "main", "--", ".codex/agents/*.toml"],
+        cwd=HARNESS, capture_output=True, text=True, check=True,
+    ).stdout.splitlines()
+    known = upgrade._forge_profile_hashes(HARNESS)
+    forge_names = set(known) | set(upgrade.RETIRED_FORGE_PROFILE_HASHES)
+    unknown = []
+    for row in changes:
+        if not row.startswith(":") or "\t" not in row:
+            continue
+        metadata, relative = row.split("\t", 1)
+        fields = metadata.split()
+        if len(fields) != 5 or fields[4] == "D" or not relative.endswith(".toml"):
+            continue
+        name = Path(relative).name
+        if name not in forge_names:
+            continue
+        content = subprocess.run(
+            ["git", "cat-file", "blob", fields[3]], cwd=HARNESS,
+            capture_output=True, check=True,
+        ).stdout
+        digest = hashlib.sha256(content).hexdigest()
+        if (digest not in known.get(name, set())
+                and digest != upgrade.RETIRED_FORGE_PROFILE_HASHES.get(name)):
+            unknown.append((name, digest))
+
+    assert not unknown, f"unrecognized Forge profile history: {unknown}"
+
+
 def _legacy_round(target: Path) -> Path:
     path = target / ".factory" / "grill-rounds" / "old.json"
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -1111,6 +1145,119 @@ def test_public_upgrade_resumes_after_destination_removal_before_copy(
     completed = json.loads(manifest.read_text(encoding="utf-8"))
     assert completed["upgrade_resume"]["completed_at"]
     assert factory.is_dir()
+
+
+def test_public_upgrade_invalid_resume_names_recorded_harness_commit(
+        repo: Path, monkeypatch: pytest.MonkeyPatch,
+        capsys: pytest.CaptureFixture[str]):
+    for relative in upgrade.PRESERVE_IN_AGENTS:
+        path = repo / relative
+        if path.is_dir() and not path.is_symlink():
+            shutil.rmtree(path)
+    git(repo, "add", "-A")
+    git(repo, "commit", "-q", "-m", "no preserved skill paths")
+
+    original_copytree = upgrade.guarded_copytree
+    factory = repo / "factory"
+
+    def interrupt(target, source, destination, **kwargs):
+        if destination == factory:
+            raise OSError("interrupted between destination removal and copy")
+        return original_copytree(target, source, destination, **kwargs)
+
+    with monkeypatch.context() as patch:
+        patch.setattr(upgrade, "guarded_copytree", interrupt)
+        with pytest.raises(OSError, match="between destination removal"):
+            upgrade.cmd_upgrade(argparse.Namespace(target=str(repo), force=False))
+
+    manifest = repo / ".factory/migrations/lean-workflow-v2.json"
+    saved = json.loads(manifest.read_text(encoding="utf-8"))
+    recorded_commit = saved["upgrade_resume"]["harness_commit"]
+    mismatch = "0" * 40 if recorded_commit != "0" * 40 else "1" * 40
+    saved["upgrade_resume"]["harness_commit"] = mismatch
+    manifest.write_text(json.dumps(saved) + "\n", encoding="utf-8")
+
+    with pytest.raises(SystemExit):
+        upgrade.cmd_upgrade(argparse.Namespace(target=str(repo), force=False))
+    output = capsys.readouterr().out
+    assert mismatch in output
+    assert "reset" in output.lower() and "clean" in output.lower()
+
+
+def test_public_upgrade_resumes_from_gitless_harness_inventory(
+        repo: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    harness = _copy_harness_source(tmp_path)
+    monkeypatch.setattr(upgrade, "repo_root", lambda: harness)
+    for relative in upgrade.PRESERVE_IN_AGENTS:
+        path = repo / relative
+        if path.is_dir() and not path.is_symlink():
+            shutil.rmtree(path)
+    git(repo, "add", "-A")
+    git(repo, "commit", "-q", "-m", "no preserved skill paths")
+
+    original_copytree = upgrade.guarded_copytree
+    factory = repo / "factory"
+
+    def interrupt(target, source, destination, **kwargs):
+        if destination == factory:
+            raise OSError("interrupted between destination removal and copy")
+        return original_copytree(target, source, destination, **kwargs)
+
+    with monkeypatch.context() as patch:
+        patch.setattr(upgrade, "guarded_copytree", interrupt)
+        with pytest.raises(OSError, match="between destination removal"):
+            upgrade.cmd_upgrade(argparse.Namespace(target=str(repo), force=False))
+
+    manifest = repo / ".factory/migrations/lean-workflow-v2.json"
+    saved = json.loads(manifest.read_text(encoding="utf-8"))
+    assert len(saved["upgrade_resume"]["harness_commit"]) == 64
+
+    upgrade.cmd_upgrade(argparse.Namespace(target=str(repo), force=False))
+    assert json.loads(manifest.read_text(encoding="utf-8"))["upgrade_resume"][
+        "completed_at"]
+    assert factory.is_dir()
+
+
+def test_completed_upgrade_interruption_gives_targeted_reset_clean_guidance(
+        repo: Path, monkeypatch: pytest.MonkeyPatch,
+        capsys: pytest.CaptureFixture[str]):
+    for relative in upgrade.PRESERVE_IN_AGENTS:
+        path = repo / relative
+        if path.is_dir() and not path.is_symlink():
+            shutil.rmtree(path)
+    git(repo, "add", "-A")
+    git(repo, "commit", "-q", "-m", "no preserved skill paths")
+
+    upgrade.cmd_upgrade(argparse.Namespace(target=str(repo), force=False))
+    manifest = repo / ".factory/migrations/lean-workflow-v2.json"
+    assert json.loads(manifest.read_text(encoding="utf-8"))["completed_at"]
+    git(repo, "add", "-A")
+    git(repo, "commit", "-q", "-m", "complete first upgrade", "--allow-empty")
+    for relative in upgrade.PRESERVE_IN_AGENTS:
+        path = repo / relative
+        if path.is_dir() and not path.is_symlink():
+            shutil.rmtree(path)
+    git(repo, "add", "-A")
+    git(repo, "commit", "-q", "-m", "remove empty preserved directories")
+
+    original_copytree = upgrade.guarded_copytree
+    factory = repo / "factory"
+
+    def interrupt(target, source, destination, **kwargs):
+        if destination == factory:
+            raise OSError("interrupted between destination removal and copy")
+        return original_copytree(target, source, destination, **kwargs)
+
+    with monkeypatch.context() as patch:
+        patch.setattr(upgrade, "guarded_copytree", interrupt)
+        with pytest.raises(OSError, match="between destination removal"):
+            upgrade.cmd_upgrade(argparse.Namespace(target=str(repo), force=False))
+
+    with pytest.raises(SystemExit):
+        upgrade.cmd_upgrade(argparse.Namespace(target=str(repo), force=False))
+    output = capsys.readouterr().out
+    assert "reset" in output.lower() and "clean" in output.lower()
+    assert "commit or stash" not in output
 
 
 def test_public_upgrade_refuses_resume_after_preserved_client_skill_is_lost(

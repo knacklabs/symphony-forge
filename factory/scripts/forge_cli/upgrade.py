@@ -105,12 +105,15 @@ KNOWN_FORGE_RETAINED_PROFILE_HASHES = {
         "ba68c9092378cb45ba632b76cbb1a3d0e9601da617f4bbc45588a2ada46e912c",
         "d0dbfbea103f552d31ec233eebb53094d6f21c01be4c8b5d4cf69768beb962d2",
         "ee02022932efe1dffd4a9e3402ec11df10c60221d3c33513925be7573bcbe96c",
+        "b22e54eef473edf628e6b1166bcf80ea93c97f09da4589c83fe069146b1503f2",
+        "55e2b801ee7fa3aa70453e982652caa0da1a53a42077f23258e1b62c5e970b7b",
     },
     "docs-decomposer.toml": {
         "4b8ee76734f910c242e15f2b89232b312f10410f22c9c4e3dbdadccbc781d6fa",
         "ebc2299566ed42b196700ad9393421c79804a737b863db2b0587f79868343f00",
         "23f1007533de1073e449f2e4b40d277c71e31b8b2256ea87e5594f537968881b",
         "c2696d86dd5de5098ef7ff9d2b9d77d061a69be7b58e60601544e93ee560da3d",
+        "b3bae16c3042a42762f717ff6357c060b9abec1ecb318182e9ad0a777820cfeb",
     },
     "functional-checker.toml": {
         "6411566c800dab5253346c63305fb61d6082533bf0f86d0283f1ecbb67d6d107",
@@ -2242,57 +2245,7 @@ def _prepare_review_outputs(target: Path, migration: dict) -> None:
     migration["prepared_reviews"] = prepared
 
 
-def _legacy_plan_approval_requires_native(target: Path) -> bool:
-    """Refuse migration until an unchanged legacy approval is consumed natively."""
-    try:
-        from factory_lib import (
-            _read_review_bytes, evidence_path,
-            plan_digest_without_assumptions, run_state_path,
-        )
-        state = load_json(run_state_path(target), default={})
-        if not isinstance(state, dict) or state.get("plan_status") != "approved":
-            return False
-        relative = state.get("plan_file")
-        approved = state.get("approved_plan_sha256")
-        if (not isinstance(relative, str) or Path(relative).is_absolute()
-                or ".." in Path(relative).parts
-                or not isinstance(approved, str)
-                or re.fullmatch(r"[0-9a-f]{64}", approved) is None):
-            return False
-        plan = target / relative
-        if (Path(relative).is_absolute() or ".." in Path(relative).parts):
-            return False
-        _read_review_bytes(target, plan)
-        digest = plan_digest_without_assumptions(plan)
-        if digest != approved:
-            return False
-        story = str(state.get("story") or state.get("issue_key") or "").strip()
-        issue = str(state.get("issue_key") or story).strip()
-        if (not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]*", story)
-                or not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]*", issue)):
-            return False
-        evidence = evidence_path(target, story, "plan-approval.json")
-        record = json.loads(_read_review_bytes(target, evidence))
-        return (
-            isinstance(record, dict)
-            and record.get("approved_plan_sha256") == digest
-            and record.get("issue") == issue
-            and record.get("story") == story
-            and all(isinstance(record.get(field), str) and record[field].strip()
-                    for field in ("approver", "at"))
-            and "runtime" not in record
-        )
-    except (OSError, UnicodeError, ValueError, TypeError, json.JSONDecodeError,
-            SystemExit):
-        return False
-
-
 def preflight_lean_migration(target: Path) -> dict | None:
-    if _legacy_plan_approval_requires_native(target):
-        fail(
-            "Lean migration requires a genuine native approval for the unchanged "
-            "plan; run `forge next`, approve that exact plan, then retry `forge upgrade`."
-        )
     original_manifest = (
         target / ".factory" / "migrations" / f"{LEAN_MIGRATION_VERSION}.json"
     )
@@ -2876,6 +2829,20 @@ def _upgrade_path_identity(path: Path) -> dict[str, object]:
             "sha256": hashlib.sha256(encoded).hexdigest()}
 
 
+def _upgrade_resume_harness_identity(
+        harness: Path, operations: list[dict[str, object]]) -> str:
+    commit = head_sha(harness)
+    if isinstance(commit, str) and re.fullmatch(r"[0-9a-f]{40}|[0-9a-f]{64}", commit):
+        return commit
+    inventory = [
+        {"source": row["source"], "identity": row["source_identity"]}
+        for row in operations if row.get("kind") in {"tree", "file"}
+    ]
+    return hashlib.sha256(json.dumps(
+        inventory, sort_keys=True, separators=(",", ":"),
+    ).encode()).hexdigest()
+
+
 def _upgrade_resume_plan(
         harness: Path, target: Path,
         preserve_sources: dict[str, Path],
@@ -2963,7 +2930,7 @@ def _upgrade_resume_plan(
                                     str(row["kind"])))
     plan = {
         "version": UPGRADE_RESUME_VERSION,
-        "harness_commit": head_sha(harness),
+        "harness_commit": _upgrade_resume_harness_identity(harness, operations),
         "operations": operations,
     }
     plan["plan_sha256"] = hashlib.sha256(json.dumps(
@@ -2978,15 +2945,10 @@ def _upgrade_resume_plan_is_valid(
     if not isinstance(plan, dict):
         return False
     operations = plan.get("operations")
-    harness_commit = head_sha(harness)
     recorded_commit = plan.get("harness_commit")
     if (plan.get("version") != UPGRADE_RESUME_VERSION
-            or (harness_commit is None and recorded_commit is not None)
-            or (harness_commit is not None and (
-                not isinstance(recorded_commit, str)
-                or not re.fullmatch(r"[0-9a-f]{40}", recorded_commit)
-                or recorded_commit != harness_commit
-            ))
+            or not isinstance(recorded_commit, str)
+            or re.fullmatch(r"[0-9a-f]{40}|[0-9a-f]{64}", recorded_commit) is None
             or not isinstance(operations, list)
             or plan.get("plan_sha256") != hashlib.sha256(json.dumps(
                 operations, sort_keys=True, separators=(",", ":"),
@@ -3004,7 +2966,7 @@ def _upgrade_resume_plan_is_valid(
             source = row.get("source")
             identity = row.get("source_identity")
             if (not isinstance(source, str) or Path(source).is_absolute()
-                    or ".." in Path(source).parts
+                    or ".." in Path(source).parts or "\\" in source
                     or not isinstance(identity, dict)
                     or _upgrade_path_identity(harness / source) != identity):
                 return False
@@ -3030,6 +2992,8 @@ def _upgrade_resume_plan_is_valid(
                     return False
         elif kind not in {"remove", "state"}:
             return False
+    if recorded_commit != _upgrade_resume_harness_identity(harness, operations):
+        return False
     return True
 
 
@@ -4503,6 +4467,44 @@ def _incomplete_lean_resume_paths(
     return allowed
 
 
+def _active_lean_migration_manifest(target: Path) -> dict | None:
+    manifest = target / ".factory" / "migrations" / f"{LEAN_MIGRATION_VERSION}.json"
+    supplemental = manifest.with_name(LEAN_MIGRATION_SUPPLEMENT)
+    if supplemental.exists() or supplemental.is_symlink():
+        manifest = supplemental
+    try:
+        if manifest.is_symlink() or not manifest.is_file():
+            return None
+        saved = load_json(manifest, default={})
+    except (OSError, UnicodeError, json.JSONDecodeError):
+        return None
+    return saved if isinstance(saved, dict) else None
+
+
+def _is_client_owned_upgrade_skill_path(relative: str, harness: Path) -> bool:
+    parts = PurePosixPath(relative).parts
+    if len(parts) < 3 or parts[:2] != ("factory", "skills"):
+        return False
+    skill = parts[2]
+    return skill in {"proposed", "rejected"} or not (
+        harness / "factory" / "skills" / skill
+    ).exists()
+
+
+def _only_harness_owned_upgrade_paths(changed: set[str], harness: Path) -> bool:
+    resume_state = {
+        f".factory/migrations/{LEAN_MIGRATION_VERSION}.json",
+        f".factory/migrations/{LEAN_MIGRATION_SUPPLEMENT}",
+    }
+    return bool(changed) and all(
+        relative in resume_state or (
+            _is_harness_owned(relative, harness)
+            and not _is_client_owned_upgrade_skill_path(relative, harness)
+        )
+        for relative in changed
+    )
+
+
 def _require_clean_upgrade_target(
         target: Path, *, allow_lean_resume: bool = False) -> None:
     status = subprocess.run(
@@ -4538,6 +4540,35 @@ def _require_clean_upgrade_target(
             )
             if allowed and changed and changed <= allowed:
                 return
+            harness = repo_root()
+            if _only_harness_owned_upgrade_paths(changed, harness):
+                saved = _active_lean_migration_manifest(target)
+                plan = saved.get("upgrade_resume") if saved else None
+                if isinstance(plan, dict) and not plan.get("completed_at"):
+                    try:
+                        valid = _upgrade_resume_plan_is_valid(
+                            target, harness, plan,
+                        )
+                    except SystemExit:
+                        valid = False
+                    if not valid:
+                        recorded = plan.get("harness_commit")
+                        label = (
+                            recorded if isinstance(recorded, str) and re.fullmatch(
+                                r"[0-9a-f]{40}|[0-9a-f]{64}", recorded,
+                            ) else "<missing or invalid>"
+                        )
+                        fail(
+                            "incomplete upgrade resume plan for harness commit "
+                            f"{label} is invalid; reset/clean only the interrupted "
+                            "harness-owned paths to HEAD, then rerun forge upgrade."
+                        )
+                if saved and saved.get("completed_at"):
+                    fail(
+                        "the Lean migration is complete, but a later upgrade was "
+                        "interrupted; reset/clean only the changed harness-owned "
+                        "paths to HEAD, then rerun forge upgrade."
+                    )
         fail(
             f"{target} has uncommitted changes. Commit or stash first so the upgrade "
             "is a reviewable diff. Lean migration has no --force bypass."
@@ -4939,6 +4970,28 @@ def _cmd_upgrade_locked(
         drift = ("\nNOTE: harness.yaml differs from the harness default (project-owned, "
                  "left untouched) — diff manually if the phase contract changed upstream.")
     print(f"Upgraded {target} to symphony-forge @ {commit[:8]}")
+    migration_paths = (
+        target / ".factory" / "migrations" / f"{LEAN_MIGRATION_VERSION}.json",
+        target / ".factory" / "migrations" / LEAN_MIGRATION_SUPPLEMENT,
+    )
+    has_legacy_plan_approval = any(
+        isinstance(manifest, dict)
+        and any(entry.get("family") == "manual-plan-approval"
+                for entry in manifest.get("entries") or []
+                if isinstance(entry, dict))
+        for path in migration_paths
+        for manifest in [load_json(path, default={})]
+    )
+    if has_legacy_plan_approval:
+        try:
+            from .approval import ApprovalRefused, eligible_candidates
+            candidate = next((item for item in eligible_candidates(target)
+                              if item.kind == "story"), None)
+        except (ApprovalRefused, OSError, ValueError, SystemExit):
+            candidate = None
+        if candidate is not None:
+            plan_file = candidate.path.relative_to(target).as_posix()
+            print(f"Next: re-approve {plan_file} in native Plan Mode after upgrade.")
     print("Replaced (harness-owned): "
           + ", ".join(UPGRADE_TREES + UPGRADE_FILES + COPY_WORKFLOWS))
     print("Replaced doc contracts: " + ", ".join(replaced_doc_contracts))
