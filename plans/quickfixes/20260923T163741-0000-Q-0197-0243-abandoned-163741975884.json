@@ -1,0 +1,15 @@
+{
+  "event": "abandoned",
+  "id": "Q-0197-0243",
+  "profile": "lite",
+  "reason": "Owner chose one task and one review: this window's committed fix (d889073d) is adopted by task LEAN-FIXES, which reviews and ships it",
+  "opened_reason": "Owner-authorized fix: the decomposition recorder freezes the task graph forever after first recording, even after the story plan is amended and natively re-approved",
+  "started_at": "2026-09-23T16:20:15+00:00",
+  "completed_at": "2026-09-23T16:37:41+00:00",
+  "files": [
+    "factory/scripts/record_decomposition_from_json.py",
+    "factory/tests/test_gates.py"
+  ],
+  "by": "Ravi Kiran Vemula",
+  "base_sha": "50e2811b8b22dc65844c727f90e145e42e39dcaa"
+}
