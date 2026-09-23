@@ -32,13 +32,10 @@ routes preserve the active task, worktree and effective scope and produce the sa
 `.factory` artifacts, but native delivery deliberately has no Forge-managed
 process identity or lifecycle proof.
 
-Start the coordinator session, Claude Code or native Codex, inside the
-worktree you are working in. Every Forge hook (native approval, the write
-lockout, the grill and delegation recorders) resolves the repository from the
-session's working directory. A session started in another checkout runs that
-checkout's hooks against the wrong repository: native Plan Mode approval records
-nothing and the gates cannot see the work. Open a new session in the task
-worktree rather than pointing an existing one at it.
+Keep the coordinating Claude/Codex session in the repository's primary checkout
+on its default branch (the main worktree). Each task and fix uses a separate
+worktree, reached by absolute path (`git -C <path>` or subprocess cwd); keep the
+coordinator shell in its checkout.
 
 The main coordinator model and reasoning remain the user's and host's choice.
 Decision 0083 routes native roles by work: Luna/max handles routine
@@ -397,6 +394,11 @@ an absent or valid epic-less roadmap leaves its gates green, while malformed
 roadmap JSON fails the arming step loudly.
 
 ## Concurrency — one worktree and PR per task
+
+Forge hooks resolve the repository from the coordinating session's working
+directory and refuse commands outside a checkout. Reach task and fix worktrees
+by absolute path (`git -C <path>` or subprocess cwd) while the coordinator stays
+in the main worktree. If stranded, resume the session from a checkout.
 
 Each leaf task owns an isolated worktree, branch, proof set, and PR. A task
 starts from refreshed trunk only after its dependency markers are present;
