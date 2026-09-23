@@ -760,6 +760,55 @@ def test_approved_task_plan_amendment_does_not_mask_changed_grounding(
             lib.require_task_grill(repo, "T1", {**STAGE_TASK, field: value})
 
 
+@pytest.mark.parametrize(
+    ("changes", "message"),
+    [
+        ({"cold_input_sha256": "not-a-digest"}, "malformed cold proof"),
+        ({"final_artifact_sha256": "F" * 64}, "malformed cold proof"),
+        ({"finding_dispositions": {}}, "malformed cold proof"),
+        ({"amendments": []}, "malformed amendment bridge"),
+        ({"artifact_delta": "not-a-list"}, "malformed amendment bridge"),
+        ({"amendments": [{
+            "delta_index": 0, "findings": [{}], "change": "change",
+            "reason": "reason", "source": "source",
+        }]}, "malformed amendment bridge"),
+        ({"amendments": [{
+            "delta_index": 1, "findings": ["cold finding"], "change": "change",
+            "reason": "reason", "source": "source",
+        }]}, "malformed amendment bridge"),
+    ],
+)
+def test_require_task_grill_rejects_malformed_cold_proof(
+        repo: Path, monkeypatch: pytest.MonkeyPatch, changes: dict, message: str):
+    lib = _seed(repo)
+    path = lib.evidence_path(
+        repo, "TEST-1", "grills/tasks/T1.json", for_write=True,
+    )
+    lib.dump_json(path, {
+        "verdict": "pass", "commit": "base",
+        "cold_input_sha256": "a" * 64,
+        "final_artifact_sha256": "b" * 64,
+        "finding_dispositions": [{
+            "finding": "cold finding", "resolution": "resolved", "source": "test",
+        }],
+        "amendments": [{
+            "delta_index": 0, "findings": ["cold finding"],
+            "change": "change", "reason": "reason", "source": "source",
+        }],
+        "artifact_delta": [{
+            "cold_start": 0, "cold_end": 1, "cold": "old\n",
+            "final_start": 0, "final_end": 1, "final": "new\n",
+        }],
+        **changes,
+    })
+    monkeypatch.setattr(
+        lib, "task_grill_grounding_matches", lambda *_args, **_kwargs: True,
+    )
+
+    with pytest.raises(SystemExit, match=message):
+        lib.require_task_grill(repo, "T1", TASK)
+
+
 def test_story_plan_predecessors_fail_closed_on_malformed_sibling_event(
         repo: Path):
     lib = _seed(repo)

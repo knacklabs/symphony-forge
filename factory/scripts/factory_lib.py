@@ -3397,12 +3397,67 @@ def require_task_grill(
     cold_fields = (
         "cold_input_sha256", "final_artifact_sha256", "finding_dispositions",
     )
-    if (any(field not in data for field in cold_fields)
-            and not _legacy_inflight_task_grill(root, task, data, treeish=treeish)):
+    missing_cold_field = any(field not in data for field in cold_fields)
+    legacy_inflight = (
+        missing_cold_field
+        and _legacy_inflight_task_grill(root, task, data, treeish=treeish)
+    )
+    if missing_cold_field and not legacy_inflight:
         raise SystemExit(
             f"the {task_id} task grill uses a removed coldless authority format; "
             "run `forge upgrade` before continuing."
         )
+    if not legacy_inflight:
+        if any(
+            not isinstance(data.get(field), str)
+            or re.fullmatch(r"[0-9a-f]{64}", data[field]) is None
+            for field in cold_fields[:2]
+        ) or not isinstance(data["finding_dispositions"], list):
+            raise SystemExit(
+                f".factory/grills/tasks/{task_id}.json has malformed cold proof; "
+                f"re-record `{record_command}`."
+            )
+        if data["cold_input_sha256"] != data["final_artifact_sha256"]:
+            amendments = data.get("amendments")
+            artifact_delta = data.get("artifact_delta")
+            disposition_findings = {
+                entry["finding"] for entry in data["finding_dispositions"]
+                if isinstance(entry, dict)
+                and isinstance(entry.get("finding"), str)
+            }
+            indexes = []
+            if (not isinstance(amendments, list) or not amendments
+                    or not isinstance(artifact_delta, list)):
+                raise SystemExit(
+                    f".factory/grills/tasks/{task_id}.json has a malformed "
+                    f"amendment bridge; re-record `{record_command}`."
+                )
+            for amendment in amendments:
+                findings = (amendment.get("findings")
+                            if isinstance(amendment, dict) else None)
+                if (
+                    not isinstance(amendment, dict)
+                    or any(
+                        not isinstance(amendment.get(field), str)
+                        or not amendment[field].strip()
+                        for field in ("change", "reason", "source")
+                    )
+                    or not isinstance(findings, list) or not findings
+                    or any(not isinstance(finding, str) for finding in findings)
+                    or len(set(findings)) != len(findings)
+                    or any(finding not in disposition_findings for finding in findings)
+                    or type(amendment.get("delta_index")) is not int
+                ):
+                    raise SystemExit(
+                        f".factory/grills/tasks/{task_id}.json has a malformed "
+                        f"amendment bridge; re-record `{record_command}`."
+                    )
+                indexes.append(amendment["delta_index"])
+            if sorted(indexes) != list(range(len(artifact_delta))):
+                raise SystemExit(
+                    f".factory/grills/tasks/{task_id}.json has a malformed "
+                    f"amendment bridge; re-record `{record_command}`."
+                )
     if data.get("verdict") != "pass":
         raise SystemExit(
             f".factory/grills/tasks/{task_id}.json verdict is "

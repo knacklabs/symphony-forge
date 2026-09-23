@@ -970,6 +970,32 @@ def test_native_approval_reuses_existing_story_and_task_approval_storage(
         repo, task_row, legacy, task.digest)
 
 
+def test_native_task_approval_preserves_exact_grill_artifact_digest(
+        repo: Path, monkeypatch: pytest.MonkeyPatch):
+    lib = load_factory_lib(repo)
+    plan = repo / ".factory" / "task.md"
+    plan.write_text("---\nstatus: approved\n---\n\n# task\n", encoding="utf-8")
+    exact_digest = hashlib.sha256(plan.read_bytes()).hexdigest()
+    semantic_digest = lib.plan_digest_without_assumptions(plan)
+    assert exact_digest != semantic_digest
+
+    grill = repo / ".factory" / "task-grill.json"
+    lib.dump_json(grill, {"verdict": "pass", "final_artifact_sha256": exact_digest})
+    candidate = approval.ApprovalCandidate(
+        "task", "APPROVE-1", "T1", plan, semantic_digest, grill,
+    )
+    monkeypatch.setattr(approval, "eligible_candidates", lambda _base: [candidate])
+
+    record = approval.record_native_approval(
+        repo, _event(candidate, "codex"), runtime="codex",
+    )
+
+    stored = json.loads(grill.read_text(encoding="utf-8"))
+    assert stored["final_artifact_sha256"] == exact_digest
+    assert stored["approved_task_plan_sha256"] == semantic_digest
+    assert record["approved_plan_sha256"] == semantic_digest
+
+
 def _lean_bootstrap_grill(lib) -> dict:
     digest = lib._LEAN_SELF_BOOTSTRAP_DIGEST
     return {
