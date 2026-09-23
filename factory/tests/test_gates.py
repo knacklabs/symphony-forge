@@ -23454,6 +23454,43 @@ def test_task_pr_ready_retry_reuses_unchanged_committed_marker(repo, tmp_path):
     assert "gh auth login" not in generic_failure
 
 
+def test_task_pr_ready_reseals_clean_successor_review_on_same_diff(repo, tmp_path):
+    git(repo, "checkout", "-qb", "feat/task-pr-reseal-clean-review")
+    marker = prepare_task_pr_ready(repo, tmp_path)
+    finish_task_for_pr_ready(repo)
+    proof = write_task_proof(repo, "T1", publish_review=True)
+    git(repo, "add", proof.relative_to(repo).as_posix(), ".factory/review-briefs/all.md")
+    git(repo, "commit", "-qm", "record T1 proof")
+    env, _, _ = task_pr_retry_env(tmp_path)
+    code, out = run(repo, "forge.py", "task", "pr-ready", "T1", env=env)
+    assert code == 0, out
+
+    original_marker = json.loads(marker.read_text())
+    original_marker_head = head(repo)
+    original_selection = json.loads((proof / "reviews/selected.json").read_text())
+
+    write_task_proof(repo, "T1", publish_review=True)
+    git(repo, "add", "-A")
+    git(repo, "commit", "-qm", "record successor combined review")
+    reseal_input_head = head(repo)
+    lib = load_factory_lib(repo)
+    assert lib.product_delta_digest(repo, original_marker["commit"], reseal_input_head) \
+        == hashlib.sha256(b"").hexdigest()
+    successor_selection = json.loads((proof / "reviews/selected.json").read_text())
+    assert successor_selection["generation_id"] != original_selection["generation_id"]
+    assert lib.task_proof_problems(repo, "ENG-1", STAGE_TASK)
+
+    code, out = run(repo, "forge.py", "task", "pr-ready", "T1", env=env)
+
+    assert code == 0, out
+    resealed_marker = json.loads(marker.read_text())
+    assert head(repo) != original_marker_head
+    assert resealed_marker["commit"] == reseal_input_head
+    assert resealed_marker["review_base_sha"] == original_marker["review_base_sha"]
+    assert json.loads(git(repo, "show", f"HEAD:{marker.relative_to(repo).as_posix()}")) \
+        == resealed_marker
+
+
 def test_task_proof_refuses_working_tree_marker_different_from_head(
         repo, tmp_path):
     git(repo, "checkout", "-qb", "feat/task-marker-identity")
