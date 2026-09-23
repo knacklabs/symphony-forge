@@ -501,10 +501,12 @@ def test_claude_context_launch_sends_exact_bound_prompt_over_stdin(
     capture = tmp_path / "companion-capture.json"
     companion.write_text(
         "MAX_PROMPT_BYTES = 1048576\n"
-        "import json, os, sys\n"
+        "import json, os, stat, sys\n"
+        "regular = stat.S_ISREG(os.fstat(0).st_mode)\n"
         "prompt = sys.stdin.buffer.read().decode('utf-8')\n"
         "with open(os.environ['FAKE_COMPANION_CAPTURE'], 'w') as stream:\n"
-        "    json.dump({'argv': sys.argv[1:], 'prompt': prompt}, stream)\n"
+        "    json.dump({'argv': sys.argv[1:], 'prompt': prompt,\n"
+        "               'regular': regular}, stream)\n"
         "print(json.dumps({'status': 0, 'threadId': 'fixture', "
         "'rawOutput': '{}'}))\n",
         encoding="utf-8",
@@ -532,6 +534,8 @@ def test_claude_context_launch_sends_exact_bound_prompt_over_stdin(
 
     captured = json.loads(capture.read_text(encoding="utf-8"))
     prompt = captured["prompt"]
+    # A pipe filled after spawn races Node's non-blocking stdin read (EAGAIN).
+    assert captured["regular"] is True
     assert "--prompt-file" not in captured["argv"]
     assert prompt.startswith("primary\n\n## Untrusted supplemental context")
     assert prompt.count("</supplemental-context>") == 1

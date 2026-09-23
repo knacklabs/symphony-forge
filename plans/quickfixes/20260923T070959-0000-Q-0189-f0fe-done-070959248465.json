@@ -1,0 +1,15 @@
+{
+  "event": "done",
+  "id": "Q-0189-f0fe",
+  "profile": "degraded",
+  "kind": "degraded",
+  "reason": "forge delegate --context-file launches die with EAGAIN: the companion reads a non-blocking stdin pipe before Forge writes the prompt; delegation itself is broken, so only the host can fix it",
+  "started_at": "2026-09-23T07:08:18+00:00",
+  "completed_at": "2026-09-23T07:09:59+00:00",
+  "files": [
+    "factory/scripts/forge_cli/delegate.py",
+    "factory/tests/test_native_launch.py"
+  ],
+  "task_id": "LEAN-WORKFLOW",
+  "story": "FORGE-COORD-1"
+}

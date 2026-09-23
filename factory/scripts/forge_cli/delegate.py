@@ -2217,15 +2217,24 @@ def launch_companion(
                     else {"start_new_session": True,
                           "preexec_fn": unblock_termination_signals_in_child}
                 )
-                prompt_stdin = has_context
+                prompt_stdin = None
+                if has_context:
+                    # The companion reads fd 0 at once, after Node has made it
+                    # non-blocking; a pipe still empty then fails with EAGAIN.
+                    # Hand it a complete anonymous file instead: nothing persists.
+                    prompt_stdin = tempfile.TemporaryFile()
+                    prompt_stdin.write(launch_text.encode("utf-8"))
+                    prompt_stdin.seek(0)
                 stdio_options = ({"text": False} if prompt_stdin else {
                     "text": True, "encoding": "utf-8", "errors": "strict",
                 })
                 proc = subprocess.Popen(
                     argv, cwd=base, stdout=stdout_log, stderr=stderr_log,
-                    stdin=subprocess.PIPE if prompt_stdin else None,
+                    stdin=prompt_stdin,
                     env=process_env, **stdio_options, **spawn_options,
                 )
+                if prompt_stdin is not None:
+                    prompt_stdin.close()
                 process_identity = _capture_spawn_identity(proc)
                 record.update({
                     "at": now_iso(),
@@ -2241,10 +2250,6 @@ def launch_companion(
                         lock, record["launch_id"], proc.pid,
                         owner_pgid=proc.pid)
                 append_delegation(base, record)
-                if prompt_stdin:
-                    assert proc.stdin is not None
-                    proc.stdin.write(launch_text.encode("utf-8"))
-                    proc.stdin.close()
         except OSError as exc:
             if proc is None:
                 append_delegation(base, {
