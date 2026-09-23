@@ -516,7 +516,12 @@ def _seed_cold_launch(repo: Path, gate: str, digest: str, task_id: str = "",
             f"\n## The artifact under interrogation ({gate})\n\n"
             f"{_cold_artifact_frame(artifact_text)}\n\n## What to return\n"
         )
-    brief.write_text(brief_body, encoding="utf-8")
+    # Bytes, exactly as launch_companion writes a real brief. The cold-artifact
+    # frame is parsed byte-for-byte; a text-mode write on Windows turns every
+    # "\n" into "\r\n", the frame header can never match, and the recorder
+    # refuses with "the authenticated cold brief does not contain its exact
+    # artifact" -- the four windows-hook-gates failures.
+    brief.write_bytes(brief_body.encode("utf-8"))
     output = repo / ".factory" / f"{launch_id}.stdout.log"
     output.write_text(json.dumps({
         "status": 0, "threadId": "fixture-session",
