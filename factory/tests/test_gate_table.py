@@ -195,7 +195,7 @@ def test_active_model_policy_has_no_forbidden_execution_surface():
         "lite": mode_run_config(HARNESS, "lite")[:2],
         **actual_roles,
     }
-    assert active["implementation"] == ("gpt-6-luna", "max")
+    assert active["implementation"] == ("gpt-6-sol", "medium")
     assert active["explore"] == ("gpt-6-sol", "medium")
     assert active["grill"] == ("gpt-6-sol", "high")
     assert active["lite"] == ("gpt-6-luna", "max")

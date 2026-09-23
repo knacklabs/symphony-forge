@@ -46,7 +46,9 @@ implementation, automated tests, diagnosed or review fixes, documentation
 edits, and mechanical refactors; Sol/medium handles read-heavy exploration and
 dependency tracing; Sol/high handles planning, decomposition, difficult
 diagnosis, independent grills, and final functional checks. A difficult
-diagnosis returns its resolved edit to the Luna/max execution role. Formal code
+diagnosis returns its resolved edit to the Luna/max execution role. A delegated
+or lite thread is the task lead on Sol/medium; it hands edits to Luna/max
+subagents. Formal code
 review stays exclusively with the unchanged, externally maintained Autoreview
 skill, which may choose its own internal Codex or agent calls. No Forge or
 native lane selects Luna/low.

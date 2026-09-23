@@ -86,7 +86,10 @@ defines the role defaults:
   Forge-native role override.
 
 A difficult diagnosis returns its resolved edit to the Luna/max execution
-role. No Forge or native configuration selects Luna with low reasoning.
+role. The thread `forge delegate` or `forge fix` launches is the
+task lead on `gpt-6-sol` at `medium` (the `implementation` and `modes.lite`
+pins); it plans and verifies and hands the edits to Luna/max subagents.
+No Forge or native configuration selects Luna with low reasoning.
 Native transport remains process-free: Forge prepares the validated dispatch
 descriptor, Main sends it to the host role, and the host owns subagent
 lifecycle. Forge adds no process, session, PID, launch-token,

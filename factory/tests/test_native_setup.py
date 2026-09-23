@@ -430,11 +430,11 @@ def test_model_policy_selects_sol_work_and_luna_lite():
             "griller", "performance", "planner", "planner-high", "security",
         },
     }
-    assert pinned_run_config(HARNESS) == ("gpt-6-luna", "max")
+    assert pinned_run_config(HARNESS) == ("gpt-6-sol", "medium")
     assert (explore["model"], explore["model_reasoning_effort"]) == (
         "gpt-6-sol", "medium")
     assert mode_run_config(HARNESS, "grill")[:2] == ("gpt-6-sol", "high")
-    assert mode_run_config(HARNESS, "lite")[:2] == ("gpt-6-luna", "max")
+    assert mode_run_config(HARNESS, "lite")[:2] == ("gpt-6-sol", "medium")
     assert (CODEX_REVIEW_MODEL, CODEX_REVIEW_THINKING) == (
         "gpt-6-sol", "high")
 

@@ -18,6 +18,10 @@ relevant tests and a concise handoff. Then return.
 The orchestrator owns local autoreview, Git staging/commit, evidence recording,
 and `forge stage done` after your process exits; do not run those parent-owned
 steps. Signals are how you stop early, not questions.
+As the delegated lead (Sol/medium) you plan and verify; hand the
+edits to `worker`/`coder` subagents (Luna/max), review their diff, and run the
+existing tests of every module touched before you hand off. Never run `forge`
+commands yourself.
 
 Rules:
 - **The constitution's CODING STANDARDS are binding, not just its conduct doc.**

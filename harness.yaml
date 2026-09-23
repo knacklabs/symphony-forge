@@ -23,8 +23,8 @@ precedence:
 
 modes:
   lite:
-    model: "gpt-6-luna"
-    reasoning: "max"
+    model: "gpt-6-sol"
+    reasoning: "medium"
     bound: 5
   # The cold reader uses a fresh model context independent of whoever authored
   # the artifact. Its model is pinned here, beside every other model pin, rather
@@ -106,8 +106,8 @@ phases:
     notes: "Per-task task graph; records the user_facing flag the ship gate reads."
   implementation:
     owner: "codex:/codex:rescue"
-    model: "gpt-6-luna"
-    reasoning: "max"
+    model: "gpt-6-sol"
+    reasoning: "medium"
     prompts: "factory/prompts/implementer.md"
     required_skills: # ENFORCED by feature type — the decomposition's user_facing flag:
       # the recorder refuses a user-facing testing artifact unless skills_used
@@ -131,6 +131,8 @@ phases:
       delegate is never without it; (3) the autoreview quality lens flags
       ladder violations (over-engineering) at review. The recorder never demands
       it in skills_used.
+      The delegated thread is the task lead on Sol/medium and hands its edits to
+      Luna/max subagents.
       Native children use their registered role profile: routine implementation,
       testing, frontend work, refactors, documentation edits, and diagnosed
       fixes use Luna/max; difficult diagnosis uses the Sol/high debugger and
