@@ -3372,9 +3372,14 @@ def require_grill(
             if rel.startswith(prefixes) and not _grill_exempt(rel, ignore_names):
                 stale.append(f"{rel} (uncommitted)")
     if stale:
+        advice = (
+            "Commit it, then run `forge grill run` again."
+            if any("(uncommitted)" in entry for entry in stale)
+            else "Re-run the grill against the current docs."
+        )
         raise SystemExit(
             f"the {gate} grill is STALE — handover docs changed since it ran: "
-            f"{', '.join(stale[:5])}. Re-run the grill against the current docs."
+            f"{', '.join(stale[:5])}. {advice}"
         )
 
 

@@ -182,7 +182,9 @@ def _completed_deleted_plan_approval(base: Path, story: str, evidence: Path) -> 
     return False
 
 
-def _story_candidate(base: Path) -> ApprovalCandidate | None:
+def _story_candidate(
+    base: Path, refusal_reasons: list[str] | None = None,
+) -> ApprovalCandidate | None:
     state = _strict_run_state(base)
     status = state.get("plan_status")
     if status not in {"awaiting-approval", "approved"}:
@@ -215,7 +217,9 @@ def _story_candidate(base: Path) -> ApprovalCandidate | None:
                 ignore_names=("client-signoff", "epics-approved"),
                 expect_digest_of=path,
             )
-        except SystemExit:
+        except SystemExit as exc:
+            if refusal_reasons is not None:
+                refusal_reasons.append(str(exc))
             return None
     else:
         approved = state.get("approved_plan_sha256")
@@ -488,9 +492,16 @@ def record_native_approval(
     with delegation_exclusion(base, "native-approval", kind="approval"):
         candidates = eligible_candidates(base)
         if len(candidates) != 1:
+            refusal_reasons: list[str] = []
+            if not candidates:
+                _story_candidate(base, refusal_reasons)
+            detail = (
+                f": {refusal_reasons[0]}"
+                if not candidates and refusal_reasons else ""
+            )
             raise ApprovalRefused(
                 "native approval requires exactly one eligible current-frontier "
-                f"candidate; found {len(candidates)}"
+                f"candidate; found {len(candidates)}{detail}"
             )
         candidate = candidates[0]
         _require_safe_plan(base, candidate.path)
