@@ -1,0 +1,15 @@
+{
+  "event": "done",
+  "id": "Q-0197-fb19",
+  "profile": "degraded",
+  "kind": "degraded",
+  "reason": "Close the native Bash write-through-symlink scope gap introduced by round 8's lexical classification (review 65643809 security finding, pre_tool_use.py:630): check both the link path and its resolved target",
+  "started_at": "2026-09-23T15:32:17+00:00",
+  "completed_at": "2026-09-23T15:33:40+00:00",
+  "files": [
+    "factory/scripts/pre_tool_use.py",
+    "factory/tests/test_worker_admission.py"
+  ],
+  "task_id": "LEAN-WORKFLOW",
+  "story": "FORGE-COORD-1"
+}
