@@ -3946,6 +3946,75 @@
       "delta_id": "866b6ff3bcc5b540ec2810792f8644e20cfe429a606881028ae0bf2b295409ce",
       "generation_id": "a9cf2e1b72b49d1b31e6a9ebea47212f22dbf7acc58c9159b4ec0c8a35ed55c5",
       "task_id": "LEAN-WORKFLOW"
+    },
+    {
+      "lens": "quality",
+      "finding": {
+        "area": "factory/scripts",
+        "category": "bug",
+        "file_path": "factory/scripts/factory_lib.py",
+        "line": 3418,
+        "summary": "Preserve grounding checks after a task-plan amendment (factory/scripts/factory_lib.py:3418): Trigger: a task receives native approval for an amended plan, then its active-stage objective, acceptance criteria, plan contracts, or user-facing classification changes while the authored plan stays the same.",
+        "title": "Preserve grounding checks after a task-plan amendment"
+      },
+      "verdict": "real",
+      "evidence": "factory/scripts/factory_lib.py:3418",
+      "instances": [
+        "factory/scripts/factory_lib.py:3418"
+      ],
+      "keep": "",
+      "reason": "",
+      "triaged_by": "claude-coordinator",
+      "triaged_at": "2026-09-23T12:09:15+00:00",
+      "delta_id": "f855f12b4dfa625d134672b00122cbf6c4182a8436c1df80352a3cba6b5bdde6",
+      "generation_id": "22dbcb187abd82aef54cad9485448c3974d07f732722763fe061300acd44aa9c",
+      "task_id": "LEAN-WORKFLOW"
+    },
+    {
+      "lens": "quality",
+      "finding": {
+        "area": "factory/scripts/forge_cli",
+        "category": "bug",
+        "file_path": "factory/scripts/forge_cli/upgrade.py",
+        "line": 3877,
+        "summary": "Preserve client skills across an interrupted upgrade (factory/scripts/forge_cli/upgrade.py:3877): When an upgrade stops after replacing `factory/` but before restoring a client-owned `factory/skills/` entry, resume accepts that entry's absence as expected.",
+        "title": "Preserve client skills across an interrupted upgrade"
+      },
+      "verdict": "real",
+      "evidence": "factory/scripts/forge_cli/upgrade.py:3878",
+      "instances": [
+        "factory/scripts/forge_cli/upgrade.py:3878"
+      ],
+      "keep": "",
+      "reason": "",
+      "triaged_by": "claude-coordinator",
+      "triaged_at": "2026-09-23T12:09:15+00:00",
+      "delta_id": "f855f12b4dfa625d134672b00122cbf6c4182a8436c1df80352a3cba6b5bdde6",
+      "generation_id": "22dbcb187abd82aef54cad9485448c3974d07f732722763fe061300acd44aa9c",
+      "task_id": "LEAN-WORKFLOW"
+    },
+    {
+      "lens": "quality",
+      "finding": {
+        "area": "factory/scripts/forge_cli",
+        "category": "bug",
+        "file_path": "factory/scripts/forge_cli/upgrade.py",
+        "line": 653,
+        "summary": "Allow active tasks to complete a fresh review after migration (factory/scripts/forge_cli/upgrade.py:653): For an active task with a complete fixed-lens triple and no pr-ready marker, migration classifies the files as excluded and preserves them.",
+        "title": "Allow active tasks to complete a fresh review after migration"
+      },
+      "verdict": "real",
+      "evidence": "factory/scripts/forge_cli/upgrade.py:653",
+      "instances": [
+        "factory/scripts/forge_cli/upgrade.py:653"
+      ],
+      "keep": "",
+      "reason": "",
+      "triaged_by": "claude-coordinator",
+      "triaged_at": "2026-09-23T12:09:15+00:00",
+      "delta_id": "f855f12b4dfa625d134672b00122cbf6c4182a8436c1df80352a3cba6b5bdde6",
+      "generation_id": "22dbcb187abd82aef54cad9485448c3974d07f732722763fe061300acd44aa9c",
+      "task_id": "LEAN-WORKFLOW"
     }
   ]
 }
