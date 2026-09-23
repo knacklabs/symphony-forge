@@ -1156,7 +1156,52 @@ def test_native_task_approval_preserves_exact_grill_artifact_digest(
     assert record["approved_plan_sha256"] == semantic_digest
 
 
-def _lean_bootstrap_grill(lib) -> dict:
+def _recorded_lean_bootstrap_actor(lib, root: Path, runtime: str = "codex") -> str:
+    story = lib._LEAN_SELF_BOOTSTRAP_STORY
+    actor = {"claude": "human-via-Claude", "codex": "human-via-Codex"}[runtime]
+    story_plan = root / "plans" / "active" / "lean-bootstrap.md"
+    story_plan.parent.mkdir(parents=True, exist_ok=True)
+    story_plan.write_text(
+        f"# Story\n\n{lib._LEAN_SELF_BOOTSTRAP_CLAUSE}.\n",
+        encoding="utf-8",
+    )
+    digest = lib.plan_digest_without_assumptions(story_plan)
+    state = lib.load_json(lib.run_state_path(root), default={})
+    state.update({
+        "issue_key": story,
+        "story": story,
+        "plan_file": story_plan.relative_to(root).as_posix(),
+        "plan_status": "approved",
+        "approved_plan_sha256": digest,
+    })
+    lib.dump_json(lib.run_state_path(root), state)
+    session = "bootstrap-approval-session"
+    event = "bootstrap-approval-event"
+    approval_record = {
+        "approved_plan_sha256": digest,
+        "approved_by": actor,
+        "approved_at": "2026-09-18T12:00:00+00:00",
+        "runtime": runtime,
+        "session_id": session,
+        "event_id": event,
+        "plan_kind": "story",
+        "story": story,
+        "task": "",
+    }
+    event_key = hashlib.sha256(
+        f"{runtime}\0{session}\0{event}".encode("utf-8")
+    ).hexdigest()
+    for relative, payload in (
+        ("plan-approval.json", approval_record),
+        (f"approval-events/{event_key}.json", approval_record),
+    ):
+        path = lib.evidence_path(root, story, relative, for_write=True)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        lib.dump_json(path, payload)
+    return actor
+
+
+def _lean_bootstrap_grill(lib, actor: str) -> dict:
     digest = lib._LEAN_SELF_BOOTSTRAP_DIGEST
     return {
         "generated_by": "griller",
@@ -1166,7 +1211,7 @@ def _lean_bootstrap_grill(lib) -> dict:
         "task_id": lib._LEAN_SELF_BOOTSTRAP_TASK,
         "final_artifact_sha256": lib._LEAN_SELF_BOOTSTRAP_FINAL_ARTIFACT_SHA256,
         "approved_task_plan_sha256": digest,
-        "approved_by": lib._LEAN_SELF_BOOTSTRAP_ACTOR,
+        "approved_by": actor,
         "approved_at": "2026-09-18T12:00:00+00:00",
     }
 
@@ -1185,7 +1230,8 @@ def _lean_bootstrap_grill(lib) -> dict:
 def test_lean_self_bootstrap_compatibility_is_exact(
         repo: Path, monkeypatch: pytest.MonkeyPatch, change: str, value: str):
     lib = load_factory_lib(repo)
-    grill = _lean_bootstrap_grill(lib)
+    actor = _recorded_lean_bootstrap_actor(lib, repo)
+    grill = _lean_bootstrap_grill(lib, actor)
     task = {"id": lib._LEAN_SELF_BOOTSTRAP_TASK}
     story = lib._LEAN_SELF_BOOTSTRAP_STORY
     digest = lib._LEAN_SELF_BOOTSTRAP_DIGEST
@@ -1211,28 +1257,54 @@ def test_lean_self_bootstrap_compatibility_is_exact(
     })
 
 
+def test_lean_self_bootstrap_actor_comes_from_current_story_approval(
+        repo: Path, monkeypatch: pytest.MonkeyPatch):
+    lib = load_factory_lib(repo)
+    actor = _recorded_lean_bootstrap_actor(lib, repo)
+    grill = _lean_bootstrap_grill(lib, actor)
+    task = {"id": lib._LEAN_SELF_BOOTSTRAP_TASK}
+    monkeypatch.setattr(
+        lib, "task_grill_grounding_matches", lambda _root, _task, _grill: True,
+    )
+
+    assert lib._lean_self_bootstrap_task_grill(
+        repo, task, grill, lib._LEAN_SELF_BOOTSTRAP_DIGEST,
+    )
+
+    grill["approved_by"] = "forged-grill-actor"
+    assert not lib._lean_self_bootstrap_task_grill(
+        repo, task, grill, lib._LEAN_SELF_BOOTSTRAP_DIGEST,
+    )
+
+    grill["approved_by"] = actor
+    story_plan = repo / "plans" / "active" / "lean-bootstrap.md"
+    original_plan = story_plan.read_bytes()
+    story_plan.write_bytes(original_plan + b"\nchanged\n")
+    assert not lib._lean_self_bootstrap_task_grill(
+        repo, task, grill, lib._LEAN_SELF_BOOTSTRAP_DIGEST,
+    )
+
+    story_plan.write_bytes(original_plan)
+    approval_path = lib.evidence_path(
+        repo, lib._LEAN_SELF_BOOTSTRAP_STORY, "plan-approval.json",
+    )
+    approval_path.unlink()
+    assert not lib._lean_self_bootstrap_task_grill(
+        repo, task, grill, lib._LEAN_SELF_BOOTSTRAP_DIGEST,
+    )
+
+
 def test_lean_self_bootstrap_records_once_without_native_event_identity(
         repo: Path, monkeypatch: pytest.MonkeyPatch):
     lib = load_factory_lib(repo)
     story = lib._LEAN_SELF_BOOTSTRAP_STORY
     task_id = lib._LEAN_SELF_BOOTSTRAP_TASK
     digest = lib._LEAN_SELF_BOOTSTRAP_DIGEST
-    actor = lib._LEAN_SELF_BOOTSTRAP_ACTOR
-    story_digest = "1" * 64
+    actor = _recorded_lean_bootstrap_actor(lib, repo)
+    story_digest = lib.require_approved_plan_digest(repo)
     task = {"id": task_id}
     decomposition = lib.protected_decomposition_state_path(repo)
     lib.dump_json(decomposition, {"plan_sha256": story_digest, "tasks": [task]})
-    story_plan = repo / "plans" / "active" / "lean.md"
-    story_plan.parent.mkdir(parents=True, exist_ok=True)
-    story_plan.write_text(
-        f"# Story\n\n{lib._LEAN_SELF_BOOTSTRAP_CLAUSE}.\n",
-        encoding="utf-8",
-    )
-    lib.dump_json(lib.run_state_path(repo), {
-        "issue_key": story,
-        "story": story,
-        "plan_file": story_plan.relative_to(repo).as_posix(),
-    })
     task_plan = lib.evidence_path(
         repo, story, f"task-plans/{task_id}.md", for_write=True,
     )
@@ -1256,18 +1328,15 @@ def test_lean_self_bootstrap_records_once_without_native_event_identity(
     lib.dump_json(grill_path, clean_grill)
     monkeypatch.setattr(lib, "_active_story_key", lambda _root: story)
     monkeypatch.setattr(
-        lib, "require_approved_plan_digest", lambda _root: story_digest,
-    )
-    monkeypatch.setattr(
         lib, "plan_digest_without_assumptions",
         lambda path: digest if path == task_plan else story_digest,
     )
-    monkeypatch.setattr(
-        lib.hashlib, "sha256",
-        lambda _body=b"": type("Digest", (), {
+    real_sha256 = hashlib.sha256
+    monkeypatch.setattr(lib.hashlib, "sha256", lambda body=b"": (
+        type("Digest", (), {
             "hexdigest": lambda self: lib._LEAN_SELF_BOOTSTRAP_FINAL_ARTIFACT_SHA256,
-        })(),
-    )
+        })() if body == task_plan.read_bytes() else real_sha256(body)
+    ))
     monkeypatch.setattr(
         lib, "require_task_grill",
         lambda _root, _task_id, _task, **_kwargs: clean_grill,

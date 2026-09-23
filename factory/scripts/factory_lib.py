@@ -1362,16 +1362,41 @@ def load_review_artifacts(
 
     reviews: dict[str, dict] = {}
     problems: list[str] = []
-    head = head_sha(root) if require_head else None
+    head = head_sha(root)
     key = _active_story_key(root)
     active_window = load_json(factory_dir(root) / "quickfix.json", default={})
     if active_window.get("profile") != "lite":
         return {}, ["lite review window is not active"]
+    window_base = active_window.get("base_sha")
     for aspect in ("quality", "performance", "security"):
         path = evidence_path(root, key or None, f"reviews/{aspect}.json")
         data = load_json(path, default={})
         if not data:
             problems.append(str(path.relative_to(root)))
+            continue
+        relative = path.relative_to(root).as_posix()
+        if not unmigrated_fixed_review_paths(root, [relative]):
+            problems.append(f"{aspect} review is preserved migration history")
+            continue
+        if require_head and data.get("commit") != head:
+            stamp = data.get("commit")
+            shown = stamp[:8] if isinstance(stamp, str) and stamp else "missing"
+            expected = head[:8] if isinstance(head, str) else "missing"
+            problems.append(
+                f"{aspect} review must be stamped at HEAD {expected} (got {shown})"
+            )
+        stamped_base = data.get("review_base_sha")
+        current_review = (
+            isinstance(window_base, str)
+            and _git_commit_exists(root, window_base)
+            and isinstance(head, str)
+            and head != window_base
+            and data.get("commit") == head
+            and _git_is_ancestor(root, window_base, head)
+            and (stamped_base is None or stamped_base == window_base)
+        )
+        if not current_review:
+            problems.append(f"{aspect} review does not belong to the open Lite window")
             continue
         reviews[aspect] = data
         if data.get("blocking_findings") or (
@@ -1379,13 +1404,6 @@ def load_review_artifacts(
         ):
             requirement = "have no blockers" if blockers_only else "be >= 8 with no blockers"
             problems.append(f"{aspect} review must {requirement}")
-        if require_head and data.get("commit") != head:
-            stamp = data.get("commit")
-            shown = stamp[:8] if isinstance(stamp, str) and stamp else "missing"
-            expected = head[:8] if head else "missing"
-            problems.append(
-                f"{aspect} review must be stamped at HEAD {expected} (got {shown})"
-            )
     return reviews, problems
 
 
@@ -2137,15 +2155,21 @@ def task_proof_problems(
         f".factory/stories/{key}/tasks/{task_id}/reviews/{aspect}.json"
         for aspect in _PROOF_LENSES
     ]
-    fixed_review_present = (
-        any(reader(relative) is not None for relative in fixed_review_paths)
-        if reader is not None else
-        any((root / relative).is_file() for relative in fixed_review_paths)
+    fixed_review_paths = unmigrated_fixed_review_paths(
+        root, fixed_review_paths, reader=reader,
+        reader_treeish=inspected_head,
     )
-    if fixed_review_present:
+    if fixed_review_paths:
+        if has_completed_lean_migration_manifest(root, reader=reader):
+            guidance = f"record a fresh review with `forge review {task_id}`"
+            message = "legacy fixed review files are not runtime proof; " + guidance
+        else:
+            message = (
+                "legacy fixed review proof is no longer runtime authority; "
+                "run `forge upgrade`"
+            )
         return [
-            f"{task_id}: legacy fixed review proof is no longer runtime "
-            "authority; run `forge upgrade`"
+            f"{task_id}: {message}"
         ]
     task, contract_problem = _task_contract(root, key, task_id, reader)
     if contract_problem:
@@ -2288,6 +2312,97 @@ def task_proof_problems(
     return problems
 
 
+def unmigrated_fixed_review_paths(
+    root: Path, candidates: list[str], *,
+    reader: Callable[[str], dict | None] | None = None,
+    reader_treeish: str = "",
+) -> list[str]:
+    """Return existing fixed-review files not recorded as preserved history."""
+    migrations = factory_dir(root) / "migrations"
+    manifest_paths = {
+        ".factory/migrations/lean-workflow-v2.json",
+        ".factory/migrations/lean-workflow-v2-supplement.json",
+    }
+    manifest_paths.update(
+        path.relative_to(root).as_posix()
+        for path in migrations.glob("lean-workflow-v2*.json")
+    )
+    preserved: set[tuple[str, str]] = set()
+    for relative in sorted(manifest_paths):
+        path = root / relative
+        try:
+            manifest = reader(relative) if reader is not None else load_json(
+                path, default=None,
+            )
+        except (OSError, json.JSONDecodeError, SystemExit, TypeError, ValueError):
+            continue
+        if (not isinstance(manifest, dict)
+                or manifest.get("generated_by") != "upgrade"
+                or manifest.get("version") != "lean-workflow-v2"
+                or not isinstance(manifest.get("completed_at"), str)
+                or not manifest["completed_at"].strip()):
+            continue
+        for entry in manifest.get("preserved_entries") or []:
+            if (isinstance(entry, dict)
+                    and isinstance(entry.get("path"), str)
+                    and isinstance(entry.get("sha256"), str)):
+                preserved.add((entry["path"], entry["sha256"]))
+
+    remaining: list[str] = []
+    for relative in candidates:
+        if reader is not None:
+            if reader(relative) is None:
+                continue
+            body = _read_git_bytes(
+                root, relative, reader_treeish or "HEAD",
+            )
+            if body is None:
+                remaining.append(relative)
+                continue
+        else:
+            candidate_path = root / relative
+            if not candidate_path.is_file():
+                continue
+            try:
+                body = candidate_path.read_bytes()
+            except OSError:
+                remaining.append(relative)
+                continue
+        digest = hashlib.sha256(body).hexdigest()
+        if (relative, digest) not in preserved:
+            remaining.append(relative)
+    return remaining
+
+
+def has_completed_lean_migration_manifest(
+    root: Path, *, reader: Callable[[str], dict | None] | None = None,
+) -> bool:
+    """Whether this repository has a completed Lean migration manifest."""
+    paths = {
+        ".factory/migrations/lean-workflow-v2.json",
+        ".factory/migrations/lean-workflow-v2-supplement.json",
+    }
+    migrations = factory_dir(root) / "migrations"
+    paths.update(
+        path.relative_to(root).as_posix()
+        for path in migrations.glob("lean-workflow-v2*.json")
+    )
+    for relative in sorted(paths):
+        try:
+            manifest = reader(relative) if reader is not None else load_json(
+                root / relative, default=None,
+            )
+        except (OSError, json.JSONDecodeError, SystemExit, TypeError, ValueError):
+            continue
+        if (isinstance(manifest, dict)
+                and manifest.get("generated_by") == "upgrade"
+                and manifest.get("version") == "lean-workflow-v2"
+                and isinstance(manifest.get("completed_at"), str)
+                and manifest["completed_at"].strip()):
+            return True
+    return False
+
+
 def run_is_task_level(root: Path, key: str = "", tasks: list[dict] | None = None) -> bool:
     """Whether this story ships task by task (per-task PRs and markers) or as
     one story -- the one answer every closeout gate must agree on.
@@ -2361,11 +2476,27 @@ def require_closeout_order(root: Path) -> list[str]:
         for task in tasks
         for aspect in ("quality", "performance", "security")
     ]
-    if any(path.is_file() for path in fixed_reviews):
-        problems.append(
-            "legacy fixed review proof is no longer runtime authority; "
-            "run `forge upgrade`"
-        )
+    unmigrated_reviews = unmigrated_fixed_review_paths(
+        root, [path.relative_to(root).as_posix() for path in fixed_reviews],
+    )
+    if unmigrated_reviews:
+        task_ids = sorted({
+            parts[4] for relative in unmigrated_reviews
+            if len(parts := Path(relative).parts) > 4 and parts[3] == "tasks"
+        })
+        if not has_completed_lean_migration_manifest(root):
+            problems.append(
+                "legacy fixed review proof is no longer runtime authority; "
+                "run `forge upgrade`"
+            )
+        else:
+            guidance = ", ".join(
+                f"`forge review {task_id}`" for task_id in task_ids
+            ) or "the story's current task"
+            problems.append(
+                "legacy fixed review files are not runtime proof; record a "
+                f"fresh review with {guidance}"
+            )
     trunk = default_trunk_branch(root)
     trunk_available = bool(tasks) and fetch_trunk(root, trunk)
     missing_trunk_markers = [
@@ -4727,11 +4858,31 @@ _LEAN_SELF_BOOTSTRAP_DIGEST = (
 _LEAN_SELF_BOOTSTRAP_FINAL_ARTIFACT_SHA256 = (
     "2f45654a62ae52fb65f92171d0f5dafa73f0b943390725c03f1c837ef70f5162"
 )
-_LEAN_SELF_BOOTSTRAP_ACTOR = "Ravi Kiran Vemula"
 _LEAN_SELF_BOOTSTRAP_CLAUSE = (
     "then bootstraps the concrete revision once with actual developer "
     "identity/time without claiming a new answer or reread"
 )
+
+
+def _lean_self_bootstrap_actor(root: Path) -> str | None:
+    """Read the bootstrap actor from the current authenticated story approval."""
+    if _active_story_key(root) != _LEAN_SELF_BOOTSTRAP_STORY:
+        return None
+    try:
+        digest = require_approved_plan_digest(root)
+        approval = load_json(
+            evidence_path(root, _LEAN_SELF_BOOTSTRAP_STORY, "plan-approval.json"),
+            default={},
+        )
+    except (OSError, UnicodeError, json.JSONDecodeError, SystemExit):
+        return None
+    if (
+        not isinstance(approval, dict)
+        or approval.get("approved_plan_sha256") != digest
+    ):
+        return None
+    actor = approval.get("approved_by")
+    return actor if isinstance(actor, str) and actor.strip() else None
 
 
 def _lean_self_bootstrap_task_grill(
@@ -4744,6 +4895,9 @@ def _lean_self_bootstrap_task_grill(
     it cannot approve another story, task, plan revision, actor, or record that
     claims a native runtime event.
     """
+    actor = _lean_self_bootstrap_actor(root)
+    if actor is None:
+        return False
     if (
         _active_story_key(root) != _LEAN_SELF_BOOTSTRAP_STORY
         or task.get("id") != _LEAN_SELF_BOOTSTRAP_TASK
@@ -4756,7 +4910,7 @@ def _lean_self_bootstrap_task_grill(
         or grill.get("final_artifact_sha256")
         != _LEAN_SELF_BOOTSTRAP_FINAL_ARTIFACT_SHA256
         or grill.get("approved_task_plan_sha256") != _LEAN_SELF_BOOTSTRAP_DIGEST
-        or grill.get("approved_by") != _LEAN_SELF_BOOTSTRAP_ACTOR
+        or grill.get("approved_by") != actor
         or any(field in grill for field in (
             "approval_runtime", "approval_session_id", "approval_event_id",
         ))
@@ -4787,10 +4941,12 @@ def record_lean_self_bootstrap_approval(
     event identity because no Claude/Codex completion event occurred.
     """
     story = _active_story_key(root)
+    actor = _lean_self_bootstrap_actor(root)
     if (
         story != _LEAN_SELF_BOOTSTRAP_STORY
         or task_id != _LEAN_SELF_BOOTSTRAP_TASK
-        or approved_by != _LEAN_SELF_BOOTSTRAP_ACTOR
+        or actor is None
+        or approved_by != actor
     ):
         raise SystemExit("Lean self-bootstrap approval does not match its authority")
     decomposition = load_json(
@@ -4842,7 +4998,7 @@ def record_lean_self_bootstrap_approval(
     updated = dict(grill)
     updated.update({
         "approved_task_plan_sha256": _LEAN_SELF_BOOTSTRAP_DIGEST,
-        "approved_by": _LEAN_SELF_BOOTSTRAP_ACTOR,
+        "approved_by": actor,
         "approved_at": now_iso(),
     })
     validate_payload(root, "grill", updated)
