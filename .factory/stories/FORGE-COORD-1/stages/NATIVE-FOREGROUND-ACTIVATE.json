@@ -1,6 +1,5 @@
 {
   "id": "NATIVE-FOREGROUND-ACTIVATE",
   "title": "Native foreground and complete first-task proof",
-  "status": "done",
-  "task_sha256": "397cc2c4a0f51e4bdc805d76fa7a685f55e0da6798ea12df8c47e316e7d19fe5"
+  "status": "done"
 }
