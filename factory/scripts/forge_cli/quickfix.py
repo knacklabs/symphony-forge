@@ -16,7 +16,7 @@ from factory_lib import (
 )
 
 from .common import fail
-from .repo_kind import is_harness_source_repo
+from .repo_kind import is_harness_source_repo, locked_repo_path
 
 MAX_FILES = 5
 QUICKFIX = "quickfix"
@@ -278,13 +278,17 @@ def cmd_mode_done(args: argparse.Namespace) -> None:
         print(f"Degraded mode {active['id']} done ({len(event['files'])} file(s)): "
               f"{active['reason']}")
         return
-    dirty = _lite_dirty_product_files(base)
+    _require_harness_marker(base, active)
+    harness_source = active.get("harness_source")
+    dirty = _lite_dirty_product_files(base, harness_source=harness_source)
     if dirty:
         fail(
             "lite mode has uncommitted product changes — commit the fix first: "
             + ", ".join(dirty[:5])
         )
-    files = _lite_manifest(base, active["base_sha"])
+    files = _lite_manifest(
+        base, active["base_sha"], harness_source=harness_source,
+    )
     if not files:
         fail("lite mode has no committed product files to close")
     bound = int(active.get("max_files", MAX_FILES))
@@ -323,20 +327,27 @@ def cmd_mode_done(args: argparse.Namespace) -> None:
           f"{active['reason']}")
 
 
-def _lite_manifest(base: Path, base_sha: str) -> list[str]:
+def _lite_manifest(
+    base: Path, base_sha: str, *, harness_source: bool | None = None,
+) -> list[str]:
     """Return committed product paths changed since the lite window opened."""
     return _lite_product_files(
         base,
         _git_paths(base, ["git", "diff", "--name-only", "-z", f"{base_sha}..HEAD", "--"]),
+        harness_source=harness_source,
     )
 
 
-def _lite_dirty_product_files(base: Path) -> list[str]:
+def _lite_dirty_product_files(
+    base: Path, *, harness_source: bool | None = None,
+) -> list[str]:
     tracked = _git_paths(base, ["git", "diff", "--name-only", "-z", "HEAD", "--"])
     untracked = _git_paths(
         base, ["git", "ls-files", "--others", "--exclude-standard", "-z"],
     )
-    return _lite_product_files(base, [*tracked, *untracked])
+    return _lite_product_files(
+        base, [*tracked, *untracked], harness_source=harness_source,
+    )
 
 
 def _git_paths(base: Path, command: list[str]) -> list[str]:
@@ -349,19 +360,32 @@ def _git_paths(base: Path, command: list[str]) -> list[str]:
     return [path for path in proc.stdout.split("\0") if path]
 
 
-def _lite_product_files(base: Path, paths: list[str]) -> list[str]:
+def _lite_product_files(
+    base: Path, paths: list[str], *, harness_source: bool | None = None,
+) -> list[str]:
     """Apply the planning-lock product boundary to repo-relative Git paths."""
-    exempt_prefixes = ("plans/", "docs/", ".gstack/", ".github/", "prototype/", ".factory/")
-    if not is_harness_source_repo(base):
-        exempt_prefixes += ("factory/", "constitution/", "harness/", ".claude/", ".codex/")
-    exempt_files = {
-        "AGENTS.md", "CLAUDE.md", "WORKFLOW.md", "harness.yaml", "README.md",
-        ".gitignore", ".gitattributes", ".envrc",
-    }
-    return sorted({
-        path for path in paths
-        if path not in exempt_files and not path.startswith(exempt_prefixes)
-    })
+    product_files: set[str] = set()
+    for path in paths:
+        if path.startswith(".factory/"):
+            continue
+        locked_path = locked_repo_path(
+            path, base, harness_source=harness_source,
+        )
+        if locked_path is None:
+            continue
+        product_files.add(locked_path)
+
+        link = base / path
+        if link.is_symlink():
+            target = link.readlink()
+            if not target.is_absolute():
+                target = link.parent / target
+            target_path = locked_repo_path(
+                str(target), base, harness_source=harness_source,
+            )
+            if target_path is not None and not target_path.startswith(".factory/"):
+                product_files.add(target_path)
+    return sorted(product_files)
 
 
 def cmd_list(args: argparse.Namespace) -> None:

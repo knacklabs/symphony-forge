@@ -26,7 +26,7 @@ def _brief(window: dict, description: str) -> str:
 
 def cmd_fix(args: argparse.Namespace) -> None:
     base = Path(args.repo).resolve() if args.repo else repo_root()
-    description = args.description.strip()
+    description = " ".join(args.description.split())
     if not description:
         fail("forge fix needs a description")
     window = load_active(base)
@@ -64,7 +64,11 @@ def cmd_fix(args: argparse.Namespace) -> None:
         # base_sha..HEAD diff for the budget and the final ledger record.
         if not (isinstance(result, dict)
                 and result.get("transport") == "host-native"):
-            record_files(base, _lite_dirty_product_files(base))
+            record_files(
+                base, _lite_dirty_product_files(
+                    base, harness_source=window.get("harness_source"),
+                ),
+            )
     if isinstance(result, dict) and result.get("action") == "spawn_agent":
         print(
             "NEXT: dispatch the printed descriptor with the host's spawn_agent "

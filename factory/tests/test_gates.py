@@ -9116,6 +9116,82 @@ def test_mode_done_refuses_dirty_product_tree(repo):
     assert (repo / ".factory" / "quickfix.json").exists()
 
 
+def test_mode_done_requires_pinned_harness_marker_and_counts_factory(repo):
+    mark_harness_source(repo)
+    active = open_lite(repo)
+    marker = repo / ".factory" / "harness-source.json"
+    marker.unlink()
+
+    (repo / "factory" / "scripts" / "lite_fix.py").write_text("fixed = True\n")
+    git(repo, "add", "factory/scripts/lite_fix.py")
+    git(repo, "commit", "-q", "-m", "bounded harness lite fix")
+    write_lite_reviews(repo)
+
+    code, out = run(repo, "forge.py", "mode", "done")
+    assert code != 0 and ".factory/harness-source.json is now missing" in out, out
+
+    marker.write_text('{"role": "harness-source"}\n')
+    code, out = run(repo, "forge.py", "mode", "done")
+    assert code == 0 and "1 file(s)" in out, out
+    done = [json.loads(path.read_text())
+            for path in (repo / "plans" / "quickfixes").glob("*.json")
+            if json.loads(path.read_text()).get("event") == "done"]
+    assert len(done) == 1 and done[0]["files"] == ["factory/scripts/lite_fix.py"]
+    assert done[0]["base_sha"] == active["base_sha"]
+
+
+def test_lite_close_counts_locked_paths_and_task_seal_reports_dirty_agents(repo):
+    open_lite(repo)
+    workflow = repo / ".github" / "workflows" / "x.yml"
+    workflow.parent.mkdir(parents=True, exist_ok=True)
+    workflow.write_text("name: locked workflow\n")
+    git(repo, "add", ".github/workflows/x.yml")
+    git(repo, "commit", "-q", "-m", "bounded workflow lite fix")
+    write_lite_reviews(repo)
+
+    code, out = run(repo, "forge.py", "mode", "done")
+    assert code == 0 and "1 file(s)" in out, out
+    done = [json.loads(path.read_text())
+            for path in (repo / "plans" / "quickfixes").glob("*.json")
+            if json.loads(path.read_text()).get("event") == "done"]
+    assert len(done) == 1 and done[0]["files"] == [".github/workflows/x.yml"]
+
+    agents = repo / "AGENTS.md"
+    agents.write_text((agents.read_text() if agents.exists() else "") + "\n# dirty\n")
+    from factory_lib import task_seal_shared_problems
+    problems = task_seal_shared_problems(repo, "")
+    assert any("clean product worktree and index" in problem and "AGENTS.md" in problem
+               for problem in problems), problems
+
+
+def test_lite_budget_counts_symlinks_and_literal_shell_names(repo):
+    source = repo / "src"
+    source.mkdir()
+    target = source / "existing.py"
+    target.write_text("existing = True\n")
+    docs_target = repo / "docs" / "reference.md"
+    docs_target.parent.mkdir(parents=True, exist_ok=True)
+    docs_target.write_text("reference\n")
+    outside_target = repo.parent / "outside-target.txt"
+    outside_target.write_text("outside\n")
+    git(repo, "add", "src/existing.py", "docs/reference.md")
+    git(repo, "commit", "-q", "-m", "seed lite symlink targets")
+
+    open_lite(repo)
+    (source / "docs-link").symlink_to(Path("../docs/reference.md"))
+    (source / "outside-link").symlink_to(outside_target)
+    (source / "product-link").symlink_to(Path("existing.py"))
+    (source / "cash$name.py").write_text("cash = True\n")
+    (source / "tick`name.py").write_text("tick = True\n")
+    git(repo, "add", "src")
+    git(repo, "commit", "-q", "-m", "bounded symlink and literal-name changes")
+    write_lite_reviews(repo)
+
+    code, out = run(repo, "forge.py", "mode", "done")
+
+    assert code != 0 and "touches 6 product files" in out, out
+
+
 def test_mode_done_refuses_over_budget_committed_diff(repo):
     open_lite(repo)
     (repo / "src").mkdir()
