@@ -902,3 +902,4 @@ def cmd_task_reconcile(args: argparse.Namespace) -> None:
     else:
         print(f"Reconciled {args.id}: stage done and marker present; nothing new "
               "to commit.")
+    print(f"Ticket: {key}/{args.id}")

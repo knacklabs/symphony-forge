@@ -9732,6 +9732,26 @@ def test_roadmap_gate_workflow_shape():
     assert "gh api" not in workflow
     assert "|| true" not in workflow
 
+
+def test_pr_ticket_check_workflow_uses_base_code_for_pull_request_target():
+    workflow = (HARNESS / ".github" / "workflows" / "pr-ticket-check.yml").read_text()
+
+    assert "pull_request_target:" in workflow
+    assert "pull_request:" not in workflow
+    assert "types: [opened, synchronize, reopened, edited]" in workflow
+    assert "permissions:\n  contents: read" in workflow
+    assert '      - uses: actions/checkout@v7\n        with:\n          persist-credentials: false' in workflow
+    assert "ref: ${{ github.event.pull_request.base.sha }}" in workflow
+    assert 'refs/pull/${PR_NUMBER}/head' in workflow
+    assert 'test "$FETCHED_HEAD" = "$HEAD_SHA"' in workflow
+    assert "BASE_REF: ${{ github.event.pull_request.base.ref }}" in workflow
+    assert 'git fetch --no-tags origin "$BASE_REF"' in workflow
+    assert "git update-ref refs/pr-ticket-check/base FETCH_HEAD" in workflow
+    assert 'git merge-base refs/pr-ticket-check/base "$HEAD_SHA"' in workflow
+    assert 'git init --bare "$PR_DATA_GIT_DIR"' in workflow
+    assert 'GIT_DIR="$PR_DATA_GIT_DIR" python3 factory/scripts/check_pr_ticket.py' in workflow
+
+
 def pr_ticket_base(repo: Path, *keys: str) -> str:
     for key in keys:
         ensure_story(repo, key)
@@ -16278,6 +16298,25 @@ def test_grill_context_file_uses_secure_snapshot_and_parser_has_no_reread(
     assert not captured["context_snapshot"].parent.exists()
     code, out = run(repo, "forge.py", "grill", "run", "--help")
     assert code == 0 and "--context-file" in out and "--reread" not in out
+
+
+def test_context_prompt_limit_defaults_when_companion_has_no_declaration(
+        tmp_path, monkeypatch):
+    from forge_cli import delegate
+
+    component = tmp_path / "companion.mjs"
+    component.write_text("// no prompt limit", encoding="utf-8")
+    monkeypatch.delenv("FORGE_COMPONENT_PROMPT_LIMIT_BYTES", raising=False)
+
+    assert delegate._context_prompt_limit("claude", component) == (
+        delegate.CONTEXT_PROMPT_MAX_BYTES
+    )
+
+    component.write_text("MAX_PROMPT_BYTES = 4096", encoding="utf-8")
+    assert delegate._context_prompt_limit("claude", component) == 4096
+
+    monkeypatch.setenv("FORGE_COMPONENT_PROMPT_LIMIT_BYTES", "2048")
+    assert delegate._context_prompt_limit("claude", component) == 2048
 
 
 @pytest.mark.parametrize("opaque", ["a" * 32, "b" * 64])
@@ -23629,6 +23668,7 @@ def test_task_reconcile_adopts_a_pending_task_whose_marker_is_on_the_trunk(
     })
     code, out = run(repo, "forge.py", "task", "reconcile", "T1", env=gh_env)
     assert code == 0, out
+    assert "Ticket: ENG-1/T1" in out.splitlines()
     git(repo, "push", "-q", "origin", "HEAD:main")
     assert marker.exists()
 
