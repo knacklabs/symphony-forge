@@ -11298,7 +11298,9 @@ def test_dependency_entry_projects_the_same_graph_as_a_quarter_turn_3d_globe():
                page.index("function showBoardView(")]
     projection = dag[dag.index("function projectDagGlobePoint("):
                      dag.index("function dagGlobeEdgePoints(")]
-    globe_frame = dag[dag.index("function renderDagGlobeFrame("):
+    # The frame renderer and the node keyframes share one progress function
+    # and one per-node state function, so the slice starts at the former.
+    globe_frame = dag[dag.index("function dagEntranceProgress("):
                       dag.index("function playDagEntrance(")]
     entrance = dag[dag.index("function playDagEntrance("):
                    dag.index("function focusDagStory(")]
@@ -11324,7 +11326,13 @@ def test_dependency_entry_projects_the_same_graph_as_a_quarter_turn_3d_globe():
     assert "DAG.nodes" in globe_frame and "DAG.edges" in globe_frame
     assert "projectDagGlobePoint" in globe_frame
     assert "dagGlobeEdgePoints" in globe_frame
-    assert 'edge.globe.setAttribute("d"' in globe_frame
+    # The entrance edges (globe arcs, then each final edge drawing in) are
+    # painted on one canvas; the SVG edges stay still and take over at rest.
+    assert "drawDagEntranceEdges({turn, assemble, unfold}, radiusScale)" in globe_frame
+    assert "ctx.bezierCurveTo(" in globe_frame and "ctx.stroke(edge.path)" in globe_frame
+    assert "ctx.lineDashOffset = edge.length * (1 - dagEaseOutCss(progress))" in globe_frame
+    assert ".dag-shell.is-forming .dag-edges { visibility: hidden; }" in page
+    assert "dag-edge-form" not in page.split("<script")[0]
     assert "nodeUnfold" in globe_frame and "edgeUnfold" in globe_frame
     assert "dagGlobeEdgeVectors" in dag
     assert "edge.globeVectors || dagGlobeEdgeVectors(edge)" in dag
@@ -11332,21 +11340,26 @@ def test_dependency_entry_projects_the_same_graph_as_a_quarter_turn_3d_globe():
     assert "DAG_GLOBE_CURVE_STEPS" in dag and "dagCubicPath" in dag
     assert 'node.style.willChange = "transform, opacity"' not in globe_frame
     assert "node.style.filter" not in globe_frame
-    assert "Math.round(point.depth * 8)" in globe_frame
+    # Front-to-back order is real depth inside the preserve-3d scene, so the
+    # node flight runs as compositor keyframes rather than per-frame z-index.
+    assert "(point.depth - .5) * 4 * (1 - nodeUnfold)" in globe_frame
+    assert "node.animate(frames.get(key)" in globe_frame
+    assert ".dag-shell.is-forming .dag-nodes { transform-style: preserve-3d; }" in page
     assert "(unfold - nodeDelay) / (1 - nodeDelay)" in globe_frame
     assert "(unfold - edgeDelay) / (1 - edgeDelay)" in globe_frame
-    assert "var(--depth-duration" in page and "var(--edge-duration" in page
-    assert 'base.style.setProperty("--edge-duration"' in dag
+    assert "var(--depth-duration" in page
+    assert "drawDuration: DAG_GLOBE_UNFOLD_MS * .64" in dag
 
     # One bounded 0 → π/2 quarter-turn leads into a morph/unfold and the ordinary
     # dependency camera; re-entering the tab may replay that same sequence.
     assert "renderDagGlobeFrame" in entrance
-    assert "const rotationProgress = clamp" in entrance
-    assert "const rotation = dagEaseInOutCubic(rotationProgress)" in entrance
+    assert "turn: dagEaseInOutCubic(clamp(" in globe_frame
     assert "turn: rotation" in entrance and "unfold" in entrance
+    assert "dagEntranceProgress(elapsed)" in entrance
+    assert "animateDagGlobeNodes()" in entrance
     assert "const total = DAG_GLOBE_TOTAL_MS" in entrance
-    assert "elapsed - DAG_GLOBE_ROTATE_START_MS" in entrance
-    assert "elapsed - DAG_GLOBE_UNFOLD_START_MS" in entrance
+    assert "(elapsed - DAG_GLOBE_ROTATE_START_MS) / DAG_GLOBE_ROTATE_MS" in globe_frame
+    assert "(elapsed - DAG_GLOBE_UNFOLD_START_MS) / DAG_GLOBE_UNFOLD_MS" in globe_frame
     assert "requestAnimationFrame" in entrance
     assert "landDagOnEntryTarget" in entrance
     assert "selectDagEntryTarget" in entrance

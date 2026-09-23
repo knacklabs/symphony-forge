@@ -456,12 +456,10 @@
     animation-delay: var(--depth-delay, 0ms);
   }
   .dag-edges { overflow: visible; pointer-events: none; }
-  .dag-edge, .dag-signal, .dag-globe-edge {
+  .dag-signals { will-change: transform; }
+  .dag-edge, .dag-signal {
     fill: none; vector-effect: non-scaling-stroke; stroke-linecap: round;
     stroke-linejoin: round; shape-rendering: geometricPrecision;
-  }
-  .dag-globe-edge {
-    stroke: var(--accent); stroke-width: 1.5; opacity: 0;
   }
   .dag-edge {
     stroke: var(--stone); stroke-width: 1.15; opacity: .42;
@@ -484,13 +482,14 @@
   .dag-signal.is-downstream {
     stroke: var(--accent-ink);
   }
-  .dag-shell.is-forming .dag-edge { opacity: 0; }
-  .dag-shell.is-unfolding .dag-edge {
-    stroke-dasharray: var(--edge-length, 1);
-    stroke-dashoffset: var(--edge-length, 1);
-    animation: dag-edge-form var(--edge-duration, 240ms) var(--ease-out) both;
-    animation-delay: var(--edge-delay, 0ms);
-  }
+  /* While the globe forms and unfolds, every edge -- the globe arcs and the
+     final edges drawing in -- is painted on one canvas (drawDagEntranceEdges).
+     The SVG edges hold still, hidden, and take over at the end already in
+     their resting state: no per-frame path rewrites, no 75 stroke-dashoffset
+     animations the compositor cannot run. */
+  .dag-canvas { position: absolute; left: 0; top: 0; z-index: 2; pointer-events: none; display: none; }
+  .dag-shell.is-forming .dag-canvas { display: block; }
+  .dag-shell.is-forming .dag-edges { visibility: hidden; }
   .dag-shell.is-forming .dag-signal { animation: none; opacity: 0; }
   @keyframes dag-signal-flow { to { stroke-dashoffset: 0; } }
 
@@ -583,6 +582,7 @@
   .dag-node.is-upstream .dag-port { border-color: var(--accent); }
   .dag-node.is-downstream .dag-port { border-color: var(--build); }
   .dag-shell.is-forming .dag-node { pointer-events: none; transition: none; }
+  .dag-shell.is-forming .dag-nodes { transform-style: preserve-3d; }
   @media (hover: hover) and (pointer: fine) {
     .dag-node.is-hovered:not(.is-selected) {
       z-index: 4; border-color: var(--accent);
@@ -598,11 +598,6 @@
   @keyframes dag-guide-form {
     from { opacity: 0; transform: scaleX(0); }
     to { opacity: 1; transform: scaleX(1); }
-  }
-  @keyframes dag-edge-form {
-    from { opacity: 0; stroke-dashoffset: var(--edge-length, 1); }
-    35% { opacity: .86; }
-    to { opacity: .42; stroke-dashoffset: 0; }
   }
   @keyframes dag-node-radar {
     from { opacity: .72; transform: scale(.9); }
@@ -1177,6 +1172,69 @@
       transform: none !important;
     }
   }
+  /* Contributors — who commits here, and how much of it runs through Forge. */
+  .people-head {
+    display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between;
+    gap: .6rem 1.5rem; margin: 1.2rem 0 .9rem;
+  }
+  .people-head h2 { font-family: var(--serif); font-size: 1.15rem; font-weight: 600; margin: 0; text-wrap: balance; }
+  .people-head p { margin: .2rem 0 0; color: var(--muted); font-size: .8rem; }
+  .people-tools { display: flex; flex-wrap: wrap; gap: .8rem; align-items: center; }
+  .people-tools .board-views { margin-top: 0; }
+  .people-tools .board-view[aria-pressed="true"] {
+    color: var(--ink); background: var(--surface); box-shadow: var(--shadow-sm);
+  }
+  .people-legend { display: flex; gap: .9rem; font-size: .72rem; color: var(--muted); }
+  .people-legend i { display: inline-block; width: 9px; height: 9px; border-radius: 2px; margin-right: .35rem; vertical-align: -1px; }
+  .people-legend .forge { background: var(--shipped); }
+  .people-legend .plain { background: var(--surface-2); border: 1px solid var(--rule); }
+  .roster {
+    background: var(--surface); border: 1px solid var(--rule); border-radius: var(--radius-sm);
+    box-shadow: var(--shadow-sm); overflow-x: auto;
+  }
+  .roster table { width: 100%; border-collapse: collapse; min-width: 720px; font-size: .82rem; }
+  .roster th {
+    text-align: left; font-size: .64rem; font-weight: 600; letter-spacing: .06em; text-transform: uppercase;
+    color: var(--faint); padding: .6rem .85rem; border-bottom: 1px solid var(--rule);
+  }
+  .roster td { padding: .7rem .85rem; border-bottom: 1px solid var(--rule); vertical-align: middle; }
+  .roster tbody tr:last-child td { border-bottom: 0; }
+  .roster tr.person { cursor: pointer; transition: background-color 140ms ease-out; }
+  .roster tr.person:hover { background: var(--wash); }
+  .roster tr.person[aria-expanded="true"] { background: var(--tint); }
+  .roster tr.person:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+  .roster .num { text-align: right; font-variant-numeric: tabular-nums; }
+  .roster .muted { color: var(--faint); }
+  .who { display: flex; align-items: center; gap: .65rem; }
+  .who .initials {
+    width: 30px; height: 30px; border-radius: 50%; flex: none; display: grid; place-items: center;
+    background: var(--surface-2); color: var(--muted); font-size: .7rem; font-weight: 700;
+  }
+  .who .name { font-weight: 600; }
+  .who .handle { display: block; font-family: var(--mono); font-size: .72rem; color: var(--muted); text-decoration: none; }
+  .who .handle:hover { color: var(--accent); text-decoration: underline; }
+  .adoption {
+    display: inline-flex; align-items: center; gap: .35rem; white-space: nowrap;
+    font-size: .7rem; font-weight: 600; padding: .18rem .55rem; border-radius: 999px;
+  }
+  .adoption::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+  .adoption.on { background: var(--done-surface); color: var(--done-ink); }
+  .adoption.mixed { background: var(--active-surface); color: var(--active-ink); }
+  .adoption.off { background: var(--surface-2); color: var(--muted); }
+  .share { display: flex; align-items: center; gap: .5rem; min-width: 150px; }
+  .share .track { flex: 1; height: 7px; border-radius: 4px; background: var(--surface-2); overflow: hidden; }
+  .share .track i { display: block; height: 100%; background: var(--shipped); }
+  .share span { width: 2.4rem; text-align: right; color: var(--muted); font-size: .74rem; font-variant-numeric: tabular-nums; }
+  .roles { display: flex; flex-wrap: wrap; gap: .25rem; }
+  .roles span { font-size: .7rem; color: var(--muted); border: 1px solid var(--rule); border-radius: 4px; padding: 0 .35rem; }
+  .roles span.muted { border: 0; }
+  .roster tr.person-detail td { background: var(--tint); padding: .2rem .85rem 1rem 3.4rem; }
+  .person-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: .9rem 1.6rem; font-size: .78rem; }
+  .person-grid h4 { margin: 0 0 .3rem; font-size: .62rem; letter-spacing: .06em; text-transform: uppercase; color: var(--faint); }
+  .person-grid ul { margin: 0; padding: 0; list-style: none; display: grid; gap: .15rem; }
+  .person-grid code { font-family: var(--mono); font-size: .72rem; color: var(--muted); }
+  .people-note { color: var(--faint); font-size: .72rem; margin-top: .7rem; }
+  .people-note code { font-family: var(--mono); }
 </style>
 </head>
 <body data-view="overview">
@@ -1199,6 +1257,8 @@
               data-board-view="lifecycle" aria-selected="false" aria-controls="lifecycle-view">Lifecycle</button>
       <button class="board-view" type="button" role="tab"
               data-board-view="dependencies" aria-selected="false" aria-controls="dependencies-view">Dependencies</button>
+      <button class="board-view" type="button" role="tab"
+              data-board-view="contributors" aria-selected="false" aria-controls="contributors-view">Contributors</button>
     </nav>
 
     <div id="lifecycle-controls" hidden>
@@ -1264,7 +1324,9 @@
         <div id="dag-world" class="dag-world">
           <div id="dag-scene" class="dag-scene">
             <div id="dag-depths" class="dag-depths" aria-hidden="true"></div>
+            <canvas id="dag-canvas" class="dag-canvas" aria-hidden="true"></canvas>
             <svg id="dag-edges" class="dag-edges" aria-hidden="true"></svg>
+            <svg id="dag-signals" class="dag-edges dag-signals" aria-hidden="true"></svg>
             <div id="dag-nodes" class="dag-nodes"></div>
           </div>
         </div>
@@ -1272,6 +1334,31 @@
       </div>
     </div>
     <p id="dag-empty" class="dag-empty" hidden>No roadmap stories yet. Dependencies appear after the roadmap is derived.</p>
+  </section>
+  <section id="contributors-view" hidden role="tabpanel" aria-label="Contributors">
+    <div class="people-head">
+      <div>
+        <h2>Contributors</h2>
+        <p id="people-summary">Reading git history…</p>
+      </div>
+      <div class="people-tools">
+        <div class="board-views" role="group" aria-label="Time window" id="people-window">
+          <button type="button" class="board-view" data-window="30" aria-pressed="false">30 days</button>
+          <button type="button" class="board-view" data-window="90" aria-pressed="true">90 days</button>
+          <button type="button" class="board-view" data-window="all" aria-pressed="false">All time</button>
+        </div>
+        <div class="people-legend"><span><i class="forge"></i>through Forge</span><span><i class="plain"></i>plain commit</span></div>
+      </div>
+    </div>
+    <div class="roster">
+      <table>
+        <thead><tr><th scope="col">Contributor</th><th scope="col">Status</th><th scope="col">Share through Forge</th>
+          <th scope="col" class="num">Commits</th><th scope="col">Forge roles</th><th scope="col">Last commit</th></tr></thead>
+        <tbody id="people-rows"></tbody>
+      </table>
+    </div>
+    <p class="people-note">A Forge commit names its story and task (<code>WF-2 T1</code>) or carries a Forge trailer.
+      One person's emails are merged automatically; correct a wrong merge with a <code>.mailmap</code> entry.</p>
   </section>
 </main>
 
@@ -2576,17 +2663,31 @@ function renderDag(state) {
   }).join("");
 
   const svg = $("dag-edges");
-  svg.setAttribute("viewBox", `0 0 ${layout.width} ${layout.height}`);
-  svg.setAttribute("width", String(layout.width));
-  svg.setAttribute("height", String(layout.height));
+  // The flowing signal dashes live in their own SVG, composited as a separate
+  // layer: a stroke-dashoffset animation repaints every frame, and in the
+  // shared SVG each frame re-rasterised all 75 edges (2.3 s of raster per
+  // 3 s of panning with a story selected, 4x CPU throttle; 0.18 s apart).
+  const signals = $("dag-signals");
+  for (const layer of [svg, signals]) {
+    layer.setAttribute("viewBox", `0 0 ${layout.width} ${layout.height}`);
+    layer.setAttribute("width", String(layout.width));
+    layer.setAttribute("height", String(layout.height));
+  }
+  signals.replaceChildren();
+  // Backing store at the device ratio, capped so a very wide roadmap cannot
+  // allocate a huge bitmap (8 M pixels ~ 32 MB).
+  const canvas = $("dag-canvas");
+  const ratio = Math.min(devicePixelRatio || 1, 2,
+                         Math.sqrt(8e6 / Math.max(1, layout.width * layout.height)));
+  canvas.width = Math.max(1, Math.round(layout.width * ratio));
+  canvas.height = Math.max(1, Math.round(layout.height * ratio));
+  canvas.style.width = `${layout.width}px`;
+  canvas.style.height = `${layout.height}px`;
+  DAG.canvasRatio = ratio;
   svg.innerHTML = `<defs><marker id="dag-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 1 L 7 4 L 0 7 z" fill="context-stroke"></path></marker></defs>`;
   DAG.edges = layout.edges.map((edge, edgeIndex) => {
     const globeVectors = dagGlobeEdgeVectors(edge);
     const data = dagEdgePath(layout.positions.get(edge.from), layout.positions.get(edge.to));
-    const globeData = dagGlobeEdgePath({...edge, globeVectors}, 0, .76);
-    const globe = document.createElementNS(DAG_SVG, "path");
-    globe.setAttribute("class", "dag-globe-edge");
-    globe.setAttribute("d", globeData);
     const base = document.createElementNS(DAG_SVG, "path");
     base.setAttribute("class", "dag-edge");
     base.setAttribute("d", data);
@@ -2594,17 +2695,18 @@ function renderDag(state) {
     const signal = document.createElementNS(DAG_SVG, "path");
     signal.setAttribute("class", "dag-signal");
     signal.setAttribute("d", data);
-    svg.append(globe, base, signal);
+    svg.append(base);
+    signals.append(signal);
     const length = Math.ceil(base.getTotalLength());
     const edgeDepth = layout.positions.get(edge.to).depth;
     const edgeProgress = layout.maxDepth ? edgeDepth / layout.maxDepth : 0;
     const edgeDelay = edgeProgress * DAG_GLOBE_UNFOLD_MS * .24;
-    base.style.setProperty("--edge-length", String(length));
-    base.style.setProperty("--edge-delay", `${edgeDelay}ms`);
-    base.style.setProperty("--edge-duration", `${DAG_GLOBE_UNFOLD_MS * .64}ms`);
     return {
-      ...edge, index: edgeIndex, globeVectors, globe, base, signal,
+      ...edge, index: edgeIndex, globeVectors, base, signal,
       finalPoints: dagFinalEdgePoints(edge),
+      // The draw-in each edge performs as the globe unfolds.
+      path: new Path2D(data), length, drawDelay: edgeDelay,
+      drawDuration: DAG_GLOBE_UNFOLD_MS * .64,
     };
   });
 
@@ -2684,6 +2786,28 @@ function renderDag(state) {
       && DAG.entryPending) scheduleDagEntrance();
 }
 
+// The viewport's size and page position, read once per layout instead of per
+// frame. Reading clientWidth/getBoundingClientRect inside an animation frame,
+// after that frame already moved the nodes, forced a synchronous style +
+// layout of the page: 700 ms at the start of the entrance and 330 ms in the
+// middle of it (4x CPU throttle), and one per pointermove while dragging.
+const DAG_VIEWPORT = {w: 0, h: 0, left: 0, top: 0, fresh: false};
+function dagViewportSize() {
+  if (!DAG_VIEWPORT.fresh || !DAG_VIEWPORT.w) {
+    const el = $("dag-viewport");
+    const rect = el.getBoundingClientRect();
+    Object.assign(DAG_VIEWPORT, {w: el.clientWidth, h: el.clientHeight,
+                                 left: rect.left, top: rect.top, fresh: true});
+  }
+  return DAG_VIEWPORT;
+}
+if ("ResizeObserver" in window) {
+  new ResizeObserver(() => { DAG_VIEWPORT.fresh = false; }).observe($("dag-viewport"));
+}
+// Page scroll moves the viewport's rect, not its size.
+addEventListener("scroll", () => { DAG_VIEWPORT.fresh = false; }, {passive: true, capture: true});
+addEventListener("resize", () => { DAG_VIEWPORT.fresh = false; }, {passive: true});
+
 function dagTransform(view) {
   return `translate3d(${view.x}px, ${view.y}px, 0) scale(${view.scale})`;
 }
@@ -2711,16 +2835,16 @@ function stopDagMotion() {
 }
 
 function dagBounds(scale) {
-  const viewport = $("dag-viewport");
+  const viewport = dagViewportSize();
   const width = (DAG.layout && DAG.layout.width || 0) * scale;
   const height = (DAG.layout && DAG.layout.height || 0) * scale;
   const margin = 48;
-  const horizontal = width <= viewport.clientWidth - margin * 2
-    ? [(viewport.clientWidth - width) / 2, (viewport.clientWidth - width) / 2]
-    : [viewport.clientWidth - width - margin, margin];
-  const vertical = height <= viewport.clientHeight - margin * 2
-    ? [(viewport.clientHeight - height) / 2, (viewport.clientHeight - height) / 2]
-    : [viewport.clientHeight - height - margin, margin];
+  const horizontal = width <= viewport.w - margin * 2
+    ? [(viewport.w - width) / 2, (viewport.w - width) / 2]
+    : [viewport.w - width - margin, margin];
+  const vertical = height <= viewport.h - margin * 2
+    ? [(viewport.h - height) / 2, (viewport.h - height) / 2]
+    : [viewport.h - height - margin, margin];
   return {minX: horizontal[0], maxX: horizontal[1], minY: vertical[0], maxY: vertical[1]};
 }
 
@@ -2764,14 +2888,14 @@ function animateDagView(target, animate = true, duration = 260) {
 
 function fitDag(animate = true) {
   if (!DAG.layout) return;
-  const viewport = $("dag-viewport");
+  const viewport = dagViewportSize();
   const scale = clamp(Math.min(
-    (viewport.clientWidth - 36) / DAG.layout.width,
-    (viewport.clientHeight - 36) / DAG.layout.height,
+    (viewport.w - 36) / DAG.layout.width,
+    (viewport.h - 36) / DAG.layout.height,
   ), .2, 1);
   animateDagView({
-    x: (viewport.clientWidth - DAG.layout.width * scale) / 2,
-    y: (viewport.clientHeight - DAG.layout.height * scale) / 2,
+    x: (viewport.w - DAG.layout.width * scale) / 2,
+    y: (viewport.h - DAG.layout.height * scale) / 2,
     scale,
   }, animate);
   DAG.needsReset = false;
@@ -2779,23 +2903,85 @@ function fitDag(animate = true) {
 
 function frameDagGlobe() {
   if (!DAG.layout) return;
-  const viewport = $("dag-viewport");
+  const viewport = dagViewportSize();
   const {globeCenter, globeRadius} = DAG.layout;
   const sphereWidth = globeRadius.x * 2 + DAG_NODE_W * .7;
   const sphereHeight = globeRadius.y * 2 + DAG_NODE_H * .7;
   const rotatingDiameter = Math.max(sphereWidth, sphereHeight);
   const scale = clamp(Math.min(
-    (viewport.clientWidth - 88) / rotatingDiameter,
-    (viewport.clientHeight - 72) / rotatingDiameter,
+    (viewport.w - 88) / rotatingDiameter,
+    (viewport.h - 72) / rotatingDiameter,
   ), .28, .82);
   animateDagView({
-    x: viewport.clientWidth / 2 - globeCenter.x * scale,
-    y: viewport.clientHeight / 2 - globeCenter.y * scale,
+    x: viewport.w / 2 - globeCenter.x * scale,
+    y: viewport.h / 2 - globeCenter.y * scale,
     scale,
   }, false);
 }
 
-function renderDagGlobeFrame({turn = 0, assemble = 1, unfold = 0}) {
+// Where the entrance is at `elapsed` ms: the same absolute progress the frame
+// loop and the precomputed node keyframes both read.
+function dagEntranceProgress(elapsed) {
+  return {
+    assemble: clamp(elapsed / DAG_GLOBE_ASSEMBLE_MS, 0, 1),
+    turn: dagEaseInOutCubic(clamp(
+      (elapsed - DAG_GLOBE_ROTATE_START_MS) / DAG_GLOBE_ROTATE_MS, 0, 1)),
+    unfold: clamp((elapsed - DAG_GLOBE_UNFOLD_START_MS) / DAG_GLOBE_UNFOLD_MS, 0, 1),
+  };
+}
+
+function dagGlobeNodeState(key, node, point, assemble, unfold) {
+  const position = DAG.layout.positions.get(key);
+  const index = Number(node.dataset.globeIndex || 0);
+  const nodeArrival = dagEaseOutCubic(clamp(assemble * 1.34 - index * .018, 0, 1));
+  const nodeDelay = clamp(position.depth * .018 + index * .0025, 0, .24);
+  const nodeUnfold = dagEaseInOutCubic(clamp(
+    (unfold - nodeDelay) / (1 - nodeDelay), 0, 1));
+  const finalX = position.x + DAG_NODE_W / 2;
+  const finalY = position.y + DAG_NODE_H / 2;
+  const x = dagMix(point.x, finalX, nodeUnfold);
+  const y = dagMix(point.y, finalY, nodeUnfold);
+  const globeScale = (.3 + point.depth * .23) * dagMix(.38, 1, nodeArrival);
+  const scale = dagMix(globeScale, 1, nodeUnfold);
+  const globeOpacity = nodeArrival * (.12 + point.depth * .88);
+  // Front-to-back order as a hair of real depth (the scene is preserve-3d),
+  // not z-index: the compositor sorts it, so the keyframes stay GPU-only.
+  const z = (point.depth - .5) * 4 * (1 - nodeUnfold);
+  return {
+    transform: `translate3d(${(x - finalX).toFixed(1)}px, ${(y - finalY).toFixed(1)}px, ${z.toFixed(2)}px) scale(${scale.toFixed(3)})`,
+    opacity: dagMix(globeOpacity, 1, nodeUnfold).toFixed(3),
+  };
+}
+
+// The whole node flight, sampled once into keyframes and handed to the
+// compositor. Writing 31 inline transforms per frame cost ~35 ms of style
+// recalculation per frame at 4x CPU throttle (each write restyles the node's
+// subtree against the board's full stylesheet); keyframes cost none.
+const DAG_ENTRANCE_SAMPLES = 48;
+function dagGlobeNodeFrames() {
+  if (DAG.layout.nodeFrames) return DAG.layout.nodeFrames;
+  const frames = new Map([...DAG.nodes.keys()].map(key => [key, []]));
+  for (let i = 0; i <= DAG_ENTRANCE_SAMPLES; i++) {
+    const offset = i / DAG_ENTRANCE_SAMPLES;
+    const {turn, assemble, unfold} = dagEntranceProgress(offset * DAG_GLOBE_TOTAL_MS);
+    const radiusScale = dagMix(.74, 1, dagEaseOutCubic(assemble));
+    for (const [key, node] of DAG.nodes) {
+      const point = projectDagGlobePoint(DAG.layout.globeVectors.get(key), turn, radiusScale);
+      frames.get(key).push({...dagGlobeNodeState(key, node, point, assemble, unfold), offset});
+    }
+  }
+  DAG.layout.nodeFrames = frames;
+  return frames;
+}
+
+function animateDagGlobeNodes() {
+  const frames = dagGlobeNodeFrames();
+  DAG.entranceAnimations = [...DAG.nodes].map(([key, node]) => node.animate(frames.get(key), {
+    duration: DAG_GLOBE_TOTAL_MS, easing: "linear", fill: "both",
+  }));
+}
+
+function renderDagGlobeFrame({turn = 0, assemble = 1, unfold = 0}, {nodes = true} = {}) {
   if (!DAG.layout) return;
   const radiusScale = dagMix(.74, 1, dagEaseOutCubic(assemble));
   const projected = new Map();
@@ -2803,58 +2989,124 @@ function renderDagGlobeFrame({turn = 0, assemble = 1, unfold = 0}) {
     projected.set(key, projectDagGlobePoint(vector, turn, radiusScale));
   }
 
-  for (const [key, node] of DAG.nodes) {
-    const point = projected.get(key);
-    const position = DAG.layout.positions.get(key);
-    const index = Number(node.dataset.globeIndex || 0);
-    const nodeArrival = dagEaseOutCubic(clamp(assemble * 1.34 - index * .018, 0, 1));
-    const nodeDelay = clamp(position.depth * .018 + index * .0025, 0, .24);
-    const nodeUnfold = dagEaseInOutCubic(clamp(
-      (unfold - nodeDelay) / (1 - nodeDelay), 0, 1));
-    const finalX = position.x + DAG_NODE_W / 2;
-    const finalY = position.y + DAG_NODE_H / 2;
-    const x = dagMix(point.x, finalX, nodeUnfold);
-    const y = dagMix(point.y, finalY, nodeUnfold);
-    const globeScale = (.3 + point.depth * .23) * dagMix(.38, 1, nodeArrival);
-    const scale = dagMix(globeScale, 1, nodeUnfold);
-    const globeOpacity = nodeArrival * (.12 + point.depth * .88);
-    const opacity = dagMix(globeOpacity, 1, nodeUnfold);
-
-    node.style.transform = `translate3d(${(x - finalX).toFixed(1)}px, ${(y - finalY).toFixed(1)}px, 0) scale(${scale.toFixed(3)})`;
-    node.style.opacity = opacity.toFixed(3);
-    const zIndex = String(20 + Math.round(point.depth * 8));
-    if (node.style.zIndex !== zIndex) node.style.zIndex = zIndex;
+  if (nodes) {
+    for (const [key, node] of DAG.nodes) {
+      const state = dagGlobeNodeState(key, node, projected.get(key), assemble, unfold);
+      node.style.transform = state.transform;
+      node.style.opacity = state.opacity;
+    }
   }
 
+  drawDagEntranceEdges({turn, assemble, unfold}, radiusScale);
+}
+
+// The ease-out every board transition uses, cubic-bezier(.23,1,.32,1),
+// solved for the canvas the way CSS solves it for the SVG.
+function dagBezierEase(x1, y1, x2, y2) {
+  const at = (a, b, t) => ((1 - 3 * b + 3 * a) * t + (3 * b - 6 * a)) * t * t + 3 * a * t;
+  return x => {
+    if (x <= 0) return 0;
+    if (x >= 1) return 1;
+    let t = x;
+    for (let i = 0; i < 6; i++) {
+      const dx = at(x1, x2, t) - x;
+      const slope = (3 * (1 - 3 * x2 + 3 * x1)) * t * t + 2 * (3 * x2 - 6 * x1) * t + 3 * x1;
+      if (Math.abs(dx) < 1e-5 || !slope) break;
+      t = clamp(t - dx / slope, 0, 1);
+    }
+    return at(y1, y2, t);
+  };
+}
+const dagEaseOutCss = dagBezierEase(.23, 1, .32, 1);
+
+function drawDagEntranceEdges({turn, assemble, unfold}, radiusScale) {
+  const canvas = $("dag-canvas");
+  const ctx = canvas.getContext("2d");
+  const ratio = DAG.canvasRatio || 1;
+  ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+  ctx.clearRect(0, 0, DAG.layout.width, DAG.layout.height);
+  const colors = DAG.entranceColors;
+  // SVG strokes are non-scaling; match their on-screen width through the
+  // camera move that runs while the graph unfolds.
+  const {from = DAG.view.scale, to = DAG.view.scale} = DAG.entranceScale || {};
+  const px = 1 / Math.max(dagMix(from, to, dagEaseInOutCubic(unfold)), .05);
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
+
+  // The globe arcs, morphing from the sphere into each edge's final curve.
+  ctx.strokeStyle = colors.accent;
+  ctx.lineWidth = 1.5 * px;
   for (const edge of DAG.edges) {
     const globePoints = dagGlobeEdgePoints(edge, turn, radiusScale);
     const targetDepth = DAG.layout.positions.get(edge.to).depth;
     const edgeDelay = clamp(targetDepth * .026, 0, .22);
     const edgeUnfold = dagEaseInOutCubic(clamp(
       (unfold - edgeDelay) / (1 - edgeDelay), 0, 1));
-    const points = globePoints.map((point, index) => ({
-      x: dagMix(point.x, edge.finalPoints[index].x, edgeUnfold),
-      y: dagMix(point.y, edge.finalPoints[index].y, edgeUnfold),
-    }));
     const averageDepth = globePoints.reduce((sum, point) => sum + point.depth, 0)
       / globePoints.length;
     const edgeArrival = dagEaseOutCubic(clamp(assemble * 1.22 - edge.index * .011, 0, 1));
     const globeFade = 1 - clamp((edgeUnfold - .7) / .3, 0, 1);
-    edge.globe.setAttribute("d", dagCubicPath(points));
-    edge.globe.style.opacity = (edgeArrival * (.12 + averageDepth * .7) * globeFade).toFixed(3);
+    const opacity = edgeArrival * (.12 + averageDepth * .7) * globeFade;
+    if (opacity < .004) continue;
+    const [a, b, c, d] = globePoints.map((point, index) => ({
+      x: dagMix(point.x, edge.finalPoints[index].x, edgeUnfold),
+      y: dagMix(point.y, edge.finalPoints[index].y, edgeUnfold),
+    }));
+    ctx.globalAlpha = opacity;
+    ctx.beginPath();
+    ctx.moveTo(a.x, a.y);
+    ctx.bezierCurveTo(b.x, b.y, c.x, c.y, d.x, d.y);
+    ctx.stroke();
   }
+
+  // The final edges drawing in as the globe unfolds: the old dag-edge-form
+  // keyframes (opacity 0 -> .86 at 35% -> .42, dash offset length -> 0).
+  if (unfold > 0) {
+    const sinceUnfold = unfold * DAG_GLOBE_UNFOLD_MS;
+    ctx.strokeStyle = colors.stone;
+    ctx.fillStyle = colors.stone;
+    ctx.lineWidth = 1.15 * px;
+    for (const edge of DAG.edges) {
+      const progress = clamp((sinceUnfold - edge.drawDelay) / edge.drawDuration, 0, 1);
+      if (progress <= 0) continue;
+      const opacity = progress < .35
+        ? dagMix(0, .86, dagEaseOutCss(progress / .35))
+        : dagMix(.86, .42, dagEaseOutCss((progress - .35) / .65));
+      ctx.globalAlpha = opacity;
+      ctx.setLineDash([edge.length, edge.length]);
+      ctx.lineDashOffset = edge.length * (1 - dagEaseOutCss(progress));
+      ctx.stroke(edge.path);
+      ctx.setLineDash([]);
+      // The arrowhead marker (markerUnits = stroke width, viewBox 8, size 6).
+      const [, , control, end] = edge.finalPoints;
+      const size = 6 * 1.15 / 8;
+      ctx.save();
+      ctx.translate(end.x, end.y);
+      ctx.rotate(Math.atan2(end.y - control.y, end.x - control.x));
+      ctx.scale(size, size);
+      ctx.beginPath();
+      ctx.moveTo(-7, -3);
+      ctx.lineTo(0, 0);
+      ctx.lineTo(-7, 3);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+    }
+  }
+  ctx.globalAlpha = 1;
 }
 
 function clearDagGlobeFrame() {
+  for (const animation of DAG.entranceAnimations || []) animation.cancel();
+  DAG.entranceAnimations = [];
   for (const node of DAG.nodes.values()) {
     node.style.removeProperty("will-change");
     node.style.removeProperty("transform");
     node.style.removeProperty("opacity");
     node.style.removeProperty("z-index");
   }
-  for (const edge of DAG.edges) {
-    edge.globe.style.removeProperty("opacity");
-  }
+  const canvas = $("dag-canvas");
+  canvas.getContext("2d").clearRect(0, 0, canvas.width, canvas.height);
 }
 
 function cancelDagEntrance(finish = true) {
@@ -2877,23 +3129,25 @@ function scheduleDagEntrance() {
   if (DAG.entranceSchedule || DAG.entranceState !== "idle") return;
   DAG.entranceState = "scheduled";
   DAG.entranceSchedule = requestAnimationFrame(() => {
-    DAG.entranceSchedule = 0;
-    if (document.body.dataset.view === "dependencies") playDagEntrance();
-    else DAG.entranceState = "idle";
+    DAG.entranceSchedule = requestAnimationFrame(() => {
+      DAG.entranceSchedule = 0;
+      if (document.body.dataset.view === "dependencies") playDagEntrance();
+      else DAG.entranceState = "idle";
+    });
   });
 }
 
 function resetDagView(animate = true, duration = 260) {
   if (!DAG.layout) return;
-  const viewport = $("dag-viewport");
+  const viewport = dagViewportSize();
   // Start readable and at the root. "Fit" remains available for the whole-map
   // overview; the default should not make every story label microscopic.
-  const scale = clamp((viewport.clientWidth - 56) / DAG.layout.width, .64, 1);
+  const scale = clamp((viewport.w - 56) / DAG.layout.width, .64, 1);
   const root = DAG.layout.orderedLayers[0][0];
   const rootPosition = root && DAG.layout.positions.get(root.key);
   animateDagView({
     x: rootPosition
-      ? viewport.clientWidth / 2 - (rootPosition.x + DAG_NODE_W / 2) * scale
+      ? viewport.w / 2 - (rootPosition.x + DAG_NODE_W / 2) * scale
       : 24,
     y: 24,
     scale,
@@ -2940,33 +3194,41 @@ function playDagEntrance() {
   // topology then completes exactly one 0 → π/2 Y-axis quarter-turn before those same
   // nodes and connections unfold into their final dependency positions.
   frameDagGlobe();
+  const rootStyle = getComputedStyle(document.documentElement);
+  DAG.entranceColors = {
+    accent: rootStyle.getPropertyValue("--accent").trim(),
+    stone: rootStyle.getPropertyValue("--stone").trim(),
+  };
+  DAG.entranceScale = {from: DAG.view.scale, to: DAG.view.scale};
   void shell.offsetWidth;
   shell.classList.add("is-forming");
   for (const node of DAG.nodes.values()) node.style.willChange = "transform, opacity";
   $("dag-viewport").setAttribute("aria-busy", "true");
   DAG.entranceState = "forming";
   const run = ++DAG.entranceRun;
+  animateDagGlobeNodes();
+  // Frame-loop time and the node animations share one clock, so an edge never
+  // runs ahead of or behind the card it connects.
+  const clock = DAG.entranceAnimations[0];
   const started = performance.now();
   let unfolding = false;
   const total = DAG_GLOBE_TOTAL_MS;
 
   const step = now => {
     if (run !== DAG.entranceRun || DAG.entranceState === "idle") return;
-    const elapsed = clamp(now - started, 0, total);
-    const assemble = clamp(elapsed / DAG_GLOBE_ASSEMBLE_MS, 0, 1);
-    const rotationElapsed = elapsed - DAG_GLOBE_ROTATE_START_MS;
-    const rotationProgress = clamp(rotationElapsed / DAG_GLOBE_ROTATE_MS, 0, 1);
-    const rotation = dagEaseInOutCubic(rotationProgress);
-    const unfoldElapsed = elapsed - DAG_GLOBE_UNFOLD_START_MS;
-    const unfold = clamp(unfoldElapsed / DAG_GLOBE_UNFOLD_MS, 0, 1);
+    const elapsed = clamp(clock && clock.currentTime !== null
+      ? Number(clock.currentTime) : now - started, 0, total);
+    const {turn: rotation, assemble, unfold} = dagEntranceProgress(elapsed);
 
     // Absolute progress—not accumulated angles—guarantees a single 0 → π/2 arc.
-    renderDagGlobeFrame({turn: rotation, assemble, unfold});
+    renderDagGlobeFrame({turn: rotation, assemble, unfold}, {nodes: false});
     if (unfold > 0 && !unfolding) {
       unfolding = true;
       DAG.entranceState = "unfolding";
       shell.classList.add("is-unfolding");
+      const globeScale = DAG.view.scale;
       landDagOnEntryTarget(true, DAG_GLOBE_UNFOLD_MS);
+      DAG.entranceScale = {from: globeScale, to: DAG.view.scale};
     }
     if (elapsed < total) {
       DAG.entranceFrame = requestAnimationFrame(step);
@@ -2978,19 +3240,25 @@ function playDagEntrance() {
     shell.classList.remove("is-forming", "is-unfolding");
     $("dag-viewport").removeAttribute("aria-busy");
     clearDagGlobeFrame();
-    selectDagEntryTarget();
+    // Landing on the entry story restyles every node and edge and starts
+    // their transitions; doing it in the same frame that leaves the forming
+    // state stacked both restyles into one ~200 ms hitch at the very end.
+    DAG.entranceFrame = requestAnimationFrame(() => {
+      DAG.entranceFrame = 0;
+      if (run === DAG.entranceRun) selectDagEntryTarget();
+    });
   };
   DAG.entranceFrame = requestAnimationFrame(step);
 }
 
 function focusDagStory(key, animate = true, duration = 420) {
   if (!DAG.layout || !DAG.layout.positions.has(key)) return;
-  const viewport = $("dag-viewport");
+  const viewport = dagViewportSize();
   const position = DAG.layout.positions.get(key);
   const scale = clamp(Math.max(DAG.view.scale, 1.02), .2, 1.25);
   animateDagView({
-    x: viewport.clientWidth / 2 - (position.x + DAG_NODE_W / 2) * scale,
-    y: viewport.clientHeight * .46 - (position.y + DAG_NODE_H / 2) * scale,
+    x: viewport.w / 2 - (position.x + DAG_NODE_W / 2) * scale,
+    y: viewport.h * .46 - (position.y + DAG_NODE_H / 2) * scale,
     scale,
   }, animate, duration);
 }
@@ -3145,8 +3413,8 @@ function returnDagToStories(animate = true) {
 function zoomDag(factor, animate = true, point = null) {
   if (!DAG.layout) return;
   stopDagMotion();
-  const viewport = $("dag-viewport");
-  const anchor = point || {x: viewport.clientWidth / 2, y: viewport.clientHeight / 2};
+  const viewport = dagViewportSize();
+  const anchor = point || {x: viewport.w / 2, y: viewport.h / 2};
   const scale = clamp(DAG.view.scale * factor, .2, 1.4);
   const worldX = (anchor.x - DAG.view.x) / DAG.view.scale;
   const worldY = (anchor.y - DAG.view.y) / DAG.view.scale;
@@ -3271,8 +3539,8 @@ dagViewport.addEventListener("pointermove", event => {
   dagViewport.classList.add("is-panning");
   const bounds = dagBounds(DAG.view.scale);
   setDagView({
-    x: rubberAxis(drag.viewX + dx, bounds.minX, bounds.maxX, dagViewport.clientWidth),
-    y: rubberAxis(drag.viewY + dy, bounds.minY, bounds.maxY, dagViewport.clientHeight),
+    x: rubberAxis(drag.viewX + dx, bounds.minX, bounds.maxX, dagViewportSize().w),
+    y: rubberAxis(drag.viewY + dy, bounds.minY, bounds.maxY, dagViewportSize().h),
     scale: DAG.view.scale,
   });
   drag.history.push({x: event.clientX, y: event.clientY, time: performance.now()});
@@ -3300,9 +3568,9 @@ dagViewport.addEventListener("wheel", event => {
   if (!event.deltaY) return;
   event.preventDefault();
   if (DAG.entranceState !== "idle") cancelDagEntrance(true);
-  const rect = dagViewport.getBoundingClientRect();
+  const rect = dagViewportSize();
   const unit = event.deltaMode === 1 ? 16
-    : event.deltaMode === 2 ? dagViewport.clientHeight : 1;
+    : event.deltaMode === 2 ? dagViewportSize().h : 1;
   retargetDagZoom(event.deltaY * unit,
                   {x: event.clientX - rect.left, y: event.clientY - rect.top});
 }, {passive: false});
@@ -3350,12 +3618,14 @@ function restoreStoryDagForEntry() {
 }
 
 function showBoardView(view) {
-  if (!(["overview", "lifecycle", "dependencies"].includes(view))) return;
+  if (!(["overview", "lifecycle", "dependencies", "contributors"].includes(view))) return;
   const previousView = document.body.dataset.view;
   document.body.dataset.view = view;
   $("overview-view").hidden = view !== "overview";
   $("lifecycle-view").hidden = view !== "lifecycle";
   $("dependencies-view").hidden = view !== "dependencies";
+  $("contributors-view").hidden = view !== "contributors";
+  if (view === "contributors") loadContributors();
   $("lifecycle-controls").hidden = view !== "lifecycle";
   $("lifecycle-footer").hidden = view !== "lifecycle";
   $("dependencies-footer").hidden = view !== "dependencies";
@@ -3381,6 +3651,103 @@ function showBoardView(view) {
 document.querySelectorAll("[data-board-view]").forEach(button => {
   button.addEventListener("click", () => showBoardView(button.dataset.boardView));
 });
+
+/* ═══ contributors ══════════════════════════════════════════════════════ */
+const PEOPLE = {data: null, window: "90", open: new Set(), loading: false};
+
+function adoption(win) {
+  if (!win.commits) return ["off", "No commits in window"];
+  const share = win.forge / win.commits;
+  if (share === 0) return ["off", "Outside Forge"];
+  if (share < 0.25) return ["mixed", "Mostly outside"];
+  return ["on", "Uses Forge"];
+}
+
+function relativeDay(iso) {
+  const days = Math.round((Date.now() - new Date(iso + "T00:00:00").getTime()) / 86400000);
+  if (days <= 0) return "today";
+  if (days === 1) return "yesterday";
+  if (days < 60) return `${days} days ago`;
+  return iso;
+}
+
+function personInitials(person) {
+  return person.name.trim().split(/\s+/).map(w => w[0] || "").join("").slice(0, 2).toUpperCase();
+}
+
+function renderContributors() {
+  const data = PEOPLE.data;
+  if (!data) return;
+  const key = PEOPLE.window;
+  const people = data.people.filter(p => p.windows[key].commits > 0);
+  const total = people.reduce((n, p) => n + p.windows[key].commits, 0);
+  const forged = people.reduce((n, p) => n + p.windows[key].forge, 0);
+  const users = people.filter(p => p.windows[key].forge > 0).length;
+  const span = key === "all" ? "in all history" : `in the last ${key} days`;
+  $("people-summary").textContent = people.length
+    ? `${people.length} ${people.length === 1 ? "person" : "people"} committed ${span}: `
+      + `${users} through Forge, ${people.length - users} outside it. `
+      + `${total.toLocaleString()} commits, ${total ? Math.round(forged / total * 100) : 0}% through Forge.`
+    : `No commits ${span}.`;
+  document.querySelectorAll("#people-window [data-window]").forEach(b =>
+    b.setAttribute("aria-pressed", String(b.dataset.window === key)));
+  const list = (items, empty) => items.length
+    ? items.map(x => `<li>${x}</li>`).join("") : `<li class="muted">${empty}</li>`;
+  $("people-rows").innerHTML = people.map((p, i) => {
+    const win = p.windows[key];
+    const pct = win.commits ? Math.round(win.forge / win.commits * 100) : 0;
+    const [cls, label] = adoption(win);
+    const open = PEOPLE.open.has(p.name);
+    const roles = p.roles.length ? p.roles.map(r => `<span>${esc(r)}</span>`).join("")
+      : `<span class="muted">—</span>`;
+    return `<tr class="person" tabindex="0" data-person="${esc(p.name)}" aria-expanded="${open}" aria-controls="person-${i}">
+        <td><div class="who"><span class="initials" aria-hidden="true">${esc(personInitials(p))}</span><div><div class="name">${esc(p.name)}</div>
+          ${p.handle ? `<a class="handle" href="https://github.com/${encodeURIComponent(p.handle)}" target="_blank" rel="noopener">@${esc(p.handle)}</a>` : ""}</div></div></td>
+        <td><span class="adoption ${cls}">${label}</span></td>
+        <td><div class="share"><div class="track"><i style="width:${pct}%"></i></div><span>${pct}%</span></div></td>
+        <td class="num">${win.commits.toLocaleString()}</td>
+        <td><div class="roles">${roles}</div></td>
+        <td>${esc(relativeDay(p.last_commit))}</td>
+      </tr>
+      <tr class="person-detail" id="person-${i}" ${open ? "" : "hidden"}><td colspan="6"><div class="person-grid">
+        <div><h4>Git identities</h4><ul>${list(p.emails.map(e => `<code>${esc(e)}</code>`), "none")}
+          ${p.aliases.length ? `<li>also as ${p.aliases.map(esc).join(", ")}</li>` : ""}</ul></div>
+        <div><h4>Stories committed to</h4><ul>${list(p.stories.map(esc), "None: commits land without a story scope.")}</ul></div>
+        <div><h4>First commit</h4><ul><li>${esc(p.first_commit)}</li></ul></div>
+      </div></td></tr>`;
+  }).join("");
+}
+
+async function loadContributors() {
+  if (PEOPLE.loading) return;
+  PEOPLE.loading = true;
+  try {
+    const res = await fetch("/api/contributors", {cache: "no-cache"});
+    if (!res.ok) throw new Error(String(res.status));
+    PEOPLE.data = await res.json();
+    renderContributors();
+  } catch {
+    if (!PEOPLE.data) $("people-summary").textContent = "Could not read the git history. Is this a git repository?";
+  } finally { PEOPLE.loading = false; }
+}
+
+$("people-rows").addEventListener("click", event => {
+  const row = event.target.closest("tr.person");
+  if (!row || event.target.closest("a")) return;  // the profile link is its own action
+  const name = row.dataset.person;
+  if (PEOPLE.open.has(name)) PEOPLE.open.delete(name); else PEOPLE.open.add(name);
+  renderContributors();
+  const again = [...document.querySelectorAll("#people-rows tr.person")].find(r => r.dataset.person === name);
+  if (again && event.detail === 0) again.focus();
+});
+$("people-rows").addEventListener("keydown", event => {
+  const row = event.target.closest("tr.person");
+  if (!row || (event.key !== "Enter" && event.key !== " ")) return;
+  event.preventDefault();
+  row.click();
+});
+document.querySelectorAll("#people-window [data-window]").forEach(button =>
+  button.addEventListener("click", () => { PEOPLE.window = button.dataset.window; renderContributors(); }));
 
 /* ═══ overlays — drawer and library share the shell ═════════════════════ */
 let openPanel = null, opener = null;
@@ -3930,7 +4297,7 @@ $("library-open").addEventListener("click", () => {
 });
 
 /* ═══ poll ══════════════════════════════════════════════════════════════ */
-let lastState = null, lastOk = 0;
+let lastState = null, lastOk = 0, lastEtag = "";
 
 function render(state) {
   const firstEver = lastState === null;
@@ -3950,9 +4317,14 @@ function render(state) {
 
 async function poll() {
   try {
-    const res = await fetch("/api/state", {cache: "no-store"});
+    const res = await fetch("/api/state", {
+      cache: "no-store",
+      headers: lastEtag && lastState ? {"If-None-Match": lastEtag} : {},
+    });
+    if (res.status === 304) { lastOk = Date.now(); if (drawer.key) refreshDrawer(drawer.key); return; }
     if (!res.ok) throw new Error(String(res.status));
     const state = await res.json();
+    lastEtag = res.headers.get("ETag") || "";
     render(state);
     lastOk = Date.now();
     // The drawer used to be fetched once on open and never again: a task's
@@ -3973,7 +4345,7 @@ function tick() {
   if (document.hidden) { el.classList.remove("stale"); label.textContent = "paused"; return; }
   const secs = Math.round((Date.now() - lastOk) / 1000);
   // Two missed polls plus slack, at either cadence.
-  const stale = secs > (stateIsHot(lastState) ? 30 : 45);
+  const stale = streaming ? secs > 40 : secs > (stateIsHot(lastState) ? 30 : 45);
   el.classList.toggle("stale", stale);
   label.textContent = stale ? `stale ${secs}s — is \`./forge board\` still running?` : "live";
 }
@@ -4026,7 +4398,20 @@ poll().then(() => { if (deepLink()) followHash(); });
 // human reads and more than the server could answer on a busy repo: a story
 // drawer that took longer than one interval started its next request before
 // the last returned.
-const POLL_LIVE = 10000, POLL_IDLE = 20000;
+const POLL_LIVE = 10000, POLL_IDLE = 20000, POLL_STREAMING = 60000;
+let streaming = false;
+function connectEvents() {
+  if (!("EventSource" in window)) return;
+  const source = new EventSource("/api/events");
+  source.addEventListener("state", event => {
+    lastOk = Date.now();
+    if (event.data && event.data !== lastEtag && !document.hidden) poll();
+  });
+  source.addEventListener("ping", () => { lastOk = Date.now(); });
+  source.addEventListener("open", () => { streaming = true; lastOk = Date.now(); });
+  // EventSource reconnects by itself; until it does, polling carries the board.
+  source.addEventListener("error", () => { streaming = false; });
+}
 
 function stateIsHot(state) {
   const s = state || {};
@@ -4052,7 +4437,7 @@ function schedulePoll() {
   pollTimer = setTimeout(async () => {
     await poll();
     schedulePoll();
-  }, stateIsHot(lastState) ? POLL_LIVE : POLL_IDLE);
+  }, streaming ? POLL_STREAMING : stateIsHot(lastState) ? POLL_LIVE : POLL_IDLE);
 }
 
 document.addEventListener("visibilitychange", () => {
@@ -4061,6 +4446,7 @@ document.addEventListener("visibilitychange", () => {
 });
 
 schedulePoll();
+connectEvents();
 setInterval(tick, 1000);
 </script>
 </body>

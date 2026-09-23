@@ -31,7 +31,10 @@ def test_a_poll_driven_repaint_keeps_the_readers_place():
     assert PAGE.count("paintDrawer({keepScroll: true})") == 1
 
 def test_the_page_polls_every_ten_seconds_and_never_stacks_drawer_requests():
-    assert "const POLL_LIVE = 10000, POLL_IDLE = 20000;" in PAGE
+    assert "const POLL_LIVE = 10000, POLL_IDLE = 20000, POLL_STREAMING = 60000;" in PAGE
     assert "stateIsHot(lastState) ? 30 : 45" in PAGE
+    # With /api/events connected the server pushes each change, so the poll
+    # drops to a slow fallback instead of stacking on top of the push.
+    assert "streaming ? POLL_STREAMING : stateIsHot(lastState) ? POLL_LIVE : POLL_IDLE" in PAGE
     assert "if (drawerFetching) return;" in PAGE
     assert "finally { drawerFetching = false; }" in PAGE
