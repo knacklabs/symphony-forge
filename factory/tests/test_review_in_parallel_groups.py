@@ -20,8 +20,9 @@ import pytest
 
 from test_gates import (  # noqa: F401
     DECOMP, HARNESS, bind_task_proof_receipts, git, head, intake,
-    load_factory_lib, record_skeleton_then_frontier, record_task_grill, repo,
-    save_plan, sign_off, write_in_scope, write_stages,
+    load_factory_lib, open_lite, record_skeleton_then_frontier,
+    record_task_grill, repo, run, save_plan, sign_off, write_in_scope,
+    write_stages,
 )
 
 sys.path.insert(0, str(HARNESS / "factory" / "scripts"))
@@ -225,6 +226,51 @@ def _generation(repo: Path) -> dict:
 def _ledger_starts(repo: Path) -> int:
     rows = [json.loads(line) for line in codex_runs_path(repo).read_text().splitlines()]
     return sum(1 for row in rows if row.get("kind") == "review" and row["status"] == "starting")
+
+
+def test_lite_review_records_three_head_artifacts_and_closes_window(repo, tmp_path):
+    sign_off(repo)
+    code, output = intake(repo)
+    assert code == 0, output
+    window = open_lite(repo)
+    (repo / "src").mkdir()
+    (repo / "src" / "lite.py").write_text("enabled = True\n")
+    git(repo, "add", "src/lite.py")
+    git(repo, "commit", "-q", "-m", "bounded Lite fix")
+
+    skill = _fake_skill(tmp_path)
+    seen = tmp_path / "seen"
+    code, output = run(
+        repo, "forge.py", "review", "--lite", "--skill", str(skill),
+        env={"FAKE_SEEN": str(seen)},
+    )
+
+    assert code == 0, output
+    invocation = json.loads((seen / "single.attempt1.json").read_text())
+    argv = invocation["argv"]
+    assert argv[argv.index("--base") + 1] == window["base_sha"]
+    assert argv[argv.index("--model") + 1] == "gpt-6-sol"
+    assert "src/lite.py" in invocation["diff"]
+    assert "--task" not in argv
+    lib = load_factory_lib(repo)
+    for aspect in review_mod.LENSES:
+        path = lib.proof_path(
+            repo, "ENG-1", f"reviews/{aspect}.json", for_write=True,
+        )
+        review = json.loads(path.read_text())
+        assert review["commit"] == head(repo)
+        assert review["review_base_sha"] == window["base_sha"]
+        assert review["reviewed_scope"] == ["src/lite.py"]
+        assert review["blocking_findings"] == []
+
+    code, output = run(repo, "forge.py", "mode", "done")
+    assert code == 0 and "1 file(s)" in output, output
+    assert not (repo / ".factory" / "quickfix.json").exists()
+    code, output = run(repo, "forge.py", "mode", "list")
+    assert code == 0 and f"[done lite] {window['id']}" in output, output
+
+    code, output = run(repo, "forge.py", "review", "--lite", "--skill", str(skill))
+    assert code != 0 and "no Lite window is open" in output, output
 
 
 # ------------------------------------------------------------- the pieces
