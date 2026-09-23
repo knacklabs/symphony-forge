@@ -89,25 +89,41 @@ def _story_candidate(repo: Path, story: str = "APPROVE-1") -> approval.ApprovalC
     return candidate
 
 
-def test_plan_save_keeps_issue_grill_and_story_approval_authority(
+def test_plan_save_refuses_split_issue_and_story_keys_without_mutation(
         repo: Path, tmp_path: Path):
     sign_off(repo)
     intake(repo, "ISSUE-I", "Invoices")
+    ensure_story(repo, "ISSUE-I", "Invoices")
     ensure_story(repo, "STORY-S", "Roadmap story")
     draft = tmp_path / "distinct-identities.md"
     draft.write_text(plan_draft(repo), encoding="utf-8")
     code, output = record_grill(repo, "plan", digest_of=draft)
     assert code == 0, output
+    state_path = load_factory_lib(repo).run_state_path(repo)
+    state_before = state_path.read_bytes()
 
     code, output = run(
         repo, "forge.py", "plan", "save", "--from", str(draft),
         "--issue", "ISSUE-I", "--story", "STORY-S",
     )
+    assert code != 0 and "--story must match --issue" in output, output
+    assert state_path.read_bytes() == state_before
+    state = json.loads(state_path.read_text(encoding="utf-8"))
+    assert state["issue_key"] == "ISSUE-I"
+    assert state.get("plan_status") != "awaiting-approval"
+    assert not list((repo / "plans" / "active").glob("*.md"))
+    assert approval.eligible_candidates(repo) == []
+
+    # The default story remains the issue key and can still be saved normally.
+    code, output = run(
+        repo, "forge.py", "plan", "save", "--from", str(draft),
+        "--issue", "ISSUE-I",
+    )
     assert code == 0, output
     candidates = approval.eligible_candidates(repo)
     assert len(candidates) == 1
     candidate = candidates[0]
-    assert candidate.story == "STORY-S"
+    assert candidate.story == "ISSUE-I"
 
     lib = load_factory_lib(repo)
     grill = json.loads(
@@ -117,16 +133,60 @@ def test_plan_save_keeps_issue_grill_and_story_approval_authority(
     record = approval.record_native_approval(
         repo, _event(candidate), runtime="claude",
     )
-    assert record["story"] == "STORY-S"
+    assert record["story"] == "ISSUE-I"
     assert json.loads(
-        lib.evidence_path(repo, "STORY-S", "plan-approval.json").read_text()
-    )["story"] == "STORY-S"
+        lib.evidence_path(repo, "ISSUE-I", "plan-approval.json").read_text()
+    )["story"] == "ISSUE-I"
     state = json.loads(lib.run_state_path(repo).read_text())
     assert state["issue_key"] == "ISSUE-I"
-    assert state["story"] == "STORY-S"
-    # The normal implementation consumer must resolve authority through the
-    # roadmap story after native approval, while the grill remains issue-scoped.
+    assert state["story"] == "ISSUE-I"
     assert lib.require_approved_plan_digest(repo) == candidate.digest
+
+
+def test_plan_save_refuses_inline_list_frontmatter_and_accepts_canonical_form(
+        repo: Path, tmp_path: Path):
+    sign_off(repo)
+    code, output = intake(repo)
+    assert code == 0, output
+    draft = tmp_path / "frontmatter-plan.md"
+    canonical = plan_draft(repo)
+    frontmatter, body = canonical.split("\n---\n", 1)
+    decision_lines = [
+        line for line in frontmatter.splitlines() if line.startswith("  - ")
+    ]
+    inline_field = "decisions_reviewed: [" + ", ".join(
+        line[4:] for line in decision_lines
+    ) + "]"
+    inline_frontmatter = frontmatter.replace(
+        "decisions_reviewed:\n" + "\n".join(decision_lines), inline_field,
+    )
+    draft.write_text(inline_frontmatter + "\n---\n" + body, encoding="utf-8")
+    active_dir = repo / "plans" / "active"
+    active_dir_existed = active_dir.exists()
+    state_path = load_factory_lib(repo).run_state_path(repo)
+    state_before = state_path.read_bytes()
+    code, output = record_grill(repo, "plan", digest_of=draft)
+    assert code == 0, output
+
+    code, output = run(
+        repo, "forge.py", "plan", "save", "--from", str(draft),
+        "--story", "ENG-1",
+    )
+    assert code != 0 and "canonical" in output, output
+    assert state_path.read_bytes() == state_before
+    assert active_dir.exists() is active_dir_existed
+    assert not list(active_dir.glob("*.md"))
+    assert approval.eligible_candidates(repo) == []
+
+    draft.write_text(canonical, encoding="utf-8")
+    code, output = record_grill(repo, "plan", digest_of=draft)
+    assert code == 0, output
+    code, output = run(
+        repo, "forge.py", "plan", "save", "--from", str(draft),
+        "--story", "ENG-1",
+    )
+    assert code == 0, output
+    assert len(approval.eligible_candidates(repo)) == 1
 
 
 @pytest.mark.parametrize("body", ["{not json\n", "[]\n"])
@@ -805,6 +865,90 @@ def test_claude_approval_hook_reports_refusal_and_recording(repo: Path):
     code, out = run(repo, "forge.py", "hook", "post_tool_use", stdin=json.dumps(event))
     context = json.loads(out)["hookSpecificOutput"]["additionalContext"]
     assert code == 0 and f"recorded native story plan approval {candidate.digest}" in context
+
+
+def test_codex_approval_hook_reports_refusal(repo: Path):
+    candidate = _story_candidate(repo)
+    event = _event(candidate, "codex")
+    event["tool_input"]["questions"][0]["question"] = "Approve this plan?"
+
+    code, out = run(repo, "forge.py", "hook", "post_tool_use", stdin=json.dumps(event))
+
+    output = json.loads(out)
+    assert code == 0
+    assert output["hookSpecificOutput"]["hookEventName"] == "PostToolUse"
+    context = output["hookSpecificOutput"]["additionalContext"]
+    assert "Forge did NOT record this plan approval" in context
+    assert "unsupported" in context
+    assert not candidate.evidence.exists()
+
+
+def test_codex_ordinary_question_hook_is_silent(repo: Path):
+    event = {
+        "tool_name": "request_user_input",
+        "tool_input": {"questions": [{
+            "id": "clarify_environment", "header": "Environment",
+            "question": "Which environment should I use?", "options": [],
+        }]},
+        "tool_response": {"answers": {}},
+    }
+
+    code, output = run(
+        repo, "forge.py", "hook", "post_tool_use", stdin=json.dumps(event),
+    )
+
+    assert code == 0
+    assert output == ""
+
+
+def test_plan_save_and_awaiting_phase_show_codex_approval_identity(
+        repo: Path, tmp_path: Path):
+    sign_off(repo)
+    code, output = intake(repo)
+    assert code == 0, output
+    draft = tmp_path / "codex-plan.md"
+    draft.write_text(plan_draft(repo), encoding="utf-8")
+    code, output = record_grill(repo, "plan", digest_of=draft)
+    assert code == 0, output
+    code, output = run(
+        repo, "forge.py", "plan", "save", "--from", str(draft),
+        "--story", "ENG-1",
+    )
+    assert code == 0, output
+    candidates = approval.eligible_candidates(repo)
+    assert len(candidates) == 1
+    digest = candidates[0].digest
+    question_id = f"approve_plan_{digest}"
+    question = f"Approve exact plan digest {digest}?"
+    assert f"Semantic digest: {digest}" in output
+    assert question_id in output
+    assert 'header="Approve plan"' in output
+    assert f'question="{question}"' in output
+
+    code, output = run(repo, "forge.py", "next")
+    assert code == 0, output
+    assert f"Semantic digest: {digest}" in output
+    assert question_id in output
+    assert 'header="Approve plan"' in output
+    assert f'question="{question}"' in output
+
+
+@pytest.mark.parametrize("plan_file", ["", "plans/active/missing-plan.md"])
+def test_awaiting_approval_next_handles_missing_plan_file(repo: Path, plan_file: str):
+    sign_off(repo)
+    code, output = intake(repo)
+    assert code == 0, output
+    lib = load_factory_lib(repo)
+    state_path = lib.run_state_path(repo)
+    state = json.loads(state_path.read_text(encoding="utf-8"))
+    state.update(plan_status="awaiting-approval", plan_file=plan_file)
+    lib.dump_json(state_path, state)
+
+    code, output = run(repo, "forge.py", "next")
+
+    assert code == 0, output
+    assert "saved plan file" in output
+    assert "is missing" in output
 
 
 def test_claude_no_argument_exit_plan_mode_approves_from_response(repo: Path):
