@@ -597,7 +597,8 @@ def seal_task(base: Path, task_id: str) -> None:
         fail(marker_problem)
 
     from factory_lib import (
-        effective_review_base, product_delta_digest, task_proof_problems,
+        effective_review_base, product_delta_digest, proof_problem_action,
+        task_proof_problems,
     )
     product_unchanged = bool(
         reusable
@@ -608,7 +609,14 @@ def seal_task(base: Path, task_id: str) -> None:
     )
     same_seal = False
     if product_unchanged:
-        same_seal = not task_proof_problems(base, key, task)
+        proof_problems = task_proof_problems(base, key, task)
+        if not proof_problems:
+            same_seal = True
+        elif not all(
+                proof_problem_action(args.id, problem) == "review"
+                for problem in proof_problems):
+            fail("Task proof changed after its marker:\n- "
+                 + "\n- ".join(proof_problems))
     if same_seal:
         commit = reusable["commit"]
         print(f"Task {args.id} already sealed at {commit[:12]}; the product "
