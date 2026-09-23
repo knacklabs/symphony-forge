@@ -78,8 +78,8 @@ def _git_log(base: Path) -> list[dict]:
             ["git", "-C", str(base), "-c", "i18n.logOutputEncoding=UTF-8",
              "log", "--all", "--no-merges", f"--format={fmt}"],
             capture_output=True, check=True, timeout=120,
-        ).stdout.decode("utf-8", errors="replace")
-    except (OSError, subprocess.SubprocessError):
+        ).stdout.decode("utf-8")
+    except (OSError, subprocess.SubprocessError, UnicodeDecodeError):
         return []
     commits = []
     for chunk in out.split("\x1e"):
@@ -114,8 +114,8 @@ def _record_names(base: Path) -> dict[str, set[str]]:
                 if seen > RECORD_FILE_LIMIT:
                     return found
                 try:
-                    text = Path(parent, name).read_text(encoding="utf-8", errors="replace")
-                except OSError:
+                    text = Path(parent, name).read_text(encoding="utf-8")
+                except (OSError, UnicodeDecodeError):
                     continue
                 for field, value in ROLE_VALUE.findall(text):
                     if not _is_agent(value):
