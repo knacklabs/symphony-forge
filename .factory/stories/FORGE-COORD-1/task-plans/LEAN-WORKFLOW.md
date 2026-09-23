@@ -4,6 +4,7 @@ task: LEAN-WORKFLOW
 title: Native approval, Lean migration, and one close-owned proof run
 status: draft
 design_review: required
+design_review_rationale: "Required: the task changes the write and sandbox boundary (hook admission and narrowed delegation scope), deletes and migrates stored Forge formats once, changes evidence schemas and the public forge CLI, and changes the approval and stage lifecycle."
 source_head_observed: 9e08774ba497
 active_decisions_reviewed: "./forge decision list --active, accepted corpus through 0083"
 ---
@@ -14,7 +15,7 @@ PR #229 still repeats approval and verification work, and its first complete clo
 
 ## Scope and boundaries
 
-Lean owns native story/task approval, one cold-read disposition bridge, narrowed delegation, secure optional grill context, content-bound proof reuse, one-time Lean and sealed fixed-review migration, the complete Decision 0080 native role registry, current per-event PR-link repair/backfill, the close-owned proof path, and aligned docs/tests.
+Lean owns native story/task approval, one cold-read disposition bridge, narrowed delegation, secure optional grill context, content-bound proof reuse, one-time Lean and sealed fixed-review migration, the complete Decision 0083 native role registry, current per-event PR-link repair/backfill, the close-owned proof path, and aligned docs/tests.
 
 Portable owns the later full event-family and bookkeeping consolidation. Native lifecycle and Shared coordinator work remain in their existing tasks. No scheduler, cache, new evidence schema, client rollout, global user configuration, or skipped coverage is authorized.
 
@@ -59,7 +60,7 @@ Workers run focused checks only. `forge task close` is the sole final proof owne
 5. Content-bound close reuse: test/verify receipts and selected-review reviewed-meaning identity reuse only when their proof-type inputs match; substantive acceptance/security/migration/evidence/review-instruction/product-delta changes force review, while canonicalized bookkeeping/timestamp changes preserve immutable original provenance.
 6. Lean migration: `forge upgrade` performs clean-checkout preflight with no `--force` bypass, full inventory/hash/classification, independent raw no-follow coverage over fixed legacy roots/exact parents, temp build, validation, publish/readback, profile/settings preservation, and deletion only after durable current outputs exist. Byte-identical retry passes and unequal partial retry refuses, except that a validated original empty completion may publish one bound `lean-workflow-v2-supplement.json` when later merged history introduces newly eligible proof.
 7. Fixed-proof migration: Lean migrates sealed fixed-lens proof once into canonical `origin=upgrade` selected generations with the full sealed-proof safety contract, while active old proof requires a fresh review and normal runtime never uses direct fixed-file fallback authority.
-8. Hook/config/profile target: committed Claude/Codex hook matrices, `.codex/config.toml`, `.claude/CLAUDE.md`, and profile installation match the recovery target; the complete Decision 0080 native role registry (sixteen roles) is installed and configured while client-modified/client-added profiles are preserved. The required selector keeps its legacy NAME `test_recovery_profile_override_keeps_only_three_forge_profiles` because required-test ids bind by id, but its body asserts the sixteen-role registry. The recorded contract Objective still says "three-profile Forge registry reduction" and needs a decomposition amendment through `record_decomposition_from_json.py`; this plan does not hand-edit the rendered contract block.
+8. Hook/config/profile target: committed Claude/Codex hook matrices, `.codex/config.toml`, `.claude/CLAUDE.md`, and profile installation match the recovery target; the complete Decision 0083 native role registry (sixteen roles) is installed and configured while client-modified/client-added profiles are preserved. The required selector keeps its legacy NAME `test_recovery_profile_override_keeps_only_three_forge_profiles` because required-test ids bind by id, but its body asserts the sixteen-role registry. The recorded contract Objective and LEAN-AC-8 already name this registry; they were amended through `record_decomposition_from_json.py`, and this plan does not hand-edit the rendered contract block.
 9. PR-link workflow staging: `.github/workflows/pr-link.yml` stages per-event `.factory/events/` files and updates its status/comment wording without returning to `.factory/events.jsonl` writes.
 10. Verified PR-link backfill: only verified PR #109 and #110 links are backfilled through `forge pr-link`, producing recorder-generated event files and clearing those board-completeness failures without touching unrelated spec gaps.
 11. Normal-runtime refusal: Lean-removed old formats outside upgrade produce `run forge upgrade` guidance; PR3-owned legacy families stay compatible until Portable handles them.
@@ -83,8 +84,11 @@ Measured 2026-09-23 at HEAD `a3d130c3`, base `9e08774b`. The full gate suite is
 scaffold-check (full suite), windows-hook-gates, pr-ticket-check, pr-contract and
 roadmap-gate. The 18 failures recorded at the handover are all resolved, and the
 task's five declared verify commands and 55 required selectors pass. No
-implementation work remains before close; what remains is ceremony: grill,
-native approval, stage start, the formal review, the functional check and seal.
+implementation work remains before close. The stage was started, closed
+incomplete, and reopened on base `9e08774b`, so it is active now. What remains
+is ceremony: this in-stage grill, the owner's native re-approval of the amended
+plan, one bound verification launch, the formal review, the functional check
+and seal.
 
 The recorded contract was amended on 2026-09-23 through
 `record_decomposition_from_json.py`, the sanctioned path, not by editing the
@@ -112,16 +116,20 @@ in this task's `tests.json` (medians n4 186.099s, n6 177.336s, n8 153.966s; n8
 17.27% faster, both runs passing, 5.97% apart, inside the 15% limit), the gate
 passed, and the canonical count is `-n 8`. AC16 governs the decision to change
 the worker count, and that decision was taken on the evidence then current; later
-edits to test files do not reopen it. AC17 holds by NON-ADOPTION with its
+edits to test files do not reopen it. The 90 passing tests in those runs are the
+three-file benchmark workload named above, not the 1437-test full suite. AC17 holds by NON-ADOPTION with its
 predicate recorded (setup share below 25%), and `factory/tests/conftest.py` is
 untouched. Neither criterion has a machine-checkable assertion, because
 `test-automated.json` accepts free-form strings; a benchmark evidence schema is a
 new evidence schema, which this task's scope excludes, and it is carried as a
 follow-up.
 
-The product delta is 132 files, over the 28,500-line soft budget. That is a
-RECORDED NOTE, not a refusal (`stages.py:1483`); the only hard refusal is above
-twice the line budget. The task stays one bounded implementation because its core
+The product delta, measured at HEAD `7a9a39df` against base `9e08774b` with the
+stage's excluded paths (`.factory/`, `plans/`, `docs/decisions/`), is 132 files
+and 32,966 changed lines, over the 28,500-line soft budget. That is a RECORDED
+NOTE, not a refusal (`stages.py:1478`); the only hard refusal is above twice
+the line budget (57,000). The growth since the budget was set is the GPT-6
+model-routing move (Decision 0083) and the scaffold-check repairs. The task stays one bounded implementation because its core
 parts are mutually dependent: native approval, removing the formats it replaces,
 migrating those formats once, and the close-owned proof path cannot land
 separately without shipping a half-migrated harness that refuses its own
@@ -137,6 +145,15 @@ session, event, tool, payload, cancellation, replay and candidate validation. It
 does NOT claim signed host attestation, and it does not exclude synthetic
 same-user invocation. The formal review assesses 0082 against the implementation.
 
+The earlier approval of digest def7a362 (event `415ae7d8…`, commit `7a9a39df`)
+does NOT count. The owner's tap was real, but it happened in a Claude session
+rooted in the myclaw checkout, and the event was passed to sf-lean's hook
+by hand. `docs/specs/plan-approval.md` puts a direct hook invocation outside
+the trusted boundary. That event stays in history unedited. The amended plan
+changes the digest, so it is superseded, and the approval that counts comes
+from a session started inside this worktree, where the host itself runs the
+project hook.
+
 Reactivation: the git-local control dir is per-worktree; `./forge story resume
 FORGE-COORD-1` rebuilds it from committed state. GATES-1 is now closed and
 archived, so `./forge next` no longer refuses on its retired proof. Sessions must
@@ -147,7 +164,7 @@ start inside the task worktree (WORKFLOW.md Runtime Modes).
 1. Implement and run focused regressions for each shared failure cause and AC13-17. Do not run the broad suite during fix iteration.
 2. The 4/6/8 benchmark already ran and its adoption gate passed, so the canonical count is `-n 8` (`.envrc:20`); do not re-benchmark unless the worker count is being changed again. No prepared fixture is adopted (AC17 predicate recorded).
 3. Commit product changes, then run `./forge task close LEAN-WORKFLOW`. Close owns the only canonical full suite, JUnit/selector proof, truthful automated record, and current review.
-4. The final task approval needs one supported runtime event. The main coordinator records the compact plan through real Claude `ExitPlanMode`; deterministic hook/recorder tests cover the Codex adapter and the other Claude refusal paths. Decision 0053 does not require an unfinished-task coordinator transfer, and no second live approval artifact is invented.
+4. The final task approval needs one supported runtime event. The owner approves the final plan through real Claude `ExitPlanMode` in a session started inside this worktree, so the host invokes this project's hook; a relayed or hand-piped event does not count; deterministic hook/recorder tests cover the Codex adapter and the other Claude refusal paths. Decision 0053 does not require an unfinished-task coordinator transfer, and no second live approval artifact is invented.
 5. Reverify `gh pr view 109` and `gh pr view 110`, current board completeness, dual-runtime, encoding, and diff checks through declared proof.
 6. Because this task is user-facing, run and record the functional checker after clean review and before sealing.
 

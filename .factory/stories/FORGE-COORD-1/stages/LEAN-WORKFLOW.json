@@ -1,5 +1,35 @@
 {
   "id": "LEAN-WORKFLOW",
   "title": "One brief and one complete independent review",
-  "status": "pending"
+  "status": "active",
+  "updated_at": "2026-09-23T05:32:42+00:00",
+  "started_at": "2026-09-23T05:33:03+00:00",
+  "base_sha": "9e08774ba4973f54d0b2805f6f84b633eb2c31ff",
+  "dirty_at_start": {
+    ".factory/events/ba5dec1bd64d4cc584f155af63dd3d71.json": {
+      "digest": "8db54fd66bf41e18b3bbf99cd61dbad0e77ef799da41fdde424e673d8d064f7b",
+      "git": "? .factory/events/ba5dec1bd64d4cc584f155af63dd3d71.json\u0000\u0000\u0000"
+    },
+    ".factory/events/f86dc1a8b01e449da385a2666d3cf1da.json": {
+      "digest": "9f30ff5421320567f84053791940a35b2a66c06d669041a2b01935074f913b81",
+      "git": "? .factory/events/f86dc1a8b01e449da385a2666d3cf1da.json\u0000\u0000\u0000"
+    },
+    ".factory/stages.json": {
+      "digest": "c9100ce7c64d7a3f18d68c860427f28fb0d80225d76e0e0dcd362fe80239ebb0",
+      "git": "1 .M N... 100644 100644 100644 53dbb5979c2343f2312883e3e2069ca4da0cc48e 53dbb5979c2343f2312883e3e2069ca4da0cc48e .factory/stages.json\u0000\u0000100644 53dbb5979c2343f2312883e3e2069ca4da0cc48e 0\t.factory/stages.json\u0000\u0000H .factory/stages.json\u0000"
+    },
+    ".factory/stories/FORGE-COORD-1/stages/LEAN-WORKFLOW.json": {
+      "digest": "a375a129afd0e93acadc358338bfc91e4a4c3fda880a49ec8f663a8bfede907a",
+      "git": "1 .M N... 100644 100644 100644 00a74f7b5d57ca0776f6438455dbb70e2b2e50db 00a74f7b5d57ca0776f6438455dbb70e2b2e50db .factory/stories/FORGE-COORD-1/stages/LEAN-WORKFLOW.json\u0000\u0000100644 00a74f7b5d57ca0776f6438455dbb70e2b2e50db 0\t.factory/stories/FORGE-COORD-1/stages/LEAN-WORKFLOW.json\u0000\u0000H .factory/stories/FORGE-COORD-1/stages/LEAN-WORKFLOW.json\u0000"
+    },
+    "plans/quickfixes/20260923T044530-0000-Q-0187-6cfe-open-044530029454.json": {
+      "digest": "22ae8d7f39948137344a9fe4b7823c508a24990fa55e336db07eb83bb31a1f51",
+      "git": "? plans/quickfixes/20260923T044530-0000-Q-0187-6cfe-open-044530029454.json\u0000\u0000\u0000"
+    },
+    "plans/quickfixes/20260923T045647-0000-Q-0187-6cfe-done-045647928375.json": {
+      "digest": "e763adc49a0044f9c8594adc4fda921e80ddb441738a2f456a9cdc730abce9a1",
+      "git": "? plans/quickfixes/20260923T045647-0000-Q-0187-6cfe-done-045647928375.json\u0000\u0000\u0000"
+    }
+  },
+  "task_sha256": "c43187d60197aacf4a36085849dabf80cb4ac8cf4ef6cd7440184d01b6d68523"
 }
