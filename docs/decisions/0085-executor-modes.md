@@ -21,9 +21,11 @@ A single setting, `FORGE_EXECUTOR` = `codex` | `claude` | `hybrid` (default `hyb
 execute (write product code). `.envrc` sets the repo default; an exported environment variable
 overrides it per machine; every gate reads it through one resolver.
 
-- `codex`: today's behavior; only Codex workers write.
-- `claude`: the Claude session and its subagents may write.
-- `hybrid`: either may write.
+- `hybrid` (default): Claude orchestrates and Codex executes — delegated Codex workers are the
+  default route for code changes. The Claude session may still execute through the same gates when
+  the coordinator chooses to (for example a small fix, or Codex unavailable).
+- `codex`: only Codex workers write; the Claude session never executes.
+- `claude`: Claude only — the Claude session and its subagents write; no Codex is required.
 
 Every writer passes the same gates: approved plan, active stage and write scope (or an open Lite /
 degraded window with its file budget), protected-state denial, and the same proof, review and ship
