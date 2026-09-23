@@ -93,4 +93,4 @@ Use category `security` for these findings.
 
 LEFTOVERS: report compatibility, dead, or style-only code only when it creates a concrete P0/P1 correctness, security, data-loss, or contract risk, with file:line evidence. Otherwise record it as a P2/P3 follow-up or say that no blocking leftover exists; cleanup alone does not make the contract partial.
 
-Reviewed meaning SHA-256: ba19a8e6e6d658804645c9d631be841bbd29a770fb1dd132b7586b24e98b346a
+Reviewed meaning SHA-256: 8dbdccb8ceeac24f6ca536aed3612109a3d69df5c2bba9bd3e9c4cad9b779d27

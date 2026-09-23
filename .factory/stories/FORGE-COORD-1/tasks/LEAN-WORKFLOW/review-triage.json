@@ -4015,6 +4015,53 @@
       "delta_id": "f855f12b4dfa625d134672b00122cbf6c4182a8436c1df80352a3cba6b5bdde6",
       "generation_id": "22dbcb187abd82aef54cad9485448c3974d07f732722763fe061300acd44aa9c",
       "task_id": "LEAN-WORKFLOW"
+    },
+    {
+      "lens": "quality",
+      "finding": {
+        "area": "factory/scripts/forge_cli",
+        "category": "bug",
+        "file_path": "factory/scripts/forge_cli/grill.py",
+        "line": 389,
+        "summary": "Preserve a prepared cold-read brief during preview (factory/scripts/forge_cli/grill.py:389): After a host-native cold read is prepared, amend its source artifact and run `forge grill run --print-only`.",
+        "title": "Preserve a prepared cold-read brief during preview"
+      },
+      "verdict": "real",
+      "evidence": "factory/scripts/forge_cli/grill.py:386",
+      "instances": [
+        "factory/scripts/forge_cli/grill.py:386"
+      ],
+      "keep": "",
+      "reason": "",
+      "triaged_by": "claude-coordinator",
+      "triaged_at": "2026-09-23T13:04:29+00:00",
+      "delta_id": "8369090972c1c56ed8e0aabb92664471432b7026312cb3ed1a82bfdc7ad18242",
+      "generation_id": "00478d4c5a948fc652a65ff4beaf3e6a57a6495ac896df89f56ad4f469787100",
+      "task_id": "LEAN-WORKFLOW"
+    },
+    {
+      "lens": "security",
+      "finding": {
+        "area": "factory/scripts",
+        "category": "security",
+        "file_path": "factory/scripts/pre_tool_use.py",
+        "line": 1120,
+        "summary": "Enforce narrowed scope for recursive native Bash writes (factory/scripts/pre_tool_use.py:1120): Trigger: an active host-native stage has an exact approved path such as `src/approved`, and Bash runs `cp -R generated src/approved` while no mode window is open.",
+        "title": "Enforce narrowed scope for recursive native Bash writes"
+      },
+      "verdict": "real",
+      "evidence": "factory/scripts/pre_tool_use.py:1120",
+      "instances": [
+        "factory/scripts/pre_tool_use.py:1120",
+        "factory/scripts/pre_tool_use.py:1141"
+      ],
+      "keep": "",
+      "reason": "",
+      "triaged_by": "claude-coordinator",
+      "triaged_at": "2026-09-23T13:04:30+00:00",
+      "delta_id": "8369090972c1c56ed8e0aabb92664471432b7026312cb3ed1a82bfdc7ad18242",
+      "generation_id": "00478d4c5a948fc652a65ff4beaf3e6a57a6495ac896df89f56ad4f469787100",
+      "task_id": "LEAN-WORKFLOW"
     }
   ]
 }
