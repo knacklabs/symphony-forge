@@ -1,0 +1,11 @@
+{
+  "approved_plan_sha256": "259494c8b15c4d7731b489c4ac282fd3b03cd7984254d2ff5625981cec210d93",
+  "approved_by": "human-via-Claude",
+  "approved_at": "2026-09-23T07:02:11+00:00",
+  "runtime": "claude",
+  "session_id": "a0106b2c-e659-5e23-b0c7-d419b1d20fda",
+  "event_id": "toolu_01JNEhWuAPxFEWbXDJnV7ySQ",
+  "plan_kind": "task",
+  "story": "FORGE-COORD-1",
+  "task": "LEAN-WORKFLOW"
+}
