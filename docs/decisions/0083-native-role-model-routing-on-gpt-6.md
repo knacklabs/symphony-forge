@@ -1,6 +1,6 @@
 ---
-status: proposed
-confirmed_by: ""
+status: accepted
+confirmed_by: "Ravi Kiran Vemula"
 date: 2026-09-23
 stories: [FORGE-COORD-1]
 supersedes: 0080-native-role-model-routing

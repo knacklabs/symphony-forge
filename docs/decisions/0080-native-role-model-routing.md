@@ -1,9 +1,10 @@
 ---
-status: accepted
+status: superseded
 confirmed_by: "User (explicit native role routing correction, Codex conversation 2026-09-18)"
 date: 2026-09-18
 stories: [FORGE-COORD-1]
 supersedes: 0074-user-selects-main-orchestrator-model
+superseded_by: 0083-native-role-model-routing-on-gpt-6
 ---
 
 # Native role model routing
