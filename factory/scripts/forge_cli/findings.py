@@ -14,8 +14,9 @@ import argparse
 from pathlib import Path
 
 from factory_lib import (
-    evidence_path, factory_dir, load_json, read_selected_review_generation,
-    repo_root, run_state_path, story_dir, validated_task_marker_commit,
+    evidence_path, factory_dir, has_completed_lean_migration_manifest,
+    load_json, read_selected_review_generation, repo_root, run_state_path,
+    story_dir, unmigrated_fixed_review_paths, validated_task_marker_commit,
 )
 from .roadmap import load_items
 
@@ -72,27 +73,39 @@ def collect(base: Path) -> list[dict]:
             evidence_path(base, task, f"reviews/{aspect}.json")
             for aspect in REVIEW_ASPECTS
         ]
-        task_fixed: list[Path] = []
+        task_candidates: list[Path] = []
         if task_root.is_dir():
             for task_dir in sorted(task_root.iterdir()):
-                task_fixed.extend(
+                task_candidates.extend(
                     task_dir / "reviews" / f"{aspect}.json"
                     for aspect in REVIEW_ASPECTS
-                    if (task_dir / "reviews" / f"{aspect}.json").is_file()
                 )
-        fixed_paths = [path for path in fixed if path.is_file()] + task_fixed
+        candidates = [path.relative_to(base).as_posix()
+                      for path in fixed + task_candidates]
+        fixed_paths = [base / relative for relative in
+                       unmigrated_fixed_review_paths(base, candidates)]
         if fixed_paths:
             task_ids = sorted({
                 path.relative_to(task_root).parts[0]
-                for path in task_fixed
+                for path in fixed_paths
+                if path.is_relative_to(task_root)
             })
             if task_ids:
                 detail = f"story {task} task {', '.join(task_ids)}"
             else:
                 detail = f"story {task}"
+            if not has_completed_lean_migration_manifest(base):
+                guidance = "run forge upgrade"
+            elif task_ids:
+                review_commands = ", ".join(
+                    f"forge review {task_id}" for task_id in task_ids
+                )
+                guidance = f"record a fresh review with {review_commands}"
+            else:
+                guidance = "record a fresh review for the story's current task"
             raise SystemExit(
-                f"{detail} has retired fixed review proof; run forge upgrade "
-                "before reading live findings"
+                f"{detail} has legacy fixed review files that are not proof; "
+                f"{guidance} before reading live findings"
             )
         selected_tasks = [
             path.parent.parent.name

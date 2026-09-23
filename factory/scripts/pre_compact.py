@@ -70,7 +70,10 @@ def snapshot(root: Path, trigger: str) -> str:
         lines += ["", "## Assumptions awaiting guidance"]
         lines += [f"- {r['id']} ({r['issue']}, {r['status']}): {r['assumption']}"
                   for r in open_assumptions]
-    flagged = [c for c in clusters(root) if c["count"] >= 2]
+    try:
+        flagged = [c for c in clusters(root) if c["count"] >= 2]
+    except SystemExit:
+        flagged = []
     if flagged:
         lines += ["", "## Finding classes (findings patterns)"]
         lines += [f"- {'RECURRING' if c['count'] >= 3 else 'watch'} x{c['count']}: "

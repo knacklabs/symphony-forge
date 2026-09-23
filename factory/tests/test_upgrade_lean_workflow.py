@@ -128,6 +128,128 @@ def _history_fixed_review(repo: Path, story: str = "H1") -> Path:
     return reviews
 
 
+def _assert_migrated_fixed_reviews_are_history(
+        repo: Path, story: str, task_ids: list[str]):
+    import factory_lib
+    from forge_cli import findings
+    from pre_compact import snapshot
+
+    factory_lib.dump_json(factory_lib.run_state_path(
+        repo, key=story, for_write=True,
+    ), {"issue_key": story, "story": story})
+    for task_id in task_ids:
+        problems = factory_lib.task_proof_problems(
+            repo, story, {"id": task_id},
+        )
+        assert not any("legacy fixed review" in problem for problem in problems)
+    closeout = factory_lib.require_closeout_order(repo)
+    assert not any("legacy fixed review" in problem for problem in closeout)
+    assert findings.collect(repo) == []
+    assert snapshot(repo, "auto")
+
+
+def test_lite_reviews_reject_preserved_story_review(repo: Path):
+    import factory_lib
+
+    story = "LITE-HISTORY"
+    factory_lib.story_dir(repo, story).mkdir(parents=True)
+    factory_lib.dump_json(factory_lib.run_state_path(repo), {"issue_key": story})
+    head = git(repo, "rev-parse", "HEAD").strip()
+    factory_lib.dump_json(factory_lib.factory_dir(repo) / "quickfix.json", {
+        "id": "Q-0001-abcd", "profile": "lite", "base_sha": head,
+    })
+    value = {
+        "generated_by": "autoreview", "score": 9,
+        "blocking_findings": [], "commit": head, "review_base_sha": head,
+    }
+    reviews = factory_lib.story_dir(repo, story) / "reviews"
+    reviews.mkdir(parents=True)
+    for aspect in ("quality", "performance", "security"):
+        (reviews / f"{aspect}.json").write_text(
+            json.dumps(value) + "\n", encoding="utf-8",
+        )
+    loaded, problems = factory_lib.load_review_artifacts(
+        repo, require_head=True, blockers_only=True,
+    )
+    assert "quality" not in loaded
+    assert any("quality review does not belong to the open Lite window" in p
+               for p in problems)
+
+    relative = f".factory/stories/{story}/reviews/quality.json"
+    digest = hashlib.sha256((reviews / "quality.json").read_bytes()).hexdigest()
+    migrations = factory_lib.factory_dir(repo) / "migrations"
+    migrations.mkdir(parents=True, exist_ok=True)
+    (migrations / "lean-workflow-v2.json").write_text(json.dumps({
+        "generated_by": "upgrade", "version": "lean-workflow-v2",
+        "completed_at": "2026-09-23T00:00:00+00:00",
+        "preserved_entries": [{"path": relative, "sha256": digest}],
+    }) + "\n", encoding="utf-8")
+
+    loaded, problems = factory_lib.load_review_artifacts(
+        repo, require_head=True, blockers_only=True,
+    )
+
+    assert "quality" not in loaded
+    assert any("quality review is preserved migration history" in p
+               for p in problems)
+
+
+def test_findings_refuse_legacy_task_review_with_fresh_review_guidance(repo: Path):
+    import factory_lib
+    from forge_cli import findings
+
+    story = "S1"
+    task = "T1"
+    factory_lib.dump_json(factory_lib.run_state_path(repo), {"issue_key": story})
+    review = (
+        factory_lib.story_dir(repo, story) / "tasks" / task
+        / "reviews" / "quality.json"
+    )
+    review.parent.mkdir(parents=True)
+    review.write_text(
+        json.dumps({"blocking_findings": []}) + "\n", encoding="utf-8",
+    )
+    manifest = factory_lib.factory_dir(repo) / "migrations" / "lean-workflow-v2.json"
+    manifest.parent.mkdir(parents=True)
+    manifest.write_text(json.dumps({
+        "generated_by": "upgrade", "version": "lean-workflow-v2",
+        "completed_at": "2026-09-23T00:00:00+00:00", "preserved_entries": [],
+    }) + "\n", encoding="utf-8")
+
+    with pytest.raises(SystemExit) as refusal:
+        findings.collect(repo)
+
+    message = str(refusal.value)
+    assert f"forge review {task}" in message
+    assert "forge upgrade" not in message
+
+
+def test_findings_story_review_guidance_names_current_task(repo: Path):
+    import factory_lib
+    from forge_cli import findings
+
+    story = "S1"
+    factory_lib.dump_json(factory_lib.run_state_path(repo), {"issue_key": story})
+    review = factory_lib.story_dir(repo, story) / "reviews" / "quality.json"
+    review.parent.mkdir(parents=True)
+    review.write_text(
+        json.dumps({"blocking_findings": []}) + "\n", encoding="utf-8",
+    )
+    manifest = factory_lib.factory_dir(repo) / "migrations" / "lean-workflow-v2.json"
+    manifest.parent.mkdir(parents=True)
+    manifest.write_text(json.dumps({
+        "generated_by": "upgrade", "version": "lean-workflow-v2",
+        "completed_at": "2026-09-23T00:00:00+00:00", "preserved_entries": [],
+    }) + "\n", encoding="utf-8")
+
+    with pytest.raises(SystemExit) as refusal:
+        findings.collect(repo)
+
+    message = str(refusal.value)
+    assert "the story's current task" in message
+    assert "<task>" not in message
+
+
 def _story_fixed_review(repo: Path, story: str = "S2") -> Path:
     root = repo / ".factory" / "stories" / story
     reviews = root / "reviews"
@@ -2410,6 +2532,7 @@ def test_lean_migration_preserves_ambiguous_pre_task_id_story_review(
     assert all((reviews / f"{lens}.json").is_file()
                for lens in upgrade.LEAN_LENSES)
     assert upgrade.preflight_lean_migration(repo) is None
+    _assert_migrated_fixed_reviews_are_history(repo, "S2", ["T1", "T2"])
 
 
 def test_lean_migration_revalidates_inventory_before_each_pointer_commit(
@@ -2512,6 +2635,10 @@ def test_lean_migration_preserves_reconciled_fixed_review_without_selection(
     assert {row["reason"] for row in fixed} == {
         "active fixed review requires a fresh review",
     }
+    upgrade.apply_lean_migration(repo, migration)
+    assert all((reviews / f"{lens}.json").is_file()
+               for lens in upgrade.LEAN_LENSES)
+    _assert_migrated_fixed_reviews_are_history(repo, "S1", ["T1"])
 
 
 def test_normal_runtime_refuses_lean_removed_formats_with_upgrade_guidance(repo: Path):
