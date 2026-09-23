@@ -205,7 +205,7 @@ your behalf, not for you to type.
 | lessons | "what did we learn about these files?" / "remember this" | none; deterministic ledger | `./forge lesson relevant` / `add` → `plans/lessons.jsonl` (schema-validated, deduped) |
 | verify + review | "Close the task" | `./forge task close <task-id>` runs the canonical proof suite and the unchanged externally maintained Autoreview skill (one three-lens pass) | close-owned proof results and the selected review generation |
 | functional check | only if `user_facing: true` | `functional-checker` subagent at Sol/high | `record_test_from_json.py --kind functional` |
-| ship | "Is this PR ready?" | none; deterministic gate (refuses unguided assumptions, missing/stale evidence) | `pr_ready.py` → archives + roadmap done |
+| ship | "Is this PR ready?" | none; deterministic gate (refuses unguided assumptions, missing/stale evidence) | `pr_ready.py` → scoped proof stays in place; roadmap done |
 | guide assumptions (orchestrator) | "review the assumptions" | `./forge assumptions list --open` / `resolve` | `plans/assumptions.md`; the ship gate reads it |
 | context dump | drop files in `docs/context/`, then "scan the context" | `/forge` → `./forge context scan` | `docs/context/ledger.json` |
 | context harvest | "Process the context dump" | agent per `harvester.md` → proposed decisions + BRIEF edits | `./forge context mark --harvested\|--ignored` |
