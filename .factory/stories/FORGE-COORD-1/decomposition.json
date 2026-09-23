@@ -1,5 +1,5 @@
 {
-  "generated_by": "docs-decomposer",
+  "generated_by": "claude-code:plan-mode",
   "user_facing": true,
   "tasks": [
     {
@@ -1090,11 +1090,31 @@
       }
     },
     {
+      "id": "LEAN-FIXES",
+      "title": "Close the Lean review findings deferred at merge",
+      "objective": "Fix the review findings left open when LEAN-WORKFLOW merged (D-0039) and lift the client-upgrade hold (D-0040), so the Lean migration is safe to run on existing client repos and the review gate agrees with the runtime.",
+      "user_facing": false,
+      "dependencies": [
+        "LEAN-WORKFLOW"
+      ],
+      "acceptance_criteria": [
+        "An upgrade interrupted after replacing factory/ never completes without a client-owned or Git-ignored skill: the retry restores it from recorded state or refuses.",
+        "Upgrade preflight classifies a malformed stage-state container as invalid inventory instead of letting it escape classification.",
+        "An interrupted retirement of an active task's fixed-lens proof is recoverable through the normal migration retry.",
+        "Native task approval preserves the grill's exact final_artifact_sha256; the semantic plan digest is recorded separately, never in its place.",
+        "The task-grill reader enforces an independent cold-grill proof (validated cold input, final artifact and dispositions), not only the presence of the field names.",
+        "A functional-evidence retry reuses the canonical verifier's proof when its inputs are unchanged instead of rerunning the full suite.",
+        "README closeout text describes in-place scoped proof, not archive-based shipping.",
+        "The decomposition recorder accepts a task-graph change only after a native story-plan re-approval bound by the payload, with every done task's id, order and dependencies unchanged.",
+        "D-0039 and D-0040 are resolved in the deferral ledger once the fixes above land."
+      ]
+    },
+    {
       "id": "PORTABLE-DELIVERY-MIGRATION",
       "title": "Portable setup, durable history and existing-client migration",
       "objective": "Portable PR3 migrates the whole event family from current per-event files, older root JSONL, and historical bundles into one append-only event log per story plus a canonical unattributed sink for idless or unattributable legacy rows, then routes future producers, readers, history, board, and audit consumers through that canonical store and removes normal-runtime legacy event readers with `forge upgrade` guidance. It also completes the remaining non-review legacy-family migration already assigned to `PORTABLE-DELIVERY-MIGRATION`, preserving client changes, dirty-state refusal, task proof, seals, selected review proof, audit and Git history, setup/doctor behavior, Linux and native Windows behavior, the three-profile Forge registry, and client-modified/client-added profiles without duplicating Lean fixed-proof/profile work or reinstalling retired Forge-owned profiles. The current bounded story ceiling is 46 changed files and 8,200 added-plus-deleted lines; the exact post-Lean JIT must add write_scope, required_tests, verify_commands, reviewer_focus, plan_contracts, and review_budget from the actual Lean trunk before delegation.",
       "dependencies": [
-        "LEAN-WORKFLOW"
+        "LEAN-FIXES"
       ],
       "user_facing": false,
       "acceptance_criteria": [
@@ -1183,6 +1203,6 @@
   "story": "FORGE-COORD-1",
   "epic": "symphony-forge",
   "plan_file": "plans/active/FORGE-COORD-1-either-claude-or-codex-coordinates-the-same-forge-workflow.md",
-  "plan_sha256": "704e22e69b3722fc885bd09231691a18c2afc01b0982a112bb7b5118744f1723",
-  "commit": "a3d130c3aae5a9ff8a78016a6bfdd39ab58966f0"
+  "plan_sha256": "8d7ff4d640f3ea3d26a78cc9e356b45525952d9c746940d31b594370ed211b7e",
+  "commit": "1af91d4752da29a0b07ad8b9dc597d353b6b0547"
 }

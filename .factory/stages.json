@@ -4,12 +4,19 @@
     {
       "id": "NATIVE-FOREGROUND-ACTIVATE",
       "title": "Native foreground and complete first-task proof",
-      "status": "done"
+      "status": "done",
+      "task_sha256": "397cc2c4a0f51e4bdc805d76fa7a685f55e0da6798ea12df8c47e316e7d19fe5"
     },
     {
       "id": "LEAN-WORKFLOW",
       "title": "One brief and one complete independent review",
-      "status": "done"
+      "status": "done",
+      "task_sha256": "c43187d60197aacf4a36085849dabf80cb4ac8cf4ef6cd7440184d01b6d68523"
+    },
+    {
+      "id": "LEAN-FIXES",
+      "title": "Close the Lean review findings deferred at merge",
+      "status": "pending"
     },
     {
       "id": "PORTABLE-DELIVERY-MIGRATION",
