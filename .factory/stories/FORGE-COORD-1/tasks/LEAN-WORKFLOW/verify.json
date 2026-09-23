@@ -1,16 +1,16 @@
 {
   "ok": true,
-  "completed_at": "2026-09-23T07:44:00+00:00",
-  "commit": "99e3b81ca8d9c6e3e6b47a3a767d68e8f5482297",
+  "completed_at": "2026-09-23T12:00:17+00:00",
+  "commit": "080e4e4a4d765dce139cda9dd51d659fa6cc17c4",
   "task_id": "LEAN-WORKFLOW",
   "recorded_by": "stage-proof",
-  "tree_digest": "a41b037e87c0f16a70fbe8d4d08b473222e5d3b286e8ed5df3053ee5d26ba063",
-  "proof_key": "29f488ff030f32f4421bcf366801ee4d01dfb7ce3fe2e3a482e2ae88ed3f3dca",
+  "tree_digest": "4d4b5d0e2608de13d1f0bd699b81ba38adb42d131719a7e31981531cca9fd124",
+  "proof_key": "c1c705ba17bc3b12caa3dce4796b9779efb97411201af15620f7888fbfddbdee",
   "results": [
     {
       "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with pytest-xdist --with psutil python factory/scripts/verify.py",
       "exit_code": 0,
-      "output_tail": "Installed 8 packages in 6ms\nVerification passed"
+      "output_tail": "Verification passed"
     },
     {
       "command": "python3 factory/scripts/check_dual_runtime.py",
