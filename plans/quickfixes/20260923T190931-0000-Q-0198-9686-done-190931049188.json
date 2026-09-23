@@ -1,0 +1,78 @@
+{
+  "event": "done",
+  "id": "Q-0198-9686",
+  "profile": "lite",
+  "by": "Ravi Kiran Vemula",
+  "reason": "Verified review gap group g5-seal for task LEAN-FIXES (owner: fix P1/P2 now, parallel)",
+  "base_sha": "fd1c6740b1d083ad8beccd5e52f8b3f88d6eb9d7",
+  "started_at": "2026-09-23T17:21:17+00:00",
+  "completed_at": "2026-09-23T19:09:31+00:00",
+  "files": [
+    "factory/scripts/factory_lib.py",
+    "factory/scripts/forge_cli/tasks.py",
+    "factory/tests/test_gates.py"
+  ],
+  "reviews": {
+    "quality": {
+      "generated_by": "autoreview",
+      "score": 10,
+      "summary": "quality lens over Q-0198-9686 (3 product path(s), fd1c674..fb985e4, Codex via the autoreview skill): 0 blocking, 0 non-blocking. The reseal path still validates the current task proof before accepting a changed review, while non-review proof changes remain rejected. No actionable defect was found.",
+      "blocking_findings": [],
+      "non_blocking_findings": [],
+      "recommendation": "approve",
+      "reviewed_scope": [
+        "factory/scripts/factory_lib.py",
+        "factory/scripts/forge_cli/tasks.py",
+        "factory/tests/test_gates.py"
+      ],
+      "skills_used": [],
+      "contract_verdicts": [],
+      "review_base_sha": "fd1c6740b1d083ad8beccd5e52f8b3f88d6eb9d7",
+      "branch_diff_digest": "ed600d51920b0495bf727c4fafe37a3c6cf5f6cd820e3e34dc9299c8be6782fa",
+      "commit": "fb985e497d91b27780c1bfae98c572b5189d0782",
+      "aspect": "quality",
+      "residual_risks": [],
+      "recorded_at": "2026-09-23T19:08:07+00:00"
+    },
+    "performance": {
+      "generated_by": "autoreview",
+      "score": 10,
+      "summary": "performance lens over Q-0198-9686 (3 product path(s), fd1c674..fb985e4, Codex via the autoreview skill): 0 blocking, 0 non-blocking. The added classification work is bounded by the number of proof problems and introduces no material cost.",
+      "blocking_findings": [],
+      "non_blocking_findings": [],
+      "recommendation": "approve",
+      "reviewed_scope": [
+        "factory/scripts/factory_lib.py",
+        "factory/scripts/forge_cli/tasks.py",
+        "factory/tests/test_gates.py"
+      ],
+      "skills_used": [],
+      "review_base_sha": "fd1c6740b1d083ad8beccd5e52f8b3f88d6eb9d7",
+      "branch_diff_digest": "ed600d51920b0495bf727c4fafe37a3c6cf5f6cd820e3e34dc9299c8be6782fa",
+      "commit": "fb985e497d91b27780c1bfae98c572b5189d0782",
+      "aspect": "performance",
+      "residual_risks": [],
+      "recorded_at": "2026-09-23T19:08:07+00:00"
+    },
+    "security": {
+      "generated_by": "autoreview",
+      "score": 10,
+      "summary": "security lens over Q-0198-9686 (3 product path(s), fd1c674..fb985e4, Codex via the autoreview skill): 0 blocking, 0 non-blocking. The change adds no new external entry point. Current proof validation remains required before resealing, and verify or test proof edits remain blocked.",
+      "blocking_findings": [],
+      "non_blocking_findings": [],
+      "recommendation": "approve",
+      "reviewed_scope": [
+        "factory/scripts/factory_lib.py",
+        "factory/scripts/forge_cli/tasks.py",
+        "factory/tests/test_gates.py"
+      ],
+      "skills_used": [],
+      "review_base_sha": "fd1c6740b1d083ad8beccd5e52f8b3f88d6eb9d7",
+      "branch_diff_digest": "ed600d51920b0495bf727c4fafe37a3c6cf5f6cd820e3e34dc9299c8be6782fa",
+      "commit": "fb985e497d91b27780c1bfae98c572b5189d0782",
+      "aspect": "security",
+      "residual_risks": [],
+      "recorded_at": "2026-09-23T19:08:07+00:00"
+    }
+  }
+}
