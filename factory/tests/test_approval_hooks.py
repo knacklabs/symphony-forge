@@ -264,8 +264,8 @@ def test_phase_refuses_approved_status_without_native_approval_authority(
     assert _approved_plan_authority_state(repo, state) == "changed"
 
 
-def test_legacy_exact_plan_approval_is_reachable_and_upgrade_refuses_before_mutation(
-        repo: Path, capsys: pytest.CaptureFixture[str]):
+def test_legacy_exact_plan_approval_is_reachable_and_upgrade_preflight_allows_it(
+        repo: Path):
     candidate = _story_candidate(repo)
     lib = load_factory_lib(repo)
     candidate.path.write_text(
@@ -283,15 +283,25 @@ def test_legacy_exact_plan_approval_is_reachable_and_upgrade_refuses_before_muta
         "issue": candidate.story, "story": candidate.story,
         "approver": "Legacy Human", "at": "2026-01-01T00:00:00+00:00",
     })
+    plan_grill = repo / ".factory" / "grills" / "plan.json"
+    lib.dump_json(plan_grill, {
+        "generated_by": "griller", "gate": "plan", "verdict": "pass",
+        "gaps": [], "contradictions": [], "resolutions": [],
+    })
     recovered = approval.eligible_candidates(repo)
     assert recovered == [candidate]
     before = {
         path: path.read_bytes() if path.exists() else None
-        for path in (candidate.path, candidate.evidence, state_path)
+        for path in (candidate.path, candidate.evidence, state_path, plan_grill)
     }
-    with pytest.raises(SystemExit):
-        upgrade.preflight_lean_migration(repo)
-    assert "genuine native approval" in capsys.readouterr().out
+    migration = upgrade.preflight_lean_migration(repo)
+    assert migration is not None
+    assert any(
+        entry.get("family") == "manual-plan-approval"
+        and entry.get("classification") == "eligible"
+        and entry.get("path") == candidate.evidence.relative_to(repo).as_posix()
+        for entry in migration.get("entries") or []
+    )
     assert {
         path: path.read_bytes() if path.exists() else None
         for path in before
@@ -422,6 +432,8 @@ def test_completed_deleted_plan_approval_searches_authenticated_prior_completion
 
 def test_public_upgrade_retry_after_native_reapproval_does_not_keep_legacy_gate(
         repo: Path):
+    sign_off(repo)
+    intake(repo)
     candidate = _story_candidate(repo)
     lib = load_factory_lib(repo)
     candidate.path.write_text(
@@ -455,17 +467,17 @@ def test_public_upgrade_retry_after_native_reapproval_does_not_keep_legacy_gate(
     git(repo, "commit", "-qm", "legacy approval recovery fixture")
     first = public_upgrade()
     code, output = first.returncode, first.stdout + first.stderr
-    assert code != 0
-    assert "genuine native approval" in output
+    assert code == 0, output
+    assert (
+        f"re-approve {candidate.path.relative_to(repo)} in native Plan Mode after upgrade"
+        in output
+    )
 
-    recovered = approval.eligible_candidates(repo)
-    assert recovered == [candidate]
+    assert approval.eligible_candidates(repo) == [candidate]
+    code, output = run(repo, "forge.py", "next")
+    assert code == 0, output
+    assert "native Plan Mode" in output
     approval.record_native_approval(repo, _event(candidate), runtime="claude")
-    git(repo, "add", "-A")
-    git(repo, "commit", "-qm", "native approval recovery fixture")
-    second = public_upgrade()
-    assert second.returncode == 0, second.stdout + second.stderr
-    assert "genuine native approval" not in second.stdout + second.stderr
     assert approval.eligible_candidates(repo) == []
 
 
