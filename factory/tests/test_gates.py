@@ -14000,6 +14000,65 @@ def test_task_reopen_refuses_a_task_not_in_the_decomposition(repo, tmp_path):
     assert code != 0 and "not in the current decomposition" in out, out
 
 
+def test_task_close_refuses_to_reopen_a_shipped_stage(repo, monkeypatch, capsys):
+    import contextlib
+    from argparse import Namespace
+    from factory_lib import task_marker_path
+    from forge_cli import close, delegate, review, stages
+
+    key, task_id = "ENG-1", "T1"
+    base_head = head(repo)
+    git(repo, "checkout", "-B", "main", base_head)
+    marker_rel = task_marker_path(key, task_id).as_posix()
+    marker_path = repo / marker_rel
+    marker_path.parent.mkdir(parents=True, exist_ok=True)
+    marker_path.write_text("{}\n", encoding="utf-8")
+    git(repo, "add", marker_rel)
+    git(repo, "commit", "-qm", "ship T1")
+    git(repo, "config", "remote.origin.url", str(repo))
+    git(repo, "config", "remote.origin.fetch",
+        "+refs/heads/*:refs/remotes/origin/*")
+    git(repo, "symbolic-ref", "refs/remotes/origin/HEAD",
+        "refs/remotes/origin/main")
+    git(repo, "fetch", "origin", "main")
+    git(repo, "cat-file", "-e", f"origin/main:{marker_rel}")
+    git(repo, "checkout", "--detach", base_head)
+
+    (repo / ".factory" / "run.json").write_text(
+        json.dumps({"issue_key": key}), encoding="utf-8",
+    )
+    write_stages(repo, {
+        "issue": key,
+        "stages": [{"id": task_id, "status": "done",
+                    "local_review_stamp": {"delta_id": "old"}}],
+    })
+    task = {"id": task_id, "write_scope": ["src/"]}
+    monkeypatch.setattr(review, "_product_dirty", lambda _base: [])
+    monkeypatch.setattr(close, "task_seal_shared_problems", lambda *_: [])
+    monkeypatch.setattr(stages, "task_for", lambda *_: task)
+    monkeypatch.setattr(stages, "stage_review_binding", lambda *_: {
+        "delta_id": "d" * 64,
+    })
+    monkeypatch.setattr(stages, "stamp_is_fresh", lambda *_: False)
+    monkeypatch.setattr(
+        delegate, "delegation_exclusion",
+        lambda *_args, **_kwargs: contextlib.nullcontext(),
+    )
+    monkeypatch.setattr(delegate, "load_delegations", lambda *_: [])
+    monkeypatch.setattr(stages, "_measure", lambda *_: {"strays": []})
+    monkeypatch.setattr(stages, "_require_successful_launch",
+                        lambda *_: stages.fail("sentinel after stage reopen"))
+
+    with pytest.raises(SystemExit):
+        close.cmd_task_close(Namespace(
+            repo=str(repo), id=task_id, engine="codex", max_priority="P3",
+            skill=None,
+        ))
+
+    assert "already SHIPPED" in capsys.readouterr().out
+    assert load_stages(repo)["stages"][0]["status"] == "done"
+
+
 def test_done_contracts_immutable_and_criteria_map_binds_plan_contracts(
         repo, tmp_path):
     sign_off(repo)

@@ -134,6 +134,23 @@ def _default_branch(base: Path) -> str:
     return default_trunk_branch(base)
 
 
+def _require_unshipped(base: Path, key: str, task_id: str) -> None:
+    default_branch = _default_branch(base)
+    marker = task_marker_path(key, task_id)
+    fetched = _git(base, "fetch", "origin", default_branch)
+    if fetched.returncode == 0:
+        present = _git(base, "cat-file", "-e",
+                       f"origin/{default_branch}:{marker.as_posix()}")
+        if present.returncode == 0:
+            fail(f"task {task_id} is already SHIPPED (its marker is on "
+                 f"origin/{default_branch}); shipped work is immutable — add a new "
+                 "follow-up task rather than reopening it.")
+    else:
+        print(f"WARNING: could not reach origin/{default_branch} to confirm "
+              f"{task_id} is unshipped; proceeding on local state. Do NOT reopen a "
+              "task whose PR has already merged.")
+
+
 def _task_plan_path(base: Path, task_id: str, *, for_write: bool = False) -> Path:
     state = load_json(run_state_path(base), default={})
     story = state.get("issue_key") or state.get("story")
@@ -492,22 +509,6 @@ def cmd_task_reopen(args: argparse.Namespace) -> None:
         if _git(base, "merge-base", "--is-ancestor", explicit, "HEAD").returncode != 0:
             fail(f"--base {explicit[:12]} is not an ancestor of HEAD")
     reopen_base = explicit or target.get("reopen_base_sha") or target.get("base_sha") or ""
-    # Shipped work is immutable. The task marker rides onto the integration branch
-    # at merge; if it is there, the work is shipped — add a follow-up task instead.
-    default_branch = _default_branch(base)
-    marker = task_marker_path(key, args.id)
-    fetched = _git(base, "fetch", "origin", default_branch)
-    if fetched.returncode == 0:
-        present = _git(base, "cat-file", "-e",
-                       f"origin/{default_branch}:{marker.as_posix()}")
-        if present.returncode == 0:
-            fail(f"task {args.id} is already SHIPPED (its marker is on "
-                 f"origin/{default_branch}); shipped work is immutable — add a new "
-                 "follow-up task rather than reopening it.")
-    else:
-        print(f"WARNING: could not reach origin/{default_branch} to confirm "
-              f"{args.id} is unshipped; proceeding on local state. Do NOT reopen a "
-              "task whose PR has already merged.")
     if getattr(args, "review_fix", False):
         from forge_cli.stages import reopen_stage_for_review_fix
         target = reopen_stage_for_review_fix(base, args.id)
@@ -516,6 +517,7 @@ def cmd_task_reopen(args: argparse.Namespace) -> None:
               f"stand. Delegate the fixes, commit, then `forge task close {args.id}` "
               "(it re-reviews the new diff, closes and seals).")
         return
+    _require_unshipped(base, key, args.id)
     # Reopening ripples forward: the done-tail built on this task has a changed
     # base, so it returns to pending too. Clear the evidence so every reopened
     # stage is re-grilled + re-implemented from scratch.
