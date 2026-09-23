@@ -12,7 +12,9 @@ from pathlib import Path
 
 import pytest
 
-from test_gates import HARNESS, git, load_factory_lib, repo, run  # noqa: F401
+from test_gates import (
+    HARNESS, _copy_harness_source, _init, git, load_factory_lib, repo, run,
+)  # noqa: F401
 
 sys.path.insert(0, str(HARNESS / "factory" / "scripts"))
 from forge_cli import upgrade  # noqa: E402
@@ -490,6 +492,17 @@ def test_lean_migration_refuses_family_specific_malformed_objects(
         upgrade.preflight_lean_migration(repo)
     assert "invalid" in capsys.readouterr().out
     assert path.read_bytes() == before
+
+
+def test_lean_preflight_classifies_malformed_stage_container_as_invalid(
+        repo: Path, capsys: pytest.CaptureFixture[str]):
+    stage = repo / ".factory/stages.json"
+    stage.write_text(json.dumps({"stages": None}), encoding="utf-8")
+
+    with pytest.raises(SystemExit):
+        upgrade.preflight_lean_migration(repo)
+    assert "invalid legacy-stage-stamp input .factory/stages.json" \
+        in capsys.readouterr().out
 
 
 @pytest.mark.parametrize(("field", "value"), [
@@ -1004,16 +1017,44 @@ def test_public_upgrade_refuses_resume_after_preserved_client_skill_is_lost(
     assert not skill.exists()
     manifest = repo / ".factory/migrations/lean-workflow-v2.json"
     assert "completed_at" not in json.loads(manifest.read_text())
+    (repo / upgrade.UPGRADE_PRESERVED_ROOT / "factory/skills/client-skill.md").unlink()
     with pytest.raises(SystemExit):
         upgrade.cmd_upgrade(argparse.Namespace(target=str(repo), force=False))
-    assert "preserved path is missing or changed: factory/skills/client-skill.md" \
-        in capsys.readouterr().out
+    assert "uncommitted changes" in capsys.readouterr().out
     assert "completed_at" not in json.loads(manifest.read_text())
 
 
-def test_public_upgrade_refuses_to_complete_after_factory_replace_loses_ignored_client_skill(
-        repo: Path, monkeypatch: pytest.MonkeyPatch,
-        capsys: pytest.CaptureFixture[str]):
+def test_public_upgrade_accepts_gitless_harness_snapshot_with_client_additions(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    source = _copy_harness_source(tmp_path)
+    target = tmp_path / "app"
+    initialized = _init(target)
+    assert initialized.returncode == 0, initialized.stdout + initialized.stderr
+
+    skill = target / "factory/skills/client-skill.md"
+    skill.write_text("client-owned skill\n", encoding="utf-8")
+    proposed = target / "factory/skills/proposed/client-note.md"
+    proposed.parent.mkdir(parents=True, exist_ok=True)
+    proposed.write_text("client proposal\n", encoding="utf-8")
+    profile = target / ".codex/agents/client-custom.toml"
+    profile.write_text('name = "client-custom"\n', encoding="utf-8")
+    _legacy_round(target)
+    git(target, "add", "-A")
+    git(target, "commit", "-q", "-m", "client additions and legacy input")
+
+    assert upgrade.head_sha(source) is None
+    monkeypatch.setattr(upgrade, "repo_root", lambda: source)
+    upgrade.cmd_upgrade(argparse.Namespace(target=str(target), force=False))
+
+    assert skill.read_text(encoding="utf-8") == "client-owned skill\n"
+    assert proposed.read_text(encoding="utf-8") == "client proposal\n"
+    assert profile.read_text(encoding="utf-8") == 'name = "client-custom"\n'
+    backup = target / upgrade.UPGRADE_PRESERVED_ROOT / skill.relative_to(target)
+    assert not backup.exists()
+
+
+def test_public_upgrade_restores_ignored_client_skill_after_factory_replace_interruption(
+        repo: Path, monkeypatch: pytest.MonkeyPatch):
     skill = repo / "factory/skills/client-skill.md"
     skill.write_text("client-owned skill\n", encoding="utf-8")
     exclude = repo / ".git/info/exclude"
@@ -1040,19 +1081,15 @@ def test_public_upgrade_refuses_to_complete_after_factory_replace_loses_ignored_
 
     assert not skill.exists()
     manifest = repo / ".factory/migrations/lean-workflow-v2.json"
-    git(repo, "add", "-A")
-    git(repo, "commit", "-q", "-m", "interrupted upgrade state")
-    assert git(repo, "status", "--porcelain", "--untracked-files=all") == ""
-    manifest_bytes = manifest.read_bytes()
-    head = git(repo, "rev-parse", "HEAD")
-    with pytest.raises(SystemExit):
-        upgrade.cmd_upgrade(argparse.Namespace(target=str(repo), force=False))
-    assert "preserved path is missing or changed: factory/skills/client-skill.md" \
-        in capsys.readouterr().out
-    assert git(repo, "rev-parse", "HEAD") == head
-    assert git(repo, "status", "--porcelain", "--untracked-files=all") == ""
-    assert manifest.read_bytes() == manifest_bytes
-    assert "completed_at" not in json.loads(manifest_bytes)
+    backup = repo / upgrade.UPGRADE_PRESERVED_ROOT / "factory/skills/client-skill.md"
+    assert backup.read_text(encoding="utf-8") == "client-owned skill\n"
+    assert backup.relative_to(repo).as_posix() in git(
+        repo, "status", "--porcelain", "--untracked-files=all",
+    )
+    upgrade.cmd_upgrade(argparse.Namespace(target=str(repo), force=False))
+    assert skill.read_text(encoding="utf-8") == "client-owned skill\n"
+    assert "completed_at" in json.loads(manifest.read_text(encoding="utf-8"))
+    assert not backup.exists()
 
 
 @pytest.mark.parametrize("destination", ["converted-stage", "migration-manifest"])
@@ -1482,6 +1519,51 @@ def test_lean_migration_resumes_after_one_fixed_lens_was_deleted(
         repo / ".factory/migrations/lean-workflow-v2.json"
     ).read_text())
     assert "completed_at" in manifest
+
+
+def test_lean_migration_resumes_after_active_fixed_lens_retirement_interruption(
+        repo: Path, monkeypatch: pytest.MonkeyPatch):
+    reviews = repo / ".factory/stories/S1/tasks/T1/reviews"
+    reviews.mkdir(parents=True, exist_ok=True)
+    for lens in upgrade.LEAN_LENSES:
+        (reviews / f"{lens}.json").write_text(
+            json.dumps(_fixed_lens()), encoding="utf-8",
+        )
+    migration = upgrade.preflight_lean_migration(repo)
+    assert migration is not None
+    rows = [entry for entry in migration["entries"]
+            if entry.get("family") == "fixed-review-lens"]
+    assert len(rows) == 3 and all(entry["preserve"] is False for entry in rows)
+    assert not (reviews.parent / "pr-ready.json").exists()
+
+    original_unlink = Path.unlink
+    deleted = 0
+
+    def interrupt_after_one_lens(path: Path, *args, **kwargs):
+        nonlocal deleted
+        if path.parent == reviews and path.name in {
+                f"{lens}.json" for lens in upgrade.LEAN_LENSES}:
+            if deleted == 1:
+                raise OSError("interrupted after active fixed lens")
+            deleted += 1
+        return original_unlink(path, *args, **kwargs)
+
+    with monkeypatch.context() as patch:
+        patch.setattr(Path, "unlink", interrupt_after_one_lens)
+        with pytest.raises(OSError, match="after active fixed lens"):
+            upgrade.apply_lean_migration(repo, migration)
+    assert deleted == 1
+
+    resumed = upgrade.preflight_lean_migration(repo)
+    assert resumed is not None and resumed["resume"] is True
+    assert resumed["review_candidates"] == []
+    assert resumed["review_sentinels"] == []
+    upgrade.apply_lean_migration(repo, resumed)
+    assert not any((reviews / f"{lens}.json").exists()
+                   for lens in upgrade.LEAN_LENSES)
+    completed = json.loads((repo / ".factory/migrations/lean-workflow-v2.json")
+                           .read_text(encoding="utf-8"))
+    assert "completed_at" in completed
 
 
 @pytest.mark.parametrize("count", [1, 2])
