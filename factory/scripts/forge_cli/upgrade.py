@@ -886,6 +886,9 @@ def lean_primary_inventory(target: Path) -> list[dict]:
                     fail("Lean migration refuses linked or non-directory "
                          f"candidate parent {story}")
                 matching(story / "reviews")
+    migration_temps = _bound_lean_temporary_paths(
+        target, {path.relative_to(target).as_posix() for path in candidates},
+    )
     entries = []
     for path in sorted(set(candidates)):
         relative = path.relative_to(target).as_posix()
@@ -912,6 +915,15 @@ def lean_primary_inventory(target: Path) -> list[dict]:
         if not stat.S_ISREG(info.st_mode) or info.st_nlink != 1:
             fail(f"Lean migration refuses linked or non-regular candidate {relative}")
         data = path.read_bytes()
+        if relative in migration_temps:
+            entries.append({
+                "path": relative, "family": "lean-migration-temporary",
+                "type": "file", "sha256": hashlib.sha256(data).hexdigest(),
+                "bytes": len(data), "classification": "excluded",
+                "reason": "manifest-bound interrupted migration temporary",
+                "preserve": False, **_entry_identity(relative),
+            })
+            continue
         family = _lean_family(relative, data)
         if not data and not family:
             if relative.endswith("/grills/plan.json") \
@@ -1665,7 +1677,11 @@ def _raw_legacy_family(relative: str, data: bytes) -> str:
 def lean_raw_inventory(target: Path) -> list[dict]:
     """Build the independent classified inventory from the raw no-follow walk."""
     rows: list[dict] = []
-    for path in _raw_inventory_paths(target):
+    paths = _raw_inventory_paths(target)
+    migration_temps = _bound_lean_temporary_paths(
+        target, {path.relative_to(target).as_posix() for path in paths},
+    )
+    for path in paths:
         relative = path.relative_to(target).as_posix()
         try:
             info = path.lstat()
@@ -1690,6 +1706,15 @@ def lean_raw_inventory(target: Path) -> list[dict]:
         if not stat.S_ISREG(info.st_mode) or info.st_nlink != 1:
             fail(f"Lean raw inventory refuses linked or non-regular candidate {relative}")
         data = path.read_bytes()
+        if relative in migration_temps:
+            rows.append({
+                "path": relative, "family": "lean-migration-temporary",
+                "type": "file", "sha256": hashlib.sha256(data).hexdigest(),
+                "bytes": len(data), "classification": "excluded",
+                "reason": "manifest-bound interrupted migration temporary",
+                "preserve": False, **_raw_entry_identity(relative),
+            })
+            continue
         family = _raw_legacy_family(relative, data)
         invalid_reason = ""
         zero_byte_legacy = not data and (
@@ -1896,7 +1921,10 @@ def _revalidate_lean_inventory(target: Path, migration: dict) -> None:
             entry for entry in entries
             if entry["path"] not in replaced_paths
             and entry["path"] not in retired_review_paths
-            and entry.get("reason") != "canonical-review-output"
+            and entry.get("reason") not in {
+                "canonical-review-output",
+                "manifest-bound interrupted migration temporary",
+            }
         ]
 
     current = {
@@ -2405,11 +2433,17 @@ def preflight_lean_migration(target: Path) -> dict | None:
         saved_identity = {
             entry["path"]: entry for entry in saved.get("entries") or []
             if isinstance(entry, dict)
-            and entry.get("reason") != "canonical-review-output"
+            and entry.get("reason") not in {
+                "canonical-review-output",
+                "manifest-bound interrupted migration temporary",
+            }
         }
         primary_identity = {
             entry["path"]: entry for entry in primary
-            if entry.get("reason") != "canonical-review-output"
+            if entry.get("reason") not in {
+                "canonical-review-output",
+                "manifest-bound interrupted migration temporary",
+            }
         }
         monotonic = True
         converted = _resume_converted_outputs(saved)
@@ -3071,6 +3105,19 @@ def _publish_converted_stage(
         current_sha256 = None
     else:
         current_sha256 = hashlib.sha256(current).hexdigest()
+    _require_unlinked_path(target, destination.parent)
+    for stale in destination.parent.iterdir():
+        if re.fullmatch(
+                rf"\.{re.escape(destination.name)}\.\d+\.lean\.tmp",
+                stale.name,
+        ) is None:
+            continue
+        _require_unlinked_path(target, stale)
+        info = stale.lstat()
+        if (not stat.S_ISREG(info.st_mode) or info.st_nlink != 1
+                or _linked_or_reparse(info)):
+            fail(f"Lean migration refuses unsafe stale temporary {stale.name}")
+        stale.unlink()
     if current_sha256 == output_sha256:
         return
     if current_sha256 is not None and current_sha256 != original_sha256:
@@ -4034,6 +4081,81 @@ def _record_upgrade_finalize_outputs(target: Path) -> None:
             fail("overall upgrade finalization readback differs")
 
 
+def _upgrade_resume_preserved_mismatches(
+        target: Path, harness: Path, saved: dict,
+) -> list[str] | None:
+    """Return preserved paths changed during an interrupted upgrade."""
+    plan = saved.get("upgrade_resume")
+    if (not isinstance(plan, dict) or plan.get("completed_at")
+            or not _upgrade_resume_plan_is_valid(target, harness, plan)):
+        return None
+    mismatches = []
+    for row in plan["operations"]:
+        if row.get("kind") != "preserve":
+            continue
+        relative = row["path"]
+        destination = target / relative
+        _require_unlinked_path(target, destination.parent)
+        if _upgrade_path_identity(destination) != row["before"]:
+            mismatches.append(relative)
+    return mismatches
+
+
+def _recorded_lean_temporary_paths(
+        target: Path, manifest: Path, saved: dict, candidates: set[str],
+) -> set[str]:
+    """Recognize only regular temp siblings of recorded migration outputs."""
+    destinations = {manifest.relative_to(target).as_posix()}
+    if not saved.get("completed_at"):
+        converted = _resume_converted_outputs(saved)
+        if converted is not None:
+            destinations.update(converted)
+    allowed = set()
+    for relative in candidates:
+        temporary = PurePosixPath(relative)
+        for destination_relative in destinations:
+            destination = _lean_manifest_path(target, destination_relative)
+            if (temporary.parent.as_posix()
+                    != destination.relative_to(target).parent.as_posix()
+                    or re.fullmatch(
+                        rf"\.{re.escape(destination.name)}\.\d+\.lean\.tmp",
+                        temporary.name,
+                    ) is None):
+                continue
+            path = _lean_manifest_path(target, relative)
+            try:
+                info = path.lstat()
+            except OSError:
+                continue
+            if (stat.S_ISREG(info.st_mode) and info.st_nlink == 1
+                    and not _linked_or_reparse(info)):
+                allowed.add(relative)
+                break
+    return allowed
+
+
+def _bound_lean_temporary_paths(target: Path, candidates: set[str]) -> set[str]:
+    manifest = target / ".factory" / "migrations" / f"{LEAN_MIGRATION_VERSION}.json"
+    supplemental = manifest.with_name(LEAN_MIGRATION_SUPPLEMENT)
+    if supplemental.exists() or supplemental.is_symlink():
+        manifest = supplemental
+    if not manifest.exists() and not manifest.is_symlink():
+        return set()
+    try:
+        _require_single_link_manifest(target, manifest)
+        saved = load_json(manifest, default={})
+        from factory_lib import validate_payload
+        try:
+            validate_payload(target, "lean-workflow-migration", saved)
+        except (OSError, UnicodeError, json.JSONDecodeError, SystemExit):
+            validate_payload(repo_root(), "lean-workflow-migration", saved)
+    except (OSError, UnicodeError, json.JSONDecodeError, SystemExit):
+        return set()
+    if not isinstance(saved, dict) or saved.get("version") != LEAN_MIGRATION_VERSION:
+        return set()
+    return _recorded_lean_temporary_paths(target, manifest, saved, candidates)
+
+
 def _incomplete_lean_resume_paths(
         target: Path, harness: Path, changed: set[str]) -> set[str]:
     """Return authenticated paths an interrupted Lean migration may dirty."""
@@ -4068,13 +4190,21 @@ def _incomplete_lean_resume_paths(
         return set()
     if not isinstance(saved, dict):
         return set()
+    overall_incomplete = isinstance(saved.get("upgrade_resume"), dict) and not \
+        saved["upgrade_resume"].get("completed_at")
+    if overall_incomplete:
+        preserved_mismatches = _upgrade_resume_preserved_mismatches(
+            target, harness, saved,
+        )
+        if preserved_mismatches is None or preserved_mismatches:
+            return set()
     overall_allowed = _authenticated_upgrade_resume_paths(
         target, harness, saved, changed,
     )
-    overall_incomplete = isinstance(saved.get("upgrade_resume"), dict) and not \
-        saved["upgrade_resume"].get("completed_at")
     if saved.get("completed_at") and overall_incomplete:
-        return overall_allowed if changed else set()
+        return (overall_allowed | _recorded_lean_temporary_paths(
+            target, manifest, saved, changed,
+        )) if changed else set()
     profile_replacements = _profile_replacement_hashes(saved)
     if profile_replacements is None:
         return set()
@@ -4191,6 +4321,9 @@ def _incomplete_lean_resume_paths(
         if _resume_harness_path_matches(harness, target, relative):
             allowed.add(relative)
             continue
+    allowed.update(_recorded_lean_temporary_paths(
+        target, manifest, saved, changed,
+    ))
     return allowed
 
 
@@ -4206,6 +4339,15 @@ def _require_clean_upgrade_target(
             f"could not verify that {target} is clean; refusing upgrade: "
             f"{status.stderr.strip() or 'git status failed'}"
         )
+    if allow_lean_resume:
+        missing_preserved = _missing_preserved_upgrade_paths(
+            target, repo_root(),
+        )
+        if missing_preserved:
+            fail(
+                "interrupted upgrade cannot resume because preserved path "
+                f"is missing or changed: {missing_preserved[0]}"
+            )
     dirty = status.stdout.strip()
     if dirty:
         if allow_lean_resume:
@@ -4224,6 +4366,21 @@ def _require_clean_upgrade_target(
             f"{target} has uncommitted changes. Commit or stash first so the upgrade "
             "is a reviewable diff. Lean migration has no --force bypass."
         )
+
+
+def _missing_preserved_upgrade_paths(target: Path, harness: Path) -> list[str]:
+    manifest = target / ".factory" / "migrations" / f"{LEAN_MIGRATION_VERSION}.json"
+    supplemental = manifest.with_name(LEAN_MIGRATION_SUPPLEMENT)
+    if supplemental.exists() or supplemental.is_symlink():
+        manifest = supplemental
+    try:
+        _require_single_link_manifest(target, manifest)
+        saved = load_json(manifest, default={})
+    except (OSError, UnicodeError, json.JSONDecodeError, SystemExit):
+        return []
+    if not isinstance(saved, dict):
+        return []
+    return _upgrade_resume_preserved_mismatches(target, harness, saved) or []
 
 
 def cmd_upgrade(args: argparse.Namespace) -> None:

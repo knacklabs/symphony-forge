@@ -447,6 +447,21 @@ def test_host_native_preparation_anchors_measurement_amendment(
     assert lib.task_stage_record(repo, "T1")["measurement_continuity"][0][
         "launch_id"
     ] == prepared["launch_id"]
+    grill = lib.load_json(lib.evidence_path(
+        repo, "ENG-1", "grills/tasks/T1.json",
+    ), default={})
+    assert lib._measurement_continuity_matches(repo, widened, grill)
+
+    # A later preparation must not replace the one named by the receipt.
+    launch_companion(
+        repo, task_id="T1", path=brief_path(repo, "T1"),
+        task_sha256_value=lib.task_digest(widened),
+        model="ignored", effort="ignored", write=True,
+        write_scope=widened["write_scope"], story="ENG-1",
+        stage_started_at=stage["started_at"], task_metadata=widened,
+        text="# later native brief\n",
+    )
+    assert lib._measurement_continuity_matches(repo, widened, grill)
 
 
 def test_measurement_amendment_without_a_bound_launch_writes_nothing(

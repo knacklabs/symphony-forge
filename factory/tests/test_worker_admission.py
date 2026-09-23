@@ -307,6 +307,51 @@ def test_native_bash_recursive_copy_cannot_escape_exact_scope(repo):
     assert "deny" in output.lower() and "recursive" in output.lower(), output
 
 
+def test_native_bash_delete_scopes_product_symlink_by_lexical_path(repo):
+    task = {**TASK, "write_scope": ["src/approved"]}
+    brief, digest = _seed_contract(repo, task)
+    (repo / "docs").mkdir(exist_ok=True)
+    (repo / "docs" / "x").write_text("outside\n", encoding="utf-8")
+    link = repo / "src" / "link"
+    link.parent.mkdir(parents=True, exist_ok=True)
+    link.symlink_to(Path("../docs/x"))
+    _record_native_preparation(repo, brief, digest, ["src/approved"])
+
+    output = _hook(repo, {
+        "tool_name": "Bash",
+        "permission_mode": "default",
+        "tool_input": {"command": "rm src/link"},
+    }, {"FORGE_COORDINATOR": "codex"})
+
+    assert (
+        "deny" in output.lower()
+        and "outside the active task scope" in output.lower()
+    ), output
+    assert link.is_symlink() and link.readlink() == Path("../docs/x")
+
+    parent_link = repo / "src" / "parent"
+    parent_link.symlink_to(Path("../docs"))
+    parent_output = _hook(repo, {
+        "tool_name": "Bash",
+        "permission_mode": "default",
+        "tool_input": {"command": "rm src/parent/x"},
+    }, {"FORGE_COORDINATOR": "codex"})
+    assert (
+        "deny" in parent_output.lower()
+        and "symlinked" in parent_output.lower()
+    ), parent_output
+
+    alias = repo.parent / "app-alias"
+    alias.symlink_to(repo, target_is_directory=True)
+    alias_output = _hook(repo, {
+        "tool_name": "Bash",
+        "permission_mode": "default",
+        "tool_input": {"command": f"rm {alias / 'src' / 'link'}"},
+    }, {"FORGE_COORDINATOR": "codex"})
+    assert "deny" in alias_output.lower(), alias_output
+    assert link.is_symlink()
+
+
 @pytest.mark.parametrize(("controls", "write_scope"), [
     (("*** Delete File: outside-link.py",), ["src/old.py"]),
     (("*** Update File: outside-link.py", "*** Move to: src/moved.py",

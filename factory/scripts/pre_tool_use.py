@@ -597,6 +597,40 @@ def normalized_patch_paths(
     return normalized
 
 
+def normalized_native_bash_paths(paths: list[str], root: Path) -> list[str] | None:
+    """Keep Bash write leaves lexical while refusing linked parents."""
+    normalized: list[str] = []
+    lexical_root = Path(os.path.abspath(root))
+    resolved_root = root.resolve()
+    for raw in paths:
+        if not raw or raw in {"-", "/dev/null"} or "$" in raw or "`" in raw:
+            continue
+        candidate = Path(raw).expanduser()
+        absolute = candidate if candidate.is_absolute() else lexical_root / candidate
+        lexical = Path(os.path.abspath(absolute))
+        try:
+            resolved_parent = lexical.parent.resolve()
+        except (OSError, RuntimeError):
+            return None
+        try:
+            rel = lexical.relative_to(lexical_root).as_posix()
+        except ValueError:
+            try:
+                resolved_parent.relative_to(resolved_root)
+            except ValueError:
+                continue
+            return None
+        try:
+            parent = lexical.parent.relative_to(lexical_root)
+            resolved_parent_rel = resolved_parent.relative_to(resolved_root)
+        except ValueError:
+            return None
+        if not rel or rel == "." or resolved_parent_rel != parent:
+            return None
+        normalized.append(rel)
+    return normalized
+
+
 def _contains_marker(rel: str) -> bool:
     """True when rel IS the repo-kind marker or a directory that contains it.
 
@@ -1077,6 +1111,10 @@ edit_target = (tool_input.get("file_path") or tool_input.get("notebook_path") or
 write_targets = [edit_target] if tool_name in EDIT_TOOLS and edit_target else []
 if tool_name == "Bash":
     write_targets = bash_write_paths(command, root)
+    if native_codex:
+        write_targets = normalized_native_bash_paths(write_targets, root)
+        if write_targets is None:
+            deny("Host-native Bash writes cannot traverse a symlinked or unresolved parent.")
 elif tool_name == PATCH_TOOL:
     parsed_patch_paths = apply_patch_paths(command)
     normalized_paths = (
@@ -1100,10 +1138,16 @@ is_harness = (
     if window is not None and "harness_source" in window
     else is_harness_source_repo(root)
 )
-locked_targets = list(dict.fromkeys(
-    rel for raw in write_targets
-    if (rel := product_path(raw, root, is_harness)) is not None
-))
+if native_codex and tool_name == "Bash":
+    locked_targets = list(dict.fromkeys(
+        rel for raw in write_targets
+        if (rel := _lexical_product_path(raw, is_harness)) is not None
+    ))
+else:
+    locked_targets = list(dict.fromkeys(
+        rel for raw in write_targets
+        if (rel := product_path(raw, root, is_harness)) is not None
+    ))
 if tool_name == PATCH_TOOL:
     scoped_targets = (
         list(dict.fromkeys(

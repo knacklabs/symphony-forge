@@ -1385,7 +1385,11 @@ def _validate_narrowed_scope_topology(
                 fail(f"--scope cannot inspect {entry!r}: {exc}")
             if _is_link_or_reparse(info):
                 fail(f"--scope refuses linked or reparse topology at {current}")
-        if mode and missing:
+        deleted_approved_file = (
+            entry in approved and not entry.endswith("/")
+            and mode in {"100644", "100755"}
+        )
+        if mode and missing and not deleted_approved_file:
             fail(f"--scope path {entry!r} drifted from its immutable baseline")
         if not missing and mode:
             current_is_directory = stat.S_ISDIR(current.lstat().st_mode)

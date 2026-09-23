@@ -79,6 +79,29 @@ def test_delegate_scope_validates_immutable_ownership_and_topology(repo: Path):
         )
 
 
+def test_delegate_scope_accepts_deleted_exact_approved_baseline_file(repo: Path):
+    removed = repo / "src/deleted.py"
+    retained = repo / "src/retained.py"
+    removed.parent.mkdir(parents=True)
+    removed.write_text("delete me\n", encoding="utf-8")
+    retained.write_text("keep me\n", encoding="utf-8")
+    subprocess.run(
+        ["git", "add", "src/deleted.py", "src/retained.py"], cwd=repo, check=True,
+    )
+    subprocess.run(["git", *GIT_ID, "commit", "-qm", "deleted scope baseline"],
+                   cwd=repo, check=True)
+    revision = subprocess.run(
+        ["git", "rev-parse", "HEAD"], cwd=repo, capture_output=True,
+        text=True, check=True,
+    ).stdout.strip()
+    removed.unlink()
+
+    assert delegate.narrowed_scope(
+        ["src/deleted.py", "src/retained.py"], ["src/deleted.py"],
+        base=repo, revision=revision,
+    ) == ["src/deleted.py"]
+
+
 def test_delegate_scope_public_launch_binds_narrowed_scope(
         repo: Path, monkeypatch: pytest.MonkeyPatch):
     task = {

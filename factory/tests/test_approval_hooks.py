@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import difflib
 import hashlib
 import json
 import subprocess
@@ -44,6 +45,20 @@ def _event(candidate: approval.ApprovalCandidate, runtime: str = "claude") -> di
             "answers": {question_id: {"answers": ["Approve plan"]}},
         },
     }
+
+
+def _artifact_delta(before: str, after: str) -> list[dict]:
+    old = before.splitlines(keepends=True)
+    new = after.splitlines(keepends=True)
+    return [{
+        "cold_start": left_start, "cold_end": left_end,
+        "cold": "".join(old[left_start:left_end]),
+        "final_start": right_start, "final_end": right_end,
+        "final": "".join(new[right_start:right_end]),
+    } for tag, left_start, left_end, right_start, right_end
+        in difflib.SequenceMatcher(
+            a=old, b=new, autojunk=False,
+        ).get_opcodes() if tag != "equal"]
 
 
 def _story_candidate(repo: Path, story: str = "APPROVE-1") -> approval.ApprovalCandidate:
@@ -136,6 +151,69 @@ def test_awaiting_story_edit_is_ineligible_until_its_plan_grill_matches(
 
     assert approval._story_candidate(repo) is None
     assert grill.read_bytes() == original_grill
+
+
+def test_recorder_accepts_amended_cold_draft_before_story_plan_save(
+        repo: Path, tmp_path: Path):
+    from test_gates import _seed_cold_launch
+
+    sign_off(repo)
+    code, out = intake(repo)
+    assert code == 0, out
+    draft = tmp_path / "cold-plan.md"
+    cold = plan_draft(repo)
+    draft.write_text(cold, encoding="utf-8")
+    finding = "State the repository fact needed by the plan."
+    _seed_cold_launch(
+        repo, "plan", hashlib.sha256(cold.encode()).hexdigest(),
+        artifact_text=cold,
+        findings={"gaps": [finding], "contradictions": []},
+    )
+    final = cold + "\nResolved repository fact.\n"
+    draft.write_text(final, encoding="utf-8")
+    payload = {
+        "generated_by": "griller", "gate": "plan", "verdict": "pass",
+        "gaps": [finding], "contradictions": [],
+        "resolutions": ["Added the repository fact."],
+        "finding_dispositions": [{
+            "finding": finding,
+            "resolution": "Added the repository fact.",
+            "source": "factory/scripts/record_grill_from_json.py",
+        }],
+        "amendments": [{
+            "delta_index": 0, "findings": [finding],
+            "change": "Added the repository fact.",
+            "reason": "Closes the cold-read finding.",
+            "source": "factory/scripts/record_grill_from_json.py",
+        }],
+        "artifact_delta": _artifact_delta(cold, final),
+    }
+    code, out = run(
+        repo, "record_grill_from_json.py", "--gate", "plan",
+        "--input-digest", str(draft), stdin=json.dumps(payload),
+    )
+    assert code == 0, out
+    grill_path = repo / ".factory" / "stories" / "ENG-1" / "grills" / "plan.json"
+    grill = json.loads(grill_path.read_text(encoding="utf-8"))
+    assert grill["input_sha256"] == load_factory_lib(repo).plan_digest_without_assumptions(
+        draft,
+    )
+    assert grill["cold_input_sha256"] == hashlib.sha256(cold.encode()).hexdigest()
+    assert grill["final_artifact_sha256"] == hashlib.sha256(
+        final.encode(),
+    ).hexdigest()
+
+    code, out = run(
+        repo, "forge.py", "plan", "save", "--from", str(draft),
+        "--story", "ENG-1",
+    )
+    assert code == 0 and "awaiting-approval" in out, out
+    candidate = approval._story_candidate(repo)
+    assert candidate is not None
+    record = approval.record_native_approval(
+        repo, _event(candidate), runtime="claude",
+    )
+    assert record["approved_plan_sha256"] == candidate.digest
 
 
 def test_native_approval_revalidates_candidate_before_first_mutation(

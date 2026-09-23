@@ -1006,8 +1006,98 @@ def test_public_upgrade_refuses_resume_after_preserved_client_skill_is_lost(
     assert "completed_at" not in json.loads(manifest.read_text())
     with pytest.raises(SystemExit):
         upgrade.cmd_upgrade(argparse.Namespace(target=str(repo), force=False))
-    assert "uncommitted changes" in capsys.readouterr().out
+    assert "preserved path is missing or changed: factory/skills/client-skill.md" \
+        in capsys.readouterr().out
     assert "completed_at" not in json.loads(manifest.read_text())
+
+
+def test_public_upgrade_refuses_to_complete_after_factory_replace_loses_ignored_client_skill(
+        repo: Path, monkeypatch: pytest.MonkeyPatch,
+        capsys: pytest.CaptureFixture[str]):
+    skill = repo / "factory/skills/client-skill.md"
+    skill.write_text("client-owned skill\n", encoding="utf-8")
+    exclude = repo / ".git/info/exclude"
+    exclude.write_text(exclude.read_text(encoding="utf-8")
+                       + "\n/factory/skills/client-skill.md\n",
+                       encoding="utf-8")
+    assert git(repo, "check-ignore", "-q", skill.relative_to(repo).as_posix()) == ""
+    legacy = _legacy_round(repo)
+    git(repo, "add", legacy.relative_to(repo).as_posix())
+    git(repo, "commit", "-q", "-m", "ignored client skill and legacy input")
+
+    original_copytree = upgrade.guarded_copytree
+
+    def replace_then_interrupt(target, source, destination, **kwargs):
+        result = original_copytree(target, source, destination, **kwargs)
+        if destination == repo / "factory":
+            raise OSError("interrupted after factory replacement")
+        return result
+
+    with monkeypatch.context() as patch:
+        patch.setattr(upgrade, "guarded_copytree", replace_then_interrupt)
+        with pytest.raises(OSError, match="after factory replacement"):
+            upgrade.cmd_upgrade(argparse.Namespace(target=str(repo), force=False))
+
+    assert not skill.exists()
+    manifest = repo / ".factory/migrations/lean-workflow-v2.json"
+    git(repo, "add", "-A")
+    git(repo, "commit", "-q", "-m", "interrupted upgrade state")
+    assert git(repo, "status", "--porcelain", "--untracked-files=all") == ""
+    manifest_bytes = manifest.read_bytes()
+    head = git(repo, "rev-parse", "HEAD")
+    with pytest.raises(SystemExit):
+        upgrade.cmd_upgrade(argparse.Namespace(target=str(repo), force=False))
+    assert "preserved path is missing or changed: factory/skills/client-skill.md" \
+        in capsys.readouterr().out
+    assert git(repo, "rev-parse", "HEAD") == head
+    assert git(repo, "status", "--porcelain", "--untracked-files=all") == ""
+    assert manifest.read_bytes() == manifest_bytes
+    assert "completed_at" not in json.loads(manifest_bytes)
+
+
+@pytest.mark.parametrize("destination", ["converted-stage", "migration-manifest"])
+def test_public_upgrade_cleans_only_bound_stale_temp_before_retry(
+        repo: Path, monkeypatch: pytest.MonkeyPatch, destination: str):
+    stage = _legacy_stage(repo, "T1") if destination == "converted-stage" else None
+    legacy = stage or _legacy_round(repo)
+    git(repo, "add", legacy.relative_to(repo).as_posix())
+    exclude = repo / ".git/info/exclude"
+    exclude.write_text(
+        exclude.read_text(encoding="utf-8")
+        + "\n/.factory/migrations/.unrelated.999.lean.tmp\n",
+        encoding="utf-8",
+    )
+    git(repo, "commit", "-q", "-m", "legacy migration input")
+
+    real_open = upgrade.os.open
+    stale_temps: list[Path] = []
+    temp_prefix = ".T1.json." if stage else ".lean-workflow-v2.json."
+
+    def interrupt_after_temp_creation(path, flags, mode=0o777, *, dir_fd=None):
+        temporary = Path(os.fsdecode(path))
+        if temporary.name.startswith(temp_prefix) and temporary.name.endswith(
+                ".lean.tmp"):
+            descriptor = real_open(path, flags, mode, dir_fd=dir_fd)
+            os.close(descriptor)
+            stale_temps.append(temporary)
+            raise OSError(f"interrupted after {destination} temp creation")
+        return real_open(path, flags, mode, dir_fd=dir_fd)
+
+    with monkeypatch.context() as patch:
+        patch.setattr(upgrade.os, "open", interrupt_after_temp_creation)
+        with pytest.raises(OSError, match=f"after {destination} temp creation"):
+            upgrade.cmd_upgrade(argparse.Namespace(target=str(repo), force=False))
+
+    assert len(stale_temps) == 1 and stale_temps[0].is_file()
+    unrelated = repo / ".factory/migrations/.unrelated.999.lean.tmp"
+    unrelated.write_text("leave this file alone\n", encoding="utf-8")
+    upgrade.cmd_upgrade(argparse.Namespace(target=str(repo), force=False))
+    assert not stale_temps[0].exists()
+    assert unrelated.read_text(encoding="utf-8") == "leave this file alone\n"
+    manifest = repo / ".factory/migrations/lean-workflow-v2.json"
+    assert json.loads(manifest.read_text()).get("completed_at")
+    if stage is not None:
+        assert "local_review_stamp" not in json.loads(stage.read_text())
 
 
 def test_public_upgrade_resumes_after_post_migration_finalization_failure(

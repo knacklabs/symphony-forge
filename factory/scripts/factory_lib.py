@@ -3625,7 +3625,9 @@ def validated_measurement_launch(
     launch_id: str = "",
 ) -> dict | None:
     """Return the launch or native preparation anchoring a measurement receipt."""
-    from forge_cli.delegate import current_delegation, load_delegations
+    from forge_cli.delegate import (
+        argv_digest, brief_path, current_delegation, load_delegations,
+    )
     from forge_cli.stages import (
         _host_native_preparation_scope, _successful_launch_entry_valid,
     )
@@ -3651,8 +3653,40 @@ def validated_measurement_launch(
             return None
         if not candidates:
             return None
-        entry = candidates[-1]
-        scope = _host_native_preparation_scope(root, task_id, stage, task)
+        entry = next((row for row in candidates
+                      if row.get("launch_id") == launch_id), None) \
+            if launch_id else candidates[-1]
+        if entry is None:
+            return None
+        if launch_id:
+            scope = entry.get("write_scope")
+            brief = brief_path(root, task_id)
+            if (
+                entry.get("transport") != "host-native"
+                or entry.get("write") is not True
+                or entry.get("launch_status") != "prepared"
+                or entry.get("task_sha256") != origin_task_sha256
+                or entry.get("stage_started_at") != stage.get("started_at")
+                or not isinstance(scope, list)
+                or not scope
+                or any(not isinstance(item, str) or not item.strip()
+                       for item in scope)
+                or entry.get("write_scope") != origin_measurement.get("write_scope")
+                or entry.get("model") != ""
+                or entry.get("effort") != ""
+                or entry.get("argv") != []
+                or entry.get("argv_sha256") != argv_digest([])
+                or entry.get("brief_path") != brief.relative_to(root).as_posix()
+                or not isinstance(entry.get("brief_sha256"), str)
+                or re.fullmatch(r"[0-9a-f]{64}", entry["brief_sha256"]) is None
+                or any(key in entry for key in (
+                    "pid", "pgid", "pid_started", "process_token", "session_id",
+                    "output_path", "stderr_path", "executable_path", "companion_path",
+                ))
+            ):
+                return None
+        else:
+            scope = _host_native_preparation_scope(root, task_id, stage, task)
         identity = entry.get("launch_id")
         if (entry.get("story") != _active_story_key(root)
                 or entry.get("task_sha256") != origin_task_sha256

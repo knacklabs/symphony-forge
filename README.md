@@ -125,7 +125,7 @@ gate rail and evidence a click away. Below, a real client project mid-delivery:
 - **Before sign-off**: discovery and prototyping are lightweight; capability
   specs are saved and grilled as they emerge, then the roadmap is derived from
   the confirmed set. The prototype remains the permanent UX reference.
-- **After sign-off**: deterministic gates. Plans live in `plans/`, decisions in `docs/decisions/`, evidence in `.factory/`; the ship gate archives every shipped task's plan + proof to `plans/completed/` and `.factory/history/`.
+- **After sign-off**: deterministic gates. Plans live in `plans/`, decisions in `docs/decisions/`, and task proof in `.factory/`; shipped task proof stays with its task.
 - **Continuously**: dump raw context (client emails, transcripts, notes) into `docs/context/`. Dumping is free, tracking is automatic. Say *"process the context dump"* and an agent scans it into the ledger, harvests it into proposed decisions and BRIEF/architecture updates, and marks each file. You can't miss pending context: it greets every session start, tops every *"what now?"*, raises a daily `gardener` issue, and **blocks plan approval** until harvested or explicitly ignored. Dev corrections get mined into proposed skills that humans promote.
 - **The repo learns from itself**: review findings are structured and clustered across tasks. Ask *"are we fixing the same thing again?"* and the agent shows which defect classes recur; the same class recurring 3+ times triggers a refactor story + invariant decision, never a fourth patch (decision 0005). Repeated failures become ledgered lessons that resurface before anyone touches the same paths again (decision 0006). Say *"this is out of scope for now"* and the parked scope keeps an explicit revisit trigger instead of vanishing.
 
@@ -145,16 +145,16 @@ column describes that machinery. In lifecycle order:
 | 3 | **Client sign-off** | an accepted `client-signoff` decision names a human, all specs are confirmed, and the roadmap covers them | `record_signoff.py`; every later phase checks the flag |
 | 4 | **Roster check** | assignees exist on `plans/team.json` (when a roster is defined) | `forge roadmap assign` |
 | 5 | **Planning lock** | product writes have an approved plan or a bounded, ledgered quickfix window | PreToolUse hook (decision 0013) |
-| 6 | **Rescue-only invocation** | always: raw `codex exec` is denied in every phase, no escape hatch; `/codex:rescue` is the runtime | PreToolUse hook |
-| 7 | **Plan grill** | the draft plan survives `/grill-me` vs the story's acceptance criteria + active decisions: same-issue, fresh, `pass` | `forge plan save` |
+| 6 | **Native dispatch** | raw or nested `codex exec` is denied; Claude delegates through `forge delegate` and `codex-plugin-cc`, while native Codex dispatches configured host role subagents | PreToolUse hook; `forge delegate` |
+| 7 | **Plan grill and approval** | one independent cold grill has complete finding dispositions, then the human approves the exact final digest in native Plan Mode | grill recorder; native approval hook |
 | 8 | **Surface Impact** | the plan classifies every surface (runtime/API/data/CLI/UI/docs/tests); Deferred and Unchanged-by-design rows carry reasons | `forge plan save` |
 | 9 | **Pending context** | every `docs/context/` dump is harvested or explicitly ignored (and scans REFUSE secrets/oversize files outright) | `forge plan save`; `context scan` |
 | 10 | **Schema + generator + skill attestation** | every evidence payload matches its `factory/schemas/` file: `generated_by` on the allowlist, mandatory design skills attested in `skills_used` on user-facing artifacts | every `record_*` script |
-| 11 | **Stage loop** | every decomposition stage ran its loop: order-enforced start, LOCAL autoreview until clean, commit, done | `forge stage start/done`; `pr_ready.py` refuses open stages (decision 0007) |
+| 11 | **Task close** | each active task has focused implementation checks, then one close-owned full verification, complete automated evidence, selected clean review, and task marker | `forge task close`; `pr_ready.py` refuses open tasks |
 | 12 | **Assumptions guided** | every `forge plan assume` row for the task is confirmed/promoted by the orchestrator (`fix-needed` keeps blocking) | `pr_ready.py` |
 | 13 | **Refactor ratchet** | a `kind: refactor` story shows non-positive net product-source line delta; refactors shrink or hold the line | `check_refactor_delta.py` in `pr_ready.py` |
 | 14 | **Frozen gates** | the vendored gate surface (scripts, schemas, prompts, hook config) matches `constitution/VENDOR_MANIFEST.json`. Locally edited gates make every other gate's evidence unverifiable; re-vendor or upstream, never patch in place | `check_vendor_integrity.py` in `pr_ready.py` (warned at session start) |
-| 15 | **Ship gate** | approved plan, decomposition, verify OK, tests + 3 reviews ≥ 8 with no blockers, functional when `user_facing`, all evidence commit-stamped, same-commit, fresh | `pr_ready.py`, which archives to `.factory/history/` and marks the roadmap item done |
+| 15 | **Ship gate** | approved plan, decomposition, current task proof with one selected three-lens review, functional proof when `user_facing`, and every task marker on trunk | `pr_ready.py`; `forge outcome set` records the shipped outcome |
 | 16 | **Hygiene floor** | decision lifecycle intact (supersede links resolve, accepted records have substance), no prototype/ imports, schemas match harness.yaml, repo within size budgets | `check_dual_runtime.py` + `check_repo_budget.py` in CI |
 
 Advisory (surfaced, never blocking): recurring finding classes, *"are we
