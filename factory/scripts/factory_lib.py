@@ -3414,10 +3414,7 @@ def require_task_grill(
             f".factory/grills/tasks/{task_id}.json has no commit stamp — re-record "
             f"with current tooling using `{record_command}`."
         )
-    if (not task_grill_grounding_matches(root, task, data, treeish=treeish)
-            and not _task_plan_amendment_preserves_cold_proof(
-                root, task, data,
-            )):
+    if not task_grill_grounding_matches(root, task, data, treeish=treeish):
         # A digest mismatch has two very different causes, and reporting both as
         # "STALE" sent a reader hunting for a content change that never
         # happened. When the grill was ground on a DIFFERENT BASIS than the one

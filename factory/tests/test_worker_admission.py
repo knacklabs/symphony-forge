@@ -263,6 +263,28 @@ def test_codex_native_host_needs_active_stage_but_no_process_identity(repo):
     assert "deny" in outside.lower() and "scope" in outside.lower(), outside
 
 
+def test_codex_native_narrowed_scope_descends_from_bare_baseline_tree(repo):
+    owned = repo / "src/owned.py"
+    owned.parent.mkdir(parents=True)
+    owned.write_text("before\n", encoding="utf-8")
+    git(repo, "add", "src/owned.py")
+    git(repo, "commit", "-qm", "scope baseline")
+    task = {**TASK, "write_scope": ["src"]}
+    brief, digest = _seed_contract(repo, task)
+    git(repo, "update-ref", "refs/forge/stage/T1", "HEAD")
+    _record_native_preparation(repo, brief, digest, ["src/owned.py"])
+
+    admitted = _hook(repo, _patch(
+        "*** Update File: src/owned.py", "@@", "-before", "+after",
+    ), {"FORGE_COORDINATOR": "codex"})
+
+    assert "deny" not in admitted.lower(), admitted
+    outside = _hook(repo, _patch(
+        "*** Add File: src/other.py", "+outside",
+    ), {"FORGE_COORDINATOR": "codex"})
+    assert "deny" in outside.lower() and "scope" in outside.lower(), outside
+
+
 @pytest.mark.parametrize(("controls", "write_scope"), [
     (("*** Delete File: outside-link.py",), ["src/old.py"]),
     (("*** Update File: outside-link.py", "*** Move to: src/moved.py",

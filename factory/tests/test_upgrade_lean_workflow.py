@@ -5,6 +5,7 @@ import contextlib
 import hashlib
 import json
 import os
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -946,6 +947,13 @@ def test_public_upgrade_persists_authenticated_resume_before_vendoring(
 def test_public_upgrade_resumes_after_destination_removal_before_copy(
         repo: Path, monkeypatch: pytest.MonkeyPatch):
     """The overall receipt authorizes a retry after rmtree but before copytree."""
+    for relative in upgrade.PRESERVE_IN_AGENTS:
+        path = repo / relative
+        if path.is_dir() and not path.is_symlink():
+            shutil.rmtree(path)
+    git(repo, "add", "-A")
+    git(repo, "commit", "-q", "-m", "no preserved skill paths")
+
     original_copytree = upgrade.guarded_copytree
     factory = repo / "factory"
 
@@ -968,6 +976,38 @@ def test_public_upgrade_resumes_after_destination_removal_before_copy(
     completed = json.loads(manifest.read_text(encoding="utf-8"))
     assert completed["upgrade_resume"]["completed_at"]
     assert factory.is_dir()
+
+
+def test_public_upgrade_refuses_resume_after_preserved_client_skill_is_lost(
+        repo: Path, monkeypatch: pytest.MonkeyPatch,
+        capsys: pytest.CaptureFixture[str]):
+    skill = repo / "factory/skills/client-skill.md"
+    skill.write_text("client-owned skill\n", encoding="utf-8")
+    git(repo, "add", skill.relative_to(repo).as_posix())
+    git(repo, "commit", "-q", "-m", "client skill")
+    legacy = _legacy_round(repo)
+    git(repo, "add", legacy.relative_to(repo).as_posix())
+    git(repo, "commit", "-q", "-m", "legacy migration input")
+
+    original_copytree = upgrade.guarded_copytree
+
+    def interrupt_after_removal(target, source, destination, **kwargs):
+        if destination == repo / "factory":
+            raise OSError("interrupted before restoring client skills")
+        return original_copytree(target, source, destination, **kwargs)
+
+    with monkeypatch.context() as patch:
+        patch.setattr(upgrade, "guarded_copytree", interrupt_after_removal)
+        with pytest.raises(OSError, match="before restoring client skills"):
+            upgrade.cmd_upgrade(argparse.Namespace(target=str(repo), force=False))
+
+    assert not skill.exists()
+    manifest = repo / ".factory/migrations/lean-workflow-v2.json"
+    assert "completed_at" not in json.loads(manifest.read_text())
+    with pytest.raises(SystemExit):
+        upgrade.cmd_upgrade(argparse.Namespace(target=str(repo), force=False))
+    assert "uncommitted changes" in capsys.readouterr().out
+    assert "completed_at" not in json.loads(manifest.read_text())
 
 
 def test_public_upgrade_resumes_after_post_migration_finalization_failure(
@@ -1031,6 +1071,35 @@ def test_authenticated_resume_admits_verified_paths_inside_vendored_tree(
     destination.write_bytes(b"unrelated target bytes\n")
     assert upgrade._authenticated_upgrade_resume_paths(
         target, harness, saved, {"factory/scripts/forge_cli/upgrade.py"},
+    ) == set()
+    destination.unlink()
+    assert upgrade._authenticated_upgrade_resume_paths(
+        target, harness, saved, {"factory/scripts/forge_cli/upgrade.py"},
+    ) == {"factory/scripts/forge_cli/upgrade.py"}
+
+
+def test_authenticated_resume_preserve_row_overrides_vendored_tree(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    harness = tmp_path / "harness"
+    target = tmp_path / "target"
+    source = harness / "factory/skills/client-skill.md"
+    destination = target / "factory/skills/client-skill.md"
+    source.parent.mkdir(parents=True)
+    destination.parent.mkdir(parents=True)
+    source.write_text("harness skill\n", encoding="utf-8")
+    destination.write_text("client skill\n", encoding="utf-8")
+    preserved = {
+        "kind": "preserve", "path": "factory/skills/client-skill.md",
+        "before": upgrade._upgrade_path_identity(destination),
+    }
+    destination.unlink()
+    monkeypatch.setattr(upgrade, "_upgrade_resume_plan_is_valid", lambda *_args: True)
+    saved = {"upgrade_resume": {"operations": [
+        preserved, {"kind": "tree", "path": "factory", "source": "factory"},
+    ]}}
+
+    assert upgrade._authenticated_upgrade_resume_paths(
+        target, harness, saved, {"factory/skills/client-skill.md"},
     ) == set()
 
 
@@ -1987,31 +2056,27 @@ def test_lean_migration_forces_fresh_review_for_active_old_proof_and_migrates_on
     for lens in upgrade.LEAN_LENSES:
         (root / f"{lens}.json").write_text(
             json.dumps(_fixed_lens()), encoding="utf-8")
-    migration = {
-        "entries": upgrade.lean_primary_inventory(repo),
-        "input_inventory_digest": "a" * 64,
-    }
-    # No pr-ready marker: active old fixed files cannot be promoted.
+    migration = upgrade.preflight_lean_migration(repo)
+    assert migration is not None
+    assert migration["entries"] == upgrade.lean_raw_inventory(repo)
+    # No pr-ready marker: active old fixed files are retired for a fresh review.
     fixed_rows = [row for row in migration["entries"]
                   if row["family"] == "fixed-review-lens"]
-    assert {row["classification"] for row in fixed_rows} == {"excluded"}
+    assert {row["classification"] for row in fixed_rows} == {"eligible"}
     assert {row["reason"] for row in fixed_rows} == {
         "active fixed review requires a fresh review",
     }
-    before = {path.name: path.read_bytes() for path in root.glob("*.json")}
+    assert {row["preserve"] for row in fixed_rows} == {False}
     assert upgrade._fixed_review_candidates(repo, migration) == []
-    upgrade.apply_lean_migration(repo, {
-        **migration, "review_candidates": [], "review_sentinels": [],
-    })
-    assert {path.name: path.read_bytes() for path in root.glob("*.json")} == before
-    marker = root.parent / "pr-ready.json"
-    marker.write_text('{"commit":"sealed"}', encoding="utf-8")
-    migration = {
-        "entries": upgrade.lean_primary_inventory(repo),
-        "input_inventory_digest": "a" * 64,
-    }
-    with pytest.raises(SystemExit):
-        upgrade._fixed_review_candidates(repo, migration)
+    upgrade.apply_lean_migration(repo, migration)
+    assert not any((root / f"{lens}.json").exists()
+                   for lens in upgrade.LEAN_LENSES)
+    assert not (root / "selected.json").exists()
+    completed = json.loads((repo / ".factory/migrations/lean-workflow-v2.json")
+                           .read_text(encoding="utf-8"))
+    assert not any(row.get("task_id") == "T1"
+                   for row in completed["preserved_entries"])
+    assert upgrade.preflight_lean_migration(repo) is None
 
 
 def test_lean_migration_refuses_sealed_fixed_proof_with_wrong_product_delta(

@@ -1734,6 +1734,7 @@ def _host_native_preparation_scope(
         base: Path, stage_id: str, stage: dict, task: dict) -> list[str] | None:
     """Return the validated scope from the latest native preparation."""
     from .delegate import argv_digest, brief_path, load_delegations
+    from factory_lib import classify_scope_entries
 
     try:
         candidates = [
@@ -1750,7 +1751,10 @@ def _host_native_preparation_scope(
     entry = candidates[-1]
     brief = brief_path(base, stage_id)
     scope = entry.get("write_scope")
-    effective = effective_scope(base, stage_id, task.get("write_scope") or [])
+    effective = classify_scope_entries(
+        base, effective_scope(base, stage_id, task.get("write_scope") or []),
+        stage_baseline(base, stage),
+    )
     if (
         entry.get("launch_status") != "prepared"
         or entry.get("write") is not True
@@ -2744,22 +2748,27 @@ def _close_proof_results_match(
                 if str(command).strip()]
     required = [proof for proof in task.get("required_tests") or []
                 if isinstance(proof, dict)]
-    if (not (commands or required) or not isinstance(verify_results, list)
-            or not isinstance(test_results, list)
-            or len(verify_results) != len(commands)
-            or len(test_results) != len(required)):
+    if not (commands or required):
         return False
-    return (
-        all(isinstance(result, dict)
-            and result.get("command") == command
-            and result.get("exit_code") == 0
-            for result, command in zip(verify_results, commands))
-        and all(isinstance(result, dict)
-                and result.get("id") == proof.get("id")
-                and result.get("path") == proof.get("path")
-                and result.get("status") == "passed"
-                for result, proof in zip(test_results, required))
-    )
+    return (_close_verify_results_match(commands, verify_results)
+            and _close_test_results_match(required, test_results))
+
+
+def _close_verify_results_match(commands: list[str], results: object) -> bool:
+    return (isinstance(results, list) and len(results) == len(commands)
+            and all(isinstance(result, dict)
+                    and result.get("command") == command
+                    and result.get("exit_code") == 0
+                    for result, command in zip(results, commands)))
+
+
+def _close_test_results_match(required: list[dict], results: object) -> bool:
+    return (isinstance(results, list) and len(results) == len(required)
+            and all(isinstance(result, dict)
+                    and result.get("id") == proof.get("id")
+                    and result.get("path") == proof.get("path")
+                    and result.get("status") == "passed"
+                    for result, proof in zip(results, required)))
 
 
 def record_stage_proof(base: Path, stage_id: str, task: dict, *, key: str,
@@ -2779,9 +2788,8 @@ def record_stage_proof(base: Path, stage_id: str, task: dict, *, key: str,
     commit by hand. The proof re-binds it instead, and only while no review
     covers the tree: the brief renders the record verbatim inside its
     approved-input section, so an edit after a review would stale that
-    brief. A task without a record gets a harness record, except a
-    user-facing task, whose record must still attest the design skills
-    (require_skills)."""
+    brief. A task without a record gets a harness record at close. Outside
+    close, a user-facing task still owes its own design-skill attestation."""
     story = active_story_key(base)
     if not story:
         return
@@ -2861,7 +2869,7 @@ def record_stage_proof(base: Path, stage_id: str, task: dict, *, key: str,
         tests["updated_at"] = now
         dump_json(tests_path, tests)
         return
-    if bool(task.get("user_facing")):
+    if bool(task.get("user_facing")) and not close_owned:
         return
     actual_commands = [
         str(command) for command in (commands_run or [])
@@ -2986,7 +2994,9 @@ def _canonical_junit_satisfies_required_tests(
         required_tool = _proof_tool_identity(
             base, required_command, fixed_after_assignments=True,
             allowed_generated_paths=generated_paths,
-            environment_overrides=junit_environment,
+            environment_overrides={
+                **_factory_env_from_envrc(base), **junit_environment,
+            },
         )
         required_tool["canonical_verifier_launcher"] = verifier_launcher
         if (required_tool.get("reusable") is not True
@@ -4170,11 +4180,17 @@ def run_stage_proof(
                 or not isinstance(existing_tests, dict)
                 or existing.get("recorded_by") != STAGE_PROOF
                 or existing.get("task_id") != stage_id
-                or existing.get("proof_key") != key
-                or existing.get("ok") is not True
-                or not _close_proof_results_match(task, saved_verify, saved_tests)):
+                or existing.get("ok") is not True):
             reuse_verify = reuse_tests = False
         else:
+            commands = [str(command) for command in task.get("verify_commands") or []
+                        if str(command).strip()]
+            required = [proof for proof in task.get("required_tests") or []
+                        if isinstance(proof, dict)]
+            reuse_verify = reuse_verify and _close_verify_results_match(
+                commands, saved_verify)
+            reuse_tests = reuse_tests and _close_test_results_match(
+                required, saved_tests)
             if reuse_verify:
                 verify_results = saved_verify
             if reuse_tests:

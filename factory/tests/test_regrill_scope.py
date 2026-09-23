@@ -710,6 +710,41 @@ def test_story_plan_reapproval_preserves_an_active_task_without_receipts(
     assert code != 0 and "Task plan approval required" in out, out
 
 
+def test_approved_task_plan_amendment_does_not_mask_changed_grounding(
+        repo: Path, tmp_path):
+    from test_gates import (  # noqa: E402
+        STAGE_TASK, native_claude_approval, post_hook, start_stage, story_state,
+    )
+
+    start_stage(repo, tmp_path, STAGE_TASK, launch=False)
+    lib = load_factory_lib(repo)
+    task_plan = story_state(repo) / "task-plans" / "T1.md"
+    task_plan.write_text(
+        task_plan.read_text(encoding="utf-8") + "\nApproved amendment.\n",
+        encoding="utf-8",
+    )
+    code, out = post_hook(repo, native_claude_approval(repo))
+    assert code == 0, out
+
+    grill = lib.load_json(
+        story_state(repo) / "grills" / "tasks" / "T1.json", default={},
+    )
+    assert lib._task_plan_amendment_preserves_cold_proof(
+        repo, STAGE_TASK, grill,
+    )
+    lib.require_task_grill(repo, "T1", STAGE_TASK)
+
+    changed_grounding = (
+        ("objective", "Build a different feature."),
+        ("acceptance_criteria", ["a different acceptance bar"]),
+        ("plan_contracts", [{"id": "C2", "statement": "different", "source": "x"}]),
+        ("user_facing", True),
+    )
+    for field, value in changed_grounding:
+        with pytest.raises(SystemExit, match="task grill is STALE"):
+            lib.require_task_grill(repo, "T1", {**STAGE_TASK, field: value})
+
+
 def test_story_plan_predecessors_fail_closed_on_malformed_sibling_event(
         repo: Path):
     lib = _seed(repo)

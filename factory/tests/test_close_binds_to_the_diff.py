@@ -556,10 +556,12 @@ def test_task_close_is_the_single_full_suite_owner_and_records_truthful_automate
     assert stage["status"] == "done"
 
 
-def test_fresh_close_owned_report_lists_only_executed_commands(repo, monkeypatch):
+@pytest.mark.parametrize("user_facing", [False, True])
+def test_fresh_close_owned_report_lists_only_executed_commands(
+        repo, monkeypatch, user_facing):
     from forge_cli import stages
 
-    task = {**STAGE_TASK, "user_facing": False}
+    task = {**STAGE_TASK, "user_facing": user_facing}
     (repo / ".factory" / "run.json").write_text(
         json.dumps({"issue_key": "ENG-1", "story": "ENG-1"}),
         encoding="utf-8",

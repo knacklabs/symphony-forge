@@ -650,9 +650,9 @@ def _classify_fixed_review_coverage(target: Path, entries: list[dict]) -> None:
                 invalidate(rows, "sealed fixed review has conflicting delta identity")
                 continue
             for row in rows:
-                row.update(classification="excluded",
+                row.update(classification="eligible",
                            reason="active fixed review requires a fresh review",
-                           preserve=True)
+                           preserve=False)
             continue
         marker_bytes = marker.read_bytes()
         try:
@@ -1301,9 +1301,9 @@ def _raw_classify_fixed_review_coverage(target: Path, rows: list[dict]) -> None:
                 mark_invalid(group, "sealed fixed review has conflicting delta identity")
                 continue
             for row in group:
-                row.update(classification="excluded",
+                row.update(classification="eligible",
                            reason="active fixed review requires a fresh review",
-                           preserve=True)
+                           preserve=False)
             continue
         marker_bytes = marker.read_bytes()
         try:
@@ -2959,7 +2959,8 @@ def _persist_prepared_lean_manifest(
         entry for entry in migration["entries"]
         if entry.get("preserve") is True
         or (entry["family"] == "fixed-review-lens"
-            and entry["path"] not in promoted_paths)
+            and entry["path"] not in promoted_paths
+            and entry.get("preserve") is not False)
     ]
     converted_outputs = []
     for entry in migration["entries"]:
@@ -3180,7 +3181,8 @@ def apply_lean_migration(
         entry for entry in migration["entries"]
         if entry.get("preserve") is True
         or (entry["family"] == "fixed-review-lens"
-            and entry["path"] not in promoted_paths)
+            and entry["path"] not in promoted_paths
+            and entry.get("preserve") is not False)
     ]
     converted_outputs = []
     converted_bodies: dict[str, bytes] = {}
@@ -3360,7 +3362,8 @@ def apply_lean_migration(
         if (entry["family"] in {
                 "fixed-review-lens", "story-fixed-review-lens",
                 "history-fixed-review-lens",
-        } and entry["path"] not in promoted_paths):
+        } and entry["path"] not in promoted_paths
+                and entry.get("preserve") is not False):
             continue
         expected_profile_sha256 = replacement_by_path.get(path)
         if expected_profile_sha256 is not None and path.is_file() \
@@ -3875,10 +3878,9 @@ def _upgrade_resume_operation_matches(
             isinstance(row.get("after"), dict) and actual == row["after"]
         )
     if kind == "preserve":
-        if not destination.exists() and not destination.is_symlink():
-            return True
         expected = row.get("before")
-        return isinstance(expected, dict) and _upgrade_path_identity(destination) == expected
+        return (isinstance(expected, dict)
+                and _upgrade_path_identity(target / root) == expected)
     if kind not in {"file", "tree"}:
         return False
     source_relative = str(row.get("source") or "")
@@ -3894,6 +3896,24 @@ def _upgrade_resume_operation_matches(
     return _upgrade_path_identity(destination) == expected
 
 
+def _upgrade_resume_path_matches(
+        harness: Path, target: Path, operations: list[dict], relative: str,
+) -> bool:
+    """Let the narrowest preserve operation govern its path and descendants."""
+    preserving = [
+        row for row in operations
+        if isinstance(row, dict) and row.get("kind") == "preserve"
+        and isinstance(row.get("path"), str)
+        and (relative == row["path"] or relative.startswith(row["path"] + "/"))
+    ]
+    if preserving:
+        longest = max(len(row["path"]) for row in preserving)
+        operations = [row for row in preserving if len(row["path"]) == longest]
+    return any(_upgrade_resume_operation_matches(
+        harness, target, row, relative,
+    ) for row in operations)
+
+
 def _authenticated_upgrade_resume_paths(
         target: Path, harness: Path, saved: dict, changed: set[str],
 ) -> set[str]:
@@ -3903,11 +3923,10 @@ def _authenticated_upgrade_resume_paths(
         return set()
     if not _upgrade_resume_plan_is_valid(target, harness, plan):
         return set()
+    operations = plan["operations"]
     return {
         relative for relative in changed
-        if any(_upgrade_resume_operation_matches(
-            harness, target, row, relative,
-        ) for row in plan["operations"])
+        if _upgrade_resume_path_matches(harness, target, operations, relative)
     }
 
 
@@ -4144,11 +4163,8 @@ def _incomplete_lean_resume_paths(
     for relative in changed:
         if relative in allowed:
             continue
-        if overall_incomplete and any(
-                _upgrade_resume_operation_matches(
-                    harness, target, row, relative,
-                ) for row in saved["upgrade_resume"]["operations"]
-        ):
+        if overall_incomplete and _upgrade_resume_path_matches(
+                harness, target, saved["upgrade_resume"]["operations"], relative):
             allowed.add(relative)
             continue
         if _resume_harness_path_matches(harness, target, relative):

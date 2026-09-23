@@ -2,7 +2,7 @@
 # CODEX_HOME=$PWD/.codex (or copy this file to ~/.codex/) for the profile
 # to be found.
 # Exploration profile for CODEX-NATIVE sessions: `codex --profile explore`
-# (gpt-6-sol @ high, semantically read-only). From Claude the path is
+# (gpt-6-sol @ medium, semantically read-only). From Claude the path is
 # /codex:rescue --model gpt-6-sol --effort medium; raw codex exec is
 # hook-blocked.
 # Planning-phase codebase exploration is NEVER done by Claude Code itself

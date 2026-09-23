@@ -250,8 +250,8 @@ def test_close_context_allows_one_fresh_nonreusable_proof_then_refuses_drift(
         authority_drift.unlink()
 
 
-@pytest.mark.parametrize("missing_artifact", ["verify.json", "tests.json"])
-def test_close_reuse_reruns_when_task_proof_evidence_is_missing(
+@pytest.mark.parametrize("missing_artifact", ["verify.json", "tests.json", "tests_changed"])
+def test_close_reuse_reruns_only_proof_with_missing_or_changed_evidence(
         repo: Path, monkeypatch: pytest.MonkeyPatch, missing_artifact: str):
     from factory_lib import dump_json, proof_path, run_state_path
 
@@ -278,8 +278,9 @@ def test_close_reuse_reruns_when_task_proof_evidence_is_missing(
     if missing_artifact != "verify.json":
         dump_json(root / "verify.json", {
             "recorded_by": stages.STAGE_PROOF, "task_id": "T1",
-            "proof_key": key, "ok": True,
+            "proof_key": "old-key" if missing_artifact == "tests_changed" else key,
             "results": prior_verify, "required_tests": prior_tests,
+            "ok": True,
         })
     if missing_artifact != "tests.json":
         dump_json(root / "tests.json", {"commit": "prior"})
@@ -302,6 +303,8 @@ def test_close_reuse_reruns_when_task_proof_evidence_is_missing(
         stages, "_proof_receipt",
         lambda _base, _stage, kind: {
             **identities[kind], "status": "passed",
+            "identity": "old-tests" if missing_artifact == "tests_changed"
+            and kind == "tests" else identities[kind]["identity"],
         },
     )
     monkeypatch.setattr(stages, "_store_proof_receipt", lambda *_args: None)
@@ -327,8 +330,11 @@ def test_close_reuse_reruns_when_task_proof_evidence_is_missing(
 
     stages.run_stage_proof(repo, "T1", task, proof_context={})
 
-    assert len(verify_runs) == len(test_runs) == 1
-    assert recorded[0]["verify_results"] == verify_runs[0]
+    assert len(verify_runs) == (0 if missing_artifact == "tests_changed" else 1)
+    assert len(test_runs) == 1
+    assert recorded[0]["verify_results"] == (
+        prior_verify if missing_artifact == "tests_changed" else verify_runs[0]
+    )
     assert recorded[0]["test_results"] == test_runs[0]
 
 
@@ -662,6 +668,50 @@ def test_canonical_junit_requires_matching_pytest_semantics_and_environment(
     assert not stages._canonical_junit_satisfies_required_tests(
         report, task, base=repo,
         canonical_command="PYTHONUTF8=0 python3 -m pytest tests",
+    )
+
+
+def test_canonical_junit_matches_envrc_factory_commands_for_selectors(
+        repo: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    source = repo / "tests" / "a.py"
+    source.parent.mkdir(parents=True, exist_ok=True)
+    source.write_text("def test_a():\n    pass\n", encoding="utf-8")
+    (repo / ".envrc").write_text(
+        'export FACTORY_TEST_CMD="python3 -m pytest tests"\n', encoding="utf-8",
+    )
+    monkeypatch.delenv("FACTORY_TEST_CMD", raising=False)
+    report = tmp_path / "canonical.xml"
+    report.write_text(
+        '<testsuite><testcase name="test_a" file="tests/a.py"/></testsuite>',
+        encoding="utf-8",
+    )
+    task = {
+        "verify_commands": ["python3 factory/scripts/verify.py"],
+        "required_tests": [{
+            "id": "test_a", "path": "tests/a.py",
+            "command": "python3 -m pytest {path}::{id} --junitxml={report}",
+        }],
+    }
+
+    def identify(_base, command, *, fixed_after_assignments=False,
+                 environment_overrides=None, **_kwargs):
+        _tokens, _environment, identity = stages._proof_environment(
+            command, fixed_after_assignments=fixed_after_assignments,
+            environment_overrides=environment_overrides,
+        )
+        return {
+            "reusable": True, "environment": identity,
+            "interpreter": "test-python", "python_version": "test-version",
+            "dependencies": {"pytest": "test-version"},
+            "uv_bootstrap": {}, "uv_overlay_sha256": "a" * 64,
+            "pytest_config": [],
+            "pytest_semantics": stages._pytest_semantic_args(command),
+        }
+
+    monkeypatch.setattr(stages, "_proof_tool_identity", identify)
+    assert stages._canonical_junit_satisfies_required_tests(
+        report, task, base=repo,
+        canonical_command="python3 -m pytest tests",
     )
 
 
