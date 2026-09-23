@@ -1,0 +1,13 @@
+{
+  "event": "open",
+  "id": "Q-0192-0520",
+  "profile": "degraded",
+  "reason": "Owner-directed small direct fix after close round 3 suite (4 failed): restore the host-native prepared clause in the cold-read guard (round 1b over-removed it; print-only already skips the guard) and update three tests still asserting the old Luna/max implementation/lite pins",
+  "started_at": "2026-09-23T11:40:21+00:00",
+  "max_files": 5,
+  "files": [],
+  "harness_source": true,
+  "kind": "degraded",
+  "task_id": "LEAN-WORKFLOW",
+  "story": "FORGE-COORD-1"
+}

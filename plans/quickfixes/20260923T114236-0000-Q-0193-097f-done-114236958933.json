@@ -1,0 +1,14 @@
+{
+  "event": "done",
+  "id": "Q-0193-097f",
+  "profile": "degraded",
+  "kind": "degraded",
+  "reason": "Owner-directed small direct fix: round 1b's print-only recovery test also asserted a second non-print native cold-read preparation succeeds, contradicting the one-read rule in test_grill_budget; the tail must assert refusal",
+  "started_at": "2026-09-23T11:41:23+00:00",
+  "completed_at": "2026-09-23T11:42:36+00:00",
+  "files": [
+    "factory/tests/test_grill_release.py"
+  ],
+  "task_id": "LEAN-WORKFLOW",
+  "story": "FORGE-COORD-1"
+}

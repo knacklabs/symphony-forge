@@ -1,0 +1,16 @@
+{
+  "event": "done",
+  "id": "Q-0192-0520",
+  "profile": "degraded",
+  "kind": "degraded",
+  "reason": "Owner-directed small direct fix after close round 3 suite (4 failed): restore the host-native prepared clause in the cold-read guard (round 1b over-removed it; print-only already skips the guard) and update three tests still asserting the old Luna/max implementation/lite pins",
+  "started_at": "2026-09-23T11:40:21+00:00",
+  "completed_at": "2026-09-23T11:40:56+00:00",
+  "files": [
+    "factory/scripts/forge_cli/grill.py",
+    "factory/tests/test_gates.py",
+    "factory/tests/test_stop_less_often.py"
+  ],
+  "task_id": "LEAN-WORKFLOW",
+  "story": "FORGE-COORD-1"
+}
