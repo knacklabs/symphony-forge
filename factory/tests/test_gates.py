@@ -23824,6 +23824,51 @@ def test_task_pr_ready_reseals_clean_successor_review_on_same_diff(repo, tmp_pat
         == resealed_marker
 
 
+def test_task_pr_ready_refuses_verify_edit_after_marker_on_unchanged_product(
+        repo, tmp_path):
+    git(repo, "checkout", "-qb", "feat/task-pr-reject-post-marker-verify")
+    marker = prepare_task_pr_ready(repo, tmp_path)
+    finish_task_for_pr_ready(repo)
+    proof = write_task_proof(repo, "T1", publish_review=True)
+    git(repo, "add", proof.relative_to(repo).as_posix(), ".factory/review-briefs/all.md")
+    git(repo, "commit", "-qm", "record T1 proof")
+    env, calls, pushes = task_pr_retry_env(tmp_path)
+    code, out = run(repo, "forge.py", "task", "pr-ready", "T1", env=env)
+    assert code == 0, out
+
+    marker_bytes = marker.read_bytes()
+    seal_commit = json.loads(marker_bytes)["commit"]
+    verify_path = proof / "verify.json"
+    verify = json.loads(verify_path.read_text())
+    assert verify["ok"] is True
+    git(repo, "cat-file", "-e", f"{verify['commit']}^{{commit}}")
+    verify["note"] = "post-marker proof edit"
+    verify_path.write_text(json.dumps(verify))
+    git(repo, "add", verify_path.relative_to(repo).as_posix())
+    git(repo, "commit", "-qm", "edit passing verify proof after marker")
+    changed_head = head(repo)
+    lib = load_factory_lib(repo)
+    assert lib.product_delta_digest(repo, seal_commit, changed_head) \
+        == hashlib.sha256(b"").hexdigest()
+    assert any(
+        "verify.json proof changed after task marker" in problem
+        for problem in lib.task_proof_problems(repo, "ENG-1", STAGE_TASK)
+    )
+    calls_before = calls.read_bytes()
+    pushes_before = pushes.read_bytes()
+
+    code, out = run(repo, "forge.py", "task", "pr-ready", "T1", env=env)
+
+    assert code != 0 and (
+        "Task proof changed after its marker:\n- T1: verify.json proof changed "
+        "after task marker" in out
+    ), out
+    assert head(repo) == changed_head
+    assert marker.read_bytes() == marker_bytes
+    assert calls.read_bytes() == calls_before
+    assert pushes.read_bytes() == pushes_before
+
+
 def test_task_proof_refuses_working_tree_marker_different_from_head(
         repo, tmp_path):
     git(repo, "checkout", "-qb", "feat/task-marker-identity")

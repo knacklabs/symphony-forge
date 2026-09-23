@@ -5352,6 +5352,11 @@ def _proof_problem_action(task_id: object, first: str) -> str:
     return "review" if first.startswith(review_starts) else "inspect-proof"
 
 
+def proof_problem_action(task_id: object, problem: str) -> str:
+    """Classify a task proof problem for the next repair action."""
+    return _proof_problem_action(task_id, problem)
+
+
 def _recorded_failure_action(root: Path, key: str, task_id: str) -> str | None:
     from forge_cli.readiness import tests_passed, verify_passed
 
