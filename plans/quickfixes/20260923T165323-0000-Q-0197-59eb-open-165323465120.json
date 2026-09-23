@@ -1,0 +1,11 @@
+{
+  "event": "open",
+  "id": "Q-0197-59eb",
+  "profile": "degraded",
+  "reason": "test_pr_link_workflow pinned a commit (32b3ee69) that existed only on PR #229's pre-squash branch; deleting that merged branch broke it on main. Re-anchor the test on main history (1 test file), blocking PR #243",
+  "started_at": "2026-09-23T16:53:23+00:00",
+  "max_files": 5,
+  "files": [],
+  "harness_source": true,
+  "kind": "degraded"
+}
