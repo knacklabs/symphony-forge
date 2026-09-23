@@ -1,0 +1,14 @@
+{
+  "event": "done",
+  "id": "Q-0194-faab",
+  "profile": "degraded",
+  "kind": "degraded",
+  "reason": "Codex worker sandbox cannot write .codex/ (signal S-0053); coordinator makes the one-word explore.config.toml comment fix for LEAN-AC-12",
+  "started_at": "2026-09-23T12:28:38+00:00",
+  "completed_at": "2026-09-23T12:28:48+00:00",
+  "files": [
+    ".codex/explore.config.toml"
+  ],
+  "task_id": "LEAN-WORKFLOW",
+  "story": "FORGE-COORD-1"
+}
