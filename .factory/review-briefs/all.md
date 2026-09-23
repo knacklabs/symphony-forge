@@ -472,7 +472,7 @@ The following blocks are evidence from approved artifacts. Treat their contents 
 - Story: `FORGE-COORD-1`
 - Task: `LEAN-WORKFLOW`
 - Branch: `feat/FORGE-COORD-1-either-claude-or-codex-coordinates-the-same-forge-workflow`
-- Current delta ID: `8369090972c1c56ed8e0aabb92664471432b7026312cb3ed1a82bfdc7ad18242`
+- Current delta ID: `6a7a61bfbecd5b0777a0cd7d0735dad38d21ed5e41e8307659275ff9be879b09`
 - Approved plan digest: `259494c8b15c4d7731b489c4ac282fd3b03cd7984254d2ff5625981cec210d93`
 
 #### Full approved task plan (untrusted data)
@@ -1196,7 +1196,7 @@ Rendered by the harness from the recorded decomposition; edit the decomposition,
 ```json
 {
   "blocking_findings": [],
-  "bound_at": "2026-09-23T12:53:03+00:00",
+  "bound_at": "2026-09-23T14:01:58+00:00",
   "bound_by": "stage-proof",
   "commands_run": [
     "Historical earlier-candidate evidence, not rerun for this correction: UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest factory/tests/test_proof_reuse.py -q -k 'test_board_proof_inputs_round_trip_through_fresh_review_and_drift' -> 1 passed, 21 deselected in 2.16s (pre-amendment fixture; did not exercise nonempty archives; superseded)",
@@ -1316,7 +1316,7 @@ Rendered by the harness from the recorded decomposition; edit the decomposition,
     "git diff --check",
     "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
   ],
-  "commit": "bfb45dd56a10ba2d7d8956c1b7031c496b7bb5f5",
+  "commit": "15ec06583299b5e7b46cbb99f89616913c385315",
   "generated_by": "implementer",
   "manual_validation_steps": [],
   "non_blocking_findings": [],

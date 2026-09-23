@@ -4062,6 +4062,99 @@
       "delta_id": "8369090972c1c56ed8e0aabb92664471432b7026312cb3ed1a82bfdc7ad18242",
       "generation_id": "00478d4c5a948fc652a65ff4beaf3e6a57a6495ac896df89f56ad4f469787100",
       "task_id": "LEAN-WORKFLOW"
+    },
+    {
+      "lens": "quality",
+      "finding": {
+        "area": "factory/scripts/forge_cli",
+        "category": "bug",
+        "file_path": "factory/scripts/forge_cli/approval.py",
+        "line": 209,
+        "summary": "Allow native approval of a story plan amended after its cold grill (factory/scripts/forge_cli/approval.py:209): When an awaiting story plan incorporates accepted cold-grill findings, the final plan digest differs from the immutable cold input.",
+        "title": "Allow native approval of a story plan amended after its cold grill"
+      },
+      "verdict": "real",
+      "evidence": "factory/scripts/forge_cli/approval.py:209",
+      "instances": [
+        "factory/scripts/forge_cli/approval.py:209"
+      ],
+      "keep": "",
+      "reason": "",
+      "triaged_by": "claude-coordinator",
+      "triaged_at": "2026-09-23T14:16:56+00:00",
+      "delta_id": "6a7a61bfbecd5b0777a0cd7d0735dad38d21ed5e41e8307659275ff9be879b09",
+      "generation_id": "b8fb3e28076e7efbce1d0be7439eea6aa329fb83a911a63670b3113324f87b88",
+      "task_id": "LEAN-WORKFLOW"
+    },
+    {
+      "lens": "quality",
+      "finding": {
+        "area": "factory/scripts",
+        "category": "bug",
+        "file_path": "factory/scripts/factory_lib.py",
+        "line": 3654,
+        "summary": "Preserve the launch named by a measurement receipt (factory/scripts/factory_lib.py:3654): When a native task's measurement scope is amended, its continuity receipt names the preparation that authorized the amendment.",
+        "title": "Preserve the launch named by a measurement receipt"
+      },
+      "verdict": "real",
+      "evidence": "factory/scripts/factory_lib.py:3653",
+      "instances": [
+        "factory/scripts/factory_lib.py:3653"
+      ],
+      "keep": "",
+      "reason": "",
+      "triaged_by": "claude-coordinator",
+      "triaged_at": "2026-09-23T14:16:56+00:00",
+      "delta_id": "6a7a61bfbecd5b0777a0cd7d0735dad38d21ed5e41e8307659275ff9be879b09",
+      "generation_id": "b8fb3e28076e7efbce1d0be7439eea6aa329fb83a911a63670b3113324f87b88",
+      "task_id": "LEAN-WORKFLOW"
+    },
+    {
+      "lens": "quality",
+      "finding": {
+        "area": "factory/scripts/forge_cli",
+        "category": "bug",
+        "file_path": "factory/scripts/forge_cli/upgrade.py",
+        "line": 3854,
+        "summary": "Preserve client skills across an interrupted upgrade (factory/scripts/forge_cli/upgrade.py:3854): If upgrade is interrupted after replacing `factory/` but before restoring a client-only skill, the skill is absent from the target.",
+        "title": "Preserve client skills across an interrupted upgrade"
+      },
+      "verdict": "real",
+      "evidence": "factory/scripts/forge_cli/upgrade.py:3854",
+      "instances": [
+        "factory/scripts/forge_cli/upgrade.py:3854",
+        "factory/scripts/forge_cli/upgrade.py:3878"
+      ],
+      "keep": "",
+      "reason": "",
+      "triaged_by": "claude-coordinator",
+      "triaged_at": "2026-09-23T14:16:57+00:00",
+      "delta_id": "6a7a61bfbecd5b0777a0cd7d0735dad38d21ed5e41e8307659275ff9be879b09",
+      "generation_id": "b8fb3e28076e7efbce1d0be7439eea6aa329fb83a911a63670b3113324f87b88",
+      "task_id": "LEAN-WORKFLOW"
+    },
+    {
+      "lens": "security",
+      "finding": {
+        "area": "factory/scripts",
+        "category": "security",
+        "file_path": "factory/scripts/pre_tool_use.py",
+        "line": 1116,
+        "summary": "Check the lexical target of native Bash writes (factory/scripts/pre_tool_use.py:1116): When an active native task runs `rm src/link` and `src/link` is a product symlink pointing into an exempt path such as `docs/`, `bash_write_paths` finds the literal target, but `locked_repo_path` resolves the symlink before classifying it.",
+        "title": "Check the lexical target of native Bash writes"
+      },
+      "verdict": "real",
+      "evidence": "factory/scripts/forge_cli/repo_kind.py:36",
+      "instances": [
+        "factory/scripts/pre_tool_use.py:1116"
+      ],
+      "keep": "",
+      "reason": "",
+      "triaged_by": "claude-coordinator",
+      "triaged_at": "2026-09-23T14:16:57+00:00",
+      "delta_id": "6a7a61bfbecd5b0777a0cd7d0735dad38d21ed5e41e8307659275ff9be879b09",
+      "generation_id": "b8fb3e28076e7efbce1d0be7439eea6aa329fb83a911a63670b3113324f87b88",
+      "task_id": "LEAN-WORKFLOW"
     }
   ]
 }
