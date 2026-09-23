@@ -4504,6 +4504,22 @@ def reopen_stage_for_review_fix(base: Path, stage_id: str) -> dict:
     this itself when a done stage's diff has moved; `task reopen --review-fix`
     remains as the explicit verb.
     """
+    data = load_stages(base)
+    stages = data.get("stages") or []
+    idx = next((i for i, st in enumerate(stages) if st.get("id") == stage_id), None)
+    if idx is None:
+        fail(f"task {stage_id} is not in the current decomposition")
+    if stages[idx].get("status") != "done":
+        status = stages[idx].get("status")
+        fail(f"task {stage_id} is '{status}', not done -- a review "
+             "fix reopens a stage that closed clean and then failed its review")
+    state = load_json(run_state_path(base), default={})
+    story = data.get("issue") or state.get("issue_key") or state.get("story") or ""
+    if not isinstance(story, str) or not story.strip():
+        fail(f"cannot check whether task {stage_id} is unshipped without a story key")
+    from .tasks import _require_unshipped
+    _require_unshipped(base, story, stage_id, require_fetch_success=True)
+
     from .delegate import delegation_exclusion
     with delegation_exclusion(base, "stages", kind="stage-state", namespace="state"):
         data = load_stages(base)
@@ -4516,10 +4532,11 @@ def reopen_stage_for_review_fix(base: Path, stage_id: str) -> dict:
             fail(f"task {stage_id} is '{target.get('status')}', not done -- a review "
                  "fix reopens a stage that closed clean and then failed its review")
         state = load_json(run_state_path(base), default={})
-        story = str(data.get("issue") or state.get("issue_key")
-                    or state.get("story") or "")
-        from .tasks import _require_unshipped
-        _require_unshipped(base, story, stage_id)
+        current_story = (data.get("issue") or state.get("issue_key")
+                         or state.get("story") or "")
+        if not isinstance(current_story, str) or current_story != story:
+            fail(f"task {stage_id}'s story changed while checking shipped status; "
+                 "retry the review fix")
         later = [st.get("id") for st in stages[idx + 1:]
                  if st.get("status") in ("done", "active")]
         if later:

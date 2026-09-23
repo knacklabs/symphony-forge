@@ -134,18 +134,24 @@ def _default_branch(base: Path) -> str:
     return default_trunk_branch(base)
 
 
-def _require_unshipped(base: Path, key: str, task_id: str) -> None:
+def _require_unshipped(
+        base: Path, key: str, task_id: str, *, require_fetch_success: bool = False,
+) -> None:
+    if not isinstance(key, str) or not key.strip():
+        fail(f"cannot check whether task {task_id} is unshipped without a story key")
     default_branch = _default_branch(base)
     marker = task_marker_path(key, task_id)
     fetched = _git(base, "fetch", "origin", default_branch)
-    if fetched.returncode == 0:
-        present = _git(base, "cat-file", "-e",
-                       f"origin/{default_branch}:{marker.as_posix()}")
-        if present.returncode == 0:
-            fail(f"task {task_id} is already SHIPPED (its marker is on "
-                 f"origin/{default_branch}); shipped work is immutable — add a new "
-                 "follow-up task rather than reopening it.")
-    else:
+    present = _git(base, "cat-file", "-e",
+                   f"origin/{default_branch}:{marker.as_posix()}")
+    if present.returncode == 0:
+        fail(f"task {task_id} is already SHIPPED (its marker is on "
+             f"origin/{default_branch}); shipped work is immutable — add a new "
+             "follow-up task rather than reopening it.")
+    if fetched.returncode != 0 and require_fetch_success:
+        fail(f"cannot confirm {task_id} is unshipped: fetch failed; "
+             "retry when origin is reachable")
+    if fetched.returncode != 0:
         print(f"WARNING: could not reach origin/{default_branch} to confirm "
               f"{task_id} is unshipped; proceeding on local state. Do NOT reopen a "
               "task whose PR has already merged.")
