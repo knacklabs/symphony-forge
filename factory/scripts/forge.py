@@ -645,8 +645,11 @@ def main() -> None:
 
     p_review = sub.add_parser(
         "review",
-        help="release Codex for a task's three-lens review and record its proof")
-    p_review.add_argument("id", help="task id from the decomposition")
+        help="release Codex for a task or Lite window's three-lens review")
+    p_review.add_argument("id", nargs="?", help="task id from the decomposition")
+    p_review.add_argument(
+        "--lite", action="store_true",
+        help="review the open Lite window's committed diff")
     p_review.add_argument(
         "--lens", choices=list(review_mod.LENSES),
         help="run a single lens (default: all three)")

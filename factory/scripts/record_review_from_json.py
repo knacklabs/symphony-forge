@@ -85,16 +85,28 @@ state = gate(
     decomposition=True,
     lite_window_ok=True,
 )
-if not args.task:
-    args.task = active_task_id(root)
-if not args.task:
-    active = [
-        str(stage.get("id") or "")
-        for stage in load_stages(root).get("stages", [])
-        if isinstance(stage, dict) and stage.get("status") == "active"
-    ]
-    if len(active) == 1:
-        args.task = active[0]
+from forge_cli.quickfix import LITE, load_active, profile_of
+active_window = load_active(root)
+lite_review = (
+    args.aspect in {"quality", "performance", "security"}
+    and bool(active_window)
+    and profile_of(active_window) == LITE
+)
+if lite_review:
+    if args.task:
+        raise SystemExit("Lite review artifacts are story-scoped; omit --task")
+    args.task = ""
+else:
+    if not args.task:
+        args.task = active_task_id(root)
+    if not args.task:
+        active = [
+            str(stage.get("id") or "")
+            for stage in load_stages(root).get("stages", [])
+            if isinstance(stage, dict) and stage.get("status") == "active"
+        ]
+        if len(active) == 1:
+            args.task = active[0]
 if args.set:
     if not args.task:
         raise SystemExit("--set requires --task")
@@ -164,7 +176,8 @@ for key in ("blocking_findings", "non_blocking_findings"):
 
 # The protected decomposition twin survives a ship (pr_ready cleans only .factory/),
 # so a shipped story's contracts must not demand later quickfix quality-review verdicts.
-if args.aspect == "quality" and state.get("decomposition_status") == "recorded":
+if (args.aspect == "quality" and not lite_review
+        and state.get("decomposition_status") == "recorded"):
     decomposition = load_json(protected_decomposition_state_path(root), default={})
     contracts = declared_contracts(decomposition)
     # Per-task proof (accepted 0054/0069): a task's review verdicts the
@@ -238,7 +251,19 @@ if args.aspect == "quality" and state.get("decomposition_status") == "recorded":
                 "quality review contract_verdicts missing declared contract ids: "
                 + ", ".join(missing_ids)
             )
-if args.aspect != "stage-local" and state.get("issue_key"):
+if lite_review:
+    binding_fields = ("review_base_sha", "branch_diff_digest", "commit")
+    supplied_binding = [field in payload for field in binding_fields]
+    if any(supplied_binding):
+        lite_base = active_window.get("base_sha")
+        if (not all(supplied_binding) or not isinstance(lite_base, str)
+                or not lite_base or payload.get("review_base_sha") != lite_base):
+            raise SystemExit("Lite review base does not match the open window's base_sha")
+        if payload.get("commit") != head_sha(root):
+            raise SystemExit("Lite review commit is not current HEAD")
+        if payload.get("branch_diff_digest") != product_delta_digest(root, lite_base):
+            raise SystemExit("Lite review diff changed after the review run")
+elif args.aspect != "stage-local" and state.get("issue_key"):
     token_path = story_dir(root, state["issue_key"]) / "review-run.json"
     token = load_json(token_path, default={})
     fields = ("review_run_id", "brief_sha256", "branch_diff_digest")

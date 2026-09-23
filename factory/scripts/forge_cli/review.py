@@ -1947,6 +1947,22 @@ def _shared_terms(finding: dict | str, source: str) -> list[str]:
 
 def cmd_review(args: argparse.Namespace) -> None:
     base = Path(args.repo).resolve() if args.repo else repo_root()
+    if getattr(args, "lite", False):
+        if args.id:
+            fail("`forge review --lite` does not take a task id")
+        if (getattr(args, "lens", None) or getattr(args, "triage", None)
+                or getattr(args, "reject", None)):
+            fail("`forge review --lite` runs the complete three-lens review")
+        if getattr(args, "max_priority", "P3") != "P3":
+            fail("complete three-lens review requires --max-priority P3")
+        review_lite(
+            base, engine=getattr(args, "engine", "codex"),
+            max_priority=getattr(args, "max_priority", "P3"),
+            skill=getattr(args, "skill", None),
+        )
+        return
+    if not args.id:
+        fail("`forge review` requires a task id or `--lite`")
     if getattr(args, "triage", None):
         real = bool(getattr(args, "real", False))
         wrong = bool(getattr(args, "not_a_defect", False))
@@ -1975,6 +1991,128 @@ def cmd_review(args: argparse.Namespace) -> None:
     )
     print(_next_hint(args.id, outcome["stage_status"], outcome["blocking"],
                      outcome["caveats"]))
+
+
+def review_lite(base: Path, *, engine: str = "codex", max_priority: str = "P3",
+                skill: str | None = None) -> None:
+    """Review the committed diff of one open Lite window and record its lenses."""
+    from .quickfix import LITE, _lite_dirty_product_files, load_active, profile_of
+
+    window = load_active(base)
+    if not window or profile_of(window) != LITE:
+        fail("no Lite window is open")
+    base_sha = window.get("base_sha")
+    if not isinstance(base_sha, str) or not base_sha:
+        fail("open Lite window has no recorded base_sha")
+    if _lite_dirty_product_files(base):
+        fail("commit the Lite changes first; the review covers committed changes only")
+
+    tip_sha = _require_git(base, "resolving HEAD", "rev-parse", "--verify", "HEAD^{commit}")
+    if _git(base, "merge-base", "--is-ancestor", base_sha, tip_sha).returncode != 0:
+        fail(f"Lite base {base_sha[:12]} is not an ancestor of HEAD")
+    excluded = review_excluded_prefixes(base)
+    scope = sorted(
+        path for path in _require_git(
+            base, "listing the Lite diff", "diff", "--name-only", f"{base_sha}..{tip_sha}",
+        ).splitlines()
+        if path.strip() and not path.startswith(excluded)
+    )
+    if not scope:
+        fail(f"no product paths changed between {base_sha[:12]} and HEAD — nothing to review")
+
+    delta_id = product_delta_digest(base, base_sha, tip_sha)
+    skill = resolve_skill(skill)
+    _require_current_review_helper(skill)
+    helper_before, helper_file_before = _helper_identity(skill)
+    from .review_launcher import repo_readable, write_launcher
+    readable, why_not = repo_readable(engine)
+    context = (
+        "# Lite review context\n\n"
+        f"Review the committed product diff for Lite window {window['id']} from "
+        f"{base_sha} to {tip_sha}.\n\n"
+        "## Plan contracts\n"
+        "No task-specific plan contracts apply.\n\n"
+        "## Reviewer focus\n"
+        "Assess the diff with the quality, performance, and security focus in "
+        "the review brief.\n"
+    ).encode("utf-8")
+    task = {"id": str(window["id"]), "plan_contracts": []}
+    prompt = _combined_prompt(task, repo_readable=readable)
+    if not safe_factory_write_bytes(
+            base, REVIEW_DATASET_REL.removeprefix(".factory/"), context):
+        fail(f"could not write {REVIEW_DATASET_REL}")
+    prompt_rel = f".factory/review-briefs/{window['id']}.combined.md"
+    if not safe_factory_write_bytes(base, prompt_rel.removeprefix(".factory/"), prompt):
+        fail(f"could not write {prompt_rel}")
+
+    tmp = Path(tempfile.mkdtemp(prefix="forge-review-lite-"))
+    worktree = tmp / "wt"
+    worktree_created = False
+    try:
+        _require_git(base, "creating the Lite review worktree", "worktree", "add",
+                     "--detach", str(worktree), tip_sha)
+        worktree_created = True
+        review_tip = product_only_tip(worktree, base_sha)
+        _write_detached(worktree, [(REVIEW_DATASET_REL, context), (prompt_rel, prompt)])
+        codex_bin = None
+        if readable:
+            from factory_lib import git_control_dir
+            launcher_root = git_control_dir(base) / "review-launcher" / window["id"]
+            codex_bin = str(write_launcher(launcher_root, worktree.resolve()))
+            print("review runs inside the reviewed worktree, read-only (0076)", flush=True)
+        else:
+            print(f"review sees only the diff bundle ({why_not})", flush=True)
+        print(f"== Lite review: releasing Codex over {len(scope)} path(s) "
+              f"({base_sha[:7]}..{review_tip[:7]}) ==", flush=True)
+        reviewed = _run_skill(
+            skill, worktree, base_sha, prompt_rel, tmp / "combined.json",
+            engine, max_priority, ledger_root=base,
+            **({"codex_bin": codex_bin} if codex_bin else {}),
+        )
+        helper_after, helper_file_after = _helper_identity(skill)
+        current_window = load_active(base)
+        if (helper_after != helper_before or helper_file_after != helper_file_before
+                or head_sha(base) != tip_sha or _lite_dirty_product_files(base)
+                or product_delta_digest(base, base_sha) != delta_id
+                or current_window.get("id") != window["id"]
+                or current_window.get("base_sha") != base_sha
+                or (base / REVIEW_DATASET_REL).read_bytes() != context):
+            fail("Lite review inputs changed during the review; nothing was recorded")
+
+        artifacts = _project_combined_report(
+            task, reviewed, scope, base_sha, tip_sha, [], [], {}, excluded,
+        )
+        recorder = base / "factory" / "scripts" / "record_review_from_json.py"
+        for aspect in LENSES:
+            artifact = artifacts[aspect]
+            artifact.pop("task_id", None)
+            artifact.update({
+                "review_base_sha": base_sha,
+                "branch_diff_digest": delta_id,
+                "commit": tip_sha,
+            })
+            payload = tmp / f"{aspect}.artifact.json"
+            payload.write_text(json.dumps(artifact, indent=2) + "\n", encoding="utf-8")
+            proc = subprocess.run(
+                [sys.executable, str(recorder), "--aspect", aspect,
+                 "--input", str(payload)], cwd=base, capture_output=True, text=True,
+                encoding="utf-8", env={**os.environ, "PYTHONUTF8": "1"},
+            )
+            if proc.returncode != 0:
+                fail(f"recording the Lite {aspect} artifact failed:\n"
+                     f"{proc.stdout.strip()}\n{proc.stderr.strip()}")
+    finally:
+        if worktree_created:
+            _git(base, "worktree", "remove", "--force", str(worktree))
+            _git(base, "worktree", "prune")
+        shutil.rmtree(tmp, ignore_errors=True)
+
+    for aspect in LENSES:
+        artifact = artifacts[aspect]
+        print(f"{aspect:<12} score {artifact['score']:>2}  "
+              f"blocking={len(artifact['blocking_findings'])} "
+              f"non-blocking={len(artifact['non_blocking_findings'])}")
+    print(f"Recorded three Lite review aspects at {tip_sha[:12]}.")
 
 
 def _write_detached(worktree: Path, detached_writes: list[tuple[str, bytes]]) -> None:
