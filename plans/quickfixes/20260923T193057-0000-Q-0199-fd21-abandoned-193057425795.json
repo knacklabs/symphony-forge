@@ -1,0 +1,12 @@
+{
+  "event": "abandoned",
+  "id": "Q-0199-fd21",
+  "profile": "lite",
+  "reason": "Docs-only change (AGENTS.md, WORKFLOW.md) reviewed clean at ae3dc6fe; mode done counts product files only, so the window cannot close through done",
+  "opened_reason": "Record that the coordinating session runs from the primary checkout (owner direction; re-run of abandoned Q-0199-c999)",
+  "started_at": "2026-09-23T19:12:16+00:00",
+  "completed_at": "2026-09-23T19:30:57+00:00",
+  "files": [],
+  "by": "Ravi Kiran Vemula",
+  "base_sha": "9a2fdb3155258ece40227f07043ebbd0d7100b82"
+}
