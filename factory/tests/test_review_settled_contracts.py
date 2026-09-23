@@ -432,8 +432,14 @@ def test_locationless_contract_verdict_has_stable_rejection_identity():
         review_finding_fingerprint(malformed)
 
 
-def test_locationless_contract_rejection_records_lineage_and_refuses_stale_source(
+def test_locationless_contract_blocker_cannot_be_rejected(
         repo, tmp_path):
+    """A plan-contract blocker is an unmet acceptance criterion: it is built,
+    never rejected as a host defect finding (owner ruling, 2026-09-23).
+
+    Rejection lineage, stale-source and broken-source reads are covered for
+    ordinary findings by test_reject_republishes_one_complete_pointer_selected_set.
+    """
     from forge_cli.review import _contract_blocker
 
     _story(repo, tmp_path)
@@ -458,35 +464,28 @@ def test_locationless_contract_rejection_records_lineage_and_refuses_stale_sourc
     root, _root_pointer = publish_review_generation(
         repo, "ENG-1", "T2", candidate,
     )
+    pointer_path = repo / ".factory/stories/ENG-1/tasks/T2/reviews/selected.json"
+    before = pointer_path.read_bytes()
 
     code, output = run(
         repo, "forge.py", "review", "T2", "--reject", "T2-AC1",
         "--lens", "quality", "--reason", "contract is covered by the fix",
         "--evidence", "src/work.py:1", "--by", "autoreview",
     )
-    assert code == 0, output
+    assert code != 0, output
+    assert "cannot be rejected as host defect findings" in output
+    assert pointer_path.read_bytes() == before
     selected, _selection, problems = read_selected_review_generation(
         repo, "ENG-1", "T2",
     )
-    assert not problems and selected["origin"] == "rejection"
-    assert selected["rejection"]["history"][0]["finding_fingerprint"] == (
-        review_finding_fingerprint(finding)
-    )
+    assert not problems
+    assert selected["generation_id"] == root["generation_id"]
+    assert selected["origin"] != "rejection"
 
     stale = read_selected_review_generation(
         repo, "ENG-1", "T2", expected_delta_id="f" * 64,
     )[2]
     assert any("stale" in problem for problem in stale)
-
-    root_path = repo / ".factory/stories/ENG-1/tasks/T2/reviews/generations" / (
-        root["generation_id"] + ".json")
-    hidden = root_path.with_suffix(".missing")
-    root_path.rename(hidden)
-    try:
-        broken = read_selected_review_generation(repo, "ENG-1", "T2")[2]
-        assert any("source is invalid" in problem for problem in broken)
-    finally:
-        hidden.rename(root_path)
 
 
 def test_rejection_compare_and_swap_refuses_interleaved_selection(
