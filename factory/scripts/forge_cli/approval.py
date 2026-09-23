@@ -447,8 +447,6 @@ def _approve_task(candidate: ApprovalCandidate, record: dict[str, Any]) -> None:
         raise ApprovalRefused("task cold-read proof disappeared during approval")
     if candidate.previous_digest:
         grill["previous_approved_task_plan_sha256"] = candidate.previous_digest
-    if "final_artifact_sha256" in grill:
-        grill["final_artifact_sha256"] = candidate.digest
     grill.update({
         "approved_task_plan_sha256": candidate.digest,
         "approved_by": record["approved_by"],
