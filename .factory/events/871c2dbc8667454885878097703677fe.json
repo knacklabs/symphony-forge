@@ -1,0 +1,1 @@
+{"event": "signal-resolved", "generated_by": "orchestrator", "at": "2026-09-23T10:34:38+00:00", "story": "FORGE-COORD-1", "detail": "S-0051-fc4c: Out of scope for this fix round. Round 1c is ONLY the native patch-scope regression in pre_tool_use.py/repo_kind.py (see the supplemental context). Do not change pytest worker count, .envrc, or anythi"}

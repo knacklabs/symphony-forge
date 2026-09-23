@@ -1,0 +1,1 @@
+{"event": "signal-confusion", "generated_by": "implementer", "at": "2026-09-23T10:33:58+00:00", "story": "FORGE-COORD-1", "detail": "AC16 requires an identical controlled pytest -n 4/6/8 comparison before changing worker count, but the brief permits focused checks only and reserves full suites to task close; current .envrc selects "}

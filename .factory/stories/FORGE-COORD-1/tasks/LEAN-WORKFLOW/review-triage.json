@@ -3850,6 +3850,102 @@
       "delta_id": "fb576037a92f24869cdc5958dc3be0007f66c76bd8258eeaed8341a5168e9c07",
       "generation_id": "39ccbdb093029b8237d00f2673d336908f9c88596bddb5e61a31a0533a39f488",
       "task_id": "LEAN-WORKFLOW"
+    },
+    {
+      "lens": "quality",
+      "finding": {
+        "area": "factory/scripts/forge_cli",
+        "category": "bug",
+        "file_path": "factory/scripts/forge_cli/stages.py",
+        "line": 2200,
+        "summary": "Consume canonical JUnit from the declared verifier (factory/scripts/forge_cli/stages.py:2200): The approved task runs `verify.py` through `uv run .",
+        "title": "Consume canonical JUnit from the declared verifier"
+      },
+      "verdict": "real",
+      "evidence": "factory/scripts/forge_cli/stages.py:2199",
+      "instances": [
+        "factory/scripts/forge_cli/stages.py:2110",
+        "factory/scripts/forge_cli/stages.py:2199"
+      ],
+      "keep": "",
+      "reason": "",
+      "triaged_by": "claude-coordinator",
+      "triaged_at": "2026-09-23T07:55:06+00:00",
+      "delta_id": "866b6ff3bcc5b540ec2810792f8644e20cfe429a606881028ae0bf2b295409ce",
+      "generation_id": "a9cf2e1b72b49d1b31e6a9ebea47212f22dbf7acc58c9159b4ec0c8a35ed55c5",
+      "task_id": "LEAN-WORKFLOW"
+    },
+    {
+      "lens": "quality",
+      "finding": {
+        "area": "factory/scripts/forge_cli",
+        "category": "bug",
+        "file_path": "factory/scripts/forge_cli/stages.py",
+        "line": 4168,
+        "summary": "Restore complete proof results before recording a close retry (factory/scripts/forge_cli/stages.py:4168): If task evidence files are removed while matching stage receipts remain, close reuses both receipts and runs no commands.",
+        "title": "Restore complete proof results before recording a close retry"
+      },
+      "verdict": "real",
+      "evidence": "factory/scripts/forge_cli/stages.py:4172",
+      "instances": [
+        "factory/scripts/forge_cli/stages.py:4160",
+        "factory/scripts/forge_cli/stages.py:4176"
+      ],
+      "keep": "",
+      "reason": "",
+      "triaged_by": "claude-coordinator",
+      "triaged_at": "2026-09-23T07:55:06+00:00",
+      "delta_id": "866b6ff3bcc5b540ec2810792f8644e20cfe429a606881028ae0bf2b295409ce",
+      "generation_id": "a9cf2e1b72b49d1b31e6a9ebea47212f22dbf7acc58c9159b4ec0c8a35ed55c5",
+      "task_id": "LEAN-WORKFLOW"
+    },
+    {
+      "lens": "quality",
+      "finding": {
+        "area": "factory/scripts/forge_cli",
+        "category": "bug",
+        "file_path": "factory/scripts/forge_cli/upgrade.py",
+        "line": 3993,
+        "summary": "Resume authorization drops changed files inside vendored trees (factory/scripts/forge_cli/upgrade.py:3993): If an upgrade is interrupted after Lean migration completes but before upgrade finalization, Git can report changed files such as factory/scripts/forge_cli/upgrade.py.",
+        "title": "Resume authorization drops changed files inside vendored trees"
+      },
+      "verdict": "real",
+      "evidence": "factory/scripts/forge_cli/upgrade.py:4141",
+      "instances": [
+        "factory/scripts/forge_cli/upgrade.py:3993",
+        "factory/scripts/forge_cli/upgrade.py:3910"
+      ],
+      "keep": "",
+      "reason": "",
+      "triaged_by": "claude-coordinator",
+      "triaged_at": "2026-09-23T07:55:06+00:00",
+      "delta_id": "866b6ff3bcc5b540ec2810792f8644e20cfe429a606881028ae0bf2b295409ce",
+      "generation_id": "a9cf2e1b72b49d1b31e6a9ebea47212f22dbf7acc58c9159b4ec0c8a35ed55c5",
+      "task_id": "LEAN-WORKFLOW"
+    },
+    {
+      "lens": "security",
+      "finding": {
+        "area": "factory/scripts",
+        "category": "security",
+        "file_path": "factory/scripts/pre_tool_use.py",
+        "line": 1087,
+        "summary": "Enforce native patch scope on the lexical symlink path (factory/scripts/pre_tool_use.py:1087): When a native Codex patch deletes or moves a symlink outside the approved scope, `normalized_patch_paths` preserves its lexical path, but this line replaces it with `locked_targets`.",
+        "title": "Enforce native patch scope on the lexical symlink path"
+      },
+      "verdict": "real",
+      "evidence": "factory/scripts/forge_cli/repo_kind.py:36",
+      "instances": [
+        "factory/scripts/pre_tool_use.py:1087",
+        "factory/scripts/pre_tool_use.py:1089"
+      ],
+      "keep": "",
+      "reason": "",
+      "triaged_by": "claude-coordinator",
+      "triaged_at": "2026-09-23T07:55:07+00:00",
+      "delta_id": "866b6ff3bcc5b540ec2810792f8644e20cfe429a606881028ae0bf2b295409ce",
+      "generation_id": "a9cf2e1b72b49d1b31e6a9ebea47212f22dbf7acc58c9159b4ec0c8a35ed55c5",
+      "task_id": "LEAN-WORKFLOW"
     }
   ]
 }
