@@ -5,6 +5,7 @@ import hashlib
 import json
 import os
 import shutil
+import stat
 import subprocess
 import sys
 import tempfile
@@ -24,11 +25,19 @@ from forge_cli.codex_runtime import (  # noqa: E402
     scan_native_result, selected_coordinator,
 )
 from forge_cli.delegate import (  # noqa: E402
-    append_delegation, argv_digest, launch_companion, load_delegations,
+    _open_private_log, append_delegation, argv_digest, launch_companion, load_delegations,
     native_agent_type,
 )
 from forge_cli.stages import _require_successful_launch, task_digest  # noqa: E402
 from factory_lib import sha256_of  # noqa: E402
+
+
+def test_companion_log_is_created_with_private_permissions(tmp_path: Path):
+    path = tmp_path / "worker.stdout.log"
+    stream = _open_private_log(path)
+    stream.close()
+
+    assert stat.S_IMODE(path.stat().st_mode) == 0o600
 
 
 @pytest.fixture()

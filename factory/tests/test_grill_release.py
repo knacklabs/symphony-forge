@@ -144,6 +144,27 @@ def test_native_grill_print_only_emits_one_complete_unrecorded_preview(
     assert load_delegations(repo) == []
 
 
+def test_print_only_reprints_an_undispatched_native_preparation_without_a_new_row(
+        repo, tmp_path, monkeypatch, capsys):
+    from forge_cli.delegate import load_delegations
+
+    _draft, prepared, _ = _seed_native_plan_grill(
+        repo, tmp_path, monkeypatch, capsys,
+    )
+    rows = load_delegations(repo)
+    _draft, preview, _ = _seed_native_plan_grill(
+        repo, tmp_path, monkeypatch, capsys, print_only=True,
+    )
+
+    assert preview["preparation_id"] == prepared["preparation_id"]
+    assert preview["task_name"] == prepared["task_name"]
+    assert load_delegations(repo) == rows
+    _draft, retry, _ = _seed_native_plan_grill(
+        repo, tmp_path, monkeypatch, capsys,
+    )
+    assert retry["preparation_id"] != prepared["preparation_id"]
+
+
 def test_native_grill_prepares_one_self_contained_griller_descriptor(
         repo, tmp_path, monkeypatch, capsys):
     draft, descriptor, emitted = _seed_native_plan_grill(

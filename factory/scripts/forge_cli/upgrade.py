@@ -2930,7 +2930,9 @@ def _upgrade_resume_plan_is_valid(
                     or _upgrade_path_identity(harness / source) != identity):
                 return False
         elif kind in {"preserve", "finalize"}:
-            if not isinstance(row.get("before"), dict):
+            if (not isinstance(row.get("before"), dict)
+                    or (kind == "finalize" and "after" in row
+                        and not isinstance(row.get("after"), dict))):
                 return False
         elif kind not in {"remove", "state"}:
             return False
@@ -3868,12 +3870,9 @@ def _upgrade_resume_operation_matches(
     if kind == "remove":
         return not destination.exists() and not destination.is_symlink()
     if kind == "finalize":
-        # Finalization has several target-derived inputs (signoff, onboarding,
-        # and ignore rules).  The plan authenticates the exact path set and
-        # harness commit; reject links or special files while allowing the
-        # idempotent finalizer to finish those bytes on retry.
-        return (not destination.exists() and not destination.is_symlink()) or (
-            destination.is_file() and not destination.is_symlink()
+        actual = _upgrade_path_identity(destination)
+        return actual == row.get("before") or (
+            isinstance(row.get("after"), dict) and actual == row["after"]
         )
     if kind == "preserve":
         if not destination.exists() and not destination.is_symlink():
@@ -3896,52 +3895,103 @@ def _upgrade_resume_operation_matches(
 
 
 def _authenticated_upgrade_resume_paths(
-        target: Path, harness: Path, saved: dict,
+        target: Path, harness: Path, saved: dict, changed: set[str],
 ) -> set[str]:
-    """Return dirty paths authorized by an incomplete overall-upgrade plan."""
+    """Return only dirty paths matching an incomplete overall-upgrade plan."""
     plan = saved.get("upgrade_resume")
     if not isinstance(plan, dict) or plan.get("completed_at"):
         return set()
     if not _upgrade_resume_plan_is_valid(target, harness, plan):
         return set()
-    allowed = {
-        ".factory/migrations/" + f"{LEAN_MIGRATION_VERSION}.json",
+    return {
+        relative for relative in changed
+        if any(_upgrade_resume_operation_matches(
+            harness, target, row, relative,
+        ) for row in plan["operations"])
     }
-    for row in plan["operations"]:
-        path = str(row["path"])
-        if row.get("kind") in {"file", "tree", "preserve", "finalize", "remove"}:
-            allowed.add(path)
-    return allowed
 
 
 def _complete_upgrade_resume(target: Path) -> None:
     """Seal the overall upgrade receipt only after every finalizer succeeds."""
-    from factory_lib import dump_json, now_iso
+    from factory_lib import dump_json, now_iso, validate_payload
 
-    manifest = target / ".factory" / "migrations" / f"{LEAN_MIGRATION_VERSION}.json"
-    if not manifest.is_file() or manifest.is_symlink():
-        return
-    saved = load_json(manifest, default={})
-    if not isinstance(saved, dict):
-        fail("overall upgrade resume manifest is malformed")
-    plan = saved.get("upgrade_resume")
-    if not isinstance(plan, dict) or plan.get("completed_at"):
-        return
-    completed_plan = {**plan, "completed_at": now_iso()}
-    completed = {**saved, "upgrade_resume": completed_plan}
-    from factory_lib import validate_payload
-    validate_payload(target, "lean-workflow-migration", completed)
-    with tempfile.TemporaryDirectory(prefix="forge-upgrade-complete-") as temporary:
-        built = Path(temporary) / manifest.name
-        dump_json(built, completed)
-        body = built.read_bytes()
-        _publish_converted_stage(
-            target, manifest, built,
-            original_sha256=hashlib.sha256(manifest.read_bytes()).hexdigest(),
-            output_sha256=hashlib.sha256(body).hexdigest(),
-        )
-    if load_json(manifest, default={}) != completed:
-        fail("overall upgrade completion readback differs")
+    migrations = target / ".factory" / "migrations"
+    manifests = [
+        migrations / f"{LEAN_MIGRATION_VERSION}.json",
+        migrations / LEAN_MIGRATION_SUPPLEMENT,
+    ]
+    for manifest in manifests:
+        if not manifest.is_file() or manifest.is_symlink():
+            continue
+        saved = load_json(manifest, default={})
+        if not isinstance(saved, dict):
+            fail("overall upgrade resume manifest is malformed")
+        plan = saved.get("upgrade_resume")
+        if not isinstance(plan, dict) or plan.get("completed_at"):
+            continue
+        completed = {**saved, "upgrade_resume": {
+            **plan, "completed_at": now_iso(),
+        }}
+        validate_payload(target, "lean-workflow-migration", completed)
+        with tempfile.TemporaryDirectory(prefix="forge-upgrade-complete-") as temporary:
+            built = Path(temporary) / manifest.name
+            dump_json(built, completed)
+            body = built.read_bytes()
+            _publish_converted_stage(
+                target, manifest, built,
+                original_sha256=hashlib.sha256(manifest.read_bytes()).hexdigest(),
+                output_sha256=hashlib.sha256(body).hexdigest(),
+            )
+        if load_json(manifest, default={}) != completed:
+            fail("overall upgrade completion readback differs")
+
+
+def _record_upgrade_finalize_outputs(target: Path) -> None:
+    """Bind exact finalizer output so resume rejects unrelated user edits."""
+    from factory_lib import dump_json, validate_payload
+
+    migrations = target / ".factory" / "migrations"
+    manifests = [
+        migrations / LEAN_MIGRATION_SUPPLEMENT,
+        migrations / f"{LEAN_MIGRATION_VERSION}.json",
+    ]
+    for manifest in manifests:
+        if not manifest.is_file() or manifest.is_symlink():
+            continue
+        saved = load_json(manifest, default={})
+        if not isinstance(saved, dict):
+            fail("overall upgrade resume manifest is malformed")
+        plan = saved.get("upgrade_resume")
+        if not isinstance(plan, dict) or plan.get("completed_at"):
+            continue
+        operations = plan.get("operations")
+        if not isinstance(operations, list):
+            fail("overall upgrade resume operations are malformed")
+        bound_operations = []
+        for row in operations:
+            if not isinstance(row, dict) or not isinstance(row.get("path"), str):
+                fail("overall upgrade resume operation is malformed")
+            bound_operations.append(
+                {**row, "after": _upgrade_path_identity(target / row["path"])}
+                if row.get("kind") == "finalize" else row
+            )
+        updated_plan = {**plan, "operations": bound_operations}
+        updated_plan["plan_sha256"] = hashlib.sha256(json.dumps(
+            bound_operations, sort_keys=True, separators=(",", ":"),
+        ).encode()).hexdigest()
+        updated = {**saved, "upgrade_resume": updated_plan}
+        validate_payload(target, "lean-workflow-migration", updated)
+        with tempfile.TemporaryDirectory(prefix="forge-upgrade-finalize-") as temporary:
+            built = Path(temporary) / manifest.name
+            dump_json(built, updated)
+            body = built.read_bytes()
+            _publish_converted_stage(
+                target, manifest, built,
+                original_sha256=hashlib.sha256(manifest.read_bytes()).hexdigest(),
+                output_sha256=hashlib.sha256(body).hexdigest(),
+            )
+        if load_json(manifest, default={}) != updated:
+            fail("overall upgrade finalization readback differs")
 
 
 def _incomplete_lean_resume_paths(
@@ -3978,20 +4028,13 @@ def _incomplete_lean_resume_paths(
         return set()
     if not isinstance(saved, dict):
         return set()
-    overall_allowed = _authenticated_upgrade_resume_paths(target, harness, saved)
+    overall_allowed = _authenticated_upgrade_resume_paths(
+        target, harness, saved, changed,
+    )
     overall_incomplete = isinstance(saved.get("upgrade_resume"), dict) and not \
         saved["upgrade_resume"].get("completed_at")
-    if overall_incomplete and not overall_allowed:
-        return set()
     if saved.get("completed_at") and overall_incomplete:
-        if changed and all(
-                any(_upgrade_resume_operation_matches(
-                    harness, target, row, relative,
-                ) for row in saved["upgrade_resume"]["operations"])
-                for relative in changed
-        ):
-            return overall_allowed
-        return set()
+        return overall_allowed if changed else set()
     profile_replacements = _profile_replacement_hashes(saved)
     if profile_replacements is None:
         return set()
@@ -4529,6 +4572,9 @@ def _cmd_upgrade_locked(
     print("Untouched (project-owned): " + ", ".join(PROJECT_OWNED) + drift)
     if retired_legacy:
         print("Retired legacy machinery: .agents/")
+    from .scaffold import remediate_windows_hook_entry
+    remediate_windows_hook_entry(target)
+    _record_upgrade_finalize_outputs(target)
     stale_references = _stale_agents_references(
         target, harness, sorted(preserved), carried_from_legacy)
     # The scan reads the index, which equals the working tree only because the
@@ -4547,6 +4593,4 @@ def _cmd_upgrade_locked(
               + ", ".join(path.name for path in preserved_profiles))
     print("Next: review with `git diff`, run `python3 factory/scripts/check_dual_runtime.py` "
           "and the gate tests, then commit.")
-    from .scaffold import remediate_windows_hook_entry
-    remediate_windows_hook_entry(target)
     _complete_upgrade_resume(target)

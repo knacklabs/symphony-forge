@@ -16882,6 +16882,30 @@ def test_task_approval_hydration_refuses_windows_reparse_components(
         tasks._contained_regular_bytes(root, source, "story approval")
 
 
+def test_task_approval_hydration_opens_source_in_binary_mode(
+        tmp_path, monkeypatch):
+    from forge_cli import tasks
+
+    root = tmp_path / "repo"
+    authority = root / "authority"
+    authority.mkdir(parents=True)
+    source = authority / "approval.json"
+    source.write_bytes(b"{\"plan\": \"exact\\r\\nbytes\"}\n")
+    binary_flag = 0x8000
+    monkeypatch.setattr(tasks.os, "O_BINARY", binary_flag, raising=False)
+    real_open = tasks.os.open
+    seen_flags = []
+
+    def open_binary(path, flags):
+        seen_flags.append(flags)
+        return real_open(path, flags & ~binary_flag)
+
+    monkeypatch.setattr(tasks.os, "open", open_binary)
+
+    assert tasks._contained_regular_bytes(root, source, "story approval") == source.read_bytes()
+    assert seen_flags[0] & binary_flag
+
+
 def test_review_generation_refuses_windows_reparse_ancestor(tmp_path, monkeypatch):
     factory_lib = load_factory_lib(HARNESS)
     root = tmp_path / "repo"
@@ -22589,29 +22613,44 @@ def test_canonical_junit_satisfies_exact_required_nodes_without_selector_rerun(
         "    pass\n",
         encoding="utf-8",
     )
+    pytest_runner = (
+        "uv run --python 3.11 --with pytest --with pytest-xdist "
+        "--with psutil python -m pytest"
+    )
     task = {
         "verify_commands": [
             "UV_CACHE_DIR=/tmp/forge-lean-uv-cache "
             "UV_TOOL_DIR=/tmp/forge-lean-uv-tools "
-            "python3 factory/scripts/verify.py",
+            "uv run --python 3.11 --with pytest --with pytest-xdist "
+            "--with psutil python factory/scripts/verify.py",
         ],
         "required_tests": [{
             "id": "test_slice", "path": "src/test_core.py",
-            "command": "python3 -m pytest {path}::{id} --junitxml={report}",
+            "command": f"{pytest_runner} {{path}}::{{id}} "
+                       "--junitxml={report}",
         }],
     }
     monkeypatch.setenv("UV_CACHE_DIR", "/tmp/forge-lean-uv-cache")
     monkeypatch.setenv("UV_TOOL_DIR", "/tmp/forge-lean-uv-tools")
-    monkeypatch.setenv("FACTORY_TEST_CMD", "python3 -m pytest src")
+    monkeypatch.setenv("FACTORY_TEST_CMD", f"{pytest_runner} src")
+    assert stages._canonical_verifier_launcher_for_task(repo, task) == [
+        "uv", "run", "--python", "3.11", "--with", "pytest", "--with",
+        "pytest-xdist", "--with", "psutil",
+    ]
     monkeypatch.setattr(stages, "proof_identity", lambda *_args, **_kwargs: {
         "identity": "a" * 64, "inputs": {}, "reusable": True,
     })
     monkeypatch.setattr(stages, "_proof_receipt", lambda *_args: {})
     monkeypatch.setattr(stages, "_store_proof_receipt", lambda *_args: None)
-    # The real product tree, not a one-file stub: canonical reuse binds every
-    # module the canonical run can import to the product tree, and the
-    # dependency probe runs for real, so a stubbed tree made every genuine
-    # import in this fixture look unbound and the canonical proof unreusable.
+    monkeypatch.setattr(stages, "_proof_tool_identity", lambda *_args, **_kwargs: {
+        "reusable": True, "environment": {"sha256": "same"},
+        "interpreter": "python3.11", "python_version": "3.11",
+        "dependencies": {"pytest": "pinned"}, "uv_bootstrap": {},
+        "uv_overlay_sha256": "a" * 64, "pytest_config": [],
+        "pytest_semantics": [],
+    })
+    # Keep the real product tree; tool identity is covered separately and this
+    # regression isolates exact JUnit consumption from local package caches.
     monkeypatch.setattr(stages, "protected_authority_snapshot", lambda _base: {})
 
     def canonical(_base, _stage_id, _task, report):
@@ -22750,7 +22789,7 @@ def test_canonical_junit_binds_to_the_actual_verifier_producer(
     ) == ""
 
 
-def test_wrapped_canonical_verifier_junit_falls_back_to_required_selector(
+def test_unsupported_wrapped_canonical_verifier_falls_back_to_required_selector(
         repo, monkeypatch, capsys):
     """A uv-wrapped verifier must not donate a JUnit report to close."""
     import forge_cli.stages as stages
@@ -22768,7 +22807,7 @@ def test_wrapped_canonical_verifier_junit_falls_back_to_required_selector(
         "verify_commands": [
             "UV_CACHE_DIR=/tmp/forge-lean-uv-cache "
             "UV_TOOL_DIR=/tmp/forge-lean-uv-tools "
-            "uv run --python 3.11 --with pytest --with pytest-xdist "
+            "uv run --offline --python 3.11 --with pytest --with pytest-xdist "
             "python factory/scripts/verify.py",
         ],
         "required_tests": [{

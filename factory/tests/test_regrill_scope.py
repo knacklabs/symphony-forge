@@ -409,6 +409,46 @@ def test_native_preparation_rebinds_after_brief_changes(
     for forbidden in ("pid", "process_token", "session_id", "output_path"):
         assert forbidden not in latest
 
+
+def test_host_native_preparation_anchors_measurement_amendment(
+        repo: Path, tmp_path, monkeypatch, capsys):
+    from test_gates import DECOMP, STAGE_TASK, start_stage  # noqa: E402
+    from forge_cli.delegate import brief_path, launch_companion, load_delegations  # noqa: E402
+
+    monkeypatch.setenv("FORGE_COORDINATOR", "codex")
+    from forge_cli import doctor
+    monkeypatch.setattr(
+        doctor, "codex_hook_readiness", lambda _base: (True, "fixture-ready"),
+    )
+    start_stage(repo, tmp_path, STAGE_TASK, launch=False)
+    lib = load_factory_lib(repo)
+    stage = lib.task_stage_record(repo, "T1")
+    launch_companion(
+        repo, task_id="T1", path=brief_path(repo, "T1"),
+        task_sha256_value=lib.task_digest(STAGE_TASK),
+        model="ignored", effort="ignored", write=True,
+        write_scope=STAGE_TASK["write_scope"], story="ENG-1",
+        stage_started_at=stage["started_at"], task_metadata=STAGE_TASK,
+        text="# current native brief\n",
+    )
+    prepared = next(
+        row for row in reversed(load_delegations(repo))
+        if row.get("task") == "T1"
+    )
+    widened = {**STAGE_TASK, "write_scope": ["src/", "billing/"]}
+
+    code, out = run(
+        repo, "record_decomposition_from_json.py",
+        stdin=json.dumps({**DECOMP, "tasks": [widened]}),
+        env={"FORGE_COORDINATOR": "codex"},
+    )
+
+    assert code == 0, out
+    assert lib.task_stage_record(repo, "T1")["measurement_continuity"][0][
+        "launch_id"
+    ] == prepared["launch_id"]
+
+
 def test_measurement_amendment_without_a_bound_launch_writes_nothing(
         repo: Path, tmp_path):
     from test_gates import DECOMP, STAGE_TASK, start_stage  # noqa: E402

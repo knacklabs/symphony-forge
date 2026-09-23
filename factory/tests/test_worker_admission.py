@@ -263,6 +263,31 @@ def test_codex_native_host_needs_active_stage_but_no_process_identity(repo):
     assert "deny" in outside.lower() and "scope" in outside.lower(), outside
 
 
+@pytest.mark.parametrize(("controls", "write_scope"), [
+    (("*** Delete File: outside-link.py",), ["src/old.py"]),
+    (("*** Update File: outside-link.py", "*** Move to: src/moved.py",
+      "@@", "-old", "+new"), ["src/old.py", "src/moved.py"]),
+])
+def test_native_patch_delete_or_move_scopes_symlink_by_its_lexical_path(
+        repo, controls, write_scope):
+    exact_task = {**TASK, "write_scope": write_scope}
+    brief, digest = _seed_contract(repo, exact_task)
+    target = repo / "src" / "old.py"
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text("old\n", encoding="utf-8")
+    link = repo / "outside-link.py"
+    link.symlink_to(Path("src") / "old.py")
+    _record_native_preparation(repo, brief, digest, write_scope)
+
+    output = _hook(
+        repo, _patch(*controls),
+        {"FORGE_COORDINATOR": "codex"},
+    )
+
+    assert "deny" in output and "outside the active task scope" in output
+    assert link.is_symlink() and link.readlink() == Path("src") / "old.py"
+
+
 def test_inherited_degraded_window_uses_native_stage_admission(repo):
     """A stale Claude outage window cannot become a native five-file grant."""
     brief, digest = _seed_contract(repo)

@@ -310,6 +310,7 @@ def _proven_tasks(base: Path, key: str, tasks: list[dict],
 def _plan_evidence(
     base: Path, story_key: str, plan: dict | None,
     derived_rows: list[dict] | None = None,
+    shipped: bool = False,
 ) -> tuple[dict | None, dict, list]:
     """Stage progress, gate evidence, and the story's real task list.
 
@@ -343,14 +344,17 @@ def _plan_evidence(
         proof = task_proof_records(
             base, story, task_id, task_status=task_statuses.get(task_id),
         ) or {}
-        from factory_lib import task_proof_problems
-        try:
-            current = not task_proof_problems(
-                base, story, task,
-                preseal=task_statuses.get(task_id) != "done",
-            )
-        except (Exception, SystemExit):
-            current = False
+        if shipped:
+            current = True
+        else:
+            from factory_lib import task_proof_problems
+            try:
+                current = not task_proof_problems(
+                    base, story, task,
+                    preseal=task_statuses.get(task_id) != "done",
+                )
+            except (Exception, SystemExit):
+                current = False
         bundles.append({
             "task": task,
             "verify": proof.get("verify") or {},
@@ -560,6 +564,7 @@ def aggregate_state(base: Path) -> dict:
         progress, evidence, tasks = _plan_evidence(
             base, item.get("key"), plan,
             live_task_rows if item.get("key") == active else None,
+            shipped=item.get("status") == "done",
         )
         story["ready_to_plan"] = item.get("key") in frontier
         story["plan"] = plan
@@ -752,7 +757,8 @@ def approval_readiness(base: Path, detail: dict) -> list[dict]:
         "ok": bool(plan), "label": "plan saved",
         "fix": "write the plan, then ask to save it against this story"})
     checks.append({
-        "ok": bool(grill) and grill.get("verdict") == "pass",
+        "ok": ((bool(grill) and grill.get("verdict") == "pass")
+               or _approved_plan_matches_detail(base, plan, detail)),
         "label": "plan grill passed",
         "fix": "grill the plan and record the result — ask for it; save refuses without a passing grill"})
     checks.append({
@@ -771,6 +777,20 @@ def approval_readiness(base: Path, detail: dict) -> list[dict]:
         "label": "no open contradiction" + (f" — {', '.join(contradictions)}" if contradictions else ""),
         "fix": "answer the paused worker in your session"})
     return checks
+
+
+def _approved_plan_matches_detail(base: Path, plan: dict | None, detail: dict) -> bool:
+    if not isinstance(plan, dict) or plan.get("status") != "approved":
+        return False
+    relative = plan.get("path")
+    approval = (detail.get("evidence") or {}).get("plan_approval")
+    if not isinstance(relative, str) or not isinstance(approval, dict):
+        return False
+    try:
+        digest = plan_digest_without_assumptions(base / relative)
+    except (OSError, ValueError):
+        return False
+    return approval.get("approved_plan_sha256") == digest
 
 
 def story_detail(base: Path, key: str) -> dict | None:
@@ -798,6 +818,9 @@ def story_detail(base: Path, key: str) -> dict | None:
         name: load_json(evidence_path(base, key, f"{name}.json"), default=None)
         for name in ("decomposition", "verify", "tests", "outcome")
     }
+    evidence["plan_approval"] = load_json(
+        evidence_path(base, key, "plan-approval.json"), default=None,
+    )
     # Stages are the one evidence file that is not per-story on disk; read them
     # issue-guarded so a shipped or non-active story shows its own task status.
     evidence["stages"] = _stages_for(base, key) or None

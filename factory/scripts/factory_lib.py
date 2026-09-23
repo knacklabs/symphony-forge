@@ -3627,9 +3627,11 @@ def validated_measurement_launch(
     origin_measurement: dict,
     launch_id: str = "",
 ) -> dict | None:
-    """Return the real write launch that anchors a measurement receipt."""
-    from forge_cli.delegate import current_delegation
-    from forge_cli.stages import _successful_launch_entry_valid
+    """Return the launch or native preparation anchoring a measurement receipt."""
+    from forge_cli.delegate import current_delegation, load_delegations
+    from forge_cli.stages import (
+        _host_native_preparation_scope, _successful_launch_entry_valid,
+    )
 
     task_id = str(task.get("id") or "")
     entry = current_delegation(
@@ -3639,6 +3641,32 @@ def validated_measurement_launch(
         task_sha256=origin_task_sha256,
         ignore_lock=True,
     )
+    if entry is None:
+        try:
+            candidates = [
+                row for row in load_delegations(root)
+                if row.get("transport") == "host-native"
+                and row.get("task") == task_id
+                and row.get("stage_started_at") == stage.get("started_at")
+                and row.get("write") is True
+            ]
+        except (OSError, SystemExit, ValueError):
+            return None
+        if not candidates:
+            return None
+        entry = candidates[-1]
+        scope = _host_native_preparation_scope(root, task_id, stage, task)
+        identity = entry.get("launch_id")
+        if (entry.get("story") != _active_story_key(root)
+                or entry.get("task_sha256") != origin_task_sha256
+                or entry.get("launch_status") != "prepared"
+                or scope != origin_measurement.get("write_scope")
+                or entry.get("write_scope") != scope
+                or not isinstance(identity, str)
+                or re.fullmatch(r"[A-Za-z0-9._-]+", identity) is None
+                or (launch_id and identity != launch_id)):
+            return None
+        return entry
     if not entry:
         return None
     if (

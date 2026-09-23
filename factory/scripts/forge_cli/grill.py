@@ -269,8 +269,6 @@ def _refuse_a_second_cold_read(base: Path, ledger_id: str, gate: str,
         cold = [row for row in _latest_launch_rows(
             base, ledger_id, since, story=story)
                 if (row.get("launch_status") == "succeeded"
-                    or (row.get("launch_status") == "prepared"
-                        and row.get("transport") == "host-native")
                     or (row.get("launch_status") in {"starting", "running"}
                         and row.get("launch_id") not in dead))]
         if not cold:
@@ -316,7 +314,8 @@ def cmd_grill_run(args: argparse.Namespace) -> None:
             base, ledger_id, kind="grill-cold-read", namespace="grill"):
         # Hold the exact gate/task key across admission and launch so a second
         # process cannot pass the repeat-read check before the first row lands.
-        _refuse_a_second_cold_read(base, ledger_id, gate, task_id)
+        if not args.print_only:
+            _refuse_a_second_cold_read(base, ledger_id, gate, task_id)
 
         label, artifact = _artifact_text(
             base, gate, task_id, (getattr(args, "file", "") or "").strip())
@@ -328,7 +327,18 @@ def cmd_grill_run(args: argparse.Namespace) -> None:
         context_metadata = None
         context_snapshot = None
         context_identity = None
-        native_task_name = f"{ledger_id}-cold-{uuid.uuid4().hex[:12]}"
+        story = load_json(run_state_path(base), default={}).get("issue_key", "")
+        prepared_for_preview = None
+        if args.print_only:
+            since = _last_pass_at(base, gate, task_id)
+            prepared_for_preview = next((row for row in reversed(
+                _latest_launch_rows(base, ledger_id, since, story=story))
+                if row.get("transport") == "host-native"
+                and row.get("launch_status") == "prepared"), None)
+        native_task_name = str(
+            (prepared_for_preview or {}).get("task_name")
+            or f"{ledger_id}-cold-{uuid.uuid4().hex[:12]}"
+        )
         if context_file := (getattr(args, "context_file", "") or "").strip():
             (context_text, context_metadata, context_snapshot,
              context_identity) = secure_context_snapshot(
@@ -345,9 +355,7 @@ def cmd_grill_run(args: argparse.Namespace) -> None:
                 model=model,
                 effort=effort,
                 write=False,      # cold reads never write or authorize writes
-                story=load_json(
-                    run_state_path(base), default={},
-                ).get("issue_key", ""),
+                story=story,
                 print_only=bool(args.print_only),
                 context_text=context_text,
                 context_metadata=context_metadata,
@@ -375,6 +383,25 @@ def cmd_grill_run(args: argparse.Namespace) -> None:
             brief_sha256 = __import__("hashlib").sha256(
                 path.read_bytes()).hexdigest()
             cold_input_sha256 = _artifact_digest(artifact)
+            if prepared_for_preview:
+                if (prepared_for_preview.get("brief_sha256") != brief_sha256
+                        or prepared_for_preview.get("task_sha256") != cold_input_sha256):
+                    fail("prepared cold-read input changed; the recorded preparation cannot be reused")
+                preparation_id = str(prepared_for_preview.get("launch_id") or "")
+                if not preparation_id:
+                    fail("prepared host-native grill has no preparation id")
+                saved_context = prepared_for_preview.get("context_file")
+                if context_file:
+                    source = Path(context_file).expanduser()
+                    if not source.is_absolute():
+                        source = base / source
+                    expected_context = saved_context if isinstance(saved_context, dict) else {}
+                    if (expected_context.get("source_path") != str(source.absolute())
+                            or expected_context.get("bytes") != context_metadata.get("bytes")
+                            or expected_context.get("sha256") != context_identity[3]):
+                        fail("prepared cold-read context changed; the recorded preparation cannot be reused")
+                if saved_context:
+                    result["context_file"] = saved_context
         else:
             rows = [row for row in _launch_rows(base, ledger_id, "", story=story)
                     if row.get("transport") == "host-native"

@@ -1913,6 +1913,15 @@ def _stable_output_sha256(path: Path, stream) -> str:
     return digest.hexdigest()
 
 
+def _open_private_log(path: Path):
+    flags = (os.O_RDWR | os.O_CREAT | os.O_EXCL
+             | getattr(os, "O_NOFOLLOW", 0) | getattr(os, "O_BINARY", 0))
+    descriptor = os.open(path, flags, 0o600)
+    return os.fdopen(
+        descriptor, "w+t", encoding="utf-8", errors="replace",
+    )
+
+
 def launch_companion(
         base: Path, *, task_id: str, text: str, path: Path,
         task_sha256_value: str, model: str, effort: str, write: bool,
@@ -2181,12 +2190,8 @@ def launch_companion(
     stdout_log = None
     stderr_log = None
     try:
-        stdout_log = open(
-            output_path, "w+t", encoding="utf-8", errors="replace",
-        )
-        stderr_log = open(
-            stderr_path, "w+t", encoding="utf-8", errors="replace",
-        )
+        stdout_log = _open_private_log(output_path)
+        stderr_log = _open_private_log(stderr_path)
     except OSError:
         if stdout_log is not None:
             stdout_log.close()

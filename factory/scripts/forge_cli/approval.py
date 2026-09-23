@@ -369,8 +369,11 @@ def _codex_approved(payload: dict[str, Any]) -> str:
     question = questions[0]
     if not isinstance(question, dict):
         return ""
+    options = question.get("options")
+    if not isinstance(options, list):
+        return ""
     labels = [entry.get("label") if isinstance(entry, dict) else entry
-              for entry in question.get("options", [])]
+              for entry in options]
     if labels != ["Approve plan", "Request changes", "Stop"]:
         return ""
     prompt = _text(question.get("question"))

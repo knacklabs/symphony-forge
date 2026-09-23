@@ -46,9 +46,12 @@ prototype ▶ spec grills ▶ CONFIRMED SPECS ▶ derived roadmap ▶ sign-off g
 - **Grills** are adversarial gaps/contradictions passes: each spec
   confirmation, sign-off, and every plan approval (`/grill-me`) require the
   relevant fresh pass.
-- One **task gate** is always armed: product edits require an approved plan and
-  current task scope unless a bounded `forge quickfix start` window is open.
-  `forge delegate` validates and prepares the canonical implementation brief.
+- One **task gate** is always armed: product edits follow an approved plan and
+  current task scope. In an active stage, `forge delegate` prepares the canonical
+  implementation brief. Lite allows only its bounded authorized writes;
+  degraded mode allows direct writes only during a companion outage. Quickfix
+  records files touched by an otherwise authorized write and does not grant
+  write authority.
   Native Codex then uses a role-based host `spawn_agent`; Claude launches its
   protected plugin companion. Raw/direct/nested `codex exec` and direct plugin
   shell launch are off-contract and hook-denied in both runtimes.

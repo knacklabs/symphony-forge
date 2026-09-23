@@ -973,6 +973,11 @@ def test_public_upgrade_resumes_after_destination_removal_before_copy(
 def test_public_upgrade_resumes_after_post_migration_finalization_failure(
         repo: Path, monkeypatch: pytest.MonkeyPatch):
     """A completed Lean migration keeps an authenticated overall retry receipt."""
+    upgrade_rel = "factory/scripts/forge_cli/upgrade.py"
+    target_upgrade = repo / upgrade_rel
+    target_upgrade.write_bytes(b"older vendored upgrade implementation\n")
+    git(repo, "add", upgrade_rel)
+    git(repo, "commit", "-q", "-m", "older vendored upgrade implementation")
     real_scan = upgrade._stale_agents_references
 
     def interrupt(*_args, **_kwargs):
@@ -987,11 +992,46 @@ def test_public_upgrade_resumes_after_post_migration_finalization_failure(
     partial = json.loads(manifest.read_text(encoding="utf-8"))
     assert partial.get("completed_at")
     assert not partial["upgrade_resume"].get("completed_at")
+    assert target_upgrade.read_bytes() == (HARNESS / upgrade_rel).read_bytes()
+    assert upgrade_rel in git(repo, "status", "--short")
+
+    readme = repo / "README.md"
+    finalizer_readme = readme.read_bytes()
+    readme.write_bytes(finalizer_readme + b"\nuser edit\n")
+    with pytest.raises(SystemExit):
+        upgrade.cmd_upgrade(argparse.Namespace(target=str(repo), force=False))
+    readme.write_bytes(finalizer_readme)
 
     monkeypatch.setattr(upgrade, "_stale_agents_references", real_scan)
     upgrade.cmd_upgrade(argparse.Namespace(target=str(repo), force=False))
     completed = json.loads(manifest.read_text(encoding="utf-8"))
     assert completed["upgrade_resume"]["completed_at"]
+
+
+def test_authenticated_resume_admits_verified_paths_inside_vendored_tree(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    harness = tmp_path / "harness"
+    target = tmp_path / "target"
+    source = harness / "factory/scripts/forge_cli/upgrade.py"
+    destination = target / "factory/scripts/forge_cli/upgrade.py"
+    source.parent.mkdir(parents=True)
+    destination.parent.mkdir(parents=True)
+    source.write_bytes(b"verified harness bytes\n")
+    destination.write_bytes(source.read_bytes())
+    monkeypatch.setattr(upgrade, "_upgrade_resume_plan_is_valid", lambda *_args: True)
+    saved = {"upgrade_resume": {"operations": [
+        {"kind": "tree", "path": "factory", "source": "factory"},
+    ]}}
+
+    allowed = upgrade._authenticated_upgrade_resume_paths(
+        target, harness, saved, {"factory/scripts/forge_cli/upgrade.py"},
+    )
+
+    assert allowed == {"factory/scripts/forge_cli/upgrade.py"}
+    destination.write_bytes(b"unrelated target bytes\n")
+    assert upgrade._authenticated_upgrade_resume_paths(
+        target, harness, saved, {"factory/scripts/forge_cli/upgrade.py"},
+    ) == set()
 
 
 @pytest.mark.parametrize("interrupt_phase", ("before-profile", "after-profile"))
@@ -1704,6 +1744,7 @@ def test_public_upgrade_resumes_authenticated_empty_completion_supplement(
     upgrade.cmd_upgrade(argparse.Namespace(target=str(repo), force=False))
     completed = json.loads(supplement.read_text(encoding="utf-8"))
     assert "completed_at" in completed
+    assert completed["upgrade_resume"]["completed_at"]
     assert "local_review_stamp" not in json.loads(stage.read_text(encoding="utf-8"))
     assert "Resumed and completed Lean migration" in capsys.readouterr().out
     assert upgrade.preflight_lean_migration(repo) is None

@@ -2067,30 +2067,62 @@ def _run_required_tests(
 
 def _canonical_verify_command(base: Path, command: str) -> bool:
     """Whether a command is the repository's direct canonical verifier."""
+    return _canonical_verifier_identity(base, command) is not None
+
+
+def _canonical_verifier_identity(
+        base: Path, command: str,
+) -> tuple[list[tuple[str, str]], list[str]] | None:
+    """Return its allowed leading assignments and exact uv launcher, if any."""
     try:
         tokens = shlex.split(command)
     except ValueError:
-        return False
+        return None
     prefix = _canonical_verifier_prefix(tokens)
     if prefix is None:
-        return False
-    _assignments, tokens = prefix
-    python_index = 0
-    if len(tokens) > 2 and Path(tokens[0]).name.lower() in {"uv", "uv.exe"} \
-            and tokens[1] == "run":
-        python_index = next((
-            index for index, token in enumerate(tokens[2:], 2)
-            if re.fullmatch(r"python(?:3(?:\.\d+)?)?(?:\.exe)?",
-                            Path(token).name.lower())
-        ), -1)
-    if python_index < 0 or len(tokens) != python_index + 2:
-        return False
-    if not re.fullmatch(r"python(?:3(?:\.\d+)?)?(?:\.exe)?",
-                        Path(tokens[python_index]).name.lower()):
-        return False
-    return os.path.abspath(base / tokens[-1]) == os.path.abspath(
-        base / "factory/scripts/verify.py"
-    )
+        return None
+    assignments, remaining = prefix
+    python = re.compile(r"python(?:3(?:\.\d+)?)?(?:\.exe)?", re.IGNORECASE)
+    launcher: list[str] = []
+    if (len(remaining) >= 2
+            and Path(remaining[0]).name.lower() in {"uv", "uv.exe"}
+            and remaining[1] == "run"):
+        index = 2
+        with_count = 0
+        python_option = False
+        python_index = -1
+        while index < len(remaining):
+            token = remaining[index]
+            if python.fullmatch(Path(token).name):
+                python_index = index
+                break
+            if (token == "--python" and not python_option
+                    and index + 1 < len(remaining)):
+                if not re.fullmatch(r"\d+(?:\.\d+){0,2}", remaining[index + 1]):
+                    return None
+                python_option = True
+                index += 2
+                continue
+            if token == "--with" and index + 1 < len(remaining):
+                package = remaining[index + 1]
+                if (not package or package.startswith("-")
+                        or any(character.isspace() for character in package)
+                        or any(character in package for character in ";&|<>`\n")):
+                    return None
+                with_count += 1
+                index += 2
+                continue
+            return None
+        if python_index < 0 or with_count == 0:
+            return None
+        launcher = remaining[:python_index]
+        remaining = remaining[python_index:]
+    if (len(remaining) != 2
+            or not python.fullmatch(Path(remaining[0]).name)
+            or os.path.abspath(base / remaining[1]) != os.path.abspath(
+                base / "factory/scripts/verify.py")):
+        return None
+    return assignments, launcher
 
 
 def _canonical_verifier_prefix(
@@ -2185,26 +2217,10 @@ def _canonical_test_command_for_task(base: Path, task: dict) -> str:
     ]
     if len(candidates) != 1:
         return ""
-    try:
-        tokens = shlex.split(candidates[0])
-    except ValueError:
+    identity = _canonical_verifier_identity(base, candidates[0])
+    if identity is None:
         return ""
-    prefix = _canonical_verifier_prefix(tokens)
-    if prefix is None:
-        return ""
-    assignments, remaining = prefix
-    # A wrapped verifier can choose a different uv environment or command
-    # than the one visible to close.  Its JUnit is therefore diagnostic only;
-    # dedicated selectors must run unless the producer is the direct
-    # repository verifier with only harmless leading assignments.
-    if (len(remaining) != 2
-            or not re.fullmatch(
-                r"python(?:3(?:\.\d+)?)?(?:\.exe)?",
-                Path(remaining[0]).name.lower(),
-            )
-            or os.path.abspath(base / remaining[1])
-            != os.path.abspath(base / "factory/scripts/verify.py")):
-        return ""
+    assignments, _launcher = identity
     command = _factory_test_command(base)
     if not command:
         return ""
@@ -2214,11 +2230,21 @@ def _canonical_test_command_for_task(base: Path, task: dict) -> str:
         return ""
     if not producer:
         return ""
-    # The prefix is inherited by verify.py's FACTORY_TEST_CMD child. Keep it
-    # on the canonical producer command so its effective environment and uv
-    # tool identity are compared with the required selectors.
+    # The verifier launcher is bound separately in proof_identity; do not wrap
+    # the test command again because .envrc may already provide its own uv run.
     return shlex.join([*(f"{name}={value}" for name, value in assignments),
                        *producer])
+
+
+def _canonical_verifier_launcher_for_task(base: Path, task: dict) -> list[str] | None:
+    candidates = [
+        str(command) for command in task.get("verify_commands") or []
+        if str(command).strip() and _canonical_verify_command(base, str(command))
+    ]
+    if len(candidates) != 1:
+        return None
+    identity = _canonical_verifier_identity(base, candidates[0])
+    return identity[1] if identity is not None else None
 
 
 def _pytest_collection_path_candidates(
@@ -2437,7 +2463,8 @@ def _pytest_identity_projection(identity: dict[str, object]) -> dict[str, object
         key: identity.get(key)
         for key in ("environment", "interpreter", "python_version",
                     "dependencies", "uv_bootstrap", "uv_overlay_sha256",
-                    "pytest_config", "pytest_semantics")
+                    "pytest_config", "pytest_semantics",
+                    "canonical_verifier_launcher")
         if key in identity
     }
 
@@ -2710,6 +2737,31 @@ def proof_key(
     ).hexdigest()
 
 
+def _close_proof_results_match(
+        task: dict, verify_results: object, test_results: object,
+) -> bool:
+    commands = [str(command) for command in task.get("verify_commands") or []
+                if str(command).strip()]
+    required = [proof for proof in task.get("required_tests") or []
+                if isinstance(proof, dict)]
+    if (not (commands or required) or not isinstance(verify_results, list)
+            or not isinstance(test_results, list)
+            or len(verify_results) != len(commands)
+            or len(test_results) != len(required)):
+        return False
+    return (
+        all(isinstance(result, dict)
+            and result.get("command") == command
+            and result.get("exit_code") == 0
+            for result, command in zip(verify_results, commands))
+        and all(isinstance(result, dict)
+                and result.get("id") == proof.get("id")
+                and result.get("path") == proof.get("path")
+                and result.get("status") == "passed"
+                for result, proof in zip(test_results, required))
+    )
+
+
 def record_stage_proof(base: Path, stage_id: str, task: dict, *, key: str,
                        verify_results: list[dict], test_results: list[dict],
                        test_id_misses: list[str],
@@ -2904,6 +2956,10 @@ def _canonical_junit_satisfies_required_tests(
     )
     if canonical_tool.get("reusable") is not True:
         return False
+    verifier_launcher = _canonical_verifier_launcher_for_task(base, task)
+    if verifier_launcher is None:
+        return False
+    canonical_tool["canonical_verifier_launcher"] = verifier_launcher
     try:
         root = ET.parse(report).getroot()
     except (ET.ParseError, OSError):
@@ -2932,6 +2988,7 @@ def _canonical_junit_satisfies_required_tests(
             allowed_generated_paths=generated_paths,
             environment_overrides=junit_environment,
         )
+        required_tool["canonical_verifier_launcher"] = verifier_launcher
         if (required_tool.get("reusable") is not True
                 or _pytest_identity_projection(required_tool)
                 != _pytest_identity_projection(canonical_tool)):
@@ -3963,6 +4020,10 @@ def proof_identity(
             hashlib.sha256(canonical_command.encode("utf-8")).hexdigest()
             if canonical_command else ""
         )
+        semantic["canonical_verifier_launcher"] = (
+            _canonical_verifier_launcher_for_task(base, task)
+            if canonical_command else None
+        )
         if canonical_command:
             canonical_tool = _proof_tool_identity(
                 base, canonical_command, fixed_after_assignments=False,
@@ -4057,6 +4118,10 @@ def run_stage_proof(
     """
     for proof in task.get("required_tests") or []:
         _require_test_input(base, stage_id, proof)
+    state = raw_run_state(base)
+    story = str(state.get("issue_key") or state.get("story") or "")
+    if active_story_key(base) != story:
+        fail(f"{stage_id} active story authority changed; refusing to record proof")
     proof_tree = product_tree_snapshot(base)
     authority_tree = protected_authority_snapshot(base)
     tool_probe_memo: dict[
@@ -4086,9 +4151,34 @@ def run_stage_proof(
         base, task, verify_identity=verify_identity,
         test_identity=test_identity,
     )
+    close_owned = record_close_evidence or proof_context is not None
     verify_results: list[dict] = []
     test_results: list[dict] = []
     commands_run: list[str] = []
+    if close_owned and (reuse_verify or reuse_tests):
+        existing = load_json(
+            task_evidence_path(base, story, stage_id, "verify.json"),
+            default={},
+        ) if story else {}
+        existing_tests = load_json(
+            task_evidence_path(base, story, stage_id, "tests.json"),
+            default=None,
+        ) if story else None
+        saved_verify = existing.get("results") if isinstance(existing, dict) else None
+        saved_tests = existing.get("required_tests") if isinstance(existing, dict) else None
+        if (not isinstance(existing, dict)
+                or not isinstance(existing_tests, dict)
+                or existing.get("recorded_by") != STAGE_PROOF
+                or existing.get("task_id") != stage_id
+                or existing.get("proof_key") != key
+                or existing.get("ok") is not True
+                or not _close_proof_results_match(task, saved_verify, saved_tests)):
+            reuse_verify = reuse_tests = False
+        else:
+            if reuse_verify:
+                verify_results = saved_verify
+            if reuse_tests:
+                test_results = saved_tests
     with tempfile.TemporaryDirectory(prefix="forge-canonical-junit-") as tmp:
         canonical_junit = Path(tmp) / "pytest.xml"
         with termination_signal_guard():
@@ -4140,11 +4230,8 @@ def run_stage_proof(
     if not reuse_tests:
         test_identity = {**test_identity, "test_id_misses": test_id_misses}
         _store_proof_receipt(base, stage_id, "tests", test_identity)
-    close_owned = record_close_evidence or proof_context is not None
     close_record_needed = close_owned
     if close_owned and reuse_verify and reuse_tests:
-        state = raw_run_state(base)
-        story = str(state.get("issue_key") or state.get("story") or "")
         existing = load_json(
             task_evidence_path(base, story, stage_id, "tests.json"),
             default={},
@@ -4156,20 +4243,11 @@ def run_stage_proof(
                 automated.get("pass_fail_summary") or ""
             )
         )
+    if close_owned and not _close_proof_results_match(
+            task, verify_results, test_results):
+        fail(f"{stage_id} close-owned proof results are incomplete; "
+             "refusing to record passing evidence")
     if close_record_needed or not reuse_verify or not reuse_tests:
-        if not verify_results or not test_results:
-            state = raw_run_state(base)
-            story = str(state.get("issue_key") or state.get("story") or "")
-            existing = load_json(
-                task_evidence_path(base, story, stage_id, "verify.json"),
-                default={},
-            ) if story else {}
-            if isinstance(existing, dict):
-                if not verify_results and isinstance(existing.get("results"), list):
-                    verify_results = existing["results"]
-                if not test_results and isinstance(
-                        existing.get("required_tests"), list):
-                    test_results = existing["required_tests"]
         if proof_tree.get("dirty"):
             print(f"{stage_id}: proof ran against uncommitted product paths; "
                   "not recorded. Commit, then close.")

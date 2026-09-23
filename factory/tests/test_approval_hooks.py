@@ -659,6 +659,17 @@ def test_native_approval_refuses_zero_multiple_candidates_replay_and_missing_ide
         approval.record_native_approval(repo, event, runtime="claude")
 
 
+def test_codex_approval_refuses_non_list_options_without_raising_type_error(repo):
+    candidate = _story_candidate(repo)
+    event = _event(candidate, "codex")
+    event["tool_input"]["questions"][0]["options"] = None
+
+    with pytest.raises(approval.ApprovalRefused, match="unsupported or unsuccessful"):
+        approval.record_native_approval(repo, event, runtime="codex")
+
+    assert not candidate.evidence.exists()
+
+
 @pytest.mark.parametrize("status", ["", "pending", "unknown", "rejected"])
 def test_claude_approval_requires_affirmative_success_without_mutation(
         repo: Path, status: str):

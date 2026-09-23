@@ -75,6 +75,24 @@ def test_the_proof_is_recorded_and_reused_for_an_unchanged_tree(repo, tmp_path):
     assert counter.read_text() == "1", "same tree, same contract: nothing ran"
 
 
+def test_close_retry_reruns_when_reusable_receipts_lack_complete_result_evidence(
+        repo, tmp_path):
+    task, counter = _counting_task(repo, tmp_path)
+    recorded = _built(repo, tmp_path, task)
+    run_stage_proof(repo, "T1", recorded, record_close_evidence=True)
+    assert counter.read_text() == "1"
+
+    verify_path = task_evidence_path(repo, "ENG-1", "T1", "verify.json")
+    verify_path.unlink()
+    run_stage_proof(repo, "T1", recorded, record_close_evidence=True)
+
+    assert counter.read_text() == "2"
+    proof = _evidence(repo, "verify.json")
+    assert proof["results"] and proof["required_tests"]
+    assert all(result["exit_code"] == 0 for result in proof["results"])
+    assert all(result["status"] == "passed" for result in proof["required_tests"])
+
+
 def test_a_changed_tree_or_contract_runs_the_proof_again(repo, tmp_path):
     task, counter = _counting_task(repo, tmp_path)
     recorded = _built(repo, tmp_path, task)

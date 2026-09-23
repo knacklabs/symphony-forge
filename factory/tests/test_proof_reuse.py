@@ -184,7 +184,13 @@ def test_close_context_allows_one_fresh_nonreusable_proof_then_refuses_drift(
     stages.write_stages(repo, {"issue": "S1", "stages": [{
         "id": "T1", "status": "active", "proof_receipts": {},
     }]})
-    monkeypatch.setattr(stages, "_run_verify_commands", lambda *_args: None)
+    monkeypatch.setattr(
+        stages, "_run_verify_commands",
+        lambda _base, _stage_id, current_task, *_args: [
+            {"command": command, "exit_code": 0, "output_tail": ""}
+            for command in current_task["verify_commands"]
+        ],
+    )
 
     context: dict[str, object] = {}
     stages.run_stage_proof(repo, "T1", task, proof_context=context)
@@ -242,6 +248,88 @@ def test_close_context_allows_one_fresh_nonreusable_proof_then_refuses_drift(
                    )), "protected-authority drift must refuse review"
     finally:
         authority_drift.unlink()
+
+
+@pytest.mark.parametrize("missing_artifact", ["verify.json", "tests.json"])
+def test_close_reuse_reruns_when_task_proof_evidence_is_missing(
+        repo: Path, monkeypatch: pytest.MonkeyPatch, missing_artifact: str):
+    from factory_lib import dump_json, proof_path, run_state_path
+
+    test_file = repo / "tests" / "a.py"
+    test_file.parent.mkdir(parents=True, exist_ok=True)
+    test_file.write_text("def test_a():\n    pass\n", encoding="utf-8")
+    task = {
+        **_task(),
+        "required_tests": [{
+            "id": "test_a", "path": "tests/a.py",
+            "command": "python -m pytest {path}::{id} -q",
+        }],
+        "verify_commands": ["python3 factory/scripts/check_dual_runtime.py"],
+    }
+    dump_json(run_state_path(repo), {"issue_key": "S1", "story": "S1"})
+    root = proof_path(repo, "S1", "tests.json", task_id="T1").parent
+    root.mkdir(parents=True, exist_ok=True)
+    key = "proof-key"
+    prior_verify = [{
+        "command": task["verify_commands"][0], "exit_code": 0,
+        "output_tail": "prior pass",
+    }]
+    prior_tests = [{"id": "test_a", "path": "tests/a.py", "status": "passed"}]
+    if missing_artifact != "verify.json":
+        dump_json(root / "verify.json", {
+            "recorded_by": stages.STAGE_PROOF, "task_id": "T1",
+            "proof_key": key, "ok": True,
+            "results": prior_verify, "required_tests": prior_tests,
+        })
+    if missing_artifact != "tests.json":
+        dump_json(root / "tests.json", {"commit": "prior"})
+    verify_runs: list[list[dict]] = []
+    test_runs: list[list[dict]] = []
+    recorded: list[dict] = []
+    identities = {
+        kind: {"identity": kind, "inputs": {"kind": kind}, "reusable": True}
+        for kind in ("verify", "tests")
+    }
+    monkeypatch.setattr(
+        stages, "_require_test_input", lambda *_args: None,
+    )
+    monkeypatch.setattr(
+        stages, "proof_identity",
+        lambda _base, _task, kind, **_kwargs: identities[kind],
+    )
+    monkeypatch.setattr(stages, "proof_key", lambda *_args, **_kwargs: key)
+    monkeypatch.setattr(
+        stages, "_proof_receipt",
+        lambda _base, _stage, kind: {
+            **identities[kind], "status": "passed",
+        },
+    )
+    monkeypatch.setattr(stages, "_store_proof_receipt", lambda *_args: None)
+    monkeypatch.setattr(stages, "product_tree_snapshot", lambda _base: {"dirty": False})
+    monkeypatch.setattr(stages, "protected_authority_snapshot", lambda _base: {})
+    monkeypatch.setattr(
+        stages, "_run_verify_commands",
+        lambda _base, _stage, current_task, *_args: verify_runs.append([
+            {"command": command, "exit_code": 0, "output_tail": "fresh pass"}
+            for command in current_task["verify_commands"]
+        ]) or verify_runs[-1],
+    )
+    monkeypatch.setattr(
+        stages, "_run_required_tests",
+        lambda *_args: ([], test_runs.append([{
+            "id": "test_a", "path": "tests/a.py", "status": "passed",
+        }]) or test_runs[-1]),
+    )
+    monkeypatch.setattr(
+        stages, "record_stage_proof",
+        lambda *_args, **kwargs: recorded.append(kwargs),
+    )
+
+    stages.run_stage_proof(repo, "T1", task, proof_context={})
+
+    assert len(verify_runs) == len(test_runs) == 1
+    assert recorded[0]["verify_results"] == verify_runs[0]
+    assert recorded[0]["test_results"] == test_runs[0]
 
 
 def test_board_proof_inputs_round_trip_through_fresh_review_and_drift(
@@ -524,10 +612,30 @@ def test_canonical_junit_requires_matching_pytest_semantics_and_environment(
         '<testsuite><testcase name="test_a" file="tests/a.py"/></testsuite>',
         encoding="utf-8",
     )
-    task = {"required_tests": [{
-        "id": "test_a", "path": "tests/a.py",
-        "command": "python3 -m pytest {path}::{id} --junitxml={report}",
-    }]}
+    task = {
+        "verify_commands": ["python3 factory/scripts/verify.py"],
+        "required_tests": [{
+            "id": "test_a", "path": "tests/a.py",
+            "command": "python3 -m pytest {path}::{id} --junitxml={report}",
+        }],
+    }
+
+    def identify(_base, command, *, fixed_after_assignments=False,
+                 environment_overrides=None, **_kwargs):
+        _tokens, _environment, environment_identity = stages._proof_environment(
+            command, fixed_after_assignments=fixed_after_assignments,
+            environment_overrides=environment_overrides,
+        )
+        return {
+            "reusable": True, "environment": environment_identity,
+            "interpreter": "test-python", "python_version": "test-version",
+            "dependencies": {"pytest": "test-version"},
+            "uv_bootstrap": {}, "uv_overlay_sha256": "a" * 64,
+            "pytest_config": [],
+            "pytest_semantics": stages._pytest_semantic_args(command),
+        }
+
+    monkeypatch.setattr(stages, "_proof_tool_identity", identify)
     monkeypatch.setenv("FACTORY_TEST_CMD", "python3 -m pytest tests")
     assert stages._canonical_junit_satisfies_required_tests(
         report, task, base=repo,

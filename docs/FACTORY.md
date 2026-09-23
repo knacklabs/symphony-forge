@@ -76,7 +76,7 @@ defines the role defaults:
   `tester`, `refactorer`, `worker`, the default implementation role, and
   bounded `lite`) use `gpt-6-luna` at `max` reasoning;
 - read-heavy exploration and dependency tracing (`explorer`) use
-  `gpt-6-sol` at `high` reasoning;
+  `gpt-6-sol` at `medium` reasoning;
 - planning and decomposition (`architect`, `planner`, `planner-high`, and
   `docs-decomposer`), difficult diagnosis (`debugger`), independent grills
   (`griller`), and final functional checks (`functional-checker`) use

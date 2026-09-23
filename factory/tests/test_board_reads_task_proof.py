@@ -152,3 +152,46 @@ def test_active_task_uses_current_generation_while_done_task_uses_sealed_marker(
     assert await_merge["T1"]["current"] is True
     assert selected_commits == ["", "marker-A", "", "marker-A", "marker-A"]
     assert proof_calls == [True, False, False]
+
+
+def test_shipped_story_skips_task_proof_revalidation_on_board_poll(
+        repo, tmp_path, monkeypatch):
+    _built(repo, tmp_path)
+
+    def unexpected(*_args, **_kwargs):
+        raise AssertionError("shipped task proof was revalidated")
+
+    monkeypatch.setattr(factory_lib, "task_proof_problems", unexpected)
+    _progress, _evidence, tasks = board._plan_evidence(
+        repo, "ENG-1", None, shipped=True,
+    )
+
+    assert tasks
+
+
+def test_board_marks_an_exactly_approved_plan_grill_as_passed(repo):
+    path = repo / "plans/active/ENG-1-plan.md"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(
+        "---\nstatus: approved\nstory: ENG-1\n---\n\n# Plan\n",
+        encoding="utf-8",
+    )
+    detail = {
+        "plan": {
+            "status": "approved",
+            "path": path.relative_to(repo).as_posix(),
+            "decisions_reviewed": [row["id"] for row in board.active_decisions(repo)],
+        },
+        "plan_body": "## Surface Impact\n\nCLI and tests.\n",
+        "evidence": {
+            "grills": {},
+            "plan_approval": {
+                "approved_plan_sha256": factory_lib.plan_digest_without_assumptions(path),
+            },
+        },
+    }
+
+    readiness = board.approval_readiness(repo, detail)
+
+    assert readiness[1]["label"] == "plan grill passed"
+    assert readiness[1]["ok"] is True

@@ -212,7 +212,10 @@ try:
     from forge_cli.context import context_files, context_paths, scan_inbox
     from forge_cli.codex_runtime import coordinator_runtime
     from forge_cli.quickfix import DEGRADED, claim_files, load_active, profile_of
-    from forge_cli.repo_kind import is_harness_source_repo, locked_repo_path
+    from forge_cli.repo_kind import (
+        CLIENT_MACHINERY_PREFIXES, ORCHESTRATION_FILES,
+        ORCHESTRATION_PREFIXES, is_harness_source_repo, locked_repo_path,
+    )
 except (ImportError, SyntaxError) as exc:
     denylist_fallback(payload, type(exc).__name__)
 
@@ -289,6 +292,19 @@ MARKER_PLAN_ONLY_MSG = (
 def product_path(raw: str, root: Path, is_harness: bool) -> str | None:
     """Compatibility name for the shared repo-kind-aware lock classifier."""
     return locked_repo_path(raw, root, harness_source=is_harness)
+
+
+def _lexical_product_path(rel: str, is_harness: bool) -> str | None:
+    """Classify a normalized patch path without resolving a symlink leaf."""
+    if not rel or rel in ORCHESTRATION_FILES:
+        return None
+    prefixes = ORCHESTRATION_PREFIXES
+    if not is_harness:
+        prefixes += CLIENT_MACHINERY_PREFIXES
+    if any(rel == prefix.rstrip("/") or rel.startswith(prefix)
+           for prefix in prefixes):
+        return None
+    return rel
 
 
 def tokenize(segment: str) -> list[str] | None:
@@ -1084,11 +1100,16 @@ locked_targets = list(dict.fromkeys(
     rel for raw in write_targets
     if (rel := product_path(raw, root, is_harness)) is not None
 ))
-scoped_targets = (
-    locked_targets
-    if native_codex
-    else (write_targets if tool_name == PATCH_TOOL else locked_targets)
-)
+if tool_name == PATCH_TOOL:
+    scoped_targets = (
+        list(dict.fromkeys(
+            rel for raw in write_targets
+            if (rel := _lexical_product_path(raw, is_harness)) is not None
+        ))
+        if native_codex else write_targets
+    )
+else:
+    scoped_targets = locked_targets
 if native_codex:
     is_degraded = False
     if scoped_targets:

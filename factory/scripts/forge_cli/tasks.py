@@ -14,7 +14,7 @@ from pathlib import Path
 from factory_lib import (
     _committed_task_marker, _windows_reparse_point,
     clean_git_env, default_trunk_branch, dump_json, evidence_path,
-    git_control_dir, load_json, now_iso,
+    git_control_dir, load_json, now_iso, raw_open_flags,
     repo_root, require_approved_plan_digest,
     require_ready_task, task_digest,
     require_task_sealed,
@@ -64,7 +64,7 @@ def _contained_regular_bytes(base: Path, source: Path, label: str) -> bytes:
     if (stat.S_ISLNK(leaf.st_mode) or not stat.S_ISREG(leaf.st_mode)
             or leaf.st_nlink != 1 or _windows_reparse_point(source)):
         fail(f"task start refused: {label} is linked or not a regular file")
-    flags = os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0)
+    flags = raw_open_flags(os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0))
     try:
         descriptor = os.open(source, flags)
     except OSError as exc:
