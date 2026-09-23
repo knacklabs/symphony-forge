@@ -1,0 +1,14 @@
+{
+  "event": "done",
+  "id": "Q-0195-cea9",
+  "profile": "degraded",
+  "kind": "degraded",
+  "reason": "implementer.md still says Forge launches routine implementation as gpt-6-luna max; the owner-approved pin is now a Sol/medium lead with Luna/max subagents",
+  "started_at": "2026-09-23T13:23:36+00:00",
+  "completed_at": "2026-09-23T13:23:39+00:00",
+  "files": [
+    "factory/prompts/implementer.md"
+  ],
+  "task_id": "LEAN-WORKFLOW",
+  "story": "FORGE-COORD-1"
+}
