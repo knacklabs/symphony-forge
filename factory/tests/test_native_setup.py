@@ -454,7 +454,7 @@ HOOK_TOOL_MATRIX = {
 
 
 def test_recovery_profile_override_keeps_only_three_forge_profiles():
-    """The retained selector now checks the complete Decision 0080 registry."""
+    """The retained selector now checks the complete Decision 0083 registry."""
     config = tomllib.loads(
         (HARNESS / ".codex/config.toml").read_text(encoding="utf-8"))
     expected = {

@@ -20,7 +20,7 @@ scope the plan does not cover.
 
 The user and host select the main coordinator model and reasoning. Native
 dispatch passes no model or reasoning override; the selected configured role's
-defaults apply. Decision 0080 routes routine implementation, automated tests,
+defaults apply. Decision 0083 routes routine implementation, automated tests,
 diagnosed or review fixes, documentation edits, and mechanical refactors to
 Luna/max; read-heavy exploration and dependency tracing to Sol/medium; and
 planning, decomposition, difficult diagnosis, independent grills, and final
@@ -239,6 +239,9 @@ instead of narrating it:
 
 ## Hard rules
 
+- Start the session inside the worktree being worked. Hooks resolve the repo
+  from the session's working directory; a session rooted elsewhere records no
+  native approval and gates the wrong repository (WORKFLOW.md Runtime Modes).
 - Implementation is delegated to Codex. Native Codex uses role-based host
   subagents without dispatch-time model/reasoning overrides; Claude uses its protected plugin
   companion. See `harness.yaml` for artifact producers; recorders refuse

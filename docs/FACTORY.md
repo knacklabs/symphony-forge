@@ -68,7 +68,7 @@ when the repo has a repeated bottleneck that justifies another role.
 
 The user and host select the main coordinator model and reasoning; the
 repository does not set either at the top level. Native dispatch names a
-configured role and passes no model or reasoning override. Decision 0080
+configured role and passes no model or reasoning override. Decision 0083
 defines the role defaults:
 
 - routine implementation, automated tests, diagnosed or review fixes,
