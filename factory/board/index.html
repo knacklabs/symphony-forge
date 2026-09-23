@@ -457,12 +457,9 @@
   }
   .dag-edges { overflow: visible; pointer-events: none; }
   .dag-signals { will-change: transform; }
-  .dag-edge, .dag-signal, .dag-globe-edge {
+  .dag-edge, .dag-signal {
     fill: none; vector-effect: non-scaling-stroke; stroke-linecap: round;
     stroke-linejoin: round; shape-rendering: geometricPrecision;
-  }
-  .dag-globe-edge {
-    stroke: var(--accent); stroke-width: 1.5; opacity: 0;
   }
   .dag-edge {
     stroke: var(--stone); stroke-width: 1.15; opacity: .42;
@@ -485,13 +482,14 @@
   .dag-signal.is-downstream {
     stroke: var(--accent-ink);
   }
-  .dag-shell.is-forming .dag-edge { opacity: 0; }
-  .dag-shell.is-unfolding .dag-edge {
-    stroke-dasharray: var(--edge-length, 1);
-    stroke-dashoffset: var(--edge-length, 1);
-    animation: dag-edge-form var(--edge-duration, 240ms) var(--ease-out) both;
-    animation-delay: var(--edge-delay, 0ms);
-  }
+  /* While the globe forms and unfolds, every edge -- the globe arcs and the
+     final edges drawing in -- is painted on one canvas (drawDagEntranceEdges).
+     The SVG edges hold still, hidden, and take over at the end already in
+     their resting state: no per-frame path rewrites, no 75 stroke-dashoffset
+     animations the compositor cannot run. */
+  .dag-canvas { position: absolute; left: 0; top: 0; z-index: 2; pointer-events: none; display: none; }
+  .dag-shell.is-forming .dag-canvas { display: block; }
+  .dag-shell.is-forming .dag-edges { visibility: hidden; }
   .dag-shell.is-forming .dag-signal { animation: none; opacity: 0; }
   @keyframes dag-signal-flow { to { stroke-dashoffset: 0; } }
 
@@ -600,11 +598,6 @@
   @keyframes dag-guide-form {
     from { opacity: 0; transform: scaleX(0); }
     to { opacity: 1; transform: scaleX(1); }
-  }
-  @keyframes dag-edge-form {
-    from { opacity: 0; stroke-dashoffset: var(--edge-length, 1); }
-    35% { opacity: .86; }
-    to { opacity: .42; stroke-dashoffset: 0; }
   }
   @keyframes dag-node-radar {
     from { opacity: .72; transform: scale(.9); }
@@ -1331,6 +1324,7 @@
         <div id="dag-world" class="dag-world">
           <div id="dag-scene" class="dag-scene">
             <div id="dag-depths" class="dag-depths" aria-hidden="true"></div>
+            <canvas id="dag-canvas" class="dag-canvas" aria-hidden="true"></canvas>
             <svg id="dag-edges" class="dag-edges" aria-hidden="true"></svg>
             <svg id="dag-signals" class="dag-edges dag-signals" aria-hidden="true"></svg>
             <div id="dag-nodes" class="dag-nodes"></div>
@@ -2680,14 +2674,20 @@ function renderDag(state) {
     layer.setAttribute("height", String(layout.height));
   }
   signals.replaceChildren();
+  // Backing store at the device ratio, capped so a very wide roadmap cannot
+  // allocate a huge bitmap (8 M pixels ~ 32 MB).
+  const canvas = $("dag-canvas");
+  const ratio = Math.min(devicePixelRatio || 1, 2,
+                         Math.sqrt(8e6 / Math.max(1, layout.width * layout.height)));
+  canvas.width = Math.max(1, Math.round(layout.width * ratio));
+  canvas.height = Math.max(1, Math.round(layout.height * ratio));
+  canvas.style.width = `${layout.width}px`;
+  canvas.style.height = `${layout.height}px`;
+  DAG.canvasRatio = ratio;
   svg.innerHTML = `<defs><marker id="dag-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 1 L 7 4 L 0 7 z" fill="context-stroke"></path></marker></defs>`;
   DAG.edges = layout.edges.map((edge, edgeIndex) => {
     const globeVectors = dagGlobeEdgeVectors(edge);
     const data = dagEdgePath(layout.positions.get(edge.from), layout.positions.get(edge.to));
-    const globeData = dagGlobeEdgePath({...edge, globeVectors}, 0, .76);
-    const globe = document.createElementNS(DAG_SVG, "path");
-    globe.setAttribute("class", "dag-globe-edge");
-    globe.setAttribute("d", globeData);
     const base = document.createElementNS(DAG_SVG, "path");
     base.setAttribute("class", "dag-edge");
     base.setAttribute("d", data);
@@ -2695,18 +2695,18 @@ function renderDag(state) {
     const signal = document.createElementNS(DAG_SVG, "path");
     signal.setAttribute("class", "dag-signal");
     signal.setAttribute("d", data);
-    svg.append(globe, base);
+    svg.append(base);
     signals.append(signal);
     const length = Math.ceil(base.getTotalLength());
     const edgeDepth = layout.positions.get(edge.to).depth;
     const edgeProgress = layout.maxDepth ? edgeDepth / layout.maxDepth : 0;
     const edgeDelay = edgeProgress * DAG_GLOBE_UNFOLD_MS * .24;
-    base.style.setProperty("--edge-length", String(length));
-    base.style.setProperty("--edge-delay", `${edgeDelay}ms`);
-    base.style.setProperty("--edge-duration", `${DAG_GLOBE_UNFOLD_MS * .64}ms`);
     return {
-      ...edge, index: edgeIndex, globeVectors, globe, base, signal,
+      ...edge, index: edgeIndex, globeVectors, base, signal,
       finalPoints: dagFinalEdgePoints(edge),
+      // The draw-in each edge performs as the globe unfolds.
+      path: new Path2D(data), length, drawDelay: edgeDelay,
+      drawDuration: DAG_GLOBE_UNFOLD_MS * .64,
     };
   });
 
@@ -2958,7 +2958,8 @@ function dagGlobeNodeState(key, node, point, assemble, unfold) {
 // recalculation per frame at 4x CPU throttle (each write restyles the node's
 // subtree against the board's full stylesheet); keyframes cost none.
 const DAG_ENTRANCE_SAMPLES = 48;
-function animateDagGlobeNodes() {
+function dagGlobeNodeFrames() {
+  if (DAG.layout.nodeFrames) return DAG.layout.nodeFrames;
   const frames = new Map([...DAG.nodes.keys()].map(key => [key, []]));
   for (let i = 0; i <= DAG_ENTRANCE_SAMPLES; i++) {
     const offset = i / DAG_ENTRANCE_SAMPLES;
@@ -2969,6 +2970,12 @@ function animateDagGlobeNodes() {
       frames.get(key).push({...dagGlobeNodeState(key, node, point, assemble, unfold), offset});
     }
   }
+  DAG.layout.nodeFrames = frames;
+  return frames;
+}
+
+function animateDagGlobeNodes() {
+  const frames = dagGlobeNodeFrames();
   DAG.entranceAnimations = [...DAG.nodes].map(([key, node]) => node.animate(frames.get(key), {
     duration: DAG_GLOBE_TOTAL_MS, easing: "linear", fill: "both",
   }));
@@ -2990,23 +2997,103 @@ function renderDagGlobeFrame({turn = 0, assemble = 1, unfold = 0}, {nodes = true
     }
   }
 
+  drawDagEntranceEdges({turn, assemble, unfold}, radiusScale);
+}
+
+// The ease-out every board transition uses, cubic-bezier(.23,1,.32,1),
+// solved for the canvas the way CSS solves it for the SVG.
+function dagBezierEase(x1, y1, x2, y2) {
+  const at = (a, b, t) => ((1 - 3 * b + 3 * a) * t + (3 * b - 6 * a)) * t * t + 3 * a * t;
+  return x => {
+    if (x <= 0) return 0;
+    if (x >= 1) return 1;
+    let t = x;
+    for (let i = 0; i < 6; i++) {
+      const dx = at(x1, x2, t) - x;
+      const slope = (3 * (1 - 3 * x2 + 3 * x1)) * t * t + 2 * (3 * x2 - 6 * x1) * t + 3 * x1;
+      if (Math.abs(dx) < 1e-5 || !slope) break;
+      t = clamp(t - dx / slope, 0, 1);
+    }
+    return at(y1, y2, t);
+  };
+}
+const dagEaseOutCss = dagBezierEase(.23, 1, .32, 1);
+
+function drawDagEntranceEdges({turn, assemble, unfold}, radiusScale) {
+  const canvas = $("dag-canvas");
+  const ctx = canvas.getContext("2d");
+  const ratio = DAG.canvasRatio || 1;
+  ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+  ctx.clearRect(0, 0, DAG.layout.width, DAG.layout.height);
+  const colors = DAG.entranceColors;
+  // SVG strokes are non-scaling; match their on-screen width through the
+  // camera move that runs while the graph unfolds.
+  const {from = DAG.view.scale, to = DAG.view.scale} = DAG.entranceScale || {};
+  const px = 1 / Math.max(dagMix(from, to, dagEaseInOutCubic(unfold)), .05);
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
+
+  // The globe arcs, morphing from the sphere into each edge's final curve.
+  ctx.strokeStyle = colors.accent;
+  ctx.lineWidth = 1.5 * px;
   for (const edge of DAG.edges) {
     const globePoints = dagGlobeEdgePoints(edge, turn, radiusScale);
     const targetDepth = DAG.layout.positions.get(edge.to).depth;
     const edgeDelay = clamp(targetDepth * .026, 0, .22);
     const edgeUnfold = dagEaseInOutCubic(clamp(
       (unfold - edgeDelay) / (1 - edgeDelay), 0, 1));
-    const points = globePoints.map((point, index) => ({
-      x: dagMix(point.x, edge.finalPoints[index].x, edgeUnfold),
-      y: dagMix(point.y, edge.finalPoints[index].y, edgeUnfold),
-    }));
     const averageDepth = globePoints.reduce((sum, point) => sum + point.depth, 0)
       / globePoints.length;
     const edgeArrival = dagEaseOutCubic(clamp(assemble * 1.22 - edge.index * .011, 0, 1));
     const globeFade = 1 - clamp((edgeUnfold - .7) / .3, 0, 1);
-    edge.globe.setAttribute("d", dagCubicPath(points));
-    edge.globe.style.opacity = (edgeArrival * (.12 + averageDepth * .7) * globeFade).toFixed(3);
+    const opacity = edgeArrival * (.12 + averageDepth * .7) * globeFade;
+    if (opacity < .004) continue;
+    const [a, b, c, d] = globePoints.map((point, index) => ({
+      x: dagMix(point.x, edge.finalPoints[index].x, edgeUnfold),
+      y: dagMix(point.y, edge.finalPoints[index].y, edgeUnfold),
+    }));
+    ctx.globalAlpha = opacity;
+    ctx.beginPath();
+    ctx.moveTo(a.x, a.y);
+    ctx.bezierCurveTo(b.x, b.y, c.x, c.y, d.x, d.y);
+    ctx.stroke();
   }
+
+  // The final edges drawing in as the globe unfolds: the old dag-edge-form
+  // keyframes (opacity 0 -> .86 at 35% -> .42, dash offset length -> 0).
+  if (unfold > 0) {
+    const sinceUnfold = unfold * DAG_GLOBE_UNFOLD_MS;
+    ctx.strokeStyle = colors.stone;
+    ctx.fillStyle = colors.stone;
+    ctx.lineWidth = 1.15 * px;
+    for (const edge of DAG.edges) {
+      const progress = clamp((sinceUnfold - edge.drawDelay) / edge.drawDuration, 0, 1);
+      if (progress <= 0) continue;
+      const opacity = progress < .35
+        ? dagMix(0, .86, dagEaseOutCss(progress / .35))
+        : dagMix(.86, .42, dagEaseOutCss((progress - .35) / .65));
+      ctx.globalAlpha = opacity;
+      ctx.setLineDash([edge.length, edge.length]);
+      ctx.lineDashOffset = edge.length * (1 - dagEaseOutCss(progress));
+      ctx.stroke(edge.path);
+      ctx.setLineDash([]);
+      // The arrowhead marker (markerUnits = stroke width, viewBox 8, size 6).
+      const [, , control, end] = edge.finalPoints;
+      const size = 6 * 1.15 / 8;
+      ctx.save();
+      ctx.translate(end.x, end.y);
+      ctx.rotate(Math.atan2(end.y - control.y, end.x - control.x));
+      ctx.scale(size, size);
+      ctx.beginPath();
+      ctx.moveTo(-7, -3);
+      ctx.lineTo(0, 0);
+      ctx.lineTo(-7, 3);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+    }
+  }
+  ctx.globalAlpha = 1;
 }
 
 function clearDagGlobeFrame() {
@@ -3018,9 +3105,8 @@ function clearDagGlobeFrame() {
     node.style.removeProperty("opacity");
     node.style.removeProperty("z-index");
   }
-  for (const edge of DAG.edges) {
-    edge.globe.style.removeProperty("opacity");
-  }
+  const canvas = $("dag-canvas");
+  canvas.getContext("2d").clearRect(0, 0, canvas.width, canvas.height);
 }
 
 function cancelDagEntrance(finish = true) {
@@ -3108,6 +3194,12 @@ function playDagEntrance() {
   // topology then completes exactly one 0 → π/2 Y-axis quarter-turn before those same
   // nodes and connections unfold into their final dependency positions.
   frameDagGlobe();
+  const rootStyle = getComputedStyle(document.documentElement);
+  DAG.entranceColors = {
+    accent: rootStyle.getPropertyValue("--accent").trim(),
+    stone: rootStyle.getPropertyValue("--stone").trim(),
+  };
+  DAG.entranceScale = {from: DAG.view.scale, to: DAG.view.scale};
   void shell.offsetWidth;
   shell.classList.add("is-forming");
   for (const node of DAG.nodes.values()) node.style.willChange = "transform, opacity";
@@ -3134,7 +3226,9 @@ function playDagEntrance() {
       unfolding = true;
       DAG.entranceState = "unfolding";
       shell.classList.add("is-unfolding");
+      const globeScale = DAG.view.scale;
       landDagOnEntryTarget(true, DAG_GLOBE_UNFOLD_MS);
+      DAG.entranceScale = {from: globeScale, to: DAG.view.scale};
     }
     if (elapsed < total) {
       DAG.entranceFrame = requestAnimationFrame(step);
@@ -3146,7 +3240,13 @@ function playDagEntrance() {
     shell.classList.remove("is-forming", "is-unfolding");
     $("dag-viewport").removeAttribute("aria-busy");
     clearDagGlobeFrame();
-    selectDagEntryTarget();
+    // Landing on the entry story restyles every node and edge and starts
+    // their transitions; doing it in the same frame that leaves the forming
+    // state stacked both restyles into one ~200 ms hitch at the very end.
+    DAG.entranceFrame = requestAnimationFrame(() => {
+      DAG.entranceFrame = 0;
+      if (run === DAG.entranceRun) selectDagEntryTarget();
+    });
   };
   DAG.entranceFrame = requestAnimationFrame(step);
 }
