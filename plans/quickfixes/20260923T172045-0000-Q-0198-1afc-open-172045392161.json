@@ -1,0 +1,12 @@
+{
+  "event": "open",
+  "id": "Q-0198-1afc",
+  "profile": "lite",
+  "reason": "Verified review gap group g4-close for task LEAN-FIXES (owner: fix P1/P2 now, parallel)",
+  "started_at": "2026-09-23T17:20:45+00:00",
+  "max_files": 5,
+  "files": [],
+  "harness_source": true,
+  "by": "Ravi Kiran Vemula",
+  "base_sha": "fd1c6740b1d083ad8beccd5e52f8b3f88d6eb9d7"
+}

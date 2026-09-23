@@ -14241,6 +14241,7 @@ def test_task_reopen_moves_frontier_back_and_ripples_the_done_tail(repo, tmp_pat
     })
     code, out = run(repo, "forge.py", "task", "reopen", "T1")
     assert code == 0 and "Reopened" in out and "T1" in out and "T2" in out, out
+    assert "WARNING: could not reach origin/main" in out, out
     # T1 is now the pending frontier again; reopening a pending task refuses.
     code, out = run(repo, "forge.py", "task", "reopen", "T1")
     assert code != 0 and "not done" in out, out
@@ -14255,29 +14256,56 @@ def test_task_reopen_refuses_a_task_not_in_the_decomposition(repo, tmp_path):
     assert code != 0 and "not in the current decomposition" in out, out
 
 
-def test_task_close_refuses_to_reopen_a_shipped_stage(repo, monkeypatch, capsys):
-    import contextlib
-    from argparse import Namespace
+def _cache_task_marker(repo: Path, key: str, task_id: str) -> None:
     from factory_lib import task_marker_path
-    from forge_cli import close, delegate, review, stages
 
-    key, task_id = "ENG-1", "T1"
     base_head = head(repo)
-    git(repo, "checkout", "-B", "main", base_head)
     marker_rel = task_marker_path(key, task_id).as_posix()
     marker_path = repo / marker_rel
     marker_path.parent.mkdir(parents=True, exist_ok=True)
     marker_path.write_text("{}\n", encoding="utf-8")
     git(repo, "add", marker_rel)
-    git(repo, "commit", "-qm", "ship T1")
-    git(repo, "config", "remote.origin.url", str(repo))
-    git(repo, "config", "remote.origin.fetch",
-        "+refs/heads/*:refs/remotes/origin/*")
+    git(repo, "commit", "-qm", f"ship {task_id}")
+    git(repo, "update-ref", "refs/remotes/origin/main", head(repo))
     git(repo, "symbolic-ref", "refs/remotes/origin/HEAD",
         "refs/remotes/origin/main")
-    git(repo, "fetch", "origin", "main")
-    git(repo, "cat-file", "-e", f"origin/main:{marker_rel}")
     git(repo, "checkout", "--detach", base_head)
+
+
+def test_task_reopen_refuses_a_cached_shipped_marker_after_fetch_failure(repo):
+    key, task_id = "ENG-1", "T1"
+    (repo / ".factory" / "run.json").write_text(
+        json.dumps({"issue_key": key}), encoding="utf-8",
+    )
+    write_stages(repo, {
+        "issue": key,
+        "stages": [{"id": task_id, "status": "done"}],
+    })
+    _cache_task_marker(repo, key, task_id)
+
+    code, out = run(repo, "forge.py", "task", "reopen", task_id)
+
+    assert code != 0 and "already SHIPPED" in out, out
+    assert load_stages(repo)["stages"][0]["status"] == "done"
+
+
+@pytest.mark.parametrize(
+    ("cached_marker", "expected"),
+    [(True, "already SHIPPED"),
+     (False, "cannot confirm T1 is unshipped: fetch failed; retry when origin is reachable")],
+)
+def test_task_close_refuses_review_fix_when_fetch_fails(
+        repo, monkeypatch, capsys, cached_marker, expected):
+    import contextlib
+    from argparse import Namespace
+    from forge_cli import close, delegate, review, stages
+
+    key, task_id = "ENG-1", "T1"
+    if cached_marker:
+        _cache_task_marker(repo, key, task_id)
+    else:
+        git(repo, "symbolic-ref", "refs/remotes/origin/HEAD",
+            "refs/remotes/origin/main")
 
     (repo / ".factory" / "run.json").write_text(
         json.dumps({"issue_key": key}), encoding="utf-8",
@@ -14310,8 +14338,60 @@ def test_task_close_refuses_to_reopen_a_shipped_stage(repo, monkeypatch, capsys)
             skill=None,
         ))
 
-    assert "already SHIPPED" in capsys.readouterr().out
+    assert expected in capsys.readouterr().out
     assert load_stages(repo)["stages"][0]["status"] == "done"
+
+
+def test_review_fix_refuses_an_empty_story_before_fetch_or_lock(
+        repo, monkeypatch, capsys):
+    from forge_cli import delegate, tasks, stages
+
+    monkeypatch.setattr(stages, "load_stages", lambda _base: {
+        "issue": "", "stages": [{"id": "T1", "status": "done"}],
+    })
+    monkeypatch.setattr(stages, "load_json", lambda *_args, **_kwargs: {
+        "issue_key": "", "story": "",
+    })
+    monkeypatch.setattr(tasks, "_git",
+                        lambda *_: pytest.fail("empty story must not fetch"))
+    monkeypatch.setattr(delegate, "delegation_exclusion",
+                        lambda *_args, **_kwargs: pytest.fail("empty story must not lock"))
+
+    with pytest.raises(SystemExit) as exc:
+        stages.reopen_stage_for_review_fix(repo, "T1")
+
+    assert exc.value.code == 1
+    assert "without a story key" in capsys.readouterr().out
+
+
+def test_review_fix_fetches_before_taking_the_stage_state_lock(repo, monkeypatch):
+    import contextlib
+    from forge_cli import delegate, tasks, stages
+
+    (repo / ".factory" / "run.json").write_text(
+        json.dumps({"issue_key": "ENG-1"}), encoding="utf-8",
+    )
+    write_stages(repo, {"issue": "ENG-1", "stages": [{"id": "T1", "status": "done"}]})
+    git_calls = []
+
+    def fake_git(_base, *args):
+        git_calls.append(args[0])
+        return subprocess.CompletedProcess(args, 0 if args[0] == "fetch" else 1,
+                                           "", "")
+
+    @contextlib.contextmanager
+    def checked_exclusion(_base, _key, *, kind, **_kwargs):
+        if kind == "stage-state":
+            assert git_calls == ["fetch", "cat-file"]
+        yield
+
+    monkeypatch.setattr(tasks, "_git", fake_git)
+    monkeypatch.setattr(delegate, "delegation_exclusion", checked_exclusion)
+
+    target = stages.reopen_stage_for_review_fix(repo, "T1")
+
+    assert target["status"] == "active"
+    assert git_calls == ["fetch", "cat-file"]
 
 
 def test_done_contracts_immutable_and_criteria_map_binds_plan_contracts(
