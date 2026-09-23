@@ -366,20 +366,27 @@ def _lite_product_files(
     """Apply the planning-lock product boundary to repo-relative Git paths."""
     product_files: set[str] = set()
     for path in paths:
-        if path.startswith(".factory/"):
+        link = base / path
+        current = base
+        has_symlink = False
+        for part in Path(path).parts:
+            current /= part
+            if current.is_symlink():
+                has_symlink = True
+                break
+        if path.startswith(".factory/") and not has_symlink:
             continue
         locked_path = locked_repo_path(
             path, base, harness_source=harness_source,
         )
-        if locked_path is None:
-            continue
-        product_files.add(locked_path)
+        if locked_path is not None:
+            product_files.add(locked_path)
 
-        link = base / path
-        if link.is_symlink():
-            target = link.readlink()
-            if not target.is_absolute():
-                target = link.parent / target
+        if has_symlink:
+            try:
+                target = link.resolve(strict=False)
+            except (OSError, RuntimeError):
+                continue
             target_path = locked_repo_path(
                 str(target), base, harness_source=harness_source,
             )

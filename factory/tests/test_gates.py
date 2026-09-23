@@ -9164,6 +9164,77 @@ def test_lite_close_counts_locked_paths_and_task_seal_reports_dirty_agents(repo)
                for problem in problems), problems
 
 
+def test_lite_close_counts_files_through_symlinked_ancestor_into_product(repo):
+    from forge_cli.quickfix import _lite_product_files
+    from forge_cli.repo_kind import locked_repo_path
+
+    source = repo / "src"
+    source.mkdir(parents=True, exist_ok=True)
+    (source / "app.py").write_text("app = True\n")
+    (repo / "docs").mkdir(parents=True, exist_ok=True)
+    (repo / "docs" / "code").symlink_to(Path("../src"), target_is_directory=True)
+
+    assert locked_repo_path(
+        "docs/code/app.py", repo, harness_source=False,
+    ) == "src/app.py"
+    assert _lite_product_files(
+        repo, ["docs/code/app.py"], harness_source=False,
+    ) == ["src/app.py"]
+
+
+def test_lite_close_counts_files_through_symlinked_ancestor_outside_repo(
+    repo, tmp_path,
+):
+    from forge_cli.quickfix import _lite_product_files
+    from forge_cli.repo_kind import locked_repo_path
+
+    outside = tmp_path / "outside"
+    outside.mkdir()
+    (outside / "app.py").write_text("app = True\n")
+    (repo / "docs").mkdir(parents=True, exist_ok=True)
+    (repo / "docs" / "code").symlink_to(outside, target_is_directory=True)
+
+    assert locked_repo_path(
+        "docs/code/app.py", repo, harness_source=False,
+    ) == "docs/code/app.py"
+    assert _lite_product_files(
+        repo, ["docs/code/app.py"], harness_source=False,
+    ) == ["docs/code/app.py"]
+
+
+def test_lite_close_counts_files_through_unresolved_symlinked_ancestor(repo):
+    from forge_cli.quickfix import _lite_product_files
+    from forge_cli.repo_kind import locked_repo_path
+
+    (repo / "docs").mkdir(parents=True, exist_ok=True)
+    (repo / "docs" / "code").symlink_to(
+        Path("missing-code"), target_is_directory=True,
+    )
+
+    assert locked_repo_path(
+        "docs/code/app.py", repo, harness_source=False,
+    ) == "docs/code/app.py"
+    assert _lite_product_files(
+        repo, ["docs/code/app.py"], harness_source=False,
+    ) == ["docs/code/app.py"]
+
+
+def test_lite_close_keeps_plain_docs_paths_exempt(repo):
+    from forge_cli.quickfix import _lite_product_files
+    from forge_cli.repo_kind import locked_repo_path
+
+    reference = repo / "docs" / "reference.md"
+    reference.parent.mkdir(parents=True, exist_ok=True)
+    reference.write_text("reference\n")
+
+    assert locked_repo_path(
+        "docs/reference.md", repo, harness_source=False,
+    ) is None
+    assert _lite_product_files(
+        repo, ["docs/reference.md"], harness_source=False,
+    ) == []
+
+
 def test_lite_budget_counts_symlinks_and_literal_shell_names(repo):
     source = repo / "src"
     source.mkdir()

@@ -32,20 +32,34 @@ def locked_repo_path(
     source_repo = (
         is_harness_source_repo(root) if harness_source is None else harness_source
     )
-    if _is_locked_path(rel, source_repo):
-        return rel
-
-    # Preserve callers' protection for a docs-side symlink into product code,
-    # while judging both names lexically instead of resolving through links.
     root_path = Path(os.path.abspath(root))
     candidate = root_path / rel
-    if candidate.is_symlink():
-        target = Path(os.readlink(candidate))
-        if not target.is_absolute():
-            target = candidate.parent / target
-        target_rel = _lexical_repo_path(str(target), root_path)
-        if target_rel is not None and _is_locked_path(target_rel, source_repo):
-            return target_rel
+    lexical_locked = _is_locked_path(rel, source_repo)
+
+    current = root_path
+    has_symlink = False
+    for part in Path(rel).parts:
+        current /= part
+        if current.is_symlink():
+            has_symlink = True
+            break
+    if not has_symlink:
+        return rel if lexical_locked else None
+
+    # A symlink at any point can make the lexical prefix misleading. Resolve
+    # only linked paths; missing leaves and other failures lock the lexical path.
+    try:
+        resolved_root = root_path.resolve(strict=True)
+        resolved = candidate.resolve(strict=True)
+        resolved_rel = resolved.relative_to(resolved_root).as_posix()
+    except (OSError, RuntimeError, ValueError):
+        # Outside targets, loops, and other resolution failures fail closed.
+        return rel
+
+    if lexical_locked:
+        return rel
+    if _is_locked_path(resolved_rel, source_repo):
+        return resolved_rel
     return None
 
 
