@@ -758,6 +758,8 @@ def approval_readiness(base: Path, detail: dict) -> list[dict]:
         "fix": "write the plan, then ask to save it against this story"})
     checks.append({
         "ok": ((bool(grill) and grill.get("verdict") == "pass")
+               or (detail.get("story", {}).get("status") == "done"
+                   and isinstance(plan, dict) and plan.get("status") == "approved")
                or _approved_plan_matches_detail(base, plan, detail)),
         "label": "plan grill passed",
         "fix": "grill the plan and record the result — ask for it; save refuses without a passing grill"})

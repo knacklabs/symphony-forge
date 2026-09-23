@@ -195,3 +195,18 @@ def test_board_marks_an_exactly_approved_plan_grill_as_passed(repo):
 
     assert readiness[1]["label"] == "plan grill passed"
     assert readiness[1]["ok"] is True
+
+
+def test_board_accepts_approved_plan_grill_for_shipped_story_only(repo):
+    detail = {
+        "story": {"status": "done"},
+        "plan": {"status": "approved"},
+        "evidence": {"grills": {}, "plan_approval": None},
+    }
+
+    readiness = board.approval_readiness(repo, detail)
+    assert readiness[1]["ok"] is True
+
+    detail["story"]["status"] = "in-progress"
+    readiness = board.approval_readiness(repo, detail)
+    assert readiness[1]["ok"] is False
