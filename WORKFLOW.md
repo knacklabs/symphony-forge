@@ -32,10 +32,15 @@ routes preserve the active task, worktree and effective scope and produce the sa
 `.factory` artifacts, but native delivery deliberately has no Forge-managed
 process identity or lifecycle proof.
 
-Keep the coordinating Claude/Codex session in the repository's primary checkout
-on its default branch (the main worktree). Each task and fix uses a separate
-worktree, reached by absolute path (`git -C <path>` or subprocess cwd); keep the
-coordinator shell in its checkout.
+Hooks resolve the repository from the session's working directory. A session in
+another checkout records no native Plan Mode approval, and task gates cannot see
+its in-session edits; open a new session in the task worktree for task approval
+and in-session edits. The primary checkout on the default branch is the
+coordinator's home for coordination work (status, merges, and Lite windows run
+by path). Reach other worktrees by absolute path (`git -C <path>` or subprocess
+cwd). Never `cd` a session shell to a directory that is not a checkout, because
+every hook then refuses every command; if stranded, resume the session from a
+checkout.
 
 The main coordinator model and reasoning remain the user's and host's choice.
 Decision 0083 routes native roles by work: Luna/max handles routine
@@ -395,10 +400,9 @@ roadmap JSON fails the arming step loudly.
 
 ## Concurrency — one worktree and PR per task
 
-Forge hooks resolve the repository from the coordinating session's working
-directory and refuse commands outside a checkout. Reach task and fix worktrees
-by absolute path (`git -C <path>` or subprocess cwd) while the coordinator stays
-in the main worktree. If stranded, resume the session from a checkout.
+Hooks use session cwd: task approval and edits need a task worktree session.
+Coordinate from the primary checkout; reach other worktrees by absolute path.
+Never `cd` the session shell outside a checkout; if stranded, resume there.
 
 Each leaf task owns an isolated worktree, branch, proof set, and PR. A task
 starts from refreshed trunk only after its dependency markers are present;
