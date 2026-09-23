@@ -71,7 +71,7 @@ Rules:
   block without calling it green, and return so Main can run the canonical full
   verifier once in its permissive environment.
 - Forge launches routine implementation, testing, frontend work, refactors,
-  documentation edits, and diagnosed fixes as `gpt-5.6-luna` at `max` reasoning
+  documentation edits, and diagnosed fixes as `gpt-6-luna` at `max` reasoning
   (`harness.yaml`). Difficult diagnosis is the separate Sol/high debugger lane;
   once its root cause is known, return the actual edit to the matching Luna/max
   implementation role. Review fixes reuse that active implementation role. If

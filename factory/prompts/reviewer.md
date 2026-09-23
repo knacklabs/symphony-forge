@@ -13,8 +13,8 @@ sent. The results merge into one immutable selected generation, with the worst
 genuine contract verdict winning (0077). Never hand the review to a nested
 companion job or hand-write findings.
 
-Formal review uses `gpt-5.6-sol` at `high` reasoning. Route fixes back to the
-active `gpt-5.6-sol`/medium implementer and reuse that agent across review loops.
+Formal review uses `gpt-6-sol` at `high` reasoning. Route fixes back to the
+active `gpt-6-luna`/max implementer and reuse that agent across review loops.
 
 A previously selected clean generation may be reused only when the stage's
 stamp-token delta and current reviewed-meaning identity both match. Reviewed
