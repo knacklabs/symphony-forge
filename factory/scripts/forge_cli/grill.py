@@ -269,6 +269,8 @@ def _refuse_a_second_cold_read(base: Path, ledger_id: str, gate: str,
         cold = [row for row in _latest_launch_rows(
             base, ledger_id, since, story=story)
                 if (row.get("launch_status") == "succeeded"
+                    or (row.get("launch_status") == "prepared"
+                        and row.get("transport") == "host-native")
                     or (row.get("launch_status") in {"starting", "running"}
                         and row.get("launch_id") not in dead))]
         if not cold:

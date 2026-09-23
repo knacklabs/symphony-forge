@@ -9242,8 +9242,8 @@ def test_forge_fix_records_luna_max_write_delegation(repo, tmp_path):
     entry = rows[-1]
     assert entry["launch_status"] == "succeeded"
     assert entry["task"] == window["id"]
-    assert entry["model"] == "gpt-6-luna"
-    assert entry["effort"] == "max"
+    assert entry["model"] == "gpt-6-sol"
+    assert entry["effort"] == "medium"
     assert entry["write"] is True
     assert entry["mode"] == "lite"
     active = json.loads((repo / ".factory" / "quickfix.json").read_text())
@@ -9261,7 +9261,7 @@ def test_modes_lite_pins_parse_and_dual_runtime_green(repo):
     sys.path.insert(0, str(repo / "factory" / "scripts"))
     try:
         from forge_cli.delegate import mode_run_config
-        assert mode_run_config(repo, "lite") == ("gpt-6-luna", "max", 5)
+        assert mode_run_config(repo, "lite") == ("gpt-6-sol", "medium", 5)
     finally:
         sys.path.pop(0)
 

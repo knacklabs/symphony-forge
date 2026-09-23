@@ -159,10 +159,11 @@ def test_print_only_reprints_an_undispatched_native_preparation_without_a_new_ro
     assert preview["preparation_id"] == prepared["preparation_id"]
     assert preview["task_name"] == prepared["task_name"]
     assert load_delegations(repo) == rows
-    _draft, retry, _ = _seed_native_plan_grill(
-        repo, tmp_path, monkeypatch, capsys,
-    )
-    assert retry["preparation_id"] != prepared["preparation_id"]
+    # Recovery is the print-only re-show; a second real preparation is still
+    # the second cold read the one-read rule refuses.
+    with pytest.raises(SystemExit):
+        _seed_native_plan_grill(repo, tmp_path, monkeypatch, capsys)
+    assert load_delegations(repo) == rows
 
 
 def test_native_grill_prepares_one_self_contained_griller_descriptor(
