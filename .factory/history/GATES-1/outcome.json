@@ -1,0 +1,5 @@
+{
+  "outcome": "T1-T3 shipped to main (#215 round provenance, #220 launch-row collapse, #226 shared requirements digest). T4 and T5 retired as obsolete: they extended grill-round and manifest machinery that the Lean workflow (PR #229) removes. Closed by owner decision, 2026-09-23.",
+  "recorded_at": "2026-09-23T01:35:07+00:00",
+  "closed_by": "Ravi Kiran Vemula"
+}

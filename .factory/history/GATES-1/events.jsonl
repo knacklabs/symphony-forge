@@ -1,0 +1,84 @@
+{"event": "roadmap-add", "generated_by": "orchestrator", "at": "2026-09-11T17:37:20+00:00", "story": "GATES-1", "detail": "docs/specs/gates-stale-only-on-what-they-read.md"}
+{"event": "intake", "generated_by": "orchestrator", "at": "2026-09-11T17:38:37+00:00", "story": "GATES-1", "detail": "Gates stale only on what they read"}
+{"event": "signal-escalated", "generated_by": "orchestrator", "at": "2026-09-11T18:34:37+00:00", "story": "GATES-1", "detail": "Whether GATES-1's plan may be recorded now that the work is split into four tasks. Two plan reads each asked the plan to specify a mechanism at implementation depth, and there are four distinct mechan"}
+{"event": "plan-human-approved", "generated_by": "human", "at": "2026-09-12T03:31:46+00:00", "story": "GATES-1", "detail": "GATES-1 approved by Ravi"}
+{"event": "plan-approved", "generated_by": "planner-high", "at": "2026-09-12T03:31:52+00:00", "story": "GATES-1", "detail": "plans/active/GATES-1-gates-stale-only-on-what-they-read.md"}
+{"event": "decomposed", "generated_by": "docs-decomposer", "at": "2026-09-12T04:14:07+00:00", "story": "GATES-1", "detail": "4 task(s)"}
+{"event": "implementing", "generated_by": "orchestrator", "at": "2026-09-12T04:14:13+00:00", "story": "GATES-1"}
+{"event": "decomposed", "generated_by": "docs-decomposer", "at": "2026-09-12T04:15:29+00:00", "story": "GATES-1", "detail": "4 task(s)"}
+{"event": "decomposed", "generated_by": "docs-decomposer", "at": "2026-09-12T04:25:03+00:00", "story": "GATES-1", "detail": "4 task(s)"}
+{"event": "decomposed", "generated_by": "docs-decomposer", "at": "2026-09-12T04:34:34+00:00", "story": "GATES-1", "detail": "4 task(s)"}
+{"event": "decomposed", "generated_by": "docs-decomposer", "at": "2026-09-12T05:49:25+00:00", "story": "GATES-1", "detail": "4 task(s)"}
+{"event": "plan-human-approved", "generated_by": "human", "at": "2026-09-12T06:12:49+00:00", "story": "GATES-1", "detail": "GATES-1 approved by Ravi"}
+{"event": "plan-approved", "generated_by": "planner-high", "at": "2026-09-12T06:12:56+00:00", "story": "GATES-1", "detail": "plans/active/GATES-1-gates-stale-only-on-what-they-read.md"}
+{"event": "decomposed", "generated_by": "docs-decomposer", "at": "2026-09-12T06:13:24+00:00", "story": "GATES-1", "detail": "4 task(s)"}
+{"event": "stage-start", "generated_by": "implementer", "at": "2026-09-12T06:50:11+00:00", "story": "GATES-1", "detail": "GATES-1-T1 A question round belongs to its gate and story"}
+{"event": "signal-contradiction", "generated_by": "implementer", "at": "2026-09-12T07:33:28+00:00", "story": "GATES-1", "detail": "The approved plan says the clean main suite has 93 failing node IDs, but a clean clone of current HEAD 8518291 produced 99 (24+25+24+26 across four deterministic node shards); recording either set wit"}
+{"event": "delegated", "generated_by": "orchestrator", "at": "2026-09-12T07:33:41+00:00", "story": "GATES-1", "detail": "GATES-1-T1 (write)"}
+{"event": "signal-resolved", "generated_by": "orchestrator", "at": "2026-09-12T08:43:18+00:00", "story": "GATES-1", "detail": "S-0011-d4d1: Correct catch, and the premise you doubted was itself wrong \u2014 record NEITHER set. The suite is not red at all. Measured sequentially and alone on clean main: 942 passed, 0 failed, 3 skipped. Both 93 a"}
+{"event": "plan-human-approved", "generated_by": "human", "at": "2026-09-12T08:43:26+00:00", "story": "GATES-1", "detail": "GATES-1 approved by Ravi"}
+{"event": "plan-approved", "generated_by": "planner-high", "at": "2026-09-12T08:43:26+00:00", "story": "GATES-1", "detail": "plans/active/GATES-1-gates-stale-only-on-what-they-read.md"}
+{"event": "decomposed", "generated_by": "docs-decomposer", "at": "2026-09-12T08:43:34+00:00", "story": "GATES-1", "detail": "4 task(s)"}
+{"event": "delegated", "generated_by": "orchestrator", "at": "2026-09-12T09:22:32+00:00", "story": "GATES-1", "detail": "GATES-1-T1 (write)"}
+{"event": "verify-failed", "generated_by": "orchestrator", "at": "2026-09-12T09:23:14+00:00", "story": "GATES-1"}
+{"event": "verify-failed", "generated_by": "orchestrator", "at": "2026-09-12T09:55:19+00:00", "story": "GATES-1"}
+{"event": "plan-human-approved", "generated_by": "human", "at": "2026-09-12T10:52:56+00:00", "story": "GATES-1", "detail": "GATES-1 approved by Ravi"}
+{"event": "plan-approved", "generated_by": "planner-high", "at": "2026-09-12T10:52:57+00:00", "story": "GATES-1", "detail": "plans/active/GATES-1-gates-stale-only-on-what-they-read.md"}
+{"event": "decomposed", "generated_by": "docs-decomposer", "at": "2026-09-12T10:53:04+00:00", "story": "GATES-1", "detail": "4 task(s)"}
+{"event": "verify-passed", "generated_by": "orchestrator", "at": "2026-09-12T12:13:43+00:00", "story": "GATES-1"}
+{"event": "tests-automated", "generated_by": "implementer", "at": "2026-09-12T12:15:13+00:00", "story": "GATES-1", "detail": "pass"}
+{"event": "review-performance", "generated_by": "autoreview", "at": "2026-09-12T12:18:32+00:00", "story": "GATES-1"}
+{"event": "review-quality", "generated_by": "autoreview", "at": "2026-09-12T12:18:32+00:00", "story": "GATES-1"}
+{"event": "review-security", "generated_by": "autoreview", "at": "2026-09-12T12:18:32+00:00", "story": "GATES-1"}
+{"event": "decomposed", "generated_by": "docs-decomposer", "at": "2026-09-12T12:54:27+00:00", "story": "GATES-1", "detail": "4 task(s)"}
+{"event": "plan-human-approved", "generated_by": "human", "at": "2026-09-13T05:22:52+00:00", "story": "GATES-1", "detail": "GATES-1 approved by Ravi"}
+{"event": "plan-approved", "generated_by": "planner-high", "at": "2026-09-13T05:22:52+00:00", "story": "GATES-1", "detail": "plans/active/GATES-1-gates-stale-only-on-what-they-read.md"}
+{"event": "stage-reconciled", "generated_by": "orchestrator", "at": "2026-09-13T05:34:04+00:00", "story": "GATES-1", "detail": "GATES-1-T1 adopted as shipped out of band (marker confirmed on trunk, no PR)"}
+{"event": "story-resumed", "generated_by": "orchestrator", "at": "2026-09-13T05:48:32+00:00", "story": "GATES-1", "detail": "1/4 task(s) already shipped"}
+{"event": "decomposed", "generated_by": "docs-decomposer", "at": "2026-09-13T05:48:41+00:00", "story": "GATES-1", "detail": "4 task(s)"}
+{"event": "decomposed", "generated_by": "docs-decomposer", "at": "2026-09-13T05:48:59+00:00", "story": "GATES-1", "detail": "4 task(s)"}
+{"event": "plan-human-approved", "generated_by": "human", "at": "2026-09-13T06:00:03+00:00", "story": "GATES-1", "detail": "GATES-1 approved by Ravi"}
+{"event": "plan-approved", "generated_by": "planner-high", "at": "2026-09-13T06:00:04+00:00", "story": "GATES-1", "detail": "plans/active/GATES-1-gates-stale-only-on-what-they-read.md"}
+{"event": "decomposed", "generated_by": "docs-decomposer", "at": "2026-09-13T06:00:12+00:00", "story": "GATES-1", "detail": "5 task(s)"}
+{"event": "plan-human-approved", "generated_by": "human", "at": "2026-09-13T06:13:53+00:00", "story": "GATES-1", "detail": "GATES-1 approved by Ravi"}
+{"event": "plan-approved", "generated_by": "planner-high", "at": "2026-09-13T06:13:53+00:00", "story": "GATES-1", "detail": "plans/active/GATES-1-gates-stale-only-on-what-they-read.md"}
+{"event": "decomposed", "generated_by": "docs-decomposer", "at": "2026-09-13T06:14:04+00:00", "story": "GATES-1", "detail": "5 task(s)"}
+{"event": "decomposed", "generated_by": "docs-decomposer", "at": "2026-09-13T06:23:47+00:00", "story": "GATES-1", "detail": "5 task(s)"}
+{"event": "plan-human-approved", "generated_by": "human", "at": "2026-09-13T06:23:47+00:00", "story": "GATES-1", "detail": "GATES-1 approved by Ravi"}
+{"event": "plan-approved", "generated_by": "planner-high", "at": "2026-09-13T06:23:47+00:00", "story": "GATES-1", "detail": "plans/active/GATES-1-gates-stale-only-on-what-they-read.md"}
+{"event": "stage-start", "generated_by": "implementer", "at": "2026-09-13T06:47:16+00:00", "story": "GATES-1", "detail": "GATES-1-T2 Both grill guards read the ledger the same way"}
+{"event": "delegated", "generated_by": "orchestrator", "at": "2026-09-13T07:22:45+00:00", "story": "GATES-1", "detail": "GATES-1-T2 (write)"}
+{"event": "verify-passed", "generated_by": "orchestrator", "at": "2026-09-13T07:54:33+00:00", "story": "GATES-1"}
+{"event": "tests-automated", "generated_by": "implementer", "at": "2026-09-13T07:55:09+00:00", "story": "GATES-1", "detail": "pass"}
+{"event": "story-resumed", "generated_by": "orchestrator", "at": "2026-09-13T08:49:21+00:00", "story": "GATES-1", "detail": "2/5 task(s) already shipped"}
+{"event": "plan-human-approved", "generated_by": "human", "at": "2026-09-13T14:20:37+00:00", "story": "GATES-1", "detail": "GATES-1 approved by Ravi"}
+{"event": "plan-approved", "generated_by": "planner-high", "at": "2026-09-13T14:20:37+00:00", "story": "GATES-1", "detail": "plans/active/GATES-1-gates-stale-only-on-what-they-read.md"}
+{"event": "decomposed", "generated_by": "docs-decomposer", "at": "2026-09-13T14:20:38+00:00", "story": "GATES-1", "detail": "5 task(s)"}
+{"event": "plan-human-approved", "generated_by": "human", "at": "2026-09-13T16:01:48+00:00", "story": "GATES-1", "detail": "GATES-1 approved by Ravi"}
+{"event": "decomposed", "generated_by": "docs-decomposer", "at": "2026-09-13T16:01:49+00:00", "story": "GATES-1", "detail": "5 task(s)"}
+{"event": "plan-approved", "generated_by": "planner-high", "at": "2026-09-13T16:01:49+00:00", "story": "GATES-1", "detail": "plans/active/GATES-1-gates-stale-only-on-what-they-read.md"}
+{"event": "plan-human-approved", "generated_by": "human", "at": "2026-09-14T06:56:42+00:00", "story": "GATES-1", "detail": "GATES-1 approved by Ravi"}
+{"event": "plan-approved", "generated_by": "planner-high", "at": "2026-09-14T06:56:42+00:00", "story": "GATES-1", "detail": "plans/active/GATES-1-gates-stale-only-on-what-they-read.md"}
+{"event": "decomposed", "generated_by": "docs-decomposer", "at": "2026-09-14T06:56:43+00:00", "story": "GATES-1", "detail": "5 task(s)"}
+{"event": "story-resumed", "generated_by": "orchestrator", "at": "2026-09-14T07:20:28+00:00", "story": "GATES-1", "detail": "2/5 task(s) already shipped"}
+{"event": "decomposed", "generated_by": "docs-decomposer", "at": "2026-09-14T07:20:38+00:00", "story": "GATES-1", "detail": "5 task(s)"}
+{"event": "stage-reconciled", "generated_by": "orchestrator", "at": "2026-09-14T07:23:48+00:00", "story": "GATES-1", "detail": "GATES-1-T2 adopted as shipped out of band (marker confirmed on trunk, no PR)"}
+{"event": "decomposed", "generated_by": "docs-decomposer", "at": "2026-09-14T07:25:25+00:00", "story": "GATES-1", "detail": "5 task(s)"}
+{"event": "story-resumed", "generated_by": "orchestrator", "at": "2026-09-14T07:43:49+00:00", "story": "GATES-1", "detail": "2/5 task(s) already shipped"}
+{"event": "stage-start", "generated_by": "implementer", "at": "2026-09-14T07:44:33+00:00", "story": "GATES-1", "detail": "GATES-1-T3 The requirements gate joins the one definition of product"}
+{"event": "delegated", "generated_by": "orchestrator", "at": "2026-09-14T08:08:58+00:00", "story": "GATES-1", "detail": "GATES-1-T3 (write)"}
+{"event": "verify-passed", "generated_by": "orchestrator", "at": "2026-09-14T08:44:46+00:00", "story": "GATES-1"}
+{"event": "tests-automated", "generated_by": "implementer", "at": "2026-09-14T08:45:38+00:00", "story": "GATES-1", "detail": "pass"}
+{"event": "tests-automated", "generated_by": "implementer", "at": "2026-09-14T09:14:16+00:00", "story": "GATES-1", "detail": "pass"}
+{"event": "tests-automated", "generated_by": "implementer", "at": "2026-09-14T09:35:09+00:00", "story": "GATES-1", "detail": "pass"}
+{"event": "review-stage-local", "generated_by": "autoreview", "at": "2026-09-14T09:36:53+00:00", "story": "GATES-1", "detail": "GATES-1-T3"}
+{"event": "tests-automated", "generated_by": "implementer", "at": "2026-09-14T10:16:00+00:00", "story": "GATES-1", "detail": "pass"}
+{"event": "review-stamp-revoked", "generated_by": "autoreview", "at": "2026-09-14T10:54:22+00:00", "story": "GATES-1", "detail": "GATES-1-T3"}
+{"event": "delegated", "generated_by": "orchestrator", "at": "2026-09-14T11:38:20+00:00", "story": "GATES-1", "detail": "GATES-1-T3 (write)"}
+{"event": "tests-automated", "generated_by": "implementer", "at": "2026-09-14T11:39:11+00:00", "story": "GATES-1", "detail": "pass"}
+{"event": "tests-automated", "generated_by": "implementer", "at": "2026-09-14T12:17:45+00:00", "story": "GATES-1", "detail": "pass"}
+{"event": "review-stage-local", "generated_by": "autoreview", "at": "2026-09-14T12:56:20+00:00", "story": "GATES-1", "detail": "GATES-1-T3"}
+{"event": "verify-passed", "generated_by": "orchestrator", "at": "2026-09-14T13:32:05+00:00", "story": "GATES-1"}
+{"event": "tests-automated", "generated_by": "implementer", "at": "2026-09-14T13:32:49+00:00", "story": "GATES-1", "detail": "pass"}
+{"event": "tests-automated", "generated_by": "implementer", "at": "2026-09-14T14:12:11+00:00", "story": "GATES-1", "detail": "passed"}
+{"event": "review-stage-local", "generated_by": "autoreview", "at": "2026-09-14T14:51:13+00:00", "story": "GATES-1", "detail": "GATES-1-T3"}

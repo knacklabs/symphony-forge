@@ -987,16 +987,19 @@
         "A named set of generated forge invocations in next-step text parses against the real command grammar"
       ],
       "order": 47,
-      "status": "active",
+      "status": "done",
       "epic": "accountable-engineering",
       "skill": "backend",
       "kind": "refactor",
       "depends_on": [],
-      "spec": "docs/specs/gates-stale-only-on-what-they-read.md"
+      "spec": "docs/specs/gates-stale-only-on-what-they-read.md",
+      "completed_at": "2026-09-23T01:35:07+00:00",
+      "history": ".factory/history/GATES-1/",
+      "outcome": "T1-T3 shipped to main (#215 round provenance, #220 launch-row collapse, #226 shared requirements digest). T4 and T5 retired as obsolete: they extended grill-round and manifest machinery that the Lean workflow (PR #229) removes. Closed by owner decision, 2026-09-23."
     }
   ],
   "generated_by": "human",
-  "updated_at": "2026-09-16T08:04:45+00:00",
+  "updated_at": "2026-09-23T01:35:07+00:00",
   "epics": [
     {
       "id": "symphony-forge",
