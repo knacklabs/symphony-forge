@@ -3509,7 +3509,7 @@ def require_grill(
                 stale.append(f"{rel} (uncommitted)")
     if stale:
         advice = (
-            "Commit it, then run `forge grill run` again."
+            f"Commit it, then run `forge grill run --gate {gate}` again."
             if any("(uncommitted)" in entry for entry in stale)
             else "Re-run the grill against the current docs."
         )

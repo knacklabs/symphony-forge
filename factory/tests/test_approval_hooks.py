@@ -810,7 +810,7 @@ def test_claude_approval_refusal_reports_uncommitted_decision(repo: Path):
 
     message = str(refused.value)
     assert decision.relative_to(repo).as_posix() in message
-    assert "commit it, then run `forge grill run` again" in message.lower()
+    assert "commit it, then run `forge grill run --gate plan` again" in message.lower()
 
 
 def test_codex_approval_refuses_non_list_options_without_raising_type_error(repo):

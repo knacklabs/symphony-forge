@@ -1,0 +1,78 @@
+{
+  "event": "done",
+  "id": "Q-0198-5f57",
+  "profile": "lite",
+  "by": "Ravi Kiran Vemula",
+  "reason": "Verified review gap group g7-approval for task LEAN-FIXES (owner: fix P1/P2 now, parallel)",
+  "base_sha": "fd1c6740b1d083ad8beccd5e52f8b3f88d6eb9d7",
+  "started_at": "2026-09-23T17:22:26+00:00",
+  "completed_at": "2026-09-23T19:11:48+00:00",
+  "files": [
+    "factory/scripts/factory_lib.py",
+    "factory/scripts/forge_cli/approval.py",
+    "factory/tests/test_approval_hooks.py"
+  ],
+  "reviews": {
+    "quality": {
+      "generated_by": "autoreview",
+      "score": 10,
+      "summary": "quality lens over Q-0198-5f57 (3 product path(s), fd1c674..b4a4797, Codex via the autoreview skill): 0 blocking, 0 non-blocking. The change preserves approval refusal behavior and adds a useful stale-grill reason. The supplied diff and readable call paths show no actionable correctness defect; no task-specific plan contracts apply.",
+      "blocking_findings": [],
+      "non_blocking_findings": [],
+      "recommendation": "approve",
+      "reviewed_scope": [
+        "factory/scripts/factory_lib.py",
+        "factory/scripts/forge_cli/approval.py",
+        "factory/tests/test_approval_hooks.py"
+      ],
+      "skills_used": [],
+      "contract_verdicts": [],
+      "review_base_sha": "fd1c6740b1d083ad8beccd5e52f8b3f88d6eb9d7",
+      "branch_diff_digest": "1535e852deab9d6969c82cb5d9fa547f9691f7bcad11584f94a82789353ee3c7",
+      "commit": "b4a4797646297ce797ef4c487015a46fbd720296",
+      "aspect": "quality",
+      "residual_risks": [],
+      "recorded_at": "2026-09-23T19:10:43+00:00"
+    },
+    "performance": {
+      "generated_by": "autoreview",
+      "score": 10,
+      "summary": "performance lens over Q-0198-5f57 (3 product path(s), fd1c674..b4a4797, Codex via the autoreview skill): 0 blocking, 0 non-blocking. The extra candidate lookup occurs only when approval finds no eligible candidates. No material performance risk is evident.",
+      "blocking_findings": [],
+      "non_blocking_findings": [],
+      "recommendation": "approve",
+      "reviewed_scope": [
+        "factory/scripts/factory_lib.py",
+        "factory/scripts/forge_cli/approval.py",
+        "factory/tests/test_approval_hooks.py"
+      ],
+      "skills_used": [],
+      "review_base_sha": "fd1c6740b1d083ad8beccd5e52f8b3f88d6eb9d7",
+      "branch_diff_digest": "1535e852deab9d6969c82cb5d9fa547f9691f7bcad11584f94a82789353ee3c7",
+      "commit": "b4a4797646297ce797ef4c487015a46fbd720296",
+      "aspect": "performance",
+      "residual_risks": [],
+      "recorded_at": "2026-09-23T19:10:44+00:00"
+    },
+    "security": {
+      "generated_by": "autoreview",
+      "score": 10,
+      "summary": "security lens over Q-0198-5f57 (3 product path(s), fd1c674..b4a4797, Codex via the autoreview skill): 0 blocking, 0 non-blocking. The approval gate remains fail-closed, and the change does not add an authorization path. No concrete security defect is evident.",
+      "blocking_findings": [],
+      "non_blocking_findings": [],
+      "recommendation": "approve",
+      "reviewed_scope": [
+        "factory/scripts/factory_lib.py",
+        "factory/scripts/forge_cli/approval.py",
+        "factory/tests/test_approval_hooks.py"
+      ],
+      "skills_used": [],
+      "review_base_sha": "fd1c6740b1d083ad8beccd5e52f8b3f88d6eb9d7",
+      "branch_diff_digest": "1535e852deab9d6969c82cb5d9fa547f9691f7bcad11584f94a82789353ee3c7",
+      "commit": "b4a4797646297ce797ef4c487015a46fbd720296",
+      "aspect": "security",
+      "residual_risks": [],
+      "recorded_at": "2026-09-23T19:10:44+00:00"
+    }
+  }
+}
