@@ -1,0 +1,12 @@
+{
+  "event": "open",
+  "id": "Q-0199-c999",
+  "profile": "lite",
+  "reason": "Record that the coordinating session runs from the primary checkout (owner direction)",
+  "started_at": "2026-09-23T18:24:07+00:00",
+  "max_files": 5,
+  "files": [],
+  "harness_source": true,
+  "by": "Ravi Kiran Vemula",
+  "base_sha": "9a2fdb3155258ece40227f07043ebbd0d7100b82"
+}
