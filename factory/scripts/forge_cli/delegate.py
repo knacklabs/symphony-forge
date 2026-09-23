@@ -1809,7 +1809,7 @@ def _context_prompt_limit(runtime: str, component: Path | None) -> int | None:
     except (OSError, UnicodeError):
         return None
     match = re.search(r"\bMAX_PROMPT_BYTES\s*=\s*([1-9][0-9]*)\b", source)
-    return int(match.group(1)) if match else None
+    return int(match.group(1)) if match else CONTEXT_PROMPT_MAX_BYTES
 
 
 def _framed_context(context_text: str) -> str:

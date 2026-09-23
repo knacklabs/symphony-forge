@@ -42,6 +42,7 @@ pino-*.log
 # Factory runtime outputs
 .factory/tool-history.jsonl
 .factory/*.tmp.json
+.factory/quickfix.json
 # forge 0025: briefs and the delegation mirror are read from disk, never from git
 .factory/briefs/
 .factory/diagnostic-briefs/
