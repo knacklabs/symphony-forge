@@ -92,6 +92,7 @@ def test_the_stamp_goes_stale_on_exactly_a_product_change(repo, tmp_path):
     assert not stamp_is_fresh(repo, _stage(repo), task_for(repo, "T1"))
     code, out = run(repo, "forge.py", "stage", "done", "T1")
     assert code != 0 and "STALE stage-local review stamp" in out, out
+    assert "the product diff changed since the review read it" in out
     assert "task close T1" in out
 
 
@@ -553,6 +554,73 @@ def test_task_close_is_the_single_full_suite_owner_and_records_truthful_automate
     ))
 
     assert reviewed["done"] is True
+    assert stage["status"] == "done"
+
+
+def test_task_close_reruns_review_for_clean_selection_with_stale_meaning(
+        repo, monkeypatch):
+    import factory_lib
+    from forge_cli import close, delegate, review, stages, tasks
+
+    task = {**STAGE_TASK, "verify_commands": ["canonical verify"]}
+    stage = {"id": "T1", "status": "active", "started_at": "now"}
+    delta_id = "d" * 64
+    generation = {
+        "origin": "combined", "input": {"sha256": "old", "bytes": 3},
+        "delta_id": delta_id,
+    }
+    (repo / ".factory" / "run.json").write_text(
+        json.dumps({"issue_key": "ENG-1"}), encoding="utf-8",
+    )
+    monkeypatch.setattr(review, "_product_dirty", lambda _base: [])
+    monkeypatch.setattr(close, "load_json", lambda *_args, **_kwargs: {
+        "issue_key": "ENG-1",
+    })
+    monkeypatch.setattr(close, "task_seal_shared_problems", lambda *_args: [])
+    monkeypatch.setattr(stages, "task_for", lambda *_args: task)
+    monkeypatch.setattr(stages, "load_stages", lambda _base: {"stages": [stage]})
+    monkeypatch.setattr(stages, "stage_review_binding", lambda *_args: {
+        "delta_id": delta_id,
+    })
+    monkeypatch.setattr(stages, "_measure", lambda *_args: {"strays": []})
+    monkeypatch.setattr(stages, "_require_successful_launch", lambda *_args: "")
+    monkeypatch.setattr(stages, "stamp_is_fresh", lambda *_args: False)
+    monkeypatch.setattr(stages, "reviewed_meaning_identity", lambda *_args: {
+        "accepted_inputs": [{"sha256": "new", "bytes": 3}],
+    })
+    monkeypatch.setattr(stages, "stamp_stage_review", lambda *_args, **_kwargs: pytest.fail(
+        "close tried to restamp a selection with stale reviewed meaning",
+    ))
+    monkeypatch.setattr(delegate, "load_delegations", lambda _base: [])
+    monkeypatch.setattr(
+        delegate, "delegation_exclusion",
+        lambda *_args, **_kwargs: contextlib.nullcontext(),
+    )
+    monkeypatch.setattr(stages, "run_stage_proof", lambda *_args, **_kwargs: ({}, {}, []))
+    monkeypatch.setattr(close, "_commit_task_proof", lambda *_args, **_kwargs: ({}, {}, []))
+    monkeypatch.setattr(close, "task_proof_problems", lambda *_args, **_kwargs: [])
+    monkeypatch.setattr(factory_lib, "selected_review_problems", lambda *_args: [])
+    monkeypatch.setattr(
+        factory_lib, "read_selected_review_generation",
+        lambda *_args, **kwargs: (
+            generation, {"generation_id": "g"},
+            [] if kwargs.get("expected_delta_id") == delta_id else ["wrong delta"],
+        ),
+    )
+    reviewed = []
+    monkeypatch.setattr(review, "review_task", lambda *_args, **_kwargs: (
+        reviewed.append(True) or {"blocking": 0}
+    ))
+    monkeypatch.setattr(
+        stages, "_finish_stage", lambda *_args, **_kwargs: stage.update(status="done"),
+    )
+    monkeypatch.setattr(tasks, "seal_task", lambda *_args: None)
+
+    close.cmd_task_close(Namespace(
+        repo=str(repo), id="T1", engine="codex", max_priority="P3", skill=None,
+    ))
+
+    assert reviewed == [True]
     assert stage["status"] == "done"
 
 

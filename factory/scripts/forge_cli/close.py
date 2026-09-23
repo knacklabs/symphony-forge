@@ -88,7 +88,7 @@ def cmd_task_close(args: argparse.Namespace) -> None:
     from .stages import (
         _find, _finish_stage, _measure, _require_successful_launch,
         load_stages, reopen_stage_for_review_fix,
-        run_stage_proof, stamp_is_fresh, task_for,
+        run_stage_proof, selected_meaning_current, stamp_is_fresh, task_for,
     )
     from .tasks import seal_task
     from .delegate import delegation_exclusion, load_delegations
@@ -159,14 +159,30 @@ def cmd_task_close(args: argparse.Namespace) -> None:
         if not stamp_is_fresh(base, stage, task):
             from factory_lib import selected_review_problems
             if story and not selected_review_problems(base, story, task_id, delta_id):
+                from factory_lib import read_selected_review_generation
                 from .stages import stamp_stage_review
-                with delegation_exclusion(base, task_id, kind="review-selection"):
-                    if selected_review_problems(base, story, task_id, delta_id):
-                        fail("selected review changed before its stamp could be restored")
-                    stamp_stage_review(
-                        base, task_id, lenses=("quality", "performance", "security"),
-                    )
-                stage = _find(load_stages(base), task_id)
+                generation, _selection, generation_problems = read_selected_review_generation(
+                    base, story, task_id, expected_delta_id=delta_id,
+                )
+                if (not generation_problems and isinstance(generation, dict)
+                        and selected_meaning_current(base, stage, task, generation)):
+                    with delegation_exclusion(base, task_id, kind="review-selection"):
+                        if selected_review_problems(base, story, task_id, delta_id):
+                            fail("selected review changed before its stamp could be restored")
+                        generation, _selection, generation_problems = (
+                            read_selected_review_generation(
+                                base, story, task_id, expected_delta_id=delta_id,
+                            )
+                        )
+                        if (not generation_problems and isinstance(generation, dict)
+                                and selected_meaning_current(
+                                    base, stage, task, generation,
+                                )):
+                            stamp_stage_review(
+                                base, task_id,
+                                lenses=("quality", "performance", "security"),
+                            )
+                            stage = _find(load_stages(base), task_id)
         if not stamp_is_fresh(base, stage, task):
             outcome = review_task(
                 base, task_id, engine=getattr(args, "engine", "codex"),

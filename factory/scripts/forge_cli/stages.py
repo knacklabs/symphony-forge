@@ -1192,12 +1192,25 @@ def reviewed_meaning_identity(
     }
 
 
+def selected_meaning_current(
+        base: Path, stage: dict, task: dict, generation: dict, *,
+        meaning: dict | None = None,
+) -> bool:
+    """Does a selected combined review still bind the current meaning?"""
+    if generation.get("origin") not in {"combined", "rejection"}:
+        return True
+    current = meaning or reviewed_meaning_identity(
+        base, stage, task, generation.get("helper"),
+    )
+    return generation.get("input") in current["accepted_inputs"]
+
+
 def require_current_review_meaning(
         base: Path, stage: dict, task: dict, generation: dict,
 ) -> dict:
     """Require the immutable prompt hash to bind the meaning being published."""
     meaning = reviewed_meaning_identity(base, stage, task, generation.get("helper"))
-    if generation.get("input") not in meaning["accepted_inputs"]:
+    if not selected_meaning_current(base, stage, task, generation, meaning=meaning):
         fail("review generation input does not match the current reviewed meaning; "
              "run a fresh review before publishing or stamping")
     return meaning
@@ -1225,7 +1238,9 @@ def stamp_is_fresh(base: Path, stage: dict, task: dict) -> bool:
         return False
     if generation.get("origin") in {"combined", "rejection"}:
         meaning = reviewed_meaning_identity(base, stage, task, generation.get("helper"))
-        if (generation.get("input") not in meaning["accepted_inputs"]
+        if (not selected_meaning_current(
+                    base, stage, task, generation, meaning=meaning,
+                )
                 or stamp.get("reviewed_meaning") != meaning["semantic_identity"]):
             return False
     return True
@@ -1299,8 +1314,35 @@ def _require_reviewed_commit(base: Path, stage: dict, task: dict) -> None:
              f"stamps the stage -- or `forge task close {stage_id}`, which runs "
              "the review only when the diff has moved, then closes and seals.")
     if not stamp_is_fresh(base, stage, task):
-        fail(f"{stage_id} has a STALE stage-local review stamp: the product diff "
-             "changed since the review read it. Commit the final tree and run "
+        meaning_changed = False
+        if stamp.get("delta_id") == stage_review_binding(base, stage, task)["delta_id"]:
+            from factory_lib import active_story_key, read_selected_review_generation
+            story = active_story_key(base)
+            generation, _selection, problems = read_selected_review_generation(
+                base, story, str(stage_id or ""),
+                expected_delta_id=str(stamp.get("delta_id") or ""),
+            ) if story else (None, None, ["no active story"])
+            if (not problems and isinstance(generation, dict)
+                    and generation.get("origin") in {"combined", "rejection"}):
+                meaning = reviewed_meaning_identity(
+                    base, stage, task, generation.get("helper"),
+                )
+                meaning_changed = (
+                    not selected_meaning_current(
+                        base, stage, task, generation, meaning=meaning,
+                    ) or stamp.get("reviewed_meaning") != meaning["semantic_identity"]
+                )
+        reason = (
+            "the reviewed meaning changed while the product diff stayed the same"
+            if meaning_changed else
+            "the product diff changed since the review read it"
+        )
+        if meaning_changed:
+            fail(f"{stage_id} has a STALE stage-local review stamp: {reason}. Run "
+                 f"`forge task close {stage_id}` to review the current meaning, or "
+                 f"`forge review {stage_id}` then retry.")
+        fail(f"{stage_id} has a STALE stage-local review stamp: {reason}. Commit "
+             "the final tree and run "
              f"`forge task close {stage_id}` (it re-reviews exactly the new diff, "
              f"reopening a done stage itself), or `forge review {stage_id}` then retry.")
     product_dirt = sorted(product_tree_snapshot(base)["dirty"])
@@ -4473,6 +4515,11 @@ def reopen_stage_for_review_fix(base: Path, stage_id: str) -> dict:
         if target.get("status") != "done":
             fail(f"task {stage_id} is '{target.get('status')}', not done -- a review "
                  "fix reopens a stage that closed clean and then failed its review")
+        state = load_json(run_state_path(base), default={})
+        story = str(data.get("issue") or state.get("issue_key")
+                    or state.get("story") or "")
+        from .tasks import _require_unshipped
+        _require_unshipped(base, story, stage_id)
         later = [st.get("id") for st in stages[idx + 1:]
                  if st.get("status") in ("done", "active")]
         if later:
@@ -4488,8 +4535,6 @@ def reopen_stage_for_review_fix(base: Path, stage_id: str) -> dict:
         # stage seals again, the brief and the pre-seal proof check read the
         # task's inputs from the current tree, not from that marker's commit
         # (the seal refused every resealed task otherwise, 2026-09-15).
-        story = str(data.get("issue") or "") or str(
-            load_json(run_state_path(base), default={}).get("issue_key") or "")
         marker = None
         if story:
             try:
