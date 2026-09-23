@@ -1,0 +1,12 @@
+{
+  "event": "open",
+  "id": "Q-0197-2f7f",
+  "profile": "lite",
+  "reason": "Owner asked to fix process gaps found in this session (group e-process), adopted by task LEAN-FIXES",
+  "started_at": "2026-09-23T16:43:17+00:00",
+  "max_files": 5,
+  "files": [],
+  "harness_source": true,
+  "by": "Ravi Kiran Vemula",
+  "base_sha": "e70937276721371d1d7cd597ba8b32a2a9a62334"
+}
