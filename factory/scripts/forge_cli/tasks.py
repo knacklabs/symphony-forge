@@ -610,10 +610,7 @@ def seal_task(base: Path, task_id: str) -> None:
     )
     same_seal = False
     if product_unchanged:
-        proof_problems = task_proof_problems(base, key, task)
-        if proof_problems:
-            fail("Task proof changed after its marker:\n- " + "\n- ".join(proof_problems))
-        same_seal = True
+        same_seal = not task_proof_problems(base, key, task)
     if same_seal:
         commit = reusable["commit"]
         print(f"Task {args.id} already sealed at {commit[:12]}; the product "
