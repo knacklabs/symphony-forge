@@ -22603,10 +22603,10 @@ def test_canonical_junit_satisfies_exact_required_nodes_without_selector_rerun(
     })
     monkeypatch.setattr(stages, "_proof_receipt", lambda *_args: {})
     monkeypatch.setattr(stages, "_store_proof_receipt", lambda *_args: None)
-    monkeypatch.setattr(
-        stages, "product_tree_snapshot",
-        lambda _base: {"tracked": {"src/test_core.py": "fixture"}, "dirty": {}},
-    )
+    # The real product tree, not a one-file stub: canonical reuse binds every
+    # module the canonical run can import to the product tree, and the
+    # dependency probe runs for real, so a stubbed tree made every genuine
+    # import in this fixture look unbound and the canonical proof unreusable.
     monkeypatch.setattr(stages, "protected_authority_snapshot", lambda _base: {})
 
     def canonical(_base, _stage_id, _task, report):
@@ -22661,10 +22661,10 @@ def test_canonical_partial_parameterized_report_falls_back_to_required_selector(
     })
     monkeypatch.setattr(stages, "_proof_receipt", lambda *_args: {})
     monkeypatch.setattr(stages, "_store_proof_receipt", lambda *_args: None)
-    monkeypatch.setattr(
-        stages, "product_tree_snapshot",
-        lambda _base: {"tracked": {"src/test_core.py": "fixture"}, "dirty": {}},
-    )
+    # The real product tree, not a one-file stub: canonical reuse binds every
+    # module the canonical run can import to the product tree, and the
+    # dependency probe runs for real, so a stubbed tree made every genuine
+    # import in this fixture look unbound and the canonical proof unreusable.
     monkeypatch.setattr(stages, "protected_authority_snapshot", lambda _base: {})
 
     def partial_canonical(_base, _stage, _task, report):
