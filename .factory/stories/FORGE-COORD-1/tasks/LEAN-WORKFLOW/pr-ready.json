@@ -1,0 +1,8 @@
+{
+  "task_id": "LEAN-WORKFLOW",
+  "branch": "feat/FORGE-COORD-1-LEAN-WORKFLOW",
+  "base_main_sha": "9e08774ba4973f54d0b2805f6f84b633eb2c31ff",
+  "commit": "26ec58ee",
+  "sealed_at": "2026-09-23T16:01:31+00:00",
+  "reconciled": true
+}

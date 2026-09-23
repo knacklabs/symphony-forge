@@ -10,7 +10,7 @@
     {
       "id": "LEAN-WORKFLOW",
       "title": "One brief and one complete independent review",
-      "status": "active",
+      "status": "done",
       "updated_at": "2026-09-23T05:32:42+00:00",
       "started_at": "2026-09-23T05:33:03+00:00",
       "base_sha": "9e08774ba4973f54d0b2805f6f84b633eb2c31ff",
@@ -8185,7 +8185,8 @@
           "status": "passed",
           "recorded_at": "2026-09-23T15:18:46+00:00"
         }
-      }
+      },
+      "completed_at": "2026-09-23T16:01:31+00:00"
     },
     {
       "id": "PORTABLE-DELIVERY-MIGRATION",
