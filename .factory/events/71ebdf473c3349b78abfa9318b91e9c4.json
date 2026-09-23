@@ -1,0 +1,1 @@
+{"event": "signal-scope-change", "generated_by": "implementer", "at": "2026-09-23T13:28:49+00:00", "story": "FORGE-COORD-1", "detail": "Merge ce34b1f2 imports PR #242 board tests but keeps Lean board.py; StateHub test fails, and factory/scripts/forge_cli/board.py plus its new test are outside LEAN-WORKFLOW write scope. Need an approve"}

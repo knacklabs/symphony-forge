@@ -1,0 +1,1 @@
+{"event": "signal-resolved", "generated_by": "orchestrator", "at": "2026-09-23T13:29:05+00:00", "story": "FORGE-COORD-1", "detail": "S-0054-50b9: Not a scope change. factory/scripts/forge_cli/board.py IS in the LEAN-WORKFLOW write scope (task-plan write-scope list; rounds 1 and 3 edited it under this scope). The merge with main already imported"}
