@@ -178,6 +178,41 @@ def test_reconcile_refuses_active_task_with_scoped_changes_off_trunk(repo, tmp_p
                for p in problems), problems
 
 
+def test_reconcile_refuses_revert_to_pre_branch_point_content(repo, tmp_path):
+    from forge_cli.stages import load_stages, write_stages
+
+    _two_task_story(repo, tmp_path)
+    base = git(repo, "rev-parse", "origin/main")
+    trunk = tmp_path / "revert-trunk"
+    git(repo, "worktree", "add", "-q", "--detach", str(trunk), base)
+    source = trunk / "src" / "core.py"
+    pre_branch_point_content = "print('pre-branch-point content')\n"
+    source.write_text(pre_branch_point_content)
+    git(trunk, "add", "src/core.py")
+    git(trunk, "commit", "-qm", "record prior scoped content")
+    source.write_text("print('branch-point content')\n")
+    git(trunk, "add", "src/core.py")
+    git(trunk, "commit", "-qm", "advance trunk branch point")
+    git(trunk, "push", "-q", "origin", "HEAD:main")
+    git(repo, "worktree", "remove", "-f", str(trunk))
+    git(repo, "fetch", "origin", "main")
+    git(repo, "checkout", "-q", "-b", "feat/ENG-1-T1", "origin/main")
+
+    stages = load_stages(repo)
+    stages["stages"][0]["status"] = "active"
+    write_stages(repo, stages)
+    source = repo / "src" / "core.py"
+    source.write_text(pre_branch_point_content)
+    git(repo, "add", "src/core.py")
+    git(repo, "commit", "-qm", "revert scoped file to prior content")
+
+    code, out = run(repo, "forge.py", "task", "reconcile", "T1")
+
+    assert code != 0, out
+    assert "scoped changes" in out
+    assert not (repo / task_marker_path("ENG-1", "T1")).exists()
+
+
 def test_reconcile_accepts_merged_task_with_later_trunk_edit(repo, tmp_path):
     from forge_cli.stages import load_stages, write_stages
 

@@ -43,7 +43,7 @@ def _require_git(
 
 def _scoped_changes_are_on_trunk(
         base: Path, trunk_ref: str, write_scope: list[str]) -> bool:
-    """Check each task-changed path against the trunk's path history."""
+    """Check each task-changed path against trunk commits since its branch point."""
     def path_object(revision: str, path: str) -> str | None:
         resolved = _git(base, "rev-parse", f"{revision}:{path}")
         if resolved.returncode != 0:
@@ -59,9 +59,10 @@ def _scoped_changes_are_on_trunk(
     merge_base = _git(base, "merge-base", trunk_ref, "HEAD")
     if merge_base.returncode != 0:
         return False
+    merge_base_sha = merge_base.stdout.strip()
     changed = _git(
         base, "diff", "--name-only", "--no-renames", "-z",
-        f"{merge_base.stdout.strip()}..HEAD", "--", *write_scope,
+        f"{merge_base_sha}..HEAD", "--", *write_scope,
     )
     if changed.returncode != 0:
         return False
@@ -69,7 +70,9 @@ def _scoped_changes_are_on_trunk(
     paths = [path for path in changed.stdout.split("\0") if path]
     for path in paths:
         task_object = path_object("HEAD", path)
-        history = _git(base, "rev-list", trunk_ref, "--", path)
+        history = _git(
+            base, "rev-list", f"{merge_base_sha}..{trunk_ref}", "--", path,
+        )
         if history.returncode != 0:
             return False
         matched = False
