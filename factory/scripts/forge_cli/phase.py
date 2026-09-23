@@ -471,10 +471,23 @@ def cmd_next(args: argparse.Namespace) -> None:
             )
     elif state.get("plan_status") == "awaiting-approval":
         phase("awaiting native plan approval")
-        steps.append(
-            f"[dev] Display the exact saved plan bytes at {state.get('plan_file')} "
-            "in native Plan Mode. The successful native approval event advances it."
-        )
+        plan_file = str(state.get("plan_file") or "")
+        if plan_file and (base / plan_file).is_file():
+            digest = plan_digest_without_assumptions(base / plan_file)
+            question_id = f"approve_plan_{digest}"
+            question = f"Approve exact plan digest {digest}?"
+            steps.append(
+                f"[dev] Display the exact saved plan bytes at {plan_file} "
+                f"(Semantic digest: {digest}) in native Plan Mode. For Codex "
+                f'request_user_input use id="{question_id}", header="Approve plan", '
+                f'question="{question}". The successful native approval event advances it.'
+            )
+        else:
+            missing = plan_file or "(empty path)"
+            steps.append(
+                f"[dev] The saved plan file at {missing} is missing; restore it "
+                "before requesting native approval."
+            )
     elif state.get("plan_status") != "approved":
         phase("planning")
         issue = state.get("issue_key")

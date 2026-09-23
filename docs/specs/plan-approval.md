@@ -37,8 +37,8 @@ The shared recorder derives exactly one eligible current-frontier candidate:
   `tool_input.plan` bytes produce the displayed current semantic digest.
 - Codex accepts only a completed synchronous `request_user_input` whose single
   question uses id `approve_plan_<digest>`, prompt `Approve exact plan digest
-  <digest>?`, the exact ordered choices `Approve plan`, `Request changes`, and
-  `Stop`, and whose id-keyed answer is `Approve plan`.
+  <digest>?`, header `Approve plan`, the exact ordered choices `Approve plan`,
+  `Request changes`, and `Stop`, and whose id-keyed answer is `Approve plan`.
 - Each event binds runtime, stable session and event identity, plan kind, story,
   task, and current semantic plan digest. Attribution is
   `human-via-Claude` or `human-via-Codex`; Forge invents no display name.

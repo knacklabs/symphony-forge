@@ -131,11 +131,14 @@ def cmd_save(args: argparse.Namespace) -> None:
     item = next((i for i in roadmap_items if i.get("key") == story), None)
     if item is None:
         fail(f"--story {story!r} is not in plans/roadmap.json")
+    if story != issue:
+        fail(f"plan save refused: --story must match --issue ({issue!r}); "
+             "intake owns the issue/story key used by downstream stages.")
     # Capture is not build authorization: `roadmap add --no-spec` exists so an
     # ad-hoc ask is visible rather than smuggled in, and this is where that debt
     # comes due — decision 0014 still governs what may be BUILT. Stories from
     # the PM handoff (`roadmap import`) are unaffected; only the escape hatch is.
-    elif item.get("spec_debt_reason") and not item.get("spec"):
+    if item.get("spec_debt_reason") and not item.get("spec"):
         fail(f"{story} was captured without a spec ({item['spec_debt_reason']}) — "
              "capture is not authorization (decision 0014). Draft and confirm the "
              f"capability spec, then: ./forge roadmap link-spec {story} "
@@ -188,7 +191,6 @@ def cmd_save(args: argparse.Namespace) -> None:
     status = "awaiting-approval"
     title = args.title or state.get("title") or issue
     dest_dir = base / "plans" / "active"
-    dest_dir.mkdir(parents=True, exist_ok=True)
     dest = dest_dir / f"{issue}-{slugify(title)}.md"
     decisions = "\n".join(f"  - {decision}" for decision in sorted(reviewed))
     decisions_value = f"\n{decisions}" if decisions else " []"
@@ -197,19 +199,28 @@ def cmd_save(args: argparse.Namespace) -> None:
         f"saved: {now_iso()}\nstory: {story}\n"
         f"decisions_reviewed:{decisions_value}\n---\n"
     )
+    if factory_lib._plan_body_digest_bytes((header + body).encode("utf-8")) \
+            != plan_digest_without_assumptions(source):
+        fail("plan save refused: frontmatter must use the canonical Forge save "
+             "form, with decisions_reviewed as a block list (one `- <id>` per "
+             "line), so the saved plan retains the semantic digest.")
+    dest_dir.mkdir(parents=True, exist_ok=True)
     dest.write_text(header + body, encoding="utf-8")
     if state:
         state["plan_status"] = status
-        # Keep the evidence/grill namespace in the run state when an explicit
-        # issue is supplied; the roadmap story may intentionally be different.
         state["issue_key"] = issue
         state["plan_file"] = dest.relative_to(base).as_posix()
         state["story"] = story
         state.pop("approved_plan_sha256", None)
         state["updated_at"] = now_iso()
         dump_json(run_state_path(base), state)
+    semantic_digest = plan_digest_without_assumptions(dest)
+    question_id = f"approve_plan_{semantic_digest}"
+    question = f"Approve exact plan digest {semantic_digest}?"
     print(
         f"Plan saved to {dest.relative_to(base)} (plan_status: awaiting-approval). "
+        f"Semantic digest: {semantic_digest}. Codex request_user_input: "
+        f'id="{question_id}", header="Approve plan", question="{question}". '
         "Display these exact bytes in native Plan Mode; successful native "
         "approval records and advances this plan automatically."
     )
