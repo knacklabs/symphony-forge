@@ -237,14 +237,48 @@ def _proven_tasks(base: Path, key: str, tasks: list[dict],
     if shipped or not total or not key:
         return {"done": total if shipped else 0, "total": total}
     from factory_lib import task_proof_problems
-    done = 0
-    for task in tasks:
+
+    def compute() -> int:
+        done = 0
+        for task in tasks:
+            try:
+                if not task_proof_problems(base, key, task):
+                    done += 1
+            except (Exception, SystemExit):
+                continue
+        return done
+
+    # The predicate runs ~15 git subprocesses per task and was 84% of an
+    # /api/state build (17 s on a 30-story repo). Its inputs are the story's
+    # records, git's refs and the linked worktrees' HEADs, so reuse the count
+    # until one of them moves.
+    task_ids = tuple(str(task.get("id")) for task in tasks)
+    try:
+        records = fscache.tree_stamp(story_dir(base, key))
+    except ValueError:
+        return {"done": compute(), "total": total}
+    stamp = (_git_stamp(base), records, task_ids)
+    return {"done": fscache.cached(f"proven:{base}:{key}", stamp, compute),
+            "total": total}
+
+
+def _git_stamp(base: Path) -> tuple:
+    """What moves when a commit, checkout, fetch or worktree commit lands.
+    Stamped at the COMMON git dir: in a linked worktree `.git` is a file."""
+    git = base / ".git"
+    if not git.is_dir():
         try:
-            if not task_proof_problems(base, key, task):
-                done += 1
+            from factory_lib import git_control_dir
+            git = git_control_dir(base).parent
         except (Exception, SystemExit):
-            continue
-    return {"done": done, "total": total}
+            return ("<no-git>", time.monotonic())  # never reuse
+    return (
+        fscache.file_stamp(git / "HEAD"),
+        fscache.file_stamp(git / "index"),
+        fscache.file_stamp(git / "packed-refs"),
+        fscache.tree_stamp(git / "refs"),
+        fscache.tree_stamp(git / "worktrees"),
+    )
 
 
 def _plan_evidence(
@@ -1231,6 +1265,85 @@ def _record_plan_views(root: Path, key: str, detail: dict | None) -> None:
         pass
 
 
+class StateHub:
+    """The board's state, built off the request path and pushed when it moves.
+
+    Building `/api/state` takes seconds on a real repo (tens on a cold one), and
+    the board used to build it inside every poll, so every viewer waited on it
+    every 10-20 s. Now one thread owns the build: requests are served the last
+    snapshot instantly (with an ETag, gzipped), and a watcher rebuilds when the
+    repo's cheap fingerprint changes -- or every REFRESH_S regardless, for what
+    a stat cannot see (a Codex job's progress in a linked worktree, a fetch
+    TTL). A rebuild that changes the content bumps the version and wakes every
+    `/api/events` stream, so an open board repaints within a couple of seconds
+    of a change instead of on its next poll.
+    """
+
+    WATCH_S = 2.0
+    REFRESH_S = 20.0
+
+    def __init__(self, root: Path, build=None) -> None:
+        self.root = root
+        self.build = build or aggregate_state
+        self.changed = threading.Condition()
+        self.version = 0
+        self.etag = ""
+        self.body = b""
+        self.gzipped = b""
+        self.built_at = 0.0
+        self.stamp: tuple | None = None
+        self._building = threading.Lock()
+
+    def fingerprint(self) -> tuple:
+        return (_next_actions_stamp(self.root), _git_stamp(self.root))
+
+    def refresh(self) -> bool:
+        """Rebuild once; True when the content changed. Serialised: a second
+        caller waits for the running build instead of starting another."""
+        import gzip
+        import hashlib
+
+        with self._building:
+            stamp = self.fingerprint()
+            state = self.build(self.root)
+            content = {k: v for k, v in state.items() if k != "generated_at"}
+            etag = '"' + hashlib.sha1(
+                json.dumps(content, sort_keys=True).encode()).hexdigest()[:20] + '"'
+            self.stamp, self.built_at = stamp, time.monotonic()
+            if etag == self.etag:
+                return False
+            body = json.dumps(state).encode()
+            with self.changed:
+                self.body, self.gzipped, self.etag = body, gzip.compress(body, 5), etag
+                self.version += 1
+                self.changed.notify_all()
+            return True
+
+    def current(self) -> tuple[str, bytes, bytes]:
+        # Read-your-writes: when the repo's fingerprint has moved (a record,
+        # a plan, a commit), this request waits for the rebuild rather than
+        # showing the change a couple of seconds late. Unchanged -- nearly
+        # every poll -- it is the stored snapshot, no build at all.
+        if not self.body or self.fingerprint() != self.stamp:
+            self.refresh()
+        return self.etag, self.body, self.gzipped
+
+    def watch(self) -> None:
+        while self.root.is_dir():
+            try:
+                due = time.monotonic() - self.built_at >= self.REFRESH_S
+                if due or self.fingerprint() != self.stamp:
+                    self.refresh()
+            except (Exception, SystemExit):
+                pass
+            time.sleep(self.WATCH_S)
+
+    def wait_for_change(self, seen: int, timeout: float) -> int:
+        with self.changed:
+            self.changed.wait_for(lambda: self.version != seen, timeout=timeout)
+            return self.version
+
+
 def make_server(base: Path, port: int) -> ThreadingHTTPServer:
     root = base.resolve()
     # This process is the read-only board: it re-renders every few seconds, and
@@ -1265,13 +1378,90 @@ def make_server(base: Path, port: int) -> ThreadingHTTPServer:
     threading.Thread(target=keep_trunk_fresh, name="board-trunk-refresh",
                      daemon=True).start()
 
+    hub = StateHub(root)
+    threading.Thread(target=hub.watch, name="board-state-watch", daemon=True).start()
+
+    def prewarm_contributors() -> None:
+        try:
+            from .contributors import contributors
+            contributors(root)
+        except (Exception, SystemExit):
+            pass
+
+    threading.Thread(target=prewarm_contributors, name="board-contributors",
+                     daemon=True).start()
+
     class BoardHandler(BaseHTTPRequestHandler):
+        # Keep-alive: one connection per viewer instead of one per request.
+        protocol_version = "HTTP/1.1"
+
+        def _send(self, status: int, body: bytes, content_type: str, *,
+                  etag: str = "", gzipped: bytes = b"") -> None:
+            if etag and etag in (self.headers.get("If-None-Match") or ""):
+                self.send_response(304)
+                self.send_header("ETag", etag)
+                self.send_header("Content-Length", "0")
+                self.end_headers()
+                return
+            if "gzip" in (self.headers.get("Accept-Encoding") or ""):
+                import gzip
+                body = gzipped or gzip.compress(body, 5)
+                encoded = True
+            else:
+                encoded = False
+            self.send_response(status)
+            self.send_header("Content-Type", content_type)
+            self.send_header("Content-Length", str(len(body)))
+            if encoded:
+                self.send_header("Content-Encoding", "gzip")
+            if etag:
+                self.send_header("ETag", etag)
+            # Revalidate every time (ETag makes that a 304), never reuse blind.
+            self.send_header("Cache-Control", "no-cache")
+            self.end_headers()
+            self.wfile.write(body)
+
+        def _events(self) -> None:
+            """Server-Sent Events: one `state` line per new snapshot version.
+            The client refetches /api/state on each. A `ping` event every 15 s
+            tells the page the stream is still live, and a dropped stream is
+            reconnected by the browser's EventSource on its own."""
+            self.send_response(200)
+            self.send_header("Content-Type", "text/event-stream")
+            self.send_header("Cache-Control", "no-cache")
+            self.send_header("Connection", "close")
+            self.end_headers()
+            self.close_connection = True
+            seen = hub.version
+            try:
+                self.wfile.write(f"event: state\ndata: {hub.etag}\n\n".encode())
+                self.wfile.flush()
+                while root.is_dir():
+                    version = hub.wait_for_change(seen, timeout=15.0)
+                    if version != seen:
+                        seen = version
+                        self.wfile.write(f"event: state\ndata: {hub.etag}\n\n".encode())
+                    else:
+                        self.wfile.write(b": keep-alive\n\n")
+                    self.wfile.flush()
+            except (OSError, ValueError):
+                return  # the viewer closed the tab
+
         def do_GET(self) -> None:  # noqa: N802 - stdlib handler API
             route = urlsplit(self.path).path
+            json_type = "application/json; charset=utf-8"
             if route == "/api/state":
-                body = json.dumps(aggregate_state(root)).encode()
-                content_type = "application/json; charset=utf-8"
-                status = 200
+                etag, body, gzipped = hub.current()
+                self._send(200, body, json_type, etag=etag, gzipped=gzipped)
+            elif route == "/api/events":
+                self._events()
+            elif route == "/api/root":
+                # Cheap identity probe for `already_serving`: it must not wait
+                # on a state build.
+                self._send(200, json.dumps({"root": str(root)}).encode(), json_type)
+            elif route == "/api/contributors":
+                from .contributors import contributors_json
+                self._send(200, contributors_json(root), json_type)
             elif route.startswith("/api/story/"):
                 key = unquote(route[len("/api/story/"):])
                 detail = story_detail(root, key)
@@ -1284,28 +1474,20 @@ def make_server(base: Path, port: int) -> ThreadingHTTPServer:
                 # reader.
                 _record_plan_views(root, key, detail)
                 body = json.dumps(detail or {"error": "unknown story"}).encode()
-                content_type = "application/json; charset=utf-8"
-                status = 200 if detail else 404
+                self._send(200 if detail else 404, body, json_type)
             elif route == "/":
-                body = (root / "factory" / "board" / "index.html").read_bytes()
-                content_type = "text/html; charset=utf-8"
-                status = 200
+                page = root / "factory" / "board" / "index.html"
+                stamp = fscache.file_stamp(page)
+                etag = f'"{stamp[0]:x}-{stamp[1]:x}"' if stamp else ""
+                self._send(200, page.read_bytes(), "text/html; charset=utf-8", etag=etag)
             else:
-                body = b"Not found\n"
-                content_type = "text/plain; charset=utf-8"
-                status = 404
-            self.send_response(status)
-            self.send_header("Content-Type", content_type)
-            self.send_header("Content-Length", str(len(body)))
-            self.send_header("Cache-Control", "no-store")
-            self.end_headers()
-            self.wfile.write(body)
+                self._send(404, b"Not found\n", "text/plain; charset=utf-8")
 
         def log_message(self, format: str, *args: object) -> None:
             return
 
-    # ponytail: stdlib server + polling, no websockets/framework — upgrade
-    # only if multiple simultaneous viewers ever matter.
+    # ponytail: stdlib server + SSE, no websockets/framework — the push is one
+    # way (server -> board), which is exactly what EventSource is for.
     return ThreadingHTTPServer(("127.0.0.1", port), BoardHandler)
 
 
@@ -1330,8 +1512,13 @@ def already_serving(port: int, root: Path | None = None) -> bool:
     import urllib.error
     import urllib.request
     try:
-        with urllib.request.urlopen(f"http://127.0.0.1:{port}/api/state", timeout=1) as r:
-            served = json.loads(r.read()).get("root")
+        try:
+            with urllib.request.urlopen(f"http://127.0.0.1:{port}/api/root", timeout=1) as r:
+                served = json.loads(r.read()).get("root")
+        except urllib.error.HTTPError:
+            # A board from before /api/root: fall back to the old probe.
+            with urllib.request.urlopen(f"http://127.0.0.1:{port}/api/state", timeout=5) as r:
+                served = json.loads(r.read()).get("root")
         if served is None:
             return False
         if root is None:
