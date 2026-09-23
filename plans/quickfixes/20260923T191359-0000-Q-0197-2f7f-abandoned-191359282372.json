@@ -1,0 +1,16 @@
+{
+  "event": "abandoned",
+  "id": "Q-0197-2f7f",
+  "profile": "lite",
+  "reason": "Window predates the current review format (its Lite review cannot be recorded); the same change is re-run as its own window on the current base",
+  "opened_reason": "Owner asked to fix process gaps found in this session (group e-process), adopted by task LEAN-FIXES",
+  "started_at": "2026-09-23T16:43:17+00:00",
+  "completed_at": "2026-09-23T19:13:59+00:00",
+  "files": [
+    "factory/scripts/forge_cli/delegate.py",
+    "factory/scripts/forge_cli/tasks.py",
+    "factory/tests/test_gates.py"
+  ],
+  "by": "Ravi Kiran Vemula",
+  "base_sha": "e70937276721371d1d7cd597ba8b32a2a9a62334"
+}
