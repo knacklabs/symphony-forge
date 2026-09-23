@@ -80,7 +80,7 @@ The native host owns subagent lifecycle. Forge adds no process/session/PID regis
 Native role routing follows Decision 0080. The user and host choose the main
 coordinator model and reasoning; routine implementation, automated tests,
 diagnosed or review fixes, documentation edits, and mechanical refactors use
-Luna/max; read-heavy exploration and dependency tracing use Terra/high; and
+Luna/max; read-heavy exploration and dependency tracing use Sol/medium; and
 planning, decomposition, difficult diagnosis, independent grills, and final
 functional checks use Sol/high. A difficult diagnosis returns its resolved edit
 to Luna/max. Formal code review remains exclusively the unchanged, externally

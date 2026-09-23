@@ -8,7 +8,7 @@ directory to first feature PR.
 
 The user and host choose the main coordinator model and reasoning. Native role
 routing uses Luna/max for routine implementation, automated tests, diagnosed or
-review fixes, documentation edits, and mechanical refactors; Terra/high for
+review fixes, documentation edits, and mechanical refactors; Sol/medium for
 read-heavy exploration and dependency tracing; and Sol/high for planning,
 decomposition, difficult diagnosis, independent grills, and final functional
 checks. Formal code review remains exclusively the unchanged, externally
@@ -260,7 +260,7 @@ stories may also advance in parallel. Story evidence ships in place under
    PLAN MODE (shift+tab). While the task is unplanned, the hook blocks
    product-code edits and writing Codex delegation, so there is no way to
    "just start coding". Plan per `factory/prompts/planner.md`. Claude delegates
-   read-heavy exploration via the Terra/high `explorer` role (read-only); raw
+   read-heavy exploration via the Sol/medium `explorer` role (read-only); raw
    `codex exec` is blocked. Native Codex spawns the configured Sol/high
    `planner-high` role without a model or reasoning override. New decisions get
    records. **Before approval, one independent cold grill is mandatory** — say:

@@ -22,7 +22,7 @@ The user and host select the main coordinator model and reasoning. Native
 dispatch passes no model or reasoning override; the selected configured role's
 defaults apply. Decision 0080 routes routine implementation, automated tests,
 diagnosed or review fixes, documentation edits, and mechanical refactors to
-Luna/max; read-heavy exploration and dependency tracing to Terra/high; and
+Luna/max; read-heavy exploration and dependency tracing to Sol/medium; and
 planning, decomposition, difficult diagnosis, independent grills, and final
 functional checks to Sol/high. A difficult diagnosis returns its resolved edit
 to Luna/max. Formal code review stays exclusively with the unchanged,
@@ -132,7 +132,7 @@ or route:
 |---|---|
 | discovery/prototype | gstack `/office-hours` for the discovery conversation; prototype freely |
 | roadmap missing | confirm captured specs, run the project-level decomposition (`factory/prompts/decomposer.md`), then `./forge roadmap derive --input <json>` |
-| planning | Plan per `factory/prompts/planner.md`. Native Codex spawns the configured Sol/high `planner-high` role without model/reasoning overrides; Claude delegates read-heavy exploration via the Terra/high `explorer` lane and validation/architecture with Sol/high, read-only — never Claude Code itself, never raw `codex exec` |
+| planning | Plan per `factory/prompts/planner.md`. Native Codex spawns the configured Sol/high `planner-high` role without model/reasoning overrides; Claude delegates read-heavy exploration via the Sol/medium `explorer` lane and validation/architecture with Sol/high, read-only — never Claude Code itself, never raw `codex exec` |
 | decomposing | run docs-decomposer per task, record with `record_decomposition_from_json.py` (schema incl. `user_facing`) |
 | implementing | Follow the one frontier action printed by `./forge next`: enter plan mode and author/re-record the JIT contract; run the task griller; `forge stage start`; or `forge delegate`. In native Codex, send the complete prepared descriptor and context metadata in the actual `spawn_agent` message to the named role, without model/reasoning overrides. The implementer writes and records the tests; user-facing tasks MUST load + attest emil-design-eng + frontend-design in `skills_used` (recorder-enforced; harness.yaml `required_skills`) |
 | verifying | For an active task, use its existing `./forge task close <id>` owner; do not start a competing or standalone full verifier. |
