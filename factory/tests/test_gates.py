@@ -15324,6 +15324,121 @@ def test_decomposition_refuses_to_rewrite_a_completed_task_contract(repo, tmp_pa
     assert code != 0 and "full contract" in out
 
 
+def reapprove_story_plan(repo: Path) -> str:
+    state = run_state(repo)
+    plan = repo / state["plan_file"]
+    plan.write_text(
+        plan.read_text(encoding="utf-8") + "\nApproved story amendment.\n",
+        encoding="utf-8",
+    )
+    digest = plan_digest_without_assumptions(plan)
+    code, out = run(repo, "forge.py", "next")
+    assert code == 0 and "awaiting amended-plan approval" in out, out
+    code, out = post_hook(repo, native_claude_approval(repo))
+    assert code == 0, out
+    assert run_state(repo)["approved_plan_sha256"] == digest
+    return digest
+
+
+def test_decomposition_graph_change_requires_story_reapproval(repo, tmp_path):
+    sign_off(repo)
+    intake(repo)
+    save_plan(repo, tmp_path)
+    record_skeleton_then_frontier(repo, [STAGE_TASK])
+    approved_digest = run_state(repo)["approved_plan_sha256"]
+    changed = {
+        **DECOMP,
+        "plan_sha256": approved_digest,
+        "tasks": [STAGE_TASK, skeletal_stage_task("T2", "follow-up")],
+    }
+    code, out = run(
+        repo, "record_decomposition_from_json.py", stdin=json.dumps(changed))
+    assert code != 0 and "task graph is frozen" in out
+
+
+def test_reapproved_decomposition_can_append_after_a_done_task(repo, tmp_path):
+    start_stage(repo, tmp_path, STAGE_TASK)
+    write_in_scope(repo, "src/core.py")
+    stamp_and_commit(repo)
+    code, out = run(repo, "forge.py", "stage", "done", "T1")
+    assert code == 0, out
+
+    digest = reapprove_story_plan(repo)
+    follow_up = skeletal_stage_task("T2", "follow-up")
+    tasks = [STAGE_TASK, follow_up]
+    unbound = {**DECOMP, "tasks": tasks}
+    code, out = run(
+        repo, "record_decomposition_from_json.py", stdin=json.dumps(unbound))
+    assert code != 0 and "task graph is frozen" in out
+
+    rebound = {**unbound, "plan_sha256": digest}
+    code, out = run(
+        repo, "record_decomposition_from_json.py", stdin=json.dumps(rebound))
+    assert code == 0, out
+    recorded = json.loads((story_state(repo) / "decomposition.json").read_text())
+    assert recorded["plan_sha256"] == digest
+    assert [task["id"] for task in recorded["tasks"]] == ["T1", "T2"]
+
+
+def test_reapproval_cannot_change_completed_task_graph(repo, tmp_path):
+    follow_up = skeletal_stage_task("T2", "second slice")
+    start_stage(repo, tmp_path, STAGE_TASK, future_tasks=[follow_up])
+    write_in_scope(repo, "src/core.py")
+    stamp_and_commit(repo)
+    code, out = run(repo, "forge.py", "stage", "done", "T1")
+    assert code == 0, out
+
+    second = task_with_plan_contracts({
+        **STAGE_TASK,
+        "id": "T2",
+        "title": "second slice",
+        "write_scope": ["src/ui/"],
+        "objective": "Build the second bounded slice.",
+        "acceptance_criteria": ["the second slice runs green"],
+    }, "T2-C")
+    tasks = [STAGE_TASK, second]
+    code, out = run(
+        repo, "record_decomposition_from_json.py",
+        stdin=json.dumps({**DECOMP, "tasks": tasks}),
+    )
+    assert code == 0, out
+    code, out = record_task_grill(repo, second)
+    assert code == 0, out
+    code, out = run(repo, "forge.py", "stage", "start", "T2", "--trunk")
+    assert code == 0, out
+    launch_fake(repo, tmp_path, "T2")
+    write_in_scope(repo, "src/ui/list.py")
+    stamp_and_commit(repo, "src/ui/list.py")
+    code, out = run(repo, "forge.py", "stage", "done", "T2")
+    assert code == 0, out
+
+    digest = reapprove_story_plan(repo)
+    renamed = {**STAGE_TASK, "id": "T3"}
+    changed_contract = {
+        **STAGE_TASK,
+        "acceptance_criteria": ["a rewritten completed contract"],
+    }
+    cases = [
+        ([renamed, second], "task graph is frozen"),
+        ([STAGE_TASK], "task graph is frozen"),
+        ([second, STAGE_TASK], "task graph is frozen"),
+        ([STAGE_TASK, {**second, "dependencies": ["T1"]}],
+         "task graph is frozen"),
+        ([changed_contract, second], "full contract"),
+    ]
+    for changed_tasks, expected in cases:
+        changed = {
+            **DECOMP,
+            "plan_sha256": digest,
+            "tasks": changed_tasks,
+        }
+        code, out = run(
+            repo, "record_decomposition_from_json.py",
+            stdin=json.dumps(changed),
+        )
+        assert code != 0 and expected in out
+
+
 def test_decomposition_backfills_unchanged_legacy_completed_contract(
         repo, tmp_path):
     follow_up = skeletal_stage_task("T2", "follow-up")

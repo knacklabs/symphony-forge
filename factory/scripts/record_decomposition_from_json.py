@@ -517,9 +517,32 @@ with delegation_exclusion(
             task for task in prior_decomposition.get("tasks") or []
             if isinstance(task, dict)
         ]
-        # Approval freezes the complete ID/order/dependency graph. Contract
-        # detail may be enriched JIT, but graph changes require a new plan.
-        if _task_graph(tasks) != _task_graph(prior_task_list):
+        graph_changed = _task_graph(tasks) != _task_graph(prior_task_list)
+        done_task_ids = {
+            task_id for task_id, status in stage_statuses.items()
+            if status == "done"
+        }
+        prior_done_tasks = [
+            task for task in prior_task_list
+            if task.get("id") in done_task_ids
+        ]
+        current_done_tasks = [
+            task for task in tasks
+            if task.get("id") in done_task_ids
+        ]
+        done_graph_unchanged = (
+            len(prior_done_tasks) == len(done_task_ids)
+            and len(current_done_tasks) == len(done_task_ids)
+            and _task_graph(prior_done_tasks) == _task_graph(current_done_tasks)
+        )
+        graph_reapproved = (
+            prior_decomposition.get("plan_sha256") != approved_sha256
+            and prior_decomposition.get("plan_sha256") in reapproval_predecessors
+            and supplied_plan_sha256 == approved_sha256
+        )
+        # A changed graph needs an authenticated native reapproval bound by the
+        # payload. Completed tasks keep their IDs, order, and dependencies.
+        if graph_changed and not (graph_reapproved and done_graph_unchanged):
             raise SystemExit(
                 "decomposition task graph is frozen after approval: task ids, "
                 "order, dependencies, and task count cannot change; amend and "
