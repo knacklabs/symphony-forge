@@ -19,6 +19,7 @@ coordinator's job through the ledger-matched recorder, exactly as before.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import re
 import uuid
 from pathlib import Path
@@ -337,6 +338,12 @@ def cmd_grill_run(args: argparse.Namespace) -> None:
                 _latest_launch_rows(base, ledger_id, since, story=story))
                 if row.get("transport") == "host-native"
                 and row.get("launch_status") == "prepared"), None)
+        if prepared_for_preview and (
+                prepared_for_preview.get("brief_sha256")
+                != hashlib.sha256(text.encode("utf-8")).hexdigest()
+                or prepared_for_preview.get("task_sha256")
+                != _artifact_digest(artifact)):
+            fail("prepared cold-read input changed; the recorded preparation cannot be reused")
         native_task_name = str(
             (prepared_for_preview or {}).get("task_name")
             or f"{ledger_id}-cold-{uuid.uuid4().hex[:12]}"

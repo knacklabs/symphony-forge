@@ -1078,6 +1078,34 @@ def test_authenticated_resume_admits_verified_paths_inside_vendored_tree(
     ) == {"factory/scripts/forge_cli/upgrade.py"}
 
 
+def test_authenticated_resume_matches_finalized_directory_descendant_only_by_identity(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    """Index-only finalizer changes retain the prior descendant identity."""
+    harness = tmp_path / "harness"
+    target = tmp_path / "target"
+    root = target / ".factory/briefs"
+    root.mkdir(parents=True)
+    child = root / "prepared.md"
+    child.write_bytes(b"prepared brief\n")
+    before = upgrade._upgrade_path_identity(root)
+    operation = {
+        "kind": "finalize", "path": ".factory/briefs",
+        "before": before,
+    }
+    monkeypatch.setattr(upgrade, "_upgrade_resume_plan_is_valid", lambda *_args: True)
+    saved = {"upgrade_resume": {"operations": [operation]}}
+    changed = {".factory/briefs/prepared.md"}
+
+    assert upgrade._authenticated_upgrade_resume_paths(
+        target, harness, saved, changed,
+    ) == changed
+
+    child.write_bytes(b"unrelated edit\n")
+    assert upgrade._authenticated_upgrade_resume_paths(
+        target, harness, saved, changed,
+    ) == set()
+
+
 def test_authenticated_resume_preserve_row_overrides_vendored_tree(
         tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     harness = tmp_path / "harness"

@@ -285,6 +285,28 @@ def test_codex_native_narrowed_scope_descends_from_bare_baseline_tree(repo):
     assert "deny" in outside.lower() and "scope" in outside.lower(), outside
 
 
+def test_native_bash_recursive_copy_cannot_escape_exact_scope(repo):
+    task = {**TASK, "write_scope": ["src/approved"]}
+    brief, digest = _seed_contract(repo, task)
+    _record_native_preparation(repo, brief, digest, ["src/approved"])
+    assert not (repo / ".factory" / "quickfix.json").exists()
+
+    admitted = _hook(repo, {
+        "tool_name": "Bash",
+        "permission_mode": "default",
+        "tool_input": {"command": "cp generated src/approved"},
+    }, {"FORGE_COORDINATOR": "codex"})
+    assert "deny" not in admitted.lower(), admitted
+
+    output = _hook(repo, {
+        "tool_name": "Bash",
+        "permission_mode": "default",
+        "tool_input": {"command": "cp -R generated src/approved"},
+    }, {"FORGE_COORDINATOR": "codex"})
+
+    assert "deny" in output.lower() and "recursive" in output.lower(), output
+
+
 @pytest.mark.parametrize(("controls", "write_scope"), [
     (("*** Delete File: outside-link.py",), ["src/old.py"]),
     (("*** Update File: outside-link.py", "*** Move to: src/moved.py",

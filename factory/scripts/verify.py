@@ -150,8 +150,14 @@ def canonical_junit_command(command: str) -> str:
     if any(token == "--junitxml" or token.startswith("--junitxml=")
            for token in tokens):
         return command
-    # Appending preserves assignments, quoting, and path spelling exactly.
-    return command + " -o junit_family=legacy --junitxml=" + shlex.quote(report)
+    options = " -o junit_family=legacy --junitxml=" + shlex.quote(report)
+    # Pytest treats options after -- as positional arguments.
+    if "--" in tokens:
+        terminator = re.search(r"(?<!\S)--(?=\s|$)", command)
+        if terminator:
+            return command[:terminator.start()] + options + " " + command[terminator.start():]
+        return command
+    return command + options
 
 results = []
 all_ok = True

@@ -58,6 +58,16 @@ def _awaiting_story(repo: Path, tmp_path: Path) -> tuple[Path, str]:
     return plan, lib.plan_digest_without_assumptions(plan)
 
 
+def test_saved_plan_routes_directly_to_native_approval_without_second_save(
+        repo: Path, tmp_path: Path):
+    plan, _ = _awaiting_story(repo, tmp_path)
+    code, out = run(repo, "forge.py", "next")
+    assert code == 0, out
+    assert "PHASE: awaiting native plan approval" in out
+    assert f"Display the exact saved plan bytes at {plan.relative_to(repo)}" in out
+    assert "plan save" not in out
+
+
 def test_native_plan_mode_approval_records_exact_digest_for_claude_exit_plan_mode(
         repo: Path, tmp_path: Path):
     plan, digest = _awaiting_story(repo, tmp_path)

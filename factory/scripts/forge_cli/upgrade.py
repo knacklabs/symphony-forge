@@ -3874,9 +3874,30 @@ def _upgrade_resume_operation_matches(
         return not destination.exists() and not destination.is_symlink()
     if kind == "finalize":
         actual = _upgrade_path_identity(destination)
-        return actual == row.get("before") or (
-            isinstance(row.get("after"), dict) and actual == row["after"]
-        )
+        suffix = relative[len(root):].lstrip("/")
+        for recorded in (row.get("before"), row.get("after")):
+            if not isinstance(recorded, dict):
+                continue
+            expected = recorded
+            if suffix:
+                if recorded.get("kind") == "missing":
+                    expected = {"kind": "missing"}
+                elif recorded.get("kind") == "tree":
+                    entries = recorded.get("entries")
+                    if not isinstance(entries, list):
+                        continue
+                    exact = next((entry for entry in entries
+                                  if isinstance(entry, dict)
+                                  and entry.get("path") == suffix), None)
+                    expected = {"kind": "missing"} if exact is None else {
+                        "kind": "file", "bytes": exact.get("bytes"),
+                        "sha256": exact.get("sha256"),
+                    }
+                else:
+                    continue
+            if actual == expected:
+                return True
+        return False
     if kind == "preserve":
         expected = row.get("before")
         return (isinstance(expected, dict)

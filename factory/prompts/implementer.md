@@ -20,8 +20,9 @@ and `forge stage done` after your process exits; do not run those parent-owned
 steps. Signals are how you stop early, not questions.
 As the delegated lead (Sol/medium) you plan and verify; hand the
 edits to `worker`/`coder` subagents (Luna/max), review their diff, and run the
-existing tests of every module touched before you hand off. Never run `forge`
-commands yourself.
+existing tests of every module touched before you hand off. Never run
+parent-owned lifecycle commands (`forge delegate`, `forge next`, or
+`forge task close`) yourself.
 
 Rules:
 - **The constitution's CODING STANDARDS are binding, not just its conduct doc.**
@@ -74,11 +75,11 @@ Rules:
   named focused regression for the correction, report the exact environmental
   block without calling it green, and return so Main can run the canonical full
   verifier once in its permissive environment.
-- Forge launches routine implementation, testing, frontend work, refactors,
-  documentation edits, and diagnosed fixes as `gpt-6-luna` at `max` reasoning
-  (`harness.yaml`). Difficult diagnosis is the separate Sol/high debugger lane;
-  once its root cause is known, return the actual edit to the matching Luna/max
-  implementation role. Review fixes reuse that active implementation role. If
+- Forge launches the delegated lead as `gpt-6-sol` at `medium` (`harness.yaml`);
+  routine implementation, testing, frontend work, refactors, documentation
+  edits, and diagnosed fixes go to `gpt-6-luna` at `max` subagents. Difficult
+  diagnosis is the separate Sol/high debugger lane; once its root cause is
+  known, return the actual edit to the matching Luna/max implementation role. Review fixes reuse that active implementation role. If
   the task turns out not to be bounded, report back instead of changing the
   model or grinding.
 - Keep diffs tight. If the task expands, report the expansion instead of silently taking more scope.

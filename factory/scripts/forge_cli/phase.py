@@ -469,6 +469,12 @@ def cmd_next(args: argparse.Namespace) -> None:
                 "record and consumed event tombstone; only actual changed plan "
                 "bytes route directly to native reapproval."
             )
+    elif state.get("plan_status") == "awaiting-approval":
+        phase("awaiting native plan approval")
+        steps.append(
+            f"[dev] Display the exact saved plan bytes at {state.get('plan_file')} "
+            "in native Plan Mode. The successful native approval event advances it."
+        )
     elif state.get("plan_status") != "approved":
         phase("planning")
         issue = state.get("issue_key")

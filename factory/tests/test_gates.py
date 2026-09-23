@@ -22600,6 +22600,30 @@ def test_verify_canonical_junit_preserves_shell_text_and_captures_direct_pytest(
     assert "test_direct" in report.read_text(encoding="utf-8")
 
 
+def test_verify_canonical_junit_places_options_before_pytest_terminator(
+        repo: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    source = (HARNESS / "factory" / "scripts" / "verify.py").read_text(
+        encoding="utf-8")
+    function = next(node for node in ast.parse(source).body
+                    if isinstance(node, ast.FunctionDef)
+                    and node.name == "canonical_junit_command")
+    namespace = {"Path": Path, "os": os, "re": re, "shlex": shlex}
+    exec(compile(ast.Module(body=[function], type_ignores=[]),
+                 "verify.py", "exec"), namespace)
+    report = tmp_path / "junit report.xml"
+    monkeypatch.setenv("FORGE_CANONICAL_JUNIT", str(report))
+    command = namespace["canonical_junit_command"](
+        "python3 -m pytest -q -- tests/test_direct.py")
+    assert "-o junit_family=legacy" in command.split(" -- ")[0]
+    test_file = repo / "tests" / "test_direct.py"
+    test_file.parent.mkdir(parents=True, exist_ok=True)
+    test_file.write_text("def test_direct():\n    pass\n", encoding="utf-8")
+    result = subprocess.run(command, cwd=repo, shell=True,
+                            capture_output=True, text=True)
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert report.is_file()
+
+
 def test_canonical_junit_satisfies_exact_required_nodes_without_selector_rerun(
         repo, tmp_path, monkeypatch):
     import forge_cli.stages as stages

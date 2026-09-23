@@ -31,6 +31,16 @@ def _flat(text: str) -> str:
     return " ".join(text.split())
 
 
+def test_implementer_prompt_keeps_reporting_commands_available():
+    prompt = (HARNESS / "factory" / "prompts" / "implementer.md").read_text(
+        encoding="utf-8")
+    assert "Never run `forge` commands yourself" not in prompt
+    assert "parent-owned lifecycle commands" in prompt
+    for command in ("forge delegate", "forge next", "forge task close",
+                    "forge.py plan assume", "forge.py signal raise",
+                    "forge.py lesson add"):
+        assert command in prompt
+
 
 # --------------------------------------------------- reading is not blocked
 def test_nothing_actually_prevents_reading_the_repo(repo: Path):

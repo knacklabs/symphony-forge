@@ -621,6 +621,10 @@ OPAQUE_DEGRADED_MSG = (
     "degraded window cannot honestly claim it against its budget. Enumerate the exact "
     "paths, or plan the change where the whole diff is measured."
 )
+OPAQUE_NATIVE_MSG = (
+    "Host-native recursive or globbed product operations cannot be proven "
+    "to stay within the active task scope."
+)
 
 
 def has_opaque_product_write(command: str, root: Path, is_harness: bool) -> bool:
@@ -1113,12 +1117,13 @@ else:
 if native_codex:
     is_degraded = False
     if scoped_targets:
+        if (command and (window or tool_name == "Bash")
+                and has_opaque_product_write(command, root, is_harness)):
+            deny(OPAQUE_DEGRADED_MSG if window else OPAQUE_NATIVE_MSG)
         if window:
             from forge_cli.quickfix import DEGRADED, LITE, profile_of
             profile = profile_of(window)
             is_degraded = profile == DEGRADED or window.get("kind") == DEGRADED
-            if command and has_opaque_product_write(command, root, is_harness):
-                deny(OPAQUE_DEGRADED_MSG)
             if any(_contains_marker(rel) for rel in scoped_targets):
                 deny(MARKER_PLAN_ONLY_MSG)
             if profile == LITE and not is_degraded:

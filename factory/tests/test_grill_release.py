@@ -166,6 +166,29 @@ def test_print_only_reprints_an_undispatched_native_preparation_without_a_new_ro
     assert load_delegations(repo) == rows
 
 
+def test_print_only_refuses_changed_prepared_input_without_overwriting_brief(
+        repo, tmp_path, monkeypatch, capsys):
+    from forge_cli import grill
+
+    draft, prepared, _ = _seed_native_plan_grill(
+        repo, tmp_path, monkeypatch, capsys,
+    )
+    brief_path = repo / prepared["brief_path"]
+    prepared_brief = brief_path.read_bytes()
+    draft.write_text(
+        draft.read_text(encoding="utf-8") + "\nChanged after preparation.\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(SystemExit):
+        grill.cmd_grill_run(argparse.Namespace(
+            repo=str(repo), gate="plan", task="", file=str(draft),
+            context_file="", print_only=True,
+        ))
+
+    assert brief_path.read_bytes() == prepared_brief
+
+
 def test_native_grill_prepares_one_self_contained_griller_descriptor(
         repo, tmp_path, monkeypatch, capsys):
     draft, descriptor, emitted = _seed_native_plan_grill(
