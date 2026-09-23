@@ -628,6 +628,13 @@ def normalized_native_bash_paths(paths: list[str], root: Path) -> list[str] | No
         if not rel or rel == "." or resolved_parent_rel != parent:
             return None
         normalized.append(rel)
+        # A write through a symlink leaf lands on its target: scope both.
+        if lexical.is_symlink():
+            try:
+                normalized.append(
+                    lexical.resolve().relative_to(resolved_root).as_posix())
+            except (OSError, RuntimeError, ValueError):
+                return None
     return normalized
 
 
