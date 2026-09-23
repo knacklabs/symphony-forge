@@ -129,6 +129,63 @@ def test_the_pointer_field_still_wins_inside_a_task_worktree(repo, tmp_path):
     assert run_is_task_level(repo) is True
 
 
+def test_reconcile_refuses_active_task_with_scoped_changes_off_trunk(repo, tmp_path):
+    from forge_cli.stages import load_stages, write_stages
+    from factory_lib import task_proof_problems
+
+    _two_task_story(repo, tmp_path)
+    stages = load_stages(repo)
+    stages["stages"][0]["status"] = "active"
+    write_stages(repo, stages)
+    git(repo, "fetch", "origin", "main")
+    source = repo / "src" / "core.py"
+    source.write_text("print('local work not on trunk')\n")
+    git(repo, "add", "src/core.py")
+    git(repo, "commit", "-qm", "keep scoped work off trunk")
+
+    code, out = run(repo, "forge.py", "task", "reconcile", "T1")
+
+    assert code != 0, out
+    assert "scoped changes" in out
+    marker = repo / task_marker_path("ENG-1", "T1")
+    assert not marker.exists()
+
+    marker.parent.mkdir(parents=True, exist_ok=True)
+    marker.write_text(json.dumps({
+        "task_id": "T1",
+        "branch": git(repo, "symbolic-ref", "--short", "HEAD"),
+        "base_main_sha": git(repo, "rev-parse", "origin/main"),
+        "commit": git(repo, "rev-parse", "HEAD"),
+        "sealed_at": "2026-09-23T00:00:00+00:00",
+        "reconciled": True,
+    }) + "\n")
+    git(repo, "add", marker.relative_to(repo).as_posix())
+    git(repo, "commit", "-qm", "local reconciled marker with off-trunk work")
+    problems = task_proof_problems(repo, "ENG-1", {"id": "T1"})
+    assert any("reconciled marker commit is not an ancestor of origin/main" in p
+               for p in problems), problems
+
+
+def test_reconcile_refuses_active_task_with_empty_write_scope(repo, tmp_path):
+    from factory_lib import protected_decomposition_state_path
+    from forge_cli.stages import load_stages, write_stages
+
+    _two_task_story(repo, tmp_path)
+    stages = load_stages(repo)
+    stages["stages"][0]["status"] = "active"
+    write_stages(repo, stages)
+    decomposition_path = protected_decomposition_state_path(repo)
+    decomposition = json.loads(decomposition_path.read_text())
+    decomposition["tasks"][0]["write_scope"] = []
+    decomposition_path.write_text(json.dumps(decomposition))
+
+    code, out = run(repo, "forge.py", "task", "reconcile", "T1")
+
+    assert code != 0, out
+    assert "has no write_scope" in out
+    assert not (repo / task_marker_path("ENG-1", "T1")).exists()
+
+
 def test_an_adopted_marker_closes_without_proof_and_readopt_makes_one(repo, tmp_path):
     """The PR gate and the frontier already accept a `reconciled` marker without
     proof; closeout must agree, or a story of adopted tasks never closes. And a

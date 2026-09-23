@@ -23518,6 +23518,25 @@ def test_task_proof_refuses_committed_null_marker(repo, tmp_path):
     ]
 
 
+def test_ci_task_proof_reconciled_marker_rejects_product_changes(repo):
+    git(repo, "checkout", "-qb", "feat/reconciled-marker-product")
+    base = head(repo)
+    marker = (repo / ".factory" / "stories" / "ENG-1" / "tasks" / "T1"
+              / "pr-ready.json")
+    marker.parent.mkdir(parents=True)
+    marker.write_text(json.dumps({"reconciled": True, "commit": base}))
+    product = repo / "src" / "reconciled-bypass.py"
+    product.parent.mkdir(exist_ok=True)
+    product.write_text("bypassed = True\n")
+    git(repo, "add", marker.relative_to(repo).as_posix(),
+        product.relative_to(repo).as_posix())
+    git(repo, "commit", "-qm", "add reconciled marker with product change")
+
+    code, out = run(repo, "check_task_proof.py", "--base", base)
+
+    assert code == 1, out
+
+
 def test_task_pr_ready_refuses_changed_evidence_after_marker(
         repo, tmp_path):
     git(repo, "checkout", "-qb", "feat/task-pr-reseal")

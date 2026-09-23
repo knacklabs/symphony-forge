@@ -1072,7 +1072,7 @@ def task_marker_on_main(
                 root, payload, task_id, inspected_head=snapshot):
             return False
         if payload.get("reconciled") is True:
-            return True
+            return _git_is_ancestor(root, payload["commit"], snapshot)
 
         def reader(path: str) -> dict | None:
             return _read_git_json(root, path, snapshot)
@@ -2176,6 +2176,11 @@ def task_proof_problems(
         if marker_problem:
             return [marker_problem]
         if marker_context is not None and marker_context.get("reconciled") is True:
+            trunk = default_trunk_branch(root)
+            if not _git_is_ancestor(
+                    root, marker_context["commit"], f"origin/{trunk}"):
+                return [f"{task_id}: reconciled marker commit is not an ancestor "
+                        f"of origin/{trunk}"]
             return []
         missing_marker = marker_context is None
 
