@@ -686,6 +686,33 @@ def test_claude_approval_accepts_supported_success_statuses(repo: Path, status: 
     assert record["approved_plan_sha256"] == candidate.digest
 
 
+def test_claude_approval_hook_reports_refusal_and_recording(repo: Path):
+    candidate = _story_candidate(repo)
+    event = _event(candidate)
+    event["tool_response"]["status"] = "cancelled"
+
+    code, out = run(repo, "forge.py", "hook", "post_tool_use", stdin=json.dumps(event))
+    context = json.loads(out)["hookSpecificOutput"]["additionalContext"]
+    assert code == 0 and "did NOT record" in context and "unsuccessful" in context
+    assert not candidate.evidence.exists()
+
+    event["tool_response"]["status"] = "success"
+    code, out = run(repo, "forge.py", "hook", "post_tool_use", stdin=json.dumps(event))
+    context = json.loads(out)["hookSpecificOutput"]["additionalContext"]
+    assert code == 0 and f"recorded native story plan approval {candidate.digest}" in context
+
+
+def test_claude_no_argument_exit_plan_mode_approves_from_response(repo: Path):
+    candidate = _story_candidate(repo)
+    event = _event(candidate)
+    plan = event["tool_input"].pop("plan")
+    event["tool_response"] = {"plan": plan, "isAgent": False, "filePath": "/x/plan.md"}
+
+    record = approval.record_native_approval(repo, event, runtime="claude")
+
+    assert record["approved_plan_sha256"] == candidate.digest
+
+
 @pytest.mark.parametrize("location", ["scoped", "archived", "legacy"])
 def test_native_approval_refuses_cross_story_host_event_replay_without_mutation(
         repo: Path, location: str):

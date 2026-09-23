@@ -326,6 +326,10 @@ def _claude_approved(payload: dict[str, Any]) -> str:
         return ""
     tool_input = payload.get("tool_input")
     plan = tool_input.get("plan") if isinstance(tool_input, dict) else None
+    # A no-argument ExitPlanMode call reaches PostToolUse without tool_input.plan;
+    # the approved text is then only in the response.
+    if plan is None:
+        plan = response.get("plan")
     if not isinstance(plan, str) or not plan:
         return ""
     status_value = response.get("status")

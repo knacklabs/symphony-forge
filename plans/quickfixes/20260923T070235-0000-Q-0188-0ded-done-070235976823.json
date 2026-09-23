@@ -1,0 +1,16 @@
+{
+  "event": "done",
+  "id": "Q-0188-0ded",
+  "profile": "degraded",
+  "kind": "degraded",
+  "reason": "native ExitPlanMode approval silently not recorded (post_tool_use swallows refusals); delegation needs that approval, so only the host can make the fix \u2014 make the hook report its outcome",
+  "started_at": "2026-09-23T06:49:09+00:00",
+  "completed_at": "2026-09-23T07:02:35+00:00",
+  "files": [
+    "factory/scripts/post_tool_use.py",
+    "factory/tests/test_approval_hooks.py",
+    "factory/scripts/forge_cli/approval.py"
+  ],
+  "task_id": "LEAN-WORKFLOW",
+  "story": "FORGE-COORD-1"
+}

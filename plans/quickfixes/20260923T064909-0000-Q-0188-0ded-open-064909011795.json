@@ -1,0 +1,13 @@
+{
+  "event": "open",
+  "id": "Q-0188-0ded",
+  "profile": "degraded",
+  "reason": "native ExitPlanMode approval silently not recorded (post_tool_use swallows refusals); delegation needs that approval, so only the host can make the fix \u2014 make the hook report its outcome",
+  "started_at": "2026-09-23T06:49:09+00:00",
+  "max_files": 5,
+  "files": [],
+  "harness_source": true,
+  "kind": "degraded",
+  "task_id": "LEAN-WORKFLOW",
+  "story": "FORGE-COORD-1"
+}
