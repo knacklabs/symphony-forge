@@ -5,7 +5,7 @@ title: Native approval, Lean migration, and one close-owned proof run
 status: draft
 design_review: required
 source_head_observed: 9e08774ba497
-active_decisions_reviewed: "./forge decision list --active, accepted corpus through 0082"
+active_decisions_reviewed: "./forge decision list --active, accepted corpus through 0083"
 ---
 
 ## Problem
@@ -47,7 +47,7 @@ Workers run focused checks only. `forge task close` is the sole final proof owne
 - `--context-file` remains optional for `forge grill run`. When supplied, its no-follow, stable identity, UTF-8/capacity, owner-only POSIX or Windows ACL, snapshot, cleanup, and metadata-only evidence rules are mandatory.
 - Test and verify reuse bind product bytes, exact argv/selectors, runner/interpreter/dependency metadata, pytest and verifier configuration, relevant environment, and generated semantic inputs. Missing, partial, unknown, or drifted identity reruns. Selected review also binds Decision 0066 delta plus current task meaning, automated evidence, review instructions, helper/config, and immutable raw provenance.
 - Lean migration requires clean-target zero-write refusal, no `--force` bypass, independent raw no-follow inventory coverage, exact-once classification, hashes, temporary build, validation, atomic publication/readback, and deletion only after durable output. A validated original empty completion may create one bound `lean-workflow-v2-supplement.json` when later merged history introduces eligible proof; every other unequal/partial retry refuses.
-- Restore proposed historical `0049-per-task-review-proof.md` unchanged. The accepted full-access decision is `0081-full-access-for-forge-managed-codex-chats.md`; `0079` is `a-task-proof-runs-once-per-tree` and `0080` is `native-role-model-routing`, so neither is the full-access destination. Numeric reuse stays forbidden. Retiring decisions Lean supersedes is owner-authorised (Ravi, 2026-09-22) and tracked as its own step, not folded into this task. Model routing moved to GPT-6 on 2026-09-23 (owner-instructed), which accepted Decision 0080 contradicts because it pins GPT-5.6 Luna/Terra/Sol. The superseding authority is `docs/decisions/0083-native-role-model-routing-on-gpt-6.md`, drafted with that change and PROPOSED pending owner acceptance in chat; until it is accepted the tree and 0080 disagree, and that disagreement is named here rather than implied.
+- Restore proposed historical `0049-per-task-review-proof.md` unchanged. The accepted full-access decision is `0081-full-access-for-forge-managed-codex-chats.md`; `0079` is `a-task-proof-runs-once-per-tree` and `0080` is `native-role-model-routing`, so neither is the full-access destination. Numeric reuse stays forbidden. Retiring decisions Lean supersedes is owner-authorised (Ravi, 2026-09-22) and tracked as its own step, not folded into this task. Model routing moved to GPT-6 on 2026-09-23 (owner-instructed), which accepted Decision 0080 contradicts because it pins GPT-5.6 Luna/Terra/Sol. The superseding authority is `docs/decisions/0083-native-role-model-routing-on-gpt-6.md`, ACCEPTED on 2026-09-23 (confirmed by Ravi Kiran Vemula) and marks 0080 superseded, so the tree, the recorded contract and the active decision corpus agree.
 - Current PR-link repair stages `.factory/events/` and backfills only verified merged PR #109/#110 through `forge pr-link`. The effective scope includes the accepted Decision 0081 full-access destination and the conditional Lean supplement manifest.
 
 ## Acceptance Criteria
@@ -76,99 +76,76 @@ Benchmark the identical workload `factory/tests/test_upgrade_lean_workflow.py fa
 
 Profile setup time from the same two baseline runs. Attempt a prepared fixture only if repeated init/scaffold setup consumes at least 25% of wall time. Compare two baseline and two prepared runs, adopt only for at least 10% median improvement with all tests passing, and record the measured predicate, commands, timings, and decision in the same schema-validated automated `tests.json`. Real init, fresh-install, path-boundary, provenance, client-scaffold, and native-platform selectors remain executable in every outcome.
 
-## Current implementation blockers
+## Current state
 
-Measured on 2026-09-22 at HEAD `678f2331`, base `9e08774b`.
+Measured 2026-09-23 at HEAD `a3d130c3`, base `9e08774b`. The full gate suite is
+1437 passed, 0 failed, 4 skipped, and CI is green on every check:
+scaffold-check (full suite), windows-hook-gates, pr-ticket-check, pr-contract and
+roadmap-gate. The 18 failures recorded at the handover are all resolved, and the
+task's five declared verify commands and 55 required selectors pass. No
+implementation work remains before close; what remains is ceremony: grill,
+native approval, stage start, the formal review, the functional check and seal.
 
-The task's five declared verify commands and its 55 required selectors PASS; the
-committed `verify.json` records that at `c8f7128`. The outstanding work is the
-repo-wide gate suite, which is `scaffold-check`'s own step and not a declared
-verify command: `pytest factory/tests -q -n auto --dist worksteal` reports 18
-failed, 1419 passed, 4 skipped. All 18 reproduce at pristine `c2b1b474`, so none
-is caused by the two CI commits on top. They group as:
+The recorded contract was amended on 2026-09-23 through
+`record_decomposition_from_json.py`, the sanctioned path, not by editing the
+rendered block: the objective and AC8 (with its bound plan contract LEAN-AC-8)
+now require the complete Decision 0083 sixteen-role registry instead of "three
+Forge-owned profiles", which the tree, 0083 and the required selector already
+agree on. Without that amendment the formal review would have had to mark AC8
+unmet, and plan-contract blockers cannot be rejected (owner ruling), so the
+review could never pass. The approved story plan still says "three-profile" in
+its narrative; it is superseded on that point by accepted Decision 0083 and the
+amended task contract, and is not re-opened.
 
-- ELEVEN `test_upgrade_*` in `test_gates.py`, ONE root cause.
-  `_persist_prepared_lean_manifest` (`upgrade.py:3022`) calls
-  `validate_payload(target, "lean-workflow-migration", ...)`, which resolves
-  `<target>/factory/schemas/lean-workflow-migration.json`. The target does not
-  carry that schema yet -- installing it is what the upgrade does, and the
-  function's own docstring says it runs "before vendoring mutates the target".
-  Validate against `runtime_source`, already a parameter of that function.
-- TWO canonical JUnit selectors (`dedicated selector reran after canonical
-  proof`): environment identity must match `verify.py` semantics for BLANK
-  phase variables.
-- TWO `test_review_triage.py`: `WORKFLOW.md` lacks "never relays a finding
-  unread".
-- ONE each: `test_review_settled_contracts.py` (locationless contract rejection
-  lineage), `test_close_binds_to_the_diff.py` (scope-bound preparation, exits 1),
-  `test_regrill_scope.py` (native preparation rebind after brief changes).
+The same amendment added four files to the recorded write scope (now 146
+entries), so they are AUTHORISED by the contract rather than merely recorded as
+strays: `factory/scripts/check_agents_hygiene.py` and
+`factory/scripts/forge_cli/context.py` (the scaffold-check repairs),
+`factory/scripts/forge_cli/story.py` (the approval-binding repair `stage start`
+demanded; not Shared's broader resume feature), and
+`factory/scripts/forge_cli/quickfix.py`, which makes degraded mode refuse under a
+Codex coordinator so Codex uses native stage admission and scope. That last one
+belongs to Lean's narrowed-delegation boundary (AC4).
 
-The product delta from base `9e08774b` is 132 files / 32,789 lines (25,383
-added + 7,406 deleted), excluding `.factory/`, `plans/`, `docs/decisions/` and
-`docs/context/ledger.json`. That is exactly the contract's 132-file ceiling and
-over its 28,500-line ceiling. Both are RECORDED NOTES, not refusals
-(`stages.py:1483`); the only hard refusal is a delta above twice the line
-budget, i.e. 57,000.
+AC16 holds by ADOPTION WITH RECORDED EVIDENCE. The 4/6/8 comparison is recorded
+in this task's `tests.json` (medians n4 186.099s, n6 177.336s, n8 153.966s; n8
+17.27% faster, both runs passing, 5.97% apart, inside the 15% limit), the gate
+passed, and the canonical count is `-n 8`. AC16 governs the decision to change
+the worker count, and that decision was taken on the evidence then current; later
+edits to test files do not reopen it. AC17 holds by NON-ADOPTION with its
+predicate recorded (setup share below 25%), and `factory/tests/conftest.py` is
+untouched. Neither criterion has a machine-checkable assertion, because
+`test-automated.json` accepts free-form strings; a benchmark evidence schema is a
+new evidence schema, which this task's scope excludes, and it is carried as a
+follow-up.
 
-AC16 holds by ADOPTION WITH RECORDED EVIDENCE, not by non-adoption. An earlier
-revision of this plan claimed the opposite and was wrong. The 4/6/8 comparison
-was run and is recorded in
-`.factory/stories/FORGE-COORD-1/tasks/LEAN-WORKFLOW/tests.json`: medians n4
-186.099s, n6 177.336s, n8 153.966s. n8 was 17.27% faster than n4, both n8 runs
-passed, and their timings differed by 5.97% of the median, inside the 15%
-repeatability limit. The adoption gate therefore passed and the canonical worker
-count moved to `-n 8`, which is what `.envrc:20` runs today.
-
-AC17 holds by NON-ADOPTION with its predicate recorded: profiled setup share was
-below 25% in both baselines, so no prepared fixture was attempted or adopted, and
-`factory/tests/conftest.py` is untouched on this branch.
-
-What neither criterion has is a MACHINE-CHECKABLE assertion.
-`factory/schemas/test-automated.json` accepts free-form command and summary
-strings, so the recorded medians and the adoption verdict are auditable prose
-rather than something a gate can falsify. Adding a benchmark-shaped evidence
-schema is a real gap, but it is a new evidence schema, which this task's scope
-explicitly excludes; it is carried as a follow-up rather than silently claimed.
-
-Effective write scope is SHORT BY FOUR FILES already changed since base
-`9e08774b`: `factory/scripts/check_agents_hygiene.py`,
-`factory/scripts/forge_cli/context.py`, `factory/scripts/forge_cli/story.py`
-and `factory/scripts/forge_cli/quickfix.py`. The first three are this task's CI
-and resume repairs; `quickfix.py` was already changed on the branch before the
-handover. None appears in the 134 base entries or the 8 recorded amendments, so
-all four are authorised through `./forge stage amend-scope` at `stage done`,
-which is the supported route for measured paths a task touched but did not
-declare. The story plan assigns Shared the broader resume work; this task's
-`story.py` change is the narrow approval-binding repair that `stage start`
-itself demanded, not that feature.
-
-Why this stays ONE bounded implementation and review despite exceeding the
-28,500-line note: the parts are mutually dependent, not merely co-located.
-Native approval, the removal of the formats it replaces, the one-time migration
-of those formats, and the close-owned proof path cannot land separately without
-shipping a half-migrated harness that refuses its own recorded evidence in
-between. The reviewable shape is bounded instead by the 0078 parallel-group
-review, which splits the diff for reading without splitting the change.
+The product delta is 132 files, over the 28,500-line soft budget. That is a
+RECORDED NOTE, not a refusal (`stages.py:1483`); the only hard refusal is above
+twice the line budget. The task stays one bounded implementation because its core
+parts are mutually dependent: native approval, removing the formats it replaces,
+migrating those formats once, and the close-owned proof path cannot land
+separately without shipping a half-migrated harness that refuses its own
+evidence. The smaller separable pieces (PR-link backfill, board copy, the
+benchmark decision) are already implemented and green; splitting them out after
+the fact would add ceremony without adding accuracy. The 0078 parallel-group
+review bounds the reading.
 
 Decision 0082 (`docs/decisions/0082-codex-hook-trust-boundary.md`) is ACCEPTED
-and is the load-bearing trust seam under AC1-AC2: native-approval authenticity
-rests on invocation of the exact hash-approved project hook plus exact digest,
-runtime, session, event, tool, payload, cancellation, replay and candidate
-validation. It does NOT claim signed host attestation, which remains an OpenAI
-host dependency, and it does not exclude synthetic same-user invocation. The
-formal review assesses 0082 against the implementation.
+and is the trust seam under AC1-AC2: native-approval authenticity rests on
+invocation of the exact hash-approved project hook plus exact digest, runtime,
+session, event, tool, payload, cancellation, replay and candidate validation. It
+does NOT claim signed host attestation, and it does not exclude synthetic
+same-user invocation. The formal review assesses 0082 against the implementation.
 
-Reactivation: this branch's git-local control dir is per-worktree and absent in
-a fresh checkout, so `./forge next` routes to GATES-1 and refuses on its retired
-fixed proof. `./forge story resume FORGE-COORD-1` rebuilds the pointer,
-protected decomposition and stage tracker from committed state without
-disturbing GATES-1, and is the supported prerequisite for
-`./forge task close LEAN-WORKFLOW`.
+Reactivation: the git-local control dir is per-worktree; `./forge story resume
+FORGE-COORD-1` rebuilds it from committed state. GATES-1 is now closed and
+archived, so `./forge next` no longer refuses on its retired proof. Sessions must
+start inside the task worktree (WORKFLOW.md Runtime Modes).
 
 ## Verification Plan
 
 1. Implement and run focused regressions for each shared failure cause and AC13-17. Do not run the broad suite during fix iteration.
-2. Run the declared 4/6/8 benchmark and conditional fixture profile; retain `-n 4` and current fixtures unless the numeric adoption gates pass.
+2. The 4/6/8 benchmark already ran and its adoption gate passed, so the canonical count is `-n 8` (`.envrc:20`); do not re-benchmark unless the worker count is being changed again. No prepared fixture is adopted (AC17 predicate recorded).
 3. Commit product changes, then run `./forge task close LEAN-WORKFLOW`. Close owns the only canonical full suite, JUnit/selector proof, truthful automated record, and current review.
 4. The final task approval needs one supported runtime event. The main coordinator records the compact plan through real Claude `ExitPlanMode`; deterministic hook/recorder tests cover the Codex adapter and the other Claude refusal paths. Decision 0053 does not require an unfinished-task coordinator transfer, and no second live approval artifact is invented.
 5. Reverify `gh pr view 109` and `gh pr view 110`, current board completeness, dual-runtime, encoding, and diff checks through declared proof.
@@ -177,7 +154,7 @@ disturbing GATES-1, and is the supported prerequisite for
 ## Manual Verification
 
 1. Run `git merge-base HEAD origin/main` and confirm `9e08774ba4973f54d0b2805f6f84b633eb2c31ff` (origin/main is already contained in this branch); record `git rev-parse HEAD` separately as the task tip.
-2. Inspect the rendered contract for exactly 17 criteria/contracts, 55 required tests, 142 allowed paths (134 base entries plus 8 recorded scope amendments), `user_facing: true`, and the 132-file/28,500-line budget.
+2. Inspect the rendered contract for exactly 17 criteria/contracts, 55 required tests, 146 allowed paths (134 base entries plus 12 recorded scope amendments, the last four added 2026-09-23), `user_facing: true`, and the 132-file/28,500-line budget.
 3. Exercise one accepted and rejected native approval event and confirm only the accepted current digest writes authority with stable runtime/session/event identity.
 4. Print a narrowed exact-file delegation and a full-scope delegation; confirm both briefs assign task-wide proof to close and hooks refuse writes outside the selected scope.
 5. Change one input in each reuse identity family and confirm only the affected proof reruns; missing identity always reruns.
@@ -190,7 +167,7 @@ disturbing GATES-1, and is the supported prerequisite for
 
 Rendered by the harness from the recorded decomposition; edit the decomposition, not this block. It is excluded from the plan's approval and grill digests, so a re-render never stales either.
 
-**Objective.** install recovery PR2 by replacing repeated approval/round ceremony with native approval, one cold grill with complete finding disposition, narrowed delegation, mandatory context-file security, content-bound close reuse in existing stage state, Lean-owned migration/deletion for removed formats including sealed fixed-proof migration, three-profile Forge registry reduction, PR-link workflow repair/backfill, docs/spec/architecture/runtime alignment, and the amended Portable PR3 handoff, plus one close-owned canonical full-suite proof path with exact-identity reuse, canonical JUnit selector proof, measured concurrency, and coverage-preserving fixture optimization.
+**Objective.** install recovery PR2 by replacing repeated approval/round ceremony with native approval, one cold grill with complete finding disposition, narrowed delegation, mandatory context-file security, content-bound close reuse in existing stage state, Lean-owned migration/deletion for removed formats including sealed fixed-proof migration, the complete Decision 0083 role registry, PR-link workflow repair/backfill, docs/spec/architecture/runtime alignment, and the amended Portable PR3 handoff, plus one close-owned canonical full-suite proof path with exact-identity reuse, canonical JUnit selector proof, measured concurrency, and coverage-preserving fixture optimization.
 
 **Acceptance criteria**
 
@@ -201,7 +178,7 @@ Rendered by the harness from the recorded decomposition; edit the decomposition,
 - Content-bound close reuse: test/verify receipts and selected-review reviewed-meaning identity reuse only when their proof-type inputs match; substantive acceptance/security/migration/evidence/review-instruction/product-delta changes force review, while canonicalized bookkeeping/timestamp changes preserve immutable original provenance.
 - Lean migration: `forge upgrade` performs clean-checkout preflight with no `--force` bypass, full inventory/hash/classification, independent raw no-follow coverage over fixed legacy roots/exact parents, temp build, validation, publish/readback, profile/settings preservation, and deletion only after durable current outputs exist. Byte-identical retry passes and unequal partial retry refuses, except that a validated original empty completion may publish one bound `lean-workflow-v2-supplement.json` when later merged history introduces newly eligible proof.
 - Fixed-proof migration: Lean migrates sealed fixed-lens proof once into canonical `origin=upgrade` selected generations with the full sealed-proof safety contract, while active old proof requires a fresh review and normal runtime never uses direct fixed-file fallback authority.
-- Hook/config/profile target: committed Claude/Codex hook matrices, `.codex/config.toml`, `.claude/CLAUDE.md`, and profile installation match the recovery target; only three Forge-owned profiles remain while client-modified/client-added profiles are preserved.
+- Hook/config/profile target: committed Claude/Codex hook matrices, `.codex/config.toml`, `.claude/CLAUDE.md`, and profile installation match the recovery target; the complete Decision 0083 sixteen-role registry is installed and configured while client-modified/client-added profiles are preserved.
 - PR-link workflow staging: `.github/workflows/pr-link.yml` stages per-event `.factory/events/` files and updates its status/comment wording without returning to `.factory/events.jsonl` writes.
 - Verified PR-link backfill: only verified PR #109 and #110 links are backfilled through `forge pr-link`, producing recorder-generated event files and clearing those board-completeness failures without touching unrelated spec gaps.
 - Normal-runtime refusal: Lean-removed old formats outside upgrade produce `run forge upgrade` guidance; PR3-owned legacy families stay compatible until Portable handles them.
@@ -356,17 +333,10 @@ Rendered by the harness from the recorded decomposition; edit the decomposition,
 - docs/decisions/0079-full-access-for-forge-managed-codex-chats.md
 - .factory/migrations/lean-workflow-v2-supplement.json
 - docs/decisions/0081-full-access-for-forge-managed-codex-chats.md
-
-**Scope amendments** (measured paths the scope did not name, recorded with `forge stage amend-scope`)
-
-- .codex/agents/coder.toml -- Record the user-approved repo-local role profiles, coder rename, and native model routing changes measured in this task.
-- .codex/agents/worker.toml -- Apply the user-approved native child model routing decision and distribute the worker role profile.
-- README.md -- Align public documentation with the user-approved Luna/Terra/Sol native child routing while keeping Autoreview unchanged.
-- docs/degraded-mode.md -- User-authorized native-mode contract amendment requires updating the remaining runtime callers, protected delegation schema, strict role contract, product brief, and degraded-mode guidance so Codex uses role-based host subagents without nested exec or process locks.
-- docs/product/BRIEF.md -- User-authorized native-mode contract amendment requires updating the remaining runtime callers, protected delegation schema, strict role contract, product brief, and degraded-mode guidance so Codex uses role-based host subagents without nested exec or process locks.
-- docs/specs/strict-role-split.md -- User-authorized native-mode contract amendment requires updating the remaining runtime callers, protected delegation schema, strict role contract, product brief, and degraded-mode guidance so Codex uses role-based host subagents without nested exec or process locks.
-- factory/scripts/forge_cli/fix.py -- User-authorized native-mode contract amendment requires updating the remaining runtime callers, protected delegation schema, strict role contract, product brief, and degraded-mode guidance so Codex uses role-based host subagents without nested exec or process locks.
-- factory/scripts/record_review_from_json.py -- The public review-generation recorder validation in record_review_from_json.py is required for Lean selected-review input and current reviewed-meaning identity; it was omitted from the task write_scope while its reviewed-meaning caller changed. Stage measurement identified this exact single path, with no other scope addition.
+- factory/scripts/check_agents_hygiene.py
+- factory/scripts/forge_cli/context.py
+- factory/scripts/forge_cli/story.py
+- factory/scripts/forge_cli/quickfix.py
 
 **Required tests** (run by `stage done`)
 

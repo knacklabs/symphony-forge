@@ -530,7 +530,7 @@
     {
       "id": "LEAN-WORKFLOW",
       "title": "One brief and one complete independent review",
-      "objective": "install recovery PR2 by replacing repeated approval/round ceremony with native approval, one cold grill with complete finding disposition, narrowed delegation, mandatory context-file security, content-bound close reuse in existing stage state, Lean-owned migration/deletion for removed formats including sealed fixed-proof migration, three-profile Forge registry reduction, PR-link workflow repair/backfill, docs/spec/architecture/runtime alignment, and the amended Portable PR3 handoff, plus one close-owned canonical full-suite proof path with exact-identity reuse, canonical JUnit selector proof, measured concurrency, and coverage-preserving fixture optimization.",
+      "objective": "install recovery PR2 by replacing repeated approval/round ceremony with native approval, one cold grill with complete finding disposition, narrowed delegation, mandatory context-file security, content-bound close reuse in existing stage state, Lean-owned migration/deletion for removed formats including sealed fixed-proof migration, the complete Decision 0083 role registry, PR-link workflow repair/backfill, docs/spec/architecture/runtime alignment, and the amended Portable PR3 handoff, plus one close-owned canonical full-suite proof path with exact-identity reuse, canonical JUnit selector proof, measured concurrency, and coverage-preserving fixture optimization.",
       "dependencies": [
         "NATIVE-FOREGROUND-ACTIVATE"
       ],
@@ -543,7 +543,7 @@
         "Content-bound close reuse: test/verify receipts and selected-review reviewed-meaning identity reuse only when their proof-type inputs match; substantive acceptance/security/migration/evidence/review-instruction/product-delta changes force review, while canonicalized bookkeeping/timestamp changes preserve immutable original provenance.",
         "Lean migration: `forge upgrade` performs clean-checkout preflight with no `--force` bypass, full inventory/hash/classification, independent raw no-follow coverage over fixed legacy roots/exact parents, temp build, validation, publish/readback, profile/settings preservation, and deletion only after durable current outputs exist. Byte-identical retry passes and unequal partial retry refuses, except that a validated original empty completion may publish one bound `lean-workflow-v2-supplement.json` when later merged history introduces newly eligible proof.",
         "Fixed-proof migration: Lean migrates sealed fixed-lens proof once into canonical `origin=upgrade` selected generations with the full sealed-proof safety contract, while active old proof requires a fresh review and normal runtime never uses direct fixed-file fallback authority.",
-        "Hook/config/profile target: committed Claude/Codex hook matrices, `.codex/config.toml`, `.claude/CLAUDE.md`, and profile installation match the recovery target; only three Forge-owned profiles remain while client-modified/client-added profiles are preserved.",
+        "Hook/config/profile target: committed Claude/Codex hook matrices, `.codex/config.toml`, `.claude/CLAUDE.md`, and profile installation match the recovery target; the complete Decision 0083 sixteen-role registry is installed and configured while client-modified/client-added profiles are preserved.",
         "PR-link workflow staging: `.github/workflows/pr-link.yml` stages per-event `.factory/events/` files and updates its status/comment wording without returning to `.factory/events.jsonl` writes.",
         "Verified PR-link backfill: only verified PR #109 and #110 links are backfilled through `forge pr-link`, producing recorder-generated event files and clearing those board-completeness failures without touching unrelated spec gaps.",
         "Normal-runtime refusal: Lean-removed old formats outside upgrade produce `run forge upgrade` guidance; PR3-owned legacy families stay compatible until Portable handles them.",
@@ -696,7 +696,11 @@
         "factory/tests/test_review_reads_the_repo.py",
         "docs/decisions/0079-full-access-for-forge-managed-codex-chats.md",
         ".factory/migrations/lean-workflow-v2-supplement.json",
-        "docs/decisions/0081-full-access-for-forge-managed-codex-chats.md"
+        "docs/decisions/0081-full-access-for-forge-managed-codex-chats.md",
+        "factory/scripts/check_agents_hygiene.py",
+        "factory/scripts/forge_cli/context.py",
+        "factory/scripts/forge_cli/story.py",
+        "factory/scripts/forge_cli/quickfix.py"
       ],
       "plan_contracts": [
         {
@@ -736,7 +740,7 @@
         },
         {
           "id": "LEAN-AC-8",
-          "statement": "Hook/config/profile target: committed Claude/Codex hook matrices, `.codex/config.toml`, `.claude/CLAUDE.md`, and profile installation match the recovery target; only three Forge-owned profiles remain while client-modified/client-added profiles are preserved.",
+          "statement": "Hook/config/profile target: committed Claude/Codex hook matrices, `.codex/config.toml`, `.claude/CLAUDE.md`, and profile installation match the recovery target; the complete Decision 0083 sixteen-role registry is installed and configured while client-modified/client-added profiles are preserved.",
           "source": ".factory/stories/FORGE-COORD-1/task-plans/LEAN-WORKFLOW.md#Acceptance Criteria"
         },
         {
@@ -1180,5 +1184,5 @@
   "epic": "symphony-forge",
   "plan_file": "plans/active/FORGE-COORD-1-either-claude-or-codex-coordinates-the-same-forge-workflow.md",
   "plan_sha256": "704e22e69b3722fc885bd09231691a18c2afc01b0982a112bb7b5118744f1723",
-  "commit": "9ae732d285e13374bb0434459b5a9318c51f377b"
+  "commit": "a3d130c3aae5a9ff8a78016a6bfdd39ab58966f0"
 }
