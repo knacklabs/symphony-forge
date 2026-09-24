@@ -20,6 +20,8 @@ simple step that git makes safe. Client upgrades stay on hold until it ships.
 - Only the old review files current Forge can't read move into `.factory/archive/`. Everything else
   you own stays: stories, history, roadmap, decisions, docs you edited, your skills and agent
   profiles, and your sign-off.
+- Upgrade ends by checking your skills the same way `forge doctor` does, and names anything missing
+  or outdated (impeccable included) with `./forge doctor --fix`; it never blocks the upgrade.
 - Upgrade prints what to do next: review the commit, open the PR. The upgrade skill follows it, then
   runs its existing after-upgrade steps (project backfill and re-authoring pending stories).
 - Running it again changes nothing, and later upgrades work the same way.
@@ -106,7 +108,9 @@ files, so the docs task corrects that example to match.
 - Board: a task with no selected review but archived review files shows "reviewed before upgrade".
 - Messages: `tasks.py`'s legacy task-grill advice and other "run forge upgrade" texts for in-progress
   work say "finish or park, then upgrade"; harness-health's automatic upgrade step is removed.
-- Doctor warns when the installed upgrade skill differs from the harness copy.
+- Doctor warns when the installed upgrade skill differs from the harness copy. The upgrade report ends
+  with doctor's required-skill check (missing or outdated skills, and `./forge doctor --fix`), never
+  blocking.
 - Roadmap: `upgrade-preserves-doc-contracts` is marked covered by FORGE-UPG-2.
 - Docs: retire `docs/specs/legacy-upgrade.md`; update `docs/getting-started.md`, WORKFLOW.md, the
   parity architecture's migration section, decision 0088's example list (approved above), and
@@ -120,7 +124,7 @@ The owner chose three tasks. CORE first, then CLEANUP, then DOCS. Each ships its
 | Label / exact task ID | What it delivers | Depends on | user_facing |
 |---|---|---|---|
 | Core / CORE | Old-client test fixture; `upgrade_flow.py` with preflight, committed snapshot, archive, byte-ownership vendoring incl. doc contracts, sign-off carry, throwaway-worktree checks, commit and rollback, tested but not yet wired; the legacy tag | none | false |
-| Cleanup / CLEANUP | `forge upgrade` switched to the new flow; `--park`; old machinery, schema, approval coupling and old tests deleted; ticket-check exemption; board label; reworded messages; harness-health step removed; doctor skill check; roadmap coverage note | CORE | false |
+| Cleanup / CLEANUP | `forge upgrade` switched to the new flow; `--park`; old machinery, schema, approval coupling and old tests deleted; ticket-check exemption; board label; reworded messages; harness-health step removed; doctor skill check; skills-ready report; roadmap coverage note | CORE | false |
 | Docs / DOCS | Specs, docs, decision 0088 example fix, upgrade skill | CLEANUP | false |
 
 ## Verify plan

@@ -211,6 +211,6 @@
   "story": "FORGE-UPG-2",
   "epic": "symphony-forge",
   "plan_file": "plans/active/FORGE-UPG-2-simple-upgrade-one-safe-step-from-any-factory-era-client.md",
-  "plan_sha256": "b0b10f262c6da0bc5a45f164b6106047a6d1006b5a55de97759320fb8a0dbccb",
-  "commit": "13b586222a711783ea5b66c54aefb3d6d4d2880f"
+  "plan_sha256": "7b2ce7f9c5a3d5b96ecd5831f6239ef9af2be2520322f012d2c0fd5912a2a183",
+  "commit": "d87a467dd97999ea24076026aa049abb44b22dc3"
 }
