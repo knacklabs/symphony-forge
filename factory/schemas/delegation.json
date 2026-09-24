@@ -39,7 +39,8 @@
     "exit_code": "int",
     "agent_type": "str",
     "task_name": "str",
-    "context_file": "dict"
+    "context_file": "dict",
+    "worktree": "str"
   },
   "kind_note": "Claude companion launches append starting, running, and terminal rows sharing a launch_id; their protected process and lock evidence remains unchanged. Codex host-native delegation appends one transport=host-native, launch_status=prepared row with an empty argv and no PID, session, token, output, or process lock. That row binds the current task, stage, canonical brief, effective write scope, configured agent type, and optional validated context source metadata before the coordinator uses spawn_agent or followup_task. Authoritative rows live in Git's protected control directory; .factory/delegations.jsonl is a diagnostic mirror. Print-only diagnostics never create a record."
 }
