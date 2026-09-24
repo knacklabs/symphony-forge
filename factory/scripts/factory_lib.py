@@ -11,6 +11,7 @@ import re
 import stat
 import subprocess
 import sys
+import tempfile
 import threading
 import time
 from datetime import datetime, timezone
@@ -706,6 +707,21 @@ def raw_run_state(root: Path) -> dict[str, Any]:
 def dump_json(path: Path, data: Any) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
+
+
+def atomic_dump_json(path: Path, data: Any) -> None:
+    """Publish JSON through a same-directory temporary file and replacement."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    descriptor, name = tempfile.mkstemp(
+        prefix=f".{path.name}.", suffix=".tmp", dir=path.parent,
+    )
+    os.close(descriptor)
+    temporary = Path(name)
+    try:
+        dump_json(temporary, data)
+        os.replace(temporary, path)
+    finally:
+        temporary.unlink(missing_ok=True)
 
 
 # Git's control dir is constant for a worktree over a process's lifetime, but
@@ -4249,29 +4265,17 @@ def render_recorded_task_contract(
 
 
 def refresh_task_plan_contract(root: Path, task_id: str, task: dict) -> bool:
-    """Re-render the contract block inside the saved task plan, if there is one.
-
-    Called wherever the contract or its amendments move: the decomposition
-    recorder, `task plan save`, `stage amend-scope`. Returns True when the
-    file changed. The block sits before `## Implementation Assumptions` when
-    that appendix exists, else at the end.
-    """
-    from forge_cli.stages import scope_amendments_path
-    story = _active_story_key(root)
-    path = evidence_path(root, story, f"task-plans/{task_id}.md", for_write=True)
-    if not path.is_file():
+    """Remove an older rendered contract without adding it back."""
+    plan = evidence_path(
+        root, _active_story_key(root), f"task-plans/{task_id}.md",
+    )
+    if not plan.is_file():
         return False
-    amendments = (load_json(scope_amendments_path(root), default={})
-                  .get("tasks", {}).get(task_id))
-    block = render_task_contract_block(task, amendments if isinstance(amendments, dict) else None)
-    text = path.read_text(encoding="utf-8")
-    stripped = strip_derived_sections(text.encode("utf-8")).decode("utf-8")
-    head, marker, tail = stripped.partition("\n## Implementation Assumptions")
-    head = head.rstrip("\n") + "\n\n"
-    rebuilt = head + block + (("\n" + marker.lstrip("\n") + tail) if marker else "")
-    if rebuilt == text:
+    original = plan.read_bytes()
+    stripped = strip_derived_sections(original)
+    if stripped == original:
         return False
-    path.write_text(rebuilt, encoding="utf-8")
+    plan.write_bytes(stripped)
     return True
 
 

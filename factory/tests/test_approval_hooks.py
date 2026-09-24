@@ -1089,10 +1089,9 @@ def test_plan_save_and_awaiting_phase_show_codex_approval_identity(
 
     code, output = run(repo, "forge.py", "next")
     assert code == 0, output
-    assert f"Semantic digest: {digest}" in output
-    assert question_id in output
+    assert f'id="{question_id}"' in output
     assert 'header="Approve plan"' in output
-    assert f'question="Approve exact plan digest {digest}?"' in output
+    assert 'question="Approve this plan?"' in output
 
 
 @pytest.mark.parametrize("plan_file", ["", "plans/active/missing-plan.md"])

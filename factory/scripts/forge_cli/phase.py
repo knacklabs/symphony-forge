@@ -475,10 +475,10 @@ def cmd_next(args: argparse.Namespace) -> None:
         if plan_file and (base / plan_file).is_file():
             digest = plan_digest_without_assumptions(base / plan_file)
             question_id = f"approve_plan_{digest}"
-            question = f"Approve exact plan digest {digest}?"
+            question = "Approve this plan?"
             steps.append(
                 f"[dev] Display the exact saved plan bytes at {plan_file} "
-                f"(Semantic digest: {digest}) in native Plan Mode. For Codex "
+                "in native Plan Mode. For Codex "
                 f'request_user_input use id="{question_id}", header="Approve plan", '
                 f'question="{question}". The successful native approval event advances it.'
             )
