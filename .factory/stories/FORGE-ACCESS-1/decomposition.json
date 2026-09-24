@@ -1,0 +1,42 @@
+{
+  "generated_by": "docs-decomposer",
+  "user_facing": false,
+  "tasks": [
+    {
+      "id": "CODE",
+      "title": "Full access in code",
+      "objective": "Delete the write lock and its admission code; task close judges the result without a launch record, shows out-of-scope files and changed records to the reviewer and in a Forge-owned PR block; stage-bound amendments; full Lite review and budget; degraded and quickfix removed; superseded-spec links; guidance reworded.",
+      "dependencies": [],
+      "acceptance_criteria": [
+        "No Forge hook refuses a write because of the file it writes; destructive commands, raw codex exec and unsigned phase advances are still refused",
+        "task close succeeds without a launch record and lists out-of-scope files, overlaps and changed records in the review brief and the PR's Forge block, and a rerun replaces only that block",
+        "A write-scope amendment during an active stage records without a launch",
+        "Lite mode done reviews every committed change and refuses more than five non-test, non-Markdown files",
+        "Degraded and quickfix commands say they were removed; old closed records still satisfy the ticket check",
+        "check_dual_runtime.py and doctor check hook coverage and the absence of edit tools; the Windows hook job passes",
+        "strict-role-split is superseded: existing roadmap links resolve, new links need a confirmed spec"
+      ],
+      "user_facing": false
+    },
+    {
+      "id": "DOCS",
+      "title": "Full access in the docs",
+      "objective": "Canon, skill, brief and session-start text describe full access in a sentence or two; degraded-mode.md deleted; no text points at removed routes or a launch requirement.",
+      "dependencies": [
+        "CODE"
+      ],
+      "acceptance_criteria": [
+        "AGENTS.md, CLAUDE.md, WORKFLOW.md, the Forge skill, getting-started, QUALITY, FACTORY, the parity architecture, delegation-boundary, dual-coordinator-parity, workflow-modes, the product brief and the session-start message describe full access and never mention degraded mode or a launch requirement",
+        "docs/degraded-mode.md is deleted and strict-role-split.md is marked superseded by full-access",
+        "AGENTS and CLAUDE hygiene checks pass"
+      ],
+      "user_facing": false
+    }
+  ],
+  "project": "",
+  "story": "FORGE-ACCESS-1",
+  "epic": "symphony-forge",
+  "plan_file": "plans/active/FORGE-ACCESS-1-full-access-forge-judges-the-result-not-each-write.md",
+  "plan_sha256": "5e646f47c4bcff5214a8c8f5b39f64d2f1039c6159e732328d30ea8bdda35a22",
+  "commit": "26ded67d13f2a0fb99b8ef435ac05c1c8a3fc8a9"
+}

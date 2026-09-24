@@ -1008,7 +1008,7 @@
         "Degraded and quickfix windows are removed; the lock code and its tests are deleted"
       ],
       "order": 48,
-      "status": "pending",
+      "status": "active",
       "epic": "symphony-forge",
       "skill": "backend",
       "kind": "refactor",
@@ -1053,7 +1053,7 @@
     }
   ],
   "generated_by": "human",
-  "updated_at": "2026-09-24T15:16:33+00:00",
+  "updated_at": "2026-09-24T15:17:59+00:00",
   "epics": [
     {
       "id": "symphony-forge",
