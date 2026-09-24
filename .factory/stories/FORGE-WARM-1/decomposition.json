@@ -1,0 +1,103 @@
+{
+  "generated_by": "docs-decomposer",
+  "user_facing": false,
+  "tasks": [
+    {
+      "id": "EXEC-MODES",
+      "title": "Executor modes",
+      "objective": "FORGE_EXECUTOR hybrid/codex/claude for Claude-coordinated sessions; Claude writers admitted under the same task, scope and proof gates; the writer record is the stage's write proof.",
+      "dependencies": [],
+      "acceptance_criteria": [
+        "FORGE_EXECUTOR selects hybrid (default), codex or claude, and each passes the same task gates",
+        "Codex-coordinated sessions keep native execution and refuse other executor settings"
+      ],
+      "user_facing": false
+    },
+    {
+      "id": "SDK-SETUP",
+      "title": "Pinned SDK and doctor check",
+      "objective": "Pinned openai-codex in a Forge-managed environment, minimum codex binary, doctor check and repair, docs; the route stays off.",
+      "dependencies": [
+        "EXEC-MODES"
+      ],
+      "acceptance_criteria": [
+        "The SDK is pinned and the binary checked against the SDK minimum; a mismatch names both versions",
+        "doctor --fix installs the pinned SDK and the minimum codex binary when needed"
+      ],
+      "user_facing": false
+    },
+    {
+      "id": "SDK-SUPERVISOR",
+      "title": "Supervisor and lease",
+      "objective": "One detached supervisor per Git common directory owns the lease and app-server behind a private socket; takeover only of a provably dead holder.",
+      "dependencies": [
+        "SDK-SETUP"
+      ],
+      "acceptance_criteria": [
+        "Only the lease holder resumes Forge threads; a stale lease is cleared; live or uncertain holders are refused",
+        "The socket and token are owner-only on POSIX and DACL-protected on Windows"
+      ],
+      "user_facing": false
+    },
+    {
+      "id": "SDK-ADMISSION",
+      "title": "Admission and close parity",
+      "objective": "Per-turn ledger rows, admission and close parity with terminal-turn proof, sticky routes, declining approval handler; the route switches on with a first real delegation.",
+      "dependencies": [
+        "SDK-SUPERVISOR"
+      ],
+      "acceptance_criteria": [
+        "Every SDK turn is admitted by a recorded ledger row and close needs a terminal turn",
+        "Routes are sticky per task; a task with a companion launch stays on the plugin",
+        "An unexpected approval request is declined and logged"
+      ],
+      "user_facing": false
+    },
+    {
+      "id": "RESUME-FIX",
+      "title": "Resume the worker for fix rounds",
+      "objective": "Review-fix rounds resume the task's worker thread with a verified snapshot; drift starts fresh; benchmark evidence recorded.",
+      "dependencies": [
+        "SDK-ADMISSION"
+      ],
+      "acceptance_criteria": [
+        "A fix round resumes the recorded thread with brief, HEAD, diff and findings; drift starts a new thread with the reason",
+        "The recorded benchmark shows fewer uncached input tokens and less wall time for resumed rounds"
+      ],
+      "user_facing": false
+    },
+    {
+      "id": "LIVE-EVENTS",
+      "title": "Live events and steering",
+      "objective": "Turn state machine, reattach, signals bound to their turn and answered by steer or interrupt, abandon-turn recovery.",
+      "dependencies": [
+        "RESUME-FIX"
+      ],
+      "acceptance_criteria": [
+        "A lost stream reattaches and an unknown turn blocks close",
+        "A signal resolution reaches the exact active turn and its delivery is recorded"
+      ],
+      "user_facing": false
+    },
+    {
+      "id": "UPGRADE-CLEANUP",
+      "title": "Upgrade, cleanup and parity",
+      "objective": "Client upgrade path, archival and pruning, parity matrix, end-to-end runs in throwaway clients.",
+      "dependencies": [
+        "LIVE-EVENTS"
+      ],
+      "acceptance_criteria": [
+        "forge upgrade adds the SDK route idempotently and plugin tasks finish on the plugin",
+        "Threads archive at task merge and story outcome; pruning touches ledger threads only",
+        "The parity matrix passes on Ubuntu and Windows CI plus local macOS observations"
+      ],
+      "user_facing": false
+    }
+  ],
+  "project": "",
+  "story": "FORGE-WARM-1",
+  "epic": "symphony-forge",
+  "plan_file": "plans/active/FORGE-WARM-1-hybrid-mode-reuses-warm-codex-worker-threads.md",
+  "plan_sha256": "b8279507a862037fea02436d0178e4c6f24a0bdb57072f7e0cd9b148282a3015",
+  "commit": "e7d51f5a4decd22d0403ec297c4a010252a578b7"
+}

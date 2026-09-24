@@ -1,0 +1,11 @@
+{
+  "approved_plan_sha256": "b8279507a862037fea02436d0178e4c6f24a0bdb57072f7e0cd9b148282a3015",
+  "approved_by": "human-via-Claude",
+  "approved_at": "2026-09-24T05:43:36+00:00",
+  "runtime": "claude",
+  "session_id": "a0106b2c-e659-5e23-b0c7-d419b1d20fda",
+  "event_id": "toolu_01NWhFH1NB9tHbH6v28pJB5V",
+  "plan_kind": "story",
+  "story": "FORGE-WARM-1",
+  "task": ""
+}

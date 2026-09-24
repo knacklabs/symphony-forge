@@ -1,51 +1,39 @@
 {
-  "issue": "FORGE-COORD-1",
+  "issue": "FORGE-WARM-1",
   "stages": [
     {
-      "id": "NATIVE-FOREGROUND-ACTIVATE",
-      "title": "Native foreground and complete first-task proof",
-      "status": "done",
-      "task_sha256": "397cc2c4a0f51e4bdc805d76fa7a685f55e0da6798ea12df8c47e316e7d19fe5"
-    },
-    {
-      "id": "LEAN-WORKFLOW",
-      "title": "One brief and one complete independent review",
-      "status": "done",
-      "task_sha256": "c43187d60197aacf4a36085849dabf80cb4ac8cf4ef6cd7440184d01b6d68523"
-    },
-    {
-      "id": "LEAN-FIXES",
-      "title": "Close the Lean review findings deferred at merge",
+      "id": "EXEC-MODES",
+      "title": "Executor modes",
       "status": "pending"
     },
     {
-      "id": "PORTABLE-DELIVERY-MIGRATION",
-      "title": "Portable setup, durable history and existing-client migration",
+      "id": "SDK-SETUP",
+      "title": "Pinned SDK and doctor check",
       "status": "pending"
     },
     {
-      "id": "NATIVE-LIFECYCLE",
-      "title": "Native detached read-only lifecycle and helpers",
+      "id": "SDK-SUPERVISOR",
+      "title": "Supervisor and lease",
       "status": "pending"
     },
     {
-      "id": "SHARED-COORDINATOR-JOURNEY",
-      "title": "Coordinator questions, task ownership and reliable continuation",
+      "id": "SDK-ADMISSION",
+      "title": "Admission and close parity",
       "status": "pending"
     },
     {
-      "id": "FORMAT-SOURCES",
-      "title": "Complete pure mechanical Python formatting",
+      "id": "RESUME-FIX",
+      "title": "Resume the worker for fix rounds",
       "status": "pending"
     },
     {
-      "id": "QUALITY-BASELINE",
-      "title": "Semantic fixes and mandatory full quality baseline",
+      "id": "LIVE-EVENTS",
+      "title": "Live events and steering",
       "status": "pending"
     },
     {
-      "id": "FORGE-COORD-1.1",
-      "title": "Complete native parity and installed-client dogfood",
+      "id": "UPGRADE-CLEANUP",
+      "title": "Upgrade, cleanup and parity",
       "status": "pending"
     }
   ]
