@@ -17,9 +17,10 @@ from pathlib import Path
 from typing import Any
 
 from factory_lib import (
-    _plan_body_digest_bytes, _safe_review_leaf,
+    ATX_CLOSING_RUN, SECTION_HEADING, _plan_body_digest_bytes, _safe_review_leaf,
     _windows_reparse_point, dump_json, evidence_path, factory_dir, git_control_dir,
     load_json, now_iso, story_dir,
+    outside_examples,
     plan_digest_without_assumptions,
     approved_plan_digest,
     parse_sections,
@@ -40,6 +41,16 @@ class ApprovalCandidate:
     digest: str
     evidence: Path
     previous_digest: str = ""
+
+
+_DELIVERY_SECTIONS = ("What changes for you", "Done when")
+
+
+def _delivery_heading_counts(text: str) -> dict[str, int]:
+    headings = outside_examples(text, SECTION_HEADING.finditer(text))
+    names = [ATX_CLOSING_RUN.sub("", match.group(1)).strip()
+             for match in headings]
+    return {name: names.count(name) for name in _DELIVERY_SECTIONS}
 
 
 def _text(value: object) -> str:
@@ -559,7 +570,10 @@ def carry_forward_story_approval(base: Path) -> bool:
         return False
     approved_sections = record.get("approved_sections")
     old_delivery = record.get("delivery_sections")
-    if not isinstance(approved_sections, dict) or not isinstance(old_delivery, dict):
+    approved_heading_counts = record.get("delivery_heading_counts")
+    if (approved_heading_counts is None
+            or not isinstance(approved_sections, dict)
+            or not isinstance(old_delivery, dict)):
         relative = path.relative_to(base).as_posix()
         committed = subprocess.run(
             ["git", "show", f"HEAD:{relative}"], cwd=base,
@@ -568,16 +582,29 @@ def carry_forward_story_approval(base: Path) -> bool:
         if (committed.returncode != 0
                 or _plan_body_digest_bytes(committed.stdout) != previous):
             return False
-        old_text = committed.stdout.decode("utf-8")
-        old_raw = parse_sections(old_text, strip_leading=False)
-        approved_sections = old_raw
-        old_delivery = {name: old_raw.get(name, "")
-                        for name in ("What changes for you", "Done when")}
+        try:
+            approved_text = committed.stdout.decode("utf-8")
+        except UnicodeDecodeError:
+            return False
+        if approved_heading_counts is None:
+            approved_heading_counts = _delivery_heading_counts(approved_text)
+        if (not isinstance(approved_sections, dict)
+                or not isinstance(old_delivery, dict)):
+            old_raw = parse_sections(approved_text, strip_leading=False)
+            approved_sections = old_raw
+            old_delivery = {name: old_raw.get(name, "")
+                            for name in _DELIVERY_SECTIONS}
+    if not isinstance(approved_heading_counts, dict):
+        return False
+    expected_heading_counts = {name: 1 for name in _DELIVERY_SECTIONS}
+    if any(type(approved_heading_counts.get(name)) is not int
+           or approved_heading_counts[name] != 1 for name in _DELIVERY_SECTIONS):
+        return False
     text = path.read_text(encoding="utf-8")
     raw_sections = parse_sections(text, strip_leading=False)
-    delivery = {name: raw_sections.get(name, "")
-                for name in ("What changes for you", "Done when")}
-    if not all(delivery.values()) or old_delivery != delivery:
+    delivery = {name: raw_sections.get(name, "") for name in _DELIVERY_SECTIONS}
+    if (_delivery_heading_counts(text) != expected_heading_counts
+            or not all(delivery.values()) or old_delivery != delivery):
         return False
     changed = sorted(name for name in set(raw_sections) | set(approved_sections)
                      if raw_sections.get(name) != approved_sections.get(name))
@@ -590,6 +617,7 @@ def carry_forward_story_approval(base: Path) -> bool:
                "event_id": event_id,
                "previous_approved_plan_sha256": previous,
                "carried_forward_reason": reason,
+               "delivery_heading_counts": expected_heading_counts,
                "delivery_sections": delivery,
                "approved_sections": raw_sections}
     replay_key = hashlib.sha256(
@@ -694,9 +722,10 @@ def record_native_approval(
         if candidate.kind == "story":
             text = candidate.path.read_text(encoding="utf-8")
             raw_sections = parse_sections(text, strip_leading=False)
+            record["delivery_heading_counts"] = _delivery_heading_counts(text)
             record["delivery_sections"] = {
                 name: raw_sections.get(name, "")
-                for name in ("What changes for you", "Done when")
+                for name in _DELIVERY_SECTIONS
             }
             record["approved_sections"] = raw_sections
         if candidate.previous_digest:

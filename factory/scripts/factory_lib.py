@@ -5166,7 +5166,7 @@ def _task_plan_state(root: Path, task: dict, grill: dict) -> str:
         return "author-task-plan"
     digest = plan_digest_without_assumptions(plan)
     cold_read_matches = grill.get("task_plan_sha256") == digest
-    if cold_read_matches or _task_plan_amendment_preserves_cold_proof(root, task, grill):
+    if cold_read_matches:
         return "approved"
     return "grill"
 
