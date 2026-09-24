@@ -1,0 +1,91 @@
+{
+  "event": "done",
+  "id": "Q-0198-57ba",
+  "profile": "lite",
+  "by": "Ravi Kiran Vemula",
+  "reason": "Verified review gap group g1-bash for task LEAN-FIXES (owner: fix P1/P2 now, parallel)",
+  "base_sha": "fd1c6740b1d083ad8beccd5e52f8b3f88d6eb9d7",
+  "started_at": "2026-09-23T17:19:11+00:00",
+  "completed_at": "2026-09-24T08:39:55+00:00",
+  "files": [
+    "factory/scripts/pre_tool_use.py",
+    "factory/tests/test_gates.py",
+    "factory/tests/test_review_task_delta.py",
+    "factory/tests/test_worker_admission.py"
+  ],
+  "reviews": {
+    "quality": {
+      "generated_by": "autoreview",
+      "score": 9,
+      "summary": "quality lens over Q-0198-57ba (4 product path(s), fd1c674..47d310e, Codex via the autoreview skill): 0 blocking, 1 non-blocking. The expanded writer classifier mistakes chmod and chown metadata operands for file paths, causing authorized commands to be denied. No task-specific plan contracts apply.",
+      "blocking_findings": [],
+      "non_blocking_findings": [
+        {
+          "category": "bug",
+          "area": "factory/scripts",
+          "summary": "Exclude chmod and chown metadata operands from write targets (factory/scripts/pre_tool_use.py:613): For `chmod 644 src/approved.py`, factory/scripts/pre_tool_use.py:613 treats `644` as a file target alongside the actual path.",
+          "file_path": "factory/scripts/pre_tool_use.py",
+          "line": 613,
+          "title": "Exclude chmod and chown metadata operands from write targets"
+        }
+      ],
+      "recommendation": "approve-with-caveats",
+      "reviewed_scope": [
+        "factory/scripts/pre_tool_use.py",
+        "factory/tests/test_gates.py",
+        "factory/tests/test_review_task_delta.py",
+        "factory/tests/test_worker_admission.py"
+      ],
+      "skills_used": [],
+      "contract_verdicts": [],
+      "review_base_sha": "fd1c6740b1d083ad8beccd5e52f8b3f88d6eb9d7",
+      "branch_diff_digest": "2aee1343953395342b67666c49338a1174cf5efdc31af31fa52d0b6fb065938e",
+      "commit": "47d310eb33061d8e5861e1e7a7eb41c122085779",
+      "aspect": "quality",
+      "residual_risks": [],
+      "recorded_at": "2026-09-24T08:39:35+00:00"
+    },
+    "performance": {
+      "generated_by": "autoreview",
+      "score": 10,
+      "summary": "performance lens over Q-0198-57ba (4 product path(s), fd1c674..47d310e, Codex via the autoreview skill): 0 blocking, 0 non-blocking. The diff adds Git subprocess calls per literal path, but the supplied evidence does not establish a material production slowdown.",
+      "blocking_findings": [],
+      "non_blocking_findings": [],
+      "recommendation": "approve",
+      "reviewed_scope": [
+        "factory/scripts/pre_tool_use.py",
+        "factory/tests/test_gates.py",
+        "factory/tests/test_review_task_delta.py",
+        "factory/tests/test_worker_admission.py"
+      ],
+      "skills_used": [],
+      "review_base_sha": "fd1c6740b1d083ad8beccd5e52f8b3f88d6eb9d7",
+      "branch_diff_digest": "2aee1343953395342b67666c49338a1174cf5efdc31af31fa52d0b6fb065938e",
+      "commit": "47d310eb33061d8e5861e1e7a7eb41c122085779",
+      "aspect": "performance",
+      "residual_risks": [],
+      "recorded_at": "2026-09-24T08:39:35+00:00"
+    },
+    "security": {
+      "generated_by": "autoreview",
+      "score": 10,
+      "summary": "security lens over Q-0198-57ba (4 product path(s), fd1c674..47d310e, Codex via the autoreview skill): 0 blocking, 0 non-blocking. The supplied diff shows additional checks for opaque Git forms and cross-worktree targets. I found no concrete security bypass attributable to this change.",
+      "blocking_findings": [],
+      "non_blocking_findings": [],
+      "recommendation": "approve",
+      "reviewed_scope": [
+        "factory/scripts/pre_tool_use.py",
+        "factory/tests/test_gates.py",
+        "factory/tests/test_review_task_delta.py",
+        "factory/tests/test_worker_admission.py"
+      ],
+      "skills_used": [],
+      "review_base_sha": "fd1c6740b1d083ad8beccd5e52f8b3f88d6eb9d7",
+      "branch_diff_digest": "2aee1343953395342b67666c49338a1174cf5efdc31af31fa52d0b6fb065938e",
+      "commit": "47d310eb33061d8e5861e1e7a7eb41c122085779",
+      "aspect": "security",
+      "residual_risks": [],
+      "recorded_at": "2026-09-24T08:39:35+00:00"
+    }
+  }
+}
