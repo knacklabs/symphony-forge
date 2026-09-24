@@ -631,48 +631,65 @@ visibility of what it does versus what it delegates, and only genuine
 human-only acts (decisions, sign-off) or unresolvable gate refusals pause it.
 
 ## Task Planning
-Story and task plans use the coordinator's native Plan Mode. Each plan gets
-one independent cold read at Sol/high. The cold proof binds the exact input it
-read; `finding_dispositions` maps every finding, and `amendments` explains every
-change between that input and the final artifact. If an already approved plan
-changes before stage start, record that amendment bridge against the existing
-cold proof and return directly to native approval of the exact amended digest;
-do not launch a second cold read solely for changed bytes. The exact final plan
-is then shown in Plan Mode. A successful Claude `ExitPlanMode` binds its exact
-`tool_input.plan`; Codex uses the synchronous `approve_plan_<digest>` question
-`Approve exact plan digest <digest>?` with `Approve plan / Request changes / Stop`
-and an id-keyed answer. Either records the human
-approval against the final digest through the shared recorder. There is no
-requirements grill, compulsory human round, `frontier_empty` question, manual
-`plan approve` / `task approve` command, board approval, or second unchanged
-save in the normal flow. Claude delegates read-heavy exploration through
-`/codex:rescue --model gpt-6-sol --effort medium`, read-only, and uses
-Sol/high for validation or architecture; it never runs raw `codex exec`.
-Native Codex uses the configured `planner-high` role through host `spawn_agent`
-without an override; that role's Sol/high defaults apply. Decomposition uses
-Sol/high, difficult diagnosis uses Sol/high before its Luna/max fix, and the
-independent grill uses Sol/high. The plan follows
-`factory/prompts/planner.md`, including the mandatory **Decisions** section: every choice not derivable from BRIEF,
-architecture, or existing records becomes a `docs/decisions/` record
-(`forge.py decision new`) before decomposition is recorded. `forge.py plan
-save --from <plan-file>` writes the exact awaiting-approval plan to
-`plans/active/<issue>-<slug>.md`. The draft frontmatter lists every ID from
-`forge decision list --active`, and `--story <key>` binds it to the roadmap;
-open contradiction signals or incomplete decision coverage refuse the save.
-`update_run.py` refuses
-`plan_status approved` without it.
+Story and task plans use the coordinator's native Plan Mode and follow
+`factory/prompts/planner.md`. They are briefs for the person approving the work:
+plain English first, with a short technical section last. A story plan uses
+`What and why`, `What changes for you`, `Done when`, `Risks`, and optional
+`What I need from you`, then a divider, `Technical approach`, a concise
+`Task decomposition` table, and `Verify plan`. Keep the plain-English portion
+to about 25 lines. A task plan uses `What and why`, `Workflow`, `Manual
+verification`, `Risks`, then a divider and `Technical notes`. Neither plan
+body contains frontmatter, IDs or ID lists, status or date lines, SHAs,
+digests, file paths, or scope lists. Mention a decision by title in the
+technical section only when it changes the design.
 
-During implementation, any call the plan does not cover is recorded the moment
-it is made — `forge.py plan assume "<one sentence>"` appends it, dated, under
-`## Implementation Assumptions` on the active plan AND as a structured row in
-`plans/assumptions.md` (id, date, issue, assumption, status, guidance). The
-ledger is the orchestrator's console: it reviews `open` rows and guides each
-one — `forge.py assumptions resolve <id> --status confirmed|fix-needed|promoted
---notes "..."`. `pr_ready.py` refuses to ship a task with unguided
-(`open`/`fix-needed`) rows; the session-start hook and `forge next` surface
-the open count. Promoted assumptions become `docs/decisions/` records. An
-assumption that would change scope or acceptance criteria is a report back
-to the dev, not an assumption.
+Each plan gets one independent wide cold read at Sol/high. The griller sweeps
+every feature the artifact touches and shipped features next to them against
+their contracts, checking current behavior, tests, and docs for dead ends,
+bypassed or unpassable gates, impractical advice, upgrade data loss, and stale
+docs. Every finding cites an exact `file:line`. The coordinator resolves
+repository-answerable findings; only genuine human choices go to the human,
+as option questions with a recommended option and its reason. The cold proof
+binds the exact input it read; `finding_dispositions` maps every finding, and
+`amendments` explains every change between that input and the final artifact.
+Commit spec, decision, and roadmap changes before launching the grill because
+its staleness check compares commit order.
+
+Before saving, the planner reviews every active decision. `forge plan save`
+records that attestation itself in `.factory/stories/<story>/plan-meta.json`,
+without adding decision IDs to the brief. Plan status, dates, and reviewed decisions live in
+`.factory/stories/<story>/plan-meta.json`, written only by `forge plan save`.
+The saved plan body is shown exactly as saved in native approval, with no Forge
+bookkeeping inserted. Claude `ExitPlanMode` binds its exact `tool_input.plan`;
+Codex retains the synchronous question id `approve_plan_<digest>` and asks
+`Approve this plan?`; the digest travels only in the question id, with the
+`Approve plan / Request changes / Stop` choices as recorder details. The human
+approval binds the digest of the body the person read. There is no requirements grill, compulsory human round,
+`frontier_empty` question, manual `plan approve` / `task approve` command,
+board approval, or second unchanged save in the normal flow.
+
+If an already approved plan changes before stage start, record the amendment
+bridge against the existing cold proof and return directly to native approval
+of the exact amended body; do not launch another cold read solely for changed
+bytes. Claude delegates read-heavy exploration through
+`/codex:rescue --model gpt-6-sol --effort medium`, read-only, and uses Sol/high
+for validation or architecture; it never runs raw `codex exec`. Native Codex
+uses the configured `planner-high` role through host `spawn_agent` without an
+override; that role's Sol/high defaults apply. Decomposition uses Sol/high,
+difficult diagnosis uses Sol/high before its Luna/max fix, and the independent
+grill uses Sol/high. Every new decision record is made before decomposition
+is recorded. `--story <key>` binds the saved plan to the roadmap; open
+contradiction signals or incomplete decision coverage refuse the save.
+
+During implementation, record any call the plan does not cover with
+`forge.py plan assume "<one sentence>"` and guide it through
+`forge.py assumptions resolve <id> --status confirmed|fix-needed|promoted
+--notes "..."`. Assumptions stay in the structured ledger, not in the approved
+plan body. `pr_ready.py` refuses to ship a task with unguided (`open` or
+`fix-needed`) rows; the session-start hook and `forge next` surface the open
+count. Promoted assumptions become decision records. An assumption that would
+change scope or acceptance criteria is a report back to the dev, not an
+assumption.
 
 ## Artifacts
 Required run artifacts:

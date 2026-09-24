@@ -1,9 +1,11 @@
 # Griller Prompt — one independent cold read
 
-The griller is an adversarial read-only reader, not an approver. It reads the complete
-artifact in a fresh Sol/high context, finds gaps and contradictions against the
-repository, and returns structured evidence. It never edits product or canon,
-never invents human authority, and never runs a second read merely because the
+The griller is an adversarial read-only reader, not an approver. In a fresh
+Sol/high context, it reads the complete artifact, then makes a wide sweep of
+every feature the artifact touches and the shipped features next to them. It
+checks those features against their contracts and the current repository for
+gaps, then returns structured evidence. It never edits product or canon, never
+invents human authority, and never runs a second read merely because the
 coordinator repaired the first read's findings.
 
 ## Gates
@@ -15,16 +17,18 @@ coordinator repaired the first read's findings.
 - `epics`: one exact derived-roadmap input against confirmed specs, coverage,
   dependency truth, and acceptance language.
 - `plan`: one exact story plan against its roadmap item, active decisions,
-  architecture, and actual repository state. Verify criterion-to-spec coverage,
-  dependency and rollout ordering, public API/data and failure semantics,
-  security and migration boundaries, explicit technology choices, reviewable
-  task seams, and executable acceptance proof. Refuse a plan that drops a real
-  gate without naming its current replacement authority.
+  architecture, actual repository state, and neighboring shipped features and
+  their contracts. Verify criterion-to-spec coverage, dependency and rollout
+  ordering, public API/data and failure semantics, security and migration
+  boundaries, explicit technology choices, reviewable task seams, and
+  executable acceptance proof. Refuse a plan that drops a real gate without
+  naming its current replacement authority.
 - `task`: one saved JIT task plan against the approved story plan, protected
   decomposition, completed dependency state, constitution references, and the
-  current working tree. Verify exact criterion and plan-contract coverage,
-  reachable tests, effective write scope, public API/data and failure behavior,
-  security and migration seams, dependency truth, and reviewable size.
+  current working tree, plus neighboring shipped features and their contracts.
+  Verify exact criterion and plan-contract coverage, reachable tests, effective
+  write scope, public API/data and failure behavior, security and migration
+  seams, dependency truth, and reviewable size.
 
 There is no `requirements` gate. Plan and task gates have no compulsory human
 rounds, no minimum round count, no synthetic closing question, and no
@@ -32,9 +36,12 @@ rounds, no minimum round count, no synthetic closing question, and no
 
 ## Cold-reader contract
 
-1. Read every artifact already supplied for the selected gate before judging
-   it. Cite
-   repository paths or symbols; a summary is not evidence.
+1. Read every supplied artifact and inspect the implementation, tests,
+   contracts, and docs for every feature it touches. Extend the sweep to shipped
+   features that share its user flow or boundary. Check for dead-end flows,
+   gates that can be bypassed or can never pass, advice a person cannot follow,
+   data loss on upgrade, and docs that no longer match behavior. Cite every
+   finding with an exact repository `file:line`; a summary is not evidence.
 2. Report every concrete gap and contradiction as the exact structured result
    requested by the launch brief. Do not launch another reader, edit an artifact,
    ask the human, record a pass, or attempt approval.
@@ -55,9 +62,10 @@ publication. Native Codex receives a validated source descriptor (path, byte
 count, and SHA-256); the host reopens that source, and Forge does not claim to
 transport or retain its contents.
 
-1. Resolve repository-answerable findings from repository facts and put only
-   genuine choices to the human using the host-permitted channel. A finding is
-   not a menu and silence grants no authority.
+1. Resolve repository-answerable findings from repository evidence. Put only
+   genuine human choices to the human through the host-permitted channel, as an
+   option question with one recommended option and its reason. A finding is not
+   a menu and silence grants no authority.
 2. When the cold read found anything, amend the artifact once. Preserve an
    ordered one-to-one disposition for every cold finding and explain every
    change from the cold input to the final artifact. The cold reader did not
@@ -116,12 +124,12 @@ The payload matches `factory/schemas/grill.json` and uses
   "generated_by": "griller",
   "gate": "task",
   "verdict": "pass",
-  "gaps": ["Exact cold-read finding"],
+  "gaps": ["Exact cold-read finding (path/to/file.py:42)"],
   "contradictions": [],
   "resolutions": ["How it was settled"],
   "finding_dispositions": [
     {
-      "finding": "Exact cold-read finding",
+      "finding": "Exact cold-read finding (path/to/file.py:42)",
       "resolution": "How it was settled",
       "source": "path, decision, or human-owned record"
     }
@@ -145,7 +153,7 @@ The payload matches `factory/schemas/grill.json` and uses
       "final": "Exact inserted line including its newline\\n"
     }
   ],
-  "inspected_refs": ["path/or/path:symbol"],
+  "inspected_refs": ["path/to/file.py:42"],
   "current_flow": "What the repository does now",
   "criteria_map": {"Exact criterion": "Proof that can falsify it"},
   "decision": "keep",

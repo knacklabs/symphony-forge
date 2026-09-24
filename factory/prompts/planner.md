@@ -26,40 +26,43 @@ Inputs:
 - the active issue context from `.factory/run.json`
 - any existing plans under `plans/`
 
-The draft starts with frontmatter attesting the live decision corpus:
+## Plan format
 
-```yaml
----
-decisions_reviewed:
-  - 0001-example-active-decision
----
-```
+Write for the person approving the work: plain English first, with a short
+technical section last. The plan is a brief, not a second Forge ledger. Do not
+put frontmatter, IDs or ID lists, status or date lines, SHAs, digests, file
+paths, or scope lists in it. Keep the story plan's plain-English sections to
+about 25 lines total. Forge records plan metadata separately. Before saving,
+review every active decision; `forge plan save` records that attestation in
+`.factory/stories/<story>/plan-meta.json`. Do not enumerate the decisions in
+the plan. Mention a decision by title in the technical section only when it
+changes the design.
 
-List every ID printed by `./forge decision list --active`. Missing, unknown,
-proposed, or superseded IDs make `plan save` refuse.
+Story plans use exactly these sections, in this order:
 
-Output exactly these sections:
-1. Problem
-2. Scope / Non-goals
-3. Acceptance Criteria
-4. Technical Approach
-5. Decisions
-6. Surface Impact
-7. Task Decomposition
-8. Risks
-9. Verify Plan
+1. `What and why`
+2. `What changes for you`
+3. `Done when`
+4. `Risks`
+5. `What I need from you` (omit when there is no genuine human choice)
+6. A horizontal divider
+7. `Technical approach`
+8. `Task decomposition` (a concise table of task names and outcomes; no IDs,
+   paths, or scope lists)
+9. `Verify plan`
 
-Surface Impact section rules (`## Surface Impact` — `plan save` refuses
-without it):
-- One row per surface: runtime behavior, API, data/schema, CLI/ops, UI,
-  docs, tests — classified `Changed`, `Read-only`, `Unchanged by design`,
-  `Deferred`, or `N-A`.
-- Every `Deferred` and `Unchanged by design` row carries a short reason —
-  an implicit surface is how API/CLI/docs/tests drift ships unreviewed.
-- Deferred rows that survive the task land in the deferral ledger with a
-  trigger (`./forge defer add`).
+Use short paragraphs or a few bullets in the first five sections. Ask only for
+a genuine human choice, as an option question with one recommended option and
+the reason for it. Keep technical details concise and include only what changes
+the design, acceptance, or verification.
 
-Task Decomposition rules:
+Task plans follow the same reader-first approach and use these sections in
+order: `What and why`, `Workflow`, `Manual verification`, `Risks`, then a
+horizontal divider and `Technical notes`. A Mermaid workflow diagram is
+welcome. Keep the first four sections in plain English. Technical notes stay
+short and contain no status, dates, IDs, hashes, paths, or scope lists.
+
+Task decomposition metadata rules:
 - Each leaf task carries `user_facing: true|false`. Set it TRUE only for tasks
   that build UI a person sees (screens, components, styling, motion); backend
   tasks (APIs, schema, services, migrations, infra) are `false`. This per-TASK
@@ -68,24 +71,19 @@ Task Decomposition rules:
   review. So a user_facing STORY whose UI is one task marks THAT task `true` and
   leaves its backend tasks `false`; backend stages then never carry UI-skill
   requirements. A user_facing story with no user_facing task is a planning bug
-  the task grill rejects.
+  the task grill rejects. Record the flag in decomposition metadata, not in the
+  human-readable plan table.
 
-Decisions section rules:
+Decision rules:
 - Every choice NOT derivable from BRIEF, architecture, or existing decision
   records is a decision (library pick, data-model shape, queue vs cron,
   API contract change, tradeoff accepted).
 - **Technology/tooling picks are decisions, never silent defaults (conduct
-  §9).** Every framework, package manager, test runner, library, data-access,
-  or build-tool choice is named here with a one-line reason it is the BEST fit
-  for this environment — NOT the ecosystem-conventional default reached for on
-  autopilot. When the best fit is unclear or confidence is low, do not default:
-  raise it as an `open_items` question for the human before building on it. A
-  tooling choice that appears in the code but not here (no justification, no
-  raised question) is exactly the defect the plan grill fails.
-- Each one must exist as a record — `python3 factory/scripts/forge.py decision
-  new <slug>` — BEFORE decomposition is recorded, and be referenced here by
-  path (e.g. `docs/decisions/0007-queue-over-cron.md`).
-- If the plan makes no new decisions, write "No new decisions" explicitly.
+  §9).** Choose the best fit for this environment and briefly explain material
+  technology choices in `Technical approach`. When the best fit is unclear or
+  confidence is low, ask the human before building on it. Record each new
+  decision before decomposition is recorded, but do not add a decision list or
+  record path to the plan.
 
 Rules:
 - Conduct is constitutional (`constitution/09-agent-conduct.md`): state
@@ -99,10 +97,10 @@ Rules:
   smallest plan that satisfies the acceptance criteria: every task must
   trace to a criterion (a task that traces to none is speculation — cut
   it); no phases that exist "for later", no abstractions the story doesn't
-  need, no infrastructure ahead of demonstrated demand. When you rejected a
-  simpler technical approach, the plan SAYS SO and why — that rejection is
-  a Decision. The grill hunts simpler shapes; a plan that over-builds fails
-  it before any code exists.
+  need, no infrastructure ahead of demonstrated demand. If a materially
+  simpler technical approach was rejected, briefly explain why in `Technical
+  approach`. The grill hunts simpler shapes; a plan that over-builds fails it
+  before any code exists.
 - Planning uses `gpt-6-sol` at `high` reasoning.
 - Treat the in-repo docs as the system of record.
 - Run `./forge findings patterns` before drafting. If a RECURRING class
@@ -141,8 +139,10 @@ Rules:
   it.** Run the grilling skill (`/grill-me`) against the draft plan — or
   follow `factory/prompts/griller.md --gate plan` directly — interrogating it
   against the story's `acceptance_criteria` (roadmap), accepted decisions,
-  and the architecture docs. Resolve findings into the plan or new decision
-  records, then record the complete payload bound to the exact draft:
+  and the architecture docs. Commit spec, decision, and roadmap changes before
+  launching the grill; its staleness check compares commit order. Resolve
+  findings into the plan or new decision records, then record the complete
+  payload bound to the exact draft:
   `python3 factory/scripts/record_grill_from_json.py --gate plan --input
   <grill-json> --input-digest <plan-file>`. For a native Codex result, use
   `python3 factory/scripts/record_grill_from_json.py --gate plan --input
@@ -150,14 +150,18 @@ Rules:
   --preparation-id <id>`.
 - Save the grilled plan into the repo, bound to its roadmap story:
   `python3 factory/scripts/forge.py plan save --from <plan-file> --story
-  <story-key>`. This records it as `awaiting-approval`.
-- Saving leaves the grilled plan at `awaiting-approval`. Present the exact final
-  artifact in native Plan Mode. A successful Claude `ExitPlanMode` binds its exact
-  plan input; Codex uses the completed id-keyed `approve_plan_<digest>` question
-  `Approve exact plan digest <digest>?` with `Approve plan / Request changes / Stop`, and records
-  approval through the shared recorder. Never use the board, a manual approve
-  command, or a second unchanged save as approval evidence. `update_run.py`
-  refuses implementation until native approval binds the final digest.
+  <story-key>`. This records the planner's review attestation in
+  `.factory/stories/<story>/plan-meta.json` and leaves the plan at
+  `awaiting-approval`.
+- Present the exact saved brief body in native Plan Mode, without adding
+  bookkeeping. A successful Claude `ExitPlanMode` binds its exact plan input;
+  Codex uses the completed id-keyed `approve_plan_<digest>` question and asks
+  `Approve this plan?`; the digest travels only in the question id. The choices
+  are `Approve plan / Request changes / Stop`, and approval is recorded through
+  the shared recorder. Never use the board, a manual approve command, or a
+  second unchanged save as approval evidence.
+  `update_run.py` refuses implementation until native approval binds the final
+  digest.
 - **Approval locks the grounding contract until the PR opens.** Before stage
   start, an edit to an already approved plan records the finding-bound
   amendment bridge against the existing cold proof, then returns directly to
