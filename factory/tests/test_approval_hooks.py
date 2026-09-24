@@ -1026,6 +1026,38 @@ def test_native_approval_from_main_checkout_records_in_matching_task_worktree(
                 / "grills" / "tasks" / f"{candidate.task}.json").exists()
 
 
+def test_native_approval_refuses_event_consumed_in_another_worktree(
+        repo: Path, tmp_path: Path):
+    first_root = _add_worktree(repo, tmp_path / "first-worktree")
+    first = _story_candidate(first_root)
+    event = _event(first)
+    approval.record_native_approval(first_root, event, runtime="claude")
+    tombstone = next((first.evidence.parent / "approval-events").glob("*.json"))
+
+    second_root = _add_worktree(repo, tmp_path / "second-worktree")
+    second = _story_candidate(second_root)
+    assert second.digest == first.digest
+    second_lib = load_factory_lib(second_root)
+    state_path = second_lib.run_state_path(second_root)
+    events_dir = second_root / ".factory" / "events"
+    before = (
+        second.path.read_bytes(), state_path.read_bytes(),
+        second.evidence.read_bytes() if second.evidence.exists() else None,
+        {path.name: path.read_bytes() for path in events_dir.glob("*.json")},
+    )
+
+    with pytest.raises(approval.ApprovalRefused, match="already consumed"):
+        approval.record_native_approval(repo, event, runtime="claude")
+
+    assert (
+        second.path.read_bytes(), state_path.read_bytes(),
+        second.evidence.read_bytes() if second.evidence.exists() else None,
+        {path.name: path.read_bytes() for path in events_dir.glob("*.json")},
+    ) == before
+    assert not (second.evidence.parent / "approval-events").exists()
+    assert tombstone.is_file()
+
+
 @pytest.mark.parametrize("runtime", ["claude", "codex"])
 def test_native_approval_hooks_report_routed_worktree(
         repo: Path, tmp_path: Path, runtime: str):

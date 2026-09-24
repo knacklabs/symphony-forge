@@ -464,7 +464,7 @@ def _event_runtime(payload: dict[str, Any], runtime: str | None) -> tuple[str, s
 
 def _matching_candidate(
         base: Path, displayed_digest: str,
-) -> tuple[Path, ApprovalCandidate]:
+) -> tuple[Path, ApprovalCandidate, list[Path]]:
     """Find one digest-matching candidate in this checkout or its worktrees."""
     try:
         result = subprocess.run(
@@ -494,10 +494,11 @@ def _matching_candidate(
         ) from exc
 
     current = base.resolve()
+    checkouts = [current, *sorted(roots - {current})]
     matches: list[tuple[Path, ApprovalCandidate]] = []
     findings: list[str] = []
     inspection_errors: list[str] = []
-    for root in [current, *sorted(roots - {current})]:
+    for root in checkouts:
         try:
             candidates = eligible_candidates(root)
         except (ApprovalRefused, OSError, SystemExit) as exc:
@@ -527,7 +528,8 @@ def _matching_candidate(
             f"candidate; found {len(matches)} matching candidates; "
             f"checkout findings: {'; '.join(findings)}"
         )
-    return matches[0]
+    approval_base, candidate = matches[0]
+    return approval_base, candidate, checkouts
 
 
 def _approve_story(base: Path, candidate: ApprovalCandidate, record: dict[str, Any]) -> None:
@@ -626,7 +628,7 @@ def record_native_approval(
     selected_runtime, displayed_digest = _event_runtime(payload, runtime)
     session_id, event_id = _event_identity(payload)
     from .delegate import delegation_exclusion
-    approval_base, candidate = _matching_candidate(base, displayed_digest)
+    approval_base, candidate, checkouts = _matching_candidate(base, displayed_digest)
 
     with delegation_exclusion(approval_base, "native-approval", kind="approval"):
         _require_current_candidate(approval_base, candidate)
@@ -635,13 +637,17 @@ def record_native_approval(
         replay_key = __import__("hashlib").sha256(
             f"{selected_runtime}\0{session_id}\0{event_id}".encode("utf-8")
         ).hexdigest()
-        # The host event is global to this checkout, not to the current story.
+        # The host event is global to all registered checkouts, not to one story.
         # Check all live layouts before creating even the current directory.
-        root = factory_dir(approval_base)
-        previous = [root / "approval-events" / f"{replay_key}.json"]
-        for parent in (root / "stories", root / "history"):
-            if parent.is_dir():
-                previous.extend(parent.glob(f"*/approval-events/{replay_key}.json"))
+        previous = []
+        for checkout in checkouts:
+            root = factory_dir(checkout)
+            previous.append(root / "approval-events" / f"{replay_key}.json")
+            for parent in (root / "stories", root / "history"):
+                if parent.is_dir():
+                    previous.extend(parent.glob(
+                        f"*/approval-events/{replay_key}.json"
+                    ))
         if any(path.exists() or path.is_symlink() for path in previous):
             raise ApprovalRefused("native approval event was already consumed")
         replay_dir = evidence_path(
