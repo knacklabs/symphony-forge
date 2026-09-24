@@ -832,7 +832,7 @@ def test_approved_story_edit_is_the_only_candidate_and_rebinds_atomically(
 
     stale = _event(candidates[0])
     stale["tool_input"] = {"plan": "# stale plan\n"}
-    with pytest.raises(approval.ApprovalRefused, match="displayed digest is stale"):
+    with pytest.raises(approval.ApprovalRefused, match="found 0 matching candidates"):
         approval.record_native_approval(repo, stale, runtime="claude")
     cancelled = {**_event(candidates[0]), "cancelled": True}
     with pytest.raises(approval.ApprovalRefused, match="unsuccessful"):
@@ -999,7 +999,13 @@ def test_native_approval_from_main_checkout_records_in_matching_task_worktree(
         runtime: str):
     task_worktree = _add_worktree(repo, tmp_path / "task-worktree")
     candidate = _task_candidate(task_worktree, monkeypatch)
-    assert approval.eligible_candidates(repo) == []
+    primary_candidate = _story_candidate(repo)
+    assert approval.eligible_candidates(repo) == [primary_candidate]
+    assert primary_candidate.digest != candidate.digest
+    primary_before = (
+        primary_candidate.path.read_bytes(),
+        load_factory_lib(repo).run_state_path(repo).read_bytes(),
+    )
 
     recorded_in: list[str] = []
     record = approval.record_native_approval(
@@ -1011,6 +1017,11 @@ def test_native_approval_from_main_checkout_records_in_matching_task_worktree(
     assert recorded_in == [str(task_worktree.resolve())]
     stored = json.loads(candidate.evidence.read_text(encoding="utf-8"))
     assert stored["approved_task_plan_sha256"] == candidate.digest
+    assert (
+        primary_candidate.path.read_bytes(),
+        load_factory_lib(repo).run_state_path(repo).read_bytes(),
+    ) == primary_before
+    assert not primary_candidate.evidence.exists()
     assert not (repo / ".factory" / "stories" / candidate.story
                 / "grills" / "tasks" / f"{candidate.task}.json").exists()
 
@@ -1065,6 +1076,32 @@ def test_native_approval_refuses_two_matching_registered_worktrees(
     assert str(first_root.resolve()) in message
     assert str(second_root.resolve()) in message
     assert not first.evidence.exists() and not second.evidence.exists()
+
+
+def test_native_approval_refuses_same_digest_in_current_and_registered_worktree(
+        repo: Path, tmp_path: Path):
+    current = _story_candidate(repo)
+    worktree = _add_worktree(repo, tmp_path / "matching-worktree")
+    matching = _story_candidate(worktree)
+    assert current.digest == matching.digest
+    before = (
+        current.path.read_bytes(), current.evidence.exists(),
+        matching.path.read_bytes(), matching.evidence.exists(),
+    )
+
+    with pytest.raises(
+            approval.ApprovalRefused,
+            match="found 2 matching candidates") as refused:
+        approval.record_native_approval(repo, _event(current), runtime="claude")
+
+    message = str(refused.value)
+    assert str(repo.resolve()) in message
+    assert str(worktree.resolve()) in message
+    assert current.digest in message
+    assert (
+        current.path.read_bytes(), current.evidence.exists(),
+        matching.path.read_bytes(), matching.evidence.exists(),
+    ) == before
 
 
 def test_native_approval_refuses_digest_missing_from_registered_worktrees(
@@ -1335,7 +1372,7 @@ def test_codex_approval_uses_question_id_and_requires_displayed_digest(
     event["tool_response"]["answers"] = {
         stale_id: {"answers": ["Approve plan"]},
     }
-    with pytest.raises(approval.ApprovalRefused, match="displayed digest is stale"):
+    with pytest.raises(approval.ApprovalRefused, match="found 0 matching candidates"):
         approval.record_native_approval(repo, event, runtime="codex")
 
 

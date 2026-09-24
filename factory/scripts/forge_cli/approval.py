@@ -335,14 +335,16 @@ def _task_candidate(base: Path) -> ApprovalCandidate | None:
 
 
 def eligible_candidates(base: Path) -> list[ApprovalCandidate]:
-    """Return all current-frontier candidates; the caller requires exactly one."""
+    """Return all current-frontier candidates for digest-bound resolution."""
     return [candidate for candidate in (_story_candidate(base), _task_candidate(base))
             if candidate is not None]
 
 
 def _require_current_candidate(base: Path, candidate: ApprovalCandidate) -> None:
-    """Re-select the exact frontier authority immediately before publication."""
-    current = eligible_candidates(base)
+    """Re-select the exact digest-matching frontier authority before publication."""
+    current = [
+        row for row in eligible_candidates(base) if row.digest == candidate.digest
+    ]
     if current != [candidate]:
         raise ApprovalRefused(
             "native approval candidate changed before publication"
@@ -460,10 +462,10 @@ def _event_runtime(payload: dict[str, Any], runtime: str | None) -> tuple[str, s
     return value, displayed_digest
 
 
-def _matching_worktree_candidate(
-        base: Path, displayed_digest: str, local_detail: str = "",
+def _matching_candidate(
+        base: Path, displayed_digest: str,
 ) -> tuple[Path, ApprovalCandidate]:
-    """Find one matching candidate among this checkout's registered worktrees."""
+    """Find one digest-matching candidate in this checkout or its worktrees."""
     try:
         result = subprocess.run(
             ["git", "worktree", "list", "--porcelain", "-z"], cwd=base,
@@ -471,14 +473,12 @@ def _matching_worktree_candidate(
         )
     except (OSError, subprocess.TimeoutExpired) as exc:
         raise ApprovalRefused(
-            "native approval requires exactly one eligible current-frontier "
-            f"candidate; found 0 in the current checkout; cannot list worktrees: {exc}"
+            f"native approval cannot list registered worktrees: {exc}"
         ) from exc
     if result.returncode != 0:
         detail = result.stderr.decode("utf-8", errors="replace").strip()
         raise ApprovalRefused(
-            "native approval requires exactly one eligible current-frontier "
-            "candidate; found 0 in the current checkout; cannot list worktrees: "
+            "native approval cannot list registered worktrees: "
             f"{detail or 'git failed'}"
         )
     try:
@@ -495,9 +495,9 @@ def _matching_worktree_candidate(
 
     current = base.resolve()
     matches: list[tuple[Path, ApprovalCandidate]] = []
-    findings = [f"{current}: no eligible candidate{local_detail}"]
+    findings: list[str] = []
     inspection_errors: list[str] = []
-    for root in sorted(roots - {current}):
+    for root in [current, *sorted(roots - {current})]:
         try:
             candidates = eligible_candidates(root)
         except (ApprovalRefused, OSError, SystemExit) as exc:
@@ -506,7 +506,10 @@ def _matching_worktree_candidate(
             inspection_errors.append(finding)
             continue
         if not candidates:
-            findings.append(f"{root}: no eligible candidate")
+            refusal_reasons: list[str] = []
+            _story_candidate(root, refusal_reasons)
+            detail = f" ({refusal_reasons[0]})" if refusal_reasons else ""
+            findings.append(f"{root}: no eligible candidate{detail}")
             continue
         labels = []
         for candidate in candidates:
@@ -521,8 +524,8 @@ def _matching_worktree_candidate(
     if inspection_errors or len(matches) != 1:
         raise ApprovalRefused(
             "native approval requires exactly one eligible current-frontier "
-            f"candidate; found {len(matches)} matching registered worktree "
-            f"candidates; worktree findings: {'; '.join(findings)}"
+            f"candidate; found {len(matches)} matching candidates; "
+            f"checkout findings: {'; '.join(findings)}"
         )
     return matches[0]
 
@@ -623,24 +626,7 @@ def record_native_approval(
     selected_runtime, displayed_digest = _event_runtime(payload, runtime)
     session_id, event_id = _event_identity(payload)
     from .delegate import delegation_exclusion
-    candidates = eligible_candidates(base)
-    if len(candidates) > 1:
-        raise ApprovalRefused(
-            "native approval requires exactly one eligible current-frontier "
-            f"candidate; found {len(candidates)}"
-        )
-    approval_base = base
-    if candidates:
-        candidate = candidates[0]
-    else:
-        refusal_reasons: list[str] = []
-        _story_candidate(base, refusal_reasons)
-        detail = f" ({refusal_reasons[0]})" if refusal_reasons else ""
-        approval_base, candidate = _matching_worktree_candidate(
-            base, displayed_digest, detail,
-        )
-    if displayed_digest != candidate.digest:
-        raise ApprovalRefused("native approval displayed digest is stale")
+    approval_base, candidate = _matching_candidate(base, displayed_digest)
 
     with delegation_exclusion(approval_base, "native-approval", kind="approval"):
         _require_current_candidate(approval_base, candidate)
