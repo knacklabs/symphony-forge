@@ -316,6 +316,22 @@ def tokenize_write_command(segment: str) -> list[str] | None:
     return tokenize(_protect_quoted_redirect_chars(segment))
 
 
+def has_directory_change(command: str) -> bool:
+    for segment in split_shell_segments(strip_heredoc_bodies(command)):
+        tokens = tokenize_write_command(segment)
+        if tokens is None:
+            continue
+        command_index = next(
+            (index for index, token in enumerate(tokens)
+             if not re.fullmatch(r"\w+=\S*", token)),
+            None,
+        )
+        if command_index is not None and tokens[command_index].rsplit("/", 1)[-1] \
+                in {"cd", "pushd"}:
+            return True
+    return False
+
+
 def split_shell_segments(value: str) -> list[str]:
     """Split shell commands on unquoted separators, preserving continuations."""
     segments: list[str] = []
@@ -457,6 +473,7 @@ def _sed_write_targets(args: list[str]) -> list[str]:
                or token.startswith("--in-place") for token in args):
         return []
     operands: list[str] = []
+    backup_suffix = ""
     has_script_option = False
     index = 0
     while index < len(args):
@@ -474,9 +491,14 @@ def _sed_write_targets(args: list[str]) -> list[str]:
             has_script_option = True
             index += 1
             continue
+        if token.startswith("-i") and token != "-i":
+            backup_suffix = token[2:]
+            index += 1
+            continue
         if token.startswith("-"):
             if (token == "-i" and index + 1 < len(args)
                     and (args[index + 1] == "" or args[index + 1].startswith("."))):
+                backup_suffix = args[index + 1]
                 index += 2
             else:
                 index += 1
@@ -484,7 +506,9 @@ def _sed_write_targets(args: list[str]) -> list[str]:
         if token:
             operands.append(token)
         index += 1
-    return operands if has_script_option else operands[1:]
+    files = operands if has_script_option else operands[1:]
+    return files + [f"{file}{backup_suffix}" for file in files] \
+        if backup_suffix else files
 
 
 def in_factory_state(raw: str, root: Path) -> bool:
@@ -1588,6 +1612,10 @@ try:
         raise TypeError("run state must be a JSON object")
 except (json.JSONDecodeError, OSError, TypeError, ValueError) as exc:
     denylist_fallback(payload, type(exc).__name__)
+
+if tool_name == "Bash" and has_directory_change(command) and (
+        bash_write_paths(command, root) or _opaque_git_form(command, root)):
+    deny("run writes from the checkout without changing directory")
 
 if tool_name == "Bash" and has_git_commit(command):
     context_dir, ledger_path = context_paths(root)

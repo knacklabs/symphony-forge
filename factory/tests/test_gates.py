@@ -8548,6 +8548,24 @@ def test_bash_write_guard_classifies_only_real_product_writes(repo):
     assert not decision("echo x > plans/roadmap.json")
 
 
+@pytest.mark.parametrize("command", [
+    "cd docs && printf x > notes.md",
+    "pushd docs && git stash pop",
+])
+def test_bash_refuses_directory_change_with_write_target(repo, command):
+    code, out = hook(repo, {
+        "tool_name": "Bash", "permission_mode": "default",
+        "tool_input": {"command": command},
+    })
+    assert code == 0 and "run writes from the checkout without changing directory" in out, out
+
+    code, out = hook(repo, {
+        "tool_name": "Bash", "permission_mode": "default",
+        "tool_input": {"command": "cd docs && git status"},
+    })
+    assert code == 0 and "deny" not in out, out
+
+
 @pytest.mark.parametrize("runtime", ["claude", "codex"])
 @pytest.mark.parametrize("command", [
     "echo hi>src/a.py",
@@ -8983,7 +9001,10 @@ def test_sed_separate_backup_suffix_keeps_script_and_target(repo, runtime):
     ) == ["plans/note.md"]
     assert bash_write_paths(
         "sed -i .bak 's/x/y/' plans/note.md", repo,
-    ) == ["plans/note.md"]
+    ) == ["plans/note.md", "plans/note.md.bak"]
+    assert bash_write_paths(
+        "sed -i.bak 's/x/y/' plans/note.md", repo,
+    ) == ["plans/note.md", "plans/note.md.bak"]
 
     runner = hook if runtime == "claude" else native_hook
     code, out = runner(repo, {
