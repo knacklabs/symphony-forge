@@ -17706,7 +17706,11 @@ def test_stage_migrate_refuses_partial_protected_authority(
     save_plan(repo, tmp_path)
     record_skeleton_then_frontier(repo, [STAGE_TASK])
     protected = delegation_ledger(repo).parent
-    source = (repo / ".factory" / protected_name).read_bytes()
+    source = (
+        story_state(repo) / protected_name
+        if protected_name == "decomposition.json"
+        else repo / ".factory" / protected_name
+    ).read_bytes()
     shutil.rmtree(protected)
     protected.mkdir(parents=True)
     (protected / protected_name).write_bytes(source)
