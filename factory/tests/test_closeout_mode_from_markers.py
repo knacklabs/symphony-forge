@@ -181,6 +181,34 @@ def test_reconcile_refuses_branch_behind_declared_trunk_commit(repo, tmp_path):
     assert code != 0 and "merge origin/main into this branch first" in out, out
 
 
+def test_reconcile_refuses_later_local_scoped_commit(repo, tmp_path):
+    from forge_cli.stages import load_stages, write_stages
+
+    _two_task_story(repo, tmp_path)
+    git(repo, "config", "user.email", "test@knacklabs.dev")
+    git(repo, "config", "user.name", "Gate Tests")
+    base = git(repo, "rev-parse", "HEAD")
+    stages = load_stages(repo)
+    stages["stages"][0]["status"] = "active"
+    stages["stages"][0]["base_sha"] = base
+    write_stages(repo, stages)
+
+    source = repo / "src" / "core.py"
+    source.write_text("print('task work shipped')\n")
+    git(repo, "add", "src/core.py")
+    git(repo, "commit", "-q", "-m", "ship T1 scoped work",
+        "-m", "Ticket: ENG-1/T1")
+    git(repo, "push", "-q", "origin", "HEAD:main")
+    source.write_text("print('later local scoped work')\n")
+    git(repo, "add", "src/core.py")
+    git(repo, "commit", "-q", "-m", "later local scoped work")
+
+    code, out = run(repo, "forge.py", "task", "reconcile", "T1")
+
+    assert code != 0 and "committed scoped changes" in out, out
+    assert not (repo / task_marker_path("ENG-1", "T1")).exists()
+
+
 def test_reconcile_accepts_squash_commit_and_marker_passes_pr_gate(
         repo, tmp_path):
     from forge_cli.stages import load_stages, write_stages
@@ -416,3 +444,44 @@ def test_an_adopted_marker_closes_without_proof_and_readopt_makes_one(repo, tmp_
     closeout = require_closeout_order(repo)
     assert any("T2 not done" in p for p in closeout), closeout
     assert not any("T1" in p for p in closeout), "\n".join(closeout)
+
+
+def test_reconcile_readopts_trunk_marker_without_recorded_stage_base(repo, tmp_path):
+    from forge_cli.stages import load_stages, write_stages
+
+    _two_task_story(repo, tmp_path)
+    git(repo, "config", "user.email", "test@knacklabs.dev")
+    git(repo, "config", "user.name", "Gate Tests")
+    base = git(repo, "rev-parse", "HEAD")
+    stages = load_stages(repo)
+    stages["stages"][0]["status"] = "active"
+    stages["stages"][0].pop("base_sha", None)
+    write_stages(repo, stages)
+
+    source = repo / "src" / "core.py"
+    source.write_text("print('T1 work shipped')\n")
+    git(repo, "add", "src/core.py")
+    git(repo, "commit", "-q", "-m", "ship T1 scoped work",
+        "-m", "Ticket: ENG-1/T1")
+    task_commit = git(repo, "rev-parse", "HEAD")
+    git(repo, "push", "-q", "origin", "HEAD:main")
+
+    marker = repo / task_marker_path("ENG-1", "T1")
+    marker.parent.mkdir(parents=True, exist_ok=True)
+    payload = {
+        "task_id": "T1",
+        "branch": "feat/ENG-1-T1",
+        "base_main_sha": base,
+        "commit": task_commit,
+        "sealed_at": "2026-09-24T00:00:00+00:00",
+    }
+    marker.write_text(json.dumps(payload) + "\n")
+    git(repo, "add", marker.relative_to(repo).as_posix())
+    git(repo, "commit", "-q", "-m", "seal T1")
+    git(repo, "push", "-q", "origin", "HEAD:main")
+
+    code, out = run(repo, "forge.py", "task", "reconcile", "T1", "--readopt",
+                    "reconcile shipped marker after proof refresh")
+
+    assert code == 0, out
+    assert json.loads(marker.read_text()) == {**payload, "reconciled": True}

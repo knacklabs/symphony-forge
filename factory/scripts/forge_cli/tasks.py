@@ -794,52 +794,6 @@ def cmd_task_reconcile(args: argparse.Namespace) -> None:
              + (f": {detail}" if detail else "."))
     if local_scope.stdout:
         fail(f"task {args.id} has uncommitted changes in the task's scope.")
-    stage_base = stage.get("base_sha")
-    if not isinstance(stage_base, str) or not stage_base.strip():
-        fail(f"{args.id} has no recorded stage base commit; this task has no "
-             "commits of its own in its scope.")
-    resolved_stage_base = _git(
-        base, "rev-parse", "--verify", "--end-of-options",
-        f"{stage_base}^{{commit}}",
-    )
-    if resolved_stage_base.returncode != 0:
-        fail(f"{args.id} has no valid recorded stage base commit; this task "
-             "has no commits of its own in its scope.")
-    shipped_commits = _git(
-        base, "log", "--topo-order", "--format=%H",
-        f"{resolved_stage_base.stdout.strip()}..{trunk_ref}",
-        "--", *write_scope,
-    )
-    if shipped_commits.returncode != 0:
-        detail = shipped_commits.stderr.strip() or shipped_commits.stdout.strip()
-        fail(f"could not check task {args.id}'s scoped trunk commits"
-             + (f": {detail}" if detail else "."))
-    declared_commits = []
-    task_ticket = f"{key}/{args.id}"
-    for candidate in shipped_commits.stdout.splitlines():
-        message = _git(base, "show", "-s", "--format=%B", candidate)
-        if message.returncode != 0:
-            detail = message.stderr.strip() or message.stdout.strip()
-            fail(f"could not read task {args.id}'s scoped trunk commit"
-                 + (f": {detail}" if detail else "."))
-        if task_ticket in TICKET_LINE.findall(message.stdout):
-            declared_commits.append(candidate)
-    if not declared_commits:
-        fail(f"no scoped commit in {stage_base}..{trunk_ref} declares "
-             f"Ticket: {task_ticket}; this task has no declared shipped work.")
-    commit = declared_commits[0]
-    if args.commit:
-        selected = _git(
-            base, "rev-parse", "--verify", "--end-of-options",
-            f"{args.commit}^{{commit}}",
-        )
-        if selected.returncode != 0 or selected.stdout.strip() not in declared_commits:
-            fail(f"--commit must be one of this task's declared scoped commits "
-                 f"on {trunk_ref}.")
-    if not _git_is_ancestor(base, commit, "HEAD"):
-        fail(f"HEAD does not descend from this task's latest declared commit "
-             f"on {trunk_ref}; merge {trunk_ref} into this branch first.")
-
     already = _git(
         base, "cat-file", "-e", f"origin/{default_branch}:{marker.as_posix()}",
     ).returncode == 0
@@ -861,6 +815,80 @@ def cmd_task_reconcile(args: argparse.Namespace) -> None:
         fail(f"task {args.id} is '{status}' and no marker for it is on origin/"
              f"{default_branch} — reconcile adopts a task whose work already "
              "SHIPPED; a task that never started has nothing to reconcile.")
+
+    if readopt:
+        # The marker on the trunk is real and its work shipped; only its proof
+        # predates the current predicate (a proof-format change, or proof that
+        # never reached the trunk). Re-mark it ADOPTED with its own identity
+        # untouched, so every gate reads it the way it reads any adopted task.
+        shipped = _require_git(
+            base, "reading the trunk marker", "show",
+            f"origin/{default_branch}:{marker.as_posix()}")
+        try:
+            payload = json.loads(shipped)
+        except json.JSONDecodeError as exc:
+            fail(f"the marker for {args.id} on origin/{default_branch} is not JSON: {exc}")
+        if not isinstance(payload, dict) or payload.get("task_id") != args.id:
+            fail(f"the marker for {args.id} on origin/{default_branch} is not its own")
+        if payload.get("reconciled") is True:
+            print(f"{args.id} is already adopted on origin/{default_branch}.")
+        payload["reconciled"] = True
+
+    if not (already and readopt):
+        stage_base = stage.get("base_sha")
+        if not isinstance(stage_base, str) or not stage_base.strip():
+            fail(f"{args.id} has no recorded stage base commit; this task has no "
+                 "commits of its own in its scope.")
+        resolved_stage_base = _git(
+            base, "rev-parse", "--verify", "--end-of-options",
+            f"{stage_base}^{{commit}}",
+        )
+        if resolved_stage_base.returncode != 0:
+            fail(f"{args.id} has no valid recorded stage base commit; this task "
+                 "has no commits of its own in its scope.")
+        shipped_commits = _git(
+            base, "log", "--topo-order", "--format=%H",
+            f"{resolved_stage_base.stdout.strip()}..{trunk_ref}",
+            "--", *write_scope,
+        )
+        if shipped_commits.returncode != 0:
+            detail = shipped_commits.stderr.strip() or shipped_commits.stdout.strip()
+            fail(f"could not check task {args.id}'s scoped trunk commits"
+                 + (f": {detail}" if detail else "."))
+        declared_commits = []
+        task_ticket = f"{key}/{args.id}"
+        for candidate in shipped_commits.stdout.splitlines():
+            message = _git(base, "show", "-s", "--format=%B", candidate)
+            if message.returncode != 0:
+                detail = message.stderr.strip() or message.stdout.strip()
+                fail(f"could not read task {args.id}'s scoped trunk commit"
+                     + (f": {detail}" if detail else "."))
+            if task_ticket in TICKET_LINE.findall(message.stdout):
+                declared_commits.append(candidate)
+        if not declared_commits:
+            fail(f"no scoped commit in {stage_base}..{trunk_ref} declares "
+                 f"Ticket: {task_ticket}; this task has no declared shipped work.")
+        commit = declared_commits[0]
+        if args.commit:
+            selected = _git(
+                base, "rev-parse", "--verify", "--end-of-options",
+                f"{args.commit}^{{commit}}",
+            )
+            if selected.returncode != 0 or selected.stdout.strip() not in declared_commits:
+                fail(f"--commit must be one of this task's declared scoped commits "
+                     f"on {trunk_ref}.")
+        if not _git_is_ancestor(base, commit, "HEAD"):
+            fail(f"HEAD does not descend from this task's latest declared commit "
+                 f"on {trunk_ref}; merge {trunk_ref} into this branch first.")
+        scoped_diff = _git(base, "diff", "--quiet", commit, "HEAD",
+                           "--", *write_scope)
+        if scoped_diff.returncode == 1:
+            fail(f"task {args.id} has committed scoped changes after its latest "
+                 "declared trunk commit; refusing to reconcile.")
+        if scoped_diff.returncode != 0:
+            detail = scoped_diff.stderr.strip() or scoped_diff.stdout.strip()
+            fail(f"could not check task {args.id}'s committed scoped changes"
+                 + (f": {detail}" if detail else "."))
 
     if not already:
         recorded_base = stage.get("base_sha")
@@ -889,22 +917,6 @@ def cmd_task_reconcile(args: argparse.Namespace) -> None:
         payload["reconciled"] = True
         dump_json(base / marker, payload)
     elif readopt:
-        # The marker on the trunk is real and its work shipped; only its proof
-        # predates the current predicate (a proof-format change, or proof that
-        # never reached the trunk). Re-mark it ADOPTED with its own identity
-        # untouched, so every gate reads it the way it reads any adopted task.
-        shipped = _require_git(
-            base, "reading the trunk marker", "show",
-            f"origin/{default_branch}:{marker.as_posix()}")
-        try:
-            payload = json.loads(shipped)
-        except json.JSONDecodeError as exc:
-            fail(f"the marker for {args.id} on origin/{default_branch} is not JSON: {exc}")
-        if not isinstance(payload, dict) or payload.get("task_id") != args.id:
-            fail(f"the marker for {args.id} on origin/{default_branch} is not its own")
-        if payload.get("reconciled") is True:
-            print(f"{args.id} is already adopted on origin/{default_branch}.")
-        payload["reconciled"] = True
         dump_json(base / marker, payload)
 
     # Flip the stage to done directly (bypassing the unsatisfiable stage-done
