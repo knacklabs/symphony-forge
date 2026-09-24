@@ -2408,13 +2408,20 @@ def cmd_delegate(args: argparse.Namespace) -> None:
     story = str(state.get("story") or state.get("issue_key") or "")
     choice = getattr(args, "choice", None)
     from . import findings
-    repeated_file = findings.repeated_finding_file(base, story, args.id)
+    repeated_files = findings.repeated_finding_files(base, story, args.id)
     if write:
-        refusal = findings.choice_error(
-            repeated_file, choice, preview=bool(args.print_only),
-        )
+        refusal = findings.choice_error(repeated_files, choice)
         if refusal:
-            fail(refusal)
+            if args.print_only:
+                print(
+                    f"WARNING: {', '.join(repeated_files)} drew findings in two "
+                    "consecutive reviews -- this preview carries no write "
+                    "authority until the user chooses --choice refactor|patch.",
+                    flush=True,
+                )
+                write = False
+            else:
+                fail(refusal)
     if story:
         from .review import (
             selected_generation, triage_workflow,
@@ -2450,8 +2457,11 @@ def cmd_delegate(args: argparse.Namespace) -> None:
     text = compose_brief(base, task, write=write,
                          user_facing=bool(task.get("user_facing")),
                          story=story, scope_override=scope)
-    if repeated_file and choice == "refactor":
-        text += f"\nRefactor {repeated_file}: replace the approach with one simpler rule.\n"
+    if repeated_files and choice == "refactor":
+        text += "\n" + "\n".join(
+            f"Refactor {file}: replace the approach with one simpler rule."
+            for file in repeated_files
+        ) + "\n"
     context_text = ""
     context_metadata = None
     context_snapshot = None

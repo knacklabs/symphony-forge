@@ -14,7 +14,8 @@ from .quickfix import (
 from .stages import task_digest
 
 
-def _brief(window: dict, description: str, refactor_file: str | None = None) -> str:
+def _brief(window: dict, description: str,
+           refactor_files: list[str] | None = None) -> str:
     text = (
         f"# Lite fix — {window['id']}\n\n"
         f"Fix: {description}\n\n"
@@ -22,8 +23,11 @@ def _brief(window: dict, description: str, refactor_file: str | None = None) -> 
         "Do not create a git commit. Run the smallest relevant checks, "
         "then report the files changed and results.\n"
     )
-    if refactor_file:
-        text += f"\nRefactor {refactor_file}: replace the approach with one simpler rule.\n"
+    if refactor_files:
+        text += "\n" + "\n".join(
+            f"Refactor {file}: replace the approach with one simpler rule."
+            for file in refactor_files
+        ) + "\n"
     return text
 
 
@@ -41,10 +45,10 @@ def cmd_fix(args: argparse.Namespace) -> None:
         fail(f"the open lite window does not match modes.lite bound {bound}")
     from . import findings
     choice = getattr(args, "choice", None)
-    repeated_file = findings.repeated_finding_file(
+    repeated_files = findings.repeated_finding_files(
         base, "", str(window.get("id") or ""), lite=True,
     )
-    refusal = findings.choice_error(repeated_file, choice)
+    refusal = findings.choice_error(repeated_files, choice)
     if refusal:
         fail(refusal)
     from .codex_runtime import coordinator_runtime
@@ -61,7 +65,7 @@ def cmd_fix(args: argparse.Namespace) -> None:
             base,
             task_id=window["id"],
             text=_brief(window, description,
-                        repeated_file if choice == "refactor" else None),
+                        repeated_files if choice == "refactor" else None),
             path=brief_path(base, window["id"]),
             task_sha256_value=task_digest(contract),
             model=model,

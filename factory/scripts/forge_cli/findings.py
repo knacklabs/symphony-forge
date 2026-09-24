@@ -29,9 +29,9 @@ WATCH_AT = 2
 REVIEW_ASPECTS = ("quality", "performance", "security")
 
 
-def repeated_finding_file(base: Path, story: str, task_id: str, *,
-                          lite: bool = False) -> str | None:
-    """File with findings in the last two complete reviews, if any."""
+def repeated_finding_files(base: Path, story: str, task_id: str, *,
+                           lite: bool = False) -> list[str]:
+    """Files with findings in the last two complete reviews, if any."""
     def files(artifacts: dict) -> set[str]:
         return {
             finding["file_path"].strip()
@@ -52,7 +52,7 @@ def repeated_finding_file(base: Path, story: str, task_id: str, *,
         window_base = str(window.get("base_sha") or "")
         if (not window or profile_of(window) != LITE or not head or not window_base
                 or head == window_base or not _git_is_ancestor(base, window_base, head)):
-            return None
+            return []
         delta = product_delta_digest(base, window_base, head)
         current = {aspect: load_json(evidence_path(
             base, _active_story_key(base) or None, f"reviews/{aspect}.json",
@@ -71,12 +71,12 @@ def repeated_finding_file(base: Path, story: str, task_id: str, *,
                        or current[aspect].get("commit") != head
                        or current[aspect].get("branch_diff_digest") != delta
                        for aspect in REVIEW_ASPECTS)):
-            return None
+            return []
         try:
             for artifact in current.values():
                 validate_payload(base, "review", artifact)
         except SystemExit:
-            return None
+            return []
         previous = [
             event for event in closed_windows(base)
             if event.get("profile") == LITE
@@ -93,17 +93,15 @@ def repeated_finding_file(base: Path, story: str, task_id: str, *,
             )
         ]
         if not previous:
-            return None
+            return []
         last = max(previous, key=lambda event: str(event.get("completed_at") or ""))
-        return next(iter(sorted(
-            files(last["reviews"]) & files(current),
-        )), None)
+        return sorted(files(last["reviews"]) & files(current))
     if not story or not task_id:
-        return None
+        return []
     directory = story_dir(base, story) / "tasks" / task_id / "reviews" / "generations"
     by_run: dict[str, tuple[str, str, dict]] = {}
     if not directory.is_dir():
-        return None
+        return []
     for path in directory.glob("*.json"):
         try:
             generation = json.loads(path.read_text(encoding="utf-8"))
@@ -126,20 +124,22 @@ def repeated_finding_file(base: Path, story: str, task_id: str, *,
             by_run[run_id] = (recorded_at, generation_id, generation)
     reviews = sorted(by_run.values(), key=lambda item: (item[0], item[1]))
     if len(reviews) < 2:
-        return None
+        return []
 
-    return next(iter(sorted(
+    return sorted(
         files(reviews[-2][2].get("lenses") or {})
         & files(reviews[-1][2].get("lenses") or {})
-    )), None)
+    )
 
 
-def choice_error(file_path: str | None, choice: str | None, *,
-                 preview: bool = False) -> str:
-    if file_path and not choice and not preview:
-        return (f"{file_path} drew findings in two consecutive reviews. Ask the user: "
-                "refactor it, or patch once more? Then re-run with "
-                "--choice refactor|patch.")
+def choice_error(file_paths: list[str], choice: str | None) -> str:
+    if file_paths and not choice:
+        return (
+            f"{', '.join(file_paths)} drew findings in two consecutive reviews. "
+            "Ask the user: "
+            "refactor it, or patch once more? Then re-run with "
+            "--choice refactor|patch."
+        )
     return ""
 
 
