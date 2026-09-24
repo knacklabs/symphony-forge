@@ -380,6 +380,13 @@ def main() -> None:
     p_fix = sub.add_parser(
         "fix", help="prepare or run a bounded fix in an open lite window")
     p_fix.add_argument("description")
+    p_fix.add_argument(
+        "--close", action="store_true",
+        help="commit product changes, run the Lite review and close on a clean review",
+    )
+    p_fix.add_argument("--resume-close", action="store_true", help=argparse.SUPPRESS)
+    p_fix.add_argument("--window-id", help=argparse.SUPPRESS)
+    p_fix.add_argument("--choice", choices=("refactor", "patch"), help="choose how to address a file found in two consecutive reviews")
     p_fix.add_argument("--repo")
     p_fix.set_defaults(func=fix_mod.cmd_fix)
 
@@ -633,6 +640,8 @@ def main() -> None:
                        help="request background execution from the active runtime")
     p_del.add_argument("--print-only", action="store_true",
                        help="print the dispatch descriptor or launch details without running it")
+    p_del.add_argument("--choice", choices=("refactor", "patch"),
+                       help="choose how to address a file found in two consecutive reviews")
     p_del.add_argument(
         "--scope", action="append", default=[], metavar="PATH",
         help="narrow a write launch to this approved file/directory (repeatable; "
@@ -747,6 +756,10 @@ def main() -> None:
              "(--gate spec/epics, and a --gate plan draft before it is saved)")
     p_gr.add_argument("--print-only", action="store_true",
                       help="compose and show the dispatch without releasing a reader")
+    p_gr.add_argument("--fresh", action="store_true",
+                      help="allow another cold read after one exists since the last pass")
+    p_gr.add_argument("--reason", default="",
+                      help="why another cold read is needed; requires --fresh")
     p_gr.add_argument(
         "--context-file", default="", metavar="PATH",
         help="capture one untrusted UTF-8 context file for this cold read")

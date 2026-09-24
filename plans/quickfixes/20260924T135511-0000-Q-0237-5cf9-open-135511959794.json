@@ -1,0 +1,12 @@
+{
+  "event": "open",
+  "id": "Q-0237-5cf9",
+  "profile": "lite",
+  "reason": "S1 follow-up: epics grill keying (review P2s)",
+  "started_at": "2026-09-24T13:55:11+00:00",
+  "max_files": 5,
+  "files": [],
+  "harness_source": true,
+  "by": "Ravi Kiran Vemula",
+  "base_sha": "8953181c9cd78076ab5ab0b6b4094fbc50125972"
+}

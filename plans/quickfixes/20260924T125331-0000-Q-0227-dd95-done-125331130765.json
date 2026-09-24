@@ -1,0 +1,86 @@
+{
+  "event": "done",
+  "id": "Q-0227-dd95",
+  "profile": "lite",
+  "by": "Ravi Kiran Vemula",
+  "reason": "Simple deterministic refactor-or-patch rule (owner decision)",
+  "base_sha": "05efda2136489d4c788ac9a5c0619ab3658b7c45",
+  "started_at": "2026-09-24T11:01:21+00:00",
+  "completed_at": "2026-09-24T12:53:31+00:00",
+  "files": [
+    "factory/scripts/forge.py",
+    "factory/scripts/forge_cli/delegate.py",
+    "factory/scripts/forge_cli/findings.py",
+    "factory/scripts/forge_cli/fix.py",
+    "factory/tests/test_refactor_choice.py"
+  ],
+  "reviews": {
+    "quality": {
+      "generated_by": "autoreview",
+      "score": 10,
+      "summary": "quality lens over Q-0227-dd95 (5 product path(s), 05efda2..1fdd9d5, Codex via the autoreview skill): 0 blocking, 0 non-blocking. The supplied diff shows the choice check in both write entry points and focused tests for the main paths. No actionable correctness defect is established from the available evidence; unchanged repository code was unavailable.",
+      "blocking_findings": [],
+      "non_blocking_findings": [],
+      "recommendation": "approve",
+      "reviewed_scope": [
+        "factory/scripts/forge.py",
+        "factory/scripts/forge_cli/delegate.py",
+        "factory/scripts/forge_cli/findings.py",
+        "factory/scripts/forge_cli/fix.py",
+        "factory/tests/test_refactor_choice.py"
+      ],
+      "skills_used": [],
+      "contract_verdicts": [],
+      "review_base_sha": "05efda2136489d4c788ac9a5c0619ab3658b7c45",
+      "branch_diff_digest": "581c3b044c34ffe639f404ce82b59421cf34a9830180596db9d25926c80c5f08",
+      "commit": "1fdd9d5d28a635fec024492750450f3943e41bbf",
+      "aspect": "quality",
+      "residual_risks": [],
+      "recorded_at": "2026-09-24T12:53:21+00:00"
+    },
+    "performance": {
+      "generated_by": "autoreview",
+      "score": 10,
+      "summary": "performance lens over Q-0227-dd95 (5 product path(s), 05efda2..1fdd9d5, Codex via the autoreview skill): 0 blocking, 0 non-blocking. The added review-history lookup runs during CLI commands. The evidence shows no concrete performance defect.",
+      "blocking_findings": [],
+      "non_blocking_findings": [],
+      "recommendation": "approve",
+      "reviewed_scope": [
+        "factory/scripts/forge.py",
+        "factory/scripts/forge_cli/delegate.py",
+        "factory/scripts/forge_cli/findings.py",
+        "factory/scripts/forge_cli/fix.py",
+        "factory/tests/test_refactor_choice.py"
+      ],
+      "skills_used": [],
+      "review_base_sha": "05efda2136489d4c788ac9a5c0619ab3658b7c45",
+      "branch_diff_digest": "581c3b044c34ffe639f404ce82b59421cf34a9830180596db9d25926c80c5f08",
+      "commit": "1fdd9d5d28a635fec024492750450f3943e41bbf",
+      "aspect": "performance",
+      "residual_risks": [],
+      "recorded_at": "2026-09-24T12:53:21+00:00"
+    },
+    "security": {
+      "generated_by": "autoreview",
+      "score": 10,
+      "summary": "security lens over Q-0227-dd95 (5 product path(s), 05efda2..1fdd9d5, Codex via the autoreview skill): 0 blocking, 0 non-blocking. The changed write paths refuse a launch when repeated findings require a choice and none is supplied. No concrete security defect or real credential is shown.",
+      "blocking_findings": [],
+      "non_blocking_findings": [],
+      "recommendation": "approve",
+      "reviewed_scope": [
+        "factory/scripts/forge.py",
+        "factory/scripts/forge_cli/delegate.py",
+        "factory/scripts/forge_cli/findings.py",
+        "factory/scripts/forge_cli/fix.py",
+        "factory/tests/test_refactor_choice.py"
+      ],
+      "skills_used": [],
+      "review_base_sha": "05efda2136489d4c788ac9a5c0619ab3658b7c45",
+      "branch_diff_digest": "581c3b044c34ffe639f404ce82b59421cf34a9830180596db9d25926c80c5f08",
+      "commit": "1fdd9d5d28a635fec024492750450f3943e41bbf",
+      "aspect": "security",
+      "residual_risks": [],
+      "recorded_at": "2026-09-24T12:53:21+00:00"
+    }
+  }
+}

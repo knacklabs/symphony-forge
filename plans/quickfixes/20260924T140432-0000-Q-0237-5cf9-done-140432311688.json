@@ -1,0 +1,95 @@
+{
+  "event": "done",
+  "id": "Q-0237-5cf9",
+  "profile": "lite",
+  "by": "Ravi Kiran Vemula",
+  "reason": "S1 follow-up: epics grill keying (review P2s)",
+  "base_sha": "8953181c9cd78076ab5ab0b6b4094fbc50125972",
+  "started_at": "2026-09-24T13:55:11+00:00",
+  "completed_at": "2026-09-24T14:04:32+00:00",
+  "files": [
+    "factory/scripts/factory_lib.py",
+    "factory/scripts/forge_cli/grill.py",
+    "factory/scripts/record_grill_from_json.py",
+    "factory/tests/test_gates.py",
+    "factory/tests/test_regrill_scope.py"
+  ],
+  "reviews": {
+    "quality": {
+      "generated_by": "autoreview",
+      "score": 9,
+      "summary": "quality lens over Q-0237-5cf9 (5 product path(s), 8953181..67443b4, Codex via the autoreview skill): 0 blocking, 1 non-blocking. The artifact keys are used consistently across the changed call sites, but key calculation fails for valid cross-drive Windows paths.",
+      "blocking_findings": [],
+      "non_blocking_findings": [
+        {
+          "category": "bug",
+          "area": "factory/scripts",
+          "summary": "Handle artifacts on a different Windows drive (factory/scripts/factory_lib.py:3474): When a Windows repository and an absolute spec or epics artifact are on different drives, this `os.path.relpath` call raises `ValueError`.",
+          "file_path": "factory/scripts/factory_lib.py",
+          "line": 3474,
+          "title": "Handle artifacts on a different Windows drive"
+        }
+      ],
+      "recommendation": "approve-with-caveats",
+      "reviewed_scope": [
+        "factory/scripts/factory_lib.py",
+        "factory/scripts/forge_cli/grill.py",
+        "factory/scripts/record_grill_from_json.py",
+        "factory/tests/test_gates.py",
+        "factory/tests/test_regrill_scope.py"
+      ],
+      "skills_used": [],
+      "contract_verdicts": [],
+      "review_base_sha": "8953181c9cd78076ab5ab0b6b4094fbc50125972",
+      "branch_diff_digest": "40b94c36fe27eb2d99eac3373bb04328d4adf9924a225f0f75f918e80faa4cfe",
+      "commit": "67443b42c48a5255e2f724bb21131faf0d6240bc",
+      "aspect": "quality",
+      "residual_risks": [],
+      "recorded_at": "2026-09-24T14:04:31+00:00"
+    },
+    "performance": {
+      "generated_by": "autoreview",
+      "score": 10,
+      "summary": "performance lens over Q-0237-5cf9 (5 product path(s), 8953181..67443b4, Codex via the autoreview skill): 0 blocking, 0 non-blocking. The added path resolution and short hash are negligible for these gate operations. No performance defect is evident.",
+      "blocking_findings": [],
+      "non_blocking_findings": [],
+      "recommendation": "approve",
+      "reviewed_scope": [
+        "factory/scripts/factory_lib.py",
+        "factory/scripts/forge_cli/grill.py",
+        "factory/scripts/record_grill_from_json.py",
+        "factory/tests/test_gates.py",
+        "factory/tests/test_regrill_scope.py"
+      ],
+      "skills_used": [],
+      "review_base_sha": "8953181c9cd78076ab5ab0b6b4094fbc50125972",
+      "branch_diff_digest": "40b94c36fe27eb2d99eac3373bb04328d4adf9924a225f0f75f918e80faa4cfe",
+      "commit": "67443b42c48a5255e2f724bb21131faf0d6240bc",
+      "aspect": "performance",
+      "residual_risks": [],
+      "recorded_at": "2026-09-24T14:04:31+00:00"
+    },
+    "security": {
+      "generated_by": "autoreview",
+      "score": 10,
+      "summary": "security lens over Q-0237-5cf9 (5 product path(s), 8953181..67443b4, Codex via the autoreview skill): 0 blocking, 0 non-blocking. The changed evidence lookup remains bound to the artifact digest. No concrete new security defect is evident.",
+      "blocking_findings": [],
+      "non_blocking_findings": [],
+      "recommendation": "approve",
+      "reviewed_scope": [
+        "factory/scripts/factory_lib.py",
+        "factory/scripts/forge_cli/grill.py",
+        "factory/scripts/record_grill_from_json.py",
+        "factory/tests/test_gates.py",
+        "factory/tests/test_regrill_scope.py"
+      ],
+      "skills_used": [],
+      "review_base_sha": "8953181c9cd78076ab5ab0b6b4094fbc50125972",
+      "branch_diff_digest": "40b94c36fe27eb2d99eac3373bb04328d4adf9924a225f0f75f918e80faa4cfe",
+      "commit": "67443b42c48a5255e2f724bb21131faf0d6240bc",
+      "aspect": "security",
+      "residual_risks": [],
+      "recorded_at": "2026-09-24T14:04:31+00:00"
+    }
+  }
+}

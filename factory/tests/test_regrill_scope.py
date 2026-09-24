@@ -13,6 +13,7 @@ bookkeeping, cost a full adversarial round.
 from __future__ import annotations
 
 import copy
+import difflib
 import hashlib
 import json
 import sys
@@ -86,17 +87,48 @@ def _fake_companion_env(tmp_path: Path) -> dict[str, str]:
     }
 
 
-def test_task_cold_read_releases_after_rerecorded_contract_change(
+def _start_stage_with_contract_frame(
+        repo: Path, tmp_path: Path, task: dict, monkeypatch,
+        *, launch: bool = True) -> None:
+    """Keep these regressions on the current plan-plus-contract task frame."""
+    import test_gates
+
+    seed = test_gates._seed_cold_launch
+
+    def seed_current(repo, gate, digest, task_id="", *, findings=None,
+                     artifact_text=None, artifact_file="",
+                     include_artifact_frame=True):
+        if gate == "task":
+            from forge_cli.grill import _artifact_digest, _review_artifact_text
+            from grill_gates import get_gate
+
+            _label, plan = get_gate(gate).locate(repo, task_id, "")
+            artifact_text = _review_artifact_text(
+                repo, gate, task_id, plan,
+            )
+            digest = _artifact_digest(artifact_text)
+        return seed(
+            repo, gate, digest, task_id, findings=findings,
+            artifact_text=artifact_text,
+            artifact_file=artifact_file,
+            include_artifact_frame=include_artifact_frame,
+        )
+
+    monkeypatch.setattr(test_gates, "_seed_cold_launch", seed_current)
+    test_gates.start_stage(repo, tmp_path, task, launch=launch)
+
+
+def test_task_cold_read_requires_reason_for_second_read(
         repo: Path, tmp_path: Path, capsys, monkeypatch):
     from types import SimpleNamespace
 
-    from test_gates import DECOMP, STAGE_TASK, run, start_stage
+    from test_gates import DECOMP, STAGE_TASK, run
     from forge_cli import delegate
     from forge_cli.delegate import load_delegations
     from forge_cli.grill import cmd_grill_run
     from factory_lib import evidence_path, load_json, run_state_path
 
-    start_stage(repo, tmp_path, STAGE_TASK, launch=False)
+    _start_stage_with_contract_frame(repo, tmp_path, STAGE_TASK, monkeypatch)
 
     monkeypatch.setenv("FORGE_COORDINATOR", "codex")
     monkeypatch.setattr(
@@ -104,7 +136,7 @@ def test_task_cold_read_releases_after_rerecorded_contract_change(
     )
     args = SimpleNamespace(
         repo=str(repo), gate="task", task="T1", print_only=False,
-        file="", context_file="",
+        file="", context_file="", fresh=False, reason="",
     )
     cmd_grill_run(args)
     assert "host-native spawn_agent" in capsys.readouterr().out
@@ -121,7 +153,7 @@ def test_task_cold_read_releases_after_rerecorded_contract_change(
         cmd_grill_run(args)
     refusal = capsys.readouterr().out
     assert "already been cold-read" in refusal
-    assert "task's contract changed" not in refusal
+    assert "--fresh --reason" in refusal
 
     amended = {
         **STAGE_TASK,
@@ -137,12 +169,16 @@ def test_task_cold_read_releases_after_rerecorded_contract_change(
     )
     assert code == 0, out
 
+    with pytest.raises(SystemExit):
+        cmd_grill_run(args)
+    refusal = capsys.readouterr().out
+    assert "already been cold-read" in refusal
+    assert "contract changed" not in refusal
+
+    args.fresh = True
+    args.reason = "Owner approved a new cold read after contract review."
     cmd_grill_run(args)
     output = capsys.readouterr().out
-    assert output.count(
-        "the task's contract changed since its last cold read; "
-        "a fresh read is allowed"
-    ) == 1
     assert "host-native spawn_agent" in output
     launches = [
         row for row in load_delegations(repo)
@@ -151,44 +187,150 @@ def test_task_cold_read_releases_after_rerecorded_contract_change(
     ]
     assert len(launches) == 2
     assert launches[0]["brief_sha256"] != launches[1]["brief_sha256"]
-    assert (launches[0]["cold_contract_sha256"]
-            != launches[1]["cold_contract_sha256"])
+    assert launches[1]["reason"] == args.reason
 
+    args.fresh = False
+    args.reason = ""
     with pytest.raises(SystemExit):
         cmd_grill_run(args)
     blocked = capsys.readouterr().out
     assert "already been cold-read" in blocked
-    assert "the task's contract changed since its last cold read" not in blocked
+    assert "contract changed" not in blocked
 
 
-def test_legacy_task_cold_read_uses_brief_identity(repo: Path, capsys, monkeypatch):
-    from forge_cli import codex_status, grill
+@pytest.mark.parametrize("change", ["contract", "plan", "both"])
+def test_task_contract_change_records_against_existing_read(
+        repo: Path, tmp_path: Path, monkeypatch, change: str):
+    from types import SimpleNamespace
+
+    from test_gates import (
+        DECOMP, STAGE_TASK, run, story_state, task_grill_payload,
+    )
+    from forge_cli import delegate
+    from forge_cli.delegate import load_delegations
+    from forge_cli.grill import (
+        _artifact_digest, _cold_artifact_from_brief, _review_artifact_text,
+        cmd_grill_run,
+    )
+    from grill_gates import get_gate
+
+    _start_stage_with_contract_frame(repo, tmp_path, STAGE_TASK, monkeypatch)
+    monkeypatch.setenv("FORGE_COORDINATOR", "codex")
+    monkeypatch.setattr(
+        delegate, "now_iso", lambda: "2099-01-01T00:00:00+00:00",
+    )
+    cmd_grill_run(SimpleNamespace(
+        repo=str(repo), gate="task", task="T1", print_only=False,
+        file="", context_file="", fresh=False, reason="",
+    ))
+
+    launch = next(row for row in load_delegations(repo)
+                  if row.get("task") == "grill-task-T1"
+                  and row.get("launch_status") == "prepared")
+    brief = repo / launch["brief_path"]
+    cold_artifact = _cold_artifact_from_brief(
+        brief.read_bytes(), launch["task_sha256"],
+    )
+    assert cold_artifact is not None and "The contract as recorded" in cold_artifact
+
+    contract_changed = change in ("contract", "both")
+    plan_changed = change in ("plan", "both")
+    amended = STAGE_TASK
+    if contract_changed:
+        amended = {
+            **STAGE_TASK,
+            "acceptance_criteria": ["the slice runs green", "and audits"],
+            "plan_contracts": STAGE_TASK["plan_contracts"] + [{
+                "id": "C2", "statement": "and audits",
+                "source": "plans/active/TEST-1-test-plan.md#acceptance-criteria",
+            }],
+        }
+        code, out = run(
+            repo, "record_decomposition_from_json.py",
+            stdin=json.dumps({**DECOMP, "tasks": [amended]}),
+        )
+        assert code == 0, out
+    task_plan = story_state(repo) / "task-plans" / "T1.md"
+    if plan_changed:
+        task_plan.write_text(
+            task_plan.read_text(encoding="utf-8") + "\nApproved audit amendment.\n",
+            encoding="utf-8",
+        )
+    _, current_plan = get_gate("task").locate(repo, "T1", "")
+    final_artifact = _review_artifact_text(repo, "task", "T1", current_plan)
+    cold_lines = cold_artifact.splitlines(keepends=True)
+    final_lines = final_artifact.splitlines(keepends=True)
+    delta = [
+        {
+            "cold_start": left_start, "cold_end": left_end,
+            "cold": "".join(cold_lines[left_start:left_end]),
+            "final_start": right_start, "final_end": right_end,
+            "final": "".join(final_lines[right_start:right_end]),
+        }
+        for tag, left_start, left_end, right_start, right_end
+        in difflib.SequenceMatcher(
+            a=cold_lines, b=final_lines, autojunk=False,
+        ).get_opcodes()
+        if tag != "equal"
+    ]
+    decision = (
+        "Owner decision: add the audit acceptance criterion."
+        if contract_changed else "Owner decision: add the approved plan note."
+    )
+    payload = {
+        **task_grill_payload(amended),
+        "finding_dispositions": [{
+            "finding": decision, "resolution": "Applied as requested.",
+            "source": decision,
+        }],
+        "amendments": [{
+            "delta_index": index, "findings": [decision],
+            "change": "Applied the approved task contract or plan text edit.",
+            "reason": "Owner decision recorded before the edit.",
+            "source": decision,
+        } for index in range(len(delta))],
+        "artifact_delta": delta,
+    }
+    cold_result = tmp_path / "cold-result.json"
+    cold_result.write_text(
+        json.dumps({"gaps": [], "contradictions": []}), encoding="utf-8",
+    )
+    code, out = run(
+        repo, "record_grill_from_json.py", "--gate", "task", "--task", "T1",
+        "--cold-result", str(cold_result), "--preparation-id", launch["launch_id"],
+        stdin=json.dumps(payload),
+    )
+    assert code == 0, out
+    recorded = json.loads(
+        (story_state(repo) / "grills" / "tasks" / "T1.json").read_text(),
+    )
+    assert recorded["preparation_id"] == launch["launch_id"]
+    assert recorded["cold_input_sha256"] == _artifact_digest(cold_artifact)
+    assert recorded["final_artifact_sha256"] == _artifact_digest(final_artifact)
+    assert recorded["artifact_delta"] == delta
+
+
+def test_latest_of_three_successful_cold_reads_is_selected(
+        repo: Path, monkeypatch):
+    from forge_cli import delegate, grill
 
     _seed(repo)
-    legacy = {
-        "launch_id": "legacy",
-        "launch_status": "prepared",
-        "transport": "host-native",
-        "brief_sha256": "a" * 64,
-    }
-    monkeypatch.setattr(grill, "_last_pass_at", lambda *_args: "")
-    monkeypatch.setattr(
-        grill, "_latest_launch_rows", lambda *_args, **_kwargs: [legacy],
-    )
-    monkeypatch.setattr(codex_status, "dead_launches", lambda _base: [])
+    rows = [
+        {
+            "task": "grill-task-T1", "story": "TEST-1",
+            "launch_id": f"launch-{index}", "at": f"2099-01-01T00:00:0{index}Z",
+            "launch_status": "prepared", "transport": "host-native",
+        }
+        for index in range(1, 4)
+    ]
+    monkeypatch.setattr(delegate, "load_delegations", lambda _base: rows)
 
-    grill._refuse_a_second_cold_read(
-        repo, "grill-task-T1", "task", "T1", "b" * 64,
-        contract_sha256="c" * 64,
+    selected = grill._latest_cold_launch_rows(
+        repo, "grill-task-T1", "task",
     )
-    assert "fresh read is allowed" in capsys.readouterr().out
 
-    with pytest.raises(SystemExit):
-        grill._refuse_a_second_cold_read(
-            repo, "grill-task-T1", "task", "T1", "a" * 64,
-            contract_sha256="c" * 64,
-        )
-    assert "already been cold-read" in capsys.readouterr().out
+    assert len(selected) == 1
+    assert selected[0]["launch_id"] == "launch-3"
 
 
 # --------------------------------------------------------------- bookkeeping
@@ -367,7 +509,8 @@ def test_opening_the_stage_does_not_stale_the_grill_that_authorised_it(repo: Pat
     assert not lib.grounding_matches(repo, moved, recorded, in_stage=True)
 
 
-def test_a_second_delegate_after_committing_needs_no_new_grill(repo: Path, tmp_path):
+def test_a_second_delegate_after_committing_needs_no_new_grill(
+        repo: Path, tmp_path, monkeypatch):
     """The loop, replayed end to end with the real commands.
 
     From the story's own handover: "committing the code stales the gate that
@@ -376,9 +519,7 @@ def test_a_second_delegate_after_committing_needs_no_new_grill(repo: Path, tmp_p
     the implementation, then go back for the fix round — which is where the
     harness used to demand a fresh grill before it would let anyone write.
     """
-    from test_gates import (  # noqa: E402
-        DECOMP, STAGE_TASK, start_stage,
-    )
+    from test_gates import DECOMP, STAGE_TASK  # noqa: E402
 
     (repo / "src").mkdir()
     (repo / "src" / "existing.ts").write_text(
@@ -386,7 +527,7 @@ def test_a_second_delegate_after_committing_needs_no_new_grill(repo: Path, tmp_p
     git(repo, "add", "src/existing.ts")
     git(repo, "-c", "user.email=t@t", "-c", "user.name=t", "commit",
         "-m", "seed immutable source ownership")
-    start_stage(repo, tmp_path, STAGE_TASK)
+    _start_stage_with_contract_frame(repo, tmp_path, STAGE_TASK, monkeypatch)
     original_grill = _seed_pre_stage_grill(repo, STAGE_TASK)
 
     # A worker signal reveals one more mechanically measured path. The
@@ -463,7 +604,7 @@ def test_a_second_delegate_after_committing_needs_no_new_grill(repo: Path, tmp_p
 
 def test_native_preparation_rebinds_after_brief_changes(
         repo: Path, tmp_path, monkeypatch, capsys):
-    from test_gates import STAGE_TASK, start_stage  # noqa: E402
+    from test_gates import STAGE_TASK  # noqa: E402
     from forge_cli.delegate import brief_path, launch_companion  # noqa: E402
     from forge_cli.stages import _require_successful_launch  # noqa: E402
 
@@ -476,7 +617,9 @@ def test_native_preparation_rebinds_after_brief_changes(
     monkeypatch.setattr(
         doctor, "codex_hook_readiness", lambda _base: (True, "fixture-ready"),
     )
-    start_stage(repo, tmp_path, STAGE_TASK, launch=False)
+    _start_stage_with_contract_frame(
+        repo, tmp_path, STAGE_TASK, monkeypatch, launch=False,
+    )
     lib = load_factory_lib(repo)
     stage = lib.task_stage_record(repo, "T1")
     path = brief_path(repo, "T1")
@@ -517,7 +660,7 @@ def test_native_preparation_rebinds_after_brief_changes(
 
 def test_host_native_preparation_anchors_measurement_amendment(
         repo: Path, tmp_path, monkeypatch, capsys):
-    from test_gates import DECOMP, STAGE_TASK, start_stage  # noqa: E402
+    from test_gates import DECOMP, STAGE_TASK  # noqa: E402
     from forge_cli.delegate import brief_path, launch_companion, load_delegations  # noqa: E402
 
     monkeypatch.setenv("FORGE_COORDINATOR", "codex")
@@ -525,7 +668,9 @@ def test_host_native_preparation_anchors_measurement_amendment(
     monkeypatch.setattr(
         doctor, "codex_hook_readiness", lambda _base: (True, "fixture-ready"),
     )
-    start_stage(repo, tmp_path, STAGE_TASK, launch=False)
+    _start_stage_with_contract_frame(
+        repo, tmp_path, STAGE_TASK, monkeypatch, launch=False,
+    )
     lib = load_factory_lib(repo)
     stage = lib.task_stage_record(repo, "T1")
     launch_companion(
@@ -570,10 +715,12 @@ def test_host_native_preparation_anchors_measurement_amendment(
 
 
 def test_measurement_amendment_without_a_bound_launch_writes_nothing(
-        repo: Path, tmp_path):
-    from test_gates import DECOMP, STAGE_TASK, start_stage  # noqa: E402
+        repo: Path, tmp_path, monkeypatch):
+    from test_gates import DECOMP, STAGE_TASK  # noqa: E402
 
-    start_stage(repo, tmp_path, STAGE_TASK, launch=False)
+    _start_stage_with_contract_frame(
+        repo, tmp_path, STAGE_TASK, monkeypatch, launch=False,
+    )
     _seed_pre_stage_grill(repo, STAGE_TASK)
     lib = load_factory_lib(repo)
     protected = lib.protected_decomposition_state_path(repo)
@@ -593,10 +740,10 @@ def test_measurement_amendment_without_a_bound_launch_writes_nothing(
 
 @pytest.mark.parametrize("corruption", ["missing", "invalid-bytes"])
 def test_measurement_continuity_never_replaces_native_task_approval_authority(
-        repo: Path, tmp_path: Path, corruption: str):
-    from test_gates import DECOMP, STAGE_TASK, start_stage  # noqa: E402
+        repo: Path, tmp_path: Path, corruption: str, monkeypatch):
+    from test_gates import DECOMP, STAGE_TASK  # noqa: E402
 
-    start_stage(repo, tmp_path, STAGE_TASK)
+    _start_stage_with_contract_frame(repo, tmp_path, STAGE_TASK, monkeypatch)
     _seed_pre_stage_grill(repo, STAGE_TASK)
     widened = {**STAGE_TASK, "write_scope": ["src/", "billing/"]}
     code, out = run(
@@ -633,13 +780,13 @@ def test_measurement_continuity_never_replaces_native_task_approval_authority(
 
 
 def test_story_plan_reapproval_rebinds_an_active_task_without_restarting_it(
-        repo: Path, tmp_path):
+        repo: Path, tmp_path, monkeypatch):
     from test_gates import (  # noqa: E402
         DECOMP, STAGE_TASK, native_claude_approval,
-        post_hook, run_state, start_stage, story_state,
+        post_hook, run_state, story_state,
     )
 
-    start_stage(repo, tmp_path, STAGE_TASK)
+    _start_stage_with_contract_frame(repo, tmp_path, STAGE_TASK, monkeypatch)
     _seed_pre_stage_grill(repo, STAGE_TASK)
     widened = {**STAGE_TASK, "write_scope": ["src/", "billing/"]}
     code, out = run(
@@ -759,13 +906,13 @@ def test_story_plan_reapproval_rebinds_an_active_task_without_restarting_it(
 
 
 def test_story_plan_reapproval_preserves_an_active_task_without_receipts(
-        repo: Path, tmp_path):
+        repo: Path, tmp_path, monkeypatch):
     from test_gates import (  # noqa: E402
         DECOMP, STAGE_TASK, native_claude_approval,
-        post_hook, run_state, start_stage, story_state,
+        post_hook, run_state, story_state,
     )
 
-    start_stage(repo, tmp_path, STAGE_TASK)
+    _start_stage_with_contract_frame(repo, tmp_path, STAGE_TASK, monkeypatch)
     lib = load_factory_lib(repo)
     stage_before = copy.deepcopy(lib.task_stage_record(repo, "T1"))
     assert not stage_before.get("measurement_continuity")
@@ -831,12 +978,14 @@ def test_story_plan_reapproval_preserves_an_active_task_without_receipts(
 
 
 def test_approved_task_plan_amendment_does_not_mask_changed_grounding(
-        repo: Path, tmp_path):
+        repo: Path, tmp_path, monkeypatch):
     from test_gates import (  # noqa: E402
-        STAGE_TASK, native_claude_approval, post_hook, start_stage, story_state,
+        STAGE_TASK, native_claude_approval, post_hook, story_state,
     )
 
-    start_stage(repo, tmp_path, STAGE_TASK, launch=False)
+    _start_stage_with_contract_frame(
+        repo, tmp_path, STAGE_TASK, monkeypatch, launch=False,
+    )
     lib = load_factory_lib(repo)
     task_plan = story_state(repo) / "task-plans" / "T1.md"
     task_plan.write_text(
@@ -965,17 +1114,18 @@ def test_story_plan_predecessors_fail_closed_on_malformed_sibling_event(
     assert {path.name: path.read_bytes() for path in events.glob("*.json")} == before
 
 
-def test_a_contract_change_still_stops_the_next_delegate(repo: Path, tmp_path):
+def test_a_contract_change_still_stops_the_next_delegate(
+        repo: Path, tmp_path, monkeypatch):
     # The other half: the gate must still refuse when what was authorised
     # actually changed, or the fix has simply removed the gate.
-    from test_gates import (  # noqa: E402
-        STAGE_TASK, start_stage,
-    )
+    from test_gates import STAGE_TASK  # noqa: E402
     from factory_lib import (  # noqa: E402
         dump_json, load_json, protected_decomposition_state_path,
     )
 
-    start_stage(repo, tmp_path, STAGE_TASK, launch=False)
+    _start_stage_with_contract_frame(
+        repo, tmp_path, STAGE_TASK, monkeypatch, launch=False,
+    )
 
     path = protected_decomposition_state_path(repo)
     decomposition = load_json(path, default={})
@@ -988,3 +1138,277 @@ def test_a_contract_change_still_stops_the_next_delegate(repo: Path, tmp_path):
                     env=_fake_companion_env(tmp_path))
     assert code != 0, f"a widened write scope no longer stops delegate:\n{out}"
     assert "STALE" in out or "grill" in out.lower()
+
+
+def _prepare_file_cold_read(
+        repo: Path, gate: str, artifact_file: Path, monkeypatch) -> dict:
+    from types import SimpleNamespace
+
+    from factory_lib import grill_key_suffix
+    from forge_cli import codex_status
+    from forge_cli.delegate import load_delegations
+    from forge_cli.grill import cmd_grill_run
+
+    monkeypatch.setenv("FORGE_COORDINATOR", "codex")
+    monkeypatch.setattr(codex_status, "dead_launches", lambda _base: [])
+    args = SimpleNamespace(
+        repo=str(repo), gate=gate, task="", file=str(artifact_file),
+        context_file="", print_only=False, fresh=False, reason="",
+    )
+    cmd_grill_run(args)
+    key = f"grill-{gate}-{grill_key_suffix(gate, artifact=artifact_file, root=repo)}"
+    return next(
+        row for row in reversed(load_delegations(repo))
+        if row.get("task") == key and row.get("launch_status") == "prepared"
+    )
+
+
+def _record_prepared_file(
+        repo: Path, gate: str, artifact_file: Path, launch: dict,
+        tmp_path: Path) -> dict:
+    from factory_lib import grill_evidence_name
+
+    result = tmp_path / f"{gate}-{artifact_file.stem}-cold-result.json"
+    result.write_text(json.dumps({"gaps": [], "contradictions": []}),
+                      encoding="utf-8")
+    payload = {
+        "generated_by": "griller", "gate": gate, "verdict": "pass",
+        "gaps": [], "contradictions": [], "resolutions": [],
+        "finding_dispositions": [],
+    }
+    code, out = run(
+        repo, "record_grill_from_json.py", "--gate", gate,
+        "--input-digest", str(artifact_file), "--cold-result", str(result),
+        "--preparation-id", launch["launch_id"], stdin=json.dumps(payload),
+    )
+    assert code == 0, out
+    return json.loads(
+        (repo / ".factory" / grill_evidence_name(
+            gate, artifact=artifact_file, root=repo,
+        ))
+        .read_text(encoding="utf-8"),
+    )
+
+
+def test_two_specs_record_against_their_own_cold_reads(
+        repo: Path, tmp_path: Path, monkeypatch):
+    from factory_lib import grill_key_suffix, sha256_of
+    from forge_cli.delegate import load_delegations
+
+    specs = repo / "docs" / "specs"
+    specs.mkdir(parents=True, exist_ok=True)
+    alpha = specs / "alpha.md"
+    beta = specs / "beta.md"
+    alpha.write_text("# Alpha\n\nAlpha capability.\n", encoding="utf-8")
+    beta.write_text("# Beta\n\nBeta capability.\n", encoding="utf-8")
+
+    alpha_launch = _prepare_file_cold_read(repo, "spec", alpha, monkeypatch)
+    beta_launch = _prepare_file_cold_read(repo, "spec", beta, monkeypatch)
+    alpha_record = _record_prepared_file(
+        repo, "spec", alpha, alpha_launch, tmp_path,
+    )
+    beta_record = _record_prepared_file(
+        repo, "spec", beta, beta_launch, tmp_path,
+    )
+
+    assert alpha_record["preparation_id"] == alpha_launch["launch_id"]
+    assert beta_record["preparation_id"] == beta_launch["launch_id"]
+    assert alpha_record["input_sha256"] == sha256_of(alpha)
+    assert beta_record["input_sha256"] == sha256_of(beta)
+    assert alpha_record["input_sha256"] != beta_record["input_sha256"]
+    assert {row["task"] for row in load_delegations(repo)
+            if row.get("launch_status") == "prepared"} >= {
+                f"grill-spec-{grill_key_suffix('spec', artifact=alpha, root=repo)}",
+                f"grill-spec-{grill_key_suffix('spec', artifact=beta, root=repo)}",
+            }
+
+
+def test_second_read_of_same_spec_needs_fresh_reason(
+        repo: Path, monkeypatch, capsys):
+    from types import SimpleNamespace
+
+    from factory_lib import grill_key_suffix
+    from forge_cli.delegate import load_delegations
+    from forge_cli.grill import cmd_grill_run
+
+    specs = repo / "docs" / "specs"
+    specs.mkdir(parents=True, exist_ok=True)
+    spec = specs / "repeat.md"
+    spec.write_text("# Repeat\n", encoding="utf-8")
+    _prepare_file_cold_read(repo, "spec", spec, monkeypatch)
+
+    with pytest.raises(SystemExit):
+        cmd_grill_run(SimpleNamespace(
+            repo=str(repo), gate="spec", task="", file=str(spec),
+            context_file="", print_only=False, fresh=False, reason="",
+        ))
+
+    assert "already been cold-read" in capsys.readouterr().out
+    assert sum(row.get("task") == f"grill-spec-{grill_key_suffix('spec', artifact=spec, root=repo)}"
+               and row.get("launch_status") == "prepared"
+               for row in load_delegations(repo)) == 1
+
+
+def test_epics_file_cold_read_records_under_its_artifact_key(
+        repo: Path, tmp_path: Path, monkeypatch):
+    from factory_lib import grill_key_suffix, sha256_of
+
+    artifact = tmp_path / "roadmap-input.json"
+    artifact.write_text('{"epics": []}\n', encoding="utf-8")
+    launch = _prepare_file_cold_read(repo, "epics", artifact, monkeypatch)
+    record = _record_prepared_file(repo, "epics", artifact, launch, tmp_path)
+
+    suffix = grill_key_suffix("epics", artifact=artifact, root=repo)
+    assert launch["task"] == f"grill-epics-{suffix}"
+    assert launch["brief_path"] == \
+        f".factory/grill-brief-epics-{suffix}.md"
+    assert record["preparation_id"] == launch["launch_id"]
+    assert record["input_sha256"] == sha256_of(artifact)
+
+
+def test_outside_epics_artifact_key_records_and_reads_pass(
+        repo: Path, tmp_path: Path, monkeypatch):
+    from factory_lib import grill_key_suffix, require_grill, sha256_of
+
+    artifact = tmp_path / "roadmap-input.json"
+    artifact.write_text('{"epics": []}\n', encoding="utf-8")
+    path_hash = hashlib.sha256(
+        artifact.resolve().as_posix().encode("utf-8")
+    ).hexdigest()[:16]
+    expected = f"{artifact.stem}-{path_hash}"
+
+    def cross_drive_relpath(*_args, **_kwargs):
+        raise ValueError("path is on a different drive")
+
+    with monkeypatch.context() as patch:
+        patch.setattr("os.path.relpath", cross_drive_relpath)
+        assert grill_key_suffix("epics", artifact=artifact, root=repo) == expected
+        assert grill_key_suffix("epics", artifact=artifact, root=repo) == expected
+
+    launch = _prepare_file_cold_read(repo, "epics", artifact, monkeypatch)
+    record = _record_prepared_file(repo, "epics", artifact, launch, tmp_path)
+    assert launch["task"] == f"grill-epics-{expected}"
+    assert record["input_sha256"] == sha256_of(artifact)
+    require_grill(repo, "epics", (), expect_digest_of=artifact)
+
+
+def test_same_named_epics_files_keep_separate_grill_passes(
+        repo: Path, tmp_path: Path, monkeypatch):
+    from factory_lib import (
+        grill_evidence_name, require_grill, sha256_of,
+    )
+
+    first = repo / "docs" / "first" / "roadmap-input.json"
+    second = repo / "docs" / "second" / "roadmap-input.json"
+    for path, text in ((first, '{"epics": []}\n'),
+                       (second, '{"epics": [{"id": "E2"}]}\n')):
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(text, encoding="utf-8")
+
+    first_launch = _prepare_file_cold_read(repo, "epics", first, monkeypatch)
+    second_launch = _prepare_file_cold_read(repo, "epics", second, monkeypatch)
+    first_pass = _record_prepared_file(
+        repo, "epics", first, first_launch, tmp_path,
+    )
+    second_pass = _record_prepared_file(
+        repo, "epics", second, second_launch, tmp_path,
+    )
+
+    assert first_launch["task"] != second_launch["task"]
+    assert first_launch["brief_path"] != second_launch["brief_path"]
+    assert grill_evidence_name("epics", artifact=first, root=repo) != \
+        grill_evidence_name("epics", artifact=second, root=repo)
+    assert first_pass["input_sha256"] == sha256_of(first)
+    assert second_pass["input_sha256"] == sha256_of(second)
+    require_grill(repo, "epics", (), expect_digest_of=first)
+    require_grill(repo, "epics", (), expect_digest_of=second)
+
+
+def test_spec_confirmation_does_not_use_another_specs_pass(repo: Path):
+    from types import SimpleNamespace
+
+    from factory_lib import (
+        dump_json, evidence_path, grill_evidence_name, sha256_of,
+    )
+    from forge_cli.specs import cmd_confirm
+
+    specs = repo / "docs" / "specs"
+    specs.mkdir(parents=True, exist_ok=True)
+    alpha = specs / "alpha.md"
+    beta = specs / "beta.md"
+    alpha.write_text(
+        "---\nslug: alpha\ntitle: Alpha\nstatus: draft\n---\n\n"
+        "# Alpha\n\n## Why\n\nAlpha is needed.\n\n"
+        "## Behaviour\n\nAlpha works.\n\n"
+        "## Acceptance criteria\n\n- Alpha works.\n",
+        encoding="utf-8",
+    )
+    beta.write_text(
+        "---\nslug: beta\ntitle: Beta\nstatus: draft\n---\n\n"
+        "# Beta\n\n## Why\n\nBeta is needed.\n\n"
+        "## Behaviour\n\nBeta works.\n\n"
+        "## Acceptance criteria\n\n- Beta works.\n",
+        encoding="utf-8",
+    )
+    beta_pass = {
+        "verdict": "pass", "commit": "test", "input_sha256": sha256_of(beta),
+        "cold_input_sha256": "a" * 64, "final_artifact_sha256": "b" * 64,
+        "finding_dispositions": [],
+    }
+    dump_json(evidence_path(
+        repo, None, grill_evidence_name("spec", artifact=beta, root=repo),
+        for_write=True,
+    ), beta_pass)
+
+    with pytest.raises(SystemExit, match="Handover grill required first"):
+        cmd_confirm(SimpleNamespace(repo=str(repo), slug="alpha"))
+
+
+def test_legacy_spec_grill_fallback_is_bound_to_its_input(repo: Path):
+    from factory_lib import (
+        dump_json, evidence_path, head_sha, require_grill, sha256_of,
+    )
+
+    specs = repo / "docs" / "specs"
+    specs.mkdir(parents=True, exist_ok=True)
+    alpha = specs / "alpha.md"
+    beta = specs / "beta.md"
+    alpha.write_text("# Alpha\n", encoding="utf-8")
+    beta.write_text("# Beta\n", encoding="utf-8")
+    dump_json(evidence_path(
+        repo, None, "grills/spec.json", for_write=True,
+    ), {
+        "verdict": "pass", "commit": head_sha(repo),
+        "input_sha256": sha256_of(alpha),
+        "cold_input_sha256": "a" * 64, "final_artifact_sha256": "b" * 64,
+        "finding_dispositions": [],
+    })
+
+    require_grill(repo, "spec", (), expect_digest_of=alpha)
+    with pytest.raises(SystemExit, match="Handover grill required first"):
+        require_grill(repo, "spec", (), expect_digest_of=beta)
+
+
+def test_legacy_epics_grill_fallback_is_bound_to_its_input(repo: Path):
+    from factory_lib import (
+        dump_json, evidence_path, head_sha, require_grill, sha256_of,
+    )
+
+    first = repo / "docs" / "first" / "roadmap-input.json"
+    second = repo / "docs" / "second" / "roadmap-input.json"
+    for path, text in ((first, '{"epics": []}\n'),
+                       (second, '{"epics": [{"id": "E2"}]}\n')):
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(text, encoding="utf-8")
+    dump_json(evidence_path(
+        repo, None, "grills/epics.json", for_write=True,
+    ), {
+        "verdict": "pass", "commit": head_sha(repo),
+        "input_sha256": sha256_of(first),
+        "cold_input_sha256": "a" * 64, "final_artifact_sha256": "b" * 64,
+        "finding_dispositions": [],
+    })
+
+    require_grill(repo, "epics", (), expect_digest_of=first)
+    with pytest.raises(SystemExit, match="Handover grill required first"):
+        require_grill(repo, "epics", (), expect_digest_of=second)

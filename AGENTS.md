@@ -98,6 +98,6 @@ re-verifies. Story proof is only `outcome.json` (`./forge outcome set`).
 - One integrated `./forge task close <id>` cycle owns proof/review/finish: preflight launch, review bounds and required-test paths before expensive proof; recheck mutable state at finish; one full factory suite at a time per shared host.
 - ONE three-lens pass per task is owned by `./forge task close <id>`; only unchanged external Autoreview runs it. Loop review → delegate Luna/max fixes → re-review until clean; record before `pr-ready` per accepted 0011, 0054 and 0069. `./forge review <id>` is diagnostic/loop; its internal Codex/agent calls follow its own policy. Never review inline or nest reviewers.
 - Each leaf task owns a worktree and PR; dependency-ready tasks parallelize only with disjoint measured scopes. Delegation/proof commands are trusted inputs; observed descendant cleanup is not hostile-code containment.
-- Coordinate from the primary checkout on the default branch; run task approval and in-session edits from a session in that task worktree; never `cd` a session shell outside a checkout.
+- Coordinate from the primary checkout on the default branch; approvals route by digest, while task edits need a task-worktree session; never `cd` outside a checkout.
 - Keep the template repo independent of any client-specific source repo.
 - Do not keep long policy blocks in `AGENTS.md`; move them into docs.

@@ -1,0 +1,119 @@
+{
+  "event": "done",
+  "id": "Q-0236-6210",
+  "profile": "lite",
+  "by": "Ravi Kiran Vemula",
+  "reason": "Process simplification s1 (moved from Q-0227-0c8e onto the batch): one cold read per artifact",
+  "base_sha": "485a061384c481996af693c479d01de823566d8d",
+  "started_at": "2026-09-24T13:47:26+00:00",
+  "completed_at": "2026-09-24T13:54:49+00:00",
+  "files": [
+    "WORKFLOW.md",
+    "factory/scripts/factory_lib.py",
+    "factory/scripts/forge.py",
+    "factory/scripts/forge_cli/delegate.py",
+    "factory/scripts/forge_cli/grill.py",
+    "factory/scripts/record_grill_from_json.py",
+    "factory/tests/test_gates.py",
+    "factory/tests/test_lean_workflow.py",
+    "factory/tests/test_regrill_scope.py"
+  ],
+  "reviews": {
+    "quality": {
+      "generated_by": "autoreview",
+      "score": 9,
+      "summary": "quality lens over Q-0236-6210 (9 product path(s), 485a061..2ddcdac, Codex via the autoreview skill): 0 blocking, 2 non-blocking. The changed launch and recording paths consistently bind the latest read, but the chosen-file key can collide and existing epics evidence loses its lookup path. No task-specific plan contracts were supplied. The raw parent was unavailable, so source attribution remains unknown.",
+      "blocking_findings": [],
+      "non_blocking_findings": [
+        {
+          "category": "bug",
+          "area": "factory/scripts",
+          "summary": "Epics files with the same stem overwrite each other's grill (factory/scripts/factory_lib.py:3467): When two epics inputs in different directories share a filename, `grill_key_suffix` gives them the same ledger, brief, and evidence key.",
+          "file_path": "factory/scripts/factory_lib.py",
+          "line": 3467,
+          "title": "Epics files with the same stem overwrite each other's grill"
+        },
+        {
+          "category": "bug",
+          "area": "factory/scripts",
+          "summary": "Existing epics passes are not read from the legacy evidence path (factory/scripts/factory_lib.py:3496): If an existing repository has a passing `.factory/grills/epics.json` for an unchanged roadmap input, `require_grill` now looks for `epics-<stem>.json`.",
+          "file_path": "factory/scripts/factory_lib.py",
+          "line": 3496,
+          "title": "Existing epics passes are not read from the legacy evidence path"
+        }
+      ],
+      "recommendation": "approve-with-caveats",
+      "reviewed_scope": [
+        "WORKFLOW.md",
+        "factory/scripts/factory_lib.py",
+        "factory/scripts/forge.py",
+        "factory/scripts/forge_cli/delegate.py",
+        "factory/scripts/forge_cli/grill.py",
+        "factory/scripts/record_grill_from_json.py",
+        "factory/tests/test_gates.py",
+        "factory/tests/test_lean_workflow.py",
+        "factory/tests/test_regrill_scope.py"
+      ],
+      "skills_used": [],
+      "contract_verdicts": [],
+      "review_base_sha": "485a061384c481996af693c479d01de823566d8d",
+      "branch_diff_digest": "eb2b9a8103a6afa3c05148174274752309b0a197f65037173e14fa2abaff60e5",
+      "commit": "2ddcdac055319d6d0701710b2a1a81a72869c05a",
+      "aspect": "quality",
+      "residual_risks": [],
+      "recorded_at": "2026-09-24T13:54:49+00:00"
+    },
+    "performance": {
+      "generated_by": "autoreview",
+      "score": 10,
+      "summary": "performance lens over Q-0236-6210 (9 product path(s), 485a061..2ddcdac, Codex via the autoreview skill): 0 blocking, 0 non-blocking. The diff shows no concrete production performance defect.",
+      "blocking_findings": [],
+      "non_blocking_findings": [],
+      "recommendation": "approve",
+      "reviewed_scope": [
+        "WORKFLOW.md",
+        "factory/scripts/factory_lib.py",
+        "factory/scripts/forge.py",
+        "factory/scripts/forge_cli/delegate.py",
+        "factory/scripts/forge_cli/grill.py",
+        "factory/scripts/record_grill_from_json.py",
+        "factory/tests/test_gates.py",
+        "factory/tests/test_lean_workflow.py",
+        "factory/tests/test_regrill_scope.py"
+      ],
+      "skills_used": [],
+      "review_base_sha": "485a061384c481996af693c479d01de823566d8d",
+      "branch_diff_digest": "eb2b9a8103a6afa3c05148174274752309b0a197f65037173e14fa2abaff60e5",
+      "commit": "2ddcdac055319d6d0701710b2a1a81a72869c05a",
+      "aspect": "performance",
+      "residual_risks": [],
+      "recorded_at": "2026-09-24T13:54:49+00:00"
+    },
+    "security": {
+      "generated_by": "autoreview",
+      "score": 10,
+      "summary": "security lens over Q-0236-6210 (9 product path(s), 485a061..2ddcdac, Codex via the autoreview skill): 0 blocking, 0 non-blocking. The inspected digest checks prevent a different input from using the overwritten pass. No concrete credential exposure or trust-boundary defect is evident.",
+      "blocking_findings": [],
+      "non_blocking_findings": [],
+      "recommendation": "approve",
+      "reviewed_scope": [
+        "WORKFLOW.md",
+        "factory/scripts/factory_lib.py",
+        "factory/scripts/forge.py",
+        "factory/scripts/forge_cli/delegate.py",
+        "factory/scripts/forge_cli/grill.py",
+        "factory/scripts/record_grill_from_json.py",
+        "factory/tests/test_gates.py",
+        "factory/tests/test_lean_workflow.py",
+        "factory/tests/test_regrill_scope.py"
+      ],
+      "skills_used": [],
+      "review_base_sha": "485a061384c481996af693c479d01de823566d8d",
+      "branch_diff_digest": "eb2b9a8103a6afa3c05148174274752309b0a197f65037173e14fa2abaff60e5",
+      "commit": "2ddcdac055319d6d0701710b2a1a81a72869c05a",
+      "aspect": "security",
+      "residual_risks": [],
+      "recorded_at": "2026-09-24T13:54:49+00:00"
+    }
+  }
+}

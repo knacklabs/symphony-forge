@@ -1,0 +1,70 @@
+{
+  "event": "done",
+  "id": "Q-0236-601d",
+  "profile": "lite",
+  "by": "Ravi Kiran Vemula",
+  "reason": "CI: fix-close tests commit without a git identity on runners",
+  "base_sha": "485a061384c481996af693c479d01de823566d8d",
+  "started_at": "2026-09-24T13:54:26+00:00",
+  "completed_at": "2026-09-24T13:56:38+00:00",
+  "files": [
+    "factory/tests/test_fix_close.py"
+  ],
+  "reviews": {
+    "quality": {
+      "generated_by": "autoreview",
+      "score": 10,
+      "summary": "quality lens over Q-0236-601d (1 product path(s), 485a061..c5c0c9b, Codex via the autoreview skill): 0 blocking, 0 non-blocking. The test helper sets a local Git identity. The supplied diff shows no actionable correctness defect.",
+      "blocking_findings": [],
+      "non_blocking_findings": [],
+      "recommendation": "approve",
+      "reviewed_scope": [
+        "factory/tests/test_fix_close.py"
+      ],
+      "skills_used": [],
+      "contract_verdicts": [],
+      "review_base_sha": "485a061384c481996af693c479d01de823566d8d",
+      "branch_diff_digest": "011d75f61db50615e9502605f4f39c0ea10d3abfe5a93bf8731f1c4f1fe274f8",
+      "commit": "c5c0c9b1eb21140f14b45d04521b22f0eea6021b",
+      "aspect": "quality",
+      "residual_risks": [],
+      "recorded_at": "2026-09-24T13:56:37+00:00"
+    },
+    "performance": {
+      "generated_by": "autoreview",
+      "score": 10,
+      "summary": "performance lens over Q-0236-601d (1 product path(s), 485a061..c5c0c9b, Codex via the autoreview skill): 0 blocking, 0 non-blocking. Two Git config calls during test setup present no material performance concern.",
+      "blocking_findings": [],
+      "non_blocking_findings": [],
+      "recommendation": "approve",
+      "reviewed_scope": [
+        "factory/tests/test_fix_close.py"
+      ],
+      "skills_used": [],
+      "review_base_sha": "485a061384c481996af693c479d01de823566d8d",
+      "branch_diff_digest": "011d75f61db50615e9502605f4f39c0ea10d3abfe5a93bf8731f1c4f1fe274f8",
+      "commit": "c5c0c9b1eb21140f14b45d04521b22f0eea6021b",
+      "aspect": "performance",
+      "residual_risks": [],
+      "recorded_at": "2026-09-24T13:56:37+00:00"
+    },
+    "security": {
+      "generated_by": "autoreview",
+      "score": 10,
+      "summary": "security lens over Q-0236-601d (1 product path(s), 485a061..c5c0c9b, Codex via the autoreview skill): 0 blocking, 0 non-blocking. The email is a test fixture, and the change shows no security issue.",
+      "blocking_findings": [],
+      "non_blocking_findings": [],
+      "recommendation": "approve",
+      "reviewed_scope": [
+        "factory/tests/test_fix_close.py"
+      ],
+      "skills_used": [],
+      "review_base_sha": "485a061384c481996af693c479d01de823566d8d",
+      "branch_diff_digest": "011d75f61db50615e9502605f4f39c0ea10d3abfe5a93bf8731f1c4f1fe274f8",
+      "commit": "c5c0c9b1eb21140f14b45d04521b22f0eea6021b",
+      "aspect": "security",
+      "residual_risks": [],
+      "recorded_at": "2026-09-24T13:56:38+00:00"
+    }
+  }
+}

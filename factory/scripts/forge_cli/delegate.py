@@ -1926,6 +1926,49 @@ def _open_private_log(path: Path):
     )
 
 
+def _companion_job_ids(base: Path) -> set[str]:
+    try:
+        from .codex_status import load_jobs
+
+        return {str(job["id"]) for job in load_jobs(base) if job.get("id")}
+    except Exception:
+        return set()
+
+
+def _companion_job_error(
+        base: Path, result: dict, previous_ids: set[str]
+) -> tuple[list[str], Path] | None:
+    from .codex_status import load_jobs
+
+    try:
+        jobs = load_jobs(base)
+    except Exception:
+        return None
+    job_id = result.get("jobId") or result.get("job_id") or result.get("id")
+    if not job_id and isinstance(result.get("job"), dict):
+        job_id = result["job"].get("id")
+    job = next((entry for entry in jobs
+                if job_id is not None and str(entry.get("id")) == str(job_id)
+                and str(entry.get("id")) not in previous_ids),
+               None)
+    if job is None and job_id is None:
+        new_jobs = [entry for entry in jobs
+                    if str(entry.get("id")) not in previous_ids]
+        if len(new_jobs) == 1:
+            job = new_jobs[0]
+    log_file = job.get("logFile") if job else None
+    if not isinstance(log_file, str) or not log_file:
+        return None
+    log_path = Path(log_file)
+    try:
+        lines = [line.strip() for line in log_path.read_text(
+            encoding="utf-8", errors="replace").splitlines() if line.strip()]
+    except OSError:
+        lines = []
+    errors = [line for line in lines if "Codex error:" in line]
+    return errors or lines[-4:], log_path
+
+
 def launch_companion(
         base: Path, *, task_id: str, text: str, path: Path,
         task_sha256_value: str, model: str, effort: str, write: bool,
@@ -1937,7 +1980,8 @@ def launch_companion(
         context_snapshot_identity: tuple[int, int, int, str] | None = None,
         context_source_path: str = "",
         task_metadata: dict | None = None,
-        cold_contract_sha256: str = "",
+        launch_reason: str = "",
+        choice: str | None = None,
         native_task_name: str = "",
         emit_descriptor: bool = True,
 ) -> dict | None:
@@ -2075,8 +2119,8 @@ def launch_companion(
                 "agent_type": agent_type,
                 "task_name": task_name,
             }
-            if cold_contract_sha256:
-                record["cold_contract_sha256"] = cold_contract_sha256
+            if launch_reason:
+                record["reason"] = launch_reason
             if story:
                 record["story"] = story
             if stage_started_at:
@@ -2085,6 +2129,8 @@ def launch_companion(
                 record["background"] = True
             if mode:
                 record["mode"] = mode
+            if choice:
+                record["choice"] = choice
             if context_file:
                 record["context_file"] = context_file
             append_delegation(base, record)
@@ -2170,8 +2216,8 @@ def launch_companion(
         "launch_status": "starting",
         "process_token": process_token,
     }
-    if cold_contract_sha256:
-        record["cold_contract_sha256"] = cold_contract_sha256
+    if launch_reason:
+        record["reason"] = launch_reason
     record.update({
         "companion_path": str(companion),
         "brief_path": rel,
@@ -2188,6 +2234,8 @@ def launch_companion(
         record["stage_started_at"] = stage_started_at
     if mode:
         record["mode"] = mode
+    if choice:
+        record["choice"] = choice
     if context_metadata:
         record["context"] = dict(context_metadata)
     terminal_recorded = False
@@ -2198,6 +2246,7 @@ def launch_companion(
     stderr = ""
     stdout_log = None
     stderr_log = None
+    previous_job_ids = _companion_job_ids(base)
     try:
         stdout_log = _open_private_log(output_path)
         stderr_log = _open_private_log(stderr_path)
@@ -2287,9 +2336,16 @@ def launch_companion(
         stderr = stderr_log.read()
         stdout_log.seek(0)
         stdout = stdout_log.read()
-        if stdout:
-            print(stdout.rstrip())
-        if proc.returncode != 0:
+        try:
+            result = json.loads(stdout)
+        except (TypeError, json.JSONDecodeError):
+            result = {}
+        if not isinstance(result, dict):
+            result = {}
+        status = result.get("status")
+        failed_status = (isinstance(status, (int, float))
+                         and not isinstance(status, bool) and status != 0)
+        if proc.returncode != 0 or failed_status:
             _revoke_native_write_admission(base, record)
             failed = {
                 **record, "at": now_iso(), "launch_status": "failed",
@@ -2297,8 +2353,21 @@ def launch_companion(
             }
             append_delegation(base, failed)
             terminal_recorded = True
+            reason = (f"exit {proc.returncode}" if proc.returncode != 0
+                      else f"reported status {status} (process exit 0)")
+            job_error = _companion_job_error(base, result, previous_job_ids)
+            if job_error:
+                lines, log_path = job_error
+                detail = "\n".join(lines)
+                if detail:
+                    fail(f"{detail}\nCodex companion job log: {log_path}\n"
+                         f"Codex companion launch failed ({reason})")
+                fail(f"Codex companion job log: {log_path}\n"
+                     f"Codex companion launch failed ({reason})")
             fail("Codex companion launch failed "
-                 f"(exit {proc.returncode}): {(stderr or stdout).strip()}")
+                 f"({reason}): {(stderr or stdout).strip()}")
+        if stdout:
+            print(stdout.rstrip())
         if sha256_of(path) != brief_digest:
             _revoke_native_write_admission(base, record)
             append_delegation(base, {
@@ -2401,6 +2470,22 @@ def cmd_delegate(args: argparse.Namespace) -> None:
              "or use --read-only for background exploration.")
     state = load_json(run_state_path(base), default={})
     story = str(state.get("story") or state.get("issue_key") or "")
+    choice = getattr(args, "choice", None)
+    from . import findings
+    repeated_files = findings.repeated_finding_files(base, story, args.id)
+    if write:
+        refusal = findings.choice_error(repeated_files, choice)
+        if refusal:
+            if args.print_only:
+                print(
+                    f"WARNING: {', '.join(repeated_files)} drew findings in two "
+                    "consecutive reviews -- this preview carries no write "
+                    "authority until the user chooses --choice refactor|patch.",
+                    flush=True,
+                )
+                write = False
+            else:
+                fail(refusal)
     if story:
         from .review import (
             selected_generation, triage_workflow,
@@ -2436,6 +2521,11 @@ def cmd_delegate(args: argparse.Namespace) -> None:
     text = compose_brief(base, task, write=write,
                          user_facing=bool(task.get("user_facing")),
                          story=story, scope_override=scope)
+    if repeated_files and choice == "refactor":
+        text += "\n" + "\n".join(
+            f"Refactor {file}: replace the approach with one simpler rule."
+            for file in repeated_files
+        ) + "\n"
     context_text = ""
     context_metadata = None
     context_snapshot = None
@@ -2470,6 +2560,7 @@ def cmd_delegate(args: argparse.Namespace) -> None:
             context_snapshot_identity=context_snapshot_identity,
             context_source_path=str(getattr(args, "context_file", "") or ""),
             task_metadata=task,
+            choice=choice,
         )
     finally:
         if context_snapshot is not None and context_snapshot.exists():
