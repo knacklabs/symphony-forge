@@ -1,0 +1,12 @@
+{
+  "event": "open",
+  "id": "Q-0240-4723",
+  "profile": "lite",
+  "reason": "Decision 0090: one human approval per story",
+  "started_at": "2026-09-24T18:29:18+00:00",
+  "max_files": 5,
+  "files": [],
+  "harness_source": true,
+  "by": "Ravi Kiran Vemula",
+  "base_sha": "cd5fd70d95af1b84061fc93b93be284d3bc7ad04"
+}
