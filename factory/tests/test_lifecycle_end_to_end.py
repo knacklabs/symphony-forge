@@ -147,7 +147,10 @@ def test_a_change_to_what_was_agreed_still_reaches_the_human(repo: Path,
     initial_grill = json.loads(grill.read_text(encoding="utf-8"))
     cold_fields = {
         field: initial_grill[field]
-        for field in ("cold_input_sha256", "finding_dispositions")
+        for field in (
+            "cold_input_sha256", "final_artifact_sha256",
+            "finding_dispositions",
+        )
     }
     initial_approved_digest = initial_grill["approved_task_plan_sha256"]
     saved.write_text(
@@ -182,7 +185,6 @@ def test_a_change_to_what_was_agreed_still_reaches_the_human(repo: Path,
     current_grill = json.loads(grill.read_text(encoding="utf-8"))
     assert {field: current_grill[field] for field in cold_fields} == cold_fields
     current_digest = load_factory_lib(repo).plan_digest_without_assumptions(saved)
-    assert current_grill["final_artifact_sha256"] == current_digest
     assert current_grill["approved_task_plan_sha256"] == current_digest
     assert current_grill["previous_approved_task_plan_sha256"] == \
         intermediate_approved_digest
