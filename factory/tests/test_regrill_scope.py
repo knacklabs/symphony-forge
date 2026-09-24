@@ -191,6 +191,104 @@ def test_legacy_task_cold_read_uses_brief_identity(repo: Path, capsys, monkeypat
     assert "already been cold-read" in capsys.readouterr().out
 
 
+def _seed_task_cold_launches(
+        repo: Path, *, stale: int, current: int) -> str:
+    from test_gates import (
+        STAGE_TASK, _seed_cold_launch, seed_task_grill_frontier,
+    )
+    from forge_cli.delegate import delegations_path
+    from forge_cli.grill import _task_contract_sha256
+
+    seed_task_grill_frontier(repo, STAGE_TASK)
+    lib = load_factory_lib(repo)
+    task_plan = lib.evidence_path(repo, "TEST-1", "task-plans/T1.md")
+    cold = task_plan.read_text(encoding="utf-8")
+    _seed_cold_launch(
+        repo, "task", hashlib.sha256(cold.encode("utf-8")).hexdigest(),
+        "T1", artifact_text=cold,
+    )
+    ledger = delegations_path(repo)
+    rows = [json.loads(line) for line in ledger.read_text().splitlines()]
+    current_id = next(
+        row["launch_id"] for row in reversed(rows)
+        if row.get("task") == "grill-task-T1"
+    )
+    current_rows = [row for row in rows if row.get("launch_id") == current_id]
+    contract_sha256 = _task_contract_sha256(repo, "T1")
+    for row in current_rows:
+        row["cold_contract_sha256"] = contract_sha256
+
+    for kind, count in (("stale", stale), ("current", current - 1)):
+        for index in range(count):
+            launch_id = f"launch-test-{kind}-{index}"
+            contract = (hashlib.sha256(launch_id.encode()).hexdigest()
+                        if kind == "stale" else contract_sha256)
+            rows.extend({
+                **row, "launch_id": launch_id,
+                "cold_contract_sha256": contract,
+            } for row in current_rows)
+    ledger.write_text("".join(json.dumps(row) + "\n" for row in rows),
+                      encoding="utf-8")
+    return current_id
+
+
+def test_task_grill_recorder_ignores_stale_contract_launches(repo: Path):
+    from test_gates import STAGE_TASK, run, task_grill_payload
+    from factory_lib import evidence_path, load_json
+
+    current_id = _seed_task_cold_launches(repo, stale=2, current=1)
+    code, out = run(
+        repo, "record_grill_from_json.py", "--gate", "task", "--task", "T1",
+        stdin=json.dumps(task_grill_payload(STAGE_TASK)),
+    )
+
+    assert code == 0, out
+    record = load_json(evidence_path(repo, "TEST-1", "grills/tasks/T1.json"))
+    assert record["launch_id"] == current_id
+
+
+def test_task_grill_recorder_uses_brief_identity_for_legacy_launches(repo: Path):
+    from test_gates import STAGE_TASK, run, task_grill_payload
+    from factory_lib import evidence_path, load_json
+    from forge_cli.delegate import delegations_path
+
+    current_id = _seed_task_cold_launches(repo, stale=1, current=1)
+    ledger = delegations_path(repo)
+    rows = [json.loads(line) for line in ledger.read_text().splitlines()]
+    for row in rows:
+        if row.get("task") != "grill-task-T1":
+            continue
+        row.pop("cold_contract_sha256", None)
+        if row.get("launch_id") != current_id:
+            row["brief_sha256"] = "0" * 64
+    ledger.write_text("".join(json.dumps(row) + "\n" for row in rows),
+                      encoding="utf-8")
+
+    code, out = run(
+        repo, "record_grill_from_json.py", "--gate", "task", "--task", "T1",
+        stdin=json.dumps(task_grill_payload(STAGE_TASK)),
+    )
+
+    assert code == 0, out
+    record = load_json(evidence_path(repo, "TEST-1", "grills/tasks/T1.json"))
+    assert record["launch_id"] == current_id
+
+
+def test_task_grill_recorder_refuses_two_current_contract_launches(repo: Path):
+    from test_gates import STAGE_TASK, run, task_grill_payload
+    from factory_lib import evidence_path
+
+    _seed_task_cold_launches(repo, stale=0, current=2)
+    code, out = run(
+        repo, "record_grill_from_json.py", "--gate", "task", "--task", "T1",
+        stdin=json.dumps(task_grill_payload(STAGE_TASK)),
+    )
+
+    record = evidence_path(repo, "TEST-1", "grills/tasks/T1.json")
+    assert code != 0 and "found 2" in out
+    assert not record.exists()
+
+
 # --------------------------------------------------------------- bookkeeping
 @pytest.mark.parametrize("field,value", [
     ("review_budget", {"max_changed_files": 999, "max_changed_lines": 9,

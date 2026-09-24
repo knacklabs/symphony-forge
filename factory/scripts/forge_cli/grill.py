@@ -277,6 +277,32 @@ def _task_contract_sha256(base: Path, task_id: str) -> str:
     return hashlib.sha256(payload.encode("utf-8")).hexdigest()
 
 
+def _cold_launch_is_current(
+    row: dict, gate: str, *, brief_sha256: str = "",
+    input_sha256: str = "", contract_sha256: str = "",
+) -> bool:
+    """Whether a cold launch still names the current grill input."""
+    if gate == "task":
+        if "cold_contract_sha256" in row:
+            identities = [(row.get("cold_contract_sha256"), contract_sha256)]
+        else:
+            identities = [(row.get("brief_sha256"), brief_sha256)]
+    else:
+        identities = [
+            (row.get("brief_sha256"), brief_sha256),
+            (row.get("task_sha256"), input_sha256),
+        ]
+    comparable = [
+        (recorded, expected)
+        for recorded, expected in identities
+        if (isinstance(recorded, str)
+            and re.fullmatch(r"[0-9a-f]{64}", recorded)
+            and expected)
+    ]
+    return not (comparable and any(recorded != expected
+                                   for recorded, expected in comparable))
+
+
 def _refuse_a_second_cold_read(base: Path, ledger_id: str, gate: str,
                                task_id: str, brief_sha256: str = "",
                                input_sha256: str = "",
@@ -295,33 +321,14 @@ def _refuse_a_second_cold_read(base: Path, ledger_id: str, gate: str,
                         and row.get("transport") == "host-native")
                     or (row.get("launch_status") in {"starting", "running"}
                         and row.get("launch_id") not in dead))]
-        stale = []
-        current = []
-        for row in cold:
-            if gate == "task":
-                recorded = row.get("cold_contract_sha256")
-                if "cold_contract_sha256" in row:
-                    identities = [(recorded, contract_sha256)]
-                else:
-                    identities = [(row.get("brief_sha256"), brief_sha256)]
-            else:
-                identities = [
-                    (row.get("brief_sha256"), brief_sha256),
-                    (row.get("task_sha256"), input_sha256),
-                ]
-            comparable = [
-                (recorded, expected)
-                for recorded, expected in identities
-                if (isinstance(recorded, str)
-                    and re.fullmatch(r"[0-9a-f]{64}", recorded)
-                    and expected)
-            ]
-            if comparable and any(recorded != expected
-                                  for recorded, expected in comparable):
-                stale.append(row)
-            else:
-                current.append(row)
-        if stale and not current:
+        current = [
+            row for row in cold
+            if _cold_launch_is_current(
+                row, gate, brief_sha256=brief_sha256,
+                input_sha256=input_sha256, contract_sha256=contract_sha256,
+            )
+        ]
+        if cold and not current:
             if gate == "task":
                 print("the task's contract changed since its last cold read; "
                       "a fresh read is allowed")

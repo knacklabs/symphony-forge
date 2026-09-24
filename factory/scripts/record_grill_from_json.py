@@ -74,6 +74,23 @@ def _cold_launch_terminal(
     if new_rows:
         completed = [rows for rows in launches.values()
                      if rows[-1].get("launch_status") == "succeeded"]
+        if gate == "task":
+            from forge_cli.grill import (
+                _cold_launch_is_current, _task_contract_sha256,
+            )
+            brief = root / ".factory" / f"grill-brief-task-{task_id}.md"
+            try:
+                brief_sha256 = hashlib.sha256(brief.read_bytes()).hexdigest()
+            except OSError:
+                brief_sha256 = ""
+            contract_sha256 = _task_contract_sha256(root, task_id)
+            completed = [
+                rows for rows in completed
+                if _cold_launch_is_current(
+                    rows[-1], gate, brief_sha256=brief_sha256,
+                    contract_sha256=contract_sha256,
+                )
+            ]
     else:
         previous_digest = previous.get("cold_input_sha256")
         if (gate != "plan"
@@ -108,6 +125,7 @@ def _cold_launch_terminal(
     terminal = rows[-1]
     immutable = (
         "task", "story", "brief_sha256", "prompt_sha256", "task_sha256",
+        "cold_contract_sha256",
         "write", "model",
         "effort", "argv", "argv_sha256", "transport", "brief_path",
         "output_path", "stderr_path", "context",
