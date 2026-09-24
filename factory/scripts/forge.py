@@ -386,6 +386,7 @@ def main() -> None:
     )
     p_fix.add_argument("--resume-close", action="store_true", help=argparse.SUPPRESS)
     p_fix.add_argument("--window-id", help=argparse.SUPPRESS)
+    p_fix.add_argument("--choice", choices=("refactor", "patch"), help="choose how to address a file found in two consecutive reviews")
     p_fix.add_argument("--repo")
     p_fix.set_defaults(func=fix_mod.cmd_fix)
 
