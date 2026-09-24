@@ -740,7 +740,9 @@ def cmd_task_reconcile(args: argparse.Namespace) -> None:
     a bound delegate launch, a fresh review stamp) are all unsatisfiable for
     already-merged work, which is exactly why they cannot close it.
     """
-    from forge_cli.stages import load_stages, write_stages, task_for
+    from forge_cli.stages import (
+        effective_scope, load_stages, task_for, write_stages,
+    )
     from forge_cli.events import append_event
     from factory_lib import task_digest
 
@@ -776,37 +778,46 @@ def cmd_task_reconcile(args: argparse.Namespace) -> None:
              "but the fetch failed. Reconcile only a task whose PR has actually "
              "merged, on a checkout that can reach origin.")
 
-    write_scope = [p.rstrip("/") for p in (task.get("write_scope") or [])
-                   if isinstance(p, str) and p.strip()]
+    write_scope = [p.rstrip("/") for p in effective_scope(
+        base, args.id, task.get("write_scope") or [],
+    ) if isinstance(p, str) and p.strip()]
     write_scope = [path for path in write_scope if path]
     if not write_scope:
-        fail(f"task {args.id} has no write_scope; reconcile cannot confirm its "
+        fail(f"task {args.id} has no effective write_scope; reconcile cannot confirm its "
              "work shipped.")
     trunk_ref = f"origin/{default_branch}"
-    if not _git_is_ancestor(base, trunk_ref, "HEAD"):
-        fail(f"merge {trunk_ref} into this branch first, then reconcile")
-    if _git(
-            base, "diff", "--quiet", trunk_ref, "HEAD", "--", *write_scope,
-    ).returncode != 0:
-        fail(f"task {args.id} still has scoped changes that are not on trunk "
-             f"— finish it with `forge task close {args.id}`.")
+    local_scope = _git(base, "status", "--porcelain", "--", *write_scope)
+    if local_scope.returncode != 0:
+        detail = local_scope.stderr.strip() or local_scope.stdout.strip()
+        fail(f"could not check task {args.id}'s scoped working tree"
+             + (f": {detail}" if detail else "."))
+    if local_scope.stdout:
+        fail(f"task {args.id} has uncommitted changes in the task's scope.")
     stage_base = stage.get("base_sha")
     if not isinstance(stage_base, str) or not stage_base.strip():
-        fail(f"{args.id} has no recorded stage base commit; nothing in this "
-             "task's scope shipped since it started.")
+        fail(f"{args.id} has no recorded stage base commit; this task has no "
+             "commits of its own in its scope.")
     resolved_stage_base = _git(
         base, "rev-parse", "--verify", "--end-of-options",
         f"{stage_base}^{{commit}}",
     )
     if resolved_stage_base.returncode != 0:
-        fail(f"{args.id} has no valid recorded stage base commit; nothing in "
-             "this task's scope shipped since it started.")
-    shipped_scope = _git(
-        base, "diff", "--quiet", resolved_stage_base.stdout.strip(),
-        trunk_ref, "--", *write_scope,
+        fail(f"{args.id} has no valid recorded stage base commit; this task "
+             "has no commits of its own in its scope.")
+    own_commits = _git(
+        base, "log", "--format=%H", f"{resolved_stage_base.stdout.strip()}..HEAD",
+        "--", *write_scope,
     )
-    if shipped_scope.returncode != 1:
-        fail(f"nothing in this task's scope shipped since it started ({args.id}).")
+    if own_commits.returncode != 0:
+        detail = own_commits.stderr.strip() or own_commits.stdout.strip()
+        fail(f"could not check task {args.id}'s scoped commits"
+             + (f": {detail}" if detail else "."))
+    if not own_commits.stdout.strip():
+        fail(f"this task has no commits of its own in its scope ({args.id}).")
+    if not _git_is_ancestor(base, "HEAD", trunk_ref):
+        fail(f"HEAD is not on {trunk_ref}. If the work was squash-merged, "
+             "reconcile cannot prove it shipped; finish the task with `forge "
+             f"task close {args.id}` instead.")
 
     already = _git(
         base, "cat-file", "-e", f"origin/{default_branch}:{marker.as_posix()}",
@@ -846,16 +857,15 @@ def cmd_task_reconcile(args: argparse.Namespace) -> None:
                  "pr-ready`).")
 
         commit = _require_git(
-            base, "resolving trunk head", "rev-parse", "--verify",
-            f"origin/{default_branch}^{{commit}}")
+            base, "resolving task head", "rev-parse", "--verify", "HEAD")
         if args.commit:
             selected = _git(
                 base, "rev-parse", "--verify", "--end-of-options",
                 f"{args.commit}^{{commit}}",
             )
             if selected.returncode != 0 or selected.stdout.strip() != commit:
-                fail(f"--commit must be the current origin/{default_branch} tip; "
-                     f"reconcile records that trunk tip.")
+                fail("--commit must be the current task branch HEAD; reconcile "
+                     "records that shipped task commit.")
         recorded_base = stage.get("base_sha")
         pointer_base = state.get("base_main_sha")
         base_main_sha = (
@@ -877,9 +887,8 @@ def cmd_task_reconcile(args: argparse.Namespace) -> None:
             fail("reconcile marker fields must all be non-empty strings")
         # Marks the marker as ADOPTED, not sealed: the PR proof gate
         # (check_task_proof.py) does not demand recorded proof for work that was
-        # already on the trunk before the harness learned about it. It cannot be
-        # abused to skip proof for new work — reconcile refuses unless the work
-        # is genuinely on the trunk already.
+        # already on the trunk before the harness learned about it. The commit
+        # identity is the task's own shipped HEAD, so it is on the PR base.
         payload["reconciled"] = True
         dump_json(base / marker, payload)
     elif readopt:

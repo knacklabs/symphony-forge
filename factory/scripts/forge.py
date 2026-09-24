@@ -281,8 +281,9 @@ def main() -> None:
     p_task_reconcile.add_argument("id", help="task id")
     p_task_reconcile.add_argument(
         "--commit",
-        help="the merge/sealed commit that shipped the task (default: the "
-             "current trunk head); must be an ancestor of origin's trunk",
+        help="the task branch HEAD that shipped (default: current task HEAD); "
+             "must resolve to current HEAD, which must be an ancestor of "
+             "origin's trunk",
     )
     p_task_reconcile.add_argument(
         "--branch",
