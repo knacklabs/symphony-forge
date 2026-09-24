@@ -9209,6 +9209,42 @@ def test_lite_close_counts_files_through_symlinked_ancestor_into_product(repo):
     ) == ["src/app.py"]
 
 
+def test_outside_symlink_to_product_is_locked_and_counted_for_lite(repo, tmp_path):
+    from forge_cli.quickfix import _lite_product_files
+    from forge_cli.repo_kind import locked_repo_path
+
+    target = repo / "src" / "app.ts"
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text("app = True\n")
+    alias = tmp_path / "app-alias.ts"
+    alias.symlink_to(target)
+
+    locked = locked_repo_path(str(alias), repo, harness_source=False)
+    assert locked == "src/app.ts"
+    code, out = hook(repo, {
+        "tool_name": "Write", "permission_mode": "default",
+        "tool_input": {"file_path": str(alias)},
+    })
+    assert code == 0 and "deny" in out and "forge delegate" in out, out
+    assert _lite_product_files(
+        repo, [str(alias)], harness_source=False,
+    ) == [locked]
+
+    outside_target = tmp_path / "outside.ts"
+    outside_target.write_text("outside = True\n")
+    outside_alias = tmp_path / "outside-alias.ts"
+    outside_alias.symlink_to(outside_target)
+    assert locked_repo_path(
+        str(outside_alias), repo, harness_source=False,
+    ) is None
+
+    broken_alias = tmp_path / "broken-alias.ts"
+    broken_alias.symlink_to(repo / "src" / "missing.ts")
+    assert locked_repo_path(
+        str(broken_alias), repo, harness_source=False,
+    ) is not None
+
+
 def test_lite_close_counts_files_through_symlinked_ancestor_outside_repo(
     repo, tmp_path,
 ):

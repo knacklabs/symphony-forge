@@ -26,39 +26,59 @@ def locked_repo_path(
     raw: str, root: Path, *, harness_source: bool | None = None,
 ) -> str | None:
     """Return a canonical locked repo path, or None for an exempt surface."""
-    rel = _lexical_repo_path(raw, root)
-    if rel is None:
+    if not raw or raw == "-":
         return None
     source_repo = (
         is_harness_source_repo(root) if harness_source is None else harness_source
     )
     root_path = Path(os.path.abspath(root))
-    candidate = root_path / rel
-    lexical_locked = _is_locked_path(rel, source_repo)
+    candidate = Path(raw)
+    if not candidate.is_absolute():
+        candidate = root_path / candidate
+    lexical_rel = _lexical_repo_path(raw, root)
 
-    current = root_path
     has_symlink = False
-    for part in Path(rel).parts:
+    unresolved_symlink = False
+    resolution_failed = False
+    current = Path(candidate.anchor)
+    for part in candidate.parts[1:]:
         current /= part
         if current.is_symlink():
             has_symlink = True
-            break
-    if not has_symlink:
-        return rel if lexical_locked else None
+            try:
+                current.resolve(strict=True)
+            except (OSError, RuntimeError):
+                unresolved_symlink = True
 
-    # A symlink at any point can make the lexical prefix misleading. Resolve
-    # only linked paths; missing leaves and other failures lock the lexical path.
     try:
-        resolved_root = root_path.resolve(strict=True)
-        resolved = candidate.resolve(strict=True)
+        resolved_root = root_path.resolve(strict=False)
+        resolved = candidate.resolve(strict=False)
         resolved_rel = resolved.relative_to(resolved_root).as_posix()
-    except (OSError, RuntimeError, ValueError):
-        # Outside targets, loops, and other resolution failures fail closed.
-        return rel
+    except ValueError:
+        resolved_rel = None
+    except (OSError, RuntimeError):
+        resolved_rel = None
+        resolution_failed = True
 
+    # A changed lexical symlink and its target are separate write identities.
+    # Keep the lexical name when resolving its linked path cannot prove an
+    # in-repo target, including links whose ancestors lead outside the repo.
+    if has_symlink and (unresolved_symlink or resolution_failed):
+        if lexical_rel is not None:
+            return lexical_rel
+        return candidate.as_posix()
+    if has_symlink and resolved_rel is None and lexical_rel is not None:
+        return lexical_rel
+
+    lexical_locked = (
+        lexical_rel is not None and _is_locked_path(lexical_rel, source_repo)
+    )
+    resolved_locked = (
+        resolved_rel is not None and _is_locked_path(resolved_rel, source_repo)
+    )
     if lexical_locked:
-        return rel
-    if _is_locked_path(resolved_rel, source_repo):
+        return lexical_rel
+    if resolved_locked:
         return resolved_rel
     return None
 
