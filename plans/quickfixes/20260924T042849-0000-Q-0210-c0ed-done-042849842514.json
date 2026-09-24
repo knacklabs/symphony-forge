@@ -1,0 +1,86 @@
+{
+  "event": "done",
+  "id": "Q-0210-c0ed",
+  "profile": "lite",
+  "by": "Ravi Kiranvemula",
+  "reason": "Plans are briefs with no bookkeeping (planA; owner-approved)",
+  "base_sha": "8415b8e02378268efcf665318be58307c9496529",
+  "started_at": "2026-09-24T01:58:42+00:00",
+  "completed_at": "2026-09-24T04:28:49+00:00",
+  "files": [
+    "factory/scripts/forge_cli/approval.py",
+    "factory/scripts/forge_cli/board.py",
+    "factory/scripts/forge_cli/plans.py",
+    "factory/tests/test_approval_hooks.py",
+    "factory/tests/test_gates.py"
+  ],
+  "reviews": {
+    "quality": {
+      "generated_by": "autoreview",
+      "score": 10,
+      "summary": "quality lens over Q-0210-c0ed (5 product path(s), 8415b8e..707b83b, Codex via the autoreview skill): 0 blocking, 0 non-blocking. The supplied diff shows the body-only plan save path, metadata lookup, and approval handling with focused tests. No actionable correctness defect is established by the available evidence; unchanged callers could not be checked in the empty sandbox.",
+      "blocking_findings": [],
+      "non_blocking_findings": [],
+      "recommendation": "approve",
+      "reviewed_scope": [
+        "factory/scripts/forge_cli/approval.py",
+        "factory/scripts/forge_cli/board.py",
+        "factory/scripts/forge_cli/plans.py",
+        "factory/tests/test_approval_hooks.py",
+        "factory/tests/test_gates.py"
+      ],
+      "skills_used": [],
+      "contract_verdicts": [],
+      "review_base_sha": "8415b8e02378268efcf665318be58307c9496529",
+      "branch_diff_digest": "33d7f551bc358452689d55f321828ad178bb25ea4af1abbbb153a75adee8aeff",
+      "commit": "707b83bc31383ddc2cb0c37c6c0cd6b8b264aa35",
+      "aspect": "quality",
+      "residual_risks": [],
+      "recorded_at": "2026-09-24T04:16:34+00:00"
+    },
+    "performance": {
+      "generated_by": "autoreview",
+      "score": 10,
+      "summary": "performance lens over Q-0210-c0ed (5 product path(s), 8415b8e..707b83b, Codex via the autoreview skill): 0 blocking, 0 non-blocking. Board refreshes now scan plan metadata files, but the evidence does not establish a production-scale performance defect.",
+      "blocking_findings": [],
+      "non_blocking_findings": [],
+      "recommendation": "approve",
+      "reviewed_scope": [
+        "factory/scripts/forge_cli/approval.py",
+        "factory/scripts/forge_cli/board.py",
+        "factory/scripts/forge_cli/plans.py",
+        "factory/tests/test_approval_hooks.py",
+        "factory/tests/test_gates.py"
+      ],
+      "skills_used": [],
+      "review_base_sha": "8415b8e02378268efcf665318be58307c9496529",
+      "branch_diff_digest": "33d7f551bc358452689d55f321828ad178bb25ea4af1abbbb153a75adee8aeff",
+      "commit": "707b83bc31383ddc2cb0c37c6c0cd6b8b264aa35",
+      "aspect": "performance",
+      "residual_risks": [],
+      "recorded_at": "2026-09-24T04:16:35+00:00"
+    },
+    "security": {
+      "generated_by": "autoreview",
+      "score": 10,
+      "summary": "security lens over Q-0210-c0ed (5 product path(s), 8415b8e..707b83b, Codex via the autoreview skill): 0 blocking, 0 non-blocking. The shown approval path checks the candidate digest and protected metadata destination. No concrete security boundary violation is established.",
+      "blocking_findings": [],
+      "non_blocking_findings": [],
+      "recommendation": "approve",
+      "reviewed_scope": [
+        "factory/scripts/forge_cli/approval.py",
+        "factory/scripts/forge_cli/board.py",
+        "factory/scripts/forge_cli/plans.py",
+        "factory/tests/test_approval_hooks.py",
+        "factory/tests/test_gates.py"
+      ],
+      "skills_used": [],
+      "review_base_sha": "8415b8e02378268efcf665318be58307c9496529",
+      "branch_diff_digest": "33d7f551bc358452689d55f321828ad178bb25ea4af1abbbb153a75adee8aeff",
+      "commit": "707b83bc31383ddc2cb0c37c6c0cd6b8b264aa35",
+      "aspect": "security",
+      "residual_risks": [],
+      "recorded_at": "2026-09-24T04:16:36+00:00"
+    }
+  }
+}
