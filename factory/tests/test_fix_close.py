@@ -141,6 +141,36 @@ def test_fix_close_commits_reviews_closes_and_commits_only_window_records(
     }
 
 
+@pytest.mark.parametrize("first_sentence", [
+    "Repair Lite path.",
+    "Repair " + "x" * 100 + ".",
+])
+def test_fix_close_uses_short_subject_and_preserves_description(
+        repo, monkeypatch, first_sentence):
+    window_id = "Q-0227-description"
+    _open_lite(repo, window_id)
+    _prepare_sync(monkeypatch)
+    _mock_worker(monkeypatch)
+    _mock_review(monkeypatch)
+    prefix = (
+        first_sentence + "\nSecond sentence explains the change. "
+        "Third sentence adds details "
+    )
+    description = prefix + "z" * (399 - len(prefix)) + "."
+    assert len(description) == 400
+
+    _invoke_close(repo, description)
+
+    product_commit = git(repo, "rev-parse", "HEAD^")
+    subject = git(repo, "show", "-s", "--format=%s", product_commit)
+    message = git(repo, "show", "-s", "--format=%B", product_commit)
+    expected = (first_sentence[:69] + "..." if len(first_sentence) > 72
+                else first_sentence)
+    assert subject == expected
+    assert len(subject) <= 72
+    assert message.index(description) < message.index(f"Ticket: {window_id}")
+
+
 def test_fix_close_blocking_review_leaves_window_open(repo, monkeypatch, capsys):
     window_id = "Q-0227-blocked"
     _open_lite(repo, window_id)

@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import shlex
 from pathlib import Path
 
@@ -122,10 +123,17 @@ def finish_fix_close(
         if Path(path).parts[0] not in {".factory", "plans"}
     ]
     if products:
+        subject = description.splitlines()[0]
+        sentence_end = re.search(r"[.!?](?=\s|$)", subject)
+        if sentence_end:
+            subject = subject[:sentence_end.end()]
+        if len(subject) > 72:
+            subject = subject[:69] + "..."
         _require_git(base, "staging Lite product changes", "add", "--", *products)
         _require_git(
             base, "committing Lite product changes", "commit", "-q", "--only",
-            "-m", description, "-m", f"Ticket: {window_id}", "--", *products,
+            "-m", subject, "-m", description, "-m", f"Ticket: {window_id}",
+            "--", *products,
         )
     elif not _lite_manifest(
         base,
