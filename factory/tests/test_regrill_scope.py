@@ -94,6 +94,7 @@ def test_task_cold_read_releases_after_rerecorded_contract_change(
     from forge_cli import delegate
     from forge_cli.delegate import load_delegations
     from forge_cli.grill import cmd_grill_run
+    from factory_lib import evidence_path, load_json, run_state_path
 
     start_stage(repo, tmp_path, STAGE_TASK, launch=False)
 
@@ -108,6 +109,14 @@ def test_task_cold_read_releases_after_rerecorded_contract_change(
     cmd_grill_run(args)
     assert "host-native spawn_agent" in capsys.readouterr().out
 
+    story = load_json(run_state_path(repo), default={}).get("issue_key", "")
+    task_plan = evidence_path(
+        repo, story, "task-plans/T1.md", for_write=True,
+    )
+    task_plan.write_text(
+        task_plan.read_text(encoding="utf-8") + "\nPlan-only amendment.\n",
+        encoding="utf-8",
+    )
     with pytest.raises(SystemExit):
         cmd_grill_run(args)
     refusal = capsys.readouterr().out
@@ -142,6 +151,8 @@ def test_task_cold_read_releases_after_rerecorded_contract_change(
     ]
     assert len(launches) == 2
     assert launches[0]["brief_sha256"] != launches[1]["brief_sha256"]
+    assert (launches[0]["cold_contract_sha256"]
+            != launches[1]["cold_contract_sha256"])
 
     with pytest.raises(SystemExit):
         cmd_grill_run(args)
