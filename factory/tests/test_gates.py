@@ -30,7 +30,6 @@ import tomllib
 import urllib.error
 import urllib.request
 import uuid
-from datetime import datetime
 from pathlib import Path
 
 import pytest
@@ -59,7 +58,7 @@ sys.path.insert(0, str(HARNESS / "factory" / "scripts"))
 from factory_lib import (
     branch_diff_digest, grounding_digest, plan_body_digest,
     plan_digest_without_assumptions,
-    product_delta_digest, product_tree_digest, require_task_grill,
+    now_iso, product_delta_digest, product_tree_digest, require_task_grill,
     task_frontier_state, task_rows,
 )
 from grill_gates import GATES
@@ -536,7 +535,7 @@ def _seed_cold_launch(repo: Path, gate: str, digest: str, task_id: str = "",
         "launch_id": launch_id,
         "task": label,
         "story": run_state(repo).get("issue_key", ""),
-        "at": datetime.now().astimezone().isoformat(),
+        "at": now_iso(),
         "brief_sha256": hashlib.sha256(brief.read_bytes()).hexdigest(),
         "brief_path": brief.relative_to(repo).as_posix(),
         "task_sha256": digest,
