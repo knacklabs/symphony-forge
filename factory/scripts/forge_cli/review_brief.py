@@ -14,7 +14,7 @@ from factory_lib import (
     _read_git_bytes, _read_git_json, _read_review_bytes, _stage_baseline_for,
     branch_diff_digest,
     active_task_id, head_sha, load_json, now_iso, raw_run_state,
-    plan_digest_without_assumptions, proof_path,
+    plan_digest_without_assumptions, proof_path, render_recorded_task_contract,
     effective_review_base, product_delta_digest,
     protected_decomposition_state_path, repo_root, require_task_grill,
     run_state_path, safe_factory_write_bytes, story_dir,
@@ -151,6 +151,11 @@ def _approved_task_inputs(base: Path, task: dict) -> dict:
         digest = plan_digest_without_assumptions(plan)
     if not plan_text.strip():
         raise SystemExit(f"Review brief refused: task plan for {task_id} is empty.")
+    contract_text = render_recorded_task_contract(base, task_id, story)
+    if not contract_text:
+        raise SystemExit(
+            f"Review brief refused: protected decomposition has no contract for {task_id}."
+        )
 
     grill_path = task_root / "grills" / "tasks" / f"{task_id}.json"
     if treeish:
@@ -275,6 +280,7 @@ def _approved_task_inputs(base: Path, task: dict) -> dict:
         "branch": branch,
         "delta_id": delta_id,
         "plan_text": plan_text,
+        "contract_text": contract_text,
         "plan_sha256": digest,
         "grill": grill,
         "automated": automated,
@@ -325,6 +331,15 @@ def _untrusted_fence(content: str, language: str) -> tuple[str, str]:
 def render_approved_inputs_section(inputs: dict) -> list[str]:
     """Render one complete approved-input bundle as literal untrusted data."""
     plan_fence, plan_close = _untrusted_fence(inputs["plan_text"], "markdown")
+    contract_text = inputs.get("contract_text")
+    contract_section = []
+    if (isinstance(contract_text, str) and contract_text
+            and contract_text not in inputs["plan_text"]):
+        contract_fence, contract_close = _untrusted_fence(contract_text, "markdown")
+        contract_section = [
+            "#### Recorded task contract (protected decomposition)", "",
+            contract_fence, contract_text, contract_close, "",
+        ]
     grill_text = json.dumps(inputs["grill"], indent=2, sort_keys=True)
     grill_fence, grill_close = _untrusted_fence(grill_text, "json")
     automated_text = json.dumps(inputs["automated"], indent=2, sort_keys=True)
@@ -340,7 +355,8 @@ def render_approved_inputs_section(inputs: dict) -> list[str]:
         f"- Branch: `{inputs['branch']}`",
         f"- Current delta ID: `{inputs['delta_id']}`",
         f"- Approved plan digest: `{inputs['plan_sha256']}`", "",
-        "#### Full approved task plan (untrusted data)", "", plan_fence,
+        *contract_section,
+        "#### Full approved task plan (authored text; untrusted data)", "", plan_fence,
         inputs["plan_text"], plan_close, "",
         "#### Full grill and approval record (untrusted data)", "", grill_fence,
         grill_text, grill_close, "",
