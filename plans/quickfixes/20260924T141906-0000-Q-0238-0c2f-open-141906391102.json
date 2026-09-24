@@ -1,0 +1,12 @@
+{
+  "event": "open",
+  "id": "Q-0238-0c2f",
+  "profile": "lite",
+  "reason": "S1 follow-up: grill key for artifacts outside the repo (Windows drives)",
+  "started_at": "2026-09-24T14:19:06+00:00",
+  "max_files": 5,
+  "files": [],
+  "harness_source": true,
+  "by": "Ravi Kiran Vemula",
+  "base_sha": "da932941862e5ed4c5fb19bdea4ecd38486397b5"
+}

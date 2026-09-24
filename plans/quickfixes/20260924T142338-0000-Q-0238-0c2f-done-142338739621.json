@@ -1,0 +1,83 @@
+{
+  "event": "done",
+  "id": "Q-0238-0c2f",
+  "profile": "lite",
+  "by": "Ravi Kiran Vemula",
+  "reason": "S1 follow-up: grill key for artifacts outside the repo (Windows drives)",
+  "base_sha": "da932941862e5ed4c5fb19bdea4ecd38486397b5",
+  "started_at": "2026-09-24T14:19:06+00:00",
+  "completed_at": "2026-09-24T14:23:38+00:00",
+  "files": [
+    "factory/scripts/factory_lib.py",
+    "factory/tests/test_regrill_scope.py"
+  ],
+  "reviews": {
+    "quality": {
+      "generated_by": "autoreview",
+      "score": 9,
+      "summary": "quality lens over Q-0238-0c2f (2 product path(s), da93294..05dbe56, Codex via the autoreview skill): 0 blocking, 1 non-blocking. The cross-drive fallback works, but it changes keys for outside-repository artifacts that already worked, making existing grill passes unreachable. No task-specific plan contracts apply.",
+      "blocking_findings": [],
+      "non_blocking_findings": [
+        {
+          "category": "regression",
+          "area": "factory/scripts",
+          "summary": "Preserve existing keys for outside-repository artifacts (factory/scripts/factory_lib.py:3475): For a spec or epics artifact outside the repository on the same drive, the previous code hashed its relative path (such as `../input/spec.md`), while line 3475 now hashes its absolute path.",
+          "file_path": "factory/scripts/factory_lib.py",
+          "line": 3475,
+          "title": "Preserve existing keys for outside-repository artifacts"
+        }
+      ],
+      "recommendation": "approve-with-caveats",
+      "reviewed_scope": [
+        "factory/scripts/factory_lib.py",
+        "factory/tests/test_regrill_scope.py"
+      ],
+      "skills_used": [],
+      "contract_verdicts": [],
+      "review_base_sha": "da932941862e5ed4c5fb19bdea4ecd38486397b5",
+      "branch_diff_digest": "42bd61b83db017ee05f40d0ff8cd9c4d6d7c0ba4646c93b53285fd02a44f24d9",
+      "commit": "05dbe5652e9be569ca6bdd13feba8ca632cc2a69",
+      "aspect": "quality",
+      "residual_risks": [],
+      "recorded_at": "2026-09-24T14:23:38+00:00"
+    },
+    "performance": {
+      "generated_by": "autoreview",
+      "score": 10,
+      "summary": "performance lens over Q-0238-0c2f (2 product path(s), da93294..05dbe56, Codex via the autoreview skill): 0 blocking, 0 non-blocking. The changed calculation adds no material cost to this path; no performance defect is evident.",
+      "blocking_findings": [],
+      "non_blocking_findings": [],
+      "recommendation": "approve",
+      "reviewed_scope": [
+        "factory/scripts/factory_lib.py",
+        "factory/tests/test_regrill_scope.py"
+      ],
+      "skills_used": [],
+      "review_base_sha": "da932941862e5ed4c5fb19bdea4ecd38486397b5",
+      "branch_diff_digest": "42bd61b83db017ee05f40d0ff8cd9c4d6d7c0ba4646c93b53285fd02a44f24d9",
+      "commit": "05dbe5652e9be569ca6bdd13feba8ca632cc2a69",
+      "aspect": "performance",
+      "residual_risks": [],
+      "recorded_at": "2026-09-24T14:23:38+00:00"
+    },
+    "security": {
+      "generated_by": "autoreview",
+      "score": 10,
+      "summary": "security lens over Q-0238-0c2f (2 product path(s), da93294..05dbe56, Codex via the autoreview skill): 0 blocking, 0 non-blocking. The diff shows no new trust boundary or credential exposure. The key change does weaken the existing duplicate cold-read guard as described in the quality finding.",
+      "blocking_findings": [],
+      "non_blocking_findings": [],
+      "recommendation": "approve",
+      "reviewed_scope": [
+        "factory/scripts/factory_lib.py",
+        "factory/tests/test_regrill_scope.py"
+      ],
+      "skills_used": [],
+      "review_base_sha": "da932941862e5ed4c5fb19bdea4ecd38486397b5",
+      "branch_diff_digest": "42bd61b83db017ee05f40d0ff8cd9c4d6d7c0ba4646c93b53285fd02a44f24d9",
+      "commit": "05dbe5652e9be569ca6bdd13feba8ca632cc2a69",
+      "aspect": "security",
+      "residual_risks": [],
+      "recorded_at": "2026-09-24T14:23:38+00:00"
+    }
+  }
+}
