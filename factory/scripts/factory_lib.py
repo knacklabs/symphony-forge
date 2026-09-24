@@ -3458,6 +3458,24 @@ def _grill_exempt(rel: str, ignore_names: tuple[str, ...]) -> bool:
     )
 
 
+def grill_key_suffix(
+    gate: str, task_id: str = "", artifact: str | Path = "",
+) -> str:
+    """Suffix a task grill by task id and a chosen-file grill by its stem."""
+    if gate == "task":
+        return task_id
+    return Path(artifact).stem if gate in {"spec", "epics"} and artifact else ""
+
+
+def grill_evidence_name(
+    gate: str, task_id: str = "", artifact: str | Path = "",
+) -> str:
+    suffix = grill_key_suffix(gate, task_id, artifact)
+    if gate == "task":
+        return f"grills/tasks/{suffix}.json"
+    return f"grills/{gate}{'-' + suffix if suffix else ''}.json"
+
+
 def require_grill(
     root: Path,
     gate: str,
@@ -3472,8 +3490,16 @@ def require_grill(
     exact artifact being gated: the recorded input_sha256 must match that
     file, so grilling proposal A never approves proposal B."""
     key = _active_story_key(root) if gate == "plan" else ""
-    path = evidence_path(root, key, f"grills/{gate}.json")
+    name = grill_evidence_name(gate, artifact=expect_digest_of or "")
+    path = evidence_path(root, key, name)
     data = load_json(path, default={})
+    if (gate == "spec" and expect_digest_of is not None
+            and not path.exists()):
+        legacy = load_json(
+            evidence_path(root, key, "grills/spec.json"), default={},
+        )
+        if legacy.get("input_sha256") == sha256_of(expect_digest_of):
+            data = legacy
     if not data:
         raise SystemExit(
             f"Handover grill required first: interrogate the handover for gaps and "
