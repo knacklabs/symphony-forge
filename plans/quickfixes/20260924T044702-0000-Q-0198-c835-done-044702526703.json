@@ -1,0 +1,95 @@
+{
+  "event": "done",
+  "id": "Q-0198-c835",
+  "profile": "lite",
+  "by": "Ravi Kiran Vemula",
+  "reason": "Verified review gap group g3-reconcile for task LEAN-FIXES (owner: fix P1/P2 now, parallel)",
+  "base_sha": "fd1c6740b1d083ad8beccd5e52f8b3f88d6eb9d7",
+  "started_at": "2026-09-23T17:20:15+00:00",
+  "completed_at": "2026-09-24T04:47:02+00:00",
+  "files": [
+    "factory/scripts/check_task_proof.py",
+    "factory/scripts/forge.py",
+    "factory/scripts/forge_cli/tasks.py",
+    "factory/tests/test_closeout_mode_from_markers.py",
+    "factory/tests/test_gates.py"
+  ],
+  "reviews": {
+    "quality": {
+      "generated_by": "autoreview",
+      "score": 9,
+      "summary": "quality lens over Q-0198-c835 (5 product path(s), fd1c674..e1ba013, Codex via the autoreview skill): 0 blocking, 1 non-blocking. The new scoped diff check rejects a shipped task after unrelated trunk work changes its scope. The supplied test covers a later change outside the scope, so it does not cover this case.",
+      "blocking_findings": [],
+      "non_blocking_findings": [
+        {
+          "category": "bug",
+          "area": "factory/scripts/forge_cli",
+          "summary": "Allow later trunk changes within the task scope (factory/scripts/forge_cli/tasks.py:883): When a task's declared commit has shipped and another task later changes a path in the same write scope, running reconcile from the current trunk makes this diff nonempty and rejects the task.",
+          "file_path": "factory/scripts/forge_cli/tasks.py",
+          "line": 883,
+          "title": "Allow later trunk changes within the task scope"
+        }
+      ],
+      "recommendation": "approve-with-caveats",
+      "reviewed_scope": [
+        "factory/scripts/check_task_proof.py",
+        "factory/scripts/forge.py",
+        "factory/scripts/forge_cli/tasks.py",
+        "factory/tests/test_closeout_mode_from_markers.py",
+        "factory/tests/test_gates.py"
+      ],
+      "skills_used": [],
+      "contract_verdicts": [],
+      "review_base_sha": "fd1c6740b1d083ad8beccd5e52f8b3f88d6eb9d7",
+      "branch_diff_digest": "bc9cbbc401aa0b964d7f58650da305b8019965282398c953743312d9f8ae8c73",
+      "commit": "e1ba013643a819a7f24cf671179bd4733c29e836",
+      "aspect": "quality",
+      "residual_risks": [],
+      "recorded_at": "2026-09-24T04:38:07+00:00"
+    },
+    "performance": {
+      "generated_by": "autoreview",
+      "score": 10,
+      "summary": "performance lens over Q-0198-c835 (5 product path(s), fd1c674..e1ba013, Codex via the autoreview skill): 0 blocking, 0 non-blocking. The commit scan makes one Git call per scoped commit. Its cost is inferred from the code; the supplied evidence does not establish a production performance defect.",
+      "blocking_findings": [],
+      "non_blocking_findings": [],
+      "recommendation": "approve",
+      "reviewed_scope": [
+        "factory/scripts/check_task_proof.py",
+        "factory/scripts/forge.py",
+        "factory/scripts/forge_cli/tasks.py",
+        "factory/tests/test_closeout_mode_from_markers.py",
+        "factory/tests/test_gates.py"
+      ],
+      "skills_used": [],
+      "review_base_sha": "fd1c6740b1d083ad8beccd5e52f8b3f88d6eb9d7",
+      "branch_diff_digest": "bc9cbbc401aa0b964d7f58650da305b8019965282398c953743312d9f8ae8c73",
+      "commit": "e1ba013643a819a7f24cf671179bd4733c29e836",
+      "aspect": "performance",
+      "residual_risks": [],
+      "recorded_at": "2026-09-24T04:38:07+00:00"
+    },
+    "security": {
+      "generated_by": "autoreview",
+      "score": 10,
+      "summary": "security lens over Q-0198-c835 (5 product path(s), fd1c674..e1ba013, Codex via the autoreview skill): 0 blocking, 0 non-blocking. The proof gate adds commit ancestry and product-diff checks for reconciled markers. No concrete security defect is established by the supplied evidence.",
+      "blocking_findings": [],
+      "non_blocking_findings": [],
+      "recommendation": "approve",
+      "reviewed_scope": [
+        "factory/scripts/check_task_proof.py",
+        "factory/scripts/forge.py",
+        "factory/scripts/forge_cli/tasks.py",
+        "factory/tests/test_closeout_mode_from_markers.py",
+        "factory/tests/test_gates.py"
+      ],
+      "skills_used": [],
+      "review_base_sha": "fd1c6740b1d083ad8beccd5e52f8b3f88d6eb9d7",
+      "branch_diff_digest": "bc9cbbc401aa0b964d7f58650da305b8019965282398c953743312d9f8ae8c73",
+      "commit": "e1ba013643a819a7f24cf671179bd4733c29e836",
+      "aspect": "security",
+      "residual_risks": [],
+      "recorded_at": "2026-09-24T04:38:08+00:00"
+    }
+  }
+}
