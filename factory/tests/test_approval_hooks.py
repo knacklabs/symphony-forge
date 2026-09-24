@@ -17,6 +17,7 @@ from test_gates import (  # noqa: F401
 
 sys.path.insert(0, str(HARNESS / "factory" / "scripts"))
 from forge_cli import approval, upgrade  # noqa: E402
+from forge_cli.decisions import active_decision_ids  # noqa: E402
 
 
 def _event(candidate: approval.ApprovalCandidate, runtime: str = "claude") -> dict:
@@ -29,7 +30,7 @@ def _event(candidate: approval.ApprovalCandidate, runtime: str = "claude") -> di
                 "tool_input": {"plan": candidate.path.read_text(encoding="utf-8")},
                 "tool_response": {"status": "success"}}
     question_id = f"approve_plan_{candidate.digest}"
-    question = f"Approve exact plan digest {candidate.digest}?"
+    question = "Approve this plan?"
     return {
         **common,
         "tool_name": "request_user_input",
@@ -187,6 +188,58 @@ def test_plan_save_refuses_inline_list_frontmatter_and_accepts_canonical_form(
     )
     assert code == 0, output
     assert len(approval.eligible_candidates(repo)) == 1
+    saved = next((repo / "plans" / "active").glob("ENG-1-*.md"))
+    saved_text = saved.read_text(encoding="utf-8")
+    assert saved_text == body
+    assert not saved_text.startswith("---\n")
+    metadata = json.loads(
+        (repo / ".factory" / "stories" / "ENG-1" / "plan-meta.json").read_text()
+    )
+    assert metadata["decisions_reviewed"] == active_decision_ids(repo)
+
+
+def test_brief_plan_saves_body_only_and_claude_approves_exact_text(
+        repo: Path, tmp_path: Path):
+    sign_off(repo)
+    code, output = intake(repo)
+    assert code == 0, output
+    brief = (
+        "## What and why\n\nPeople need a clear invoice workflow.\n\n"
+        "## What changes for you\n\nInvoices are easier to review.\n\n"
+        "## Done when\n\nA user can create and review an invoice.\n\n"
+        "## Risks\n\nExisting records must remain readable.\n\n"
+        "## Technical approach\n\nUse the existing invoice service.\n\n"
+        "## Task decomposition\n\nImplement the user flow and its checks.\n\n"
+        "## Verify plan\n\nRun the focused invoice checks.\n"
+    )
+    draft = tmp_path / "brief-plan.md"
+    draft.write_text(brief, encoding="utf-8")
+    code, output = record_grill(repo, "plan", digest_of=draft)
+    assert code == 0, output
+    code, output = run(
+        repo, "forge.py", "plan", "save", "--from", str(draft),
+        "--story", "ENG-1",
+    )
+    assert code == 0, output
+    saved = next((repo / "plans" / "active").glob("ENG-1-*.md"))
+    exact_text = saved.read_text(encoding="utf-8")
+    assert exact_text == brief
+    assert "---" not in exact_text
+    metadata_path = repo / ".factory" / "stories" / "ENG-1" / "plan-meta.json"
+    metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+    assert set(metadata) == {
+        "issue", "story", "title", "status", "saved", "plan_file",
+        "decisions_reviewed",
+    }
+    assert metadata["decisions_reviewed"] == active_decision_ids(repo)
+    candidate = approval.eligible_candidates(repo)[0]
+    event = _event(candidate)
+    assert event["tool_input"]["plan"] == exact_text
+    record = approval.record_native_approval(repo, event, runtime="claude")
+    assert record["approved_plan_sha256"] == candidate.digest
+    assert saved.read_text(encoding="utf-8") == exact_text
+    assert json.loads(metadata_path.read_text(encoding="utf-8"))["status"] == "approved"
+    assert json.loads(load_factory_lib(repo).run_state_path(repo).read_text())["plan_status"] == "approved"
 
 
 @pytest.mark.parametrize("body", ["{not json\n", "[]\n"])
@@ -882,7 +935,7 @@ def test_claude_approval_hook_reports_refusal_and_recording(repo: Path):
 def test_codex_approval_hook_reports_refusal(repo: Path):
     candidate = _story_candidate(repo)
     event = _event(candidate, "codex")
-    event["tool_input"]["questions"][0]["question"] = "Approve this plan?"
+    event["tool_input"]["questions"][0]["question"] = "Review this plan?"
 
     code, out = run(repo, "forge.py", "hook", "post_tool_use", stdin=json.dumps(event))
 
@@ -931,18 +984,19 @@ def test_plan_save_and_awaiting_phase_show_codex_approval_identity(
     assert len(candidates) == 1
     digest = candidates[0].digest
     question_id = f"approve_plan_{digest}"
-    question = f"Approve exact plan digest {digest}?"
+    question = "Approve this plan?"
     assert f"Semantic digest: {digest}" in output
     assert question_id in output
     assert 'header="Approve plan"' in output
     assert f'question="{question}"' in output
+    assert "Approve exact plan digest" not in output
 
     code, output = run(repo, "forge.py", "next")
     assert code == 0, output
     assert f"Semantic digest: {digest}" in output
     assert question_id in output
     assert 'header="Approve plan"' in output
-    assert f'question="{question}"' in output
+    assert f'question="Approve exact plan digest {digest}?"' in output
 
 
 @pytest.mark.parametrize("plan_file", ["", "plans/active/missing-plan.md"])
@@ -1043,9 +1097,11 @@ def test_codex_approval_uses_question_id_and_requires_displayed_digest(
             approval.record_native_approval(repo, event, runtime="codex")
 
     event = _event(candidate, "codex")
-    event["tool_input"]["questions"][0]["question"] = "Approve this plan?"
-    with pytest.raises(approval.ApprovalRefused, match="unsupported"):
-        approval.record_native_approval(repo, event, runtime="codex")
+    assert approval._codex_approved(event) == candidate.digest
+    event["tool_input"]["questions"][0]["question"] = (
+        f"Approve exact plan digest {candidate.digest}?"
+    )
+    assert approval._codex_approved(event) == candidate.digest
 
     stale_digest = "0" * 64
     stale_id = f"approve_plan_{stale_digest}"

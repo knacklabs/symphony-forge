@@ -688,7 +688,7 @@ def native_claude_approval(repo: Path) -> dict:
 def native_codex_approval(repo: Path) -> dict:
     candidate = _approval_candidate(repo)
     question_id = f"approve_plan_{candidate.digest}"
-    question = f"Approve exact plan digest {candidate.digest}?"
+    question = "Approve this plan?"
     return {
         "tool_name": "request_user_input",
         "session_id": f"session-{uuid.uuid4().hex}",
@@ -9612,7 +9612,14 @@ def test_plan_save_stops_once_at_awaiting_native_approval(repo, tmp_path):
     assert "native Plan Mode" in out
     assert "forge plan approve" not in out
     active = next((repo / "plans" / "active").glob("ENG-1-*.md"))
-    assert "status: awaiting-approval" in active.read_text()
+    from forge_cli.plans import parse_frontmatter
+    assert active.read_text() == parse_frontmatter(plan.read_text())[1]
+    assert "---" not in active.read_text()
+    metadata = json.loads(
+        (repo / ".factory" / "stories" / "ENG-1" / "plan-meta.json").read_text()
+    )
+    assert metadata["status"] == "awaiting-approval"
+    assert metadata["plan_file"] == active.relative_to(repo).as_posix()
     assert run_state(repo)["plan_status"] == "awaiting-approval"
     code, out = run(repo, "update_run.py", "--phase", "implementing")
     assert code != 0 and "requires an approved, saved plan" in out
@@ -9816,7 +9823,11 @@ def test_plan_save_requires_decision_coverage_and_no_open_contradiction(repo, tm
     record_grill(repo, "plan", digest_of=draft)
     code, out = run(repo, "forge.py", "plan", "save", "--from", str(draft),
                     "--story", "ENG-1")
-    assert code != 0 and "decisions_reviewed" in out
+    assert code == 0 and "awaiting-approval" in out, out
+    metadata = json.loads(
+        (repo / ".factory" / "stories" / "ENG-1" / "plan-meta.json").read_text()
+    )
+    assert metadata["decisions_reviewed"] == active_decision_ids(repo)
 
     draft.write_text(plan_draft(repo, decisions=[]))
     record_grill(repo, "plan", digest_of=draft)
@@ -9851,9 +9862,12 @@ def test_plan_save_requires_decision_coverage_and_no_open_contradiction(repo, tm
     code, out = post_hook(repo, native_claude_approval(repo))
     assert code == 0, out
     saved = next((repo / "plans" / "active").glob("ENG-1-*.md")).read_text()
-    assert "story: ENG-1" in saved
-    for decision in active_decision_ids(repo):
-        assert f"  - {decision}" in saved
+    assert "---" not in saved
+    metadata = json.loads(
+        (repo / ".factory" / "stories" / "ENG-1" / "plan-meta.json").read_text()
+    )
+    assert metadata["status"] == "approved"
+    assert metadata["decisions_reviewed"] == active_decision_ids(repo)
 
     (repo / ".factory" / "stages.json").write_text(json.dumps({
         "issue": "ENG-1",
@@ -12110,8 +12124,41 @@ def test_board_task_rows_carry_their_own_plan_spec_and_proof(repo, tmp_path):
             "2. **T2 — second**: something else entirely.\n")
     assert plan_section(body, "T1") == "build the first slice end to end."
     assert "something else" not in plan_section(body, "T1")
+    lowercase = ("## Task decomposition\n\n"
+                 "| Task | Outcome |\n| --- | --- |\n| T1 | the first slice outcome |\n")
+    assert plan_section(lowercase, "T1") == "the first slice outcome"
     # a plan that merely restates the objective adds nothing and is dropped
     assert plan_section(body, "T9") == ""
+
+
+def test_board_reads_plan_metadata_and_body_from_separate_files(repo: Path):
+    from forge_cli.board import story_detail
+
+    intake(repo)
+    body = (
+        "## What and why\n\nA short brief.\n\n"
+        "## What changes for you\n\nInvoices are easier to review.\n"
+    )
+    plan = repo / "plans" / "active" / "ENG-1-brief.md"
+    plan.parent.mkdir(parents=True, exist_ok=True)
+    plan.write_text(body, encoding="utf-8")
+    metadata_path = repo / ".factory" / "stories" / "ENG-1" / "plan-meta.json"
+    metadata = {
+        "issue": "ENG-1", "story": "ENG-1", "title": "Invoices",
+        "status": "awaiting-approval", "saved": "2026-09-24T00:00:00+00:00",
+        "plan_file": plan.relative_to(repo).as_posix(),
+        "decisions_reviewed": active_decision_ids(repo),
+    }
+    metadata_path.write_text(json.dumps(metadata, indent=2) + "\n", encoding="utf-8")
+
+    detail = story_detail(repo, "ENG-1")
+    assert detail["plan"]["status"] == "awaiting-approval"
+    assert detail["plan"]["decisions_reviewed"] == active_decision_ids(repo)
+    assert detail["plan_body"] == body
+
+    metadata["status"] = "approved"
+    metadata_path.write_text(json.dumps(metadata, indent=2) + "\n", encoding="utf-8")
+    assert story_detail(repo, "ENG-1")["plan"]["status"] == "approved"
 
 
 def test_board_task_dossiers_survive_object_form_required_tests(repo):

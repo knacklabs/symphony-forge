@@ -27,7 +27,9 @@ from . import events
 from . import fscache
 from .assumptions import open_count as open_assumptions
 from .decisions import decision_records
-from .plans import parse_frontmatter
+from .plans import (
+    parse_frontmatter, plan_metadata_index, read_plan_metadata,
+)
 from .quickfix import load_active
 from .readiness import review_passed, tests_passed, verify_passed
 from .roadmap import load_roadmap, ready_pending
@@ -38,14 +40,20 @@ from .specs import spec_records
 
 def _plan_records(base: Path, location: str) -> list[dict]:
     # Every request scans all three plan locations to find one plan, and the
-    # board polls itself every few seconds. Memoised against the directory's
-    # stamp, so an added, edited, renamed or removed plan still reads fresh.
+    # board polls itself every few seconds. Memoised against plan and protected
+    # metadata stamps, so status and attestation changes still read fresh.
     directory = base / "plans" / location
+    metadata_paths = sorted((base / ".factory" / "stories").glob("*/plan-meta.json"))
+    metadata_stamp = tuple(
+        (path.relative_to(base).as_posix(), fscache.file_stamp(path))
+        for path in metadata_paths
+    )
 
     def compute() -> list[dict]:
         records = []
+        metadata_index = plan_metadata_index(base)
         for path in sorted(directory.glob("*.md")):
-            fields, _ = parse_frontmatter(path.read_text(encoding="utf-8"))
+            fields = read_plan_metadata(base, path, metadata_index)
             records.append({
                 **fields,
                 "path": path.relative_to(base).as_posix(),
@@ -55,7 +63,7 @@ def _plan_records(base: Path, location: str) -> list[dict]:
 
     records = fscache.cached(
         f"plan_records:{base}:{location}",
-        fscache.dir_stamp(directory, ".md"), compute,
+        (fscache.dir_stamp(directory, ".md"), metadata_stamp), compute,
     )
     # Hand out copies: a caller mutating a record must not corrupt the memo.
     return [dict(record) for record in records]
@@ -804,9 +812,10 @@ def approval_readiness(base: Path, detail: dict) -> list[dict]:
         "detail": missing,
         "fix": "the plan must attest every active decision — ask for the missing ones"})
     checks.append({
-        "ok": "## Surface Impact" in body,
-        "label": "Surface Impact section",
-        "fix": "the plan must classify every surface — runtime, API, data, CLI, UI, docs, tests"})
+        "ok": ("## Surface Impact" in body
+               or "## What changes for you" in body),
+        "label": "plan impact section",
+        "fix": "add the Surface Impact or What changes for you section"})
     checks.append({
         "ok": not contradictions,
         "label": "no open contradiction" + (f" — {', '.join(contradictions)}" if contradictions else ""),
@@ -927,10 +936,24 @@ def plan_section(body: str, task_id: str) -> str:
     the row above already says exactly that."""
     if not body or not task_id:
         return ""
-    lines = body.splitlines()
+    sections = parse_sections(body)
+    decomposition = next(
+        (value for heading, value in sections.items()
+         if heading.casefold() == "task decomposition"),
+        "",
+    )
+    if not decomposition:
+        return ""
+    lines = decomposition.splitlines()
     for index, line in enumerate(lines):
         if task_id not in line:
             continue
+        if "|" in line:
+            cells = [cell.strip() for cell in line.strip().strip("|").split("|")]
+            if not any(cell == task_id or cell.startswith(task_id + " ") for cell in cells):
+                continue
+            text = " ".join(cell for cell in cells if cell and cell != task_id)
+            return text if len(text) > 3 else ""
         collected = [TASK_PREFIX.sub("", line).strip()]
         # Keep indented continuations; stop at the next list item or blank line.
         for follow in lines[index + 1:]:
