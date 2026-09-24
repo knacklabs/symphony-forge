@@ -6,13 +6,13 @@ import json
 import shlex
 from pathlib import Path
 
-from factory_lib import ledger_dir, load_review_artifacts, repo_root
+from factory_lib import ledger_dir, load_json, load_review_artifacts, repo_root
 
 from .common import fail
 from .delegate import brief_path, launch_companion, mode_run_config
 from .quickfix import (
-    LITE, _lite_dirty_product_files, _lite_product_files, cmd_mode_done,
-    ledger_path, load_active, profile_of, record_files,
+    LITE, _lite_dirty_product_files, _lite_manifest, _lite_product_files,
+    cmd_mode_done, ledger_path, load_active, profile_of, record_files,
 )
 from .stages import task_digest
 
@@ -121,15 +121,19 @@ def finish_fix_close(
         )
         if Path(path).parts[0] not in {".factory", "plans"}
     ]
-    if not products:
+    if products:
+        _require_git(base, "staging Lite product changes", "add", "--", *products)
+        _require_git(
+            base, "committing Lite product changes", "commit", "-q", "--only",
+            "-m", description, "-m", f"Ticket: {window_id}", "--", *products,
+        )
+    elif not _lite_manifest(
+        base,
+        window["base_sha"],
+        harness_source=window.get("harness_source"),
+    ):
         print(f"No product changes to commit; Lite window {window_id} remains open.")
         return
-
-    _require_git(base, "staging Lite product changes", "add", "--", *products)
-    _require_git(
-        base, "committing Lite product changes", "commit", "-q", "--only",
-        "-m", description, "-m", f"Ticket: {window_id}", "--", *products,
-    )
 
     from .review import review_lite
 
@@ -159,10 +163,14 @@ def finish_fix_close(
             )
 
     cmd_mode_done(argparse.Namespace(repo=str(base)))
-    records = sorted(
-        path for path in ledger_dir(ledger_path(base)).iterdir()
-        if window_id in path.name and path.is_file() and not path.is_symlink()
-    )
+    records = []
+    for path in ledger_dir(ledger_path(base)).glob("*.json"):
+        if not path.is_file() or path.is_symlink():
+            continue
+        event = load_json(path, default={})
+        if isinstance(event, dict) and event.get("id") == window_id:
+            records.append(path)
+    records.sort()
     relative = [path.relative_to(base).as_posix() for path in records]
     if relative:
         _require_git(base, "staging Lite window records", "add", "--", *relative)

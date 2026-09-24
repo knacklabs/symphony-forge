@@ -93,6 +93,11 @@ def test_fix_close_commits_reviews_closes_and_commits_only_window_records(
         repo, monkeypatch, capsys):
     window_id = "Q-0227-clean"
     _open_lite(repo, window_id)
+    foreign_window_id = "Q-0227-cleanup"
+    foreign_record = append_ledger_record(
+        quickfix.ledger_path(repo), {"event": "done", "id": foreign_window_id},
+        f"done-{foreign_window_id}",
+    )
     _prepare_sync(monkeypatch)
     workers = _mock_worker(monkeypatch)
     reviews = _mock_review(monkeypatch, non_blocking=[{
@@ -128,6 +133,7 @@ def test_fix_close_commits_reviews_closes_and_commits_only_window_records(
     assert len(record_paths) == 2
     assert all(path.startswith("plans/quickfixes/") and window_id in path
                for path in record_paths)
+    assert foreign_record.relative_to(repo).as_posix() not in record_paths
     record_message = git(repo, "show", "-s", "--format=%B", "HEAD")
     assert f"Ticket: {window_id}" in record_message
     assert set(git(repo, "diff", "--cached", "--name-only").splitlines()) == {
@@ -157,6 +163,50 @@ def test_fix_close_blocking_review_leaves_window_open(repo, monkeypatch, capsys)
     assert f"Ticket: {window_id}" in git(repo, "show", "-s", "--format=%B", "HEAD")
     assert not any(event.get("event") == "done" and event.get("id") == window_id
                    for event in quickfix.load_events(repo))
+
+
+def test_fix_close_resume_reviews_and_closes_previously_committed_changes(
+        repo, monkeypatch, capsys):
+    window_id = "Q-0227-review-retry"
+    _open_lite(repo, window_id)
+    _prepare_sync(monkeypatch)
+    workers = _mock_worker(monkeypatch)
+    complete_review_calls = _mock_review(monkeypatch)
+    complete_review = review.review_lite
+    review_attempts = []
+
+    def incomplete_first_review(base: Path, **kwargs):
+        review_attempts.append((base, kwargs))
+        if len(review_attempts) > 1:
+            complete_review(base, **kwargs)
+
+    monkeypatch.setattr(review, "review_lite", incomplete_first_review)
+    original = head(repo)
+
+    with pytest.raises(SystemExit):
+        _invoke_close(repo)
+    assert "Lite review needs current complete artifacts" in capsys.readouterr().out
+
+    product_commit = head(repo)
+    assert product_commit != original
+    assert quickfix.load_active(repo)["id"] == window_id
+    assert git(repo, "show", "-s", "--format=%s", product_commit) == "Repair Lite path"
+    assert git(repo, "diff-tree", "--no-commit-id", "--name-only", "-r",
+               product_commit) == "src/fix.py"
+
+    fix.cmd_fix(argparse.Namespace(
+        description="Repair Lite path", repo=str(repo), close=True,
+        resume_close=True, window_id=window_id,
+    ))
+
+    assert workers and len(workers) == 1
+    assert review_attempts == [(repo, {}), (repo, {})]
+    assert complete_review_calls == [(repo, {})]
+    assert not quickfix.load_active(repo)
+    assert git(repo, "rev-parse", "HEAD^") == product_commit
+    assert git(repo, "rev-parse", "HEAD^^") == original
+    assert git(repo, "log", "--format=%s", f"{original}..HEAD").splitlines().count(
+        "Repair Lite path") == 1
 
 
 def test_fix_close_with_no_product_change_does_not_commit_or_review(
