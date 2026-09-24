@@ -60,7 +60,7 @@ native lane selects Luna/low.
 - **Full** is the standard workflow: an approved plan proceeds through bounded
   stages, deterministic verification, autoreview, and the remaining gates.
 - **Lite** is a human-opened, bounded write window for a small supervised fix:
-  `./forge mode lite --by "<name>" --reason "<why>"`. Run
+  `./forge mode lite --by "<name>" --reason "<why>"`. The committed diff may touch at most five budget-counted files; test paths and `*.md` files do not use a slot but are still reviewed. Run
   `./forge fix "<description>" --close` to commit product paths, run the
   existing three-lens review, and close the window with its records committed
   when there are no blocking findings. Blocking findings leave the window open
