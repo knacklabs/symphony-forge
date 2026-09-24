@@ -74,6 +74,39 @@ TERMINATION_SIGNALS = tuple(
 )
 
 
+def thread_title(kind: str, subject: str, title: str) -> str:
+    """Render the short, kind-first title Codex uses for a thread name."""
+    prefix = f"{kind} · {subject} · "
+    available = 59 - len(prefix)
+    if available < 0:
+        raise ValueError("thread title kind and subject exceed 59 characters")
+    title = title.strip()
+    if available == 0 and title:
+        raise ValueError("thread title has no room for an ellipsis")
+    if len(title) > available:
+        title = title[:max(0, available - 1)] + "…"
+    return prefix + title
+
+
+def _thread_titled_delegation(
+        base: Path, task: dict, story: str, text: str, *, write: bool,
+        generation: dict | None = None, debug: bool = False) -> str:
+    task_id = str(task.get("id") or "")
+    subject = f"{story}/{task_id}" if story else task_id
+    title = str(task.get("title") or "")
+    if write:
+        kind = "Fix" if generation else "Build"
+        if generation:
+            generations = (base / ".factory" / "stories" / story / "tasks"
+                           / task_id / "reviews" / "generations")
+            round_count = sum(1 for path in generations.glob("*.json"))
+            if round_count:
+                title = f"review round {round_count}"
+    else:
+        kind = "Debug" if debug else "Explore"
+    return f"{thread_title(kind, subject, title)}\n{text}"
+
+
 class ProcessDiscoveryError(RuntimeError):
     """The process tree could not be inspected safely."""
 
@@ -2002,6 +2035,17 @@ def launch_companion(
                 f"is not satisfied ({hook_detail})"
             )
 
+    if mode == "lite":
+        description = next(
+            (line.removeprefix("Fix:").strip()
+             for line in text.splitlines() if line.startswith("Fix:")),
+            task_id,
+        )
+        sentence_end = re.search(r"[.!?](?=\s|$)", description)
+        if sentence_end:
+            description = description[:sentence_end.end()]
+        text = f"{thread_title('Lite', task_id, description)}\n{text}"
+
     # Prefixed, not bare hex: a bare 32-character hex string reads as a
     # credential to secret scanners.
     launch_id = f"launch-{uuid.uuid4().hex}"
@@ -2048,6 +2092,7 @@ def launch_companion(
             r"[^a-z0-9_]+", "_", (native_task_name or task_id).lower(),
         ).strip("_") or "forge_task"
         message = (
+            f"{text.splitlines()[0]}\n"
             f"Read {rel} and complete task {task_id}. You are not alone in "
             "the codebase; preserve other agents' edits and stay within the "
             "brief's declared scope."
@@ -2426,6 +2471,8 @@ def launch_companion(
 
 
 def cmd_delegate(args: argparse.Namespace) -> None:
+    if getattr(args, "debug", False) and not args.read_only:
+        fail("--debug requires --read-only")
     base = Path(args.repo).resolve() if args.repo else repo_root()
     decomposition = load_json(
         protected_decomposition_state_path(base), default={})
@@ -2474,6 +2521,7 @@ def cmd_delegate(args: argparse.Namespace) -> None:
              "or use --read-only for background exploration.")
     state = load_json(run_state_path(base), default={})
     story = str(state.get("story") or state.get("issue_key") or "")
+    generation = None
     choice = getattr(args, "choice", None)
     from . import findings
     repeated_files = findings.repeated_finding_files(base, story, args.id)
@@ -2525,6 +2573,10 @@ def cmd_delegate(args: argparse.Namespace) -> None:
     text = compose_brief(base, task, write=write,
                          user_facing=bool(task.get("user_facing")),
                          story=story, scope_override=scope)
+    text = _thread_titled_delegation(
+        base, task, story, text, write=write, generation=generation,
+        debug=getattr(args, "debug", False),
+    )
     if repeated_files and choice == "refactor":
         text += "\n" + "\n".join(
             f"Refactor {file}: replace the approach with one simpler rule."

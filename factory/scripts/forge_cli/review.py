@@ -365,10 +365,24 @@ def _product_dirty(base: Path) -> list[str]:
     return dirty
 
 
+def _review_thread_title(task: dict, title: str, base: Path | None = None) -> str:
+    from .delegate import thread_title
+
+    subject = str(task.get("_thread_subject") or "")
+    if not subject:
+        state = load_json(run_state_path(base or repo_root()), default={})
+        story = str(state.get("issue_key") or state.get("story") or "")
+        task_id = str(task.get("id") or "")
+        subject = f"{story}/{task_id}" if story else task_id
+    return thread_title("Review", subject, title)
+
+
 def _lens_prompt(task: dict, lens: str, base: Path | None = None, *,
                  repo_readable: bool = True) -> bytes:
     preamble = COMMON_PREAMBLE if repo_readable else DIFF_ONLY_PREAMBLE
-    lines = [f"# Review brief — {task.get('id', '')} — {lens} lens", "",
+    lines = [_review_thread_title(
+                 task, str(task.get("title") or "code review"), base),
+             f"# Review brief — {task.get('id', '')} — {lens} lens", "",
              preamble, TEST_AUDIT_RULE, LENS_FOCUS[lens], LEFTOVER_INSTRUCTION]
     if lens == "quality":
         lines += [QUALITY_VERDICT_FORMAT, VERDICT_INSTRUCTION, ""]
@@ -376,7 +390,8 @@ def _lens_prompt(task: dict, lens: str, base: Path | None = None, *,
     return ("\n".join(lines).rstrip() + "\n").encode()
 
 
-def _combined_prompt(task: dict, *, repo_readable: bool = True,
+def _combined_prompt(task: dict, *, base: Path | None = None,
+                     repo_readable: bool = True,
                      semantic_identity: str = "") -> bytes:
     contracts = [
         str(contract.get("id")) for contract in task.get("plan_contracts") or []
@@ -404,6 +419,8 @@ def _combined_prompt(task: dict, *, repo_readable: bool = True,
         "contract fails closed. In a one-pass run, verdict every contract.\n"
     )
     lines = [
+        _review_thread_title(
+            task, str(task.get("title") or "code review"), base),
         f"# Review brief — {task.get('id', '')} — combined review", "",
         (COMMON_PREAMBLE if repo_readable else DIFF_ONLY_PREAMBLE).replace(
             "one lens of a three-lens", "the three-lens"),
@@ -2048,8 +2065,11 @@ def review_lite(base: Path, *, engine: str = "codex", max_priority: str = "P3",
         "Assess the diff with the quality, performance, and security focus in "
         "the review brief.\n"
     ).encode("utf-8")
-    task = {"id": str(window["id"]), "plan_contracts": []}
-    prompt = _combined_prompt(task, repo_readable=readable)
+    task = {
+        "id": str(window["id"]), "plan_contracts": [],
+        "_thread_subject": str(window["id"]), "title": "Lite review",
+    }
+    prompt = _combined_prompt(task, base=base, repo_readable=readable)
     if not safe_factory_write_bytes(
             base, REVIEW_DATASET_REL.removeprefix(".factory/"), context):
         fail(f"could not write {REVIEW_DATASET_REL}")
@@ -2442,7 +2462,7 @@ def review_task(base: Path, task_id: str, *, lens: str | None = None,
         rel = f"review-briefs/{args.id}.{name}.md"
         body = (_lens_prompt(task, name, base, repo_readable=readable) if args.lens
                 else _combined_prompt(
-                    task, repo_readable=readable,
+                    task, base=base, repo_readable=readable,
                     semantic_identity=meaning["semantic_identity"]))
         if not safe_factory_write_bytes(base, rel, body):
             fail(f"could not write .factory/{rel}")

@@ -872,10 +872,13 @@ def write_passing_artifacts(
             }
         lib.dump_json(task_root / "tests.json", tests)
 
+    from forge_cli.delegate import thread_title  # noqa: E402
     from forge_cli.review_brief import (  # noqa: E402
         VERDICT_INSTRUCTION, _task_section,
     )
+    first_task = decomposition["tasks"][0]
     brief_lines = [
+        thread_title("Review", f"{key}/{first_task['id']}", first_task["title"]),
         "# Branch-wide plan-contract review brief", "", VERDICT_INSTRUCTION, "",
     ]
     for task in decomposition["tasks"]:

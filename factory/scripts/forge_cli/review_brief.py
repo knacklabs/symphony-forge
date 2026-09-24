@@ -552,7 +552,8 @@ def render_review_brief(
     reviewed_task: str = "",
 ) -> tuple[bytes, dict | None, str]:
     """Purely render the authoritative review dataset and its active inputs."""
-    lines = [title, "", VERDICT_INSTRUCTION, ""]
+    from .delegate import thread_title
+
     from .stages import load_stages
     statuses = {
         row.get("id"): row.get("status")
@@ -566,6 +567,19 @@ def render_review_brief(
              if status == "active"),
             "",
         )
+    target = next((task for task in selected
+                   if task.get("id") == reviewed_task), None)
+    if target is None and selected:
+        target = selected[0]
+    subject_task = str((target or {}).get("id") or reviewed_task or "review")
+    state = raw_run_state(base)
+    story = str(state.get("issue_key") or state.get("story") or "")
+    subject = f"{story}/{subject_task}" if story else subject_task
+    thread_line = thread_title(
+        "Review", subject,
+        str((target or {}).get("title") or "plan-contract review"),
+    )
+    lines = [thread_line, title, "", VERDICT_INSTRUCTION, ""]
     reviewed_inputs = None
     lines.extend(_decision_inputs_section(base, selected))
     settled_seen: dict[tuple[str, ...], str] = {}
