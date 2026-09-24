@@ -803,19 +803,19 @@
     "old_client test fixture"
   ],
   "summary": "One cold read (8 gaps, 4 contradictions); resolved from repository facts and the owner's three-task choice (story plan re-approved); CORE unwired; task plan and contract amended once; criteria equal plan contracts.",
-  "input_sha256": "772721a1de2e7b0b385df897ae10cd20d71d2f5757b900385faaf932afe4fe30",
+  "input_sha256": "6fccb28de7c2ec9da0dc81371dc910cac3bbdef67d13b5246d461618d77c6778",
   "grounding_basis": "working-tree",
   "grounding_treeish": "",
   "task_plan_sha256": "d4434d98df5f241a8142b8abebda13538a92368432718ef0332069ed3a336bec",
-  "recorded_at": "2026-09-24T16:44:53+00:00",
-  "commit": "13b586222a711783ea5b66c54aefb3d6d4d2880f",
+  "recorded_at": "2026-09-24T17:07:36+00:00",
+  "commit": "c7aba2920c416650065c897e8a0976772469b7b9",
   "launch_id": "launch-c51330415d2c4ea19eabcf5d48beaff3",
   "cold_input_sha256": "34a9dd8b464dbc961b6020a9952c49ac4f07f5f2e39799de6076ab9214b3a89c",
   "final_artifact_sha256": "bf8e81ea2e87c2f442be6962fbc79ca46e7f46dec09cb74c9c5a2143500841df",
   "approved_task_plan_sha256": "d4434d98df5f241a8142b8abebda13538a92368432718ef0332069ed3a336bec",
   "approved_by": "human-via-Claude",
-  "approved_at": "2026-09-24T16:47:04+00:00",
+  "approved_at": "2026-09-24T17:08:56+00:00",
   "approval_runtime": "claude",
   "approval_session_id": "a0106b2c-e659-5e23-b0c7-d419b1d20fda",
-  "approval_event_id": "toolu_01RgPKEbDHw3tcSqdLGkLTHt"
+  "approval_event_id": "toolu_01TedxCV48rFc2Lk8PuSgn2g"
 }
