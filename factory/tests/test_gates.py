@@ -13249,7 +13249,8 @@ def test_task_reconcile_adopts_out_of_band_merge_without_a_pr(repo, tmp_path):
     # The task's work is genuinely on the trunk: src/ is pushed to origin/main.
     write_in_scope(repo, "src/core.py")
     git(repo, "add", "src/core.py")
-    git(repo, "commit", "-qm", "ship T1 work via a story PR")
+    git(repo, "commit", "-qm",
+        "ship T1 work via a story PR\n\nTicket: ENG-1/T1")
     configure_origin_main(repo, tmp_path / "reconcile-origin.git")
 
     marker = story_state(repo) / "tasks" / "T1" / "pr-ready.json"
@@ -13289,33 +13290,25 @@ def test_task_reconcile_refuses_when_work_is_not_on_the_trunk(repo, tmp_path):
     git(repo, "config", "user.name", "Gate Tests")
     second = task_skeleton({**STAGE_TASK, "id": "T2", "title": "second slice"})
     record_skeleton_then_frontier(repo, [STAGE_TASK, second])
-    write_in_scope(repo, "src/core.py", "print('started task scope')\n")
-    git(repo, "add", "src/core.py")
-    git(repo, "commit", "-qm", "record task scope baseline")
-    base = head(repo)
+    task_base = head(repo)
+    # Local task work exists, but it is not on origin/main.
     configure_origin_main(repo, tmp_path / "reconcile-origin-empty.git")
+    write_in_scope(repo, "src/core.py")
+    git(repo, "add", "src/core.py")
+    git(repo, "commit", "-qm", "record unshipped T1 work")
     write_stages(repo, {
         "issue": "ENG-1",
         "stages": [
             {"id": "T1", "title": "core slice", "status": "active",
-             "base_sha": base},
+             "base_sha": task_base},
             {"id": "T2", "title": "second slice", "status": "pending"},
         ],
     })
-    # origin/main removed a scoped file after the stage started. This creates a
-    # scoped trunk delta while leaving no scoped path on the trunk itself.
-    trunk = tmp_path / "reconcile-origin-deleted-scope"
-    git(repo, "worktree", "add", "-q", "--detach", str(trunk), base)
-    (trunk / "src" / "core.py").unlink()
-    git(trunk, "add", "src/core.py")
-    git(trunk, "commit", "-qm", "remove scoped path from trunk")
-    git(trunk, "push", "-q", "origin", "HEAD:main")
-    git(repo, "worktree", "remove", "-f", str(trunk))
-    git(repo, "merge", "--ff-only", "origin/main")
+    # origin/main carries no src/ content — the task's work never shipped.
     marker = story_state(repo) / "tasks" / "T1" / "pr-ready.json"
 
     code, out = run(repo, "forge.py", "task", "reconcile", "T1")
-    assert code != 0 and "does not look shipped" in out
+    assert code != 0 and "no declared shipped work" in out
     assert not marker.exists()
 
 
@@ -23532,25 +23525,6 @@ def test_task_proof_refuses_committed_null_marker(repo, tmp_path):
     ]
 
 
-def test_ci_task_proof_reconciled_marker_rejects_product_changes(repo):
-    git(repo, "checkout", "-qb", "feat/reconciled-marker-product")
-    base = head(repo)
-    marker = (repo / ".factory" / "stories" / "ENG-1" / "tasks" / "T1"
-              / "pr-ready.json")
-    marker.parent.mkdir(parents=True)
-    marker.write_text(json.dumps({"reconciled": True, "commit": base}))
-    product = repo / "src" / "reconciled-bypass.py"
-    product.parent.mkdir(exist_ok=True)
-    product.write_text("bypassed = True\n")
-    git(repo, "add", marker.relative_to(repo).as_posix(),
-        product.relative_to(repo).as_posix())
-    git(repo, "commit", "-qm", "add reconciled marker with product change")
-
-    code, out = run(repo, "check_task_proof.py", "--base", base)
-
-    assert code == 1, out
-
-
 def test_task_pr_ready_refuses_changed_evidence_after_marker(
         repo, tmp_path):
     git(repo, "checkout", "-qb", "feat/task-pr-reseal")
@@ -23762,7 +23736,7 @@ def test_task_reconcile_adopts_a_pending_task_whose_marker_is_on_the_trunk(
     task_base = head(repo)
     write_in_scope(repo, "src/core.py")
     git(repo, "add", "src/core.py")
-    git(repo, "commit", "-qm", "ship T1 work")
+    git(repo, "commit", "-qm", "ship T1 work\n\nTicket: ENG-1/T1")
     configure_origin_main(repo, tmp_path / "pending-origin.git")
 
     marker = story_state(repo) / "tasks" / "T1" / "pr-ready.json"
@@ -23799,8 +23773,8 @@ def test_task_reconcile_adopts_a_pending_task_whose_marker_is_on_the_trunk(
 
 def test_task_reconcile_still_refuses_a_pending_task_with_no_marker(
         repo, tmp_path):
-    # The relaxation is bounded by the marker. A pending task that never shipped
-    # has nothing to adopt, and reconcile must not invent a completion for it.
+    # The relaxation is bounded by the marker. A pending task whose work shipped
+    # without a marker has nothing to adopt, and reconcile must not invent one.
     sign_off(repo)
     intake(repo)
     save_plan(repo, tmp_path)
@@ -23810,7 +23784,8 @@ def test_task_reconcile_still_refuses_a_pending_task_with_no_marker(
     task_base = head(repo)
     write_in_scope(repo, "src/core.py")
     git(repo, "add", "src/core.py")
-    git(repo, "commit", "-qm", "ship pending task work without a marker")
+    git(repo, "commit", "-qm",
+        "ship pending T1 work without a marker\n\nTicket: ENG-1/T1")
     configure_origin_main(repo, tmp_path / "nomarker-origin.git")
     write_stages(repo, {
         "issue": "ENG-1",

@@ -11,6 +11,7 @@ import stat
 import subprocess
 from pathlib import Path
 
+from check_pr_ticket import TICKET_LINE
 from factory_lib import (
     _committed_task_marker, _git_is_ancestor, _windows_reparse_point,
     clean_git_env, default_trunk_branch, dump_json, evidence_path,
@@ -804,20 +805,40 @@ def cmd_task_reconcile(args: argparse.Namespace) -> None:
     if resolved_stage_base.returncode != 0:
         fail(f"{args.id} has no valid recorded stage base commit; this task "
              "has no commits of its own in its scope.")
-    own_commits = _git(
-        base, "log", "--format=%H", f"{resolved_stage_base.stdout.strip()}..HEAD",
+    shipped_commits = _git(
+        base, "log", "--topo-order", "--format=%H",
+        f"{resolved_stage_base.stdout.strip()}..{trunk_ref}",
         "--", *write_scope,
     )
-    if own_commits.returncode != 0:
-        detail = own_commits.stderr.strip() or own_commits.stdout.strip()
-        fail(f"could not check task {args.id}'s scoped commits"
+    if shipped_commits.returncode != 0:
+        detail = shipped_commits.stderr.strip() or shipped_commits.stdout.strip()
+        fail(f"could not check task {args.id}'s scoped trunk commits"
              + (f": {detail}" if detail else "."))
-    if not own_commits.stdout.strip():
-        fail(f"this task has no commits of its own in its scope ({args.id}).")
-    if not _git_is_ancestor(base, "HEAD", trunk_ref):
-        fail(f"HEAD is not on {trunk_ref}. If the work was squash-merged, "
-             "reconcile cannot prove it shipped; finish the task with `forge "
-             f"task close {args.id}` instead.")
+    declared_commits = []
+    task_ticket = f"{key}/{args.id}"
+    for candidate in shipped_commits.stdout.splitlines():
+        message = _git(base, "show", "-s", "--format=%B", candidate)
+        if message.returncode != 0:
+            detail = message.stderr.strip() or message.stdout.strip()
+            fail(f"could not read task {args.id}'s scoped trunk commit"
+                 + (f": {detail}" if detail else "."))
+        if task_ticket in TICKET_LINE.findall(message.stdout):
+            declared_commits.append(candidate)
+    if not declared_commits:
+        fail(f"no scoped commit in {stage_base}..{trunk_ref} declares "
+             f"Ticket: {task_ticket}; this task has no declared shipped work.")
+    commit = declared_commits[0]
+    if args.commit:
+        selected = _git(
+            base, "rev-parse", "--verify", "--end-of-options",
+            f"{args.commit}^{{commit}}",
+        )
+        if selected.returncode != 0 or selected.stdout.strip() not in declared_commits:
+            fail(f"--commit must be one of this task's declared scoped commits "
+                 f"on {trunk_ref}.")
+    if not _git_is_ancestor(base, commit, "HEAD"):
+        fail(f"HEAD does not descend from this task's latest declared commit "
+             f"on {trunk_ref}; merge {trunk_ref} into this branch first.")
 
     already = _git(
         base, "cat-file", "-e", f"origin/{default_branch}:{marker.as_posix()}",
@@ -842,30 +863,6 @@ def cmd_task_reconcile(args: argparse.Namespace) -> None:
              "SHIPPED; a task that never started has nothing to reconcile.")
 
     if not already:
-        # Confirm the task's work is genuinely on the trunk before adopting it: at
-        # least one of its write_scope paths must resolve on origin/<trunk>. This
-        # guards against reconciling work that never actually shipped.
-        on_trunk = any(
-            _git(base, "cat-file", "-e",
-                 f"origin/{default_branch}:{path}").returncode == 0
-            for path in write_scope
-        )
-        if not on_trunk:
-            fail(f"none of {args.id}'s write_scope paths are on origin/"
-                 f"{default_branch} — its work does not look shipped. Reconcile "
-                 "only a genuinely merged task (or ship it with `forge task "
-                 "pr-ready`).")
-
-        commit = _require_git(
-            base, "resolving task head", "rev-parse", "--verify", "HEAD")
-        if args.commit:
-            selected = _git(
-                base, "rev-parse", "--verify", "--end-of-options",
-                f"{args.commit}^{{commit}}",
-            )
-            if selected.returncode != 0 or selected.stdout.strip() != commit:
-                fail("--commit must be the current task branch HEAD; reconcile "
-                     "records that shipped task commit.")
         recorded_base = stage.get("base_sha")
         pointer_base = state.get("base_main_sha")
         base_main_sha = (
@@ -888,7 +885,7 @@ def cmd_task_reconcile(args: argparse.Namespace) -> None:
         # Marks the marker as ADOPTED, not sealed: the PR proof gate
         # (check_task_proof.py) does not demand recorded proof for work that was
         # already on the trunk before the harness learned about it. The commit
-        # identity is the task's own shipped HEAD, so it is on the PR base.
+        # identity is the latest scoped trunk commit that declares this task.
         payload["reconciled"] = True
         dump_json(base / marker, payload)
     elif readopt:
