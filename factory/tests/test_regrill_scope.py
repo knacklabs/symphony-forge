@@ -738,47 +738,6 @@ def test_measurement_amendment_without_a_bound_launch_writes_nothing(
     assert (protected.read_bytes(), tracked.read_bytes()) == before
 
 
-@pytest.mark.parametrize("corruption", ["missing", "invalid-bytes"])
-def test_measurement_continuity_never_replaces_native_task_approval_authority(
-        repo: Path, tmp_path: Path, corruption: str, monkeypatch):
-    from test_gates import DECOMP, STAGE_TASK  # noqa: E402
-
-    _start_stage_with_contract_frame(repo, tmp_path, STAGE_TASK, monkeypatch)
-    _seed_pre_stage_grill(repo, STAGE_TASK)
-    widened = {**STAGE_TASK, "write_scope": ["src/", "billing/"]}
-    code, out = run(
-        repo, "record_decomposition_from_json.py",
-        stdin=json.dumps({**DECOMP, "tasks": [widened]}),
-    )
-    assert code == 0, out
-    lib = load_factory_lib(repo)
-    grill_path = lib.evidence_path(
-        repo, "ENG-1", "grills/tasks/T1.json",
-    )
-    grill = lib.load_json(grill_path, default={})
-    assert lib._measurement_continuity_matches(repo, widened, grill)
-    replays = [
-        path for path in grill_path.parents[2].glob("approval-events/*.json")
-        if json.loads(path.read_text()).get("task") == "T1"
-    ]
-    assert replays
-    if corruption == "missing":
-        for replay in replays:
-            replay.unlink()
-    else:
-        for replay in replays:
-            replay.write_bytes(b"\xff")
-
-    digest = lib.plan_digest_without_assumptions(
-        lib.evidence_path(repo, "ENG-1", "task-plans/T1.md"),
-    )
-    assert not lib._task_plan_approval_matches_digest(
-        repo, widened, grill, digest,
-    )
-    with pytest.raises(SystemExit, match="approval"):
-        lib.require_ready_task(repo, "T1")
-
-
 def test_story_plan_reapproval_rebinds_an_active_task_without_restarting_it(
         repo: Path, tmp_path, monkeypatch):
     from test_gates import (  # noqa: E402
@@ -974,44 +933,7 @@ def test_story_plan_reapproval_preserves_an_active_task_without_receipts(
         repo, "forge.py", "delegate", "T1",
         env=_fake_companion_env(tmp_path),
     )
-    assert code != 0 and "Task plan approval required" in out, out
-
-
-def test_approved_task_plan_amendment_does_not_mask_changed_grounding(
-        repo: Path, tmp_path, monkeypatch):
-    from test_gates import (  # noqa: E402
-        STAGE_TASK, native_claude_approval, post_hook, story_state,
-    )
-
-    _start_stage_with_contract_frame(
-        repo, tmp_path, STAGE_TASK, monkeypatch, launch=False,
-    )
-    lib = load_factory_lib(repo)
-    task_plan = story_state(repo) / "task-plans" / "T1.md"
-    task_plan.write_text(
-        task_plan.read_text(encoding="utf-8") + "\nApproved amendment.\n",
-        encoding="utf-8",
-    )
-    code, out = post_hook(repo, native_claude_approval(repo))
-    assert code == 0, out
-
-    grill = lib.load_json(
-        story_state(repo) / "grills" / "tasks" / "T1.json", default={},
-    )
-    assert lib._task_plan_amendment_preserves_cold_proof(
-        repo, STAGE_TASK, grill,
-    )
-    lib.require_task_grill(repo, "T1", STAGE_TASK)
-
-    changed_grounding = (
-        ("objective", "Build a different feature."),
-        ("acceptance_criteria", ["a different acceptance bar"]),
-        ("plan_contracts", [{"id": "C2", "statement": "different", "source": "x"}]),
-        ("user_facing", True),
-    )
-    for field, value in changed_grounding:
-        with pytest.raises(SystemExit, match="task grill is STALE"):
-            lib.require_task_grill(repo, "T1", {**STAGE_TASK, field: value})
+    assert code != 0 and "task grill is STALE" in out, out
 
 
 @pytest.mark.parametrize(

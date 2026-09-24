@@ -18,9 +18,8 @@ import hashlib
 import json
 
 from test_gates import (  # noqa: I001 — puts factory/scripts on sys.path
-    STAGE_TASK, delegation_ledger, fake_companion_env, intake,
-    native_codex_approval, plan_draft, plan_digest_without_assumptions,
-    post_hook, record_grill, record_skeleton_then_frontier,
+    STAGE_TASK, intake, plan_draft, plan_digest_without_assumptions,
+    record_grill, record_skeleton_then_frontier,
     record_task_grill, repo, run, save_plan, sign_off, story_state,
 )
 from factory_lib import (  # noqa: E402
@@ -116,61 +115,6 @@ def test_refresh_removes_existing_contract_without_changing_approval_digest(repo
     assert plan_body_digest(path) == before
 
 
-def test_native_task_approval_survives_contract_block_removal(repo, monkeypatch):
-    from forge_cli import approval
-    from forge_cli.approval import ApprovalCandidate
-    from factory_lib import _task_plan_approval_matches_digest, run_state_path
-
-    story = "STORY-1"
-    story_dir = repo / ".factory" / "stories" / story
-    story_dir.mkdir(parents=True)
-    state_path = run_state_path(repo, story, for_write=True)
-    state_path.parent.mkdir(parents=True, exist_ok=True)
-    state_path.write_text(
-        '{"issue_key":"STORY-1","story":"STORY-1"}\n', encoding="utf-8",
-    )
-    path = story_dir / "task-plans" / "T1.md"
-    path.parent.mkdir(parents=True)
-    path.write_text(PLAN + BLOCK, encoding="utf-8")
-    digest = plan_body_digest(path)
-    grill_path = story_dir / "grills" / "tasks" / "T1.json"
-    grill_path.parent.mkdir(parents=True)
-    grill_path.write_text('{"verdict":"pass"}\n', encoding="utf-8")
-    candidate = ApprovalCandidate(
-        "task", story, "T1", path, digest, grill_path,
-    )
-    monkeypatch.setattr(approval, "eligible_candidates", lambda _root: [candidate])
-    question_id = f"approve_plan_{digest}"
-    approval.record_native_approval(repo, {
-        "tool_name": "request_user_input",
-        "session_id": "contract-block-test-session",
-        "tool_use_id": "contract-block-test-event",
-        "tool_input": {"questions": [{
-            "id": question_id,
-            "header": "Approve plan",
-            "question": "Approve this plan?",
-            "options": [
-                {"label": "Approve plan"},
-                {"label": "Request changes"},
-                {"label": "Stop"},
-            ],
-        }]},
-        "tool_response": {"answers": {
-            question_id: {"answers": ["Approve plan"]},
-        }},
-    }, runtime="codex")
-
-    grill = json.loads(grill_path.read_text(encoding="utf-8"))
-    task = {"id": "T1"}
-    assert _task_plan_approval_matches_digest(repo, task, grill, digest)
-    path.write_text(PLAN, encoding="utf-8")
-    digest_without_block = plan_body_digest(path)
-    assert digest_without_block == digest
-    assert _task_plan_approval_matches_digest(
-        repo, task, grill, digest_without_block,
-    )
-
-
 def test_forge_next_codex_approval_question_keeps_digest_in_id(repo, tmp_path):
     sign_off(repo)
     intake(repo)
@@ -240,39 +184,3 @@ def test_task_plan_save_strips_contract_block_and_preserves_legacy_metadata(
                     "--from", str(source))
     assert code == 0, out
     assert not meta.exists()
-
-
-def test_stage_start_and_delegate_require_codex_task_plan_approval(repo, tmp_path):
-    sign_off(repo)
-    intake(repo)
-    save_plan(repo, tmp_path)
-    record_skeleton_then_frontier(repo, [STAGE_TASK])
-    code, out = run(repo, "forge.py", "stage", "start", "T1", "--trunk")
-    assert code != 0 and "Task plan required first" in out
-    code, out = record_task_grill(repo, STAGE_TASK, approve=False)
-    assert code == 0, out
-    task_plan = story_state(repo) / "task-plans" / "T1.md"
-    assert task_plan.read_text(encoding="utf-8") == (
-        "# Task plan — T1\n\nImplement the recorded contract.\n\n"
-        "## Workflow\n\nRequest -> handler -> store.\n\n"
-        "## Manual Verification\n\n1. Run it. 2. See the row.\n"
-    )
-    assert "forge:contract" not in task_plan.read_text(encoding="utf-8")
-    assert not (task_plan.parent / "T1.meta.json").exists()
-    code, out = run(repo, "forge.py", "stage", "start", "T1", "--trunk")
-    assert code != 0 and "Task plan approval required" in out
-
-    code, out = post_hook(repo, native_codex_approval(repo))
-    assert code == 0, out
-    code, out = run(repo, "forge.py", "stage", "start", "T1", "--trunk")
-    assert code == 0, out
-    task_plan.write_text(task_plan.read_text() + "\nChanged after approval.\n")
-    code, out = run(
-        repo, "forge.py", "delegate", "T1", env=fake_companion_env(tmp_path),
-    )
-    assert code != 0 and "Task plan approval required" in out
-    rows = [
-        json.loads(line)
-        for line in delegation_ledger(repo).read_text().splitlines()
-    ]
-    assert not any(row.get("task") == "T1" for row in rows)

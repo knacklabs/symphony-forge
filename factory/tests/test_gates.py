@@ -458,8 +458,7 @@ def seed_task_grill_frontier(repo: Path, task: dict) -> None:
     task_plan.write_text(f"# Task plan — {task['id']}\n")
 
 
-def record_task_grill(repo: Path, task: dict, verdict: str = "pass",
-                      *, approve: bool = True) -> tuple[int, str]:
+def record_task_grill(repo: Path, task: dict, verdict: str = "pass") -> tuple[int, str]:
     source = repo / ".factory" / "task-plan-drafts" / f"{task['id']}.md"
     source.parent.mkdir(parents=True, exist_ok=True)
     source.write_text(f"# Task plan — {task['id']}\n\nImplement the recorded contract.\n\n## Workflow\n\nRequest -> handler -> store.\n\n## Manual Verification\n\n1. Run it. 2. See the row.\n", encoding="utf-8")
@@ -478,10 +477,7 @@ def record_task_grill(repo: Path, task: dict, verdict: str = "pass",
         repo, "record_grill_from_json.py", "--gate", "task",
         "--task", task["id"], stdin=json.dumps(payload),
     )
-    if code != 0 or verdict != "pass" or not approve:
-        return code, plan_out + out
-    code, approve_out = post_hook(repo, native_claude_approval(repo))
-    return code, out + plan_out + approve_out
+    return code, plan_out + out
 
 
 def _seed_cold_launch(repo: Path, gate: str, digest: str, task_id: str = "",
@@ -7035,7 +7031,7 @@ def test_frontier_orders_task_plan_before_grill(repo, tmp_path):
         stdin=json.dumps(payload),
     )
     assert code == 0, out
-    assert task_frontier_state(repo)[0] == "await-approval"
+    assert task_frontier_state(repo)[0] == "stage-start"
 
 def test_record_task_grill_writes_per_id_file(repo):
     task_id = "FORGE-BOARD-2.1"
@@ -19729,74 +19725,6 @@ def test_task_frontier_honours_dependency_dag(repo, tmp_path):
     require_ready_task(repo, "T3", require_approval=False, require_grill=False)
 
 
-def test_stage_start_and_delegate_refuse_without_approved_task_plan(repo, tmp_path):
-    sign_off(repo)
-    intake(repo)
-    save_plan(repo, tmp_path)
-    record_skeleton_then_frontier(repo, [STAGE_TASK])
-    code, out = run(repo, "forge.py", "stage", "start", "T1", "--trunk")
-    assert code != 0 and "Task plan required first" in out
-    code, out = record_task_grill(repo, STAGE_TASK, approve=False)
-    assert code == 0, out
-    code, out = run(repo, "forge.py", "stage", "start", "T1", "--trunk")
-    assert code != 0 and "Task plan approval required" in out
-
-    code, out = post_hook(repo, native_claude_approval(repo))
-    assert code == 0, out
-    code, out = run(repo, "forge.py", "stage", "start", "T1", "--trunk")
-    assert code == 0, out
-    task_plan = story_state(repo) / "task-plans" / "T1.md"
-    task_plan.write_text(task_plan.read_text() + "\nChanged after approval.\n")
-    code, out = run(
-        repo, "forge.py", "delegate", "T1", env=fake_companion_env(tmp_path),
-    )
-    assert code != 0 and "Task plan approval required" in out
-    rows = [json.loads(line) for line in delegation_ledger(repo).read_text().splitlines()]
-    assert not any(row.get("task") == "T1" for row in rows)
-
-
-def test_forge_next_and_board_route_author_task_plan_and_await_approval(
-        repo, tmp_path):
-    sign_off(repo)
-    intake(repo)
-    save_plan(repo, tmp_path)
-    record_skeleton_then_frontier(repo, [STAGE_TASK])
-    from forge_cli.board import next_actions
-
-    def assert_route(frontier: str, row_state: str, command: str) -> None:
-        assert task_frontier_state(repo)[0] == frontier
-        assert task_rows(repo)[0]["state"] == row_state
-        code, output = run(repo, "forge.py", "next")
-        assert code == 0, output
-        actions = [line.split(". ", 1)[1]
-                   for line in output.splitlines() if ". [dev]" in line]
-        action = next((a for a in actions if command in a), None)
-        assert action is not None, f"{command!r} in none of: {actions}"
-        assert any(command in step for step in next_actions(repo)["steps"])
-
-    assert_route("author-task-plan", "author-task-plan", "task plan save T1")
-    source = tmp_path / "T1.md"
-    source.write_text("# T1 plan\n\nImplement the bounded task.\n\n## Workflow\n\nRequest -> handler -> store.\n\n## Manual Verification\n\n1. Run it. 2. See the row.\n")
-    code, out = run(
-        repo, "forge.py", "task", "plan", "save", "T1", "--from", str(source),
-    )
-    assert code == 0, out
-    assert_route("grill", "ready", "Grill the saved T1 plan")
-    payload = task_grill_payload(STAGE_TASK)
-    _seed_task_cold_launch(repo, "T1")
-    code, out = run(
-        repo, "record_grill_from_json.py", "--gate", "task", "--task", "T1",
-        stdin=json.dumps(payload),
-    )
-    assert code == 0, out
-    assert_route("await-approval", "await-approval", "native Plan Mode")
-
-    code, out = post_hook(repo, native_claude_approval(repo))
-    assert code == 0, out
-    assert task_frontier_state(repo)[0] == "stage-start"
-    assert task_rows(repo)[0]["state"] == "grilled"
-
-
 def test_board_task_rows_show_grill_freshness_and_budget(
         repo, tmp_path, monkeypatch):
     task = {**STAGE_TASK, "review_budget": {
@@ -20635,7 +20563,6 @@ def test_review_consumers_include_complete_approved_inputs(
         f"- Story: `{state['issue_key']}`", "- Task: `T1`", f"- Branch: `{branch}`",
         "- Current delta ID: `",
         "#### Full approved task plan", "#### Full grill and approval record",
-        '"approved_by": "human-via-Claude"', '"approved_task_plan_sha256"',
         "#### Full task-owned automated report",
         plan_text, full_grill, full_automated,
     ))
@@ -20939,14 +20866,6 @@ def test_review_consumers_include_complete_approved_inputs(
     (proof / "tests.json").write_text(json.dumps(tests))
     code, out = run(repo, "forge.py", "review-brief", "T1", "--repo", str(repo))
     assert code != 0 and "stale or ungrounded" in out
-    assert brief_path.read_bytes() == prior_brief
-
-    grill_path.write_text(json.dumps(grill))
-    payload = dict(grill)
-    payload.pop("approved_by")
-    grill_path.write_text(json.dumps(payload))
-    code, out = run(repo, "forge.py", "review-brief", "T1", "--repo", str(repo))
-    assert code != 0 and "approved_by and approved_at" in out
     assert brief_path.read_bytes() == prior_brief
 
     grill_path.write_text(json.dumps(grill))

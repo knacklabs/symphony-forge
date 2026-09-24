@@ -93,8 +93,8 @@ so a fresh worktree with no `.factory/` reads the same answer, and nothing
 per-task can re-point it. Re-running on a signed-off project is refused;
 changing the pin is a reviewed edit. `update_run.py` and `pre_tool_use.py`
 refuse phases at `planning` or later until the pin resolves to an accepted,
-human-confirmed record. The per-task human gate is plan approval, not a second
-sign-off.
+human-confirmed record. The story plan gets one native human approval; each task
+plan gets a recorded cold read.
 
 Every handover gate is preceded by a recorded GRILL
 (`factory/prompts/griller.md`): an adversarial gaps-and-contradictions
@@ -465,8 +465,8 @@ sequence a JIT contract loop for every pending task:
    `python3 factory/scripts/record_grill_from_json.py --gate task --task <id>
    --input <grill-json> --cold-result <path> --preparation-id <id>`; Claude
    keeps its command-managed cold-reader path
-4. record the human task-plan approval against the same saved revision;
-   changed approval-bound content follows the existing amendment route
+4. a saved task plan with its matching recorded cold read is approved by the
+   story approval; no task-plan human approval is needed
 5. `forge stage start <id>` (dependency and scope eligibility are derived;
    task-level `--parallel` is refused)
 6. `forge delegate <id>` composes and validates the task brief. In native
@@ -608,7 +608,7 @@ the approved plan, a human-only act, or scope the plan does not cover.
 
 ### Who authors what — no ambiguity once implementation starts
 
-After task-plan sign-off, the division of labour is FIXED, so a task never
+After the task plan's cold read, the division of labour is FIXED, so a task never
 stalls on "should I do this or hand it to Codex?":
 
 - **Every product change is assigned to a Codex worker.** In native Codex,
@@ -641,8 +641,8 @@ visibility of what it does versus what it delegates, and only genuine
 human-only acts (decisions, sign-off) or unresolvable gate refusals pause it.
 
 ## Task Planning
-Story and task plans use the coordinator's native Plan Mode and follow
-`factory/prompts/planner.md`. They are briefs for the person approving the work:
+Story plans use native Plan Mode; task plans need one recorded cold read and no
+human approval. Both follow `factory/prompts/planner.md` and are briefs:
 plain English first, with a short technical section last. A story plan uses
 `What and why`, `What changes for you`, `Done when`, `Risks`, and optional
 `What I need from you`, then a divider, `Technical approach`, a concise
@@ -681,10 +681,9 @@ approval binds the digest of the body the person read. There is no requirements 
 `frontier_empty` question, manual `plan approve` / `task approve` command,
 board approval, or second unchanged save in the normal flow.
 
-If an already approved plan changes before stage start, record the amendment
-bridge against the existing cold proof and return directly to native approval
-of the exact amended body; do not launch another cold read solely for changed
-bytes. Claude delegates read-heavy exploration through
+If an approved story plan changes before stage start, preserve its cold proof.
+Only changes to `What changes for you` or `Done when` return to native approval;
+other amendments carry the approval forward with a recorded reason. Claude delegates read-heavy exploration through
 `/codex:rescue --model gpt-6-sol --effort medium`, read-only, and uses Sol/high
 for validation or architecture; it never runs raw `codex exec`. Native Codex
 uses the configured `planner-high` role through host `spawn_agent` without an
@@ -737,8 +736,7 @@ stories still archive until `forge upgrade` migrates them.
    result with `python3 factory/scripts/record_grill_from_json.py --gate task
    --task <id> --input <grill-json> --cold-result <path>
    --preparation-id <id>`), record every finding's
-   disposition and amendment, obtain native approval of the final task-plan
-   digest, start the stage, then delegate it through the canonical host-native
+   disposition and amendment, start the stage, then delegate it through the canonical host-native
    descriptor; native Codex
    spawns the matching host role and Claude launches the plugin companion.
    `delegate --scope` may repeat to select a proper subset of the approved

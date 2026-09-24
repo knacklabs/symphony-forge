@@ -22,7 +22,7 @@ from pathlib import Path
 
 from test_gates import (  # noqa: F401
     HARNESS, STAGE_TASK, fake_companion_env, git, intake, load_factory_lib,
-    native_claude_approval, post_hook, record_skeleton_then_frontier,
+    record_skeleton_then_frontier,
     record_task_grill, repo, run, save_plan, sign_off, story_state,
 )
 
@@ -54,11 +54,7 @@ def test_approval_to_pr_without_asking_the_human_anything_settled(
     assert _stop_hook(repo).get("continue") is True, (
         "the gate must not touch planning")
 
-    code, out = record_task_grill(repo, STAGE_TASK, approve=False)
-    assert code == 0, out
-
-    # ---- approval: consume the native Plan Mode approval event --------------
-    code, out = post_hook(repo, native_claude_approval(repo))
+    code, out = record_task_grill(repo, STAGE_TASK)
     assert code == 0, out
 
     # ---- the stage opens: from here the run is the agent's ----------------
@@ -122,75 +118,6 @@ def test_approval_to_pr_without_asking_the_human_anything_settled(
     # ---- and the escalation is spent, not a standing pass ------------------
     assert _stop_hook(repo).get("decision") == "block", (
         "one escalation authorised more than one interruption")
-
-
-def test_a_change_to_what_was_agreed_still_reaches_the_human(repo: Path,
-                                                             tmp_path):
-    """The other direction: autonomy must not swallow a real change.
-
-    The plan the human approved was edited twice after approval in the story
-    this comes from — once cosmetically, once adding an `asOf` instant to a
-    published contract. The second is a design change to something already
-    signed off, and it must not be clearable by an agent re-grilling.
-    """
-    sign_off(repo)
-    intake(repo)
-    save_plan(repo, tmp_path)
-    record_skeleton_then_frontier(repo, [STAGE_TASK])
-    code, out = record_task_grill(repo, STAGE_TASK, approve=False)
-    assert code == 0, out
-    code, out = post_hook(repo, native_claude_approval(repo))
-    assert code == 0, out
-
-    saved = story_state(repo) / "task-plans" / "T1.md"
-    grill = story_state(repo) / "grills" / "tasks" / "T1.json"
-    initial_grill = json.loads(grill.read_text(encoding="utf-8"))
-    cold_fields = {
-        field: initial_grill[field]
-        for field in (
-            "cold_input_sha256", "final_artifact_sha256",
-            "finding_dispositions",
-        )
-    }
-    initial_approved_digest = initial_grill["approved_task_plan_sha256"]
-    saved.write_text(
-        saved.read_text(encoding="utf-8")
-        + "\nThe query now takes an `asOf` instant.\n", encoding="utf-8")
-
-    code, out = run(repo, "forge.py", "stage", "start", "T1", "--trunk")
-    assert code != 0 and "Task plan approval required" in out, out
-    stale_event = native_claude_approval(repo)
-    code, out = post_hook(repo, stale_event)
-    assert code == 0, out
-    intermediate_approved_digest = json.loads(
-        grill.read_text(encoding="utf-8"),
-    )["approved_task_plan_sha256"]
-
-    saved.write_text(
-        saved.read_text(encoding="utf-8")
-        + "\nThe query response now includes a revision token.\n",
-        encoding="utf-8",
-    )
-    code, out = run(repo, "forge.py", "stage", "start", "T1", "--trunk")
-    assert code != 0 and "Task plan approval required" in out, out
-    code, out = post_hook(repo, stale_event)
-    assert code == 0, out  # hook adapters ignore non-authoritative host events
-    stale_grill = json.loads(grill.read_text(encoding="utf-8"))
-    assert stale_grill["approved_task_plan_sha256"] != \
-        load_factory_lib(repo).plan_digest_without_assumptions(saved)
-    code, out = post_hook(repo, native_claude_approval(repo))
-    assert code == 0, out
-    code, out = run(repo, "forge.py", "stage", "start", "T1", "--trunk")
-    assert code == 0, out
-    current_grill = json.loads(grill.read_text(encoding="utf-8"))
-    assert {field: current_grill[field] for field in cold_fields} == cold_fields
-    current_digest = load_factory_lib(repo).plan_digest_without_assumptions(saved)
-    assert current_grill["approved_task_plan_sha256"] == current_digest
-    assert current_grill["previous_approved_task_plan_sha256"] == \
-        intermediate_approved_digest
-    assert load_factory_lib(repo).approved_task_plan_predecessors(
-        repo, {"id": "T1"}, current_grill,
-    ) == (intermediate_approved_digest, initial_approved_digest)
 
 
 def test_widening_the_scope_still_stops_the_next_delegate(repo: Path, tmp_path):

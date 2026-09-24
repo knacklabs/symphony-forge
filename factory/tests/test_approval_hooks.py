@@ -90,36 +90,6 @@ def _story_candidate(repo: Path, story: str = "APPROVE-1") -> approval.ApprovalC
     return candidate
 
 
-def _task_candidate(repo: Path, monkeypatch: pytest.MonkeyPatch):
-    story = _story_candidate(repo)
-    approval.record_native_approval(repo, _event(story), runtime="claude")
-    lib = load_factory_lib(repo)
-    task = {"id": "T1"}
-    monkeypatch.setattr(
-        approval, "task_frontier_state", lambda _base: ("await-approval", task),
-    )
-    plan = lib.evidence_path(
-        repo, story.story, "task-plans/T1.md", for_write=True,
-    )
-    plan.parent.mkdir(parents=True, exist_ok=True)
-    plan.write_text("# Task plan\n", encoding="utf-8")
-    digest = lib.plan_digest_without_assumptions(plan)
-    grill = lib.evidence_path(
-        repo, story.story, "grills/tasks/T1.json", for_write=True,
-    )
-    lib.dump_json(grill, {
-        "verdict": "pass", "task_plan_sha256": digest,
-        "cold_input_sha256": digest, "final_artifact_sha256": digest,
-        "finding_dispositions": [],
-    })
-    lib.dump_json(lib.protected_decomposition_state_path(repo), {
-        "plan_sha256": story.digest, "tasks": [task],
-    })
-    candidates = approval.eligible_candidates(repo)
-    assert len(candidates) == 1 and candidates[0].kind == "task"
-    return candidates[0]
-
-
 def _add_worktree(repo: Path, path: Path) -> Path:
     git(repo, "worktree", "add", "--detach", str(path), "HEAD")
     return path
@@ -893,82 +863,6 @@ def test_approved_story_edit_is_the_only_candidate_and_rebinds_atomically(
     )
 
 
-def test_task_approval_waits_for_story_approval_and_decomposition_rebinding(
-        repo: Path, monkeypatch: pytest.MonkeyPatch):
-    story = _story_candidate(repo)
-    approval.record_native_approval(repo, _event(story), runtime="claude")
-    lib = load_factory_lib(repo)
-    task = {"id": "T1"}
-    monkeypatch.setattr(
-        approval, "task_frontier_state", lambda _base: ("await-approval", task),
-    )
-    task_plan = lib.evidence_path(
-        repo, "APPROVE-1", "task-plans/T1.md", for_write=True,
-    )
-    task_plan.parent.mkdir(parents=True, exist_ok=True)
-    task_plan.write_text("# Task plan\n", encoding="utf-8")
-    task_digest = lib.plan_digest_without_assumptions(task_plan)
-    task_grill = lib.evidence_path(
-        repo, "APPROVE-1", "grills/tasks/T1.json", for_write=True,
-    )
-    lib.dump_json(task_grill, {
-        "verdict": "pass", "task_plan_sha256": task_digest,
-        "cold_input_sha256": task_digest,
-        "final_artifact_sha256": task_digest,
-        "finding_dispositions": [],
-    })
-    decomposition = lib.protected_decomposition_state_path(repo)
-    decomposition.unlink(missing_ok=True)
-
-    assert approval._task_candidate(repo) is None
-    story_digest = lib.plan_digest_without_assumptions(story.path)
-    lib.dump_json(decomposition, {
-        "plan_sha256": story_digest, "tasks": [task],
-    })
-    assert approval._task_candidate(repo) is not None
-
-    story.path.write_text(
-        story.path.read_text(encoding="utf-8") + "\nAnother amendment.\n",
-        encoding="utf-8",
-    )
-    assert approval._task_candidate(repo) is None
-    assert [row.kind for row in approval.eligible_candidates(repo)] == ["story"]
-
-
-def test_task_approval_requires_exact_approval_frontier(
-        repo: Path, monkeypatch: pytest.MonkeyPatch):
-    story = _story_candidate(repo)
-    approval.record_native_approval(repo, _event(story), runtime="claude")
-    lib = load_factory_lib(repo)
-    task = {"id": "T1"}
-    task_plan = lib.evidence_path(
-        repo, "APPROVE-1", "task-plans/T1.md", for_write=True,
-    )
-    task_plan.parent.mkdir(parents=True, exist_ok=True)
-    task_plan.write_text("# Task plan\n", encoding="utf-8")
-    task_digest = lib.plan_digest_without_assumptions(task_plan)
-    task_grill = lib.evidence_path(
-        repo, "APPROVE-1", "grills/tasks/T1.json", for_write=True,
-    )
-    lib.dump_json(task_grill, {
-        "verdict": "pass", "task_plan_sha256": task_digest,
-        "cold_input_sha256": task_digest,
-        "final_artifact_sha256": task_digest,
-        "finding_dispositions": [],
-    })
-    lib.dump_json(lib.protected_decomposition_state_path(repo), {
-        "plan_sha256": story.digest, "tasks": [task],
-    })
-    before = task_grill.read_bytes()
-
-    for action in ("grill", "author-task-plan", "stage-start", "delegate"):
-        monkeypatch.setattr(
-            approval, "task_frontier_state", lambda _base, value=action: (value, task),
-        )
-        assert approval._task_candidate(repo) is None
-        assert task_grill.read_bytes() == before
-
-
 def test_native_approval_refuses_zero_multiple_candidates_replay_and_missing_identity(
         repo: Path, monkeypatch: pytest.MonkeyPatch):
     candidate = _story_candidate(repo)
@@ -991,39 +885,6 @@ def test_native_approval_refuses_zero_multiple_candidates_replay_and_missing_ide
     approval.record_native_approval(repo, event, runtime="claude")
     with pytest.raises(approval.ApprovalRefused, match="already consumed"):
         approval.record_native_approval(repo, event, runtime="claude")
-
-
-@pytest.mark.parametrize("runtime", ["claude", "codex"])
-def test_native_approval_from_main_checkout_records_in_matching_task_worktree(
-        repo: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
-        runtime: str):
-    task_worktree = _add_worktree(repo, tmp_path / "task-worktree")
-    candidate = _task_candidate(task_worktree, monkeypatch)
-    primary_candidate = _story_candidate(repo)
-    assert approval.eligible_candidates(repo) == [primary_candidate]
-    assert primary_candidate.digest != candidate.digest
-    primary_before = (
-        primary_candidate.path.read_bytes(),
-        load_factory_lib(repo).run_state_path(repo).read_bytes(),
-    )
-
-    recorded_in: list[str] = []
-    record = approval.record_native_approval(
-        repo, _event(candidate, runtime), runtime=runtime,
-        recorded_in=recorded_in,
-    )
-
-    assert record["plan_kind"] == "task"
-    assert recorded_in == [str(task_worktree.resolve())]
-    stored = json.loads(candidate.evidence.read_text(encoding="utf-8"))
-    assert stored["approved_task_plan_sha256"] == candidate.digest
-    assert (
-        primary_candidate.path.read_bytes(),
-        load_factory_lib(repo).run_state_path(repo).read_bytes(),
-    ) == primary_before
-    assert not primary_candidate.evidence.exists()
-    assert not (repo / ".factory" / "stories" / candidate.story
-                / "grills" / "tasks" / f"{candidate.task}.json").exists()
 
 
 def test_native_approval_refuses_event_consumed_in_another_worktree(
@@ -1437,84 +1298,6 @@ def test_codex_approval_accepts_missing_or_completed_status(
     assert record["approved_plan_sha256"] == candidate.digest
 
 
-def test_native_approval_reuses_existing_story_and_task_approval_storage(
-        repo: Path, monkeypatch: pytest.MonkeyPatch):
-    story = _story_candidate(repo)
-    monkeypatch.setattr(approval, "eligible_candidates", lambda _base: [story])
-    record = approval.record_native_approval(repo, _event(story), runtime="claude")
-    assert json.loads(story.evidence.read_text())["approved_plan_sha256"] == record[
-        "approved_plan_sha256"]
-
-    plan = repo / ".factory" / "task.md"
-    plan.write_text("# task\n", encoding="utf-8")
-    grill = repo / ".factory" / "task-grill.json"
-    grill.write_text('{"verdict":"pass"}\n', encoding="utf-8")
-    task = approval.ApprovalCandidate(
-        "task", "APPROVE-1", "T1", plan,
-        load_factory_lib(repo).plan_digest_without_assumptions(plan), grill,
-    )
-    monkeypatch.setattr(approval, "eligible_candidates", lambda _base: [task])
-    task_record = approval.record_native_approval(
-        repo, _event(task, "codex"), runtime="codex")
-    stored = json.loads(grill.read_text())
-    assert stored["approved_task_plan_sha256"] == task_record["approved_plan_sha256"]
-    assert stored["approval_event_id"] == task_record["event_id"]
-    lib = load_factory_lib(repo)
-    task_row = {"id": "T1"}
-    assert lib._task_plan_approval_matches_digest(
-        repo, task_row, stored, task.digest)
-
-    replay = next(
-        path for path in (story.evidence.parent / "approval-events").glob("*.json")
-        if json.loads(path.read_text()).get("task") == "T1"
-    )
-    replay_bytes = replay.read_bytes()
-    replay.unlink()
-    assert not lib._task_plan_approval_matches_digest(
-        repo, task_row, stored, task.digest)
-    replay.write_text("{not json\n", encoding="utf-8")
-    assert not lib._task_plan_approval_matches_digest(
-        repo, task_row, stored, task.digest)
-    replay.write_bytes(b"\xff")
-    assert not lib._task_plan_approval_matches_digest(
-        repo, task_row, stored, task.digest)
-    replay.write_bytes(replay_bytes)
-    legacy = {
-        "approved_task_plan_sha256": task.digest,
-        "approved_by": "Legacy Human",
-        "approved_at": "2026-01-01T00:00:00+00:00",
-        "task_plan_sha256": task.digest,
-    }
-    assert not lib._task_plan_approval_matches_digest(
-        repo, task_row, legacy, task.digest)
-
-
-def test_native_task_approval_preserves_exact_grill_artifact_digest(
-        repo: Path, monkeypatch: pytest.MonkeyPatch):
-    lib = load_factory_lib(repo)
-    plan = repo / ".factory" / "task.md"
-    plan.write_text("---\nstatus: approved\n---\n\n# task\n", encoding="utf-8")
-    exact_digest = hashlib.sha256(plan.read_bytes()).hexdigest()
-    semantic_digest = lib.plan_digest_without_assumptions(plan)
-    assert exact_digest != semantic_digest
-
-    grill = repo / ".factory" / "task-grill.json"
-    lib.dump_json(grill, {"verdict": "pass", "final_artifact_sha256": exact_digest})
-    candidate = approval.ApprovalCandidate(
-        "task", "APPROVE-1", "T1", plan, semantic_digest, grill,
-    )
-    monkeypatch.setattr(approval, "eligible_candidates", lambda _base: [candidate])
-
-    record = approval.record_native_approval(
-        repo, _event(candidate, "codex"), runtime="codex",
-    )
-
-    stored = json.loads(grill.read_text(encoding="utf-8"))
-    assert stored["final_artifact_sha256"] == exact_digest
-    assert stored["approved_task_plan_sha256"] == semantic_digest
-    assert record["approved_plan_sha256"] == semantic_digest
-
-
 def _recorded_lean_bootstrap_actor(lib, root: Path, runtime: str = "codex") -> str:
     story = lib._LEAN_SELF_BOOTSTRAP_STORY
     actor = {"claude": "human-via-Claude", "codex": "human-via-Codex"}[runtime]
@@ -1559,98 +1342,6 @@ def _recorded_lean_bootstrap_actor(lib, root: Path, runtime: str = "codex") -> s
         lib.dump_json(path, payload)
     return actor
 
-
-def _lean_bootstrap_grill(lib, actor: str) -> dict:
-    digest = lib._LEAN_SELF_BOOTSTRAP_DIGEST
-    return {
-        "generated_by": "griller",
-        "gate": "task",
-        "verdict": "pass",
-        "issue": lib._LEAN_SELF_BOOTSTRAP_STORY,
-        "task_id": lib._LEAN_SELF_BOOTSTRAP_TASK,
-        "final_artifact_sha256": lib._LEAN_SELF_BOOTSTRAP_FINAL_ARTIFACT_SHA256,
-        "approved_task_plan_sha256": digest,
-        "approved_by": actor,
-        "approved_at": "2026-09-18T12:00:00+00:00",
-    }
-
-
-@pytest.mark.parametrize(
-    ("change", "value"),
-    [
-        ("story", "OTHER"),
-        ("task", "OTHER"),
-        ("digest", "0" * 64),
-        ("approved_by", "Other Human"),
-        ("approved_at", "not-a-time"),
-        ("approval_runtime", "claude"),
-    ],
-)
-def test_lean_self_bootstrap_compatibility_is_exact(
-        repo: Path, monkeypatch: pytest.MonkeyPatch, change: str, value: str):
-    lib = load_factory_lib(repo)
-    actor = _recorded_lean_bootstrap_actor(lib, repo)
-    grill = _lean_bootstrap_grill(lib, actor)
-    task = {"id": lib._LEAN_SELF_BOOTSTRAP_TASK}
-    story = lib._LEAN_SELF_BOOTSTRAP_STORY
-    digest = lib._LEAN_SELF_BOOTSTRAP_DIGEST
-    if change == "story":
-        story = value
-    elif change == "task":
-        task["id"] = value
-    elif change == "digest":
-        digest = value
-    else:
-        grill[change] = value
-    monkeypatch.setattr(lib, "_active_story_key", lambda _root: story)
-    monkeypatch.setattr(
-        lib, "task_grill_grounding_matches",
-        lambda _root, _task, _grill: True,
-    )
-
-    accepted = lib._lean_self_bootstrap_task_grill(repo, task, grill, digest)
-
-    assert accepted is (change not in {
-        "story", "task", "digest", "approved_by", "approved_at",
-        "approval_runtime",
-    })
-
-
-def test_lean_self_bootstrap_actor_comes_from_current_story_approval(
-        repo: Path, monkeypatch: pytest.MonkeyPatch):
-    lib = load_factory_lib(repo)
-    actor = _recorded_lean_bootstrap_actor(lib, repo)
-    grill = _lean_bootstrap_grill(lib, actor)
-    task = {"id": lib._LEAN_SELF_BOOTSTRAP_TASK}
-    monkeypatch.setattr(
-        lib, "task_grill_grounding_matches", lambda _root, _task, _grill: True,
-    )
-
-    assert lib._lean_self_bootstrap_task_grill(
-        repo, task, grill, lib._LEAN_SELF_BOOTSTRAP_DIGEST,
-    )
-
-    grill["approved_by"] = "forged-grill-actor"
-    assert not lib._lean_self_bootstrap_task_grill(
-        repo, task, grill, lib._LEAN_SELF_BOOTSTRAP_DIGEST,
-    )
-
-    grill["approved_by"] = actor
-    story_plan = repo / "plans" / "active" / "lean-bootstrap.md"
-    original_plan = story_plan.read_bytes()
-    story_plan.write_bytes(original_plan + b"\nchanged\n")
-    assert not lib._lean_self_bootstrap_task_grill(
-        repo, task, grill, lib._LEAN_SELF_BOOTSTRAP_DIGEST,
-    )
-
-    story_plan.write_bytes(original_plan)
-    approval_path = lib.evidence_path(
-        repo, lib._LEAN_SELF_BOOTSTRAP_STORY, "plan-approval.json",
-    )
-    approval_path.unlink()
-    assert not lib._lean_self_bootstrap_task_grill(
-        repo, task, grill, lib._LEAN_SELF_BOOTSTRAP_DIGEST,
-    )
 
 
 def test_lean_self_bootstrap_records_once_without_native_event_identity(
@@ -1713,9 +1404,6 @@ def test_lean_self_bootstrap_records_once_without_native_event_identity(
     assert not any(field in recorded for field in (
         "approval_runtime", "approval_session_id", "approval_event_id",
     ))
-    assert lib._task_plan_approval_matches_digest(
-        repo, task, recorded, digest,
-    )
     assert not list(
         (grill_path.parent.parent / "approval-events").glob("*.json")
     )
@@ -1843,34 +1531,6 @@ def test_native_approval_refuses_unsafe_authority_and_replay_destinations(
 
     assert (candidate.path.read_bytes(), state_path.read_bytes()) == before
     assert external.read_text(encoding="utf-8") == '{"sentinel": true}\n'
-
-
-@pytest.mark.parametrize("kind", ["symlink", "hardlink"])
-def test_native_task_approval_refuses_unsafe_grill_destination(
-        repo: Path, tmp_path: Path, kind: str, monkeypatch: pytest.MonkeyPatch):
-    import os
-
-    plan = repo / ".factory" / "task.md"
-    plan.write_text("# task\n", encoding="utf-8")
-    grill = repo / ".factory" / "task-grill.json"
-    outside = tmp_path / "task-grill.json"
-    outside.write_text('{"verdict":"pass"}\n', encoding="utf-8")
-    if kind == "symlink":
-        grill.symlink_to(outside)
-    else:
-        os.link(outside, grill)
-    task = approval.ApprovalCandidate(
-        "task", "APPROVE-1", "T1", plan,
-        load_factory_lib(repo).plan_digest_without_assumptions(plan), grill,
-    )
-    monkeypatch.setattr(approval, "eligible_candidates", lambda _base: [task])
-    before = outside.read_bytes()
-
-    with pytest.raises(approval.ApprovalRefused, match="destination"):
-        approval.record_native_approval(
-            repo, _event(task, "codex"), runtime="codex")
-
-    assert outside.read_bytes() == before
 
 
 def test_native_story_approval_refuses_unsafe_run_state_without_tombstone(

@@ -126,7 +126,7 @@ def _story(repo, tmp_path, *, t1_status: str = "done") -> None:
     stages = load_stages(repo)
     stages["stages"][1]["status"] = "active"
     write_stages(repo, stages)
-    code, out = record_task_grill(repo, t2, approve=False)
+    code, out = record_task_grill(repo, t2)
     assert code == 0, out
     _fixture_approve_t2(repo)
     _write_complete_automated(repo, "T2")

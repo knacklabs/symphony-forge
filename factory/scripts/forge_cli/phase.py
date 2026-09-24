@@ -188,7 +188,6 @@ _PARALLEL_COMMANDS = {
     "delegate": "./forge delegate {id} from inside its worktree",
     "stage-start": "./forge task start {id}, then `./forge stage start {id}` from "
                    "inside the worktree it prints",
-    "await-approval": "show the exact plan in native Plan Mode and consume its approval",
     "grill": "./forge grill run --gate task --task {id}",
     "author-task-plan": "author its plan, then ./forge task plan save {id} --from <path>",
     "author-contract": "author its contract and re-record the decomposition",
@@ -231,6 +230,8 @@ def cmd_next(args: argparse.Namespace) -> None:
     from .story import ensure_active_pointer
     rederived = not load_json(run_state_path(base), default={}).get("issue_key")
     active_key = ensure_active_pointer(base)
+    from .approval import carry_forward_story_approval
+    carry_forward_story_approval(base)
     state = load_json(run_state_path(base), default={})
     factory = base / ".factory"
     pending_ctx = len(pending_context(base))
@@ -435,7 +436,7 @@ def cmd_next(args: argparse.Namespace) -> None:
             "fresh human approval event. This post-approval edit returns directly "
             "to its approver; do not launch another plan cold read. After approval, "
             "re-record the same decomposition to bind the new story digest. An "
-            "unchanged task keeps its existing cold proof and task approval."
+            "unchanged task keeps its existing cold proof."
         )
     elif _approved_plan_authority_state(base, state) == "upgrade":
         phase("planning authority upgrade required")
@@ -613,14 +614,6 @@ def cmd_next(args: argparse.Namespace) -> None:
                         f"`./forge task plan save {task_id} --from <path>` (it stays "
                         "hidden on the board until its grill is clean), then grill it. "
                         "The grill is the provenance, not the mode you wrote it in."
-                    )
-                elif frontier == "await-approval":
-                    steps.append(
-                        f"[dev] The cold-grilled {task_id} plan is ready. Display "
-                        "its exact final bytes in native Plan Mode and ask once. "
-                        "A successful Claude ExitPlanMode or the exact synchronous "
-                        "Codex Approve plan / Request changes / Stop response is "
-                        "recorded automatically; there is no board or manual-approve step."
                     )
                 elif frontier == "stage-start":
                     # Naming only `stage start` sent the work to the trunk's own

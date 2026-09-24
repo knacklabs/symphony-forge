@@ -18,7 +18,7 @@ from pathlib import Path
 
 from test_gates import (  # noqa: F401
     HARNESS, STAGE_TASK, git, intake, load_factory_lib, record_skeleton_then_frontier,
-    native_claude_approval, post_hook, record_task_grill, repo, run, save_plan,
+    record_task_grill, repo, run, save_plan,
     sign_off, start_stage, story_state, write_in_scope, write_task_proof,
 )
 
@@ -49,72 +49,8 @@ def test_an_edited_story_plan_routes_to_native_reapproval_without_a_cold_read(
     assert "Display its exact current bytes in native Plan Mode" in out
     assert "do not launch another plan cold read" in out
     assert "re-record the same decomposition" in out
-    assert "keeps its existing cold proof and task approval" in out
+    assert "keeps its existing cold proof" in out
     assert grill.read_bytes() == original_grill
-
-
-def test_a_plan_edited_after_approval_cannot_reuse_stale_native_authority(
-        repo: Path, tmp_path):
-    """An old approval alone cannot authenticate a newly edited artifact."""
-    sign_off(repo)
-    intake(repo)
-    save_plan(repo, tmp_path)
-    record_skeleton_then_frontier(repo, [STAGE_TASK])
-    code, out = record_task_grill(repo, STAGE_TASK, approve=False)
-    assert code == 0, out
-    code, out = post_hook(repo, native_claude_approval(repo))
-    assert code == 0, out
-
-    saved = story_state(repo) / "task-plans" / "T1.md"
-    grill_path = story_state(repo) / "grills" / "tasks" / "T1.json"
-    original_grill = json.loads(grill_path.read_text())
-    preserved_cold_proof = {
-        field: original_grill.get(field)
-        for field in (
-            "cold_input_sha256", "final_artifact_sha256",
-            "finding_dispositions", "amendments",
-        )
-    }
-
-    def task_approval_events():
-        return [
-            event
-            for path in (story_state(repo) / "approval-events").glob("*.json")
-            if (event := json.loads(path.read_text())).get("task") == "T1"
-        ]
-
-    saved.write_text(saved.read_text(encoding="utf-8") + "\nOne reworded line.\n",
-                     encoding="utf-8")
-
-    code, out = run(repo, "forge.py", "stage", "start", "T1", "--trunk")
-    assert code != 0, out
-    assert "Task plan approval required" in out
-    lib = load_factory_lib(repo)
-    assert not lib._task_plan_approval_matches_digest(
-        repo, STAGE_TASK, original_grill,
-        lib.plan_digest_without_assumptions(saved),
-    )
-    assert len(task_approval_events()) == 1
-    assert {
-        field: json.loads(grill_path.read_text()).get(field)
-        for field in preserved_cold_proof
-    } == preserved_cold_proof
-    code, out = post_hook(repo, native_claude_approval(repo))
-    assert code == 0, out
-    code, out = run(repo, "forge.py", "stage", "start", "T1", "--trunk")
-    assert code == 0, out
-    updated = json.loads(grill_path.read_text())
-    assert {
-        field: updated.get(field) for field in preserved_cold_proof
-    } == preserved_cold_proof
-    amended_digest = lib.plan_digest_without_assumptions(saved)
-    assert updated["approved_task_plan_sha256"] == amended_digest
-    assert updated["previous_approved_task_plan_sha256"] \
-        == original_grill["approved_task_plan_sha256"]
-    assert len(task_approval_events()) == 2
-    assert lib._task_plan_approval_matches_digest(
-        repo, STAGE_TASK, updated, amended_digest,
-    )
 
 
 def test_an_unapproved_plan_edit_still_needs_a_regrill(repo: Path, tmp_path):
@@ -124,7 +60,7 @@ def test_an_unapproved_plan_edit_still_needs_a_regrill(repo: Path, tmp_path):
     intake(repo)
     save_plan(repo, tmp_path)
     record_skeleton_then_frontier(repo, [STAGE_TASK])
-    code, out = record_task_grill(repo, STAGE_TASK, approve=False)
+    code, out = record_task_grill(repo, STAGE_TASK)
     assert code == 0, out
 
     saved = story_state(repo) / "task-plans" / "T1.md"
@@ -149,9 +85,7 @@ def test_stage_start_refuses_when_task_start_was_skipped(repo: Path, tmp_path):
     intake(repo)
     save_plan(repo, tmp_path)
     record_skeleton_then_frontier(repo, [STAGE_TASK])
-    code, out = record_task_grill(repo, STAGE_TASK, approve=False)
-    assert code == 0, out
-    code, out = post_hook(repo, native_claude_approval(repo))
+    code, out = record_task_grill(repo, STAGE_TASK)
     assert code == 0, out
 
     code, out = run(repo, "forge.py", "stage", "start", "T1")

@@ -7,6 +7,7 @@ Codex cannot acquire subtly different approval semantics.
 from __future__ import annotations
 
 import json
+import hashlib
 import os
 import re
 import stat
@@ -16,12 +17,13 @@ from pathlib import Path
 from typing import Any
 
 from factory_lib import (
-    _plan_body_digest_bytes, _safe_review_leaf, _task_plan_state,
+    _plan_body_digest_bytes, _safe_review_leaf,
     _windows_reparse_point, dump_json, evidence_path, factory_dir, git_control_dir,
     load_json, now_iso, story_dir,
-    plan_digest_without_assumptions, protected_decomposition_state_path,
+    plan_digest_without_assumptions,
     approved_plan_digest,
-    require_grill, run_state_path, task_frontier_state,
+    parse_sections,
+    require_grill, run_state_path,
 )
 
 
@@ -289,55 +291,10 @@ def _story_candidate(
     )
 
 
-def _task_candidate(base: Path) -> ApprovalCandidate | None:
-    state = _strict_run_state(base)
-    frontier = task_frontier_state(base)
-    if frontier is None:
-        return None
-    frontier_state, task = frontier
-    if frontier_state != "await-approval":
-        return None
-    story = _text(state.get("story")) or _text(state.get("issue_key"))
-    if not story:
-        return None
-    story_plan = _plan_path(base, state.get("plan_file"))
-    if (state.get("plan_status") != "approved"
-            or story_plan is None):
-        return None
-    story_digest = plan_digest_without_assumptions(story_plan)
-    if approved_plan_digest(base, state, story_plan) != story_digest:
-        return None
-    decomposition = load_json(
-        protected_decomposition_state_path(base), default={},
-    )
-    if (not isinstance(decomposition, dict)
-            or state.get("approved_plan_sha256") != story_digest
-            or decomposition.get("plan_sha256") != story_digest):
-        return None
-    task_id = _text(task.get("id"))
-    if not task_id:
-        return None
-    plan = evidence_path(base, story, f"task-plans/{task_id}.md")
-    grill_path = evidence_path(base, story, f"grills/tasks/{task_id}.json")
-    grill = load_json(grill_path, default={})
-    if (not isinstance(grill, dict) or not plan.is_file()
-            or grill.get("verdict") != "pass"):
-        return None
-    digest = plan_digest_without_assumptions(plan)
-    if _task_plan_state(base, task, grill) != "await-approval":
-        return None
-    previous_digest = _text(grill.get("approved_task_plan_sha256"))
-    if previous_digest == digest:
-        previous_digest = ""
-    return ApprovalCandidate(
-        "task", story, task_id, plan, digest, grill_path, previous_digest,
-    )
-
-
 def eligible_candidates(base: Path) -> list[ApprovalCandidate]:
     """Return all current-frontier candidates for digest-bound resolution."""
-    return [candidate for candidate in (_story_candidate(base), _task_candidate(base))
-            if candidate is not None]
+    candidate = _story_candidate(base)
+    return [candidate] if candidate is not None else []
 
 
 def _require_current_candidate(base: Path, candidate: ApprovalCandidate) -> None:
@@ -582,21 +539,73 @@ def _approve_story(base: Path, candidate: ApprovalCandidate, record: dict[str, A
     dump_json(state_path, state)
 
 
-def _approve_task(candidate: ApprovalCandidate, record: dict[str, Any]) -> None:
-    grill = load_json(candidate.evidence, default={})
-    if not grill:
-        raise ApprovalRefused("task cold-read proof disappeared during approval")
-    if candidate.previous_digest:
-        grill["previous_approved_task_plan_sha256"] = candidate.previous_digest
-    grill.update({
-        "approved_task_plan_sha256": candidate.digest,
-        "approved_by": record["approved_by"],
-        "approved_at": record["approved_at"],
-        "approval_runtime": record["runtime"],
-        "approval_session_id": record["session_id"],
-        "approval_event_id": record["event_id"],
-    })
-    dump_json(candidate.evidence, grill)
+def carry_forward_story_approval(base: Path) -> bool:
+    """Carry a story approval over an edit that preserves its delivery sections."""
+    state = load_json(run_state_path(base), default={})
+    path = _plan_path(base, state.get("plan_file"))
+    if state.get("plan_status") != "approved" or path is None:
+        return False
+    previous = state.get("approved_plan_sha256")
+    current = plan_digest_without_assumptions(path)
+    if not previous or previous == current:
+        return False
+    story = _text(state.get("story")) or _text(state.get("issue_key"))
+    evidence = evidence_path(base, story, "plan-approval.json")
+    record = load_json(evidence, default={})
+    from factory_lib import _native_story_approval_recorded
+    if (not isinstance(record, dict)
+            or record.get("approved_plan_sha256") != previous
+            or not _native_story_approval_recorded(base, story, record)):
+        return False
+    approved_sections = record.get("approved_sections")
+    old_delivery = record.get("delivery_sections")
+    if not isinstance(approved_sections, dict) or not isinstance(old_delivery, dict):
+        relative = path.relative_to(base).as_posix()
+        committed = subprocess.run(
+            ["git", "show", f"HEAD:{relative}"], cwd=base,
+            capture_output=True,
+        )
+        if (committed.returncode != 0
+                or _plan_body_digest_bytes(committed.stdout) != previous):
+            return False
+        old_text = committed.stdout.decode("utf-8")
+        old_raw = parse_sections(old_text, strip_leading=False)
+        approved_sections = old_raw
+        old_delivery = {name: old_raw.get(name, "")
+                        for name in ("What changes for you", "Done when")}
+    text = path.read_text(encoding="utf-8")
+    raw_sections = parse_sections(text, strip_leading=False)
+    delivery = {name: raw_sections.get(name, "")
+                for name in ("What changes for you", "Done when")}
+    if not all(delivery.values()) or old_delivery != delivery:
+        return False
+    changed = sorted(name for name in set(raw_sections) | set(approved_sections)
+                     if raw_sections.get(name) != approved_sections.get(name))
+    reason = "Delivery sections unchanged; amended: " + (
+        ", ".join(changed) if changed else "text outside sections")
+    event_id = "carry-" + current
+    carried = {**record,
+               "approved_plan_sha256": current,
+               "approved_at": now_iso(),
+               "event_id": event_id,
+               "previous_approved_plan_sha256": previous,
+               "carried_forward_reason": reason,
+               "delivery_sections": delivery,
+               "approved_sections": raw_sections}
+    replay_key = hashlib.sha256(
+        f"{carried['runtime']}\0{carried['session_id']}\0{event_id}".encode()
+    ).hexdigest()
+    replay = evidence_path(base, story, f"approval-events/{replay_key}.json",
+                           for_write=True)
+    if replay.exists():
+        return False
+    _require_safe_destination(base, evidence, required=True)
+    _require_safe_destination(base, replay, required=False)
+    replay.parent.mkdir(parents=True, exist_ok=True)
+    dump_json(replay, carried)
+    _approve_story(base, ApprovalCandidate("story", story, "", path, current,
+                                          evidence, previous), carried)
+    return True
 
 
 def _restore_files(snapshots: dict[Path, bytes | None], base: Path) -> None:
@@ -682,6 +691,14 @@ def record_native_approval(
             "story": candidate.story,
             "task": candidate.task,
         }
+        if candidate.kind == "story":
+            text = candidate.path.read_text(encoding="utf-8")
+            raw_sections = parse_sections(text, strip_leading=False)
+            record["delivery_sections"] = {
+                name: raw_sections.get(name, "")
+                for name in ("What changes for you", "Done when")
+            }
+            record["approved_sections"] = raw_sections
         if candidate.previous_digest:
             record["previous_approved_plan_sha256"] = candidate.previous_digest
         snapshots = {
@@ -701,8 +718,6 @@ def record_native_approval(
                     story=candidate.story,
                     detail=candidate.path.relative_to(approval_base).as_posix(),
                 )
-            else:
-                _approve_task(candidate, record)
         except Exception:
             _restore_files(snapshots, approval_base)
             raise

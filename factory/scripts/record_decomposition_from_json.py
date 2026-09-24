@@ -538,10 +538,13 @@ with delegation_exclusion(
         graph_reapproved = (
             prior_decomposition.get("plan_sha256") != approved_sha256
             and prior_decomposition.get("plan_sha256") in reapproval_predecessors
-            and supplied_plan_sha256 == approved_sha256
+            and (supplied_plan_sha256 == approved_sha256
+                 or (supplied_plan_sha256 is None and load_json(
+                     evidence_path(root, story, "plan-approval.json"), default={},
+                 ).get("carried_forward_reason")))
         )
-        # A changed graph needs an authenticated native reapproval bound by the
-        # payload. Completed tasks keep their IDs, order, and dependencies.
+        # A changed graph needs native reapproval or a delivery-preserving
+        # carried approval. Completed tasks keep IDs, order, and dependencies.
         if graph_changed and not (graph_reapproved and done_graph_unchanged):
             raise SystemExit(
                 "decomposition task graph is frozen after approval: task ids, "

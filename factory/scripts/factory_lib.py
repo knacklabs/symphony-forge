@@ -504,7 +504,7 @@ def _ledger_order(record: dict) -> tuple:
     return (1, json.dumps(record, sort_keys=True))
 
 
-def parse_sections(text: str) -> dict[str, str]:
+def parse_sections(text: str, *, strip_leading: bool = True) -> dict[str, str]:
     """Map level-two Markdown heading names to their stripped bodies.
 
     The single answer to "does this document have this section, with content".
@@ -518,7 +518,10 @@ def parse_sections(text: str) -> dict[str, str]:
         ATX_CLOSING_RUN.sub("", heading.group(1)).strip(): text[
             heading.end():headings[index + 1].start()
             if index + 1 < len(headings) else len(text)
-        ].strip()
+        ].strip() if strip_leading else text[
+            heading.end():headings[index + 1].start()
+            if index + 1 < len(headings) else len(text)
+        ].rstrip()
         for index, heading in enumerate(headings)
     }
 
@@ -3688,10 +3691,9 @@ def require_task_grill(
             f"the {task_id} task grill is STALE — its grounding inputs changed. "
             f"Re-grill and record `{record_command}`; --task-digest was removed "
             "because the digest is derived from the protected contract, approved "
-            "plan, and product tree. Tip: record the task grill LAST, immediately "
-            "before native approval / `stage start` — committing any tracked file "
-            "outside .factory/ and plans/ (docs/, factory/scripts/, source) between "
-            "grilling and approving changes the product tree and re-stales it."
+            "plan, and scoped product tree. Tip: record the task grill LAST, "
+            "immediately before `stage start` — changing a tracked file inside "
+            "the task's declared write scope re-stales it."
         )
 
 
@@ -3732,7 +3734,8 @@ def task_plan_binding_digest(root: Path, task_id: str, grill: dict) -> str:
          if isinstance(item, dict) and item.get("id") == task_id),
         {"id": task_id},
     )
-    if not _task_plan_approval_matches_digest(root, task, grill, digest):
+    if not (grill.get("task_plan_sha256") == digest
+            or _task_plan_amendment_preserves_cold_proof(root, task, grill)):
         return ""
     return digest
 
@@ -3749,9 +3752,13 @@ def story_plan_digest(root: Path) -> str:
 
 def _native_story_approval_recorded(
     root: Path, story: str, record: dict, *, path: Path | None = None,
+    seen: frozenset[str] = frozenset(),
 ) -> bool:
-    """Whether one story-approval record is its real native-event tombstone."""
+    """Whether a story approval has an intact native-event lineage."""
     runtime = record.get("runtime")
+    digest = record.get("approved_plan_sha256")
+    if digest in seen:
+        return False
     session = record.get("session_id")
     event = record.get("event_id")
     expected_actor = {
@@ -3782,7 +3789,22 @@ def _native_story_approval_recorded(
     if path is not None and path != replay:
         return False
     try:
-        return load_json(replay, default={}) == record
+        if load_json(replay, default={}) != record:
+            return False
+        if record.get("carried_forward_reason"):
+            previous = record.get("previous_approved_plan_sha256")
+            if re.fullmatch(r"[0-9a-f]{64}", previous or "") is None:
+                return False
+            event_dir = evidence_path(root, story, "approval-events")
+            return sum(
+                1 for candidate_path in event_dir.glob("*.json")
+                if isinstance((candidate := load_json(candidate_path, default={})), dict)
+                and candidate.get("approved_plan_sha256") == previous
+                and _native_story_approval_recorded(
+                    root, story, candidate, path=candidate_path,
+                    seen=seen | {digest})
+            ) == 1
+        return True
     except (OSError, UnicodeError, json.JSONDecodeError):
         return False
 
@@ -4074,7 +4096,9 @@ def _measurement_continuity_matches(
         plan_digest_without_assumptions(task_plan) if task_plan.is_file() else ""
     )
     if (not story_digest or not task_plan_digest
-            or grill.get("approved_task_plan_sha256") != task_plan_digest):
+            or not (grill.get("task_plan_sha256") == task_plan_digest
+                    or _task_plan_amendment_preserves_cold_proof(
+                        root, task, grill))):
         return False
     current_task_sha256 = task_digest(task)
     if stage.get("status") == "done":
@@ -4350,6 +4374,8 @@ def validated_task_marker_commit(root: Path, key: str, task_id: str) -> str:
 
 def require_approved_plan_digest(root: Path) -> str:
     """Return the live approved-plan digest or require a fresh approval."""
+    from forge_cli.approval import carry_forward_story_approval
+    carry_forward_story_approval(root)
     state = load_json(run_state_path(root), default={})
     plan_file = state.get("plan_file")
     plan = root / plan_file if isinstance(plan_file, str) else None
@@ -4456,29 +4482,31 @@ def product_delta_digest(root: Path, base_sha: str, head: str = "") -> str:
     return hashlib.sha256(diff.stdout).hexdigest()
 
 def product_tree_digest(root: Path, treeish: str = "",
-                        exclude: tuple[str, ...] = (".factory/", "plans/")) -> str:
-    """Hash product blobs from the index, or from a named historical tree."""
+                        exclude: tuple[str, ...] = (".factory/", "plans/"),
+                        include: tuple[str, ...] = ()) -> str:
+    """Hash selected product blobs from the index or a historical tree."""
     dirs = _git_dirs(root) if BOARD_MEMO else None
     if dirs is None:
-        return _product_tree_digest_now(root, treeish, exclude)
+        return _product_tree_digest_now(root, treeish, exclude, include)
     from forge_cli import fscache
 
     git_dir, common = dirs
     if treeish:
         # An object id names the same tree forever; a ref name can move.
         if not re.fullmatch(r"[0-9a-f]{40}|[0-9a-f]{64}", treeish):
-            return _product_tree_digest_now(root, treeish, exclude)
-        namespace, stamp = f"board:tree:{common}:{treeish}:{exclude}", ()
+            return _product_tree_digest_now(root, treeish, exclude, include)
+        namespace, stamp = f"board:tree:{common}:{treeish}:{exclude}:{include}", ()
     else:
         # `ls-files --stage` reads this worktree's index and nothing else.
-        namespace = f"board:index-tree:{git_dir}:{exclude}"
+        namespace = f"board:index-tree:{git_dir}:{exclude}:{include}"
         stamp = (fscache.file_stamp(git_dir / "index"),)
     return _board_memo(namespace, stamp,
-                       lambda: _product_tree_digest_now(root, treeish, exclude))
+                       lambda: _product_tree_digest_now(root, treeish, exclude, include))
 
 
 def _product_tree_digest_now(root: Path, treeish: str,
-                             exclude: tuple[str, ...]) -> str:
+                             exclude: tuple[str, ...],
+                             include: tuple[str, ...] = ()) -> str:
     git_args = (["ls-tree", "-r", "-z", treeish]
                 if treeish else ["ls-files", "--stage", "-z"])
     proc = subprocess.run(
@@ -4501,6 +4529,11 @@ def _product_tree_digest_now(root: Path, treeish: str,
             continue
         metadata, path = entry.split("\t", 1)
         if path.startswith(exclude):
+            continue
+        if include and not any(
+            path.startswith(scope) if scope.endswith("/") else path == scope
+            for scope in include
+        ):
             continue
         fields = metadata.split()
         blobs.append((path, fields[2] if treeish else fields[1]))
@@ -4589,8 +4622,8 @@ def grounding_digest(root: Path, task: dict, *, treeish: str = "",
         "plan_sha256": _plan_sha256,
     }
     # The product tree is part of the grounding only until the stage opens.
-    # Before work starts, the plan was grilled against a codebase and a change
-    # there means the grill read something else. After work starts, the tree
+    # Before work starts, the plan was grilled against its declared scope and a
+    # change there means the grill read something else. After work starts, the tree
     # moves BECAUSE OF the work the grill authorised, so binding to it makes
     # the gate self-defeating: committing the implementation stales the grill,
     # and the grill is what `forge delegate` needs to fix the implementation.
@@ -4599,7 +4632,8 @@ def grounding_digest(root: Path, task: dict, *, treeish: str = "",
     # not the codebase the grill read changing under it.
     if not in_stage:
         body["product_tree_sha256"] = product_tree_digest(
-            root, treeish, exclude=harness_owned_prefixes())
+            root, treeish, exclude=harness_owned_prefixes(),
+            include=tuple(task.get("write_scope") or ()))
     payload = json.dumps(body, sort_keys=True, separators=(",", ":"),
                          ensure_ascii=True)
     return hashlib.sha256(payload.encode()).hexdigest()
@@ -4910,17 +4944,6 @@ def _task_plan_amendment_preserves_cold_proof(
     )
 
 
-def _task_plan_approval_matches_digest(
-    root: Path, task: dict, grill: dict, digest: str,
-) -> bool:
-    """Whether current approval authority binds this task-plan digest."""
-    return (
-        _native_task_approval_recorded(root, task, grill, digest)
-        or _lean_self_bootstrap_task_grill(root, task, grill, digest)
-        or _legacy_inflight_task_grill(root, task, grill)
-    )
-
-
 _LEAN_SELF_BOOTSTRAP_STORY = "FORGE-COORD-1"
 _LEAN_SELF_BOOTSTRAP_TASK = "LEAN-WORKFLOW"
 _LEAN_SELF_BOOTSTRAP_DIGEST = (
@@ -4954,52 +4977,6 @@ def _lean_self_bootstrap_actor(root: Path) -> str | None:
         return None
     actor = approval.get("approved_by")
     return actor if isinstance(actor, str) and actor.strip() else None
-
-
-def _lean_self_bootstrap_task_grill(
-    root: Path, task: dict, grill: dict, digest: str,
-) -> bool:
-    """Recognize Lean's one approved, human-attributed bootstrap record.
-
-    The story plan authorized this exact self-bootstrap before the native-only
-    approval path existed.  Keep the exception content-addressed and historical:
-    it cannot approve another story, task, plan revision, actor, or record that
-    claims a native runtime event.
-    """
-    actor = _lean_self_bootstrap_actor(root)
-    if actor is None:
-        return False
-    if (
-        _active_story_key(root) != _LEAN_SELF_BOOTSTRAP_STORY
-        or task.get("id") != _LEAN_SELF_BOOTSTRAP_TASK
-        or digest != _LEAN_SELF_BOOTSTRAP_DIGEST
-        or grill.get("issue") != _LEAN_SELF_BOOTSTRAP_STORY
-        or grill.get("task_id") != _LEAN_SELF_BOOTSTRAP_TASK
-        or grill.get("generated_by") != "griller"
-        or grill.get("gate") != "task"
-        or grill.get("verdict") != "pass"
-        or grill.get("final_artifact_sha256")
-        != _LEAN_SELF_BOOTSTRAP_FINAL_ARTIFACT_SHA256
-        or grill.get("approved_task_plan_sha256") != _LEAN_SELF_BOOTSTRAP_DIGEST
-        or grill.get("approved_by") != actor
-        or any(field in grill for field in (
-            "approval_runtime", "approval_session_id", "approval_event_id",
-        ))
-    ):
-        return False
-    approved_at = grill.get("approved_at")
-    if not isinstance(approved_at, str) or not approved_at:
-        return False
-    try:
-        timestamp = datetime.fromisoformat(approved_at)
-    except ValueError:
-        return False
-    if timestamp.tzinfo is None or timestamp.utcoffset() is None:
-        return False
-    try:
-        return task_grill_grounding_matches(root, task, grill)
-    except SystemExit:
-        return False
 
 
 def record_lean_self_bootstrap_approval(
@@ -5189,13 +5166,8 @@ def _task_plan_state(root: Path, task: dict, grill: dict) -> str:
         return "author-task-plan"
     digest = plan_digest_without_assumptions(plan)
     cold_read_matches = grill.get("task_plan_sha256") == digest
-    approved = _task_plan_approval_matches_digest(root, task, grill, digest)
-    if approved:
+    if cold_read_matches or _task_plan_amendment_preserves_cold_proof(root, task, grill):
         return "approved"
-    if _task_plan_amendment_preserves_cold_proof(root, task, grill):
-        return "await-approval"
-    if cold_read_matches:
-        return "await-approval"
     return "grill"
 
 
@@ -5933,14 +5905,9 @@ def require_ready_task(
         if plan_state == "grill":
             raise SystemExit(
                 f"the {task_id} task grill is STALE — the task plan changed "
-                "before any native approval bound it. Re-grill and record "
+                "after its cold read. Re-grill and record "
                 "`python3 factory/scripts/record_grill_from_json.py --gate task "
                 f"--task {task_id}` against the current plan."
-            )
-        if plan_state == "await-approval":
-            raise SystemExit(
-                f"Task plan approval required: display the exact current {task_id} "
-                "plan in native Plan Mode and consume its approval event."
             )
     return task
 
