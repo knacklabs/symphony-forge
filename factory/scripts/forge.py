@@ -380,6 +380,12 @@ def main() -> None:
     p_fix = sub.add_parser(
         "fix", help="prepare or run a bounded fix in an open lite window")
     p_fix.add_argument("description")
+    p_fix.add_argument(
+        "--close", action="store_true",
+        help="commit product changes, run the Lite review and close on a clean review",
+    )
+    p_fix.add_argument("--resume-close", action="store_true", help=argparse.SUPPRESS)
+    p_fix.add_argument("--window-id", help=argparse.SUPPRESS)
     p_fix.add_argument("--repo")
     p_fix.set_defaults(func=fix_mod.cmd_fix)
 

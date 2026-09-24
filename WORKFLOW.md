@@ -60,9 +60,14 @@ native lane selects Luna/low.
 - **Full** is the standard workflow: an approved plan proceeds through bounded
   stages, deterministic verification, autoreview, and the remaining gates.
 - **Lite** is a human-opened, bounded write window for a small supervised fix:
-  `./forge mode lite --by "<name>" --reason "<why>"`. It returns to Full when
-  the committed fix is within its file budget, `./forge review --lite` records
-  all three clean aspects, and `./forge mode done` closes the window.
+  `./forge mode lite --by "<name>" --reason "<why>"`. Run
+  `./forge fix "<description>" --close` to commit product paths, run the
+  existing three-lens review, and close the window with its records committed
+  when there are no blocking findings. Blocking findings leave the window open
+  for another fix round; non-blocking findings are accepted and can be logged
+  with `forge defer add` if they matter. A host-native worker is asynchronous;
+  after it returns, continue with the `--resume-close --window-id` command
+  printed by the initial invocation.
 
 ## Factory Phases
 0a. `discovery` — lightweight problem, stakeholder, and constraint discovery; no `.factory` ceremony required.
