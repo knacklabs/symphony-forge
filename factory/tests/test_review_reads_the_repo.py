@@ -204,7 +204,15 @@ def test_the_brief_tells_the_reviewer_to_read_before_it_writes_partial():
     combined = _combined_prompt(task).decode()
     assert "You are the three-lens code review" in combined and "READ-ONLY" in combined
     assert "factory/skills/test-audit/SKILL.md" in combined
-    assert "not thereby partial" in _combined_prompt(task, repo_readable=False).decode()
+    diff_only_combined = _combined_prompt(task, repo_readable=False).decode()
+    assert "not thereby partial" in diff_only_combined
+    briefs = [
+        _lens_prompt(task, lens, repo_readable=readable).decode()
+        for lens in ("quality", "performance", "security")
+        for readable in (True, False)
+    ] + [combined, diff_only_combined]
+    assert all("fabricated mocks or fixtures that\nsupply the behavior or receipts under test" in brief
+               for brief in briefs)
     argv = _skill_argv(Path("skill"), "abc", "p.md", Path("o.json"), "codex", "P3")
     assert "--codex-bin" not in argv
     assert _skill_argv(Path("skill"), "abc", "p.md", Path("o.json"), "codex", "P3",
