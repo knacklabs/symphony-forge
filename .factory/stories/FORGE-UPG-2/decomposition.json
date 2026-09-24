@@ -1,0 +1,57 @@
+{
+  "generated_by": "docs-decomposer",
+  "user_facing": false,
+  "tasks": [
+    {
+      "id": "CORE",
+      "title": "The new upgrade flow",
+      "objective": "An old-client test fixture and the new upgrade_flow.py wired to forge upgrade: fail-closed preflight, committed harness snapshot, upgrade branch, archive table, byte-ownership vendoring incl. doc contracts and the sign-off carry, checks in a throwaway worktree, trailered commit, exact rollback.",
+      "dependencies": [],
+      "acceptance_criteria": [
+        "A test fixture scaffolds a client from 8563f8c6, 43f6bede, 47516c55 or a pre-2ebba90d commit of this repository",
+        "Idle clients from the three factory-era versions upgrade with exit 0 on an upgrade branch, then forge next, forge audit, forge doctor --fast and the board data run without errors",
+        "A second upgrade changes nothing; a newer harness upgrade succeeds; a non-ancestor vendored commit is refused",
+        "Work in progress in any worktree, a dirty target or harness, an unreadable worktree, a pre-rename client, unshipped client machinery files and blocked machinery paths are refused with no repository change",
+        "An injected failure after vendoring leaves the original branch, tracked files and git-local state exactly as before",
+        "Client skills, custom profiles, edited doc contracts, docs/memory, grill records, unknown .factory files and the sign-off survive; exactly the archive table's files move under .factory/archive/pre-<sha>/"
+      ],
+      "user_facing": false
+    },
+    {
+      "id": "CLEANUP",
+      "title": "Parking, old code out, edges",
+      "objective": "--park inside the branch and rollback; the old upgrade machinery, schema, approval coupling and tests deleted; legacy tag; ticket-check exemption; board label; reworded messages; harness-health step removed; doctor skill check; doc-contract roadmap item covered.",
+      "dependencies": [
+        "CORE"
+      ],
+      "acceptance_criteria": [
+        "--park lets a story through, archives its state and plan record, moves its plan to plans/archive and returns its roadmap item to pending; refused while another worktree holds the story",
+        "The Lean migration, resume plans, profile hash tables and .agents migration are deleted; the forge-legacy-upgrade route reaches current from a pre-rename client",
+        "The upgrade PR passes the ticket check and a hand-made change outside the upgrader's categories does not",
+        "Tasks with archived reviews show as reviewed before upgrade on the board",
+        "No message tells a user with work in progress to run forge upgrade; harness-health opens no upgrade PR; doctor warns on a stale installed upgrade skill"
+      ],
+      "user_facing": false
+    },
+    {
+      "id": "DOCS",
+      "title": "Upgrade docs and skill",
+      "objective": "Retire legacy-upgrade.md; update getting-started, WORKFLOW, the parity architecture, decision 0088's example list and the upgrade skill.",
+      "dependencies": [
+        "CLEANUP"
+      ],
+      "acceptance_criteria": [
+        "docs/specs/legacy-upgrade.md is retired and the docs describe finish-or-park, clean, upgrade, follow the printed steps",
+        "Decision 0088's example list matches the archive table",
+        "The upgrade skill follows upgrade's printed steps and keeps its backfill and re-authoring steps"
+      ],
+      "user_facing": false
+    }
+  ],
+  "project": "",
+  "story": "FORGE-UPG-2",
+  "epic": "symphony-forge",
+  "plan_file": "plans/active/FORGE-UPG-2-simple-upgrade-one-safe-step-from-any-factory-era-client.md",
+  "plan_sha256": "a234f94231ffef7d6924f8c6449dcba85537b5c3840ddf87634bfdd1f9bd680f",
+  "commit": "26ded67d13f2a0fb99b8ef435ac05c1c8a3fc8a9"
+}

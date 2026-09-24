@@ -1026,7 +1026,7 @@
         "The upgrade PR passes the ticket check; the old migration machinery is deleted"
       ],
       "order": 49,
-      "status": "pending",
+      "status": "active",
       "epic": "symphony-forge",
       "skill": "backend",
       "kind": "refactor",
