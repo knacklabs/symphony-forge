@@ -14,13 +14,14 @@ from pathlib import Path
 from check_pr_ticket import TICKET_LINE
 from factory_lib import (
     _committed_task_marker, _git_is_ancestor, _windows_reparse_point,
+    atomic_dump_json,
     clean_git_env, default_trunk_branch, dump_json, evidence_path,
     git_control_dir, load_json, now_iso, raw_open_flags,
     repo_root, require_approved_plan_digest,
     require_ready_task, task_digest,
     require_task_sealed,
     protected_decomposition_state_path, run_state_path,
-    task_marker_on_main, task_marker_path,
+    story_dir, task_marker_on_main, task_marker_path,
 )
 
 from .common import fail
@@ -219,7 +220,12 @@ def cmd_plan_save(args: argparse.Namespace) -> None:
         fail("task plan source must be UTF-8 Markdown")
     if not content.strip():
         fail("task plan source must not be empty")
-    require_task_plan_sections(content, args.id)
+    from .plans import parse_frontmatter
+    metadata, body = parse_frontmatter(content)
+    has_frontmatter = body != content
+    if not body.strip():
+        fail("task plan source must not be empty")
+    require_task_plan_sections(body, args.id)
     dest = _task_plan_path(base, args.id, for_write=True)
     state = load_json(run_state_path(base), default={})
     story = state.get("issue_key") or state.get("story")
@@ -232,9 +238,14 @@ def cmd_plan_save(args: argparse.Namespace) -> None:
         fail(f"task plan save refused: {args.id} has a legacy task grill. Run "
              "`forge upgrade` to retire the old format before saving.")
     dest.parent.mkdir(parents=True, exist_ok=True)
-    dest.write_text(content, encoding="utf-8")
-    # The plan carries a RENDERED copy of its contract, never a hand-written
-    # one, so the reader sees scope, tests and criteria that cannot drift.
+    dest.write_text(body, encoding="utf-8")
+    meta_path = story_dir(base, story) / "task-plans" / f"{args.id}.meta.json"
+    if has_frontmatter:
+        atomic_dump_json(meta_path, metadata)
+    else:
+        meta_path.unlink(missing_ok=True)
+    # Keep the shared refresh call for compatibility; task contracts remain in
+    # the decomposition and do not become task-plan text.
     from factory_lib import (
         protected_decomposition_state_path, refresh_task_plan_contract,
     )
