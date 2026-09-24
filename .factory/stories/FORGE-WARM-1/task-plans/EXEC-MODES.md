@@ -75,10 +75,13 @@ flowchart LR
 - `forge next`: in claude mode a Claude writer preparation's next action is "edit inside the task
   scope, then `forge task close <id>`".
 - The `executor` field is declared in `factory/schemas/delegation.json` (values hybrid|codex|claude)
-  and validated wherever a Claude preparation is admitted. The schema, `forge_cli/phase.py`, AGENTS.md
-  and `factory/skills/forge.md` are added through an approved scope amendment at implementation.
+  and validated wherever a Claude preparation is admitted.
 - Hybrid Claude writes (decision 0085) are deferred by the owner's decision as D-0044.
-- Docs: `.claude/CLAUDE.md` (stay within its line limit), WORKFLOW.md, the delegation-boundary,
+- User-facing docs: README.md ("Where Codex sits" and prerequisites: Codex tools are needed only for
+  hybrid and codex; Claude writes in claude mode) and docs/getting-started.md (a short "Choose who
+  writes code" step with the `.envrc` line).
+- Other docs: AGENTS.md and `factory/skills/forge.md` (one line each, AGENTS.md stays within its size
+  limit), `.claude/CLAUDE.md` (within its line limit), WORKFLOW.md, the delegation-boundary,
   strict-role-split and dual-coordinator parity specs, the parity architecture, the product brief and
   docs/FACTORY.md name the three modes.
 - Tests: `factory/tests/test_executor_modes.py`.

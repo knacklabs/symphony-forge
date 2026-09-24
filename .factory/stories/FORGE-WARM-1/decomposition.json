@@ -37,7 +37,13 @@
         "docs/specs/dual-coordinator-parity.md",
         "docs/architecture/dual-coordinator-parity.md",
         "docs/product/BRIEF.md",
-        "docs/FACTORY.md"
+        "docs/FACTORY.md",
+        "factory/schemas/delegation.json",
+        "factory/scripts/forge_cli/phase.py",
+        "AGENTS.md",
+        "factory/skills/forge.md",
+        "README.md",
+        "docs/getting-started.md"
       ],
       "required_tests": [
         {
@@ -137,9 +143,9 @@
         }
       ],
       "review_budget": {
-        "max_changed_files": 22,
-        "max_changed_lines": 900,
-        "reason": "Small edits across the resolver, hook, delegate, admission, close, review, grill and doctor paths, eight short doc amendments, and one new test file."
+        "max_changed_files": 28,
+        "max_changed_lines": 1000,
+        "reason": "Small edits across the resolver, hook, delegate, admission, close, review, grill, doctor and next-step paths, the delegation schema, twelve short doc amendments including README and getting-started, and one new test file."
       }
     },
     {
@@ -228,5 +234,5 @@
   "epic": "symphony-forge",
   "plan_file": "plans/active/FORGE-WARM-1-hybrid-mode-reuses-warm-codex-worker-threads.md",
   "plan_sha256": "b8279507a862037fea02436d0178e4c6f24a0bdb57072f7e0cd9b148282a3015",
-  "commit": "f8b2ec06ba4587b5d63df901778f35c24af854d1"
+  "commit": "3b99430e518e70ac9085cf67296ffe92fd17db11"
 }
