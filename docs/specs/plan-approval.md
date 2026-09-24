@@ -14,8 +14,8 @@ exact saved plan body. The body is a reader-facing brief, with no Forge status,
 dates, reviewed-decision list, hashes, paths, or scope lists inserted into it.
 An agent-authored command, a board view, a synthetic closing question, or a
 marker proving only that plan mode was active cannot establish approval. Story
-and task approval therefore consume the host's native Plan Mode completion and
-share one digest and replay model across Claude and Codex.
+approval consumes the host's native Plan Mode completion across Claude and Codex;
+task plans are covered by that approval after their matching cold read.
 
 Plan metadata lives in `.factory/stories/<story>/plan-meta.json` and contains
 status, dates, and reviewed decisions. Before saving, the planner reviews every
@@ -28,8 +28,8 @@ body. Native approval binds the body the human read.
 `forge plan save` validates the story plan and stores it once as
 `awaiting-approval`. A successful native approval records approval of that
 exact body separately, making its effective status `approved` without rewriting
-the save-owned metadata or requiring a second unchanged save. Task plans use the
-same approval recorder and store the approval on their existing task-grill record.
+the save-owned metadata or requiring a second unchanged save. A task plan is
+ready when its saved revision has a matching recorded cold read.
 There are no normal-flow `plan approve` or `task approve` commands.
 
 The saved brief is displayed exactly as written in native approval, without
@@ -70,15 +70,15 @@ one eligible candidate. A direct or synthetic hook invocation is outside the
 trusted operational boundary and cannot establish native human approval.
 Signed host attestation remains a host dependency.
 
-The story approval remains `.factory/stories/<key>/plan-approval.json`; the
-task approval remains in `.factory/stories/<key>/grills/tasks/<id>.json`. A
+The story approval remains `.factory/stories/<key>/plan-approval.json`; task
+cold-read proof remains in `.factory/stories/<key>/grills/tasks/<id>.json`. A
 story-scoped consumed-event tombstone prevents replay. These are recorder-owned
 artifacts, never hand-authored state.
 
 ## Acceptance criteria
 
 - One cold-read/disposition/amendment bridge and one native human approval bind
-  the final story or task plan digest.
+  the story plan; a task plan needs its matching recorded cold read only.
 - Story save stops at `awaiting-approval`; native approval advances its
   effective status without a second save or a manual approval command.
 - Both runtime adapters call the same candidate, digest, replay, attribution,
@@ -88,9 +88,8 @@ artifacts, never hand-authored state.
 - Plan status, dates, and reviewed decisions live in
   `.factory/stories/<story>/plan-meta.json`, and only `forge plan save` writes
   that metadata.
-- Editing the plan after approval stales the approval and blocks downstream
-  implementation until the amended final digest receives a fresh native human
-  approval. It returns directly to the approver; the existing cold read is not
-  repeated solely because approved content was amended.
+- Editing `What changes for you` or `Done when` after story approval requires
+  fresh native approval. Other story amendments carry approval to the new digest
+  with a recorded reason; the existing cold read is preserved.
 - Existing substantive gates remain: active decisions, contradiction signals,
   story criteria, task contracts, and the always-armed write boundary.
