@@ -37,10 +37,15 @@ explicitly open a degraded window with a reason:
 ```
 
 The window is recorded on the quickfix ledger with `kind: degraded`. It may
-claim at most five distinct locked files. Each direct Edit, Write,
-NotebookEdit, or recognized Bash write claims its locked target before the
-tool runs; a sixth file is denied. Recursive or globbed operations whose file
-set cannot be bounded are denied. The repository-kind marker is never eligible.
+claim at most five distinct locked files toward its budget. Test files (under a
+`test` or `tests` path segment, or named `test_*.py`, `*_test.py`, `*.test.*`,
+or `*.spec.*`) and `*.md` files are still recorded but do not use a slot. Each
+direct Edit, Write, NotebookEdit, or recognized Bash write claims its locked
+target before the tool runs; a sixth budget-counted file is denied. Recursive
+or globbed operations whose file set cannot be bounded are denied. The
+repository-kind marker is never eligible. The separate degraded stage-close
+fallback still requires no more than five total in-scope files, including test
+and Markdown files.
 `docs/`, `plans/`, `prototype/`, `.gstack/`,
 recorders, scratchpad, and git operations keep their normal routing.
 
