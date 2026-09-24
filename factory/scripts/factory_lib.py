@@ -1861,6 +1861,9 @@ def _current_task_review_inputs(
         plan_text = raw_plan.decode("utf-8")
     except UnicodeDecodeError:
         return None, [f"{task_id}: current approved task plan is not UTF-8"]
+    contract_text = render_recorded_task_contract(root, task_id, key)
+    if not contract_text:
+        return None, [f"{task_id}: current recorded task contract is missing"]
     grill = read_json(grill_path)
     tests = read_json(tests_path)
     automated = tests.get("automated") if isinstance(tests, dict) else None
@@ -1883,6 +1886,7 @@ def _current_task_review_inputs(
         "branch": branch,
         "delta_id": delta_id,
         "plan_text": plan_text,
+        "contract_text": contract_text,
         "plan_sha256": _plan_body_digest_bytes(raw_plan),
         "grill": grill,
         "automated": automated,
@@ -4215,6 +4219,38 @@ def render_task_contract_block(task: dict, amendments: dict | None = None) -> st
                   + (f" -- {budget.get('reason')}" if budget.get("reason") else "")]
     lines += [CONTRACT_BLOCK_END]
     return "\n".join(lines) + "\n"
+
+
+def render_recorded_task_contract(
+    root: Path, task_id: str, story: str | None = None,
+) -> str:
+    """Render a task contract from recorded decomposition state, never its plan."""
+    from forge_cli.stages import scope_amendments_path
+
+    key = story or _active_story_key(root)
+    active = key == _active_story_key(root)
+    shipped = (
+        (story_dir(root, key) / "shipped.json").is_file()
+        or (factory_dir(root) / "history" / key / "shipped.json").is_file()
+    )
+    decomposition_path = (
+        protected_decomposition_state_path(root)
+        if active and not shipped
+        else decomposition_state_path(root, key)
+    )
+    decomposition = load_json(decomposition_path, default={})
+    task = next(
+        (item for item in decomposition.get("tasks", [])
+         if isinstance(item, dict) and item.get("id") == task_id),
+        None,
+    )
+    if task is None:
+        return ""
+    amendments = {}
+    if active and not shipped:
+        amendments = (load_json(scope_amendments_path(root), default={})
+                      .get("tasks", {}).get(task_id, {}))
+    return render_task_contract_block(task, amendments)
 
 
 def refresh_task_plan_contract(root: Path, task_id: str, task: dict) -> bool:

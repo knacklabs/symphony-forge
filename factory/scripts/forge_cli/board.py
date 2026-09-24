@@ -12,10 +12,11 @@ from pathlib import Path
 from urllib.parse import unquote, urlsplit
 
 from factory_lib import (
-    plan_digest_without_assumptions,
+    plan_digest_without_assumptions, render_recorded_task_contract,
     read_selected_review_generation, task_evidence_path,
     evidence_path, load_json, now_iso, parse_sections,
-    repo_root, run_state_path, story_dir, task_rows, validated_task_marker_commit,
+    repo_root, run_state_path, story_dir, strip_derived_sections, task_rows,
+    validated_task_marker_commit,
 )
 
 # Shipped/archived plans move out of active|completed; scan debt too or a
@@ -990,9 +991,14 @@ def task_plan_view(base: Path, key: str, task: dict, grill: dict | None) -> dict
     )
     if not fresh:
         return {"plan_state": "stale"}
+    authored_plan = strip_derived_sections(plan_path.read_bytes()).decode("utf-8")
+    contract = render_recorded_task_contract(base, task["id"], key)
+    plan = authored_plan.rstrip("\n")
+    if contract:
+        plan += "\n\n" + contract
     return {
         "plan_state": "clean",
-        "plan": plan_path.read_text(encoding="utf-8"),
+        "plan": plan,
         "plan_path": plan_path.relative_to(base).as_posix(),
     }
 
