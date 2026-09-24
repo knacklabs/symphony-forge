@@ -8937,6 +8937,72 @@ def test_bash_lock_uses_lexical_product_path_for_symlink_leaf(repo, runtime):
     assert code == 0 and "deny" in out, out
 
 
+@pytest.mark.parametrize("runtime", ["claude", "codex"])
+def test_git_restore_lock_checks_lexical_symlink_path(repo, runtime):
+    target = repo / "plans" / "note.md"
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text("note\n", encoding="utf-8")
+    link = repo / "src" / "a.py"
+    link.parent.mkdir(parents=True, exist_ok=True)
+    link.symlink_to("../plans/note.md")
+    git(repo, "add", "src/a.py")
+
+    runner = hook if runtime == "claude" else native_hook
+    code, out = runner(repo, {
+        "tool_name": "Bash", "permission_mode": "default",
+        "tool_input": {"command": "git restore src/a.py"},
+    })
+    assert code == 0 and "deny" in out, out
+
+
+@pytest.mark.parametrize("runtime", ["claude", "codex"])
+def test_bash_and_git_lock_refuse_dangling_symlink_leaf(repo, runtime):
+    link = repo / "src" / "dangling.py"
+    link.parent.mkdir(parents=True, exist_ok=True)
+    link.symlink_to("../plans/missing.md")
+    git(repo, "add", "src/dangling.py")
+
+    runner = hook if runtime == "claude" else native_hook
+    for command in (
+        "echo x > src/dangling.py",
+        "git restore src/dangling.py",
+    ):
+        code, out = runner(repo, {
+            "tool_name": "Bash", "permission_mode": "default",
+            "tool_input": {"command": command},
+        })
+        assert code == 0 and "deny" in out, (command, out)
+
+
+@pytest.mark.parametrize("runtime", ["claude", "codex"])
+def test_sed_separate_backup_suffix_keeps_script_and_target(repo, runtime):
+    from pre_tool_use import bash_write_paths
+
+    assert bash_write_paths(
+        "sed -i '' 's/x/y/' plans/note.md", repo,
+    ) == ["plans/note.md"]
+    assert bash_write_paths(
+        "sed -i .bak 's/x/y/' plans/note.md", repo,
+    ) == ["plans/note.md"]
+
+    runner = hook if runtime == "claude" else native_hook
+    code, out = runner(repo, {
+        "tool_name": "Bash", "permission_mode": "default",
+        "tool_input": {
+            "command": "sed -i .bak 's/x/y/' plans/note.md",
+        },
+    })
+    assert code == 0 and "deny" not in out, out
+
+    code, out = runner(repo, {
+        "tool_name": "Bash", "permission_mode": "default",
+        "tool_input": {
+            "command": "sed -i .bak 's/x/y/' src/a.py",
+        },
+    })
+    assert code == 0 and "deny" in out, out
+
+
 def mark_harness_source(repo: Path) -> None:
     marker = repo / ".factory" / "harness-source.json"
     marker.parent.mkdir(parents=True, exist_ok=True)

@@ -475,7 +475,8 @@ def _sed_write_targets(args: list[str]) -> list[str]:
             index += 1
             continue
         if token.startswith("-"):
-            if token == "-i" and index + 1 < len(args) and args[index + 1] == "":
+            if (token == "-i" and index + 1 < len(args)
+                    and (args[index + 1] == "" or args[index + 1].startswith("."))):
                 index += 2
             else:
                 index += 1
@@ -794,12 +795,17 @@ def _resolve_git_file_paths(
     for raw in paths:
         if not _literal_git_file_path(raw):
             return None
-        target = (cwd / raw).resolve()
         try:
-            rel = target.relative_to(checkout_root).as_posix()
-        except ValueError:
+            lexical_target = Path(os.path.abspath(cwd / raw))
+            lexical_rel = lexical_target.relative_to(checkout_root).as_posix()
+            lexical_parent = lexical_target.parent.relative_to(checkout_root)
+            resolved_parent = lexical_target.parent.resolve().relative_to(checkout_root)
+            target = lexical_target.resolve(strict=lexical_target.is_symlink())
+            resolved_rel = target.relative_to(checkout_root).as_posix()
+        except (OSError, RuntimeError, ValueError):
             return None
-        if target.is_dir():
+        if (not lexical_rel or lexical_rel == "."
+                or lexical_parent != resolved_parent or target.is_dir()):
             return None
         try:
             indexed = subprocess.run(
@@ -811,13 +817,14 @@ def _resolve_git_file_paths(
                 return None
         except (OSError, subprocess.SubprocessError):
             return None
-        if any(path != rel and path.startswith(rel + "/")
+        if any(path != lexical_rel and path.startswith(lexical_rel + "/")
                for path in indexed.stdout.split("\0") if path):
             return None
         if source is not None:
             try:
                 entry = subprocess.run(
-                    ["git", "ls-tree", "-z", "--full-tree", source, "--", rel],
+                    ["git", "ls-tree", "-z", "--full-tree", source,
+                     "--", lexical_rel],
                     cwd=checkout_root, capture_output=True, text=True,
                     encoding="utf-8", errors="surrogateescape",
                 )
@@ -829,13 +836,14 @@ def _resolve_git_file_paths(
                 if not record:
                     continue
                 metadata, _, entry_path = record.partition("\t")
-                if entry_path == rel and len(metadata.split()) > 1 \
+                if entry_path == lexical_rel and len(metadata.split()) > 1 \
                         and metadata.split()[1] != "blob":
                     return None
-        result_paths.append(
-            rel if checkout_root == root.resolve() else str(checkout_root / rel)
-        )
-    return result_paths
+        for rel in dict.fromkeys((lexical_rel, resolved_rel)):
+            result_paths.append(
+                rel if checkout_root == root.resolve() else str(checkout_root / rel)
+            )
+    return list(dict.fromkeys(result_paths))
 
 
 def _git_write_paths(
@@ -1082,7 +1090,7 @@ def normalized_native_bash_paths(paths: list[str], root: Path) -> list[str] | No
         if lexical.is_symlink():
             try:
                 normalized.append(
-                    lexical.resolve().relative_to(resolved_root).as_posix())
+                    lexical.resolve(strict=True).relative_to(resolved_root).as_posix())
             except (OSError, RuntimeError, ValueError):
                 return None
     return normalized
