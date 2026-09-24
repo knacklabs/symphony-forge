@@ -30,13 +30,18 @@ def main() -> None:
             return
         tool = payload.get("tool_name")
         if tool == "ExitPlanMode":
+            recorded_in: list[str] = []
             try:
-                record = record_native_approval(repo_root(), payload, runtime="claude")
+                record = record_native_approval(
+                    repo_root(), payload, runtime="claude",
+                    recorded_in=recorded_in,
+                )
             except (ApprovalRefused, Exception, SystemExit) as exc:
                 _tell_refusal(payload, exc)
                 return
             _tell_host(f"Forge recorded native {record['plan_kind']} plan approval "
-                       f"{record['approved_plan_sha256']}.")
+                       f"{record['approved_plan_sha256']} in worktree "
+                       f"{recorded_in[0]}.")
         elif tool == "request_user_input":
             tool_input = payload.get("tool_input")
             questions = (
@@ -48,10 +53,20 @@ def main() -> None:
                     and str(question.get("id", "")).startswith("approve_plan_")
                     for question in questions)):
                 return
+            recorded_in = []
             try:
-                record_native_approval(repo_root(), payload, runtime="codex")
+                record = record_native_approval(
+                    repo_root(), payload, runtime="codex",
+                    recorded_in=recorded_in,
+                )
             except (ApprovalRefused, Exception, SystemExit) as exc:
                 _tell_refusal(payload, exc)
+            else:
+                _tell_host(
+                    f"Forge recorded native {record['plan_kind']} plan approval "
+                    f"{record['approved_plan_sha256']} in worktree "
+                    f"{recorded_in[0]}."
+                )
     except (ApprovalRefused, Exception, SystemExit):
         return
 
