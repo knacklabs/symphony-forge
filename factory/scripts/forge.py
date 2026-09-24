@@ -324,7 +324,7 @@ def main() -> None:
 
     p_qf = sub.add_parser("quickfix", help="bounded, ledgered planning-lock escape hatch")
     qf_sub = p_qf.add_subparsers(dest="quickfix_command", required=True)
-    p_qfs = qf_sub.add_parser("start", help="open a five-file quickfix window")
+    p_qfs = qf_sub.add_parser("start", help="open a 25-file quickfix window")
     p_qfs.add_argument("reason")
     p_qfs.add_argument("--repo")
     p_qfs.set_defaults(func=quickfix_mod.cmd_start)
@@ -358,10 +358,10 @@ def main() -> None:
         "degraded",
         help="manage a degraded write window — open it with `degraded start "
              "--reason ...`, close it with `mode done`. USE IT FOR: a companion "
-             "outage, or a fix only the host can make (max five files). It is a "
+             "outage, or a fix only the host can make (max 25 files). It is a "
              "WRITE window, not a gate window — it relaxes no grill or approval")
     degraded_sub = p_mdeg.add_subparsers(dest="degraded_command", required=True)
-    p_mdegs = degraded_sub.add_parser("start", help="open a five-file degraded window")
+    p_mdegs = degraded_sub.add_parser("start", help="open a 25-file degraded window")
     p_mdegs.add_argument("--reason", required=True, help="why degraded mode is required")
     p_mdegs.add_argument("--repo")
     p_mdegs.set_defaults(func=quickfix_mod.cmd_degraded_start)

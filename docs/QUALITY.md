@@ -114,7 +114,7 @@ below when a retry makes no progress.
   non-blocking follow-up; it does not block the seal.
 - **Host-side fixing** is the single exception, and only when the defect cannot
   be reproduced or fixed inside the Codex sandbox. Open a ledgered degraded
-  window and state why. A window that closes with at most five files, all
+  window and state why. A window that closes with at most 25 files, all
   inside the task's write scope, is accepted by `stage done` as the stage's
   write launch and recorded on the stage.
 

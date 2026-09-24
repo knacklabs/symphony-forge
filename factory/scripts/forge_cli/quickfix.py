@@ -18,7 +18,7 @@ from factory_lib import (
 from .common import fail
 from .repo_kind import is_harness_source_repo, locked_repo_path
 
-MAX_FILES = 5
+MAX_FILES = 25
 QUICKFIX = "quickfix"
 LITE = "lite"
 DEGRADED = "degraded"

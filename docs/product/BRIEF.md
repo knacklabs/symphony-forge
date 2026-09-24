@@ -101,7 +101,7 @@ repository and reproducible in a fresh worktree.
   against `factory/schemas/`, including a pinned `generated_by`.
 - The planning lock is always armed. Full work requires an approved plan and
   decomposition; bounded ledgered quickfix and Lite windows are the other
-  planning-lock exits. The degraded window is the separate five-file Claude
+  planning-lock exits. The degraded window is the separate 25-file Claude
   plugin outage valve.
 - Raw, direct, or nested `codex exec` and direct plugin shell launch remain
   off-contract and hook-denied for general/manual delegation. This does not

@@ -1868,7 +1868,7 @@ def _require_successful_launch(base: Path, stage_id: str, stage: dict,
          "defect, a host-only check) — make it inside a ledgered window: "
          "`forge mode degraded start --reason \"<why Codex cannot>\"`, fix, "
          "`forge mode done` (opened while THIS stage is active so it is bound "
-         "to it, closed with one to five files, all inside the task's write "
+         "to it, closed with one to 25 files, all inside the task's write "
          "scope; a window opened before this binding existed does not count — "
          "reopen one).")
 

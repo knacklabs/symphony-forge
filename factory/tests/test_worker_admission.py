@@ -1017,7 +1017,7 @@ def test_native_lite_fix_prepares_without_stage_and_keeps_window_budget(
     refused = _hook(repo, _patch(
         "*** Add File: src/lite-over-budget.py", "+new",
     ), {"FORGE_COORDINATOR": "codex"})
-    assert "deny" in refused.lower() and "five-file" in refused.lower(), refused
+    assert "deny" in refused.lower() and "5-file" in refused.lower(), refused
 
     protected = _hook(repo, _patch(
         "*** Update File: .factory/quickfix.json", "@@", "-{}", "+{}",

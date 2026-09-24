@@ -224,7 +224,7 @@ root, then:
 - **Ask "what now?" whenever you are unsure.** The harness answers with the
   current phase and the exact next step. There is nothing to memorize.
 - **Every feature starts with a plan the agent must defend.** Product writes
-  require plan mode and an approved plan, or an explicit five-file quickfix;
+  require plan mode and an approved plan, or an explicit 25-file quickfix;
   planned work then runs stage by stage with a local review
   before every commit, and shipping refuses until the evidence gates pass.
 - **The map:** `AGENTS.md` is the contract and read order, `WORKFLOW.md` the

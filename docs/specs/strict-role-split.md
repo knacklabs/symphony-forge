@@ -71,7 +71,7 @@ The task historically named `FORGE-COORD-1/NATIVE-FOREGROUND-ACTIVATE` owns the 
   degraded-mode window. Native Codex permits the active task's effective scope
   without worker-process identity while refusing wrong-task, wrong-worktree,
   out-of-scope and protected-state mutations. A Claude degraded window retains
-  its five-file budget and rides the PR.
+  its 25-file budget and rides the PR.
 - Tests derive orchestration exemptions from the shared path classifier and
   prove that protected state still changes only through recorders/commands.
 - Both adapters and AGENTS.md state the coordinator-versus-delegated-writer routing and the current approved read-only exploration lane.

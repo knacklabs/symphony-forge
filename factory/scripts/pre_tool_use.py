@@ -243,11 +243,15 @@ PLAN_MODE_MSG = (
     "`./forge delegate <task-id>`. If the companion is unavailable, open the sole "
     "bounded exception with `./forge mode degraded start --reason \"<reason>\"`."
 )
-QUICKFIX_LIMIT_MSG = (
-    "Degraded window scope exceeded — its five-file claim budget is exhausted. "
-    "Close it with `./forge mode done`, restore the companion, and use "
-    "`./forge delegate <task-id>` for the remaining write work."
-)
+def quickfix_limit_msg(active: dict | None) -> str:
+    """The deny text for a full window, naming that window's own file bound."""
+    bound = (active or {}).get("max_files")
+    budget = f"{bound}-file claim budget" if bound else "file claim budget"
+    return (
+        f"Degraded window scope exceeded — its {budget} is exhausted. "
+        "Close it with `./forge mode done`, restore the companion, and use "
+        "`./forge delegate <task-id>` for the remaining write work."
+    )
 MARKER_PLAN_ONLY_MSG = (
     f"{HARNESS_SOURCE_MARKER} is the repo-kind marker: it may be created, edited, "
     "or deleted only through `./forge delegate <task-id>`, never by the session or "
@@ -1330,9 +1334,9 @@ def guard_product_writes(
         deny(MARKER_PLAN_ONLY_MSG)
     if not degraded:
         deny(PLAN_MODE_MSG)
-    claimed, _ = claim_files(root, product)
+    claimed, active = claim_files(root, product)
     if not claimed:
-        deny(QUICKFIX_LIMIT_MSG)
+        deny(quickfix_limit_msg(active))
 
 
 blocked = [
@@ -1789,9 +1793,9 @@ if native_codex:
             if any(_contains_marker(rel) for rel in scoped_targets):
                 deny(MARKER_PLAN_ONLY_MSG)
             if profile == LITE and not is_degraded:
-                claimed, _ = claim_files(root, locked_targets)
+                claimed, active = claim_files(root, locked_targets)
                 if not claimed:
-                    deny(QUICKFIX_LIMIT_MSG)
+                    deny(quickfix_limit_msg(active))
             elif not is_degraded:
                 deny(
                     "Host-native product writes require an authorized Lite or "
@@ -1831,9 +1835,9 @@ else:
                 deny("Registered worker write is outside the protected task scope: "
                      + ", ".join(outside))
         elif worker["kind"] == "lite":
-            claimed, _ = claim_files(root, locked_targets)
+            claimed, active = claim_files(root, locked_targets)
             if not claimed:
-                deny(QUICKFIX_LIMIT_MSG)
+                deny(quickfix_limit_msg(active))
         else:
             deny("Forge worker write admission returned an unknown grant kind.")
     else:

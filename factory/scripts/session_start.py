@@ -83,7 +83,7 @@ if quickfix:
     else:
         context.append(
             f"OPEN QUICKFIX {quickfix['id']}: {quickfix['reason']} — "
-            f"{len(quickfix.get('files', []))}/{quickfix.get('max_files', 5)} files; "
+            f"{len(quickfix.get('files', []))}/{quickfix.get('max_files', 25)} files; "
             "close with `./forge quickfix done`."
         )
 ledger = load_json(root / "docs" / "context" / "ledger.json", default={"files": {}})

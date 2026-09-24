@@ -8146,12 +8146,12 @@ def test_degraded_window_allows_and_ledgers_product_write(repo):
     assert code == 0 and "Degraded mode" in out, out
     active = json.loads((repo / ".factory" / "quickfix.json").read_text())
     assert active["profile"] == "degraded" and active["kind"] == "degraded"
-    assert active["reason"] == "companion outage" and active["max_files"] == 5
+    assert active["reason"] == "companion outage" and active["max_files"] == 25
 
     claimed = (
         "src/app.ts", "AGENTS.md", ".github/workflows/build.yml",
         "factory/scripts/repair.py", "tests/test_repair.py",
-    )
+    ) + tuple(f"src/extra_{index}.ts" for index in range(20))
     for rel in claimed:
         code, out = hook(repo, {
             "tool_name": "Edit", "permission_mode": "default",
@@ -8173,7 +8173,7 @@ def test_degraded_window_allows_and_ledgers_product_write(repo):
         "tool_name": "Edit", "permission_mode": "default",
         "tool_input": {"file_path": str(repo / "src" / "sixth.py")},
     })
-    assert code == 0 and "deny" in out and "five-file" in out
+    assert code == 0 and "deny" in out and "25-file" in out
 
     window_id = active["id"]
     code, out = run(repo, "forge.py", "mode", "done")
@@ -9387,7 +9387,7 @@ def test_degraded_lifecycle_tracks_files_and_enforces_budget(repo):
     active_path = repo / ".factory" / "quickfix.json"
     active = json.loads(active_path.read_text())
     assert active["reason"] == "repair parser"
-    assert active["max_files"] == 5 and active["files"] == []
+    assert active["max_files"] == 25 and active["files"] == []
 
     companion = "node /x/codex-companion.mjs task --write 'repair parser'"
     code, out = hook(repo, {
@@ -10334,7 +10334,7 @@ test_forge_skill_maps_lite_mode_phrase.forge_skill_lite = True
 
 def test_quickfix_profile_behavior_unchanged(repo):
     code, out = run(repo, "forge.py", "quickfix", "start", "repair parser")
-    assert code == 0 and "Quickfix" in out and "0/5 files" in out, out
+    assert code == 0 and "Quickfix" in out and "0/25 files" in out, out
     active_path = repo / ".factory" / "quickfix.json"
     active = json.loads(active_path.read_text())
     assert active["profile"] == "quickfix"

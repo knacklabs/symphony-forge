@@ -23,7 +23,7 @@ stages, verify/tests/reviews, outcome, archived to `.factory/history/<issue>/`
 - **`quickfix.files` is empty in 29 of 29 real records.** `claim_files` is
   reached only on the planning-lock denial path, so an active story never
   claims, and `PLANNING_WRITE_OK_FILES` exempts common targets outside one. The
-  five-file budget that makes the escape hatch *bounded* therefore never binds,
+  25-file budget that makes the escape hatch *bounded* therefore never binds,
   and the ledger cannot say what an ad-hoc change touched.
 - **Two shipped stories have no outcome at all** — FORGE-INIT-1 and
   harness-v2-wedge have `.factory/history/` directories but never appeared in
@@ -54,7 +54,7 @@ no reader. This lands first because it makes every remaining gap visible.
 A quickfix window records what it touched, not only why. **Recording and
 bounding are separated**, because they answer different questions: every path
 that authorizes a product write during an open window records the file against
-it, while the five-file budget still binds only where the quickfix is itself
+it, while the 25-file budget still binds only where the quickfix is itself
 the authorization. Inside an approved story a task's write scope already bounds
 the work, and a second competing budget there would refuse honest edits; but
 the window must still say what it touched.

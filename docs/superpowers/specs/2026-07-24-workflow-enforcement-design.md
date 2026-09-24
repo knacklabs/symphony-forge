@@ -27,7 +27,7 @@ All changes are to this template repo (hooks, `forge_cli/`, docs). Branch: `chor
 - Deny messages must name both exits: "enter plan mode (shift+tab)" or `./forge quickfix start "<reason>"`.
 
 **New `forge_cli/quickfix.py`** + wiring in `factory/scripts/forge.py` (mirror `forge_cli/signal.py` structure):
-- `./forge quickfix start "<reason>"` → writes `.factory/quickfix.json` `{id, reason, started_at, max_files: 5, files: []}` and appends an `open` record to `plans/quickfixes.jsonl` (durable ledger, same JSONL merge-driver treatment as signals).
+- `./forge quickfix start "<reason>"` → writes `.factory/quickfix.json` `{id, reason, started_at, max_files: 25, files: []}` and appends an `open` record to `plans/quickfixes.jsonl` (durable ledger, same JSONL merge-driver treatment as signals).
 - While active, `pre_tool_use.py` allows product edits but appends each distinct product file to `quickfix.json.files`; exceeding `max_files` → deny with "scope exceeded — this is not a quickfix, enter plan mode".
 - `./forge quickfix done` → appends closure (files touched) to the ledger, removes `.factory/quickfix.json`.
 - `session_start.py` surfaces an open quickfix window in its context injection (alongside open signals, lines ~66-74).
