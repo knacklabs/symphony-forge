@@ -1,0 +1,12 @@
+{
+  "event": "open",
+  "id": "Q-0210-a0e6",
+  "profile": "lite",
+  "reason": "Task plans are briefs with no bookkeeping (planB; owner-approved)",
+  "started_at": "2026-09-24T02:47:58+00:00",
+  "max_files": 5,
+  "files": [],
+  "harness_source": true,
+  "by": "Ravi Kiran Vemula",
+  "base_sha": "745a8113459f5eb6cd32a715dc3c605b167b451d"
+}
