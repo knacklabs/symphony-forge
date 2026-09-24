@@ -1,0 +1,82 @@
+{
+  "event": "done",
+  "id": "Q-0198-0974",
+  "profile": "lite",
+  "by": "Ravi Kiran Vemula",
+  "reason": "Verified review gap group g8-grill for task LEAN-FIXES (owner: fix P1/P2 now, parallel)",
+  "base_sha": "fd1c6740b1d083ad8beccd5e52f8b3f88d6eb9d7",
+  "started_at": "2026-09-23T17:23:00+00:00",
+  "completed_at": "2026-09-24T01:17:12+00:00",
+  "files": [
+    "factory/schemas/grill.json",
+    "factory/scripts/record_grill_from_json.py",
+    "factory/tests/test_gates.py",
+    "factory/tests/test_lean_workflow.py"
+  ],
+  "reviews": {
+    "quality": {
+      "generated_by": "autoreview",
+      "score": 10,
+      "summary": "quality lens over Q-0198-0974 (4 product path(s), fd1c674..b205dc4, Codex via the autoreview skill): 0 blocking, 0 non-blocking. The plan amendment bridge reuses a prior cold read only when no newer launch is selected. The recorder checks the prior digest and findings, validates the cold-to-final delta, and rejects an unchanged final artifact. No task-specific plan contracts apply.",
+      "blocking_findings": [],
+      "non_blocking_findings": [],
+      "recommendation": "approve",
+      "reviewed_scope": [
+        "factory/schemas/grill.json",
+        "factory/scripts/record_grill_from_json.py",
+        "factory/tests/test_gates.py",
+        "factory/tests/test_lean_workflow.py"
+      ],
+      "skills_used": [],
+      "contract_verdicts": [],
+      "review_base_sha": "fd1c6740b1d083ad8beccd5e52f8b3f88d6eb9d7",
+      "branch_diff_digest": "5ccc87ac593fdd00ececc937422364488c81f6cbc74aa04aa82d0eacfca636b1",
+      "commit": "b205dc4c14e9e26c1a0c76374ad4f406726ab273",
+      "aspect": "quality",
+      "residual_risks": [],
+      "recorded_at": "2026-09-24T01:15:56+00:00"
+    },
+    "performance": {
+      "generated_by": "autoreview",
+      "score": 10,
+      "summary": "performance lens over Q-0198-0974 (4 product path(s), fd1c674..b205dc4, Codex via the autoreview skill): 0 blocking, 0 non-blocking. The added ledger scans are linear in the existing delegation ledger. The available evidence shows no material performance defect.",
+      "blocking_findings": [],
+      "non_blocking_findings": [],
+      "recommendation": "approve",
+      "reviewed_scope": [
+        "factory/schemas/grill.json",
+        "factory/scripts/record_grill_from_json.py",
+        "factory/tests/test_gates.py",
+        "factory/tests/test_lean_workflow.py"
+      ],
+      "skills_used": [],
+      "review_base_sha": "fd1c6740b1d083ad8beccd5e52f8b3f88d6eb9d7",
+      "branch_diff_digest": "5ccc87ac593fdd00ececc937422364488c81f6cbc74aa04aa82d0eacfca636b1",
+      "commit": "b205dc4c14e9e26c1a0c76374ad4f406726ab273",
+      "aspect": "performance",
+      "residual_risks": [],
+      "recorded_at": "2026-09-24T01:15:57+00:00"
+    },
+    "security": {
+      "generated_by": "autoreview",
+      "score": 10,
+      "summary": "security lens over Q-0198-0974 (4 product path(s), fd1c674..b205dc4, Codex via the autoreview skill): 0 blocking, 0 non-blocking. The reused launch still passes lifecycle, brief, result, and finding checks; the host-native path also checks the prior preparation identity. Static review found no concrete new trust-boundary defect. Project code was not executed.",
+      "blocking_findings": [],
+      "non_blocking_findings": [],
+      "recommendation": "approve",
+      "reviewed_scope": [
+        "factory/schemas/grill.json",
+        "factory/scripts/record_grill_from_json.py",
+        "factory/tests/test_gates.py",
+        "factory/tests/test_lean_workflow.py"
+      ],
+      "skills_used": [],
+      "review_base_sha": "fd1c6740b1d083ad8beccd5e52f8b3f88d6eb9d7",
+      "branch_diff_digest": "5ccc87ac593fdd00ececc937422364488c81f6cbc74aa04aa82d0eacfca636b1",
+      "commit": "b205dc4c14e9e26c1a0c76374ad4f406726ab273",
+      "aspect": "security",
+      "residual_risks": [],
+      "recorded_at": "2026-09-24T01:15:57+00:00"
+    }
+  }
+}
