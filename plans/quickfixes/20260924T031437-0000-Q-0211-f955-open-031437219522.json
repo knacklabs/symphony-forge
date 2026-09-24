@@ -1,0 +1,12 @@
+{
+  "event": "open",
+  "id": "Q-0211-f955",
+  "profile": "lite",
+  "reason": "Simplification is part of every review and fix round (owner direction)",
+  "started_at": "2026-09-24T03:14:37+00:00",
+  "max_files": 5,
+  "files": [],
+  "harness_source": true,
+  "by": "Ravi Kiran Vemula",
+  "base_sha": "8411c57a8394a6fea9641f52d5c04cfc4a23f4de"
+}
