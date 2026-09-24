@@ -2,7 +2,7 @@
 slug: fde-discovery
 title: The agent works as a forward deployed engineer
 status: confirmed
-saved: 2026-09-24T15:12:54+00:00
+saved: 2026-09-24T15:27:32+00:00
 ---
 
 # The agent works as a forward deployed engineer
@@ -42,8 +42,9 @@ today's workaround, the cost, who feels it, how often, and the evidence. The
 chosen card's heading is named in the Brief's problem and in the capability
 spec's Why. When the customer doesn't know what to build, the agent asks
 about their work and ranks the pains by cost, or gives the FDE a customer
-call script; the notes the FDE drops in `docs/context/` are harvested by the
-agent with `forge context harvest` into the cards.
+call script; the agent reads the notes the FDE drops in `docs/context/`,
+writes what they show into the cards, and marks each note harvested with
+`forge context mark`, naming DISCOVERY.md as its output.
 
 **Options and the choice.** The agent offers two to four options per problem,
 always including not building and the smallest testable slice, and
@@ -61,6 +62,8 @@ rounded day rate. Payback = build cost ÷ confident monthly value. Payback of
 first. More than 12: recommend not building. If the value cannot be
 estimated at all, the recommendation is to find out first (one more
 customer conversation), not to build. Real salaries are never recorded.
+`forge payback` computes this from the inputs, so the agent never does the
+arithmetic by hand and the same inputs always give the same answer.
 
 **Success measure.** Every capability spec confirmed after this change has a
 `## Success measure` section with four non-empty fields: metric, baseline,
@@ -69,11 +72,13 @@ without them; specs confirmed earlier are not re-checked. When several
 roadmap stories come from one spec, the measure belongs to the spec and is
 checked after its last story ships.
 
-**After ship.** `forge outcome set` for the story that completes a spec with a
-success measure also adds a deferral row with a due date (the check date),
-once. Deferral rows gain an optional due date; `forge next` lists open rows
-whose due date has passed. The agent measures, and `forge defer resolve
---notes "<measured result>"` closes the row.
+**After ship.** When `forge pr-link` records the merged PR of the last story
+from a spec with a success measure, that story's roadmap item gets the spec's
+check date as its success-check date, once. `forge next` lists shipped
+stories whose success-check date has passed and that have no measured
+result. The agent measures, and `forge outcome check <story> --result
+"<measured result>"` records it in the story's outcome. Success checks are not
+deferrals and never appear in the deferral ledger.
 
 **Owners.** Discovery's owner in `harness.yaml` becomes the Forge skill;
 impeccable is added to the prototype phase's allowed tools and reported by
@@ -102,14 +107,18 @@ the upgrade skill mentions they can archive that history themselves.
 - `forge spec confirm` refuses a new spec whose Success measure is missing or
   has an empty field or a bad date, and accepts a complete one with only its
   status changed.
-- `forge outcome set` on the last story of a spec with a success measure adds
-  one dated deferral row; after its date, `forge next` lists it; `forge defer
-  resolve --notes` closes it.
+- `forge pr-link` for the last story of a spec with a success measure sets
+  its success-check date once; after that date `forge next` lists it until
+  `forge outcome check <story> --result` records the measurement; nothing is
+  added to the deferral ledger.
+- `forge payback` returns build, smallest slice first, don't build, or find
+  out first, and gives the same answer for the same inputs.
 - `forge doctor` (fast, full and `--fix`) passes on a machine without gstack
   or direnv, never installs either, and reports impeccable as optional.
-- `forge gstack` no longer exists; in this repository, no code, config,
-  prompt, skill, living confirmed spec, WORKFLOW/AGENTS/CLAUDE/README/
-  getting-started text or test references gstack. Decisions, superseded
+- `forge gstack` no longer exists; in this repository, no code (including the
+  `.gstack/` path tokens), config, prompt, skill, living confirmed spec,
+  WORKFLOW/AGENTS/CLAUDE/README/getting-started text or test references
+  gstack. Decisions, superseded
   specs, plans, `.factory/` records and the archive are exempt as history.
 - `init`, `adopt` and `upgrade` add no gstack ignore rules or `.envrc` gstack
   lines and leave existing client ones untouched.
