@@ -639,6 +639,8 @@ def main() -> None:
                        help="request background execution from the active runtime")
     p_del.add_argument("--print-only", action="store_true",
                        help="print the dispatch descriptor or launch details without running it")
+    p_del.add_argument("--choice", choices=("refactor", "patch"),
+                       help="choose how to address a file found in two consecutive reviews")
     p_del.add_argument(
         "--scope", action="append", default=[], metavar="PATH",
         help="narrow a write launch to this approved file/directory (repeatable; "

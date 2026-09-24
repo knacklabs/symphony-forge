@@ -1981,6 +1981,7 @@ def launch_companion(
         context_source_path: str = "",
         task_metadata: dict | None = None,
         cold_contract_sha256: str = "",
+        choice: str | None = None,
         native_task_name: str = "",
         emit_descriptor: bool = True,
 ) -> dict | None:
@@ -2128,6 +2129,8 @@ def launch_companion(
                 record["background"] = True
             if mode:
                 record["mode"] = mode
+            if choice:
+                record["choice"] = choice
             if context_file:
                 record["context_file"] = context_file
             append_delegation(base, record)
@@ -2231,6 +2234,8 @@ def launch_companion(
         record["stage_started_at"] = stage_started_at
     if mode:
         record["mode"] = mode
+    if choice:
+        record["choice"] = choice
     if context_metadata:
         record["context"] = dict(context_metadata)
     terminal_recorded = False
@@ -2465,6 +2470,22 @@ def cmd_delegate(args: argparse.Namespace) -> None:
              "or use --read-only for background exploration.")
     state = load_json(run_state_path(base), default={})
     story = str(state.get("story") or state.get("issue_key") or "")
+    choice = getattr(args, "choice", None)
+    from . import findings
+    repeated_files = findings.repeated_finding_files(base, story, args.id)
+    if write:
+        refusal = findings.choice_error(repeated_files, choice)
+        if refusal:
+            if args.print_only:
+                print(
+                    f"WARNING: {', '.join(repeated_files)} drew findings in two "
+                    "consecutive reviews -- this preview carries no write "
+                    "authority until the user chooses --choice refactor|patch.",
+                    flush=True,
+                )
+                write = False
+            else:
+                fail(refusal)
     if story:
         from .review import (
             selected_generation, triage_workflow,
@@ -2500,6 +2521,11 @@ def cmd_delegate(args: argparse.Namespace) -> None:
     text = compose_brief(base, task, write=write,
                          user_facing=bool(task.get("user_facing")),
                          story=story, scope_override=scope)
+    if repeated_files and choice == "refactor":
+        text += "\n" + "\n".join(
+            f"Refactor {file}: replace the approach with one simpler rule."
+            for file in repeated_files
+        ) + "\n"
     context_text = ""
     context_metadata = None
     context_snapshot = None
@@ -2534,6 +2560,7 @@ def cmd_delegate(args: argparse.Namespace) -> None:
             context_snapshot_identity=context_snapshot_identity,
             context_source_path=str(getattr(args, "context_file", "") or ""),
             task_metadata=task,
+            choice=choice,
         )
     finally:
         if context_snapshot is not None and context_snapshot.exists():
