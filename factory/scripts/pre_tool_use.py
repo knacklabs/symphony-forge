@@ -527,6 +527,70 @@ def _writer_form_is_plain(name: str, args: list[str]) -> bool:
                    for i, arg in enumerate(args))
 
 
+def _wrapped_writer(tokens: list[str]) -> bool:
+    index = _shell_command_index(tokens)
+    if index is None:
+        return False
+    name = tokens[index].rsplit("/", 1)[-1]
+    if name in WRITER_PROGRAMS:
+        return True
+    if name not in {"sh", "bash", "dash", "ksh", "zsh"}:
+        return False
+    for offset, option in enumerate(tokens[index + 1:-1]):
+        if re.fullmatch(r"-[A-Za-z]*c[A-Za-z]*", option):
+            script = tokens[index + 2 + offset]
+            for segment in split_shell_segments(script):
+                nested = tokenize_write_command(segment)
+                if nested is None or _wrapped_writer(nested):
+                    return True
+            return False
+    return False
+
+
+def _xargs_writer(args: list[str]) -> bool:
+    values = {"-a", "--arg-file", "-d", "--delimiter", "-E", "--eof",
+              "-I", "--replace", "-L", "--max-lines", "-n", "--max-args",
+              "-P", "--max-procs", "-s", "--max-chars"}
+    flags = {"-0", "--null", "-p", "--interactive", "-r", "--no-run-if-empty",
+             "-t", "--verbose", "-x", "--exit", "--show-limits", "--help",
+             "--version"}
+    index = 0
+    while index < len(args) and args[index].startswith("-"):
+        option = args[index]
+        if option == "--":
+            index += 1
+            break
+        if option in values:
+            index += 2
+        elif option in flags or any(
+                option.startswith(value + "=")
+                for value in values if value.startswith("--")):
+            index += 1
+        elif any(option.startswith(value) and len(option) > len(value)
+                 for value in values if value.startswith("-")):
+            index += 1
+        else:
+            return True
+    return _wrapped_writer(args[index:])
+
+
+def _env_split_writer(tokens: list[str]) -> bool:
+    for index, option in enumerate(tokens[1:], start=1):
+        if option in {"-S", "--split-string"} and index + 1 < len(tokens):
+            value = tokens[index + 1]
+        elif option.startswith("-S") and option != "-S":
+            value = option[2:]
+        elif option.startswith("--split-string="):
+            value = option.split("=", 1)[1]
+        else:
+            continue
+        try:
+            return _wrapped_writer(shlex.split(value))
+        except ValueError:
+            return True
+    return False
+
+
 def _writer_targets(name: str, args: list[str]) -> list[str]:
     if name != "sed":
         return [arg.split("=", 1)[1] if "=" in arg else arg
@@ -1180,16 +1244,10 @@ def has_opaque_product_write(
             return None
         _, tokens = redirect_targets(tokens)
         index = _shell_command_index(tokens)
-        end = index if index is not None else len(tokens)
-        if any(token.rsplit("/", 1)[-1] == "sudo" for token in tokens[:end]):
-            return "plain"
-        env = next((i for i, token in enumerate(tokens[:end])
-                    if token.rsplit("/", 1)[-1] == "env"), None)
-        if env is not None and any(token.startswith("-") or
-                                   re.fullmatch(r"\w+=\S*", token)
-                                   for token in tokens[env + 1:end]):
-            return "plain"
         if index is None:
+            if tokens and tokens[0].rsplit("/", 1)[-1] == "env" \
+                    and _env_split_writer(tokens):
+                return "plain"
             continue
         name = tokens[index].rsplit("/", 1)[-1]
         args = tokens[index + 1:]
@@ -1200,11 +1258,17 @@ def has_opaque_product_write(
                 changed_directory
                 or any(token.rsplit("/", 1)[-1] == "sudo"
                        or re.fullmatch(r"\w+=\S*", token) for token in tokens[:index])
+                or any(token.rsplit("/", 1)[-1] == "env" and any(
+                    option.startswith("-") or re.fullmatch(r"\w+=\S*", option)
+                    for option in tokens[position + 1:index])
+                    for position, token in enumerate(tokens[:index]))
                 or not _writer_form_is_plain(name, args)):
             return "plain"
-        if name == "xargs":
+        if name == "xargs" and _xargs_writer(args):
             return "plain"
-        if name == "find" and any(token in {"-exec", "-execdir"} for token in args):
+        if name == "find" and any(
+                token in {"-exec", "-execdir"} and _wrapped_writer(args[position + 1:])
+                for position, token in enumerate(args)):
             return "plain"
         if name == "git":
             git_args = args
