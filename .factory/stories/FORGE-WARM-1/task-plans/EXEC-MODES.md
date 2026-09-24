@@ -2,166 +2,68 @@
 
 ## What and why
 
-Today only Codex may change product code when Claude coordinates, so a Claude-only team cannot ship.
-One setting now picks who writes: hybrid (default: Codex writes), codex (only Codex), or claude
-(Claude and its subagents; no Codex needed). `forge delegate` in claude mode records a writer entry
-instead of starting Codex. Claude may then edit inside the task's scope, and task close accepts that
-entry as the write proof. Hybrid opts in per task by running delegate once with the setting on
-claude. Proof, review and close gates are identical. Codex-coordinated sessions are unchanged.
+Today only Codex may change product code when Claude coordinates, so a team that uses only Claude
+cannot ship. One setting in `.envrc` now decides who writes, for the whole repository:
+
+- hybrid (default) and codex: exactly today's behaviour — Codex workers write.
+- claude: Claude and its subagents write; no Codex is needed anywhere.
+
+The same task scope, proof, review and close checks apply in every mode. Codex-coordinated sessions
+keep native Codex execution. Letting Claude write a single task while in hybrid is left for later.
 
 ## Workflow
 
 ```mermaid
 flowchart LR
-  S[Setting] -->|hybrid| C[delegate starts Codex]
-  S -->|claude| P[delegate records Claude writer]
-  C -.->|one-task opt-in| P
-  P --> W[Claude edits inside task scope only]
+  S[".envrc setting"] -->|hybrid or codex| C["delegate / fix start Codex (as today)"]
+  S -->|claude| P["delegate / fix record a Claude writer entry"]
+  P --> W["Claude edits inside the task scope or Lite budget only"]
   C --> X[task close]
   W --> X
 ```
 
 ## Manual Verification
 
-1. No setting: Claude's in-scope edit is refused and points to `forge delegate`; doctor shows hybrid.
-2. Run delegate once with the setting on claude: no Codex starts; in-scope edit passes, outside is refused.
-3. Claude mode, no Codex installed: doctor passes, grill offers a fresh Claude reader, task close reviews with the claude engine and closes.
-4. Codex mode: Claude's edits stay refused and close still asks for a Codex launch.
-5. Codex-coordinated session with the setting on claude: delegate and doctor refuse and name it.
-6. A misspelled value is refused and the message lists the three valid values.
+1. No setting: a Claude edit to product code is refused and `forge delegate` starts Codex, as today.
+2. `FORGE_EXECUTOR=codex`: same as step 1.
+3. `FORGE_EXECUTOR=claude`, active task: `forge delegate` records a Claude writer and starts no Codex;
+   an in-scope edit passes, an out-of-scope edit or a protected marker edit is refused.
+4. `FORGE_EXECUTOR=claude`, Lite window: `forge fix` records a Claude writer; edits pass only within
+   the window's file budget.
+5. `FORGE_EXECUTOR=claude` on a machine without Codex: `forge doctor` (fast, full, --fix) passes without
+   installing Codex; the task grill asks for a fresh Claude subagent reader; task close accepts the
+   Claude writer entry and reviews with the claude engine.
+6. A Codex-coordinated session with the setting on claude is refused and told to unset it; a misspelled
+   value is refused everywhere with the three valid values listed.
 
 ## Risks
 
-- The writer entry allows writing but does not prove it happened. The diff, proof and review still decide, as for native Codex today.
-- A shared `.envrc` that sets this blocks teammates who coordinate from Codex. That is deliberate, and the template never sets it.
-- In claude mode a Lite window works the same way: `forge fix` records a Claude writer entry instead of
-  starting Codex, and Claude edits stay inside the window's file budget.
+- A shared `.envrc` that sets claude blocks teammates who coordinate from Codex; the template never
+  sets it.
+- The Claude writer entry allows writing but does not prove it happened; the diff, proof and review
+  still decide, as for native Codex today.
 
 ---
 
 ## Technical notes
 
-- Resolver in `forge_cli/codex_runtime.py`, next to `selected_coordinator`:
-  `selected_executor()` reads `FORGE_EXECUTOR` (strip/lower). When `coordinator_runtime() == "codex"`
-  it returns `"codex"` for unset or `codex` and raises `SystemExit` for any other value ("Codex
-  coordination always executes natively; unset FORGE_EXECUTOR"). Otherwise it returns `hybrid` when
-  unset and `SystemExit`s on anything outside `hybrid|codex|claude`. Add
-  `review_engine() -> "claude" if selected_executor() == "claude" else "codex"`.
-- Write hook, `pre_tool_use.py`, Claude branch (~1461-1488): after `live_worker_admission`, when
-  there are `scoped_targets`, no worker credential, `window is None` and `selected_executor() !=
-  "codex"`, admit through the existing `native_stage_admission(root)` (exactly one active stage plus
-  the latest host-native preparation bound to stage, brief, contract digest and effective scope).
-  Before that, run the same `has_opaque_product_write` check as `guard_product_writes`. Then use
-  `path_in_scope` against `worker["scope"]`. Deny with the admission error plus the hint
-  "`FORGE_EXECUTOR=claude ./forge delegate <task-id>`". A `SystemExit` from the resolver becomes a
-  `deny`. Every other path, including open windows and codex mode, keeps `guard_product_writes`. The
-  native Codex branch is untouched. The hook writes nothing.
-- Delegate, `launch_companion` (`delegate.py` ~1944-2100): call `executor = selected_executor()`
-  first, so Codex sessions refuse there. Set `host = runtime == "codex" or executor == "claude"`
-  (Lite included, exactly as native Codex Lite prepares today; the hook then admits Claude writes in an
-  open Lite window through the existing native Lite admission and the window's budget). Use `host` in place of `runtime == "codex"` for the lock and reconcile conditions
-  and the host-native branch. Keep `codex_hook_readiness` on `runtime == "codex"` only. The
-  preparation row is the existing `transport: host-native`, `launch_status: prepared` record (the
-  "writer list"), with no schema change. `cmd_delegate`'s event name follows the returned descriptor.
-  Grill (`grill.py`) goes through `launch_companion`, so claude mode prepares a fresh host reader with
-  no change there. `record_grill_from_json.py --cold-result --preparation-id` already records it.
-- Close: in `_require_successful_launch` (`stages.py` ~1831), after the Codex-coordinator block,
-  return `""` when `selected_executor() != "codex"` and `_host_native_preparation_valid(...)`. The
-  companion and degraded-window path is unchanged, and the "no successful write launch" wording is
-  kept. This one function covers close preflight (`close.py:146`) and stage finish (`stages.py`
-  4362/4372/4395). `validated_measurement_launch` already falls back to host-native preparation.
-- Review: in `forge.py` both `--engine` parsers default to `None`. `close.py:188` and
-  `review.py` (`cmd_review` 1959/1988) pass `getattr(args, "engine", None)`. `review_task` and
-  `review_lite` begin with `engine = engine or review_engine()`.
-- Doctor, `cmd_doctor`: add an `executor` row with the resolved mode, red with the resolver message
-  on refusal. When the mode is `claude`, set `required=False` on rows whose name starts with
-  `codex` before counting failures.
-- Docs: `.claude/CLAUDE.md` role split and grill line (stay at or under 40 lines), the WORKFLOW.md
-  delegate paragraph, and the delegation-boundary closeout bullet each name the three modes and the
-  hybrid one-command opt-in.
-- Per-task executor: the preparation row records `executor`; review and close take the engine and the
-  write-proof rule from the task's recorded row, not from the current environment, so a one-task hybrid
-  opt-in closes and reviews with Claude without re-setting the variable.
-- Claude-host dispatch: for `executor == "claude"` the host-native descriptor tells the Claude session
-  to make the edits itself or through a Claude subagent (no `spawn_agent`/`followup_task`); the task
-  grill's host reader is a fresh Claude subagent given the prepared brief, recorded through the existing
-  `--cold-result --preparation-id` path.
-- Writer switch: `delegate` refuses a Claude writer preparation while the task has a starting or running
-  companion launch (existing `current_delegation` / delegation lock), naming the launch to finish or
-  cancel first.
-- Codex coordination: the native hook branch and `_require_successful_launch` resolve the executor first,
-  so a Codex-coordinated session with any setting other than unset/codex is refused before native
-  admission or close.
-- Claude Lite: in claude mode with an open Lite window, the Claude branch admits a write when the window
-  has a Claude writer preparation (made by `forge fix`) and the path fits the window's budget — the same
-  `_lite_contract` check native Lite uses.
-- Doctor: `--fast`, full and `--fix` resolve the executor first; in claude mode they skip the Codex CLI
-  and plugin checks and never install Codex.
-- Docs also amend `docs/specs/strict-role-split.md`, `docs/specs/dual-coordinator-parity.md` and
-  `docs/architecture/dual-coordinator-parity.md` where they say Claude product writes need the plugin.
-- Tests: one new `factory/tests/test_executor_modes.py` that reuses the helpers in
-  `test_worker_admission.py`, `test_gates.py`, `test_grill_release.py` and
-  `test_review_lenses_in_parallel.py`.
-
-<!-- forge:contract -->
-## Contract (recorded)
-
-Rendered by the harness from the recorded decomposition; edit the decomposition, not this block. It is excluded from the plan's approval and grill digests, so a re-render never stales either.
-
-**Objective.** FORGE_EXECUTOR hybrid/codex/claude for Claude-coordinated sessions; Claude writers admitted under the same task, scope and proof gates; the writer record is the stage's write proof.
-
-**Acceptance criteria**
-
-- With no FORGE_EXECUTOR set in a Claude-coordinated session, the executor resolves to hybrid, a Claude session product write in an active task is refused and points to forge delegate, and delegate starts Codex as today.
-- FORGE_EXECUTOR=claude forge delegate records a Claude writer entry for the active task without starting Codex; in hybrid or claude mode the Claude session and its subagents may then write inside that task's effective scope, and a write outside it is refused naming the path.
-- In claude mode on a machine without Codex, doctor (including --fast and --fix) passes without Codex, the task grill prepares a fresh Claude subagent reader, and task close runs the same proof, reviews with Autoreview's claude engine, and closes on the Claude writer entry.
-- In codex mode a Claude writer entry grants nothing: Claude session writes stay refused and close still requires a successful Codex launch.
-- A Codex-coordinated session keeps native execution and refuses any FORGE_EXECUTOR other than unset or codex with a message naming the setting, in delegate, doctor, the write hook and task close.
-- An unknown FORGE_EXECUTOR value is refused by commands and by the write hook with a message listing hybrid, codex and claude.
-- In claude mode forge fix records a Claude writer entry for the open Lite window, and Claude edits are admitted only within that window's file budget.
-- A task's executor is recorded on its writer entry and review and close follow it; switching a task to a Claude writer is refused while a Codex launch for that task is starting or running.
-
-**Write scope** (what `stage done` measures the diff against)
-
-- factory/scripts/forge_cli/codex_runtime.py
-- factory/scripts/pre_tool_use.py
-- factory/scripts/forge_cli/delegate.py
-- factory/scripts/forge_cli/stages.py
-- factory/scripts/forge_cli/review.py
-- factory/scripts/forge_cli/close.py
-- factory/scripts/forge_cli/doctor.py
-- factory/scripts/forge.py
-- factory/tests/test_executor_modes.py
-- .claude/CLAUDE.md
-- WORKFLOW.md
-- docs/specs/delegation-boundary.md
-- docs/specs/strict-role-split.md
-- docs/specs/dual-coordinator-parity.md
-- docs/architecture/dual-coordinator-parity.md
-
-**Required tests** (run by `stage done`)
-
-- `test_executor_resolver_defaults_to_hybrid_and_refuses_unknown_values` -- `UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}` (factory/tests/test_executor_modes.py)
-- `test_codex_coordinated_session_refuses_any_executor_but_codex` -- `UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}` (factory/tests/test_executor_modes.py)
-- `test_hybrid_claude_session_stays_locked_without_a_claude_writer_record` -- `UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}` (factory/tests/test_executor_modes.py)
-- `test_claude_writer_record_admits_only_in_scope_writes_in_hybrid_and_claude` -- `UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}` (factory/tests/test_executor_modes.py)
-- `test_codex_executor_keeps_claude_session_locked_despite_writer_record` -- `UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}` (factory/tests/test_executor_modes.py)
-- `test_claude_executor_delegate_records_writer_without_starting_codex` -- `UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}` (factory/tests/test_executor_modes.py)
-- `test_claude_writer_record_is_stage_write_proof_except_in_codex_mode` -- `UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}` (factory/tests/test_executor_modes.py)
-- `test_claude_executor_stage_done_closes_on_claude_writer_record` -- `UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}` (factory/tests/test_executor_modes.py)
-- `test_claude_executor_grill_prepares_a_fresh_host_reader` -- `UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}` (factory/tests/test_executor_modes.py)
-- `test_claude_executor_defaults_review_engine_to_claude` -- `UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}` (factory/tests/test_executor_modes.py)
-- `test_doctor_claude_executor_does_not_require_codex` -- `UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}` (factory/tests/test_executor_modes.py)
-- `test_claude_executor_lite_fix_records_writer_and_admits_within_budget` -- `UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}` (factory/tests/test_executor_modes.py)
-- `test_switch_to_claude_writer_refused_while_codex_launch_runs` -- `UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}` (factory/tests/test_executor_modes.py)
-- `test_codex_coordinated_hook_and_close_refuse_other_executor` -- `UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}` (factory/tests/test_executor_modes.py)
-
-**Verify commands**
-
-- `UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with pytest-xdist --with psutil python factory/scripts/verify.py`
-- `python3 factory/scripts/check_dual_runtime.py`
-- `python3 factory/scripts/check_encoding_hygiene.py`
-- `git diff --check`
-
-**Review budget.** 15 files / 800 lines -- Eight small source edits reusing host-native preparation and admission, five short doc amendments, and one new test file.
-<!-- /forge:contract -->
+- `codex_runtime.selected_executor()`: reads `FORGE_EXECUTOR`; Claude-coordinated → hybrid when unset,
+  else hybrid|codex|claude; Codex-coordinated → only unset/codex. Every refusal lists the three values.
+  `review_engine()` → claude in claude mode, else codex.
+- claude mode reuses the host-native preparation row (as native Codex does), recorded with
+  `executor: "claude"`: `launch_companion` (delegate and fix) prepares it instead of launching Codex.
+- Write hook, Claude branch: in claude mode admit a write when the current preparation for the active
+  task (or the open Lite window) has `executor: "claude"` and the path passes the same scope, Lite
+  budget and protected-marker checks the native path uses. hybrid/codex: unchanged
+  (`guard_product_writes`). Codex branch: resolve the executor first.
+- Close (`_require_successful_launch`) and `validated_measurement_launch`: in claude mode accept a
+  `executor: "claude"` preparation as the write proof; otherwise unchanged. Review defaults to
+  `review_engine()`.
+- Grill: in claude mode the host-native handoff tells the session to use a fresh Claude subagent as
+  the cold reader (instead of `spawn_agent`), recorded through `--cold-result --preparation-id`.
+- Doctor: `--fast`, full and `--fix` resolve the executor first; claude mode skips Codex CLI/plugin
+  checks and installs.
+- Docs: `.claude/CLAUDE.md` (stay within its line limit), WORKFLOW.md, the delegation-boundary,
+  strict-role-split and dual-coordinator parity specs, the parity architecture, the product brief and
+  docs/FACTORY.md name the three modes.
+- Tests: `factory/tests/test_executor_modes.py`.

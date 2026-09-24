@@ -5,104 +5,88 @@
     {
       "id": "EXEC-MODES",
       "title": "Executor modes",
-      "objective": "FORGE_EXECUTOR hybrid/codex/claude for Claude-coordinated sessions; Claude writers admitted under the same task, scope and proof gates; the writer record is the stage's write proof.",
+      "objective": "FORGE_EXECUTOR decides who writes for the whole repository: hybrid (default) and codex keep today's Codex writers; claude makes Claude and its subagents the writers everywhere, under the same gates, with no Codex needed.",
       "dependencies": [],
       "acceptance_criteria": [
-        "With no FORGE_EXECUTOR set in a Claude-coordinated session, the executor resolves to hybrid, a Claude session product write in an active task is refused and points to forge delegate, and delegate starts Codex as today.",
-        "FORGE_EXECUTOR=claude forge delegate records a Claude writer entry for the active task without starting Codex; in hybrid or claude mode the Claude session and its subagents may then write inside that task's effective scope, and a write outside it is refused naming the path.",
-        "In claude mode on a machine without Codex, doctor (including --fast and --fix) passes without Codex, the task grill prepares a fresh Claude subagent reader, and task close runs the same proof, reviews with Autoreview's claude engine, and closes on the Claude writer entry.",
-        "In codex mode a Claude writer entry grants nothing: Claude session writes stay refused and close still requires a successful Codex launch.",
-        "A Codex-coordinated session keeps native execution and refuses any FORGE_EXECUTOR other than unset or codex with a message naming the setting, in delegate, doctor, the write hook and task close.",
-        "An unknown FORGE_EXECUTOR value is refused by commands and by the write hook with a message listing hybrid, codex and claude.",
-        "In claude mode forge fix records a Claude writer entry for the open Lite window, and Claude edits are admitted only within that window's file budget.",
-        "A task's executor is recorded on its writer entry and review and close follow it; switching a task to a Claude writer is refused while a Codex launch for that task is starting or running."
+        "With no FORGE_EXECUTOR set in a Claude-coordinated session the executor is hybrid and behaviour is unchanged: a Claude product edit is refused and forge delegate starts Codex.",
+        "With FORGE_EXECUTOR=codex behaviour is unchanged from today.",
+        "With FORGE_EXECUTOR=claude, forge delegate records a Claude writer entry for the active task without starting Codex, and the Claude session and its subagents may write only inside the task's effective scope; protected markers stay refused.",
+        "With FORGE_EXECUTOR=claude, forge fix records a Claude writer entry for the open Lite window, and Claude edits are admitted only within the window's file budget.",
+        "With FORGE_EXECUTOR=claude on a machine without Codex, forge doctor (fast, full and --fix) passes without installing Codex, the task grill hands its cold read to a fresh Claude subagent, and task close accepts the Claude writer entry as write proof and reviews with the claude engine.",
+        "A Codex-coordinated session refuses any FORGE_EXECUTOR other than unset or codex in delegate, doctor, the write hook and close, and an unknown value is refused everywhere with hybrid, codex and claude listed."
       ],
       "user_facing": false,
       "write_scope": [
         "factory/scripts/forge_cli/codex_runtime.py",
         "factory/scripts/pre_tool_use.py",
         "factory/scripts/forge_cli/delegate.py",
+        "factory/scripts/forge_cli/worker_admission.py",
         "factory/scripts/forge_cli/stages.py",
-        "factory/scripts/forge_cli/review.py",
         "factory/scripts/forge_cli/close.py",
+        "factory/scripts/forge_cli/review.py",
+        "factory/scripts/forge_cli/grill.py",
         "factory/scripts/forge_cli/doctor.py",
+        "factory/scripts/factory_lib.py",
         "factory/scripts/forge.py",
+        "factory/scripts/forge_cli/fix.py",
         "factory/tests/test_executor_modes.py",
         ".claude/CLAUDE.md",
         "WORKFLOW.md",
         "docs/specs/delegation-boundary.md",
         "docs/specs/strict-role-split.md",
         "docs/specs/dual-coordinator-parity.md",
-        "docs/architecture/dual-coordinator-parity.md"
+        "docs/architecture/dual-coordinator-parity.md",
+        "docs/product/BRIEF.md",
+        "docs/FACTORY.md"
       ],
       "required_tests": [
         {
-          "id": "test_executor_resolver_defaults_to_hybrid_and_refuses_unknown_values",
+          "id": "test_unset_executor_is_hybrid_and_keeps_todays_behaviour",
           "path": "factory/tests/test_executor_modes.py",
           "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
         },
         {
-          "id": "test_codex_coordinated_session_refuses_any_executor_but_codex",
+          "id": "test_codex_executor_keeps_todays_behaviour",
           "path": "factory/tests/test_executor_modes.py",
           "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
         },
         {
-          "id": "test_hybrid_claude_session_stays_locked_without_a_claude_writer_record",
+          "id": "test_claude_executor_delegate_records_writer_and_admits_only_in_scope",
           "path": "factory/tests/test_executor_modes.py",
           "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
         },
         {
-          "id": "test_claude_writer_record_admits_only_in_scope_writes_in_hybrid_and_claude",
+          "id": "test_claude_executor_refuses_protected_marker_writes",
           "path": "factory/tests/test_executor_modes.py",
           "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
         },
         {
-          "id": "test_codex_executor_keeps_claude_session_locked_despite_writer_record",
+          "id": "test_claude_executor_lite_fix_admits_within_budget",
           "path": "factory/tests/test_executor_modes.py",
           "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
         },
         {
-          "id": "test_claude_executor_delegate_records_writer_without_starting_codex",
+          "id": "test_claude_executor_doctor_fast_full_fix_need_no_codex",
           "path": "factory/tests/test_executor_modes.py",
           "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
         },
         {
-          "id": "test_claude_writer_record_is_stage_write_proof_except_in_codex_mode",
+          "id": "test_claude_executor_grill_hands_off_to_claude_subagent",
           "path": "factory/tests/test_executor_modes.py",
           "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
         },
         {
-          "id": "test_claude_executor_stage_done_closes_on_claude_writer_record",
+          "id": "test_claude_executor_close_accepts_claude_writer_and_reviews_with_claude",
           "path": "factory/tests/test_executor_modes.py",
           "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
         },
         {
-          "id": "test_claude_executor_grill_prepares_a_fresh_host_reader",
+          "id": "test_codex_coordinated_session_refuses_other_executor_everywhere",
           "path": "factory/tests/test_executor_modes.py",
           "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
         },
         {
-          "id": "test_claude_executor_defaults_review_engine_to_claude",
-          "path": "factory/tests/test_executor_modes.py",
-          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
-        },
-        {
-          "id": "test_doctor_claude_executor_does_not_require_codex",
-          "path": "factory/tests/test_executor_modes.py",
-          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
-        },
-        {
-          "id": "test_claude_executor_lite_fix_records_writer_and_admits_within_budget",
-          "path": "factory/tests/test_executor_modes.py",
-          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
-        },
-        {
-          "id": "test_switch_to_claude_writer_refused_while_codex_launch_runs",
-          "path": "factory/tests/test_executor_modes.py",
-          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
-        },
-        {
-          "id": "test_codex_coordinated_hook_and_close_refuse_other_executor",
+          "id": "test_unknown_executor_value_is_refused_with_valid_values",
           "path": "factory/tests/test_executor_modes.py",
           "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
         }
@@ -123,49 +107,39 @@
       "plan_contracts": [
         {
           "id": "EXEC-AC-1",
-          "statement": "With no FORGE_EXECUTOR set in a Claude-coordinated session, the executor resolves to hybrid, a Claude session product write in an active task is refused and points to forge delegate, and delegate starts Codex as today.",
+          "statement": "With no FORGE_EXECUTOR set in a Claude-coordinated session the executor is hybrid and behaviour is unchanged: a Claude product edit is refused and forge delegate starts Codex.",
           "source": ".factory/stories/FORGE-WARM-1/task-plans/EXEC-MODES.md#Manual Verification"
         },
         {
           "id": "EXEC-AC-2",
-          "statement": "FORGE_EXECUTOR=claude forge delegate records a Claude writer entry for the active task without starting Codex; in hybrid or claude mode the Claude session and its subagents may then write inside that task's effective scope, and a write outside it is refused naming the path.",
+          "statement": "With FORGE_EXECUTOR=codex behaviour is unchanged from today.",
           "source": ".factory/stories/FORGE-WARM-1/task-plans/EXEC-MODES.md#Manual Verification"
         },
         {
           "id": "EXEC-AC-3",
-          "statement": "In claude mode on a machine without Codex, doctor (including --fast and --fix) passes without Codex, the task grill prepares a fresh Claude subagent reader, and task close runs the same proof, reviews with Autoreview's claude engine, and closes on the Claude writer entry.",
+          "statement": "With FORGE_EXECUTOR=claude, forge delegate records a Claude writer entry for the active task without starting Codex, and the Claude session and its subagents may write only inside the task's effective scope; protected markers stay refused.",
           "source": ".factory/stories/FORGE-WARM-1/task-plans/EXEC-MODES.md#Manual Verification"
         },
         {
           "id": "EXEC-AC-4",
-          "statement": "In codex mode a Claude writer entry grants nothing: Claude session writes stay refused and close still requires a successful Codex launch.",
+          "statement": "With FORGE_EXECUTOR=claude, forge fix records a Claude writer entry for the open Lite window, and Claude edits are admitted only within the window's file budget.",
           "source": ".factory/stories/FORGE-WARM-1/task-plans/EXEC-MODES.md#Manual Verification"
         },
         {
           "id": "EXEC-AC-5",
-          "statement": "A Codex-coordinated session keeps native execution and refuses any FORGE_EXECUTOR other than unset or codex with a message naming the setting, in delegate, doctor, the write hook and task close.",
+          "statement": "With FORGE_EXECUTOR=claude on a machine without Codex, forge doctor (fast, full and --fix) passes without installing Codex, the task grill hands its cold read to a fresh Claude subagent, and task close accepts the Claude writer entry as write proof and reviews with the claude engine.",
           "source": ".factory/stories/FORGE-WARM-1/task-plans/EXEC-MODES.md#Manual Verification"
         },
         {
           "id": "EXEC-AC-6",
-          "statement": "An unknown FORGE_EXECUTOR value is refused by commands and by the write hook with a message listing hybrid, codex and claude.",
-          "source": ".factory/stories/FORGE-WARM-1/task-plans/EXEC-MODES.md#Manual Verification"
-        },
-        {
-          "id": "EXEC-AC-7",
-          "statement": "In claude mode forge fix records a Claude writer entry for the open Lite window, and Claude edits are admitted only within that window's file budget.",
-          "source": ".factory/stories/FORGE-WARM-1/task-plans/EXEC-MODES.md#Manual Verification"
-        },
-        {
-          "id": "EXEC-AC-8",
-          "statement": "A task's executor is recorded on its writer entry and review and close follow it; switching a task to a Claude writer is refused while a Codex launch for that task is starting or running.",
+          "statement": "A Codex-coordinated session refuses any FORGE_EXECUTOR other than unset or codex in delegate, doctor, the write hook and close, and an unknown value is refused everywhere with hybrid, codex and claude listed.",
           "source": ".factory/stories/FORGE-WARM-1/task-plans/EXEC-MODES.md#Manual Verification"
         }
       ],
       "review_budget": {
-        "max_changed_files": 15,
-        "max_changed_lines": 800,
-        "reason": "Eight small source edits reusing host-native preparation and admission, five short doc amendments, and one new test file."
+        "max_changed_files": 22,
+        "max_changed_lines": 900,
+        "reason": "Small edits across the resolver, hook, delegate, admission, close, review, grill and doctor paths, eight short doc amendments, and one new test file."
       }
     },
     {
@@ -254,5 +228,5 @@
   "epic": "symphony-forge",
   "plan_file": "plans/active/FORGE-WARM-1-hybrid-mode-reuses-warm-codex-worker-threads.md",
   "plan_sha256": "b8279507a862037fea02436d0178e4c6f24a0bdb57072f7e0cd9b148282a3015",
-  "commit": "4ebaec4a3d258ffa5ff16098a464b658fc3d3653"
+  "commit": "f8b2ec06ba4587b5d63df901778f35c24af854d1"
 }
