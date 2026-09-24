@@ -783,17 +783,30 @@ def cmd_task_reconcile(args: argparse.Namespace) -> None:
         fail(f"task {args.id} has no write_scope; reconcile cannot confirm its "
              "work shipped.")
     trunk_ref = f"origin/{default_branch}"
-    if (not _git_is_ancestor(base, "HEAD", trunk_ref)
-            and _git(
-                base, "diff", "--quiet", trunk_ref, "HEAD", "--", *write_scope,
-            ).returncode != 0):
-        fail(
-            f"{args.id}'s scoped files differ from {trunk_ref}. If the task "
-            f"already shipped and trunk has moved on, rebase or merge {trunk_ref} "
-            "into this branch so the scoped files match, then run reconcile "
-            f"again; if it has not shipped, finish it with `forge task close "
-            f"{args.id}`."
-        )
+    if not _git_is_ancestor(base, trunk_ref, "HEAD"):
+        fail(f"merge {trunk_ref} into this branch first, then reconcile")
+    if _git(
+            base, "diff", "--quiet", trunk_ref, "HEAD", "--", *write_scope,
+    ).returncode != 0:
+        fail(f"task {args.id} still has scoped changes that are not on trunk "
+             f"— finish it with `forge task close {args.id}`.")
+    stage_base = stage.get("base_sha")
+    if not isinstance(stage_base, str) or not stage_base.strip():
+        fail(f"{args.id} has no recorded stage base commit; nothing in this "
+             "task's scope shipped since it started.")
+    resolved_stage_base = _git(
+        base, "rev-parse", "--verify", "--end-of-options",
+        f"{stage_base}^{{commit}}",
+    )
+    if resolved_stage_base.returncode != 0:
+        fail(f"{args.id} has no valid recorded stage base commit; nothing in "
+             "this task's scope shipped since it started.")
+    shipped_scope = _git(
+        base, "diff", "--quiet", resolved_stage_base.stdout.strip(),
+        trunk_ref, "--", *write_scope,
+    )
+    if shipped_scope.returncode != 1:
+        fail(f"nothing in this task's scope shipped since it started ({args.id}).")
 
     already = _git(
         base, "cat-file", "-e", f"origin/{default_branch}:{marker.as_posix()}",
@@ -832,15 +845,17 @@ def cmd_task_reconcile(args: argparse.Namespace) -> None:
                  "only a genuinely merged task (or ship it with `forge task "
                  "pr-ready`).")
 
-        commit = args.commit or _require_git(
+        commit = _require_git(
             base, "resolving trunk head", "rev-parse", "--verify",
             f"origin/{default_branch}^{{commit}}")
         if args.commit:
-            anc = _git(base, "merge-base", "--is-ancestor", commit,
-                       f"origin/{default_branch}")
-            if anc.returncode != 0:
-                fail(f"--commit {commit} is not an ancestor of origin/"
-                     f"{default_branch}; pass the merge commit of the task's PR.")
+            selected = _git(
+                base, "rev-parse", "--verify", "--end-of-options",
+                f"{args.commit}^{{commit}}",
+            )
+            if selected.returncode != 0 or selected.stdout.strip() != commit:
+                fail(f"--commit must be the current origin/{default_branch} tip; "
+                     f"reconcile records that trunk tip.")
         recorded_base = stage.get("base_sha")
         pointer_base = state.get("base_main_sha")
         base_main_sha = (

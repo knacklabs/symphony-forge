@@ -13289,15 +13289,29 @@ def test_task_reconcile_refuses_when_work_is_not_on_the_trunk(repo, tmp_path):
     git(repo, "config", "user.name", "Gate Tests")
     second = task_skeleton({**STAGE_TASK, "id": "T2", "title": "second slice"})
     record_skeleton_then_frontier(repo, [STAGE_TASK, second])
+    write_in_scope(repo, "src/core.py", "print('started task scope')\n")
+    git(repo, "add", "src/core.py")
+    git(repo, "commit", "-qm", "record task scope baseline")
+    base = head(repo)
+    configure_origin_main(repo, tmp_path / "reconcile-origin-empty.git")
     write_stages(repo, {
         "issue": "ENG-1",
         "stages": [
-            {"id": "T1", "title": "core slice", "status": "active"},
+            {"id": "T1", "title": "core slice", "status": "active",
+             "base_sha": base},
             {"id": "T2", "title": "second slice", "status": "pending"},
         ],
     })
-    # origin/main carries no src/ content — the task's work never shipped.
-    configure_origin_main(repo, tmp_path / "reconcile-origin-empty.git")
+    # origin/main removed a scoped file after the stage started. This creates a
+    # scoped trunk delta while leaving no scoped path on the trunk itself.
+    trunk = tmp_path / "reconcile-origin-deleted-scope"
+    git(repo, "worktree", "add", "-q", "--detach", str(trunk), base)
+    (trunk / "src" / "core.py").unlink()
+    git(trunk, "add", "src/core.py")
+    git(trunk, "commit", "-qm", "remove scoped path from trunk")
+    git(trunk, "push", "-q", "origin", "HEAD:main")
+    git(repo, "worktree", "remove", "-f", str(trunk))
+    git(repo, "merge", "--ff-only", "origin/main")
     marker = story_state(repo) / "tasks" / "T1" / "pr-ready.json"
 
     code, out = run(repo, "forge.py", "task", "reconcile", "T1")
@@ -23745,6 +23759,7 @@ def test_task_reconcile_adopts_a_pending_task_whose_marker_is_on_the_trunk(
     git(repo, "config", "user.name", "Gate Tests")
     second = task_skeleton({**STAGE_TASK, "id": "T2", "title": "second slice"})
     record_skeleton_then_frontier(repo, [STAGE_TASK, second])
+    task_base = head(repo)
     write_in_scope(repo, "src/core.py")
     git(repo, "add", "src/core.py")
     git(repo, "commit", "-qm", "ship T1 work")
@@ -23757,7 +23772,7 @@ def test_task_reconcile_adopts_a_pending_task_whose_marker_is_on_the_trunk(
         "issue": "ENG-1",
         "stages": [
             {"id": "T1", "title": "core slice", "status": "active",
-             "base_sha": head(repo)},
+             "base_sha": task_base},
             {"id": "T2", "title": "second slice", "status": "pending"},
         ],
     })
@@ -23771,7 +23786,8 @@ def test_task_reconcile_adopts_a_pending_task_whose_marker_is_on_the_trunk(
     write_stages(repo, {
         "issue": "ENG-1",
         "stages": [
-            {"id": "T1", "title": "core slice", "status": "pending"},
+            {"id": "T1", "title": "core slice", "status": "pending",
+             "base_sha": task_base},
             {"id": "T2", "title": "second slice", "status": "pending"},
         ],
     })
@@ -23791,10 +23807,15 @@ def test_task_reconcile_still_refuses_a_pending_task_with_no_marker(
     git(repo, "config", "user.email", "test@knacklabs.dev")
     git(repo, "config", "user.name", "Gate Tests")
     record_skeleton_then_frontier(repo, [STAGE_TASK])
+    task_base = head(repo)
+    write_in_scope(repo, "src/core.py")
+    git(repo, "add", "src/core.py")
+    git(repo, "commit", "-qm", "ship pending task work without a marker")
     configure_origin_main(repo, tmp_path / "nomarker-origin.git")
     write_stages(repo, {
         "issue": "ENG-1",
-        "stages": [{"id": "T1", "title": "core slice", "status": "pending"}],
+        "stages": [{"id": "T1", "title": "core slice", "status": "pending",
+                    "base_sha": task_base}],
     })
     gh_env, _argv_path = fake_gh_env(tmp_path)
     code, out = run(repo, "forge.py", "task", "reconcile", "T1", env=gh_env)
