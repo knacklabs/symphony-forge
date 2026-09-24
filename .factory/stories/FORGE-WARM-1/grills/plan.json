@@ -1,0 +1,408 @@
+{
+  "generated_by": "griller",
+  "gate": "plan",
+  "verdict": "pass",
+  "issue": "FORGE-WARM-1",
+  "gaps": [
+    "The executor-mode design does not cover every writer allowed by Decision 0085: hybrid mode also permits an admitted Claude writer, and claude mode must work without Codex. The plan names Claude admission only for claude mode and does not identify how `pre_tool_use.py`, delegation, doctor, grill, review, and close consume one resolver.",
+    "The SDK launch contract leaves key technology choices open: no exact `openai-codex` version, compatible installed Codex binary requirement, explicit sandbox setting, hook enablement, or proof that the Sol/medium lead can delegate edits to Luna/max children. See `docs/specs/warm-codex-threads.md:44-55` and Decision 0084.",
+    "A turn ledger row alone cannot satisfy current Claude write admission. `worker_admission.live_worker_admission` requires a process token, verified ancestry, a held task lock, and a bound brief; `stages._successful_launch_entry_valid` requires a successful launch. The plan does not specify the SDK route's replacement trust checks, narrowed-scope enforcement, revocation, or terminal proof.",
+    "The lease description does not explain how a long-running app-server survives separate `forge delegate` invocations, how a new supervisor reconnects after a crash, or how fencing prevents a stale owner from issuing turns after takeover. These are necessary to prove the single-owner criterion across task worktrees sharing one Git common directory.",
+    "Resume has no atomic input boundary. The plan does not say how it snapshots and bounds HEAD, stage-base commits, uncommitted content, and triaged findings while the worktree changes, or how it verifies those bytes before resuming. `docs/specs/warm-codex-threads.md:57-64` also requires a fresh thread when the recorded thread is missing, archived, or compacted past its base; the plan only says 'binding drift'.",
+    "The measurement is not executable as written. The confirmed spec's AC6 requires three recorded fix rounds, three cold and three resumed runs per round, the same model, effort and brief, median comparison, and fewer uncached input tokens and less wall time. The Verify Plan names none of those controls, data fields, or a story-evidence owner.",
+    "Live-event recovery lacks a falsifiable state machine for duplicate or missing events, failed or interrupted turns, `thread/read` disagreement, and the point at which an unknown turn becomes terminal. The plan says reattach and block close but gives no testable reconciliation rule.",
+    "The signal route cannot identify the 'exact turn id' from current records: `signal.cmd_raise` records the story issue key in `task` and `signal.cmd_resolve` records only id and notes. The plan does not assign ownership for binding a signal and its resolution to a task, thread, and active turn, or for handling completion during steering.",
+    "The upgrade task has no specified dependency-install surface or migration rule. The repository has no SDK requirements file, and `upgrade.py` preserves an existing `.envrc` rather than updating it. The plan must identify where the exact pin is installed, how doctor sees that interpreter, and how an in-flight plugin task stays on its original route across upgrade.",
+    "Rollout omits the active D-0040 client-upgrade hold. `plans/deferrals.md:48` requires the D-0039 upgrade findings to be fixed and reviewed; the approved FORGE-COORD-1 plan assigns that release to `LEAN-FIXES`. UPGRADE-CLEANUP has no dependency or refusal condition for that prerequisite.",
+    "The named documentation changes leave a binding contract stale. `docs/specs/dual-coordinator-parity.md:76` still defines Claude delegation as the protected plugin companion, while the plan only assigns changes to the delegation-boundary spec, architecture, and Product Brief. It does not identify this confirmed spec or the current route descriptions in `WORKFLOW.md` and `docs/FACTORY.md` for reconciliation.",
+    "The parity proof names platforms but no executable cells, commands, runner versions, or evidence limits for SDK and plugin routes under all three executor modes. `docs/specs/dual-coordinator-parity.md:144` and Decision 0065 distinguish local macOS observations from Ubuntu/native-Windows CI and forbid presenting package smoke as an authenticated task.",
+    "The decomposition does not establish reviewable ownership where RESUME-FIX and LIVE-EVENTS both consume SDK-ROUTE and likely change delegation, turn state, and ledger readers. It gives neither disjoint measured scopes for parallel work nor an explicit serial dependency, and no task clearly owns the promised installed-client task with a resumed fix round.",
+    "The installed-client end-to-end proof has no named client, exact harness revision, task contract, evidence location, or external-repository authorization boundary. The plan makes that run a story-close condition without a task that can deliver and review it."
+  ],
+  "contradictions": [
+    "The Risks section says a version mismatch 'refuses before starting a job', while Acceptance Criterion 2 and the Technical Approach select the plugin fallback when the doctor check fails. The plan must distinguish refusal of the SDK route from refusal of delegation.",
+    "The Scope section says Codex workers 'keep full access, as today', but Decision 0081:18-22,44-46 says the supported `codex-plugin-cc` fallback hardcodes workspace-write/read-only app-server policies. `approval_policy=\"never\"` does not establish the promised full-access SDK sandbox.",
+    "Acceptance Criterion 3 says a task cannot close while its Codex worker is running or unknown, without limiting that rule to SDK turns. Decision 0086:27-28 leaves native Codex unchanged, and `docs/specs/delegation-boundary.md:69-77` explicitly allows native close from a preparation row without process or terminal-state proof."
+  ],
+  "resolutions": [
+    "Technical Approach: one FORGE_EXECUTOR resolver read by the write hook, delegate, doctor, grill, review and close; hybrid also admits a Claude writer; claude mode needs no Codex.",
+    "Pinned openai-codex==0.156.1 in factory/requirements-sdk.txt; codex_bin is the installed codex (>= 0.151.0); every turn sets danger-full-access and approval never explicitly, keeps hooks enabled; SDK-ROUTE proves Sol lead to Luna child edits.",
+    "Admission parity defined: supervisor holds the task lock per turn, process token with hook-verified ancestry, bound brief digest and effective scope, revocation honoured, terminal turn entry accepted by stage close in place of a companion launch.",
+    "Detached supervisor per Git common directory owns the lease and app-server; delegate attaches over a local socket; takeover only of a dead holder with a bumped fencing counter; stale counters refused.",
+    "Atomic resume snapshot (HEAD, stage base, worktree tree object incl. uncommitted, findings digest) recorded and re-verified before thread_resume; missing, archived or compacted-past-base threads start fresh with the reason.",
+    "Verify Plan now states the benchmark exactly per spec criterion 6 and names the evidence file and recorder.",
+    "Turn state machine defined (started, running, completed, failed, interrupted, unknown); duplicates ignored by item id; thread/read's terminal answer wins; unknown blocks close.",
+    "Signal raise now records task, thread id and active turn id; LIVE-EVENTS owns binding and delivery by steer, or interrupt plus resume; late resolutions ride the next resumed turn.",
+    "Install surface named: factory/requirements-sdk.txt into a Forge-managed uv environment used by doctor and delegate; upgrade leaves .envrc alone; route recorded per task at first delegation so in-flight plugin tasks stay on it.",
+    "Risks and Technical Approach: UPGRADE-CLEANUP refuses to ship client upgrades while D-0040 is open (the Lean fixes lift it).",
+    "Docs list extended to the dual-coordinator parity spec, WORKFLOW.md and docs/FACTORY.md.",
+    "Verify Plan defines the parity cells (every executor mode x SDK and plugin routes), runners (Ubuntu and native-Windows CI, local macOS) and decision 0065 evidence labels.",
+    "RESUME-FIX and LIVE-EVENTS are now serial (LIVE-EVENTS depends on RESUME-FIX); UPGRADE-CLEANUP owns the installed-client end-to-end run.",
+    "End-to-end proof defined: a throwaway client from this template via forge init in a temporary directory, never a real client; recorded harness commit; evidence in e2e.json via a recorder.",
+    "Risks reworded: a mismatch disables the new route for that job, which runs on the plugin, decided before dispatch; delegation itself is not refused.",
+    "Scope reworded: full access applies to the new route and native chats; the plugin fallback keeps its current settings.",
+    "Criterion 3 now limited to jobs on the new route; native close rules unchanged."
+  ],
+  "finding_dispositions": [
+    {
+      "finding": "The executor-mode design does not cover every writer allowed by Decision 0085: hybrid mode also permits an admitted Claude writer, and claude mode must work without Codex. The plan names Claude admission only for claude mode and does not identify how `pre_tool_use.py`, delegation, doctor, grill, review, and close consume one resolver.",
+      "resolution": "Technical Approach: one FORGE_EXECUTOR resolver read by the write hook, delegate, doctor, grill, review and close; hybrid also admits a Claude writer; claude mode needs no Codex.",
+      "source": "repository fact"
+    },
+    {
+      "finding": "The SDK launch contract leaves key technology choices open: no exact `openai-codex` version, compatible installed Codex binary requirement, explicit sandbox setting, hook enablement, or proof that the Sol/medium lead can delegate edits to Luna/max children. See `docs/specs/warm-codex-threads.md:44-55` and Decision 0084.",
+      "resolution": "Pinned openai-codex==0.156.1 in factory/requirements-sdk.txt; codex_bin is the installed codex (>= 0.151.0); every turn sets danger-full-access and approval never explicitly, keeps hooks enabled; SDK-ROUTE proves Sol lead to Luna child edits.",
+      "source": "repository fact"
+    },
+    {
+      "finding": "A turn ledger row alone cannot satisfy current Claude write admission. `worker_admission.live_worker_admission` requires a process token, verified ancestry, a held task lock, and a bound brief; `stages._successful_launch_entry_valid` requires a successful launch. The plan does not specify the SDK route's replacement trust checks, narrowed-scope enforcement, revocation, or terminal proof.",
+      "resolution": "Admission parity defined: supervisor holds the task lock per turn, process token with hook-verified ancestry, bound brief digest and effective scope, revocation honoured, terminal turn entry accepted by stage close in place of a companion launch.",
+      "source": "repository fact"
+    },
+    {
+      "finding": "The lease description does not explain how a long-running app-server survives separate `forge delegate` invocations, how a new supervisor reconnects after a crash, or how fencing prevents a stale owner from issuing turns after takeover. These are necessary to prove the single-owner criterion across task worktrees sharing one Git common directory.",
+      "resolution": "Detached supervisor per Git common directory owns the lease and app-server; delegate attaches over a local socket; takeover only of a dead holder with a bumped fencing counter; stale counters refused.",
+      "source": "repository fact"
+    },
+    {
+      "finding": "Resume has no atomic input boundary. The plan does not say how it snapshots and bounds HEAD, stage-base commits, uncommitted content, and triaged findings while the worktree changes, or how it verifies those bytes before resuming. `docs/specs/warm-codex-threads.md:57-64` also requires a fresh thread when the recorded thread is missing, archived, or compacted past its base; the plan only says 'binding drift'.",
+      "resolution": "Atomic resume snapshot (HEAD, stage base, worktree tree object incl. uncommitted, findings digest) recorded and re-verified before thread_resume; missing, archived or compacted-past-base threads start fresh with the reason.",
+      "source": "repository fact"
+    },
+    {
+      "finding": "The measurement is not executable as written. The confirmed spec's AC6 requires three recorded fix rounds, three cold and three resumed runs per round, the same model, effort and brief, median comparison, and fewer uncached input tokens and less wall time. The Verify Plan names none of those controls, data fields, or a story-evidence owner.",
+      "resolution": "Verify Plan now states the benchmark exactly per spec criterion 6 and names the evidence file and recorder.",
+      "source": "repository fact"
+    },
+    {
+      "finding": "Live-event recovery lacks a falsifiable state machine for duplicate or missing events, failed or interrupted turns, `thread/read` disagreement, and the point at which an unknown turn becomes terminal. The plan says reattach and block close but gives no testable reconciliation rule.",
+      "resolution": "Turn state machine defined (started, running, completed, failed, interrupted, unknown); duplicates ignored by item id; thread/read's terminal answer wins; unknown blocks close.",
+      "source": "repository fact"
+    },
+    {
+      "finding": "The signal route cannot identify the 'exact turn id' from current records: `signal.cmd_raise` records the story issue key in `task` and `signal.cmd_resolve` records only id and notes. The plan does not assign ownership for binding a signal and its resolution to a task, thread, and active turn, or for handling completion during steering.",
+      "resolution": "Signal raise now records task, thread id and active turn id; LIVE-EVENTS owns binding and delivery by steer, or interrupt plus resume; late resolutions ride the next resumed turn.",
+      "source": "repository fact"
+    },
+    {
+      "finding": "The upgrade task has no specified dependency-install surface or migration rule. The repository has no SDK requirements file, and `upgrade.py` preserves an existing `.envrc` rather than updating it. The plan must identify where the exact pin is installed, how doctor sees that interpreter, and how an in-flight plugin task stays on its original route across upgrade.",
+      "resolution": "Install surface named: factory/requirements-sdk.txt into a Forge-managed uv environment used by doctor and delegate; upgrade leaves .envrc alone; route recorded per task at first delegation so in-flight plugin tasks stay on it.",
+      "source": "repository fact"
+    },
+    {
+      "finding": "Rollout omits the active D-0040 client-upgrade hold. `plans/deferrals.md:48` requires the D-0039 upgrade findings to be fixed and reviewed; the approved FORGE-COORD-1 plan assigns that release to `LEAN-FIXES`. UPGRADE-CLEANUP has no dependency or refusal condition for that prerequisite.",
+      "resolution": "Risks and Technical Approach: UPGRADE-CLEANUP refuses to ship client upgrades while D-0040 is open (the Lean fixes lift it).",
+      "source": "repository fact"
+    },
+    {
+      "finding": "The named documentation changes leave a binding contract stale. `docs/specs/dual-coordinator-parity.md:76` still defines Claude delegation as the protected plugin companion, while the plan only assigns changes to the delegation-boundary spec, architecture, and Product Brief. It does not identify this confirmed spec or the current route descriptions in `WORKFLOW.md` and `docs/FACTORY.md` for reconciliation.",
+      "resolution": "Docs list extended to the dual-coordinator parity spec, WORKFLOW.md and docs/FACTORY.md.",
+      "source": "repository fact"
+    },
+    {
+      "finding": "The parity proof names platforms but no executable cells, commands, runner versions, or evidence limits for SDK and plugin routes under all three executor modes. `docs/specs/dual-coordinator-parity.md:144` and Decision 0065 distinguish local macOS observations from Ubuntu/native-Windows CI and forbid presenting package smoke as an authenticated task.",
+      "resolution": "Verify Plan defines the parity cells (every executor mode x SDK and plugin routes), runners (Ubuntu and native-Windows CI, local macOS) and decision 0065 evidence labels.",
+      "source": "repository fact"
+    },
+    {
+      "finding": "The decomposition does not establish reviewable ownership where RESUME-FIX and LIVE-EVENTS both consume SDK-ROUTE and likely change delegation, turn state, and ledger readers. It gives neither disjoint measured scopes for parallel work nor an explicit serial dependency, and no task clearly owns the promised installed-client task with a resumed fix round.",
+      "resolution": "RESUME-FIX and LIVE-EVENTS are now serial (LIVE-EVENTS depends on RESUME-FIX); UPGRADE-CLEANUP owns the installed-client end-to-end run.",
+      "source": "repository fact"
+    },
+    {
+      "finding": "The installed-client end-to-end proof has no named client, exact harness revision, task contract, evidence location, or external-repository authorization boundary. The plan makes that run a story-close condition without a task that can deliver and review it.",
+      "resolution": "End-to-end proof defined: a throwaway client from this template via forge init in a temporary directory, never a real client; recorded harness commit; evidence in e2e.json via a recorder.",
+      "source": "repository fact"
+    },
+    {
+      "finding": "The Risks section says a version mismatch 'refuses before starting a job', while Acceptance Criterion 2 and the Technical Approach select the plugin fallback when the doctor check fails. The plan must distinguish refusal of the SDK route from refusal of delegation.",
+      "resolution": "Risks reworded: a mismatch disables the new route for that job, which runs on the plugin, decided before dispatch; delegation itself is not refused.",
+      "source": "repository fact"
+    },
+    {
+      "finding": "The Scope section says Codex workers 'keep full access, as today', but Decision 0081:18-22,44-46 says the supported `codex-plugin-cc` fallback hardcodes workspace-write/read-only app-server policies. `approval_policy=\"never\"` does not establish the promised full-access SDK sandbox.",
+      "resolution": "Scope reworded: full access applies to the new route and native chats; the plugin fallback keeps its current settings.",
+      "source": "repository fact"
+    },
+    {
+      "finding": "Acceptance Criterion 3 says a task cannot close while its Codex worker is running or unknown, without limiting that rule to SDK turns. Decision 0086:27-28 leaves native Codex unchanged, and `docs/specs/delegation-boundary.md:69-77` explicitly allows native close from a preparation row without process or terminal-state proof.",
+      "resolution": "Criterion 3 now limited to jobs on the new route; native close rules unchanged.",
+      "source": "repository fact"
+    }
+  ],
+  "amendments": [
+    {
+      "change": "span 0: amended to resolve the plan cold-read findings",
+      "reason": "one amendment after the single cold read, resolving repository-answerable findings",
+      "source": "coordinator amendment 2026-09-24",
+      "findings": [
+        "The executor-mode design does not cover every writer allowed by Decision 0085: hybrid mode also permits an admitted Claude writer, and claude mode must work without Codex. The plan names Claude admission only for claude mode and does not identify how `pre_tool_use.py`, delegation, doctor, grill, review, and close consume one resolver.",
+        "The SDK launch contract leaves key technology choices open: no exact `openai-codex` version, compatible installed Codex binary requirement, explicit sandbox setting, hook enablement, or proof that the Sol/medium lead can delegate edits to Luna/max children. See `docs/specs/warm-codex-threads.md:44-55` and Decision 0084.",
+        "A turn ledger row alone cannot satisfy current Claude write admission. `worker_admission.live_worker_admission` requires a process token, verified ancestry, a held task lock, and a bound brief; `stages._successful_launch_entry_valid` requires a successful launch. The plan does not specify the SDK route's replacement trust checks, narrowed-scope enforcement, revocation, or terminal proof.",
+        "The lease description does not explain how a long-running app-server survives separate `forge delegate` invocations, how a new supervisor reconnects after a crash, or how fencing prevents a stale owner from issuing turns after takeover. These are necessary to prove the single-owner criterion across task worktrees sharing one Git common directory.",
+        "Resume has no atomic input boundary. The plan does not say how it snapshots and bounds HEAD, stage-base commits, uncommitted content, and triaged findings while the worktree changes, or how it verifies those bytes before resuming. `docs/specs/warm-codex-threads.md:57-64` also requires a fresh thread when the recorded thread is missing, archived, or compacted past its base; the plan only says 'binding drift'.",
+        "The measurement is not executable as written. The confirmed spec's AC6 requires three recorded fix rounds, three cold and three resumed runs per round, the same model, effort and brief, median comparison, and fewer uncached input tokens and less wall time. The Verify Plan names none of those controls, data fields, or a story-evidence owner.",
+        "Live-event recovery lacks a falsifiable state machine for duplicate or missing events, failed or interrupted turns, `thread/read` disagreement, and the point at which an unknown turn becomes terminal. The plan says reattach and block close but gives no testable reconciliation rule.",
+        "The signal route cannot identify the 'exact turn id' from current records: `signal.cmd_raise` records the story issue key in `task` and `signal.cmd_resolve` records only id and notes. The plan does not assign ownership for binding a signal and its resolution to a task, thread, and active turn, or for handling completion during steering.",
+        "The upgrade task has no specified dependency-install surface or migration rule. The repository has no SDK requirements file, and `upgrade.py` preserves an existing `.envrc` rather than updating it. The plan must identify where the exact pin is installed, how doctor sees that interpreter, and how an in-flight plugin task stays on its original route across upgrade.",
+        "Rollout omits the active D-0040 client-upgrade hold. `plans/deferrals.md:48` requires the D-0039 upgrade findings to be fixed and reviewed; the approved FORGE-COORD-1 plan assigns that release to `LEAN-FIXES`. UPGRADE-CLEANUP has no dependency or refusal condition for that prerequisite.",
+        "The named documentation changes leave a binding contract stale. `docs/specs/dual-coordinator-parity.md:76` still defines Claude delegation as the protected plugin companion, while the plan only assigns changes to the delegation-boundary spec, architecture, and Product Brief. It does not identify this confirmed spec or the current route descriptions in `WORKFLOW.md` and `docs/FACTORY.md` for reconciliation.",
+        "The parity proof names platforms but no executable cells, commands, runner versions, or evidence limits for SDK and plugin routes under all three executor modes. `docs/specs/dual-coordinator-parity.md:144` and Decision 0065 distinguish local macOS observations from Ubuntu/native-Windows CI and forbid presenting package smoke as an authenticated task.",
+        "The decomposition does not establish reviewable ownership where RESUME-FIX and LIVE-EVENTS both consume SDK-ROUTE and likely change delegation, turn state, and ledger readers. It gives neither disjoint measured scopes for parallel work nor an explicit serial dependency, and no task clearly owns the promised installed-client task with a resumed fix round.",
+        "The installed-client end-to-end proof has no named client, exact harness revision, task contract, evidence location, or external-repository authorization boundary. The plan makes that run a story-close condition without a task that can deliver and review it.",
+        "The Risks section says a version mismatch 'refuses before starting a job', while Acceptance Criterion 2 and the Technical Approach select the plugin fallback when the doctor check fails. The plan must distinguish refusal of the SDK route from refusal of delegation.",
+        "The Scope section says Codex workers 'keep full access, as today', but Decision 0081:18-22,44-46 says the supported `codex-plugin-cc` fallback hardcodes workspace-write/read-only app-server policies. `approval_policy=\"never\"` does not establish the promised full-access SDK sandbox.",
+        "Acceptance Criterion 3 says a task cannot close while its Codex worker is running or unknown, without limiting that rule to SDK turns. Decision 0086:27-28 leaves native Codex unchanged, and `docs/specs/delegation-boundary.md:69-77` explicitly allows native close from a preparation row without process or terminal-state proof."
+      ],
+      "delta_index": 0
+    },
+    {
+      "change": "span 1: amended to resolve the plan cold-read findings",
+      "reason": "one amendment after the single cold read, resolving repository-answerable findings",
+      "source": "coordinator amendment 2026-09-24",
+      "findings": [
+        "The executor-mode design does not cover every writer allowed by Decision 0085: hybrid mode also permits an admitted Claude writer, and claude mode must work without Codex. The plan names Claude admission only for claude mode and does not identify how `pre_tool_use.py`, delegation, doctor, grill, review, and close consume one resolver.",
+        "The SDK launch contract leaves key technology choices open: no exact `openai-codex` version, compatible installed Codex binary requirement, explicit sandbox setting, hook enablement, or proof that the Sol/medium lead can delegate edits to Luna/max children. See `docs/specs/warm-codex-threads.md:44-55` and Decision 0084.",
+        "A turn ledger row alone cannot satisfy current Claude write admission. `worker_admission.live_worker_admission` requires a process token, verified ancestry, a held task lock, and a bound brief; `stages._successful_launch_entry_valid` requires a successful launch. The plan does not specify the SDK route's replacement trust checks, narrowed-scope enforcement, revocation, or terminal proof.",
+        "The lease description does not explain how a long-running app-server survives separate `forge delegate` invocations, how a new supervisor reconnects after a crash, or how fencing prevents a stale owner from issuing turns after takeover. These are necessary to prove the single-owner criterion across task worktrees sharing one Git common directory.",
+        "Resume has no atomic input boundary. The plan does not say how it snapshots and bounds HEAD, stage-base commits, uncommitted content, and triaged findings while the worktree changes, or how it verifies those bytes before resuming. `docs/specs/warm-codex-threads.md:57-64` also requires a fresh thread when the recorded thread is missing, archived, or compacted past its base; the plan only says 'binding drift'.",
+        "The measurement is not executable as written. The confirmed spec's AC6 requires three recorded fix rounds, three cold and three resumed runs per round, the same model, effort and brief, median comparison, and fewer uncached input tokens and less wall time. The Verify Plan names none of those controls, data fields, or a story-evidence owner.",
+        "Live-event recovery lacks a falsifiable state machine for duplicate or missing events, failed or interrupted turns, `thread/read` disagreement, and the point at which an unknown turn becomes terminal. The plan says reattach and block close but gives no testable reconciliation rule.",
+        "The signal route cannot identify the 'exact turn id' from current records: `signal.cmd_raise` records the story issue key in `task` and `signal.cmd_resolve` records only id and notes. The plan does not assign ownership for binding a signal and its resolution to a task, thread, and active turn, or for handling completion during steering.",
+        "The upgrade task has no specified dependency-install surface or migration rule. The repository has no SDK requirements file, and `upgrade.py` preserves an existing `.envrc` rather than updating it. The plan must identify where the exact pin is installed, how doctor sees that interpreter, and how an in-flight plugin task stays on its original route across upgrade.",
+        "Rollout omits the active D-0040 client-upgrade hold. `plans/deferrals.md:48` requires the D-0039 upgrade findings to be fixed and reviewed; the approved FORGE-COORD-1 plan assigns that release to `LEAN-FIXES`. UPGRADE-CLEANUP has no dependency or refusal condition for that prerequisite.",
+        "The named documentation changes leave a binding contract stale. `docs/specs/dual-coordinator-parity.md:76` still defines Claude delegation as the protected plugin companion, while the plan only assigns changes to the delegation-boundary spec, architecture, and Product Brief. It does not identify this confirmed spec or the current route descriptions in `WORKFLOW.md` and `docs/FACTORY.md` for reconciliation.",
+        "The parity proof names platforms but no executable cells, commands, runner versions, or evidence limits for SDK and plugin routes under all three executor modes. `docs/specs/dual-coordinator-parity.md:144` and Decision 0065 distinguish local macOS observations from Ubuntu/native-Windows CI and forbid presenting package smoke as an authenticated task.",
+        "The decomposition does not establish reviewable ownership where RESUME-FIX and LIVE-EVENTS both consume SDK-ROUTE and likely change delegation, turn state, and ledger readers. It gives neither disjoint measured scopes for parallel work nor an explicit serial dependency, and no task clearly owns the promised installed-client task with a resumed fix round.",
+        "The installed-client end-to-end proof has no named client, exact harness revision, task contract, evidence location, or external-repository authorization boundary. The plan makes that run a story-close condition without a task that can deliver and review it.",
+        "The Risks section says a version mismatch 'refuses before starting a job', while Acceptance Criterion 2 and the Technical Approach select the plugin fallback when the doctor check fails. The plan must distinguish refusal of the SDK route from refusal of delegation.",
+        "The Scope section says Codex workers 'keep full access, as today', but Decision 0081:18-22,44-46 says the supported `codex-plugin-cc` fallback hardcodes workspace-write/read-only app-server policies. `approval_policy=\"never\"` does not establish the promised full-access SDK sandbox.",
+        "Acceptance Criterion 3 says a task cannot close while its Codex worker is running or unknown, without limiting that rule to SDK turns. Decision 0086:27-28 leaves native Codex unchanged, and `docs/specs/delegation-boundary.md:69-77` explicitly allows native close from a preparation row without process or terminal-state proof."
+      ],
+      "delta_index": 1
+    },
+    {
+      "change": "span 2: amended to resolve the plan cold-read findings",
+      "reason": "one amendment after the single cold read, resolving repository-answerable findings",
+      "source": "coordinator amendment 2026-09-24",
+      "findings": [
+        "The executor-mode design does not cover every writer allowed by Decision 0085: hybrid mode also permits an admitted Claude writer, and claude mode must work without Codex. The plan names Claude admission only for claude mode and does not identify how `pre_tool_use.py`, delegation, doctor, grill, review, and close consume one resolver.",
+        "The SDK launch contract leaves key technology choices open: no exact `openai-codex` version, compatible installed Codex binary requirement, explicit sandbox setting, hook enablement, or proof that the Sol/medium lead can delegate edits to Luna/max children. See `docs/specs/warm-codex-threads.md:44-55` and Decision 0084.",
+        "A turn ledger row alone cannot satisfy current Claude write admission. `worker_admission.live_worker_admission` requires a process token, verified ancestry, a held task lock, and a bound brief; `stages._successful_launch_entry_valid` requires a successful launch. The plan does not specify the SDK route's replacement trust checks, narrowed-scope enforcement, revocation, or terminal proof.",
+        "The lease description does not explain how a long-running app-server survives separate `forge delegate` invocations, how a new supervisor reconnects after a crash, or how fencing prevents a stale owner from issuing turns after takeover. These are necessary to prove the single-owner criterion across task worktrees sharing one Git common directory.",
+        "Resume has no atomic input boundary. The plan does not say how it snapshots and bounds HEAD, stage-base commits, uncommitted content, and triaged findings while the worktree changes, or how it verifies those bytes before resuming. `docs/specs/warm-codex-threads.md:57-64` also requires a fresh thread when the recorded thread is missing, archived, or compacted past its base; the plan only says 'binding drift'.",
+        "The measurement is not executable as written. The confirmed spec's AC6 requires three recorded fix rounds, three cold and three resumed runs per round, the same model, effort and brief, median comparison, and fewer uncached input tokens and less wall time. The Verify Plan names none of those controls, data fields, or a story-evidence owner.",
+        "Live-event recovery lacks a falsifiable state machine for duplicate or missing events, failed or interrupted turns, `thread/read` disagreement, and the point at which an unknown turn becomes terminal. The plan says reattach and block close but gives no testable reconciliation rule.",
+        "The signal route cannot identify the 'exact turn id' from current records: `signal.cmd_raise` records the story issue key in `task` and `signal.cmd_resolve` records only id and notes. The plan does not assign ownership for binding a signal and its resolution to a task, thread, and active turn, or for handling completion during steering.",
+        "The upgrade task has no specified dependency-install surface or migration rule. The repository has no SDK requirements file, and `upgrade.py` preserves an existing `.envrc` rather than updating it. The plan must identify where the exact pin is installed, how doctor sees that interpreter, and how an in-flight plugin task stays on its original route across upgrade.",
+        "Rollout omits the active D-0040 client-upgrade hold. `plans/deferrals.md:48` requires the D-0039 upgrade findings to be fixed and reviewed; the approved FORGE-COORD-1 plan assigns that release to `LEAN-FIXES`. UPGRADE-CLEANUP has no dependency or refusal condition for that prerequisite.",
+        "The named documentation changes leave a binding contract stale. `docs/specs/dual-coordinator-parity.md:76` still defines Claude delegation as the protected plugin companion, while the plan only assigns changes to the delegation-boundary spec, architecture, and Product Brief. It does not identify this confirmed spec or the current route descriptions in `WORKFLOW.md` and `docs/FACTORY.md` for reconciliation.",
+        "The parity proof names platforms but no executable cells, commands, runner versions, or evidence limits for SDK and plugin routes under all three executor modes. `docs/specs/dual-coordinator-parity.md:144` and Decision 0065 distinguish local macOS observations from Ubuntu/native-Windows CI and forbid presenting package smoke as an authenticated task.",
+        "The decomposition does not establish reviewable ownership where RESUME-FIX and LIVE-EVENTS both consume SDK-ROUTE and likely change delegation, turn state, and ledger readers. It gives neither disjoint measured scopes for parallel work nor an explicit serial dependency, and no task clearly owns the promised installed-client task with a resumed fix round.",
+        "The installed-client end-to-end proof has no named client, exact harness revision, task contract, evidence location, or external-repository authorization boundary. The plan makes that run a story-close condition without a task that can deliver and review it.",
+        "The Risks section says a version mismatch 'refuses before starting a job', while Acceptance Criterion 2 and the Technical Approach select the plugin fallback when the doctor check fails. The plan must distinguish refusal of the SDK route from refusal of delegation.",
+        "The Scope section says Codex workers 'keep full access, as today', but Decision 0081:18-22,44-46 says the supported `codex-plugin-cc` fallback hardcodes workspace-write/read-only app-server policies. `approval_policy=\"never\"` does not establish the promised full-access SDK sandbox.",
+        "Acceptance Criterion 3 says a task cannot close while its Codex worker is running or unknown, without limiting that rule to SDK turns. Decision 0086:27-28 leaves native Codex unchanged, and `docs/specs/delegation-boundary.md:69-77` explicitly allows native close from a preparation row without process or terminal-state proof."
+      ],
+      "delta_index": 2
+    },
+    {
+      "change": "span 3: amended to resolve the plan cold-read findings",
+      "reason": "one amendment after the single cold read, resolving repository-answerable findings",
+      "source": "coordinator amendment 2026-09-24",
+      "findings": [
+        "The executor-mode design does not cover every writer allowed by Decision 0085: hybrid mode also permits an admitted Claude writer, and claude mode must work without Codex. The plan names Claude admission only for claude mode and does not identify how `pre_tool_use.py`, delegation, doctor, grill, review, and close consume one resolver.",
+        "The SDK launch contract leaves key technology choices open: no exact `openai-codex` version, compatible installed Codex binary requirement, explicit sandbox setting, hook enablement, or proof that the Sol/medium lead can delegate edits to Luna/max children. See `docs/specs/warm-codex-threads.md:44-55` and Decision 0084.",
+        "A turn ledger row alone cannot satisfy current Claude write admission. `worker_admission.live_worker_admission` requires a process token, verified ancestry, a held task lock, and a bound brief; `stages._successful_launch_entry_valid` requires a successful launch. The plan does not specify the SDK route's replacement trust checks, narrowed-scope enforcement, revocation, or terminal proof.",
+        "The lease description does not explain how a long-running app-server survives separate `forge delegate` invocations, how a new supervisor reconnects after a crash, or how fencing prevents a stale owner from issuing turns after takeover. These are necessary to prove the single-owner criterion across task worktrees sharing one Git common directory.",
+        "Resume has no atomic input boundary. The plan does not say how it snapshots and bounds HEAD, stage-base commits, uncommitted content, and triaged findings while the worktree changes, or how it verifies those bytes before resuming. `docs/specs/warm-codex-threads.md:57-64` also requires a fresh thread when the recorded thread is missing, archived, or compacted past its base; the plan only says 'binding drift'.",
+        "The measurement is not executable as written. The confirmed spec's AC6 requires three recorded fix rounds, three cold and three resumed runs per round, the same model, effort and brief, median comparison, and fewer uncached input tokens and less wall time. The Verify Plan names none of those controls, data fields, or a story-evidence owner.",
+        "Live-event recovery lacks a falsifiable state machine for duplicate or missing events, failed or interrupted turns, `thread/read` disagreement, and the point at which an unknown turn becomes terminal. The plan says reattach and block close but gives no testable reconciliation rule.",
+        "The signal route cannot identify the 'exact turn id' from current records: `signal.cmd_raise` records the story issue key in `task` and `signal.cmd_resolve` records only id and notes. The plan does not assign ownership for binding a signal and its resolution to a task, thread, and active turn, or for handling completion during steering.",
+        "The upgrade task has no specified dependency-install surface or migration rule. The repository has no SDK requirements file, and `upgrade.py` preserves an existing `.envrc` rather than updating it. The plan must identify where the exact pin is installed, how doctor sees that interpreter, and how an in-flight plugin task stays on its original route across upgrade.",
+        "Rollout omits the active D-0040 client-upgrade hold. `plans/deferrals.md:48` requires the D-0039 upgrade findings to be fixed and reviewed; the approved FORGE-COORD-1 plan assigns that release to `LEAN-FIXES`. UPGRADE-CLEANUP has no dependency or refusal condition for that prerequisite.",
+        "The named documentation changes leave a binding contract stale. `docs/specs/dual-coordinator-parity.md:76` still defines Claude delegation as the protected plugin companion, while the plan only assigns changes to the delegation-boundary spec, architecture, and Product Brief. It does not identify this confirmed spec or the current route descriptions in `WORKFLOW.md` and `docs/FACTORY.md` for reconciliation.",
+        "The parity proof names platforms but no executable cells, commands, runner versions, or evidence limits for SDK and plugin routes under all three executor modes. `docs/specs/dual-coordinator-parity.md:144` and Decision 0065 distinguish local macOS observations from Ubuntu/native-Windows CI and forbid presenting package smoke as an authenticated task.",
+        "The decomposition does not establish reviewable ownership where RESUME-FIX and LIVE-EVENTS both consume SDK-ROUTE and likely change delegation, turn state, and ledger readers. It gives neither disjoint measured scopes for parallel work nor an explicit serial dependency, and no task clearly owns the promised installed-client task with a resumed fix round.",
+        "The installed-client end-to-end proof has no named client, exact harness revision, task contract, evidence location, or external-repository authorization boundary. The plan makes that run a story-close condition without a task that can deliver and review it.",
+        "The Risks section says a version mismatch 'refuses before starting a job', while Acceptance Criterion 2 and the Technical Approach select the plugin fallback when the doctor check fails. The plan must distinguish refusal of the SDK route from refusal of delegation.",
+        "The Scope section says Codex workers 'keep full access, as today', but Decision 0081:18-22,44-46 says the supported `codex-plugin-cc` fallback hardcodes workspace-write/read-only app-server policies. `approval_policy=\"never\"` does not establish the promised full-access SDK sandbox.",
+        "Acceptance Criterion 3 says a task cannot close while its Codex worker is running or unknown, without limiting that rule to SDK turns. Decision 0086:27-28 leaves native Codex unchanged, and `docs/specs/delegation-boundary.md:69-77` explicitly allows native close from a preparation row without process or terminal-state proof."
+      ],
+      "delta_index": 3
+    },
+    {
+      "change": "span 4: amended to resolve the plan cold-read findings",
+      "reason": "one amendment after the single cold read, resolving repository-answerable findings",
+      "source": "coordinator amendment 2026-09-24",
+      "findings": [
+        "The executor-mode design does not cover every writer allowed by Decision 0085: hybrid mode also permits an admitted Claude writer, and claude mode must work without Codex. The plan names Claude admission only for claude mode and does not identify how `pre_tool_use.py`, delegation, doctor, grill, review, and close consume one resolver.",
+        "The SDK launch contract leaves key technology choices open: no exact `openai-codex` version, compatible installed Codex binary requirement, explicit sandbox setting, hook enablement, or proof that the Sol/medium lead can delegate edits to Luna/max children. See `docs/specs/warm-codex-threads.md:44-55` and Decision 0084.",
+        "A turn ledger row alone cannot satisfy current Claude write admission. `worker_admission.live_worker_admission` requires a process token, verified ancestry, a held task lock, and a bound brief; `stages._successful_launch_entry_valid` requires a successful launch. The plan does not specify the SDK route's replacement trust checks, narrowed-scope enforcement, revocation, or terminal proof.",
+        "The lease description does not explain how a long-running app-server survives separate `forge delegate` invocations, how a new supervisor reconnects after a crash, or how fencing prevents a stale owner from issuing turns after takeover. These are necessary to prove the single-owner criterion across task worktrees sharing one Git common directory.",
+        "Resume has no atomic input boundary. The plan does not say how it snapshots and bounds HEAD, stage-base commits, uncommitted content, and triaged findings while the worktree changes, or how it verifies those bytes before resuming. `docs/specs/warm-codex-threads.md:57-64` also requires a fresh thread when the recorded thread is missing, archived, or compacted past its base; the plan only says 'binding drift'.",
+        "The measurement is not executable as written. The confirmed spec's AC6 requires three recorded fix rounds, three cold and three resumed runs per round, the same model, effort and brief, median comparison, and fewer uncached input tokens and less wall time. The Verify Plan names none of those controls, data fields, or a story-evidence owner.",
+        "Live-event recovery lacks a falsifiable state machine for duplicate or missing events, failed or interrupted turns, `thread/read` disagreement, and the point at which an unknown turn becomes terminal. The plan says reattach and block close but gives no testable reconciliation rule.",
+        "The signal route cannot identify the 'exact turn id' from current records: `signal.cmd_raise` records the story issue key in `task` and `signal.cmd_resolve` records only id and notes. The plan does not assign ownership for binding a signal and its resolution to a task, thread, and active turn, or for handling completion during steering.",
+        "The upgrade task has no specified dependency-install surface or migration rule. The repository has no SDK requirements file, and `upgrade.py` preserves an existing `.envrc` rather than updating it. The plan must identify where the exact pin is installed, how doctor sees that interpreter, and how an in-flight plugin task stays on its original route across upgrade.",
+        "Rollout omits the active D-0040 client-upgrade hold. `plans/deferrals.md:48` requires the D-0039 upgrade findings to be fixed and reviewed; the approved FORGE-COORD-1 plan assigns that release to `LEAN-FIXES`. UPGRADE-CLEANUP has no dependency or refusal condition for that prerequisite.",
+        "The named documentation changes leave a binding contract stale. `docs/specs/dual-coordinator-parity.md:76` still defines Claude delegation as the protected plugin companion, while the plan only assigns changes to the delegation-boundary spec, architecture, and Product Brief. It does not identify this confirmed spec or the current route descriptions in `WORKFLOW.md` and `docs/FACTORY.md` for reconciliation.",
+        "The parity proof names platforms but no executable cells, commands, runner versions, or evidence limits for SDK and plugin routes under all three executor modes. `docs/specs/dual-coordinator-parity.md:144` and Decision 0065 distinguish local macOS observations from Ubuntu/native-Windows CI and forbid presenting package smoke as an authenticated task.",
+        "The decomposition does not establish reviewable ownership where RESUME-FIX and LIVE-EVENTS both consume SDK-ROUTE and likely change delegation, turn state, and ledger readers. It gives neither disjoint measured scopes for parallel work nor an explicit serial dependency, and no task clearly owns the promised installed-client task with a resumed fix round.",
+        "The installed-client end-to-end proof has no named client, exact harness revision, task contract, evidence location, or external-repository authorization boundary. The plan makes that run a story-close condition without a task that can deliver and review it.",
+        "The Risks section says a version mismatch 'refuses before starting a job', while Acceptance Criterion 2 and the Technical Approach select the plugin fallback when the doctor check fails. The plan must distinguish refusal of the SDK route from refusal of delegation.",
+        "The Scope section says Codex workers 'keep full access, as today', but Decision 0081:18-22,44-46 says the supported `codex-plugin-cc` fallback hardcodes workspace-write/read-only app-server policies. `approval_policy=\"never\"` does not establish the promised full-access SDK sandbox.",
+        "Acceptance Criterion 3 says a task cannot close while its Codex worker is running or unknown, without limiting that rule to SDK turns. Decision 0086:27-28 leaves native Codex unchanged, and `docs/specs/delegation-boundary.md:69-77` explicitly allows native close from a preparation row without process or terminal-state proof."
+      ],
+      "delta_index": 4
+    },
+    {
+      "change": "span 5: amended to resolve the plan cold-read findings",
+      "reason": "one amendment after the single cold read, resolving repository-answerable findings",
+      "source": "coordinator amendment 2026-09-24",
+      "findings": [
+        "The executor-mode design does not cover every writer allowed by Decision 0085: hybrid mode also permits an admitted Claude writer, and claude mode must work without Codex. The plan names Claude admission only for claude mode and does not identify how `pre_tool_use.py`, delegation, doctor, grill, review, and close consume one resolver.",
+        "The SDK launch contract leaves key technology choices open: no exact `openai-codex` version, compatible installed Codex binary requirement, explicit sandbox setting, hook enablement, or proof that the Sol/medium lead can delegate edits to Luna/max children. See `docs/specs/warm-codex-threads.md:44-55` and Decision 0084.",
+        "A turn ledger row alone cannot satisfy current Claude write admission. `worker_admission.live_worker_admission` requires a process token, verified ancestry, a held task lock, and a bound brief; `stages._successful_launch_entry_valid` requires a successful launch. The plan does not specify the SDK route's replacement trust checks, narrowed-scope enforcement, revocation, or terminal proof.",
+        "The lease description does not explain how a long-running app-server survives separate `forge delegate` invocations, how a new supervisor reconnects after a crash, or how fencing prevents a stale owner from issuing turns after takeover. These are necessary to prove the single-owner criterion across task worktrees sharing one Git common directory.",
+        "Resume has no atomic input boundary. The plan does not say how it snapshots and bounds HEAD, stage-base commits, uncommitted content, and triaged findings while the worktree changes, or how it verifies those bytes before resuming. `docs/specs/warm-codex-threads.md:57-64` also requires a fresh thread when the recorded thread is missing, archived, or compacted past its base; the plan only says 'binding drift'.",
+        "The measurement is not executable as written. The confirmed spec's AC6 requires three recorded fix rounds, three cold and three resumed runs per round, the same model, effort and brief, median comparison, and fewer uncached input tokens and less wall time. The Verify Plan names none of those controls, data fields, or a story-evidence owner.",
+        "Live-event recovery lacks a falsifiable state machine for duplicate or missing events, failed or interrupted turns, `thread/read` disagreement, and the point at which an unknown turn becomes terminal. The plan says reattach and block close but gives no testable reconciliation rule.",
+        "The signal route cannot identify the 'exact turn id' from current records: `signal.cmd_raise` records the story issue key in `task` and `signal.cmd_resolve` records only id and notes. The plan does not assign ownership for binding a signal and its resolution to a task, thread, and active turn, or for handling completion during steering.",
+        "The upgrade task has no specified dependency-install surface or migration rule. The repository has no SDK requirements file, and `upgrade.py` preserves an existing `.envrc` rather than updating it. The plan must identify where the exact pin is installed, how doctor sees that interpreter, and how an in-flight plugin task stays on its original route across upgrade.",
+        "Rollout omits the active D-0040 client-upgrade hold. `plans/deferrals.md:48` requires the D-0039 upgrade findings to be fixed and reviewed; the approved FORGE-COORD-1 plan assigns that release to `LEAN-FIXES`. UPGRADE-CLEANUP has no dependency or refusal condition for that prerequisite.",
+        "The named documentation changes leave a binding contract stale. `docs/specs/dual-coordinator-parity.md:76` still defines Claude delegation as the protected plugin companion, while the plan only assigns changes to the delegation-boundary spec, architecture, and Product Brief. It does not identify this confirmed spec or the current route descriptions in `WORKFLOW.md` and `docs/FACTORY.md` for reconciliation.",
+        "The parity proof names platforms but no executable cells, commands, runner versions, or evidence limits for SDK and plugin routes under all three executor modes. `docs/specs/dual-coordinator-parity.md:144` and Decision 0065 distinguish local macOS observations from Ubuntu/native-Windows CI and forbid presenting package smoke as an authenticated task.",
+        "The decomposition does not establish reviewable ownership where RESUME-FIX and LIVE-EVENTS both consume SDK-ROUTE and likely change delegation, turn state, and ledger readers. It gives neither disjoint measured scopes for parallel work nor an explicit serial dependency, and no task clearly owns the promised installed-client task with a resumed fix round.",
+        "The installed-client end-to-end proof has no named client, exact harness revision, task contract, evidence location, or external-repository authorization boundary. The plan makes that run a story-close condition without a task that can deliver and review it.",
+        "The Risks section says a version mismatch 'refuses before starting a job', while Acceptance Criterion 2 and the Technical Approach select the plugin fallback when the doctor check fails. The plan must distinguish refusal of the SDK route from refusal of delegation.",
+        "The Scope section says Codex workers 'keep full access, as today', but Decision 0081:18-22,44-46 says the supported `codex-plugin-cc` fallback hardcodes workspace-write/read-only app-server policies. `approval_policy=\"never\"` does not establish the promised full-access SDK sandbox.",
+        "Acceptance Criterion 3 says a task cannot close while its Codex worker is running or unknown, without limiting that rule to SDK turns. Decision 0086:27-28 leaves native Codex unchanged, and `docs/specs/delegation-boundary.md:69-77` explicitly allows native close from a preparation row without process or terminal-state proof."
+      ],
+      "delta_index": 5
+    },
+    {
+      "change": "span 6: amended to resolve the plan cold-read findings",
+      "reason": "one amendment after the single cold read, resolving repository-answerable findings",
+      "source": "coordinator amendment 2026-09-24",
+      "findings": [
+        "The executor-mode design does not cover every writer allowed by Decision 0085: hybrid mode also permits an admitted Claude writer, and claude mode must work without Codex. The plan names Claude admission only for claude mode and does not identify how `pre_tool_use.py`, delegation, doctor, grill, review, and close consume one resolver.",
+        "The SDK launch contract leaves key technology choices open: no exact `openai-codex` version, compatible installed Codex binary requirement, explicit sandbox setting, hook enablement, or proof that the Sol/medium lead can delegate edits to Luna/max children. See `docs/specs/warm-codex-threads.md:44-55` and Decision 0084.",
+        "A turn ledger row alone cannot satisfy current Claude write admission. `worker_admission.live_worker_admission` requires a process token, verified ancestry, a held task lock, and a bound brief; `stages._successful_launch_entry_valid` requires a successful launch. The plan does not specify the SDK route's replacement trust checks, narrowed-scope enforcement, revocation, or terminal proof.",
+        "The lease description does not explain how a long-running app-server survives separate `forge delegate` invocations, how a new supervisor reconnects after a crash, or how fencing prevents a stale owner from issuing turns after takeover. These are necessary to prove the single-owner criterion across task worktrees sharing one Git common directory.",
+        "Resume has no atomic input boundary. The plan does not say how it snapshots and bounds HEAD, stage-base commits, uncommitted content, and triaged findings while the worktree changes, or how it verifies those bytes before resuming. `docs/specs/warm-codex-threads.md:57-64` also requires a fresh thread when the recorded thread is missing, archived, or compacted past its base; the plan only says 'binding drift'.",
+        "The measurement is not executable as written. The confirmed spec's AC6 requires three recorded fix rounds, three cold and three resumed runs per round, the same model, effort and brief, median comparison, and fewer uncached input tokens and less wall time. The Verify Plan names none of those controls, data fields, or a story-evidence owner.",
+        "Live-event recovery lacks a falsifiable state machine for duplicate or missing events, failed or interrupted turns, `thread/read` disagreement, and the point at which an unknown turn becomes terminal. The plan says reattach and block close but gives no testable reconciliation rule.",
+        "The signal route cannot identify the 'exact turn id' from current records: `signal.cmd_raise` records the story issue key in `task` and `signal.cmd_resolve` records only id and notes. The plan does not assign ownership for binding a signal and its resolution to a task, thread, and active turn, or for handling completion during steering.",
+        "The upgrade task has no specified dependency-install surface or migration rule. The repository has no SDK requirements file, and `upgrade.py` preserves an existing `.envrc` rather than updating it. The plan must identify where the exact pin is installed, how doctor sees that interpreter, and how an in-flight plugin task stays on its original route across upgrade.",
+        "Rollout omits the active D-0040 client-upgrade hold. `plans/deferrals.md:48` requires the D-0039 upgrade findings to be fixed and reviewed; the approved FORGE-COORD-1 plan assigns that release to `LEAN-FIXES`. UPGRADE-CLEANUP has no dependency or refusal condition for that prerequisite.",
+        "The named documentation changes leave a binding contract stale. `docs/specs/dual-coordinator-parity.md:76` still defines Claude delegation as the protected plugin companion, while the plan only assigns changes to the delegation-boundary spec, architecture, and Product Brief. It does not identify this confirmed spec or the current route descriptions in `WORKFLOW.md` and `docs/FACTORY.md` for reconciliation.",
+        "The parity proof names platforms but no executable cells, commands, runner versions, or evidence limits for SDK and plugin routes under all three executor modes. `docs/specs/dual-coordinator-parity.md:144` and Decision 0065 distinguish local macOS observations from Ubuntu/native-Windows CI and forbid presenting package smoke as an authenticated task.",
+        "The decomposition does not establish reviewable ownership where RESUME-FIX and LIVE-EVENTS both consume SDK-ROUTE and likely change delegation, turn state, and ledger readers. It gives neither disjoint measured scopes for parallel work nor an explicit serial dependency, and no task clearly owns the promised installed-client task with a resumed fix round.",
+        "The installed-client end-to-end proof has no named client, exact harness revision, task contract, evidence location, or external-repository authorization boundary. The plan makes that run a story-close condition without a task that can deliver and review it.",
+        "The Risks section says a version mismatch 'refuses before starting a job', while Acceptance Criterion 2 and the Technical Approach select the plugin fallback when the doctor check fails. The plan must distinguish refusal of the SDK route from refusal of delegation.",
+        "The Scope section says Codex workers 'keep full access, as today', but Decision 0081:18-22,44-46 says the supported `codex-plugin-cc` fallback hardcodes workspace-write/read-only app-server policies. `approval_policy=\"never\"` does not establish the promised full-access SDK sandbox.",
+        "Acceptance Criterion 3 says a task cannot close while its Codex worker is running or unknown, without limiting that rule to SDK turns. Decision 0086:27-28 leaves native Codex unchanged, and `docs/specs/delegation-boundary.md:69-77` explicitly allows native close from a preparation row without process or terminal-state proof."
+      ],
+      "delta_index": 6
+    },
+    {
+      "change": "span 7: amended to resolve the plan cold-read findings",
+      "reason": "one amendment after the single cold read, resolving repository-answerable findings",
+      "source": "coordinator amendment 2026-09-24",
+      "findings": [
+        "The executor-mode design does not cover every writer allowed by Decision 0085: hybrid mode also permits an admitted Claude writer, and claude mode must work without Codex. The plan names Claude admission only for claude mode and does not identify how `pre_tool_use.py`, delegation, doctor, grill, review, and close consume one resolver.",
+        "The SDK launch contract leaves key technology choices open: no exact `openai-codex` version, compatible installed Codex binary requirement, explicit sandbox setting, hook enablement, or proof that the Sol/medium lead can delegate edits to Luna/max children. See `docs/specs/warm-codex-threads.md:44-55` and Decision 0084.",
+        "A turn ledger row alone cannot satisfy current Claude write admission. `worker_admission.live_worker_admission` requires a process token, verified ancestry, a held task lock, and a bound brief; `stages._successful_launch_entry_valid` requires a successful launch. The plan does not specify the SDK route's replacement trust checks, narrowed-scope enforcement, revocation, or terminal proof.",
+        "The lease description does not explain how a long-running app-server survives separate `forge delegate` invocations, how a new supervisor reconnects after a crash, or how fencing prevents a stale owner from issuing turns after takeover. These are necessary to prove the single-owner criterion across task worktrees sharing one Git common directory.",
+        "Resume has no atomic input boundary. The plan does not say how it snapshots and bounds HEAD, stage-base commits, uncommitted content, and triaged findings while the worktree changes, or how it verifies those bytes before resuming. `docs/specs/warm-codex-threads.md:57-64` also requires a fresh thread when the recorded thread is missing, archived, or compacted past its base; the plan only says 'binding drift'.",
+        "The measurement is not executable as written. The confirmed spec's AC6 requires three recorded fix rounds, three cold and three resumed runs per round, the same model, effort and brief, median comparison, and fewer uncached input tokens and less wall time. The Verify Plan names none of those controls, data fields, or a story-evidence owner.",
+        "Live-event recovery lacks a falsifiable state machine for duplicate or missing events, failed or interrupted turns, `thread/read` disagreement, and the point at which an unknown turn becomes terminal. The plan says reattach and block close but gives no testable reconciliation rule.",
+        "The signal route cannot identify the 'exact turn id' from current records: `signal.cmd_raise` records the story issue key in `task` and `signal.cmd_resolve` records only id and notes. The plan does not assign ownership for binding a signal and its resolution to a task, thread, and active turn, or for handling completion during steering.",
+        "The upgrade task has no specified dependency-install surface or migration rule. The repository has no SDK requirements file, and `upgrade.py` preserves an existing `.envrc` rather than updating it. The plan must identify where the exact pin is installed, how doctor sees that interpreter, and how an in-flight plugin task stays on its original route across upgrade.",
+        "Rollout omits the active D-0040 client-upgrade hold. `plans/deferrals.md:48` requires the D-0039 upgrade findings to be fixed and reviewed; the approved FORGE-COORD-1 plan assigns that release to `LEAN-FIXES`. UPGRADE-CLEANUP has no dependency or refusal condition for that prerequisite.",
+        "The named documentation changes leave a binding contract stale. `docs/specs/dual-coordinator-parity.md:76` still defines Claude delegation as the protected plugin companion, while the plan only assigns changes to the delegation-boundary spec, architecture, and Product Brief. It does not identify this confirmed spec or the current route descriptions in `WORKFLOW.md` and `docs/FACTORY.md` for reconciliation.",
+        "The parity proof names platforms but no executable cells, commands, runner versions, or evidence limits for SDK and plugin routes under all three executor modes. `docs/specs/dual-coordinator-parity.md:144` and Decision 0065 distinguish local macOS observations from Ubuntu/native-Windows CI and forbid presenting package smoke as an authenticated task.",
+        "The decomposition does not establish reviewable ownership where RESUME-FIX and LIVE-EVENTS both consume SDK-ROUTE and likely change delegation, turn state, and ledger readers. It gives neither disjoint measured scopes for parallel work nor an explicit serial dependency, and no task clearly owns the promised installed-client task with a resumed fix round.",
+        "The installed-client end-to-end proof has no named client, exact harness revision, task contract, evidence location, or external-repository authorization boundary. The plan makes that run a story-close condition without a task that can deliver and review it.",
+        "The Risks section says a version mismatch 'refuses before starting a job', while Acceptance Criterion 2 and the Technical Approach select the plugin fallback when the doctor check fails. The plan must distinguish refusal of the SDK route from refusal of delegation.",
+        "The Scope section says Codex workers 'keep full access, as today', but Decision 0081:18-22,44-46 says the supported `codex-plugin-cc` fallback hardcodes workspace-write/read-only app-server policies. `approval_policy=\"never\"` does not establish the promised full-access SDK sandbox.",
+        "Acceptance Criterion 3 says a task cannot close while its Codex worker is running or unknown, without limiting that rule to SDK turns. Decision 0086:27-28 leaves native Codex unchanged, and `docs/specs/delegation-boundary.md:69-77` explicitly allows native close from a preparation row without process or terminal-state proof."
+      ],
+      "delta_index": 7
+    }
+  ],
+  "artifact_delta": [
+    {
+      "cold_start": 102,
+      "cold_end": 104,
+      "cold": "task plans from the main checkout (both come next, as their own story). Codex workers keep full\naccess, as today; Forge's existing checks keep them inside their task.\n",
+      "final_start": 102,
+      "final_end": 106,
+      "final": "task plans from the main checkout (both come next, as their own story). Workers on the new route run\nwith full access and never ask, as native Codex chats do today; the plugin fallback keeps its current\nsettings. Forge's existing checks keep every worker inside its task. Native Codex coordination is\nunchanged.\n"
+    },
+    {
+      "cold_start": 111,
+      "cold_end": 113,
+      "cold": "3. Every job Forge gives Codex is recorded and admitted the same way today's jobs are, and a task\n   cannot close while its Codex worker is still working or in an unknown state.\n",
+      "final_start": 113,
+      "final_end": 115,
+      "final": "3. Every job Forge gives Codex on the new route is recorded and admitted as strictly as today's\n   plugin jobs, and a task cannot close while such a worker is still working or in an unknown state.\n"
+    },
+    {
+      "cold_start": 126,
+      "cold_end": 127,
+      "cold": "  the exact version and refuses before starting a job if versions don't match.\n",
+      "final_start": 128,
+      "final_end": 131,
+      "final": "  the exact version, and on a mismatch it does not use the new route for that job \u2014 the job runs on\n  the plugin instead, decided before it starts.\n- Rolling out to client repos waits until the Lean fixes lift today's client-upgrade hold.\n"
+    },
+    {
+      "cold_start": 145,
+      "cold_end": 145,
+      "cold": "",
+      "final_start": 149,
+      "final_end": 153,
+      "final": "- One resolver: `FORGE_EXECUTOR` (hybrid default, codex, claude) is read by one function used by the\n  write hook, `forge delegate`, doctor, grill, review and close. Hybrid admits a Claude writer too,\n  under the same gates (decision 0085); claude mode needs no Codex.\n\n"
+    },
+    {
+      "cold_start": 148,
+      "cold_end": 152,
+      "cold": "- SDK route: `openai-codex` pinned exactly, `CodexConfig.codex_bin` = installed `codex`; one\n  app-server per Git common directory held by a lease (pid, start time, fencing counter); `forge\n  delegate` selects the route pre-dispatch from `forge doctor`; explicit declining approval handler;\n  `approval_policy=\"never\"`.\n",
+      "final_start": 156,
+      "final_end": 171,
+      "final": "- SDK route: `openai-codex==0.156.1` in `factory/requirements-sdk.txt`, installed by `forge doctor\n  --fix` into a Forge-managed uv environment that doctor and delegate both use; `CodexConfig.codex_bin`\n  = the installed `codex` (>= the SDK's minimum, 0.151.0). Every turn sets sandbox\n  `danger-full-access` and `approval_policy=\"never\"` explicitly (decision 0081), keeps Codex hooks\n  enabled, and runs the Sol/medium lead with Luna/max subagents (decision 0084) \u2014 SDK-ROUTE proves\n  a child edit lands with the lead's thread. The approval handler declines on every path.\n- Supervisor and lease: `forge delegate` starts or attaches to one detached supervisor per Git\n  common directory, which holds the lease (pid, process start time, fencing counter) and owns the\n  app-server over stdio; delegate talks to it over a local socket. A new supervisor takes over only a\n  dead holder's lease and bumps the counter; every turn carries the counter and a stale one is\n  refused. A mismatch or unhealthy supervisor selects the plugin route pre-dispatch.\n- Admission parity: the supervisor holds the task lock for each turn, carries a process token whose\n  ancestry the write hook verifies (as for companion launches), binds the brief digest and effective\n  scope, honours revocation, and records a terminal turn entry that stage close accepts in place of\n  a successful companion launch. Native close rules are unchanged.\n"
+    },
+    {
+      "cold_start": 155,
+      "cold_end": 162,
+      "cold": "- Resume: fix rounds run `forge delegate` as today, then `thread_resume` with the brief, HEAD, the\n  stage-base diff plus uncommitted changes, and triaged findings; binding drift \u2192 new thread.\n- Events: consume item/diff/token/turn events into the delegation log; reattach via `thread/read`;\n  signals \u2192 `turn/steer` on the exact turn id, else interrupt + resume.\n- Upgrade/cleanup: `forge upgrade` adds the requirement and doctor check idempotently; plugin-route\n  tasks finish on the plugin; archive at task merge and story outcome; prune Forge-owned rollouts.\n- Docs: amend the delegation-boundary spec, dual-coordinator parity architecture and product brief.\n",
+      "final_start": 174,
+      "final_end": 195,
+      "final": "- Resume: fix rounds run `forge delegate` as today, then snapshot the input atomically \u2014 HEAD, the\n  stage base, a tree object of the worktree including uncommitted changes, and the triaged-findings\n  digest \u2014 record it, re-verify it immediately before `thread_resume`, and send the brief, HEAD, the\n  stage-base-to-snapshot diff and the findings. Binding drift, or a missing, archived or\n  compacted-past-base thread, starts a new thread with the reason.\n- Events: a per-turn state machine (started \u2192 running \u2192 completed | failed | interrupted | unknown):\n  duplicate events are ignored by item id; a lost stream reattaches and reconciles with `thread/read`,\n  whose terminal answer wins; a turn with no terminal answer is `unknown` and blocks close until\n  `thread/read` reports terminal.\n- Signals: a worker's `forge signal raise` now records the task, thread id and active turn id; its\n  resolution is sent by `turn/steer` on that turn, or `turn/interrupt` plus a resumed turn; a signal\n  resolved after the turn ended rides the next resumed turn.\n- Upgrade/cleanup: `forge upgrade` adds `factory/requirements-sdk.txt` and the doctor check\n  idempotently and leaves `.envrc` alone; each task's route is recorded at its first delegation, so a\n  task started on the plugin stays on it across an upgrade; UPGRADE-CLEANUP refuses to ship client\n  upgrades while deferral D-0040 is open. Archive a task's thread at its merge and the rest at story\n  outcome; prune Forge-owned rollouts only.\n- Docs: amend the delegation-boundary spec, the dual-coordinator parity spec and architecture, the\n  product brief, WORKFLOW.md and docs/FACTORY.md where they name the plugin as the Claude route.\n- Evidence: benchmark results in `.factory/stories/FORGE-WARM-1/benchmark.json` and the end-to-end\n  run in `.factory/stories/FORGE-WARM-1/e2e.json`, both through schema-validated recorders.\n"
+    },
+    {
+      "cold_start": 172,
+      "cold_end": 174,
+      "cold": "| Live / LIVE-EVENTS | Live event stream with reattach; signals steer or interrupt the running turn | SDK-ROUTE | false |\n| Rollout / UPGRADE-CLEANUP | Client upgrade path, archival and pruning, full parity matrix on three platforms | RESUME-FIX, LIVE-EVENTS | false |\n",
+      "final_start": 205,
+      "final_end": 207,
+      "final": "| Live / LIVE-EVENTS | Turn state machine, reattach, signals bound to their turn and answered by steer or interrupt | RESUME-FIX | false |\n| Rollout / UPGRADE-CLEANUP | Client upgrade path, archival and pruning, parity matrix, installed-client end-to-end run | LIVE-EVENTS | false |\n"
+    },
+    {
+      "cold_start": 178,
+      "cold_end": 180,
+      "cold": "green CI. RESUME-FIX records the before/after measurement. The story closes after a real task runs\nend to end in hybrid mode on the SDK route, with a resumed fix round, on an installed client.\n",
+      "final_start": 211,
+      "final_end": 219,
+      "final": "green CI. RESUME-FIX records the benchmark exactly as the spec's criterion 6 defines it: three recorded\nfix rounds, each replayed three times cold and three times resumed with the same model, effort and\nbrief; median uncached input tokens and wall time. UPGRADE-CLEANUP runs the parity matrix \u2014 every\nexecutor mode on the SDK and plugin routes, as pytest cells on Ubuntu and native-Windows CI plus local\nmacOS, labelled per decision 0065 (CI cells are not authenticated tasks) \u2014 and the end-to-end run: a\nthrowaway client created from this template with `forge init` in a temporary directory (never a real\nclient repository), one real task on the SDK route including a resumed fix round, at a recorded\nharness commit.\n"
+    }
+  ],
+  "questions_asked": 0,
+  "summary": "One cold read (14 gaps, 3 contradictions), all repository-answerable; plan amended once.",
+  "input_sha256": "91a0ae355b5d081399e0f59c1caa0037a7af2cd7b8de0311a9ff78acec6a5121",
+  "recorded_at": "2026-09-24T01:20:29+00:00",
+  "commit": "88b0707d4371ad04879455e951ba3ddb75ecdfdc",
+  "cold_input_sha256": "92c91a04c29c4ff984dfc2af270095d233a94112ff863583551801a239683e5f",
+  "final_artifact_sha256": "c9450a023255e595f85372a75197a05a932e2f82d24f3915695cc7bcaa462fef"
+}

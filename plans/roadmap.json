@@ -996,10 +996,34 @@
       "completed_at": "2026-09-23T01:35:07+00:00",
       "history": ".factory/history/GATES-1/",
       "outcome": "T1-T3 shipped to main (#215 round provenance, #220 launch-row collapse, #226 shared requirements digest). T4 and T5 retired as obsolete: they extended grill-round and manifest machinery that the Lean workflow (PR #229) removes. Closed by owner decision, 2026-09-23."
+    },
+    {
+      "key": "FORGE-WARM-1",
+      "title": "Hybrid mode reuses warm Codex worker threads",
+      "story": "As a developer running Forge in hybrid mode, I get review-fix rounds from a Codex worker that already knows the task, so fixes land faster without re-reading the repo",
+      "acceptance_criteria": [
+        "FORGE_EXECUTOR selects hybrid (default), codex or claude per decision 0085",
+        "Hybrid delegation uses the pinned SDK route when doctor passes, else the plugin route pre-dispatch",
+        "Every SDK turn is admitted by a recorded ledger row; close needs a terminal turn",
+        "Review-fix rounds resume the task's worker thread with brief, HEAD, diff and findings",
+        "A recorded benchmark shows resumed fix rounds use fewer uncached tokens and less time",
+        "Live event stream with reattach; signals steer or interrupt the active turn",
+        "One lease-held app-server per repository",
+        "forge upgrade adds the SDK route to existing clients idempotently; plugin tasks keep working",
+        "Forge threads are archived at task merge and story close; pruning touches Forge threads only",
+        "Parity matrix covers claude, codex and hybrid on macOS, Linux and Windows"
+      ],
+      "order": 48,
+      "status": "active",
+      "epic": "symphony-forge",
+      "skill": "backend",
+      "kind": "feature",
+      "depends_on": [],
+      "spec": "docs/specs/warm-codex-threads.md"
     }
   ],
   "generated_by": "human",
-  "updated_at": "2026-09-23T01:35:07+00:00",
+  "updated_at": "2026-09-24T01:13:46+00:00",
   "epics": [
     {
       "id": "symphony-forge",
