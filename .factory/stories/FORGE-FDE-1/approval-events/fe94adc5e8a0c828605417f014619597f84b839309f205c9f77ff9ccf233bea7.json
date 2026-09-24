@@ -1,0 +1,11 @@
+{
+  "approved_plan_sha256": "f4d50c7b95a191506fd9a1317a0c7857e8d971c7bab1eb036c9cd87cbad4e393",
+  "approved_by": "human-via-Claude",
+  "approved_at": "2026-09-24T15:39:11+00:00",
+  "runtime": "claude",
+  "session_id": "a0106b2c-e659-5e23-b0c7-d419b1d20fda",
+  "event_id": "toolu_01VQmDoSbZ9G5LxS5ZH7MzPt",
+  "plan_kind": "story",
+  "story": "FORGE-FDE-1",
+  "task": ""
+}

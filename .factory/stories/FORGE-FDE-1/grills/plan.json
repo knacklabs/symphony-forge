@@ -1,0 +1,475 @@
+{
+  "generated_by": "griller",
+  "gate": "plan",
+  "verdict": "pass",
+  "gaps": [
+    "The draft omits the required `Task decomposition` and `Verify plan` sections, so the task seams and acceptance checks are not reviewable in the plan format (`factory/prompts/planner.md:41-52`).",
+    "The discovery approach does not state the Lite two-question limit, the full eight-question limit, or how unanswered fields become `unknown` at the limit (`docs/specs/fde-discovery.md:26-30`).",
+    "Changing only the scaffolded DISCOVERY template leaves existing client DISCOVERY files on the old `## Problem` shape; adopt preserves files already present. The plan does not say how discovery adds cards there (`factory/scripts/forge_cli/scaffold.py:174-190`, `factory/scripts/forge_cli/adopt.py:351`).",
+    "The completion and test language does not prove that the chosen card is linked into the Brief and spec, that the human's option and reason are recorded, or that factual questions use neutral choices (`docs/specs/fde-discovery.md:32-53`).",
+    "The confirmed spec directs agents to run `forge context harvest`, but the CLI offers only `scan`, `list`, and `mark`. The plan does not replace this dead-end instruction in the customer-notes flow (`docs/specs/fde-discovery.md:43-46`, `factory/scripts/forge.py:517-536`).",
+    "The plan names payback boundary tests but gives no executable examples or verification method for the agent's recommendation and the unknown-value case; the required `Verify plan` section is absent (`docs/specs/fde-discovery.md:55-63`, `factory/prompts/planner.md:49-52`).",
+    "Adding a mandatory Success measure without updating spec-authoring guidance leaves `spec save` help and the spec README describing only the old required sections, so authors can reach confirmation with a draft they were told was complete (`factory/scripts/forge.py:395-406`, `docs/specs/README.md:3-10`).",
+    "The proposed optional `due` column needs an explicit backward-compatible parse and save contract for existing six-column rows; the current parser is strict and `save_rows` rewrites the whole ledger (`factory/scripts/forge_cli/deferrals.py:28-75`, `plans/deferrals.md:7-10`).",
+    "The automatic success-check row has no defined `why deferred` or `trigger to revisit` values, although `defer add` requires both; the plan also leaves the stable spec identity used to prevent duplicate rows on repeated `outcome set` calls unspecified (`factory/scripts/forge_cli/deferrals.py:82-98`, `factory/scripts/forge_cli/outcome.py:33-55`).",
+    "Using deferrals for scheduled success checks also requires a disposition for the shipped stale-deferral audit: it flags every open row older than 60 days by its added date, even when its check date is later (`factory/scripts/forge_cli/audit.py:86-100`).",
+    "Moving gstack history into `docs/context/` makes each archived file a pending inbox item. Marking it harvested requires named output artifacts; the plan names neither the outputs nor how the archive is processed without a false harvest claim (`factory/scripts/forge_cli/context.py:56-86`, `factory/scripts/forge_cli/context.py:178-209`).",
+    "REMOVE-GSTACK spans the CLI, doctor, adoption, configuration, documentation, archive, and widely separated tests. The plan does not split this into bounded reviewable outcomes despite the one-session task rule (`factory/prompts/planner.md:114-119`, `factory/tests/test_gates.py:6792`, `factory/tests/test_gates.py:23114`)."
+  ],
+  "contradictions": [
+    "The plan promises a success check after the last story ships but creates it in `outcome set`, which runs before `pr_ready` can refuse shipment; a failed or abandoned closeout can therefore leave a due check for an unshipped spec (`docs/specs/fde-discovery.md:68-75`, `factory/scripts/pr_ready.py:139-154`, `factory/scripts/pr_ready.py:166-185`).",
+    "A success check is not deliberately removed scope, yet the proposed ledger explicitly defines every row that way and tells operators to put fired items back on the roadmap. The plan changes that meaning without reconciling its commands and guidance (`factory/scripts/forge_cli/deferrals.py:1-9`, `factory/scripts/forge_cli/deferrals.py:22-29`).",
+    "The claim that all three tasks have disjoint scopes is false: FDE-SKILL and REMOVE-GSTACK both change the Forge skill, scaffold and harness manifest (`factory/skills/forge.md:133-153`, `factory/scripts/forge_cli/scaffold.py:36`, `factory/scripts/forge_cli/scaffold.py:174`, `harness.yaml:21-39`).",
+    "The plan assigns required cleanup to FORGE-ACCESS-1 and FORGE-UPG-2, but both are pending and FORGE-FDE-1 has no dependency on either. FDE can therefore finish while its own gstack-removal criterion is unmet (`plans/roadmap.json:1001-1016`, `plans/roadmap.json:1019-1034`, `plans/roadmap.json:1037-1052`).",
+    "The plan promises no gstack references in Forge's own code while explicitly retaining the `.gstack/` token in `stages.py` and omitting the live token in `check_refactor_delta.py`. The acceptance criterion needs a named replacement authority or a narrower boundary (`docs/specs/fde-discovery.md:110-113`, `factory/scripts/forge_cli/stages.py:62-65`, `factory/scripts/check_refactor_delta.py:21-24`)."
+  ],
+  "resolutions": [
+    "Task decomposition and Verify plan sections are added (plan format).",
+    "The skill states the limits: two questions for a Lite fix, eight for a story, unanswered fields written as unknown and priced as guessed (Technical approach: Skill).",
+    "On first use the agent adds `## Problems` to an existing DISCOVERY.md; only new scaffolds get it from the template (Technical approach: Skill).",
+    "The Verify plan adds a scripted walkthrough in a throwaway client checking one question per turn with Why I ask, neutral options for facts, the stop at the limit, the card named in brief and spec, and the recorded choice.",
+    "The spec now says the agent writes the notes into the cards and runs `forge context mark <note> harvested` with DISCOVERY.md as output; `harvest` is not used (spec amended; Technical approach: Customer notes).",
+    "`forge payback` makes the rule executable with defined inputs and exact boundaries; tests cover 3, 12 and the unknown case (Technical approach; Verify plan).",
+    "`spec save` help and docs/specs/README.md list the Success measure section (Technical approach: Specs).",
+    "Success checks no longer use the deferral ledger (spec amended), so its six-column parser is unchanged.",
+    "Success checks no longer create deferral rows (spec amended); the check lives on the roadmap item and outcome, so no why/trigger values or duplicate identity are needed.",
+    "The stale-deferral audit is untouched because success checks are not deferrals (Technical approach: Check-back).",
+    "The archive is summarised in docs/memory/gstack-history.md and its files are marked harvested with that note as the named output (Technical approach: gstack removal docs).",
+    "gstack removal is split into REMOVE-GSTACK-CODE and REMOVE-GSTACK-DOCS, each bounded (Task decomposition).",
+    "The check date is set at `forge pr-link` (the merged-PR record), not at `forge outcome set`, so it exists only for shipped stories (spec amended; Technical approach: Check-back).",
+    "Success checks are not deferrals: they live on the roadmap item (success_check_due) and the outcome (measured) via `forge outcome check`; the deferral ledger's meaning is unchanged (spec amended).",
+    "Scopes are sequenced: REMOVE-GSTACK-CODE follows FDE-SKILL because both touch harness.yaml, scaffold.py and the skill; FDE-SKILL and SUCCESS-MEASURE are disjoint and parallel (Task decomposition).",
+    "This story removes every gstack reference itself (whichever code exists when the task runs); nothing is assigned to FORGE-ACCESS-1 or FORGE-UPG-2 (Technical approach: gstack removal code).",
+    "All `.gstack/` path tokens are removed, including stages.py and check_refactor_delta.py; the spec's criterion now names them (spec amended)."
+  ],
+  "finding_dispositions": [
+    {
+      "finding": "The draft omits the required `Task decomposition` and `Verify plan` sections, so the task seams and acceptance checks are not reviewable in the plan format (`factory/prompts/planner.md:41-52`).",
+      "resolution": "Task decomposition and Verify plan sections are added (plan format).",
+      "source": "repository fact"
+    },
+    {
+      "finding": "The discovery approach does not state the Lite two-question limit, the full eight-question limit, or how unanswered fields become `unknown` at the limit (`docs/specs/fde-discovery.md:26-30`).",
+      "resolution": "The skill states the limits: two questions for a Lite fix, eight for a story, unanswered fields written as unknown and priced as guessed (Technical approach: Skill).",
+      "source": "repository fact"
+    },
+    {
+      "finding": "Changing only the scaffolded DISCOVERY template leaves existing client DISCOVERY files on the old `## Problem` shape; adopt preserves files already present. The plan does not say how discovery adds cards there (`factory/scripts/forge_cli/scaffold.py:174-190`, `factory/scripts/forge_cli/adopt.py:351`).",
+      "resolution": "On first use the agent adds `## Problems` to an existing DISCOVERY.md; only new scaffolds get it from the template (Technical approach: Skill).",
+      "source": "repository fact"
+    },
+    {
+      "finding": "The completion and test language does not prove that the chosen card is linked into the Brief and spec, that the human's option and reason are recorded, or that factual questions use neutral choices (`docs/specs/fde-discovery.md:32-53`).",
+      "resolution": "The Verify plan adds a scripted walkthrough in a throwaway client checking one question per turn with Why I ask, neutral options for facts, the stop at the limit, the card named in brief and spec, and the recorded choice.",
+      "source": "repository fact"
+    },
+    {
+      "finding": "The confirmed spec directs agents to run `forge context harvest`, but the CLI offers only `scan`, `list`, and `mark`. The plan does not replace this dead-end instruction in the customer-notes flow (`docs/specs/fde-discovery.md:43-46`, `factory/scripts/forge.py:517-536`).",
+      "resolution": "The spec now says the agent writes the notes into the cards and runs `forge context mark <note> harvested` with DISCOVERY.md as output; `harvest` is not used (spec amended; Technical approach: Customer notes).",
+      "source": "repository fact"
+    },
+    {
+      "finding": "The plan names payback boundary tests but gives no executable examples or verification method for the agent's recommendation and the unknown-value case; the required `Verify plan` section is absent (`docs/specs/fde-discovery.md:55-63`, `factory/prompts/planner.md:49-52`).",
+      "resolution": "`forge payback` makes the rule executable with defined inputs and exact boundaries; tests cover 3, 12 and the unknown case (Technical approach; Verify plan).",
+      "source": "repository fact"
+    },
+    {
+      "finding": "Adding a mandatory Success measure without updating spec-authoring guidance leaves `spec save` help and the spec README describing only the old required sections, so authors can reach confirmation with a draft they were told was complete (`factory/scripts/forge.py:395-406`, `docs/specs/README.md:3-10`).",
+      "resolution": "`spec save` help and docs/specs/README.md list the Success measure section (Technical approach: Specs).",
+      "source": "repository fact"
+    },
+    {
+      "finding": "The proposed optional `due` column needs an explicit backward-compatible parse and save contract for existing six-column rows; the current parser is strict and `save_rows` rewrites the whole ledger (`factory/scripts/forge_cli/deferrals.py:28-75`, `plans/deferrals.md:7-10`).",
+      "resolution": "Success checks no longer use the deferral ledger (spec amended), so its six-column parser is unchanged.",
+      "source": "repository fact"
+    },
+    {
+      "finding": "The automatic success-check row has no defined `why deferred` or `trigger to revisit` values, although `defer add` requires both; the plan also leaves the stable spec identity used to prevent duplicate rows on repeated `outcome set` calls unspecified (`factory/scripts/forge_cli/deferrals.py:82-98`, `factory/scripts/forge_cli/outcome.py:33-55`).",
+      "resolution": "Success checks no longer create deferral rows (spec amended); the check lives on the roadmap item and outcome, so no why/trigger values or duplicate identity are needed.",
+      "source": "repository fact"
+    },
+    {
+      "finding": "Using deferrals for scheduled success checks also requires a disposition for the shipped stale-deferral audit: it flags every open row older than 60 days by its added date, even when its check date is later (`factory/scripts/forge_cli/audit.py:86-100`).",
+      "resolution": "The stale-deferral audit is untouched because success checks are not deferrals (Technical approach: Check-back).",
+      "source": "repository fact"
+    },
+    {
+      "finding": "Moving gstack history into `docs/context/` makes each archived file a pending inbox item. Marking it harvested requires named output artifacts; the plan names neither the outputs nor how the archive is processed without a false harvest claim (`factory/scripts/forge_cli/context.py:56-86`, `factory/scripts/forge_cli/context.py:178-209`).",
+      "resolution": "The archive is summarised in docs/memory/gstack-history.md and its files are marked harvested with that note as the named output (Technical approach: gstack removal docs).",
+      "source": "repository fact"
+    },
+    {
+      "finding": "REMOVE-GSTACK spans the CLI, doctor, adoption, configuration, documentation, archive, and widely separated tests. The plan does not split this into bounded reviewable outcomes despite the one-session task rule (`factory/prompts/planner.md:114-119`, `factory/tests/test_gates.py:6792`, `factory/tests/test_gates.py:23114`).",
+      "resolution": "gstack removal is split into REMOVE-GSTACK-CODE and REMOVE-GSTACK-DOCS, each bounded (Task decomposition).",
+      "source": "repository fact"
+    },
+    {
+      "finding": "The plan promises a success check after the last story ships but creates it in `outcome set`, which runs before `pr_ready` can refuse shipment; a failed or abandoned closeout can therefore leave a due check for an unshipped spec (`docs/specs/fde-discovery.md:68-75`, `factory/scripts/pr_ready.py:139-154`, `factory/scripts/pr_ready.py:166-185`).",
+      "resolution": "The check date is set at `forge pr-link` (the merged-PR record), not at `forge outcome set`, so it exists only for shipped stories (spec amended; Technical approach: Check-back).",
+      "source": "repository fact"
+    },
+    {
+      "finding": "A success check is not deliberately removed scope, yet the proposed ledger explicitly defines every row that way and tells operators to put fired items back on the roadmap. The plan changes that meaning without reconciling its commands and guidance (`factory/scripts/forge_cli/deferrals.py:1-9`, `factory/scripts/forge_cli/deferrals.py:22-29`).",
+      "resolution": "Success checks are not deferrals: they live on the roadmap item (success_check_due) and the outcome (measured) via `forge outcome check`; the deferral ledger's meaning is unchanged (spec amended).",
+      "source": "repository fact"
+    },
+    {
+      "finding": "The claim that all three tasks have disjoint scopes is false: FDE-SKILL and REMOVE-GSTACK both change the Forge skill, scaffold and harness manifest (`factory/skills/forge.md:133-153`, `factory/scripts/forge_cli/scaffold.py:36`, `factory/scripts/forge_cli/scaffold.py:174`, `harness.yaml:21-39`).",
+      "resolution": "Scopes are sequenced: REMOVE-GSTACK-CODE follows FDE-SKILL because both touch harness.yaml, scaffold.py and the skill; FDE-SKILL and SUCCESS-MEASURE are disjoint and parallel (Task decomposition).",
+      "source": "repository fact"
+    },
+    {
+      "finding": "The plan assigns required cleanup to FORGE-ACCESS-1 and FORGE-UPG-2, but both are pending and FORGE-FDE-1 has no dependency on either. FDE can therefore finish while its own gstack-removal criterion is unmet (`plans/roadmap.json:1001-1016`, `plans/roadmap.json:1019-1034`, `plans/roadmap.json:1037-1052`).",
+      "resolution": "This story removes every gstack reference itself (whichever code exists when the task runs); nothing is assigned to FORGE-ACCESS-1 or FORGE-UPG-2 (Technical approach: gstack removal code).",
+      "source": "repository fact"
+    },
+    {
+      "finding": "The plan promises no gstack references in Forge's own code while explicitly retaining the `.gstack/` token in `stages.py` and omitting the live token in `check_refactor_delta.py`. The acceptance criterion needs a named replacement authority or a narrower boundary (`docs/specs/fde-discovery.md:110-113`, `factory/scripts/forge_cli/stages.py:62-65`, `factory/scripts/check_refactor_delta.py:21-24`).",
+      "resolution": "All `.gstack/` path tokens are removed, including stages.py and check_refactor_delta.py; the spec's criterion now names them (spec amended).",
+      "source": "repository fact"
+    }
+  ],
+  "amendments": [
+    {
+      "change": "span 0: rewritten to resolve the cold-read findings",
+      "reason": "one amendment after the single cold read, resolving repository-answerable findings",
+      "source": "coordinator amendment 2026-09-24",
+      "findings": [
+        "The draft omits the required `Task decomposition` and `Verify plan` sections, so the task seams and acceptance checks are not reviewable in the plan format (`factory/prompts/planner.md:41-52`).",
+        "The discovery approach does not state the Lite two-question limit, the full eight-question limit, or how unanswered fields become `unknown` at the limit (`docs/specs/fde-discovery.md:26-30`).",
+        "Changing only the scaffolded DISCOVERY template leaves existing client DISCOVERY files on the old `## Problem` shape; adopt preserves files already present. The plan does not say how discovery adds cards there (`factory/scripts/forge_cli/scaffold.py:174-190`, `factory/scripts/forge_cli/adopt.py:351`).",
+        "The completion and test language does not prove that the chosen card is linked into the Brief and spec, that the human's option and reason are recorded, or that factual questions use neutral choices (`docs/specs/fde-discovery.md:32-53`).",
+        "The confirmed spec directs agents to run `forge context harvest`, but the CLI offers only `scan`, `list`, and `mark`. The plan does not replace this dead-end instruction in the customer-notes flow (`docs/specs/fde-discovery.md:43-46`, `factory/scripts/forge.py:517-536`).",
+        "The plan names payback boundary tests but gives no executable examples or verification method for the agent's recommendation and the unknown-value case; the required `Verify plan` section is absent (`docs/specs/fde-discovery.md:55-63`, `factory/prompts/planner.md:49-52`).",
+        "Adding a mandatory Success measure without updating spec-authoring guidance leaves `spec save` help and the spec README describing only the old required sections, so authors can reach confirmation with a draft they were told was complete (`factory/scripts/forge.py:395-406`, `docs/specs/README.md:3-10`).",
+        "The proposed optional `due` column needs an explicit backward-compatible parse and save contract for existing six-column rows; the current parser is strict and `save_rows` rewrites the whole ledger (`factory/scripts/forge_cli/deferrals.py:28-75`, `plans/deferrals.md:7-10`).",
+        "The automatic success-check row has no defined `why deferred` or `trigger to revisit` values, although `defer add` requires both; the plan also leaves the stable spec identity used to prevent duplicate rows on repeated `outcome set` calls unspecified (`factory/scripts/forge_cli/deferrals.py:82-98`, `factory/scripts/forge_cli/outcome.py:33-55`).",
+        "Using deferrals for scheduled success checks also requires a disposition for the shipped stale-deferral audit: it flags every open row older than 60 days by its added date, even when its check date is later (`factory/scripts/forge_cli/audit.py:86-100`).",
+        "Moving gstack history into `docs/context/` makes each archived file a pending inbox item. Marking it harvested requires named output artifacts; the plan names neither the outputs nor how the archive is processed without a false harvest claim (`factory/scripts/forge_cli/context.py:56-86`, `factory/scripts/forge_cli/context.py:178-209`).",
+        "REMOVE-GSTACK spans the CLI, doctor, adoption, configuration, documentation, archive, and widely separated tests. The plan does not split this into bounded reviewable outcomes despite the one-session task rule (`factory/prompts/planner.md:114-119`, `factory/tests/test_gates.py:6792`, `factory/tests/test_gates.py:23114`).",
+        "The plan promises a success check after the last story ships but creates it in `outcome set`, which runs before `pr_ready` can refuse shipment; a failed or abandoned closeout can therefore leave a due check for an unshipped spec (`docs/specs/fde-discovery.md:68-75`, `factory/scripts/pr_ready.py:139-154`, `factory/scripts/pr_ready.py:166-185`).",
+        "A success check is not deliberately removed scope, yet the proposed ledger explicitly defines every row that way and tells operators to put fired items back on the roadmap. The plan changes that meaning without reconciling its commands and guidance (`factory/scripts/forge_cli/deferrals.py:1-9`, `factory/scripts/forge_cli/deferrals.py:22-29`).",
+        "The claim that all three tasks have disjoint scopes is false: FDE-SKILL and REMOVE-GSTACK both change the Forge skill, scaffold and harness manifest (`factory/skills/forge.md:133-153`, `factory/scripts/forge_cli/scaffold.py:36`, `factory/scripts/forge_cli/scaffold.py:174`, `harness.yaml:21-39`).",
+        "The plan assigns required cleanup to FORGE-ACCESS-1 and FORGE-UPG-2, but both are pending and FORGE-FDE-1 has no dependency on either. FDE can therefore finish while its own gstack-removal criterion is unmet (`plans/roadmap.json:1001-1016`, `plans/roadmap.json:1019-1034`, `plans/roadmap.json:1037-1052`).",
+        "The plan promises no gstack references in Forge's own code while explicitly retaining the `.gstack/` token in `stages.py` and omitting the live token in `check_refactor_delta.py`. The acceptance criterion needs a named replacement authority or a narrower boundary (`docs/specs/fde-discovery.md:110-113`, `factory/scripts/forge_cli/stages.py:62-65`, `factory/scripts/check_refactor_delta.py:21-24`)."
+      ],
+      "delta_index": 0
+    },
+    {
+      "change": "span 1: rewritten to resolve the cold-read findings",
+      "reason": "one amendment after the single cold read, resolving repository-answerable findings",
+      "source": "coordinator amendment 2026-09-24",
+      "findings": [
+        "The draft omits the required `Task decomposition` and `Verify plan` sections, so the task seams and acceptance checks are not reviewable in the plan format (`factory/prompts/planner.md:41-52`).",
+        "The discovery approach does not state the Lite two-question limit, the full eight-question limit, or how unanswered fields become `unknown` at the limit (`docs/specs/fde-discovery.md:26-30`).",
+        "Changing only the scaffolded DISCOVERY template leaves existing client DISCOVERY files on the old `## Problem` shape; adopt preserves files already present. The plan does not say how discovery adds cards there (`factory/scripts/forge_cli/scaffold.py:174-190`, `factory/scripts/forge_cli/adopt.py:351`).",
+        "The completion and test language does not prove that the chosen card is linked into the Brief and spec, that the human's option and reason are recorded, or that factual questions use neutral choices (`docs/specs/fde-discovery.md:32-53`).",
+        "The confirmed spec directs agents to run `forge context harvest`, but the CLI offers only `scan`, `list`, and `mark`. The plan does not replace this dead-end instruction in the customer-notes flow (`docs/specs/fde-discovery.md:43-46`, `factory/scripts/forge.py:517-536`).",
+        "The plan names payback boundary tests but gives no executable examples or verification method for the agent's recommendation and the unknown-value case; the required `Verify plan` section is absent (`docs/specs/fde-discovery.md:55-63`, `factory/prompts/planner.md:49-52`).",
+        "Adding a mandatory Success measure without updating spec-authoring guidance leaves `spec save` help and the spec README describing only the old required sections, so authors can reach confirmation with a draft they were told was complete (`factory/scripts/forge.py:395-406`, `docs/specs/README.md:3-10`).",
+        "The proposed optional `due` column needs an explicit backward-compatible parse and save contract for existing six-column rows; the current parser is strict and `save_rows` rewrites the whole ledger (`factory/scripts/forge_cli/deferrals.py:28-75`, `plans/deferrals.md:7-10`).",
+        "The automatic success-check row has no defined `why deferred` or `trigger to revisit` values, although `defer add` requires both; the plan also leaves the stable spec identity used to prevent duplicate rows on repeated `outcome set` calls unspecified (`factory/scripts/forge_cli/deferrals.py:82-98`, `factory/scripts/forge_cli/outcome.py:33-55`).",
+        "Using deferrals for scheduled success checks also requires a disposition for the shipped stale-deferral audit: it flags every open row older than 60 days by its added date, even when its check date is later (`factory/scripts/forge_cli/audit.py:86-100`).",
+        "Moving gstack history into `docs/context/` makes each archived file a pending inbox item. Marking it harvested requires named output artifacts; the plan names neither the outputs nor how the archive is processed without a false harvest claim (`factory/scripts/forge_cli/context.py:56-86`, `factory/scripts/forge_cli/context.py:178-209`).",
+        "REMOVE-GSTACK spans the CLI, doctor, adoption, configuration, documentation, archive, and widely separated tests. The plan does not split this into bounded reviewable outcomes despite the one-session task rule (`factory/prompts/planner.md:114-119`, `factory/tests/test_gates.py:6792`, `factory/tests/test_gates.py:23114`).",
+        "The plan promises a success check after the last story ships but creates it in `outcome set`, which runs before `pr_ready` can refuse shipment; a failed or abandoned closeout can therefore leave a due check for an unshipped spec (`docs/specs/fde-discovery.md:68-75`, `factory/scripts/pr_ready.py:139-154`, `factory/scripts/pr_ready.py:166-185`).",
+        "A success check is not deliberately removed scope, yet the proposed ledger explicitly defines every row that way and tells operators to put fired items back on the roadmap. The plan changes that meaning without reconciling its commands and guidance (`factory/scripts/forge_cli/deferrals.py:1-9`, `factory/scripts/forge_cli/deferrals.py:22-29`).",
+        "The claim that all three tasks have disjoint scopes is false: FDE-SKILL and REMOVE-GSTACK both change the Forge skill, scaffold and harness manifest (`factory/skills/forge.md:133-153`, `factory/scripts/forge_cli/scaffold.py:36`, `factory/scripts/forge_cli/scaffold.py:174`, `harness.yaml:21-39`).",
+        "The plan assigns required cleanup to FORGE-ACCESS-1 and FORGE-UPG-2, but both are pending and FORGE-FDE-1 has no dependency on either. FDE can therefore finish while its own gstack-removal criterion is unmet (`plans/roadmap.json:1001-1016`, `plans/roadmap.json:1019-1034`, `plans/roadmap.json:1037-1052`).",
+        "The plan promises no gstack references in Forge's own code while explicitly retaining the `.gstack/` token in `stages.py` and omitting the live token in `check_refactor_delta.py`. The acceptance criterion needs a named replacement authority or a narrower boundary (`docs/specs/fde-discovery.md:110-113`, `factory/scripts/forge_cli/stages.py:62-65`, `factory/scripts/check_refactor_delta.py:21-24`)."
+      ],
+      "delta_index": 1
+    },
+    {
+      "change": "span 2: rewritten to resolve the cold-read findings",
+      "reason": "one amendment after the single cold read, resolving repository-answerable findings",
+      "source": "coordinator amendment 2026-09-24",
+      "findings": [
+        "The draft omits the required `Task decomposition` and `Verify plan` sections, so the task seams and acceptance checks are not reviewable in the plan format (`factory/prompts/planner.md:41-52`).",
+        "The discovery approach does not state the Lite two-question limit, the full eight-question limit, or how unanswered fields become `unknown` at the limit (`docs/specs/fde-discovery.md:26-30`).",
+        "Changing only the scaffolded DISCOVERY template leaves existing client DISCOVERY files on the old `## Problem` shape; adopt preserves files already present. The plan does not say how discovery adds cards there (`factory/scripts/forge_cli/scaffold.py:174-190`, `factory/scripts/forge_cli/adopt.py:351`).",
+        "The completion and test language does not prove that the chosen card is linked into the Brief and spec, that the human's option and reason are recorded, or that factual questions use neutral choices (`docs/specs/fde-discovery.md:32-53`).",
+        "The confirmed spec directs agents to run `forge context harvest`, but the CLI offers only `scan`, `list`, and `mark`. The plan does not replace this dead-end instruction in the customer-notes flow (`docs/specs/fde-discovery.md:43-46`, `factory/scripts/forge.py:517-536`).",
+        "The plan names payback boundary tests but gives no executable examples or verification method for the agent's recommendation and the unknown-value case; the required `Verify plan` section is absent (`docs/specs/fde-discovery.md:55-63`, `factory/prompts/planner.md:49-52`).",
+        "Adding a mandatory Success measure without updating spec-authoring guidance leaves `spec save` help and the spec README describing only the old required sections, so authors can reach confirmation with a draft they were told was complete (`factory/scripts/forge.py:395-406`, `docs/specs/README.md:3-10`).",
+        "The proposed optional `due` column needs an explicit backward-compatible parse and save contract for existing six-column rows; the current parser is strict and `save_rows` rewrites the whole ledger (`factory/scripts/forge_cli/deferrals.py:28-75`, `plans/deferrals.md:7-10`).",
+        "The automatic success-check row has no defined `why deferred` or `trigger to revisit` values, although `defer add` requires both; the plan also leaves the stable spec identity used to prevent duplicate rows on repeated `outcome set` calls unspecified (`factory/scripts/forge_cli/deferrals.py:82-98`, `factory/scripts/forge_cli/outcome.py:33-55`).",
+        "Using deferrals for scheduled success checks also requires a disposition for the shipped stale-deferral audit: it flags every open row older than 60 days by its added date, even when its check date is later (`factory/scripts/forge_cli/audit.py:86-100`).",
+        "Moving gstack history into `docs/context/` makes each archived file a pending inbox item. Marking it harvested requires named output artifacts; the plan names neither the outputs nor how the archive is processed without a false harvest claim (`factory/scripts/forge_cli/context.py:56-86`, `factory/scripts/forge_cli/context.py:178-209`).",
+        "REMOVE-GSTACK spans the CLI, doctor, adoption, configuration, documentation, archive, and widely separated tests. The plan does not split this into bounded reviewable outcomes despite the one-session task rule (`factory/prompts/planner.md:114-119`, `factory/tests/test_gates.py:6792`, `factory/tests/test_gates.py:23114`).",
+        "The plan promises a success check after the last story ships but creates it in `outcome set`, which runs before `pr_ready` can refuse shipment; a failed or abandoned closeout can therefore leave a due check for an unshipped spec (`docs/specs/fde-discovery.md:68-75`, `factory/scripts/pr_ready.py:139-154`, `factory/scripts/pr_ready.py:166-185`).",
+        "A success check is not deliberately removed scope, yet the proposed ledger explicitly defines every row that way and tells operators to put fired items back on the roadmap. The plan changes that meaning without reconciling its commands and guidance (`factory/scripts/forge_cli/deferrals.py:1-9`, `factory/scripts/forge_cli/deferrals.py:22-29`).",
+        "The claim that all three tasks have disjoint scopes is false: FDE-SKILL and REMOVE-GSTACK both change the Forge skill, scaffold and harness manifest (`factory/skills/forge.md:133-153`, `factory/scripts/forge_cli/scaffold.py:36`, `factory/scripts/forge_cli/scaffold.py:174`, `harness.yaml:21-39`).",
+        "The plan assigns required cleanup to FORGE-ACCESS-1 and FORGE-UPG-2, but both are pending and FORGE-FDE-1 has no dependency on either. FDE can therefore finish while its own gstack-removal criterion is unmet (`plans/roadmap.json:1001-1016`, `plans/roadmap.json:1019-1034`, `plans/roadmap.json:1037-1052`).",
+        "The plan promises no gstack references in Forge's own code while explicitly retaining the `.gstack/` token in `stages.py` and omitting the live token in `check_refactor_delta.py`. The acceptance criterion needs a named replacement authority or a narrower boundary (`docs/specs/fde-discovery.md:110-113`, `factory/scripts/forge_cli/stages.py:62-65`, `factory/scripts/check_refactor_delta.py:21-24`)."
+      ],
+      "delta_index": 2
+    },
+    {
+      "change": "span 3: rewritten to resolve the cold-read findings",
+      "reason": "one amendment after the single cold read, resolving repository-answerable findings",
+      "source": "coordinator amendment 2026-09-24",
+      "findings": [
+        "The draft omits the required `Task decomposition` and `Verify plan` sections, so the task seams and acceptance checks are not reviewable in the plan format (`factory/prompts/planner.md:41-52`).",
+        "The discovery approach does not state the Lite two-question limit, the full eight-question limit, or how unanswered fields become `unknown` at the limit (`docs/specs/fde-discovery.md:26-30`).",
+        "Changing only the scaffolded DISCOVERY template leaves existing client DISCOVERY files on the old `## Problem` shape; adopt preserves files already present. The plan does not say how discovery adds cards there (`factory/scripts/forge_cli/scaffold.py:174-190`, `factory/scripts/forge_cli/adopt.py:351`).",
+        "The completion and test language does not prove that the chosen card is linked into the Brief and spec, that the human's option and reason are recorded, or that factual questions use neutral choices (`docs/specs/fde-discovery.md:32-53`).",
+        "The confirmed spec directs agents to run `forge context harvest`, but the CLI offers only `scan`, `list`, and `mark`. The plan does not replace this dead-end instruction in the customer-notes flow (`docs/specs/fde-discovery.md:43-46`, `factory/scripts/forge.py:517-536`).",
+        "The plan names payback boundary tests but gives no executable examples or verification method for the agent's recommendation and the unknown-value case; the required `Verify plan` section is absent (`docs/specs/fde-discovery.md:55-63`, `factory/prompts/planner.md:49-52`).",
+        "Adding a mandatory Success measure without updating spec-authoring guidance leaves `spec save` help and the spec README describing only the old required sections, so authors can reach confirmation with a draft they were told was complete (`factory/scripts/forge.py:395-406`, `docs/specs/README.md:3-10`).",
+        "The proposed optional `due` column needs an explicit backward-compatible parse and save contract for existing six-column rows; the current parser is strict and `save_rows` rewrites the whole ledger (`factory/scripts/forge_cli/deferrals.py:28-75`, `plans/deferrals.md:7-10`).",
+        "The automatic success-check row has no defined `why deferred` or `trigger to revisit` values, although `defer add` requires both; the plan also leaves the stable spec identity used to prevent duplicate rows on repeated `outcome set` calls unspecified (`factory/scripts/forge_cli/deferrals.py:82-98`, `factory/scripts/forge_cli/outcome.py:33-55`).",
+        "Using deferrals for scheduled success checks also requires a disposition for the shipped stale-deferral audit: it flags every open row older than 60 days by its added date, even when its check date is later (`factory/scripts/forge_cli/audit.py:86-100`).",
+        "Moving gstack history into `docs/context/` makes each archived file a pending inbox item. Marking it harvested requires named output artifacts; the plan names neither the outputs nor how the archive is processed without a false harvest claim (`factory/scripts/forge_cli/context.py:56-86`, `factory/scripts/forge_cli/context.py:178-209`).",
+        "REMOVE-GSTACK spans the CLI, doctor, adoption, configuration, documentation, archive, and widely separated tests. The plan does not split this into bounded reviewable outcomes despite the one-session task rule (`factory/prompts/planner.md:114-119`, `factory/tests/test_gates.py:6792`, `factory/tests/test_gates.py:23114`).",
+        "The plan promises a success check after the last story ships but creates it in `outcome set`, which runs before `pr_ready` can refuse shipment; a failed or abandoned closeout can therefore leave a due check for an unshipped spec (`docs/specs/fde-discovery.md:68-75`, `factory/scripts/pr_ready.py:139-154`, `factory/scripts/pr_ready.py:166-185`).",
+        "A success check is not deliberately removed scope, yet the proposed ledger explicitly defines every row that way and tells operators to put fired items back on the roadmap. The plan changes that meaning without reconciling its commands and guidance (`factory/scripts/forge_cli/deferrals.py:1-9`, `factory/scripts/forge_cli/deferrals.py:22-29`).",
+        "The claim that all three tasks have disjoint scopes is false: FDE-SKILL and REMOVE-GSTACK both change the Forge skill, scaffold and harness manifest (`factory/skills/forge.md:133-153`, `factory/scripts/forge_cli/scaffold.py:36`, `factory/scripts/forge_cli/scaffold.py:174`, `harness.yaml:21-39`).",
+        "The plan assigns required cleanup to FORGE-ACCESS-1 and FORGE-UPG-2, but both are pending and FORGE-FDE-1 has no dependency on either. FDE can therefore finish while its own gstack-removal criterion is unmet (`plans/roadmap.json:1001-1016`, `plans/roadmap.json:1019-1034`, `plans/roadmap.json:1037-1052`).",
+        "The plan promises no gstack references in Forge's own code while explicitly retaining the `.gstack/` token in `stages.py` and omitting the live token in `check_refactor_delta.py`. The acceptance criterion needs a named replacement authority or a narrower boundary (`docs/specs/fde-discovery.md:110-113`, `factory/scripts/forge_cli/stages.py:62-65`, `factory/scripts/check_refactor_delta.py:21-24`)."
+      ],
+      "delta_index": 3
+    },
+    {
+      "change": "span 4: rewritten to resolve the cold-read findings",
+      "reason": "one amendment after the single cold read, resolving repository-answerable findings",
+      "source": "coordinator amendment 2026-09-24",
+      "findings": [
+        "The draft omits the required `Task decomposition` and `Verify plan` sections, so the task seams and acceptance checks are not reviewable in the plan format (`factory/prompts/planner.md:41-52`).",
+        "The discovery approach does not state the Lite two-question limit, the full eight-question limit, or how unanswered fields become `unknown` at the limit (`docs/specs/fde-discovery.md:26-30`).",
+        "Changing only the scaffolded DISCOVERY template leaves existing client DISCOVERY files on the old `## Problem` shape; adopt preserves files already present. The plan does not say how discovery adds cards there (`factory/scripts/forge_cli/scaffold.py:174-190`, `factory/scripts/forge_cli/adopt.py:351`).",
+        "The completion and test language does not prove that the chosen card is linked into the Brief and spec, that the human's option and reason are recorded, or that factual questions use neutral choices (`docs/specs/fde-discovery.md:32-53`).",
+        "The confirmed spec directs agents to run `forge context harvest`, but the CLI offers only `scan`, `list`, and `mark`. The plan does not replace this dead-end instruction in the customer-notes flow (`docs/specs/fde-discovery.md:43-46`, `factory/scripts/forge.py:517-536`).",
+        "The plan names payback boundary tests but gives no executable examples or verification method for the agent's recommendation and the unknown-value case; the required `Verify plan` section is absent (`docs/specs/fde-discovery.md:55-63`, `factory/prompts/planner.md:49-52`).",
+        "Adding a mandatory Success measure without updating spec-authoring guidance leaves `spec save` help and the spec README describing only the old required sections, so authors can reach confirmation with a draft they were told was complete (`factory/scripts/forge.py:395-406`, `docs/specs/README.md:3-10`).",
+        "The proposed optional `due` column needs an explicit backward-compatible parse and save contract for existing six-column rows; the current parser is strict and `save_rows` rewrites the whole ledger (`factory/scripts/forge_cli/deferrals.py:28-75`, `plans/deferrals.md:7-10`).",
+        "The automatic success-check row has no defined `why deferred` or `trigger to revisit` values, although `defer add` requires both; the plan also leaves the stable spec identity used to prevent duplicate rows on repeated `outcome set` calls unspecified (`factory/scripts/forge_cli/deferrals.py:82-98`, `factory/scripts/forge_cli/outcome.py:33-55`).",
+        "Using deferrals for scheduled success checks also requires a disposition for the shipped stale-deferral audit: it flags every open row older than 60 days by its added date, even when its check date is later (`factory/scripts/forge_cli/audit.py:86-100`).",
+        "Moving gstack history into `docs/context/` makes each archived file a pending inbox item. Marking it harvested requires named output artifacts; the plan names neither the outputs nor how the archive is processed without a false harvest claim (`factory/scripts/forge_cli/context.py:56-86`, `factory/scripts/forge_cli/context.py:178-209`).",
+        "REMOVE-GSTACK spans the CLI, doctor, adoption, configuration, documentation, archive, and widely separated tests. The plan does not split this into bounded reviewable outcomes despite the one-session task rule (`factory/prompts/planner.md:114-119`, `factory/tests/test_gates.py:6792`, `factory/tests/test_gates.py:23114`).",
+        "The plan promises a success check after the last story ships but creates it in `outcome set`, which runs before `pr_ready` can refuse shipment; a failed or abandoned closeout can therefore leave a due check for an unshipped spec (`docs/specs/fde-discovery.md:68-75`, `factory/scripts/pr_ready.py:139-154`, `factory/scripts/pr_ready.py:166-185`).",
+        "A success check is not deliberately removed scope, yet the proposed ledger explicitly defines every row that way and tells operators to put fired items back on the roadmap. The plan changes that meaning without reconciling its commands and guidance (`factory/scripts/forge_cli/deferrals.py:1-9`, `factory/scripts/forge_cli/deferrals.py:22-29`).",
+        "The claim that all three tasks have disjoint scopes is false: FDE-SKILL and REMOVE-GSTACK both change the Forge skill, scaffold and harness manifest (`factory/skills/forge.md:133-153`, `factory/scripts/forge_cli/scaffold.py:36`, `factory/scripts/forge_cli/scaffold.py:174`, `harness.yaml:21-39`).",
+        "The plan assigns required cleanup to FORGE-ACCESS-1 and FORGE-UPG-2, but both are pending and FORGE-FDE-1 has no dependency on either. FDE can therefore finish while its own gstack-removal criterion is unmet (`plans/roadmap.json:1001-1016`, `plans/roadmap.json:1019-1034`, `plans/roadmap.json:1037-1052`).",
+        "The plan promises no gstack references in Forge's own code while explicitly retaining the `.gstack/` token in `stages.py` and omitting the live token in `check_refactor_delta.py`. The acceptance criterion needs a named replacement authority or a narrower boundary (`docs/specs/fde-discovery.md:110-113`, `factory/scripts/forge_cli/stages.py:62-65`, `factory/scripts/check_refactor_delta.py:21-24`)."
+      ],
+      "delta_index": 4
+    },
+    {
+      "change": "span 5: rewritten to resolve the cold-read findings",
+      "reason": "one amendment after the single cold read, resolving repository-answerable findings",
+      "source": "coordinator amendment 2026-09-24",
+      "findings": [
+        "The draft omits the required `Task decomposition` and `Verify plan` sections, so the task seams and acceptance checks are not reviewable in the plan format (`factory/prompts/planner.md:41-52`).",
+        "The discovery approach does not state the Lite two-question limit, the full eight-question limit, or how unanswered fields become `unknown` at the limit (`docs/specs/fde-discovery.md:26-30`).",
+        "Changing only the scaffolded DISCOVERY template leaves existing client DISCOVERY files on the old `## Problem` shape; adopt preserves files already present. The plan does not say how discovery adds cards there (`factory/scripts/forge_cli/scaffold.py:174-190`, `factory/scripts/forge_cli/adopt.py:351`).",
+        "The completion and test language does not prove that the chosen card is linked into the Brief and spec, that the human's option and reason are recorded, or that factual questions use neutral choices (`docs/specs/fde-discovery.md:32-53`).",
+        "The confirmed spec directs agents to run `forge context harvest`, but the CLI offers only `scan`, `list`, and `mark`. The plan does not replace this dead-end instruction in the customer-notes flow (`docs/specs/fde-discovery.md:43-46`, `factory/scripts/forge.py:517-536`).",
+        "The plan names payback boundary tests but gives no executable examples or verification method for the agent's recommendation and the unknown-value case; the required `Verify plan` section is absent (`docs/specs/fde-discovery.md:55-63`, `factory/prompts/planner.md:49-52`).",
+        "Adding a mandatory Success measure without updating spec-authoring guidance leaves `spec save` help and the spec README describing only the old required sections, so authors can reach confirmation with a draft they were told was complete (`factory/scripts/forge.py:395-406`, `docs/specs/README.md:3-10`).",
+        "The proposed optional `due` column needs an explicit backward-compatible parse and save contract for existing six-column rows; the current parser is strict and `save_rows` rewrites the whole ledger (`factory/scripts/forge_cli/deferrals.py:28-75`, `plans/deferrals.md:7-10`).",
+        "The automatic success-check row has no defined `why deferred` or `trigger to revisit` values, although `defer add` requires both; the plan also leaves the stable spec identity used to prevent duplicate rows on repeated `outcome set` calls unspecified (`factory/scripts/forge_cli/deferrals.py:82-98`, `factory/scripts/forge_cli/outcome.py:33-55`).",
+        "Using deferrals for scheduled success checks also requires a disposition for the shipped stale-deferral audit: it flags every open row older than 60 days by its added date, even when its check date is later (`factory/scripts/forge_cli/audit.py:86-100`).",
+        "Moving gstack history into `docs/context/` makes each archived file a pending inbox item. Marking it harvested requires named output artifacts; the plan names neither the outputs nor how the archive is processed without a false harvest claim (`factory/scripts/forge_cli/context.py:56-86`, `factory/scripts/forge_cli/context.py:178-209`).",
+        "REMOVE-GSTACK spans the CLI, doctor, adoption, configuration, documentation, archive, and widely separated tests. The plan does not split this into bounded reviewable outcomes despite the one-session task rule (`factory/prompts/planner.md:114-119`, `factory/tests/test_gates.py:6792`, `factory/tests/test_gates.py:23114`).",
+        "The plan promises a success check after the last story ships but creates it in `outcome set`, which runs before `pr_ready` can refuse shipment; a failed or abandoned closeout can therefore leave a due check for an unshipped spec (`docs/specs/fde-discovery.md:68-75`, `factory/scripts/pr_ready.py:139-154`, `factory/scripts/pr_ready.py:166-185`).",
+        "A success check is not deliberately removed scope, yet the proposed ledger explicitly defines every row that way and tells operators to put fired items back on the roadmap. The plan changes that meaning without reconciling its commands and guidance (`factory/scripts/forge_cli/deferrals.py:1-9`, `factory/scripts/forge_cli/deferrals.py:22-29`).",
+        "The claim that all three tasks have disjoint scopes is false: FDE-SKILL and REMOVE-GSTACK both change the Forge skill, scaffold and harness manifest (`factory/skills/forge.md:133-153`, `factory/scripts/forge_cli/scaffold.py:36`, `factory/scripts/forge_cli/scaffold.py:174`, `harness.yaml:21-39`).",
+        "The plan assigns required cleanup to FORGE-ACCESS-1 and FORGE-UPG-2, but both are pending and FORGE-FDE-1 has no dependency on either. FDE can therefore finish while its own gstack-removal criterion is unmet (`plans/roadmap.json:1001-1016`, `plans/roadmap.json:1019-1034`, `plans/roadmap.json:1037-1052`).",
+        "The plan promises no gstack references in Forge's own code while explicitly retaining the `.gstack/` token in `stages.py` and omitting the live token in `check_refactor_delta.py`. The acceptance criterion needs a named replacement authority or a narrower boundary (`docs/specs/fde-discovery.md:110-113`, `factory/scripts/forge_cli/stages.py:62-65`, `factory/scripts/check_refactor_delta.py:21-24`)."
+      ],
+      "delta_index": 5
+    },
+    {
+      "change": "span 6: rewritten to resolve the cold-read findings",
+      "reason": "one amendment after the single cold read, resolving repository-answerable findings",
+      "source": "coordinator amendment 2026-09-24",
+      "findings": [
+        "The draft omits the required `Task decomposition` and `Verify plan` sections, so the task seams and acceptance checks are not reviewable in the plan format (`factory/prompts/planner.md:41-52`).",
+        "The discovery approach does not state the Lite two-question limit, the full eight-question limit, or how unanswered fields become `unknown` at the limit (`docs/specs/fde-discovery.md:26-30`).",
+        "Changing only the scaffolded DISCOVERY template leaves existing client DISCOVERY files on the old `## Problem` shape; adopt preserves files already present. The plan does not say how discovery adds cards there (`factory/scripts/forge_cli/scaffold.py:174-190`, `factory/scripts/forge_cli/adopt.py:351`).",
+        "The completion and test language does not prove that the chosen card is linked into the Brief and spec, that the human's option and reason are recorded, or that factual questions use neutral choices (`docs/specs/fde-discovery.md:32-53`).",
+        "The confirmed spec directs agents to run `forge context harvest`, but the CLI offers only `scan`, `list`, and `mark`. The plan does not replace this dead-end instruction in the customer-notes flow (`docs/specs/fde-discovery.md:43-46`, `factory/scripts/forge.py:517-536`).",
+        "The plan names payback boundary tests but gives no executable examples or verification method for the agent's recommendation and the unknown-value case; the required `Verify plan` section is absent (`docs/specs/fde-discovery.md:55-63`, `factory/prompts/planner.md:49-52`).",
+        "Adding a mandatory Success measure without updating spec-authoring guidance leaves `spec save` help and the spec README describing only the old required sections, so authors can reach confirmation with a draft they were told was complete (`factory/scripts/forge.py:395-406`, `docs/specs/README.md:3-10`).",
+        "The proposed optional `due` column needs an explicit backward-compatible parse and save contract for existing six-column rows; the current parser is strict and `save_rows` rewrites the whole ledger (`factory/scripts/forge_cli/deferrals.py:28-75`, `plans/deferrals.md:7-10`).",
+        "The automatic success-check row has no defined `why deferred` or `trigger to revisit` values, although `defer add` requires both; the plan also leaves the stable spec identity used to prevent duplicate rows on repeated `outcome set` calls unspecified (`factory/scripts/forge_cli/deferrals.py:82-98`, `factory/scripts/forge_cli/outcome.py:33-55`).",
+        "Using deferrals for scheduled success checks also requires a disposition for the shipped stale-deferral audit: it flags every open row older than 60 days by its added date, even when its check date is later (`factory/scripts/forge_cli/audit.py:86-100`).",
+        "Moving gstack history into `docs/context/` makes each archived file a pending inbox item. Marking it harvested requires named output artifacts; the plan names neither the outputs nor how the archive is processed without a false harvest claim (`factory/scripts/forge_cli/context.py:56-86`, `factory/scripts/forge_cli/context.py:178-209`).",
+        "REMOVE-GSTACK spans the CLI, doctor, adoption, configuration, documentation, archive, and widely separated tests. The plan does not split this into bounded reviewable outcomes despite the one-session task rule (`factory/prompts/planner.md:114-119`, `factory/tests/test_gates.py:6792`, `factory/tests/test_gates.py:23114`).",
+        "The plan promises a success check after the last story ships but creates it in `outcome set`, which runs before `pr_ready` can refuse shipment; a failed or abandoned closeout can therefore leave a due check for an unshipped spec (`docs/specs/fde-discovery.md:68-75`, `factory/scripts/pr_ready.py:139-154`, `factory/scripts/pr_ready.py:166-185`).",
+        "A success check is not deliberately removed scope, yet the proposed ledger explicitly defines every row that way and tells operators to put fired items back on the roadmap. The plan changes that meaning without reconciling its commands and guidance (`factory/scripts/forge_cli/deferrals.py:1-9`, `factory/scripts/forge_cli/deferrals.py:22-29`).",
+        "The claim that all three tasks have disjoint scopes is false: FDE-SKILL and REMOVE-GSTACK both change the Forge skill, scaffold and harness manifest (`factory/skills/forge.md:133-153`, `factory/scripts/forge_cli/scaffold.py:36`, `factory/scripts/forge_cli/scaffold.py:174`, `harness.yaml:21-39`).",
+        "The plan assigns required cleanup to FORGE-ACCESS-1 and FORGE-UPG-2, but both are pending and FORGE-FDE-1 has no dependency on either. FDE can therefore finish while its own gstack-removal criterion is unmet (`plans/roadmap.json:1001-1016`, `plans/roadmap.json:1019-1034`, `plans/roadmap.json:1037-1052`).",
+        "The plan promises no gstack references in Forge's own code while explicitly retaining the `.gstack/` token in `stages.py` and omitting the live token in `check_refactor_delta.py`. The acceptance criterion needs a named replacement authority or a narrower boundary (`docs/specs/fde-discovery.md:110-113`, `factory/scripts/forge_cli/stages.py:62-65`, `factory/scripts/check_refactor_delta.py:21-24`)."
+      ],
+      "delta_index": 6
+    },
+    {
+      "change": "span 7: rewritten to resolve the cold-read findings",
+      "reason": "one amendment after the single cold read, resolving repository-answerable findings",
+      "source": "coordinator amendment 2026-09-24",
+      "findings": [
+        "The draft omits the required `Task decomposition` and `Verify plan` sections, so the task seams and acceptance checks are not reviewable in the plan format (`factory/prompts/planner.md:41-52`).",
+        "The discovery approach does not state the Lite two-question limit, the full eight-question limit, or how unanswered fields become `unknown` at the limit (`docs/specs/fde-discovery.md:26-30`).",
+        "Changing only the scaffolded DISCOVERY template leaves existing client DISCOVERY files on the old `## Problem` shape; adopt preserves files already present. The plan does not say how discovery adds cards there (`factory/scripts/forge_cli/scaffold.py:174-190`, `factory/scripts/forge_cli/adopt.py:351`).",
+        "The completion and test language does not prove that the chosen card is linked into the Brief and spec, that the human's option and reason are recorded, or that factual questions use neutral choices (`docs/specs/fde-discovery.md:32-53`).",
+        "The confirmed spec directs agents to run `forge context harvest`, but the CLI offers only `scan`, `list`, and `mark`. The plan does not replace this dead-end instruction in the customer-notes flow (`docs/specs/fde-discovery.md:43-46`, `factory/scripts/forge.py:517-536`).",
+        "The plan names payback boundary tests but gives no executable examples or verification method for the agent's recommendation and the unknown-value case; the required `Verify plan` section is absent (`docs/specs/fde-discovery.md:55-63`, `factory/prompts/planner.md:49-52`).",
+        "Adding a mandatory Success measure without updating spec-authoring guidance leaves `spec save` help and the spec README describing only the old required sections, so authors can reach confirmation with a draft they were told was complete (`factory/scripts/forge.py:395-406`, `docs/specs/README.md:3-10`).",
+        "The proposed optional `due` column needs an explicit backward-compatible parse and save contract for existing six-column rows; the current parser is strict and `save_rows` rewrites the whole ledger (`factory/scripts/forge_cli/deferrals.py:28-75`, `plans/deferrals.md:7-10`).",
+        "The automatic success-check row has no defined `why deferred` or `trigger to revisit` values, although `defer add` requires both; the plan also leaves the stable spec identity used to prevent duplicate rows on repeated `outcome set` calls unspecified (`factory/scripts/forge_cli/deferrals.py:82-98`, `factory/scripts/forge_cli/outcome.py:33-55`).",
+        "Using deferrals for scheduled success checks also requires a disposition for the shipped stale-deferral audit: it flags every open row older than 60 days by its added date, even when its check date is later (`factory/scripts/forge_cli/audit.py:86-100`).",
+        "Moving gstack history into `docs/context/` makes each archived file a pending inbox item. Marking it harvested requires named output artifacts; the plan names neither the outputs nor how the archive is processed without a false harvest claim (`factory/scripts/forge_cli/context.py:56-86`, `factory/scripts/forge_cli/context.py:178-209`).",
+        "REMOVE-GSTACK spans the CLI, doctor, adoption, configuration, documentation, archive, and widely separated tests. The plan does not split this into bounded reviewable outcomes despite the one-session task rule (`factory/prompts/planner.md:114-119`, `factory/tests/test_gates.py:6792`, `factory/tests/test_gates.py:23114`).",
+        "The plan promises a success check after the last story ships but creates it in `outcome set`, which runs before `pr_ready` can refuse shipment; a failed or abandoned closeout can therefore leave a due check for an unshipped spec (`docs/specs/fde-discovery.md:68-75`, `factory/scripts/pr_ready.py:139-154`, `factory/scripts/pr_ready.py:166-185`).",
+        "A success check is not deliberately removed scope, yet the proposed ledger explicitly defines every row that way and tells operators to put fired items back on the roadmap. The plan changes that meaning without reconciling its commands and guidance (`factory/scripts/forge_cli/deferrals.py:1-9`, `factory/scripts/forge_cli/deferrals.py:22-29`).",
+        "The claim that all three tasks have disjoint scopes is false: FDE-SKILL and REMOVE-GSTACK both change the Forge skill, scaffold and harness manifest (`factory/skills/forge.md:133-153`, `factory/scripts/forge_cli/scaffold.py:36`, `factory/scripts/forge_cli/scaffold.py:174`, `harness.yaml:21-39`).",
+        "The plan assigns required cleanup to FORGE-ACCESS-1 and FORGE-UPG-2, but both are pending and FORGE-FDE-1 has no dependency on either. FDE can therefore finish while its own gstack-removal criterion is unmet (`plans/roadmap.json:1001-1016`, `plans/roadmap.json:1019-1034`, `plans/roadmap.json:1037-1052`).",
+        "The plan promises no gstack references in Forge's own code while explicitly retaining the `.gstack/` token in `stages.py` and omitting the live token in `check_refactor_delta.py`. The acceptance criterion needs a named replacement authority or a narrower boundary (`docs/specs/fde-discovery.md:110-113`, `factory/scripts/forge_cli/stages.py:62-65`, `factory/scripts/check_refactor_delta.py:21-24`)."
+      ],
+      "delta_index": 7
+    },
+    {
+      "change": "span 8: rewritten to resolve the cold-read findings",
+      "reason": "one amendment after the single cold read, resolving repository-answerable findings",
+      "source": "coordinator amendment 2026-09-24",
+      "findings": [
+        "The draft omits the required `Task decomposition` and `Verify plan` sections, so the task seams and acceptance checks are not reviewable in the plan format (`factory/prompts/planner.md:41-52`).",
+        "The discovery approach does not state the Lite two-question limit, the full eight-question limit, or how unanswered fields become `unknown` at the limit (`docs/specs/fde-discovery.md:26-30`).",
+        "Changing only the scaffolded DISCOVERY template leaves existing client DISCOVERY files on the old `## Problem` shape; adopt preserves files already present. The plan does not say how discovery adds cards there (`factory/scripts/forge_cli/scaffold.py:174-190`, `factory/scripts/forge_cli/adopt.py:351`).",
+        "The completion and test language does not prove that the chosen card is linked into the Brief and spec, that the human's option and reason are recorded, or that factual questions use neutral choices (`docs/specs/fde-discovery.md:32-53`).",
+        "The confirmed spec directs agents to run `forge context harvest`, but the CLI offers only `scan`, `list`, and `mark`. The plan does not replace this dead-end instruction in the customer-notes flow (`docs/specs/fde-discovery.md:43-46`, `factory/scripts/forge.py:517-536`).",
+        "The plan names payback boundary tests but gives no executable examples or verification method for the agent's recommendation and the unknown-value case; the required `Verify plan` section is absent (`docs/specs/fde-discovery.md:55-63`, `factory/prompts/planner.md:49-52`).",
+        "Adding a mandatory Success measure without updating spec-authoring guidance leaves `spec save` help and the spec README describing only the old required sections, so authors can reach confirmation with a draft they were told was complete (`factory/scripts/forge.py:395-406`, `docs/specs/README.md:3-10`).",
+        "The proposed optional `due` column needs an explicit backward-compatible parse and save contract for existing six-column rows; the current parser is strict and `save_rows` rewrites the whole ledger (`factory/scripts/forge_cli/deferrals.py:28-75`, `plans/deferrals.md:7-10`).",
+        "The automatic success-check row has no defined `why deferred` or `trigger to revisit` values, although `defer add` requires both; the plan also leaves the stable spec identity used to prevent duplicate rows on repeated `outcome set` calls unspecified (`factory/scripts/forge_cli/deferrals.py:82-98`, `factory/scripts/forge_cli/outcome.py:33-55`).",
+        "Using deferrals for scheduled success checks also requires a disposition for the shipped stale-deferral audit: it flags every open row older than 60 days by its added date, even when its check date is later (`factory/scripts/forge_cli/audit.py:86-100`).",
+        "Moving gstack history into `docs/context/` makes each archived file a pending inbox item. Marking it harvested requires named output artifacts; the plan names neither the outputs nor how the archive is processed without a false harvest claim (`factory/scripts/forge_cli/context.py:56-86`, `factory/scripts/forge_cli/context.py:178-209`).",
+        "REMOVE-GSTACK spans the CLI, doctor, adoption, configuration, documentation, archive, and widely separated tests. The plan does not split this into bounded reviewable outcomes despite the one-session task rule (`factory/prompts/planner.md:114-119`, `factory/tests/test_gates.py:6792`, `factory/tests/test_gates.py:23114`).",
+        "The plan promises a success check after the last story ships but creates it in `outcome set`, which runs before `pr_ready` can refuse shipment; a failed or abandoned closeout can therefore leave a due check for an unshipped spec (`docs/specs/fde-discovery.md:68-75`, `factory/scripts/pr_ready.py:139-154`, `factory/scripts/pr_ready.py:166-185`).",
+        "A success check is not deliberately removed scope, yet the proposed ledger explicitly defines every row that way and tells operators to put fired items back on the roadmap. The plan changes that meaning without reconciling its commands and guidance (`factory/scripts/forge_cli/deferrals.py:1-9`, `factory/scripts/forge_cli/deferrals.py:22-29`).",
+        "The claim that all three tasks have disjoint scopes is false: FDE-SKILL and REMOVE-GSTACK both change the Forge skill, scaffold and harness manifest (`factory/skills/forge.md:133-153`, `factory/scripts/forge_cli/scaffold.py:36`, `factory/scripts/forge_cli/scaffold.py:174`, `harness.yaml:21-39`).",
+        "The plan assigns required cleanup to FORGE-ACCESS-1 and FORGE-UPG-2, but both are pending and FORGE-FDE-1 has no dependency on either. FDE can therefore finish while its own gstack-removal criterion is unmet (`plans/roadmap.json:1001-1016`, `plans/roadmap.json:1019-1034`, `plans/roadmap.json:1037-1052`).",
+        "The plan promises no gstack references in Forge's own code while explicitly retaining the `.gstack/` token in `stages.py` and omitting the live token in `check_refactor_delta.py`. The acceptance criterion needs a named replacement authority or a narrower boundary (`docs/specs/fde-discovery.md:110-113`, `factory/scripts/forge_cli/stages.py:62-65`, `factory/scripts/check_refactor_delta.py:21-24`)."
+      ],
+      "delta_index": 8
+    },
+    {
+      "change": "span 9: rewritten to resolve the cold-read findings",
+      "reason": "one amendment after the single cold read, resolving repository-answerable findings",
+      "source": "coordinator amendment 2026-09-24",
+      "findings": [
+        "The draft omits the required `Task decomposition` and `Verify plan` sections, so the task seams and acceptance checks are not reviewable in the plan format (`factory/prompts/planner.md:41-52`).",
+        "The discovery approach does not state the Lite two-question limit, the full eight-question limit, or how unanswered fields become `unknown` at the limit (`docs/specs/fde-discovery.md:26-30`).",
+        "Changing only the scaffolded DISCOVERY template leaves existing client DISCOVERY files on the old `## Problem` shape; adopt preserves files already present. The plan does not say how discovery adds cards there (`factory/scripts/forge_cli/scaffold.py:174-190`, `factory/scripts/forge_cli/adopt.py:351`).",
+        "The completion and test language does not prove that the chosen card is linked into the Brief and spec, that the human's option and reason are recorded, or that factual questions use neutral choices (`docs/specs/fde-discovery.md:32-53`).",
+        "The confirmed spec directs agents to run `forge context harvest`, but the CLI offers only `scan`, `list`, and `mark`. The plan does not replace this dead-end instruction in the customer-notes flow (`docs/specs/fde-discovery.md:43-46`, `factory/scripts/forge.py:517-536`).",
+        "The plan names payback boundary tests but gives no executable examples or verification method for the agent's recommendation and the unknown-value case; the required `Verify plan` section is absent (`docs/specs/fde-discovery.md:55-63`, `factory/prompts/planner.md:49-52`).",
+        "Adding a mandatory Success measure without updating spec-authoring guidance leaves `spec save` help and the spec README describing only the old required sections, so authors can reach confirmation with a draft they were told was complete (`factory/scripts/forge.py:395-406`, `docs/specs/README.md:3-10`).",
+        "The proposed optional `due` column needs an explicit backward-compatible parse and save contract for existing six-column rows; the current parser is strict and `save_rows` rewrites the whole ledger (`factory/scripts/forge_cli/deferrals.py:28-75`, `plans/deferrals.md:7-10`).",
+        "The automatic success-check row has no defined `why deferred` or `trigger to revisit` values, although `defer add` requires both; the plan also leaves the stable spec identity used to prevent duplicate rows on repeated `outcome set` calls unspecified (`factory/scripts/forge_cli/deferrals.py:82-98`, `factory/scripts/forge_cli/outcome.py:33-55`).",
+        "Using deferrals for scheduled success checks also requires a disposition for the shipped stale-deferral audit: it flags every open row older than 60 days by its added date, even when its check date is later (`factory/scripts/forge_cli/audit.py:86-100`).",
+        "Moving gstack history into `docs/context/` makes each archived file a pending inbox item. Marking it harvested requires named output artifacts; the plan names neither the outputs nor how the archive is processed without a false harvest claim (`factory/scripts/forge_cli/context.py:56-86`, `factory/scripts/forge_cli/context.py:178-209`).",
+        "REMOVE-GSTACK spans the CLI, doctor, adoption, configuration, documentation, archive, and widely separated tests. The plan does not split this into bounded reviewable outcomes despite the one-session task rule (`factory/prompts/planner.md:114-119`, `factory/tests/test_gates.py:6792`, `factory/tests/test_gates.py:23114`).",
+        "The plan promises a success check after the last story ships but creates it in `outcome set`, which runs before `pr_ready` can refuse shipment; a failed or abandoned closeout can therefore leave a due check for an unshipped spec (`docs/specs/fde-discovery.md:68-75`, `factory/scripts/pr_ready.py:139-154`, `factory/scripts/pr_ready.py:166-185`).",
+        "A success check is not deliberately removed scope, yet the proposed ledger explicitly defines every row that way and tells operators to put fired items back on the roadmap. The plan changes that meaning without reconciling its commands and guidance (`factory/scripts/forge_cli/deferrals.py:1-9`, `factory/scripts/forge_cli/deferrals.py:22-29`).",
+        "The claim that all three tasks have disjoint scopes is false: FDE-SKILL and REMOVE-GSTACK both change the Forge skill, scaffold and harness manifest (`factory/skills/forge.md:133-153`, `factory/scripts/forge_cli/scaffold.py:36`, `factory/scripts/forge_cli/scaffold.py:174`, `harness.yaml:21-39`).",
+        "The plan assigns required cleanup to FORGE-ACCESS-1 and FORGE-UPG-2, but both are pending and FORGE-FDE-1 has no dependency on either. FDE can therefore finish while its own gstack-removal criterion is unmet (`plans/roadmap.json:1001-1016`, `plans/roadmap.json:1019-1034`, `plans/roadmap.json:1037-1052`).",
+        "The plan promises no gstack references in Forge's own code while explicitly retaining the `.gstack/` token in `stages.py` and omitting the live token in `check_refactor_delta.py`. The acceptance criterion needs a named replacement authority or a narrower boundary (`docs/specs/fde-discovery.md:110-113`, `factory/scripts/forge_cli/stages.py:62-65`, `factory/scripts/check_refactor_delta.py:21-24`)."
+      ],
+      "delta_index": 9
+    }
+  ],
+  "artifact_delta": [
+    {
+      "cold_start": 14,
+      "cold_end": 15,
+      "cold": "  the evidence. Each question says in one line why it matters, until you tell it you know.\n",
+      "final_start": 14,
+      "final_end": 16,
+      "final": "  the evidence. Each question says in one line why it matters, until you tell it you know. A quick fix\n  gets at most two questions; a story at most eight, and anything still unknown is marked unknown.\n"
+    },
+    {
+      "cold_start": 16,
+      "cold_end": 17,
+      "cold": "  build\" and the smallest testable slice), and recommends one by a simple payback rule. You choose.\n",
+      "final_start": 17,
+      "final_end": 19,
+      "final": "  build\" and the smallest testable slice), and recommends one using `forge payback`. You choose, and\n  your choice and reason go into the spec.\n"
+    },
+    {
+      "cold_start": 18,
+      "cold_end": 19,
+      "cold": "  After shipping, `forge next` reminds you when it's time to check, and the result is recorded.\n",
+      "final_start": 20,
+      "final_end": 22,
+      "final": "  When the work has shipped and the date passes, `forge next` reminds you to check, and\n  `forge outcome check` records what you measured.\n"
+    },
+    {
+      "cold_start": 25,
+      "cold_end": 29,
+      "cold": "  question limit.\n- The payback rule gives the same answer for the same numbers, including the 3- and 12-month edges.\n- A new spec can't be confirmed without a complete success measure, and a due success check shows in\n  `forge next` until its result is recorded.\n",
+      "final_start": 28,
+      "final_end": 33,
+      "final": "  question limit, with the chosen card named in the brief and spec.\n- `forge payback` gives the same answer for the same numbers, including the 3- and 12-month edges and\n  the unknown-value case.\n- A new spec can't be confirmed without a complete success measure; a shipped story's check shows in\n  `forge next` after its date until its result is recorded.\n"
+    },
+    {
+      "cold_start": 30,
+      "cold_end": 31,
+      "cold": "  docs and tests; this repo's old gstack notes are archived.\n",
+      "final_start": 34,
+      "final_end": 35,
+      "final": "  docs and tests; this repo's old gstack notes are archived and summarised.\n"
+    },
+    {
+      "cold_start": 38,
+      "cold_end": 38,
+      "cold": "",
+      "final_start": 42,
+      "final_end": 44,
+      "final": "- The quality of discovery depends on the agent following the skill; a scripted walkthrough in a\n  throwaway client checks it before shipping.\n"
+    },
+    {
+      "cold_start": 47,
+      "cold_end": 51,
+      "cold": "- Skill: ~70-line FDE section in `factory/skills/forge.md` (asking rules, depth by route, eight\n  discovery questions with the stopping rule, options, payback rule, success measure, check-back);\n  new `factory/skills/fde-reference.md` from the drafted reference (examples, question bank, call\n  script, bad-to-better questions). Discovery row in the intent table points at the skill.\n",
+      "final_start": 53,
+      "final_end": 61,
+      "final": "- Skill: ~70-line FDE section in `factory/skills/forge.md`: asking rules (one per turn, past events,\n  no solutions during discovery, neutral options for facts, recommended-first for decisions, \"Why I\n  ask\" until the FDE opts out); depth (Lite: two questions; story: eight; unanswered fields written as\n  unknown and priced as guessed); problem cards (add `## Problems` to an existing DISCOVERY.md on first\n  use; name the chosen card in the Brief's problem and the spec's Why); options and the human's choice\n  written into the spec's Behaviour; `forge payback`; success measure; check-back. New\n  `factory/skills/fde-reference.md` holds the examples, question bank, call script and bad-to-better\n  questions. The discovery intent row points at the skill.\n"
+    },
+    {
+      "cold_start": 52,
+      "cold_end": 52,
+      "cold": "",
+      "final_start": 62,
+      "final_end": 68,
+      "final": "- Customer notes: the agent writes what the notes show into the cards and runs\n  `forge context mark <note> harvested` with DISCOVERY.md as the output.\n- `forge payback` (new small module and command): inputs hours per month, people, hourly rate,\n  revenue per month, incident cost and monthly chance, confidence (measured/estimated/guessed), build\n  days and day rate; output the payback months and one of build / smallest slice first / don't build /\n  find out first, with exact boundaries (<=3, >3 and <=12, >12).\n"
+    },
+    {
+      "cold_start": 53,
+      "cold_end": 57,
+      "cold": "  check date for specs confirmed after this change; `griller.md` flags a missing or empty one.\n- Deferrals: optional `due` column (`forge defer add --due YYYY-MM-DD`); `forge outcome set` on the\n  last story of a spec with a success measure adds one dated row (idempotent); `forge next` lists open\n  rows past due; `forge defer resolve --notes` closes them.\n",
+      "final_start": 69,
+      "final_end": 75,
+      "final": "  check date for specs confirmed after this change; `griller.md` flags a missing or empty one;\n  `spec save` help and `docs/specs/README.md` list the new section.\n- Check-back: `forge pr-link` sets `success_check_due` on the roadmap item of the last story from a\n  spec with a success measure (once); `forge next` lists shipped stories past that date without a\n  measured result; `forge outcome check <story> --result \"<text>\"` records `measured` in the story's\n  outcome. The deferral ledger and its audit are untouched.\n"
+    },
+    {
+      "cold_start": 59,
+      "cold_end": 76,
+      "cold": "- gstack removal: delete `forge_cli/gstack.py` and its subcommand; doctor gstack checks and the\n  direnv requirement (Forge reads `.envrc` directly; doctor reports impeccable as optional and the\n  upgrade-skill check unchanged); adopt/upgrade/scaffold gstack ignore and `.envrc` additions; the\n  `.gstack/` budget token in `check_repo_budget.py`; `.gitignore`/`.gitattributes`/`.envrc` lines in\n  this repo; install-skill steps; docs (WORKFLOW, README, getting-started, ROLES, living specs,\n  constitution README precedence). Keep the `.gstack/` tokens in `stages.py` scope exclusion.\n- Archive: move `.gstack/projects/knacklabs-symphony-forge/` to `docs/context/gstack-archive/` and\n  record it as harvested in the context ledger.\n- Tests: FDE rules (payback boundaries, success-measure validation, due deferrals, outcome\n  auto-row); gstack removal (no references in scope, doctor without gstack/direnv, adopt/upgrade\n  leave client lines alone); rewrite the two mixed `.envrc`/`.gitattributes` tests.\n- Coordination: FORGE-ACCESS-1 deletes write-guard code that mentions `.gstack/`; FORGE-UPG-2 rewrites\n  `upgrade.py`. This story's `upgrade.py` gstack lines are dropped by FORGE-UPG-2 instead, and its\n  `pre_tool_use.py`/`repo_kind.py` tokens go with FORGE-ACCESS-1.\n- Tasks: FDE-SKILL (skill, reference, DISCOVERY template, harness owner), SUCCESS-MEASURE (spec\n  confirm, griller line, deferral due, outcome row, forge next), REMOVE-GSTACK (code, config, docs,\n  tests, archive). All three run in parallel; their scopes are disjoint.\n",
+      "final_start": 77,
+      "final_end": 112,
+      "final": "- gstack removal (code): delete `forge_cli/gstack.py` and its subcommand; doctor gstack checks and\n  the direnv requirement (Forge reads `.envrc` directly; doctor reports impeccable as optional);\n  adopt/upgrade/scaffold gstack ignore and `.envrc` additions (whichever upgrade code exists when this\n  task runs); every `.gstack/` path token (`pre_tool_use.py`, `repo_kind.py`, `stages.py`,\n  `check_refactor_delta.py`, `check_repo_budget.py`) where it still exists; this repo's\n  `.gitignore`/`.gitattributes`/`.envrc` lines; tests (rewrite the two mixed `.envrc`/`.gitattributes`\n  tests).\n- gstack removal (docs): WORKFLOW, README, getting-started, ROLES, living specs, constitution README\n  precedence, install skills; move `.gstack/projects/knacklabs-symphony-forge/` to\n  `docs/context/gstack-archive/`, summarise its decisions and learnings in\n  `docs/memory/gstack-history.md`, and mark the archive files harvested with that note as output.\n\n## Task decomposition\n\nFDE-SKILL and SUCCESS-MEASURE run in parallel (disjoint); REMOVE-GSTACK-CODE follows FDE-SKILL (both\ntouch `harness.yaml`, `scaffold.py` and the skill); REMOVE-GSTACK-DOCS follows REMOVE-GSTACK-CODE.\nEach ships its own pull request.\n\n| Label / exact task ID | What it delivers | Depends on | user_facing |\n|---|---|---|---|\n| Skill / FDE-SKILL | FDE skill section, reference file, DISCOVERY template, discovery owner and impeccable in `harness.yaml`, `forge payback` | none | false |\n| Measure / SUCCESS-MEASURE | Spec confirm validation, griller line, spec help and README, pr-link check date, `forge next` listing, `forge outcome check` | none | false |\n| Code / REMOVE-GSTACK-CODE | gstack command, doctor checks, direnv requirement, adopt/upgrade/scaffold additions, path tokens, repo config lines, tests | FDE-SKILL | false |\n| Docs / REMOVE-GSTACK-DOCS | gstack text out of docs, living specs and install skills; archive, summary note and harvest marks | REMOVE-GSTACK-CODE | false |\n\n## Verify plan\n\nEach task: focused tests, `forge task close` (full suite plus one three-lens review), the CI-only\nchecks, green CI. Tests cover `forge payback` at 3, 12 and unknown value; success-measure refusals\n(missing, empty field, bad date) and acceptance with only the status changed; the pr-link check date,\nits `forge next` listing and `forge outcome check`; doctor passing without gstack or direnv; a repo-wide\nsearch finding gstack only in history and the archive; adopt/upgrade leaving client lines alone. Before\nthe story ships, a scripted walkthrough in a throwaway client runs discovery on a vague ask and\nchecks: one question per turn with \"Why I ask\", neutral options for facts, the stop at the limit, a\nfilled problem card named in the brief and spec, and the recorded choice.\n"
+    }
+  ],
+  "questions_asked": 0,
+  "summary": "One cold read (12 gaps, 5 contradictions); resolved from repository facts with a spec amendment (check-back via pr-link and forge outcome check, forge payback, context mark); plan amended once (limits, problem-card handling, walkthrough, split gstack removal, sequenced scopes).",
+  "input_sha256": "f4d50c7b95a191506fd9a1317a0c7857e8d971c7bab1eb036c9cd87cbad4e393",
+  "issue": "FORGE-FDE-1",
+  "recorded_at": "2026-09-24T15:28:17+00:00",
+  "commit": "4ef5eee22c94e3c94d2d5217a44c22eb4c255676",
+  "launch_id": "launch-b9385b7eba03493a8d4feaece17bbbf4",
+  "cold_input_sha256": "9317decb4c7c55928c13f131687cc43e013811e3188d9d59746666b32226881a",
+  "final_artifact_sha256": "2855af2b5653a9ba8fa8e019de053f4468ddb30aef0f7d3de1ac49e6bd6f7256"
+}
