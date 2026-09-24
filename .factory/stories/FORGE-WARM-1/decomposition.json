@@ -152,9 +152,7 @@
       "id": "SDK-SETUP",
       "title": "Pinned SDK and doctor check",
       "objective": "Pinned openai-codex in a Forge-managed environment, minimum codex binary, doctor check and repair, docs; the route stays off.",
-      "dependencies": [
-        "EXEC-MODES"
-      ],
+      "dependencies": [],
       "acceptance_criteria": [
         "The SDK is pinned and the binary checked against the SDK minimum; a mismatch names both versions",
         "doctor --fix installs the pinned SDK and the minimum codex binary when needed"
@@ -179,7 +177,8 @@
       "title": "Admission and close parity",
       "objective": "Per-turn ledger rows, admission and close parity with terminal-turn proof, sticky routes, declining approval handler; the route switches on with a first real delegation.",
       "dependencies": [
-        "SDK-SUPERVISOR"
+        "SDK-SUPERVISOR",
+        "EXEC-MODES"
       ],
       "acceptance_criteria": [
         "Every SDK turn is admitted by a recorded ledger row and close needs a terminal turn",
@@ -229,10 +228,10 @@
       "user_facing": false
     }
   ],
+  "plan_sha256": "8f5bee463bfd0c96d0801e0099011e1b1d742acaa0607a3fa0430caacb1577dc",
   "project": "",
   "story": "FORGE-WARM-1",
   "epic": "symphony-forge",
   "plan_file": "plans/active/FORGE-WARM-1-hybrid-mode-reuses-warm-codex-worker-threads.md",
-  "plan_sha256": "9049cc6f9c2e56a23c521b06e12d5bbf0c4412704bae6ff9938727746d2ff28c",
-  "commit": "9d1d82595ee2e59efb748a135a59e2fa6d98aa4d"
+  "commit": "776efd0d634f6fcb3d42f5d273a5faeb0fc9c4bb"
 }

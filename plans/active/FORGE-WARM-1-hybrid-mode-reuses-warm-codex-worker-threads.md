@@ -28,7 +28,7 @@ worker's changes against the task but do not sandbox them.
 - The `.envrc` setting picks hybrid, Codex-only or Claude-only, and each passes the same task checks.
 - In hybrid mode Forge talks to Codex through its own long-running Codex server when the setup check
   passes, and through today's plugin otherwise — decided before a job starts, never midway.
-- Every job on the new route is recorded and admitted as strictly as today's, and a task can't close
+- Every job on the new route is recorded as strictly as today's, and a task can't close
   while its worker is still running or in an unknown state.
 - A fix round continues the task's own worker with the latest code and the review findings; if the
   task changed underneath it, Forge starts a fresh worker and says why.
@@ -58,14 +58,13 @@ Nothing beyond approving this plan.
 ## Technical approach
 
 - One `FORGE_EXECUTOR` resolver (hybrid default, codex, claude) for Claude-coordinated sessions,
-  read by the write hook, delegate, doctor, grill, review and close; Codex-coordinated sessions keep
-  native Codex execution (any other executor setting there is refused with a message). Claude mode admits
-  the Claude session and its subagents inside the active task's effective scope (or an open Lite
-  window's budget) after `forge delegate` / `forge fix` composes the canonical brief and records a
-  Claude writer entry that is the stage's write proof in place of a
-  companion launch; Claude mode grills with a fresh Claude subagent reader and reviews with
-  Autoreview's claude engine. Hybrid Claude writes for a single task are deferred (D-0044),
-  and Codex-coordinated sessions support only Codex execution in this story (D-0045).
+  read by delegate, doctor, grill, review and close. Under full access (decision 0087) it decides whom
+  `forge delegate` hands work to; it admits or refuses no writes. Claude mode hands tasks to a Claude
+  subagent writer, grills with a fresh Claude subagent reader and reviews with Autoreview's claude
+  engine. Codex-coordinated sessions keep native Codex execution (any other setting there is refused
+  with a message). Hybrid Claude writes for a single task are deferred (D-0044), and
+  Codex-coordinated sessions support only Codex execution in this story (D-0045). EXEC-MODES is
+  replanned on top of FORGE-ACCESS-1's CODE task and starts after it merges.
 - SDK route: `openai-codex` pinned exactly in `factory/requirements-sdk.txt`; the installed `codex`
   binary must be at least the SDK's minimum; `forge doctor --fix` installs the pinned SDK into a
   Forge-managed uv environment used by doctor and delegate and, when needed, the minimum `codex`; every turn sets `danger-full-access` and
@@ -80,9 +79,9 @@ Nothing beyond approving this plan.
   plugin task). A version mismatch or unhealthy supervisor selects the plugin only for a task's FIRST
   delegation; a task already on the SDK route refuses with the fix or an explicit, recorded
   `--fresh-route` restart.
-- Admission parity: the supervisor holds the task lock per turn, carries a hook-verified process
-  token, binds the brief digest and scope, honours revocation, and records a terminal turn entry that
-  stage close accepts in place of a companion launch; per-turn ledger rows (thread, turn, story, task,
+- Turn records: the supervisor holds the task lock per turn, binds the brief digest and scope, and
+  records a terminal turn entry (under full access nothing is admitted or revoked, and close needs no
+  launch record); per-turn ledger rows (thread, turn, story, task,
   stage incarnation, delegation, worktree, common dir, contract digest, base commit) go through a
   schema-validated recorder; close requires `turn/completed` and no loaded turn. Native close rules
   are unchanged.
@@ -98,11 +97,11 @@ Nothing beyond approving this plan.
   app-server dies and a turn can never be read, a recorded `forge delegate --abandon-turn` marks it
   failed and the task continues on a fresh thread.
 - Upgrade and cleanup: `forge upgrade` adds the requirement and doctor check idempotently and leaves
-  `.envrc` alone; plugin-started tasks stay on the plugin; client upgrades wait for D-0040 to close.
+  `.envrc` alone; plugin-started tasks stay on the plugin; client upgrades wait for FORGE-UPG-2 to lift the client-upgrade hold.
   Threads archive at task merge and story outcome (retried by doctor); pruning touches only ledger
   threads.
-- Docs: README.md, docs/getting-started.md, docs/degraded-mode.md, `.claude/CLAUDE.md`, AGENTS.md, the
-  Forge skill, the delegation-boundary, dual-coordinator parity and strict-role-split specs, the parity
+- Docs: README.md, docs/getting-started.md, `.claude/CLAUDE.md`, AGENTS.md, the
+  Forge skill, the delegation-boundary and dual-coordinator parity specs, the parity
   architecture, the product brief, WORKFLOW.md and docs/FACTORY.md wherever they name the plugin as the
   only Claude route or deny Claude writers.
 - Task-level mechanics (per-turn supervisor binding, ledger location, abandon-turn cleanup, signal
@@ -115,14 +114,15 @@ Nothing beyond approving this plan.
 
 ## Task decomposition
 
-Tasks run in dependency order; each ships its own pull request.
+SDK-SETUP starts now; SDK-SUPERVISOR follows it. EXEC-MODES starts once FORGE-ACCESS-1's CODE task has
+merged; SDK-ADMISSION needs both EXEC-MODES and SDK-SUPERVISOR. Each task ships its own pull request.
 
 | Label / exact task ID | What it delivers | Depends on | user_facing |
 |---|---|---|---|
-| Modes / EXEC-MODES | `FORGE_EXECUTOR` hybrid/codex/claude with the same gates for every writer | none | false |
-| Setup / SDK-SETUP | Pinned SDK, minimum binary, Forge-managed environment, doctor check and repair, docs (route stays off) | EXEC-MODES | false |
+| Modes / EXEC-MODES | `FORGE_EXECUTOR` hybrid/codex/claude deciding whom `forge delegate` hands work to, with the same close checks for every writer | none | false |
+| Setup / SDK-SETUP | Pinned SDK, minimum binary, Forge-managed environment, doctor check and repair, docs (route stays off) | none | false |
 | Supervisor / SDK-SUPERVISOR | Detached supervisor, secured socket, lease with fencing and takeover, app-server lifecycle | SDK-SETUP | false |
-| Admission / SDK-ADMISSION | Per-turn ledger, admission and close parity with terminal-turn proof, sticky routes, declining approval handler, route switched on, first real delegation | SDK-SUPERVISOR | false |
+| Admission / SDK-ADMISSION | Per-turn ledger, close parity with terminal-turn proof, sticky routes, declining approval handler, route switched on, first real delegation | SDK-SUPERVISOR, EXEC-MODES | false |
 | Resume / RESUME-FIX | Fix rounds continue the task's worker thread; drift starts fresh; benchmark evidence | SDK-ADMISSION | false |
 | Live / LIVE-EVENTS | Turn state machine, reattach, signals bound to their turn and answered by steer or interrupt | RESUME-FIX | false |
 | Rollout / UPGRADE-CLEANUP | Client upgrade path, archival and pruning, parity matrix, end-to-end runs | LIVE-EVENTS | false |
@@ -138,7 +138,7 @@ replayed three times cold and three times resumed (same model, effort and brief;
 worktree at the round's snapshot with the same findings; resumed trials fork the saved worker thread);
 median uncached input tokens and wall time. UPGRADE-CLEANUP runs the parity matrix — claude mode,
 codex mode, and hybrid on the SDK and plugin routes; each cell checks setup, init/adopt/upgrade, a
-refused out-of-scope write, hook delivery and task close — as pytest cells on Ubuntu and native-Windows
+out-of-scope file shown to the reviewer, hook delivery and task close — as pytest cells on Ubuntu and native-Windows
 CI, labelled per decision 0065, plus one real task per mode observed locally on macOS. End-to-end, in
 throwaway clients (never a real client): a fresh `forge init` client running one real task with a
 resumed fix round, and an older-template client with an active plugin task upgraded twice, the task
