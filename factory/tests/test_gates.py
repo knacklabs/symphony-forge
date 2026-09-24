@@ -9384,6 +9384,7 @@ def test_lite_counts_docs_symlink_into_product_once(repo):
     (source / "app.py").write_text("app = True\n")
     docs = repo / "docs"
     docs.mkdir(exist_ok=True)
+    (docs / "reference.md").write_text("reference\n")
     first_link = docs / "app-link.py"
     second_link = docs / "app-link-copy.py"
     first_link.symlink_to(Path("../src/app.py"))
@@ -9402,9 +9403,10 @@ def test_lite_counts_docs_symlink_into_product_once(repo):
     first_link.unlink()
     second_link.unlink()
     git(repo, "add", "src/app.py")
+    git(repo, "add", "docs/reference.md")
     git(repo, "commit", "-q", "-m", "seed symlink target")
     open_lite(repo)
-    first_link.symlink_to(Path("../src/app.py"))
+    first_link.symlink_to(Path("reference.md"))
     git(repo, "add", "docs/app-link.py")
     git(repo, "commit", "-q", "-m", "add docs symlink")
     write_lite_reviews(repo)
@@ -9457,6 +9459,40 @@ def test_lite_close_counts_deleted_and_retargeted_historical_docs_symlinks(
     assert done[0]["files"] == [
         "docs/deleted-link.py", "docs/outside-link.py", "docs/retargeted-link.py",
     ]
+
+
+def test_lite_close_counts_chained_docs_symlinks_by_repository_path(repo):
+    from forge_cli.quickfix import _lite_manifest
+
+    source = repo / "src"
+    source.mkdir()
+    (source / "app.py").write_text("app = True\n")
+    docs = repo / "docs"
+    docs.mkdir(exist_ok=True)
+    (docs / "reference.md").write_text("reference\n")
+    (docs / "hub").symlink_to(Path("../src/app.py"))
+    for number in range(6):
+        (docs / f"alias-{number}.py").symlink_to(Path("hub"))
+    git(repo, "add", "src", "docs")
+    git(repo, "commit", "-q", "-m", "seed chained docs symlinks")
+
+    active = open_lite(repo)
+    (docs / "reference.md").write_text("updated reference\n")
+    for number in range(6):
+        (docs / f"alias-{number}.py").unlink()
+    (docs / "hub").unlink()
+    (docs / "hub").symlink_to(Path("reference.md"))
+    git(repo, "add", "-A", "--", "docs")
+    git(repo, "commit", "-q", "-m", "delete aliases and retarget docs hub")
+
+    assert _lite_manifest(
+        repo, active["base_sha"], harness_source=active["harness_source"],
+    ) == [*(f"docs/alias-{number}.py" for number in range(6)), "docs/hub"]
+
+    code, out = run(repo, "forge.py", "mode", "done")
+
+    assert code != 0 and "touches 7 product files" in out and "bound is 5" in out, out
+    assert (repo / ".factory" / "quickfix.json").exists()
 
 
 def test_lite_budget_counts_symlinks_once_and_literal_shell_names(repo):

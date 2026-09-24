@@ -356,73 +356,29 @@ def _lite_manifest(
             "the harness-source marker cannot change inside a Lite window; "
             "change it through a task"
         )
-    historical_symlinks = _lite_historical_symlinks(
-        base, paths, base_sha, harness_source=harness_source,
-    )
-    historical_symlinks.update(_lite_historical_symlinks(
-        base, paths, "HEAD", harness_source=harness_source,
-    ))
+    symlink_paths = _lite_symlink_paths(base, base_sha)
     return _lite_product_files(
         base,
-        paths,
+        [*paths, *symlink_paths],
         harness_source=harness_source,
-        historical_symlinks=historical_symlinks,
+        symlink_paths=symlink_paths,
     )
 
 
-def _lite_historical_symlinks(
-    base: Path, paths: list[str], commit: str, *,
-    harness_source: bool | None,
+def _lite_symlink_paths(
+    base: Path, base_sha: str,
 ) -> set[str]:
-    """Return changed paths whose symlink target at commit is locked."""
-    if not paths:
-        return set()
-    tree = subprocess.run(
-        ["git", "--literal-pathspecs", "ls-tree", "-z", commit, "--", *paths],
-        cwd=base, capture_output=True, text=True, env=clean_git_env(),
-        encoding="utf-8", errors="surrogateescape",
+    """Return changed paths that are symlinks at either end of the diff."""
+    records = _git_paths(
+        base, ["git", "diff", "--raw", "--no-renames", "-z",
+              f"{base_sha}..HEAD", "--"],
     )
-    if tree.returncode != 0:
-        fail(f"could not inspect the lite diff: {tree.stderr.strip()}")
     symlinks: set[str] = set()
-    for entry in tree.stdout.split("\0"):
-        if not entry:
-            continue
-        metadata, path = entry.split("\t", 1)
-        mode = metadata.split(" ", 1)[0]
-        if mode != "120000" or path not in paths:
-            continue
-        target = subprocess.run(
-            ["git", "cat-file", "-p", f"{commit}:{path}"],
-            cwd=base, capture_output=True, text=True, env=clean_git_env(),
-            encoding="utf-8", errors="surrogateescape",
-        )
-        if target.returncode != 0:
-            fail(f"could not inspect the lite diff: {target.stderr.strip()}")
-        if _lite_symlink_target_is_locked(
-            base, path, target.stdout,
-            harness_source=(is_harness_source_repo(base) if harness_source is None
-                            else harness_source),
-        ):
+    for metadata, path in zip(records[::2], records[1::2]):
+        modes = metadata.lstrip(":").split()[:2]
+        if "120000" in modes:
             symlinks.add(path)
     return symlinks
-
-
-def _lite_symlink_target_is_locked(
-    base: Path, path: str, target: str, *, harness_source: bool,
-) -> bool:
-    root = Path(os.path.abspath(base))
-    target_path = Path(target)
-    if not target_path.is_absolute():
-        target_path = root / Path(path).parent / target_path
-    target_path = Path(os.path.abspath(target_path))
-    try:
-        relative = target_path.relative_to(root).as_posix()
-    except ValueError:
-        return True
-    return locked_repo_path(
-        relative, base, harness_source=harness_source, literal=True,
-    ) is not None
 
 
 def _lite_dirty_product_files(
@@ -449,12 +405,12 @@ def _git_paths(base: Path, command: list[str]) -> list[str]:
 
 def _lite_product_files(
     base: Path, paths: list[str], *, harness_source: bool | None = None,
-    historical_symlinks: set[str] | None = None,
+    symlink_paths: set[str] | None = None,
 ) -> list[str]:
     """Apply the planning-lock product boundary to repo-relative Git paths."""
     product_files: list[str] = []
     for path in dict.fromkeys(paths):
-        if historical_symlinks and path in historical_symlinks:
+        if symlink_paths and path in symlink_paths:
             product_files.append(path)
             continue
         current = base
