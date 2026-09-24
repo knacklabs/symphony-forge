@@ -2,7 +2,7 @@
 slug: fde-discovery
 title: The agent works as a forward deployed engineer
 status: confirmed
-saved: 2026-09-24T16:17:27+00:00
+saved: 2026-09-24T17:03:49+00:00
 ---
 
 # The agent works as a forward deployed engineer
@@ -82,8 +82,9 @@ until it is done too. Success checks are not deferrals and never appear in
 the deferral ledger.
 
 **Owners.** Discovery's owner in `harness.yaml` becomes the Forge skill;
-impeccable is added to the prototype phase's allowed tools and reported by
-`forge doctor` as optional, with its install command.
+impeccable is added to the prototype phase's allowed tools. impeccable is a
+required skill at a pinned version: `forge doctor` checks that it is installed
+at that version for Claude and Codex, and `forge doctor --fix` installs it.
 
 **gstack and direnv removed.** The `forge gstack` command; doctor checks that
 clone and install gstack; direnv as a requirement (Forge reads `.envrc`
@@ -115,7 +116,8 @@ the upgrade skill mentions they can archive that history themselves.
 - `forge payback` returns build, smallest slice first, don't build, or find
   out first, and gives the same answer for the same inputs.
 - `forge doctor` (fast, full and `--fix`) passes on a machine without gstack
-  or direnv, never installs either, and reports impeccable as optional.
+  or direnv and never installs either; it reports a missing or outdated
+  impeccable as a required skill, and `--fix` installs the pinned version.
 - `forge gstack` no longer exists; in this repository, no code (including the
   `.gstack/` path tokens), config, prompt, skill, living confirmed spec,
   WORKFLOW/AGENTS/CLAUDE/README/getting-started text or test references

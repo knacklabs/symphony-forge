@@ -2,7 +2,7 @@
 slug: simple-upgrade
 title: Simple upgrade: one safe step from any factory-era client to current
 status: confirmed
-saved: 2026-09-24T15:14:16+00:00
+saved: 2026-09-24T17:03:50+00:00
 ---
 
 # Simple upgrade: one safe step from any factory-era client to current
@@ -92,6 +92,12 @@ harness-owned path, the vendor manifest, an exact rename (100% similar) of a
 path matching the archive table into `.factory/archive/pre-*/`, or an addition
 of one of Forge's own ignore blocks; anything else needs a normal ticket.
 
+**Skills ready.** The upgrade report ends with the same required-skill check
+`forge doctor` runs (impeccable, grill-me, the design skills, Autoreview, the
+Codex plugin): it names each skill that is missing or outdated and the one
+command that fixes it, `./forge doctor --fix`. It reports and never blocks the
+upgrade.
+
 **Archived reviews.** A task with no selected review but with archived review
 files under `.factory/archive/pre-*/` shows on the board as "reviewed before
 upgrade"; the files stay readable there. CI does not re-check tasks that
@@ -136,6 +142,8 @@ the installed skill differs from the harness copy.
   `.factory` files survive; exactly the table's files end up under
   `.factory/archive/pre-<sha>/` at their original relative paths, and the
   board shows those tasks as reviewed before upgrade.
+- The upgrade report names every missing or outdated required skill with
+  `./forge doctor --fix`, and a missing skill never fails the upgrade.
 - The upgrade PR passes the PR ticket check; a hand-made change added to the
   upgrade commit does not.
 - The Lean migration, resume plans, profile hash tables and `.agents`
