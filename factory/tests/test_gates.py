@@ -64,6 +64,7 @@ from factory_lib import (
 from grill_gates import GATES
 from forge_cli.grill import _artifact_digest
 from forge_cli.events import load_events
+from forge_cli.quickfix import MAX_FILES
 from forge_cli.stages import load_stages, stage_baseline, task_digest, write_stages
 from record_signoff import REQUIRED_BRIEF_HEADINGS
 
@@ -9163,7 +9164,7 @@ def test_harness_degraded_claims_machinery_files_against_budget(repo):
                     "--reason", "repair machinery")
     assert code == 0, out
 
-    expected = [f"factory/scripts/repair-{number}.py" for number in range(1, 6)]
+    expected = [f"factory/scripts/repair-{number}.py" for number in range(1, MAX_FILES + 1)]
     for rel in expected:
         code, out = hook(repo, {
             "tool_name": "Edit", "permission_mode": "default",
@@ -9172,7 +9173,7 @@ def test_harness_degraded_claims_machinery_files_against_budget(repo):
         assert code == 0 and "deny" not in out, out
     code, out = hook(repo, {
         "tool_name": "Edit", "permission_mode": "default",
-        "tool_input": {"file_path": str(repo / "factory/scripts/repair-6.py")},
+        "tool_input": {"file_path": str(repo / f"factory/scripts/repair-{MAX_FILES + 1}.py")},
     })
     assert code == 0 and "deny" in out and "scope exceeded" in out
 
@@ -9239,7 +9240,7 @@ def test_degraded_pins_repo_kind_so_marker_deletion_cannot_escape_budget(repo):
     assert code == 0, out
     (repo / ".factory" / "harness-source.json").unlink()  # marker gone (any vector)
     assert not is_harness_source_repo(repo)  # live classification would say client
-    for number in range(1, 6):  # ...but the window still claims machinery
+    for number in range(1, MAX_FILES + 1):  # ...but the window still claims machinery
         code, out = hook(repo, {
             "tool_name": "Edit", "permission_mode": "default",
             "tool_input": {"file_path": str(repo / "factory" / "scripts" / f"m{number}.py")},
@@ -9247,7 +9248,7 @@ def test_degraded_pins_repo_kind_so_marker_deletion_cannot_escape_budget(repo):
         assert code == 0 and "deny" not in out, out
     code, out = hook(repo, {  # 6th exceeds the pinned budget — still product
         "tool_name": "Edit", "permission_mode": "default",
-        "tool_input": {"file_path": str(repo / "factory" / "scripts" / "m6.py")},
+        "tool_input": {"file_path": str(repo / "factory" / "scripts" / f"m{MAX_FILES + 1}.py")},
     })
     assert code == 0 and "deny" in out and "scope exceeded" in out
     # And the pin cannot be laundered away by closing the window: a harness-pinned
@@ -9319,7 +9320,7 @@ def test_harness_degraded_counts_each_file_copied_into_a_machinery_dir(repo):
     code, out = run(repo, "forge.py", "mode", "degraded", "start",
                     "--reason", "copies")
     assert code == 0, out
-    for number in range(1, 6):
+    for number in range(1, MAX_FILES + 1):
         code, out = hook(repo, {
             "tool_name": "Bash", "permission_mode": "default",
             "tool_input": {"command": f"cp /tmp/a{number} factory/scripts/"},
@@ -9327,7 +9328,7 @@ def test_harness_degraded_counts_each_file_copied_into_a_machinery_dir(repo):
         assert code == 0 and "deny" not in out, out
     code, out = hook(repo, {
         "tool_name": "Bash", "permission_mode": "default",
-        "tool_input": {"command": "cp /tmp/a6 factory/scripts/"},
+        "tool_input": {"command": f"cp /tmp/a{MAX_FILES + 1} factory/scripts/"},
     })
     assert code == 0 and "deny" in out and "scope exceeded" in out
 
@@ -9397,7 +9398,7 @@ def test_degraded_lifecycle_tracks_files_and_enforces_budget(repo):
     assert code == 0 and "deny" in out and "forge delegate" in out
     assert json.loads(active_path.read_text())["files"] == []
 
-    for number in range(1, 6):
+    for number in range(1, MAX_FILES + 1):
         code, out = hook(repo, {
             "tool_name": "Edit", "permission_mode": "default",
             "tool_input": {"file_path": str(repo / "src" / f"file-{number}.py")},
@@ -9409,17 +9410,17 @@ def test_degraded_lifecycle_tracks_files_and_enforces_budget(repo):
         "tool_input": {"command": "touch src/file-5.py"},
     })
     assert code == 0 and "deny" not in out
-    assert len(json.loads(active_path.read_text())["files"]) == 5
+    assert len(json.loads(active_path.read_text())["files"]) == MAX_FILES
 
     code, out = hook(repo, {
         "tool_name": "Edit", "permission_mode": "default",
-        "tool_input": {"file_path": str(repo / "src" / "file-6.py")},
+        "tool_input": {"file_path": str(repo / "src" / f"file-{MAX_FILES + 1}.py")},
     })
     assert code == 0 and "deny" in out and "scope exceeded" in out
-    assert len(json.loads(active_path.read_text())["files"]) == 5
+    assert len(json.loads(active_path.read_text())["files"]) == MAX_FILES
 
     code, out = run(repo, "forge.py", "mode", "list")
-    assert code == 0 and "repair parser" in out and "5/5" in out
+    assert code == 0 and "repair parser" in out and f"{MAX_FILES}/{MAX_FILES}" in out
     code, out = run(repo, "forge.py", "mode", "done")
     assert code == 0 and "5 file(s)" in out, out
     assert not active_path.exists()
@@ -9432,7 +9433,7 @@ def test_degraded_lifecycle_tracks_files_and_enforces_budget(repo):
     assert set(events) == {"open", "done"}
     assert events["open"]["started_at"] <= events["done"]["completed_at"]
     events = [events["open"], events["done"]]
-    assert events[-1]["files"] == [f"src/file-{number}.py" for number in range(1, 6)]
+    assert events[-1]["files"] == [f"src/file-{number}.py" for number in range(1, MAX_FILES + 1)]
 
     code, out = hook(repo, {
         "tool_name": "Edit", "permission_mode": "default",
@@ -9451,7 +9452,7 @@ def test_degraded_enforces_budget_inside_an_active_story(repo, tmp_path):
     assert code == 0, out
 
     active_path = repo / ".factory" / "quickfix.json"
-    for number in range(1, 6):
+    for number in range(1, MAX_FILES + 1):
         code, out = hook(repo, {
             "tool_name": "Edit", "permission_mode": "default",
             "tool_input": {"file_path": str(repo / "src" / f"story-{number}.py")},
@@ -9459,11 +9460,11 @@ def test_degraded_enforces_budget_inside_an_active_story(repo, tmp_path):
         assert code == 0 and "deny" not in out, out
     code, out = hook(repo, {
         "tool_name": "Edit", "permission_mode": "default",
-        "tool_input": {"file_path": str(repo / "src" / "story-6.py")},
+        "tool_input": {"file_path": str(repo / "src" / f"story-{MAX_FILES + 1}.py")},
     })
     assert code == 0 and "deny" in out and "scope exceeded" in out
     assert json.loads(active_path.read_text())["files"] == [
-        f"src/story-{number}.py" for number in range(1, 6)
+        f"src/story-{number}.py" for number in range(1, MAX_FILES + 1)
     ]
 
 
@@ -9473,7 +9474,7 @@ def test_degraded_budget_refuses_over_limit_when_unplanned(repo):
     assert code == 0, out
     active_path = repo / ".factory" / "quickfix.json"
 
-    for number in range(1, 6):
+    for number in range(1, MAX_FILES + 1):
         code, out = hook(repo, {
             "tool_name": "Edit", "permission_mode": "default",
             "tool_input": {"file_path": str(repo / "src" / f"bounded-{number}.py")},
@@ -9481,11 +9482,11 @@ def test_degraded_budget_refuses_over_limit_when_unplanned(repo):
         assert code == 0 and "deny" not in out, out
     code, out = hook(repo, {
         "tool_name": "Edit", "permission_mode": "default",
-        "tool_input": {"file_path": str(repo / "src" / "bounded-6.py")},
+        "tool_input": {"file_path": str(repo / "src" / f"bounded-{MAX_FILES + 1}.py")},
     })
     assert code == 0 and "deny" in out and "scope exceeded" in out
     assert json.loads(active_path.read_text())["files"] == [
-        f"src/bounded-{number}.py" for number in range(1, 6)
+        f"src/bounded-{number}.py" for number in range(1, MAX_FILES + 1)
     ]
 
 

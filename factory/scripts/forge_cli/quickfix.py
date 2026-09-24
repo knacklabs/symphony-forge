@@ -19,6 +19,9 @@ from .common import fail
 from .repo_kind import is_harness_source_repo, locked_repo_path
 
 MAX_FILES = 25
+# A Lite window keeps its own bound: `forge fix` refuses a window whose
+# max_files differs from harness.yaml modes.lite.bound, which is 5.
+LITE_MAX_FILES = 5
 QUICKFIX = "quickfix"
 LITE = "lite"
 DEGRADED = "degraded"
@@ -143,7 +146,7 @@ def _open(base: Path, *, profile: str, reason: str, by: str | None = None) -> di
         "profile": profile,
         "reason": reason,
         "started_at": now_iso(),
-        "max_files": MAX_FILES,
+        "max_files": LITE_MAX_FILES if profile == LITE else MAX_FILES,
         "files": [],
         # Pin the repo kind for the window's lifetime: the planning lock reads
         # this instead of the live marker while a quickfix is open, so deleting
