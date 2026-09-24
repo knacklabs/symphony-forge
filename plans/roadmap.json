@@ -1,4 +1,5 @@
 {
+  "generated_by": "human",
   "items": [
     {
       "key": "harness-v2-wedge",
@@ -1016,6 +1017,30 @@
       "spec": "docs/specs/full-access.md"
     },
     {
+      "key": "FORGE-WARM-1",
+      "title": "Hybrid mode reuses warm Codex worker threads",
+      "story": "As a developer running Forge in hybrid mode, I get review-fix rounds from a Codex worker that already knows the task, so fixes land faster without re-reading the repo",
+      "acceptance_criteria": [
+        "FORGE_EXECUTOR selects hybrid (default), codex or claude per decision 0085",
+        "Hybrid delegation uses the pinned SDK route when doctor passes, else the plugin route pre-dispatch",
+        "Every SDK turn is admitted by a recorded ledger row; close needs a terminal turn",
+        "Review-fix rounds resume the task's worker thread with brief, HEAD, diff and findings",
+        "A recorded benchmark shows resumed fix rounds use fewer uncached tokens and less time",
+        "Live event stream with reattach; signals steer or interrupt the active turn",
+        "One lease-held app-server per repository",
+        "forge upgrade adds the SDK route to existing clients idempotently; plugin tasks keep working",
+        "Forge threads are archived at task merge and story close; pruning touches Forge threads only",
+        "Parity matrix covers claude, codex and hybrid on macOS, Linux and Windows"
+      ],
+      "order": 48,
+      "status": "active",
+      "epic": "symphony-forge",
+      "skill": "backend",
+      "kind": "feature",
+      "depends_on": [],
+      "spec": "docs/specs/warm-codex-threads.md"
+    },
+    {
       "key": "FORGE-UPG-2",
       "title": "Simple upgrade: one safe step from any factory-era client",
       "story": "As an FDE maintaining a client repo, I upgrade it to the current Forge in one safe command, so that clients get fixes without half-upgraded repos or stranded stories.",
@@ -1052,8 +1077,6 @@
       "spec": "docs/specs/fde-discovery.md"
     }
   ],
-  "generated_by": "human",
-  "updated_at": "2026-09-24T15:17:59+00:00",
   "epics": [
     {
       "id": "symphony-forge",
@@ -1127,5 +1150,6 @@
         "docs/specs/factory-event-export.md"
       ]
     }
-  ]
+  ],
+  "updated_at": "2026-09-24T17:22:27+00:00"
 }

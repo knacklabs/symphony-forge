@@ -1,0 +1,189 @@
+{
+  "generated_by": "griller",
+  "gate": "task",
+  "verdict": "pass",
+  "issue": "FORGE-WARM-1",
+  "task_id": "EXEC-MODES",
+  "gaps": [
+    "The Claude-only route does not state how an in-flight Codex companion is stopped or fenced when FORGE_EXECUTOR switches to claude. The proposed hook admits writes from a current Claude preparation, while the existing companion can still have a live write launch; a mode change must not leave both writers able to edit the task ( .factory/stories/FORGE-WARM-1/task-plans/EXEC-MODES.md:55-68; factory/scripts/forge_cli/delegate.py:784-850).",
+    "The proposed Claude cold-reader command is incomplete: record_grill_from_json.py requires a structured payload through --input or stdin in addition to --cold-result and --preparation-id. Following the plan's printed command alone refuses with 'Expected JSON on stdin or via --input' (.factory/stories/FORGE-WARM-1/task-plans/EXEC-MODES.md:71-74; factory/scripts/record_grill_from_json.py:679-709).",
+    "The plan promises a machine without Codex can use Forge, but specifies the Claude subagent handoff only for a task grill. The same grill command handles other gates, and the current implementation route launches a companion for Claude coordination. The handoff and proof for plan, spec, signoff, and epics cold reads remain unstated (.factory/stories/FORGE-WARM-1/task-plans/EXEC-MODES.md:9,62-74; factory/scripts/forge_cli/grill.py:365-445).",
+    "A Claude writer preparation has launch_status='prepared', but task_frontier_state currently recognizes only a succeeded terminal delegation and classifies other rows as inspect-delegate. Changing phase.py's displayed next action alone leaves forge next on the wrong frontier after a valid Claude preparation; the plan does not name the upstream frontier-state change or a test for it (.factory/stories/FORGE-WARM-1/task-plans/EXEC-MODES.md:75-76; factory/scripts/factory_lib.py:5602-5616,5633-5649).",
+    "The Claude Lite flow stops at edit admission in the plan and its required test. A Lite window cannot finish until it has clean reviews at HEAD, while forge review --lite currently defaults to the codex engine. The contract needs a falsifiable Claude-only Lite review and mode-done path to support the stated no-Codex workflow (.factory/stories/FORGE-WARM-1/task-plans/EXEC-MODES.md:31-35,59-61; factory/scripts/forge_cli/quickfix.py:269-320; factory/scripts/forge.py:646-658).",
+    "The mode-switch rule is a security and proof condition, but none of the ten required tests names a switch or proves that an old-mode row loses admission and close authority. Add a test that begins a task in one mode, switches modes with its prior row still present, and checks both the hook and close (.factory/stories/FORGE-WARM-1/task-plans/EXEC-MODES.md:66-68; .factory/stories/FORGE-WARM-1/decomposition.json:48-98).",
+    "The plan says the Claude cold reader receives the prepared brief as its only input, but does not give an executable Claude subagent dispatch contract that ensures the reader has not inherited the author's artifact context. The existing fresh-reader guidance is specifically a new host spawn_agent task; replacing its name with 'general-purpose' leaves the independence check to the coordinator's judgment (.factory/stories/FORGE-WARM-1/task-plans/EXEC-MODES.md:71-74; factory/scripts/forge_cli/grill.py:530-548)."
+  ],
+  "contradictions": [
+    "The saved task plan and recorded criterion make hybrid reject Claude product edits and defer gated Claude writing, while accepted Decision 0085 and the approved story plan explicitly allow Claude to execute through the same gates in hybrid and assign that behavior to EXEC-MODES. D-0044 records an owner deferral but does not amend either binding authority; the task would deliver less than the approved story plan (.factory/stories/FORGE-WARM-1/task-plans/EXEC-MODES.md:8-12,27,79; docs/decisions/0085-executor-modes.md:20-26; plans/active/FORGE-WARM-1-hybrid-mode-reuses-warm-codex-worker-threads.md:59-65; plans/deferrals.md:52)."
+  ],
+  "resolutions": [
+    "delegate refuses a Claude writer preparation while a companion launch for the task is starting or running (existing delegation lock); after a switch the task is delegated again.",
+    "The printed record command now includes --input <disposition json> alongside --cold-result and --preparation-id.",
+    "The Claude subagent handoff applies to every grill gate (plan, spec, signoff, epics, task) through the one host-native handoff path.",
+    "task_frontier_state treats a current Claude writer preparation as edit-then-close, so forge next points to the right step.",
+    "forge review --lite defaults to review_engine(), so a Claude-only Lite window reviews and closes without Codex.",
+    "The mode switch is exercised inside the existing close test: old-mode row present after a switch, hook and close both refuse it.",
+    "The handoff starts a NEW Claude subagent whose prompt is only the prepared brief file; subagents start with no conversation history, so the reader cannot inherit the author's context.",
+    "Owner decision (native question): amend the FORGE-WARM-1 story plan to defer hybrid Claude writes (D-0044) and re-approve it natively."
+  ],
+  "finding_dispositions": [
+    {
+      "finding": "The Claude-only route does not state how an in-flight Codex companion is stopped or fenced when FORGE_EXECUTOR switches to claude. The proposed hook admits writes from a current Claude preparation, while the existing companion can still have a live write launch; a mode change must not leave both writers able to edit the task ( .factory/stories/FORGE-WARM-1/task-plans/EXEC-MODES.md:55-68; factory/scripts/forge_cli/delegate.py:784-850).",
+      "resolution": "delegate refuses a Claude writer preparation while a companion launch for the task is starting or running (existing delegation lock); after a switch the task is delegated again.",
+      "source": "repository fact"
+    },
+    {
+      "finding": "The proposed Claude cold-reader command is incomplete: record_grill_from_json.py requires a structured payload through --input or stdin in addition to --cold-result and --preparation-id. Following the plan's printed command alone refuses with 'Expected JSON on stdin or via --input' (.factory/stories/FORGE-WARM-1/task-plans/EXEC-MODES.md:71-74; factory/scripts/record_grill_from_json.py:679-709).",
+      "resolution": "The printed record command now includes --input <disposition json> alongside --cold-result and --preparation-id.",
+      "source": "repository fact"
+    },
+    {
+      "finding": "The plan promises a machine without Codex can use Forge, but specifies the Claude subagent handoff only for a task grill. The same grill command handles other gates, and the current implementation route launches a companion for Claude coordination. The handoff and proof for plan, spec, signoff, and epics cold reads remain unstated (.factory/stories/FORGE-WARM-1/task-plans/EXEC-MODES.md:9,62-74; factory/scripts/forge_cli/grill.py:365-445).",
+      "resolution": "The Claude subagent handoff applies to every grill gate (plan, spec, signoff, epics, task) through the one host-native handoff path.",
+      "source": "repository fact"
+    },
+    {
+      "finding": "A Claude writer preparation has launch_status='prepared', but task_frontier_state currently recognizes only a succeeded terminal delegation and classifies other rows as inspect-delegate. Changing phase.py's displayed next action alone leaves forge next on the wrong frontier after a valid Claude preparation; the plan does not name the upstream frontier-state change or a test for it (.factory/stories/FORGE-WARM-1/task-plans/EXEC-MODES.md:75-76; factory/scripts/factory_lib.py:5602-5616,5633-5649).",
+      "resolution": "task_frontier_state treats a current Claude writer preparation as edit-then-close, so forge next points to the right step.",
+      "source": "repository fact"
+    },
+    {
+      "finding": "The Claude Lite flow stops at edit admission in the plan and its required test. A Lite window cannot finish until it has clean reviews at HEAD, while forge review --lite currently defaults to the codex engine. The contract needs a falsifiable Claude-only Lite review and mode-done path to support the stated no-Codex workflow (.factory/stories/FORGE-WARM-1/task-plans/EXEC-MODES.md:31-35,59-61; factory/scripts/forge_cli/quickfix.py:269-320; factory/scripts/forge.py:646-658).",
+      "resolution": "forge review --lite defaults to review_engine(), so a Claude-only Lite window reviews and closes without Codex.",
+      "source": "repository fact"
+    },
+    {
+      "finding": "The mode-switch rule is a security and proof condition, but none of the ten required tests names a switch or proves that an old-mode row loses admission and close authority. Add a test that begins a task in one mode, switches modes with its prior row still present, and checks both the hook and close (.factory/stories/FORGE-WARM-1/task-plans/EXEC-MODES.md:66-68; .factory/stories/FORGE-WARM-1/decomposition.json:48-98).",
+      "resolution": "The mode switch is exercised inside the existing close test: old-mode row present after a switch, hook and close both refuse it.",
+      "source": "repository fact"
+    },
+    {
+      "finding": "The plan says the Claude cold reader receives the prepared brief as its only input, but does not give an executable Claude subagent dispatch contract that ensures the reader has not inherited the author's artifact context. The existing fresh-reader guidance is specifically a new host spawn_agent task; replacing its name with 'general-purpose' leaves the independence check to the coordinator's judgment (.factory/stories/FORGE-WARM-1/task-plans/EXEC-MODES.md:71-74; factory/scripts/forge_cli/grill.py:530-548).",
+      "resolution": "The handoff starts a NEW Claude subagent whose prompt is only the prepared brief file; subagents start with no conversation history, so the reader cannot inherit the author's context.",
+      "source": "repository fact"
+    },
+    {
+      "finding": "The saved task plan and recorded criterion make hybrid reject Claude product edits and defer gated Claude writing, while accepted Decision 0085 and the approved story plan explicitly allow Claude to execute through the same gates in hybrid and assign that behavior to EXEC-MODES. D-0044 records an owner deferral but does not amend either binding authority; the task would deliver less than the approved story plan (.factory/stories/FORGE-WARM-1/task-plans/EXEC-MODES.md:8-12,27,79; docs/decisions/0085-executor-modes.md:20-26; plans/active/FORGE-WARM-1-hybrid-mode-reuses-warm-codex-worker-threads.md:59-65; plans/deferrals.md:52).",
+      "resolution": "Owner decision (native question): amend the FORGE-WARM-1 story plan to defer hybrid Claude writes (D-0044) and re-approve it natively.",
+      "source": "repository fact"
+    }
+  ],
+  "amendments": [
+    {
+      "change": "span 0: amended to resolve the task cold-read findings",
+      "reason": "one amendment after the single cold read",
+      "source": "coordinator amendment 2026-09-24",
+      "findings": [
+        "The Claude-only route does not state how an in-flight Codex companion is stopped or fenced when FORGE_EXECUTOR switches to claude. The proposed hook admits writes from a current Claude preparation, while the existing companion can still have a live write launch; a mode change must not leave both writers able to edit the task ( .factory/stories/FORGE-WARM-1/task-plans/EXEC-MODES.md:55-68; factory/scripts/forge_cli/delegate.py:784-850).",
+        "The proposed Claude cold-reader command is incomplete: record_grill_from_json.py requires a structured payload through --input or stdin in addition to --cold-result and --preparation-id. Following the plan's printed command alone refuses with 'Expected JSON on stdin or via --input' (.factory/stories/FORGE-WARM-1/task-plans/EXEC-MODES.md:71-74; factory/scripts/record_grill_from_json.py:679-709).",
+        "The plan promises a machine without Codex can use Forge, but specifies the Claude subagent handoff only for a task grill. The same grill command handles other gates, and the current implementation route launches a companion for Claude coordination. The handoff and proof for plan, spec, signoff, and epics cold reads remain unstated (.factory/stories/FORGE-WARM-1/task-plans/EXEC-MODES.md:9,62-74; factory/scripts/forge_cli/grill.py:365-445).",
+        "A Claude writer preparation has launch_status='prepared', but task_frontier_state currently recognizes only a succeeded terminal delegation and classifies other rows as inspect-delegate. Changing phase.py's displayed next action alone leaves forge next on the wrong frontier after a valid Claude preparation; the plan does not name the upstream frontier-state change or a test for it (.factory/stories/FORGE-WARM-1/task-plans/EXEC-MODES.md:75-76; factory/scripts/factory_lib.py:5602-5616,5633-5649).",
+        "The Claude Lite flow stops at edit admission in the plan and its required test. A Lite window cannot finish until it has clean reviews at HEAD, while forge review --lite currently defaults to the codex engine. The contract needs a falsifiable Claude-only Lite review and mode-done path to support the stated no-Codex workflow (.factory/stories/FORGE-WARM-1/task-plans/EXEC-MODES.md:31-35,59-61; factory/scripts/forge_cli/quickfix.py:269-320; factory/scripts/forge.py:646-658).",
+        "The mode-switch rule is a security and proof condition, but none of the ten required tests names a switch or proves that an old-mode row loses admission and close authority. Add a test that begins a task in one mode, switches modes with its prior row still present, and checks both the hook and close (.factory/stories/FORGE-WARM-1/task-plans/EXEC-MODES.md:66-68; .factory/stories/FORGE-WARM-1/decomposition.json:48-98).",
+        "The plan says the Claude cold reader receives the prepared brief as its only input, but does not give an executable Claude subagent dispatch contract that ensures the reader has not inherited the author's artifact context. The existing fresh-reader guidance is specifically a new host spawn_agent task; replacing its name with 'general-purpose' leaves the independence check to the coordinator's judgment (.factory/stories/FORGE-WARM-1/task-plans/EXEC-MODES.md:71-74; factory/scripts/forge_cli/grill.py:530-548).",
+        "The saved task plan and recorded criterion make hybrid reject Claude product edits and defer gated Claude writing, while accepted Decision 0085 and the approved story plan explicitly allow Claude to execute through the same gates in hybrid and assign that behavior to EXEC-MODES. D-0044 records an owner deferral but does not amend either binding authority; the task would deliver less than the approved story plan (.factory/stories/FORGE-WARM-1/task-plans/EXEC-MODES.md:8-12,27,79; docs/decisions/0085-executor-modes.md:20-26; plans/active/FORGE-WARM-1-hybrid-mode-reuses-warm-codex-worker-threads.md:59-65; plans/deferrals.md:52)."
+      ],
+      "delta_index": 0
+    },
+    {
+      "change": "span 1: amended to resolve the task cold-read findings",
+      "reason": "one amendment after the single cold read",
+      "source": "coordinator amendment 2026-09-24",
+      "findings": [
+        "The Claude-only route does not state how an in-flight Codex companion is stopped or fenced when FORGE_EXECUTOR switches to claude. The proposed hook admits writes from a current Claude preparation, while the existing companion can still have a live write launch; a mode change must not leave both writers able to edit the task ( .factory/stories/FORGE-WARM-1/task-plans/EXEC-MODES.md:55-68; factory/scripts/forge_cli/delegate.py:784-850).",
+        "The proposed Claude cold-reader command is incomplete: record_grill_from_json.py requires a structured payload through --input or stdin in addition to --cold-result and --preparation-id. Following the plan's printed command alone refuses with 'Expected JSON on stdin or via --input' (.factory/stories/FORGE-WARM-1/task-plans/EXEC-MODES.md:71-74; factory/scripts/record_grill_from_json.py:679-709).",
+        "The plan promises a machine without Codex can use Forge, but specifies the Claude subagent handoff only for a task grill. The same grill command handles other gates, and the current implementation route launches a companion for Claude coordination. The handoff and proof for plan, spec, signoff, and epics cold reads remain unstated (.factory/stories/FORGE-WARM-1/task-plans/EXEC-MODES.md:9,62-74; factory/scripts/forge_cli/grill.py:365-445).",
+        "A Claude writer preparation has launch_status='prepared', but task_frontier_state currently recognizes only a succeeded terminal delegation and classifies other rows as inspect-delegate. Changing phase.py's displayed next action alone leaves forge next on the wrong frontier after a valid Claude preparation; the plan does not name the upstream frontier-state change or a test for it (.factory/stories/FORGE-WARM-1/task-plans/EXEC-MODES.md:75-76; factory/scripts/factory_lib.py:5602-5616,5633-5649).",
+        "The Claude Lite flow stops at edit admission in the plan and its required test. A Lite window cannot finish until it has clean reviews at HEAD, while forge review --lite currently defaults to the codex engine. The contract needs a falsifiable Claude-only Lite review and mode-done path to support the stated no-Codex workflow (.factory/stories/FORGE-WARM-1/task-plans/EXEC-MODES.md:31-35,59-61; factory/scripts/forge_cli/quickfix.py:269-320; factory/scripts/forge.py:646-658).",
+        "The mode-switch rule is a security and proof condition, but none of the ten required tests names a switch or proves that an old-mode row loses admission and close authority. Add a test that begins a task in one mode, switches modes with its prior row still present, and checks both the hook and close (.factory/stories/FORGE-WARM-1/task-plans/EXEC-MODES.md:66-68; .factory/stories/FORGE-WARM-1/decomposition.json:48-98).",
+        "The plan says the Claude cold reader receives the prepared brief as its only input, but does not give an executable Claude subagent dispatch contract that ensures the reader has not inherited the author's artifact context. The existing fresh-reader guidance is specifically a new host spawn_agent task; replacing its name with 'general-purpose' leaves the independence check to the coordinator's judgment (.factory/stories/FORGE-WARM-1/task-plans/EXEC-MODES.md:71-74; factory/scripts/forge_cli/grill.py:530-548).",
+        "The saved task plan and recorded criterion make hybrid reject Claude product edits and defer gated Claude writing, while accepted Decision 0085 and the approved story plan explicitly allow Claude to execute through the same gates in hybrid and assign that behavior to EXEC-MODES. D-0044 records an owner deferral but does not amend either binding authority; the task would deliver less than the approved story plan (.factory/stories/FORGE-WARM-1/task-plans/EXEC-MODES.md:8-12,27,79; docs/decisions/0085-executor-modes.md:20-26; plans/active/FORGE-WARM-1-hybrid-mode-reuses-warm-codex-worker-threads.md:59-65; plans/deferrals.md:52)."
+      ],
+      "delta_index": 1
+    },
+    {
+      "change": "span 2: amended to resolve the task cold-read findings",
+      "reason": "one amendment after the single cold read",
+      "source": "coordinator amendment 2026-09-24",
+      "findings": [
+        "The Claude-only route does not state how an in-flight Codex companion is stopped or fenced when FORGE_EXECUTOR switches to claude. The proposed hook admits writes from a current Claude preparation, while the existing companion can still have a live write launch; a mode change must not leave both writers able to edit the task ( .factory/stories/FORGE-WARM-1/task-plans/EXEC-MODES.md:55-68; factory/scripts/forge_cli/delegate.py:784-850).",
+        "The proposed Claude cold-reader command is incomplete: record_grill_from_json.py requires a structured payload through --input or stdin in addition to --cold-result and --preparation-id. Following the plan's printed command alone refuses with 'Expected JSON on stdin or via --input' (.factory/stories/FORGE-WARM-1/task-plans/EXEC-MODES.md:71-74; factory/scripts/record_grill_from_json.py:679-709).",
+        "The plan promises a machine without Codex can use Forge, but specifies the Claude subagent handoff only for a task grill. The same grill command handles other gates, and the current implementation route launches a companion for Claude coordination. The handoff and proof for plan, spec, signoff, and epics cold reads remain unstated (.factory/stories/FORGE-WARM-1/task-plans/EXEC-MODES.md:9,62-74; factory/scripts/forge_cli/grill.py:365-445).",
+        "A Claude writer preparation has launch_status='prepared', but task_frontier_state currently recognizes only a succeeded terminal delegation and classifies other rows as inspect-delegate. Changing phase.py's displayed next action alone leaves forge next on the wrong frontier after a valid Claude preparation; the plan does not name the upstream frontier-state change or a test for it (.factory/stories/FORGE-WARM-1/task-plans/EXEC-MODES.md:75-76; factory/scripts/factory_lib.py:5602-5616,5633-5649).",
+        "The Claude Lite flow stops at edit admission in the plan and its required test. A Lite window cannot finish until it has clean reviews at HEAD, while forge review --lite currently defaults to the codex engine. The contract needs a falsifiable Claude-only Lite review and mode-done path to support the stated no-Codex workflow (.factory/stories/FORGE-WARM-1/task-plans/EXEC-MODES.md:31-35,59-61; factory/scripts/forge_cli/quickfix.py:269-320; factory/scripts/forge.py:646-658).",
+        "The mode-switch rule is a security and proof condition, but none of the ten required tests names a switch or proves that an old-mode row loses admission and close authority. Add a test that begins a task in one mode, switches modes with its prior row still present, and checks both the hook and close (.factory/stories/FORGE-WARM-1/task-plans/EXEC-MODES.md:66-68; .factory/stories/FORGE-WARM-1/decomposition.json:48-98).",
+        "The plan says the Claude cold reader receives the prepared brief as its only input, but does not give an executable Claude subagent dispatch contract that ensures the reader has not inherited the author's artifact context. The existing fresh-reader guidance is specifically a new host spawn_agent task; replacing its name with 'general-purpose' leaves the independence check to the coordinator's judgment (.factory/stories/FORGE-WARM-1/task-plans/EXEC-MODES.md:71-74; factory/scripts/forge_cli/grill.py:530-548).",
+        "The saved task plan and recorded criterion make hybrid reject Claude product edits and defer gated Claude writing, while accepted Decision 0085 and the approved story plan explicitly allow Claude to execute through the same gates in hybrid and assign that behavior to EXEC-MODES. D-0044 records an owner deferral but does not amend either binding authority; the task would deliver less than the approved story plan (.factory/stories/FORGE-WARM-1/task-plans/EXEC-MODES.md:8-12,27,79; docs/decisions/0085-executor-modes.md:20-26; plans/active/FORGE-WARM-1-hybrid-mode-reuses-warm-codex-worker-threads.md:59-65; plans/deferrals.md:52)."
+      ],
+      "delta_index": 2
+    }
+  ],
+  "artifact_delta": [
+    {
+      "cold_start": 67,
+      "cold_end": 68,
+      "cold": "  another mode is delegated again after a switch.\n",
+      "final_start": 67,
+      "final_end": 75,
+      "final": "  another mode is delegated again after a switch, and `delegate` refuses to prepare a Claude writer\n  while a companion launch for that task is starting or running (the existing delegation lock).\n  `test_claude_executor_close_accepts_claude_writer_and_reviews_with_claude` also switches modes with\n  the old row present and checks both the hook and close refuse it.\n- Frontier: `task_frontier_state` treats a current Claude writer preparation as \"edit, then close\" (not\n  inspect-delegate), so `forge next` points to the right step.\n- Lite in claude mode: `forge review --lite` defaults to `review_engine()` (claude), so a Claude-only\n  Lite window reviews and closes without Codex.\n"
+    },
+    {
+      "cold_start": 70,
+      "cold_end": 74,
+      "cold": "- Claude cold reader: grill prepares its usual host-native `agent_type: griller` row; in claude mode the\n  handoff reads \"run a fresh Claude subagent (general-purpose) with the prepared brief as its only\n  input, then record its JSON with `record_grill_from_json.py --gate task --task <id> --cold-result\n  <file> --preparation-id <id>`\" instead of the `spawn_agent` descriptor.\n",
+      "final_start": 77,
+      "final_end": 83,
+      "final": "- Claude cold reader (every gate: plan, spec, signoff, epics, task): grill prepares its usual host-native\n  `agent_type: griller` row; in claude mode the handoff reads \"start a NEW Claude subagent (general-purpose;\n  a subagent starts with no conversation history) whose prompt is only the prepared brief file; save its\n  JSON reply; then record with `record_grill_from_json.py --gate <gate> [--task <id>] --input\n  <disposition json> --cold-result <reply file> --preparation-id <id>`\" instead of the `spawn_agent`\n  descriptor.\n"
+    },
+    {
+      "cold_start": 78,
+      "cold_end": 79,
+      "cold": "- Hybrid Claude writes (decision 0085) are deferred by the owner's decision as D-0044.\n",
+      "final_start": 87,
+      "final_end": 89,
+      "final": "- Hybrid Claude writes (decision 0085) are deferred by the owner's decision as D-0044; the story plan is\n  amended and re-approved to match.\n"
+    }
+  ],
+  "questions_asked": 0,
+  "inspected_refs": [
+    "factory/scripts/forge_cli/codex_runtime.py",
+    "factory/scripts/pre_tool_use.py",
+    "factory/scripts/forge_cli/delegate.py",
+    "factory/scripts/forge_cli/stages.py",
+    "factory/scripts/forge_cli/close.py",
+    "factory/scripts/forge_cli/doctor.py",
+    "factory/scripts/forge_cli/grill.py",
+    "factory/scripts/forge_cli/fix.py",
+    "docs/specs/strict-role-split.md",
+    "docs/specs/dual-coordinator-parity.md"
+  ],
+  "current_flow": "Claude-coordinated sessions deny Claude product writes; forge delegate launches the Codex companion and close requires a successful companion launch; native Codex coordination uses host-native preparation rows.",
+  "criteria_map": {
+    "With no FORGE_EXECUTOR set in a Claude-coordinated session the executor is hybrid and behaviour is unchanged: a Claude product edit is refused and forge delegate starts Codex.": "Manual Verification step 1; Technical notes",
+    "With FORGE_EXECUTOR=codex behaviour is unchanged from today.": "Manual Verification step 2; Technical notes",
+    "With FORGE_EXECUTOR=claude, forge delegate records a Claude writer entry for the active task without starting Codex, and the Claude session and its subagents may write only inside the task's effective scope; protected markers stay refused.": "Manual Verification step 3; Technical notes",
+    "With FORGE_EXECUTOR=claude, forge fix records a Claude writer entry for the open Lite window, and Claude edits are admitted only within the window's file budget.": "Manual Verification step 4; Technical notes",
+    "With FORGE_EXECUTOR=claude on a machine without Codex, forge doctor (fast, full and --fix) passes without installing Codex, the task grill hands its cold read to a fresh Claude subagent, and task close accepts the Claude writer entry as write proof and reviews with the claude engine.": "Manual Verification step 5; Technical notes",
+    "A Codex-coordinated session refuses any FORGE_EXECUTOR other than unset or codex in delegate, doctor, the write hook and close, and an unknown value is refused everywhere with hybrid, codex and claude listed.": "Manual Verification step 6; Technical notes"
+  },
+  "decision": "keep",
+  "new_abstractions": [
+    "selected_executor() resolver in codex_runtime.py"
+  ],
+  "summary": "Cold read after adding the user-facing docs (7 gaps, 1 contradiction), all repository-answerable; contract and task plan amended once.",
+  "input_sha256": "e5f3f3ad74d55144bf185bde781a710d2c4cb6d80ecefe1748a50680710cca49",
+  "grounding_basis": "working-tree",
+  "grounding_treeish": "",
+  "task_plan_sha256": "c4a788a8f080f865137df9ecce4d304f1da0519cad1f582bc16e0827259b983b",
+  "recorded_at": "2026-09-24T10:15:47+00:00",
+  "commit": "2fad98dcb24cb566e452a497f92c5e2153f262ae",
+  "launch_id": "launch-7986047494f64e97b174f8538490d171",
+  "cold_input_sha256": "a62aebfb54c36bd34ef6feac74c30c2694b233ef7b967843bbc3bf570ee9f5cc",
+  "final_artifact_sha256": "bf731f050b72826e12ef260f694acd7cc95b6169591994e368c988683945d576",
+  "approved_task_plan_sha256": "c4a788a8f080f865137df9ecce4d304f1da0519cad1f582bc16e0827259b983b",
+  "approved_by": "human-via-Claude",
+  "approved_at": "2026-09-24T10:59:55+00:00",
+  "approval_runtime": "claude",
+  "approval_session_id": "a0106b2c-e659-5e23-b0c7-d419b1d20fda",
+  "approval_event_id": "toolu_011jYuEm1qFBbaLDuHocyqcw"
+}

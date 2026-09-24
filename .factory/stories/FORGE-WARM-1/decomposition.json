@@ -1,0 +1,237 @@
+{
+  "generated_by": "docs-decomposer",
+  "user_facing": false,
+  "tasks": [
+    {
+      "id": "EXEC-MODES",
+      "title": "Executor modes",
+      "objective": "FORGE_EXECUTOR decides who writes for the whole repository: hybrid (default) and codex keep today's Codex writers; claude makes Claude and its subagents the writers everywhere, under the same gates, with no Codex needed.",
+      "dependencies": [],
+      "acceptance_criteria": [
+        "With no FORGE_EXECUTOR set in a Claude-coordinated session the executor is hybrid and behaviour is unchanged: a Claude product edit is refused and forge delegate starts Codex.",
+        "With FORGE_EXECUTOR=codex behaviour is unchanged from today.",
+        "With FORGE_EXECUTOR=claude, forge delegate records a Claude writer entry for the active task without starting Codex, and the Claude session and its subagents may write only inside the task's effective scope; protected markers stay refused.",
+        "With FORGE_EXECUTOR=claude, forge fix records a Claude writer entry for the open Lite window, and Claude edits are admitted only within the window's file budget.",
+        "With FORGE_EXECUTOR=claude on a machine without Codex, forge doctor (fast, full and --fix) passes without installing Codex, the task grill hands its cold read to a fresh Claude subagent, and task close accepts the Claude writer entry as write proof and reviews with the claude engine.",
+        "A Codex-coordinated session refuses any FORGE_EXECUTOR other than unset or codex in delegate, doctor, the write hook and close, and an unknown value is refused everywhere with hybrid, codex and claude listed."
+      ],
+      "user_facing": false,
+      "write_scope": [
+        "factory/scripts/forge_cli/codex_runtime.py",
+        "factory/scripts/pre_tool_use.py",
+        "factory/scripts/forge_cli/delegate.py",
+        "factory/scripts/forge_cli/worker_admission.py",
+        "factory/scripts/forge_cli/stages.py",
+        "factory/scripts/forge_cli/close.py",
+        "factory/scripts/forge_cli/review.py",
+        "factory/scripts/forge_cli/grill.py",
+        "factory/scripts/forge_cli/doctor.py",
+        "factory/scripts/factory_lib.py",
+        "factory/scripts/forge.py",
+        "factory/scripts/forge_cli/fix.py",
+        "factory/tests/test_executor_modes.py",
+        ".claude/CLAUDE.md",
+        "WORKFLOW.md",
+        "docs/specs/delegation-boundary.md",
+        "docs/specs/strict-role-split.md",
+        "docs/specs/dual-coordinator-parity.md",
+        "docs/architecture/dual-coordinator-parity.md",
+        "docs/product/BRIEF.md",
+        "docs/FACTORY.md",
+        "factory/schemas/delegation.json",
+        "factory/scripts/forge_cli/phase.py",
+        "AGENTS.md",
+        "factory/skills/forge.md",
+        "README.md",
+        "docs/getting-started.md"
+      ],
+      "required_tests": [
+        {
+          "id": "test_unset_executor_is_hybrid_and_keeps_todays_behaviour",
+          "path": "factory/tests/test_executor_modes.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_codex_executor_keeps_todays_behaviour",
+          "path": "factory/tests/test_executor_modes.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_claude_executor_delegate_records_writer_and_admits_only_in_scope",
+          "path": "factory/tests/test_executor_modes.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_claude_executor_refuses_protected_marker_writes",
+          "path": "factory/tests/test_executor_modes.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_claude_executor_lite_fix_admits_within_budget",
+          "path": "factory/tests/test_executor_modes.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_claude_executor_doctor_fast_full_fix_need_no_codex",
+          "path": "factory/tests/test_executor_modes.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_claude_executor_grill_hands_off_to_claude_subagent",
+          "path": "factory/tests/test_executor_modes.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_claude_executor_close_accepts_claude_writer_and_reviews_with_claude",
+          "path": "factory/tests/test_executor_modes.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_codex_coordinated_session_refuses_other_executor_everywhere",
+          "path": "factory/tests/test_executor_modes.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_unknown_executor_value_is_refused_with_valid_values",
+          "path": "factory/tests/test_executor_modes.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+        }
+      ],
+      "verify_commands": [
+        "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with pytest-xdist --with psutil python factory/scripts/verify.py",
+        "python3 factory/scripts/check_dual_runtime.py",
+        "python3 factory/scripts/check_encoding_hygiene.py",
+        "git diff --check"
+      ],
+      "reviewer_focus": [
+        "Apply constitution/09-agent-conduct.md sections 2-4 and Ponytail: one resolver, reuse of host-native preparation and admission, no new ledger, schema or hook-written evidence.",
+        "Prove hybrid by default behaves exactly as before until a Claude writer record exists. The Claude session stays locked, and the companion launch, lock and close path are unchanged.",
+        "Prove Claude writer admission is the existing native stage admission: exactly one active stage, a preparation bound to stage, brief, contract digest and narrowed effective scope, path-in-scope on every target, and opaque Bash and marker refusals kept.",
+        "Prove close accepts the Claude writer record only in hybrid or claude mode, with codex mode still requiring a successful companion launch (wording 'no successful write launch' kept), and that Codex-coordinated sessions refuse any non-codex setting while their native branch is untouched.",
+        "Confirm claude mode needs no Codex: doctor demotes only codex rows, grill prepares a fresh host reader through the existing preparation path, review defaults to the claude engine, and Lite stays on its current route."
+      ],
+      "plan_contracts": [
+        {
+          "id": "EXEC-AC-1",
+          "statement": "With no FORGE_EXECUTOR set in a Claude-coordinated session the executor is hybrid and behaviour is unchanged: a Claude product edit is refused and forge delegate starts Codex.",
+          "source": ".factory/stories/FORGE-WARM-1/task-plans/EXEC-MODES.md#Manual Verification"
+        },
+        {
+          "id": "EXEC-AC-2",
+          "statement": "With FORGE_EXECUTOR=codex behaviour is unchanged from today.",
+          "source": ".factory/stories/FORGE-WARM-1/task-plans/EXEC-MODES.md#Manual Verification"
+        },
+        {
+          "id": "EXEC-AC-3",
+          "statement": "With FORGE_EXECUTOR=claude, forge delegate records a Claude writer entry for the active task without starting Codex, and the Claude session and its subagents may write only inside the task's effective scope; protected markers stay refused.",
+          "source": ".factory/stories/FORGE-WARM-1/task-plans/EXEC-MODES.md#Manual Verification"
+        },
+        {
+          "id": "EXEC-AC-4",
+          "statement": "With FORGE_EXECUTOR=claude, forge fix records a Claude writer entry for the open Lite window, and Claude edits are admitted only within the window's file budget.",
+          "source": ".factory/stories/FORGE-WARM-1/task-plans/EXEC-MODES.md#Manual Verification"
+        },
+        {
+          "id": "EXEC-AC-5",
+          "statement": "With FORGE_EXECUTOR=claude on a machine without Codex, forge doctor (fast, full and --fix) passes without installing Codex, the task grill hands its cold read to a fresh Claude subagent, and task close accepts the Claude writer entry as write proof and reviews with the claude engine.",
+          "source": ".factory/stories/FORGE-WARM-1/task-plans/EXEC-MODES.md#Manual Verification"
+        },
+        {
+          "id": "EXEC-AC-6",
+          "statement": "A Codex-coordinated session refuses any FORGE_EXECUTOR other than unset or codex in delegate, doctor, the write hook and close, and an unknown value is refused everywhere with hybrid, codex and claude listed.",
+          "source": ".factory/stories/FORGE-WARM-1/task-plans/EXEC-MODES.md#Manual Verification"
+        }
+      ],
+      "review_budget": {
+        "max_changed_files": 28,
+        "max_changed_lines": 1000,
+        "reason": "Small edits across the resolver, hook, delegate, admission, close, review, grill, doctor and next-step paths, the delegation schema, twelve short doc amendments including README and getting-started, and one new test file."
+      }
+    },
+    {
+      "id": "SDK-SETUP",
+      "title": "Pinned SDK and doctor check",
+      "objective": "Pinned openai-codex in a Forge-managed environment, minimum codex binary, doctor check and repair, docs; the route stays off.",
+      "dependencies": [],
+      "acceptance_criteria": [
+        "The SDK is pinned and the binary checked against the SDK minimum; a mismatch names both versions",
+        "doctor --fix installs the pinned SDK and the minimum codex binary when needed"
+      ],
+      "user_facing": false
+    },
+    {
+      "id": "SDK-SUPERVISOR",
+      "title": "Supervisor and lease",
+      "objective": "One detached supervisor per Git common directory owns the lease and app-server behind a private socket; takeover only of a provably dead holder.",
+      "dependencies": [
+        "SDK-SETUP"
+      ],
+      "acceptance_criteria": [
+        "Only the lease holder resumes Forge threads; a stale lease is cleared; live or uncertain holders are refused",
+        "The socket and token are owner-only on POSIX and DACL-protected on Windows"
+      ],
+      "user_facing": false
+    },
+    {
+      "id": "SDK-ADMISSION",
+      "title": "Admission and close parity",
+      "objective": "Per-turn ledger rows, admission and close parity with terminal-turn proof, sticky routes, declining approval handler; the route switches on with a first real delegation.",
+      "dependencies": [
+        "SDK-SUPERVISOR",
+        "EXEC-MODES"
+      ],
+      "acceptance_criteria": [
+        "Every SDK turn is admitted by a recorded ledger row and close needs a terminal turn",
+        "Routes are sticky per task; a task with a companion launch stays on the plugin",
+        "An unexpected approval request is declined and logged"
+      ],
+      "user_facing": false
+    },
+    {
+      "id": "RESUME-FIX",
+      "title": "Resume the worker for fix rounds",
+      "objective": "Review-fix rounds resume the task's worker thread with a verified snapshot; drift starts fresh; benchmark evidence recorded.",
+      "dependencies": [
+        "SDK-ADMISSION"
+      ],
+      "acceptance_criteria": [
+        "A fix round resumes the recorded thread with brief, HEAD, diff and findings; drift starts a new thread with the reason",
+        "The recorded benchmark shows fewer uncached input tokens and less wall time for resumed rounds"
+      ],
+      "user_facing": false
+    },
+    {
+      "id": "LIVE-EVENTS",
+      "title": "Live events and steering",
+      "objective": "Turn state machine, reattach, signals bound to their turn and answered by steer or interrupt, abandon-turn recovery.",
+      "dependencies": [
+        "RESUME-FIX"
+      ],
+      "acceptance_criteria": [
+        "A lost stream reattaches and an unknown turn blocks close",
+        "A signal resolution reaches the exact active turn and its delivery is recorded"
+      ],
+      "user_facing": false
+    },
+    {
+      "id": "UPGRADE-CLEANUP",
+      "title": "Upgrade, cleanup and parity",
+      "objective": "Client upgrade path, archival and pruning, parity matrix, end-to-end runs in throwaway clients.",
+      "dependencies": [
+        "LIVE-EVENTS"
+      ],
+      "acceptance_criteria": [
+        "forge upgrade adds the SDK route idempotently and plugin tasks finish on the plugin",
+        "Threads archive at task merge and story outcome; pruning touches ledger threads only",
+        "The parity matrix passes on Ubuntu and Windows CI plus local macOS observations"
+      ],
+      "user_facing": false
+    }
+  ],
+  "plan_sha256": "8f5bee463bfd0c96d0801e0099011e1b1d742acaa0607a3fa0430caacb1577dc",
+  "project": "",
+  "story": "FORGE-WARM-1",
+  "epic": "symphony-forge",
+  "plan_file": "plans/active/FORGE-WARM-1-hybrid-mode-reuses-warm-codex-worker-threads.md",
+  "commit": "776efd0d634f6fcb3d42f5d273a5faeb0fc9c4bb"
+}
