@@ -1,0 +1,70 @@
+{
+  "event": "done",
+  "id": "Q-0235-1845",
+  "profile": "lite",
+  "by": "Ravi Kiran Vemula",
+  "reason": "CI encoding hygiene: pin two diagnostic reads added by the batch",
+  "base_sha": "a69788de1414ec1f0be8480ac8fd9fac11a45cd8",
+  "started_at": "2026-09-24T13:26:34+00:00",
+  "completed_at": "2026-09-24T13:29:26+00:00",
+  "files": [
+    "factory/scripts/check_encoding_hygiene.py"
+  ],
+  "reviews": {
+    "quality": {
+      "generated_by": "autoreview",
+      "score": 10,
+      "summary": "quality lens over Q-0235-1845 (1 product path(s), a69788d..d36229b, Codex via the autoreview skill): 0 blocking, 0 non-blocking. Both new content pins match their intended call lines and resolve under the scanner\u2019s line-based checks. No actionable correctness defect was found.",
+      "blocking_findings": [],
+      "non_blocking_findings": [],
+      "recommendation": "approve",
+      "reviewed_scope": [
+        "factory/scripts/check_encoding_hygiene.py"
+      ],
+      "skills_used": [],
+      "contract_verdicts": [],
+      "review_base_sha": "a69788de1414ec1f0be8480ac8fd9fac11a45cd8",
+      "branch_diff_digest": "1eeffc8211e6014e68477784b385de461dc49f347b8f305b7868932795aa82c5",
+      "commit": "d36229b08c2f6f6e6b3d71674741f02659f4011c",
+      "aspect": "quality",
+      "residual_risks": [],
+      "recorded_at": "2026-09-24T13:29:25+00:00"
+    },
+    "performance": {
+      "generated_by": "autoreview",
+      "score": 10,
+      "summary": "performance lens over Q-0235-1845 (1 product path(s), a69788d..d36229b, Codex via the autoreview skill): 0 blocking, 0 non-blocking. The two static allowlist entries add negligible scan work. No production hot path changes.",
+      "blocking_findings": [],
+      "non_blocking_findings": [],
+      "recommendation": "approve",
+      "reviewed_scope": [
+        "factory/scripts/check_encoding_hygiene.py"
+      ],
+      "skills_used": [],
+      "review_base_sha": "a69788de1414ec1f0be8480ac8fd9fac11a45cd8",
+      "branch_diff_digest": "1eeffc8211e6014e68477784b385de461dc49f347b8f305b7868932795aa82c5",
+      "commit": "d36229b08c2f6f6e6b3d71674741f02659f4011c",
+      "aspect": "performance",
+      "residual_risks": [],
+      "recorded_at": "2026-09-24T13:29:25+00:00"
+    },
+    "security": {
+      "generated_by": "autoreview",
+      "score": 10,
+      "summary": "security lens over Q-0235-1845 (1 product path(s), a69788d..d36229b, Codex via the autoreview skill): 0 blocking, 0 non-blocking. The pins cover diagnostic stderr decoding and worker log readback. The change introduces no demonstrated security defect.",
+      "blocking_findings": [],
+      "non_blocking_findings": [],
+      "recommendation": "approve",
+      "reviewed_scope": [
+        "factory/scripts/check_encoding_hygiene.py"
+      ],
+      "skills_used": [],
+      "review_base_sha": "a69788de1414ec1f0be8480ac8fd9fac11a45cd8",
+      "branch_diff_digest": "1eeffc8211e6014e68477784b385de461dc49f347b8f305b7868932795aa82c5",
+      "commit": "d36229b08c2f6f6e6b3d71674741f02659f4011c",
+      "aspect": "security",
+      "residual_risks": [],
+      "recorded_at": "2026-09-24T13:29:25+00:00"
+    }
+  }
+}

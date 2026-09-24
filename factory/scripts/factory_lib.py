@@ -3458,6 +3458,34 @@ def _grill_exempt(rel: str, ignore_names: tuple[str, ...]) -> bool:
     )
 
 
+def grill_key_suffix(
+    gate: str, task_id: str = "", artifact: str | Path = "",
+    root: Path | None = None,
+) -> str:
+    """Suffix a task grill by id and a chosen-file grill by its path."""
+    if gate == "task":
+        return task_id
+    if gate not in {"spec", "epics"} or not artifact:
+        return ""
+    base = (root or repo_root()).resolve()
+    path = Path(artifact).expanduser()
+    if not path.is_absolute():
+        path = base / path
+    path = path.resolve()
+    key_path = path.relative_to(base).as_posix() if path.is_relative_to(base) else path.as_posix()
+    return f"{path.stem}-{hashlib.sha256(key_path.encode('utf-8')).hexdigest()[:16]}"
+
+
+def grill_evidence_name(
+    gate: str, task_id: str = "", artifact: str | Path = "",
+    root: Path | None = None,
+) -> str:
+    suffix = grill_key_suffix(gate, task_id, artifact, root)
+    if gate == "task":
+        return f"grills/tasks/{suffix}.json"
+    return f"grills/{gate}{'-' + suffix if suffix else ''}.json"
+
+
 def require_grill(
     root: Path,
     gate: str,
@@ -3472,8 +3500,16 @@ def require_grill(
     exact artifact being gated: the recorded input_sha256 must match that
     file, so grilling proposal A never approves proposal B."""
     key = _active_story_key(root) if gate == "plan" else ""
-    path = evidence_path(root, key, f"grills/{gate}.json")
+    name = grill_evidence_name(gate, artifact=expect_digest_of or "", root=root)
+    path = evidence_path(root, key, name)
     data = load_json(path, default={})
+    if (gate in {"spec", "epics"} and expect_digest_of is not None
+            and not path.exists()):
+        legacy = load_json(
+            evidence_path(root, key, f"grills/{gate}.json"), default={},
+        )
+        if legacy.get("input_sha256") == sha256_of(expect_digest_of):
+            data = legacy
     if not data:
         raise SystemExit(
             f"Handover grill required first: interrogate the handover for gaps and "

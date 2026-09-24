@@ -68,6 +68,19 @@ def _distinct_union(current: list[str], files: list[str]) -> list[str]:
     return list(dict.fromkeys([*current, *files]))
 
 
+def _counts_toward_budget(path: str | Path) -> bool:
+    path = Path(path)
+    name = path.name
+    return not (
+        name.endswith(".md")
+        or any(part in {"test", "tests"} for part in path.parts)
+        or (name.startswith("test_") and name.endswith(".py"))
+        or name.endswith("_test.py")
+        or ".test." in name
+        or ".spec." in name
+    )
+
+
 def record_files(base: Path, files: list[str]) -> None:
     """Passively record distinct files touched by an already-authorized write."""
     active = load_active(base)
@@ -89,7 +102,9 @@ def claim_files(base: Path, files: list[str]) -> tuple[bool, dict]:
         return False, {}
     current = list(active.get("files", []))
     combined = _distinct_union(current, files)
-    if len(combined) > int(active.get("max_files", MAX_FILES)):
+    if sum(_counts_toward_budget(path) for path in combined) > int(
+        active.get("max_files", MAX_FILES)
+    ):
         return False, active
     active["files"] = combined
     dump_json(quickfix_path(base), active)
@@ -308,9 +323,10 @@ def cmd_mode_done(args: argparse.Namespace) -> None:
     if not files:
         fail("lite mode has no committed product files to close")
     bound = int(active.get("max_files", MAX_FILES))
-    if len(files) > bound:
+    counted_files = [path for path in files if _counts_toward_budget(path)]
+    if len(counted_files) > bound:
         fail(
-            f"lite mode committed diff touches {len(files)} product files; "
+            f"lite mode committed diff touches {len(counted_files)} product files; "
             f"the bound is {bound}"
         )
     reviews, review_problems = load_review_artifacts(

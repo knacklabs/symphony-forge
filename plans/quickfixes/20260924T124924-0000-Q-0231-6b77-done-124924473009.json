@@ -1,0 +1,74 @@
+{
+  "event": "done",
+  "id": "Q-0231-6b77",
+  "profile": "lite",
+  "by": "Ravi Kiran Vemula",
+  "reason": "forge fix --close: short commit subject from the description",
+  "base_sha": "67721b06886fa969636fe722f856b76871e38c37",
+  "started_at": "2026-09-24T12:45:44+00:00",
+  "completed_at": "2026-09-24T12:49:24+00:00",
+  "files": [
+    "factory/scripts/forge_cli/fix.py",
+    "factory/tests/test_fix_close.py"
+  ],
+  "reviews": {
+    "quality": {
+      "generated_by": "autoreview",
+      "score": 10,
+      "summary": "quality lens over Q-0231-6b77 (2 product path(s), 67721b0..07a5495, Codex via the autoreview skill): 0 blocking, 0 non-blocking. The change creates a subject of at most 72 characters and retains the full description in the commit body. The added test covers short and long first sentences. No actionable defect is evident from the supplied diff and changed files; runtime tests were not run.",
+      "blocking_findings": [],
+      "non_blocking_findings": [],
+      "recommendation": "approve",
+      "reviewed_scope": [
+        "factory/scripts/forge_cli/fix.py",
+        "factory/tests/test_fix_close.py"
+      ],
+      "skills_used": [],
+      "contract_verdicts": [],
+      "review_base_sha": "67721b06886fa969636fe722f856b76871e38c37",
+      "branch_diff_digest": "fbd5a2912ce48f4fb58fd0e57404fcb75075333d3b2cb368af5646195b950f91",
+      "commit": "07a54951929e2baf6a57849d65e54184cf3fb198",
+      "aspect": "quality",
+      "residual_risks": [],
+      "recorded_at": "2026-09-24T12:49:23+00:00"
+    },
+    "performance": {
+      "generated_by": "autoreview",
+      "score": 10,
+      "summary": "performance lens over Q-0231-6b77 (2 product path(s), 67721b0..07a5495, Codex via the autoreview skill): 0 blocking, 0 non-blocking. The added string processing is bounded by the description length and introduces no meaningful performance risk.",
+      "blocking_findings": [],
+      "non_blocking_findings": [],
+      "recommendation": "approve",
+      "reviewed_scope": [
+        "factory/scripts/forge_cli/fix.py",
+        "factory/tests/test_fix_close.py"
+      ],
+      "skills_used": [],
+      "review_base_sha": "67721b06886fa969636fe722f856b76871e38c37",
+      "branch_diff_digest": "fbd5a2912ce48f4fb58fd0e57404fcb75075333d3b2cb368af5646195b950f91",
+      "commit": "07a54951929e2baf6a57849d65e54184cf3fb198",
+      "aspect": "performance",
+      "residual_risks": [],
+      "recorded_at": "2026-09-24T12:49:23+00:00"
+    },
+    "security": {
+      "generated_by": "autoreview",
+      "score": 10,
+      "summary": "security lens over Q-0231-6b77 (2 product path(s), 67721b0..07a5495, Codex via the autoreview skill): 0 blocking, 0 non-blocking. The description is passed as a Git argument, with no new shell interpolation or evident trust-boundary issue.",
+      "blocking_findings": [],
+      "non_blocking_findings": [],
+      "recommendation": "approve",
+      "reviewed_scope": [
+        "factory/scripts/forge_cli/fix.py",
+        "factory/tests/test_fix_close.py"
+      ],
+      "skills_used": [],
+      "review_base_sha": "67721b06886fa969636fe722f856b76871e38c37",
+      "branch_diff_digest": "fbd5a2912ce48f4fb58fd0e57404fcb75075333d3b2cb368af5646195b950f91",
+      "commit": "07a54951929e2baf6a57849d65e54184cf3fb198",
+      "aspect": "security",
+      "residual_risks": [],
+      "recorded_at": "2026-09-24T12:49:23+00:00"
+    }
+  }
+}

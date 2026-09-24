@@ -10,6 +10,7 @@ import json
 import os
 import re
 import stat
+import subprocess
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -334,14 +335,16 @@ def _task_candidate(base: Path) -> ApprovalCandidate | None:
 
 
 def eligible_candidates(base: Path) -> list[ApprovalCandidate]:
-    """Return all current-frontier candidates; the caller requires exactly one."""
+    """Return all current-frontier candidates for digest-bound resolution."""
     return [candidate for candidate in (_story_candidate(base), _task_candidate(base))
             if candidate is not None]
 
 
 def _require_current_candidate(base: Path, candidate: ApprovalCandidate) -> None:
-    """Re-select the exact frontier authority immediately before publication."""
-    current = eligible_candidates(base)
+    """Re-select the exact digest-matching frontier authority before publication."""
+    current = [
+        row for row in eligible_candidates(base) if row.digest == candidate.digest
+    ]
     if current != [candidate]:
         raise ApprovalRefused(
             "native approval candidate changed before publication"
@@ -459,6 +462,76 @@ def _event_runtime(payload: dict[str, Any], runtime: str | None) -> tuple[str, s
     return value, displayed_digest
 
 
+def _matching_candidate(
+        base: Path, displayed_digest: str,
+) -> tuple[Path, ApprovalCandidate, list[Path]]:
+    """Find one digest-matching candidate in this checkout or its worktrees."""
+    try:
+        result = subprocess.run(
+            ["git", "worktree", "list", "--porcelain", "-z"], cwd=base,
+            capture_output=True, timeout=5,
+        )
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        raise ApprovalRefused(
+            f"native approval cannot list registered worktrees: {exc}"
+        ) from exc
+    if result.returncode != 0:
+        detail = result.stderr.decode("utf-8", errors="replace").strip()
+        raise ApprovalRefused(
+            "native approval cannot list registered worktrees: "
+            f"{detail or 'git failed'}"
+        )
+    try:
+        roots = {
+            Path(field.removeprefix(b"worktree ").decode("utf-8")).resolve()
+            for field in result.stdout.split(b"\0")
+            if field.startswith(b"worktree ")
+        }
+    except UnicodeDecodeError as exc:
+        raise ApprovalRefused(
+            "native approval cannot inspect registered worktrees: "
+            "git returned a non-UTF-8 path"
+        ) from exc
+
+    current = base.resolve()
+    checkouts = [current, *sorted(roots - {current})]
+    matches: list[tuple[Path, ApprovalCandidate]] = []
+    findings: list[str] = []
+    inspection_errors: list[str] = []
+    for root in checkouts:
+        try:
+            candidates = eligible_candidates(root)
+        except (ApprovalRefused, OSError, SystemExit) as exc:
+            finding = f"{root}: could not inspect candidates ({exc})"
+            findings.append(finding)
+            inspection_errors.append(finding)
+            continue
+        if not candidates:
+            refusal_reasons: list[str] = []
+            _story_candidate(root, refusal_reasons)
+            detail = f" ({refusal_reasons[0]})" if refusal_reasons else ""
+            findings.append(f"{root}: no eligible candidate{detail}")
+            continue
+        labels = []
+        for candidate in candidates:
+            identity = (f"{candidate.kind} {candidate.story}/task {candidate.task}"
+                        if candidate.kind == "task"
+                        else f"{candidate.kind} {candidate.story}")
+            labels.append(f"{identity} digest {candidate.digest}")
+            if candidate.digest == displayed_digest:
+                matches.append((root, candidate))
+        findings.append(f"{root}: " + ", ".join(labels))
+
+    if inspection_errors or len(matches) != 1:
+        raise ApprovalRefused(
+            "native approval requires exactly one eligible current-frontier "
+            f"candidate; found {len(matches)} matching candidates; "
+            f"checkout findings: {'; '.join(findings)}"
+        )
+    approval_base, candidate = matches[0]
+    return approval_base, candidate, checkouts
+
+
 def _approve_story(base: Path, candidate: ApprovalCandidate, record: dict[str, Any]) -> None:
     _require_safe_plan(base, candidate.path)
     text = candidate.path.read_text(encoding="utf-8")
@@ -542,50 +615,43 @@ def _restore_files(snapshots: dict[Path, bytes | None], base: Path) -> None:
 
 def record_native_approval(
     base: Path, payload: dict[str, Any], *, runtime: str | None = None,
+    recorded_in: list[str] | None = None,
 ) -> dict[str, Any]:
     """Validate and consume one native approval event.
 
     Raises :class:`ApprovalRefused` without mutation for every non-approval or
     ambiguous state.  The returned record is also the durable storage shape.
+    When supplied, ``recorded_in`` receives the target checkout root.
     """
     if not isinstance(payload, dict):
         raise ApprovalRefused("native approval payload must be an object")
     selected_runtime, displayed_digest = _event_runtime(payload, runtime)
     session_id, event_id = _event_identity(payload)
     from .delegate import delegation_exclusion
-    with delegation_exclusion(base, "native-approval", kind="approval"):
-        candidates = eligible_candidates(base)
-        if len(candidates) != 1:
-            refusal_reasons: list[str] = []
-            if not candidates:
-                _story_candidate(base, refusal_reasons)
-            detail = (
-                f": {refusal_reasons[0]}"
-                if not candidates and refusal_reasons else ""
-            )
-            raise ApprovalRefused(
-                "native approval requires exactly one eligible current-frontier "
-                f"candidate; found {len(candidates)}{detail}"
-            )
-        candidate = candidates[0]
-        _require_safe_plan(base, candidate.path)
-        if displayed_digest != candidate.digest:
-            raise ApprovalRefused("native approval displayed digest is stale")
+    approval_base, candidate, checkouts = _matching_candidate(base, displayed_digest)
+
+    with delegation_exclusion(approval_base, "native-approval", kind="approval"):
+        _require_current_candidate(approval_base, candidate)
+        _require_safe_plan(approval_base, candidate.path)
 
         replay_key = __import__("hashlib").sha256(
             f"{selected_runtime}\0{session_id}\0{event_id}".encode("utf-8")
         ).hexdigest()
-        # The host event is global to this checkout, not to the current story.
+        # The host event is global to all registered checkouts, not to one story.
         # Check all live layouts before creating even the current directory.
-        root = factory_dir(base)
-        previous = [root / "approval-events" / f"{replay_key}.json"]
-        for parent in (root / "stories", root / "history"):
-            if parent.is_dir():
-                previous.extend(parent.glob(f"*/approval-events/{replay_key}.json"))
+        previous = []
+        for checkout in checkouts:
+            root = factory_dir(checkout)
+            previous.append(root / "approval-events" / f"{replay_key}.json")
+            for parent in (root / "stories", root / "history"):
+                if parent.is_dir():
+                    previous.extend(parent.glob(
+                        f"*/approval-events/{replay_key}.json"
+                    ))
         if any(path.exists() or path.is_symlink() for path in previous):
             raise ApprovalRefused("native approval event was already consumed")
         replay_dir = evidence_path(
-            base, candidate.story, "approval-events", for_write=True,
+            approval_base, candidate.story, "approval-events", for_write=True,
         )
         replay_path = replay_dir / f"{replay_key}.json"
         if replay_path.exists() or replay_path.is_symlink():
@@ -594,16 +660,16 @@ def record_native_approval(
         authority_paths = {candidate.evidence}
         if candidate.kind == "story":
             authority_paths.update({
-                candidate.path, run_state_path(base),
-                story_dir(base, candidate.story) / "plan-meta.json",
+                candidate.path, run_state_path(approval_base),
+                story_dir(approval_base, candidate.story) / "plan-meta.json",
             })
         for authority_path in authority_paths:
             _require_safe_destination(
-                base, authority_path, required=authority_path.exists())
-        _require_safe_destination(base, replay_path, required=False)
-        _require_current_candidate(base, candidate)
+                approval_base, authority_path, required=authority_path.exists())
+        _require_safe_destination(approval_base, replay_path, required=False)
+        _require_current_candidate(approval_base, candidate)
         replay_dir.mkdir(parents=True, exist_ok=True)
-        _require_safe_destination(base, replay_path, required=False)
+        _require_safe_destination(approval_base, replay_path, required=False)
 
         record: dict[str, Any] = {
             "approved_plan_sha256": candidate.digest,
@@ -628,16 +694,18 @@ def record_native_approval(
         dump_json(replay_path, record)
         try:
             if candidate.kind == "story":
-                _approve_story(base, candidate, record)
+                _approve_story(approval_base, candidate, record)
                 from .events import append_event
                 append_event(
-                    base, "plan-approved", actor="planner-high",
+                    approval_base, "plan-approved", actor="planner-high",
                     story=candidate.story,
-                    detail=candidate.path.relative_to(base).as_posix(),
+                    detail=candidate.path.relative_to(approval_base).as_posix(),
                 )
             else:
                 _approve_task(candidate, record)
         except Exception:
-            _restore_files(snapshots, base)
+            _restore_files(snapshots, approval_base)
             raise
+        if recorded_in is not None:
+            recorded_in.append(str(approval_base.resolve()))
         return record

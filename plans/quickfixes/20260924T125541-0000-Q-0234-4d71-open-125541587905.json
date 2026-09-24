@@ -1,0 +1,12 @@
+{
+  "event": "open",
+  "id": "Q-0234-4d71",
+  "profile": "lite",
+  "reason": "Batch merge: restore forge fix --choice lost when resolving the parser conflict",
+  "started_at": "2026-09-24T12:55:41+00:00",
+  "max_files": 5,
+  "files": [],
+  "harness_source": true,
+  "by": "Ravi Kiran Vemula",
+  "base_sha": "2aefebb098a85166a70f7bbc598e7128689f30f3"
+}

@@ -1,0 +1,12 @@
+{
+  "event": "open",
+  "id": "Q-0235-1845",
+  "profile": "lite",
+  "reason": "CI encoding hygiene: pin two diagnostic reads added by the batch",
+  "started_at": "2026-09-24T13:26:34+00:00",
+  "max_files": 5,
+  "files": [],
+  "harness_source": true,
+  "by": "Ravi Kiran Vemula",
+  "base_sha": "a69788de1414ec1f0be8480ac8fd9fac11a45cd8"
+}

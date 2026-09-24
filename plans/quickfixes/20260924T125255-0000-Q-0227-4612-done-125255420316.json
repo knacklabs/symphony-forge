@@ -1,0 +1,86 @@
+{
+  "event": "done",
+  "id": "Q-0227-4612",
+  "profile": "lite",
+  "by": "Ravi Kiran Vemula",
+  "reason": "Process simplification s4 (owner-approved, end to end)",
+  "base_sha": "05efda2136489d4c788ac9a5c0619ab3658b7c45",
+  "started_at": "2026-09-24T11:36:29+00:00",
+  "completed_at": "2026-09-24T12:52:55+00:00",
+  "files": [
+    "AGENTS.md",
+    "WORKFLOW.md",
+    "factory/scripts/forge_cli/approval.py",
+    "factory/scripts/post_tool_use.py",
+    "factory/tests/test_approval_hooks.py"
+  ],
+  "reviews": {
+    "quality": {
+      "generated_by": "autoreview",
+      "score": 10,
+      "summary": "quality lens over Q-0227-4612 (5 product path(s), 05efda2..88e8d87, Codex via the autoreview skill): 0 blocking, 0 non-blocking. The supplied diff shows digest-based routing to a registered worktree, target revalidation, and tests for routing, ambiguity, and stale digests. No actionable correctness defect is established from the available evidence; unchanged repository files were unavailable.",
+      "blocking_findings": [],
+      "non_blocking_findings": [],
+      "recommendation": "approve",
+      "reviewed_scope": [
+        "AGENTS.md",
+        "WORKFLOW.md",
+        "factory/scripts/forge_cli/approval.py",
+        "factory/scripts/post_tool_use.py",
+        "factory/tests/test_approval_hooks.py"
+      ],
+      "skills_used": [],
+      "contract_verdicts": [],
+      "review_base_sha": "05efda2136489d4c788ac9a5c0619ab3658b7c45",
+      "branch_diff_digest": "3be765d1d2a076fccb7dcfb9487e14a23a1aeb00f0db16a510becd34fa258036",
+      "commit": "88e8d87c20a3b9168271251f35e2efc3f2b02657",
+      "aspect": "quality",
+      "residual_risks": [],
+      "recorded_at": "2026-09-24T12:52:29+00:00"
+    },
+    "performance": {
+      "generated_by": "autoreview",
+      "score": 10,
+      "summary": "performance lens over Q-0227-4612 (5 product path(s), 05efda2..88e8d87, Codex via the autoreview skill): 0 blocking, 0 non-blocking. Candidate inspection now scales with the number of registered worktrees. The evidence does not establish a material performance defect.",
+      "blocking_findings": [],
+      "non_blocking_findings": [],
+      "recommendation": "approve",
+      "reviewed_scope": [
+        "AGENTS.md",
+        "WORKFLOW.md",
+        "factory/scripts/forge_cli/approval.py",
+        "factory/scripts/post_tool_use.py",
+        "factory/tests/test_approval_hooks.py"
+      ],
+      "skills_used": [],
+      "review_base_sha": "05efda2136489d4c788ac9a5c0619ab3658b7c45",
+      "branch_diff_digest": "3be765d1d2a076fccb7dcfb9487e14a23a1aeb00f0db16a510becd34fa258036",
+      "commit": "88e8d87c20a3b9168271251f35e2efc3f2b02657",
+      "aspect": "performance",
+      "residual_risks": [],
+      "recorded_at": "2026-09-24T12:52:29+00:00"
+    },
+    "security": {
+      "generated_by": "autoreview",
+      "score": 10,
+      "summary": "security lens over Q-0227-4612 (5 product path(s), 05efda2..88e8d87, Codex via the autoreview skill): 0 blocking, 0 non-blocking. The changed code refuses ambiguous matches and checks replay records across registered worktrees. No concrete trust-boundary violation or exposed credential is shown.",
+      "blocking_findings": [],
+      "non_blocking_findings": [],
+      "recommendation": "approve",
+      "reviewed_scope": [
+        "AGENTS.md",
+        "WORKFLOW.md",
+        "factory/scripts/forge_cli/approval.py",
+        "factory/scripts/post_tool_use.py",
+        "factory/tests/test_approval_hooks.py"
+      ],
+      "skills_used": [],
+      "review_base_sha": "05efda2136489d4c788ac9a5c0619ab3658b7c45",
+      "branch_diff_digest": "3be765d1d2a076fccb7dcfb9487e14a23a1aeb00f0db16a510becd34fa258036",
+      "commit": "88e8d87c20a3b9168271251f35e2efc3f2b02657",
+      "aspect": "security",
+      "residual_risks": [],
+      "recorded_at": "2026-09-24T12:52:29+00:00"
+    }
+  }
+}

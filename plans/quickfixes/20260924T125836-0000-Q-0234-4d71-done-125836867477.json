@@ -1,0 +1,70 @@
+{
+  "event": "done",
+  "id": "Q-0234-4d71",
+  "profile": "lite",
+  "by": "Ravi Kiran Vemula",
+  "reason": "Batch merge: restore forge fix --choice lost when resolving the parser conflict",
+  "base_sha": "2aefebb098a85166a70f7bbc598e7128689f30f3",
+  "started_at": "2026-09-24T12:55:41+00:00",
+  "completed_at": "2026-09-24T12:58:36+00:00",
+  "files": [
+    "factory/scripts/forge.py"
+  ],
+  "reviews": {
+    "quality": {
+      "generated_by": "autoreview",
+      "score": 10,
+      "summary": "quality lens over Q-0234-4d71 (1 product path(s), 2aefebb..c46f7ba, Codex via the autoreview skill): 0 blocking, 0 non-blocking. The added --choice argument accepts the two values already handled by cmd_fix and forwarded to the companion launch. No actionable defect is evident in the supplied diff and accessible caller code.",
+      "blocking_findings": [],
+      "non_blocking_findings": [],
+      "recommendation": "approve",
+      "reviewed_scope": [
+        "factory/scripts/forge.py"
+      ],
+      "skills_used": [],
+      "contract_verdicts": [],
+      "review_base_sha": "2aefebb098a85166a70f7bbc598e7128689f30f3",
+      "branch_diff_digest": "8c279fb54671764fca33d461d492b1c3e9ef06a6a2a5909af50c0832c56b9bbf",
+      "commit": "c46f7ba43c8cbf7c8344e6dbe9ecad789d025d99",
+      "aspect": "quality",
+      "residual_risks": [],
+      "recorded_at": "2026-09-24T12:58:36+00:00"
+    },
+    "performance": {
+      "generated_by": "autoreview",
+      "score": 10,
+      "summary": "performance lens over Q-0234-4d71 (1 product path(s), 2aefebb..c46f7ba, Codex via the autoreview skill): 0 blocking, 0 non-blocking. Argument parsing adds no material work to the fix path.",
+      "blocking_findings": [],
+      "non_blocking_findings": [],
+      "recommendation": "approve",
+      "reviewed_scope": [
+        "factory/scripts/forge.py"
+      ],
+      "skills_used": [],
+      "review_base_sha": "2aefebb098a85166a70f7bbc598e7128689f30f3",
+      "branch_diff_digest": "8c279fb54671764fca33d461d492b1c3e9ef06a6a2a5909af50c0832c56b9bbf",
+      "commit": "c46f7ba43c8cbf7c8344e6dbe9ecad789d025d99",
+      "aspect": "performance",
+      "residual_risks": [],
+      "recorded_at": "2026-09-24T12:58:36+00:00"
+    },
+    "security": {
+      "generated_by": "autoreview",
+      "score": 10,
+      "summary": "security lens over Q-0234-4d71 (1 product path(s), 2aefebb..c46f7ba, Codex via the autoreview skill): 0 blocking, 0 non-blocking. The argument is restricted to fixed values and introduces no evident trust boundary or credential exposure. The raw parent patch was unavailable for independent verification.",
+      "blocking_findings": [],
+      "non_blocking_findings": [],
+      "recommendation": "approve",
+      "reviewed_scope": [
+        "factory/scripts/forge.py"
+      ],
+      "skills_used": [],
+      "review_base_sha": "2aefebb098a85166a70f7bbc598e7128689f30f3",
+      "branch_diff_digest": "8c279fb54671764fca33d461d492b1c3e9ef06a6a2a5909af50c0832c56b9bbf",
+      "commit": "c46f7ba43c8cbf7c8344e6dbe9ecad789d025d99",
+      "aspect": "security",
+      "residual_risks": [],
+      "recorded_at": "2026-09-24T12:58:36+00:00"
+    }
+  }
+}

@@ -62,7 +62,6 @@ from factory_lib import (
     task_frontier_state, task_rows,
 )
 from grill_gates import GATES
-from forge_cli.grill import _artifact_digest
 from forge_cli.events import load_events
 from forge_cli.stages import load_stages, stage_baseline, task_digest, write_stages
 from record_signoff import REQUIRED_BRIEF_HEADINGS
@@ -367,6 +366,9 @@ def record_grill(repo: Path, gate: str, verdict: str = "pass",
         repo, "", str(digest_of) if digest_of else "")
     _seed_cold_launch(repo, gate, hashlib.sha256(artifact.encode()).hexdigest(),
                       artifact_text=artifact,
+                      artifact_file=(str(digest_of)
+                                     if gate in {"spec", "epics"}
+                                     and digest_of else ""),
                       findings={field: payload[field]
                                 for field in ("gaps", "contradictions")})
     extra = ["--input-digest", str(digest_of)] if digest_of else []
@@ -471,15 +473,7 @@ def record_task_grill(repo: Path, task: dict, verdict: str = "pass",
     if code != 0:
         return code, plan_out
     payload = task_grill_payload(task, verdict)
-    lib = load_factory_lib(repo)
-    saved_plan = lib.evidence_path(
-        repo, run_state(repo).get("issue_key"),
-        f"task-plans/{task['id']}.md",
-    )
-    _seed_cold_launch(
-        repo, "task", _artifact_digest(saved_plan.read_text(encoding="utf-8")),
-        task["id"],
-    )
+    _seed_task_cold_launch(repo, task["id"])
     code, out = run(
         repo, "record_grill_from_json.py", "--gate", "task",
         "--task", task["id"], stdin=json.dumps(payload),
@@ -493,9 +487,12 @@ def record_task_grill(repo: Path, task: dict, verdict: str = "pass",
 def _seed_cold_launch(repo: Path, gate: str, digest: str, task_id: str = "",
                       *, findings: dict | None = None,
                       artifact_text: str | None = None,
+                      artifact_file: str = "",
                       include_artifact_frame: bool = True) -> None:
+    from factory_lib import grill_key_suffix
     from forge_cli.delegate import argv_digest, delegations_path
-    label = f"grill-{gate}" + (f"-{task_id}" if task_id else "")
+    suffix = grill_key_suffix(gate, task_id, artifact_file, repo)
+    label = f"grill-{gate}" + (f"-{suffix}" if suffix else "")
     path = delegations_path(repo)
     path.parent.mkdir(parents=True, exist_ok=True)
     rows = []
@@ -504,11 +501,13 @@ def _seed_cold_launch(repo: Path, gate: str, digest: str, task_id: str = "",
                 if line.strip()]
     rows = [row for row in rows if row.get("task") != label]
     launch_id = f"launch-test-{uuid.uuid4().hex}"
-    suffix = f"-{task_id}" if task_id else ""
-    brief = repo / ".factory" / f"grill-brief-{gate}{suffix}.md"
+    brief_suffix = f"-{suffix}" if suffix else ""
+    brief = repo / ".factory" / f"grill-brief-{gate}{brief_suffix}.md"
     from forge_cli.grill import _cold_artifact_frame
     if artifact_text is None:
-        _label, artifact_text = GATES[gate].locate(repo, task_id, "")
+        _label, artifact_text = GATES[gate].locate(
+            repo, task_id, artifact_file,
+        )
     brief_body = "fixture cold-read brief\n"
     if include_artifact_frame:
         brief_body += (
@@ -558,6 +557,20 @@ def _seed_cold_launch(repo: Path, gate: str, digest: str, task_id: str = "",
     ])
     path.write_text("".join(json.dumps(row) + "\n" for row in rows),
                     encoding="utf-8")
+
+
+def _seed_task_cold_launch(repo: Path, task_id: str, *,
+                           findings: dict | None = None,
+                           include_artifact_frame: bool = True) -> None:
+    from forge_cli.grill import _artifact_digest, _review_artifact_text
+
+    _label, plan = GATES["task"].locate(repo, task_id, "")
+    artifact = _review_artifact_text(repo, "task", task_id, plan)
+    _seed_cold_launch(
+        repo, "task", _artifact_digest(artifact), task_id,
+        findings=findings, artifact_text=artifact,
+        include_artifact_frame=include_artifact_frame,
+    )
 
 
 def delegate_task_grill_test(test):
@@ -6892,7 +6905,7 @@ def test_roadmap_import_gated_on_signoff_grill_then_pm_approval(repo, tmp_path):
     other.write_text("{}")
     record_grill(repo, "epics", digest_of=other)
     code, out = run(repo, "forge.py", "roadmap", "import", "--input", str(src))
-    assert code != 0 and "THIS input" in out
+    assert code != 0 and "Handover grill required first" in out
     record_grill(repo, "epics", digest_of=src)
     code, out = run(repo, "forge.py", "roadmap", "import", "--input", str(src))
     assert code != 0 and "epics-approved" in out  # then the PM accept gate
@@ -6977,9 +6990,7 @@ def test_task_grill_requires_a_saved_plan_and_refuses_a_legacy_retry(repo):
         repo, "forge.py", "task", "plan", "save", "T1", "--from", str(source),
     )
     assert code == 0, out
-    _seed_cold_launch(
-        repo, "task", _artifact_digest(plan.read_text(encoding="utf-8")), "T1",
-    )
+    _seed_task_cold_launch(repo, "T1")
     code, out = run(repo, *command, stdin=json.dumps(payload))
     assert code == 0, out
 
@@ -7018,9 +7029,7 @@ def test_frontier_orders_task_plan_before_grill(repo, tmp_path):
     assert code == 0 and "Grill the saved T1 plan" in out
 
     payload = task_grill_payload(STAGE_TASK)
-    saved = story_state(repo) / "task-plans" / "T1.md"
-    _seed_cold_launch(repo, "task",
-                      _artifact_digest(saved.read_text(encoding="utf-8")), "T1")
+    _seed_task_cold_launch(repo, "T1")
     code, out = run(
         repo, "record_grill_from_json.py", "--gate", "task", "--task", "T1",
         stdin=json.dumps(payload),
@@ -7033,10 +7042,7 @@ def test_record_task_grill_writes_per_id_file(repo):
     task = {**STAGE_TASK, "id": task_id}
     seed_task_grill_frontier(repo, task)
     payload = task_grill_payload(task, task_id=task_id)
-    plan = repo / ".factory" / "task-plans" / f"{task_id}.md"
-    _seed_cold_launch(
-        repo, "task", _artifact_digest(plan.read_text(encoding="utf-8")), task_id,
-    )
+    _seed_task_cold_launch(repo, task_id)
 
     code, out = run(repo, "record_grill_from_json.py", "--gate", "task",
                     "--task", task_id,
@@ -7057,10 +7063,7 @@ def test_record_task_grill_binds_derived_digest(repo):
     task = {**STAGE_TASK, "id": task_id}
     seed_task_grill_frontier(repo, task)
     payload = task_grill_payload(task)
-    plan = repo / ".factory" / "task-plans" / f"{task_id}.md"
-    _seed_cold_launch(
-        repo, "task", _artifact_digest(plan.read_text(encoding="utf-8")), task_id,
-    )
+    _seed_task_cold_launch(repo, task_id)
 
     code, out = run(repo, "record_grill_from_json.py", "--gate", "task",
                     "--task", task_id,
@@ -7077,10 +7080,7 @@ def test_record_task_grill_requires_authenticated_cold_artifact_frame(repo):
     task = {**STAGE_TASK, "id": "T1"}
     seed_task_grill_frontier(repo, task)
     plan = repo / ".factory/task-plans/T1.md"
-    _seed_cold_launch(
-        repo, "task", _artifact_digest(plan.read_text(encoding="utf-8")), "T1",
-        include_artifact_frame=False,
-    )
+    _seed_task_cold_launch(repo, "T1", include_artifact_frame=False)
     code, out = run(
         repo, "record_grill_from_json.py", "--gate", "task", "--task", "T1",
         stdin=json.dumps(task_grill_payload(task)),
@@ -7210,13 +7210,8 @@ def test_task_grill_requires_proofs_and_complete_dispositions(repo):
         return run(repo, *command, stdin=json.dumps(payload))
 
     complete = task_grill_payload(task)
-    plan = repo / ".factory/task-plans/T1.md"
-
     def seed(findings=None):
-        _seed_cold_launch(
-            repo, "task", _artifact_digest(plan.read_text(encoding="utf-8")),
-            "T1", findings=findings,
-        )
+        _seed_task_cold_launch(repo, "T1", findings=findings)
 
     for field in ("inspected_refs", "current_flow", "criteria_map", "decision",
                   "new_abstractions", "finding_dispositions"):
@@ -7287,11 +7282,7 @@ def test_task_grill_block_requires_escalation_packet(repo):
     }))
     assert code != 0 and "exactly" in out
 
-    _seed_cold_launch(
-        repo, "task",
-        _artifact_digest((repo / ".factory/task-plans/T1.md").read_text(encoding="utf-8")),
-        "T1",
-    )
+    _seed_task_cold_launch(repo, "T1")
     code, out = run(repo, *command, stdin=json.dumps(payload))
     assert code == 0, out
 
@@ -8150,7 +8141,7 @@ def test_degraded_window_allows_and_ledgers_product_write(repo):
 
     claimed = (
         "src/app.ts", "AGENTS.md", ".github/workflows/build.yml",
-        "factory/scripts/repair.py", "tests/test_repair.py",
+        "factory/scripts/repair.py", "tests/test_repair.py", "src/helper.ts",
     )
     for rel in claimed:
         code, out = hook(repo, {
@@ -8173,16 +8164,28 @@ def test_degraded_window_allows_and_ledgers_product_write(repo):
         "tool_name": "Edit", "permission_mode": "default",
         "tool_input": {"file_path": str(repo / "src" / "sixth.py")},
     })
-    assert code == 0 and "deny" in out and "five-file" in out
+    assert code == 0 and "deny" not in out, out
+    assert json.loads(
+        (repo / ".factory" / "quickfix.json").read_text()
+    )["files"] == [*claimed, "src/sixth.py"]
+    code, out = hook(repo, {
+        "tool_name": "Edit", "permission_mode": "default",
+        "tool_input": {"file_path": str(repo / "src" / "seventh.py")},
+    })
+    assert code == 0 and "deny" in out and "five-file" in out, out
+    assert json.loads(
+        (repo / ".factory" / "quickfix.json").read_text()
+    )["files"] == [*claimed, "src/sixth.py"]
 
     window_id = active["id"]
     code, out = run(repo, "forge.py", "mode", "done")
-    assert code == 0 and window_id in out and "5 file(s)" in out, out
+    assert code == 0 and window_id in out and "7 file(s)" in out, out
     records = [json.loads(path.read_text())
                for path in (repo / "plans" / "quickfixes").glob("*.json")]
     done = next(record for record in records
                 if record.get("event") == "done" and record.get("id") == window_id)
-    assert done["kind"] == "degraded" and done["files"] == list(claimed)
+    assert done["kind"] == "degraded"
+    assert done["files"] == [*claimed, "src/sixth.py"]
 
     git(repo, "add", "plans/quickfixes")
     git(repo, "commit", "-q", "-m", "record degraded window")
@@ -10105,17 +10108,42 @@ def test_lite_budget_counts_symlinks_once_and_literal_shell_names(repo):
 
 
 def test_mode_done_refuses_over_budget_committed_diff(repo):
+    from forge_cli.quickfix import _counts_toward_budget, claim_files
+
     open_lite(repo)
-    (repo / "src").mkdir()
-    for number in range(5):
-        (repo / "src" / f"fix_{number}.py").write_text(f"value = {number}\n")
+    files = [
+        *(f"src/fix_{number}.py" for number in range(5)),
+        "src/tests/smoke.py",
+        "src/test/integration.py",
+        "src/legacy_test.py",
+        "src/README.md",
+        "src/notes.md",
+    ]
+    assert all(_counts_toward_budget(path) for path in files[:5])
+    assert all(not _counts_toward_budget(path) for path in files[5:])
+    assert all(not _counts_toward_budget(path) for path in (
+        "src/test_helper.py", "src/widget.test.ts", "src/widget.spec.ts",
+    ))
+    claimed, active = claim_files(repo, files)
+    assert claimed and active["files"] == files
+    claimed, unchanged = claim_files(repo, ["src/sixth.py"])
+    assert not claimed and unchanged["files"] == files
+
+    for rel in files:
+        path = repo / rel
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text("value = True\n")
     git(repo, "add", "src")
-    git(repo, "commit", "-q", "-m", "maximum-size lite fix")
+    git(repo, "commit", "-q", "-m", "maximum-size lite fix with docs and tests")
     write_lite_reviews(repo)
 
     code, out = run(repo, "forge.py", "mode", "done")
 
-    assert code == 0 and "5 file(s)" in out, out
+    assert code == 0 and "10 file(s)" in out, out
+    done = [json.loads(path.read_text())
+            for path in (repo / "plans" / "quickfixes").glob("*.json")
+            if json.loads(path.read_text()).get("event") == "done"]
+    assert len(done) == 1 and done[0]["files"] == sorted(files)
 
     open_lite(repo)
     for number in range(6):
@@ -10127,6 +10155,24 @@ def test_mode_done_refuses_over_budget_committed_diff(repo):
 
     assert code != 0 and "touches 6 product files" in out and "bound is 5" in out, out
     assert (repo / ".factory" / "quickfix.json").exists()
+
+
+def test_lite_still_refuses_markdown_alias_of_repo_kind_marker(repo):
+    mark_harness_source(repo)
+    open_lite(repo)
+    marker_alias = repo / ".factory" / "harness-source.md"
+    marker_alias.symlink_to(Path("harness-source.json"))
+
+    code, out = hook(repo, {
+        "tool_name": "Write",
+        "permission_mode": "default",
+        "tool_input": {"file_path": str(marker_alias)},
+    })
+
+    assert code == 0 and "deny" in out, out
+    assert json.loads(
+        (repo / ".factory" / "quickfix.json").read_text()
+    )["files"] == []
 
 
 def test_mode_done_requires_clean_reviews_at_head(repo):
@@ -15298,11 +15344,7 @@ def test_done_contracts_immutable_and_criteria_map_binds_plan_contracts(
     assert code != 0 and "requires the task's plan_contracts" in out
 
     seed_task_grill_frontier(repo, task)
-    _seed_cold_launch(
-        repo, "task",
-        _artifact_digest((repo / ".factory/task-plans/T1.md").read_text(encoding="utf-8")),
-        "T1",
-    )
+    _seed_task_cold_launch(repo, "T1")
     code, out = run(
         repo, "record_grill_from_json.py", "--gate", "task", "--task", "T1",
         stdin=json.dumps(payload),
@@ -15313,11 +15355,7 @@ def test_done_contracts_immutable_and_criteria_map_binds_plan_contracts(
         **task["plan_contracts"][0], "statement": "a different plan promise",
     }]}
     seed_task_grill_frontier(repo, mismatched)
-    _seed_cold_launch(
-        repo, "task",
-        _artifact_digest((repo / ".factory/task-plans/T1.md").read_text(encoding="utf-8")),
-        "T1",
-    )
+    _seed_task_cold_launch(repo, "T1")
     code, out = run(
         repo, "record_grill_from_json.py", "--gate", "task", "--task", "T1",
         stdin=json.dumps(payload),
@@ -19745,9 +19783,7 @@ def test_forge_next_and_board_route_author_task_plan_and_await_approval(
     assert code == 0, out
     assert_route("grill", "ready", "Grill the saved T1 plan")
     payload = task_grill_payload(STAGE_TASK)
-    saved = story_state(repo) / "task-plans" / "T1.md"
-    _seed_cold_launch(repo, "task",
-                      _artifact_digest(saved.read_text(encoding="utf-8")), "T1")
+    _seed_task_cold_launch(repo, "T1")
     code, out = run(
         repo, "record_grill_from_json.py", "--gate", "task", "--task", "T1",
         stdin=json.dumps(payload),

@@ -1,0 +1,12 @@
+{
+  "event": "open",
+  "id": "Q-0231-6b77",
+  "profile": "lite",
+  "reason": "forge fix --close: short commit subject from the description",
+  "started_at": "2026-09-24T12:45:44+00:00",
+  "max_files": 5,
+  "files": [],
+  "harness_source": true,
+  "by": "Ravi Kiran Vemula",
+  "base_sha": "67721b06886fa969636fe722f856b76871e38c37"
+}

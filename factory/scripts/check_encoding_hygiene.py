@@ -83,6 +83,8 @@ REPLACE_ALLOWLIST: tuple[ContentPin, ...] = (
     _pin("factory/scripts/forge_cli/doctor.py", "8a2e66903fca9ef3a2c5c2ad0bc8bda60d14cf90c9d6f3e664bf62e6c8dc746a", 1), _pin("factory/scripts/check_factory_scaffold.py", "5f0fbd72b30fb35378eb98dabfb9013ab557d8ee9a608724f3c63f47ff53bf6b"), _pin("factory/scripts/forge_cli/common.py", "8a2e66903fca9ef3a2c5c2ad0bc8bda60d14cf90c9d6f3e664bf62e6c8dc746a"),
     _pin("factory/scripts/factory_lib.py", "1f62e74bfdb6534a502d82f64cc6ebd68fcb44b1a36cf2465eaebb501b65e21e"), _pin("factory/scripts/forge_cli/stages.py", "c94d0727342455ffac97fce3c6865421242c03f535b7ebff0c45ae878685e01f", 1),
     _pin("factory/scripts/forge_cli/delegate.py", "e4c2f7c74cff7d12401b557a6aab9414b73f056ce45c8912bc320daddbfba752"),
+    _pin("factory/scripts/forge_cli/approval.py", "029cdf253f5a1090bb46f5e982351a903bfbf875565b9e6ef69c45725e09cbff"),
+    _pin("factory/scripts/forge_cli/delegate.py", "bd747e77e4977bb0f98229ba83f1b3618030c2e68b394763d2a209ff101e8282"),
 )
 
 STDIN_ALLOWLIST: tuple[ContentPin, ...] = (

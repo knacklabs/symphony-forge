@@ -1,0 +1,12 @@
+{
+  "event": "open",
+  "id": "Q-0230-faf7",
+  "profile": "lite",
+  "reason": "Batch merge: restore the Lite budget sentence lost in the WORKFLOW.md conflict",
+  "started_at": "2026-09-24T12:44:03+00:00",
+  "max_files": 5,
+  "files": [],
+  "harness_source": true,
+  "by": "Ravi Kiran Vemula",
+  "base_sha": "2f09e9b34b13214e4f5e48cad96cc25f2f0ed931"
+}

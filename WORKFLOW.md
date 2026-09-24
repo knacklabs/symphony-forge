@@ -32,15 +32,15 @@ routes preserve the active task, worktree and effective scope and produce the sa
 `.factory` artifacts, but native delivery deliberately has no Forge-managed
 process identity or lifecycle proof.
 
-Hooks resolve the repository from the session's working directory. A session in
-another checkout records no native Plan Mode approval, and task gates cannot see
-its in-session edits; open a new session in the task worktree for task approval
-and in-session edits. The primary checkout on the default branch is the
-coordinator's home for coordination work (status, merges, and Lite windows run
-by path). Reach other worktrees by absolute path (`git -C <path>` or subprocess
-cwd). Never `cd` a session shell to a directory that is not a checkout, because
-every hook then refuses every command; if stranded, resume the session from a
-checkout.
+Hooks resolve the repository from the session's working directory. Native
+approvals route by displayed digest from the primary checkout into the matching
+worktree. Task gates cannot see in-session edits from another checkout, so task
+edits still need a session in the task worktree. The primary checkout on the
+default branch is the coordinator's home for coordination work (status, merges,
+and Lite windows run by path). Reach other worktrees by absolute path
+(`git -C <path>` or subprocess cwd). Never `cd` a session shell to a directory
+that is not a checkout, because every hook then refuses every command; if
+stranded, resume the session from a checkout.
 
 The main coordinator model and reasoning remain the user's and host's choice.
 Decision 0083 routes native roles by work: Luna/max handles routine
@@ -60,9 +60,14 @@ native lane selects Luna/low.
 - **Full** is the standard workflow: an approved plan proceeds through bounded
   stages, deterministic verification, autoreview, and the remaining gates.
 - **Lite** is a human-opened, bounded write window for a small supervised fix:
-  `./forge mode lite --by "<name>" --reason "<why>"`. It returns to Full when
-  the committed fix is within its file budget, `./forge review --lite` records
-  all three clean aspects, and `./forge mode done` closes the window.
+  `./forge mode lite --by "<name>" --reason "<why>"`. The committed diff may touch at most five budget-counted files; test paths and `*.md` files do not use a slot but are still reviewed. Run
+  `./forge fix "<description>" --close` to commit product paths, run the
+  existing three-lens review, and close the window with its records committed
+  when there are no blocking findings. Blocking findings leave the window open
+  for another fix round; non-blocking findings are accepted and can be logged
+  with `forge defer add` if they matter. A host-native worker is asynchronous;
+  after it returns, continue with the `--resume-close --window-id` command
+  printed by the initial invocation.
 
 ## Factory Phases
 0a. `discovery` — lightweight problem, stakeholder, and constraint discovery; no `.factory` ceremony required.
@@ -400,8 +405,9 @@ roadmap JSON fails the arming step loudly.
 
 ## Concurrency — one worktree and PR per task
 
-Hooks use session cwd: task approval and edits need a task worktree session.
-Coordinate from the primary checkout; reach other worktrees by absolute path.
+Native approvals route from the primary checkout by displayed digest. In-session
+task edits still need a task-worktree session. Coordinate from the primary
+checkout; reach other worktrees by absolute path.
 Never `cd` the session shell outside a checkout; if stranded, resume there.
 
 Each leaf task owns an isolated worktree, branch, proof set, and PR. A task
@@ -647,17 +653,20 @@ body contains frontmatter, IDs or ID lists, status or date lines, SHAs,
 digests, file paths, or scope lists. Mention a decision by title in the
 technical section only when it changes the design.
 
-Each plan gets one independent wide cold read at Sol/high. The griller sweeps
+Every gate gets one independent wide cold read at Sol/high. The griller sweeps
 every feature the artifact touches and shipped features next to them against
 their contracts, checking current behavior, tests, and docs for dead ends,
 bypassed or unpassable gates, impractical advice, upgrade data loss, and stale
 docs. Every finding cites an exact `file:line`. The coordinator resolves
 repository-answerable findings; only genuine human choices go to the human,
-as option questions with a recommended option and its reason. The cold proof
-binds the exact input it read; `finding_dispositions` maps every finding, and
-`amendments` explains every change between that input and the final artifact.
-Commit spec, decision, and roadmap changes before launching the grill because
-its staleness check compares commit order.
+as option questions with a recommended option and its reason. A pass always
+records against the latest successful read; earlier reads are superseded.
+`finding_dispositions` maps every finding, and `amendments` plus
+`artifact_delta` bridge any text or task-contract change to the final artifact.
+An owner decision used for an amendment must appear in `finding_dispositions`,
+with its source naming that decision. After a read exists since the last pass,
+`forge grill run` requires `--fresh --reason "<why>"` to launch another read;
+the reason is saved on its launch row.
 
 Before saving, the planner reviews every active decision. `forge plan save`
 records that attestation itself in `.factory/stories/<story>/plan-meta.json`,
