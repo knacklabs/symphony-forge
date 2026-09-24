@@ -380,6 +380,8 @@ def main() -> None:
     p_fix = sub.add_parser(
         "fix", help="prepare or run a bounded fix in an open lite window")
     p_fix.add_argument("description")
+    p_fix.add_argument("--choice", choices=("refactor", "patch"),
+                       help="choose how to address a file found in two consecutive reviews")
     p_fix.add_argument("--repo")
     p_fix.set_defaults(func=fix_mod.cmd_fix)
 
@@ -633,6 +635,8 @@ def main() -> None:
                        help="request background execution from the active runtime")
     p_del.add_argument("--print-only", action="store_true",
                        help="print the dispatch descriptor or launch details without running it")
+    p_del.add_argument("--choice", choices=("refactor", "patch"),
+                       help="choose how to address a file found in two consecutive reviews")
     p_del.add_argument(
         "--scope", action="append", default=[], metavar="PATH",
         help="narrow a write launch to this approved file/directory (repeatable; "

@@ -11,18 +11,136 @@ WORKFLOW.md "Recurring Findings — a design signal".
 from __future__ import annotations
 
 import argparse
+import json
 from pathlib import Path
 
 from factory_lib import (
-    evidence_path, factory_dir, has_completed_lean_migration_manifest,
-    load_json, read_selected_review_generation, repo_root, run_state_path,
-    story_dir, unmigrated_fixed_review_paths, validated_task_marker_commit,
+    _active_story_key, _git_is_ancestor, evidence_path, factory_dir,
+    has_completed_lean_migration_manifest, head_sha, load_json,
+    product_delta_digest, read_selected_review_generation, repo_root,
+    review_generation_id, run_state_path, story_dir,
+    unmigrated_fixed_review_paths, validated_task_marker_commit,
+    validate_payload, validate_review_document,
 )
 from .roadmap import load_items
 
 RECURRING_AT = 3  # same class a third time = stop patching, consolidate
 WATCH_AT = 2
 REVIEW_ASPECTS = ("quality", "performance", "security")
+
+
+def repeated_finding_file(base: Path, story: str, task_id: str, *,
+                          lite: bool = False) -> str | None:
+    """File with findings in the last two complete reviews, if any."""
+    def files(artifacts: dict) -> set[str]:
+        return {
+            finding["file_path"].strip()
+            for aspect in REVIEW_ASPECTS
+            for field in ("blocking_findings", "non_blocking_findings")
+            for finding in (artifacts.get(aspect, {}).get(field) or [])
+            if isinstance(finding, dict)
+            and str(finding.get("category", "")).casefold() != "simplification-debt"
+            and isinstance(finding.get("file_path"), str)
+            and finding["file_path"].strip()
+        }
+
+    if lite:
+        from .quickfix import LITE, closed_windows, load_active, profile_of
+
+        window = load_active(base)
+        head = head_sha(base) or ""
+        window_base = str(window.get("base_sha") or "")
+        if (not window or profile_of(window) != LITE or not head or not window_base
+                or head == window_base or not _git_is_ancestor(base, window_base, head)):
+            return None
+        delta = product_delta_digest(base, window_base, head)
+        current = {aspect: load_json(evidence_path(
+            base, _active_story_key(base) or None, f"reviews/{aspect}.json",
+        ), default={}) for aspect in REVIEW_ASPECTS}
+        def bindings(rows: dict) -> set[tuple]:
+            return {
+                tuple(rows[aspect].get(field) for field in (
+                    "review_run_id", "brief_sha256", "branch_diff_digest",
+                    "review_base_sha", "commit",
+                )) for aspect in REVIEW_ASPECTS
+            }
+
+        if (not all(isinstance(current.get(aspect), dict) for aspect in REVIEW_ASPECTS)
+                or len(bindings(current)) != 1
+                or any(current[aspect].get("review_base_sha") != window_base
+                       or current[aspect].get("commit") != head
+                       or current[aspect].get("branch_diff_digest") != delta
+                       for aspect in REVIEW_ASPECTS)):
+            return None
+        try:
+            for artifact in current.values():
+                validate_payload(base, "review", artifact)
+        except SystemExit:
+            return None
+        previous = [
+            event for event in closed_windows(base)
+            if event.get("profile") == LITE
+            and str(event.get("completed_at") or "") <= str(window.get("started_at") or "")
+            and isinstance(event.get("reviews"), dict)
+            and set(event["reviews"]) == set(REVIEW_ASPECTS)
+            and all(isinstance(event["reviews"].get(aspect), dict)
+                    for aspect in REVIEW_ASPECTS)
+            and len(bindings(event["reviews"])) == 1
+            and _git_is_ancestor(
+                base,
+                str(event["reviews"]["quality"].get("commit") or ""),
+                window_base,
+            )
+        ]
+        if not previous:
+            return None
+        last = max(previous, key=lambda event: str(event.get("completed_at") or ""))
+        return next(iter(sorted(
+            files(last["reviews"]) & files(current),
+        )), None)
+    if not story or not task_id:
+        return None
+    directory = story_dir(base, story) / "tasks" / task_id / "reviews" / "generations"
+    by_run: dict[str, tuple[str, str, dict]] = {}
+    if not directory.is_dir():
+        return None
+    for path in directory.glob("*.json"):
+        try:
+            generation = json.loads(path.read_text(encoding="utf-8"))
+            if not isinstance(generation, dict):
+                continue
+            validate_review_document(base, generation)
+        except (OSError, UnicodeError, json.JSONDecodeError, SystemExit):
+            continue
+        run_id = generation.get("review_run_id")
+        generation_id = generation.get("generation_id")
+        if (generation.get("story") != story or generation.get("task_id") != task_id
+                or not isinstance(run_id, str) or not run_id
+                or not isinstance(generation_id, str)
+                or path.stem != generation_id
+                or generation_id != review_generation_id(generation)):
+            continue
+        recorded_at = str(generation.get("recorded_at") or "")
+        previous = by_run.get(run_id)
+        if previous is None or (recorded_at, generation_id) > previous[:2]:
+            by_run[run_id] = (recorded_at, generation_id, generation)
+    reviews = sorted(by_run.values(), key=lambda item: (item[0], item[1]))
+    if len(reviews) < 2:
+        return None
+
+    return next(iter(sorted(
+        files(reviews[-2][2].get("lenses") or {})
+        & files(reviews[-1][2].get("lenses") or {})
+    )), None)
+
+
+def choice_error(file_path: str | None, choice: str | None, *,
+                 preview: bool = False) -> str:
+    if file_path and not choice and not preview:
+        return (f"{file_path} drew findings in two consecutive reviews. Ask the user: "
+                "refactor it, or patch once more? Then re-run with "
+                "--choice refactor|patch.")
+    return ""
 
 
 def _finding_rows(task: str, aspect: str, data: dict) -> list[dict]:

@@ -14,14 +14,17 @@ from .quickfix import (
 from .stages import task_digest
 
 
-def _brief(window: dict, description: str) -> str:
-    return (
+def _brief(window: dict, description: str, refactor_file: str | None = None) -> str:
+    text = (
         f"# Lite fix — {window['id']}\n\n"
         f"Fix: {description}\n\n"
         "Work only on this bounded fix inside the open lite window. "
         "Do not create a git commit. Run the smallest relevant checks, "
         "then report the files changed and results.\n"
     )
+    if refactor_file:
+        text += f"\nRefactor {refactor_file}: replace the approach with one simpler rule.\n"
+    return text
 
 
 def cmd_fix(args: argparse.Namespace) -> None:
@@ -36,6 +39,14 @@ def cmd_fix(args: argparse.Namespace) -> None:
     model, effort, bound = mode_run_config(base, LITE)
     if window.get("max_files") != bound:
         fail(f"the open lite window does not match modes.lite bound {bound}")
+    from . import findings
+    choice = getattr(args, "choice", None)
+    repeated_file = findings.repeated_finding_file(
+        base, "", str(window.get("id") or ""), lite=True,
+    )
+    refusal = findings.choice_error(repeated_file, choice)
+    if refusal:
+        fail(refusal)
     from .codex_runtime import coordinator_runtime
     native = coordinator_runtime() == "codex"
     contract = {
@@ -49,7 +60,8 @@ def cmd_fix(args: argparse.Namespace) -> None:
         result = launch_companion(
             base,
             task_id=window["id"],
-            text=_brief(window, description),
+            text=_brief(window, description,
+                        repeated_file if choice == "refactor" else None),
             path=brief_path(base, window["id"]),
             task_sha256_value=task_digest(contract),
             model=model,
@@ -57,6 +69,7 @@ def cmd_fix(args: argparse.Namespace) -> None:
             write=True,
             write_scope=[] if native else None,
             mode=LITE,
+            choice=choice,
         )
     finally:
         # Record what terra just touched — its writes are uncommitted, so this
