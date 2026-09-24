@@ -10,7 +10,8 @@ from pathlib import Path
 import pytest
 
 from test_gates import (  # noqa: F401
-    HARNESS, PLAN_BODY, STAGE_TASK, _seed_cold_launch, intake, load_factory_lib,
+    HARNESS, PLAN_BODY, STAGE_TASK, _seed_cold_launch, _seed_task_cold_launch,
+    intake, load_factory_lib,
     native_claude_approval, plan_draft, record_grill, repo, run,
     seed_task_grill_frontier, sign_off, write_stages,
 )
@@ -66,19 +67,7 @@ def _plan_metadata(repo: Path) -> dict:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
-def _plan_grill_payload(finding: str) -> dict:
-    resolution = "Added the fact requested by the cold reader."
-    return {
-        "generated_by": "griller", "gate": "plan", "verdict": "pass",
-        "gaps": [finding], "contradictions": [], "resolutions": [resolution],
-        "finding_dispositions": [{
-            "finding": finding, "resolution": resolution,
-            "source": "factory/scripts/record_grill_from_json.py",
-        }],
-    }
-
-
-def _bridge_plan_payload(cold: str, final: str, finding: str) -> dict:
+def _amended_plan_payload(cold: str, final: str, finding: str) -> dict:
     cold_lines = cold.splitlines(keepends=True)
     final_lines = final.splitlines(keepends=True)
     delta = [{
@@ -90,88 +79,22 @@ def _bridge_plan_payload(cold: str, final: str, finding: str) -> dict:
         in difflib.SequenceMatcher(
             a=cold_lines, b=final_lines, autojunk=False,
         ).get_opcodes() if tag != "equal"]
-    payload = _plan_grill_payload(finding)
-    payload["amendments"] = [{
-        "delta_index": index, "findings": [finding],
-        "change": "Added the requested plan detail.",
-        "reason": "Closes the cold-reader finding.",
-        "source": "factory/scripts/record_grill_from_json.py",
-    } for index in range(len(delta))]
-    payload["artifact_delta"] = delta
-    return payload
-
-
-def _seed_native_plan_preparation(repo: Path, tmp_path: Path, artifact: str,
-                                  findings: dict) -> tuple[str, Path]:
-    from factory_lib import now_iso
-    from forge_cli.delegate import argv_digest, delegations_path, load_delegations
-    from forge_cli.grill import _cold_artifact_frame
-
-    preparation_id = f"launch-{uuid.uuid4().hex}"
-    brief = repo / ".factory" / "grill-brief-plan.md"
-    brief.write_text(
-        "fixture cold-read brief\n\n## The artifact under interrogation (plan)\n\n"
-        + _cold_artifact_frame(artifact) + "\n\n## What to return\n",
-        encoding="utf-8",
-    )
-    state = json.loads(load_factory_lib(repo).run_state_path(repo).read_text())
-    prepared = {
-        "generated_by": "orchestrator", "at": now_iso(),
-        "launch_id": preparation_id, "task": "grill-plan",
-        "story": state["issue_key"],
-        "brief_sha256": hashlib.sha256(brief.read_bytes()).hexdigest(),
-        "brief_path": brief.relative_to(repo).as_posix(),
-        "task_sha256": hashlib.sha256(artifact.encode("utf-8")).hexdigest(),
-        "write": False, "model": "", "effort": "", "argv": [],
-        "argv_sha256": argv_digest([]), "launch_status": "prepared",
-        "transport": "host-native", "agent_type": "griller",
+    resolution = "Added the fact requested by the cold reader."
+    return {
+        "generated_by": "griller", "gate": "plan", "verdict": "pass",
+        "gaps": [finding], "contradictions": [], "resolutions": [resolution],
+        "finding_dispositions": [{
+            "finding": finding, "resolution": resolution,
+            "source": "factory/scripts/record_grill_from_json.py",
+        }],
+        "amendments": [{
+            "delta_index": index, "findings": [finding],
+            "change": "Added the requested plan detail.",
+            "reason": "Closes the cold-reader finding.",
+            "source": "factory/scripts/record_grill_from_json.py",
+        } for index in range(len(delta))],
+        "artifact_delta": delta,
     }
-    ledger = delegations_path(repo)
-    rows = load_delegations(repo)
-    rows.append(prepared)
-    ledger.parent.mkdir(parents=True, exist_ok=True)
-    ledger.write_text("".join(json.dumps(row) + "\n" for row in rows),
-                      encoding="utf-8")
-    result = tmp_path / "native-cold-result.jsonl"
-    result.write_text(json.dumps(findings) + "\n", encoding="utf-8")
-    return preparation_id, result
-
-
-def _record_plan_grill(repo: Path, input_digest: Path, payload: dict,
-                       native: tuple[str, Path] | None = None):
-    args = ["record_grill_from_json.py", "--gate", "plan",
-            "--input-digest", str(input_digest)]
-    env = None
-    if native:
-        preparation_id, result = native
-        args.extend(["--cold-result", str(result), "--preparation-id", preparation_id])
-        env = {"FORGE_COORDINATOR": "codex"}
-    return run(repo, *args, stdin=json.dumps(payload), env=env)
-
-
-def _seed_passing_plan_grill(repo: Path, tmp_path: Path, *, native: bool = False):
-    sign_off(repo)
-    intake(repo)
-    draft = tmp_path / "bridge-plan.md"
-    draft.write_text(plan_draft(repo), encoding="utf-8")
-    cold = draft.read_text(encoding="utf-8")
-    finding = "State the exact repository fact."
-    payload = _plan_grill_payload(finding)
-    native_preparation = None
-    if native:
-        native_preparation = _seed_native_plan_preparation(
-            repo, tmp_path, cold,
-            {"gaps": [finding], "contradictions": []},
-        )
-    else:
-        _seed_cold_launch(
-            repo, "plan", hashlib.sha256(cold.encode("utf-8")).hexdigest(),
-            artifact_text=cold,
-            findings={"gaps": [finding], "contradictions": []},
-        )
-    code, out = _record_plan_grill(repo, draft, payload, native_preparation)
-    assert code == 0, out
-    return draft, cold, finding, native_preparation
 
 
 def test_saved_plan_routes_directly_to_native_approval_without_second_save(
@@ -389,7 +312,7 @@ def test_one_cold_grill_full_disposition_replaces_round_floors_and_frontier_fake
     assert "frontier_empty" not in stored and "rounds" not in stored
 
 
-def test_cold_to_final_bridge_refuses_missing_duplicate_unbound_and_unexplained(
+def test_cold_to_final_amendment_map_refuses_missing_duplicate_unbound_and_unexplained(
         repo: Path, tmp_path: Path):
     sign_off(repo)
     intake(repo)
@@ -448,218 +371,57 @@ def test_cold_to_final_bridge_refuses_missing_duplicate_unbound_and_unexplained(
     assert code == 0, out
 
 
-@pytest.mark.parametrize("native", [False, True], ids=["command", "native"])
-def test_plan_amendment_bridge_rerecord_reuses_prior_cold_launch(
-        repo: Path, tmp_path: Path, native: bool):
-    from forge_cli.delegate import load_delegations
-
-    draft, cold, finding, preparation = _seed_passing_plan_grill(
-        repo, tmp_path, native=native,
-    )
-    final = cold + "\nAdded the requested repository fact.\n"
-    draft.write_text(final, encoding="utf-8")
-
-    code, out = _record_plan_grill(
-        repo, draft, _bridge_plan_payload(cold, final, finding), preparation,
-    )
-
-    assert code == 0, out
-    grill = json.loads(
-        (repo / ".factory/stories/ENG-1/grills/plan.json").read_text()
-    )
-    assert grill["cold_input_sha256"] == hashlib.sha256(cold.encode()).hexdigest()
-    assert grill["final_artifact_sha256"] == hashlib.sha256(final.encode()).hexdigest()
-    rows = [row for row in load_delegations(repo) if row.get("task") == "grill-plan"]
-    assert all(row["at"].endswith("+00:00") for row in rows)
-
-
-def test_plan_amendment_bridge_selects_latest_identical_historical_launch(
+def test_recorder_uses_latest_successful_cold_read_with_amendments(
         repo: Path, tmp_path: Path):
     from forge_cli.delegate import delegations_path, load_delegations
 
-    draft, cold, finding, _preparation = _seed_passing_plan_grill(repo, tmp_path)
-    grill_path = repo / ".factory/stories/ENG-1/grills/plan.json"
-    previous = json.loads(grill_path.read_text())
-    previous.pop("launch_id")
-    grill_path.write_text(json.dumps(previous), encoding="utf-8")
-
-    rows = load_delegations(repo)
-    old_lifecycle = [dict(row) for row in rows if row.get("task") == "grill-plan"]
-    assert [row["launch_status"] for row in old_lifecycle] == [
-        "starting", "running", "succeeded",
-    ]
-    latest_id = f"launch-test-{uuid.uuid4().hex}"
-    duplicate_lifecycle = [{**row, "launch_id": latest_id} for row in old_lifecycle]
-    rows.extend(duplicate_lifecycle)
-    ledger = delegations_path(repo)
-    ledger.write_text("".join(json.dumps(row) + "\n" for row in rows),
-                      encoding="utf-8")
-
-    final = cold + "\nAdded the requested repository fact.\n"
-    draft.write_text(final, encoding="utf-8")
-    code, out = _record_plan_grill(
-        repo, draft, _bridge_plan_payload(cold, final, finding),
-    )
-
+    sign_off(repo)
+    code, out = intake(repo)
     assert code == 0, out
-    stored = json.loads(grill_path.read_text())
-    assert stored["launch_id"] == latest_id
-
-
-def test_task_grill_refuses_prior_cold_read_after_objective_changes(
-        repo: Path):
-    from test_gates import (
-        STAGE_TASK, _seed_cold_launch, seed_task_grill_frontier,
-        task_grill_payload,
-    )
-
-    seed_task_grill_frontier(repo, STAGE_TASK)
-    lib = load_factory_lib(repo)
-    task_plan = lib.evidence_path(repo, "TEST-1", "task-plans/T1.md")
-    plan_bytes = task_plan.read_bytes()
-    cold = task_plan.read_text(encoding="utf-8")
+    draft = tmp_path / "latest-read.md"
+    draft.write_text(plan_draft(repo), encoding="utf-8")
+    earlier = draft.read_text(encoding="utf-8")
     _seed_cold_launch(
-        repo, "task", hashlib.sha256(cold.encode()).hexdigest(), "T1",
-        artifact_text=cold,
+        repo, "plan", hashlib.sha256(earlier.encode()).hexdigest(),
+        artifact_text=earlier,
+        findings={"gaps": ["Earlier finding."], "contradictions": []},
     )
-    payload = task_grill_payload(STAGE_TASK)
+    earlier_rows = [row for row in load_delegations(repo)
+                    if row.get("task") == "grill-plan"]
+
+    latest = earlier + "\nUpdated repository fact for the latest read.\n"
+    draft.write_text(latest, encoding="utf-8")
+    finding = "State the updated repository fact."
+    _seed_cold_launch(
+        repo, "plan", hashlib.sha256(latest.encode()).hexdigest(),
+        artifact_text=latest,
+        findings={"gaps": [finding], "contradictions": []},
+    )
+    all_rows = load_delegations(repo)
+    latest_rows = [row for row in all_rows if row.get("task") == "grill-plan"]
+    other_rows = [row for row in all_rows if row.get("task") != "grill-plan"]
+    assert earlier_rows[-1]["launch_id"] != latest_rows[-1]["launch_id"]
+    ledger = delegations_path(repo)
+    ledger.write_text("".join(
+        json.dumps(row) + "\n"
+        for row in [*other_rows, *earlier_rows, *latest_rows]
+    ), encoding="utf-8")
+
+    final = latest + "Resolved the latest finding.\n"
+    draft.write_text(final, encoding="utf-8")
     code, out = run(
-        repo, "record_grill_from_json.py", "--gate", "task", "--task", "T1",
-        stdin=json.dumps(payload),
-    )
-    assert code == 0, out
-    grill_path = lib.evidence_path(repo, "TEST-1", "grills/tasks/T1.json")
-    previous_record = grill_path.read_bytes()
-
-    decomposition_path = lib.protected_decomposition_state_path(repo)
-    decomposition = json.loads(decomposition_path.read_text(encoding="utf-8"))
-    changed_task = {
-        **decomposition["tasks"][0], "objective": "Build a different feature.",
-    }
-    decomposition["tasks"][0] = changed_task
-    decomposition_path.write_text(json.dumps(decomposition), encoding="utf-8")
-    assert task_plan.read_bytes() == plan_bytes
-    assert lib.grounding_digest(repo, changed_task, in_stage=False) != json.loads(
-        previous_record
-    )["input_sha256"]
-
-    code, out = run(
-        repo, "record_grill_from_json.py", "--gate", "task", "--task", "T1",
-        stdin=json.dumps(payload),
-    )
-
-    assert code != 0 and "found 0" in out
-    assert grill_path.read_bytes() == previous_record
-
-
-@pytest.mark.parametrize("native", [False, True], ids=["command", "native"])
-def test_plan_amendment_bridge_refuses_noop_rerecord(
-        repo: Path, tmp_path: Path, native: bool):
-    draft, _cold, finding, preparation = _seed_passing_plan_grill(
-        repo, tmp_path, native=native,
-    )
-    grill_path = repo / ".factory/stories/ENG-1/grills/plan.json"
-    previous_record = grill_path.read_bytes()
-
-    code, out = _record_plan_grill(
-        repo, draft, _plan_grill_payload(finding), preparation,
-    )
-
-    assert code != 0 and (
-        "amendment bridge cannot reuse an unchanged final artifact" in out
-    )
-    assert grill_path.read_bytes() == previous_record
-
-
-@pytest.mark.parametrize("native", [False, True], ids=["command", "native"])
-def test_plan_amendment_bridge_refuses_changed_findings(
-        repo: Path, tmp_path: Path, native: bool):
-    draft, cold, finding, preparation = _seed_passing_plan_grill(
-        repo, tmp_path, native=native,
-    )
-    grill_path = repo / ".factory/stories/ENG-1/grills/plan.json"
-    previous_record = grill_path.read_bytes()
-    final = cold + "\nAdded the requested repository fact.\n"
-    draft.write_text(final, encoding="utf-8")
-
-    code, out = _record_plan_grill(
-        repo, draft, _bridge_plan_payload(cold, final, "Substituted finding."),
-        preparation,
-    )
-
-    assert code != 0 and "bridge findings must match the previous pass" in out
-    assert grill_path.read_bytes() == previous_record
-
-
-def test_command_bridge_does_not_reuse_native_previous_proof(repo: Path, tmp_path: Path):
-    draft, cold, finding, _preparation = _seed_passing_plan_grill(repo, tmp_path)
-    grill_path = repo / ".factory/stories/ENG-1/grills/plan.json"
-    previous = json.loads(grill_path.read_text())
-    previous.update({
-        "transport": "host-native", "preparation_id": f"launch-{uuid.uuid4().hex}",
-    })
-    grill_path.write_text(json.dumps(previous), encoding="utf-8")
-    final = cold + "\nAdded the requested repository fact.\n"
-    draft.write_text(final, encoding="utf-8")
-
-    code, out = _record_plan_grill(
-        repo, draft, _bridge_plan_payload(cold, final, finding),
-    )
-
-    assert code != 0 and "found 0" in out
-
-
-@pytest.mark.parametrize("tamper", ["preparation_id", "transport"])
-def test_native_bridge_requires_the_previous_preparation_identity(
-        repo: Path, tmp_path: Path, tamper: str):
-    draft, cold, finding, preparation = _seed_passing_plan_grill(
-        repo, tmp_path, native=True,
-    )
-    grill_path = repo / ".factory/stories/ENG-1/grills/plan.json"
-    previous = json.loads(grill_path.read_text())
-    if tamper == "preparation_id":
-        previous["preparation_id"] = f"launch-{uuid.uuid4().hex}"
-    else:
-        previous.pop("transport")
-    grill_path.write_text(json.dumps(previous), encoding="utf-8")
-    final = cold + "\nAdded the requested repository fact.\n"
-    draft.write_text(final, encoding="utf-8")
-
-    code, out = _record_plan_grill(
-        repo, draft, _bridge_plan_payload(cold, final, finding), preparation,
-    )
-
-    assert code != 0 and "matching host-native prepared row; found 0" in out
-
-
-def test_request_changes_edit_has_candidate_after_amendment_bridge_rerecord(
-        repo: Path, tmp_path: Path):
-    draft, cold, finding, _preparation = _seed_passing_plan_grill(repo, tmp_path)
-    code, out = run(repo, "forge.py", "plan", "save", "--from", str(draft),
-                    "--story", "ENG-1")
-    assert code == 0, out
-    lib = load_factory_lib(repo)
-    plan = repo / json.loads(lib.run_state_path(repo).read_text())["plan_file"]
-    candidate = approval.eligible_candidates(repo)[0]
-    with pytest.raises(approval.ApprovalRefused, match="unsupported or unsuccessful"):
-        approval.record_native_approval(
-            repo, _codex_event(candidate.digest, "Request changes"), runtime="codex",
-        )
-    plan.write_text(
-        plan.read_text(encoding="utf-8") + "\nAdded the requested plan detail.\n",
-        encoding="utf-8",
-    )
-    assert approval.eligible_candidates(repo) == []
-    final = plan.read_text(encoding="utf-8")
-
-    code, out = _record_plan_grill(
-        repo, plan, _bridge_plan_payload(cold, final, finding),
+        repo, "record_grill_from_json.py", "--gate", "plan",
+        "--input-digest", str(draft),
+        stdin=json.dumps(_amended_plan_payload(latest, final, finding)),
     )
 
     assert code == 0, out
-    candidates = approval.eligible_candidates(repo)
-    assert len(candidates) == 1
-    assert candidates[0].digest == lib.plan_digest_without_assumptions(plan)
+    recorded = json.loads(
+        (repo / ".factory/stories/ENG-1/grills/plan.json").read_text()
+    )
+    assert recorded["launch_id"] == latest_rows[-1]["launch_id"]
+    assert recorded["cold_input_sha256"] == hashlib.sha256(latest.encode()).hexdigest()
+    assert recorded["final_artifact_sha256"] == hashlib.sha256(final.encode()).hexdigest()
 
 
 def test_normal_authority_refuses_coldless_grill_with_upgrade_guidance(repo: Path):
@@ -969,11 +731,16 @@ def test_cold_grill_refuses_output_changed_after_terminal_publication(repo, tmp_
 
 def test_task_cold_grill_crlf_uses_same_text_digest_as_launch(repo):
     from test_gates import STAGE_TASK, seed_task_grill_frontier, task_grill_payload
+    from forge_cli.grill import _artifact_digest, _review_artifact_text
+    from grill_gates import get_gate
+
     seed_task_grill_frontier(repo, STAGE_TASK)
     plan = repo / ".factory/task-plans/T1.md"
     plan.write_bytes(plan.read_bytes().replace(b"\n", b"\r\n"))
-    cold = hashlib.sha256(plan.read_text(encoding="utf-8").encode()).hexdigest()
-    _seed_cold_launch(repo, "task", cold, "T1")
+    _, task_plan = get_gate("task").locate(repo, "T1", "")
+    cold_artifact = _review_artifact_text(repo, "task", "T1", task_plan)
+    cold = _artifact_digest(cold_artifact)
+    _seed_task_cold_launch(repo, "T1")
     code, out = run(repo, "record_grill_from_json.py", "--gate", "task", "--task", "T1",
                     stdin=json.dumps(task_grill_payload(STAGE_TASK)))
     assert code == 0, out

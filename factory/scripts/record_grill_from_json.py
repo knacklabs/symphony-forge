@@ -25,8 +25,9 @@ from pathlib import Path
 from factory_lib import (
     plan_digest_without_assumptions,
     dump_json, evidence_path, git_control_dir, grounding_digest, head_sha,
-    load_json, now_iso, protected_decomposition_state_path, read_stdin_utf8,
-    repo_root, run_state_path, sha256_of,
+    grill_evidence_name, grill_key_suffix, load_json, now_iso,
+    protected_decomposition_state_path, read_stdin_utf8, repo_root,
+    run_state_path, sha256_of,
     task_frontier_state, task_stage_record, validate_payload,
 )
 from grill_gates import gate_names, get_gate
@@ -40,77 +41,26 @@ def _non_empty_string(value: object) -> bool:
 
 
 def _cold_launch_terminal(
-    root: Path, gate: str, task_id: str,
-) -> tuple[dict, list[str], dict | None]:
-    """Select one launch and validate its immutable lifecycle and argv."""
-    from forge_cli.delegate import argv_digest, load_delegations
-    label = f"grill-{gate}" + (f"-{task_id}" if task_id else "")
-    story = load_json(run_state_path(root), default={}).get("issue_key", "")
-    spec = get_gate(gate)
-    previous = load_json(
-        evidence_path(root, story if spec.story_scoped else "",
-                      spec.evidence_name(task_id)), default={},
-    )
-    since = str(previous.get("recorded_at") or "")
-    previous_launch_id = previous.get("launch_id")
-    scoped_rows = [
-        row for row in load_delegations(root)
-        if row.get("task") == label
-        and (not spec.story_scoped or row.get("story") == story)
-    ]
-    new_rows = [
-        row for row in scoped_rows
-        if (str(row.get("at") or "") > since
-            or (isinstance(previous_launch_id, str)
-                and str(row.get("at") or "") == since
-                and isinstance(row.get("launch_id"), str)
-                and row.get("launch_id") != previous_launch_id))
-    ]
-    launches: dict[str, list[dict]] = {}
-    for row in new_rows:
-        if isinstance(row.get("launch_id"), str):
-            launches.setdefault(row["launch_id"], []).append(row)
-    bridge_previous = None
-    if new_rows:
-        completed = [rows for rows in launches.values()
-                     if rows[-1].get("launch_status") == "succeeded"]
-    else:
-        previous_digest = previous.get("cold_input_sha256")
-        if (gate != "plan"
-                or previous.get("verdict") != "pass"
-                or previous.get("transport") == "host-native"
-                or not isinstance(previous_digest, str)
-                or not re.fullmatch(r"[0-9a-f]{64}", previous_digest)):
-            completed = []
-        else:
-            old_launches: dict[str, list[dict]] = {}
-            for row in scoped_rows:
-                if (row.get("task_sha256") == previous_digest
-                        and isinstance(row.get("launch_id"), str)):
-                    old_launches.setdefault(row["launch_id"], []).append(row)
-            completed = [rows for rows in old_launches.values()
-                         if rows[-1].get("launch_status") == "succeeded"]
-            if previous_launch_id is not None:
-                completed = [rows for rows in completed
-                             if rows[0].get("launch_id") == previous_launch_id]
-            elif completed:
-                completed = [max(
-                    enumerate(completed),
-                    key=lambda item: (str(item[1][-1].get("at") or ""), item[0]),
-                )[1]]
-            bridge_previous = previous
-    if len(completed) != 1:
-        raise SystemExit(
-            f"{gate} grill requires exactly one successful independent cold-read "
-            f"launch since its last pass; found {len(completed)}"
-        )
-    rows = completed[0]
+    root: Path, gate: str, task_id: str, artifact_file: str = "",
+) -> tuple[dict, list[str]]:
+    """Select the latest successful launch and validate its lifecycle/argv."""
+    from forge_cli.delegate import argv_digest
+    from forge_cli.grill import _latest_cold_launch_rows
+
+    suffix = grill_key_suffix(gate, task_id, artifact_file, root)
+    ledger_id = f"grill-{gate}" + (f"-{suffix}" if suffix else "")
+    rows = _latest_cold_launch_rows(root, ledger_id, gate)
     terminal = rows[-1]
+    if terminal.get("transport") == "host-native":
+        raise SystemExit(
+            f"{gate} latest cold read is host-native; record it with "
+            "--cold-result and its --preparation-id"
+        )
     immutable = (
         "task", "story", "brief_sha256", "prompt_sha256", "task_sha256",
         "write", "model",
         "effort", "argv", "argv_sha256", "transport", "brief_path",
-        "output_path", "stderr_path", "context",
+        "output_path", "stderr_path", "context", "reason",
     )
     if (len(rows) != 3
             or [row.get("launch_status") for row in rows]
@@ -130,15 +80,17 @@ def _cold_launch_terminal(
             or any(not isinstance(token, str) for token in argv)
             or terminal.get("argv_sha256") != argv_digest(argv)):
         raise SystemExit(f"{gate} cold-read launch argv identity is invalid")
-    return terminal, argv, bridge_previous
+    return terminal, argv
 
 
 def _cold_launch_brief(
     root: Path, gate: str, task_id: str, terminal: dict,
+    artifact_file: str = "",
 ) -> tuple[Path, bytes, str]:
     """Validate the exact brief bytes and optional context identity."""
+    suffix = grill_key_suffix(gate, task_id, artifact_file, root)
     brief = root / ".factory" / (
-        f"grill-brief-{gate}" + (f"-{task_id}" if task_id else "") + ".md"
+        f"grill-brief-{gate}" + (f"-{suffix}" if suffix else "") + ".md"
     )
     try:
         brief_bytes = brief.read_bytes()
@@ -263,11 +215,13 @@ def _cold_findings(gate: str, finding_text: str) -> dict:
 
 
 def _cold_launch_result(
-    root: Path, gate: str, task_id: str,
-) -> tuple[str, dict, str | None, dict | None, str]:
-    terminal, argv, bridge_previous = _cold_launch_terminal(root, gate, task_id)
+    root: Path, gate: str, task_id: str, artifact_file: str = "",
+) -> tuple[str, dict, str | None, str]:
+    terminal, argv = _cold_launch_terminal(
+        root, gate, task_id, artifact_file,
+    )
     brief, brief_bytes, context_opaque = _cold_launch_brief(
-        root, gate, task_id, terminal,
+        root, gate, task_id, terminal, artifact_file,
     )
     output, result = _cold_result_bytes(terminal, gate)
     finding_text = _cold_finding_text(
@@ -285,7 +239,7 @@ def _cold_launch_result(
     if (cold_artifact is not None
             and hashlib.sha256(cold_artifact.encode("utf-8")).hexdigest() != digest):
         raise SystemExit(f"{gate} cold-read brief artifact does not match its input digest")
-    return digest, findings, cold_artifact, bridge_previous, terminal["launch_id"]
+    return digest, findings, cold_artifact, terminal["launch_id"]
 
 
 def _regular_utf8_bytes(path: Path, gate: str) -> tuple[bytes, str]:
@@ -327,48 +281,24 @@ def _regular_utf8_bytes(path: Path, gate: str) -> tuple[bytes, str]:
 
 def _native_cold_launch_result(
     root: Path, gate: str, task_id: str, result_path: Path,
-    preparation_id: str,
-) -> tuple[str, dict, str | None, str, dict | None]:
+    preparation_id: str, artifact_file: str = "",
+) -> tuple[str, dict, str | None, str]:
     """Admit one process-free host-native griller preparation and its result."""
-    from forge_cli.delegate import argv_digest, load_delegations
+    from forge_cli.delegate import argv_digest
     from forge_cli.grill import _cold_artifact_from_brief
 
     if not re.fullmatch(r"launch-[0-9a-f]{32}", preparation_id):
         raise SystemExit(f"{gate} host-native preparation id is invalid")
-    label = f"grill-{gate}" + (f"-{task_id}" if task_id else "")
     story = load_json(run_state_path(root), default={}).get("issue_key", "")
-    spec = get_gate(gate)
-    previous = load_json(
-        evidence_path(root, story if spec.story_scoped else "",
-                      spec.evidence_name(task_id)), default={},
+    from forge_cli.grill import _latest_cold_launch_rows
+    suffix = grill_key_suffix(gate, task_id, artifact_file, root)
+    rows = _latest_cold_launch_rows(
+        root, f"grill-{gate}" + (f"-{suffix}" if suffix else ""), gate,
     )
-    since = str(previous.get("recorded_at") or "")
-    scoped_rows = [row for row in load_delegations(root)
-                   if row.get("task") == label
-                   and (not spec.story_scoped or row.get("story") == story)]
-    new_rows = [row for row in scoped_rows
-                if str(row.get("at") or "") > since]
-    bridge_previous = None
-    if new_rows:
-        rows = [row for row in new_rows
-                if row.get("launch_id") == preparation_id]
-    else:
-        previous_digest = previous.get("cold_input_sha256")
-        if (gate == "plan"
-                and previous.get("verdict") == "pass"
-                and previous.get("transport") == "host-native"
-                and previous.get("preparation_id") == preparation_id
-                and isinstance(previous_digest, str)
-                and re.fullmatch(r"[0-9a-f]{64}", previous_digest)):
-            rows = [row for row in scoped_rows
-                    if row.get("launch_id") == preparation_id]
-            bridge_previous = previous
-        else:
-            rows = []
-    if len(rows) != 1:
+    if len(rows) != 1 or rows[0].get("launch_id") != preparation_id:
         raise SystemExit(
-            f"{gate} grill requires exactly one matching host-native prepared "
-            f"row; found {len(rows)}"
+            f"{gate} cold result must use the latest successful cold-read "
+            "preparation"
         )
     prepared = rows[0]
     forbidden_fragments = (
@@ -394,13 +324,10 @@ def _native_cold_launch_result(
             or prepared.get("model") != ""
             or prepared.get("effort") != ""):
         raise SystemExit(f"{gate} host-native cold-read preparation is invalid")
-    if (bridge_previous is not None
-            and prepared.get("task_sha256")
-            != bridge_previous.get("cold_input_sha256")):
-        raise SystemExit(f"{gate} host-native bridge input does not match the previous pass")
-
+    brief_suffix = grill_key_suffix(gate, task_id, artifact_file, root)
     brief = root / ".factory" / (
-        f"grill-brief-{gate}" + (f"-{task_id}" if task_id else "") + ".md"
+        f"grill-brief-{gate}"
+        + (f"-{brief_suffix}" if brief_suffix else "") + ".md"
     )
     try:
         brief_bytes = brief.read_bytes()
@@ -423,15 +350,7 @@ def _native_cold_launch_result(
 
     result_bytes, finding_text = _regular_utf8_bytes(result_path, gate)
     findings = _cold_findings(gate, finding_text)
-    return (digest, findings, cold_artifact,
-            hashlib.sha256(result_bytes).hexdigest(), bridge_previous)
-
-
-def _validate_bridge_findings(previous: dict | None, payload: dict, gate: str) -> None:
-    if (previous is not None
-            and any(payload.get(field) != previous.get(field)
-                    for field in ("gaps", "contradictions"))):
-        raise SystemExit(f"{gate} bridge findings must match the previous pass")
+    return digest, findings, cold_artifact, hashlib.sha256(result_bytes).hexdigest()
 
 
 def _artifact_delta(cold: str, final: str) -> list[dict]:
@@ -462,11 +381,12 @@ def _validate_dispositions(
         raise SystemExit("grill findings must match the authenticated cold-read result")
     findings = [*cold_findings["gaps"], *cold_findings["contradictions"]]
     dispositions = payload.get("finding_dispositions")
-    if not isinstance(dispositions, list) or len(dispositions) != len(findings):
+    if not isinstance(dispositions, list) or len(dispositions) < len(findings):
         raise SystemExit(
             "grill finding_dispositions must map every cold-read finding exactly once"
         )
-    for finding, disposition in zip(findings, dispositions):
+    cold_dispositions = dispositions[:len(findings)]
+    for finding, disposition in zip(findings, cold_dispositions):
         if (not isinstance(disposition, dict)
                 or disposition.get("finding") != finding
                 or any(not _non_empty_string(disposition.get(field))
@@ -475,11 +395,31 @@ def _validate_dispositions(
                 "grill finding_dispositions must be ordered one-to-one objects "
                 "with exact finding, resolution, and source"
             )
+    owner_decisions = {}
+    for disposition in dispositions[len(findings):]:
+        finding = (disposition.get("finding")
+                   if isinstance(disposition, dict) else None)
+        source = (disposition.get("source")
+                  if isinstance(disposition, dict) else None)
+        if (not isinstance(disposition, dict)
+                or not isinstance(finding, str)
+                or not finding.startswith("Owner decision: ")
+                or not finding.removeprefix("Owner decision: ").strip()
+                or source != finding
+                or any(not _non_empty_string(disposition.get(field))
+                       for field in ("resolution", "source"))
+                or finding in owner_decisions):
+            raise SystemExit(
+                "extra grill dispositions must explicitly name an owner decision "
+                "as both finding and source"
+            )
+        owner_decisions[finding] = source
     amendments = payload.get("amendments", [])
     if not isinstance(amendments, list):
         raise SystemExit("grill amendments must be a list")
     disposition_findings = {entry["finding"] for entry in dispositions}
     indexes = []
+    cited_owner_decisions = set()
     for entry in amendments:
         if (not isinstance(entry, dict)
                 or any(not _non_empty_string(entry.get(field))
@@ -489,15 +429,30 @@ def _validate_dispositions(
             )
         bound = entry.get("findings")
         if (not isinstance(bound, list) or not bound
+                or any(not _non_empty_string(finding) for finding in bound)
                 or len(set(bound)) != len(bound)
                 or any(finding not in disposition_findings for finding in bound)):
             raise SystemExit(
                 "every grill amendment must bind non-duplicate exact cold finding "
                 "dispositions"
             )
+        bound_owner_decisions = set(bound) & owner_decisions.keys()
+        if bound_owner_decisions:
+            if entry["source"] not in bound_owner_decisions:
+                raise SystemExit(
+                    "an owner-decision amendment source must name its bound "
+                    "owner decision exactly"
+                )
+            cited_owner_decisions.update(bound_owner_decisions)
+        elif entry["source"].startswith("Owner decision:"):
+            raise SystemExit(
+                "an owner-decision amendment must bind its owner decision disposition"
+            )
         if type(entry.get("delta_index")) is not int:
             raise SystemExit("every grill amendment requires an integer delta_index")
         indexes.append(entry["delta_index"])
+    if set(owner_decisions) != cited_owner_decisions:
+        raise SystemExit("every owner decision disposition must bind an artifact amendment")
     if cold_artifact is None:
         raise SystemExit("the authenticated cold brief does not contain its exact artifact")
     delta = _artifact_delta(
@@ -790,30 +745,26 @@ payload["commit"] = head_sha(root)
 active_story = load_json(run_state_path(root), default={}).get("issue_key", "")
 _gate = get_gate(args.gate)
 _label, artifact = _gate.locate(root, args.task or "", args.input_digest or "")
-from forge_cli.grill import _artifact_digest
+from forge_cli.grill import _artifact_digest, _review_artifact_text
+artifact = _review_artifact_text(root, args.gate, args.task or "", artifact)
 final_digest = _artifact_digest(artifact)
 if args.cold_result:
     (_cold_digest, _cold_findings, _cold_artifact,
-     _result_sha256, _bridge_previous) = \
+     _result_sha256) = \
         _native_cold_launch_result(
             root, args.gate, args.task or "",
             Path(args.cold_result).expanduser(), args.preparation_id,
+            args.input_digest or "",
         )
     payload["transport"] = "host-native"
     payload["preparation_id"] = args.preparation_id
     payload["result_sha256"] = _result_sha256
 else:
     (_cold_digest, _cold_findings, _cold_artifact,
-     _bridge_previous, _launch_id) = _cold_launch_result(
-        root, args.gate, args.task or "",
+     _launch_id) = _cold_launch_result(
+        root, args.gate, args.task or "", args.input_digest or "",
     )
     payload["launch_id"] = _launch_id
-_validate_bridge_findings(_bridge_previous, payload, args.gate)
-if (_bridge_previous is not None
-        and final_digest == _bridge_previous.get("final_artifact_sha256")):
-    raise SystemExit(
-        f"{args.gate} amendment bridge cannot reuse an unchanged final artifact"
-    )
 _validate_dispositions(
     payload, _cold_digest, final_digest, _cold_findings,
     _cold_artifact, artifact,
@@ -821,7 +772,9 @@ _validate_dispositions(
 
 
 story = active_story if _gate.story_scoped else ""
-name = _gate.evidence_name(args.task or "")
+name = grill_evidence_name(
+    args.gate, args.task or "", args.input_digest or "", root,
+)
 dest = evidence_path(root, story, name, for_write=True)
 dump_json(dest, payload)
 print(f"Recorded {args.gate} grill: {payload['verdict']} "

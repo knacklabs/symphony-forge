@@ -1,0 +1,12 @@
+{
+  "event": "open",
+  "id": "Q-0236-6210",
+  "profile": "lite",
+  "reason": "Process simplification s1 (moved from Q-0227-0c8e onto the batch): one cold read per artifact",
+  "started_at": "2026-09-24T13:47:26+00:00",
+  "max_files": 5,
+  "files": [],
+  "harness_source": true,
+  "by": "Ravi Kiran Vemula",
+  "base_sha": "485a061384c481996af693c479d01de823566d8d"
+}

@@ -756,6 +756,10 @@ def main() -> None:
              "(--gate spec/epics, and a --gate plan draft before it is saved)")
     p_gr.add_argument("--print-only", action="store_true",
                       help="compose and show the dispatch without releasing a reader")
+    p_gr.add_argument("--fresh", action="store_true",
+                      help="allow another cold read after one exists since the last pass")
+    p_gr.add_argument("--reason", default="",
+                      help="why another cold read is needed; requires --fresh")
     p_gr.add_argument(
         "--context-file", default="", metavar="PATH",
         help="capture one untrusted UTF-8 context file for this cold read")

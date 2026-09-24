@@ -653,17 +653,20 @@ body contains frontmatter, IDs or ID lists, status or date lines, SHAs,
 digests, file paths, or scope lists. Mention a decision by title in the
 technical section only when it changes the design.
 
-Each plan gets one independent wide cold read at Sol/high. The griller sweeps
+Every gate gets one independent wide cold read at Sol/high. The griller sweeps
 every feature the artifact touches and shipped features next to them against
 their contracts, checking current behavior, tests, and docs for dead ends,
 bypassed or unpassable gates, impractical advice, upgrade data loss, and stale
 docs. Every finding cites an exact `file:line`. The coordinator resolves
 repository-answerable findings; only genuine human choices go to the human,
-as option questions with a recommended option and its reason. The cold proof
-binds the exact input it read; `finding_dispositions` maps every finding, and
-`amendments` explains every change between that input and the final artifact.
-Commit spec, decision, and roadmap changes before launching the grill because
-its staleness check compares commit order.
+as option questions with a recommended option and its reason. A pass always
+records against the latest successful read; earlier reads are superseded.
+`finding_dispositions` maps every finding, and `amendments` plus
+`artifact_delta` bridge any text or task-contract change to the final artifact.
+An owner decision used for an amendment must appear in `finding_dispositions`,
+with its source naming that decision. After a read exists since the last pass,
+`forge grill run` requires `--fresh --reason "<why>"` to launch another read;
+the reason is saved on its launch row.
 
 Before saving, the planner reviews every active decision. `forge plan save`
 records that attestation itself in `.factory/stories/<story>/plan-meta.json`,

@@ -1980,7 +1980,7 @@ def launch_companion(
         context_snapshot_identity: tuple[int, int, int, str] | None = None,
         context_source_path: str = "",
         task_metadata: dict | None = None,
-        cold_contract_sha256: str = "",
+        launch_reason: str = "",
         choice: str | None = None,
         native_task_name: str = "",
         emit_descriptor: bool = True,
@@ -2119,8 +2119,8 @@ def launch_companion(
                 "agent_type": agent_type,
                 "task_name": task_name,
             }
-            if cold_contract_sha256:
-                record["cold_contract_sha256"] = cold_contract_sha256
+            if launch_reason:
+                record["reason"] = launch_reason
             if story:
                 record["story"] = story
             if stage_started_at:
@@ -2216,8 +2216,8 @@ def launch_companion(
         "launch_status": "starting",
         "process_token": process_token,
     }
-    if cold_contract_sha256:
-        record["cold_contract_sha256"] = cold_contract_sha256
+    if launch_reason:
+        record["reason"] = launch_reason
     record.update({
         "companion_path": str(companion),
         "brief_path": rel,
