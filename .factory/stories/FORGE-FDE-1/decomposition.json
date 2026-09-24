@@ -8,13 +8,157 @@
       "objective": "FDE skill section and reference file, DISCOVERY problem cards, discovery owner and impeccable in harness.yaml, forge payback, success-measure validation, pr-link check date, forge next listing and forge outcome check.",
       "dependencies": [],
       "acceptance_criteria": [
-        "The Forge skill's FDE section is about 70 lines and the reference file holds examples, question bank and call script",
-        "forge payback gives the same answer for the same inputs, including the 3- and 12-month boundaries and the unknown-value case",
-        "forge spec confirm refuses a new spec with a missing or incomplete success measure and accepts a complete one with only its status changed",
-        "forge pr-link sets the success-check date once; forge next lists it after that date until forge outcome check records the result",
-        "A scripted discovery walkthrough in a throwaway client asks one question per turn with a Why-I-ask line, stops at the limit and fills a problem card named in the brief and spec"
+        "The Forge skill has a Work as the forward deployed engineer section of at most 70 lines covering asking rules, depth limits, problem cards, options, forge payback, the success measure and the check-back; the discovery row and new intent rows point to it; factory/skills/fde-reference.md holds the worked examples, question bank, customer call script and bad-to-better questions.",
+        "The FDE section states one question per turn about past events, no solution during discovery, a Why I ask line until the FDE says they know why, at most two questions for a Lite fix and eight for a story with unanswered fields written unknown and priced as guessed, neutral choices with no recommendation for fact questions and the recommendation first for decision questions, and options that include don't build and the smallest slice with only build options priced by forge payback.",
+        "A project created by forge init gets a DISCOVERY.md with a ## Problems section holding a ### card with job, workaround, cost, who feels it, how often and evidence; the skill tells the agent to add that section to an existing DISCOVERY.md on its first discovery use; harness.yaml names the Forge skill as discovery owner and allows impeccable in the prototype phase, with its gstack lines unchanged.",
+        "forge payback returns build at a payback of exactly 3 months or less, smallest slice first above 3 up to and including 12, don't build above 12 or at zero confident value, and find out first when no value is given; the same inputs always print the same line and bad or partial inputs are refused naming the flag.",
+        "forge spec confirm refuses a draft spec whose ## Success measure is missing, has an empty Metric, Baseline, Target or Check date, or has a check date that is not a valid YYYY-MM-DD date, and confirms a complete one changing only its status line; an already-confirmed spec is not re-checked, and spec save's hint names a missing success measure.",
+        "forge next lists a confirmed spec's success check only when at least one roadmap story is linked to it, every linked story is done, its check date has passed and its Success measure has no Result line; a pending or later-added linked story postpones the listing; forge spec measure <slug> --result appends '- Result: <text> (YYYY-MM-DD)' to that section only, which stops the listing, and refuses an unknown slug, a spec without a Success measure and an empty result; nothing is written to the deferral ledger."
       ],
-      "user_facing": false
+      "user_facing": false,
+      "write_scope": [
+        "factory/skills/forge.md",
+        "factory/skills/fde-reference.md",
+        "factory/scripts/forge_cli/scaffold.py",
+        "harness.yaml",
+        "factory/scripts/forge_cli/payback.py",
+        "factory/scripts/forge.py",
+        "factory/scripts/forge_cli/specs.py",
+        "factory/prompts/griller.md",
+        "docs/specs/README.md",
+        "factory/scripts/forge_cli/phase.py",
+        "factory/tests/test_fde.py",
+        "factory/tests/test_gates.py",
+        "factory/tests/test_regrill_scope.py"
+      ],
+      "required_tests": [
+        {
+          "id": "test_fde_skill_section_is_lean_and_reference_holds_examples",
+          "path": "factory/tests/test_fde.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_fde_skill_states_asking_rules_limits_and_neutral_options",
+          "path": "factory/tests/test_fde.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_new_discovery_template_has_problem_cards_and_owners_changed",
+          "path": "factory/tests/test_fde.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_payback_verdicts_at_exact_boundaries_and_unknown_value",
+          "path": "factory/tests/test_fde.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_payback_command_is_deterministic_and_refuses_bad_inputs",
+          "path": "factory/tests/test_fde.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_spec_confirm_refuses_missing_or_incomplete_success_measure",
+          "path": "factory/tests/test_fde.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_spec_confirm_accepts_complete_success_measure_changing_only_status",
+          "path": "factory/tests/test_fde.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_spec_confirmed_before_the_rule_is_not_rechecked_and_save_hints_it",
+          "path": "factory/tests/test_fde.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_next_lists_success_check_when_all_spec_stories_done_and_date_passed",
+          "path": "factory/tests/test_fde.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_pending_or_later_added_story_postpones_success_check",
+          "path": "factory/tests/test_fde.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_spec_measure_appends_dated_result_and_stops_listing",
+          "path": "factory/tests/test_fde.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_spec_measure_refuses_unknown_slug_missing_measure_and_empty_result",
+          "path": "factory/tests/test_fde.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_spec_confirm_roadmap_derive_and_signoff_gate",
+          "path": "factory/tests/test_gates.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_adhoc_capture_is_visible_debt_not_a_build_bypass",
+          "path": "factory/tests/test_gates.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_spec_confirmation_does_not_use_another_specs_pass",
+          "path": "factory/tests/test_regrill_scope.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+        }
+      ],
+      "verify_commands": [
+        "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with pytest-xdist --with psutil python factory/scripts/verify.py",
+        "python3 factory/scripts/check_dual_runtime.py",
+        "python3 factory/scripts/check_encoding_hygiene.py",
+        "git diff --check"
+      ],
+      "reviewer_focus": [
+        "Apply constitution/09-agent-conduct.md sections 2-4 and Ponytail: no new ledger, record type, schema field or hook; the check-back is computed by forge next from specs and the roadmap with nothing stored ahead; forge pr-link, outcome files, the pr-link workflow and the deferral ledger are untouched.",
+        "forge payback shape: a pure payback() with typed verdict and confidence constants, a PaybackInputError(ValueError) for every bad or partial input, exact fractions.Fraction arithmetic so the 3- and 12-month boundaries compare exactly, rounding only for display, and a thin cmd_payback printing one deterministic line; no value input means find out first.",
+        "Success measure: one parser in specs.py (success_measure / success_measure_problems) shared by spec confirm, the spec save hint, spec measure and forge next; the confirm check runs only on the draft-to-confirmed transition, before the grill, so already-confirmed specs are never re-checked; missing_required_content and REQUIRED_SECTIONS are unchanged; confirm still rewrites only the status line.",
+        "forge spec measure: validates slug, a complete Success measure and a non-empty result before writing; locates the section with the same heading rule as parse_sections (outside examples); inserts exactly one '- Result: <text> (YYYY-MM-DD)' line at the end of that section and changes no other byte.",
+        "forge next listing is read-only: confirmed specs with a complete measure and no Result, check date on or before today, at least one linked roadmap item and every linked item done; one step per spec naming forge spec measure <slug>.",
+        "Docs: the FDE section in forge.md is at most 70 lines and matches the confirmed spec (Lite at most 2 and story at most 8 questions, neutral fact options, Why I ask until opt-out, six-field cards in DISCOVERY.md added on first use to existing files, card named in BRIEF Summary and spec Why, build options only priced, rounded rates only); examples live only in fde-reference.md; every command it names exists with its real flags; harness.yaml changes only the discovery owner and the prototype allowlist, and no gstack text is removed here."
+      ],
+      "plan_contracts": [
+        {
+          "id": "FDE-AC-1",
+          "statement": "The Forge skill has a Work as the forward deployed engineer section of at most 70 lines covering asking rules, depth limits, problem cards, options, forge payback, the success measure and the check-back; the discovery row and new intent rows point to it; factory/skills/fde-reference.md holds the worked examples, question bank, customer call script and bad-to-better questions.",
+          "source": ".factory/stories/FORGE-FDE-1/task-plans/FDE.md#Manual Verification"
+        },
+        {
+          "id": "FDE-AC-2",
+          "statement": "The FDE section states one question per turn about past events, no solution during discovery, a Why I ask line until the FDE says they know why, at most two questions for a Lite fix and eight for a story with unanswered fields written unknown and priced as guessed, neutral choices with no recommendation for fact questions and the recommendation first for decision questions, and options that include don't build and the smallest slice with only build options priced by forge payback.",
+          "source": ".factory/stories/FORGE-FDE-1/task-plans/FDE.md#Manual Verification"
+        },
+        {
+          "id": "FDE-AC-3",
+          "statement": "A project created by forge init gets a DISCOVERY.md with a ## Problems section holding a ### card with job, workaround, cost, who feels it, how often and evidence; the skill tells the agent to add that section to an existing DISCOVERY.md on its first discovery use; harness.yaml names the Forge skill as discovery owner and allows impeccable in the prototype phase, with its gstack lines unchanged.",
+          "source": ".factory/stories/FORGE-FDE-1/task-plans/FDE.md#Manual Verification"
+        },
+        {
+          "id": "FDE-AC-4",
+          "statement": "forge payback returns build at a payback of exactly 3 months or less, smallest slice first above 3 up to and including 12, don't build above 12 or at zero confident value, and find out first when no value is given; the same inputs always print the same line and bad or partial inputs are refused naming the flag.",
+          "source": ".factory/stories/FORGE-FDE-1/task-plans/FDE.md#Manual Verification"
+        },
+        {
+          "id": "FDE-AC-5",
+          "statement": "forge spec confirm refuses a draft spec whose ## Success measure is missing, has an empty Metric, Baseline, Target or Check date, or has a check date that is not a valid YYYY-MM-DD date, and confirms a complete one changing only its status line; an already-confirmed spec is not re-checked, and spec save's hint names a missing success measure.",
+          "source": ".factory/stories/FORGE-FDE-1/task-plans/FDE.md#Manual Verification"
+        },
+        {
+          "id": "FDE-AC-6",
+          "statement": "forge next lists a confirmed spec's success check only when at least one roadmap story is linked to it, every linked story is done, its check date has passed and its Success measure has no Result line; a pending or later-added linked story postpones the listing; forge spec measure <slug> --result appends '- Result: <text> (YYYY-MM-DD)' to that section only, which stops the listing, and refuses an unknown slug, a spec without a Success measure and an empty result; nothing is written to the deferral ledger.",
+          "source": ".factory/stories/FORGE-FDE-1/task-plans/FDE.md#Manual Verification"
+        }
+      ],
+      "review_budget": {
+        "max_changed_files": 13,
+        "max_changed_lines": 900,
+        "reason": "About 210 lines of small code (payback module, spec measure parser and spec measure command, forge next listing, CLI wiring), about 270 lines of docs (70-line skill section, reference file, template, README, griller, harness.yaml), one new test file of about 340 lines and three one-fixture test edits."
+      }
     },
     {
       "id": "GSTACK",
@@ -36,6 +180,6 @@
   "story": "FORGE-FDE-1",
   "epic": "symphony-forge",
   "plan_file": "plans/active/FORGE-FDE-1-the-agent-works-as-a-forward-deployed-engineer-gstack-removed.md",
-  "plan_sha256": "f4d50c7b95a191506fd9a1317a0c7857e8d971c7bab1eb036c9cd87cbad4e393",
-  "commit": "4ef5eee22c94e3c94d2d5217a44c22eb4c255676"
+  "plan_sha256": "b97aaf79ba4e2877026b8edde8f67136b882e3e33062be66e17cfa13e686ca8d",
+  "commit": "13b586222a711783ea5b66c54aefb3d6d4d2880f"
 }
