@@ -19500,6 +19500,7 @@ def test_doctor_flags_skill_missing_for_codex_runtime(repo, tmp_path):
     assert ("codex", "review-animations") in missing
     assert ("claude", "review-animations") not in missing
     advisory = skills_missing_per_runtime(repo, home=home, advisory=True)
+    assert not [m for m in advisory if m[1] == "test-audit"]
     for skill in ("apple-design", "animation-vocabulary"):
         assert ("claude", skill) in advisory
         assert ("codex", skill) in advisory

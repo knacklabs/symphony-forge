@@ -203,6 +203,7 @@ def test_the_brief_tells_the_reviewer_to_read_before_it_writes_partial():
     # The combined brief (the default review) carries the same rule.
     combined = _combined_prompt(task).decode()
     assert "You are the three-lens code review" in combined and "READ-ONLY" in combined
+    assert "factory/skills/test-audit/SKILL.md" in combined
     assert "not thereby partial" in _combined_prompt(task, repo_readable=False).decode()
     argv = _skill_argv(Path("skill"), "abc", "p.md", Path("o.json"), "codex", "P3")
     assert "--codex-bin" not in argv

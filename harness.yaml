@@ -116,6 +116,8 @@ phases:
         - "emil-design-eng"
         - "frontend-design"
     advisory_skills:
+      - skill: "test-audit"
+        when: "writing or changing tests"
       - skill: "apple-design"
         when: "user_facing: true AND the task involves gestures, transitions, or motion"
       - skill: "animation-vocabulary"

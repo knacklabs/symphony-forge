@@ -149,6 +149,7 @@ Rules:
   commands. Report exact commands, results, and remaining gaps in your handoff.
   The orchestrator records the story-wide testing artifact after all sequential
   stages are complete.
+- Apply the inlined test-audit authoring gate to every test you write or change.
 - Before handoff, inspect the final diff and report changed files, test results,
   assumptions, and any remaining gap. Report every assigned requirement in one
   row naming its concrete code or documentation change and the actual focused

@@ -284,6 +284,8 @@ def test_full_scope_brief_keeps_worker_owned_task_verification(repo: Path):
         in brief
     )
     assert "Do not run the task-wide required tests" not in brief
+    assert "## Advisory skill — test-audit" in brief
+    assert "What credible regression makes it fail?" in brief
 
 
 def test_hook_refuses_write_outside_narrowed_delegate_scope():

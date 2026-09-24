@@ -135,6 +135,8 @@ def skills_missing_per_runtime(base: Path, home: Path | None = None,
     kind = "advisory" if advisory else "required"
     for phase, groups in skill_groups(base).items():
         for skill in groups[kind]:
+            if advisory and (base / "factory" / "skills" / skill / "SKILL.md").is_file():
+                continue
             for runtime in SKILL_GROUP_RUNTIMES.get(phase, ()):
                 rel = SKILL_HOMES[runtime]
                 # A directory is not a skill: what a runtime LOADS is SKILL.md,

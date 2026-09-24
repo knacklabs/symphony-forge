@@ -15,6 +15,9 @@ companion job or hand-write findings.
 
 Formal review uses `gpt-6-sol` at `high` reasoning. Route fixes back to the
 active `gpt-6-luna`/max implementer and reuse that agent across review loops.
+Apply `factory/skills/test-audit/SKILL.md`: flag tests that assert implementation
+rather than behavior, lack a credible regression, duplicate coverage, or require
+test-only production seams as findings.
 
 A previously selected clean generation may be reused only when the stage's
 stamp-token delta and current reviewed-meaning identity both match. Reviewed

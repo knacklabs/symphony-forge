@@ -110,6 +110,8 @@ reachability FIRST: every deliverable a plan contract, acceptance criterion, or
 the reviewer focus names must be genuinely implemented AND reachable (registered,
 invoked — not merely defined in a file nothing imports); an absent or unreachable
 deliverable is a blocking finding even when the rest is clean. Flag
+tests that fail factory/skills/test-audit/SKILL.md: implementation assertions,
+missing credible regressions, duplicate coverage, or test-only production seams.
 single-responsibility violations and incoherent file/folder organisation against
 the reviewer focus (never a mandated layout). Structure-for-growth in shared
 infrastructure is NOT over-engineering; reserve that finding for speculative

@@ -1233,6 +1233,10 @@ def compose_brief(base: Path, task: dict, *, write: bool, user_facing: bool,
     prompt = base / "factory" / "prompts" / "implementer.md"
     if prompt.is_file():
         body += _section("Implementer contract", prompt.read_text(encoding="utf-8"))
+    for skill in skill_groups(base).get("implementation", {}).get("advisory", []):
+        vendored = base / "factory" / "skills" / skill / "SKILL.md"
+        if vendored.is_file():
+            body += _section(f"Advisory skill — {skill}", vendored.read_text(encoding="utf-8"))
     if user_facing:
         for skill in required_skills(base):
             text = _skill_text(skill)
