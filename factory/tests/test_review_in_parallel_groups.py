@@ -232,7 +232,11 @@ def test_lite_review_records_three_head_artifacts_and_closes_window(repo, tmp_pa
     sign_off(repo)
     code, output = intake(repo)
     assert code == 0, output
+    git(repo, "add", "-A")
+    git(repo, "commit", "-q", "-m", "fixture approved project setup")
     window = open_lite(repo)
+    from forge_cli.quickfix import _lite_dirty_product_files
+    assert _lite_dirty_product_files(repo) == []
     (repo / "src").mkdir()
     (repo / "src" / "lite.py").write_text("enabled = True\n")
     git(repo, "add", "src/lite.py")

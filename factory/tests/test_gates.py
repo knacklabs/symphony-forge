@@ -9202,6 +9202,8 @@ def test_mode_done_clears_scoped_reviews_without_legacy_dir(repo):
     key = run_state(repo)["issue_key"]
     assert lib.story_uses_scoped_layout(repo, key)
 
+    git(repo, "add", "-A")
+    git(repo, "commit", "-q", "-m", "prepare scoped story fixture")
     open_lite(repo)
     (repo / "src").mkdir(exist_ok=True)
     (repo / "src" / "scoped_fix.py").write_text("ok = True\n")
@@ -9276,10 +9278,61 @@ def test_mode_done_refuses_dirty_product_tree(repo):
     assert (repo / ".factory" / "quickfix.json").exists()
 
 
+def test_lite_dirty_tree_ignores_factory_only_changes(repo):
+    from forge_cli.quickfix import _lite_dirty_product_files
+
+    open_lite(repo)
+    side_effect = repo / ".factory" / "lite-side-effect.json"
+    side_effect.write_text("{}\n")
+    git(repo, "add", "-f", ".factory/lite-side-effect.json")
+
+    assert _lite_dirty_product_files(repo) == []
+
+
+def test_lite_dirty_tree_ignores_factory_and_plans_changes(repo):
+    from forge_cli.quickfix import _lite_dirty_product_files
+
+    roadmap = repo / "plans" / "roadmap.json"
+    roadmap.parent.mkdir(parents=True, exist_ok=True)
+    roadmap.write_text('{"version": 1}\n')
+    source = repo / "src" / "dirty.py"
+    source.parent.mkdir(parents=True, exist_ok=True)
+    source.write_text("dirty = False\n")
+    git(repo, "add", "plans/roadmap.json", "src/dirty.py")
+    git(repo, "commit", "-q", "-m", "add baseline files")
+    open_lite(repo)
+
+    roadmap.write_text('{"version": 2}\n')
+    assert _lite_dirty_product_files(repo) == []
+
+    source.write_text("dirty = True\n")
+    assert _lite_dirty_product_files(repo) == ["src/dirty.py"]
+
+
+def test_mode_done_refuses_uncommitted_docs_symlink_deletion(repo):
+    docs = repo / "docs"
+    docs.mkdir(exist_ok=True)
+    link = docs / "guide-link.md"
+    link.symlink_to("../README.md")
+    git(repo, "add", "-f", "docs/guide-link.md")
+    git(repo, "commit", "-q", "-m", "add docs link")
+    open_lite(repo)
+    link.unlink()
+
+    code, out = run(repo, "forge.py", "mode", "done")
+
+    assert code != 0 and "commit the fix first" in out, out
+    assert "docs/guide-link.md" in out
+    assert (repo / ".factory" / "quickfix.json").exists()
+
+
 def test_mode_done_requires_pinned_harness_marker_and_counts_factory(repo):
     mark_harness_source(repo)
-    active = open_lite(repo)
     marker = repo / ".factory" / "harness-source.json"
+    original_marker = marker.read_text()
+    git(repo, "add", "-f", ".factory/harness-source.json")
+    git(repo, "commit", "-q", "-m", "mark harness source")
+    active = open_lite(repo)
     marker.unlink()
 
     (repo / "factory" / "scripts" / "lite_fix.py").write_text("fixed = True\n")
@@ -9288,9 +9341,11 @@ def test_mode_done_requires_pinned_harness_marker_and_counts_factory(repo):
     write_lite_reviews(repo)
 
     code, out = run(repo, "forge.py", "mode", "done")
-    assert code != 0 and ".factory/harness-source.json is now missing" in out, out
+    assert code != 0, out
+    assert "opened as harness-source repo" in out and "current kind is client repo" in out, out
+    assert ".factory/harness-source.json is now missing" in out, out
 
-    marker.write_text('{"role": "harness-source"}\n')
+    marker.write_text(original_marker)
     code, out = run(repo, "forge.py", "mode", "done")
     assert code == 0 and "1 file(s)" in out, out
     done = [json.loads(path.read_text())
@@ -9298,6 +9353,44 @@ def test_mode_done_requires_pinned_harness_marker_and_counts_factory(repo):
             if json.loads(path.read_text()).get("event") == "done"]
     assert len(done) == 1 and done[0]["files"] == ["factory/scripts/lite_fix.py"]
     assert done[0]["base_sha"] == active["base_sha"]
+
+
+def test_mode_done_refuses_client_to_harness_repo_kind_change(repo):
+    active = open_lite(repo)
+    assert active["harness_source"] is False
+    mark_harness_source(repo)
+    for number in range(6):
+        path = repo / "factory" / "scripts" / f"lite_fix_{number}.py"
+        path.write_text(f"value = {number}\n")
+    product_fix = repo / "src" / "lite_product_fix.py"
+    product_fix.parent.mkdir()
+    product_fix.write_text("fixed = True\n")
+    git(
+        repo, "add", "-f", ".factory/harness-source.json", "factory/scripts",
+        "src/lite_product_fix.py",
+    )
+    git(repo, "commit", "-q", "-m", "add harness marker during lite window")
+    write_lite_reviews(repo)
+
+    code, out = run(repo, "forge.py", "mode", "done")
+
+    assert code != 0, out
+    assert "the harness-source marker cannot change inside a Lite window; " \
+        "change it through a task" in out, out
+    assert (repo / ".factory" / "quickfix.json").exists()
+
+
+def test_mode_done_refuses_marker_only_client_to_harness_change(repo):
+    open_lite(repo)
+    mark_harness_source(repo)
+    git(repo, "add", "-f", ".factory/harness-source.json")
+    git(repo, "commit", "-q", "-m", "add harness marker during lite window")
+
+    code, out = run(repo, "forge.py", "mode", "done")
+
+    assert code != 0 and "the harness-source marker cannot change inside a Lite " \
+        "window; change it through a task" in out, out
+    assert (repo / ".factory" / "quickfix.json").exists()
 
 
 def test_lite_close_counts_locked_paths_and_task_seal_reports_dirty_agents(repo):
@@ -9324,7 +9417,293 @@ def test_lite_close_counts_locked_paths_and_task_seal_reports_dirty_agents(repo)
                for problem in problems), problems
 
 
-def test_lite_budget_counts_symlinks_and_literal_shell_names(repo):
+def test_mode_done_refuses_committed_harness_marker_edit(repo):
+    from forge_cli.quickfix import _lite_dirty_product_files
+
+    mark_harness_source(repo)
+    git(repo, "add", "-f", ".factory/harness-source.json")
+    git(repo, "commit", "-q", "-m", "mark harness source")
+    open_lite(repo)
+
+    marker = repo / ".factory" / "harness-source.json"
+    marker.write_text('{"role": "harness-source", "repo": "edited"}\n')
+    assert _lite_dirty_product_files(repo) == []
+    code, out = run(repo, "forge.py", "mode", "done")
+    assert code != 0 and "no committed product files to close" in out, out
+
+    git(repo, "add", "-f", ".factory/harness-source.json")
+    git(repo, "commit", "-q", "-m", "edit harness marker")
+    code, out = run(repo, "forge.py", "mode", "done")
+    assert code != 0 and "the harness-source marker cannot change inside a Lite " \
+        "window; change it through a task" in out, out
+    assert (repo / ".factory" / "quickfix.json").exists()
+
+
+def test_mode_done_refuses_harness_marker_change_in_mixed_diff(repo):
+    mark_harness_source(repo)
+    git(repo, "add", "-f", ".factory/harness-source.json")
+    git(repo, "commit", "-q", "-m", "mark harness source")
+    open_lite(repo)
+
+    marker = repo / ".factory" / "harness-source.json"
+    marker.write_text('{"role": "harness-source", "repo": "edited"}\n')
+    git(repo, "add", "-f", ".factory/harness-source.json")
+    for number in range(5):
+        path = repo / "src" / f"lite_fix_{number}.py"
+        path.parent.mkdir(exist_ok=True)
+        path.write_text(f"value = {number}\n")
+        git(repo, "add", f"src/lite_fix_{number}.py")
+    git(repo, "commit", "-q", "-m", "edit marker and five locked paths")
+    code, out = run(repo, "forge.py", "mode", "done")
+    assert code != 0 and "the harness-source marker cannot change inside a Lite " \
+        "window; change it through a task" in out, out
+    assert (repo / ".factory" / "quickfix.json").exists()
+
+
+def test_mode_done_refuses_committed_harness_marker_deletion(repo):
+    mark_harness_source(repo)
+    git(repo, "add", "-f", ".factory/harness-source.json")
+    git(repo, "commit", "-q", "-m", "mark harness source")
+    open_lite(repo)
+
+    (repo / ".factory" / "harness-source.json").unlink()
+    git(repo, "add", "-u", ".factory/harness-source.json")
+    git(repo, "commit", "-q", "-m", "delete harness marker")
+
+    code, out = run(repo, "forge.py", "mode", "done")
+
+    assert code != 0 and "the harness-source marker cannot change inside a Lite " \
+        "window; change it through a task" in out, out
+    assert (repo / ".factory" / "quickfix.json").exists()
+
+
+def test_lite_close_counts_files_through_symlinked_ancestor_into_product(repo):
+    from forge_cli.quickfix import _lite_product_files
+    from forge_cli.repo_kind import locked_repo_path
+
+    source = repo / "src"
+    source.mkdir(parents=True, exist_ok=True)
+    (source / "app.py").write_text("app = True\n")
+    (repo / "docs").mkdir(parents=True, exist_ok=True)
+    (repo / "docs" / "code").symlink_to(Path("../src"), target_is_directory=True)
+
+    assert locked_repo_path(
+        "docs/code/app.py", repo, harness_source=False,
+    ) == "src/app.py"
+    assert _lite_product_files(
+        repo, ["docs/code/app.py"], harness_source=False,
+    ) == ["docs/code/app.py"]
+
+
+def test_outside_symlink_to_product_is_locked_and_counted_for_lite(repo, tmp_path):
+    from forge_cli.quickfix import _lite_product_files
+    from forge_cli.repo_kind import locked_repo_path
+
+    target = repo / "src" / "app.ts"
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text("app = True\n")
+    alias = tmp_path / "app-alias.ts"
+    alias.symlink_to(target)
+
+    locked = locked_repo_path(str(alias), repo, harness_source=False)
+    assert locked == "src/app.ts"
+    code, out = hook(repo, {
+        "tool_name": "Write", "permission_mode": "default",
+        "tool_input": {"file_path": str(alias)},
+    })
+    assert code == 0 and "deny" in out and "forge delegate" in out, out
+    assert _lite_product_files(
+        repo, [str(alias)], harness_source=False,
+    ) == [locked]
+
+    outside_target = tmp_path / "outside.ts"
+    outside_target.write_text("outside = True\n")
+    outside_alias = tmp_path / "outside-alias.ts"
+    outside_alias.symlink_to(outside_target)
+    assert locked_repo_path(
+        str(outside_alias), repo, harness_source=False,
+    ) is None
+
+    broken_alias = tmp_path / "broken-alias.ts"
+    broken_alias.symlink_to(repo / "src" / "missing.ts")
+    assert locked_repo_path(
+        str(broken_alias), repo, harness_source=False,
+    ) is not None
+
+
+def test_lite_close_counts_files_through_symlinked_ancestor_outside_repo(
+    repo, tmp_path,
+):
+    from forge_cli.quickfix import _lite_product_files
+    from forge_cli.repo_kind import locked_repo_path
+
+    outside = tmp_path / "outside"
+    outside.mkdir()
+    (outside / "app.py").write_text("app = True\n")
+    (repo / "docs").mkdir(parents=True, exist_ok=True)
+    (repo / "docs" / "code").symlink_to(outside, target_is_directory=True)
+
+    assert locked_repo_path(
+        "docs/code/app.py", repo, harness_source=False,
+    ) == "docs/code/app.py"
+    assert _lite_product_files(
+        repo, ["docs/code/app.py"], harness_source=False,
+    ) == ["docs/code/app.py"]
+
+
+def test_lite_close_counts_files_through_unresolved_symlinked_ancestor(repo):
+    from forge_cli.quickfix import _lite_product_files
+    from forge_cli.repo_kind import locked_repo_path
+
+    (repo / "docs").mkdir(parents=True, exist_ok=True)
+    (repo / "docs" / "code").symlink_to(
+        Path("missing-code"), target_is_directory=True,
+    )
+
+    assert locked_repo_path(
+        "docs/code/app.py", repo, harness_source=False,
+    ) == "docs/code/app.py"
+    assert _lite_product_files(
+        repo, ["docs/code/app.py"], harness_source=False,
+    ) == ["docs/code/app.py"]
+
+
+def test_lite_close_keeps_plain_docs_paths_exempt(repo):
+    from forge_cli.quickfix import _lite_product_files
+    from forge_cli.repo_kind import locked_repo_path
+
+    reference = repo / "docs" / "reference.md"
+    reference.parent.mkdir(parents=True, exist_ok=True)
+    reference.write_text("reference\n")
+
+    assert locked_repo_path(
+        "docs/reference.md", repo, harness_source=False,
+    ) is None
+    assert _lite_product_files(
+        repo, ["docs/reference.md"], harness_source=False,
+    ) == []
+
+
+def test_lite_counts_docs_symlink_into_product_once(repo):
+    from forge_cli.quickfix import _lite_product_files
+
+    source = repo / "src"
+    source.mkdir()
+    (source / "app.py").write_text("app = True\n")
+    docs = repo / "docs"
+    docs.mkdir(exist_ok=True)
+    (docs / "reference.md").write_text("reference\n")
+    first_link = docs / "app-link.py"
+    second_link = docs / "app-link-copy.py"
+    first_link.symlink_to(Path("../src/app.py"))
+    second_link.symlink_to(Path("../src/app.py"))
+
+    assert _lite_product_files(
+        repo, ["docs/app-link.py"], harness_source=False,
+    ) == ["docs/app-link.py"]
+    shared_target = _lite_product_files(
+        repo, ["docs/app-link.py", "docs/app-link.py",
+               "docs/app-link-copy.py"],
+        harness_source=False,
+    )
+    assert shared_target == ["docs/app-link-copy.py", "docs/app-link.py"]
+
+    first_link.unlink()
+    second_link.unlink()
+    git(repo, "add", "src/app.py")
+    git(repo, "add", "docs/reference.md")
+    git(repo, "commit", "-q", "-m", "seed symlink target")
+    open_lite(repo)
+    first_link.symlink_to(Path("reference.md"))
+    git(repo, "add", "docs/app-link.py")
+    git(repo, "commit", "-q", "-m", "add docs symlink")
+    write_lite_reviews(repo)
+
+    code, out = run(repo, "forge.py", "mode", "done")
+    assert code == 0 and "1 file(s)" in out, out
+    done = [json.loads(path.read_text())
+            for path in (repo / "plans" / "quickfixes").glob("*.json")
+            if json.loads(path.read_text()).get("event") == "done"]
+    assert len(done) == 1
+    assert done[0]["files"] == ["docs/app-link.py"]
+
+
+def test_lite_close_counts_deleted_and_retargeted_historical_docs_symlinks(
+    repo, tmp_path,
+):
+    source = repo / "src"
+    source.mkdir()
+    (source / "app.py").write_text("app = True\n")
+    docs = repo / "docs"
+    docs.mkdir(exist_ok=True)
+    (docs / "reference.md").write_text("reference\n")
+    outside = tmp_path / "outside-reference.md"
+    outside.write_text("outside\n")
+    deleted_link = docs / "deleted-link.py"
+    retargeted_link = docs / "retargeted-link.py"
+    outside_link = docs / "outside-link.py"
+    deleted_link.symlink_to(Path("../src/app.py"))
+    retargeted_link.symlink_to(Path("../src/app.py"))
+    outside_link.symlink_to(outside)
+    git(repo, "add", "src", "docs")
+    git(repo, "commit", "-q", "-m", "seed docs symlinks")
+
+    open_lite(repo)
+    deleted_link.unlink()
+    retargeted_link.unlink()
+    retargeted_link.symlink_to(Path("reference.md"))
+    outside_link.unlink()
+    git(repo, "add", "-A", "--", "docs")
+    git(repo, "commit", "-q", "-m", "delete and retarget docs symlinks")
+    write_lite_reviews(repo)
+
+    code, out = run(repo, "forge.py", "mode", "done")
+
+    assert code == 0 and "3 file(s)" in out, out
+    done = [json.loads(path.read_text())
+            for path in (repo / "plans" / "quickfixes").glob("*.json")
+            if json.loads(path.read_text()).get("event") == "done"]
+    assert len(done) == 1
+    assert done[0]["files"] == [
+        "docs/deleted-link.py", "docs/outside-link.py", "docs/retargeted-link.py",
+    ]
+
+
+def test_lite_close_counts_chained_docs_symlinks_by_repository_path(repo):
+    from forge_cli.quickfix import _lite_manifest
+
+    source = repo / "src"
+    source.mkdir()
+    (source / "app.py").write_text("app = True\n")
+    docs = repo / "docs"
+    docs.mkdir(exist_ok=True)
+    (docs / "reference.md").write_text("reference\n")
+    (docs / "hub").symlink_to(Path("../src/app.py"))
+    for number in range(6):
+        (docs / f"alias-{number}.py").symlink_to(Path("hub"))
+    git(repo, "add", "src", "docs")
+    git(repo, "commit", "-q", "-m", "seed chained docs symlinks")
+
+    active = open_lite(repo)
+    (docs / "reference.md").write_text("updated reference\n")
+    for number in range(6):
+        (docs / f"alias-{number}.py").unlink()
+    (docs / "hub").unlink()
+    (docs / "hub").symlink_to(Path("reference.md"))
+    git(repo, "add", "-A", "--", "docs")
+    git(repo, "commit", "-q", "-m", "delete aliases and retarget docs hub")
+
+    assert _lite_manifest(
+        repo, active["base_sha"], harness_source=active["harness_source"],
+    ) == [*(f"docs/alias-{number}.py" for number in range(6)), "docs/hub"]
+
+    code, out = run(repo, "forge.py", "mode", "done")
+
+    assert code != 0 and "touches 7 product files" in out and "bound is 5" in out, out
+    assert (repo / ".factory" / "quickfix.json").exists()
+
+
+def test_lite_budget_counts_symlinks_once_and_literal_shell_names(repo):
     source = repo / "src"
     source.mkdir()
     target = source / "existing.py"
@@ -9349,7 +9728,15 @@ def test_lite_budget_counts_symlinks_and_literal_shell_names(repo):
 
     code, out = run(repo, "forge.py", "mode", "done")
 
-    assert code != 0 and "touches 6 product files" in out, out
+    assert code == 0 and "5 file(s)" in out, out
+    done = [json.loads(path.read_text())
+            for path in (repo / "plans" / "quickfixes").glob("*.json")
+            if json.loads(path.read_text()).get("event") == "done"]
+    assert len(done) == 1
+    assert done[0]["files"] == [
+        "src/cash$name.py", "src/docs-link", "src/outside-link",
+        "src/product-link", "src/tick`name.py",
+    ]
 
 
 def test_mode_done_refuses_over_budget_committed_diff(repo):
