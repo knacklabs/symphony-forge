@@ -22,13 +22,6 @@ MAX_FILES = 5
 QUICKFIX = "quickfix"
 LITE = "lite"
 DEGRADED = "degraded"
-_LITE_DIRTY_EXCLUDED_PATHS = (
-    ".factory/",
-    "plans/quickfixes/",
-    "plans/quickfixes.jsonl",
-    "plans/lessons/",
-    "plans/lessons.jsonl",
-)
 
 
 def quickfix_path(base: Path) -> Path:
@@ -408,11 +401,7 @@ def _lite_dirty_product_files(
                 index += 1
         dirty.extend(
             path for path in paths
-            if not any(
-                path == excluded.rstrip("/")
-                or (excluded.endswith("/") and path.startswith(excluded))
-                for excluded in _LITE_DIRTY_EXCLUDED_PATHS
-            )
+            if not path.startswith((".factory/", "plans/"))
         )
     return sorted(set(dirty))
 

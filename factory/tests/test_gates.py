@@ -9129,30 +9129,24 @@ def test_lite_dirty_tree_ignores_factory_only_changes(repo):
     assert _lite_dirty_product_files(repo) == []
 
 
-def test_lite_dirty_tree_ignores_window_ledgers_only(repo):
+def test_lite_dirty_tree_ignores_factory_and_plans_changes(repo):
     from forge_cli.quickfix import _lite_dirty_product_files
 
+    roadmap = repo / "plans" / "roadmap.json"
+    roadmap.parent.mkdir(parents=True, exist_ok=True)
+    roadmap.write_text('{"version": 1}\n')
+    source = repo / "src" / "dirty.py"
+    source.parent.mkdir(parents=True, exist_ok=True)
+    source.write_text("dirty = False\n")
+    git(repo, "add", "plans/roadmap.json", "src/dirty.py")
+    git(repo, "commit", "-q", "-m", "add baseline files")
     open_lite(repo)
-    paths = (
-        "plans/quickfixes/fixture.json",
-        "plans/quickfixes.jsonl",
-        "plans/lessons/fixture.json",
-        "plans/lessons.jsonl",
-        "plans/roadmap.json",
-        "plans/quickfixes.jsonl.evil",
-        "plans/lessons.jsonl.extra",
-    )
-    for relative in paths:
-        path = repo / relative
-        path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text("{}\n")
-    git(repo, "add", "-f", *paths)
 
-    assert _lite_dirty_product_files(repo) == [
-        "plans/lessons.jsonl.extra",
-        "plans/quickfixes.jsonl.evil",
-        "plans/roadmap.json",
-    ]
+    roadmap.write_text('{"version": 2}\n')
+    assert _lite_dirty_product_files(repo) == []
+
+    source.write_text("dirty = True\n")
+    assert _lite_dirty_product_files(repo) == ["src/dirty.py"]
 
 
 def test_mode_done_refuses_uncommitted_docs_symlink_deletion(repo):
