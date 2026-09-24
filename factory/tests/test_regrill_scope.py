@@ -1144,6 +1144,7 @@ def _prepare_file_cold_read(
         repo: Path, gate: str, artifact_file: Path, monkeypatch) -> dict:
     from types import SimpleNamespace
 
+    from factory_lib import grill_key_suffix
     from forge_cli import codex_status
     from forge_cli.delegate import load_delegations
     from forge_cli.grill import cmd_grill_run
@@ -1155,7 +1156,7 @@ def _prepare_file_cold_read(
         context_file="", print_only=False, fresh=False, reason="",
     )
     cmd_grill_run(args)
-    key = f"grill-{gate}-{artifact_file.stem}"
+    key = f"grill-{gate}-{grill_key_suffix(gate, artifact=artifact_file, root=repo)}"
     return next(
         row for row in reversed(load_delegations(repo))
         if row.get("task") == key and row.get("launch_status") == "prepared"
@@ -1165,6 +1166,8 @@ def _prepare_file_cold_read(
 def _record_prepared_file(
         repo: Path, gate: str, artifact_file: Path, launch: dict,
         tmp_path: Path) -> dict:
+    from factory_lib import grill_evidence_name
+
     result = tmp_path / f"{gate}-{artifact_file.stem}-cold-result.json"
     result.write_text(json.dumps({"gaps": [], "contradictions": []}),
                       encoding="utf-8")
@@ -1180,14 +1183,16 @@ def _record_prepared_file(
     )
     assert code == 0, out
     return json.loads(
-        (repo / ".factory" / "grills" / f"{gate}-{artifact_file.stem}.json")
+        (repo / ".factory" / grill_evidence_name(
+            gate, artifact=artifact_file, root=repo,
+        ))
         .read_text(encoding="utf-8"),
     )
 
 
 def test_two_specs_record_against_their_own_cold_reads(
         repo: Path, tmp_path: Path, monkeypatch):
-    from factory_lib import sha256_of
+    from factory_lib import grill_key_suffix, sha256_of
     from forge_cli.delegate import load_delegations
 
     specs = repo / "docs" / "specs"
@@ -1213,7 +1218,8 @@ def test_two_specs_record_against_their_own_cold_reads(
     assert alpha_record["input_sha256"] != beta_record["input_sha256"]
     assert {row["task"] for row in load_delegations(repo)
             if row.get("launch_status") == "prepared"} >= {
-                "grill-spec-alpha", "grill-spec-beta",
+                f"grill-spec-{grill_key_suffix('spec', artifact=alpha, root=repo)}",
+                f"grill-spec-{grill_key_suffix('spec', artifact=beta, root=repo)}",
             }
 
 
@@ -1221,6 +1227,7 @@ def test_second_read_of_same_spec_needs_fresh_reason(
         repo: Path, monkeypatch, capsys):
     from types import SimpleNamespace
 
+    from factory_lib import grill_key_suffix
     from forge_cli.delegate import load_delegations
     from forge_cli.grill import cmd_grill_run
 
@@ -1237,25 +1244,58 @@ def test_second_read_of_same_spec_needs_fresh_reason(
         ))
 
     assert "already been cold-read" in capsys.readouterr().out
-    assert sum(row.get("task") == "grill-spec-repeat"
+    assert sum(row.get("task") == f"grill-spec-{grill_key_suffix('spec', artifact=spec, root=repo)}"
                and row.get("launch_status") == "prepared"
                for row in load_delegations(repo)) == 1
 
 
 def test_epics_file_cold_read_records_under_its_artifact_key(
         repo: Path, tmp_path: Path, monkeypatch):
-    from factory_lib import sha256_of
+    from factory_lib import grill_key_suffix, sha256_of
 
     artifact = tmp_path / "roadmap-input.json"
     artifact.write_text('{"epics": []}\n', encoding="utf-8")
     launch = _prepare_file_cold_read(repo, "epics", artifact, monkeypatch)
     record = _record_prepared_file(repo, "epics", artifact, launch, tmp_path)
 
-    assert launch["task"] == "grill-epics-roadmap-input"
+    suffix = grill_key_suffix("epics", artifact=artifact, root=repo)
+    assert launch["task"] == f"grill-epics-{suffix}"
     assert launch["brief_path"] == \
-        ".factory/grill-brief-epics-roadmap-input.md"
+        f".factory/grill-brief-epics-{suffix}.md"
     assert record["preparation_id"] == launch["launch_id"]
     assert record["input_sha256"] == sha256_of(artifact)
+
+
+def test_same_named_epics_files_keep_separate_grill_passes(
+        repo: Path, tmp_path: Path, monkeypatch):
+    from factory_lib import (
+        grill_evidence_name, require_grill, sha256_of,
+    )
+
+    first = repo / "docs" / "first" / "roadmap-input.json"
+    second = repo / "docs" / "second" / "roadmap-input.json"
+    for path, text in ((first, '{"epics": []}\n'),
+                       (second, '{"epics": [{"id": "E2"}]}\n')):
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(text, encoding="utf-8")
+
+    first_launch = _prepare_file_cold_read(repo, "epics", first, monkeypatch)
+    second_launch = _prepare_file_cold_read(repo, "epics", second, monkeypatch)
+    first_pass = _record_prepared_file(
+        repo, "epics", first, first_launch, tmp_path,
+    )
+    second_pass = _record_prepared_file(
+        repo, "epics", second, second_launch, tmp_path,
+    )
+
+    assert first_launch["task"] != second_launch["task"]
+    assert first_launch["brief_path"] != second_launch["brief_path"]
+    assert grill_evidence_name("epics", artifact=first, root=repo) != \
+        grill_evidence_name("epics", artifact=second, root=repo)
+    assert first_pass["input_sha256"] == sha256_of(first)
+    assert second_pass["input_sha256"] == sha256_of(second)
+    require_grill(repo, "epics", (), expect_digest_of=first)
+    require_grill(repo, "epics", (), expect_digest_of=second)
 
 
 def test_spec_confirmation_does_not_use_another_specs_pass(repo: Path):
@@ -1290,7 +1330,8 @@ def test_spec_confirmation_does_not_use_another_specs_pass(repo: Path):
         "finding_dispositions": [],
     }
     dump_json(evidence_path(
-        repo, None, grill_evidence_name("spec", artifact=beta), for_write=True,
+        repo, None, grill_evidence_name("spec", artifact=beta, root=repo),
+        for_write=True,
     ), beta_pass)
 
     with pytest.raises(SystemExit, match="Handover grill required first"):
@@ -1320,3 +1361,28 @@ def test_legacy_spec_grill_fallback_is_bound_to_its_input(repo: Path):
     require_grill(repo, "spec", (), expect_digest_of=alpha)
     with pytest.raises(SystemExit, match="Handover grill required first"):
         require_grill(repo, "spec", (), expect_digest_of=beta)
+
+
+def test_legacy_epics_grill_fallback_is_bound_to_its_input(repo: Path):
+    from factory_lib import (
+        dump_json, evidence_path, head_sha, require_grill, sha256_of,
+    )
+
+    first = repo / "docs" / "first" / "roadmap-input.json"
+    second = repo / "docs" / "second" / "roadmap-input.json"
+    for path, text in ((first, '{"epics": []}\n'),
+                       (second, '{"epics": [{"id": "E2"}]}\n')):
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(text, encoding="utf-8")
+    dump_json(evidence_path(
+        repo, None, "grills/epics.json", for_write=True,
+    ), {
+        "verdict": "pass", "commit": head_sha(repo),
+        "input_sha256": sha256_of(first),
+        "cold_input_sha256": "a" * 64, "final_artifact_sha256": "b" * 64,
+        "finding_dispositions": [],
+    })
+
+    require_grill(repo, "epics", (), expect_digest_of=first)
+    with pytest.raises(SystemExit, match="Handover grill required first"):
+        require_grill(repo, "epics", (), expect_digest_of=second)

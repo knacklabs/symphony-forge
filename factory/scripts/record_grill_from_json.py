@@ -47,7 +47,7 @@ def _cold_launch_terminal(
     from forge_cli.delegate import argv_digest
     from forge_cli.grill import _latest_cold_launch_rows
 
-    suffix = grill_key_suffix(gate, task_id, artifact_file)
+    suffix = grill_key_suffix(gate, task_id, artifact_file, root)
     ledger_id = f"grill-{gate}" + (f"-{suffix}" if suffix else "")
     rows = _latest_cold_launch_rows(root, ledger_id, gate)
     terminal = rows[-1]
@@ -88,7 +88,7 @@ def _cold_launch_brief(
     artifact_file: str = "",
 ) -> tuple[Path, bytes, str]:
     """Validate the exact brief bytes and optional context identity."""
-    suffix = grill_key_suffix(gate, task_id, artifact_file)
+    suffix = grill_key_suffix(gate, task_id, artifact_file, root)
     brief = root / ".factory" / (
         f"grill-brief-{gate}" + (f"-{suffix}" if suffix else "") + ".md"
     )
@@ -291,7 +291,7 @@ def _native_cold_launch_result(
         raise SystemExit(f"{gate} host-native preparation id is invalid")
     story = load_json(run_state_path(root), default={}).get("issue_key", "")
     from forge_cli.grill import _latest_cold_launch_rows
-    suffix = grill_key_suffix(gate, task_id, artifact_file)
+    suffix = grill_key_suffix(gate, task_id, artifact_file, root)
     rows = _latest_cold_launch_rows(
         root, f"grill-{gate}" + (f"-{suffix}" if suffix else ""), gate,
     )
@@ -324,7 +324,7 @@ def _native_cold_launch_result(
             or prepared.get("model") != ""
             or prepared.get("effort") != ""):
         raise SystemExit(f"{gate} host-native cold-read preparation is invalid")
-    brief_suffix = grill_key_suffix(gate, task_id, artifact_file)
+    brief_suffix = grill_key_suffix(gate, task_id, artifact_file, root)
     brief = root / ".factory" / (
         f"grill-brief-{gate}"
         + (f"-{brief_suffix}" if brief_suffix else "") + ".md"
@@ -773,7 +773,7 @@ _validate_dispositions(
 
 story = active_story if _gate.story_scoped else ""
 name = grill_evidence_name(
-    args.gate, args.task or "", args.input_digest or "",
+    args.gate, args.task or "", args.input_digest or "", root,
 )
 dest = evidence_path(root, story, name, for_write=True)
 dump_json(dest, payload)

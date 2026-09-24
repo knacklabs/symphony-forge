@@ -292,7 +292,7 @@ def _last_pass_at(
     story = load_json(run_state_path(base), default={}).get("issue_key", "")
     record = load_json(
         evidence_path(base, story if get_gate(gate).story_scoped else "",
-                      grill_evidence_name(gate, task_id, artifact_file)),
+                      grill_evidence_name(gate, task_id, artifact_file, base)),
         default={})
     return str(record.get("recorded_at") or "")
 
@@ -358,7 +358,7 @@ def cmd_grill_run(args: argparse.Namespace) -> None:
     # Keyed apart from real task ids so a grill row can never be mistaken for
     # a task's delegation, and so concurrent grills of different gates do not
     # collide in the ledger.
-    suffix = grill_key_suffix(gate, task_id, artifact_file)
+    suffix = grill_key_suffix(gate, task_id, artifact_file, base)
     ledger_id = f"grill-{gate}" + (f"-{suffix}" if suffix else "")
     with delegation_exclusion(
             base, ledger_id, kind="grill-cold-read", namespace="grill"):

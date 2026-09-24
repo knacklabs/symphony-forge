@@ -489,11 +489,9 @@ def _seed_cold_launch(repo: Path, gate: str, digest: str, task_id: str = "",
                       artifact_text: str | None = None,
                       artifact_file: str = "",
                       include_artifact_frame: bool = True) -> None:
+    from factory_lib import grill_key_suffix
     from forge_cli.delegate import argv_digest, delegations_path
-    suffix = task_id or (
-        Path(artifact_file).stem
-        if gate in {"spec", "epics"} and artifact_file else ""
-    )
+    suffix = grill_key_suffix(gate, task_id, artifact_file, repo)
     label = f"grill-{gate}" + (f"-{suffix}" if suffix else "")
     path = delegations_path(repo)
     path.parent.mkdir(parents=True, exist_ok=True)
