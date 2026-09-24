@@ -22,6 +22,13 @@ MAX_FILES = 5
 QUICKFIX = "quickfix"
 LITE = "lite"
 DEGRADED = "degraded"
+_LITE_DIRTY_EXCLUDED_PATHS = (
+    ".factory/",
+    "plans/quickfixes/",
+    "plans/quickfixes.jsonl",
+    "plans/lessons/",
+    "plans/lessons.jsonl",
+)
 
 
 def quickfix_path(base: Path) -> Path:
@@ -299,7 +306,7 @@ def cmd_mode_done(args: argparse.Namespace) -> None:
         base, active["base_sha"], harness_source=harness_source,
     )
     _require_lite_repo_kind(base, active)
-    dirty = _lite_dirty_product_files(base, harness_source=harness_source)
+    dirty = _lite_dirty_product_files(base)
     if dirty:
         fail(
             "lite mode has uncommitted product changes — commit the fix first: "
@@ -384,13 +391,30 @@ def _lite_symlink_paths(
 def _lite_dirty_product_files(
     base: Path, *, harness_source: bool | None = None,
 ) -> list[str]:
-    tracked = _git_paths(base, ["git", "diff", "--name-only", "-z", "HEAD", "--"])
-    untracked = _git_paths(
-        base, ["git", "ls-files", "--others", "--exclude-standard", "-z"],
+    entries = _git_paths(
+        base, ["git", "status", "--porcelain", "-z", "--untracked-files=all"],
     )
-    return _lite_product_files(
-        base, [*tracked, *untracked], harness_source=harness_source,
-    )
+    dirty: list[str] = []
+    index = 0
+    while index < len(entries):
+        entry = entries[index]
+        index += 1
+        if len(entry) < 4 or entry[2] != " ":
+            fail("could not parse git status while checking the Lite worktree")
+        paths = [entry[3:]]
+        if "R" in entry[:2] or "C" in entry[:2]:
+            if index < len(entries):
+                paths.append(entries[index])
+                index += 1
+        dirty.extend(
+            path for path in paths
+            if not any(
+                path == excluded.rstrip("/")
+                or (excluded.endswith("/") and path.startswith(excluded))
+                for excluded in _LITE_DIRTY_EXCLUDED_PATHS
+            )
+        )
+    return sorted(set(dirty))
 
 
 def _git_paths(base: Path, command: list[str]) -> list[str]:

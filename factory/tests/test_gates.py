@@ -9042,6 +9042,8 @@ def test_mode_done_clears_scoped_reviews_without_legacy_dir(repo):
     key = run_state(repo)["issue_key"]
     assert lib.story_uses_scoped_layout(repo, key)
 
+    git(repo, "add", "-A")
+    git(repo, "commit", "-q", "-m", "prepare scoped story fixture")
     open_lite(repo)
     (repo / "src").mkdir(exist_ok=True)
     (repo / "src" / "scoped_fix.py").write_text("ok = True\n")
@@ -9113,6 +9115,60 @@ def test_mode_done_refuses_dirty_product_tree(repo):
     code, out = run(repo, "forge.py", "mode", "done")
 
     assert code != 0 and "commit the fix first" in out, out
+    assert (repo / ".factory" / "quickfix.json").exists()
+
+
+def test_lite_dirty_tree_ignores_factory_only_changes(repo):
+    from forge_cli.quickfix import _lite_dirty_product_files
+
+    open_lite(repo)
+    side_effect = repo / ".factory" / "lite-side-effect.json"
+    side_effect.write_text("{}\n")
+    git(repo, "add", "-f", ".factory/lite-side-effect.json")
+
+    assert _lite_dirty_product_files(repo) == []
+
+
+def test_lite_dirty_tree_ignores_window_ledgers_only(repo):
+    from forge_cli.quickfix import _lite_dirty_product_files
+
+    open_lite(repo)
+    paths = (
+        "plans/quickfixes/fixture.json",
+        "plans/quickfixes.jsonl",
+        "plans/lessons/fixture.json",
+        "plans/lessons.jsonl",
+        "plans/roadmap.json",
+        "plans/quickfixes.jsonl.evil",
+        "plans/lessons.jsonl.extra",
+    )
+    for relative in paths:
+        path = repo / relative
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text("{}\n")
+    git(repo, "add", "-f", *paths)
+
+    assert _lite_dirty_product_files(repo) == [
+        "plans/lessons.jsonl.extra",
+        "plans/quickfixes.jsonl.evil",
+        "plans/roadmap.json",
+    ]
+
+
+def test_mode_done_refuses_uncommitted_docs_symlink_deletion(repo):
+    docs = repo / "docs"
+    docs.mkdir(exist_ok=True)
+    link = docs / "guide-link.md"
+    link.symlink_to("../README.md")
+    git(repo, "add", "-f", "docs/guide-link.md")
+    git(repo, "commit", "-q", "-m", "add docs link")
+    open_lite(repo)
+    link.unlink()
+
+    code, out = run(repo, "forge.py", "mode", "done")
+
+    assert code != 0 and "commit the fix first" in out, out
+    assert "docs/guide-link.md" in out
     assert (repo / ".factory" / "quickfix.json").exists()
 
 
@@ -9217,11 +9273,9 @@ def test_mode_done_refuses_committed_harness_marker_edit(repo):
 
     marker = repo / ".factory" / "harness-source.json"
     marker.write_text('{"role": "harness-source", "repo": "edited"}\n')
-    assert _lite_dirty_product_files(
-        repo, harness_source=True,
-    ) == [".factory/harness-source.json"]
+    assert _lite_dirty_product_files(repo) == []
     code, out = run(repo, "forge.py", "mode", "done")
-    assert code != 0 and "commit the fix first" in out, out
+    assert code != 0 and "no committed product files to close" in out, out
 
     git(repo, "add", "-f", ".factory/harness-source.json")
     git(repo, "commit", "-q", "-m", "edit harness marker")
