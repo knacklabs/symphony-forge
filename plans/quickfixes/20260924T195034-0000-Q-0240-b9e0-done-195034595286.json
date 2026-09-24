@@ -1,0 +1,123 @@
+{
+  "event": "done",
+  "id": "Q-0240-b9e0",
+  "profile": "lite",
+  "by": "Ravi Kiran Vemula",
+  "reason": "Vendor the test-audit skill for coding and review (owner request)",
+  "base_sha": "87dc4c14f372bd28960c4e0b702dc849839aaba6",
+  "started_at": "2026-09-24T19:41:53+00:00",
+  "completed_at": "2026-09-24T19:50:34+00:00",
+  "files": [
+    "factory/prompts/implementer.md",
+    "factory/prompts/reviewer.md",
+    "factory/scripts/forge_cli/delegate.py",
+    "factory/scripts/forge_cli/doctor.py",
+    "factory/scripts/forge_cli/review.py",
+    "factory/skills/test-audit/CAMPAIGN.md",
+    "factory/skills/test-audit/NOTICE.md",
+    "factory/skills/test-audit/SKILL.md",
+    "factory/tests/test_delegate_scope.py",
+    "factory/tests/test_gates.py",
+    "factory/tests/test_review_reads_the_repo.py",
+    "harness.yaml"
+  ],
+  "reviews": {
+    "quality": {
+      "generated_by": "autoreview",
+      "score": 9,
+      "summary": "quality lens over Q-0240-b9e0 (12 product path(s), 87dc4c1..ae5043a, Codex via the autoreview skill): 0 blocking, 1 non-blocking. The implementer brief receives the skill text, but the supported diff-only review path receives only a file reference it cannot follow. That leaves the new review gate incomplete in that mode.",
+      "blocking_findings": [],
+      "non_blocking_findings": [
+        {
+          "category": "bug",
+          "area": "factory/scripts/forge_cli",
+          "summary": "Include the test-audit rules in diff-only review briefs (factory/scripts/forge_cli/review.py:113): When a review uses diff-only mode, such as with FORGE_REVIEW_EMPTY_WORKSPACE set, this line tells the reviewer to apply factory/skills/test-audit/SKILL.md, but the generated brief includes only the reference.",
+          "file_path": "factory/scripts/forge_cli/review.py",
+          "line": 113,
+          "title": "Include the test-audit rules in diff-only review briefs"
+        }
+      ],
+      "recommendation": "approve-with-caveats",
+      "reviewed_scope": [
+        "factory/prompts/implementer.md",
+        "factory/prompts/reviewer.md",
+        "factory/scripts/forge_cli/delegate.py",
+        "factory/scripts/forge_cli/doctor.py",
+        "factory/scripts/forge_cli/review.py",
+        "factory/skills/test-audit/CAMPAIGN.md",
+        "factory/skills/test-audit/NOTICE.md",
+        "factory/skills/test-audit/SKILL.md",
+        "factory/tests/test_delegate_scope.py",
+        "factory/tests/test_gates.py",
+        "factory/tests/test_review_reads_the_repo.py",
+        "harness.yaml"
+      ],
+      "skills_used": [],
+      "contract_verdicts": [],
+      "review_base_sha": "87dc4c14f372bd28960c4e0b702dc849839aaba6",
+      "branch_diff_digest": "b59aab870490a91ea2348c62f4d858537f9f291af61532caca554763a7cdf2a2",
+      "commit": "ae5043a3e97c22a6f4da8f9403e41d8c405a4875",
+      "aspect": "quality",
+      "residual_risks": [],
+      "recorded_at": "2026-09-24T19:50:33+00:00"
+    },
+    "performance": {
+      "generated_by": "autoreview",
+      "score": 10,
+      "summary": "performance lens over Q-0240-b9e0 (12 product path(s), 87dc4c1..ae5043a, Codex via the autoreview skill): 0 blocking, 0 non-blocking. No actionable performance defect is evident in the supplied change.",
+      "blocking_findings": [],
+      "non_blocking_findings": [],
+      "recommendation": "approve",
+      "reviewed_scope": [
+        "factory/prompts/implementer.md",
+        "factory/prompts/reviewer.md",
+        "factory/scripts/forge_cli/delegate.py",
+        "factory/scripts/forge_cli/doctor.py",
+        "factory/scripts/forge_cli/review.py",
+        "factory/skills/test-audit/CAMPAIGN.md",
+        "factory/skills/test-audit/NOTICE.md",
+        "factory/skills/test-audit/SKILL.md",
+        "factory/tests/test_delegate_scope.py",
+        "factory/tests/test_gates.py",
+        "factory/tests/test_review_reads_the_repo.py",
+        "harness.yaml"
+      ],
+      "skills_used": [],
+      "review_base_sha": "87dc4c14f372bd28960c4e0b702dc849839aaba6",
+      "branch_diff_digest": "b59aab870490a91ea2348c62f4d858537f9f291af61532caca554763a7cdf2a2",
+      "commit": "ae5043a3e97c22a6f4da8f9403e41d8c405a4875",
+      "aspect": "performance",
+      "residual_risks": [],
+      "recorded_at": "2026-09-24T19:50:34+00:00"
+    },
+    "security": {
+      "generated_by": "autoreview",
+      "score": 10,
+      "summary": "security lens over Q-0240-b9e0 (12 product path(s), 87dc4c1..ae5043a, Codex via the autoreview skill): 0 blocking, 0 non-blocking. No concrete security defect or credential exposure is evident in the supplied change.",
+      "blocking_findings": [],
+      "non_blocking_findings": [],
+      "recommendation": "approve",
+      "reviewed_scope": [
+        "factory/prompts/implementer.md",
+        "factory/prompts/reviewer.md",
+        "factory/scripts/forge_cli/delegate.py",
+        "factory/scripts/forge_cli/doctor.py",
+        "factory/scripts/forge_cli/review.py",
+        "factory/skills/test-audit/CAMPAIGN.md",
+        "factory/skills/test-audit/NOTICE.md",
+        "factory/skills/test-audit/SKILL.md",
+        "factory/tests/test_delegate_scope.py",
+        "factory/tests/test_gates.py",
+        "factory/tests/test_review_reads_the_repo.py",
+        "harness.yaml"
+      ],
+      "skills_used": [],
+      "review_base_sha": "87dc4c14f372bd28960c4e0b702dc849839aaba6",
+      "branch_diff_digest": "b59aab870490a91ea2348c62f4d858537f9f291af61532caca554763a7cdf2a2",
+      "commit": "ae5043a3e97c22a6f4da8f9403e41d8c405a4875",
+      "aspect": "security",
+      "residual_risks": [],
+      "recorded_at": "2026-09-24T19:50:34+00:00"
+    }
+  }
+}

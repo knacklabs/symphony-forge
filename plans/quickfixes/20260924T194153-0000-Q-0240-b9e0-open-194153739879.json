@@ -1,0 +1,12 @@
+{
+  "event": "open",
+  "id": "Q-0240-b9e0",
+  "profile": "lite",
+  "reason": "Vendor the test-audit skill for coding and review (owner request)",
+  "started_at": "2026-09-24T19:41:53+00:00",
+  "max_files": 5,
+  "files": [],
+  "harness_source": true,
+  "by": "Ravi Kiran Vemula",
+  "base_sha": "87dc4c14f372bd28960c4e0b702dc849839aaba6"
+}
