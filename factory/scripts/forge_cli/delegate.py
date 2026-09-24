@@ -959,6 +959,12 @@ def existing_modules(base: Path, scope: list[str]) -> list[str]:
     return found
 
 
+def _coordinator_owned_paths(scope: list[str]) -> list[str]:
+    return [path for path in scope
+            if path.replace("\\", "/") == ".codex"
+            or path.replace("\\", "/").startswith(".codex/")]
+
+
 def _skill_text(skill: str) -> str:
     for candidate in (Path.home() / ".claude" / "skills" / skill / "SKILL.md",
                       Path.home() / ".codex" / "skills" / skill / "SKILL.md"):
@@ -1137,6 +1143,17 @@ def compose_brief(base: Path, task: dict, *, write: bool, user_facing: bool,
     narrowed = scope_override is not None and scope_override != full_scope
     if scope_override is not None:
         scope = scope_override
+    coordinator_owned = _coordinator_owned_paths(scope)
+    worker_scope = [path for path in scope if path not in coordinator_owned]
+    if not write:
+        access = "NO — read only"
+    elif coordinator_owned:
+        access = (
+            "YES — edit worker-owned paths only; coordinator-owned paths are "
+            "listed below"
+        )
+    else:
+        access = "YES — you may edit files in the write scope"
     try:
         max_files, max_lines, _reason = review_budget(task)
     except ValueError as exc:
@@ -1145,8 +1162,7 @@ def compose_brief(base: Path, task: dict, *, write: bool, user_facing: bool,
     lines = [
         f"# Brief — {task['id']}: {task.get('title', '')}",
         "",
-        f"Story: {story or '(none)'} | write access: "
-        f"{'YES — you may edit files in the write scope' if write else 'NO — read only'}",
+        f"Story: {story or '(none)'} | write access: {access}",
         "",
         "This brief is the whole context you are given. It was composed from the "
         "recorded decomposition, the implementer contract, the active decisions "
@@ -1171,6 +1187,9 @@ def compose_brief(base: Path, task: dict, *, write: bool, user_facing: bool,
          "Delegation coverage: FULL effective task scope. Run the smallest relevant "
          "focused tests for the paths you change, then return. `forge task close` "
          "owns the task-wide required tests and verify commands."),
+        "For focused pytest checks, use `python3 factory/scripts/run_tests.py "
+        "{path} {id} {report}`. It uses installed pytest offline, or falls back "
+        "to uv with Python 3.11 when pytest is unavailable.",
     ]
     body = "\n".join(lines) + "\n"
     body += _section("Constitution — coding standards (BINDING)", CONSTITUTION_BRIEF)
@@ -1184,10 +1203,16 @@ def compose_brief(base: Path, task: dict, *, write: bool, user_facing: bool,
     body += _section("Objective", task.get("objective", ""))
     body += _section("Acceptance criteria", "\n".join(
         f"- {c}" for c in task.get("acceptance_criteria") or []))
-    body += _section("Write scope — nothing outside this", "\n".join(
-        f"- {s}" for s in scope) + (
-        "\n\n`forge stage done` refuses a change outside this list."))
-    modules = existing_modules(base, scope)
+    scope_text = "\n".join(f"- {s}" for s in worker_scope) or "(none)"
+    if coordinator_owned:
+        scope_text += (
+            "\n\nCoordinator-owned paths (do not edit; the coordinator "
+            "applies these):\n"
+            + "\n".join(f"- {s}" for s in coordinator_owned)
+        )
+    scope_text += "\n\n`forge stage done` refuses a change outside this list."
+    body += _section("Write scope — nothing outside this", scope_text)
+    modules = existing_modules(base, worker_scope)
     body += _section("What already exists in that scope (use it, do not re-create it)",
                      "\n".join(f"- {m}" for m in modules) or "(nothing yet)")
     body += _section("Tests you must write", "\n".join(
@@ -2142,6 +2167,12 @@ def launch_companion(
         print(f"Brief {rel} ({len(text.splitlines())} lines) | "
               f"Write access: {'YES' if write else 'NO'} | "
               f"host-native spawn_agent{detail}")
+        coordinator_owned = _coordinator_owned_paths(write_scope or [])
+        if coordinator_owned:
+            print("Coordinator-owned paths (do not edit; the coordinator "
+                  "applies these):")
+            for owned_path in coordinator_owned:
+                print(f"- {owned_path}")
         if emit_descriptor:
             print(json.dumps(descriptor, sort_keys=True))
         if context_snapshot is not None:
