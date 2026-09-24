@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
-"""Bash write classification is a guardrail stopping a coordinator or worker
-from editing out-of-scope or locked files through ordinary shell and Git.
-Git is allowlisted for read/index-only forms and literal-file writes; every
-other form is opaque. It is not containment against deliberately adversarial
-commands: interpreters can always write, consistent with AGENTS.md.
+"""Classify ordinary shell writes with broad targets and fail-closed Git.
+Known writers count non-option operands; sed needs in-place mode and refuses
+backup suffixes. Git permits read forms, literal file writes, and only -C
+global options. Redirections count targets; interpreters stay unparsed.
 """
 from __future__ import annotations
 
@@ -316,16 +315,58 @@ def tokenize_write_command(segment: str) -> list[str] | None:
     return tokenize(_protect_quoted_redirect_chars(segment))
 
 
+def _is_directory_operand(raw: str, root: Path) -> bool:
+    path = Path(raw).expanduser()
+    return (path if path.is_absolute() else root / path).is_dir()
+
+
+COPY_WRITE_PROGRAMS = {"cp", "mv", "install", "rsync", "ln"}
+
+
+def _copy_write_targets(name: str, args: list[str], root: Path) -> list[str]:
+    operands = [arg for arg in args if not arg.startswith("-")]
+    if len(operands) < 2:
+        return operands
+    dest = operands[-1]
+    sources = operands[:-1] if name == "mv" else []
+    if dest.endswith("/") or _is_directory_operand(dest, root):
+        base = dest.rstrip("/")
+        return sources + [
+            f"{base}/{Path(source).name}" for source in operands[:-1]
+        ]
+    return sources + [dest]
+
+
+PREFIX_VALUE_OPTIONS = {
+    "env": {"-u", "--unset", "-C", "--chdir", "-S", "--split-string"},
+    "sudo": {"-u", "--user", "-g", "--group", "-h", "--host", "-p", "--prompt",
+             "-C", "--close-from", "-D", "--chdir", "-R", "--chroot", "-T",
+             "--command-timeout", "-r", "--role", "-t", "--type", "-U",
+             "--other-user"},
+}
+
+
+def _shell_command_index(tokens: list[str]) -> int | None:
+    index = 0
+    while index < len(tokens) and re.fullmatch(r"\w+=\S*", tokens[index]):
+        index += 1
+    while index < len(tokens):
+        name = tokens[index].rsplit("/", 1)[-1]
+        if name not in {"env", "command", "sudo"}:
+            return index
+        index += 1
+        while index < len(tokens) and (re.fullmatch(r"\w+=\S*", tokens[index])
+                                       or tokens[index].startswith("-")):
+            index += 2 if tokens[index] in PREFIX_VALUE_OPTIONS.get(name, ()) else 1
+    return index if index < len(tokens) else None
+
+
 def has_directory_change(command: str) -> bool:
     for segment in split_shell_segments(strip_heredoc_bodies(command)):
         tokens = tokenize_write_command(segment)
         if tokens is None:
             continue
-        command_index = next(
-            (index for index, token in enumerate(tokens)
-             if not re.fullmatch(r"\w+=\S*", token)),
-            None,
-        )
+        command_index = _shell_command_index(tokens)
         if command_index is not None and tokens[command_index].rsplit("/", 1)[-1] \
                 in {"cd", "pushd"}:
             return True
@@ -447,7 +488,7 @@ def redirect_targets(tokens: list[str]) -> tuple[list[str], list[str]]:
                 target = tokens[index]
                 index += 1
             if operator != ">&" or (target != "-" and not target.isdigit()):
-                if target:
+                if target and target != "/dev/null":
                     targets.append(target)
             continue
         if input_redirect:
@@ -467,48 +508,58 @@ def redirect_targets(tokens: list[str]) -> tuple[list[str], list[str]]:
     )
 
 
-def _sed_write_targets(args: list[str]) -> list[str]:
-    """Return every in-place sed file operand, excluding scripts and flags."""
-    if not any(token == "-i" or token.startswith("-i")
-               or token.startswith("--in-place") for token in args):
-        return []
+WRITER_PROGRAMS = {
+    "sed", "cp", "mv", "rm", "rmdir", "tee", "touch", "mkdir", "ln",
+    "install", "truncate", "dd", "patch", "rsync", "chmod", "chown",
+    "unlink",
+}
+
+
+def _writer_targets(name: str, args: list[str]) -> list[str] | None:
+    """Return broad write operands, or None for an opaque sed backup suffix."""
+    if name != "sed":
+        return [arg.split("=", 1)[1] if "=" in arg else arg
+                for arg in args if not arg.startswith("-") or "=" in arg]
+
+    inplace = backup = script_option = False
     operands: list[str] = []
-    backup_suffix = ""
-    has_script_option = False
     index = 0
     while index < len(args):
-        token = args[index]
-        if token == "--":
-            operands.extend(arg for arg in args[index + 1:] if arg)
+        arg = args[index]
+        if arg == "--":
+            operands.extend(args[index + 1:])
             break
-        if token in {"-e", "--expression", "-f", "--file"}:
-            has_script_option = True
+        if arg in {"-e", "--expression", "-f", "--file"}:
+            script_option = True
             index += 2
             continue
-        if (token.startswith("--expression=") or token.startswith("--file=")
-                or (token.startswith("-e") and token != "-e")
-                or (token.startswith("-f") and token != "-f")):
-            has_script_option = True
-            index += 1
-            continue
-        if token.startswith("-i") and token != "-i":
-            backup_suffix = token[2:]
-            index += 1
-            continue
-        if token.startswith("-"):
-            if (token == "-i" and index + 1 < len(args)
-                    and (args[index + 1] == "" or args[index + 1].startswith("."))):
-                backup_suffix = args[index + 1]
+        if arg.startswith(("--expression=", "--file=")) or (
+                arg.startswith(("-e", "-f")) and len(arg) > 2):
+            script_option = True
+        elif arg == "--in-place" or arg.startswith("--in-place=") or (
+                arg.startswith("-") and not arg.startswith("--") and "i" in arg[1:]):
+            inplace = True
+            suffix = (arg.split("=", 1)[1] if arg.startswith("--in-place=")
+                      else arg[1:].split("i", 1)[1] if arg.startswith("-")
+                      and not arg.startswith("--") else "")
+            backup |= bool(suffix)
+            if not suffix and index + 1 < len(args) and (
+                    args[index + 1] == "" or args[index + 1].startswith(".")):
+                backup |= bool(args[index + 1])
                 index += 2
-            else:
-                index += 1
+                continue
+        elif arg.startswith("-"):
+            index += 1
             continue
-        if token:
-            operands.append(token)
+        else:
+            operands.append(arg)
         index += 1
-    files = operands if has_script_option else operands[1:]
-    return files + [f"{file}{backup_suffix}" for file in files] \
-        if backup_suffix else files
+    if not inplace:
+        return []
+    if backup:
+        return None
+    operands = operands if script_option else operands[1:]
+    return [arg.split("=", 1)[1] if "=" in arg else arg for arg in operands]
 
 
 def in_factory_state(raw: str, root: Path) -> bool:
@@ -530,27 +581,35 @@ def in_factory_state(raw: str, root: Path) -> bool:
     return rel.startswith(".factory/") and rel not in FACTORY_STATE_WRITABLE
 
 
-# git global options that consume a following token as their value; the real
-# subcommand is the first bare token once these (and plain flags) are skipped.
-GIT_VALUE_OPTS = {
-    "-C", "-c", "--git-dir", "--work-tree", "--namespace",
-    "--super-prefix", "--config-env",
-}
-
-
 def git_subcommand(args: list[str]) -> tuple[str | None, list[str]]:
-    """The git subcommand and its args, skipping global options and their values."""
+    """Return the subcommand after the admitted -C path options."""
     index = 0
     while index < len(args):
         token = args[index]
-        if token in GIT_VALUE_OPTS:
-            index += 2  # option plus its separate value
-            continue
-        if token.startswith("-"):
-            index += 1  # a flag, or --opt=value carrying its own value
-            continue
-        return token, args[index + 1:]
+        if token == "-C":
+            index += 2
+        elif token.startswith("-"):
+            return None, []
+        else:
+            return token, args[index + 1:]
     return None, []
+
+
+def _opaque_git_global_options(args: list[str]) -> bool:
+    """Only literal -C paths are admitted before a Git subcommand."""
+    index = 0
+    while index < len(args):
+        token = args[index]
+        if token == "-C":
+            if index + 1 == len(args) or any(
+                    char in args[index + 1] for char in "$`~*?[{"):
+                return True
+            index += 2
+        elif token.startswith("-"):
+            return True
+        else:
+            return False
+    return False
 
 
 def _git_working_directory(args: list[str], root: Path) -> Path | None:
@@ -559,25 +618,16 @@ def _git_working_directory(args: list[str], root: Path) -> Path | None:
     index = 0
     while index < len(args):
         token = args[index]
-        if token in GIT_VALUE_OPTS:
+        if token == "-C":
             if index + 1 >= len(args):
                 return None
             value = args[index + 1]
-            if token == "-C":
-                candidate = Path(value).expanduser()
-                cwd = candidate if candidate.is_absolute() else cwd / candidate
-            elif token in {"--git-dir", "--work-tree"}:
-                return None
+            candidate = Path(value).expanduser()
+            cwd = candidate if candidate.is_absolute() else cwd / candidate
             index += 2
             continue
-        if token.startswith("-C") and token != "-C":
-            candidate = Path(token[2:]).expanduser()
-            cwd = candidate if candidate.is_absolute() else cwd / candidate
-            index += 1
-            continue
         if token.startswith("-"):
-            index += 1
-            continue
+            return None
         break
     try:
         return cwd.resolve()
@@ -894,11 +944,7 @@ def has_git_commit(value: str) -> bool:
         tokens = tokenize(segment)
         if tokens is None:
             continue
-        command_index = next(
-            (index for index, token in enumerate(tokens)
-             if not re.fullmatch(r"\w+=\S*", token)),
-            None,
-        )
+        command_index = _shell_command_index(tokens)
         if command_index is None:
             continue
         if tokens[command_index].rsplit("/", 1)[-1] != "git":
@@ -906,34 +952,6 @@ def has_git_commit(value: str) -> bool:
         if git_subcommand(tokens[command_index + 1:])[0] == "commit":
             return True
     return False
-
-
-def _copy_operands(operands: list[str], args: list[str],
-                   root: Path) -> tuple[list[str], list[str]]:
-    """(created destination files, source paths) for a cp/mv.
-
-    A directory (or repo-root) destination expands to `<dir>/<basename>` per
-    source, so each CREATED file is counted against the budget rather than the
-    container claiming one slot for many files. A file destination is itself.
-    GNU `-t <dir>` / `--target-directory=<dir>` puts the dir first, sources after.
-    """
-    target = None
-    for position, arg in enumerate(args):
-        if arg in ("-t", "--target-directory") and position + 1 < len(args):
-            target = args[position + 1]
-        elif arg.startswith("--target-directory="):
-            target = arg.split("=", 1)[1]
-    if target is not None:
-        dest, sources = target, operands
-    elif len(operands) >= 2:
-        dest, sources = operands[-1], operands[:-1]
-    else:
-        return operands, []  # single/zero operand — nothing to expand
-    dest_path = Path(dest) if Path(dest).is_absolute() else root / dest
-    if dest_path.is_dir() or dest in (".", ""):
-        base = dest.rstrip("/") or "."
-        return [f"{base}/{Path(src).name}" for src in sources], sources
-    return [dest], sources
 
 
 def bash_write_paths(value: str, root: Path) -> list[str]:
@@ -954,54 +972,32 @@ def bash_write_paths(value: str, root: Path) -> list[str]:
         # Command POSITION only (after env-var prefixes) — the same discipline
         # the codex-exec guard uses. Otherwise prose that merely mentions a
         # tool ("...sed -i, cp, mv...") is parsed as an invocation.
-        command_index = next(
-            (index for index, token in enumerate(tokens)
-             if not re.fullmatch(r"\w+=\S*", token)),
-            None,
-        )
+        command_index = _shell_command_index(tokens)
         if command_index is None:
             continue
         command_name = tokens[command_index].rsplit("/", 1)[-1]
-        if command_name not in {"tee", "sed", "cp", "mv", "touch", "rm",
-                                "unlink", "git"}:
+        if command_name not in WRITER_PROGRAMS | {"git"}:
             continue
         args = tokens[command_index + 1:]
-        operands = [token for token in args if not token.startswith("-")]
-        if command_name == "tee":
-            found.extend(operands)
-        elif command_name == "touch":
-            found.extend(operands)
-        elif command_name in {"rm", "unlink"}:
-            # Deleting a product path disarms as surely as writing one: removing
-            # the repo-kind marker would flip source->client. Every operand is a
-            # target. This heuristic covers the COMMON drift shapes; cwd games
-            # (`cd .factory && rm`), git -C, indirect pathspecs, globs, and
-            # arbitrary code (python -c, find -delete) are beyond it by design
-            # (decision 0013). The quickfix repo-kind PIN makes the file budget
-            # un-escapable regardless of how the marker is deleted; the locked
-            # case falls back to git visibility + artifact-gate backstop.
-            found.extend(operands)
-        elif command_name == "git":
-            sub, sub_args = git_subcommand(args)
-            paths = _git_write_paths(sub, sub_args, root, args)
-            if paths is not None:
-                found.extend(paths)
-            elif sub in {"rm", "mv"}:
-                found.extend(token for token in sub_args
-                             if token != "--" and not token.startswith("-"))
-        elif command_name == "cp" and operands:
-            # Count each CREATED file (dir destinations expand to dir/basename),
-            # so N copies into a machinery dir spend N budget slots, not one.
-            created, _ = _copy_operands(operands, args, root)
-            found.extend(created)
-        elif command_name == "mv":
-            # The destination is a write (expanded like cp) AND every source is a
-            # deletion — moving the marker away removes it just like `rm`.
-            created, sources = _copy_operands(operands, args, root)
-            found.extend(created)
-            found.extend(sources)
-        elif command_name == "sed":
-            found.extend(_sed_write_targets(args))
+        if command_name == "git":
+            if _opaque_git_global_options(args):
+                found.extend(_writer_targets("git", args) or [])
+            else:
+                sub, sub_args = git_subcommand(args)
+                paths = _git_write_paths(sub, sub_args, root, args)
+                if paths is not None:
+                    found.extend(paths)
+                elif sub in {"rm", "mv"}:
+                    found.extend(token for token in sub_args
+                                 if token != "--" and not token.startswith("-"))
+        else:
+            targets = (
+                _copy_write_targets(command_name, args, root)
+                if command_name in COPY_WRITE_PROGRAMS
+                else _writer_targets(command_name, args)
+            )
+            if targets:
+                found.extend(targets)
     return found
 
 
@@ -1164,15 +1160,15 @@ def _opaque_git_form(command: str, root: Path) -> str | None:
         tokens = tokenize_write_command(segment)
         if tokens is None:
             continue
-        index = next((i for i, token in enumerate(tokens)
-                      if not re.fullmatch(r"\w+=\S*", token)), None)
+        index = _shell_command_index(tokens)
         if index is None or tokens[index].rsplit("/", 1)[-1] != "git":
             continue
         git_args = tokens[index + 1:]
         sub, args = git_subcommand(git_args)
-        if _git_read_or_index_only(sub, args):
+        opaque_globals = _opaque_git_global_options(git_args)
+        if not opaque_globals and _git_read_or_index_only(sub, args):
             continue
-        if _git_write_paths(sub, args, root, git_args) is not None:
+        if not opaque_globals and _git_write_paths(sub, args, root, git_args) is not None:
             continue
         form = f"git {sub or 'unknown'}"
         if sub in {"stash", "reflog", "remote", "worktree", "notes"}:
@@ -1197,18 +1193,13 @@ def _opaque_git_form(command: str, root: Path) -> str | None:
 
 def has_opaque_product_write(
         command: str, root: Path, is_harness: bool) -> bool | None:
-    """Whether a write has an unbounded product target or opaque Git mutation.
-
-    Copy/move opacity is keyed on the destination so read-OUT backups remain
-    allowed. Arbitrary code stays a documented residual (decision 0013).
-    """
+    """Whether a write has an unbounded product target or opaque form."""
     for segment in split_shell_segments(strip_heredoc_bodies(command)):
         tokens = tokenize_write_command(segment)
         if tokens is None:
             return None
         _, tokens = redirect_targets(tokens)
-        index = next((i for i, token in enumerate(tokens)
-                      if not re.fullmatch(r"\w+=\S*", token)), None)
+        index = _shell_command_index(tokens)
         if index is None:
             continue
         name = tokens[index].rsplit("/", 1)[-1]
@@ -1216,32 +1207,43 @@ def has_opaque_product_write(
         if name == "git":
             git_args = args
             sub, args = git_subcommand(args)
+            if _opaque_git_global_options(git_args):
+                return True
             if _git_read_or_index_only(sub, args):
                 continue
             if _git_write_paths(sub, args, root, git_args) is None:
                 return True
             continue
-        elif name not in {"rm", "unlink", "cp", "mv"}:
+        elif name not in WRITER_PROGRAMS:
             continue
+        targets = (
+            _copy_write_targets(name, args, root)
+            if name in COPY_WRITE_PROGRAMS else _writer_targets(name, args)
+        )
+        if targets is None:
+            return True
+        product_targets = [target for target in targets
+                           if product_path(target, root, is_harness)]
+        if not product_targets:
+            continue
+        globbed = any(any(char in target for char in GLOB_METACHARS)
+                      for target in targets)
+        if globbed:
+            return True
         flags = [token for token in args if token.startswith("-")]
-        operands = [token for token in args
-                    if not token.startswith("-") and token not in {">", ">>"}]
         recursive = any(
             flag in ("-r", "-R", "-a", "--recursive", "--archive")
-            or (len(flag) > 1 and not flag.startswith("--")
-                and any(char in flag for char in "rRa"))
+                or (len(flag) > 1 and not flag.startswith("--")
+                    and any(char in flag for char in "rRa"))
             for flag in flags)
-        if name in {"rm", "unlink"}:
-            for operand in operands:
-                if (recursive or any(c in operand for c in GLOB_METACHARS)) \
-                        and product_path(operand, root, is_harness):
-                    return True
-        else:  # cp / mv — opaque only when it WRITES into a product path
-            created, sources = _copy_operands(operands, args, root)
-            writes_product = any(product_path(c, root, is_harness) for c in created)
-            glob_source = any(any(g in src for g in GLOB_METACHARS) for src in sources)
-            if writes_product and (recursive or glob_source):
-                return True
+        if name in {"rm", "unlink"} and recursive:
+            return True
+        if name not in COPY_WRITE_PROGRAMS:
+            continue
+        if (name == "rsync" or recursive) and any(
+                _is_directory_operand(source, root)
+                for source in [arg for arg in args if not arg.startswith("-")][:-1]):
+            return True
     return False
 
 

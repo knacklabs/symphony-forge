@@ -8602,6 +8602,8 @@ def test_bash_refuses_directory_change_with_write_target(repo, command):
     "git stash push",
     "git stash save message",
     "git restore -p",
+    "git --work-tree=/x restore -- f",
+    "git -Csrc restore -- f",
     "git checkout HEAD -- src",
     "git apply",
     "git diff --output=src/diff.patch",
@@ -8690,6 +8692,13 @@ def test_locked_git_pathspecs_keep_only_literal_file_targets(repo, runtime):
     assert bash_write_paths("git checkout HEAD -- src/a.py", repo) == [
         "src/a.py",
     ]
+    assert bash_write_paths("cp src/a.py docs/b", repo) == ["docs/b"]
+    assert bash_write_paths("dd if=src/input of=docs/output", repo) == [
+        "src/input", "docs/output",
+    ]
+    assert bash_write_paths("sed s/x/y/ src/a.py", repo) == []
+    for prefix in ("env MODE=test", "command --", "sudo -u root"):
+        assert bash_write_paths(f"{prefix} touch src/a.py", repo) == ["src/a.py"]
 
     runner = hook if runtime == "claude" else native_hook
     for command in ("git checkout -- src", "git restore -- 'src/*.py'"):
@@ -8816,6 +8825,10 @@ def test_locked_git_apply_explicit_apply_keeps_write_classification(repo, runtim
 ])
 def test_locked_bash_fd_redirects_and_quoted_operators_are_allowed(
         repo, runtime, command):
+    from pre_tool_use import bash_write_paths
+
+    if command == "echo x > /dev/null":
+        assert bash_write_paths(command, repo) == []
     runner = hook if runtime == "claude" else native_hook
     code, out = runner(repo, {
         "tool_name": "Bash", "permission_mode": "default",
@@ -8993,35 +9006,29 @@ def test_bash_and_git_lock_refuse_dangling_symlink_leaf(repo, runtime):
 
 
 @pytest.mark.parametrize("runtime", ["claude", "codex"])
-def test_sed_separate_backup_suffix_keeps_script_and_target(repo, runtime):
+def test_sed_backup_suffix_is_opaque(repo, runtime):
     from pre_tool_use import bash_write_paths
 
     assert bash_write_paths(
         "sed -i '' 's/x/y/' plans/note.md", repo,
     ) == ["plans/note.md"]
-    assert bash_write_paths(
-        "sed -i .bak 's/x/y/' plans/note.md", repo,
-    ) == ["plans/note.md", "plans/note.md.bak"]
-    assert bash_write_paths(
-        "sed -i.bak 's/x/y/' plans/note.md", repo,
-    ) == ["plans/note.md", "plans/note.md.bak"]
-
+    assert bash_write_paths("sed -Ei s/x/y/ src/a.py", repo) == ["src/a.py"]
     runner = hook if runtime == "claude" else native_hook
     code, out = runner(repo, {
         "tool_name": "Bash", "permission_mode": "default",
-        "tool_input": {
-            "command": "sed -i .bak 's/x/y/' plans/note.md",
-        },
-    })
-    assert code == 0 and "deny" not in out, out
-
-    code, out = runner(repo, {
-        "tool_name": "Bash", "permission_mode": "default",
-        "tool_input": {
-            "command": "sed -i .bak 's/x/y/' src/a.py",
-        },
+        "tool_input": {"command": "sed -Ei s/x/y/ src/a.py"},
     })
     assert code == 0 and "deny" in out, out
+    for command in (
+        "sed -i .bak 's/x/y/' plans/note.md",
+        "sed -i.bak 's/x/y/' plans/note.md",
+        "sed --in-place=.bak 's/x/y/' plans/note.md",
+    ):
+        code, out = runner(repo, {
+            "tool_name": "Bash", "permission_mode": "default",
+            "tool_input": {"command": command},
+        })
+        assert code == 0 and "deny" in out, (command, out)
 
 
 def mark_harness_source(repo: Path) -> None:
@@ -9213,10 +9220,9 @@ def test_degraded_pins_repo_kind_so_marker_deletion_cannot_escape_budget(repo):
     assert code == 0, out
 
 
-def test_harness_quickfix_allows_benign_root_destination(repo):
-    # The ancestor-marker guard must fire only on marker DELETION, not on a
-    # benign create-into-root destination like `cp/mv <src> .` (whose parsed
-    # target is the repo root). Those are ordinary product writes, budget-claimed.
+def test_harness_quickfix_refuses_root_destination_product_write(repo):
+    # A directory destination expands to a product file; quickfix refuses
+    # product writes.
     mark_harness_source(repo)
     code, out = run(repo, "forge.py", "quickfix", "start", "benign")
     assert code == 0, out
@@ -9225,17 +9231,17 @@ def test_harness_quickfix_allows_benign_root_destination(repo):
             "tool_name": "Bash", "permission_mode": "default",
             "tool_input": {"command": command},
         })
-        assert code == 0 and "repo-kind marker" not in out, command
+        assert code == 0 and "deny" in out, (command, out)
 
 
-def test_harness_degraded_refuses_opaque_machinery_deletes(repo):
+def test_harness_degraded_refuses_opaque_machinery_deletes(repo, tmp_path):
     # The 5-file budget is only honest if each claimed slot is a bounded file. A
-    # recursive/globbed/brace-expanded DELETE of machinery would spend one slot on
-    # an unbounded set, so a quickfix refuses it; explicit single-file ops stay
-    # allowed, and — critically — read-OUT copies (product source, external dest)
-    # are NOT blocked (they modify nothing in the repo).
+    # recursive/globbed operation INTO machinery is unbounded; copies out of
+    # machinery do not write in the repo and stay allowed.
     mark_harness_source(repo)
     (repo / "factory" / "scripts").mkdir(parents=True, exist_ok=True)
+    copy_tree = tmp_path / "tree"
+    copy_tree.mkdir()
     code, out = run(repo, "forge.py", "mode", "degraded", "start",
                     "--reason", "opaque")
     assert code == 0, out
@@ -9243,7 +9249,7 @@ def test_harness_degraded_refuses_opaque_machinery_deletes(repo):
                     "rm factory/scripts/*.py",
                     "rm factory/scripts/f{1..6}.py",       # brace expansion
                     "git rm -r factory/scripts",
-                    "cp -R /tmp/tree factory/scripts/new",  # recursive copy INTO machinery
+                    f"cp -R {copy_tree} factory/scripts/new",  # recursive copy INTO machinery
                     "cp /tmp/x/*.py factory/scripts/"):     # glob source INTO machinery
         code, out = hook(repo, {
             "tool_name": "Bash", "permission_mode": "default",
@@ -9251,8 +9257,8 @@ def test_harness_degraded_refuses_opaque_machinery_deletes(repo):
         })
         assert code == 0 and "deny" in out, command
     for command in ("rm factory/scripts/one.py",              # explicit single file
-                    "sed -i 's/foo.*/bar/' factory/scripts/x.py",  # sed regex, not a glob
-                    "cp -R factory/scripts /tmp/backup",      # read-OUT: nothing written in-repo
+                    "sed -i 's/foo.*/bar/' factory/scripts/x.py",  # sed regex isn't a glob
+                    "cp -R factory/scripts /tmp/backup",      # read-OUT: no in-repo write
                     "cp factory/scripts/*.py /tmp/backup"):   # read-OUT glob source
         code, out = hook(repo, {
             "tool_name": "Bash", "permission_mode": "default",
