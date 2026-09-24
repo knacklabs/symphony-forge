@@ -1,0 +1,74 @@
+{
+  "event": "done",
+  "id": "Q-0218-283a",
+  "profile": "lite",
+  "by": "Ravi Kiran Vemula",
+  "reason": "Full-suite breakage after merges (sfC)",
+  "base_sha": "87c66118bb8c4464f63f4231cdf8dd18b03e70e0",
+  "started_at": "2026-09-24T07:27:20+00:00",
+  "completed_at": "2026-09-24T08:36:39+00:00",
+  "files": [
+    "factory/scripts/forge_cli/tasks.py",
+    "factory/tests/test_gates.py"
+  ],
+  "reviews": {
+    "quality": {
+      "generated_by": "autoreview",
+      "score": 10,
+      "summary": "quality lens over Q-0218-283a (2 product path(s), 87c6611..23249ed, Codex via the autoreview skill): 0 blocking, 0 non-blocking. The diff preserves the cached shipped-marker check, skips fetching when no origin is configured, and continues to fetch when origin exists. The updated tests cover those paths. Assessment is limited to the supplied diff; unchanged helpers and callers were unavailable.",
+      "blocking_findings": [],
+      "non_blocking_findings": [],
+      "recommendation": "approve",
+      "reviewed_scope": [
+        "factory/scripts/forge_cli/tasks.py",
+        "factory/tests/test_gates.py"
+      ],
+      "skills_used": [],
+      "contract_verdicts": [],
+      "review_base_sha": "87c66118bb8c4464f63f4231cdf8dd18b03e70e0",
+      "branch_diff_digest": "32af9da900ad913c7c1087408ffceadf5704127cda4658d5eee42f9823032250",
+      "commit": "23249edbfa476ba60157f7e18ed13d33da896ff5",
+      "aspect": "quality",
+      "residual_risks": [],
+      "recorded_at": "2026-09-24T08:25:12+00:00"
+    },
+    "performance": {
+      "generated_by": "autoreview",
+      "score": 10,
+      "summary": "performance lens over Q-0218-283a (2 product path(s), 87c6611..23249ed, Codex via the autoreview skill): 0 blocking, 0 non-blocking. The added local Git checks are small, and skipping an unavailable fetch avoids unnecessary work. No actionable performance defect is evident.",
+      "blocking_findings": [],
+      "non_blocking_findings": [],
+      "recommendation": "approve",
+      "reviewed_scope": [
+        "factory/scripts/forge_cli/tasks.py",
+        "factory/tests/test_gates.py"
+      ],
+      "skills_used": [],
+      "review_base_sha": "87c66118bb8c4464f63f4231cdf8dd18b03e70e0",
+      "branch_diff_digest": "32af9da900ad913c7c1087408ffceadf5704127cda4658d5eee42f9823032250",
+      "commit": "23249edbfa476ba60157f7e18ed13d33da896ff5",
+      "aspect": "performance",
+      "residual_risks": [],
+      "recorded_at": "2026-09-24T08:25:13+00:00"
+    },
+    "security": {
+      "generated_by": "autoreview",
+      "score": 10,
+      "summary": "security lens over Q-0218-283a (2 product path(s), 87c6611..23249ed, Codex via the autoreview skill): 0 blocking, 0 non-blocking. The changed path still rejects a cached shipped marker before allowing a task to proceed. No concrete new trust-boundary or credential risk is evident from the diff.",
+      "blocking_findings": [],
+      "non_blocking_findings": [],
+      "recommendation": "approve",
+      "reviewed_scope": [
+        "factory/scripts/forge_cli/tasks.py",
+        "factory/tests/test_gates.py"
+      ],
+      "skills_used": [],
+      "review_base_sha": "87c66118bb8c4464f63f4231cdf8dd18b03e70e0",
+      "branch_diff_digest": "32af9da900ad913c7c1087408ffceadf5704127cda4658d5eee42f9823032250",
+      "commit": "23249edbfa476ba60157f7e18ed13d33da896ff5",
+      "aspect": "security",
+      "residual_risks": [],
+      "recorded_at": "2026-09-24T08:25:13+00:00"
+    }
+  }
+}
