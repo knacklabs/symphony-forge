@@ -158,7 +158,12 @@ def test_reconcile_refuses_active_task_with_scoped_changes_off_trunk(repo, tmp_p
     code, out = run(repo, "forge.py", "task", "reconcile", "T1")
 
     assert code != 0, out
-    assert "scoped changes" in out
+    assert (
+        "T1's scoped files differ from origin/main. If the task already shipped "
+        "and trunk has moved on, rebase or merge origin/main into this branch so "
+        "the scoped files match, then run reconcile again; if it has not shipped, "
+        "finish it with `forge task close T1`."
+    ) in out
     marker = repo / task_marker_path("ENG-1", "T1")
     assert not marker.exists()
 
@@ -178,42 +183,8 @@ def test_reconcile_refuses_active_task_with_scoped_changes_off_trunk(repo, tmp_p
                for p in problems), problems
 
 
-def test_reconcile_refuses_revert_to_pre_branch_point_content(repo, tmp_path):
-    from forge_cli.stages import load_stages, write_stages
-
-    _two_task_story(repo, tmp_path)
-    base = git(repo, "rev-parse", "origin/main")
-    trunk = tmp_path / "revert-trunk"
-    git(repo, "worktree", "add", "-q", "--detach", str(trunk), base)
-    source = trunk / "src" / "core.py"
-    pre_branch_point_content = "print('pre-branch-point content')\n"
-    source.write_text(pre_branch_point_content)
-    git(trunk, "add", "src/core.py")
-    git(trunk, "commit", "-qm", "record prior scoped content")
-    source.write_text("print('branch-point content')\n")
-    git(trunk, "add", "src/core.py")
-    git(trunk, "commit", "-qm", "advance trunk branch point")
-    git(trunk, "push", "-q", "origin", "HEAD:main")
-    git(repo, "worktree", "remove", "-f", str(trunk))
-    git(repo, "fetch", "origin", "main")
-    git(repo, "checkout", "-q", "-b", "feat/ENG-1-T1", "origin/main")
-
-    stages = load_stages(repo)
-    stages["stages"][0]["status"] = "active"
-    write_stages(repo, stages)
-    source = repo / "src" / "core.py"
-    source.write_text(pre_branch_point_content)
-    git(repo, "add", "src/core.py")
-    git(repo, "commit", "-qm", "revert scoped file to prior content")
-
-    code, out = run(repo, "forge.py", "task", "reconcile", "T1")
-
-    assert code != 0, out
-    assert "scoped changes" in out
-    assert not (repo / task_marker_path("ENG-1", "T1")).exists()
-
-
-def test_reconcile_accepts_merged_task_with_later_trunk_edit(repo, tmp_path):
+def test_reconcile_accepts_ancestor_merge_even_after_later_scoped_edit(
+        repo, tmp_path):
     from forge_cli.stages import load_stages, write_stages
 
     _two_task_story(repo, tmp_path)
@@ -263,6 +234,44 @@ def test_reconcile_accepts_squash_merged_task(repo, tmp_path):
     code, out = run(repo, "forge.py", "task", "reconcile", "T1")
 
     assert code == 0, out
+
+
+def test_reconcile_refuses_squash_merge_when_trunk_later_edits_scoped_file(
+        repo, tmp_path):
+    from forge_cli.stages import load_stages, write_stages
+
+    _two_task_story(repo, tmp_path)
+    stages = load_stages(repo)
+    stages["stages"][0]["status"] = "active"
+    write_stages(repo, stages)
+    base = git(repo, "rev-parse", "HEAD")
+    task_content = "print('squash merged task work')\n"
+    source = repo / "src" / "core.py"
+    source.write_text(task_content)
+    git(repo, "add", "src/core.py")
+    git(repo, "commit", "-qm", "task scoped change")
+
+    trunk = tmp_path / "later-squash-trunk"
+    git(repo, "worktree", "add", "-q", "--detach", str(trunk), base)
+    (trunk / "src" / "core.py").write_text(task_content)
+    git(trunk, "add", "src/core.py")
+    git(trunk, "commit", "-qm", "squash merge task scoped change")
+    (trunk / "src" / "core.py").write_text("print('later trunk edit')\n")
+    git(trunk, "add", "src/core.py")
+    git(trunk, "commit", "-qm", "edit scoped file after task squash")
+    git(trunk, "push", "-q", "origin", "HEAD:main")
+    git(repo, "worktree", "remove", "-f", str(trunk))
+
+    code, out = run(repo, "forge.py", "task", "reconcile", "T1")
+
+    assert code != 0, out
+    assert (
+        "T1's scoped files differ from origin/main. If the task already shipped "
+        "and trunk has moved on, rebase or merge origin/main into this branch so "
+        "the scoped files match, then run reconcile again; if it has not shipped, "
+        "finish it with `forge task close T1`."
+    ) in out
+    assert not (repo / task_marker_path("ENG-1", "T1")).exists()
 
 
 def test_reconcile_refuses_active_task_with_empty_write_scope(repo, tmp_path):

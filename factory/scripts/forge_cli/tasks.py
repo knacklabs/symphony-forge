@@ -41,61 +41,6 @@ def _require_git(
     return proc.stdout.strip() if strip else proc.stdout
 
 
-def _scoped_changes_are_on_trunk(
-        base: Path, trunk_ref: str, write_scope: list[str]) -> bool:
-    """Check each task-changed path against trunk commits since its branch point."""
-    def path_object(revision: str, path: str) -> str | None:
-        resolved = _git(base, "rev-parse", f"{revision}:{path}")
-        if resolved.returncode != 0:
-            return None
-        kind = _git(base, "cat-file", "-t", resolved.stdout.strip())
-        if kind.returncode != 0 or kind.stdout.strip() != "blob":
-            return None
-        return resolved.stdout.strip()
-
-    if _git_is_ancestor(base, "HEAD", trunk_ref):
-        return True
-
-    merge_base = _git(base, "merge-base", trunk_ref, "HEAD")
-    if merge_base.returncode != 0:
-        return False
-    merge_base_sha = merge_base.stdout.strip()
-    changed = _git(
-        base, "diff", "--name-only", "--no-renames", "-z",
-        f"{merge_base_sha}..HEAD", "--", *write_scope,
-    )
-    if changed.returncode != 0:
-        return False
-
-    paths = [path for path in changed.stdout.split("\0") if path]
-    for path in paths:
-        task_object = path_object("HEAD", path)
-        history = _git(
-            base, "rev-list", f"{merge_base_sha}..{trunk_ref}", "--", path,
-        )
-        if history.returncode != 0:
-            return False
-        matched = False
-        for commit in history.stdout.splitlines():
-            trunk_object = path_object(commit, path)
-            if task_object is not None and trunk_object == task_object:
-                matched = True
-                break
-            if task_object is None and trunk_object is None:
-                parents = _git(base, "rev-list", "--parents", "-n", "1", commit)
-                if parents.returncode != 0:
-                    return False
-                for parent in parents.stdout.splitlines()[0].split()[1:]:
-                    if path_object(parent, path) is not None:
-                        matched = True
-                        break
-                if matched:
-                    break
-        if not matched:
-            return False
-    return True
-
-
 def _contained_regular_bytes(base: Path, source: Path, label: str) -> bytes:
     """Snapshot one contained authority file without following links."""
     try:
@@ -838,9 +783,17 @@ def cmd_task_reconcile(args: argparse.Namespace) -> None:
         fail(f"task {args.id} has no write_scope; reconcile cannot confirm its "
              "work shipped.")
     trunk_ref = f"origin/{default_branch}"
-    if not _scoped_changes_are_on_trunk(base, trunk_ref, write_scope):
-        fail(f"task {args.id} has scoped changes not on origin/{default_branch}; "
-             "reconcile only when its write_scope matches the trunk.")
+    if (not _git_is_ancestor(base, "HEAD", trunk_ref)
+            and _git(
+                base, "diff", "--quiet", trunk_ref, "HEAD", "--", *write_scope,
+            ).returncode != 0):
+        fail(
+            f"{args.id}'s scoped files differ from {trunk_ref}. If the task "
+            f"already shipped and trunk has moved on, rebase or merge {trunk_ref} "
+            "into this branch so the scoped files match, then run reconcile "
+            f"again; if it has not shipped, finish it with `forge task close "
+            f"{args.id}`."
+        )
 
     already = _git(
         base, "cat-file", "-e", f"origin/{default_branch}:{marker.as_posix()}",
