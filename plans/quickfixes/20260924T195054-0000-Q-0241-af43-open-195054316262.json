@@ -1,0 +1,12 @@
+{
+  "event": "open",
+  "id": "Q-0241-af43",
+  "profile": "lite",
+  "reason": "test-audit rules in diff-only review briefs too",
+  "started_at": "2026-09-24T19:50:54+00:00",
+  "max_files": 5,
+  "files": [],
+  "harness_source": true,
+  "by": "Ravi Kiranvemula",
+  "base_sha": "19cddd5e6fb30608838fae0cbc4f9fa841634dc2"
+}
