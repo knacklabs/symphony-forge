@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Bash write classification is a guardrail stopping a coordinator or worker
 from editing out-of-scope or locked files through ordinary shell and Git.
-It parses common write shapes and treats unparsed worktree-mutating shell or Git
-forms as opaque writes. It is not containment against deliberately adversarial
+Git is allowlisted for read/index-only forms and literal-file writes; every
+other form is opaque. It is not containment against deliberately adversarial
 commands: interpreters can always write, consistent with AGENTS.md.
 """
 from __future__ import annotations
@@ -83,63 +83,6 @@ def _unmerged_paths(root: Path) -> set[str]:
     }
 
 
-def _git_recovery(command: str, root: Path, unmerged: set[str]) -> bool | None:
-    """Allow/deny a single git-native recovery command; None means unrelated."""
-    try:
-        tokens = shlex.split(command)
-    except ValueError:
-        return None
-    if not tokens or tokens[0].rsplit("/", 1)[-1] != "git":
-        return None
-    index = 1
-    while index < len(tokens) and tokens[index].startswith("-"):
-        if tokens[index] in {"-C", "--git-dir", "--work-tree"}:
-            return False
-        if tokens[index] in {"-C", "-c", "--git-dir", "--work-tree"}:
-            index += 2
-        else:
-            index += 1
-    if index >= len(tokens):
-        return None
-    verb, args = tokens[index], tokens[index + 1:]
-    if verb in {"merge", "rebase", "cherry-pick"}:
-        return args == ["--abort"]
-    if verb not in {"checkout", "rm", "add", "reset"}:
-        return None
-    if verb == "checkout":
-        modes = [arg for arg in args if arg in {"--ours", "--theirs"}]
-        if len(modes) != 1:
-            return None
-    paths: list[str] = []
-    skip_value = False
-    for arg in args:
-        if skip_value:
-            skip_value = False
-            continue
-        if (arg == "--pathspec-from-file"
-                or arg.startswith("--pathspec-from-file=")):
-            return False
-        if arg in {"--source"}:
-            skip_value = True
-            continue
-        if arg == "--" or arg.startswith("-"):
-            continue
-        paths.append(arg)
-    if verb == "reset" and "--hard" in args:
-        return False
-    if verb == "reset" and not paths:
-        return True
-    normalized: set[str] = set()
-    for raw in paths:
-        candidate = Path(raw)
-        try:
-            normalized.add((candidate if candidate.is_absolute() else root / candidate)
-                           .resolve().relative_to(root.resolve()).as_posix())
-        except ValueError:
-            return False
-    return bool(normalized) and normalized <= unmerged
-
-
 STATIC_WRITE_EXEMPT_PREFIXES = ("plans/", "docs/", ".gstack/", "prototype/")
 STATIC_WRITE_EXEMPT_FILES = {"README.md", ".gitignore", ".gitattributes", ".envrc"}
 
@@ -213,13 +156,6 @@ def _fallback_readonly(command: str) -> bool:
 def denylist_fallback(payload: dict, reason: str) -> None:
     root = _repo_from_cwd()
     command = ((payload.get("tool_input") or {}).get("command") or "").strip()
-    unmerged = _unmerged_paths(root)
-    recovery = _git_recovery(command, root, unmerged)
-    if recovery is True:
-        print(json.dumps({}))
-        raise SystemExit(0)
-    if recovery is False:
-        deny("Merge recovery is limited to the paths currently reported by git ls-files -u.")
     tool = payload.get("tool_name", "")
     target = ((payload.get("tool_input") or {}).get("file_path") or
               (payload.get("tool_input") or {}).get("notebook_path") or "")
@@ -550,118 +486,6 @@ def _sed_write_targets(args: list[str]) -> list[str]:
     return operands if has_script_option else operands[1:]
 
 
-def _git_restore_paths(args: list[str]) -> list[str]:
-    paths: list[str] = []
-    after_separator = False
-    index = 0
-    while index < len(args):
-        token = args[index]
-        if token == "--":
-            after_separator = True
-            index += 1
-            continue
-        if not after_separator and token in {"-s", "--source"}:
-            index += 2
-            continue
-        if (not after_separator and
-                (token.startswith("--source=") or
-                 (token.startswith("-s") and token != "-s"))):
-            index += 1
-            continue
-        if after_separator or not token.startswith("-"):
-            paths.append(token)
-        index += 1
-    return paths
-
-
-def _has_pathspec_from_file(args: list[str]) -> bool:
-    """Whether git hides its affected paths in a pathspec file option."""
-    for token in args:
-        if token == "--":
-            break
-        if (token == "--pathspec-from-file"
-                or token.startswith("--pathspec-from-file=")):
-            return True
-    return False
-
-
-GIT_APPLY_VALUE_OPTS = {"-p", "--directory", "--include", "--exclude"}
-
-
-def _git_apply_paths(args: list[str], root: Path) -> list[str] | None:
-    """Read changed paths from git's numstat output, or return None if opaque."""
-    patch_files: list[str] = []
-    path_options: list[str] = []
-    index = 0
-    after_separator = False
-    while index < len(args):
-        token = args[index]
-        if token == "--":
-            after_separator = True
-            index += 1
-            continue
-        if not after_separator and token in GIT_APPLY_VALUE_OPTS:
-            if token in {"-p", "--directory"} and index + 1 < len(args):
-                path_options.extend((token, args[index + 1]))
-            index += 2
-            continue
-        if (not after_separator and any(
-                token.startswith(option + "=")
-                for option in ("--directory", "--include", "--exclude"))):
-            if token.startswith("--directory="):
-                path_options.append(token)
-            index += 1
-            continue
-        if not after_separator and token.startswith("-p") and token != "-p":
-            path_options.append(token)
-            index += 1
-            continue
-        if not after_separator and token.startswith("-"):
-            index += 1
-            continue
-        patch_files.append(token)
-        index += 1
-    if not patch_files:
-        return None
-
-    paths: list[str] = []
-    for patch in patch_files:
-        patch_path = Path(patch).expanduser()
-        if not patch_path.is_absolute():
-            patch_path = root / patch_path
-        try:
-            if not patch_path.is_file():
-                return None
-            result = subprocess.run(
-                ["git", "apply", "--numstat", "-z", *path_options,
-                 str(patch_path)],
-                cwd=root, capture_output=True, text=True,
-                encoding="utf-8", errors="surrogateescape",
-            )
-        except (OSError, subprocess.SubprocessError):
-            return None
-        if result.returncode:
-            return None
-        records = result.stdout.split("\0")
-        index = 0
-        while index < len(records):
-            record = records[index]
-            index += 1
-            if not record:
-                continue
-            fields = record.split("\t", 2)
-            if len(fields) != 3:
-                return None
-            if fields[2]:
-                paths.append(fields[2])
-            else:
-                if index + 1 >= len(records) or not records[index] or not records[index + 1]:
-                    return None
-                paths.extend((records[index], records[index + 1]))
-                index += 2
-    return paths
-
-
 def in_factory_state(raw: str, root: Path) -> bool:
     """True when a write target lands in protected .factory/ state."""
     value = raw.strip().strip("\"'")
@@ -736,102 +560,300 @@ def _git_working_directory(args: list[str], root: Path) -> Path | None:
         return None
 
 
-def _expand_git_pathspecs(
-        pathspecs: list[str], args: list[str], root: Path,
-) -> list[str] | None:
-    """Expand tracked files for git pathspecs, or return None if opaque."""
-    if not pathspecs:
-        return None
-    cwd = _git_working_directory(args, root)
-    if cwd is None:
-        return None
-    try:
-        checkout = subprocess.run(
-            ["git", "rev-parse", "--show-toplevel"], cwd=cwd,
-            capture_output=True, text=True, encoding="utf-8",
-            errors="surrogateescape",
-        )
-        if checkout.returncode:
-            return None
-        checkout_root = Path(checkout.stdout.strip()).resolve()
-        result = subprocess.run(
-            ["git", "ls-files", "--full-name", "-z", "--", *pathspecs],
-            cwd=cwd, capture_output=True, text=True, encoding="utf-8",
-            errors="surrogateescape",
-        )
-    except (OSError, RuntimeError, subprocess.SubprocessError):
-        return None
-    if result.returncode:
-        return None
-    paths = [path for path in result.stdout.split("\0") if path]
-    if not paths:
-        return None
-    if checkout_root == root.resolve():
-        return paths
-    return [str(checkout_root / path) for path in paths]
-
-
-def _git_pathspecs(sub: str, args: list[str]) -> list[str] | None:
-    """Recognize path-only forms for write commands with git pathspecs."""
-    if _has_pathspec_from_file(args):
-        return None
-    if sub == "checkout":
-        if "--" not in args:
-            return None
-        separator = args.index("--")
-        before = args[:separator]
-        if any(token in {"-b", "-B", "--orphan"} for token in before):
-            return None
-        # With `--`, one positional token is a tree-ish source; without it the
-        # command changes branches. Multiple tokens are ambiguous option values.
-        if sum(not token.startswith("-") for token in before) > 1:
-            return None
-        paths = [token for token in args[separator + 1:] if token]
-    elif sub == "restore":
-        paths = _git_restore_paths(args)
-    elif sub == "rm":
-        after_separator = "--" in args
-        start = args.index("--") + 1 if after_separator else 0
-        paths = [token for token in args[start:]
-                 if token and (after_separator or not token.startswith("-"))]
-    else:
-        return None
-    return paths or None
-
-
-def _git_worktree_mutation(
-        sub: str, args: list[str], root: Path, git_args: list[str],
-) -> tuple[bool, list[str] | None]:
-    """Return whether a git command mutates the worktree and its known paths."""
-    if sub in {"checkout", "restore", "rm"}:
-        pathspecs = _git_pathspecs(sub, args)
-        if pathspecs is None:
-            return (sub == "checkout", None)
-        return True, _expand_git_pathspecs(pathspecs, git_args, root)
-    if sub in {"switch", "merge", "rebase", "pull", "cherry-pick", "revert"}:
-        return True, None
-    if sub == "reset" and "--hard" in args:
-        return True, None
-    if sub == "stash":
-        operation = next((token for token in args if not token.startswith("-")), "")
-        if operation in {"pop", "apply"}:
-            return True, None
-    if sub == "clean":
-        if "--dry-run" in args or any(
-                token.startswith("-") and "n" in token[1:]
-                and not token.startswith("--") for token in args):
-            return False, []
-        return True, None
-    return False, []
-
-
+GIT_READ_ONLY_COMMANDS = {
+    "status", "log", "diff", "show", "rev-parse", "ls-files", "ls-tree",
+    "cat-file", "blame", "grep", "describe", "merge-base", "shortlog",
+    "for-each-ref", "check-ignore", "check-attr", "fetch",
+}
 GIT_APPLY_READ_ONLY = {"--check", "--stat", "--numstat", "--summary"}
 
 
 def _git_apply_is_read_only(args: list[str]) -> bool:
-    options = args[:args.index("--")] if "--" in args else args
-    return ("--apply" not in options
-            and any(option in options for option in GIT_APPLY_READ_ONLY))
+    modes = set()
+    for token in args:
+        if token == "--":
+            break
+        if token in GIT_APPLY_READ_ONLY:
+            modes.add(token)
+        elif token.startswith("-") and token != "-":
+            return False
+    return bool(modes) and "--apply" not in args
+
+
+def _git_list_form(
+        args: list[str], *, flags: set[str], listed: bool = False,
+) -> bool:
+    """Accept listing forms, with patterns only after a listing option."""
+    listing = not args or listed
+    patterns = listed
+    for arg in args:
+        if arg in {"--list", "-l"}:
+            listing = True
+            patterns = True
+        elif arg == "--":
+            if not listing:
+                return False
+            patterns = True
+        elif arg in flags:
+            continue
+        elif any(arg.startswith(flag + "=") for flag in flags
+                 if flag.startswith("--")):
+            continue
+        elif not arg.startswith("-") and patterns:
+            continue
+        else:
+            return False
+    return listing
+
+
+def _git_read_or_index_only(sub: str | None, args: list[str]) -> bool:
+    """Whether this exact Git form cannot write worktree files."""
+    if any(arg == "--output" or arg.startswith("--output=") for arg in args):
+        return False
+    if sub in {"diff", "log", "show", "reflog", "shortlog"} and any(
+            arg == "-o" or arg.startswith("-o") and arg != "-o"
+            for arg in args):
+        return False
+    if sub in {"add", "commit"}:
+        return True
+    if sub in GIT_READ_ONLY_COMMANDS:
+        return True
+    if sub == "reflog":
+        action = next((arg for arg in args if not arg.startswith("-")), None)
+        return action in {None, "show", "list"}
+    if sub == "branch":
+        listing_flags = {"-a", "-r", "--all", "--remotes", "-v", "-vv",
+                         "--verbose", "--show-current", "--contains",
+                         "--merged", "--no-merged", "--no-contains",
+                         "--points-at"}
+        return _git_list_form(
+            args, listed=not args or any(arg in listing_flags for arg in args),
+            flags=listing_flags | {"--no-abbrev", "--contains", "--merged",
+                                   "--no-merged"},
+        )
+    if sub == "tag":
+        if not args:
+            return True
+        return _git_list_form(
+            args, flags={"--contains", "--no-contains", "--merged",
+                         "--no-merged", "--points-at", "--ignore-case", "-i",
+                         "--column", "--no-column", "--color", "--no-color",
+                         "-n"},
+        ) and args[0] in {"-l", "--list"}
+    if sub == "remote":
+        if not args or args in (["-v"], ["--verbose"]):
+            return True
+        return (args[0] == "get-url"
+                and all(arg in {"--all", "--push"} or not arg.startswith("-")
+                        for arg in args[1:])
+                and sum(not arg.startswith("-") for arg in args[1:]) == 1)
+    if sub == "config":
+        read_options = {"--local", "--global", "--system", "--worktree",
+                        "--show-origin", "--show-scope", "--null", "-z",
+                        "--name-only", "--includes", "--no-includes"}
+        index = 0
+        while index < len(args):
+            option = args[index]
+            if option in read_options or option.startswith(("--file=", "--type=")):
+                index += 1
+            elif option in {"--file", "-f"} and index + 1 < len(args):
+                index += 2
+            else:
+                break
+        if index == len(args):
+            return False
+        action, rest = args[index], args[index + 1:]
+        if action == "--get":
+            return (len(rest) in {1, 2}
+                    and all(not arg.startswith("-") for arg in rest))
+        return (action in {"--list", "-l"}
+                and all(arg in read_options or arg.startswith(
+                    ("--file=", "--type=")) for arg in rest))
+    if sub == "worktree":
+        return (bool(args) and args[0] == "list"
+                and all(arg in {"--porcelain", "-z", "--verbose", "-v"}
+                        for arg in args[1:]))
+    if sub == "stash":
+        return bool(args) and args[0] in {"list", "show"}
+    if sub == "notes":
+        return (not args or args[0] in {"list", "show"})
+    if sub == "symbolic-ref":
+        options = {"-q", "--quiet", "--short", "--no-recurse", "--recurse"}
+        names = [arg for arg in args if not arg.startswith("-")]
+        return len(names) == 1 and all(
+            arg in options or not arg.startswith("-") for arg in args
+        )
+    if sub == "apply":
+        return _git_apply_is_read_only(args)
+    return False
+
+
+def _git_location(git_args: list[str], root: Path) -> tuple[Path, Path] | None:
+    cwd = _git_working_directory(git_args, root)
+    if cwd is None:
+        return None
+    try:
+        result = subprocess.run(
+            ["git", "rev-parse", "--show-toplevel"], cwd=cwd,
+            capture_output=True, text=True, encoding="utf-8",
+            errors="surrogateescape",
+        )
+        if result.returncode:
+            return None
+        return cwd, Path(result.stdout.strip()).resolve()
+    except (OSError, RuntimeError, subprocess.SubprocessError):
+        return None
+
+
+def _literal_git_file_path(raw: str) -> bool:
+    return bool(raw and not raw.startswith(":") and not raw.endswith("/")
+                and not Path(raw).is_absolute()
+                and not any(char in raw for char in "*?[{"))
+
+
+def _git_file_form(sub: str, args: list[str]) -> tuple[list[str], str | None] | None:
+    """Parse only restore/checkout forms with literal file pathspecs."""
+    if sub == "restore":
+        if "--" in args:
+            if args.count("--") != 1 or args[0] != "--":
+                return None
+            paths = args[1:]
+        else:
+            paths = args
+            if any(path.startswith("-") for path in paths):
+                return None
+        source = None
+    elif sub == "checkout":
+        if args.count("--") != 1:
+            return None
+        separator = args.index("--")
+        before, paths = args[:separator], args[separator + 1:]
+        if len(before) > 1 or any(token.startswith("-") for token in before):
+            return None
+        source = before[0] if before else None
+    else:
+        return None
+    if not paths or not all(_literal_git_file_path(path) for path in paths):
+        return None
+    return paths, source
+
+
+def _git_apply_paths(
+        args: list[str], root: Path, git_args: list[str],
+) -> list[str] | None:
+    """Resolve the literal file paths changed by one patch file."""
+    if len(args) != 1 or not args[0] or args[0].startswith("-"):
+        return None
+    location = _git_location(git_args, root)
+    if location is None:
+        return None
+    cwd, checkout_root = location
+    patch_path = Path(args[0]).expanduser()
+    if not patch_path.is_absolute():
+        patch_path = cwd / patch_path
+    if not patch_path.is_file():
+        return None
+    try:
+        result = subprocess.run(
+            ["git", "apply", "--numstat", "-z", str(patch_path)],
+            cwd=cwd, capture_output=True, text=True, encoding="utf-8",
+            errors="surrogateescape",
+        )
+    except (OSError, subprocess.SubprocessError):
+        return None
+    if result.returncode:
+        return None
+    paths: list[str] = []
+    records = result.stdout.split("\0")
+    index = 0
+    while index < len(records):
+        record = records[index]
+        index += 1
+        if not record:
+            continue
+        fields = record.split("\t", 2)
+        if len(fields) != 3:
+            return None
+        if fields[2]:
+            paths.append(fields[2])
+        else:
+            if index + 1 >= len(records) or not records[index] or not records[index + 1]:
+                return None
+            paths.extend((records[index], records[index + 1]))
+            index += 2
+    return _resolve_git_file_paths(paths, cwd, checkout_root, root, git_args)
+
+
+def _resolve_git_file_paths(
+        paths: list[str], cwd: Path, checkout_root: Path, root: Path,
+        git_args: list[str], source: str | None = None,
+) -> list[str] | None:
+    if not paths:
+        return None
+    result_paths: list[str] = []
+    for raw in paths:
+        if not _literal_git_file_path(raw):
+            return None
+        target = (cwd / raw).resolve()
+        try:
+            rel = target.relative_to(checkout_root).as_posix()
+        except ValueError:
+            return None
+        if target.is_dir():
+            return None
+        try:
+            indexed = subprocess.run(
+                ["git", "ls-files", "--full-name", "-z", "--", raw],
+                cwd=cwd, capture_output=True, text=True,
+                encoding="utf-8", errors="surrogateescape",
+            )
+            if indexed.returncode:
+                return None
+        except (OSError, subprocess.SubprocessError):
+            return None
+        if any(path != rel and path.startswith(rel + "/")
+               for path in indexed.stdout.split("\0") if path):
+            return None
+        if source is not None:
+            try:
+                entry = subprocess.run(
+                    ["git", "ls-tree", "-z", "--full-tree", source, "--", rel],
+                    cwd=checkout_root, capture_output=True, text=True,
+                    encoding="utf-8", errors="surrogateescape",
+                )
+            except (OSError, subprocess.SubprocessError):
+                return None
+            if entry.returncode:
+                return None
+            for record in entry.stdout.split("\0"):
+                if not record:
+                    continue
+                metadata, _, entry_path = record.partition("\t")
+                if entry_path == rel and len(metadata.split()) > 1 \
+                        and metadata.split()[1] != "blob":
+                    return None
+        result_paths.append(
+            rel if checkout_root == root.resolve() else str(checkout_root / rel)
+        )
+    return result_paths
+
+
+def _git_write_paths(
+        sub: str | None, args: list[str], root: Path, git_args: list[str],
+) -> list[str] | None:
+    if sub == "apply":
+        if _git_apply_is_read_only(args):
+            return []
+        return _git_apply_paths(args, root, git_args)
+    form = _git_file_form(sub or "", args)
+    if form is None:
+        return None
+    paths, source = form
+    location = _git_location(git_args, root)
+    if location is None:
+        return None
+    cwd, checkout_root = location
+    return _resolve_git_file_paths(paths, cwd, checkout_root, root, git_args, source)
 
 
 def has_git_commit(value: str) -> bool:
@@ -928,21 +950,13 @@ def bash_write_paths(value: str, root: Path) -> list[str]:
             # case falls back to git visibility + artifact-gate backstop.
             found.extend(operands)
         elif command_name == "git":
-            # `git rm` / `git mv` delete or relocate tracked files like their
-            # shell namesakes — skip git's global options to reach the subcommand.
             sub, sub_args = git_subcommand(args)
-            mutates, paths = _git_worktree_mutation(
-                sub or "", sub_args, root, args,
-            )
-            if mutates and paths is not None:
+            paths = _git_write_paths(sub, sub_args, root, args)
+            if paths is not None:
                 found.extend(paths)
-            elif sub == "mv":
+            elif sub in {"rm", "mv"}:
                 found.extend(token for token in sub_args
-                             if not token.startswith("-"))
-            elif sub == "rm":
-                found.extend(_git_pathspecs(sub, sub_args) or [])
-            elif sub == "apply" and not _git_apply_is_read_only(sub_args):
-                found.extend(_git_apply_paths(sub_args, root) or [])
+                             if token != "--" and not token.startswith("-"))
         elif command_name == "cp" and operands:
             # Count each CREATED file (dir destinations expand to dir/basename),
             # so N copies into a machinery dir spend N budget slots, not one.
@@ -1107,6 +1121,46 @@ UNPARSEABLE_BASH_MSG = (
     "that it respects the delegation and planning boundaries. Use "
     "`./forge delegate <task-id>` for a companion launch."
 )
+GIT_OPAQUE_MSG = (
+    "Opaque Git form `{form}` is not admitted under the session lock. Use "
+    "`./forge delegate <task-id>` or a Lite window with literal in-scope file paths."
+)
+
+
+def _opaque_git_form(command: str, root: Path) -> str | None:
+    for segment in split_shell_segments(strip_heredoc_bodies(command)):
+        tokens = tokenize_write_command(segment)
+        if tokens is None:
+            continue
+        index = next((i for i, token in enumerate(tokens)
+                      if not re.fullmatch(r"\w+=\S*", token)), None)
+        if index is None or tokens[index].rsplit("/", 1)[-1] != "git":
+            continue
+        git_args = tokens[index + 1:]
+        sub, args = git_subcommand(git_args)
+        if _git_read_or_index_only(sub, args):
+            continue
+        if _git_write_paths(sub, args, root, git_args) is not None:
+            continue
+        form = f"git {sub or 'unknown'}"
+        if sub in {"stash", "reflog", "remote", "worktree", "notes"}:
+            action = next((arg for arg in args if not arg.startswith("-")), None)
+            if action:
+                form += f" {action}"
+        elif sub == "reset":
+            mode = next((arg for arg in args
+                         if arg in {"--soft", "--mixed", "--hard", "--merge", "--keep"}), None)
+            if mode:
+                form += f" {mode}"
+        elif sub == "restore":
+            if any(arg in {"-p", "--patch"} for arg in args):
+                form += " -p"
+            elif not args:
+                form += " (pathless)"
+        elif sub == "checkout" and "--" in args:
+            form += " <tree> -- <pathspec>"
+        return form
+    return None
 
 
 def has_opaque_product_write(
@@ -1130,27 +1184,11 @@ def has_opaque_product_write(
         if name == "git":
             git_args = args
             sub, args = git_subcommand(args)
-            if sub == "apply":
-                if _has_pathspec_from_file(args):
-                    return True
-                if _git_apply_is_read_only(args):
-                    continue
-                if _git_apply_paths(args, root) is None:
-                    return True
+            if _git_read_or_index_only(sub, args):
                 continue
-            if (sub in {"restore", "checkout", "rm", "mv"}
-                    and _has_pathspec_from_file(args)):
+            if _git_write_paths(sub, args, root, git_args) is None:
                 return True
-            mutates, paths = _git_worktree_mutation(
-                sub or "", args, root, git_args,
-            )
-            if mutates:
-                if paths is None:
-                    return True
-                continue
-            if sub != "rm":
-                continue
-            name = "rm"
+            continue
         elif name not in {"rm", "unlink", "cp", "mv"}:
             continue
         flags = [token for token in args if token.startswith("-")]
@@ -1520,12 +1558,6 @@ if tool_name in EDIT_TOOLS:
             if _alt is not None:
                 root = _alt
 unmerged = _unmerged_paths(root)
-recovery = _git_recovery(command, root, unmerged) if unmerged else None
-if recovery is True:
-    print(json.dumps({}))
-    raise SystemExit(0)
-if recovery is False:
-    deny("Merge recovery is limited to the paths currently reported by git ls-files -u.")
 if tool_name in EDIT_TOOLS and unmerged:
     edit_path = tool_input.get("file_path") or tool_input.get("notebook_path") or ""
     if edit_path:
@@ -1614,11 +1646,18 @@ if command and tool_name == "Bash":
     if opaque is None:
         deny(UNPARSEABLE_BASH_MSG)
     if opaque:
-        if any(
+        git_form = _opaque_git_form(command, root)
+        contains_marker = any(
                 _contains_marker(rel)
                 for raw in write_targets
-                if (rel := _lexical_product_path(raw, is_harness)) is not None):
+                if (rel := _lexical_product_path(raw, is_harness)) is not None
+        )
+        if contains_marker:
+            if git_form:
+                deny(GIT_OPAQUE_MSG.format(form=git_form) + " " + MARKER_PLAN_ONLY_MSG)
             deny(MARKER_PLAN_ONLY_MSG)
+        if git_form:
+            deny(GIT_OPAQUE_MSG.format(form=git_form))
         if native_codex:
             deny(OPAQUE_DEGRADED_MSG if window else OPAQUE_NATIVE_MSG)
         deny(OPAQUE_DEGRADED_MSG if window and profile_of(window) == DEGRADED

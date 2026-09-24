@@ -7927,12 +7927,14 @@ def test_hook_denylist_fallback_on_unparseable_state_or_import(repo):
     assert code == 0 and json.loads(out) == {"continue": True}
 
 
-def test_hook_permits_git_native_resolution_on_unmerged_paths(repo):
+def test_hook_only_permits_allowlisted_git_forms_with_unmerged_paths(repo):
     make_unmerged(repo)
+    for command in ("git status", "git add -- src/conflict.ts"):
+        code, out = hook(repo, {"tool_name": "Bash", "tool_input": {"command": command}})
+        assert code == 0 and out == "{}\n", command
     for command in (
         "git checkout --ours -- src/conflict.ts",
         "git checkout --theirs -- src/conflict.ts",
-        "git add -- src/conflict.ts",
         "git rm -- src/conflict.ts",
         "git reset -- src/conflict.ts",
         "git merge --abort",
@@ -7940,7 +7942,7 @@ def test_hook_permits_git_native_resolution_on_unmerged_paths(repo):
         "git cherry-pick --abort",
     ):
         code, out = hook(repo, {"tool_name": "Bash", "tool_input": {"command": command}})
-        assert code == 0 and out == "{}\n", command
+        assert code == 0 and "deny" in out, command
 
 
 def test_hook_refuses_handwrite_and_merged_paths_during_merge(repo):
@@ -7950,11 +7952,8 @@ def test_hook_refuses_handwrite_and_merged_paths_during_merge(repo):
             "file_path": str(repo / "src" / "conflict.ts")}},
         {"tool_name": "Write", "tool_input": {
             "file_path": str(repo / "src" / "conflict.ts")}},
-        {"tool_name": "Bash", "tool_input": {"command": "git add -- src/app.ts"}},
         {"tool_name": "Bash", "tool_input": {
             "command": "git checkout --ours -- src/app.ts"}},
-        {"tool_name": "Bash", "tool_input": {
-            "command": "git add -- src/conflict.ts src/app.ts"}},
     ):
         code, out = hook(repo, payload)
         assert code == 0 and "deny" in out, payload
@@ -8578,8 +8577,24 @@ def test_bash_write_guard_classifies_only_real_product_writes(repo):
     "git checkout --discard-changes topic",
     "git switch topic",
     "git reset --hard HEAD",
+    "git reset --merge",
+    "git reset --keep",
     "git stash pop",
     "git stash apply",
+    "git stash push",
+    "git stash save message",
+    "git restore -p",
+    "git checkout HEAD -- src",
+    "git apply",
+    "git diff --output=src/diff.patch",
+    "git branch -D topic",
+    "git tag -d release",
+    "git remote set-url origin https://example.invalid/repo.git",
+    "git config --unset user.name",
+    "git reflog expire --expire=now --all",
+    "git worktree remove ../other",
+    "git notes add -m note HEAD",
+    "git symbolic-ref --delete refs/heads/topic",
     "git clean -fd",
     "git merge topic",
     "git rebase topic",
@@ -8606,7 +8621,40 @@ def test_locked_bash_write_shapes_are_denied(repo, runtime, command):
 
 
 @pytest.mark.parametrize("runtime", ["claude", "codex"])
-def test_locked_git_pathspecs_expand_to_tracked_files(repo, runtime):
+@pytest.mark.parametrize("command", [
+    "git status", "git log -1", "git diff --stat", "git show HEAD",
+    "git rev-parse HEAD", "git ls-files", "git ls-tree HEAD",
+    "git cat-file -t HEAD", "git blame -- src/app.ts", "git grep app",
+    "git describe --always", "git merge-base HEAD HEAD", "git shortlog -s",
+    "git reflog", "git reflog show", "git branch --show-current",
+    "git branch -a", "git tag --list", "git tag -l 'v*'", "git branch",
+    "git tag", "git remote -v", "git remote get-url origin",
+    "git config --get user.name", "git config --global --list",
+    "git worktree list --porcelain", "git fetch --prune origin",
+    "git stash list", "git stash show", "git notes list",
+    "git notes show HEAD", "git for-each-ref", "git symbolic-ref HEAD",
+    "git check-ignore README.md", "git check-attr text -- README.md",
+    "git apply --check x.patch", "git add -A", "git commit -a -m test",
+    "git commit --include src/app.ts -m test",
+    "git commit --only src/app.ts -m test",
+])
+def test_locked_git_read_and_index_only_allowlist(repo, runtime, command):
+    (repo / "x.patch").write_text(
+        "diff --git a/src/a.py b/src/a.py\n"
+        "--- a/src/a.py\n+++ b/src/a.py\n"
+        "@@ -1 +1 @@\n-old\n+new\n",
+        encoding="utf-8",
+    )
+    runner = hook if runtime == "claude" else native_hook
+    code, out = runner(repo, {
+        "tool_name": "Bash", "permission_mode": "default",
+        "tool_input": {"command": command},
+    })
+    assert code == 0 and "deny" not in out, (command, out)
+
+
+@pytest.mark.parametrize("runtime", ["claude", "codex"])
+def test_locked_git_pathspecs_keep_only_literal_file_targets(repo, runtime):
     from pre_tool_use import bash_write_paths
 
     for path in ("src/a.py", "src/c.py", "src/nested/b.py"):
@@ -8615,17 +8663,9 @@ def test_locked_git_pathspecs_expand_to_tracked_files(repo, runtime):
         target.write_text("tracked\n", encoding="utf-8")
     git(repo, "add", "src")
 
-    assert bash_write_paths("git checkout -- src", repo) == [
-        "src/a.py", "src/c.py", "src/nested/b.py",
-    ]
-    glob_targets = bash_write_paths("git restore -- 'src/*.py'", repo)
-    assert glob_targets == ["src/a.py", "src/c.py", "src/nested/b.py"]
-    assert bash_write_paths("git rm -r -- src", repo) == glob_targets
-    from forge_cli.worker_admission import path_in_scope
-    assert [path for path in glob_targets
-            if not path_in_scope(path, ["src/a.py"])] == [
-                "src/c.py", "src/nested/b.py",
-            ]
+    assert bash_write_paths("git checkout -- src", repo) == []
+    assert bash_write_paths("git restore -- 'src/*.py'", repo) == []
+    assert bash_write_paths("git rm -r -- src", repo) == ["src"]
     assert bash_write_paths("git -C src restore -- a.py", repo) == [
         "src/a.py",
     ]
@@ -8634,15 +8674,62 @@ def test_locked_git_pathspecs_expand_to_tracked_files(repo, runtime):
     ]
 
     runner = hook if runtime == "claude" else native_hook
-    code, out = runner(repo, {
-        "tool_name": "Bash", "permission_mode": "default",
-        "tool_input": {"command": "git checkout -- src"},
-    })
-    assert code == 0 and "deny" in out, out
+    for command in ("git checkout -- src", "git restore -- 'src/*.py'"):
+        code, out = runner(repo, {
+            "tool_name": "Bash", "permission_mode": "default",
+            "tool_input": {"command": command},
+        })
+        assert code == 0 and "deny" in out and "Lite window" in out, out
+
+
+def test_locked_literal_git_file_writes_are_allowed_in_lite_scope(repo):
+    path = repo / "src" / "scoped-file.py"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text("value = 1\n", encoding="utf-8")
+    git(repo, "add", "src/scoped-file.py")
+    git(repo, "commit", "-q", "-m", "scope fixture")
+    (repo / "x.patch").write_text(
+        "diff --git a/src/scoped-file.py b/src/scoped-file.py\n"
+        "--- a/src/scoped-file.py\n+++ b/src/scoped-file.py\n"
+        "@@ -1 +1 @@\n-value = 1\n+value = 2\n",
+        encoding="utf-8",
+    )
+    open_lite(repo)
+
+    for command in (
+        "git restore src/scoped-file.py",
+        "git checkout HEAD -- src/scoped-file.py",
+        "git apply x.patch",
+    ):
+        code, out = native_hook(repo, {
+            "tool_name": "Bash", "permission_mode": "default",
+            "tool_input": {"command": command},
+        })
+        assert code == 0 and "deny" not in out, (command, out)
 
 
 @pytest.mark.parametrize("runtime", ["claude", "codex"])
-def test_locked_unexpandable_git_pathspec_is_opaque(repo, runtime):
+def test_checkout_tree_directory_absent_from_index_is_opaque(repo, runtime):
+    base = git(repo, "rev-parse", "HEAD")
+    path = repo / "tree-only" / "new.py"
+    path.parent.mkdir()
+    path.write_text("value = 2\n", encoding="utf-8")
+    git(repo, "add", "tree-only/new.py")
+    git(repo, "commit", "-q", "-m", "alternate tree")
+    source = git(repo, "rev-parse", "HEAD")
+    git(repo, "reset", "--hard", base)
+
+    runner = hook if runtime == "claude" else native_hook
+    command = f"git checkout {source} -- tree-only"
+    code, out = runner(repo, {
+        "tool_name": "Bash", "permission_mode": "default",
+        "tool_input": {"command": command},
+    })
+    assert code == 0 and "deny" in out and "git checkout" in out, out
+
+
+@pytest.mark.parametrize("runtime", ["claude", "codex"])
+def test_locked_literal_missing_git_path_still_needs_scope(repo, runtime):
     runner = hook if runtime == "claude" else native_hook
     code, out = runner(repo, {
         "tool_name": "Bash", "permission_mode": "default",
@@ -8692,13 +8779,13 @@ def test_locked_git_apply_explicit_apply_keeps_write_classification(repo, runtim
         encoding="utf-8",
     )
     command = "git apply --apply --stat x.patch"
-    assert bash_write_paths(command, repo) == ["src/a.py"]
+    assert bash_write_paths(command, repo) == []
     runner = hook if runtime == "claude" else native_hook
     code, out = runner(repo, {
         "tool_name": "Bash", "permission_mode": "default",
         "tool_input": {"command": command},
     })
-    assert code == 0 and "deny" in out, out
+    assert code == 0 and "deny" in out and "git apply" in out, out
 
 
 @pytest.mark.parametrize("runtime", ["claude", "codex"])
@@ -8738,7 +8825,7 @@ def test_locked_bash_quoted_separators_and_parse_failures_are_denied(
 
 
 @pytest.mark.parametrize("runtime", ["claude", "codex"])
-def test_locked_git_apply_path_options_are_applied_to_numstat(repo, runtime):
+def test_locked_git_apply_path_options_are_opaque(repo, runtime):
     from pre_tool_use import bash_write_paths
 
     (repo / "x.patch").write_text(
@@ -8748,14 +8835,14 @@ def test_locked_git_apply_path_options_are_applied_to_numstat(repo, runtime):
         encoding="utf-8",
     )
     command = "git apply --directory=src -p2 x.patch"
-    assert bash_write_paths(command, repo) == ["src/a.py"]
+    assert bash_write_paths(command, repo) == []
 
     runner = hook if runtime == "claude" else native_hook
     code, out = runner(repo, {
         "tool_name": "Bash", "permission_mode": "default",
         "tool_input": {"command": command},
     })
-    assert code == 0 and "deny" in out, out
+    assert code == 0 and "deny" in out and "git apply" in out, out
 
 
 @pytest.mark.parametrize("command", [
