@@ -1,0 +1,12 @@
+{
+  "event": "open",
+  "id": "Q-0217-321d",
+  "profile": "lite",
+  "reason": "A cold read made stale by a contract change must not block a fresh read (task-grill deadlock found on EXEC-MODES)",
+  "started_at": "2026-09-24T06:28:53+00:00",
+  "max_files": 5,
+  "files": [],
+  "harness_source": true,
+  "by": "Ravi Kiran Vemula",
+  "base_sha": "290621c315da801576e1a525e945227d198e920b"
+}

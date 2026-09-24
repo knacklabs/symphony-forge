@@ -1,0 +1,82 @@
+{
+  "event": "done",
+  "id": "Q-0217-321d",
+  "profile": "lite",
+  "by": "Ravi Kiran Vemula",
+  "reason": "A cold read made stale by a contract change must not block a fresh read (task-grill deadlock found on EXEC-MODES)",
+  "base_sha": "290621c315da801576e1a525e945227d198e920b",
+  "started_at": "2026-09-24T06:28:53+00:00",
+  "completed_at": "2026-09-24T07:48:04+00:00",
+  "files": [
+    "factory/scripts/forge_cli/delegate.py",
+    "factory/scripts/forge_cli/grill.py",
+    "factory/tests/test_lean_workflow.py",
+    "factory/tests/test_regrill_scope.py"
+  ],
+  "reviews": {
+    "quality": {
+      "generated_by": "autoreview",
+      "score": 10,
+      "summary": "quality lens over Q-0217-321d (4 product path(s), 290621c..fb48247, Codex via the autoreview skill): 0 blocking, 0 non-blocking. The diff ties task cold reads to a protected contract fingerprint, and the new test covers plan-only changes, contract changes, and repeat refusal. No actionable defect is evident. Unchanged callees could not be inspected in the empty sandbox.",
+      "blocking_findings": [],
+      "non_blocking_findings": [],
+      "recommendation": "approve",
+      "reviewed_scope": [
+        "factory/scripts/forge_cli/delegate.py",
+        "factory/scripts/forge_cli/grill.py",
+        "factory/tests/test_lean_workflow.py",
+        "factory/tests/test_regrill_scope.py"
+      ],
+      "skills_used": [],
+      "contract_verdicts": [],
+      "review_base_sha": "290621c315da801576e1a525e945227d198e920b",
+      "branch_diff_digest": "3e17b5b5270c9a3a0dad138954dac21674495a1a83f49d114fdf25844ef75648",
+      "commit": "fb48247247e8761b7caa6db3dcfe40c3364b5530",
+      "aspect": "quality",
+      "residual_risks": [],
+      "recorded_at": "2026-09-24T07:33:25+00:00"
+    },
+    "performance": {
+      "generated_by": "autoreview",
+      "score": 10,
+      "summary": "performance lens over Q-0217-321d (4 product path(s), 290621c..fb48247, Codex via the autoreview skill): 0 blocking, 0 non-blocking. The added state read and hash occur once per grill invocation. The diff shows no material performance risk.",
+      "blocking_findings": [],
+      "non_blocking_findings": [],
+      "recommendation": "approve",
+      "reviewed_scope": [
+        "factory/scripts/forge_cli/delegate.py",
+        "factory/scripts/forge_cli/grill.py",
+        "factory/tests/test_lean_workflow.py",
+        "factory/tests/test_regrill_scope.py"
+      ],
+      "skills_used": [],
+      "review_base_sha": "290621c315da801576e1a525e945227d198e920b",
+      "branch_diff_digest": "3e17b5b5270c9a3a0dad138954dac21674495a1a83f49d114fdf25844ef75648",
+      "commit": "fb48247247e8761b7caa6db3dcfe40c3364b5530",
+      "aspect": "performance",
+      "residual_risks": [],
+      "recorded_at": "2026-09-24T07:33:25+00:00"
+    },
+    "security": {
+      "generated_by": "autoreview",
+      "score": 10,
+      "summary": "security lens over Q-0217-321d (4 product path(s), 290621c..fb48247, Codex via the autoreview skill): 0 blocking, 0 non-blocking. The launch record stores a contract digest rather than contract text. The diff shows no concrete trust-boundary or credential-handling defect.",
+      "blocking_findings": [],
+      "non_blocking_findings": [],
+      "recommendation": "approve",
+      "reviewed_scope": [
+        "factory/scripts/forge_cli/delegate.py",
+        "factory/scripts/forge_cli/grill.py",
+        "factory/tests/test_lean_workflow.py",
+        "factory/tests/test_regrill_scope.py"
+      ],
+      "skills_used": [],
+      "review_base_sha": "290621c315da801576e1a525e945227d198e920b",
+      "branch_diff_digest": "3e17b5b5270c9a3a0dad138954dac21674495a1a83f49d114fdf25844ef75648",
+      "commit": "fb48247247e8761b7caa6db3dcfe40c3364b5530",
+      "aspect": "security",
+      "residual_risks": [],
+      "recorded_at": "2026-09-24T07:33:26+00:00"
+    }
+  }
+}
