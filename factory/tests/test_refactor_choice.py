@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import sys
 from pathlib import Path
@@ -10,12 +11,14 @@ from types import SimpleNamespace
 import pytest
 
 sys.path.insert(0, str(Path(__file__).parents[1] / "scripts"))
-from factory_lib import review_generation_id  # noqa: E402
+import factory_lib  # noqa: E402
+from factory_lib import review_generation_bytes, review_generation_id  # noqa: E402
 from forge_cli import delegate, findings, fix, quickfix  # noqa: E402
 
 
 def _review(base: Path, story: str, task: str, run: str, recorded_at: str,
-            file_path: str | tuple[str, ...], *, category: str = "bug") -> None:
+            file_path: str | tuple[str, ...], *, category: str = "bug",
+            source_generation_id: str = "") -> dict:
     file_paths = (file_path,) if isinstance(file_path, str) else file_path
     lenses = {
         aspect: {
@@ -27,14 +30,44 @@ def _review(base: Path, story: str, task: str, run: str, recorded_at: str,
         for aspect in ("quality", "performance", "security")
     }
     generation = {
-        "origin": "combined", "story": story, "task_id": task,
+        "format": "forge-review-generation/v1",
+        "origin": "rejection" if source_generation_id else "combined",
+        "story": story, "task_id": task, "delta_id": "d" * 64,
         "review_run_id": run, "recorded_at": recorded_at, "lenses": lenses,
     }
+    if source_generation_id:
+        lesson_path = (f".factory/stories/{story}/tasks/{task}/reviews/lessons/{run}.json")
+        lesson = base / lesson_path
+        lesson.parent.mkdir(parents=True, exist_ok=True)
+        lesson.write_text("lesson\n", encoding="utf-8")
+        generation["rejection"] = {
+            "source_generation_id": source_generation_id,
+            "history": [{
+                "lesson_path": lesson_path,
+                "lesson_sha256": hashlib.sha256(lesson.read_bytes()).hexdigest(),
+            }],
+        }
     generation["generation_id"] = review_generation_id(generation)
     path = (base / ".factory" / "stories" / story / "tasks" / task
             / "reviews" / "generations" / f"{generation['generation_id']}.json")
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(generation), encoding="utf-8")
+    path.write_bytes(review_generation_bytes(generation))
+    return generation
+
+
+def _select(base: Path, generation: dict) -> None:
+    path = (base / ".factory" / "stories" / generation["story"] / "tasks"
+            / generation["task_id"] / "reviews" / "selected.json")
+    document = {
+        "format": "forge-review-selection/v1",
+        "story": generation["story"], "task_id": generation["task_id"],
+        "generation_id": generation["generation_id"],
+        "generation_sha256": hashlib.sha256(
+            review_generation_bytes(generation)
+        ).hexdigest(),
+        "delta_id": generation["delta_id"], "selected_at": "2026-01-03T00:00:00Z",
+    }
+    path.write_bytes(review_generation_bytes(document))
 
 
 def _prepare_fix(monkeypatch, base: Path, repeated_files: list[str]):
@@ -97,12 +130,21 @@ def _prepare_delegate(monkeypatch, base: Path, repeated_files: list[str]) -> Non
 @pytest.fixture(autouse=True)
 def _skip_schema_for_minimal_review_fixtures(monkeypatch):
     monkeypatch.setattr(findings, "validate_review_document", lambda *_args: None)
+    monkeypatch.setattr(factory_lib, "validate_review_document", lambda *_args: None)
+    monkeypatch.setattr(factory_lib, "_rejection_successor_problems",
+                        lambda *_args: [])
 
 
 def test_consecutive_same_file_findings_require_a_choice(
         tmp_path: Path, monkeypatch, capsys):
-    _review(tmp_path, "ENG-1", "T1", "run-1", "2026-01-01T00:00:00Z", "src/a.py")
-    _review(tmp_path, "ENG-1", "T1", "run-2", "2026-01-02T00:00:00Z", "src/a.py")
+    previous = _review(
+        tmp_path, "ENG-1", "T1", "run-1", "2026-01-01T00:00:00Z", "src/a.py",
+    )
+    selected = _review(
+        tmp_path, "ENG-1", "T1", "run-2", "2026-01-02T00:00:00Z", "src/a.py",
+        source_generation_id=previous["generation_id"],
+    )
+    _select(tmp_path, selected)
 
     file_paths = findings.repeated_finding_files(tmp_path, "ENG-1", "T1")
     assert file_paths == ["src/a.py"]
@@ -130,8 +172,14 @@ def test_patch_choice_allows_the_fix_round(tmp_path: Path, monkeypatch):
 def test_two_repeated_files_are_named_and_get_refactor_lines(
         tmp_path: Path, monkeypatch, capsys):
     paths = ("src/a.py", "src/b.py")
-    _review(tmp_path, "ENG-1", "T1", "run-1", "2026-01-01T00:00:00Z", paths)
-    _review(tmp_path, "ENG-1", "T1", "run-2", "2026-01-02T00:00:00Z", paths)
+    previous = _review(
+        tmp_path, "ENG-1", "T1", "run-1", "2026-01-01T00:00:00Z", paths,
+    )
+    selected = _review(
+        tmp_path, "ENG-1", "T1", "run-2", "2026-01-02T00:00:00Z", paths,
+        source_generation_id=previous["generation_id"],
+    )
+    _select(tmp_path, selected)
     repeated_files = findings.repeated_finding_files(tmp_path, "ENG-1", "T1")
     assert repeated_files == ["src/a.py", "src/b.py"]
     assert findings.choice_error(repeated_files, None) == (
@@ -160,8 +208,47 @@ def test_two_repeated_files_are_named_and_get_refactor_lines(
 
 
 def test_different_files_do_not_trigger_the_rule(tmp_path: Path):
+    previous = _review(
+        tmp_path, "ENG-1", "T1", "run-1", "2026-01-01T00:00:00Z", "src/a.py",
+    )
+    selected = _review(
+        tmp_path, "ENG-1", "T1", "run-2", "2026-01-02T00:00:00Z", "src/b.py",
+        source_generation_id=previous["generation_id"],
+    )
+    _select(tmp_path, selected)
+
+    assert findings.repeated_finding_files(tmp_path, "ENG-1", "T1") == []
+
+
+def test_normal_selected_review_compares_with_an_earlier_generation(
+        tmp_path: Path):
     _review(tmp_path, "ENG-1", "T1", "run-1", "2026-01-01T00:00:00Z", "src/a.py")
-    _review(tmp_path, "ENG-1", "T1", "run-2", "2026-01-02T00:00:00Z", "src/b.py")
+    selected = _review(
+        tmp_path, "ENG-1", "T1", "run-2", "2026-01-02T00:00:00Z", "src/a.py",
+    )
+    _select(tmp_path, selected)
+
+    assert findings.repeated_finding_files(tmp_path, "ENG-1", "T1") == ["src/a.py"]
+
+
+def test_later_orphan_generation_is_ignored_after_selected_review(tmp_path: Path):
+    _review(
+        tmp_path, "ENG-1", "T1", "run-1", "2026-01-01T00:00:00Z", "src/a.py",
+    )
+    selected = _review(
+        tmp_path, "ENG-1", "T1", "run-2", "2026-01-02T00:00:00Z", "src/a.py",
+    )
+    _review(tmp_path, "ENG-1", "T1", "orphan", "2026-01-04T00:00:00Z", "src/b.py")
+    _select(tmp_path, selected)
+
+    assert findings.repeated_finding_files(tmp_path, "ENG-1", "T1") == ["src/a.py"]
+
+
+def test_single_selected_review_has_no_predecessor(tmp_path: Path):
+    selected = _review(
+        tmp_path, "ENG-1", "T1", "run-1", "2026-01-01T00:00:00Z", "src/a.py",
+    )
+    _select(tmp_path, selected)
 
     assert findings.repeated_finding_files(tmp_path, "ENG-1", "T1") == []
 

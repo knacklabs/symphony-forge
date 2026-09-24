@@ -15,7 +15,8 @@ import json
 from pathlib import Path
 
 from factory_lib import (
-    _active_story_key, _git_is_ancestor, evidence_path, factory_dir,
+    _active_story_key, _git_is_ancestor, _read_review_bytes,
+    evidence_path, factory_dir,
     has_completed_lean_migration_manifest, head_sha, load_json,
     product_delta_digest, read_selected_review_generation, repo_root,
     review_generation_id, run_state_path, story_dir,
@@ -98,37 +99,57 @@ def repeated_finding_files(base: Path, story: str, task_id: str, *,
         return sorted(files(last["reviews"]) & files(current))
     if not story or not task_id:
         return []
-    directory = story_dir(base, story) / "tasks" / task_id / "reviews" / "generations"
-    by_run: dict[str, tuple[str, str, dict]] = {}
+    generation, _selection, problems = read_selected_review_generation(
+        base, story, task_id,
+    )
+    if problems or not isinstance(generation, dict):
+        return []
+    source_id = (generation.get("rejection") or {}).get("source_generation_id")
+    if generation.get("origin") == "rejection" and isinstance(source_id, str) and source_id:
+        source_path = (story_dir(base, story) / "tasks" / task_id / "reviews"
+                       / "generations" / f"{source_id}.json")
+        try:
+            previous = json.loads(_read_review_bytes(base, source_path))
+        except (OSError, UnicodeError, json.JSONDecodeError, SystemExit):
+            return []
+        if not isinstance(previous, dict):
+            return []
+        return sorted(
+            files(previous.get("lenses") or {})
+            & files(generation.get("lenses") or {})
+        )
+
+    directory = (story_dir(base, story) / "tasks" / task_id / "reviews"
+                 / "generations")
+    selected_recorded_at = str(generation.get("recorded_at") or "")
+    candidates: list[tuple[str, str, dict]] = []
     if not directory.is_dir():
         return []
     for path in directory.glob("*.json"):
         try:
-            generation = json.loads(path.read_text(encoding="utf-8"))
-            if not isinstance(generation, dict):
+            candidate = json.loads(_read_review_bytes(base, path))
+            if not isinstance(candidate, dict):
                 continue
-            validate_review_document(base, generation)
+            validate_review_document(base, candidate)
         except (OSError, UnicodeError, json.JSONDecodeError, SystemExit):
             continue
-        run_id = generation.get("review_run_id")
-        generation_id = generation.get("generation_id")
-        if (generation.get("story") != story or generation.get("task_id") != task_id
+        run_id = candidate.get("review_run_id")
+        generation_id = candidate.get("generation_id")
+        recorded_at = str(candidate.get("recorded_at") or "")
+        if (candidate.get("story") != story or candidate.get("task_id") != task_id
                 or not isinstance(run_id, str) or not run_id
                 or not isinstance(generation_id, str)
                 or path.stem != generation_id
-                or generation_id != review_generation_id(generation)):
+                or generation_id != review_generation_id(candidate)
+                or not recorded_at or recorded_at >= selected_recorded_at):
             continue
-        recorded_at = str(generation.get("recorded_at") or "")
-        previous = by_run.get(run_id)
-        if previous is None or (recorded_at, generation_id) > previous[:2]:
-            by_run[run_id] = (recorded_at, generation_id, generation)
-    reviews = sorted(by_run.values(), key=lambda item: (item[0], item[1]))
-    if len(reviews) < 2:
+        candidates.append((recorded_at, generation_id, candidate))
+    if not candidates:
         return []
-
+    previous = max(candidates, key=lambda item: (item[0], item[1]))[2]
     return sorted(
-        files(reviews[-2][2].get("lenses") or {})
-        & files(reviews[-1][2].get("lenses") or {})
+        files(previous.get("lenses") or {})
+        & files(generation.get("lenses") or {})
     )
 
 
