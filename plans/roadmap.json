@@ -1044,7 +1044,7 @@
         "gstack and direnv are removed from Forge; client gstack files are untouched"
       ],
       "order": 50,
-      "status": "pending",
+      "status": "active",
       "epic": "symphony-forge",
       "skill": "backend",
       "kind": "feature",

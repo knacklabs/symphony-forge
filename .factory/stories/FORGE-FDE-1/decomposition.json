@@ -1,0 +1,41 @@
+{
+  "generated_by": "docs-decomposer",
+  "user_facing": false,
+  "tasks": [
+    {
+      "id": "FDE",
+      "title": "The agent works as an FDE",
+      "objective": "FDE skill section and reference file, DISCOVERY problem cards, discovery owner and impeccable in harness.yaml, forge payback, success-measure validation, pr-link check date, forge next listing and forge outcome check.",
+      "dependencies": [],
+      "acceptance_criteria": [
+        "The Forge skill's FDE section is about 70 lines and the reference file holds examples, question bank and call script",
+        "forge payback gives the same answer for the same inputs, including the 3- and 12-month boundaries and the unknown-value case",
+        "forge spec confirm refuses a new spec with a missing or incomplete success measure and accepts a complete one with only its status changed",
+        "forge pr-link sets the success-check date once; forge next lists it after that date until forge outcome check records the result",
+        "A scripted discovery walkthrough in a throwaway client asks one question per turn with a Why-I-ask line, stops at the limit and fills a problem card named in the brief and spec"
+      ],
+      "user_facing": false
+    },
+    {
+      "id": "GSTACK",
+      "title": "gstack and direnv removed",
+      "objective": "Remove gstack and direnv from Forge's code, config, docs, install skills and tests; archive and summarise this repo's gstack history; leave client gstack files alone.",
+      "dependencies": [
+        "FDE"
+      ],
+      "acceptance_criteria": [
+        "forge doctor (fast, full, --fix) passes without gstack or direnv, never installs either, and reports impeccable as optional",
+        "forge gstack no longer exists and no code, config, prompt, skill, living spec or canon doc in this repository references gstack outside history and the archive",
+        "init, adopt and upgrade add no gstack lines and leave client ones untouched",
+        "This repository's gstack history is under docs/context/gstack-archive/, summarised in docs/memory/gstack-history.md and marked harvested"
+      ],
+      "user_facing": false
+    }
+  ],
+  "project": "",
+  "story": "FORGE-FDE-1",
+  "epic": "symphony-forge",
+  "plan_file": "plans/active/FORGE-FDE-1-the-agent-works-as-a-forward-deployed-engineer-gstack-removed.md",
+  "plan_sha256": "f4d50c7b95a191506fd9a1317a0c7857e8d971c7bab1eb036c9cd87cbad4e393",
+  "commit": "4ef5eee22c94e3c94d2d5217a44c22eb4c255676"
+}
