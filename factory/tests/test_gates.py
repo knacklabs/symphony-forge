@@ -7928,12 +7928,14 @@ def test_hook_denylist_fallback_on_unparseable_state_or_import(repo):
     assert code == 0 and json.loads(out) == {"continue": True}
 
 
-def test_hook_permits_git_native_resolution_on_unmerged_paths(repo):
+def test_hook_only_permits_allowlisted_git_forms_with_unmerged_paths(repo):
     make_unmerged(repo)
+    for command in ("git status", "git add -- src/conflict.ts"):
+        code, out = hook(repo, {"tool_name": "Bash", "tool_input": {"command": command}})
+        assert code == 0 and out == "{}\n", command
     for command in (
         "git checkout --ours -- src/conflict.ts",
         "git checkout --theirs -- src/conflict.ts",
-        "git add -- src/conflict.ts",
         "git rm -- src/conflict.ts",
         "git reset -- src/conflict.ts",
         "git merge --abort",
@@ -7941,7 +7943,7 @@ def test_hook_permits_git_native_resolution_on_unmerged_paths(repo):
         "git cherry-pick --abort",
     ):
         code, out = hook(repo, {"tool_name": "Bash", "tool_input": {"command": command}})
-        assert code == 0 and out == "{}\n", command
+        assert code == 0 and "deny" in out, command
 
 
 def test_hook_refuses_handwrite_and_merged_paths_during_merge(repo):
@@ -7951,11 +7953,8 @@ def test_hook_refuses_handwrite_and_merged_paths_during_merge(repo):
             "file_path": str(repo / "src" / "conflict.ts")}},
         {"tool_name": "Write", "tool_input": {
             "file_path": str(repo / "src" / "conflict.ts")}},
-        {"tool_name": "Bash", "tool_input": {"command": "git add -- src/app.ts"}},
         {"tool_name": "Bash", "tool_input": {
             "command": "git checkout --ours -- src/app.ts"}},
-        {"tool_name": "Bash", "tool_input": {
-            "command": "git add -- src/conflict.ts src/app.ts"}},
     ):
         code, out = hook(repo, payload)
         assert code == 0 and "deny" in out, payload
@@ -8550,14 +8549,79 @@ def test_bash_write_guard_classifies_only_real_product_writes(repo):
     assert not decision("echo x > plans/roadmap.json")
 
 
+@pytest.mark.parametrize("command", [
+    "cd docs && printf x > notes.md",
+    "pushd docs && git stash pop",
+])
+def test_bash_refuses_directory_change_with_write_target(repo, command):
+    code, out = hook(repo, {
+        "tool_name": "Bash", "permission_mode": "default",
+        "tool_input": {"command": command},
+    })
+    assert code == 0 and "run writes from the checkout without changing directory" in out, out
+
+    code, out = hook(repo, {
+        "tool_name": "Bash", "permission_mode": "default",
+        "tool_input": {"command": "cd docs && git status"},
+    })
+    assert code == 0 and "deny" not in out, out
+
+
 @pytest.mark.parametrize("runtime", ["claude", "codex"])
 @pytest.mark.parametrize("command", [
     "echo hi>src/a.py",
     "cmd 2>src/a.py",
     "cmd 2> src/a.py",
     "echo hi >| src/a.py",
+    "echo x >& src/a.py",
+    "echo x >&src/a.py",
+    "echo x &> src/a.py",
+    "echo x &>src/a.py",
+    "echo x &>> src/a.py",
+    "echo x &>>src/a.py",
+    "echo x <> src/a.py",
+    "echo x <>src/a.py",
+    "echo x >|src/a.py",
+    "echo x 3>& src/a.py",
+    "echo x 3>&src/a.py",
     "git checkout HEAD -- src/a.py",
     "git restore src/a.py",
+    "git restore --pathspec-from-file=src/paths.txt",
+    "git restore --pathspec-from-file src/paths.txt",
+    "git checkout --pathspec-from-file=src/paths.txt",
+    "git checkout --pathspec-from-file src/paths.txt",
+    "git rm --pathspec-from-file=src/paths.txt",
+    "git checkout topic",
+    "git checkout --force topic",
+    "git checkout --discard-changes topic",
+    "git switch topic",
+    "git reset --hard HEAD",
+    "git reset --merge",
+    "git reset --keep",
+    "git stash pop",
+    "git stash apply",
+    "git stash push",
+    "git stash save message",
+    "git restore -p",
+    "git --work-tree=/x restore -- f",
+    "git -Csrc restore -- f",
+    "git checkout HEAD -- src",
+    "git apply",
+    "git diff --output=src/diff.patch",
+    "git branch -D topic",
+    "git tag -d release",
+    "git remote set-url origin https://example.invalid/repo.git",
+    "git config --unset user.name",
+    "git reflog expire --expire=now --all",
+    "git worktree remove ../other",
+    "git notes add -m note HEAD",
+    "git symbolic-ref --delete refs/heads/topic",
+    "git clean -fd",
+    "git merge topic",
+    "git rebase topic",
+    "git pull",
+    "git cherry-pick deadbeef",
+    "git revert deadbeef",
     "sed -i s/x/y/ src/a.py plans/note.md",
     "git apply x.patch",
 ])
@@ -8579,6 +8643,229 @@ def test_locked_bash_write_shapes_are_denied(repo, runtime, command):
 
 @pytest.mark.parametrize("runtime", ["claude", "codex"])
 @pytest.mark.parametrize("command", [
+    "cp -t d f", "env -C d touch f", "chmod -R 777 d",
+    "cp --target-directory=d f", "cp -a a b", "rm -r f",
+    "sed -i.bak 's/x/y/' f", "env MODE=test touch f",
+    "cd d && touch f", "pushd d && touch f", "sudo -u root touch f",
+    "xargs touch f", "xargs sh -c 'touch f'",
+    "find . -exec touch f \\;", "find . -exec sh -c 'touch f' \\;",
+    "env -S 'touch f'",
+])
+def test_locked_writer_options_and_wrappers_are_refused(repo, runtime, command):
+    runner = hook if runtime == "claude" else native_hook
+    code, out = runner(repo, {
+        "tool_name": "Bash", "permission_mode": "default",
+        "tool_input": {"command": command},
+    })
+    assert code == 0 and (
+        "the write lock only allows plain file writes; use a Lite window or "
+        "`forge delegate` for this command"
+    ) in out, (command, out)
+
+
+@pytest.mark.parametrize("runtime", ["claude", "codex"])
+@pytest.mark.parametrize("command", [
+    "git status", "git log -1", "git diff --stat", "git show HEAD",
+    "git rev-parse HEAD", "git ls-files", "git ls-tree HEAD",
+    "git cat-file -t HEAD", "git blame -- src/app.ts", "git grep app",
+    "git describe --always", "git merge-base HEAD HEAD", "git shortlog -s",
+    "git reflog", "git reflog show", "git branch --show-current",
+    "git branch -a", "git tag --list", "git tag -l 'v*'", "git branch",
+    "git tag", "git remote -v", "git remote get-url origin",
+    "git config --get user.name", "git config --global --list",
+    "git worktree list --porcelain", "git fetch --prune origin",
+    "git stash list", "git stash show", "git notes list",
+    "git notes show HEAD", "git for-each-ref", "git symbolic-ref HEAD",
+    "git check-ignore README.md", "git check-attr text -- README.md",
+    "git apply --check x.patch", "git add -A", "git commit -a -m test",
+    "git commit --include src/app.ts -m test",
+    "git commit --only src/app.ts -m test",
+])
+def test_locked_git_read_and_index_only_allowlist(repo, runtime, command):
+    (repo / "x.patch").write_text(
+        "diff --git a/src/a.py b/src/a.py\n"
+        "--- a/src/a.py\n+++ b/src/a.py\n"
+        "@@ -1 +1 @@\n-old\n+new\n",
+        encoding="utf-8",
+    )
+    runner = hook if runtime == "claude" else native_hook
+    code, out = runner(repo, {
+        "tool_name": "Bash", "permission_mode": "default",
+        "tool_input": {"command": command},
+    })
+    assert code == 0 and "deny" not in out, (command, out)
+
+
+@pytest.mark.parametrize("runtime", ["claude", "codex"])
+def test_locked_git_pathspecs_keep_only_literal_file_targets(repo, runtime):
+    from pre_tool_use import bash_write_paths
+
+    for path in ("src/a.py", "src/c.py", "src/nested/b.py"):
+        target = repo / path
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text("tracked\n", encoding="utf-8")
+    git(repo, "add", "src")
+
+    assert bash_write_paths("git checkout -- src", repo) == []
+    assert bash_write_paths("git restore -- 'src/*.py'", repo) == []
+    assert bash_write_paths("git rm -r -- src", repo) == ["src"]
+    assert bash_write_paths("git -C src restore -- a.py", repo) == [
+        "src/a.py",
+    ]
+    assert bash_write_paths("git checkout HEAD -- src/a.py", repo) == [
+        "src/a.py",
+    ]
+    assert bash_write_paths("cp src/a.py docs/b", repo) == ["docs/b"]
+    assert bash_write_paths("cp a b", repo) == ["b"]
+    assert bash_write_paths("mkdir -p d", repo) == ["d"]
+    assert bash_write_paths("sed -i 's/x/y/' f", repo) == ["f"]
+    assert bash_write_paths("rm -f f", repo) == ["f"]
+    assert bash_write_paths("dd if=src/input of=docs/output", repo) == [
+        "src/input", "docs/output",
+    ]
+    assert bash_write_paths("sed s/x/y/ src/a.py", repo) == []
+    for prefix in ("env MODE=test", "command --", "sudo -u root"):
+        assert bash_write_paths(f"{prefix} touch src/a.py", repo) == ["src/a.py"]
+
+    runner = hook if runtime == "claude" else native_hook
+    for command in ("git checkout -- src", "git restore -- 'src/*.py'"):
+        code, out = runner(repo, {
+            "tool_name": "Bash", "permission_mode": "default",
+            "tool_input": {"command": command},
+        })
+        assert code == 0 and "deny" in out and "Lite window" in out, out
+
+
+def test_locked_literal_git_file_writes_are_allowed_in_lite_scope(repo):
+    path = repo / "src" / "scoped-file.py"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text("value = 1\n", encoding="utf-8")
+    git(repo, "add", "src/scoped-file.py")
+    git(repo, "commit", "-q", "-m", "scope fixture")
+    (repo / "x.patch").write_text(
+        "diff --git a/src/scoped-file.py b/src/scoped-file.py\n"
+        "--- a/src/scoped-file.py\n+++ b/src/scoped-file.py\n"
+        "@@ -1 +1 @@\n-value = 1\n+value = 2\n",
+        encoding="utf-8",
+    )
+    open_lite(repo)
+
+    for command in (
+        "git restore src/scoped-file.py",
+        "git checkout HEAD -- src/scoped-file.py",
+        "git apply x.patch",
+    ):
+        code, out = native_hook(repo, {
+            "tool_name": "Bash", "permission_mode": "default",
+            "tool_input": {"command": command},
+        })
+        assert code == 0 and "deny" not in out, (command, out)
+
+
+@pytest.mark.parametrize("runtime", ["claude", "codex"])
+def test_checkout_tree_directory_absent_from_index_is_opaque(repo, runtime):
+    base = git(repo, "rev-parse", "HEAD")
+    path = repo / "tree-only" / "new.py"
+    path.parent.mkdir()
+    path.write_text("value = 2\n", encoding="utf-8")
+    git(repo, "add", "tree-only/new.py")
+    git(repo, "commit", "-q", "-m", "alternate tree")
+    source = git(repo, "rev-parse", "HEAD")
+    git(repo, "reset", "--hard", base)
+
+    runner = hook if runtime == "claude" else native_hook
+    command = f"git checkout {source} -- tree-only"
+    code, out = runner(repo, {
+        "tool_name": "Bash", "permission_mode": "default",
+        "tool_input": {"command": command},
+    })
+    assert code == 0 and "deny" in out and "git checkout" in out, out
+
+
+@pytest.mark.parametrize("runtime", ["claude", "codex"])
+def test_locked_literal_missing_git_path_still_needs_scope(repo, runtime):
+    runner = hook if runtime == "claude" else native_hook
+    code, out = runner(repo, {
+        "tool_name": "Bash", "permission_mode": "default",
+        "tool_input": {"command": "git checkout -- missing-tracked-path"},
+    })
+    assert code == 0 and "deny" in out, out
+
+
+@pytest.mark.parametrize("runtime", ["claude", "codex"])
+def test_locked_recursive_delete_of_sibling_checkout_root_is_denied(repo, runtime):
+    sibling = repo.parent / "sibling-checkout"
+    (sibling / ".git").mkdir(parents=True)
+    (sibling / "factory" / "scripts").mkdir(parents=True)
+    runner = hook if runtime == "claude" else native_hook
+    code, out = runner(repo, {
+        "tool_name": "Bash", "permission_mode": "default",
+        "tool_input": {"command": f"rm -rf {shlex.quote(str(sibling))}"},
+    })
+    assert code == 0 and "deny" in out, out
+
+
+@pytest.mark.parametrize("runtime", ["claude", "codex"])
+@pytest.mark.parametrize("option", ["--check", "--stat", "--numstat", "--summary"])
+def test_locked_git_apply_read_only_modes_are_allowed(repo, runtime, option):
+    (repo / "x.patch").write_text(
+        "diff --git a/src/a.py b/src/a.py\n"
+        "--- a/src/a.py\n+++ b/src/a.py\n"
+        "@@ -1 +1 @@\n-old\n+new\n",
+        encoding="utf-8",
+    )
+    runner = hook if runtime == "claude" else native_hook
+    code, out = runner(repo, {
+        "tool_name": "Bash", "permission_mode": "default",
+        "tool_input": {"command": f"git apply {option} x.patch"},
+    })
+    assert code == 0 and "deny" not in out, out
+
+
+@pytest.mark.parametrize("runtime", ["claude", "codex"])
+def test_locked_git_apply_explicit_apply_keeps_write_classification(repo, runtime):
+    from pre_tool_use import bash_write_paths
+
+    (repo / "x.patch").write_text(
+        "diff --git a/src/a.py b/src/a.py\n"
+        "--- a/src/a.py\n+++ b/src/a.py\n"
+        "@@ -1 +1 @@\n-old\n+new\n",
+        encoding="utf-8",
+    )
+    command = "git apply --apply --stat x.patch"
+    assert bash_write_paths(command, repo) == []
+    runner = hook if runtime == "claude" else native_hook
+    code, out = runner(repo, {
+        "tool_name": "Bash", "permission_mode": "default",
+        "tool_input": {"command": command},
+    })
+    assert code == 0 and "deny" in out and "git apply" in out, out
+
+
+@pytest.mark.parametrize("runtime", ["claude", "codex"])
+@pytest.mark.parametrize("command", [
+    "make build 2>&1",
+    "echo x >&2",
+    "echo x >&-",
+    "echo x > /dev/null",
+    "echo '>' src/a.py",
+])
+def test_locked_bash_fd_redirects_and_quoted_operators_are_allowed(
+        repo, runtime, command):
+    from pre_tool_use import bash_write_paths
+
+    if command == "echo x > /dev/null":
+        assert bash_write_paths(command, repo) == []
+    runner = hook if runtime == "claude" else native_hook
+    code, out = runner(repo, {
+        "tool_name": "Bash", "permission_mode": "default",
+        "tool_input": {"command": command},
+    })
+    assert code == 0 and "deny" not in out, out
+
+
+@pytest.mark.parametrize("runtime", ["claude", "codex"])
+@pytest.mark.parametrize("command", [
     "echo 'a;b' > src/a.py",
     "printf 'a|b' > src/a.py",
     "echo 'a & b' > src/a.py",
@@ -8596,7 +8883,7 @@ def test_locked_bash_quoted_separators_and_parse_failures_are_denied(
 
 
 @pytest.mark.parametrize("runtime", ["claude", "codex"])
-def test_locked_git_apply_path_options_are_applied_to_numstat(repo, runtime):
+def test_locked_git_apply_path_options_are_opaque(repo, runtime):
     from pre_tool_use import bash_write_paths
 
     (repo / "x.patch").write_text(
@@ -8606,14 +8893,14 @@ def test_locked_git_apply_path_options_are_applied_to_numstat(repo, runtime):
         encoding="utf-8",
     )
     command = "git apply --directory=src -p2 x.patch"
-    assert bash_write_paths(command, repo) == ["src/a.py"]
+    assert bash_write_paths(command, repo) == []
 
     runner = hook if runtime == "claude" else native_hook
     code, out = runner(repo, {
         "tool_name": "Bash", "permission_mode": "default",
         "tool_input": {"command": command},
     })
-    assert code == 0 and "deny" in out, out
+    assert code == 0 and "deny" in out and "git apply" in out, out
 
 
 @pytest.mark.parametrize("command", [
@@ -8658,19 +8945,28 @@ def test_unreadable_git_apply_patch_is_treated_as_opaque(repo, runtime):
 
 
 @pytest.mark.parametrize("runtime", ["claude", "codex"])
+def test_sed_expression_option_does_not_become_write_target(repo, runtime):
+    runner = hook if runtime == "claude" else native_hook
+    code, out = runner(repo, {
+        "tool_name": "Bash", "permission_mode": "default",
+        "tool_input": {"command": "sed -i -e s/x/y/ plans/note.md"},
+    })
+    assert code == 0 and "deny" not in out, out
+
+
+@pytest.mark.parametrize("runtime", ["claude", "codex"])
 @pytest.mark.parametrize("command", [
-    "sed -i -e s/x/y/ plans/note.md",
     "sed -i --expression s/x/y/ plans/note.md",
     "sed -i -f src/script.sed plans/note.md",
     "sed -i --file src/script.sed plans/note.md",
 ])
-def test_sed_script_options_do_not_become_write_targets(repo, runtime, command):
+def test_sed_non_plain_script_options_are_refused(repo, runtime, command):
     runner = hook if runtime == "claude" else native_hook
     code, out = runner(repo, {
         "tool_name": "Bash", "permission_mode": "default",
         "tool_input": {"command": command},
     })
-    assert code == 0 and "deny" not in out, out
+    assert code == 0 and "the write lock only allows plain file writes" in out, out
 
 
 def test_multi_file_sed_targets_reach_narrowed_scope_check(repo):
@@ -8706,6 +9002,69 @@ def test_bash_lock_uses_lexical_product_path_for_symlink_leaf(repo, runtime):
         "tool_input": {"command": "echo x > src/product-link.py"},
     })
     assert code == 0 and "deny" in out, out
+
+
+@pytest.mark.parametrize("runtime", ["claude", "codex"])
+def test_git_restore_lock_checks_lexical_symlink_path(repo, runtime):
+    target = repo / "plans" / "note.md"
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text("note\n", encoding="utf-8")
+    link = repo / "src" / "a.py"
+    link.parent.mkdir(parents=True, exist_ok=True)
+    link.symlink_to("../plans/note.md")
+    git(repo, "add", "src/a.py")
+
+    runner = hook if runtime == "claude" else native_hook
+    code, out = runner(repo, {
+        "tool_name": "Bash", "permission_mode": "default",
+        "tool_input": {"command": "git restore src/a.py"},
+    })
+    assert code == 0 and "deny" in out, out
+
+
+@pytest.mark.parametrize("runtime", ["claude", "codex"])
+def test_bash_and_git_lock_refuse_dangling_symlink_leaf(repo, runtime):
+    link = repo / "src" / "dangling.py"
+    link.parent.mkdir(parents=True, exist_ok=True)
+    link.symlink_to("../plans/missing.md")
+    git(repo, "add", "src/dangling.py")
+
+    runner = hook if runtime == "claude" else native_hook
+    for command in (
+        "echo x > src/dangling.py",
+        "git restore src/dangling.py",
+    ):
+        code, out = runner(repo, {
+            "tool_name": "Bash", "permission_mode": "default",
+            "tool_input": {"command": command},
+        })
+        assert code == 0 and "deny" in out, (command, out)
+
+
+@pytest.mark.parametrize("runtime", ["claude", "codex"])
+def test_sed_backup_suffix_is_opaque(repo, runtime):
+    from pre_tool_use import bash_write_paths
+
+    assert bash_write_paths(
+        "sed -i '' 's/x/y/' plans/note.md", repo,
+    ) == ["plans/note.md"]
+    assert bash_write_paths("sed -Ei s/x/y/ src/a.py", repo) == ["src/a.py"]
+    runner = hook if runtime == "claude" else native_hook
+    code, out = runner(repo, {
+        "tool_name": "Bash", "permission_mode": "default",
+        "tool_input": {"command": "sed -Ei s/x/y/ src/a.py"},
+    })
+    assert code == 0 and "deny" in out, out
+    for command in (
+        "sed -i .bak 's/x/y/' plans/note.md",
+        "sed -i.bak 's/x/y/' plans/note.md",
+        "sed --in-place=.bak 's/x/y/' plans/note.md",
+    ):
+        code, out = runner(repo, {
+            "tool_name": "Bash", "permission_mode": "default",
+            "tool_input": {"command": command},
+        })
+        assert code == 0 and "deny" in out, (command, out)
 
 
 def mark_harness_source(repo: Path) -> None:
@@ -8850,7 +9209,10 @@ def test_harness_degraded_cannot_delete_the_repo_kind_marker(repo):
             "tool_input": {"command": command},
         })
         assert code == 0 and "deny" in out, command
-        assert "repo-kind marker" in out or "recorded state" in out, command
+        if command == "rm -r .factory":
+            assert "the write lock only allows plain file writes" in out
+        else:
+            assert "repo-kind marker" in out or "recorded state" in out, command
     code, out = hook(repo, {
         "tool_name": "Write", "permission_mode": "default",
         "tool_input": {"file_path": str(repo / ".factory" / "harness-source.json")},
@@ -8897,10 +9259,9 @@ def test_degraded_pins_repo_kind_so_marker_deletion_cannot_escape_budget(repo):
     assert code == 0, out
 
 
-def test_harness_quickfix_allows_benign_root_destination(repo):
-    # The ancestor-marker guard must fire only on marker DELETION, not on a
-    # benign create-into-root destination like `cp/mv <src> .` (whose parsed
-    # target is the repo root). Those are ordinary product writes, budget-claimed.
+def test_harness_quickfix_refuses_root_destination_product_write(repo):
+    # A directory destination expands to a product file; quickfix refuses
+    # product writes.
     mark_harness_source(repo)
     code, out = run(repo, "forge.py", "quickfix", "start", "benign")
     assert code == 0, out
@@ -8909,17 +9270,17 @@ def test_harness_quickfix_allows_benign_root_destination(repo):
             "tool_name": "Bash", "permission_mode": "default",
             "tool_input": {"command": command},
         })
-        assert code == 0 and "repo-kind marker" not in out, command
+        assert code == 0 and "deny" in out, (command, out)
 
 
-def test_harness_degraded_refuses_opaque_machinery_deletes(repo):
+def test_harness_degraded_refuses_opaque_machinery_deletes(repo, tmp_path):
     # The 5-file budget is only honest if each claimed slot is a bounded file. A
-    # recursive/globbed/brace-expanded DELETE of machinery would spend one slot on
-    # an unbounded set, so a quickfix refuses it; explicit single-file ops stay
-    # allowed, and — critically — read-OUT copies (product source, external dest)
-    # are NOT blocked (they modify nothing in the repo).
+    # recursive/globbed operation INTO machinery is unbounded; copies out of
+    # machinery do not write in the repo and stay allowed.
     mark_harness_source(repo)
     (repo / "factory" / "scripts").mkdir(parents=True, exist_ok=True)
+    copy_tree = tmp_path / "tree"
+    copy_tree.mkdir()
     code, out = run(repo, "forge.py", "mode", "degraded", "start",
                     "--reason", "opaque")
     assert code == 0, out
@@ -8927,7 +9288,7 @@ def test_harness_degraded_refuses_opaque_machinery_deletes(repo):
                     "rm factory/scripts/*.py",
                     "rm factory/scripts/f{1..6}.py",       # brace expansion
                     "git rm -r factory/scripts",
-                    "cp -R /tmp/tree factory/scripts/new",  # recursive copy INTO machinery
+                    f"cp -R {copy_tree} factory/scripts/new",  # recursive copy INTO machinery
                     "cp /tmp/x/*.py factory/scripts/"):     # glob source INTO machinery
         code, out = hook(repo, {
             "tool_name": "Bash", "permission_mode": "default",
@@ -8935,14 +9296,18 @@ def test_harness_degraded_refuses_opaque_machinery_deletes(repo):
         })
         assert code == 0 and "deny" in out, command
     for command in ("rm factory/scripts/one.py",              # explicit single file
-                    "sed -i 's/foo.*/bar/' factory/scripts/x.py",  # sed regex, not a glob
-                    "cp -R factory/scripts /tmp/backup",      # read-OUT: nothing written in-repo
+                    "sed -i 's/foo.*/bar/' factory/scripts/x.py",  # sed regex isn't a glob
                     "cp factory/scripts/*.py /tmp/backup"):   # read-OUT glob source
         code, out = hook(repo, {
             "tool_name": "Bash", "permission_mode": "default",
             "tool_input": {"command": command},
         })
         assert code == 0 and "deny" not in out, command
+    code, out = hook(repo, {
+        "tool_name": "Bash", "permission_mode": "default",
+        "tool_input": {"command": "cp -R factory/scripts /tmp/backup"},
+    })
+    assert code == 0 and "the write lock only allows plain file writes" in out, out
 
 
 def test_harness_degraded_counts_each_file_copied_into_a_machinery_dir(repo):
