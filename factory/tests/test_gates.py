@@ -1858,10 +1858,12 @@ def test_pr_ready_legacy_fixed_review_requires_upgrade(repo, tmp_path):
     assert signed_off(repo)
     code, _ = intake(repo)
     assert code == 0
-    make_legacy_story(repo)
     code, out = save_plan(repo, tmp_path)
     assert code == 0, out
     record_skeleton_then_frontier(repo, DECOMP["tasks"])
+    # Plan save and decomposition create scoped state. Re-convert after both so
+    # the legacy fixture writes its fixed reviews under .factory/reviews.
+    make_legacy_story(repo)
     write_passing_artifacts(repo, publish_selected=False, legacy_fixed=True)
     legacy_reviews = repo / ".factory/reviews"
     task_reviews = story_state(repo, "ENG-1") / "tasks/T1/reviews"
@@ -9827,7 +9829,8 @@ def test_plan_save_requires_decision_coverage_and_no_open_contradiction(repo, tm
     metadata = json.loads(
         (repo / ".factory" / "stories" / "ENG-1" / "plan-meta.json").read_text()
     )
-    assert metadata["decisions_reviewed"] == active_decision_ids(repo)
+    assert metadata["decisions_in_force"] == active_decision_ids(repo)
+    assert "decisions_reviewed" not in metadata
 
     draft.write_text(plan_draft(repo, decisions=[]))
     record_grill(repo, "plan", digest_of=draft)
@@ -12147,18 +12150,35 @@ def test_board_reads_plan_metadata_and_body_from_separate_files(repo: Path):
         "issue": "ENG-1", "story": "ENG-1", "title": "Invoices",
         "status": "awaiting-approval", "saved": "2026-09-24T00:00:00+00:00",
         "plan_file": plan.relative_to(repo).as_posix(),
-        "decisions_reviewed": active_decision_ids(repo),
+        "decisions_in_force": active_decision_ids(repo),
     }
     metadata_path.write_text(json.dumps(metadata, indent=2) + "\n", encoding="utf-8")
 
     detail = story_detail(repo, "ENG-1")
     assert detail["plan"]["status"] == "awaiting-approval"
-    assert detail["plan"]["decisions_reviewed"] == active_decision_ids(repo)
+    assert detail["plan"]["decisions_in_force"] == active_decision_ids(repo)
     assert detail["plan_body"] == body
 
+    metadata.pop("decisions_in_force")
+    metadata["decisions_reviewed"] = active_decision_ids(repo)
     metadata["status"] = "approved"
     metadata_path.write_text(json.dumps(metadata, indent=2) + "\n", encoding="utf-8")
-    assert story_detail(repo, "ENG-1")["plan"]["status"] == "approved"
+    detail = story_detail(repo, "ENG-1")
+    assert detail["plan"]["status"] == "approved"
+    assert detail["plan"]["decisions_reviewed"] == active_decision_ids(repo)
+
+    metadata_path.unlink()
+    lib = load_factory_lib(repo)
+    state_path = lib.run_state_path(repo)
+    state = json.loads(state_path.read_text(encoding="utf-8"))
+    state.update({
+        "issue_key": "ENG-1", "story": "ENG-1", "plan_status": "approved",
+        "plan_file": plan.relative_to(repo).as_posix(),
+    })
+    lib.dump_json(state_path, state)
+    detail = story_detail(repo, "ENG-1")
+    assert detail["plan"]["status"] == "approved"
+    assert detail["plan"]["plan_file"] == plan.relative_to(repo).as_posix()
 
 
 def test_board_task_dossiers_survive_object_form_required_tests(repo):

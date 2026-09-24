@@ -268,9 +268,10 @@ def test_brief_plan_saves_body_only_and_claude_approves_exact_text(
     metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
     assert set(metadata) == {
         "issue", "story", "title", "status", "saved", "plan_file",
-        "decisions_reviewed",
+        "decisions_in_force",
     }
-    assert metadata["decisions_reviewed"] == active_decision_ids(repo)
+    assert metadata["decisions_in_force"] == active_decision_ids(repo)
+    assert "decisions_reviewed" not in metadata
     candidate = approval.eligible_candidates(repo)[0]
     event = _event(candidate)
     assert event["tool_input"]["plan"] == exact_text
@@ -279,6 +280,62 @@ def test_brief_plan_saves_body_only_and_claude_approves_exact_text(
     assert saved.read_text(encoding="utf-8") == exact_text
     assert json.loads(metadata_path.read_text(encoding="utf-8"))["status"] == "approved"
     assert json.loads(load_factory_lib(repo).run_state_path(repo).read_text())["plan_status"] == "approved"
+
+
+def test_brief_plan_refuses_decision_accepted_after_its_grill(repo: Path, tmp_path: Path):
+    sign_off(repo)
+    code, output = intake(repo)
+    assert code == 0, output
+    brief = (
+        "## What and why\n\nPeople need a clear invoice workflow.\n\n"
+        "## What changes for you\n\nInvoices are easier to review.\n\n"
+        "## Done when\n\nA user can create and review an invoice.\n\n"
+        "## Risks\n\nExisting records must remain readable.\n\n"
+        "## Technical approach\n\nUse the existing invoice service.\n\n"
+        "## Task decomposition\n\nImplement the user flow and its checks.\n\n"
+        "## Verify plan\n\nRun the focused invoice checks.\n"
+    )
+    draft = tmp_path / "brief-plan.md"
+    draft.write_text(brief, encoding="utf-8")
+    code, output = record_grill(repo, "plan", digest_of=draft)
+    assert code == 0, output
+    code, output = run(repo, "forge.py", "decision", "new", "after-grill",
+                       "--repo", str(repo))
+    assert code == 0, output
+    code, output = run(repo, "forge.py", "decision", "accept", "after-grill",
+                       "--by", "PM", "--repo", str(repo))
+    assert code == 0, output
+
+    code, output = run(
+        repo, "forge.py", "plan", "save", "--from", str(draft),
+        "--story", "ENG-1",
+    )
+
+    assert code != 0
+    assert "a decision was accepted after the plan grill; re-grill" in output
+    assert not list((repo / "plans" / "active").glob("*.md"))
+
+
+def test_body_only_plan_approval_uses_matching_run_state(repo: Path):
+    candidate = _story_candidate(repo)
+    body = "# Brief plan\n\nApproved exact body.\n"
+    candidate.path.write_text(body, encoding="utf-8")
+    lib = load_factory_lib(repo)
+    digest = lib.plan_digest_without_assumptions(candidate.path)
+    grill_path = lib.evidence_path(repo, candidate.story, "grills/plan.json")
+    grill = json.loads(grill_path.read_text(encoding="utf-8"))
+    grill["input_sha256"] = digest
+    lib.dump_json(grill_path, grill)
+    metadata_path = repo / ".factory" / "stories" / candidate.story / "plan-meta.json"
+    metadata_path.unlink(missing_ok=True)
+
+    candidate = approval._story_candidate(repo)
+    assert candidate is not None
+    approval.record_native_approval(repo, _event(candidate), runtime="claude")
+
+    assert candidate.path.read_text(encoding="utf-8") == body
+    assert not metadata_path.exists()
+    assert json.loads(lib.run_state_path(repo).read_text())["plan_status"] == "approved"
 
 
 @pytest.mark.parametrize("body", ["{not json\n", "[]\n"])

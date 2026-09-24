@@ -223,6 +223,12 @@ def _story_candidate(
     metadata = load_json(metadata_path, default={})
     if not isinstance(metadata, dict) or metadata.get("plan_file") != state.get("plan_file"):
         metadata = {}
+    if (not metadata and not metadata_path.exists()
+            and state.get("plan_file") == path.relative_to(base).as_posix()):
+        metadata = {
+            "issue": issue, "story": story, "status": status,
+            "plan_file": state["plan_file"],
+        }
     from .plans import parse_frontmatter
 
     fields, _ = parse_frontmatter(path.read_text(encoding="utf-8"))
@@ -458,6 +464,8 @@ def _approve_story(base: Path, candidate: ApprovalCandidate, record: dict[str, A
     text = candidate.path.read_text(encoding="utf-8")
     metadata_path = story_dir(base, candidate.story) / "plan-meta.json"
     metadata = load_json(metadata_path, default={})
+    from .plans import FRONTMATTER
+
     if isinstance(metadata, dict) and metadata.get("plan_file") == candidate.path.relative_to(base).as_posix():
         _require_safe_destination(base, metadata_path, required=True)
         if metadata.get("status") not in {"awaiting-approval", "approved"}:
@@ -468,6 +476,13 @@ def _approve_story(base: Path, candidate: ApprovalCandidate, record: dict[str, A
 
         metadata["status"] = "approved"
         write_plan_metadata(base, candidate.story, metadata)
+    elif not metadata_path.exists() and not FRONTMATTER.match(text):
+        state = _strict_run_state(base)
+        if (state.get("plan_file") != candidate.path.relative_to(base).as_posix()
+                or state.get("plan_status") not in {"awaiting-approval", "approved"}):
+            raise ApprovalRefused(
+                "story plan has neither awaiting-approval nor approved status"
+            )
     else:
         updated, count = re.subn(
             r"(?m)^(status:\s*)awaiting-approval\s*$", r"\1approved", text, count=1,

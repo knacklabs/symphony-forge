@@ -48,6 +48,7 @@ def _plan_records(base: Path, location: str) -> list[dict]:
         (path.relative_to(base).as_posix(), fscache.file_stamp(path))
         for path in metadata_paths
     )
+    run_state_stamp = fscache.file_stamp(base / ".factory" / "run.json")
 
     def compute() -> list[dict]:
         records = []
@@ -63,7 +64,7 @@ def _plan_records(base: Path, location: str) -> list[dict]:
 
     records = fscache.cached(
         f"plan_records:{base}:{location}",
-        (fscache.dir_stamp(directory, ".md"), metadata_stamp), compute,
+        (fscache.dir_stamp(directory, ".md"), metadata_stamp, run_state_stamp), compute,
     )
     # Hand out copies: a caller mutating a record must not corrupt the memo.
     return [dict(record) for record in records]
@@ -789,9 +790,13 @@ def approval_readiness(base: Path, detail: dict) -> list[dict]:
     plan = detail.get("plan")
     body = detail.get("plan_body") or ""
     grill = (detail.get("evidence", {}).get("grills") or {}).get("plan")
-    reviewed = set(plan.get("decisions_reviewed") or []) if plan else set()
+    decision_field = (
+        "decisions_reviewed"
+        if plan and "decisions_reviewed" in plan else "decisions_in_force"
+    )
+    decisions = set(plan.get(decision_field) or []) if plan else set()
     active = {d["id"] for d in active_decisions(base)}
-    missing = sorted(active - reviewed)
+    missing = sorted(active - decisions)
     contradictions = [s["id"] for s in open_signals(base)
                       if s.get("kind") == "contradiction"]
     checks.append({
@@ -806,11 +811,19 @@ def approval_readiness(base: Path, detail: dict) -> list[dict]:
         "fix": "grill the plan and record the result — ask for it; save refuses without a passing grill"})
     checks.append({
         "ok": not missing,
-        "label": "decisions reviewed" + (f" — {len(missing)} missing" if missing else ""),
+        "label": (
+            ("decisions reviewed" if decision_field == "decisions_reviewed"
+             else "decisions in force")
+            + (f" — {len(missing)} missing" if missing else "")
+        ),
         # The ids are the evidence, but sixteen of them inline is a wall of
         # text; the board discloses them behind the count.
         "detail": missing,
-        "fix": "the plan must attest every active decision — ask for the missing ones"})
+        "fix": (
+            "the plan must attest every active decision — ask for the missing ones"
+            if decision_field == "decisions_reviewed"
+            else "re-grill and save the brief plan against the active decisions in force"
+        )})
     checks.append({
         "ok": ("## Surface Impact" in body
                or "## What changes for you" in body),

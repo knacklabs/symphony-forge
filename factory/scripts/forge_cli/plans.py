@@ -96,7 +96,7 @@ def plan_metadata_index(base: Path) -> dict[str, dict[str, Any]]:
 def read_plan_metadata(
     base: Path, path: Path, metadata_index: dict[str, dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
-    """Prefer protected metadata for this plan, with legacy frontmatter fallback."""
+    """Prefer protected metadata, then the matching run pointer, then frontmatter."""
     fields, _ = parse_frontmatter(path.read_text(encoding="utf-8"))
     index = metadata_index if metadata_index is not None else plan_metadata_index(base)
     metadata = index.get(path.relative_to(base).as_posix())
@@ -106,6 +106,23 @@ def read_plan_metadata(
             if Path(str(entry.get("plan_file", ""))).name == path.name
         ]
         metadata = matches[0] if len(matches) == 1 else None
+    if metadata is None:
+        state = load_json(run_state_path(base), default={})
+        relative = path.relative_to(base).as_posix()
+        if not isinstance(state, dict):
+            state = {}
+        story = state.get("story") or state.get("issue_key")
+        if not isinstance(story, str) or not story:
+            story = None
+        metadata_path = plan_meta_path(base, story) if story else None
+        if (state.get("plan_file") == relative and metadata_path is not None
+                and not metadata_path.exists()):
+            metadata = {
+                "issue": state.get("issue_key"),
+                "story": story,
+                "status": state.get("plan_status"),
+                "plan_file": relative,
+            }
     return {**fields, **metadata} if metadata else fields
 
 
@@ -128,9 +145,9 @@ def write_plan_metadata(base: Path, story: str, metadata: dict[str, Any]) -> Non
 def _require_decision_attestation(
     base: Path, fields: dict[str, Any], *, has_frontmatter: bool,
 ) -> list[str]:
+    if not has_frontmatter:
+        return []
     active_ids = active_decision_ids(base)
-    if not has_frontmatter and "decisions_reviewed" not in fields:
-        return active_ids
     if "decisions_reviewed" not in fields or not isinstance(
         fields["decisions_reviewed"], list
     ):
@@ -157,13 +174,19 @@ def _require_decision_attestation(
 
 def _require_matching_plan_grill(
     base: Path, plan: Path, issue: str, *, awaiting: bool = False,
-) -> None:
+    check_decisions_in_force: bool = False,
+) -> tuple[dict[str, Any], list[str]]:
+    grill = load_json(evidence_path(base, issue, "grills/plan.json"), default={})
+    decisions_in_force = []
+    if (check_decisions_in_force and isinstance(grill, dict)
+            and grill.get("issue") == issue
+            and grill.get("input_sha256") == plan_digest_without_assumptions(plan)):
+        decisions_in_force = _require_decisions_in_force_at_grill(base, grill)
     require_grill(
         base, "plan",
         ("docs/product/", "docs/decisions/", "docs/architecture/"),
         ignore_names=("client-signoff", "epics-approved"),
     )
-    grill = load_json(evidence_path(base, issue, "grills/plan.json"), default={})
     if grill.get("issue") != issue:
         fail(f"the recorded plan grill is for {grill.get('issue')!r}, not "
              f"{issue!r} — re-grill the current plan, then approve it")
@@ -173,6 +196,30 @@ def _require_matching_plan_grill(
                  "plan. Re-grill the awaiting plan, then approve it again.")
         fail(f"the plan grill was not recorded against THIS input ({plan.name}) — "
              "re-grill the current version, then approve it again")
+    return grill, decisions_in_force
+
+
+def _require_decisions_in_force_at_grill(
+    base: Path, grill: dict[str, Any],
+) -> list[str]:
+    """Return active decisions present before the matching grill was recorded."""
+    issue = str(grill.get("issue") or "")
+    try:
+        grill_stamp = evidence_path(base, issue, "grills/plan.json").stat().st_mtime_ns
+    except OSError:
+        fail("could not establish the plan grill time; re-grill")
+    active = []
+    for record in decision_records(base):
+        if record["status"] != "accepted":
+            continue
+        try:
+            changed_at = record["path"].stat().st_mtime_ns
+        except OSError:
+            fail("could not establish decision timing against the plan grill; re-grill")
+        if changed_at > grill_stamp:
+            fail("a decision was accepted after the plan grill; re-grill")
+        active.append(str(record["id"]))
+    return active
 
 
 def _stages_progress(base: Path, issue: str, location: str) -> str:
@@ -258,7 +305,12 @@ def cmd_save(args: argparse.Namespace) -> None:
     # Approval requires the plan to have been GRILLED (grill-me / griller.md
     # --gate plan): fresh, passing, for THIS task, and bound by digest to
     # THIS draft — grilling one version never approves an edited one.
-    _require_matching_plan_grill(base, source, issue)
+    source_text = source.read_text(encoding="utf-8")
+    fields, body = parse_frontmatter(source_text)
+    has_frontmatter = bool(FRONTMATTER.match(source_text))
+    _, decisions_in_force = _require_matching_plan_grill(
+        base, source, issue, check_decisions_in_force=not has_frontmatter,
+    )
     contradictions = [
         signal for signal in open_signals(base) if signal.get("kind") == "contradiction"
     ]
@@ -268,9 +320,6 @@ def cmd_save(args: argparse.Namespace) -> None:
             + ", ".join(signal["id"] for signal in contradictions)
             + ". Resolve the contradiction before approving the plan."
         )
-    source_text = source.read_text(encoding="utf-8")
-    fields, body = parse_frontmatter(source_text)
-    has_frontmatter = bool(FRONTMATTER.match(source_text))
     reviewed = _require_decision_attestation(
         base, fields, has_frontmatter=has_frontmatter,
     )
@@ -310,8 +359,11 @@ def cmd_save(args: argparse.Namespace) -> None:
         "status": status,
         "saved": saved,
         "plan_file": dest.relative_to(base).as_posix(),
-        "decisions_reviewed": reviewed,
     }
+    if has_frontmatter:
+        metadata["decisions_reviewed"] = reviewed
+    else:
+        metadata["decisions_in_force"] = decisions_in_force
     write_plan_metadata(base, story, metadata)
     previous_path = Path(previous_plan_file) if isinstance(previous_plan_file, str) else None
     if (previous_path and previous_plan_file != dest_relative
