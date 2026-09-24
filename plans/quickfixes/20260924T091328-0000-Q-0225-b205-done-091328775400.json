@@ -1,0 +1,74 @@
+{
+  "event": "done",
+  "id": "Q-0225-b205",
+  "profile": "lite",
+  "by": "Ravi Kiran Vemula",
+  "reason": "Legacy task cold reads without a contract fingerprint must be releasable when their brief changed",
+  "base_sha": "ee0351ef9dd0b6c563a758d8e9d872ccd2ad1a70",
+  "started_at": "2026-09-24T09:07:11+00:00",
+  "completed_at": "2026-09-24T09:13:28+00:00",
+  "files": [
+    "factory/scripts/forge_cli/grill.py",
+    "factory/tests/test_regrill_scope.py"
+  ],
+  "reviews": {
+    "quality": {
+      "generated_by": "autoreview",
+      "score": 10,
+      "summary": "quality lens over Q-0225-b205 (2 product path(s), ee0351e..0e0270e, Codex via the autoreview skill): 0 blocking, 0 non-blocking. The legacy task path now compares brief hashes when a recorded contract hash is absent. The added test covers both changed and unchanged briefs. No task-specific plan contracts apply; the assessment is limited to the supplied diff.",
+      "blocking_findings": [],
+      "non_blocking_findings": [],
+      "recommendation": "approve",
+      "reviewed_scope": [
+        "factory/scripts/forge_cli/grill.py",
+        "factory/tests/test_regrill_scope.py"
+      ],
+      "skills_used": [],
+      "contract_verdicts": [],
+      "review_base_sha": "ee0351ef9dd0b6c563a758d8e9d872ccd2ad1a70",
+      "branch_diff_digest": "f1677598b39676e8fa34533761be0e6f35ea276a071ed34491b6729c09159c6e",
+      "commit": "0e0270ee1e979e3358dff39b9983ff18edf3e071",
+      "aspect": "quality",
+      "residual_risks": [],
+      "recorded_at": "2026-09-24T09:13:13+00:00"
+    },
+    "performance": {
+      "generated_by": "autoreview",
+      "score": 10,
+      "summary": "performance lens over Q-0225-b205 (2 product path(s), ee0351e..0e0270e, Codex via the autoreview skill): 0 blocking, 0 non-blocking. The change adds no material work to the existing row scan.",
+      "blocking_findings": [],
+      "non_blocking_findings": [],
+      "recommendation": "approve",
+      "reviewed_scope": [
+        "factory/scripts/forge_cli/grill.py",
+        "factory/tests/test_regrill_scope.py"
+      ],
+      "skills_used": [],
+      "review_base_sha": "ee0351ef9dd0b6c563a758d8e9d872ccd2ad1a70",
+      "branch_diff_digest": "f1677598b39676e8fa34533761be0e6f35ea276a071ed34491b6729c09159c6e",
+      "commit": "0e0270ee1e979e3358dff39b9983ff18edf3e071",
+      "aspect": "performance",
+      "residual_risks": [],
+      "recorded_at": "2026-09-24T09:13:13+00:00"
+    },
+    "security": {
+      "generated_by": "autoreview",
+      "score": 10,
+      "summary": "security lens over Q-0225-b205 (2 product path(s), ee0351e..0e0270e, Codex via the autoreview skill): 0 blocking, 0 non-blocking. The diff introduces no new trust boundary or credential handling. No concrete security defect is evident.",
+      "blocking_findings": [],
+      "non_blocking_findings": [],
+      "recommendation": "approve",
+      "reviewed_scope": [
+        "factory/scripts/forge_cli/grill.py",
+        "factory/tests/test_regrill_scope.py"
+      ],
+      "skills_used": [],
+      "review_base_sha": "ee0351ef9dd0b6c563a758d8e9d872ccd2ad1a70",
+      "branch_diff_digest": "f1677598b39676e8fa34533761be0e6f35ea276a071ed34491b6729c09159c6e",
+      "commit": "0e0270ee1e979e3358dff39b9983ff18edf3e071",
+      "aspect": "security",
+      "residual_risks": [],
+      "recorded_at": "2026-09-24T09:13:13+00:00"
+    }
+  }
+}
