@@ -1,0 +1,12 @@
+{
+  "event": "open",
+  "id": "Q-0218-755a",
+  "profile": "lite",
+  "reason": "Full-suite breakage after merges (sfA)",
+  "started_at": "2026-09-24T07:27:18+00:00",
+  "max_files": 5,
+  "files": [],
+  "harness_source": true,
+  "by": "Ravi Kiran Vemula",
+  "base_sha": "87c66118bb8c4464f63f4231cdf8dd18b03e70e0"
+}
