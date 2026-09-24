@@ -144,6 +144,10 @@ def _require_unshipped(
         fail(f"cannot check whether task {task_id} is unshipped without a story key")
     default_branch = _default_branch(base)
     marker = task_marker_path(key, task_id)
+    remotes = _git(base, "remote")
+    has_origin = remotes.returncode != 0 or "origin" in remotes.stdout.splitlines()
+    if not has_origin:
+        return
     fetched = _git(base, "fetch", "origin", default_branch)
     present = _git(base, "cat-file", "-e",
                    f"origin/{default_branch}:{marker.as_posix()}")
