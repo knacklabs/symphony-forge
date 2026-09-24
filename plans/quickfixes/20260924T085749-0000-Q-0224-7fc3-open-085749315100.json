@@ -1,0 +1,12 @@
+{
+  "event": "open",
+  "id": "Q-0224-7fc3",
+  "profile": "lite",
+  "reason": "Encoding-hygiene allowlist for the new git path decodes in pre_tool_use",
+  "started_at": "2026-09-24T08:57:49+00:00",
+  "max_files": 5,
+  "files": [],
+  "harness_source": true,
+  "by": "Ravi Kiran Vemula",
+  "base_sha": "b115343cde98d237257179c11383030e0368cb33"
+}

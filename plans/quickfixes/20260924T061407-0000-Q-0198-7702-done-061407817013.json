@@ -1,0 +1,91 @@
+{
+  "event": "done",
+  "id": "Q-0198-7702",
+  "profile": "lite",
+  "by": "Ravi Kiran Vemula",
+  "reason": "Verified review gap group g2-lite for task LEAN-FIXES (owner: fix P1/P2 now, parallel)",
+  "base_sha": "fd1c6740b1d083ad8beccd5e52f8b3f88d6eb9d7",
+  "started_at": "2026-09-23T17:19:43+00:00",
+  "completed_at": "2026-09-24T06:14:07+00:00",
+  "files": [
+    "factory/scripts/forge_cli/quickfix.py",
+    "factory/scripts/forge_cli/repo_kind.py",
+    "factory/tests/test_gates.py",
+    "factory/tests/test_review_in_parallel_groups.py"
+  ],
+  "reviews": {
+    "quality": {
+      "generated_by": "autoreview",
+      "score": 9,
+      "summary": "quality lens over Q-0198-7702 (4 product path(s), fd1c674..2ad1077, Codex via the autoreview skill): 0 blocking, 1 non-blocking. The dirty-worktree check now rejects ordinary docs edits that the Lite manifest excludes. No task-specific plan contracts apply.",
+      "blocking_findings": [],
+      "non_blocking_findings": [
+        {
+          "category": "regression",
+          "area": "factory/scripts/forge_cli",
+          "summary": "Preserve the product boundary when checking dirty files (factory/scripts/forge_cli/quickfix.py:400): When an ordinary `docs/reference.md` edit is uncommitted alongside a valid committed Lite fix, this filter returns the docs file as dirty, so `mode done` rejects the close as having uncommitted product changes.",
+          "file_path": "factory/scripts/forge_cli/quickfix.py",
+          "line": 400,
+          "title": "Preserve the product boundary when checking dirty files"
+        }
+      ],
+      "recommendation": "approve-with-caveats",
+      "reviewed_scope": [
+        "factory/scripts/forge_cli/quickfix.py",
+        "factory/scripts/forge_cli/repo_kind.py",
+        "factory/tests/test_gates.py",
+        "factory/tests/test_review_in_parallel_groups.py"
+      ],
+      "skills_used": [],
+      "contract_verdicts": [],
+      "review_base_sha": "fd1c6740b1d083ad8beccd5e52f8b3f88d6eb9d7",
+      "branch_diff_digest": "e3b0aff73a0a58ff1ddef3d26004aed8b453fdc4cddf8c5d8c7efaa157235240",
+      "commit": "2ad1077734028ccef81d15f88573dd7979fcb2c0",
+      "aspect": "quality",
+      "residual_risks": [],
+      "recorded_at": "2026-09-24T06:13:45+00:00"
+    },
+    "performance": {
+      "generated_by": "autoreview",
+      "score": 10,
+      "summary": "performance lens over Q-0198-7702 (4 product path(s), fd1c674..2ad1077, Codex via the autoreview skill): 0 blocking, 0 non-blocking. The supplied change shows no concrete production performance defect.",
+      "blocking_findings": [],
+      "non_blocking_findings": [],
+      "recommendation": "approve",
+      "reviewed_scope": [
+        "factory/scripts/forge_cli/quickfix.py",
+        "factory/scripts/forge_cli/repo_kind.py",
+        "factory/tests/test_gates.py",
+        "factory/tests/test_review_in_parallel_groups.py"
+      ],
+      "skills_used": [],
+      "review_base_sha": "fd1c6740b1d083ad8beccd5e52f8b3f88d6eb9d7",
+      "branch_diff_digest": "e3b0aff73a0a58ff1ddef3d26004aed8b453fdc4cddf8c5d8c7efaa157235240",
+      "commit": "2ad1077734028ccef81d15f88573dd7979fcb2c0",
+      "aspect": "performance",
+      "residual_risks": [],
+      "recorded_at": "2026-09-24T06:13:46+00:00"
+    },
+    "security": {
+      "generated_by": "autoreview",
+      "score": 10,
+      "summary": "security lens over Q-0198-7702 (4 product path(s), fd1c674..2ad1077, Codex via the autoreview skill): 0 blocking, 0 non-blocking. The supplied change shows no concrete security defect.",
+      "blocking_findings": [],
+      "non_blocking_findings": [],
+      "recommendation": "approve",
+      "reviewed_scope": [
+        "factory/scripts/forge_cli/quickfix.py",
+        "factory/scripts/forge_cli/repo_kind.py",
+        "factory/tests/test_gates.py",
+        "factory/tests/test_review_in_parallel_groups.py"
+      ],
+      "skills_used": [],
+      "review_base_sha": "fd1c6740b1d083ad8beccd5e52f8b3f88d6eb9d7",
+      "branch_diff_digest": "e3b0aff73a0a58ff1ddef3d26004aed8b453fdc4cddf8c5d8c7efaa157235240",
+      "commit": "2ad1077734028ccef81d15f88573dd7979fcb2c0",
+      "aspect": "security",
+      "residual_risks": [],
+      "recorded_at": "2026-09-24T06:13:46+00:00"
+    }
+  }
+}

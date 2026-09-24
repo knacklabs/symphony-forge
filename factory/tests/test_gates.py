@@ -7928,12 +7928,14 @@ def test_hook_denylist_fallback_on_unparseable_state_or_import(repo):
     assert code == 0 and json.loads(out) == {"continue": True}
 
 
-def test_hook_permits_git_native_resolution_on_unmerged_paths(repo):
+def test_hook_only_permits_allowlisted_git_forms_with_unmerged_paths(repo):
     make_unmerged(repo)
+    for command in ("git status", "git add -- src/conflict.ts"):
+        code, out = hook(repo, {"tool_name": "Bash", "tool_input": {"command": command}})
+        assert code == 0 and out == "{}\n", command
     for command in (
         "git checkout --ours -- src/conflict.ts",
         "git checkout --theirs -- src/conflict.ts",
-        "git add -- src/conflict.ts",
         "git rm -- src/conflict.ts",
         "git reset -- src/conflict.ts",
         "git merge --abort",
@@ -7941,7 +7943,7 @@ def test_hook_permits_git_native_resolution_on_unmerged_paths(repo):
         "git cherry-pick --abort",
     ):
         code, out = hook(repo, {"tool_name": "Bash", "tool_input": {"command": command}})
-        assert code == 0 and out == "{}\n", command
+        assert code == 0 and "deny" in out, command
 
 
 def test_hook_refuses_handwrite_and_merged_paths_during_merge(repo):
@@ -7951,11 +7953,8 @@ def test_hook_refuses_handwrite_and_merged_paths_during_merge(repo):
             "file_path": str(repo / "src" / "conflict.ts")}},
         {"tool_name": "Write", "tool_input": {
             "file_path": str(repo / "src" / "conflict.ts")}},
-        {"tool_name": "Bash", "tool_input": {"command": "git add -- src/app.ts"}},
         {"tool_name": "Bash", "tool_input": {
             "command": "git checkout --ours -- src/app.ts"}},
-        {"tool_name": "Bash", "tool_input": {
-            "command": "git add -- src/conflict.ts src/app.ts"}},
     ):
         code, out = hook(repo, payload)
         assert code == 0 and "deny" in out, payload
@@ -8550,14 +8549,79 @@ def test_bash_write_guard_classifies_only_real_product_writes(repo):
     assert not decision("echo x > plans/roadmap.json")
 
 
+@pytest.mark.parametrize("command", [
+    "cd docs && printf x > notes.md",
+    "pushd docs && git stash pop",
+])
+def test_bash_refuses_directory_change_with_write_target(repo, command):
+    code, out = hook(repo, {
+        "tool_name": "Bash", "permission_mode": "default",
+        "tool_input": {"command": command},
+    })
+    assert code == 0 and "run writes from the checkout without changing directory" in out, out
+
+    code, out = hook(repo, {
+        "tool_name": "Bash", "permission_mode": "default",
+        "tool_input": {"command": "cd docs && git status"},
+    })
+    assert code == 0 and "deny" not in out, out
+
+
 @pytest.mark.parametrize("runtime", ["claude", "codex"])
 @pytest.mark.parametrize("command", [
     "echo hi>src/a.py",
     "cmd 2>src/a.py",
     "cmd 2> src/a.py",
     "echo hi >| src/a.py",
+    "echo x >& src/a.py",
+    "echo x >&src/a.py",
+    "echo x &> src/a.py",
+    "echo x &>src/a.py",
+    "echo x &>> src/a.py",
+    "echo x &>>src/a.py",
+    "echo x <> src/a.py",
+    "echo x <>src/a.py",
+    "echo x >|src/a.py",
+    "echo x 3>& src/a.py",
+    "echo x 3>&src/a.py",
     "git checkout HEAD -- src/a.py",
     "git restore src/a.py",
+    "git restore --pathspec-from-file=src/paths.txt",
+    "git restore --pathspec-from-file src/paths.txt",
+    "git checkout --pathspec-from-file=src/paths.txt",
+    "git checkout --pathspec-from-file src/paths.txt",
+    "git rm --pathspec-from-file=src/paths.txt",
+    "git checkout topic",
+    "git checkout --force topic",
+    "git checkout --discard-changes topic",
+    "git switch topic",
+    "git reset --hard HEAD",
+    "git reset --merge",
+    "git reset --keep",
+    "git stash pop",
+    "git stash apply",
+    "git stash push",
+    "git stash save message",
+    "git restore -p",
+    "git --work-tree=/x restore -- f",
+    "git -Csrc restore -- f",
+    "git checkout HEAD -- src",
+    "git apply",
+    "git diff --output=src/diff.patch",
+    "git branch -D topic",
+    "git tag -d release",
+    "git remote set-url origin https://example.invalid/repo.git",
+    "git config --unset user.name",
+    "git reflog expire --expire=now --all",
+    "git worktree remove ../other",
+    "git notes add -m note HEAD",
+    "git symbolic-ref --delete refs/heads/topic",
+    "git clean -fd",
+    "git merge topic",
+    "git rebase topic",
+    "git pull",
+    "git cherry-pick deadbeef",
+    "git revert deadbeef",
     "sed -i s/x/y/ src/a.py plans/note.md",
     "git apply x.patch",
 ])
@@ -8579,6 +8643,229 @@ def test_locked_bash_write_shapes_are_denied(repo, runtime, command):
 
 @pytest.mark.parametrize("runtime", ["claude", "codex"])
 @pytest.mark.parametrize("command", [
+    "cp -t d f", "env -C d touch f", "chmod -R 777 d",
+    "cp --target-directory=d f", "cp -a a b", "rm -r f",
+    "sed -i.bak 's/x/y/' f", "env MODE=test touch f",
+    "cd d && touch f", "pushd d && touch f", "sudo -u root touch f",
+    "xargs touch f", "xargs sh -c 'touch f'",
+    "find . -exec touch f \\;", "find . -exec sh -c 'touch f' \\;",
+    "env -S 'touch f'",
+])
+def test_locked_writer_options_and_wrappers_are_refused(repo, runtime, command):
+    runner = hook if runtime == "claude" else native_hook
+    code, out = runner(repo, {
+        "tool_name": "Bash", "permission_mode": "default",
+        "tool_input": {"command": command},
+    })
+    assert code == 0 and (
+        "the write lock only allows plain file writes; use a Lite window or "
+        "`forge delegate` for this command"
+    ) in out, (command, out)
+
+
+@pytest.mark.parametrize("runtime", ["claude", "codex"])
+@pytest.mark.parametrize("command", [
+    "git status", "git log -1", "git diff --stat", "git show HEAD",
+    "git rev-parse HEAD", "git ls-files", "git ls-tree HEAD",
+    "git cat-file -t HEAD", "git blame -- src/app.ts", "git grep app",
+    "git describe --always", "git merge-base HEAD HEAD", "git shortlog -s",
+    "git reflog", "git reflog show", "git branch --show-current",
+    "git branch -a", "git tag --list", "git tag -l 'v*'", "git branch",
+    "git tag", "git remote -v", "git remote get-url origin",
+    "git config --get user.name", "git config --global --list",
+    "git worktree list --porcelain", "git fetch --prune origin",
+    "git stash list", "git stash show", "git notes list",
+    "git notes show HEAD", "git for-each-ref", "git symbolic-ref HEAD",
+    "git check-ignore README.md", "git check-attr text -- README.md",
+    "git apply --check x.patch", "git add -A", "git commit -a -m test",
+    "git commit --include src/app.ts -m test",
+    "git commit --only src/app.ts -m test",
+])
+def test_locked_git_read_and_index_only_allowlist(repo, runtime, command):
+    (repo / "x.patch").write_text(
+        "diff --git a/src/a.py b/src/a.py\n"
+        "--- a/src/a.py\n+++ b/src/a.py\n"
+        "@@ -1 +1 @@\n-old\n+new\n",
+        encoding="utf-8",
+    )
+    runner = hook if runtime == "claude" else native_hook
+    code, out = runner(repo, {
+        "tool_name": "Bash", "permission_mode": "default",
+        "tool_input": {"command": command},
+    })
+    assert code == 0 and "deny" not in out, (command, out)
+
+
+@pytest.mark.parametrize("runtime", ["claude", "codex"])
+def test_locked_git_pathspecs_keep_only_literal_file_targets(repo, runtime):
+    from pre_tool_use import bash_write_paths
+
+    for path in ("src/a.py", "src/c.py", "src/nested/b.py"):
+        target = repo / path
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text("tracked\n", encoding="utf-8")
+    git(repo, "add", "src")
+
+    assert bash_write_paths("git checkout -- src", repo) == []
+    assert bash_write_paths("git restore -- 'src/*.py'", repo) == []
+    assert bash_write_paths("git rm -r -- src", repo) == ["src"]
+    assert bash_write_paths("git -C src restore -- a.py", repo) == [
+        "src/a.py",
+    ]
+    assert bash_write_paths("git checkout HEAD -- src/a.py", repo) == [
+        "src/a.py",
+    ]
+    assert bash_write_paths("cp src/a.py docs/b", repo) == ["docs/b"]
+    assert bash_write_paths("cp a b", repo) == ["b"]
+    assert bash_write_paths("mkdir -p d", repo) == ["d"]
+    assert bash_write_paths("sed -i 's/x/y/' f", repo) == ["f"]
+    assert bash_write_paths("rm -f f", repo) == ["f"]
+    assert bash_write_paths("dd if=src/input of=docs/output", repo) == [
+        "src/input", "docs/output",
+    ]
+    assert bash_write_paths("sed s/x/y/ src/a.py", repo) == []
+    for prefix in ("env MODE=test", "command --", "sudo -u root"):
+        assert bash_write_paths(f"{prefix} touch src/a.py", repo) == ["src/a.py"]
+
+    runner = hook if runtime == "claude" else native_hook
+    for command in ("git checkout -- src", "git restore -- 'src/*.py'"):
+        code, out = runner(repo, {
+            "tool_name": "Bash", "permission_mode": "default",
+            "tool_input": {"command": command},
+        })
+        assert code == 0 and "deny" in out and "Lite window" in out, out
+
+
+def test_locked_literal_git_file_writes_are_allowed_in_lite_scope(repo):
+    path = repo / "src" / "scoped-file.py"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text("value = 1\n", encoding="utf-8")
+    git(repo, "add", "src/scoped-file.py")
+    git(repo, "commit", "-q", "-m", "scope fixture")
+    (repo / "x.patch").write_text(
+        "diff --git a/src/scoped-file.py b/src/scoped-file.py\n"
+        "--- a/src/scoped-file.py\n+++ b/src/scoped-file.py\n"
+        "@@ -1 +1 @@\n-value = 1\n+value = 2\n",
+        encoding="utf-8",
+    )
+    open_lite(repo)
+
+    for command in (
+        "git restore src/scoped-file.py",
+        "git checkout HEAD -- src/scoped-file.py",
+        "git apply x.patch",
+    ):
+        code, out = native_hook(repo, {
+            "tool_name": "Bash", "permission_mode": "default",
+            "tool_input": {"command": command},
+        })
+        assert code == 0 and "deny" not in out, (command, out)
+
+
+@pytest.mark.parametrize("runtime", ["claude", "codex"])
+def test_checkout_tree_directory_absent_from_index_is_opaque(repo, runtime):
+    base = git(repo, "rev-parse", "HEAD")
+    path = repo / "tree-only" / "new.py"
+    path.parent.mkdir()
+    path.write_text("value = 2\n", encoding="utf-8")
+    git(repo, "add", "tree-only/new.py")
+    git(repo, "commit", "-q", "-m", "alternate tree")
+    source = git(repo, "rev-parse", "HEAD")
+    git(repo, "reset", "--hard", base)
+
+    runner = hook if runtime == "claude" else native_hook
+    command = f"git checkout {source} -- tree-only"
+    code, out = runner(repo, {
+        "tool_name": "Bash", "permission_mode": "default",
+        "tool_input": {"command": command},
+    })
+    assert code == 0 and "deny" in out and "git checkout" in out, out
+
+
+@pytest.mark.parametrize("runtime", ["claude", "codex"])
+def test_locked_literal_missing_git_path_still_needs_scope(repo, runtime):
+    runner = hook if runtime == "claude" else native_hook
+    code, out = runner(repo, {
+        "tool_name": "Bash", "permission_mode": "default",
+        "tool_input": {"command": "git checkout -- missing-tracked-path"},
+    })
+    assert code == 0 and "deny" in out, out
+
+
+@pytest.mark.parametrize("runtime", ["claude", "codex"])
+def test_locked_recursive_delete_of_sibling_checkout_root_is_denied(repo, runtime):
+    sibling = repo.parent / "sibling-checkout"
+    (sibling / ".git").mkdir(parents=True)
+    (sibling / "factory" / "scripts").mkdir(parents=True)
+    runner = hook if runtime == "claude" else native_hook
+    code, out = runner(repo, {
+        "tool_name": "Bash", "permission_mode": "default",
+        "tool_input": {"command": f"rm -rf {shlex.quote(str(sibling))}"},
+    })
+    assert code == 0 and "deny" in out, out
+
+
+@pytest.mark.parametrize("runtime", ["claude", "codex"])
+@pytest.mark.parametrize("option", ["--check", "--stat", "--numstat", "--summary"])
+def test_locked_git_apply_read_only_modes_are_allowed(repo, runtime, option):
+    (repo / "x.patch").write_text(
+        "diff --git a/src/a.py b/src/a.py\n"
+        "--- a/src/a.py\n+++ b/src/a.py\n"
+        "@@ -1 +1 @@\n-old\n+new\n",
+        encoding="utf-8",
+    )
+    runner = hook if runtime == "claude" else native_hook
+    code, out = runner(repo, {
+        "tool_name": "Bash", "permission_mode": "default",
+        "tool_input": {"command": f"git apply {option} x.patch"},
+    })
+    assert code == 0 and "deny" not in out, out
+
+
+@pytest.mark.parametrize("runtime", ["claude", "codex"])
+def test_locked_git_apply_explicit_apply_keeps_write_classification(repo, runtime):
+    from pre_tool_use import bash_write_paths
+
+    (repo / "x.patch").write_text(
+        "diff --git a/src/a.py b/src/a.py\n"
+        "--- a/src/a.py\n+++ b/src/a.py\n"
+        "@@ -1 +1 @@\n-old\n+new\n",
+        encoding="utf-8",
+    )
+    command = "git apply --apply --stat x.patch"
+    assert bash_write_paths(command, repo) == []
+    runner = hook if runtime == "claude" else native_hook
+    code, out = runner(repo, {
+        "tool_name": "Bash", "permission_mode": "default",
+        "tool_input": {"command": command},
+    })
+    assert code == 0 and "deny" in out and "git apply" in out, out
+
+
+@pytest.mark.parametrize("runtime", ["claude", "codex"])
+@pytest.mark.parametrize("command", [
+    "make build 2>&1",
+    "echo x >&2",
+    "echo x >&-",
+    "echo x > /dev/null",
+    "echo '>' src/a.py",
+])
+def test_locked_bash_fd_redirects_and_quoted_operators_are_allowed(
+        repo, runtime, command):
+    from pre_tool_use import bash_write_paths
+
+    if command == "echo x > /dev/null":
+        assert bash_write_paths(command, repo) == []
+    runner = hook if runtime == "claude" else native_hook
+    code, out = runner(repo, {
+        "tool_name": "Bash", "permission_mode": "default",
+        "tool_input": {"command": command},
+    })
+    assert code == 0 and "deny" not in out, out
+
+
+@pytest.mark.parametrize("runtime", ["claude", "codex"])
+@pytest.mark.parametrize("command", [
     "echo 'a;b' > src/a.py",
     "printf 'a|b' > src/a.py",
     "echo 'a & b' > src/a.py",
@@ -8596,7 +8883,7 @@ def test_locked_bash_quoted_separators_and_parse_failures_are_denied(
 
 
 @pytest.mark.parametrize("runtime", ["claude", "codex"])
-def test_locked_git_apply_path_options_are_applied_to_numstat(repo, runtime):
+def test_locked_git_apply_path_options_are_opaque(repo, runtime):
     from pre_tool_use import bash_write_paths
 
     (repo / "x.patch").write_text(
@@ -8606,14 +8893,14 @@ def test_locked_git_apply_path_options_are_applied_to_numstat(repo, runtime):
         encoding="utf-8",
     )
     command = "git apply --directory=src -p2 x.patch"
-    assert bash_write_paths(command, repo) == ["src/a.py"]
+    assert bash_write_paths(command, repo) == []
 
     runner = hook if runtime == "claude" else native_hook
     code, out = runner(repo, {
         "tool_name": "Bash", "permission_mode": "default",
         "tool_input": {"command": command},
     })
-    assert code == 0 and "deny" in out, out
+    assert code == 0 and "deny" in out and "git apply" in out, out
 
 
 @pytest.mark.parametrize("command", [
@@ -8658,19 +8945,28 @@ def test_unreadable_git_apply_patch_is_treated_as_opaque(repo, runtime):
 
 
 @pytest.mark.parametrize("runtime", ["claude", "codex"])
+def test_sed_expression_option_does_not_become_write_target(repo, runtime):
+    runner = hook if runtime == "claude" else native_hook
+    code, out = runner(repo, {
+        "tool_name": "Bash", "permission_mode": "default",
+        "tool_input": {"command": "sed -i -e s/x/y/ plans/note.md"},
+    })
+    assert code == 0 and "deny" not in out, out
+
+
+@pytest.mark.parametrize("runtime", ["claude", "codex"])
 @pytest.mark.parametrize("command", [
-    "sed -i -e s/x/y/ plans/note.md",
     "sed -i --expression s/x/y/ plans/note.md",
     "sed -i -f src/script.sed plans/note.md",
     "sed -i --file src/script.sed plans/note.md",
 ])
-def test_sed_script_options_do_not_become_write_targets(repo, runtime, command):
+def test_sed_non_plain_script_options_are_refused(repo, runtime, command):
     runner = hook if runtime == "claude" else native_hook
     code, out = runner(repo, {
         "tool_name": "Bash", "permission_mode": "default",
         "tool_input": {"command": command},
     })
-    assert code == 0 and "deny" not in out, out
+    assert code == 0 and "the write lock only allows plain file writes" in out, out
 
 
 def test_multi_file_sed_targets_reach_narrowed_scope_check(repo):
@@ -8706,6 +9002,69 @@ def test_bash_lock_uses_lexical_product_path_for_symlink_leaf(repo, runtime):
         "tool_input": {"command": "echo x > src/product-link.py"},
     })
     assert code == 0 and "deny" in out, out
+
+
+@pytest.mark.parametrize("runtime", ["claude", "codex"])
+def test_git_restore_lock_checks_lexical_symlink_path(repo, runtime):
+    target = repo / "plans" / "note.md"
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text("note\n", encoding="utf-8")
+    link = repo / "src" / "a.py"
+    link.parent.mkdir(parents=True, exist_ok=True)
+    link.symlink_to("../plans/note.md")
+    git(repo, "add", "src/a.py")
+
+    runner = hook if runtime == "claude" else native_hook
+    code, out = runner(repo, {
+        "tool_name": "Bash", "permission_mode": "default",
+        "tool_input": {"command": "git restore src/a.py"},
+    })
+    assert code == 0 and "deny" in out, out
+
+
+@pytest.mark.parametrize("runtime", ["claude", "codex"])
+def test_bash_and_git_lock_refuse_dangling_symlink_leaf(repo, runtime):
+    link = repo / "src" / "dangling.py"
+    link.parent.mkdir(parents=True, exist_ok=True)
+    link.symlink_to("../plans/missing.md")
+    git(repo, "add", "src/dangling.py")
+
+    runner = hook if runtime == "claude" else native_hook
+    for command in (
+        "echo x > src/dangling.py",
+        "git restore src/dangling.py",
+    ):
+        code, out = runner(repo, {
+            "tool_name": "Bash", "permission_mode": "default",
+            "tool_input": {"command": command},
+        })
+        assert code == 0 and "deny" in out, (command, out)
+
+
+@pytest.mark.parametrize("runtime", ["claude", "codex"])
+def test_sed_backup_suffix_is_opaque(repo, runtime):
+    from pre_tool_use import bash_write_paths
+
+    assert bash_write_paths(
+        "sed -i '' 's/x/y/' plans/note.md", repo,
+    ) == ["plans/note.md"]
+    assert bash_write_paths("sed -Ei s/x/y/ src/a.py", repo) == ["src/a.py"]
+    runner = hook if runtime == "claude" else native_hook
+    code, out = runner(repo, {
+        "tool_name": "Bash", "permission_mode": "default",
+        "tool_input": {"command": "sed -Ei s/x/y/ src/a.py"},
+    })
+    assert code == 0 and "deny" in out, out
+    for command in (
+        "sed -i .bak 's/x/y/' plans/note.md",
+        "sed -i.bak 's/x/y/' plans/note.md",
+        "sed --in-place=.bak 's/x/y/' plans/note.md",
+    ):
+        code, out = runner(repo, {
+            "tool_name": "Bash", "permission_mode": "default",
+            "tool_input": {"command": command},
+        })
+        assert code == 0 and "deny" in out, (command, out)
 
 
 def mark_harness_source(repo: Path) -> None:
@@ -8850,7 +9209,10 @@ def test_harness_degraded_cannot_delete_the_repo_kind_marker(repo):
             "tool_input": {"command": command},
         })
         assert code == 0 and "deny" in out, command
-        assert "repo-kind marker" in out or "recorded state" in out, command
+        if command == "rm -r .factory":
+            assert "the write lock only allows plain file writes" in out
+        else:
+            assert "repo-kind marker" in out or "recorded state" in out, command
     code, out = hook(repo, {
         "tool_name": "Write", "permission_mode": "default",
         "tool_input": {"file_path": str(repo / ".factory" / "harness-source.json")},
@@ -8897,10 +9259,9 @@ def test_degraded_pins_repo_kind_so_marker_deletion_cannot_escape_budget(repo):
     assert code == 0, out
 
 
-def test_harness_quickfix_allows_benign_root_destination(repo):
-    # The ancestor-marker guard must fire only on marker DELETION, not on a
-    # benign create-into-root destination like `cp/mv <src> .` (whose parsed
-    # target is the repo root). Those are ordinary product writes, budget-claimed.
+def test_harness_quickfix_refuses_root_destination_product_write(repo):
+    # A directory destination expands to a product file; quickfix refuses
+    # product writes.
     mark_harness_source(repo)
     code, out = run(repo, "forge.py", "quickfix", "start", "benign")
     assert code == 0, out
@@ -8909,17 +9270,17 @@ def test_harness_quickfix_allows_benign_root_destination(repo):
             "tool_name": "Bash", "permission_mode": "default",
             "tool_input": {"command": command},
         })
-        assert code == 0 and "repo-kind marker" not in out, command
+        assert code == 0 and "deny" in out, (command, out)
 
 
-def test_harness_degraded_refuses_opaque_machinery_deletes(repo):
+def test_harness_degraded_refuses_opaque_machinery_deletes(repo, tmp_path):
     # The 5-file budget is only honest if each claimed slot is a bounded file. A
-    # recursive/globbed/brace-expanded DELETE of machinery would spend one slot on
-    # an unbounded set, so a quickfix refuses it; explicit single-file ops stay
-    # allowed, and — critically — read-OUT copies (product source, external dest)
-    # are NOT blocked (they modify nothing in the repo).
+    # recursive/globbed operation INTO machinery is unbounded; copies out of
+    # machinery do not write in the repo and stay allowed.
     mark_harness_source(repo)
     (repo / "factory" / "scripts").mkdir(parents=True, exist_ok=True)
+    copy_tree = tmp_path / "tree"
+    copy_tree.mkdir()
     code, out = run(repo, "forge.py", "mode", "degraded", "start",
                     "--reason", "opaque")
     assert code == 0, out
@@ -8927,7 +9288,7 @@ def test_harness_degraded_refuses_opaque_machinery_deletes(repo):
                     "rm factory/scripts/*.py",
                     "rm factory/scripts/f{1..6}.py",       # brace expansion
                     "git rm -r factory/scripts",
-                    "cp -R /tmp/tree factory/scripts/new",  # recursive copy INTO machinery
+                    f"cp -R {copy_tree} factory/scripts/new",  # recursive copy INTO machinery
                     "cp /tmp/x/*.py factory/scripts/"):     # glob source INTO machinery
         code, out = hook(repo, {
             "tool_name": "Bash", "permission_mode": "default",
@@ -8935,14 +9296,18 @@ def test_harness_degraded_refuses_opaque_machinery_deletes(repo):
         })
         assert code == 0 and "deny" in out, command
     for command in ("rm factory/scripts/one.py",              # explicit single file
-                    "sed -i 's/foo.*/bar/' factory/scripts/x.py",  # sed regex, not a glob
-                    "cp -R factory/scripts /tmp/backup",      # read-OUT: nothing written in-repo
+                    "sed -i 's/foo.*/bar/' factory/scripts/x.py",  # sed regex isn't a glob
                     "cp factory/scripts/*.py /tmp/backup"):   # read-OUT glob source
         code, out = hook(repo, {
             "tool_name": "Bash", "permission_mode": "default",
             "tool_input": {"command": command},
         })
         assert code == 0 and "deny" not in out, command
+    code, out = hook(repo, {
+        "tool_name": "Bash", "permission_mode": "default",
+        "tool_input": {"command": "cp -R factory/scripts /tmp/backup"},
+    })
+    assert code == 0 and "the write lock only allows plain file writes" in out, out
 
 
 def test_harness_degraded_counts_each_file_copied_into_a_machinery_dir(repo):
@@ -9202,6 +9567,8 @@ def test_mode_done_clears_scoped_reviews_without_legacy_dir(repo):
     key = run_state(repo)["issue_key"]
     assert lib.story_uses_scoped_layout(repo, key)
 
+    git(repo, "add", "-A")
+    git(repo, "commit", "-q", "-m", "prepare scoped story fixture")
     open_lite(repo)
     (repo / "src").mkdir(exist_ok=True)
     (repo / "src" / "scoped_fix.py").write_text("ok = True\n")
@@ -9276,10 +9643,61 @@ def test_mode_done_refuses_dirty_product_tree(repo):
     assert (repo / ".factory" / "quickfix.json").exists()
 
 
+def test_lite_dirty_tree_ignores_factory_only_changes(repo):
+    from forge_cli.quickfix import _lite_dirty_product_files
+
+    open_lite(repo)
+    side_effect = repo / ".factory" / "lite-side-effect.json"
+    side_effect.write_text("{}\n")
+    git(repo, "add", "-f", ".factory/lite-side-effect.json")
+
+    assert _lite_dirty_product_files(repo) == []
+
+
+def test_lite_dirty_tree_ignores_factory_and_plans_changes(repo):
+    from forge_cli.quickfix import _lite_dirty_product_files
+
+    roadmap = repo / "plans" / "roadmap.json"
+    roadmap.parent.mkdir(parents=True, exist_ok=True)
+    roadmap.write_text('{"version": 1}\n')
+    source = repo / "src" / "dirty.py"
+    source.parent.mkdir(parents=True, exist_ok=True)
+    source.write_text("dirty = False\n")
+    git(repo, "add", "plans/roadmap.json", "src/dirty.py")
+    git(repo, "commit", "-q", "-m", "add baseline files")
+    open_lite(repo)
+
+    roadmap.write_text('{"version": 2}\n')
+    assert _lite_dirty_product_files(repo) == []
+
+    source.write_text("dirty = True\n")
+    assert _lite_dirty_product_files(repo) == ["src/dirty.py"]
+
+
+def test_mode_done_refuses_uncommitted_docs_symlink_deletion(repo):
+    docs = repo / "docs"
+    docs.mkdir(exist_ok=True)
+    link = docs / "guide-link.md"
+    link.symlink_to("../README.md")
+    git(repo, "add", "-f", "docs/guide-link.md")
+    git(repo, "commit", "-q", "-m", "add docs link")
+    open_lite(repo)
+    link.unlink()
+
+    code, out = run(repo, "forge.py", "mode", "done")
+
+    assert code != 0 and "commit the fix first" in out, out
+    assert "docs/guide-link.md" in out
+    assert (repo / ".factory" / "quickfix.json").exists()
+
+
 def test_mode_done_requires_pinned_harness_marker_and_counts_factory(repo):
     mark_harness_source(repo)
-    active = open_lite(repo)
     marker = repo / ".factory" / "harness-source.json"
+    original_marker = marker.read_text()
+    git(repo, "add", "-f", ".factory/harness-source.json")
+    git(repo, "commit", "-q", "-m", "mark harness source")
+    active = open_lite(repo)
     marker.unlink()
 
     (repo / "factory" / "scripts" / "lite_fix.py").write_text("fixed = True\n")
@@ -9288,9 +9706,11 @@ def test_mode_done_requires_pinned_harness_marker_and_counts_factory(repo):
     write_lite_reviews(repo)
 
     code, out = run(repo, "forge.py", "mode", "done")
-    assert code != 0 and ".factory/harness-source.json is now missing" in out, out
+    assert code != 0, out
+    assert "opened as harness-source repo" in out and "current kind is client repo" in out, out
+    assert ".factory/harness-source.json is now missing" in out, out
 
-    marker.write_text('{"role": "harness-source"}\n')
+    marker.write_text(original_marker)
     code, out = run(repo, "forge.py", "mode", "done")
     assert code == 0 and "1 file(s)" in out, out
     done = [json.loads(path.read_text())
@@ -9298,6 +9718,44 @@ def test_mode_done_requires_pinned_harness_marker_and_counts_factory(repo):
             if json.loads(path.read_text()).get("event") == "done"]
     assert len(done) == 1 and done[0]["files"] == ["factory/scripts/lite_fix.py"]
     assert done[0]["base_sha"] == active["base_sha"]
+
+
+def test_mode_done_refuses_client_to_harness_repo_kind_change(repo):
+    active = open_lite(repo)
+    assert active["harness_source"] is False
+    mark_harness_source(repo)
+    for number in range(6):
+        path = repo / "factory" / "scripts" / f"lite_fix_{number}.py"
+        path.write_text(f"value = {number}\n")
+    product_fix = repo / "src" / "lite_product_fix.py"
+    product_fix.parent.mkdir()
+    product_fix.write_text("fixed = True\n")
+    git(
+        repo, "add", "-f", ".factory/harness-source.json", "factory/scripts",
+        "src/lite_product_fix.py",
+    )
+    git(repo, "commit", "-q", "-m", "add harness marker during lite window")
+    write_lite_reviews(repo)
+
+    code, out = run(repo, "forge.py", "mode", "done")
+
+    assert code != 0, out
+    assert "the harness-source marker cannot change inside a Lite window; " \
+        "change it through a task" in out, out
+    assert (repo / ".factory" / "quickfix.json").exists()
+
+
+def test_mode_done_refuses_marker_only_client_to_harness_change(repo):
+    open_lite(repo)
+    mark_harness_source(repo)
+    git(repo, "add", "-f", ".factory/harness-source.json")
+    git(repo, "commit", "-q", "-m", "add harness marker during lite window")
+
+    code, out = run(repo, "forge.py", "mode", "done")
+
+    assert code != 0 and "the harness-source marker cannot change inside a Lite " \
+        "window; change it through a task" in out, out
+    assert (repo / ".factory" / "quickfix.json").exists()
 
 
 def test_lite_close_counts_locked_paths_and_task_seal_reports_dirty_agents(repo):
@@ -9324,7 +9782,293 @@ def test_lite_close_counts_locked_paths_and_task_seal_reports_dirty_agents(repo)
                for problem in problems), problems
 
 
-def test_lite_budget_counts_symlinks_and_literal_shell_names(repo):
+def test_mode_done_refuses_committed_harness_marker_edit(repo):
+    from forge_cli.quickfix import _lite_dirty_product_files
+
+    mark_harness_source(repo)
+    git(repo, "add", "-f", ".factory/harness-source.json")
+    git(repo, "commit", "-q", "-m", "mark harness source")
+    open_lite(repo)
+
+    marker = repo / ".factory" / "harness-source.json"
+    marker.write_text('{"role": "harness-source", "repo": "edited"}\n')
+    assert _lite_dirty_product_files(repo) == []
+    code, out = run(repo, "forge.py", "mode", "done")
+    assert code != 0 and "no committed product files to close" in out, out
+
+    git(repo, "add", "-f", ".factory/harness-source.json")
+    git(repo, "commit", "-q", "-m", "edit harness marker")
+    code, out = run(repo, "forge.py", "mode", "done")
+    assert code != 0 and "the harness-source marker cannot change inside a Lite " \
+        "window; change it through a task" in out, out
+    assert (repo / ".factory" / "quickfix.json").exists()
+
+
+def test_mode_done_refuses_harness_marker_change_in_mixed_diff(repo):
+    mark_harness_source(repo)
+    git(repo, "add", "-f", ".factory/harness-source.json")
+    git(repo, "commit", "-q", "-m", "mark harness source")
+    open_lite(repo)
+
+    marker = repo / ".factory" / "harness-source.json"
+    marker.write_text('{"role": "harness-source", "repo": "edited"}\n')
+    git(repo, "add", "-f", ".factory/harness-source.json")
+    for number in range(5):
+        path = repo / "src" / f"lite_fix_{number}.py"
+        path.parent.mkdir(exist_ok=True)
+        path.write_text(f"value = {number}\n")
+        git(repo, "add", f"src/lite_fix_{number}.py")
+    git(repo, "commit", "-q", "-m", "edit marker and five locked paths")
+    code, out = run(repo, "forge.py", "mode", "done")
+    assert code != 0 and "the harness-source marker cannot change inside a Lite " \
+        "window; change it through a task" in out, out
+    assert (repo / ".factory" / "quickfix.json").exists()
+
+
+def test_mode_done_refuses_committed_harness_marker_deletion(repo):
+    mark_harness_source(repo)
+    git(repo, "add", "-f", ".factory/harness-source.json")
+    git(repo, "commit", "-q", "-m", "mark harness source")
+    open_lite(repo)
+
+    (repo / ".factory" / "harness-source.json").unlink()
+    git(repo, "add", "-u", ".factory/harness-source.json")
+    git(repo, "commit", "-q", "-m", "delete harness marker")
+
+    code, out = run(repo, "forge.py", "mode", "done")
+
+    assert code != 0 and "the harness-source marker cannot change inside a Lite " \
+        "window; change it through a task" in out, out
+    assert (repo / ".factory" / "quickfix.json").exists()
+
+
+def test_lite_close_counts_files_through_symlinked_ancestor_into_product(repo):
+    from forge_cli.quickfix import _lite_product_files
+    from forge_cli.repo_kind import locked_repo_path
+
+    source = repo / "src"
+    source.mkdir(parents=True, exist_ok=True)
+    (source / "app.py").write_text("app = True\n")
+    (repo / "docs").mkdir(parents=True, exist_ok=True)
+    (repo / "docs" / "code").symlink_to(Path("../src"), target_is_directory=True)
+
+    assert locked_repo_path(
+        "docs/code/app.py", repo, harness_source=False,
+    ) == "src/app.py"
+    assert _lite_product_files(
+        repo, ["docs/code/app.py"], harness_source=False,
+    ) == ["docs/code/app.py"]
+
+
+def test_outside_symlink_to_product_is_locked_and_counted_for_lite(repo, tmp_path):
+    from forge_cli.quickfix import _lite_product_files
+    from forge_cli.repo_kind import locked_repo_path
+
+    target = repo / "src" / "app.ts"
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text("app = True\n")
+    alias = tmp_path / "app-alias.ts"
+    alias.symlink_to(target)
+
+    locked = locked_repo_path(str(alias), repo, harness_source=False)
+    assert locked == "src/app.ts"
+    code, out = hook(repo, {
+        "tool_name": "Write", "permission_mode": "default",
+        "tool_input": {"file_path": str(alias)},
+    })
+    assert code == 0 and "deny" in out and "forge delegate" in out, out
+    assert _lite_product_files(
+        repo, [str(alias)], harness_source=False,
+    ) == [locked]
+
+    outside_target = tmp_path / "outside.ts"
+    outside_target.write_text("outside = True\n")
+    outside_alias = tmp_path / "outside-alias.ts"
+    outside_alias.symlink_to(outside_target)
+    assert locked_repo_path(
+        str(outside_alias), repo, harness_source=False,
+    ) is None
+
+    broken_alias = tmp_path / "broken-alias.ts"
+    broken_alias.symlink_to(repo / "src" / "missing.ts")
+    assert locked_repo_path(
+        str(broken_alias), repo, harness_source=False,
+    ) is not None
+
+
+def test_lite_close_counts_files_through_symlinked_ancestor_outside_repo(
+    repo, tmp_path,
+):
+    from forge_cli.quickfix import _lite_product_files
+    from forge_cli.repo_kind import locked_repo_path
+
+    outside = tmp_path / "outside"
+    outside.mkdir()
+    (outside / "app.py").write_text("app = True\n")
+    (repo / "docs").mkdir(parents=True, exist_ok=True)
+    (repo / "docs" / "code").symlink_to(outside, target_is_directory=True)
+
+    assert locked_repo_path(
+        "docs/code/app.py", repo, harness_source=False,
+    ) == "docs/code/app.py"
+    assert _lite_product_files(
+        repo, ["docs/code/app.py"], harness_source=False,
+    ) == ["docs/code/app.py"]
+
+
+def test_lite_close_counts_files_through_unresolved_symlinked_ancestor(repo):
+    from forge_cli.quickfix import _lite_product_files
+    from forge_cli.repo_kind import locked_repo_path
+
+    (repo / "docs").mkdir(parents=True, exist_ok=True)
+    (repo / "docs" / "code").symlink_to(
+        Path("missing-code"), target_is_directory=True,
+    )
+
+    assert locked_repo_path(
+        "docs/code/app.py", repo, harness_source=False,
+    ) == "docs/code/app.py"
+    assert _lite_product_files(
+        repo, ["docs/code/app.py"], harness_source=False,
+    ) == ["docs/code/app.py"]
+
+
+def test_lite_close_keeps_plain_docs_paths_exempt(repo):
+    from forge_cli.quickfix import _lite_product_files
+    from forge_cli.repo_kind import locked_repo_path
+
+    reference = repo / "docs" / "reference.md"
+    reference.parent.mkdir(parents=True, exist_ok=True)
+    reference.write_text("reference\n")
+
+    assert locked_repo_path(
+        "docs/reference.md", repo, harness_source=False,
+    ) is None
+    assert _lite_product_files(
+        repo, ["docs/reference.md"], harness_source=False,
+    ) == []
+
+
+def test_lite_counts_docs_symlink_into_product_once(repo):
+    from forge_cli.quickfix import _lite_product_files
+
+    source = repo / "src"
+    source.mkdir()
+    (source / "app.py").write_text("app = True\n")
+    docs = repo / "docs"
+    docs.mkdir(exist_ok=True)
+    (docs / "reference.md").write_text("reference\n")
+    first_link = docs / "app-link.py"
+    second_link = docs / "app-link-copy.py"
+    first_link.symlink_to(Path("../src/app.py"))
+    second_link.symlink_to(Path("../src/app.py"))
+
+    assert _lite_product_files(
+        repo, ["docs/app-link.py"], harness_source=False,
+    ) == ["docs/app-link.py"]
+    shared_target = _lite_product_files(
+        repo, ["docs/app-link.py", "docs/app-link.py",
+               "docs/app-link-copy.py"],
+        harness_source=False,
+    )
+    assert shared_target == ["docs/app-link-copy.py", "docs/app-link.py"]
+
+    first_link.unlink()
+    second_link.unlink()
+    git(repo, "add", "src/app.py")
+    git(repo, "add", "docs/reference.md")
+    git(repo, "commit", "-q", "-m", "seed symlink target")
+    open_lite(repo)
+    first_link.symlink_to(Path("reference.md"))
+    git(repo, "add", "docs/app-link.py")
+    git(repo, "commit", "-q", "-m", "add docs symlink")
+    write_lite_reviews(repo)
+
+    code, out = run(repo, "forge.py", "mode", "done")
+    assert code == 0 and "1 file(s)" in out, out
+    done = [json.loads(path.read_text())
+            for path in (repo / "plans" / "quickfixes").glob("*.json")
+            if json.loads(path.read_text()).get("event") == "done"]
+    assert len(done) == 1
+    assert done[0]["files"] == ["docs/app-link.py"]
+
+
+def test_lite_close_counts_deleted_and_retargeted_historical_docs_symlinks(
+    repo, tmp_path,
+):
+    source = repo / "src"
+    source.mkdir()
+    (source / "app.py").write_text("app = True\n")
+    docs = repo / "docs"
+    docs.mkdir(exist_ok=True)
+    (docs / "reference.md").write_text("reference\n")
+    outside = tmp_path / "outside-reference.md"
+    outside.write_text("outside\n")
+    deleted_link = docs / "deleted-link.py"
+    retargeted_link = docs / "retargeted-link.py"
+    outside_link = docs / "outside-link.py"
+    deleted_link.symlink_to(Path("../src/app.py"))
+    retargeted_link.symlink_to(Path("../src/app.py"))
+    outside_link.symlink_to(outside)
+    git(repo, "add", "src", "docs")
+    git(repo, "commit", "-q", "-m", "seed docs symlinks")
+
+    open_lite(repo)
+    deleted_link.unlink()
+    retargeted_link.unlink()
+    retargeted_link.symlink_to(Path("reference.md"))
+    outside_link.unlink()
+    git(repo, "add", "-A", "--", "docs")
+    git(repo, "commit", "-q", "-m", "delete and retarget docs symlinks")
+    write_lite_reviews(repo)
+
+    code, out = run(repo, "forge.py", "mode", "done")
+
+    assert code == 0 and "3 file(s)" in out, out
+    done = [json.loads(path.read_text())
+            for path in (repo / "plans" / "quickfixes").glob("*.json")
+            if json.loads(path.read_text()).get("event") == "done"]
+    assert len(done) == 1
+    assert done[0]["files"] == [
+        "docs/deleted-link.py", "docs/outside-link.py", "docs/retargeted-link.py",
+    ]
+
+
+def test_lite_close_counts_chained_docs_symlinks_by_repository_path(repo):
+    from forge_cli.quickfix import _lite_manifest
+
+    source = repo / "src"
+    source.mkdir()
+    (source / "app.py").write_text("app = True\n")
+    docs = repo / "docs"
+    docs.mkdir(exist_ok=True)
+    (docs / "reference.md").write_text("reference\n")
+    (docs / "hub").symlink_to(Path("../src/app.py"))
+    for number in range(6):
+        (docs / f"alias-{number}.py").symlink_to(Path("hub"))
+    git(repo, "add", "src", "docs")
+    git(repo, "commit", "-q", "-m", "seed chained docs symlinks")
+
+    active = open_lite(repo)
+    (docs / "reference.md").write_text("updated reference\n")
+    for number in range(6):
+        (docs / f"alias-{number}.py").unlink()
+    (docs / "hub").unlink()
+    (docs / "hub").symlink_to(Path("reference.md"))
+    git(repo, "add", "-A", "--", "docs")
+    git(repo, "commit", "-q", "-m", "delete aliases and retarget docs hub")
+
+    assert _lite_manifest(
+        repo, active["base_sha"], harness_source=active["harness_source"],
+    ) == [*(f"docs/alias-{number}.py" for number in range(6)), "docs/hub"]
+
+    code, out = run(repo, "forge.py", "mode", "done")
+
+    assert code != 0 and "touches 7 product files" in out and "bound is 5" in out, out
+    assert (repo / ".factory" / "quickfix.json").exists()
+
+
+def test_lite_budget_counts_symlinks_once_and_literal_shell_names(repo):
     source = repo / "src"
     source.mkdir()
     target = source / "existing.py"
@@ -9349,7 +10093,15 @@ def test_lite_budget_counts_symlinks_and_literal_shell_names(repo):
 
     code, out = run(repo, "forge.py", "mode", "done")
 
-    assert code != 0 and "touches 6 product files" in out, out
+    assert code == 0 and "5 file(s)" in out, out
+    done = [json.loads(path.read_text())
+            for path in (repo / "plans" / "quickfixes").glob("*.json")
+            if json.loads(path.read_text()).get("event") == "done"]
+    assert len(done) == 1
+    assert done[0]["files"] == [
+        "src/cash$name.py", "src/docs-link", "src/outside-link",
+        "src/product-link", "src/tick`name.py",
+    ]
 
 
 def test_mode_done_refuses_over_budget_committed_diff(repo):
@@ -13569,7 +14321,8 @@ def test_task_reconcile_adopts_out_of_band_merge_without_a_pr(repo, tmp_path):
     # The task's work is genuinely on the trunk: src/ is pushed to origin/main.
     write_in_scope(repo, "src/core.py")
     git(repo, "add", "src/core.py")
-    git(repo, "commit", "-qm", "ship T1 work via a story PR")
+    git(repo, "commit", "-qm",
+        "ship T1 work via a story PR\n\nTicket: ENG-1/T1")
     configure_origin_main(repo, tmp_path / "reconcile-origin.git")
 
     marker = story_state(repo) / "tasks" / "T1" / "pr-ready.json"
@@ -13609,19 +14362,25 @@ def test_task_reconcile_refuses_when_work_is_not_on_the_trunk(repo, tmp_path):
     git(repo, "config", "user.name", "Gate Tests")
     second = task_skeleton({**STAGE_TASK, "id": "T2", "title": "second slice"})
     record_skeleton_then_frontier(repo, [STAGE_TASK, second])
+    task_base = head(repo)
+    # Local task work exists, but it is not on origin/main.
+    configure_origin_main(repo, tmp_path / "reconcile-origin-empty.git")
+    write_in_scope(repo, "src/core.py")
+    git(repo, "add", "src/core.py")
+    git(repo, "commit", "-qm", "record unshipped T1 work")
     write_stages(repo, {
         "issue": "ENG-1",
         "stages": [
-            {"id": "T1", "title": "core slice", "status": "active"},
+            {"id": "T1", "title": "core slice", "status": "active",
+             "base_sha": task_base},
             {"id": "T2", "title": "second slice", "status": "pending"},
         ],
     })
     # origin/main carries no src/ content — the task's work never shipped.
-    configure_origin_main(repo, tmp_path / "reconcile-origin-empty.git")
     marker = story_state(repo) / "tasks" / "T1" / "pr-ready.json"
 
     code, out = run(repo, "forge.py", "task", "reconcile", "T1")
-    assert code != 0 and "does not look shipped" in out
+    assert code != 0 and "no declared shipped work" in out
     assert not marker.exists()
 
 
@@ -14306,10 +15065,28 @@ def test_task_reopen_moves_frontier_back_and_ripples_the_done_tail(repo, tmp_pat
     })
     code, out = run(repo, "forge.py", "task", "reopen", "T1")
     assert code == 0 and "Reopened" in out and "T1" in out and "T2" in out, out
-    assert "WARNING: could not reach origin/main" in out, out
+    assert "WARNING: could not reach origin/main" not in out, out
     # T1 is now the pending frontier again; reopening a pending task refuses.
     code, out = run(repo, "forge.py", "task", "reopen", "T1")
     assert code != 0 and "not done" in out, out
+
+
+def test_unshipped_check_skips_fetch_without_origin(repo, monkeypatch, capsys):
+    from forge_cli import tasks
+
+    assert git(repo, "remote") == ""
+    calls = []
+    real_git = tasks._git
+
+    def track_git(base, *args):
+        calls.append(args)
+        return real_git(base, *args)
+
+    monkeypatch.setattr(tasks, "_git", track_git)
+    tasks._require_unshipped(repo, "ENG-1", "T1", require_fetch_success=True)
+
+    assert [args[0] for args in calls] == ["cat-file", "remote"]
+    assert "WARNING" not in capsys.readouterr().out
 
 
 def test_task_reopen_refuses_a_task_not_in_the_decomposition(repo, tmp_path):
@@ -14337,7 +15114,9 @@ def _cache_task_marker(repo: Path, key: str, task_id: str) -> None:
     git(repo, "checkout", "--detach", base_head)
 
 
-def test_task_reopen_refuses_a_cached_shipped_marker_after_fetch_failure(repo):
+@pytest.mark.parametrize("origin_remote", [False, True],
+                         ids=["without-origin", "after-fetch-failure"])
+def test_task_reopen_refuses_a_cached_shipped_marker(repo, origin_remote):
     key, task_id = "ENG-1", "T1"
     (repo / ".factory" / "run.json").write_text(
         json.dumps({"issue_key": key}), encoding="utf-8",
@@ -14347,6 +15126,8 @@ def test_task_reopen_refuses_a_cached_shipped_marker_after_fetch_failure(repo):
         "stages": [{"id": task_id, "status": "done"}],
     })
     _cache_task_marker(repo, key, task_id)
+    if origin_remote:
+        git(repo, "remote", "add", "origin", str(repo / "missing-origin.git"))
 
     code, out = run(repo, "forge.py", "task", "reopen", task_id)
 
@@ -14371,6 +15152,7 @@ def test_task_close_refuses_review_fix_when_fetch_fails(
     else:
         git(repo, "symbolic-ref", "refs/remotes/origin/HEAD",
             "refs/remotes/origin/main")
+    git(repo, "remote", "add", "origin", str(repo / "missing-origin.git"))
 
     (repo / ".factory" / "run.json").write_text(
         json.dumps({"issue_key": key}), encoding="utf-8",
@@ -14441,13 +15223,14 @@ def test_review_fix_fetches_before_taking_the_stage_state_lock(repo, monkeypatch
 
     def fake_git(_base, *args):
         git_calls.append(args[0])
-        return subprocess.CompletedProcess(args, 0 if args[0] == "fetch" else 1,
-                                           "", "")
+        code = 0 if args[0] in ("remote", "fetch") else 1
+        stdout = "origin\n" if args[0] == "remote" else ""
+        return subprocess.CompletedProcess(args, code, stdout, "")
 
     @contextlib.contextmanager
     def checked_exclusion(_base, _key, *, kind, **_kwargs):
         if kind == "stage-state":
-            assert git_calls == ["fetch", "cat-file"]
+            assert git_calls == ["cat-file", "remote", "fetch", "cat-file"]
         yield
 
     monkeypatch.setattr(tasks, "_git", fake_git)
@@ -14456,7 +15239,7 @@ def test_review_fix_fetches_before_taking_the_stage_state_lock(repo, monkeypatch
     target = stages.reopen_stage_for_review_fix(repo, "T1")
 
     assert target["status"] == "active"
-    assert git_calls == ["fetch", "cat-file"]
+    assert git_calls == ["cat-file", "remote", "fetch", "cat-file"]
 
 
 def test_done_contracts_immutable_and_criteria_map_binds_plan_contracts(
@@ -17312,7 +18095,11 @@ def test_stage_migrate_refuses_partial_protected_authority(
     save_plan(repo, tmp_path)
     record_skeleton_then_frontier(repo, [STAGE_TASK])
     protected = delegation_ledger(repo).parent
-    source = (repo / ".factory" / protected_name).read_bytes()
+    source = (
+        story_state(repo) / protected_name
+        if protected_name == "decomposition.json"
+        else repo / ".factory" / protected_name
+    ).read_bytes()
     shutil.rmtree(protected)
     protected.mkdir(parents=True)
     (protected / protected_name).write_bytes(source)
@@ -24078,25 +24865,6 @@ def test_task_proof_refuses_committed_null_marker(repo, tmp_path):
     ]
 
 
-def test_ci_task_proof_reconciled_marker_rejects_product_changes(repo):
-    git(repo, "checkout", "-qb", "feat/reconciled-marker-product")
-    base = head(repo)
-    marker = (repo / ".factory" / "stories" / "ENG-1" / "tasks" / "T1"
-              / "pr-ready.json")
-    marker.parent.mkdir(parents=True)
-    marker.write_text(json.dumps({"reconciled": True, "commit": base}))
-    product = repo / "src" / "reconciled-bypass.py"
-    product.parent.mkdir(exist_ok=True)
-    product.write_text("bypassed = True\n")
-    git(repo, "add", marker.relative_to(repo).as_posix(),
-        product.relative_to(repo).as_posix())
-    git(repo, "commit", "-qm", "add reconciled marker with product change")
-
-    code, out = run(repo, "check_task_proof.py", "--base", base)
-
-    assert code == 1, out
-
-
 def test_task_pr_ready_refuses_changed_evidence_after_marker(
         repo, tmp_path):
     git(repo, "checkout", "-qb", "feat/task-pr-reseal")
@@ -24305,9 +25073,10 @@ def test_task_reconcile_adopts_a_pending_task_whose_marker_is_on_the_trunk(
     git(repo, "config", "user.name", "Gate Tests")
     second = task_skeleton({**STAGE_TASK, "id": "T2", "title": "second slice"})
     record_skeleton_then_frontier(repo, [STAGE_TASK, second])
+    task_base = head(repo)
     write_in_scope(repo, "src/core.py")
     git(repo, "add", "src/core.py")
-    git(repo, "commit", "-qm", "ship T1 work")
+    git(repo, "commit", "-qm", "ship T1 work\n\nTicket: ENG-1/T1")
     configure_origin_main(repo, tmp_path / "pending-origin.git")
 
     marker = story_state(repo) / "tasks" / "T1" / "pr-ready.json"
@@ -24317,7 +25086,7 @@ def test_task_reconcile_adopts_a_pending_task_whose_marker_is_on_the_trunk(
         "issue": "ENG-1",
         "stages": [
             {"id": "T1", "title": "core slice", "status": "active",
-             "base_sha": head(repo)},
+             "base_sha": task_base},
             {"id": "T2", "title": "second slice", "status": "pending"},
         ],
     })
@@ -24332,7 +25101,8 @@ def test_task_reconcile_adopts_a_pending_task_whose_marker_is_on_the_trunk(
     write_stages(repo, {
         "issue": "ENG-1",
         "stages": [
-            {"id": "T1", "title": "core slice", "status": "pending"},
+            {"id": "T1", "title": "core slice", "status": "pending",
+             "base_sha": task_base},
             {"id": "T2", "title": "second slice", "status": "pending"},
         ],
     })
@@ -24344,18 +25114,24 @@ def test_task_reconcile_adopts_a_pending_task_whose_marker_is_on_the_trunk(
 
 def test_task_reconcile_still_refuses_a_pending_task_with_no_marker(
         repo, tmp_path):
-    # The relaxation is bounded by the marker. A pending task that never shipped
-    # has nothing to adopt, and reconcile must not invent a completion for it.
+    # The relaxation is bounded by the marker. A pending task whose work shipped
+    # without a marker has nothing to adopt, and reconcile must not invent one.
     sign_off(repo)
     intake(repo)
     save_plan(repo, tmp_path)
     git(repo, "config", "user.email", "test@knacklabs.dev")
     git(repo, "config", "user.name", "Gate Tests")
     record_skeleton_then_frontier(repo, [STAGE_TASK])
+    task_base = head(repo)
+    write_in_scope(repo, "src/core.py")
+    git(repo, "add", "src/core.py")
+    git(repo, "commit", "-qm",
+        "ship pending T1 work without a marker\n\nTicket: ENG-1/T1")
     configure_origin_main(repo, tmp_path / "nomarker-origin.git")
     write_stages(repo, {
         "issue": "ENG-1",
-        "stages": [{"id": "T1", "title": "core slice", "status": "pending"}],
+        "stages": [{"id": "T1", "title": "core slice", "status": "pending",
+                    "base_sha": task_base}],
     })
     gh_env, _argv_path = fake_gh_env(tmp_path)
     code, out = run(repo, "forge.py", "task", "reconcile", "T1", env=gh_env)

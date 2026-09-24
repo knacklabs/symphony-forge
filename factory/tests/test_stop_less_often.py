@@ -71,7 +71,8 @@ def test_a_plan_edited_after_approval_cannot_reuse_stale_native_authority(
     preserved_cold_proof = {
         field: original_grill.get(field)
         for field in (
-            "cold_input_sha256", "finding_dispositions", "amendments",
+            "cold_input_sha256", "final_artifact_sha256",
+            "finding_dispositions", "amendments",
         )
     }
 
@@ -107,7 +108,7 @@ def test_a_plan_edited_after_approval_cannot_reuse_stale_native_authority(
         field: updated.get(field) for field in preserved_cold_proof
     } == preserved_cold_proof
     amended_digest = lib.plan_digest_without_assumptions(saved)
-    assert updated["final_artifact_sha256"] == amended_digest
+    assert updated["approved_task_plan_sha256"] == amended_digest
     assert updated["previous_approved_task_plan_sha256"] \
         == original_grill["approved_task_plan_sha256"]
     assert len(task_approval_events()) == 2

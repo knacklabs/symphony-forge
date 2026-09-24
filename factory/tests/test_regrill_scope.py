@@ -86,6 +86,81 @@ def _fake_companion_env(tmp_path: Path) -> dict[str, str]:
     }
 
 
+def test_task_cold_read_releases_after_rerecorded_contract_change(
+        repo: Path, tmp_path: Path, capsys, monkeypatch):
+    from types import SimpleNamespace
+
+    from test_gates import DECOMP, STAGE_TASK, run, start_stage
+    from forge_cli import delegate
+    from forge_cli.delegate import load_delegations
+    from forge_cli.grill import cmd_grill_run
+    from factory_lib import evidence_path, load_json, run_state_path
+
+    start_stage(repo, tmp_path, STAGE_TASK, launch=False)
+
+    monkeypatch.setenv("FORGE_COORDINATOR", "codex")
+    monkeypatch.setattr(
+        delegate, "now_iso", lambda: "2099-01-01T00:00:00+00:00",
+    )
+    args = SimpleNamespace(
+        repo=str(repo), gate="task", task="T1", print_only=False,
+        file="", context_file="",
+    )
+    cmd_grill_run(args)
+    assert "host-native spawn_agent" in capsys.readouterr().out
+
+    story = load_json(run_state_path(repo), default={}).get("issue_key", "")
+    task_plan = evidence_path(
+        repo, story, "task-plans/T1.md", for_write=True,
+    )
+    task_plan.write_text(
+        task_plan.read_text(encoding="utf-8") + "\nPlan-only amendment.\n",
+        encoding="utf-8",
+    )
+    with pytest.raises(SystemExit):
+        cmd_grill_run(args)
+    refusal = capsys.readouterr().out
+    assert "already been cold-read" in refusal
+    assert "task's contract changed" not in refusal
+
+    amended = {
+        **STAGE_TASK,
+        "acceptance_criteria": ["the slice runs green", "and audits"],
+        "plan_contracts": STAGE_TASK["plan_contracts"] + [{
+            "id": "C2", "statement": "and audits",
+            "source": "plans/active/TEST-1-test-plan.md#acceptance-criteria",
+        }],
+    }
+    code, out = run(
+        repo, "record_decomposition_from_json.py",
+        stdin=json.dumps({**DECOMP, "tasks": [amended]}),
+    )
+    assert code == 0, out
+
+    cmd_grill_run(args)
+    output = capsys.readouterr().out
+    assert output.count(
+        "the task's contract changed since its last cold read; "
+        "a fresh read is allowed"
+    ) == 1
+    assert "host-native spawn_agent" in output
+    launches = [
+        row for row in load_delegations(repo)
+        if row.get("task") == "grill-task-T1"
+        and row.get("launch_status") == "prepared"
+    ]
+    assert len(launches) == 2
+    assert launches[0]["brief_sha256"] != launches[1]["brief_sha256"]
+    assert (launches[0]["cold_contract_sha256"]
+            != launches[1]["cold_contract_sha256"])
+
+    with pytest.raises(SystemExit):
+        cmd_grill_run(args)
+    blocked = capsys.readouterr().out
+    assert "already been cold-read" in blocked
+    assert "the task's contract changed since its last cold read" not in blocked
+
+
 # --------------------------------------------------------------- bookkeeping
 @pytest.mark.parametrize("field,value", [
     ("review_budget", {"max_changed_files": 999, "max_changed_lines": 9,

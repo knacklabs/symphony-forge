@@ -11,15 +11,18 @@ import stat
 import subprocess
 from pathlib import Path
 
+from check_pr_ticket import TICKET_LINE
 from factory_lib import (
-    _committed_task_marker, _windows_reparse_point,
+    _committed_task_marker, _git_is_ancestor, _windows_reparse_point,
+    atomic_dump_json,
     clean_git_env, default_trunk_branch, dump_json, evidence_path,
     git_control_dir, load_json, now_iso, raw_open_flags,
     repo_root, require_approved_plan_digest,
     require_ready_task, task_digest,
     require_task_sealed,
     protected_decomposition_state_path, run_state_path,
-    task_marker_on_main, task_marker_path,
+    story_dir, task_marker_on_main, task_marker_path,
+    strip_derived_sections,
 )
 
 from .common import fail
@@ -141,6 +144,16 @@ def _require_unshipped(
         fail(f"cannot check whether task {task_id} is unshipped without a story key")
     default_branch = _default_branch(base)
     marker = task_marker_path(key, task_id)
+    present = _git(base, "cat-file", "-e",
+                   f"origin/{default_branch}:{marker.as_posix()}")
+    if present.returncode == 0:
+        fail(f"task {task_id} is already SHIPPED (its marker is on "
+             f"origin/{default_branch}); shipped work is immutable — add a new "
+             "follow-up task rather than reopening it.")
+    remotes = _git(base, "remote")
+    has_origin = remotes.returncode != 0 or "origin" in remotes.stdout.splitlines()
+    if not has_origin:
+        return
     fetched = _git(base, "fetch", "origin", default_branch)
     present = _git(base, "cat-file", "-e",
                    f"origin/{default_branch}:{marker.as_posix()}")
@@ -218,7 +231,13 @@ def cmd_plan_save(args: argparse.Namespace) -> None:
         fail("task plan source must be UTF-8 Markdown")
     if not content.strip():
         fail("task plan source must not be empty")
-    require_task_plan_sections(content, args.id)
+    from .plans import parse_frontmatter
+    metadata, body = parse_frontmatter(content)
+    has_frontmatter = body != content
+    if not body.strip():
+        fail("task plan source must not be empty")
+    body = strip_derived_sections(body.encode("utf-8")).decode("utf-8")
+    require_task_plan_sections(body, args.id)
     dest = _task_plan_path(base, args.id, for_write=True)
     state = load_json(run_state_path(base), default={})
     story = state.get("issue_key") or state.get("story")
@@ -231,9 +250,14 @@ def cmd_plan_save(args: argparse.Namespace) -> None:
         fail(f"task plan save refused: {args.id} has a legacy task grill. Run "
              "`forge upgrade` to retire the old format before saving.")
     dest.parent.mkdir(parents=True, exist_ok=True)
-    dest.write_text(content, encoding="utf-8")
-    # The plan carries a RENDERED copy of its contract, never a hand-written
-    # one, so the reader sees scope, tests and criteria that cannot drift.
+    dest.write_text(body, encoding="utf-8")
+    meta_path = story_dir(base, story) / "task-plans" / f"{args.id}.meta.json"
+    if has_frontmatter:
+        atomic_dump_json(meta_path, metadata)
+    else:
+        meta_path.unlink(missing_ok=True)
+    # Keep the shared refresh call for compatibility; task contracts remain in
+    # the decomposition and do not become task-plan text.
     from factory_lib import (
         protected_decomposition_state_path, refresh_task_plan_contract,
     )
@@ -753,7 +777,9 @@ def cmd_task_reconcile(args: argparse.Namespace) -> None:
     a bound delegate launch, a fresh review stamp) are all unsatisfiable for
     already-merged work, which is exactly why they cannot close it.
     """
-    from forge_cli.stages import load_stages, write_stages, task_for
+    from forge_cli.stages import (
+        effective_scope, load_stages, task_for, write_stages,
+    )
     from forge_cli.events import append_event
     from factory_lib import task_digest
 
@@ -789,18 +815,21 @@ def cmd_task_reconcile(args: argparse.Namespace) -> None:
              "but the fetch failed. Reconcile only a task whose PR has actually "
              "merged, on a checkout that can reach origin.")
 
-    write_scope = [p.rstrip("/") for p in (task.get("write_scope") or [])
-                   if isinstance(p, str) and p.strip()]
+    write_scope = [p.rstrip("/") for p in effective_scope(
+        base, args.id, task.get("write_scope") or [],
+    ) if isinstance(p, str) and p.strip()]
     write_scope = [path for path in write_scope if path]
     if not write_scope:
-        fail(f"task {args.id} has no write_scope; reconcile cannot confirm its "
+        fail(f"task {args.id} has no effective write_scope; reconcile cannot confirm its "
              "work shipped.")
-    scoped_diff = _git(base, "diff", "--quiet", f"origin/{default_branch}",
-                       "HEAD", "--", *write_scope)
-    if scoped_diff.returncode != 0:
-        fail(f"task {args.id} has scoped changes not on origin/{default_branch}; "
-             "reconcile only when its write_scope matches the trunk.")
-
+    trunk_ref = f"origin/{default_branch}"
+    local_scope = _git(base, "status", "--porcelain", "--", *write_scope)
+    if local_scope.returncode != 0:
+        detail = local_scope.stderr.strip() or local_scope.stdout.strip()
+        fail(f"could not check task {args.id}'s scoped working tree"
+             + (f": {detail}" if detail else "."))
+    if local_scope.stdout:
+        fail(f"task {args.id} has uncommitted changes in the task's scope.")
     already = _git(
         base, "cat-file", "-e", f"origin/{default_branch}:{marker.as_posix()}",
     ).returncode == 0
@@ -823,30 +852,81 @@ def cmd_task_reconcile(args: argparse.Namespace) -> None:
              f"{default_branch} — reconcile adopts a task whose work already "
              "SHIPPED; a task that never started has nothing to reconcile.")
 
-    if not already:
-        # Confirm the task's work is genuinely on the trunk before adopting it: at
-        # least one of its write_scope paths must resolve on origin/<trunk>. This
-        # guards against reconciling work that never actually shipped.
-        on_trunk = any(
-            _git(base, "cat-file", "-e",
-                 f"origin/{default_branch}:{path}").returncode == 0
-            for path in write_scope
-        )
-        if not on_trunk:
-            fail(f"none of {args.id}'s write_scope paths are on origin/"
-                 f"{default_branch} — its work does not look shipped. Reconcile "
-                 "only a genuinely merged task (or ship it with `forge task "
-                 "pr-ready`).")
+    if readopt:
+        # The marker on the trunk is real and its work shipped; only its proof
+        # predates the current predicate (a proof-format change, or proof that
+        # never reached the trunk). Re-mark it ADOPTED with its own identity
+        # untouched, so every gate reads it the way it reads any adopted task.
+        shipped = _require_git(
+            base, "reading the trunk marker", "show",
+            f"origin/{default_branch}:{marker.as_posix()}")
+        try:
+            payload = json.loads(shipped)
+        except json.JSONDecodeError as exc:
+            fail(f"the marker for {args.id} on origin/{default_branch} is not JSON: {exc}")
+        if not isinstance(payload, dict) or payload.get("task_id") != args.id:
+            fail(f"the marker for {args.id} on origin/{default_branch} is not its own")
+        if payload.get("reconciled") is True:
+            print(f"{args.id} is already adopted on origin/{default_branch}.")
+        payload["reconciled"] = True
 
-        commit = args.commit or _require_git(
-            base, "resolving trunk head", "rev-parse", "--verify",
-            f"origin/{default_branch}^{{commit}}")
+    if not (already and readopt):
+        stage_base = stage.get("base_sha")
+        if not isinstance(stage_base, str) or not stage_base.strip():
+            fail(f"{args.id} has no recorded stage base commit; this task has no "
+                 "commits of its own in its scope.")
+        resolved_stage_base = _git(
+            base, "rev-parse", "--verify", "--end-of-options",
+            f"{stage_base}^{{commit}}",
+        )
+        if resolved_stage_base.returncode != 0:
+            fail(f"{args.id} has no valid recorded stage base commit; this task "
+                 "has no commits of its own in its scope.")
+        shipped_commits = _git(
+            base, "log", "--topo-order", "--format=%H",
+            f"{resolved_stage_base.stdout.strip()}..{trunk_ref}",
+            "--", *write_scope,
+        )
+        if shipped_commits.returncode != 0:
+            detail = shipped_commits.stderr.strip() or shipped_commits.stdout.strip()
+            fail(f"could not check task {args.id}'s scoped trunk commits"
+                 + (f": {detail}" if detail else "."))
+        declared_commits = []
+        task_ticket = f"{key}/{args.id}"
+        for candidate in shipped_commits.stdout.splitlines():
+            message = _git(base, "show", "-s", "--format=%B", candidate)
+            if message.returncode != 0:
+                detail = message.stderr.strip() or message.stdout.strip()
+                fail(f"could not read task {args.id}'s scoped trunk commit"
+                     + (f": {detail}" if detail else "."))
+            if task_ticket in TICKET_LINE.findall(message.stdout):
+                declared_commits.append(candidate)
+        if not declared_commits:
+            fail(f"no scoped commit in {stage_base}..{trunk_ref} declares "
+                 f"Ticket: {task_ticket}; this task has no declared shipped work.")
+        commit = declared_commits[0]
         if args.commit:
-            anc = _git(base, "merge-base", "--is-ancestor", commit,
-                       f"origin/{default_branch}")
-            if anc.returncode != 0:
-                fail(f"--commit {commit} is not an ancestor of origin/"
-                     f"{default_branch}; pass the merge commit of the task's PR.")
+            selected = _git(
+                base, "rev-parse", "--verify", "--end-of-options",
+                f"{args.commit}^{{commit}}",
+            )
+            if selected.returncode != 0 or selected.stdout.strip() not in declared_commits:
+                fail(f"--commit must be one of this task's declared scoped commits "
+                     f"on {trunk_ref}.")
+        if not _git_is_ancestor(base, commit, "HEAD"):
+            fail(f"HEAD does not descend from this task's latest declared commit "
+                 f"on {trunk_ref}; merge {trunk_ref} into this branch first.")
+        scoped_diff = _git(base, "diff", "--quiet", commit, "HEAD",
+                           "--", *write_scope)
+        if scoped_diff.returncode == 1:
+            fail(f"task {args.id} has committed scoped changes after its latest "
+                 "declared trunk commit; refusing to reconcile.")
+        if scoped_diff.returncode != 0:
+            detail = scoped_diff.stderr.strip() or scoped_diff.stdout.strip()
+            fail(f"could not check task {args.id}'s committed scoped changes"
+                 + (f": {detail}" if detail else "."))
+
+    if not already:
         recorded_base = stage.get("base_sha")
         pointer_base = state.get("base_main_sha")
         base_main_sha = (
@@ -868,28 +948,11 @@ def cmd_task_reconcile(args: argparse.Namespace) -> None:
             fail("reconcile marker fields must all be non-empty strings")
         # Marks the marker as ADOPTED, not sealed: the PR proof gate
         # (check_task_proof.py) does not demand recorded proof for work that was
-        # already on the trunk before the harness learned about it. It cannot be
-        # abused to skip proof for new work — reconcile refuses unless the work
-        # is genuinely on the trunk already.
+        # already on the trunk before the harness learned about it. The commit
+        # identity is the latest scoped trunk commit that declares this task.
         payload["reconciled"] = True
         dump_json(base / marker, payload)
     elif readopt:
-        # The marker on the trunk is real and its work shipped; only its proof
-        # predates the current predicate (a proof-format change, or proof that
-        # never reached the trunk). Re-mark it ADOPTED with its own identity
-        # untouched, so every gate reads it the way it reads any adopted task.
-        shipped = _require_git(
-            base, "reading the trunk marker", "show",
-            f"origin/{default_branch}:{marker.as_posix()}")
-        try:
-            payload = json.loads(shipped)
-        except json.JSONDecodeError as exc:
-            fail(f"the marker for {args.id} on origin/{default_branch} is not JSON: {exc}")
-        if not isinstance(payload, dict) or payload.get("task_id") != args.id:
-            fail(f"the marker for {args.id} on origin/{default_branch} is not its own")
-        if payload.get("reconciled") is True:
-            print(f"{args.id} is already adopted on origin/{default_branch}.")
-        payload["reconciled"] = True
         dump_json(base / marker, payload)
 
     # Flip the stage to done directly (bypassing the unsatisfiable stage-done

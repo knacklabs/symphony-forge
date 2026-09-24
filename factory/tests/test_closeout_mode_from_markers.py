@@ -129,41 +129,223 @@ def test_the_pointer_field_still_wins_inside_a_task_worktree(repo, tmp_path):
     assert run_is_task_level(repo) is True
 
 
-def test_reconcile_refuses_active_task_with_scoped_changes_off_trunk(repo, tmp_path):
+def test_reconcile_refuses_other_tasks_scoped_commit_on_trunk(repo, tmp_path):
     from forge_cli.stages import load_stages, write_stages
-    from factory_lib import task_proof_problems
+
+    _two_task_story(repo, tmp_path)
+    base = git(repo, "rev-parse", "HEAD")
+    stages = load_stages(repo)
+    stages["stages"][0]["status"] = "active"
+    stages["stages"][0]["base_sha"] = base
+    write_stages(repo, stages)
+
+    trunk = tmp_path / "reconcile-unrelated-trunk"
+    git(repo, "worktree", "add", "-q", "--detach", str(trunk), base)
+    (trunk / "src" / "unrelated.py").write_text("print('T2 trunk work')\n")
+    git(trunk, "add", "src/unrelated.py")
+    git(trunk, "commit", "-q", "-m", "ship T2 scoped work",
+        "-m", "Ticket: ENG-1/T2")
+    git(trunk, "push", "-q", "origin", "HEAD:main")
+    git(repo, "worktree", "remove", "-f", str(trunk))
+    git(repo, "merge", "--ff-only", "origin/main")
+
+    code, out = run(repo, "forge.py", "task", "reconcile", "T1")
+
+    assert code != 0 and (
+        "no scoped commit in" in out and "Ticket: ENG-1/T1" in out
+    ), out
+    assert not (repo / task_marker_path("ENG-1", "T1")).exists()
+
+
+def test_reconcile_refuses_branch_behind_declared_trunk_commit(repo, tmp_path):
+    from forge_cli.stages import load_stages, write_stages
+
+    _two_task_story(repo, tmp_path)
+    base = git(repo, "rev-parse", "HEAD")
+    stages = load_stages(repo)
+    stages["stages"][0]["status"] = "active"
+    stages["stages"][0]["base_sha"] = base
+    write_stages(repo, stages)
+
+    trunk = tmp_path / "declared-trunk"
+    git(repo, "worktree", "add", "-q", "--detach", str(trunk), base)
+    (trunk / "src" / "core.py").write_text("print('squash merged task work')\n")
+    git(trunk, "add", "src/core.py")
+    git(trunk, "commit", "-q", "-m", "squash merge task scoped change",
+        "-m", "Ticket: ENG-1/T1")
+    git(trunk, "push", "-q", "origin", "HEAD:main")
+    git(repo, "worktree", "remove", "-f", str(trunk))
+
+    code, out = run(repo, "forge.py", "task", "reconcile", "T1")
+
+    assert code != 0 and "merge origin/main into this branch first" in out, out
+
+
+def test_reconcile_refuses_later_local_scoped_commit(repo, tmp_path):
+    from forge_cli.stages import load_stages, write_stages
+
+    _two_task_story(repo, tmp_path)
+    git(repo, "config", "user.email", "test@knacklabs.dev")
+    git(repo, "config", "user.name", "Gate Tests")
+    base = git(repo, "rev-parse", "HEAD")
+    stages = load_stages(repo)
+    stages["stages"][0]["status"] = "active"
+    stages["stages"][0]["base_sha"] = base
+    write_stages(repo, stages)
+
+    source = repo / "src" / "core.py"
+    source.write_text("print('task work shipped')\n")
+    git(repo, "add", "src/core.py")
+    git(repo, "commit", "-q", "-m", "ship T1 scoped work",
+        "-m", "Ticket: ENG-1/T1")
+    git(repo, "push", "-q", "origin", "HEAD:main")
+    source.write_text("print('later local scoped work')\n")
+    git(repo, "add", "src/core.py")
+    git(repo, "commit", "-q", "-m", "later local scoped work")
+
+    code, out = run(repo, "forge.py", "task", "reconcile", "T1")
+
+    assert code != 0 and "committed scoped changes" in out, out
+    assert not (repo / task_marker_path("ENG-1", "T1")).exists()
+
+
+def test_reconcile_accepts_squash_commit_and_marker_passes_pr_gate(
+        repo, tmp_path):
+    from forge_cli.stages import load_stages, write_stages
+
+    _two_task_story(repo, tmp_path)
+    base = git(repo, "rev-parse", "HEAD")
+    stages = load_stages(repo)
+    stages["stages"][0]["status"] = "active"
+    stages["stages"][0]["base_sha"] = base
+    write_stages(repo, stages)
+    task_content = "print('squash merged task work')\n"
+    trunk = tmp_path / "squash-trunk"
+    git(repo, "worktree", "add", "-q", "--detach", str(trunk), base)
+    source = trunk / "src" / "core.py"
+    source.write_text(task_content)
+    git(trunk, "add", "src/core.py")
+    git(trunk, "commit", "-q", "-m", "squash merge task scoped change",
+        "-m", "Ticket: ENG-1/T1")
+    task_commit = git(trunk, "rev-parse", "HEAD")
+    later_doc = trunk / "docs" / "after-task.md"
+    later_doc.parent.mkdir(parents=True, exist_ok=True)
+    later_doc.write_text("unrelated trunk update\n")
+    git(trunk, "add", "docs/after-task.md")
+    git(trunk, "commit", "-qm", "unrelated trunk update after task shipped")
+    git(trunk, "push", "-q", "origin", "HEAD:main")
+    git(repo, "worktree", "remove", "-f", str(trunk))
+    git(repo, "merge", "--ff-only", "origin/main")
+
+    code, out = run(repo, "forge.py", "task", "reconcile", "T1",
+                    "--commit", base)
+
+    assert code != 0 and "--commit must be one of this task's declared" in out
+    assert not (repo / task_marker_path("ENG-1", "T1")).exists()
+
+    code, out = run(repo, "forge.py", "task", "reconcile", "T1",
+                    "--commit", task_commit)
+
+    assert code == 0, out
+    marker = json.loads((repo / task_marker_path("ENG-1", "T1")).read_text())
+    assert marker["commit"] == task_commit
+    trunk_tip = git(repo, "rev-parse", "origin/main")
+    assert trunk_tip != task_commit
+    pr_base = git(repo, "merge-base", "origin/main", "HEAD")
+    assert pr_base == trunk_tip
+    code, out = run(repo, "check_task_proof.py", "--base", pr_base)
+    assert code == 0, out
+
+
+def test_reconcile_accepts_commit_only_in_amended_scope(repo, tmp_path):
+    from forge_cli.stages import load_stages, scope_amendments_path, write_stages
+
+    _two_task_story(repo, tmp_path)
+    base = git(repo, "rev-parse", "HEAD")
+    stages = load_stages(repo)
+    stages["stages"][0]["status"] = "active"
+    stages["stages"][0]["base_sha"] = base
+    write_stages(repo, stages)
+    amendments = scope_amendments_path(repo)
+    amendments.parent.mkdir(parents=True, exist_ok=True)
+    amendments.write_text(json.dumps({"tasks": {"T1": {
+        "added_paths": ["tests/added_scope.py"],
+        "amendments": [{"reason": "measured task work",
+                        "added_paths": ["tests/added_scope.py"]}],
+    }}}))
+    added = repo / "tests" / "added_scope.py"
+    added.parent.mkdir(parents=True, exist_ok=True)
+    added.write_text("print('task work in the amended scope')\n")
+    git(repo, "add", "tests/added_scope.py")
+    git(repo, "commit", "-q", "-m", "task change in amended scope",
+        "-m", "Ticket: ENG-1/T1")
+    task_commit = git(repo, "rev-parse", "HEAD")
+    git(repo, "push", "-q", "origin", "HEAD:main")
+
+    code, out = run(repo, "forge.py", "task", "reconcile", "T1")
+
+    assert code == 0, out
+    marker = json.loads((repo / task_marker_path("ENG-1", "T1")).read_text())
+    assert marker["commit"] == task_commit
+
+
+def test_reconcile_refuses_uncommitted_scoped_edit(repo, tmp_path):
+    from forge_cli.stages import load_stages, write_stages
+
+    _two_task_story(repo, tmp_path)
+    base = git(repo, "rev-parse", "HEAD")
+    stages = load_stages(repo)
+    stages["stages"][0]["status"] = "active"
+    stages["stages"][0]["base_sha"] = base
+    write_stages(repo, stages)
+    source = repo / "src" / "core.py"
+    source.write_text("print('committed task work')\n")
+    git(repo, "add", "src/core.py")
+    git(repo, "commit", "-q", "-m", "task scoped change",
+        "-m", "Ticket: ENG-1/T1")
+    git(repo, "push", "-q", "origin", "HEAD:main")
+    source.write_text("print('uncommitted scoped edit')\n")
+    (repo / "src" / "untracked.py").write_text("print('untracked scoped edit')\n")
+
+    code, out = run(repo, "forge.py", "task", "reconcile", "T1")
+
+    assert code != 0 and "uncommitted changes in the task's scope" in out, out
+    assert not (repo / task_marker_path("ENG-1", "T1")).exists()
+
+
+def test_reconcile_refuses_when_task_has_no_own_scoped_commits(
+        repo, tmp_path):
+    from forge_cli.stages import load_stages, write_stages
 
     _two_task_story(repo, tmp_path)
     stages = load_stages(repo)
     stages["stages"][0]["status"] = "active"
+    stages["stages"][0]["base_sha"] = git(repo, "rev-parse", "HEAD")
     write_stages(repo, stages)
-    git(repo, "fetch", "origin", "main")
-    source = repo / "src" / "core.py"
-    source.write_text("print('local work not on trunk')\n")
-    git(repo, "add", "src/core.py")
-    git(repo, "commit", "-qm", "keep scoped work off trunk")
 
     code, out = run(repo, "forge.py", "task", "reconcile", "T1")
 
-    assert code != 0, out
-    assert "scoped changes" in out
-    marker = repo / task_marker_path("ENG-1", "T1")
-    assert not marker.exists()
+    assert code != 0 and (
+        "no scoped commit in" in out and "Ticket: ENG-1/T1" in out
+    ), out
+    assert not (repo / task_marker_path("ENG-1", "T1")).exists()
 
-    marker.parent.mkdir(parents=True, exist_ok=True)
-    marker.write_text(json.dumps({
-        "task_id": "T1",
-        "branch": git(repo, "symbolic-ref", "--short", "HEAD"),
-        "base_main_sha": git(repo, "rev-parse", "origin/main"),
-        "commit": git(repo, "rev-parse", "HEAD"),
-        "sealed_at": "2026-09-23T00:00:00+00:00",
-        "reconciled": True,
-    }) + "\n")
-    git(repo, "add", marker.relative_to(repo).as_posix())
-    git(repo, "commit", "-qm", "local reconciled marker with off-trunk work")
-    problems = task_proof_problems(repo, "ENG-1", {"id": "T1"})
-    assert any("reconciled marker commit is not an ancestor of origin/main" in p
-               for p in problems), problems
+
+def test_reconcile_refuses_when_recorded_stage_base_is_missing(repo, tmp_path):
+    from forge_cli.stages import load_stages, write_stages
+
+    _two_task_story(repo, tmp_path)
+    stages = load_stages(repo)
+    stages["stages"][0]["status"] = "active"
+    stages["stages"][0].pop("base_sha", None)
+    write_stages(repo, stages)
+
+    code, out = run(repo, "forge.py", "task", "reconcile", "T1")
+
+    assert code != 0 and (
+        "T1 has no recorded stage base commit" in out
+    ), out
+    assert not (repo / task_marker_path("ENG-1", "T1")).exists()
 
 
 def test_reconcile_refuses_active_task_with_empty_write_scope(repo, tmp_path):
@@ -182,8 +364,27 @@ def test_reconcile_refuses_active_task_with_empty_write_scope(repo, tmp_path):
     code, out = run(repo, "forge.py", "task", "reconcile", "T1")
 
     assert code != 0, out
-    assert "has no write_scope" in out
+    assert "has no effective write_scope" in out
     assert not (repo / task_marker_path("ENG-1", "T1")).exists()
+
+
+def test_ci_task_proof_reconciled_marker_rejects_product_changes(repo):
+    git(repo, "checkout", "-qb", "feat/reconciled-marker-product")
+    base = git(repo, "rev-parse", "HEAD")
+    marker = (repo / ".factory" / "stories" / "ENG-1" / "tasks" / "T1"
+              / "pr-ready.json")
+    marker.parent.mkdir(parents=True)
+    marker.write_text(json.dumps({"reconciled": True, "commit": base}))
+    product = repo / "src" / "reconciled-bypass.py"
+    product.parent.mkdir(exist_ok=True)
+    product.write_text("bypassed = True\n")
+    git(repo, "add", marker.relative_to(repo).as_posix(),
+        product.relative_to(repo).as_posix())
+    git(repo, "commit", "-qm", "add reconciled marker with product change")
+
+    code, out = run(repo, "check_task_proof.py", "--base", base)
+
+    assert code == 1, out
 
 
 def test_an_adopted_marker_closes_without_proof_and_readopt_makes_one(repo, tmp_path):
@@ -198,6 +399,17 @@ def test_an_adopted_marker_closes_without_proof_and_readopt_makes_one(repo, tmp_
     _two_task_story(repo, tmp_path)
     git(repo, "config", "user.email", "test@knacklabs.dev")
     git(repo, "config", "user.name", "Gate Tests")
+    from forge_cli.stages import load_stages, write_stages
+    stages = load_stages(repo)
+    stages["stages"][0]["status"] = "active"
+    stages["stages"][0]["base_sha"] = git(repo, "rev-parse", "HEAD")
+    write_stages(repo, stages)
+    source = repo / "src" / "core.py"
+    source.write_text("print('T1 work shipped before adoption')\n")
+    git(repo, "add", "src/core.py")
+    git(repo, "commit", "-q", "-m", "ship T1 scoped work",
+        "-m", "Ticket: ENG-1/T1")
+    git(repo, "push", "-q", "origin", "HEAD:main")
     tasks = json.loads((delegation_ledger(repo).parent / "decomposition.json").read_text())["tasks"]
     t1 = next(t for t in tasks if t["id"] == "T1")
     publish_task_marker(repo, "ENG-1", "T1")           # a real marker on the trunk ...
@@ -232,3 +444,44 @@ def test_an_adopted_marker_closes_without_proof_and_readopt_makes_one(repo, tmp_
     closeout = require_closeout_order(repo)
     assert any("T2 not done" in p for p in closeout), closeout
     assert not any("T1" in p for p in closeout), "\n".join(closeout)
+
+
+def test_reconcile_readopts_trunk_marker_without_recorded_stage_base(repo, tmp_path):
+    from forge_cli.stages import load_stages, write_stages
+
+    _two_task_story(repo, tmp_path)
+    git(repo, "config", "user.email", "test@knacklabs.dev")
+    git(repo, "config", "user.name", "Gate Tests")
+    base = git(repo, "rev-parse", "HEAD")
+    stages = load_stages(repo)
+    stages["stages"][0]["status"] = "active"
+    stages["stages"][0].pop("base_sha", None)
+    write_stages(repo, stages)
+
+    source = repo / "src" / "core.py"
+    source.write_text("print('T1 work shipped')\n")
+    git(repo, "add", "src/core.py")
+    git(repo, "commit", "-q", "-m", "ship T1 scoped work",
+        "-m", "Ticket: ENG-1/T1")
+    task_commit = git(repo, "rev-parse", "HEAD")
+    git(repo, "push", "-q", "origin", "HEAD:main")
+
+    marker = repo / task_marker_path("ENG-1", "T1")
+    marker.parent.mkdir(parents=True, exist_ok=True)
+    payload = {
+        "task_id": "T1",
+        "branch": "feat/ENG-1-T1",
+        "base_main_sha": base,
+        "commit": task_commit,
+        "sealed_at": "2026-09-24T00:00:00+00:00",
+    }
+    marker.write_text(json.dumps(payload) + "\n")
+    git(repo, "add", marker.relative_to(repo).as_posix())
+    git(repo, "commit", "-q", "-m", "seal T1")
+    git(repo, "push", "-q", "origin", "HEAD:main")
+
+    code, out = run(repo, "forge.py", "task", "reconcile", "T1", "--readopt",
+                    "reconcile shipped marker after proof refresh")
+
+    assert code == 0, out
+    assert json.loads(marker.read_text()) == {**payload, "reconciled": True}

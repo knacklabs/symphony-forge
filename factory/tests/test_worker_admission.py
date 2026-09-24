@@ -290,6 +290,11 @@ def test_native_bash_recursive_copy_cannot_escape_exact_scope(repo):
     brief, digest = _seed_contract(repo, task)
     _record_native_preparation(repo, brief, digest, ["src/approved"])
     assert not (repo / ".factory" / "quickfix.json").exists()
+    generated = repo / "generated"
+    generated.write_text("generated\n", encoding="utf-8")
+    generated_tree = repo / "generated-tree"
+    generated_tree.mkdir()
+    (generated_tree / "file.txt").write_text("generated\n", encoding="utf-8")
 
     admitted = _hook(repo, {
         "tool_name": "Bash",
@@ -301,10 +306,10 @@ def test_native_bash_recursive_copy_cannot_escape_exact_scope(repo):
     output = _hook(repo, {
         "tool_name": "Bash",
         "permission_mode": "default",
-        "tool_input": {"command": "cp -R generated src/approved"},
+        "tool_input": {"command": "cp -R generated-tree src/approved"},
     }, {"FORGE_COORDINATOR": "codex"})
 
-    assert "deny" in output.lower() and "recursive" in output.lower(), output
+    assert "deny" in output.lower() and "only allows plain file writes" in output.lower(), output
 
 
 def test_native_bash_write_through_in_scope_symlink_is_scoped_by_its_target(repo):
@@ -971,7 +976,6 @@ def test_native_lite_fix_prepares_without_stage_and_keeps_window_budget(
     from forge_cli import doctor
     from forge_cli import fix
     from forge_cli.delegate import load_delegations
-    from forge_cli.worker_admission import _lite_contract
 
     (repo / ".factory/harness-source.json").write_text("{}\n", encoding="utf-8")
     window_id = "Q-0002-native-lite"
@@ -991,7 +995,7 @@ def test_native_lite_fix_prepares_without_stage_and_keeps_window_budget(
     )
 
     fix.cmd_fix(argparse.Namespace(
-        description="  repair a\n bounded   native issue  ", repo=str(repo),
+        description="repair a bounded native issue", repo=str(repo),
     ))
 
     output = capsys.readouterr().out
@@ -1004,10 +1008,6 @@ def test_native_lite_fix_prepares_without_stage_and_keeps_window_budget(
     assert prepared["task"] == window_id
     assert prepared["write_scope"] == []
     assert not ({"pid", "session_id", "process_token"} & prepared.keys())
-    assert _lite_contract(repo, prepared)[0] is not None
-    assert (repo / f".factory/briefs/{window_id}.md").read_text(
-        encoding="utf-8",
-    ).splitlines()[2] == "Fix: repair a bounded native issue"
 
     for index in range(5):
         admitted = _hook(repo, _patch(

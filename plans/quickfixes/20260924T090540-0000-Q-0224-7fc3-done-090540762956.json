@@ -1,0 +1,70 @@
+{
+  "event": "done",
+  "id": "Q-0224-7fc3",
+  "profile": "lite",
+  "by": "Ravi Kiran Vemula",
+  "reason": "Encoding-hygiene allowlist for the new git path decodes in pre_tool_use",
+  "base_sha": "b115343cde98d237257179c11383030e0368cb33",
+  "started_at": "2026-09-24T08:57:49+00:00",
+  "completed_at": "2026-09-24T09:05:40+00:00",
+  "files": [
+    "factory/scripts/check_encoding_hygiene.py"
+  ],
+  "reviews": {
+    "quality": {
+      "generated_by": "autoreview",
+      "score": 10,
+      "summary": "quality lens over Q-0224-7fc3 (1 product path(s), b115343..76d161e, Codex via the autoreview skill): 0 blocking, 0 non-blocking. The two additions pin specific Git path byte captures. The supplied diff shows no actionable correctness defect; the empty sandbox prevents independent verification of the referenced source lines.",
+      "blocking_findings": [],
+      "non_blocking_findings": [],
+      "recommendation": "approve",
+      "reviewed_scope": [
+        "factory/scripts/check_encoding_hygiene.py"
+      ],
+      "skills_used": [],
+      "contract_verdicts": [],
+      "review_base_sha": "b115343cde98d237257179c11383030e0368cb33",
+      "branch_diff_digest": "222d4e663f4515618e754692702eac4bb375b228fe6e67e6844f2cad70d03da3",
+      "commit": "76d161edd543c19b51545ddf5f9dd8336293c424",
+      "aspect": "quality",
+      "residual_risks": [],
+      "recorded_at": "2026-09-24T09:05:30+00:00"
+    },
+    "performance": {
+      "generated_by": "autoreview",
+      "score": 10,
+      "summary": "performance lens over Q-0224-7fc3 (1 product path(s), b115343..76d161e, Codex via the autoreview skill): 0 blocking, 0 non-blocking. The additions are static allowlist entries and show no material performance risk.",
+      "blocking_findings": [],
+      "non_blocking_findings": [],
+      "recommendation": "approve",
+      "reviewed_scope": [
+        "factory/scripts/check_encoding_hygiene.py"
+      ],
+      "skills_used": [],
+      "review_base_sha": "b115343cde98d237257179c11383030e0368cb33",
+      "branch_diff_digest": "222d4e663f4515618e754692702eac4bb375b228fe6e67e6844f2cad70d03da3",
+      "commit": "76d161edd543c19b51545ddf5f9dd8336293c424",
+      "aspect": "performance",
+      "residual_risks": [],
+      "recorded_at": "2026-09-24T09:05:30+00:00"
+    },
+    "security": {
+      "generated_by": "autoreview",
+      "score": 10,
+      "summary": "security lens over Q-0224-7fc3 (1 product path(s), b115343..76d161e, Codex via the autoreview skill): 0 blocking, 0 non-blocking. The entries name specific source hashes and occurrences. The supplied evidence shows no concrete security defect.",
+      "blocking_findings": [],
+      "non_blocking_findings": [],
+      "recommendation": "approve",
+      "reviewed_scope": [
+        "factory/scripts/check_encoding_hygiene.py"
+      ],
+      "skills_used": [],
+      "review_base_sha": "b115343cde98d237257179c11383030e0368cb33",
+      "branch_diff_digest": "222d4e663f4515618e754692702eac4bb375b228fe6e67e6844f2cad70d03da3",
+      "commit": "76d161edd543c19b51545ddf5f9dd8336293c424",
+      "aspect": "security",
+      "residual_risks": [],
+      "recorded_at": "2026-09-24T09:05:30+00:00"
+    }
+  }
+}

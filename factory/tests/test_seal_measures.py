@@ -27,6 +27,7 @@ from factory_lib import (  # noqa: E402
     load_json, plan_digest_without_assumptions,
     protected_decomposition_state_path, require_task_grill, task_rows,
 )
+from forge_cli.plans import parse_frontmatter  # noqa: E402
 
 
 def _claim(repo: Path, *files: str) -> str:
@@ -123,8 +124,8 @@ def test_plan_digest_keeps_authored_frontmatter_and_drops_save_stamps(tmp_path):
 def test_one_plan_grill_before_save_still_matches_after_save(repo, tmp_path):
     # The recipe "record the grill against the draft, save, record again
     # against the saved copy" is gone: the digest is the plan BODY, so the
-    # `saved:` timestamp `plan save` writes into the frontmatter cannot
-    # invalidate the one record.
+    # `saved` timestamp recorded in plan metadata cannot invalidate the one
+    # record.
     sign_off(repo)
     intake(repo)
     draft = tmp_path / "plan.md"
@@ -135,12 +136,16 @@ def test_one_plan_grill_before_save_still_matches_after_save(repo, tmp_path):
                     "--story", "ENG-1")
     assert code == 0 and "awaiting-approval" in out, out
     active = next((repo / "plans" / "active").glob("ENG-1-*.md"))
-    assert "saved:" in active.read_text(encoding="utf-8")
-    assert (plan_digest_without_assumptions(draft)
-            == plan_digest_without_assumptions(active))
+    metadata_path = repo / ".factory" / "stories" / "ENG-1" / "plan-meta.json"
+    metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+    assert metadata["saved"]
+    draft_fields, draft_body = parse_frontmatter(
+        draft.read_text(encoding="utf-8"))
+    assert active.read_text(encoding="utf-8") == draft_body
+    assert metadata["decisions_reviewed"] == draft_fields["decisions_reviewed"]
     code, out = post_hook(repo, native_claude_approval(repo))
     assert code == 0, out
-    assert "status: approved" in active.read_text(encoding="utf-8")
+    assert json.loads(metadata_path.read_text(encoding="utf-8"))["status"] == "approved"
 
 
 def _write_decision(repo: Path, name: str = "0999-measured-not-refused") -> str:

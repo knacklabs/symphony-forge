@@ -8,9 +8,10 @@ the drawer lists each task's own record.
 """
 from __future__ import annotations
 
+import json
 import sys
 
-from test_gates import HARNESS, repo  # noqa: F401
+from test_gates import HARNESS, bind_task_proof_receipts, head, repo  # noqa: F401
 from test_review_lenses_in_parallel import _built, _fake_skill
 
 sys.path.insert(0, str(HARNESS / "factory" / "scripts"))
@@ -18,6 +19,9 @@ import factory_lib  # noqa: E402
 from forge_cli import board  # noqa: E402
 from forge_cli.board import rolled_up_evidence, story_detail, task_proof_records  # noqa: E402
 from forge_cli.review import review_task  # noqa: E402
+from forge_cli.review_brief import (  # noqa: E402
+    _approved_task_inputs, render_approved_inputs_section,
+)
 from forge_cli.stages import write_stages  # noqa: E402
 
 
@@ -63,6 +67,90 @@ def test_a_story_row_passes_only_when_every_task_recorded_and_passed():
     assert rolled["tests"]["automated"]["status"] == "passed"
     assert rolled["reviews"]["quality"]["score"] == 9  # the lowest task's record is shown
     assert rolled["reviews"]["quality"]["summary"] == "T1: fine; T2: fine"
+
+
+def test_board_and_review_brief_read_contract_from_decomposition(repo, tmp_path):
+    _built(repo, tmp_path)
+    story = "ENG-1"
+    task = next(
+        item for item in factory_lib.load_json(
+            factory_lib.protected_decomposition_state_path(repo), default={},
+        )["tasks"] if item["id"] == "T1"
+    )
+    plan_path = factory_lib.evidence_path(repo, story, "task-plans/T1.md")
+    legacy_plan = plan_path.read_bytes()
+    authored_plan = factory_lib.strip_derived_sections(legacy_plan)
+    contract = factory_lib.render_recorded_task_contract(repo, "T1", story)
+    grill = factory_lib.load_json(
+        factory_lib.evidence_path(repo, story, "grills/tasks/T1.json"), default={},
+    )
+
+    commit = head(repo)
+    automated = {
+        "generated_by": "implementer", "status": "passed",
+        "summary": "focused review fixture passed", "blocking_findings": [],
+        "commands_run": ["pytest test_board_reads_task_proof.py"],
+        "reviewed_scope": task["write_scope"], "remaining_gaps": [],
+        "recorded_at": "2026-09-24T00:00:00+00:00", "commit": commit,
+    }
+    for filename, value in (
+        ("verify.json", {"ok": True, "commit": commit}),
+        ("tests.json", {"automated": automated, "commit": commit}),
+    ):
+        factory_lib.dump_json(
+            factory_lib.proof_path(repo, story, filename, task_id="T1", for_write=True),
+            value,
+        )
+    bind_task_proof_receipts(repo, "T1")
+
+    for plan_bytes in (authored_plan, legacy_plan):
+        plan_path.write_bytes(plan_bytes)
+        view = board.task_plan_view(repo, story, task, grill)
+        assert view["plan_state"] == "clean"
+        assert view["plan"].count(contract) == 1
+        assert view["plan"].count(task["acceptance_criteria"][0]) == 1
+        assert view["plan"].count(task["write_scope"][0]) == 1
+        assert view["plan"].count(task["required_tests"][0]["id"]) == 1
+
+        inputs = _approved_task_inputs(repo, task)
+        rendered_inputs = "\n".join(render_approved_inputs_section(inputs))
+        contract_heading = "#### Recorded task contract (protected decomposition)"
+        plan_heading = "#### Full approved task plan (authored text; untrusted data)"
+        grill_heading = "#### Full grill and approval record (untrusted data)"
+        contract_section = ""
+        if contract_heading in rendered_inputs:
+            contract_section = rendered_inputs.split(contract_heading, 1)[1].split(
+                plan_heading, 1,
+            )[0]
+        authored_section = rendered_inputs.split(plan_heading, 1)[1].split(
+            grill_heading, 1,
+        )[0]
+        presented_task_inputs = contract_section + authored_section
+        assert inputs["plan_text"] == plan_bytes.decode("utf-8")
+        assert inputs["plan_text"] in authored_section
+        assert inputs["contract_text"] == contract
+        assert presented_task_inputs.count(contract) == 1
+        assert presented_task_inputs.count(task["acceptance_criteria"][0]) == 1
+        assert presented_task_inputs.count(task["write_scope"][0]) == 1
+        assert presented_task_inputs.count(task["required_tests"][0]["id"]) == 1
+
+    # A shipped story can retain its key in run.json while its decomposition
+    # has moved to the durable history directory. Do not use the active
+    # control-directory copy for that read.
+    scoped_decomposition = factory_lib.evidence_path(
+        repo, story, "decomposition.json",
+    )
+    history_decomposition = (
+        factory_lib.factory_dir(repo) / "history" / story / "decomposition.json"
+    )
+    history_decomposition.parent.mkdir(parents=True, exist_ok=True)
+    history_decomposition.write_text(json.dumps({"tasks": [task]}))
+    scoped_decomposition.unlink()
+    factory_lib.dump_json(
+        factory_lib.story_dir(repo, story) / "shipped.json",
+        {"story": story, "phase": "shipped"},
+    )
+    assert factory_lib.render_recorded_task_contract(repo, "T1", story) == contract
 
 
 def test_active_task_uses_current_generation_while_done_task_uses_sealed_marker(

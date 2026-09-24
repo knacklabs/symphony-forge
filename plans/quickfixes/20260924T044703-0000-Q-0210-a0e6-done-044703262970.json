@@ -1,0 +1,82 @@
+{
+  "event": "done",
+  "id": "Q-0210-a0e6",
+  "profile": "lite",
+  "by": "Ravi Kiran Vemula",
+  "reason": "Task plans are briefs with no bookkeeping (planB; owner-approved)",
+  "base_sha": "745a8113459f5eb6cd32a715dc3c605b167b451d",
+  "started_at": "2026-09-24T02:47:58+00:00",
+  "completed_at": "2026-09-24T04:47:03+00:00",
+  "files": [
+    "factory/scripts/factory_lib.py",
+    "factory/scripts/forge_cli/board.py",
+    "factory/scripts/forge_cli/review_brief.py",
+    "factory/tests/test_board_reads_task_proof.py"
+  ],
+  "reviews": {
+    "quality": {
+      "generated_by": "autoreview",
+      "score": 10,
+      "summary": "quality lens over Q-0210-a0e6 (4 product path(s), 745a811..b6385d8, Codex via the autoreview skill): 0 blocking, 0 non-blocking. The supplied diff shows the recorded contract added to review inputs and the board plan view, with tests covering authored and legacy plans. No actionable correctness defect is established. Unchanged helper behavior could not be independently checked in the empty sandbox.",
+      "blocking_findings": [],
+      "non_blocking_findings": [],
+      "recommendation": "approve",
+      "reviewed_scope": [
+        "factory/scripts/factory_lib.py",
+        "factory/scripts/forge_cli/board.py",
+        "factory/scripts/forge_cli/review_brief.py",
+        "factory/tests/test_board_reads_task_proof.py"
+      ],
+      "skills_used": [],
+      "contract_verdicts": [],
+      "review_base_sha": "745a8113459f5eb6cd32a715dc3c605b167b451d",
+      "branch_diff_digest": "a32f7a3cde001e15792abf11e8fad1a2c6a9a7e08f325bdaba1ede33a5154095",
+      "commit": "b6385d8d470c419e161bb670815b929af93b684a",
+      "aspect": "quality",
+      "residual_risks": [],
+      "recorded_at": "2026-09-24T04:28:55+00:00"
+    },
+    "performance": {
+      "generated_by": "autoreview",
+      "score": 10,
+      "summary": "performance lens over Q-0210-a0e6 (4 product path(s), 745a811..b6385d8, Codex via the autoreview skill): 0 blocking, 0 non-blocking. The new contract read adds file parsing when these views are built. The evidence does not establish a production bottleneck or an actionable performance defect.",
+      "blocking_findings": [],
+      "non_blocking_findings": [],
+      "recommendation": "approve",
+      "reviewed_scope": [
+        "factory/scripts/factory_lib.py",
+        "factory/scripts/forge_cli/board.py",
+        "factory/scripts/forge_cli/review_brief.py",
+        "factory/tests/test_board_reads_task_proof.py"
+      ],
+      "skills_used": [],
+      "review_base_sha": "745a8113459f5eb6cd32a715dc3c605b167b451d",
+      "branch_diff_digest": "a32f7a3cde001e15792abf11e8fad1a2c6a9a7e08f325bdaba1ede33a5154095",
+      "commit": "b6385d8d470c419e161bb670815b929af93b684a",
+      "aspect": "performance",
+      "residual_risks": [],
+      "recorded_at": "2026-09-24T04:28:55+00:00"
+    },
+    "security": {
+      "generated_by": "autoreview",
+      "score": 10,
+      "summary": "security lens over Q-0210-a0e6 (4 product path(s), 745a811..b6385d8, Codex via the autoreview skill): 0 blocking, 0 non-blocking. The review brief fences the plan and contract as untrusted data. The supplied change shows no concrete credential exposure or trust-boundary violation.",
+      "blocking_findings": [],
+      "non_blocking_findings": [],
+      "recommendation": "approve",
+      "reviewed_scope": [
+        "factory/scripts/factory_lib.py",
+        "factory/scripts/forge_cli/board.py",
+        "factory/scripts/forge_cli/review_brief.py",
+        "factory/tests/test_board_reads_task_proof.py"
+      ],
+      "skills_used": [],
+      "review_base_sha": "745a8113459f5eb6cd32a715dc3c605b167b451d",
+      "branch_diff_digest": "a32f7a3cde001e15792abf11e8fad1a2c6a9a7e08f325bdaba1ede33a5154095",
+      "commit": "b6385d8d470c419e161bb670815b929af93b684a",
+      "aspect": "security",
+      "residual_risks": [],
+      "recorded_at": "2026-09-24T04:28:56+00:00"
+    }
+  }
+}

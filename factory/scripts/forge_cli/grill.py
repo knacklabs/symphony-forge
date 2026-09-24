@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import json
 import re
 import uuid
 from pathlib import Path
@@ -258,9 +259,29 @@ def _last_pass_at(base: Path, gate: str, task_id: str) -> str:
     return str(record.get("recorded_at") or "")
 
 
+def _task_contract_sha256(base: Path, task_id: str) -> str:
+    """Fingerprint the protected task contract without its plan text."""
+    from factory_lib import (
+        GROUNDING_CONTRACT_FIELDS, load_json,
+        protected_decomposition_state_path,
+    )
+
+    tasks = load_json(protected_decomposition_state_path(base),
+                      default={}).get("tasks", [])
+    task = next((entry for entry in tasks if entry.get("id") == task_id), None)
+    if not task:
+        return ""
+    contract = {field: task.get(field) for field in GROUNDING_CONTRACT_FIELDS}
+    payload = json.dumps(contract, sort_keys=True, separators=(",", ":"),
+                         ensure_ascii=True)
+    return hashlib.sha256(payload.encode("utf-8")).hexdigest()
+
+
 def _refuse_a_second_cold_read(base: Path, ledger_id: str, gate: str,
-                               task_id: str) -> None:
-    """Allow exactly one successful cold launch per recorded pass."""
+                               task_id: str, brief_sha256: str = "",
+                               input_sha256: str = "",
+                               contract_sha256: str = "") -> None:
+    """Allow one cold launch per recorded pass for the current input."""
     try:
         since = _last_pass_at(base, gate, task_id)
         story = load_json(run_state_path(base), default={}).get("issue_key", "") \
@@ -274,6 +295,39 @@ def _refuse_a_second_cold_read(base: Path, ledger_id: str, gate: str,
                         and row.get("transport") == "host-native")
                     or (row.get("launch_status") in {"starting", "running"}
                         and row.get("launch_id") not in dead))]
+        stale = []
+        current = []
+        for row in cold:
+            if gate == "task":
+                recorded = row.get("cold_contract_sha256")
+                # Older launches do not identify the protected contract, so
+                # they remain authoritative and cannot release another read.
+                identities = [(recorded, contract_sha256)]
+            else:
+                identities = [
+                    (row.get("brief_sha256"), brief_sha256),
+                    (row.get("task_sha256"), input_sha256),
+                ]
+            comparable = [
+                (recorded, expected)
+                for recorded, expected in identities
+                if (isinstance(recorded, str)
+                    and re.fullmatch(r"[0-9a-f]{64}", recorded)
+                    and expected)
+            ]
+            if comparable and any(recorded != expected
+                                  for recorded, expected in comparable):
+                stale.append(row)
+            else:
+                current.append(row)
+        if stale and not current:
+            if gate == "task":
+                print("the task's contract changed since its last cold read; "
+                      "a fresh read is allowed")
+            else:
+                print("the grill input changed since its last cold read; "
+                      "a fresh read is allowed")
+        cold = current
         if not cold:
             return
     except (Exception, SystemExit):
@@ -317,12 +371,18 @@ def cmd_grill_run(args: argparse.Namespace) -> None:
             base, ledger_id, kind="grill-cold-read", namespace="grill"):
         # Hold the exact gate/task key across admission and launch so a second
         # process cannot pass the repeat-read check before the first row lands.
-        if not args.print_only:
-            _refuse_a_second_cold_read(base, ledger_id, gate, task_id)
-
+        contract_sha256 = (_task_contract_sha256(base, task_id)
+                           if gate == "task" else "")
         label, artifact = _artifact_text(
             base, gate, task_id, (getattr(args, "file", "") or "").strip())
         text = _compose_brief(base, gate, label, artifact, task_id)
+        if not args.print_only:
+            _refuse_a_second_cold_read(
+                base, ledger_id, gate, task_id,
+                hashlib.sha256(text.encode("utf-8")).hexdigest(),
+                _artifact_digest(artifact),
+                contract_sha256,
+            )
         path = base / ".factory" / f"grill-brief-{gate}" \
             f"{'-' + task_id if task_id else ''}.md"
         model, effort, _bound = mode_run_config(base, "grill")
@@ -372,6 +432,7 @@ def cmd_grill_run(args: argparse.Namespace) -> None:
                 context_snapshot_identity=context_identity,
                 context_source_path=context_file,
                 native_task_name=native_task_name,
+                cold_contract_sha256=contract_sha256,
                 emit_descriptor=False,
             )
         finally:

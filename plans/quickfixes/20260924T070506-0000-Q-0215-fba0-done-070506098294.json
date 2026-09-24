@@ -1,0 +1,95 @@
+{
+  "event": "done",
+  "id": "Q-0215-fba0",
+  "profile": "lite",
+  "by": "Ravi Kiran Vemula",
+  "reason": "planB2 (owner-approved LEAN-FIXES follow-up)",
+  "base_sha": "f542de24f172ee4d9a95cdc4300d38451fdc3349",
+  "started_at": "2026-09-24T05:45:20+00:00",
+  "completed_at": "2026-09-24T07:05:06+00:00",
+  "files": [
+    "factory/scripts/factory_lib.py",
+    "factory/scripts/forge_cli/phase.py",
+    "factory/scripts/forge_cli/tasks.py",
+    "factory/tests/test_approval_hooks.py",
+    "factory/tests/test_contract_block_digest.py"
+  ],
+  "reviews": {
+    "quality": {
+      "generated_by": "autoreview",
+      "score": 9,
+      "summary": "quality lens over Q-0215-fba0 (5 product path(s), f542de2..aa1c8e7, Codex via the autoreview skill): 0 blocking, 1 non-blocking. Saving a task plan with authored frontmatter changes which content the grill and approval digests cover. The added test checks metadata storage but does not check digest continuity for that case.",
+      "blocking_findings": [],
+      "non_blocking_findings": [
+        {
+          "category": "bug",
+          "area": "factory/scripts/forge_cli",
+          "summary": "Preserve authored frontmatter in the task-plan approval digest (factory/scripts/forge_cli/tasks.py:243): When a task plan contains authored frontmatter, this line saves only its body to the plan file and moves the fields to a sidecar.",
+          "file_path": "factory/scripts/forge_cli/tasks.py",
+          "line": 243,
+          "title": "Preserve authored frontmatter in the task-plan approval digest"
+        }
+      ],
+      "recommendation": "approve-with-caveats",
+      "reviewed_scope": [
+        "factory/scripts/factory_lib.py",
+        "factory/scripts/forge_cli/phase.py",
+        "factory/scripts/forge_cli/tasks.py",
+        "factory/tests/test_approval_hooks.py",
+        "factory/tests/test_contract_block_digest.py"
+      ],
+      "skills_used": [],
+      "contract_verdicts": [],
+      "review_base_sha": "f542de24f172ee4d9a95cdc4300d38451fdc3349",
+      "branch_diff_digest": "390b080ff842315cae5ea50eec7defdba0a0dac7bcea857aad6d6141fd297ef7",
+      "commit": "aa1c8e7a20032cf6aca7e7fba751aff0fb01c1ee",
+      "aspect": "quality",
+      "residual_risks": [],
+      "recorded_at": "2026-09-24T06:41:48+00:00"
+    },
+    "performance": {
+      "generated_by": "autoreview",
+      "score": 10,
+      "summary": "performance lens over Q-0215-fba0 (5 product path(s), f542de2..aa1c8e7, Codex via the autoreview skill): 0 blocking, 0 non-blocking. The changed paths are save and approval operations. The diff shows no actionable performance defect.",
+      "blocking_findings": [],
+      "non_blocking_findings": [],
+      "recommendation": "approve",
+      "reviewed_scope": [
+        "factory/scripts/factory_lib.py",
+        "factory/scripts/forge_cli/phase.py",
+        "factory/scripts/forge_cli/tasks.py",
+        "factory/tests/test_approval_hooks.py",
+        "factory/tests/test_contract_block_digest.py"
+      ],
+      "skills_used": [],
+      "review_base_sha": "f542de24f172ee4d9a95cdc4300d38451fdc3349",
+      "branch_diff_digest": "390b080ff842315cae5ea50eec7defdba0a0dac7bcea857aad6d6141fd297ef7",
+      "commit": "aa1c8e7a20032cf6aca7e7fba751aff0fb01c1ee",
+      "aspect": "performance",
+      "residual_risks": [],
+      "recorded_at": "2026-09-24T06:41:48+00:00"
+    },
+    "security": {
+      "generated_by": "autoreview",
+      "score": 10,
+      "summary": "security lens over Q-0215-fba0 (5 product path(s), f542de2..aa1c8e7, Codex via the autoreview skill): 0 blocking, 0 non-blocking. The approval question retains its digest-bound ID, and the temporary JSON file uses a same-directory replacement. No separate concrete security defect is evident from the supplied change.",
+      "blocking_findings": [],
+      "non_blocking_findings": [],
+      "recommendation": "approve",
+      "reviewed_scope": [
+        "factory/scripts/factory_lib.py",
+        "factory/scripts/forge_cli/phase.py",
+        "factory/scripts/forge_cli/tasks.py",
+        "factory/tests/test_approval_hooks.py",
+        "factory/tests/test_contract_block_digest.py"
+      ],
+      "skills_used": [],
+      "review_base_sha": "f542de24f172ee4d9a95cdc4300d38451fdc3349",
+      "branch_diff_digest": "390b080ff842315cae5ea50eec7defdba0a0dac7bcea857aad6d6141fd297ef7",
+      "commit": "aa1c8e7a20032cf6aca7e7fba751aff0fb01c1ee",
+      "aspect": "security",
+      "residual_risks": [],
+      "recorded_at": "2026-09-24T06:41:49+00:00"
+    }
+  }
+}

@@ -1,0 +1,78 @@
+{
+  "event": "done",
+  "id": "Q-0218-755a",
+  "profile": "lite",
+  "by": "Ravi Kiran Vemula",
+  "reason": "Full-suite breakage after merges (sfA)",
+  "base_sha": "87c66118bb8c4464f63f4231cdf8dd18b03e70e0",
+  "started_at": "2026-09-24T07:27:18+00:00",
+  "completed_at": "2026-09-24T07:48:02+00:00",
+  "files": [
+    "factory/tests/test_close_binds_to_the_diff.py",
+    "factory/tests/test_lean_workflow.py",
+    "factory/tests/test_seal_measures.py"
+  ],
+  "reviews": {
+    "quality": {
+      "generated_by": "autoreview",
+      "score": 10,
+      "summary": "quality lens over Q-0218-755a (3 product path(s), 87c6611..8a13272, Codex via the autoreview skill): 0 blocking, 0 non-blocking. The supplied diff updates tests to check plan metadata and separately rendered contracts. No actionable defect is evident. Unchanged implementation files were unavailable, so this assessment is limited to the supplied change.",
+      "blocking_findings": [],
+      "non_blocking_findings": [],
+      "recommendation": "approve",
+      "reviewed_scope": [
+        "factory/tests/test_close_binds_to_the_diff.py",
+        "factory/tests/test_lean_workflow.py",
+        "factory/tests/test_seal_measures.py"
+      ],
+      "skills_used": [],
+      "contract_verdicts": [],
+      "review_base_sha": "87c66118bb8c4464f63f4231cdf8dd18b03e70e0",
+      "branch_diff_digest": "8237be6676c163518874cd1eca96101ad277b9f70989bfade25b9966422ebd8e",
+      "commit": "8a132723409f878998d828584d783743c9b36fd5",
+      "aspect": "quality",
+      "residual_risks": [],
+      "recorded_at": "2026-09-24T07:46:38+00:00"
+    },
+    "performance": {
+      "generated_by": "autoreview",
+      "score": 10,
+      "summary": "performance lens over Q-0218-755a (3 product path(s), 87c6611..8a13272, Codex via the autoreview skill): 0 blocking, 0 non-blocking. The test changes show no production performance impact.",
+      "blocking_findings": [],
+      "non_blocking_findings": [],
+      "recommendation": "approve",
+      "reviewed_scope": [
+        "factory/tests/test_close_binds_to_the_diff.py",
+        "factory/tests/test_lean_workflow.py",
+        "factory/tests/test_seal_measures.py"
+      ],
+      "skills_used": [],
+      "review_base_sha": "87c66118bb8c4464f63f4231cdf8dd18b03e70e0",
+      "branch_diff_digest": "8237be6676c163518874cd1eca96101ad277b9f70989bfade25b9966422ebd8e",
+      "commit": "8a132723409f878998d828584d783743c9b36fd5",
+      "aspect": "performance",
+      "residual_risks": [],
+      "recorded_at": "2026-09-24T07:46:38+00:00"
+    },
+    "security": {
+      "generated_by": "autoreview",
+      "score": 10,
+      "summary": "security lens over Q-0218-755a (3 product path(s), 87c6611..8a13272, Codex via the autoreview skill): 0 blocking, 0 non-blocking. The diff shows no new trust boundary, credential exposure, or security defect.",
+      "blocking_findings": [],
+      "non_blocking_findings": [],
+      "recommendation": "approve",
+      "reviewed_scope": [
+        "factory/tests/test_close_binds_to_the_diff.py",
+        "factory/tests/test_lean_workflow.py",
+        "factory/tests/test_seal_measures.py"
+      ],
+      "skills_used": [],
+      "review_base_sha": "87c66118bb8c4464f63f4231cdf8dd18b03e70e0",
+      "branch_diff_digest": "8237be6676c163518874cd1eca96101ad277b9f70989bfade25b9966422ebd8e",
+      "commit": "8a132723409f878998d828584d783743c9b36fd5",
+      "aspect": "security",
+      "residual_risks": [],
+      "recorded_at": "2026-09-24T07:46:39+00:00"
+    }
+  }
+}

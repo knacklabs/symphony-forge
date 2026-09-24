@@ -11,6 +11,7 @@ import re
 import stat
 import subprocess
 import sys
+import tempfile
 import threading
 import time
 from datetime import datetime, timezone
@@ -708,6 +709,21 @@ def dump_json(path: Path, data: Any) -> None:
     path.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
 
 
+def atomic_dump_json(path: Path, data: Any) -> None:
+    """Publish JSON through a same-directory temporary file and replacement."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    descriptor, name = tempfile.mkstemp(
+        prefix=f".{path.name}.", suffix=".tmp", dir=path.parent,
+    )
+    os.close(descriptor)
+    temporary = Path(name)
+    try:
+        dump_json(temporary, data)
+        os.replace(temporary, path)
+    finally:
+        temporary.unlink(missing_ok=True)
+
+
 # Git's control dir is constant for a worktree over a process's lifetime, but
 # resolving it shells out to git twice. The board resolves it ~100× per poll
 # (once per run_state_path / evidence_path call), which turned a single request
@@ -1072,7 +1088,7 @@ def task_marker_on_main(
                 root, payload, task_id, inspected_head=snapshot):
             return False
         if payload.get("reconciled") is True:
-            return _git_is_ancestor(root, payload["commit"], snapshot)
+            return True
 
         def reader(path: str) -> dict | None:
             return _read_git_json(root, path, snapshot)
@@ -1861,6 +1877,9 @@ def _current_task_review_inputs(
         plan_text = raw_plan.decode("utf-8")
     except UnicodeDecodeError:
         return None, [f"{task_id}: current approved task plan is not UTF-8"]
+    contract_text = render_recorded_task_contract(root, task_id, key)
+    if not contract_text:
+        return None, [f"{task_id}: current recorded task contract is missing"]
     grill = read_json(grill_path)
     tests = read_json(tests_path)
     automated = tests.get("automated") if isinstance(tests, dict) else None
@@ -1883,6 +1902,7 @@ def _current_task_review_inputs(
         "branch": branch,
         "delta_id": delta_id,
         "plan_text": plan_text,
+        "contract_text": contract_text,
         "plan_sha256": _plan_body_digest_bytes(raw_plan),
         "grill": grill,
         "automated": automated,
@@ -2200,11 +2220,6 @@ def task_proof_problems(
         if marker_problem:
             return [marker_problem]
         if marker_context is not None and marker_context.get("reconciled") is True:
-            trunk = default_trunk_branch(root)
-            if not _git_is_ancestor(
-                    root, marker_context["commit"], f"origin/{trunk}"):
-                return [f"{task_id}: reconciled marker commit is not an ancestor "
-                        f"of origin/{trunk}"]
             return []
         missing_marker = marker_context is None
 
@@ -4217,30 +4232,50 @@ def render_task_contract_block(task: dict, amendments: dict | None = None) -> st
     return "\n".join(lines) + "\n"
 
 
-def refresh_task_plan_contract(root: Path, task_id: str, task: dict) -> bool:
-    """Re-render the contract block inside the saved task plan, if there is one.
-
-    Called wherever the contract or its amendments move: the decomposition
-    recorder, `task plan save`, `stage amend-scope`. Returns True when the
-    file changed. The block sits before `## Implementation Assumptions` when
-    that appendix exists, else at the end.
-    """
+def render_recorded_task_contract(
+    root: Path, task_id: str, story: str | None = None,
+) -> str:
+    """Render a task contract from recorded decomposition state, never its plan."""
     from forge_cli.stages import scope_amendments_path
-    story = _active_story_key(root)
-    path = evidence_path(root, story, f"task-plans/{task_id}.md", for_write=True)
-    if not path.is_file():
+
+    key = story or _active_story_key(root)
+    active = key == _active_story_key(root)
+    shipped = (
+        (story_dir(root, key) / "shipped.json").is_file()
+        or (factory_dir(root) / "history" / key / "shipped.json").is_file()
+    )
+    decomposition_path = (
+        protected_decomposition_state_path(root)
+        if active and not shipped
+        else decomposition_state_path(root, key)
+    )
+    decomposition = load_json(decomposition_path, default={})
+    task = next(
+        (item for item in decomposition.get("tasks", [])
+         if isinstance(item, dict) and item.get("id") == task_id),
+        None,
+    )
+    if task is None:
+        return ""
+    amendments = {}
+    if active and not shipped:
+        amendments = (load_json(scope_amendments_path(root), default={})
+                      .get("tasks", {}).get(task_id, {}))
+    return render_task_contract_block(task, amendments)
+
+
+def refresh_task_plan_contract(root: Path, task_id: str, task: dict) -> bool:
+    """Remove an older rendered contract without adding it back."""
+    plan = evidence_path(
+        root, _active_story_key(root), f"task-plans/{task_id}.md",
+    )
+    if not plan.is_file():
         return False
-    amendments = (load_json(scope_amendments_path(root), default={})
-                  .get("tasks", {}).get(task_id))
-    block = render_task_contract_block(task, amendments if isinstance(amendments, dict) else None)
-    text = path.read_text(encoding="utf-8")
-    stripped = strip_derived_sections(text.encode("utf-8")).decode("utf-8")
-    head, marker, tail = stripped.partition("\n## Implementation Assumptions")
-    head = head.rstrip("\n") + "\n\n"
-    rebuilt = head + block + (("\n" + marker.lstrip("\n") + tail) if marker else "")
-    if rebuilt == text:
+    original = plan.read_bytes()
+    stripped = strip_derived_sections(original)
+    if stripped == original:
         return False
-    path.write_text(rebuilt, encoding="utf-8")
+    plan.write_bytes(stripped)
     return True
 
 

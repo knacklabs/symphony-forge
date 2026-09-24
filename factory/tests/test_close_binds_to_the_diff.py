@@ -34,7 +34,8 @@ from test_gates import (  # noqa: F401
 sys.path.insert(0, str(HARNESS / "factory" / "scripts"))
 from factory_lib import (  # noqa: E402
     load_json, plan_digest_without_assumptions, product_delta_digest,
-    protected_decomposition_state_path, task_evidence_path,
+    protected_decomposition_state_path, render_recorded_task_contract,
+    task_evidence_path,
 )
 from forge_cli.stages import (  # noqa: E402
     load_stages, stamp_is_fresh, task_digest, task_for, write_stages,
@@ -224,11 +225,13 @@ def test_the_grill_reads_the_recorded_contract_and_the_amended_scope(repo, tmp_p
     assert "lib/helper.py" in section and "only seam" in section
 
 
-def test_the_task_plan_carries_a_rendered_contract_outside_its_digest(repo, tmp_path):
+def test_task_plan_omits_contract_rendered_from_decomposition(repo, tmp_path):
     start_stage(repo, tmp_path, STAGE_TASK)
     plan = story_state(repo) / "task-plans" / "T1.md"
     text = plan.read_text(encoding="utf-8")
-    assert "<!-- forge:contract -->" in text and "- src/" in text
+    assert "<!-- forge:contract -->" not in text
+    contract = render_recorded_task_contract(repo, "T1")
+    assert "<!-- forge:contract -->" in contract and "- src/" in contract
     before = plan_digest_without_assumptions(plan)
 
     write_in_scope(repo, "src/core.py")
@@ -238,10 +241,11 @@ def test_the_task_plan_carries_a_rendered_contract_outside_its_digest(repo, tmp_
     code, out = run(repo, "forge.py", "stage", "amend-scope", "T1",
                     "--reason", "the helper is the only seam for the criterion")
     assert code == 0, out
-    text = plan.read_text(encoding="utf-8")
-    assert "lib/helper.py" in text, "the amendment was not rendered into the plan"
+    contract = render_recorded_task_contract(repo, "T1")
+    assert "lib/helper.py" in contract and "only seam" in contract
+    assert "<!-- forge:contract -->" not in plan.read_text(encoding="utf-8")
     assert plan_digest_without_assumptions(plan) == before, \
-        "re-rendering the contract block changed the plan's approval digest"
+        "rendering the contract changed the plan's approval digest"
 
 
 # --------------------------------------------------------- one command
