@@ -211,7 +211,27 @@ def cmd_save(args: argparse.Namespace) -> None:
         fail(f"plan source {source} not found — pass the approved plan file via --from")
     story = args.story or issue
     current_story = state.get("story") or state.get("issue_key")
-    if state.get("plan_status") == "approved" and current_story == story:
+    title = args.title or state.get("title") or issue
+    dest_dir = base / "plans" / "active"
+    dest = dest_dir / f"{issue}-{slugify(title)}.md"
+    dest_relative = dest.relative_to(base).as_posix()
+    previous_metadata = load_json(plan_meta_path(base, story), default={})
+    previous_plan_file = (
+        previous_metadata.get("plan_file")
+        if isinstance(previous_metadata, dict) else None
+    )
+    previous_plan_approved = (
+        isinstance(previous_metadata, dict)
+        and previous_metadata.get("status") == "approved"
+    )
+    if (previous_plan_approved and isinstance(previous_plan_file, str)
+            and previous_plan_file != dest_relative):
+        fail(f"plan save refused: an approved plan exists at {previous_plan_file}; "
+             "amend it rather than saving a new title")
+    if (
+        (state.get("plan_status") == "approved" and current_story == story)
+        or (previous_plan_approved and previous_plan_file == dest_relative)
+    ):
         fail(f"plan save refused: {story} already has an approved current plan. "
              "Keep the approved contract stable; use the governed amendment "
              "path when its meaning must change.")
@@ -266,9 +286,6 @@ def cmd_save(args: argparse.Namespace) -> None:
         ]
         fail("the plan is missing required sections: " + ", ".join(missing_sections))
     status = "awaiting-approval"
-    title = args.title or state.get("title") or issue
-    dest_dir = base / "plans" / "active"
-    dest = dest_dir / f"{issue}-{slugify(title)}.md"
     saved = now_iso()
     header = ""
     if has_frontmatter:
@@ -296,6 +313,12 @@ def cmd_save(args: argparse.Namespace) -> None:
         "decisions_reviewed": reviewed,
     }
     write_plan_metadata(base, story, metadata)
+    previous_path = Path(previous_plan_file) if isinstance(previous_plan_file, str) else None
+    if (previous_path and previous_plan_file != dest_relative
+            and previous_path.parent == Path("plans/active")
+            and previous_path.name.startswith(f"{issue}-")
+            and previous_path.suffix == ".md"):
+        (base / previous_path).unlink(missing_ok=True)
     if state:
         state["plan_status"] = status
         state["issue_key"] = issue

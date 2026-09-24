@@ -198,6 +198,45 @@ def test_plan_save_refuses_inline_list_frontmatter_and_accepts_canonical_form(
     assert metadata["decisions_reviewed"] == active_decision_ids(repo)
 
 
+def test_plan_resave_replaces_only_unapproved_story_plan(repo: Path, tmp_path: Path):
+    sign_off(repo)
+    code, output = intake(repo)
+    assert code == 0, output
+    draft = tmp_path / "resaved-plan.md"
+    draft.write_text(plan_draft(repo), encoding="utf-8")
+    code, output = record_grill(repo, "plan", digest_of=draft)
+    assert code == 0, output
+    code, output = run(
+        repo, "forge.py", "plan", "save", "--from", str(draft),
+        "--title", "First title",
+    )
+    assert code == 0, output
+    first = repo / "plans" / "active" / "ENG-1-first-title.md"
+    assert first.is_file()
+
+    code, output = run(
+        repo, "forge.py", "plan", "save", "--from", str(draft),
+        "--title", "Updated title",
+    )
+    assert code == 0, output
+    updated = repo / "plans" / "active" / "ENG-1-updated-title.md"
+    assert not first.exists()
+    assert list((repo / "plans" / "active").glob("ENG-1-*.md")) == [updated]
+
+    candidate = approval.eligible_candidates(repo)[0]
+    approved_bytes = updated.read_bytes()
+    approval.record_native_approval(repo, _event(candidate), runtime="claude")
+    code, output = run(
+        repo, "forge.py", "plan", "save", "--from", str(draft),
+        "--title", "Third title",
+    )
+    assert code != 0
+    assert ("an approved plan exists at plans/active/ENG-1-updated-title.md; "
+            "amend it rather than saving a new title") in output
+    assert updated.read_bytes() == approved_bytes
+    assert list((repo / "plans" / "active").glob("ENG-1-*.md")) == [updated]
+
+
 def test_brief_plan_saves_body_only_and_claude_approves_exact_text(
         repo: Path, tmp_path: Path):
     sign_off(repo)
