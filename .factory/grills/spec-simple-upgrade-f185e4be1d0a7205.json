@@ -1,0 +1,657 @@
+{
+  "generated_by": "griller",
+  "gate": "spec",
+  "verdict": "pass",
+  "gaps": [
+    "The pre-rename recovery instruction does not identify an exact last compatible harness commit or a runnable way to obtain and use it. A developer must guess which version to run, despite the spec making this a prerequisite (docs/specs/simple-upgrade.md:27; docs/decisions/0088-simple-upgrade.md:39).",
+    "The vendored-commit check establishes only that the object exists. The spec does not say whether it must be an ancestor of the harness HEAD, or what happens when the client records a newer commit; proceeding could downgrade the client while presenting the operation as an upgrade (docs/specs/simple-upgrade.md:24; factory/scripts/forge_cli/scaffold.py:608).",
+    "The worktree scan has no stated fail-closed rule for unreadable or stale Git worktree bookkeeping. The existing worktree enumerator silently skips unreadable entries, so a worktree with in-progress work could be omitted despite the promised refusal (docs/specs/simple-upgrade.md:31; factory/scripts/factory_lib.py:5307).",
+    "The work-in-progress definition covers approved active plans but leaves a saved plan awaiting approval with no story pointer unspecified. Archiving its grill or approval files while retaining the plan could strand that handoff; the plan metadata and approval state are separate from the pointer (docs/specs/simple-upgrade.md:35; factory/scripts/forge_cli/plans.py:82; factory/scripts/forge_cli/plans.py:274).",
+    "Parking does not define how every linked worktree's branch and git-local run, stage, and task state is retired. Changing the target branch's roadmap and archive alone leaves a parked task worktree able to continue from its old branch and state (docs/specs/simple-upgrade.md:42; factory/scripts/factory_lib.py:5323; factory/scripts/forge_cli/stages.py:163).",
+    "Parking moves the plan but does not specify resetting its protected plan metadata or the worktree run pointer. An approved `plan-meta.json` still blocks a new plan save, so returning the roadmap item to pending does not by itself make replanning reachable (docs/specs/simple-upgrade.md:42; factory/scripts/forge_cli/plans.py:274; factory/scripts/intake.py:76).",
+    "The archive table says `grills/` and grill-round files without distinguishing obsolete files from current digest-bound grill records. The board still reads story grill records at that path; archiving them wholesale can erase current handoff evidence from the live readers (docs/specs/simple-upgrade.md:51; factory/scripts/forge_cli/board.py:905).",
+    "The byte-equality ownership rule does not specify how client-added files under the vendored gate trees are handled. Keeping an unknown `factory/scripts` file while regenerating the manifest would freeze client code as gate machinery; the current integrity checker includes every file in those trees (docs/specs/simple-upgrade.md:57; docs/specs/simple-upgrade.md:60; factory/scripts/check_vendor_integrity.py:46).",
+    "The spec promises no writes on refusal but does not define whether acquiring the existing git-local exclusion lock counts or how preflight is ordered around it. The current upgrade acquires that lock before its deeper preflight, so this guarantee needs a precise boundary and test (docs/specs/simple-upgrade.md:21; factory/scripts/forge_cli/upgrade.py:4613).",
+    "The transactional health step omits `forge doctor --fast` and board-data loading even though the first acceptance criterion requires both after success. A commit could be published before either downstream reader is exercised (docs/specs/simple-upgrade.md:63; docs/specs/simple-upgrade.md:94).",
+    "The proposed PR-ticket exemption lacks a provenance rule for archive, `.gitignore`, and `.codex` changes. The existing exemption accepts a manifest marker plus allowed path names, so extending those names alone could exempt a hand-authored change to client or archived evidence with no completed ticket (docs/specs/simple-upgrade.md:75; factory/scripts/check_pr_ticket.py:162).",
+    "The archived-review display has no defined read representation. The board currently obtains task review status from `reviews/selected.json` and a valid selected generation; simply moving fixed lens files into an archive cannot make such a task display as reviewed (docs/specs/simple-upgrade.md:79; factory/scripts/forge_cli/board.py:97; docs/QUALITY.md:171).",
+    "The upgrade skill is installed as a setup-pinned copy, while the spec describes changing its runbook. It does not state how an already-installed old copy learns the new branch, parking, and commit procedure before it directs the first upgrade; the existing runbook still expects an uncommitted diff and manual commit (docs/specs/simple-upgrade.md:87; setup:66; install/claude/knacklabs-upgrade-project/SKILL.md:81).",
+    "The acceptance fixtures name two historical commits and an unspecified Lean-era commit, but do not name a pre-rename commit or test the required pre-rename refusal and usable intermediate-upgrade advice. That boundary remains unproved by the stated end-to-end fixtures (docs/specs/simple-upgrade.md:94; docs/specs/simple-upgrade.md:104)."
+  ],
+  "contradictions": [
+    "The title and promised behavior say one step from any client version, but the spec refuses pre-rename clients and requires an intermediate upgrade with an older harness first (docs/specs/simple-upgrade.md:3; docs/specs/simple-upgrade.md:27)."
+  ],
+  "resolutions": [
+    "Exact route for pre-rename clients: this story tags the last .agents-migrating harness commit `forge-legacy-upgrade`; the refusal tells the developer to check it out in a separate worktree, run its upgrade, then this one (Behaviour: Scope).",
+    "The vendored commit must be an ancestor of the harness HEAD; unknown, unrelated or newer commits are refused, so no downgrade (Behaviour: Before anything is written; AC3).",
+    "Fail closed: a listed worktree that cannot be read (missing folder or unreadable state) is refused by name with `git worktree prune` suggested (Behaviour; AC4).",
+    "Any plan in plans/active/ whose roadmap item is not done counts as work in progress, approved or not, so a plan awaiting approval is never stranded (Behaviour; AC4).",
+    "Parking is refused while another worktree holds the story's pointer or stage (remove those worktrees first); in the target it archives state, clears a pointer at the story, and resets the roadmap item (Behaviour: Parking; AC5).",
+    "Parking also archives the story's plan record (plan-meta) and clears its run pointer, so a new plan can be saved; AC5 tests that replanning is reachable.",
+    "The archive table is narrowed to what actually breaks current readers: fixed per-lens review files and the root decomposition/tests/verify singletons; grill records stay in place (Behaviour step 2; AC8).",
+    "Unshipped client files inside factory/, constitution/ or harness/ (except client skills) are refused by name before any write, so client code is never frozen into the gate manifest (Behaviour; AC6).",
+    "The lock boundary is stated: acquiring upgrade's own git-local lock is not a repository write; preflight runs under it; a refusal changes no repository file, branch or git-local state (Behaviour: Before anything is written).",
+    "The health step now includes `forge doctor --fast` and a board data load before the commit (Behaviour step 4).",
+    "Ticket-check provenance: the upgrade commit carries a Forge-Upgrade trailer, and the exemption applies only when every change is harness-owned, the manifest, an exact (100%) rename of an archive-table path into .factory/archive/pre-*/, or one of Forge's own ignore blocks; AC9 tests a hand-made change is not exempt (Behaviour: After the upgrade).",
+    "Archived-review display is defined: a task with no selected review but archived review files shows as 'reviewed before upgrade' on the board (Behaviour: Archived reviews; AC8).",
+    "Upgrade prints its own next steps, so an older installed skill copy still leads to the right result; forge doctor warns when the installed skill differs from the harness copy (Behaviour: The upgrade skill).",
+    "Acceptance fixtures now name 47516c55 as the Lean-era commit and add a pre-rename fixture (before 2ebba90d) that must be refused with the legacy instructions (AC1, AC2).",
+    "Title and scope now say any factory-era client (vendored after the 2026-07-24 rename); pre-rename clients take one older step first (Title; Behaviour: Scope)."
+  ],
+  "finding_dispositions": [
+    {
+      "finding": "The pre-rename recovery instruction does not identify an exact last compatible harness commit or a runnable way to obtain and use it. A developer must guess which version to run, despite the spec making this a prerequisite (docs/specs/simple-upgrade.md:27; docs/decisions/0088-simple-upgrade.md:39).",
+      "resolution": "Exact route for pre-rename clients: this story tags the last .agents-migrating harness commit `forge-legacy-upgrade`; the refusal tells the developer to check it out in a separate worktree, run its upgrade, then this one (Behaviour: Scope).",
+      "source": "repository fact"
+    },
+    {
+      "finding": "The vendored-commit check establishes only that the object exists. The spec does not say whether it must be an ancestor of the harness HEAD, or what happens when the client records a newer commit; proceeding could downgrade the client while presenting the operation as an upgrade (docs/specs/simple-upgrade.md:24; factory/scripts/forge_cli/scaffold.py:608).",
+      "resolution": "The vendored commit must be an ancestor of the harness HEAD; unknown, unrelated or newer commits are refused, so no downgrade (Behaviour: Before anything is written; AC3).",
+      "source": "repository fact"
+    },
+    {
+      "finding": "The worktree scan has no stated fail-closed rule for unreadable or stale Git worktree bookkeeping. The existing worktree enumerator silently skips unreadable entries, so a worktree with in-progress work could be omitted despite the promised refusal (docs/specs/simple-upgrade.md:31; factory/scripts/factory_lib.py:5307).",
+      "resolution": "Fail closed: a listed worktree that cannot be read (missing folder or unreadable state) is refused by name with `git worktree prune` suggested (Behaviour; AC4).",
+      "source": "repository fact"
+    },
+    {
+      "finding": "The work-in-progress definition covers approved active plans but leaves a saved plan awaiting approval with no story pointer unspecified. Archiving its grill or approval files while retaining the plan could strand that handoff; the plan metadata and approval state are separate from the pointer (docs/specs/simple-upgrade.md:35; factory/scripts/forge_cli/plans.py:82; factory/scripts/forge_cli/plans.py:274).",
+      "resolution": "Any plan in plans/active/ whose roadmap item is not done counts as work in progress, approved or not, so a plan awaiting approval is never stranded (Behaviour; AC4).",
+      "source": "repository fact"
+    },
+    {
+      "finding": "Parking does not define how every linked worktree's branch and git-local run, stage, and task state is retired. Changing the target branch's roadmap and archive alone leaves a parked task worktree able to continue from its old branch and state (docs/specs/simple-upgrade.md:42; factory/scripts/factory_lib.py:5323; factory/scripts/forge_cli/stages.py:163).",
+      "resolution": "Parking is refused while another worktree holds the story's pointer or stage (remove those worktrees first); in the target it archives state, clears a pointer at the story, and resets the roadmap item (Behaviour: Parking; AC5).",
+      "source": "repository fact"
+    },
+    {
+      "finding": "Parking moves the plan but does not specify resetting its protected plan metadata or the worktree run pointer. An approved `plan-meta.json` still blocks a new plan save, so returning the roadmap item to pending does not by itself make replanning reachable (docs/specs/simple-upgrade.md:42; factory/scripts/forge_cli/plans.py:274; factory/scripts/intake.py:76).",
+      "resolution": "Parking also archives the story's plan record (plan-meta) and clears its run pointer, so a new plan can be saved; AC5 tests that replanning is reachable.",
+      "source": "repository fact"
+    },
+    {
+      "finding": "The archive table says `grills/` and grill-round files without distinguishing obsolete files from current digest-bound grill records. The board still reads story grill records at that path; archiving them wholesale can erase current handoff evidence from the live readers (docs/specs/simple-upgrade.md:51; factory/scripts/forge_cli/board.py:905).",
+      "resolution": "The archive table is narrowed to what actually breaks current readers: fixed per-lens review files and the root decomposition/tests/verify singletons; grill records stay in place (Behaviour step 2; AC8).",
+      "source": "repository fact"
+    },
+    {
+      "finding": "The byte-equality ownership rule does not specify how client-added files under the vendored gate trees are handled. Keeping an unknown `factory/scripts` file while regenerating the manifest would freeze client code as gate machinery; the current integrity checker includes every file in those trees (docs/specs/simple-upgrade.md:57; docs/specs/simple-upgrade.md:60; factory/scripts/check_vendor_integrity.py:46).",
+      "resolution": "Unshipped client files inside factory/, constitution/ or harness/ (except client skills) are refused by name before any write, so client code is never frozen into the gate manifest (Behaviour; AC6).",
+      "source": "repository fact"
+    },
+    {
+      "finding": "The spec promises no writes on refusal but does not define whether acquiring the existing git-local exclusion lock counts or how preflight is ordered around it. The current upgrade acquires that lock before its deeper preflight, so this guarantee needs a precise boundary and test (docs/specs/simple-upgrade.md:21; factory/scripts/forge_cli/upgrade.py:4613).",
+      "resolution": "The lock boundary is stated: acquiring upgrade's own git-local lock is not a repository write; preflight runs under it; a refusal changes no repository file, branch or git-local state (Behaviour: Before anything is written).",
+      "source": "repository fact"
+    },
+    {
+      "finding": "The transactional health step omits `forge doctor --fast` and board-data loading even though the first acceptance criterion requires both after success. A commit could be published before either downstream reader is exercised (docs/specs/simple-upgrade.md:63; docs/specs/simple-upgrade.md:94).",
+      "resolution": "The health step now includes `forge doctor --fast` and a board data load before the commit (Behaviour step 4).",
+      "source": "repository fact"
+    },
+    {
+      "finding": "The proposed PR-ticket exemption lacks a provenance rule for archive, `.gitignore`, and `.codex` changes. The existing exemption accepts a manifest marker plus allowed path names, so extending those names alone could exempt a hand-authored change to client or archived evidence with no completed ticket (docs/specs/simple-upgrade.md:75; factory/scripts/check_pr_ticket.py:162).",
+      "resolution": "Ticket-check provenance: the upgrade commit carries a Forge-Upgrade trailer, and the exemption applies only when every change is harness-owned, the manifest, an exact (100%) rename of an archive-table path into .factory/archive/pre-*/, or one of Forge's own ignore blocks; AC9 tests a hand-made change is not exempt (Behaviour: After the upgrade).",
+      "source": "repository fact"
+    },
+    {
+      "finding": "The archived-review display has no defined read representation. The board currently obtains task review status from `reviews/selected.json` and a valid selected generation; simply moving fixed lens files into an archive cannot make such a task display as reviewed (docs/specs/simple-upgrade.md:79; factory/scripts/forge_cli/board.py:97; docs/QUALITY.md:171).",
+      "resolution": "Archived-review display is defined: a task with no selected review but archived review files shows as 'reviewed before upgrade' on the board (Behaviour: Archived reviews; AC8).",
+      "source": "repository fact"
+    },
+    {
+      "finding": "The upgrade skill is installed as a setup-pinned copy, while the spec describes changing its runbook. It does not state how an already-installed old copy learns the new branch, parking, and commit procedure before it directs the first upgrade; the existing runbook still expects an uncommitted diff and manual commit (docs/specs/simple-upgrade.md:87; setup:66; install/claude/knacklabs-upgrade-project/SKILL.md:81).",
+      "resolution": "Upgrade prints its own next steps, so an older installed skill copy still leads to the right result; forge doctor warns when the installed skill differs from the harness copy (Behaviour: The upgrade skill).",
+      "source": "repository fact"
+    },
+    {
+      "finding": "The acceptance fixtures name two historical commits and an unspecified Lean-era commit, but do not name a pre-rename commit or test the required pre-rename refusal and usable intermediate-upgrade advice. That boundary remains unproved by the stated end-to-end fixtures (docs/specs/simple-upgrade.md:94; docs/specs/simple-upgrade.md:104).",
+      "resolution": "Acceptance fixtures now name 47516c55 as the Lean-era commit and add a pre-rename fixture (before 2ebba90d) that must be refused with the legacy instructions (AC1, AC2).",
+      "source": "repository fact"
+    },
+    {
+      "finding": "The title and promised behavior say one step from any client version, but the spec refuses pre-rename clients and requires an intermediate upgrade with an older harness first (docs/specs/simple-upgrade.md:3; docs/specs/simple-upgrade.md:27).",
+      "resolution": "Title and scope now say any factory-era client (vendored after the 2026-07-24 rename); pre-rename clients take one older step first (Title; Behaviour: Scope).",
+      "source": "repository fact"
+    }
+  ],
+  "amendments": [
+    {
+      "change": "span 0: rewritten to resolve the cold-read findings",
+      "reason": "one amendment after the single cold read, resolving repository-answerable findings",
+      "source": "coordinator amendment 2026-09-24",
+      "findings": [
+        "The pre-rename recovery instruction does not identify an exact last compatible harness commit or a runnable way to obtain and use it. A developer must guess which version to run, despite the spec making this a prerequisite (docs/specs/simple-upgrade.md:27; docs/decisions/0088-simple-upgrade.md:39).",
+        "The vendored-commit check establishes only that the object exists. The spec does not say whether it must be an ancestor of the harness HEAD, or what happens when the client records a newer commit; proceeding could downgrade the client while presenting the operation as an upgrade (docs/specs/simple-upgrade.md:24; factory/scripts/forge_cli/scaffold.py:608).",
+        "The worktree scan has no stated fail-closed rule for unreadable or stale Git worktree bookkeeping. The existing worktree enumerator silently skips unreadable entries, so a worktree with in-progress work could be omitted despite the promised refusal (docs/specs/simple-upgrade.md:31; factory/scripts/factory_lib.py:5307).",
+        "The work-in-progress definition covers approved active plans but leaves a saved plan awaiting approval with no story pointer unspecified. Archiving its grill or approval files while retaining the plan could strand that handoff; the plan metadata and approval state are separate from the pointer (docs/specs/simple-upgrade.md:35; factory/scripts/forge_cli/plans.py:82; factory/scripts/forge_cli/plans.py:274).",
+        "Parking does not define how every linked worktree's branch and git-local run, stage, and task state is retired. Changing the target branch's roadmap and archive alone leaves a parked task worktree able to continue from its old branch and state (docs/specs/simple-upgrade.md:42; factory/scripts/factory_lib.py:5323; factory/scripts/forge_cli/stages.py:163).",
+        "Parking moves the plan but does not specify resetting its protected plan metadata or the worktree run pointer. An approved `plan-meta.json` still blocks a new plan save, so returning the roadmap item to pending does not by itself make replanning reachable (docs/specs/simple-upgrade.md:42; factory/scripts/forge_cli/plans.py:274; factory/scripts/intake.py:76).",
+        "The archive table says `grills/` and grill-round files without distinguishing obsolete files from current digest-bound grill records. The board still reads story grill records at that path; archiving them wholesale can erase current handoff evidence from the live readers (docs/specs/simple-upgrade.md:51; factory/scripts/forge_cli/board.py:905).",
+        "The byte-equality ownership rule does not specify how client-added files under the vendored gate trees are handled. Keeping an unknown `factory/scripts` file while regenerating the manifest would freeze client code as gate machinery; the current integrity checker includes every file in those trees (docs/specs/simple-upgrade.md:57; docs/specs/simple-upgrade.md:60; factory/scripts/check_vendor_integrity.py:46).",
+        "The spec promises no writes on refusal but does not define whether acquiring the existing git-local exclusion lock counts or how preflight is ordered around it. The current upgrade acquires that lock before its deeper preflight, so this guarantee needs a precise boundary and test (docs/specs/simple-upgrade.md:21; factory/scripts/forge_cli/upgrade.py:4613).",
+        "The transactional health step omits `forge doctor --fast` and board-data loading even though the first acceptance criterion requires both after success. A commit could be published before either downstream reader is exercised (docs/specs/simple-upgrade.md:63; docs/specs/simple-upgrade.md:94).",
+        "The proposed PR-ticket exemption lacks a provenance rule for archive, `.gitignore`, and `.codex` changes. The existing exemption accepts a manifest marker plus allowed path names, so extending those names alone could exempt a hand-authored change to client or archived evidence with no completed ticket (docs/specs/simple-upgrade.md:75; factory/scripts/check_pr_ticket.py:162).",
+        "The archived-review display has no defined read representation. The board currently obtains task review status from `reviews/selected.json` and a valid selected generation; simply moving fixed lens files into an archive cannot make such a task display as reviewed (docs/specs/simple-upgrade.md:79; factory/scripts/forge_cli/board.py:97; docs/QUALITY.md:171).",
+        "The upgrade skill is installed as a setup-pinned copy, while the spec describes changing its runbook. It does not state how an already-installed old copy learns the new branch, parking, and commit procedure before it directs the first upgrade; the existing runbook still expects an uncommitted diff and manual commit (docs/specs/simple-upgrade.md:87; setup:66; install/claude/knacklabs-upgrade-project/SKILL.md:81).",
+        "The acceptance fixtures name two historical commits and an unspecified Lean-era commit, but do not name a pre-rename commit or test the required pre-rename refusal and usable intermediate-upgrade advice. That boundary remains unproved by the stated end-to-end fixtures (docs/specs/simple-upgrade.md:94; docs/specs/simple-upgrade.md:104).",
+        "The title and promised behavior say one step from any client version, but the spec refuses pre-rename clients and requires an intermediate upgrade with an older harness first (docs/specs/simple-upgrade.md:3; docs/specs/simple-upgrade.md:27)."
+      ],
+      "delta_index": 0
+    },
+    {
+      "change": "span 1: rewritten to resolve the cold-read findings",
+      "reason": "one amendment after the single cold read, resolving repository-answerable findings",
+      "source": "coordinator amendment 2026-09-24",
+      "findings": [
+        "The pre-rename recovery instruction does not identify an exact last compatible harness commit or a runnable way to obtain and use it. A developer must guess which version to run, despite the spec making this a prerequisite (docs/specs/simple-upgrade.md:27; docs/decisions/0088-simple-upgrade.md:39).",
+        "The vendored-commit check establishes only that the object exists. The spec does not say whether it must be an ancestor of the harness HEAD, or what happens when the client records a newer commit; proceeding could downgrade the client while presenting the operation as an upgrade (docs/specs/simple-upgrade.md:24; factory/scripts/forge_cli/scaffold.py:608).",
+        "The worktree scan has no stated fail-closed rule for unreadable or stale Git worktree bookkeeping. The existing worktree enumerator silently skips unreadable entries, so a worktree with in-progress work could be omitted despite the promised refusal (docs/specs/simple-upgrade.md:31; factory/scripts/factory_lib.py:5307).",
+        "The work-in-progress definition covers approved active plans but leaves a saved plan awaiting approval with no story pointer unspecified. Archiving its grill or approval files while retaining the plan could strand that handoff; the plan metadata and approval state are separate from the pointer (docs/specs/simple-upgrade.md:35; factory/scripts/forge_cli/plans.py:82; factory/scripts/forge_cli/plans.py:274).",
+        "Parking does not define how every linked worktree's branch and git-local run, stage, and task state is retired. Changing the target branch's roadmap and archive alone leaves a parked task worktree able to continue from its old branch and state (docs/specs/simple-upgrade.md:42; factory/scripts/factory_lib.py:5323; factory/scripts/forge_cli/stages.py:163).",
+        "Parking moves the plan but does not specify resetting its protected plan metadata or the worktree run pointer. An approved `plan-meta.json` still blocks a new plan save, so returning the roadmap item to pending does not by itself make replanning reachable (docs/specs/simple-upgrade.md:42; factory/scripts/forge_cli/plans.py:274; factory/scripts/intake.py:76).",
+        "The archive table says `grills/` and grill-round files without distinguishing obsolete files from current digest-bound grill records. The board still reads story grill records at that path; archiving them wholesale can erase current handoff evidence from the live readers (docs/specs/simple-upgrade.md:51; factory/scripts/forge_cli/board.py:905).",
+        "The byte-equality ownership rule does not specify how client-added files under the vendored gate trees are handled. Keeping an unknown `factory/scripts` file while regenerating the manifest would freeze client code as gate machinery; the current integrity checker includes every file in those trees (docs/specs/simple-upgrade.md:57; docs/specs/simple-upgrade.md:60; factory/scripts/check_vendor_integrity.py:46).",
+        "The spec promises no writes on refusal but does not define whether acquiring the existing git-local exclusion lock counts or how preflight is ordered around it. The current upgrade acquires that lock before its deeper preflight, so this guarantee needs a precise boundary and test (docs/specs/simple-upgrade.md:21; factory/scripts/forge_cli/upgrade.py:4613).",
+        "The transactional health step omits `forge doctor --fast` and board-data loading even though the first acceptance criterion requires both after success. A commit could be published before either downstream reader is exercised (docs/specs/simple-upgrade.md:63; docs/specs/simple-upgrade.md:94).",
+        "The proposed PR-ticket exemption lacks a provenance rule for archive, `.gitignore`, and `.codex` changes. The existing exemption accepts a manifest marker plus allowed path names, so extending those names alone could exempt a hand-authored change to client or archived evidence with no completed ticket (docs/specs/simple-upgrade.md:75; factory/scripts/check_pr_ticket.py:162).",
+        "The archived-review display has no defined read representation. The board currently obtains task review status from `reviews/selected.json` and a valid selected generation; simply moving fixed lens files into an archive cannot make such a task display as reviewed (docs/specs/simple-upgrade.md:79; factory/scripts/forge_cli/board.py:97; docs/QUALITY.md:171).",
+        "The upgrade skill is installed as a setup-pinned copy, while the spec describes changing its runbook. It does not state how an already-installed old copy learns the new branch, parking, and commit procedure before it directs the first upgrade; the existing runbook still expects an uncommitted diff and manual commit (docs/specs/simple-upgrade.md:87; setup:66; install/claude/knacklabs-upgrade-project/SKILL.md:81).",
+        "The acceptance fixtures name two historical commits and an unspecified Lean-era commit, but do not name a pre-rename commit or test the required pre-rename refusal and usable intermediate-upgrade advice. That boundary remains unproved by the stated end-to-end fixtures (docs/specs/simple-upgrade.md:94; docs/specs/simple-upgrade.md:104).",
+        "The title and promised behavior say one step from any client version, but the spec refuses pre-rename clients and requires an intermediate upgrade with an older harness first (docs/specs/simple-upgrade.md:3; docs/specs/simple-upgrade.md:27)."
+      ],
+      "delta_index": 1
+    },
+    {
+      "change": "span 2: rewritten to resolve the cold-read findings",
+      "reason": "one amendment after the single cold read, resolving repository-answerable findings",
+      "source": "coordinator amendment 2026-09-24",
+      "findings": [
+        "The pre-rename recovery instruction does not identify an exact last compatible harness commit or a runnable way to obtain and use it. A developer must guess which version to run, despite the spec making this a prerequisite (docs/specs/simple-upgrade.md:27; docs/decisions/0088-simple-upgrade.md:39).",
+        "The vendored-commit check establishes only that the object exists. The spec does not say whether it must be an ancestor of the harness HEAD, or what happens when the client records a newer commit; proceeding could downgrade the client while presenting the operation as an upgrade (docs/specs/simple-upgrade.md:24; factory/scripts/forge_cli/scaffold.py:608).",
+        "The worktree scan has no stated fail-closed rule for unreadable or stale Git worktree bookkeeping. The existing worktree enumerator silently skips unreadable entries, so a worktree with in-progress work could be omitted despite the promised refusal (docs/specs/simple-upgrade.md:31; factory/scripts/factory_lib.py:5307).",
+        "The work-in-progress definition covers approved active plans but leaves a saved plan awaiting approval with no story pointer unspecified. Archiving its grill or approval files while retaining the plan could strand that handoff; the plan metadata and approval state are separate from the pointer (docs/specs/simple-upgrade.md:35; factory/scripts/forge_cli/plans.py:82; factory/scripts/forge_cli/plans.py:274).",
+        "Parking does not define how every linked worktree's branch and git-local run, stage, and task state is retired. Changing the target branch's roadmap and archive alone leaves a parked task worktree able to continue from its old branch and state (docs/specs/simple-upgrade.md:42; factory/scripts/factory_lib.py:5323; factory/scripts/forge_cli/stages.py:163).",
+        "Parking moves the plan but does not specify resetting its protected plan metadata or the worktree run pointer. An approved `plan-meta.json` still blocks a new plan save, so returning the roadmap item to pending does not by itself make replanning reachable (docs/specs/simple-upgrade.md:42; factory/scripts/forge_cli/plans.py:274; factory/scripts/intake.py:76).",
+        "The archive table says `grills/` and grill-round files without distinguishing obsolete files from current digest-bound grill records. The board still reads story grill records at that path; archiving them wholesale can erase current handoff evidence from the live readers (docs/specs/simple-upgrade.md:51; factory/scripts/forge_cli/board.py:905).",
+        "The byte-equality ownership rule does not specify how client-added files under the vendored gate trees are handled. Keeping an unknown `factory/scripts` file while regenerating the manifest would freeze client code as gate machinery; the current integrity checker includes every file in those trees (docs/specs/simple-upgrade.md:57; docs/specs/simple-upgrade.md:60; factory/scripts/check_vendor_integrity.py:46).",
+        "The spec promises no writes on refusal but does not define whether acquiring the existing git-local exclusion lock counts or how preflight is ordered around it. The current upgrade acquires that lock before its deeper preflight, so this guarantee needs a precise boundary and test (docs/specs/simple-upgrade.md:21; factory/scripts/forge_cli/upgrade.py:4613).",
+        "The transactional health step omits `forge doctor --fast` and board-data loading even though the first acceptance criterion requires both after success. A commit could be published before either downstream reader is exercised (docs/specs/simple-upgrade.md:63; docs/specs/simple-upgrade.md:94).",
+        "The proposed PR-ticket exemption lacks a provenance rule for archive, `.gitignore`, and `.codex` changes. The existing exemption accepts a manifest marker plus allowed path names, so extending those names alone could exempt a hand-authored change to client or archived evidence with no completed ticket (docs/specs/simple-upgrade.md:75; factory/scripts/check_pr_ticket.py:162).",
+        "The archived-review display has no defined read representation. The board currently obtains task review status from `reviews/selected.json` and a valid selected generation; simply moving fixed lens files into an archive cannot make such a task display as reviewed (docs/specs/simple-upgrade.md:79; factory/scripts/forge_cli/board.py:97; docs/QUALITY.md:171).",
+        "The upgrade skill is installed as a setup-pinned copy, while the spec describes changing its runbook. It does not state how an already-installed old copy learns the new branch, parking, and commit procedure before it directs the first upgrade; the existing runbook still expects an uncommitted diff and manual commit (docs/specs/simple-upgrade.md:87; setup:66; install/claude/knacklabs-upgrade-project/SKILL.md:81).",
+        "The acceptance fixtures name two historical commits and an unspecified Lean-era commit, but do not name a pre-rename commit or test the required pre-rename refusal and usable intermediate-upgrade advice. That boundary remains unproved by the stated end-to-end fixtures (docs/specs/simple-upgrade.md:94; docs/specs/simple-upgrade.md:104).",
+        "The title and promised behavior say one step from any client version, but the spec refuses pre-rename clients and requires an intermediate upgrade with an older harness first (docs/specs/simple-upgrade.md:3; docs/specs/simple-upgrade.md:27)."
+      ],
+      "delta_index": 2
+    },
+    {
+      "change": "span 3: rewritten to resolve the cold-read findings",
+      "reason": "one amendment after the single cold read, resolving repository-answerable findings",
+      "source": "coordinator amendment 2026-09-24",
+      "findings": [
+        "The pre-rename recovery instruction does not identify an exact last compatible harness commit or a runnable way to obtain and use it. A developer must guess which version to run, despite the spec making this a prerequisite (docs/specs/simple-upgrade.md:27; docs/decisions/0088-simple-upgrade.md:39).",
+        "The vendored-commit check establishes only that the object exists. The spec does not say whether it must be an ancestor of the harness HEAD, or what happens when the client records a newer commit; proceeding could downgrade the client while presenting the operation as an upgrade (docs/specs/simple-upgrade.md:24; factory/scripts/forge_cli/scaffold.py:608).",
+        "The worktree scan has no stated fail-closed rule for unreadable or stale Git worktree bookkeeping. The existing worktree enumerator silently skips unreadable entries, so a worktree with in-progress work could be omitted despite the promised refusal (docs/specs/simple-upgrade.md:31; factory/scripts/factory_lib.py:5307).",
+        "The work-in-progress definition covers approved active plans but leaves a saved plan awaiting approval with no story pointer unspecified. Archiving its grill or approval files while retaining the plan could strand that handoff; the plan metadata and approval state are separate from the pointer (docs/specs/simple-upgrade.md:35; factory/scripts/forge_cli/plans.py:82; factory/scripts/forge_cli/plans.py:274).",
+        "Parking does not define how every linked worktree's branch and git-local run, stage, and task state is retired. Changing the target branch's roadmap and archive alone leaves a parked task worktree able to continue from its old branch and state (docs/specs/simple-upgrade.md:42; factory/scripts/factory_lib.py:5323; factory/scripts/forge_cli/stages.py:163).",
+        "Parking moves the plan but does not specify resetting its protected plan metadata or the worktree run pointer. An approved `plan-meta.json` still blocks a new plan save, so returning the roadmap item to pending does not by itself make replanning reachable (docs/specs/simple-upgrade.md:42; factory/scripts/forge_cli/plans.py:274; factory/scripts/intake.py:76).",
+        "The archive table says `grills/` and grill-round files without distinguishing obsolete files from current digest-bound grill records. The board still reads story grill records at that path; archiving them wholesale can erase current handoff evidence from the live readers (docs/specs/simple-upgrade.md:51; factory/scripts/forge_cli/board.py:905).",
+        "The byte-equality ownership rule does not specify how client-added files under the vendored gate trees are handled. Keeping an unknown `factory/scripts` file while regenerating the manifest would freeze client code as gate machinery; the current integrity checker includes every file in those trees (docs/specs/simple-upgrade.md:57; docs/specs/simple-upgrade.md:60; factory/scripts/check_vendor_integrity.py:46).",
+        "The spec promises no writes on refusal but does not define whether acquiring the existing git-local exclusion lock counts or how preflight is ordered around it. The current upgrade acquires that lock before its deeper preflight, so this guarantee needs a precise boundary and test (docs/specs/simple-upgrade.md:21; factory/scripts/forge_cli/upgrade.py:4613).",
+        "The transactional health step omits `forge doctor --fast` and board-data loading even though the first acceptance criterion requires both after success. A commit could be published before either downstream reader is exercised (docs/specs/simple-upgrade.md:63; docs/specs/simple-upgrade.md:94).",
+        "The proposed PR-ticket exemption lacks a provenance rule for archive, `.gitignore`, and `.codex` changes. The existing exemption accepts a manifest marker plus allowed path names, so extending those names alone could exempt a hand-authored change to client or archived evidence with no completed ticket (docs/specs/simple-upgrade.md:75; factory/scripts/check_pr_ticket.py:162).",
+        "The archived-review display has no defined read representation. The board currently obtains task review status from `reviews/selected.json` and a valid selected generation; simply moving fixed lens files into an archive cannot make such a task display as reviewed (docs/specs/simple-upgrade.md:79; factory/scripts/forge_cli/board.py:97; docs/QUALITY.md:171).",
+        "The upgrade skill is installed as a setup-pinned copy, while the spec describes changing its runbook. It does not state how an already-installed old copy learns the new branch, parking, and commit procedure before it directs the first upgrade; the existing runbook still expects an uncommitted diff and manual commit (docs/specs/simple-upgrade.md:87; setup:66; install/claude/knacklabs-upgrade-project/SKILL.md:81).",
+        "The acceptance fixtures name two historical commits and an unspecified Lean-era commit, but do not name a pre-rename commit or test the required pre-rename refusal and usable intermediate-upgrade advice. That boundary remains unproved by the stated end-to-end fixtures (docs/specs/simple-upgrade.md:94; docs/specs/simple-upgrade.md:104).",
+        "The title and promised behavior say one step from any client version, but the spec refuses pre-rename clients and requires an intermediate upgrade with an older harness first (docs/specs/simple-upgrade.md:3; docs/specs/simple-upgrade.md:27)."
+      ],
+      "delta_index": 3
+    },
+    {
+      "change": "span 4: rewritten to resolve the cold-read findings",
+      "reason": "one amendment after the single cold read, resolving repository-answerable findings",
+      "source": "coordinator amendment 2026-09-24",
+      "findings": [
+        "The pre-rename recovery instruction does not identify an exact last compatible harness commit or a runnable way to obtain and use it. A developer must guess which version to run, despite the spec making this a prerequisite (docs/specs/simple-upgrade.md:27; docs/decisions/0088-simple-upgrade.md:39).",
+        "The vendored-commit check establishes only that the object exists. The spec does not say whether it must be an ancestor of the harness HEAD, or what happens when the client records a newer commit; proceeding could downgrade the client while presenting the operation as an upgrade (docs/specs/simple-upgrade.md:24; factory/scripts/forge_cli/scaffold.py:608).",
+        "The worktree scan has no stated fail-closed rule for unreadable or stale Git worktree bookkeeping. The existing worktree enumerator silently skips unreadable entries, so a worktree with in-progress work could be omitted despite the promised refusal (docs/specs/simple-upgrade.md:31; factory/scripts/factory_lib.py:5307).",
+        "The work-in-progress definition covers approved active plans but leaves a saved plan awaiting approval with no story pointer unspecified. Archiving its grill or approval files while retaining the plan could strand that handoff; the plan metadata and approval state are separate from the pointer (docs/specs/simple-upgrade.md:35; factory/scripts/forge_cli/plans.py:82; factory/scripts/forge_cli/plans.py:274).",
+        "Parking does not define how every linked worktree's branch and git-local run, stage, and task state is retired. Changing the target branch's roadmap and archive alone leaves a parked task worktree able to continue from its old branch and state (docs/specs/simple-upgrade.md:42; factory/scripts/factory_lib.py:5323; factory/scripts/forge_cli/stages.py:163).",
+        "Parking moves the plan but does not specify resetting its protected plan metadata or the worktree run pointer. An approved `plan-meta.json` still blocks a new plan save, so returning the roadmap item to pending does not by itself make replanning reachable (docs/specs/simple-upgrade.md:42; factory/scripts/forge_cli/plans.py:274; factory/scripts/intake.py:76).",
+        "The archive table says `grills/` and grill-round files without distinguishing obsolete files from current digest-bound grill records. The board still reads story grill records at that path; archiving them wholesale can erase current handoff evidence from the live readers (docs/specs/simple-upgrade.md:51; factory/scripts/forge_cli/board.py:905).",
+        "The byte-equality ownership rule does not specify how client-added files under the vendored gate trees are handled. Keeping an unknown `factory/scripts` file while regenerating the manifest would freeze client code as gate machinery; the current integrity checker includes every file in those trees (docs/specs/simple-upgrade.md:57; docs/specs/simple-upgrade.md:60; factory/scripts/check_vendor_integrity.py:46).",
+        "The spec promises no writes on refusal but does not define whether acquiring the existing git-local exclusion lock counts or how preflight is ordered around it. The current upgrade acquires that lock before its deeper preflight, so this guarantee needs a precise boundary and test (docs/specs/simple-upgrade.md:21; factory/scripts/forge_cli/upgrade.py:4613).",
+        "The transactional health step omits `forge doctor --fast` and board-data loading even though the first acceptance criterion requires both after success. A commit could be published before either downstream reader is exercised (docs/specs/simple-upgrade.md:63; docs/specs/simple-upgrade.md:94).",
+        "The proposed PR-ticket exemption lacks a provenance rule for archive, `.gitignore`, and `.codex` changes. The existing exemption accepts a manifest marker plus allowed path names, so extending those names alone could exempt a hand-authored change to client or archived evidence with no completed ticket (docs/specs/simple-upgrade.md:75; factory/scripts/check_pr_ticket.py:162).",
+        "The archived-review display has no defined read representation. The board currently obtains task review status from `reviews/selected.json` and a valid selected generation; simply moving fixed lens files into an archive cannot make such a task display as reviewed (docs/specs/simple-upgrade.md:79; factory/scripts/forge_cli/board.py:97; docs/QUALITY.md:171).",
+        "The upgrade skill is installed as a setup-pinned copy, while the spec describes changing its runbook. It does not state how an already-installed old copy learns the new branch, parking, and commit procedure before it directs the first upgrade; the existing runbook still expects an uncommitted diff and manual commit (docs/specs/simple-upgrade.md:87; setup:66; install/claude/knacklabs-upgrade-project/SKILL.md:81).",
+        "The acceptance fixtures name two historical commits and an unspecified Lean-era commit, but do not name a pre-rename commit or test the required pre-rename refusal and usable intermediate-upgrade advice. That boundary remains unproved by the stated end-to-end fixtures (docs/specs/simple-upgrade.md:94; docs/specs/simple-upgrade.md:104).",
+        "The title and promised behavior say one step from any client version, but the spec refuses pre-rename clients and requires an intermediate upgrade with an older harness first (docs/specs/simple-upgrade.md:3; docs/specs/simple-upgrade.md:27)."
+      ],
+      "delta_index": 4
+    },
+    {
+      "change": "span 5: rewritten to resolve the cold-read findings",
+      "reason": "one amendment after the single cold read, resolving repository-answerable findings",
+      "source": "coordinator amendment 2026-09-24",
+      "findings": [
+        "The pre-rename recovery instruction does not identify an exact last compatible harness commit or a runnable way to obtain and use it. A developer must guess which version to run, despite the spec making this a prerequisite (docs/specs/simple-upgrade.md:27; docs/decisions/0088-simple-upgrade.md:39).",
+        "The vendored-commit check establishes only that the object exists. The spec does not say whether it must be an ancestor of the harness HEAD, or what happens when the client records a newer commit; proceeding could downgrade the client while presenting the operation as an upgrade (docs/specs/simple-upgrade.md:24; factory/scripts/forge_cli/scaffold.py:608).",
+        "The worktree scan has no stated fail-closed rule for unreadable or stale Git worktree bookkeeping. The existing worktree enumerator silently skips unreadable entries, so a worktree with in-progress work could be omitted despite the promised refusal (docs/specs/simple-upgrade.md:31; factory/scripts/factory_lib.py:5307).",
+        "The work-in-progress definition covers approved active plans but leaves a saved plan awaiting approval with no story pointer unspecified. Archiving its grill or approval files while retaining the plan could strand that handoff; the plan metadata and approval state are separate from the pointer (docs/specs/simple-upgrade.md:35; factory/scripts/forge_cli/plans.py:82; factory/scripts/forge_cli/plans.py:274).",
+        "Parking does not define how every linked worktree's branch and git-local run, stage, and task state is retired. Changing the target branch's roadmap and archive alone leaves a parked task worktree able to continue from its old branch and state (docs/specs/simple-upgrade.md:42; factory/scripts/factory_lib.py:5323; factory/scripts/forge_cli/stages.py:163).",
+        "Parking moves the plan but does not specify resetting its protected plan metadata or the worktree run pointer. An approved `plan-meta.json` still blocks a new plan save, so returning the roadmap item to pending does not by itself make replanning reachable (docs/specs/simple-upgrade.md:42; factory/scripts/forge_cli/plans.py:274; factory/scripts/intake.py:76).",
+        "The archive table says `grills/` and grill-round files without distinguishing obsolete files from current digest-bound grill records. The board still reads story grill records at that path; archiving them wholesale can erase current handoff evidence from the live readers (docs/specs/simple-upgrade.md:51; factory/scripts/forge_cli/board.py:905).",
+        "The byte-equality ownership rule does not specify how client-added files under the vendored gate trees are handled. Keeping an unknown `factory/scripts` file while regenerating the manifest would freeze client code as gate machinery; the current integrity checker includes every file in those trees (docs/specs/simple-upgrade.md:57; docs/specs/simple-upgrade.md:60; factory/scripts/check_vendor_integrity.py:46).",
+        "The spec promises no writes on refusal but does not define whether acquiring the existing git-local exclusion lock counts or how preflight is ordered around it. The current upgrade acquires that lock before its deeper preflight, so this guarantee needs a precise boundary and test (docs/specs/simple-upgrade.md:21; factory/scripts/forge_cli/upgrade.py:4613).",
+        "The transactional health step omits `forge doctor --fast` and board-data loading even though the first acceptance criterion requires both after success. A commit could be published before either downstream reader is exercised (docs/specs/simple-upgrade.md:63; docs/specs/simple-upgrade.md:94).",
+        "The proposed PR-ticket exemption lacks a provenance rule for archive, `.gitignore`, and `.codex` changes. The existing exemption accepts a manifest marker plus allowed path names, so extending those names alone could exempt a hand-authored change to client or archived evidence with no completed ticket (docs/specs/simple-upgrade.md:75; factory/scripts/check_pr_ticket.py:162).",
+        "The archived-review display has no defined read representation. The board currently obtains task review status from `reviews/selected.json` and a valid selected generation; simply moving fixed lens files into an archive cannot make such a task display as reviewed (docs/specs/simple-upgrade.md:79; factory/scripts/forge_cli/board.py:97; docs/QUALITY.md:171).",
+        "The upgrade skill is installed as a setup-pinned copy, while the spec describes changing its runbook. It does not state how an already-installed old copy learns the new branch, parking, and commit procedure before it directs the first upgrade; the existing runbook still expects an uncommitted diff and manual commit (docs/specs/simple-upgrade.md:87; setup:66; install/claude/knacklabs-upgrade-project/SKILL.md:81).",
+        "The acceptance fixtures name two historical commits and an unspecified Lean-era commit, but do not name a pre-rename commit or test the required pre-rename refusal and usable intermediate-upgrade advice. That boundary remains unproved by the stated end-to-end fixtures (docs/specs/simple-upgrade.md:94; docs/specs/simple-upgrade.md:104).",
+        "The title and promised behavior say one step from any client version, but the spec refuses pre-rename clients and requires an intermediate upgrade with an older harness first (docs/specs/simple-upgrade.md:3; docs/specs/simple-upgrade.md:27)."
+      ],
+      "delta_index": 5
+    },
+    {
+      "change": "span 6: rewritten to resolve the cold-read findings",
+      "reason": "one amendment after the single cold read, resolving repository-answerable findings",
+      "source": "coordinator amendment 2026-09-24",
+      "findings": [
+        "The pre-rename recovery instruction does not identify an exact last compatible harness commit or a runnable way to obtain and use it. A developer must guess which version to run, despite the spec making this a prerequisite (docs/specs/simple-upgrade.md:27; docs/decisions/0088-simple-upgrade.md:39).",
+        "The vendored-commit check establishes only that the object exists. The spec does not say whether it must be an ancestor of the harness HEAD, or what happens when the client records a newer commit; proceeding could downgrade the client while presenting the operation as an upgrade (docs/specs/simple-upgrade.md:24; factory/scripts/forge_cli/scaffold.py:608).",
+        "The worktree scan has no stated fail-closed rule for unreadable or stale Git worktree bookkeeping. The existing worktree enumerator silently skips unreadable entries, so a worktree with in-progress work could be omitted despite the promised refusal (docs/specs/simple-upgrade.md:31; factory/scripts/factory_lib.py:5307).",
+        "The work-in-progress definition covers approved active plans but leaves a saved plan awaiting approval with no story pointer unspecified. Archiving its grill or approval files while retaining the plan could strand that handoff; the plan metadata and approval state are separate from the pointer (docs/specs/simple-upgrade.md:35; factory/scripts/forge_cli/plans.py:82; factory/scripts/forge_cli/plans.py:274).",
+        "Parking does not define how every linked worktree's branch and git-local run, stage, and task state is retired. Changing the target branch's roadmap and archive alone leaves a parked task worktree able to continue from its old branch and state (docs/specs/simple-upgrade.md:42; factory/scripts/factory_lib.py:5323; factory/scripts/forge_cli/stages.py:163).",
+        "Parking moves the plan but does not specify resetting its protected plan metadata or the worktree run pointer. An approved `plan-meta.json` still blocks a new plan save, so returning the roadmap item to pending does not by itself make replanning reachable (docs/specs/simple-upgrade.md:42; factory/scripts/forge_cli/plans.py:274; factory/scripts/intake.py:76).",
+        "The archive table says `grills/` and grill-round files without distinguishing obsolete files from current digest-bound grill records. The board still reads story grill records at that path; archiving them wholesale can erase current handoff evidence from the live readers (docs/specs/simple-upgrade.md:51; factory/scripts/forge_cli/board.py:905).",
+        "The byte-equality ownership rule does not specify how client-added files under the vendored gate trees are handled. Keeping an unknown `factory/scripts` file while regenerating the manifest would freeze client code as gate machinery; the current integrity checker includes every file in those trees (docs/specs/simple-upgrade.md:57; docs/specs/simple-upgrade.md:60; factory/scripts/check_vendor_integrity.py:46).",
+        "The spec promises no writes on refusal but does not define whether acquiring the existing git-local exclusion lock counts or how preflight is ordered around it. The current upgrade acquires that lock before its deeper preflight, so this guarantee needs a precise boundary and test (docs/specs/simple-upgrade.md:21; factory/scripts/forge_cli/upgrade.py:4613).",
+        "The transactional health step omits `forge doctor --fast` and board-data loading even though the first acceptance criterion requires both after success. A commit could be published before either downstream reader is exercised (docs/specs/simple-upgrade.md:63; docs/specs/simple-upgrade.md:94).",
+        "The proposed PR-ticket exemption lacks a provenance rule for archive, `.gitignore`, and `.codex` changes. The existing exemption accepts a manifest marker plus allowed path names, so extending those names alone could exempt a hand-authored change to client or archived evidence with no completed ticket (docs/specs/simple-upgrade.md:75; factory/scripts/check_pr_ticket.py:162).",
+        "The archived-review display has no defined read representation. The board currently obtains task review status from `reviews/selected.json` and a valid selected generation; simply moving fixed lens files into an archive cannot make such a task display as reviewed (docs/specs/simple-upgrade.md:79; factory/scripts/forge_cli/board.py:97; docs/QUALITY.md:171).",
+        "The upgrade skill is installed as a setup-pinned copy, while the spec describes changing its runbook. It does not state how an already-installed old copy learns the new branch, parking, and commit procedure before it directs the first upgrade; the existing runbook still expects an uncommitted diff and manual commit (docs/specs/simple-upgrade.md:87; setup:66; install/claude/knacklabs-upgrade-project/SKILL.md:81).",
+        "The acceptance fixtures name two historical commits and an unspecified Lean-era commit, but do not name a pre-rename commit or test the required pre-rename refusal and usable intermediate-upgrade advice. That boundary remains unproved by the stated end-to-end fixtures (docs/specs/simple-upgrade.md:94; docs/specs/simple-upgrade.md:104).",
+        "The title and promised behavior say one step from any client version, but the spec refuses pre-rename clients and requires an intermediate upgrade with an older harness first (docs/specs/simple-upgrade.md:3; docs/specs/simple-upgrade.md:27)."
+      ],
+      "delta_index": 6
+    },
+    {
+      "change": "span 7: rewritten to resolve the cold-read findings",
+      "reason": "one amendment after the single cold read, resolving repository-answerable findings",
+      "source": "coordinator amendment 2026-09-24",
+      "findings": [
+        "The pre-rename recovery instruction does not identify an exact last compatible harness commit or a runnable way to obtain and use it. A developer must guess which version to run, despite the spec making this a prerequisite (docs/specs/simple-upgrade.md:27; docs/decisions/0088-simple-upgrade.md:39).",
+        "The vendored-commit check establishes only that the object exists. The spec does not say whether it must be an ancestor of the harness HEAD, or what happens when the client records a newer commit; proceeding could downgrade the client while presenting the operation as an upgrade (docs/specs/simple-upgrade.md:24; factory/scripts/forge_cli/scaffold.py:608).",
+        "The worktree scan has no stated fail-closed rule for unreadable or stale Git worktree bookkeeping. The existing worktree enumerator silently skips unreadable entries, so a worktree with in-progress work could be omitted despite the promised refusal (docs/specs/simple-upgrade.md:31; factory/scripts/factory_lib.py:5307).",
+        "The work-in-progress definition covers approved active plans but leaves a saved plan awaiting approval with no story pointer unspecified. Archiving its grill or approval files while retaining the plan could strand that handoff; the plan metadata and approval state are separate from the pointer (docs/specs/simple-upgrade.md:35; factory/scripts/forge_cli/plans.py:82; factory/scripts/forge_cli/plans.py:274).",
+        "Parking does not define how every linked worktree's branch and git-local run, stage, and task state is retired. Changing the target branch's roadmap and archive alone leaves a parked task worktree able to continue from its old branch and state (docs/specs/simple-upgrade.md:42; factory/scripts/factory_lib.py:5323; factory/scripts/forge_cli/stages.py:163).",
+        "Parking moves the plan but does not specify resetting its protected plan metadata or the worktree run pointer. An approved `plan-meta.json` still blocks a new plan save, so returning the roadmap item to pending does not by itself make replanning reachable (docs/specs/simple-upgrade.md:42; factory/scripts/forge_cli/plans.py:274; factory/scripts/intake.py:76).",
+        "The archive table says `grills/` and grill-round files without distinguishing obsolete files from current digest-bound grill records. The board still reads story grill records at that path; archiving them wholesale can erase current handoff evidence from the live readers (docs/specs/simple-upgrade.md:51; factory/scripts/forge_cli/board.py:905).",
+        "The byte-equality ownership rule does not specify how client-added files under the vendored gate trees are handled. Keeping an unknown `factory/scripts` file while regenerating the manifest would freeze client code as gate machinery; the current integrity checker includes every file in those trees (docs/specs/simple-upgrade.md:57; docs/specs/simple-upgrade.md:60; factory/scripts/check_vendor_integrity.py:46).",
+        "The spec promises no writes on refusal but does not define whether acquiring the existing git-local exclusion lock counts or how preflight is ordered around it. The current upgrade acquires that lock before its deeper preflight, so this guarantee needs a precise boundary and test (docs/specs/simple-upgrade.md:21; factory/scripts/forge_cli/upgrade.py:4613).",
+        "The transactional health step omits `forge doctor --fast` and board-data loading even though the first acceptance criterion requires both after success. A commit could be published before either downstream reader is exercised (docs/specs/simple-upgrade.md:63; docs/specs/simple-upgrade.md:94).",
+        "The proposed PR-ticket exemption lacks a provenance rule for archive, `.gitignore`, and `.codex` changes. The existing exemption accepts a manifest marker plus allowed path names, so extending those names alone could exempt a hand-authored change to client or archived evidence with no completed ticket (docs/specs/simple-upgrade.md:75; factory/scripts/check_pr_ticket.py:162).",
+        "The archived-review display has no defined read representation. The board currently obtains task review status from `reviews/selected.json` and a valid selected generation; simply moving fixed lens files into an archive cannot make such a task display as reviewed (docs/specs/simple-upgrade.md:79; factory/scripts/forge_cli/board.py:97; docs/QUALITY.md:171).",
+        "The upgrade skill is installed as a setup-pinned copy, while the spec describes changing its runbook. It does not state how an already-installed old copy learns the new branch, parking, and commit procedure before it directs the first upgrade; the existing runbook still expects an uncommitted diff and manual commit (docs/specs/simple-upgrade.md:87; setup:66; install/claude/knacklabs-upgrade-project/SKILL.md:81).",
+        "The acceptance fixtures name two historical commits and an unspecified Lean-era commit, but do not name a pre-rename commit or test the required pre-rename refusal and usable intermediate-upgrade advice. That boundary remains unproved by the stated end-to-end fixtures (docs/specs/simple-upgrade.md:94; docs/specs/simple-upgrade.md:104).",
+        "The title and promised behavior say one step from any client version, but the spec refuses pre-rename clients and requires an intermediate upgrade with an older harness first (docs/specs/simple-upgrade.md:3; docs/specs/simple-upgrade.md:27)."
+      ],
+      "delta_index": 7
+    },
+    {
+      "change": "span 8: rewritten to resolve the cold-read findings",
+      "reason": "one amendment after the single cold read, resolving repository-answerable findings",
+      "source": "coordinator amendment 2026-09-24",
+      "findings": [
+        "The pre-rename recovery instruction does not identify an exact last compatible harness commit or a runnable way to obtain and use it. A developer must guess which version to run, despite the spec making this a prerequisite (docs/specs/simple-upgrade.md:27; docs/decisions/0088-simple-upgrade.md:39).",
+        "The vendored-commit check establishes only that the object exists. The spec does not say whether it must be an ancestor of the harness HEAD, or what happens when the client records a newer commit; proceeding could downgrade the client while presenting the operation as an upgrade (docs/specs/simple-upgrade.md:24; factory/scripts/forge_cli/scaffold.py:608).",
+        "The worktree scan has no stated fail-closed rule for unreadable or stale Git worktree bookkeeping. The existing worktree enumerator silently skips unreadable entries, so a worktree with in-progress work could be omitted despite the promised refusal (docs/specs/simple-upgrade.md:31; factory/scripts/factory_lib.py:5307).",
+        "The work-in-progress definition covers approved active plans but leaves a saved plan awaiting approval with no story pointer unspecified. Archiving its grill or approval files while retaining the plan could strand that handoff; the plan metadata and approval state are separate from the pointer (docs/specs/simple-upgrade.md:35; factory/scripts/forge_cli/plans.py:82; factory/scripts/forge_cli/plans.py:274).",
+        "Parking does not define how every linked worktree's branch and git-local run, stage, and task state is retired. Changing the target branch's roadmap and archive alone leaves a parked task worktree able to continue from its old branch and state (docs/specs/simple-upgrade.md:42; factory/scripts/factory_lib.py:5323; factory/scripts/forge_cli/stages.py:163).",
+        "Parking moves the plan but does not specify resetting its protected plan metadata or the worktree run pointer. An approved `plan-meta.json` still blocks a new plan save, so returning the roadmap item to pending does not by itself make replanning reachable (docs/specs/simple-upgrade.md:42; factory/scripts/forge_cli/plans.py:274; factory/scripts/intake.py:76).",
+        "The archive table says `grills/` and grill-round files without distinguishing obsolete files from current digest-bound grill records. The board still reads story grill records at that path; archiving them wholesale can erase current handoff evidence from the live readers (docs/specs/simple-upgrade.md:51; factory/scripts/forge_cli/board.py:905).",
+        "The byte-equality ownership rule does not specify how client-added files under the vendored gate trees are handled. Keeping an unknown `factory/scripts` file while regenerating the manifest would freeze client code as gate machinery; the current integrity checker includes every file in those trees (docs/specs/simple-upgrade.md:57; docs/specs/simple-upgrade.md:60; factory/scripts/check_vendor_integrity.py:46).",
+        "The spec promises no writes on refusal but does not define whether acquiring the existing git-local exclusion lock counts or how preflight is ordered around it. The current upgrade acquires that lock before its deeper preflight, so this guarantee needs a precise boundary and test (docs/specs/simple-upgrade.md:21; factory/scripts/forge_cli/upgrade.py:4613).",
+        "The transactional health step omits `forge doctor --fast` and board-data loading even though the first acceptance criterion requires both after success. A commit could be published before either downstream reader is exercised (docs/specs/simple-upgrade.md:63; docs/specs/simple-upgrade.md:94).",
+        "The proposed PR-ticket exemption lacks a provenance rule for archive, `.gitignore`, and `.codex` changes. The existing exemption accepts a manifest marker plus allowed path names, so extending those names alone could exempt a hand-authored change to client or archived evidence with no completed ticket (docs/specs/simple-upgrade.md:75; factory/scripts/check_pr_ticket.py:162).",
+        "The archived-review display has no defined read representation. The board currently obtains task review status from `reviews/selected.json` and a valid selected generation; simply moving fixed lens files into an archive cannot make such a task display as reviewed (docs/specs/simple-upgrade.md:79; factory/scripts/forge_cli/board.py:97; docs/QUALITY.md:171).",
+        "The upgrade skill is installed as a setup-pinned copy, while the spec describes changing its runbook. It does not state how an already-installed old copy learns the new branch, parking, and commit procedure before it directs the first upgrade; the existing runbook still expects an uncommitted diff and manual commit (docs/specs/simple-upgrade.md:87; setup:66; install/claude/knacklabs-upgrade-project/SKILL.md:81).",
+        "The acceptance fixtures name two historical commits and an unspecified Lean-era commit, but do not name a pre-rename commit or test the required pre-rename refusal and usable intermediate-upgrade advice. That boundary remains unproved by the stated end-to-end fixtures (docs/specs/simple-upgrade.md:94; docs/specs/simple-upgrade.md:104).",
+        "The title and promised behavior say one step from any client version, but the spec refuses pre-rename clients and requires an intermediate upgrade with an older harness first (docs/specs/simple-upgrade.md:3; docs/specs/simple-upgrade.md:27)."
+      ],
+      "delta_index": 8
+    },
+    {
+      "change": "span 9: rewritten to resolve the cold-read findings",
+      "reason": "one amendment after the single cold read, resolving repository-answerable findings",
+      "source": "coordinator amendment 2026-09-24",
+      "findings": [
+        "The pre-rename recovery instruction does not identify an exact last compatible harness commit or a runnable way to obtain and use it. A developer must guess which version to run, despite the spec making this a prerequisite (docs/specs/simple-upgrade.md:27; docs/decisions/0088-simple-upgrade.md:39).",
+        "The vendored-commit check establishes only that the object exists. The spec does not say whether it must be an ancestor of the harness HEAD, or what happens when the client records a newer commit; proceeding could downgrade the client while presenting the operation as an upgrade (docs/specs/simple-upgrade.md:24; factory/scripts/forge_cli/scaffold.py:608).",
+        "The worktree scan has no stated fail-closed rule for unreadable or stale Git worktree bookkeeping. The existing worktree enumerator silently skips unreadable entries, so a worktree with in-progress work could be omitted despite the promised refusal (docs/specs/simple-upgrade.md:31; factory/scripts/factory_lib.py:5307).",
+        "The work-in-progress definition covers approved active plans but leaves a saved plan awaiting approval with no story pointer unspecified. Archiving its grill or approval files while retaining the plan could strand that handoff; the plan metadata and approval state are separate from the pointer (docs/specs/simple-upgrade.md:35; factory/scripts/forge_cli/plans.py:82; factory/scripts/forge_cli/plans.py:274).",
+        "Parking does not define how every linked worktree's branch and git-local run, stage, and task state is retired. Changing the target branch's roadmap and archive alone leaves a parked task worktree able to continue from its old branch and state (docs/specs/simple-upgrade.md:42; factory/scripts/factory_lib.py:5323; factory/scripts/forge_cli/stages.py:163).",
+        "Parking moves the plan but does not specify resetting its protected plan metadata or the worktree run pointer. An approved `plan-meta.json` still blocks a new plan save, so returning the roadmap item to pending does not by itself make replanning reachable (docs/specs/simple-upgrade.md:42; factory/scripts/forge_cli/plans.py:274; factory/scripts/intake.py:76).",
+        "The archive table says `grills/` and grill-round files without distinguishing obsolete files from current digest-bound grill records. The board still reads story grill records at that path; archiving them wholesale can erase current handoff evidence from the live readers (docs/specs/simple-upgrade.md:51; factory/scripts/forge_cli/board.py:905).",
+        "The byte-equality ownership rule does not specify how client-added files under the vendored gate trees are handled. Keeping an unknown `factory/scripts` file while regenerating the manifest would freeze client code as gate machinery; the current integrity checker includes every file in those trees (docs/specs/simple-upgrade.md:57; docs/specs/simple-upgrade.md:60; factory/scripts/check_vendor_integrity.py:46).",
+        "The spec promises no writes on refusal but does not define whether acquiring the existing git-local exclusion lock counts or how preflight is ordered around it. The current upgrade acquires that lock before its deeper preflight, so this guarantee needs a precise boundary and test (docs/specs/simple-upgrade.md:21; factory/scripts/forge_cli/upgrade.py:4613).",
+        "The transactional health step omits `forge doctor --fast` and board-data loading even though the first acceptance criterion requires both after success. A commit could be published before either downstream reader is exercised (docs/specs/simple-upgrade.md:63; docs/specs/simple-upgrade.md:94).",
+        "The proposed PR-ticket exemption lacks a provenance rule for archive, `.gitignore`, and `.codex` changes. The existing exemption accepts a manifest marker plus allowed path names, so extending those names alone could exempt a hand-authored change to client or archived evidence with no completed ticket (docs/specs/simple-upgrade.md:75; factory/scripts/check_pr_ticket.py:162).",
+        "The archived-review display has no defined read representation. The board currently obtains task review status from `reviews/selected.json` and a valid selected generation; simply moving fixed lens files into an archive cannot make such a task display as reviewed (docs/specs/simple-upgrade.md:79; factory/scripts/forge_cli/board.py:97; docs/QUALITY.md:171).",
+        "The upgrade skill is installed as a setup-pinned copy, while the spec describes changing its runbook. It does not state how an already-installed old copy learns the new branch, parking, and commit procedure before it directs the first upgrade; the existing runbook still expects an uncommitted diff and manual commit (docs/specs/simple-upgrade.md:87; setup:66; install/claude/knacklabs-upgrade-project/SKILL.md:81).",
+        "The acceptance fixtures name two historical commits and an unspecified Lean-era commit, but do not name a pre-rename commit or test the required pre-rename refusal and usable intermediate-upgrade advice. That boundary remains unproved by the stated end-to-end fixtures (docs/specs/simple-upgrade.md:94; docs/specs/simple-upgrade.md:104).",
+        "The title and promised behavior say one step from any client version, but the spec refuses pre-rename clients and requires an intermediate upgrade with an older harness first (docs/specs/simple-upgrade.md:3; docs/specs/simple-upgrade.md:27)."
+      ],
+      "delta_index": 9
+    },
+    {
+      "change": "span 10: rewritten to resolve the cold-read findings",
+      "reason": "one amendment after the single cold read, resolving repository-answerable findings",
+      "source": "coordinator amendment 2026-09-24",
+      "findings": [
+        "The pre-rename recovery instruction does not identify an exact last compatible harness commit or a runnable way to obtain and use it. A developer must guess which version to run, despite the spec making this a prerequisite (docs/specs/simple-upgrade.md:27; docs/decisions/0088-simple-upgrade.md:39).",
+        "The vendored-commit check establishes only that the object exists. The spec does not say whether it must be an ancestor of the harness HEAD, or what happens when the client records a newer commit; proceeding could downgrade the client while presenting the operation as an upgrade (docs/specs/simple-upgrade.md:24; factory/scripts/forge_cli/scaffold.py:608).",
+        "The worktree scan has no stated fail-closed rule for unreadable or stale Git worktree bookkeeping. The existing worktree enumerator silently skips unreadable entries, so a worktree with in-progress work could be omitted despite the promised refusal (docs/specs/simple-upgrade.md:31; factory/scripts/factory_lib.py:5307).",
+        "The work-in-progress definition covers approved active plans but leaves a saved plan awaiting approval with no story pointer unspecified. Archiving its grill or approval files while retaining the plan could strand that handoff; the plan metadata and approval state are separate from the pointer (docs/specs/simple-upgrade.md:35; factory/scripts/forge_cli/plans.py:82; factory/scripts/forge_cli/plans.py:274).",
+        "Parking does not define how every linked worktree's branch and git-local run, stage, and task state is retired. Changing the target branch's roadmap and archive alone leaves a parked task worktree able to continue from its old branch and state (docs/specs/simple-upgrade.md:42; factory/scripts/factory_lib.py:5323; factory/scripts/forge_cli/stages.py:163).",
+        "Parking moves the plan but does not specify resetting its protected plan metadata or the worktree run pointer. An approved `plan-meta.json` still blocks a new plan save, so returning the roadmap item to pending does not by itself make replanning reachable (docs/specs/simple-upgrade.md:42; factory/scripts/forge_cli/plans.py:274; factory/scripts/intake.py:76).",
+        "The archive table says `grills/` and grill-round files without distinguishing obsolete files from current digest-bound grill records. The board still reads story grill records at that path; archiving them wholesale can erase current handoff evidence from the live readers (docs/specs/simple-upgrade.md:51; factory/scripts/forge_cli/board.py:905).",
+        "The byte-equality ownership rule does not specify how client-added files under the vendored gate trees are handled. Keeping an unknown `factory/scripts` file while regenerating the manifest would freeze client code as gate machinery; the current integrity checker includes every file in those trees (docs/specs/simple-upgrade.md:57; docs/specs/simple-upgrade.md:60; factory/scripts/check_vendor_integrity.py:46).",
+        "The spec promises no writes on refusal but does not define whether acquiring the existing git-local exclusion lock counts or how preflight is ordered around it. The current upgrade acquires that lock before its deeper preflight, so this guarantee needs a precise boundary and test (docs/specs/simple-upgrade.md:21; factory/scripts/forge_cli/upgrade.py:4613).",
+        "The transactional health step omits `forge doctor --fast` and board-data loading even though the first acceptance criterion requires both after success. A commit could be published before either downstream reader is exercised (docs/specs/simple-upgrade.md:63; docs/specs/simple-upgrade.md:94).",
+        "The proposed PR-ticket exemption lacks a provenance rule for archive, `.gitignore`, and `.codex` changes. The existing exemption accepts a manifest marker plus allowed path names, so extending those names alone could exempt a hand-authored change to client or archived evidence with no completed ticket (docs/specs/simple-upgrade.md:75; factory/scripts/check_pr_ticket.py:162).",
+        "The archived-review display has no defined read representation. The board currently obtains task review status from `reviews/selected.json` and a valid selected generation; simply moving fixed lens files into an archive cannot make such a task display as reviewed (docs/specs/simple-upgrade.md:79; factory/scripts/forge_cli/board.py:97; docs/QUALITY.md:171).",
+        "The upgrade skill is installed as a setup-pinned copy, while the spec describes changing its runbook. It does not state how an already-installed old copy learns the new branch, parking, and commit procedure before it directs the first upgrade; the existing runbook still expects an uncommitted diff and manual commit (docs/specs/simple-upgrade.md:87; setup:66; install/claude/knacklabs-upgrade-project/SKILL.md:81).",
+        "The acceptance fixtures name two historical commits and an unspecified Lean-era commit, but do not name a pre-rename commit or test the required pre-rename refusal and usable intermediate-upgrade advice. That boundary remains unproved by the stated end-to-end fixtures (docs/specs/simple-upgrade.md:94; docs/specs/simple-upgrade.md:104).",
+        "The title and promised behavior say one step from any client version, but the spec refuses pre-rename clients and requires an intermediate upgrade with an older harness first (docs/specs/simple-upgrade.md:3; docs/specs/simple-upgrade.md:27)."
+      ],
+      "delta_index": 10
+    },
+    {
+      "change": "span 11: rewritten to resolve the cold-read findings",
+      "reason": "one amendment after the single cold read, resolving repository-answerable findings",
+      "source": "coordinator amendment 2026-09-24",
+      "findings": [
+        "The pre-rename recovery instruction does not identify an exact last compatible harness commit or a runnable way to obtain and use it. A developer must guess which version to run, despite the spec making this a prerequisite (docs/specs/simple-upgrade.md:27; docs/decisions/0088-simple-upgrade.md:39).",
+        "The vendored-commit check establishes only that the object exists. The spec does not say whether it must be an ancestor of the harness HEAD, or what happens when the client records a newer commit; proceeding could downgrade the client while presenting the operation as an upgrade (docs/specs/simple-upgrade.md:24; factory/scripts/forge_cli/scaffold.py:608).",
+        "The worktree scan has no stated fail-closed rule for unreadable or stale Git worktree bookkeeping. The existing worktree enumerator silently skips unreadable entries, so a worktree with in-progress work could be omitted despite the promised refusal (docs/specs/simple-upgrade.md:31; factory/scripts/factory_lib.py:5307).",
+        "The work-in-progress definition covers approved active plans but leaves a saved plan awaiting approval with no story pointer unspecified. Archiving its grill or approval files while retaining the plan could strand that handoff; the plan metadata and approval state are separate from the pointer (docs/specs/simple-upgrade.md:35; factory/scripts/forge_cli/plans.py:82; factory/scripts/forge_cli/plans.py:274).",
+        "Parking does not define how every linked worktree's branch and git-local run, stage, and task state is retired. Changing the target branch's roadmap and archive alone leaves a parked task worktree able to continue from its old branch and state (docs/specs/simple-upgrade.md:42; factory/scripts/factory_lib.py:5323; factory/scripts/forge_cli/stages.py:163).",
+        "Parking moves the plan but does not specify resetting its protected plan metadata or the worktree run pointer. An approved `plan-meta.json` still blocks a new plan save, so returning the roadmap item to pending does not by itself make replanning reachable (docs/specs/simple-upgrade.md:42; factory/scripts/forge_cli/plans.py:274; factory/scripts/intake.py:76).",
+        "The archive table says `grills/` and grill-round files without distinguishing obsolete files from current digest-bound grill records. The board still reads story grill records at that path; archiving them wholesale can erase current handoff evidence from the live readers (docs/specs/simple-upgrade.md:51; factory/scripts/forge_cli/board.py:905).",
+        "The byte-equality ownership rule does not specify how client-added files under the vendored gate trees are handled. Keeping an unknown `factory/scripts` file while regenerating the manifest would freeze client code as gate machinery; the current integrity checker includes every file in those trees (docs/specs/simple-upgrade.md:57; docs/specs/simple-upgrade.md:60; factory/scripts/check_vendor_integrity.py:46).",
+        "The spec promises no writes on refusal but does not define whether acquiring the existing git-local exclusion lock counts or how preflight is ordered around it. The current upgrade acquires that lock before its deeper preflight, so this guarantee needs a precise boundary and test (docs/specs/simple-upgrade.md:21; factory/scripts/forge_cli/upgrade.py:4613).",
+        "The transactional health step omits `forge doctor --fast` and board-data loading even though the first acceptance criterion requires both after success. A commit could be published before either downstream reader is exercised (docs/specs/simple-upgrade.md:63; docs/specs/simple-upgrade.md:94).",
+        "The proposed PR-ticket exemption lacks a provenance rule for archive, `.gitignore`, and `.codex` changes. The existing exemption accepts a manifest marker plus allowed path names, so extending those names alone could exempt a hand-authored change to client or archived evidence with no completed ticket (docs/specs/simple-upgrade.md:75; factory/scripts/check_pr_ticket.py:162).",
+        "The archived-review display has no defined read representation. The board currently obtains task review status from `reviews/selected.json` and a valid selected generation; simply moving fixed lens files into an archive cannot make such a task display as reviewed (docs/specs/simple-upgrade.md:79; factory/scripts/forge_cli/board.py:97; docs/QUALITY.md:171).",
+        "The upgrade skill is installed as a setup-pinned copy, while the spec describes changing its runbook. It does not state how an already-installed old copy learns the new branch, parking, and commit procedure before it directs the first upgrade; the existing runbook still expects an uncommitted diff and manual commit (docs/specs/simple-upgrade.md:87; setup:66; install/claude/knacklabs-upgrade-project/SKILL.md:81).",
+        "The acceptance fixtures name two historical commits and an unspecified Lean-era commit, but do not name a pre-rename commit or test the required pre-rename refusal and usable intermediate-upgrade advice. That boundary remains unproved by the stated end-to-end fixtures (docs/specs/simple-upgrade.md:94; docs/specs/simple-upgrade.md:104).",
+        "The title and promised behavior say one step from any client version, but the spec refuses pre-rename clients and requires an intermediate upgrade with an older harness first (docs/specs/simple-upgrade.md:3; docs/specs/simple-upgrade.md:27)."
+      ],
+      "delta_index": 11
+    },
+    {
+      "change": "span 12: rewritten to resolve the cold-read findings",
+      "reason": "one amendment after the single cold read, resolving repository-answerable findings",
+      "source": "coordinator amendment 2026-09-24",
+      "findings": [
+        "The pre-rename recovery instruction does not identify an exact last compatible harness commit or a runnable way to obtain and use it. A developer must guess which version to run, despite the spec making this a prerequisite (docs/specs/simple-upgrade.md:27; docs/decisions/0088-simple-upgrade.md:39).",
+        "The vendored-commit check establishes only that the object exists. The spec does not say whether it must be an ancestor of the harness HEAD, or what happens when the client records a newer commit; proceeding could downgrade the client while presenting the operation as an upgrade (docs/specs/simple-upgrade.md:24; factory/scripts/forge_cli/scaffold.py:608).",
+        "The worktree scan has no stated fail-closed rule for unreadable or stale Git worktree bookkeeping. The existing worktree enumerator silently skips unreadable entries, so a worktree with in-progress work could be omitted despite the promised refusal (docs/specs/simple-upgrade.md:31; factory/scripts/factory_lib.py:5307).",
+        "The work-in-progress definition covers approved active plans but leaves a saved plan awaiting approval with no story pointer unspecified. Archiving its grill or approval files while retaining the plan could strand that handoff; the plan metadata and approval state are separate from the pointer (docs/specs/simple-upgrade.md:35; factory/scripts/forge_cli/plans.py:82; factory/scripts/forge_cli/plans.py:274).",
+        "Parking does not define how every linked worktree's branch and git-local run, stage, and task state is retired. Changing the target branch's roadmap and archive alone leaves a parked task worktree able to continue from its old branch and state (docs/specs/simple-upgrade.md:42; factory/scripts/factory_lib.py:5323; factory/scripts/forge_cli/stages.py:163).",
+        "Parking moves the plan but does not specify resetting its protected plan metadata or the worktree run pointer. An approved `plan-meta.json` still blocks a new plan save, so returning the roadmap item to pending does not by itself make replanning reachable (docs/specs/simple-upgrade.md:42; factory/scripts/forge_cli/plans.py:274; factory/scripts/intake.py:76).",
+        "The archive table says `grills/` and grill-round files without distinguishing obsolete files from current digest-bound grill records. The board still reads story grill records at that path; archiving them wholesale can erase current handoff evidence from the live readers (docs/specs/simple-upgrade.md:51; factory/scripts/forge_cli/board.py:905).",
+        "The byte-equality ownership rule does not specify how client-added files under the vendored gate trees are handled. Keeping an unknown `factory/scripts` file while regenerating the manifest would freeze client code as gate machinery; the current integrity checker includes every file in those trees (docs/specs/simple-upgrade.md:57; docs/specs/simple-upgrade.md:60; factory/scripts/check_vendor_integrity.py:46).",
+        "The spec promises no writes on refusal but does not define whether acquiring the existing git-local exclusion lock counts or how preflight is ordered around it. The current upgrade acquires that lock before its deeper preflight, so this guarantee needs a precise boundary and test (docs/specs/simple-upgrade.md:21; factory/scripts/forge_cli/upgrade.py:4613).",
+        "The transactional health step omits `forge doctor --fast` and board-data loading even though the first acceptance criterion requires both after success. A commit could be published before either downstream reader is exercised (docs/specs/simple-upgrade.md:63; docs/specs/simple-upgrade.md:94).",
+        "The proposed PR-ticket exemption lacks a provenance rule for archive, `.gitignore`, and `.codex` changes. The existing exemption accepts a manifest marker plus allowed path names, so extending those names alone could exempt a hand-authored change to client or archived evidence with no completed ticket (docs/specs/simple-upgrade.md:75; factory/scripts/check_pr_ticket.py:162).",
+        "The archived-review display has no defined read representation. The board currently obtains task review status from `reviews/selected.json` and a valid selected generation; simply moving fixed lens files into an archive cannot make such a task display as reviewed (docs/specs/simple-upgrade.md:79; factory/scripts/forge_cli/board.py:97; docs/QUALITY.md:171).",
+        "The upgrade skill is installed as a setup-pinned copy, while the spec describes changing its runbook. It does not state how an already-installed old copy learns the new branch, parking, and commit procedure before it directs the first upgrade; the existing runbook still expects an uncommitted diff and manual commit (docs/specs/simple-upgrade.md:87; setup:66; install/claude/knacklabs-upgrade-project/SKILL.md:81).",
+        "The acceptance fixtures name two historical commits and an unspecified Lean-era commit, but do not name a pre-rename commit or test the required pre-rename refusal and usable intermediate-upgrade advice. That boundary remains unproved by the stated end-to-end fixtures (docs/specs/simple-upgrade.md:94; docs/specs/simple-upgrade.md:104).",
+        "The title and promised behavior say one step from any client version, but the spec refuses pre-rename clients and requires an intermediate upgrade with an older harness first (docs/specs/simple-upgrade.md:3; docs/specs/simple-upgrade.md:27)."
+      ],
+      "delta_index": 12
+    },
+    {
+      "change": "span 13: rewritten to resolve the cold-read findings",
+      "reason": "one amendment after the single cold read, resolving repository-answerable findings",
+      "source": "coordinator amendment 2026-09-24",
+      "findings": [
+        "The pre-rename recovery instruction does not identify an exact last compatible harness commit or a runnable way to obtain and use it. A developer must guess which version to run, despite the spec making this a prerequisite (docs/specs/simple-upgrade.md:27; docs/decisions/0088-simple-upgrade.md:39).",
+        "The vendored-commit check establishes only that the object exists. The spec does not say whether it must be an ancestor of the harness HEAD, or what happens when the client records a newer commit; proceeding could downgrade the client while presenting the operation as an upgrade (docs/specs/simple-upgrade.md:24; factory/scripts/forge_cli/scaffold.py:608).",
+        "The worktree scan has no stated fail-closed rule for unreadable or stale Git worktree bookkeeping. The existing worktree enumerator silently skips unreadable entries, so a worktree with in-progress work could be omitted despite the promised refusal (docs/specs/simple-upgrade.md:31; factory/scripts/factory_lib.py:5307).",
+        "The work-in-progress definition covers approved active plans but leaves a saved plan awaiting approval with no story pointer unspecified. Archiving its grill or approval files while retaining the plan could strand that handoff; the plan metadata and approval state are separate from the pointer (docs/specs/simple-upgrade.md:35; factory/scripts/forge_cli/plans.py:82; factory/scripts/forge_cli/plans.py:274).",
+        "Parking does not define how every linked worktree's branch and git-local run, stage, and task state is retired. Changing the target branch's roadmap and archive alone leaves a parked task worktree able to continue from its old branch and state (docs/specs/simple-upgrade.md:42; factory/scripts/factory_lib.py:5323; factory/scripts/forge_cli/stages.py:163).",
+        "Parking moves the plan but does not specify resetting its protected plan metadata or the worktree run pointer. An approved `plan-meta.json` still blocks a new plan save, so returning the roadmap item to pending does not by itself make replanning reachable (docs/specs/simple-upgrade.md:42; factory/scripts/forge_cli/plans.py:274; factory/scripts/intake.py:76).",
+        "The archive table says `grills/` and grill-round files without distinguishing obsolete files from current digest-bound grill records. The board still reads story grill records at that path; archiving them wholesale can erase current handoff evidence from the live readers (docs/specs/simple-upgrade.md:51; factory/scripts/forge_cli/board.py:905).",
+        "The byte-equality ownership rule does not specify how client-added files under the vendored gate trees are handled. Keeping an unknown `factory/scripts` file while regenerating the manifest would freeze client code as gate machinery; the current integrity checker includes every file in those trees (docs/specs/simple-upgrade.md:57; docs/specs/simple-upgrade.md:60; factory/scripts/check_vendor_integrity.py:46).",
+        "The spec promises no writes on refusal but does not define whether acquiring the existing git-local exclusion lock counts or how preflight is ordered around it. The current upgrade acquires that lock before its deeper preflight, so this guarantee needs a precise boundary and test (docs/specs/simple-upgrade.md:21; factory/scripts/forge_cli/upgrade.py:4613).",
+        "The transactional health step omits `forge doctor --fast` and board-data loading even though the first acceptance criterion requires both after success. A commit could be published before either downstream reader is exercised (docs/specs/simple-upgrade.md:63; docs/specs/simple-upgrade.md:94).",
+        "The proposed PR-ticket exemption lacks a provenance rule for archive, `.gitignore`, and `.codex` changes. The existing exemption accepts a manifest marker plus allowed path names, so extending those names alone could exempt a hand-authored change to client or archived evidence with no completed ticket (docs/specs/simple-upgrade.md:75; factory/scripts/check_pr_ticket.py:162).",
+        "The archived-review display has no defined read representation. The board currently obtains task review status from `reviews/selected.json` and a valid selected generation; simply moving fixed lens files into an archive cannot make such a task display as reviewed (docs/specs/simple-upgrade.md:79; factory/scripts/forge_cli/board.py:97; docs/QUALITY.md:171).",
+        "The upgrade skill is installed as a setup-pinned copy, while the spec describes changing its runbook. It does not state how an already-installed old copy learns the new branch, parking, and commit procedure before it directs the first upgrade; the existing runbook still expects an uncommitted diff and manual commit (docs/specs/simple-upgrade.md:87; setup:66; install/claude/knacklabs-upgrade-project/SKILL.md:81).",
+        "The acceptance fixtures name two historical commits and an unspecified Lean-era commit, but do not name a pre-rename commit or test the required pre-rename refusal and usable intermediate-upgrade advice. That boundary remains unproved by the stated end-to-end fixtures (docs/specs/simple-upgrade.md:94; docs/specs/simple-upgrade.md:104).",
+        "The title and promised behavior say one step from any client version, but the spec refuses pre-rename clients and requires an intermediate upgrade with an older harness first (docs/specs/simple-upgrade.md:3; docs/specs/simple-upgrade.md:27)."
+      ],
+      "delta_index": 13
+    },
+    {
+      "change": "span 14: rewritten to resolve the cold-read findings",
+      "reason": "one amendment after the single cold read, resolving repository-answerable findings",
+      "source": "coordinator amendment 2026-09-24",
+      "findings": [
+        "The pre-rename recovery instruction does not identify an exact last compatible harness commit or a runnable way to obtain and use it. A developer must guess which version to run, despite the spec making this a prerequisite (docs/specs/simple-upgrade.md:27; docs/decisions/0088-simple-upgrade.md:39).",
+        "The vendored-commit check establishes only that the object exists. The spec does not say whether it must be an ancestor of the harness HEAD, or what happens when the client records a newer commit; proceeding could downgrade the client while presenting the operation as an upgrade (docs/specs/simple-upgrade.md:24; factory/scripts/forge_cli/scaffold.py:608).",
+        "The worktree scan has no stated fail-closed rule for unreadable or stale Git worktree bookkeeping. The existing worktree enumerator silently skips unreadable entries, so a worktree with in-progress work could be omitted despite the promised refusal (docs/specs/simple-upgrade.md:31; factory/scripts/factory_lib.py:5307).",
+        "The work-in-progress definition covers approved active plans but leaves a saved plan awaiting approval with no story pointer unspecified. Archiving its grill or approval files while retaining the plan could strand that handoff; the plan metadata and approval state are separate from the pointer (docs/specs/simple-upgrade.md:35; factory/scripts/forge_cli/plans.py:82; factory/scripts/forge_cli/plans.py:274).",
+        "Parking does not define how every linked worktree's branch and git-local run, stage, and task state is retired. Changing the target branch's roadmap and archive alone leaves a parked task worktree able to continue from its old branch and state (docs/specs/simple-upgrade.md:42; factory/scripts/factory_lib.py:5323; factory/scripts/forge_cli/stages.py:163).",
+        "Parking moves the plan but does not specify resetting its protected plan metadata or the worktree run pointer. An approved `plan-meta.json` still blocks a new plan save, so returning the roadmap item to pending does not by itself make replanning reachable (docs/specs/simple-upgrade.md:42; factory/scripts/forge_cli/plans.py:274; factory/scripts/intake.py:76).",
+        "The archive table says `grills/` and grill-round files without distinguishing obsolete files from current digest-bound grill records. The board still reads story grill records at that path; archiving them wholesale can erase current handoff evidence from the live readers (docs/specs/simple-upgrade.md:51; factory/scripts/forge_cli/board.py:905).",
+        "The byte-equality ownership rule does not specify how client-added files under the vendored gate trees are handled. Keeping an unknown `factory/scripts` file while regenerating the manifest would freeze client code as gate machinery; the current integrity checker includes every file in those trees (docs/specs/simple-upgrade.md:57; docs/specs/simple-upgrade.md:60; factory/scripts/check_vendor_integrity.py:46).",
+        "The spec promises no writes on refusal but does not define whether acquiring the existing git-local exclusion lock counts or how preflight is ordered around it. The current upgrade acquires that lock before its deeper preflight, so this guarantee needs a precise boundary and test (docs/specs/simple-upgrade.md:21; factory/scripts/forge_cli/upgrade.py:4613).",
+        "The transactional health step omits `forge doctor --fast` and board-data loading even though the first acceptance criterion requires both after success. A commit could be published before either downstream reader is exercised (docs/specs/simple-upgrade.md:63; docs/specs/simple-upgrade.md:94).",
+        "The proposed PR-ticket exemption lacks a provenance rule for archive, `.gitignore`, and `.codex` changes. The existing exemption accepts a manifest marker plus allowed path names, so extending those names alone could exempt a hand-authored change to client or archived evidence with no completed ticket (docs/specs/simple-upgrade.md:75; factory/scripts/check_pr_ticket.py:162).",
+        "The archived-review display has no defined read representation. The board currently obtains task review status from `reviews/selected.json` and a valid selected generation; simply moving fixed lens files into an archive cannot make such a task display as reviewed (docs/specs/simple-upgrade.md:79; factory/scripts/forge_cli/board.py:97; docs/QUALITY.md:171).",
+        "The upgrade skill is installed as a setup-pinned copy, while the spec describes changing its runbook. It does not state how an already-installed old copy learns the new branch, parking, and commit procedure before it directs the first upgrade; the existing runbook still expects an uncommitted diff and manual commit (docs/specs/simple-upgrade.md:87; setup:66; install/claude/knacklabs-upgrade-project/SKILL.md:81).",
+        "The acceptance fixtures name two historical commits and an unspecified Lean-era commit, but do not name a pre-rename commit or test the required pre-rename refusal and usable intermediate-upgrade advice. That boundary remains unproved by the stated end-to-end fixtures (docs/specs/simple-upgrade.md:94; docs/specs/simple-upgrade.md:104).",
+        "The title and promised behavior say one step from any client version, but the spec refuses pre-rename clients and requires an intermediate upgrade with an older harness first (docs/specs/simple-upgrade.md:3; docs/specs/simple-upgrade.md:27)."
+      ],
+      "delta_index": 14
+    },
+    {
+      "change": "span 15: rewritten to resolve the cold-read findings",
+      "reason": "one amendment after the single cold read, resolving repository-answerable findings",
+      "source": "coordinator amendment 2026-09-24",
+      "findings": [
+        "The pre-rename recovery instruction does not identify an exact last compatible harness commit or a runnable way to obtain and use it. A developer must guess which version to run, despite the spec making this a prerequisite (docs/specs/simple-upgrade.md:27; docs/decisions/0088-simple-upgrade.md:39).",
+        "The vendored-commit check establishes only that the object exists. The spec does not say whether it must be an ancestor of the harness HEAD, or what happens when the client records a newer commit; proceeding could downgrade the client while presenting the operation as an upgrade (docs/specs/simple-upgrade.md:24; factory/scripts/forge_cli/scaffold.py:608).",
+        "The worktree scan has no stated fail-closed rule for unreadable or stale Git worktree bookkeeping. The existing worktree enumerator silently skips unreadable entries, so a worktree with in-progress work could be omitted despite the promised refusal (docs/specs/simple-upgrade.md:31; factory/scripts/factory_lib.py:5307).",
+        "The work-in-progress definition covers approved active plans but leaves a saved plan awaiting approval with no story pointer unspecified. Archiving its grill or approval files while retaining the plan could strand that handoff; the plan metadata and approval state are separate from the pointer (docs/specs/simple-upgrade.md:35; factory/scripts/forge_cli/plans.py:82; factory/scripts/forge_cli/plans.py:274).",
+        "Parking does not define how every linked worktree's branch and git-local run, stage, and task state is retired. Changing the target branch's roadmap and archive alone leaves a parked task worktree able to continue from its old branch and state (docs/specs/simple-upgrade.md:42; factory/scripts/factory_lib.py:5323; factory/scripts/forge_cli/stages.py:163).",
+        "Parking moves the plan but does not specify resetting its protected plan metadata or the worktree run pointer. An approved `plan-meta.json` still blocks a new plan save, so returning the roadmap item to pending does not by itself make replanning reachable (docs/specs/simple-upgrade.md:42; factory/scripts/forge_cli/plans.py:274; factory/scripts/intake.py:76).",
+        "The archive table says `grills/` and grill-round files without distinguishing obsolete files from current digest-bound grill records. The board still reads story grill records at that path; archiving them wholesale can erase current handoff evidence from the live readers (docs/specs/simple-upgrade.md:51; factory/scripts/forge_cli/board.py:905).",
+        "The byte-equality ownership rule does not specify how client-added files under the vendored gate trees are handled. Keeping an unknown `factory/scripts` file while regenerating the manifest would freeze client code as gate machinery; the current integrity checker includes every file in those trees (docs/specs/simple-upgrade.md:57; docs/specs/simple-upgrade.md:60; factory/scripts/check_vendor_integrity.py:46).",
+        "The spec promises no writes on refusal but does not define whether acquiring the existing git-local exclusion lock counts or how preflight is ordered around it. The current upgrade acquires that lock before its deeper preflight, so this guarantee needs a precise boundary and test (docs/specs/simple-upgrade.md:21; factory/scripts/forge_cli/upgrade.py:4613).",
+        "The transactional health step omits `forge doctor --fast` and board-data loading even though the first acceptance criterion requires both after success. A commit could be published before either downstream reader is exercised (docs/specs/simple-upgrade.md:63; docs/specs/simple-upgrade.md:94).",
+        "The proposed PR-ticket exemption lacks a provenance rule for archive, `.gitignore`, and `.codex` changes. The existing exemption accepts a manifest marker plus allowed path names, so extending those names alone could exempt a hand-authored change to client or archived evidence with no completed ticket (docs/specs/simple-upgrade.md:75; factory/scripts/check_pr_ticket.py:162).",
+        "The archived-review display has no defined read representation. The board currently obtains task review status from `reviews/selected.json` and a valid selected generation; simply moving fixed lens files into an archive cannot make such a task display as reviewed (docs/specs/simple-upgrade.md:79; factory/scripts/forge_cli/board.py:97; docs/QUALITY.md:171).",
+        "The upgrade skill is installed as a setup-pinned copy, while the spec describes changing its runbook. It does not state how an already-installed old copy learns the new branch, parking, and commit procedure before it directs the first upgrade; the existing runbook still expects an uncommitted diff and manual commit (docs/specs/simple-upgrade.md:87; setup:66; install/claude/knacklabs-upgrade-project/SKILL.md:81).",
+        "The acceptance fixtures name two historical commits and an unspecified Lean-era commit, but do not name a pre-rename commit or test the required pre-rename refusal and usable intermediate-upgrade advice. That boundary remains unproved by the stated end-to-end fixtures (docs/specs/simple-upgrade.md:94; docs/specs/simple-upgrade.md:104).",
+        "The title and promised behavior say one step from any client version, but the spec refuses pre-rename clients and requires an intermediate upgrade with an older harness first (docs/specs/simple-upgrade.md:3; docs/specs/simple-upgrade.md:27)."
+      ],
+      "delta_index": 15
+    },
+    {
+      "change": "span 16: rewritten to resolve the cold-read findings",
+      "reason": "one amendment after the single cold read, resolving repository-answerable findings",
+      "source": "coordinator amendment 2026-09-24",
+      "findings": [
+        "The pre-rename recovery instruction does not identify an exact last compatible harness commit or a runnable way to obtain and use it. A developer must guess which version to run, despite the spec making this a prerequisite (docs/specs/simple-upgrade.md:27; docs/decisions/0088-simple-upgrade.md:39).",
+        "The vendored-commit check establishes only that the object exists. The spec does not say whether it must be an ancestor of the harness HEAD, or what happens when the client records a newer commit; proceeding could downgrade the client while presenting the operation as an upgrade (docs/specs/simple-upgrade.md:24; factory/scripts/forge_cli/scaffold.py:608).",
+        "The worktree scan has no stated fail-closed rule for unreadable or stale Git worktree bookkeeping. The existing worktree enumerator silently skips unreadable entries, so a worktree with in-progress work could be omitted despite the promised refusal (docs/specs/simple-upgrade.md:31; factory/scripts/factory_lib.py:5307).",
+        "The work-in-progress definition covers approved active plans but leaves a saved plan awaiting approval with no story pointer unspecified. Archiving its grill or approval files while retaining the plan could strand that handoff; the plan metadata and approval state are separate from the pointer (docs/specs/simple-upgrade.md:35; factory/scripts/forge_cli/plans.py:82; factory/scripts/forge_cli/plans.py:274).",
+        "Parking does not define how every linked worktree's branch and git-local run, stage, and task state is retired. Changing the target branch's roadmap and archive alone leaves a parked task worktree able to continue from its old branch and state (docs/specs/simple-upgrade.md:42; factory/scripts/factory_lib.py:5323; factory/scripts/forge_cli/stages.py:163).",
+        "Parking moves the plan but does not specify resetting its protected plan metadata or the worktree run pointer. An approved `plan-meta.json` still blocks a new plan save, so returning the roadmap item to pending does not by itself make replanning reachable (docs/specs/simple-upgrade.md:42; factory/scripts/forge_cli/plans.py:274; factory/scripts/intake.py:76).",
+        "The archive table says `grills/` and grill-round files without distinguishing obsolete files from current digest-bound grill records. The board still reads story grill records at that path; archiving them wholesale can erase current handoff evidence from the live readers (docs/specs/simple-upgrade.md:51; factory/scripts/forge_cli/board.py:905).",
+        "The byte-equality ownership rule does not specify how client-added files under the vendored gate trees are handled. Keeping an unknown `factory/scripts` file while regenerating the manifest would freeze client code as gate machinery; the current integrity checker includes every file in those trees (docs/specs/simple-upgrade.md:57; docs/specs/simple-upgrade.md:60; factory/scripts/check_vendor_integrity.py:46).",
+        "The spec promises no writes on refusal but does not define whether acquiring the existing git-local exclusion lock counts or how preflight is ordered around it. The current upgrade acquires that lock before its deeper preflight, so this guarantee needs a precise boundary and test (docs/specs/simple-upgrade.md:21; factory/scripts/forge_cli/upgrade.py:4613).",
+        "The transactional health step omits `forge doctor --fast` and board-data loading even though the first acceptance criterion requires both after success. A commit could be published before either downstream reader is exercised (docs/specs/simple-upgrade.md:63; docs/specs/simple-upgrade.md:94).",
+        "The proposed PR-ticket exemption lacks a provenance rule for archive, `.gitignore`, and `.codex` changes. The existing exemption accepts a manifest marker plus allowed path names, so extending those names alone could exempt a hand-authored change to client or archived evidence with no completed ticket (docs/specs/simple-upgrade.md:75; factory/scripts/check_pr_ticket.py:162).",
+        "The archived-review display has no defined read representation. The board currently obtains task review status from `reviews/selected.json` and a valid selected generation; simply moving fixed lens files into an archive cannot make such a task display as reviewed (docs/specs/simple-upgrade.md:79; factory/scripts/forge_cli/board.py:97; docs/QUALITY.md:171).",
+        "The upgrade skill is installed as a setup-pinned copy, while the spec describes changing its runbook. It does not state how an already-installed old copy learns the new branch, parking, and commit procedure before it directs the first upgrade; the existing runbook still expects an uncommitted diff and manual commit (docs/specs/simple-upgrade.md:87; setup:66; install/claude/knacklabs-upgrade-project/SKILL.md:81).",
+        "The acceptance fixtures name two historical commits and an unspecified Lean-era commit, but do not name a pre-rename commit or test the required pre-rename refusal and usable intermediate-upgrade advice. That boundary remains unproved by the stated end-to-end fixtures (docs/specs/simple-upgrade.md:94; docs/specs/simple-upgrade.md:104).",
+        "The title and promised behavior say one step from any client version, but the spec refuses pre-rename clients and requires an intermediate upgrade with an older harness first (docs/specs/simple-upgrade.md:3; docs/specs/simple-upgrade.md:27)."
+      ],
+      "delta_index": 16
+    }
+  ],
+  "artifact_delta": [
+    {
+      "cold_start": 2,
+      "cold_end": 3,
+      "cold": "title: Simple upgrade: one safe step from any client version to current\n",
+      "final_start": 2,
+      "final_end": 3,
+      "final": "title: Simple upgrade: one safe step from any factory-era client to current\n"
+    },
+    {
+      "cold_start": 4,
+      "cold_end": 5,
+      "cold": "saved: 2026-09-24T12:52:11+00:00\n",
+      "final_start": 4,
+      "final_end": 5,
+      "final": "saved: 2026-09-24T15:14:16+00:00\n"
+    },
+    {
+      "cold_start": 7,
+      "cold_end": 8,
+      "cold": "# Simple upgrade: one safe step from any client version to current\n",
+      "final_start": 7,
+      "final_end": 8,
+      "final": "# Simple upgrade: one safe step from any factory-era client to current\n"
+    },
+    {
+      "cold_start": 20,
+      "cold_end": 20,
+      "cold": "",
+      "final_start": 20,
+      "final_end": 27,
+      "final": "**Scope.** One step takes any client vendored after the machinery moved to\n`factory/` (2026-07-24) to the current harness. A pre-rename client, whose\nForge machinery still lives under `.agents/`, is refused with exact\ninstructions: check out the harness tag `forge-legacy-upgrade` (the last\nharness commit that migrates `.agents/`, tagged by this story) into a\nseparate worktree, run its upgrade, then run this one.\n\n"
+    },
+    {
+      "cold_start": 24,
+      "cold_end": 29,
+      "cold": "  not a commit in the harness repository (a repo without Forge is pointed to\n  `forge adopt`);\n- a pre-rename client that still carries Forge machinery under `.agents/`:\n  it is told to upgrade first with the last harness version that migrates\n  `.agents/` (2026-08-04 or later, before this change), then run this upgrade;\n",
+      "final_start": 31,
+      "final_end": 34,
+      "final": "  not an ancestor of the harness HEAD (unknown, unrelated or newer: no\n  downgrades); a repo without Forge is pointed to `forge adopt`;\n- a pre-rename client (above);\n"
+    },
+    {
+      "cold_start": 30,
+      "cold_end": 40,
+      "cold": "- a target where any worktree has work in progress, unless that story is\n  parked (below). Work in progress means: a story pointer (the worktree's\n  git-local pointer, else `.factory/run.json`) whose phase is anything but\n  `shipped`; any active stage in the git-local stage state; an open Lite,\n  quickfix or degraded window; or an approved story plan in `plans/active/`\n  whose roadmap item is not done. The message lists each worktree and story\n  and says to finish it on the current version or park it. Unreadable state\n  is refused, not guessed;\n- a client-owned file, or an ignored file, at a path the current machinery\n  must write.\n",
+      "final_start": 35,
+      "final_end": 52,
+      "final": "- a worktree of the repo that git lists but that cannot be read (missing\n  folder or unreadable state), named, with `git worktree prune` suggested;\n- work in progress in any worktree, unless that story is parked (below). Work\n  in progress means: a story pointer (the worktree's git-local pointer, else\n  `.factory/run.json`) whose phase is anything but `shipped`; any active stage\n  in the git-local stage state; an open Lite, quickfix or degraded window; or\n  any plan in `plans/active/` whose roadmap item is not done, whether approved\n  or not. The message lists each worktree and story and says to finish it on\n  the current version or park it;\n- a client file inside Forge's machinery folders (`factory/`, `constitution/`,\n  `harness/`, except client skills under `factory/skills/`) that Forge never\n  shipped, named, to be moved out first;\n- a client-owned or ignored file at a path the current machinery must write.\n\nAcquiring upgrade's own git-local lock is not a repository write; preflight\nruns under that lock, and a refusal leaves no repository file, branch or\ngit-local state changed.\n"
+    },
+    {
+      "cold_start": 42,
+      "cold_end": 45,
+      "cold": "supported way to abandon a story for the upgrade: its old workflow state is\narchived with the other old files, its plan moves to `plans/archive/`, and its\nroadmap item returns to pending so it is re-planned on the new version.\n",
+      "final_start": 54,
+      "final_end": 60,
+      "final": "supported way to abandon a story for the upgrade. It is refused while any\nworktree other than the target holds that story's pointer or stage (remove\nthose worktrees first). In the target, the story's workflow state and plan\nrecord move to the archive, its plan moves to `plans/archive/`, its run\npointer is cleared if it points at the story, and its roadmap item returns to\npending so it is planned fresh on the new version.\n"
+    },
+    {
+      "cold_start": 52,
+      "cold_end": 59,
+      "cold": "   relative to the repo under that directory. The list is one explicit table:\n   root `decomposition.json`/`tests.json`/`verify.json`, `grills/`,\n   grill-round files, `plan-approval.json`, `plan-mode/`, and the fixed\n   per-lens review files under stories, tasks and history. Ignored and\n   untracked files are never moved. Everything else stays: story and history\n   directories, outcomes, events, ledgers, `run.json`, the roadmap, docs,\n   client skills and profiles, and unknown files;\n",
+      "final_start": 67,
+      "final_end": 72,
+      "final": "   under that directory. The table is exactly: the fixed per-lens review\n   files (`quality.json`, `performance.json`, `security.json`) under story,\n   task and history `reviews/` folders, and the root `.factory/`\n   `decomposition.json`, `tests.json` and `verify.json`. Nothing else is\n   archived; ignored and untracked files are never moved;\n"
+    },
+    {
+      "cold_start": 62,
+      "cold_end": 64,
+      "cold": "4. runs the dual-runtime, scaffold and vendor-integrity checks plus\n   `forge next` and `forge audit`;\n",
+      "final_start": 75,
+      "final_end": 77,
+      "final": "4. runs the dual-runtime, scaffold and vendor-integrity checks, `forge next`,\n   `forge audit`, `forge doctor --fast` and a load of the board data;\n"
+    },
+    {
+      "cold_start": 65,
+      "cold_end": 66,
+      "cold": "   new harness commits.\n",
+      "final_start": 78,
+      "final_end": 80,
+      "final": "   new harness commits and a `Forge-Upgrade: <old>..<new>` trailer, then\n   prints the next steps (review commands and how to open the PR).\n"
+    },
+    {
+      "cold_start": 72,
+      "cold_end": 77,
+      "cold": "**After the upgrade** the developer reviews the upgrade commit\n(`git show --stat` and `git diff <original>..HEAD`, which include archived\nmoves) and opens a PR from the upgrade branch. The PR ticket check accepts an\nupgrade commit's re-vendored machinery, `.factory/archive/pre-*/` moves and\nthe upgrade's `.gitignore` and `.codex` edits as a harness re-vendor.\n",
+      "final_start": 86,
+      "final_end": 93,
+      "final": "**After the upgrade** the developer follows the printed steps: review the\nupgrade commit (`git show --stat` and `git diff <original>..HEAD`) and open a\nPR from the upgrade branch. The PR ticket check treats a commit with the\n`Forge-Upgrade` trailer as a re-vendor only when every change in it is a\nharness-owned path, the vendor manifest, an exact rename (100% similar) of a\npath matching the archive table into `.factory/archive/pre-*/`, or an addition\nof one of Forge's own ignore blocks; anything else needs a normal ticket.\n"
+    },
+    {
+      "cold_start": 78,
+      "cold_end": 81,
+      "cold": "**Archived reviews.** Tasks whose reviews were archived show on the board as\nreviewed before the upgrade; their review files remain readable in the\narchive. CI does not re-check tasks that already shipped.\n",
+      "final_start": 94,
+      "final_end": 98,
+      "final": "**Archived reviews.** A task with no selected review but with archived review\nfiles under `.factory/archive/pre-*/` shows on the board as \"reviewed before\nupgrade\"; the files stay readable there. CI does not re-check tasks that\nalready shipped.\n"
+    },
+    {
+      "cold_start": 86,
+      "cold_end": 90,
+      "cold": "**The upgrade skill** walks the agent through: find work in progress and ask\nthe developer to finish or park each story, clean the tree, run upgrade,\nreview the upgrade commit, open the PR. It drops the old post-upgrade audit,\ndoctor repair, backfill and re-authoring steps.\n",
+      "final_start": 103,
+      "final_end": 108,
+      "final": "**The upgrade skill** says: find work in progress and ask the developer to\nfinish or park each story, clean the tree, run `forge upgrade`, and follow\nits printed steps. Because upgrade prints its own steps, an older installed\ncopy of the skill still leads to the right result; `forge doctor` warns when\nthe installed skill differs from the harness copy.\n"
+    },
+    {
+      "cold_start": 93,
+      "cold_end": 97,
+      "cold": "- Clients built from harness commits 8563f8c6, 43f6bede and one Lean-era\n  commit, with no work in progress, upgrade to current with exit 0 on an\n  upgrade branch; then `forge next`, `forge audit`, `forge doctor --fast` and\n  the board data run without errors.\n",
+      "final_start": 111,
+      "final_end": 117,
+      "final": "- Clients built from harness commits 8563f8c6, 43f6bede and 47516c55, with no\n  work in progress, upgrade to current with exit 0 on an upgrade branch; then\n  `forge next`, `forge audit`, `forge doctor --fast` and the board data run\n  without errors.\n- A client built from a pre-rename commit (before 2ebba90d) is refused with\n  the `forge-legacy-upgrade` instructions.\n"
+    },
+    {
+      "cold_start": 98,
+      "cold_end": 106,
+      "cold": "  newer harness commit succeeds.\n- Work in progress in any worktree (including a task sealed and awaiting\n  merge, and an approved plan with no pointer) is refused before anything is\n  written, naming the worktree and story; `--park <story>` lets that story\n  through, archives its state and returns its roadmap item to pending.\n- A dirty target, a dirty harness, a missing or unknown vendored commit, a\n  pre-rename `.agents/` client, and a client or ignored file at a required\n  machinery path are each refused before anything is written.\n",
+      "final_start": 118,
+      "final_end": 131,
+      "final": "  newer harness commit succeeds; a client vendored at a commit that is not an\n  ancestor of the harness is refused.\n- Work in progress in any worktree (a task sealed and awaiting merge, an\n  approved plan with no pointer, a saved plan awaiting approval) is refused\n  before anything is written, naming the worktree and story; an unreadable\n  listed worktree is refused by name.\n- `--park <story>` lets that story through: its state and plan record are\n  archived, its plan moves to `plans/archive/`, its roadmap item is pending\n  and a new plan for it can be saved; parking is refused while another\n  worktree holds the story.\n- A dirty target, a dirty harness, a missing vendored commit, an unshipped\n  client file in the machinery folders, and a client or ignored file at a\n  required machinery path are each refused with no repository change.\n"
+    },
+    {
+      "cold_start": 109,
+      "cold_end": 113,
+      "cold": "- Client skills, custom Codex profiles, docs/memory and unknown `.factory`\n  files survive; the listed old-format files end up under\n  `.factory/archive/pre-<sha>/` at their original relative paths.\n- The upgrade PR passes the PR ticket check.\n",
+      "final_start": 134,
+      "final_end": 140,
+      "final": "- Client skills, custom Codex profiles, docs/memory, grill records and unknown\n  `.factory` files survive; exactly the table's files end up under\n  `.factory/archive/pre-<sha>/` at their original relative paths, and the\n  board shows those tasks as reviewed before upgrade.\n- The upgrade PR passes the PR ticket check; a hand-made change added to the\n  upgrade commit does not.\n"
+    },
+    {
+      "cold_start": 114,
+      "cold_end": 115,
+      "cold": "  migration code are deleted.\n",
+      "final_start": 141,
+      "final_end": 150,
+      "final": "  migration code are deleted from current Forge.\n\n## Success measure\n\n- Metric: share of local client checkouts with no work in progress that\n  upgrade on the first run without manual repair.\n- Baseline: 0 of 9 simulated clients (2026-09-24).\n- Target: every idle client checkout, including a real myclaw checkout.\n- Check date: 2026-10-15\n"
+    }
+  ],
+  "questions_asked": 0,
+  "summary": "Keyed cold read (14 gaps, 1 contradiction); resolved from repository facts; spec amended once (narrower archive table, legacy tag route, ancestor check, fail-closed worktrees, parking clears plan state, ticket provenance).",
+  "input_sha256": "1144d87d0289b9e47f76266c716a99e50784cae07b6a936e448ea4841c911d08",
+  "recorded_at": "2026-09-24T15:14:16+00:00",
+  "commit": "197fba796fc1325e6c9ae31ebeca264e9a188b44",
+  "launch_id": "launch-d74b7504ff284de69e3b607d93703330",
+  "cold_input_sha256": "469ec649cdba4af99b0ea886d34e0bd02fa90e874c01bbb85b9813b36c47536a",
+  "final_artifact_sha256": "1144d87d0289b9e47f76266c716a99e50784cae07b6a936e448ea4841c911d08"
+}
