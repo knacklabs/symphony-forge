@@ -61,8 +61,9 @@ native lane selects Luna/low.
   stages, deterministic verification, autoreview, and the remaining gates.
 - **Lite** is a human-opened, bounded write window for a small supervised fix:
   `./forge mode lite --by "<name>" --reason "<why>"`. It returns to Full when
-  the committed fix is within its file budget, `./forge review --lite` records
-  all three clean aspects, and `./forge mode done` closes the window.
+  the committed diff has at most five budget-counted files (test paths and
+  `*.md` files do not use a slot but are still reviewed), `./forge review --lite`
+  records all three clean aspects, and `./forge mode done` closes the window.
 
 ## Factory Phases
 0a. `discovery` — lightweight problem, stakeholder, and constraint discovery; no `.factory` ceremony required.

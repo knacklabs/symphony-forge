@@ -8150,7 +8150,7 @@ def test_degraded_window_allows_and_ledgers_product_write(repo):
 
     claimed = (
         "src/app.ts", "AGENTS.md", ".github/workflows/build.yml",
-        "factory/scripts/repair.py", "tests/test_repair.py",
+        "factory/scripts/repair.py", "tests/test_repair.py", "src/helper.ts",
     )
     for rel in claimed:
         code, out = hook(repo, {
@@ -8173,16 +8173,28 @@ def test_degraded_window_allows_and_ledgers_product_write(repo):
         "tool_name": "Edit", "permission_mode": "default",
         "tool_input": {"file_path": str(repo / "src" / "sixth.py")},
     })
-    assert code == 0 and "deny" in out and "five-file" in out
+    assert code == 0 and "deny" not in out, out
+    assert json.loads(
+        (repo / ".factory" / "quickfix.json").read_text()
+    )["files"] == [*claimed, "src/sixth.py"]
+    code, out = hook(repo, {
+        "tool_name": "Edit", "permission_mode": "default",
+        "tool_input": {"file_path": str(repo / "src" / "seventh.py")},
+    })
+    assert code == 0 and "deny" in out and "five-file" in out, out
+    assert json.loads(
+        (repo / ".factory" / "quickfix.json").read_text()
+    )["files"] == [*claimed, "src/sixth.py"]
 
     window_id = active["id"]
     code, out = run(repo, "forge.py", "mode", "done")
-    assert code == 0 and window_id in out and "5 file(s)" in out, out
+    assert code == 0 and window_id in out and "7 file(s)" in out, out
     records = [json.loads(path.read_text())
                for path in (repo / "plans" / "quickfixes").glob("*.json")]
     done = next(record for record in records
                 if record.get("event") == "done" and record.get("id") == window_id)
-    assert done["kind"] == "degraded" and done["files"] == list(claimed)
+    assert done["kind"] == "degraded"
+    assert done["files"] == [*claimed, "src/sixth.py"]
 
     git(repo, "add", "plans/quickfixes")
     git(repo, "commit", "-q", "-m", "record degraded window")
@@ -10105,17 +10117,42 @@ def test_lite_budget_counts_symlinks_once_and_literal_shell_names(repo):
 
 
 def test_mode_done_refuses_over_budget_committed_diff(repo):
+    from forge_cli.quickfix import _counts_toward_budget, claim_files
+
     open_lite(repo)
-    (repo / "src").mkdir()
-    for number in range(5):
-        (repo / "src" / f"fix_{number}.py").write_text(f"value = {number}\n")
+    files = [
+        *(f"src/fix_{number}.py" for number in range(5)),
+        "src/tests/smoke.py",
+        "src/test/integration.py",
+        "src/legacy_test.py",
+        "src/README.md",
+        "src/notes.md",
+    ]
+    assert all(_counts_toward_budget(path) for path in files[:5])
+    assert all(not _counts_toward_budget(path) for path in files[5:])
+    assert all(not _counts_toward_budget(path) for path in (
+        "src/test_helper.py", "src/widget.test.ts", "src/widget.spec.ts",
+    ))
+    claimed, active = claim_files(repo, files)
+    assert claimed and active["files"] == files
+    claimed, unchanged = claim_files(repo, ["src/sixth.py"])
+    assert not claimed and unchanged["files"] == files
+
+    for rel in files:
+        path = repo / rel
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text("value = True\n")
     git(repo, "add", "src")
-    git(repo, "commit", "-q", "-m", "maximum-size lite fix")
+    git(repo, "commit", "-q", "-m", "maximum-size lite fix with docs and tests")
     write_lite_reviews(repo)
 
     code, out = run(repo, "forge.py", "mode", "done")
 
-    assert code == 0 and "5 file(s)" in out, out
+    assert code == 0 and "10 file(s)" in out, out
+    done = [json.loads(path.read_text())
+            for path in (repo / "plans" / "quickfixes").glob("*.json")
+            if json.loads(path.read_text()).get("event") == "done"]
+    assert len(done) == 1 and done[0]["files"] == sorted(files)
 
     open_lite(repo)
     for number in range(6):
@@ -10127,6 +10164,24 @@ def test_mode_done_refuses_over_budget_committed_diff(repo):
 
     assert code != 0 and "touches 6 product files" in out and "bound is 5" in out, out
     assert (repo / ".factory" / "quickfix.json").exists()
+
+
+def test_lite_still_refuses_markdown_alias_of_repo_kind_marker(repo):
+    mark_harness_source(repo)
+    open_lite(repo)
+    marker_alias = repo / ".factory" / "harness-source.md"
+    marker_alias.symlink_to(Path("harness-source.json"))
+
+    code, out = hook(repo, {
+        "tool_name": "Write",
+        "permission_mode": "default",
+        "tool_input": {"file_path": str(marker_alias)},
+    })
+
+    assert code == 0 and "deny" in out, out
+    assert json.loads(
+        (repo / ".factory" / "quickfix.json").read_text()
+    )["files"] == []
 
 
 def test_mode_done_requires_clean_reviews_at_head(repo):
