@@ -8,15 +8,207 @@
       "objective": "Delete the write lock and its admission code; task close judges the result without a launch record, shows out-of-scope files and changed records to the reviewer and in a Forge-owned PR block; stage-bound amendments; full Lite review and budget; degraded and quickfix removed; superseded-spec links; guidance reworded.",
       "dependencies": [],
       "acceptance_criteria": [
-        "No Forge hook refuses a write because of the file it writes; destructive commands, raw codex exec and unsigned phase advances are still refused",
-        "task close succeeds without a launch record and lists out-of-scope files, overlaps and changed records in the review brief and the PR's Forge block, and a rerun replaces only that block",
-        "A write-scope amendment during an active stage records without a launch",
-        "Lite mode done reviews every committed change and refuses more than five non-test, non-Markdown files",
-        "Degraded and quickfix commands say they were removed; old closed records still satisfy the ticket check",
-        "check_dual_runtime.py and doctor check hook coverage and the absence of edit tools; the Windows hook job passes",
-        "strict-role-split is superseded: existing roadmap links resolve, new links need a confirmed spec"
+        "No Forge hook refuses an Edit, Write, apply_patch or Bash write because of the file it writes, including product, canon, .factory records and another worktree; destructive commands, raw codex exec, direct companion launches and phase-advancing scripts before sign-off are still refused.",
+        "task close on a task whose diff since its stage base includes a file outside its declared write scope, with no scope amendment and no recorded launch, succeeds when proof and review pass; the review brief and the PR's Forge block list that file, name every changed path in or out of scope that another active stage in any story declared, list changed .factory, plans and docs/decisions paths only as records, and the brief carries the plans and decisions text diff including the working tree.",
+        "Re-running task close on an open PR replaces only the Forge block (appending it if absent) and keeps human edits and Ticket lines; a failed PR update warns with the retry command and does not fail the close.",
+        "A write-scope amendment recorded during an active stage succeeds without a launch record, bound to the active stage, and the task grill stays valid.",
+        "Lite mode done and the Lite review use every committed change since the window opened with nothing filtered out, and mode done refuses when more than five non-test, non-Markdown files changed.",
+        "forge mode degraded start|done and forge quickfix start|done say they were removed, exit non-zero and change nothing; old closed quickfix and degraded records still satisfy the PR ticket check; a legacy open quickfix or degraded window is named by the lite-open refusal and the task-seal preflight with forge mode abandon --reason, which closes it.",
+        "check_dual_runtime.py and forge doctor pass on the shipped hook files and fail when an edit tool is routed to the Claude hook or apply_patch to the Codex hook; every path::test selector in the scaffold workflow names an existing test, so a misspelled selector fails the suite.",
+        "The spec resolver accepts a confirmed or superseded spec for roadmap stories already linked to it (plan save, roadmap derive and sign-off) and does not report it as a draft, while every new roadmap link requires a confirmed spec."
       ],
-      "user_facing": false
+      "user_facing": false,
+      "write_scope": [
+        "factory/scripts/pre_tool_use.py",
+        "factory/scripts/stop_continue.py",
+        "factory/scripts/session_start.py",
+        "factory/scripts/forge.py",
+        "factory/scripts/factory_lib.py",
+        "factory/scripts/check_dual_runtime.py",
+        "factory/scripts/check_encoding_hygiene.py",
+        "factory/scripts/record_decomposition_from_json.py",
+        "factory/scripts/record_signoff.py",
+        "factory/scripts/forge_cli/worker_admission.py",
+        "factory/scripts/forge_cli/repo_kind.py",
+        "factory/scripts/forge_cli/delegate.py",
+        "factory/scripts/forge_cli/doctor.py",
+        "factory/scripts/forge_cli/close.py",
+        "factory/scripts/forge_cli/stages.py",
+        "factory/scripts/forge_cli/tasks.py",
+        "factory/scripts/forge_cli/review.py",
+        "factory/scripts/forge_cli/review_brief.py",
+        "factory/scripts/forge_cli/quickfix.py",
+        "factory/scripts/forge_cli/fix.py",
+        "factory/scripts/forge_cli/specs.py",
+        "factory/scripts/forge_cli/plans.py",
+        "factory/scripts/forge_cli/roadmap.py",
+        "factory/scripts/forge_cli/phase.py",
+        "factory/scripts/forge_cli/signal.py",
+        "factory/scripts/forge_cli/scaffold.py",
+        "factory/scripts/forge_cli/board.py",
+        "factory/schemas/signal.json",
+        ".claude/settings.json",
+        ".codex/hooks.json",
+        ".github/workflows/factory-scaffold.yml",
+        "factory/tests/test_full_access.py",
+        "factory/tests/test_gates.py",
+        "factory/tests/test_worker_admission.py",
+        "factory/tests/test_seal_measures.py",
+        "factory/tests/test_close_binds_to_the_diff.py",
+        "factory/tests/test_native_launch.py",
+        "factory/tests/test_regrill_scope.py",
+        "factory/tests/test_native_setup.py",
+        "factory/tests/test_review_task_delta.py",
+        "factory/tests/test_raw_writes_keep_bytes.py",
+        "factory/tests/test_delegate_scope.py"
+      ],
+      "required_tests": [
+        {
+          "id": "test_hook_never_refuses_a_write_by_its_target",
+          "path": "factory/tests/test_full_access.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_retained_command_gates_still_refuse",
+          "path": "factory/tests/test_full_access.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_close_without_launch_lists_outside_scope_overlap_and_records",
+          "path": "factory/tests/test_full_access.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_pr_block_rerun_replaces_only_the_forge_block",
+          "path": "factory/tests/test_full_access.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_pr_block_edit_failure_warns_and_close_succeeds",
+          "path": "factory/tests/test_full_access.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_mid_stage_amendment_records_without_a_launch",
+          "path": "factory/tests/test_full_access.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_lite_done_reviews_every_committed_path_and_counts_the_budget",
+          "path": "factory/tests/test_full_access.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_removed_degraded_and_quickfix_commands_change_nothing",
+          "path": "factory/tests/test_full_access.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_old_closed_records_count_and_legacy_open_windows_point_to_abandon",
+          "path": "factory/tests/test_full_access.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_hook_registration_requires_coverage_and_absence",
+          "path": "factory/tests/test_full_access.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_superseded_spec_keeps_existing_links_and_refuses_new_ones",
+          "path": "factory/tests/test_full_access.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_task_close_goes_from_built_to_pr_and_is_idempotent",
+          "path": "factory/tests/test_close_binds_to_the_diff.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_pr_ticket_story_and_quickfix_handling_unchanged",
+          "path": "factory/tests/test_gates.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_registered_hook_path_keeps_recorder_armed",
+          "path": "factory/tests/test_gates.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_companion_guard_refuses_every_direct_launch_shape",
+          "path": "factory/tests/test_gates.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_lean_stop_allows_authenticated_registered_worker_handoff",
+          "path": "factory/tests/test_worker_admission.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_ci_locale_forcing_selectors_reference_existing_tests",
+          "path": "factory/tests/test_gates.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+        }
+      ],
+      "verify_commands": [
+        "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with pytest-xdist --with psutil python factory/scripts/verify.py",
+        "python3 factory/scripts/check_dual_runtime.py",
+        "python3 factory/scripts/check_encoding_hygiene.py",
+        "git diff --check"
+      ],
+      "reviewer_focus": [
+        "Apply constitution/09-agent-conduct.md sections 2-4 and Ponytail: this task mostly deletes code. Guard code is deleted, not disabled or flag-gated. No new ledger, schema, lock or hook-written evidence. New code is one scope-report helper in stages.py that close, the review brief and the PR block all use, one PR-block update in seal_task, and one removed-command handler.",
+        "Prove the hook keeps exactly the ask gate, the destructive denylist, the codex-exec and companion bans, the check bypass, the sign-off gate and the commit belt with only the tokenizer helpers they call. No remaining branch reads a write target, repo kind, a Lite or degraded window, or worker admission.",
+        "Prove close, stage done and mid-stage amendments need no launch or preparation record. Legacy receipts that carry launch_id still validate. Re-running close on an unchanged product delta does not re-review or reopen the stage: the scope section of the review brief is byte-stable because it leaves out the files close writes after the review.",
+        "Prove the scope report comes from `git diff <stage base>` (committed plus working tree, all paths) against the DECLARED write scope, not the amended one. Only the task's proof folder and .factory/stages.json are excluded. .factory, plans and docs/decisions paths go only to the records list. Overlaps check every changed path against the declared scopes of active stages in any story, through active_stages_everywhere(any_story=True). The PR update changes only the marked Forge block, keeps human text and Ticket lines, and on a gh failure warns without failing.",
+        "Prove Lite measures and reviews the full committed diff with no product filter, and that the repo-kind pin, claim_files and locked_repo_path are gone with no caller left. Removed commands exit non-zero without writing anything. Old closed records still pass check_pr_ticket, and legacy open windows point to `forge mode abandon --reason`. The spec resolver accepts a superseded spec only for links that already exist. The real strict-role-split spec is not edited here."
+      ],
+      "plan_contracts": [
+        {
+          "id": "ACCESS-CODE-AC-1",
+          "statement": "No Forge hook refuses an Edit, Write, apply_patch or Bash write because of the file it writes, including product, canon, .factory records and another worktree; destructive commands, raw codex exec, direct companion launches and phase-advancing scripts before sign-off are still refused.",
+          "source": ".factory/stories/FORGE-ACCESS-1/task-plans/CODE.md#Manual Verification"
+        },
+        {
+          "id": "ACCESS-CODE-AC-2",
+          "statement": "task close on a task whose diff since its stage base includes a file outside its declared write scope, with no scope amendment and no recorded launch, succeeds when proof and review pass; the review brief and the PR's Forge block list that file, name every changed path in or out of scope that another active stage in any story declared, list changed .factory, plans and docs/decisions paths only as records, and the brief carries the plans and decisions text diff including the working tree.",
+          "source": ".factory/stories/FORGE-ACCESS-1/task-plans/CODE.md#Manual Verification"
+        },
+        {
+          "id": "ACCESS-CODE-AC-3",
+          "statement": "Re-running task close on an open PR replaces only the Forge block (appending it if absent) and keeps human edits and Ticket lines; a failed PR update warns with the retry command and does not fail the close.",
+          "source": ".factory/stories/FORGE-ACCESS-1/task-plans/CODE.md#Manual Verification"
+        },
+        {
+          "id": "ACCESS-CODE-AC-4",
+          "statement": "A write-scope amendment recorded during an active stage succeeds without a launch record, bound to the active stage, and the task grill stays valid.",
+          "source": ".factory/stories/FORGE-ACCESS-1/task-plans/CODE.md#Manual Verification"
+        },
+        {
+          "id": "ACCESS-CODE-AC-5",
+          "statement": "Lite mode done and the Lite review use every committed change since the window opened with nothing filtered out, and mode done refuses when more than five non-test, non-Markdown files changed.",
+          "source": ".factory/stories/FORGE-ACCESS-1/task-plans/CODE.md#Manual Verification"
+        },
+        {
+          "id": "ACCESS-CODE-AC-6",
+          "statement": "forge mode degraded start|done and forge quickfix start|done say they were removed, exit non-zero and change nothing; old closed quickfix and degraded records still satisfy the PR ticket check; a legacy open quickfix or degraded window is named by the lite-open refusal and the task-seal preflight with forge mode abandon --reason, which closes it.",
+          "source": ".factory/stories/FORGE-ACCESS-1/task-plans/CODE.md#Manual Verification"
+        },
+        {
+          "id": "ACCESS-CODE-AC-7",
+          "statement": "check_dual_runtime.py and forge doctor pass on the shipped hook files and fail when an edit tool is routed to the Claude hook or apply_patch to the Codex hook; every path::test selector in the scaffold workflow names an existing test, so a misspelled selector fails the suite.",
+          "source": ".factory/stories/FORGE-ACCESS-1/task-plans/CODE.md#Manual Verification"
+        },
+        {
+          "id": "ACCESS-CODE-AC-8",
+          "statement": "The spec resolver accepts a confirmed or superseded spec for roadmap stories already linked to it (plan save, roadmap derive and sign-off) and does not report it as a draft, while every new roadmap link requires a confirmed spec.",
+          "source": ".factory/stories/FORGE-ACCESS-1/task-plans/CODE.md#Manual Verification"
+        }
+      ],
+      "review_budget": {
+        "max_changed_files": 44,
+        "max_changed_lines": 7500,
+        "reason": "Mostly deletion. About 2,300 lines of hook, admission, launch-validation, repo-kind and quickfix code and about 104 guard-only tests (roughly 3,500 lines) are removed. About 38 tests are adjusted. New code is about 250 source lines (scope report, PR block, spec rule, removed-command handler, hook-registration absence check) plus one new test file of about 450 lines, across the listed write scope."
+      }
     },
     {
       "id": "DOCS",
@@ -37,6 +229,6 @@
   "story": "FORGE-ACCESS-1",
   "epic": "symphony-forge",
   "plan_file": "plans/active/FORGE-ACCESS-1-full-access-forge-judges-the-result-not-each-write.md",
-  "plan_sha256": "5e646f47c4bcff5214a8c8f5b39f64d2f1039c6159e732328d30ea8bdda35a22",
-  "commit": "26ded67d13f2a0fb99b8ef435ac05c1c8a3fc8a9"
+  "plan_sha256": "63aa0026f31c9c5685b21a9c42aae5b3ede82418c8545ae5a857cc39b66f10d9",
+  "commit": "13b586222a711783ea5b66c54aefb3d6d4d2880f"
 }

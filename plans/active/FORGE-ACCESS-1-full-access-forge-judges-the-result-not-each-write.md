@@ -99,22 +99,17 @@ Nothing beyond approving this plan.
   `test_degraded_window_allows_and_ledgers_product_write`, reduce
   `test_registered_hook_path_keeps_recorder_and_lockout_armed` to its recorder half, add
   `test_full_access.py::test_retained_command_gates_still_refuse`.
-- Tasks: REMOVE-LOCK owns the hook, `worker_admission.py`, `repo_kind.py`, `delegate.py` write
-  admission, hook wiring and their tests. CLOSE-JUDGES owns close, stages, tasks, review, review brief,
-  the decomposition recorder, specs, phase/signal/scaffold guidance and ALL of `quickfix.py`
-  (including removing `claim_files` and the repo-kind pin). The two scopes are disjoint and run in
-  parallel; DOCS (canon and skill text) follows both.
+- Tasks (the owner chose two): CODE delivers everything above except canon text, in one PR; DOCS
+  follows with the canon and skill text and marks `strict-role-split.md` superseded.
 
 ## Task decomposition
 
-REMOVE-LOCK and CLOSE-JUDGES run in parallel (disjoint scopes); DOCS follows both. Each ships its own
-pull request.
+CODE first, then DOCS. Each ships its own pull request.
 
 | Label / exact task ID | What it delivers | Depends on | user_facing |
 |---|---|---|---|
-| Lock / REMOVE-LOCK | Write guard, write admission and revocation deleted; hook wiring and its checks (presence and absence); retained command gates kept | none | false |
-| Close / CLOSE-JUDGES | Launch-free close with stray, overlap and records lists; PR block; stage-bound amendments; full Lite review and budget; degraded and quickfix removed; superseded-spec links; reworded guidance | none | false |
-| Docs / DOCS | Canon, skill, brief and session-start text; `docs/degraded-mode.md` deleted; `strict-role-split.md` superseded | REMOVE-LOCK, CLOSE-JUDGES | false |
+| Code / CODE | Write guard, write admission and revocation deleted; hook wiring and its checks (presence and absence); retained command gates kept; launch-free close with stray, overlap and records lists; PR block; stage-bound amendments; full Lite review and budget; degraded and quickfix removed; superseded-spec link rule; reworded guidance | none | false |
+| Docs / DOCS | Canon, skill, brief and session-start wording; `docs/degraded-mode.md` deleted; `strict-role-split.md` superseded | CODE | false |
 
 ## Verify plan
 

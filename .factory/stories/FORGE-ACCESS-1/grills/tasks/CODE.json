@@ -1,0 +1,577 @@
+{
+  "generated_by": "griller",
+  "gate": "task",
+  "verdict": "pass",
+  "issue": "FORGE-ACCESS-1",
+  "task_id": "CODE",
+  "gaps": [
+    "The proposed scope report cannot show every changed record: it omits uncommitted `.factory/` changes, although the approved story plan requires the stage-base diff plus working tree with no exclusions (plans/active/FORGE-ACCESS-1-full-access-forge-judges-the-result-not-each-write.md:65; .factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:135). It also puts records in a separate category without saying whether a record outside the declared scope appears in the promised outside-scope list (.factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:137).",
+    "Overlap detection is narrower than the promised 'another active task': the plan checks only outside-scope paths using `active_stages_everywhere`, which returns active stages of the current story only. An in-scope path that overlaps another task, or a path overlapping a task in another story, will not be named (docs/specs/full-access.md:37; .factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:141; factory/scripts/forge_cli/stages.py:887).",
+    "The proposed plan and decision text diff is `git diff <stage base>..HEAD`, so it omits working-tree edits even though the approved review input is the committed diff plus working tree. The plan does not say how those edits become visible to the reviewer or whether close must refuse them (plans/active/FORGE-ACCESS-1-full-access-forge-judges-the-result-not-each-write.md:65; .factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:142).",
+    "Removing `quickfix done` leaves a dead-end instruction for a legacy open quickfix window: both the open-window refusal and task-seal preflight still tell the operator to run that removed command. The plan retains `mode abandon` but does not update either instruction (factory/scripts/forge_cli/quickfix.py:144; factory/scripts/factory_lib.py:5963; .factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:167).",
+    "The claimed Windows selector check does not validate the new `test_full_access.py` selector: it parses only `test_gates.py` selectors. A misspelled new selector can pass this check and fail the Windows job (.factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:186; factory/tests/test_gates.py:10707; factory/tests/test_gates.py:10719).",
+    "The new test file is told to reuse `test_gates`'s `repo` fixture, but that fixture is defined in `test_gates.py`, not a shared fixture module. The plan leaves the fixture import or relocation unstated, so the required tests in `test_full_access.py` have no specified way to collect (factory/tests/test_gates.py:317; .factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:192)."
+  ],
+  "contradictions": [
+    "The approved story plan fixes three tasks\u2014REMOVE-LOCK and CLOSE-JUDGES in parallel, then DOCS\u2014while the protected decomposition and saved task plan replace them with one CODE task followed by DOCS. This changes IDs, dependency ordering, PR seams and review size without a corresponding amended, reapproved story plan; the recorder treats graph changes as requiring that authority (plans/active/FORGE-ACCESS-1-full-access-forge-judges-the-result-not-each-write.md:108; .factory/stories/FORGE-ACCESS-1/decomposition.json:6; factory/scripts/record_decomposition_from_json.py:538). The task plan itself concedes the combined work may exceed one session (.factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:86).",
+    "CODE's acceptance criterion says `strict-role-split` is superseded, but its write scope omits `docs/specs/strict-role-split.md` and the dependent DOCS task owns that status change. CODE cannot deliver its recorded criterion in its own PR (.factory/stories/FORGE-ACCESS-1/decomposition.json:17; .factory/stories/FORGE-ACCESS-1/decomposition.json:20; .factory/stories/FORGE-ACCESS-1/decomposition.json:216).",
+    "The task has seven acceptance criteria but eight `plan_contracts` statements with different exact wording. No `criteria_map` can have keys equal to both sets as the task-gate contract requires (.factory/stories/FORGE-ACCESS-1/decomposition.json:10; .factory/stories/FORGE-ACCESS-1/decomposition.json:159; .factory/stories/FORGE-ACCESS-1/decomposition.json:195)."
+  ],
+  "resolutions": [
+    "The scope report is built from `git diff <stage base>` (committed plus working tree, all paths), excluding only the task's own proof folder and .factory/stages.json; out-of-scope .factory/, plans/ and docs/decisions/ paths appear in the separate records list (Technical notes).",
+    "Overlaps check every changed path, in or out of scope, against the declared scopes of active stages in every story via stages.active_stages_everywhere(base, any_story=True) (Technical notes).",
+    "The plan and decision text diff is `git diff <stage base> -- plans/ docs/decisions/`, which includes working-tree edits (Technical notes).",
+    "The open-window refusal (quickfix.py _open) and the seal preflight (factory_lib task_seal_shared_problems) now point legacy quickfix and degraded windows at `./forge mode abandon --reason`, which already closes any profile (Manual Verification 6; AC-6).",
+    "The selector-existence test now validates every factory/tests/<file>.py::<name> selector in the workflow and is a required test (Technical notes).",
+    "test_full_access.py imports its fixtures by name from test_gates (`from test_gates import HARNESS, git, hook, repo, run`), which registers them with pytest (Technical notes).",
+    "The story plan was amended and natively re-approved to exactly two tasks (CODE, DOCS) by the owner's decision; the recorded graph now matches it.",
+    "CODE implements only the superseded-spec resolver rule, tested with a fixture spec; marking the real strict-role-split.md superseded is DOCS's criterion.",
+    "CODE's acceptance criteria are now exactly its eight plan-contract statements, so the criteria map keys equal both sets."
+  ],
+  "finding_dispositions": [
+    {
+      "finding": "The proposed scope report cannot show every changed record: it omits uncommitted `.factory/` changes, although the approved story plan requires the stage-base diff plus working tree with no exclusions (plans/active/FORGE-ACCESS-1-full-access-forge-judges-the-result-not-each-write.md:65; .factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:135). It also puts records in a separate category without saying whether a record outside the declared scope appears in the promised outside-scope list (.factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:137).",
+      "resolution": "The scope report is built from `git diff <stage base>` (committed plus working tree, all paths), excluding only the task's own proof folder and .factory/stages.json; out-of-scope .factory/, plans/ and docs/decisions/ paths appear in the separate records list (Technical notes).",
+      "source": "repository fact"
+    },
+    {
+      "finding": "Overlap detection is narrower than the promised 'another active task': the plan checks only outside-scope paths using `active_stages_everywhere`, which returns active stages of the current story only. An in-scope path that overlaps another task, or a path overlapping a task in another story, will not be named (docs/specs/full-access.md:37; .factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:141; factory/scripts/forge_cli/stages.py:887).",
+      "resolution": "Overlaps check every changed path, in or out of scope, against the declared scopes of active stages in every story via stages.active_stages_everywhere(base, any_story=True) (Technical notes).",
+      "source": "repository fact"
+    },
+    {
+      "finding": "The proposed plan and decision text diff is `git diff <stage base>..HEAD`, so it omits working-tree edits even though the approved review input is the committed diff plus working tree. The plan does not say how those edits become visible to the reviewer or whether close must refuse them (plans/active/FORGE-ACCESS-1-full-access-forge-judges-the-result-not-each-write.md:65; .factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:142).",
+      "resolution": "The plan and decision text diff is `git diff <stage base> -- plans/ docs/decisions/`, which includes working-tree edits (Technical notes).",
+      "source": "repository fact"
+    },
+    {
+      "finding": "Removing `quickfix done` leaves a dead-end instruction for a legacy open quickfix window: both the open-window refusal and task-seal preflight still tell the operator to run that removed command. The plan retains `mode abandon` but does not update either instruction (factory/scripts/forge_cli/quickfix.py:144; factory/scripts/factory_lib.py:5963; .factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:167).",
+      "resolution": "The open-window refusal (quickfix.py _open) and the seal preflight (factory_lib task_seal_shared_problems) now point legacy quickfix and degraded windows at `./forge mode abandon --reason`, which already closes any profile (Manual Verification 6; AC-6).",
+      "source": "repository fact"
+    },
+    {
+      "finding": "The claimed Windows selector check does not validate the new `test_full_access.py` selector: it parses only `test_gates.py` selectors. A misspelled new selector can pass this check and fail the Windows job (.factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:186; factory/tests/test_gates.py:10707; factory/tests/test_gates.py:10719).",
+      "resolution": "The selector-existence test now validates every factory/tests/<file>.py::<name> selector in the workflow and is a required test (Technical notes).",
+      "source": "repository fact"
+    },
+    {
+      "finding": "The new test file is told to reuse `test_gates`'s `repo` fixture, but that fixture is defined in `test_gates.py`, not a shared fixture module. The plan leaves the fixture import or relocation unstated, so the required tests in `test_full_access.py` have no specified way to collect (factory/tests/test_gates.py:317; .factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:192).",
+      "resolution": "test_full_access.py imports its fixtures by name from test_gates (`from test_gates import HARNESS, git, hook, repo, run`), which registers them with pytest (Technical notes).",
+      "source": "repository fact"
+    },
+    {
+      "finding": "The approved story plan fixes three tasks\u2014REMOVE-LOCK and CLOSE-JUDGES in parallel, then DOCS\u2014while the protected decomposition and saved task plan replace them with one CODE task followed by DOCS. This changes IDs, dependency ordering, PR seams and review size without a corresponding amended, reapproved story plan; the recorder treats graph changes as requiring that authority (plans/active/FORGE-ACCESS-1-full-access-forge-judges-the-result-not-each-write.md:108; .factory/stories/FORGE-ACCESS-1/decomposition.json:6; factory/scripts/record_decomposition_from_json.py:538). The task plan itself concedes the combined work may exceed one session (.factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:86).",
+      "resolution": "The story plan was amended and natively re-approved to exactly two tasks (CODE, DOCS) by the owner's decision; the recorded graph now matches it.",
+      "source": "owner answer 2026-09-24 (native question: two tasks) and native amended-plan approval"
+    },
+    {
+      "finding": "CODE's acceptance criterion says `strict-role-split` is superseded, but its write scope omits `docs/specs/strict-role-split.md` and the dependent DOCS task owns that status change. CODE cannot deliver its recorded criterion in its own PR (.factory/stories/FORGE-ACCESS-1/decomposition.json:17; .factory/stories/FORGE-ACCESS-1/decomposition.json:20; .factory/stories/FORGE-ACCESS-1/decomposition.json:216).",
+      "resolution": "CODE implements only the superseded-spec resolver rule, tested with a fixture spec; marking the real strict-role-split.md superseded is DOCS's criterion.",
+      "source": "repository fact"
+    },
+    {
+      "finding": "The task has seven acceptance criteria but eight `plan_contracts` statements with different exact wording. No `criteria_map` can have keys equal to both sets as the task-gate contract requires (.factory/stories/FORGE-ACCESS-1/decomposition.json:10; .factory/stories/FORGE-ACCESS-1/decomposition.json:159; .factory/stories/FORGE-ACCESS-1/decomposition.json:195).",
+      "resolution": "CODE's acceptance criteria are now exactly its eight plan-contract statements, so the criteria map keys equal both sets.",
+      "source": "repository fact"
+    }
+  ],
+  "amendments": [
+    {
+      "change": "span 0: amended to resolve the task cold-read findings",
+      "reason": "one amendment after the single cold read",
+      "source": "coordinator amendment 2026-09-24",
+      "findings": [
+        "The proposed scope report cannot show every changed record: it omits uncommitted `.factory/` changes, although the approved story plan requires the stage-base diff plus working tree with no exclusions (plans/active/FORGE-ACCESS-1-full-access-forge-judges-the-result-not-each-write.md:65; .factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:135). It also puts records in a separate category without saying whether a record outside the declared scope appears in the promised outside-scope list (.factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:137).",
+        "Overlap detection is narrower than the promised 'another active task': the plan checks only outside-scope paths using `active_stages_everywhere`, which returns active stages of the current story only. An in-scope path that overlaps another task, or a path overlapping a task in another story, will not be named (docs/specs/full-access.md:37; .factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:141; factory/scripts/forge_cli/stages.py:887).",
+        "The proposed plan and decision text diff is `git diff <stage base>..HEAD`, so it omits working-tree edits even though the approved review input is the committed diff plus working tree. The plan does not say how those edits become visible to the reviewer or whether close must refuse them (plans/active/FORGE-ACCESS-1-full-access-forge-judges-the-result-not-each-write.md:65; .factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:142).",
+        "Removing `quickfix done` leaves a dead-end instruction for a legacy open quickfix window: both the open-window refusal and task-seal preflight still tell the operator to run that removed command. The plan retains `mode abandon` but does not update either instruction (factory/scripts/forge_cli/quickfix.py:144; factory/scripts/factory_lib.py:5963; .factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:167).",
+        "The claimed Windows selector check does not validate the new `test_full_access.py` selector: it parses only `test_gates.py` selectors. A misspelled new selector can pass this check and fail the Windows job (.factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:186; factory/tests/test_gates.py:10707; factory/tests/test_gates.py:10719).",
+        "The new test file is told to reuse `test_gates`'s `repo` fixture, but that fixture is defined in `test_gates.py`, not a shared fixture module. The plan leaves the fixture import or relocation unstated, so the required tests in `test_full_access.py` have no specified way to collect (factory/tests/test_gates.py:317; .factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:192).",
+        "The approved story plan fixes three tasks\u2014REMOVE-LOCK and CLOSE-JUDGES in parallel, then DOCS\u2014while the protected decomposition and saved task plan replace them with one CODE task followed by DOCS. This changes IDs, dependency ordering, PR seams and review size without a corresponding amended, reapproved story plan; the recorder treats graph changes as requiring that authority (plans/active/FORGE-ACCESS-1-full-access-forge-judges-the-result-not-each-write.md:108; .factory/stories/FORGE-ACCESS-1/decomposition.json:6; factory/scripts/record_decomposition_from_json.py:538). The task plan itself concedes the combined work may exceed one session (.factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:86).",
+        "CODE's acceptance criterion says `strict-role-split` is superseded, but its write scope omits `docs/specs/strict-role-split.md` and the dependent DOCS task owns that status change. CODE cannot deliver its recorded criterion in its own PR (.factory/stories/FORGE-ACCESS-1/decomposition.json:17; .factory/stories/FORGE-ACCESS-1/decomposition.json:20; .factory/stories/FORGE-ACCESS-1/decomposition.json:216).",
+        "The task has seven acceptance criteria but eight `plan_contracts` statements with different exact wording. No `criteria_map` can have keys equal to both sets as the task-gate contract requires (.factory/stories/FORGE-ACCESS-1/decomposition.json:10; .factory/stories/FORGE-ACCESS-1/decomposition.json:159; .factory/stories/FORGE-ACCESS-1/decomposition.json:195)."
+      ],
+      "delta_index": 0
+    },
+    {
+      "change": "span 1: amended to resolve the task cold-read findings",
+      "reason": "one amendment after the single cold read",
+      "source": "coordinator amendment 2026-09-24",
+      "findings": [
+        "The proposed scope report cannot show every changed record: it omits uncommitted `.factory/` changes, although the approved story plan requires the stage-base diff plus working tree with no exclusions (plans/active/FORGE-ACCESS-1-full-access-forge-judges-the-result-not-each-write.md:65; .factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:135). It also puts records in a separate category without saying whether a record outside the declared scope appears in the promised outside-scope list (.factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:137).",
+        "Overlap detection is narrower than the promised 'another active task': the plan checks only outside-scope paths using `active_stages_everywhere`, which returns active stages of the current story only. An in-scope path that overlaps another task, or a path overlapping a task in another story, will not be named (docs/specs/full-access.md:37; .factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:141; factory/scripts/forge_cli/stages.py:887).",
+        "The proposed plan and decision text diff is `git diff <stage base>..HEAD`, so it omits working-tree edits even though the approved review input is the committed diff plus working tree. The plan does not say how those edits become visible to the reviewer or whether close must refuse them (plans/active/FORGE-ACCESS-1-full-access-forge-judges-the-result-not-each-write.md:65; .factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:142).",
+        "Removing `quickfix done` leaves a dead-end instruction for a legacy open quickfix window: both the open-window refusal and task-seal preflight still tell the operator to run that removed command. The plan retains `mode abandon` but does not update either instruction (factory/scripts/forge_cli/quickfix.py:144; factory/scripts/factory_lib.py:5963; .factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:167).",
+        "The claimed Windows selector check does not validate the new `test_full_access.py` selector: it parses only `test_gates.py` selectors. A misspelled new selector can pass this check and fail the Windows job (.factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:186; factory/tests/test_gates.py:10707; factory/tests/test_gates.py:10719).",
+        "The new test file is told to reuse `test_gates`'s `repo` fixture, but that fixture is defined in `test_gates.py`, not a shared fixture module. The plan leaves the fixture import or relocation unstated, so the required tests in `test_full_access.py` have no specified way to collect (factory/tests/test_gates.py:317; .factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:192).",
+        "The approved story plan fixes three tasks\u2014REMOVE-LOCK and CLOSE-JUDGES in parallel, then DOCS\u2014while the protected decomposition and saved task plan replace them with one CODE task followed by DOCS. This changes IDs, dependency ordering, PR seams and review size without a corresponding amended, reapproved story plan; the recorder treats graph changes as requiring that authority (plans/active/FORGE-ACCESS-1-full-access-forge-judges-the-result-not-each-write.md:108; .factory/stories/FORGE-ACCESS-1/decomposition.json:6; factory/scripts/record_decomposition_from_json.py:538). The task plan itself concedes the combined work may exceed one session (.factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:86).",
+        "CODE's acceptance criterion says `strict-role-split` is superseded, but its write scope omits `docs/specs/strict-role-split.md` and the dependent DOCS task owns that status change. CODE cannot deliver its recorded criterion in its own PR (.factory/stories/FORGE-ACCESS-1/decomposition.json:17; .factory/stories/FORGE-ACCESS-1/decomposition.json:20; .factory/stories/FORGE-ACCESS-1/decomposition.json:216).",
+        "The task has seven acceptance criteria but eight `plan_contracts` statements with different exact wording. No `criteria_map` can have keys equal to both sets as the task-gate contract requires (.factory/stories/FORGE-ACCESS-1/decomposition.json:10; .factory/stories/FORGE-ACCESS-1/decomposition.json:159; .factory/stories/FORGE-ACCESS-1/decomposition.json:195)."
+      ],
+      "delta_index": 1
+    },
+    {
+      "change": "span 2: amended to resolve the task cold-read findings",
+      "reason": "one amendment after the single cold read",
+      "source": "coordinator amendment 2026-09-24",
+      "findings": [
+        "The proposed scope report cannot show every changed record: it omits uncommitted `.factory/` changes, although the approved story plan requires the stage-base diff plus working tree with no exclusions (plans/active/FORGE-ACCESS-1-full-access-forge-judges-the-result-not-each-write.md:65; .factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:135). It also puts records in a separate category without saying whether a record outside the declared scope appears in the promised outside-scope list (.factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:137).",
+        "Overlap detection is narrower than the promised 'another active task': the plan checks only outside-scope paths using `active_stages_everywhere`, which returns active stages of the current story only. An in-scope path that overlaps another task, or a path overlapping a task in another story, will not be named (docs/specs/full-access.md:37; .factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:141; factory/scripts/forge_cli/stages.py:887).",
+        "The proposed plan and decision text diff is `git diff <stage base>..HEAD`, so it omits working-tree edits even though the approved review input is the committed diff plus working tree. The plan does not say how those edits become visible to the reviewer or whether close must refuse them (plans/active/FORGE-ACCESS-1-full-access-forge-judges-the-result-not-each-write.md:65; .factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:142).",
+        "Removing `quickfix done` leaves a dead-end instruction for a legacy open quickfix window: both the open-window refusal and task-seal preflight still tell the operator to run that removed command. The plan retains `mode abandon` but does not update either instruction (factory/scripts/forge_cli/quickfix.py:144; factory/scripts/factory_lib.py:5963; .factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:167).",
+        "The claimed Windows selector check does not validate the new `test_full_access.py` selector: it parses only `test_gates.py` selectors. A misspelled new selector can pass this check and fail the Windows job (.factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:186; factory/tests/test_gates.py:10707; factory/tests/test_gates.py:10719).",
+        "The new test file is told to reuse `test_gates`'s `repo` fixture, but that fixture is defined in `test_gates.py`, not a shared fixture module. The plan leaves the fixture import or relocation unstated, so the required tests in `test_full_access.py` have no specified way to collect (factory/tests/test_gates.py:317; .factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:192).",
+        "The approved story plan fixes three tasks\u2014REMOVE-LOCK and CLOSE-JUDGES in parallel, then DOCS\u2014while the protected decomposition and saved task plan replace them with one CODE task followed by DOCS. This changes IDs, dependency ordering, PR seams and review size without a corresponding amended, reapproved story plan; the recorder treats graph changes as requiring that authority (plans/active/FORGE-ACCESS-1-full-access-forge-judges-the-result-not-each-write.md:108; .factory/stories/FORGE-ACCESS-1/decomposition.json:6; factory/scripts/record_decomposition_from_json.py:538). The task plan itself concedes the combined work may exceed one session (.factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:86).",
+        "CODE's acceptance criterion says `strict-role-split` is superseded, but its write scope omits `docs/specs/strict-role-split.md` and the dependent DOCS task owns that status change. CODE cannot deliver its recorded criterion in its own PR (.factory/stories/FORGE-ACCESS-1/decomposition.json:17; .factory/stories/FORGE-ACCESS-1/decomposition.json:20; .factory/stories/FORGE-ACCESS-1/decomposition.json:216).",
+        "The task has seven acceptance criteria but eight `plan_contracts` statements with different exact wording. No `criteria_map` can have keys equal to both sets as the task-gate contract requires (.factory/stories/FORGE-ACCESS-1/decomposition.json:10; .factory/stories/FORGE-ACCESS-1/decomposition.json:159; .factory/stories/FORGE-ACCESS-1/decomposition.json:195)."
+      ],
+      "delta_index": 2
+    },
+    {
+      "change": "span 3: amended to resolve the task cold-read findings",
+      "reason": "one amendment after the single cold read",
+      "source": "coordinator amendment 2026-09-24",
+      "findings": [
+        "The proposed scope report cannot show every changed record: it omits uncommitted `.factory/` changes, although the approved story plan requires the stage-base diff plus working tree with no exclusions (plans/active/FORGE-ACCESS-1-full-access-forge-judges-the-result-not-each-write.md:65; .factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:135). It also puts records in a separate category without saying whether a record outside the declared scope appears in the promised outside-scope list (.factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:137).",
+        "Overlap detection is narrower than the promised 'another active task': the plan checks only outside-scope paths using `active_stages_everywhere`, which returns active stages of the current story only. An in-scope path that overlaps another task, or a path overlapping a task in another story, will not be named (docs/specs/full-access.md:37; .factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:141; factory/scripts/forge_cli/stages.py:887).",
+        "The proposed plan and decision text diff is `git diff <stage base>..HEAD`, so it omits working-tree edits even though the approved review input is the committed diff plus working tree. The plan does not say how those edits become visible to the reviewer or whether close must refuse them (plans/active/FORGE-ACCESS-1-full-access-forge-judges-the-result-not-each-write.md:65; .factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:142).",
+        "Removing `quickfix done` leaves a dead-end instruction for a legacy open quickfix window: both the open-window refusal and task-seal preflight still tell the operator to run that removed command. The plan retains `mode abandon` but does not update either instruction (factory/scripts/forge_cli/quickfix.py:144; factory/scripts/factory_lib.py:5963; .factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:167).",
+        "The claimed Windows selector check does not validate the new `test_full_access.py` selector: it parses only `test_gates.py` selectors. A misspelled new selector can pass this check and fail the Windows job (.factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:186; factory/tests/test_gates.py:10707; factory/tests/test_gates.py:10719).",
+        "The new test file is told to reuse `test_gates`'s `repo` fixture, but that fixture is defined in `test_gates.py`, not a shared fixture module. The plan leaves the fixture import or relocation unstated, so the required tests in `test_full_access.py` have no specified way to collect (factory/tests/test_gates.py:317; .factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:192).",
+        "The approved story plan fixes three tasks\u2014REMOVE-LOCK and CLOSE-JUDGES in parallel, then DOCS\u2014while the protected decomposition and saved task plan replace them with one CODE task followed by DOCS. This changes IDs, dependency ordering, PR seams and review size without a corresponding amended, reapproved story plan; the recorder treats graph changes as requiring that authority (plans/active/FORGE-ACCESS-1-full-access-forge-judges-the-result-not-each-write.md:108; .factory/stories/FORGE-ACCESS-1/decomposition.json:6; factory/scripts/record_decomposition_from_json.py:538). The task plan itself concedes the combined work may exceed one session (.factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:86).",
+        "CODE's acceptance criterion says `strict-role-split` is superseded, but its write scope omits `docs/specs/strict-role-split.md` and the dependent DOCS task owns that status change. CODE cannot deliver its recorded criterion in its own PR (.factory/stories/FORGE-ACCESS-1/decomposition.json:17; .factory/stories/FORGE-ACCESS-1/decomposition.json:20; .factory/stories/FORGE-ACCESS-1/decomposition.json:216).",
+        "The task has seven acceptance criteria but eight `plan_contracts` statements with different exact wording. No `criteria_map` can have keys equal to both sets as the task-gate contract requires (.factory/stories/FORGE-ACCESS-1/decomposition.json:10; .factory/stories/FORGE-ACCESS-1/decomposition.json:159; .factory/stories/FORGE-ACCESS-1/decomposition.json:195)."
+      ],
+      "delta_index": 3
+    },
+    {
+      "change": "span 4: amended to resolve the task cold-read findings",
+      "reason": "one amendment after the single cold read",
+      "source": "coordinator amendment 2026-09-24",
+      "findings": [
+        "The proposed scope report cannot show every changed record: it omits uncommitted `.factory/` changes, although the approved story plan requires the stage-base diff plus working tree with no exclusions (plans/active/FORGE-ACCESS-1-full-access-forge-judges-the-result-not-each-write.md:65; .factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:135). It also puts records in a separate category without saying whether a record outside the declared scope appears in the promised outside-scope list (.factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:137).",
+        "Overlap detection is narrower than the promised 'another active task': the plan checks only outside-scope paths using `active_stages_everywhere`, which returns active stages of the current story only. An in-scope path that overlaps another task, or a path overlapping a task in another story, will not be named (docs/specs/full-access.md:37; .factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:141; factory/scripts/forge_cli/stages.py:887).",
+        "The proposed plan and decision text diff is `git diff <stage base>..HEAD`, so it omits working-tree edits even though the approved review input is the committed diff plus working tree. The plan does not say how those edits become visible to the reviewer or whether close must refuse them (plans/active/FORGE-ACCESS-1-full-access-forge-judges-the-result-not-each-write.md:65; .factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:142).",
+        "Removing `quickfix done` leaves a dead-end instruction for a legacy open quickfix window: both the open-window refusal and task-seal preflight still tell the operator to run that removed command. The plan retains `mode abandon` but does not update either instruction (factory/scripts/forge_cli/quickfix.py:144; factory/scripts/factory_lib.py:5963; .factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:167).",
+        "The claimed Windows selector check does not validate the new `test_full_access.py` selector: it parses only `test_gates.py` selectors. A misspelled new selector can pass this check and fail the Windows job (.factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:186; factory/tests/test_gates.py:10707; factory/tests/test_gates.py:10719).",
+        "The new test file is told to reuse `test_gates`'s `repo` fixture, but that fixture is defined in `test_gates.py`, not a shared fixture module. The plan leaves the fixture import or relocation unstated, so the required tests in `test_full_access.py` have no specified way to collect (factory/tests/test_gates.py:317; .factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:192).",
+        "The approved story plan fixes three tasks\u2014REMOVE-LOCK and CLOSE-JUDGES in parallel, then DOCS\u2014while the protected decomposition and saved task plan replace them with one CODE task followed by DOCS. This changes IDs, dependency ordering, PR seams and review size without a corresponding amended, reapproved story plan; the recorder treats graph changes as requiring that authority (plans/active/FORGE-ACCESS-1-full-access-forge-judges-the-result-not-each-write.md:108; .factory/stories/FORGE-ACCESS-1/decomposition.json:6; factory/scripts/record_decomposition_from_json.py:538). The task plan itself concedes the combined work may exceed one session (.factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:86).",
+        "CODE's acceptance criterion says `strict-role-split` is superseded, but its write scope omits `docs/specs/strict-role-split.md` and the dependent DOCS task owns that status change. CODE cannot deliver its recorded criterion in its own PR (.factory/stories/FORGE-ACCESS-1/decomposition.json:17; .factory/stories/FORGE-ACCESS-1/decomposition.json:20; .factory/stories/FORGE-ACCESS-1/decomposition.json:216).",
+        "The task has seven acceptance criteria but eight `plan_contracts` statements with different exact wording. No `criteria_map` can have keys equal to both sets as the task-gate contract requires (.factory/stories/FORGE-ACCESS-1/decomposition.json:10; .factory/stories/FORGE-ACCESS-1/decomposition.json:159; .factory/stories/FORGE-ACCESS-1/decomposition.json:195)."
+      ],
+      "delta_index": 4
+    },
+    {
+      "change": "span 5: amended to resolve the task cold-read findings",
+      "reason": "one amendment after the single cold read",
+      "source": "coordinator amendment 2026-09-24",
+      "findings": [
+        "The proposed scope report cannot show every changed record: it omits uncommitted `.factory/` changes, although the approved story plan requires the stage-base diff plus working tree with no exclusions (plans/active/FORGE-ACCESS-1-full-access-forge-judges-the-result-not-each-write.md:65; .factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:135). It also puts records in a separate category without saying whether a record outside the declared scope appears in the promised outside-scope list (.factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:137).",
+        "Overlap detection is narrower than the promised 'another active task': the plan checks only outside-scope paths using `active_stages_everywhere`, which returns active stages of the current story only. An in-scope path that overlaps another task, or a path overlapping a task in another story, will not be named (docs/specs/full-access.md:37; .factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:141; factory/scripts/forge_cli/stages.py:887).",
+        "The proposed plan and decision text diff is `git diff <stage base>..HEAD`, so it omits working-tree edits even though the approved review input is the committed diff plus working tree. The plan does not say how those edits become visible to the reviewer or whether close must refuse them (plans/active/FORGE-ACCESS-1-full-access-forge-judges-the-result-not-each-write.md:65; .factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:142).",
+        "Removing `quickfix done` leaves a dead-end instruction for a legacy open quickfix window: both the open-window refusal and task-seal preflight still tell the operator to run that removed command. The plan retains `mode abandon` but does not update either instruction (factory/scripts/forge_cli/quickfix.py:144; factory/scripts/factory_lib.py:5963; .factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:167).",
+        "The claimed Windows selector check does not validate the new `test_full_access.py` selector: it parses only `test_gates.py` selectors. A misspelled new selector can pass this check and fail the Windows job (.factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:186; factory/tests/test_gates.py:10707; factory/tests/test_gates.py:10719).",
+        "The new test file is told to reuse `test_gates`'s `repo` fixture, but that fixture is defined in `test_gates.py`, not a shared fixture module. The plan leaves the fixture import or relocation unstated, so the required tests in `test_full_access.py` have no specified way to collect (factory/tests/test_gates.py:317; .factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:192).",
+        "The approved story plan fixes three tasks\u2014REMOVE-LOCK and CLOSE-JUDGES in parallel, then DOCS\u2014while the protected decomposition and saved task plan replace them with one CODE task followed by DOCS. This changes IDs, dependency ordering, PR seams and review size without a corresponding amended, reapproved story plan; the recorder treats graph changes as requiring that authority (plans/active/FORGE-ACCESS-1-full-access-forge-judges-the-result-not-each-write.md:108; .factory/stories/FORGE-ACCESS-1/decomposition.json:6; factory/scripts/record_decomposition_from_json.py:538). The task plan itself concedes the combined work may exceed one session (.factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:86).",
+        "CODE's acceptance criterion says `strict-role-split` is superseded, but its write scope omits `docs/specs/strict-role-split.md` and the dependent DOCS task owns that status change. CODE cannot deliver its recorded criterion in its own PR (.factory/stories/FORGE-ACCESS-1/decomposition.json:17; .factory/stories/FORGE-ACCESS-1/decomposition.json:20; .factory/stories/FORGE-ACCESS-1/decomposition.json:216).",
+        "The task has seven acceptance criteria but eight `plan_contracts` statements with different exact wording. No `criteria_map` can have keys equal to both sets as the task-gate contract requires (.factory/stories/FORGE-ACCESS-1/decomposition.json:10; .factory/stories/FORGE-ACCESS-1/decomposition.json:159; .factory/stories/FORGE-ACCESS-1/decomposition.json:195)."
+      ],
+      "delta_index": 5
+    },
+    {
+      "change": "span 6: amended to resolve the task cold-read findings",
+      "reason": "one amendment after the single cold read",
+      "source": "coordinator amendment 2026-09-24",
+      "findings": [
+        "The proposed scope report cannot show every changed record: it omits uncommitted `.factory/` changes, although the approved story plan requires the stage-base diff plus working tree with no exclusions (plans/active/FORGE-ACCESS-1-full-access-forge-judges-the-result-not-each-write.md:65; .factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:135). It also puts records in a separate category without saying whether a record outside the declared scope appears in the promised outside-scope list (.factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:137).",
+        "Overlap detection is narrower than the promised 'another active task': the plan checks only outside-scope paths using `active_stages_everywhere`, which returns active stages of the current story only. An in-scope path that overlaps another task, or a path overlapping a task in another story, will not be named (docs/specs/full-access.md:37; .factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:141; factory/scripts/forge_cli/stages.py:887).",
+        "The proposed plan and decision text diff is `git diff <stage base>..HEAD`, so it omits working-tree edits even though the approved review input is the committed diff plus working tree. The plan does not say how those edits become visible to the reviewer or whether close must refuse them (plans/active/FORGE-ACCESS-1-full-access-forge-judges-the-result-not-each-write.md:65; .factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:142).",
+        "Removing `quickfix done` leaves a dead-end instruction for a legacy open quickfix window: both the open-window refusal and task-seal preflight still tell the operator to run that removed command. The plan retains `mode abandon` but does not update either instruction (factory/scripts/forge_cli/quickfix.py:144; factory/scripts/factory_lib.py:5963; .factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:167).",
+        "The claimed Windows selector check does not validate the new `test_full_access.py` selector: it parses only `test_gates.py` selectors. A misspelled new selector can pass this check and fail the Windows job (.factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:186; factory/tests/test_gates.py:10707; factory/tests/test_gates.py:10719).",
+        "The new test file is told to reuse `test_gates`'s `repo` fixture, but that fixture is defined in `test_gates.py`, not a shared fixture module. The plan leaves the fixture import or relocation unstated, so the required tests in `test_full_access.py` have no specified way to collect (factory/tests/test_gates.py:317; .factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:192).",
+        "The approved story plan fixes three tasks\u2014REMOVE-LOCK and CLOSE-JUDGES in parallel, then DOCS\u2014while the protected decomposition and saved task plan replace them with one CODE task followed by DOCS. This changes IDs, dependency ordering, PR seams and review size without a corresponding amended, reapproved story plan; the recorder treats graph changes as requiring that authority (plans/active/FORGE-ACCESS-1-full-access-forge-judges-the-result-not-each-write.md:108; .factory/stories/FORGE-ACCESS-1/decomposition.json:6; factory/scripts/record_decomposition_from_json.py:538). The task plan itself concedes the combined work may exceed one session (.factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:86).",
+        "CODE's acceptance criterion says `strict-role-split` is superseded, but its write scope omits `docs/specs/strict-role-split.md` and the dependent DOCS task owns that status change. CODE cannot deliver its recorded criterion in its own PR (.factory/stories/FORGE-ACCESS-1/decomposition.json:17; .factory/stories/FORGE-ACCESS-1/decomposition.json:20; .factory/stories/FORGE-ACCESS-1/decomposition.json:216).",
+        "The task has seven acceptance criteria but eight `plan_contracts` statements with different exact wording. No `criteria_map` can have keys equal to both sets as the task-gate contract requires (.factory/stories/FORGE-ACCESS-1/decomposition.json:10; .factory/stories/FORGE-ACCESS-1/decomposition.json:159; .factory/stories/FORGE-ACCESS-1/decomposition.json:195)."
+      ],
+      "delta_index": 6
+    },
+    {
+      "change": "span 7: amended to resolve the task cold-read findings",
+      "reason": "one amendment after the single cold read",
+      "source": "coordinator amendment 2026-09-24",
+      "findings": [
+        "The proposed scope report cannot show every changed record: it omits uncommitted `.factory/` changes, although the approved story plan requires the stage-base diff plus working tree with no exclusions (plans/active/FORGE-ACCESS-1-full-access-forge-judges-the-result-not-each-write.md:65; .factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:135). It also puts records in a separate category without saying whether a record outside the declared scope appears in the promised outside-scope list (.factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:137).",
+        "Overlap detection is narrower than the promised 'another active task': the plan checks only outside-scope paths using `active_stages_everywhere`, which returns active stages of the current story only. An in-scope path that overlaps another task, or a path overlapping a task in another story, will not be named (docs/specs/full-access.md:37; .factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:141; factory/scripts/forge_cli/stages.py:887).",
+        "The proposed plan and decision text diff is `git diff <stage base>..HEAD`, so it omits working-tree edits even though the approved review input is the committed diff plus working tree. The plan does not say how those edits become visible to the reviewer or whether close must refuse them (plans/active/FORGE-ACCESS-1-full-access-forge-judges-the-result-not-each-write.md:65; .factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:142).",
+        "Removing `quickfix done` leaves a dead-end instruction for a legacy open quickfix window: both the open-window refusal and task-seal preflight still tell the operator to run that removed command. The plan retains `mode abandon` but does not update either instruction (factory/scripts/forge_cli/quickfix.py:144; factory/scripts/factory_lib.py:5963; .factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:167).",
+        "The claimed Windows selector check does not validate the new `test_full_access.py` selector: it parses only `test_gates.py` selectors. A misspelled new selector can pass this check and fail the Windows job (.factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:186; factory/tests/test_gates.py:10707; factory/tests/test_gates.py:10719).",
+        "The new test file is told to reuse `test_gates`'s `repo` fixture, but that fixture is defined in `test_gates.py`, not a shared fixture module. The plan leaves the fixture import or relocation unstated, so the required tests in `test_full_access.py` have no specified way to collect (factory/tests/test_gates.py:317; .factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:192).",
+        "The approved story plan fixes three tasks\u2014REMOVE-LOCK and CLOSE-JUDGES in parallel, then DOCS\u2014while the protected decomposition and saved task plan replace them with one CODE task followed by DOCS. This changes IDs, dependency ordering, PR seams and review size without a corresponding amended, reapproved story plan; the recorder treats graph changes as requiring that authority (plans/active/FORGE-ACCESS-1-full-access-forge-judges-the-result-not-each-write.md:108; .factory/stories/FORGE-ACCESS-1/decomposition.json:6; factory/scripts/record_decomposition_from_json.py:538). The task plan itself concedes the combined work may exceed one session (.factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:86).",
+        "CODE's acceptance criterion says `strict-role-split` is superseded, but its write scope omits `docs/specs/strict-role-split.md` and the dependent DOCS task owns that status change. CODE cannot deliver its recorded criterion in its own PR (.factory/stories/FORGE-ACCESS-1/decomposition.json:17; .factory/stories/FORGE-ACCESS-1/decomposition.json:20; .factory/stories/FORGE-ACCESS-1/decomposition.json:216).",
+        "The task has seven acceptance criteria but eight `plan_contracts` statements with different exact wording. No `criteria_map` can have keys equal to both sets as the task-gate contract requires (.factory/stories/FORGE-ACCESS-1/decomposition.json:10; .factory/stories/FORGE-ACCESS-1/decomposition.json:159; .factory/stories/FORGE-ACCESS-1/decomposition.json:195)."
+      ],
+      "delta_index": 7
+    },
+    {
+      "change": "span 8: amended to resolve the task cold-read findings",
+      "reason": "one amendment after the single cold read",
+      "source": "coordinator amendment 2026-09-24",
+      "findings": [
+        "The proposed scope report cannot show every changed record: it omits uncommitted `.factory/` changes, although the approved story plan requires the stage-base diff plus working tree with no exclusions (plans/active/FORGE-ACCESS-1-full-access-forge-judges-the-result-not-each-write.md:65; .factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:135). It also puts records in a separate category without saying whether a record outside the declared scope appears in the promised outside-scope list (.factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:137).",
+        "Overlap detection is narrower than the promised 'another active task': the plan checks only outside-scope paths using `active_stages_everywhere`, which returns active stages of the current story only. An in-scope path that overlaps another task, or a path overlapping a task in another story, will not be named (docs/specs/full-access.md:37; .factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:141; factory/scripts/forge_cli/stages.py:887).",
+        "The proposed plan and decision text diff is `git diff <stage base>..HEAD`, so it omits working-tree edits even though the approved review input is the committed diff plus working tree. The plan does not say how those edits become visible to the reviewer or whether close must refuse them (plans/active/FORGE-ACCESS-1-full-access-forge-judges-the-result-not-each-write.md:65; .factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:142).",
+        "Removing `quickfix done` leaves a dead-end instruction for a legacy open quickfix window: both the open-window refusal and task-seal preflight still tell the operator to run that removed command. The plan retains `mode abandon` but does not update either instruction (factory/scripts/forge_cli/quickfix.py:144; factory/scripts/factory_lib.py:5963; .factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:167).",
+        "The claimed Windows selector check does not validate the new `test_full_access.py` selector: it parses only `test_gates.py` selectors. A misspelled new selector can pass this check and fail the Windows job (.factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:186; factory/tests/test_gates.py:10707; factory/tests/test_gates.py:10719).",
+        "The new test file is told to reuse `test_gates`'s `repo` fixture, but that fixture is defined in `test_gates.py`, not a shared fixture module. The plan leaves the fixture import or relocation unstated, so the required tests in `test_full_access.py` have no specified way to collect (factory/tests/test_gates.py:317; .factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:192).",
+        "The approved story plan fixes three tasks\u2014REMOVE-LOCK and CLOSE-JUDGES in parallel, then DOCS\u2014while the protected decomposition and saved task plan replace them with one CODE task followed by DOCS. This changes IDs, dependency ordering, PR seams and review size without a corresponding amended, reapproved story plan; the recorder treats graph changes as requiring that authority (plans/active/FORGE-ACCESS-1-full-access-forge-judges-the-result-not-each-write.md:108; .factory/stories/FORGE-ACCESS-1/decomposition.json:6; factory/scripts/record_decomposition_from_json.py:538). The task plan itself concedes the combined work may exceed one session (.factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:86).",
+        "CODE's acceptance criterion says `strict-role-split` is superseded, but its write scope omits `docs/specs/strict-role-split.md` and the dependent DOCS task owns that status change. CODE cannot deliver its recorded criterion in its own PR (.factory/stories/FORGE-ACCESS-1/decomposition.json:17; .factory/stories/FORGE-ACCESS-1/decomposition.json:20; .factory/stories/FORGE-ACCESS-1/decomposition.json:216).",
+        "The task has seven acceptance criteria but eight `plan_contracts` statements with different exact wording. No `criteria_map` can have keys equal to both sets as the task-gate contract requires (.factory/stories/FORGE-ACCESS-1/decomposition.json:10; .factory/stories/FORGE-ACCESS-1/decomposition.json:159; .factory/stories/FORGE-ACCESS-1/decomposition.json:195)."
+      ],
+      "delta_index": 8
+    },
+    {
+      "change": "span 9: amended to resolve the task cold-read findings",
+      "reason": "one amendment after the single cold read",
+      "source": "coordinator amendment 2026-09-24",
+      "findings": [
+        "The proposed scope report cannot show every changed record: it omits uncommitted `.factory/` changes, although the approved story plan requires the stage-base diff plus working tree with no exclusions (plans/active/FORGE-ACCESS-1-full-access-forge-judges-the-result-not-each-write.md:65; .factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:135). It also puts records in a separate category without saying whether a record outside the declared scope appears in the promised outside-scope list (.factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:137).",
+        "Overlap detection is narrower than the promised 'another active task': the plan checks only outside-scope paths using `active_stages_everywhere`, which returns active stages of the current story only. An in-scope path that overlaps another task, or a path overlapping a task in another story, will not be named (docs/specs/full-access.md:37; .factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:141; factory/scripts/forge_cli/stages.py:887).",
+        "The proposed plan and decision text diff is `git diff <stage base>..HEAD`, so it omits working-tree edits even though the approved review input is the committed diff plus working tree. The plan does not say how those edits become visible to the reviewer or whether close must refuse them (plans/active/FORGE-ACCESS-1-full-access-forge-judges-the-result-not-each-write.md:65; .factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:142).",
+        "Removing `quickfix done` leaves a dead-end instruction for a legacy open quickfix window: both the open-window refusal and task-seal preflight still tell the operator to run that removed command. The plan retains `mode abandon` but does not update either instruction (factory/scripts/forge_cli/quickfix.py:144; factory/scripts/factory_lib.py:5963; .factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:167).",
+        "The claimed Windows selector check does not validate the new `test_full_access.py` selector: it parses only `test_gates.py` selectors. A misspelled new selector can pass this check and fail the Windows job (.factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:186; factory/tests/test_gates.py:10707; factory/tests/test_gates.py:10719).",
+        "The new test file is told to reuse `test_gates`'s `repo` fixture, but that fixture is defined in `test_gates.py`, not a shared fixture module. The plan leaves the fixture import or relocation unstated, so the required tests in `test_full_access.py` have no specified way to collect (factory/tests/test_gates.py:317; .factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:192).",
+        "The approved story plan fixes three tasks\u2014REMOVE-LOCK and CLOSE-JUDGES in parallel, then DOCS\u2014while the protected decomposition and saved task plan replace them with one CODE task followed by DOCS. This changes IDs, dependency ordering, PR seams and review size without a corresponding amended, reapproved story plan; the recorder treats graph changes as requiring that authority (plans/active/FORGE-ACCESS-1-full-access-forge-judges-the-result-not-each-write.md:108; .factory/stories/FORGE-ACCESS-1/decomposition.json:6; factory/scripts/record_decomposition_from_json.py:538). The task plan itself concedes the combined work may exceed one session (.factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:86).",
+        "CODE's acceptance criterion says `strict-role-split` is superseded, but its write scope omits `docs/specs/strict-role-split.md` and the dependent DOCS task owns that status change. CODE cannot deliver its recorded criterion in its own PR (.factory/stories/FORGE-ACCESS-1/decomposition.json:17; .factory/stories/FORGE-ACCESS-1/decomposition.json:20; .factory/stories/FORGE-ACCESS-1/decomposition.json:216).",
+        "The task has seven acceptance criteria but eight `plan_contracts` statements with different exact wording. No `criteria_map` can have keys equal to both sets as the task-gate contract requires (.factory/stories/FORGE-ACCESS-1/decomposition.json:10; .factory/stories/FORGE-ACCESS-1/decomposition.json:159; .factory/stories/FORGE-ACCESS-1/decomposition.json:195)."
+      ],
+      "delta_index": 9
+    },
+    {
+      "change": "span 10: amended to resolve the task cold-read findings",
+      "reason": "one amendment after the single cold read",
+      "source": "coordinator amendment 2026-09-24",
+      "findings": [
+        "The proposed scope report cannot show every changed record: it omits uncommitted `.factory/` changes, although the approved story plan requires the stage-base diff plus working tree with no exclusions (plans/active/FORGE-ACCESS-1-full-access-forge-judges-the-result-not-each-write.md:65; .factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:135). It also puts records in a separate category without saying whether a record outside the declared scope appears in the promised outside-scope list (.factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:137).",
+        "Overlap detection is narrower than the promised 'another active task': the plan checks only outside-scope paths using `active_stages_everywhere`, which returns active stages of the current story only. An in-scope path that overlaps another task, or a path overlapping a task in another story, will not be named (docs/specs/full-access.md:37; .factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:141; factory/scripts/forge_cli/stages.py:887).",
+        "The proposed plan and decision text diff is `git diff <stage base>..HEAD`, so it omits working-tree edits even though the approved review input is the committed diff plus working tree. The plan does not say how those edits become visible to the reviewer or whether close must refuse them (plans/active/FORGE-ACCESS-1-full-access-forge-judges-the-result-not-each-write.md:65; .factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:142).",
+        "Removing `quickfix done` leaves a dead-end instruction for a legacy open quickfix window: both the open-window refusal and task-seal preflight still tell the operator to run that removed command. The plan retains `mode abandon` but does not update either instruction (factory/scripts/forge_cli/quickfix.py:144; factory/scripts/factory_lib.py:5963; .factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:167).",
+        "The claimed Windows selector check does not validate the new `test_full_access.py` selector: it parses only `test_gates.py` selectors. A misspelled new selector can pass this check and fail the Windows job (.factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:186; factory/tests/test_gates.py:10707; factory/tests/test_gates.py:10719).",
+        "The new test file is told to reuse `test_gates`'s `repo` fixture, but that fixture is defined in `test_gates.py`, not a shared fixture module. The plan leaves the fixture import or relocation unstated, so the required tests in `test_full_access.py` have no specified way to collect (factory/tests/test_gates.py:317; .factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:192).",
+        "The approved story plan fixes three tasks\u2014REMOVE-LOCK and CLOSE-JUDGES in parallel, then DOCS\u2014while the protected decomposition and saved task plan replace them with one CODE task followed by DOCS. This changes IDs, dependency ordering, PR seams and review size without a corresponding amended, reapproved story plan; the recorder treats graph changes as requiring that authority (plans/active/FORGE-ACCESS-1-full-access-forge-judges-the-result-not-each-write.md:108; .factory/stories/FORGE-ACCESS-1/decomposition.json:6; factory/scripts/record_decomposition_from_json.py:538). The task plan itself concedes the combined work may exceed one session (.factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:86).",
+        "CODE's acceptance criterion says `strict-role-split` is superseded, but its write scope omits `docs/specs/strict-role-split.md` and the dependent DOCS task owns that status change. CODE cannot deliver its recorded criterion in its own PR (.factory/stories/FORGE-ACCESS-1/decomposition.json:17; .factory/stories/FORGE-ACCESS-1/decomposition.json:20; .factory/stories/FORGE-ACCESS-1/decomposition.json:216).",
+        "The task has seven acceptance criteria but eight `plan_contracts` statements with different exact wording. No `criteria_map` can have keys equal to both sets as the task-gate contract requires (.factory/stories/FORGE-ACCESS-1/decomposition.json:10; .factory/stories/FORGE-ACCESS-1/decomposition.json:159; .factory/stories/FORGE-ACCESS-1/decomposition.json:195)."
+      ],
+      "delta_index": 10
+    },
+    {
+      "change": "span 11: amended to resolve the task cold-read findings",
+      "reason": "one amendment after the single cold read",
+      "source": "coordinator amendment 2026-09-24",
+      "findings": [
+        "The proposed scope report cannot show every changed record: it omits uncommitted `.factory/` changes, although the approved story plan requires the stage-base diff plus working tree with no exclusions (plans/active/FORGE-ACCESS-1-full-access-forge-judges-the-result-not-each-write.md:65; .factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:135). It also puts records in a separate category without saying whether a record outside the declared scope appears in the promised outside-scope list (.factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:137).",
+        "Overlap detection is narrower than the promised 'another active task': the plan checks only outside-scope paths using `active_stages_everywhere`, which returns active stages of the current story only. An in-scope path that overlaps another task, or a path overlapping a task in another story, will not be named (docs/specs/full-access.md:37; .factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:141; factory/scripts/forge_cli/stages.py:887).",
+        "The proposed plan and decision text diff is `git diff <stage base>..HEAD`, so it omits working-tree edits even though the approved review input is the committed diff plus working tree. The plan does not say how those edits become visible to the reviewer or whether close must refuse them (plans/active/FORGE-ACCESS-1-full-access-forge-judges-the-result-not-each-write.md:65; .factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:142).",
+        "Removing `quickfix done` leaves a dead-end instruction for a legacy open quickfix window: both the open-window refusal and task-seal preflight still tell the operator to run that removed command. The plan retains `mode abandon` but does not update either instruction (factory/scripts/forge_cli/quickfix.py:144; factory/scripts/factory_lib.py:5963; .factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:167).",
+        "The claimed Windows selector check does not validate the new `test_full_access.py` selector: it parses only `test_gates.py` selectors. A misspelled new selector can pass this check and fail the Windows job (.factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:186; factory/tests/test_gates.py:10707; factory/tests/test_gates.py:10719).",
+        "The new test file is told to reuse `test_gates`'s `repo` fixture, but that fixture is defined in `test_gates.py`, not a shared fixture module. The plan leaves the fixture import or relocation unstated, so the required tests in `test_full_access.py` have no specified way to collect (factory/tests/test_gates.py:317; .factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:192).",
+        "The approved story plan fixes three tasks\u2014REMOVE-LOCK and CLOSE-JUDGES in parallel, then DOCS\u2014while the protected decomposition and saved task plan replace them with one CODE task followed by DOCS. This changes IDs, dependency ordering, PR seams and review size without a corresponding amended, reapproved story plan; the recorder treats graph changes as requiring that authority (plans/active/FORGE-ACCESS-1-full-access-forge-judges-the-result-not-each-write.md:108; .factory/stories/FORGE-ACCESS-1/decomposition.json:6; factory/scripts/record_decomposition_from_json.py:538). The task plan itself concedes the combined work may exceed one session (.factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:86).",
+        "CODE's acceptance criterion says `strict-role-split` is superseded, but its write scope omits `docs/specs/strict-role-split.md` and the dependent DOCS task owns that status change. CODE cannot deliver its recorded criterion in its own PR (.factory/stories/FORGE-ACCESS-1/decomposition.json:17; .factory/stories/FORGE-ACCESS-1/decomposition.json:20; .factory/stories/FORGE-ACCESS-1/decomposition.json:216).",
+        "The task has seven acceptance criteria but eight `plan_contracts` statements with different exact wording. No `criteria_map` can have keys equal to both sets as the task-gate contract requires (.factory/stories/FORGE-ACCESS-1/decomposition.json:10; .factory/stories/FORGE-ACCESS-1/decomposition.json:159; .factory/stories/FORGE-ACCESS-1/decomposition.json:195)."
+      ],
+      "delta_index": 11
+    },
+    {
+      "change": "span 12: amended to resolve the task cold-read findings",
+      "reason": "one amendment after the single cold read",
+      "source": "coordinator amendment 2026-09-24",
+      "findings": [
+        "The proposed scope report cannot show every changed record: it omits uncommitted `.factory/` changes, although the approved story plan requires the stage-base diff plus working tree with no exclusions (plans/active/FORGE-ACCESS-1-full-access-forge-judges-the-result-not-each-write.md:65; .factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:135). It also puts records in a separate category without saying whether a record outside the declared scope appears in the promised outside-scope list (.factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:137).",
+        "Overlap detection is narrower than the promised 'another active task': the plan checks only outside-scope paths using `active_stages_everywhere`, which returns active stages of the current story only. An in-scope path that overlaps another task, or a path overlapping a task in another story, will not be named (docs/specs/full-access.md:37; .factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:141; factory/scripts/forge_cli/stages.py:887).",
+        "The proposed plan and decision text diff is `git diff <stage base>..HEAD`, so it omits working-tree edits even though the approved review input is the committed diff plus working tree. The plan does not say how those edits become visible to the reviewer or whether close must refuse them (plans/active/FORGE-ACCESS-1-full-access-forge-judges-the-result-not-each-write.md:65; .factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:142).",
+        "Removing `quickfix done` leaves a dead-end instruction for a legacy open quickfix window: both the open-window refusal and task-seal preflight still tell the operator to run that removed command. The plan retains `mode abandon` but does not update either instruction (factory/scripts/forge_cli/quickfix.py:144; factory/scripts/factory_lib.py:5963; .factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:167).",
+        "The claimed Windows selector check does not validate the new `test_full_access.py` selector: it parses only `test_gates.py` selectors. A misspelled new selector can pass this check and fail the Windows job (.factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:186; factory/tests/test_gates.py:10707; factory/tests/test_gates.py:10719).",
+        "The new test file is told to reuse `test_gates`'s `repo` fixture, but that fixture is defined in `test_gates.py`, not a shared fixture module. The plan leaves the fixture import or relocation unstated, so the required tests in `test_full_access.py` have no specified way to collect (factory/tests/test_gates.py:317; .factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:192).",
+        "The approved story plan fixes three tasks\u2014REMOVE-LOCK and CLOSE-JUDGES in parallel, then DOCS\u2014while the protected decomposition and saved task plan replace them with one CODE task followed by DOCS. This changes IDs, dependency ordering, PR seams and review size without a corresponding amended, reapproved story plan; the recorder treats graph changes as requiring that authority (plans/active/FORGE-ACCESS-1-full-access-forge-judges-the-result-not-each-write.md:108; .factory/stories/FORGE-ACCESS-1/decomposition.json:6; factory/scripts/record_decomposition_from_json.py:538). The task plan itself concedes the combined work may exceed one session (.factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:86).",
+        "CODE's acceptance criterion says `strict-role-split` is superseded, but its write scope omits `docs/specs/strict-role-split.md` and the dependent DOCS task owns that status change. CODE cannot deliver its recorded criterion in its own PR (.factory/stories/FORGE-ACCESS-1/decomposition.json:17; .factory/stories/FORGE-ACCESS-1/decomposition.json:20; .factory/stories/FORGE-ACCESS-1/decomposition.json:216).",
+        "The task has seven acceptance criteria but eight `plan_contracts` statements with different exact wording. No `criteria_map` can have keys equal to both sets as the task-gate contract requires (.factory/stories/FORGE-ACCESS-1/decomposition.json:10; .factory/stories/FORGE-ACCESS-1/decomposition.json:159; .factory/stories/FORGE-ACCESS-1/decomposition.json:195)."
+      ],
+      "delta_index": 12
+    },
+    {
+      "change": "span 13: amended to resolve the task cold-read findings",
+      "reason": "one amendment after the single cold read",
+      "source": "coordinator amendment 2026-09-24",
+      "findings": [
+        "The proposed scope report cannot show every changed record: it omits uncommitted `.factory/` changes, although the approved story plan requires the stage-base diff plus working tree with no exclusions (plans/active/FORGE-ACCESS-1-full-access-forge-judges-the-result-not-each-write.md:65; .factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:135). It also puts records in a separate category without saying whether a record outside the declared scope appears in the promised outside-scope list (.factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:137).",
+        "Overlap detection is narrower than the promised 'another active task': the plan checks only outside-scope paths using `active_stages_everywhere`, which returns active stages of the current story only. An in-scope path that overlaps another task, or a path overlapping a task in another story, will not be named (docs/specs/full-access.md:37; .factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:141; factory/scripts/forge_cli/stages.py:887).",
+        "The proposed plan and decision text diff is `git diff <stage base>..HEAD`, so it omits working-tree edits even though the approved review input is the committed diff plus working tree. The plan does not say how those edits become visible to the reviewer or whether close must refuse them (plans/active/FORGE-ACCESS-1-full-access-forge-judges-the-result-not-each-write.md:65; .factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:142).",
+        "Removing `quickfix done` leaves a dead-end instruction for a legacy open quickfix window: both the open-window refusal and task-seal preflight still tell the operator to run that removed command. The plan retains `mode abandon` but does not update either instruction (factory/scripts/forge_cli/quickfix.py:144; factory/scripts/factory_lib.py:5963; .factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:167).",
+        "The claimed Windows selector check does not validate the new `test_full_access.py` selector: it parses only `test_gates.py` selectors. A misspelled new selector can pass this check and fail the Windows job (.factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:186; factory/tests/test_gates.py:10707; factory/tests/test_gates.py:10719).",
+        "The new test file is told to reuse `test_gates`'s `repo` fixture, but that fixture is defined in `test_gates.py`, not a shared fixture module. The plan leaves the fixture import or relocation unstated, so the required tests in `test_full_access.py` have no specified way to collect (factory/tests/test_gates.py:317; .factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:192).",
+        "The approved story plan fixes three tasks\u2014REMOVE-LOCK and CLOSE-JUDGES in parallel, then DOCS\u2014while the protected decomposition and saved task plan replace them with one CODE task followed by DOCS. This changes IDs, dependency ordering, PR seams and review size without a corresponding amended, reapproved story plan; the recorder treats graph changes as requiring that authority (plans/active/FORGE-ACCESS-1-full-access-forge-judges-the-result-not-each-write.md:108; .factory/stories/FORGE-ACCESS-1/decomposition.json:6; factory/scripts/record_decomposition_from_json.py:538). The task plan itself concedes the combined work may exceed one session (.factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:86).",
+        "CODE's acceptance criterion says `strict-role-split` is superseded, but its write scope omits `docs/specs/strict-role-split.md` and the dependent DOCS task owns that status change. CODE cannot deliver its recorded criterion in its own PR (.factory/stories/FORGE-ACCESS-1/decomposition.json:17; .factory/stories/FORGE-ACCESS-1/decomposition.json:20; .factory/stories/FORGE-ACCESS-1/decomposition.json:216).",
+        "The task has seven acceptance criteria but eight `plan_contracts` statements with different exact wording. No `criteria_map` can have keys equal to both sets as the task-gate contract requires (.factory/stories/FORGE-ACCESS-1/decomposition.json:10; .factory/stories/FORGE-ACCESS-1/decomposition.json:159; .factory/stories/FORGE-ACCESS-1/decomposition.json:195)."
+      ],
+      "delta_index": 13
+    },
+    {
+      "change": "span 14: amended to resolve the task cold-read findings",
+      "reason": "one amendment after the single cold read",
+      "source": "coordinator amendment 2026-09-24",
+      "findings": [
+        "The proposed scope report cannot show every changed record: it omits uncommitted `.factory/` changes, although the approved story plan requires the stage-base diff plus working tree with no exclusions (plans/active/FORGE-ACCESS-1-full-access-forge-judges-the-result-not-each-write.md:65; .factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:135). It also puts records in a separate category without saying whether a record outside the declared scope appears in the promised outside-scope list (.factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:137).",
+        "Overlap detection is narrower than the promised 'another active task': the plan checks only outside-scope paths using `active_stages_everywhere`, which returns active stages of the current story only. An in-scope path that overlaps another task, or a path overlapping a task in another story, will not be named (docs/specs/full-access.md:37; .factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:141; factory/scripts/forge_cli/stages.py:887).",
+        "The proposed plan and decision text diff is `git diff <stage base>..HEAD`, so it omits working-tree edits even though the approved review input is the committed diff plus working tree. The plan does not say how those edits become visible to the reviewer or whether close must refuse them (plans/active/FORGE-ACCESS-1-full-access-forge-judges-the-result-not-each-write.md:65; .factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:142).",
+        "Removing `quickfix done` leaves a dead-end instruction for a legacy open quickfix window: both the open-window refusal and task-seal preflight still tell the operator to run that removed command. The plan retains `mode abandon` but does not update either instruction (factory/scripts/forge_cli/quickfix.py:144; factory/scripts/factory_lib.py:5963; .factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:167).",
+        "The claimed Windows selector check does not validate the new `test_full_access.py` selector: it parses only `test_gates.py` selectors. A misspelled new selector can pass this check and fail the Windows job (.factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:186; factory/tests/test_gates.py:10707; factory/tests/test_gates.py:10719).",
+        "The new test file is told to reuse `test_gates`'s `repo` fixture, but that fixture is defined in `test_gates.py`, not a shared fixture module. The plan leaves the fixture import or relocation unstated, so the required tests in `test_full_access.py` have no specified way to collect (factory/tests/test_gates.py:317; .factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:192).",
+        "The approved story plan fixes three tasks\u2014REMOVE-LOCK and CLOSE-JUDGES in parallel, then DOCS\u2014while the protected decomposition and saved task plan replace them with one CODE task followed by DOCS. This changes IDs, dependency ordering, PR seams and review size without a corresponding amended, reapproved story plan; the recorder treats graph changes as requiring that authority (plans/active/FORGE-ACCESS-1-full-access-forge-judges-the-result-not-each-write.md:108; .factory/stories/FORGE-ACCESS-1/decomposition.json:6; factory/scripts/record_decomposition_from_json.py:538). The task plan itself concedes the combined work may exceed one session (.factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:86).",
+        "CODE's acceptance criterion says `strict-role-split` is superseded, but its write scope omits `docs/specs/strict-role-split.md` and the dependent DOCS task owns that status change. CODE cannot deliver its recorded criterion in its own PR (.factory/stories/FORGE-ACCESS-1/decomposition.json:17; .factory/stories/FORGE-ACCESS-1/decomposition.json:20; .factory/stories/FORGE-ACCESS-1/decomposition.json:216).",
+        "The task has seven acceptance criteria but eight `plan_contracts` statements with different exact wording. No `criteria_map` can have keys equal to both sets as the task-gate contract requires (.factory/stories/FORGE-ACCESS-1/decomposition.json:10; .factory/stories/FORGE-ACCESS-1/decomposition.json:159; .factory/stories/FORGE-ACCESS-1/decomposition.json:195)."
+      ],
+      "delta_index": 14
+    },
+    {
+      "change": "span 15: amended to resolve the task cold-read findings",
+      "reason": "one amendment after the single cold read",
+      "source": "coordinator amendment 2026-09-24",
+      "findings": [
+        "The proposed scope report cannot show every changed record: it omits uncommitted `.factory/` changes, although the approved story plan requires the stage-base diff plus working tree with no exclusions (plans/active/FORGE-ACCESS-1-full-access-forge-judges-the-result-not-each-write.md:65; .factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:135). It also puts records in a separate category without saying whether a record outside the declared scope appears in the promised outside-scope list (.factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:137).",
+        "Overlap detection is narrower than the promised 'another active task': the plan checks only outside-scope paths using `active_stages_everywhere`, which returns active stages of the current story only. An in-scope path that overlaps another task, or a path overlapping a task in another story, will not be named (docs/specs/full-access.md:37; .factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:141; factory/scripts/forge_cli/stages.py:887).",
+        "The proposed plan and decision text diff is `git diff <stage base>..HEAD`, so it omits working-tree edits even though the approved review input is the committed diff plus working tree. The plan does not say how those edits become visible to the reviewer or whether close must refuse them (plans/active/FORGE-ACCESS-1-full-access-forge-judges-the-result-not-each-write.md:65; .factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:142).",
+        "Removing `quickfix done` leaves a dead-end instruction for a legacy open quickfix window: both the open-window refusal and task-seal preflight still tell the operator to run that removed command. The plan retains `mode abandon` but does not update either instruction (factory/scripts/forge_cli/quickfix.py:144; factory/scripts/factory_lib.py:5963; .factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:167).",
+        "The claimed Windows selector check does not validate the new `test_full_access.py` selector: it parses only `test_gates.py` selectors. A misspelled new selector can pass this check and fail the Windows job (.factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:186; factory/tests/test_gates.py:10707; factory/tests/test_gates.py:10719).",
+        "The new test file is told to reuse `test_gates`'s `repo` fixture, but that fixture is defined in `test_gates.py`, not a shared fixture module. The plan leaves the fixture import or relocation unstated, so the required tests in `test_full_access.py` have no specified way to collect (factory/tests/test_gates.py:317; .factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:192).",
+        "The approved story plan fixes three tasks\u2014REMOVE-LOCK and CLOSE-JUDGES in parallel, then DOCS\u2014while the protected decomposition and saved task plan replace them with one CODE task followed by DOCS. This changes IDs, dependency ordering, PR seams and review size without a corresponding amended, reapproved story plan; the recorder treats graph changes as requiring that authority (plans/active/FORGE-ACCESS-1-full-access-forge-judges-the-result-not-each-write.md:108; .factory/stories/FORGE-ACCESS-1/decomposition.json:6; factory/scripts/record_decomposition_from_json.py:538). The task plan itself concedes the combined work may exceed one session (.factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:86).",
+        "CODE's acceptance criterion says `strict-role-split` is superseded, but its write scope omits `docs/specs/strict-role-split.md` and the dependent DOCS task owns that status change. CODE cannot deliver its recorded criterion in its own PR (.factory/stories/FORGE-ACCESS-1/decomposition.json:17; .factory/stories/FORGE-ACCESS-1/decomposition.json:20; .factory/stories/FORGE-ACCESS-1/decomposition.json:216).",
+        "The task has seven acceptance criteria but eight `plan_contracts` statements with different exact wording. No `criteria_map` can have keys equal to both sets as the task-gate contract requires (.factory/stories/FORGE-ACCESS-1/decomposition.json:10; .factory/stories/FORGE-ACCESS-1/decomposition.json:159; .factory/stories/FORGE-ACCESS-1/decomposition.json:195)."
+      ],
+      "delta_index": 15
+    },
+    {
+      "change": "span 16: amended to resolve the task cold-read findings",
+      "reason": "one amendment after the single cold read",
+      "source": "coordinator amendment 2026-09-24",
+      "findings": [
+        "The proposed scope report cannot show every changed record: it omits uncommitted `.factory/` changes, although the approved story plan requires the stage-base diff plus working tree with no exclusions (plans/active/FORGE-ACCESS-1-full-access-forge-judges-the-result-not-each-write.md:65; .factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:135). It also puts records in a separate category without saying whether a record outside the declared scope appears in the promised outside-scope list (.factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:137).",
+        "Overlap detection is narrower than the promised 'another active task': the plan checks only outside-scope paths using `active_stages_everywhere`, which returns active stages of the current story only. An in-scope path that overlaps another task, or a path overlapping a task in another story, will not be named (docs/specs/full-access.md:37; .factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:141; factory/scripts/forge_cli/stages.py:887).",
+        "The proposed plan and decision text diff is `git diff <stage base>..HEAD`, so it omits working-tree edits even though the approved review input is the committed diff plus working tree. The plan does not say how those edits become visible to the reviewer or whether close must refuse them (plans/active/FORGE-ACCESS-1-full-access-forge-judges-the-result-not-each-write.md:65; .factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:142).",
+        "Removing `quickfix done` leaves a dead-end instruction for a legacy open quickfix window: both the open-window refusal and task-seal preflight still tell the operator to run that removed command. The plan retains `mode abandon` but does not update either instruction (factory/scripts/forge_cli/quickfix.py:144; factory/scripts/factory_lib.py:5963; .factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:167).",
+        "The claimed Windows selector check does not validate the new `test_full_access.py` selector: it parses only `test_gates.py` selectors. A misspelled new selector can pass this check and fail the Windows job (.factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:186; factory/tests/test_gates.py:10707; factory/tests/test_gates.py:10719).",
+        "The new test file is told to reuse `test_gates`'s `repo` fixture, but that fixture is defined in `test_gates.py`, not a shared fixture module. The plan leaves the fixture import or relocation unstated, so the required tests in `test_full_access.py` have no specified way to collect (factory/tests/test_gates.py:317; .factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:192).",
+        "The approved story plan fixes three tasks\u2014REMOVE-LOCK and CLOSE-JUDGES in parallel, then DOCS\u2014while the protected decomposition and saved task plan replace them with one CODE task followed by DOCS. This changes IDs, dependency ordering, PR seams and review size without a corresponding amended, reapproved story plan; the recorder treats graph changes as requiring that authority (plans/active/FORGE-ACCESS-1-full-access-forge-judges-the-result-not-each-write.md:108; .factory/stories/FORGE-ACCESS-1/decomposition.json:6; factory/scripts/record_decomposition_from_json.py:538). The task plan itself concedes the combined work may exceed one session (.factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:86).",
+        "CODE's acceptance criterion says `strict-role-split` is superseded, but its write scope omits `docs/specs/strict-role-split.md` and the dependent DOCS task owns that status change. CODE cannot deliver its recorded criterion in its own PR (.factory/stories/FORGE-ACCESS-1/decomposition.json:17; .factory/stories/FORGE-ACCESS-1/decomposition.json:20; .factory/stories/FORGE-ACCESS-1/decomposition.json:216).",
+        "The task has seven acceptance criteria but eight `plan_contracts` statements with different exact wording. No `criteria_map` can have keys equal to both sets as the task-gate contract requires (.factory/stories/FORGE-ACCESS-1/decomposition.json:10; .factory/stories/FORGE-ACCESS-1/decomposition.json:159; .factory/stories/FORGE-ACCESS-1/decomposition.json:195)."
+      ],
+      "delta_index": 16
+    },
+    {
+      "change": "span 17: amended to resolve the task cold-read findings",
+      "reason": "one amendment after the single cold read",
+      "source": "coordinator amendment 2026-09-24",
+      "findings": [
+        "The proposed scope report cannot show every changed record: it omits uncommitted `.factory/` changes, although the approved story plan requires the stage-base diff plus working tree with no exclusions (plans/active/FORGE-ACCESS-1-full-access-forge-judges-the-result-not-each-write.md:65; .factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:135). It also puts records in a separate category without saying whether a record outside the declared scope appears in the promised outside-scope list (.factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:137).",
+        "Overlap detection is narrower than the promised 'another active task': the plan checks only outside-scope paths using `active_stages_everywhere`, which returns active stages of the current story only. An in-scope path that overlaps another task, or a path overlapping a task in another story, will not be named (docs/specs/full-access.md:37; .factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:141; factory/scripts/forge_cli/stages.py:887).",
+        "The proposed plan and decision text diff is `git diff <stage base>..HEAD`, so it omits working-tree edits even though the approved review input is the committed diff plus working tree. The plan does not say how those edits become visible to the reviewer or whether close must refuse them (plans/active/FORGE-ACCESS-1-full-access-forge-judges-the-result-not-each-write.md:65; .factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:142).",
+        "Removing `quickfix done` leaves a dead-end instruction for a legacy open quickfix window: both the open-window refusal and task-seal preflight still tell the operator to run that removed command. The plan retains `mode abandon` but does not update either instruction (factory/scripts/forge_cli/quickfix.py:144; factory/scripts/factory_lib.py:5963; .factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:167).",
+        "The claimed Windows selector check does not validate the new `test_full_access.py` selector: it parses only `test_gates.py` selectors. A misspelled new selector can pass this check and fail the Windows job (.factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:186; factory/tests/test_gates.py:10707; factory/tests/test_gates.py:10719).",
+        "The new test file is told to reuse `test_gates`'s `repo` fixture, but that fixture is defined in `test_gates.py`, not a shared fixture module. The plan leaves the fixture import or relocation unstated, so the required tests in `test_full_access.py` have no specified way to collect (factory/tests/test_gates.py:317; .factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:192).",
+        "The approved story plan fixes three tasks\u2014REMOVE-LOCK and CLOSE-JUDGES in parallel, then DOCS\u2014while the protected decomposition and saved task plan replace them with one CODE task followed by DOCS. This changes IDs, dependency ordering, PR seams and review size without a corresponding amended, reapproved story plan; the recorder treats graph changes as requiring that authority (plans/active/FORGE-ACCESS-1-full-access-forge-judges-the-result-not-each-write.md:108; .factory/stories/FORGE-ACCESS-1/decomposition.json:6; factory/scripts/record_decomposition_from_json.py:538). The task plan itself concedes the combined work may exceed one session (.factory/stories/FORGE-ACCESS-1/task-plans/CODE.md:86).",
+        "CODE's acceptance criterion says `strict-role-split` is superseded, but its write scope omits `docs/specs/strict-role-split.md` and the dependent DOCS task owns that status change. CODE cannot deliver its recorded criterion in its own PR (.factory/stories/FORGE-ACCESS-1/decomposition.json:17; .factory/stories/FORGE-ACCESS-1/decomposition.json:20; .factory/stories/FORGE-ACCESS-1/decomposition.json:216).",
+        "The task has seven acceptance criteria but eight `plan_contracts` statements with different exact wording. No `criteria_map` can have keys equal to both sets as the task-gate contract requires (.factory/stories/FORGE-ACCESS-1/decomposition.json:10; .factory/stories/FORGE-ACCESS-1/decomposition.json:159; .factory/stories/FORGE-ACCESS-1/decomposition.json:195)."
+      ],
+      "delta_index": 17
+    }
+  ],
+  "artifact_delta": [
+    {
+      "cold_start": 15,
+      "cold_end": 19,
+      "cold": "  run. Files the task changed outside its declared scope, and any overlap with another active task,\n  are shown to the reviewer and in a block of the pull request description that Forge owns.\n  Changed records, plans and decisions are listed separately, with the plan and decision text diff.\n  Re-running close replaces only that block.\n",
+      "final_start": 15,
+      "final_end": 20,
+      "final": "  run. Files the task changed outside its declared scope are shown to the reviewer and in a\n  block of the pull request description that Forge owns. So is any changed file that another\n  active task, in any story, also declared. Changed records, plans and decisions are listed\n  separately, with the text diff of the plans and decisions. Re-running close replaces only that\n  block.\n"
+    },
+    {
+      "cold_start": 23,
+      "cold_end": 24,
+      "cold": "  closed records still count for the PR ticket check.\n",
+      "final_start": 24,
+      "final_end": 26,
+      "final": "  closed records still count for the PR ticket check. A legacy window left open is closed with\n  `forge mode abandon --reason`, and Forge's messages say so.\n"
+    },
+    {
+      "cold_start": 25,
+      "cold_end": 26,
+      "cold": "  needs a confirmed spec.\n",
+      "final_start": 27,
+      "final_end": 29,
+      "final": "  needs a confirmed spec. This task adds only that rule; marking a real spec superseded is part of\n  the docs work.\n"
+    },
+    {
+      "cold_start": 39,
+      "cold_end": 40,
+      "cold": "  P --> R[\"one review: brief lists out-of-scope files, overlaps, changed records, plan and decision diffs\"]\n",
+      "final_start": 42,
+      "final_end": 43,
+      "final": "  P --> R[\"one review: brief lists out-of-scope files, overlaps, changed records, plan and decision diff\"]\n"
+    },
+    {
+      "cold_start": 53,
+      "cold_end": 55,
+      "cold": "   review brief and the PR's Forge block both list that file. The brief also names an overlap\n   with another active task's scope and lists the changed records apart from the product files.\n",
+      "final_start": 56,
+      "final_end": 61,
+      "final": "   review brief and the PR's Forge block both list that file. Both also name every changed file,\n   inside or outside the task's scope, that another active task in any story also declared.\n   Changed `.factory/`, `plans/` and `docs/decisions/` files are listed as records, never as\n   out-of-scope files. The brief also carries the text diff of the changed plans and decisions,\n   including uncommitted edits.\n"
+    },
+    {
+      "cold_start": 67,
+      "cold_end": 68,
+      "cold": "   `check_pr_ticket.py`.\n",
+      "final_start": 73,
+      "final_end": 76,
+      "final": "   `check_pr_ticket.py`. With a legacy quickfix window left open, `forge mode lite` and\n   `forge task close` both refuse and name `forge mode abandon --reason`, and that command closes\n   the window.\n"
+    },
+    {
+      "cold_start": 70,
+      "cold_end": 74,
+      "cold": "   hook. The Windows hook job's list of tests contains only tests that exist.\n8. When a spec is marked superseded, plan save and sign-off still accept the roadmap stories that\n   already link to it. `roadmap add` and `roadmap link-spec` refuse it as not confirmed.\n   `forge next` does not list it as a draft to confirm.\n",
+      "final_start": 78,
+      "final_end": 84,
+      "final": "   hook. Every `path::test` selector in the scaffold workflow names a test that exists, in any\n   test file, so a misspelled selector fails the suite.\n8. With a fixture spec marked superseded, plan save, roadmap derive and sign-off still accept the\n   roadmap stories that already link to it, and `forge next` does not list it as a draft. A new\n   link to it through `roadmap add`, `roadmap fill` or `roadmap link-spec` is refused because\n   the spec is not confirmed.\n"
+    },
+    {
+      "cold_start": 82,
+      "cold_end": 83,
+      "cold": "  task's own proof folder and the stage tracker.\n",
+      "final_start": 92,
+      "final_end": 94,
+      "final": "  task's own proof folder and the stage tracker. If any other record changes between the review\n  and the seal, close reviews again. That is intended, because the reviewer has to see the change.\n"
+    },
+    {
+      "cold_start": 87,
+      "cold_end": 89,
+      "cold": "  lines. If it runs over one session, split it along the story plan's original line: first delete\n  the lock and its tests, then change close, Lite, the removed commands and the spec rule.\n",
+      "final_start": 98,
+      "final_end": 100,
+      "final": "  lines. If it runs over one session, split it in two: first delete the lock and its tests, then\n  change close, Lite, the removed commands and the spec rule.\n"
+    },
+    {
+      "cold_start": 135,
+      "cold_end": 145,
+      "cold": "  `records` and `record_diff`. Paths come from `changed_paths(base, stage_baseline(base, stage),\n  stage[\"dirty_at_start\"])`. Records are paths under `.factory/`, `plans/` or `docs/decisions/`;\n  within `.factory/`, only committed changes count, and the task's own evidence folder and\n  `.factory/stages.json` are left out. Every other path not covered by the DECLARED\n  `task[\"write_scope\"]` is `outside`; use `classify_scope_entries` and `_covered`, with no\n  `measure_prefixes`. An overlap is an `outside` path covered by the declared scope of another\n  stage from `active_stages_everywhere`. `record_diff` is `git diff <stage base>..HEAD --\n  plans/ docs/decisions/`. `close.py:141-145` prints `outside`. `review_brief._task_section`\n  (419) adds a `### Changes outside the declared scope` section for the reviewed task only, so\n  the output is byte-stable for a fixed HEAD.\n",
+      "final_start": 146,
+      "final_end": 167,
+      "final": "  `records` and `record_diff`. Changed paths are `git diff --name-only -z <stage base>`, which\n  covers committed and working-tree changes on every path. Base is\n  `stage_baseline(base, stage)`. Untracked files are not in that diff, and close already stops\n  on untracked product paths (`review._product_dirty`). Only two things are excluded: the task's\n  own proof folder (`task_evidence_path(base, story, task_id, \"\")`) and `.factory/stages.json`.\n  - `records`: every other changed path under `.factory/`, `plans/` or `docs/decisions/`, in or\n    out of the declared scope. These paths go ONLY to `records`, never to `outside`.\n  - `outside`: every remaining changed path not covered by the DECLARED `task[\"write_scope\"]`,\n    using `classify_scope_entries` and `_covered`, with no `measure_prefixes`. Scope amendments\n    do not narrow it.\n  - `overlaps`: every changed path, in scope or out, covered by the declared `write_scope` of\n    another active stage in ANY story of the repo. Get those stages from\n    `stages.active_stages_everywhere(base, any_story=True)`. The new keyword skips the issue\n    filter (stages.py 901) and deduplicates on (issue, stage id) instead of the id alone.\n    Resolve each stage's task with `task_for(root, stage_id)`. Each entry names the path, the\n    other task and its story.\n  - `record_diff`: `git diff <stage base> -- plans/ docs/decisions/`, which includes the working\n    tree.\n  - Consumers: `close.py:141-145` prints `outside` and `overlaps` (advisory, no refusal).\n    `review_brief._task_section` (419) adds a `### Changes outside the declared scope` section\n    for the reviewed task only, so the output is byte-stable for a fixed tree.\n"
+    },
+    {
+      "cold_start": 170,
+      "cold_end": 171,
+      "cold": "  `DEGRADED` constant's users. `cmd_mode_abandon` still closes any legacy open window.\n",
+      "final_start": 192,
+      "final_end": 198,
+      "final": "  `DEGRADED` constant's users. `cmd_mode_abandon` (quickfix.py 256-281) already closes a window\n  of any profile, writing an `abandoned` event. It stays; only its `_require_harness_marker`\n  call goes. Legacy open quickfix or degraded windows point there:\n  - the open-window refusal in `_open` (144-148) says `./forge mode abandon --reason \"<why>\"`\n    for those profiles and `./forge mode done` for Lite;\n  - `factory_lib.task_seal_shared_problems` (5963-5970) does the same.\n"
+    },
+    {
+      "cold_start": 172,
+      "cold_end": 173,
+      "cold": "  records keep counting.\n",
+      "final_start": 199,
+      "final_end": 200,
+      "final": "  closed records keep counting.\n"
+    },
+    {
+      "cold_start": 178,
+      "cold_end": 178,
+      "cold": "",
+      "final_start": 205,
+      "final_end": 207,
+      "final": "  Tests use a fixture spec. Marking `docs/specs/strict-role-split.md` superseded belongs to the\n  docs task, not this one.\n"
+    },
+    {
+      "cold_start": 189,
+      "cold_end": 193,
+      "cold": "  `test_ci_locale_forcing_selectors_reference_existing_tests` (test_gates 10707) already fails if\n  a selector names a missing test.\n- New tests, in `factory/tests/test_full_access.py`, reuse the `test_gates` fixtures (`repo`,\n  `hook`, `run`, `git`). One test per Manual Verification item, plus the PR-edit failure case.\n",
+      "final_start": 218,
+      "final_end": 227,
+      "final": "- Selector check: `test_ci_locale_forcing_selectors_reference_existing_tests` (test_gates\n  10707-10725) today parses only `test_gates.py` selectors. Extend it to every\n  `factory/tests/<file>.py::<name>` selector in `factory-scaffold.yml`: each file must exist,\n  and `<name>` must be a top-level test function in that file, found by `ast` as today. A\n  misspelled `test_full_access` selector then fails.\n- New tests, in `factory/tests/test_full_access.py`: `from test_gates import HARNESS, git, hook,\n  repo, run  # noqa: F401`. Importing the `repo` fixture by name registers it with pytest, which\n  is the pattern other test files already use; there is no conftest.py. One test per Manual\n  Verification item, plus the PR-edit failure case.\n"
+    },
+    {
+      "cold_start": 206,
+      "cold_end": 208,
+      "cold": "- Tests to CHANGE (about 38):\n  - `test_gates.py`: 2955, 7665, 7897 (fallback now allows writes but still refuses the kept\n",
+      "final_start": 240,
+      "final_end": 242,
+      "final": "- Tests to CHANGE (about 39):\n  - `test_gates.py`: 10707 (selector check, as above), 2955, 7665, 7897 (fallback now allows writes but still refuses the kept\n"
+    },
+    {
+      "cold_start": 231,
+      "cold_end": 238,
+      "cold": "- No Forge hook refuses a write because of the file it writes; destructive commands, raw codex exec and unsigned phase advances are still refused\n- task close succeeds without a launch record and lists out-of-scope files, overlaps and changed records in the review brief and the PR's Forge block, and a rerun replaces only that block\n- A write-scope amendment during an active stage records without a launch\n- Lite mode done reviews every committed change and refuses more than five non-test, non-Markdown files\n- Degraded and quickfix commands say they were removed; old closed records still satisfy the ticket check\n- check_dual_runtime.py and doctor check hook coverage and the absence of edit tools; the Windows hook job passes\n- strict-role-split is superseded: existing roadmap links resolve, new links need a confirmed spec\n",
+      "final_start": 265,
+      "final_end": 273,
+      "final": "- No Forge hook refuses an Edit, Write, apply_patch or Bash write because of the file it writes, including product, canon, .factory records and another worktree; destructive commands, raw codex exec, direct companion launches and phase-advancing scripts before sign-off are still refused.\n- task close on a task whose diff since its stage base includes a file outside its declared write scope, with no scope amendment and no recorded launch, succeeds when proof and review pass; the review brief and the PR's Forge block list that file, name every changed path in or out of scope that another active stage in any story declared, list changed .factory, plans and docs/decisions paths only as records, and the brief carries the plans and decisions text diff including the working tree.\n- Re-running task close on an open PR replaces only the Forge block (appending it if absent) and keeps human edits and Ticket lines; a failed PR update warns with the retry command and does not fail the close.\n- A write-scope amendment recorded during an active stage succeeds without a launch record, bound to the active stage, and the task grill stays valid.\n- Lite mode done and the Lite review use every committed change since the window opened with nothing filtered out, and mode done refuses when more than five non-test, non-Markdown files changed.\n- forge mode degraded start|done and forge quickfix start|done say they were removed, exit non-zero and change nothing; old closed quickfix and degraded records still satisfy the PR ticket check; a legacy open quickfix or degraded window is named by the lite-open refusal and the task-seal preflight with forge mode abandon --reason, which closes it.\n- check_dual_runtime.py and forge doctor pass on the shipped hook files and fail when an edit tool is routed to the Claude hook or apply_patch to the Codex hook; every path::test selector in the scaffold workflow names an existing test, so a misspelled selector fails the suite.\n- The spec resolver accepts a confirmed or superseded spec for roadmap stories already linked to it (plan save, roadmap derive and sign-off) and does not report it as a draft, while every new roadmap link requires a confirmed spec.\n"
+    },
+    {
+      "cold_start": 294,
+      "cold_end": 295,
+      "cold": "- `test_old_closed_degraded_record_still_satisfies_the_ticket_check` -- `UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}` (factory/tests/test_full_access.py)\n",
+      "final_start": 329,
+      "final_end": 330,
+      "final": "- `test_old_closed_records_count_and_legacy_open_windows_point_to_abandon` -- `UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}` (factory/tests/test_full_access.py)\n"
+    },
+    {
+      "cold_start": 302,
+      "cold_end": 302,
+      "cold": "",
+      "final_start": 337,
+      "final_end": 338,
+      "final": "- `test_ci_locale_forcing_selectors_reference_existing_tests` -- `UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}` (factory/tests/test_gates.py)\n"
+    }
+  ],
+  "questions_asked": 0,
+  "inspected_refs": [
+    "factory/scripts/pre_tool_use.py",
+    "factory/scripts/forge_cli/worker_admission.py",
+    "factory/scripts/forge_cli/repo_kind.py",
+    "factory/scripts/forge_cli/delegate.py",
+    "factory/scripts/forge_cli/close.py",
+    "factory/scripts/forge_cli/stages.py",
+    "factory/scripts/forge_cli/tasks.py",
+    "factory/scripts/forge_cli/quickfix.py",
+    "factory/scripts/record_decomposition_from_json.py",
+    "factory/scripts/check_dual_runtime.py"
+  ],
+  "current_flow": "A session write lock denies coordinator product writes through PreToolUse Bash/Edit parsing; close requires a recorded Codex launch; out-of-scope files are advisory notes; Lite counts only product files; degraded and quickfix windows claim files at write time.",
+  "criteria_map": {
+    "No Forge hook refuses an Edit, Write, apply_patch or Bash write because of the file it writes, including product, canon, .factory records and another worktree; destructive commands, raw codex exec, direct companion launches and phase-advancing scripts before sign-off are still refused.": "Manual Verification step 1; Technical notes",
+    "task close on a task whose diff since its stage base includes a file outside its declared write scope, with no scope amendment and no recorded launch, succeeds when proof and review pass; the review brief and the PR's Forge block list that file, name every changed path in or out of scope that another active stage in any story declared, list changed .factory, plans and docs/decisions paths only as records, and the brief carries the plans and decisions text diff including the working tree.": "Manual Verification step 2; Technical notes",
+    "Re-running task close on an open PR replaces only the Forge block (appending it if absent) and keeps human edits and Ticket lines; a failed PR update warns with the retry command and does not fail the close.": "Manual Verification step 3; Technical notes",
+    "A write-scope amendment recorded during an active stage succeeds without a launch record, bound to the active stage, and the task grill stays valid.": "Manual Verification step 4; Technical notes",
+    "Lite mode done and the Lite review use every committed change since the window opened with nothing filtered out, and mode done refuses when more than five non-test, non-Markdown files changed.": "Manual Verification step 5; Technical notes",
+    "forge mode degraded start|done and forge quickfix start|done say they were removed, exit non-zero and change nothing; old closed quickfix and degraded records still satisfy the PR ticket check; a legacy open quickfix or degraded window is named by the lite-open refusal and the task-seal preflight with forge mode abandon --reason, which closes it.": "Manual Verification step 6; Technical notes",
+    "check_dual_runtime.py and forge doctor pass on the shipped hook files and fail when an edit tool is routed to the Claude hook or apply_patch to the Codex hook; every path::test selector in the scaffold workflow names an existing test, so a misspelled selector fails the suite.": "Manual Verification step 7; Technical notes",
+    "The spec resolver accepts a confirmed or superseded spec for roadmap stories already linked to it (plan save, roadmap derive and sign-off) and does not report it as a draft, while every new roadmap link requires a confirmed spec.": "Manual Verification step 8; Technical notes"
+  },
+  "decision": "keep",
+  "new_abstractions": [
+    "stages.active_stages_everywhere(any_story=True) option",
+    "Forge-owned PR body block <!-- forge:scope -->"
+  ],
+  "summary": "One cold read (6 gaps, 3 contradictions); resolved from repository facts and the owner's two-task choice (story plan re-approved); task plan and contract amended once; criteria equal plan contracts.",
+  "input_sha256": "030fb2d94f271b657903ff574017264b14bb811eae8fe1bda167d59f9c82767d",
+  "grounding_basis": "working-tree",
+  "grounding_treeish": "",
+  "task_plan_sha256": "91b67517cbeca02609e3f1611da9a9f4dd0d669e27021cbd8c06aef9e0016fbc",
+  "recorded_at": "2026-09-24T16:44:15+00:00",
+  "commit": "13b586222a711783ea5b66c54aefb3d6d4d2880f",
+  "launch_id": "launch-dd89c84e27df4b5d9c3c1e775af805d2",
+  "cold_input_sha256": "6f35f9e9076deae665ef65036e881058c9474b97af85988ddfd0bd87e170a8c7",
+  "final_artifact_sha256": "9ea58b88ab4b8741cb2d41f450e89beaeb69a2dcaf89fe360df7c46f3f554971",
+  "approved_task_plan_sha256": "91b67517cbeca02609e3f1611da9a9f4dd0d669e27021cbd8c06aef9e0016fbc",
+  "approved_by": "human-via-Claude",
+  "approved_at": "2026-09-24T16:46:11+00:00",
+  "approval_runtime": "claude",
+  "approval_session_id": "a0106b2c-e659-5e23-b0c7-d419b1d20fda",
+  "approval_event_id": "toolu_01Kc8973DpmZ8YPoN4Zb9oqx"
+}
