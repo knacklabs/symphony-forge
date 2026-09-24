@@ -1,0 +1,74 @@
+{
+  "event": "done",
+  "id": "Q-0218-2c67",
+  "profile": "lite",
+  "by": "Ravi Kiran Vemula",
+  "reason": "Full-suite breakage after merges (sfB)",
+  "base_sha": "87c66118bb8c4464f63f4231cdf8dd18b03e70e0",
+  "started_at": "2026-09-24T07:27:19+00:00",
+  "completed_at": "2026-09-24T07:48:02+00:00",
+  "files": [
+    "factory/tests/test_lifecycle_end_to_end.py",
+    "factory/tests/test_stop_less_often.py"
+  ],
+  "reviews": {
+    "quality": {
+      "generated_by": "autoreview",
+      "score": 10,
+      "summary": "quality lens over Q-0218-2c67 (2 product path(s), 87c6611..18792b1, Codex via the autoreview skill): 0 blocking, 0 non-blocking. The assertions now preserve the original final artifact digest while checking the amended plan through the approved plan digest. No actionable defect is evident in the supplied diff; unchanged repository code was unavailable for verification.",
+      "blocking_findings": [],
+      "non_blocking_findings": [],
+      "recommendation": "approve",
+      "reviewed_scope": [
+        "factory/tests/test_lifecycle_end_to_end.py",
+        "factory/tests/test_stop_less_often.py"
+      ],
+      "skills_used": [],
+      "contract_verdicts": [],
+      "review_base_sha": "87c66118bb8c4464f63f4231cdf8dd18b03e70e0",
+      "branch_diff_digest": "097e0700c245f4407dbeada5d9e8b657d968a1c294c3450d5e9eeb1b993918cb",
+      "commit": "18792b1e001bdcbf69dee92adced2ff597aefc52",
+      "aspect": "quality",
+      "residual_risks": [],
+      "recorded_at": "2026-09-24T07:38:59+00:00"
+    },
+    "performance": {
+      "generated_by": "autoreview",
+      "score": 10,
+      "summary": "performance lens over Q-0218-2c67 (2 product path(s), 87c6611..18792b1, Codex via the autoreview skill): 0 blocking, 0 non-blocking. The changes add only small test assertions and show no production performance impact.",
+      "blocking_findings": [],
+      "non_blocking_findings": [],
+      "recommendation": "approve",
+      "reviewed_scope": [
+        "factory/tests/test_lifecycle_end_to_end.py",
+        "factory/tests/test_stop_less_often.py"
+      ],
+      "skills_used": [],
+      "review_base_sha": "87c66118bb8c4464f63f4231cdf8dd18b03e70e0",
+      "branch_diff_digest": "097e0700c245f4407dbeada5d9e8b657d968a1c294c3450d5e9eeb1b993918cb",
+      "commit": "18792b1e001bdcbf69dee92adced2ff597aefc52",
+      "aspect": "performance",
+      "residual_risks": [],
+      "recorded_at": "2026-09-24T07:38:59+00:00"
+    },
+    "security": {
+      "generated_by": "autoreview",
+      "score": 10,
+      "summary": "security lens over Q-0218-2c67 (2 product path(s), 87c6611..18792b1, Codex via the autoreview skill): 0 blocking, 0 non-blocking. No new trust boundary, credential handling, or concrete security risk is visible.",
+      "blocking_findings": [],
+      "non_blocking_findings": [],
+      "recommendation": "approve",
+      "reviewed_scope": [
+        "factory/tests/test_lifecycle_end_to_end.py",
+        "factory/tests/test_stop_less_often.py"
+      ],
+      "skills_used": [],
+      "review_base_sha": "87c66118bb8c4464f63f4231cdf8dd18b03e70e0",
+      "branch_diff_digest": "097e0700c245f4407dbeada5d9e8b657d968a1c294c3450d5e9eeb1b993918cb",
+      "commit": "18792b1e001bdcbf69dee92adced2ff597aefc52",
+      "aspect": "security",
+      "residual_risks": [],
+      "recorded_at": "2026-09-24T07:39:00+00:00"
+    }
+  }
+}
