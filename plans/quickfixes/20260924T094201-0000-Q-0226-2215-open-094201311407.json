@@ -1,0 +1,12 @@
+{
+  "event": "open",
+  "id": "Q-0226-2215",
+  "profile": "lite",
+  "reason": "CI: profile-hash history test must not need a local main branch",
+  "started_at": "2026-09-24T09:42:01+00:00",
+  "max_files": 5,
+  "files": [],
+  "harness_source": true,
+  "by": "Ravi Kiran Vemula",
+  "base_sha": "95db09bf172b3c32a8725afcde2d20f354965778"
+}
