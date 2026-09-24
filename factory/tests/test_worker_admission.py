@@ -487,6 +487,73 @@ def test_codex_read_only_delegate_uses_diagnostic_brief(repo, monkeypatch):
     assert canonical.read_bytes() == original
 
 
+@pytest.mark.parametrize(("exit_code", "status"), [(1, 1), (0, 2)])
+def test_failed_companion_reports_correlated_codex_job_log(
+        repo, tmp_path, monkeypatch, capsys, exit_code, status):
+    from forge_cli import codex_status, delegate
+
+    _seed_contract(repo)
+    home = tmp_path / "home"
+    companion = (home / ".claude/plugins/cache/openai-codex/codex/1.0.0"
+                 / "scripts/codex-companion.mjs")
+    companion.parent.mkdir(parents=True)
+    companion.write_text("// fake companion\n", encoding="utf-8")
+    (home / ".claude/plugins/installed_plugins.json").write_text(
+        json.dumps({"plugins": {"codex@openai-codex": [{
+            "installPath": str(companion.parents[1]),
+        }]}}), encoding="utf-8",
+    )
+    node_dir = tmp_path / "bin"
+    node_dir.mkdir()
+    node = node_dir / "node"
+    node.write_text(
+        f"#!{sys.executable}\n"
+        "import json, os, sys\n"
+        "with open(os.environ['FORGE_TEST_JOB_FILE'], 'w', encoding='utf-8') as job:\n"
+        " json.dump({'id': 'job-test', 'workspaceRoot': "
+        "os.environ['FORGE_TEST_WORKSPACE'], 'createdAt': "
+        "'2026-09-24T00:00:00Z', 'logFile': os.environ['FORGE_TEST_LOG']}, job)\n"
+        f"print(json.dumps({{'status': {status}, 'jobId': 'job-test', "
+        "'rawOutput': 'unfinished lead text'}))\n"
+        f"sys.exit({exit_code})\n",
+        encoding="utf-8",
+    )
+    node.chmod(0o755)
+    log_path = tmp_path / "job.log"
+    log_path.write_text("Codex error: out of credits\nTurn failed.\n",
+                        encoding="utf-8")
+    state_root = tmp_path / "codex-state"
+    job_dir = state_root / "project" / "jobs"
+    job_dir.mkdir(parents=True)
+
+    monkeypatch.setenv("HOME", str(home))
+    monkeypatch.setenv("PATH", f"{node_dir}{os.pathsep}{os.environ['PATH']}")
+    monkeypatch.setenv("FORGE_COORDINATOR", "claude")
+    monkeypatch.setenv("FORGE_TEST_JOB_FILE", str(job_dir / "job-test.json"))
+    monkeypatch.setenv("FORGE_TEST_WORKSPACE", str(repo))
+    monkeypatch.setenv("FORGE_TEST_LOG", str(log_path))
+    monkeypatch.setattr(codex_status, "STATE_ROOT", state_root)
+    monkeypatch.setattr(delegate, "_process_table", lambda: {})
+    monkeypatch.setattr(delegate, "_capture_spawn_identity", lambda _proc: "known")
+    monkeypatch.setattr(
+        delegate, "_wait_and_reap",
+        lambda proc, *_args, **_kwargs: proc.wait() is not None,
+    )
+    with pytest.raises(SystemExit):
+        delegate.launch_companion(
+            repo, task_id="T1", text="brief", path=repo / ".factory/briefs/T1.md",
+            task_sha256_value="task-digest", model="gpt-test", effort="medium",
+            write=False,
+        )
+
+    output = capsys.readouterr().out
+    refusal = next(line for line in output.splitlines()
+                   if line.startswith("ERROR:"))
+    assert refusal.startswith("ERROR: Codex error: out of credits")
+    assert f"Codex companion job log: {log_path}" in output
+    assert "unfinished lead text" not in output
+
+
 def test_known_native_launch_reads_delegation_ledger_once(tmp_path, monkeypatch):
     import factory_lib
     import forge_cli.codex_runtime as codex_runtime

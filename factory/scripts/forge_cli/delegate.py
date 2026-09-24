@@ -1926,6 +1926,49 @@ def _open_private_log(path: Path):
     )
 
 
+def _companion_job_ids(base: Path) -> set[str]:
+    try:
+        from .codex_status import load_jobs
+
+        return {str(job["id"]) for job in load_jobs(base) if job.get("id")}
+    except Exception:
+        return set()
+
+
+def _companion_job_error(
+        base: Path, result: dict, previous_ids: set[str]
+) -> tuple[list[str], Path] | None:
+    from .codex_status import load_jobs
+
+    try:
+        jobs = load_jobs(base)
+    except Exception:
+        return None
+    job_id = result.get("jobId") or result.get("job_id") or result.get("id")
+    if not job_id and isinstance(result.get("job"), dict):
+        job_id = result["job"].get("id")
+    job = next((entry for entry in jobs
+                if job_id is not None and str(entry.get("id")) == str(job_id)
+                and str(entry.get("id")) not in previous_ids),
+               None)
+    if job is None and job_id is None:
+        new_jobs = [entry for entry in jobs
+                    if str(entry.get("id")) not in previous_ids]
+        if len(new_jobs) == 1:
+            job = new_jobs[0]
+    log_file = job.get("logFile") if job else None
+    if not isinstance(log_file, str) or not log_file:
+        return None
+    log_path = Path(log_file)
+    try:
+        lines = [line.strip() for line in log_path.read_text(
+            encoding="utf-8", errors="replace").splitlines() if line.strip()]
+    except OSError:
+        lines = []
+    errors = [line for line in lines if "Codex error:" in line]
+    return errors or lines[-4:], log_path
+
+
 def launch_companion(
         base: Path, *, task_id: str, text: str, path: Path,
         task_sha256_value: str, model: str, effort: str, write: bool,
@@ -2198,6 +2241,7 @@ def launch_companion(
     stderr = ""
     stdout_log = None
     stderr_log = None
+    previous_job_ids = _companion_job_ids(base)
     try:
         stdout_log = _open_private_log(output_path)
         stderr_log = _open_private_log(stderr_path)
@@ -2287,9 +2331,16 @@ def launch_companion(
         stderr = stderr_log.read()
         stdout_log.seek(0)
         stdout = stdout_log.read()
-        if stdout:
-            print(stdout.rstrip())
-        if proc.returncode != 0:
+        try:
+            result = json.loads(stdout)
+        except (TypeError, json.JSONDecodeError):
+            result = {}
+        if not isinstance(result, dict):
+            result = {}
+        status = result.get("status")
+        failed_status = (isinstance(status, (int, float))
+                         and not isinstance(status, bool) and status != 0)
+        if proc.returncode != 0 or failed_status:
             _revoke_native_write_admission(base, record)
             failed = {
                 **record, "at": now_iso(), "launch_status": "failed",
@@ -2297,8 +2348,21 @@ def launch_companion(
             }
             append_delegation(base, failed)
             terminal_recorded = True
+            reason = (f"exit {proc.returncode}" if proc.returncode != 0
+                      else f"reported status {status} (process exit 0)")
+            job_error = _companion_job_error(base, result, previous_job_ids)
+            if job_error:
+                lines, log_path = job_error
+                detail = "\n".join(lines)
+                if detail:
+                    fail(f"{detail}\nCodex companion job log: {log_path}\n"
+                         f"Codex companion launch failed ({reason})")
+                fail(f"Codex companion job log: {log_path}\n"
+                     f"Codex companion launch failed ({reason})")
             fail("Codex companion launch failed "
-                 f"(exit {proc.returncode}): {(stderr or stdout).strip()}")
+                 f"({reason}): {(stderr or stdout).strip()}")
+        if stdout:
+            print(stdout.rstrip())
         if sha256_of(path) != brief_digest:
             _revoke_native_write_admission(base, record)
             append_delegation(base, {
