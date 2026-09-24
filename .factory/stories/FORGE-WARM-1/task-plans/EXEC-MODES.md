@@ -79,6 +79,26 @@ flowchart LR
 - Docs: `.claude/CLAUDE.md` role split and grill line (stay at or under 40 lines), the WORKFLOW.md
   delegate paragraph, and the delegation-boundary closeout bullet each name the three modes and the
   hybrid one-command opt-in.
+- Per-task executor: the preparation row records `executor`; review and close take the engine and the
+  write-proof rule from the task's recorded row, not from the current environment, so a one-task hybrid
+  opt-in closes and reviews with Claude without re-setting the variable.
+- Claude-host dispatch: for `executor == "claude"` the host-native descriptor tells the Claude session
+  to make the edits itself or through a Claude subagent (no `spawn_agent`/`followup_task`); the task
+  grill's host reader is a fresh Claude subagent given the prepared brief, recorded through the existing
+  `--cold-result --preparation-id` path.
+- Writer switch: `delegate` refuses a Claude writer preparation while the task has a starting or running
+  companion launch (existing `current_delegation` / delegation lock), naming the launch to finish or
+  cancel first.
+- Codex coordination: the native hook branch and `_require_successful_launch` resolve the executor first,
+  so a Codex-coordinated session with any setting other than unset/codex is refused before native
+  admission or close.
+- Claude Lite: in claude mode with an open Lite window, the Claude branch admits a write when the window
+  has a Claude writer preparation (made by `forge fix`) and the path fits the window's budget — the same
+  `_lite_contract` check native Lite uses.
+- Doctor: `--fast`, full and `--fix` resolve the executor first; in claude mode they skip the Codex CLI
+  and plugin checks and never install Codex.
+- Docs also amend `docs/specs/strict-role-split.md`, `docs/specs/dual-coordinator-parity.md` and
+  `docs/architecture/dual-coordinator-parity.md` where they say Claude product writes need the plugin.
 - Tests: one new `factory/tests/test_executor_modes.py` that reuses the helpers in
   `test_worker_admission.py`, `test_gates.py`, `test_grill_release.py` and
   `test_review_lenses_in_parallel.py`.
@@ -92,8 +112,14 @@ Rendered by the harness from the recorded decomposition; edit the decomposition,
 
 **Acceptance criteria**
 
-- FORGE_EXECUTOR selects hybrid (default), codex or claude, and each passes the same task gates
-- Codex-coordinated sessions keep native execution and refuse other executor settings
+- With no FORGE_EXECUTOR set in a Claude-coordinated session, the executor resolves to hybrid, a Claude session product write in an active task is refused and points to forge delegate, and delegate starts Codex as today.
+- FORGE_EXECUTOR=claude forge delegate records a Claude writer entry for the active task without starting Codex; in hybrid or claude mode the Claude session and its subagents may then write inside that task's effective scope, and a write outside it is refused naming the path.
+- In claude mode on a machine without Codex, doctor (including --fast and --fix) passes without Codex, the task grill prepares a fresh Claude subagent reader, and task close runs the same proof, reviews with Autoreview's claude engine, and closes on the Claude writer entry.
+- In codex mode a Claude writer entry grants nothing: Claude session writes stay refused and close still requires a successful Codex launch.
+- A Codex-coordinated session keeps native execution and refuses any FORGE_EXECUTOR other than unset or codex with a message naming the setting, in delegate, doctor, the write hook and task close.
+- An unknown FORGE_EXECUTOR value is refused by commands and by the write hook with a message listing hybrid, codex and claude.
+- In claude mode forge fix records a Claude writer entry for the open Lite window, and Claude edits are admitted only within that window's file budget.
+- A task's executor is recorded on its writer entry and review and close follow it; switching a task to a Claude writer is refused while a Codex launch for that task is starting or running.
 
 **Write scope** (what `stage done` measures the diff against)
 
@@ -109,6 +135,9 @@ Rendered by the harness from the recorded decomposition; edit the decomposition,
 - .claude/CLAUDE.md
 - WORKFLOW.md
 - docs/specs/delegation-boundary.md
+- docs/specs/strict-role-split.md
+- docs/specs/dual-coordinator-parity.md
+- docs/architecture/dual-coordinator-parity.md
 
 **Required tests** (run by `stage done`)
 
@@ -124,6 +153,8 @@ Rendered by the harness from the recorded decomposition; edit the decomposition,
 - `test_claude_executor_defaults_review_engine_to_claude` -- `UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}` (factory/tests/test_executor_modes.py)
 - `test_doctor_claude_executor_does_not_require_codex` -- `UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}` (factory/tests/test_executor_modes.py)
 - `test_claude_executor_lite_fix_records_writer_and_admits_within_budget` -- `UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}` (factory/tests/test_executor_modes.py)
+- `test_switch_to_claude_writer_refused_while_codex_launch_runs` -- `UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}` (factory/tests/test_executor_modes.py)
+- `test_codex_coordinated_hook_and_close_refuse_other_executor` -- `UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}` (factory/tests/test_executor_modes.py)
 
 **Verify commands**
 
@@ -132,5 +163,5 @@ Rendered by the harness from the recorded decomposition; edit the decomposition,
 - `python3 factory/scripts/check_encoding_hygiene.py`
 - `git diff --check`
 
-**Review budget.** 12 files / 700 lines -- Eight small source edits (about 120 lines) that reuse host-native preparation and admission, three short doc amendments, and one new test file of about 400 lines.
+**Review budget.** 15 files / 800 lines -- Eight small source edits reusing host-native preparation and admission, five short doc amendments, and one new test file.
 <!-- /forge:contract -->
