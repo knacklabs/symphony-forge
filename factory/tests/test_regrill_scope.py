@@ -161,6 +161,36 @@ def test_task_cold_read_releases_after_rerecorded_contract_change(
     assert "the task's contract changed since its last cold read" not in blocked
 
 
+def test_legacy_task_cold_read_uses_brief_identity(repo: Path, capsys, monkeypatch):
+    from forge_cli import codex_status, grill
+
+    _seed(repo)
+    legacy = {
+        "launch_id": "legacy",
+        "launch_status": "prepared",
+        "transport": "host-native",
+        "brief_sha256": "a" * 64,
+    }
+    monkeypatch.setattr(grill, "_last_pass_at", lambda *_args: "")
+    monkeypatch.setattr(
+        grill, "_latest_launch_rows", lambda *_args, **_kwargs: [legacy],
+    )
+    monkeypatch.setattr(codex_status, "dead_launches", lambda _base: [])
+
+    grill._refuse_a_second_cold_read(
+        repo, "grill-task-T1", "task", "T1", "b" * 64,
+        contract_sha256="c" * 64,
+    )
+    assert "fresh read is allowed" in capsys.readouterr().out
+
+    with pytest.raises(SystemExit):
+        grill._refuse_a_second_cold_read(
+            repo, "grill-task-T1", "task", "T1", "a" * 64,
+            contract_sha256="c" * 64,
+        )
+    assert "already been cold-read" in capsys.readouterr().out
+
+
 # --------------------------------------------------------------- bookkeeping
 @pytest.mark.parametrize("field,value", [
     ("review_budget", {"max_changed_files": 999, "max_changed_lines": 9,

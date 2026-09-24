@@ -300,9 +300,10 @@ def _refuse_a_second_cold_read(base: Path, ledger_id: str, gate: str,
         for row in cold:
             if gate == "task":
                 recorded = row.get("cold_contract_sha256")
-                # Older launches do not identify the protected contract, so
-                # they remain authoritative and cannot release another read.
-                identities = [(recorded, contract_sha256)]
+                if "cold_contract_sha256" in row:
+                    identities = [(recorded, contract_sha256)]
+                else:
+                    identities = [(row.get("brief_sha256"), brief_sha256)]
             else:
                 identities = [
                     (row.get("brief_sha256"), brief_sha256),

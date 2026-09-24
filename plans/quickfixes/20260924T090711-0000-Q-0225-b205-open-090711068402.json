@@ -1,0 +1,12 @@
+{
+  "event": "open",
+  "id": "Q-0225-b205",
+  "profile": "lite",
+  "reason": "Legacy task cold reads without a contract fingerprint must be releasable when their brief changed",
+  "started_at": "2026-09-24T09:07:11+00:00",
+  "max_files": 5,
+  "files": [],
+  "harness_source": true,
+  "by": "Ravi Kiran Vemula",
+  "base_sha": "ee0351ef9dd0b6c563a758d8e9d872ccd2ad1a70"
+}
