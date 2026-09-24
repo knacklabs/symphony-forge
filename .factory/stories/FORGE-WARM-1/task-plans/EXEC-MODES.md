@@ -65,18 +65,28 @@ flowchart LR
   checks and installs.
 - Mode switch: the write proof must match the CURRENT mode — claude mode accepts only a preparation
   recorded with `executor: "claude"`; hybrid/codex accept only a companion launch. A task begun under
-  another mode is delegated again after a switch.
+  another mode is delegated again after a switch, and `delegate` refuses to prepare a Claude writer
+  while a companion launch for that task is starting or running (the existing delegation lock).
+  `test_claude_executor_close_accepts_claude_writer_and_reviews_with_claude` also switches modes with
+  the old row present and checks both the hook and close refuse it.
+- Frontier: `task_frontier_state` treats a current Claude writer preparation as "edit, then close" (not
+  inspect-delegate), so `forge next` points to the right step.
+- Lite in claude mode: `forge review --lite` defaults to `review_engine()` (claude), so a Claude-only
+  Lite window reviews and closes without Codex.
 - Protected markers (including the repo-kind marker) are always refused on the Claude path; it does not
   inherit the native path's marker exemption.
-- Claude cold reader: grill prepares its usual host-native `agent_type: griller` row; in claude mode the
-  handoff reads "run a fresh Claude subagent (general-purpose) with the prepared brief as its only
-  input, then record its JSON with `record_grill_from_json.py --gate task --task <id> --cold-result
-  <file> --preparation-id <id>`" instead of the `spawn_agent` descriptor.
+- Claude cold reader (every gate: plan, spec, signoff, epics, task): grill prepares its usual host-native
+  `agent_type: griller` row; in claude mode the handoff reads "start a NEW Claude subagent (general-purpose;
+  a subagent starts with no conversation history) whose prompt is only the prepared brief file; save its
+  JSON reply; then record with `record_grill_from_json.py --gate <gate> [--task <id>] --input
+  <disposition json> --cold-result <reply file> --preparation-id <id>`" instead of the `spawn_agent`
+  descriptor.
 - `forge next`: in claude mode a Claude writer preparation's next action is "edit inside the task
   scope, then `forge task close <id>`".
 - The `executor` field is declared in `factory/schemas/delegation.json` (values hybrid|codex|claude)
   and validated wherever a Claude preparation is admitted.
-- Hybrid Claude writes (decision 0085) are deferred by the owner's decision as D-0044.
+- Hybrid Claude writes (decision 0085) are deferred by the owner's decision as D-0044; the story plan is
+  amended and re-approved to match.
 - User-facing docs: README.md ("Where Codex sits" and prerequisites: Codex tools are needed only for
   hybrid and codex; Claude writes in claude mode) and docs/getting-started.md (a short "Choose who
   writes code" step with the `.envrc` line).
