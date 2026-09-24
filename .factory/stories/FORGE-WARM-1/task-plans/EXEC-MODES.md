@@ -63,6 +63,21 @@ flowchart LR
   the cold reader (instead of `spawn_agent`), recorded through `--cold-result --preparation-id`.
 - Doctor: `--fast`, full and `--fix` resolve the executor first; claude mode skips Codex CLI/plugin
   checks and installs.
+- Mode switch: the write proof must match the CURRENT mode — claude mode accepts only a preparation
+  recorded with `executor: "claude"`; hybrid/codex accept only a companion launch. A task begun under
+  another mode is delegated again after a switch.
+- Protected markers (including the repo-kind marker) are always refused on the Claude path; it does not
+  inherit the native path's marker exemption.
+- Claude cold reader: grill prepares its usual host-native `agent_type: griller` row; in claude mode the
+  handoff reads "run a fresh Claude subagent (general-purpose) with the prepared brief as its only
+  input, then record its JSON with `record_grill_from_json.py --gate task --task <id> --cold-result
+  <file> --preparation-id <id>`" instead of the `spawn_agent` descriptor.
+- `forge next`: in claude mode a Claude writer preparation's next action is "edit inside the task
+  scope, then `forge task close <id>`".
+- The `executor` field is declared in `factory/schemas/delegation.json` (values hybrid|codex|claude)
+  and validated wherever a Claude preparation is admitted. The schema, `forge_cli/phase.py`, AGENTS.md
+  and `factory/skills/forge.md` are added through an approved scope amendment at implementation.
+- Hybrid Claude writes (decision 0085) are deferred by the owner's decision as D-0044.
 - Docs: `.claude/CLAUDE.md` (stay within its line limit), WORKFLOW.md, the delegation-boundary,
   strict-role-split and dual-coordinator parity specs, the parity architecture, the product brief and
   docs/FACTORY.md name the three modes.
