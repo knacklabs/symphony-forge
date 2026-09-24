@@ -18,9 +18,10 @@ waiting. Codex can keep a conversation alive and continue it; Forge just never a
 - Existing client repos get this through `forge upgrade`; work already in progress finishes the old
   way, and Forge cleans up its own Codex conversations when tasks and stories finish.
 
-Not in this story: one shared story conversation every task branches from, and approving task plans
-from the main checkout — both come next. Codex workers keep full access as today; Forge's checks
-review their changes against the task but do not sandbox them.
+Not in this story: one shared story conversation every task branches from, approving task plans from
+the main checkout, and letting Claude write a single task while in hybrid mode — all come later. Workers on the new Codex route run with full access and never ask, as
+native Codex chats do; the plugin fallback keeps its current settings. Forge's checks review every
+worker's changes against the task but do not sandbox them.
 
 ## Done when
 
@@ -58,11 +59,13 @@ Nothing beyond approving this plan.
 
 - One `FORGE_EXECUTOR` resolver (hybrid default, codex, claude) for Claude-coordinated sessions,
   read by the write hook, delegate, doctor, grill, review and close; Codex-coordinated sessions keep
-  native Codex execution (any other executor setting there is refused with a message). Hybrid and claude modes admit the
-  Claude session and its subagents when a task is active in that worktree and the path is inside the
-  task's effective scope, recorded in the task's writer list; that record is the stage's write proof
-  at close preflight and stage finish in place of a companion launch. Claude mode grills with a fresh Claude
-  reader and reviews with Autoreview's claude engine.
+  native Codex execution (any other executor setting there is refused with a message). Claude mode admits
+  the Claude session and its subagents inside the active task's effective scope (or an open Lite
+  window's budget) after `forge delegate` / `forge fix` composes the canonical brief and records a
+  Claude writer entry that is the stage's write proof in place of a
+  companion launch; Claude mode grills with a fresh Claude subagent reader and reviews with
+  Autoreview's claude engine. Hybrid Claude writes for a single task are deferred (D-0044),
+  and Codex-coordinated sessions support only Codex execution in this story (D-0045).
 - SDK route: `openai-codex` pinned exactly in `factory/requirements-sdk.txt`; the installed `codex`
   binary must be at least the SDK's minimum; `forge doctor --fix` installs the pinned SDK into a
   Forge-managed uv environment used by doctor and delegate and, when needed, the minimum `codex`; every turn sets `danger-full-access` and
@@ -74,9 +77,9 @@ Nothing beyond approving this plan.
   every request names a worktree of that common directory; takeover only of a provably dead holder
   (uncertain liveness is refused; an orphaned app-server is terminated first); stale counters refused.
 - Routes are sticky per task in both directions (a task with any existing companion launch is a
-  plugin task); a broken route refuses with the fix or an explicit,
-  recorded `--fresh-route` restart. Mismatch or an unhealthy supervisor selects the plugin before
-  dispatch.
+  plugin task). A version mismatch or unhealthy supervisor selects the plugin only for a task's FIRST
+  delegation; a task already on the SDK route refuses with the fix or an explicit, recorded
+  `--fresh-route` restart.
 - Admission parity: the supervisor holds the task lock per turn, carries a hook-verified process
   token, binds the brief digest and scope, honours revocation, and records a terminal turn entry that
   stage close accepts in place of a companion launch; per-turn ledger rows (thread, turn, story, task,
@@ -98,12 +101,17 @@ Nothing beyond approving this plan.
   `.envrc` alone; plugin-started tasks stay on the plugin; client upgrades wait for D-0040 to close.
   Threads archive at task merge and story outcome (retried by doctor); pruning touches only ledger
   threads.
-- Docs: the delegation-boundary, dual-coordinator parity and strict-role-split specs, the parity
-  architecture, the product brief, WORKFLOW.md and docs/FACTORY.md where they name the plugin as the
+- Docs: README.md, docs/getting-started.md, docs/degraded-mode.md, `.claude/CLAUDE.md`, AGENTS.md, the
+  Forge skill, the delegation-boundary, dual-coordinator parity and strict-role-split specs, the parity
+  architecture, the product brief, WORKFLOW.md and docs/FACTORY.md wherever they name the plugin as the
   only Claude route or deny Claude writers.
+- Task-level mechanics (per-turn supervisor binding, ledger location, abandon-turn cleanup, signal
+  delivery proof, benchmark artifacts, platform evidence) are specified in each task's own plan and
+  cold read, planned just in time.
 - Activation: the new route stays off until SDK-ADMISSION ships (SDK-SETUP and SDK-SUPERVISOR install
-  and check only); SDK-ADMISSION includes terminal-turn proof via `thread/read`, LIVE-EVENTS adds
-  streaming, reattach and steering.
+  and check only); SDK-ADMISSION includes terminal-turn proof via `thread/read`; until LIVE-EVENTS
+  ships, worker signals work as today (pause, resolve, resume) and LIVE-EVENTS then adds streaming,
+  reattach and steering.
 
 ## Task decomposition
 
