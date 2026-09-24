@@ -30,11 +30,11 @@ def _upgrade(target: Path, *extra: str) -> subprocess.CompletedProcess[str]:
 
 def test_forge_profile_hash_registry_covers_main_history():
     if git(HARNESS, "rev-parse", "--is-shallow-repository") == "true":
-        pytest.skip("main profile history is unavailable in a shallow clone")
+        pytest.skip("HEAD profile history cannot be checked in a shallow clone")
 
     changes = subprocess.run(
         ["git", "log", "--raw", "--no-abbrev", "--no-renames", "--format=",
-         "main", "--", ".codex/agents/*.toml"],
+         "HEAD", "--", ".codex/agents/*.toml"],
         cwd=HARNESS, capture_output=True, text=True, check=True,
     ).stdout.splitlines()
     known = upgrade._forge_profile_hashes(HARNESS)
