@@ -233,6 +233,6 @@
   "story": "FORGE-WARM-1",
   "epic": "symphony-forge",
   "plan_file": "plans/active/FORGE-WARM-1-hybrid-mode-reuses-warm-codex-worker-threads.md",
-  "plan_sha256": "b8279507a862037fea02436d0178e4c6f24a0bdb57072f7e0cd9b148282a3015",
-  "commit": "3b99430e518e70ac9085cf67296ffe92fd17db11"
+  "plan_sha256": "9049cc6f9c2e56a23c521b06e12d5bbf0c4412704bae6ff9938727746d2ff28c",
+  "commit": "9d1d82595ee2e59efb748a135a59e2fa6d98aa4d"
 }
