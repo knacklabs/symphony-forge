@@ -1266,6 +1266,32 @@ def test_epics_file_cold_read_records_under_its_artifact_key(
     assert record["input_sha256"] == sha256_of(artifact)
 
 
+def test_outside_epics_artifact_key_records_and_reads_pass(
+        repo: Path, tmp_path: Path, monkeypatch):
+    from factory_lib import grill_key_suffix, require_grill, sha256_of
+
+    artifact = tmp_path / "roadmap-input.json"
+    artifact.write_text('{"epics": []}\n', encoding="utf-8")
+    path_hash = hashlib.sha256(
+        artifact.resolve().as_posix().encode("utf-8")
+    ).hexdigest()[:16]
+    expected = f"{artifact.stem}-{path_hash}"
+
+    def cross_drive_relpath(*_args, **_kwargs):
+        raise ValueError("path is on a different drive")
+
+    with monkeypatch.context() as patch:
+        patch.setattr("os.path.relpath", cross_drive_relpath)
+        assert grill_key_suffix("epics", artifact=artifact, root=repo) == expected
+        assert grill_key_suffix("epics", artifact=artifact, root=repo) == expected
+
+    launch = _prepare_file_cold_read(repo, "epics", artifact, monkeypatch)
+    record = _record_prepared_file(repo, "epics", artifact, launch, tmp_path)
+    assert launch["task"] == f"grill-epics-{expected}"
+    assert record["input_sha256"] == sha256_of(artifact)
+    require_grill(repo, "epics", (), expect_digest_of=artifact)
+
+
 def test_same_named_epics_files_keep_separate_grill_passes(
         repo: Path, tmp_path: Path, monkeypatch):
     from factory_lib import (

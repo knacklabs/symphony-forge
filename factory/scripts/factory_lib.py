@@ -3471,8 +3471,9 @@ def grill_key_suffix(
     path = Path(artifact).expanduser()
     if not path.is_absolute():
         path = base / path
-    relative = os.path.relpath(path.resolve(), base).replace(os.sep, "/")
-    return f"{path.stem}-{hashlib.sha256(relative.encode('utf-8')).hexdigest()[:16]}"
+    path = path.resolve()
+    key_path = path.relative_to(base).as_posix() if path.is_relative_to(base) else path.as_posix()
+    return f"{path.stem}-{hashlib.sha256(key_path.encode('utf-8')).hexdigest()[:16]}"
 
 
 def grill_evidence_name(
