@@ -1,0 +1,70 @@
+{
+  "event": "done",
+  "id": "Q-0226-2215",
+  "profile": "lite",
+  "by": "Ravi Kiran Vemula",
+  "reason": "CI: profile-hash history test must not need a local main branch",
+  "base_sha": "95db09bf172b3c32a8725afcde2d20f354965778",
+  "started_at": "2026-09-24T09:42:01+00:00",
+  "completed_at": "2026-09-24T09:45:03+00:00",
+  "files": [
+    "factory/tests/test_upgrade_lean_workflow.py"
+  ],
+  "reviews": {
+    "quality": {
+      "generated_by": "autoreview",
+      "score": 10,
+      "summary": "quality lens over Q-0226-2215 (1 product path(s), 95db09b..4973fe0, Codex via the autoreview skill): 0 blocking, 0 non-blocking. The supplied diff shows no actionable defect. Using HEAD makes the history check follow the checked-out revision. The unchanged assertions were unavailable, which limits assessment of the test as a whole.",
+      "blocking_findings": [],
+      "non_blocking_findings": [],
+      "recommendation": "approve",
+      "reviewed_scope": [
+        "factory/tests/test_upgrade_lean_workflow.py"
+      ],
+      "skills_used": [],
+      "contract_verdicts": [],
+      "review_base_sha": "95db09bf172b3c32a8725afcde2d20f354965778",
+      "branch_diff_digest": "f691a425888b68b23cabc85b225dbaa011dc78201402dc58eceba894f0853845",
+      "commit": "4973fe03865b82ce1a261c5d23a517cdbe717b3c",
+      "aspect": "quality",
+      "residual_risks": [],
+      "recorded_at": "2026-09-24T09:44:52+00:00"
+    },
+    "performance": {
+      "generated_by": "autoreview",
+      "score": 10,
+      "summary": "performance lens over Q-0226-2215 (1 product path(s), 95db09b..4973fe0, Codex via the autoreview skill): 0 blocking, 0 non-blocking. The revision change shows no material performance impact.",
+      "blocking_findings": [],
+      "non_blocking_findings": [],
+      "recommendation": "approve",
+      "reviewed_scope": [
+        "factory/tests/test_upgrade_lean_workflow.py"
+      ],
+      "skills_used": [],
+      "review_base_sha": "95db09bf172b3c32a8725afcde2d20f354965778",
+      "branch_diff_digest": "f691a425888b68b23cabc85b225dbaa011dc78201402dc58eceba894f0853845",
+      "commit": "4973fe03865b82ce1a261c5d23a517cdbe717b3c",
+      "aspect": "performance",
+      "residual_risks": [],
+      "recorded_at": "2026-09-24T09:44:52+00:00"
+    },
+    "security": {
+      "generated_by": "autoreview",
+      "score": 10,
+      "summary": "security lens over Q-0226-2215 (1 product path(s), 95db09b..4973fe0, Codex via the autoreview skill): 0 blocking, 0 non-blocking. The changed test lines show no security risk.",
+      "blocking_findings": [],
+      "non_blocking_findings": [],
+      "recommendation": "approve",
+      "reviewed_scope": [
+        "factory/tests/test_upgrade_lean_workflow.py"
+      ],
+      "skills_used": [],
+      "review_base_sha": "95db09bf172b3c32a8725afcde2d20f354965778",
+      "branch_diff_digest": "f691a425888b68b23cabc85b225dbaa011dc78201402dc58eceba894f0853845",
+      "commit": "4973fe03865b82ce1a261c5d23a517cdbe717b3c",
+      "aspect": "security",
+      "residual_risks": [],
+      "recorded_at": "2026-09-24T09:44:52+00:00"
+    }
+  }
+}

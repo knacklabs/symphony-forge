@@ -1,39 +1,51 @@
 {
-  "issue": "FORGE-WARM-1",
+  "issue": "FORGE-COORD-1",
   "stages": [
     {
-      "id": "EXEC-MODES",
-      "title": "Executor modes",
+      "id": "NATIVE-FOREGROUND-ACTIVATE",
+      "title": "Native foreground and complete first-task proof",
+      "status": "done",
+      "task_sha256": "397cc2c4a0f51e4bdc805d76fa7a685f55e0da6798ea12df8c47e316e7d19fe5"
+    },
+    {
+      "id": "LEAN-WORKFLOW",
+      "title": "One brief and one complete independent review",
+      "status": "done",
+      "task_sha256": "c43187d60197aacf4a36085849dabf80cb4ac8cf4ef6cd7440184d01b6d68523"
+    },
+    {
+      "id": "LEAN-FIXES",
+      "title": "Close the Lean review findings deferred at merge",
       "status": "pending"
     },
     {
-      "id": "SDK-SETUP",
-      "title": "Pinned SDK and doctor check",
+      "id": "PORTABLE-DELIVERY-MIGRATION",
+      "title": "Portable setup, durable history and existing-client migration",
       "status": "pending"
     },
     {
-      "id": "SDK-SUPERVISOR",
-      "title": "Supervisor and lease",
+      "id": "NATIVE-LIFECYCLE",
+      "title": "Native detached read-only lifecycle and helpers",
       "status": "pending"
     },
     {
-      "id": "SDK-ADMISSION",
-      "title": "Admission and close parity",
+      "id": "SHARED-COORDINATOR-JOURNEY",
+      "title": "Coordinator questions, task ownership and reliable continuation",
       "status": "pending"
     },
     {
-      "id": "RESUME-FIX",
-      "title": "Resume the worker for fix rounds",
+      "id": "FORMAT-SOURCES",
+      "title": "Complete pure mechanical Python formatting",
       "status": "pending"
     },
     {
-      "id": "LIVE-EVENTS",
-      "title": "Live events and steering",
+      "id": "QUALITY-BASELINE",
+      "title": "Semantic fixes and mandatory full quality baseline",
       "status": "pending"
     },
     {
-      "id": "UPGRADE-CLEANUP",
-      "title": "Upgrade, cleanup and parity",
+      "id": "FORGE-COORD-1.1",
+      "title": "Complete native parity and installed-client dogfood",
       "status": "pending"
     }
   ]
