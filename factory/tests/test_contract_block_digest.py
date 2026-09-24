@@ -25,6 +25,7 @@ from test_gates import (  # noqa: I001 — puts factory/scripts on sys.path
 )
 from factory_lib import (  # noqa: E402
     CONTRACT_BLOCK_END, CONTRACT_BLOCK_START, plan_body_digest,
+    refresh_task_plan_contract, run_state_path, strip_derived_sections,
 )
 
 __all__ = ["repo"]
@@ -47,6 +48,14 @@ BLOCK = f"""
 ## Contract (recorded)
 
 Rendered by the harness from the recorded decomposition.
+
+**Acceptance criteria**
+
+- stale acceptance criteria
+
+**Write scope**
+
+- stale/scope.py
 {CONTRACT_BLOCK_END}
 """
 
@@ -83,6 +92,28 @@ def test_an_authored_edit_still_changes_the_digest(repo):
                     encoding="utf-8")
 
     assert plan_body_digest(path) != before
+
+
+def test_refresh_removes_existing_contract_without_changing_approval_digest(repo):
+    state_path = run_state_path(repo)
+    state = json.loads(state_path.read_text(encoding="utf-8"))
+    state["issue_key"] = "STORY-1"
+    state["story"] = "STORY-1"
+    state_path.write_text(json.dumps(state), encoding="utf-8")
+    path = repo / ".factory" / "stories" / "STORY-1" / "task-plans" / "T1.md"
+    path.parent.mkdir(parents=True)
+    path.write_text(PLAN + BLOCK, encoding="utf-8")
+    before = plan_body_digest(path)
+
+    assert refresh_task_plan_contract(
+        repo, "T1", {"id": "T1", "acceptance_criteria": ["new criteria"]},
+    )
+
+    refreshed = path.read_text(encoding="utf-8")
+    assert "forge:contract" not in refreshed
+    assert "stale acceptance criteria" not in refreshed
+    assert "stale/scope.py" not in refreshed
+    assert plan_body_digest(path) == before
 
 
 def test_native_task_approval_survives_contract_block_removal(repo, monkeypatch):
@@ -169,17 +200,22 @@ def test_task_plan_save_strips_contract_block_and_preserves_legacy_metadata(
     source = tmp_path / "T1-plan.md"
     body = (
         "# T1 plan\n\n### Workflow\n\nA -> B.\n"
-        "\n### Manual Verification\n\n1. Run it.\n"
+        "\n### Manual Verification\n\n1. Run it.\n" + BLOCK
     )
     source.write_text(body, encoding="utf-8")
+    approval_digest = plan_body_digest(source)
 
     code, out = run(repo, "forge.py", "task", "plan", "save", "T1",
                     "--from", str(source))
     assert code == 0, out
     destination = story_state(repo) / "task-plans" / "T1.md"
     meta = story_state(repo) / "task-plans" / "T1.meta.json"
-    assert destination.read_text(encoding="utf-8") == body
-    assert "forge:contract" not in destination.read_text(encoding="utf-8")
+    assert destination.read_bytes() == strip_derived_sections(body.encode("utf-8"))
+    saved = destination.read_text(encoding="utf-8")
+    assert "forge:contract" not in saved
+    assert "stale acceptance criteria" not in saved
+    assert "stale/scope.py" not in saved
+    assert plan_body_digest(destination) == approval_digest
     assert not meta.exists()
 
     legacy_body = (

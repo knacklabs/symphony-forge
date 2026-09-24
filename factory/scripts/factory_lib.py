@@ -4265,8 +4265,18 @@ def render_recorded_task_contract(
 
 
 def refresh_task_plan_contract(root: Path, task_id: str, task: dict) -> bool:
-    """Keep the call surface while leaving task plans as authored briefs."""
-    return False
+    """Remove an older rendered contract without adding it back."""
+    plan = evidence_path(
+        root, _active_story_key(root), f"task-plans/{task_id}.md",
+    )
+    if not plan.is_file():
+        return False
+    original = plan.read_bytes()
+    stripped = strip_derived_sections(original)
+    if stripped == original:
+        return False
+    plan.write_bytes(stripped)
+    return True
 
 
 def approved_plan_digest(

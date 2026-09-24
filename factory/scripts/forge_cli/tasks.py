@@ -22,6 +22,7 @@ from factory_lib import (
     require_task_sealed,
     protected_decomposition_state_path, run_state_path,
     story_dir, task_marker_on_main, task_marker_path,
+    strip_derived_sections,
 )
 
 from .common import fail
@@ -225,6 +226,7 @@ def cmd_plan_save(args: argparse.Namespace) -> None:
     has_frontmatter = body != content
     if not body.strip():
         fail("task plan source must not be empty")
+    body = strip_derived_sections(body.encode("utf-8")).decode("utf-8")
     require_task_plan_sections(body, args.id)
     dest = _task_plan_path(base, args.id, for_write=True)
     state = load_json(run_state_path(base), default={})
