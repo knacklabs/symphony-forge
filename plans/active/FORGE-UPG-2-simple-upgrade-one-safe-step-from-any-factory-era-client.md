@@ -64,13 +64,15 @@ files, so the docs task corrects that example to match.
 
 ## Technical approach
 
-- New flow in `factory/scripts/forge_cli/upgrade_flow.py` (target ~400-500 lines) wired to
-  `forge upgrade`; all preflight under the existing git-local lock: harness clean; target
+- New flow in `factory/scripts/forge_cli/upgrade_flow.py` (target ~400-500 lines), built and tested
+  first without being wired in; CLEANUP switches `forge upgrade` to it together with the ticket-check
+  and harness-health changes, so nothing half-works in between; all preflight under the existing git-local lock: harness clean; target
   `constitution/VENDORED_FROM` present and an ancestor of harness HEAD; pre-rename `.agents/`
   machinery refused with the `forge-legacy-upgrade` route; target clean (`--untracked-files=all`);
   every listed worktree readable; in-flight check per worktree (git-local pointer else
   `.factory/run.json` phase not shipped; active git-local stage; `.factory/quickfix.json`; any
-  `plans/active/` plan whose roadmap item is not done); unshipped client files in
+  `plans/active/` plan in any worktree whose roadmap item is not done); archive destinations that
+  already exist; unshipped client files in
   `factory/`/`constitution/`/`harness/` (except client skills) and client or ignored files at required
   machinery paths refused.
 - Source bytes: vendoring copies from a committed snapshot of the harness (`git archive HEAD` into a
@@ -87,8 +89,10 @@ files, so the docs task corrects that example to match.
   `forge doctor --fast`, board `aggregate_state`); any tracked change they make is a failure; the
   throwaway worktree is removed either way.
 - Commit with trailers `Forge-Upgrade: <old>..<new>` and one `Parked: <story>` per parked story; print
-  next steps. On failure: reset, check out the original branch, delete the upgrade branch,
-  `git clean -fd` of added paths (never `-x`), restore `<git-dir>/forge/`.
+  next steps. On any failure or interruption (including Ctrl-C): reset, check out the original
+  branch, delete the upgrade branch, delete exactly the files the upgrade wrote that were not tracked
+  before (its own list, not `git clean`), restore `<git-dir>/forge/` except upgrade's own lock file.
+  A detached HEAD is refused up front.
 - Ticket check (`check_pr_ticket.is_harness_revendor`): a `Forge-Upgrade` commit is exempt when every
   change is one the upgrader produces — harness-owned paths, the manifest, 100% renames of
   archive-table paths into `.factory/archive/pre-*/`, Forge's `.gitignore`/`.gitattributes` blocks and
@@ -97,7 +101,8 @@ files, so the docs task corrects that example to match.
 - Delete: the Lean inventories, revalidation, resume plans, preserve backups, profile hash tables, the
   `.agents` layout migration and the `run.json` pre-check; `approval.py`'s import of
   `_validate_completed_manifest`; `factory/schemas/lean-workflow-migration.json`; old tests.
-- Tag `forge-legacy-upgrade` at the last harness commit that still carries the `.agents` migration.
+- Tag `forge-legacy-upgrade` at a commit already on main that still carries the `.agents` migration
+  (1a08c7bc), so the route exists as soon as CORE ships.
 - Board: a task with no selected review but archived review files shows "reviewed before upgrade".
 - Messages: `tasks.py`'s legacy task-grill advice and other "run forge upgrade" texts for in-progress
   work say "finish or park, then upgrade"; harness-health's automatic upgrade step is removed.
@@ -110,18 +115,13 @@ files, so the docs task corrects that example to match.
 
 ## Task decomposition
 
-Each task ships its own pull request. OLD-CLIENT-FIXTURE first; CORE after it; PARK and DELETE-OLD
-after CORE (disjoint: PARK adds to `upgrade_flow.py`'s park step, DELETE-OLD removes `upgrade.py`
-machinery and old tests); EDGES after DELETE-OLD; DOCS-SKILL last.
+The owner chose three tasks. CORE first, then CLEANUP, then DOCS. Each ships its own pull request.
 
 | Label / exact task ID | What it delivers | Depends on | user_facing |
 |---|---|---|---|
-| Fixture / OLD-CLIENT-FIXTURE | Test helper that scaffolds a client from any harness commit in this repo's history (8563f8c6, 43f6bede, 47516c55, pre-2ebba90d) | none | false |
-| Core / CORE | `upgrade_flow.py`: preflight, committed snapshot, archive, byte-ownership vendoring incl. doc contracts, sign-off carry, throwaway-worktree checks, commit, rollback; wired to `forge upgrade`; new tests | OLD-CLIENT-FIXTURE | false |
-| Park / PARK | `--park` inside the branch and rollback, with its refusals and tests | CORE | false |
-| Delete / DELETE-OLD | Old machinery, schema, approval coupling and old tests removed; legacy tag | CORE | false |
-| Edges / EDGES | Ticket-check exemption, board label, reworded messages, harness-health step removed, doctor skill check, roadmap coverage note | DELETE-OLD | false |
-| Docs / DOCS-SKILL | Specs, docs, decision 0088 example fix, upgrade skill | EDGES | false |
+| Core / CORE | Old-client test fixture; `upgrade_flow.py` with preflight, committed snapshot, archive, byte-ownership vendoring incl. doc contracts, sign-off carry, throwaway-worktree checks, commit and rollback, tested but not yet wired; the legacy tag | none | false |
+| Cleanup / CLEANUP | `forge upgrade` switched to the new flow; `--park`; old machinery, schema, approval coupling and old tests deleted; ticket-check exemption; board label; reworded messages; harness-health step removed; doctor skill check; roadmap coverage note | CORE | false |
+| Docs / DOCS | Specs, docs, decision 0088 example fix, upgrade skill | CLEANUP | false |
 
 ## Verify plan
 

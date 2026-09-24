@@ -8,14 +8,173 @@
       "objective": "An old-client test fixture and the new upgrade_flow.py wired to forge upgrade: fail-closed preflight, committed harness snapshot, upgrade branch, archive table, byte-ownership vendoring incl. doc contracts and the sign-off carry, checks in a throwaway worktree, trailered commit, exact rollback.",
       "dependencies": [],
       "acceptance_criteria": [
-        "A test fixture scaffolds a client from 8563f8c6, 43f6bede, 47516c55 or a pre-2ebba90d commit of this repository",
-        "Idle clients from the three factory-era versions upgrade with exit 0 on an upgrade branch, then forge next, forge audit, forge doctor --fast and the board data run without errors",
-        "A second upgrade changes nothing; a newer harness upgrade succeeds; a non-ancestor vendored commit is refused",
-        "Work in progress in any worktree, a dirty target or harness, an unreadable worktree, a pre-rename client, unshipped client machinery files and blocked machinery paths are refused with no repository change",
-        "An injected failure after vendoring leaves the original branch, tracked files and git-local state exactly as before",
-        "Client skills, custom profiles, edited doc contracts, docs/memory, grill records, unknown .factory files and the sign-off survive; exactly the archive table's files move under .factory/archive/pre-<sha>/"
+        "A test helper builds clients from harness commits 8563f8c6, 43f6bede and 47516c55 and from a pre-rename commit (before 2ebba90d) by running that version's own forge init; each carries that version's layout and a constitution/VENDORED_FROM naming the commit.",
+        "Run through upgrade_flow.cmd_upgrade (forge upgrade is unchanged until CLEANUP), an idle client from each of 8563f8c6, 43f6bede and 47516c55 upgrades with exit 0 onto a new forge-upgrade/<old>-<time> branch in one commit carrying a Forge-Upgrade: <old>..<new> trailer, leaving the original branch untouched and the tree clean with VENDORED_FROM at the harness commit; forge next, forge audit, forge doctor --fast (missing machine tools reported, never a crash) and the board data then run without errors.",
+        "A second upgrade with the same harness creates no branch or commit and changes nothing; an upgrade to a newer harness commit succeeds; a vendored commit that is unknown or not an ancestor of the harness is refused, and a client without VENDORED_FROM is pointed to forge adopt.",
+        "Work in progress in any listed worktree (a story pointer whose phase is not shipped, an active git-local stage, an open Lite, quickfix or degraded window, or a plan in that worktree's plans/active/ whose roadmap item is not done, whether approved or awaiting approval) is refused before anything is written, naming each worktree and story, and nothing in the repository changes apart from upgrade's own lock file <git-dir>/forge/locks/state/lean-upgrade.lock.",
+        "A modified or untracked target file, a detached HEAD, a harness with uncommitted changes, an unreadable listed worktree (named, with git worktree prune suggested), a client file in factory/, constitution/ or harness/ that Forge never shipped (advised to move it out of that folder and re-run), a changed Forge-owned file outside doc contracts and profiles (given the git show restore command), an ignored file at a path upgrade writes, and an archive destination that already exists are each refused with the reason, leaving HEAD, branches, worktrees, the working tree and git-local Forge state unchanged apart from upgrade's own lock file <git-dir>/forge/locks/state/lean-upgrade.lock.",
+        "A pre-rename client (Forge machinery under .agents/) is refused with a message naming the forge-legacy-upgrade tag and the exact commands to run the older upgrader from it and then this upgrade, and nothing changes apart from upgrade's own lock file <git-dir>/forge/locks/state/lean-upgrade.lock.",
+        "The forge-legacy-upgrade tag's commit 1a08c7bc is on main, is an ancestor of the harness and still carries the .agents/ migration; the coordinator creates and pushes the tag at merge.",
+        "A check failure, a KeyboardInterrupt or a SIGTERM after vendoring leaves the client on its original branch with identical tracked files and git-local Forge state, removes every file the upgrade wrote that was not tracked at the original HEAD (including an ignored new .envrc), and leaves no upgrade branch or throwaway worktree.",
+        "A forge-upgrade/* branch left by a killed run (marked with branch.<branch>.forgeOriginal) is refused by the next run with exact recovery commands, and after running them the client is on its original branch and a new upgrade succeeds.",
+        "Client skills, custom and edited agent profiles, edited doc contracts (named in the report), docs/memory, grill records and unknown .factory files survive byte-for-byte; exactly the tracked per-lens quality/performance/security review files under story, task and history reviews/ folders and the root .factory decomposition.json, tests.json and verify.json move as exact renames to .factory/archive/pre-<old>/<original path>, and nothing else moves.",
+        "A client whose sign-off exists only in its legacy .factory/run.json upgrades with harness.yaml carrying the canonical signoff_record pin, and a pinned sign-off is untouched.",
+        "Upgrade copies only the harness's committed tree: a file present but not committed in the harness checkout never reaches the client."
       ],
-      "user_facing": false
+      "user_facing": false,
+      "write_scope": [
+        "factory/scripts/forge_cli/upgrade_flow.py",
+        "factory/scripts/forge_cli/upgrade.py",
+        "factory/tests/old_client.py",
+        "factory/tests/test_upgrade_flow.py"
+      ],
+      "required_tests": [
+        {
+          "id": "test_old_client_fixture_builds_each_factory_era_version",
+          "path": "factory/tests/test_upgrade_flow.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_idle_clients_upgrade_on_a_branch_and_everyday_commands_run",
+          "path": "factory/tests/test_upgrade_flow.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_second_upgrade_changes_nothing_and_newer_harness_upgrades",
+          "path": "factory/tests/test_upgrade_flow.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_unknown_newer_or_missing_vendored_commit_is_refused",
+          "path": "factory/tests/test_upgrade_flow.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_work_in_progress_in_any_worktree_is_refused_by_name",
+          "path": "factory/tests/test_upgrade_flow.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_unsafe_targets_are_refused_without_any_change",
+          "path": "factory/tests/test_upgrade_flow.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_pre_rename_client_is_refused_with_the_legacy_route",
+          "path": "factory/tests/test_upgrade_flow.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_legacy_route_commit_carries_the_agents_migration",
+          "path": "factory/tests/test_upgrade_flow.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_failure_or_interruption_after_vendoring_restores_the_client_exactly",
+          "path": "factory/tests/test_upgrade_flow.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_leftover_upgrade_branch_is_refused_with_recovery_commands",
+          "path": "factory/tests/test_upgrade_flow.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_client_owned_content_survives_and_only_the_archive_table_moves",
+          "path": "factory/tests/test_upgrade_flow.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_legacy_signoff_is_carried_into_the_harness_pin",
+          "path": "factory/tests/test_upgrade_flow.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+        },
+        {
+          "id": "test_vendoring_copies_only_committed_harness_bytes",
+          "path": "factory/tests/test_upgrade_flow.py",
+          "command": "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with psutil python -m pytest {path}::{id} -o junit_family=legacy --junitxml={report}"
+        }
+      ],
+      "verify_commands": [
+        "UV_CACHE_DIR=/tmp/forge-lean-uv-cache UV_TOOL_DIR=/tmp/forge-lean-uv-tools uv run --python 3.11 --with pytest --with pytest-xdist --with psutil python factory/scripts/verify.py",
+        "python3 factory/scripts/check_dual_runtime.py",
+        "python3 factory/scripts/check_encoding_hygiene.py",
+        "git diff --check"
+      ],
+      "reviewer_focus": [
+        "Apply constitution/09-agent-conduct.md sections 2-4 and Ponytail: one new module with a thin cmd_upgrade and small preflight, plan, apply, check, commit and rollback functions; ensure_missing and stamp_vendoring are an in-place split of upgrade.py imported by the new flow, not copies; no new schema, ledger, config file or hash table.",
+        "Prove every refusal happens before the first write under the existing git-local lock and leaves HEAD, branches, worktrees, the working tree and <git-dir>/forge/ unchanged apart from that lock file; work-in-progress reads cover every listed worktree, including its plans/active/, and fail closed on unreadable state.",
+        "Prove byte ownership: the decision comes from blob ids of target HEAD, harness <VENDORED_FROM> and harness HEAD; only Forge-owned paths are refreshed or retired; edited doc contracts and profiles are kept and named; never-shipped machinery files get move-out advice and changed Forge files get the git show hint; vendoring reads only the git-archive snapshot, never the harness working tree.",
+        "Prove the rollback is exact for any BaseException or SIGTERM after the branch exists: original branch restored, upgrade branch and its forgeOriginal config deleted, exactly the recorded new paths removed without git clean, <git-dir>/forge/ restored, throwaway worktree removed; checks run only in the throwaway worktree, any tracked change there fails the upgrade, and a leftover branch from a hard kill is refused with recovery commands.",
+        "Confirm forge.py and the old tests are untouched, so forge upgrade still runs upgrade.cmd_upgrade; the legacy tag is only a named constant and a merge step; wiring, --park, the ticket check, board label, messages, harness-health, doctor skill check and deletions are left to CLEANUP, and docs to DOCS."
+      ],
+      "plan_contracts": [
+        {
+          "id": "UPG-CORE-1",
+          "statement": "A test helper builds clients from harness commits 8563f8c6, 43f6bede and 47516c55 and from a pre-rename commit (before 2ebba90d) by running that version's own forge init; each carries that version's layout and a constitution/VENDORED_FROM naming the commit.",
+          "source": ".factory/stories/FORGE-UPG-2/task-plans/CORE.md#Manual Verification"
+        },
+        {
+          "id": "UPG-CORE-2",
+          "statement": "Run through upgrade_flow.cmd_upgrade (forge upgrade is unchanged until CLEANUP), an idle client from each of 8563f8c6, 43f6bede and 47516c55 upgrades with exit 0 onto a new forge-upgrade/<old>-<time> branch in one commit carrying a Forge-Upgrade: <old>..<new> trailer, leaving the original branch untouched and the tree clean with VENDORED_FROM at the harness commit; forge next, forge audit, forge doctor --fast (missing machine tools reported, never a crash) and the board data then run without errors.",
+          "source": ".factory/stories/FORGE-UPG-2/task-plans/CORE.md#Manual Verification"
+        },
+        {
+          "id": "UPG-CORE-3",
+          "statement": "A second upgrade with the same harness creates no branch or commit and changes nothing; an upgrade to a newer harness commit succeeds; a vendored commit that is unknown or not an ancestor of the harness is refused, and a client without VENDORED_FROM is pointed to forge adopt.",
+          "source": ".factory/stories/FORGE-UPG-2/task-plans/CORE.md#Manual Verification"
+        },
+        {
+          "id": "UPG-CORE-4",
+          "statement": "Work in progress in any listed worktree (a story pointer whose phase is not shipped, an active git-local stage, an open Lite, quickfix or degraded window, or a plan in that worktree's plans/active/ whose roadmap item is not done, whether approved or awaiting approval) is refused before anything is written, naming each worktree and story, and nothing in the repository changes apart from upgrade's own lock file <git-dir>/forge/locks/state/lean-upgrade.lock.",
+          "source": ".factory/stories/FORGE-UPG-2/task-plans/CORE.md#Manual Verification"
+        },
+        {
+          "id": "UPG-CORE-5",
+          "statement": "A modified or untracked target file, a detached HEAD, a harness with uncommitted changes, an unreadable listed worktree (named, with git worktree prune suggested), a client file in factory/, constitution/ or harness/ that Forge never shipped (advised to move it out of that folder and re-run), a changed Forge-owned file outside doc contracts and profiles (given the git show restore command), an ignored file at a path upgrade writes, and an archive destination that already exists are each refused with the reason, leaving HEAD, branches, worktrees, the working tree and git-local Forge state unchanged apart from upgrade's own lock file <git-dir>/forge/locks/state/lean-upgrade.lock.",
+          "source": ".factory/stories/FORGE-UPG-2/task-plans/CORE.md#Manual Verification"
+        },
+        {
+          "id": "UPG-CORE-6",
+          "statement": "A pre-rename client (Forge machinery under .agents/) is refused with a message naming the forge-legacy-upgrade tag and the exact commands to run the older upgrader from it and then this upgrade, and nothing changes apart from upgrade's own lock file <git-dir>/forge/locks/state/lean-upgrade.lock.",
+          "source": ".factory/stories/FORGE-UPG-2/task-plans/CORE.md#Manual Verification"
+        },
+        {
+          "id": "UPG-CORE-7",
+          "statement": "The forge-legacy-upgrade tag's commit 1a08c7bc is on main, is an ancestor of the harness and still carries the .agents/ migration; the coordinator creates and pushes the tag at merge.",
+          "source": ".factory/stories/FORGE-UPG-2/task-plans/CORE.md#Manual Verification"
+        },
+        {
+          "id": "UPG-CORE-8",
+          "statement": "A check failure, a KeyboardInterrupt or a SIGTERM after vendoring leaves the client on its original branch with identical tracked files and git-local Forge state, removes every file the upgrade wrote that was not tracked at the original HEAD (including an ignored new .envrc), and leaves no upgrade branch or throwaway worktree.",
+          "source": ".factory/stories/FORGE-UPG-2/task-plans/CORE.md#Manual Verification"
+        },
+        {
+          "id": "UPG-CORE-9",
+          "statement": "A forge-upgrade/* branch left by a killed run (marked with branch.<branch>.forgeOriginal) is refused by the next run with exact recovery commands, and after running them the client is on its original branch and a new upgrade succeeds.",
+          "source": ".factory/stories/FORGE-UPG-2/task-plans/CORE.md#Manual Verification"
+        },
+        {
+          "id": "UPG-CORE-10",
+          "statement": "Client skills, custom and edited agent profiles, edited doc contracts (named in the report), docs/memory, grill records and unknown .factory files survive byte-for-byte; exactly the tracked per-lens quality/performance/security review files under story, task and history reviews/ folders and the root .factory decomposition.json, tests.json and verify.json move as exact renames to .factory/archive/pre-<old>/<original path>, and nothing else moves.",
+          "source": ".factory/stories/FORGE-UPG-2/task-plans/CORE.md#Manual Verification"
+        },
+        {
+          "id": "UPG-CORE-11",
+          "statement": "A client whose sign-off exists only in its legacy .factory/run.json upgrades with harness.yaml carrying the canonical signoff_record pin, and a pinned sign-off is untouched.",
+          "source": ".factory/stories/FORGE-UPG-2/task-plans/CORE.md#Manual Verification"
+        },
+        {
+          "id": "UPG-CORE-12",
+          "statement": "Upgrade copies only the harness's committed tree: a file present but not committed in the harness checkout never reaches the client.",
+          "source": ".factory/stories/FORGE-UPG-2/task-plans/CORE.md#Manual Verification"
+        }
+      ],
+      "review_budget": {
+        "max_changed_files": 4,
+        "max_changed_lines": 1350,
+        "reason": "One new module of about 530 lines, a small in-place split in upgrade.py, one new test file of about 620 lines and a fixture module of about 150 lines; the flow is not wired, so no other file changes."
+      }
     },
     {
       "id": "CLEANUP",
@@ -52,6 +211,6 @@
   "story": "FORGE-UPG-2",
   "epic": "symphony-forge",
   "plan_file": "plans/active/FORGE-UPG-2-simple-upgrade-one-safe-step-from-any-factory-era-client.md",
-  "plan_sha256": "a234f94231ffef7d6924f8c6449dcba85537b5c3840ddf87634bfdd1f9bd680f",
-  "commit": "26ded67d13f2a0fb99b8ef435ac05c1c8a3fc8a9"
+  "plan_sha256": "b0b10f262c6da0bc5a45f164b6106047a6d1006b5a55de97759320fb8a0dbccb",
+  "commit": "13b586222a711783ea5b66c54aefb3d6d4d2880f"
 }
