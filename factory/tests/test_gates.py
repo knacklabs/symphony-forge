@@ -4148,6 +4148,35 @@ def test_decision_numbering_allocates_sequentially(repo):
     assert names == ["0001-first.md", "0002-second.md"]
 
 
+def test_decision_numbering_uses_decisions_on_other_local_branches(repo):
+    decisions = repo / "docs" / "decisions"
+    decisions.mkdir(parents=True, exist_ok=True)
+    existing = [
+        int(path.name[:4])
+        for path in decisions.glob("[0-9][0-9][0-9][0-9]-*.md")
+    ]
+    branch_number = max(existing, default=0) + 5
+    current = git(repo, "branch", "--show-current")
+    branch = "decision-number-only-on-branch"
+    git(repo, "switch", "-c", branch)
+    branch_record = decisions / f"{branch_number:04d}-branch-only.md"
+    branch_record.write_text("# Decision only on another local branch\n")
+    git(repo, "add", "--", f"docs/decisions/{branch_record.name}")
+    git(repo, "commit", "-qm", "add branch-only decision")
+    git(repo, "switch", current)
+    assert not branch_record.exists()
+
+    code, out = run(repo, "forge.py", "decision", "new", "after-branch-only",
+                    "--repo", str(repo))
+
+    allocated = branch_number + 1
+    assert code == 0, out
+    assert (decisions / f"{allocated:04d}-after-branch-only.md").is_file()
+    assert f"allocated {allocated:04d}" in out
+    assert f"highest existing {branch_number:04d}" in out
+    assert "local branches" in out
+
+
 def test_plan_assume_requires_active_plan_then_appends(repo, tmp_path):
     sign_off(repo)
     intake(repo)
