@@ -1,8 +1,9 @@
 ---
-status: accepted
+status: superseded
 confirmed_by: "Ravi"
 date: 2026-08-11
 stories: [FORGE-ROLE-1]
+superseded_by: 0087-full-access-close-checks
 ---
 
 # Strict Role Split
