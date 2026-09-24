@@ -9165,8 +9165,21 @@ def test_mode_done_refuses_client_to_harness_repo_kind_change(repo):
     code, out = run(repo, "forge.py", "mode", "done")
 
     assert code != 0, out
-    assert "opened as client repo" in out and "current kind is harness-source repo" in out, out
-    assert ".factory/harness-source.json is now present" in out, out
+    assert "the harness-source marker cannot change inside a Lite window; " \
+        "change it through a task" in out, out
+    assert (repo / ".factory" / "quickfix.json").exists()
+
+
+def test_mode_done_refuses_marker_only_client_to_harness_change(repo):
+    open_lite(repo)
+    mark_harness_source(repo)
+    git(repo, "add", "-f", ".factory/harness-source.json")
+    git(repo, "commit", "-q", "-m", "add harness marker during lite window")
+
+    code, out = run(repo, "forge.py", "mode", "done")
+
+    assert code != 0 and "the harness-source marker cannot change inside a Lite " \
+        "window; change it through a task" in out, out
     assert (repo / ".factory" / "quickfix.json").exists()
 
 
@@ -9194,13 +9207,13 @@ def test_lite_close_counts_locked_paths_and_task_seal_reports_dirty_agents(repo)
                for problem in problems), problems
 
 
-def test_lite_counts_committed_harness_marker_edit(repo):
-    from forge_cli.quickfix import _lite_dirty_product_files, _lite_manifest
+def test_mode_done_refuses_committed_harness_marker_edit(repo):
+    from forge_cli.quickfix import _lite_dirty_product_files
 
     mark_harness_source(repo)
     git(repo, "add", "-f", ".factory/harness-source.json")
     git(repo, "commit", "-q", "-m", "mark harness source")
-    active = open_lite(repo)
+    open_lite(repo)
 
     marker = repo / ".factory" / "harness-source.json"
     marker.write_text('{"role": "harness-source", "repo": "edited"}\n')
@@ -9212,21 +9225,13 @@ def test_lite_counts_committed_harness_marker_edit(repo):
 
     git(repo, "add", "-f", ".factory/harness-source.json")
     git(repo, "commit", "-q", "-m", "edit harness marker")
-    assert _lite_manifest(
-        repo, active["base_sha"], harness_source=True,
-    ) == [".factory/harness-source.json"]
-
-    write_lite_reviews(repo)
     code, out = run(repo, "forge.py", "mode", "done")
-    assert code == 0 and "1 file(s)" in out, out
-    done = [json.loads(path.read_text())
-            for path in (repo / "plans" / "quickfixes").glob("*.json")
-            if json.loads(path.read_text()).get("event") == "done"]
-    assert len(done) == 1
-    assert done[0]["files"] == [".factory/harness-source.json"]
+    assert code != 0 and "the harness-source marker cannot change inside a Lite " \
+        "window; change it through a task" in out, out
+    assert (repo / ".factory" / "quickfix.json").exists()
 
 
-def test_lite_harness_marker_counts_toward_locked_path_budget(repo):
+def test_mode_done_refuses_harness_marker_change_in_mixed_diff(repo):
     mark_harness_source(repo)
     git(repo, "add", "-f", ".factory/harness-source.json")
     git(repo, "commit", "-q", "-m", "mark harness source")
@@ -9241,10 +9246,26 @@ def test_lite_harness_marker_counts_toward_locked_path_budget(repo):
         path.write_text(f"value = {number}\n")
         git(repo, "add", f"src/lite_fix_{number}.py")
     git(repo, "commit", "-q", "-m", "edit marker and five locked paths")
-    write_lite_reviews(repo)
+    code, out = run(repo, "forge.py", "mode", "done")
+    assert code != 0 and "the harness-source marker cannot change inside a Lite " \
+        "window; change it through a task" in out, out
+    assert (repo / ".factory" / "quickfix.json").exists()
+
+
+def test_mode_done_refuses_committed_harness_marker_deletion(repo):
+    mark_harness_source(repo)
+    git(repo, "add", "-f", ".factory/harness-source.json")
+    git(repo, "commit", "-q", "-m", "mark harness source")
+    open_lite(repo)
+
+    (repo / ".factory" / "harness-source.json").unlink()
+    git(repo, "add", "-u", ".factory/harness-source.json")
+    git(repo, "commit", "-q", "-m", "delete harness marker")
 
     code, out = run(repo, "forge.py", "mode", "done")
-    assert code != 0 and "committed diff touches 6 product files" in out, out
+
+    assert code != 0 and "the harness-source marker cannot change inside a Lite " \
+        "window; change it through a task" in out, out
     assert (repo / ".factory" / "quickfix.json").exists()
 
 
@@ -9395,6 +9416,47 @@ def test_lite_counts_docs_symlink_into_product_once(repo):
             if json.loads(path.read_text()).get("event") == "done"]
     assert len(done) == 1
     assert done[0]["files"] == ["docs/app-link.py"]
+
+
+def test_lite_close_counts_deleted_and_retargeted_historical_docs_symlinks(
+    repo, tmp_path,
+):
+    source = repo / "src"
+    source.mkdir()
+    (source / "app.py").write_text("app = True\n")
+    docs = repo / "docs"
+    docs.mkdir(exist_ok=True)
+    (docs / "reference.md").write_text("reference\n")
+    outside = tmp_path / "outside-reference.md"
+    outside.write_text("outside\n")
+    deleted_link = docs / "deleted-link.py"
+    retargeted_link = docs / "retargeted-link.py"
+    outside_link = docs / "outside-link.py"
+    deleted_link.symlink_to(Path("../src/app.py"))
+    retargeted_link.symlink_to(Path("../src/app.py"))
+    outside_link.symlink_to(outside)
+    git(repo, "add", "src", "docs")
+    git(repo, "commit", "-q", "-m", "seed docs symlinks")
+
+    open_lite(repo)
+    deleted_link.unlink()
+    retargeted_link.unlink()
+    retargeted_link.symlink_to(Path("reference.md"))
+    outside_link.unlink()
+    git(repo, "add", "-A", "--", "docs")
+    git(repo, "commit", "-q", "-m", "delete and retarget docs symlinks")
+    write_lite_reviews(repo)
+
+    code, out = run(repo, "forge.py", "mode", "done")
+
+    assert code == 0 and "3 file(s)" in out, out
+    done = [json.loads(path.read_text())
+            for path in (repo / "plans" / "quickfixes").glob("*.json")
+            if json.loads(path.read_text()).get("event") == "done"]
+    assert len(done) == 1
+    assert done[0]["files"] == [
+        "docs/deleted-link.py", "docs/outside-link.py", "docs/retargeted-link.py",
+    ]
 
 
 def test_lite_budget_counts_symlinks_once_and_literal_shell_names(repo):

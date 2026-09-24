@@ -294,17 +294,17 @@ def cmd_mode_done(args: argparse.Namespace) -> None:
         print(f"Degraded mode {active['id']} done ({len(event['files'])} file(s)): "
               f"{active['reason']}")
         return
-    _require_lite_repo_kind(base, active)
     harness_source = active.get("harness_source")
+    files = _lite_manifest(
+        base, active["base_sha"], harness_source=harness_source,
+    )
+    _require_lite_repo_kind(base, active)
     dirty = _lite_dirty_product_files(base, harness_source=harness_source)
     if dirty:
         fail(
             "lite mode has uncommitted product changes — commit the fix first: "
             + ", ".join(dirty[:5])
         )
-    files = _lite_manifest(
-        base, active["base_sha"], harness_source=harness_source,
-    )
     if not files:
         fail("lite mode has no committed product files to close")
     bound = int(active.get("max_files", MAX_FILES))
@@ -347,11 +347,82 @@ def _lite_manifest(
     base: Path, base_sha: str, *, harness_source: bool | None = None,
 ) -> list[str]:
     """Return committed product paths changed since the lite window opened."""
+    paths = _git_paths(
+        base, ["git", "diff", "--name-only", "-z", f"{base_sha}..HEAD", "--"],
+    )
+    marker = ".factory/harness-source.json"
+    if marker in paths:
+        fail(
+            "the harness-source marker cannot change inside a Lite window; "
+            "change it through a task"
+        )
+    historical_symlinks = _lite_historical_symlinks(
+        base, paths, base_sha, harness_source=harness_source,
+    )
+    historical_symlinks.update(_lite_historical_symlinks(
+        base, paths, "HEAD", harness_source=harness_source,
+    ))
     return _lite_product_files(
         base,
-        _git_paths(base, ["git", "diff", "--name-only", "-z", f"{base_sha}..HEAD", "--"]),
+        paths,
         harness_source=harness_source,
+        historical_symlinks=historical_symlinks,
     )
+
+
+def _lite_historical_symlinks(
+    base: Path, paths: list[str], commit: str, *,
+    harness_source: bool | None,
+) -> set[str]:
+    """Return changed paths whose symlink target at commit is locked."""
+    if not paths:
+        return set()
+    tree = subprocess.run(
+        ["git", "--literal-pathspecs", "ls-tree", "-z", commit, "--", *paths],
+        cwd=base, capture_output=True, text=True, env=clean_git_env(),
+        encoding="utf-8", errors="surrogateescape",
+    )
+    if tree.returncode != 0:
+        fail(f"could not inspect the lite diff: {tree.stderr.strip()}")
+    symlinks: set[str] = set()
+    for entry in tree.stdout.split("\0"):
+        if not entry:
+            continue
+        metadata, path = entry.split("\t", 1)
+        mode = metadata.split(" ", 1)[0]
+        if mode != "120000" or path not in paths:
+            continue
+        target = subprocess.run(
+            ["git", "cat-file", "-p", f"{commit}:{path}"],
+            cwd=base, capture_output=True, text=True, env=clean_git_env(),
+            encoding="utf-8", errors="surrogateescape",
+        )
+        if target.returncode != 0:
+            fail(f"could not inspect the lite diff: {target.stderr.strip()}")
+        if _lite_symlink_target_is_locked(
+            base, path, target.stdout,
+            harness_source=(is_harness_source_repo(base) if harness_source is None
+                            else harness_source),
+        ):
+            symlinks.add(path)
+    return symlinks
+
+
+def _lite_symlink_target_is_locked(
+    base: Path, path: str, target: str, *, harness_source: bool,
+) -> bool:
+    root = Path(os.path.abspath(base))
+    target_path = Path(target)
+    if not target_path.is_absolute():
+        target_path = root / Path(path).parent / target_path
+    target_path = Path(os.path.abspath(target_path))
+    try:
+        relative = target_path.relative_to(root).as_posix()
+    except ValueError:
+        return True
+    return locked_repo_path(
+        relative, base, harness_source=harness_source, literal=True,
+    ) is not None
 
 
 def _lite_dirty_product_files(
@@ -378,10 +449,14 @@ def _git_paths(base: Path, command: list[str]) -> list[str]:
 
 def _lite_product_files(
     base: Path, paths: list[str], *, harness_source: bool | None = None,
+    historical_symlinks: set[str] | None = None,
 ) -> list[str]:
     """Apply the planning-lock product boundary to repo-relative Git paths."""
     product_files: list[str] = []
     for path in dict.fromkeys(paths):
+        if historical_symlinks and path in historical_symlinks:
+            product_files.append(path)
+            continue
         current = base
         has_symlink = False
         for part in Path(path).parts:
@@ -393,7 +468,7 @@ def _lite_product_files(
                 and path != ".factory/harness-source.json" and not has_symlink):
             continue
         locked_path = locked_repo_path(
-            path, base, harness_source=harness_source,
+            path, base, harness_source=harness_source, literal=True,
         )
         if locked_path is not None:
             try:

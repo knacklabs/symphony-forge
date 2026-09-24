@@ -24,9 +24,12 @@ def is_harness_source_repo(root: Path) -> bool:
 
 def locked_repo_path(
     raw: str, root: Path, *, harness_source: bool | None = None,
+    literal: bool = False,
 ) -> str | None:
     """Return a canonical locked repo path, or None for an exempt surface."""
     if not raw or raw == "-":
+        return None
+    if not literal and any(char in raw for char in "$`"):
         return None
     source_repo = (
         is_harness_source_repo(root) if harness_source is None else harness_source
