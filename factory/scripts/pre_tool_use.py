@@ -515,51 +515,30 @@ WRITER_PROGRAMS = {
 }
 
 
-def _writer_targets(name: str, args: list[str]) -> list[str] | None:
-    """Return broad write operands, or None for an opaque sed backup suffix."""
+def _writer_form_is_plain(name: str, args: list[str]) -> bool:
+    allowed = {"sed": {"-i", "-e", "-E", "-r"}, "cp": {"-f"},
+               "mv": {"-f"}, "rm": {"-f"}, "ln": {"-f"},
+               "mkdir": {"-p"}, "tee": {"-a"}}.get(name, set())
+    return not any(arg.startswith("-") and arg not in allowed
+                   or name == "dd" and "=" in arg
+                   or name == "sed" and arg == "-i" and i + 1 < len(args)
+                   and args[i + 1].startswith(".") and args[i + 1]
+                   or name == "sed" and arg == "-e" and i + 1 == len(args)
+                   for i, arg in enumerate(args))
+
+
+def _writer_targets(name: str, args: list[str]) -> list[str]:
     if name != "sed":
         return [arg.split("=", 1)[1] if "=" in arg else arg
                 for arg in args if not arg.startswith("-") or "=" in arg]
-
-    inplace = backup = script_option = False
-    operands: list[str] = []
-    index = 0
-    while index < len(args):
-        arg = args[index]
-        if arg == "--":
-            operands.extend(args[index + 1:])
-            break
-        if arg in {"-e", "--expression", "-f", "--file"}:
-            script_option = True
-            index += 2
-            continue
-        if arg.startswith(("--expression=", "--file=")) or (
-                arg.startswith(("-e", "-f")) and len(arg) > 2):
-            script_option = True
-        elif arg == "--in-place" or arg.startswith("--in-place=") or (
-                arg.startswith("-") and not arg.startswith("--") and "i" in arg[1:]):
-            inplace = True
-            suffix = (arg.split("=", 1)[1] if arg.startswith("--in-place=")
-                      else arg[1:].split("i", 1)[1] if arg.startswith("-")
-                      and not arg.startswith("--") else "")
-            backup |= bool(suffix)
-            if not suffix and index + 1 < len(args) and (
-                    args[index + 1] == "" or args[index + 1].startswith(".")):
-                backup |= bool(args[index + 1])
-                index += 2
-                continue
-        elif arg.startswith("-"):
-            index += 1
-            continue
-        else:
-            operands.append(arg)
-        index += 1
-    if not inplace:
-        return []
-    if backup:
-        return None
-    operands = operands if script_option else operands[1:]
-    return [arg.split("=", 1)[1] if "=" in arg else arg for arg in operands]
+    inplace = any(arg.startswith("-") and "i" in arg[1:] for arg in args)
+    script = "-e" in args
+    skipped = {i + 1 for i, arg in enumerate(args[:-1])
+               if arg == "-e" or arg == "-i" and
+               (args[i + 1] == "" or args[i + 1].startswith("."))}
+    operands = [arg for i, arg in enumerate(args)
+                if not arg.startswith("-") and i not in skipped]
+    return (operands if script else operands[1:]) if inplace else []
 
 
 def in_factory_state(raw: str, root: Path) -> bool:
@@ -1192,18 +1171,41 @@ def _opaque_git_form(command: str, root: Path) -> str | None:
 
 
 def has_opaque_product_write(
-        command: str, root: Path, is_harness: bool) -> bool | None:
+        command: str, root: Path, is_harness: bool) -> bool | str | None:
     """Whether a write has an unbounded product target or opaque form."""
+    changed_directory = False
     for segment in split_shell_segments(strip_heredoc_bodies(command)):
         tokens = tokenize_write_command(segment)
         if tokens is None:
             return None
         _, tokens = redirect_targets(tokens)
         index = _shell_command_index(tokens)
+        end = index if index is not None else len(tokens)
+        if any(token.rsplit("/", 1)[-1] == "sudo" for token in tokens[:end]):
+            return "plain"
+        env = next((i for i, token in enumerate(tokens[:end])
+                    if token.rsplit("/", 1)[-1] == "env"), None)
+        if env is not None and any(token.startswith("-") or
+                                   re.fullmatch(r"\w+=\S*", token)
+                                   for token in tokens[env + 1:end]):
+            return "plain"
         if index is None:
             continue
         name = tokens[index].rsplit("/", 1)[-1]
         args = tokens[index + 1:]
+        if name in {"cd", "pushd"}:
+            changed_directory = True
+            continue
+        if name in WRITER_PROGRAMS and (
+                changed_directory
+                or any(token.rsplit("/", 1)[-1] == "sudo"
+                       or re.fullmatch(r"\w+=\S*", token) for token in tokens[:index])
+                or not _writer_form_is_plain(name, args)):
+            return "plain"
+        if name == "xargs":
+            return "plain"
+        if name == "find" and any(token in {"-exec", "-execdir"} for token in args):
+            return "plain"
         if name == "git":
             git_args = args
             sub, args = git_subcommand(args)
@@ -1220,8 +1222,6 @@ def has_opaque_product_write(
             _copy_write_targets(name, args, root)
             if name in COPY_WRITE_PROGRAMS else _writer_targets(name, args)
         )
-        if targets is None:
-            return True
         product_targets = [target for target in targets
                            if product_path(target, root, is_harness)]
         if not product_targets:
@@ -1230,17 +1230,7 @@ def has_opaque_product_write(
                       for target in targets)
         if globbed:
             return True
-        flags = [token for token in args if token.startswith("-")]
-        recursive = any(
-            flag in ("-r", "-R", "-a", "--recursive", "--archive")
-                or (len(flag) > 1 and not flag.startswith("--")
-                    and any(char in flag for char in "rRa"))
-            for flag in flags)
-        if name in {"rm", "unlink"} and recursive:
-            return True
-        if name not in COPY_WRITE_PROGRAMS:
-            continue
-        if (name == "rsync" or recursive) and any(
+        if name == "rsync" and any(
                 _is_directory_operand(source, root)
                 for source in [arg for arg in args if not arg.startswith("-")][:-1]):
             return True
@@ -1615,6 +1605,20 @@ try:
 except (json.JSONDecodeError, OSError, TypeError, ValueError) as exc:
     denylist_fallback(payload, type(exc).__name__)
 
+window = load_active(root)
+is_harness = (
+    bool(window["harness_source"])
+    if window is not None and "harness_source" in window
+    else is_harness_source_repo(root)
+)
+opaque = has_opaque_product_write(command, root, is_harness) \
+    if tool_name == "Bash" and command else False
+if opaque == "plain":
+    deny("the write lock only allows plain file writes; use a Lite window or "
+         "`forge delegate` for this command")
+if opaque is None:
+    deny(UNPARSEABLE_BASH_MSG)
+
 if tool_name == "Bash" and has_directory_change(command) and (
         bash_write_paths(command, root) or _opaque_git_form(command, root)):
     deny("run writes from the checkout without changing directory")
@@ -1673,16 +1677,7 @@ for candidate in write_targets:
 
 # The session lock covers every permission mode. Planning changes authorization
 # for the plan UI, never for product or canon writes.
-window = load_active(root)
-is_harness = (
-    bool(window["harness_source"])
-    if window is not None and "harness_source" in window
-    else is_harness_source_repo(root)
-)
 if command and tool_name == "Bash":
-    opaque = has_opaque_product_write(command, root, is_harness)
-    if opaque is None:
-        deny(UNPARSEABLE_BASH_MSG)
     if opaque:
         git_form = _opaque_git_form(command, root)
         contains_marker = any(

@@ -8642,6 +8642,28 @@ def test_locked_bash_write_shapes_are_denied(repo, runtime, command):
 
 @pytest.mark.parametrize("runtime", ["claude", "codex"])
 @pytest.mark.parametrize("command", [
+    "cp -t d f", "env -C d touch f", "chmod -R 777 d",
+    "cp --target-directory=d f", "cp -a a b", "rm -r f",
+    "sed -i.bak 's/x/y/' f", "env MODE=test touch f",
+    "cd d && touch f", "pushd d && touch f", "sudo -u root touch f",
+    "xargs touch f", "xargs sh -c 'touch f'",
+    "find . -exec touch f \\;", "find . -exec sh -c 'touch f' \\;",
+    "env -S 'touch f'",
+])
+def test_locked_writer_options_and_wrappers_are_refused(repo, runtime, command):
+    runner = hook if runtime == "claude" else native_hook
+    code, out = runner(repo, {
+        "tool_name": "Bash", "permission_mode": "default",
+        "tool_input": {"command": command},
+    })
+    assert code == 0 and (
+        "the write lock only allows plain file writes; use a Lite window or "
+        "`forge delegate` for this command"
+    ) in out, (command, out)
+
+
+@pytest.mark.parametrize("runtime", ["claude", "codex"])
+@pytest.mark.parametrize("command", [
     "git status", "git log -1", "git diff --stat", "git show HEAD",
     "git rev-parse HEAD", "git ls-files", "git ls-tree HEAD",
     "git cat-file -t HEAD", "git blame -- src/app.ts", "git grep app",
@@ -8693,6 +8715,10 @@ def test_locked_git_pathspecs_keep_only_literal_file_targets(repo, runtime):
         "src/a.py",
     ]
     assert bash_write_paths("cp src/a.py docs/b", repo) == ["docs/b"]
+    assert bash_write_paths("cp a b", repo) == ["b"]
+    assert bash_write_paths("mkdir -p d", repo) == ["d"]
+    assert bash_write_paths("sed -i 's/x/y/' f", repo) == ["f"]
+    assert bash_write_paths("rm -f f", repo) == ["f"]
     assert bash_write_paths("dd if=src/input of=docs/output", repo) == [
         "src/input", "docs/output",
     ]
@@ -8918,19 +8944,28 @@ def test_unreadable_git_apply_patch_is_treated_as_opaque(repo, runtime):
 
 
 @pytest.mark.parametrize("runtime", ["claude", "codex"])
+def test_sed_expression_option_does_not_become_write_target(repo, runtime):
+    runner = hook if runtime == "claude" else native_hook
+    code, out = runner(repo, {
+        "tool_name": "Bash", "permission_mode": "default",
+        "tool_input": {"command": "sed -i -e s/x/y/ plans/note.md"},
+    })
+    assert code == 0 and "deny" not in out, out
+
+
+@pytest.mark.parametrize("runtime", ["claude", "codex"])
 @pytest.mark.parametrize("command", [
-    "sed -i -e s/x/y/ plans/note.md",
     "sed -i --expression s/x/y/ plans/note.md",
     "sed -i -f src/script.sed plans/note.md",
     "sed -i --file src/script.sed plans/note.md",
 ])
-def test_sed_script_options_do_not_become_write_targets(repo, runtime, command):
+def test_sed_non_plain_script_options_are_refused(repo, runtime, command):
     runner = hook if runtime == "claude" else native_hook
     code, out = runner(repo, {
         "tool_name": "Bash", "permission_mode": "default",
         "tool_input": {"command": command},
     })
-    assert code == 0 and "deny" not in out, out
+    assert code == 0 and "the write lock only allows plain file writes" in out, out
 
 
 def test_multi_file_sed_targets_reach_narrowed_scope_check(repo):
@@ -9173,7 +9208,10 @@ def test_harness_degraded_cannot_delete_the_repo_kind_marker(repo):
             "tool_input": {"command": command},
         })
         assert code == 0 and "deny" in out, command
-        assert "repo-kind marker" in out or "recorded state" in out, command
+        if command == "rm -r .factory":
+            assert "the write lock only allows plain file writes" in out
+        else:
+            assert "repo-kind marker" in out or "recorded state" in out, command
     code, out = hook(repo, {
         "tool_name": "Write", "permission_mode": "default",
         "tool_input": {"file_path": str(repo / ".factory" / "harness-source.json")},
@@ -9258,13 +9296,17 @@ def test_harness_degraded_refuses_opaque_machinery_deletes(repo, tmp_path):
         assert code == 0 and "deny" in out, command
     for command in ("rm factory/scripts/one.py",              # explicit single file
                     "sed -i 's/foo.*/bar/' factory/scripts/x.py",  # sed regex isn't a glob
-                    "cp -R factory/scripts /tmp/backup",      # read-OUT: no in-repo write
                     "cp factory/scripts/*.py /tmp/backup"):   # read-OUT glob source
         code, out = hook(repo, {
             "tool_name": "Bash", "permission_mode": "default",
             "tool_input": {"command": command},
         })
         assert code == 0 and "deny" not in out, command
+    code, out = hook(repo, {
+        "tool_name": "Bash", "permission_mode": "default",
+        "tool_input": {"command": "cp -R factory/scripts /tmp/backup"},
+    })
+    assert code == 0 and "the write lock only allows plain file writes" in out, out
 
 
 def test_harness_degraded_counts_each_file_copied_into_a_machinery_dir(repo):
