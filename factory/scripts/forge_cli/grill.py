@@ -259,8 +259,9 @@ def _last_pass_at(base: Path, gate: str, task_id: str) -> str:
 
 
 def _refuse_a_second_cold_read(base: Path, ledger_id: str, gate: str,
-                               task_id: str) -> None:
-    """Allow exactly one successful cold launch per recorded pass."""
+                               task_id: str, brief_sha256: str = "",
+                               input_sha256: str = "") -> None:
+    """Allow one cold launch per recorded pass for the current input."""
     try:
         since = _last_pass_at(base, gate, task_id)
         story = load_json(run_state_path(base), default={}).get("issue_key", "") \
@@ -274,6 +275,33 @@ def _refuse_a_second_cold_read(base: Path, ledger_id: str, gate: str,
                         and row.get("transport") == "host-native")
                     or (row.get("launch_status") in {"starting", "running"}
                         and row.get("launch_id") not in dead))]
+        stale = []
+        current = []
+        for row in cold:
+            identities = [
+                (row.get("brief_sha256"), brief_sha256),
+                (row.get("task_sha256"), input_sha256),
+            ]
+            comparable = [
+                (recorded, expected)
+                for recorded, expected in identities
+                if (isinstance(recorded, str)
+                    and re.fullmatch(r"[0-9a-f]{64}", recorded)
+                    and expected)
+            ]
+            if comparable and any(recorded != expected
+                                  for recorded, expected in comparable):
+                stale.append(row)
+            else:
+                current.append(row)
+        if stale and not current:
+            if gate == "task":
+                print("the task's contract changed since its last cold read; "
+                      "a fresh read is allowed")
+            else:
+                print("the grill input changed since its last cold read; "
+                      "a fresh read is allowed")
+        cold = current
         if not cold:
             return
     except (Exception, SystemExit):
@@ -317,12 +345,15 @@ def cmd_grill_run(args: argparse.Namespace) -> None:
             base, ledger_id, kind="grill-cold-read", namespace="grill"):
         # Hold the exact gate/task key across admission and launch so a second
         # process cannot pass the repeat-read check before the first row lands.
-        if not args.print_only:
-            _refuse_a_second_cold_read(base, ledger_id, gate, task_id)
-
         label, artifact = _artifact_text(
             base, gate, task_id, (getattr(args, "file", "") or "").strip())
         text = _compose_brief(base, gate, label, artifact, task_id)
+        if not args.print_only:
+            _refuse_a_second_cold_read(
+                base, ledger_id, gate, task_id,
+                hashlib.sha256(text.encode("utf-8")).hexdigest(),
+                _artifact_digest(artifact),
+            )
         path = base / ".factory" / f"grill-brief-{gate}" \
             f"{'-' + task_id if task_id else ''}.md"
         model, effort, _bound = mode_run_config(base, "grill")

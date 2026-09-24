@@ -178,7 +178,7 @@ def test_saved_plan_routes_directly_to_native_approval_without_second_save(
 
 def test_native_plan_mode_approval_records_exact_digest_for_claude_exit_plan_mode(
         repo: Path, tmp_path: Path):
-    plan, digest = _awaiting_story(repo, tmp_path)
+    _, digest = _awaiting_story(repo, tmp_path)
     event = native_claude_approval(repo)
     displayed = event["tool_input"]["plan"]
     event["tool_response"] = {"plan": displayed, "isAgent": False}
@@ -197,7 +197,9 @@ def test_native_plan_mode_approval_records_exact_digest_for_claude_exit_plan_mod
     record = approval.record_native_approval(
         repo, event, runtime="claude")
     assert record["approved_plan_sha256"] == digest
-    assert "status: approved" in plan.read_text()
+    assert json.loads(
+        (repo / ".factory" / "stories" / "ENG-1" / "plan-meta.json").read_text()
+    )["status"] == "approved"
     assert json.loads(load_factory_lib(repo).run_state_path(repo).read_text())[
         "approved_plan_sha256"] == digest
 
@@ -268,12 +270,14 @@ def test_review_identity_binds_task_grill_and_grouped_runner(repo: Path):
 
 def test_native_plan_mode_approval_records_exact_digest_for_codex_sync_approval(
         repo: Path, tmp_path: Path):
-    plan, digest = _awaiting_story(repo, tmp_path)
+    _, digest = _awaiting_story(repo, tmp_path)
     record = approval.record_native_approval(
         repo, _codex_event(digest), runtime="codex")
     assert record["approved_plan_sha256"] == digest
     assert record["approved_by"] == "human-via-Codex"
-    assert "status: approved" in plan.read_text()
+    assert json.loads(
+        (repo / ".factory" / "stories" / "ENG-1" / "plan-meta.json").read_text()
+    )["status"] == "approved"
 
 
 def test_native_approval_refuses_stale_wrong_runtime_canceled_async_and_unsupported_payloads(
@@ -321,7 +325,7 @@ def test_native_approval_refuses_stale_wrong_runtime_canceled_async_and_unsuppor
 
 def test_normal_flow_no_longer_requires_requirements_grill_manual_approval_or_second_save(
         repo: Path, tmp_path: Path):
-    plan, digest = _awaiting_story(repo, tmp_path)
+    _, digest = _awaiting_story(repo, tmp_path)
     approval.record_native_approval(
         repo, native_claude_approval(repo), runtime="claude")
     state = json.loads(load_factory_lib(repo).run_state_path(repo).read_text())
@@ -330,7 +334,9 @@ def test_normal_flow_no_longer_requires_requirements_grill_manual_approval_or_se
     assert not (repo / ".factory/grills/requirements.json").exists()
     code, out = run(repo, "forge.py", "plan", "approve", "--by", "Nobody")
     assert code != 0 and "invalid choice" in out
-    assert "status: approved" in plan.read_text()
+    assert json.loads(
+        (repo / ".factory" / "stories" / "ENG-1" / "plan-meta.json").read_text()
+    )["status"] == "approved"
 
 
 def test_one_cold_grill_full_disposition_replaces_round_floors_and_frontier_fake(
