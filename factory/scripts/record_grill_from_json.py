@@ -52,12 +52,20 @@ def _cold_launch_terminal(
                       spec.evidence_name(task_id)), default={},
     )
     since = str(previous.get("recorded_at") or "")
+    previous_launch_id = previous.get("launch_id")
     scoped_rows = [
         row for row in load_delegations(root)
         if row.get("task") == label
         and (not spec.story_scoped or row.get("story") == story)
     ]
-    new_rows = [row for row in scoped_rows if str(row.get("at") or "") > since]
+    new_rows = [
+        row for row in scoped_rows
+        if (str(row.get("at") or "") > since
+            or (isinstance(previous_launch_id, str)
+                and str(row.get("at") or "") == since
+                and isinstance(row.get("launch_id"), str)
+                and row.get("launch_id") != previous_launch_id))
+    ]
     launches: dict[str, list[dict]] = {}
     for row in new_rows:
         if isinstance(row.get("launch_id"), str):
@@ -82,6 +90,14 @@ def _cold_launch_terminal(
                     old_launches.setdefault(row["launch_id"], []).append(row)
             completed = [rows for rows in old_launches.values()
                          if rows[-1].get("launch_status") == "succeeded"]
+            if previous_launch_id is not None:
+                completed = [rows for rows in completed
+                             if rows[0].get("launch_id") == previous_launch_id]
+            elif completed:
+                completed = [max(
+                    enumerate(completed),
+                    key=lambda item: (str(item[1][-1].get("at") or ""), item[0]),
+                )[1]]
             bridge_previous = previous
     if len(completed) != 1:
         raise SystemExit(
@@ -248,7 +264,7 @@ def _cold_findings(gate: str, finding_text: str) -> dict:
 
 def _cold_launch_result(
     root: Path, gate: str, task_id: str,
-) -> tuple[str, dict, str | None, dict | None]:
+) -> tuple[str, dict, str | None, dict | None, str]:
     terminal, argv, bridge_previous = _cold_launch_terminal(root, gate, task_id)
     brief, brief_bytes, context_opaque = _cold_launch_brief(
         root, gate, task_id, terminal,
@@ -269,7 +285,7 @@ def _cold_launch_result(
     if (cold_artifact is not None
             and hashlib.sha256(cold_artifact.encode("utf-8")).hexdigest() != digest):
         raise SystemExit(f"{gate} cold-read brief artifact does not match its input digest")
-    return digest, findings, cold_artifact, bridge_previous
+    return digest, findings, cold_artifact, bridge_previous, terminal["launch_id"]
 
 
 def _regular_utf8_bytes(path: Path, gate: str) -> tuple[bytes, str]:
@@ -788,7 +804,10 @@ if args.cold_result:
     payload["result_sha256"] = _result_sha256
 else:
     (_cold_digest, _cold_findings, _cold_artifact,
-     _bridge_previous) = _cold_launch_result(root, args.gate, args.task or "")
+     _bridge_previous, _launch_id) = _cold_launch_result(
+        root, args.gate, args.task or "",
+    )
+    payload["launch_id"] = _launch_id
 _validate_bridge_findings(_bridge_previous, payload, args.gate)
 if (_bridge_previous is not None
         and final_digest == _bridge_previous.get("final_artifact_sha256")):

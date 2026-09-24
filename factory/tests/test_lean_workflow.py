@@ -465,6 +465,39 @@ def test_plan_amendment_bridge_rerecord_reuses_prior_cold_launch(
     assert all(row["at"].endswith("+00:00") for row in rows)
 
 
+def test_plan_amendment_bridge_selects_latest_identical_historical_launch(
+        repo: Path, tmp_path: Path):
+    from forge_cli.delegate import delegations_path, load_delegations
+
+    draft, cold, finding, _preparation = _seed_passing_plan_grill(repo, tmp_path)
+    grill_path = repo / ".factory/stories/ENG-1/grills/plan.json"
+    previous = json.loads(grill_path.read_text())
+    previous.pop("launch_id")
+    grill_path.write_text(json.dumps(previous), encoding="utf-8")
+
+    rows = load_delegations(repo)
+    old_lifecycle = [dict(row) for row in rows if row.get("task") == "grill-plan"]
+    assert [row["launch_status"] for row in old_lifecycle] == [
+        "starting", "running", "succeeded",
+    ]
+    latest_id = f"launch-test-{uuid.uuid4().hex}"
+    duplicate_lifecycle = [{**row, "launch_id": latest_id} for row in old_lifecycle]
+    rows.extend(duplicate_lifecycle)
+    ledger = delegations_path(repo)
+    ledger.write_text("".join(json.dumps(row) + "\n" for row in rows),
+                      encoding="utf-8")
+
+    final = cold + "\nAdded the requested repository fact.\n"
+    draft.write_text(final, encoding="utf-8")
+    code, out = _record_plan_grill(
+        repo, draft, _bridge_plan_payload(cold, final, finding),
+    )
+
+    assert code == 0, out
+    stored = json.loads(grill_path.read_text())
+    assert stored["launch_id"] == latest_id
+
+
 def test_task_grill_refuses_prior_cold_read_after_objective_changes(
         repo: Path):
     from test_gates import (
