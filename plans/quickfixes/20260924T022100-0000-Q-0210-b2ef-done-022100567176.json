@@ -1,0 +1,85 @@
+{
+  "event": "done",
+  "id": "Q-0210-b2ef",
+  "profile": "lite",
+  "by": "Ravi Kiranvemula",
+  "reason": "Plans are briefs with no bookkeeping (planC; owner-approved)",
+  "base_sha": "8415b8e02378268efcf665318be58307c9496529",
+  "started_at": "2026-09-24T01:58:43+00:00",
+  "completed_at": "2026-09-24T02:21:00+00:00",
+  "files": [
+    "WORKFLOW.md",
+    "factory/prompts/griller.md",
+    "factory/prompts/planner.md",
+    "factory/skills/forge.md"
+  ],
+  "reviews": {
+    "quality": {
+      "generated_by": "autoreview",
+      "score": 10,
+      "summary": "quality lens over Q-0210-b2ef (5 product path(s), 8415b8e..6d7d719, Codex via the autoreview skill): 0 blocking, 0 non-blocking. The supplied documentation changes are internally consistent. The diff does not show the plan-save validator or approval recorder, so their compatibility with the new instructions cannot be verified from this evidence.",
+      "blocking_findings": [],
+      "non_blocking_findings": [],
+      "recommendation": "approve",
+      "reviewed_scope": [
+        "WORKFLOW.md",
+        "docs/specs/plan-approval.md",
+        "factory/prompts/griller.md",
+        "factory/prompts/planner.md",
+        "factory/skills/forge.md"
+      ],
+      "skills_used": [],
+      "contract_verdicts": [],
+      "review_base_sha": "8415b8e02378268efcf665318be58307c9496529",
+      "branch_diff_digest": "a6fb21ed7716314712eade42a87c733d58c8ce434ced997e45b7a85d44a12d4f",
+      "commit": "6d7d719770d5a4f5952db6fa1788cfde05b1bf54",
+      "aspect": "quality",
+      "residual_risks": [],
+      "recorded_at": "2026-09-24T02:20:45+00:00"
+    },
+    "performance": {
+      "generated_by": "autoreview",
+      "score": 10,
+      "summary": "performance lens over Q-0210-b2ef (5 product path(s), 8415b8e..6d7d719, Codex via the autoreview skill): 0 blocking, 0 non-blocking. The wider cold-read instructions may increase review work, but the diff shows no concrete performance defect.",
+      "blocking_findings": [],
+      "non_blocking_findings": [],
+      "recommendation": "approve",
+      "reviewed_scope": [
+        "WORKFLOW.md",
+        "docs/specs/plan-approval.md",
+        "factory/prompts/griller.md",
+        "factory/prompts/planner.md",
+        "factory/skills/forge.md"
+      ],
+      "skills_used": [],
+      "review_base_sha": "8415b8e02378268efcf665318be58307c9496529",
+      "branch_diff_digest": "a6fb21ed7716314712eade42a87c733d58c8ce434ced997e45b7a85d44a12d4f",
+      "commit": "6d7d719770d5a4f5952db6fa1788cfde05b1bf54",
+      "aspect": "performance",
+      "residual_risks": [],
+      "recorded_at": "2026-09-24T02:20:45+00:00"
+    },
+    "security": {
+      "generated_by": "autoreview",
+      "score": 10,
+      "summary": "security lens over Q-0210-b2ef (5 product path(s), 8415b8e..6d7d719, Codex via the autoreview skill): 0 blocking, 0 non-blocking. The diff changes documentation and prompts; it shows no concrete security defect.",
+      "blocking_findings": [],
+      "non_blocking_findings": [],
+      "recommendation": "approve",
+      "reviewed_scope": [
+        "WORKFLOW.md",
+        "docs/specs/plan-approval.md",
+        "factory/prompts/griller.md",
+        "factory/prompts/planner.md",
+        "factory/skills/forge.md"
+      ],
+      "skills_used": [],
+      "review_base_sha": "8415b8e02378268efcf665318be58307c9496529",
+      "branch_diff_digest": "a6fb21ed7716314712eade42a87c733d58c8ce434ced997e45b7a85d44a12d4f",
+      "commit": "6d7d719770d5a4f5952db6fa1788cfde05b1bf54",
+      "aspect": "security",
+      "residual_risks": [],
+      "recorded_at": "2026-09-24T02:20:45+00:00"
+    }
+  }
+}

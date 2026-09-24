@@ -1,0 +1,14 @@
+{
+  "topic": "grill staleness",
+  "lesson": "Commit spec, decision and roadmap changes BEFORE launching a plan or spec grill: the staleness check compares commit order, so committing a handover doc after recording the grill forces a second cold read even when the content is unchanged. Fix pending: staleness should compare content digests.",
+  "source": "ae37e669",
+  "applies_to": [
+    "docs/decisions/**",
+    "docs/specs/**",
+    "plans/**",
+    "factory/scripts/factory_lib.py"
+  ],
+  "severity": "medium",
+  "generated_by": "orchestrator",
+  "added_at": "2026-09-24T01:21:17+00:00"
+}

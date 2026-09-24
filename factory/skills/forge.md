@@ -154,7 +154,7 @@ or route:
 | what's left to build / show the roadmap | `./forge roadmap list` (`--pending` for what's next; grouped by epic, shows @assignee) |
 | what can run in parallel / fan out the work | `./forge roadmap parallel` — the dependency-ready story frontier. Each leaf task owns a worktree and PR; dependency-ready tasks may advance together only when their measured scopes are disjoint |
 | roadmap merge conflict / duplicate items after merging branches | `./forge roadmap heal` — deterministic union (done-wins); mid-merge it rebuilds from the merge stages, then `git add plans/roadmap.json` |
-| grill the handover / stress-test before a gate | `factory/prompts/griller.md` — one question at a time vs the actual docs. For a native plan grill, run `./forge grill run --gate plan --file <plan-file>`, put the complete descriptor and context metadata in the actual `spawn_agent` message to `griller`, resolve findings, then record the exact JSON with `python3 factory/scripts/record_grill_from_json.py --gate plan --input <grill-json> --input-digest <plan-file> --cold-result <path> --preparation-id <id>`. For a native task grill, use `./forge grill run --gate task --task <id>` and `python3 factory/scripts/record_grill_from_json.py --gate task --task <id> --input <grill-json> --cold-result <path> --preparation-id <id>`. Claude keeps its command-managed cold reader. Required gates refuse without their fresh pass |
+| grill the handover / stress-test before a gate | `factory/prompts/griller.md` — make a wide sweep of each touched feature and neighboring shipped features against their contracts; cite every finding as `file:line`. For a native plan grill, run `./forge grill run --gate plan --file <plan-file>`, put the complete descriptor and context metadata in the actual `spawn_agent` message to `griller`, resolve findings, then record the exact JSON with `python3 factory/scripts/record_grill_from_json.py --gate plan --input <grill-json> --input-digest <plan-file> --cold-result <path> --preparation-id <id>`. For a native task grill, use `./forge grill run --gate task --task <id>` and `python3 factory/scripts/record_grill_from_json.py --gate task --task <id> --input <grill-json> --cold-result <path> --preparation-id <id>`. Claude keeps its command-managed cold reader. Required gates refuse without their fresh pass |
 | grill me on this plan | run the one host-specific independent cold grill against the draft plan with `./forge grill run --gate plan --file <plan-file>`, complete its dispositions, and use `python3 factory/scripts/record_grill_from_json.py --gate plan --input <grill-json> --input-digest <plan-file>` for a command-managed result or `python3 factory/scripts/record_grill_from_json.py --gate plan --input <grill-json> --input-digest <plan-file> --cold-result <path> --preparation-id <id>` for the native result before `plan save` — mandatory before `plan save` |
 | capture a capability spec | `./forge spec save <slug> --from <draft.md>`; confirmation requires a digest-bound spec grill, then `./forge spec confirm <slug>` |
 | here's the derived project backlog | `./forge roadmap derive --input <json>` (pre-sign-off, every story links a confirmed spec) |
@@ -164,9 +164,9 @@ or route:
 | assign a story / distribute work (EM) | `./forge roadmap assign <KEY> --to <dev>` — checked against the roster; match story skill to dev skills |
 | who does what / role handoffs | `docs/ROLES.md` — forge next tags every step [PM]/[EM]/[dev] |
 | start a task / new feature | `python3 factory/scripts/intake.py --issue <KEY> --title "<title>"` — then check `forge.py context list --pending` BEFORE planning |
-| save and approve a plan | Run one independent cold grill against the draft and complete its disposition/amendment bridge; then `python3 factory/scripts/forge.py plan save --from <plan-file> --story <key>` once and show those exact final bytes in native Plan Mode. If an already approved plan is amended before stage start, record the bridge against that existing cold proof and return directly to exact native approval; do not launch a second cold grill solely for changed bytes. Successful Claude `ExitPlanMode` binds its exact plan input; Codex uses id `approve_plan_<digest>`, prompt `Approve exact plan digest <digest>?`, and an id-keyed `Approve plan` answer |
+| save and approve a plan | Commit any spec, decision, or roadmap changes before launching the cold grill because its staleness check compares commit order. Run one independent wide cold grill against the draft and complete its disposition/amendment bridge; before saving, review every active decision, then run `python3 factory/scripts/forge.py plan save --from <plan-file> --story <key>` once. `forge plan save` records that review attestation in `.factory/stories/<story>/plan-meta.json`. Show the plan body exactly as saved in native Plan Mode, without Forge bookkeeping in the displayed brief. If an already approved plan is amended before stage start, record the bridge against that existing cold proof and return directly to exact native approval; do not launch a second cold grill solely for changed bytes. Successful Claude `ExitPlanMode` binds its exact plan input; Codex retains id `approve_plan_<digest>`, prompt `Approve this plan?`, and an id-keyed `Approve plan` answer as recorder details; the digest travels only in the question id. |
 | show implementation progress / how far along are we / show the board | `./forge board` — see "Show, don't recite" below. `./forge plan list` is the text fallback |
-| review the plan / let me read the plan | present the exact final plan through native Plan Mode; `./forge board` is a read-only status view and never an approval transport |
+| review the plan / let me read the plan | present only the exact saved plan brief through native Plan Mode, with no Forge bookkeeping added; `./forge board` is a read-only status view and never an approval transport |
 | I need a small fix without a plan | Apply the route table above. Prefer reviewed Lite for an eligible, authorized standalone fix: `./forge mode lite --by "<authorizing actor>" --reason "<why>"`; close with `./forge mode done` after focused checks and clean required review. Quickfix is the distinct trace-only exception, never a review shortcut. |
 | why is my edit blocked | the planning lock is ALWAYS armed (decision 0013): product writes need an approved plan or an open quickfix. `.factory/` is never hand-written; recorded state comes from the record_* scripts |
 | record the decomposition | `python3 factory/scripts/record_decomposition_from_json.py --input <json>`, then `update_run.py --phase implementing --decomposition-status recorded` |
@@ -177,7 +177,7 @@ or route:
 | compact the assumptions ledger | `./forge assumptions archive` — resolved rows from finished tasks move to the archive |
 | is the repo getting heavy | `python3 factory/scripts/check_repo_budget.py` (CI runs it too) |
 | human confirms a decision | acceptance is the HUMAN's call, not their keystroke: on an explicit in-chat confirmation ("accept <slug>", "approved"), run `./forge decision accept <slug> --by "<their name>"` for them; without that statement, relay and wait |
-| made an assumption while implementing | `python3 factory/scripts/forge.py plan assume "<one sentence>"` — lands on the active plan AND as an open row in plans/assumptions.md |
+| made an assumption while implementing | `python3 factory/scripts/forge.py plan assume "<one sentence>"` — records an open row in `plans/assumptions.md`; keep bookkeeping out of the approved plan body |
 | worker hit a contradiction / is confused / blocked / scope shifted | `./forge signal raise --kind <k> --by <agent> -m "..."` then PAUSE — the orchestrator monitors `.factory/signals.jsonl`, resolves, resumes |
 | a worker signal is open (orchestrator) | `./forge signal list --open` → inspect the signal and its worker state → resolve the cause with `./forge signal resolve <id> --notes "<answer>"`. Resume only a live paused worker; otherwise reconcile its result before deciding whether new delegation is needed. Open signals block pr_ready |
 | review / guide the assumptions (orchestrator) | `./forge assumptions list --open`, then `./forge assumptions resolve <id> --status confirmed\|fix-needed\|promoted --notes "..."` — pr_ready refuses unguided rows |
@@ -231,7 +231,8 @@ instead of narrating it:
 - Specs, decisions, the plans ledger and quickfix history sit behind the
   **Library** panel in the header — reference material, off the main surface.
 - **After saving a plan**, the board may show its readiness, but native Plan
-  Mode must display the exact final plan for approval.
+  Mode must display only the exact saved brief for approval, with no Forge
+  bookkeeping added to its body.
 - The board is READ-ONLY on purpose. It shows status; it never approves.
   Approval recording comes from the native host completion event.
 - Still report the outcome in chat — the board supplements your answer, it
@@ -250,6 +251,15 @@ instead of narrating it:
   Autoreview skill (0011), looped review → Luna/max Codex fixes findings →
   re-review until clean. Its authenticated internal Codex/agent use is allowed
   and follows its own policy; never review inline or nest reviewers.
+- After each review, check for `simplification-debt` and run
+  `./forge findings patterns` for recurring mechanisms (Decision 0005). When
+  either appears, tell the user whether to refactor now or keep fixing, with a
+  recommendation and one-line reason. Recommend refactoring now only when it
+  fits the current task's scope and is smaller than the next fix round;
+  otherwise keep the change minimal and record it with `./forge defer add
+  "<item>" --why "<reason>" --trigger "<reopen condition>"` or a refactor
+  story. Never patch the same mechanism a third time without raising this
+  choice.
 - Never set a decision to `accepted`, never flip `client_signoff`, never
   activate a proposed skill without an explicit human confirmation — the
   human decides; a clear in-chat statement lets you run the recording
