@@ -18,8 +18,8 @@ and remove gstack and direnv.
   build" and the smallest testable slice), and recommends one using `forge payback`. You choose, and
   your choice and reason go into the spec.
 - Every new spec states how success will be measured, with a baseline, a target and a check date.
-  When the work has shipped and the date passes, `forge next` reminds you to check, and
-  `forge outcome check` records what you measured.
+  When every story from that spec is done and the date passes, `forge next` reminds you to check,
+  and `forge spec measure` records what you measured in the spec itself.
 - For UI ideas it prototypes with impeccable when it's installed, plain HTML otherwise.
 - Setup gets simpler: no gstack, no direnv. Client repos keep any gstack files they already have.
 
@@ -29,8 +29,8 @@ and remove gstack and direnv.
   question limit, with the chosen card named in the brief and spec.
 - `forge payback` gives the same answer for the same numbers, including the 3- and 12-month edges and
   the unknown-value case.
-- A new spec can't be confirmed without a complete success measure; a shipped story's check shows in
-  `forge next` after its date until its result is recorded.
+- A new spec can't be confirmed without a complete success measure; a spec's check shows in `forge next`
+  once all its stories are done and its date has passed, until its result is recorded.
 - `forge doctor` passes without gstack or direnv, and gstack is gone from Forge's own code, settings,
   docs and tests; this repo's old gstack notes are archived and summarised.
 - `init`, `adopt` and `upgrade` stop adding gstack lines and leave clients' existing ones alone.
@@ -56,7 +56,8 @@ Nothing beyond approving this plan.
   ask" until the FDE opts out); depth (Lite: two questions; story: eight; unanswered fields written as
   unknown and priced as guessed); problem cards (add `## Problems` to an existing DISCOVERY.md on first
   use; name the chosen card in the Brief's problem and the spec's Why); options and the human's choice
-  written into the spec's Behaviour; `forge payback`; success measure; check-back. New
+  written into the spec's Behaviour; `forge payback`; success measure; check-back. New projects get
+  the `## Problems` template; adopted projects with an existing DISCOVERY.md get it on first use. New
   `factory/skills/fde-reference.md` holds the examples, question bank, call script and bad-to-better
   questions. The discovery intent row points at the skill.
 - DISCOVERY template (`scaffold.py`): `## Problems` with one `###` card per pain and the six fields.
@@ -69,10 +70,12 @@ Nothing beyond approving this plan.
 - Specs: `specs.py` confirm requires `## Success measure` with metric, baseline, target and an ISO
   check date for specs confirmed after this change; `griller.md` flags a missing or empty one;
   `spec save` help and `docs/specs/README.md` list the new section.
-- Check-back: `forge pr-link` sets `success_check_due` on the roadmap item of the last story from a
-  spec with a success measure (once); `forge next` lists shipped stories past that date without a
-  measured result; `forge outcome check <story> --result "<text>"` records `measured` in the story's
-  outcome. The deferral ledger and its audit are untouched.
+- Check-back, computed with nothing stored ahead: `forge next` lists a spec with a success measure
+  when every roadmap story linked to it is done, its check date has passed and its Success measure has
+  no `- Result:` line; `forge spec measure <slug> --result "<text>"` appends
+  `- Result: <text> (YYYY-MM-DD)` to that section. `forge pr-link`, the PR-link workflow, outcomes,
+  the deferral ledger and its audit are untouched. Payback prices build options only; "don't build"
+  and "find out first" are listed without it.
 - `harness.yaml`: discovery owner → Forge skill; impeccable in the prototype allowlist; gstack
   precedence tier and disabled list removed.
 - gstack removal (code): delete `forge_cli/gstack.py` and its subcommand; doctor gstack checks and
@@ -89,23 +92,20 @@ Nothing beyond approving this plan.
 
 ## Task decomposition
 
-FDE-SKILL and SUCCESS-MEASURE run in parallel (disjoint); REMOVE-GSTACK-CODE follows FDE-SKILL (both
-touch `harness.yaml`, `scaffold.py` and the skill); REMOVE-GSTACK-DOCS follows REMOVE-GSTACK-CODE.
-Each ships its own pull request.
+The owner chose two tasks. FDE first, then GSTACK (both touch `harness.yaml`, `scaffold.py` and the
+skill). Each ships its own pull request.
 
 | Label / exact task ID | What it delivers | Depends on | user_facing |
 |---|---|---|---|
-| Skill / FDE-SKILL | FDE skill section, reference file, DISCOVERY template, discovery owner and impeccable in `harness.yaml`, `forge payback` | none | false |
-| Measure / SUCCESS-MEASURE | Spec confirm validation, griller line, spec help and README, pr-link check date, `forge next` listing, `forge outcome check` | none | false |
-| Code / REMOVE-GSTACK-CODE | gstack command, doctor checks, direnv requirement, adopt/upgrade/scaffold additions, path tokens, repo config lines, tests | FDE-SKILL | false |
-| Docs / REMOVE-GSTACK-DOCS | gstack text out of docs, living specs and install skills; archive, summary note and harvest marks | REMOVE-GSTACK-CODE | false |
+| Skill / FDE | FDE skill section, reference file, DISCOVERY template, discovery owner and impeccable in `harness.yaml`, `forge payback`, success-measure validation, griller line, spec help and README, computed `forge next` check, `forge spec measure` | none | false |
+| Removal / GSTACK | gstack command, doctor checks, direnv requirement, adopt/upgrade/scaffold additions, path tokens, repo config lines, docs, living specs, install skills, tests; archive, summary note and harvest marks | FDE | false |
 
 ## Verify plan
 
 Each task: focused tests, `forge task close` (full suite plus one three-lens review), the CI-only
 checks, green CI. Tests cover `forge payback` at 3, 12 and unknown value; success-measure refusals
 (missing, empty field, bad date) and acceptance with only the status changed; the pr-link check date,
-its `forge next` listing and `forge outcome check`; doctor passing without gstack or direnv; a repo-wide
+the computed `forge next` listing and `forge spec measure`; doctor passing without gstack or direnv; a repo-wide
 search finding gstack only in history and the archive; adopt/upgrade leaving client lines alone. Before
 the story ships, a scripted walkthrough in a throwaway client runs discovery on a vague ask and
 checks: one question per turn with "Why I ask", neutral options for facts, the stop at the limit, a
