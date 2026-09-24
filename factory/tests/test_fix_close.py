@@ -16,6 +16,8 @@ from forge_cli import fix, quickfix, review  # noqa: E402
 
 
 def _open_lite(repo: Path, window_id: str) -> dict:
+    git(repo, "config", "user.email", "test@knacklabs.dev")
+    git(repo, "config", "user.name", "Gate Tests")
     window = {
         "id": window_id,
         "profile": "lite",
