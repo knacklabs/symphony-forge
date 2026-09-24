@@ -1,0 +1,11 @@
+{
+  "approved_plan_sha256": "a234f94231ffef7d6924f8c6449dcba85537b5c3840ddf87634bfdd1f9bd680f",
+  "approved_by": "human-via-Claude",
+  "approved_at": "2026-09-24T15:34:59+00:00",
+  "runtime": "claude",
+  "session_id": "a0106b2c-e659-5e23-b0c7-d419b1d20fda",
+  "event_id": "toolu_01NiAYPyEZBWAXW1XReNEqkk",
+  "plan_kind": "story",
+  "story": "FORGE-UPG-2",
+  "task": ""
+}

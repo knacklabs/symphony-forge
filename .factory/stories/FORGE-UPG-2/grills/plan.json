@@ -1,0 +1,427 @@
+{
+  "generated_by": "griller",
+  "gate": "plan",
+  "verdict": "pass",
+  "gaps": [
+    "The plan does not place `--park` inside a rollback boundary. Parking changes the roadmap and story records; if it happens before the upgrade branch, failure changes the original branch. If it happens on the upgrade branch, those changes fall outside the proposed ticket exemption. See docs/specs/simple-upgrade.md:54-60 and factory/scripts/check_pr_ticket.py:53-58.",
+    "Restoring only `<git-dir>/forge/` cannot prove the promised exact rollback. The planned `forge next` check can write a Git-local `forge-roadmap-healed` marker and can heal `plans/roadmap.json`; neither effect is accounted for in the rollback design. See factory/scripts/forge_cli/phase.py:74-128 and factory/scripts/forge_cli/phase.py:223-233.",
+    "A clean harness worktree does not make the existing copy path a copy of committed bytes: it walks the filesystem, and its ignore list excludes only Python caches and `.DS_Store`. The plan needs a committed-source snapshot or a test that rejects other ignored source files. See factory/scripts/forge_cli/upgrade.py:3581-3586 and factory/scripts/forge_cli/upgrade.py:4708-4715.",
+    "The proposed ticket exemption omits existing upgrade outputs such as added `.gitattributes` rules, README onboarding, and removal of the old `.gstack/` ignore rule. An older client needing any of these would fail the promised ticket check. See factory/scripts/forge_cli/upgrade.py:4817-4827, factory/scripts/forge_cli/upgrade.py:4859-4882, and factory/scripts/check_pr_ticket.py:44-58.",
+    "Path classification and a `Forge-Upgrade` trailer do not prove that a harness-owned file contains the named harness commit's bytes. A hand edit to `factory/` or `WORKFLOW.md`, paired with a rewritten manifest, satisfies the proposed classification and can satisfy the current integrity check. This leaves the explicit hand-made-change rejection criterion unproved. See factory/scripts/check_pr_ticket.py:53-58 and factory/scripts/check_vendor_integrity.py:64-85.",
+    "The pre-rename proof covers refusal and instructions, but the plan does not test that running the tagged older upgrader and then the new upgrader actually reaches current Forge. That is the only offered route for these clients. See docs/specs/simple-upgrade.md:21-26 and docs/specs/simple-upgrade.md:116-117.",
+    "REBUILD combines replacing a 5,030-line upgrader, parking, rollback, deletions, and the main test replacement in one task without explaining how implementation, proof, three-lens review, and fixes fit one bounded session. The task seam needs a smaller reviewable shape. See factory/scripts/forge_cli/upgrade.py:4593 and WORKFLOW.md:367-380."
+  ],
+  "contradictions": [
+    "The plan's exact archive table excludes old grills and approval files, while accepted Decision 0088 explicitly includes them. The current task-plan reader can still direct a client with a legacy task grill to run `forge upgrade`, creating a dead end after the proposed removal. See docs/decisions/0088-simple-upgrade.md:27-32 and factory/scripts/forge_cli/tasks.py:241-251.",
+    "The plan promises client-owned docs survive while reusing the doc-contract copy path, which overwrites differing client doc-contract files. A separate active roadmap story specifically addresses this loss and has no dependency or disposition in this plan. See factory/scripts/forge_cli/upgrade.py:4771-4783 and plans/roadmap.json:906-919.",
+    "Deleting the sign-off carry without a replacement can turn an older signed-off client into an unsigned one: the current upgrader transfers the legacy `run.json` sign-off into `harness.yaml`, while current phase and board readers require that pin. See factory/scripts/forge_cli/upgrade.py:4829-4858 and factory/scripts/factory_lib.py:624-639.",
+    "Reducing the upgrade skill to finish or park, upgrade, and open a PR drops its shipped project backfill and guided pending-story re-authoring flow. The plan names no replacement authority or route for that neighboring user flow. See plans/roadmap.json:395-414 and install/claude/knacklabs-upgrade-project/SKILL.md:92-132."
+  ],
+  "resolutions": [
+    "Parking runs on the upgrade branch inside the rollback, and the upgrade commit carries a Parked: trailer per story whose plan move, plan-meta archive and roadmap change the ticket exemption accepts (Technical approach: Run; Ticket check).",
+    "Checks run in a throwaway worktree of the upgrade commit, so forge next's heal and git-local marker cannot touch the target; any tracked change they make is a failure (Technical approach: Checks).",
+    "Vendoring copies from a committed snapshot of the harness (git archive HEAD into a temp dir), never the working tree (Technical approach: Source bytes).",
+    "The ticket exemption now lists every output the upgrader produces: harness-owned paths, manifest, archive renames, .gitignore/.gitattributes blocks and old-rule removals, README onboarding block, sign-off pin, and parked-story changes (Technical approach: Ticket check).",
+    "Byte provenance: without harness access the ticket check cannot prove exact harness bytes; the plan states this limit (Risks) and the check refuses changes outside the upgrader's categories; a disguised in-category hand edit is judged by review, consistent with full access (decision 0087).",
+    "Verify plan now runs the pre-rename two-step route end to end: the older upgrader from the legacy commit, then the new one, reaching current (Verify plan).",
+    "REBUILD is split into CORE (new module), PARK and DELETE-OLD, each one bounded reviewable task (Task decomposition).",
+    "The confirmed spec narrowed the archive table; decision 0088's example list is corrected in DOCS-SKILL with the owner's approval carried in the plan approval; the legacy task-grill 'run forge upgrade' advice is reworded to 'finish or park' because no in-flight work crosses an upgrade (What I need from you; Messages).",
+    "Doc-contract files follow the byte-ownership rule: client-edited ones are kept and named in the report, never overwritten; the upgrade-preserves-doc-contracts roadmap item is marked covered (Technical approach; Roadmap).",
+    "The sign-off carry (legacy run.json sign-off to the harness.yaml pin) is kept, so signed-off clients stay signed off (Technical approach: Run).",
+    "The upgrade skill keeps its existing after-upgrade project backfill and pending-story re-authoring steps after following upgrade's printed steps (What changes for you; Docs)."
+  ],
+  "finding_dispositions": [
+    {
+      "finding": "The plan does not place `--park` inside a rollback boundary. Parking changes the roadmap and story records; if it happens before the upgrade branch, failure changes the original branch. If it happens on the upgrade branch, those changes fall outside the proposed ticket exemption. See docs/specs/simple-upgrade.md:54-60 and factory/scripts/check_pr_ticket.py:53-58.",
+      "resolution": "Parking runs on the upgrade branch inside the rollback, and the upgrade commit carries a Parked: trailer per story whose plan move, plan-meta archive and roadmap change the ticket exemption accepts (Technical approach: Run; Ticket check).",
+      "source": "repository fact"
+    },
+    {
+      "finding": "Restoring only `<git-dir>/forge/` cannot prove the promised exact rollback. The planned `forge next` check can write a Git-local `forge-roadmap-healed` marker and can heal `plans/roadmap.json`; neither effect is accounted for in the rollback design. See factory/scripts/forge_cli/phase.py:74-128 and factory/scripts/forge_cli/phase.py:223-233.",
+      "resolution": "Checks run in a throwaway worktree of the upgrade commit, so forge next's heal and git-local marker cannot touch the target; any tracked change they make is a failure (Technical approach: Checks).",
+      "source": "repository fact"
+    },
+    {
+      "finding": "A clean harness worktree does not make the existing copy path a copy of committed bytes: it walks the filesystem, and its ignore list excludes only Python caches and `.DS_Store`. The plan needs a committed-source snapshot or a test that rejects other ignored source files. See factory/scripts/forge_cli/upgrade.py:3581-3586 and factory/scripts/forge_cli/upgrade.py:4708-4715.",
+      "resolution": "Vendoring copies from a committed snapshot of the harness (git archive HEAD into a temp dir), never the working tree (Technical approach: Source bytes).",
+      "source": "repository fact"
+    },
+    {
+      "finding": "The proposed ticket exemption omits existing upgrade outputs such as added `.gitattributes` rules, README onboarding, and removal of the old `.gstack/` ignore rule. An older client needing any of these would fail the promised ticket check. See factory/scripts/forge_cli/upgrade.py:4817-4827, factory/scripts/forge_cli/upgrade.py:4859-4882, and factory/scripts/check_pr_ticket.py:44-58.",
+      "resolution": "The ticket exemption now lists every output the upgrader produces: harness-owned paths, manifest, archive renames, .gitignore/.gitattributes blocks and old-rule removals, README onboarding block, sign-off pin, and parked-story changes (Technical approach: Ticket check).",
+      "source": "repository fact"
+    },
+    {
+      "finding": "Path classification and a `Forge-Upgrade` trailer do not prove that a harness-owned file contains the named harness commit's bytes. A hand edit to `factory/` or `WORKFLOW.md`, paired with a rewritten manifest, satisfies the proposed classification and can satisfy the current integrity check. This leaves the explicit hand-made-change rejection criterion unproved. See factory/scripts/check_pr_ticket.py:53-58 and factory/scripts/check_vendor_integrity.py:64-85.",
+      "resolution": "Byte provenance: without harness access the ticket check cannot prove exact harness bytes; the plan states this limit (Risks) and the check refuses changes outside the upgrader's categories; a disguised in-category hand edit is judged by review, consistent with full access (decision 0087).",
+      "source": "repository fact"
+    },
+    {
+      "finding": "The pre-rename proof covers refusal and instructions, but the plan does not test that running the tagged older upgrader and then the new upgrader actually reaches current Forge. That is the only offered route for these clients. See docs/specs/simple-upgrade.md:21-26 and docs/specs/simple-upgrade.md:116-117.",
+      "resolution": "Verify plan now runs the pre-rename two-step route end to end: the older upgrader from the legacy commit, then the new one, reaching current (Verify plan).",
+      "source": "repository fact"
+    },
+    {
+      "finding": "REBUILD combines replacing a 5,030-line upgrader, parking, rollback, deletions, and the main test replacement in one task without explaining how implementation, proof, three-lens review, and fixes fit one bounded session. The task seam needs a smaller reviewable shape. See factory/scripts/forge_cli/upgrade.py:4593 and WORKFLOW.md:367-380.",
+      "resolution": "REBUILD is split into CORE (new module), PARK and DELETE-OLD, each one bounded reviewable task (Task decomposition).",
+      "source": "repository fact"
+    },
+    {
+      "finding": "The plan's exact archive table excludes old grills and approval files, while accepted Decision 0088 explicitly includes them. The current task-plan reader can still direct a client with a legacy task grill to run `forge upgrade`, creating a dead end after the proposed removal. See docs/decisions/0088-simple-upgrade.md:27-32 and factory/scripts/forge_cli/tasks.py:241-251.",
+      "resolution": "The confirmed spec narrowed the archive table; decision 0088's example list is corrected in DOCS-SKILL with the owner's approval carried in the plan approval; the legacy task-grill 'run forge upgrade' advice is reworded to 'finish or park' because no in-flight work crosses an upgrade (What I need from you; Messages).",
+      "source": "repository fact"
+    },
+    {
+      "finding": "The plan promises client-owned docs survive while reusing the doc-contract copy path, which overwrites differing client doc-contract files. A separate active roadmap story specifically addresses this loss and has no dependency or disposition in this plan. See factory/scripts/forge_cli/upgrade.py:4771-4783 and plans/roadmap.json:906-919.",
+      "resolution": "Doc-contract files follow the byte-ownership rule: client-edited ones are kept and named in the report, never overwritten; the upgrade-preserves-doc-contracts roadmap item is marked covered (Technical approach; Roadmap).",
+      "source": "repository fact"
+    },
+    {
+      "finding": "Deleting the sign-off carry without a replacement can turn an older signed-off client into an unsigned one: the current upgrader transfers the legacy `run.json` sign-off into `harness.yaml`, while current phase and board readers require that pin. See factory/scripts/forge_cli/upgrade.py:4829-4858 and factory/scripts/factory_lib.py:624-639.",
+      "resolution": "The sign-off carry (legacy run.json sign-off to the harness.yaml pin) is kept, so signed-off clients stay signed off (Technical approach: Run).",
+      "source": "repository fact"
+    },
+    {
+      "finding": "Reducing the upgrade skill to finish or park, upgrade, and open a PR drops its shipped project backfill and guided pending-story re-authoring flow. The plan names no replacement authority or route for that neighboring user flow. See plans/roadmap.json:395-414 and install/claude/knacklabs-upgrade-project/SKILL.md:92-132.",
+      "resolution": "The upgrade skill keeps its existing after-upgrade project backfill and pending-story re-authoring steps after following upgrade's printed steps (What changes for you; Docs).",
+      "source": "repository fact"
+    }
+  ],
+  "amendments": [
+    {
+      "change": "span 0: rewritten to resolve the cold-read findings",
+      "reason": "one amendment after the single cold read, resolving repository-answerable findings",
+      "source": "coordinator amendment 2026-09-24",
+      "findings": [
+        "The plan does not place `--park` inside a rollback boundary. Parking changes the roadmap and story records; if it happens before the upgrade branch, failure changes the original branch. If it happens on the upgrade branch, those changes fall outside the proposed ticket exemption. See docs/specs/simple-upgrade.md:54-60 and factory/scripts/check_pr_ticket.py:53-58.",
+        "Restoring only `<git-dir>/forge/` cannot prove the promised exact rollback. The planned `forge next` check can write a Git-local `forge-roadmap-healed` marker and can heal `plans/roadmap.json`; neither effect is accounted for in the rollback design. See factory/scripts/forge_cli/phase.py:74-128 and factory/scripts/forge_cli/phase.py:223-233.",
+        "A clean harness worktree does not make the existing copy path a copy of committed bytes: it walks the filesystem, and its ignore list excludes only Python caches and `.DS_Store`. The plan needs a committed-source snapshot or a test that rejects other ignored source files. See factory/scripts/forge_cli/upgrade.py:3581-3586 and factory/scripts/forge_cli/upgrade.py:4708-4715.",
+        "The proposed ticket exemption omits existing upgrade outputs such as added `.gitattributes` rules, README onboarding, and removal of the old `.gstack/` ignore rule. An older client needing any of these would fail the promised ticket check. See factory/scripts/forge_cli/upgrade.py:4817-4827, factory/scripts/forge_cli/upgrade.py:4859-4882, and factory/scripts/check_pr_ticket.py:44-58.",
+        "Path classification and a `Forge-Upgrade` trailer do not prove that a harness-owned file contains the named harness commit's bytes. A hand edit to `factory/` or `WORKFLOW.md`, paired with a rewritten manifest, satisfies the proposed classification and can satisfy the current integrity check. This leaves the explicit hand-made-change rejection criterion unproved. See factory/scripts/check_pr_ticket.py:53-58 and factory/scripts/check_vendor_integrity.py:64-85.",
+        "The pre-rename proof covers refusal and instructions, but the plan does not test that running the tagged older upgrader and then the new upgrader actually reaches current Forge. That is the only offered route for these clients. See docs/specs/simple-upgrade.md:21-26 and docs/specs/simple-upgrade.md:116-117.",
+        "REBUILD combines replacing a 5,030-line upgrader, parking, rollback, deletions, and the main test replacement in one task without explaining how implementation, proof, three-lens review, and fixes fit one bounded session. The task seam needs a smaller reviewable shape. See factory/scripts/forge_cli/upgrade.py:4593 and WORKFLOW.md:367-380.",
+        "The plan's exact archive table excludes old grills and approval files, while accepted Decision 0088 explicitly includes them. The current task-plan reader can still direct a client with a legacy task grill to run `forge upgrade`, creating a dead end after the proposed removal. See docs/decisions/0088-simple-upgrade.md:27-32 and factory/scripts/forge_cli/tasks.py:241-251.",
+        "The plan promises client-owned docs survive while reusing the doc-contract copy path, which overwrites differing client doc-contract files. A separate active roadmap story specifically addresses this loss and has no dependency or disposition in this plan. See factory/scripts/forge_cli/upgrade.py:4771-4783 and plans/roadmap.json:906-919.",
+        "Deleting the sign-off carry without a replacement can turn an older signed-off client into an unsigned one: the current upgrader transfers the legacy `run.json` sign-off into `harness.yaml`, while current phase and board readers require that pin. See factory/scripts/forge_cli/upgrade.py:4829-4858 and factory/scripts/factory_lib.py:624-639.",
+        "Reducing the upgrade skill to finish or park, upgrade, and open a PR drops its shipped project backfill and guided pending-story re-authoring flow. The plan names no replacement authority or route for that neighboring user flow. See plans/roadmap.json:395-414 and install/claude/knacklabs-upgrade-project/SKILL.md:92-132."
+      ],
+      "delta_index": 0
+    },
+    {
+      "change": "span 1: rewritten to resolve the cold-read findings",
+      "reason": "one amendment after the single cold read, resolving repository-answerable findings",
+      "source": "coordinator amendment 2026-09-24",
+      "findings": [
+        "The plan does not place `--park` inside a rollback boundary. Parking changes the roadmap and story records; if it happens before the upgrade branch, failure changes the original branch. If it happens on the upgrade branch, those changes fall outside the proposed ticket exemption. See docs/specs/simple-upgrade.md:54-60 and factory/scripts/check_pr_ticket.py:53-58.",
+        "Restoring only `<git-dir>/forge/` cannot prove the promised exact rollback. The planned `forge next` check can write a Git-local `forge-roadmap-healed` marker and can heal `plans/roadmap.json`; neither effect is accounted for in the rollback design. See factory/scripts/forge_cli/phase.py:74-128 and factory/scripts/forge_cli/phase.py:223-233.",
+        "A clean harness worktree does not make the existing copy path a copy of committed bytes: it walks the filesystem, and its ignore list excludes only Python caches and `.DS_Store`. The plan needs a committed-source snapshot or a test that rejects other ignored source files. See factory/scripts/forge_cli/upgrade.py:3581-3586 and factory/scripts/forge_cli/upgrade.py:4708-4715.",
+        "The proposed ticket exemption omits existing upgrade outputs such as added `.gitattributes` rules, README onboarding, and removal of the old `.gstack/` ignore rule. An older client needing any of these would fail the promised ticket check. See factory/scripts/forge_cli/upgrade.py:4817-4827, factory/scripts/forge_cli/upgrade.py:4859-4882, and factory/scripts/check_pr_ticket.py:44-58.",
+        "Path classification and a `Forge-Upgrade` trailer do not prove that a harness-owned file contains the named harness commit's bytes. A hand edit to `factory/` or `WORKFLOW.md`, paired with a rewritten manifest, satisfies the proposed classification and can satisfy the current integrity check. This leaves the explicit hand-made-change rejection criterion unproved. See factory/scripts/check_pr_ticket.py:53-58 and factory/scripts/check_vendor_integrity.py:64-85.",
+        "The pre-rename proof covers refusal and instructions, but the plan does not test that running the tagged older upgrader and then the new upgrader actually reaches current Forge. That is the only offered route for these clients. See docs/specs/simple-upgrade.md:21-26 and docs/specs/simple-upgrade.md:116-117.",
+        "REBUILD combines replacing a 5,030-line upgrader, parking, rollback, deletions, and the main test replacement in one task without explaining how implementation, proof, three-lens review, and fixes fit one bounded session. The task seam needs a smaller reviewable shape. See factory/scripts/forge_cli/upgrade.py:4593 and WORKFLOW.md:367-380.",
+        "The plan's exact archive table excludes old grills and approval files, while accepted Decision 0088 explicitly includes them. The current task-plan reader can still direct a client with a legacy task grill to run `forge upgrade`, creating a dead end after the proposed removal. See docs/decisions/0088-simple-upgrade.md:27-32 and factory/scripts/forge_cli/tasks.py:241-251.",
+        "The plan promises client-owned docs survive while reusing the doc-contract copy path, which overwrites differing client doc-contract files. A separate active roadmap story specifically addresses this loss and has no dependency or disposition in this plan. See factory/scripts/forge_cli/upgrade.py:4771-4783 and plans/roadmap.json:906-919.",
+        "Deleting the sign-off carry without a replacement can turn an older signed-off client into an unsigned one: the current upgrader transfers the legacy `run.json` sign-off into `harness.yaml`, while current phase and board readers require that pin. See factory/scripts/forge_cli/upgrade.py:4829-4858 and factory/scripts/factory_lib.py:624-639.",
+        "Reducing the upgrade skill to finish or park, upgrade, and open a PR drops its shipped project backfill and guided pending-story re-authoring flow. The plan names no replacement authority or route for that neighboring user flow. See plans/roadmap.json:395-414 and install/claude/knacklabs-upgrade-project/SKILL.md:92-132."
+      ],
+      "delta_index": 1
+    },
+    {
+      "change": "span 2: rewritten to resolve the cold-read findings",
+      "reason": "one amendment after the single cold read, resolving repository-answerable findings",
+      "source": "coordinator amendment 2026-09-24",
+      "findings": [
+        "The plan does not place `--park` inside a rollback boundary. Parking changes the roadmap and story records; if it happens before the upgrade branch, failure changes the original branch. If it happens on the upgrade branch, those changes fall outside the proposed ticket exemption. See docs/specs/simple-upgrade.md:54-60 and factory/scripts/check_pr_ticket.py:53-58.",
+        "Restoring only `<git-dir>/forge/` cannot prove the promised exact rollback. The planned `forge next` check can write a Git-local `forge-roadmap-healed` marker and can heal `plans/roadmap.json`; neither effect is accounted for in the rollback design. See factory/scripts/forge_cli/phase.py:74-128 and factory/scripts/forge_cli/phase.py:223-233.",
+        "A clean harness worktree does not make the existing copy path a copy of committed bytes: it walks the filesystem, and its ignore list excludes only Python caches and `.DS_Store`. The plan needs a committed-source snapshot or a test that rejects other ignored source files. See factory/scripts/forge_cli/upgrade.py:3581-3586 and factory/scripts/forge_cli/upgrade.py:4708-4715.",
+        "The proposed ticket exemption omits existing upgrade outputs such as added `.gitattributes` rules, README onboarding, and removal of the old `.gstack/` ignore rule. An older client needing any of these would fail the promised ticket check. See factory/scripts/forge_cli/upgrade.py:4817-4827, factory/scripts/forge_cli/upgrade.py:4859-4882, and factory/scripts/check_pr_ticket.py:44-58.",
+        "Path classification and a `Forge-Upgrade` trailer do not prove that a harness-owned file contains the named harness commit's bytes. A hand edit to `factory/` or `WORKFLOW.md`, paired with a rewritten manifest, satisfies the proposed classification and can satisfy the current integrity check. This leaves the explicit hand-made-change rejection criterion unproved. See factory/scripts/check_pr_ticket.py:53-58 and factory/scripts/check_vendor_integrity.py:64-85.",
+        "The pre-rename proof covers refusal and instructions, but the plan does not test that running the tagged older upgrader and then the new upgrader actually reaches current Forge. That is the only offered route for these clients. See docs/specs/simple-upgrade.md:21-26 and docs/specs/simple-upgrade.md:116-117.",
+        "REBUILD combines replacing a 5,030-line upgrader, parking, rollback, deletions, and the main test replacement in one task without explaining how implementation, proof, three-lens review, and fixes fit one bounded session. The task seam needs a smaller reviewable shape. See factory/scripts/forge_cli/upgrade.py:4593 and WORKFLOW.md:367-380.",
+        "The plan's exact archive table excludes old grills and approval files, while accepted Decision 0088 explicitly includes them. The current task-plan reader can still direct a client with a legacy task grill to run `forge upgrade`, creating a dead end after the proposed removal. See docs/decisions/0088-simple-upgrade.md:27-32 and factory/scripts/forge_cli/tasks.py:241-251.",
+        "The plan promises client-owned docs survive while reusing the doc-contract copy path, which overwrites differing client doc-contract files. A separate active roadmap story specifically addresses this loss and has no dependency or disposition in this plan. See factory/scripts/forge_cli/upgrade.py:4771-4783 and plans/roadmap.json:906-919.",
+        "Deleting the sign-off carry without a replacement can turn an older signed-off client into an unsigned one: the current upgrader transfers the legacy `run.json` sign-off into `harness.yaml`, while current phase and board readers require that pin. See factory/scripts/forge_cli/upgrade.py:4829-4858 and factory/scripts/factory_lib.py:624-639.",
+        "Reducing the upgrade skill to finish or park, upgrade, and open a PR drops its shipped project backfill and guided pending-story re-authoring flow. The plan names no replacement authority or route for that neighboring user flow. See plans/roadmap.json:395-414 and install/claude/knacklabs-upgrade-project/SKILL.md:92-132."
+      ],
+      "delta_index": 2
+    },
+    {
+      "change": "span 3: rewritten to resolve the cold-read findings",
+      "reason": "one amendment after the single cold read, resolving repository-answerable findings",
+      "source": "coordinator amendment 2026-09-24",
+      "findings": [
+        "The plan does not place `--park` inside a rollback boundary. Parking changes the roadmap and story records; if it happens before the upgrade branch, failure changes the original branch. If it happens on the upgrade branch, those changes fall outside the proposed ticket exemption. See docs/specs/simple-upgrade.md:54-60 and factory/scripts/check_pr_ticket.py:53-58.",
+        "Restoring only `<git-dir>/forge/` cannot prove the promised exact rollback. The planned `forge next` check can write a Git-local `forge-roadmap-healed` marker and can heal `plans/roadmap.json`; neither effect is accounted for in the rollback design. See factory/scripts/forge_cli/phase.py:74-128 and factory/scripts/forge_cli/phase.py:223-233.",
+        "A clean harness worktree does not make the existing copy path a copy of committed bytes: it walks the filesystem, and its ignore list excludes only Python caches and `.DS_Store`. The plan needs a committed-source snapshot or a test that rejects other ignored source files. See factory/scripts/forge_cli/upgrade.py:3581-3586 and factory/scripts/forge_cli/upgrade.py:4708-4715.",
+        "The proposed ticket exemption omits existing upgrade outputs such as added `.gitattributes` rules, README onboarding, and removal of the old `.gstack/` ignore rule. An older client needing any of these would fail the promised ticket check. See factory/scripts/forge_cli/upgrade.py:4817-4827, factory/scripts/forge_cli/upgrade.py:4859-4882, and factory/scripts/check_pr_ticket.py:44-58.",
+        "Path classification and a `Forge-Upgrade` trailer do not prove that a harness-owned file contains the named harness commit's bytes. A hand edit to `factory/` or `WORKFLOW.md`, paired with a rewritten manifest, satisfies the proposed classification and can satisfy the current integrity check. This leaves the explicit hand-made-change rejection criterion unproved. See factory/scripts/check_pr_ticket.py:53-58 and factory/scripts/check_vendor_integrity.py:64-85.",
+        "The pre-rename proof covers refusal and instructions, but the plan does not test that running the tagged older upgrader and then the new upgrader actually reaches current Forge. That is the only offered route for these clients. See docs/specs/simple-upgrade.md:21-26 and docs/specs/simple-upgrade.md:116-117.",
+        "REBUILD combines replacing a 5,030-line upgrader, parking, rollback, deletions, and the main test replacement in one task without explaining how implementation, proof, three-lens review, and fixes fit one bounded session. The task seam needs a smaller reviewable shape. See factory/scripts/forge_cli/upgrade.py:4593 and WORKFLOW.md:367-380.",
+        "The plan's exact archive table excludes old grills and approval files, while accepted Decision 0088 explicitly includes them. The current task-plan reader can still direct a client with a legacy task grill to run `forge upgrade`, creating a dead end after the proposed removal. See docs/decisions/0088-simple-upgrade.md:27-32 and factory/scripts/forge_cli/tasks.py:241-251.",
+        "The plan promises client-owned docs survive while reusing the doc-contract copy path, which overwrites differing client doc-contract files. A separate active roadmap story specifically addresses this loss and has no dependency or disposition in this plan. See factory/scripts/forge_cli/upgrade.py:4771-4783 and plans/roadmap.json:906-919.",
+        "Deleting the sign-off carry without a replacement can turn an older signed-off client into an unsigned one: the current upgrader transfers the legacy `run.json` sign-off into `harness.yaml`, while current phase and board readers require that pin. See factory/scripts/forge_cli/upgrade.py:4829-4858 and factory/scripts/factory_lib.py:624-639.",
+        "Reducing the upgrade skill to finish or park, upgrade, and open a PR drops its shipped project backfill and guided pending-story re-authoring flow. The plan names no replacement authority or route for that neighboring user flow. See plans/roadmap.json:395-414 and install/claude/knacklabs-upgrade-project/SKILL.md:92-132."
+      ],
+      "delta_index": 3
+    },
+    {
+      "change": "span 4: rewritten to resolve the cold-read findings",
+      "reason": "one amendment after the single cold read, resolving repository-answerable findings",
+      "source": "coordinator amendment 2026-09-24",
+      "findings": [
+        "The plan does not place `--park` inside a rollback boundary. Parking changes the roadmap and story records; if it happens before the upgrade branch, failure changes the original branch. If it happens on the upgrade branch, those changes fall outside the proposed ticket exemption. See docs/specs/simple-upgrade.md:54-60 and factory/scripts/check_pr_ticket.py:53-58.",
+        "Restoring only `<git-dir>/forge/` cannot prove the promised exact rollback. The planned `forge next` check can write a Git-local `forge-roadmap-healed` marker and can heal `plans/roadmap.json`; neither effect is accounted for in the rollback design. See factory/scripts/forge_cli/phase.py:74-128 and factory/scripts/forge_cli/phase.py:223-233.",
+        "A clean harness worktree does not make the existing copy path a copy of committed bytes: it walks the filesystem, and its ignore list excludes only Python caches and `.DS_Store`. The plan needs a committed-source snapshot or a test that rejects other ignored source files. See factory/scripts/forge_cli/upgrade.py:3581-3586 and factory/scripts/forge_cli/upgrade.py:4708-4715.",
+        "The proposed ticket exemption omits existing upgrade outputs such as added `.gitattributes` rules, README onboarding, and removal of the old `.gstack/` ignore rule. An older client needing any of these would fail the promised ticket check. See factory/scripts/forge_cli/upgrade.py:4817-4827, factory/scripts/forge_cli/upgrade.py:4859-4882, and factory/scripts/check_pr_ticket.py:44-58.",
+        "Path classification and a `Forge-Upgrade` trailer do not prove that a harness-owned file contains the named harness commit's bytes. A hand edit to `factory/` or `WORKFLOW.md`, paired with a rewritten manifest, satisfies the proposed classification and can satisfy the current integrity check. This leaves the explicit hand-made-change rejection criterion unproved. See factory/scripts/check_pr_ticket.py:53-58 and factory/scripts/check_vendor_integrity.py:64-85.",
+        "The pre-rename proof covers refusal and instructions, but the plan does not test that running the tagged older upgrader and then the new upgrader actually reaches current Forge. That is the only offered route for these clients. See docs/specs/simple-upgrade.md:21-26 and docs/specs/simple-upgrade.md:116-117.",
+        "REBUILD combines replacing a 5,030-line upgrader, parking, rollback, deletions, and the main test replacement in one task without explaining how implementation, proof, three-lens review, and fixes fit one bounded session. The task seam needs a smaller reviewable shape. See factory/scripts/forge_cli/upgrade.py:4593 and WORKFLOW.md:367-380.",
+        "The plan's exact archive table excludes old grills and approval files, while accepted Decision 0088 explicitly includes them. The current task-plan reader can still direct a client with a legacy task grill to run `forge upgrade`, creating a dead end after the proposed removal. See docs/decisions/0088-simple-upgrade.md:27-32 and factory/scripts/forge_cli/tasks.py:241-251.",
+        "The plan promises client-owned docs survive while reusing the doc-contract copy path, which overwrites differing client doc-contract files. A separate active roadmap story specifically addresses this loss and has no dependency or disposition in this plan. See factory/scripts/forge_cli/upgrade.py:4771-4783 and plans/roadmap.json:906-919.",
+        "Deleting the sign-off carry without a replacement can turn an older signed-off client into an unsigned one: the current upgrader transfers the legacy `run.json` sign-off into `harness.yaml`, while current phase and board readers require that pin. See factory/scripts/forge_cli/upgrade.py:4829-4858 and factory/scripts/factory_lib.py:624-639.",
+        "Reducing the upgrade skill to finish or park, upgrade, and open a PR drops its shipped project backfill and guided pending-story re-authoring flow. The plan names no replacement authority or route for that neighboring user flow. See plans/roadmap.json:395-414 and install/claude/knacklabs-upgrade-project/SKILL.md:92-132."
+      ],
+      "delta_index": 4
+    },
+    {
+      "change": "span 5: rewritten to resolve the cold-read findings",
+      "reason": "one amendment after the single cold read, resolving repository-answerable findings",
+      "source": "coordinator amendment 2026-09-24",
+      "findings": [
+        "The plan does not place `--park` inside a rollback boundary. Parking changes the roadmap and story records; if it happens before the upgrade branch, failure changes the original branch. If it happens on the upgrade branch, those changes fall outside the proposed ticket exemption. See docs/specs/simple-upgrade.md:54-60 and factory/scripts/check_pr_ticket.py:53-58.",
+        "Restoring only `<git-dir>/forge/` cannot prove the promised exact rollback. The planned `forge next` check can write a Git-local `forge-roadmap-healed` marker and can heal `plans/roadmap.json`; neither effect is accounted for in the rollback design. See factory/scripts/forge_cli/phase.py:74-128 and factory/scripts/forge_cli/phase.py:223-233.",
+        "A clean harness worktree does not make the existing copy path a copy of committed bytes: it walks the filesystem, and its ignore list excludes only Python caches and `.DS_Store`. The plan needs a committed-source snapshot or a test that rejects other ignored source files. See factory/scripts/forge_cli/upgrade.py:3581-3586 and factory/scripts/forge_cli/upgrade.py:4708-4715.",
+        "The proposed ticket exemption omits existing upgrade outputs such as added `.gitattributes` rules, README onboarding, and removal of the old `.gstack/` ignore rule. An older client needing any of these would fail the promised ticket check. See factory/scripts/forge_cli/upgrade.py:4817-4827, factory/scripts/forge_cli/upgrade.py:4859-4882, and factory/scripts/check_pr_ticket.py:44-58.",
+        "Path classification and a `Forge-Upgrade` trailer do not prove that a harness-owned file contains the named harness commit's bytes. A hand edit to `factory/` or `WORKFLOW.md`, paired with a rewritten manifest, satisfies the proposed classification and can satisfy the current integrity check. This leaves the explicit hand-made-change rejection criterion unproved. See factory/scripts/check_pr_ticket.py:53-58 and factory/scripts/check_vendor_integrity.py:64-85.",
+        "The pre-rename proof covers refusal and instructions, but the plan does not test that running the tagged older upgrader and then the new upgrader actually reaches current Forge. That is the only offered route for these clients. See docs/specs/simple-upgrade.md:21-26 and docs/specs/simple-upgrade.md:116-117.",
+        "REBUILD combines replacing a 5,030-line upgrader, parking, rollback, deletions, and the main test replacement in one task without explaining how implementation, proof, three-lens review, and fixes fit one bounded session. The task seam needs a smaller reviewable shape. See factory/scripts/forge_cli/upgrade.py:4593 and WORKFLOW.md:367-380.",
+        "The plan's exact archive table excludes old grills and approval files, while accepted Decision 0088 explicitly includes them. The current task-plan reader can still direct a client with a legacy task grill to run `forge upgrade`, creating a dead end after the proposed removal. See docs/decisions/0088-simple-upgrade.md:27-32 and factory/scripts/forge_cli/tasks.py:241-251.",
+        "The plan promises client-owned docs survive while reusing the doc-contract copy path, which overwrites differing client doc-contract files. A separate active roadmap story specifically addresses this loss and has no dependency or disposition in this plan. See factory/scripts/forge_cli/upgrade.py:4771-4783 and plans/roadmap.json:906-919.",
+        "Deleting the sign-off carry without a replacement can turn an older signed-off client into an unsigned one: the current upgrader transfers the legacy `run.json` sign-off into `harness.yaml`, while current phase and board readers require that pin. See factory/scripts/forge_cli/upgrade.py:4829-4858 and factory/scripts/factory_lib.py:624-639.",
+        "Reducing the upgrade skill to finish or park, upgrade, and open a PR drops its shipped project backfill and guided pending-story re-authoring flow. The plan names no replacement authority or route for that neighboring user flow. See plans/roadmap.json:395-414 and install/claude/knacklabs-upgrade-project/SKILL.md:92-132."
+      ],
+      "delta_index": 5
+    },
+    {
+      "change": "span 6: rewritten to resolve the cold-read findings",
+      "reason": "one amendment after the single cold read, resolving repository-answerable findings",
+      "source": "coordinator amendment 2026-09-24",
+      "findings": [
+        "The plan does not place `--park` inside a rollback boundary. Parking changes the roadmap and story records; if it happens before the upgrade branch, failure changes the original branch. If it happens on the upgrade branch, those changes fall outside the proposed ticket exemption. See docs/specs/simple-upgrade.md:54-60 and factory/scripts/check_pr_ticket.py:53-58.",
+        "Restoring only `<git-dir>/forge/` cannot prove the promised exact rollback. The planned `forge next` check can write a Git-local `forge-roadmap-healed` marker and can heal `plans/roadmap.json`; neither effect is accounted for in the rollback design. See factory/scripts/forge_cli/phase.py:74-128 and factory/scripts/forge_cli/phase.py:223-233.",
+        "A clean harness worktree does not make the existing copy path a copy of committed bytes: it walks the filesystem, and its ignore list excludes only Python caches and `.DS_Store`. The plan needs a committed-source snapshot or a test that rejects other ignored source files. See factory/scripts/forge_cli/upgrade.py:3581-3586 and factory/scripts/forge_cli/upgrade.py:4708-4715.",
+        "The proposed ticket exemption omits existing upgrade outputs such as added `.gitattributes` rules, README onboarding, and removal of the old `.gstack/` ignore rule. An older client needing any of these would fail the promised ticket check. See factory/scripts/forge_cli/upgrade.py:4817-4827, factory/scripts/forge_cli/upgrade.py:4859-4882, and factory/scripts/check_pr_ticket.py:44-58.",
+        "Path classification and a `Forge-Upgrade` trailer do not prove that a harness-owned file contains the named harness commit's bytes. A hand edit to `factory/` or `WORKFLOW.md`, paired with a rewritten manifest, satisfies the proposed classification and can satisfy the current integrity check. This leaves the explicit hand-made-change rejection criterion unproved. See factory/scripts/check_pr_ticket.py:53-58 and factory/scripts/check_vendor_integrity.py:64-85.",
+        "The pre-rename proof covers refusal and instructions, but the plan does not test that running the tagged older upgrader and then the new upgrader actually reaches current Forge. That is the only offered route for these clients. See docs/specs/simple-upgrade.md:21-26 and docs/specs/simple-upgrade.md:116-117.",
+        "REBUILD combines replacing a 5,030-line upgrader, parking, rollback, deletions, and the main test replacement in one task without explaining how implementation, proof, three-lens review, and fixes fit one bounded session. The task seam needs a smaller reviewable shape. See factory/scripts/forge_cli/upgrade.py:4593 and WORKFLOW.md:367-380.",
+        "The plan's exact archive table excludes old grills and approval files, while accepted Decision 0088 explicitly includes them. The current task-plan reader can still direct a client with a legacy task grill to run `forge upgrade`, creating a dead end after the proposed removal. See docs/decisions/0088-simple-upgrade.md:27-32 and factory/scripts/forge_cli/tasks.py:241-251.",
+        "The plan promises client-owned docs survive while reusing the doc-contract copy path, which overwrites differing client doc-contract files. A separate active roadmap story specifically addresses this loss and has no dependency or disposition in this plan. See factory/scripts/forge_cli/upgrade.py:4771-4783 and plans/roadmap.json:906-919.",
+        "Deleting the sign-off carry without a replacement can turn an older signed-off client into an unsigned one: the current upgrader transfers the legacy `run.json` sign-off into `harness.yaml`, while current phase and board readers require that pin. See factory/scripts/forge_cli/upgrade.py:4829-4858 and factory/scripts/factory_lib.py:624-639.",
+        "Reducing the upgrade skill to finish or park, upgrade, and open a PR drops its shipped project backfill and guided pending-story re-authoring flow. The plan names no replacement authority or route for that neighboring user flow. See plans/roadmap.json:395-414 and install/claude/knacklabs-upgrade-project/SKILL.md:92-132."
+      ],
+      "delta_index": 6
+    },
+    {
+      "change": "span 7: rewritten to resolve the cold-read findings",
+      "reason": "one amendment after the single cold read, resolving repository-answerable findings",
+      "source": "coordinator amendment 2026-09-24",
+      "findings": [
+        "The plan does not place `--park` inside a rollback boundary. Parking changes the roadmap and story records; if it happens before the upgrade branch, failure changes the original branch. If it happens on the upgrade branch, those changes fall outside the proposed ticket exemption. See docs/specs/simple-upgrade.md:54-60 and factory/scripts/check_pr_ticket.py:53-58.",
+        "Restoring only `<git-dir>/forge/` cannot prove the promised exact rollback. The planned `forge next` check can write a Git-local `forge-roadmap-healed` marker and can heal `plans/roadmap.json`; neither effect is accounted for in the rollback design. See factory/scripts/forge_cli/phase.py:74-128 and factory/scripts/forge_cli/phase.py:223-233.",
+        "A clean harness worktree does not make the existing copy path a copy of committed bytes: it walks the filesystem, and its ignore list excludes only Python caches and `.DS_Store`. The plan needs a committed-source snapshot or a test that rejects other ignored source files. See factory/scripts/forge_cli/upgrade.py:3581-3586 and factory/scripts/forge_cli/upgrade.py:4708-4715.",
+        "The proposed ticket exemption omits existing upgrade outputs such as added `.gitattributes` rules, README onboarding, and removal of the old `.gstack/` ignore rule. An older client needing any of these would fail the promised ticket check. See factory/scripts/forge_cli/upgrade.py:4817-4827, factory/scripts/forge_cli/upgrade.py:4859-4882, and factory/scripts/check_pr_ticket.py:44-58.",
+        "Path classification and a `Forge-Upgrade` trailer do not prove that a harness-owned file contains the named harness commit's bytes. A hand edit to `factory/` or `WORKFLOW.md`, paired with a rewritten manifest, satisfies the proposed classification and can satisfy the current integrity check. This leaves the explicit hand-made-change rejection criterion unproved. See factory/scripts/check_pr_ticket.py:53-58 and factory/scripts/check_vendor_integrity.py:64-85.",
+        "The pre-rename proof covers refusal and instructions, but the plan does not test that running the tagged older upgrader and then the new upgrader actually reaches current Forge. That is the only offered route for these clients. See docs/specs/simple-upgrade.md:21-26 and docs/specs/simple-upgrade.md:116-117.",
+        "REBUILD combines replacing a 5,030-line upgrader, parking, rollback, deletions, and the main test replacement in one task without explaining how implementation, proof, three-lens review, and fixes fit one bounded session. The task seam needs a smaller reviewable shape. See factory/scripts/forge_cli/upgrade.py:4593 and WORKFLOW.md:367-380.",
+        "The plan's exact archive table excludes old grills and approval files, while accepted Decision 0088 explicitly includes them. The current task-plan reader can still direct a client with a legacy task grill to run `forge upgrade`, creating a dead end after the proposed removal. See docs/decisions/0088-simple-upgrade.md:27-32 and factory/scripts/forge_cli/tasks.py:241-251.",
+        "The plan promises client-owned docs survive while reusing the doc-contract copy path, which overwrites differing client doc-contract files. A separate active roadmap story specifically addresses this loss and has no dependency or disposition in this plan. See factory/scripts/forge_cli/upgrade.py:4771-4783 and plans/roadmap.json:906-919.",
+        "Deleting the sign-off carry without a replacement can turn an older signed-off client into an unsigned one: the current upgrader transfers the legacy `run.json` sign-off into `harness.yaml`, while current phase and board readers require that pin. See factory/scripts/forge_cli/upgrade.py:4829-4858 and factory/scripts/factory_lib.py:624-639.",
+        "Reducing the upgrade skill to finish or park, upgrade, and open a PR drops its shipped project backfill and guided pending-story re-authoring flow. The plan names no replacement authority or route for that neighboring user flow. See plans/roadmap.json:395-414 and install/claude/knacklabs-upgrade-project/SKILL.md:92-132."
+      ],
+      "delta_index": 7
+    },
+    {
+      "change": "span 8: rewritten to resolve the cold-read findings",
+      "reason": "one amendment after the single cold read, resolving repository-answerable findings",
+      "source": "coordinator amendment 2026-09-24",
+      "findings": [
+        "The plan does not place `--park` inside a rollback boundary. Parking changes the roadmap and story records; if it happens before the upgrade branch, failure changes the original branch. If it happens on the upgrade branch, those changes fall outside the proposed ticket exemption. See docs/specs/simple-upgrade.md:54-60 and factory/scripts/check_pr_ticket.py:53-58.",
+        "Restoring only `<git-dir>/forge/` cannot prove the promised exact rollback. The planned `forge next` check can write a Git-local `forge-roadmap-healed` marker and can heal `plans/roadmap.json`; neither effect is accounted for in the rollback design. See factory/scripts/forge_cli/phase.py:74-128 and factory/scripts/forge_cli/phase.py:223-233.",
+        "A clean harness worktree does not make the existing copy path a copy of committed bytes: it walks the filesystem, and its ignore list excludes only Python caches and `.DS_Store`. The plan needs a committed-source snapshot or a test that rejects other ignored source files. See factory/scripts/forge_cli/upgrade.py:3581-3586 and factory/scripts/forge_cli/upgrade.py:4708-4715.",
+        "The proposed ticket exemption omits existing upgrade outputs such as added `.gitattributes` rules, README onboarding, and removal of the old `.gstack/` ignore rule. An older client needing any of these would fail the promised ticket check. See factory/scripts/forge_cli/upgrade.py:4817-4827, factory/scripts/forge_cli/upgrade.py:4859-4882, and factory/scripts/check_pr_ticket.py:44-58.",
+        "Path classification and a `Forge-Upgrade` trailer do not prove that a harness-owned file contains the named harness commit's bytes. A hand edit to `factory/` or `WORKFLOW.md`, paired with a rewritten manifest, satisfies the proposed classification and can satisfy the current integrity check. This leaves the explicit hand-made-change rejection criterion unproved. See factory/scripts/check_pr_ticket.py:53-58 and factory/scripts/check_vendor_integrity.py:64-85.",
+        "The pre-rename proof covers refusal and instructions, but the plan does not test that running the tagged older upgrader and then the new upgrader actually reaches current Forge. That is the only offered route for these clients. See docs/specs/simple-upgrade.md:21-26 and docs/specs/simple-upgrade.md:116-117.",
+        "REBUILD combines replacing a 5,030-line upgrader, parking, rollback, deletions, and the main test replacement in one task without explaining how implementation, proof, three-lens review, and fixes fit one bounded session. The task seam needs a smaller reviewable shape. See factory/scripts/forge_cli/upgrade.py:4593 and WORKFLOW.md:367-380.",
+        "The plan's exact archive table excludes old grills and approval files, while accepted Decision 0088 explicitly includes them. The current task-plan reader can still direct a client with a legacy task grill to run `forge upgrade`, creating a dead end after the proposed removal. See docs/decisions/0088-simple-upgrade.md:27-32 and factory/scripts/forge_cli/tasks.py:241-251.",
+        "The plan promises client-owned docs survive while reusing the doc-contract copy path, which overwrites differing client doc-contract files. A separate active roadmap story specifically addresses this loss and has no dependency or disposition in this plan. See factory/scripts/forge_cli/upgrade.py:4771-4783 and plans/roadmap.json:906-919.",
+        "Deleting the sign-off carry without a replacement can turn an older signed-off client into an unsigned one: the current upgrader transfers the legacy `run.json` sign-off into `harness.yaml`, while current phase and board readers require that pin. See factory/scripts/forge_cli/upgrade.py:4829-4858 and factory/scripts/factory_lib.py:624-639.",
+        "Reducing the upgrade skill to finish or park, upgrade, and open a PR drops its shipped project backfill and guided pending-story re-authoring flow. The plan names no replacement authority or route for that neighboring user flow. See plans/roadmap.json:395-414 and install/claude/knacklabs-upgrade-project/SKILL.md:92-132."
+      ],
+      "delta_index": 8
+    },
+    {
+      "change": "span 9: rewritten to resolve the cold-read findings",
+      "reason": "one amendment after the single cold read, resolving repository-answerable findings",
+      "source": "coordinator amendment 2026-09-24",
+      "findings": [
+        "The plan does not place `--park` inside a rollback boundary. Parking changes the roadmap and story records; if it happens before the upgrade branch, failure changes the original branch. If it happens on the upgrade branch, those changes fall outside the proposed ticket exemption. See docs/specs/simple-upgrade.md:54-60 and factory/scripts/check_pr_ticket.py:53-58.",
+        "Restoring only `<git-dir>/forge/` cannot prove the promised exact rollback. The planned `forge next` check can write a Git-local `forge-roadmap-healed` marker and can heal `plans/roadmap.json`; neither effect is accounted for in the rollback design. See factory/scripts/forge_cli/phase.py:74-128 and factory/scripts/forge_cli/phase.py:223-233.",
+        "A clean harness worktree does not make the existing copy path a copy of committed bytes: it walks the filesystem, and its ignore list excludes only Python caches and `.DS_Store`. The plan needs a committed-source snapshot or a test that rejects other ignored source files. See factory/scripts/forge_cli/upgrade.py:3581-3586 and factory/scripts/forge_cli/upgrade.py:4708-4715.",
+        "The proposed ticket exemption omits existing upgrade outputs such as added `.gitattributes` rules, README onboarding, and removal of the old `.gstack/` ignore rule. An older client needing any of these would fail the promised ticket check. See factory/scripts/forge_cli/upgrade.py:4817-4827, factory/scripts/forge_cli/upgrade.py:4859-4882, and factory/scripts/check_pr_ticket.py:44-58.",
+        "Path classification and a `Forge-Upgrade` trailer do not prove that a harness-owned file contains the named harness commit's bytes. A hand edit to `factory/` or `WORKFLOW.md`, paired with a rewritten manifest, satisfies the proposed classification and can satisfy the current integrity check. This leaves the explicit hand-made-change rejection criterion unproved. See factory/scripts/check_pr_ticket.py:53-58 and factory/scripts/check_vendor_integrity.py:64-85.",
+        "The pre-rename proof covers refusal and instructions, but the plan does not test that running the tagged older upgrader and then the new upgrader actually reaches current Forge. That is the only offered route for these clients. See docs/specs/simple-upgrade.md:21-26 and docs/specs/simple-upgrade.md:116-117.",
+        "REBUILD combines replacing a 5,030-line upgrader, parking, rollback, deletions, and the main test replacement in one task without explaining how implementation, proof, three-lens review, and fixes fit one bounded session. The task seam needs a smaller reviewable shape. See factory/scripts/forge_cli/upgrade.py:4593 and WORKFLOW.md:367-380.",
+        "The plan's exact archive table excludes old grills and approval files, while accepted Decision 0088 explicitly includes them. The current task-plan reader can still direct a client with a legacy task grill to run `forge upgrade`, creating a dead end after the proposed removal. See docs/decisions/0088-simple-upgrade.md:27-32 and factory/scripts/forge_cli/tasks.py:241-251.",
+        "The plan promises client-owned docs survive while reusing the doc-contract copy path, which overwrites differing client doc-contract files. A separate active roadmap story specifically addresses this loss and has no dependency or disposition in this plan. See factory/scripts/forge_cli/upgrade.py:4771-4783 and plans/roadmap.json:906-919.",
+        "Deleting the sign-off carry without a replacement can turn an older signed-off client into an unsigned one: the current upgrader transfers the legacy `run.json` sign-off into `harness.yaml`, while current phase and board readers require that pin. See factory/scripts/forge_cli/upgrade.py:4829-4858 and factory/scripts/factory_lib.py:624-639.",
+        "Reducing the upgrade skill to finish or park, upgrade, and open a PR drops its shipped project backfill and guided pending-story re-authoring flow. The plan names no replacement authority or route for that neighboring user flow. See plans/roadmap.json:395-414 and install/claude/knacklabs-upgrade-project/SKILL.md:92-132."
+      ],
+      "delta_index": 9
+    },
+    {
+      "change": "span 10: rewritten to resolve the cold-read findings",
+      "reason": "one amendment after the single cold read, resolving repository-answerable findings",
+      "source": "coordinator amendment 2026-09-24",
+      "findings": [
+        "The plan does not place `--park` inside a rollback boundary. Parking changes the roadmap and story records; if it happens before the upgrade branch, failure changes the original branch. If it happens on the upgrade branch, those changes fall outside the proposed ticket exemption. See docs/specs/simple-upgrade.md:54-60 and factory/scripts/check_pr_ticket.py:53-58.",
+        "Restoring only `<git-dir>/forge/` cannot prove the promised exact rollback. The planned `forge next` check can write a Git-local `forge-roadmap-healed` marker and can heal `plans/roadmap.json`; neither effect is accounted for in the rollback design. See factory/scripts/forge_cli/phase.py:74-128 and factory/scripts/forge_cli/phase.py:223-233.",
+        "A clean harness worktree does not make the existing copy path a copy of committed bytes: it walks the filesystem, and its ignore list excludes only Python caches and `.DS_Store`. The plan needs a committed-source snapshot or a test that rejects other ignored source files. See factory/scripts/forge_cli/upgrade.py:3581-3586 and factory/scripts/forge_cli/upgrade.py:4708-4715.",
+        "The proposed ticket exemption omits existing upgrade outputs such as added `.gitattributes` rules, README onboarding, and removal of the old `.gstack/` ignore rule. An older client needing any of these would fail the promised ticket check. See factory/scripts/forge_cli/upgrade.py:4817-4827, factory/scripts/forge_cli/upgrade.py:4859-4882, and factory/scripts/check_pr_ticket.py:44-58.",
+        "Path classification and a `Forge-Upgrade` trailer do not prove that a harness-owned file contains the named harness commit's bytes. A hand edit to `factory/` or `WORKFLOW.md`, paired with a rewritten manifest, satisfies the proposed classification and can satisfy the current integrity check. This leaves the explicit hand-made-change rejection criterion unproved. See factory/scripts/check_pr_ticket.py:53-58 and factory/scripts/check_vendor_integrity.py:64-85.",
+        "The pre-rename proof covers refusal and instructions, but the plan does not test that running the tagged older upgrader and then the new upgrader actually reaches current Forge. That is the only offered route for these clients. See docs/specs/simple-upgrade.md:21-26 and docs/specs/simple-upgrade.md:116-117.",
+        "REBUILD combines replacing a 5,030-line upgrader, parking, rollback, deletions, and the main test replacement in one task without explaining how implementation, proof, three-lens review, and fixes fit one bounded session. The task seam needs a smaller reviewable shape. See factory/scripts/forge_cli/upgrade.py:4593 and WORKFLOW.md:367-380.",
+        "The plan's exact archive table excludes old grills and approval files, while accepted Decision 0088 explicitly includes them. The current task-plan reader can still direct a client with a legacy task grill to run `forge upgrade`, creating a dead end after the proposed removal. See docs/decisions/0088-simple-upgrade.md:27-32 and factory/scripts/forge_cli/tasks.py:241-251.",
+        "The plan promises client-owned docs survive while reusing the doc-contract copy path, which overwrites differing client doc-contract files. A separate active roadmap story specifically addresses this loss and has no dependency or disposition in this plan. See factory/scripts/forge_cli/upgrade.py:4771-4783 and plans/roadmap.json:906-919.",
+        "Deleting the sign-off carry without a replacement can turn an older signed-off client into an unsigned one: the current upgrader transfers the legacy `run.json` sign-off into `harness.yaml`, while current phase and board readers require that pin. See factory/scripts/forge_cli/upgrade.py:4829-4858 and factory/scripts/factory_lib.py:624-639.",
+        "Reducing the upgrade skill to finish or park, upgrade, and open a PR drops its shipped project backfill and guided pending-story re-authoring flow. The plan names no replacement authority or route for that neighboring user flow. See plans/roadmap.json:395-414 and install/claude/knacklabs-upgrade-project/SKILL.md:92-132."
+      ],
+      "delta_index": 10
+    },
+    {
+      "change": "span 11: rewritten to resolve the cold-read findings",
+      "reason": "one amendment after the single cold read, resolving repository-answerable findings",
+      "source": "coordinator amendment 2026-09-24",
+      "findings": [
+        "The plan does not place `--park` inside a rollback boundary. Parking changes the roadmap and story records; if it happens before the upgrade branch, failure changes the original branch. If it happens on the upgrade branch, those changes fall outside the proposed ticket exemption. See docs/specs/simple-upgrade.md:54-60 and factory/scripts/check_pr_ticket.py:53-58.",
+        "Restoring only `<git-dir>/forge/` cannot prove the promised exact rollback. The planned `forge next` check can write a Git-local `forge-roadmap-healed` marker and can heal `plans/roadmap.json`; neither effect is accounted for in the rollback design. See factory/scripts/forge_cli/phase.py:74-128 and factory/scripts/forge_cli/phase.py:223-233.",
+        "A clean harness worktree does not make the existing copy path a copy of committed bytes: it walks the filesystem, and its ignore list excludes only Python caches and `.DS_Store`. The plan needs a committed-source snapshot or a test that rejects other ignored source files. See factory/scripts/forge_cli/upgrade.py:3581-3586 and factory/scripts/forge_cli/upgrade.py:4708-4715.",
+        "The proposed ticket exemption omits existing upgrade outputs such as added `.gitattributes` rules, README onboarding, and removal of the old `.gstack/` ignore rule. An older client needing any of these would fail the promised ticket check. See factory/scripts/forge_cli/upgrade.py:4817-4827, factory/scripts/forge_cli/upgrade.py:4859-4882, and factory/scripts/check_pr_ticket.py:44-58.",
+        "Path classification and a `Forge-Upgrade` trailer do not prove that a harness-owned file contains the named harness commit's bytes. A hand edit to `factory/` or `WORKFLOW.md`, paired with a rewritten manifest, satisfies the proposed classification and can satisfy the current integrity check. This leaves the explicit hand-made-change rejection criterion unproved. See factory/scripts/check_pr_ticket.py:53-58 and factory/scripts/check_vendor_integrity.py:64-85.",
+        "The pre-rename proof covers refusal and instructions, but the plan does not test that running the tagged older upgrader and then the new upgrader actually reaches current Forge. That is the only offered route for these clients. See docs/specs/simple-upgrade.md:21-26 and docs/specs/simple-upgrade.md:116-117.",
+        "REBUILD combines replacing a 5,030-line upgrader, parking, rollback, deletions, and the main test replacement in one task without explaining how implementation, proof, three-lens review, and fixes fit one bounded session. The task seam needs a smaller reviewable shape. See factory/scripts/forge_cli/upgrade.py:4593 and WORKFLOW.md:367-380.",
+        "The plan's exact archive table excludes old grills and approval files, while accepted Decision 0088 explicitly includes them. The current task-plan reader can still direct a client with a legacy task grill to run `forge upgrade`, creating a dead end after the proposed removal. See docs/decisions/0088-simple-upgrade.md:27-32 and factory/scripts/forge_cli/tasks.py:241-251.",
+        "The plan promises client-owned docs survive while reusing the doc-contract copy path, which overwrites differing client doc-contract files. A separate active roadmap story specifically addresses this loss and has no dependency or disposition in this plan. See factory/scripts/forge_cli/upgrade.py:4771-4783 and plans/roadmap.json:906-919.",
+        "Deleting the sign-off carry without a replacement can turn an older signed-off client into an unsigned one: the current upgrader transfers the legacy `run.json` sign-off into `harness.yaml`, while current phase and board readers require that pin. See factory/scripts/forge_cli/upgrade.py:4829-4858 and factory/scripts/factory_lib.py:624-639.",
+        "Reducing the upgrade skill to finish or park, upgrade, and open a PR drops its shipped project backfill and guided pending-story re-authoring flow. The plan names no replacement authority or route for that neighboring user flow. See plans/roadmap.json:395-414 and install/claude/knacklabs-upgrade-project/SKILL.md:92-132."
+      ],
+      "delta_index": 11
+    }
+  ],
+  "artifact_delta": [
+    {
+      "cold_start": 20,
+      "cold_end": 22,
+      "cold": "  you own stays: stories, history, roadmap, decisions, docs, your skills and agent profiles.\n- Upgrade prints what to do next: review the commit, open the PR. The upgrade skill follows it.\n",
+      "final_start": 20,
+      "final_end": 24,
+      "final": "  you own stays: stories, history, roadmap, decisions, docs you edited, your skills and agent\n  profiles, and your sign-off.\n- Upgrade prints what to do next: review the commit, open the PR. The upgrade skill follows it, then\n  runs its existing after-upgrade steps (project backfill and re-authoring pending stories).\n"
+    },
+    {
+      "cold_start": 25,
+      "cold_end": 25,
+      "cold": "",
+      "final_start": 27,
+      "final_end": 30,
+      "final": "\nThis also covers the separate \"upgrade preserves doc contracts\" roadmap item: docs you edited are kept\nand named in the report, never overwritten.\n"
+    },
+    {
+      "cold_start": 33,
+      "cold_end": 34,
+      "cold": "  refused with the older-step instructions.\n",
+      "final_start": 38,
+      "final_end": 39,
+      "final": "  refused with the older-step instructions, and following them reaches current Forge.\n"
+    },
+    {
+      "cold_start": 38,
+      "cold_end": 41,
+      "cold": "- Client-owned files survive, old review files end up in the archive, and the board shows those tasks\n  as reviewed before the upgrade.\n- The upgrade PR passes the ticket check, and a hand-made change slipped into it does not.\n",
+      "final_start": 43,
+      "final_end": 46,
+      "final": "- Client-owned files (including edited docs and the sign-off) survive, old review files end up in the\n  archive, and the board shows those tasks as reviewed before the upgrade.\n- The upgrade PR passes the ticket check; a change outside what upgrade produces is refused.\n"
+    },
+    {
+      "cold_start": 47,
+      "cold_end": 48,
+      "cold": "- Files a client git-ignores are never moved, so the safety reset can't lose them.\n",
+      "final_start": 52,
+      "final_end": 55,
+      "final": "- The ticket check cannot prove a harness file holds exact harness bytes without the harness itself,\n  so a hand edit disguised inside an upgrade commit is caught by review, as every change is under\n  full access.\n"
+    },
+    {
+      "cold_start": 51,
+      "cold_end": 52,
+      "cold": "Nothing beyond approving this plan.\n",
+      "final_start": 58,
+      "final_end": 61,
+      "final": "Approving this plan also approves one wording fix: decision 0088's example list says old grills and\napproval files are archived; the confirmed spec archives only the old review files and three root\nfiles, so the docs task corrects that example to match.\n"
+    },
+    {
+      "cold_start": 57,
+      "cold_end": 73,
+      "cold": "- New `upgrade.py` flow (target ~400-500 lines), all preflight under the existing git-local lock:\n  harness clean; `constitution/VENDORED_FROM` present and an ancestor of harness HEAD; pre-rename\n  `.agents/` machinery refused with the `forge-legacy-upgrade` tag route; target clean\n  (`--untracked-files=all`); every listed worktree readable; in-flight check per worktree (git-local\n  pointer else `.factory/run.json` phase not shipped; active git-local stage; `.factory/quickfix.json`;\n  any `plans/active/` plan whose roadmap item is not done); unshipped client files in\n  `factory/`/`constitution/`/`harness/` (except `factory/skills/` client skills) and client or\n  ignored files at required machinery paths refused.\n- `--park <story>`: refused if another worktree holds the story; archives its state and\n  `plan-meta.json`, moves its plan to `plans/archive/`, clears the target pointer, resets the roadmap\n  item to pending.\n- Run: branch `forge-upgrade/<sha>-<ts>`; copy `<git-dir>/forge/` aside; `git mv` the archive table\n  (fixed per-lens review files under story/task/history `reviews/`; root `.factory/`\n  decomposition/tests/verify) to `.factory/archive/pre-<sha>/<path>`; vendor through the existing\n  copy, client-skill preservation, doc-contract, ensure-missing and `write_manifest` code with\n  ownership by byte-compare against `git show <VENDORED_FROM>:<path>`; checks (`check_dual_runtime`,\n",
+      "final_start": 66,
+      "final_end": 85,
+      "final": "- New flow in `factory/scripts/forge_cli/upgrade_flow.py` (target ~400-500 lines) wired to\n  `forge upgrade`; all preflight under the existing git-local lock: harness clean; target\n  `constitution/VENDORED_FROM` present and an ancestor of harness HEAD; pre-rename `.agents/`\n  machinery refused with the `forge-legacy-upgrade` route; target clean (`--untracked-files=all`);\n  every listed worktree readable; in-flight check per worktree (git-local pointer else\n  `.factory/run.json` phase not shipped; active git-local stage; `.factory/quickfix.json`; any\n  `plans/active/` plan whose roadmap item is not done); unshipped client files in\n  `factory/`/`constitution/`/`harness/` (except client skills) and client or ignored files at required\n  machinery paths refused.\n- Source bytes: vendoring copies from a committed snapshot of the harness (`git archive HEAD` into a\n  temp dir), never from the working tree.\n- Run, on branch `forge-upgrade/<sha>-<ts>`: copy `<git-dir>/forge/` aside; apply `--park` (archive the\n  story's state and `plan-meta.json`, move its plan to `plans/archive/`, clear the pointer, reset the\n  roadmap item) \u2014 parking is inside the branch and the rollback; `git mv` the archive table into\n  `.factory/archive/pre-<sha>/<path>`; vendor with the existing copy, client-skill preservation,\n  ensure-missing, sign-off carry (legacy `run.json` sign-off \u2192 `harness.yaml` pin, kept) and\n  `write_manifest` code; ownership by byte-compare against `git show <VENDORED_FROM>:<path>` for all\n  harness files INCLUDING doc-contract files (client-edited ones are kept and named in the report).\n- Checks run in a throwaway worktree of the upgrade commit (`check_dual_runtime`,\n"
+    },
+    {
+      "cold_start": 74,
+      "cold_end": 85,
+      "cold": "  `forge doctor --fast`, board `aggregate_state`); commit with a `Forge-Upgrade: <old>..<new>`\n  trailer; print next steps. On failure: reset the branch, check out the original, delete the\n  branch, `git clean -fd` of added paths (never `-x`), restore `<git-dir>/forge/`.\n- Delete: Lean inventories, revalidation, resume plans, preserve backups, profile hash tables, the\n  `.agents` layout migration, the sign-off carry and `run.json` pre-check; `approval.py`'s import of\n  `_validate_completed_manifest`; `factory/schemas/lean-workflow-migration.json`.\n- Tag `forge-legacy-upgrade` at the last harness commit before this story's merge that still carries\n  the `.agents` migration.\n- `check_pr_ticket.is_harness_revendor`: a `Forge-Upgrade` commit is exempt only when every change is\n  harness-owned, the manifest, a 100% rename of an archive-table path into `.factory/archive/pre-*/`,\n  or one of Forge's own ignore blocks.\n",
+      "final_start": 86,
+      "final_end": 100,
+      "final": "  `forge doctor --fast`, board `aggregate_state`); any tracked change they make is a failure; the\n  throwaway worktree is removed either way.\n- Commit with trailers `Forge-Upgrade: <old>..<new>` and one `Parked: <story>` per parked story; print\n  next steps. On failure: reset, check out the original branch, delete the upgrade branch,\n  `git clean -fd` of added paths (never `-x`), restore `<git-dir>/forge/`.\n- Ticket check (`check_pr_ticket.is_harness_revendor`): a `Forge-Upgrade` commit is exempt when every\n  change is one the upgrader produces \u2014 harness-owned paths, the manifest, 100% renames of\n  archive-table paths into `.factory/archive/pre-*/`, Forge's `.gitignore`/`.gitattributes` blocks and\n  old-rule removals, the README onboarding block, the sign-off pin, and, for each `Parked:` story, its\n  plan move, `plan-meta.json` archive and roadmap status change. Anything else needs a normal ticket.\n- Delete: the Lean inventories, revalidation, resume plans, preserve backups, profile hash tables, the\n  `.agents` layout migration and the `run.json` pre-check; `approval.py`'s import of\n  `_validate_completed_manifest`; `factory/schemas/lean-workflow-migration.json`; old tests.\n- Tag `forge-legacy-upgrade` at the last harness commit that still carries the `.agents` migration.\n"
+    },
+    {
+      "cold_start": 86,
+      "cold_end": 88,
+      "cold": "- Runtime messages that say \"run forge upgrade\" for in-progress work are reworded; harness-health's\n  automatic upgrade step is removed.\n",
+      "final_start": 101,
+      "final_end": 103,
+      "final": "- Messages: `tasks.py`'s legacy task-grill advice and other \"run forge upgrade\" texts for in-progress\n  work say \"finish or park, then upgrade\"; harness-health's automatic upgrade step is removed.\n"
+    },
+    {
+      "cold_start": 89,
+      "cold_end": 93,
+      "cold": "- Tests: a fixture that scaffolds a client from an old harness commit (from this repo's history:\n  8563f8c6, 43f6bede, 47516c55, and a pre-2ebba90d commit); replace `test_upgrade_lean_workflow.py`\n  and the `.agents`/profile/pre-check tests in `test_gates.py` with ~15-20 tests for the acceptance\n  criteria; keep the core vendoring tests.\n",
+      "final_start": 104,
+      "final_end": 105,
+      "final": "- Roadmap: `upgrade-preserves-doc-contracts` is marked covered by FORGE-UPG-2.\n"
+    },
+    {
+      "cold_start": 94,
+      "cold_end": 95,
+      "cold": "  parity architecture's migration section, decision 0088's archive parenthetical note, and\n",
+      "final_start": 106,
+      "final_end": 107,
+      "final": "  parity architecture's migration section, decision 0088's example list (approved above), and\n"
+    },
+    {
+      "cold_start": 96,
+      "cold_end": 101,
+      "cold": "  steps).\n- Tasks: OLD-CLIENT-FIXTURE, REBUILD (flow, park, deletions, tests), EDGES (ticket check, board label,\n  messages, harness-health, doctor skill check, approval coupling, legacy tag), DOCS-SKILL. REBUILD\n  needs the fixture; EDGES and DOCS-SKILL follow REBUILD. Then a real upgrade of a copy of\n  myclaw-partb before lifting the hold.\n",
+      "final_start": 108,
+      "final_end": 136,
+      "final": "  steps, then the existing backfill and re-authoring steps).\n\n## Task decomposition\n\nEach task ships its own pull request. OLD-CLIENT-FIXTURE first; CORE after it; PARK and DELETE-OLD\nafter CORE (disjoint: PARK adds to `upgrade_flow.py`'s park step, DELETE-OLD removes `upgrade.py`\nmachinery and old tests); EDGES after DELETE-OLD; DOCS-SKILL last.\n\n| Label / exact task ID | What it delivers | Depends on | user_facing |\n|---|---|---|---|\n| Fixture / OLD-CLIENT-FIXTURE | Test helper that scaffolds a client from any harness commit in this repo's history (8563f8c6, 43f6bede, 47516c55, pre-2ebba90d) | none | false |\n| Core / CORE | `upgrade_flow.py`: preflight, committed snapshot, archive, byte-ownership vendoring incl. doc contracts, sign-off carry, throwaway-worktree checks, commit, rollback; wired to `forge upgrade`; new tests | OLD-CLIENT-FIXTURE | false |\n| Park / PARK | `--park` inside the branch and rollback, with its refusals and tests | CORE | false |\n| Delete / DELETE-OLD | Old machinery, schema, approval coupling and old tests removed; legacy tag | CORE | false |\n| Edges / EDGES | Ticket-check exemption, board label, reworded messages, harness-health step removed, doctor skill check, roadmap coverage note | DELETE-OLD | false |\n| Docs / DOCS-SKILL | Specs, docs, decision 0088 example fix, upgrade skill | EDGES | false |\n\n## Verify plan\n\nEach task: focused tests, `forge task close` (full suite plus one three-lens review), the CI-only\nchecks, green CI. The fixture-driven tests cover every acceptance item: clean upgrades from the three\nversions followed by `forge next`, `forge audit`, `forge doctor --fast` and board data; the pre-rename\nrefusal and the two-step route (older upgrader from the legacy commit, then the new one) reaching\ncurrent; idempotence and a newer-harness upgrade; every refusal leaving the repo byte-identical; an\ninjected failure after vendoring restoring branch, files and git-local state; parking; archive paths;\nthe ticket check accepting the upgrade commit and refusing an added hand-made change outside its\ncategories. Before lifting the client-upgrade hold: upgrade a copy of myclaw-partb and confirm its\neveryday commands.\n"
+    }
+  ],
+  "questions_asked": 0,
+  "summary": "One cold read (7 gaps, 4 contradictions); resolved from repository facts; plan amended once (parking inside rollback, throwaway-worktree checks, committed snapshot, full exemption list, two-step legacy test, split rebuild, doc-contract and sign-off kept).",
+  "input_sha256": "a234f94231ffef7d6924f8c6449dcba85537b5c3840ddf87634bfdd1f9bd680f",
+  "issue": "FORGE-UPG-2",
+  "recorded_at": "2026-09-24T15:26:57+00:00",
+  "commit": "26ded67d13f2a0fb99b8ef435ac05c1c8a3fc8a9",
+  "launch_id": "launch-68631900497646a09383aa9b30b5c6cc",
+  "cold_input_sha256": "a9c2bc19c51a2a6a0650f3c551cfb1e9e3f59461f3a1f48c141f832243ef2969",
+  "final_artifact_sha256": "b2332677f411a79a7a0e0e556e14f5f23318a79ae89c6be7ebf7db19fece53aa"
+}
