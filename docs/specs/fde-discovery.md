@@ -1,8 +1,8 @@
 ---
 slug: fde-discovery
 title: The agent works as a forward deployed engineer
-status: draft
-saved: 2026-09-24T13:43:19+00:00
+status: confirmed
+saved: 2026-09-24T15:12:54+00:00
 ---
 
 # The agent works as a forward deployed engineer
@@ -18,59 +18,109 @@ makes the Forge skill itself own discovery, and removes gstack and direnv.
 
 ## Behaviour
 
-- The Forge skill gains a lean FDE section (about 70 lines) and a reference
-  file `factory/skills/fde-reference.md` the agent opens only when needed
-  (worked examples, question bank, customer call script, bad-to-better
-  questions).
-- Depth follows the lane: a fix gets up to two questions, a small story four
-  to six, a story the full discovery.
-- Asking rules: one question per turn; ask about what already happened, not
-  what someone would do; no solution during discovery; praise and promises
-  are not evidence. Questions about facts offer neutral choices with no
-  recommended answer; questions asking the human to decide put the
-  recommended option first. Each question carries one "Why I ask" line,
-  dropped for FDEs who show they know it.
-- Discovery fills a short problem card in `docs/product/DISCOVERY.md`: the
-  job, today's workaround, the cost (time, money or risk), who feels it, how
-  often, and the evidence. When the customer doesn't know what to build, the
-  agent asks about their work and ranks pains by cost, or gives the FDE a
-  customer call script whose notes come back through `docs/context/`.
-- The agent offers two to four options per problem, always including not
-  building and the smallest testable slice; UI prototypes go to impeccable.
-- The payback rule: monthly value (hours × people × rate, revenue, or risk
-  reduction) times a confidence factor (1.0 measured, 0.5 estimated, 0.2
-  guessed), against build cost. Payback within 3 months: build; 3 to 12
-  months: build the smallest slice first; over 12 months: recommend not
-  building. Rates are rounded loaded rates, never real salaries.
-- Every story spec gets a `## Success measure` section (metric, baseline,
-  target, check date); the spec cold read flags a missing one. After ship,
-  the outcome states the metric, a dated deferral row brings the check back,
-  and `forge next` lists success checks whose date has passed.
-- Discovery's owner in `harness.yaml` becomes the Forge skill; impeccable is
-  allowed in the prototype phase.
-- gstack is removed from Forge: the `forge gstack` command, doctor checks
-  that clone and install it, adopt/upgrade/scaffold ignore and `.envrc`
-  additions, harness settings, the precedence tier, docs, install skills and
-  tests. direnv is no longer required by doctor; Forge reads `.envrc`
-  directly. The tracked gstack history in this repo moves to
-  `docs/context/gstack-archive/`. Existing client gstack ignore and `.envrc`
-  lines are left alone.
+**The skill.** The Forge skill gains a lean FDE section (about 70 lines) and
+a reference file `factory/skills/fde-reference.md` the agent opens only when
+needed (worked examples, question bank, customer call script, bad-to-better
+questions).
+
+**How deep to go.** Until the three-lane story lands, the route is today's:
+a Lite fix asks at most two questions; anything else is a story and gets the
+full discovery. The full discovery asks at most eight questions; when the
+limit is reached, missing answers are written as "unknown" and the payback
+rule treats them as guessed, so questioning never loops.
+
+**Asking rules.** One question per turn; ask about what already happened, not
+what someone would do; no solution during discovery; praise and promises are
+not evidence. Questions about facts offer neutral choices with no
+recommended answer; questions asking the human to decide put the recommended
+option first. Each question carries one "Why I ask" line until the FDE
+answers that they know why; from then on, only the question.
+
+**Problem cards.** `docs/product/DISCOVERY.md` has a `## Problems` section
+with one card per pain (a `###` heading each) holding six fields: the job,
+today's workaround, the cost, who feels it, how often, and the evidence. The
+chosen card's heading is named in the Brief's problem and in the capability
+spec's Why. When the customer doesn't know what to build, the agent asks
+about their work and ranks the pains by cost, or gives the FDE a customer
+call script; the notes the FDE drops in `docs/context/` are harvested by the
+agent with `forge context harvest` into the cards.
+
+**Options and the choice.** The agent offers two to four options per problem,
+always including not building and the smallest testable slice, and
+recommends the one with the best payback. The human chooses through an
+option question (recommendation first); the chosen option and one line of
+why are written into the capability spec's Behaviour. UI prototypes use
+impeccable when it is installed, else plain HTML under `prototype/`.
+
+**The payback rule.** Monthly value = hours saved per month × people ×
+rounded loaded hourly rate, or added revenue per month, or risk reduction
+(cost of the incident × chance per month). Value × confidence (1.0 measured,
+0.5 estimated, 0.2 guessed or unknown). Build cost = estimated build days ×
+rounded day rate. Payback = build cost ÷ confident monthly value. Payback of
+3 months or less: build. More than 3 and up to 12: build the smallest slice
+first. More than 12: recommend not building. If the value cannot be
+estimated at all, the recommendation is to find out first (one more
+customer conversation), not to build. Real salaries are never recorded.
+
+**Success measure.** Every capability spec confirmed after this change has a
+`## Success measure` section with four non-empty fields: metric, baseline,
+target and check date (YYYY-MM-DD). `forge spec confirm` refuses a new spec
+without them; specs confirmed earlier are not re-checked. When several
+roadmap stories come from one spec, the measure belongs to the spec and is
+checked after its last story ships.
+
+**After ship.** `forge outcome set` for the story that completes a spec with a
+success measure also adds a deferral row with a due date (the check date),
+once. Deferral rows gain an optional due date; `forge next` lists open rows
+whose due date has passed. The agent measures, and `forge defer resolve
+--notes "<measured result>"` closes the row.
+
+**Owners.** Discovery's owner in `harness.yaml` becomes the Forge skill;
+impeccable is added to the prototype phase's allowed tools and reported by
+`forge doctor` as optional, with its install command.
+
+**gstack and direnv removed.** The `forge gstack` command; doctor checks that
+clone and install gstack; direnv as a requirement (Forge reads `.envrc`
+directly); init/adopt/upgrade gstack ignore rules and `.envrc` gstack lines;
+the gstack precedence tier and disabled list in `harness.yaml`; and the
+gstack mentions in WORKFLOW, AGENTS, CLAUDE files, README, getting-started,
+the Forge skill, install skills, living confirmed specs, and tests. This
+repository's tracked gstack history moves to `docs/context/gstack-archive/`
+and is recorded as harvested in the context ledger in the same change. Client
+repos keep their `.gstack/` data, ignore rules and `.envrc` lines untouched;
+the upgrade skill mentions they can archive that history themselves.
 
 ## Acceptance criteria
 
-- The Forge skill's FDE section is at most about 70 lines, and the reference
+- The Forge skill's FDE section is about 70 lines or fewer, and the reference
   file holds the examples, question bank and call script.
-- Starting discovery on a vague ask produces one question per turn, each with
-  a "Why I ask" line, and fills the DISCOVERY.md problem card.
-- A story spec without `## Success measure` is flagged by its cold read; with
-  one, `spec confirm` accepts it unchanged.
-- A shipped story with a success check date in the past appears in
-  `forge next`.
+- A new discovery with a vague ask asks one question per turn, each with a
+  "Why I ask" line until the FDE says they know why, stops at the lane's
+  limit, and fills a problem card in DISCOVERY.md.
+- The payback rule gives the same recommendation for the same inputs,
+  including the exact 3- and 12-month boundaries and the unknown-value case.
+- `forge spec confirm` refuses a new spec whose Success measure is missing or
+  has an empty field or a bad date, and accepts a complete one with only its
+  status changed.
+- `forge outcome set` on the last story of a spec with a success measure adds
+  one dated deferral row; after its date, `forge next` lists it; `forge defer
+  resolve --notes` closes it.
 - `forge doctor` (fast, full and `--fix`) passes on a machine without gstack
-  or direnv and never installs either.
-- `forge gstack` no longer exists; no Forge code, config, doc, install skill
-  or test references gstack except the archive and history records.
-- `init`, `adopt` and `upgrade` no longer add gstack ignore rules or
-  `.envrc` gstack lines, and leave existing ones untouched.
-- The previously tracked gstack history is readable under
-  `docs/context/gstack-archive/`.
+  or direnv, never installs either, and reports impeccable as optional.
+- `forge gstack` no longer exists; in this repository, no code, config,
+  prompt, skill, living confirmed spec, WORKFLOW/AGENTS/CLAUDE/README/
+  getting-started text or test references gstack. Decisions, superseded
+  specs, plans, `.factory/` records and the archive are exempt as history.
+- `init`, `adopt` and `upgrade` add no gstack ignore rules or `.envrc` gstack
+  lines and leave existing client ones untouched.
+- This repository's former gstack history is readable under
+  `docs/context/gstack-archive/` and the context ledger shows it harvested.
+
+## Success measure
+
+- Metric: share of new stories whose confirmed spec carries a complete
+  success measure, and FDE-reported confidence in choosing what to build.
+- Baseline: 0% of specs today; confidence not measured.
+- Target: 100% of specs confirmed after this ships; at least 4 of 5 FDEs
+  say discovery helped them choose (one-question check-in).
+- Check date: 2026-11-15
