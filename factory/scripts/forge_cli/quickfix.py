@@ -389,14 +389,21 @@ def _lite_product_files(
             if current.is_symlink():
                 has_symlink = True
                 break
-        if path.startswith(".factory/") and not has_symlink:
+        if (path.startswith(".factory/")
+                and path != ".factory/harness-source.json" and not has_symlink):
             continue
         locked_path = locked_repo_path(
             path, base, harness_source=harness_source,
         )
         if locked_path is not None:
-            product_files.append(locked_path)
-    return sorted(product_files)
+            try:
+                repo_path = Path(os.path.abspath(base / path)).relative_to(
+                    Path(os.path.abspath(base)),
+                ).as_posix()
+            except ValueError:
+                repo_path = locked_path
+            product_files.append(repo_path)
+    return sorted(set(product_files))
 
 
 def cmd_list(args: argparse.Namespace) -> None:
