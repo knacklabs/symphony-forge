@@ -1,0 +1,74 @@
+{
+  "event": "done",
+  "id": "Q-0241-5379",
+  "profile": "lite",
+  "by": "Ravi Kiran Vemula",
+  "reason": "Decision 0090: update two tests that pin removed task approvals",
+  "base_sha": "8db9523c4939fc4e2af9e583782b4d3f31dbc8f1",
+  "started_at": "2026-09-24T19:38:28+00:00",
+  "completed_at": "2026-09-24T19:43:30+00:00",
+  "files": [
+    "factory/tests/test_board_approval_gate.py",
+    "factory/tests/test_gates.py"
+  ],
+  "reviews": {
+    "quality": {
+      "generated_by": "autoreview",
+      "score": 10,
+      "summary": "quality lens over Q-0241-5379 (2 product path(s), 8db9523..bc80c6a, Codex via the autoreview skill): 0 blocking, 0 non-blocking. The supplied diff changes two test assertions. It does not establish a concrete failure or a violated approval-order contract. The product text and test results are unavailable, which limits verification.",
+      "blocking_findings": [],
+      "non_blocking_findings": [],
+      "recommendation": "approve",
+      "reviewed_scope": [
+        "factory/tests/test_board_approval_gate.py",
+        "factory/tests/test_gates.py"
+      ],
+      "skills_used": [],
+      "contract_verdicts": [],
+      "review_base_sha": "8db9523c4939fc4e2af9e583782b4d3f31dbc8f1",
+      "branch_diff_digest": "8fb09f522029732668d2520b35405a1eee49bbda9af4aafb4b41b2575a922761",
+      "commit": "bc80c6ac102ab89644f5590b3be31f844522185b",
+      "aspect": "quality",
+      "residual_risks": [],
+      "recorded_at": "2026-09-24T19:43:30+00:00"
+    },
+    "performance": {
+      "generated_by": "autoreview",
+      "score": 10,
+      "summary": "performance lens over Q-0241-5379 (2 product path(s), 8db9523..bc80c6a, Codex via the autoreview skill): 0 blocking, 0 non-blocking. The changed assertions do not affect a production hot path.",
+      "blocking_findings": [],
+      "non_blocking_findings": [],
+      "recommendation": "approve",
+      "reviewed_scope": [
+        "factory/tests/test_board_approval_gate.py",
+        "factory/tests/test_gates.py"
+      ],
+      "skills_used": [],
+      "review_base_sha": "8db9523c4939fc4e2af9e583782b4d3f31dbc8f1",
+      "branch_diff_digest": "8fb09f522029732668d2520b35405a1eee49bbda9af4aafb4b41b2575a922761",
+      "commit": "bc80c6ac102ab89644f5590b3be31f844522185b",
+      "aspect": "performance",
+      "residual_risks": [],
+      "recorded_at": "2026-09-24T19:43:30+00:00"
+    },
+    "security": {
+      "generated_by": "autoreview",
+      "score": 10,
+      "summary": "security lens over Q-0241-5379 (2 product path(s), 8db9523..bc80c6a, Codex via the autoreview skill): 0 blocking, 0 non-blocking. The change introduces no visible trust boundary or credential handling.",
+      "blocking_findings": [],
+      "non_blocking_findings": [],
+      "recommendation": "approve",
+      "reviewed_scope": [
+        "factory/tests/test_board_approval_gate.py",
+        "factory/tests/test_gates.py"
+      ],
+      "skills_used": [],
+      "review_base_sha": "8db9523c4939fc4e2af9e583782b4d3f31dbc8f1",
+      "branch_diff_digest": "8fb09f522029732668d2520b35405a1eee49bbda9af4aafb4b41b2575a922761",
+      "commit": "bc80c6ac102ab89644f5590b3be31f844522185b",
+      "aspect": "security",
+      "residual_risks": [],
+      "recorded_at": "2026-09-24T19:43:30+00:00"
+    }
+  }
+}

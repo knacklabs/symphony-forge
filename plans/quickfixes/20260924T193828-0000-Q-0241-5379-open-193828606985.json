@@ -1,0 +1,12 @@
+{
+  "event": "open",
+  "id": "Q-0241-5379",
+  "profile": "lite",
+  "reason": "Decision 0090: update two tests that pin removed task approvals",
+  "started_at": "2026-09-24T19:38:28+00:00",
+  "max_files": 5,
+  "files": [],
+  "harness_source": true,
+  "by": "Ravi Kiran Vemula",
+  "base_sha": "8db9523c4939fc4e2af9e583782b4d3f31dbc8f1"
+}
