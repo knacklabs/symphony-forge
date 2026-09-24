@@ -509,10 +509,14 @@ sequence a JIT contract loop for every pending task:
     `plan-contract-missing` rows remain acceptance blockers to implement and
     re-review, but are not host defect triage.
     The coordinator never relays a finding unread: it TRIAGES every actionable
-    one first -- opens the cited line and the code it
-    calls, decides real or not with a file:line it read, and for a real one
-    searches the repo for every other place the same contract applies -- and
-    records it (`forge review <id> --triage "<text>" --lens <l> --real
+    one first -- opens the cited line and the code it calls, and judges it against
+    the mechanism's stated purpose using a file:line it read. An outside-purpose
+    finding (e.g. an adversarial shape against a guard documented as a guardrail,
+    not containment) is recorded `--not-a-defect` with that reason. For a real
+    finding, it searches the repo for every other place the same contract applies.
+    Before briefing a second fix round on the same guard, the coordinator first
+    asks whether one simpler rule removes the whole class. It records the triage
+    (`forge review <id> --triage "<text>" --lens <l> --real
     --evidence <file:line> --instance <file:line> ... [--keep "<what must not
     change>"] --by <agent>`, or `--not-a-defect --evidence <file:line> --reason
     ...`). The fix brief carries the triage beside each finding, and `forge

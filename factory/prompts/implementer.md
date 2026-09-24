@@ -58,7 +58,10 @@ Rules:
   active before you receive the brief. Implement only that task. For both
   ordinary and NARROWED delegations, run the focused acceptance regressions
   needed for the assigned changes, reconcile every assigned finding against
-  its actual result, and record a truthful implementer test report. Preserve
+  its actual result, and record a truthful implementer test report. In fix
+  rounds, take the simplest fix that closes the finding. If the same guard or
+  mechanism draws findings in two consecutive rounds, stop adding cases; replace
+  it with one blunt rule and say so in the handoff. Preserve
   unresolved risks and distinguish focused checks from final task-wide proof.
   The orchestrator commits the completed changes and uses ONE `forge task close`
   owner for final required tests and verify commands. Do not start a standalone

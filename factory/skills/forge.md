@@ -251,6 +251,15 @@ instead of narrating it:
   Autoreview skill (0011), looped review → Luna/max Codex fixes findings →
   re-review until clean. Its authenticated internal Codex/agent use is allowed
   and follows its own policy; never review inline or nest reviewers.
+- After each review, check for `simplification-debt` and run
+  `./forge findings patterns` for recurring mechanisms (Decision 0005). When
+  either appears, tell the user whether to refactor now or keep fixing, with a
+  recommendation and one-line reason. Recommend refactoring now only when it
+  fits the current task's scope and is smaller than the next fix round;
+  otherwise keep the change minimal and record it with `./forge defer add
+  "<item>" --why "<reason>" --trigger "<reopen condition>"` or a refactor
+  story. Never patch the same mechanism a third time without raising this
+  choice.
 - Never set a decision to `accepted`, never flip `client_signoff`, never
   activate a proposed skill without an explicit human confirmation — the
   human decides; a clear in-chat statement lets you run the recording

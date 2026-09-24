@@ -37,8 +37,10 @@ and naming all instances (0075). Repeated identical refusals follow
 Review depth: the helper runs at **`--max-priority P3`**, the complete
 three-lens depth `forge review` enforces. P0/P1 findings block the task; P2/P3
 findings are recorded as `non_blocking_findings` and MUST be resolved or
-explicitly deferred (with a reason) before the task ships — never silently
-dropped, and never by themselves the reason for another review.
+explicitly deferred (with a reason) before the task ships, except
+`simplification-debt`, which never blocks the current change. Other
+non-blocking findings are never silently dropped or by themselves the reason
+for another review.
 
 Procedure:
 
@@ -105,12 +107,23 @@ Procedure:
      (necessity/YAGNI → reuse what exists → stdlib → native platform feature →
      an already-installed dependency → one line → minimum viable code); flag a
      diff that breaks it — a new dependency where the stdlib or an installed one
-     suffices, a reimplementation of an existing helper, speculative flexibility,
-     or a sprawling change where a surgical one would do — as an
-     `over-engineering` finding. Lazy is NOT negligent: a diff that drops
-     required input/trust-boundary validation, error handling, security, or
-     accessibility to look smaller is the OPPOSITE finding — a blocking gap,
-     never waved through as "minimal".
+     suffices, a reimplementation of an existing helper, speculative flexibility
+     — as an `over-engineering` finding. **Simpler alternative — check every
+     mechanism the diff adds or extends:** ask whether one simpler, blunt rule
+     covers the same cases (fail closed where safety is involved). Flag the stable
+     `simplification` category, naming that rule, when cases are handled one by
+     one though one rule covers the class, a follow-up fix adds machinery where a
+     blunt rule works, or complexity exceeds the stated purpose (e.g. treating a
+     guardrail as hostile-code containment). Dropping required validation, error
+     handling, security, or accessibility is the opposite finding — a blocking
+     gap, never simplification.
+     **Existing simplification debt:** inspect existing code in files the diff
+     touches and the functions it calls. Report avoidable complexity under the
+     stable `simplification-debt` category in `non_blocking_findings`, naming
+     the simpler shape; it never blocks the current change or triggers another
+     fix/review round by itself. The coordinator follows `factory/skills/forge.md`
+     to decide whether to refactor now or ledger it. Keep `simplification` for
+     complexity the diff adds or extends.
      **Conversely, the constitution's coding standards are LAW, and code that
      VIOLATES them IS a finding** under a stable `constitution-conformance`
      category. Read `constitution/README.md` and the references its index maps to
