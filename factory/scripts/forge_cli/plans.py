@@ -3,7 +3,9 @@ from __future__ import annotations
 
 import argparse
 import datetime
+import os
 import re
+import tempfile
 from pathlib import Path
 from typing import Any
 
@@ -32,6 +34,16 @@ REQUIRED_PLAN_SECTIONS = (
     "Task Decomposition",
     "Risks",
     "Verify Plan",
+)
+
+BRIEF_PLAN_SECTIONS = (
+    "What and why",
+    "What changes for you",
+    "Done when",
+    "Risks",
+    "Technical approach",
+    "Task decomposition",
+    "Verify plan",
 )
 
 
@@ -67,15 +79,114 @@ def parse_frontmatter(text: str) -> tuple[dict[str, Any], str]:
     return fields, text[match.end():]
 
 
+def plan_meta_path(base: Path, story: str) -> Path:
+    return factory_lib.story_dir(base, story) / "plan-meta.json"
+
+
+def plan_metadata_index(base: Path) -> dict[str, dict[str, Any]]:
+    """Index protected plan metadata by its recorded plan path."""
+    index = {}
+    for metadata_path in sorted((base / ".factory" / "stories").glob("*/plan-meta.json")):
+        metadata = load_json(metadata_path, default={})
+        if isinstance(metadata, dict) and isinstance(metadata.get("plan_file"), str):
+            index[metadata["plan_file"]] = metadata
+    return index
+
+
+def read_plan_metadata(
+    base: Path, path: Path, metadata_index: dict[str, dict[str, Any]] | None = None,
+) -> dict[str, Any]:
+    """Prefer protected metadata, then the matching run pointer, then frontmatter."""
+    fields, _ = parse_frontmatter(path.read_text(encoding="utf-8"))
+    index = metadata_index if metadata_index is not None else plan_metadata_index(base)
+    metadata = index.get(path.relative_to(base).as_posix())
+    if metadata is None:
+        matches = [
+            entry for entry in index.values()
+            if Path(str(entry.get("plan_file", ""))).name == path.name
+        ]
+        metadata = matches[0] if len(matches) == 1 else None
+    if metadata is None:
+        state = load_json(run_state_path(base), default={})
+        relative = path.relative_to(base).as_posix()
+        if not isinstance(state, dict):
+            state = {}
+        story = state.get("story") or state.get("issue_key")
+        if not isinstance(story, str) or not story:
+            story = None
+        metadata_path = plan_meta_path(base, story) if story else None
+        if (state.get("plan_file") == relative and metadata_path is not None
+                and not metadata_path.exists()):
+            metadata = {
+                "issue": state.get("issue_key"),
+                "story": story,
+                "status": state.get("plan_status"),
+                "plan_file": relative,
+            }
+    return {**fields, **metadata} if metadata else fields
+
+
+def write_plan_metadata(base: Path, story: str, metadata: dict[str, Any]) -> None:
+    """Atomically publish plan metadata using the shared JSON serializer."""
+    destination = plan_meta_path(base, story)
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    descriptor, name = tempfile.mkstemp(
+        prefix=f".{destination.name}.", suffix=".tmp", dir=destination.parent,
+    )
+    os.close(descriptor)
+    temporary = Path(name)
+    try:
+        dump_json(temporary, metadata)
+        os.replace(temporary, destination)
+    finally:
+        temporary.unlink(missing_ok=True)
+
+
+def _require_decision_attestation(
+    base: Path, fields: dict[str, Any], *, has_frontmatter: bool,
+) -> list[str]:
+    if not has_frontmatter:
+        return []
+    active_ids = active_decision_ids(base)
+    if "decisions_reviewed" not in fields or not isinstance(
+        fields["decisions_reviewed"], list
+    ):
+        fail(
+            "plan frontmatter must include decisions_reviewed as a list of every "
+            "active decision id (`./forge decision list --active`)."
+        )
+    reviewed = set(fields["decisions_reviewed"])
+    active = set(active_ids)
+    missing = sorted(active - reviewed)
+    inactive = sorted(reviewed - active)
+    if missing:
+        fail("decisions_reviewed is missing active decisions: " + ", ".join(missing))
+    if inactive:
+        known = {str(record["id"]) for record in decision_records(base)}
+        labels = [
+            decision if decision not in known else f"{decision} (inactive)"
+            for decision in inactive
+        ]
+        fail("decisions_reviewed contains unknown or inactive decisions: "
+             + ", ".join(labels))
+    return sorted(reviewed)
+
+
 def _require_matching_plan_grill(
     base: Path, plan: Path, issue: str, *, awaiting: bool = False,
-) -> None:
+    check_decisions_in_force: bool = False,
+) -> tuple[dict[str, Any], list[str]]:
+    grill = load_json(evidence_path(base, issue, "grills/plan.json"), default={})
+    decisions_in_force = []
+    if (check_decisions_in_force and isinstance(grill, dict)
+            and grill.get("issue") == issue
+            and grill.get("input_sha256") == plan_digest_without_assumptions(plan)):
+        decisions_in_force = _require_decisions_in_force_at_grill(base, grill)
     require_grill(
         base, "plan",
         ("docs/product/", "docs/decisions/", "docs/architecture/"),
         ignore_names=("client-signoff", "epics-approved"),
     )
-    grill = load_json(evidence_path(base, issue, "grills/plan.json"), default={})
     if grill.get("issue") != issue:
         fail(f"the recorded plan grill is for {grill.get('issue')!r}, not "
              f"{issue!r} — re-grill the current plan, then approve it")
@@ -85,6 +196,30 @@ def _require_matching_plan_grill(
                  "plan. Re-grill the awaiting plan, then approve it again.")
         fail(f"the plan grill was not recorded against THIS input ({plan.name}) — "
              "re-grill the current version, then approve it again")
+    return grill, decisions_in_force
+
+
+def _require_decisions_in_force_at_grill(
+    base: Path, grill: dict[str, Any],
+) -> list[str]:
+    """Return active decisions present before the matching grill was recorded."""
+    issue = str(grill.get("issue") or "")
+    try:
+        grill_stamp = evidence_path(base, issue, "grills/plan.json").stat().st_mtime_ns
+    except OSError:
+        fail("could not establish the plan grill time; re-grill")
+    active = []
+    for record in decision_records(base):
+        if record["status"] != "accepted":
+            continue
+        try:
+            changed_at = record["path"].stat().st_mtime_ns
+        except OSError:
+            fail("could not establish decision timing against the plan grill; re-grill")
+        if changed_at > grill_stamp:
+            fail("a decision was accepted after the plan grill; re-grill")
+        active.append(str(record["id"]))
+    return active
 
 
 def _stages_progress(base: Path, issue: str, location: str) -> str:
@@ -123,7 +258,27 @@ def cmd_save(args: argparse.Namespace) -> None:
         fail(f"plan source {source} not found — pass the approved plan file via --from")
     story = args.story or issue
     current_story = state.get("story") or state.get("issue_key")
-    if state.get("plan_status") == "approved" and current_story == story:
+    title = args.title or state.get("title") or issue
+    dest_dir = base / "plans" / "active"
+    dest = dest_dir / f"{issue}-{slugify(title)}.md"
+    dest_relative = dest.relative_to(base).as_posix()
+    previous_metadata = load_json(plan_meta_path(base, story), default={})
+    previous_plan_file = (
+        previous_metadata.get("plan_file")
+        if isinstance(previous_metadata, dict) else None
+    )
+    previous_plan_approved = (
+        isinstance(previous_metadata, dict)
+        and previous_metadata.get("status") == "approved"
+    )
+    if (previous_plan_approved and isinstance(previous_plan_file, str)
+            and previous_plan_file != dest_relative):
+        fail(f"plan save refused: an approved plan exists at {previous_plan_file}; "
+             "amend it rather than saving a new title")
+    if (
+        (state.get("plan_status") == "approved" and current_story == story)
+        or (previous_plan_approved and previous_plan_file == dest_relative)
+    ):
         fail(f"plan save refused: {story} already has an approved current plan. "
              "Keep the approved contract stable; use the governed amendment "
              "path when its meaning must change.")
@@ -150,7 +305,12 @@ def cmd_save(args: argparse.Namespace) -> None:
     # Approval requires the plan to have been GRILLED (grill-me / griller.md
     # --gate plan): fresh, passing, for THIS task, and bound by digest to
     # THIS draft — grilling one version never approves an edited one.
-    _require_matching_plan_grill(base, source, issue)
+    source_text = source.read_text(encoding="utf-8")
+    fields, body = parse_frontmatter(source_text)
+    has_frontmatter = bool(FRONTMATTER.match(source_text))
+    _, decisions_in_force = _require_matching_plan_grill(
+        base, source, issue, check_decisions_in_force=not has_frontmatter,
+    )
     contradictions = [
         signal for signal in open_signals(base) if signal.get("kind") == "contradiction"
     ]
@@ -160,52 +320,57 @@ def cmd_save(args: argparse.Namespace) -> None:
             + ", ".join(signal["id"] for signal in contradictions)
             + ". Resolve the contradiction before approving the plan."
         )
-    fields, body = parse_frontmatter(source.read_text(encoding="utf-8"))
-    if "decisions_reviewed" not in fields or not isinstance(
-        fields["decisions_reviewed"], list
-    ):
-        fail(
-            "plan frontmatter must include decisions_reviewed as a list of every "
-            "active decision id (`./forge decision list --active`)."
-        )
-    reviewed = set(fields["decisions_reviewed"])
-    active = set(active_decision_ids(base))
-    missing = sorted(active - reviewed)
-    inactive = sorted(reviewed - active)
-    if missing:
-        fail("decisions_reviewed is missing active decisions: " + ", ".join(missing))
-    if inactive:
-        known = {str(record["id"]) for record in decision_records(base)}
-        labels = [
-            decision if decision not in known else f"{decision} (inactive)"
-            for decision in inactive
-        ]
-        fail("decisions_reviewed contains unknown or inactive decisions: "
-             + ", ".join(labels))
+    reviewed = _require_decision_attestation(
+        base, fields, has_frontmatter=has_frontmatter,
+    )
     sections = factory_lib.parse_sections(body)
-    missing_sections = [
-        section for section in REQUIRED_PLAN_SECTIONS if not sections.get(section)
-    ]
-    if missing_sections:
+    has_new_brief = all(sections.get(section) for section in BRIEF_PLAN_SECTIONS)
+    has_legacy_plan = all(sections.get(section) for section in REQUIRED_PLAN_SECTIONS)
+    if not has_new_brief and not has_legacy_plan:
+        required_sections = (
+            REQUIRED_PLAN_SECTIONS if has_frontmatter else BRIEF_PLAN_SECTIONS
+        )
+        missing_sections = [
+            section for section in required_sections if not sections.get(section)
+        ]
         fail("the plan is missing required sections: " + ", ".join(missing_sections))
     status = "awaiting-approval"
-    title = args.title or state.get("title") or issue
-    dest_dir = base / "plans" / "active"
-    dest = dest_dir / f"{issue}-{slugify(title)}.md"
-    decisions = "\n".join(f"  - {decision}" for decision in sorted(reviewed))
-    decisions_value = f"\n{decisions}" if decisions else " []"
-    header = (
-        f"---\nissue: {issue}\ntitle: {title}\nstatus: {status}\n"
-        f"saved: {now_iso()}\nstory: {story}\n"
-        f"decisions_reviewed:{decisions_value}\n---\n"
-    )
-    if factory_lib._plan_body_digest_bytes((header + body).encode("utf-8")) \
-            != plan_digest_without_assumptions(source):
-        fail("plan save refused: frontmatter must use the canonical Forge save "
-             "form, with decisions_reviewed as a block list (one `- <id>` per "
-             "line), so the saved plan retains the semantic digest.")
+    saved = now_iso()
+    header = ""
+    if has_frontmatter:
+        decisions = "\n".join(f"  - {decision}" for decision in reviewed)
+        decisions_value = f"\n{decisions}" if decisions else " []"
+        header = (
+            f"---\nissue: {issue}\ntitle: {title}\nstatus: {status}\n"
+            f"saved: {saved}\nstory: {story}\n"
+            f"decisions_reviewed:{decisions_value}\n---\n"
+        )
+        if factory_lib._plan_body_digest_bytes((header + body).encode("utf-8")) \
+                != plan_digest_without_assumptions(source):
+            fail("plan save refused: frontmatter must use the canonical Forge save "
+                 "form, with decisions_reviewed as a block list (one `- <id>` per "
+                 "line), so the saved plan retains the semantic digest.")
     dest_dir.mkdir(parents=True, exist_ok=True)
-    dest.write_text(header + body, encoding="utf-8")
+    dest.write_text(body, encoding="utf-8")
+    metadata = {
+        "issue": issue,
+        "story": story,
+        "title": title,
+        "status": status,
+        "saved": saved,
+        "plan_file": dest.relative_to(base).as_posix(),
+    }
+    if has_frontmatter:
+        metadata["decisions_reviewed"] = reviewed
+    else:
+        metadata["decisions_in_force"] = decisions_in_force
+    write_plan_metadata(base, story, metadata)
+    previous_path = Path(previous_plan_file) if isinstance(previous_plan_file, str) else None
+    if (previous_path and previous_plan_file != dest_relative
+            and previous_path.parent == Path("plans/active")
+            and previous_path.name.startswith(f"{issue}-")
+            and previous_path.suffix == ".md"):
+        (base / previous_path).unlink(missing_ok=True)
     if state:
         state["plan_status"] = status
         state["issue_key"] = issue
@@ -216,7 +381,7 @@ def cmd_save(args: argparse.Namespace) -> None:
         dump_json(run_state_path(base), state)
     semantic_digest = plan_digest_without_assumptions(dest)
     question_id = f"approve_plan_{semantic_digest}"
-    question = f"Approve exact plan digest {semantic_digest}?"
+    question = "Approve this plan?"
     print(
         f"Plan saved to {dest.relative_to(base)} (plan_status: awaiting-approval). "
         f"Semantic digest: {semantic_digest}. Codex request_user_input: "
@@ -233,9 +398,10 @@ def cmd_list(args: argparse.Namespace) -> None:
         for item in load_json(base / "plans" / "roadmap.json", default={}).get("items", [])
     }
     rows = []
+    metadata_index = plan_metadata_index(base)
     for location in ("active", "completed"):
         for path in sorted((base / "plans" / location).glob("*.md")):
-            fields, _ = parse_frontmatter(path.read_text(encoding="utf-8"))
+            fields = read_plan_metadata(base, path, metadata_index)
             issue = str(fields.get("issue", "-"))
             story = str(fields.get("story", "-"))
             rows.append((

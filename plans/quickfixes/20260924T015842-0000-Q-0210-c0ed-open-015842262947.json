@@ -1,0 +1,12 @@
+{
+  "event": "open",
+  "id": "Q-0210-c0ed",
+  "profile": "lite",
+  "reason": "Plans are briefs with no bookkeeping (planA; owner-approved)",
+  "started_at": "2026-09-24T01:58:42+00:00",
+  "max_files": 5,
+  "files": [],
+  "harness_source": true,
+  "by": "Ravi Kiranvemula",
+  "base_sha": "8415b8e02378268efcf665318be58307c9496529"
+}
