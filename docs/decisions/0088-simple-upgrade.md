@@ -39,7 +39,12 @@ Upgrade does one simple thing, made safe by git:
 - The Lean migration, resume plans, inventories, profile hash tables and the
   `.agents/` layout migration are deleted; upgrade shrinks to a few hundred
   lines with tests that build clients from real old commits.
-- Clients with a story in progress upgrade only after finishing it.
+- Clients with a story in progress upgrade only after finishing it, or after
+  parking it with `forge upgrade --park <story>` (the supported abandon path:
+  its state is archived and its roadmap item returns to pending).
+- In practice the "safety branch" is the untouched original branch: upgrade
+  works on its own `forge-upgrade/...` branch and commits there, so failure
+  means returning to the original branch.
 - Recurring-findings history starts fresh for archived reviews.
 - The automatic upgrade PR in harness-health is removed: it cannot see
   local work in progress. A developer upgrades with the upgrade skill.

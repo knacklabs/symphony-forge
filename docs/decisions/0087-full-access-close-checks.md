@@ -43,3 +43,5 @@ default way of working, not a hook-enforced lock.
 - A hand-edited `.factory` record is caught only when it is inconsistent;
   records are checked, not signed. This was already true.
 - The executor-modes task gets simpler: claude mode needs no write admission.
+- Amends 0085: the executor mode chooses whom `forge delegate` hands work to;
+  it no longer restricts who may write or requires write admission.
