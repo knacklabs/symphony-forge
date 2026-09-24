@@ -2,7 +2,7 @@
 slug: fde-discovery
 title: The agent works as a forward deployed engineer
 status: confirmed
-saved: 2026-09-24T15:27:32+00:00
+saved: 2026-09-24T16:17:27+00:00
 ---
 
 # The agent works as a forward deployed engineer
@@ -72,13 +72,14 @@ without them; specs confirmed earlier are not re-checked. When several
 roadmap stories come from one spec, the measure belongs to the spec and is
 checked after its last story ships.
 
-**After ship.** When `forge pr-link` records the merged PR of the last story
-from a spec with a success measure, that story's roadmap item gets the spec's
-check date as its success-check date, once. `forge next` lists shipped
-stories whose success-check date has passed and that have no measured
-result. The agent measures, and `forge outcome check <story> --result
-"<measured result>"` records it in the story's outcome. Success checks are not
-deferrals and never appear in the deferral ledger.
+**After ship.** Nothing is stored ahead of time: `forge next` lists a spec's
+success check when every roadmap story linked to that spec is done, its check
+date has passed, and its Success measure has no result yet. The agent
+measures, and `forge spec measure <slug> --result "<measured result>"` adds a
+`- Result: <text> (YYYY-MM-DD)` line to the spec's Success measure, which
+stops the listing. A story added to the spec later simply postpones the check
+until it is done too. Success checks are not deferrals and never appear in
+the deferral ledger.
 
 **Owners.** Discovery's owner in `harness.yaml` becomes the Forge skill;
 impeccable is added to the prototype phase's allowed tools and reported by
@@ -107,10 +108,10 @@ the upgrade skill mentions they can archive that history themselves.
 - `forge spec confirm` refuses a new spec whose Success measure is missing or
   has an empty field or a bad date, and accepts a complete one with only its
   status changed.
-- `forge pr-link` for the last story of a spec with a success measure sets
-  its success-check date once; after that date `forge next` lists it until
-  `forge outcome check <story> --result` records the measurement; nothing is
-  added to the deferral ledger.
+- Once every story linked to a spec with a success measure is done and its
+  check date has passed, `forge next` lists the check until `forge spec
+  measure <slug> --result` records the result in the spec; a pending story
+  from the spec postpones it; nothing is added to the deferral ledger.
 - `forge payback` returns build, smallest slice first, don't build, or find
   out first, and gives the same answer for the same inputs.
 - `forge doctor` (fast, full and `--fix`) passes on a machine without gstack
