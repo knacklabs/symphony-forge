@@ -1,4 +1,10 @@
 #!/usr/bin/env python3
+"""Bash write classification is a guardrail stopping a coordinator or worker
+from editing out-of-scope or locked files through ordinary shell and Git.
+It parses common write shapes and treats unparsed worktree-mutating shell or Git
+forms as opaque writes. It is not containment against deliberately adversarial
+commands: interpreters can always write, consistent with AGENTS.md.
+"""
 from __future__ import annotations
 
 import json
@@ -42,7 +48,7 @@ def _repo_from_cwd() -> Path:
 
 def _harness_checkout(path: Path) -> Path | None:
     """Return the nearest harness checkout containing this path."""
-    return next((parent for parent in path.parents
+    return next((parent for parent in (path, *path.parents)
                  if (parent / ".git").exists()
                  and (parent / "factory" / "scripts").is_dir()), None)
 
@@ -698,6 +704,136 @@ def git_subcommand(args: list[str]) -> tuple[str | None, list[str]]:
     return None, []
 
 
+def _git_working_directory(args: list[str], root: Path) -> Path | None:
+    """Resolve git's leading -C options, or refuse a redirected worktree."""
+    cwd = root
+    index = 0
+    while index < len(args):
+        token = args[index]
+        if token in GIT_VALUE_OPTS:
+            if index + 1 >= len(args):
+                return None
+            value = args[index + 1]
+            if token == "-C":
+                candidate = Path(value).expanduser()
+                cwd = candidate if candidate.is_absolute() else cwd / candidate
+            elif token in {"--git-dir", "--work-tree"}:
+                return None
+            index += 2
+            continue
+        if token.startswith("-C") and token != "-C":
+            candidate = Path(token[2:]).expanduser()
+            cwd = candidate if candidate.is_absolute() else cwd / candidate
+            index += 1
+            continue
+        if token.startswith("-"):
+            index += 1
+            continue
+        break
+    try:
+        return cwd.resolve()
+    except (OSError, RuntimeError):
+        return None
+
+
+def _expand_git_pathspecs(
+        pathspecs: list[str], args: list[str], root: Path,
+) -> list[str] | None:
+    """Expand tracked files for git pathspecs, or return None if opaque."""
+    if not pathspecs:
+        return None
+    cwd = _git_working_directory(args, root)
+    if cwd is None:
+        return None
+    try:
+        checkout = subprocess.run(
+            ["git", "rev-parse", "--show-toplevel"], cwd=cwd,
+            capture_output=True, text=True, encoding="utf-8",
+            errors="surrogateescape",
+        )
+        if checkout.returncode:
+            return None
+        checkout_root = Path(checkout.stdout.strip()).resolve()
+        result = subprocess.run(
+            ["git", "ls-files", "--full-name", "-z", "--", *pathspecs],
+            cwd=cwd, capture_output=True, text=True, encoding="utf-8",
+            errors="surrogateescape",
+        )
+    except (OSError, RuntimeError, subprocess.SubprocessError):
+        return None
+    if result.returncode:
+        return None
+    paths = [path for path in result.stdout.split("\0") if path]
+    if not paths:
+        return None
+    if checkout_root == root.resolve():
+        return paths
+    return [str(checkout_root / path) for path in paths]
+
+
+def _git_pathspecs(sub: str, args: list[str]) -> list[str] | None:
+    """Recognize path-only forms for write commands with git pathspecs."""
+    if _has_pathspec_from_file(args):
+        return None
+    if sub == "checkout":
+        if "--" not in args:
+            return None
+        separator = args.index("--")
+        before = args[:separator]
+        if any(token in {"-b", "-B", "--orphan"} for token in before):
+            return None
+        # With `--`, one positional token is a tree-ish source; without it the
+        # command changes branches. Multiple tokens are ambiguous option values.
+        if sum(not token.startswith("-") for token in before) > 1:
+            return None
+        paths = [token for token in args[separator + 1:] if token]
+    elif sub == "restore":
+        paths = _git_restore_paths(args)
+    elif sub == "rm":
+        after_separator = "--" in args
+        start = args.index("--") + 1 if after_separator else 0
+        paths = [token for token in args[start:]
+                 if token and (after_separator or not token.startswith("-"))]
+    else:
+        return None
+    return paths or None
+
+
+def _git_worktree_mutation(
+        sub: str, args: list[str], root: Path, git_args: list[str],
+) -> tuple[bool, list[str] | None]:
+    """Return whether a git command mutates the worktree and its known paths."""
+    if sub in {"checkout", "restore", "rm"}:
+        pathspecs = _git_pathspecs(sub, args)
+        if pathspecs is None:
+            return (sub == "checkout", None)
+        return True, _expand_git_pathspecs(pathspecs, git_args, root)
+    if sub in {"switch", "merge", "rebase", "pull", "cherry-pick", "revert"}:
+        return True, None
+    if sub == "reset" and "--hard" in args:
+        return True, None
+    if sub == "stash":
+        operation = next((token for token in args if not token.startswith("-")), "")
+        if operation in {"pop", "apply"}:
+            return True, None
+    if sub == "clean":
+        if "--dry-run" in args or any(
+                token.startswith("-") and "n" in token[1:]
+                and not token.startswith("--") for token in args):
+            return False, []
+        return True, None
+    return False, []
+
+
+GIT_APPLY_READ_ONLY = {"--check", "--stat", "--numstat", "--summary"}
+
+
+def _git_apply_is_read_only(args: list[str]) -> bool:
+    options = args[:args.index("--")] if "--" in args else args
+    return ("--apply" not in options
+            and any(option in options for option in GIT_APPLY_READ_ONLY))
+
+
 def has_git_commit(value: str) -> bool:
     """True when a shell segment directly invokes `git ... commit`."""
     for segment in split_shell_segments(strip_heredoc_bodies(value)):
@@ -795,14 +931,17 @@ def bash_write_paths(value: str, root: Path) -> list[str]:
             # `git rm` / `git mv` delete or relocate tracked files like their
             # shell namesakes — skip git's global options to reach the subcommand.
             sub, sub_args = git_subcommand(args)
-            if sub in {"rm", "mv"}:
+            mutates, paths = _git_worktree_mutation(
+                sub or "", sub_args, root, args,
+            )
+            if mutates and paths is not None:
+                found.extend(paths)
+            elif sub == "mv":
                 found.extend(token for token in sub_args
                              if not token.startswith("-"))
-            elif sub == "restore":
-                found.extend(_git_restore_paths(sub_args))
-            elif sub == "checkout" and "--" in sub_args:
-                found.extend(sub_args[sub_args.index("--") + 1:])
-            elif sub == "apply":
+            elif sub == "rm":
+                found.extend(_git_pathspecs(sub, sub_args) or [])
+            elif sub == "apply" and not _git_apply_is_read_only(sub_args):
                 found.extend(_git_apply_paths(sub_args, root) or [])
         elif command_name == "cp" and operands:
             # Count each CREATED file (dir destinations expand to dir/basename),
@@ -972,13 +1111,10 @@ UNPARSEABLE_BASH_MSG = (
 
 def has_opaque_product_write(
         command: str, root: Path, is_harness: bool) -> bool | None:
-    """An op whose exact product-file set can't be read from the literal command,
-    so a degraded window cannot claim it: a recursive/globbed/brace DELETE of a product
-    path (`rm`/`unlink`/`git rm`), or a recursive/glob-sourced copy/move whose
-    DESTINATION is a product path. Copy/move opacity is keyed on the destination,
-    never the source, so a read-OUT backup (`cp -R factory/scripts /tmp/x`) is
-    never blocked. Pure shell games and arbitrary code stay a documented residual
-    (decision 0013); the repo-kind PIN, not this check, is the security guarantee.
+    """Whether a write has an unbounded product target or opaque Git mutation.
+
+    Copy/move opacity is keyed on the destination so read-OUT backups remain
+    allowed. Arbitrary code stays a documented residual (decision 0013).
     """
     for segment in split_shell_segments(strip_heredoc_bodies(command)):
         tokens = tokenize_write_command(segment)
@@ -992,12 +1128,26 @@ def has_opaque_product_write(
         name = tokens[index].rsplit("/", 1)[-1]
         args = tokens[index + 1:]
         if name == "git":
+            git_args = args
             sub, args = git_subcommand(args)
-            if (sub in {"restore", "checkout", "rm", "mv", "apply"}
+            if sub == "apply":
+                if _has_pathspec_from_file(args):
+                    return True
+                if _git_apply_is_read_only(args):
+                    continue
+                if _git_apply_paths(args, root) is None:
+                    return True
+                continue
+            if (sub in {"restore", "checkout", "rm", "mv"}
                     and _has_pathspec_from_file(args)):
                 return True
-            if sub == "apply" and _git_apply_paths(args, root) is None:
-                return True
+            mutates, paths = _git_worktree_mutation(
+                sub or "", args, root, git_args,
+            )
+            if mutates:
+                if paths is None:
+                    return True
+                continue
             if sub != "rm":
                 continue
             name = "rm"
@@ -1025,8 +1175,9 @@ def has_opaque_product_write(
     return False
 
 
-def guard_product_writes(targets: list[str], root: Path, command: str = "",
-                         *, lexical_targets: bool = False) -> None:
+def guard_product_writes(
+        targets: list[str], root: Path, *, lexical_targets: bool = False,
+) -> None:
     window = load_active(root)
     # Effective repo kind: a live marker read, UNLESS a window is open — then
     # the kind pinned at its start wins, so deleting the marker during the window
@@ -1037,16 +1188,6 @@ def guard_product_writes(targets: list[str], root: Path, command: str = "",
     else:
         is_harness = is_harness_source_repo(root)
     degraded = bool(window and profile_of(window) == DEGRADED)
-    # Opaque check FIRST: a recursive/globbed op or a `cp -t`/dir copy can affect
-    # product files the literal-target extractor never classifies, so `product`
-    # may be empty even though the command hits machinery. Deny before any early
-    # return, whether the repo is fully locked or a quickfix is open.
-    if command:
-        opaque = has_opaque_product_write(command, root, is_harness)
-        if opaque is None:
-            deny(UNPARSEABLE_BASH_MSG)
-        if opaque:
-            deny(OPAQUE_DEGRADED_MSG if degraded else PLAN_MODE_MSG)
     classify = _lexical_product_path if lexical_targets else None
     product = list(dict.fromkeys(
         rel for raw in targets
@@ -1468,6 +1609,20 @@ is_harness = (
     if window is not None and "harness_source" in window
     else is_harness_source_repo(root)
 )
+if command and tool_name == "Bash":
+    opaque = has_opaque_product_write(command, root, is_harness)
+    if opaque is None:
+        deny(UNPARSEABLE_BASH_MSG)
+    if opaque:
+        if any(
+                _contains_marker(rel)
+                for raw in write_targets
+                if (rel := _lexical_product_path(raw, is_harness)) is not None):
+            deny(MARKER_PLAN_ONLY_MSG)
+        if native_codex:
+            deny(OPAQUE_DEGRADED_MSG if window else OPAQUE_NATIVE_MSG)
+        deny(OPAQUE_DEGRADED_MSG if window and profile_of(window) == DEGRADED
+             else PLAN_MODE_MSG)
 if tool_name == "Bash" or native_codex and tool_name == PATCH_TOOL:
     locked_targets = list(dict.fromkeys(
         rel for raw in write_targets
@@ -1490,12 +1645,6 @@ else:
     scoped_targets = locked_targets
 if native_codex:
     is_degraded = False
-    if command and tool_name == "Bash":
-        opaque = has_opaque_product_write(command, root, is_harness)
-        if opaque is None:
-            deny(UNPARSEABLE_BASH_MSG)
-        if opaque:
-            deny(OPAQUE_DEGRADED_MSG if window else OPAQUE_NATIVE_MSG)
     if scoped_targets:
         if window:
             from forge_cli.quickfix import DEGRADED, LITE, profile_of
@@ -1553,7 +1702,6 @@ else:
             deny("Forge worker write admission returned an unknown grant kind.")
     else:
         guard_product_writes(write_targets, root,
-                             command=command if tool_name == "Bash" else "",
                              lexical_targets=tool_name == "Bash")
 # A heredoc whose ONLY consumer is a data sink (cat/tee/printf/echo writing
 # to a file) is data, never argv: its body is dropped before the companion

@@ -8573,6 +8573,19 @@ def test_bash_write_guard_classifies_only_real_product_writes(repo):
     "git checkout --pathspec-from-file=src/paths.txt",
     "git checkout --pathspec-from-file src/paths.txt",
     "git rm --pathspec-from-file=src/paths.txt",
+    "git checkout topic",
+    "git checkout --force topic",
+    "git checkout --discard-changes topic",
+    "git switch topic",
+    "git reset --hard HEAD",
+    "git stash pop",
+    "git stash apply",
+    "git clean -fd",
+    "git merge topic",
+    "git rebase topic",
+    "git pull",
+    "git cherry-pick deadbeef",
+    "git revert deadbeef",
     "sed -i s/x/y/ src/a.py plans/note.md",
     "git apply x.patch",
 ])
@@ -8584,6 +8597,102 @@ def test_locked_bash_write_shapes_are_denied(repo, runtime, command):
             "@@ -1 +1 @@\n-old\n+new\n",
             encoding="utf-8",
         )
+    runner = hook if runtime == "claude" else native_hook
+    code, out = runner(repo, {
+        "tool_name": "Bash", "permission_mode": "default",
+        "tool_input": {"command": command},
+    })
+    assert code == 0 and "deny" in out, out
+
+
+@pytest.mark.parametrize("runtime", ["claude", "codex"])
+def test_locked_git_pathspecs_expand_to_tracked_files(repo, runtime):
+    from pre_tool_use import bash_write_paths
+
+    for path in ("src/a.py", "src/c.py", "src/nested/b.py"):
+        target = repo / path
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text("tracked\n", encoding="utf-8")
+    git(repo, "add", "src")
+
+    assert bash_write_paths("git checkout -- src", repo) == [
+        "src/a.py", "src/c.py", "src/nested/b.py",
+    ]
+    glob_targets = bash_write_paths("git restore -- 'src/*.py'", repo)
+    assert glob_targets == ["src/a.py", "src/c.py", "src/nested/b.py"]
+    assert bash_write_paths("git rm -r -- src", repo) == glob_targets
+    from forge_cli.worker_admission import path_in_scope
+    assert [path for path in glob_targets
+            if not path_in_scope(path, ["src/a.py"])] == [
+                "src/c.py", "src/nested/b.py",
+            ]
+    assert bash_write_paths("git -C src restore -- a.py", repo) == [
+        "src/a.py",
+    ]
+    assert bash_write_paths("git checkout HEAD -- src/a.py", repo) == [
+        "src/a.py",
+    ]
+
+    runner = hook if runtime == "claude" else native_hook
+    code, out = runner(repo, {
+        "tool_name": "Bash", "permission_mode": "default",
+        "tool_input": {"command": "git checkout -- src"},
+    })
+    assert code == 0 and "deny" in out, out
+
+
+@pytest.mark.parametrize("runtime", ["claude", "codex"])
+def test_locked_unexpandable_git_pathspec_is_opaque(repo, runtime):
+    runner = hook if runtime == "claude" else native_hook
+    code, out = runner(repo, {
+        "tool_name": "Bash", "permission_mode": "default",
+        "tool_input": {"command": "git checkout -- missing-tracked-path"},
+    })
+    assert code == 0 and "deny" in out, out
+
+
+@pytest.mark.parametrize("runtime", ["claude", "codex"])
+def test_locked_recursive_delete_of_sibling_checkout_root_is_denied(repo, runtime):
+    sibling = repo.parent / "sibling-checkout"
+    (sibling / ".git").mkdir(parents=True)
+    (sibling / "factory" / "scripts").mkdir(parents=True)
+    runner = hook if runtime == "claude" else native_hook
+    code, out = runner(repo, {
+        "tool_name": "Bash", "permission_mode": "default",
+        "tool_input": {"command": f"rm -rf {shlex.quote(str(sibling))}"},
+    })
+    assert code == 0 and "deny" in out, out
+
+
+@pytest.mark.parametrize("runtime", ["claude", "codex"])
+@pytest.mark.parametrize("option", ["--check", "--stat", "--numstat", "--summary"])
+def test_locked_git_apply_read_only_modes_are_allowed(repo, runtime, option):
+    (repo / "x.patch").write_text(
+        "diff --git a/src/a.py b/src/a.py\n"
+        "--- a/src/a.py\n+++ b/src/a.py\n"
+        "@@ -1 +1 @@\n-old\n+new\n",
+        encoding="utf-8",
+    )
+    runner = hook if runtime == "claude" else native_hook
+    code, out = runner(repo, {
+        "tool_name": "Bash", "permission_mode": "default",
+        "tool_input": {"command": f"git apply {option} x.patch"},
+    })
+    assert code == 0 and "deny" not in out, out
+
+
+@pytest.mark.parametrize("runtime", ["claude", "codex"])
+def test_locked_git_apply_explicit_apply_keeps_write_classification(repo, runtime):
+    from pre_tool_use import bash_write_paths
+
+    (repo / "x.patch").write_text(
+        "diff --git a/src/a.py b/src/a.py\n"
+        "--- a/src/a.py\n+++ b/src/a.py\n"
+        "@@ -1 +1 @@\n-old\n+new\n",
+        encoding="utf-8",
+    )
+    command = "git apply --apply --stat x.patch"
+    assert bash_write_paths(command, repo) == ["src/a.py"]
     runner = hook if runtime == "claude" else native_hook
     code, out = runner(repo, {
         "tool_name": "Bash", "permission_mode": "default",
