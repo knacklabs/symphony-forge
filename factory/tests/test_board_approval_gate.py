@@ -25,5 +25,5 @@ def test_native_approval_no_longer_routes_through_board_or_manual_approve(repo: 
     code, out = run(repo, "forge.py", "plan", "approve", "--by", "Nobody")
     assert code != 0 and "invalid choice" in out
     phase = (HARNESS / "factory/scripts/forge_cli/phase.py").read_text(encoding="utf-8")
-    assert "consume its approval" in phase
+    assert "awaiting native plan approval" in phase
     assert "task approve {id}" not in phase

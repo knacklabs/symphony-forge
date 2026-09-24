@@ -19863,12 +19863,12 @@ def test_docs_state_enforced_order():
     enforced_order = (
         "author its complete contract",
         "one independent cold task grill",
-        "native approval",
         "start the stage",
         "delegate it",
     )
     positions = [task_loop.index(step) for step in enforced_order]
     assert positions == sorted(positions)
+    assert "disposition and amendment, start the stage" in task_loop
 
 
 def test_plan_save_refuses_a_plan_missing_any_required_section(repo, tmp_path):
