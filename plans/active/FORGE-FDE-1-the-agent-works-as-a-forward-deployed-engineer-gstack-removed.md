@@ -20,7 +20,8 @@ and remove gstack and direnv.
 - Every new spec states how success will be measured, with a baseline, a target and a check date.
   When every story from that spec is done and the date passes, `forge next` reminds you to check,
   and `forge spec measure` records what you measured in the spec itself.
-- For UI ideas it prototypes with impeccable when it's installed, plain HTML otherwise.
+- For UI ideas it prototypes with impeccable, which Forge now treats as a required skill at a pinned
+  version: `forge doctor` checks it and `forge doctor --fix` installs it for Claude and Codex.
 - Setup gets simpler: no gstack, no direnv. Client repos keep any gstack files they already have.
 
 ## Done when
@@ -79,7 +80,8 @@ Nothing beyond approving this plan.
 - `harness.yaml`: discovery owner → Forge skill; impeccable in the prototype allowlist; gstack
   precedence tier and disabled list removed.
 - gstack removal (code): delete `forge_cli/gstack.py` and its subcommand; doctor gstack checks and
-  the direnv requirement (Forge reads `.envrc` directly; doctor reports impeccable as optional);
+  the direnv requirement (Forge reads `.envrc` directly); impeccable becomes a required skill at a
+  pinned version that doctor checks for Claude and Codex and `doctor --fix` installs;
   adopt/upgrade/scaffold gstack ignore and `.envrc` additions (whichever upgrade code exists when this
   task runs); every `.gstack/` path token (`pre_tool_use.py`, `repo_kind.py`, `stages.py`,
   `check_refactor_delta.py`, `check_repo_budget.py`) where it still exists; this repo's
@@ -98,7 +100,7 @@ skill). Each ships its own pull request.
 | Label / exact task ID | What it delivers | Depends on | user_facing |
 |---|---|---|---|
 | Skill / FDE | FDE skill section, reference file, DISCOVERY template, discovery owner and impeccable in `harness.yaml`, `forge payback`, success-measure validation, griller line, spec help and README, computed `forge next` check, `forge spec measure` | none | false |
-| Removal / GSTACK | gstack command, doctor checks, direnv requirement, adopt/upgrade/scaffold additions, path tokens, repo config lines, docs, living specs, install skills, tests; archive, summary note and harvest marks | FDE | false |
+| Removal / GSTACK | gstack command, doctor checks, direnv requirement, impeccable required and installed at a pinned version, adopt/upgrade/scaffold additions, path tokens, repo config lines, docs, living specs, install skills, tests; archive, summary note and harvest marks | FDE | false |
 
 ## Verify plan
 

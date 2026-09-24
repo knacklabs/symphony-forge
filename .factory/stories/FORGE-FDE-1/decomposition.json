@@ -180,6 +180,6 @@
   "story": "FORGE-FDE-1",
   "epic": "symphony-forge",
   "plan_file": "plans/active/FORGE-FDE-1-the-agent-works-as-a-forward-deployed-engineer-gstack-removed.md",
-  "plan_sha256": "b97aaf79ba4e2877026b8edde8f67136b882e3e33062be66e17cfa13e686ca8d",
-  "commit": "13b586222a711783ea5b66c54aefb3d6d4d2880f"
+  "plan_sha256": "8f7ced408b6bc47529eb39ab0068ef64440ad629c5050dbf3d1a9e61f893c3a8",
+  "commit": "d87a467dd97999ea24076026aa049abb44b22dc3"
 }
