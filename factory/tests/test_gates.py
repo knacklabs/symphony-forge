@@ -14720,8 +14720,7 @@ def test_unshipped_check_skips_fetch_without_origin(repo, monkeypatch, capsys):
     monkeypatch.setattr(tasks, "_git", track_git)
     tasks._require_unshipped(repo, "ENG-1", "T1", require_fetch_success=True)
 
-    assert not any(args[:1] == ("fetch",) for args in calls)
-    assert not any(args[:1] == ("cat-file",) for args in calls)
+    assert [args[0] for args in calls] == ["cat-file", "remote"]
     assert "WARNING" not in capsys.readouterr().out
 
 
@@ -14750,7 +14749,9 @@ def _cache_task_marker(repo: Path, key: str, task_id: str) -> None:
     git(repo, "checkout", "--detach", base_head)
 
 
-def test_task_reopen_refuses_a_cached_shipped_marker_after_fetch_failure(repo):
+@pytest.mark.parametrize("origin_remote", [False, True],
+                         ids=["without-origin", "after-fetch-failure"])
+def test_task_reopen_refuses_a_cached_shipped_marker(repo, origin_remote):
     key, task_id = "ENG-1", "T1"
     (repo / ".factory" / "run.json").write_text(
         json.dumps({"issue_key": key}), encoding="utf-8",
@@ -14760,7 +14761,8 @@ def test_task_reopen_refuses_a_cached_shipped_marker_after_fetch_failure(repo):
         "stages": [{"id": task_id, "status": "done"}],
     })
     _cache_task_marker(repo, key, task_id)
-    git(repo, "remote", "add", "origin", str(repo / "missing-origin.git"))
+    if origin_remote:
+        git(repo, "remote", "add", "origin", str(repo / "missing-origin.git"))
 
     code, out = run(repo, "forge.py", "task", "reopen", task_id)
 
@@ -14856,13 +14858,14 @@ def test_review_fix_fetches_before_taking_the_stage_state_lock(repo, monkeypatch
 
     def fake_git(_base, *args):
         git_calls.append(args[0])
-        return subprocess.CompletedProcess(args, 0 if args[0] == "fetch" else 1,
-                                           "", "")
+        code = 0 if args[0] in ("remote", "fetch") else 1
+        stdout = "origin\n" if args[0] == "remote" else ""
+        return subprocess.CompletedProcess(args, code, stdout, "")
 
     @contextlib.contextmanager
     def checked_exclusion(_base, _key, *, kind, **_kwargs):
         if kind == "stage-state":
-            assert git_calls == ["fetch", "cat-file"]
+            assert git_calls == ["cat-file", "remote", "fetch", "cat-file"]
         yield
 
     monkeypatch.setattr(tasks, "_git", fake_git)
@@ -14871,7 +14874,7 @@ def test_review_fix_fetches_before_taking_the_stage_state_lock(repo, monkeypatch
     target = stages.reopen_stage_for_review_fix(repo, "T1")
 
     assert target["status"] == "active"
-    assert git_calls == ["fetch", "cat-file"]
+    assert git_calls == ["cat-file", "remote", "fetch", "cat-file"]
 
 
 def test_done_contracts_immutable_and_criteria_map_binds_plan_contracts(
