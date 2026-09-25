@@ -56,6 +56,8 @@ def test_close_proof_and_preflight_bind_same_effective_environment(
         'export FACTORY_TYPECHECK_CMD="python3 -m compileall tests"\n',
         encoding="utf-8",
     )
+    git(repo, "config", "user.email", "test@knacklabs.dev")
+    git(repo, "config", "user.name", "Gate Tests")
     git(repo, "add", "tests/a.py", ".envrc")
     git(repo, "commit", "-qm", "proof inputs")
     task = {
