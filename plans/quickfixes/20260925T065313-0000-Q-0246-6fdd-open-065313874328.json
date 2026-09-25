@@ -1,0 +1,12 @@
+{
+  "event": "open",
+  "id": "Q-0246-6fdd",
+  "profile": "lite",
+  "reason": "Shard the harness test suite across 4 CI runners",
+  "started_at": "2026-09-25T06:53:13+00:00",
+  "max_files": 5,
+  "files": [],
+  "harness_source": true,
+  "by": "Ravi Kiran Vemula",
+  "base_sha": "8845f0f4a18095be266fc008dbcf2d97ad9c82b9"
+}

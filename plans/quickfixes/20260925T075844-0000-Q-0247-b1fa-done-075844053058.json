@@ -1,0 +1,91 @@
+{
+  "event": "done",
+  "id": "Q-0247-b1fa",
+  "profile": "lite",
+  "by": "Ravi Kiran Vemula",
+  "reason": "Duration-balanced CI shards (6 runners)",
+  "base_sha": "67bbd61e25dfb019226d912ec6c5d6f502d6f1b8",
+  "started_at": "2026-09-25T07:05:29+00:00",
+  "completed_at": "2026-09-25T07:58:44+00:00",
+  "files": [
+    ".github/workflows/factory-scaffold.yml",
+    "factory/scripts/junit_to_durations.py",
+    "factory/tests/.test_durations",
+    "factory/tests/test_junit_to_durations.py"
+  ],
+  "reviews": {
+    "quality": {
+      "generated_by": "autoreview",
+      "score": 10,
+      "summary": "quality lens over Q-0247-b1fa (4 product path(s), 67bbd61..5e03235, Codex via the autoreview skill): 0 blocking, 0 non-blocking. The duration converter and full-suite workflow appear internally consistent from the available evidence. Project code was not executed during this read-only review.",
+      "blocking_findings": [],
+      "non_blocking_findings": [],
+      "recommendation": "approve",
+      "reviewed_scope": [
+        ".github/workflows/factory-scaffold.yml",
+        "factory/scripts/junit_to_durations.py",
+        "factory/tests/.test_durations",
+        "factory/tests/test_junit_to_durations.py"
+      ],
+      "skills_used": [],
+      "contract_verdicts": [],
+      "review_base_sha": "67bbd61e25dfb019226d912ec6c5d6f502d6f1b8",
+      "branch_diff_digest": "601ad591d4415ee3a46001472b79379c3125ebf9ec60f3b4ce53662240ced3ab",
+      "commit": "5e03235b9d664aacb4b6ba03a898fd1c5c0bb0e7",
+      "aspect": "quality",
+      "residual_risks": [],
+      "recorded_at": "2026-09-25T07:58:40+00:00"
+    },
+    "performance": {
+      "generated_by": "autoreview",
+      "score": 9,
+      "summary": "performance lens over Q-0247-b1fa (4 product path(s), 67bbd61..5e03235, Codex via the autoreview skill): 0 blocking, 1 non-blocking. The Markdown-only path concentrates every matched test on one runner. The resulting CI delay is an inference from the changed routing, not a measured runtime.",
+      "blocking_findings": [],
+      "non_blocking_findings": [
+        {
+          "category": "maintainability",
+          "area": ".github/workflows",
+          "summary": "Restore parallel execution for large Markdown-only test subsets (.github/workflows/factory-scaffold.yml:85): When a Markdown-only PR matches tests, line 85 sends the entire subset to shard 1 while shards 2\u20136 do no test work.",
+          "file_path": ".github/workflows/factory-scaffold.yml",
+          "line": 85,
+          "title": "Restore parallel execution for large Markdown-only test subsets"
+        }
+      ],
+      "recommendation": "approve-with-caveats",
+      "reviewed_scope": [
+        ".github/workflows/factory-scaffold.yml",
+        "factory/scripts/junit_to_durations.py",
+        "factory/tests/.test_durations",
+        "factory/tests/test_junit_to_durations.py"
+      ],
+      "skills_used": [],
+      "review_base_sha": "67bbd61e25dfb019226d912ec6c5d6f502d6f1b8",
+      "branch_diff_digest": "601ad591d4415ee3a46001472b79379c3125ebf9ec60f3b4ce53662240ced3ab",
+      "commit": "5e03235b9d664aacb4b6ba03a898fd1c5c0bb0e7",
+      "aspect": "performance",
+      "residual_risks": [],
+      "recorded_at": "2026-09-25T07:58:40+00:00"
+    },
+    "security": {
+      "generated_by": "autoreview",
+      "score": 10,
+      "summary": "security lens over Q-0247-b1fa (4 product path(s), 67bbd61..5e03235, Codex via the autoreview skill): 0 blocking, 0 non-blocking. I found no concrete credential exposure or security boundary violation in the changed lines.",
+      "blocking_findings": [],
+      "non_blocking_findings": [],
+      "recommendation": "approve",
+      "reviewed_scope": [
+        ".github/workflows/factory-scaffold.yml",
+        "factory/scripts/junit_to_durations.py",
+        "factory/tests/.test_durations",
+        "factory/tests/test_junit_to_durations.py"
+      ],
+      "skills_used": [],
+      "review_base_sha": "67bbd61e25dfb019226d912ec6c5d6f502d6f1b8",
+      "branch_diff_digest": "601ad591d4415ee3a46001472b79379c3125ebf9ec60f3b4ce53662240ced3ab",
+      "commit": "5e03235b9d664aacb4b6ba03a898fd1c5c0bb0e7",
+      "aspect": "security",
+      "residual_risks": [],
+      "recorded_at": "2026-09-25T07:58:41+00:00"
+    }
+  }
+}

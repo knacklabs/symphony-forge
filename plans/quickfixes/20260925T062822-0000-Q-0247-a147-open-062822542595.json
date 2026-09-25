@@ -1,0 +1,12 @@
+{
+  "event": "open",
+  "id": "Q-0247-a147",
+  "profile": "lite",
+  "reason": "PR 251 CI failure",
+  "started_at": "2026-09-25T06:28:22+00:00",
+  "max_files": 5,
+  "files": [],
+  "harness_source": true,
+  "by": "Ravi Kiran Vemula",
+  "base_sha": "b5d8efbda11ed046c4e6ac08509b7cf745101639"
+}

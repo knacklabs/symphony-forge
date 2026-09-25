@@ -60,9 +60,15 @@ Task plans follow the same reader-first approach and use these sections in
 order: `What and why`, `Workflow`, `Manual verification`, `Risks`, then a
 horizontal divider and `Technical notes`. A Mermaid workflow diagram is
 welcome. Keep the first four sections in plain English. Technical notes stay
-short and contain no status, dates, IDs, hashes, paths, or scope lists.
+short and contain no status, dates, IDs, hashes, paths, or scope lists, except
+that each coordinator-owned `.codex/...` edit must name its exact path and say
+that the coordinator applies it.
 
 Task decomposition metadata rules:
+- Each `required_tests` entry is an `{id, path, command}` proof object. Use
+  `python3 factory/scripts/run_tests.py {path} {id} {report}` as its command;
+  it runs installed pytest offline and falls back to uv with Python 3.11 when
+  pytest is unavailable.
 - Each leaf task carries `user_facing: true|false`. Set it TRUE only for tasks
   that build UI a person sees (screens, components, styling, motion); backend
   tasks (APIs, schema, services, migrations, infra) are `false`. This per-TASK

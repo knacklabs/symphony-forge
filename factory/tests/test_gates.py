@@ -4151,6 +4151,35 @@ def test_decision_numbering_allocates_sequentially(repo):
     assert names == ["0001-first.md", "0002-second.md"]
 
 
+def test_decision_numbering_uses_decisions_on_other_local_branches(repo):
+    decisions = repo / "docs" / "decisions"
+    decisions.mkdir(parents=True, exist_ok=True)
+    existing = [
+        int(path.name[:4])
+        for path in decisions.glob("[0-9][0-9][0-9][0-9]-*.md")
+    ]
+    branch_number = max(existing, default=0) + 5
+    current = git(repo, "branch", "--show-current")
+    branch = "decision-number-only-on-branch"
+    git(repo, "switch", "-c", branch)
+    branch_record = decisions / f"{branch_number:04d}-branch-only.md"
+    branch_record.write_text("# Decision only on another local branch\n")
+    git(repo, "add", "--", f"docs/decisions/{branch_record.name}")
+    git(repo, "commit", "-qm", "add branch-only decision")
+    git(repo, "switch", current)
+    assert not branch_record.exists()
+
+    code, out = run(repo, "forge.py", "decision", "new", "after-branch-only",
+                    "--repo", str(repo))
+
+    allocated = branch_number + 1
+    assert code == 0, out
+    assert (decisions / f"{allocated:04d}-after-branch-only.md").is_file()
+    assert f"allocated {allocated:04d}" in out
+    assert f"highest existing {branch_number:04d}" in out
+    assert "local branches" in out
+
+
 def test_plan_assume_requires_active_plan_then_appends(repo, tmp_path):
     sign_off(repo)
     intake(repo)
@@ -9557,6 +9586,111 @@ def test_mode_lite_opens_window_with_profile_and_base_sha(repo):
 
     code, out = run(repo, "forge.py", "mode", "full")
     assert code != 0 and "invalid choice" in out
+
+
+@pytest.mark.parametrize("origin", ["fresh", "stale", "none"])
+def test_mode_done_counts_only_lite_files_after_merging_main(repo, monkeypatch, origin):
+    from forge_cli import review as review_mod
+    from forge_cli.quickfix import _lite_manifest
+
+    git(repo, "checkout", "-q", "-B", "main")
+    git(repo, "checkout", "-q", "-b", "lite-fix")
+    active = open_lite(repo)
+    source = repo / "src"
+    source.mkdir()
+    (source / "own.py").write_text("own = True\n")
+    git(repo, "add", "src/own.py")
+    git(repo, "commit", "-q", "-m", "lite fix")
+
+    git(repo, "checkout", "-q", "main")
+    source.mkdir()
+    for number in range(5):
+        (source / f"main_{number}.py").write_text(f"main = {number}\n")
+    git(repo, "add", "src")
+    git(repo, "commit", "-q", "-m", "main product changes")
+    if origin == "fresh":
+        git(repo, "update-ref", "refs/remotes/origin/main", head(repo))
+    elif origin == "none":
+        git(repo, "update-ref", "-d", "refs/remotes/origin/main")
+    git(repo, "checkout", "-q", "lite-fix")
+    git(repo, "merge", "--no-ff", "main", "-m", "merge main")
+    assert _lite_manifest(repo, active["base_sha"]) == ["src/own.py"]
+
+    def review_reached(_skill, worktree, base_sha, *_args, **_kwargs):
+        assert base_sha == active["base_sha"]
+        assert git(worktree, "diff", "--name-only", f"{base_sha}..HEAD").splitlines() == [
+            "src/own.py",
+        ]
+        raise RuntimeError("review reached")
+
+    monkeypatch.setattr(review_mod, "resolve_skill", lambda _skill: "helper")
+    monkeypatch.setattr(review_mod, "_require_current_review_helper", lambda _skill: None)
+    monkeypatch.setattr(review_mod, "_helper_identity", lambda _skill: ("helper", "file"))
+    monkeypatch.setattr(review_mod, "_run_skill", review_reached)
+    with pytest.raises(RuntimeError, match="review reached"):
+        review_mod.review_lite(repo)
+    write_lite_reviews(repo)
+
+    code, out = run(repo, "forge.py", "mode", "done")
+
+    assert code == 0 and "1 file(s)" in out, out
+    done = [json.loads(path.read_text())
+            for path in (repo / "plans" / "quickfixes").glob("*.json")
+            if json.loads(path.read_text()).get("event") == "done"]
+    assert len(done) == 1
+    assert done[0]["base_sha"] == active["base_sha"]
+    assert done[0]["files"] == ["src/own.py"]
+
+
+def test_lite_on_local_trunk_without_origin_measures_and_reviews_own_commit(
+        repo, monkeypatch):
+    from forge_cli.quickfix import _lite_manifest
+    from forge_cli import review as review_mod
+
+    git(repo, "update-ref", "-d", "refs/remotes/origin/main")
+    active = open_lite(repo)
+    (repo / "src").mkdir()
+    (repo / "src" / "own.py").write_text("own = True\n")
+    git(repo, "add", "src/own.py")
+    git(repo, "commit", "-q", "-m", "lite fix on main")
+
+    assert _lite_manifest(repo, active["base_sha"]) == ["src/own.py"]
+
+    def review_reached(_skill, _worktree, base_sha, *_args, **_kwargs):
+        assert base_sha == active["base_sha"]
+        raise RuntimeError("review reached")
+
+    monkeypatch.setattr(review_mod, "resolve_skill", lambda _skill: "helper")
+    monkeypatch.setattr(review_mod, "_require_current_review_helper", lambda _skill: None)
+    monkeypatch.setattr(review_mod, "_helper_identity", lambda _skill: ("helper", "file"))
+    monkeypatch.setattr(review_mod, "_run_skill", review_reached)
+    with pytest.raises(RuntimeError, match="review reached"):
+        review_mod.review_lite(repo)
+
+    write_lite_reviews(repo)
+    code, out = run(repo, "forge.py", "mode", "done")
+    assert code == 0 and "1 file(s)" in out, out
+
+
+def test_mode_done_counts_lite_commit_on_main_before_branching(repo):
+    from forge_cli.quickfix import _lite_manifest
+
+    active = open_lite(repo)
+    (repo / "src").mkdir()
+    (repo / "src" / "own.py").write_text("own = True\n")
+    git(repo, "add", "src/own.py")
+    git(repo, "commit", "-q", "-m", "lite fix on main")
+    git(repo, "checkout", "-q", "-b", "lite-fix")
+    (repo / "src" / "branch.py").write_text("branch = True\n")
+    git(repo, "add", "src/branch.py")
+    git(repo, "commit", "-q", "-m", "lite fix on branch")
+
+    assert _lite_manifest(repo, active["base_sha"]) == [
+        "src/branch.py", "src/own.py",
+    ]
+    write_lite_reviews(repo)
+    code, out = run(repo, "forge.py", "mode", "done")
+    assert code == 0 and "2 file(s)" in out, out
 
 
 def test_mode_done_clears_scoped_reviews_without_legacy_dir(repo):
