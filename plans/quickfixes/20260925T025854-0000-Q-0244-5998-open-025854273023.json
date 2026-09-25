@@ -1,0 +1,12 @@
+{
+  "event": "open",
+  "id": "Q-0244-5998",
+  "profile": "lite",
+  "reason": "Accept the refreshed Autoreview helper's review_completion field",
+  "started_at": "2026-09-25T02:58:54+00:00",
+  "max_files": 5,
+  "files": [],
+  "harness_source": true,
+  "by": "Ravi Kiran Vemula",
+  "base_sha": "fcbb064c7be307bec63e06debe5fdab0274d4d64"
+}
