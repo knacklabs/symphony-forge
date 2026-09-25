@@ -1,51 +1,79 @@
 {
-  "issue": "FORGE-COORD-1",
+  "issue": "FORGE-NEXT-1",
   "stages": [
     {
-      "id": "NATIVE-FOREGROUND-ACTIVATE",
-      "title": "Native foreground and complete first-task proof",
-      "status": "done",
-      "task_sha256": "397cc2c4a0f51e4bdc805d76fa7a685f55e0da6798ea12df8c47e316e7d19fe5"
-    },
-    {
-      "id": "LEAN-WORKFLOW",
-      "title": "One brief and one complete independent review",
-      "status": "done",
-      "task_sha256": "c43187d60197aacf4a36085849dabf80cb4ac8cf4ef6cd7440184d01b6d68523"
-    },
-    {
-      "id": "LEAN-FIXES",
-      "title": "Close the Lean review findings deferred at merge",
+      "id": "CORE",
+      "title": "Package skeleton, CLI entry and test harness",
       "status": "pending"
     },
     {
-      "id": "PORTABLE-DELIVERY-MIGRATION",
-      "title": "Portable setup, durable history and existing-client migration",
+      "id": "STORY",
+      "title": "Story doc, cold read, approval on both hosts, and forge next",
       "status": "pending"
     },
     {
-      "id": "NATIVE-LIFECYCLE",
-      "title": "Native detached read-only lifecycle and helpers",
+      "id": "RECORDS",
+      "title": "Specs, decisions and the roadmap",
       "status": "pending"
     },
     {
-      "id": "SHARED-COORDINATOR-JOURNEY",
-      "title": "Coordinator questions, task ownership and reliable continuation",
+      "id": "WORK",
+      "title": "Task and fix start, the worker, git hooks and the deny hook",
       "status": "pending"
     },
     {
-      "id": "FORMAT-SOURCES",
-      "title": "Complete pure mechanical Python formatting",
+      "id": "CLOSE",
+      "title": "Close, the review loop, the check wait and forge-pr-check",
       "status": "pending"
     },
     {
-      "id": "QUALITY-BASELINE",
-      "title": "Semantic fixes and mandatory full quality baseline",
+      "id": "SETUP",
+      "title": "init, sync, doctor, adapters and the release",
       "status": "pending"
     },
     {
-      "id": "FORGE-COORD-1.1",
-      "title": "Complete native parity and installed-client dogfood",
+      "id": "BOARD",
+      "title": "The plain-English board",
+      "status": "pending"
+    },
+    {
+      "id": "MIGRATE",
+      "title": "Moving copied-in clients",
+      "status": "pending"
+    },
+    {
+      "id": "DOCS-STANDARDS",
+      "title": "Standards page, client stack conventions, one UI skill, guide and archive list",
+      "status": "pending"
+    },
+    {
+      "id": "DOCS-PHASES",
+      "title": "Build-simple phase texts",
+      "status": "pending"
+    },
+    {
+      "id": "ADOPT",
+      "title": "This repo runs on v1",
+      "status": "pending"
+    },
+    {
+      "id": "PILOT-FDE",
+      "title": "The FDE story runs on v1",
+      "status": "pending"
+    },
+    {
+      "id": "CLIENT-FIX",
+      "title": "A fresh client closes a fix",
+      "status": "pending"
+    },
+    {
+      "id": "MIGRATE-MYCLAW",
+      "title": "myclaw moves to v1",
+      "status": "pending"
+    },
+    {
+      "id": "SWITCH",
+      "title": "Replace the old workflows, delete the old tree and release 1.0.0",
       "status": "pending"
     }
   ]
