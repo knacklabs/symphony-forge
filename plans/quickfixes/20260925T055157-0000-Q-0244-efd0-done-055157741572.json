@@ -1,0 +1,99 @@
+{
+  "event": "done",
+  "id": "Q-0244-efd0",
+  "profile": "lite",
+  "by": "Ravi Kiran Vemula",
+  "reason": "Markdown-only PRs skip the full harness test suite; main push still runs it",
+  "base_sha": "fcbb064c7be307bec63e06debe5fdab0274d4d64",
+  "started_at": "2026-09-25T05:37:35+00:00",
+  "completed_at": "2026-09-25T05:51:57+00:00",
+  "files": [
+    ".github/workflows/factory-scaffold.yml",
+    "factory/scripts/forge_cli/doctor.py",
+    "factory/scripts/forge_cli/review.py",
+    "factory/tests/test_gates.py",
+    "factory/tests/test_review_task_delta.py",
+    "factory/tests/test_seal_measures.py"
+  ],
+  "reviews": {
+    "quality": {
+      "generated_by": "autoreview",
+      "score": 9,
+      "summary": "quality lens over Q-0244-efd0 (6 product path(s), fcbb064..00308e5, Codex via the autoreview skill): 0 blocking, 1 non-blocking. The relaxed finding validation admits a missing required field and projects it into the review output. No task-specific plan contracts apply.",
+      "blocking_findings": [],
+      "non_blocking_findings": [
+        {
+          "category": "regression",
+          "area": "factory/scripts/forge_cli",
+          "summary": "Require source_attribution in review findings (factory/scripts/forge_cli/review.py:503): When a provider finding omits `source_attribution`, this subset check accepts it.",
+          "file_path": "factory/scripts/forge_cli/review.py",
+          "line": 503,
+          "title": "Require source_attribution in review findings"
+        }
+      ],
+      "recommendation": "approve-with-caveats",
+      "reviewed_scope": [
+        ".github/workflows/factory-scaffold.yml",
+        "factory/scripts/forge_cli/doctor.py",
+        "factory/scripts/forge_cli/review.py",
+        "factory/tests/test_gates.py",
+        "factory/tests/test_review_task_delta.py",
+        "factory/tests/test_seal_measures.py"
+      ],
+      "skills_used": [],
+      "contract_verdicts": [],
+      "review_base_sha": "fcbb064c7be307bec63e06debe5fdab0274d4d64",
+      "branch_diff_digest": "3974c8e4571ef5d42839149aeed4424ddf8bedc896d479b02d771f7dfbf54819",
+      "commit": "00308e515f7296ecd2aad56e5009d8fabe89f0c8",
+      "aspect": "quality",
+      "residual_risks": [],
+      "recorded_at": "2026-09-25T05:51:57+00:00"
+    },
+    "performance": {
+      "generated_by": "autoreview",
+      "score": 10,
+      "summary": "performance lens over Q-0244-efd0 (6 product path(s), fcbb064..00308e5, Codex via the autoreview skill): 0 blocking, 0 non-blocking. The supplied diff shows no concrete performance defect meeting the reporting threshold.",
+      "blocking_findings": [],
+      "non_blocking_findings": [],
+      "recommendation": "approve",
+      "reviewed_scope": [
+        ".github/workflows/factory-scaffold.yml",
+        "factory/scripts/forge_cli/doctor.py",
+        "factory/scripts/forge_cli/review.py",
+        "factory/tests/test_gates.py",
+        "factory/tests/test_review_task_delta.py",
+        "factory/tests/test_seal_measures.py"
+      ],
+      "skills_used": [],
+      "review_base_sha": "fcbb064c7be307bec63e06debe5fdab0274d4d64",
+      "branch_diff_digest": "3974c8e4571ef5d42839149aeed4424ddf8bedc896d479b02d771f7dfbf54819",
+      "commit": "00308e515f7296ecd2aad56e5009d8fabe89f0c8",
+      "aspect": "performance",
+      "residual_risks": [],
+      "recorded_at": "2026-09-25T05:51:57+00:00"
+    },
+    "security": {
+      "generated_by": "autoreview",
+      "score": 10,
+      "summary": "security lens over Q-0244-efd0 (6 product path(s), fcbb064..00308e5, Codex via the autoreview skill): 0 blocking, 0 non-blocking. The supplied diff shows no concrete security defect meeting the reporting threshold.",
+      "blocking_findings": [],
+      "non_blocking_findings": [],
+      "recommendation": "approve",
+      "reviewed_scope": [
+        ".github/workflows/factory-scaffold.yml",
+        "factory/scripts/forge_cli/doctor.py",
+        "factory/scripts/forge_cli/review.py",
+        "factory/tests/test_gates.py",
+        "factory/tests/test_review_task_delta.py",
+        "factory/tests/test_seal_measures.py"
+      ],
+      "skills_used": [],
+      "review_base_sha": "fcbb064c7be307bec63e06debe5fdab0274d4d64",
+      "branch_diff_digest": "3974c8e4571ef5d42839149aeed4424ddf8bedc896d479b02d771f7dfbf54819",
+      "commit": "00308e515f7296ecd2aad56e5009d8fabe89f0c8",
+      "aspect": "security",
+      "residual_risks": [],
+      "recorded_at": "2026-09-25T05:51:57+00:00"
+    }
+  }
+}
