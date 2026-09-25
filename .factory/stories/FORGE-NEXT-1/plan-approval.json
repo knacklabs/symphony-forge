@@ -1,0 +1,11 @@
+{
+  "approved_plan_sha256": "b9aba30fc75c2f118e04b11c85e8752d5015b089b4ac2d23fb7ead08eee3c8e9",
+  "approved_by": "human-via-Claude",
+  "approved_at": "2026-09-25T14:56:33+00:00",
+  "runtime": "claude",
+  "session_id": "a0106b2c-e659-5e23-b0c7-d419b1d20fda",
+  "event_id": "toolu_012Pmm3dKHYXdTRwanek1zGv",
+  "plan_kind": "story",
+  "story": "FORGE-NEXT-1",
+  "task": ""
+}

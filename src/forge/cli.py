@@ -149,6 +149,9 @@ def _run(argv: list[str] | None) -> int:
 
 
 def main(argv: list[str] | None = None) -> int:
+    # Piped output on Windows uses a legacy code page; never crash on a character like "→".
+    for stream in (sys.stdout, sys.stderr):
+        stream.reconfigure(errors="replace")  # type: ignore[union-attr]
     try:
         return _run(argv)
     except repo.Refused as refusal:
