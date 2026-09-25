@@ -659,7 +659,8 @@ def _validate_review_status(report: dict) -> None:
 def _actual_passes(report: object) -> list[tuple[str, dict]]:
     if not isinstance(report, dict):
         fail("combined review helper wrapper has invalid fields")
-    if report.get("review_status") == "incomplete":
+    if (report.get("review_status") == "incomplete"
+            and not report.get("scope_rejected_findings")):
         fail("the reviewer marked its assessment incomplete; rerun the review")
     if "pass_reports" not in report:
         processed = _validate_processed_report(report, {"provider_report", "review_status"})
