@@ -1,0 +1,12 @@
+{
+  "event": "open",
+  "id": "Q-0246-5b0b",
+  "profile": "lite",
+  "reason": "PR 257 CI: test assumes the default branch is main",
+  "started_at": "2026-09-25T06:59:08+00:00",
+  "max_files": 5,
+  "files": [],
+  "harness_source": true,
+  "by": "Ravi Kiran Vemula",
+  "base_sha": "a9b889e405fd1254ec3b7a8da5b26c1a40e8a592"
+}
