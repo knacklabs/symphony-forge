@@ -22,6 +22,7 @@ INSTALL = {
     "uv": "curl -LsSf https://astral.sh/uv/install.sh | sh",
     "claude": "npm install -g @anthropic-ai/claude-code",
     "codex": "npm install -g @openai/codex",
+    "impeccable": "npx skills add pbakaus/impeccable -g",
 }
 
 # A harmless payload per hook event, so each host hook runs without changing anything.
@@ -116,6 +117,14 @@ def doctor(args: argparse.Namespace) -> None:
     # user trusts the project in their own Codex config.
     codex = Path(os.environ.get("CODEX_HOME") or Path.home() / ".codex") / "config.toml"
     trusted = _codex_trusts(top, codex)
+
+    # impeccable is the one required UI skill. Claude Code and Codex each read skills from their
+    # own folders, in the user's home and in the repo.
+    skills = [Path.home() / ".claude", Path.home() / ".agents", codex.parent,
+              top / ".claude", top / ".agents", top / ".codex"]
+    if not any((folder / "skills" / "impeccable" / "SKILL.md").is_file() for folder in skills):
+        rows.append(("impeccable, the one UI skill Forge requires, isn't installed for Claude Code "
+                     "or Codex.", INSTALL["impeccable"]))
 
     for problem, fix in rows:
         print(f"- {problem}\n  Fix: {fix}")

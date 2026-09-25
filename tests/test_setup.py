@@ -164,14 +164,24 @@ def _fresh_client(repo, gh, tmp_path: Path) -> tuple[Path, subprocess.CompletedP
     ("workflow skips test", ("The tests check in .github/workflows/forge.yml doesn't run "
                              "forge.toml's test command.",)),
     ("codex doesn't trust the project", ()),
+    ("no impeccable", ("impeccable, the one UI skill Forge requires, isn't installed for Claude "
+                       "Code or Codex.\n  Fix: npx skills add pbakaus/impeccable -g\n",)),
 ])
 def test_29_doctor(repo, gh, tmp_path, monkeypatch, case, rows):
     client, init = _fresh_client(repo, gh, tmp_path)
     assert init.returncode == 0, init.stderr
     gh.respond("auth", "status")
+    home = tmp_path / "home"  # so skills installed on this machine don't count
+    home.mkdir()
+    monkeypatch.setenv("HOME", str(home))
+    monkeypatch.setenv("USERPROFILE", str(home))
     codex_home = tmp_path / "codex"  # the user's Codex config, which records trusted projects
     codex_home.mkdir()
     monkeypatch.setenv("CODEX_HOME", str(codex_home))
+    if case != "no impeccable":
+        skill = codex_home / "skills" / "impeccable" / "SKILL.md"
+        skill.parent.mkdir(parents=True)
+        skill.write_text("---\nname: impeccable\n---\n", encoding="utf-8")
     if case != "codex doesn't trust the project":
         (codex_home / "config.toml").write_text(
             f'[projects.{json.dumps(str(client))}]\ntrust_level = "trusted"\n', encoding="utf-8")
