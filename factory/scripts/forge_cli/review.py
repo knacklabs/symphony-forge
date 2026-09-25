@@ -815,13 +815,16 @@ def _tagged_finding(finding: dict) -> tuple[
     title = finding.get("title")
     matches = [lens for lens, tag in zip(LENSES, LENS_TAGS)
                if isinstance(title, str) and title.startswith(tag)]
+    known_tags = {tag.strip().casefold() for tag in LENS_TAGS}
+    if not matches and not any(tag in title.casefold() for tag in known_tags):
+        title = "[quality] " + title
+        matches = ["quality"]
     if len(matches) != 1:
         fail("every combined review finding needs exactly one lens title tag")
     lens = matches[0]
     clean_title = " ".join(
         unicodedata.normalize("NFC", title[len(f"[{lens}] "):]).split()
     )
-    known_tags = {tag.strip().casefold() for tag in LENS_TAGS}
     if not clean_title or any(
             tag in clean_title.casefold() for tag in known_tags):
         fail("every combined review finding needs exactly one lens title tag")
@@ -1414,6 +1417,7 @@ def _run_skill(skill: Path, worktree: Path, base_sha: str, prompt_rel: str,
     # review was ever in flight. A delegation is covered by its own ledger; a
     # review was the blind spot, and it is the release the coordinator is told
     # to watch every time.
+    first_findings: list[dict] = []
     for attempt in range(2):
         json_out.unlink(missing_ok=True)
         started = _record_codex_run(ledger, prompt_rel, argv)
@@ -1443,10 +1447,42 @@ def _run_skill(skill: Path, worktree: Path, base_sha: str, prompt_rel: str,
                                          allow_missing=True) is None]
             if missing:
                 if attempt == 0:
+                    first_findings = [copy.deepcopy(finding)
+                                      for _label, wrapper in passes
+                                      for finding in wrapper["findings"]]
                     print("reviewer omitted the assessment markers; retrying review pass once",
                           flush=True)
                     continue
                 _pass_sections(missing[0])
+            if first_findings:
+                target = (parsed["pass_reports"][0]["report"]
+                          if "pass_reports" in parsed else parsed)
+                seen = {(finding["title"], finding["code_location"]["file_path"],
+                         finding["code_location"]["line"])
+                        for _label, wrapper in passes for finding in wrapper["findings"]}
+                added = []
+                for finding in first_findings:
+                    key = (finding["title"], finding["code_location"]["file_path"],
+                           finding["code_location"]["line"])
+                    if key not in seen:
+                        seen.add(key)
+                        added.append(finding)
+                if added:
+                    target["findings"].extend(copy.deepcopy(added))
+                    target["provider_report"]["findings"].extend(copy.deepcopy(added))
+                    target["overall_correctness"] = "patch is incorrect"
+                    target["provider_report"]["overall_correctness"] = "patch is incorrect"
+                    if target is parsed:
+                        parsed["review_status"] = "findings"
+                    else:
+                        parsed["findings"].extend(added)
+                        parsed["overall_correctness"] = "patch is incorrect"
+                        parsed["review_status"] = "findings"
+                        if "provider_report" in parsed:
+                            parsed["provider_report"]["findings"].extend(copy.deepcopy(added))
+                            parsed["provider_report"]["overall_correctness"] = "patch is incorrect"
+                    _actual_passes(parsed)
+                    raw = (json.dumps(parsed, ensure_ascii=False, indent=2) + "\n").encode("utf-8")
         return (parsed, raw) if return_raw else parsed
 
 

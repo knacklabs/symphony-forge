@@ -521,6 +521,16 @@ def test_combined_review_refuses_incomplete_noncontiguous_missing_copied_or_mixe
         lens, finding, *_ = _tagged_finding(
             _combined_finding("quality", title, "src/a.py", 3))
         assert (lens, finding["title"]) == ("quality", title)
+    untagged = _processed(_provider_report(
+        _combined_explanation("VERDICT C1: implemented — src/a.py:1", "measured", "bounded"),
+        [_combined_finding("quality", "Missing lens tag", "src/a.py", 3)]),
+        review_status="findings")
+    untagged_lenses = _project_combined_report(
+        {"id": "T1", "plan_contracts": [{"id": "C1"}]}, untagged,
+        ["src/a.py"], "a" * 40, "b" * 40, [], [], {}, ())
+    assert untagged_lenses["quality"]["non_blocking_findings"][0]["title"] == "Missing lens tag"
+    assert not untagged_lenses["performance"]["non_blocking_findings"]
+    assert not untagged_lenses["security"]["non_blocking_findings"]
 
     mutators = (
         lambda report: report.update(overall_explanation=report["overall_explanation"].replace(
@@ -528,7 +538,6 @@ def test_combined_review_refuses_incomplete_noncontiguous_missing_copied_or_mixe
             "BEGIN FORGE ASSESSMENT security", 1)),
         lambda report: report["findings"].append(
             _combined_finding("quality", "Same issue", "src/./a.py", 3)),
-        lambda report: report["findings"][0].update(title="Missing lens tag"),
         lambda report: report["findings"][0].update(title="[quality]  [security]"),
         lambda report: report["findings"][0].pop("source_attribution"),
         lambda report: report["findings"][0].update(source_attribution={}),
