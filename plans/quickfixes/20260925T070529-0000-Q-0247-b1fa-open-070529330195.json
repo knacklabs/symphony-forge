@@ -1,0 +1,12 @@
+{
+  "event": "open",
+  "id": "Q-0247-b1fa",
+  "profile": "lite",
+  "reason": "Duration-balanced CI shards (6 runners)",
+  "started_at": "2026-09-25T07:05:29+00:00",
+  "max_files": 5,
+  "files": [],
+  "harness_source": true,
+  "by": "Ravi Kiran Vemula",
+  "base_sha": "67bbd61e25dfb019226d912ec6c5d6f502d6f1b8"
+}
