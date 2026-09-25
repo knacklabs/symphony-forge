@@ -87,7 +87,7 @@ def signed_off(top: Path) -> bool:
         return True
     texts = [path.read_text(encoding="utf-8") for path in top.glob("docs/decisions/*client-signoff.md")]
     ref = story.landed_ref(top)
-    names = repo.git("ls-tree", "--name-only", ref, "docs/decisions/", cwd=top).splitlines()
+    names = repo.git("ls-tree", "-r", "--name-only", ref, "--", "docs/decisions", cwd=top).splitlines()
     texts += [story.show(top, ref, name) or "" for name in names if name.endswith("client-signoff.md")]
     return any(re.search(r"^status:\s*[\"']?accepted\b", text.split("---")[1], re.M)
                for text in texts if text.startswith("---"))
