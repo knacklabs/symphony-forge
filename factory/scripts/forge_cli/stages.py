@@ -3155,7 +3155,6 @@ def _proof_environment(
     """Return parsed argv and a secret-free identity for its effective env."""
     tokens = shlex.split(command)
     environment = os.environ.copy()
-    inherited_canonical_junit = environment.get("FORGE_CANONICAL_JUNIT")
     if environment_overrides:
         for key, value in environment_overrides.items():
             # The canonical verifier unconditionally injects this value into
@@ -3167,10 +3166,8 @@ def _proof_environment(
                 environment[key] = value
             else:
                 environment.setdefault(key, value)
-    inherited_python_utf8 = environment.get("PYTHONUTF8")
-    # Proof runners always replace this nonce. Keep that fixed override stable
-    # while still binding every other inherited variable an arbitrary command
-    # may read.
+    # Proof runners replace this nonce and force UTF-8 mode. Bind the full
+    # environment they pass to the child, not values they have overwritten.
     environment["FORGE_PROCESS_TOKEN"] = "<forge-generated>"
     if not fixed_after_assignments:
         environment["PYTHONUTF8"] = "1"
@@ -3182,22 +3179,8 @@ def _proof_environment(
     canonical = json.dumps(
         sorted(environment.items()), separators=(",", ":"), ensure_ascii=False,
     ).encode("utf-8")
-    identity = {
-        "sha256": hashlib.sha256(canonical).hexdigest(),
-        "entries": len(environment),
-        "inherited_pythonutf8_sha256": hashlib.sha256(
-            ("<unset>" if inherited_python_utf8 is None
-             else inherited_python_utf8).encode("utf-8")
-        ).hexdigest(),
-        # Canonical and selector runners replace this path with their own
-        # temporary report.  Keep the inherited value bound as well: it is a
-        # caller-controlled input that can affect a plugin before the runner
-        # applies its fresh report path.
-        "inherited_canonical_junit_sha256": hashlib.sha256(
-            ("<unset>" if inherited_canonical_junit is None
-             else inherited_canonical_junit).encode("utf-8")
-        ).hexdigest(),
-    }
+    identity = {"sha256": hashlib.sha256(canonical).hexdigest(),
+                "entries": len(environment)}
     return tokens, environment, identity
 
 
@@ -4048,16 +4031,17 @@ def proof_identity(
         for field in ("tracked", "dirty")
         for relative in (snapshot.get(field) or {})
     }
-    junit_environment = (
-        _canonical_junit_environment() if kind == "tests" else None
-    )
     tools = [
         _proof_tool_identity(
             base, command, fixed_after_assignments=(kind == "tests"),
             probe_memo=tool_probe_memo,
             allowed_generated_paths=generated_paths,
             allowed_product_paths=allowed_product_paths,
-            environment_overrides=junit_environment,
+            environment_overrides=(
+                _canonical_junit_environment()
+                if kind == "tests" or _canonical_verify_command(base, command)
+                else None
+            ),
         )
         for command in commands
     ]

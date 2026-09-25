@@ -1,0 +1,70 @@
+{
+  "event": "done",
+  "id": "Q-0247-a147",
+  "profile": "lite",
+  "by": "Ravi Kiran Vemula",
+  "reason": "PR 251 CI failure",
+  "base_sha": "b5d8efbda11ed046c4e6ac08509b7cf745101639",
+  "started_at": "2026-09-25T06:28:22+00:00",
+  "completed_at": "2026-09-25T06:30:23+00:00",
+  "files": [
+    "factory/tests/test_proof_identity_env.py"
+  ],
+  "reviews": {
+    "quality": {
+      "generated_by": "autoreview",
+      "score": 10,
+      "summary": "quality lens over Q-0247-a147 (1 product path(s), b5d8efb..917b103, Codex via the autoreview skill): 0 blocking, 0 non-blocking. The test sets a local Git identity before committing its fixtures, making the commit independent of the host's Git configuration. No actionable defect is evident in the supplied change.",
+      "blocking_findings": [],
+      "non_blocking_findings": [],
+      "recommendation": "approve",
+      "reviewed_scope": [
+        "factory/tests/test_proof_identity_env.py"
+      ],
+      "skills_used": [],
+      "contract_verdicts": [],
+      "review_base_sha": "b5d8efbda11ed046c4e6ac08509b7cf745101639",
+      "branch_diff_digest": "dbbfa86e312f8aec1cb2cb047cbb0e679541bc70b470a359abcb20cbaa325069",
+      "commit": "917b103b6446878791eeb71d5b09c87f9d033e72",
+      "aspect": "quality",
+      "residual_risks": [],
+      "recorded_at": "2026-09-25T06:30:22+00:00"
+    },
+    "performance": {
+      "generated_by": "autoreview",
+      "score": 10,
+      "summary": "performance lens over Q-0247-a147 (1 product path(s), b5d8efb..917b103, Codex via the autoreview skill): 0 blocking, 0 non-blocking. The two setup commands do not affect a production path.",
+      "blocking_findings": [],
+      "non_blocking_findings": [],
+      "recommendation": "approve",
+      "reviewed_scope": [
+        "factory/tests/test_proof_identity_env.py"
+      ],
+      "skills_used": [],
+      "review_base_sha": "b5d8efbda11ed046c4e6ac08509b7cf745101639",
+      "branch_diff_digest": "dbbfa86e312f8aec1cb2cb047cbb0e679541bc70b470a359abcb20cbaa325069",
+      "commit": "917b103b6446878791eeb71d5b09c87f9d033e72",
+      "aspect": "performance",
+      "residual_risks": [],
+      "recorded_at": "2026-09-25T06:30:22+00:00"
+    },
+    "security": {
+      "generated_by": "autoreview",
+      "score": 10,
+      "summary": "security lens over Q-0247-a147 (1 product path(s), b5d8efb..917b103, Codex via the autoreview skill): 0 blocking, 0 non-blocking. The test email is an identity placeholder, not a credential. No security boundary changes.",
+      "blocking_findings": [],
+      "non_blocking_findings": [],
+      "recommendation": "approve",
+      "reviewed_scope": [
+        "factory/tests/test_proof_identity_env.py"
+      ],
+      "skills_used": [],
+      "review_base_sha": "b5d8efbda11ed046c4e6ac08509b7cf745101639",
+      "branch_diff_digest": "dbbfa86e312f8aec1cb2cb047cbb0e679541bc70b470a359abcb20cbaa325069",
+      "commit": "917b103b6446878791eeb71d5b09c87f9d033e72",
+      "aspect": "security",
+      "residual_risks": [],
+      "recorded_at": "2026-09-25T06:30:22+00:00"
+    }
+  }
+}

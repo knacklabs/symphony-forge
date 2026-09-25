@@ -11,8 +11,8 @@ from pathlib import Path
 
 from factory_lib import (
     _active_story_key, append_ledger_record, clean_git_env, dump_json,
-    evidence_path, head_sha, load_json, load_review_artifacts, now_iso,
-    read_ledger_records, repo_root,
+    evidence_path, head_sha, load_json,
+    load_review_artifacts, now_iso, read_ledger_records, repo_root,
 )
 
 from .common import fail
@@ -363,22 +363,28 @@ def _lite_manifest(
     base: Path, base_sha: str, *, harness_source: bool | None = None,
 ) -> list[str]:
     """Return committed product paths changed since the lite window opened."""
-    paths = _git_paths(
-        base, ["git", "diff", "--name-only", "-z", f"{base_sha}..HEAD", "--"],
-    )
+    paths = lite_committed_paths(base, base_sha)
     marker = ".factory/harness-source.json"
     if marker in paths:
         fail(
             "the harness-source marker cannot change inside a Lite window; "
             "change it through a task"
         )
-    symlink_paths = _lite_symlink_paths(base, base_sha)
+    symlink_paths = _lite_symlink_paths(base, base_sha) & set(paths)
     return _lite_product_files(
         base,
         [*paths, *symlink_paths],
         harness_source=harness_source,
         symlink_paths=symlink_paths,
     )
+
+
+def lite_committed_paths(base: Path, opening_sha: str) -> list[str]:
+    """Paths committed on the window's first-parent line, excluding merges."""
+    return sorted(set(_git_paths(
+        base, ["git", "log", "--first-parent", "--no-merges", "--name-only",
+               "--format=", "-z", f"{opening_sha}..HEAD", "--"],
+    )))
 
 
 def _lite_symlink_paths(

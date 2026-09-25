@@ -1,0 +1,12 @@
+{
+  "event": "open",
+  "id": "Q-0245-1a70",
+  "profile": "lite",
+  "reason": "Lite budget counts only the window's own changes, not files merged in from main",
+  "started_at": "2026-09-25T05:56:50+00:00",
+  "max_files": 5,
+  "files": [],
+  "harness_source": true,
+  "by": "Ravi Kiran Vemula",
+  "base_sha": "454f4f9447915de4ebe39b3f0272c7618f5c531b"
+}
