@@ -2248,8 +2248,7 @@ def _canonical_test_command_for_task(base: Path, task: dict) -> str:
     the safe fallback whenever that producer binding is ambiguous.
     """
     # These are assigned by pytest-xdist for the hosting worker. They do not
-    # alter collection or test semantics of the child verifier; every proof
-    # identity still binds their actual values through _proof_environment.
+    # alter collection or test semantics of the child verifier.
     pytest_runtime_keys = {
         "PYTEST_CURRENT_TEST", "PYTEST_VERSION", "PYTEST_XDIST_WORKER",
         "PYTEST_XDIST_WORKER_COUNT", "PYTEST_XDIST_TESTRUNUID",
@@ -3155,8 +3154,16 @@ def _proof_environment(
     """Return parsed argv and a secret-free identity for its effective env."""
     tokens = shlex.split(command)
     environment = os.environ.copy()
-    inherited_canonical_junit = environment.get("FORGE_CANONICAL_JUNIT")
+    identity_keys = {
+        "PATH", "PYTHONPATH", "PYTHONHOME", "PYTHONNOUSERSITE",
+        "PYTHONHASHSEED", "PYTHONWARNINGS", "PYTHONIOENCODING",
+        "PYTEST_ADDOPTS", "PYTEST_PLUGINS",
+        "PYTEST_DISABLE_PLUGIN_AUTOLOAD", "FACTORY_TEST_CMD",
+        "VIRTUAL_ENV", "UV_PROJECT_ENVIRONMENT", "UV_PYTHON", "UV_OFFLINE",
+        "PYTHONUTF8", "FORGE_PROCESS_TOKEN",
+    }
     if environment_overrides:
+        identity_keys.update(environment_overrides)
         for key, value in environment_overrides.items():
             # The canonical verifier unconditionally injects this value into
             # its child environment.  A caller may have inherited a stale
@@ -3167,37 +3174,22 @@ def _proof_environment(
                 environment[key] = value
             else:
                 environment.setdefault(key, value)
-    inherited_python_utf8 = environment.get("PYTHONUTF8")
-    # Proof runners always replace this nonce. Keep that fixed override stable
-    # while still binding every other inherited variable an arbitrary command
-    # may read.
+    # Proof runners replace this nonce and force UTF-8 mode.
     environment["FORGE_PROCESS_TOKEN"] = "<forge-generated>"
     if not fixed_after_assignments:
         environment["PYTHONUTF8"] = "1"
     while tokens and re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*=.*", tokens[0]):
         key, value = tokens.pop(0).split("=", 1)
         environment[key] = value
+        identity_keys.add(key)
     if fixed_after_assignments:
         environment["PYTHONUTF8"] = "1"
     canonical = json.dumps(
-        sorted(environment.items()), separators=(",", ":"), ensure_ascii=False,
+        sorted((key, environment[key]) for key in identity_keys
+               if key in environment),
+        separators=(",", ":"), ensure_ascii=False,
     ).encode("utf-8")
-    identity = {
-        "sha256": hashlib.sha256(canonical).hexdigest(),
-        "entries": len(environment),
-        "inherited_pythonutf8_sha256": hashlib.sha256(
-            ("<unset>" if inherited_python_utf8 is None
-             else inherited_python_utf8).encode("utf-8")
-        ).hexdigest(),
-        # Canonical and selector runners replace this path with their own
-        # temporary report.  Keep the inherited value bound as well: it is a
-        # caller-controlled input that can affect a plugin before the runner
-        # applies its fresh report path.
-        "inherited_canonical_junit_sha256": hashlib.sha256(
-            ("<unset>" if inherited_canonical_junit is None
-             else inherited_canonical_junit).encode("utf-8")
-        ).hexdigest(),
-    }
+    identity = {"sha256": hashlib.sha256(canonical).hexdigest()}
     return tokens, environment, identity
 
 
