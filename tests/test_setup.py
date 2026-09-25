@@ -9,6 +9,7 @@ import os
 import re
 import shutil
 import subprocess
+import tomllib
 from pathlib import Path
 
 import pytest
@@ -52,7 +53,18 @@ def _hooks_folder(top: Path) -> Path:
                                cwd=top, capture_output=True, text=True, check=True).stdout.strip())
 
 
-def test_28_sync(repo):
+def _stub_forge(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, failing: str = "") -> Path:
+    """A forge that hook commands (host and git) find first on PATH. It logs each call and its
+    input, and fails the call named by failing. The tests' own forge calls still run the real one."""
+    folder, log = tmp_path / "hook-forge", tmp_path / "hook-calls.log"
+    folder.mkdir()
+    _executable(folder / "forge", f'#!/bin/sh\n{{ echo "$*"; cat; echo; }} >> "{log.as_posix()}"\n'
+                                  f'[ "$*" != "{failing}" ]\n')
+    monkeypatch.setenv("PATH", f"{folder}{os.pathsep}{os.environ['PATH']}")
+    return log
+
+
+def test_28_sync(repo, tmp_path, monkeypatch):
     _on_a_branch_with_forge_toml(repo)
     repo.write("AGENTS.md", "# Our agents\n\nOur own rules.\n")
     repo.write(".claude/settings.json", json.dumps({
@@ -60,8 +72,14 @@ def test_28_sync(repo):
         "hooks": {"PreToolUse": [{"matcher": "Bash", "hooks": [{"type": "command",
                                                                   "command": "our-guard"}]}],
                   "Stop": [{"hooks": [{"type": "command", "command": OLD_FORGE_HOOK}]}]}}))
+    repo.write(".codex/config.toml", 'model = "o3"\n\n[features]\nweb_search = true\n')
     repo.git("add", "-A")
     repo.git("commit", "-q", "-m", "Our own files")
+    # The repo's own git hooks, from before Forge; each logs its name, arguments and input.
+    hooks = _hooks_folder(repo.path)
+    ours = tmp_path / "our-hooks.log"
+    for name in ("pre-commit", "pre-push"):
+        _executable(hooks / name, f'#!/bin/sh\n{{ echo "{name} $*"; cat; }} >> "{ours.as_posix()}"\n')
 
     first = repo.forge("sync")
     assert first.returncode == 0, first.stderr
@@ -71,7 +89,6 @@ def test_28_sync(repo):
     assert changed == LISTED
     for rel in LISTED:
         assert f"Wrote {rel}" in first.stdout
-    hooks = _hooks_folder(repo.path)
     for shim in ("pre-commit", "pre-push"):
         assert f"exec forge hook {shim}" in (hooks / shim).read_text(encoding="utf-8")
 
@@ -102,6 +119,26 @@ def test_28_sync(repo):
                 for hook in group["hooks"]]
     assert "our-guard" in commands
     assert OLD_FORGE_HOOK not in commands and "Stop" not in settings["hooks"]
+    # The repo's own Codex settings stay; only Codex's project hooks are switched on.
+    config = tomllib.loads((repo.path / ".codex/config.toml").read_text(encoding="utf-8"))
+    assert config == {"model": "o3", "features": {"web_search": True, "hooks": True}}
+
+    # The repo's own git hooks still run first, with the same arguments and input, then Forge's.
+    calls = _stub_forge(tmp_path, monkeypatch)
+    repo.git("commit", "-q", "--allow-empty", "-m", "Checked by both hooks")
+    repo.git("push", "-q", "origin", "fix/adapters")
+    ran = ours.read_text(encoding="utf-8").splitlines()
+    assert ran[0] == "pre-commit " and ran[1].startswith("pre-push origin ")
+    [pushed] = [line for line in ran if line.startswith("refs/heads/fix/adapters ")]
+    forge_calls = calls.read_text(encoding="utf-8")
+    assert forge_calls.startswith(f"hook pre-commit\n\nhook pre-push {ran[1][len('pre-push '):]}\n"
+                                  f"{pushed}\n"), forge_calls
+    # ... and when one of them fails, so does the commit, before Forge's hook runs.
+    _executable(hooks / "pre-commit.pre-forge", "#!/bin/sh\nexit 1\n")
+    stopped = subprocess.run(["git", "commit", "-q", "--allow-empty", "-m", "Stopped"],
+                             cwd=repo.path, capture_output=True, text=True)
+    assert stopped.returncode != 0
+    assert calls.read_text(encoding="utf-8") == forge_calls
 
 
 def _fresh_client(repo, gh, tmp_path: Path) -> tuple[Path, subprocess.CompletedProcess[str]]:
@@ -112,17 +149,6 @@ def _fresh_client(repo, gh, tmp_path: Path) -> tuple[Path, subprocess.CompletedP
     repo.git("remote", "add", "origin", str(remote), cwd=client)
     gh.respond("api", stdout="{}")
     return client, repo.forge("init", cwd=client)
-
-
-def _host_hook_forge(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, failing: str = "") -> Path:
-    """A forge that the host hook commands find first on PATH. It logs each call and its payload,
-    and fails the call named by failing. Doctor itself still runs the real forge."""
-    folder, log = tmp_path / "hook-forge", tmp_path / "hook-calls.log"
-    folder.mkdir()
-    _executable(folder / "forge", f'#!/bin/sh\n{{ echo "$*"; cat; echo; }} >> "{log.as_posix()}"\n'
-                                  f'[ "$*" != "{failing}" ]\n')
-    monkeypatch.setenv("PATH", f"{folder}{os.pathsep}{os.environ['PATH']}")
-    return log
 
 
 @pytest.mark.parametrize("case, rows", [
@@ -136,11 +162,18 @@ def _host_hook_forge(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, failing: s
     ("no checks or test", ("forge.toml names no checks", "forge.toml has no test command.")),
     ("workflow skips test", ("The tests check in .github/workflows/forge.yml doesn't run "
                              "forge.toml's test command.",)),
+    ("codex doesn't trust the project", ()),
 ])
 def test_29_doctor(repo, gh, tmp_path, monkeypatch, case, rows):
     client, init = _fresh_client(repo, gh, tmp_path)
     assert init.returncode == 0, init.stderr
     gh.respond("auth", "status")
+    codex_home = tmp_path / "codex"  # the user's Codex config, which records trusted projects
+    codex_home.mkdir()
+    monkeypatch.setenv("CODEX_HOME", str(codex_home))
+    if case != "codex doesn't trust the project":
+        (codex_home / "config.toml").write_text(
+            f'[projects.{json.dumps(str(client))}]\ntrust_level = "trusted"\n', encoding="utf-8")
     if case == "missing tool":  # no claude anywhere on PATH, even on a machine that has it
         monkeypatch.setenv("PATH", os.pathsep.join(
             folder for folder in os.environ["PATH"].split(os.pathsep)
@@ -149,7 +182,7 @@ def test_29_doctor(repo, gh, tmp_path, monkeypatch, case, rows):
         _executable(repo.bin / "claude", "#!/bin/sh\n")
         if os.name == "nt":
             (repo.bin / "claude.cmd").write_text("@exit /b 0\n", encoding="utf-8")
-    log = _host_hook_forge(tmp_path, monkeypatch, "hook deny" if case == "host hook fails" else "")
+    log = _stub_forge(tmp_path, monkeypatch, "hook deny" if case == "host hook fails" else "")
     toml = client / "forge.toml"
     edit = {"version mismatch": (r'version = ".*"', 'version = "v0.0.1"'),
             "no checks or test": (r'(?s)test = .*?\nchecks = .*?\n', 'test = ""\nchecks = []\n'),
@@ -179,12 +212,18 @@ def test_29_doctor(repo, gh, tmp_path, monkeypatch, case, rows):
         assert rule["required_pull_request_reviews"] is not None and rule["enforce_admins"] is True
 
         assert done.returncode == 0, done.stdout + done.stderr
-        assert "Everything checks out" in done.stdout
+        assert done.stdout.startswith("Everything checks out"), done.stdout
         # Each host hook command ran, with a payload.
         calls = log.read_text(encoding="utf-8")
         for hook in ("context", "deny", "approval"):
             assert calls.count(f"hook {hook}\n") == 2, calls
         assert calls.count('"hook_event_name"') == 6
+    elif case == "codex doesn't trust the project":
+        # Advice, not a failure, and "everything checks out" never hides it.
+        assert done.returncode == 0, done.stdout + done.stderr
+        assert "- Note: Codex runs this repo's hooks only in a project it trusts" in done.stdout
+        assert f'trust_level = "trusted" to {codex_home / "config.toml"}' in done.stdout
+        assert "Everything else checks out" in done.stdout
     else:
         assert done.returncode == 1
         for row in rows:

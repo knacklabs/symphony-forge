@@ -3,7 +3,9 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import shutil
+import tomllib
 from pathlib import Path
 
 from forge import __version__, repo, sync
@@ -38,6 +40,18 @@ def _forge_hooks(path: Path) -> list[tuple[str, str]]:
                 for hook in group.get("hooks", []) if sync.FORGE_COMMAND.search(hook.get("command", ""))]
     except (ValueError, AttributeError, TypeError, KeyError):
         return []
+
+
+def _codex_trusts(top: Path, config: Path) -> bool:
+    """Whether the user's Codex config trusts this checkout or its main repo."""
+    common = Path(repo.git("rev-parse", "--path-format=absolute", "--git-common-dir", cwd=top))
+    roots = {top.resolve(), common.resolve().parent}
+    try:
+        projects = tomllib.loads(sync.read(config)).get("projects", {})
+        return any(Path(path).resolve() in roots and project.get("trust_level") == "trusted"
+                   for path, project in projects.items())
+    except (tomllib.TOMLDecodeError, AttributeError):
+        return False
 
 
 def doctor(args: argparse.Namespace) -> None:
@@ -93,8 +107,17 @@ def doctor(args: argparse.Namespace) -> None:
         rows.append((f"The tests check in {sync.WORKFLOW_PATH} doesn't run forge.toml's test "
                      "command.", "forge sync"))
 
+    # Advice, not a problem: Codex skips the project hooks (the deny hook included) until the
+    # user trusts the project in their own Codex config.
+    codex = Path(os.environ.get("CODEX_HOME") or Path.home() / ".codex") / "config.toml"
+    trusted = _codex_trusts(top, codex)
+
     for problem, fix in rows:
         print(f"- {problem}\n  Fix: {fix}")
+    if not trusted:
+        print("- Note: Codex runs this repo's hooks only in a project it trusts, and it doesn't "
+              "trust this one yet.\n  Fix: open Codex here and trust the project, or add "
+              f'[projects."{top}"] with trust_level = "trusted" to {codex}')
     if rows:
         repo.refuse(REFUSALS["problems"], count=len(rows))
-    print(f"Everything checks out for Forge {cfg['version']}.")
+    print(f"Everything {'checks' if trusted else 'else checks'} out for Forge {cfg['version']}.")
