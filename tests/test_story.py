@@ -262,7 +262,7 @@ def test_22_promote(repo):
     state = fix / ".factory" / "fixes" / "keep-baskets.json"
     state.parent.mkdir(parents=True)
     state.write_text(json.dumps({"why": "Shoppers lose their basket when they leave",
-                                 "done": "A basket survives signing out"}), encoding="utf-8")
+                                 "done_when": "A basket survives signing out"}), encoding="utf-8")
     (fix / "basket.py").write_text("SAVED = True\n", encoding="utf-8")
     repo.git("add", "-A", cwd=fix)
     repo.git("commit", "-q", "-m", "Keep baskets", cwd=fix)

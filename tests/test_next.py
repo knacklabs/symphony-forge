@@ -42,7 +42,7 @@ def test_15_human_touches(repo, claude_payload, codex_payload):
     repo.git("worktree", "add", "-q", "-b", "fix/tidy-up", str(fix), "main")
     (fix / ".factory" / "fixes").mkdir(parents=True)
     (fix / ".factory" / "fixes" / "tidy-up.json").write_text(
-        json.dumps({"why": "Tidy up", "done": "It is tidy"}), encoding="utf-8")
+        json.dumps({"why": "Tidy up", "done_when": "It is tidy"}), encoding="utf-8")
     asked = codex_payload("PostToolUse", "request_user_input",
                           {"questions": [{"id": "colour", "question": "Which colour?"}]},
                           {"answers": {"colour": {"answers": ["Blue"]}}}, cwd=fix)

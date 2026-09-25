@@ -167,7 +167,7 @@ def done(args: Any) -> int:
     path = add_worktree(top, f"fix/{slug}", ref)
     state.update(status="done", outcome=args.outcome, merged=dates, finished=max(dates.values()))
     fix = {"kind": "story-done", "why": f"Record that {title} is finished, and what it achieved.",
-           "done": "The board shows the story as finished, with its outcome.", "outcome": args.outcome,
+           "done_when": "The board shows the story as finished, with its outcome.", "outcome": args.outcome,
            "branch": f"fix/{slug}", "base": repo.git("rev-parse", ref, cwd=top), "status": "started",
            "touches": 0}
     changed = [repo.write_state(key, repo.add_step(state, "done"), path),
@@ -292,11 +292,10 @@ def undisposed(findings: str) -> str:
     return ""
 
 
-def pr_doc_problem(base: str, head: str, top: Path | None = None) -> str:
-    """The story-doc part of forge-pr-check: the first problem with a story doc the pull request
-    carries (changes between base and head), or "". Everything is read from head as data."""
-    top = top or repo.root()
-    for path in repo.git("diff", "--name-only", f"{base}...{head}", "--", "plans/", cwd=top).splitlines():
+def check_pr_docs(top: Path, head: str, changed: list[str]) -> str | None:
+    """The story-doc part of forge-pr-check: the problem with the first bad story doc among the
+    pull request's changed paths, or None. Everything is read from head, as data."""
+    for path in changed:
         match = re.fullmatch(r"plans/([A-Z][A-Z0-9-]*)\.md", path)
         text = show(top, head, path) if match else None
         if text is None:
@@ -311,7 +310,7 @@ def pr_doc_problem(base: str, head: str, top: Path | None = None) -> str:
         approval = json_of(show(top, head, repo.state_path(match[1]))).get("approval") or {}
         if approval.get("hash") != approval_hash(text):
             return f'The approval of {path} doesn\'t match its "What changes for you" and "Done when".'
-    return ""
+    return None
 
 
 # --- worktrees and the default branch ------------------------------------------------------
