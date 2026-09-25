@@ -1267,7 +1267,7 @@ def test_proof_identity_binds_environment_without_persisting_secrets(
             "secret-options-one"):
         assert secret not in serialized
     assert all(set(identity["inputs"]["tools"][0]["environment"])
-               == {"sha256"}
+               == {"sha256", "entries"}
                for identity in first.values())
 
     monkeypatch.setenv("FACTORY_TEST_CMD", "secret-command-two")
@@ -1295,7 +1295,7 @@ def test_proof_identity_binds_environment_without_persisting_secrets(
         kind: stages.proof_identity(repo, task, kind, product_tree={})["identity"]
         for kind in ("verify", "tests")
     }
-    assert inherited_one == inherited_two
+    assert inherited_one != inherited_two
 
     monkeypatch.setenv("FORGE_PROCESS_TOKEN", "generated-nonce-one")
     monkeypatch.setenv("PYTHONUTF8", "0")
