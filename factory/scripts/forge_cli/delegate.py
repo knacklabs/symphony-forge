@@ -112,8 +112,40 @@ def diagnostic_briefs_dir(base: Path) -> Path:
     return base / ".factory" / "diagnostic-briefs"
 
 
+_GIT_COMMON_DIR_CACHE: dict[Path, Path] = {}
+
+
 def delegations_path(base: Path) -> Path:
-    return git_control_dir(base) / "delegations.jsonl"
+    return _git_common_dir(base) / "forge" / "delegations.jsonl"
+
+
+def _git_common_dir(base: Path) -> Path:
+    cached = _GIT_COMMON_DIR_CACHE.get(base)
+    if cached is not None:
+        return cached
+    proc = subprocess.run(
+        ["git", "rev-parse", "--git-common-dir"], cwd=base,
+        capture_output=True, text=True, env=clean_git_env(),
+        encoding="utf-8",
+    )
+    if proc.returncode != 0 or not proc.stdout.strip():
+        fail("Cannot resolve Git's shared control directory for delegation state.")
+    path = type(base)(proc.stdout.strip())
+    common = (path if path.is_absolute() else base / path).resolve()
+    _GIT_COMMON_DIR_CACHE[base] = common
+    return common
+
+
+def _delegation_ledger_paths(base: Path) -> list[Path]:
+    common = _git_common_dir(base)
+    worktrees = common / "worktrees"
+    legacy = []
+    if worktrees.is_dir():
+        legacy = [
+            worktree / "forge" / "delegations.jsonl"
+            for worktree in sorted(worktrees.iterdir())
+        ]
+    return [*legacy, common / "forge" / "delegations.jsonl"]
 
 
 def delegation_mirror_path(base: Path) -> Path:
@@ -126,7 +158,7 @@ def delegation_lock_path(base: Path, lock_id: str, *,
         fail(f"lock id {lock_id!r} is not a plain identifier")
     if namespace not in {"task", "state", "grill"}:
         fail(f"lock namespace {namespace!r} is not supported")
-    return delegations_path(base).parent / "locks" / namespace / f"{lock_id}.lock"
+    return git_control_dir(base) / "locks" / namespace / f"{lock_id}.lock"
 
 
 def brief_path(base: Path, task_id: str) -> Path:
@@ -138,26 +170,28 @@ def brief_path(base: Path, task_id: str) -> Path:
 
 
 def load_delegations(base: Path) -> list[dict]:
-    path = delegations_path(base)
-    if not path.exists():
-        return []
     entries = []
-    for line_number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), start=1):
-        if not line.strip():
+    for path in dict.fromkeys(_delegation_ledger_paths(base)):
+        if not path.exists():
             continue
-        try:
-            entry = json.loads(line)
-        except json.JSONDecodeError:
-            fail(f"delegation authority is malformed at line {line_number}; "
-                 "no prior launch can authorize stage close")
-        if not isinstance(entry, dict):
-            fail(f"delegation authority has a non-object row at line "
-                 f"{line_number}; no prior launch can authorize stage close")
-        entries.append(entry)
+        for line_number, line in enumerate(
+                path.read_text(encoding="utf-8").splitlines(), start=1):
+            if not line.strip():
+                continue
+            try:
+                entry = json.loads(line)
+            except json.JSONDecodeError:
+                fail(f"delegation authority is malformed at line {line_number}; "
+                     "no prior launch can authorize stage close")
+            if not isinstance(entry, dict):
+                fail(f"delegation authority has a non-object row at line "
+                     f"{line_number}; no prior launch can authorize stage close")
+            entries.append(entry)
     return entries
 
 
 def append_delegation(base: Path, record: dict) -> bool:
+    record = {**record, "worktree": str(base.resolve())}
     validate_payload(base, "delegation", record)
     terminal = record.get("launch_status") in {"succeeded", "failed"}
     if record.get("transport") == "native" and terminal:

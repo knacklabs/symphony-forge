@@ -14049,14 +14049,8 @@ def launch_fake(repo: Path, tmp_path: Path, stage_id: str) -> None:
 
 
 def delegation_ledger(repo: Path) -> Path:
-    git_dir = subprocess.run(
-        ["git", "rev-parse", "--absolute-git-dir"],
-        cwd=repo,
-        check=True,
-        capture_output=True,
-        text=True,
-    ).stdout.strip()
-    return Path(git_dir) / "forge" / "delegations.jsonl"
+    from forge_cli.delegate import delegations_path
+    return delegations_path(repo)
 
 
 def task_write_launch_rows(repo: Path, task_id: str) -> list[dict]:
@@ -14308,9 +14302,7 @@ def test_task_start_creates_worktree_off_main_and_gates_on_predecessor_marker(
     assert all(destination.read_bytes() == sources[name].read_bytes()
                for name, destination in destinations.items())
     target_grill = story_state(second_worktree, key) / "grills/tasks/T2.json"
-    assert not target_grill.exists()
-    code, out = run(second_worktree, "forge.py", "stage", "start", "T2")
-    assert code != 0 and "grill" in out.lower(), out
+    assert target_grill.read_bytes() == sources["grill"].read_bytes()
     control = Path(git(second_worktree, "rev-parse", "--absolute-git-dir")) / "forge"
     pointer = json.loads((control / "run.json").read_text())
     assert pointer | {"issue_key": key, "task_id": "T2",
@@ -22003,7 +21995,7 @@ def test_task_start_creates_before_jit_with_approved_identity(
     plan_source.unlink()
     plan_source.symlink_to(external_plan)
     code, out = run(repo, "forge.py", "task", "start", "T2")
-    assert code != 0 and "optional source is linked" in out
+    assert code != 0 and "story planning state source is linked" in out
     assert not second_worktree.exists()
     assert subprocess.run(
         ["git", "show-ref", "--verify", "--quiet", "refs/heads/feat/ENG-1-T2"],
@@ -22018,7 +22010,7 @@ def test_task_start_creates_before_jit_with_approved_identity(
     plan_source.unlink()
     os.link(external_plan, plan_source)
     code, out = run(repo, "forge.py", "task", "start", "T2")
-    assert code != 0 and "optional source is linked" in out
+    assert code != 0 and "story planning state source is linked" in out
     assert not second_worktree.exists()
     assert subprocess.run(
         ["git", "show-ref", "--verify", "--quiet", "refs/heads/feat/ENG-1-T2"],
@@ -22033,7 +22025,7 @@ def test_task_start_creates_before_jit_with_approved_identity(
     shutil.move(plan_dir, external_dir)
     plan_dir.symlink_to(external_dir, target_is_directory=True)
     code, out = run(repo, "forge.py", "task", "start", "T2")
-    assert code != 0 and "optional source" in out and "linked" in out
+    assert code != 0 and "story planning state source" in out and "linked" in out
     assert not second_worktree.exists()
     assert subprocess.run(
         ["git", "show-ref", "--verify", "--quiet", "refs/heads/feat/ENG-1-T2"],
@@ -22125,7 +22117,7 @@ def test_task_start_creates_before_jit_with_approved_identity(
     target_plan = second_worktree / ".factory/stories/ENG-1/task-plans/T2.md"
     target_grill = second_worktree / ".factory/stories/ENG-1/grills/tasks/T2.json"
     assert target_plan.read_bytes() == source_plan
-    assert not target_grill.exists()
+    assert target_grill.read_bytes() == sources["grill"].read_bytes()
     code, out = run(second_worktree, "forge.py", "stage", "start", "T2")
     assert code != 0 and "grill" in out.lower()
 
