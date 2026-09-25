@@ -52,7 +52,7 @@ def wait(top: Path, item: str, sha: str, names: list[str]) -> None:
 
 def _seen(top: Path, item: str, sha: str) -> list[tuple[str, str]]:
     """Each check run and commit status on sha, as (name, pass/pending/red)."""
-    # ponytail: one page of 100 check runs and 100 statuses per commit; page when a repo has more.
+    # Every page: a failed matrix job on page two must still count.
     endpoint = f"repos/{{owner}}/{{repo}}/commits/{sha}"
     runs = _ask(top, item, ".check_runs", f"{endpoint}/check-runs?per_page=100")
     statuses = _ask(top, item, ".statuses", f"{endpoint}/status?per_page=100")
@@ -63,9 +63,13 @@ def _seen(top: Path, item: str, sha: str) -> list[tuple[str, str]]:
 
 
 def _ask(top: Path, item: str, field: str, endpoint: str) -> list[dict[str, Any]]:
-    done = repo.run("gh", "api", "--jq", field, endpoint, cwd=top)
+    # --paginate with "<field>[]" prints one JSON object per line across all pages.
+    done = repo.run("gh", "api", "--paginate", "--jq", f"{field}[]", endpoint, cwd=top)
     try:
-        found = json.loads(done.stdout) if done.returncode == 0 else None
+        text = done.stdout.strip()
+        found = (json.loads(text) if text.startswith("[")
+                 else [json.loads(line) for line in text.splitlines() if line.strip()]
+                 ) if done.returncode == 0 else None
     except ValueError:
         found = None
     if not isinstance(found, list) or not all(isinstance(entry, dict) for entry in found):

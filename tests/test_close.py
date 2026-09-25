@@ -112,8 +112,10 @@ class Forge:
                 (self.repo.bin / "codex-calls.jsonl").read_text("utf-8").splitlines()]
 
     def checks(self, runs: list[dict], statuses: list[dict] | None = None) -> None:
-        self.gh.respond("api", "--jq", ".check_runs", stdout=json.dumps(runs))
-        self.gh.respond("api", "--jq", ".statuses", stdout=json.dumps(statuses or []))
+        # gh api --paginate --jq '<field>[]' prints one object per line across every page.
+        lines = lambda rows: "".join(json.dumps(row) + "\n" for row in rows)  # noqa: E731
+        self.gh.respond("api", "--paginate", "--jq", ".check_runs[]", stdout=lines(runs))
+        self.gh.respond("api", "--paginate", "--jq", ".statuses[]", stdout=lines(statuses or []))
 
     def open_pr(self, body: str, state: str = "OPEN") -> None:
         self.gh.respond("pr", "list", "--head",
