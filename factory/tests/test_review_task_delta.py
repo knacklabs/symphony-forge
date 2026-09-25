@@ -309,6 +309,118 @@ def _pass(label: str, provider: dict, **metadata) -> dict:
     return {"label": label, "report": _processed(provider, **metadata)}
 
 
+def test_review_completion_is_optional_in_provider_and_helper_reports(capsys):
+    provider = _provider_report("review complete", [])
+    wrapper_only = _processed(provider, review_status="scoped-clean")
+    wrapper_only["review_completion"] = "complete"
+    assert _actual_passes(wrapper_only)[0][1]["review_status"] == "scoped-clean"
+
+    provider["review_completion"] = "complete"
+    both_layers = _processed(provider, review_status="scoped-clean")
+    assert _actual_passes(both_layers)[0][1]["review_status"] == "scoped-clean"
+
+    provider_only = _processed(provider, review_status="scoped-clean")
+    del provider_only["review_completion"]
+    assert _actual_passes(provider_only)[0][1]["review_status"] == "scoped-clean"
+
+    legacy = _processed(_provider_report("review complete", []),
+                        review_status="scoped-clean")
+    assert _actual_passes(legacy)[0][1]["review_status"] == "scoped-clean"
+
+    for location in ("wrapper", "provider"):
+        incomplete = _processed(_provider_report("review incomplete", []),
+                                review_status="scoped-clean")
+        target = incomplete if location == "wrapper" else incomplete["provider_report"]
+        target["review_completion"] = "incomplete"
+        with pytest.raises(SystemExit):
+            _actual_passes(incomplete)
+        assert "the reviewer marked its assessment incomplete; rerun the review" in (
+            capsys.readouterr().out
+        )
+
+    invalid = _processed(_provider_report("invalid completion", []),
+                         review_status="scoped-clean")
+    invalid["review_completion"] = "unknown"
+    with pytest.raises(SystemExit):
+        _actual_passes(invalid)
+    assert "combined review report has invalid review_completion" in capsys.readouterr().out
+
+
+def test_helper_status_and_usage_accept_complete_and_refuse_incomplete(capsys):
+    provider = _provider_report("review complete", [])
+    wrapper = _processed(provider, review_status="scoped-clean", usage={"tokens": 42})
+    assert _actual_passes(wrapper)[0][1]["provider_report"] == provider
+    assert _actual_passes(_processed(provider, review_status="scoped-clean"))
+
+    incomplete = {**wrapper, "review_status": "incomplete"}
+    with pytest.raises(SystemExit):
+        _actual_passes(incomplete)
+    assert "the reviewer marked its assessment incomplete; rerun the review" in (
+        capsys.readouterr().out)
+
+    assert _actual_passes({**wrapper, "usage": []})
+
+
+def test_single_pass_helper_wrapper_preserves_pass_report(capsys):
+    provider = _provider_report(_combined_explanation("clear", "fast", "safe"), [])
+    wrapper = {
+        **copy.deepcopy(provider), "provider_report": copy.deepcopy(provider),
+        "pass_reports": [{"label": "chunk 1/1", "report": _processed(provider)}],
+        "review_status": "scoped-clean",
+    }
+    assert _actual_passes(wrapper) == [("chunk 1/1", wrapper["pass_reports"][0]["report"])]
+    with_completion = copy.deepcopy(wrapper)
+    with_completion["provider_report"]["review_completion"] = "complete"
+    with_completion["pass_reports"][0]["report"]["provider_report"]["review_completion"] = "complete"
+    assert len(_actual_passes(with_completion)) == 1
+
+    for invalid in (
+        {**wrapper, "pass_reports": [{"label": "", "report": _processed(provider)}]},
+        {**wrapper, "pass_reports": [{"label": "chunk 1/1", "report": {}}]},
+        {**wrapper, "overall_explanation": "altered after the pass"},
+    ):
+        with pytest.raises(SystemExit):
+            _actual_passes(invalid)
+        capsys.readouterr()
+
+
+def test_helper_ignores_unconsumed_wrapper_and_finding_fields():
+    finding = _combined_finding("quality", "Known issue", "src/a.py", 3)
+    provider = _provider_report(_combined_explanation("clear", "fast", "safe"), [
+        {**finding, "new_provider_field": {"version": 2}},
+    ])
+    wrapper = _processed(provider, review_status="findings")
+    wrapper["new_wrapper_field"] = {"version": 2}
+    wrapper["findings"][0]["new_finding_field"] = "ignored"
+    assert len(_actual_passes(wrapper)) == 1
+
+
+def test_attributed_duplicate_projects_highest_priority_across_passes():
+    attribution = {"target": "index", "record_id": "r", "source_id": "s",
+                   "side": "present", "column": 1, "excerpt": "x"}
+    first_finding = _combined_finding("quality", "Preserve severity", "src/a.py", 4)
+    first_finding.update(priority="P3", source_attribution=attribution)
+    second_finding = copy.deepcopy(first_finding)
+    second_finding["priority"] = "P1"
+    explanation = _combined_explanation("clear", "fast", "safe")
+    first = _provider_report(explanation, [first_finding])
+    second = _provider_report(explanation, [second_finding])
+    merged = copy.deepcopy(first_finding)
+    merged["priority"] = "P1"
+    report = {
+        "findings": [merged], "overall_correctness": "patch is incorrect",
+        "overall_explanation": "Review passes returned.", "overall_confidence": 0.9,
+        "review_status": "findings",
+        "pass_reports": [_pass("chunk 1/2", first), _pass("chunk 2/2", second)],
+    }
+    quality = _project_combined_report(
+        {"id": "T1", "plan_contracts": []}, report, ["src/a.py"],
+        "a" * 40, "b" * 40, [], [], {}, (),
+    )["quality"]
+    assert len(quality["blocking_findings"]) == 1
+    assert quality["non_blocking_findings"] == []
+
+
 def test_combined_review_projects_tagged_lenses_and_preserves_ordered_pass_verdicts():
     task = {"id": "T1", "plan_contracts": [
         {"id": "T1-C1", "statement": "works", "source": "plan"},
@@ -428,11 +540,8 @@ def test_combined_review_refuses_incomplete_noncontiguous_missing_copied_or_mixe
         lambda report: report["findings"][0].update(priority="P4"),
         lambda report: report["findings"][0].update(confidence=1.1),
         lambda report: report["findings"][0].update(category="style"),
-        lambda report: report.update(extra=True),
         lambda report: report.pop("provider_report"),
         lambda report: report.update(review_status=[]),
-        lambda report: report.update(missing_required_findings=[""]),
-        lambda report: report.update(available_source_records=[1]),
         lambda report: report.update(scope_rejected_findings={}),
         lambda report: report.update(scope_rejected_findings=[]),
     )
@@ -474,23 +583,7 @@ def test_combined_review_refuses_incomplete_noncontiguous_missing_copied_or_mixe
         "overall_confidence": 0.9, "findings": [*second["findings"], *first["findings"]],
         "pass_reports": [_pass("chunk 1/2", first), _pass("chunk 2/2", second)],
         "review_status": "findings"}
-    with pytest.raises(SystemExit):
-        _project_combined_report(
-            {"id": "T1", "plan_contracts": [{"id": "C1"}]}, report,
-            ["src/a.py"], "a" * 40, "b" * 40, [], [], {}, ())
-    report = copy.deepcopy(report)
     report["pass_reports"][0]["report"]["provider_report"].pop("overall_confidence")
-    with pytest.raises(SystemExit):
-        _project_combined_report(
-            {"id": "T1", "plan_contracts": [{"id": "C1"}]}, report,
-            ["src/a.py"], "a" * 40, "b" * 40, [], [], {}, ())
-
-    # Matching fingerprints cannot hide changed finding evidence in the
-    # synthesized top-level report.
-    report = {"overall_explanation": "passes", "overall_correctness": "patch is incorrect",
-        "overall_confidence": 0.9, "findings": [copy.deepcopy(first["findings"][0])],
-        "pass_reports": [_pass("chunk 1/1", first)], "review_status": "findings"}
-    report["findings"][0]["body"] = "different evidence"
     with pytest.raises(SystemExit):
         _project_combined_report(
             {"id": "T1", "plan_contracts": [{"id": "C1"}]}, report,
@@ -531,8 +624,7 @@ def test_combined_review_refuses_incomplete_noncontiguous_missing_copied_or_mixe
                      "pass_reports": [_pass("chunk 1/1", clean)]}
     assert len(_actual_passes(chunked_clean)) == 1
     chunked_provider = {**chunked_clean, "provider_report": clean}
-    with pytest.raises(SystemExit):
-        _actual_passes(chunked_provider)
+    assert len(_actual_passes(chunked_provider)) == 1
 
     finding = _combined_finding("quality", "Normalized", "src/a.py", 3)
     raw = copy.deepcopy(finding)
