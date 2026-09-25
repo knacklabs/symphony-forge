@@ -1,8 +1,9 @@
 """forge close: close a task or fix by the close rule.
 
-Merge the default branch in, review the head (unless the committed review still covers it),
-push and open or update the pull request, wait for the checks forge.toml names, then mark the
-item ready. A human merges.
+Merge the default branch in, review the head (unless the committed review still covers it) and
+commit the result, push and open or update the pull request, then wait for the checks forge.toml
+names on exactly that pushed head. Nothing is committed after the checks: GitHub holds when they
+finished. A human merges.
 """
 from __future__ import annotations
 
@@ -47,7 +48,7 @@ def close(args: argparse.Namespace) -> int:
 
     _merge_default(top, item, branch, default)
     result = state.get("review") or {}
-    fresh = result.get("tree") == review.fingerprint("HEAD", item, top)
+    fresh = result.get("tree") == review.fingerprint("HEAD", item, top, state)
     if dismissals and not fresh:
         repo.refuse(REFUSALS["stale_dismiss" if result else "bad_dismiss"], item=item)
     if not fresh:
@@ -63,6 +64,7 @@ def close(args: argparse.Namespace) -> int:
         result["status"] = "blocked" if serious else "clean"
         state.update(review=result, status="fixing" if serious else "waiting for checks")
         _save(top, item, state, f"Review of {item}: {result['status']}")
+    head = repo.git("rev-parse", "HEAD", cwd=top)
     repo.git("push", "-q", "-u", "origin", branch, cwd=top)
     _publish(top, item, state, branch, default, pr, result)
 
@@ -72,13 +74,7 @@ def close(args: argparse.Namespace) -> int:
                   f"({finding['file']}:{finding['line']})\n{finding['body']}\n")
         repo.refuse(REFUSALS["blocked"], item=item, findings="; ".join(
             f"finding {n} ({f['title'].rstrip('.')})" for n, f in serious))
-    checks.wait(top, item, repo.git("rev-parse", "HEAD", cwd=top), cfg["checks"])
-    if state.get("status") != "ready":
-        repo.add_step(state, "ci-green")
-        repo.add_step(state, "ready")
-        state["status"] = "ready"
-        _save(top, item, state, f"{item} is ready to merge")
-        repo.git("push", "-q", "origin", branch, cwd=top)
+    checks.wait(top, item, head, cfg["checks"])
     print(f"Ready: {item} has a clean review and green checks. A human merges its pull request.")
     return 0
 

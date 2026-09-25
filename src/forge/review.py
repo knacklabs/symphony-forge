@@ -94,10 +94,11 @@ def task(top: Path, item: str) -> tuple[str, dict[str, str], dict[str, str]]:
 # --- what a review covers --------------------------------------------------------------
 
 
-def fingerprint(commit: str, item: str, top: Path) -> str:
+def fingerprint(commit: str, item: str, top: Path, state: dict[str, Any]) -> str:
     """What a clean review covers: the product tree at commit (everything outside .factory/ and
-    plans/) and, for a task, its story doc's Tasks, Risks and New moving parts. Read through git,
-    so a pull request's head is only ever data."""
+    plans/), plus what the change must do: a task's story doc Done when, Tasks, Risks and New
+    moving parts, or a fix's why and done-when lines from its state. Read through git, so a pull
+    request's head is only ever data."""
     listing = repo.git("ls-tree", "-r", "-z", "--full-tree", commit, cwd=top).split("\0")
     product = [entry for entry in listing if not entry.partition("\t")[2].startswith(BOOKKEEPING)]
     digest = hashlib.sha256("\0".join(product).encode("utf-8"))
@@ -105,8 +106,12 @@ def fingerprint(commit: str, item: str, top: Path) -> str:
     if name:
         text = repo.run("git", "show", f"{commit}:plans/{key}.md", cwd=top).stdout
         doc = sections(text)
-        for part in (doc.get("Tasks", ""), doc.get("Risks", ""), moving_parts(text)):
-            digest.update(b"\0" + part.encode("utf-8"))
+        parts = [doc.get("Done when", ""), doc.get("Tasks", ""), doc.get("Risks", ""),
+                 moving_parts(text)]
+    else:
+        parts = [str(state.get("why", "")), str(state.get("done_when", ""))]
+    for part in parts:
+        digest.update(b"\0" + part.encode("utf-8"))
     return digest.hexdigest()
 
 
@@ -205,7 +210,7 @@ def run(top: Path, item: str, state: dict[str, Any], cfg: dict[str, Any],
         repo.run("git", "worktree", "remove", "--force", str(tree), cwd=top)
         shutil.rmtree(tmp, ignore_errors=True)
         repo.run("git", "worktree", "prune", cwd=top)
-    return {"commit": head, "tree": fingerprint(head, item, top), "findings": findings,
+    return {"commit": head, "tree": fingerprint(head, item, top, state), "findings": findings,
             "dismissals": []}
 
 

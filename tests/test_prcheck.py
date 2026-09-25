@@ -64,13 +64,38 @@ def _review_blocked(env):
         "fixed or dismissed.", "forge close tidy-readme")
 
 
-def _review_of_an_older_tree(env):
+OUT_OF_DATE = "out of date: the product files or what the change must do changed after it."
+
+
+def _product_changed_after_review(env):
     item, where = env.start_fix()
     assert env.close(item).returncode == 0
     env.commit(where, "app.py", "print('changed after the review')\n")
     return "fix/tidy-readme", where, (
-        "The committed review at the head of fix/tidy-readme is for an older product tree than "
-        "the head.", "forge close tidy-readme")
+        f"The committed review at the head of fix/tidy-readme is {OUT_OF_DATE}",
+        "forge close tidy-readme")
+
+
+def _story_done_when_changed_after_review(env):
+    item, where = env.start_task()
+    assert env.close(item).returncode == 0
+    doc = (where / "plans" / "SHOP.md").read_text("utf-8")
+    env.commit(where, "plans/SHOP.md", doc.replace("1. A shopper can save a basket.",
+                                                   "1. A shopper can save and name a basket."))
+    return "task/SHOP-T1", where, (
+        f"The committed review at the head of task/SHOP-T1 is {OUT_OF_DATE}", "forge close SHOP/T1")
+
+
+def _fix_done_when_changed_after_review(env):
+    item, where = env.start_fix()
+    assert env.close(item).returncode == 0
+    # Stands in for a changed done-when line; no command changes one yet.
+    rel = ".factory/fixes/tidy-readme.json"
+    env.commit(where, rel, (where / rel).read_text("utf-8").replace(
+        "The readme opens with a greeting", "The readme opens with a warm greeting"))
+    return "fix/tidy-readme", where, (
+        f"The committed review at the head of fix/tidy-readme is {OUT_OF_DATE}",
+        "forge close tidy-readme")
 
 
 def _no_branch_given(env):
@@ -81,7 +106,8 @@ def _no_branch_given(env):
 
 CASES = [_passes_once_close_finished, _branch_forge_did_not_start, _fix_without_done_when,
          _fix_over_the_limit, _fix_allowed_large, _interface_path_by_base_config, _review_blocked,
-         _review_of_an_older_tree, _no_branch_given]
+         _product_changed_after_review, _story_done_when_changed_after_review,
+         _fix_done_when_changed_after_review, _no_branch_given]
 
 
 @pytest.mark.parametrize("case", CASES, ids=lambda case: case.__name__.strip("_"))

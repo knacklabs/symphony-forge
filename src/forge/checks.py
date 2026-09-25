@@ -1,7 +1,8 @@
 """Waiting through gh for the checks forge.toml names, on the pull request's head commit.
 
-Every named check must succeed. Any check that fails, is cancelled or times out is red. A named
-check that hasn't reported, or a GitHub API error, is "not green yet" with the reason.
+Only the named checks count, and each must succeed; a check forge.toml doesn't name never
+blocks, even when it fails. A named check that hasn't reported, or a GitHub API error, is "not
+green yet" with the reason.
 """
 from __future__ import annotations
 
@@ -17,7 +18,7 @@ REFUSALS = {
     "red": ("Checks failed on the pull request: {names}.", "forge work {item}"),
     "not_green": ("The checks are not green yet: {reason}.", "forge close {item}"),
 }
-PASS, FINE, PENDING, RED = "pass", "fine", "pending", "red"
+PASS, PENDING, RED = "pass", "pending", "red"
 
 
 def wait(top: Path, item: str, sha: str, names: list[str]) -> None:
@@ -26,8 +27,7 @@ def wait(top: Path, item: str, sha: str, names: list[str]) -> None:
     deadline = time.monotonic() + float(os.environ.get("FORGE_CHECKS_WAIT", "600"))
     while True:
         seen = _seen(top, item, sha)
-        red = [name for name, state in seen if state == RED]
-        missing, pending = [], []
+        red, missing, pending = [], [], []
         for want in names:
             # A matrix job reports as "tests (ubuntu-latest)", and so on; every one must pass.
             states = [state for name, state in seen if name == want or name.startswith(want + " (")]
@@ -36,9 +36,9 @@ def wait(top: Path, item: str, sha: str, names: list[str]) -> None:
             elif PENDING in states:
                 pending.append(want)
             elif any(state != PASS for state in states):
-                red.append(want)  # a skipped required check never turns green
+                red.append(want)  # failed, cancelled, timed out, or skipped: it never turns green
         if red:
-            repo.refuse(REFUSALS["red"], names=", ".join(dict.fromkeys(red)), item=item)
+            repo.refuse(REFUSALS["red"], names=", ".join(red), item=item)
         if not missing and not pending:
             return
         left = deadline - time.monotonic()
@@ -51,14 +51,13 @@ def wait(top: Path, item: str, sha: str, names: list[str]) -> None:
 
 
 def _seen(top: Path, item: str, sha: str) -> list[tuple[str, str]]:
-    """Each check run and commit status on sha, as (name, pass/fine/pending/red)."""
+    """Each check run and commit status on sha, as (name, pass/pending/red)."""
     # ponytail: one page of 100 check runs and 100 statuses per commit; page when a repo has more.
     endpoint = f"repos/{{owner}}/{{repo}}/commits/{sha}"
     runs = _ask(top, item, ".check_runs", f"{endpoint}/check-runs?per_page=100")
     statuses = _ask(top, item, ".statuses", f"{endpoint}/status?per_page=100")
-    conclusions = {"success": PASS, "skipped": FINE, "neutral": FINE}
     return ([(str(run.get("name")), PENDING if run.get("status") != "completed"
-              else conclusions.get(run.get("conclusion"), RED)) for run in runs]
+              else PASS if run.get("conclusion") == "success" else RED) for run in runs]
             + [(str(status.get("context")), {"success": PASS, "pending": PENDING}.get(
                 status.get("state"), RED)) for status in statuses])
 

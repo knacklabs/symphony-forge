@@ -84,7 +84,8 @@ CLEAN = {"exit": 0, "report": report()}
 FAILED = {"exit": 3, "report": None, "say": "codex: the model is unavailable"}
 INCOMPLETE = {"exit": 2, "report": report(status="incomplete"),
               "say": "autoreview incomplete: selected scope could not be certified"}
-GREEN = [run("tests"), run("forge-pr-check"), run("lint", "skipped")]
+# "lint" isn't named in forge.toml, so it never blocks close, even red.
+GREEN = [run("tests"), run("forge-pr-check"), run("lint", "failure")]
 
 
 class Forge:
@@ -214,7 +215,7 @@ def _open_serious_finding(env):
 
 
 def _red_check(env):
-    env.checks([run("tests", "failure"), run("forge-pr-check")])
+    env.checks([run("tests", "failure"), run("forge-pr-check"), run("lint", "failure")])
     return {"item": env.start_fix()[0], "problem": "Checks failed on the pull request: tests.",
             "next": "forge work tidy-readme"}
 
@@ -378,6 +379,10 @@ def test_18_close(env, kind):
             "the basket is saved here") in body(env.gh_calls("pr", "edit")[-1])
     assert second.stdout.splitlines()[-1] == (
         f"Ready: {item} has a clean review and green checks. A human merges its pull request.")
+    # The checks close waited for are on the pushed head, and nothing was committed after them.
+    pushed = env.repo.git("ls-remote", "origin", branch).split()[0]
+    assert pushed == env.repo.git("rev-parse", "HEAD", cwd=where)
+    assert all(f"/commits/{pushed}/" in call[-1] for call in env.gh_calls("api")[-2:])
 
     # A new commit needs a new round; the older result and its dismissal no longer count.
     env.commit(where, "app.py", "print('saved twice')\n")
@@ -398,11 +403,27 @@ def test_18_close(env, kind):
 
 # --- criterion 19: the functional check -----------------------------------------------------
 
-@pytest.mark.parametrize("task, user_facing", [("T1", False), ("T2", True)])
-def test_19_functional_check(env, task, user_facing):
+MISSING_CHECK = finding("P1", "Not done: functional check", "show.py")
+HOLLOW_CHECK = {**MISSING_CHECK, "body": "The check says only 'it works'; nothing was exercised."}
+
+
+@pytest.mark.parametrize("task, answer, refused", [
+    ("T2", blocked(MISSING_CHECK), True), ("T2", blocked(HOLLOW_CHECK), True),
+    ("T2", CLEAN, False), ("T1", CLEAN, False)],
+    ids=["missing", "hollow", "user-facing-clean", "not-user-facing"])
+def test_19_functional_check(env, task, answer, refused):
+    # A user-facing task's review is told to report a missing or hollow functional check as a P1
+    # `Not done`; close refuses on that finding and passes once the check is there.
     item = env.start_task(task, {"show.py": "print('basket')\n"})[0]
-    assert env.close(item).returncode == 0
-    assert ("`Not done: functional check`" in env.prompt()) is user_facing
+    env.reviews(answer)
+    done = env.close(item)
+    assert ("`Not done: functional check`" in env.prompt()) is (task == "T2")
+    if refused:
+        assert done.returncode == 1
+        assert done.stderr.splitlines()[-2] == (
+            "The review left serious findings open: finding 1 (Not done: functional check).")
+    else:
+        assert done.returncode == 0, done.stderr
 
 
 # --- criterion 27: the pull request's title and summary ----------------------------------------

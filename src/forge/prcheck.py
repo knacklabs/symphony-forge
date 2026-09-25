@@ -62,8 +62,10 @@ def pr_check(args: argparse.Namespace) -> int:
     if not (isinstance(result, dict) and isinstance(result.get("findings"), list)
             and isinstance(result.get("dismissals"), list)):
         problem = "missing"
-    elif result.get("tree") != review.fingerprint(head, item, top):
-        problem = "for an older product tree than the head"
+    elif not _on_branch(top, str(result.get("commit", "")), head):
+        problem = "for a commit that isn't part of this branch"
+    elif result.get("tree") != review.fingerprint(head, item, top, state):
+        problem = "out of date: the product files or what the change must do changed after it"
     elif review.blocking(result):
         problem = "blocked by serious findings no one fixed or dismissed"
     else:
@@ -84,6 +86,13 @@ def promote_problem(changed: list[str], interfaces: list[str]) -> str:
     if len(code) > CODE_LIMIT:
         return f"changes {len(code)} code files, over the limit of {CODE_LIMIT}"
     return ""
+
+
+def _on_branch(top: Path, commit: str, head: str) -> bool:
+    """The reviewed commit is the head or one of its ancestors. It is read from the head, so it
+    must look like a commit id before it goes near git."""
+    return bool(re.fullmatch(r"[0-9a-f]{40}|[0-9a-f]{64}", commit)) and repo.run(
+        "git", "merge-base", "--is-ancestor", commit, head, cwd=top).returncode == 0
 
 
 def _started(top: Path, head: str, branch: str) -> tuple[str, dict[str, Any]]:
