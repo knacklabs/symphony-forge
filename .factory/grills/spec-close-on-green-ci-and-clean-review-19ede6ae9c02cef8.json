@@ -1,0 +1,342 @@
+{
+  "generated_by": "griller",
+  "gate": "spec",
+  "verdict": "pass",
+  "gaps": [
+    "The review rule has no replacement for the current contract-verdict gate. A review with no P0/P1 defect can still leave an acceptance criterion partial or missing; the draft does not say how close detects that. docs/specs/close-on-green-ci-and-clean-review.md:33; factory/scripts/forge_cli/review_brief.py:24; docs/QUALITY.md:82",
+    "The draft says the coordinator may triage a P0/P1 finding as unreal, but does not say how that disposition affects a latest review result that still contains the blocker. The existing citation-rejection route is being deleted. docs/specs/close-on-green-ci-and-clean-review.md:36; docs/QUALITY.md:85",
+    "A failed, interrupted, malformed, or incomplete Autoreview run has no defined result or retry rule. The current reader explicitly refuses an incomplete assessment, so absence of findings alone cannot mean clean. docs/specs/close-on-green-ci-and-clean-review.md:39; factory/scripts/forge_cli/review.py:543",
+    "The draft does not say whether the latest review result is committed or how it can cover the final head commit if recording the result or task status creates another commit. The current seal commits review evidence and a marker after review, while the proposed rule requires the review commit to equal the PR head. docs/specs/close-on-green-ci-and-clean-review.md:39; factory/scripts/forge_cli/tasks.py:749",
+    "CI green does not establish that each task's declared required tests and verify commands ran. Those commands are currently executed by close and can differ from the repository CI suite; the draft names no replacement gate for them. docs/specs/close-on-green-ci-and-clean-review.md:42; factory/scripts/forge_cli/close.py:148; docs/QUALITY.md:51",
+    "The check predicate needs an exact source and status rule: which check runs and status contexts belong to the PR head, whether skipped or neutral counts, and how unavailable API results differ from no checks. 'Every CI check' and 'full suite' do not identify the same set. docs/specs/close-on-green-ci-and-clean-review.md:43; factory/scripts/forge_cli/doctor.py:1227",
+    "The three-condition close rule omits the required functional check for a task recorded as user-facing. Current close refuses to make such a task done without its functional result; CI and Autoreview do not supply that result. docs/specs/close-on-green-ci-and-clean-review.md:28; factory/scripts/forge_cli/close.py:232; factory/scripts/factory_lib.py:2032",
+    "The grill replacement covers only plans and specs. The repository also gates sign-off, roadmap epics, and saved task plans on their own cold reads; the draft gives no replacement authority or disposition location for those gates. docs/specs/close-on-green-ci-and-clean-review.md:49; factory/scripts/record_signoff.py:133; factory/scripts/forge_cli/roadmap.py:401; docs/specs/plan-approval.md:31",
+    "A reader, time, and commit cannot identify the exact uncommitted draft shown to a cold reader or distinguish a later edit to that same plan or spec. The draft removes input binding without stating how confirmation and approval reject a changed artifact. docs/specs/close-on-green-ci-and-clean-review.md:49; factory/scripts/forge_cli/grill.py:207; factory/scripts/forge_cli/specs.py:165",
+    "Lite has no defined path from its current open window and `fix --close` command to a task-style branch, PR, CI wait, and resumable close. Its current close records a done window after local review and creates no PR. docs/specs/close-on-green-ci-and-clean-review.md:53; factory/scripts/forge_cli/fix.py:163; factory/scripts/forge_cli/fix.py:190",
+    "The draft does not define how already active or done tasks, open Lite windows, and existing task markers remain readable after proof and review readers are removed. Current trunk progress validates a marker through its committed proof, so simply ignoring old files changes whether historical completed tasks count. docs/specs/close-on-green-ci-and-clean-review.md:56; factory/scripts/factory_lib.py:1090",
+    "The four in-flight plans need a named governed amendment and approval path. 'Re-recorded' does not say which approved content changes, which existing approvals carry forward, or when fresh human approval is required before tasks start. docs/specs/close-on-green-ci-and-clean-review.md:98; factory/scripts/forge_cli/plans.py:274; docs/specs/plan-approval.md:91"
+  ],
+  "contradictions": [
+    "The draft promises the full suite as CI proof for every task and Lite fix, but the vendored PR workflow skips the six test shards in client repositories and permits `scaffold-check` to succeed when they are skipped. This leaves client product changes without the proposed proof. docs/specs/close-on-green-ci-and-clean-review.md:42; .github/workflows/factory-scaffold.yml:47; .github/workflows/factory-scaffold.yml:138",
+    "The draft requires every check on the PR's latest commit to be green while leaving CI mechanics unchanged. The existing PR-link workflow pushes a later `[skip ci]` commit after a successful run and carries only `scaffold-check` to it, so the latest commit does not receive the full set of green runs. docs/specs/close-on-green-ci-and-clean-review.md:43; .github/workflows/pr-link.yml:98; .github/workflows/pr-link.yml:112",
+    "Deleting Lite window manifests and stored budget bases conflicts with the retained bounded Lite contract: its opening SHA defines the reviewed committed diff, and that diff is checked against the five-file limit at close. No replacement boundary is specified. docs/specs/close-on-green-ci-and-clean-review.md:53; docs/decisions/0031-workflow-modes-lite.md:36; factory/scripts/forge_cli/quickfix.py:313; factory/scripts/forge_cli/review.py:2009",
+    "Putting grill findings and dispositions inside the story plan conflicts with the confirmed plan-approval contract that the exact human-facing plan body contains no Forge bookkeeping and that plan metadata is stored separately. docs/specs/close-on-green-ci-and-clean-review.md:49; docs/specs/plan-approval.md:12; docs/specs/plan-approval.md:20",
+    "Deleting `verify.json` and `tests.json` as authority while keeping the existing PR gate unchanged would make every new task-marker PR fail: `roadmap-gate` still invokes `check_task_proof.py`, which requires those artifacts and a selected review generation. docs/specs/close-on-green-ci-and-clean-review.md:89; .github/workflows/roadmap-gate.yml:64; factory/scripts/check_task_proof.py:60"
+  ],
+  "resolutions": [
+    "Unmet Done-when items and acceptance criteria are reported by the reviewer as P1 'Not done' findings and block (Rules in detail: Unmet Done when).",
+    "Dismissal needs a file:line proof, is stored in the review result and listed in the PR; close counts only undismissed P0/P1 (Rules in detail: Triage).",
+    "A failed, interrupted, unreadable or incomplete Autoreview run produces no result; close retries once then stops with the helper's error (Rules in detail: Failed reviews).",
+    "The review result is committed under .factory and covers the PR head when product files outside .factory and plans are identical to the reviewed commit (Rules in detail: Which commit a review covers).",
+    "Required tests live in the repository suite that CI runs; the reviewer reports missing or hollow ones as Not done; close stops running per-task verify commands (Rules in detail: Tests that must exist).",
+    "harness.yaml ci.required_checks names the required checks; exact status rule for check runs and statuses on the reviewed head; missing required check or API error is not green yet (Rules in detail: Which checks count).",
+    "The functional check for user-facing tasks is kept (Unchanged; acceptance criterion).",
+    "Every gate (spec, story plan, task plan, epics, sign-off) uses the same one-cold-read record with a notes file beside the artifact (Behaviour: Grills).",
+    "The grill record stores the file's git hash as read and as amended; confirm and approval refuse any other current hash (Rules in detail: Changed grilled files).",
+    "Lite keeps its window record with ticket, branch and opening commit and closes via PR, green CI and clean review (Behaviour: Lite fixes).",
+    "Markers already on trunk count as done without re-reading proof; active tasks and open windows finish under the new rules (Rules in detail: Old records).",
+    "In-flight plans change only their technical notes, so under decision 0090 they need no fresh human approval; the coordinator records each amendment (Rules in detail: In-flight plans).",
+    "Client repositories name their own CI test check in harness.yaml; close refuses where none is named and doctor says why (Rules in detail: Which checks count).",
+    "Bookkeeping-only bot commits that skip CI after the run do not change which commit close judges (Rules in detail: Bot commits after the run).",
+    "The five-file Lite limit stays and counts files touched by the window's own commits from the recorded opening commit; only manifests and stored budget bases go (Behaviour: Lite fixes).",
+    "Grill findings and dispositions go in a notes file beside the artifact, never in the human-facing plan body (Behaviour: Grills).",
+    "The roadmap PR gate checks the task marker against its committed review result instead of verify.json, tests.json and a selected generation (Rules in detail: The PR gate)."
+  ],
+  "finding_dispositions": [
+    {
+      "finding": "The review rule has no replacement for the current contract-verdict gate. A review with no P0/P1 defect can still leave an acceptance criterion partial or missing; the draft does not say how close detects that. docs/specs/close-on-green-ci-and-clean-review.md:33; factory/scripts/forge_cli/review_brief.py:24; docs/QUALITY.md:82",
+      "resolution": "Unmet Done-when items and acceptance criteria are reported by the reviewer as P1 'Not done' findings and block (Rules in detail: Unmet Done when).",
+      "source": "simple rule"
+    },
+    {
+      "finding": "The draft says the coordinator may triage a P0/P1 finding as unreal, but does not say how that disposition affects a latest review result that still contains the blocker. The existing citation-rejection route is being deleted. docs/specs/close-on-green-ci-and-clean-review.md:36; docs/QUALITY.md:85",
+      "resolution": "Dismissal needs a file:line proof, is stored in the review result and listed in the PR; close counts only undismissed P0/P1 (Rules in detail: Triage).",
+      "source": "simple rule"
+    },
+    {
+      "finding": "A failed, interrupted, malformed, or incomplete Autoreview run has no defined result or retry rule. The current reader explicitly refuses an incomplete assessment, so absence of findings alone cannot mean clean. docs/specs/close-on-green-ci-and-clean-review.md:39; factory/scripts/forge_cli/review.py:543",
+      "resolution": "A failed, interrupted, unreadable or incomplete Autoreview run produces no result; close retries once then stops with the helper's error (Rules in detail: Failed reviews).",
+      "source": "repository fact"
+    },
+    {
+      "finding": "The draft does not say whether the latest review result is committed or how it can cover the final head commit if recording the result or task status creates another commit. The current seal commits review evidence and a marker after review, while the proposed rule requires the review commit to equal the PR head. docs/specs/close-on-green-ci-and-clean-review.md:39; factory/scripts/forge_cli/tasks.py:749",
+      "resolution": "The review result is committed under .factory and covers the PR head when product files outside .factory and plans are identical to the reviewed commit (Rules in detail: Which commit a review covers).",
+      "source": "simple rule"
+    },
+    {
+      "finding": "CI green does not establish that each task's declared required tests and verify commands ran. Those commands are currently executed by close and can differ from the repository CI suite; the draft names no replacement gate for them. docs/specs/close-on-green-ci-and-clean-review.md:42; factory/scripts/forge_cli/close.py:148; docs/QUALITY.md:51",
+      "resolution": "Required tests live in the repository suite that CI runs; the reviewer reports missing or hollow ones as Not done; close stops running per-task verify commands (Rules in detail: Tests that must exist).",
+      "source": "simple rule"
+    },
+    {
+      "finding": "The check predicate needs an exact source and status rule: which check runs and status contexts belong to the PR head, whether skipped or neutral counts, and how unavailable API results differ from no checks. 'Every CI check' and 'full suite' do not identify the same set. docs/specs/close-on-green-ci-and-clean-review.md:43; factory/scripts/forge_cli/doctor.py:1227",
+      "resolution": "harness.yaml ci.required_checks names the required checks; exact status rule for check runs and statuses on the reviewed head; missing required check or API error is not green yet (Rules in detail: Which checks count).",
+      "source": "repository fact"
+    },
+    {
+      "finding": "The three-condition close rule omits the required functional check for a task recorded as user-facing. Current close refuses to make such a task done without its functional result; CI and Autoreview do not supply that result. docs/specs/close-on-green-ci-and-clean-review.md:28; factory/scripts/forge_cli/close.py:232; factory/scripts/factory_lib.py:2032",
+      "resolution": "The functional check for user-facing tasks is kept (Unchanged; acceptance criterion).",
+      "source": "repository fact"
+    },
+    {
+      "finding": "The grill replacement covers only plans and specs. The repository also gates sign-off, roadmap epics, and saved task plans on their own cold reads; the draft gives no replacement authority or disposition location for those gates. docs/specs/close-on-green-ci-and-clean-review.md:49; factory/scripts/record_signoff.py:133; factory/scripts/forge_cli/roadmap.py:401; docs/specs/plan-approval.md:31",
+      "resolution": "Every gate (spec, story plan, task plan, epics, sign-off) uses the same one-cold-read record with a notes file beside the artifact (Behaviour: Grills).",
+      "source": "simple rule"
+    },
+    {
+      "finding": "A reader, time, and commit cannot identify the exact uncommitted draft shown to a cold reader or distinguish a later edit to that same plan or spec. The draft removes input binding without stating how confirmation and approval reject a changed artifact. docs/specs/close-on-green-ci-and-clean-review.md:49; factory/scripts/forge_cli/grill.py:207; factory/scripts/forge_cli/specs.py:165",
+      "resolution": "The grill record stores the file's git hash as read and as amended; confirm and approval refuse any other current hash (Rules in detail: Changed grilled files).",
+      "source": "simple rule"
+    },
+    {
+      "finding": "Lite has no defined path from its current open window and `fix --close` command to a task-style branch, PR, CI wait, and resumable close. Its current close records a done window after local review and creates no PR. docs/specs/close-on-green-ci-and-clean-review.md:53; factory/scripts/forge_cli/fix.py:163; factory/scripts/forge_cli/fix.py:190",
+      "resolution": "Lite keeps its window record with ticket, branch and opening commit and closes via PR, green CI and clean review (Behaviour: Lite fixes).",
+      "source": "repository fact"
+    },
+    {
+      "finding": "The draft does not define how already active or done tasks, open Lite windows, and existing task markers remain readable after proof and review readers are removed. Current trunk progress validates a marker through its committed proof, so simply ignoring old files changes whether historical completed tasks count. docs/specs/close-on-green-ci-and-clean-review.md:56; factory/scripts/factory_lib.py:1090",
+      "resolution": "Markers already on trunk count as done without re-reading proof; active tasks and open windows finish under the new rules (Rules in detail: Old records).",
+      "source": "simple rule"
+    },
+    {
+      "finding": "The four in-flight plans need a named governed amendment and approval path. 'Re-recorded' does not say which approved content changes, which existing approvals carry forward, or when fresh human approval is required before tasks start. docs/specs/close-on-green-ci-and-clean-review.md:98; factory/scripts/forge_cli/plans.py:274; docs/specs/plan-approval.md:91",
+      "resolution": "In-flight plans change only their technical notes, so under decision 0090 they need no fresh human approval; the coordinator records each amendment (Rules in detail: In-flight plans).",
+      "source": "repository fact"
+    },
+    {
+      "finding": "The draft promises the full suite as CI proof for every task and Lite fix, but the vendored PR workflow skips the six test shards in client repositories and permits `scaffold-check` to succeed when they are skipped. This leaves client product changes without the proposed proof. docs/specs/close-on-green-ci-and-clean-review.md:42; .github/workflows/factory-scaffold.yml:47; .github/workflows/factory-scaffold.yml:138",
+      "resolution": "Client repositories name their own CI test check in harness.yaml; close refuses where none is named and doctor says why (Rules in detail: Which checks count).",
+      "source": "repository fact"
+    },
+    {
+      "finding": "The draft requires every check on the PR's latest commit to be green while leaving CI mechanics unchanged. The existing PR-link workflow pushes a later `[skip ci]` commit after a successful run and carries only `scaffold-check` to it, so the latest commit does not receive the full set of green runs. docs/specs/close-on-green-ci-and-clean-review.md:43; .github/workflows/pr-link.yml:98; .github/workflows/pr-link.yml:112",
+      "resolution": "Bookkeeping-only bot commits that skip CI after the run do not change which commit close judges (Rules in detail: Bot commits after the run).",
+      "source": "repository fact"
+    },
+    {
+      "finding": "Deleting Lite window manifests and stored budget bases conflicts with the retained bounded Lite contract: its opening SHA defines the reviewed committed diff, and that diff is checked against the five-file limit at close. No replacement boundary is specified. docs/specs/close-on-green-ci-and-clean-review.md:53; docs/decisions/0031-workflow-modes-lite.md:36; factory/scripts/forge_cli/quickfix.py:313; factory/scripts/forge_cli/review.py:2009",
+      "resolution": "The five-file Lite limit stays and counts files touched by the window's own commits from the recorded opening commit; only manifests and stored budget bases go (Behaviour: Lite fixes).",
+      "source": "repository fact"
+    },
+    {
+      "finding": "Putting grill findings and dispositions inside the story plan conflicts with the confirmed plan-approval contract that the exact human-facing plan body contains no Forge bookkeeping and that plan metadata is stored separately. docs/specs/close-on-green-ci-and-clean-review.md:49; docs/specs/plan-approval.md:12; docs/specs/plan-approval.md:20",
+      "resolution": "Grill findings and dispositions go in a notes file beside the artifact, never in the human-facing plan body (Behaviour: Grills).",
+      "source": "repository fact"
+    },
+    {
+      "finding": "Deleting `verify.json` and `tests.json` as authority while keeping the existing PR gate unchanged would make every new task-marker PR fail: `roadmap-gate` still invokes `check_task_proof.py`, which requires those artifacts and a selected review generation. docs/specs/close-on-green-ci-and-clean-review.md:89; .github/workflows/roadmap-gate.yml:64; factory/scripts/check_task_proof.py:60",
+      "resolution": "The roadmap PR gate checks the task marker against its committed review result instead of verify.json, tests.json and a selected generation (Rules in detail: The PR gate).",
+      "source": "repository fact"
+    }
+  ],
+  "amendments": [
+    {
+      "change": "span 0: rewritten to resolve the cold-read findings",
+      "reason": "one amendment after the single cold read, resolving repository-answerable findings",
+      "source": "coordinator amendment 2026-09-25",
+      "findings": [
+        "The review rule has no replacement for the current contract-verdict gate. A review with no P0/P1 defect can still leave an acceptance criterion partial or missing; the draft does not say how close detects that. docs/specs/close-on-green-ci-and-clean-review.md:33; factory/scripts/forge_cli/review_brief.py:24; docs/QUALITY.md:82",
+        "The draft says the coordinator may triage a P0/P1 finding as unreal, but does not say how that disposition affects a latest review result that still contains the blocker. The existing citation-rejection route is being deleted. docs/specs/close-on-green-ci-and-clean-review.md:36; docs/QUALITY.md:85",
+        "A failed, interrupted, malformed, or incomplete Autoreview run has no defined result or retry rule. The current reader explicitly refuses an incomplete assessment, so absence of findings alone cannot mean clean. docs/specs/close-on-green-ci-and-clean-review.md:39; factory/scripts/forge_cli/review.py:543",
+        "The draft does not say whether the latest review result is committed or how it can cover the final head commit if recording the result or task status creates another commit. The current seal commits review evidence and a marker after review, while the proposed rule requires the review commit to equal the PR head. docs/specs/close-on-green-ci-and-clean-review.md:39; factory/scripts/forge_cli/tasks.py:749",
+        "CI green does not establish that each task's declared required tests and verify commands ran. Those commands are currently executed by close and can differ from the repository CI suite; the draft names no replacement gate for them. docs/specs/close-on-green-ci-and-clean-review.md:42; factory/scripts/forge_cli/close.py:148; docs/QUALITY.md:51",
+        "The check predicate needs an exact source and status rule: which check runs and status contexts belong to the PR head, whether skipped or neutral counts, and how unavailable API results differ from no checks. 'Every CI check' and 'full suite' do not identify the same set. docs/specs/close-on-green-ci-and-clean-review.md:43; factory/scripts/forge_cli/doctor.py:1227",
+        "The three-condition close rule omits the required functional check for a task recorded as user-facing. Current close refuses to make such a task done without its functional result; CI and Autoreview do not supply that result. docs/specs/close-on-green-ci-and-clean-review.md:28; factory/scripts/forge_cli/close.py:232; factory/scripts/factory_lib.py:2032",
+        "The grill replacement covers only plans and specs. The repository also gates sign-off, roadmap epics, and saved task plans on their own cold reads; the draft gives no replacement authority or disposition location for those gates. docs/specs/close-on-green-ci-and-clean-review.md:49; factory/scripts/record_signoff.py:133; factory/scripts/forge_cli/roadmap.py:401; docs/specs/plan-approval.md:31",
+        "A reader, time, and commit cannot identify the exact uncommitted draft shown to a cold reader or distinguish a later edit to that same plan or spec. The draft removes input binding without stating how confirmation and approval reject a changed artifact. docs/specs/close-on-green-ci-and-clean-review.md:49; factory/scripts/forge_cli/grill.py:207; factory/scripts/forge_cli/specs.py:165",
+        "Lite has no defined path from its current open window and `fix --close` command to a task-style branch, PR, CI wait, and resumable close. Its current close records a done window after local review and creates no PR. docs/specs/close-on-green-ci-and-clean-review.md:53; factory/scripts/forge_cli/fix.py:163; factory/scripts/forge_cli/fix.py:190",
+        "The draft does not define how already active or done tasks, open Lite windows, and existing task markers remain readable after proof and review readers are removed. Current trunk progress validates a marker through its committed proof, so simply ignoring old files changes whether historical completed tasks count. docs/specs/close-on-green-ci-and-clean-review.md:56; factory/scripts/factory_lib.py:1090",
+        "The four in-flight plans need a named governed amendment and approval path. 'Re-recorded' does not say which approved content changes, which existing approvals carry forward, or when fresh human approval is required before tasks start. docs/specs/close-on-green-ci-and-clean-review.md:98; factory/scripts/forge_cli/plans.py:274; docs/specs/plan-approval.md:91",
+        "The draft promises the full suite as CI proof for every task and Lite fix, but the vendored PR workflow skips the six test shards in client repositories and permits `scaffold-check` to succeed when they are skipped. This leaves client product changes without the proposed proof. docs/specs/close-on-green-ci-and-clean-review.md:42; .github/workflows/factory-scaffold.yml:47; .github/workflows/factory-scaffold.yml:138",
+        "The draft requires every check on the PR's latest commit to be green while leaving CI mechanics unchanged. The existing PR-link workflow pushes a later `[skip ci]` commit after a successful run and carries only `scaffold-check` to it, so the latest commit does not receive the full set of green runs. docs/specs/close-on-green-ci-and-clean-review.md:43; .github/workflows/pr-link.yml:98; .github/workflows/pr-link.yml:112",
+        "Deleting Lite window manifests and stored budget bases conflicts with the retained bounded Lite contract: its opening SHA defines the reviewed committed diff, and that diff is checked against the five-file limit at close. No replacement boundary is specified. docs/specs/close-on-green-ci-and-clean-review.md:53; docs/decisions/0031-workflow-modes-lite.md:36; factory/scripts/forge_cli/quickfix.py:313; factory/scripts/forge_cli/review.py:2009",
+        "Putting grill findings and dispositions inside the story plan conflicts with the confirmed plan-approval contract that the exact human-facing plan body contains no Forge bookkeeping and that plan metadata is stored separately. docs/specs/close-on-green-ci-and-clean-review.md:49; docs/specs/plan-approval.md:12; docs/specs/plan-approval.md:20",
+        "Deleting `verify.json` and `tests.json` as authority while keeping the existing PR gate unchanged would make every new task-marker PR fail: `roadmap-gate` still invokes `check_task_proof.py`, which requires those artifacts and a selected review generation. docs/specs/close-on-green-ci-and-clean-review.md:89; .github/workflows/roadmap-gate.yml:64; factory/scripts/check_task_proof.py:60"
+      ],
+      "delta_index": 0
+    },
+    {
+      "change": "span 1: rewritten to resolve the cold-read findings",
+      "reason": "one amendment after the single cold read, resolving repository-answerable findings",
+      "source": "coordinator amendment 2026-09-25",
+      "findings": [
+        "The review rule has no replacement for the current contract-verdict gate. A review with no P0/P1 defect can still leave an acceptance criterion partial or missing; the draft does not say how close detects that. docs/specs/close-on-green-ci-and-clean-review.md:33; factory/scripts/forge_cli/review_brief.py:24; docs/QUALITY.md:82",
+        "The draft says the coordinator may triage a P0/P1 finding as unreal, but does not say how that disposition affects a latest review result that still contains the blocker. The existing citation-rejection route is being deleted. docs/specs/close-on-green-ci-and-clean-review.md:36; docs/QUALITY.md:85",
+        "A failed, interrupted, malformed, or incomplete Autoreview run has no defined result or retry rule. The current reader explicitly refuses an incomplete assessment, so absence of findings alone cannot mean clean. docs/specs/close-on-green-ci-and-clean-review.md:39; factory/scripts/forge_cli/review.py:543",
+        "The draft does not say whether the latest review result is committed or how it can cover the final head commit if recording the result or task status creates another commit. The current seal commits review evidence and a marker after review, while the proposed rule requires the review commit to equal the PR head. docs/specs/close-on-green-ci-and-clean-review.md:39; factory/scripts/forge_cli/tasks.py:749",
+        "CI green does not establish that each task's declared required tests and verify commands ran. Those commands are currently executed by close and can differ from the repository CI suite; the draft names no replacement gate for them. docs/specs/close-on-green-ci-and-clean-review.md:42; factory/scripts/forge_cli/close.py:148; docs/QUALITY.md:51",
+        "The check predicate needs an exact source and status rule: which check runs and status contexts belong to the PR head, whether skipped or neutral counts, and how unavailable API results differ from no checks. 'Every CI check' and 'full suite' do not identify the same set. docs/specs/close-on-green-ci-and-clean-review.md:43; factory/scripts/forge_cli/doctor.py:1227",
+        "The three-condition close rule omits the required functional check for a task recorded as user-facing. Current close refuses to make such a task done without its functional result; CI and Autoreview do not supply that result. docs/specs/close-on-green-ci-and-clean-review.md:28; factory/scripts/forge_cli/close.py:232; factory/scripts/factory_lib.py:2032",
+        "The grill replacement covers only plans and specs. The repository also gates sign-off, roadmap epics, and saved task plans on their own cold reads; the draft gives no replacement authority or disposition location for those gates. docs/specs/close-on-green-ci-and-clean-review.md:49; factory/scripts/record_signoff.py:133; factory/scripts/forge_cli/roadmap.py:401; docs/specs/plan-approval.md:31",
+        "A reader, time, and commit cannot identify the exact uncommitted draft shown to a cold reader or distinguish a later edit to that same plan or spec. The draft removes input binding without stating how confirmation and approval reject a changed artifact. docs/specs/close-on-green-ci-and-clean-review.md:49; factory/scripts/forge_cli/grill.py:207; factory/scripts/forge_cli/specs.py:165",
+        "Lite has no defined path from its current open window and `fix --close` command to a task-style branch, PR, CI wait, and resumable close. Its current close records a done window after local review and creates no PR. docs/specs/close-on-green-ci-and-clean-review.md:53; factory/scripts/forge_cli/fix.py:163; factory/scripts/forge_cli/fix.py:190",
+        "The draft does not define how already active or done tasks, open Lite windows, and existing task markers remain readable after proof and review readers are removed. Current trunk progress validates a marker through its committed proof, so simply ignoring old files changes whether historical completed tasks count. docs/specs/close-on-green-ci-and-clean-review.md:56; factory/scripts/factory_lib.py:1090",
+        "The four in-flight plans need a named governed amendment and approval path. 'Re-recorded' does not say which approved content changes, which existing approvals carry forward, or when fresh human approval is required before tasks start. docs/specs/close-on-green-ci-and-clean-review.md:98; factory/scripts/forge_cli/plans.py:274; docs/specs/plan-approval.md:91",
+        "The draft promises the full suite as CI proof for every task and Lite fix, but the vendored PR workflow skips the six test shards in client repositories and permits `scaffold-check` to succeed when they are skipped. This leaves client product changes without the proposed proof. docs/specs/close-on-green-ci-and-clean-review.md:42; .github/workflows/factory-scaffold.yml:47; .github/workflows/factory-scaffold.yml:138",
+        "The draft requires every check on the PR's latest commit to be green while leaving CI mechanics unchanged. The existing PR-link workflow pushes a later `[skip ci]` commit after a successful run and carries only `scaffold-check` to it, so the latest commit does not receive the full set of green runs. docs/specs/close-on-green-ci-and-clean-review.md:43; .github/workflows/pr-link.yml:98; .github/workflows/pr-link.yml:112",
+        "Deleting Lite window manifests and stored budget bases conflicts with the retained bounded Lite contract: its opening SHA defines the reviewed committed diff, and that diff is checked against the five-file limit at close. No replacement boundary is specified. docs/specs/close-on-green-ci-and-clean-review.md:53; docs/decisions/0031-workflow-modes-lite.md:36; factory/scripts/forge_cli/quickfix.py:313; factory/scripts/forge_cli/review.py:2009",
+        "Putting grill findings and dispositions inside the story plan conflicts with the confirmed plan-approval contract that the exact human-facing plan body contains no Forge bookkeeping and that plan metadata is stored separately. docs/specs/close-on-green-ci-and-clean-review.md:49; docs/specs/plan-approval.md:12; docs/specs/plan-approval.md:20",
+        "Deleting `verify.json` and `tests.json` as authority while keeping the existing PR gate unchanged would make every new task-marker PR fail: `roadmap-gate` still invokes `check_task_proof.py`, which requires those artifacts and a selected review generation. docs/specs/close-on-green-ci-and-clean-review.md:89; .github/workflows/roadmap-gate.yml:64; factory/scripts/check_task_proof.py:60"
+      ],
+      "delta_index": 1
+    },
+    {
+      "change": "span 2: rewritten to resolve the cold-read findings",
+      "reason": "one amendment after the single cold read, resolving repository-answerable findings",
+      "source": "coordinator amendment 2026-09-25",
+      "findings": [
+        "The review rule has no replacement for the current contract-verdict gate. A review with no P0/P1 defect can still leave an acceptance criterion partial or missing; the draft does not say how close detects that. docs/specs/close-on-green-ci-and-clean-review.md:33; factory/scripts/forge_cli/review_brief.py:24; docs/QUALITY.md:82",
+        "The draft says the coordinator may triage a P0/P1 finding as unreal, but does not say how that disposition affects a latest review result that still contains the blocker. The existing citation-rejection route is being deleted. docs/specs/close-on-green-ci-and-clean-review.md:36; docs/QUALITY.md:85",
+        "A failed, interrupted, malformed, or incomplete Autoreview run has no defined result or retry rule. The current reader explicitly refuses an incomplete assessment, so absence of findings alone cannot mean clean. docs/specs/close-on-green-ci-and-clean-review.md:39; factory/scripts/forge_cli/review.py:543",
+        "The draft does not say whether the latest review result is committed or how it can cover the final head commit if recording the result or task status creates another commit. The current seal commits review evidence and a marker after review, while the proposed rule requires the review commit to equal the PR head. docs/specs/close-on-green-ci-and-clean-review.md:39; factory/scripts/forge_cli/tasks.py:749",
+        "CI green does not establish that each task's declared required tests and verify commands ran. Those commands are currently executed by close and can differ from the repository CI suite; the draft names no replacement gate for them. docs/specs/close-on-green-ci-and-clean-review.md:42; factory/scripts/forge_cli/close.py:148; docs/QUALITY.md:51",
+        "The check predicate needs an exact source and status rule: which check runs and status contexts belong to the PR head, whether skipped or neutral counts, and how unavailable API results differ from no checks. 'Every CI check' and 'full suite' do not identify the same set. docs/specs/close-on-green-ci-and-clean-review.md:43; factory/scripts/forge_cli/doctor.py:1227",
+        "The three-condition close rule omits the required functional check for a task recorded as user-facing. Current close refuses to make such a task done without its functional result; CI and Autoreview do not supply that result. docs/specs/close-on-green-ci-and-clean-review.md:28; factory/scripts/forge_cli/close.py:232; factory/scripts/factory_lib.py:2032",
+        "The grill replacement covers only plans and specs. The repository also gates sign-off, roadmap epics, and saved task plans on their own cold reads; the draft gives no replacement authority or disposition location for those gates. docs/specs/close-on-green-ci-and-clean-review.md:49; factory/scripts/record_signoff.py:133; factory/scripts/forge_cli/roadmap.py:401; docs/specs/plan-approval.md:31",
+        "A reader, time, and commit cannot identify the exact uncommitted draft shown to a cold reader or distinguish a later edit to that same plan or spec. The draft removes input binding without stating how confirmation and approval reject a changed artifact. docs/specs/close-on-green-ci-and-clean-review.md:49; factory/scripts/forge_cli/grill.py:207; factory/scripts/forge_cli/specs.py:165",
+        "Lite has no defined path from its current open window and `fix --close` command to a task-style branch, PR, CI wait, and resumable close. Its current close records a done window after local review and creates no PR. docs/specs/close-on-green-ci-and-clean-review.md:53; factory/scripts/forge_cli/fix.py:163; factory/scripts/forge_cli/fix.py:190",
+        "The draft does not define how already active or done tasks, open Lite windows, and existing task markers remain readable after proof and review readers are removed. Current trunk progress validates a marker through its committed proof, so simply ignoring old files changes whether historical completed tasks count. docs/specs/close-on-green-ci-and-clean-review.md:56; factory/scripts/factory_lib.py:1090",
+        "The four in-flight plans need a named governed amendment and approval path. 'Re-recorded' does not say which approved content changes, which existing approvals carry forward, or when fresh human approval is required before tasks start. docs/specs/close-on-green-ci-and-clean-review.md:98; factory/scripts/forge_cli/plans.py:274; docs/specs/plan-approval.md:91",
+        "The draft promises the full suite as CI proof for every task and Lite fix, but the vendored PR workflow skips the six test shards in client repositories and permits `scaffold-check` to succeed when they are skipped. This leaves client product changes without the proposed proof. docs/specs/close-on-green-ci-and-clean-review.md:42; .github/workflows/factory-scaffold.yml:47; .github/workflows/factory-scaffold.yml:138",
+        "The draft requires every check on the PR's latest commit to be green while leaving CI mechanics unchanged. The existing PR-link workflow pushes a later `[skip ci]` commit after a successful run and carries only `scaffold-check` to it, so the latest commit does not receive the full set of green runs. docs/specs/close-on-green-ci-and-clean-review.md:43; .github/workflows/pr-link.yml:98; .github/workflows/pr-link.yml:112",
+        "Deleting Lite window manifests and stored budget bases conflicts with the retained bounded Lite contract: its opening SHA defines the reviewed committed diff, and that diff is checked against the five-file limit at close. No replacement boundary is specified. docs/specs/close-on-green-ci-and-clean-review.md:53; docs/decisions/0031-workflow-modes-lite.md:36; factory/scripts/forge_cli/quickfix.py:313; factory/scripts/forge_cli/review.py:2009",
+        "Putting grill findings and dispositions inside the story plan conflicts with the confirmed plan-approval contract that the exact human-facing plan body contains no Forge bookkeeping and that plan metadata is stored separately. docs/specs/close-on-green-ci-and-clean-review.md:49; docs/specs/plan-approval.md:12; docs/specs/plan-approval.md:20",
+        "Deleting `verify.json` and `tests.json` as authority while keeping the existing PR gate unchanged would make every new task-marker PR fail: `roadmap-gate` still invokes `check_task_proof.py`, which requires those artifacts and a selected review generation. docs/specs/close-on-green-ci-and-clean-review.md:89; .github/workflows/roadmap-gate.yml:64; factory/scripts/check_task_proof.py:60"
+      ],
+      "delta_index": 2
+    },
+    {
+      "change": "span 3: rewritten to resolve the cold-read findings",
+      "reason": "one amendment after the single cold read, resolving repository-answerable findings",
+      "source": "coordinator amendment 2026-09-25",
+      "findings": [
+        "The review rule has no replacement for the current contract-verdict gate. A review with no P0/P1 defect can still leave an acceptance criterion partial or missing; the draft does not say how close detects that. docs/specs/close-on-green-ci-and-clean-review.md:33; factory/scripts/forge_cli/review_brief.py:24; docs/QUALITY.md:82",
+        "The draft says the coordinator may triage a P0/P1 finding as unreal, but does not say how that disposition affects a latest review result that still contains the blocker. The existing citation-rejection route is being deleted. docs/specs/close-on-green-ci-and-clean-review.md:36; docs/QUALITY.md:85",
+        "A failed, interrupted, malformed, or incomplete Autoreview run has no defined result or retry rule. The current reader explicitly refuses an incomplete assessment, so absence of findings alone cannot mean clean. docs/specs/close-on-green-ci-and-clean-review.md:39; factory/scripts/forge_cli/review.py:543",
+        "The draft does not say whether the latest review result is committed or how it can cover the final head commit if recording the result or task status creates another commit. The current seal commits review evidence and a marker after review, while the proposed rule requires the review commit to equal the PR head. docs/specs/close-on-green-ci-and-clean-review.md:39; factory/scripts/forge_cli/tasks.py:749",
+        "CI green does not establish that each task's declared required tests and verify commands ran. Those commands are currently executed by close and can differ from the repository CI suite; the draft names no replacement gate for them. docs/specs/close-on-green-ci-and-clean-review.md:42; factory/scripts/forge_cli/close.py:148; docs/QUALITY.md:51",
+        "The check predicate needs an exact source and status rule: which check runs and status contexts belong to the PR head, whether skipped or neutral counts, and how unavailable API results differ from no checks. 'Every CI check' and 'full suite' do not identify the same set. docs/specs/close-on-green-ci-and-clean-review.md:43; factory/scripts/forge_cli/doctor.py:1227",
+        "The three-condition close rule omits the required functional check for a task recorded as user-facing. Current close refuses to make such a task done without its functional result; CI and Autoreview do not supply that result. docs/specs/close-on-green-ci-and-clean-review.md:28; factory/scripts/forge_cli/close.py:232; factory/scripts/factory_lib.py:2032",
+        "The grill replacement covers only plans and specs. The repository also gates sign-off, roadmap epics, and saved task plans on their own cold reads; the draft gives no replacement authority or disposition location for those gates. docs/specs/close-on-green-ci-and-clean-review.md:49; factory/scripts/record_signoff.py:133; factory/scripts/forge_cli/roadmap.py:401; docs/specs/plan-approval.md:31",
+        "A reader, time, and commit cannot identify the exact uncommitted draft shown to a cold reader or distinguish a later edit to that same plan or spec. The draft removes input binding without stating how confirmation and approval reject a changed artifact. docs/specs/close-on-green-ci-and-clean-review.md:49; factory/scripts/forge_cli/grill.py:207; factory/scripts/forge_cli/specs.py:165",
+        "Lite has no defined path from its current open window and `fix --close` command to a task-style branch, PR, CI wait, and resumable close. Its current close records a done window after local review and creates no PR. docs/specs/close-on-green-ci-and-clean-review.md:53; factory/scripts/forge_cli/fix.py:163; factory/scripts/forge_cli/fix.py:190",
+        "The draft does not define how already active or done tasks, open Lite windows, and existing task markers remain readable after proof and review readers are removed. Current trunk progress validates a marker through its committed proof, so simply ignoring old files changes whether historical completed tasks count. docs/specs/close-on-green-ci-and-clean-review.md:56; factory/scripts/factory_lib.py:1090",
+        "The four in-flight plans need a named governed amendment and approval path. 'Re-recorded' does not say which approved content changes, which existing approvals carry forward, or when fresh human approval is required before tasks start. docs/specs/close-on-green-ci-and-clean-review.md:98; factory/scripts/forge_cli/plans.py:274; docs/specs/plan-approval.md:91",
+        "The draft promises the full suite as CI proof for every task and Lite fix, but the vendored PR workflow skips the six test shards in client repositories and permits `scaffold-check` to succeed when they are skipped. This leaves client product changes without the proposed proof. docs/specs/close-on-green-ci-and-clean-review.md:42; .github/workflows/factory-scaffold.yml:47; .github/workflows/factory-scaffold.yml:138",
+        "The draft requires every check on the PR's latest commit to be green while leaving CI mechanics unchanged. The existing PR-link workflow pushes a later `[skip ci]` commit after a successful run and carries only `scaffold-check` to it, so the latest commit does not receive the full set of green runs. docs/specs/close-on-green-ci-and-clean-review.md:43; .github/workflows/pr-link.yml:98; .github/workflows/pr-link.yml:112",
+        "Deleting Lite window manifests and stored budget bases conflicts with the retained bounded Lite contract: its opening SHA defines the reviewed committed diff, and that diff is checked against the five-file limit at close. No replacement boundary is specified. docs/specs/close-on-green-ci-and-clean-review.md:53; docs/decisions/0031-workflow-modes-lite.md:36; factory/scripts/forge_cli/quickfix.py:313; factory/scripts/forge_cli/review.py:2009",
+        "Putting grill findings and dispositions inside the story plan conflicts with the confirmed plan-approval contract that the exact human-facing plan body contains no Forge bookkeeping and that plan metadata is stored separately. docs/specs/close-on-green-ci-and-clean-review.md:49; docs/specs/plan-approval.md:12; docs/specs/plan-approval.md:20",
+        "Deleting `verify.json` and `tests.json` as authority while keeping the existing PR gate unchanged would make every new task-marker PR fail: `roadmap-gate` still invokes `check_task_proof.py`, which requires those artifacts and a selected review generation. docs/specs/close-on-green-ci-and-clean-review.md:89; .github/workflows/roadmap-gate.yml:64; factory/scripts/check_task_proof.py:60"
+      ],
+      "delta_index": 3
+    },
+    {
+      "change": "span 4: rewritten to resolve the cold-read findings",
+      "reason": "one amendment after the single cold read, resolving repository-answerable findings",
+      "source": "coordinator amendment 2026-09-25",
+      "findings": [
+        "The review rule has no replacement for the current contract-verdict gate. A review with no P0/P1 defect can still leave an acceptance criterion partial or missing; the draft does not say how close detects that. docs/specs/close-on-green-ci-and-clean-review.md:33; factory/scripts/forge_cli/review_brief.py:24; docs/QUALITY.md:82",
+        "The draft says the coordinator may triage a P0/P1 finding as unreal, but does not say how that disposition affects a latest review result that still contains the blocker. The existing citation-rejection route is being deleted. docs/specs/close-on-green-ci-and-clean-review.md:36; docs/QUALITY.md:85",
+        "A failed, interrupted, malformed, or incomplete Autoreview run has no defined result or retry rule. The current reader explicitly refuses an incomplete assessment, so absence of findings alone cannot mean clean. docs/specs/close-on-green-ci-and-clean-review.md:39; factory/scripts/forge_cli/review.py:543",
+        "The draft does not say whether the latest review result is committed or how it can cover the final head commit if recording the result or task status creates another commit. The current seal commits review evidence and a marker after review, while the proposed rule requires the review commit to equal the PR head. docs/specs/close-on-green-ci-and-clean-review.md:39; factory/scripts/forge_cli/tasks.py:749",
+        "CI green does not establish that each task's declared required tests and verify commands ran. Those commands are currently executed by close and can differ from the repository CI suite; the draft names no replacement gate for them. docs/specs/close-on-green-ci-and-clean-review.md:42; factory/scripts/forge_cli/close.py:148; docs/QUALITY.md:51",
+        "The check predicate needs an exact source and status rule: which check runs and status contexts belong to the PR head, whether skipped or neutral counts, and how unavailable API results differ from no checks. 'Every CI check' and 'full suite' do not identify the same set. docs/specs/close-on-green-ci-and-clean-review.md:43; factory/scripts/forge_cli/doctor.py:1227",
+        "The three-condition close rule omits the required functional check for a task recorded as user-facing. Current close refuses to make such a task done without its functional result; CI and Autoreview do not supply that result. docs/specs/close-on-green-ci-and-clean-review.md:28; factory/scripts/forge_cli/close.py:232; factory/scripts/factory_lib.py:2032",
+        "The grill replacement covers only plans and specs. The repository also gates sign-off, roadmap epics, and saved task plans on their own cold reads; the draft gives no replacement authority or disposition location for those gates. docs/specs/close-on-green-ci-and-clean-review.md:49; factory/scripts/record_signoff.py:133; factory/scripts/forge_cli/roadmap.py:401; docs/specs/plan-approval.md:31",
+        "A reader, time, and commit cannot identify the exact uncommitted draft shown to a cold reader or distinguish a later edit to that same plan or spec. The draft removes input binding without stating how confirmation and approval reject a changed artifact. docs/specs/close-on-green-ci-and-clean-review.md:49; factory/scripts/forge_cli/grill.py:207; factory/scripts/forge_cli/specs.py:165",
+        "Lite has no defined path from its current open window and `fix --close` command to a task-style branch, PR, CI wait, and resumable close. Its current close records a done window after local review and creates no PR. docs/specs/close-on-green-ci-and-clean-review.md:53; factory/scripts/forge_cli/fix.py:163; factory/scripts/forge_cli/fix.py:190",
+        "The draft does not define how already active or done tasks, open Lite windows, and existing task markers remain readable after proof and review readers are removed. Current trunk progress validates a marker through its committed proof, so simply ignoring old files changes whether historical completed tasks count. docs/specs/close-on-green-ci-and-clean-review.md:56; factory/scripts/factory_lib.py:1090",
+        "The four in-flight plans need a named governed amendment and approval path. 'Re-recorded' does not say which approved content changes, which existing approvals carry forward, or when fresh human approval is required before tasks start. docs/specs/close-on-green-ci-and-clean-review.md:98; factory/scripts/forge_cli/plans.py:274; docs/specs/plan-approval.md:91",
+        "The draft promises the full suite as CI proof for every task and Lite fix, but the vendored PR workflow skips the six test shards in client repositories and permits `scaffold-check` to succeed when they are skipped. This leaves client product changes without the proposed proof. docs/specs/close-on-green-ci-and-clean-review.md:42; .github/workflows/factory-scaffold.yml:47; .github/workflows/factory-scaffold.yml:138",
+        "The draft requires every check on the PR's latest commit to be green while leaving CI mechanics unchanged. The existing PR-link workflow pushes a later `[skip ci]` commit after a successful run and carries only `scaffold-check` to it, so the latest commit does not receive the full set of green runs. docs/specs/close-on-green-ci-and-clean-review.md:43; .github/workflows/pr-link.yml:98; .github/workflows/pr-link.yml:112",
+        "Deleting Lite window manifests and stored budget bases conflicts with the retained bounded Lite contract: its opening SHA defines the reviewed committed diff, and that diff is checked against the five-file limit at close. No replacement boundary is specified. docs/specs/close-on-green-ci-and-clean-review.md:53; docs/decisions/0031-workflow-modes-lite.md:36; factory/scripts/forge_cli/quickfix.py:313; factory/scripts/forge_cli/review.py:2009",
+        "Putting grill findings and dispositions inside the story plan conflicts with the confirmed plan-approval contract that the exact human-facing plan body contains no Forge bookkeeping and that plan metadata is stored separately. docs/specs/close-on-green-ci-and-clean-review.md:49; docs/specs/plan-approval.md:12; docs/specs/plan-approval.md:20",
+        "Deleting `verify.json` and `tests.json` as authority while keeping the existing PR gate unchanged would make every new task-marker PR fail: `roadmap-gate` still invokes `check_task_proof.py`, which requires those artifacts and a selected review generation. docs/specs/close-on-green-ci-and-clean-review.md:89; .github/workflows/roadmap-gate.yml:64; factory/scripts/check_task_proof.py:60"
+      ],
+      "delta_index": 4
+    },
+    {
+      "change": "span 5: rewritten to resolve the cold-read findings",
+      "reason": "one amendment after the single cold read, resolving repository-answerable findings",
+      "source": "coordinator amendment 2026-09-25",
+      "findings": [
+        "The review rule has no replacement for the current contract-verdict gate. A review with no P0/P1 defect can still leave an acceptance criterion partial or missing; the draft does not say how close detects that. docs/specs/close-on-green-ci-and-clean-review.md:33; factory/scripts/forge_cli/review_brief.py:24; docs/QUALITY.md:82",
+        "The draft says the coordinator may triage a P0/P1 finding as unreal, but does not say how that disposition affects a latest review result that still contains the blocker. The existing citation-rejection route is being deleted. docs/specs/close-on-green-ci-and-clean-review.md:36; docs/QUALITY.md:85",
+        "A failed, interrupted, malformed, or incomplete Autoreview run has no defined result or retry rule. The current reader explicitly refuses an incomplete assessment, so absence of findings alone cannot mean clean. docs/specs/close-on-green-ci-and-clean-review.md:39; factory/scripts/forge_cli/review.py:543",
+        "The draft does not say whether the latest review result is committed or how it can cover the final head commit if recording the result or task status creates another commit. The current seal commits review evidence and a marker after review, while the proposed rule requires the review commit to equal the PR head. docs/specs/close-on-green-ci-and-clean-review.md:39; factory/scripts/forge_cli/tasks.py:749",
+        "CI green does not establish that each task's declared required tests and verify commands ran. Those commands are currently executed by close and can differ from the repository CI suite; the draft names no replacement gate for them. docs/specs/close-on-green-ci-and-clean-review.md:42; factory/scripts/forge_cli/close.py:148; docs/QUALITY.md:51",
+        "The check predicate needs an exact source and status rule: which check runs and status contexts belong to the PR head, whether skipped or neutral counts, and how unavailable API results differ from no checks. 'Every CI check' and 'full suite' do not identify the same set. docs/specs/close-on-green-ci-and-clean-review.md:43; factory/scripts/forge_cli/doctor.py:1227",
+        "The three-condition close rule omits the required functional check for a task recorded as user-facing. Current close refuses to make such a task done without its functional result; CI and Autoreview do not supply that result. docs/specs/close-on-green-ci-and-clean-review.md:28; factory/scripts/forge_cli/close.py:232; factory/scripts/factory_lib.py:2032",
+        "The grill replacement covers only plans and specs. The repository also gates sign-off, roadmap epics, and saved task plans on their own cold reads; the draft gives no replacement authority or disposition location for those gates. docs/specs/close-on-green-ci-and-clean-review.md:49; factory/scripts/record_signoff.py:133; factory/scripts/forge_cli/roadmap.py:401; docs/specs/plan-approval.md:31",
+        "A reader, time, and commit cannot identify the exact uncommitted draft shown to a cold reader or distinguish a later edit to that same plan or spec. The draft removes input binding without stating how confirmation and approval reject a changed artifact. docs/specs/close-on-green-ci-and-clean-review.md:49; factory/scripts/forge_cli/grill.py:207; factory/scripts/forge_cli/specs.py:165",
+        "Lite has no defined path from its current open window and `fix --close` command to a task-style branch, PR, CI wait, and resumable close. Its current close records a done window after local review and creates no PR. docs/specs/close-on-green-ci-and-clean-review.md:53; factory/scripts/forge_cli/fix.py:163; factory/scripts/forge_cli/fix.py:190",
+        "The draft does not define how already active or done tasks, open Lite windows, and existing task markers remain readable after proof and review readers are removed. Current trunk progress validates a marker through its committed proof, so simply ignoring old files changes whether historical completed tasks count. docs/specs/close-on-green-ci-and-clean-review.md:56; factory/scripts/factory_lib.py:1090",
+        "The four in-flight plans need a named governed amendment and approval path. 'Re-recorded' does not say which approved content changes, which existing approvals carry forward, or when fresh human approval is required before tasks start. docs/specs/close-on-green-ci-and-clean-review.md:98; factory/scripts/forge_cli/plans.py:274; docs/specs/plan-approval.md:91",
+        "The draft promises the full suite as CI proof for every task and Lite fix, but the vendored PR workflow skips the six test shards in client repositories and permits `scaffold-check` to succeed when they are skipped. This leaves client product changes without the proposed proof. docs/specs/close-on-green-ci-and-clean-review.md:42; .github/workflows/factory-scaffold.yml:47; .github/workflows/factory-scaffold.yml:138",
+        "The draft requires every check on the PR's latest commit to be green while leaving CI mechanics unchanged. The existing PR-link workflow pushes a later `[skip ci]` commit after a successful run and carries only `scaffold-check` to it, so the latest commit does not receive the full set of green runs. docs/specs/close-on-green-ci-and-clean-review.md:43; .github/workflows/pr-link.yml:98; .github/workflows/pr-link.yml:112",
+        "Deleting Lite window manifests and stored budget bases conflicts with the retained bounded Lite contract: its opening SHA defines the reviewed committed diff, and that diff is checked against the five-file limit at close. No replacement boundary is specified. docs/specs/close-on-green-ci-and-clean-review.md:53; docs/decisions/0031-workflow-modes-lite.md:36; factory/scripts/forge_cli/quickfix.py:313; factory/scripts/forge_cli/review.py:2009",
+        "Putting grill findings and dispositions inside the story plan conflicts with the confirmed plan-approval contract that the exact human-facing plan body contains no Forge bookkeeping and that plan metadata is stored separately. docs/specs/close-on-green-ci-and-clean-review.md:49; docs/specs/plan-approval.md:12; docs/specs/plan-approval.md:20",
+        "Deleting `verify.json` and `tests.json` as authority while keeping the existing PR gate unchanged would make every new task-marker PR fail: `roadmap-gate` still invokes `check_task_proof.py`, which requires those artifacts and a selected review generation. docs/specs/close-on-green-ci-and-clean-review.md:89; .github/workflows/roadmap-gate.yml:64; factory/scripts/check_task_proof.py:60"
+      ],
+      "delta_index": 5
+    }
+  ],
+  "artifact_delta": [
+    {
+      "cold_start": 40,
+      "cold_end": 40,
+      "cold": "",
+      "final_start": 40,
+      "final_end": 41,
+      "final": "The exact rules are in \"Rules in detail\" below.\n"
+    },
+    {
+      "cold_start": 48,
+      "cold_end": 51,
+      "cold": "**Grills.** A plan or spec gets one cold read. The reader's findings and what was done about each\nare written as a short list in the plan or spec itself. Forge records who read it, when, and at\nwhich commit. Nothing goes stale because other files change afterwards.\n",
+      "final_start": 49,
+      "final_end": 54,
+      "final": "**Grills.** A spec, story plan, task plan, epic list or sign-off gets one cold read. The reader's\nfindings and what was done about each are written as a short list in a notes file beside the\nartifact (never inside the human-facing plan body). Forge records who read it, when, and the git\nhash of the file as read and after the one amendment. Nothing goes stale because other files\nchange afterwards.\n"
+    },
+    {
+      "cold_start": 53,
+      "cold_end": 54,
+      "cold": "green CI, clean review. Window manifests and stored budget bases are removed.\n",
+      "final_start": 56,
+      "final_end": 59,
+      "final": "green CI, clean review. Its window record keeps only the ticket, the branch and the commit it opened\nat; the five-file limit stays and counts the files touched by the window's own commits. Window\nmanifests and stored budget bases are removed.\n"
+    },
+    {
+      "cold_start": 66,
+      "cold_end": 68,
+      "cold": "the destructive-command denylist, the commit belt, the sign-off gate, the ticket check, the roadmap,\nspecs and decisions.\n",
+      "final_start": 71,
+      "final_end": 110,
+      "final": "the functional check for user-facing tasks, the destructive-command denylist, the commit belt, the\nsign-off gate, the ticket check, the roadmap, specs and decisions.\n\n## Rules in detail\n\n- **Unmet \"Done when\".** The review instructions tell the reviewer to report every \"Done when\" item\n  or acceptance criterion the branch does not meet as a P1 finding titled `Not done: <item>`. An\n  unmet item is a defect, so it blocks like any P1. There are no verdict records.\n- **Triage.** The coordinator may dismiss a P0/P1 finding as not real only with a `file:line` that\n  proves it; the dismissal and its reason are stored in the review result and listed in the PR\n  body. Close counts only undismissed P0/P1 findings.\n- **Failed reviews.** An Autoreview run that exits with an error, is interrupted, returns output\n  Forge cannot read, or reports its review as incomplete produces no review result. Close retries it\n  once, then stops and shows the helper's own error. Only a completed run counts, whether clean or\n  with findings.\n- **Which commit a review covers.** The review result is committed under `.factory/`. It covers the\n  PR head when the head's product files (everything outside `.factory/` and `plans/`) are identical\n  to the reviewed commit's, so recording the result or the task status never makes it stale.\n- **Tests that must exist.** A task's required tests are part of the repository's test suite and run\n  in CI; the review instructions list them and the reviewer reports a missing or hollow one as\n  `Not done`. Close no longer runs per-task verify commands itself.\n- **Which checks count.** `harness.yaml` names the required CI checks (`ci.required_checks`; this\n  repository: `scaffold-check`, which fails unless all six test shards pass). Close reads the check\n  runs and commit statuses of the reviewed PR head: every required check must be `success`; other\n  checks may be `success`, `skipped` or `neutral`; any `failure`, `cancelled` or `timed_out` is red;\n  a missing required check or an API error is \"not green yet\" with the reason. A client repository\n  names its own test check there; if none is named, close refuses and `forge doctor` says why.\n- **Bot commits after the run.** Later commits on the PR that only touch bookkeeping paths and skip\n  CI (the pr-link backfill) do not change which commit close judges.\n- **The PR gate.** The roadmap gate checks each new task marker against its committed review result\n  (clean, covering the marker's product tree) instead of `verify.json`, `tests.json` and a selected\n  review generation.\n- **Old records.** Task markers already on trunk count as done without re-reading their proof.\n  Tasks active and Lite windows open at the switch finish under these rules.\n- **Changed grilled files.** `spec confirm` and plan approval refuse when the file's current git hash\n  is neither the hash the cold reader saw nor the recorded amended hash.\n- **In-flight plans.** The four active story plans change only in their technical notes (how a task\n  closes); their \"What changes for you\" and \"Done when\" are unchanged, so under the one-approval\n  rule they need no fresh human approval. The coordinator records each amendment.\n"
+    },
+    {
+      "cold_start": 72,
+      "cold_end": 73,
+      "cold": "  review result for the branch's current head commit.\n",
+      "final_start": 114,
+      "final_end": 118,
+      "final": "  completed review result whose reviewed product files equal the PR head's.\n- An unmet \"Done when\" item or acceptance criterion is reported as a P1 `Not done` finding and\n  blocks; a failed or incomplete review run is retried once and then stops close.\n- A user-facing task still needs its functional check before it is done.\n"
+    },
+    {
+      "cold_start": 85,
+      "cold_end": 88,
+      "cold": "- One cold read of a plan or spec is recorded as reader, time and commit; its findings and\n  dispositions are a list in the plan or spec. A later change to other files does not make it stale.\n- Lite fixes carry one ticket line; no window manifest or budget base is written.\n",
+      "final_start": 130,
+      "final_end": 140,
+      "final": "- One cold read of a spec, plan, task plan, epic list or sign-off is recorded as reader, time and\n  the file's git hash as read and as amended; its findings and dispositions are a list in a notes\n  file beside the artifact. A later change to other files does not make it stale; a change to the\n  file itself does.\n- `harness.yaml` names the required CI checks; close judges the reviewed PR head by them and refuses\n  in a repository that names none.\n- The roadmap PR gate accepts a task marker with a clean committed review result and no longer\n  requires `verify.json`, `tests.json` or a review generation.\n- Lite fixes carry one ticket line and close with a PR, green CI and a clean review; no window\n  manifest or budget base is written, and the five-file limit counts the window's own commits.\n"
+    }
+  ],
+  "questions_asked": 0,
+  "summary": "One cold read (12 gaps, 5 contradictions); resolved with simple rules and repository facts; spec amended once.",
+  "input_sha256": "59233fc7d62b1abd53be1d5216fd2128a66405050ec3952da1b8ca2e5a1d9923",
+  "recorded_at": "2026-09-25T12:55:41+00:00",
+  "commit": "0269a82c5e7689950772b599b03d5be461890efe",
+  "launch_id": "launch-c754384dc67f4787a6de128b4c4d6a11",
+  "cold_input_sha256": "c334ab1fa78b6b6653173a0a4f15aa4fd0a30c99bc7b8b3e1808f30e702bdc0b",
+  "final_artifact_sha256": "59233fc7d62b1abd53be1d5216fd2128a66405050ec3952da1b8ca2e5a1d9923"
+}
