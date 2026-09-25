@@ -97,7 +97,8 @@ def test_10_version_pin(repo, tmp_path):
            "UV_TOOL_BIN_DIR": str(tmp_path / "tool-bin")}
     subprocess.run([uv, "tool", "install", "-q", f"git+{source.as_uri()}@{version}"], env=env,
                    check=True, capture_output=True, timeout=120)
-    installed = shutil.which("forge", path=str(tmp_path / "tool-bin"))
+    # Not shutil.which: on Windows it searches the current folder first and finds the old forge.cmd.
+    installed = next(p for p in (tmp_path / "tool-bin").iterdir() if p.stem.lower() == "forge")
     shown = subprocess.run([installed, "--version"], capture_output=True, text=True, check=True)
     assert shown.stdout.split()[-1] == version
 
