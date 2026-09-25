@@ -9561,6 +9561,7 @@ def test_mode_done_counts_only_lite_files_after_merging_main(repo, monkeypatch, 
     from forge_cli import review as review_mod
     from forge_cli.quickfix import _lite_manifest
 
+    git(repo, "checkout", "-q", "-B", "main")
     git(repo, "checkout", "-q", "-b", "lite-fix")
     active = open_lite(repo)
     source = repo / "src"
