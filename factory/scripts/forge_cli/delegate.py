@@ -130,7 +130,7 @@ def _git_common_dir(base: Path) -> Path:
     )
     if proc.returncode != 0 or not proc.stdout.strip():
         fail("Cannot resolve Git's shared control directory for delegation state.")
-    path = Path(proc.stdout.strip())
+    path = type(base)(proc.stdout.strip())
     common = (path if path.is_absolute() else base / path).resolve()
     _GIT_COMMON_DIR_CACHE[base] = common
     return common
@@ -158,7 +158,7 @@ def delegation_lock_path(base: Path, lock_id: str, *,
         fail(f"lock id {lock_id!r} is not a plain identifier")
     if namespace not in {"task", "state", "grill"}:
         fail(f"lock namespace {namespace!r} is not supported")
-    return delegations_path(base).parent / "locks" / namespace / f"{lock_id}.lock"
+    return git_control_dir(base) / "locks" / namespace / f"{lock_id}.lock"
 
 
 def brief_path(base: Path, task_id: str) -> Path:

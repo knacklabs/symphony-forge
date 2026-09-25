@@ -493,6 +493,11 @@ def cmd_task_start(args: argparse.Namespace) -> None:
         base, base / ".factory" / "stories" / key,
         "story planning state source",
     )
+    stage_records = Path(".factory") / "stories" / key / "stages"
+    snapshots = {
+        relative: content for relative, content in snapshots.items()
+        if relative.parent != stage_records
+    }
     snapshots.setdefault(decomposition_relative, decomposition_bytes)
     snapshots.setdefault(approval_relative, approval_bytes)
     snapshots.setdefault(event_relative, approval_event_bytes)
