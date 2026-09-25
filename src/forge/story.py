@@ -78,17 +78,19 @@ def new(args: Any) -> int:
     if not KEY.fullmatch(key):
         repo.refuse(REFUSALS["bad_key"], key=key)
     why, row, fix_top, fix_state = "<Why this matters now, in plain English.>", "", None, None
+    done = "<Something anyone can observe once this is done.>"
     if fix:
         fix_top = worktrees(top).get(f"fix/{fix}")
         fix_state = repo.read_state(fix, fix_top) if fix_top else None
         if not fix_state:
             repo.refuse(REFUSALS["no_fix"], fix=fix)
         why = fix_state.get("why") or why
+        done = fix_state.get("done_when") or done  # the promoted task covers Done-when item 1
         # The task's Scope is what the fix changed since it left the default branch.
         base = repo.git("merge-base", repo.default_branch(top), "HEAD", cwd=fix_top)
         scope = [f"`{path}`" for path in repo.git("diff", "--name-only", base, cwd=fix_top).splitlines()
                  if not path.startswith(".factory/")]
-        row = f"| {fix.upper()} | {why} | {why} | — | {', '.join(scope)} | | none | no |\n"
+        row = f"| {fix.upper()} | {why} | {why} | 1 | {', '.join(scope)} | | none | no |\n"
     elif key not in {item["key"] for item in repo.roadmap(top)}:
         repo.refuse(REFUSALS["not_on_roadmap"], key=key)
     title = args.title or (why if fix else "")
@@ -97,7 +99,7 @@ def new(args: Any) -> int:
     path = add_worktree(top, f"story/{key}", repo.default_branch(top))
     doc = f"plans/{key}.md"
     text = Template((TEMPLATES / "story.md").read_text(encoding="utf-8"))
-    _write(path / doc, text.safe_substitute(title=title, why=why, tasks=row))
+    _write(path / doc, text.safe_substitute(title=title, why=why, done=done, tasks=row))
     changed = [doc, *(_add_to_roadmap(path, key, title) if fix else [])]
     state = repo.add_step({"title": title, "doc": doc, "status": "planning", "touches": 0}, "start")
     changed.append(repo.write_state(key, state, path))

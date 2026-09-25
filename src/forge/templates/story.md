@@ -10,7 +10,7 @@ $why
 
 ## Done when
 
-1. <Something anyone can observe once this is done.>
+1. $done
 
 ## Tasks
 
