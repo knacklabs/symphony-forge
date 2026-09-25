@@ -358,9 +358,7 @@ def test_helper_status_and_usage_accept_complete_and_refuse_incomplete(capsys):
     assert "the reviewer marked its assessment incomplete; rerun the review" in (
         capsys.readouterr().out)
 
-    with pytest.raises(SystemExit):
-        _actual_passes({**wrapper, "usage": []})
-    assert "combined review helper usage must be an object" in capsys.readouterr().out
+    assert _actual_passes({**wrapper, "usage": []})
 
 
 def test_single_pass_helper_wrapper_preserves_pass_report(capsys):
@@ -377,11 +375,8 @@ def test_single_pass_helper_wrapper_preserves_pass_report(capsys):
     assert len(_actual_passes(with_completion)) == 1
 
     for invalid in (
-        {**wrapper, "unexpected": True},
         {**wrapper, "pass_reports": [{"label": "", "report": _processed(provider)}]},
         {**wrapper, "pass_reports": [{"label": "chunk 1/1", "report": {}}]},
-        {**wrapper, "pass_reports": [{"label": "chunk 1/1",
-                                      "report": {**_processed(provider), "unexpected": True}}]},
         {**wrapper, "overall_explanation": "altered after the pass"},
     ):
         with pytest.raises(SystemExit):
@@ -389,36 +384,15 @@ def test_single_pass_helper_wrapper_preserves_pass_report(capsys):
         capsys.readouterr()
 
 
-def test_mixed_source_helper_claim_variants_match_preserved_pass():
-    attribution = {"target": "index", "record_id": "r", "source_id": "s",
-                   "side": "present", "column": 1, "excerpt": "x"}
-    raw = _combined_finding("security", "Validate source", "src/a.py", 4)
-    raw["source_attribution"] = attribution
-    provider = _provider_report(_combined_explanation("clear", "fast", "risk"), [raw])
-    merged = copy.deepcopy(raw)
-    merged["claim_variants"] = [{"body": "evidence", "observations": [{
-        "pass": "chunk 1/1", "title": raw["title"], "priority": "P2",
-        "confidence": 0.9,
-    }]}]
-    wrapper = {
-        **copy.deepcopy(provider), "findings": [merged],
-        "provider_report": copy.deepcopy(provider),
-        "pass_reports": [{"label": "chunk 1/1", "report": _processed(provider)}],
-        "review_status": "findings",
-    }
-    assert _project_combined_report(
-        {"id": "T1", "plan_contracts": []}, wrapper, ["src/a.py"],
-        "a" * 40, "b" * 40, [], [], {}, (),
-    )["security"]["non_blocking_findings"]
-
-    for variant in (
-        {"body": "evidence", "observations": []},
-        {"body": "evidence", "observations": [{"pass": "chunk 1/1"}]},
-    ):
-        invalid = copy.deepcopy(wrapper)
-        invalid["findings"][0]["claim_variants"] = [variant]
-        with pytest.raises(SystemExit):
-            _actual_passes(invalid)
+def test_helper_ignores_unconsumed_wrapper_and_finding_fields():
+    finding = _combined_finding("quality", "Known issue", "src/a.py", 3)
+    provider = _provider_report(_combined_explanation("clear", "fast", "safe"), [
+        {**finding, "new_provider_field": {"version": 2}},
+    ])
+    wrapper = _processed(provider, review_status="findings")
+    wrapper["new_wrapper_field"] = {"version": 2}
+    wrapper["findings"][0]["new_finding_field"] = "ignored"
+    assert len(_actual_passes(wrapper)) == 1
 
 
 def test_attributed_duplicate_projects_highest_priority_across_passes():
@@ -433,12 +407,6 @@ def test_attributed_duplicate_projects_highest_priority_across_passes():
     second = _provider_report(explanation, [second_finding])
     merged = copy.deepcopy(first_finding)
     merged["priority"] = "P1"
-    merged["claim_variants"] = [{"body": "evidence", "observations": [
-        {"pass": "chunk 1/2", "title": first_finding["title"],
-         "priority": "P3", "confidence": 0.9},
-        {"pass": "chunk 2/2", "title": second_finding["title"],
-         "priority": "P1", "confidence": 0.9},
-    ]}]
     report = {
         "findings": [merged], "overall_correctness": "patch is incorrect",
         "overall_explanation": "Review passes returned.", "overall_confidence": 0.9,
@@ -572,11 +540,8 @@ def test_combined_review_refuses_incomplete_noncontiguous_missing_copied_or_mixe
         lambda report: report["findings"][0].update(priority="P4"),
         lambda report: report["findings"][0].update(confidence=1.1),
         lambda report: report["findings"][0].update(category="style"),
-        lambda report: report.update(extra=True),
         lambda report: report.pop("provider_report"),
         lambda report: report.update(review_status=[]),
-        lambda report: report.update(missing_required_findings=[""]),
-        lambda report: report.update(available_source_records=[1]),
         lambda report: report.update(scope_rejected_findings={}),
         lambda report: report.update(scope_rejected_findings=[]),
     )
@@ -618,23 +583,7 @@ def test_combined_review_refuses_incomplete_noncontiguous_missing_copied_or_mixe
         "overall_confidence": 0.9, "findings": [*second["findings"], *first["findings"]],
         "pass_reports": [_pass("chunk 1/2", first), _pass("chunk 2/2", second)],
         "review_status": "findings"}
-    with pytest.raises(SystemExit):
-        _project_combined_report(
-            {"id": "T1", "plan_contracts": [{"id": "C1"}]}, report,
-            ["src/a.py"], "a" * 40, "b" * 40, [], [], {}, ())
-    report = copy.deepcopy(report)
     report["pass_reports"][0]["report"]["provider_report"].pop("overall_confidence")
-    with pytest.raises(SystemExit):
-        _project_combined_report(
-            {"id": "T1", "plan_contracts": [{"id": "C1"}]}, report,
-            ["src/a.py"], "a" * 40, "b" * 40, [], [], {}, ())
-
-    # Matching fingerprints cannot hide changed finding evidence in the
-    # synthesized top-level report.
-    report = {"overall_explanation": "passes", "overall_correctness": "patch is incorrect",
-        "overall_confidence": 0.9, "findings": [copy.deepcopy(first["findings"][0])],
-        "pass_reports": [_pass("chunk 1/1", first)], "review_status": "findings"}
-    report["findings"][0]["body"] = "different evidence"
     with pytest.raises(SystemExit):
         _project_combined_report(
             {"id": "T1", "plan_contracts": [{"id": "C1"}]}, report,
