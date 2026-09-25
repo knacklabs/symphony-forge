@@ -97,35 +97,31 @@ def test_verdict_records_fill_contract_verdicts_and_never_count_as_findings():
         assert lenses[lens]["blocking_findings"] == []
 
 
-def test_unmarked_assessment_preserves_findings_and_their_lens_scores():
+def test_unmarked_assessment_cannot_certify_lenses(capsys):
     explanation = "The approval queue omits later pages. Other lenses found no issue."
-    lenses = _project(_report([
-        _finding("[quality] VERDICT C1: implemented", "src/work.py:1 filters the queue"),
-        _finding("[quality] VERDICT C2: implemented", "src/api.py:3 authorises history"),
-        _finding("[quality] Paginate the approval queue", "Later pages cannot be reached",
-                 priority="P1", category="bug"),
-        _finding("[performance] Avoid repeated scans", "Each page request scans the queue",
-                 priority="P2", category="bug"),
-    ], explanation=explanation))
-    assert lenses["quality"]["summary"].endswith(explanation)
-    assert [f["summary"].split(" (")[0] for f in lenses["quality"]["blocking_findings"]] == [
-        "Paginate the approval queue"]
-    assert [f["summary"].split(" (")[0] for f in lenses["performance"]["non_blocking_findings"]] == [
-        "Avoid repeated scans"]
-    assert lenses["quality"]["score"] < lenses["performance"]["score"]
-    assert lenses["performance"]["score"] < lenses["security"]["score"]
+    with pytest.raises(SystemExit):
+        _project(_report([
+            _finding("[quality] VERDICT C1: implemented", "src/work.py:1 filters the queue"),
+            _finding("[quality] VERDICT C2: implemented", "src/api.py:3 authorises history"),
+            _finding("[quality] Paginate the approval queue", "Later pages cannot be reached",
+                     priority="P1", category="bug"),
+            _finding("[performance] Avoid repeated scans", "Each page request scans the queue",
+                     priority="P2", category="bug"),
+        ], explanation=explanation))
+    assert "combined review needs one non-empty assessment for quality" in capsys.readouterr().out
 
 
 def test_reordered_and_repeated_markers_take_the_first_complete_block():
     explanation = (
         "BEGIN FORGE ASSESSMENT security\nSecurity first.\nEND FORGE ASSESSMENT security\n"
         "BEGIN FORGE ASSESSMENT quality\nFirst quality.\nEND FORGE ASSESSMENT quality\n"
-        "BEGIN FORGE ASSESSMENT quality\nSecond quality.\nEND FORGE ASSESSMENT quality"
+        "BEGIN FORGE ASSESSMENT quality\nSecond quality.\nEND FORGE ASSESSMENT quality\n"
+        "BEGIN FORGE ASSESSMENT performance\nMeasured.\nEND FORGE ASSESSMENT performance"
     )
     sections, _ = _pass_sections({"overall_explanation": explanation})
     assert sections == {
         "quality": "First quality.",
-        "performance": explanation,
+        "performance": "Measured.",
         "security": "Security first.",
     }
 

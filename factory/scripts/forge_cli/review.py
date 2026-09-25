@@ -440,7 +440,7 @@ def _combined_prompt(task: dict, *, repo_readable: bool = True,
     return ("\n".join(lines).rstrip() + "\n").encode()
 
 
-def _pass_sections(report: dict) -> tuple[dict[str, str], list[str]]:
+def _pass_sections(report: dict, *, allow_missing: bool = False) -> tuple[dict[str, str], list[str]] | None:
     explanation = report.get("overall_explanation")
     if not isinstance(explanation, str) or len(explanation) > 3000:
         fail("combined review pass needs overall_explanation within 3000 characters")
@@ -448,6 +448,7 @@ def _pass_sections(report: dict) -> tuple[dict[str, str], list[str]]:
     markers = {marker for _, begin, end in SECTION_MARKERS for marker in (begin, end)}
     positions: dict[str, tuple[int, int]] = {}
     sections: dict[str, str] = {}
+    missing: list[str] = []
     for lens, begin, end in SECTION_MARKERS:
         for start, line in enumerate(lines):
             if line != begin:
@@ -461,9 +462,11 @@ def _pass_sections(report: dict) -> tuple[dict[str, str], list[str]]:
                 sections[lens] = body
                 break
         if lens not in sections:
-            sections[lens] = explanation.strip() or "no separate assessment"
+            missing.append(lens)
     spans = sorted(positions.values())
     if any(left[1] >= right[0] for left, right in zip(spans, spans[1:])):
+        if allow_missing:
+            return None
         fail("combined review lens sections overlap")
     if "quality" in positions:
         start, stop = positions["quality"]
@@ -471,6 +474,10 @@ def _pass_sections(report: dict) -> tuple[dict[str, str], list[str]]:
             fail("combined review VERDICT lines must appear only in the quality assessment")
     if len({sections[lens] for lens in positions}) != len(positions):
         fail("combined review copied one lens assessment into another lens")
+    if missing:
+        if allow_missing:
+            return None
+        fail(f"combined review needs one non-empty assessment for {missing[0]}")
     return sections, lines
 
 
@@ -1407,24 +1414,40 @@ def _run_skill(skill: Path, worktree: Path, base_sha: str, prompt_rel: str,
     # review was ever in flight. A delegation is covered by its own ledger; a
     # review was the blind spot, and it is the release the coordinator is told
     # to watch every time.
-    started = _record_codex_run(ledger, prompt_rel, argv)
-    process = subprocess.Popen(argv, cwd=worktree,
-                               env={**os.environ, "PYTHONUTF8": "1"})
-    _stamp_codex_run(ledger, started, pid=process.pid)
-    try:
-        returncode = process.wait()
-    finally:
-        _close_codex_run(ledger, started, getattr(process, "returncode", None))
-    if returncode not in (0, 1, 2):  # 1: findings; 2: incomplete, judged below
-        fail(f"autoreview exited {returncode} for {prompt_rel}; see its output above")
-    if not json_out.is_file():
-        fail(f"autoreview produced no JSON for {prompt_rel} (the run aborted?)")
-    raw = json_out.read_bytes()
-    try:
-        parsed = json.loads(raw.decode("utf-8"))
-    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
-        fail(f"autoreview produced invalid UTF-8 JSON for {prompt_rel}: {exc}")
-    return (parsed, raw) if return_raw else parsed
+    for attempt in range(2):
+        json_out.unlink(missing_ok=True)
+        started = _record_codex_run(ledger, prompt_rel, argv)
+        process = subprocess.Popen(argv, cwd=worktree,
+                                   env={**os.environ, "PYTHONUTF8": "1"})
+        _stamp_codex_run(ledger, started, pid=process.pid)
+        try:
+            returncode = process.wait()
+        finally:
+            _close_codex_run(ledger, started, getattr(process, "returncode", None))
+        if returncode not in (0, 1, 2):  # 1: findings; 2: incomplete, judged below
+            fail(f"autoreview exited {returncode} for {prompt_rel}; see its output above")
+        if not json_out.is_file():
+            fail(f"autoreview produced no JSON for {prompt_rel} (the run aborted?)")
+        raw = json_out.read_bytes()
+        try:
+            parsed = json.loads(raw.decode("utf-8"))
+        except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+            fail(f"autoreview produced invalid UTF-8 JSON for {prompt_rel}: {exc}")
+        if returncode in (0, 1) and prompt_rel.endswith(".combined.md"):
+            passes = _actual_passes(parsed)
+            for _label, wrapper in passes:
+                for finding in wrapper["provider_report"]["findings"]:
+                    _tagged_finding(finding)
+            missing = [wrapper["provider_report"] for _label, wrapper in passes
+                       if _pass_sections(wrapper["provider_report"],
+                                         allow_missing=True) is None]
+            if missing:
+                if attempt == 0:
+                    print("reviewer omitted the assessment markers; retrying review pass once",
+                          flush=True)
+                    continue
+                _pass_sections(missing[0])
+        return (parsed, raw) if return_raw else parsed
 
 
 def reject_finding(base: Path, task_id: str, lens: str, match: str, *,

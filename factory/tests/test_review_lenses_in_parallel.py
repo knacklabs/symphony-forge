@@ -16,7 +16,9 @@ from test_gates import (  # noqa: F401
 )
 
 sys.path.insert(0, str(HARNESS / "factory" / "scripts"))
-from forge_cli.review import _helper_identity, codex_runs_path, review_task  # noqa: E402
+from forge_cli.review import (  # noqa: E402
+    _helper_identity, _project_combined_report, _run_skill, codex_runs_path, review_task,
+)
 from forge_cli.stages import (  # noqa: E402
     load_stages, reviewed_meaning_identity, task_for,
 )
@@ -49,6 +51,18 @@ provider = {
     ),
     "overall_confidence": 0.9,
 }
+if os.environ.get("FAKE_MARKER_STATE"):
+    state = pathlib.Path(os.environ["FAKE_MARKER_STATE"])
+    attempts = int(state.read_text()) + 1 if state.exists() else 1
+    state.write_text(str(attempts))
+    if attempts == 1 or os.environ.get("FAKE_ALWAYS_MISSING"):
+        provider["overall_explanation"] = (
+            "BEGIN FORGE ASSESSMENT quality\nUnclosed assessment."
+            if os.environ.get("FAKE_MALFORMED_MARKERS")
+            else "No separate lens assessments."
+        )
+    if os.environ.get("FAKE_INVALID_REPORT"):
+        provider["overall_correctness"] = "unknown"
 report = {**provider, "provider_report": provider, "review_status": "scoped-clean"}
 out.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
 if os.environ.get("FAKE_MUTATE_HELPER"):
@@ -63,6 +77,20 @@ def _fake_skill(tmp_path: Path) -> Path:
     path = tmp_path / "fake-autoreview.py"
     path.write_text(FAKE_REVIEW, encoding="utf-8")
     return path
+
+
+def _marker_review(tmp_path: Path) -> tuple[dict, bytes]:
+    brief = tmp_path / ".factory/review-briefs"
+    brief.mkdir(parents=True)
+    (brief / "T1.combined.md").write_text(
+        "BEGIN FORGE ASSESSMENT quality\n"
+        "BEGIN FORGE ASSESSMENT performance\n"
+        "BEGIN FORGE ASSESSMENT security\n"
+        "[quality] [performance] [security] ")
+    (brief / "all.md").write_text("### Approved task inputs\n")
+    return _run_skill(_fake_skill(tmp_path), tmp_path, "a" * 40,
+                      ".factory/review-briefs/T1.combined.md", tmp_path / "result.json",
+                      "claude", "P3", return_raw=True)
 
 
 def _built(repo: Path, tmp_path: Path) -> None:
@@ -145,6 +173,56 @@ def test_default_review_uses_one_helper_and_publishes_one_generation(repo, tmp_p
     assert generation["input"] == {
         "sha256": hashlib.sha256(prompt).hexdigest(), "bytes": len(prompt),
     }
+
+
+@pytest.mark.parametrize("malformed", [False, True])
+def test_review_retries_missing_assessment_markers_once(
+        tmp_path, monkeypatch, capsys, malformed):
+    state = tmp_path / "attempts"
+    monkeypatch.setenv("FAKE_MARKER_STATE", str(state))
+    if malformed:
+        monkeypatch.setenv("FAKE_MALFORMED_MARKERS", "1")
+
+    reviewed, raw = _marker_review(tmp_path)
+
+    assert state.read_text() == "2"
+    assert capsys.readouterr().out.count(
+        "reviewer omitted the assessment markers; retrying review pass once") == 1
+    assert json.loads(raw) == reviewed
+    assert "BEGIN FORGE ASSESSMENT quality" in reviewed["overall_explanation"]
+    artifacts = _project_combined_report(
+        {"id": "T1", "plan_contracts": [{"id": "C1"}]}, reviewed,
+        ["src/core.py"], "a" * 40, "b" * 40, [], [], {}, ())
+    assert "VERDICT C1: implemented" in artifacts["quality"]["summary"]
+
+
+def test_review_refuses_two_passes_without_assessment_markers(
+        tmp_path, monkeypatch, capsys):
+    state = tmp_path / "attempts"
+    monkeypatch.setenv("FAKE_MARKER_STATE", str(state))
+    monkeypatch.setenv("FAKE_ALWAYS_MISSING", "1")
+
+    with pytest.raises(SystemExit):
+        _marker_review(tmp_path)
+
+    assert state.read_text() == "2"
+    output = capsys.readouterr().out
+    assert output.count("reviewer omitted the assessment markers; retrying review pass once") == 1
+    assert "combined review needs one non-empty assessment for quality" in output
+
+
+def test_review_does_not_retry_invalid_report(tmp_path, monkeypatch, capsys):
+    state = tmp_path / "attempts"
+    monkeypatch.setenv("FAKE_MARKER_STATE", str(state))
+    monkeypatch.setenv("FAKE_INVALID_REPORT", "1")
+
+    with pytest.raises(SystemExit):
+        _marker_review(tmp_path)
+
+    assert state.read_text() == "1"
+    output = capsys.readouterr().out
+    assert "combined review report has invalid overall_correctness" in output
+    assert "retrying review pass" not in output
 
 
 def test_review_helper_identity_mismatch_refuses_publication(repo, tmp_path, monkeypatch):
