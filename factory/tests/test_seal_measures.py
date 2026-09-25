@@ -260,19 +260,14 @@ def test_check_pr_ticket_ignores_records_merged_in_from_the_trunk(repo):
     assert merged not in out
 
 
-FAKE_UPSTREAM = "a" * 40
-
-
-def _fake_git(monkeypatch, *, online: bool = True, upstream: str = FAKE_UPSTREAM):
-    """Stand in for run_quiet: no network, a fake upstream, a fake clone."""
+def _fake_git(monkeypatch, *, online: bool = True):
+    """Stand in for run_quiet: no network, a fake clone of the pinned release."""
     from forge_cli import doctor
 
     calls: list[list[str]] = []
 
     def run_quiet(argv, **_kwargs):
         calls.append(list(argv))
-        if argv[:2] == ["git", "ls-remote"]:
-            return (0, f"{upstream}\tHEAD") if online else (128, "could not resolve host")
         if argv[:2] == ["git", "clone"]:
             if not online:
                 return 128, "could not resolve host"
@@ -280,8 +275,8 @@ def _fake_git(monkeypatch, *, online: bool = True, upstream: str = FAKE_UPSTREAM
             skill.mkdir(parents=True)
             (skill / "SKILL.md").write_text("fresh reviewer\n")
             return 0, ""
-        if "rev-parse" in argv:
-            return 0, upstream
+        if "fetch" in argv or "checkout" in argv:
+            return (0, "") if online else (128, "could not resolve host")
         return 0, ""
 
     monkeypatch.setattr(doctor, "run_quiet", run_quiet)
@@ -297,21 +292,25 @@ def test_doctor_reports_a_stale_autoreview_copy_and_fix_refreshes_both_homes(
     for copy in (codex_copy, claude_copy):
         copy.mkdir(parents=True)
         (copy / "SKILL.md").write_text("old reviewer\n")
-    _fake_git(monkeypatch)
+    calls = _fake_git(monkeypatch)
 
     # Installed before refreshes existed (no recorded sha): stale.
     sha = doctor._autoreview_upstream_sha()
-    assert sha == FAKE_UPSTREAM
+    assert sha == doctor.AUTOREVIEW_PIN
     ok, detail = doctor._autoreview_status(tmp_path, sha)
-    assert not ok and detail == f"stale (upstream {FAKE_UPSTREAM})"
+    assert not ok and detail == f"stale (expected {doctor.AUTOREVIEW_PIN})"
 
     assert doctor._autoreview_install(tmp_path, sha)
+    assert any(call[-2:] == ["origin", doctor.AUTOREVIEW_PIN]
+               for call in calls if "fetch" in call)
+    assert any(call[-1] == doctor.AUTOREVIEW_PIN
+               for call in calls if "checkout" in call)
     for copy in (codex_copy, claude_copy):
         assert (copy / "SKILL.md").read_text() == "fresh reviewer\n"
-        assert (copy / ".upstream-sha").read_text().strip() == FAKE_UPSTREAM
+        assert (copy / ".upstream-sha").read_text().strip() == doctor.AUTOREVIEW_PIN
     assert doctor._autoreview_status(tmp_path, sha) == (True, str(codex_copy))
 
-    # Upstream moves again: stale again, until the next --fix.
+    # A different installed commit is a mismatch.
     assert not doctor._autoreview_status(tmp_path, "b" * 40)[0]
 
 
@@ -320,24 +319,24 @@ def test_doctor_refresh_backs_up_a_locally_modified_skill(tmp_path, monkeypatch)
 
     codex_copy = doctor._autoreview_dir(tmp_path)
     _fake_git(monkeypatch)
-    assert doctor._autoreview_install(tmp_path, FAKE_UPSTREAM)
+    assert doctor._autoreview_install(tmp_path, doctor.AUTOREVIEW_PIN)
     recorded = (codex_copy / ".installed-digest").read_text().strip()
     assert recorded == doctor._autoreview_tree_digest(codex_copy)
 
     # Untouched: a refresh replaces in place, no backup.
-    _fake_git(monkeypatch, upstream="b" * 40)
-    assert doctor._autoreview_install(tmp_path, "b" * 40)
+    _fake_git(monkeypatch)
+    assert doctor._autoreview_install(tmp_path, doctor.AUTOREVIEW_PIN)
     assert not list(codex_copy.parent.glob("autoreview.bak-*"))
 
     # Modified locally: the tree is moved aside before the fresh copy lands.
     (codex_copy / "SKILL.md").write_text("my local tweak\n")
-    _fake_git(monkeypatch, upstream="c" * 40)
-    assert doctor._autoreview_install(tmp_path, "c" * 40)
+    _fake_git(monkeypatch)
+    assert doctor._autoreview_install(tmp_path, doctor.AUTOREVIEW_PIN)
     backups = list(codex_copy.parent.glob("autoreview.bak-*"))
     assert len(backups) == 1
     assert (backups[0] / "SKILL.md").read_text() == "my local tweak\n"
     assert (codex_copy / "SKILL.md").read_text() == "fresh reviewer\n"
-    assert (codex_copy / ".upstream-sha").read_text().strip() == "c" * 40
+    assert (codex_copy / ".upstream-sha").read_text().strip() == doctor.AUTOREVIEW_PIN
 
 
 def test_doctor_autoreview_refresh_skips_offline_and_never_creates_claude_copy(
@@ -349,18 +348,17 @@ def test_doctor_autoreview_refresh_skips_offline_and_never_creates_claude_copy(
     (codex_copy / "SKILL.md").write_text("old reviewer\n")
 
     _fake_git(monkeypatch, online=False)
-    assert doctor._autoreview_upstream_sha() == ""
-    # No network, no verdict: the copy is not called stale.
-    assert doctor._autoreview_status(tmp_path, "") == (True, str(codex_copy))
-    assert not doctor._autoreview_install(tmp_path, "")
+    assert doctor._autoreview_upstream_sha() == doctor.AUTOREVIEW_PIN
+    assert not doctor._autoreview_status(tmp_path, doctor.AUTOREVIEW_PIN)[0]
+    assert not doctor._autoreview_install(tmp_path, doctor.AUTOREVIEW_PIN)
     assert (codex_copy / "SKILL.md").read_text() == "old reviewer\n"
 
     _fake_git(monkeypatch)
-    assert doctor._autoreview_install(tmp_path, FAKE_UPSTREAM)
+    assert doctor._autoreview_install(tmp_path, doctor.AUTOREVIEW_PIN)
     # Only ~/.codex is the required home; ~/.claude is refreshed when it
     # already holds a copy, never created.
     assert not (tmp_path / ".claude" / "skills" / "autoreview").exists()
-    assert (codex_copy / ".upstream-sha").read_text().strip() == FAKE_UPSTREAM
+    assert (codex_copy / ".upstream-sha").read_text().strip() == doctor.AUTOREVIEW_PIN
     # A missing copy reads as not installed, not stale.
-    assert doctor._autoreview_status(tmp_path / "other", FAKE_UPSTREAM) == (
+    assert doctor._autoreview_status(tmp_path / "other", doctor.AUTOREVIEW_PIN) == (
         False, "not installed")
