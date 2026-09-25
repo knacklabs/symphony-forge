@@ -7,6 +7,8 @@ on:
   pull_request:
   push:
     branches: [main]
+    # Any tag, a throwaway test tag included, also checks that Forge installs from it.
+    tags: ["**"]
 
 permissions:
   contents: read
@@ -40,3 +42,39 @@ jobs:
           git diff --numstat HEAD^1 HEAD \
             | awk '{a += $1; d += $2} END {printf "Net lines: %+d (%d added, %d removed)\n", a - d, a, d}' \
             | tee -a "$GITHUB_STEP_SUMMARY"
+
+  installed-from-tag:
+    if: github.ref_type == 'tag'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v6
+      - name: Install Forge from the tag
+        run: uv tool install "git+https://github.com/${GITHUB_REPOSITORY}@${GITHUB_REF_NAME}"
+      - name: forge --version prints the version at the tag
+        run: |
+          version=$(sed -n 's/^__version__ = "\(.*\)"$/\1/p' src/forge/__init__.py)
+          forge --version
+          test "$(forge --version)" = "forge v$version"
+      - name: A fresh client opens the shipped standards page and templates
+        run: |
+          # Every Markdown file under src/forge/ at the tag (the standards page and every
+          # template) ships inside the installed package.
+          package=$("$(uv tool dir)/symphony-forge/bin/python" -c \
+            'import forge, pathlib; print(pathlib.Path(forge.__file__).parent)')
+          git ls-files 'src/forge/*.md' | while read -r file; do
+            test -s "$package/${file#src/forge/}" || { echo "Not shipped: $file"; exit 1; }
+          done
+          # forge init in a fresh client writes its files from the installed templates.
+          # A stub gh stands in for GitHub's branch protection.
+          mkdir "$RUNNER_TEMP/stub" && printf '#!/bin/sh\nexit 0\n' > "$RUNNER_TEMP/stub/gh"
+          chmod +x "$RUNNER_TEMP/stub/gh"
+          git init -q --bare -b main "$RUNNER_TEMP/client.git"
+          git init -q -b main "$RUNNER_TEMP/client" && cd "$RUNNER_TEMP/client"
+          git remote add origin "$RUNNER_TEMP/client.git"
+          git config user.name "Forge CI" && git config user.email forge-ci@example.com
+          PATH="$RUNNER_TEMP/stub:$PATH" forge init
+          for file in AGENTS.md CLAUDE.md .claude/skills/forge/SKILL.md docs/product/BRIEF.md; do
+            grep -q . "$file" || { echo "Empty: $file"; exit 1; }
+          done
