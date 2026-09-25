@@ -1,0 +1,86 @@
+{
+  "event": "done",
+  "id": "Q-0244-5998",
+  "profile": "lite",
+  "by": "Ravi Kiran Vemula",
+  "reason": "Accept the refreshed Autoreview helper's review_completion field",
+  "base_sha": "fcbb064c7be307bec63e06debe5fdab0274d4d64",
+  "started_at": "2026-09-25T02:58:54+00:00",
+  "completed_at": "2026-09-25T04:21:40+00:00",
+  "files": [
+    "factory/scripts/forge_cli/doctor.py",
+    "factory/scripts/forge_cli/review.py",
+    "factory/tests/test_gates.py",
+    "factory/tests/test_review_task_delta.py",
+    "factory/tests/test_seal_measures.py"
+  ],
+  "reviews": {
+    "quality": {
+      "generated_by": "autoreview",
+      "score": 10,
+      "summary": "quality lens over Q-0244-5998 (5 product path(s), fcbb064..589d5a5, Codex via the autoreview skill): 0 blocking, 0 non-blocking. The supplied diff shows no actionable correctness defect. No task-specific plan contracts apply.",
+      "blocking_findings": [],
+      "non_blocking_findings": [],
+      "recommendation": "approve",
+      "reviewed_scope": [
+        "factory/scripts/forge_cli/doctor.py",
+        "factory/scripts/forge_cli/review.py",
+        "factory/tests/test_gates.py",
+        "factory/tests/test_review_task_delta.py",
+        "factory/tests/test_seal_measures.py"
+      ],
+      "skills_used": [],
+      "contract_verdicts": [],
+      "review_base_sha": "fcbb064c7be307bec63e06debe5fdab0274d4d64",
+      "branch_diff_digest": "4e0ccf2eeeec06cf5c92be7451d609d4e57a6e07a0650f6f9b570f8699333227",
+      "commit": "589d5a558285e328ec9cad00d18801792e39333d",
+      "aspect": "quality",
+      "residual_risks": [],
+      "recorded_at": "2026-09-25T04:21:39+00:00"
+    },
+    "performance": {
+      "generated_by": "autoreview",
+      "score": 10,
+      "summary": "performance lens over Q-0244-5998 (5 product path(s), fcbb064..589d5a5, Codex via the autoreview skill): 0 blocking, 0 non-blocking. The changes show no material hot-path or resource-use regression.",
+      "blocking_findings": [],
+      "non_blocking_findings": [],
+      "recommendation": "approve",
+      "reviewed_scope": [
+        "factory/scripts/forge_cli/doctor.py",
+        "factory/scripts/forge_cli/review.py",
+        "factory/tests/test_gates.py",
+        "factory/tests/test_review_task_delta.py",
+        "factory/tests/test_seal_measures.py"
+      ],
+      "skills_used": [],
+      "review_base_sha": "fcbb064c7be307bec63e06debe5fdab0274d4d64",
+      "branch_diff_digest": "4e0ccf2eeeec06cf5c92be7451d609d4e57a6e07a0650f6f9b570f8699333227",
+      "commit": "589d5a558285e328ec9cad00d18801792e39333d",
+      "aspect": "performance",
+      "residual_risks": [],
+      "recorded_at": "2026-09-25T04:21:40+00:00"
+    },
+    "security": {
+      "generated_by": "autoreview",
+      "score": 10,
+      "summary": "security lens over Q-0244-5998 (5 product path(s), fcbb064..589d5a5, Codex via the autoreview skill): 0 blocking, 0 non-blocking. Pinning the Autoreview checkout to a specific commit reduces upstream change risk. No concrete security defect is evident in the supplied diff.",
+      "blocking_findings": [],
+      "non_blocking_findings": [],
+      "recommendation": "approve",
+      "reviewed_scope": [
+        "factory/scripts/forge_cli/doctor.py",
+        "factory/scripts/forge_cli/review.py",
+        "factory/tests/test_gates.py",
+        "factory/tests/test_review_task_delta.py",
+        "factory/tests/test_seal_measures.py"
+      ],
+      "skills_used": [],
+      "review_base_sha": "fcbb064c7be307bec63e06debe5fdab0274d4d64",
+      "branch_diff_digest": "4e0ccf2eeeec06cf5c92be7451d609d4e57a6e07a0650f6f9b570f8699333227",
+      "commit": "589d5a558285e328ec9cad00d18801792e39333d",
+      "aspect": "security",
+      "residual_risks": [],
+      "recorded_at": "2026-09-25T04:21:40+00:00"
+    }
+  }
+}
