@@ -25,7 +25,7 @@ def main(output, reports):
             durations[identity] = float(case.attrib["time"])
     if not durations:
         raise ValueError("No JUnit test cases found")
-    Path(output).write_text(json.dumps(durations, indent=2, sort_keys=True) + "\n")
+    Path(output).write_text(json.dumps(durations, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
 
 if __name__ == "__main__":
