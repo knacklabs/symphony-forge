@@ -1,8 +1,9 @@
 ---
-status: accepted
+status: superseded
 confirmed_by: "User (explicit approval, Codex conversation 2026-09-11)"
 date: 2026-09-11
 stories: [FORGE-COORD-1]
+superseded_by: 0092-close-is-green-ci-and-clean-review
 ---
 
 # One combined review generation with one selected pointer

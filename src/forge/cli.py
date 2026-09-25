@@ -111,12 +111,13 @@ def _parser() -> _Parser:
             command = commands.add_parser(name, help=text, description=text)
         for names, options in arguments:
             command.add_argument(*names, **options)
-        command.set_defaults(words=words, target=target, changes=changes)
+        # "handler", not "target": `forge read` has a positional argument named target.
+        command.set_defaults(words=words, handler=target, changes=changes)
     return parser
 
 
 def _function(args: argparse.Namespace) -> Callable[[argparse.Namespace], int | None]:
-    module, name = args.target.split(":")
+    module, name = args.handler.split(":")
     try:
         found = importlib.import_module(f"forge.{module}")
     except ModuleNotFoundError as exc:
@@ -148,6 +149,9 @@ def _run(argv: list[str] | None) -> int:
 
 
 def main(argv: list[str] | None = None) -> int:
+    # Piped output on Windows uses a legacy code page; never crash on a character like "→".
+    for stream in (sys.stdout, sys.stderr):
+        stream.reconfigure(errors="replace")  # type: ignore[union-attr]
     try:
         return _run(argv)
     except repo.Refused as refusal:
