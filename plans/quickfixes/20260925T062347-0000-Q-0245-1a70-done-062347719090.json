@@ -1,0 +1,95 @@
+{
+  "event": "done",
+  "id": "Q-0245-1a70",
+  "profile": "lite",
+  "by": "Ravi Kiran Vemula",
+  "reason": "Lite budget counts only the window's own changes, not files merged in from main",
+  "base_sha": "454f4f9447915de4ebe39b3f0272c7618f5c531b",
+  "started_at": "2026-09-25T05:56:50+00:00",
+  "completed_at": "2026-09-25T06:23:47+00:00",
+  "files": [
+    "factory/scripts/forge_cli/findings.py",
+    "factory/scripts/forge_cli/quickfix.py",
+    "factory/scripts/forge_cli/review.py",
+    "factory/scripts/record_review_from_json.py",
+    "factory/tests/test_gates.py"
+  ],
+  "reviews": {
+    "quality": {
+      "generated_by": "autoreview",
+      "score": 9,
+      "summary": "quality lens over Q-0245-1a70 (5 product path(s), 454f4f9..1dea98d, Codex via the autoreview skill): 0 blocking, 1 non-blocking. The new Lite scope filter compares raw manifest paths with potentially quoted diff paths, so valid committed filenames can fail review. No task-specific plan contracts apply.",
+      "blocking_findings": [],
+      "non_blocking_findings": [
+        {
+          "category": "bug",
+          "area": "factory/scripts/forge_cli",
+          "summary": "Parse review diff paths without Git quoting (factory/scripts/forge_cli/review.py:1281): When a committed Lite product filename contains non-ASCII characters or a tab, `_lite_manifest` reads the raw path using `-z`, but this `git diff --name-only` can return a quoted path.",
+          "file_path": "factory/scripts/forge_cli/review.py",
+          "line": 1281,
+          "title": "Parse review diff paths without Git quoting"
+        }
+      ],
+      "recommendation": "approve-with-caveats",
+      "reviewed_scope": [
+        "factory/scripts/forge_cli/findings.py",
+        "factory/scripts/forge_cli/quickfix.py",
+        "factory/scripts/forge_cli/review.py",
+        "factory/scripts/record_review_from_json.py",
+        "factory/tests/test_gates.py"
+      ],
+      "skills_used": [],
+      "contract_verdicts": [],
+      "review_base_sha": "454f4f9447915de4ebe39b3f0272c7618f5c531b",
+      "branch_diff_digest": "09067676f0c2d266805b2478b8a2eb5105e884a746a011c0575364c16feee7c6",
+      "commit": "1dea98d50e4220ba8523a626956a749295c38a50",
+      "aspect": "quality",
+      "residual_risks": [],
+      "recorded_at": "2026-09-25T06:23:46+00:00"
+    },
+    "performance": {
+      "generated_by": "autoreview",
+      "score": 10,
+      "summary": "performance lens over Q-0245-1a70 (5 product path(s), 454f4f9..1dea98d, Codex via the autoreview skill): 0 blocking, 0 non-blocking. The supplied diff does not establish a production performance defect.",
+      "blocking_findings": [],
+      "non_blocking_findings": [],
+      "recommendation": "approve",
+      "reviewed_scope": [
+        "factory/scripts/forge_cli/findings.py",
+        "factory/scripts/forge_cli/quickfix.py",
+        "factory/scripts/forge_cli/review.py",
+        "factory/scripts/record_review_from_json.py",
+        "factory/tests/test_gates.py"
+      ],
+      "skills_used": [],
+      "review_base_sha": "454f4f9447915de4ebe39b3f0272c7618f5c531b",
+      "branch_diff_digest": "09067676f0c2d266805b2478b8a2eb5105e884a746a011c0575364c16feee7c6",
+      "commit": "1dea98d50e4220ba8523a626956a749295c38a50",
+      "aspect": "performance",
+      "residual_risks": [],
+      "recorded_at": "2026-09-25T06:23:47+00:00"
+    },
+    "security": {
+      "generated_by": "autoreview",
+      "score": 10,
+      "summary": "security lens over Q-0245-1a70 (5 product path(s), 454f4f9..1dea98d, Codex via the autoreview skill): 0 blocking, 0 non-blocking. The supplied diff shows no concrete security defect or exposed credential.",
+      "blocking_findings": [],
+      "non_blocking_findings": [],
+      "recommendation": "approve",
+      "reviewed_scope": [
+        "factory/scripts/forge_cli/findings.py",
+        "factory/scripts/forge_cli/quickfix.py",
+        "factory/scripts/forge_cli/review.py",
+        "factory/scripts/record_review_from_json.py",
+        "factory/tests/test_gates.py"
+      ],
+      "skills_used": [],
+      "review_base_sha": "454f4f9447915de4ebe39b3f0272c7618f5c531b",
+      "branch_diff_digest": "09067676f0c2d266805b2478b8a2eb5105e884a746a011c0575364c16feee7c6",
+      "commit": "1dea98d50e4220ba8523a626956a749295c38a50",
+      "aspect": "security",
+      "residual_risks": [],
+      "recorded_at": "2026-09-25T06:23:47+00:00"
+    }
+  }
+}
