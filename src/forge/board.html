@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Forge board</title>
+<style>
+  /* Ported from the old board: warm paper, an oxblood accent, a serif for headings, solid cards.
+     Colour never carries meaning alone; every slow flag says so in words. */
+  :root {
+    --paper: #faf8f4; --surface: #fffdfa; --surface-2: #f2eee6; --ink: #1a1714;
+    --muted: #6f675e; --accent: #8c2f39; --shipped: #2f6b4f; --rule: rgba(26, 23, 20, .12);
+    --shadow: 0 1px 2px rgba(26, 23, 20, .06), 0 1px 3px rgba(26, 23, 20, .07);
+    --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    --sans: system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --paper: #16140f; --surface: #1e1b15; --surface-2: #26221a; --ink: #f0ece4;
+      --muted: #a49b8d; --accent: #d4707a; --shipped: #5fa37e; --rule: rgba(240, 236, 228, .14);
+      --shadow: 0 1px 2px rgba(0, 0, 0, .35);
+    }
+  }
+  * { box-sizing: border-box; margin: 0; }
+  body { background: var(--paper); color: var(--ink); font: 15px/1.55 var(--sans); }
+  main { max-width: 860px; margin: 0 auto; padding: 1.5rem 1rem 3rem; }
+  header { display: flex; flex-wrap: wrap; align-items: baseline; gap: .4rem 1rem;
+           padding-bottom: .9rem; border-bottom: 1px solid var(--rule); }
+  h1 { font: 400 1.5rem/1.1 var(--serif); display: inline-flex; align-items: center; gap: .55rem; }
+  h1::before { content: "\25C6"; width: 28px; height: 28px; border-radius: 8px; display: inline-flex;
+               align-items: center; justify-content: center; font-size: .75rem;
+               color: var(--surface); background: var(--accent); }
+  header p { color: var(--muted); font-size: .85rem; }
+  h2 { font: 600 .72rem/1 var(--sans); letter-spacing: .14em; text-transform: uppercase;
+       color: var(--accent); margin: 2rem 0 .7rem; }
+  h3 { font: 400 1.25rem/1.25 var(--serif); }
+  h4 { font: 600 .68rem/1 var(--sans); letter-spacing: .12em; text-transform: uppercase;
+       color: var(--muted); margin: 1.1rem 0 .45rem; }
+  .card { background: var(--surface); border: 1px solid var(--rule); border-radius: 8px;
+          box-shadow: var(--shadow); padding: 1rem 1.1rem; margin-bottom: .8rem; }
+  .note { background: var(--surface-2); }
+  .sentence { font: 1.05rem/1.4 var(--serif); margin-top: .3rem; }
+  .meta, .took, .detail { color: var(--muted); font-size: .88rem; }
+  ul, ol { padding-left: 1.2rem; }
+  li { margin: .35rem 0; }
+  .numbers li::marker { color: var(--accent); }
+  .status { color: var(--shipped); }
+  .slow { color: var(--accent); font-size: .88rem; border-left: 3px solid var(--accent);
+          padding-left: .5rem; margin-top: .2rem; }
+  .timeline { list-style: none; padding-left: 0; border-left: 2px solid var(--rule); }
+  .timeline li { padding-left: .9rem; position: relative; }
+  .timeline li::before { content: ""; position: absolute; left: -6px; top: .5rem; width: 10px;
+                         height: 10px; border-radius: 50%; background: var(--accent); }
+  .timeline time { display: block; color: var(--muted); font-size: .8rem; }
+  .detail { display: block; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Forge board</h1>
+    <p>Updated $updated</p>
+  </header>
+  <h2>How the factory is doing</h2>
+  <section class="card"><ul class="numbers">$numbers</ul></section>
+  $note
+  <h2>Stories</h2>
+  $stories
+  <h2>Small fixes</h2>
+  $fixes
+</main>
+</body>
+</html>
