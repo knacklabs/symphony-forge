@@ -43,7 +43,8 @@ Build a lean Forge v1 and switch to it. Seventeen owner decisions define it:
 5. **`.factory/` holds current state only.** History lives in git, and reviews and test results
    live in the pull request.
 6. **The board is for non-technical readers.** It tells the whole history and the current state of
-   each story in plain English, built from one sentence that each step writes.
+   each story in plain English. The timeline is built from each merged pull request's plain-English
+   title and summary plus the dates in the current state, so Forge keeps no history of its own.
 7. **Forge is a pinned tool, not a copy.** Clients pin a Forge version and get generated adapter
    files; `forge sync` regenerates them, and upgrading means bumping the pin.
 8. **Workers are a setting:** `claude` or `codex`. Claude workers ship first; Codex workers follow
@@ -130,8 +131,9 @@ and the standards page opens with them.
     0038 (hooks fail loudly), 0040 (Windows user scope), 0061 (host-native questions), 0068
     (workers may use the network) and 0082 (Codex hook trust boundary).
   - The FDE and approval rules: 0089 (FDE discovery) and 0090 (one approval per story).
-  - Client sign-off, 0010 and 0014: still binding. v1 does not enforce them; the sign-off story
-    brings the gate back after the switch.
+  - Client sign-off, 0010 and 0014: still binding. In client repos, v1 refuses story approval
+    until the client sign-off is recorded; the Forge repo itself is exempt, as today. The sign-off
+    story adds the fuller checks after the switch.
 - Any other decision that depends on machinery this rebuild removes (stages, recorders, schemas,
   the write lock, vendoring, lessons, deferrals, audits) is superseded to that extent.
 - The `supersedes:` field holds one slug (0088, simple upgrade, replaced outright by the pinned tool and `forge migrate`). The full list above is the record.
