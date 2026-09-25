@@ -51,7 +51,7 @@ def hook(args: Any) -> int:
         payload = None
     if not isinstance(payload, dict):
         repo.refuse(REFUSALS["bad_payload"])
-    tool, answered = payload.get("tool_name"), _completed(payload)
+    tool, answered = payload.get("tool_name"), _answered(payload)
     approving = tool == "ExitPlanMode" or (tool == "request_user_input" and _asks_approval(payload))
     if not approving and not (tool in QUESTIONS and answered):
         return 0  # any other tool (forge doctor's sample among them) records nothing
@@ -142,6 +142,14 @@ def _completed(payload: dict[str, Any]) -> bool:
     if any(part.get("is_error") is True or part.get("cancelled") is True for part in (payload, response)):
         return False
     return response.get("status") is None or _text(response.get("status")).lower() in SUCCESS
+
+
+def _answered(payload: dict[str, Any]) -> bool:
+    """The human answered: the call completed with a response, and a question's response holds an
+    answer. A plan that ExitPlanMode completed was accepted by the human."""
+    response = payload.get("tool_response")
+    return (_completed(payload) and isinstance(response, dict)
+            and (payload.get("tool_name") == "ExitPlanMode" or bool(response.get("answers"))))
 
 
 def _claude_digest(payload: dict[str, Any]) -> str:

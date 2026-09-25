@@ -84,7 +84,11 @@ def new(args: Any) -> int:
         if not fix_state:
             repo.refuse(REFUSALS["no_fix"], fix=fix)
         why = fix_state.get("why") or why
-        row = f"| {fix.upper()} | {why} | {why} | | | | | no |\n"
+        # The task's Scope is what the fix changed since it left the default branch.
+        base = repo.git("merge-base", repo.default_branch(top), "HEAD", cwd=fix_top)
+        scope = [f"`{path}`" for path in repo.git("diff", "--name-only", base, cwd=fix_top).splitlines()
+                 if not path.startswith(".factory/")]
+        row = f"| {fix.upper()} | {why} | {why} | — | {', '.join(scope)} | | none | no |\n"
     elif key not in {item["key"] for item in repo.roadmap(top)}:
         repo.refuse(REFUSALS["not_on_roadmap"], key=key)
     title = args.title or (why if fix else "")

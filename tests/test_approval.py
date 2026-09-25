@@ -71,7 +71,7 @@ def test_14_approval_capture(repo, claude_payload, codex_payload):
 
 def test_32_client_signoff(repo, claude_payload):
     setup(repo, kind="client", keys=("SHOP", "OWN"))
-    ready(repo, "SHOP")
+    shop = ready(repo, "SHOP")
     head = repo.git("rev-parse", "story/SHOP")
     approval = claude_plan(claude_payload, DOC)
 
@@ -101,6 +101,7 @@ def test_32_client_signoff(repo, claude_payload):
     repo.git("add", "-A")
     repo.git("commit", "-q", "-m", "The client signed off")
     repo.git("push", "-q", "origin", "main")  # as when the decision's fix merges
+    assert not (shop / "docs" / "decisions").exists()  # so it is found on the default branch
     recorded = hook(repo, approval)
     assert recorded.returncode == 0, recorded.stderr
     assert "Next: forge task start SHOP/SAVE" in repo.forge("next").stdout

@@ -11,15 +11,18 @@ def test_15_human_touches(repo, claude_payload, codex_payload):
     shop = ready(repo, "SHOP")
     question = {"questions": [{"question": "Which colour?", "options": [{"label": "Blue"}]}]}
 
-    def ask(cwd, answered=True):
-        response = {"answers": {"Which colour?": "Blue"}} if answered else {"is_error": True}
+    def ask(cwd, response=None):
+        response = response or {"answers": {"Which colour?": "Blue"}}
         assert hook(repo, claude_payload("PostToolUse", "AskUserQuestion", question, response,
                                          cwd=cwd)).returncode == 0
 
     # In the story's worktree, an answered question and the approval each add one; a question
-    # that failed adds none.
+    # that failed, or whose response has no answer, adds none.
     ask(shop)
-    ask(shop, answered=False)
+    for unanswered in ({"is_error": True}, {"answers": {}}, {"status": "success"}):
+        ask(shop, unanswered)
+    assert hook(repo, claude_payload("PostToolUse", "AskUserQuestion", question,
+                                     cwd=shop)).returncode == 0  # no tool_response at all
     assert hook(repo, claude_plan(claude_payload, (shop / "plans" / "SHOP.md").read_text("utf-8"),
                                   cwd=shop)).returncode == 0
 

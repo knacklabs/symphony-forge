@@ -279,6 +279,9 @@ def test_22_promote(repo):
     assert repo.git("branch", "--list", "fix/keep-baskets") == ""
     doc = repo.git("show", "story/BASKET:plans/BASKET.md")
     assert "## Why\n\nShoppers lose their basket when they leave\n" in doc
-    assert "| KEEP-BASKETS |" in doc
+    row = next(line for line in doc.splitlines() if line.startswith("| KEEP-BASKETS |"))
+    assert "`basket.py`" in row and ".factory" not in row  # its Scope is what the fix changed
     roadmap = json.loads(repo.git("show", "story/BASKET:plans/roadmap.json"))
     assert [item["key"] for item in roadmap["items"]] == ["SHOP", "BASKET"]
+    read = repo.forge("read", "BASKET")  # the promoted story's doc is well formed
+    assert read.returncode == 0, read.stderr
