@@ -1,0 +1,12 @@
+{
+  "event": "open",
+  "id": "Q-0252-11a0",
+  "profile": "lite",
+  "reason": "A review with valid findings is not thrown away when the reviewer omits assessment markers",
+  "started_at": "2026-09-25T08:46:34+00:00",
+  "max_files": 5,
+  "files": [],
+  "harness_source": true,
+  "by": "Ravi Kiran Vemula",
+  "base_sha": "f29ca673f7d4c3ba601d716d1a5047ea36251389"
+}

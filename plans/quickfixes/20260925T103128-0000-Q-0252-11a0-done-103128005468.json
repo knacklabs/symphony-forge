@@ -1,0 +1,99 @@
+{
+  "event": "done",
+  "id": "Q-0252-11a0",
+  "profile": "lite",
+  "by": "Ravi Kiran Vemula",
+  "reason": "A review with valid findings is not thrown away when the reviewer omits assessment markers",
+  "base_sha": "f29ca673f7d4c3ba601d716d1a5047ea36251389",
+  "started_at": "2026-09-25T08:46:34+00:00",
+  "completed_at": "2026-09-25T10:31:28+00:00",
+  "files": [
+    "factory/scripts/forge_cli/review.py",
+    "factory/tests/test_review_lenses_in_parallel.py",
+    "factory/tests/test_review_task_delta.py",
+    "factory/tests/test_review_verdict_records.py"
+  ],
+  "reviews": {
+    "quality": {
+      "generated_by": "autoreview",
+      "score": 9,
+      "summary": "quality lens over Q-0252-11a0 (4 product path(s), f29ca67..5e898d0, Codex via the autoreview skill): 0 blocking, 2 non-blocking. The retry logic can assign retained findings to the wrong review pass, and the tag fallback can assign findings to the wrong lens. These conclusions follow from the supplied diff; unchanged repository files were unavailable.",
+      "blocking_findings": [],
+      "non_blocking_findings": [
+        {
+          "category": "bug",
+          "area": "factory/scripts/forge_cli",
+          "summary": "Keep retained findings in their originating review pass (factory/scripts/forge_cli/review.py:1458): When a combined review has multiple passes, one pass omits assessment markers, and the retry omits a finding from a later pass, this code appends that finding to `pass_reports[0]` regardless of its origin.",
+          "file_path": "factory/scripts/forge_cli/review.py",
+          "line": 1458,
+          "title": "Keep retained findings in their originating review pass"
+        },
+        {
+          "category": "bug",
+          "area": "factory/scripts/forge_cli",
+          "summary": "Do not route every untagged finding to quality (factory/scripts/forge_cli/review.py:820): If a provider emits an untagged finding with category `security`, this fallback adds `[quality]`.",
+          "file_path": "factory/scripts/forge_cli/review.py",
+          "line": 820,
+          "title": "Do not route every untagged finding to quality"
+        }
+      ],
+      "recommendation": "approve-with-caveats",
+      "reviewed_scope": [
+        "factory/scripts/forge_cli/review.py",
+        "factory/tests/test_review_lenses_in_parallel.py",
+        "factory/tests/test_review_task_delta.py",
+        "factory/tests/test_review_verdict_records.py"
+      ],
+      "skills_used": [],
+      "contract_verdicts": [],
+      "review_base_sha": "f29ca673f7d4c3ba601d716d1a5047ea36251389",
+      "branch_diff_digest": "5bf82947736d05118cf222129fe351c14323bcdae0c13983b94b7db55c41a832",
+      "commit": "5e898d03515ef0e01988d777cfa077742c255273",
+      "aspect": "quality",
+      "residual_risks": [],
+      "recorded_at": "2026-09-25T10:31:21+00:00"
+    },
+    "performance": {
+      "generated_by": "autoreview",
+      "score": 10,
+      "summary": "performance lens over Q-0252-11a0 (4 product path(s), f29ca67..5e898d0, Codex via the autoreview skill): 0 blocking, 0 non-blocking. The retry adds one provider invocation when markers are missing. The diff shows no actionable production performance defect.",
+      "blocking_findings": [],
+      "non_blocking_findings": [],
+      "recommendation": "approve",
+      "reviewed_scope": [
+        "factory/scripts/forge_cli/review.py",
+        "factory/tests/test_review_lenses_in_parallel.py",
+        "factory/tests/test_review_task_delta.py",
+        "factory/tests/test_review_verdict_records.py"
+      ],
+      "skills_used": [],
+      "review_base_sha": "f29ca673f7d4c3ba601d716d1a5047ea36251389",
+      "branch_diff_digest": "5bf82947736d05118cf222129fe351c14323bcdae0c13983b94b7db55c41a832",
+      "commit": "5e898d03515ef0e01988d777cfa077742c255273",
+      "aspect": "performance",
+      "residual_risks": [],
+      "recorded_at": "2026-09-25T10:31:23+00:00"
+    },
+    "security": {
+      "generated_by": "autoreview",
+      "score": 10,
+      "summary": "security lens over Q-0252-11a0 (4 product path(s), f29ca67..5e898d0, Codex via the autoreview skill): 0 blocking, 0 non-blocking. An untagged security finding remains in the aggregate report but can be absent from the security lens report. The diff shows no direct application vulnerability.",
+      "blocking_findings": [],
+      "non_blocking_findings": [],
+      "recommendation": "approve",
+      "reviewed_scope": [
+        "factory/scripts/forge_cli/review.py",
+        "factory/tests/test_review_lenses_in_parallel.py",
+        "factory/tests/test_review_task_delta.py",
+        "factory/tests/test_review_verdict_records.py"
+      ],
+      "skills_used": [],
+      "review_base_sha": "f29ca673f7d4c3ba601d716d1a5047ea36251389",
+      "branch_diff_digest": "5bf82947736d05118cf222129fe351c14323bcdae0c13983b94b7db55c41a832",
+      "commit": "5e898d03515ef0e01988d777cfa077742c255273",
+      "aspect": "security",
+      "residual_risks": [],
+      "recorded_at": "2026-09-25T10:31:25+00:00"
+    }
+  }
+}
