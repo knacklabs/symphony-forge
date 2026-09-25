@@ -25,6 +25,7 @@ export class OrderController {
   constructor(private readonly orders: OrderService) {}
 
   @Post(':id/cancel')
+  @HttpCode(200)  // an action changes an existing order, so 200, not Nest's default 201 for POST
   @ApiOperation({ summary: 'Cancel an order that has not shipped.' })
   @ApiOkResponse({ type: OrderResponseDto })
   @ApiConflictResponse({ description: 'ORDER_ALREADY_SHIPPED' })
@@ -40,7 +41,8 @@ export class OrderController {
   field, with a maximum length on every string.
 - Response DTOs have a static `from(record)` that picks the fields the caller may see.
 - Status codes: 200 read or update, 201 create, 204 delete, 400 invalid input, 401 not signed in,
-  403 not allowed, 404 not found, 409 conflict, 429 too many requests, 500 our fault.
+  403 not allowed, 404 not found (including another account's record), 409 conflict, 429 too many
+  requests, 500 our fault.
 
 ## Lists
 

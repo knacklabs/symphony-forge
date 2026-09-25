@@ -20,7 +20,9 @@ LISTED = {"AGENTS.md", "CLAUDE.md", ".claude/settings.json", ".claude/skills/for
           ".github/workflows/forge.yml"}
 SCAFFOLD = {"forge.toml", "docs/product/BRIEF.md", "docs/product/DISCOVERY.md",
             "docs/specs/README.md", "docs/decisions/README.md", "plans/roadmap.json"}
-OLD_FORGE_HOOK = "sh -c '\"$(git rev-parse --show-toplevel)/forge\" hook stop_continue || exit 2' || exit 2"
+NO_IMPECCABLE = ("impeccable, the one UI skill Forge requires, isn't installed where the claude "
+                 "worker reads skills.\n  Fix: npx skills add pbakaus/impeccable -g\n")
+OLD_FORGE_HOOK ="sh -c '\"$(git rev-parse --show-toplevel)/forge\" hook stop_continue || exit 2' || exit 2"
 
 
 def _executable(path: Path, text: str) -> None:
@@ -164,8 +166,8 @@ def _fresh_client(repo, gh, tmp_path: Path) -> tuple[Path, subprocess.CompletedP
     ("workflow skips test", ("The tests check in .github/workflows/forge.yml doesn't run "
                              "forge.toml's test command.",)),
     ("codex doesn't trust the project", ()),
-    ("no impeccable", ("impeccable, the one UI skill Forge requires, isn't installed for Claude "
-                       "Code or Codex.\n  Fix: npx skills add pbakaus/impeccable -g\n",)),
+    ("no impeccable", (NO_IMPECCABLE,)),
+    ("impeccable only for codex", (NO_IMPECCABLE,)),
 ])
 def test_29_doctor(repo, gh, tmp_path, monkeypatch, case, rows):
     client, init = _fresh_client(repo, gh, tmp_path)
@@ -178,8 +180,12 @@ def test_29_doctor(repo, gh, tmp_path, monkeypatch, case, rows):
     codex_home = tmp_path / "codex"  # the user's Codex config, which records trusted projects
     codex_home.mkdir()
     monkeypatch.setenv("CODEX_HOME", str(codex_home))
-    if case != "no impeccable":
-        skill = codex_home / "skills" / "impeccable" / "SKILL.md"
+    # impeccable where the configured worker (claude, from forge init) reads skills, or only
+    # where Codex reads them, or nowhere.
+    skills = {"no impeccable": None, "impeccable only for codex": codex_home}.get(
+        case, home / ".claude")
+    if skills:
+        skill = skills / "skills" / "impeccable" / "SKILL.md"
         skill.parent.mkdir(parents=True)
         skill.write_text("---\nname: impeccable\n---\n", encoding="utf-8")
     if case != "codex doesn't trust the project":

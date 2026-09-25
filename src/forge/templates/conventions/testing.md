@@ -32,7 +32,8 @@ it('cancels an order that has not shipped', async () => {
 });
 ```
 
-Cover the refusals the story cares about the same way: the wrong account gets 403, bad input 400.
+Cover the refusals the story cares about the same way: another account's order gets 404, so its
+existence doesn't leak (see security.md), and bad input gets 400.
 
 ## UI tests
 

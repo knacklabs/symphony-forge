@@ -118,13 +118,14 @@ def doctor(args: argparse.Namespace) -> None:
     codex = Path(os.environ.get("CODEX_HOME") or Path.home() / ".codex") / "config.toml"
     trusted = _codex_trusts(top, codex)
 
-    # impeccable is the one required UI skill. Claude Code and Codex each read skills from their
-    # own folders, in the user's home and in the repo.
-    skills = [Path.home() / ".claude", Path.home() / ".agents", codex.parent,
-              top / ".claude", top / ".agents", top / ".codex"]
-    if not any((folder / "skills" / "impeccable" / "SKILL.md").is_file() for folder in skills):
-        rows.append(("impeccable, the one UI skill Forge requires, isn't installed for Claude Code "
-                     "or Codex.", INSTALL["impeccable"]))
+    # impeccable is the one required UI skill, so it must be where the configured worker reads
+    # skills: its own folder in the user's home, or the repo's.
+    skills = {"claude": [Path.home() / ".claude", top / ".claude", top / ".agents"],
+              "codex": [codex.parent, Path.home() / ".agents", top / ".codex", top / ".agents"]}
+    if not any((folder / "skills" / "impeccable" / "SKILL.md").is_file()
+               for folder in skills[cfg["workers"]]):
+        rows.append((f"impeccable, the one UI skill Forge requires, isn't installed where the "
+                     f"{cfg['workers']} worker reads skills.", INSTALL["impeccable"]))
 
     for problem, fix in rows:
         print(f"- {problem}\n  Fix: {fix}")
