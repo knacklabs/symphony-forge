@@ -1075,6 +1075,44 @@
       "kind": "feature",
       "depends_on": [],
       "spec": "docs/specs/fde-discovery.md"
+    },
+    {
+      "key": "FORGE-CUT-1",
+      "title": "A task closes on a green CI run and a clean review",
+      "story": "As a developer running Forge, a finished task closes as soon as its PR's CI is green and its Autoreview review has no P0/P1 finding, so I ship in minutes instead of fighting Forge's own bookkeeping, without losing the review that catches regressions.",
+      "acceptance_criteria": [
+        "Every task and Lite fix is reviewed by Autoreview; an undismissed P0/P1 finding, including a Not done item, blocks until fixed and re-reviewed",
+        "Close completes only when the required CI checks on the reviewed PR head are green; it runs no local proof and writes no proof files",
+        "Review lineage, lens markers, verdict records, proof receipts, grill byte bindings and Lite manifests are deleted with their tests; old records do not break any command",
+        "Grills are one cold read recorded as reader, time and file hash, with dispositions in a notes file beside the artifact",
+        "No Python module under factory/scripts is over 1,200 lines after a pure-move split, with the suite green before and after"
+      ],
+      "order": 51,
+      "status": "pending",
+      "epic": "symphony-forge",
+      "skill": "backend",
+      "kind": "refactor",
+      "depends_on": [],
+      "spec": "docs/specs/close-on-green-ci-and-clean-review.md"
+    },
+    {
+      "key": "FORGE-NEXT-1",
+      "title": "Lean Forge v1: a simpler factory, rebuilt and switched",
+      "story": "As an FDE or developer on Forge, I get one simple way to plan, build, review and ship on either Claude or Codex, installed as a pinned tool, with a plain-English board anyone can read, so we ship client value in minutes instead of fighting the factory.",
+      "acceptance_criteria": [
+        "A story needs one doc, one cold read and one approval; every change ships as a PR through review (P0/P1 looped) and green CI",
+        "Workflow rules are enforced by forge commands and git hooks, with the PR check as backstop, identically on Claude and Codex",
+        "Clients install a pinned Forge tool; forge sync regenerates the adapter; forge migrate moves a vendored client in one PR",
+        "The board tells history and current state in plain English for non-technical readers",
+        "Switch checks pass: the FDE story end to end, a fresh client fix, and migrating myclaw; then the old tree is deleted"
+      ],
+      "order": 52,
+      "status": "active",
+      "epic": "symphony-forge",
+      "skill": "backend",
+      "kind": "refactor",
+      "depends_on": [],
+      "spec": "docs/specs/lean-forge-v1.md"
     }
   ],
   "epics": [
@@ -1151,5 +1189,5 @@
       ]
     }
   ],
-  "updated_at": "2026-09-24T17:22:27+00:00"
+  "updated_at": "2026-09-25T14:33:24+00:00"
 }

@@ -1,0 +1,263 @@
+{
+  "generated_by": "docs-decomposer",
+  "user_facing": false,
+  "tasks": [
+    {
+      "id": "CORE",
+      "title": "Package skeleton, CLI entry and test harness",
+      "objective": "A uv-installable src/forge package with the full 18-command table (unbuilt commands say so), state helpers, the forge.toml version pin, the one-refusal-table-per-module convention, a behaviour-test harness with a bare remote and stub gh, a rules check, and a new CI workflow on Linux, macOS and Windows; at most five code files.",
+      "dependencies": [],
+      "acceptance_criteria": [
+        "uv run forge --version prints the package version and forge with no arguments lists every command in the table; the table has at most 20 commands.",
+        "A state-changing command refuses when the installed version differs from forge.toml's version and prints the uv tool install line; forge --version, doctor and next still run.",
+        "The rules check fails on a module in src/forge over 1,200 lines, src/forge over the line ceiling set in pyproject.toml (8,000 to start), more than 20 commands, a test citing an unknown criterion number, or two tests citing the same criterion; CI prints each PR's net lines.",
+        "The new workflow runs tests/ on Linux, macOS and Windows runners, each finishing in under five minutes with a five-minute job timeout."
+      ],
+      "user_facing": false
+    },
+    {
+      "id": "STORY",
+      "title": "Story doc, cold read, approval on both hosts, and forge next",
+      "objective": "forge story new writes the one story doc (Covers, Scope and Tests columns, New moving parts, Risks) on a story branch that is never a pull request, or promotes a fix keeping its commits and adding the roadmap item; forge read runs one read-only cold read of a story doc or spec, discarded if any file changes, recording read and amended hashes; v1 approval is the hash of What changes for you and Done when, captured on both hosts with today's Codex trust checks (exact digest, runtime, tool identity, replay refusal, one eligible candidate) applied to that hash, committing doc, notes and state on the story branch, refusing in a client repo until sign-off (exempt with repo = forge-source), and counting human touches per state file; forge story done opens a fix of kind story-done holding the outcome; forge next and the context hook say where things stand; at most five code files.",
+      "dependencies": [
+        "CORE"
+      ],
+      "acceptance_criteria": [
+        "The story doc template starts with What changes for you; forge-pr-check fails a PR carrying a story doc that does not, whose read has a finding without a disposition, or whose approval hash does not match the hash of What changes for you and Done when.",
+        "story new refuses a key not on the roadmap; a duplicate ID, unknown After ID, cycle, Covers number that is not a Done-when item or empty Scope is reported with the wrong row; a doc with no Risks section is refused.",
+        "forge read runs read-only, writes the notes file and records reader, time and read hash, and --amended adds the amended hash; a read during which any file changed is discarded; approval and spec confirm refuse with no read, a current hash matching neither the amended nor (unamended) read hash, or a finding without a disposition.",
+        "A successful ExitPlanMode with the doc's digest, or a Codex request_user_input matching the ported contract (id approve_plan_<digest>, prompt Approve this plan?, header Approve plan, choices Approve plan / Request changes / Stop, answer Approve plan), records the approval and commits doc, notes and state on the story branch; a failed or cancelled call, Request changes, stale digest, replay, zero or several candidates, or unmatched text records nothing and forge next says why.",
+        "Each approval and other answered question adds one to the touch count in the state file of the story, task or fix being worked on.",
+        "story new --from-fix keeps the fix's commits on the first task branch, puts the fix's reason in the draft Why and adds the roadmap item.",
+        "In a client repo with no accepted client-signoff decision a matching approval records nothing and forge next names the sign-off step; once accepted the same approval records; with repo = forge-source approval needs no sign-off.",
+        "forge next prints one sentence and the exact next command(s) for every state in the spec.",
+        "forge story done opens a fix of kind story-done holding the outcome sentence; the end-to-end test of story done belongs to ADOPT."
+      ],
+      "user_facing": false
+    },
+    {
+      "id": "RECORDS",
+      "title": "Specs, decisions and the roadmap",
+      "objective": "forge spec save and spec confirm (confirm requires the spec's cold read), forge decision new and decision accept, and forge roadmap add (ported) that adds items from a confirmed spec through the fix lane; at most five code files.",
+      "dependencies": [
+        "CORE"
+      ],
+      "acceptance_criteria": [
+        "spec save adds the header (slug, title, draft status, saved time) to a spec without one; spec confirm --by marks it confirmed only after its cold read with the amended hash and every finding dispositioned.",
+        "decision new writes the next numbered record with the standard header and Context, Decision and Consequences sections; decision accept --by fills confirmed_by, sets accepted and marks the superseded record.",
+        "forge roadmap add <spec> adds items from a confirmed spec through the fix lane and refuses a draft spec.",
+        "Each refusal prints the problem and a Next: command, and has a behaviour test."
+      ],
+      "user_facing": false
+    },
+    {
+      "id": "WORK",
+      "title": "Task and fix start, the worker, git hooks and the deny hook",
+      "objective": "task start (refusing a Scope that overlaps a started, unmerged task) and fix start (with Why: and Done when: lines) create a branch, worktree and state with start dates; forge fix allow-large records the human's permission; forge work runs the Claude worker with the brief (Codex refused); the git hooks enforce the default-branch, Forge-branch and promote rules (code files and interfaces only); the host deny hook blocks destructive commands, --no-verify and gh pr merge; at most five code files.",
+      "dependencies": [
+        "CORE"
+      ],
+      "acceptance_criteria": [
+        "After approval, editing What changes for you or Done when makes task start refuse until a new approval; editing Why, Tasks, Risks or Notes does not.",
+        "task start refuses before the story is approved, while a dependency is unmerged, or while its Scope overlaps a started, unmerged task; otherwise it creates the branch (from the story branch until the doc is on the default branch), worktree and task state, and forge next lists every dependency-ready task with free Scope.",
+        "forge work with workers = claude runs claude -p in the worktree with a brief holding the story's three sections, the task row with Covers, Scope and Tests, the New moving parts line, the Risks, the notes and the standards page, plus open serious findings and failing checks in a fix round; workers = codex refuses with the warm-threads message; the log stays under .git/forge/.",
+        "pre-commit refuses a commit on the default branch, on a branch Forge did not start, or a fix's sixth code file or interfaces path without an allow-large reason; Markdown planning documents never count; each refusal names the next command.",
+        "pre-push refuses a push to the default branch and --no-verify fix commits that break the promote rule.",
+        "The deny hook blocks the carried-over destructive commands, --no-verify and gh pr merge and allows ordinary commands.",
+        "fix start refuses without both a why and a done-when; after forge fix allow-large the hooks allow the fix past the limit and the reason is in its state."
+      ],
+      "user_facing": false
+    },
+    {
+      "id": "CLOSE",
+      "title": "Close, the review loop, the check wait and forge-pr-check",
+      "objective": "forge close closes a task or fix (every kind, including story-done and migrate) by the close rule spec: merge the default branch in first (a conflict stops close with a plain message), push, open or update the PR, Autoreview loop (a failed or incomplete run retried once, then refuse) blocking only on covered Done-when items, review freshness over the product tree plus the story doc's Tasks, Risks and New moving parts, wait for the named checks (missing or API error = not green), then ready; the committed review result holds findings, dismissals and status; a plain-English title and summary plus one Forge block in the PR body; the required forge-pr-check run from the base branch with base config, PR head as data only; at most five code files.",
+      "dependencies": [
+        "CORE"
+      ],
+      "acceptance_criteria": [
+        "Close, task start and the PR checks refuse only for a red, missing or pending required check, an open P0/P1 finding, a missing or out-of-date approval, or unfinished work; every refusal prints the problem and a Next: command, and each refusal has a behaviour test.",
+        "Close meets the close rule spec's acceptance criteria that apply to v1 for a task and for a fix, merges the default branch in first and stops on a conflict with a plain message naming the files, lets only covered Done-when items produce a blocking Not done, commits a review result holding findings, dismissals with file:line reasons and status, reads only Autoreview's findings and review_status, and replaces only its own PR body block.",
+        "For a user-facing task the review instructions report a missing functional check as a P1 Not done finding.",
+        "forge-pr-check runs on every PR from a task or fix branch and fails for a branch Forge did not start, a fix over the limit without an allow-large reason, a fix missing its Why or Done when line, or a head whose committed review result is not clean for its product tree; it passes once close has finished.",
+        "Close gives every PR a plain-English title and a one-line plain-English summary as the first line of its body, and re-running close keeps both.",
+        "The PR title and summary line contain no IDs, 7+ character hex strings, file paths or the words P0, P1, CI, PR, commit, branch or worktree.",
+        "A failed or incomplete Autoreview run is retried once, then close refuses; a missing required check is not green; a GitHub API error is not green and close gives the reason.",
+        "A change to the story doc's Tasks, Risks or New moving parts after a clean review needs a new review round.",
+        "forge-pr-check runs from the base branch (pull_request_target with a base checkout) and reads policy and config from the base; the PR head is data only."
+      ],
+      "user_facing": false
+    },
+    {
+      "id": "SETUP",
+      "title": "init, sync, doctor, adapters and the release",
+      "objective": "forge init writes forge.toml pinned to the running version with the stack's default interfaces and test command, makes one first commit holding both scaffold and sync output, and applies branch protection (PR required, tests and forge-pr-check required, no direct pushes) through gh api, reporting it; forge sync writes fail-closed adapters for Claude Code and Codex, the git hook shims and a workflow with tests and a base-run forge-pr-check; forge doctor runs a host hook health check and checks the tests workflow runs test; a tag job installs from the tag with uv, checks forge --version and opens the shipped standards page and templates in a fresh client; at most five code files.",
+      "dependencies": [
+        "CORE"
+      ],
+      "acceptance_criteria": [
+        "forge sync writes exactly the listed adapter files for both hosts, installs the two git hook shims, and generates a workflow running the test command as tests plus forge-pr-check; a second run changes nothing; text outside the AGENTS.md block and non-Forge settings keys are kept.",
+        "forge doctor reports one row with its fix for a missing tool, a version mismatch, missing hook shims, a host hook command that fails to run, adapter drift, empty checks or no test, and a tests workflow that does not run the test command; it passes on a repo just made by forge init.",
+        "A pushed test tag runs a job that installs Forge from the tag with uv tool install, forge --version prints that tag's version, and the shipped standards page and templates open in a fresh client.",
+        "With forge unable to launch, every generated host hook command exits with code 2.",
+        "forge init makes one first commit holding the scaffold and sync output, pins forge.toml to the running version, and applies and reports branch protection requiring a PR, tests and forge-pr-check."
+      ],
+      "user_facing": false
+    },
+    {
+      "id": "BOARD",
+      "title": "The plain-English board",
+      "objective": "forge board writes and opens one static page that shows, for each roadmap story, a state sentence, how long each step took, the total human touches, plain slow flags (a part open over 2 working days, a close over 30 minutes) and a dated timeline: approval date, the story's merged pull requests (title and summary line via gh, matched by branch), then the finished date with the outcome sentence; it computes the three success numbers (task cycle time, human touches per story, share of PRs fixing Forge) from state and GitHub and forge next shows them in one line after the check date; readable by a non-technical person, with a functional check; at most five code files.",
+      "dependencies": [
+        "CORE",
+        "STORY"
+      ],
+      "acceptance_criteria": [
+        "forge board shows per roadmap story a state sentence, step durations, total touches, a slow line for a part open over 2 working days or a close over 30 minutes, and a timeline of the approval date, each merged PR's title and summary line by merge date from a stubbed gh, then the finished date with the outcome; without gh it shows state and dates only.",
+        "The board computes task cycle time, human touches per story and the share of PRs fixing Forge from state and a stubbed gh, and after the check date forge next shows them in one line.",
+        "A person reads the page for a sample story with three tasks and a fix, and every line reads as plain English."
+      ],
+      "user_facing": true
+    },
+    {
+      "id": "MIGRATE",
+      "title": "Moving copied-in clients",
+      "objective": "forge migrate moves a client that copied in the factory/ layout to v1: a preflight (clean working tree, no work in flight, full change set computed first, no path outside the repo; it owns forge/migrate-v1 only when its state marks the branch Forge-made, stops and asks if the branch has other commits, and resets only its own interrupted run); it archives every pre-migration .factory/ entry except archive/ to .factory/archive/pre-v1-<date>/ (numeric suffix on collision), then writes a migrate fix state with an allow-large reason recorded with the runner's name; it deletes exactly the spec's listed Forge-owned paths, sets client-changed copies aside in .forge-migrate/kept/, carries over default-branch approvals and marker-done tasks, pins forge.toml to the running version and applies and reports branch protection; with repo = forge-source it converts and syncs but deletes nothing; at most five code files.",
+      "dependencies": [
+        "SETUP",
+        "STORY"
+      ],
+      "acceptance_criteria": [
+        "On a myclaw-shaped fixture, migrate archives every pre-migration .factory/ entry to .factory/archive/pre-v1-<date>/ first, writes a migrate fix state with a named allow-large reason, deletes exactly the listed Forge-owned paths and nothing else, moves client-changed copies to .forge-migrate/kept/ and lists them in the PR, converts each active plan with its default-branch approval carried over and marker-done tasks done, writes forge.toml pinned to the running version, and reports the branch protection it applied.",
+        "It refuses a dirty working tree, work in flight, a path outside the repo, and an .agents/-era layout; it stops and asks when forge/migrate-v1 has commits it did not make; after its own interrupted run a second run produces the same branch.",
+        "In a repo whose forge.toml says repo = forge-source, it converts plans and writes the adapter but deletes nothing.",
+        "A trial run on a throwaway copy of myclaw lists the right deletions, kept copies, conversions and carried-over approvals, and myclaw itself is unchanged."
+      ],
+      "user_facing": false
+    },
+    {
+      "id": "DOCS-STANDARDS",
+      "title": "Standards page, client stack conventions, one UI skill, guide and archive list",
+      "objective": "A standards page of about 300 lines opening with the 13 Forge principles and the 11 client-app principles, with structure rules only where their concern exists (interfaces only for external services or a real second implementation, no microservice or future-growth planning) and the constitution changes carried over, replaces the constitution and ships in the package as src/forge/standards.md; the client stack conventions are trimmed to the smallest stack, with Redis/queues, CDK, OIDC and monitoring added only when a story's New moving parts names them; impeccable is the only required UI skill in doctor; a guide and an archive list; at most five code files.",
+      "dependencies": [
+        "STORY",
+        "RECORDS",
+        "WORK",
+        "CLOSE",
+        "SETUP"
+      ],
+      "acceptance_criteria": [
+        "The shipped standards page is at most 320 lines, opens with the 13 principles, lists the 11 client-app principles, and has no rule asking for an interface per service, microservice or future-growth planning, or a file split by line count; the shipped conventions name Redis or queues, CDK, OIDC and a monitoring stack only as add-when-named.",
+        "docs/guide.md names every command in the table and none that isn't; docs/archive.md lists what the switch removes and the tag it stays under."
+      ],
+      "user_facing": false
+    },
+    {
+      "id": "DOCS-PHASES",
+      "title": "Build-simple phase texts",
+      "objective": "The Markdown phase texts carry the build-simple rules: the skill's Build simple section, planning and roadmap-by-value rules and check-back question; the story template with New moving parts; the simple-enough cold read; the Simpler review rule; the worker brief with the functional check walk-through; motion skills only when a Done-when item needs them; no code files.",
+      "dependencies": [
+        "DOCS-STANDARDS"
+      ],
+      "acceptance_criteria": [
+        "The story template ends its Tasks section with New moving parts: none, and the worker brief and review instructions both contain the story's line.",
+        "The review instructions contain the Simpler rule: P2 Simpler: <cut> -> <replacement>, P1 for a new moving part the story does not name, required structure for a real concern is not a finding, and validation, security, data-loss protection and accessibility are never simpler.",
+        "The cold-read prompt contains the scope challenge (Cut or defer, the New moving parts check, the smaller shape, unlisted one-way steps, never dropping validation, security, data-loss protection or accessibility), and the notes template offers cut, defer and keep dispositions.",
+        "forge doctor fails without impeccable and passes with impeccable and no other UI skill; the brief and review text name motion skills only for a Done-when item that needs motion.",
+        "The skill stays under 120 lines, maps each common intent to one command, and its Build simple section stays under 40 lines.",
+        "forge init writes the stack's default interfaces, and with interfaces empty the review instructions tell the reviewer to report an interface change as a P1 Promote finding."
+      ],
+      "user_facing": false
+    },
+    {
+      "id": "ADOPT",
+      "title": "This repo runs on v1",
+      "objective": "This repo moves onto v1 through forge migrate's source-repo mode with repo = forge-source and forge.toml pinned to v1.0.0-rc.1: only existing plans are converted (this story with its approval and New moving parts carried over, FDE for its v1 re-plan, warm threads marked needs re-plan); AGENTS.md and CLAUDE.md are regenerated with the v1 block, replacing old instructions outside it (this repo only); the generated adapters replace the old host hooks; the walkthrough and contract tests; every criterion tested; after merge the coordinator tags the merge commit v1.0.0-rc.1 and installs from it; at most five code files.",
+      "dependencies": [
+        "STORY",
+        "RECORDS",
+        "WORK",
+        "CLOSE",
+        "SETUP",
+        "BOARD",
+        "MIGRATE",
+        "DOCS-STANDARDS",
+        "DOCS-PHASES"
+      ],
+      "acceptance_criteria": [
+        "forge doctor passes in this repo; this story (approval carried over), the FDE story (for re-plan) and the warm-threads story (marked needs re-plan) exist as v1 story docs; AGENTS.md and CLAUDE.md hold the v1 block.",
+        "The walkthrough test drives one story through every step with stubs through both adapters, ends with the board showing its approval, merged parts and finished date in order, and covers story done end to end.",
+        "One contract test feeds recorded samples from Autoreview, the GitHub CLI, Claude Code and Codex, each with an extra unknown field, and passes; doctor reports an Autoreview helper at a different version than the pin.",
+        "Every refusal in every module's refusal table has a behaviour test; every state-changing command run on the default branch leaves it unchanged; no command writes a PR link, CI result, test output or history list into .factory/; the board page and PR summaries contain no IDs, 7+ character hex strings, paths or jargon.",
+        "The rules check requires exactly one test per criterion in the spec, and passes.",
+        "A fix in this repo closes on v1, and v1.0.0-rc.1 is tagged on ADOPT's merge commit and installs from its tag."
+      ],
+      "user_facing": false
+    },
+    {
+      "id": "PILOT-FDE",
+      "title": "The FDE story runs on v1",
+      "objective": "The FDE story is re-planned for v1 with one fresh approval (its gstack-removal task dropped as moot); its tasks build the FDE skill section, forge spec payback, forge spec measure and the impeccable doctor row, porting code from branch feat/FORGE-FDE-1-FDE (commit a529a1ee), and land in the FDE story's own pull requests built by v1's worker.",
+      "dependencies": [
+        "ADOPT"
+      ],
+      "acceptance_criteria": [
+        "The re-planned FDE story is approved once on v1.",
+        "Each FDE task is closed by the close rule (clean review, green checks) and merged."
+      ],
+      "user_facing": false
+    },
+    {
+      "id": "CLIENT-FIX",
+      "title": "A fresh client closes a fix",
+      "objective": "In a throwaway client repo made with forge init, one fix is started, built, closed and merged, with branch protection applied and reported.",
+      "dependencies": [
+        "SETUP",
+        "CLOSE",
+        "WORK"
+      ],
+      "acceptance_criteria": [
+        "The fix's pull request is merged with green checks and a clean review.",
+        "forge init applied branch protection and reported it."
+      ],
+      "user_facing": false
+    },
+    {
+      "id": "MIGRATE-MYCLAW",
+      "title": "myclaw moves to v1",
+      "objective": "In myclaw (external repo), forge migrate opens its pull request, which closes by the close rule and is merged; then one fix is merged on v1.",
+      "dependencies": [
+        "MIGRATE",
+        "ADOPT"
+      ],
+      "acceptance_criteria": [
+        "The migrate pull request in myclaw is merged.",
+        "One fix in myclaw is merged on v1."
+      ],
+      "user_facing": false
+    },
+    {
+      "id": "SWITCH",
+      "title": "Replace the old workflows, delete the old tree and release 1.0.0",
+      "objective": "After ADOPT, PILOT-FDE, CLIENT-FIX and MIGRATE-MYCLAW: tag the last old-tree commit, replace the old workflows with v1's generated CI (tests and forge-pr-check) and delete the old ones, apply and report branch protection on this repo, delete the old tree and old Forge docs while keeping the guide, docs/archive.md, docs/product/, docs/context/, specs, decisions and every doc the pilot produced, mark superseded decisions, and after merge tag the merge commit v1.0.0 with a check that its tree equals main; runs as a v1 task.",
+      "dependencies": [
+        "ADOPT",
+        "PILOT-FDE",
+        "CLIENT-FIX",
+        "MIGRATE-MYCLAW"
+      ],
+      "acceptance_criteria": [
+        "The repo holds only the new package, its tests, the kept docs (guide, archive list, product, context, specs, decisions, pilot docs) and v1's generated CI; the old workflows are gone.",
+        "Every check is green, forge-pr-check and tests are required by branch protection, and direct pushes to main are refused.",
+        "v1.0.0 is tagged on the merge commit and its tree equals main's."
+      ],
+      "user_facing": false
+    }
+  ],
+  "project": "",
+  "story": "FORGE-NEXT-1",
+  "epic": "symphony-forge",
+  "plan_file": "plans/active/FORGE-NEXT-1-lean-forge-v1-a-simpler-factory-rebuilt-and-switched.md",
+  "plan_sha256": "b9aba30fc75c2f118e04b11c85e8752d5015b089b4ac2d23fb7ead08eee3c8e9",
+  "commit": "2896986765f23777af85d7266cd35e127cd5b167"
+}
