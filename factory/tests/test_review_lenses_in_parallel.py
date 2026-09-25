@@ -68,7 +68,8 @@ if os.environ.get("FAKE_MARKER_STATE"):
                     "code_location": {"file_path": "src/core.py", "line": line}}
         provider["findings"] = (
             [finding("[quality] First only", 2, "P1"),
-             finding("[quality] Shared", 3, "P2")]
+             finding("[quality] Shared", 3,
+                     os.environ.get("FAKE_FIRST_SHARED_PRIORITY", "P2"))]
             if attempts == 1 else
             [finding("[quality] Retry only", 4, "P3"),
              finding("[quality] Shared", 3, "P3")])
@@ -224,7 +225,7 @@ def test_review_refuses_two_passes_without_assessment_markers(
     assert "combined review needs one non-empty assessment for quality" in output
 
 
-def test_review_retry_preserves_first_pass_findings_and_retry_priority(
+def test_review_retry_preserves_first_pass_findings_and_higher_priority(
         tmp_path, monkeypatch):
     monkeypatch.setenv("FAKE_MARKER_STATE", str(tmp_path / "attempts"))
     monkeypatch.setenv("FAKE_RETRY_FINDINGS", "1")
@@ -233,7 +234,7 @@ def test_review_retry_preserves_first_pass_findings_and_retry_priority(
 
     findings = reviewed["provider_report"]["findings"]
     assert [(finding["title"], finding["priority"]) for finding in findings] == [
-        ("[quality] Retry only", "P3"), ("[quality] Shared", "P3"),
+        ("[quality] Retry only", "P3"), ("[quality] Shared", "P2"),
         ("[quality] First only", "P1"),
     ]
     assert reviewed["findings"] == findings
@@ -243,6 +244,25 @@ def test_review_retry_preserves_first_pass_findings_and_retry_priority(
         ["src/core.py"], "a" * 40, "b" * 40, [], [], {}, ())["quality"]
     assert len(quality["blocking_findings"]) == 1
     assert len(quality["non_blocking_findings"]) == 2
+
+
+def test_review_retry_keeps_first_pass_p1_for_matching_p3(tmp_path, monkeypatch):
+    monkeypatch.setenv("FAKE_MARKER_STATE", str(tmp_path / "attempts"))
+    monkeypatch.setenv("FAKE_RETRY_FINDINGS", "1")
+    monkeypatch.setenv("FAKE_FIRST_SHARED_PRIORITY", "P1")
+
+    reviewed, raw = _marker_review(tmp_path)
+
+    findings = reviewed["provider_report"]["findings"]
+    shared = [finding for finding in findings if finding["title"] == "[quality] Shared"]
+    assert len(shared) == 1
+    assert shared[0]["priority"] == "P1"
+    assert reviewed["findings"] == findings
+    assert json.loads(raw) == reviewed
+    quality = _project_combined_report(
+        {"id": "T1", "plan_contracts": [{"id": "C1"}]}, reviewed,
+        ["src/core.py"], "a" * 40, "b" * 40, [], [], {}, ())["quality"]
+    assert len(quality["blocking_findings"]) == 2
 
 
 def test_review_does_not_retry_invalid_report(tmp_path, monkeypatch, capsys):

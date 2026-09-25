@@ -1457,16 +1457,36 @@ def _run_skill(skill: Path, worktree: Path, base_sha: str, prompt_rel: str,
             if first_findings:
                 target = (parsed["pass_reports"][0]["report"]
                           if "pass_reports" in parsed else parsed)
-                seen = {(finding["title"], finding["code_location"]["file_path"],
-                         finding["code_location"]["line"])
-                        for _label, wrapper in passes for finding in wrapper["findings"]}
+                def finding_key(finding):
+                    return (finding["title"], finding["code_location"]["file_path"],
+                            finding["code_location"]["line"])
+
+                seen = {finding_key(finding) for _label, wrapper in passes
+                        for finding in wrapper["findings"]}
                 added = []
                 for finding in first_findings:
-                    key = (finding["title"], finding["code_location"]["file_path"],
-                           finding["code_location"]["line"])
+                    key = finding_key(finding)
                     if key not in seen:
                         seen.add(key)
                         added.append(finding)
+                priorities = {}
+                for finding in first_findings:
+                    key = finding_key(finding)
+                    priorities[key] = min(priorities.get(key, finding["priority"]),
+                                          finding["priority"])
+                finding_lists = [parsed["findings"]]
+                if "provider_report" in parsed:
+                    finding_lists.append(parsed["provider_report"]["findings"])
+                for _label, wrapper in passes:
+                    finding_lists.extend((wrapper["findings"],
+                                          wrapper["provider_report"]["findings"]))
+                changed = False
+                for findings in finding_lists:
+                    for finding in findings:
+                        key = finding_key(finding)
+                        if key in priorities and priorities[key] < finding["priority"]:
+                            finding["priority"] = priorities[key]
+                            changed = True
                 if added:
                     target["findings"].extend(copy.deepcopy(added))
                     target["provider_report"]["findings"].extend(copy.deepcopy(added))
@@ -1481,6 +1501,7 @@ def _run_skill(skill: Path, worktree: Path, base_sha: str, prompt_rel: str,
                         if "provider_report" in parsed:
                             parsed["provider_report"]["findings"].extend(copy.deepcopy(added))
                             parsed["provider_report"]["overall_correctness"] = "patch is incorrect"
+                if added or changed:
                     _actual_passes(parsed)
                     raw = (json.dumps(parsed, ensure_ascii=False, indent=2) + "\n").encode("utf-8")
         return (parsed, raw) if return_raw else parsed
