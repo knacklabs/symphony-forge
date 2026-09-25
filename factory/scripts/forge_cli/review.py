@@ -577,11 +577,13 @@ def _validate_provider_report(report: object, *, merged: bool = False) -> dict:
 
 def _validate_processed_report(report: object, required: set[str]) -> dict:
     allowed = (REPORT_FIELDS | OPTIONAL_REPORT_FIELDS | required
-               | REPORT_METADATA_FIELDS
+               | REPORT_METADATA_FIELDS | {"usage"}
                | ({"provider_report"} if "pass_reports" in required else set()))
     if (not isinstance(report, dict) or not REPORT_FIELDS | required <= set(report)
             or set(report) - allowed):
         fail("combined review helper wrapper has invalid fields")
+    if "usage" in report and not isinstance(report["usage"], dict):
+        fail("combined review helper usage must be an object")
     _validate_provider_report({
         field: report[field]
         for field in REPORT_FIELDS | (OPTIONAL_REPORT_FIELDS & set(report))
@@ -697,6 +699,8 @@ def _validate_review_status(report: dict) -> None:
 def _actual_passes(report: object) -> list[tuple[str, dict]]:
     if not isinstance(report, dict):
         fail("combined review helper wrapper has invalid fields")
+    if report.get("review_status") == "incomplete":
+        fail("the reviewer marked its assessment incomplete; rerun the review")
     if "pass_reports" not in report:
         processed = _validate_processed_report(report, {"provider_report", "review_status"})
         _validate_provider_report(processed["provider_report"])
@@ -888,6 +892,7 @@ def _project_combined_report(
     retained: list[tuple[str, dict]] = []
     retained_raw: list[dict] = []
     projected_fingerprints: set[tuple[str, int, int, str]] = set()
+    projected_findings: dict[tuple[str, int, int, str], dict] = {}
     seen_merge_keys: set[tuple[str, int, str, str]] = set()
     mixed_expected: dict[tuple, dict] = {}
     verdict_lines: list[str] = []
@@ -918,6 +923,7 @@ def _project_combined_report(
                 else:
                     retained.append((lens, clean))
                     by_lens[lens].append(clean)
+                    projected_findings[fingerprint] = clean
             attribution = finding.get("source_attribution")
             if attribution:
                 location = finding["code_location"]
@@ -940,6 +946,9 @@ def _project_combined_report(
                 })
                 merged["priority"] = min(merged["priority"], finding["priority"])
                 merged["confidence"] = min(merged["confidence"], finding["confidence"])
+                if fingerprint in projected_findings:
+                    projected_findings[fingerprint]["priority"] = min(
+                        projected_findings[fingerprint]["priority"], finding["priority"])
             elif merge_key not in seen_merge_keys:
                 seen_merge_keys.add(merge_key)
                 merged = copy.deepcopy(finding)

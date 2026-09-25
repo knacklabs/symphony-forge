@@ -346,6 +346,23 @@ def test_review_completion_is_optional_in_provider_and_helper_reports(capsys):
     assert "combined review report has invalid review_completion" in capsys.readouterr().out
 
 
+def test_helper_status_and_usage_accept_complete_and_refuse_incomplete(capsys):
+    provider = _provider_report("review complete", [])
+    wrapper = _processed(provider, review_status="scoped-clean", usage={"tokens": 42})
+    assert _actual_passes(wrapper)[0][1]["provider_report"] == provider
+    assert _actual_passes(_processed(provider, review_status="scoped-clean"))
+
+    incomplete = {**wrapper, "review_status": "incomplete"}
+    with pytest.raises(SystemExit):
+        _actual_passes(incomplete)
+    assert "the reviewer marked its assessment incomplete; rerun the review" in (
+        capsys.readouterr().out)
+
+    with pytest.raises(SystemExit):
+        _actual_passes({**wrapper, "usage": []})
+    assert "combined review helper usage must be an object" in capsys.readouterr().out
+
+
 def test_single_pass_helper_wrapper_preserves_pass_report(capsys):
     provider = _provider_report(_combined_explanation("clear", "fast", "safe"), [])
     wrapper = {
@@ -402,6 +419,38 @@ def test_mixed_source_helper_claim_variants_match_preserved_pass():
         invalid["findings"][0]["claim_variants"] = [variant]
         with pytest.raises(SystemExit):
             _actual_passes(invalid)
+
+
+def test_attributed_duplicate_projects_highest_priority_across_passes():
+    attribution = {"target": "index", "record_id": "r", "source_id": "s",
+                   "side": "present", "column": 1, "excerpt": "x"}
+    first_finding = _combined_finding("quality", "Preserve severity", "src/a.py", 4)
+    first_finding.update(priority="P3", source_attribution=attribution)
+    second_finding = copy.deepcopy(first_finding)
+    second_finding["priority"] = "P1"
+    explanation = _combined_explanation("clear", "fast", "safe")
+    first = _provider_report(explanation, [first_finding])
+    second = _provider_report(explanation, [second_finding])
+    merged = copy.deepcopy(first_finding)
+    merged["priority"] = "P1"
+    merged["claim_variants"] = [{"body": "evidence", "observations": [
+        {"pass": "chunk 1/2", "title": first_finding["title"],
+         "priority": "P3", "confidence": 0.9},
+        {"pass": "chunk 2/2", "title": second_finding["title"],
+         "priority": "P1", "confidence": 0.9},
+    ]}]
+    report = {
+        "findings": [merged], "overall_correctness": "patch is incorrect",
+        "overall_explanation": "Review passes returned.", "overall_confidence": 0.9,
+        "review_status": "findings",
+        "pass_reports": [_pass("chunk 1/2", first), _pass("chunk 2/2", second)],
+    }
+    quality = _project_combined_report(
+        {"id": "T1", "plan_contracts": []}, report, ["src/a.py"],
+        "a" * 40, "b" * 40, [], [], {}, (),
+    )["quality"]
+    assert len(quality["blocking_findings"]) == 1
+    assert quality["non_blocking_findings"] == []
 
 
 def test_combined_review_projects_tagged_lenses_and_preserves_ordered_pass_verdicts():
