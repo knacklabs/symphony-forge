@@ -1,0 +1,24 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "symphony-forge"
+dynamic = ["version"]
+description = "Forge: one small tool that takes a story from approval to a merged pull request."
+requires-python = ">=3.11"
+dependencies = []
+
+[project.scripts]
+forge = "forge.cli:main"
+
+[tool.hatch.version]
+path = "src/forge/__init__.py"
+
+# The wheel ships every file under src/forge: the code plus its Markdown and data files.
+[tool.hatch.build.targets.wheel]
+packages = ["src/forge"]
+
+[tool.forge]
+# Every line of every file under src/forge/ counts. Raising this needs an accepted decision.
+line_ceiling = 8000

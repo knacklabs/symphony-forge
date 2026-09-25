@@ -1,0 +1,42 @@
+name: forge-next
+
+# The new Forge (src/forge, tests/). The old factory suite keeps running in
+# factory-scaffold.yml until the switch.
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  tests:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    # The whole suite must finish in under five minutes on every runner.
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v6
+      # 3.11 is the oldest Python Forge supports.
+      - run: uv run --python 3.11 --with pytest python -m pytest tests -q
+
+  net-lines:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 2
+      - name: Print the pull request's net lines
+        # HEAD is the pull request merged into its base; HEAD^1 is the base.
+        run: |
+          git diff --numstat HEAD^1 HEAD \
+            | awk '{a += $1; d += $2} END {printf "Net lines: %+d (%d added, %d removed)\n", a - d, a, d}' \
+            | tee -a "$GITHUB_STEP_SUMMARY"
