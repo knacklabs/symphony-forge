@@ -17,7 +17,7 @@ from factory_lib import (
     plan_digest_without_assumptions, proof_path, render_recorded_task_contract,
     effective_review_base, product_delta_digest,
     protected_decomposition_state_path, repo_root, require_task_grill,
-    run_state_path, safe_factory_write_bytes, story_dir,
+    review_identity_body, run_state_path, safe_factory_write_bytes, story_dir,
 )
 
 
@@ -660,7 +660,7 @@ def cmd_review_brief(args: argparse.Namespace) -> None:
         story = state.get("issue_key")
         if not isinstance(story, str) or not story:
             raise SystemExit("Cannot mint a branch review run without an active story.")
-        brief_sha256 = hashlib.sha256(body).hexdigest()
+        brief_sha256 = hashlib.sha256(review_identity_body(body)).hexdigest()
         diff_digest = (
             reviewed_inputs["delta_id"] if reviewed_inputs else branch_diff_digest(base)
         )

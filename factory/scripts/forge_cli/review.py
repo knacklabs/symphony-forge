@@ -29,7 +29,7 @@ from pathlib import Path, PurePosixPath
 from factory_lib import (
     head_sha, load_json, product_delta_digest,
     proof_path, protected_decomposition_state_path, repo_root, run_state_path,
-    safe_factory_write_bytes, schema_path,
+    review_identity_body, safe_factory_write_bytes, schema_path,
 )
 
 from .common import fail
@@ -2614,8 +2614,9 @@ def review_task(base: Path, task_id: str, *, lens: str | None = None,
             "inspected_commit": tip_sha,
             "delta_id": token.get("branch_diff_digest"),
             "helper": helper_before,
-            "input": {"sha256": hashlib.sha256(prompt_body).hexdigest(),
-                      "bytes": len(prompt_body)},
+            "input": {"sha256": hashlib.sha256(
+                review_identity_body(prompt_body)).hexdigest(),
+                      "bytes": len(review_identity_body(prompt_body))},
             "raw_result": {"encoding": "base64",
                            "sha256": hashlib.sha256(raw_result).hexdigest(),
                            "bytes": len(raw_result),

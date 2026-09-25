@@ -10,7 +10,8 @@ import pytest
 HARNESS = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(HARNESS / "factory" / "scripts"))
 
-from forge_cli import codex_runtime, delegate, grill, review, review_brief  # noqa: E402
+from forge_cli import codex_runtime, delegate, grill, review, review_brief, stages  # noqa: E402
+from factory_lib import review_identity_body  # noqa: E402
 
 
 def _assert_title(brief: str | bytes, expected: str) -> None:
@@ -136,6 +137,19 @@ def test_lite_review_prompt_uses_window_subject():
     })
 
     _assert_title(prompt, "Review · Q-0244-9c2a · Lite review")
+
+
+def test_review_titles_do_not_change_hashed_input():
+    task = {"id": "T1", "title": "Add cache", "plan_contracts": []}
+    prompt = review._combined_prompt(task)
+    renamed = b"Review \xc2\xb7 other subject \xc2\xb7 other title\n" + prompt.split(b"\n", 1)[1]
+    assert review_identity_body(prompt) == review_identity_body(renamed)
+
+    dataset = b"Review \xc2\xb7 S-42/T1 \xc2\xb7 Add cache\n# Reviewed contract\n"
+    retitled = b"Review \xc2\xb7 S-42/T1 \xc2\xb7 New label\n# Reviewed contract\n"
+    changed = b"Review \xc2\xb7 S-42/T1 \xc2\xb7 Add cache\n# Changed contract\n"
+    assert stages._canonical_review_dataset(dataset) == stages._canonical_review_dataset(retitled)
+    assert stages._canonical_review_dataset(dataset) != stages._canonical_review_dataset(changed)
 
 
 def test_rendered_review_brief_uses_story_task_subject(

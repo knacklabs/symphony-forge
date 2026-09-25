@@ -1912,6 +1912,11 @@ def _current_task_review_inputs(
     }, []
 
 
+def review_identity_body(body: bytes) -> bytes:
+    """Exclude the generated Codex thread label from review identities."""
+    return body.partition(b"\n")[2] if body.startswith("Review · ".encode()) else body
+
+
 def _review_input_problems(
     root: Path,
     key: str,
@@ -1951,7 +1956,7 @@ def _review_input_problems(
         ]
 
     problems: list[str] = []
-    expected_hash = hashlib.sha256(brief_bytes).hexdigest()
+    expected_hash = hashlib.sha256(review_identity_body(brief_bytes)).hexdigest()
     for lens in _PROOF_LENSES:
         review = reviews.get(lens)
         if isinstance(review, dict) and review.get("brief_sha256") != expected_hash:

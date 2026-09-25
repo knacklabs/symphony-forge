@@ -34,7 +34,7 @@ from factory_lib import (
     plan_digest_without_assumptions, product_tree_digest,
     protected_decomposition_state_path, repo_root, require_approved_plan_digest,
     require_ready_task, require_task_worktree, run_state_path,
-    safe_factory_write_json, sha256_of, story_dir, task_digest,
+    review_identity_body, safe_factory_write_json, sha256_of, story_dir, task_digest,
     proof_path, proof_read_path, task_evidence_path, validate_payload,
 )
 
@@ -1033,7 +1033,7 @@ def _canonical_review_envelope(value, *, nested: frozenset[str] = frozenset()):
 def _canonical_review_dataset(dataset: bytes) -> bytes:
     """Ignore recorder bookkeeping only inside the two rendered JSON artifacts."""
     try:
-        text = dataset.decode("utf-8")
+        text = review_identity_body(dataset).decode("utf-8")
     except UnicodeDecodeError:
         return dataset
     headings = {
@@ -1180,11 +1180,12 @@ def reviewed_meaning_identity(
     prompts = [_combined_prompt(task, repo_readable=readable,
                                 semantic_identity=semantic_identity)
                for readable in (True, False)]
-    prompt = prompts[0]
+    prompt = review_identity_body(prompts[0])
     return {
         "identity": hashlib.sha256(prompt).hexdigest(), "bytes": len(prompt),
         "accepted_inputs": [
-            {"sha256": hashlib.sha256(body).hexdigest(), "bytes": len(body)}
+            {"sha256": hashlib.sha256(review_identity_body(body)).hexdigest(),
+             "bytes": len(review_identity_body(body))}
             for body in prompts
         ],
         "semantic_identity": semantic_identity,
