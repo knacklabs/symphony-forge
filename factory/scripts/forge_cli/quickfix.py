@@ -385,28 +385,37 @@ def _lite_manifest(
 def lite_diff_base(base: Path, opening_sha: str) -> str:
     """Exclude default-branch commits merged after the Lite window opened."""
     branch = default_trunk_branch(base)
+    tip_sha = head_sha(base)
+    candidates = []
     for ref in (f"origin/{branch}", branch):
         resolved = subprocess.run(
             ["git", "rev-parse", "--verify", f"{ref}^{{commit}}"],
             cwd=base, capture_output=True, text=True, env=clean_git_env(),
         )
-        if resolved.returncode == 0:
-            main_sha = resolved.stdout.strip()
-            break
-    else:
-        return opening_sha
-    common = subprocess.run(
-        ["git", "merge-base", "HEAD", main_sha],
-        cwd=base, capture_output=True, text=True, env=clean_git_env(),
-    )
-    if common.returncode != 0:
-        return opening_sha
-    merged_sha = common.stdout.strip()
-    ancestor = subprocess.run(
-        ["git", "merge-base", "--is-ancestor", opening_sha, merged_sha],
-        cwd=base, capture_output=True, env=clean_git_env(),
-    )
-    return merged_sha if ancestor.returncode == 0 else opening_sha
+        if resolved.returncode != 0:
+            continue
+        common = subprocess.run(
+            ["git", "merge-base", "HEAD", resolved.stdout.strip()],
+            cwd=base, capture_output=True, text=True, env=clean_git_env(),
+        )
+        if common.returncode != 0:
+            continue
+        merged_sha = common.stdout.strip()
+        if merged_sha == tip_sha:
+            continue
+        ancestor = subprocess.run(
+            ["git", "merge-base", "--is-ancestor", opening_sha, merged_sha],
+            cwd=base, capture_output=True, env=clean_git_env(),
+        )
+        if ancestor.returncode == 0 and merged_sha not in candidates:
+            candidates.append(merged_sha)
+    for candidate in candidates:
+        if all(subprocess.run(
+            ["git", "merge-base", "--is-ancestor", other, candidate],
+            cwd=base, capture_output=True, env=clean_git_env(),
+        ).returncode == 0 for other in candidates):
+            return candidate
+    return opening_sha
 
 
 def _lite_symlink_paths(

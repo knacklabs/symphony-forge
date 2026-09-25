@@ -9587,6 +9587,64 @@ def test_mode_done_counts_only_lite_files_after_merging_main(repo):
     assert done[0]["files"] == ["src/own.py"]
 
 
+def test_lite_on_local_trunk_without_origin_measures_and_reviews_own_commit(
+        repo, monkeypatch):
+    from forge_cli.quickfix import _lite_manifest, lite_diff_base
+    from forge_cli import review as review_mod
+
+    git(repo, "update-ref", "-d", "refs/remotes/origin/main")
+    active = open_lite(repo)
+    (repo / "src").mkdir()
+    (repo / "src" / "own.py").write_text("own = True\n")
+    git(repo, "add", "src/own.py")
+    git(repo, "commit", "-q", "-m", "lite fix on main")
+
+    assert lite_diff_base(repo, active["base_sha"]) == active["base_sha"]
+    assert _lite_manifest(repo, active["base_sha"]) == ["src/own.py"]
+
+    def review_reached(_skill, _worktree, base_sha, *_args, **_kwargs):
+        assert base_sha == active["base_sha"]
+        raise RuntimeError("review reached")
+
+    monkeypatch.setattr(review_mod, "resolve_skill", lambda _skill: "helper")
+    monkeypatch.setattr(review_mod, "_require_current_review_helper", lambda _skill: None)
+    monkeypatch.setattr(review_mod, "_helper_identity", lambda _skill: ("helper", "file"))
+    monkeypatch.setattr(review_mod, "_run_skill", review_reached)
+    with pytest.raises(RuntimeError, match="review reached"):
+        review_mod.review_lite(repo)
+
+    write_lite_reviews(repo)
+    code, out = run(repo, "forge.py", "mode", "done")
+    assert code == 0 and "1 file(s)" in out, out
+
+
+def test_mode_done_uses_local_main_newer_than_stale_origin_main(repo):
+    from forge_cli.quickfix import _lite_manifest, lite_diff_base
+
+    git(repo, "checkout", "-q", "-b", "lite-fix")
+    active = open_lite(repo)
+    (repo / "src").mkdir()
+    (repo / "src" / "own.py").write_text("own = True\n")
+    git(repo, "add", "src/own.py")
+    git(repo, "commit", "-q", "-m", "lite fix")
+
+    git(repo, "checkout", "-q", "main")
+    (repo / "src").mkdir()
+    for number in range(5):
+        (repo / "src" / f"main_{number}.py").write_text(f"main = {number}\n")
+    git(repo, "add", "src")
+    git(repo, "commit", "-q", "-m", "main product changes")
+    local_main = head(repo)
+    git(repo, "checkout", "-q", "lite-fix")
+    git(repo, "merge", "--no-ff", "main", "-m", "merge main")
+
+    assert lite_diff_base(repo, active["base_sha"]) == local_main
+    assert _lite_manifest(repo, active["base_sha"]) == ["src/own.py"]
+    write_lite_reviews(repo)
+    code, out = run(repo, "forge.py", "mode", "done")
+    assert code == 0 and "1 file(s)" in out, out
+
+
 def test_mode_done_clears_scoped_reviews_without_legacy_dir(repo):
     # CFS-1 layout: reviews live under the story dir and .factory/reviews never
     # exists. Lite close must clean the scoped gate reviews and not crash on the
