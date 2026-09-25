@@ -210,6 +210,7 @@ LENS_TAGS = tuple(f"[{lens}] " for lens in LENSES)
 REPORT_FIELDS = {
     "findings", "overall_correctness", "overall_explanation", "overall_confidence",
 }
+OPTIONAL_REPORT_FIELDS = {"review_completion"}
 FINDING_FIELDS = {
     "title", "body", "priority", "confidence", "category", "code_location",
     "source_attribution",
@@ -527,8 +528,15 @@ def _validate_helper_finding(finding: object, *, accepted: bool) -> dict:
 
 
 def _validate_provider_report(report: object) -> dict:
-    if not isinstance(report, dict) or set(report) != REPORT_FIELDS:
+    if (not isinstance(report, dict) or not REPORT_FIELDS <= set(report)
+            or set(report) - REPORT_FIELDS - OPTIONAL_REPORT_FIELDS):
         fail("combined review report has invalid fields")
+    if "review_completion" in report:
+        if (not isinstance(report["review_completion"], str)
+                or report["review_completion"] not in {"complete", "incomplete"}):
+            fail("combined review report has invalid review_completion")
+        if report["review_completion"] == "incomplete":
+            fail("the reviewer marked its assessment incomplete; rerun the review")
     if (not isinstance(report.get("overall_correctness"), str) or
             report["overall_correctness"] not in {"patch is correct", "patch is incorrect"}):
         fail("combined review report has invalid overall_correctness")
@@ -546,11 +554,14 @@ def _validate_provider_report(report: object) -> dict:
 
 
 def _validate_processed_report(report: object, required: set[str]) -> dict:
-    allowed = REPORT_FIELDS | required | REPORT_METADATA_FIELDS
+    allowed = REPORT_FIELDS | OPTIONAL_REPORT_FIELDS | required | REPORT_METADATA_FIELDS
     if (not isinstance(report, dict) or not REPORT_FIELDS | required <= set(report)
             or set(report) - allowed):
         fail("combined review helper wrapper has invalid fields")
-    _validate_provider_report({field: report[field] for field in REPORT_FIELDS})
+    _validate_provider_report({
+        field: report[field]
+        for field in REPORT_FIELDS | (OPTIONAL_REPORT_FIELDS & set(report))
+    })
     if "provider_report" in report:
         _validate_provider_report(report["provider_report"])
     for finding in report["findings"]:

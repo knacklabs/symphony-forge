@@ -309,6 +309,43 @@ def _pass(label: str, provider: dict, **metadata) -> dict:
     return {"label": label, "report": _processed(provider, **metadata)}
 
 
+def test_review_completion_is_optional_in_provider_and_helper_reports(capsys):
+    provider = _provider_report("review complete", [])
+    wrapper_only = _processed(provider, review_status="scoped-clean")
+    wrapper_only["review_completion"] = "complete"
+    assert _actual_passes(wrapper_only)[0][1]["review_status"] == "scoped-clean"
+
+    provider["review_completion"] = "complete"
+    both_layers = _processed(provider, review_status="scoped-clean")
+    assert _actual_passes(both_layers)[0][1]["review_status"] == "scoped-clean"
+
+    provider_only = _processed(provider, review_status="scoped-clean")
+    del provider_only["review_completion"]
+    assert _actual_passes(provider_only)[0][1]["review_status"] == "scoped-clean"
+
+    legacy = _processed(_provider_report("review complete", []),
+                        review_status="scoped-clean")
+    assert _actual_passes(legacy)[0][1]["review_status"] == "scoped-clean"
+
+    for location in ("wrapper", "provider"):
+        incomplete = _processed(_provider_report("review incomplete", []),
+                                review_status="scoped-clean")
+        target = incomplete if location == "wrapper" else incomplete["provider_report"]
+        target["review_completion"] = "incomplete"
+        with pytest.raises(SystemExit):
+            _actual_passes(incomplete)
+        assert "the reviewer marked its assessment incomplete; rerun the review" in (
+            capsys.readouterr().out
+        )
+
+    invalid = _processed(_provider_report("invalid completion", []),
+                         review_status="scoped-clean")
+    invalid["review_completion"] = "unknown"
+    with pytest.raises(SystemExit):
+        _actual_passes(invalid)
+    assert "combined review report has invalid review_completion" in capsys.readouterr().out
+
+
 def test_combined_review_projects_tagged_lenses_and_preserves_ordered_pass_verdicts():
     task = {"id": "T1", "plan_contracts": [
         {"id": "T1-C1", "statement": "works", "source": "plan"},
