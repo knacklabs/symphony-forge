@@ -5,6 +5,7 @@ import argparse
 import copy
 import ctypes
 import hashlib
+import importlib
 import importlib.util
 import json
 import os
@@ -251,6 +252,22 @@ def report_legacy_roadmap_gaps(base: Path) -> None:
 
 def _check(name: str, ok: bool, detail: str, fix: str, required: bool = True) -> dict:
     return {"name": name, "ok": ok, "detail": detail, "fix": fix, "required": required}
+
+
+def _offline_pytest_check() -> dict:
+    try:
+        importlib.import_module("pytest")
+    except ImportError:
+        available = False
+    else:
+        available = True
+    detail = ("pytest is importable by this Python"
+              if available else "pytest is not importable; required tests will use uv")
+    return _check(
+        "offline required-test runner", available, detail,
+        "install pytest in this Python environment to run required tests offline",
+        required=False,
+    )
 
 
 def _display_mark(check: dict) -> str:
@@ -1742,6 +1759,7 @@ def cmd_doctor(args: argparse.Namespace) -> None:
     checks.append(_check(
         "git", git is not None, git or "not on PATH", _git_fix_message()))
     checks.append(python)
+    checks.append(_offline_pytest_check())
     checks.extend(windows_install_checks)
 
     checks.append(_psutil_check(fix=args.fix))

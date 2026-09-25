@@ -1,0 +1,12 @@
+{
+  "event": "open",
+  "id": "Q-0244-efd0",
+  "profile": "lite",
+  "reason": "Markdown-only PRs skip the full harness test suite; main push still runs it",
+  "started_at": "2026-09-25T05:37:35+00:00",
+  "max_files": 5,
+  "files": [],
+  "harness_source": true,
+  "by": "Ravi Kiran Vemula",
+  "base_sha": "fcbb064c7be307bec63e06debe5fdab0274d4d64"
+}
