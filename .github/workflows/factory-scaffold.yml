@@ -9,6 +9,7 @@ on:
 jobs:
   gate-tests:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     strategy:
       fail-fast: false
       matrix:
@@ -49,7 +50,7 @@ jobs:
           PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
           SHARD: ${{ matrix.shard }}
         run: |
-          python3 -m pip install --quiet pytest pytest-xdist pytest-split psutil
+          python3 -m pip install --quiet pytest pytest-xdist pytest-split pytest-timeout psutil
           if [[ ! -f .test_durations ]]; then
             cp factory/tests/.test_durations .test_durations
           fi
@@ -83,7 +84,7 @@ jobs:
             done
             if ((${#matching_tests[@]})); then
               if ((SHARD == 1)); then
-                python3 -m pytest "${matching_tests[@]}" -q -n auto --dist worksteal --junitxml=test-results.xml
+                python3 -m pytest "${matching_tests[@]}" -q -n auto --dist worksteal --timeout=300 --timeout-method=thread --junitxml=test-results.xml
               else
                 echo "Markdown-only subset runs on shard 1."
               fi
@@ -91,7 +92,7 @@ jobs:
               echo "No factory tests mention the changed Markdown files; skipping gate regression tests."
             fi
           else
-            python3 -m pytest factory/tests -q -n auto --dist worksteal --splits 6 --group "$SHARD" --splitting-algorithm least_duration --durations-path .test_durations --junitxml=test-results.xml
+            python3 -m pytest factory/tests -q -n auto --dist worksteal --splits 6 --group "$SHARD" --splitting-algorithm least_duration --durations-path .test_durations --timeout=300 --timeout-method=thread --junitxml=test-results.xml
           fi
       - uses: actions/upload-artifact@v4
         if: always() && steps.repo_kind.outputs.is_harness == 'true'
@@ -132,6 +133,7 @@ jobs:
     needs: gate-tests
     if: always()
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - name: Require passing gate tests
         if: needs.gate-tests.result != 'success' && needs.gate-tests.result != 'skipped'
@@ -203,6 +205,7 @@ jobs:
 
   windows-hook-gates:
     runs-on: windows-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v7
       - name: Identify harness vs vendored client

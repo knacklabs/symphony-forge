@@ -130,6 +130,94 @@ def _optional_contained_regular_bytes(
     return _contained_regular_bytes(base, source, label)
 
 
+def _contained_tree_snapshots(
+        base: Path, source: Path, label: str) -> dict[Path, bytes]:
+    """Snapshot every regular file below a contained directory without links."""
+    try:
+        relative_root = source.relative_to(base)
+    except ValueError:
+        fail(f"task start refused: {label} escapes the source worktree")
+    current = base
+    for part in relative_root.parts[:-1]:
+        current /= part
+        try:
+            info = current.lstat()
+        except FileNotFoundError:
+            return {}
+        except OSError as exc:
+            fail(f"task start refused: {label} is unreadable: {exc}")
+        if (stat.S_ISLNK(info.st_mode) or not stat.S_ISDIR(info.st_mode)
+                or _windows_reparse_point(current)):
+            fail(f"task start refused: {label} has a linked or invalid parent")
+    try:
+        info = source.lstat()
+    except FileNotFoundError:
+        return {}
+    except OSError as exc:
+        fail(f"task start refused: {label} is unreadable: {exc}")
+    if (stat.S_ISLNK(info.st_mode) or not stat.S_ISDIR(info.st_mode)
+            or _windows_reparse_point(source)):
+        fail(f"task start refused: {label} is linked or not a directory")
+
+    snapshots: dict[Path, bytes] = {}
+
+    def walk_error(exc: OSError) -> None:
+        fail(f"task start refused: {label} is unreadable: {exc}")
+
+    for directory, dirs, files in os.walk(
+            source, topdown=True, followlinks=False, onerror=walk_error):
+        parent = Path(directory)
+        for name in dirs:
+            child = parent / name
+            info = child.lstat()
+            if (stat.S_ISLNK(info.st_mode) or not stat.S_ISDIR(info.st_mode)
+                    or _windows_reparse_point(child)):
+                fail(f"task start refused: {label} contains a linked directory")
+        for name in files:
+            child = parent / name
+            relative = child.relative_to(base)
+            snapshots[relative] = _contained_regular_bytes(base, child, label)
+    return snapshots
+
+
+def _tree_entries(base: Path, revision: str) -> dict[bytes, tuple[bytes, ...]]:
+    result = subprocess.run(
+        ["git", "ls-tree", "-r", "-z", "--full-tree", revision],
+        cwd=base, capture_output=True, env=clean_git_env(),
+    )
+    if result.returncode != 0:
+        detail = result.stderr.decode("utf-8").strip()
+        fail(f"resolving committed tree {revision} failed"
+             + (f": {detail}" if detail else ""))
+    entries = {}
+    for row in result.stdout.split(b"\0"):
+        if not row:
+            continue
+        metadata, path = row.split(b"\t", 1)
+        entries[path] = tuple(metadata.split())
+    return entries
+
+
+def _move_checkout_to_origin_if_contained(
+        base: Path, trunk: str, origin_sha: str) -> None:
+    head = _require_git(base, "resolving current commit", "rev-parse", "HEAD")
+    committed = _tree_entries(base, head)
+    origin = _tree_entries(base, origin_sha)
+    if any(origin.get(path) != entry for path, entry in committed.items()):
+        print(f"Leaving planning checkout at {head}: its committed files differ "
+              f"from origin/{trunk}.")
+        return
+    if head == origin_sha:
+        return
+    reset = _git(base, "reset", "--keep", origin_sha)
+    if reset.returncode != 0:
+        detail = reset.stderr.strip() or reset.stdout.strip()
+        print(f"Leaving planning checkout at {head}: reset --keep to "
+              f"origin/{trunk} was refused" + (f": {detail}" if detail else "."))
+        return
+    print(f"Moved planning checkout to origin/{trunk}; kept its uncommitted records.")
+
+
 def _default_branch(base: Path) -> str:
     """The integration branch a task PR targets: origin's default branch, not a
     hardcoded 'main'. Delegates to the single canonical resolver so PR targeting,
@@ -318,6 +406,11 @@ def cmd_task_start(args: argparse.Namespace) -> None:
 
     trunk = default_trunk_branch(base)
     _require_git(base, f"fetching origin/{trunk}", "fetch", "origin", trunk)
+    base_main_sha = _require_git(
+        base, f"resolving fetched origin/{trunk}", "rev-parse", "--verify",
+        f"origin/{trunk}^{{commit}}",
+    )
+    _move_checkout_to_origin_if_contained(base, trunk, base_main_sha)
     # The gate is the dependency graph, not the list order: a task starts once
     # every task it depends on has its marker on the trunk, so independent
     # tasks start side by side in their own worktrees.
@@ -339,11 +432,6 @@ def cmd_task_start(args: argparse.Namespace) -> None:
                    or Path(path).is_absolute()
                    or ".." in Path(path).parts for path in scope)):
         fail(f"task start refused: {args.id} has no protected in-repository write_scope")
-    base_main_sha = _require_git(
-        base, f"resolving fetched origin/{trunk}", "rev-parse", "--verify",
-        f"origin/{trunk}^{{commit}}",
-    )
-
     branch = f"feat/{key}-{args.id}"
     worktree = base.parent / f"{base.name}-{key}-{args.id}"
     if _git(base, "show-ref", "--verify", "--quiet", f"refs/heads/{branch}").returncode == 0:
@@ -401,17 +489,20 @@ def cmd_task_start(args: argparse.Namespace) -> None:
     # Keep one no-follow byte snapshot for every source before the target
     # worktree is allocated. Approval bytes remain the authenticated records
     # selected above; they are intentionally copied verbatim into the target.
-    authenticated = {
-        approval_relative: approval_bytes,
-        event_relative: approval_event_bytes,
+    snapshots = _contained_tree_snapshots(
+        base, base / ".factory" / "stories" / key,
+        "story planning state source",
+    )
+    stage_records = Path(".factory") / "stories" / key / "stages"
+    snapshots = {
+        relative: content for relative, content in snapshots.items()
+        if relative.parent != stage_records
     }
-    snapshots: dict[Path, bytes] = {
-        plan_relative: plan_bytes,
-        decomposition_relative: decomposition_bytes,
-        **authenticated,
-    }
-    # Plan content can hydrate a successor workspace, but its source grill is
-    # approval authority and must be recorded afresh in the new target.
+    snapshots.setdefault(decomposition_relative, decomposition_bytes)
+    snapshots.setdefault(approval_relative, approval_bytes)
+    snapshots.setdefault(event_relative, approval_event_bytes)
+    snapshots[plan_relative] = plan_bytes
+    # Preserve the old task-plan layout when hydrating a legacy story.
     optional_sources = {
         Path(".factory") / "stories" / key / "task-plans" / f"{args.id}.md":
             evidence_path(base, key, f"task-plans/{args.id}.md"),
@@ -440,14 +531,8 @@ def cmd_task_start(args: argparse.Namespace) -> None:
         "-b", branch, base_main_sha,
     )
     try:
-        # Preflight every destination before deleting inherited approval or
-        # writing any hydration payload into the newly allocated worktree.
+        # Preflight every destination before writing hydration into the new tree.
         from .scaffold import assert_target_file_destination
-        target_grill = assert_target_file_destination(
-            worktree,
-            worktree / ".factory" / "stories" / key / "grills" / "tasks"
-            / f"{args.id}.json",
-        )
         destinations = {
             relative: assert_target_file_destination(worktree, worktree / relative)
             for relative in payloads
@@ -458,10 +543,6 @@ def cmd_task_start(args: argparse.Namespace) -> None:
             for name in ("decomposition.json", "stages.json", "run.json")
         }
 
-        # A fetched trunk can contain this task's earlier approval record. Keep
-        # it in Git history, but require a fresh target grill and approval.
-        if target_grill.exists() or target_grill.is_symlink():
-            target_grill.unlink()
         for relative, content in payloads.items():
             destination = destinations[relative]
             destination.parent.mkdir(parents=True, exist_ok=True)
