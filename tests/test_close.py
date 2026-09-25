@@ -215,7 +215,10 @@ def _open_serious_finding(env):
 
 
 def _red_check(env):
-    env.checks([run("tests", "failure"), run("forge-pr-check"), run("lint", "failure")])
+    # One matrix variant failed while another still runs: red at once, no waiting.
+    env.checks([run("tests (ubuntu-latest)", "failure"),
+                run("tests (windows-latest)", None, "in_progress"),
+                run("forge-pr-check"), run("lint", "failure")])
     return {"item": env.start_fix()[0], "problem": "Checks failed on the pull request: tests.",
             "next": "forge work tidy-readme"}
 
@@ -250,8 +253,13 @@ def _no_checks_named(env):
 
 
 def _not_started(env):
-    return {"item": "never-started",
-            "problem": "Forge has not started never-started in any worktree of this repo.",
+    # An earlier fix merged, so its state is on main and in every branch started since; only a
+    # worktree on the branch that state names counts as that fix's.
+    env.commit(env.repo.path, ".factory/fixes/old-fix.json",
+               json.dumps({"branch": "fix/old-fix", "why": "Old", "done_when": "Done"}))
+    env.start_fix()
+    return {"item": "old-fix",
+            "problem": "Forge has not started old-fix in any worktree of this repo.",
             "next": "forge next"}
 
 
@@ -285,6 +293,26 @@ def _stale_dismissal(env):
             "next": "forge close tidy-readme"}
 
 
+def _dismissal_cites_no_such_line(env):
+    env.reviews(blocked(finding("P1", "Not done: The readme opens with a greeting")))
+    item = env.start_fix()[0]  # app.py has one line
+    env.close(item)
+    return {"item": item, "args": ["--dismiss", "1", "--because", "app.py:3 it greets here"],
+            "problem": "app.py:3 is not a line of the reviewed commit, so it can't prove a "
+                       "finding wrong.",
+            "next": 'forge close tidy-readme --dismiss <n> --because "<file:line> <reason>"'}
+
+
+def _dismissal_cites_no_such_file(env):
+    env.reviews(blocked(finding("P1", "Not done: The readme opens with a greeting")))
+    item = env.start_fix()[0]
+    env.close(item)
+    return {"item": item, "args": ["--dismiss", "1", "--because", "greet.py:1 it greets here"],
+            "problem": "greet.py:1 is not a line of the reviewed commit, so it can't prove a "
+                       "finding wrong.",
+            "next": 'forge close tidy-readme --dismiss <n> --because "<file:line> <reason>"'}
+
+
 def _helper_not_pinned(env):
     helper = os.environ["AUTOREVIEW"]
     (Path(helper).parents[1] / ".upstream-sha").write_text("0" * 40, "utf-8")
@@ -302,7 +330,8 @@ def _task_row_missing(env):
 
 GATES = [_review_fails_twice, _review_incomplete_twice, _open_serious_finding, _red_check,
          _pending_check, _missing_required_check, _github_api_error, _no_checks_named,
-         _not_started, _merge_conflict, _bad_dismissal, _stale_dismissal, _helper_not_pinned,
+         _not_started, _merge_conflict, _bad_dismissal, _stale_dismissal,
+         _dismissal_cites_no_such_line, _dismissal_cites_no_such_file, _helper_not_pinned,
          _task_row_missing]
 
 
@@ -372,10 +401,10 @@ def test_18_close(env, kind):
 
     # A dismissal cites the line that proves the finding wrong; the committed review still covers
     # the head (only state moved it), so no new round runs, and close waits for green checks.
-    second = env.close(item, "--dismiss", "1", "--because", "app.py:3 the basket is saved here")
+    second = env.close(item, "--dismiss", "1", "--because", "app.py:1 the basket is saved here")
     assert second.returncode == 0, second.stderr
     assert len(env.review_calls()) == 1
-    assert ("1. P1 Not done: A shopper can save a basket (app.py:1): dismissed because app.py:3 "
+    assert ("1. P1 Not done: A shopper can save a basket (app.py:1): dismissed because app.py:1 "
             "the basket is saved here") in body(env.gh_calls("pr", "edit")[-1])
     assert second.stdout.splitlines()[-1] == (
         f"Ready: {item} has a clean review and green checks. A human merges its pull request.")

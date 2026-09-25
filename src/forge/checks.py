@@ -33,10 +33,10 @@ def wait(top: Path, item: str, sha: str, names: list[str]) -> None:
             states = [state for name, state in seen if name == want or name.startswith(want + " (")]
             if not states:
                 missing.append(want)
+            elif RED in states:  # failed, cancelled, timed out or skipped: red at once
+                red.append(want)
             elif PENDING in states:
                 pending.append(want)
-            elif any(state != PASS for state in states):
-                red.append(want)  # failed, cancelled, timed out, or skipped: it never turns green
         if red:
             repo.refuse(REFUSALS["red"], names=", ".join(red), item=item)
         if not missing and not pending:

@@ -27,6 +27,8 @@ REFUSALS = {
                     'forge close {item} --dismiss <n> --because "<file:line> <reason>"'),
     "stale_dismiss": ("The branch changed since the review those finding numbers came from.",
                       "forge close {item}"),
+    "no_such_line": ("{where} is not a line of the reviewed commit, so it can't prove a finding "
+                     "wrong.", 'forge close {item} --dismiss <n> --because "<file:line> <reason>"'),
     "blocked": ("The review left serious findings open: {findings}.",
                 'forge work {item}, or forge close {item} --dismiss <n> --because '
                 '"<file:line> <reason>"'),
@@ -57,6 +59,7 @@ def close(args: argparse.Namespace) -> int:
     for number, because in dismissals:
         if not 1 <= number <= len(result["findings"]):
             repo.refuse(REFUSALS["bad_dismiss"], item=item)
+        _check_line(top, item, result["commit"], because.split()[0])
         result["dismissals"] = [d for d in result["dismissals"] if d["finding"] != number]
         result["dismissals"].append({"finding": number, "because": because})
     serious = review.blocking(result)
@@ -80,13 +83,13 @@ def close(args: argparse.Namespace) -> int:
 
 
 def _worktree(item: str) -> Path:
-    """The checkout on a work branch that holds the item's state."""
-    rel, here = repo.state_path(item), repo.root()
-    default = repo.default_branch(here)
-    for block in repo.git("worktree", "list", "--porcelain", cwd=here).split("\n\n"):
+    """The checkout on the item's own branch: the one its state names. An earlier item's state
+    reaches later branches through the default branch, so the file alone proves nothing."""
+    for block in repo.git("worktree", "list", "--porcelain", cwd=repo.root()).split("\n\n"):
         fields = dict(line.partition(" ")[::2] for line in block.splitlines())
         branch = fields.get("branch", "").removeprefix("refs/heads/")
-        if branch and branch != default and (Path(fields["worktree"]) / rel).is_file():
+        state = repo.read_state(item, Path(fields["worktree"])) if branch else None
+        if state and state.get("branch") == branch:
             return Path(fields["worktree"])
     repo.refuse(REFUSALS["not_started"], item=item)
 
@@ -96,6 +99,14 @@ def _dismissals(args: argparse.Namespace, item: str) -> list[tuple[int, str]]:
     if len(numbers) != len(reasons) or not all(re.match(r"\S+:\d+\s+\S", r) for r in reasons):
         repo.refuse(REFUSALS["bad_dismiss"], item=item)
     return list(zip(numbers, reasons))
+
+
+def _check_line(top: Path, item: str, commit: str, where: str) -> None:
+    """A dismissal's file:line must be a real line of the reviewed commit."""
+    path, _, line = where.rpartition(":")
+    shown = repo.run("git", "show", f"{commit}:{path}", cwd=top)
+    if shown.returncode or not 1 <= int(line) <= len(shown.stdout.splitlines()):
+        repo.refuse(REFUSALS["no_such_line"], where=where, item=item)
 
 
 def _merge_default(top: Path, item: str, branch: str, default: str) -> None:
