@@ -4,6 +4,7 @@ on:
   push:
     branches: [main]
   pull_request:
+  workflow_dispatch:
 
 jobs:
   scaffold-check:
@@ -74,9 +75,46 @@ jobs:
       # them to one worker (23 min, barely better than serial).
       - name: Gate regression tests
         if: steps.repo_kind.outputs.is_harness == 'true'
+        env:
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: |
           python3 -m pip install --quiet pytest pytest-xdist psutil
-          python3 -m pytest factory/tests -q -n auto --dist worksteal
+          if [[ "$GITHUB_EVENT_NAME" == pull_request ]]; then
+            mapfile -d '' -t changes < <(git diff --name-status -z "$PR_BASE_SHA" HEAD)
+            changed_files=()
+            markdown_only=true
+            for ((i=0; i<${#changes[@]}; i+=2)); do
+              status=${changes[i]}
+              file=${changes[i+1]}
+              if [[ "$status" == D || "$status" == R* || "$file" != *.md ]]; then
+                markdown_only=false
+                break
+              fi
+              changed_files+=("$file")
+            done
+            if ((${#changed_files[@]} == 0)); then
+              markdown_only=false
+            fi
+          fi
+          if [[ "${markdown_only:-false}" == true ]]; then
+            matching_tests=()
+            for test in factory/tests/test_*.py; do
+              for file in "${changed_files[@]}"; do
+                if grep -q -F -e "$file" -e "${file##*/}" -e "${file%/*}" \
+                    -e '*.md' -e '.md")' "$test"; then
+                  matching_tests+=("$test")
+                  break
+                fi
+              done
+            done
+            if ((${#matching_tests[@]})); then
+              python3 -m pytest "${matching_tests[@]}" -q -n auto --dist worksteal
+            else
+              echo "No factory tests mention the changed Markdown files; skipping gate regression tests."
+            fi
+          else
+            python3 -m pytest factory/tests -q -n auto --dist worksteal
+          fi
       # Scaffolds from THIS repo, so it inherits whatever .claude skills the repo
       # carries. In the harness that is just `forge`, whose canon lives in the
       # copied factory/ tree. A client's own skills point at repo-root skills/,

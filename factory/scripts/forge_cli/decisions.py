@@ -4,9 +4,10 @@ from __future__ import annotations
 import argparse
 import datetime
 import re
+import subprocess
 from pathlib import Path
 
-from factory_lib import load_json, repo_root, run_state_path
+from factory_lib import clean_git_env, load_json, repo_root, run_state_path
 
 from . import fscache
 from .common import fail
@@ -78,6 +79,45 @@ def active_decision_ids(base: Path) -> list[str]:
             if record["status"] == "accepted"]
 
 
+def _decision_numbers(base: Path) -> tuple[int, list[str]]:
+    sources: dict[int, set[str]] = {}
+    for existing in (base / "docs" / "decisions").glob(
+            "[0-9][0-9][0-9][0-9]-*.md"):
+        sources.setdefault(int(existing.name[:4]), set()).add("working tree")
+
+    refs = subprocess.run(
+        ["git", "for-each-ref", "--format=%(refname)%09%(objectname)",
+         "refs/heads", "refs/remotes/origin/main"],
+        cwd=base, capture_output=True, text=True, env=clean_git_env(),
+        encoding="utf-8",
+    )
+    if refs.returncode != 0:
+        fail(f"cannot list decision-number refs: {refs.stderr.strip()}")
+    for row in refs.stdout.splitlines():
+        ref, _, treeish = row.partition("\t")
+        if ref == "refs/remotes/origin/main":
+            source = "origin/main"
+        elif ref.startswith("refs/heads/"):
+            source = f"local branch {ref.removeprefix('refs/heads/')}"
+        else:
+            continue
+        tree = subprocess.run(
+            ["git", "ls-tree", "-r", "-z", "--name-only", treeish,
+             "--", "docs/decisions/"],
+            cwd=base, capture_output=True, env=clean_git_env(),
+        )
+        if tree.returncode != 0:
+            fail(f"cannot inspect docs/decisions in {source}: "
+                 f"{tree.stderr.decode('utf-8', 'replace').strip()}")
+        for path in tree.stdout.decode("utf-8", "surrogateescape").split("\0"):
+            match = re.fullmatch(r"docs/decisions/([0-9]{4})-[^/]+\.md", path)
+            if match:
+                sources.setdefault(int(match.group(1)), set()).add(source)
+
+    highest = max(sources, default=0)
+    return highest, sorted(sources.get(highest, ()))
+
+
 def cmd_new(args: argparse.Namespace) -> None:
     base = Path(args.repo).resolve() if args.repo else repo_root()
     decisions = base / "docs" / "decisions"
@@ -89,12 +129,8 @@ def cmd_new(args: argparse.Namespace) -> None:
         if not matches:
             fail(f"cannot supersede: no record matching docs/decisions/NNNN-{old_slug}.md")
         old_record = matches[-1]
-    taken = set()
-    for existing in decisions.glob("[0-9][0-9][0-9][0-9]-*.md"):
-        taken.add(int(existing.name[:4]))
-    number = 1
-    while number in taken:
-        number += 1
+    highest, highest_sources = _decision_numbers(base)
+    number = highest + 1
     slug = args.slug.strip().lower().replace(" ", "-")
     path = decisions / f"{number:04d}-{slug}.md"
     title = args.title or slug.replace("-", " ").title()
@@ -107,6 +143,13 @@ def cmd_new(args: argparse.Namespace) -> None:
     result = f"Created {path}" + (f" (governs {story})" if story else "")
     if old_record is not None:
         result += f"; Supersedes {old_record.stem}"
+    source_summary = sorted({
+        source if source in {"working tree", "origin/main"} else "local branches"
+        for source in highest_sources
+    })
+    result += (f" (allocated {number:04d}; next after highest existing "
+               f"{highest:04d} found in {', '.join(source_summary)})" if highest else
+               f" (allocated {number:04d}, no existing decisions found)")
     print(result)
 
 
