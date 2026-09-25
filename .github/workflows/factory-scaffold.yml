@@ -80,22 +80,28 @@ jobs:
         run: |
           python3 -m pip install --quiet pytest pytest-xdist psutil
           if [[ "$GITHUB_EVENT_NAME" == pull_request ]]; then
-            mapfile -d '' -t changed_files < <(git diff --name-only -z "$PR_BASE_SHA" HEAD)
-            if ((${#changed_files[@]})); then
-              markdown_only=true
-              for file in "${changed_files[@]}"; do
-                if [[ "$file" != *.md ]]; then
-                  markdown_only=false
-                  break
-                fi
-              done
+            mapfile -d '' -t changes < <(git diff --name-status -z "$PR_BASE_SHA" HEAD)
+            changed_files=()
+            markdown_only=true
+            for ((i=0; i<${#changes[@]}; i+=2)); do
+              status=${changes[i]}
+              file=${changes[i+1]}
+              if [[ "$status" == D || "$status" == R* || "$file" != *.md ]]; then
+                markdown_only=false
+                break
+              fi
+              changed_files+=("$file")
+            done
+            if ((${#changed_files[@]} == 0)); then
+              markdown_only=false
             fi
           fi
           if [[ "${markdown_only:-false}" == true ]]; then
             matching_tests=()
             for test in factory/tests/test_*.py; do
               for file in "${changed_files[@]}"; do
-                if grep -q -F -e "$file" -e "${file##*/}" "$test"; then
+                if grep -q -F -e "$file" -e "${file##*/}" -e "${file%/*}" \
+                    -e '*.md' -e '.md")' "$test"; then
                   matching_tests+=("$test")
                   break
                 fi
