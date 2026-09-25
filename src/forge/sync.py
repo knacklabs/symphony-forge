@@ -235,6 +235,8 @@ def files(top: Path, cfg: dict[str, Any]) -> dict[str, str]:
 
 def shims(top: Path, cfg: dict[str, Any]) -> dict[Path, str]:
     """The two git hook shims, in the hooks folder every worktree shares."""
+    # Asked from the checkout's top: git gives core.hooksPath when set, and resolves a relative
+    # one from the worktree's root, where git runs its hooks (checked with git 2.47).
     folder = Path(repo.git("rev-parse", "--path-format=absolute", "--git-path", "hooks", cwd=top))
     return {folder / hook: SHIM.replace("<version>", cfg["version"]).replace("<hook>", hook)
             .replace("<what>", what).replace("<install>", install_line(cfg["version"]))

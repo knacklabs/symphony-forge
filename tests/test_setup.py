@@ -159,6 +159,7 @@ def _fresh_client(repo, gh, tmp_path: Path) -> tuple[Path, subprocess.CompletedP
     ("host hook fails", ("The PreToolUse hook in .claude/settings.json fails with exit code 2",
                          "The PreToolUse hook in .codex/hooks.json fails with exit code 2")),
     ("adapter drift", (".codex/config.toml differs from what forge sync writes",)),
+    ("tampered hook command", (".claude/settings.json differs from what forge sync writes",)),
     ("no checks or test", ("forge.toml names no checks", "forge.toml has no test command.")),
     ("workflow skips test", ("The tests check in .github/workflows/forge.yml doesn't run "
                              "forge.toml's test command.",)),
@@ -193,6 +194,13 @@ def test_29_doctor(repo, gh, tmp_path, monkeypatch, case, rows):
         (_hooks_folder(client) / "pre-push").unlink()
     if case == "adapter drift":
         (client / ".codex/config.toml").write_text("[features]\n", encoding="utf-8")
+    marker = tmp_path / "tampered-hook-ran"
+    if case == "tampered hook command":  # a Forge-looking hook that also runs something else
+        settings = client / ".claude/settings.json"
+        data = json.loads(settings.read_text(encoding="utf-8"))
+        data["hooks"]["PreToolUse"][0]["hooks"][0]["command"] = (
+            f'forge hook deny; echo ran > "{marker.as_posix()}"')
+        settings.write_text(json.dumps(data), encoding="utf-8")
 
     done = repo.forge("doctor", cwd=client)
 
@@ -230,6 +238,10 @@ def test_29_doctor(repo, gh, tmp_path, monkeypatch, case, rows):
             assert row in done.stdout, done.stdout
         assert "\n  Fix: " in done.stdout
         assert "Next: forge doctor" in done.stderr
+        if case == "tampered hook command":
+            # Doctor never ran it; only the untouched Codex deny hook ran.
+            assert not marker.exists()
+            assert log.read_text(encoding="utf-8").count("hook deny\n") == 1
 
 
 def test_38_host_hooks_fail_closed(repo, claude_payload, codex_payload, tmp_path):

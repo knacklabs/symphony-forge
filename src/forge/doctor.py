@@ -32,10 +32,10 @@ SAMPLES = {
 }
 
 
-def _forge_hooks(path: Path) -> list[tuple[str, str]]:
+def _forge_hooks(text: str) -> list[tuple[str, str]]:
     """(event, command) for each Forge hook in a host's hook file. A broken file shows as drift."""
     try:
-        hooks = json.loads(sync.read(path) or "{}").get("hooks", {})
+        hooks = json.loads(text or "{}").get("hooks", {})
         return [(event, hook["command"]) for event, groups in hooks.items() for group in groups
                 for hook in group.get("hooks", []) if sync.FORGE_COMMAND.search(hook.get("command", ""))]
     except (ValueError, AttributeError, TypeError, KeyError):
@@ -86,7 +86,12 @@ def doctor(args: argparse.Namespace) -> None:
                      "install Git, which brings sh, and put it on PATH"))
     else:
         for rel in sync.HOSTS:
-            for event, command in _forge_hooks(top / rel):
+            # Only a command exactly as forge sync writes it ever runs. Any other one makes the
+            # file differ from sync's, so it is already a drift row above, and it never runs.
+            generated = set(_forge_hooks(wanted.get(rel, "")))
+            for event, command in _forge_hooks(sync.read(top / rel)):
+                if (event, command) not in generated:
+                    continue
                 payload = {"session_id": "forge-doctor", "cwd": str(top), "hook_event_name": event,
                            **SAMPLES.get(event, {})}
                 done = repo.run("sh", "-c", command, cwd=top, input=json.dumps(payload))
